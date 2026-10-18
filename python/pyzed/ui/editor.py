@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .. import _core
-from ..theme import Theme
+from ..theme import Theme, alpha
 from .base import _theme
 
 _EXT_TOKENS = {"py": "py", "rs": "rs", "js": "js", "ts": "ts", "tsx": "tsx", "jsx": "js", "md": "md", "toml": "toml",
@@ -36,6 +36,11 @@ def editor(
     active_line: bool = True,
     height: Any = "fill",
     placeholder: Optional[str] = None,
+    annotations: Optional[Dict[int, Union[str, Tuple[str, str]]]] = None,
+    show_whitespace: bool = False,
+    tab_size: Optional[int] = None,
+    capture_keys: Sequence[str] = (),
+    on_scroll: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -54,6 +59,14 @@ def editor(
 
     ``height`` is ``"fill"`` by default; inside a vertical ``scrollable`` use a number or
     ``"shrink"`` (tall enough for every line).
+
+    ``annotations`` maps 1-based lines to virtual text drawn after the line's last character
+    (``"2 references"`` or ``("undefined name", "#e06c75")``), as used for code lens and
+    inline diagnostics. ``show_whitespace`` draws spaces as ``·`` and tabs as ``→``.
+    With ``tab_size``, Tab inserts spaces, Enter keeps the indentation (one level more after
+    ``:``) and Backspace removes a whole level. Keys in ``capture_keys`` (``"up"``, ``"down"``,
+    ``"enter"``, ``"tab"``, ``"escape"``...) are left to the app's ``on_key``, e.g. while a
+    completion list is open. ``on_scroll(info)`` gets the scroll offset (``info["x"]``, ``info["y"]``).
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -80,6 +93,11 @@ def editor(
         active_line=t.active_line if active_line else None,
         scrollbar_color=t.scrollbar,
         height=height,
+        annotations=annotations,
+        whitespace=alpha(t.line_number, 0.8) if show_whitespace else None,
+        tab_size=tab_size,
+        capture_keys=list(capture_keys),
+        on_scroll=on_scroll,
     )
 
 

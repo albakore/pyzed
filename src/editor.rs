@@ -49,6 +49,14 @@ struct Measure {
     rows: HashMap<u64, u32>,
 }
 
+/// A key the editor indents for (see `EditorState::indent`).
+#[derive(Debug, Clone, Copy)]
+pub enum IndentKey {
+    Tab,
+    Enter,
+    Backspace,
+}
+
 /// The persistent state of one editor (keyed by its `id`).
 pub struct EditorState {
     pub content: text_editor::Content,
@@ -166,6 +174,50 @@ impl EditorState {
         let follows = !matches!(action, text_editor::Action::Scroll { .. });
         self.content.perform(action);
         self.outcome(id, before, is_edit, follows)
+    }
+
+    /// Python-style indentation, computed on the text as it is when the key arrives: Tab inserts
+    /// spaces up to the next multiple of `size`, Enter keeps the indentation (one level more
+    /// after `:`) and Backspace in leading spaces removes a whole level.
+    pub fn indent(&mut self, id: &str, key: IndentKey, size: usize) -> Outcome {
+        use text_editor::{Action, Edit};
+        let cursor = self.content.cursor();
+        let before = cursor.position;
+        let line = self
+            .content
+            .line(before.line)
+            .map(|l| l.text.into_owned())
+            .unwrap_or_default();
+        let head: String = line.chars().take(before.column).collect();
+        let column = head.chars().count();
+        let selecting = cursor.selection.is_some();
+        let spaces = |content: &mut text_editor::Content, n: usize| {
+            for _ in 0..n {
+                content.perform(Action::Edit(Edit::Insert(' ')));
+            }
+        };
+        match key {
+            IndentKey::Tab => spaces(&mut self.content, size - column % size),
+            IndentKey::Enter => {
+                let mut indent = head.chars().take_while(|c| *c == ' ').count();
+                if head.trim_end().ends_with(':') {
+                    indent += size;
+                }
+                self.content.perform(Action::Edit(Edit::Enter));
+                spaces(&mut self.content, indent);
+            }
+            IndentKey::Backspace => {
+                let n = if !selecting && column > 0 && head.chars().all(|c| c == ' ') {
+                    (column - 1) % size + 1
+                } else {
+                    1
+                };
+                for _ in 0..n {
+                    self.content.perform(Action::Edit(Edit::Backspace));
+                }
+            }
+        }
+        self.outcome(id, before, true, true)
     }
 
     /// Moves the cursor by a page (iced's own page motion assumes a fixed-height editor).
@@ -329,6 +381,24 @@ pub fn view<'a>(state: &'a EditorState, props: &EditorProps) -> Element<'a, Mess
         .into()
 }
 
+fn key_name(key: keyboard::key::Named) -> Option<&'static str> {
+    use keyboard::key::Named;
+    Some(match key {
+        Named::ArrowUp => "up",
+        Named::ArrowDown => "down",
+        Named::ArrowLeft => "left",
+        Named::ArrowRight => "right",
+        Named::Enter => "enter",
+        Named::Tab => "tab",
+        Named::Escape => "escape",
+        Named::PageUp => "pageup",
+        Named::PageDown => "pagedown",
+        Named::Home => "home",
+        Named::End => "end",
+        _ => return None,
+    })
+}
+
 fn numbers<'a>(
     starts: &[u32],
     range: std::ops::Range<usize>,
@@ -446,6 +516,11 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
 
     let page_id = props.id.clone();
     let page_cursor = props.on_cursor.clone();
+    let indent_size = props.tab_size;
+    let indent_id = props.id.clone();
+    let indent_change = props.on_change.clone();
+    let indent_cursor = props.on_cursor.clone();
+    let capture = props.capture_keys.clone();
     let mut editor = widget::text_editor(&state.content)
         .font(props.font)
         .size(props.size)
@@ -481,10 +556,36 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             if !matches!(press.status, text_editor::Status::Focused { .. }) {
                 return Binding::from_key_press(press);
             }
+            let plain =
+                !(press.modifiers.control() || press.modifiers.alt() || press.modifiers.logo());
+            if let keyboard::Key::Named(named) = press.key.as_ref()
+                && plain
+                && capture.iter().any(|k| key_name(named) == Some(k.as_str()))
+            {
+                return None;
+            }
             let select = press.modifiers.shift();
             match press.key.as_ref() {
                 keyboard::Key::Named(keyboard::key::Named::PageDown) => page(true, select),
                 keyboard::Key::Named(keyboard::key::Named::PageUp) => page(false, select),
+                keyboard::Key::Named(named) if plain && !select && indent_size.is_some() => {
+                    let key = match named {
+                        keyboard::key::Named::Tab => Some(IndentKey::Tab),
+                        keyboard::key::Named::Enter => Some(IndentKey::Enter),
+                        keyboard::key::Named::Backspace => Some(IndentKey::Backspace),
+                        _ => None,
+                    };
+                    match key {
+                        Some(key) => Some(Binding::Custom(Message::EditorIndent {
+                            id: indent_id.clone(),
+                            key,
+                            size: indent_size.unwrap_or(4),
+                            on_change: indent_change.clone(),
+                            on_cursor: indent_cursor.clone(),
+                        })),
+                        None => Binding::from_key_press(press),
+                    }
+                }
                 _ => Binding::from_key_press(press),
             }
         })
@@ -515,28 +616,126 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         highlighter::Highlight::to_format,
     );
 
+    let total_height = 2.0 * PAD_Y + starts[starts.len() - 1] as f32 * lh;
+    let mut layers: Vec<Element<'a, Message>> = Vec::new();
+
     // The active line is highlighted with a band drawn underneath the text.
-    let code: Element<'a, Message> = match props.active_line {
-        Some(color) => {
-            let top = PAD_Y + starts[cursor_line] as f32 * lh;
-            let rows = starts[cursor_line + 1] - starts[cursor_line];
-            let band = column![
-                Space::new().height(Length::Fixed(top)),
-                container(Space::new())
-                    .width(Length::Fixed(editor_width))
-                    .height(Length::Fixed(rows as f32 * lh))
-                    .style(move |_| container::Style {
-                        background: Some(Background::Color(color)),
-                        ..Default::default()
-                    }),
-            ]
-            // A stack takes the size of its first child, so the band spans the whole text.
-            .height(Length::Fixed(
-                2.0 * PAD_Y + starts[starts.len() - 1] as f32 * lh,
-            ));
-            widget::Stack::with_children([band.into(), editor.into()]).into()
+    if let Some(color) = props.active_line {
+        let top = PAD_Y + starts[cursor_line] as f32 * lh;
+        let rows = starts[cursor_line + 1] - starts[cursor_line];
+        let band = column![
+            Space::new().height(Length::Fixed(top)),
+            container(Space::new())
+                .width(Length::Fixed(editor_width))
+                .height(Length::Fixed(rows as f32 * lh))
+                .style(move |_| container::Style {
+                    background: Some(Background::Color(color)),
+                    ..Default::default()
+                }),
+        ]
+        // A stack takes the size of its first child, so the band spans the whole text.
+        .height(Length::Fixed(total_height));
+        layers.push(band.into());
+    }
+    layers.push(editor.into());
+
+    // Visible whitespace: a copy of the text where only spaces and tabs are drawn.
+    if let (Some(color), None) = (props.whitespace, wrap_width) {
+        let mut dots = String::new();
+        for (i, line) in state.content.lines().enumerate() {
+            if i > 0 {
+                dots.push('\n');
+            }
+            let mut col = 0usize;
+            for ch in line.text.chars() {
+                match ch {
+                    ' ' => {
+                        dots.push('·');
+                        col += 1;
+                    }
+                    '\t' => {
+                        // cosmic-text puts tab stops every 8 columns.
+                        let next = (col / 8 + 1) * 8;
+                        dots.push('→');
+                        dots.extend(std::iter::repeat_n(' ', next - col - 1));
+                        col = next;
+                    }
+                    _ => {
+                        dots.push(' ');
+                        col += 1;
+                    }
+                }
+            }
         }
-        None => editor.into(),
+        layers.push(
+            container(
+                text(dots)
+                    .font(props.font)
+                    .size(props.size)
+                    .line_height(LineHeight::Absolute(Pixels(lh)))
+                    .color(color)
+                    .wrapping(Wrapping::None),
+            )
+            .padding(Padding {
+                top: PAD_Y,
+                bottom: PAD_Y,
+                left: PAD_LEFT,
+                right: PAD_RIGHT,
+            })
+            .into(),
+        );
+    }
+
+    // End-of-line annotations (diagnostics, code lens), placed after the last glyph.
+    if !props.annotations.is_empty() {
+        let fallback = props
+            .gutter_color
+            .unwrap_or(Color::from_rgb8(0x6b, 0x72, 0x80));
+        let mut measure = state.measure.borrow_mut();
+        for (line, label, color) in &props.annotations {
+            let index = line.saturating_sub(1);
+            if *line == 0 || index >= line_count || label.is_empty() {
+                continue;
+            }
+            let content = state
+                .content
+                .line(index)
+                .map(|l| l.text.into_owned())
+                .unwrap_or_default();
+            let rows = starts[index + 1] - starts[index];
+            let (x, y) = match wrap_width {
+                // A wrapped line puts its note on its last row, right-aligned.
+                Some(width) if rows > 1 => (
+                    PAD_LEFT + width - measure.width(label, props.font, props.size * 0.9, lh),
+                    starts[index + 1] - 1,
+                ),
+                _ => (
+                    PAD_LEFT
+                        + measure.width(&content, props.font, props.size, lh)
+                        + props.size * 2.0,
+                    starts[index],
+                ),
+            };
+            layers.push(
+                widget::pin(
+                    text(label.clone())
+                        .font(props.font)
+                        .size(props.size * 0.9)
+                        .line_height(LineHeight::Absolute(Pixels(lh)))
+                        .color(color.unwrap_or(fallback))
+                        .wrapping(Wrapping::None),
+                )
+                .x(x)
+                .y(PAD_Y + y as f32 * lh)
+                .into(),
+            );
+        }
+    }
+
+    let code: Element<'a, Message> = if layers.len() == 1 {
+        layers.pop().unwrap()
+    } else {
+        widget::Stack::with_children(layers).into()
     };
 
     let body: Element<'_, Message> = if props.gutter {
@@ -613,8 +812,13 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         }
     };
     let scroller_color = props.scrollbar_color;
-    widget::Scrollable::with_direction(Probe::new(body, &state.viewport), direction)
-        .id(scroll_id(&props.id))
+    let mut scroller =
+        widget::Scrollable::with_direction(Probe::new(body, &state.viewport), direction)
+            .id(scroll_id(&props.id));
+    if let Some(cb) = props.on_scroll.clone() {
+        scroller = scroller.on_scroll(move |viewport| Message::Scrolled(cb.clone(), viewport));
+    }
+    scroller
         .style(move |theme: &Theme, status| {
             let mut out = scrollable::default(theme, status);
             let color = scroller_color.unwrap_or(with_alpha(

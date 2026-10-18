@@ -74,6 +74,13 @@ pub enum Message {
         select: bool,
         on_cursor: Option<PyMsg>,
     },
+    EditorIndent {
+        id: Arc<str>,
+        key: crate::editor::IndentKey,
+        size: usize,
+        on_change: Option<PyMsg>,
+        on_cursor: Option<PyMsg>,
+    },
     Scrolled(PyMsg, scrollable::Viewport),
     Key(String),
     /// A message produced inside the given window.
@@ -629,6 +636,38 @@ fn call_hook<'py>(
     )
 }
 
+/// Reports an editor change to Python (`on_change(text)`, then `on_cursor(line, column)`).
+fn editor_outcome(
+    py: Python<'_>,
+    state: &mut State,
+    target: &Bound<'_, PyAny>,
+    outcome: crate::editor::Outcome,
+    on_change: Option<PyMsg>,
+    on_cursor: Option<PyMsg>,
+) -> Task<Message> {
+    let mut result = Ok(py.None().into_bound(py));
+    if outcome.edited
+        && let Some(cb) = on_change
+    {
+        result = callback(target, cb.0.bind(py), (outcome.text.clone(),));
+    }
+    if outcome.cursor_moved
+        && let Some(cb) = on_cursor
+        && result.is_ok()
+    {
+        let (line, column) = outcome.cursor;
+        result = callback(target, cb.0.bind(py), (line + 1, column + 1));
+    }
+    let scroll = outcome.scroll;
+    match result {
+        Ok(value) => Task::batch([scroll, command_task(py, state, &value)]),
+        Err(err) => {
+            err.print(py);
+            scroll
+        }
+    }
+}
+
 fn update(state: &mut State, message: Message) -> Task<Message> {
     state.caches.prune();
     if let Message::Windowed(id, inner) = message {
@@ -675,27 +714,19 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 let Some(outcome) = state.caches.perform_editor(&id, action) else {
                     return Task::none();
                 };
-                let mut result = Ok(py.None().into_bound(py));
-                if outcome.edited
-                    && let Some(cb) = on_change
-                {
-                    result = callback(&target, cb.0.bind(py), (outcome.text.clone(),));
-                }
-                if outcome.cursor_moved
-                    && let Some(cb) = on_cursor
-                    && result.is_ok()
-                {
-                    let (line, column) = outcome.cursor;
-                    result = callback(&target, cb.0.bind(py), (line + 1, column + 1));
-                }
-                let scroll = outcome.scroll;
-                return match result {
-                    Ok(value) => Task::batch([scroll, command_task(py, state, &value)]),
-                    Err(err) => {
-                        err.print(py);
-                        scroll
-                    }
+                return editor_outcome(py, state, &target, outcome, on_change, on_cursor);
+            }
+            Message::EditorIndent {
+                id,
+                key,
+                size,
+                on_change,
+                on_cursor,
+            } => {
+                let Some(outcome) = state.caches.indent_editor(&id, key, size) else {
+                    return Task::none();
                 };
+                return editor_outcome(py, state, &target, outcome, on_change, on_cursor);
             }
             Message::EditorPage {
                 id,

@@ -5,6 +5,7 @@
 
 import os
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -92,7 +93,7 @@ def hot_reload_shots(scale):
 def designer_shots(scale):
     """The visual designer and the forms it makes."""
     login = HERE / "designer" / "login.pzform"
-    app = designer.Designer(login)
+    app = designer.Designer(login, language_servers=False)
     app.doc.select("sign_in")
     app._selection_changed()
     app.screenshot(OUT / "designer.png", size=(1440, 900), scale=scale)
@@ -172,6 +173,66 @@ def project_shot(scale):
         os.chdir(cwd)  # opening a project makes its folder the current one
 
 
+def _wait(predicate, timeout=20.0):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end and not predicate():
+        time.sleep(0.05)
+
+
+def code_editor_shots(scale):
+    """The designer's code editor: completion with docs, diagnostics and code lens, settings.
+
+    Uses the real ty and ruff servers (``uv add --dev ty ruff``), like the designer does.
+    """
+    login = HERE / "designer" / "login.pzform"
+    app = designer.Designer(login)
+    app.assist.settings = designer.EditorSettings(show_whitespace=False)
+    app.doc.code = "import re\n\n" + app.doc.code
+    app.open_default_event("sign_in")
+    intel = app.assist.intel
+    _wait(lambda: all(s.ready for s in intel.servers.values()))
+
+    def type_code(buffer):
+        lines = buffer.split("\n")
+        app.set_code_buffer(buffer[:-1])
+        app.set_code_cursor(len(lines), len(lines[-1]))
+        app.set_code_buffer(buffer)
+        app.set_code_cursor(len(lines), len(lines[-1]) + 1)
+
+    head = (
+        'def sign_in_click(form, event):\n'
+        '    """Checks the address and starts signing in."""\n'
+        '    email = form.email.text.strip()\n'
+    )
+    type_code(head + "    if not re.f")
+    _wait(lambda: app.assist.completion is not None and not app.assist.completion.loading)
+    app.screenshot(OUT / "designer-completion.png", size=(1440, 900), scale=scale)
+
+    app.assist.close_completion()
+    type_code(head + "    form.")
+    app.screenshot(OUT / "designer-completion-form.png", size=(1440, 900), scale=scale)
+
+    app.assist.close_completion()
+    buffer = head + (
+        '    if not re.fullmatch(r"[^@]+@[^@]+", email):\n'
+        '        form.status.text = "Enter a valid email address."\n'
+        '        return form.email.focus()\n'
+        '    form.status.text = f"Welcome, {emial}"\n'
+        '    form.sign_in.enabled = False\n'
+        '    form.ticker.running = True\n'
+    )
+    app.set_code_buffer(buffer)
+    _wait(lambda: any("emial" in d.message for d in app.assist.diagnostics()))
+    intel.refresh_lenses(app.doc.form)
+    _wait(lambda: all(lens.parts and "reference" in lens.parts[0] for lens in intel.lenses), 5)
+    app.screenshot(OUT / "designer-diagnostics.png", size=(1440, 900), scale=scale)
+
+    app.assist.settings = designer.EditorSettings(show_whitespace=True)
+    app.open_editor_settings()
+    app.screenshot(OUT / "designer-editor-settings.png", size=(1440, 900), scale=scale)
+    app.assist.shutdown()
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     scale = 1.5
@@ -201,6 +262,7 @@ def main():
     hot_reload_shots(scale)
     designer_shots(1.0)
     project_shot(1.0)
+    code_editor_shots(1.0)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 

@@ -68,6 +68,16 @@ impl Caches {
         Some(editor.perform(id, action))
     }
 
+    pub fn indent_editor(
+        &mut self,
+        id: &str,
+        key: crate::editor::IndentKey,
+        size: usize,
+    ) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.indent(id, key, size))
+    }
+
     pub fn page_editor(&mut self, id: &str, down: bool, select: bool) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
         Some(editor.page(id, down, select))

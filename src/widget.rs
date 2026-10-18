@@ -137,6 +137,15 @@ pub struct EditorProps {
     pub scrollbar_color: Option<Color>,
     pub on_change: Option<PyMsg>,
     pub on_cursor: Option<PyMsg>,
+    /// End-of-line virtual text (1-based line, text, color): diagnostics, code lens.
+    pub annotations: Vec<(usize, String, Option<Color>)>,
+    /// Draw spaces as `·` and tabs as `→` in this color.
+    pub whitespace: Option<Color>,
+    /// Tab inserts spaces up to the next multiple of `tab_size`; Enter keeps the indentation.
+    pub tab_size: Option<usize>,
+    /// Keys the editor ignores (handled by the app's `on_key` instead), e.g. `"up"`, `"enter"`.
+    pub capture_keys: Vec<String>,
+    pub on_scroll: Option<PyMsg>,
 }
 
 pub enum Kind {
@@ -1181,7 +1190,8 @@ pub fn progress_bar(
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
     placeholder=None, placeholder_color=None, gutter=true, gutter_color=None,
     gutter_active_color=None, gutter_width=None, markers=None, wrap=false, on_change=None,
-    on_cursor=None, active_line=None, scrollbar_color=None))]
+    on_cursor=None, active_line=None, scrollbar_color=None, annotations=None, whitespace=None,
+    tab_size=None, capture_keys=None, on_scroll=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1210,6 +1220,11 @@ pub fn code_editor(
     on_cursor: Any<'_>,
     active_line: Any<'_>,
     scrollbar_color: Any<'_>,
+    annotations: Option<Bound<'_, PyDict>>,
+    whitespace: Any<'_>,
+    tab_size: Option<usize>,
+    capture_keys: Option<Vec<String>>,
+    on_scroll: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     // syntax: {"keyword": "#b477cf", "comment": ("#5d636f", "italic"), ...}
     let mut rules = Vec::new();
@@ -1232,6 +1247,20 @@ pub fn code_editor(
     if let Some(markers) = markers {
         for (line, value) in markers.iter() {
             marker_list.push((line.extract::<usize>()?, style::color(&value)?));
+        }
+    }
+    // annotations: {3: "2 references", 7: ("undefined name", "#e06c75")}
+    let mut annotation_list = Vec::new();
+    if let Some(annotations) = annotations {
+        for (line, value) in annotations.iter() {
+            let (label, color) = match value.cast::<PyTuple>() {
+                Ok(t) if t.len() == 2 => (
+                    t.get_item(0)?.extract::<String>()?,
+                    style::opt_color(&Some(t.get_item(1)?))?,
+                ),
+                _ => (value.extract::<String>()?, None),
+            };
+            annotation_list.push((line.extract::<usize>()?, label, color));
         }
     }
     let font = style::font(Some(font.unwrap_or("mono")), &None, false)?.unwrap_or(Font::MONOSPACE);
@@ -1259,6 +1288,11 @@ pub fn code_editor(
             wrap,
             active_line: style::opt_color(&active_line)?,
             scrollbar_color: style::opt_color(&scrollbar_color)?,
+            annotations: annotation_list,
+            whitespace: style::opt_color(&whitespace)?,
+            tab_size: tab_size.filter(|n| *n > 0),
+            capture_keys: capture_keys.unwrap_or_default(),
+            on_scroll: PyMsg::maybe(&on_scroll),
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),

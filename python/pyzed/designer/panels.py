@@ -1,4 +1,4 @@
-"""The designer's docks: toolbox, outline, property grid, events list and event code editor.
+"""The designer's docks: toolbox, outline, property grid and events list (the code editor is in ``code_panel``).
 
 Each function is a view of a ``Designer``: it reads its state and wires widget callbacks
 to its methods, so all behavior stays in ``Designer``/``Document``.
@@ -323,24 +323,3 @@ def right_dock(d: "Designer", t: Theme) -> Any:
 
 
 # -- code ------------------------------------------------------------------------
-
-
-def code_panel(d: "Designer", t: Theme) -> Any:
-    assert d.editing is not None
-    handler, text = d.editing
-    whole = handler == "*"
-    path = d.doc.code_path.name if d.doc.code_path else f"{d.doc.form.name}.py"
-    title = path if whole else f"{path} › {handler}()"
-    header = ui.panel_header(title, icon="code", actions=[
-        ui.button("Whole file" if not whole else "This handler", d.toggle_whole_file, variant="ghost", size="sm",
-                  theme=t),
-        ui.button("Apply", d.apply_code, icon="check", variant="tinted", size="sm", theme=t),
-        ui.icon_button("x", d.close_code, size="sm", tooltip="Close", theme=t),
-    ], theme=t)
-    error = None
-    if d.code_error:
-        error = _core.container(ui.label(d.code_error, size="sm", color="error", mono=True, theme=t),
-                                padding=(4, 12), width="fill", bg=alpha(t.error, 0.1))
-    editor = ui.editor(f"code:{handler}:{d.code_revision}", text, language="py", on_change=d.set_code_buffer,
-                       theme=t)
-    return _core.column([header, error, editor], width="fill", height="fill")

@@ -32,6 +32,7 @@ from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
 from .runtime import Event, FormApp, FormWindow, open_form, run, theme_for
+from .settings import EditorSettings
 
 
 def design(path=None, *, theme=None):
@@ -56,6 +57,7 @@ __all__ = [
     "Control",
     "Designer",
     "Document",
+    "EditorSettings",
     "Event",
     "Form",
     "FormApp",

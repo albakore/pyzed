@@ -58,6 +58,7 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 | Ctrl+S, Ctrl+O, Ctrl+N | Save, open, new |
 | F5, Shift+F5 | Run the form, close the running form |
 | F7 | Edit the whole code file |
+| Ctrl+Space | Open the completion list (in the code editor) |
 
 Right-click a control for a context menu with the same actions.
 
@@ -162,6 +163,106 @@ Every visible control has `mouse_enter`, `mouse_leave` and `right_click`. On top
 | Timer (invisible at run time) | `tick` |
 | Form | `load`, `close` (return `False` to keep it open), `key`, `resize` |
 
+## Code editor
+
+The code panel is a Python editor backed by two language servers from Astral: **ty** (types, completion,
+references) and **ruff** (linting). They run in the form's own project, so completion knows your dependencies.
+
+![Completing a function of the re module, with its signature and docstring](../../../../screenshots/designer-completion.png)
+
+### Completion
+
+- The list opens while you type a name or after a `.`, and **Ctrl+Space** opens it anywhere. **Up**/**Down**
+  move, **Enter** or **Tab** insert, **Escape** closes it.
+- Each entry has an icon for its kind and a pane with its signature and documentation (the docstring):
+
+  | Icon color | Kind |
+  | --- | --- |
+  | Purple | Functions and methods |
+  | Yellow | Classes, enums, type parameters |
+  | Blue | Variables, attributes and properties |
+  | Cyan | Constants |
+  | Red | Modules |
+  | Accent | Controls of the form |
+
+  Private names (`_cache`) are dimmed, carry a lock and are listed after public ones; dunders (`__init__`) come last.
+- `form.` lists the controls of the form, `form.email.` the properties of that text box and `event.` the event's
+  fields: the designer completes them itself, since a handler's `form` has no type the servers could read.
+- Picking a name that is not imported yet (an *auto-import* entry) also adds its `import` at the top of the file.
+
+![form. completes the form's own controls](../../../../screenshots/designer-completion-form.png)
+
+### Your project and its dependencies
+
+The servers start in the folder of the nearest `pyproject.toml` above the form (or `uv.lock`, `setup.py`,
+`.git`) and use its `.venv`, which is where `uv sync` installs your dependencies (`$VIRTUAL_ENV` otherwise). The
+form's own folder and `src/` are added as import roots, so a UI kept in its own folder still resolves both:
+
+```
+myapp/
+├── pyproject.toml      ← uv add httpx
+├── .venv/              ← uv sync
+├── src/myapp/
+└── ui/
+    ├── login.pzform
+    ├── login.py        ← import httpx / from helpers import greet / from myapp import api
+    └── helpers.py
+```
+
+Install the servers in the project with `uv add --dev ty ruff`, or next to the designer with
+`pip install "pyzed-ui[designer]"`. The designer looks in the project's `.venv` first, then in its own environment,
+then on `PATH`. Ruff reads its rules from `[tool.ruff]` in `pyproject.toml`.
+
+```mermaid
+sequenceDiagram
+    participant E as Code editor
+    participant A as CodeAssist
+    participant I as CodeIntel
+    participant T as ty server
+    participant R as ruff server
+    E->>A: on_change(text), on_cursor(line, col)
+    A->>I: update(module, handler, text)
+    I->>T: didChange (whole module, handler swapped in)
+    I->>R: didChange
+    T-->>I: publishDiagnostics
+    R-->>I: publishDiagnostics
+    A->>I: complete(line, col)
+    I->>T: textDocument/completion
+    T-->>A: items (via pyzed.post, on the UI thread)
+    A->>E: popup, inline errors, code lens
+```
+
+The editor shows one handler, but the servers always see the whole module with that handler swapped in, so imports
+and helpers at the top of the file are known; positions are translated between the two.
+
+### Diagnostics and code lens
+
+![Inline errors, the problems list and code lens](../../../../screenshots/designer-diagnostics.png)
+
+- The first problem of a line is shown at its end (error lens), and every problem is listed under the editor;
+  click one to jump to it. The header counts errors and warnings.
+- **Code lens** at the end of each `def` and `class` line shows how many references it has (from ty), how many
+  classes implement it, and which events call it (`on sign_in.click`).
+
+### Editor settings
+
+The gear button in the code panel (or the server dots in the status bar) opens the editor settings. They are saved
+per user in `designer.json` inside the Pyzed config folder (`%APPDATA%\pyzed`, `~/Library/Application Support/pyzed`
+or `~/.config/pyzed`).
+
+![Editor settings with the language servers' status](../../../../screenshots/designer-editor-settings.png)
+
+| Setting | What it does |
+| --- | --- |
+| Language servers | Turns ty and ruff on or off, shows whether each is ready (and its version), the project root and the Python in use. **Restart servers** after `uv sync`. |
+| Theme, font size | The editor can use a different theme from the designer. |
+| Line numbers, highlight current line, wrap | Gutter and layout. |
+| Show whitespace | Draws spaces as `·` and tabs as `→`. |
+| Tab size | Tab inserts spaces, Enter keeps the indentation (one level more after `:`), Backspace removes a level. |
+| Autocomplete while typing | Off means the list only opens with Ctrl+Space. |
+| Format with ruff on Apply | Runs `ruff format` on the code when you apply it. |
+| Code lens, inline diagnostics | Show or hide the notes at the end of lines. |
+
 ## Components
 
 Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,
@@ -234,3 +335,7 @@ classDiagram
 - `project_panel.py`: the Project tab (uv projects, dependencies, ruff, ty and git; see [Projects with uv](/pyzed/guides/projects/)).
 - `surface.py` and `panels.py`: the views; `app.py`: the `Designer` app wiring clicks and keys to the document.
 - `runtime.py`: `FormApp` and `FormWindow`, which draw a form and call its handlers.
+- `lsp.py`: a small JSON-RPC client for language servers and the detection of the project and its `.venv`.
+- `intellisense.py`: `CodeIntel`, which keeps ty and ruff in sync with the open handler, and the completion,
+  diagnostics and code lens logic (no UI).
+- `code_panel.py`: the code editor's view and `CodeAssist`, its state; `settings.py`: the editor settings.
