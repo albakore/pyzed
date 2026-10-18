@@ -22,11 +22,13 @@ from ..icons import icon as _icon
 from ..theme import themes
 from . import code as _code
 from . import components as _components
-from . import geometry, panels, surface
+from . import geometry, panels, project_panel, surface
 from .components import Prop
 from .document import Document
 from .model import SUFFIX
+from .project_panel import ProjectController
 from .runtime import FormWindow
+from ..project import Project
 
 Rect = Tuple[float, float, float, float]
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build"}
@@ -94,7 +96,16 @@ class Designer(App):
         self.pending: Optional[Callable[[], Any]] = None
         self.toasts: List[Toast] = []
         self.preview: Optional[FormWindow] = None
+        # the uv project the form belongs to (Project tab)
+        self.left_tab = "design"
+        self.projects = ProjectController(self)
+        found = Project.find(path or Path.cwd())
+        if found is not None and found.is_pyzed:
+            self.projects.attach(found)
         self.title = self.window_title
+
+    def on_start(self) -> Any:
+        return self.projects.load_tools()
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
@@ -114,7 +125,10 @@ class Designer(App):
             self.toasts.remove(toast)
 
     def subscriptions(self):
-        return [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
+        subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
+        if self.projects.busy:  # keeps the spinner of a running uv command moving
+            subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
+        return subs
 
     # -- selection ------------------------------------------------------------
     def _selection_changed(self) -> None:
@@ -403,6 +417,9 @@ class Designer(App):
         return flip
 
     # -- docks ------------------------------------------------------------------
+    def set_left_tab(self, tab: str) -> None:
+        self.left_tab = tab
+
     def set_right_tab(self, tab: str) -> None:
         self.right_tab = tab
 
@@ -584,6 +601,11 @@ class Designer(App):
         if not self._flush_code():
             self.notify("Fix the code before running", self.code_error, kind="error", seconds=4)
             return None
+        if self.projects.runs_outside and self.doc.path is not None:
+            # The designer does not have the project's dependencies: run it with `uv run`.
+            self.save()
+            self.projects.run_form(Path(self.doc.path))
+            return None
         try:
             handlers = self._compile_handlers()
         except Exception as err:  # noqa: BLE001 - show any import-time error to the user
@@ -606,6 +628,7 @@ class Designer(App):
         return _code.handlers(module)
 
     def stop_form(self) -> Any:
+        self.projects.stop()
         if self.preview is not None and self.preview.is_open:
             return self.preview.close()
         return None
@@ -709,7 +732,8 @@ class Designer(App):
         doc = self.doc
         start = [
             _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 8)),
-            ui.title_button("Pyzed Designer"),
+            ui.title_button(self.projects.project.name, lambda: self.set_left_tab("project"), icon="package")
+            if self.projects.project else ui.title_button("Pyzed Designer", lambda: self.set_left_tab("project")),
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
@@ -804,6 +828,8 @@ class Designer(App):
         return ui.status_bar(start, end, theme=t)
 
     def dialog_view(self, t) -> Any:
+        if self.dialog and self.dialog.startswith("project:"):
+            return project_panel.dialog(self, t)
         if self.dialog == "confirm":
             return ui.modal(
                 ui.label("The current form has unsaved changes. Discard them?", theme=t),

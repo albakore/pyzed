@@ -387,7 +387,14 @@ def load_handlers(path: Union[str, Path], form: Optional[Form] = None) -> Dict[s
 
 
 def open_form(path: Union[str, Path]) -> FormApp:
-    """Loads a ``.pzform`` and its handlers into a ``FormApp`` ready to ``run()`` or ``screenshot()``."""
+    """Loads a ``.pzform`` and its handlers into a ``FormApp`` ready to ``run()`` or ``screenshot()``.
+
+    If the form belongs to a project (see ``pyzed.project``), the project is activated first
+    so its handlers can import the backend and the packages of its ``.venv``.
+    """
+    from ..project import activate_for
+
+    activate_for(path)
     form = load(path)
     return FormApp(form, load_handlers(path, form), path)
 

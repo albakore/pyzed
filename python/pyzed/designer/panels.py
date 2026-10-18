@@ -129,11 +129,20 @@ def outline(d: "Designer", t: Theme) -> Any:
 
 
 def left_dock(d: "Designer", t: Theme) -> Any:
-    top = _core.column([ui.panel_header("Toolbox", icon="component", theme=t), toolbox(d, t)],
-                       width="fill", height="fill")
-    bottom = _core.column([ui.panel_header("Outline", icon="layers", theme=t), outline(d, t)],
-                          width="fill", height="fill")
-    return ui.split(top, bottom, vertical=True, ratio=d.left_ratio, on_resize=d.resize_left, min_size=120, theme=t)
+    from . import project_panel
+
+    tabs = [ui.Tab("design", "Design", icon="component"), ui.Tab("project", "Project", icon="package")]
+    if d.left_tab == "project":
+        body = project_panel.view(d, t)
+    else:
+        top = _core.column([ui.panel_header("Toolbox", icon="component", theme=t), toolbox(d, t)],
+                           width="fill", height="fill")
+        bottom = _core.column([ui.panel_header("Outline", icon="layers", theme=t), outline(d, t)],
+                              width="fill", height="fill")
+        body = ui.split(top, bottom, vertical=True, ratio=d.left_ratio, on_resize=d.resize_left, min_size=120,
+                        theme=t)
+    return _core.column([ui.tab_bar(tabs, d.left_tab, on_select=d.set_left_tab, theme=t), body],
+                        width="fill", height="fill")
 
 
 # -- properties ------------------------------------------------------------------

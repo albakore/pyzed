@@ -3,6 +3,7 @@
     python examples/screenshots.py
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -128,6 +129,49 @@ def designer_shots(scale):
     designer.FormApp(form).screenshot(OUT / "designer-components.png", scale=scale)
 
 
+PROJECT_TOML = """[project]
+name = "shop"
+version = "0.1.0"
+dependencies = ["httpx>=0.28", "pyzed-ui>=0.4"]
+
+[dependency-groups]
+dev = ["ruff>=0.17", "ty>=0.0.89"]
+
+[tool.pyzed]
+ui = "ui"
+main = "ui/main.pzform"
+"""
+
+
+def project_shot(scale):
+    """The designer's Project tab on a sample uv project (no uv or network needed)."""
+    import tempfile
+
+    from pyzed import project
+
+    cwd = Path.cwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp) / "shop"
+        (root / "ui").mkdir(parents=True)
+        (root / "pyproject.toml").write_text(PROJECT_TOML)
+        (root / "uv.lock").write_text("".join(
+            f'[[package]]\nname = "{n}"\nversion = "{v}"\n\n'
+            for n, v in [("httpx", "0.28.1"), ("pyzed-ui", "0.4.0"), ("ruff", "0.17.1"), ("ty", "0.0.89")]))
+        shop = project.Project.open(root)
+        project._write_main_form(shop, "Shop")
+        (root / "ui" / "cart.pzform").write_text((root / "ui" / "main.pzform").read_text())
+        app = designer.Designer(shop.main_form)
+        app.left_tab = "project"
+        p = app.projects
+        p.branch = "main"
+        p.tools = {n: project.Tool(n, n, v) for n, v in
+                   [("uv", "0.11.3"), ("git", "2.43.0"), ("ruff", "0.17.1"), ("ty", "0.0.89")]}
+        p.latest = {"ruff": "0.18.0"}
+        p.last = project.Result(["ruff", "check"], 0, "All checks passed!")
+        app.screenshot(OUT / "designer-project.png", size=(1440, 900), scale=scale)
+        os.chdir(cwd)  # opening a project makes its folder the current one
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     scale = 1.5
@@ -156,6 +200,7 @@ def main():
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
     designer_shots(1.0)
+    project_shot(1.0)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 
