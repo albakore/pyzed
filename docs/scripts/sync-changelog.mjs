@@ -38,7 +38,7 @@ body = body.replace(HEADING, (line, version) => {
 
 const intro = latestStable
 	? `La última versión estable es **${latestStable.version}**${latestStable.date ? ` (${latestStable.date})` : ''}.\n\n` +
-		'```bash\npip install --upgrade pyzed==' + latestStable.version + '\n```\n'
+		'```bash\npip install --upgrade pyzed-ui==' + latestStable.version + '\n```\n'
 	: 'Todavía no hay una versión estable publicada.\n';
 
 const page = `---
