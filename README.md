@@ -88,10 +88,18 @@ pz.run(Counter)
 ### Crear un proyecto nuevo
 
 ```bash
-pyzed new mi-app      # crea mi-app/main.py con barra de título, sidebar, estado y paleta de comandos
-cd mi-app && python main.py
-pyzed icons folder    # busca nombres de iconos
+pyzed new mi-app          # proyecto de uv: UI en ui/, backend en src/, ruff, ty y git
+cd mi-app
+uv run pyzed design       # edita el form principal
+uv run pyzed run          # ejecútalo
+pyzed add httpx           # dependencias con uv (add, remove, upgrade, sync, deps)
+uv run pyzed build        # ejecutable para esta plataforma (PyInstaller)
+pyzed icons folder        # busca nombres de iconos
 ```
+
+¿Ya usas `uv init`? Ejecuta `pyzed init` dentro del proyecto. `pyzed new mi-app --script` crea la app de un solo
+archivo de siempre. Más en [Proyectos con uv](https://albakore.github.io/pyzed/es/guides/projects/) y
+[Compilar y distribuir](https://albakore.github.io/pyzed/es/guides/packaging/).
 
 ### Hot reload
 

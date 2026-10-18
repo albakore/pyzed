@@ -1,22 +1,43 @@
 ---
 title: Create a project
-description: Generate a complete app with the Pyzed CLI.
+description: Generate a Pyzed app as a uv project, with the UI in its own folder and ruff, ty and git ready.
 ---
 
-Pyzed installs the `pyzed` command, which creates a project ready to run:
+Pyzed installs the `pyzed` command. With [uv](https://docs.astral.sh/uv/) installed, it creates a complete
+project:
 
 ```bash
 pyzed new my-app
 cd my-app
-python main.py
+uv run pyzed design     # open the main form in the visual designer
+uv run pyzed run        # run the app
 ```
 
-This generates:
+This generates a standard uv project:
 
 ```
 my-app/
-├── main.py            # app with title bar, sidebar, status bar and command palette
-└── requirements.txt   # pyzed
+├── pyproject.toml     # dependencies (pyzed-ui; ruff and ty for development) + [tool.pyzed]
+├── uv.lock
+├── .venv/
+├── .git/
+├── src/my_app/        # backend
+└── ui/                # forms (.pzform) and their event handlers (.py)
+```
+
+The UI folder keeps the interface apart from the rest of the code, and its handlers can import the backend, any
+module of the project and every dependency. Already have a project made with `uv init`? Run `pyzed init` inside
+it. See [Projects with uv](/pyzed/guides/projects/) for the layout, dependency commands and the designer's
+Project tab, and [Build and distribute](/pyzed/guides/packaging/) to package the app for each platform.
+
+## A single-file app
+
+To start from code instead of the designer, `--script` creates one `main.py` without uv:
+
+```bash
+pyzed new my-app --script
+cd my-app
+python main.py
 ```
 
 The template already includes:

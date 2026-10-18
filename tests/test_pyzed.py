@@ -106,7 +106,7 @@ def test_view_errors_render_an_error_screen(tmp_path):
 
 def test_cli_new(tmp_path, capsys):
     target = tmp_path / "my-app"
-    assert cli_main(["new", str(target)]) == 0
+    assert cli_main(["new", "--script", str(target)]) == 0
     source = (target / "main.py").read_text()
     assert 'title = "My App"' in source
     compile(source, "main.py", "exec")

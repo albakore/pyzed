@@ -232,5 +232,6 @@ classDiagram
 - `history.py`: deshacer/rehacer con instantáneas; las ediciones seguidas de un campo cuentan como un paso.
 - `code.py`: busca, añade, renombra y reemplaza handlers con `ast` sin tocar el resto del archivo.
 - `document.py`: todos los comandos de edición, sin UI, así que se puede testear entero.
+- `project_panel.py`: la pestaña Project (proyectos de uv, dependencias, ruff, ty y git; consulta [Proyectos con uv](/pyzed/es/guides/projects/)).
 - `surface.py` y `panels.py`: las vistas; `app.py`: la app `Designer` que traduce clics y teclas al documento.
 - `runtime.py`: `FormApp` y `FormWindow`, que dibujan un formulario y llaman a sus handlers.

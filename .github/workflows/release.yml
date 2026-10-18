@@ -2,8 +2,9 @@ name: Release
 
 # Runs when a vX.Y.Z tag is pushed (vX.Y.Z-rc.N, -beta.N, ... for
 # pre-releases). Builds and tests the wheels and the sdist, publishes them on
-# PyPI with Trusted Publishing, adds the version to CHANGELOG.md on main,
-# creates the GitHub Release with its notes and redeploys the docs site.
+# PyPI with Trusted Publishing, builds the standalone Pyzed Design app for
+# Linux, Windows and macOS, adds the version to CHANGELOG.md on main, creates
+# the GitHub Release with its notes and files and redeploys the docs site.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
@@ -110,6 +111,39 @@ jobs:
           name: dist-sdist
           path: dist/*.tar.gz
 
+  designer:
+    name: Pyzed Design ${{ matrix.name }}
+    needs: [meta, wheels]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, runner: ubuntu-latest }
+          - { name: macos-arm64, runner: macos-latest }
+          - { name: windows-x64, runner: windows-latest }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.meta.outputs.tag }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist-${{ matrix.name }}
+          path: wheels
+      - name: Build the standalone designer
+        shell: bash
+        run: |
+          python -m pip install pyinstaller uv
+          python -m pip install --no-index --find-links wheels pyzed-ui
+          python scripts/build_designer.py --out designer
+      - uses: actions/upload-artifact@v7
+        with:
+          name: designer-${{ matrix.name }}
+          path: designer/*.zip
+
   pypi:
     name: Publish on PyPI
     needs: [meta, wheels, sdist]
@@ -163,7 +197,9 @@ jobs:
 
   github-release:
     name: GitHub Release
-    needs: [meta, changelog]
+    needs: [meta, changelog, designer]
+    # A failed designer build must not hold back the release of the library.
+    if: ${{ !cancelled() && needs.changelog.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -182,6 +218,12 @@ jobs:
           pattern: dist-*
           merge-multiple: true
           path: dist
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: designer-*
+          merge-multiple: true
+          path: dist
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -191,6 +233,7 @@ jobs:
           python -m pip install git-cliff
           python scripts/changelog.py --notes "$TAG" > notes.md
           printf '\n\n```\npip install pyzed-ui==%s\n```\n' "${TAG#v}" >> notes.md
+          printf '\n**Pyzed Design** (the designer as a standalone app, uv included): download the `pyzed-design-*.zip` for your platform below.\n' >> notes.md
           flags=(--title "$TAG" --notes-file notes.md --verify-tag)
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease --latest=false); else flags+=(--latest); fi
           if gh release view "$TAG" >/dev/null 2>&1; then

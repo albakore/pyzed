@@ -231,5 +231,6 @@ classDiagram
 - `history.py`: undo/redo as snapshots; repeated edits of one field merge into one step.
 - `code.py`: finds, adds, renames and replaces handler functions with `ast` without touching the rest of the file.
 - `document.py`: every editing command, with no UI, so it is fully testable.
+- `project_panel.py`: the Project tab (uv projects, dependencies, ruff, ty and git; see [Projects with uv](/pyzed/guides/projects/)).
 - `surface.py` and `panels.py`: the views; `app.py`: the `Designer` app wiring clicks and keys to the document.
 - `runtime.py`: `FormApp` and `FormWindow`, which draw a form and call its handlers.
