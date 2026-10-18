@@ -22,9 +22,24 @@ release notes readable. By taking part you agree to follow the
 You need Python 3.9+, a stable Rust toolchain (`rustup`) and, on Linux, the
 usual X11/Wayland development libraries.
 
+With [uv](https://docs.astral.sh/uv/):
+
 ```sh
 git clone https://github.com/albakore/pyzed
 cd pyzed
+uv sync                              # creates .venv, builds the Rust core (release), installs pyzed editable
+uv run pytest tests
+uv run python examples/gallery.py
+```
+
+`uv sync` installs the `dev` group (maturin, pytest). Python changes under
+`python/pyzed/` are picked up directly, and after changing Rust code the next
+`uv run` or `uv sync` rebuilds the core (`[tool.uv] cache-keys` in
+`pyproject.toml`). Add `--extra designer` for ty and ruff.
+
+With pip:
+
+```sh
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install maturin pytest
@@ -33,15 +48,14 @@ pytest tests
 ```
 
 Use `--release`: debug builds of Iced are too slow to use the real window.
-After changing Rust code, run `maturin develop --release` again; Python-only
-changes under `python/pyzed/` are picked up directly.
+After changing Rust code, run `maturin develop --release` again.
 
 Before pushing, run the same checks as CI:
 
 ```sh
 cargo fmt --check
 cargo clippy -- -D warnings
-pytest tests
+uv run pytest tests                  # or: pytest tests
 ```
 
 ### Project layout

@@ -9,9 +9,21 @@ Pyzed necesita **Python 3.9 o superior**.
 
 ## Desde PyPI
 
-```bash
-pip install pyzed-ui
-```
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv add pyzed-ui          # en un proyecto de uv
+		uv run python main.py
+		```
+
+		Para empezar una app nueva como proyecto de uv, ve a [Crear un proyecto](/pyzed/es/getting-started/new-project/).
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pip install pyzed-ui
+		```
+	</TabItem>
+</Tabs>
 
 El paquete se llama `pyzed-ui` en PyPI (el nombre `pyzed` ya estaba ocupado), pero se importa como `pyzed`.
 Los wheels precompilados para Linux, macOS y Windows incluyen el motor de Rust, así que no
@@ -25,7 +37,8 @@ Si `pip install pyzed-ui` no encuentra un wheel para tu plataforma, instala desd
 ## Desde el código fuente
 
 ```bash
-pip install git+https://github.com/albakore/pyzed
+uv add git+https://github.com/albakore/pyzed        # uv
+pip install git+https://github.com/albakore/pyzed   # pip
 ```
 
 Esto compila la extensión de Rust, así que necesitas [Rust estable](https://rustup.rs) y las
@@ -51,34 +64,38 @@ dependencias de sistema de tu plataforma:
 	</TabItem>
 </Tabs>
 
-## Para desarrollar Pyzed
+## Desarrollar Pyzed
 
-<Steps>
+Para trabajar en Pyzed, clona el repositorio. Necesitas [Rust estable](https://rustup.rs) y las
+dependencias del sistema de arriba.
 
-1. Clona el repositorio y crea un entorno virtual:
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		git clone https://github.com/albakore/pyzed && cd pyzed
+		uv sync                          # crea .venv, compila el núcleo de Rust (release) e instala pyzed editable
+		uv run pytest tests
+		uv run python examples/gallery.py
+		```
 
-   ```bash
-   git clone https://github.com/albakore/pyzed && cd pyzed
-   python -m venv .venv && source .venv/bin/activate
-   ```
+		- `uv sync` también instala el grupo `dev` (maturin y pytest). La primera compilación tarda unos minutos.
+		- Los cambios en Python (`python/pyzed/`) se usan directamente.
+		- Después de cambiar código de Rust (`src/`), el siguiente `uv run` o `uv sync` recompila el núcleo solo.
+		- `uv sync --extra designer` añade ty y ruff para el editor de código del diseñador.
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		git clone https://github.com/albakore/pyzed && cd pyzed
+		python -m venv .venv && source .venv/bin/activate
+		pip install maturin pytest
+		maturin develop --release        # repítelo después de cambiar código de Rust
+		pytest tests
+		python examples/gallery.py
+		```
 
-2. Compila e instala en modo editable con [maturin](https://www.maturin.rs):
-
-   ```bash
-   pip install maturin pytest
-   maturin develop --release
-   ```
-
-   Usa `--release`: la build de depuración es mucho más lenta al usar la ventana.
-
-3. Ejecuta los tests y un ejemplo:
-
-   ```bash
-   pytest tests
-   python examples/gallery.py
-   ```
-
-</Steps>
+		Usa `--release`: la build de depuración es mucho más lenta al usar la ventana.
+	</TabItem>
+</Tabs>
 
 ## Linux y WSL
 

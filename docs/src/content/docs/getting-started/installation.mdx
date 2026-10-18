@@ -9,9 +9,21 @@ Pyzed requires **Python 3.9 or later**.
 
 ## From PyPI
 
-```bash
-pip install pyzed-ui
-```
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv add pyzed-ui          # in a uv project
+		uv run python main.py
+		```
+
+		To start a new app as a uv project, see [Create a project](/pyzed/getting-started/new-project/).
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pip install pyzed-ui
+		```
+	</TabItem>
+</Tabs>
 
 The package is called `pyzed-ui` on PyPI (the name `pyzed` was already taken), but it is imported as `pyzed`.
 The prebuilt wheels for Linux, macOS and Windows include the Rust engine, so you don't
@@ -25,7 +37,8 @@ If `pip install pyzed-ui` can't find a wheel for your platform, install from sou
 ## From source
 
 ```bash
-pip install git+https://github.com/albakore/pyzed
+uv add git+https://github.com/albakore/pyzed        # uv
+pip install git+https://github.com/albakore/pyzed   # pip
 ```
 
 This compiles the Rust extension, so you need [stable Rust](https://rustup.rs) and your
@@ -53,32 +66,36 @@ platform's system dependencies:
 
 ## Developing Pyzed
 
-<Steps>
+To work on Pyzed itself, clone the repository. You need [stable Rust](https://rustup.rs) and the
+system dependencies above.
 
-1. Clone the repository and create a virtual environment:
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		git clone https://github.com/albakore/pyzed && cd pyzed
+		uv sync                          # creates .venv, builds the Rust core (release) and installs pyzed editable
+		uv run pytest tests
+		uv run python examples/gallery.py
+		```
 
-   ```bash
-   git clone https://github.com/albakore/pyzed && cd pyzed
-   python -m venv .venv && source .venv/bin/activate
-   ```
+		- `uv sync` also installs the `dev` group (maturin and pytest). The first build takes a few minutes.
+		- Python changes under `python/pyzed/` are picked up directly.
+		- After changing Rust code (`src/`), the next `uv run` or `uv sync` rebuilds the core by itself.
+		- `uv sync --extra designer` adds ty and ruff for the designer's code editor.
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		git clone https://github.com/albakore/pyzed && cd pyzed
+		python -m venv .venv && source .venv/bin/activate
+		pip install maturin pytest
+		maturin develop --release        # run it again after changing Rust code
+		pytest tests
+		python examples/gallery.py
+		```
 
-2. Build and install in editable mode with [maturin](https://www.maturin.rs):
-
-   ```bash
-   pip install maturin pytest
-   maturin develop --release
-   ```
-
-   Use `--release`: the debug build is much slower when using the window.
-
-3. Run the tests and an example:
-
-   ```bash
-   pytest tests
-   python examples/gallery.py
-   ```
-
-</Steps>
+		Use `--release`: the debug build is much slower when using the window.
+	</TabItem>
+</Tabs>
 
 ## Linux and WSL
 

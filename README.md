@@ -33,17 +33,20 @@ Incluye componentes listos para usar inspirados en el editor [Zed](https://zed.d
 Por ahora se instala desde el código fuente. Necesitas Rust estable y Python 3.9 o superior.
 
 ```bash
-pip install git+https://github.com/albakore/pyzed
+uv add pyzed-ui             # en un proyecto de uv (o: pip install pyzed-ui)
 ```
 
-Para desarrollar:
+Para desarrollar Pyzed con [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/albakore/pyzed && cd pyzed
-python -m venv .venv && source .venv/bin/activate
-pip install maturin
-maturin develop --release   # usa --release: la build debug es mucho más lenta
+uv sync                     # crea .venv, compila el núcleo de Rust en release e instala pyzed editable
+uv run pytest tests
+uv run python examples/gallery.py
 ```
+
+Los cambios en Python se usan al momento, y tras tocar Rust el siguiente `uv run` recompila solo. Sin uv:
+`pip install maturin && maturin develop --release` dentro de un venv.
 
 ## Inicio rápido
 

@@ -24,6 +24,10 @@ classifiers = [
 # Language servers for the designer's code editor (completion, diagnostics, code lens).
 designer = ["ty", "ruff"]
 
+[dependency-groups]
+# Installed by `uv sync`: the build backend and the test runner.
+dev = ["maturin>=1.7,<2.0", "pytest"]
+
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"
 
@@ -34,3 +38,7 @@ pyzed = "pyzed.cli:main"
 python-source = "python"
 module-name = "pyzed._core"
 features = ["pyo3/extension-module"]
+
+[tool.uv]
+# Rebuild the Rust core on `uv sync`/`uv run` when it changes (Python files are picked up live).
+cache-keys = [{ file = "pyproject.toml" }, { file = "Cargo.toml" }, { file = "Cargo.lock" }, { file = "src/**/*.rs" }]
