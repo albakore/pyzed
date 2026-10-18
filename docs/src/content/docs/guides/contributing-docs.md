@@ -64,7 +64,7 @@ flowchart LR
 
 ## Regenerating the reference and images
 
-These need Pyzed installed (`maturin develop --release`):
+These need Pyzed installed (`uv sync`, or `maturin develop --release`):
 
 ```bash
 python docs/scripts/gen_api.py              # API reference, both languages
