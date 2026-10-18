@@ -1,26 +1,136 @@
 //! Turns the Python-built `Widget` tree into iced elements.
 
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use elsa::FrozenMap;
 use iced::advanced::text::Wrapping;
 use iced::widget::text::LineHeight;
 use iced::widget::{
-    self, Space, button, checkbox, column, container, mouse_area, progress_bar, row, rule,
-    scrollable, slider, svg, text, text_editor, text_input, toggler, tooltip,
+    self, Space, button, checkbox, column, container, image, markdown, mouse_area, progress_bar,
+    qr_code, row, rule, scrollable, slider, svg, text, text_editor, text_input, toggler, tooltip,
+    vertical_slider,
 };
-use iced::{Background, Border, Color, Element, Font, Length, Padding, Pixels, Theme};
+use iced::{Background, Border, Color, Element, Font, Length, Pixels, Task, Theme};
 use pyo3::prelude::*;
 
-use crate::app::{EditorState, Message};
-use crate::highlighter::{self, Highlighter};
+use crate::app::Message;
+use crate::editor::{self, EditorState, Outcome};
+use crate::extra::{self, CanvasCache};
+use crate::sticky::{Split, SplitStyle};
 use crate::style::ICONS;
-use crate::widget::{EditorProps, Kind, Widget};
+use crate::widget::{Kind, SvgSource, Widget};
 
-pub type Editors = FrozenMap<String, Box<EditorState>>;
+/// Everything that must outlive a single `view()` call: editor buffers, decoded images,
+/// parsed markdown, canvas geometry... Keyed by id or by content hash.
+#[derive(Default)]
+pub struct Caches {
+    editors: FrozenMap<String, Box<EditorState>>,
+    pending_cursors: RefCell<HashMap<String, text_editor::Position>>,
+    images: RefCell<HashMap<u64, image::Handle>>,
+    svgs: RefCell<HashMap<u64, svg::Handle>>,
+    canvases: FrozenMap<String, Box<CanvasCache>>,
+    markdown: FrozenMap<u64, Vec<markdown::Item>>,
+    qr: FrozenMap<u64, Box<qr_code::Data>>,
+}
 
+impl Caches {
+    pub fn set_editor_text(&mut self, id: &str, text: &str) {
+        match self.editors.as_mut().get_mut(id) {
+            Some(editor) => editor.reset(text),
+            None => {
+                self.editors
+                    .insert(id.to_owned(), Box::new(EditorState::new(text)));
+            }
+        }
+    }
+
+    pub fn set_editor_cursor(
+        &mut self,
+        id: &str,
+        position: text_editor::Position,
+    ) -> Task<Message> {
+        match self.editors.as_mut().get_mut(id) {
+            Some(editor) => editor.move_to(id, position),
+            None => {
+                self.pending_cursors
+                    .borrow_mut()
+                    .insert(id.to_owned(), position);
+                Task::none()
+            }
+        }
+    }
+
+    pub fn perform_editor(&mut self, id: &str, action: text_editor::Action) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.perform(id, action))
+    }
+
+    pub fn page_editor(&mut self, id: &str, down: bool, select: bool) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.page(id, down, select))
+    }
+
+    /// Drops content-keyed caches that grew large (they are rebuilt on demand).
+    pub fn prune(&mut self) {
+        if self.markdown.as_mut().len() > 32 {
+            self.markdown.as_mut().clear();
+        }
+        if self.qr.as_mut().len() > 64 {
+            self.qr.as_mut().clear();
+        }
+        if self.images.get_mut().len() > 512 {
+            self.images.get_mut().clear();
+        }
+        if self.svgs.get_mut().len() > 1024 {
+            self.svgs.get_mut().clear();
+        }
+        if self.canvases.as_mut().len() > 256 {
+            self.canvases.as_mut().clear();
+        }
+    }
+
+    fn editor(&self, id: &str, text: &str) -> &EditorState {
+        if let Some(state) = self.editors.get(id) {
+            return state;
+        }
+        let mut state = EditorState::new(text);
+        if let Some(position) = self.pending_cursors.borrow_mut().remove(id) {
+            state.content.move_to(text_editor::Cursor {
+                position,
+                selection: None,
+            });
+        }
+        self.editors.insert(id.to_owned(), Box::new(state))
+    }
+
+    fn svg(&self, source: &SvgSource) -> svg::Handle {
+        let key = match source {
+            SvgSource::Path(p) => crate::editor::hash_of(p.as_bytes()),
+            SvgSource::Bytes(b) => crate::editor::hash_of(b) ^ 0x51,
+        };
+        if let Some(h) = self.svgs.borrow().get(&key) {
+            return h.clone();
+        }
+        let handle = match source {
+            SvgSource::Path(p) => svg::Handle::from_path(p),
+            SvgSource::Bytes(b) => svg::Handle::from_memory(b.clone()),
+        };
+        self.svgs.borrow_mut().insert(key, handle.clone());
+        handle
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Ctx<'a> {
-    pub editors: &'a Editors,
-    pub pending_cursors:
-        &'a std::cell::RefCell<std::collections::HashMap<String, text_editor::Position>>,
+    caches: &'a Caches,
+}
+
+impl<'a> Ctx<'a> {
+    pub fn new(caches: &'a Caches) -> Self {
+        Self { caches }
+    }
 }
 
 fn with_alpha(color: Color, a: f32) -> Color {
@@ -30,7 +140,7 @@ fn with_alpha(color: Color, a: f32) -> Color {
     }
 }
 
-pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a, Message> {
+pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a, Message> {
     let node = node.bind(py).get();
 
     match &node.kind {
@@ -98,6 +208,7 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             layout,
             align,
             clip,
+            wrap,
         } => {
             let mut r = row(children.iter().map(|c| build(py, c, ctx)))
                 .spacing(*spacing)
@@ -114,7 +225,10 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             if let Some(a) = align {
                 r = r.align_y(*a);
             }
-            r.into()
+            match wrap {
+                Some(line_spacing) => r.wrap().vertical_spacing(*line_spacing).into(),
+                None => r.into(),
+            }
         }
         Kind::Container {
             child,
@@ -309,6 +423,7 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             id,
             anchor_bottom,
             style,
+            on_scroll,
         } => {
             let bar = scrollable::Scrollbar::new()
                 .width(style.width)
@@ -335,6 +450,9 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             }
             if let Some(id) = id {
                 s = s.id(id.clone());
+            }
+            if let Some(cb) = on_scroll.clone() {
+                s = s.on_scroll(move |viewport| Message::Scrolled(cb.clone(), viewport));
             }
             if *anchor_bottom {
                 s = s.anchor_bottom();
@@ -398,9 +516,27 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             on_double_click,
             on_enter,
             on_exit,
+            on_move,
+            on_scroll,
+            on_middle_press,
             cursor,
         } => {
             let mut m = mouse_area(build(py, child, ctx));
+            if let Some(cb) = on_move.clone() {
+                m = m.on_move(move |p| Message::Point(cb.clone(), p.x, p.y));
+            }
+            if let Some(cb) = on_scroll.clone() {
+                m = m.on_scroll(move |delta| {
+                    let (x, y) = match delta {
+                        iced::mouse::ScrollDelta::Lines { x, y } => (x, y),
+                        iced::mouse::ScrollDelta::Pixels { x, y } => (x / 60.0, y / 60.0),
+                    };
+                    Message::Point(cb.clone(), x, y)
+                });
+            }
+            if let Some(msg) = on_middle_press.clone() {
+                m = m.on_middle_press(Message::Py(msg));
+            }
             if let Some(msg) = on_press.clone() {
                 m = m.on_press(Message::Py(msg));
             }
@@ -567,20 +703,19 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             value,
             step,
             on_change,
+            on_release,
             width,
+            height,
+            vertical,
             style,
         } => {
             let cb = on_change.clone();
-            let mut s = slider(*min..=*max, *value, move |v| match &cb {
+            let on_change = move |v| match &cb {
                 Some(cb) => Message::Slide(cb.clone(), v),
                 None => Message::Noop,
-            })
-            .step(*step);
-            if let Some(w) = width {
-                s = s.width(*w);
-            }
+            };
             let st = style.clone();
-            s.style(move |theme: &Theme, status| {
+            let style = move |theme: &Theme, status| {
                 let mut out = slider::default(theme, status);
                 if let Some(a) = st.accent {
                     out.rail.backgrounds.0 = Background::Color(a);
@@ -597,8 +732,36 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
                     out.handle.border_width = 1.0;
                 }
                 out
-            })
-            .into()
+            };
+            if *vertical {
+                let mut s = vertical_slider(*min..=*max, *value, on_change)
+                    .step(*step)
+                    .style(style);
+                if let Some(m) = on_release.clone() {
+                    s = s.on_release(Message::Py(m));
+                }
+                if let Some(Length::Fixed(w)) = width {
+                    s = s.width(*w);
+                }
+                if let Some(h) = height {
+                    s = s.height(*h);
+                }
+                s.into()
+            } else {
+                let mut s = slider(*min..=*max, *value, on_change)
+                    .step(*step)
+                    .style(style);
+                if let Some(m) = on_release.clone() {
+                    s = s.on_release(Message::Py(m));
+                }
+                if let Some(w) = width {
+                    s = s.width(*w);
+                }
+                if let Some(Length::Fixed(h)) = height {
+                    s = s.height(*h);
+                }
+                s.into()
+            }
         }
         Kind::ProgressBar {
             min,
@@ -632,230 +795,151 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: &Ctx<'a>) -> Element<'a
             })
             .into()
         }
-        Kind::Editor(props) => editor(props, ctx),
+        Kind::Editor(props) => editor::view(ctx.caches.editor(&props.id, &props.text), props),
         Kind::Svg {
             source,
             width,
             height,
             color,
+            fit,
+            opacity,
+            rotation,
         } => {
-            let handle = match source {
-                crate::widget::SvgSource::Path(p) => svg::Handle::from_path(p),
-                crate::widget::SvgSource::Bytes(b) => svg::Handle::from_memory(b.clone()),
-            };
-            let mut s = svg(handle);
+            let mut s = svg(ctx.caches.svg(source))
+                .opacity(*opacity)
+                .rotation(iced::Radians(rotation.to_radians()));
             if let Some(w) = width {
                 s = s.width(*w);
             }
             if let Some(h) = height {
                 s = s.height(*h);
             }
+            if let Some(f) = fit {
+                s = s.content_fit(*f);
+            }
             if let Some(c) = *color {
                 s = s.style(move |_, _| svg::Style { color: Some(c) });
             }
             s.into()
         }
-    }
-}
-
-fn editor<'a>(props: &EditorProps, ctx: &Ctx<'a>) -> Element<'a, Message> {
-    let key: &str = &props.id;
-    let state: &'a EditorState = match ctx.editors.get(key) {
-        Some(state) => state,
-        None => {
-            let mut state = EditorState::new(&props.text);
-            if let Some(position) = ctx.pending_cursors.borrow_mut().remove(key) {
-                state.content.move_to(text_editor::Cursor {
-                    position,
-                    selection: None,
+        Kind::Image(props) => extra::render_image(props, props.source.handle(&ctx.caches.images)),
+        Kind::Canvas(props) => {
+            let cache = props
+                .cache_key
+                .as_ref()
+                .map(|(id, _)| match ctx.caches.canvases.get(id) {
+                    Some(cache) => cache,
+                    None => ctx.caches.canvases.insert(id.clone(), Box::default()),
                 });
-            }
-            ctx.editors.insert(key.to_owned(), Box::new(state))
+            extra::render_canvas(Arc::clone(props), cache)
         }
-    };
-
-    let lh = props.line_height;
-    let pad_y = 4.0;
-    let line_count = state.content.line_count().max(1);
-    let cursor_line = state.content.cursor().position.line;
-
-    let id = props.id.clone();
-    let on_change = props.on_change.clone();
-    let on_cursor = props.on_cursor.clone();
-
-    let (bg, fg, sel, placeholder_color) = (
-        props.background,
-        props.text_color,
-        props.selection_color,
-        props.placeholder_color,
-    );
-
-    let theme_id = highlighter::theme_id(&props.syntax);
-    let token = if highlighter::has_syntax(&props.language) {
-        props.language.clone()
-    } else {
-        "txt".into()
-    };
-
-    let mut editor = text_editor(&state.content)
-        .font(props.font)
-        .size(props.size)
-        .line_height(LineHeight::Absolute(Pixels(lh)))
-        .padding(Padding {
-            top: pad_y,
-            bottom: pad_y,
-            left: 4.0,
-            right: 12.0,
-        })
-        .wrapping(if props.wrap {
-            Wrapping::Word
-        } else {
-            Wrapping::None
-        })
-        .height(Length::Shrink)
-        .on_action(move |action| Message::Editor {
-            id: id.clone(),
-            action,
-            on_change: on_change.clone(),
-            on_cursor: on_cursor.clone(),
-        })
-        .style(move |theme: &Theme, status| {
-            let mut out = text_editor::default(theme, status);
-            out.background = Background::Color(Color::TRANSPARENT);
-            out.border = Border::default();
-            if let Some(c) = fg {
-                out.value = c;
-            }
-            if let Some(c) = sel {
-                out.selection = c;
-            }
-            if let Some(c) = placeholder_color {
-                out.placeholder = c;
-            }
-            out
-        });
-    if let Some(p) = &props.placeholder {
-        editor = editor.placeholder(p.clone());
-    }
-    let editor = editor.highlight_with::<Highlighter>(
-        highlighter::Settings {
-            token,
-            theme: theme_id,
-            font: props.font,
-        },
-        highlighter::Highlight::to_format,
-    );
-
-    let mut body = row![].height(Length::Shrink);
-
-    if props.gutter {
-        let digits = line_count.to_string().len().max(2) as f32;
-        let width = props
-            .gutter_width
-            .unwrap_or(digits * props.size * 0.62 + 28.0);
-        let dim = props
-            .gutter_color
-            .unwrap_or(Color::from_rgb8(0x4e, 0x5a, 0x5f));
-        let active = props
-            .gutter_active_color
-            .unwrap_or(Color::from_rgb8(0xd0, 0xd4, 0xda));
-        let numbers = |range: std::ops::Range<usize>, color: Color| {
-            let content = range
-                .map(|n| (n + 1).to_string())
-                .collect::<Vec<_>>()
-                .join("\n");
-            text(content)
-                .font(props.font)
-                .size(props.size)
-                .line_height(LineHeight::Absolute(Pixels(lh)))
-                .color(color)
-                .width(Length::Fill)
-                .align_x(iced::alignment::Horizontal::Right)
-                .wrapping(Wrapping::None)
-        };
-        let cursor_line = cursor_line.min(line_count - 1);
-        let mut gutter = column![].width(Length::Fixed(width)).padding(Padding {
-            top: pad_y,
-            bottom: pad_y,
-            left: 0.0,
-            right: 14.0,
-        });
-        if cursor_line > 0 {
-            gutter = gutter.push(numbers(0..cursor_line, dim));
+        Kind::RichText(props) => extra::render_rich(props),
+        Kind::Markdown(props) => {
+            let items = match ctx.caches.markdown.get(&props.key) {
+                Some(items) => items,
+                None => ctx
+                    .caches
+                    .markdown
+                    .insert(props.key, extra::parse_markdown(&props.source)),
+            };
+            extra::render_markdown(props, items)
         }
-        gutter = gutter.push(numbers(cursor_line..cursor_line + 1, active));
-        if cursor_line + 1 < line_count {
-            gutter = gutter.push(numbers(cursor_line + 1..line_count, dim));
-        }
-
-        // Git-style change markers drawn as thin bars on the left edge of the gutter.
-        let mut markers = props.markers.clone();
-        markers.sort_by_key(|(line, _)| *line);
-        let mut bars = column![].width(Length::Fixed(3.0)).padding(Padding {
-            top: pad_y,
-            ..Padding::ZERO
-        });
-        let mut next = 1usize;
-        for (line, color) in markers {
-            if line < next || line > line_count {
-                continue;
+        Kind::QrCode(props) => {
+            let data = match ctx.caches.qr.get(&props.key) {
+                Some(data) => Some(data),
+                None => qr_code::Data::new(&props.data)
+                    .ok()
+                    .map(|data| ctx.caches.qr.insert(props.key, Box::new(data))),
+            };
+            match data {
+                Some(data) => extra::render_qr(props, data),
+                None => text("QR data too long").into(),
             }
-            if line > next {
-                bars = bars.push(Space::new().height(Length::Fixed((line - next) as f32 * lh)));
-            }
-            bars = bars.push(
-                container(Space::new())
-                    .width(Length::Fixed(3.0))
-                    .height(Length::Fixed(lh))
-                    .style(move |_| container::Style {
-                        background: Some(Background::Color(color)),
-                        ..Default::default()
-                    }),
-            );
-            next = line + 1;
         }
-        body = body.push(bars).push(gutter);
-    }
-    body = body.push(editor);
-
-    let mut scroller = widget::Scrollable::with_direction(
-        body,
-        scrollable::Direction::Vertical(
-            scrollable::Scrollbar::new().width(8.0).scroller_width(8.0),
-        ),
-    )
-    .style(|theme: &Theme, status| {
-        let mut out = scrollable::default(theme, status);
-        out.vertical_rail.background = None;
-        out.vertical_rail.border = Border::default();
-        out.vertical_rail.scroller.background = Background::Color(with_alpha(
-            theme.extended_palette().background.strong.color,
-            0.6,
-        ));
-        out.vertical_rail.scroller.border = Border {
-            radius: 0.0.into(),
-            ..Border::default()
-        };
-        out
-    })
-    .width(props.layout.width.unwrap_or(Length::Fill))
-    .height(props.layout.height.unwrap_or(Length::Fill));
-    if let Some(p) = props.layout.padding {
-        scroller = scroller.height(props.layout.height.unwrap_or(Length::Fill));
-        return container(scroller)
-            .padding(p)
-            .style(move |_| container::Style {
-                background: bg.map(Background::Color),
-                ..Default::default()
+        Kind::PickList(props) => extra::render_pick_list(props),
+        Kind::Radio(props) => extra::render_radio(props),
+        Kind::Split(props) => {
+            let on_resize = props.on_resize.clone().map(|cb| {
+                Box::new(move |ratio: f32| Message::Slide(cb.clone(), ratio))
+                    as Box<dyn Fn(f32) -> Message + 'a>
+            });
+            let color = props.color.unwrap_or(Color::from_rgb8(0x46, 0x4b, 0x57));
+            Split::new(
+                build(py, &props.first, ctx),
+                build(py, &props.second, ctx),
+                props.vertical,
+                props.ratio,
+                props.min,
+                SplitStyle {
+                    color,
+                    hover_color: props.hover_color.unwrap_or(color),
+                    line: props.thickness,
+                    handle: props.handle,
+                },
+                on_resize,
+                (props.width, props.height),
+            )
+            .into()
+        }
+        Kind::Pin {
+            child,
+            x,
+            y,
+            width,
+            height,
+        } => widget::pin(build(py, child, ctx))
+            .x(*x)
+            .y(*y)
+            .width(*width)
+            .height(*height)
+            .into(),
+        Kind::Grid {
+            children,
+            columns,
+            max_width,
+            spacing,
+            height,
+            aspect_ratio,
+            width,
+        } => {
+            let mut g = widget::grid(children.iter().map(|c| build(py, c, ctx))).spacing(*spacing);
+            if let Some(n) = columns {
+                g = g.columns(*n);
+            }
+            if let Some(m) = max_width {
+                g = g.fluid(*m);
+            }
+            if let Some(w) = width {
+                g = g.width(*w);
+            }
+            if let Some(r) = aspect_ratio {
+                g = g.height(widget::grid::aspect_ratio(*r, 1.0));
+            } else if let Some(h) = height {
+                g = g.height(*h);
+            }
+            g.into()
+        }
+        Kind::Responsive(callback) => {
+            let callback = callback.clone();
+            widget::responsive(move |size| {
+                Python::attach(|py| {
+                    let result = callback
+                        .0
+                        .bind(py)
+                        .call1((size.width, size.height))
+                        .and_then(|w| crate::widget::child(&w));
+                    match result {
+                        Ok(node) => build(py, &node, ctx),
+                        Err(err) => {
+                            err.print(py);
+                            text(crate::app::format_error(py, &err))
+                                .color(Color::from_rgb8(0xd0, 0x72, 0x77))
+                                .into()
+                        }
+                    }
+                })
             })
-            .into();
+            .into()
+        }
     }
-    container(scroller)
-        .width(props.layout.width.unwrap_or(Length::Fill))
-        .height(props.layout.height.unwrap_or(Length::Fill))
-        .style(move |_| container::Style {
-            background: bg.map(Background::Color),
-            ..Default::default()
-        })
-        .into()
 }

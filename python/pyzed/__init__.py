@@ -15,27 +15,47 @@
             ], spacing=12, padding=24)
 
     pz.run(Counter)
+
+Layout and primitives live at the top level (``pz.column``, ``pz.text``, ``pz.canvas``...),
+ready-made Zed-style components in ``pz.ui`` and colors in ``pz.themes``.
 """
 
 from ._core import (
     Command,
+    Span,
+    Subscription,
     Widget,
     button,
+    canvas,
     checkbox,
     code_editor,
     column,
     container,
+    every,
+    grid,
     hover,
+    image,
+    image_viewer,
+    listen,
     load_font,
+    markdown,
     mouse_area,
     opaque,
+    pick_list,
+    pin,
     post,
     progress_bar,
+    qr_code,
+    radio,
+    responsive,
+    rich_text,
     row,
     rule,
     scrollable,
     slider,
     space,
+    span,
+    split,
     stack,
     svg,
     text,
@@ -43,12 +63,13 @@ from ._core import (
     toggler,
     tooltip,
 )
-from .app import App, run, screenshot
+from ._async import loop as asyncio_loop, spawn
+from .app import App, Window, run, screenshot
 from .icons import icon
-from .theme import Theme, themes
-from . import theme, icons, ui
+from .theme import AutoTheme, Theme, themes
+from . import draw, theme, icons, ui
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def hspace(width="fill"):
@@ -66,26 +87,50 @@ def center(content, **kwargs):
     return container(content, center=True, **kwargs)
 
 
+def vertical_slider(min, max, value, **kwargs):  # noqa: A002 - mirrors slider()
+    """A slider that moves up and down (``slider(..., vertical=True)``)."""
+    return slider(min, max, value, vertical=True, **kwargs)
+
+
 __all__ = [
     "App",
+    "AutoTheme",
     "Command",
+    "Span",
+    "Subscription",
     "Theme",
     "Widget",
+    "Window",
+    "asyncio_loop",
     "button",
+    "canvas",
     "center",
     "checkbox",
     "code_editor",
     "column",
     "container",
+    "draw",
+    "every",
+    "grid",
     "hover",
     "hspace",
     "icon",
     "icons",
+    "image",
+    "image_viewer",
+    "listen",
     "load_font",
+    "markdown",
     "mouse_area",
     "opaque",
+    "pick_list",
+    "pin",
     "post",
     "progress_bar",
+    "qr_code",
+    "radio",
+    "responsive",
+    "rich_text",
     "row",
     "rule",
     "run",
@@ -93,6 +138,9 @@ __all__ = [
     "scrollable",
     "slider",
     "space",
+    "span",
+    "spawn",
+    "split",
     "stack",
     "svg",
     "text",
@@ -102,5 +150,6 @@ __all__ = [
     "toggler",
     "tooltip",
     "ui",
+    "vertical_slider",
     "vspace",
 ]

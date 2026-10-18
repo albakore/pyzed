@@ -15,6 +15,7 @@ _EXT_TOKENS = {"py": "py", "rs": "rs", "js": "js", "ts": "ts", "tsx": "tsx", "js
 
 
 def language_token(path: str) -> str:
+    """The highlighter token for a file path, from its extension (``"main.rs"`` -> ``"rs"``)."""
     ext = path.rsplit(".", 1)[-1].lower() if "." in path else "txt"
     return _EXT_TOKENS.get(ext, ext)
 
@@ -32,6 +33,7 @@ def editor(
     line_height: Optional[float] = None,
     gutter: bool = True,
     wrap: bool = False,
+    active_line: bool = True,
     placeholder: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
@@ -43,6 +45,11 @@ def editor(
 
     ``markers`` maps 1-based line numbers to git statuses ("created", "modified", "deleted").
     ``on_change(text)`` and ``on_cursor(line, column)`` may return messages.
+
+    Like Zed, long lines scroll horizontally while the line numbers stay put; with
+    ``wrap=True`` they wrap at the editor's width instead, and the gutter numbers only the
+    first row of each wrapped line. ``active_line`` highlights the line with the cursor.
+    The view follows the cursor (arrows, PageUp/PageDown, ``Command.set_editor_cursor``).
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -66,6 +73,8 @@ def editor(
         wrap=wrap,
         on_change=on_change,
         on_cursor=on_cursor,
+        active_line=t.active_line if active_line else None,
+        scrollbar_color=t.scrollbar,
     )
 
 
