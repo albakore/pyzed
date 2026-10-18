@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Lint Rust
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+      - name: Build and install
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install maturin pytest
+          .venv/bin/maturin develop --release
+      - name: Run tests
+        run: .venv/bin/python -m pytest -q tests
+
+  wheels:
+    name: Wheel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist
+          manylinux: "2_28"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.os }}
+          path: dist/*.whl

@@ -1,0 +1,36 @@
+[package]
+name = "pyzed"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Fast, modern GUIs for Python powered by Iced"
+license = "MIT"
+repository = "https://github.com/albakore/pyzed"
+publish = false
+
+[lib]
+name = "_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+iced = { version = "0.14", default-features = false, features = [
+    "wgpu",
+    "tiny-skia",
+    "crisp",
+    "web-colors",
+    "thread-pool",
+    "x11",
+    "wayland",
+    "advanced",
+    "svg",
+] }
+iced_test = "0.14"
+pyo3 = { version = "0.27", features = ["extension-module", "abi3-py39"] }
+two-face = { version = "0.4", default-features = false, features = ["syntect-default-fancy"] }
+elsa = "1.11"
+png = "0.17"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true

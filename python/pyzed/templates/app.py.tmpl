@@ -1,0 +1,82 @@
+"""{name}: a Pyzed app. Run it with `python main.py`."""
+
+import pyzed as pz
+from pyzed import Command, ui
+
+
+class App(pz.App):
+    title = "{name}"
+    size = (1100, 720)
+
+    def __init__(self):
+        self.pages = ["Inbox", "Today", "Projects", "Archive"]
+        self.page = "Inbox"
+        self.note = ""
+        self.palette_open = False
+        self.query = ""
+
+    # Messages can be plain callables: buttons call them directly.
+    def go(self, page):
+        self.page = page
+
+    def toggle_theme(self):
+        self.theme = pz.themes.ONE_LIGHT if self.theme.is_dark else pz.themes.ONE_DARK
+
+    def on_key(self, combo):
+        if combo in ("ctrl-shift-p", "cmd-shift-p"):
+            self.palette_open, self.query = True, ""
+            return Command.focus("palette")
+        if combo == "escape":
+            self.palette_open = False
+
+    def run_command(self, action):
+        self.palette_open = False
+        action()
+
+    def view(self):
+        sidebar = pz.column(
+            [
+                ui.list_header("PAGES"),
+                *[
+                    ui.list_item(p, lambda p=p: self.go(p), icon="file-text", selected=p == self.page, inset=True)
+                    for p in self.pages
+                ],
+            ],
+            padding=6,
+        )
+        content = pz.container(
+            pz.column(
+                [
+                    ui.heading(self.page),
+                    ui.muted("Press Ctrl+Shift+P to open the command palette."),
+                    ui.input(self.note, lambda text: setattr(self, "note", text), placeholder="Write a note…"),
+                    pz.row([ui.button("Toggle theme", self.toggle_theme, icon="sun-moon"),
+                            ui.button("Save", lambda: None, variant="solid", keys="ctrl-s")], spacing=8),
+                ],
+                spacing=14,
+                max_width=640,
+            ),
+            padding=32,
+            width="fill",
+        )
+        layout = ui.workspace(
+            content,
+            title_bar=ui.title_bar([ui.title_button("{name}", chevron=True)], [ui.avatar("ME")]),
+            left=sidebar,
+            status_bar=ui.status_bar([ui.status_item(self.page, icon="file-text")],
+                                     [ui.status_item(self.theme.name, self.toggle_theme)]),
+        )
+        if self.palette_open:
+            commands = [
+                ui.PaletteItem("theme: toggle", lambda: self.run_command(self.toggle_theme)),
+                *[ui.PaletteItem(f"go to: {{p.lower()}}", lambda p=p: self.run_command(lambda: self.go(p)))
+                  for p in self.pages],
+            ]
+            palette = ui.command_palette(self.query, lambda q: setattr(self, "query", q), commands,
+                                         input_id="palette")
+            layout = ui.layer(layout, palette, on_dismiss=lambda: setattr(self, "palette_open", False))
+        return layout
+
+
+if __name__ == "__main__":
+    pz.run(App)
