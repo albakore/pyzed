@@ -71,6 +71,14 @@ def app(module, cls, setup=None, *args):
     return make
 
 
+def components_setup(app):
+    app.rating = 4
+    app.tags = ["python", "rust", "iced"]
+    app.note = (40, 60)
+    app.pinned = True
+    app.log = ["double_click", "drag_end", "drag +12, +4", "drag +20, +8", "drag_start", "focus"]
+
+
 def life_setup(app):
     random.seed(4)
     app.randomize()
@@ -83,6 +91,7 @@ SHOTS = {
     "tutorials/multi-window": (Windows, (820, 560)),
     "tutorials/game-of-life": (app("game_of_life", "Life", life_setup), None),
     "tutorials/styling": (app("styling", "Styling"), (1000, 400)),
+    "tutorials/components": (app("components", "Demo", components_setup), None),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

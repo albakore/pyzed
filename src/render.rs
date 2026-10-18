@@ -575,6 +575,11 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             s.into()
         }
         Kind::Opaque { child } => widget::opaque(build(py, child, ctx)),
+        Kind::Events {
+            child,
+            handlers,
+            cursor,
+        } => crate::events::EventArea::new(build(py, child, ctx), handlers.clone(), *cursor).into(),
         Kind::Hover { base, top } => widget::hover(build(py, base, ctx), build(py, top, ctx)),
         Kind::Tooltip {
             child,

@@ -80,6 +80,20 @@ platform's system dependencies:
 
 </Steps>
 
+## Linux and WSL
+
+Pyzed sets a few defaults before the first window opens:
+
+- **GPU driver warnings are silenced.** Mesa prints messages such as `libEGL warning: failed to
+  get driver name for fd -1` or `MESA: error: ZINK: failed to choose pdev` while the renderer
+  looks for a working backend. They are harmless, so Pyzed sets `EGL_LOG_LEVEL=fatal` and
+  `MESA_LOG=silent`. Set `PYZED_GPU_LOGS=1` to see them again.
+- **WSL uses X11.** The Wayland compositor of WSLg drops the connection when a window is
+  maximized or resized, which prints `Io error: Broken pipe (os error 32)`. Under WSL, Pyzed
+  uses X11 (through XWayland) instead. Set `PYZED_WAYLAND=1` to keep Wayland.
+
+Variables you set yourself (`EGL_LOG_LEVEL`, `MESA_LOG`, `WAYLAND_DISPLAY`...) are never changed.
+
 ## Verify the installation
 
 ```bash

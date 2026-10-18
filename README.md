@@ -182,6 +182,44 @@ tuplas `(r, g, b[, a])`.
 
 Todos leen sus colores del tema actual y aceptan `theme=` u otros parámetros para cambiarlos.
 
+## Eventos y componentes propios
+
+Cualquier widget tiene los eventos habituales de un editor gráfico, implementados una sola vez
+en Rust (no en cada componente):
+
+```python
+pz.container(nota, padding=12).on(
+    click=self.seleccionar,          # sin argumento: solo se llama
+    double_click=lambda e: ...,      # con uno: recibe un pz.Event (e.x, e.y, e.key...)
+    drag=self.mover,                 # e.dx, e.dy
+    key_down=self.atajo,             # cuando tiene el foco (tras un clic)
+)
+```
+
+Son 18: `click`, `double_click`, `right_click`, `middle_click`, `mouse_down`/`mouse_up`,
+`mouse_enter`/`mouse_leave`/`mouse_move`, `scroll`, `drag_start`/`drag`/`drag_end`,
+`focus`/`blur`, `key_down`/`key_up` y `resize`.
+
+Los componentes propios son clases, como en React: props anotados, estado que se conserva entre
+renders, `render()` y eventos propios con `self.emit(...)`. Aparecen solos en la biblioteca del
+diseñador.
+
+```python
+class Rating(pz.Component):
+    value: int = 0
+    events = {"change": "Se eligió una estrella"}
+
+    def render(self):
+        return pz.row([pz.text("★" if i <= self.value else "☆").on(click=lambda i=i: self.emit("change", i))
+                       for i in range(1, 6)])
+
+Rating(value=self.estrellas, on_change=lambda e: setattr(self, "estrellas", e.value))
+```
+
+<img src="docs/src/assets/tutorials/components.png" width="640" alt="Componentes y eventos">
+
+Ver [`examples/components.py`](examples/components.py) y las guías de eventos y componentes.
+
 ## Diseñador visual
 
 Un editor de formularios al estilo Visual Basic / Qt Designer, hecho con Pyzed: arrastras componentes a una
@@ -228,6 +266,7 @@ Cambiar `self.theme` en `update` cambia el estilo de toda la interfaz al momento
 | [`examples/mini_editor.py`](examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas (árbol, pestañas, editor, paleta). |
 | [`examples/gallery.py`](examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. |
 | [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor tipo Zed sobre una carpeta real: abrir, editar y guardar (`ctrl-s`), paleta (`ctrl-shift-p`), buscador (`ctrl-p`), docks (`ctrl-b`, `ctrl-j`, `ctrl-alt-b`) y temas. El panel de terminal muestra una salida de ejemplo; no ejecuta una shell. |
+| [`examples/components.py`](examples/components.py) | Componentes propios (puntuación, etiquetas) y eventos comunes: arrastrar, doble clic, foco y teclas. |
 | [`examples/hot_reload/`](examples/hot_reload) | Hot reload con dos módulos: ejecútalo con `pyzed dev examples/hot_reload/main.py` y edítalo. |
 | [`examples/tutorial/`](examples/tutorial) | Tutorial en cinco pasos, de una ventana vacía a una app de notas. |
 | [`examples/todos.py`](examples/todos.py) | Lista de tareas con edición, filtros y guardado (demo `todos` de Iced). |

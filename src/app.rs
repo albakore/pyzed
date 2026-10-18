@@ -60,6 +60,8 @@ pub enum Message {
     Slide(PyMsg, f32),
     Call(PyMsg, PyMsg),
     Point(PyMsg, f32, f32),
+    /// A common event (click, drag, focus...) from a widget wrapped with `.on(...)`.
+    Event(PyMsg, Box<crate::events::EventData>),
     Editor {
         id: Arc<str>,
         action: text_editor::Action,
@@ -582,6 +584,36 @@ fn callback<'py>(
     dispatch(target, &result)
 }
 
+/// Builds a `pyzed.Event` and hands it to the handler (see `pyzed.events._deliver`).
+fn deliver_event<'py>(
+    target: &Bound<'py, PyAny>,
+    handler: &Bound<'py, PyAny>,
+    data: &crate::events::EventData,
+) -> PyResult<Bound<'py, PyAny>> {
+    let py = target.py();
+    let kwargs = PyDict::new(py);
+    kwargs.set_item("x", data.x)?;
+    kwargs.set_item("y", data.y)?;
+    kwargs.set_item("button", data.button)?;
+    kwargs.set_item("dx", data.dx)?;
+    kwargs.set_item("dy", data.dy)?;
+    kwargs.set_item("width", data.width)?;
+    kwargs.set_item("height", data.height)?;
+    kwargs.set_item("key", data.key.as_deref())?;
+    kwargs.set_item("shift", data.modifiers.shift())?;
+    kwargs.set_item("ctrl", data.modifiers.control())?;
+    kwargs.set_item("alt", data.modifiers.alt())?;
+    kwargs.set_item("logo", data.modifiers.logo())?;
+    let result = py
+        .import("pyzed.events")?
+        .getattr("_deliver")?
+        .call((handler, data.kind.name()), Some(&kwargs))?;
+    if is_final(&result) {
+        return Ok(result);
+    }
+    dispatch(target, &result)
+}
+
 fn call_hook<'py>(
     target: &Bound<'py, PyAny>,
     name: &str,
@@ -622,6 +654,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::Slide(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Point(cb, x, y) => callback(&target, cb.0.bind(py), (x, y)),
             Message::Call(cb, value) => callback(&target, cb.0.bind(py), (value.0.bind(py),)),
+            Message::Event(cb, data) => deliver_event(&target, cb.0.bind(py), &data),
             Message::Key(combo) => {
                 let main = state.app.bind(py).clone();
                 match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -962,11 +995,9 @@ fn key_name(key: &Key) -> Option<String> {
     })
 }
 
-fn key_message(event: keyboard::Event) -> Option<Message> {
-    let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
-        return None;
-    };
-    let name = key_name(&key)?;
+/// A key press as a Zed-style combo such as `"ctrl-shift-p"` (`None` for lone modifiers).
+pub fn key_combo(key: &Key, modifiers: keyboard::Modifiers) -> Option<String> {
+    let name = key_name(key)?;
     let mut combo = String::new();
     if modifiers.control() {
         combo.push_str("ctrl-");
@@ -981,7 +1012,14 @@ fn key_message(event: keyboard::Event) -> Option<Message> {
         combo.push_str("cmd-");
     }
     combo.push_str(&name);
-    Some(Message::Key(combo))
+    Some(combo)
+}
+
+fn key_message(event: keyboard::Event) -> Option<Message> {
+    let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
+        return None;
+    };
+    key_combo(&key, modifiers).map(Message::Key)
 }
 
 fn key_event(

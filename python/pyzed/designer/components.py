@@ -469,3 +469,16 @@ for _component in (
               ("tick",), "Runs its tick event periodically. Invisible at run time.", visual=False),
 ):
     register(_component)
+
+
+# -- components made with pyzed.Component ------------------------------------
+# They join the toolbox as they are defined (see `Component.__init_subclass__`);
+# this picks up the ones defined before the designer was imported.
+def _register_user_components() -> None:
+    from ..component import registered
+
+    for cls in registered():
+        register(cls.designer_spec())
+
+
+_register_user_components()
