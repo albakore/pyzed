@@ -1,0 +1,88 @@
+---
+title: Instalación
+description: Cómo instalar Pyzed en Linux, macOS y Windows.
+---
+
+import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
+
+Pyzed necesita **Python 3.9 o superior**.
+
+## Desde PyPI
+
+```bash
+pip install pyzed-ui
+```
+
+El paquete se llama `pyzed-ui` en PyPI (el nombre `pyzed` ya estaba ocupado), pero se importa como `pyzed`.
+Los wheels precompilados para Linux, macOS y Windows incluyen el motor de Rust, así que no
+necesitas compilar nada.
+
+<Aside type="caution" title="Antes de la primera versión en PyPI">
+Si `pip install pyzed-ui` no encuentra un wheel para tu plataforma, instala desde el código fuente
+(abajo). Necesitarás Rust estable.
+</Aside>
+
+## Desde el código fuente
+
+```bash
+pip install git+https://github.com/albakore/pyzed
+```
+
+Esto compila la extensión de Rust, así que necesitas [Rust estable](https://rustup.rs) y las
+dependencias de sistema de tu plataforma:
+
+<Tabs syncKey="os">
+	<TabItem label="Linux">
+		```bash
+		# Debian / Ubuntu
+		sudo apt install build-essential libxkbcommon-x11-0
+		curl https://sh.rustup.rs -sSf | sh
+		```
+	</TabItem>
+	<TabItem label="macOS">
+		```bash
+		xcode-select --install
+		curl https://sh.rustup.rs -sSf | sh
+		```
+	</TabItem>
+	<TabItem label="Windows">
+		Instala [Rust con rustup](https://rustup.rs) y las *Build Tools for Visual Studio*
+		(carga de trabajo "Desarrollo para el escritorio con C++").
+	</TabItem>
+</Tabs>
+
+## Para desarrollar Pyzed
+
+<Steps>
+
+1. Clona el repositorio y crea un entorno virtual:
+
+   ```bash
+   git clone https://github.com/albakore/pyzed && cd pyzed
+   python -m venv .venv && source .venv/bin/activate
+   ```
+
+2. Compila e instala en modo editable con [maturin](https://www.maturin.rs):
+
+   ```bash
+   pip install maturin pytest
+   maturin develop --release
+   ```
+
+   Usa `--release`: la build de depuración es mucho más lenta al usar la ventana.
+
+3. Ejecuta los tests y un ejemplo:
+
+   ```bash
+   pytest tests
+   python examples/gallery.py
+   ```
+
+</Steps>
+
+## Comprobar la instalación
+
+```bash
+python -c "import pyzed; print(pyzed.__version__)"
+pyzed icons folder
+```
