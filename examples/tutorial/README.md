@@ -6,6 +6,9 @@ Cinco pasos cortos, cada uno es un archivo que se ejecuta solo:
 python examples/tutorial/step1_hello.py
 ```
 
+Consejo: ejecútalos con `pyzed dev examples/tutorial/step1_hello.py` y la ventana se actualizará
+cada vez que guardes el archivo, sin perder el estado.
+
 ## 1. Una ventana ([`step1_hello.py`](step1_hello.py))
 
 Una app es una clase que hereda de `pz.App` y define `view()`. `view()` devuelve un árbol de

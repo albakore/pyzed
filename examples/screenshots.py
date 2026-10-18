@@ -44,6 +44,49 @@ def workspace(theme, files, active, expanded=(), **flags):
     return app
 
 
+def hot_reload_shots(scale):
+    """Before, after and failed-reload images of examples/hot_reload, using the real reloader."""
+    import importlib
+    import os
+    import shutil
+    import tempfile
+    import time
+
+    from pyzed import hot_reload
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        for name in ("main.py", "cards.py"):
+            shutil.copy(HERE / "hot_reload" / name, tmp / name)
+        sys.path.insert(0, str(tmp))
+        try:
+            demo = importlib.import_module("main")
+            app = demo.Dashboard()
+            app.clicks = 3
+            app.screenshot(OUT / "hot-reload-before.png", scale=scale)
+
+            reloader = hot_reload.Reloader(app)
+            cards, main = tmp / "cards.py", tmp / "main.py"
+
+            def edit(path, old, new):
+                path.write_text(path.read_text().replace(old, new))
+                stamp = time.time() + 5
+                os.utime(path, (stamp, stamp))
+                reloader.reload([path])
+
+            edit(cards, 'ACCENT = "#61afef"', 'ACCENT = "#98c379"')
+            edit(main, '"Edit me and save"', '"Saved, still 3 clicks"')
+            app.screenshot(OUT / "hot-reload-after.png", scale=scale)
+
+            edit(main, "self.clicks += 1", "self.clicks += 1)")
+            app.screenshot(OUT / "hot-reload-error.png", scale=scale)
+            reloader.stop()
+        finally:
+            sys.path.remove(str(tmp))
+            for name in ("main", "cards"):
+                sys.modules.pop(name, None)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     scale = 1.5
@@ -70,6 +113,7 @@ def main():
     Gallery().screenshot(OUT / "components-dark.png", scale=scale)
     Gallery(pz.themes.ONE_LIGHT).screenshot(OUT / "components-light.png", scale=scale)
     Counter().screenshot(OUT / "counter.png", scale=2)
+    hot_reload_shots(scale)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 
