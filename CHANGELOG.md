@@ -11,6 +11,31 @@ La web de documentación lee este archivo en cada build y marca la última versi
 
 ## [Sin publicar]
 
+## [0.2.0] - 2026-10-18
+
+Primera versión publicada en PyPI como `pyzed-ui`.
+
+### Breaking changes
+
+- `App.run()` lanza un error si se llama por segunda vez en el mismo proceso.
+
+### Añadido
+
+- Varias ventanas por app: abrir y cerrar ventanas extra, hooks y comandos de ventana (`Window`).
+- Soporte async: corrutinas, generadores y generadores async desde `update` o `Command.perform`.
+- Suscripciones: temporizadores con `pz.every` y flujos con `pz.listen`.
+- Widgets nuevos: `image` (mapas de bits), `image_viewer`, `canvas` con `pz.draw`, `rich_text`, `markdown`, `qr_code`, `pick_list`, `radio`, `split`, `pin`, `grid` y `responsive`; degradados y más opciones de estilo.
+- Componentes nuevos en `pyzed.ui`: `select`, `radio_group`, `number_field`, `split_button`, `chip`, `disclosure`, `callout`, `table`, `facepile`, `diff_stat`, gráficos, `spinner`, `popover`, `markdown`, `split` y `stat`.
+- Theming: importar temas de Zed, temas Ayu, Gruvbox y One incluidos, `Theme.generate()` y cambio automático entre claro y oscuro.
+- Editor: scroll horizontal con el margen de números fijo, números de línea correctos con `wrap`, línea activa, autoscroll del cursor y PageUp/PageDown.
+- Ejemplos basados en las demos de Iced (todos, game of life, reloj, cronómetro, descargas, websocket, varias ventanas, visor de imágenes, markdown, QR, estilos, menú contextual, paneles) y un tutorial de cinco pasos.
+- Web de documentación con guías, tutoriales, referencia de la API e ilustraciones de componentes.
+- Workflows de CI y de release: wheels para Linux, macOS y Windows publicados en PyPI.
+
+### Corregido
+
+- Las imágenes se recortan y redondean bien en todos los renderizadores, también en las capturas sin GPU.
+
 ## [0.1.0] - 2026-10-18
 
 Primera versión.
