@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://albakore.github.io/pyzed/
+    about: Guides, tutorials and the API reference.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/albakore/pyzed/security/advisories/new
+    about: Please report security problems privately.

@@ -1,54 +1,65 @@
 # Changelog
 
-Todos los cambios relevantes de Pyzed se registran aquí. El formato sigue
-[Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa
-[versionado semántico](https://semver.org/lang/es/).
+All notable changes to Pyzed are recorded here. Each version is a heading
+`## [X.Y.Z] - YYYY-MM-DD` and the project follows
+[semantic versioning](https://semver.org/). Versions with a suffix
+(`1.0.0-rc.1`, `0.3.0-beta.1`) are pre-releases.
 
-Cada versión es un encabezado `## [X.Y.Z] - AAAA-MM-DD` con las secciones que apliquen:
-`### Breaking changes`, `### Añadido`, `### Cambiado`, `### Corregido`, `### Eliminado`.
-Las versiones con sufijo (`1.0.0-rc.1`, `0.2.0b1`) se consideran preliminares.
-La web de documentación lee este archivo en cada build y marca la última versión estable.
+Sections follow FastAPI's release notes: `### Breaking Changes`,
+`### Features`, `### Fixes`, `### Refactors`, `### Upgrades`, `### Docs`,
+`### Translations` and `### Internal`. They are generated from the gitmoji
+commit messages when a version is released (see
+[CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)); notes
+written by hand under `## [Unreleased]` are kept and merged in.
+The documentation site reads this file on every build and marks the latest
+stable version.
 
-## [Sin publicar]
+## [Unreleased]
 
 ## [0.2.0] - 2026-10-18
 
-Primera versión publicada en PyPI como `pyzed-ui`.
+First version published on PyPI, as `pyzed-ui`.
 
-### Breaking changes
+### Breaking Changes
 
-- `App.run()` lanza un error si se llama por segunda vez en el mismo proceso.
+- 💥 `App.run()` raises an error when it is called a second time in the same process.
 
-### Añadido
+### Features
 
-- Varias ventanas por app: abrir y cerrar ventanas extra, hooks y comandos de ventana (`Window`).
-- Soporte async: corrutinas, generadores y generadores async desde `update` o `Command.perform`.
-- Suscripciones: temporizadores con `pz.every` y flujos con `pz.listen`.
-- Widgets nuevos: `image` (mapas de bits), `image_viewer`, `canvas` con `pz.draw`, `rich_text`, `markdown`, `qr_code`, `pick_list`, `radio`, `split`, `pin`, `grid` y `responsive`; degradados y más opciones de estilo.
-- Componentes nuevos en `pyzed.ui`: `select`, `radio_group`, `number_field`, `split_button`, `chip`, `disclosure`, `callout`, `table`, `facepile`, `diff_stat`, gráficos, `spinner`, `popover`, `markdown`, `split` y `stat`.
-- Theming: importar temas de Zed, temas Ayu, Gruvbox y One incluidos, `Theme.generate()` y cambio automático entre claro y oscuro.
-- Editor: scroll horizontal con el margen de números fijo, números de línea correctos con `wrap`, línea activa, autoscroll del cursor y PageUp/PageDown.
-- Ejemplos basados en las demos de Iced (todos, game of life, reloj, cronómetro, descargas, websocket, varias ventanas, visor de imágenes, markdown, QR, estilos, menú contextual, paneles) y un tutorial de cinco pasos.
-- Web de documentación con guías, tutoriales, referencia de la API e ilustraciones de componentes.
-- Workflows de CI y de release: wheels para Linux, macOS y Windows publicados en PyPI.
+- ✨ Several windows per app: open and close extra windows, window hooks and window commands (`Window`).
+- ✨ Async support: coroutines, generators and async generators from `update` or `Command.perform`.
+- ✨ Subscriptions: timers with `pz.every` and streams with `pz.listen`.
+- ✨ New widgets: `image` (bitmaps), `image_viewer`, `canvas` with `pz.draw`, `rich_text`, `markdown`, `qr_code`, `pick_list`, `radio`, `split`, `pin`, `grid` and `responsive`; gradients and more style options.
+- ✨ New `pyzed.ui` components: `select`, `radio_group`, `number_field`, `split_button`, `chip`, `disclosure`, `callout`, `table`, `facepile`, `diff_stat`, charts, `spinner`, `popover`, `markdown`, `split` and `stat`.
+- ✨ Theming: import Zed themes, bundled Ayu, Gruvbox and One themes, `Theme.generate()` and automatic light/dark switching.
+- ✨ Editor: horizontal scrolling with a sticky line-number gutter, correct line numbers with `wrap`, active line, cursor autoscroll and PageUp/PageDown.
 
-### Corregido
+### Fixes
 
-- Las imágenes se recortan y redondean bien en todos los renderizadores, también en las capturas sin GPU.
+- 🐛 Images are clipped and rounded correctly in every renderer, including off-screen screenshots without a GPU.
+
+### Docs
+
+- 📝 Documentation site with guides, tutorials, API reference and component illustrations.
+- 📝 Examples based on Iced's demos (todos, game of life, clock, stopwatch, downloads, websocket, multiple windows, image viewer, markdown, QR code, styling, context menu, panes) and a five-step tutorial.
+
+### Internal
+
+- 👷 CI and release workflows: wheels for Linux, macOS and Windows published on PyPI.
 
 ## [0.1.0] - 2026-10-18
 
-Primera versión.
+First version (not published on PyPI).
 
-### Añadido
+### Features
 
-- Runtime al estilo Elm sobre Iced 0.14 (`App`, `update`, `view`, `on_start`, `on_key`).
-- Mensajes como cualquier valor de Python o como callables que se llaman directamente.
-- `Command`: `exit`, `focus`, `set_editor_text`, `set_editor_cursor`, `scroll_to_end`, `batch`, `message` y `perform` (trabajo en un hilo).
-- `pz.post()` para enviar mensajes desde otros hilos.
-- Widgets base: `text`, `column`, `row`, `container`, `center`, `button`, `text_input`, `scrollable`, `space`, `rule`, `mouse_area`, `stack`, `opaque`, `hover`, `tooltip`, `checkbox`, `toggler`, `slider`, `progress_bar`, `code_editor`, `svg` e `icon`.
-- Unos 40 componentes al estilo Zed en `pyzed.ui`: botones, formularios, listas, árbol de archivos, pestañas, workspace con docks, paleta de comandos, toasts, editor de código y terminal.
-- Temas One Dark, One Light y Gruvbox Dark con los tokens de color de Zed, y `Theme.derive()`.
-- Fuentes IBM Plex e iconos Lucide incluidos.
-- Capturas fuera de pantalla con `app.screenshot()` (sin GPU ni display).
-- CLI: `pyzed new` y `pyzed icons`.
+- ✨ Elm-style runtime on top of Iced 0.14 (`App`, `update`, `view`, `on_start`, `on_key`).
+- ✨ Messages can be any Python value, or callables that are called directly.
+- ✨ `Command`: `exit`, `focus`, `set_editor_text`, `set_editor_cursor`, `scroll_to_end`, `batch`, `message` and `perform` (work on a thread).
+- ✨ `pz.post()` to send messages from other threads.
+- ✨ Base widgets: `text`, `column`, `row`, `container`, `center`, `button`, `text_input`, `scrollable`, `space`, `rule`, `mouse_area`, `stack`, `opaque`, `hover`, `tooltip`, `checkbox`, `toggler`, `slider`, `progress_bar`, `code_editor`, `svg` and `icon`.
+- ✨ About 40 Zed-style components in `pyzed.ui`: buttons, forms, lists, file tree, tabs, workspace with docks, command palette, toasts, code editor and terminal.
+- ✨ One Dark, One Light and Gruvbox Dark themes with Zed's color tokens, and `Theme.derive()`.
+- ✨ Bundled IBM Plex fonts and Lucide icons.
+- ✨ Off-screen screenshots with `app.screenshot()` (no GPU or display needed).
+- ✨ CLI: `pyzed new` and `pyzed icons`.

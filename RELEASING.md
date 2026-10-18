@@ -1,49 +1,56 @@
-# Publicar una versión
+# Releasing a version
 
-Los mensajes de commit (y los títulos de PR, que son el commit al hacer
-*squash merge*) siguen [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/):
-`feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `test:`, `build:`, `ci:`,
-`chore:`. Un `!` (`feat!: ...`) o un pie `BREAKING CHANGE: ...` marca un
-cambio incompatible. Con eso se arma el changelog de cada release.
+Release notes are generated from the gitmoji commit titles on `main` (see
+[CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)), grouped like
+FastAPI's: Breaking Changes, Features, Fixes, Refactors, Upgrades, Docs,
+Translations and Internal.
 
-## Pasos
+## Steps
 
-1. Si quieres, redacta a mano las notas bajo `## [Sin publicar]` en
-   `CHANGELOG.md` (formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)).
-   Al publicar se combinan con las generadas desde los commits; si la versión
-   ya tiene su propia sección, se usa tal cual.
-2. Sube la versión en `Cargo.toml` (es la única fuente; `pyproject.toml` la
-   toma de ahí) y actualiza `Cargo.lock` con `cargo update -p pyzed`.
-   Para una pre-release usa un sufijo: `0.2.0-rc.1`, `0.2.0-beta.1`.
-3. Haz merge del PR en `main`.
-4. Crea y empuja el tag:
+1. Optionally write notes by hand under `## [Unreleased]` in `CHANGELOG.md`,
+   for example a `### Highlights` section. They are merged with the generated
+   entries; if the version already has its own section, it is used as is.
+   Preview what would be generated with:
 
    ```sh
-   git tag v0.2.0
-   git push origin v0.2.0
+   pip install git-cliff
+   python scripts/changelog.py --preview
    ```
 
-El workflow **Release** (`.github/workflows/release.yml`) entonces:
+2. Bump the version in `Cargo.toml` (the only source; `pyproject.toml` reads it
+   from there) and refresh `Cargo.lock` with `cargo update -p pyzed`. Use a
+   suffix for a pre-release: `0.3.0-rc.1`, `0.3.0-beta.1`. Merge that change
+   with a PR titled `🔖 Release 0.3.0`.
 
-- verifica que el tag coincide con `Cargo.toml`;
-- compila wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64) y el
-  sdist, y prueba cada wheel;
-- publica en PyPI con Trusted Publishing;
-- crea la GitHub Release con sus notas (breaking changes, nuevas funciones,
-  mejoras, correcciones…), marcada como *latest* si es estable o como
-  *pre-release* si lleva sufijo;
-- añade la sección de la versión a `CHANGELOG.md` en `main` y vuelve a
-  desplegar la web de documentación (`docs.yml`), que marca la última versión
-  estable.
+3. Create and push the tag from `main`:
 
-Para ver qué entraría en la próxima versión:
-`pip install git-cliff && python scripts/changelog.py --preview`.
+   ```sh
+   git switch main && git pull
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
 
-## Configuración única en PyPI
+   Creating a release on GitHub with a new `v0.3.0` tag on `main` works too.
 
-En <https://pypi.org/manage/account/publishing/> añade un *pending publisher*:
+The **Release** workflow (`.github/workflows/release.yml`) then:
 
-| Campo | Valor |
+- checks that the tag matches `Cargo.toml`;
+- builds the wheels (Linux x86_64/aarch64, macOS arm64/x86_64, Windows x64)
+  and the sdist, and tests each wheel. The README links are made absolute
+  (`scripts/pypi_readme.py`) so images show up on PyPI;
+- publishes on PyPI with Trusted Publishing;
+- adds the version's section to `CHANGELOG.md` on `main`;
+- creates the GitHub Release with those notes, marked as *latest* when it is
+  stable or as a *pre-release* when it has a suffix;
+- redeploys the documentation site (`docs.yml`), which marks the latest
+  stable version.
+
+## One-time PyPI setup
+
+Already done for `pyzed-ui`. For reference, the trusted publisher at
+<https://pypi.org/manage/account/publishing/> is:
+
+| Field | Value |
 | --- | --- |
 | PyPI project name | `pyzed-ui` |
 | Owner | `albakore` |
@@ -51,8 +58,5 @@ En <https://pypi.org/manage/account/publishing/> añade un *pending publisher*:
 | Workflow name | `release.yml` |
 | Environment name | `pypi` |
 
-El nombre `pyzed` ya está ocupado en PyPI, así que el paquete se publica como
-`pyzed-ui` (`pip install pyzed-ui`); en código se sigue importando `import pyzed`.
-
-Y en GitHub, *Settings → Environments*, crea el entorno `pypi` (opcionalmente
-con aprobación manual antes de publicar).
+The name `pyzed` was already taken on PyPI, so the package is published as
+`pyzed-ui` (`pip install pyzed-ui`); in code it is still `import pyzed`.

@@ -1,16 +1,16 @@
 name: Release
 
-# Se dispara al empujar un tag vX.Y.Z (o vX.Y.Z-rc.N, -beta.N, ... para
-# pre-releases). Compila wheels y sdist, los prueba, publica en PyPI con
-# Trusted Publishing, crea la GitHub Release con sus notas y actualiza
-# CHANGELOG.md en main y redespliega la web de documentación.
+# Runs when a vX.Y.Z tag is pushed (vX.Y.Z-rc.N, -beta.N, ... for
+# pre-releases). Builds and tests the wheels and the sdist, publishes them on
+# PyPI with Trusted Publishing, adds the version to CHANGELOG.md on main,
+# creates the GitHub Release with its notes and redeploys the docs site.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: Tag existente a (re)publicar, p. ej. v0.2.0
+        description: Existing tag to (re)publish, e.g. v0.3.0
         required: true
 
 concurrency:
@@ -25,7 +25,7 @@ env:
 
 jobs:
   meta:
-    name: Verificar versión
+    name: Check version
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
@@ -35,11 +35,11 @@ jobs:
         with:
           ref: ${{ env.TAG }}
       - id: meta
-        name: El tag coincide con Cargo.toml
+        name: Tag matches Cargo.toml
         run: |
           version=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n1)
           if [ "v$version" != "$TAG" ]; then
-            echo "::error::El tag $TAG no coincide con la versión de Cargo.toml ($version)"
+            echo "::error::Tag $TAG does not match the Cargo.toml version ($version)"
             exit 1
           fi
           case "$version" in
@@ -69,12 +69,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Absolute links in the PyPI description
+        shell: bash
+        run: python scripts/pypi_readme.py "${{ needs.meta.outputs.tag }}"
       - uses: PyO3/maturin-action@v1
         with:
           command: build
           target: ${{ matrix.target }}
           args: --release --out dist
           manylinux: "2_28"
+          sccache: "true"
       - name: Test the wheel
         if: matrix.test
         shell: bash
@@ -95,6 +99,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ needs.meta.outputs.tag }}
+      - name: Absolute links in the PyPI description
+        run: python3 scripts/pypi_readme.py "${{ needs.meta.outputs.tag }}"
       - uses: PyO3/maturin-action@v1
         with:
           command: sdist
@@ -105,7 +111,7 @@ jobs:
           path: dist/*.tar.gz
 
   pypi:
-    name: Publicar en PyPI
+    name: Publish on PyPI
     needs: [meta, wheels, sdist]
     runs-on: ubuntu-latest
     environment:
@@ -123,8 +129,8 @@ jobs:
         with:
           skip-existing: true
 
-  github-release:
-    name: GitHub Release
+  changelog:
+    name: Update CHANGELOG.md
     needs: [meta, pypi]
     runs-on: ubuntu-latest
     permissions:
@@ -132,7 +138,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.meta.outputs.tag }}
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Add the version to CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install git-cliff
+          python scripts/changelog.py --update "$TAG"
+      - name: Commit to main
+        run: |
+          if git diff --quiet -- CHANGELOG.md; then
+            echo "CHANGELOG.md was already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "🔖 Release notes for $TAG"
+          git push origin HEAD:main
+
+  github-release:
+    name: GitHub Release
+    needs: [meta, changelog]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      # main now has the version's section, including notes written by hand.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -142,9 +182,10 @@ jobs:
           pattern: dist-*
           merge-multiple: true
           path: dist
-      - name: Crear la release
+      - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           PRERELEASE: ${{ needs.meta.outputs.prerelease }}
         run: |
           python -m pip install git-cliff
@@ -158,45 +199,10 @@ jobs:
           else
             gh release create "$TAG" dist/* "${flags[@]}"
           fi
-
-  changelog:
-    name: Actualizar CHANGELOG y docs
-    needs: [meta, github-release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Añadir la versión a CHANGELOG.md
-        run: |
-          python -m pip install git-cliff
-          python scripts/changelog.py --update "$TAG"
-      - name: Commit en main
-        run: |
-          if git diff --quiet -- CHANGELOG.md; then
-            echo "CHANGELOG.md ya estaba al día"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "chore(release): changelog $TAG"
-          git push origin HEAD:main
-      - name: Redesplegar la web de documentación
+      - name: Redeploy the documentation site
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Ni el push ni la release hechos con GITHUB_TOKEN disparan otros
-          # workflows, así que lanzamos el de la web explícitamente (si existe).
-          if gh workflow view docs.yml >/dev/null 2>&1; then
-            gh workflow run docs.yml --ref main
-          else
-            echo "No hay workflow docs.yml todavía; nada que redesplegar."
-          fi
+          # Neither the push nor the release made with GITHUB_TOKEN trigger
+          # other workflows, so start the site deploy explicitly.
+          gh workflow run docs.yml --ref main

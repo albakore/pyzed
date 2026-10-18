@@ -1,29 +1,25 @@
-# git-cliff: genera CHANGELOG.md y las notas de cada release a partir de
-# commits convencionales (feat:, fix:, perf:, docs:, ...; `!` o
-# "BREAKING CHANGE:" marcan un cambio incompatible).
+# git-cliff builds each release section from the commit history. Commits and
+# PR titles follow the FastAPI/gitmoji style described in CONTRIBUTING.md
+# ("✨ Add ...", "🐛 Fix ...", "📝 Update docs ..."). scripts/changelog.py
+# inserts the section into CHANGELOG.md without touching hand-written notes.
 
 [changelog]
-# Solo se usa para generar la sección de cada versión; scripts/changelog.py la
-# inserta en CHANGELOG.md (formato Keep a Changelog) sin tocar lo escrito a mano.
 header = ""
 body = """
-{%- macro remote_url() -%}https://github.com/albakore/pyzed{%- endmacro -%}
+{%- macro repo() -%}https://github.com/albakore/pyzed{%- endmacro -%}
 {% if version %}
 ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else %}
-## [Sin publicar]
+## [Unreleased]
 {% endif %}
-{%- set breaking = commits | filter(attribute="breaking", value=true) -%}
-{% if breaking | length > 0 %}
-### Breaking changes
-{% for commit in breaking %}
-- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{% if commit.breaking_description %}{{ commit.breaking_description | upper_first }}{% else %}{{ commit.message | upper_first }}{% endif %} ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))
-{%- endfor %}
-{% endif %}
-{%- for group, commits in commits | filter(attribute="breaking", value=false) | group_by(attribute="group") %}
-### {{ group | striptags | trim | upper_first }}
+{%- for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
 {% for commit in commits %}
-- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))
+- {{ commit.message | split(pat="\n") | first | trim | upper_first }}.\
+{% if commit.remote.pr_number %} PR [#{{ commit.remote.pr_number }}]({{ self::repo() }}/pull/{{ commit.remote.pr_number }})\
+{% else %} [{{ commit.id | truncate(length=7, end="") }}]({{ self::repo() }}/commit/{{ commit.id }})\
+{% endif %}\
+{% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}.
 {%- endfor %}
 {% endfor %}
 """
@@ -39,20 +35,60 @@ filter_commits = false
 tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+.*"
 sort_commits = "oldest"
 commit_preprocessors = [
-  { pattern = '\s+$', replace = "" },
+  # ":sparkles: Add x" -> "✨ Add x", so both gitmoji spellings land in the same group.
+  { pattern = "^:boom:", replace = "💥" },
+  { pattern = "^:sparkles:", replace = "✨" },
+  { pattern = "^:tada:", replace = "🎉" },
+  { pattern = "^:bug:", replace = "🐛" },
+  { pattern = "^:ambulance:", replace = "🚑️" },
+  { pattern = "^:adhesive_bandage:", replace = "🩹" },
+  { pattern = "^:recycle:", replace = "♻️" },
+  { pattern = "^:zap:", replace = "⚡️" },
+  { pattern = "^:art:", replace = "🎨" },
+  { pattern = "^:fire:", replace = "🔥" },
+  { pattern = "^:truck:", replace = "🚚" },
+  { pattern = "^:arrow_up:", replace = "⬆️" },
+  { pattern = "^:arrow_down:", replace = "⬇️" },
+  { pattern = "^:pushpin:", replace = "📌" },
+  { pattern = "^:heavy_plus_sign:", replace = "➕" },
+  { pattern = "^:heavy_minus_sign:", replace = "➖" },
+  { pattern = "^:memo:", replace = "📝" },
+  { pattern = "^:pencil2:", replace = "✏️" },
+  { pattern = "^:bulb:", replace = "💡" },
+  { pattern = "^:globe_with_meridians:", replace = "🌐" },
+  { pattern = "^:construction_worker:", replace = "👷" },
+  { pattern = "^:green_heart:", replace = "💚" },
+  { pattern = "^:wrench:", replace = "🔧" },
+  { pattern = "^:hammer:", replace = "🔨" },
+  { pattern = "^:white_check_mark:", replace = "✅" },
+  { pattern = "^:bookmark:", replace = "🔖" },
+  { pattern = "^:lock:", replace = "🔒️" },
+  # Squash merges append "(#12)"; the PR link is added by the template instead.
+  { pattern = "\\s*\\(#\\d+\\)$", replace = "" },
+  { pattern = "\\s+$", replace = "" },
 ]
 commit_parsers = [
+  { message = "^🔖", skip = true },
   { message = "^chore\\(release\\)", skip = true },
   { message = "^Merge ", skip = true },
-  { message = "^feat", group = "<!-- 0 -->Añadido" },
-  { message = "^perf", group = "<!-- 1 -->Cambiado" },
-  { message = "^refactor", group = "<!-- 1 -->Cambiado" },
-  { message = "^style", group = "<!-- 1 -->Cambiado" },
-  { message = "^fix", group = "<!-- 2 -->Corregido" },
-  { message = "^revert", group = "<!-- 2 -->Corregido" },
-  { message = "^docs", group = "<!-- 3 -->Documentación" },
-  { message = "^test", group = "<!-- 5 -->Mantenimiento" },
-  { message = "^(build|ci)", group = "<!-- 5 -->Mantenimiento" },
-  { message = "^chore", group = "<!-- 5 -->Mantenimiento" },
-  { message = ".*", group = "<!-- 6 -->Otros cambios" },
+  { field = "breaking", pattern = "true", group = "<!-- 0 -->Breaking Changes" },
+  { message = "^💥", group = "<!-- 0 -->Breaking Changes" },
+  { message = "^(✨|🎉|🚸|♿|💄|🔊)", group = "<!-- 1 -->Features" },
+  { message = "^(🐛|🚑|🩹|🔒)", group = "<!-- 2 -->Fixes" },
+  { message = "^(♻|⚡|🎨|🔥|🚚|🏷|⚰|🗑)", group = "<!-- 3 -->Refactors" },
+  { message = "^(⬆|⬇|📌|➕|➖)", group = "<!-- 4 -->Upgrades" },
+  { message = "^(📝|✏|💡|📄|🍱|📸)", group = "<!-- 5 -->Docs" },
+  { message = "^🌐", group = "<!-- 6 -->Translations" },
+  { message = "^(👷|💚|🔧|🔨|✅|🧪|🙈|📦|🚨|🧑‍💻|👥)", group = "<!-- 7 -->Internal" },
+  # Conventional Commits keep working too.
+  { message = "^feat", group = "<!-- 1 -->Features" },
+  { message = "^(fix|revert)", group = "<!-- 2 -->Fixes" },
+  { message = "^(perf|refactor|style)", group = "<!-- 3 -->Refactors" },
+  { message = "^docs", group = "<!-- 5 -->Docs" },
+  { message = "^(build|ci|chore|test)", group = "<!-- 7 -->Internal" },
+  { message = ".*", group = "<!-- 7 -->Internal" },
 ]
+
+[remote.github]
+owner = "albakore"
+repo = "pyzed"

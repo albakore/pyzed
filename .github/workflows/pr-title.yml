@@ -1,33 +1,40 @@
 name: PR title
 
-# El changelog se genera de los commits convencionales; con "squash merge" el
-# título del PR es el mensaje del commit, así que lo validamos aquí.
+# Release notes are built from commit messages, and with "Squash and merge"
+# the PR title becomes the commit message, so it has to follow the gitmoji
+# convention described in CONTRIBUTING.md.
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
-permissions:
-  pull-requests: read
+permissions: {}
 
 jobs:
-  conventional:
-    name: Título convencional
+  gitmoji:
+    name: Gitmoji title
     runs-on: ubuntu-latest
     steps:
-      - uses: amannn/action-semantic-pull-request@v5
+      - name: Check the title
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            fix
-            perf
-            refactor
-            style
-            docs
-            test
-            build
-            ci
-            chore
-            revert
-          requireScope: false
+          TITLE: ${{ github.event.pull_request.title }}
+        shell: python
+        run: |
+          import os, re, sys
+
+          title = os.environ["TITLE"]
+          emojis = (
+              "💥 ✨ 🎉 🚸 ♿ 💄 🔊 🐛 🚑 🩹 🔒 ♻ ⚡ 🎨 🔥 🚚 🏷 ⚰ 🗑 ⬆ ⬇ 📌 ➕ ➖ "
+              "📝 ✏ 💡 📄 🍱 📸 🌐 👷 💚 🔧 🔨 ✅ 🧪 🙈 📦 🚨 🧑‍💻 👥 🔖 ⏪"
+          ).split()
+          shortcode = re.match(r"^:[a-z0-9_+-]+: \S", title)
+          ok = shortcode or any(
+              re.match(rf"^{re.escape(e)}️? \S", title) for e in emojis
+          )
+          if not ok:
+              print(
+                  f"::error::PR title {title!r} must start with a gitmoji and a space, "
+                  "for example '✨ Add hot reload' or '🐛 Fix editor scroll'. "
+                  "See CONTRIBUTING.md#commit-messages-and-pr-titles."
+              )
+              sys.exit(1)
+          print(f"OK: {title}")
