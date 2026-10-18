@@ -26,7 +26,7 @@ class MiApp(pz.App):
     title = "Mi app"            # o un método/propiedad que devuelva el título
     size = (900, 600)
     min_size = (480, 320)
-    theme = pz.themes.ONE_DARK
+    theme = "One Dark"           # un Theme, un nombre o pz.themes.auto(...)
 
     def __init__(self):         # el estado inicial
         self.items = []
@@ -82,6 +82,7 @@ Lo que devuelva el callable se trata así:
 | --- | --- |
 | `None` | Nada más: Pyzed vuelve a dibujar. |
 | un `Command` (o lista de ellos) | Se ejecuta el comando. |
+| una corrutina, un generador o un generador async | Se ejecuta en segundo plano y cada resultado va a `update`. Ver [async y suscripciones](/pyzed/guides/async/). |
 | cualquier otro valor | Se envía a `update` como mensaje. |
 
 Los controles que producen un valor llaman al callable con ese valor: `on_input(texto)`,
@@ -96,8 +97,10 @@ Captura la variable con un argumento por defecto, o todas las lambdas usarán el
 
 | Método | Cuándo se llama |
 | --- | --- |
-| `on_start()` | Una vez, al arrancar. Puede devolver un `Command` (por ejemplo, cargar datos). |
+| `on_start()` | Una vez, al arrancar. Puede devolver un `Command` o una corrutina (por ejemplo, cargar datos). |
 | `on_key(combo)` | En cada tecla pulsada. Ver [teclado y atajos](/pyzed/guides/keyboard/). |
+| `subscriptions()` | Después de cada `update`. Devuelve los temporizadores y streams activos (`pz.every`, `pz.listen`). |
+| `on_open()`, `on_close()`, `on_resize(w, h)` | Eventos de la ventana. Ver [varias ventanas](/pyzed/guides/windows/). |
 
 ## Efectos: `Command`
 

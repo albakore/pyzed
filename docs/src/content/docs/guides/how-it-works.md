@@ -2,7 +2,7 @@
 title: Cómo funciona por dentro
 description: El puente entre Python y Iced, el árbol de widgets, el estado del editor y el rendimiento.
 sidebar:
-  order: 8
+  order: 11
 ---
 
 ```

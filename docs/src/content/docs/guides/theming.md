@@ -8,55 +8,100 @@ sidebar:
 Cada componente de `pyzed.ui` lee sus colores del **tema actual**. Cambiar `self.theme`
 restiliza toda la interfaz al instante.
 
-| One Dark | One Light |
-| --- | --- |
-| ![One Dark](../../../../screenshots/components-dark.png) | ![One Light](../../../../screenshots/components-light.png) |
+![Temas incluidos](../../../assets/tutorials/styling.png)
 
 ## Elegir un tema
 
+`App.theme` (y `Window.theme`) acepta un `Theme`, el **nombre** de un tema registrado o
+`themes.auto(...)` para seguir el modo claro/oscuro del sistema:
+
 ```python
 class MiApp(pz.App):
-    theme = pz.themes.ONE_LIGHT          # ONE_DARK (por defecto), ONE_LIGHT, GRUVBOX_DARK
+    theme = "Ayu Dark"                                   # cualquier nombre de pz.themes.names()
+    # theme = pz.themes.ONE_LIGHT                        # o un objeto Theme
+    # theme = pz.themes.auto("One Light", "One Dark")    # sigue al sistema
 
     def alternar_tema(self):
-        self.theme = pz.themes.ONE_LIGHT if self.theme.is_dark else pz.themes.ONE_DARK
+        actual = self.resolved_theme()
+        self.theme = "One Light" if actual.is_dark else "One Dark"
 ```
 
-`pz.themes.all()` devuelve la lista de temas incluidos, útil para un selector:
+Pyzed incluye las familias **One**, **Ayu** y **Gruvbox** importadas de Zed (licencia MIT):
+`One Dark`, `One Light`, `Ayu Dark`, `Ayu Light`, `Ayu Mirage`, `Gruvbox Dark`,
+`Gruvbox Dark Hard`, `Gruvbox Light`… `pz.themes.names()` devuelve la lista exacta y
+`pz.themes.get("ayu dark")` busca sin distinguir mayúsculas.
+
+Un selector de temas:
 
 ```python
-ui.segmented([t.name for t in pz.themes.all()], self.theme.name,
-              lambda name: setattr(self, "theme", next(t for t in pz.themes.all() if t.name == name)))
+ui.select(pz.themes.names(), self.resolved_theme().name, lambda name: setattr(self, "theme", name))
+```
+
+## Leer los colores del tema
+
+Como `self.theme` puede ser un nombre o un `AutoTheme`, usa **`self.resolved_theme()`** para
+obtener el `Theme` concreto que se está usando. Sus tokens son atributos:
+
+```python
+def view(self):
+    t = self.resolved_theme()
+    return pz.container(contenido, bg=t.surface, border_color=t.border, radius=t.radius)
+```
+
+Dentro de `view()` también puedes usar `pyzed.theme.current()`. Los componentes aceptan
+`theme=` para dibujarse con otro tema, y un `Theme` funciona como gestor de contexto para
+dibujar un bloque con otro tema:
+
+```python
+with pz.themes.get("One Light"):
+    vista_previa = ui.card(ui.label("Así se ve en claro"))
 ```
 
 ## Crear un tema
 
-`Theme.derive()` copia un tema cambiando algunos tokens. Los diccionarios `syntax` y `ansi` se
-combinan con los del tema base:
+### Cambiar algunos tokens
+
+`Theme.derive()` copia un tema cambiando algunos tokens (los diccionarios `syntax` y `ansi` se
+combinan). `with_accent()` cambia el color de acento y todo lo que depende de él (foco,
+selección, enlaces, botones principales):
 
 ```python
-oceano = pz.themes.ONE_DARK.derive(
-    name="Océano",
-    accent="#4fb3ff",
-    text_accent="#4fb3ff",
-    border_focused="#4fb3ff",
-    syntax={"keyword": "#ff79c6", "string": ("#a6e3a1", "italic")},
-    radius=8,
-)
+oceano = pz.themes.ONE_DARK.derive(name="Océano", syntax={"keyword": "#ff79c6"}).with_accent("#4fb3ff")
 ```
 
 Un estilo de sintaxis es un color o una tupla `(color, "italic" | "bold")`.
 
-## Usar los colores del tema en tu código
-
-Dentro de `view()`, `self.theme` es el tema actual. Sus tokens son atributos:
+### Generarlo a partir de tres colores
 
 ```python
-pz.container(contenido, bg=self.theme.surface, border_color=self.theme.border, radius=self.theme.radius)
+propio = pz.Theme.generate("Propio", background="#1b1d23", text="#e6e6e6", accent="#ff8a65")
 ```
 
-Fuera de la app, `pyzed.theme.current()` devuelve el tema activo. Los componentes también aceptan
-`theme=` para dibujarse con otro tema.
+Superficies, bordes, estados de hover y textos atenuados se mezclan a partir del fondo y el
+texto. La apariencia (claro u oscuro) se deduce del fondo si no pasas `appearance=`. También
+acepta `error`, `warning`, `success`, `syntax` y `radius`.
+
+### Importar un tema de Zed
+
+Cualquier tema de la [galería de Zed](https://zed.dev/extensions?filter=themes) funciona:
+
+```python
+catppuccin = pz.Theme.from_zed("catppuccin.json", name="Catppuccin Mocha")   # uno
+pz.themes.load_zed("catppuccin.json")                                       # todos, registrados por nombre
+```
+
+### Registrar, guardar y cargar
+
+```python
+pz.themes.register(propio)          # ya se puede usar como theme = "Propio"
+propio.save("propio.json")          # formato propio de Pyzed
+pz.Theme.load("propio.json")
+```
+
+### Utilidades de color
+
+`pyzed.theme` incluye `alpha`, `mix`, `lighten`, `darken`, `luminance`, `contrast` y
+`readable_on(fondo)`, que elige texto claro u oscuro según el contraste.
 
 ## Tokens
 
@@ -82,7 +127,5 @@ Los nombres siguen el esquema de temas de Zed.
 
 ## Un tema desde cero
 
-Si no quieres partir de uno existente, crea un `pz.Theme(...)` pasando **todos** los tokens
-obligatorios. Lo más práctico es copiar `ONE_DARK` o `ONE_LIGHT` de
-[`python/pyzed/theme.py`](https://github.com/albakore/pyzed/blob/main/python/pyzed/theme.py) y
-cambiar los valores.
+`Theme.from_dict(datos)` crea un tema con los tokens que indiques y toma el resto de One Dark u
+One Light según `appearance`. Es el formato que escribe `Theme.save()`.

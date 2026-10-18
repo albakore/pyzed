@@ -795,3 +795,467 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/components/code/).
         ],
     },
 ]
+
+
+# ---------------------------------------------------------------------------
+# 0.2: multi-window, async, new widgets and components
+# ---------------------------------------------------------------------------
+
+COMMON.update({
+    "font": "Fuente del fragmento o del texto (nombre de familia, p. ej. `\"IBM Plex Mono\"`).",
+    "weight": "Grosor de la fuente: `\"normal\"`, `\"medium\"`, `\"semibold\"` o `\"bold\"`.",
+    "italic": "Si es `True`, el fragmento se dibuja en cursiva.",
+    "wrap": "Ajuste de línea / pasa los hijos a una nueva fila cuando no caben.",
+    "line_spacing": "Separación entre filas cuando `wrap=True`.",
+    "gradient": "Degradado lineal de fondo: `(ángulo, [colores])` o `(ángulo, [(posición, color), ...])`.",
+    "on_scroll": "Se llama al desplazar.",
+    "on_move": "Se llama con `(x, y)` al mover el ratón.",
+    "on_middle_press": "Clic con el botón central.",
+    "on_release": "Se llama al soltar.",
+    "vertical": "Orientación vertical.",
+    "content_fit": '`"contain"`, `"cover"`, `"fill"`, `"none"` o `"scale-down"`.',
+    "opacity": "Opacidad de 0 a 1.",
+    "rotation": "Rotación en grados.",
+    "active_line": "Color de fondo de la línea del cursor.",
+    "scrollbar_color": "Color de la barra de desplazamiento.",
+    "key": "Clave que identifica la suscripción (por defecto, el mensaje o la función).",
+    "filter": '`"linear"` (suave) o `"nearest"` (píxeles nítidos, para pixel art).',
+    "source": "Ruta del archivo, `bytes` del archivo codificado, o píxeles RGBA crudos con `size=(ancho, alto)`.",
+    "description": "Texto secundario.",
+    "options": "Lista de opciones.",
+    "on_menu": "Mensaje o callable del botón del menú.",
+    "handle": "Ancho de la zona que se puede arrastrar.",
+    "text_size": "Tamaño del texto.",
+})
+
+
+def _page(slug):
+    return next(p for p in PAGES if p["slug"] == slug)
+
+
+def _section(slug, title, items, before=None):
+    page = _page(slug)
+    sections = page["sections"]
+    for i, (name, existing) in enumerate(sections):
+        if name == title:
+            existing.update(items)
+            return
+    index = next((i for i, (n, _) in enumerate(sections) if n == before), len(sections))
+    sections.insert(index, (title, items))
+
+
+# -- App, windows and async ------------------------------------------------
+_page("app")["intro"] += """
+
+Ver también [varias ventanas](/pyzed/guides/windows/) y [async y suscripciones](/pyzed/guides/async/).
+"""
+_page("app")["sections"][0][1]["pyzed.App"]["desc"] = """
+Clase base de las aplicaciones (arquitectura Elm, como Iced). Es también la **ventana
+principal**, así que hereda todo lo de [`Window`](#window). Sobrescribe `view()` y, si usas
+mensajes, `update(message)`. El estado vive en atributos de la instancia.
+
+| Atributo de clase | Por defecto | Descripción |
+| --- | --- | --- |
+| `title` | `"Pyzed"` | Título de la ventana. Puede ser un callable (o propiedad) que devuelva el texto. |
+| `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
+| `font_size` | `14` | Tamaño de texto por defecto. |
+| `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
+| `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
+
+El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
+
+| Método | Descripción |
+| --- | --- |
+| `view()` | Devuelve el árbol de widgets. Se llama después de cada mensaje. |
+| `update(message)` | Recibe los mensajes. Puede devolver un `Command`, una lista de ellos, una corrutina, un generador (normal o async) u otro mensaje. |
+| `on_start()` | Opcional. Se ejecuta una vez al arrancar; puede devolver un `Command` o una corrutina. |
+| `on_key(combo)` | Opcional. Recibe cada tecla como `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `subscriptions()` | Opcional. Devuelve las suscripciones activas (`pz.every`, `pz.listen`). Se reevalúa tras cada `update`. |
+| `resolved_theme()` | El `Theme` concreto en uso (resuelve nombres y `themes.auto`). |
+| `run()` | Abre la ventana y bloquea hasta que la app termina. |
+| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renderiza el estado actual a un PNG sin ventana. |
+
+Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de cerrarse.
+"""
+_section("app", "Ventanas", {
+    "pyzed.Window": {
+        "desc": """
+Una ventana extra con su propio `view()`, título, tamaño y tema. Se abre devolviendo
+`ventana.open()` (o `Command.open_window(ventana)`). Dentro, `self.app` es la app, así que las
+ventanas comparten estado; los mensajes que produce van a su `update()`, que por defecto los
+reenvía a `app.update()`.
+
+| Atributo | Por defecto | Descripción |
+| --- | --- | --- |
+| `title` | `"Pyzed"` | Texto o callable. |
+| `size` | `(800, 600)` | Tamaño inicial. |
+| `min_size`, `max_size` | `None` | Límites de tamaño. |
+| `position` | `None` | `"center"` o `(x, y)`. |
+| `resizable` | `True` | Si se puede redimensionar. |
+| `decorations` | `True` | `False` quita el marco del sistema (barra de título propia con `drag()`). |
+| `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. |
+| `scale` | `1.0` | Escala de la interfaz. |
+| `theme` | `None` | Tema propio; `None` usa el de la app. |
+| `app` | — | La app dueña de la ventana (se asigna al abrirla). |
+| `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
+
+| Método | Descripción |
+| --- | --- |
+| `view()` | Obligatorio. Devuelve el árbol de widgets de la ventana. |
+| `update(message)` | Recibe los mensajes de la ventana (por defecto los reenvía a la app). |
+| `open()` / `close()` / `drag()` | Comandos para abrirla, cerrarla o empezar a moverla. |
+| `is_open` | Si está abierta. |
+| `resolved_theme()` | El `Theme` concreto que usa. |
+| `on_open()` | Al abrirse. |
+| `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
+| `on_resize(width, height)` | Al cambiar de tamaño. |
+| `on_key(combo)`, `subscriptions()` | Como en `App`. |
+""",
+        "no_signature": True,
+    },
+})
+_section("app", "Async y suscripciones", {
+    "pyzed.every": {
+        "desc": "Una suscripción que envía `message` a `update` cada `seconds` segundos (como `time::every` de Iced). Si `message` es un callable, se llama. Devuélvela desde `subscriptions()`.",
+        "params": {"seconds": "Intervalo en segundos (mayor que 0)."},
+        "example": """
+            def subscriptions(self):
+                return [pz.every(1, "tick")] if self.running else []
+        """,
+    },
+    "pyzed.listen": {
+        "desc": "Una suscripción que ejecuta `function()` (un generador o generador async) mientras esté activa y envía cada valor que produce a `update`. Ideal para websockets y streams.",
+        "params": {"function": "Función generadora (normal o `async def`)."},
+        "example": """
+            async def feed():
+                async for message in websocket:
+                    yield message
+
+            def subscriptions(self):
+                return [pz.listen(feed)]
+        """,
+    },
+    "pyzed.Subscription": {"desc": "Lo que devuelven `every` y `listen`. Se identifica por su `key`: mientras `subscriptions()` siga devolviendo una con la misma clave, sigue en marcha; cuando desaparece, se detiene.", "no_signature": True},
+    "pyzed.spawn": {
+        "desc": "Programa una corrutina en el loop de asyncio de Pyzed sin esperar su resultado y devuelve un `concurrent.futures.Future`. Para recibir el resultado en la interfaz, devuelve la corrutina desde `update` o usa `Command.perform`.",
+        "params": {"awaitable": "La corrutina."},
+    },
+    "pyzed.asyncio_loop": {"desc": "El loop de asyncio (en un hilo en segundo plano) donde Pyzed ejecuta todas las corrutinas. Se arranca al usarlo por primera vez."},
+})
+
+# -- Command ---------------------------------------------------------------------
+_win = "La ventana (`pz.Window`). Sin ella, la que produjo el mensaje."
+_page("command")["sections"][0][1].update({
+    "pyzed.Command.scroll_to": {
+        "desc": "Desplaza el `scrollable` con ese `id` a una posición absoluta en píxeles.",
+        "params": {"id": "El `id` del scrollable.", "x": "Desplazamiento horizontal.", "y": "Desplazamiento vertical."},
+    },
+    "pyzed.Command.copy": {"desc": "Copia `text` al portapapeles del sistema.", "params": {"text": "El texto."}},
+    "pyzed.Command.paste": {"desc": "Lee el portapapeles y llama a `then(texto)` (cadena vacía si está vacío).", "params": {"then": "Callable que recibe el texto."}},
+})
+_page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (
+    "Ejecuta `function()` en segundo plano y entrega el resultado a `then(resultado)` en el hilo de la "
+    "interfaz. `function` puede ser normal (corre en un hilo) o `async def` (corre en el loop de asyncio de "
+    "Pyzed). Si devuelve un generador (normal o async), `then` se llama con cada valor. También acepta una "
+    "corrutina o un generador ya creados (`fetch(url)` en lugar de `fetch`). Sin `then`, los resultados van a "
+    "`update`. Si `function` lanza, se imprime el error."
+)
+_section("command", "Ventanas y portapapeles", {
+    "pyzed.Command.open_window": {"desc": "Abre una ventana nueva para esa instancia de `pz.Window`.", "params": {"window": "La ventana."}},
+    "pyzed.Command.close_window": {"desc": "Cierra la ventana.", "params": {"window": _win}},
+    "pyzed.Command.drag_window": {"desc": "Empieza a mover la ventana con el ratón (úsalo al pulsar una barra de título propia).", "params": {"window": _win}},
+    "pyzed.Command.minimize_window": {"desc": "Minimiza la ventana.", "params": {"window": _win}},
+    "pyzed.Command.toggle_maximize_window": {"desc": "Maximiza la ventana o la restaura si ya lo está.", "params": {"window": _win}},
+    "pyzed.Command.set_fullscreen": {"desc": "Pone o quita la pantalla completa.", "params": {"fullscreen": "`True` para pantalla completa.", "window": _win}},
+    "pyzed.Command.resize_window": {"desc": "Cambia el tamaño de la ventana (píxeles lógicos).", "params": {"width": "Ancho.", "height": "Alto.", "window": _win}},
+    "pyzed.Command.move_window": {"desc": "Mueve la ventana a una posición de la pantalla.", "params": {"x": "Posición horizontal.", "y": "Posición vertical.", "window": _win}},
+    "pyzed.Command.focus_window": {"desc": "Trae la ventana al frente y le da el foco.", "params": {"window": _win}},
+})
+
+# -- Widgets ----------------------------------------------------------------------
+_w = _page("widgets")["sections"]
+dict(_w)["Layout"].update({
+    "pyzed.grid": {
+        "desc": "Coloca los hijos en una rejilla con un número fijo de `columns`, o tantas columnas de como mucho `max_width` como quepan.",
+        "params": {"columns": "Número de columnas.", "height": "Alto de cada fila.", "aspect_ratio": "Mantiene las celdas en esta proporción ancho/alto."},
+        "example": "pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)",
+    },
+    "pyzed.split": {
+        "desc": "Dos paneles con un divisor que se arrastra. Para el estilo del tema usa `ui.split`.",
+        "params": {
+            "first": "Primer panel.", "second": "Segundo panel.",
+            "ratio": "Proporción del primer panel (0–1).",
+            "on_resize": "Callable que recibe la nueva proporción mientras se arrastra.",
+            "vertical": "Apila los paneles arriba/abajo.",
+            "min_size": "Tamaño mínimo del primer panel.", "min_size_second": "Tamaño mínimo del segundo panel.",
+            "color": "Color del divisor.", "hover_color": "Color del divisor al pasar el ratón o arrastrar.",
+            "thickness": "Grosor de la línea.",
+        },
+    },
+    "pyzed.pin": {
+        "desc": "Coloca `content` en `(x, y)` dentro de una caja. Úsalo en un `stack` para posicionar popovers y menús contextuales.",
+        "params": {"x": "Posición horizontal.", "y": "Posición vertical."},
+    },
+    "pyzed.responsive": {
+        "desc": "Construye su contenido con `function(ancho, alto)` usando el espacio realmente disponible, para que el layout se adapte (por ejemplo, ocultar una barra lateral si la ventana es estrecha).",
+        "params": {"function": "Función que recibe `(ancho, alto)` y devuelve un widget."},
+    },
+})
+_section("widgets", "Imágenes y contenido", {
+    "pyzed.image": {
+        "desc": "Una imagen de mapa de bits (PNG, JPEG, GIF, BMP, WebP…) desde una ruta o `bytes`, o píxeles RGBA crudos.",
+        "params": {"radius": "Radio de las esquinas.", "scale": "Escala.", "size": "`(ancho, alto)` cuando `source` son píxeles RGBA crudos."},
+        "example": 'pz.image("foto.jpg", width=320, content_fit="cover", radius=8)',
+    },
+    "pyzed.image_viewer": {
+        "desc": "Una imagen que se puede desplazar (arrastrando) y ampliar (rueda del ratón), como el visor de Iced.",
+        "params": {"min_scale": "Zoom mínimo.", "max_scale": "Zoom máximo.", "scale_step": "Cuánto cambia el zoom por paso de rueda.", "size": "`(ancho, alto)` para píxeles RGBA crudos."},
+    },
+    "pyzed.markdown": {
+        "desc": "Renderiza Markdown (títulos, listas, bloques de código, citas, tablas, enlaces…). Para los colores del tema usa `ui.markdown`.",
+        "params": {"source": "El texto Markdown.", "link_color": "Color de los enlaces.", "code_color": "Color del código.", "code_bg": "Fondo del código.", "on_link": "Callable que recibe la URL al pulsar un enlace."},
+    },
+    "pyzed.rich_text": {
+        "desc": "Texto hecho de fragmentos con estilos distintos. Los textos sueltos son fragmentos sin estilo.",
+        "params": {"spans": "Lista de `span(...)` o textos.", "line_height": "Alto de línea."},
+        "example": 'pz.rich_text(["Pulsa ", pz.span("aquí", color="#74ade8", underline=True, link=self.abrir), " para abrir."])',
+    },
+    "pyzed.span": {
+        "desc": "Un fragmento con estilo para `rich_text`. Con `link`, al pulsarlo se envía (o se llama) ese valor.",
+        "params": {"text": "El texto.", "radius": "Radio del fondo.", "underline": "Subrayado.", "strikethrough": "Tachado.", "link": "Mensaje o callable al pulsarlo."},
+    },
+    "pyzed.Span": {"desc": "El tipo de los fragmentos que crea `pz.span`.", "no_signature": True},
+    "pyzed.qr_code": {
+        "desc": "Un código QR que codifica `data`.",
+        "params": {"data": "El texto o URL a codificar.", "cell_size": "Tamaño de cada módulo en píxeles."},
+    },
+    "pyzed.canvas": {
+        "desc": "Una superficie de dibujo 2D. `shapes` es una lista creada con [`pyzed.draw`](/pyzed/reference/draw/). Los callbacks del ratón reciben coordenadas relativas al canvas. Con un `id`, la geometría se cachea entre frames y solo se recalcula cuando cambian las formas. Ver la guía de [dibujo con canvas](/pyzed/guides/canvas/).",
+        "params": {
+            "shapes": "Lista de formas de `pyzed.draw` (se aceptan listas anidadas).",
+            "id": "Activa la caché de geometría.",
+            "on_press": "Callable que recibe `(x, y)` al pulsar.",
+            "on_release": "Callable que recibe `(x, y)` al soltar.",
+            "on_right_press": "Callable que recibe `(x, y)` con clic derecho.",
+            "on_scroll": "Callable que recibe `(dx, dy)` en líneas al usar la rueda.",
+            "cursor": "Cursor del ratón (`\"crosshair\"`, `\"pointer\"`…).",
+        },
+    },
+}, before="Interacción")
+dict(_w)["Controles"].update({
+    "pyzed.vertical_slider": {"desc": "Un deslizador vertical (`slider(..., vertical=True)`).", "params": {"min": "Mínimo.", "max": "Máximo.", "kwargs": "Los de `slider`."}},
+    "pyzed.pick_list": {
+        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el estilo de Zed usa `ui.select`.",
+        "params": {
+            "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
+            "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
+            "placeholder_color": "Color del placeholder.", "handle_color": "Color de la flecha.",
+            "menu_bg": "Fondo del menú.", "menu_color": "Texto del menú.", "menu_border_color": "Borde del menú.",
+            "selected_bg": "Fondo de la opción resaltada.", "selected_color": "Texto de la opción resaltada.",
+        },
+    },
+    "pyzed.radio": {
+        "desc": "Un botón de radio. Agrupa varios tú mismo (o usa `ui.radio_group`); `on_select` se envía al pulsarlo.",
+        "params": {"selected": "Si está marcado.", "on_select": "Mensaje o callable al pulsarlo.", "spacing": "Separación entre el círculo y el texto."},
+    },
+})
+dict(_w)["Interacción"]["pyzed.mouse_area"]["params"]["on_scroll"] = "Callable que recibe `(dx, dy)` en líneas al usar la rueda."
+dict(_w)["Layout"]["pyzed.scrollable"]["params"]["on_scroll"] = "Callable que recibe un dict con `x`, `y`, `relative_x`, `relative_y`, `width`, `height`, `content_width` y `content_height`."
+dict(_w)["Controles"]["pyzed.slider"]["params"]["on_release"] = "Se envía al soltar el tirador."
+
+# -- UI -----------------------------------------------------------------------------
+_section("ui", "Controles", {
+    "pyzed.ui.select": {
+        "desc": "Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums o dataclasses.",
+        "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.'},
+    },
+    "pyzed.ui.radio_group": {
+        "desc": "Opciones mutuamente excluyentes como botones de radio.",
+        "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna."},
+    },
+    "pyzed.ui.number_field": {
+        "desc": "Un campo numérico con botones −/+ (el `NumericStepper` de Zed). `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
+        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…)."},
+    },
+    "pyzed.ui.split_button": {
+        "desc": "Un botón con una flecha aparte para más opciones (el `SplitButton` de Zed). `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
+        "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES},
+    },
+    "pyzed.ui.toggle_group": {
+        "desc": "Un control segmentado solo con iconos.",
+        "params": {"options": "Pares `(valor, nombre_de_icono)`.", "selected": "Valor actual."},
+    },
+    "pyzed.ui.chip": {
+        "desc": "Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.",
+        "params": {"content": "Texto.", "on_remove": "Muestra una ✕ que envía esto al pulsarla."},
+    },
+    "pyzed.ui.disclosure": {
+        "desc": "Una sección plegable: cabecera con flecha que muestra u oculta `content`. El estado abierto es tuyo: cámbialo en `on_toggle`.",
+        "params": {"title": "Título (texto o widget).", "content": "Contenido.", "open": "Si está abierta.", "on_toggle": "Mensaje o callable al pulsar la cabecera."},
+    },
+}, before="Listas, árbol y menús")
+_section("ui", "Datos y feedback", {
+    "pyzed.ui.callout": {
+        "desc": "Un aviso en línea (el `Callout`/`Banner` de Zed).",
+        "params": {"title": "Título (texto o widget).", "tint": '`"info"`, `"success"`, `"warning"`, `"error"` o `"hint"`: elige el color y el icono.', "on_dismiss": "Añade un botón de cerrar."},
+    },
+    "pyzed.ui.empty_state": {
+        "desc": "Un marcador centrado para listas vacías, búsquedas sin resultados, etc.",
+        "params": {"title": "Título."},
+    },
+    "pyzed.ui.settings_group": {
+        "desc": "Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de ajustes de Zed).",
+        "params": {"title": "Título del grupo.", "rows": "Las filas (normalmente `ui.field`)."},
+    },
+    "pyzed.ui.Column": {
+        "desc": 'Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o una función de la fila; `render` (opcional) convierte el valor en un widget. `width` es `"fill"`, un número o `("fill", 2)`.',
+        "params": {"title": "Encabezado (y nombre para ordenar).", "key": "Cómo obtener el valor de cada fila.", "align": '`"start"`, `"center"` o `"end"`.', "render": "Función valor → widget.", "sortable": "Si el encabezado se puede pulsar para ordenar."},
+    },
+    "pyzed.ui.table": {
+        "desc": "Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado.",
+        "params": {
+            "columns": "`ui.Column` o claves simples.", "rows": "Dicts u objetos.", "sort_by": "Título de la columna por la que se ordena.",
+            "descending": "Orden descendente.", "on_sort": "Callable que recibe el título pulsado.", "on_row_press": "Callable que recibe la fila pulsada.",
+            "selected": "La fila resaltada.", "striped": "Filas alternas sombreadas.", "row_height": "Alto de cada fila.",
+        },
+    },
+    "pyzed.ui.stat": {
+        "desc": "Un número de panel: título, valor grande, variación opcional (`+4.2%`) y sparkline.",
+        "params": {"title": "Título.", "delta": "Variación en %; verde si es positiva, roja si no.", "trend": "Valores para la sparkline."},
+    },
+    "pyzed.ui.sparkline": {
+        "desc": "Un gráfico de línea diminuto para tendencias.",
+        "params": {"values": "Valores.", "fill": "Rellena el área bajo la línea."},
+    },
+    "pyzed.ui.bar_chart": {
+        "desc": "Un gráfico de barras vertical con etiquetas opcionales.",
+        "params": {"values": "Valores.", "labels": "Etiquetas bajo cada barra."},
+    },
+    "pyzed.ui.donut": {
+        "desc": "Un gráfico de anillo; `label` se dibuja en el centro.",
+        "params": {"values": "Valores.", "colors": "Colores (por defecto, los del tema).", "thickness": "Grosor del anillo.", "label": "Texto central."},
+    },
+    "pyzed.ui.spinner": {
+        "desc": "Un arco que gira para estados de carga. Su ángulo sale del reloj, así que mantén una suscripción `pz.every(1/30, ...)` activa mientras se muestra.",
+        "params": {"speed": "Vueltas por segundo."},
+    },
+    "pyzed.ui.count_badge": {
+        "desc": "Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de `max`.",
+        "params": {"count": "El número.", "max": "Máximo antes de mostrar `N+`."},
+    },
+    "pyzed.ui.facepile": {
+        "desc": "Avatares superpuestos de colaboradores, como en la barra de título de Zed. Los que pasan de `max_shown` se agrupan en `+N`.",
+        "params": {"people": "Iniciales o nombres.", "overlap": "Solapamiento en píxeles.", "max_shown": "Cuántos mostrar."},
+    },
+    "pyzed.ui.diff_stat": {
+        "desc": "`+12 −3` con bloques de colores al estilo de GitHub.",
+        "params": {"added": "Líneas añadidas.", "removed": "Líneas eliminadas.", "blocks": "Número de bloques."},
+    },
+    "pyzed.ui.keybinding_hint": {
+        "desc": "Una pista atenuada como «Abrir archivo Ctrl P» para pies y estados vacíos.",
+        "params": {"text": "Texto."},
+    },
+    "pyzed.ui.markdown": {
+        "desc": "`pz.markdown` con los colores de texto, enlaces y código del tema.",
+        "params": {"source": "El texto Markdown.", "on_link": "Callable que recibe la URL al pulsar un enlace."},
+    },
+    "pyzed.ui.split": {
+        "desc": "`pz.split` con el divisor del color de borde del tema (acento al arrastrarlo).",
+        "params": {"first": "Primer panel.", "second": "Segundo panel.", "ratio": "Proporción del primero (0–1).", "on_resize": "Callable que recibe la nueva proporción.", "min_size": "Tamaño mínimo de cada panel.", "kwargs": "Los de `pz.split`."},
+    },
+}, before="Listas, árbol y menús")
+dict(_page("ui")["sections"])["Overlays"]["pyzed.ui.popover"] = {
+    "desc": "Muestra `content` (un `ui.menu`, una tarjeta…) sobre `base` en `(x, y)`. Hacer clic en cualquier otro sitio llama a `on_dismiss`. Para un menú de clic derecho, guarda la posición del ratón con `mouse_area(on_move=...)` y abre el popover desde `on_right_press` (ver `examples/context_menu.py`).",
+    "params": {"base": "La interfaz de debajo.", "content": "Lo que flota (o `None`).", "x": "Posición horizontal.", "y": "Posición vertical."},
+}
+
+# -- Theme ------------------------------------------------------------------------------
+_t = _page("theme")
+_t["sections"][0][1].update({
+    "pyzed.Theme.with_accent": {"desc": "Una copia con otro color de acento y todo lo que depende de él (foco, selección, enlaces, botones principales, texto sobre acento).", "params": {"accent": "El color."}},
+    "pyzed.Theme.generate": {
+        "desc": "Crea un tema completo a partir de unos pocos colores. Superficies, bordes, estados de hover y textos atenuados se mezclan a partir de `background` y `text`; la apariencia se deduce del brillo del fondo si no se indica.",
+        "params": {"name": "Nombre.", "background": "Color del editor/fondo.", "text": "Color del texto.", "accent": "Color de acento.", "appearance": '`"dark"` o `"light"`.', "error": "Color de error.", "warning": "Color de aviso.", "success": "Color de éxito.", "syntax": "Colores de sintaxis extra.", "radius": "Radio de las esquinas."},
+        "example": 'pz.Theme.generate("Propio", background="#1b1d23", text="#e6e6e6", accent="#ff8a65")',
+    },
+    "pyzed.Theme.from_zed": {
+        "desc": "Lee un tema de un archivo de familia de temas de Zed (`.json`) o un dict. Una familia suele tener varios (Ayu Dark/Light/Mirage); `name` elige uno (por defecto, el primero).",
+        "params": {"source": "Ruta, texto JSON o dict.", "name": "Nombre del tema dentro de la familia."},
+    },
+    "pyzed.Theme.to_dict": {"desc": "Un dict apto para JSON; `Theme.from_dict` lo vuelve a leer."},
+    "pyzed.Theme.from_dict": {"desc": "Crea un tema a partir de `to_dict`. Los tokens que falten salen de `base` (One Dark u One Light según `appearance`).", "params": {"data": "Los tokens.", "base": "Tema base."}},
+    "pyzed.Theme.save": {"desc": "Guarda el tema como JSON (formato propio de Pyzed).", "params": {"path": "Ruta del archivo."}},
+    "pyzed.Theme.load": {"desc": "Lee un tema escrito con `save` (para temas de Zed usa `from_zed`).", "params": {"path": "Ruta del archivo."}},
+})
+dict(_t["sections"])["Temas incluidos"].update({
+    "pyzed.themes.names": {"desc": "Nombres de todos los temas registrados."},
+    "pyzed.themes.get": {"desc": "Busca un tema por nombre (sin distinguir mayúsculas). Lanza `KeyError` si no existe.", "params": {"name": "Nombre."}},
+    "pyzed.themes.register": {"desc": "Añade (o reemplaza) un tema para poder usarlo por su nombre.", "params": {"theme": "El tema."}},
+    "pyzed.themes.load_zed": {"desc": "Carga y registra todos los temas de un archivo de familia de Zed.", "params": {"source": "Ruta, texto JSON o dict."}},
+    "pyzed.themes.auto": {"desc": "Un tema que sigue el modo claro/oscuro del sistema.", "params": {"light": "Tema (o nombre) para modo claro.", "dark": "Tema (o nombre) para modo oscuro."}},
+    "pyzed.AutoTheme": {"desc": "Lo que devuelve `themes.auto`: un par `(light, dark)`. `pick(dark)` devuelve el que toca.", "no_signature": True},
+})
+_t["sections"][1][1]["pyzed.themes"]["desc"] = (
+    "Espacio de nombres con los temas incluidos (las familias One, Ayu y Gruvbox de Zed) y el registro de "
+    "temas. Los incluidos también están como atributos: `themes.ONE_DARK`, `themes.ONE_LIGHT`, "
+    "`themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
+)
+dict(_t["sections"])["Utilidades (pyzed.theme)"].update({
+    "pyzed.theme.resolve": {"desc": "Convierte un valor de `App.theme` (tema, nombre, `AutoTheme` o `None`) en un `Theme`.", "params": {"value": "El valor.", "dark": "Si el sistema está en modo oscuro."}},
+    "pyzed.theme.lighten": {"desc": "Aclara un color.", "params": {"color": "Color hex.", "amount": "Cantidad de 0 a 1."}},
+    "pyzed.theme.darken": {"desc": "Oscurece un color.", "params": {"color": "Color hex.", "amount": "Cantidad de 0 a 1."}},
+    "pyzed.theme.luminance": {"desc": "Luminancia relativa (WCAG) de un color, de 0 a 1.", "params": {"color": "Color hex."}},
+    "pyzed.theme.contrast": {"desc": "Relación de contraste WCAG entre dos colores (1 a 21).", "params": {"a": "Primer color.", "b": "Segundo color."}},
+    "pyzed.theme.readable_on": {"desc": "Devuelve `light` u `dark`, el que más contraste tenga sobre `background`.", "params": {"background": "Color de fondo.", "light": "Texto claro.", "dark": "Texto oscuro."}},
+})
+
+# -- Draw ---------------------------------------------------------------------------------
+_paint = {"fill": "Color de relleno.", "stroke": "Color del trazo.", "width": "Grosor del trazo.", "dash": "Patrón de guiones, p. ej. `[6, 4]`.", "cap": '`"round"`, `"square"` o `"butt"`: forma de los extremos.'}
+PAGES.append({
+    "slug": "draw",
+    "title": "Dibujo (pyzed.draw)",
+    "description": "Formas, texto y transformaciones para pz.canvas.",
+    "order": 7,
+    "intro": """
+        Las formas de `pyzed.draw` son diccionarios simples que se pasan a [`pz.canvas`](/pyzed/reference/widgets/#canvas).
+        Los ángulos van en grados y `y` crece hacia abajo. Ver la guía de [dibujo con canvas](/pyzed/guides/canvas/).
+
+        ```python
+        from pyzed import draw
+
+        pz.canvas([
+            draw.background("#1e2127"),
+            draw.circle(100, 100, 40, fill="#74ade8"),
+            draw.text(100, 180, "Hola", color="#dce0e5", align_x="center"),
+        ], width=200, height=200)
+        ```
+    """,
+    "sections": [
+        ("Formas", {
+            "pyzed.draw.background": {"desc": "Rellena todo el canvas.", "params": {"color": "Color."}},
+            "pyzed.draw.rect": {"desc": "Un rectángulo, relleno y/o con trazo.", "params": {**_paint, "x": "Izquierda.", "y": "Arriba.", "w": "Ancho.", "h": "Alto.", "radius": "Radio de las esquinas."}},
+            "pyzed.draw.rects": {"desc": "Muchos rectángulos rellenos de un color en una sola forma (rápido para rejillas y barras).", "params": {"items": "Tuplas `(x, y, w, h)`.", "fill": "Color."}},
+            "pyzed.draw.circle": {"desc": "Un círculo centrado en `(x, y)`.", "params": {**_paint, "x": "Centro x.", "y": "Centro y.", "r": "Radio."}},
+            "pyzed.draw.line": {"desc": "Una línea recta.", "params": {**_paint, "x1": "Inicio x.", "y1": "Inicio y.", "x2": "Fin x.", "y2": "Fin y."}},
+            "pyzed.draw.polyline": {"desc": "Une `points` con líneas rectas (`closed=True` cierra la figura).", "params": {**_paint, "points": "Lista de `(x, y)`.", "closed": "Cierra la figura."}},
+            "pyzed.draw.polygon": {"desc": "Una figura cerrada que pasa por `points`.", "params": {**_paint, "points": "Lista de `(x, y)`."}},
+            "pyzed.draw.arc": {"desc": "Un arco de circunferencia de `start` a `end` grados (0 = las 3 en punto, sentido horario). `pie=True` lo cierra por el centro (porción de tarta).", "params": {**_paint, "x": "Centro x.", "y": "Centro y.", "r": "Radio.", "start": "Ángulo inicial.", "end": "Ángulo final.", "pie": "Cierra por el centro."}},
+            "pyzed.draw.path": {
+                "desc": "Un trazado libre con operaciones tipo SVG: `(\"M\", x, y)` mover, `(\"L\", x, y)` línea, `(\"Q\", cx, cy, x, y)` curva cuadrática, `(\"C\", c1x, c1y, c2x, c2y, x, y)` curva cúbica, `(\"A\", cx, cy, r, inicio, fin)` arco, `(\"Z\",)` cerrar.",
+                "params": {**_paint, "ops": "Lista de operaciones."},
+            },
+            "pyzed.draw.text": {"desc": "Texto anclado en `(x, y)`; `align_x`/`align_y` eligen qué lado del texto queda en ese punto.", "params": {"x": "Posición x.", "y": "Posición y.", "content": "El texto.", "color": "Color.", "size": "Tamaño.", "font": "Familia.", "weight": "Peso.", "align_x": '`"start"`, `"center"` o `"end"`.', "align_y": '`"top"`, `"center"` o `"bottom"`.'}},
+        }),
+        ("Transformaciones", {
+            "pyzed.draw.translate": {"desc": "Desplaza las formas que vienen después.", "params": {"x": "Horizontal.", "y": "Vertical."}},
+            "pyzed.draw.rotate": {"desc": "Gira las formas que vienen después alrededor del origen actual.", "params": {"degrees": "Grados."}},
+            "pyzed.draw.scale": {"desc": "Escala las formas que vienen después.", "params": {"x": "Factor horizontal.", "y": "Factor vertical (por defecto, igual que `x`)."}},
+            "pyzed.draw.save": {"desc": "Guarda la transformación actual (úsalo con `restore`)."},
+            "pyzed.draw.restore": {"desc": "Vuelve a la transformación guardada por el último `save`."},
+            "pyzed.draw.group": {"desc": "Dibuja `shapes` desplazadas, giradas y escaladas sin afectar a las formas siguientes. Devuelve una lista: expándela con `*`.", "params": {"shapes": "Las formas.", "x": "Desplazamiento x.", "y": "Desplazamiento y.", "rotation": "Grados.", "scale_by": "Escala."}},
+        }),
+    ],
+})
+for p in PAGES:
+    if p["slug"] == "icons":
+        p["order"] = 8

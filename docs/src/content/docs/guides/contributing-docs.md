@@ -2,7 +2,7 @@
 title: Editar la documentación
 description: Cómo está organizada esta web, cómo previsualizarla y cómo regenerar la referencia y las imágenes.
 sidebar:
-  order: 9
+  order: 12
 ---
 
 La web está hecha con [Astro Starlight](https://starlight.astro.build) y vive en `docs/`.
@@ -16,6 +16,7 @@ docs/
 │   ├── api_docs.py               # descripciones en español de la API
 │   ├── gen_api.py                # genera src/content/docs/reference/*.md
 │   ├── component_shots.py        # genera src/assets/components/*.png
+│   ├── example_shots.py          # genera capturas de ejemplos y tutoriales
 │   └── sync-changelog.mjs        # CHANGELOG.md → página de novedades + versión estable
 └── src/content/docs/             # las páginas (Markdown / MDX)
 ```
@@ -36,6 +37,7 @@ Necesitan Pyzed instalado (`maturin develop --release`):
 python docs/scripts/gen_api.py            # referencia de la API
 python docs/scripts/gen_api.py --check    # falla si hay funciones públicas sin documentar
 python docs/scripts/component_shots.py    # ilustraciones de componentes
+python docs/scripts/example_shots.py      # capturas de ejemplos y tutoriales
 python examples/screenshots.py            # capturas grandes
 ```
 

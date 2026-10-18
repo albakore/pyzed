@@ -19,9 +19,13 @@ from pyzed import Command
 | `Command.set_editor_text(id, texto)` | Reemplaza el texto de un editor. |
 | `Command.set_editor_cursor(id, línea, col)` | Mueve el cursor de un editor (desde 1). |
 | `Command.scroll_to_end(id)` | Desplaza un `scrollable` al final. |
+| `Command.scroll_to(id, x, y)` | Desplaza un `scrollable` a una posición en píxeles. |
+| `Command.copy(texto)` | Copia al portapapeles. |
+| `Command.paste(then)` | Lee el portapapeles y llama a `then(texto)`. |
 | `Command.message(msg)` | Envía `msg` a `update` en el siguiente ciclo. |
-| `Command.perform(fn, then)` | Ejecuta `fn()` en un hilo y entrega el resultado a `then`. |
+| `Command.perform(fn, then)` | Ejecuta `fn()` en segundo plano (un hilo, o el loop de asyncio si es `async def`) y entrega el resultado a `then`. |
 | `Command.batch([...])` | Varios a la vez (también vale devolver una lista). |
+| `Command.open_window(w)`, `close_window`, `drag_window`… | Controlan ventanas. Ver [varias ventanas](/pyzed/guides/windows/#comandos-de-ventana). |
 
 ## Enfocar un campo
 
@@ -36,8 +40,11 @@ def view(self):
 
 ## Trabajo en segundo plano
 
-`Command.perform` ejecuta una función lenta en otro hilo para no congelar la interfaz y, al
-terminar, llama a `then(resultado)` en el hilo de la interfaz:
+`Command.perform` ejecuta una función lenta en segundo plano para no congelar la interfaz y, al
+terminar, llama a `then(resultado)` en el hilo de la interfaz. Si la función es `async def`, corre
+en el loop de asyncio de Pyzed; si devuelve un generador, `then` se llama con cada valor. Para
+código async también puedes devolver la corrutina directamente: ver
+[async y suscripciones](/pyzed/guides/async/).
 
 ```python
 import json

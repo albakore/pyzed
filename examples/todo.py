@@ -57,7 +57,7 @@ class Todo(pz.App):
         if combo == "ctrl-l":
             return self.clear_done()
         if combo == "ctrl-t":
-            self.theme = pz.themes.ONE_LIGHT if self.theme.is_dark else pz.themes.ONE_DARK
+            self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
 
     # -- view ----------------------------------------------------------------
     def visible(self):
@@ -115,7 +115,7 @@ class Todo(pz.App):
             width="fill",
             height="fill",
             align_x="center",
-            bg=self.theme.editor,
+            bg=self.resolved_theme().editor,
         )
 
 
