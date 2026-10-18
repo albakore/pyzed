@@ -120,13 +120,14 @@ def _pyzed_project(folder: Path) -> Optional[Environment]:
         proj = _project.find(folder) if hasattr(_project, "find") else None
         if proj is None:
             return None
-        python = proj.python_executable()
-        venv = None
-        if python:
-            python = Path(python)
-            venv = python.parent.parent if python.parent.name in ("bin", "Scripts") else None
         root = Path(proj.root)
-        paths = [Path(p) for p in proj.paths() if Path(p) != root and "site-packages" not in str(p)]
+        venv = Path(proj.venv) if getattr(proj, "venv", None) else None
+        if venv is None or not (venv / "pyvenv.cfg").exists():
+            python = proj.python_executable()
+            venv = Path(python).parent.parent if python else None
+        paths = [Path(p) for p in proj.paths() if Path(p) != root]
+        if folder != root and folder not in paths:
+            paths.insert(0, folder)
         return Environment(root=root, venv=venv, extra_paths=paths)
     except Exception:  # noqa: BLE001 - fall back to our own detection
         return None
