@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from . import _core
+from . import hot_reload as _hot_reload
 from . import theme as _theme
 
 ThemeLike = Union[_theme.Theme, _theme.AutoTheme, str, None]
@@ -99,6 +100,8 @@ class Window:
 
     # -- hooks used by the native runtime ---------------------------------
     def __pyzed_view__(self):
+        _hot_reload.note_window(self)
+        _hot_reload.check()
         _theme.use(self.resolved_theme())
         return self.view()
 
@@ -136,20 +139,40 @@ class App(Window):
         return []
 
     # -- conveniences -------------------------------------------------------
-    def run(self) -> None:
-        """Opens the window and blocks until the app exits."""
-        _core.run(self)
+    def run(self, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> None:
+        """Opens the window and blocks until the app exits.
+
+        ``reload=True`` turns on hot reload (see ``pyzed.hot_reload``): saving a file of
+        your project updates the running window and keeps its state. ``watch`` adds
+        folders or files to the ones watched. When ``reload`` is ``None`` the
+        ``PYZED_RELOAD`` environment variable decides (``pyzed dev`` sets it).
+        """
+        run(self, reload=reload, watch=watch)
 
     def screenshot(self, path, *, size=None, scale: float = 2.0, wait: float = 0.1) -> None:
         """Renders the current state off-screen (no GPU or display needed) into a PNG."""
         _core.screenshot(self, str(path), size=size, scale=scale, wait=wait)
 
 
-def run(app) -> None:
-    """Runs an ``App`` instance (or class, which is instantiated with no arguments)."""
+def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> None:
+    """Runs an ``App`` instance (or class, which is instantiated with no arguments).
+
+    ``reload=True`` turns on hot reload: the window picks up your code changes each time
+    you save a file, keeping the app's state. ``watch`` adds folders or files to watch.
+    ``None`` defers to the ``PYZED_RELOAD`` environment variable (set by ``pyzed dev``).
+    """
+    if _hot_reload.is_reloading():
+        return  # the main script is being re-executed by a reload; the app already runs
     if isinstance(app, type):
         app = app()
-    _core.run(app)
+    if reload is None:
+        reload = _hot_reload.enabled_by_env()
+    reloader = _hot_reload.enable(app, [*watch, *_hot_reload.watched_by_env()]) if reload else None
+    try:
+        _core.run(app)
+    finally:
+        if reloader is not None:
+            reloader.stop()
 
 
 def screenshot(app, path, *, size=None, scale: float = 2.0, wait: float = 0.1) -> None:

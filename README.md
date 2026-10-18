@@ -93,6 +93,41 @@ cd mi-app && python main.py
 pyzed icons folder    # busca nombres de iconos
 ```
 
+### Hot reload
+
+```bash
+pyzed dev main.py     # como `python main.py`, pero cada vez que guardas se actualiza la ventana
+```
+
+También con `pz.run(MiApp, reload=True)` o la variable `PYZED_RELOAD=1`. Al guardar cualquier
+`.py` del proyecto, la ventana muestra el cambio sin reiniciarse y **conserva el estado** (los
+atributos de tu app). Si el código nuevo tiene un error, la ventana lo muestra hasta que guardas
+la corrección.
+
+| Antes | Después de guardar | Con un error |
+| --- | --- | --- |
+| ![Antes](docs/screenshots/hot-reload-before.png) | ![Después](docs/screenshots/hot-reload-after.png) | ![Error](docs/screenshots/hot-reload-error.png) |
+
+```mermaid
+sequenceDiagram
+    participant Editor as Tu editor
+    participant Watcher as Hilo vigilante
+    participant UI as Hilo de la UI (Iced)
+    participant App as Tu App
+    Editor->>Watcher: guardas cards.py
+    Watcher->>UI: pz.post(recargar)
+    UI->>UI: re-ejecuta cards.py y los módulos que lo importan
+    UI->>App: obj.__class__ = clase nueva (mismo estado)
+    UI->>App: on_reload() si existe
+    UI->>App: view()
+    App-->>UI: árbol de widgets nuevo
+```
+
+Los atributos que crea `__init__` no se vuelven a crear: dale un valor por defecto de clase a los
+atributos nuevos, o define `on_reload(self)` para migrar el estado. Ver
+[`examples/hot_reload/`](examples/hot_reload) y `pyzed.hot_reload` para vigilar otros archivos
+(`Reloader.watch(ruta, callback)`).
+
 ## Conceptos
 
 | Concepto | Cómo funciona |
@@ -169,6 +204,7 @@ Cambiar `self.theme` en `update` cambia el estilo de toda la interfaz al momento
 | [`examples/mini_editor.py`](examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas (árbol, pestañas, editor, paleta). |
 | [`examples/gallery.py`](examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. |
 | [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor tipo Zed sobre una carpeta real: abrir, editar y guardar (`ctrl-s`), paleta (`ctrl-shift-p`), buscador (`ctrl-p`), docks (`ctrl-b`, `ctrl-j`, `ctrl-alt-b`) y temas. El panel de terminal muestra una salida de ejemplo; no ejecuta una shell. |
+| [`examples/hot_reload/`](examples/hot_reload) | Hot reload con dos módulos: ejecútalo con `pyzed dev examples/hot_reload/main.py` y edítalo. |
 | [`examples/tutorial/`](examples/tutorial) | Tutorial en cinco pasos, de una ventana vacía a una app de notas. |
 | [`examples/todos.py`](examples/todos.py) | Lista de tareas con edición, filtros y guardado (demo `todos` de Iced). |
 | [`examples/game_of_life.py`](examples/game_of_life.py) | Juego de la vida en un `canvas` con `pz.every`. |

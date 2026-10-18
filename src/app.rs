@@ -766,14 +766,11 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
     })
 }
 
-fn error_view<'a>(message: String) -> Element<'a, Message> {
+fn error_view<'a>(title: &'static str, message: String) -> Element<'a, Message> {
     let red = Color::from_rgb8(0xd0, 0x72, 0x77);
     container(
         column![
-            text("Python error in view()")
-                .size(18)
-                .color(red)
-                .font(Font::with_name(SANS)),
+            text(title).size(18).color(red).font(Font::with_name(SANS)),
             scrollable(
                 text(message)
                     .size(13)
@@ -819,8 +816,18 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
         match root {
             Ok(root) => render::build(py, &root, Ctx::new(&state.caches)),
             Err(err) => {
-                err.print(py);
-                error_view(format_error(py, &err))
+                let reload_failed = err
+                    .get_type(py)
+                    .name()
+                    .is_ok_and(|name| name == "ReloadError");
+                if reload_failed {
+                    // The reloader already printed the traceback; show it as is.
+                    let message = err.value(py).to_string();
+                    error_view("Reload failed: fix the code and save again", message)
+                } else {
+                    err.print(py);
+                    error_view("Python error in view()", format_error(py, &err))
+                }
             }
         }
     });
