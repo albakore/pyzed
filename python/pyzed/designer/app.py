@@ -22,7 +22,8 @@ from ..icons import icon as _icon
 from ..theme import themes
 from . import code as _code
 from . import components as _components
-from . import geometry, panels, project_panel, surface
+from . import code_panel, geometry, panels, project_panel, surface
+from .code_panel import CodeAssist
 from .components import Prop
 from .document import Document
 from .model import SUFFIX
@@ -61,7 +62,8 @@ class Designer(App):
     size = (1440, 900)
     min_size = (960, 600)
 
-    def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> None:
+    def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
+                 language_servers: bool = True) -> None:
         if path is not None and Path(path).exists():
             self.doc = Document.open(path)
         else:
@@ -90,6 +92,7 @@ class Designer(App):
         self.last_handler: Optional[str] = None
         self.code_error: Optional[str] = None
         self.code_revision = 0
+        self.assist = CodeAssist(self, servers=language_servers)
         # dialogs, messages and the running preview
         self.dialog: Optional[str] = None
         self.dialog_path = ""
@@ -455,6 +458,7 @@ class Designer(App):
         self.code_error = None
         self.right_tab = "events"
         self.focus = "code"
+        self.assist.opened()
 
     def unwire(self, target: Optional[str], event: str) -> None:
         _, events = self.doc.owner(target)
@@ -463,10 +467,24 @@ class Designer(App):
             self.close_code()
         self.doc.unwire(target, event, delete_code=True)
 
+    @property
+    def editor_id(self) -> str:
+        """The id of the code editor's buffer (a new one for each handler opened)."""
+        handler = self.editing[0] if self.editing else ""
+        return f"code:{handler}:{self.code_revision}"
+
     def set_code_buffer(self, text: str) -> None:
         if self.editing is not None:
             self.editing = (self.editing[0], text)
             self.focus = "code"
+            self.assist.changed(text)
+
+    def set_code_cursor(self, line: int, column: int) -> Any:
+        self.focus = "code"
+        return self.assist.moved(line, column)
+
+    def open_editor_settings(self) -> None:
+        self.dialog = "editor_settings"
 
     def _flush_code(self) -> bool:
         """Applies the open editor to the document; ``False`` (and an error shown) if it does not parse."""
@@ -486,9 +504,16 @@ class Designer(App):
         self.code_error = None
         return True
 
-    def apply_code(self) -> None:
-        if self._flush_code():
-            self.notify("Code applied", kind="success", seconds=1.5)
+    def apply_code(self) -> Any:
+        if self.editing is None or not self._flush_code():
+            return None
+        self.notify("Code applied", kind="success", seconds=1.5)
+        formatted = self.assist.format(self.editing[1])
+        if formatted == self.editing[1]:
+            return None
+        self.set_code_buffer(formatted)
+        self._flush_code()
+        return _core.Command.set_editor_text(self.editor_id, formatted)
 
     def toggle_whole_file(self) -> None:
         if self.editing is None or not self._flush_code():
@@ -501,16 +526,19 @@ class Designer(App):
         else:
             self.editing = ("*", self.doc.code)
         self.code_revision += 1
+        self.assist.opened()
 
     def close_code(self) -> None:
         if self._flush_code():
             self.editing = None
+            self.assist.closed()
 
     def edit_whole_file(self) -> None:
         if self._flush_code():
             self.editing = ("*", self.doc.code)
             self.code_revision += 1
             self.focus = "code"
+            self.assist.opened()
 
     # -- files --------------------------------------------------------------
     def _guard(self, action: Callable[[], Any]) -> Any:
@@ -646,6 +674,10 @@ class Designer(App):
         }
         if combo in commands:
             return commands[combo]()
+        if self.focus == "code" and self.editing is not None and not self.dialog:
+            handled, result = self.assist.on_key(combo)
+            if handled:
+                return result
         if combo == "escape":
             if self.dialog:
                 return self.close_dialog()
@@ -708,7 +740,7 @@ class Designer(App):
                                                                  height="fill", bg=t.background)],
                               width="fill", height="fill")
         if self.editing is not None:
-            center = ui.split(center, _core.mouse_area(panels.code_panel(self, t), on_enter=self.focus_code),
+            center = ui.split(center, _core.mouse_area(code_panel.code_panel(self, t), on_enter=self.focus_code),
                               vertical=True, ratio=0.6, theme=t)
         body = ui.workspace(
             center,
@@ -825,6 +857,10 @@ class Designer(App):
                            selected=self.show_grid),
             ui.status_item("Snap", self.toggle("snap"), icon="magnet", selected=self.snap),
         ]
+        if self.editing is not None:
+            line, column = self.assist.cursor
+            end = [ui.status_item(f"Ln {line}, Col {column}", theme=t),
+                   *code_panel.server_status_items(self.assist, t, self.open_editor_settings), *end]
         return ui.status_bar(start, end, theme=t)
 
     def dialog_view(self, t) -> Any:
@@ -859,6 +895,8 @@ class Designer(App):
                     _core.container(_core.scrollable(_core.column(rows, width="fill")), height=260),
                 ], spacing=10),
                 title="Open form", on_close=self.close_dialog, width=520, theme=t)
+        if self.dialog == "editor_settings":
+            return code_panel.settings_dialog(self, t)
         return None
 
 

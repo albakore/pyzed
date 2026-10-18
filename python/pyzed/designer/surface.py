@@ -148,17 +148,19 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         on_right_press=d.close_menu,
         cursor="crosshair" if d.tool else None,
     )
+    # A soft outline instead of a blurred shadow: wgpu redraws blurred shadows of a scrolled
+    # layer over its content while a later layer (the code editor's completion list) is shown.
     frame = _core.container(
-        _core.column([_chrome(form.title, w, ft), client]),
-        border_color=t.border, border_width=1, radius=t.radius, clip=True,
-        shadow=(t.shadow, (0, 8), 24),
+        _core.container(_core.column([_chrome(form.title, w, ft), client]),
+                        border_color=t.border, border_width=1, radius=t.radius, clip=True),
+        padding=3, radius=t.radius + 3, border_color=alpha(t.shadow, 0.5), border_width=3,
     )
     # A size grip under the bottom-right corner resizes the form itself.
     grip = _core.mouse_area(
         _core.container(_icon("move-diagonal-2", size=12, color=t.icon_muted), width=16, height=16, center=True),
         on_press=d.press_form_grip, cursor="crosshair",
     )
-    sized = _core.column([frame, _core.row([_core.space(width=w - 4), grip])], spacing=0)
+    sized = _core.column([frame, _core.row([_core.space(width=w + 2), grip])], spacing=0)
     return _core.mouse_area(
         _core.scrollable(_core.container(sized, padding=MARGIN), direction="both", width="fill", height="fill"),
         on_release=d.release,

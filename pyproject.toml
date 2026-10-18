@@ -20,6 +20,10 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 
+[project.optional-dependencies]
+# Language servers for the designer's code editor (completion, diagnostics, code lens).
+designer = ["ty", "ruff"]
+
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"
 

@@ -236,6 +236,12 @@ pyzed run login.pzform      # ejecuta el formulario
 Cada formulario son dos archivos: `login.pzform` (diseño en JSON) y `login.py` (handlers en Python). Ejemplo en
 [`examples/designer`](examples/designer); guía completa en `docs/src/content/docs/guides/designer.md`.
 
+El editor de código del diseñador autocompleta con **ty** y muestra errores con **ruff** (`uv add --dev ty ruff`),
+usando el `.venv` de tu proyecto uv aunque la UI esté en su propia carpeta: iconos por tipo de símbolo con su
+documentación, errores en línea, code lens y una configuración propia (tema, espacios visibles, tabulación...).
+
+![Autocompletado en el editor de código](https://raw.githubusercontent.com/albakore/pyzed/main/docs/screenshots/designer-completion.png)
+
 ## Temas
 
 ```python
