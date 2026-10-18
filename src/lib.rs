@@ -2,6 +2,7 @@
 
 mod app;
 mod editor;
+mod events;
 mod extra;
 mod fonts;
 mod highlighter;

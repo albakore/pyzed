@@ -47,7 +47,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
 ### `run`
 
 ```python
-run(app)
+run(app, *, reload=None, watch=())
 ```
 
 Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.
@@ -55,6 +55,8 @@ Runs an app: opens the window and blocks until it is closed. Accepts the class o
 | Parameter | Description |
 | --- | --- |
 | `app` | An `App` instance (or the class, which is instantiated with no arguments). |
+| `reload` | Hot reload: saving a project file updates the running window and keeps its state. `None` follows `PYZED_RELOAD` (set by `pyzed dev`). |
+| `watch` | Extra folders or files to watch for hot reload. |
 
 ### `screenshot`
 
@@ -210,3 +212,74 @@ asyncio_loop()
 ```
 
 The asyncio loop (on a background thread) where Pyzed runs every coroutine. It starts the first time it is used.
+
+## Events and components
+
+### `on`
+
+```python
+on(widget, *, cursor=None, **handlers)
+```
+
+Attaches common event handlers to a widget; same as `widget.on(...)`. Events: `click`, `double_click`, `right_click`, `middle_click`, `mouse_down`, `mouse_up`, `mouse_enter`, `mouse_leave`, `mouse_move`, `scroll`, `drag_start`, `drag`, `drag_end`, `focus`, `blur`, `key_down`, `key_up`, `resize`. See [Events](/pyzed/guides/events/).
+
+| Parameter | Description |
+| --- | --- |
+| `widget` | The widget (a string is wrapped in a container). |
+| `cursor` | Mouse cursor over the widget, such as `"pointer"` or `"grab"`. |
+| `handlers` | `event=handler` pairs. A handler that takes an argument gets a `pz.Event`; a non-callable value is a message for `update`; `None` removes it. |
+
+```python
+pz.container(card, padding=12).on(click=self.select, drag=lambda e: self.move(e.dx, e.dy))
+```
+
+### `Event`
+
+```python
+class Event
+```
+
+What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.
+
+| Parameter | Description |
+| --- | --- |
+| `type` | Event name. |
+| `x` | Pointer x, relative to the widget. |
+| `y` | Pointer y, relative to the widget. |
+| `dx` | Horizontal scroll (lines) or drag movement. |
+| `dy` | Vertical scroll (lines) or drag movement. |
+| `width` | Widget width. |
+| `height` | Widget height. |
+| `button` | `"left"`, `"right"`, `"middle"`... |
+| `key` | Key combo, such as `"ctrl-s"`. |
+| `shift` | Shift held. |
+| `ctrl` | Control held. |
+| `alt` | Alt held. |
+| `logo` | Cmd/Windows key held. |
+| `value` | Value of a custom event. |
+| `source` | Component that emitted it. |
+
+### `Component`
+
+```python
+class Component
+```
+
+Base class for custom components, like React components: annotated class attributes are props, other attributes are state kept between renders, `render()` returns widgets and `events` declares custom events raised with `self.emit(name, value)`. Calling the class returns a widget. Components appear in the designer's toolbox. See [Custom components](/pyzed/guides/components/).
+
+| Parameter | Description |
+| --- | --- |
+| `args` | Props, in declaration order. |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `kwargs` | Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move. |
+
+```python
+class Rating(pz.Component):
+    value: int = 0
+    events = {"change": "A star was picked."}
+
+    def render(self):
+        return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
+
+Rating(value=3, on_change=lambda e: print(e.value))
+```

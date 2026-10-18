@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from . import _core
+from . import _platform
+from . import component as _component
 from . import hot_reload as _hot_reload
 from . import theme as _theme
 
@@ -103,7 +105,8 @@ class Window:
         _hot_reload.note_window(self)
         _hot_reload.check()
         _theme.use(self.resolved_theme())
-        return self.view()
+        with _component.render_pass(self):
+            return self.view()
 
     def __pyzed_palette__(self):
         return self.resolved_theme().palette()
@@ -168,6 +171,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     if reload is None:
         reload = _hot_reload.enabled_by_env()
     reloader = _hot_reload.enable(app, [*watch, *_hot_reload.watched_by_env()]) if reload else None
+    _platform.prepare()
     try:
         _core.run(app)
     finally:

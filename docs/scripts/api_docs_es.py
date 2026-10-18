@@ -1259,3 +1259,50 @@ PAGES.append({
 for p in PAGES:
     if p["slug"] == "icons":
         p["order"] = 8
+
+
+# -- Hot reload, eventos y componentes -----------------------------------------
+_page("app")["sections"][0][1]["pyzed.run"].setdefault("params", {}).update({
+    "reload": "Hot reload: al guardar un archivo del proyecto se actualiza la ventana sin perder el estado. `None` sigue a `PYZED_RELOAD` (lo define `pyzed dev`).",
+    "watch": "Carpetas o archivos extra a vigilar para el hot reload.",
+})
+_section("app", "Eventos y componentes", {
+    "pyzed.on": {
+        "desc": "Añade handlers de eventos comunes a un widget; igual que `widget.on(...)`. Eventos: `click`, `double_click`, `right_click`, `middle_click`, `mouse_down`, `mouse_up`, `mouse_enter`, `mouse_leave`, `mouse_move`, `scroll`, `drag_start`, `drag`, `drag_end`, `focus`, `blur`, `key_down`, `key_up`, `resize`. Ver [Eventos](/pyzed/es/guides/events/).",
+        "params": {
+            "widget": "El widget (un texto se envuelve en un container).",
+            "cursor": 'Cursor del ratón sobre el widget, como `"pointer"` o `"grab"`.',
+            "handlers": "Pares `evento=handler`. Un handler con un argumento recibe un `pz.Event`; un valor no invocable es un mensaje para `update`; `None` lo quita.",
+        },
+        "example": """
+            pz.container(tarjeta, padding=12).on(click=self.seleccionar, drag=lambda e: self.mover(e.dx, e.dy))
+        """,
+    },
+    "pyzed.Event": {
+        "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, y `value`/`source` en eventos propios.",
+    },
+    "pyzed.Component": {
+        "desc": "Clase base de los componentes propios, como en React: los atributos de clase anotados son props, los demás atributos son estado que se conserva entre renders, `render()` devuelve widgets y `events` declara eventos propios que se lanzan con `self.emit(nombre, valor)`. Llamar a la clase devuelve un widget. Aparecen en la biblioteca del diseñador. Ver [Componentes propios](/pyzed/es/guides/components/).",
+        "example": """
+            class Rating(pz.Component):
+                value: int = 0
+                events = {"change": "Se eligió una estrella."}
+
+                def render(self):
+                    return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
+
+            Rating(value=3, on_change=lambda e: print(e.value))
+        """,
+    },
+})
+_page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
+    "type": "Nombre del evento.", "x": "X del puntero, relativa al widget.", "y": "Y del puntero, relativa al widget.",
+    "dx": "Scroll horizontal (líneas) o movimiento del arrastre.", "dy": "Scroll vertical (líneas) o movimiento del arrastre.",
+    "width": "Ancho del widget.", "height": "Alto del widget.", "button": '`"left"`, `"right"`, `"middle"`...',
+    "key": 'Combinación de teclas, como `"ctrl-s"`.', "shift": "Shift pulsado.", "ctrl": "Control pulsado.", "alt": "Alt pulsado.",
+    "logo": "Tecla Cmd/Windows pulsada.", "value": "Valor de un evento propio.", "source": "Componente que lo emitió.",
+}
+_page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
+    "args": "Props, en el orden en que se declaran.",
+    "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes) y `key=` para conservar el estado cuando los elementos se mueven.",
+}

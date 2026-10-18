@@ -1259,3 +1259,50 @@ PAGES.append({
 for p in PAGES:
     if p["slug"] == "icons":
         p["order"] = 8
+
+
+# -- Hot reload, events and components ---------------------------------------
+_page("app")["sections"][0][1]["pyzed.run"].setdefault("params", {}).update({
+    "reload": "Hot reload: saving a project file updates the running window and keeps its state. `None` follows `PYZED_RELOAD` (set by `pyzed dev`).",
+    "watch": "Extra folders or files to watch for hot reload.",
+})
+_section("app", "Events and components", {
+    "pyzed.on": {
+        "desc": "Attaches common event handlers to a widget; same as `widget.on(...)`. Events: `click`, `double_click`, `right_click`, `middle_click`, `mouse_down`, `mouse_up`, `mouse_enter`, `mouse_leave`, `mouse_move`, `scroll`, `drag_start`, `drag`, `drag_end`, `focus`, `blur`, `key_down`, `key_up`, `resize`. See [Events](/pyzed/guides/events/).",
+        "params": {
+            "widget": "The widget (a string is wrapped in a container).",
+            "cursor": 'Mouse cursor over the widget, such as `"pointer"` or `"grab"`.',
+            "handlers": "`event=handler` pairs. A handler that takes an argument gets a `pz.Event`; a non-callable value is a message for `update`; `None` removes it.",
+        },
+        "example": """
+            pz.container(card, padding=12).on(click=self.select, drag=lambda e: self.move(e.dx, e.dy))
+        """,
+    },
+    "pyzed.Event": {
+        "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.",
+    },
+    "pyzed.Component": {
+        "desc": "Base class for custom components, like React components: annotated class attributes are props, other attributes are state kept between renders, `render()` returns widgets and `events` declares custom events raised with `self.emit(name, value)`. Calling the class returns a widget. Components appear in the designer's toolbox. See [Custom components](/pyzed/guides/components/).",
+        "example": """
+            class Rating(pz.Component):
+                value: int = 0
+                events = {"change": "A star was picked."}
+
+                def render(self):
+                    return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
+
+            Rating(value=3, on_change=lambda e: print(e.value))
+        """,
+    },
+})
+_page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
+    "type": "Event name.", "x": "Pointer x, relative to the widget.", "y": "Pointer y, relative to the widget.",
+    "dx": "Horizontal scroll (lines) or drag movement.", "dy": "Vertical scroll (lines) or drag movement.",
+    "width": "Widget width.", "height": "Widget height.", "button": '`"left"`, `"right"`, `"middle"`...',
+    "key": 'Key combo, such as `"ctrl-s"`.', "shift": "Shift held.", "ctrl": "Control held.", "alt": "Alt held.",
+    "logo": "Cmd/Windows key held.", "value": "Value of a custom event.", "source": "Component that emitted it.",
+}
+_page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
+    "args": "Props, in declaration order.",
+    "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move.",
+}

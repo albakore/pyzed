@@ -305,6 +305,12 @@ pub enum Kind {
         width: Option<f32>,
     },
     Responsive(PyMsg),
+    /// Common events attached with `.on(...)` (see `events.rs`).
+    Events {
+        child: Py<Widget>,
+        handlers: crate::events::Handlers,
+        cursor: Option<iced::mouse::Interaction>,
+    },
 }
 
 pub enum SvgSource {
@@ -355,9 +361,85 @@ impl Widget {
             Kind::Pin { .. } => "pin",
             Kind::Grid { .. } => "grid",
             Kind::Responsive(_) => "responsive",
+            Kind::Events {
+                child, handlers, ..
+            } => {
+                let names: Vec<&str> = handlers.0.iter().map(|(k, _)| k.name()).collect();
+                let inner = Python::attach(|py| child.bind(py).get().__repr__());
+                return format!("{inner}.on({})", names.join(", "));
+            }
         };
         format!("<Widget {name}>")
     }
+
+    /// Attaches common event handlers and returns the wrapped widget.
+    ///
+    /// Events: click, double_click, right_click, middle_click, mouse_down, mouse_up,
+    /// mouse_enter, mouse_leave, mouse_move, scroll, drag_start, drag, drag_end, focus,
+    /// blur, key_down, key_up and resize (names may also start with ``on_``). Each
+    /// handler is a callable (called with a ``pyzed.Event`` if it takes an argument) or
+    /// a message for ``update``; ``None`` removes a handler. ``cursor`` sets the mouse
+    /// cursor shown over the widget. Calling ``on`` again merges the handlers.
+    #[pyo3(signature = (*, cursor=None, **handlers))]
+    fn on(
+        slf: &Bound<'_, Self>,
+        cursor: Option<&str>,
+        handlers: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<Widget>> {
+        let py = slf.py();
+        let (child, mut merged, mut pointer) = match &slf.get().kind {
+            Kind::Events {
+                child,
+                handlers,
+                cursor,
+            } => (child.clone_ref(py), handlers.clone(), *cursor),
+            _ => (
+                slf.clone().unbind(),
+                crate::events::Handlers::default(),
+                None,
+            ),
+        };
+        if let Some(cursor) = cursor {
+            pointer = extra::parse_cursor(Some(cursor))?;
+        }
+        if let Some(handlers) = handlers {
+            for (name, handler) in handlers.iter() {
+                let name: String = name.extract()?;
+                let kind = crate::events::EventKind::parse(&name).ok_or_else(|| {
+                    let known: Vec<&str> = crate::events::EventKind::ALL
+                        .iter()
+                        .map(|k| k.name())
+                        .collect();
+                    PyValueError::new_err(format!(
+                        "unknown event {name:?}; available events: {}",
+                        known.join(", ")
+                    ))
+                })?;
+                if handler.is_none() {
+                    merged.remove(kind);
+                } else {
+                    merged.set(kind, PyMsg::new(&handler));
+                }
+            }
+        }
+        new(
+            py,
+            Kind::Events {
+                child,
+                handlers: merged,
+                cursor: pointer,
+            },
+        )
+    }
+}
+
+/// The names of the common events, in catalog order.
+#[pyfunction]
+pub fn event_names() -> Vec<&'static str> {
+    crate::events::EventKind::ALL
+        .iter()
+        .map(|k| k.name())
+        .collect()
 }
 
 pub fn new(py: Python<'_>, kind: Kind) -> PyResult<Py<Widget>> {
@@ -1245,6 +1327,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(space, m)?)?;
     m.add_function(wrap_pyfunction!(rule, m)?)?;
     m.add_function(wrap_pyfunction!(mouse_area, m)?)?;
+    m.add_function(wrap_pyfunction!(event_names, m)?)?;
     m.add_function(wrap_pyfunction!(stack, m)?)?;
     m.add_function(wrap_pyfunction!(opaque, m)?)?;
     m.add_function(wrap_pyfunction!(hover, m)?)?;

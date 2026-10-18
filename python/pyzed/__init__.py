@@ -65,9 +65,11 @@ from ._core import (
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
+from .component import Component
+from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import designer, draw, hot_reload, theme, icons, ui
+from . import component, designer, draw, events, hot_reload, theme, icons, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -102,6 +104,8 @@ __all__ = [
     "App",
     "AutoTheme",
     "Command",
+    "Component",
+    "Event",
     "Span",
     "Subscription",
     "Theme",
@@ -116,7 +120,9 @@ __all__ = [
     "column",
     "container",
     "designer",
+    "component",
     "draw",
+    "events",
     "every",
     "grid",
     "hot_reload",
@@ -130,6 +136,7 @@ __all__ = [
     "load_font",
     "markdown",
     "mouse_area",
+    "on",
     "opaque",
     "pick_list",
     "pin",
