@@ -1,0 +1,63 @@
+# git-cliff: genera CHANGELOG.md y las notas de cada release a partir de
+# commits convencionales (feat:, fix:, perf:, docs:, ...; `!` o
+# "BREAKING CHANGE:" marcan un cambio incompatible).
+
+[changelog]
+header = """
+# Changelog
+
+Todos los cambios relevantes de Pyzed. Se genera automáticamente con
+[git-cliff](https://git-cliff.org) a partir de los
+[commits convencionales](https://www.conventionalcommits.org/es/v1.0.0/).
+"""
+body = """
+{%- macro remote_url() -%}https://github.com/albakore/pyzed{%- endmacro -%}
+{% if version %}
+## [{{ version | trim_start_matches(pat="v") }}]({{ self::remote_url() }}/releases/tag/{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}
+## [Sin publicar]
+{% endif %}
+{%- set breaking = commits | filter(attribute="breaking", value=true) -%}
+{% if breaking | length > 0 %}
+### ⚠️ Breaking changes
+{% for commit in breaking %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{% if commit.breaking_description %}{{ commit.breaking_description | upper_first }}{% else %}{{ commit.message | upper_first }}{% endif %} ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))
+{%- endfor %}
+{% endif %}
+{%- for group, commits in commits | filter(attribute="breaking", value=false) | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))
+{%- endfor %}
+{% endfor %}
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9]+\\.[0-9]+\\.[0-9]+.*"
+sort_commits = "oldest"
+commit_preprocessors = [
+  # Quita referencias de PR "(#12)" duplicadas al final y espacios sobrantes.
+  { pattern = '\s+$', replace = "" },
+]
+commit_parsers = [
+  { message = "^chore\\(release\\)", skip = true },
+  { message = "^Merge ", skip = true },
+  { message = "^feat", group = "<!-- 0 -->Nuevas funciones" },
+  { message = "^perf", group = "<!-- 1 -->Mejoras" },
+  { message = "^refactor", group = "<!-- 1 -->Mejoras" },
+  { message = "^style", group = "<!-- 1 -->Mejoras" },
+  { message = "^fix", group = "<!-- 2 -->Correcciones" },
+  { message = "^revert", group = "<!-- 2 -->Correcciones" },
+  { message = "^docs", group = "<!-- 3 -->Documentación" },
+  { message = "^test", group = "<!-- 4 -->Tests" },
+  { message = "^(build|ci)", group = "<!-- 5 -->Build y CI" },
+  { message = "^chore", group = "<!-- 6 -->Mantenimiento" },
+  { message = ".*", group = "<!-- 7 -->Otros cambios" },
+]
