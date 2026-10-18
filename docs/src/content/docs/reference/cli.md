@@ -1,28 +1,63 @@
 ---
 title: CLI
-description: The pyzed new and pyzed icons commands.
+description: Every pyzed command - projects, dependencies, running, building and icons.
 sidebar:
   order: 9
 ---
 
-Installing Pyzed adds the `pyzed` command (also available as `python -m pyzed`).
+Installing Pyzed adds the `pyzed` command (also available as `python -m pyzed`). Commands that work on a project
+look for the nearest `pyproject.toml` from the current folder up. See [Projects with uv](/pyzed/guides/projects/).
 
-## `pyzed new <name>`
+## Projects
 
-Creates a folder with a ready-to-run app from a template.
+### `pyzed new <name>`
 
-```bash
-pyzed new my-app
-cd my-app && python main.py
-```
+Creates a uv project in a new folder: `uv init --package`, the `[tool.pyzed]` table, `ui/main.pzform` with its
+handlers, `pyzed-ui` as a dependency, `ruff` and `ty` as dev dependencies, and a git repository.
 
-| File | Contents |
+| Option | Effect |
 | --- | --- |
-| `main.py` | App with `ui.workspace`, title bar, sidebar with pages, status bar, command palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and theme switching. |
-| `requirements.txt` | `pyzed` |
+| `--app` | Backend next to `pyproject.toml` instead of in `src/` (`uv init --app`). |
+| `--python VERSION` | Python version of the project. |
+| `--no-git` | No git repository. |
+| `--no-sync` | Only write `pyproject.toml` (no resolving or installing). |
+| `--script` | A single `main.py` with a workspace, sidebar and command palette, plus `requirements.txt`; no uv. |
 
-The app title is derived from the folder name (`my-app` → `My App`). It fails if the folder
-exists and is not empty.
+### `pyzed init [path]`
+
+Adds Pyzed to the uv project at `path` (default: the current folder), with the same options as `new` except
+`--script`. If there is no `pyproject.toml`, it runs `uv init` first. Existing code is not modified.
+
+## Dependencies
+
+| Command | Does |
+| --- | --- |
+| `pyzed add PACKAGE...` | `uv add`. A constraint (`"httpx==0.27.2"`) changes the version of a package already there. `--dev`, `--group NAME`, `--editable` (local paths). |
+| `pyzed remove PACKAGE...` | `uv remove`, in the group the package is in. |
+| `pyzed upgrade [PACKAGE...]` | Upgrades the given packages (every one when none is given) within their constraints and syncs. |
+| `pyzed sync` | `uv sync`. |
+| `pyzed deps [--outdated]` | Lists direct dependencies, their group and locked version (`--outdated`: only those with a newer release). |
+| `pyzed check [--fix]` | `ruff check` and `ty check`; exits with 1 if either fails. |
+
+## Running
+
+| Command | Does |
+| --- | --- |
+| `pyzed design [form or folder]` | Opens the [visual designer](/pyzed/guides/designer/). Inside a project and without a form, opens its main form. |
+| `pyzed run [form] [--reload]` | Runs a form with its handlers; default: the project's main form. `--reload` updates the window on save. |
+| `pyzed dev script.py [--watch PATH]` | Runs a script with hot reload: saving a file updates the open window. |
+
+## `pyzed build`
+
+Packages the project for the current platform with PyInstaller. See [Build and distribute](/pyzed/guides/packaging/).
+
+| Option | Effect |
+| --- | --- |
+| `--onefile` | A single executable instead of a folder. |
+| `--console` | Keep the console window. |
+| `--name NAME` | Name of the executable. |
+| `--dry-run` | Print the PyInstaller command. |
+| `--workflow` | Write `.github/workflows/build.yml`, which builds on Linux, Windows and macOS. |
 
 ## `pyzed icons [filter]`
 
