@@ -67,7 +67,7 @@ from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import draw, hot_reload, theme, icons, ui
+from . import designer, draw, hot_reload, theme, icons, ui
 
 __version__ = "0.2.0"
 
@@ -109,6 +109,7 @@ __all__ = [
     "code_editor",
     "column",
     "container",
+    "designer",
     "draw",
     "every",
     "grid",

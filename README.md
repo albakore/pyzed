@@ -174,6 +174,22 @@ tuplas `(r, g, b[, a])`.
 
 Todos leen sus colores del tema actual y aceptan `theme=` u otros parámetros para cambiarlos.
 
+## Diseñador visual
+
+Un editor de formularios al estilo Visual Basic / Qt Designer, hecho con Pyzed: arrastras componentes a una
+grilla de puntos con snapping, los alineas, editas sus propiedades y haces doble clic para escribir el código de
+cada evento. **F5** ejecuta el formulario con toda su lógica.
+
+```bash
+pyzed design login.pzform   # abre el diseñador
+pyzed run login.pzform      # ejecuta el formulario
+```
+
+![Diseñador visual](https://raw.githubusercontent.com/albakore/pyzed/main/docs/screenshots/designer.png)
+
+Cada formulario son dos archivos: `login.pzform` (diseño en JSON) y `login.py` (handlers en Python). Ejemplo en
+[`examples/designer`](examples/designer); guía completa en `docs/src/content/docs/guides/designer.md`.
+
 ## Temas
 
 ```python

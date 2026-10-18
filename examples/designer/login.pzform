@@ -1,0 +1,293 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "login",
+    "title": "Sign in",
+    "width": 440,
+    "height": 400,
+    "theme": "One Dark",
+    "accent": "#74ade8",
+    "background": null,
+    "radius": 8,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {
+      "load": "form_load"
+    },
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "card",
+      "type": "panel",
+      "x": 24,
+      "y": 24,
+      "width": 392,
+      "height": 352,
+      "props": {
+        "title": "",
+        "background": "",
+        "border": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "title",
+      "type": "heading",
+      "x": 48,
+      "y": 48,
+      "width": 344,
+      "height": 36,
+      "props": {
+        "text": "Welcome back",
+        "level": "2",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "subtitle",
+      "type": "label",
+      "x": 48,
+      "y": 88,
+      "width": 344,
+      "height": 24,
+      "props": {
+        "text": "Sign in to continue to Pyzed.",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "user_label",
+      "type": "label",
+      "x": 48,
+      "y": 128,
+      "width": 344,
+      "height": 20,
+      "props": {
+        "text": "Email",
+        "size": "sm",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "email",
+      "type": "input",
+      "x": 48,
+      "y": 152,
+      "width": 344,
+      "height": 32,
+      "props": {
+        "text": "",
+        "placeholder": "you@example.com",
+        "icon": "mail",
+        "secure": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "password_label",
+      "type": "label",
+      "x": 48,
+      "y": 192,
+      "width": 344,
+      "height": 20,
+      "props": {
+        "text": "Password",
+        "size": "sm",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "password",
+      "type": "input",
+      "x": 48,
+      "y": 216,
+      "width": 344,
+      "height": 32,
+      "props": {
+        "text": "",
+        "placeholder": "••••••••",
+        "icon": "lock",
+        "secure": true
+      },
+      "events": {
+        "submit": "password_submit"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "remember",
+      "type": "checkbox",
+      "x": 48,
+      "y": 264,
+      "width": 200,
+      "height": 24,
+      "props": {
+        "text": "Remember me",
+        "checked": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "sign_in",
+      "type": "button",
+      "x": 48,
+      "y": 304,
+      "width": 344,
+      "height": 32,
+      "props": {
+        "text": "Sign in",
+        "variant": "solid",
+        "icon": "log-in"
+      },
+      "events": {
+        "click": "sign_in_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 48,
+      "y": 344,
+      "width": 344,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "center",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "progress",
+      "type": "progress",
+      "x": 48,
+      "y": 336,
+      "width": 344,
+      "height": 4,
+      "props": {
+        "value": 0,
+        "max": 100,
+        "tint": "accent"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": false,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "ticker",
+      "type": "timer",
+      "x": 336,
+      "y": 0.0,
+      "width": 88,
+      "height": 24,
+      "props": {
+        "interval": 40,
+        "running": false
+      },
+      "events": {
+        "tick": "ticker_tick"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}
