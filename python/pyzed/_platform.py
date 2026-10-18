@@ -53,8 +53,9 @@ def prepare() -> List[str]:
         return []
     changed = []
     if not _flag("PYZED_GPU_LOGS"):
-        # Mesa's EGL loader and its own logger; both are read when the driver loads.
-        for name, value in (("EGL_LOG_LEVEL", "fatal"), ("MESA_LOG", "silent")):
+        # Mesa's EGL loader and its own logger ("null" discards "MESA: error: ZINK: ..." lines);
+        # both are read when the driver loads.
+        for name, value in (("EGL_LOG_LEVEL", "fatal"), ("MESA_LOG", "null")):
             if name not in os.environ:
                 os.environ[name] = value
                 changed.append(name)
