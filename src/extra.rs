@@ -69,27 +69,68 @@ impl ImageSource {
         }
     }
 
-    pub fn handle(
+    /// Decodes the image once (cached by content) into RGBA pixels.
+    ///
+    /// Decoding here, instead of handing iced a path, makes the first frame complete
+    /// (wgpu loads files in the background, so off-screen screenshots came out empty)
+    /// and gives `Picture` the pixels it needs to crop and round corners itself.
+    pub fn decode(
         &self,
-        cache: &std::cell::RefCell<std::collections::HashMap<u64, img::Handle>>,
-    ) -> img::Handle {
+        cache: &std::cell::RefCell<std::collections::HashMap<u64, Decoded>>,
+    ) -> Decoded {
         let key = self.key();
-        if let Some(handle) = cache.borrow().get(&key) {
-            return handle.clone();
+        if let Some(decoded) = cache.borrow().get(&key) {
+            return decoded.clone();
         }
-        let handle = match self {
-            ImageSource::Path(p) => img::Handle::from_path(p),
-            ImageSource::Bytes(b) => img::Handle::from_bytes(b.clone()),
+        let rgba = match self {
+            ImageSource::Path(p) => ::image::open(p).map(|i| i.to_rgba8()).ok(),
+            ImageSource::Bytes(b) => ::image::load_from_memory(b).map(|i| i.to_rgba8()).ok(),
             ImageSource::Rgba {
                 width,
                 height,
                 pixels,
-            } => img::Handle::from_rgba(*width, *height, pixels.clone()),
+            } => ::image::RgbaImage::from_raw(*width, *height, pixels.clone()),
         };
-        cache.borrow_mut().insert(key, handle.clone());
-        handle
+        let decoded = match rgba {
+            Some(rgba) => {
+                let (width, height) = rgba.dimensions();
+                let pixels = bytes::Bytes::from(rgba.into_raw());
+                Decoded {
+                    key,
+                    handle: img::Handle::from_rgba(width, height, pixels.clone()),
+                    size: Some((width, height)),
+                    pixels,
+                }
+            }
+            // Unreadable: let iced try (and show nothing, as it does for broken images).
+            None => Decoded {
+                key,
+                handle: match self {
+                    ImageSource::Path(p) => img::Handle::from_path(p),
+                    ImageSource::Bytes(b) => img::Handle::from_bytes(b.clone()),
+                    ImageSource::Rgba { .. } => img::Handle::from_bytes(Vec::new()),
+                },
+                size: None,
+                pixels: bytes::Bytes::new(),
+            },
+        };
+        cache.borrow_mut().insert(key, decoded.clone());
+        decoded
     }
 }
+
+/// A decoded bitmap: an iced handle plus its RGBA pixels (cheap to clone).
+#[derive(Clone)]
+pub struct Decoded {
+    key: u64,
+    pub handle: img::Handle,
+    size: Option<(u32, u32)>,
+    pixels: bytes::Bytes,
+}
+
+/// Cropped / rounded copies of images, keyed by image, crop rectangle and corner radius.
+pub type MaskCache =
+    std::cell::RefCell<std::collections::HashMap<(u64, [u32; 4], [u32; 2]), img::Handle>>;
 
 fn image_source(source: &Bound<'_, PyAny>, size: Option<(u32, u32)>) -> PyResult<ImageSource> {
     if let Ok(bytes) = source.cast::<PyBytes>() {
@@ -204,14 +245,18 @@ pub fn image_viewer(
     )
 }
 
-pub fn render_image<'a>(props: &ImageProps, handle: img::Handle) -> Element<'a, Message> {
+pub fn render_image<'a>(
+    props: &ImageProps,
+    decoded: Decoded,
+    masks: &'a MaskCache,
+) -> Element<'a, Message> {
     let filter = if props.nearest {
         img::FilterMethod::Nearest
     } else {
         img::FilterMethod::Linear
     };
     if let Some((min, max, step)) = props.viewer {
-        let mut v = widget::image::viewer(handle)
+        let mut v = widget::image::viewer(decoded.handle)
             .min_scale(min)
             .max_scale(max)
             .scale_step(step)
@@ -224,24 +269,217 @@ pub fn render_image<'a>(props: &ImageProps, handle: img::Handle) -> Element<'a, 
         }
         return v.into();
     }
-    let mut i = widget::image(handle)
-        .filter_method(filter)
-        .opacity(props.opacity)
-        .scale(props.scale)
-        .rotation(Radians(props.rotation.to_radians()));
-    if let Some(w) = props.width {
-        i = i.width(w);
+    let width = props.width.unwrap_or(Length::Shrink);
+    let height = props.height.unwrap_or(Length::Shrink);
+    if decoded.size.is_none() || props.rotation != 0.0 {
+        // Rotated: iced's widget, inside a clipping container. The software renderer
+        // still lets the rotated corners spill out of the box.
+        let mut i = widget::image(decoded.handle)
+            .filter_method(filter)
+            .opacity(props.opacity)
+            .scale(props.scale)
+            .rotation(Radians(props.rotation.to_radians()))
+            .width(width)
+            .height(height);
+        if let Some(fit) = props.fit {
+            i = i.content_fit(fit);
+        }
+        if props.radius > 0.0 {
+            i = i.border_radius(props.radius);
+        }
+        return widget::container(i).clip(true).into();
     }
-    if let Some(h) = props.height {
-        i = i.height(h);
+    Element::new(Picture {
+        decoded,
+        width,
+        height,
+        fit: props.fit.unwrap_or(ContentFit::Contain),
+        filter,
+        opacity: props.opacity,
+        radius: props.radius,
+        scale: props.scale,
+        masks,
+    })
+}
+
+/// A bitmap that crops itself to its box and rounds its own corners, so `cover`,
+/// `none` and `radius` look the same with wgpu and with the software renderer
+/// (tiny-skia ignores both the clip bounds and the border radius of images).
+struct Picture<'a> {
+    decoded: Decoded,
+    width: Length,
+    height: Length,
+    fit: ContentFit,
+    filter: img::FilterMethod,
+    opacity: f32,
+    radius: f32,
+    scale: f32,
+    masks: &'a MaskCache,
+}
+
+impl Picture<'_> {
+    fn image_size(&self) -> Size {
+        let (w, h) = self.decoded.size.unwrap_or((1, 1));
+        Size::new(w as f32, h as f32)
     }
-    if let Some(fit) = props.fit {
-        i = i.content_fit(fit);
+
+    /// Where the whole (uncropped) image lands inside `bounds`, like iced's image widget.
+    fn drawing_bounds(&self, bounds: Rectangle) -> Rectangle {
+        let size = self.fit.fit(self.image_size(), bounds.size()) * self.scale;
+        let position = match self.fit {
+            ContentFit::None => bounds.position(),
+            _ => Point::new(
+                bounds.center_x() - size.width / 2.0,
+                bounds.center_y() - size.height / 2.0,
+            ),
+        };
+        Rectangle::new(position, size)
     }
-    if props.radius > 0.0 {
-        i = i.border_radius(props.radius);
+
+    /// The visible part of the image with rounded corners, as a cached RGBA handle.
+    fn masked(&self, drawing: Rectangle, visible: Rectangle) -> Option<img::Handle> {
+        let (iw, ih) = self.decoded.size?;
+        let sx = iw as f32 / drawing.width;
+        let sy = ih as f32 / drawing.height;
+        let x0 = (((visible.x - drawing.x) * sx).round() as u32).min(iw - 1);
+        let y0 = (((visible.y - drawing.y) * sy).round() as u32).min(ih - 1);
+        let cw = ((visible.width * sx).round() as u32).clamp(1, iw - x0);
+        let ch = ((visible.height * sy).round() as u32).clamp(1, ih - y0);
+        // The radius is in logical pixels of the box; in image pixels it scales per axis.
+        let rx = (self.radius * sx).min(cw as f32 / 2.0);
+        let ry = (self.radius * sy).min(ch as f32 / 2.0);
+        let key = (
+            self.decoded.key,
+            [x0, y0, cw, ch],
+            [(rx * 16.0) as u32, (ry * 16.0) as u32],
+        );
+        if let Some(handle) = self.masks.borrow().get(&key) {
+            return Some(handle.clone());
+        }
+        let src = &self.decoded.pixels;
+        let mut out = Vec::with_capacity((cw * ch * 4) as usize);
+        for y in y0..y0 + ch {
+            let start = ((y * iw + x0) * 4) as usize;
+            out.extend_from_slice(&src[start..start + (cw * 4) as usize]);
+        }
+        if rx >= 0.5 && ry >= 0.5 {
+            round_corners(&mut out, cw, ch, rx, ry);
+        }
+        let handle = img::Handle::from_rgba(cw, ch, out);
+        self.masks.borrow_mut().insert(key, handle.clone());
+        Some(handle)
     }
-    i.into()
+}
+
+/// Fades the pixels outside elliptical corners of radii `rx`/`ry` (anti-aliased).
+fn round_corners(pixels: &mut [u8], width: u32, height: u32, rx: f32, ry: f32) {
+    let edge = 1.0 / rx.min(ry);
+    let (w, h) = (width as f32, height as f32);
+    let corner_rows = (ry.ceil() as u32).min(height);
+    let rows = (0..corner_rows).chain(height.saturating_sub(corner_rows).max(corner_rows)..height);
+    for y in rows {
+        let py = y as f32 + 0.5;
+        let dy = if py < ry {
+            ry - py
+        } else if py > h - ry {
+            py - (h - ry)
+        } else {
+            continue;
+        };
+        for x in 0..width {
+            let px = x as f32 + 0.5;
+            let dx = if px < rx {
+                rx - px
+            } else if px > w - rx {
+                px - (w - rx)
+            } else {
+                continue;
+            };
+            let d = ((dx / rx).powi(2) + (dy / ry).powi(2)).sqrt();
+            let coverage = ((1.0 - d) / edge + 0.5).clamp(0.0, 1.0);
+            if coverage < 1.0 {
+                let a = &mut pixels[((y * width + x) * 4 + 3) as usize];
+                *a = (*a as f32 * coverage).round() as u8;
+            }
+        }
+    }
+}
+
+impl<Theme> iced::advanced::Widget<Message, Theme, iced::Renderer> for Picture<'_> {
+    fn size(&self) -> Size<Length> {
+        Size::new(self.width, self.height)
+    }
+
+    fn layout(
+        &mut self,
+        _tree: &mut iced::advanced::widget::Tree,
+        _renderer: &iced::Renderer,
+        limits: &iced::advanced::layout::Limits,
+    ) -> iced::advanced::layout::Node {
+        // Same sizing rules as iced's image widget.
+        let image = self.image_size();
+        let bounds = limits.resolve(self.width, self.height, image);
+        let full = self.fit.fit(image, bounds);
+        let size = Size::new(
+            match self.width {
+                Length::Shrink => bounds.width.min(full.width),
+                _ => bounds.width,
+            },
+            match self.height {
+                Length::Shrink => bounds.height.min(full.height),
+                _ => bounds.height,
+            },
+        );
+        iced::advanced::layout::Node::new(size)
+    }
+
+    fn draw(
+        &self,
+        _tree: &iced::advanced::widget::Tree,
+        renderer: &mut iced::Renderer,
+        _theme: &Theme,
+        _style: &iced::advanced::renderer::Style,
+        layout: iced::advanced::Layout<'_>,
+        _cursor: mouse::Cursor,
+        _viewport: &Rectangle,
+    ) {
+        use iced::advanced::image::Renderer as _;
+        let bounds = layout.bounds();
+        let drawing = self.drawing_bounds(bounds);
+        let Some(visible) = drawing.intersection(&bounds) else {
+            return;
+        };
+        let image = |handle: img::Handle| iced::advanced::image::Image {
+            handle,
+            filter_method: self.filter,
+            rotation: Radians(0.0),
+            border_radius: Default::default(),
+            opacity: self.opacity,
+            snap: true,
+        };
+        let overflows =
+            visible.width < drawing.width - 0.5 || visible.height < drawing.height - 0.5;
+        let (handle, target) = if self.radius <= 0.0 && !overflows {
+            (self.decoded.handle.clone(), drawing)
+        } else {
+            match self.masked(drawing, visible) {
+                Some(handle) => (handle, visible),
+                None => return,
+            }
+        };
+        // wgpu uploads big images (over 2 MB) in the background, so the first frame (the
+        // only one an off-screen screenshot gets) would be empty; upload them right away.
+        if let iced::advanced::image::Handle::Rgba { width, height, .. } = &handle
+            && (*width as usize) * (*height as usize) * 4 >= 2 * 1024 * 1024
+        {
+            let _ = renderer.load_image(&handle);
+        }
+        renderer.draw_image(
+            image(handle),
+            target,
+            target.intersection(&bounds).unwrap_or(target),
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1494,7 +1732,7 @@ pub fn responsive(py: Python<'_>, function: &Bound<'_, PyAny>) -> PyResult<Py<Wi
 
 pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Span>()?;
-    m.add_function(wrap_pyfunction!(image, m)?)?;
+    m.add_function(wrap_pyfunction!(self::image, m)?)?;
     m.add_function(wrap_pyfunction!(image_viewer, m)?)?;
     m.add_function(wrap_pyfunction!(canvas, m)?)?;
     m.add_function(wrap_pyfunction!(span, m)?)?;

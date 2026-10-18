@@ -306,3 +306,90 @@ def test_examples_render(path, tmp_path, monkeypatch):
         assert out.exists()
     finally:
         sys.modules.pop(path.stem, None)
+
+
+def read_png(path):
+    """Decodes an 8-bit RGBA PNG (what screenshots write) into rows of (r, g, b, a)."""
+    import zlib
+
+    data = Path(path).read_bytes()
+    pos, idat, width, height = 8, b"", 0, 0
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        body = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            width, height, depth, color = struct.unpack(">IIBB", body[:10])
+            assert (depth, color) == (8, 6)
+        elif kind == b"IDAT":
+            idat += body
+        pos += 12 + length
+    raw, stride, rows, prev = zlib.decompress(idat), width * 4, [], bytearray(width * 4)
+    for y in range(height):
+        kind, line = raw[y * (stride + 1)], bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            a = line[i - 4] if i >= 4 else 0
+            b = prev[i]
+            c = prev[i - 4] if i >= 4 else 0
+            if kind == 1:
+                line[i] = (line[i] + a) & 255
+            elif kind == 2:
+                line[i] = (line[i] + b) & 255
+            elif kind == 3:
+                line[i] = (line[i] + (a + b) // 2) & 255
+            elif kind == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        rows.append([tuple(line[x * 4:x * 4 + 4]) for x in range(width)])
+        prev = line
+    return rows
+
+
+def test_image_cover_and_radius_stay_inside_their_box(tmp_path):
+    red = bytes((255, 0, 0, 255)) * (200 * 100)
+
+    class Demo(pz.App):
+        size = (200, 100)
+
+        def view(self):
+            return pz.container(
+                pz.row([
+                    pz.image(red, size=(200, 100), width=50, height=50, content_fit="cover"),
+                    pz.space(width=50),
+                    pz.image(red, size=(200, 100), width=50, height=50, content_fit="cover", radius=25),
+                ]),
+                padding=25, width="fill", height="fill", bg="#0000ff",
+            )
+
+    out = tmp_path / "clip.png"
+    Demo().screenshot(out, scale=1)
+    px = read_png(out)
+    assert px[50][50][:3] == (255, 0, 0)   # inside the first image
+    assert px[50][90][:3] == (0, 0, 255)   # right of it: the 2x wide image must not spill
+    assert px[50][150][:3] == (255, 0, 0)  # center of the round image
+    assert px[26][126][:3] == (0, 0, 255)  # its top-left corner is cut off
+
+
+def test_images_from_files_render_on_first_frame(tmp_path):
+    source = tmp_path / "big.png"
+    # A large PNG (over 2 MB of pixels) that wgpu would otherwise upload in the background.
+    width, height = 1024, 600
+    import zlib
+
+    raw = b"".join(b"\x00" + bytes((0, 200, 0, 255)) * width for _ in range(height))
+
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body) & 0xFFFFFFFF)
+
+    source.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+                       + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
+
+    class Demo(pz.App):
+        size = (100, 100)
+
+        def view(self):
+            return pz.image(str(source), width="fill", height="fill", content_fit="cover")
+
+    out = tmp_path / "file.png"
+    Demo().screenshot(out, scale=1)
+    assert read_png(out)[50][50][:3] == (0, 200, 0)

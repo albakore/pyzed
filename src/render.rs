@@ -8,8 +8,8 @@ use elsa::FrozenMap;
 use iced::advanced::text::Wrapping;
 use iced::widget::text::LineHeight;
 use iced::widget::{
-    self, Space, button, checkbox, column, container, image, markdown, mouse_area, progress_bar,
-    qr_code, row, rule, scrollable, slider, svg, text, text_editor, text_input, toggler, tooltip,
+    self, Space, button, checkbox, column, container, markdown, mouse_area, progress_bar, qr_code,
+    row, rule, scrollable, slider, svg, text, text_editor, text_input, toggler, tooltip,
     vertical_slider,
 };
 use iced::{Background, Border, Color, Element, Font, Length, Pixels, Task, Theme};
@@ -28,7 +28,8 @@ use crate::widget::{Kind, SvgSource, Widget};
 pub struct Caches {
     editors: FrozenMap<String, Box<EditorState>>,
     pending_cursors: RefCell<HashMap<String, text_editor::Position>>,
-    images: RefCell<HashMap<u64, image::Handle>>,
+    images: RefCell<HashMap<u64, extra::Decoded>>,
+    image_masks: extra::MaskCache,
     svgs: RefCell<HashMap<u64, svg::Handle>>,
     canvases: FrozenMap<String, Box<CanvasCache>>,
     markdown: FrozenMap<u64, Vec<markdown::Item>>,
@@ -82,6 +83,9 @@ impl Caches {
         }
         if self.images.get_mut().len() > 512 {
             self.images.get_mut().clear();
+        }
+        if self.image_masks.get_mut().len() > 64 {
+            self.image_masks.get_mut().clear();
         }
         if self.svgs.get_mut().len() > 1024 {
             self.svgs.get_mut().clear();
@@ -822,7 +826,11 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             }
             s.into()
         }
-        Kind::Image(props) => extra::render_image(props, props.source.handle(&ctx.caches.images)),
+        Kind::Image(props) => extra::render_image(
+            props,
+            props.source.decode(&ctx.caches.images),
+            &ctx.caches.image_masks,
+        ),
         Kind::Canvas(props) => {
             let cache = props
                 .cache_key
