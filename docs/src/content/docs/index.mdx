@@ -1,0 +1,91 @@
+---
+title: Pyzed
+description: Interfaces modernas y rápidas en Python, renderizadas por Iced (Rust), con componentes inspirados en el editor Zed.
+template: splash
+hero:
+  tagline: Interfaces de escritorio modernas y rápidas en Python. Tú describes la interfaz; Iced, en Rust, la dibuja. Con más de 40 componentes al estilo del editor Zed.
+  image:
+    file: ../../../screenshots/zed-one-dark.png
+    alt: Un editor tipo Zed hecho con Pyzed
+  actions:
+    - text: Empezar
+      link: getting-started/quickstart/
+      icon: right-arrow
+    - text: Ver componentes
+      link: components/overview/
+      variant: minimal
+    - text: GitHub
+      link: https://github.com/albakore/pyzed
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import LatestRelease from '../../components/LatestRelease.astro';
+
+<LatestRelease />
+
+## Una app en 20 líneas
+
+```python title="counter.py"
+import pyzed as pz
+from pyzed import ui
+
+
+class Counter(pz.App):
+    title = "Counter"
+    size = (360, 220)
+
+    def __init__(self):
+        self.count = 0
+
+    def view(self):
+        return pz.center(
+            pz.row([
+                ui.button("-1", lambda: setattr(self, "count", self.count - 1), icon="minus"),
+                ui.heading(str(self.count)),
+                ui.button("+1", lambda: setattr(self, "count", self.count + 1), icon="plus", variant="solid"),
+            ], spacing=12, align="center"),
+            bg=self.theme.editor,
+        )
+
+
+pz.run(Counter)
+```
+
+## Por qué Pyzed
+
+<CardGrid>
+	<Card title="Rendimiento nativo" icon="rocket">
+		Python solo describe la interfaz. Layout, texto y dibujado (wgpu, con tiny-skia de respaldo)
+		los hace Iced 0.14 en Rust mediante PyO3.
+	</Card>
+	<Card title="Sencillo" icon="pencil">
+		La arquitectura Elm de Iced (estado, `update`, `view`) sin ceremonia: un botón puede llamar
+		directamente a `self.guardar`.
+	</Card>
+	<Card title="Componentes de Zed" icon="puzzle">
+		Botones, pestañas, árbol de archivos, paleta de comandos, editor con resaltado, terminal,
+		menús, toasts y un workspace con docks.
+	</Card>
+	<Card title="Temas" icon="seti:pipeline">
+		One Dark, One Light y Gruvbox con los tokens de color de Zed. Deriva el tuyo en una línea y
+		cámbialo en caliente.
+	</Card>
+	<Card title="Multiplataforma" icon="laptop">
+		Linux, macOS y Windows. Fuentes IBM Plex e iconos Lucide (~2000) incluidos.
+	</Card>
+	<Card title="Capturas sin ventana" icon="seti:image">
+		`app.screenshot("ui.png")` renderiza fuera de pantalla, sin GPU. Todas las imágenes de esta
+		web se generan así.
+	</Card>
+</CardGrid>
+
+## Siguientes pasos
+
+<CardGrid>
+	<LinkCard title="Inicio rápido" href="getting-started/quickstart/" description="Instala Pyzed y crea tu primera ventana." />
+	<LinkCard title="Tutorial: lista de tareas" href="tutorials/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
+	<LinkCard title="Tutorial: un mini editor tipo Zed" href="tutorials/zed-like-editor/" description="Workspace, árbol de archivos, pestañas, editor y paleta." />
+	<LinkCard title="Temas" href="guides/theming/" description="Tokens de color, temas incluidos y cómo crear los tuyos." />
+</CardGrid>

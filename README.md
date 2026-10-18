@@ -3,6 +3,8 @@
 **Interfaces modernas y rápidas en Python, renderizadas por [Iced](https://iced.rs) (Rust).**
 Incluye componentes listos para usar inspirados en el editor [Zed](https://zed.dev).
 
+📖 **Documentación:** [albakore.github.io/pyzed](https://albakore.github.io/pyzed/) · [Novedades](CHANGELOG.md)
+
 ![Recreación del editor Zed hecha con Pyzed](docs/screenshots/zed-one-dark.png)
 
 > Esta captura es una app de Python ([`examples/zed_editor.py`](examples/zed_editor.py)):
@@ -154,6 +156,9 @@ Cambiar `self.theme` en `update` cambia el estilo de toda la interfaz al momento
 | Archivo | Qué muestra |
 | --- | --- |
 | [`examples/counter.py`](examples/counter.py) | Lo mínimo: estado, mensajes y callables. |
+| [`examples/todo.py`](examples/todo.py) | Lista de tareas: formularios, listas, filtros, foco y atajos. |
+| [`examples/downloads.py`](examples/downloads.py) | Trabajo en segundo plano con `Command.perform` y `pz.post`, progreso y notificaciones. |
+| [`examples/mini_editor.py`](examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas (árbol, pestañas, editor, paleta). |
 | [`examples/gallery.py`](examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. |
 | [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor tipo Zed sobre una carpeta real: abrir, editar y guardar (`ctrl-s`), paleta (`ctrl-shift-p`), buscador (`ctrl-p`), docks (`ctrl-b`, `ctrl-j`, `ctrl-alt-b`) y temas. El panel de terminal muestra una salida de ejemplo; no ejecuta una shell. |
 | [`examples/screenshots.py`](examples/screenshots.py) | Regenera las imágenes de `docs/screenshots`. |
