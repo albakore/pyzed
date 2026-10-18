@@ -3192,9 +3192,11 @@ dependencies = [
 name = "pyzed"
 version = "0.2.0"
 dependencies = [
+ "bytes",
  "elsa",
  "iced",
  "iced_test",
+ "image",
  "png 0.17.16",
  "pyo3",
  "two-face",

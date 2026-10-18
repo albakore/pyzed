@@ -34,6 +34,8 @@ pyo3 = { version = "0.27", features = ["extension-module", "abi3-py39"] }
 two-face = { version = "0.4", default-features = false, features = ["syntect-default-fancy"] }
 elsa = "1.11"
 png = "0.17"
+image = "0.25"
+bytes = "1"
 
 [profile.release]
 lto = "thin"
