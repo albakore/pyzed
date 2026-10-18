@@ -18,8 +18,6 @@ on:
       - "python/**"
       - "src/**"
       - ".github/workflows/docs.yml"
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -53,7 +51,6 @@ jobs:
   api-reference:
     name: API reference up to date
     runs-on: ubuntu-latest
-    if: github.event_name != 'release'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,7 +75,9 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.event_name == 'release')
+    # Pages solo acepta despliegues desde main; tras cada release, release.yml
+    # lanza este workflow en main con workflow_dispatch.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       pages: write
