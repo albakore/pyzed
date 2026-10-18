@@ -16,6 +16,12 @@ stable version.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-18
+
+### Fixes
+
+- 🐛 Read `pyzed.__version__` from the package metadata. PR [#17](https://github.com/albakore/pyzed/pull/17) by [@albakore](https://github.com/albakore).
+
 ## [0.3.0] - 2026-10-18
 
 ### Highlights
