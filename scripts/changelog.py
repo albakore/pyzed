@@ -1,14 +1,17 @@
-"""Mantiene CHANGELOG.md (formato Keep a Changelog) a partir de commits convencionales.
+"""Keep CHANGELOG.md up to date from the gitmoji commit history.
 
-Usa git-cliff (``pip install git-cliff``) con la configuración de ``cliff.toml``.
+Uses git-cliff (``pip install git-cliff``) with the configuration in ``cliff.toml``.
 
-    python scripts/changelog.py --preview          # qué entraría en la próxima versión
-    python scripts/changelog.py --update v0.2.0    # añade la sección de v0.2.0 a CHANGELOG.md
-    python scripts/changelog.py --notes v0.2.0     # notas de v0.2.0 para la GitHub Release
+    python scripts/changelog.py --preview          # what would go into the next release
+    python scripts/changelog.py --update v0.3.0    # add the v0.3.0 section to CHANGELOG.md
+    python scripts/changelog.py --notes v0.3.0     # v0.3.0 notes for the GitHub Release
 
-``--update`` respeta lo escrito a mano: si la versión ya tiene sección no la toca, y lo
-que haya bajo ``## [Sin publicar]`` pasa a encabezar la sección nueva. ``--notes`` usa la
-sección de CHANGELOG.md si existe y, si no, la genera desde los commits.
+``--update`` keeps hand-written notes: a version that already has a section is left
+alone, and whatever is under ``## [Unreleased]`` is merged into the new section.
+``--notes`` uses the CHANGELOG.md section when there is one, otherwise it generates it.
+
+PR numbers and authors come from the GitHub API (set ``GITHUB_TOKEN`` to avoid rate
+limits); without network access the entries link to the commit instead.
 """
 
 from __future__ import annotations
@@ -21,23 +24,33 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CHANGELOG = ROOT / "CHANGELOG.md"
-UNRELEASED = re.compile(r"^## +\[?(?:Sin publicar|Unreleased)\]?[ \t]*$", re.MULTILINE | re.IGNORECASE)
+UNRELEASED = re.compile(r"^## +\[?(?:Unreleased|Sin publicar)\]?[ \t]*$", re.MULTILINE | re.IGNORECASE)
+# FastAPI's release-notes order; any other heading (e.g. "### Highlights") goes right
+# after the breaking changes.
+SECTION_ORDER = [
+    "Breaking Changes",
+    "Features",
+    "Fixes",
+    "Refactors",
+    "Upgrades",
+    "Docs",
+    "Translations",
+    "Internal",
+]
 HEADING = re.compile(r"^## ", re.MULTILINE)
 
 
 def cliff(*args: str) -> str:
-    result = subprocess.run(
-        ["git", "cliff", "--config", str(ROOT / "cliff.toml"), *args],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    command = ["git", "cliff", "--config", str(ROOT / "cliff.toml"), "--use-native-tls", *args]
+    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    if result.returncode != 0:
+        # No network (or rate limited): fall back to commit links without PR data.
+        result = subprocess.run(command + ["--offline"], cwd=ROOT, check=True, capture_output=True, text=True)
     return result.stdout
 
 
 def generated_section(tag: str) -> str:
-    """Sección "## [X.Y.Z] - fecha" con los commits desde el tag anterior hasta ``tag``."""
+    """The "## [X.Y.Z] - date" section with the commits from the previous tag to ``tag``."""
     tags = subprocess.run(
         ["git", "tag", "--list", "v[0-9]*", "--sort=-v:refname", "--merged", tag],
         cwd=ROOT,
@@ -47,7 +60,7 @@ def generated_section(tag: str) -> str:
     ).stdout.split()
     previous = next((t for t in tags if t != tag), None)
     if previous is None:
-        # Primera versión: desde el commit raíz (git-cliff necesita un rango "a..b").
+        # First release: start at the root commit (git-cliff needs an "a..b" range).
         previous = subprocess.run(
             ["git", "rev-list", "--max-parents=0", tag], cwd=ROOT, check=True, capture_output=True, text=True
         ).stdout.split()[0]
@@ -85,14 +98,19 @@ def update(tag: str) -> bool:
 
 
 def merge(manual: str, generated: str) -> str:
-    """Une dos cuerpos de sección juntando los "### Subsección" con el mismo nombre."""
+    """Merge two section bodies, joining "### Subsections" with the same name."""
     blocks: dict[str, list[str]] = {}
     for body in (manual, generated):
         for chunk in re.split(r"(?m)^(?=### )", body.strip()):
             title, _, rest = chunk.partition("\n") if chunk.startswith("### ") else ("", "", chunk)
             if rest.strip() or title:
                 blocks.setdefault(title.strip(), []).append(rest.strip())
-    order = sorted(blocks, key=lambda title: title != "### Breaking changes")  # estable: el resto en su orden
+    def rank(title: str) -> int:
+        name = title.removeprefix("###").strip().lower()
+        known = [s.lower() for s in SECTION_ORDER]
+        return known.index(name) * 2 if name in known else 1
+
+    order = sorted(blocks, key=rank)
     return "\n\n".join(
         "\n\n".join(p for p in [title, "\n".join(r for r in blocks[title] if r)] if p) for title in order
     ).strip()
@@ -108,16 +126,16 @@ def notes(tag: str) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--preview", action="store_true", help="muestra los cambios aún sin publicar")
-    group.add_argument("--update", metavar="TAG", help="añade la sección de esa versión a CHANGELOG.md")
-    group.add_argument("--notes", metavar="TAG", help="imprime las notas de esa versión")
+    group.add_argument("--preview", action="store_true", help="show the unreleased changes")
+    group.add_argument("--update", metavar="TAG", help="add that version's section to CHANGELOG.md")
+    group.add_argument("--notes", metavar="TAG", help="print that version's release notes")
     args = parser.parse_args(argv)
 
     if args.preview:
         sys.stdout.write(cliff("--unreleased").strip() + "\n")
     elif args.update:
         changed = update(args.update)
-        print(f"CHANGELOG.md: {'añadida' if changed else 'ya tenía'} la sección de {args.update}")
+        print(f"CHANGELOG.md: {'added' if changed else 'already had'} the {args.update} section")
     else:
         sys.stdout.write(notes(args.notes) + "\n")
     return 0

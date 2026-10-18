@@ -51,6 +51,11 @@ jobs:
   api-reference:
     name: API reference up to date
     runs-on: ubuntu-latest
+    env:
+      # Only needs an importable build: skip LTO to compile faster.
+      CARGO_PROFILE_RELEASE_LTO: "false"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
+      CARGO_INCREMENTAL: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,6 +63,8 @@ jobs:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: wheel
       - name: Build and install
         run: |
           python -m venv .venv
