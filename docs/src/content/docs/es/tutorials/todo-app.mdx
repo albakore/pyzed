@@ -1,0 +1,108 @@
+---
+title: Lista de tareas
+description: Tu primera app completa con estado, formularios, listas, filtros y atajos.
+sidebar:
+  order: 1
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import source from '../../../../../../examples/todo.py?raw';
+
+En este tutorial construimos una lista de tareas. Aprenderás a guardar estado, leer un campo de
+texto, dibujar listas, filtrar y añadir atajos de teclado.
+
+![La app terminada](../../../../assets/tutorials/todo.png)
+
+<Steps>
+
+1. **El modelo.** Una tarea es un dataclass. El estado de la app es la lista de tareas, el texto
+   que se está escribiendo y el filtro activo:
+
+   ```python
+   @dataclass
+   class Task:
+       title: str
+       done: bool = False
+
+
+   class Todo(pz.App):
+       title = "Tareas"
+       size = (520, 560)
+
+       def __init__(self):
+           self.tasks = [Task("Crear mi primera app")]
+           self.draft = ""
+           self.filter = "Todas"
+   ```
+
+2. **Añadir tareas.** El campo es *controlado*: muestra `self.draft` y cada pulsación lo
+   actualiza. Enter (`on_submit`) y el botón llaman al mismo método:
+
+   ```python
+   def add(self):
+       if self.draft.strip():
+           self.tasks.append(Task(self.draft.strip()))
+           self.draft = ""
+       return Command.focus("new-task")      # devuelve el foco al campo
+
+   # en view():
+   pz.row([
+       ui.input(self.draft, lambda text: setattr(self, "draft", text), id="new-task",
+                placeholder="¿Qué hay que hacer?", on_submit=self.add, icon="plus"),
+       ui.button("Añadir", self.add, variant="solid"),
+   ], spacing=8)
+   ```
+
+3. **Dibujar la lista.** Cada tarea es un `ui.list_item` con una casilla al inicio y un botón de
+   borrar al final. Las lambdas capturan `task` porque `task_row` recibe la tarea como argumento:
+
+   ```python
+   def task_row(self, task):
+       return ui.list_item(
+           ui.label(task.title, color="text_muted" if task.done else "text"),
+           lambda: self.toggle(task),
+           start=ui.checkbox(task.done, lambda _: self.toggle(task)),
+           end=ui.icon_button("trash-2", lambda: self.remove(task), size="sm", tooltip="Eliminar"),
+           height=34,
+           inset=True,
+       )
+   ```
+
+4. **Filtrar.** `ui.segmented` cambia `self.filter`, y `view()` solo muestra las tareas visibles.
+   Como `view()` se vuelve a llamar después de cada cambio, no hay que "refrescar" nada:
+
+   ```python
+   ui.segmented(["Todas", "Pendientes", "Hechas"], self.filter, lambda f: setattr(self, "filter", f))
+   ```
+
+5. **Atajos.** `on_key` recibe cada tecla como texto:
+
+   ```python
+   def on_key(self, combo):
+       if combo == "ctrl-l":
+           return self.clear_done()
+       if combo == "ctrl-t":
+           self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
+   ```
+
+6. **Foco inicial.** `on_start` se ejecuta una vez al abrir la ventana:
+
+   ```python
+   def on_start(self):
+       return Command.focus("new-task")
+   ```
+
+</Steps>
+
+<Aside type="tip">
+Prueba a cambiar el tema con <kbd>Ctrl</kbd>+<kbd>T</kbd>: todos los componentes se restilizan
+porque leen sus colores del tema activo.
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/todo.py" />
+
+```bash
+python examples/todo.py
+```

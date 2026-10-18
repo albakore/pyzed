@@ -1,36 +1,36 @@
 ---
-title: Inicio rápido
-description: Tu primera ventana con Pyzed en cinco minutos.
+title: Quickstart
+description: Your first Pyzed window in five minutes.
 ---
 
-## 1. Una ventana
+## 1. A window
 
-```python title="hola.py"
+```python title="hello.py"
 import pyzed as pz
 
 
-class Hola(pz.App):
-    title = "Hola"
+class Hello(pz.App):
+    title = "Hello"
     size = (400, 240)
 
     def view(self):
-        return pz.center(pz.text("Hola, Pyzed", size=24))
+        return pz.center(pz.text("Hello, Pyzed", size=24))
 
 
-pz.run(Hola)
+pz.run(Hello)
 ```
 
 ```bash
-python hola.py
+python hello.py
 ```
 
-Una app es una clase que hereda de `pz.App`. Su método `view()` devuelve los widgets que se ven.
-`pz.run()` abre la ventana y bloquea hasta que se cierra.
+An app is a class that inherits from `pz.App`. Its `view()` method returns the widgets that are shown.
+`pz.run()` opens the window and blocks until it is closed.
 
-## 2. Estado y mensajes
+## 2. State and messages
 
-El estado vive en tu objeto. Los widgets interactivos reciben un **mensaje**: cualquier valor de
-Python. Cuando el usuario pulsa el botón, Pyzed llama a `update(mensaje)` y vuelve a dibujar.
+State lives in your object. Interactive widgets take a **message**: any Python
+value. When the user clicks the button, Pyzed calls `update(message)` and redraws.
 
 ```python title="counter.py"
 import pyzed as pz
@@ -67,39 +67,39 @@ class Counter(pz.App):
 pz.run(Counter)
 ```
 
-![El contador](../../../../screenshots/counter.png)
+![The counter](../../../../screenshots/counter.png)
 
-## 3. Callables en lugar de mensajes
+## 3. Callables instead of messages
 
-Si el mensaje es un callable (una lambda o un método), Pyzed lo **llama directamente** y no pasa
-por `update`. Para apps pequeñas suele ser lo más cómodo:
+If the message is a callable (a lambda or a method), Pyzed **calls it directly** and skips
+`update`. For small apps this is usually the most convenient:
 
 ```python
-ui.button("Guardar", self.guardar)            # llama a self.guardar()
-ui.button("Borrar", lambda: self.borrar(id))  # con argumentos
+ui.button("Save", self.save)                  # calls self.save()
+ui.button("Delete", lambda: self.delete(id))  # with arguments
 ```
 
-Los controles que producen un valor (`on_input`, `on_toggle`, `on_change`…) llaman al callable
-con ese valor:
+Controls that produce a value (`on_input`, `on_toggle`, `on_change`…) call the callable
+with that value:
 
 ```python
-ui.input(self.nombre, lambda texto: setattr(self, "nombre", texto), placeholder="Tu nombre")
+ui.input(self.name, lambda text: setattr(self, "name", text), placeholder="Your name")
 ```
 
-## 4. Componentes y temas
+## 4. Components and themes
 
-`pyzed.ui` trae componentes listos al estilo de Zed. Todos leen el tema actual:
+`pyzed.ui` ships ready-made Zed-style components. They all read the current theme:
 
 ```python
-class MiApp(pz.App):
+class MyApp(pz.App):
     theme = pz.themes.ONE_LIGHT
 
-    def cambiar_tema(self):
+    def toggle_theme(self):
         self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
 ```
 
-## Siguiente
+## Next
 
-- [Crear un proyecto con `pyzed new`](/pyzed/getting-started/new-project/)
-- [Tutorial: lista de tareas](/pyzed/tutorials/todo-app/)
-- [Guía de la arquitectura](/pyzed/guides/architecture/)
+- [Create a project with `pyzed new`](/pyzed/getting-started/new-project/)
+- [Tutorial: to-do list](/pyzed/tutorials/todo-app/)
+- [Architecture guide](/pyzed/guides/architecture/)

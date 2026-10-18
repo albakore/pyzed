@@ -1,56 +1,56 @@
 ---
-title: Visión general
-description: Los componentes de pyzed.ui, inspirados en el editor Zed.
+title: Overview
+description: The pyzed.ui components, inspired by the Zed editor.
 sidebar:
   order: 0
 ---
 
-`pyzed.ui` es una colección de componentes listos para usar que reproducen el aspecto del editor
-[Zed](https://zed.dev). Son **funciones** que devuelven widgets, así que se combinan libremente
-con los [widgets base](/pyzed/reference/widgets/) y entre sí.
+`pyzed.ui` is a collection of ready-to-use components that reproduce the look of the
+[Zed](https://zed.dev) editor. They are **functions** that return widgets, so they combine freely
+with the [base widgets](/pyzed/reference/widgets/) and with each other.
 
-![Galería de componentes (One Dark)](../../../../screenshots/components-dark.png)
+![Component gallery (One Dark)](../../../../screenshots/components-dark.png)
 
 ```python
 import pyzed as pz
 from pyzed import ui
 
-ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
+ui.button("Save", self.save, icon="save", variant="solid", keys="ctrl-s")
 ```
 
-## Reglas comunes
+## Common rules
 
-- **Colores del tema.** Cada componente lee el tema actual (`App.theme`, o el de la ventana en
-  [multi-ventana](/pyzed/guides/windows/)). Cambiar el tema restiliza toda la interfaz. Todos aceptan `theme=` para usar otro.
-- **Tokens o hex.** Los parámetros de color (`color`, `icon_color`, `tint`…) aceptan un token del
-  tema como `"accent"`, `"text_muted"` o `"error"`, o un color `"#rrggbb"`.
-- **Mensajes o callables.** `on_press`, `on_select`, `on_toggle`… aceptan un mensaje para `update`
-  o un callable. Los que producen un valor (texto, `bool`, id) llaman al callable con ese valor.
-- **Iconos.** El parámetro `icon=` acepta cualquier nombre de [Lucide](https://lucide.dev).
-- **Atajos.** `keys="ctrl-shift-p"` muestra el atajo al estilo de Zed (símbolos en macOS).
+- **Theme colors.** Every component reads the current theme (`App.theme`, or the window's theme in
+  [multi-window](/pyzed/guides/windows/) apps). Changing the theme restyles the whole UI. All of them accept `theme=` to use a different one.
+- **Tokens or hex.** Color parameters (`color`, `icon_color`, `tint`…) accept a theme token such as
+  `"accent"`, `"text_muted"` or `"error"`, or a `"#rrggbb"` color.
+- **Messages or callables.** `on_press`, `on_select`, `on_toggle`… accept a message for `update`
+  or a callable. Those that produce a value (text, `bool`, id) call the callable with that value.
+- **Icons.** The `icon=` parameter accepts any [Lucide](https://lucide.dev) name.
+- **Shortcuts.** `keys="ctrl-shift-p"` displays the shortcut Zed-style (symbols on macOS).
 
-## Grupos
+## Groups
 
-| Grupo | Componentes |
+| Group | Components |
 | --- | --- |
-| [Básicos](/pyzed/components/basics/) | `button`, `icon_button`, `label`, `muted`, `heading`, `badge`, `indicator`, `kbd`, `avatar`, `tooltip`, `divider`, `card` |
-| [Formularios](/pyzed/components/forms/) | `input`, `search_input`, `switch`, `checkbox`, `slider`, `progress`, `segmented`, `field` |
-| [Listas y árbol](/pyzed/components/lists/) | `list_item`, `list_header`, `tree` + `TreeNode`, `menu` + `MenuItem` |
-| [Navegación](/pyzed/components/navigation/) | `tab_bar` + `Tab`, `breadcrumbs`, `toolbar` |
+| [Basics](/pyzed/components/basics/) | `button`, `icon_button`, `label`, `muted`, `heading`, `badge`, `indicator`, `kbd`, `avatar`, `tooltip`, `divider`, `card` |
+| [Forms](/pyzed/components/forms/) | `input`, `search_input`, `switch`, `checkbox`, `slider`, `progress`, `segmented`, `field` |
+| [Lists and tree](/pyzed/components/lists/) | `list_item`, `list_header`, `tree` + `TreeNode`, `menu` + `MenuItem` |
+| [Navigation](/pyzed/components/navigation/) | `tab_bar` + `Tab`, `breadcrumbs`, `toolbar` |
 | [Workspace](/pyzed/components/workspace/) | `workspace`, `title_bar`, `title_button`, `status_bar`, `status_item`, `panel`, `panel_header` |
 | [Overlays](/pyzed/components/overlays/) | `layer`, `modal`, `command_palette`, `picker`, `fuzzy_filter`, `toast`, `toasts` |
-| [Código](/pyzed/components/code/) | `editor`, `terminal`, `ansi` |
-| [Más controles](/pyzed/components/controls/) | `select`, `radio_group`, `number_field`, `split_button`, `toggle_group`, `chip`, `disclosure` |
-| [Datos y feedback](/pyzed/components/data/) | `table` + `Column`, `callout`, `empty_state`, `settings_group`, `stat`, `sparkline`, `bar_chart`, `donut`, `spinner`, `count_badge`, `facepile`, `diff_stat`, `keybinding_hint` |
-| [Contenido y paneles](/pyzed/components/content/) | `markdown`, `split`, `popover`; widgets base `pz.image`, `pz.image_viewer`, `pz.rich_text`, `pz.qr_code`, `pz.grid` |
+| [Code](/pyzed/components/code/) | `editor`, `terminal`, `ansi` |
+| [More controls](/pyzed/components/controls/) | `select`, `radio_group`, `number_field`, `split_button`, `toggle_group`, `chip`, `disclosure` |
+| [Data and feedback](/pyzed/components/data/) | `table` + `Column`, `callout`, `empty_state`, `settings_group`, `stat`, `sparkline`, `bar_chart`, `donut`, `spinner`, `count_badge`, `facepile`, `diff_stat`, `keybinding_hint` |
+| [Content and panels](/pyzed/components/content/) | `markdown`, `split`, `popover`; base widgets `pz.image`, `pz.image_viewer`, `pz.rich_text`, `pz.qr_code`, `pz.grid` |
 
-Para ver todos funcionando, ejecuta la galería:
+To see them all in action, run the gallery:
 
 ```bash
 python examples/gallery.py
 ```
 
-:::tip[Ilustraciones]
-Las imágenes de esta sección se generan con `python docs/scripts/component_shots.py`, que dibuja
-cada ejemplo fuera de pantalla con `App.screenshot`.
+:::tip[Illustrations]
+The images in this section are generated with `python docs/scripts/component_shots.py`, which
+renders each example offscreen with `App.screenshot`.
 :::

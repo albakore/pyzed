@@ -1,53 +1,53 @@
 ---
-title: Teclado y atajos
-description: Atajos al estilo de Zed con on_key y cómo mostrarlos en la interfaz.
+title: Keyboard and shortcuts
+description: Zed-style shortcuts with on_key and how to show them in the UI.
 sidebar:
   order: 8
 ---
 
-Define `on_key(self, combo)` en tu app para recibir **todas** las teclas pulsadas, como un
-keymap global. `combo` es un texto al estilo de Zed:
+Define `on_key(self, combo)` in your app to receive **every** key press, like a global keymap.
+`combo` is a Zed-style string:
 
-| Tecla | `combo` |
+| Key | `combo` |
 | --- | --- |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | `"ctrl-shift-p"` |
 | <kbd>Cmd</kbd>+<kbd>S</kbd> (macOS) / <kbd>Win</kbd>+<kbd>S</kbd> | `"cmd-s"` |
 | <kbd>Alt</kbd>+<kbd>Z</kbd> | `"alt-z"` |
 | <kbd>Esc</kbd> | `"escape"` |
-| Flechas | `"up"`, `"down"`, `"left"`, `"right"` |
-| Otras | `"enter"`, `"tab"`, `"space"`, `"backspace"`, `"delete"`, `"home"`, `"end"`, `"pageup"`, `"pagedown"`, `"f1"`… |
+| Arrows | `"up"`, `"down"`, `"left"`, `"right"` |
+| Others | `"enter"`, `"tab"`, `"space"`, `"backspace"`, `"delete"`, `"home"`, `"end"`, `"pageup"`, `"pagedown"`, `"f1"`… |
 
-Los modificadores van siempre en este orden: `ctrl-`, `alt-`, `shift-`, `cmd-`. Las letras llegan
-en minúscula.
+Modifiers always come in this order: `ctrl-`, `alt-`, `shift-`, `cmd-`. Letters arrive in
+lowercase.
 
 ```python
 KEYMAP = {
-    "ctrl-shift-p": "abrir_paleta",
-    "ctrl-p": "abrir_archivos",
+    "ctrl-shift-p": "open_palette",
+    "ctrl-p": "open_files",
     "ctrl-b": "toggle_left",
-    "ctrl-s": "guardar",
+    "ctrl-s": "save",
 }
 
 
 class App(pz.App):
     def on_key(self, combo):
-        # admite Cmd en macOS y Ctrl en el resto con la misma tabla
-        accion = KEYMAP.get(combo.replace("cmd-", "ctrl-"))
-        if accion:
-            return getattr(self, accion)()
+        # support Cmd on macOS and Ctrl elsewhere with the same table
+        action = KEYMAP.get(combo.replace("cmd-", "ctrl-"))
+        if action:
+            return getattr(self, action)()
 ```
 
-`on_key` puede devolver lo mismo que un callback: `None`, un `Command` o un mensaje para `update`.
+`on_key` can return the same things as a callback: `None`, a `Command` or a message for `update`.
 
 :::note
-`on_key` recibe también las teclas que ya procesó un campo con foco (por ejemplo, las letras que
-escribes en un `input`). Responde solo a los combos que te interesen, y comprueba el estado si un
-atajo solo tiene sentido en cierto contexto (`if self.palette_open and combo == "escape"`).
+`on_key` also receives keys already handled by a focused field (for example, the letters you
+type in an `input`). Only respond to the combos you care about, and check the state when a
+shortcut only makes sense in a given context (`if self.palette_open and combo == "escape"`).
 :::
 
-## Mostrar atajos
+## Showing shortcuts
 
-- `ui.kbd("ctrl-shift-p")` dibuja las teclas. En macOS usa símbolos (⌃⇧P) y en el resto palabras.
+- `ui.kbd("ctrl-shift-p")` draws the keys. On macOS it uses symbols (⌃⇧P), elsewhere words.
 - `ui.button(..., keys="ctrl-s")`, `ui.MenuItem(..., keys=...)`, `ui.PaletteItem(..., keys=...)`
-  y `ui.tooltip(..., keys=...)` muestran el atajo junto a la acción.
-- Fija el estilo con `pyzed.ui.base.KEY_STYLE = "symbols"` o `"words"`.
+  and `ui.tooltip(..., keys=...)` show the shortcut next to the action.
+- Force the style with `pyzed.ui.base.KEY_STYLE = "symbols"` or `"words"`.

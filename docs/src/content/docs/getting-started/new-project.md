@@ -1,47 +1,47 @@
 ---
-title: Crear un proyecto
-description: Genera una app completa con la CLI de Pyzed.
+title: Create a project
+description: Generate a complete app with the Pyzed CLI.
 ---
 
-Pyzed instala el comando `pyzed`, que crea un proyecto listo para ejecutar:
+Pyzed installs the `pyzed` command, which creates a project ready to run:
 
 ```bash
-pyzed new mi-app
-cd mi-app
+pyzed new my-app
+cd my-app
 python main.py
 ```
 
-Esto genera:
+This generates:
 
 ```
-mi-app/
-├── main.py            # app con barra de título, sidebar, barra de estado y paleta de comandos
+my-app/
+├── main.py            # app with title bar, sidebar, status bar and command palette
 └── requirements.txt   # pyzed
 ```
 
-La plantilla ya incluye:
+The template already includes:
 
-- Un `ui.workspace` con barra de título, panel izquierdo y barra de estado.
-- Navegación entre páginas con `ui.list_item`.
-- Una paleta de comandos que se abre con <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>
-  y se cierra con <kbd>Esc</kbd>.
-- Un botón para alternar entre tema claro y oscuro.
+- A `ui.workspace` with a title bar, left panel and status bar.
+- Navigation between pages with `ui.list_item`.
+- A command palette that opens with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>
+  and closes with <kbd>Esc</kbd>.
+- A button to switch between light and dark themes.
 
-## Buscar iconos
+## Find icons
 
-Pyzed incluye los ~2000 iconos de [Lucide](https://lucide.dev). Para buscar nombres:
+Pyzed includes the ~2000 [Lucide](https://lucide.dev) icons. To search for names:
 
 ```bash
 pyzed icons folder
 # folder, folder-open, folder-git, folder-plus, ...
 ```
 
-Úsalos con `pz.icon("folder")` o con el parámetro `icon=` de los componentes.
+Use them with `pz.icon("folder")` or with the `icon=` parameter of components.
 
-## Ejecutar como módulo
+## Run as a module
 
-`python -m pyzed` es equivalente al comando `pyzed`:
+`python -m pyzed` is equivalent to the `pyzed` command:
 
 ```bash
-python -m pyzed new otra-app
+python -m pyzed new another-app
 ```

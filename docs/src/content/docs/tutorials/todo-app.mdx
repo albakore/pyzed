@@ -1,6 +1,6 @@
 ---
-title: Lista de tareas
-description: Tu primera app completa con estado, formularios, listas, filtros y atajos.
+title: To-do list
+description: Your first complete app with state, forms, lists, filters and shortcuts.
 sidebar:
   order: 1
 ---
@@ -8,15 +8,15 @@ sidebar:
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../examples/todo.py?raw';
 
-En este tutorial construimos una lista de tareas. Aprenderás a guardar estado, leer un campo de
-texto, dibujar listas, filtrar y añadir atajos de teclado.
+In this tutorial we build a to-do list. You will learn how to keep state, read a text field,
+draw lists, filter and add keyboard shortcuts.
 
-![La app terminada](../../../assets/tutorials/todo.png)
+![The finished app](../../../assets/tutorials/todo.png)
 
 <Steps>
 
-1. **El modelo.** Una tarea es un dataclass. El estado de la app es la lista de tareas, el texto
-   que se está escribiendo y el filtro activo:
+1. **The model.** A task is a dataclass. The app state is the list of tasks, the text being
+   typed and the active filter:
 
    ```python
    @dataclass
@@ -26,35 +26,36 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
 
 
    class Todo(pz.App):
-       title = "Tareas"
+       title = "Tasks"
        size = (520, 560)
 
        def __init__(self):
-           self.tasks = [Task("Crear mi primera app")]
+           self.tasks = [Task("Build my first app")]
            self.draft = ""
-           self.filter = "Todas"
+           self.filter = "All"
    ```
 
-2. **Añadir tareas.** El campo es *controlado*: muestra `self.draft` y cada pulsación lo
-   actualiza. Enter (`on_submit`) y el botón llaman al mismo método:
+2. **Adding tasks.** The field is *controlled*: it shows `self.draft` and every keystroke
+   updates it. Enter (`on_submit`) and the button call the same method:
 
    ```python
    def add(self):
        if self.draft.strip():
            self.tasks.append(Task(self.draft.strip()))
            self.draft = ""
-       return Command.focus("new-task")      # devuelve el foco al campo
+       return Command.focus("new-task")      # give focus back to the field
 
-   # en view():
+   # in view():
    pz.row([
        ui.input(self.draft, lambda text: setattr(self, "draft", text), id="new-task",
-                placeholder="¿Qué hay que hacer?", on_submit=self.add, icon="plus"),
-       ui.button("Añadir", self.add, variant="solid"),
+                placeholder="What needs to be done?", on_submit=self.add, icon="plus"),
+       ui.button("Add", self.add, variant="solid"),
    ], spacing=8)
    ```
 
-3. **Dibujar la lista.** Cada tarea es un `ui.list_item` con una casilla al inicio y un botón de
-   borrar al final. Las lambdas capturan `task` porque `task_row` recibe la tarea como argumento:
+3. **Drawing the list.** Each task is a `ui.list_item` with a checkbox at the start and a delete
+   button at the end. The lambdas capture `task` because `task_row` receives the task as an
+   argument:
 
    ```python
    def task_row(self, task):
@@ -62,20 +63,20 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
            ui.label(task.title, color="text_muted" if task.done else "text"),
            lambda: self.toggle(task),
            start=ui.checkbox(task.done, lambda _: self.toggle(task)),
-           end=ui.icon_button("trash-2", lambda: self.remove(task), size="sm", tooltip="Eliminar"),
+           end=ui.icon_button("trash-2", lambda: self.remove(task), size="sm", tooltip="Delete"),
            height=34,
            inset=True,
        )
    ```
 
-4. **Filtrar.** `ui.segmented` cambia `self.filter`, y `view()` solo muestra las tareas visibles.
-   Como `view()` se vuelve a llamar después de cada cambio, no hay que "refrescar" nada:
+4. **Filtering.** `ui.segmented` changes `self.filter`, and `view()` only shows the visible
+   tasks. Since `view()` is called again after every change, there is nothing to "refresh":
 
    ```python
-   ui.segmented(["Todas", "Pendientes", "Hechas"], self.filter, lambda f: setattr(self, "filter", f))
+   ui.segmented(["All", "Pending", "Done"], self.filter, lambda f: setattr(self, "filter", f))
    ```
 
-5. **Atajos.** `on_key` recibe cada tecla como texto:
+5. **Shortcuts.** `on_key` receives each key as text:
 
    ```python
    def on_key(self, combo):
@@ -85,7 +86,7 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
            self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
    ```
 
-6. **Foco inicial.** `on_start` se ejecuta una vez al abrir la ventana:
+6. **Initial focus.** `on_start` runs once when the window opens:
 
    ```python
    def on_start(self):
@@ -95,11 +96,11 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
 </Steps>
 
 <Aside type="tip">
-Prueba a cambiar el tema con <kbd>Ctrl</kbd>+<kbd>T</kbd>: todos los componentes se restilizan
-porque leen sus colores del tema activo.
+Try switching the theme with <kbd>Ctrl</kbd>+<kbd>T</kbd>: every component restyles itself
+because it reads its colors from the active theme.
 </Aside>
 
-## Código completo
+## Full code
 
 <Code code={source} lang="py" title="examples/todo.py" />
 

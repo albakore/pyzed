@@ -1,11 +1,11 @@
 ---
-title: Navegación
-description: Pestañas de editor, breadcrumbs y la barra de herramientas.
+title: Navigation
+description: Editor tabs, breadcrumbs and the toolbar.
 sidebar:
   order: 4
 ---
 
-![Pestañas, breadcrumbs y barra de herramientas](../../../assets/components/tabs.png)
+![Tabs, breadcrumbs and toolbar](../../../assets/components/tabs.png)
 
 ```python
 pz.column([
@@ -16,56 +16,56 @@ pz.column([
             ui.Tab.for_file("README.md", preview=True),
         ],
         active="src/main.rs",
-        on_select=self.activar,
-        on_close=self.cerrar,
-        start=[ui.icon_button("arrow-left", self.atras, size="sm"),
-               ui.icon_button("arrow-right", self.adelante, size="sm")],
-        end=[ui.icon_button("plus", self.nuevo, size="sm"),
-             ui.icon_button("columns-2", self.dividir, size="sm")],
+        on_select=self.activate,
+        on_close=self.close,
+        start=[ui.icon_button("arrow-left", self.back, size="sm"),
+               ui.icon_button("arrow-right", self.forward, size="sm")],
+        end=[ui.icon_button("plus", self.new, size="sm"),
+             ui.icon_button("columns-2", self.split, size="sm")],
     ),
     ui.toolbar(
         [ui.breadcrumbs([("file-code", "src"), "main.rs", "fn main"])],
-        [ui.icon_button("search", self.buscar, size="sm")],
+        [ui.icon_button("search", self.search, size="sm")],
     ),
 ])
 ```
 
-## Pestañas
+## Tabs
 
 - `Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)`.
-- `Tab.for_file(ruta)` usa el nombre del archivo como etiqueta, la ruta como id y el icono de su tipo.
-- `dirty=True` muestra un punto; al pasar el ratón se convierte en el botón de cerrar, como en Zed.
-- `preview=True` dibuja el nombre en cursiva (pestaña de vista previa).
-- `status` tiñe el nombre con el color de git.
-- `on_select(id)` y `on_close(id)` reciben el id de la pestaña.
+- `Tab.for_file(path)` uses the file name as label, the path as id and the icon for its type.
+- `dirty=True` shows a dot; on hover it turns into the close button, as in Zed.
+- `preview=True` draws the name in italics (preview tab).
+- `status` tints the name with the git color.
+- `on_select(id)` and `on_close(id)` receive the tab id.
 
-Un patrón habitual para gestionar pestañas:
+A common pattern for managing tabs:
 
 ```python
-def abrir(self, path):
-    if path not in self.abiertas:
-        self.abiertas.append(path)
-    self.activa = path
+def open(self, path):
+    if path not in self.open_tabs:
+        self.open_tabs.append(path)
+    self.active = path
 
-def cerrar(self, path):
-    i = self.abiertas.index(path)
-    self.abiertas.remove(path)
-    if self.activa == path:
-        self.activa = self.abiertas[min(i, len(self.abiertas) - 1)] if self.abiertas else None
+def close(self, path):
+    i = self.open_tabs.index(path)
+    self.open_tabs.remove(path)
+    if self.active == path:
+        self.active = self.open_tabs[min(i, len(self.open_tabs) - 1)] if self.open_tabs else None
 ```
 
 ## Breadcrumbs
 
 ```python
 ui.breadcrumbs(["src", "ui", "button.rs"])
-ui.breadcrumbs([("folder", "src"), ("file-code", "main.rs")], on_press=self.ir_a_nivel)
+ui.breadcrumbs([("folder", "src"), ("file-code", "main.rs")], on_press=self.go_to_level)
 ```
 
-Las partes pueden ser textos o tuplas `(icono, texto)`. `on_press` recibe el índice.
+Parts can be strings or `(icon, text)` tuples. `on_press` receives the index.
 
-## Barra de herramientas
+## Toolbar
 
-`ui.toolbar(start, end)` es la barra que Zed muestra bajo las pestañas: normalmente breadcrumbs a
-la izquierda y acciones del buffer a la derecha.
+`ui.toolbar(start, end)` is the bar Zed shows below the tabs: usually breadcrumbs on the left and
+buffer actions on the right.
 
-Referencia completa: [Navegación](/pyzed/reference/ui/#navegación).
+Full reference: [Navigation](/pyzed/reference/ui/#navigation).

@@ -1,9 +1,9 @@
-"""Renderiza las capturas de los ejemplos (docs/src/assets/tutorials y docs/src/assets/examples).
+"""Renders the example screenshots (docs/src/assets/tutorials and docs/src/assets/examples).
 
-    python docs/scripts/example_shots.py              # todas
-    python docs/scripts/example_shots.py styling      # solo algunas
+    python docs/scripts/example_shots.py              # all of them
+    python docs/scripts/example_shots.py styling      # only some
 
-Se dibujan fuera de pantalla con ``App.screenshot`` (sin ventana ni GPU).
+They are drawn off-screen with ``App.screenshot`` (no window or GPU).
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ class Windows(pz.App):
             note = Note(n, theme)
             note.app = self.main
             self.notes.append(note)
-        self.notes[0].text = "Hola desde otra ventana"
+        self.notes[0].text = "Hello from another window"
         self.main.windows, self.main.opened = self.notes, 2
 
     def view(self):
@@ -79,17 +79,17 @@ def life_setup(app):
 
 
 SHOTS = {
-    # Ilustraciones de las guías
+    # Guide illustrations
     "tutorials/multi-window": (Windows, (820, 560)),
     "tutorials/game-of-life": (app("game_of_life", "Life", life_setup), None),
     "tutorials/styling": (app("styling", "Styling"), (1000, 400)),
-    # Tutorial por pasos (examples/tutorial)
+    # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),
     "tutorials/step3": (app("step3_layout", "Settings"), None),
     "tutorials/step4": (app("step4_async", "Quotes"), None),
     "tutorials/step5": (app("step5_notes", "Notes"), None),
-    # Galería de ejemplos
+    # Examples gallery
     "examples/clock": (app("clock", "Clock"), None),
     "examples/image_viewer": (app("image_viewer", "Viewer"), None),
     "examples/markdown_viewer": (app("markdown_viewer", "MarkdownViewer"), None),

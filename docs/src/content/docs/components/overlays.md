@@ -1,29 +1,28 @@
 ---
 title: Overlays
-description: Capas, modales, la paleta de comandos, pickers con búsqueda difusa y notificaciones.
+description: Layers, modals, the command palette, fuzzy-search pickers and notifications.
 sidebar:
   order: 6
 ---
 
-## Capas
+## Layers
 
-`ui.layer(base, overlay, on_dismiss=...)` dibuja `overlay` encima de la interfaz. Hacer clic
-fuera envía `on_dismiss`. Si `overlay` es `None`, devuelve `base` sin cambios, así que puedes
-escribir:
+`ui.layer(base, overlay, on_dismiss=...)` draws `overlay` on top of the UI. Clicking outside
+sends `on_dismiss`. If `overlay` is `None`, it returns `base` unchanged, so you can write:
 
 ```python
 def view(self):
     layout = ui.workspace(...)
-    return ui.layer(layout, self.dialogo(), on_dismiss=self.cerrar, backdrop="#00000066")
+    return ui.layer(layout, self.dialog(), on_dismiss=self.close, backdrop="#00000066")
 
-def dialogo(self):
-    if not self.confirmando:
+def dialog(self):
+    if not self.confirming:
         return None
     return ui.modal(...)
 ```
 
-`align_x`, `align_y` y `offset` controlan dónde aparece el overlay (por defecto, centrado arriba
-como la paleta de Zed).
+`align_x`, `align_y` and `offset` control where the overlay appears (by default, centered at the
+top like Zed's palette).
 
 ## Modal
 
@@ -31,21 +30,21 @@ como la paleta de Zed).
 
 ```python
 ui.modal(
-    ui.muted("Hay cambios sin guardar en main.py. ¿Quieres guardarlos antes de cerrar?"),
-    title="¿Guardar cambios?",
-    on_close=self.cerrar,
+    ui.muted("main.py has unsaved changes. Do you want to save them before closing?"),
+    title="Save changes?",
+    on_close=self.close,
     footer=[
-        ui.button("No guardar", self.descartar, variant="ghost"),
-        ui.button("Cancelar", self.cerrar),
-        ui.button("Guardar", self.guardar, variant="solid"),
+        ui.button("Don't save", self.discard, variant="ghost"),
+        ui.button("Cancel", self.close),
+        ui.button("Save", self.save, variant="solid"),
     ],
     width=420,
 )
 ```
 
-## Paleta de comandos
+## Command palette
 
-![Paleta de comandos](../../../assets/components/palette.png)
+![Command palette](../../../assets/components/palette.png)
 
 ```python
 class App(pz.App):
@@ -86,40 +85,42 @@ class App(pz.App):
         return ui.layer(layout, palette, on_dismiss=lambda: setattr(self, "palette_open", False))
 ```
 
-Enter (`on_submit`) ejecuta el comando resaltado; las flechas cambian `selected`.
+Enter (`on_submit`) runs the highlighted command; the arrow keys change `selected`.
 
-## Picker y búsqueda difusa
+## Picker and fuzzy search
 
-`command_palette` está construida sobre `picker` y `fuzzy_filter`. Úsalos para tus propios
-buscadores (archivos, símbolos, ramas…):
+![Picker with fuzzy matches](../../../assets/components/picker.png)
+
+`command_palette` is built on top of `picker` and `fuzzy_filter`. Use them for your own
+finders (files, symbols, branches…):
 
 ```python
-matches = ui.fuzzy_filter(self.query, self.archivos)            # [(archivo, posiciones), ...]
-items = [(ui.PaletteItem(Path(f).name, lambda f=f: self.abrir(f), icon="file", detail=f), pos)
+matches = ui.fuzzy_filter(self.query, self.files)               # [(file, positions), ...]
+items = [(ui.PaletteItem(Path(f).name, lambda f=f: self.open(f), icon="file", detail=f), pos)
          for f, pos in matches[:50]]
-ui.picker(self.query, self.set_query, items, selected=self.sel, placeholder="Buscar archivos…")
+ui.picker(self.query, self.set_query, items, selected=self.sel, placeholder="Search files…")
 ```
 
-`fuzzy_match(query, texto)` devuelve `(puntuación, posiciones)` o `None`, y `highlighted()`
-dibuja un texto con las coincidencias resaltadas.
+`fuzzy_match(query, text)` returns `(score, positions)` or `None`, and `highlighted()`
+draws a text with the matches highlighted.
 
-## Notificaciones
+## Notifications
 
-![Notificaciones](../../../assets/components/toasts.png)
+![Notifications](../../../assets/components/toasts.png)
 
 ```python
-ui.toast("Guardado", "main.py se guardó correctamente.", kind="success", on_dismiss=self.cerrar_aviso)
-ui.toast("Actualización disponible", "Pyzed 0.2 ya está en PyPI.", kind="info",
-         actions=[ui.button("Ver novedades", self.novedades, size="sm")])
+ui.toast("Saved", "main.py was saved successfully.", kind="success", on_dismiss=self.dismiss_toast)
+ui.toast("Update available", "Pyzed 0.2 is now on PyPI.", kind="info",
+         actions=[ui.button("What's new", self.whats_new, size="sm")])
 ```
 
-`ui.toasts(base, items)` las apila en la esquina inferior derecha. Para que desaparezcan solas,
-usa un hilo y [`pz.post`](/pyzed/guides/commands/#mensajes-desde-otros-hilos):
+`ui.toasts(base, items)` stacks them in the bottom-right corner. To make them disappear on their
+own, use a thread and [`pz.post`](/pyzed/guides/commands/#messages-from-other-threads):
 
 ```python
-def avisar(self, titulo):
-    self.avisos.append(titulo)
-    threading.Timer(3, pz.post, args=(("quitar_aviso", titulo),)).start()
+def notify(self, title):
+    self.toasts.append(title)
+    threading.Timer(3, pz.post, args=(("remove_toast", title),)).start()
 ```
 
-Referencia completa: [Overlays](/pyzed/reference/ui/#overlays).
+Full reference: [Overlays](/pyzed/reference/ui/#overlays).

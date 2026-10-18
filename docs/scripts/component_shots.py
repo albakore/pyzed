@@ -1,9 +1,9 @@
-"""Renderiza las ilustraciones de la sección Componentes (docs/src/assets/components/*.png).
+"""Renders the illustrations of the Components pages (docs/src/assets/components/*.png).
 
-    python docs/scripts/component_shots.py            # todas
-    python docs/scripts/component_shots.py tabs tree  # solo algunas
+    python docs/scripts/component_shots.py            # all of them
+    python docs/scripts/component_shots.py tabs tree  # only some
 
-Se dibujan fuera de pantalla con ``App.screenshot`` (sin ventana ni GPU), con el tema One Dark.
+They are drawn off-screen with ``App.screenshot`` (no window or GPU), in the One Dark theme.
 """
 
 from __future__ import annotations
@@ -32,12 +32,12 @@ def buttons():
             ui.button("Error", noop, variant="error", icon="trash-2"),
             ui.button("Warning", noop, variant="warning", icon="triangle-alert"),
             ui.button("Success", noop, variant="success", icon="check"),
-            ui.button("Guardar", noop, icon="save", keys="ctrl-s"),
+            ui.button("Save", noop, icon="save", keys="ctrl-s"),
         ], spacing=8),
         pz.row([
             ui.button("xs", noop, size="xs"), ui.button("sm", noop, size="sm"),
             ui.button("md", noop, size="md"), ui.button("lg", noop, size="lg"),
-            ui.icon_button("settings", noop, tooltip="Ajustes"),
+            ui.icon_button("settings", noop, tooltip="Settings"),
             ui.icon_button("search", noop, variant="filled"),
             ui.icon_button("bell", noop, selected=True),
         ], spacing=8, align="center"),
@@ -49,9 +49,9 @@ def text():
         ui.heading("Heading 1"),
         ui.heading("Heading 2", level=2),
         ui.heading("Heading 3", level=3),
-        ui.label("Label normal"),
-        ui.muted("Texto atenuado"),
-        ui.label("Texto de acento", color="accent"),
+        ui.label("Normal label"),
+        ui.muted("Muted text"),
+        ui.label("Accent text", color="accent"),
         ui.label("def mono(): ...", mono=True, size="sm"),
     ], spacing=6)
 
@@ -72,11 +72,11 @@ def badges():
 def card():
     return ui.card(
         pz.column([
-            ui.muted("Pyzed dibuja la interfaz con Iced en Rust."),
-            pz.row([pz.hspace(), ui.button("Cancelar", noop, variant="ghost"),
-                    ui.button("Aceptar", noop, variant="solid")], spacing=8),
+            ui.muted("Pyzed draws the UI with Iced, in Rust."),
+            pz.row([pz.hspace(), ui.button("Cancel", noop, variant="ghost"),
+                    ui.button("OK", noop, variant="solid")], spacing=8),
         ], spacing=12),
-        title="Tarjeta",
+        title="Card",
         actions=[ui.icon_button("ellipsis", noop, size="sm")],
         width=380,
     )
@@ -84,12 +84,12 @@ def card():
 
 def forms():
     return pz.column([
-        ui.input("", noop, placeholder="Nombre del proyecto"),
+        ui.input("", noop, placeholder="Project name"),
         ui.search_input("comp", noop),
-        ui.field("Autoguardado", ui.switch(True, noop), description="Guarda al cambiar de pestaña"),
-        ui.field("Formato al guardar", ui.checkbox(False, noop)),
-        ui.field("Tamaño de fuente", pz.container(ui.slider(0.6, noop), width=160)),
-        ui.segmented(["Editor", "Terminal", "Ambos"], "Editor", noop),
+        ui.field("Autosave", ui.switch(True, noop), description="Saves when switching tabs"),
+        ui.field("Format on save", ui.checkbox(False, noop)),
+        ui.field("Font size", pz.container(ui.slider(0.6, noop), width=160)),
+        ui.segmented(["Editor", "Terminal", "Both"], "Editor", noop),
         ui.progress(0.65),
     ], spacing=12, width=420)
 
@@ -97,11 +97,11 @@ def forms():
 def list_items():
     return pz.container(
         pz.column([
-            ui.list_header("RECIENTES", end=ui.icon_button("plus", noop, size="xs")),
+            ui.list_header("RECENT", end=ui.icon_button("plus", noop, size="xs")),
             ui.list_item("main.py", noop, icon="file-code", icon_color="#3572a5", selected=True, inset=True),
             ui.list_item("README.md", noop, icon="file-text", inset=True, end=ui.badge("M", tint="warning")),
             ui.list_item("Cargo.toml", noop, icon="file-cog", inset=True, end=ui.kbd("ctrl-1", size="xs")),
-            ui.list_item("antiguo.txt", noop, icon="file", inset=True, disabled=True),
+            ui.list_item("old.txt", noop, icon="file", inset=True, disabled=True),
         ], width=300),
         padding=4,
     )
@@ -118,14 +118,14 @@ def tree():
 
 def menu():
     return ui.menu([
-        ui.MenuItem("Nuevo archivo", noop, icon="file-plus", keys="ctrl-n"),
-        ui.MenuItem("Nueva carpeta", noop, icon="folder-plus"),
+        ui.MenuItem("New file", noop, icon="file-plus", keys="ctrl-n"),
+        ui.MenuItem("New folder", noop, icon="folder-plus"),
         ui.SEPARATOR,
         "EDITAR",
-        ui.MenuItem("Copiar ruta", noop, keys="ctrl-alt-c"),
-        ui.MenuItem("Ajuste de línea", noop, checked=True),
+        ui.MenuItem("Copy path", noop, keys="ctrl-alt-c"),
+        ui.MenuItem("Soft wrap", noop, checked=True),
         ui.SEPARATOR,
-        ui.MenuItem("Eliminar", noop, icon="trash-2", danger=True),
+        ui.MenuItem("Delete", noop, icon="trash-2", danger=True),
     ])
 
 
@@ -155,10 +155,10 @@ def workspace():
         ]),
         title_bar=ui.title_bar([ui.title_button("pyzed", chevron=True), ui.title_button("main", icon="git-branch", muted=True)],
                                [ui.icon_button("bell", noop, size="sm"), ui.avatar("KV")]),
-        left=pz.column([ui.panel_header("Proyecto", [ui.icon_button("plus", noop, size="xs")]),
+        left=pz.column([ui.panel_header("Project", [ui.icon_button("plus", noop, size="xs")]),
                         ui.tree(files, expanded={"src"}, selected="src/main.py")]),
         bottom=pz.column([ui.panel_header("Terminal", icon="terminal"),
-                          ui.terminal("$ python main.py\n\x1b[32m✓\x1b[0m listo")]),
+                          ui.terminal("$ python main.py\n\x1b[32m✓\x1b[0m done")]),
         status_bar=ui.status_bar([ui.status_item("0", icon="circle-x"), ui.status_item("1", icon="triangle-alert")],
                                  [ui.status_item("Ln 4, Col 8"), ui.status_item("Python")]),
         left_width=200,
@@ -179,21 +179,21 @@ def palette():
 
 def modal():
     return ui.modal(
-        ui.muted("Hay cambios sin guardar en main.py. ¿Quieres guardarlos antes de cerrar?"),
-        title="¿Guardar cambios?",
+        ui.muted("main.py has unsaved changes. Save them before closing?"),
+        title="Save changes?",
         on_close=noop,
-        footer=[ui.button("No guardar", noop, variant="ghost"), ui.button("Cancelar", noop),
-                ui.button("Guardar", noop, variant="solid")],
+        footer=[ui.button("Don't save", noop, variant="ghost"), ui.button("Cancel", noop),
+                ui.button("Save", noop, variant="solid")],
         width=420,
     )
 
 
 def toasts():
     return pz.column([
-        ui.toast("Guardado", "main.py se guardó correctamente.", kind="success", on_dismiss=noop),
-        ui.toast("Actualización disponible", "Pyzed 0.2 ya está en PyPI.", kind="info",
-                 actions=[ui.button("Ver novedades", noop, size="sm")], on_dismiss=noop),
-        ui.toast("No se pudo conectar", kind="error", on_dismiss=noop),
+        ui.toast("Saved", "main.py was saved.", kind="success", on_dismiss=noop),
+        ui.toast("Update available", "Pyzed 0.2 is on PyPI.", kind="info",
+                 actions=[ui.button("What's new", noop, size="sm")], on_dismiss=noop),
+        ui.toast("Could not connect", kind="error", on_dismiss=noop),
     ], spacing=8)
 
 
@@ -224,10 +224,10 @@ def controls():
         pz.row([
             ui.select(["Python", "Rust", "TypeScript"], "Rust", noop, width=160),
             ui.number_field(14, noop, min=8, max=32, suffix="px"),
-            ui.split_button("Ejecutar", noop, noop, icon="play"),
+            ui.split_button("Run", noop, noop, icon="play"),
         ], spacing=10, align="center"),
         pz.row([
-            ui.radio_group([("a", "Espacios"), ("b", "Tabs")], "a", noop, horizontal=True),
+            ui.radio_group([("a", "Spaces"), ("b", "Tabs")], "a", noop, horizontal=True),
             pz.hspace(),
             ui.toggle_group([("l", "align-left"), ("c", "align-center"), ("r", "align-right")], "c", noop),
         ], spacing=10, align="center"),
@@ -236,20 +236,20 @@ def controls():
             ui.chip("rust", on_remove=noop),
             ui.chip("iced", on_press=noop),
         ], spacing=6),
-        ui.disclosure("Opciones avanzadas", ui.muted("Contenido plegable."), open=True, on_toggle=noop),
+        ui.disclosure("Advanced options", ui.muted("Collapsible content."), open=True, on_toggle=noop),
     ], spacing=14)
 
 
 def feedback():
     return pz.column([
-        ui.callout("Hay una versión nueva", "Pyzed 0.2 añade ventanas, async y canvas.", tint="info",
-                   actions=[ui.button("Ver novedades", noop, size="sm")], on_dismiss=noop),
-        ui.callout("No se pudo guardar", "El archivo es de solo lectura.", tint="error"),
+        ui.callout("A new version is out", "Pyzed 0.2 adds windows, async and canvas.", tint="info",
+                   actions=[ui.button("What's new", noop, size="sm")], on_dismiss=noop),
+        ui.callout("Could not save", "The file is read-only.", tint="error"),
         pz.row([
             ui.spinner(), ui.count_badge(7), ui.count_badge(120, tint="error"),
             ui.facepile(["Ana", "Luis", "Kev", "Marta"]),
             ui.diff_stat(42, 9),
-            ui.keybinding_hint("Abrir paleta", "ctrl-shift-p"),
+            ui.keybinding_hint("Open palette", "ctrl-shift-p"),
         ], spacing=14, align="center"),
     ], spacing=12)
 
@@ -262,17 +262,17 @@ def table():
         {"name": "docs.yml", "lang": "YAML", "lines": 64},
     ]
     return ui.table(
-        [ui.Column("Archivo", "name"), ui.Column("Lenguaje", "lang", width=120),
-         ui.Column("Líneas", "lines", width=80, align="end")],
-        rows, sort_by="Líneas", descending=True, on_sort=noop, selected=rows[1], striped=True,
+        [ui.Column("File", "name"), ui.Column("Language", "lang", width=120),
+         ui.Column("Lines", "lines", width=80, align="end")],
+        rows, sort_by="Lines", descending=True, on_sort=noop, selected=rows[1], striped=True,
     )
 
 
 def charts():
     return pz.row([
         pz.column([
-            ui.stat("Usuarios", "1.284", delta=12.5, trend=[3, 5, 4, 6, 8, 7, 9]),
-            ui.stat("Errores", "37", delta=-8.0),
+            ui.stat("Users", "1.284", delta=12.5, trend=[3, 5, 4, 6, 8, 7, 9]),
+            ui.stat("Errors", "37", delta=-8.0),
         ], spacing=10, width=200),
         ui.bar_chart([12, 19, 8, 15, 22, 17], labels=["L", "M", "X", "J", "V", "S"], width=260, height=150),
         pz.column([ui.donut([60, 25, 15], label="60%"), ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8])],
@@ -282,23 +282,23 @@ def charts():
 
 def empty():
     return pz.row([
-        ui.card(ui.empty_state("Sin resultados", "Prueba con otra búsqueda.", icon="search",
-                               actions=[ui.button("Limpiar filtros", noop, size="sm")]), padding=12),
+        ui.card(ui.empty_state("No results", "Try another search.", icon="search",
+                               actions=[ui.button("Clear filters", noop, size="sm")]), padding=12),
         ui.settings_group("Editor", [
-            ui.field("Tamaño de fuente", ui.number_field(14, noop, suffix="px")),
-            ui.field("Ajuste de línea", ui.switch(True, noop)),
-        ], description="Preferencias del editor."),
+            ui.field("Font size", ui.number_field(14, noop, suffix="px")),
+            ui.field("Soft wrap", ui.switch(True, noop)),
+        ], description="Editor preferences."),
     ], spacing=16)
 
 
 def content():
-    md = "## Markdown\n\nTexto con **negrita**, *cursiva*, `código` y [enlaces](https://iced.rs).\n\n- Listas\n- Y más"
+    md = "## Markdown\n\nText with **bold**, *italic*, `code` and [links](https://iced.rs).\n\n- Lists\n- And more"
     return pz.row([
         pz.column([
             pz.markdown(md, width=300),
             pz.rich_text([
-                pz.span("rich_text "), pz.span("mezcla ", color="#e5c07b"),
-                pz.span("estilos", weight="bold", underline=True), pz.span(" en una línea", italic=True),
+                pz.span("rich_text "), pz.span("mixes ", color="#e5c07b"),
+                pz.span("styles", weight="bold", underline=True), pz.span(" on one line", italic=True),
             ]),
         ], spacing=12, width=320),
         pz.column([
@@ -320,8 +320,58 @@ def media():
 def split():
     t = pz.themes.get("One Dark")
     pane = lambda title, color: pz.container(ui.label(title), padding=12, width="fill", height="fill", bg=color)
-    return ui.split(pane("Izquierda", t.panel), ui.split(pane("Arriba", t.editor), pane("Abajo", t.background),
+    return ui.split(pane("Left", t.panel), ui.split(pane("Top", t.editor), pane("Bottom", t.background),
                                                          vertical=True), ratio=0.4, on_resize=noop)
+
+
+def widgets():
+    t = pz.themes.get("One Dark")
+    return pz.column([
+        pz.row([
+            pz.button("pz.button", noop, bg=t.accent, color=t.background, radius=4, padding=(6, 12)),
+            pz.checkbox(True, "checkbox", on_toggle=noop),
+            pz.toggler(True, "toggler", on_toggle=noop),
+            pz.radio("radio", True, noop),
+        ], spacing=16, align="center"),
+        pz.row([
+            pz.container(pz.text_input("text_input", on_input=noop), width=200),
+            pz.pick_list(["pick_list", "option"], "pick_list", noop, width=140),
+        ], spacing=16, align="center"),
+        pz.row([pz.container(pz.slider(0, 100, 60, on_change=noop), width=200),
+                pz.container(pz.progress_bar(0.6), width=200)], spacing=16, align="center"),
+        pz.rule(),
+        pz.row([pz.icon("sparkles", size=18, color=t.accent), pz.text("pz.text with an icon", color=t.text)],
+               spacing=8, align="center"),
+    ], spacing=14)
+
+
+def canvas():
+    from pyzed import draw
+    shapes = [
+        draw.rect(10, 10, 120, 80, fill="#74ade8", radius=8),
+        draw.circle(200, 50, 40, fill="#a1c181"),
+        draw.arc(300, 50, 40, 0, 270, stroke="#e5c07b", width=8, cap="round"),
+        draw.polygon([(360, 90), (400, 10), (440, 90)], fill="#d07277"),
+        draw.line(10, 120, 440, 120, stroke="#5d636f", width=2, dash=[6, 4]),
+        draw.text(225, 150, "pz.canvas + pyzed.draw", color="#dce0e5", size=16, align_x="center"),
+    ]
+    return pz.canvas(shapes, width=450, height=170)
+
+
+def popover():
+    base = pz.container(ui.muted("Right-click anywhere"), width="fill", height="fill", padding=12)
+    menu = ui.menu([
+        ui.MenuItem("Copy", noop, icon="copy", keys="ctrl-c"),
+        ui.MenuItem("Paste", noop, icon="clipboard", keys="ctrl-v"),
+        ui.MenuItem("Delete", noop, icon="trash-2", danger=True),
+    ], width=200)
+    return ui.popover(ui.card(base, padding=0), menu, x=120, y=40, on_dismiss=noop)
+
+
+def picker():
+    files = ["src/app.rs", "src/render.rs", "python/pyzed/app.py", "python/pyzed/theme.py", "README.md"]
+    items = ui.fuzzy_filter("app", [ui.PaletteItem(f, noop) for f in files], key=lambda i: i.label)
+    return ui.picker("app", noop, items, selected=0, placeholder="Search files…", width=480)
 
 
 SHOTS = {
@@ -348,6 +398,10 @@ SHOTS = {
     "content": (content, (520, 210)),
     "media": (media, (620, 180)),
     "split": (split, (520, 260)),
+    "widgets": (widgets, (520, 225)),
+    "canvas": (canvas, (490, 210)),
+    "popover": (popover, (420, 220)),
+    "picker": (picker, (520, 200)),
 }
 
 

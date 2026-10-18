@@ -1,62 +1,64 @@
 ---
-title: Layout y estilo
-description: Filas, columnas, contenedores, tamaños, relleno, alineación y colores.
+title: Layout and styling
+description: Rows, columns, containers, sizes, padding, alignment and colors.
 sidebar:
   order: 2
 ---
 
-## Filas y columnas
+## Rows and columns
+
+![Base widgets: buttons, inputs, sliders, progress and text](../../../assets/components/widgets.png)
 
 ```python
 pz.column([a, b, c], spacing=8, padding=16)            # vertical
 pz.row([a, b, c], spacing=8, align="center")          # horizontal
 ```
 
-- `children` acepta listas anidadas y omite `None` y `False`, así que puedes escribir
+- `children` accepts nested lists and skips `None` and `False`, so you can write
   `self.error and ui.label(self.error, color="error")`.
-- Un texto o un número como hijo se convierte en `pz.text`.
-- `align` alinea los hijos en el eje cruzado: `"start"`, `"center"`, `"end"`.
+- A string or a number as a child becomes a `pz.text`.
+- `align` aligns children on the cross axis: `"start"`, `"center"`, `"end"`.
 
-## Tamaños
+## Sizes
 
-`width` y `height` aceptan:
+`width` and `height` accept:
 
-| Valor | Significado |
+| Value | Meaning |
 | --- | --- |
-| `240` | Píxeles fijos. |
-| `"shrink"` | Lo justo para el contenido. |
-| `"fill"` | Todo el espacio disponible. |
-| `"fill:2"` | Una proporción del espacio: dos `"fill:1"` y un `"fill:2"` reparten 25/25/50. |
+| `240` | Fixed pixels. |
+| `"shrink"` | Just enough for the content. |
+| `"fill"` | All available space. |
+| `"fill:2"` | A share of the space: two `"fill:1"` and one `"fill:2"` split 25/25/50. |
 
 ```python
 pz.row([
     pz.container(sidebar, width=240),
-    pz.container(contenido, width="fill"),
+    pz.container(content, width="fill"),
 ])
 ```
 
-Empuja elementos a los extremos con un hueco flexible:
+Push items to the edges with a flexible gap:
 
 ```python
-pz.row([ui.label("Título"), pz.hspace(), ui.button("Cerrar", self.cerrar)])
+pz.row([ui.label("Title"), pz.hspace(), ui.button("Close", self.close)])
 ```
 
-:::caution[Hijos que rellenan]
-Un hijo con `"fill"` (por ejemplo, `pz.rule()` horizontal) hace que su columna también rellene.
-Si quieres que la columna encoja, pon `width="shrink"` en la columna.
+:::caution[Filling children]
+A child with `"fill"` (for example, a horizontal `pz.rule()`) makes its column fill too. If you
+want the column to shrink, set `width="shrink"` on the column.
 :::
 
-## Relleno
+## Padding
 
-`padding` acepta `8` (todos los lados), `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`.
+`padding` accepts `8` (all sides), `(vertical, horizontal)` or `(top, right, bottom, left)`.
 
-## Contenedores
+## Containers
 
-`pz.container` envuelve un hijo para darle tamaño, alineación y estilo:
+`pz.container` wraps a child to give it size, alignment and style:
 
 ```python
 pz.container(
-    contenido,
+    content,
     padding=(12, 16),
     width="fill",
     max_width=720,
@@ -65,43 +67,43 @@ pz.container(
     border_color="#464b57",
     border_width=1,
     radius=8,
-    shadow=("#00000066", (0, 4), 16),   # (color, (dx, dy), desenfoque)
+    shadow=("#00000066", (0, 4), 16),   # (color, (dx, dy), blur)
     clip=True,
 )
 ```
 
-`pz.center(contenido)` lo centra en todo el espacio. `pz.container(None, width=8, height=8, bg=...)`
-es un rectángulo de color.
+`pz.center(content)` centers it in all the available space. `pz.container(None, width=8, height=8, bg=...)`
+is a colored rectangle.
 
-## Colores
+## Colors
 
-Los colores aceptan `"#rgb"`, `"#rrggbb"`, `"#rrggbbaa"`, tuplas `(r, g, b)` / `(r, g, b, a)` o
-`"transparent"`. En los componentes de `pyzed.ui` también puedes usar un token del tema
-(`"accent"`, `"text_muted"`…). Para colores derivados:
+Colors accept `"#rgb"`, `"#rrggbb"`, `"#rrggbbaa"`, tuples `(r, g, b)` / `(r, g, b, a)` or
+`"transparent"`. In `pyzed.ui` components you can also use a theme token (`"accent"`,
+`"text_muted"`…). For derived colors:
 
 ```python
 from pyzed.theme import alpha, mix
 
-alpha(self.resolved_theme().accent, 0.2)            # 20 % de opacidad
-mix(self.resolved_theme().editor, "#ffffff", 0.05)  # un 5 % más claro
+alpha(self.resolved_theme().accent, 0.2)            # 20% opacity
+mix(self.resolved_theme().editor, "#ffffff", 0.05)  # 5% lighter
 ```
 
-## Texto
+## Text
 
 ```python
-pz.text("Hola", size=16, weight="semibold", color="#dce0e5")
-pz.text("código", font="mono")
-pz.text("una línea muy larga…", wrap=False)
+pz.text("Hello", size=16, weight="semibold", color="#dce0e5")
+pz.text("code", font="mono")
+pz.text("a very long line…", wrap=False)
 ```
 
-Fuentes incluidas: IBM Plex Sans (`"sans"`, por defecto), IBM Plex Mono (`"mono"`) y Lucide
-(`"icons"`). Ver [iconos y fuentes](/pyzed/guides/icons-fonts/).
+Bundled fonts: IBM Plex Sans (`"sans"`, the default), IBM Plex Mono (`"mono"`) and Lucide
+(`"icons"`). See [icons and fonts](/pyzed/guides/icons-fonts/).
 
-## Superposiciones y scroll
+## Overlays and scrolling
 
-- `pz.stack([abajo, arriba])` superpone widgets; `pz.opaque(w)` evita que los clics lo atraviesen.
-- `pz.scrollable(contenido, direction="vertical" | "horizontal" | "both")` añade scroll.
-  Con `anchor_bottom=True` se queda pegado al final.
-- `pz.hover(base, encima)` muestra `encima` solo al pasar el ratón.
-- `pz.mouse_area(w, on_right_press=..., on_double_click=..., cursor="pointer")` detecta eventos
-  del ratón.
+- `pz.stack([below, above])` layers widgets; `pz.opaque(w)` stops clicks from passing through.
+- `pz.scrollable(content, direction="vertical" | "horizontal" | "both")` adds scrolling.
+  With `anchor_bottom=True` it stays pinned to the end.
+- `pz.hover(base, overlay)` shows `overlay` only on mouse hover.
+- `pz.mouse_area(w, on_right_press=..., on_double_click=..., cursor="pointer")` detects mouse
+  events.
