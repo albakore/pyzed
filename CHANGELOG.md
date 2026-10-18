@@ -16,6 +16,39 @@ stable version.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-18
+
+### Highlights
+
+- **Pyzed Designer**: a Visual Basic / Qt Designer style form editor (`pyzed design app.pzform`) with a toolbox, dot-grid snapping, alignment tools, property grid, events and per-event code editing. **F5** runs the form with all its logic.
+- **Hot reload**: `pyzed dev main.py` updates the open window on every save and keeps the app's state.
+- **Bilingual docs**: the site is in English by default, with a full Spanish translation under `/es/`.
+
+### Features
+
+- ✨ Add visual form designer with event code editing, grid snapping and alignment. PR [#15](https://github.com/albakore/pyzed/pull/15) by [@albakore](https://github.com/albakore).
+- ✨ Add hot reload for running apps (`pyzed dev`, `pz.run(App, reload=True)`, `PYZED_RELOAD=1`). PR [#14](https://github.com/albakore/pyzed/pull/14) by [@albakore](https://github.com/albakore).
+
+### Upgrades
+
+- ⬆️ Bump pyo3 from 0.27.2 to 0.30.1. PR [#11](https://github.com/albakore/pyzed/pull/11) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump two-face from 0.4.5 to 0.5.2. PR [#10](https://github.com/albakore/pyzed/pull/10) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump png from 0.17.16 to 0.18.1. PR [#9](https://github.com/albakore/pyzed/pull/9) by [@dependabot](https://github.com/apps/dependabot).
+- ⬆️ Bump the GitHub Actions group with 7 updates. PR [#12](https://github.com/albakore/pyzed/pull/12) by [@dependabot](https://github.com/apps/dependabot).
+
+### Docs
+
+- 📝 README images now show up on PyPI.
+
+### Translations
+
+- 🌐 Make the docs bilingual (English by default, Spanish under `/es`), with Mermaid diagrams and new screenshots. PR [#13](https://github.com/albakore/pyzed/pull/13) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 Speed up CI, gitmoji release notes, PyPI README images and contribution guidelines. PR [#8](https://github.com/albakore/pyzed/pull/8) by [@albakore](https://github.com/albakore).
+- 👷 Deploy the docs site only from `main`, not from release tags. PR [#7](https://github.com/albakore/pyzed/pull/7) by [@albakore](https://github.com/albakore).
+
 ## [0.2.0] - 2026-10-18
 
 First version published on PyPI, as `pyzed-ui`.

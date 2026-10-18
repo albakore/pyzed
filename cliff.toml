@@ -19,7 +19,8 @@ body = """
 {% if commit.remote.pr_number %} PR [#{{ commit.remote.pr_number }}]({{ self::repo() }}/pull/{{ commit.remote.pr_number }})\
 {% else %} [{{ commit.id | truncate(length=7, end="") }}]({{ self::repo() }}/commit/{{ commit.id }})\
 {% endif %}\
-{% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}.
+{% if commit.remote.username and commit.remote.username is ending_with("[bot]") %} by [@{{ commit.remote.username | replace(from="[bot]", to="") }}](https://github.com/apps/{{ commit.remote.username | replace(from="[bot]", to="") }})\
+{% elif commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}.
 {%- endfor %}
 {% endfor %}
 """
@@ -63,9 +64,11 @@ commit_preprocessors = [
   { pattern = "^:white_check_mark:", replace = "✅" },
   { pattern = "^:bookmark:", replace = "🔖" },
   { pattern = "^:lock:", replace = "🔒️" },
-  # Squash merges append "(#12)"; the PR link is added by the template instead.
-  { pattern = "\\s*\\(#\\d+\\)$", replace = "" },
-  { pattern = "\\s+$", replace = "" },
+  # Dependabot writes "⬆️ bump ..."; capitalize like the rest of the notes.
+  { pattern = "^(⬆️|⬇️) bump", replace = "$1 Bump" },
+  # Squash merges append "(#12)" to the title; the template links the PR instead.
+  { pattern = "(?m)\\s*\\(#\\d+\\)$", replace = "" },
+  { pattern = "(?m)[ \\t]+$", replace = "" },
 ]
 commit_parsers = [
   { message = "^🔖", skip = true },
