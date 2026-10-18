@@ -3,7 +3,7 @@ title: Pyzed
 description: Interfaces modernas y rápidas en Python, renderizadas por Iced (Rust), con componentes inspirados en el editor Zed.
 template: splash
 hero:
-  tagline: Interfaces de escritorio modernas y rápidas en Python. Tú describes la interfaz; Iced, en Rust, la dibuja. Con más de 40 componentes al estilo del editor Zed.
+  tagline: Interfaces de escritorio modernas y rápidas en Python. Tú describes la interfaz; Iced, en Rust, la dibuja. Con más de 70 componentes al estilo del editor Zed, async y varias ventanas.
   image:
     file: ../../../screenshots/zed-one-dark.png
     alt: Un editor tipo Zed hecho con Pyzed
@@ -46,7 +46,7 @@ class Counter(pz.App):
                 ui.heading(str(self.count)),
                 ui.button("+1", lambda: setattr(self, "count", self.count + 1), icon="plus", variant="solid"),
             ], spacing=12, align="center"),
-            bg=self.theme.editor,
+            bg=self.resolved_theme().editor,
         )
 
 
@@ -69,8 +69,12 @@ pz.run(Counter)
 		menús, toasts y un workspace con docks.
 	</Card>
 	<Card title="Temas" icon="seti:pipeline">
-		One Dark, One Light y Gruvbox con los tokens de color de Zed. Deriva el tuyo en una línea y
-		cámbialo en caliente.
+		One, Ayu y Gruvbox con los tokens de color de Zed, modo claro/oscuro del sistema e importación
+		de cualquier tema de Zed. Deriva el tuyo en una línea y cámbialo en caliente.
+	</Card>
+	<Card title="Async y varias ventanas" icon="random">
+		`update` y los callbacks pueden ser `async`; `pz.every` y `pz.listen` para temporizadores y
+		streams. Cada `pz.Window` tiene su propia vista y tema, con el estado compartido.
 	</Card>
 	<Card title="Multiplataforma" icon="laptop">
 		Linux, macOS y Windows. Fuentes IBM Plex e iconos Lucide (~2000) incluidos.
@@ -87,5 +91,6 @@ pz.run(Counter)
 	<LinkCard title="Inicio rápido" href="getting-started/quickstart/" description="Instala Pyzed y crea tu primera ventana." />
 	<LinkCard title="Tutorial: lista de tareas" href="tutorials/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
 	<LinkCard title="Tutorial: un mini editor tipo Zed" href="tutorials/zed-like-editor/" description="Workspace, árbol de archivos, pestañas, editor y paleta." />
+	<LinkCard title="Tutorial en 5 pasos" href="tutorials/step-by-step/" description="De una ventana vacía a una app de notas con async y dos ventanas." />
 	<LinkCard title="Temas" href="guides/theming/" description="Tokens de color, temas incluidos y cómo crear los tuyos." />
 </CardGrid>

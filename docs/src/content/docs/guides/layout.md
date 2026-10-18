@@ -82,8 +82,8 @@ Los colores aceptan `"#rgb"`, `"#rrggbb"`, `"#rrggbbaa"`, tuplas `(r, g, b)` / `
 ```python
 from pyzed.theme import alpha, mix
 
-alpha(self.theme.accent, 0.2)            # 20 % de opacidad
-mix(self.theme.editor, "#ffffff", 0.05)  # un 5 % más claro
+alpha(self.resolved_theme().accent, 0.2)            # 20 % de opacidad
+mix(self.resolved_theme().editor, "#ffffff", 0.05)  # un 5 % más claro
 ```
 
 ## Texto

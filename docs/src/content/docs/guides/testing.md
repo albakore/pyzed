@@ -2,7 +2,7 @@
 title: Tests y capturas
 description: Renderiza tu app sin ventana para tests, documentación e integración continua.
 sidebar:
-  order: 7
+  order: 10
 ---
 
 `app.screenshot(ruta)` dibuja el estado actual de la app **fuera de pantalla** y guarda un PNG.

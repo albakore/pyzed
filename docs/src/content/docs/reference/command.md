@@ -115,7 +115,7 @@ Vuelve a enviar `message` a `update` en el siguiente ciclo.
 perform(function, then=None)
 ```
 
-Ejecuta `function()` en un hilo en segundo plano y entrega el resultado a `then(resultado)` en el hilo de la interfaz. Sin `then`, el resultado se envía a `update`. Si `function` lanza, se imprime el error.
+Ejecuta `function()` en segundo plano y entrega el resultado a `then(resultado)` en el hilo de la interfaz. `function` puede ser normal (corre en un hilo) o `async def` (corre en el loop de asyncio de Pyzed). Si devuelve un generador (normal o async), `then` se llama con cada valor. También acepta una corrutina o un generador ya creados (`fetch(url)` en lugar de `fetch`). Sin `then`, los resultados van a `update`. Si `function` lanza, se imprime el error.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -130,3 +130,156 @@ def cargar(self):
 def recibido(self, datos):
     self.cargando, self.datos = False, datos
 ```
+
+### `scroll_to`
+
+```python
+scroll_to(id, x=0.0, y=0.0)
+```
+
+Desplaza el `scrollable` con ese `id` a una posición absoluta en píxeles.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del scrollable. |
+| `x` | Desplazamiento horizontal. |
+| `y` | Desplazamiento vertical. |
+
+### `copy`
+
+```python
+copy(text)
+```
+
+Copia `text` al portapapeles del sistema.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `text` | El texto. |
+
+### `paste`
+
+```python
+paste(then)
+```
+
+Lee el portapapeles y llama a `then(texto)` (cadena vacía si está vacío).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Callable que recibe el texto. |
+
+## Ventanas y portapapeles
+
+### `open_window`
+
+```python
+open_window(window)
+```
+
+Abre una ventana nueva para esa instancia de `pz.Window`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana. |
+
+### `close_window`
+
+```python
+close_window(window=None)
+```
+
+Cierra la ventana.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `drag_window`
+
+```python
+drag_window(window=None)
+```
+
+Empieza a mover la ventana con el ratón (úsalo al pulsar una barra de título propia).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `minimize_window`
+
+```python
+minimize_window(window=None)
+```
+
+Minimiza la ventana.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `toggle_maximize_window`
+
+```python
+toggle_maximize_window(window=None)
+```
+
+Maximiza la ventana o la restaura si ya lo está.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `set_fullscreen`
+
+```python
+set_fullscreen(fullscreen=True, window=None)
+```
+
+Pone o quita la pantalla completa.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `fullscreen` | `True` para pantalla completa. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `resize_window`
+
+```python
+resize_window(width, height, window=None)
+```
+
+Cambia el tamaño de la ventana (píxeles lógicos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `width` | Ancho. |
+| `height` | Alto. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `move_window`
+
+```python
+move_window(x, y, window=None)
+```
+
+Mueve la ventana a una posición de la pantalla.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `x` | Posición horizontal. |
+| `y` | Posición vertical. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `focus_window`
+
+```python
+focus_window(window=None)
+```
+
+Trae la ventana al frente y le da el foco.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |

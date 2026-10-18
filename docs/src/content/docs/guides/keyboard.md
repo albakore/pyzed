@@ -2,7 +2,7 @@
 title: Teclado y atajos
 description: Atajos al estilo de Zed con on_key y cómo mostrarlos en la interfaz.
 sidebar:
-  order: 5
+  order: 8
 ---
 
 Define `on_key(self, combo)` en tu app para recibir **todas** las teclas pulsadas, como un

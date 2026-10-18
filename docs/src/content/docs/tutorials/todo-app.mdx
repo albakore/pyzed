@@ -82,7 +82,7 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
        if combo == "ctrl-l":
            return self.clear_done()
        if combo == "ctrl-t":
-           self.theme = pz.themes.ONE_LIGHT if self.theme.is_dark else pz.themes.ONE_DARK
+           self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
    ```
 
 6. **Foco inicial.** `on_start` se ejecuta una vez al abrir la ventana:
@@ -96,7 +96,7 @@ texto, dibujar listas, filtrar y añadir atajos de teclado.
 
 <Aside type="tip">
 Prueba a cambiar el tema con <kbd>Ctrl</kbd>+<kbd>T</kbd>: todos los componentes se restilizan
-porque leen sus colores de `self.theme`.
+porque leen sus colores del tema activo.
 </Aside>
 
 ## Código completo

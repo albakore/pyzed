@@ -60,7 +60,7 @@ class Counter(pz.App):
                     ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0), tooltip="Reset"),
                 ], spacing=8),
             ], spacing=16, align="center"),
-            bg=self.theme.editor,
+            bg=self.resolved_theme().editor,
         )
 
 
@@ -95,7 +95,7 @@ class MiApp(pz.App):
     theme = pz.themes.ONE_LIGHT
 
     def cambiar_tema(self):
-        self.theme = pz.themes.ONE_DARK if not self.theme.is_dark else pz.themes.ONE_LIGHT
+        self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
 ```
 
 ## Siguiente

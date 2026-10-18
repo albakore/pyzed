@@ -219,6 +219,111 @@ def terminal():
     return pz.container(ui.terminal(out), width=520, height=170)
 
 
+def controls():
+    return pz.column([
+        pz.row([
+            ui.select(["Python", "Rust", "TypeScript"], "Rust", noop, width=160),
+            ui.number_field(14, noop, min=8, max=32, suffix="px"),
+            ui.split_button("Ejecutar", noop, noop, icon="play"),
+        ], spacing=10, align="center"),
+        pz.row([
+            ui.radio_group([("a", "Espacios"), ("b", "Tabs")], "a", noop, horizontal=True),
+            pz.hspace(),
+            ui.toggle_group([("l", "align-left"), ("c", "align-center"), ("r", "align-right")], "c", noop),
+        ], spacing=10, align="center"),
+        pz.row([
+            ui.chip("python", icon="tag", selected=True),
+            ui.chip("rust", on_remove=noop),
+            ui.chip("iced", on_press=noop),
+        ], spacing=6),
+        ui.disclosure("Opciones avanzadas", ui.muted("Contenido plegable."), open=True, on_toggle=noop),
+    ], spacing=14)
+
+
+def feedback():
+    return pz.column([
+        ui.callout("Hay una versión nueva", "Pyzed 0.2 añade ventanas, async y canvas.", tint="info",
+                   actions=[ui.button("Ver novedades", noop, size="sm")], on_dismiss=noop),
+        ui.callout("No se pudo guardar", "El archivo es de solo lectura.", tint="error"),
+        pz.row([
+            ui.spinner(), ui.count_badge(7), ui.count_badge(120, tint="error"),
+            ui.facepile(["Ana", "Luis", "Kev", "Marta"]),
+            ui.diff_stat(42, 9),
+            ui.keybinding_hint("Abrir paleta", "ctrl-shift-p"),
+        ], spacing=14, align="center"),
+    ], spacing=12)
+
+
+def table():
+    rows = [
+        {"name": "render.rs", "lang": "Rust", "lines": 1840},
+        {"name": "app.py", "lang": "Python", "lines": 512},
+        {"name": "theme.py", "lang": "Python", "lines": 730},
+        {"name": "docs.yml", "lang": "YAML", "lines": 64},
+    ]
+    return ui.table(
+        [ui.Column("Archivo", "name"), ui.Column("Lenguaje", "lang", width=120),
+         ui.Column("Líneas", "lines", width=80, align="end")],
+        rows, sort_by="Líneas", descending=True, on_sort=noop, selected=rows[1], striped=True,
+    )
+
+
+def charts():
+    return pz.row([
+        pz.column([
+            ui.stat("Usuarios", "1.284", delta=12.5, trend=[3, 5, 4, 6, 8, 7, 9]),
+            ui.stat("Errores", "37", delta=-8.0),
+        ], spacing=10, width=200),
+        ui.bar_chart([12, 19, 8, 15, 22, 17], labels=["L", "M", "X", "J", "V", "S"], width=260, height=150),
+        pz.column([ui.donut([60, 25, 15], label="60%"), ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8])],
+                  spacing=12, align="center"),
+    ], spacing=20)
+
+
+def empty():
+    return pz.row([
+        ui.card(ui.empty_state("Sin resultados", "Prueba con otra búsqueda.", icon="search",
+                               actions=[ui.button("Limpiar filtros", noop, size="sm")]), padding=12),
+        ui.settings_group("Editor", [
+            ui.field("Tamaño de fuente", ui.number_field(14, noop, suffix="px")),
+            ui.field("Ajuste de línea", ui.switch(True, noop)),
+        ], description="Preferencias del editor."),
+    ], spacing=16)
+
+
+def content():
+    md = "## Markdown\n\nTexto con **negrita**, *cursiva*, `código` y [enlaces](https://iced.rs).\n\n- Listas\n- Y más"
+    return pz.row([
+        pz.column([
+            pz.markdown(md, width=300),
+            pz.rich_text([
+                pz.span("rich_text "), pz.span("mezcla ", color="#e5c07b"),
+                pz.span("estilos", weight="bold", underline=True), pz.span(" en una línea", italic=True),
+            ]),
+        ], spacing=12, width=320),
+        pz.column([
+            pz.qr_code("https://albakore.github.io/pyzed/", cell_size=4),
+            ui.muted("pz.qr_code", size="sm"),
+        ], spacing=6, align="center"),
+    ], spacing=24)
+
+
+def media():
+    img = str(Path(__file__).resolve().parents[2] / "docs" / "screenshots" / "zed-one-dark.png")
+    return pz.row([
+        pz.image(img, width=240, height=140, content_fit="contain"),
+        pz.image(img, width=160, height=140, content_fit="contain", opacity=0.5),
+        pz.image(img, width=120, height=140, content_fit="contain", filter="nearest"),
+    ], spacing=16, align="center")
+
+
+def split():
+    t = pz.themes.get("One Dark")
+    pane = lambda title, color: pz.container(ui.label(title), padding=12, width="fill", height="fill", bg=color)
+    return ui.split(pane("Izquierda", t.panel), ui.split(pane("Arriba", t.editor), pane("Abajo", t.background),
+                                                         vertical=True), ratio=0.4, on_resize=noop)
+
+
 SHOTS = {
     "buttons": (buttons, (600, 150)),
     "text": (text, (320, 230)),
@@ -235,6 +340,14 @@ SHOTS = {
     "toasts": (toasts, (380, 270)),
     "editor": (editor, (600, 290)),
     "terminal": (terminal, (560, 210)),
+    "controls": (controls, (600, 210)),
+    "feedback": (feedback, (640, 210)),
+    "table": (table, (480, 190)),
+    "charts": (charts, (640, 240)),
+    "empty": (empty, (680, 240)),
+    "content": (content, (520, 210)),
+    "media": (media, (620, 180)),
+    "split": (split, (520, 260)),
 }
 
 
@@ -245,14 +358,14 @@ class Shot(pz.App):
     def view(self):
         if self.full:
             return self.build()
-        return pz.container(self.build(), padding=20, width="fill", height="fill", bg=self.theme.background)
+        return pz.container(self.build(), padding=20, width="fill", height="fill", bg=self.resolved_theme().background)
 
 
 def main(names):
     OUT.mkdir(parents=True, exist_ok=True)
     for name in names or SHOTS:
         build, size = SHOTS[name]
-        Shot(build, full=name == "workspace").screenshot(OUT / f"{name}.png", size=size, scale=2)
+        Shot(build, full=name in ("workspace", "split")).screenshot(OUT / f"{name}.png", size=size, scale=2)
         print(f"wrote {name}.png")
 
 

@@ -96,7 +96,7 @@ class Downloads(pz.App):
             padding=24,
             width="fill",
             height="fill",
-            bg=self.theme.editor,
+            bg=self.resolved_theme().editor,
         )
         items = [ui.toast(title, msg, kind=kind, on_dismiss=("dismiss", tid)) for tid, title, msg, kind in self.toasts]
         return ui.toasts(body, items)

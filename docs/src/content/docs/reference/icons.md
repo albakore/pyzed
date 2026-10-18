@@ -2,7 +2,7 @@
 title: "Iconos"
 description: "Iconos de Lucide incluidos y utilidades por tipo de archivo."
 sidebar:
-  order: 6
+  order: 8
 ---
 
 <!-- Archivo generado por docs/scripts/gen_api.py. Edita docs/scripts/api_docs.py. -->

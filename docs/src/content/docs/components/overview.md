@@ -20,8 +20,8 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 
 ## Reglas comunes
 
-- **Colores del tema.** Cada componente lee el tema actual (`App.theme`). Cambiar el tema
-  restiliza toda la interfaz. Todos aceptan `theme=` para usar otro.
+- **Colores del tema.** Cada componente lee el tema actual (`App.theme`, o el de la ventana en
+  [multi-ventana](/pyzed/guides/windows/)). Cambiar el tema restiliza toda la interfaz. Todos aceptan `theme=` para usar otro.
 - **Tokens o hex.** Los parámetros de color (`color`, `icon_color`, `tint`…) aceptan un token del
   tema como `"accent"`, `"text_muted"` o `"error"`, o un color `"#rrggbb"`.
 - **Mensajes o callables.** `on_press`, `on_select`, `on_toggle`… aceptan un mensaje para `update`
@@ -40,6 +40,9 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 | [Workspace](/pyzed/components/workspace/) | `workspace`, `title_bar`, `title_button`, `status_bar`, `status_item`, `panel`, `panel_header` |
 | [Overlays](/pyzed/components/overlays/) | `layer`, `modal`, `command_palette`, `picker`, `fuzzy_filter`, `toast`, `toasts` |
 | [Código](/pyzed/components/code/) | `editor`, `terminal`, `ansi` |
+| [Más controles](/pyzed/components/controls/) | `select`, `radio_group`, `number_field`, `split_button`, `toggle_group`, `chip`, `disclosure` |
+| [Datos y feedback](/pyzed/components/data/) | `table` + `Column`, `callout`, `empty_state`, `settings_group`, `stat`, `sparkline`, `bar_chart`, `donut`, `spinner`, `count_badge`, `facepile`, `diff_stat`, `keybinding_hint` |
+| [Contenido y paneles](/pyzed/components/content/) | `markdown`, `split`, `popover`; widgets base `pz.image`, `pz.image_viewer`, `pz.rich_text`, `pz.qr_code`, `pz.grid` |
 
 Para ver todos funcionando, ejecuta la galería:
 

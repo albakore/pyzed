@@ -41,9 +41,11 @@ def cambiado(self, texto):
     self.sucios.add(self.activa)
 ```
 
-:::note[Limitaciones actuales]
-El editor todavía no tiene scroll horizontal, y los números de línea asumen `wrap=False`.
-:::
+- **Líneas largas.** Con `wrap=False` (por defecto) el editor se desplaza en horizontal y los
+  números de línea quedan fijos a la izquierda. Con `wrap=True` las líneas se ajustan y el número
+  aparece en la primera fila de cada línea, como en Zed.
+- **Línea activa.** La línea del cursor se resalta y el scroll sigue al cursor (también con
+  <kbd>RePág</kbd>/<kbd>AvPág</kbd>).
 
 ## Terminal
 

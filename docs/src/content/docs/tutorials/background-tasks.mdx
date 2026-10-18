@@ -14,6 +14,12 @@ Una interfaz nunca debe bloquearse esperando a la red o al disco. Pyzed ofrece d
   resultado.
 - **`pz.post(mensaje)`** envía mensajes a la app desde cualquier hilo (progreso, eventos).
 
+<Aside type="tip">
+Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def` o generadores
+`async`, y `pz.listen` convierte un stream en una suscripción. Lo cuenta la guía
+[Async y suscripciones](/pyzed/guides/async/).
+</Aside>
+
 ![Descargas con progreso y notificaciones](../../../assets/tutorials/downloads.png)
 
 <Steps>

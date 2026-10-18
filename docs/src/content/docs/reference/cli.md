@@ -2,7 +2,7 @@
 title: CLI
 description: Los comandos pyzed new y pyzed icons.
 sidebar:
-  order: 7
+  order: 9
 ---
 
 Al instalar Pyzed se añade el comando `pyzed` (también disponible como `python -m pyzed`).

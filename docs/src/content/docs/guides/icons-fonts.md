@@ -2,7 +2,7 @@
 title: Iconos y fuentes
 description: Los iconos de Lucide, los iconos por tipo de archivo y cómo cargar fuentes propias.
 sidebar:
-  order: 6
+  order: 9
 ---
 
 ## Iconos
