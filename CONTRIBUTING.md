@@ -32,7 +32,7 @@ uv run pytest tests
 uv run python examples/gallery.py
 ```
 
-`uv sync` installs the `dev` group (maturin, pytest). Python changes under
+`uv sync` installs the `test` group (maturin, pytest). Python changes under
 `python/pyzed/` are picked up directly, and after changing Rust code the next
 `uv run` or `uv sync` rebuilds the core (`[tool.uv] cache-keys` in
 `pyproject.toml`). Add `--extra designer` for ty and ruff.

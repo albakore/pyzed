@@ -78,7 +78,7 @@ dependencias del sistema de arriba.
 		uv run python examples/gallery.py
 		```
 
-		- `uv sync` también instala el grupo `dev` (maturin y pytest). La primera compilación tarda unos minutos.
+		- `uv sync` también instala el grupo `test` (maturin y pytest). La primera compilación tarda unos minutos.
 		- Los cambios en Python (`python/pyzed/`) se usan directamente.
 		- Después de cambiar código de Rust (`src/`), el siguiente `uv run` o `uv sync` recompila el núcleo solo.
 		- `uv sync --extra designer` añade ty y ruff para el editor de código del diseñador.
