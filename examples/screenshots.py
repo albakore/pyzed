@@ -15,6 +15,7 @@ import pyzed as pz  # noqa: E402
 from counter import Counter  # noqa: E402
 from gallery import Gallery  # noqa: E402
 from zed_editor import Zed  # noqa: E402
+from pyzed import designer  # noqa: E402
 
 pz.ui.base.KEY_STYLE = "words"
 
@@ -87,6 +88,46 @@ def hot_reload_shots(scale):
                 sys.modules.pop(name, None)
 
 
+def designer_shots(scale):
+    """The visual designer and the forms it makes."""
+    login = HERE / "designer" / "login.pzform"
+    app = designer.Designer(login)
+    app.doc.select("sign_in")
+    app._selection_changed()
+    app.screenshot(OUT / "designer.png", size=(1440, 900), scale=scale)
+
+    app.open_default_event("sign_in")
+    app.screenshot(OUT / "designer-code.png", size=(1440, 900), scale=scale)
+
+    app.close_code()
+    app.right_tab = "properties"
+    app.doc.select(["user_label", "email", "password"])
+    app._selection_changed()
+    app.screenshot(OUT / "designer-align.png", size=(1440, 900), scale=scale)
+
+    app.doc.select(None)
+    app._selection_changed()
+    app.doc.form.theme = "Gruvbox Light"
+    app.doc.form.accent = "#b16286"
+    app.theme = pz.themes.ONE_LIGHT
+    app.screenshot(OUT / "designer-light.png", size=(1440, 900), scale=scale)
+
+    designer.open_form(login).screenshot(OUT / "designer-run.png", scale=2)
+
+    # every built-in component on one form, as the toolbox places them
+    form = designer.Form(title="Components", width=760, height=560)
+    x, y, row_h = 16, 16, 0
+    for spec in designer.all_components():
+        w, h = spec.size
+        if x + w > form.width - 16:
+            x, y, row_h = 16, y + row_h + 16, 0
+        form.add(spec.create(spec.type, x, y))
+        x += w + 16
+        row_h = max(row_h, h)
+    form.get("panel").props["title"] = "Panel"
+    designer.FormApp(form).screenshot(OUT / "designer-components.png", scale=scale)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     scale = 1.5
@@ -114,6 +155,7 @@ def main():
     Gallery(pz.themes.ONE_LIGHT).screenshot(OUT / "components-light.png", scale=scale)
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
+    designer_shots(1.0)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 

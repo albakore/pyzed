@@ -1,4 +1,4 @@
-"""Command line helpers: ``pyzed new <name>``, ``pyzed dev <script>`` and ``pyzed icons [filter]``."""
+"""Command line helpers: ``pyzed new``, ``pyzed dev``, ``pyzed design``, ``pyzed run`` and ``pyzed icons``."""
 
 from __future__ import annotations
 
@@ -52,6 +52,23 @@ def icons(pattern: str = "") -> int:
     return 0
 
 
+def design(path=None) -> int:
+    from .designer import design as open_designer
+
+    open_designer(path)
+    return 0
+
+
+def run_form(path: str, reload: bool = False) -> int:
+    from .designer import run
+
+    if not Path(path).exists():
+        print(f"error: {path} does not exist", file=sys.stderr)
+        return 1
+    run(path, reload=reload or None)
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="pyzed", description="Pyzed: fast GUIs for Python powered by Iced")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -61,6 +78,11 @@ def main(argv=None) -> int:
     p_dev.add_argument("script")
     p_dev.add_argument("--watch", action="append", default=[], metavar="PATH", help="also watch this folder or file")
     p_dev.add_argument("args", nargs=argparse.REMAINDER, help="arguments passed to the script")
+    p_design = sub.add_parser("design", help="open the visual form designer")
+    p_design.add_argument("form", nargs="?", help="a .pzform file (created on first save if missing)")
+    p_run = sub.add_parser("run", help="run a form made with the designer")
+    p_run.add_argument("form")
+    p_run.add_argument("--reload", action="store_true", help="update the window when the form or its code is saved")
     p_icons = sub.add_parser("icons", help="list the bundled Lucide icon names")
     p_icons.add_argument("filter", nargs="?", default="")
     args = parser.parse_args(argv)
@@ -68,6 +90,10 @@ def main(argv=None) -> int:
         return new(args.name)
     if args.command == "dev":
         return dev(args.script, args.args, args.watch)
+    if args.command == "design":
+        return design(args.form)
+    if args.command == "run":
+        return run_form(args.form, args.reload)
     return icons(args.filter)
 
 

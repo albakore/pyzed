@@ -1,0 +1,236 @@
+---
+title: Diseñador visual
+description: Crea ventanas arrastrando componentes, conecta sus eventos a Python y ejecútalas, como en Visual Basic o Qt Designer.
+sidebar:
+  order: 13
+---
+
+Pyzed Designer es un editor de formularios al estilo de Visual Basic, el diseñador de WinForms de Visual Studio y
+Qt Designer, hecho con el propio Pyzed. Dibujas la ventana con el ratón, ajustas propiedades en una grilla, haces
+doble clic en un control para escribir el código de su evento y pulsas **F5** para ejecutarla con toda su lógica.
+
+```bash
+pyzed design login.pzform      # abre (o crea) un formulario
+pyzed run login.pzform         # lo ejecuta, sin el diseñador
+pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el formulario o su código
+```
+
+![El diseñador con el ejemplo de inicio de sesión](../../../../../screenshots/designer.png)
+
+## La ventana
+
+| Zona | Qué hace |
+| --- | --- |
+| **Toolbox** (izquierda) | La biblioteca de componentes. Haz clic en uno y luego en el formulario para colocarlo con su tamaño por defecto, o arrastra un rectángulo para darle tamaño. La búsqueda filtra la lista. |
+| **Outline** (izquierda) | Todos los controles por orden Z (el de arriba primero). Clic para seleccionar; el ojo y el candado ocultan o bloquean un control. |
+| **Formulario** (centro) | La superficie de diseño con grilla de puntos. Arrastra para mover, usa las ocho asas para redimensionar y arrastra en un hueco para seleccionar con un rectángulo. El tirador de la esquina inferior derecha cambia el tamaño del formulario. |
+| **Properties** (derecha) | Nombre, propiedades del componente, layout (X, Y, tamaño, anclajes) y comportamiento (visible, habilitado, bloqueado). Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
+| **Events** (derecha) | Los eventos del control seleccionado (o del formulario). Doble clic en uno crea su handler y lo abre en el editor de código. |
+| **Código** (abajo) | El código de un handler, o del archivo entero (**F7**). **Apply** comprueba la sintaxis antes de tocar el archivo. |
+
+![Escribiendo el código del clic de un botón](../../../../../screenshots/designer-code.png)
+
+## Alineación, grilla y snapping
+
+- **Ajustar a la grilla** (imán) redondea posiciones y tamaños al paso de la grilla (8 px por defecto, configurable
+  por formulario). **G** muestra u oculta los puntos.
+- **Guías inteligentes** (regla) pegan el control que mueves a los bordes y centros de los demás y del formulario, y
+  dibujan una línea roja mientras coinciden.
+- La barra de herramientas alinea la selección por bordes **izquierdo, centro, derecho, superior, medio o inferior**,
+  **distribuye** tres o más controles por igual, les da el **mismo ancho o alto**, los **centra** en el formulario y
+  cambia el **orden Z**. Con un solo control, la alineación es respecto al formulario.
+- Los **anclajes** deciden qué pasa al redimensionar la ventana en ejecución, como en WinForms: anclado a izquierda y
+  derecha el control se estira, anclado solo a la derecha sigue ese borde, sin anclajes queda centrado.
+
+![Tres controles seleccionados, listos para alinear](../../../../../screenshots/designer-align.png)
+
+### Teclado
+
+| Teclas | Acción |
+| --- | --- |
+| Arrows / Shift+arrows | Mover 1 px / un paso de grilla |
+| Delete | Borrar la selección |
+| Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+D | Copiar, cortar, pegar, duplicar |
+| Ctrl+A | Seleccionar todo |
+| Ctrl+Z, Ctrl+Shift+Z | Deshacer, rehacer |
+| Enter | Abrir el código del evento principal del control |
+| Escape | Cancelar un arrastre, cerrar un menú, volver al puntero |
+| Ctrl+S, Ctrl+O, Ctrl+N | Guardar, abrir, nuevo |
+| F5, Shift+F5 | Ejecutar el formulario, cerrarlo |
+| F7 | Editar el archivo de código completo |
+
+Clic derecho en un control abre un menú contextual con las mismas acciones.
+
+## Estética
+
+Cada formulario elige cualquier tema registrado (One, Ayu, Gruvbox o el tuyo) y puede cambiar el color de acento,
+el fondo, el radio de las esquinas y el tamaño de letra. El tema del propio diseñador es independiente (selector
+arriba a la derecha).
+
+![Un formulario con el tema Gruvbox Light y acento propio](../../../../../screenshots/designer-light.png)
+
+## Archivos
+
+Un formulario son dos archivos juntos, pensados para versionarse:
+
+```
+login.pzform   ← diseño: JSON, diffs legibles
+login.py       ← handlers de eventos: Python normal
+```
+
+```mermaid
+flowchart LR
+    subgraph Designer["pyzed design"]
+        T[Toolbox] --> S[Superficie de diseño]
+        S --> P[Properties]
+        S --> E[Events]
+        E --> C[Editor de código]
+    end
+    S -- save --> F[(login.pzform)]
+    C -- save --> H[(login.py)]
+    F --> R["pyzed run / designer.run()"]
+    H --> R
+    R --> W[Ventana nativa dibujada por Iced]
+```
+
+El `.pzform` guarda la configuración del formulario y, por cada control, su tipo, posición, tamaño, propiedades,
+anclajes y qué handler llama cada evento:
+
+```json
+{
+  "format": "pyzed.form/1",
+  "form": { "name": "login", "title": "Sign in", "width": 440, "height": 400, "theme": "One Dark", "events": { "load": "form_load" } },
+  "controls": [
+    { "name": "sign_in", "type": "button", "x": 48, "y": 304, "width": 344, "height": 32,
+      "props": { "text": "Sign in", "variant": "solid", "icon": "log-in" },
+      "events": { "click": "sign_in_click" }, "anchor": ["left", "top"] }
+  ]
+}
+```
+
+## Cambios en vivo
+
+Los formularios funcionan con hot reload (`pyzed.hot_reload`): ejecútalos con `pyzed run app.pzform --reload` (o
+`designer.run(ruta, reload=True)`, o `PYZED_RELOAD=1`) y cada vez que guardes `app.pzform` o `app.py`, desde el
+diseñador o desde tu editor, la ventana abierta se actualiza sin reiniciarse. Se reemplazan el diseño, las
+propiedades y el código; lo que el usuario escribió o eligió en cada control se mantiene. Dentro del diseñador,
+**Guardar** también refresca el formulario abierto con **F5**.
+
+## Escribir handlers de eventos
+
+Los handlers se llaman `<control>_<evento>` y reciben el `form` en ejecución y un `event`. Los controles son
+atributos del formulario y sus propiedades atributos del control; al cambiarlas se actualiza la ventana.
+
+```python
+def sign_in_click(form, event):
+    if "@" not in form.email.text:
+        form.status.text = "Enter a valid email address."
+        return form.email.focus()          # los handlers pueden devolver comandos
+    form.sign_in.enabled = False
+    form.progress.show()
+    form.ticker.running = True             # un control Timer empieza a contar
+```
+
+`event.sender` es el control que lo lanzó, `event.name` el evento y `event.value` su valor (el texto nuevo de una caja
+de texto, el estado de una casilla, la combinación de teclas del evento `key` del formulario...). Pueden devolver lo
+mismo que cualquier callback de Pyzed: un `Command`, una corrutina, un generador. Si un handler lanza una excepción,
+el error aparece abajo en la ventana en vez de cerrarla.
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Iced as Iced (Rust)
+    participant RT as FormRuntime
+    participant H as login.py
+    Usuario->>Iced: clic en "Sign in"
+    Iced->>RT: callback de sign_in.click
+    RT->>H: sign_in_click(form, event)
+    H->>RT: form.status.text = "..."
+    RT->>Iced: view() con las propiedades nuevas
+    Iced->>Usuario: redibuja la ventana
+```
+
+### Eventos
+
+Todo control visible tiene `mouse_enter`, `mouse_leave` y `right_click`. Además:
+
+| Componente | Eventos |
+| --- | --- |
+| Button | `click` |
+| Label | `click`, `double_click` |
+| Text box | `change`, `submit` |
+| Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box | `change` |
+| Timer (invisible al ejecutar) | `tick` |
+| Formulario | `load`, `close` (devuelve `False` para no cerrar), `key`, `resize` |
+
+## Componentes
+
+Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,
+List box, Progress bar, Badge, Image, Icon, Markdown, Spinner, Panel, Divider and Timer.
+
+![Todos los componentes incluidos](../../../../../screenshots/designer-components.png)
+
+Registra los tuyos y aparecen en la toolbox:
+
+```python
+from pyzed import ui
+from pyzed.designer import Component, Prop, register
+
+register(Component(
+    type="rating", label="Rating", icon="star", category="Custom", size=(120, 24),
+    props=(Prop("value", "number", 3, min=0, max=5),),
+    events=("change",),
+    render=lambda control, ctx: ui.label("★" * int(control.props["value"])),
+))
+```
+
+`render` se usa en el diseñador (inerte) y al ejecutar; usa `ctx.on(control, "change", "value")` para los
+callbacks y el mismo código sirve en ambos.
+
+## Formularios desde código
+
+Todo lo que hace el diseñador está disponible desde Python, útil para generar formularios o para tests:
+
+```python
+from pyzed import designer
+from pyzed.designer import Document
+
+doc = Document(designer.Form(name="hello", title="Hello", width=320, height=140))
+doc.add("input", 16, 16, 200, 28)
+doc.add("button", 224, 16)
+doc.select_all()
+doc.align("middle")
+handler = doc.wire("button1", "click")
+doc.set_handler_source(handler, "def button1_click(form, event):\n    form.button1.text = form.input1.text\n")
+doc.save("hello.pzform")
+
+designer.run("hello.pzform")
+```
+
+## Cómo está hecho
+
+```mermaid
+classDiagram
+    class Form { controls; events; theme; grid }
+    class Control { name; type; x; y; width; height; props; events; anchor }
+    class Component { type; props; events; render() }
+    class Document { form; code; selection; history; add(); align(); wire() }
+    class History { push(); undo(); redo() }
+    class Designer { pyzed App: docks and gestures }
+    class FormRuntime { dispatch(); view() }
+    Form "1" *-- "*" Control
+    Control ..> Component : type
+    Document --> Form
+    Document --> History
+    Designer --> Document
+    FormRuntime --> Form
+```
+
+- `model.py`: el formulario y sus controles, guardados como JSON.
+- `components.py`: la biblioteca de componentes y el `render` compartido por diseñador y runtime.
+- `geometry.py`: snapping, alineación, distribución, redimensionado, anclajes y guías (funciones puras).
+- `history.py`: deshacer/rehacer con instantáneas; las ediciones seguidas de un campo cuentan como un paso.
+- `code.py`: busca, añade, renombra y reemplaza handlers con `ast` sin tocar el resto del archivo.
+- `document.py`: todos los comandos de edición, sin UI, así que se puede testear entero.
+- `surface.py` y `panels.py`: las vistas; `app.py`: la app `Designer` que traduce clics y teclas al documento.
+- `runtime.py`: `FormApp` y `FormWindow`, que dibujan un formulario y llaman a sus handlers.
