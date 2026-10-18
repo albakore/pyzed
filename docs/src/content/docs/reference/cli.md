@@ -1,32 +1,32 @@
 ---
 title: CLI
-description: Los comandos pyzed new y pyzed icons.
+description: The pyzed new and pyzed icons commands.
 sidebar:
   order: 9
 ---
 
-Al instalar Pyzed se añade el comando `pyzed` (también disponible como `python -m pyzed`).
+Installing Pyzed adds the `pyzed` command (also available as `python -m pyzed`).
 
-## `pyzed new <nombre>`
+## `pyzed new <name>`
 
-Crea una carpeta con una app lista para ejecutar a partir de una plantilla.
+Creates a folder with a ready-to-run app from a template.
 
 ```bash
-pyzed new mi-app
-cd mi-app && python main.py
+pyzed new my-app
+cd my-app && python main.py
 ```
 
-| Archivo | Contenido |
+| File | Contents |
 | --- | --- |
-| `main.py` | App con `ui.workspace`, barra de título, sidebar con páginas, barra de estado, paleta de comandos (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) y cambio de tema. |
+| `main.py` | App with `ui.workspace`, title bar, sidebar with pages, status bar, command palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and theme switching. |
 | `requirements.txt` | `pyzed` |
 
-El título de la app se deriva del nombre de la carpeta (`mi-app` → `Mi App`). Falla si la carpeta
-existe y no está vacía.
+The app title is derived from the folder name (`my-app` → `My App`). It fails if the folder
+exists and is not empty.
 
-## `pyzed icons [filtro]`
+## `pyzed icons [filter]`
 
-Lista los nombres de los iconos de Lucide incluidos que contienen `filtro`.
+Lists the names of the bundled Lucide icons that contain `filter`.
 
 ```bash
 pyzed icons arrow

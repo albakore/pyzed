@@ -77,7 +77,7 @@ PAGES = [
         "order": 1,
         "intro": """
             Todo lo que necesitas para arrancar una aplicación. Ver también la guía de
-            [arquitectura](/pyzed/guides/architecture/).
+            [arquitectura](/pyzed/es/guides/architecture/).
         """,
         "sections": [
             ("Aplicación", {
@@ -152,7 +152,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "intro": """
             Un `Command` es un efecto que el runtime ejecuta por ti. Devuélvelo desde `update`,
             `on_start`, `on_key` o cualquier callback. También puedes devolver una lista o una
-            tupla de comandos. Ver la guía de [comandos y tareas](/pyzed/guides/commands/).
+            tupla de comandos. Ver la guía de [comandos y tareas](/pyzed/es/guides/commands/).
 
             ```python
             from pyzed import Command
@@ -219,8 +219,8 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "order": 3,
         "intro": """
             Los widgets base están implementados en Rust y se importan desde `pyzed`. Son los
-            ladrillos con los que están hechos los [componentes](/pyzed/components/overview/).
-            Ver la guía de [layout](/pyzed/guides/layout/) para los tamaños, el relleno y los colores.
+            ladrillos con los que están hechos los [componentes](/pyzed/es/components/overview/).
+            Ver la guía de [layout](/pyzed/es/guides/layout/) para los tamaños, el relleno y los colores.
         """,
         "sections": [
             ("Widget", {
@@ -371,7 +371,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
 Un editor de código con resaltado de sintaxis, números de línea y marcadores de git, basado en
 `text_editor` de Iced. Es **no controlado**: `text` solo es el valor inicial para ese `id`; el
 texto, el cursor y el historial viven en Rust. Usa `Command.set_editor_text` para reemplazarlo.
-Para el estilo de Zed usa [`ui.editor`](/pyzed/components/code/).
+Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 """,
                     "params": {
                         "id": "Identifica el buffer. Reutilízalo para conservar el estado entre renders.",
@@ -404,7 +404,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/components/code/).
         "order": 4,
         "intro": """
             Firmas y parámetros de todos los componentes. Para verlos con imágenes y ejemplos,
-            ve a la sección [Componentes](/pyzed/components/overview/).
+            ve a la sección [Componentes](/pyzed/es/components/overview/).
 
             Todos son funciones que devuelven un `Widget` y leen sus colores del tema actual.
             Los parámetros de color aceptan un **token** del tema (`"accent"`, `"text_muted"`,
@@ -719,7 +719,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/components/code/).
         "description": "Theme, los temas incluidos y las utilidades de color.",
         "order": 5,
         "intro": """
-            Ver la guía de [temas](/pyzed/guides/theming/) para la lista de tokens y cómo crear los tuyos.
+            Ver la guía de [temas](/pyzed/es/guides/theming/) para la lista de tokens y cómo crear los tuyos.
         """,
         "sections": [
             ("Theme", {
@@ -847,7 +847,7 @@ def _section(slug, title, items, before=None):
 # -- App, windows and async ------------------------------------------------
 _page("app")["intro"] += """
 
-Ver también [varias ventanas](/pyzed/guides/windows/) y [async y suscripciones](/pyzed/guides/async/).
+Ver también [varias ventanas](/pyzed/es/guides/windows/) y [async y suscripciones](/pyzed/es/guides/async/).
 """
 _page("app")["sections"][0][1]["pyzed.App"]["desc"] = """
 Clase base de las aplicaciones (arquitectura Elm, como Iced). Es también la **ventana
@@ -1030,7 +1030,7 @@ _section("widgets", "Imágenes y contenido", {
         "params": {"data": "El texto o URL a codificar.", "cell_size": "Tamaño de cada módulo en píxeles."},
     },
     "pyzed.canvas": {
-        "desc": "Una superficie de dibujo 2D. `shapes` es una lista creada con [`pyzed.draw`](/pyzed/reference/draw/). Los callbacks del ratón reciben coordenadas relativas al canvas. Con un `id`, la geometría se cachea entre frames y solo se recalcula cuando cambian las formas. Ver la guía de [dibujo con canvas](/pyzed/guides/canvas/).",
+        "desc": "Una superficie de dibujo 2D. `shapes` es una lista creada con [`pyzed.draw`](/pyzed/es/reference/draw/). Los callbacks del ratón reciben coordenadas relativas al canvas. Con un `id`, la geometría se cachea entre frames y solo se recalcula cuando cambian las formas. Ver la guía de [dibujo con canvas](/pyzed/es/guides/canvas/).",
         "params": {
             "shapes": "Lista de formas de `pyzed.draw` (se aceptan listas anidadas).",
             "id": "Activa la caché de geometría.",
@@ -1217,8 +1217,8 @@ PAGES.append({
     "description": "Formas, texto y transformaciones para pz.canvas.",
     "order": 7,
     "intro": """
-        Las formas de `pyzed.draw` son diccionarios simples que se pasan a [`pz.canvas`](/pyzed/reference/widgets/#canvas).
-        Los ángulos van en grados y `y` crece hacia abajo. Ver la guía de [dibujo con canvas](/pyzed/guides/canvas/).
+        Las formas de `pyzed.draw` son diccionarios simples que se pasan a [`pz.canvas`](/pyzed/es/reference/widgets/#canvas).
+        Los ángulos van en grados y `y` crece hacia abajo. Ver la guía de [dibujo con canvas](/pyzed/es/guides/canvas/).
 
         ```python
         from pyzed import draw

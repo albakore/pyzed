@@ -3,3 +3,4 @@ dist/
 .astro/
 src/content/docs/changelog.md
 src/generated/
+src/content/docs/es/changelog.md

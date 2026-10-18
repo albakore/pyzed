@@ -1,20 +1,22 @@
 ---
-// Aviso con la última versión estable, leída de CHANGELOG.md (ver scripts/sync-changelog.mjs).
+// Banner with the latest stable release, read from CHANGELOG.md (see scripts/sync-changelog.mjs).
 import release from '../generated/release.json';
 
 const stable = release.latestStable;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const es = Astro.currentLocale === 'es';
+const changelog = `${base}${es ? '/es' : ''}/changelog/`;
 ---
 
 {
 	stable && (
-		<a class="latest-release" href={`${base}/changelog/`}>
+		<a class="latest-release" href={changelog}>
 			<span class="dot" />
 			<span>
-				Última versión estable: <strong>v{stable.version}</strong>
+				{es ? 'Última versión estable' : 'Latest stable release'}: <strong>v{stable.version}</strong>
 				{stable.date && <span class="date"> · {stable.date}</span>}
 			</span>
-			<span class="arrow">Ver novedades →</span>
+			<span class="arrow">{es ? 'Ver novedades' : "What's new"} →</span>
 		</a>
 	)
 }

@@ -1,14 +1,14 @@
 ---
-title: Dibujo con canvas
-description: Formas, texto, transformaciones y eventos del ratón con pz.canvas y pyzed.draw.
+title: Drawing with canvas
+description: Shapes, text, transforms and mouse events with pz.canvas and pyzed.draw.
 sidebar:
   order: 7
 ---
 
-`pz.canvas` es una superficie de dibujo 2D. Las formas se crean con `pyzed.draw` y son
-diccionarios simples, así que construirlas en cada frame es barato.
+`pz.canvas` is a 2D drawing surface. Shapes are created with `pyzed.draw` and are plain
+dictionaries, so building them every frame is cheap.
 
-![Juego de la vida dibujado en un canvas](../../../assets/tutorials/game-of-life.png)
+![Game of Life drawn on a canvas](../../../assets/tutorials/game-of-life.png)
 
 ```python
 import pyzed as pz
@@ -18,61 +18,63 @@ pz.canvas([
     draw.background("#1e2127"),
     draw.circle(100, 100, 40, fill="#74ade8"),
     draw.line(0, 0, 200, 200, stroke="#d07277", width=2, dash=[6, 4]),
-    draw.text(100, 180, "Hola", color="#dce0e5", align_x="center"),
+    draw.text(100, 180, "Hello", color="#dce0e5", align_x="center"),
 ], width=200, height=200)
 ```
 
-Los ángulos van en grados, `y` crece hacia abajo y los colores aceptan lo mismo que `pz.text`.
+Angles are in degrees, `y` grows downwards, and colors accept the same values as `pz.text`.
 
-## Formas
+## Shapes
 
-| Función | Forma |
+![Shapes drawn with pyzed.draw](../../../assets/components/canvas.png)
+
+| Function | Shape |
 | --- | --- |
-| `draw.background(color)` | Rellena todo el canvas. |
-| `draw.rect(x, y, w, h, fill=, stroke=, width=, radius=, dash=)` | Rectángulo (redondeado con `radius`). |
-| `draw.rects([(x, y, w, h), ...], fill=)` | Muchos rectángulos de un color en una sola forma (rápido para rejillas). |
-| `draw.circle(x, y, r, ...)` | Círculo. |
-| `draw.line(x1, y1, x2, y2, stroke=, width=, dash=, cap=)` | Línea; `cap="round"` redondea los extremos. |
-| `draw.polyline(puntos, closed=False)` / `draw.polygon(puntos)` | Líneas que unen puntos / figura cerrada. |
-| `draw.arc(x, y, r, inicio, fin, pie=False)` | Arco (0° = las 3 en punto, sentido horario); `pie=True` lo cierra por el centro. |
-| `draw.path(ops)` | Trazado libre con operaciones tipo SVG: `("M", x, y)`, `("L", x, y)`, `("Q", cx, cy, x, y)`, `("C", ...)`, `("A", cx, cy, r, inicio, fin)`, `("Z",)`. |
-| `draw.text(x, y, texto, color=, size=, font=, weight=, align_x=, align_y=)` | Texto anclado en `(x, y)`. |
+| `draw.background(color)` | Fills the whole canvas. |
+| `draw.rect(x, y, w, h, fill=, stroke=, width=, radius=, dash=)` | Rectangle (rounded with `radius`). |
+| `draw.rects([(x, y, w, h), ...], fill=)` | Many rectangles of one color in a single shape (fast for grids). |
+| `draw.circle(x, y, r, ...)` | Circle. |
+| `draw.line(x1, y1, x2, y2, stroke=, width=, dash=, cap=)` | Line; `cap="round"` rounds the ends. |
+| `draw.polyline(points, closed=False)` / `draw.polygon(points)` | Lines joining points / closed shape. |
+| `draw.arc(x, y, r, start, end, pie=False)` | Arc (0° = 3 o'clock, clockwise); `pie=True` closes it through the center. |
+| `draw.path(ops)` | Free-form path with SVG-like operations: `("M", x, y)`, `("L", x, y)`, `("Q", cx, cy, x, y)`, `("C", ...)`, `("A", cx, cy, r, start, end)`, `("Z",)`. |
+| `draw.text(x, y, text, color=, size=, font=, weight=, align_x=, align_y=)` | Text anchored at `(x, y)`. |
 
-## Transformaciones
+## Transforms
 
-`draw.translate(x, y)`, `draw.rotate(grados)` y `draw.scale(x, y)` afectan a las formas que
-vienen **después**. Delimítalas con `draw.save()` / `draw.restore()`, o usa `draw.group`:
+`draw.translate(x, y)`, `draw.rotate(degrees)` and `draw.scale(x, y)` affect the shapes that
+come **after** them. Scope them with `draw.save()` / `draw.restore()`, or use `draw.group`:
 
 ```python
-def manecilla(angulo, largo, color):
+def hand(angle, length, color):
     return draw.group(
-        [draw.line(0, 0, 0, -largo, stroke=color, width=3, cap="round")],
-        x=100, y=100, rotation=angulo,
+        [draw.line(0, 0, 0, -length, stroke=color, width=3, cap="round")],
+        x=100, y=100, rotation=angle,
     )
 
 pz.canvas([draw.circle(100, 100, 90, stroke="#5c6370", width=2),
-           *manecilla(self.minutos * 6, 70, "#dce0e5"),
-           *manecilla(self.segundos * 6, 85, "#d07277")], width=200, height=200)
+           *hand(self.minutes * 6, 70, "#dce0e5"),
+           *hand(self.seconds * 6, 85, "#d07277")], width=200, height=200)
 ```
 
-## Eventos del ratón
+## Mouse events
 
-`pz.canvas` acepta callbacks que reciben coordenadas relativas al canvas:
+`pz.canvas` accepts callbacks that receive coordinates relative to the canvas:
 
 ```python
-pz.canvas(formas, width=400, height=300,
-          on_press=lambda x, y: self.pintar(x, y),
-          on_move=lambda x, y: self.mover(x, y),
+pz.canvas(shapes, width=400, height=300,
+          on_press=lambda x, y: self.paint(x, y),
+          on_move=lambda x, y: self.move(x, y),
           cursor="crosshair")
 ```
 
-Consulta la [referencia de `canvas`](/pyzed/reference/widgets/#canvas) para la lista completa.
+See the [`canvas` reference](/pyzed/reference/widgets/#canvas) for the full list.
 
-## Rendimiento
+## Performance
 
-Dale un `id` al canvas para cachear la geometría entre frames: solo se vuelve a teselar cuando
-cambian las formas. Para miles de celdas, usa `draw.rects` en lugar de un `draw.rect` por celda.
+Give the canvas an `id` to cache its geometry between frames: it is only re-tessellated when the
+shapes change. For thousands of cells, use `draw.rects` instead of one `draw.rect` per cell.
 
-Los gráficos de `pyzed.ui` (`sparkline`, `bar_chart`, `donut`, `spinner`) están hechos con
-`canvas`: mira [`python/pyzed/ui/display.py`](https://github.com/albakore/pyzed/blob/main/python/pyzed/ui/display.py)
-como ejemplo.
+The `pyzed.ui` charts (`sparkline`, `bar_chart`, `donut`, `spinner`) are built with `canvas`:
+see [`python/pyzed/ui/display.py`](https://github.com/albakore/pyzed/blob/main/python/pyzed/ui/display.py)
+for an example.

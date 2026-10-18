@@ -1,77 +1,77 @@
 ---
-title: Formularios
-description: Campos de texto, interruptores, casillas, deslizadores, progreso y grupos segmentados.
+title: Forms
+description: Text fields, switches, checkboxes, sliders, progress bars and segmented groups.
 sidebar:
   order: 2
 ---
 
-![Controles de formulario](../../../assets/components/forms.png)
+![Form controls](../../../assets/components/forms.png)
 
 ```python
-class Ajustes(pz.App):
+class Settings(pz.App):
     def __init__(self):
-        self.nombre = ""
+        self.name = ""
         self.query = ""
         self.autosave = True
-        self.formatear = False
-        self.fuente = 0.6
-        self.modo = "Editor"
+        self.format_on_save = False
+        self.font = 0.6
+        self.mode = "Editor"
 
     def view(self):
         return pz.column([
-            ui.input(self.nombre, lambda t: setattr(self, "nombre", t), placeholder="Nombre del proyecto"),
+            ui.input(self.name, lambda t: setattr(self, "name", t), placeholder="Project name"),
             ui.search_input(self.query, lambda t: setattr(self, "query", t)),
-            ui.field("Autoguardado", ui.switch(self.autosave, lambda v: setattr(self, "autosave", v)),
-                     description="Guarda al cambiar de pestaña"),
-            ui.field("Formato al guardar", ui.checkbox(self.formatear, lambda v: setattr(self, "formatear", v))),
-            ui.field("Tamaño de fuente",
-                     pz.container(ui.slider(self.fuente, lambda v: setattr(self, "fuente", v)), width=160)),
-            ui.segmented(["Editor", "Terminal", "Ambos"], self.modo, lambda m: setattr(self, "modo", m)),
+            ui.field("Autosave", ui.switch(self.autosave, lambda v: setattr(self, "autosave", v)),
+                     description="Save when switching tabs"),
+            ui.field("Format on save", ui.checkbox(self.format_on_save, lambda v: setattr(self, "format_on_save", v))),
+            ui.field("Font size",
+                     pz.container(ui.slider(self.font, lambda v: setattr(self, "font", v)), width=160)),
+            ui.segmented(["Editor", "Terminal", "Both"], self.mode, lambda m: setattr(self, "mode", m)),
             ui.progress(0.65),
         ], spacing=12, padding=20, width=420)
 ```
 
-## Campos de texto
+## Text fields
 
-Los campos son **controlados**: muestran `value` y te avisan de cada cambio con `on_input`.
-Guarda el texto en tu estado y vuelve a pasarlo en `view()`.
+Fields are **controlled**: they show `value` and notify you of every change through `on_input`.
+Store the text in your state and pass it back in `view()`.
 
 ```python
-ui.input(self.email, self.set_email, placeholder="tu@correo.com", icon="mail",
-         on_submit=self.enviar, id="email")
-ui.input(self.clave, self.set_clave, secure=True)          # contraseña
+ui.input(self.email, self.set_email, placeholder="you@example.com", icon="mail",
+         on_submit=self.send, id="email")
+ui.input(self.password, self.set_password, secure=True)    # password
 ui.input(self.query, self.set_query, borderless=True, size="lg")
 ```
 
-Para enfocar un campo desde el código, dale un `id` y devuelve `Command.focus("email")`.
+To focus a field from code, give it an `id` and return `Command.focus("email")`.
 
-## Interruptores y casillas
+## Switches and checkboxes
 
-`on_toggle` recibe el nuevo `bool`:
+`on_toggle` receives the new `bool`:
 
 ```python
 ui.switch(self.wifi, lambda on: setattr(self, "wifi", on), label="Wi-Fi")
-ui.checkbox(self.acepto, lambda v: setattr(self, "acepto", v), label="Acepto los términos")
+ui.checkbox(self.accepted, lambda v: setattr(self, "accepted", v), label="I accept the terms")
 ```
 
-## Deslizador y progreso
+## Slider and progress
 
 ```python
-ui.slider(self.volumen, self.set_volumen, min=0, max=100, step=1)
-ui.progress(self.descargado, max=self.total, tint="success", height=6)
+ui.slider(self.volume, self.set_volume, min=0, max=100, step=1)
+ui.progress(self.downloaded, max=self.total, tint="success", height=6)
 ```
 
-## Grupo segmentado
+## Segmented group
 
-El `ToggleButtonGroup` de Zed. `on_select` recibe la opción elegida:
+Zed's `ToggleButtonGroup`. `on_select` receives the chosen option:
 
 ```python
-ui.segmented(["Día", "Semana", "Mes"], self.vista, lambda v: setattr(self, "vista", v))
+ui.segmented(["Day", "Week", "Month"], self.view_mode, lambda v: setattr(self, "view_mode", v))
 ```
 
-## Filas de ajustes
+## Settings rows
 
-`ui.field(título, control, description=...)` alinea un título a la izquierda y el control a la
-derecha, como el panel de ajustes de Zed.
+`ui.field(title, control, description=...)` aligns a title on the left and the control on the
+right, like Zed's settings panel.
 
-Referencia completa: [Formularios](/pyzed/reference/ui/#formularios).
+Full reference: [Forms](/pyzed/reference/ui/#forms).

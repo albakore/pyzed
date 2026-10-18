@@ -1,40 +1,40 @@
 ---
-title: Introducción
-description: Qué es Pyzed, cómo funciona y cuándo usarlo.
+title: Introduction
+description: What Pyzed is, how it works and when to use it.
 ---
 
-**Pyzed** es una librería para crear interfaces de escritorio en Python con el rendimiento de
-[Iced](https://iced.rs), un toolkit de GUI escrito en Rust. Incluye una colección de componentes
-inspirados en el editor [Zed](https://zed.dev): pestañas, árbol de archivos, paleta de comandos,
-editor de código, terminal, menús, notificaciones y un workspace con paneles acoplables.
+**Pyzed** is a library for building desktop interfaces in Python with the performance of
+[Iced](https://iced.rs), a GUI toolkit written in Rust. It includes a set of components
+inspired by the [Zed](https://zed.dev) editor: tabs, file tree, command palette, code editor,
+terminal, menus, notifications and a workspace with dockable panels.
 
-![Recreación de Zed hecha con Pyzed (tema One Light)](../../../../screenshots/zed-one-light.png)
+![A Zed recreation built with Pyzed (One Light theme)](../../../../screenshots/zed-one-light.png)
 
-## Cómo funciona
+## How it works
 
-Tu código Python describe **qué** se ve. Rust se encarga de **cómo** se dibuja.
+Your Python code describes **what** is shown. Rust takes care of **how** it is drawn.
 
 ```
 Python                         Rust (pyzed._core, PyO3)                 Iced 0.14
-App.view() ──► árbol de Widget ──► render.rs: Widget → iced::Element ──► layout + wgpu/tiny-skia
-App.update() ◄── mensajes ◄────── app.rs: Message, Command → Task ◄──── eventos (ratón, teclado)
+App.view() ──► Widget tree ──► render.rs: Widget → iced::Element ──► layout + wgpu/tiny-skia
+App.update() ◄── messages ◄────── app.rs: Message, Command → Task ◄──── events (mouse, keyboard)
 ```
 
-- `view()` devuelve un árbol de `Widget`. Son objetos inmutables de Rust, así que construirlo es barato.
-- Cuando el usuario interactúa, Pyzed llama a tu `update(mensaje)` o directamente al callable
-  que pasaste (`on_press=self.guardar`). Después vuelve a llamar a `view()`.
-- El layout, el texto, el resaltado de sintaxis y el dibujado ocurren en Rust.
-- El GIL se libera mientras corre el bucle de eventos, así que tus hilos de Python siguen trabajando.
+- `view()` returns a tree of `Widget`s. They are immutable Rust objects, so building it is cheap.
+- When the user interacts, Pyzed calls your `update(message)` or directly the callable
+  you passed (`on_press=self.save`). Then it calls `view()` again.
+- Layout, text, syntax highlighting and drawing happen in Rust.
+- The GIL is released while the event loop runs, so your Python threads keep working.
 
-## Cuándo usar Pyzed
+## When to use Pyzed
 
-- Herramientas de escritorio, paneles internos, editores y utilidades que deben sentirse rápidas.
-- Interfaces densas al estilo de un IDE, con muchos paneles, listas y atajos de teclado.
-- Apps que quieres probar o documentar con capturas generadas sin pantalla.
+- Desktop tools, internal dashboards, editors and utilities that should feel fast.
+- Dense IDE-style interfaces with many panels, lists and keyboard shortcuts.
+- Apps you want to test or document with screenshots generated headlessly.
 
-## Qué necesitas saber
+## What you need to know
 
-Python básico: clases, funciones y lambdas. No hace falta saber Rust ni Iced.
+Basic Python: classes, functions and lambdas. No Rust or Iced knowledge required.
 
-Continúa con la [instalación](/pyzed/getting-started/installation/) o salta directamente al
-[inicio rápido](/pyzed/getting-started/quickstart/).
+Continue with the [installation](/pyzed/getting-started/installation/) or jump straight to the
+[quickstart](/pyzed/getting-started/quickstart/).

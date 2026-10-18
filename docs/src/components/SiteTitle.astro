@@ -1,15 +1,17 @@
 ---
-// Título del sitio con la última versión estable (sale de CHANGELOG.md, ver scripts/sync-changelog.mjs).
+// Site title plus the latest stable version (read from CHANGELOG.md, see scripts/sync-changelog.mjs).
 import Default from '@astrojs/starlight/components/SiteTitle.astro';
 import release from '../generated/release.json';
 
 const stable = release.latestStable?.version;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const es = Astro.currentLocale === 'es';
+const changelog = `${base}${es ? '/es' : ''}/changelog/`;
 ---
 
 <div class="site-title-with-version">
 	<Default><slot /></Default>
-	{stable && <a class="version-pill" href={`${base}/changelog/`} title="Última versión estable">v{stable}</a>}
+	{stable && <a class="version-pill" href={changelog} title={es ? 'Última versión estable' : 'Latest stable release'}>v{stable}</a>}
 </div>
 
 <style>

@@ -1,6 +1,6 @@
 ---
-title: Tareas en segundo plano
-description: Descargas con progreso, trabajo bloqueante y notificaciones sin congelar la interfaz.
+title: Background tasks
+description: Downloads with progress, blocking work and notifications without freezing the UI.
 sidebar:
   order: 3
 ---
@@ -8,23 +8,23 @@ sidebar:
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../examples/downloads.py?raw';
 
-Una interfaz nunca debe bloquearse esperando a la red o al disco. Pyzed ofrece dos herramientas:
+A UI must never block waiting on the network or the disk. Pyzed offers two tools:
 
-- **`Command.perform(fn, then)`** ejecuta una función bloqueante en otro hilo y te entrega el
-  resultado.
-- **`pz.post(mensaje)`** envía mensajes a la app desde cualquier hilo (progreso, eventos).
+- **`Command.perform(fn, then)`** runs a blocking function on another thread and hands you the
+  result.
+- **`pz.post(message)`** sends messages to the app from any thread (progress, events).
 
 <Aside type="tip">
-Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def` o generadores
-`async`, y `pz.listen` convierte un stream en una suscripción. Lo cuenta la guía
-[Async y suscripciones](/pyzed/guides/async/).
+If you prefer `asyncio`, `update` and callbacks can also be `async def` functions or `async`
+generators, and `pz.listen` turns a stream into a subscription. See the
+[Async and subscriptions](/pyzed/guides/async/) guide.
 </Aside>
 
-![Descargas con progreso y notificaciones](../../../assets/tutorials/downloads.png)
+![Downloads with progress and notifications](../../../assets/tutorials/downloads.png)
 
 <Steps>
 
-1. **Un resultado: `Command.perform`.** Para "haz esto y avísame cuando termine":
+1. **One result: `Command.perform`.** For "do this and tell me when it's done":
 
    ```python
    def check_updates(self):
@@ -33,17 +33,17 @@ Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def`
 
    @staticmethod
    def fetch_latest_version():
-       time.sleep(1.5)          # por ejemplo, una petición HTTP
+       time.sleep(1.5)          # e.g. an HTTP request
        return "0.2.0"
 
-   def got_version(self, version):     # se ejecuta en el hilo de la interfaz
+   def got_version(self, version):     # runs on the UI thread
        self.checking, self.latest = False, version
    ```
 
-   Mientras `self.checking` es `True`, el botón se dibuja deshabilitado (`on_press=None`).
+   While `self.checking` is `True`, the button is drawn disabled (`on_press=None`).
 
-2. **Muchos resultados: `pz.post`.** Un hilo propio informa del progreso con mensajes que llegan
-   a `update`:
+2. **Many results: `pz.post`.** A thread of your own reports progress with messages that reach
+   `update`:
 
    ```python
    def start(self, name):
@@ -64,10 +64,10 @@ Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def`
        if kind == "progress":
            self.progress[name] = rest[0]
        elif kind == "finished":
-           self.notify(f"{name} descargado", kind="success")
+           self.notify(f"{name} downloaded", kind="success")
    ```
 
-3. **Notificaciones que se cierran solas.** Un `threading.Timer` publica el mensaje de cierre:
+3. **Self-dismissing notifications.** A `threading.Timer` posts the dismiss message:
 
    ```python
    def notify(self, title, message=None, kind="info"):
@@ -75,18 +75,18 @@ Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def`
        self.toasts.append((toast_id, title, message, kind))
        threading.Timer(4, pz.post, args=(("dismiss", toast_id),)).start()
 
-   # en view():
+   # in view():
    return ui.toasts(body, [ui.toast(t, m, kind=k, on_dismiss=("dismiss", i)) for i, t, m, k in self.toasts])
    ```
 
 </Steps>
 
 <Aside>
-El estado solo se modifica en el hilo de la interfaz (en `update` y en los callbacks). Los hilos
-de trabajo no tocan `self`: envían mensajes con `pz.post`.
+State is only modified on the UI thread (in `update` and in callbacks). Worker threads don't
+touch `self`: they send messages with `pz.post`.
 </Aside>
 
-## Código completo
+## Full code
 
 <Code code={source} lang="py" title="examples/downloads.py" />
 

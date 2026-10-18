@@ -1,66 +1,66 @@
 ---
-title: Código
-description: El editor de código con resaltado y marcadores de git, y la vista de terminal.
+title: Code
+description: The code editor with syntax highlighting and git markers, and the terminal view.
 sidebar:
   order: 7
 ---
 
 ## Editor
 
-![Editor de código](../../../assets/components/editor.png)
+![Code editor](../../../assets/components/editor.png)
 
 ```python
 ui.editor(
-    "counter.py",                      # id del buffer
-    codigo,                            # texto inicial
-    path="counter.py",                 # deduce el lenguaje
+    "counter.py",                      # buffer id
+    code,                              # initial text
+    path="counter.py",                 # infers the language
     markers={6: "modified", 7: "created", 10: "created"},
-    on_change=self.cambiado,           # recibe el texto completo
-    on_cursor=self.cursor,             # recibe (línea, columna), desde 1
+    on_change=self.changed,            # receives the full text
+    on_cursor=self.cursor,             # receives (line, column), 1-based
 )
 ```
 
-- **No controlado.** El texto, el cursor, la selección y el historial de deshacer viven en Rust,
-  asociados al `id`. `text` solo se usa la primera vez que aparece ese `id`. Para reemplazar el
-  contenido devuelve `Command.set_editor_text(id, texto)`.
-- **Un buffer por archivo.** Usa la ruta como `id`: al cambiar de pestaña cada archivo conserva su
-  cursor y su historial.
-- **Resaltado.** Más de 100 lenguajes (gramáticas de syntect / two-face) con los colores de
-  sintaxis del tema. El lenguaje se deduce de `path` o se pasa con `language="rs"`.
-- **Marcadores de git.** `markers` asigna a cada línea `"created"`, `"modified"` o `"deleted"`.
-- **Cursor.** `Command.set_editor_cursor(id, línea, columna)` mueve el cursor, incluso antes del
-  primer dibujado.
+- **Uncontrolled.** The text, cursor, selection and undo history live in Rust, tied to the `id`.
+  `text` is only used the first time that `id` appears. To replace the content, return
+  `Command.set_editor_text(id, text)`.
+- **One buffer per file.** Use the path as `id`: when switching tabs, each file keeps its cursor
+  and history.
+- **Highlighting.** Over 100 languages (syntect / two-face grammars) using the theme's syntax
+  colors. The language is inferred from `path` or passed with `language="rs"`.
+- **Git markers.** `markers` assigns `"created"`, `"modified"` or `"deleted"` to each line.
+- **Cursor.** `Command.set_editor_cursor(id, line, column)` moves the cursor, even before the
+  first draw.
 
 ```python
-def guardar(self):
-    Path(self.activa).write_text(self.textos[self.activa])
-    self.sucios.discard(self.activa)
+def save(self):
+    Path(self.active).write_text(self.texts[self.active])
+    self.dirty.discard(self.active)
 
-def cambiado(self, texto):
-    self.textos[self.activa] = texto
-    self.sucios.add(self.activa)
+def changed(self, text):
+    self.texts[self.active] = text
+    self.dirty.add(self.active)
 ```
 
-- **Líneas largas.** Con `wrap=False` (por defecto) el editor se desplaza en horizontal y los
-  números de línea quedan fijos a la izquierda. Con `wrap=True` las líneas se ajustan y el número
-  aparece en la primera fila de cada línea, como en Zed.
-- **Línea activa.** La línea del cursor se resalta y el scroll sigue al cursor (también con
-  <kbd>RePág</kbd>/<kbd>AvPág</kbd>).
+- **Long lines.** With `wrap=False` (default) the editor scrolls horizontally and the line
+  numbers stay pinned on the left. With `wrap=True` lines wrap and the number appears on the
+  first row of each line, as in Zed.
+- **Active line.** The cursor line is highlighted and scrolling follows the cursor (also with
+  <kbd>PgUp</kbd>/<kbd>PgDn</kbd>).
 
 ## Terminal
 
 ![Terminal](../../../assets/components/terminal.png)
 
 ```python
-salida = "$ pytest -q\n\x1b[32m24 passed\x1b[0m in 1.21s\n$ "
-ui.terminal(salida, id="term")
+output = "$ pytest -q\n\x1b[32m24 passed\x1b[0m in 1.21s\n$ "
+ui.terminal(output, id="term")
 ```
 
-Es una vista de **solo lectura** que entiende los colores ANSI y se mantiene desplazada al final.
-Pásale la salida de un proceso que ejecutes tú (por ejemplo con `subprocess` en un hilo y
-`pz.post`). También acepta una lista de líneas de segmentos `(texto, color)`, donde el color es
-un nombre ANSI (`"green"`, `"red"`, `"dim"`…) o un token del tema.
+It is a **read-only** view that understands ANSI colors and stays scrolled to the bottom.
+Feed it the output of a process you run yourself (for example with `subprocess` in a thread and
+`pz.post`). It also accepts a list of lines made of `(text, color)` segments, where the color is
+an ANSI name (`"green"`, `"red"`, `"dim"`…) or a theme token.
 
-`ui.ansi(texto)` hace la conversión a segmentos por si quieres dibujarlos a tu manera.
+`ui.ansi(text)` converts to segments in case you want to draw them your own way.
 
-Referencia completa: [Código](/pyzed/reference/ui/#código).
+Full reference: [Code](/pyzed/reference/ui/#code).

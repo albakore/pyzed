@@ -1,41 +1,41 @@
 ---
-title: Listas, árbol y menús
-description: Filas de lista, el árbol de archivos del panel de proyecto y menús contextuales.
+title: Lists, tree and menus
+description: List rows, the project panel's file tree and context menus.
 sidebar:
   order: 3
 ---
 
-## Elementos de lista
+## List items
 
-![Elementos de lista](../../../assets/components/list.png)
+![List items](../../../assets/components/list.png)
 
 ```python
 pz.column([
-    ui.list_header("RECIENTES", end=ui.icon_button("plus", self.nuevo, size="xs")),
-    ui.list_item("main.py", self.abrir, icon="file-code", icon_color="#3572a5", selected=True, inset=True),
-    ui.list_item("README.md", self.abrir, icon="file-text", inset=True, end=ui.badge("M", tint="warning")),
-    ui.list_item("Cargo.toml", self.abrir, icon="file-cog", inset=True, end=ui.kbd("ctrl-1", size="xs")),
-    ui.list_item("antiguo.txt", self.abrir, icon="file", inset=True, disabled=True),
+    ui.list_header("RECENT", end=ui.icon_button("plus", self.new, size="xs")),
+    ui.list_item("main.py", self.open, icon="file-code", icon_color="#3572a5", selected=True, inset=True),
+    ui.list_item("README.md", self.open, icon="file-text", inset=True, end=ui.badge("M", tint="warning")),
+    ui.list_item("Cargo.toml", self.open, icon="file-cog", inset=True, end=ui.kbd("ctrl-1", size="xs")),
+    ui.list_item("old.txt", self.open, icon="file", inset=True, disabled=True),
 ], width=300)
 ```
 
-`list_item` tiene huecos `start` y `end` para cualquier widget, `indent` para anidar,
-`focused` para el borde de foco y `on_right_press` para abrir un menú contextual.
+`list_item` has `start` and `end` slots for any widget, `indent` for nesting,
+`focused` for the focus border and `on_right_press` to open a context menu.
 
-Para pasar el elemento al callback, usa un argumento por defecto en la lambda:
+To pass the item to the callback, use a default argument in the lambda:
 
 ```python
-[ui.list_item(f, lambda f=f: self.abrir(f), selected=f == self.actual) for f in self.archivos]
+[ui.list_item(f, lambda f=f: self.open(f), selected=f == self.current) for f in self.files]
 ```
 
-## Árbol de archivos
+## File tree
 
-El panel de proyecto de Zed: carpetas plegables, iconos por tipo de archivo y colores de git.
+Zed's project panel: collapsible folders, per-file-type icons and git colors.
 
-![Árbol de archivos](../../../assets/components/tree.png)
+![File tree](../../../assets/components/tree.png)
 
 ```python
-class Explorador(pz.App):
+class Explorer(pz.App):
     def __init__(self):
         self.nodes = ui.TreeNode.from_paths(
             ["src/main.rs", "src/app.rs", "src/ui/button.rs", "src/ui/mod.rs",
@@ -56,13 +56,13 @@ class Explorador(pz.App):
                        on_toggle=self.toggle, on_select=self.select)
 ```
 
-- `TreeNode.from_paths(rutas, status=...)` crea el árbol, pone las carpetas primero y propaga el
-  estado de git a las carpetas que contienen cambios.
-- El id de cada nodo es su ruta (`"src/ui/button.rs"`).
-- `status`: `"modified"`, `"created"`, `"deleted"`, `"conflict"` o `"ignored"`.
-- Puedes crear los nodos a mano: `TreeNode("src", children=[TreeNode("main.rs", id="src/main.rs")])`.
+- `TreeNode.from_paths(paths, status=...)` builds the tree, puts folders first and propagates
+  git status to the folders that contain changes.
+- Each node's id is its path (`"src/ui/button.rs"`).
+- `status`: `"modified"`, `"created"`, `"deleted"`, `"conflict"` or `"ignored"`.
+- You can build the nodes by hand: `TreeNode("src", children=[TreeNode("main.rs", id="src/main.rs")])`.
 
-Para leer una carpeta real:
+To read a real folder:
 
 ```python
 from pathlib import Path
@@ -72,28 +72,28 @@ paths = [p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() 
 nodes = ui.TreeNode.from_paths(paths)
 ```
 
-## Menú contextual
+## Context menu
 
-![Menú contextual](../../../assets/components/menu.png)
+![Context menu](../../../assets/components/menu.png)
 
 ```python
 ui.menu([
-    ui.MenuItem("Nuevo archivo", self.nuevo, icon="file-plus", keys="ctrl-n"),
-    ui.MenuItem("Nueva carpeta", self.nueva_carpeta, icon="folder-plus"),
+    ui.MenuItem("New file", self.new, icon="file-plus", keys="ctrl-n"),
+    ui.MenuItem("New folder", self.new_folder, icon="folder-plus"),
     ui.SEPARATOR,
-    "EDITAR",                                   # un texto suelto es un encabezado
-    ui.MenuItem("Copiar ruta", self.copiar, keys="ctrl-alt-c"),
-    ui.MenuItem("Ajuste de línea", self.toggle_wrap, checked=self.wrap),
+    "EDIT",                                     # a plain string is a header
+    ui.MenuItem("Copy path", self.copy, keys="ctrl-alt-c"),
+    ui.MenuItem("Soft wrap", self.toggle_wrap, checked=self.wrap),
     ui.SEPARATOR,
-    ui.MenuItem("Eliminar", self.eliminar, icon="trash-2", danger=True),
+    ui.MenuItem("Delete", self.delete, icon="trash-2", danger=True),
 ])
 ```
 
-Para mostrarlo flotando, úsalo como overlay de [`ui.layer`](/pyzed/components/overlays/#capas):
+To show it floating, use it as the overlay of [`ui.layer`](/pyzed/components/overlays/#layers):
 
 ```python
-layout = ui.layer(layout, self.menu_abierto and ui.menu(...) or None,
-                  on_dismiss=self.cerrar_menu, align_x="start", offset=120)
+layout = ui.layer(layout, self.menu_open and ui.menu(...) or None,
+                  on_dismiss=self.close_menu, align_x="start", offset=120)
 ```
 
-Referencia completa: [Listas, árbol y menús](/pyzed/reference/ui/#listas-árbol-y-menús).
+Full reference: [Lists, tree and menus](/pyzed/reference/ui/#lists-tree-and-menus).

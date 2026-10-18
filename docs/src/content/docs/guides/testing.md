@@ -1,33 +1,33 @@
 ---
-title: Tests y capturas
-description: Renderiza tu app sin ventana para tests, documentación e integración continua.
+title: Tests and screenshots
+description: Render your app without a window for tests, documentation and CI.
 sidebar:
   order: 10
 ---
 
-`app.screenshot(ruta)` dibuja el estado actual de la app **fuera de pantalla** y guarda un PNG.
-No necesita ventana, display ni GPU (usa el renderizador por software), así que funciona en CI.
+`app.screenshot(path)` renders the app's current state **off-screen** and saves a PNG.
+It needs no window, display or GPU (it uses the software renderer), so it works in CI.
 
 ```python
-app = MiApp()
-app.items = ["uno", "dos"]          # prepara el estado que quieras mostrar
-app.screenshot("docs/lista.png", size=(480, 320), scale=2)
+app = MyApp()
+app.items = ["one", "two"]          # set up the state you want to show
+app.screenshot("docs/list.png", size=(480, 320), scale=2)
 ```
 
-- `size`: tamaño lógico; por defecto `App.size`.
-- `scale`: densidad del PNG (2 = retina).
-- `wait`: segundos a esperar antes de capturar, por si `on_start` lanzó trabajo.
+- `size`: logical size; defaults to `App.size`.
+- `scale`: PNG pixel density (2 = retina).
+- `wait`: seconds to wait before capturing, in case `on_start` started some work.
 
-Todas las imágenes de esta documentación se generan así:
+Every image in this documentation is generated this way:
 
 ```bash
-python examples/screenshots.py              # capturas grandes (docs/screenshots)
-python docs/scripts/component_shots.py      # ilustraciones de componentes
+python examples/screenshots.py              # large screenshots (docs/screenshots)
+python docs/scripts/component_shots.py      # component illustrations
 ```
 
-## Probar la lógica
+## Testing the logic
 
-Como el estado vive en tu objeto, `update` y los callbacks se prueban como Python normal:
+Since the state lives in your object, `update` and callbacks are tested like plain Python:
 
 ```python
 def test_counter():
@@ -37,15 +37,15 @@ def test_counter():
     assert app.count == 2
 ```
 
-## Probar que la vista se dibuja
+## Testing that the view renders
 
-`view()` debe devolver un `Widget` sin lanzar excepciones. Una captura es una buena prueba de humo:
+`view()` must return a `Widget` without raising. A screenshot makes a good smoke test:
 
 ```python
 def test_view_renders(tmp_path):
-    app = MiApp()
+    app = MyApp()
     app.screenshot(tmp_path / "ui.png", size=(800, 600))
     assert (tmp_path / "ui.png").stat().st_size > 0
 ```
 
-Si `view()` lanza, la captura muestra el traceback en lugar de la interfaz, igual que la ventana.
+If `view()` raises, the screenshot shows the traceback instead of the UI, just like the window.

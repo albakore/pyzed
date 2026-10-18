@@ -1,50 +1,50 @@
 ---
-title: Más controles
-description: Desplegables, radios, campos numéricos, botones divididos, chips y secciones plegables.
+title: More controls
+description: Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections.
 sidebar:
   order: 8
 ---
 
-![Más controles](../../../assets/components/controls.png)
+![More controls](../../../assets/components/controls.png)
 
 ```python
-class Ajustes(pz.App):
+class Settings(pz.App):
     def __init__(self):
-        self.lenguaje = "Rust"
-        self.fuente = 14
-        self.indentacion = "a"
-        self.alineado = "c"
-        self.avanzado = True
+        self.language = "Rust"
+        self.font = 14
+        self.indentation = "a"
+        self.alignment = "c"
+        self.advanced = True
 
     def view(self):
         return pz.column([
             pz.row([
-                ui.select(["Python", "Rust", "TypeScript"], self.lenguaje,
-                          lambda v: setattr(self, "lenguaje", v), width=160),
-                ui.number_field(self.fuente, lambda v: setattr(self, "fuente", v), min=8, max=32, suffix="px"),
-                ui.split_button("Ejecutar", self.ejecutar, self.abrir_menu, icon="play"),
+                ui.select(["Python", "Rust", "TypeScript"], self.language,
+                          lambda v: setattr(self, "language", v), width=160),
+                ui.number_field(self.font, lambda v: setattr(self, "font", v), min=8, max=32, suffix="px"),
+                ui.split_button("Run", self.run, self.open_menu, icon="play"),
             ], spacing=10, align="center"),
-            ui.radio_group([("a", "Espacios"), ("b", "Tabs")], self.indentacion,
-                           lambda v: setattr(self, "indentacion", v), horizontal=True),
+            ui.radio_group([("a", "Spaces"), ("b", "Tabs")], self.indentation,
+                           lambda v: setattr(self, "indentation", v), horizontal=True),
             ui.toggle_group([("l", "align-left"), ("c", "align-center"), ("r", "align-right")],
-                            self.alineado, lambda v: setattr(self, "alineado", v)),
+                            self.alignment, lambda v: setattr(self, "alignment", v)),
             pz.row([ui.chip("python", icon="tag", selected=True),
-                    ui.chip("rust", on_remove=self.quitar_etiqueta),
-                    ui.chip("iced", on_press=self.filtrar)], spacing=6),
-            ui.disclosure("Opciones avanzadas", ui.muted("Contenido plegable."), open=self.avanzado,
-                          on_toggle=lambda: setattr(self, "avanzado", not self.avanzado)),
+                    ui.chip("rust", on_remove=self.remove_tag),
+                    ui.chip("iced", on_press=self.filter)], spacing=6),
+            ui.disclosure("Advanced options", ui.muted("Collapsible content."), open=self.advanced,
+                          on_toggle=lambda: setattr(self, "advanced", not self.advanced)),
         ], spacing=14)
 ```
 
-| Componente | Para qué |
+| Component | Purpose |
 | --- | --- |
-| `ui.select(options, selected, on_select)` | Desplegable con el estilo de Zed (`DropdownMenu`). Llama a `on_select` con la opción elegida. |
-| `ui.radio_group(options, selected, on_select)` | Opciones excluyentes. `options` son textos o pares `(valor, etiqueta)`. `horizontal=True` las pone en fila. |
-| `ui.number_field(value, on_change)` | Número con botones `−`/`+`, límites `min`/`max`, `step` y `suffix`. |
-| `ui.split_button(content, on_press, on_menu)` | Acción principal y un chevron para más opciones (normalmente abre un [`ui.popover`](/pyzed/components/content/#popover)). |
-| `ui.toggle_group(options, selected, on_select)` | Grupo segmentado solo con iconos: `options` son pares `(valor, icono)`. |
-| `ui.chip(content)` | Etiqueta compacta. `on_press` la hace pulsable y `on_remove` añade una ✕. |
-| `ui.disclosure(title, content, open=)` | Sección plegable. El estado abierto/cerrado es tuyo: cámbialo en `on_toggle`. |
+| `ui.select(options, selected, on_select)` | Zed-style dropdown (`DropdownMenu`). Calls `on_select` with the chosen option. |
+| `ui.radio_group(options, selected, on_select)` | Mutually exclusive options. `options` are strings or `(value, label)` pairs. `horizontal=True` lays them out in a row. |
+| `ui.number_field(value, on_change)` | Number with `−`/`+` buttons, `min`/`max` limits, `step` and `suffix`. |
+| `ui.split_button(content, on_press, on_menu)` | Main action plus a chevron for more options (usually opens a [`ui.popover`](/pyzed/components/content/#popover)). |
+| `ui.toggle_group(options, selected, on_select)` | Icon-only segmented group: `options` are `(value, icon)` pairs. |
+| `ui.chip(content)` | Compact tag. `on_press` makes it clickable and `on_remove` adds an ✕. |
+| `ui.disclosure(title, content, open=)` | Collapsible section. The open/closed state is yours: change it in `on_toggle`. |
 
-Para los controles básicos (`input`, `switch`, `slider`…) mira [Formularios](/pyzed/components/forms/).
-Referencia completa: [Controles](/pyzed/reference/ui/#controles).
+For the basic controls (`input`, `switch`, `slider`…) see [Forms](/pyzed/components/forms/).
+Full reference: [Controls](/pyzed/reference/ui/#controls).

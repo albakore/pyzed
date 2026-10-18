@@ -1,94 +1,94 @@
 ---
-title: Básicos
-description: Botones, textos, badges, atajos, avatares, tooltips y tarjetas.
+title: Basics
+description: Buttons, text, badges, shortcuts, avatars, tooltips and cards.
 sidebar:
   order: 1
 ---
 
-## Botones
+## Buttons
 
-![Botones](../../../assets/components/buttons.png)
+![Buttons](../../../assets/components/buttons.png)
 
 ```python
 pz.row([
-    ui.button("Filled", self.accion),
-    ui.button("Ghost", self.accion, variant="ghost"),
-    ui.button("Outline", self.accion, variant="outline"),
-    ui.button("Solid", self.accion, variant="solid"),
-    ui.button("Disabled", self.accion, disabled=True),
+    ui.button("Filled", self.action),
+    ui.button("Ghost", self.action, variant="ghost"),
+    ui.button("Outline", self.action, variant="outline"),
+    ui.button("Solid", self.action, variant="solid"),
+    ui.button("Disabled", self.action, disabled=True),
 ], spacing=8)
 
-ui.button("Error", self.borrar, variant="error", icon="trash-2")
-ui.button("Guardar", self.guardar, icon="save", keys="ctrl-s")
-ui.button("lg", self.accion, size="lg")
+ui.button("Error", self.delete, variant="error", icon="trash-2")
+ui.button("Save", self.save, icon="save", keys="ctrl-s")
+ui.button("lg", self.action, size="lg")
 
-ui.icon_button("settings", self.ajustes, tooltip="Ajustes")
-ui.icon_button("bell", self.avisos, selected=True)
+ui.icon_button("settings", self.settings, tooltip="Settings")
+ui.icon_button("bell", self.notifications, selected=True)
 ```
 
-- `variant`: `"filled"` (por defecto), `"ghost"`, `"subtle"`, `"outline"`, `"solid"`, `"tinted"`
-  o directamente un color semántico (`"accent"`, `"error"`, `"warning"`, `"success"`, `"info"`).
+- `variant`: `"filled"` (default), `"ghost"`, `"subtle"`, `"outline"`, `"solid"`, `"tinted"`
+  or a semantic color directly (`"accent"`, `"error"`, `"warning"`, `"success"`, `"info"`).
 - `size`: `"xs"`, `"sm"`, `"md"`, `"lg"`.
 - `icon` + `icon_position="start" | "end"`, `full_width=True`, `selected=True`.
-- Si `on_press` es `None`, el botón se dibuja deshabilitado.
-- Cualquier parámetro de estilo de [`pz.button`](/pyzed/reference/widgets/#button) (`bg`,
-  `hover_bg`, `radius`…) sobrescribe el del tema.
+- If `on_press` is `None`, the button is drawn disabled.
+- Any style parameter of [`pz.button`](/pyzed/reference/widgets/#button) (`bg`,
+  `hover_bg`, `radius`…) overrides the theme's.
 
-## Texto
+## Text
 
-![Textos](../../../assets/components/text.png)
+![Text](../../../assets/components/text.png)
 
 ```python
 ui.heading("Heading 1")
 ui.heading("Heading 2", level=2)
-ui.label("Label normal")
-ui.muted("Texto atenuado")
-ui.label("Texto de acento", color="accent")
+ui.label("Normal label")
+ui.muted("Muted text")
+ui.label("Accent text", color="accent")
 ui.label("def mono(): ...", mono=True, size="sm")
 ```
 
-`size` acepta `"xs"`, `"sm"`, `"md"`, `"lg"`, `"xl"`, `"2xl"` o un número.
+`size` accepts `"xs"`, `"sm"`, `"md"`, `"lg"`, `"xl"`, `"2xl"` or a number.
 
-## Badges, indicadores, atajos y avatares
+## Badges, indicators, shortcuts and avatars
 
-![Badges, indicadores, atajos y avatares](../../../assets/components/badges.png)
+![Badges, indicators, shortcuts and avatars](../../../assets/components/badges.png)
 
 ```python
 ui.badge("success", tint="success")
 ui.badge("error", tint="error", icon="circle-x")
-ui.badge("solid", variant="solid")          # "soft" (por defecto), "solid", "outline"
+ui.badge("solid", variant="solid")          # "soft" (default), "solid", "outline"
 
-ui.indicator("success")                      # punto de color
+ui.indicator("success")                      # colored dot
 
-ui.kbd("ctrl-shift-p")                       # ⌃⇧P en macOS, Ctrl Shift P en el resto
-ui.kbd("cmd-k cmd-s")                        # acordes
+ui.kbd("ctrl-shift-p")                       # ⌃⇧P on macOS, Ctrl Shift P elsewhere
+ui.kbd("cmd-k cmd-s")                        # chords
 
-ui.avatar("KV", index=1)                     # index elige un color de colaborador del tema
+ui.avatar("KV", index=1)                     # index picks a collaborator color from the theme
 ```
 
-El estilo de los atajos se controla con `pyzed.ui.base.KEY_STYLE`: `"auto"` (por defecto),
-`"symbols"` o `"words"`.
+Shortcut style is controlled with `pyzed.ui.base.KEY_STYLE`: `"auto"` (default),
+`"symbols"` or `"words"`.
 
 ## Tooltip
 
 ```python
-ui.tooltip(ui.icon_button("save", self.guardar), "Guardar", keys="ctrl-s", position="bottom")
+ui.tooltip(ui.icon_button("save", self.save), "Save", keys="ctrl-s", position="bottom")
 ```
 
-`ui.icon_button(..., tooltip="Texto")` es un atajo para lo mismo.
+`ui.icon_button(..., tooltip="Text")` is a shortcut for the same thing.
 
-## Tarjeta y divisor
+## Card and divider
 
-![Tarjeta](../../../assets/components/card.png)
+![Card](../../../assets/components/card.png)
 
 ```python
 ui.card(
     pz.column([
-        ui.muted("Pyzed dibuja la interfaz con Iced en Rust."),
-        pz.row([pz.hspace(), ui.button("Cancelar", self.cerrar, variant="ghost"),
-                ui.button("Aceptar", self.aceptar, variant="solid")], spacing=8),
+        ui.muted("Pyzed draws the UI with Iced in Rust."),
+        pz.row([pz.hspace(), ui.button("Cancel", self.close, variant="ghost"),
+                ui.button("OK", self.accept, variant="solid")], spacing=8),
     ], spacing=12),
-    title="Tarjeta",
+    title="Card",
     actions=[ui.icon_button("ellipsis", self.menu, size="sm")],
     width=380,
 )
@@ -97,4 +97,4 @@ ui.divider()                # horizontal
 ui.divider(vertical=True)
 ```
 
-Referencia completa: [Componentes (pyzed.ui)](/pyzed/reference/ui/#básicos).
+Full reference: [Components (pyzed.ui)](/pyzed/reference/ui/#basics).

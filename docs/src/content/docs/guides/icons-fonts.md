@@ -1,31 +1,31 @@
 ---
-title: Iconos y fuentes
-description: Los iconos de Lucide, los iconos por tipo de archivo y cómo cargar fuentes propias.
+title: Icons and fonts
+description: Lucide icons, file-type icons and how to load your own fonts.
 sidebar:
   order: 9
 ---
 
-## Iconos
+## Icons
 
-Pyzed incluye la fuente de iconos de [Lucide](https://lucide.dev) (~2000 iconos, licencia ISC).
+Pyzed bundles the [Lucide](https://lucide.dev) icon font (~2000 icons, ISC license).
 
 ```python
 pz.icon("folder", size=16, color="#74ade8")
-ui.button("Abrir", self.abrir, icon="folder-open")
-ui.list_item("Ajustes", self.ajustes, icon="settings")
+ui.button("Open", self.open, icon="folder-open")
+ui.list_item("Settings", self.settings, icon="settings")
 ```
 
-Busca nombres en [lucide.dev/icons](https://lucide.dev/icons) o desde la terminal:
+Look up names at [lucide.dev/icons](https://lucide.dev/icons) or from the terminal:
 
 ```bash
 pyzed icons git
 # git-branch, git-commit-horizontal, git-compare, git-fork, git-merge, git-pull-request, ...
 ```
 
-`pyzed.icons.names()` devuelve la lista completa y `pyzed.icons.glyph("folder")` el carácter,
-para mezclarlo con texto usando `font="icons"`.
+`pyzed.icons.names()` returns the full list and `pyzed.icons.glyph("folder")` the character,
+to mix it with text using `font="icons"`.
 
-### Iconos por tipo de archivo
+### File-type icons
 
 ```python
 from pyzed import icons
@@ -35,25 +35,25 @@ icons.for_file("Cargo.toml")    # ("file-cog", "#9c4221")
 icons.language_for("main.py")   # "Python"
 ```
 
-`ui.Tab.for_file` y `ui.tree` ya los usan.
+`ui.Tab.for_file` and `ui.tree` already use them.
 
-## Fuentes
+## Fonts
 
-Fuentes incluidas:
+Bundled fonts:
 
-| Nombre | Fuente |
+| Name | Font |
 | --- | --- |
-| `"sans"` (por defecto) | IBM Plex Sans |
+| `"sans"` (default) | IBM Plex Sans |
 | `"mono"` | IBM Plex Mono |
 | `"icons"` | Lucide |
 
-Para usar otra, cárgala antes de ejecutar la app y refiérete a ella por su nombre de familia:
+To use another one, load it before running the app and refer to it by its family name:
 
 ```python
 pz.load_font("fonts/JetBrainsMono-Regular.ttf")
 
 pz.text("fn main() {}", font="JetBrains Mono")
-pz.code_editor("buf", texto, font="JetBrains Mono")
+pz.code_editor("buf", text, font="JetBrains Mono")
 ```
 
-`load_font` también acepta los `bytes` del archivo.
+`load_font` also accepts the file's `bytes`.

@@ -1,28 +1,42 @@
 ---
-title: Async y suscripciones
-description: Corrutinas, generadores, temporizadores y streams sin bloquear la interfaz.
+title: Async and subscriptions
+description: Coroutines, generators, timers and streams without blocking the interface.
 sidebar:
   order: 5
 ---
 
-Pyzed ejecuta tus corrutinas en **un único loop de asyncio** que corre en un hilo en segundo
-plano. Así puedes usar `aiohttp`, `httpx`, `websockets` y cualquier librería async sin
-configurar nada, y la ventana nunca se bloquea.
+Pyzed runs your coroutines on **a single asyncio loop** that runs in a background thread. That
+way you can use `aiohttp`, `httpx`, `websockets` and any async library with no setup, and the
+window never blocks.
 
-## Qué puede devolver `update` o un callback
+## What `update` or a callback can return
 
-| Valor devuelto | Qué hace Pyzed |
+```mermaid
+sequenceDiagram
+    participant UI as UI thread (Iced)
+    participant App as update()
+    participant Aio as asyncio loop
+    UI->>App: click → message
+    App-->>Aio: return coroutine / generator
+    Note over UI: the window keeps responding
+    Aio-->>App: result → update(result)
+    App->>UI: view()
+    Aio-->>App: each yielded value → update (async generator)
+    App->>UI: view()
+```
+
+| Return value | What Pyzed does |
 | --- | --- |
-| `None` | Vuelve a dibujar. |
-| un `Command` o una lista de ellos | Los ejecuta. |
-| una **corrutina** (`async def`) | La ejecuta en el loop y envía su resultado a `update`. |
-| un **generador** | Lo recorre en un hilo y envía cada valor a `update`. |
-| un **generador async** | Lo recorre en el loop y envía cada valor a `update`. |
-| cualquier otro valor | Lo envía a `update` como mensaje. |
+| `None` | Redraws. |
+| a `Command` or a list of them | Runs them. |
+| a **coroutine** (`async def`) | Runs it on the loop and sends its result to `update`. |
+| a **generator** | Iterates it in a thread and sends each value to `update`. |
+| an **async generator** | Iterates it on the loop and sends each value to `update`. |
+| any other value | Sends it to `update` as a message. |
 
-Los valores `None` que produzca un generador se ignoran.
+`None` values yielded by a generator are ignored.
 
-## Una petición: corrutina o `Command.perform`
+## A request: coroutine or `Command.perform`
 
 ```python
 import httpx
@@ -35,11 +49,11 @@ class Repos(pz.App):
     def on_start(self):
         return self.load()
 
-    async def load(self):                       # devolver una corrutina la ejecuta
+    async def load(self):                       # returning a coroutine runs it
         self.loading = True
         async with httpx.AsyncClient() as client:
             r = await client.get("https://api.github.com/users/albakore/repos")
-        return ("loaded", r.json())             # va a update()
+        return ("loaded", r.json())             # goes to update()
 
     def update(self, message):
         kind, data = message
@@ -47,14 +61,15 @@ class Repos(pz.App):
             self.repos, self.loading = data, False
 ```
 
-:::caution[Estado y corrutinas]
-El cuerpo de la corrutina corre en el loop de asyncio, no en el hilo de la interfaz. Cambiar
-`self` desde ahí funciona para cosas simples, pero lo más seguro es **devolver** el resultado y
-modificar el estado en `update` o en el callback `then`.
+:::caution[State and coroutines]
+The coroutine body runs on the asyncio loop, not on the UI thread. Changing `self` from there
+works for simple things, but the safest approach is to **return** the result and modify state in
+`update` or in the `then` callback.
 :::
 
-Con `Command.perform(funcion, then)` el resultado llega a un callback concreto en lugar de a
-`update`. `funcion` puede ser normal (corre en un hilo) o `async def` (corre en el loop):
+With `Command.perform(function, then)` the result goes to a specific callback instead of
+`update`. `function` can be a regular function (runs in a thread) or `async def` (runs on the
+loop):
 
 ```python
 async def fetch_quote():
@@ -66,13 +81,13 @@ class Quotes(pz.App):
         self.loading = True
         return pz.Command.perform(fetch_quote, self.loaded)
 
-    def loaded(self, quote):          # en el hilo de la interfaz
+    def loaded(self, quote):          # on the UI thread
         self.quote, self.loading = quote, False
 ```
 
-## Progreso: generadores async
+## Progress: async generators
 
-Cada `yield` llega a `update` mientras el trabajo sigue en segundo plano:
+Each `yield` reaches `update` while the work keeps going in the background:
 
 ```python
 async def download(index, size):
@@ -87,7 +102,7 @@ async def download(index, size):
 class Downloads(pz.App):
     def start(self, item):
         item.state = "running"
-        return download(item.index, item.size)      # devolver el generador lo arranca
+        return download(item.index, item.size)      # returning the generator starts it
 
     def update(self, message):
         index, event, value = message
@@ -95,14 +110,14 @@ class Downloads(pz.App):
             self.downloads[index].progress = value
 ```
 
-Para arrancar varios a la vez, envuélvelos en `Command.perform`:
+To start several at once, wrap them in `Command.perform`:
 `return [pz.Command.perform(self.start(d)) for d in self.downloads]`.
 
-## Suscripciones: temporizadores y streams
+## Subscriptions: timers and streams
 
-`subscriptions()` devuelve las fuentes de mensajes que deben estar **activas ahora**. Pyzed la
-vuelve a evaluar después de cada `update`: una suscripción existe mientras la devuelves y se
-detiene en cuanto deja de aparecer.
+`subscriptions()` returns the message sources that should be **active right now**. Pyzed
+re-evaluates it after every `update`: a subscription exists as long as you return it and stops
+as soon as it no longer appears.
 
 ```python
 class Stopwatch(pz.App):
@@ -117,10 +132,10 @@ class Stopwatch(pz.App):
             self.elapsed += 0.01
 ```
 
-| Función | Qué hace |
+| Function | What it does |
 | --- | --- |
-| `pz.every(segundos, mensaje)` | Envía `mensaje` cada `segundos` (como `time::every` de Iced). Si `mensaje` es un callable, se llama. |
-| `pz.listen(funcion)` | Ejecuta `funcion()` (un generador o generador async) mientras la suscripción esté activa y envía cada valor a `update`. |
+| `pz.every(seconds, message)` | Sends `message` every `seconds` (like Iced's `time::every`). If `message` is a callable, it is called. |
+| `pz.listen(function)` | Runs `function()` (a generator or async generator) while the subscription is active and sends each value to `update`. |
 
 ```python
 async def feed():
@@ -134,17 +149,17 @@ class Ticker(pz.App):
         return [pz.listen(feed)] if self.connected else []
 ```
 
-Las suscripciones se identifican por una **clave** (por defecto, el mensaje o la función). Si
-necesitas dos iguales con parámetros distintos, pasa `key="..."`.
+Subscriptions are identified by a **key** (by default, the message or the function). If you
+need two identical ones with different parameters, pass `key="..."`.
 
-:::tip[Animaciones]
-`ui.spinner()` y otros dibujos que dependen del reloj solo se mueven cuando la vista se redibuja.
-Mantén una suscripción `pz.every(1 / 30, lambda: None)` activa mientras se muestran.
+:::tip[Animations]
+`ui.spinner()` and other clock-driven drawings only move when the view is redrawn. Keep a
+`pz.every(1 / 30, lambda: None)` subscription active while they are shown.
 :::
 
-## Utilidades
+## Utilities
 
-- `pz.spawn(corrutina)` programa una corrutina en el loop de Pyzed sin esperar su resultado
-  (devuelve un `concurrent.futures.Future`).
-- `pz.asyncio_loop()` devuelve el loop, por si una librería lo necesita.
-- `pz.post(mensaje)` sigue funcionando desde cualquier hilo.
+- `pz.spawn(coroutine)` schedules a coroutine on Pyzed's loop without waiting for its result
+  (returns a `concurrent.futures.Future`).
+- `pz.asyncio_loop()` returns the loop, in case a library needs it.
+- `pz.post(message)` still works from any thread.

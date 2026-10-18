@@ -1,35 +1,35 @@
 ---
-title: Instalación
-description: Cómo instalar Pyzed en Linux, macOS y Windows.
+title: Installation
+description: How to install Pyzed on Linux, macOS and Windows.
 ---
 
 import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
 
-Pyzed necesita **Python 3.9 o superior**.
+Pyzed requires **Python 3.9 or later**.
 
-## Desde PyPI
+## From PyPI
 
 ```bash
 pip install pyzed-ui
 ```
 
-El paquete se llama `pyzed-ui` en PyPI (el nombre `pyzed` ya estaba ocupado), pero se importa como `pyzed`.
-Los wheels precompilados para Linux, macOS y Windows incluyen el motor de Rust, así que no
-necesitas compilar nada.
+The package is called `pyzed-ui` on PyPI (the name `pyzed` was already taken), but it is imported as `pyzed`.
+The prebuilt wheels for Linux, macOS and Windows include the Rust engine, so you don't
+need to compile anything.
 
-<Aside type="caution" title="Antes de la primera versión en PyPI">
-Si `pip install pyzed-ui` no encuentra un wheel para tu plataforma, instala desde el código fuente
-(abajo). Necesitarás Rust estable.
+<Aside type="caution" title="Before the first PyPI release">
+If `pip install pyzed-ui` can't find a wheel for your platform, install from source
+(below). You'll need stable Rust.
 </Aside>
 
-## Desde el código fuente
+## From source
 
 ```bash
 pip install git+https://github.com/albakore/pyzed
 ```
 
-Esto compila la extensión de Rust, así que necesitas [Rust estable](https://rustup.rs) y las
-dependencias de sistema de tu plataforma:
+This compiles the Rust extension, so you need [stable Rust](https://rustup.rs) and your
+platform's system dependencies:
 
 <Tabs syncKey="os">
 	<TabItem label="Linux">
@@ -46,32 +46,32 @@ dependencias de sistema de tu plataforma:
 		```
 	</TabItem>
 	<TabItem label="Windows">
-		Instala [Rust con rustup](https://rustup.rs) y las *Build Tools for Visual Studio*
-		(carga de trabajo "Desarrollo para el escritorio con C++").
+		Install [Rust with rustup](https://rustup.rs) and the *Build Tools for Visual Studio*
+		("Desktop development with C++" workload).
 	</TabItem>
 </Tabs>
 
-## Para desarrollar Pyzed
+## Developing Pyzed
 
 <Steps>
 
-1. Clona el repositorio y crea un entorno virtual:
+1. Clone the repository and create a virtual environment:
 
    ```bash
    git clone https://github.com/albakore/pyzed && cd pyzed
    python -m venv .venv && source .venv/bin/activate
    ```
 
-2. Compila e instala en modo editable con [maturin](https://www.maturin.rs):
+2. Build and install in editable mode with [maturin](https://www.maturin.rs):
 
    ```bash
    pip install maturin pytest
    maturin develop --release
    ```
 
-   Usa `--release`: la build de depuración es mucho más lenta al usar la ventana.
+   Use `--release`: the debug build is much slower when using the window.
 
-3. Ejecuta los tests y un ejemplo:
+3. Run the tests and an example:
 
    ```bash
    pytest tests
@@ -80,7 +80,7 @@ dependencias de sistema de tu plataforma:
 
 </Steps>
 
-## Comprobar la instalación
+## Verify the installation
 
 ```bash
 python -c "import pyzed; print(pyzed.__version__)"

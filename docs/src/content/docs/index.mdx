@@ -1,17 +1,17 @@
 ---
 title: Pyzed
-description: Interfaces modernas y rápidas en Python, renderizadas por Iced (Rust), con componentes inspirados en el editor Zed.
+description: Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor.
 template: splash
 hero:
-  tagline: Interfaces de escritorio modernas y rápidas en Python. Tú describes la interfaz; Iced, en Rust, la dibuja. Con más de 70 componentes al estilo del editor Zed, async y varias ventanas.
+  tagline: Fast, modern desktop interfaces in Python. You describe the UI; Iced, in Rust, draws it. With 70+ Zed-style components, async and multiple windows.
   image:
     file: ../../../screenshots/zed-one-dark.png
-    alt: Un editor tipo Zed hecho con Pyzed
+    alt: A Zed-like editor built with Pyzed
   actions:
-    - text: Empezar
+    - text: Get started
       link: getting-started/quickstart/
       icon: right-arrow
-    - text: Ver componentes
+    - text: Browse components
       link: components/overview/
       variant: minimal
     - text: GitHub
@@ -25,7 +25,7 @@ import LatestRelease from '../../components/LatestRelease.astro';
 
 <LatestRelease />
 
-## Una app en 20 líneas
+## An app in 20 lines
 
 ```python title="counter.py"
 import pyzed as pz
@@ -53,44 +53,44 @@ class Counter(pz.App):
 pz.run(Counter)
 ```
 
-## Por qué Pyzed
+## Why Pyzed
 
 <CardGrid>
-	<Card title="Rendimiento nativo" icon="rocket">
-		Python solo describe la interfaz. Layout, texto y dibujado (wgpu, con tiny-skia de respaldo)
-		los hace Iced 0.14 en Rust mediante PyO3.
+	<Card title="Native performance" icon="rocket">
+		Python only describes the UI. Layout, text and drawing (wgpu, with tiny-skia as fallback)
+		are handled by Iced 0.14 in Rust through PyO3.
 	</Card>
-	<Card title="Sencillo" icon="pencil">
-		La arquitectura Elm de Iced (estado, `update`, `view`) sin ceremonia: un botón puede llamar
-		directamente a `self.guardar`.
+	<Card title="Simple" icon="pencil">
+		Iced's Elm architecture (state, `update`, `view`) without the ceremony: a button can call
+		`self.save` directly.
 	</Card>
-	<Card title="Componentes de Zed" icon="puzzle">
-		Botones, pestañas, árbol de archivos, paleta de comandos, editor con resaltado, terminal,
-		menús, toasts y un workspace con docks.
+	<Card title="Zed components" icon="puzzle">
+		Buttons, tabs, file tree, command palette, editor with syntax highlighting, terminal,
+		menus, toasts and a workspace with docks.
 	</Card>
-	<Card title="Temas" icon="seti:pipeline">
-		One, Ayu y Gruvbox con los tokens de color de Zed, modo claro/oscuro del sistema e importación
-		de cualquier tema de Zed. Deriva el tuyo en una línea y cámbialo en caliente.
+	<Card title="Themes" icon="seti:pipeline">
+		One, Ayu and Gruvbox with Zed's color tokens, system light/dark mode and import of any
+		Zed theme. Derive your own in one line and switch it at runtime.
 	</Card>
-	<Card title="Async y varias ventanas" icon="random">
-		`update` y los callbacks pueden ser `async`; `pz.every` y `pz.listen` para temporizadores y
-		streams. Cada `pz.Window` tiene su propia vista y tema, con el estado compartido.
+	<Card title="Async and multiple windows" icon="random">
+		`update` and callbacks can be `async`; `pz.every` and `pz.listen` for timers and
+		streams. Each `pz.Window` has its own view and theme, with shared state.
 	</Card>
-	<Card title="Multiplataforma" icon="laptop">
-		Linux, macOS y Windows. Fuentes IBM Plex e iconos Lucide (~2000) incluidos.
+	<Card title="Cross-platform" icon="laptop">
+		Linux, macOS and Windows. IBM Plex fonts and Lucide icons (~2000) included.
 	</Card>
-	<Card title="Capturas sin ventana" icon="seti:image">
-		`app.screenshot("ui.png")` renderiza fuera de pantalla, sin GPU. Todas las imágenes de esta
-		web se generan así.
+	<Card title="Headless screenshots" icon="seti:image">
+		`app.screenshot("ui.png")` renders off-screen, without a GPU. Every image on this
+		site is generated that way.
 	</Card>
 </CardGrid>
 
-## Siguientes pasos
+## Next steps
 
 <CardGrid>
-	<LinkCard title="Inicio rápido" href="getting-started/quickstart/" description="Instala Pyzed y crea tu primera ventana." />
-	<LinkCard title="Tutorial: lista de tareas" href="tutorials/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
-	<LinkCard title="Tutorial: un mini editor tipo Zed" href="tutorials/zed-like-editor/" description="Workspace, árbol de archivos, pestañas, editor y paleta." />
-	<LinkCard title="Tutorial en 5 pasos" href="tutorials/step-by-step/" description="De una ventana vacía a una app de notas con async y dos ventanas." />
-	<LinkCard title="Temas" href="guides/theming/" description="Tokens de color, temas incluidos y cómo crear los tuyos." />
+	<LinkCard title="Quickstart" href="getting-started/quickstart/" description="Install Pyzed and create your first window." />
+	<LinkCard title="Tutorial: to-do list" href="tutorials/todo-app/" description="State, forms, lists and shortcuts, step by step." />
+	<LinkCard title="Tutorial: a mini Zed-like editor" href="tutorials/zed-like-editor/" description="Workspace, file tree, tabs, editor and palette." />
+	<LinkCard title="5-step tutorial" href="tutorials/step-by-step/" description="From an empty window to a notes app with async and two windows." />
+	<LinkCard title="Themes" href="guides/theming/" description="Color tokens, built-in themes and how to create your own." />
 </CardGrid>

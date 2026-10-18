@@ -74,9 +74,9 @@ jobs:
         run: |
           .venv/bin/python docs/scripts/gen_api.py --check | sed 's/^/::warning title=Docs::/' || true
           .venv/bin/python docs/scripts/gen_api.py > /dev/null
-          if ! git diff --quiet -- docs/src/content/docs/reference; then
+          if ! git diff --quiet -- docs/src/content/docs/reference docs/src/content/docs/es/reference; then
             echo "::warning title=Docs::The API reference is out of date. Run 'python docs/scripts/gen_api.py' and commit the result."
-            git diff --stat -- docs/src/content/docs/reference
+            git diff --stat -- docs/src/content/docs/reference docs/src/content/docs/es/reference
           fi
 
   deploy:

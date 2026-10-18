@@ -62,6 +62,10 @@ The site is in `docs/`; see the
 for how to run it locally, regenerate the API reference and the component
 screenshots. If you add or change public API, document it in the same PR.
 
+The docs are bilingual: English pages live at the root of `docs/src/content/docs/` and
+the Spanish translation under `docs/src/content/docs/es/`, with the same paths. Add or
+change a page in both languages when you can; a missing translation falls back to English.
+
 ## Pull requests
 
 1. Fork the repository and create a branch from `main`

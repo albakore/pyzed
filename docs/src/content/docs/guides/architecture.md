@@ -1,122 +1,137 @@
 ---
-title: Arquitectura de una app
-description: Estado, view, update, mensajes y callables. El modelo Elm de Iced en Python.
+title: App architecture
+description: State, view, update, messages and callables. Iced's Elm model in Python.
 sidebar:
   order: 1
 ---
 
-Pyzed sigue la **arquitectura Elm** de Iced: el estado vive en tu objeto, `view()` lo dibuja y
-los eventos lo cambian. Después de cada cambio, Pyzed vuelve a llamar a `view()`.
+Pyzed follows Iced's **Elm architecture**: state lives in your object, `view()` draws it and
+events change it. After every change, Pyzed calls `view()` again.
 
 ```
             ┌──────────── view() ────────────┐
             │                                ▼
-      estado (self)                    árbol de widgets ──► Iced lo dibuja
+      state (self)                     widget tree ──► Iced draws it
             ▲                                │
-            └── update(msg) / callable ◄─────┘  el usuario hace clic, escribe…
+            └── update(msg) / callable ◄─────┘  the user clicks, types…
 ```
 
-## La clase App
+## The App class
 
 ```python
 import pyzed as pz
 
 
-class MiApp(pz.App):
-    title = "Mi app"            # o un método/propiedad que devuelva el título
+class MyApp(pz.App):
+    title = "My app"            # or a method/property that returns the title
     size = (900, 600)
     min_size = (480, 320)
-    theme = "One Dark"           # un Theme, un nombre o pz.themes.auto(...)
+    theme = "One Dark"           # a Theme, a name or pz.themes.auto(...)
 
-    def __init__(self):         # el estado inicial
+    def __init__(self):         # the initial state
         self.items = []
 
-    def view(self):             # obligatorio: devuelve un Widget
+    def view(self):             # required: returns a Widget
         ...
 
-    def update(self, message):  # opcional: recibe los mensajes
+    def update(self, message):  # optional: receives messages
         ...
 
 
-pz.run(MiApp)                   # o MiApp().run()
+pz.run(MyApp)                   # or MyApp().run()
 ```
 
-Todos los atributos de clase están en la [referencia de App](/pyzed/reference/app/#app).
+All class attributes are listed in the [App reference](/pyzed/reference/app/#app).
 
-:::tip[`view()` debe ser barato y sin efectos]
-Pyzed llama a `view()` después de cada mensaje. Calcula ahí lo que vas a mostrar, pero no hagas
-E/S ni cambies el estado: eso va en `update` o en los callbacks.
+:::tip[`view()` must be cheap and side-effect free]
+Pyzed calls `view()` after every message. Compute what you are going to show there, but don't do
+I/O or change state: that belongs in `update` or in callbacks.
 :::
 
-## Mensajes
+Every interaction runs the same loop: Pyzed calls `view()`, Iced draws the tree and turns each event into a message, and the message updates your state, which triggers the next `view()`.
 
-Los widgets interactivos aceptan un **mensaje**: cualquier valor de Python. Al activarse, Pyzed
-lo envía a `update`:
+```mermaid
+flowchart LR
+    S[("state: self.*")] --> V["view()"]
+    V -->|widget tree| R["Iced (Rust)"]
+    R -->|click, key, input…| M{"message"}
+    M -->|a value| U["update(message)"]
+    M -->|a callable| C["called directly"]
+    U --> S
+    C --> S
+    U -.->|Command| E["effects: tasks, focus, windows…"]
+    E -.-> M
+```
+
+## Messages
+
+Interactive widgets take a **message**: any Python value. When activated, Pyzed sends it to
+`update`:
 
 ```python
-ui.button("Borrar", ("borrar", item.id))
+ui.button("Delete", ("delete", item.id))
 
 def update(self, message):
     match message:
-        case ("borrar", item_id):
+        case ("delete", item_id):
             self.items = [i for i in self.items if i.id != item_id]
-        case "limpiar":
+        case "clear":
             self.items.clear()
 ```
 
-Usa mensajes cuando quieras centralizar la lógica en un sitio, registrar acciones, deshacerlas o
-probar `update` sin interfaz.
+Use messages when you want to keep the logic in one place, log actions, undo them or test
+`update` without a UI.
 
 ## Callables
 
-Si el mensaje es un callable, Pyzed lo **llama directamente** y `update` no se entera:
+If the message is a callable, Pyzed **calls it directly** and `update` never sees it:
 
 ```python
-ui.button("Guardar", self.guardar)
-ui.button("Borrar", lambda: self.borrar(item.id))
+ui.button("Save", self.save)
+ui.button("Delete", lambda: self.delete(item.id))
 ```
 
-Lo que devuelva el callable se trata así:
+The callable's return value is handled like this:
 
-| Devuelve | Qué pasa |
+| Returns | What happens |
 | --- | --- |
-| `None` | Nada más: Pyzed vuelve a dibujar. |
-| un `Command` (o lista de ellos) | Se ejecuta el comando. |
-| una corrutina, un generador o un generador async | Se ejecuta en segundo plano y cada resultado va a `update`. Ver [async y suscripciones](/pyzed/guides/async/). |
-| cualquier otro valor | Se envía a `update` como mensaje. |
+| `None` | Nothing else: Pyzed redraws. |
+| a `Command` (or a list of them) | The command runs. |
+| a coroutine, a generator or an async generator | It runs in the background and each result goes to `update`. See [async and subscriptions](/pyzed/guides/async/). |
+| any other value | It is sent to `update` as a message. |
 
-Los controles que producen un valor llaman al callable con ese valor: `on_input(texto)`,
-`on_toggle(bool)`, `on_change(valor)`, `on_select(id)`, `on_cursor(línea, columna)`.
+Controls that produce a value call the callable with that value: `on_input(text)`,
+`on_toggle(bool)`, `on_change(value)`, `on_select(id)`, `on_cursor(line, column)`.
 
-:::caution[Lambdas dentro de bucles]
-Captura la variable con un argumento por defecto, o todas las lambdas usarán el último valor:
-`lambda f=f: self.abrir(f)`.
+:::caution[Lambdas inside loops]
+Capture the variable with a default argument, or every lambda will use the last value:
+`lambda f=f: self.open(f)`.
 :::
 
-## Hooks opcionales
+## Optional hooks
 
-| Método | Cuándo se llama |
+| Method | When it is called |
 | --- | --- |
-| `on_start()` | Una vez, al arrancar. Puede devolver un `Command` o una corrutina (por ejemplo, cargar datos). |
-| `on_key(combo)` | En cada tecla pulsada. Ver [teclado y atajos](/pyzed/guides/keyboard/). |
-| `subscriptions()` | Después de cada `update`. Devuelve los temporizadores y streams activos (`pz.every`, `pz.listen`). |
-| `on_open()`, `on_close()`, `on_resize(w, h)` | Eventos de la ventana. Ver [varias ventanas](/pyzed/guides/windows/). |
+| `on_start()` | Once, at startup. It can return a `Command` or a coroutine (for example, to load data). |
+| `on_key(combo)` | On every key press. See [keyboard and shortcuts](/pyzed/guides/keyboard/). |
+| `subscriptions()` | After every `update`. Returns the active timers and streams (`pz.every`, `pz.listen`). |
+| `on_open()`, `on_close()`, `on_resize(w, h)` | Window events. See [multiple windows](/pyzed/guides/windows/). |
 
-## Efectos: `Command`
+## Effects: `Command`
 
-`update`, `on_start`, `on_key` y los callbacks pueden devolver un [`Command`](/pyzed/reference/command/)
-para pedir efectos: enfocar un campo, cerrar la app, hacer trabajo en segundo plano… Ver
-[comandos y tareas](/pyzed/guides/commands/).
+`update`, `on_start`, `on_key` and callbacks can return a [`Command`](/pyzed/reference/command/)
+to request effects: focus a field, close the app, run work in the background… See
+[commands and tasks](/pyzed/guides/commands/).
 
-## Errores
+## Errors
 
-Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de cerrarse. Corrige el
-código y la siguiente interacción vuelve a intentarlo. Las excepciones en callbacks y en `update`
-se imprimen en la consola.
+If `view()` raises an exception, the window shows the traceback instead of closing. Fix the code
+and the next interaction tries again. Exceptions in callbacks and in `update` are printed to the
+console.
 
-## Organizar una app grande
+## Organizing a large app
 
-Como los componentes son funciones, divide `view()` en métodos y funciones normales:
+Since components are functions, split `view()` into regular methods and functions:
 
 ```python
 class Editor(pz.App):
@@ -126,9 +141,9 @@ class Editor(pz.App):
                             status_bar=self.status_bar())
 
     def project_panel(self):
-        return pz.column([ui.panel_header("Proyecto"), ui.tree(self.nodes, expanded=self.expanded)])
+        return pz.column([ui.panel_header("Project"), ui.tree(self.nodes, expanded=self.expanded)])
 ```
 
-Para reutilizar piezas entre apps, escribe funciones que reciban datos y callbacks y devuelvan
-widgets, igual que las de `pyzed.ui`. Mira [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py)
-como ejemplo de una app grande.
+To reuse pieces across apps, write functions that take data and callbacks and return widgets,
+just like the ones in `pyzed.ui`. See [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py)
+for an example of a large app.

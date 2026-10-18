@@ -1,131 +1,130 @@
 ---
-title: Temas
-description: Los temas incluidos, los tokens de color de Zed y cómo crear y cambiar temas.
+title: Themes
+description: The bundled themes, Zed's color tokens, and how to create and switch themes.
 sidebar:
   order: 3
 ---
 
-Cada componente de `pyzed.ui` lee sus colores del **tema actual**. Cambiar `self.theme`
-restiliza toda la interfaz al instante.
+Every `pyzed.ui` component reads its colors from the **current theme**. Changing `self.theme`
+restyles the whole interface instantly.
 
-![Temas incluidos](../../../assets/tutorials/styling.png)
+![Bundled themes](../../../assets/tutorials/styling.png)
 
-## Elegir un tema
+## Choosing a theme
 
-`App.theme` (y `Window.theme`) acepta un `Theme`, el **nombre** de un tema registrado o
-`themes.auto(...)` para seguir el modo claro/oscuro del sistema:
+`App.theme` (and `Window.theme`) accepts a `Theme`, the **name** of a registered theme or
+`themes.auto(...)` to follow the system's light/dark mode:
 
 ```python
-class MiApp(pz.App):
-    theme = "Ayu Dark"                                   # cualquier nombre de pz.themes.names()
-    # theme = pz.themes.ONE_LIGHT                        # o un objeto Theme
-    # theme = pz.themes.auto("One Light", "One Dark")    # sigue al sistema
+class MyApp(pz.App):
+    theme = "Ayu Dark"                                   # any name from pz.themes.names()
+    # theme = pz.themes.ONE_LIGHT                        # or a Theme object
+    # theme = pz.themes.auto("One Light", "One Dark")    # follows the system
 
-    def alternar_tema(self):
-        actual = self.resolved_theme()
-        self.theme = "One Light" if actual.is_dark else "One Dark"
+    def toggle_theme(self):
+        current = self.resolved_theme()
+        self.theme = "One Light" if current.is_dark else "One Dark"
 ```
 
-Pyzed incluye las familias **One**, **Ayu** y **Gruvbox** importadas de Zed (licencia MIT):
+Pyzed bundles the **One**, **Ayu** and **Gruvbox** families imported from Zed (MIT license):
 `One Dark`, `One Light`, `Ayu Dark`, `Ayu Light`, `Ayu Mirage`, `Gruvbox Dark`,
-`Gruvbox Dark Hard`, `Gruvbox Light`… `pz.themes.names()` devuelve la lista exacta y
-`pz.themes.get("ayu dark")` busca sin distinguir mayúsculas.
+`Gruvbox Dark Hard`, `Gruvbox Light`… `pz.themes.names()` returns the exact list and
+`pz.themes.get("ayu dark")` looks one up case-insensitively.
 
-Un selector de temas:
+A theme picker:
 
 ```python
 ui.select(pz.themes.names(), self.resolved_theme().name, lambda name: setattr(self, "theme", name))
 ```
 
-## Leer los colores del tema
+## Reading theme colors
 
-Como `self.theme` puede ser un nombre o un `AutoTheme`, usa **`self.resolved_theme()`** para
-obtener el `Theme` concreto que se está usando. Sus tokens son atributos:
+Since `self.theme` can be a name or an `AutoTheme`, use **`self.resolved_theme()`** to get the
+concrete `Theme` in use. Its tokens are attributes:
 
 ```python
 def view(self):
     t = self.resolved_theme()
-    return pz.container(contenido, bg=t.surface, border_color=t.border, radius=t.radius)
+    return pz.container(content, bg=t.surface, border_color=t.border, radius=t.radius)
 ```
 
-Dentro de `view()` también puedes usar `pyzed.theme.current()`. Los componentes aceptan
-`theme=` para dibujarse con otro tema, y un `Theme` funciona como gestor de contexto para
-dibujar un bloque con otro tema:
+Inside `view()` you can also use `pyzed.theme.current()`. Components accept `theme=` to draw
+with another theme, and a `Theme` works as a context manager to draw a block with another theme:
 
 ```python
 with pz.themes.get("One Light"):
-    vista_previa = ui.card(ui.label("Así se ve en claro"))
+    preview = ui.card(ui.label("This is how it looks in light mode"))
 ```
 
-## Crear un tema
+## Creating a theme
 
-### Cambiar algunos tokens
+### Changing a few tokens
 
-`Theme.derive()` copia un tema cambiando algunos tokens (los diccionarios `syntax` y `ansi` se
-combinan). `with_accent()` cambia el color de acento y todo lo que depende de él (foco,
-selección, enlaces, botones principales):
+`Theme.derive()` copies a theme with some tokens changed (the `syntax` and `ansi` dictionaries
+are merged). `with_accent()` changes the accent color and everything that depends on it (focus,
+selection, links, primary buttons):
 
 ```python
-oceano = pz.themes.ONE_DARK.derive(name="Océano", syntax={"keyword": "#ff79c6"}).with_accent("#4fb3ff")
+ocean = pz.themes.ONE_DARK.derive(name="Ocean", syntax={"keyword": "#ff79c6"}).with_accent("#4fb3ff")
 ```
 
-Un estilo de sintaxis es un color o una tupla `(color, "italic" | "bold")`.
+A syntax style is a color or a `(color, "italic" | "bold")` tuple.
 
-### Generarlo a partir de tres colores
+### Generating one from three colors
 
 ```python
-propio = pz.Theme.generate("Propio", background="#1b1d23", text="#e6e6e6", accent="#ff8a65")
+custom = pz.Theme.generate("Custom", background="#1b1d23", text="#e6e6e6", accent="#ff8a65")
 ```
 
-Superficies, bordes, estados de hover y textos atenuados se mezclan a partir del fondo y el
-texto. La apariencia (claro u oscuro) se deduce del fondo si no pasas `appearance=`. También
-acepta `error`, `warning`, `success`, `syntax` y `radius`.
+Surfaces, borders, hover states and muted text are blended from the background and the text.
+The appearance (light or dark) is inferred from the background unless you pass `appearance=`.
+It also accepts `error`, `warning`, `success`, `syntax` and `radius`.
 
-### Importar un tema de Zed
+### Importing a Zed theme
 
-Cualquier tema de la [galería de Zed](https://zed.dev/extensions?filter=themes) funciona:
+Any theme from the [Zed gallery](https://zed.dev/extensions?filter=themes) works:
 
 ```python
-catppuccin = pz.Theme.from_zed("catppuccin.json", name="Catppuccin Mocha")   # uno
-pz.themes.load_zed("catppuccin.json")                                       # todos, registrados por nombre
+catppuccin = pz.Theme.from_zed("catppuccin.json", name="Catppuccin Mocha")   # one
+pz.themes.load_zed("catppuccin.json")                                       # all, registered by name
 ```
 
-### Registrar, guardar y cargar
+### Registering, saving and loading
 
 ```python
-pz.themes.register(propio)          # ya se puede usar como theme = "Propio"
-propio.save("propio.json")          # formato propio de Pyzed
-pz.Theme.load("propio.json")
+pz.themes.register(custom)         # now usable as theme = "Custom"
+custom.save("custom.json")          # Pyzed's own format
+pz.Theme.load("custom.json")
 ```
 
-### Utilidades de color
+### Color utilities
 
-`pyzed.theme` incluye `alpha`, `mix`, `lighten`, `darken`, `luminance`, `contrast` y
-`readable_on(fondo)`, que elige texto claro u oscuro según el contraste.
+`pyzed.theme` includes `alpha`, `mix`, `lighten`, `darken`, `luminance`, `contrast` and
+`readable_on(background)`, which picks light or dark text based on contrast.
 
 ## Tokens
 
-Los nombres siguen el esquema de temas de Zed.
+Names follow Zed's theme schema.
 
-| Grupo | Tokens |
+| Group | Tokens |
 | --- | --- |
-| Superficies | `background`, `surface`, `elevated`, `editor`, `title_bar`, `status_bar`, `tab_bar`, `tab_active`, `tab_inactive`, `panel`, `terminal` |
-| Bordes | `border`, `border_variant`, `border_focused`, `border_selected` |
-| Elementos | `element`, `element_hover`, `element_active`, `element_selected` (botones con fondo) |
-| Elementos fantasma | `ghost_hover`, `ghost_active`, `ghost_selected` (filas de lista, botones sin fondo) |
-| Texto e iconos | `text`, `text_muted`, `text_placeholder`, `text_disabled`, `text_accent`, `icon`, `icon_muted`, `accent`, `on_accent` |
-| Estado | `error`, `warning`, `success`, `info`, `hint` |
+| Surfaces | `background`, `surface`, `elevated`, `editor`, `title_bar`, `status_bar`, `tab_bar`, `tab_active`, `tab_inactive`, `panel`, `terminal` |
+| Borders | `border`, `border_variant`, `border_focused`, `border_selected` |
+| Elements | `element`, `element_hover`, `element_active`, `element_selected` (filled buttons) |
+| Ghost elements | `ghost_hover`, `ghost_active`, `ghost_selected` (list rows, borderless buttons) |
+| Text and icons | `text`, `text_muted`, `text_placeholder`, `text_disabled`, `text_accent`, `icon`, `icon_muted`, `accent`, `on_accent` |
+| Status | `error`, `warning`, `success`, `info`, `hint` |
 | Git | `created`, `modified`, `deleted`, `conflict`, `ignored` |
 | Editor | `editor_text`, `line_number`, `line_number_active`, `active_line`, `selection`, `scrollbar`, `scrollbar_hover`, `search_match`, `shadow` |
-| Sintaxis | `syntax`: `primary`, `comment`, `comment.doc`, `keyword`, `function`, `type`, `string`, `string.escape`, `number`, `boolean`, `constant`, `property`, `attribute`, `operator`, `variable`, `variable.special`, `punctuation`, `punctuation.bracket`, `tag`, `title`, `link_uri`… |
-| Colaboradores | `players`: colores para avatares (`ui.avatar(index=...)`). |
+| Syntax | `syntax`: `primary`, `comment`, `comment.doc`, `keyword`, `function`, `type`, `string`, `string.escape`, `number`, `boolean`, `constant`, `property`, `attribute`, `operator`, `variable`, `variable.special`, `punctuation`, `punctuation.bracket`, `tag`, `title`, `link_uri`… |
+| Collaborators | `players`: avatar colors (`ui.avatar(index=...)`). |
 | Terminal | `ansi`: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `bright_black`, `dim`. |
-| Métricas | `radius`, `radius_sm`, `ui_font_size`, `buffer_font_size` |
-| Metadatos | `name`, `appearance` (`"dark"` o `"light"`) |
+| Metrics | `radius`, `radius_sm`, `ui_font_size`, `buffer_font_size` |
+| Metadata | `name`, `appearance` (`"dark"` or `"light"`) |
 
-`theme.tokens()` devuelve todos como diccionario y `theme.color("text_muted")` resuelve un nombre.
+`theme.tokens()` returns them all as a dictionary and `theme.color("text_muted")` resolves a name.
 
-## Un tema desde cero
+## A theme from scratch
 
-`Theme.from_dict(datos)` crea un tema con los tokens que indiques y toma el resto de One Dark u
-One Light según `appearance`. Es el formato que escribe `Theme.save()`.
+`Theme.from_dict(data)` creates a theme with the tokens you specify and takes the rest from One
+Dark or One Light depending on `appearance`. It is the format that `Theme.save()` writes.
