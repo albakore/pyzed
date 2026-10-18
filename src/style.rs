@@ -239,6 +239,7 @@ pub struct BoxStyle {
     pub border_width: f32,
     pub radius: Radius,
     pub shadow: Option<Shadow>,
+    pub gradient: Option<iced::Gradient>,
 }
 
 impl BoxStyle {
@@ -249,6 +250,7 @@ impl BoxStyle {
             && self.border_width == 0.0
             && self.radius == Radius::default()
             && self.shadow.is_none()
+            && self.gradient.is_none()
     }
 
     pub fn border(&self) -> Border {
@@ -262,7 +264,10 @@ impl BoxStyle {
     pub fn container(&self) -> iced::widget::container::Style {
         iced::widget::container::Style {
             text_color: self.text_color,
-            background: self.background.map(Background::Color),
+            background: match self.gradient {
+                Some(g) => Some(Background::Gradient(g)),
+                None => self.background.map(Background::Color),
+            },
             border: self.border(),
             shadow: self.shadow.unwrap_or_default(),
             ..Default::default()
@@ -304,5 +309,41 @@ pub fn box_style(
         border_width,
         radius: radius(radius_value)?,
         shadow: shadow(shadow_value)?,
+        gradient: None,
     })
+}
+
+/// `(angle_degrees, [color, ...])` or `(angle_degrees, [(offset, color), ...])`.
+///
+/// The angle follows CSS: 0 points up and 90 points right.
+pub fn gradient(value: &Any<'_>) -> PyResult<Option<iced::Gradient>> {
+    let Some(value) = value.as_ref().filter(|v| !v.is_none()) else {
+        return Ok(None);
+    };
+    let t = value.cast::<PyTuple>().map_err(|_| {
+        PyTypeError::new_err(
+            "gradient must be (angle, [colors]) or (angle, [(offset, color), ...])",
+        )
+    })?;
+    if t.len() != 2 {
+        return Err(PyValueError::new_err("gradient must be (angle, stops)"));
+    }
+    let angle: f32 = t.get_item(0)?.extract()?;
+    let stops: Vec<Bound<'_, PyAny>> = t.get_item(1)?.try_iter()?.collect::<PyResult<_>>()?;
+    if stops.len() < 2 {
+        return Err(PyValueError::new_err("a gradient needs at least two stops"));
+    }
+    let mut linear = iced::gradient::Linear::new(iced::Radians(angle.to_radians()));
+    let last = (stops.len() - 1) as f32;
+    for (i, stop) in stops.iter().enumerate() {
+        let (offset, c) = match stop.cast::<PyTuple>() {
+            Ok(pair) if pair.len() == 2 && pair.get_item(0)?.extract::<f32>().is_ok() => (
+                pair.get_item(0)?.extract::<f32>()?,
+                color(&pair.get_item(1)?)?,
+            ),
+            _ => (i as f32 / last, color(stop)?),
+        };
+        linear = linear.add_stop(offset.clamp(0.0, 1.0), c);
+    }
+    Ok(Some(iced::Gradient::Linear(linear)))
 }

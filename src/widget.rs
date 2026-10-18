@@ -11,6 +11,7 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString, PyTuple};
 
+use crate::extra;
 use crate::style::{self, Any, BoxStyle};
 
 /// A Python value used as a message (or a callable producing one).
@@ -132,6 +133,8 @@ pub struct EditorProps {
     pub gutter_width: Option<f32>,
     pub markers: Vec<(usize, Color)>,
     pub wrap: bool,
+    pub active_line: Option<Color>,
+    pub scrollbar_color: Option<Color>,
     pub on_change: Option<PyMsg>,
     pub on_cursor: Option<PyMsg>,
 }
@@ -151,6 +154,7 @@ pub enum Kind {
         layout: Layout,
         align: Option<Vertical>,
         clip: bool,
+        wrap: Option<f32>,
     },
     Container {
         child: Py<Widget>,
@@ -187,6 +191,7 @@ pub enum Kind {
         id: Option<String>,
         anchor_bottom: bool,
         style: ScrollStyle,
+        on_scroll: Option<PyMsg>,
     },
     Space {
         width: Length,
@@ -205,6 +210,9 @@ pub enum Kind {
         on_double_click: Option<PyMsg>,
         on_enter: Option<PyMsg>,
         on_exit: Option<PyMsg>,
+        on_move: Option<PyMsg>,
+        on_scroll: Option<PyMsg>,
+        on_middle_press: Option<PyMsg>,
         cursor: Option<iced::mouse::Interaction>,
     },
     Stack {
@@ -247,7 +255,10 @@ pub enum Kind {
         value: f32,
         step: f32,
         on_change: Option<PyMsg>,
+        on_release: Option<PyMsg>,
         width: Option<Length>,
+        height: Option<Length>,
+        vertical: bool,
         style: ToggleStyle,
     },
     ProgressBar {
@@ -265,7 +276,35 @@ pub enum Kind {
         width: Option<Length>,
         height: Option<Length>,
         color: Option<Color>,
+        fit: Option<iced::ContentFit>,
+        opacity: f32,
+        rotation: f32,
     },
+    Image(Box<extra::ImageProps>),
+    Canvas(Arc<extra::CanvasProps>),
+    RichText(Box<extra::RichProps>),
+    Markdown(Box<extra::MarkdownProps>),
+    QrCode(Box<extra::QrProps>),
+    PickList(Box<extra::PickListProps>),
+    Radio(Box<extra::RadioProps>),
+    Split(Box<extra::SplitProps>),
+    Pin {
+        child: Py<Widget>,
+        x: f32,
+        y: f32,
+        width: Length,
+        height: Length,
+    },
+    Grid {
+        children: Vec<Py<Widget>>,
+        columns: Option<usize>,
+        max_width: Option<f32>,
+        spacing: f32,
+        height: Option<Length>,
+        aspect_ratio: Option<f32>,
+        width: Option<f32>,
+    },
+    Responsive(PyMsg),
 }
 
 pub enum SvgSource {
@@ -305,12 +344,23 @@ impl Widget {
             Kind::ProgressBar { .. } => "progress_bar",
             Kind::Editor(_) => "code_editor",
             Kind::Svg { .. } => "svg",
+            Kind::Image(_) => "image",
+            Kind::Canvas(_) => "canvas",
+            Kind::RichText(_) => "rich_text",
+            Kind::Markdown(_) => "markdown",
+            Kind::QrCode(_) => "qr_code",
+            Kind::PickList(_) => "pick_list",
+            Kind::Radio(_) => "radio",
+            Kind::Split(_) => "split",
+            Kind::Pin { .. } => "pin",
+            Kind::Grid { .. } => "grid",
+            Kind::Responsive(_) => "responsive",
         };
         format!("<Widget {name}>")
     }
 }
 
-fn new(py: Python<'_>, kind: Kind) -> PyResult<Py<Widget>> {
+pub fn new(py: Python<'_>, kind: Kind) -> PyResult<Py<Widget>> {
     Py::new(py, Widget { kind })
 }
 
@@ -357,6 +407,31 @@ pub fn child(value: &Bound<'_, PyAny>) -> PyResult<Py<Widget>> {
         "expected a Widget or str, got {}",
         value.get_type().name()?
     )))
+}
+
+/// Flattens nested lists/tuples/iterables into a flat list, skipping `None` and `False`.
+pub fn flatten<'py>(value: &Bound<'py, PyAny>) -> PyResult<Vec<Bound<'py, PyAny>>> {
+    fn collect<'py>(value: &Bound<'py, PyAny>, out: &mut Vec<Bound<'py, PyAny>>) -> PyResult<()> {
+        if value.is_none() {
+            return Ok(());
+        }
+        if let Ok(flag) = value.cast::<pyo3::types::PyBool>()
+            && !flag.is_true()
+        {
+            return Ok(());
+        }
+        if value.cast::<PyList>().is_ok() || value.cast::<PyTuple>().is_ok() {
+            for item in value.try_iter()? {
+                collect(&item?, out)?;
+            }
+            return Ok(());
+        }
+        out.push(value.clone());
+        Ok(())
+    }
+    let mut out = Vec::new();
+    collect(value, &mut out)?;
+    Ok(out)
 }
 
 /// Flattens nested lists/tuples of children, skipping `None` and `False`.
@@ -476,7 +551,7 @@ pub fn column(
 
 #[pyfunction]
 #[pyo3(signature = (children=None, *, spacing=0.0, padding=None, width=None, height=None,
-    align=None, clip=false))]
+    align=None, clip=false, wrap=false, line_spacing=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn row(
     py: Python<'_>,
@@ -487,6 +562,8 @@ pub fn row(
     height: Any<'_>,
     align: Option<&str>,
     clip: bool,
+    wrap: bool,
+    line_spacing: Option<f32>,
 ) -> PyResult<Py<Widget>> {
     new(
         py,
@@ -496,6 +573,7 @@ pub fn row(
             layout: Layout::new(&width, &height, &padding)?,
             align: style::align_y(align)?,
             clip,
+            wrap: wrap.then_some(line_spacing.unwrap_or(spacing)),
         },
     )
 }
@@ -503,7 +581,7 @@ pub fn row(
 #[pyfunction]
 #[pyo3(signature = (content=None, *, padding=None, width=None, height=None, max_width=None,
     max_height=None, align_x=None, align_y=None, center=false, bg=None, color=None,
-    border_color=None, border_width=0.0, radius=None, shadow=None, clip=false))]
+    border_color=None, border_width=0.0, radius=None, shadow=None, clip=false, gradient=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn container(
     py: Python<'_>,
@@ -523,6 +601,7 @@ pub fn container(
     radius: Any<'_>,
     shadow: Any<'_>,
     clip: bool,
+    gradient: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     let mut layout = Layout::new(&width, &height, &padding)?;
     layout.max_width = max_width;
@@ -551,7 +630,12 @@ pub fn container(
             layout,
             align_x: ax,
             align_y: ay,
-            style: style::box_style(&bg, &color, &border_color, border_width, &radius, &shadow)?,
+            style: {
+                let mut s =
+                    style::box_style(&bg, &color, &border_color, border_width, &radius, &shadow)?;
+                s.gradient = style::gradient(&gradient)?;
+                s
+            },
             clip,
         },
     )
@@ -674,7 +758,7 @@ pub fn text_input(
 #[pyfunction]
 #[pyo3(signature = (content, *, direction="vertical", width=None, height=None, padding=None,
     id=None, anchor_bottom=false, rail=None, scroller=None, scroller_hover=None,
-    scrollbar_width=8.0, scroller_width=None, margin=0.0))]
+    scrollbar_width=8.0, scroller_width=None, margin=0.0, on_scroll=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn scrollable(
     py: Python<'_>,
@@ -691,6 +775,7 @@ pub fn scrollable(
     scrollbar_width: f32,
     scroller_width: Option<f32>,
     margin: f32,
+    on_scroll: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     if !matches!(direction, "vertical" | "horizontal" | "both") {
         return Err(PyValueError::new_err(
@@ -713,6 +798,7 @@ pub fn scrollable(
                 scroller_width: scroller_width.unwrap_or(scrollbar_width),
                 margin,
             },
+            on_scroll: PyMsg::maybe(&on_scroll),
         },
     )
 }
@@ -749,7 +835,8 @@ pub fn rule(
 
 #[pyfunction]
 #[pyo3(signature = (content, *, on_press=None, on_release=None, on_right_press=None,
-    on_double_click=None, on_enter=None, on_exit=None, cursor=None))]
+    on_double_click=None, on_enter=None, on_exit=None, on_move=None, on_scroll=None,
+    on_middle_press=None, cursor=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn mouse_area(
     py: Python<'_>,
@@ -760,23 +847,12 @@ pub fn mouse_area(
     on_double_click: Any<'_>,
     on_enter: Any<'_>,
     on_exit: Any<'_>,
+    on_move: Any<'_>,
+    on_scroll: Any<'_>,
+    on_middle_press: Any<'_>,
     cursor: Option<&str>,
 ) -> PyResult<Py<Widget>> {
-    use iced::mouse::Interaction;
-    let cursor = match cursor {
-        None => None,
-        Some("pointer") => Some(Interaction::Pointer),
-        Some("text") => Some(Interaction::Text),
-        Some("grab") => Some(Interaction::Grab),
-        Some("grabbing") => Some(Interaction::Grabbing),
-        Some("crosshair") => Some(Interaction::Crosshair),
-        Some("not-allowed") => Some(Interaction::NotAllowed),
-        Some("resize-horizontal") => Some(Interaction::ResizingHorizontally),
-        Some("resize-vertical") => Some(Interaction::ResizingVertically),
-        Some("move") => Some(Interaction::Move),
-        Some("idle" | "default") => Some(Interaction::Idle),
-        Some(other) => return Err(PyValueError::new_err(format!("unknown cursor {other:?}"))),
-    };
+    let cursor = extra::parse_cursor(cursor)?;
     new(
         py,
         Kind::MouseArea {
@@ -787,6 +863,9 @@ pub fn mouse_area(
             on_double_click: PyMsg::maybe(&on_double_click),
             on_enter: PyMsg::maybe(&on_enter),
             on_exit: PyMsg::maybe(&on_exit),
+            on_move: PyMsg::maybe(&on_move),
+            on_scroll: PyMsg::maybe(&on_scroll),
+            on_middle_press: PyMsg::maybe(&on_middle_press),
             cursor,
         },
     )
@@ -947,8 +1026,8 @@ pub fn toggler(
 }
 
 #[pyfunction]
-#[pyo3(signature = (min, max, value, *, step=1.0, on_change=None, width=None, accent=None,
-    bg=None, knob_color=None, border_color=None))]
+#[pyo3(signature = (min, max, value, *, step=1.0, on_change=None, on_release=None, width=None,
+    height=None, vertical=false, accent=None, bg=None, knob_color=None, border_color=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn slider(
     py: Python<'_>,
@@ -957,7 +1036,10 @@ pub fn slider(
     value: f32,
     step: f32,
     on_change: Any<'_>,
+    on_release: Any<'_>,
     width: Any<'_>,
+    height: Any<'_>,
+    vertical: bool,
     accent: Any<'_>,
     bg: Any<'_>,
     knob_color: Any<'_>,
@@ -971,7 +1053,10 @@ pub fn slider(
             value,
             step,
             on_change: PyMsg::maybe(&on_change),
+            on_release: PyMsg::maybe(&on_release),
             width: style::opt_length(&width)?,
+            height: style::opt_length(&height)?,
+            vertical,
             style: toggle_style(&accent, &bg, &border_color, &knob_color, &None)?,
         },
     )
@@ -1014,7 +1099,7 @@ pub fn progress_bar(
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
     placeholder=None, placeholder_color=None, gutter=true, gutter_color=None,
     gutter_active_color=None, gutter_width=None, markers=None, wrap=false, on_change=None,
-    on_cursor=None))]
+    on_cursor=None, active_line=None, scrollbar_color=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1041,6 +1126,8 @@ pub fn code_editor(
     wrap: bool,
     on_change: Any<'_>,
     on_cursor: Any<'_>,
+    active_line: Any<'_>,
+    scrollbar_color: Any<'_>,
 ) -> PyResult<Py<Widget>> {
     // syntax: {"keyword": "#b477cf", "comment": ("#5d636f", "italic"), ...}
     let mut rules = Vec::new();
@@ -1088,6 +1175,8 @@ pub fn code_editor(
             gutter_width,
             markers: marker_list,
             wrap,
+            active_line: style::opt_color(&active_line)?,
+            scrollbar_color: style::opt_color(&scrollbar_color)?,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),
@@ -1095,13 +1184,18 @@ pub fn code_editor(
 }
 
 #[pyfunction]
-#[pyo3(signature = (source, *, width=None, height=None, color=None))]
+#[pyo3(signature = (source, *, width=None, height=None, color=None, content_fit=None,
+    opacity=1.0, rotation=0.0))]
+#[allow(clippy::too_many_arguments)]
 pub fn svg(
     py: Python<'_>,
     source: &Bound<'_, PyAny>,
     width: Any<'_>,
     height: Any<'_>,
     color: Any<'_>,
+    content_fit: Option<&str>,
+    opacity: f32,
+    rotation: f32,
 ) -> PyResult<Py<Widget>> {
     let source = if let Ok(bytes) = source.cast::<pyo3::types::PyBytes>() {
         SvgSource::Bytes(bytes.as_bytes().to_vec())
@@ -1120,6 +1214,21 @@ pub fn svg(
             width: style::opt_length(&width)?,
             height: style::opt_length(&height)?,
             color: style::opt_color(&color)?,
+            fit: match content_fit {
+                None => None,
+                Some("contain") => Some(iced::ContentFit::Contain),
+                Some("cover") => Some(iced::ContentFit::Cover),
+                Some("fill") => Some(iced::ContentFit::Fill),
+                Some("none") => Some(iced::ContentFit::None),
+                Some("scale-down" | "scale_down") => Some(iced::ContentFit::ScaleDown),
+                Some(other) => {
+                    return Err(PyValueError::new_err(format!(
+                        "invalid content_fit {other:?}"
+                    )));
+                }
+            },
+            opacity,
+            rotation,
         },
     )
 }

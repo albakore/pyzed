@@ -29,6 +29,14 @@ class Gallery(pz.App):
         self.active_tab = "main.py"
         self.selected_file = "src/app.py"
         self.expanded = {"src"}
+        self.language = "Python"
+        self.size_choice = "Medium"
+        self.tab_size = 4
+        self.tags = {"rust", "python", "ui"}
+        self.advanced_open = True
+        self.sort_by = "Size"
+        self.descending = True
+        self.selected_row = None
 
     def set(self, field):
         return lambda value: setattr(self, field, value)
@@ -159,10 +167,48 @@ class Gallery(pz.App):
                      on_dismiss=lambda: None, width=None),
         )
 
-        theme_picker = ui.segmented(
-            [th.name for th in pz.themes.all()], t.name,
-            lambda name: setattr(self, "theme", next(th for th in pz.themes.all() if th.name == name)),
+        forms = self.section(
+            "Forms",
+            ui.field("Language", ui.select(["Python", "Rust", "TypeScript", "Go"], self.language,
+                                           self.set("language"), width=160)),
+            ui.field("Tab size", ui.number_field(self.tab_size, self.set("tab_size"), min=1, max=8)),
+            ui.radio_group(["Small", "Medium", "Large"], self.size_choice, self.set("size_choice"), horizontal=True),
+            pz.row([ui.chip(tag, on_remove=lambda tag=tag: self.tags.discard(tag)) for tag in sorted(self.tags)],
+                   spacing=6),
+            ui.disclosure("Advanced", ui.muted("Settings that most people never need."), open=self.advanced_open,
+                          on_toggle=lambda: setattr(self, "advanced_open", not self.advanced_open)),
+            pz.row([ui.split_button("Run", lambda: None, lambda: None, icon="play"),
+                    ui.toggle_group([("list", "list"), ("grid", "layout-grid")], "list", lambda v: None)],
+                   spacing=8),
         )
+        feedback = self.section(
+            "Feedback",
+            ui.callout("Update available", "Pyzed 0.2 is ready.", tint="info",
+                       actions=[ui.button("Update", lambda: None, size="sm", variant="solid")]),
+            ui.callout("Build failed", "3 errors in src/main.rs", tint="error"),
+            pz.row([ui.count_badge(3), ui.count_badge(128, tint="error"), ui.facepile(["KV", "AL", "MZ", "JD", "RS", "TT"]),
+                    ui.diff_stat(42, 7)], spacing=12, align="center"),
+            ui.keybinding_hint("Open file", "ctrl-p"),
+        )
+        files = [dict(name="main.rs", size=1200, lang="Rust"), dict(name="app.py", size=840, lang="Python"),
+                 dict(name="README.md", size=310, lang="Markdown"), dict(name="theme.json", size=96, lang="JSON")]
+
+        def sort(column):
+            self.descending = not self.descending if self.sort_by == column else False
+            self.sort_by = column
+
+        data = self.section(
+            "Data",
+            ui.table([ui.Column("Name", "name"), ui.Column("Size", "size", width=70, align="end"),
+                      ui.Column("Language", "lang")], files, sort_by=self.sort_by, descending=self.descending,
+                     on_sort=sort, on_row_press=self.set("selected_row"), selected=self.selected_row, height=156),
+            pz.row([ui.stat("Requests", "12.4k", delta=4.2, trend=[3, 5, 4, 6, 8, 7, 9]),
+                    ui.donut([5, 3, 2], label="62%", size=88)], spacing=12, align="center"),
+            ui.bar_chart([4, 8, 6, 9, 3], labels=["Mon", "Tue", "Wed", "Thu", "Fri"], width=300, height=120),
+        )
+
+        theme_picker = ui.select(pz.themes.names(), t.name, lambda name: setattr(self, "theme", pz.themes.get(name)),
+                                 width=200)
         header = pz.row([
             pz.icon("layers", size=22, color=t.accent),
             ui.heading("Pyzed components", level=2),
@@ -175,9 +221,14 @@ class Gallery(pz.App):
             pz.column([inputs, tree], spacing=16, width="fill"),
             pz.column([tabs, toasts], spacing=16, width="fill"),
         ], spacing=16)
+        more = pz.row([
+            pz.column([forms], width="fill"),
+            pz.column([feedback], width="fill"),
+            pz.column([data], width="fill"),
+        ], spacing=16)
 
         return pz.container(
-            pz.scrollable(pz.column([header, grid], spacing=20, padding=24), height="fill"),
+            pz.scrollable(pz.column([header, grid, more], spacing=20, padding=24), height="fill"),
             width="fill",
             height="fill",
             bg=t.background if not t.is_dark else t.editor,

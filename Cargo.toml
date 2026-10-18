@@ -1,6 +1,6 @@
 [package]
 name = "pyzed"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.88"
 description = "Fast, modern GUIs for Python powered by Iced"
@@ -23,6 +23,11 @@ iced = { version = "0.14", default-features = false, features = [
     "wayland",
     "advanced",
     "svg",
+    "image",
+    "canvas",
+    "markdown",
+    "qr_code",
+    "linux-theme-detection",
 ] }
 iced_test = "0.14"
 pyo3 = { version = "0.27", features = ["extension-module", "abi3-py39"] }

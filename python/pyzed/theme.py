@@ -1,21 +1,38 @@
 """Themes: color tokens modeled after Zed's theme schema.
 
 Every component reads its colors from the *current* theme, so switching
-``App.theme`` restyles the whole UI. Create your own with ``Theme.derive``::
+``App.theme`` restyles the whole UI. Ways to get a theme:
 
-    my_theme = themes.ONE_DARK.derive(name="Ocean", accent="#4fb3ff")
+    themes.AYU_DARK                                   # built-in (Zed's own themes)
+    themes.get("Gruvbox Light")                       # by name
+    themes.ONE_DARK.derive(name="Ocean", accent="#4fb3ff")   # tweak tokens
+    themes.ONE_DARK.with_accent("#e5c07b")            # recolor accents only
+    Theme.generate("Ocean", background="#0f1419", text="#e6e1cf", accent="#39bae6")
+    themes.load_zed("my-theme.json")                  # any Zed theme family file
+    themes.auto(themes.ONE_LIGHT, themes.ONE_DARK)    # follow the OS appearance
+
+Use a theme for part of the UI with ``with theme:`` (components built inside the
+block use it), or pass ``theme=`` to any component.
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field, fields, replace
-from typing import Dict, Tuple, Union
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 SyntaxStyle = Union[str, Tuple[str, str]]
 
 
 @dataclass(frozen=True)
 class Theme:
+    """A complete set of design tokens: surfaces, borders, text, status, editor and syntax colors.
+
+    Colors are ``"#rrggbb"`` or ``"#rrggbbaa"`` strings. Themes are immutable; use
+    ``derive``/``with_accent`` to make variations.
+    """
+
     name: str
     appearance: str  # "dark" | "light"
 
@@ -108,8 +125,158 @@ class Theme:
             changes["ansi"] = {**self.ansi, **changes["ansi"]}
         return replace(self, **changes)
 
+    def with_accent(self, accent: str) -> "Theme":
+        """A copy whose accent color (focus rings, selection, links, primary buttons) is ``accent``."""
+        players = (accent, *self.players[1:]) if self.players else (accent,)
+        return self.derive(
+            accent=accent,
+            text_accent=accent,
+            info=accent,
+            border_focused=accent,
+            border_selected=alpha(accent, 0.45),
+            selection=alpha(accent, 0.24),
+            search_match=alpha(accent, 0.4),
+            on_accent=readable_on(accent),
+            players=players,
+        )
+
     def tokens(self) -> Dict[str, object]:
+        """All tokens as a dict (a shallow copy)."""
         return {f.name: getattr(self, f.name) for f in fields(self)}
+
+    def to_dict(self) -> Dict[str, Any]:
+        """A JSON-friendly dict; ``Theme.from_dict`` reads it back."""
+        out = self.tokens()
+        out["syntax"] = {k: list(v) if isinstance(v, tuple) else v for k, v in self.syntax.items()}
+        out["players"] = list(self.players)
+        return out
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any], *, base: Optional["Theme"] = None) -> "Theme":
+        """Builds a theme from ``to_dict`` output. Missing tokens come from ``base``
+        (One Dark or One Light, depending on ``appearance``)."""
+        data = dict(data)
+        if base is None:
+            base = ONE_LIGHT if data.get("appearance") == "light" else ONE_DARK
+        known = {f.name for f in fields(cls)}
+        unknown = set(data) - known
+        if unknown:
+            raise ValueError(f"unknown theme tokens: {', '.join(sorted(unknown))}")
+        if "syntax" in data:
+            data["syntax"] = {k: tuple(v) if isinstance(v, list) else v for k, v in data["syntax"].items()}
+        if "players" in data:
+            data["players"] = tuple(data["players"])
+        return base.derive(**data)
+
+    def save(self, path: Union[str, Path]) -> None:
+        """Writes the theme as JSON (Pyzed's own format; see ``Theme.load``)."""
+        Path(path).write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> "Theme":
+        """Reads a theme written by ``save`` (for Zed theme files use ``Theme.from_zed``)."""
+        return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+    def __enter__(self) -> "Theme":
+        _stack.append(_current)
+        use(self)
+        return self
+
+    def __exit__(self, *exc) -> None:
+        use(_stack.pop())
+
+    # -- constructors -------------------------------------------------------
+    @classmethod
+    def generate(
+        cls,
+        name: str,
+        *,
+        background: str,
+        text: str,
+        accent: str,
+        appearance: Optional[str] = None,
+        error: Optional[str] = None,
+        warning: Optional[str] = None,
+        success: Optional[str] = None,
+        syntax: Optional[Dict[str, SyntaxStyle]] = None,
+        radius: float = 6.0,
+    ) -> "Theme":
+        """Derives a full theme from a handful of base colors.
+
+        ``background`` is the editor/canvas color; surfaces, borders, hover states and
+        muted text are mixed from it and ``text``. ``appearance`` is guessed from the
+        background's brightness when omitted.
+        """
+        dark = (appearance == "dark") if appearance else luminance(background) < 0.4
+        base = ONE_DARK if dark else ONE_LIGHT
+        shade = "#ffffff" if dark else "#000000"
+        def step(amount: float) -> str:
+            return mix(background, shade, amount)
+        surface = step(0.04)
+        chrome = step(0.08)
+        theme = base.derive(
+            name=name,
+            appearance="dark" if dark else "light",
+            background=chrome,
+            surface=surface,
+            elevated=surface,
+            editor=background,
+            title_bar=chrome,
+            status_bar=chrome,
+            tab_bar=surface,
+            tab_active=background,
+            tab_inactive=surface,
+            panel=surface,
+            terminal=background,
+            border=step(0.16),
+            border_variant=step(0.10),
+            element=step(0.06),
+            element_hover=step(0.10),
+            element_active=step(0.15),
+            element_selected=step(0.15),
+            ghost_hover=step(0.10),
+            ghost_active=step(0.15),
+            ghost_selected=step(0.15),
+            text=text,
+            text_muted=mix(text, background, 0.3),
+            text_placeholder=mix(text, background, 0.45),
+            text_disabled=mix(text, background, 0.5),
+            icon=text,
+            icon_muted=mix(text, background, 0.3),
+            editor_text=mix(text, background, 0.1),
+            line_number=mix(text, background, 0.6),
+            line_number_active=text,
+            active_line=alpha(step(0.05), 0.75),
+            scrollbar=alpha(text, 0.3),
+            scrollbar_hover=alpha(text, 0.5),
+            error=error or base.error,
+            warning=warning or base.warning,
+            success=success or base.success,
+            created=success or base.created,
+            modified=warning or base.modified,
+            deleted=error or base.deleted,
+            conflict=warning or base.conflict,
+            ignored=mix(text, background, 0.5),
+            radius=radius,
+            radius_sm=max(radius - 2, 0),
+            syntax={**base.syntax, "primary": mix(text, background, 0.1), **(syntax or {})},
+            ansi={**base.ansi, "black": background, "white": text},
+        )
+        return theme.with_accent(accent)
+
+    @classmethod
+    def from_zed(cls, source: Union[str, Path, Dict[str, Any]], name: Optional[str] = None) -> "Theme":
+        """Reads a theme from a Zed theme family file (``.json``) or dict.
+
+        A family usually holds several themes (e.g. Ayu Dark/Light/Mirage); ``name``
+        picks one (the first one by default). See ``themes.load_zed`` to load them all.
+        """
+        family = _read_json(source)
+        entries = family.get("themes", [family])
+        for entry in entries:
+            if name is None or entry.get("name") == name:
+                return _from_zed_style(entry)
+        raise ValueError(f"theme {name!r} not found; available: {[e.get('name') for e in entries]}")
 
     def color(self, name: str) -> str:
         """Resolves a token name ("accent", "text_muted", "error"...) or passes a hex color through."""
@@ -459,28 +626,20 @@ GRUVBOX_DARK = ONE_DARK.derive(
 )
 
 
-class themes:  # noqa: N801 - namespace
-    ONE_DARK = ONE_DARK
-    ONE_LIGHT = ONE_LIGHT
-    GRUVBOX_DARK = GRUVBOX_DARK
+@dataclass(frozen=True)
+class AutoTheme:
+    """Follows the operating system's appearance: ``light`` in light mode, ``dark`` in dark mode."""
 
-    @staticmethod
-    def all():
-        return [ONE_DARK, ONE_LIGHT, GRUVBOX_DARK]
+    light: Theme
+    dark: Theme
 
-
-_current: Theme = ONE_DARK
+    def pick(self, dark: bool) -> Theme:
+        return self.dark if dark else self.light
 
 
-def current() -> Theme:
-    """The theme components use when none is passed explicitly."""
-    return _current
-
-
-def use(theme: Theme) -> None:
-    """Sets the current theme (``App`` does this for you before every ``view()``)."""
-    global _current
-    _current = theme
+# ---------------------------------------------------------------------------
+# Color helpers
+# ---------------------------------------------------------------------------
 
 
 def _rgba(color: str):
@@ -510,3 +669,244 @@ def mix(a: str, b: str, amount: float = 0.5) -> str:
     rb, gb, bb, ab = _rgba(b)
     t = amount
     return _hex(ra + (rb - ra) * t, ga + (gb - ga) * t, ba + (bb - ba) * t, aa + (ab - aa) * t)
+
+
+def luminance(color: str) -> float:
+    """Relative luminance (0 = black, 1 = white) as defined by WCAG."""
+    def channel(c: float) -> float:
+        c /= 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b, _ = _rgba(color)
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def contrast(a: str, b: str) -> float:
+    """WCAG contrast ratio between two colors (1 to 21)."""
+    la, lb = sorted((luminance(a), luminance(b)), reverse=True)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def readable_on(background: str, light: str = "#fafafa", dark: str = "#1c2025") -> str:
+    """Whichever of ``light``/``dark`` text reads better on ``background``."""
+    return light if contrast(background, light) >= contrast(background, dark) else dark
+
+
+def lighten(color: str, amount: float = 0.1) -> str:
+    return mix(color, "#ffffff", amount)
+
+
+def darken(color: str, amount: float = 0.1) -> str:
+    return mix(color, "#000000", amount)
+
+
+# ---------------------------------------------------------------------------
+# Zed theme files
+# ---------------------------------------------------------------------------
+
+_ZED_KEYS = {
+    "background": "background",
+    "surface": "surface.background",
+    "elevated": "elevated_surface.background",
+    "editor": "editor.background",
+    "title_bar": "title_bar.background",
+    "status_bar": "status_bar.background",
+    "tab_bar": "tab_bar.background",
+    "tab_active": "tab.active_background",
+    "tab_inactive": "tab.inactive_background",
+    "panel": "panel.background",
+    "terminal": "terminal.background",
+    "border": "border",
+    "border_variant": "border.variant",
+    "border_focused": "border.focused",
+    "border_selected": "border.selected",
+    "element": "element.background",
+    "element_hover": "element.hover",
+    "element_active": "element.active",
+    "element_selected": "element.selected",
+    "ghost_hover": "ghost_element.hover",
+    "ghost_active": "ghost_element.active",
+    "ghost_selected": "ghost_element.selected",
+    "text": "text",
+    "text_muted": "text.muted",
+    "text_placeholder": "text.placeholder",
+    "text_disabled": "text.disabled",
+    "text_accent": "text.accent",
+    "icon": "icon",
+    "icon_muted": "icon.muted",
+    "error": "error",
+    "warning": "warning",
+    "success": "success",
+    "info": "info",
+    "hint": "hint",
+    "created": "created",
+    "modified": "modified",
+    "deleted": "deleted",
+    "conflict": "conflict",
+    "ignored": "ignored",
+    "editor_text": "editor.foreground",
+    "line_number": "editor.line_number",
+    "line_number_active": "editor.active_line_number",
+    "active_line": "editor.active_line.background",
+    "scrollbar": "scrollbar.thumb.background",
+    "scrollbar_hover": "scrollbar.thumb.hover_background",
+    "search_match": "search.match_background",
+}
+
+_ANSI = ("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "bright_black")
+
+
+def _read_json(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
+    if isinstance(source, dict):
+        return source
+    return json.loads(Path(source).read_text(encoding="utf-8"))
+
+
+def _short(color: Optional[str]) -> Optional[str]:
+    """``#rrggbbff`` -> ``#rrggbb`` (Zed writes alpha even when opaque)."""
+    if isinstance(color, str) and len(color) == 9 and color.lower().endswith("ff"):
+        return color[:7]
+    return color
+
+
+def _from_zed_style(entry: Dict[str, Any]) -> Theme:
+    style = entry.get("style", {})
+    appearance = entry.get("appearance", "dark")
+    base = ONE_LIGHT if appearance == "light" else ONE_DARK
+    tokens: Dict[str, Any] = {"name": entry.get("name", "Zed theme"), "appearance": appearance}
+    for token, key in _ZED_KEYS.items():
+        value = _short(style.get(key))
+        if value:
+            tokens[token] = value
+    tokens.setdefault("title_bar", tokens.get("background", base.title_bar))
+    tokens.setdefault("status_bar", tokens.get("background", base.status_bar))
+    players = [p for p in style.get("players", []) if isinstance(p, dict)]
+    if players:
+        tokens["players"] = tuple(_short(p.get("cursor")) for p in players if p.get("cursor"))
+        if players[0].get("selection"):
+            tokens["selection"] = players[0]["selection"]
+    accent = tokens.get("text_accent") or (tokens.get("players") or (base.accent,))[0]
+    tokens["accent"] = accent
+    tokens["on_accent"] = readable_on(accent)
+    tokens["shadow"] = "#0000004d" if appearance == "dark" else "#00000026"
+    syntax: Dict[str, SyntaxStyle] = {}
+    for scope, value in (style.get("syntax") or {}).items():
+        if not isinstance(value, dict) or not value.get("color"):
+            continue
+        color = _short(value["color"])
+        flags = []
+        if value.get("font_style") == "italic":
+            flags.append("italic")
+        if (value.get("font_weight") or 0) >= 700:
+            flags.append("bold")
+        syntax[scope] = (color, " ".join(flags)) if flags else color
+    if syntax:
+        syntax.setdefault("primary", tokens.get("editor_text", base.editor_text))
+        tokens["syntax"] = syntax
+    ansi = {name: _short(style[f"terminal.ansi.{name}"]) for name in _ANSI if style.get(f"terminal.ansi.{name}")}
+    if style.get("terminal.dim_foreground"):
+        ansi["dim"] = _short(style["terminal.dim_foreground"])
+    if ansi:
+        tokens["ansi"] = ansi
+    return base.derive(**tokens)
+
+
+# ---------------------------------------------------------------------------
+# Built-in themes and the registry
+# ---------------------------------------------------------------------------
+
+_BUNDLED = Path(__file__).with_name("zed_themes")
+_registry: Dict[str, Theme] = {}
+
+
+def _load_bundled(file: str) -> List[Theme]:
+    try:
+        family = _read_json(_BUNDLED / file)
+    except OSError:  # pragma: no cover - broken install
+        return []
+    return [_from_zed_style(entry) for entry in family.get("themes", [])]
+
+
+class themes:  # noqa: N801 - namespace
+    """Built-in themes (Zed's One, Ayu and Gruvbox families) and the theme registry."""
+
+    ONE_DARK = ONE_DARK
+    ONE_LIGHT = ONE_LIGHT
+    GRUVBOX_DARK = GRUVBOX_DARK
+
+    @staticmethod
+    def all() -> List[Theme]:
+        """Every registered theme, in registration order."""
+        return list(_registry.values())
+
+    @staticmethod
+    def names() -> List[str]:
+        return list(_registry)
+
+    @staticmethod
+    def get(name: str) -> Theme:
+        """Looks a theme up by name (case-insensitive)."""
+        if name in _registry:
+            return _registry[name]
+        for key, value in _registry.items():
+            if key.lower() == name.lower():
+                return value
+        raise KeyError(f"unknown theme {name!r}; available: {', '.join(_registry)}")
+
+    @staticmethod
+    def register(theme: Theme) -> Theme:
+        """Adds (or replaces) a theme so it can be found by name."""
+        _registry[theme.name] = theme
+        return theme
+
+    @staticmethod
+    def load_zed(source: Union[str, Path, Dict[str, Any]]) -> List[Theme]:
+        """Loads and registers every theme in a Zed theme family file."""
+        family = _read_json(source)
+        return [themes.register(_from_zed_style(entry)) for entry in family.get("themes", [family])]
+
+    @staticmethod
+    def auto(light: Union[Theme, str] = "One Light", dark: Union[Theme, str] = "One Dark") -> AutoTheme:
+        """A theme that follows the OS light/dark setting."""
+        return AutoTheme(
+            light if isinstance(light, Theme) else themes.get(light),
+            dark if isinstance(dark, Theme) else themes.get(dark),
+        )
+
+
+for _theme in (ONE_DARK, ONE_LIGHT):
+    themes.register(_theme)
+for _theme in _load_bundled("ayu.json") + _load_bundled("gruvbox.json"):
+    themes.register(_theme)
+    setattr(themes, _theme.name.upper().replace(" ", "_"), _theme)
+GRUVBOX_DARK = themes.GRUVBOX_DARK = _registry.get("Gruvbox Dark", GRUVBOX_DARK)
+del _theme
+
+
+_current: Theme = ONE_DARK
+_stack: List[Theme] = []
+
+
+def current() -> Theme:
+    """The theme components use when none is passed explicitly."""
+    return _current
+
+
+def use(theme: Theme) -> None:
+    """Sets the current theme (``App`` does this for you before every ``view()``)."""
+    global _current
+    _current = theme
+
+
+def resolve(value: Union[Theme, AutoTheme, str, None], *, dark: bool = True) -> Theme:
+    """Turns an ``App.theme`` value (theme, name, ``AutoTheme`` or ``None``) into a ``Theme``."""
+    if value is None:
+        return ONE_DARK if dark else ONE_LIGHT
+    if isinstance(value, Theme):
+        return value
+    if isinstance(value, AutoTheme):
+        return value.pick(dark)
+    if isinstance(value, str):
+        if value == "auto":
+            return ONE_DARK if dark else ONE_LIGHT
+        return themes.get(value)
+    raise TypeError(f"expected a Theme, AutoTheme or theme name, got {type(value).__name__}")
