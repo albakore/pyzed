@@ -79,5 +79,4 @@ jobs:
       - name: Generate changelog
         run: |
           python -m pip install git-cliff
-          python scripts/changelog.py --output "$RUNNER_TEMP/CHANGELOG.md" --json "$RUNNER_TEMP/releases.json"
-          cat "$RUNNER_TEMP/CHANGELOG.md" >> "$GITHUB_STEP_SUMMARY"
+          python scripts/changelog.py --preview | tee -a "$GITHUB_STEP_SUMMARY"

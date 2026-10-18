@@ -3,7 +3,7 @@ name: Release
 # Se dispara al empujar un tag vX.Y.Z (o vX.Y.Z-rc.N, -beta.N, ... para
 # pre-releases). Compila wheels y sdist, los prueba, publica en PyPI con
 # Trusted Publishing, crea la GitHub Release con sus notas y actualiza
-# CHANGELOG.md en main para la web de documentación.
+# CHANGELOG.md en main y redespliega la web de documentación.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
@@ -132,6 +132,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.meta.outputs.tag }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
@@ -173,10 +174,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Regenerar CHANGELOG.md
+      - name: Añadir la versión a CHANGELOG.md
         run: |
           python -m pip install git-cliff
-          python scripts/changelog.py
+          python scripts/changelog.py --update "$TAG"
       - name: Commit en main
         run: |
           if git diff --quiet -- CHANGELOG.md; then
@@ -192,8 +193,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Un push hecho con GITHUB_TOKEN no dispara otros workflows, así que
-          # lanzamos el de la web explícitamente (si ya existe).
+          # Ni el push ni la release hechos con GITHUB_TOKEN disparan otros
+          # workflows, así que lanzamos el de la web explícitamente (si existe).
           if gh workflow view docs.yml >/dev/null 2>&1; then
             gh workflow run docs.yml --ref main
           else

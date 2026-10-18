@@ -8,11 +8,15 @@ cambio incompatible. Con eso se arma el changelog de cada release.
 
 ## Pasos
 
-1. Sube la versión en `Cargo.toml` (es la única fuente; `pyproject.toml` la
+1. Si quieres, redacta a mano las notas bajo `## [Sin publicar]` en
+   `CHANGELOG.md` (formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)).
+   Al publicar se combinan con las generadas desde los commits; si la versión
+   ya tiene su propia sección, se usa tal cual.
+2. Sube la versión en `Cargo.toml` (es la única fuente; `pyproject.toml` la
    toma de ahí) y actualiza `Cargo.lock` con `cargo update -p pyzed`.
    Para una pre-release usa un sufijo: `0.2.0-rc.1`, `0.2.0-beta.1`.
-2. Haz merge del PR en `main`.
-3. Crea y empuja el tag:
+3. Haz merge del PR en `main`.
+4. Crea y empuja el tag:
 
    ```sh
    git tag v0.2.0
@@ -28,10 +32,12 @@ El workflow **Release** (`.github/workflows/release.yml`) entonces:
 - crea la GitHub Release con sus notas (breaking changes, nuevas funciones,
   mejoras, correcciones…), marcada como *latest* si es estable o como
   *pre-release* si lleva sufijo;
-- regenera `CHANGELOG.md` en `main` y vuelve a desplegar la web de
-  documentación, que marca la última versión estable.
+- añade la sección de la versión a `CHANGELOG.md` en `main` y vuelve a
+  desplegar la web de documentación (`docs.yml`), que marca la última versión
+  estable.
 
-Para ver el changelog en local: `pip install git-cliff && python scripts/changelog.py`.
+Para ver qué entraría en la próxima versión:
+`pip install git-cliff && python scripts/changelog.py --preview`.
 
 ## Configuración única en PyPI
 
