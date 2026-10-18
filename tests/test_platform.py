@@ -25,7 +25,7 @@ def test_driver_warnings_are_silenced(env):
     assert set(_platform.prepare()) == {"EGL_LOG_LEVEL", "MESA_LOG"}
     import os
 
-    assert os.environ["EGL_LOG_LEVEL"] == "fatal" and os.environ["MESA_LOG"] == "silent"
+    assert os.environ["EGL_LOG_LEVEL"] == "fatal" and os.environ["MESA_LOG"] == "null"
 
 
 def test_user_settings_win(env):
