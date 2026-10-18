@@ -427,7 +427,7 @@ def spinner(*, size: float = 16, tint: str = "accent", speed: float = 1.0, theme
 
 
 def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Optional[Sequence[float]] = None,
-         theme: Optional[Theme] = None) -> _core.Widget:
+         width: Any = None, theme: Optional[Theme] = None) -> _core.Widget:
     """A dashboard number: title, big value, optional change (``+4.2%``) and sparkline."""
     t = _theme(theme)
     change = None
@@ -445,6 +445,7 @@ def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Option
             spacing=4,
         ),
         padding=14,
+        width=width,
         bg=t.surface,
         border_color=t.border_variant,
         border_width=1.0,

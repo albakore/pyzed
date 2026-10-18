@@ -308,7 +308,16 @@ pub fn view<'a>(state: &'a EditorState, props: &EditorProps) -> Element<'a, Mess
     let bg = props.background;
     let padding = props.layout.padding.unwrap_or(Padding::ZERO);
     let width = props.layout.width.unwrap_or(Length::Fill);
-    let height = props.layout.height.unwrap_or(Length::Fill);
+    let mut height = props.layout.height.unwrap_or(Length::Fill);
+    if height == Length::Shrink {
+        // `responsive` needs a bounded height (it would be infinite inside a scrollable),
+        // so a shrinking editor gets a fixed height that fits every line.
+        let lines = state.content.line_count().max(1) as f32;
+        let bar = if props.wrap { 0.0 } else { 10.0 };
+        height = Length::Fixed(
+            lines * props.line_height + 2.0 * PAD_Y + bar + padding.top + padding.bottom,
+        );
+    }
     container(responsive(move |size| body(state, &props, size)))
         .padding(padding)
         .width(width)

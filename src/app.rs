@@ -194,7 +194,8 @@ impl Command {
     ///
     /// `function` may be a regular function (run in a worker thread), an `async def`
     /// coroutine function (run on Pyzed's asyncio loop), or return a generator / async
-    /// generator, in which case `then` is called once per yielded value.
+    /// generator, in which case `then` is called once per yielded value. An already
+    /// created coroutine or generator (`fetch(url)` rather than `fetch`) works too.
     #[staticmethod]
     #[pyo3(signature = (function, then=None))]
     fn perform(function: &Bound<'_, PyAny>, then: Option<Bound<'_, PyAny>>) -> Self {
@@ -421,7 +422,11 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 .collect::<Vec<_>>(),
         ),
         CommandKind::Message(msg) => Task::done(Message::Py(msg.clone())),
-        CommandKind::Perform(function, then) => background(function.clone(), true, then.clone()),
+        CommandKind::Perform(function, then) => {
+            // A coroutine or generator object (not a function) is drained as is.
+            let call = !is_deferred(function.0.bind(py));
+            background(function.clone(), call, then.clone())
+        }
         CommandKind::OpenWindow(obj) => open_window(py, state, obj.0.bind(py)),
         CommandKind::CloseWindow(obj) => match resolve_window(py, state, obj) {
             Some(id) => window::close(id),
@@ -1268,6 +1273,13 @@ fn font_size(app: &Bound<'_, PyAny>) -> PyResult<f32> {
 /// Opens the app's window and runs it until it is closed.
 #[pyfunction]
 pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
+    static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if STARTED.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        // winit can only create one event loop per process.
+        return Err(PyRuntimeError::new_err(
+            "pz.run() can only be called once per process; open more windows with Command.open_window",
+        ));
+    }
     fonts::ensure_loaded();
     window_settings(app.bind(py))?;
     let size = font_size(app.bind(py))?;

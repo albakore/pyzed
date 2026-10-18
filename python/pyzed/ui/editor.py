@@ -34,6 +34,7 @@ def editor(
     gutter: bool = True,
     wrap: bool = False,
     active_line: bool = True,
+    height: Any = "fill",
     placeholder: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
@@ -50,6 +51,9 @@ def editor(
     ``wrap=True`` they wrap at the editor's width instead, and the gutter numbers only the
     first row of each wrapped line. ``active_line`` highlights the line with the cursor.
     The view follows the cursor (arrows, PageUp/PageDown, ``Command.set_editor_cursor``).
+
+    ``height`` is ``"fill"`` by default; inside a vertical ``scrollable`` use a number or
+    ``"shrink"`` (tall enough for every line).
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -75,6 +79,7 @@ def editor(
         on_cursor=on_cursor,
         active_line=t.active_line if active_line else None,
         scrollbar_color=t.scrollbar,
+        height=height,
     )
 
 
