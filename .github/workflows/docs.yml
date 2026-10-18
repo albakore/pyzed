@@ -1,0 +1,91 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "CHANGELOG.md"
+      - "examples/**"
+      - "python/**"
+      - "src/**"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "CHANGELOG.md"
+      - "examples/**"
+      - "python/**"
+      - "src/**"
+      - ".github/workflows/docs.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - name: Install
+        working-directory: docs
+        run: npm ci
+      - name: Build (reads CHANGELOG.md and marks the latest stable release)
+        working-directory: docs
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/dist
+
+  api-reference:
+    name: API reference up to date
+    runs-on: ubuntu-latest
+    if: github.event_name != 'release'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build and install
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install maturin
+          .venv/bin/maturin develop --release
+      - name: Check (warnings only)
+        run: |
+          .venv/bin/python docs/scripts/gen_api.py --check | sed 's/^/::warning title=Docs::/' || true
+          .venv/bin/python docs/scripts/gen_api.py > /dev/null
+          if ! git diff --quiet -- docs/src/content/docs/reference; then
+            echo "::warning title=Docs::The API reference is out of date. Run 'python docs/scripts/gen_api.py' and commit the result."
+            git diff --stat -- docs/src/content/docs/reference
+          fi
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.event_name == 'release')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,89 @@
+---
+title: Tareas en segundo plano
+description: Descargas con progreso, trabajo bloqueante y notificaciones sin congelar la interfaz.
+sidebar:
+  order: 3
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import source from '../../../../../examples/downloads.py?raw';
+
+Una interfaz nunca debe bloquearse esperando a la red o al disco. Pyzed ofrece dos herramientas:
+
+- **`Command.perform(fn, then)`** ejecuta una función bloqueante en otro hilo y te entrega el
+  resultado.
+- **`pz.post(mensaje)`** envía mensajes a la app desde cualquier hilo (progreso, eventos).
+
+![Descargas con progreso y notificaciones](../../../assets/tutorials/downloads.png)
+
+<Steps>
+
+1. **Un resultado: `Command.perform`.** Para "haz esto y avísame cuando termine":
+
+   ```python
+   def check_updates(self):
+       self.checking = True
+       return Command.perform(self.fetch_latest_version, self.got_version)
+
+   @staticmethod
+   def fetch_latest_version():
+       time.sleep(1.5)          # por ejemplo, una petición HTTP
+       return "0.2.0"
+
+   def got_version(self, version):     # se ejecuta en el hilo de la interfaz
+       self.checking, self.latest = False, version
+   ```
+
+   Mientras `self.checking` es `True`, el botón se dibuja deshabilitado (`on_press=None`).
+
+2. **Muchos resultados: `pz.post`.** Un hilo propio informa del progreso con mensajes que llegan
+   a `update`:
+
+   ```python
+   def start(self, name):
+       self.progress[name] = 0.0
+
+       def worker():
+           done = 0.0
+           while done < 1.0:
+               time.sleep(0.05)
+               done = min(1.0, done + 0.05)
+               pz.post(("progress", name, done))
+           pz.post(("finished", name))
+
+       threading.Thread(target=worker, daemon=True).start()
+
+   def update(self, message):
+       kind, name, *rest = message
+       if kind == "progress":
+           self.progress[name] = rest[0]
+       elif kind == "finished":
+           self.notify(f"{name} descargado", kind="success")
+   ```
+
+3. **Notificaciones que se cierran solas.** Un `threading.Timer` publica el mensaje de cierre:
+
+   ```python
+   def notify(self, title, message=None, kind="info"):
+       toast_id = f"{time.monotonic()}"
+       self.toasts.append((toast_id, title, message, kind))
+       threading.Timer(4, pz.post, args=(("dismiss", toast_id),)).start()
+
+   # en view():
+   return ui.toasts(body, [ui.toast(t, m, kind=k, on_dismiss=("dismiss", i)) for i, t, m, k in self.toasts])
+   ```
+
+</Steps>
+
+<Aside>
+El estado solo se modifica en el hilo de la interfaz (en `update` y en los callbacks). Los hilos
+de trabajo no tocan `self`: envían mensajes con `pz.post`.
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/downloads.py" />
+
+```bash
+python examples/downloads.py
+```
