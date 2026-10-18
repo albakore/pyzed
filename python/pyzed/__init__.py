@@ -69,7 +69,13 @@ from .icons import icon
 from .theme import AutoTheme, Theme, themes
 from . import designer, draw, hot_reload, theme, icons, ui
 
-__version__ = "0.2.0"
+try:
+    # The version lives only in Cargo.toml; read it from the installed package metadata.
+    from importlib.metadata import version as _version
+
+    __version__ = _version("pyzed-ui")
+except Exception:  # pragma: no cover - running from a source tree without metadata
+    __version__ = "0+unknown"
 
 
 def hspace(width="fill"):
