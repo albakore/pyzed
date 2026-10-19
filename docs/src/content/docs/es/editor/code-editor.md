@@ -117,6 +117,8 @@ mueve un control.
 - <kbd>↑</kbd>/<kbd>↓</kbd> se mueven (dando la vuelta), <kbd>RePág</kbd>/<kbd>AvPág</kbd> saltan nueve filas,
   <kbd>Enter</kbd> o <kbd>Tab</kbd> insertan, <kbd>Esc</kbd> cierra; un clic también inserta. El pie muestra la
   posición (`3/42`).
+- La rueda del ratón desplaza la lista sin mover la entrada resaltada, y una barra a su derecha indica dónde estás.
+  Los nombres y firmas largos se recortan con `…` para que quepan; el panel junto a la lista los muestra completos.
 - Al seguir escribiendo la lista se filtra: primero los nombres que empiezan por lo escrito, luego los que contienen
   las letras en orden (`gtx` encuentra `get_text`).
 - Cada entrada tiene un icono según su tipo y, junto a la lista, un panel con su **firma** y su **documentación**

@@ -37,6 +37,8 @@ ROW_HEIGHT = 24.0
 #: Height of the list's padding and footer.
 FOOTER = 34.0
 LIST_WIDTH = 320.0
+#: Width of the completion list's scrollbar.
+SCROLLBAR = 4.0
 DOC_WIDTH = 340.0
 CAPTURED = ("up", "down", "enter", "tab", "escape", "pageup", "pagedown")
 FIND_ID = "designer-code-find"
@@ -78,6 +80,10 @@ class Completion:
     index: int = 0
     #: True while waiting for the language server (``shown`` may already have local items).
     loading: bool = False
+    #: The first row on screen; the wheel scrolls it, moving the selection brings it back into view.
+    top: int = 0
+    #: Keep the highlighted row in view (off after the wheel scrolls the list).
+    follow: bool = True
 
     @property
     def selected(self) -> Optional[CompletionItem]:
@@ -240,6 +246,7 @@ class CodeAssist:
             self.completion = None
             return
         c.index = c.shown.index(selected) if selected in c.shown else 0
+        c.follow = True
 
     def move_selection(self, delta: int) -> None:
         """Moves the highlighted completion by ``delta`` rows: wrapping around for one step, clamped for
@@ -248,6 +255,16 @@ class CodeAssist:
         if c is None or not c.shown:
             return
         c.index = (c.index + delta) % len(c.shown) if abs(delta) == 1 else max(0, min(len(c.shown) - 1, c.index + delta))
+        c.follow = True
+
+    def scroll_completion(self, _x: float, y: float) -> None:
+        """Scrolls the completion list by the mouse wheel (``y`` lines, positive up) without moving the
+        highlighted row; the list keeps the rows in range when it is drawn."""
+        c = self.completion
+        if c is None:
+            return
+        c.top = max(0, c.top - round(y * 3))
+        c.follow = False
 
     def select(self, index: int) -> Any:
         """Highlights completion ``index`` and accepts it (a click in the list); returns the editor
@@ -669,24 +686,47 @@ def kind_badge(item: CompletionItem, t: Theme, size: float = 16) -> Any:
 
 
 def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, max_height: float = 300) -> Any:
-    """Builds the completion list (at most ``visible_rows`` rows around the highlighted one) and, beside it,
-    the highlighted item's signature and documentation, at most ``max_height`` pixels tall."""
+    """Builds the completion list (``visible_rows`` rows, scrolled with the wheel or to keep the highlighted
+    one in view, with a scrollbar when there are more) and, beside it, the highlighted item's signature and
+    documentation, at most ``max_height`` pixels tall."""
     c = a.completion
     assert c is not None
+    visible_rows = max(1, visible_rows)
+    last_top = max(len(c.shown) - visible_rows, 0)
+    if c.follow:
+        c.top = min(c.top, c.index)
+        c.top = max(c.top, c.index - visible_rows + 1)
+    c.top = min(max(c.top, 0), last_top)
+    scrolls = len(c.shown) > visible_rows
+    room = LIST_WIDTH - 2 * 4 - 2 - 2 * 8 - 16 - 8 - (SCROLLBAR + 2 if scrolls else 0)
     rows: List[Any] = []
-    first = min(max(c.index - visible_rows // 2, 0), max(len(c.shown) - visible_rows, 0))
-    for i, item in enumerate(c.shown[first: first + visible_rows], start=first):
+    for i, item in enumerate(c.shown[c.top: c.top + visible_rows], start=c.top):
         selected = i == c.index
         label_color = t.text_muted if item.private or item.is_dunder else t.text
+        label, detail = fit_row(item.label, " ".join(item.detail.split()), room)
         rows.append(_core.button(
-            _core.row([
+            _core.container(_core.row([
                 kind_badge(item, t),
-                _core.text(item.label, size=13, font="mono", color=label_color, wrap=False),
+                _core.text(label, size=13, font="mono", color=label_color, wrap=False),
                 _core.space(width="fill"),
-                _core.text(_short(item.detail, 28), size=11, color=t.text_muted, wrap=False),
-            ], spacing=8, align="center"),
+                _core.text(detail, size=11, color=t.text_muted, wrap=False) if detail else None,
+            ], spacing=8, align="center"), width="fill", clip=True),
             lambda i=i: a.select(i), padding=(0, 8), height=ROW_HEIGHT, width="fill",
             bg=t.element_selected if selected else "transparent", hover_bg=t.element_hover, radius=4))
+    if scrolls and rows:
+        track = len(rows) * ROW_HEIGHT
+        thumb = max(track * visible_rows / len(c.shown), 16.0)
+        offset = (track - thumb) * c.top / last_top if last_top else 0.0
+        bar = _core.stack([
+            _core.container(_core.space(), width=SCROLLBAR, height=track, radius=SCROLLBAR / 2,
+                            bg=alpha(t.text_muted, 0.08)),
+            _core.pin(_core.container(_core.space(), width=SCROLLBAR, height=thumb, radius=SCROLLBAR / 2,
+                                      bg=alpha(t.text_muted, 0.45)), x=0, y=offset),
+        ], width=SCROLLBAR, height=track)
+        body: Any = _core.row([_core.column(rows, spacing=0, width="fill"), bar], spacing=2)
+    else:
+        body = _core.column(rows, spacing=0, width="fill")
+    body = _core.mouse_area(body, on_scroll=a.scroll_completion)
     if c.loading and not rows:
         rows.append(_core.container(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t), padding=(4, 8)))
     footer = _core.container(
@@ -695,13 +735,13 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
                    _core.space(width="fill"),
                    ui.label(tr("↵ insert  esc close"), size="xs", color="text_muted", theme=t)]),
         padding=(2, 8), width="fill")
-    listing = _core.container(_core.column([*rows, footer], spacing=0), width=LIST_WIDTH, padding=4,
+    listing = _core.container(_core.column([body, footer], spacing=0), width=LIST_WIDTH, padding=4, clip=True,
                               bg=t.elevated, border_color=t.border, border_width=1, radius=6)
     item = c.selected
     if item is None or not (item.detail or item.documentation):
         return listing
     doc_parts = [
-        _core.row([kind_badge(item, t, 18), _core.text(item.label, size=13, font="mono", color=t.text, wrap=False),
+        _core.row([kind_badge(item, t, 18), _core.text(item.label, size=13, font="mono", color=t.text, width="fill"),
                    ui.badge(tr("private"), theme=t) if item.private else None], spacing=8, align="center"),
         _core.text(item.detail, size=12, font="mono", color=t.text_muted) if item.detail else None,
         ui.divider(theme=t) if item.documentation else None,
@@ -712,6 +752,19 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
                            padding=10, bg=t.elevated,
                            border_color=t.border, border_width=1, radius=6)
     return _core.row([listing, docs], spacing=4)
+
+
+def fit_row(label: str, detail: str, room: float) -> Tuple[str, str]:
+    """Cuts a completion row's ``label`` (13 px mono) and ``detail`` (11 px) with "…" so both fit in
+    ``room`` pixels; the label wins, and the detail is dropped when too little of it would show."""
+    label_char, detail_char, gap = 13 * CHAR_WIDTH, 6.2, 12
+    most = max(int(room // label_char), 4)
+    if len(label) > most:
+        return label[: most - 1] + "…", ""
+    left = int((room - len(label) * label_char - gap) // detail_char)
+    if left < 8 or not detail:
+        return label, ""
+    return label, _short(detail, left)
 
 
 def _short_doc(text: str, limit: int = 1200) -> str:
