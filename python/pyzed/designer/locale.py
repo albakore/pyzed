@@ -522,4 +522,28 @@ i18n.add("es", {"designer": {
     "Choose an icon…": "Elegir un icono…",
 }})
 
+# Position: anchor presets, offsets, size limits, pivot and rotation
+i18n.add("es", {"designer": {
+    "Middle": "Centro", "Stretch": "Estirar", "Anchor presets": "Presets de anclaje",
+    "Also move it there": "Moverlo también allí",
+    "Edges of the window (or the container) the control follows when it is resized":
+        "Bordes de la ventana (o del contenedor) que sigue el control cuando cambia de tamaño",
+    "X · Width": "X · Ancho", "Y · Height": "Y · Alto", "Left · Right": "Izquierda · Derecha",
+    "Top · Bottom": "Arriba · Abajo",
+    "Distances to the left and right sides of the container (the control stretches)":
+        "Distancias a los lados izquierdo y derecho del contenedor (el control se estira)",
+    "Distances to the top and bottom of the container (the control stretches)":
+        "Distancias a los bordes de arriba y de abajo del contenedor (el control se estira)",
+    "Min size": "Tamaño mínimo", "Max size": "Tamaño máximo", "Pivot": "Pivote",
+    "The control never gets smaller than this when it stretches (0: no limit)":
+        "El control nunca queda más pequeño que esto al estirarse (0: sin límite)",
+    "The control never gets bigger than this when it stretches (0: no limit)":
+        "El control nunca queda más grande que esto al estirarse (0: sin límite)",
+    "The point rotation and scale turn around, and that stays put when a size limit stops the control from "
+    "stretching: 0 0 is the top-left corner, 0.5 0.5 the center":
+        "El punto alrededor del que giran la rotación y la escala, y que queda fijo cuando un límite de tamaño "
+        "frena el estiramiento: 0 0 es la esquina de arriba a la izquierda, 0.5 0.5 el centro",
+    "Degrees clockwise, around the pivot": "Grados en sentido horario, alrededor del pivote",
+}})
+
 from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

@@ -90,6 +90,12 @@ En el formulario y en los contenedores libres, los **anclajes** deciden qué pas
 cambia de tamaño al ejecutarse, como en WinForms. Anclado a izquierda y derecha, un control se estira; anclado solo a
 la derecha, sigue ese borde; sin anclar a ninguno, se queda centrado. Lo mismo en vertical con arriba y abajo.
 
+Se eligen en la sección **Posición** de [Propiedades](/pyzed/es/editor/properties/#posición) en una cuadrícula de
+16 presets, como en Unity, Unreal o Godot, y a un control estirado se le puede dar un **tamaño mínimo** y
+**máximo** para que deje de crecer en un ancho legible (su **pivote** dice qué lado conserva entonces). El
+formulario en ejecución los aplica todos; en código sin el diseñador,
+[`pz.anchor_layout`](/pyzed/es/guides/layout/#disposiciones-ancladas) hace lo mismo.
+
 Una receta habitual para una ventana redimensionable:
 
 1. Una **columna flex** anclada por los cuatro lados llena la ventana.

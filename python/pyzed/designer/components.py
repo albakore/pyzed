@@ -223,7 +223,8 @@ def styled(widget: Any, control: Control, ctx: RenderContext) -> Any:
         return widget
     from . import styling
 
-    return styling.apply(widget, control.style, ctx.theme)
+    return styling.apply(widget, styling.pivoted(control.style, control.pivot, (control.width, control.height)),
+                         ctx.theme)
 
 
 # -- helpers -------------------------------------------------------------------

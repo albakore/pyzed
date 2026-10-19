@@ -194,25 +194,13 @@ def anchored(control: Control, design: Tuple[float, float], actual: Tuple[float,
 
     Like WinForms anchors: an edge anchored to the form keeps its distance to that
     side; anchored to both sides it stretches; anchored to neither it keeps its
-    relative position (centered controls stay centered).
+    relative position (centered controls stay centered). The control's minimum and
+    maximum size and its pivot (``Control.layout``) apply too; see ``pyzed.anchors.place``.
     """
-    dw = actual[0] - design[0]
-    dh = actual[1] - design[1]
-    x, y, w, h = control.rect
-    a = set(control.anchor)
-    if "left" in a and "right" in a:
-        w = max(w + dw, MIN_SIZE)
-    elif "right" in a:
-        x += dw
-    elif "left" not in a:
-        x += dw / 2
-    if "top" in a and "bottom" in a:
-        h = max(h + dh, MIN_SIZE)
-    elif "bottom" in a:
-        y += dh
-    elif "top" not in a:
-        y += dh / 2
-    return (x, y, w, h)
+    from .. import anchors
+
+    return anchors.place(control.rect, control.anchor, design, actual, min_size=control.min_size,
+                         max_size=control.max_size, pivot=control.pivot)
 
 
 Line = Tuple[float, float, float, float]

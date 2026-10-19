@@ -243,6 +243,26 @@ def icon_picker():
 
 
 @shot
+def anchors():
+    from pyzed.designer import anchor_panel, panels
+
+    app = login()
+    app.doc.select("sign_in")
+    app._selection_changed()
+    app.toggle_anchor_presets("sign_in")
+    control = app.doc.form["sign_in"]
+
+    class Position(pz.App):
+        def view(self):
+            t = app.theme_obj
+            rows = anchor_panel.position_rows(app, control, t, panels.prop_row)
+            return pz.container(pz.column(rows, spacing=4), padding=12, width="fill", height="fill", bg=t.panel)
+
+    pz.screenshot(Position(), OUT / "editor-anchors.png", size=(380, 520))
+    print("editor-anchors.png")
+
+
+@shot
 def data():
     app = bound_login(login())
     app.doc.select("email")

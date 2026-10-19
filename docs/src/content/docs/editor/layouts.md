@@ -88,6 +88,11 @@ On the form and in free containers, **anchors** decide what happens when the run
 resized, like in WinForms. Anchored to left and right, a control stretches; anchored only to the right, it follows
 that edge; anchored to neither, it stays centered. The same applies vertically with top and bottom.
 
+Pick them in the **Position** section of [Properties](/pyzed/editor/properties/#position) from a grid of 16
+presets, as in Unity, Unreal or Godot, and give a stretched control a **minimum** and **maximum size** so it
+stops growing at a readable width (its **pivot** says which side it keeps then). The running form applies all
+of them; in code without the designer, [`pz.anchor_layout`](/pyzed/guides/layout/#anchored-layouts) does the same.
+
 A common recipe for a resizable window:
 
 1. A **flex column** anchored on all four sides fills the window.

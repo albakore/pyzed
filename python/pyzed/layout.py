@@ -140,3 +140,79 @@ def flex(
     if ends:
         seq.append(spacer(ends))
     return container(seq, **options)
+
+
+class AnchorItem:
+    """A child of ``pz.anchor_layout`` with its place, size and anchor; made with ``pz.anchor``."""
+
+    __slots__ = ("content", "rect", "edges", "min_size", "max_size", "pivot", "rotate")
+
+    def __init__(self, content: Any, rect: tuple, edges: tuple, min_size: tuple, max_size: tuple, pivot: tuple,
+                 rotate: float):
+        self.content = content
+        self.rect = rect
+        self.edges = edges
+        self.min_size = min_size
+        self.max_size = max_size
+        self.pivot = pivot
+        self.rotate = rotate
+
+    def __repr__(self) -> str:
+        return f"<AnchorItem rect={self.rect!r} anchor={self.edges!r}>"
+
+
+def anchor(content: Any, *, x: float = 0, y: float = 0, width: float = 100, height: float = 28,
+           anchor: Any = "top_left", min_width: float = 0, min_height: float = 0, max_width: float = 0,
+           max_height: float = 0, pivot: tuple = (0.5, 0.5), rotate: float = 0) -> AnchorItem:
+    """Places a child of ``pz.anchor_layout`` at ``x``, ``y`` with ``width`` and ``height`` (in the layout's
+    design size) and says how it follows a resize.
+
+    ``anchor`` is a preset of ``pyzed.anchors.PRESETS`` (``"top_right"``, ``"bottom_wide"``, ``"center"``,
+    ``"full"``...), words (``"left right bottom"``) or a tuple of edges. ``min_*`` and ``max_*`` limit the
+    size when it stretches (``0``: no limit), ``pivot`` is the point that stays put when a limit stops it
+    and that ``rotate`` (degrees clockwise) turns around.
+    """
+    from . import anchors
+
+    return AnchorItem(content, (float(x), float(y), float(width), float(height)), anchors.edges(anchor),
+                      (float(min_width), float(min_height)), (float(max_width), float(max_height)),
+                      (float(pivot[0]), float(pivot[1])), float(rotate))
+
+
+def anchor_layout(children: Iterable[AnchorItem], *, design: Optional[tuple] = None, width: Any = "fill",
+                  height: Any = "fill") -> _core.Widget:
+    """Places children made with ``pz.anchor`` freely, like a designed form: when the layout is resized,
+    each child follows its anchor (keeps its distance to the edges it is anchored to, stretches between
+    opposite ones, stays centered otherwise).
+
+    ``design`` is the size the children's ``x``, ``y``, ``width`` and ``height`` were laid out in; by default
+    the smallest size that holds them all. Later children are drawn on top::
+
+        pz.anchor_layout([
+            pz.anchor(ui.heading("Report"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+            pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+        ], design=(400, 300))
+    """
+    from . import anchors
+
+    items = [c for c in children if c is not None]
+    for item in items:
+        if not isinstance(item, AnchorItem):
+            raise TypeError("pz.anchor_layout children must be made with pz.anchor(...)")
+    if design is None:
+        design = (max((i.rect[0] + i.rect[2] for i in items), default=0.0),
+                  max((i.rect[1] + i.rect[3] for i in items), default=0.0))
+
+    def build(available_width: float, available_height: float) -> Any:
+        placed = []
+        for item in items:
+            x, y, w, h = anchors.place(item.rect, item.edges, design, (available_width, available_height),
+                                       min_size=item.min_size, max_size=item.max_size, pivot=item.pivot)
+            content = _core.container(item.content, width=w, height=h)
+            if item.rotate:
+                dx, dy = anchors.pivot_offset((w, h), item.pivot, item.rotate)
+                content = content.style(rotate=item.rotate, translate=(dx, dy))
+            placed.append(_core.pin(content, x=x, y=y))
+        return _core.stack(placed, width="fill", height="fill")
+
+    return _core.container(_core.responsive(build), width=width, height=height)

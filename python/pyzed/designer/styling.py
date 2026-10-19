@@ -247,6 +247,40 @@ class _using:
         _theme.use(self.previous)
 
 
+def pivoted(style: Dict[str, Any], pivot: Tuple[float, float], size: Tuple[float, float]) -> Dict[str, Any]:
+    """``style`` with the translation that makes its ``rotate`` and ``scale`` turn around ``pivot`` instead of
+    the center (unchanged when the pivot is the center or nothing turns)."""
+    if tuple(pivot) == (0.5, 0.5) or not (style.get("rotate") or style.get("scale") not in (None, 1, 1.0)):
+        return style
+    from .. import anchors
+
+    try:
+        rotate = _style.degrees(style.get("rotate") or 0)
+        scale = float(style.get("scale") if style.get("scale") is not None else 1.0)
+    except (TypeError, ValueError):
+        return style
+    dx, dy = anchors.pivot_offset(size, pivot, rotate, scale)
+    tx, ty = _translate_px(style.get("translate"), size)
+    return {**style, "translate": [tx + dx, ty + dy]}
+
+
+def _translate_px(value: Any, size: Tuple[float, float]) -> Tuple[float, float]:
+    def px(v: Any, length: float) -> float:
+        if isinstance(v, str):
+            text = v.strip()
+            return float(text[:-1]) / 100 * length if text.endswith("%") else float(text.removesuffix("px") or 0)
+        return float(v or 0)
+
+    try:
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return px(value[0], size[0]), px(value[1], size[1])
+        if value not in (None, ""):
+            return px(value, size[0]), 0.0
+    except (TypeError, ValueError):
+        pass
+    return 0.0, 0.0
+
+
 def apply(widget: Any, style: Optional[Dict[str, Any]], theme: Theme) -> Any:
     """``widget`` with a control's saved style (unchanged when it has none)."""
     clean_style = clean(style, theme)

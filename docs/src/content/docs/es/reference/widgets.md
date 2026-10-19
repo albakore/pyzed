@@ -382,6 +382,196 @@ Da tamaño a un hijo de `pz.flex`.
 | `basis` | Un tamaño fijo en píxeles en el eje principal, en lugar de crecer. |
 | `align` | Alineación transversal de este hijo. |
 
+### `anchor`
+
+```python
+anchor(
+    content,
+    *,
+    x=0,
+    y=0,
+    width=100,
+    height=28,
+    anchor='top_left',
+    min_width=0,
+    min_height=0,
+    max_width=0,
+    max_height=0,
+    pivot=(0.5, 0.5),
+    rotate=0,
+)
+```
+
+Coloca un hijo de `pz.anchor_layout` en `x`, `y` con `width` y `height` (en el tamaño de diseño de la disposición) y dice cómo sigue a un cambio de tamaño.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | El widget. |
+| `x` | Borde izquierdo en el tamaño de diseño. |
+| `y` | Borde superior en el tamaño de diseño. |
+| `width` | Ancho en el tamaño de diseño. |
+| `height` | Alto en el tamaño de diseño. |
+| `anchor` | Un preset de `pyzed.anchors.PRESETS` (`"top_right"`, `"bottom_wide"`, `"center"`, `"full"`...), palabras (`"left right bottom"`) o una tupla de bordes. |
+| `min_width` | Ancho mínimo al estirarse (`0`: sin límite). |
+| `min_height` | Alto mínimo al estirarse. |
+| `max_width` | Ancho máximo al estirarse (`0`: sin límite). |
+| `max_height` | Alto máximo al estirarse. |
+| `pivot` | `(x, y)` de `0` a `1`: el punto que queda fijo cuando un límite lo frena, y alrededor del que gira `rotate`. |
+| `rotate` | Grados en sentido horario. |
+
+```python
+pz.anchor(ui.button("Cerrar", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right")
+```
+
+### `anchor_layout`
+
+```python
+anchor_layout(children, *, design=None, width='fill', height='fill')
+```
+
+Coloca libremente hijos hechos con `pz.anchor`, como un formulario diseñado: al cambiar de tamaño, cada hijo mantiene su distancia a los bordes a los que está anclado, se estira entre bordes opuestos y se queda centrado en los demás casos. Los últimos hijos se dibujan encima. Ver [Disposiciones ancladas](/pyzed/es/guides/layout/#disposiciones-ancladas).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `children` | Hijos hechos con `pz.anchor(...)` (`None` se ignora). |
+| `design` | `(ancho, alto)` en el que se colocaron los hijos; por defecto, el más pequeño que los contiene. |
+| `width` | Ancho. |
+| `height` | Alto. |
+
+```python
+pz.anchor_layout([
+    pz.anchor(ui.heading("Informe"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+    pz.anchor(ui.button("Cerrar", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+], design=(400, 300))
+```
+
+### `place`
+
+```python
+place(
+    rect,
+    anchor,
+    design,
+    actual,
+    *,
+    min_size=(0, 0),
+    max_size=(0, 0),
+    pivot=(0.5, 0.5),
+)
+```
+
+Dónde va una caja diseñada en un padre de tamaño `design` dentro de un padre de tamaño `actual`, siguiendo su anclaje, con límites de tamaño y un pivote. La cuenta detrás de `pz.anchor_layout` y de los formularios diseñados.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `rect` | `(x, y, ancho, alto)` en el tamaño de diseño. |
+| `anchor` | Un preset, palabras o bordes. |
+| `design` | El tamaño de diseño del padre. |
+| `actual` | El tamaño actual del padre. |
+| `min_size` | Límites inferiores `(ancho, alto)` (`0`: ninguno). |
+| `max_size` | Límites superiores `(ancho, alto)` (`0`: ninguno). |
+| `pivot` | El punto que queda fijo cuando un límite frena el estiramiento. |
+
+```python
+anchors.place((20, 20, 100, 30), "top_right", design=(400, 300), actual=(600, 300))  # (220, 20, 100, 30)
+```
+
+### `PRESETS`
+
+Los 16 presets de anclaje por nombre (`top_left`, `top_center`, `top_right`, `top_wide`, `center_left`, `center`, `center_right`, `center_wide`, `bottom_left`, `bottom_center`, `bottom_right`, `bottom_wide`, `left_tall`, `center_tall`, `right_tall`, `full`), cada uno con la tupla de bordes a los que ancla.
+
+### `edges`
+
+```python
+edges(anchor)
+```
+
+Los bordes de un anclaje dado como nombre de preset, palabras o bordes. Lanza `ValueError` con cualquier otra cosa.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `anchor` | Lo que se lee. |
+
+### `preset_of`
+
+```python
+preset_of(edges)
+```
+
+El nombre del preset que corresponde a un conjunto de bordes (todo conjunto es uno de los 16).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `edges` | Bordes. |
+
+### `preset`
+
+```python
+preset(horizontal, vertical)
+```
+
+El preset colocado `horizontal` (`left`, `center`, `right`, `wide`) y `vertical` (`top`, `center`, `bottom`, `tall`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `horizontal` | Colocación en el eje x. |
+| `vertical` | Colocación en el eje y. |
+
+### `axes`
+
+```python
+axes(edges)
+```
+
+La colocación `(horizontal, vertical)` de un conjunto de bordes, como `("right", "top")`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `edges` | Bordes. |
+
+### `snap_to`
+
+```python
+snap_to(anchor, rect, parent, margin=0.0)
+```
+
+Una caja movida (y redimensionada en los ejes estirados) adonde apunta un anclaje: contra los bordes anclados, centrada o llenando el padre, a `margin` píxeles.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `anchor` | Un preset, palabras o bordes. |
+| `rect` | La caja. |
+| `parent` | El tamaño del padre. |
+| `margin` | Distancia a los bordes. |
+
+### `offsets`
+
+```python
+offsets(rect, parent)
+```
+
+Las distancias `(izquierda, arriba, derecha, abajo)` de cada lado del padre a una caja.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `rect` | La caja. |
+| `parent` | El tamaño del padre. |
+
+### `pivot_offset`
+
+```python
+pivot_offset(size, pivot, rotate=0.0, scale=1.0)
+```
+
+La traslación que hace que una rotación y una escala (que giran alrededor del centro de la caja) giren alrededor de `pivot`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `size` | El tamaño de la caja. |
+| `pivot` | `(x, y)` de `0` a `1`. |
+| `rotate` | Grados en sentido horario. |
+| `scale` | Factor de escala. |
+
 ### `resizable`
 
 ```python

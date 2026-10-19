@@ -40,6 +40,13 @@ def check_format(fmt: Any, current: str, what: str) -> None:
 RESERVED = frozenset({"name", "title", "size", "window", "close", "data", "errors", "valid", "validate"}
                      | set(keyword.kwlist))
 
+def _number(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value) if value not in (None, "") else default
+    except (TypeError, ValueError):
+        return default
+
+
 #: Edges a control can be anchored to. Anchoring to opposite edges stretches it.
 ANCHORS = ("left", "top", "right", "bottom")
 
@@ -78,6 +85,25 @@ class Control:
     animations: List[Dict[str, Any]] = field(default_factory=list)
     bind: str = ""
     rules: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def min_size(self) -> Tuple[float, float]:
+        """``(min_width, min_height)`` from ``layout`` (``0`` means no limit)."""
+        return (_number(self.layout.get("min_width")), _number(self.layout.get("min_height")))
+
+    @property
+    def max_size(self) -> Tuple[float, float]:
+        """``(max_width, max_height)`` from ``layout`` (``0`` means no limit)."""
+        return (_number(self.layout.get("max_width")), _number(self.layout.get("max_height")))
+
+    @property
+    def pivot(self) -> Tuple[float, float]:
+        """The point rotation and scale turn around, and that stays put when a size limit stops the control from
+        stretching: ``(0, 0)`` is the top-left corner, ``(0.5, 0.5)`` (the default) the center."""
+        value = self.layout.get("pivot")
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            return (min(max(_number(value[0], 0.5), 0.0), 1.0), min(max(_number(value[1], 0.5), 0.0), 1.0))
+        return (0.5, 0.5)
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
