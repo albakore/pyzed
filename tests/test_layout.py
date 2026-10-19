@@ -126,3 +126,54 @@ def test_dock_restores_a_saved_layout():
 def test_dock_panel_checks_the_side():
     with pytest.raises(ValueError, match="side"):
         pz.DockPanel("x", "X", "content", side="middle")
+
+
+def _png_column(path, x):
+    """The RGB colors down column ``x`` of an 8-bit RGB/RGBA PNG (no Pillow in CI)."""
+    import struct
+    import zlib
+
+    data = path.read_bytes()
+    pos, idat, width, channels = 8, b"", 0, 4
+    while pos < len(data):
+        length, kind = struct.unpack(">I4s", data[pos:pos + 8])
+        chunk = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            width = struct.unpack(">I", chunk[:4])[0]
+            channels = {2: 3, 6: 4}[chunk[9]]
+        elif kind == b"IDAT":
+            idat += chunk
+        pos += 12 + length
+    raw, stride = zlib.decompress(idat), width * channels
+    prev, column = bytearray(stride), []
+    for row in range(len(raw) // (stride + 1)):
+        kind, line = raw[row * (stride + 1)], bytearray(raw[row * (stride + 1) + 1:(row + 1) * (stride + 1)])
+        for i in range(stride):
+            a = line[i - channels] if i >= channels else 0
+            b, c = prev[i], prev[i - channels] if i >= channels else 0
+            if kind == 1:
+                line[i] = (line[i] + a) & 255
+            elif kind == 2:
+                line[i] = (line[i] + b) & 255
+            elif kind == 3:
+                line[i] = (line[i] + (a + b) // 2) & 255
+            elif kind == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                line[i] = (line[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        column.append(tuple(line[x * channels:x * channels + 3]))
+        prev = line
+    return column
+
+
+@pytest.mark.parametrize("options", [{"columns": 2}, {"max_width": 200}])
+def test_uniform_grid_height_is_each_rows_height(tmp_path, options):
+    class Demo(pz.App):
+        def view(self):
+            cells = [pz.container(None, bg="#ff0000", width="fill", height="fill") for _ in range(4)]
+            return pz.container(pz.grid(cells, height=40, **options), bg="#000000", width="fill", height="fill")
+
+    out = tmp_path / "grid.png"
+    pz.screenshot(Demo, out, size=(400, 200), scale=1)
+    reds = [y for y, (r, g, b) in enumerate(_png_column(out, 10)) if r > 200 and g < 50]
+    assert (reds[0], reds[-1]) == (0, 79)  # two rows of 40 px, not 200 px split in two
