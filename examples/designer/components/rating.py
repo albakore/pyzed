@@ -4,6 +4,8 @@ The layout is in rating.pzcomp; properties, events and logic are below. Use it l
 any component: ``Rating(...)`` in a view, or from the designer's toolbox.
 """
 
+from typing import Annotated
+
 import pyzed as pz
 from pyzed.designer import SceneComponent
 
@@ -11,7 +13,7 @@ from pyzed.designer import SceneComponent
 class Rating(SceneComponent, scene="rating.pzcomp"):
     """Five stars the user can click."""
 
-    value: int = 3  # How many stars are lit
+    value: Annotated[int, pz.Range(0, 5)] = 3  # How many stars are lit
     readonly: bool = False
     clicks: int = pz.state(0, doc="Times the user picked a rating")
     events = {"change": "A star was picked (event.value is the rating)"}

@@ -323,6 +323,61 @@ class Rating(pz.Component):
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
 
+### `Color`
+
+```python
+class Color
+```
+
+Type hint for a component prop that holds a color (a theme token or `"#rrggbb"`): the designer shows a color picker for it. A plain `str` at run time.
+
+```python
+tint: pz.Color = "accent"
+```
+
+### `Icon`
+
+```python
+class Icon
+```
+
+Type hint for a component prop that holds a Lucide icon name: the designer shows an icon picker for it. A plain `str` at run time.
+
+```python
+mark: pz.Icon = "star"
+```
+
+### `Multiline`
+
+```python
+class Multiline
+```
+
+Type hint for a component prop that holds long text: the designer shows a text area for it. A plain `str` at run time.
+
+```python
+notes: pz.Multiline = ""
+```
+
+### `Range`
+
+```python
+@dataclass
+class Range(min, max, step=1)
+```
+
+Limits of a number prop, used with `typing.Annotated`: the designer shows a number box limited to them. See [Custom components](/pyzed/guides/components/#in-the-designer).
+
+| Parameter | Description |
+| --- | --- |
+| `min` | Lowest value. |
+| `max` | Highest value. |
+| `step` | Step of the + and - buttons. |
+
+```python
+level: Annotated[int, pz.Range(0, 10)] = 3
+```
+
 ### `state`
 
 ```python

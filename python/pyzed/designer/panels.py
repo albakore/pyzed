@@ -165,6 +165,8 @@ OUTLINE_ROW = 24
 
 def outline(d: "Designer", t: Theme) -> Any:
     """The form's controls as a tree: containers can be folded and get a "+" to add controls inside them."""
+    from . import scene_panel
+
     doc = d.doc
     form = doc.form
     rows: List[Any] = [ui.list_item(form.name, d.select_form, icon="app-window", selected=not doc.selection,
@@ -192,9 +194,15 @@ def outline(d: "Designer", t: Theme) -> Any:
                                selected=c.locked, tooltip="Lock", theme=t),
             ]
             chevron = None
+            members = None if container else scene_panel.child_members(c.type)  # a component placed here
             if container:
                 chevron = ui.icon_button("chevron-right" if folded else "chevron-down",
                                          lambda n=c.name: d.toggle_folded(n), size="xs", theme=t)
+            elif members:
+                opened = c.name in d.members_open
+                chevron = ui.icon_button("chevron-down" if opened else "chevron-right",
+                                         lambda n=c.name: d.toggle_members(n), size="xs",
+                                         tooltip="Its properties and methods", theme=t)
             else:
                 chevron = _core.space(width=20)
             target = d.outline_target
@@ -209,6 +217,8 @@ def outline(d: "Designer", t: Theme) -> Any:
                 drop=target[1] if target is not None and target[0] == c.name else None))
             if container and not folded:
                 add(c.name, depth + 1)
+            if members and c.name in d.members_open:
+                rows.extend(scene_panel.member_rows(d, c, members, 4 + (depth + 1) * 14 + 20, t))
 
     add(None, 0)
     return _core.scrollable(_core.column(rows, width="fill"), height="fill")

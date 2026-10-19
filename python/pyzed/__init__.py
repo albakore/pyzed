@@ -71,6 +71,7 @@ from .component import Component, state
 from .dock import Dock, DockPanel
 from .layout import flex, flex_item
 from .i18n import t
+from .hints import Color, Icon, Multiline, Range
 from .style import Gradient, Mask, Paint, Style, define_style, set_style
 from .events import Event, on
 from .icons import icon
@@ -108,7 +109,11 @@ def vertical_slider(min, max, value, **kwargs):  # noqa: A002 - mirrors slider()
 
 __all__ = [
     "App",
+    "Color",
     "Gradient",
+    "Icon",
+    "Multiline",
+    "Range",
     "Mask",
     "Paint",
     "Style",

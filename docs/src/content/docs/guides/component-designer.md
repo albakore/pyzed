@@ -31,6 +31,17 @@ A component is not a form: it has no window, title or menu, and it only exists i
 The designer shows it that way: a **Component** badge in the title bar, and an accent frame with the class name on
 the canvas instead of window buttons.
 
+## Form view and Component view
+
+Every open file is a tab above the canvas. A `.pzform` opens in the **Form view** and a `.pzcomp` in the
+**Component view**, where you work on the class: its properties, events, methods and child components. Double-click
+a component placed on a form, or on another component, to open it in its own Component view tab:
+
+![A form and the component it uses, each in its tab](../../../../screenshots/designer-component-tabs.png)
+
+Switching tabs keeps each document as it was, undo history included. Closing a tab with unsaved changes asks
+whether to save them first.
+
 A component is two files next to each other:
 
 | File | What it holds |
@@ -39,6 +50,8 @@ A component is two files next to each other:
 | `rating.py` | The class: its properties, custom events and methods. |
 
 ```python
+from typing import Annotated
+
 import pyzed as pz
 from pyzed.designer import SceneComponent
 
@@ -46,7 +59,7 @@ from pyzed.designer import SceneComponent
 class Rating(SceneComponent, scene="rating.pzcomp"):
     """Five stars the user can click."""
 
-    value: int = 3  # How many stars are lit
+    value: Annotated[int, pz.Range(0, 5)] = 3  # How many stars are lit
     readonly: bool = False
     clicks: int = pz.state(0, doc="Times the user picked a rating")
     events = {"change": "A star was picked (event.value is the rating)"}
@@ -72,14 +85,57 @@ With nothing selected, the Properties tab shows the component itself:
 - **Layout**: its size, background and grid.
 - **Properties**: each one has a name, a type and a default. The eye icon marks a **public** property, a prop
   the parent passes (`Rating(value=4)`); the lock marks a **private** one, state declared with `pz.state`.
-  Both are attributes in the code: `self.value`, `self.clicks`.
+  Both are attributes in the code: `self.value`, `self.clicks`. The type decides the editor the property gets,
+  here and in the Properties tab of the forms that use the component (see [Property types](#property-types)).
 - **Custom events**: the events the component raises with `self.emit("change", value)`, with a description.
   The parent handles them with `on_change=...` in code, or in the Events tab of a form.
-- **Methods**: every method of the class. Click one to open it in the code editor. `setup()`, `on_mount()` and
-  `on_unmount()` are added when you click them.
+- **Methods**: every method of the class, grouped in lifecycle hooks, event handlers and your own methods
+  (a name starting with `_` is private). Click one to open it in the code editor. `setup()`, `on_mount()` and
+  `on_unmount()` are added when you click them; type a name and press **+ Method** to add a reusable method.
 
 Each change is written to the class right away, and what you write in the class shows up in the panel. If the
 code has a syntax error, the panel shows the last version that parsed until you fix it.
+
+## Property types
+
+As in the Godot inspector, the type of a property picks its editor. Choose it in the **Type** list of the
+property's card:
+
+| Type | Annotation in the class | Editor |
+| --- | --- | --- |
+| str, int, float, bool | `str`, `int`... | Text, number box or switch. |
+| Color | `pz.Color` | Color swatch with a theme token or `#rrggbb`. |
+| Icon | `pz.Icon` | Icon picker. |
+| Multiline | `pz.Multiline` | Text area. |
+| Choice | `Literal["fast", "slow"]` | Drop-down; the card has an **Options** field. |
+| Range | `Annotated[int, pz.Range(0, 5)]` | Number box with limits; the card has **Min**, **Max** and **Step**. |
+| list, dict, Any | `list`... | A Python expression. |
+
+![Properties of several types](../../../../screenshots/designer-component-members.png)
+
+The designer writes the imports these types need (`import pyzed as pz`, `from typing import Annotated`).
+
+```python
+class Rating(SceneComponent, scene="rating.pzcomp"):
+    value: Annotated[int, pz.Range(0, 5)] = 3  # How many stars are lit
+
+
+class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
+    tint: pz.Color = "text_muted"  # Color of the role line
+```
+
+## Reusable code
+
+A component's class is ordinary Python, so it can hold any code and not just event handlers: helper methods,
+private state, computed values, imports. A public method is part of the component's API, and forms and parent
+components can call it:
+
+```python
+class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
+    def rate(self, stars):
+        """Rates the person from code, as if the user clicked the stars."""
+        return self.stars.pick(stars)
+```
 
 ## Events of the controls
 
@@ -132,6 +188,16 @@ class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
 ```
 
 ![Two cards on a form](../../../../screenshots/designer-component-run.png)
+
+### Child components in the outline
+
+A child component is an attribute of its parent, and its properties and methods are reachable from it:
+`self.stars.value`, `self.stars.pick(5)`. From a form it works the same way: `form.ada.rate(5)`.
+
+In the **Outline**, the arrow next to a placed component lists its public properties and methods. Click one to
+insert it in the code editor at the cursor (`self.stars.pick()` in a component, `form.ada.rate()` in a form):
+
+![The outline lists the properties and methods of a placed component](../../../../screenshots/designer-component-outline.png)
 
 A property that a designed component changes itself, such as `self.score` above, keeps its value until the
 parent passes a different one, like an exported variable in Godot. A form handler can set it too:

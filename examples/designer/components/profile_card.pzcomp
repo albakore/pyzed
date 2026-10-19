@@ -11,6 +11,7 @@
     "font_size": 14.0,
     "resizable": false,
     "grid": 8,
+    "style": {},
     "code": null,
     "label": "",
     "icon": "id-card",
@@ -118,7 +119,8 @@
       "text": "person"
     },
     "role": {
-      "text": "job"
+      "text": "job",
+      "color": "tint"
     },
     "stars": {
       "value": "score"

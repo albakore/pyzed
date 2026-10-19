@@ -1426,6 +1426,23 @@ _section("app", "Eventos y componentes", {
             Rating(value=3, on_change=lambda e: print(e.value))
         """,
     },
+    "pyzed.Color": {
+        "desc": "Anotación para un prop de componente que guarda un color (un token del tema o `\"#rrggbb\"`): el diseñador muestra un selector de color. En ejecución es un `str` normal.",
+        "example": 'tint: pz.Color = "accent"',
+    },
+    "pyzed.Icon": {
+        "desc": "Anotación para un prop de componente que guarda el nombre de un icono de Lucide: el diseñador muestra un selector de icono. En ejecución es un `str` normal.",
+        "example": 'mark: pz.Icon = "star"',
+    },
+    "pyzed.Multiline": {
+        "desc": "Anotación para un prop de componente con texto largo: el diseñador muestra un área de texto. En ejecución es un `str` normal.",
+        "example": 'notes: pz.Multiline = ""',
+    },
+    "pyzed.Range": {
+        "desc": "Límites de un prop numérico, con `typing.Annotated`: el diseñador muestra un campo numérico limitado a ellos. Ver [Componentes propios](/pyzed/es/guides/components/#en-el-diseñador).",
+        "params": {"min": "Valor mínimo.", "max": "Valor máximo.", "step": "Paso de los botones + y -."},
+        "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
+    },
     "pyzed.state": {
         "desc": 'Declara una variable de estado privada en la clase de un componente: el padre no puede pasarla y cada instancia empieza con su propia copia del valor (listas y diccionarios son seguros). El diseñador la muestra junto a las props. Ver [Componentes propios](/pyzed/es/guides/components/).',
         "params": {'default': 'Valor inicial, copiado para cada instancia.', 'doc': 'Descripción que muestra el diseñador.'},

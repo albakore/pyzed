@@ -447,3 +447,109 @@ def test_component_draws_its_styles(tmp_path):
     designer.save(form, tmp_path / "main.pzform")
     designer.open_form(tmp_path / "main.pzform").screenshot(tmp_path / "run.png", scale=1)
     assert (tmp_path / "run.png").exists()
+
+
+# -- the Component view ------------------------------------------------------------------
+
+
+def test_documents_open_in_tabs_and_components_in_their_view(tmp_path):
+    make_rating(tmp_path).save()
+    card = new_component("Card", tmp_path / "card.pzcomp")
+    card.add("rating", 8, 8)
+    card.save()
+    form = designer.Form(width=300, height=200)
+    form.add(components.get("card").create("card1", 10, 10))
+    designer.save(form, tmp_path / "main.pzform")
+
+    app = designer.Designer(tmp_path / "main.pzform", language_servers=False)
+    assert len(app.docs) == 1 and not isinstance(app.doc, SceneDocument)
+    app.view()
+    app.open_default_event("card1")  # double-click a placed component: its Component view
+    assert len(app.docs) == 2 and isinstance(app.doc, SceneDocument) and app.doc.path.name == "card.pzcomp"
+    app.open_default_event("rating1")  # and the component inside it
+    assert app.doc.path.name == "rating.pzcomp" and len(app.docs) == 3
+    app.view()
+    app.select_doc(0)
+    assert app.doc.path.name == "main.pzform"
+    app.open_path(tmp_path / "card.pzcomp")  # already open: its tab
+    assert len(app.docs) == 3 and app.doc.path.name == "card.pzcomp"
+    app.doc.add("label", 0, 0)
+    app.close_doc()
+    assert app.dialog == "confirm" and len(app.docs) == 3  # unsaved: asks first
+    app.confirm_discard()
+    assert len(app.docs) == 2
+
+
+def test_property_kinds_pick_the_editor():
+    from typing import Annotated, Literal
+
+    from pyzed.component import _designer_prop
+
+    class Badge(pz.Component):
+        designer = False
+        notes: pz.Multiline = ""
+        tint: pz.Color = "accent"
+        mark: pz.Icon = "star"
+        scale: Literal["sm", "md"] = "md"
+        level: Annotated[int, pz.Range(0, 10)] = 3
+
+        def render(self):
+            return pz.text(self.notes)
+
+    props = {p.name: p for p in (_designer_prop(i, components.Prop) for i in Badge.__props__.values())}
+    assert props["notes"].kind == "multiline" and props["tint"].kind == "color" and props["mark"].kind == "icon"
+    assert props["scale"].kind == "choice" and props["scale"].choices == ("sm", "md")
+    assert (props["level"].kind, props["level"].min, props["level"].max) == ("number", 0, 10)
+
+
+def test_member_kinds_in_the_class_code(tmp_path):
+    doc = make_rating(tmp_path)
+    doc.update_member("value", type=scene_code.type_for("Range"))
+    assert doc.member("value").type == "Annotated[int, pz.Range(0, 100)]" and doc.member("value").default == 3
+    doc.add_member("tint", scene_code.type_for("Color"))
+    doc.add_member("mode", scene_code.choice_type(["fast", "slow"]))
+    assert doc.member("tint").default == "accent" and doc.member("mode").default == "fast"
+    assert "from typing import Annotated, Literal\n" in doc.code and "import pyzed as pz\n" in doc.code
+    assert scene_code.kind_of(doc.member("mode").type) == "Choice"
+    assert scene_code.choices_of(doc.member("mode").type) == ["fast", "slow"]
+    doc.update_member("mode", type=scene_code.choice_type(["a", "b"]))
+    assert doc.member("mode").default == "a"
+    assert scene_code.range_of("Annotated[float, pz.Range(0, 1, 0.1)]") == ("float", 0, 1, 0.1)
+    compile(doc.code, "rating.py", "exec")
+    cls = load_component(doc.save())
+    assert cls.create().value == 3
+
+
+def test_reusable_methods_and_children_from_the_tree(tmp_path):
+    from pyzed.designer import scene_panel
+
+    rating = make_rating(tmp_path)
+    name = rating.add_method("bump", "self, by=1")
+    rating.set_handler_source(name, "def bump(self, by=1):\n    self.value += by\n")
+    assert rating.add_method("bump") == "bump2"
+    rating.save()
+    card = new_component("Card", tmp_path / "card.pzcomp")
+    card.add("rating", 8, 8)
+    card.save()
+    members = scene_panel.child_members("rating")
+    assert members["properties"] == ["value"] and "bump" in members["methods"]
+    assert "button1_click" not in members["methods"]  # handlers of its own controls are not listed
+
+    cls = load_component(tmp_path / "card.pzcomp")
+    owner = type("Owner", (), {})()
+    with render_pass(owner):
+        cls()
+    (instance,) = [i for i in owner._pyzed_components.values() if type(i) is cls]
+    instance.rating1.bump(2)  # a method of the child component, through the control
+    assert instance.rating1.instance.value == 5
+
+    app = designer.Designer(tmp_path / "card.pzcomp", language_servers=False)
+    app.toggle_members("rating1")
+    app.view()  # the outline lists value and bump()
+    command = scene_panel.insert_snippet(app, "self.rating1.bump()")
+    assert command is not None and app.editing is None  # copied: no code open
+    scene_panel.add_method(app, "reset")
+    assert app.editing[0] == "reset"
+    app.assist.cursor = (3, 5)
+    scene_panel.insert_snippet(app, "self.rating1.bump()")
+    assert "    self.rating1.bump()" in app.editing[1]

@@ -323,6 +323,61 @@ class Rating(pz.Component):
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
 
+### `Color`
+
+```python
+class Color
+```
+
+Anotación para un prop de componente que guarda un color (un token del tema o `"#rrggbb"`): el diseñador muestra un selector de color. En ejecución es un `str` normal.
+
+```python
+tint: pz.Color = "accent"
+```
+
+### `Icon`
+
+```python
+class Icon
+```
+
+Anotación para un prop de componente que guarda el nombre de un icono de Lucide: el diseñador muestra un selector de icono. En ejecución es un `str` normal.
+
+```python
+mark: pz.Icon = "star"
+```
+
+### `Multiline`
+
+```python
+class Multiline
+```
+
+Anotación para un prop de componente con texto largo: el diseñador muestra un área de texto. En ejecución es un `str` normal.
+
+```python
+notes: pz.Multiline = ""
+```
+
+### `Range`
+
+```python
+@dataclass
+class Range(min, max, step=1)
+```
+
+Límites de un prop numérico, con `typing.Annotated`: el diseñador muestra un campo numérico limitado a ellos. Ver [Componentes propios](/pyzed/es/guides/components/#en-el-diseñador).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `min` | Valor mínimo. |
+| `max` | Valor máximo. |
+| `step` | Paso de los botones + y -. |
+
+```python
+level: Annotated[int, pz.Range(0, 10)] = 3
+```
+
 ### `state`
 
 ```python

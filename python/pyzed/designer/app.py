@@ -93,6 +93,12 @@ class Toast:
     expires: float = 0.0
 
 
+def _component_registry() -> Dict[str, type]:
+    from ..component import _REGISTRY
+
+    return _REGISTRY
+
+
 class Designer(App):
     """The visual form editor."""
 
@@ -145,6 +151,7 @@ class Designer(App):
         self.toolbox_query = ""
         self.name_buffer = ""
         self.folded: set = set()  # containers folded in the outline
+        self.members_open: set = set()  # placed components whose properties and methods the outline lists
         self.collapsed_sections: set = set()  # property groups folded in the Properties panel
         self.add_parent: Optional[str] = None  # container the "Add control" picker adds into
         self.picker_query = ""
@@ -220,6 +227,10 @@ class Designer(App):
 
     def toggle_folded(self, name: str) -> None:
         self.folded ^= {name}
+
+    def toggle_members(self, name: str) -> None:
+        """Shows or hides the properties and methods of a component placed as ``name`` in the outline."""
+        self.members_open ^= {name}
 
     def open_add_child(self, parent: Optional[str]) -> Any:
         """Shows the component picker to add a control inside ``parent`` (the form when ``None``)."""
@@ -962,6 +973,8 @@ class Designer(App):
         control = self.doc.form.get(name)
         if control is None:
             return
+        if self.open_component_of(name):  # a designed component opens in its Component view
+            return
         event = _components.get(control.type).default_event
         if event:
             self.edit_event(name, event)
@@ -1066,12 +1079,109 @@ class Designer(App):
 
     # -- files --------------------------------------------------------------
     def _guard(self, action: Callable[[], Any]) -> Any:
-        """Runs ``action`` now, or after confirming that unsaved changes may be discarded."""
-        if self.doc.dirty:
-            self.pending = action
-            self.dialog = "confirm"
-            return None
+        """Runs ``action``: opening or creating a file adds a tab, so nothing unsaved is lost."""
         return action()
+
+    # -- open documents (tabs) ------------------------------------------------
+    @property
+    def doc(self) -> Document:
+        """The document of the active tab."""
+        return self.docs[self.active_doc]
+
+    @doc.setter
+    def doc(self, value: Document) -> None:
+        """Opens ``value`` in a tab: the tab of the same file, an untouched empty tab, or a new one."""
+        docs: List[Document] = self.__dict__.setdefault("docs", [])
+        if not docs:
+            docs.append(value)
+            self.active_doc = 0
+            return
+        if value.path is not None:
+            for i, other in enumerate(docs):
+                if other.path is not None and other.path.resolve() == value.path.resolve():
+                    docs[i] = value
+                    self.active_doc = i
+                    return
+        current = docs[self.active_doc]
+        if current.path is None and not current.dirty and not current.form.controls and current is not value:
+            docs[self.active_doc] = value  # an empty untitled form: reuse its tab
+            return
+        docs.append(value)
+        self.active_doc = len(docs) - 1
+
+    def _leave_doc(self) -> bool:
+        """Closes what belongs to the active tab (the code editor, menus) before switching."""
+        if not self._flush_code():
+            self.notify("Fix the code first", self.code_error, kind="error", seconds=4)
+            return False
+        self.editing = None
+        self.menu = None
+        self.drag = None
+        return True
+
+    def select_doc(self, index: int) -> None:
+        """Switches to the tab at ``index``."""
+        if index == self.active_doc or not 0 <= index < len(self.docs) or not self._leave_doc():
+            return
+        self.active_doc = index
+        self.code_revision += 1
+        self._selection_changed()
+
+    def close_doc(self, index: Optional[int] = None) -> None:
+        """Closes a tab (the active one by default), asking first when it has unsaved changes."""
+        index = self.active_doc if index is None else index
+        if not 0 <= index < len(self.docs):
+            return
+        doc = self.docs[index]
+
+        def close() -> None:
+            if index == self.active_doc:
+                self.editing = None
+            self.docs.pop(index)
+            if not self.docs:
+                self.docs.append(Document())
+            if self.active_doc >= index and self.active_doc > 0:
+                self.active_doc -= 1
+            self.active_doc = min(self.active_doc, len(self.docs) - 1)
+            self._selection_changed()
+
+        if doc.dirty:
+            if index != self.active_doc:
+                self.select_doc(index)
+            self.pending = close
+            self.dialog = "confirm"
+            return
+        close()
+
+    def open_component_of(self, name: str) -> bool:
+        """Opens the designed component placed as ``name`` in its own Component tab (double-click)."""
+        control = self.doc.form.get(name)
+        cls = _component_registry().get(control.type) if control is not None else None
+        path = getattr(cls, "scene_file", None) if cls is not None else None
+        if path is None or not Path(path).exists():
+            return False
+        if not self._leave_doc():
+            return True
+        for i, other in enumerate(self.docs):
+            if other.path is not None and other.path.resolve() == Path(path).resolve():
+                self.select_doc(i)
+                return True
+        self.open_path(path)
+        return True
+
+    def doc_tabs(self, t) -> Any:
+        """One tab per open file: forms open in the Form view, components in the Component view."""
+        tabs = []
+        for i, doc in enumerate(self.docs):
+            scene = getattr(doc, "is_scene", False)
+            kind = tr("Component") if scene else tr("Form")
+            tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
+                               icon="component" if scene else "app-window",
+                               icon_color="accent" if scene else None, dirty=doc.dirty))
+        view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
+        return ui.tab_bar(tabs, str(self.active_doc), on_select=lambda i: self.select_doc(int(i)),
+                          on_close=lambda i: self.close_doc(int(i)),
+                          end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
 
     def new(self, kind: str = "form") -> Any:
         """Shows the "New" dialog: a form (name, title, template and folder) or a component (``kind``)."""
@@ -1185,6 +1295,13 @@ class Designer(App):
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
+        for i, other in enumerate(self.docs):
+            if other.path is not None and path.exists() and other.path.resolve() == path.resolve():
+                self.dialog = None
+                self.select_doc(i)  # already open: keep its unsaved changes
+                return
+        if not self._leave_doc():
+            return
         try:
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
@@ -1386,8 +1503,8 @@ class Designer(App):
     def view(self):
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        center = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas], width="fill",
-                              height="fill")
+        center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                              width="fill", height="fill")
         body = _core.container(_core.column([
             self.title_bar(t),
             docks.workspace(self, center, t),

@@ -31,6 +31,18 @@ Un componente no es un formulario: no tiene ventana, título ni menú, y solo ex
 componente. El diseñador lo muestra así: una etiqueta **Component** en la barra de título, y un marco de color con el
 nombre de la clase en el lienzo en vez de los botones de ventana.
 
+## Vista de formulario y vista de componente
+
+Cada archivo abierto es una pestaña sobre el lienzo. Un `.pzform` se abre en la **vista de formulario** y un
+`.pzcomp` en la **vista de componente**, donde se trabaja sobre la clase: sus propiedades, eventos, métodos y
+componentes hijos. Haz doble clic en un componente colocado en un formulario, o en otro componente, para abrirlo en
+su propia pestaña de vista de componente:
+
+![Un formulario y el componente que usa, cada uno en su pestaña](../../../../../screenshots/designer-component-tabs.png)
+
+Al cambiar de pestaña cada documento queda como estaba, con su historial de deshacer. Al cerrar una pestaña con
+cambios sin guardar se pregunta si guardarlos antes.
+
 Un componente son dos archivos juntos:
 
 | Archivo | Qué contiene |
@@ -39,6 +51,8 @@ Un componente son dos archivos juntos:
 | `rating.py` | La clase: sus propiedades, eventos propios y métodos. |
 
 ```python
+from typing import Annotated
+
 import pyzed as pz
 from pyzed.designer import SceneComponent
 
@@ -46,7 +60,7 @@ from pyzed.designer import SceneComponent
 class Rating(SceneComponent, scene="rating.pzcomp"):
     """Five stars the user can click."""
 
-    value: int = 3  # How many stars are lit
+    value: Annotated[int, pz.Range(0, 5)] = 3  # How many stars are lit
     readonly: bool = False
     clicks: int = pz.state(0, doc="Times the user picked a rating")
     events = {"change": "A star was picked (event.value is the rating)"}
@@ -72,14 +86,58 @@ Sin nada seleccionado, la pestaña Properties muestra el propio componente:
 - **Layout**: su tamaño, fondo y rejilla.
 - **Properties**: cada una tiene nombre, tipo y valor por defecto. El ojo marca una propiedad **pública**, una prop
   que pasa el padre (`Rating(value=4)`); el candado marca una **privada**, estado declarado con `pz.state`. Las
-  dos son atributos en el código: `self.value`, `self.clicks`.
+  dos son atributos en el código: `self.value`, `self.clicks`. El tipo decide el editor de la propiedad, aquí y en
+  la pestaña Properties de los formularios que usan el componente (ver [Tipos de propiedad](#tipos-de-propiedad)).
 - **Custom events**: los eventos que el componente lanza con `self.emit("change", valor)`, con su descripción. El
   padre los recibe con `on_change=...` en código, o en la pestaña Events de un formulario.
-- **Methods**: todos los métodos de la clase. Haz clic en uno para abrirlo en el editor de código. `setup()`,
-  `on_mount()` y `on_unmount()` se añaden al hacer clic en ellos.
+- **Methods**: todos los métodos de la clase, agrupados en ciclo de vida, manejadores de eventos y tus propios
+  métodos (un nombre que empieza por `_` es privado). Haz clic en uno para abrirlo en el editor de código.
+  `setup()`, `on_mount()` y `on_unmount()` se añaden al hacer clic en ellos; escribe un nombre y pulsa
+  **+ Method** para añadir un método reutilizable.
 
 Cada cambio se escribe en la clase en el momento, y lo que escribas en la clase aparece en el panel. Si el código
 tiene un error de sintaxis, el panel muestra la última versión válida hasta que lo corrijas.
+
+## Tipos de propiedad
+
+Como en el inspector de Godot, el tipo de una propiedad elige su editor. Elígelo en la lista **Type** de la tarjeta
+de la propiedad:
+
+| Tipo | Anotación en la clase | Editor |
+| --- | --- | --- |
+| str, int, float, bool | `str`, `int`... | Texto, campo numérico o interruptor. |
+| Color | `pz.Color` | Muestra de color con un token del tema o `#rrggbb`. |
+| Icon | `pz.Icon` | Selector de icono. |
+| Multiline | `pz.Multiline` | Área de texto. |
+| Choice | `Literal["fast", "slow"]` | Desplegable; la tarjeta tiene un campo **Options**. |
+| Range | `Annotated[int, pz.Range(0, 5)]` | Campo numérico con límites; la tarjeta tiene **Min**, **Max** y **Step**. |
+| list, dict, Any | `list`... | Una expresión de Python. |
+
+![Propiedades de varios tipos](../../../../../screenshots/designer-component-members.png)
+
+El diseñador escribe los imports que necesitan estos tipos (`import pyzed as pz`, `from typing import Annotated`).
+
+```python
+class Rating(SceneComponent, scene="rating.pzcomp"):
+    value: Annotated[int, pz.Range(0, 5)] = 3  # How many stars are lit
+
+
+class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
+    tint: pz.Color = "text_muted"  # Color of the role line
+```
+
+## Código reutilizable
+
+La clase de un componente es Python normal, así que puede tener cualquier código y no solo manejadores de eventos:
+métodos auxiliares, estado privado, valores calculados, imports. Un método público forma parte de la API del
+componente, y los formularios y componentes padre pueden llamarlo:
+
+```python
+class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
+    def rate(self, stars):
+        """Rates the person from code, as if the user clicked the stars."""
+        return self.stars.pick(stars)
+```
 
 ## Eventos de los controles
 
@@ -132,6 +190,17 @@ class ProfileCard(SceneComponent, scene="profile_card.pzcomp"):
 ```
 
 ![Dos tarjetas en un formulario](../../../../../screenshots/designer-component-run.png)
+
+### Componentes hijos en el esquema
+
+Un componente hijo es un atributo de su padre, y sus propiedades y métodos se alcanzan desde él:
+`self.stars.value`, `self.stars.pick(5)`. Desde un formulario funciona igual: `form.ada.rate(5)`.
+
+En el **Outline**, la flecha junto a un componente colocado lista sus propiedades y métodos públicos. Haz clic en uno
+para insertarlo en el editor de código, en el cursor (`self.stars.pick()` en un componente, `form.ada.rate()` en un
+formulario):
+
+![El esquema lista las propiedades y métodos de un componente colocado](../../../../../screenshots/designer-component-outline.png)
 
 Una propiedad que el propio componente cambia, como `self.score` arriba, conserva su valor hasta que el padre pasa
 otro distinto, como una variable exportada en Godot. Un handler del formulario también puede cambiarla:

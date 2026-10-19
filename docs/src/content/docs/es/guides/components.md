@@ -127,6 +127,16 @@ Cada subclase de `pz.Component` aparece en la biblioteca del [diseñador](/pyzed
 - **Props**: se convierten en propiedades. `bool` muestra un interruptor, `int` y `float` un campo
   numérico, `Literal[...]` un desplegable, `list` un elemento por línea, y un prop llamado
   `color` o `icon` tiene su propio selector.
+  Las anotaciones de `pyzed` eligen un editor más completo, como los export hints de Godot:
+
+  | Anotación | Editor |
+  | --- | --- |
+  | `pz.Color` | Un selector de color (token del tema o `#rrggbb`). |
+  | `pz.Icon` | Un selector de icono. |
+  | `pz.Multiline` | Un área de texto. |
+  | `Annotated[int, pz.Range(0, 10)]` | Un campo numérico limitado de 0 a 10 (`step` es opcional). |
+
+  En ejecución son `str` e `int` normales: `tint: pz.Color = "accent"`.
 - **Eventos propios**: se convierten en eventos a los que puedes asignar código.
 
 Estos atributos de clase controlan cómo aparece:

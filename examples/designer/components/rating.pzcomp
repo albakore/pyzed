@@ -11,6 +11,7 @@
     "font_size": 14.0,
     "resizable": false,
     "grid": 8,
+    "style": {},
     "code": null,
     "label": "",
     "icon": "star",

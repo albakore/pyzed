@@ -29,7 +29,7 @@ from . import components as _components
 from . import layout as _layout
 from . import styling
 from .model import Control
-from .runtime import ControlProxy, Event, theme_for
+from .runtime import ControlProxy, Event, remember_instance, theme_for
 
 #: Component types being rendered right now (a scene that contains itself draws a placeholder).
 _rendering: list = []
@@ -269,6 +269,7 @@ class SceneComponent(Component):
                     merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
                     widgets[control.name] = _wrap_mouse(ctx, control,
                                                         _components.styled(spec.render(merged, ctx), control, ctx))
+                    remember_instance(self, control, ctx)
         finally:
             _rendering.pop()
         background = theme.color(model.background) if model.background else None
