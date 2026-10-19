@@ -88,6 +88,10 @@ out to take it back to the form, or select a few controls and use **Edit → Gro
 Children of a flex or grid are listed in their order in the outline; drag them there, or on the form, to reorder
 them. Moving or resizing a container moves its children with it, and copy, paste and delete take them along.
 
+A container's children cover most of it, so a press there picks a child. To pick or move the container itself, use
+the tab with its name above its top-left corner: it shows while the pointer is over the container and while the
+container, or a control inside it, is selected.
+
 ![A sidebar form: a flex column with its children](../../../../screenshots/designer-layout.png)
 
 ## Menus, settings and the command palette
