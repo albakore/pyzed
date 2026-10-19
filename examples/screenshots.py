@@ -293,7 +293,17 @@ def project_shot(scale):
         shop = project.Project.open(root)
         project._write_main_form(shop, "Shop")
         (root / "ui" / "cart.pzform").write_text((root / "ui" / "main.pzform").read_text())
+        (root / "src" / "shop").mkdir(parents=True)
+        (root / "src" / "shop" / "__init__.py").write_text("")
+        (root / "src" / "shop" / "cart.py").write_text("")
+        (root / "assets").mkdir()
+        (root / "assets" / "logo.svg").write_text("<svg/>")
+        (root / "README.md").write_text("# Shop\n")
+        (root / ".gitignore").write_text(".venv/\n")
         app = designer.Designer(shop.main_form)
+        app.projects.files.refresh()
+        app.projects.files.expanded = {"ui", "src", "src/shop"}
+        app.projects.files.selected = "ui/main.pzform"
         app.left_tab = "project"
         p = app.projects
         p.branch = "main"
@@ -302,6 +312,8 @@ def project_shot(scale):
         p.latest = {"ruff": "0.18.0"}
         p.last = project.Result(["ruff", "check"], 0, "All checks passed!")
         app.screenshot(OUT / "designer-project.png", size=(1440, 900), scale=scale)
+        app.left_tab = "dependencies"
+        app.screenshot(OUT / "designer-dependencies.png", size=(1440, 900), scale=scale)
         os.chdir(cwd)  # opening a project makes its folder the current one
 
 

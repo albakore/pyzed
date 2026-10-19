@@ -62,6 +62,12 @@ def _project(d: "Designer", t: Theme) -> Any:
     return project_panel.view(d, t)
 
 
+def _dependencies(d: "Designer", t: Theme) -> Any:
+    from . import project_panel
+
+    return project_panel.dependencies_view(d, t)
+
+
 def _properties(d: "Designer", t: Theme) -> Any:
     from . import panels
 
@@ -94,7 +100,8 @@ def _console(d: "Designer", t: Theme) -> Any:
 
 PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("design", "Design", "component", "left", _design),
-    Panel("project", "Project", "package", "left", _project),
+    Panel("project", "Project", "folder-tree", "left", _project),
+    Panel("dependencies", "Dependencies", "package", "left", _dependencies, lambda d: d.projects.project is not None),
     Panel("properties", "Properties", "settings-2", "right", _properties),
     Panel("events", "Events", "zap", "right", _events),
     Panel("agent", "Agent", "sparkles", "right", _agent),
@@ -180,7 +187,10 @@ def dock_view(d: "Designer", dock: str, t: Theme) -> Optional[Any]:
     if panel is None:
         return None
     panels = layout.panels_in(dock, d)
-    tabs = [ui.Tab(p.id, p.title, icon=p.icon) for p in panels]
+    # When the titles do not fit the dock (three panels on the left), the tabs not shown keep only their icon.
+    needed = sum(len(p.title) * 6.8 + 62 for p in panels)
+    compact = dock in ("left", "right") and needed > layout.sizes.get(dock, 0)
+    tabs = [ui.Tab(p.id, "" if compact and p.id != panel.id else p.title, icon=p.icon) for p in panels]
     end = [ui.icon_button(DOCK_ICONS[dock], lambda: d.open_dock_menu(dock), size="sm", selected=layout.menu == dock,
                           tooltip=tr("Move this panel"), theme=t),
            ui.icon_button("x", lambda: d.toggle_dock(dock), size="sm", tooltip=tr("Hide dock"), theme=t)]

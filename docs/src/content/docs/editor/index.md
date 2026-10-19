@@ -40,7 +40,7 @@ flowchart TB
     T["Title bar: ☰ menu · project / file · Run ▶ · Stop · View · Help · ⚙ Settings"]
     subgraph W[" "]
         direction LR
-        L["Left dock<br/>Design (Toolbox + Outline)<br/>Project"]
+        L["Left dock<br/>Design (Toolbox + Outline)<br/>Project<br/>Dependencies"]
         subgraph C["Center"]
             direction TB
             D["Document tabs: Form · login.pzform | Component · rating.pzcomp"]
@@ -59,7 +59,8 @@ flowchart TB
 | **Title bar** | The ☰ menu (File and Run), the project and file names (click the file to open another), **Run** and **Stop**, the **View** and **Help** menus and the **Settings** gear. | [Menus and commands](/pyzed/editor/menus-and-commands/) |
 | **Toolbox** | Every component you can place, by category, with a search box. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
 | **Outline** | The controls of the document as a tree: select, reorder, nest, hide and lock them. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#the-outline) |
-| **Project** | The uv project: its forms, dependencies, ruff, ty and git. | [Projects](/pyzed/editor/projects/) |
+| **Project** | The project's files and folders as a tree, with search and git status. | [Projects](/pyzed/editor/projects/) |
+| **Dependencies** | The project's dependencies, ruff and ty (shown once a project is open). | [Projects](/pyzed/editor/projects/#the-dependencies-panel) |
 | **Document tabs** | One tab per open form or component. | [Files and documents](/pyzed/editor/files-and-scripting/) |
 | **Toolbar** | File actions, undo, alignment, distribution, sizing, z-order and the grid tools. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#align-distribute-and-size) |
 | **Canvas** | The form exactly as it will run, with a dot grid, selection, handles and smart guides. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
@@ -103,7 +104,7 @@ flowchart LR
 
 ## In this manual
 
-- [Projects](/pyzed/editor/projects/): uv projects, dependencies, ruff, ty and git from the Project panel.
+- [Projects](/pyzed/editor/projects/): uv projects, the file tree, dependencies, ruff, ty and git.
 - [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/): placing, selecting, moving, resizing, snapping, guides,
   alignment and the outline.
 - [Properties](/pyzed/editor/properties/): every section of the property grid, the list and table editors.

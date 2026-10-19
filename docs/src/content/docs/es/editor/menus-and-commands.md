@@ -122,7 +122,8 @@ Seis paneles viven en cuatro docks alrededor del lienzo:
 | Panel | Dock por defecto | Muestra |
 | --- | --- | --- |
 | **Diseño** | Izquierdo | La caja de herramientas y la estructura. |
-| **Proyecto** | Izquierdo | El proyecto de uv. |
+| **Proyecto** | Izquierdo | Los archivos del proyecto. |
+| **Dependencias** | Izquierdo | Dependencias, ruff y ty (solo con un proyecto abierto). |
 | **Propiedades** | Derecho | La grilla de propiedades. |
 | **Eventos** | Derecho | Los eventos de la selección. |
 | **Código** | Inferior | El editor de código (solo mientras hay un manejador o el archivo abierto). |
@@ -145,6 +146,7 @@ flowchart LR
     subgraph Izquierdo
         Diseño
         Proyecto
+        Dependencias
     end
     subgraph Centro
         Superior["Dock superior (vacío por defecto)"]

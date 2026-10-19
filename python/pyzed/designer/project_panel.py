@@ -1,8 +1,9 @@
-"""The designer's Project tab: create and open uv projects, manage their dependencies,
-run ruff and ty, and create the git repository.
+"""The designer's Project and Dependencies tabs: create and open uv projects, browse their
+files, manage their dependencies, run ruff and ty, and create the git repository.
 
 ``ProjectController`` holds the state and the actions (each slow command runs on a
-worker thread and reports back on the UI thread); ``view`` and ``dialog`` draw it.
+worker thread and reports back on the UI thread); ``view`` (the file tree, see
+``workspace``), ``dependencies_view`` and ``dialog`` draw it.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ from .. import _core, ui
 from .. import project as _project
 from ..project import Dependency, Project, Result, Tool
 from ..theme import Theme, alpha
+from . import workspace as _workspace
+from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -47,11 +50,16 @@ class ProjectController:
         self.new_git = True
         self.new_package = True
         self.open_text = ""
+        #: The project's file tree.
+        self.files = _workspace.Workspace(designer)
+        #: The folder browser of the Open project and New project dialogs.
+        self.browser = _workspace.FolderBrowser(Path.cwd())
 
     # -- opening ------------------------------------------------------------------------
     def attach(self, project: Optional[Project]) -> Any:
         """Makes ``project`` the open one (activated, remembered, its folder the working one)."""
         self.project = project
+        self.files.attach(project.root if project is not None else None)
         if project is None:
             return None
         project.activate()
@@ -77,6 +85,7 @@ class ProjectController:
         self.project.reload()
         self.deps = self.project.dependencies()
         self.branch = self.project.git_branch()
+        self.files.refresh()
 
     def _got_tools(self, found: Dict[str, Tool]) -> None:
         self.tools = found
@@ -268,9 +277,19 @@ class ProjectController:
     def show(self, dialog: str) -> Callable[[], None]:
         """Returns a callback that opens the project dialog ``dialog`` (``"open"``, ``"new"``...)."""
         def open_dialog() -> None:
+            if dialog == "open":
+                recent = _project.recent_projects(1)
+                self.browser.go(recent[0].parent if recent else Path.cwd())
+            elif dialog == "browse_new":
+                self.browser.go(self.new_folder or Path.cwd())
             self.d.dialog = f"project:{dialog}"
 
         return open_dialog
+
+    def choose_location(self) -> None:
+        """Takes the browser's folder as the New project location and goes back to that dialog."""
+        self.new_folder = str(self.browser.path)
+        self.d.dialog = "project:new"
 
 
 # -- views -----------------------------------------------------------------------------------
@@ -337,39 +356,59 @@ def _output(p: ProjectController, t: Theme) -> Any:
     ], width="fill")
 
 
+def _header(d: "Designer", p: ProjectController, project: Project, t: Theme) -> Any:
+    git = (ui.badge(p.branch or "git", icon="git-branch", tint="accent", theme=t) if project.is_git else
+           ui.button(tr("Create repository"), p.git_init, icon="git-branch-plus", size="sm", variant="ghost",
+                     theme=t))
+    return _core.container(_core.column([
+        _core.row([ui.label(project.name, weight="semibold", theme=t),
+                   ui.label(project.version, size="xs", mono=True, color="text_muted", theme=t),
+                   _core.space(width="fill"), git,
+                   ui.icon_button("folder-open", p.show("open"), size="sm", tooltip=tr("Open another project"),
+                                  theme=t)], spacing=6, align="center"),
+        ui.label(str(project.root), size="xs", color="text_muted", wrap=False, theme=t),
+    ], spacing=2), padding=(10, 12, 4, 12), width="fill")
+
+
+def _busy(p: ProjectController, t: Theme) -> Any:
+    if not p.busy:
+        return None
+    return _core.container(_core.row([ui.spinner(size=12, theme=t), ui.label(p.busy, size="sm", theme=t)],
+                                     spacing=8, align="center"), padding=(4, 12), width="fill",
+                           bg=alpha(t.accent, 0.08))
+
+
 def view(d: "Designer", t: Theme) -> Any:
-    """The Project tab of the left dock."""
+    """The Project tab of the left dock: the project's files, like Zed's project panel."""
     p = d.projects
     project = p.project
     if project is None:
         return _empty(p, t)
-    forms = [ui.list_item(form.relative_to(project.root).as_posix(), lambda f=form: d._guard(lambda: d.open_path(f)),
-                          icon="layout-template", inset=True,
-                          selected=d.doc.path is not None and Path(d.doc.path).resolve() == form.resolve(), theme=t)
-             for form in project.forms()]
-    git = (ui.badge(p.branch or "git", icon="git-branch", tint="accent", theme=t) if project.is_git else
-           ui.button("Create repository", p.git_init, icon="git-branch-plus", size="sm", variant="ghost", theme=t))
-    header = _core.container(_core.column([
-        _core.row([ui.label(project.name, weight="semibold", theme=t),
-                   ui.label(project.version, size="xs", mono=True, color="text_muted", theme=t),
-                   _core.space(width="fill"), git], spacing=8, align="center"),
-        ui.label(str(project.root), size="xs", color="text_muted", wrap=False, theme=t),
-    ], spacing=2), padding=(10, 12, 4, 12), width="fill")
-    busy = None
-    if p.busy:
-        busy = _core.container(_core.row([ui.spinner(size=12, theme=t), ui.label(p.busy, size="sm", theme=t)],
-                                         spacing=8, align="center"), padding=(4, 12), width="fill",
-                               bg=alpha(t.accent, 0.08))
+    tree = _core.mouse_area(_core.container(_workspace.tree_view(p.files, t), padding=(0, 4, 24, 4), width="fill"),
+                            on_right_press=lambda: p.files.open_menu(""))
+    return _core.column([
+        _header(d, p, project, t),
+        _busy(p, t),
+        _workspace.toolbar_view(p.files, t),
+        _core.scrollable(tree, height="fill"),
+    ], width="fill", height="fill")
+
+
+def dependencies_view(d: "Designer", t: Theme) -> Any:
+    """The Dependencies tab: the packages of the open project (uv), its tools and checks."""
+    p = d.projects
+    if p.project is None:
+        return _empty(p, t)
     add = _core.container(_core.row([
-        ui.input(p.add_text, p.setter("add_text"), placeholder="Add package, e.g. httpx", size="sm",
+        ui.input(p.add_text, p.setter("add_text"), placeholder=tr("Add package, e.g. httpx"), size="sm",
                  on_submit=p.add, theme=t),
         ui.checkbox(p.add_dev, p.setter("add_dev"), label="dev", theme=t),
-        ui.icon_button("plus", p.add, size="sm", tooltip="Add (uv add)", theme=t),
+        ui.icon_button("plus", p.add, size="sm", tooltip=tr("Add (uv add)"), theme=t),
     ], spacing=6, align="center"), padding=(2, 12), width="fill")
     dep_actions = _core.row([
-        ui.icon_button("refresh-cw", p.sync, size="sm", tooltip="Sync (uv sync)", theme=t),
-        ui.icon_button("search-check", p.check_updates, size="sm", tooltip="Check for updates", theme=t),
-        ui.icon_button("arrow-up-circle", lambda: p.upgrade(), size="sm", tooltip="Upgrade all", theme=t),
+        ui.icon_button("refresh-cw", p.sync, size="sm", tooltip=tr("Sync (uv sync)"), theme=t),
+        ui.icon_button("search-check", p.check_updates, size="sm", tooltip=tr("Check for updates"), theme=t),
+        ui.icon_button("arrow-up-circle", lambda: p.upgrade(), size="sm", tooltip=tr("Upgrade all"), theme=t),
     ], spacing=2)
     checks = _core.container(_core.row([
         ui.tooltip(ui.button("Lint", p.lint, icon="list-checks", size="sm", theme=t), "ruff check", theme=t),
@@ -377,15 +416,11 @@ def view(d: "Designer", t: Theme) -> Any:
         ui.tooltip(ui.button("Types", p.typecheck, icon="shield-check", size="sm", theme=t), "ty check", theme=t),
     ], spacing=4), padding=(4, 8), width="fill")
     body = _core.column([
-        header,
-        busy,
-        _section("Forms", t, ui.icon_button("folder-open", p.show("open"), size="sm", tooltip="Open another project",
-                                            theme=t)),
-        *(forms or [ui.label("No forms in the UI folder yet.", size="sm", color="text_muted", theme=t)]),
-        _section("Dependencies", t, dep_actions),
+        _busy(p, t),
+        _section(tr("Dependencies"), t, dep_actions),
         add,
         *[_dep_row(p, dep, t) for dep in p.deps],
-        _section("Tools", t),
+        _section(tr("Tools"), t),
         *[_tool_row(tool, t) for tool in p.tools.values()],
         checks,
         _output(p, t),
@@ -402,8 +437,10 @@ def dialog(d: "Designer", t: Theme) -> Any:
         return ui.modal(_core.column([
             ui.field("Name", ui.input(p.new_name, p.setter("new_name"), on_submit=p.create, width=260, theme=t),
                      theme=t),
-            ui.field("Location", ui.input(p.new_folder, p.setter("new_folder"), mono=True, width=260, theme=t),
-                     description=f"Creates {target}", theme=t),
+            ui.field("Location", _core.row([
+                ui.input(p.new_folder, p.setter("new_folder"), mono=True, width=260, theme=t),
+                ui.button(tr("Browse…"), p.show("browse_new"), icon="folder-search", size="sm", theme=t),
+            ], spacing=6, align="center"), description=f"Creates {target}", theme=t),
             ui.field("Backend in src/", ui.switch(p.new_package, p.setter("new_package"), theme=t),
                      description="uv init --package: importable from the UI and from tests", theme=t),
             ui.field("Git repository", ui.switch(p.new_git, p.setter("new_git"), theme=t), theme=t),
@@ -411,15 +448,31 @@ def dialog(d: "Designer", t: Theme) -> Any:
             ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),
             ui.button("Create", p.create, icon="folder-plus", variant="solid", theme=t)])
     if which == "open":
-        recent = [ui.list_item(str(path), lambda path=path: p.open(str(path)), icon="folder-git-2", inset=True,
-                               theme=t) for path in _project.recent_projects()]
-        return ui.modal(_core.column([
-            ui.input(p.open_text, p.setter("open_text"), placeholder="Folder with a pyproject.toml", icon="folder",
-                     on_submit=lambda: p.open(p.open_text), mono=True, theme=t),
-            _core.container(_core.scrollable(_core.column(recent, width="fill")), height=220) if recent else None,
-        ], spacing=10), title="Open project", on_close=d.close_dialog, width=560, theme=t, footer=[
-            ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),
-            ui.button("Open", lambda: p.open(p.open_text), variant="solid", theme=t)])
+        here = p.browser.path
+        ok = _workspace.is_project(here)
+        hint = tr("{folder} is a uv project", folder=here.name or str(here)) if ok else \
+            tr("Pick a folder with a pyproject.toml")
+        return ui.modal(_workspace.browser_view(p.browser, t, open_project=lambda f: p.open(str(f)),
+                                                recent=_project.recent_projects()),
+                        title=tr("Open project"), on_close=d.close_dialog, width=760, theme=t, footer=[
+            ui.label(hint, size="sm", color="success" if ok else "text_muted", theme=t),
+            _core.space(width="fill"),
+            ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+            ui.button(tr("Open"), lambda: p.open(str(here)), icon="folder-open", variant="solid", disabled=not ok,
+                      theme=t)])
+    if which == "browse_new":
+        return ui.modal(_workspace.browser_view(p.browser, t), title=tr("Choose where to create the project"),
+                        on_close=p.show("new"), width=760, theme=t, footer=[
+            ui.label(str(p.browser.path / (p.new_name or "…")), size="sm", mono=True, color="text_muted", theme=t),
+            _core.space(width="fill"),
+            ui.button(tr("Back"), p.show("new"), variant="ghost", theme=t),
+            ui.button(tr("Choose this folder"), p.choose_location, icon="check", variant="solid", theme=t)])
+    if which == "name" and p.files.naming is not None:
+        return _workspace.name_dialog(p.files, t)
+    if which == "delete" and p.files.deleting is not None:
+        return _workspace.delete_dialog(p.files, t)
+    if which == "find":
+        return _workspace.find_dialog(p.files, t)
     if which == "change" and p.change_target is not None:
         return ui.modal(
             ui.field("Requirement", ui.input(p.change_text, p.setter("change_text"), on_submit=p.change, mono=True,

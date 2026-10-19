@@ -205,6 +205,20 @@ def new_project():
 
 
 @shot
+def open_project():
+    folder = Path(tempfile.mkdtemp(prefix="pyzed-shots-projects-")) / "projects"
+    for name in ("shop", "weather", "notes"):
+        (folder / name).mkdir(parents=True)
+        (folder / name / "pyproject.toml").write_text(f'[project]\nname = "{name}"\nversion = "0.1.0"\n')
+    for name in ("archive", "scratch"):
+        (folder / name).mkdir()
+    app = login()
+    app.projects.show("open")()
+    app.projects.browser.go(folder)
+    save(app, "open-project")
+
+
+@shot
 def reference():
     app = login()
     app.doc.select("sign_in")

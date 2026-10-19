@@ -1,16 +1,17 @@
 ---
 title: Proyectos
-description: Crea y abre proyectos de uv, gestiona dependencias, ejecuta ruff y ty y crea el repositorio git desde el panel Proyecto.
+description: Crea y abre proyectos de uv, recorre y busca sus archivos, gestiona dependencias, ejecuta ruff y ty y crea el repositorio git desde los paneles Proyecto y Dependencias.
 sidebar:
   order: 1
 ---
 
 Una app de Pyzed es un proyecto de [uv](https://docs.astral.sh/uv/) normal: la interfaz vive en `ui/`, el backend
-en `src/` y uv gestiona las dependencias. El panel **Proyecto** (dock izquierdo, junto a **Diseño**) hace todo eso
-sin salir del editor. El contexto, la estructura de un proyecto y los comandos `pyzed` equivalentes están en
+en `src/` y uv gestiona las dependencias. El panel **Proyecto** (dock izquierdo, junto a **Diseño**) muestra los
+archivos del proyecto, como el panel de proyecto de Zed o el explorador de VS Code, y el panel **Dependencias** de
+al lado gestiona paquetes, herramientas y comprobaciones, todo sin salir del editor. El contexto, la estructura de un proyecto y los comandos `pyzed` equivalentes están en
 [Proyectos con uv](/pyzed/es/guides/projects/).
 
-![El panel Proyecto: formularios, dependencias, herramientas y la salida de ruff](../../../../../screenshots/designer-project.png)
+![El panel Proyecto: los archivos y carpetas del proyecto](../../../../../screenshots/designer-project.png)
 
 ## Cómo encuentra el editor tu proyecto
 
@@ -39,7 +40,7 @@ abrirlo).
 | Campo | Qué hace |
 | --- | --- |
 | **Name** | El nombre del proyecto y de su carpeta. |
-| **Location** | La carpeta donde se crea; el diálogo muestra la ruta completa que va a crear. |
+| **Location** | La carpeta donde se crea; el diálogo muestra la ruta completa que va a crear. **Browse…** abre el explorador de carpetas: ve hasta una carpeta y pulsa **Choose this folder**. |
 | **Backend in src/** | `uv init --package`: un paquete `src/<nombre>/` que se puede importar desde la UI y desde los tests. Apagado da una estructura plana (`uv init --app`). |
 | **Git repository** | Ejecuta `git init` y escribe un `.gitignore`. |
 
@@ -48,24 +49,78 @@ destino tiene que estar vacía o ser ya un proyecto.
 
 ### Abrir un proyecto
 
-Escribe (o pega) una carpeta que tenga un `pyproject.toml` y pulsa <kbd>Enter</kbd> u **Open**, o elige uno de los
-proyectos recientes de la lista. Si el proyecto tiene formulario principal, se abre en una pestaña.
+**Open…** muestra un explorador de carpetas en lugar de un campo de texto:
+
+![El diálogo Open project: lugares, proyectos recientes y las carpetas de la actual](../../../../../screenshots/editor-open-project.png)
+
+- La barra de arriba va a la **carpeta superior** (flecha) o al **inicio**, y cada parte de la ruta se puede
+  pulsar. El ojo muestra u oculta las carpetas ocultas.
+- El campo de ruta de debajo acepta una carpeta escrita o pegada; <kbd>Enter</kbd> va a ella.
+- A la izquierda, los **lugares** habituales (inicio, escritorio, documentos, descargas, los discos) y tus
+  proyectos **recientes** (haz clic en uno para abrirlo).
+- A la derecha, las carpetas de la actual; haz clic en una para entrar. Las que son proyectos de uv (tienen un
+  `pyproject.toml`) llevan la etiqueta **project** y su propio botón **Open**.
+
+**Open**, abajo, abre la carpeta en la que estás cuando es un proyecto. Si el proyecto tiene formulario
+principal, se abre en una pestaña.
 
 ## El panel del proyecto
 
 ### Cabecera
 
 El nombre, la versión y la carpeta del proyecto. A la derecha, la **rama de git** actual, o **Create repository**
-cuando la carpeta todavía no es un repositorio (ejecuta `git init` y escribe un `.gitignore`, como Zed).
+cuando la carpeta todavía no es un repositorio (ejecuta `git init` y escribe un `.gitignore`, como Zed), y un
+botón de carpeta que abre otro proyecto.
 
 Mientras se ejecuta un comando, una barra con un indicador dice qué está pasando (`Adding httpx`,
 `Syncing the environment`...). Los comandos corren en otro hilo, así que puedes seguir diseñando mientras uv
 descarga paquetes.
 
-### Formularios
+### Archivos
 
-Todos los `.pzform` de la carpeta de UI del proyecto. Haz clic en uno para abrirlo en una pestaña; el abierto está
-resaltado. El icono de carpeta al final de la sección abre otro proyecto.
+Debajo de la cabecera, los archivos y carpetas del proyecto en árbol, como el panel de proyecto de Zed. Las
+carpetas se abren y cierran con un clic (`ui/` y `src/` empiezan abiertas); los archivos se colorean según su
+estado en git (modificado, nuevo, borrado, conflicto) y las carpetas toman el color de lo que cambió dentro. Los
+entornos virtuales, las cachés y la salida de compilación (`.venv`, `__pycache__`, `build`, `dist`...) no se
+muestran; los archivos ocultos como `.gitignore`, sí.
+
+Al hacer clic en un archivo se abre donde corresponde:
+
+| Archivo | Se abre |
+| --- | --- |
+| `.pzform`, `.pzcomp` | En una pestaña del diseñador. |
+| El `.py` de un formulario o componente | Su formulario, con el archivo de código entero en el [panel de código](/pyzed/es/editor/code-editor/). |
+| Cualquier otro | Con la app del sistema para ese tipo de archivo. |
+
+La barra sobre el árbol tiene un **buscador** de archivos y carpetas (busca las letras en orden, como el buscador
+de archivos de Zed, y el nombre del archivo cuenta más que las carpetas: `crt` encuentra `ui/cart.pzform`),
+**New file**, **New folder** (en la carpeta seleccionada), **Collapse all** y **Refresh**. El árbol se recarga solo
+al guardar y después de los comandos de uv.
+
+**Clic derecho** sobre un archivo o carpeta (o sobre el espacio vacío bajo el árbol, para la carpeta del
+proyecto) abre su menú:
+
+| Opción | Qué hace |
+| --- | --- |
+| **Open** / **Open with the system app** | Abre el archivo en el editor o con su app predeterminada. |
+| **Reveal in file manager** | Lo muestra en Archivos, Finder o el Explorador. |
+| **New file…** / **New folder…** | Crea uno en esa carpeta (un archivo nuevo se abre al momento). |
+| **Copy path** / **Copy relative path** | Copia la ruta completa o la ruta desde la carpeta del proyecto. |
+| **Rename…** | Lo renombra. |
+| **Delete…** | Lo borra después de preguntar (una carpeta, con todo lo que tiene); no se puede deshacer. |
+
+### Ir a un archivo
+
+<kbd>Ctrl</kbd>+<kbd>P</kbd> (o **File → Go to file…**) abre una búsqueda sobre todos los archivos y carpetas del
+proyecto. Escribe parte de un nombre y pulsa <kbd>Enter</kbd> para el mejor resultado, o haz clic en uno; una
+carpeta se muestra en el panel Proyecto.
+
+## El panel Dependencias
+
+Con un proyecto abierto, el dock izquierdo suma un panel **Dependencias** junto a **Proyecto** (si los tres títulos
+no caben, los paneles que no se muestran se quedan solo con su icono).
+
+![El panel Dependencias: paquetes, herramientas y la salida de ruff](../../../../../screenshots/designer-dependencies.png)
 
 ### Dependencias
 

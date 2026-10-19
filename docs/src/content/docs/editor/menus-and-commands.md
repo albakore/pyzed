@@ -120,7 +120,8 @@ Six panels live in four docks around the canvas:
 | Panel | Default dock | Shows |
 | --- | --- | --- |
 | **Design** | Left | The toolbox and the outline. |
-| **Project** | Left | The uv project. |
+| **Project** | Left | The project's files. |
+| **Dependencies** | Left | Dependencies, ruff and ty (only with a project open). |
 | **Properties** | Right | The property grid. |
 | **Events** | Right | The events of the selection. |
 | **Code** | Bottom | The code editor (only while a handler or the file is open). |
@@ -142,6 +143,7 @@ flowchart LR
     subgraph Left
         Design
         Project
+        Dependencies
     end
     subgraph Center
         Top["Top dock (empty by default)"]
