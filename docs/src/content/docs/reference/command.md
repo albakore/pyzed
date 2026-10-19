@@ -271,6 +271,43 @@ Reads the clipboard and calls `then(text)` (empty string if it is empty).
 | --- | --- |
 | `then` | Callable that receives the text. |
 
+### `paste_image`
+
+```python
+paste_image(then)
+```
+
+Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Callable that receives the PNG bytes or `None`. |
+
+### `pick_files`
+
+```python
+pick_files(
+    then,
+    *,
+    title=None,
+    filters=None,
+    directory=None,
+    multiple=True,
+    folder=False,
+)
+```
+
+Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Callable that receives the list of paths. |
+| `title` | The dialog's title. |
+| `filters` | A list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`. |
+| `directory` | The folder it opens in. |
+| `multiple` | `False` picks a single file. |
+| `folder` | `True` picks folders instead of files. |
+
 ## Windows and clipboard
 
 ### `open_window`

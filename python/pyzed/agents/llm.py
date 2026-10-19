@@ -13,6 +13,7 @@ deltas as they arrive; it returns the finished ``Turn``.
 from __future__ import annotations
 
 import json
+import os
 import re
 import threading
 import urllib.error
@@ -73,30 +74,87 @@ def _adaptive(model: str) -> bool:
     return not _OLD_CLAUDE.search(model)
 
 
+#: Claude clients that sign in with workload identity federation, kept so their token is reused.
+_FEDERATED: Dict[Any, Any] = {}
+
+
+def _identity_token(fed: "_providers.FederationSettings") -> Callable[[], str]:
+    """Where the identity token (a JWT from your identity provider) comes from."""
+    if fed.token_source == "command":
+        import shlex
+        import subprocess
+
+        def from_command() -> str:
+            result = subprocess.run(shlex.split(fed.token_command, posix=os.name != "nt"), capture_output=True,
+                                    text=True, timeout=60)
+            token = result.stdout.strip()
+            if result.returncode != 0 or not token:
+                raise AgentError(f"The identity token command failed: {(result.stderr or '').strip()[:200]}")
+            return token
+
+        return from_command
+    if fed.token_source == "env":
+        def from_env() -> str:
+            token = os.environ.get(fed.token_env or "ANTHROPIC_IDENTITY_TOKEN", "").strip()
+            if not token:
+                raise AgentError(f"{fed.token_env or 'ANTHROPIC_IDENTITY_TOKEN'} is not set")
+            return token
+
+        return from_env
+    from anthropic.lib.credentials import IdentityTokenFile
+
+    return IdentityTokenFile(fed.token_file or None)
+
+
 def _anthropic_client(provider_id: str, settings: _providers.AgentSettings, key: Optional[str]) -> Any:
     try:
         import anthropic
     except ImportError as err:
         raise AgentError('Claude needs the anthropic package: pip install "pyzed-ui[agents]"') from err
     kwargs: Dict[str, Any] = {"max_retries": 2}
-    if key:
-        kwargs["api_key"] = key
     own = settings.providers.get(provider_id)
     if own and own.base_url:
         kwargs["base_url"] = own.base_url
+    fed = settings.federation
+    if not key and provider_id == "anthropic" and fed.enabled:
+        # Workload identity federation: your identity provider's token is exchanged for a short-lived
+        # Claude token (no API key); the client refreshes it before it expires.
+        cache = (kwargs.get("base_url"), *fed.to_tuple())
+        if cache in _FEDERATED:
+            return _FEDERATED[cache]
+        try:
+            from anthropic.lib.credentials import WorkloadIdentityCredentials
+        except ImportError as err:
+            raise AgentError("Workload identity federation needs a newer anthropic package: "
+                             "pip install -U anthropic") from err
+        credentials = WorkloadIdentityCredentials(
+            identity_token_provider=_identity_token(fed), federation_rule_id=fed.rule_id,
+            organization_id=fed.organization_id, service_account_id=fed.service_account_id or None,
+            workspace_id=fed.workspace_id or None)
+        client = _FEDERATED[cache] = anthropic.Anthropic(credentials=credentials, **kwargs)
+        return client
+    if key:
+        kwargs["api_key"] = key
     try:
-        return anthropic.Anthropic(**kwargs)  # no key: the SDK reads an `ant auth login` profile
+        return anthropic.Anthropic(**kwargs)  # no key: the SDK reads federation variables or an ant profile
     except anthropic.AnthropicError as err:
         raise AgentError("Anthropic is not set up: add an API key or sign in with the browser") from err
 
 
 def _anthropic_messages(messages: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out = []
+    dropped: set = set()  # tool calls of external (ACP) agents: other models cannot replay them
     for m in messages:
         content = m["content"]
-        if m["role"] == "assistant" and m.get("provider") != "anthropic":
+        if m["role"] == "assistant" and m.get("provider") == "acp":
+            dropped |= {b.get("id") for b in content if b.get("type") == "tool_use"}
+            content = [b for b in content if b.get("type") == "text"]
+        elif m["role"] == "assistant" and m.get("provider") != "anthropic":
             content = [b for b in content if b.get("type") in ("text", "tool_use")]
-        out.append({"role": m["role"], "content": content})
+        elif dropped:
+            content = [b for b in content if not (b.get("type") == "tool_result" and b.get("tool_use_id") in dropped)]
+        if content:
+            out.append({"role": m["role"], "content": content})
     return out
 
 
@@ -115,6 +173,8 @@ def _anthropic_error(err: Exception) -> AgentError:
         return AgentError(f"Anthropic error {err.status_code}: {getattr(err, 'message', err)}")
     if isinstance(err, anthropic.APIConnectionError):
         return AgentError("Could not reach Anthropic; check the network")
+    if type(err).__name__ in ("WorkloadIdentityError", "CredentialsError", "IdentityTokenFileError"):
+        return AgentError(f"Workload identity federation failed: {err}")
     return AgentError(str(err))
 
 
@@ -181,18 +241,35 @@ def _stream_anthropic(provider_id: str, model: str, system: str, messages: Seque
 
 # -- OpenAI-compatible --------------------------------------------------------------------------
 
+def _image_url(block: Dict[str, Any]) -> Dict[str, Any]:
+    source = block.get("source") or {}
+    return {"type": "image_url",
+            "image_url": {"url": f"data:{source.get('media_type', 'image/png')};base64,{source.get('data', '')}"}}
+
+
 def _openai_messages(system: str, messages: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = [{"role": "system", "content": system}] if system else []
+    dropped: set = set()
     for m in messages:
         blocks = m["content"]
         if m["role"] == "user":
-            results = [b for b in blocks if b.get("type") == "tool_result"]
+            results = [b for b in blocks if b.get("type") == "tool_result" and b.get("tool_use_id") not in dropped]
             for b in results:
                 out.append({"role": "tool", "tool_call_id": b["tool_use_id"], "content": _result_text(b)})
+            # tool messages carry text only: images a tool returned follow in a user message
+            images = [b for b in blocks if b.get("type") == "image"]
+            images += [c for b in results if isinstance(b.get("content"), list)
+                       for c in b["content"] if isinstance(c, dict) and c.get("type") == "image"]
             text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
-            if text or not results:
+            if images:
+                out.append({"role": "user", "content": [{"type": "text", "text": text or "The images:"},
+                                                        *(_image_url(b) for b in images)]})
+            elif text or not [b for b in blocks if b.get("type") == "tool_result"]:
                 out.append({"role": "user", "content": text})
         else:
+            if m.get("provider") == "acp":
+                dropped |= {b.get("id") for b in blocks if b.get("type") == "tool_use"}
+                blocks = [b for b in blocks if b.get("type") == "text"]
             text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
             calls = [{"id": b["id"], "type": "function",
                       "function": {"name": b["name"], "arguments": json.dumps(b.get("input") or {})}}
@@ -218,6 +295,8 @@ def _headers(provider_id: str, key: Optional[str]) -> Dict[str, str]:
     if provider_id == "openrouter":
         headers["HTTP-Referer"] = "https://albakore.github.io/pyzed/"
         headers["X-Title"] = "Pyzed"
+    if provider_id == "github":
+        headers["X-GitHub-Api-Version"] = "2022-11-28"
     return headers
 
 
@@ -299,7 +378,8 @@ def _stream_openai(provider_id: str, model: str, system: str, messages: Sequence
                    on_event: OnEvent, cancel: threading.Event) -> Turn:
     base = settings.base_url(provider_id)
     if not base:
-        raise AgentError("Set the server's base URL in Settings → AI agents")
+        raise AgentError("Set the server's base URL in Settings → AI agents" if provider_id != "vertex" else
+                         "Choose the Google Cloud project in Settings → AI agents → Google Vertex AI")
     body: Dict[str, Any] = {"model": model, "stream": True, "messages": _openai_messages(system, messages),
                             "stream_options": {"include_usage": True}}
     if tools:
@@ -318,6 +398,34 @@ def _stream_openai(provider_id: str, model: str, system: str, messages: Sequence
 
 # -- entry points -------------------------------------------------------------------------------
 
+def _credential(provider_id: str, settings: _providers.AgentSettings) -> Optional[str]:
+    """The key or access token to send: a key saved in the keychain wins, then (Claude) workload identity
+    federation from the settings, then the environment and OAuth tokens (refreshed when they expire)."""
+    if provider_id == "anthropic" and settings.federation.enabled and \
+            not _providers.saved_secret(provider_id):
+        return None
+    try:
+        return _providers.api_key(provider_id, settings=settings)
+    except Exception as err:  # noqa: BLE001 - a refresh that failed: sign in again
+        raise AgentError(f"{_providers.PROVIDERS[provider_id].name}: {err}") from err
+
+
+def _github_models(key: Optional[str]) -> List[str]:
+    """The models of GitHub Models (what GitHub Copilot accounts can call), from its catalog."""
+    request = urllib.request.Request("https://models.github.ai/catalog/models", headers={
+        "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
+        **({"Authorization": f"Bearer {key}"} if key else {})})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            data = json.loads(response.read().decode() or "[]")
+    except urllib.error.HTTPError as err:
+        raise _http_error("github", err) from err
+    except (OSError, ValueError) as err:
+        raise AgentError(f"Could not reach GitHub: {getattr(err, 'reason', err)}") from err
+    items = data if isinstance(data, list) else data.get("data") or []
+    return sorted(str(m.get("id")) for m in items if isinstance(m, dict) and m.get("id"))
+
+
 def stream_turn(model: str, system: str, messages: Sequence[Dict[str, Any]], tools: Sequence[ToolSpec] = (), *,
                 settings: Optional[_providers.AgentSettings] = None, on_event: Optional[OnEvent] = None,
                 cancel: Optional[threading.Event] = None, key: Optional[str] = None) -> Turn:
@@ -325,8 +433,11 @@ def stream_turn(model: str, system: str, messages: Sequence[Dict[str, Any]], too
     settings = settings or _providers.load()
     provider_id, name = _providers.split_model(model)
     provider = _providers.PROVIDERS[provider_id]
-    key = key if key is not None else _providers.api_key(provider_id)
-    if provider.needs_key and not key and not (provider_id == "anthropic" and _providers.credential_source(provider_id)):
+    if provider.protocol == "acp":
+        raise AgentError("External agents run through pyzed.agents.acp, not stream_turn")
+    key = key if key is not None else _credential(provider_id, settings)
+    if provider.needs_key and not key and not (provider_id == "anthropic" and
+                                               _providers.credential_source(provider_id, settings=settings)):
         raise AgentError(f"{provider.name} is not set up: add a key in Settings → AI agents")
     fn = _stream_anthropic if provider.protocol == "anthropic" else _stream_openai
     turn = fn(provider_id, name, system, messages, tools, settings, key, on_event or (lambda k, t: None),
@@ -339,7 +450,11 @@ def list_models(provider_id: str, settings: Optional[_providers.AgentSettings] =
     """Asks the provider which models it offers (sorted names, without the provider prefix)."""
     settings = settings or _providers.load()
     provider = _providers.PROVIDERS[provider_id]
-    key = key if key is not None else _providers.api_key(provider_id)
+    key = key if key is not None else _credential(provider_id, settings)
+    if provider_id == "github":
+        return _github_models(key)
+    if provider_id == "vertex":
+        return list(provider.models)
     if provider.protocol == "anthropic":
         import anthropic
 

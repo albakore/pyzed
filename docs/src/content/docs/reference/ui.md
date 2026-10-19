@@ -2062,6 +2062,7 @@ editor(
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
+    font=None,
     theme=None,
 )
 ```
@@ -2101,6 +2102,7 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `highlights` | Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
 | `match_brackets` | Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it). |
 | `selection_highlight` | Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor). |
+| `font` | Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat's message box. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

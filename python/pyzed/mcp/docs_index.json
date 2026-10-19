@@ -183,7 +183,7 @@
   {
    "slug": "editor/projects",
    "title": "Projects",
-   "description": "Create and open uv projects, manage dependencies, run ruff and ty and create the git repository from the Project panel.",
+   "description": "Create and open uv projects, browse and search their files, manage dependencies, run ruff and ty and create the git repository from the Project and Dependencies panels.",
    "path": "docs/src/content/docs/editor/projects.md"
   },
   {
@@ -1670,6 +1670,23 @@
      "then": "Callable that receives the text."
     }
    },
+   "pyzed.Command.paste_image": {
+    "desc": "Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.",
+    "params": {
+     "then": "Callable that receives the PNG bytes or `None`."
+    }
+   },
+   "pyzed.Command.pick_files": {
+    "desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).",
+    "params": {
+     "then": "Callable that receives the list of paths.",
+     "title": "The dialog's title.",
+     "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.",
+     "directory": "The folder it opens in.",
+     "multiple": "`False` picks a single file.",
+     "folder": "`True` picks folders instead of files."
+    }
+   },
    "pyzed.Command.open_window": {
     "desc": "Opens a new window for that `pz.Window` instance.",
     "params": {
@@ -3059,6 +3076,7 @@
      "markers": "`{line: \"created\" | \"modified\" | \"deleted\"}`.",
      "on_cursor": "Callable that receives `(line, column)`.",
      "font_size": "Font size (defaults to the theme's).",
+     "font": "Typeface: `\"mono\"` by default; `\"sans\"` makes a multi-line text box, like a chat's message box.",
      "line_height": "Line height.",
      "gutter": "Shows line numbers.",
      "wrap": "Line wrapping.",

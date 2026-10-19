@@ -565,7 +565,7 @@ def test_copied_keys_are_recognised_per_provider():
     assert not providers.looks_like_key("anthropic", "sk-ant-short")
     assert {"anthropic", "openai", "google", "openrouter", "xai", "mistral", "deepseek", "groq", "ollama"} \
         <= set(providers.PROVIDERS)
-    assert all(p.login in ("browser", "oauth") for p in providers.PROVIDERS.values() if p.needs_key)
+    assert all(p.login in ("browser", "oauth", "device", "google") for p in providers.PROVIDERS.values() if p.needs_key)
     with pytest.raises(login.LoginError):
         login.login("anthropic")  # Anthropic signs in by copying a key, never through a CLI
     opened = []

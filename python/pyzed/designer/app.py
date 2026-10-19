@@ -1873,6 +1873,10 @@ class Designer(App):
         if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
             self.app_menu = None
             return _commands.run(action.id, self)
+        if self.focus == "agent" and not self.dialog:
+            handled, result = self.agent.on_key(combo)
+            if handled:
+                return result
         if self.focus == "code" and self.editing is not None and not self.dialog:
             handled, result = self.assist.on_key(combo)
             if handled:

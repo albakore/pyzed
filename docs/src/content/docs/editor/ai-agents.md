@@ -39,6 +39,17 @@ Signing in happens inside Pyzed Design; no other program is needed.
   five minutes), and only a text that looks like that provider's key is used.
 - **OpenRouter**: real OAuth with PKCE. You approve Pyzed on OpenRouter's page and the key it issues comes back to
   Pyzed directly; nothing to copy.
+- **GitHub Copilot**: **Sign in with GitHub** uses GitHub's device flow. Pyzed opens
+  `github.com/login/device` and shows a short code; type it there, approve Pyzed, and the token comes back on its
+  own (the card has a button to copy the code, and **Cancel**). It reaches the models of your GitHub account and Copilot
+  plan through GitHub Models. Signing in needs a GitHub App client ID in the provider's settings; without one,
+  **Sign in with a token** takes a fine-grained personal access token with the **Models** permission.
+- **Google Vertex AI**: **Sign in with Google** opens Google's consent page (OAuth with PKCE) and the token comes
+  back to Pyzed; it is refreshed on its own. If you already ran `gcloud auth application-default login`, those
+  credentials are used and nothing else is needed. Pick the **Google Cloud project** (with Vertex AI enabled)
+  in the provider's settings, or click **List my projects**.
+- **Anthropic without a key**: [workload identity federation](#claude-without-an-api-key) exchanges a token from
+  your identity provider for a short-lived Claude token.
 - **Ollama, LM Studio**: nothing to sign in to. Clicking them asks the local server for its models.
 
 You can always paste a key by hand in the [settings](#settings) or set the provider's environment variable.
@@ -52,10 +63,10 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 | **Header** | The thread's title, **New thread** (<kbd>+</kbd>), **History**, **Expand the panel** (it fills the window; click again to put it back in its dock) and the agent's **settings**. |
 | **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per tool it used: a spinner while it runs, a check when it worked, a red cross when it failed. Click a line to see the tool's input and result. |
 | **Agent changes** | After a run that changed something: **Reject** puts every form and code file it touched back as they were before the run; **Keep** hides the bar. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
-| **Message box** | <kbd>Enter</kbd> sends. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-). While the agent works the send button becomes **Stop**. |
-| **+** | Starts an @ mention, like typing <kbd>@</kbd>. |
+| **Message box** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. While the agent works the send button becomes **Stop**. |
+| **+** | **Files, the form, its code, controls** (an @ mention), **Attach images…**, **Paste image** and **Screenshot of the form**. See [Images](#images). |
 | **Permission mode** | What the agent may do without asking (see below). |
-| **Model** | Every provider with its models. A provider that is not set up shows **Connect…**, which signs in right there. |
+| **Model** | Every provider with its models, and the [external agents](#external-agents). A provider that is not set up shows **Connect…**, which signs in right there. |
 | **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
 | **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
 
@@ -74,7 +85,8 @@ code editor), so "align these" or "validate this field" refer to what you are lo
 ### Adding context with @
 
 Type <kbd>@</kbd> (or click **+**) and pick what to attach: the **selection**, the open **form**, its **code**,
-one of its **controls**, or a **file** of the project. Keep typing to filter the list; <kbd>Enter</kbd> picks the
+one of its **controls**, a **file** of the project (an image file goes as an image), or a **screenshot** of the
+open form. Keep typing to filter the list; <kbd>Enter</kbd> picks the
 highlighted row. What you pick shows as a chip above the message and its content goes with the message, so the
 agent doesn't have to look for it. Files that may hold secrets (`.env`, keys…) are never offered.
 
@@ -87,12 +99,14 @@ Type <kbd>/</kbd> at the start of the message:
 | Command | Does |
 | --- | --- |
 | `/new` | Starts a new thread. |
+| `/app` | Starts a request to [build a whole application](#building-an-application). |
 | `/history` | Shows the past threads. |
 | `/settings` | Opens the AI agents settings. |
 | `/form`, `/component` | Starts a request to generate a form or a component. |
 | `/explain` | Explains the open form and its handlers. |
 | `/fix` | Checks the form's code with `validate_code` and fixes what it finds. |
 | `/tidy` | Aligns the controls and evens out the margins. |
+| `/look` | Takes a screenshot of the form, looks at it and improves its layout and design. |
 
 ### What the agent can do
 
@@ -106,10 +120,41 @@ Type <kbd>/</kbd> at the start of the message:
 | `list_components`, `describe_component`, `search_icons`, `list_themes`, `read_docs`… | The same knowledge as the [MCP server](/pyzed/guides/mcp/): components, icons, themes and this documentation. |
 | `validate_code`, `validate_form` | Check code and forms before handing them back. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Work with files of the project, never outside its folder. |
+| `screenshot_form` | Renders the open form to a picture and looks at it, to check the layout as you see it. |
+| `get_project`, `create_project`, `add_dependency`, `check_project`, `open_document` | Read the open project (forms, components, dependencies, entry point), create a new one and open it, add a package with uv, run the project's checks and open any of its files in a tab. |
+| `list_examples`, `read_example`, `new_form` | Pyzed's examples to learn from, and a starting form written for a description. |
+| `mcp_<server>_<tool>` | The tools of the [MCP servers](#mcp-servers) you added. |
 
 Tools that **create or write files** ask first in the **Ask before writing** mode: a card shows **Allow**,
 **Always allow** (for the rest of the session) and **Deny**. **Bypass permissions** skips it. Changes to the open
 document never ask, since they can be undone.
+
+## Images
+
+The agent can look at pictures: a mock-up to rebuild, a screenshot of a bug, the form as it looks now. Add them
+with **+**:
+
+- **Attach images…** opens the system's file dialog (PNG, JPEG, GIF or WebP, up to 5 MB each).
+- **Paste image** takes the picture you copied (a screenshot, an image from the browser).
+- **Screenshot of the form** renders the open form and attaches it.
+
+They show as thumbnails above the message and in the thread. Tools can answer with images too: `screenshot_form`
+and the tools of MCP servers that return pictures. The model must take images (Claude, GPT-4.1 and later, Gemini,
+most vision models of Ollama…).
+
+## Building an application
+
+`/app`, the **Create a notes app…** suggestion or a plain request ("Create an app to track my expenses") start a
+whole application, not only a form. The agent knows the editor (projects, forms, components, styles, data
+binding, the [MCP server](/pyzed/guides/mcp/) and these docs) and, in each message, what is open: the project
+and its files, the form, the selection and the other tabs. It then:
+
+1. Creates a [project](/pyzed/editor/projects/) with `create_project` (or uses the open one) and adds the
+   packages it needs with `add_dependency`.
+2. Writes the forms and components, places their controls, wires the events and writes the code, reading
+   Pyzed's examples and docs when it needs them.
+3. Looks at each form with `screenshot_form` and fixes what doesn't look right.
+4. Runs `check_project` and `validate_code` until they pass, and tells you how to run it (<kbd>F5</kbd>).
 
 ## Generating forms and components
 
@@ -143,17 +188,67 @@ command palette.
 
 | Provider | How to connect | Notes |
 | --- | --- | --- |
-| **Anthropic** | **Sign in with the browser**, API key or `ANTHROPIC_API_KEY` | Claude models stream their reasoning summaries, use adaptive thinking and take effort and fast mode. An existing Anthropic CLI profile (`ant auth login`) is also used, but the CLI is not needed. |
+| **Anthropic** | **Sign in with the browser**, API key, `ANTHROPIC_API_KEY` or [identity federation](#claude-without-an-api-key) | Claude models stream their reasoning summaries, use adaptive thinking and take effort and fast mode. An existing Anthropic CLI profile (`ant auth login`) is also used, but the CLI is not needed. |
 | **OpenAI** | **Sign in with the browser**, API key or `OPENAI_API_KEY` | |
 | **Google Gemini** | **Sign in with the browser**, AI Studio key or `GEMINI_API_KEY` | Through Gemini's OpenAI-compatible endpoint. |
 | **OpenRouter** | **Sign in with the browser** (OAuth), API key or `OPENROUTER_API_KEY` | OAuth with PKCE: the key OpenRouter issues for Pyzed goes to the keychain. |
 | **xAI**, **Mistral**, **DeepSeek**, **Groq** | **Sign in with the browser**, API key or `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` | Their models are listed after signing in. |
+| **GitHub Copilot** | **Sign in with GitHub** (device flow), a fine-grained token with the **Models** permission or `GITHUB_TOKEN` | The models of GitHub Models (`openai/gpt-4.1`, …) with your account's limits. Signing in needs a **GitHub App client ID** (or `PYZED_GITHUB_CLIENT_ID`). |
+| **Google Vertex AI** | **Sign in with Google**, or the Google Cloud credentials of this computer (`gcloud auth application-default login`) | Gemini through Vertex AI's OpenAI-compatible endpoint, with no key. Needs a **Google Cloud project** and a **Location** (`global` by default); signing in with Google needs an **OAuth client** (Desktop app) whose secret goes to the keychain. |
 | **Ollama**, **LM Studio** | Nothing: they run on your computer | Change the **Server URL** if they run elsewhere. |
 | **OpenAI-compatible** | Server URL, and a key if the server needs one | vLLM, llama.cpp, a company gateway… |
 
 Click a provider to open it: **Sign in with the browser** (see [Signing in](#signing-in)), paste a key and
 **Save**, **Get a key** (opens the provider's key page), **Remove key**, and **Refresh models**, which asks the
 provider for its list of models so they show up in the model picker.
+
+**Test the connection** checks the provider with what is set up and shows where the credentials come from.
+
+### Claude without an API key
+
+Open **Anthropic** and fill in **Workload identity federation**. A token from your identity provider (GitHub
+Actions, Google Cloud, Azure, Okta, Kubernetes…) is exchanged for a short-lived Claude token, so no API key is
+stored anywhere. First create the issuer and the federation rule in the Claude Console, then fill in:
+
+| Field | What goes there |
+| --- | --- |
+| **Federation rule** | The rule's ID, `fdrl_…`. |
+| **Organization ID** | Your organization's UUID. |
+| **Service account** | `svac_…`, when the rule doesn't name one. Optional. |
+| **Workspace** | `wrkspc_…` or `default`. Optional. |
+| **Identity token** | Where the token comes from: a **File** (the path of the JWT, or `ANTHROPIC_IDENTITY_TOKEN_FILE`), a **Command** that prints a fresh one (for example `gcloud auth print-identity-token`) or a **Variable** (`ANTHROPIC_IDENTITY_TOKEN`). |
+
+A saved API key wins over federation; remove it to use federation. The `ANTHROPIC_FEDERATION_RULE_ID`,
+`ANTHROPIC_ORGANIZATION_ID` and `ANTHROPIC_IDENTITY_TOKEN_FILE` variables work too.
+
+### MCP servers
+
+**MCP servers** adds the tools of any [Model Context Protocol](https://modelcontextprotocol.io) server to the
+agent's, like Zed's context servers. **Add an MCP server** asks for:
+
+- a **Name**;
+- the **Command**, as you would type it in a terminal (`npx -y @modelcontextprotocol/server-github`,
+  `uvx mcp-server-fetch`…), **or the URL** of a remote server (Streamable HTTP);
+- **Secrets**: `NAME=value` pairs separated by `;`, passed as environment variables (or as headers for a URL).
+  They go to the system keychain, never to `agents.json`.
+
+**Test** starts the server and lists its tools; the switch turns it off without removing it. Their tools show
+up as `mcp_<server>_<tool>`. Tools the server doesn't mark as read-only ask first in **Ask before writing**, like
+file writes; in **Read only** they are left out.
+
+### External agents
+
+**External agents** run Claude Code, Gemini CLI, Codex or any agent that speaks the
+[Agent Client Protocol](https://agentclientprotocol.com) inside the panel, as in Zed. **Add an external agent…**
+offers the known ones (Claude Code through `@zed-industries/claude-code-acp`, `gemini --experimental-acp`, Codex
+through `@zed-industries/codex-acp`) or **Other…** for any command. Once added, pick it in the model picker under
+**External agents**.
+
+The agent runs as its own program in the project folder and signs in its own way (its own account or key; put
+keys in **Secrets**). Pyzed answers its requests: it reads and writes files only inside the project and never
+the ones that may hold secrets, and asks before acting according to the permission mode (**Read only** allows
+only reads, **Chat only** refuses every tool). With **Share Pyzed's MCP server** on, the agent also gets Pyzed's
+components, docs, generators and checks (needs the `mcp` package).
 
 ### Where keys are stored
 

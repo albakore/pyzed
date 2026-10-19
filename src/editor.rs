@@ -1713,8 +1713,12 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             }
             let plain =
                 !(press.modifiers.control() || press.modifiers.alt() || press.modifiers.logo());
+            // Shift+Enter always breaks the line, even when the app takes Enter (a chat box sends with it).
+            let shift_enter = press.modifiers.shift()
+                && press.key == keyboard::Key::Named(keyboard::key::Named::Enter);
             if let keyboard::Key::Named(named) = press.key.as_ref()
                 && plain
+                && !shift_enter
                 && capture.iter().any(|k| key_name(named) == Some(k.as_str()))
             {
                 return None;
