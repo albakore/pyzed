@@ -84,6 +84,17 @@ _ES = {
     "Striped": "Rayado", "Tabs": "Pestañas", "Text": "Texto", "Tint": "Matiz", "Trend values": "Valores de tendencia",
     "Value": "Valor", "Values": "Valores", "Variant": "Variante", "Vertical": "Vertical", "Weight": "Peso",
     "Wrap": "Ajustar texto",
+    # Style section
+    "Style": "Estilo", "Text color": "Color del texto", "Font": "Fuente", "Italic": "Cursiva",
+    "Line height": "Interlineado", "Border color": "Color del borde", "Border width": "Grosor del borde",
+    "Margin": "Margen", "Max width": "Ancho máximo", "Max height": "Alto máximo", "Align content": "Alinear contenido",
+    "Align vertically": "Alinear en vertical", "Clip": "Recortar", "From": "Desde", "To": "Hasta", "Fill": "Relleno",
+    "Opacity": "Opacidad", "Mask": "Máscara", "Angle": "Ángulo", "Offset": "Desplazamiento", "Blur": "Desenfoque",
+    "Reset style": "Restablecer el estilo", "Default": "Por defecto", "Gradient": "Degradado",
+    "Fade out": "Desvanecer", "Fade in": "Aparecer", "Sans": "Sans", "Serif": "Serif", "Mono": "Mono",
+    "Thin": "Fina", "Light": "Ligera", "Normal": "Normal", "Medium": "Media", "Semibold": "Seminegrita",
+    "Bold": "Negrita", "Black": "Gruesa", "On": "Sí", "Off": "No", "Start": "Inicio", "Center": "Centro",
+    "End": "Final",
     # Settings dialog
     "Appearance": "Apariencia", "Theme": "Tema", "Language": "Idioma", "System default": "Idioma del sistema",
     "Language of the designer's menus and panels": "Idioma de los menús y paneles del diseñador",

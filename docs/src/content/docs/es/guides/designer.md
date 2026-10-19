@@ -140,6 +140,26 @@ el fondo, el radio de las esquinas y el tamaño de letra. El tema del propio dis
 
 ![Un formulario con el tema Gruvbox Light y acento propio](../../../../../screenshots/designer-light.png)
 
+
+### Estilos
+
+Cada control tiene una sección **Estilo** en Propiedades, como CSS solo para ese control (ver [Estilos](../styles/)):
+fondo, color del texto, fuente, peso, cursiva, tamaño de letra, interlineado, color y grosor del borde, radio de
+esquina, sombra, relleno, margen, ancho y alto máximos, alineación del contenido y recorte. Los campos vacíos dejan
+el aspecto propio del componente, y **Restablecer el estilo** los borra todos.
+
+Haz clic en la muestra de un color para abrir la paleta, con alfa. La paleta del fondo también crea degradados
+lineales (arrastra las paradas, ajusta el ángulo) y máscaras de opacidad. Los colores pueden ser tokens del tema
+(`accent`, `text_muted`...), así el estilo sigue al tema del formulario. El radio de esquina acepta un número o cuatro
+(arriba a la izquierda, arriba a la derecha, abajo a la derecha, abajo a la izquierda); el relleno y el margen, uno,
+dos o cuatro.
+
+Sin nada seleccionado, la sección **Estilo** del formulario es el estilo global de la ventana: su fuente, color y
+tamaño se aplican a todos los textos que no fijan los suyos, y su fondo, color de borde y radio pasan al tema. Al
+ejecutar funciona igual (`Window.style`), y también en los componentes hechos en el diseñador.
+
+![Un botón con un degradado con máscara, la fuente serif global y la paleta abierta](../../../../../screenshots/designer-style.png)
+
 ## Archivos
 
 Un formulario son dos archivos juntos, pensados para versionarse:

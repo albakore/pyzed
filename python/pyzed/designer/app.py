@@ -122,6 +122,7 @@ class Designer(App):
         self.window_pointer: Tuple[float, float] = (0.0, 0.0)
         self.carry: Optional[Carry] = None
         self.over_form = False  # the pointer is over the form being designed
+        self.color_picker: Optional[Tuple[Optional[str], str]] = None  # (control or None, style key) being picked
         #: outline row under the pointer while carrying, and where it would drop: "before", "inside" or "after"
         self.outline_target: Optional[Tuple[str, str]] = None
         self.hovered_row: Optional[str] = None  # toolbox or outline row under the pointer
@@ -203,6 +204,7 @@ class Designer(App):
         primary = self.doc.primary
         self.name_buffer = primary.name if primary else ""
         self.menu = None
+        self.color_picker = None
 
     def select_form(self) -> None:
         self.doc.select(None)
@@ -781,6 +783,27 @@ class Designer(App):
 
     def set_form(self, key: str, value: Any) -> None:
         self.doc.set_form(key, value)
+
+    def set_style(self, name: Optional[str], key: str, value: Any) -> None:
+        """A Style section edit: ``value`` as the field gives it (text, number, choice)."""
+        from . import styling
+
+        try:
+            stored = styling.field_value(key, value)
+        except (TypeError, ValueError):
+            return
+        self.doc.set_style(name, key, stored)
+
+    def set_style_value(self, name: Optional[str], key: str, value: Any) -> None:
+        """Stores an already built style value (a background, a shadow) as it is."""
+        self.doc.set_style(name, key, value)
+
+    def clear_style(self, name: Optional[str]) -> None:
+        self.doc.clear_style(name)
+
+    def toggle_color_picker(self, name: Optional[str], key: str) -> None:
+        """Opens the color picker under a Style row (or closes it when it is already open)."""
+        self.color_picker = None if self.color_picker == (name, key) else (name, key)
 
     def set_name_buffer(self, text: str) -> None:
         self.name_buffer = text

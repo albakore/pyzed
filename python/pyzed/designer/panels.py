@@ -23,7 +23,7 @@ ROW_HEIGHT = 28.0
 #: Icons of the property groups in the accordion.
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
-                 "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move"}
+                 "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -300,6 +300,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             value = c.props.get(prop.name, prop.default)
             rows.append(prop_row(prop.title, editor_for(d, prop, value, d.prop_setter(c.name, prop), f"{c.name}.{prop.name}",
                                                         t), t))
+    rows.extend(style_rows(d, c.name, c.style, t))
     rows.extend(_layout_rows(d, c, t))
     return rows
 
@@ -363,9 +364,16 @@ def form_properties(d: "Designer", t: Theme) -> List[Any]:
                                                   setter("radius", float), min=0, max=24, width="fill", theme=t), t),
         prop_row("Font size", ui.number_field(form.font_size, setter("font_size", float), min=8, max=32, width="fill",
                                               theme=t), t),
+        *style_rows(d, None, form.style, t, fields=_global_fields()),
         Group("Designer"),
         prop_row("Grid size", ui.number_field(form.grid, setter("grid", int), min=2, max=64, width="fill", theme=t), t),
     ]
+
+
+def _global_fields() -> Any:
+    from .styling import GLOBAL_FIELDS
+
+    return GLOBAL_FIELDS
 
 
 def properties(d: "Designer", t: Theme) -> Any:
@@ -430,3 +438,131 @@ def events(d: "Designer", t: Theme) -> Any:
     rows.append(_core.container(ui.label("Double-click an event, or a control on the form, to write its code.",
                                          size="xs", color="text_muted", theme=t), padding=(12, 12)))
     return _core.scrollable(_core.column(rows, width="fill"), height="fill")
+
+
+# -- style -----------------------------------------------------------------------
+
+
+def _choice_editor(options: Any, value: str, on_change: Callable[[str], Any], t: Theme) -> Any:
+    """A drop-down of ``options`` (values) shown translated; ``""`` reads "Default"."""
+    labels = {(tr(o.capitalize()) if o else tr("Default")): o for o in options}
+    current = next((label for label, o in labels.items() if o == value), tr("Default"))
+    return ui.select(list(labels), current, lambda label: on_change(labels.get(label, "")), width="fill", size="sm",
+                     theme=t)
+
+
+def _picker_open(d: "Designer", name: Optional[str], key: str) -> bool:
+    return d.color_picker == (name, key)
+
+
+def _picker_row(d: "Designer", name: Optional[str], key: str, value: Any, on_pick: Callable[[Any], Any], t: Theme,
+                *, fill: bool = False) -> Any:
+    """The color picker under a color or background row (with gradients and masks for a fill)."""
+    from .runtime import theme_for
+    from .styling import unpicked
+
+    ft = theme_for(d.doc.form)
+    picker = ui.ColorPicker(value=unpicked(value, ft, ft.accent), gradients=fill, masks=fill,
+                            on_change=lambda e: on_pick(e.value), key=f"picker:{name}:{key}")
+    return _core.container(picker, padding=(4, 10, 8, LABEL_WIDTH + 20), width="fill")
+
+
+def _swatch(d: "Designer", name: Optional[str], key: str, value: Any) -> Any:
+    from .runtime import theme_for
+    from .styling import _using, clean
+
+    ft = theme_for(d.doc.form)
+    shown = clean({"background": value}, ft) if value else None
+    with _using(ft):
+        return ui.color_swatch(shown.get("background") if shown else "transparent", size=18,
+                               on_press=lambda: d.toggle_color_picker(name, key))
+
+
+def _color_editor(d: "Designer", name: Optional[str], key: str, value: Any, on_change: Callable[[str], Any],
+                  t: Theme, placeholder: str = "token or #rrggbbaa") -> Any:
+    return _core.row([_swatch(d, name, key, value),
+                      ui.input(str(value or ""), on_change, placeholder=placeholder, size="sm", mono=True, theme=t)],
+                     spacing=6, align="center")
+
+
+def _color_rows(d: "Designer", name: Optional[str], key: str, title: str, value: Any, on_change: Callable[[Any], Any],
+                t: Theme, *, tip: Optional[str] = None, placeholder: str = "token or #rrggbbaa") -> List[Any]:
+    rows = [prop_row(title, _color_editor(d, name, key, value, on_change, t, placeholder), t, tip=tip)]
+    if _picker_open(d, name, key):
+        rows.append(_picker_row(d, name, key, value, on_change, t))
+    return rows
+
+
+def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -> List[Any]:
+    from .styling import describe, picked
+
+    def pick(v: Any) -> None:
+        d.set_style_value(name, "background", picked(v))
+
+    summary = _core.row([
+        _swatch(d, name, "background", value),
+        _core.button(ui.label(tr(describe(value)), size="sm", color="text" if value else "text_muted", theme=t),
+                     lambda: d.toggle_color_picker(name, "background"), bg="transparent", hover_bg=t.element_hover,
+                     padding=(2, 6), width="fill"),
+        ui.icon_button("x", lambda: d.set_style_value(name, "background", None), size="xs", tooltip="No background",
+                       theme=t) if value else _core.space(width=0),
+    ], spacing=6, align="center")
+    rows = [prop_row("Background", summary, t, tip="A color, a gradient or a masked fill: click to pick")]
+    if _picker_open(d, name, "background"):
+        rows.append(_picker_row(d, name, "background", value, pick, t, fill=True))
+    return rows
+
+
+def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fields: Any = None) -> List[Any]:
+    """The Style section: background, text, border, corners, shadow, spacing and alignment.
+
+    ``name`` is the control being edited, or ``None`` for the form's global style.
+    """
+    from . import styling
+
+    fields = styling.FIELDS if fields is None else fields
+    rows: List[Any] = [Group("Style")]
+    rows.extend(_background_rows(d, name, style.get("background"), t))
+    for field in fields:
+        value = style.get(field.key)
+
+        def on_change(v: Any, key: str = field.key) -> None:
+            d.set_style(name, key, v)
+
+        if field.kind == "color":
+            rows.extend(_color_rows(d, name, field.key, field.title, value, on_change, t, tip=field.tip))
+            continue
+        if field.kind == "number":
+            number = float(value) if isinstance(value, (int, float)) else 0.0
+            editor = ui.number_field(number, on_change, min=field.min, max=field.max, step=field.step, width="fill",
+                                     theme=t)
+        elif field.kind == "choice":
+            editor = _choice_editor(field.choices, styling.choice_of(field.key, value), on_change, t)
+        elif field.kind in ("box", "radius"):
+            editor = ui.input(styling.numbers_text(value), on_change, placeholder="0" if field.kind == "radius" else
+                              "8 · 8 12 · 4 8 4 8", size="sm", mono=True, theme=t)
+        elif field.kind == "shadow":
+            color, x, y, blur = styling.shadow_parts(value)
+
+            def shadow(part: int, v: Any, parts: tuple = (color, x, y, blur)) -> None:
+                values = list(parts)
+                values[part] = v
+                d.set_style_value(name, "shadow", styling.shadow_value(*values))
+
+            rows.extend(_color_rows(d, name, "shadow", field.title, color, lambda v: shadow(0, v), t, tip=field.tip,
+                                    placeholder="none"))
+            if color:
+                rows.append(prop_row("Offset", _core.row([
+                    ui.number_field(x, lambda v: shadow(1, v), min=-64, max=64, width="fill", theme=t),
+                    ui.number_field(y, lambda v: shadow(2, v), min=-64, max=64, width="fill", theme=t),
+                ], spacing=6), t, tip="Horizontal and vertical offset"))
+                rows.append(prop_row("Blur", ui.number_field(blur, lambda v: shadow(3, v), min=0, max=96, width="fill",
+                                                             theme=t), t))
+            continue
+        else:
+            editor = ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
+        rows.append(prop_row(field.title, editor, t, tip=field.tip))
+    if style:
+        rows.append(_core.container(ui.button(tr("Reset style"), lambda: d.clear_style(name), icon="rotate-ccw",
+                                              variant="ghost", size="sm", theme=t), padding=(4, 10)))
+    return rows

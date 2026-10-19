@@ -27,6 +27,7 @@ from .. import _core, ui
 from ..component import Component
 from . import components as _components
 from . import layout as _layout
+from . import styling
 from .model import Control
 from .runtime import ControlProxy, Event, theme_for
 
@@ -266,10 +267,13 @@ class SceneComponent(Component):
                     continue
                 if spec.visual:
                     merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
-                    widgets[control.name] = _wrap_mouse(ctx, control, spec.render(merged, ctx))
+                    widgets[control.name] = _wrap_mouse(ctx, control,
+                                                        _components.styled(spec.render(merged, ctx), control, ctx))
         finally:
             _rendering.pop()
         background = theme.color(model.background) if model.background else None
+        if background is None and isinstance((model.style or {}).get("background"), str):
+            background = theme.background  # a global plain color became the theme's background
         error = self.__dict__.get("_pyzed_error")
 
         def draw(width: float, height: float) -> Any:
@@ -278,6 +282,8 @@ class SceneComponent(Component):
             layers = []
             if background is not None:
                 layers.append(_core.container(width="fill", height="fill", bg=background))
+            if painted is not None:
+                layers.append(painted)
             for name, widget in widgets.items():
                 x, y, w, h = rects[name]
                 layers.append(_core.pin(_core.container(widget, width=w, height=h, clip=True), x=x, y=y))
@@ -285,8 +291,10 @@ class SceneComponent(Component):
                 layers.append(_core.container(ui.callout("Component error", error, tint="error",
                                                          on_dismiss=self._dismiss_error),
                                               width="fill", height="fill", align_y="end"))
-            return _core.stack(layers, width="fill", height="fill")
+            return styling.apply_global(_core.stack(layers, width="fill", height="fill"), model.style, theme,
+                                        background=False)
 
+        painted = styling.background_layer(model.style, theme)
         body = _core.responsive(draw)
         if placed:
             return body
