@@ -141,6 +141,11 @@ def invaders_setup(app):
     app.powerups.append([520, 300])
 
 
+def window_frame_setup(app):
+    app.frame = "gnome"  # the same picture on every desktop
+    app.log = "New note"
+
+
 def invaders_title_setup(app):
     for _ in range(30):
         app.tick(1 / 60)
@@ -158,6 +163,7 @@ SHOTS = {
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
     "tutorials/effects": (app("effects", "Effects"), (900, 460)),
+    "tutorials/window-frames": (app("window_frame", "Notes", window_frame_setup), (760, 520)),
     "showcase/hud": (app("hud", "Hud"), (1280, 720)),
     "showcase/main-menu": (app("main_menu", "MainMenu"), (1280, 720)),
     "showcase/inventory": (app("inventory", "Inventory"), (1180, 640)),

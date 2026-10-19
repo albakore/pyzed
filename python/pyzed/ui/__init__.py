@@ -54,6 +54,7 @@ from .display import (
     stat,
     table,
 )
+from .frame import Menu, system_platform, window_controls, window_frame, window_title_bar
 from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
 from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
@@ -148,6 +149,11 @@ __all__ = [
     "segmented",
     "select",
     "SEPARATOR",
+    "Menu",
+    "system_platform",
+    "window_controls",
+    "window_frame",
+    "window_title_bar",
     "settings_group",
     "slider",
     "sparkline",

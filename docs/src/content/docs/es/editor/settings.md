@@ -19,6 +19,8 @@ diálogo.
 | **Idioma** | *Idioma del sistema*, English o Español: el idioma de los menús y paneles. |
 | **Barra de herramientas** | Muestra u oculta la barra de herramientas. |
 | **Barra de estado** | Muestra u oculta la barra de estado. |
+| **Marco de ventana propio** | Activado por defecto: Pyzed Design dibuja su propia barra de título y botones de ventana, como Zed. Desactívalo para usar el marco del sistema (se aplica la próxima vez que se abre). |
+| **Marco de la vista previa** | El marco de ventana que el lienzo muestra alrededor del formulario: el de este sistema, macOS, Windows 11, GNOME, Ubuntu o KDE Plasma. |
 
 ## Lienzo del formulario
 

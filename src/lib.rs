@@ -8,6 +8,7 @@ mod events;
 mod extra;
 mod focus;
 mod fonts;
+mod frame;
 mod highlighter;
 mod layout;
 mod render;
@@ -38,6 +39,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     extra::register(m)?;
     shader::register(m)?;
     layout::register(m)?;
+    frame::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;

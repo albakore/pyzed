@@ -559,6 +559,17 @@ i18n.add("es", {"designer": {
     "Preview the form in a language…": "Ver el formulario en un idioma…",
     "The form's theme ({name})": "El tema del formulario ({name})",
     "The current language ({name})": "El idioma actual ({name})",
+    "Preview window frame…": "Vista previa del marco de ventana…",
+    "Preview the form in the window frame of…": "Ver el formulario con el marco de ventana de…",
+    "This system ({name})": "Este sistema ({name})",
+    "Window frame shown around the form": "Marco de ventana que se muestra alrededor del formulario",
+    "Custom window frame": "Marco de ventana propio",
+    "Pyzed's own title bar and window buttons; off uses the system's frame (applies on restart)":
+        "Barra de título y botones de ventana de Pyzed; desactivado usa el marco del sistema (se aplica al reiniciar)",
+    "Form preview frame": "Marco de la vista previa",
+    "The window frame the canvas shows around the form": "El marco de ventana que el lienzo muestra alrededor del formulario",
+    "Window frame": "Marco de ventana",
+    "Restart Pyzed Design to apply the change": "Reinicia Pyzed Design para aplicar el cambio",
     "Choose an icon…": "Elegir un icono…",
 }})
 

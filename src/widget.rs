@@ -365,6 +365,11 @@ pub enum Kind {
         placement: crate::layout::Placement,
     },
     Resizable(Box<crate::layout::ResizableProps>),
+    /// Borders that resize a window without system decorations (`window_edges(...)`).
+    WindowEdges {
+        child: Py<Widget>,
+        border: f32,
+    },
     /// Common events attached with `.on(...)` (see `events.rs`).
     Events {
         child: Py<Widget>,
@@ -437,6 +442,7 @@ impl Widget {
                 return format!("<Widget cell {inner}>");
             }
             Kind::Resizable(_) => "resizable",
+            Kind::WindowEdges { .. } => "window_edges",
             Kind::Presence(_) => "presence",
             Kind::Animated { child, spec } => {
                 let inner = Python::attach(|py| child.bind(py).get().__repr__());

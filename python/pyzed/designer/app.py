@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .. import _core, ui
 from ..app import App
+from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from . import binding as _binding
@@ -155,6 +156,9 @@ class Designer(App):
         self.focus = "canvas"
         # preferences and view options
         self.prefs = preferences.load()
+        # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
+        self.frame = "custom" if self.prefs.window_frame else None
+        self.preview_frame: Optional[str] = self.prefs.preview_frame or None
         self.show_grid = self.prefs.show_grid
         self.snap = self.prefs.snap
         self.smart_guides = self.prefs.smart_guides
@@ -1221,9 +1225,21 @@ class Designer(App):
 
     def set_preview(self, which: str, value: Optional[str]) -> None:
         """Previews the form in theme or language ``value`` (``None`` goes back to the form's own) on the canvas
-        and when it runs."""
+        and when it runs, or (``which="frame"``) in the window frame of platform ``value`` on the canvas
+        (``None`` is this system's; remembered in the preferences)."""
         setattr(self, f"preview_{which}", value or None)
+        if which == "frame":
+            self.prefs.preview_frame = value or ""
+            preferences.save(self.prefs)
         self.dialog = None
+
+    def set_window_frame(self, custom: bool) -> None:
+        """Draws the designer's own title bar and window buttons (``custom``) or uses the system's frame.
+        Saved in the preferences; it applies the next time the designer opens."""
+        if custom == bool(self.prefs.window_frame):
+            return
+        self.set_pref("window_frame", custom)
+        self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 
     def toggle_app_menu(self, name: str) -> None:
         """Opens the title bar menu ``name`` ("file", "view" or "help"), or closes it if open."""
@@ -1968,7 +1984,8 @@ class Designer(App):
             handled, result = self.assist.on_key(combo)
             if handled:
                 return result
-        if self.dialog in ("palette", "add_control", "preview_theme", "preview_language") and combo in ("up", "down"):
+        if self.dialog in ("palette", "add_control", "preview_theme", "preview_language", "preview_frame") \
+                and combo in ("up", "down"):
             self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
             return None
         if combo == "escape":
@@ -2039,17 +2056,23 @@ class Designer(App):
         self.sync_code()
         t = self.theme_obj
         main = self.panes.main
-        body = _core.container(_core.column([
-            self.title_bar(t),
-            docks.workspace(self, self.center_view(main, t), t),
-            self.status_bar(t) if self.prefs.show_status_bar else None,
-        ], width="fill", height="fill"), width="fill", height="fill", bg=t.background)
+        frame = self.__pyzed_frame__()
+        inside = [docks.workspace(self, self.center_view(main, t), t),
+                  self.status_bar(t) if self.prefs.show_status_bar else None]
+        if frame is not None:  # Pyzed's own window frame, with the title bar's items in it
+            start, end = self.title_items(t)
+            body = ui.window_frame(_core.column(inside, width="fill", height="fill"), start=start, end=end,
+                                   height=TITLE_HEIGHT, resize_edges=False, theme=t)
+        else:
+            body = _core.column([self.title_bar(t), *inside], width="fill", height="fill")
+        body = _core.container(body, width="fill", height="fill", bg=t.background)
         if self.app_menu is not None:
             menu = self.title_menu(self.app_menu, t)
             if self.app_menu == "file":
-                body = ui.popover(body, menu, x=8, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
+                x = ui_frame.start_x(frame) if frame else 8
+                body = ui.popover(body, menu, x=x, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
-                right = 8 + 30 * (1 if self.app_menu == "help" else 2)
+                right = (ui_frame.end_x(frame) if frame else 8) + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
         if self.projects.files.menu is not None:
             menu, mx, my = self.projects.files.menu_at(t)
@@ -2063,7 +2086,10 @@ class Designer(App):
         if ghost is not None:
             gx, gy = self.window_pointer
             body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
-        return self.window_overlays(body, main, t)
+        body = self.window_overlays(body, main, t)
+        if frame is not None:  # the borders resize the window, above the menus and dialogs
+            body = _core.window_edges(body, enabled=not self.window_maximized and frame != "overlay")
+        return body
 
     def center_view(self, pane: Pane, t) -> Any:
         """What sits under the tabs of ``pane``: its document's toolbar and canvas (or, in the main window,
@@ -2144,6 +2170,11 @@ class Designer(App):
 
     def title_bar(self, t) -> Any:
         """Returns the title bar: menu, project and file buttons, Run and Stop, View, Help and Settings."""
+        start, end = self.title_items(t)
+        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+
+    def title_items(self, t) -> Tuple[List[Any], List[Any]]:
+        """The items at the start (menu, project, file) and end (Run, Stop, View, Help, Settings) of the title bar."""
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
@@ -2168,7 +2199,7 @@ class Designer(App):
                            tooltip=None if self.app_menu else tr("Help"), theme=t),
             ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
         ]
-        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+        return start, end
 
     def set_designer_theme(self, name: str) -> None:
         """Switches the designer to the theme ``name`` and saves it in the preferences."""
@@ -2266,6 +2297,8 @@ class Designer(App):
                            color="accent") if self.preview_theme else None,
             ui.status_item(self.preview_language, lambda: self.open_preview_picker("language"), icon="languages",
                            color="accent") if self.preview_language else None,
+            ui.status_item(ui_frame.PLATFORM_LABELS[surface.frame_style(self)], lambda: self.open_preview_picker("frame"),
+                           icon="app-window", tooltip=tr("Window frame shown around the form")),
             ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers"),
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
@@ -2324,7 +2357,8 @@ class Designer(App):
             return agent_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
                  "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette,
-                 "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language}
+                 "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language,
+                 "preview_frame": dialogs.preview_frame}
         if self.dialog in named:
             return named[self.dialog](self, t)
         return None

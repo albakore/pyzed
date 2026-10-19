@@ -161,6 +161,34 @@ def designer_window():
 
     login = Path(__file__).resolve().parents[2] / "examples" / "designer" / "login.pzform"
     app = designer.Designer(login, language_servers=False)
+    app.frame, app.preview_frame = "gnome", "macos"  # the same frames on every desktop
     app.doc.select("sign_in")
     app._selection_changed()
+    return app
+
+
+@scene("window-controls", size=(560, 300))
+def window_controls():
+    def bars():
+        rows = []
+        for style in ui.frame.PLATFORMS:
+            rows.append(ui.window_title_bar("Notes", style=style, on_minimize=lambda: None,
+                                            on_maximize=lambda: None, on_close=lambda: None))
+        rows.append(ui.window_title_bar("Notes", style="macos", focused=False))
+        rows.append(ui.window_title_bar("Notes", style="windows", maximized=True))
+        return pz.container(pz.column(rows, spacing=6), padding=8, width="fill", height="fill")
+
+    return _app(bars)
+
+
+@scene("window-frame", size=(560, 300))
+def window_frame():
+    app = _app(lambda: pz.container(ui.label("Hello"), padding=16, width="fill", height="fill"))
+    app.frame, app.title = "windows", "Notes"
+    app.frame_menus = lambda: [
+        ui.Menu("File", [ui.MenuItem("Open…", icon="folder-open", keys="ctrl-o"), ui.SEPARATOR, ui.MenuItem("Quit")]),
+        ui.Menu("Edit", [ui.MenuItem("Undo", keys="ctrl-z")]),
+    ]
+    menu = ui.frame._menu_state(app)  # the File menu is open
+    menu.open, menu.expanded, menu.x = 0, True, 8
     return app

@@ -22,6 +22,13 @@ class Command:
         """Copies `text` to the system clipboard."""
         ...
     @staticmethod
+    def drag_resize_window(direction: Any, window: Any = ...) -> Any:
+        """Starts resizing the window with the mouse from one of its edges or corners:
+        `direction` is "n", "s", "e", "w", "ne", "nw", "se" or "sw" (use it on press of
+        a custom border; `ui.window_frame` already does).
+        """
+        ...
+    @staticmethod
     def drag_window(window: Any = ...) -> Any:
         """Starts moving the window with the mouse (use it on press of a custom title bar)."""
         ...
@@ -65,6 +72,10 @@ class Command:
         """Folds the block that starts at `line` (1-based) of the `code_editor` with the given
         `id` (`fold=False` unfolds it).
         """
+        ...
+    @staticmethod
+    def maximize_window(maximized: Any = ..., window: Any = ...) -> Any:
+        """Maximizes the window (or restores it with `maximized=False`)."""
         ...
     @staticmethod
     def message(message: Any) -> Any:
@@ -154,6 +165,12 @@ class Command:
     @staticmethod
     def set_fullscreen(fullscreen: Any = ..., window: Any = ...) -> Any:
         """Switches the window between fullscreen and windowed mode."""
+        ...
+    @staticmethod
+    def show_window_menu(window: Any = ...) -> Any:
+        """Shows the system's window menu (move, size, close...) under the pointer.
+        Only Windows has one; elsewhere it does nothing.
+        """
         ...
     @staticmethod
     def toggle_maximize_window(window: Any = ...) -> Any:
@@ -401,5 +418,11 @@ def tooltip(content: Any, tip: Any, *, position: Any = ..., gap: Any = ..., bg: 
 def virtual_column(count: Any, item: Any, *, item_height: Any, spacing: Any = ..., overscan: Any = ..., width: Any = ...) -> Any:
     """A column of `count` rows of the same height that only builds the rows in view:
     `item(index)` is called when row `index` scrolls into view. Put it in a `scrollable`.
+    """
+    ...
+def window_edges(content: Any, *, border: Any = ..., enabled: Any = ...) -> Any:
+    """Wraps `content` (the whole window) so that pressing within `border` pixels of an edge
+    resizes the window: the way to resize windows opened with `decorations=False`. The
+    corners take twice as much room. `enabled=False` turns it off (for a maximized window).
     """
     ...

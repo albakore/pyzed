@@ -234,6 +234,30 @@ Window.drag()
 
 A command that starts moving the window (for custom title bars).
 
+#### `Window.minimize`
+
+```python
+Window.minimize()
+```
+
+A command that minimizes the window.
+
+#### `Window.toggle_maximize`
+
+```python
+Window.toggle_maximize()
+```
+
+A command that maximizes the window, or restores it when it is maximized.
+
+#### `Window.frame_menus`
+
+```python
+Window.frame_menus()
+```
+
+The menus on the left of a custom frame's title bar (`frame = "custom"`): a list of `ui.Menu`.
+
 #### `Window.resolved_theme`
 
 ```python

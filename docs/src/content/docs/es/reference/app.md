@@ -235,6 +235,30 @@ Window.drag()
 
 Un comando que empieza a mover la ventana (para barras de título propias).
 
+#### `Window.minimize`
+
+```python
+Window.minimize()
+```
+
+Un comando que minimiza la ventana.
+
+#### `Window.toggle_maximize`
+
+```python
+Window.toggle_maximize()
+```
+
+Un comando que maximiza la ventana, o la restaura si está maximizada.
+
+#### `Window.frame_menus`
+
+```python
+Window.frame_menus()
+```
+
+Los menús a la izquierda de la barra de título de un marco propio (`frame = "custom"`): una lista de `ui.Menu`.
+
 #### `Window.resolved_theme`
 
 ```python

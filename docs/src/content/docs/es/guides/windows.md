@@ -84,13 +84,14 @@ Atributos de clase o de instancia:
 | `title` | Texto o callable. |
 | `size`, `min_size`, `max_size` | Tamaños en píxeles lógicos. |
 | `position` | `"center"` o `(x, y)`. |
-| `resizable`, `decorations` | `decorations=False` quita el marco del sistema (barra de título propia). |
+| `resizable`, `decorations` | `decorations=False` quita el marco del sistema por completo. |
+| `frame` | `"custom"` dibuja la barra de título, los botones de ventana y los menús en Pyzed (ver [Marcos de ventana](#marcos-de-ventana-tu-propia-barra-de-título)). |
 | `transparent`, `maximized`, `fullscreen` | Estado inicial. |
 | `scale` | Escala de la interfaz. |
 | `theme` | Un `Theme`, un nombre o `themes.auto(...)`. `None` usa el de la app. |
 | `transition`, `exit_transition` | Cómo se anima al abrirse y al cerrarse: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... un preset o una `pz.Animation`. Ver [Animación](/pyzed/es/guides/animation/#transiciones-de-ventana). |
 
-`window_size` contiene el tamaño actual y `window_position` dónde está la ventana en la pantalla (los actualiza el runtime; la posición es `None` en Wayland).
+`window_size` contiene el tamaño actual y `window_position` dónde está la ventana en la pantalla (los actualiza el runtime; la posición es `None` en Wayland). `window_maximized` y `window_focused` dicen si está maximizada y si tiene el foco del teclado.
 
 ## Ganchos
 
@@ -111,27 +112,74 @@ mensaje.
 | `Command.open_window(w)` / `w.open()` | Abre la ventana. |
 | `Command.close_window(w)` / `w.close()` | La cierra. |
 | `Command.drag_window(w)` / `w.drag()` | Empieza a moverla con el ratón (para barras de título propias). |
-| `Command.minimize_window(w)` | La minimiza. |
-| `Command.toggle_maximize_window(w)` | Maximiza o restaura. |
+| `Command.minimize_window(w)` / `w.minimize()` | La minimiza. |
+| `Command.toggle_maximize_window(w)` / `w.toggle_maximize()` | Maximiza o restaura. |
+| `Command.maximize_window(True, w)` | La maximiza (`False` la restaura). |
+| `Command.drag_resize_window("se", w)` | Empieza a cambiar su tamaño desde un borde o una esquina (para marcos propios). |
+| `Command.show_window_menu(w)` | Muestra el menú de ventana del sistema (solo Windows). |
 | `Command.set_fullscreen(True, w)` | Pantalla completa. |
 | `Command.resize_window(ancho, alto, w)` | Cambia el tamaño. |
 | `Command.move_window(x, y, w)` | La mueve. |
 | `Command.focus_window(w)` | La trae al frente. |
 
-### Barra de título propia
+### Marcos de ventana: tu propia barra de título
+
+`frame = "custom"` cambia el marco del sistema por uno dibujado por Pyzed, como el de Zed: una barra de título
+que mueve la ventana (doble clic la maximiza), los botones de minimizar, maximizar y cerrar con el estilo del
+sistema, menús a la izquierda y bordes que cambian el tamaño de la ventana. `frame_menus()` devuelve los menús.
+
+![Marcos de ventana de cada plataforma](../../../../assets/tutorials/window-frames.png)
 
 ```python
-class Frameless(pz.App):
-    decorations = False
+class Notas(pz.App):
+    title = "Notas"
+    frame = "custom"          # o "macos", "windows", "gnome", "ubuntu", "kde"
+
+    def frame_menus(self):
+        return [
+            ui.Menu("Archivo", [ui.MenuItem("Abrir…", self.abrir, keys="ctrl-o"), ui.SEPARATOR,
+                                ui.MenuItem("Salir", self.close)]),
+            ui.Menu("Editar", [ui.MenuItem("Deshacer", self.deshacer, keys="ctrl-z")]),
+        ]
 
     def view(self):
-        bar = pz.mouse_area(
-            ui.title_bar([ui.title_button("Mi app")], [ui.icon_button("x", self.close)]),
-            on_press=self.drag,
-            on_double_click=lambda: pz.Command.toggle_maximize_window(),
-        )
-        return pz.column([bar, self.contenido()])
+        return self.editor()
 ```
+
+Los menús quedan tras un botón ☰, como en Zed: un clic abre el primero y muestra el nombre de todos, y al
+pasar el puntero a otro nombre se abre ese. Para poner más cosas en la barra (un selector de proyecto, un botón
+Ejecutar), llama tú a `ui.window_frame` en `view()`; así la ventana no se enmarca dos veces:
+
+```python
+def view(self):
+    return ui.window_frame(
+        self.editor(),
+        menus=self.frame_menus(),
+        start=[ui.title_button("pyzed", chevron=True)],
+        end=[ui.button("Ejecutar", self.ejecutar, icon="play", size="sm")],
+    )
+```
+
+| Valor de `frame` | Qué obtienes |
+| --- | --- |
+| `None` (por defecto) o `"system"` | El marco del sistema. |
+| `"custom"` o `True` | La barra de título de Pyzed con los botones del sistema. En macOS el sistema sigue dibujando sus semáforos sobre la barra. |
+| `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"`, `"kde"` | Los botones de esa plataforma en cualquier sistema. |
+
+`window_maximized` y `window_focused` dicen si la ventana está maximizada y tiene el foco (los actualiza el
+runtime), así que el botón de maximizar muestra el símbolo de restaurar y la barra se atenúa en segundo plano.
+Maximizada, la ventana no tiene borde para cambiar su tamaño.
+
+Las piezas también funcionan por separado: `ui.window_title_bar` es la barra sola (sin callbacks solo se
+muestra, que es como Pyzed Design previsualiza los formularios), `ui.window_controls` los tres botones y
+`pz.window_edges` los bordes que cambian el tamaño de una ventana sin decoraciones. Para una barra hecha desde
+cero, usa los comandos `Command.drag_window`, `Command.drag_resize_window`, `Command.toggle_maximize_window` y
+`Command.show_window_menu`.
+
+**Notas por plataforma.** En Windows la ventana conserva la sombra y las esquinas redondeadas del sistema.
+Wayland mueve y redimensiona la ventana igual que X11 (lo hace el compositor). En WSL Pyzed usa X11 y
+`"custom"` dibuja botones de Windows, el escritorio donde aparece la ventana. `ui.system_platform()` dice qué
+estilo elige `"custom"`.
 
 ### Pestañas arrastrables y ventanas desprendibles
 

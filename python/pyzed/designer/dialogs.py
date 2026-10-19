@@ -41,6 +41,14 @@ def settings(d: "Designer", t: Theme) -> Any:
     def switch(key: str) -> Any:
         return ui.switch(bool(getattr(p, key)), lambda v, k=key: d.set_pref(k, v), theme=t)
 
+    frame_labels = {"": tr("This system ({name})", name=ui.frame.PLATFORM_LABELS[ui.system_platform()]),
+                    **ui.frame.PLATFORM_LABELS}
+    frame_names = list(frame_labels.values())
+    frame_current = frame_labels.get(p.preview_frame, frame_names[0])
+
+    def pick_frame(name: str) -> None:
+        d.set_preview("frame", next(k for k, v in frame_labels.items() if v == name) or None)
+
     names = {code: tr(name) if not code else name for code, name in LANGUAGES}
     language_names = list(names.values())
     current = names.get(p.language, language_names[0])
@@ -52,6 +60,11 @@ def settings(d: "Designer", t: Theme) -> Any:
                  description=tr("Language of the designer's menus and panels"), theme=t),
         ui.field(tr("Toolbar"), switch("show_toolbar"), theme=t),
         ui.field(tr("Status bar"), switch("show_status_bar"), theme=t),
+        ui.field(tr("Custom window frame"), ui.switch(bool(p.window_frame), d.set_window_frame, theme=t),
+                 description=tr("Pyzed's own title bar and window buttons; off uses the system's frame (applies on "
+                                "restart)"), theme=t),
+        ui.field(tr("Form preview frame"), ui.select(frame_names, frame_current, pick_frame, width=200, theme=t),
+                 description=tr("The window frame the canvas shows around the form"), theme=t),
     ], theme=t)
     canvas = ui.settings_group(tr("Form canvas"), [
         ui.field(tr("Show grid"), switch("show_grid"), theme=t),
@@ -260,18 +273,23 @@ def palette(d: "Designer", t: Theme) -> Any:
                      placeholder=tr("Run a command…"), input_id=PICKER_ID, on_submit=chosen, theme=t)
 
 
-def _preview_picker(d: "Designer", which: str, options: List[str], own: str, t: Theme) -> Any:
+_PREVIEW_ICONS = {"theme": "palette", "language": "languages", "frame": "app-window"}
+_PREVIEW_PLACEHOLDERS = {"theme": "Preview the form in a theme…", "language": "Preview the form in a language…",
+                         "frame": "Preview the form in the window frame of…"}
+
+
+def _preview_picker(d: "Designer", which: str, options: List[str], own: str, t: Theme,
+                    labels: Optional[dict] = None) -> Any:
     current = getattr(d, f"preview_{which}")
     items = [ui.PaletteItem(own, lambda: d.set_preview(which, None), icon="undo-2",
                             detail=tr("current") if current is None else "")]
     for option in options:
-        items.append(ui.PaletteItem(option, lambda o=option: d.set_preview(which, o),
-                                    icon="palette" if which == "theme" else "languages",
-                                    detail=tr("current") if option == current else ""))
+        items.append(ui.PaletteItem((labels or {}).get(option, option), lambda o=option: d.set_preview(which, o),
+                                    icon=_PREVIEW_ICONS[which], detail=tr("current") if option == current else ""))
     matches = ui.fuzzy_filter(d.picker_query, items, key=lambda i: i.label)
     index = min(d.picker_index, max(len(matches) - 1, 0))
     chosen = matches[index][0].on_press if matches else None
-    placeholder = tr("Preview the form in a theme…") if which == "theme" else tr("Preview the form in a language…")
+    placeholder = tr(_PREVIEW_PLACEHOLDERS[which])
     return ui.picker(d.picker_query, d.set_picker_query, matches, selected=index, placeholder=placeholder,
                      input_id=PICKER_ID, on_submit=chosen, theme=t)
 
@@ -281,6 +299,13 @@ def preview_theme(d: "Designer", t: Theme) -> Any:
     from ..theme import themes
 
     return _preview_picker(d, "theme", themes.names(), tr("The form's theme ({name})", name=d.doc.form.theme), t)
+
+
+def preview_frame(d: "Designer", t: Theme) -> Any:
+    """The platforms whose window frame the canvas can show around the form, first this system's."""
+    labels = ui.frame.PLATFORM_LABELS
+    own = tr("This system ({name})", name=labels[ui.system_platform()])
+    return _preview_picker(d, "frame", list(ui.frame.PLATFORMS), own, t, labels=labels)
 
 
 def preview_language(d: "Designer", t: Theme) -> Any:

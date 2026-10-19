@@ -1803,6 +1803,160 @@ A panel header: icon, title and actions.
 | `height` | Height. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
+## Window frame
+
+### `window_frame`
+
+```python
+window_frame(
+    content,
+    *,
+    title=None,
+    menus=None,
+    menu_button=True,
+    start=(),
+    center=None,
+    end=(),
+    style=None,
+    window=None,
+    height=None,
+    resize_border=6.0,
+    resize_edges=True,
+    bg=None,
+    theme=None,
+)
+```
+
+The whole frame of a window opened with `frame="custom"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed, and borders that resize the window.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The window's content, under the title bar. |
+| `title` | Title shown in the bar. By default the window's `title`. |
+| `menus` | Menus on the left of the bar: a list of `ui.Menu`. |
+| `menu_button` | Shows the menus behind a ☰ button, like Zed (`False` always shows their names). |
+| `start` | Items after the menus (project, branch…). |
+| `center` | Your own widget in the middle instead of the title. |
+| `end` | Items before the window buttons. |
+| `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"`. By default the window's `frame`, or this system's. |
+| `window` | The window the buttons act on. By default the one whose `view()` is running. |
+| `height` | Height of the bar. By default the platform's. |
+| `resize_border` | Width in pixels of the borders that resize the window. |
+| `resize_edges` | `False` leaves the resize borders to you (`pz.window_edges`), to put them over menus and dialogs. |
+| `bg` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+class Notes(pz.App):
+frame = "custom"
+
+def view(self):
+    return ui.window_frame(self.editor(), menus=[ui.Menu("File", [ui.MenuItem("Open", self.open)])],
+                           end=[ui.icon_button("settings", self.settings)])
+```
+
+### `window_title_bar`
+
+```python
+window_title_bar(
+    title=None,
+    *,
+    style=None,
+    start=(),
+    center=None,
+    end=(),
+    on_drag=None,
+    on_minimize=None,
+    on_maximize=None,
+    on_close=None,
+    on_menu=None,
+    maximized=False,
+    focused=True,
+    width='fill',
+    height=None,
+    bg=None,
+    border=True,
+    theme=None,
+)
+```
+
+A window's title bar alone: window buttons in the style of `style` (on the left for macOS), `start` items, the title and `end` items. Without callbacks it only shows, which is how Pyzed Design previews a form in the frame of each platform.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | Title (centered, or on the left on Windows). |
+| `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"` (`None`: this system's). |
+| `start` | Items at the start. |
+| `center` | Widget in the middle instead of the title. |
+| `end` | Items at the end. |
+| `on_drag` | Called when the empty part of the bar is dragged (return `Command.drag_window()`). |
+| `on_minimize` | Minimize button. |
+| `on_maximize` | Maximize button and double click on the bar. |
+| `on_close` | Close button. |
+| `on_menu` | Right click on the bar. |
+| `maximized` | Shows the restore symbol. |
+| `focused` | `False` dims it like a window in the background. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | Height. By default the platform's. |
+| `bg` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `border` | Line under the bar. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `window_controls`
+
+```python
+window_controls(
+    style=None,
+    *,
+    on_minimize=None,
+    on_maximize=None,
+    on_close=None,
+    maximized=False,
+    focused=True,
+    height=None,
+    theme=None,
+)
+```
+
+The minimize, maximize and close buttons in the style of a platform. A button without a callback is drawn but does nothing.
+
+| Parameter | Description |
+| --- | --- |
+| `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"` (`None`: this system's). |
+| `on_minimize` | Minimize button. |
+| `on_maximize` | Maximize button. |
+| `on_close` | Close button. |
+| `maximized` | Shows the restore symbol. |
+| `focused` | `False` dims them. |
+| `height` | Height. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `Menu`
+
+```python
+@dataclass
+class Menu(label, items=[])
+```
+
+A menu of a window frame's menu bar: a name and its items (`ui.MenuItem`, `ui.SEPARATOR` or a header string).
+
+| Parameter | Description |
+| --- | --- |
+| `label` | The menu's name. |
+| `items` | Its entries: `ui.MenuItem`, `ui.SEPARATOR` or a header string. |
+
+```python
+ui.Menu("File", [ui.MenuItem("Open…", self.open, keys="ctrl-o"), ui.SEPARATOR, ui.MenuItem("Quit", self.close)])
+```
+
+### `system_platform`
+
+```python
+system_platform()
+```
+
+The style of this system's window buttons: `"macos"`, `"windows"`, `"kde"`, `"ubuntu"` or `"gnome"` (other Linux desktops). Under WSL it is `"windows"`.
+
 ## Overlays
 
 ### `layer`

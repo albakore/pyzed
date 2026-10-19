@@ -309,6 +309,10 @@ where
                 if over {
                     let at = position.unwrap_or_default();
                     state.press = Some((*button, at));
+                    if *button == mouse::Button::Left {
+                        // A drag handed to the system (moving the window) never reports its release.
+                        state.drag = None;
+                    }
                     let name = Some(button_name(*button));
                     publish(EventData {
                         button: name,
