@@ -148,6 +148,28 @@ pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], 
 `pz.flex_item` sets how much of the free space a child takes (`grow`), or a fixed size
 (`basis`). `wrap=True` wraps a row onto new lines.
 
+## Anchored layouts
+
+`pz.anchor_layout` places children freely, like a form made in Pyzed Design, and each child follows its
+**anchor** when the window is resized: it keeps its distance to the edges it is anchored to, stretches between
+opposite edges and stays centered otherwise.
+
+```python
+pz.anchor_layout([
+    pz.anchor(ui.heading("Report"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+    pz.anchor(report_body, x=16, y=48, width=368, height=192, anchor="full", max_width=720),
+    pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+], design=(400, 300))
+```
+
+`x`, `y`, `width` and `height` are in the `design` size (by default the smallest size that holds every child).
+`anchor` is one of the 16 presets of `pyzed.anchors.PRESETS` (`"top_left"`, `"top_center"`, `"top_right"`,
+`"top_wide"`, `"center_left"`, `"center"`... `"bottom_wide"`, `"left_tall"`, `"center_tall"`, `"right_tall"` and
+`"full"`), words such as `"left right bottom"`, or a tuple of edges. `min_width`, `min_height`, `max_width` and
+`max_height` limit the size when a child stretches; `pivot` (`0` to `1` on each axis) is the point that stays put
+when a limit stops it, and that `rotate` (degrees clockwise) turns around. `pyzed.anchors.place` does the math
+on its own if you place boxes yourself.
+
 ## Docks and resizable panels
 
 `pz.resizable(content, edge="right", size=240)` gives a panel a handle on one edge that the

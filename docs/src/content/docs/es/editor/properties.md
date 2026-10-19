@@ -106,16 +106,26 @@ Para un control colocado libremente (en el formulario, o en un panel, un group b
 | Campo | Significado |
 | --- | --- |
 | **Dentro de** | Solo dentro de un contenedor: el nombre del contenedor (clic para seleccionarlo) y un botón para **sacarlo**. |
-| **X**, **Y** | Posición respecto al formulario o al contenedor. |
-| **Ancho**, **Alto** | Tamaño en píxeles. |
-| **Anclaje** | Cuatro interruptores (izquierda, arriba, derecha, abajo): los bordes que siguen a la ventana, o al contenedor, cuando cambia de tamaño al ejecutarse. |
+| **Anclaje** | El preset de anclaje, dibujado como una caja en un marco, y su nombre (`Arriba · Izquierda`). Púlsalo para abrir la cuadrícula de 4×4 presets (ver abajo). |
+| **X · Ancho**, **Y · Alto** | Posición respecto al formulario o al contenedor, y tamaño en píxeles. |
+| **Izquierda · Derecha**, **Arriba · Abajo** | En lugar de X y Ancho (o Y y Alto) cuando el control se estira en ese eje: sus distancias a los lados del contenedor. Al cambiar una, el lado opuesto se queda donde está. |
+| **Tamaño mínimo**, **Tamaño máximo** | Límites del ancho y el alto cuando el control se estira (`0`: sin límite), para que un panel estirado se detenga en un ancho legible. |
+| **Pivote** | El punto alrededor del que el control gira y escala, y que queda fijo cuando un límite de tamaño frena el estiramiento: `0 0` es la esquina de arriba a la izquierda, `0.5 0.5` (por defecto) el centro, `1 1` la esquina de abajo a la derecha. |
+| **Rotación** | Grados en sentido horario, alrededor del pivote (el mismo valor que el `rotate` del estilo). |
+
+![La sección Posición con los presets de anclaje abiertos](../../../../../screenshots/editor-anchors.png)
 
 Para un hijo de una **fila o columna flex**: **Crecer** (su parte del espacio libre; 0 mantiene su tamaño),
 **Ancho** y **Alto**. Para un hijo de una **grilla**: **Columnas** (cuántas columnas ocupa), **Ancho** y
 **Alto**. Estos hijos los coloca su contenedor, así que no tienen X ni Y: arrástralos para reordenarlos. Ver
 [Disposición y contenedores](/pyzed/es/editor/layouts/).
 
-Los anclajes funcionan como en WinForms:
+Los presets son los anclajes de Unity, Unreal y Godot. Las columnas dicen cómo sigue el control al ancho
+(**Izquierda**, **Centro**, **Derecha** o **Estirar**) y las filas cómo sigue al alto (**Arriba**, **Centro**,
+**Abajo** o **Estirar**); la última celda, **Estirar · Estirar**, llena el contenedor. Elegir un preset solo cambia
+cómo sigue el control a un cambio de tamaño; activa **Moverlo también allí** para pegarlo además a los bordes a los
+que está anclado (centrado, o llenando el contenedor en los ejes estirados). Por dentro, un preset es un conjunto de
+bordes, como en WinForms:
 
 | Anclajes | Cuando la ventana crece |
 | --- | --- |

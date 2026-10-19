@@ -382,6 +382,196 @@ Sizes a child of `pz.flex`.
 | `basis` | A fixed main size in pixels, instead of growing. |
 | `align` | Cross-axis alignment for this child. |
 
+### `anchor`
+
+```python
+anchor(
+    content,
+    *,
+    x=0,
+    y=0,
+    width=100,
+    height=28,
+    anchor='top_left',
+    min_width=0,
+    min_height=0,
+    max_width=0,
+    max_height=0,
+    pivot=(0.5, 0.5),
+    rotate=0,
+)
+```
+
+Places a child of `pz.anchor_layout` at `x`, `y` with `width` and `height` (in the layout's design size) and says how it follows a resize.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The widget. |
+| `x` | Left edge in the design size. |
+| `y` | Top edge in the design size. |
+| `width` | Width in the design size. |
+| `height` | Height in the design size. |
+| `anchor` | A preset of `pyzed.anchors.PRESETS` (`"top_right"`, `"bottom_wide"`, `"center"`, `"full"`...), words (`"left right bottom"`) or a tuple of edges. |
+| `min_width` | Smallest width when it stretches (`0`: no limit). |
+| `min_height` | Smallest height when it stretches. |
+| `max_width` | Largest width when it stretches (`0`: no limit). |
+| `max_height` | Largest height when it stretches. |
+| `pivot` | `(x, y)` from `0` to `1`: the point that stays put when a limit stops it, and that `rotate` turns around. |
+| `rotate` | Degrees clockwise. |
+
+```python
+pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right")
+```
+
+### `anchor_layout`
+
+```python
+anchor_layout(children, *, design=None, width='fill', height='fill')
+```
+
+Places children made with `pz.anchor` freely, like a designed form: when it is resized, each child keeps its distance to the edges it is anchored to, stretches between opposite ones and stays centered otherwise. Later children are drawn on top. See [Anchored layouts](/pyzed/guides/layout/#anchored-layouts).
+
+| Parameter | Description |
+| --- | --- |
+| `children` | Children made with `pz.anchor(...)` (`None` is skipped). |
+| `design` | `(width, height)` the children were laid out in; by default the smallest size that holds them. |
+| `width` | Width. |
+| `height` | Height. |
+
+```python
+pz.anchor_layout([
+    pz.anchor(ui.heading("Report"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+    pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+], design=(400, 300))
+```
+
+### `place`
+
+```python
+place(
+    rect,
+    anchor,
+    design,
+    actual,
+    *,
+    min_size=(0, 0),
+    max_size=(0, 0),
+    pivot=(0.5, 0.5),
+)
+```
+
+Where a box designed in a parent of size `design` goes in a parent of size `actual`, following its anchor, with size limits and a pivot. The math behind `pz.anchor_layout` and designed forms.
+
+| Parameter | Description |
+| --- | --- |
+| `rect` | `(x, y, width, height)` in the design size. |
+| `anchor` | A preset, words or edges. |
+| `design` | The parent's design size. |
+| `actual` | The parent's current size. |
+| `min_size` | `(width, height)` lower limits (`0`: none). |
+| `max_size` | `(width, height)` upper limits (`0`: none). |
+| `pivot` | The point that stays put when a limit stops the box from stretching. |
+
+```python
+anchors.place((20, 20, 100, 30), "top_right", design=(400, 300), actual=(600, 300))  # (220, 20, 100, 30)
+```
+
+### `PRESETS`
+
+The 16 anchor presets by name (`top_left`, `top_center`, `top_right`, `top_wide`, `center_left`, `center`, `center_right`, `center_wide`, `bottom_left`, `bottom_center`, `bottom_right`, `bottom_wide`, `left_tall`, `center_tall`, `right_tall`, `full`), each the tuple of edges it anchors to.
+
+### `edges`
+
+```python
+edges(anchor)
+```
+
+The edges of an anchor given as a preset name, words or edges. Raises `ValueError` for anything else.
+
+| Parameter | Description |
+| --- | --- |
+| `anchor` | What to read. |
+
+### `preset_of`
+
+```python
+preset_of(edges)
+```
+
+The name of the preset a set of edges matches (every set is one of the 16).
+
+| Parameter | Description |
+| --- | --- |
+| `edges` | Edges. |
+
+### `preset`
+
+```python
+preset(horizontal, vertical)
+```
+
+The preset placed `horizontal` (`left`, `center`, `right`, `wide`) and `vertical` (`top`, `center`, `bottom`, `tall`).
+
+| Parameter | Description |
+| --- | --- |
+| `horizontal` | Placement on the x axis. |
+| `vertical` | Placement on the y axis. |
+
+### `axes`
+
+```python
+axes(edges)
+```
+
+The `(horizontal, vertical)` placement of a set of edges, such as `("right", "top")`.
+
+| Parameter | Description |
+| --- | --- |
+| `edges` | Edges. |
+
+### `snap_to`
+
+```python
+snap_to(anchor, rect, parent, margin=0.0)
+```
+
+A box moved (and sized, on stretched axes) to sit where an anchor points: against the anchored edges, centered or filling the parent, `margin` pixels in.
+
+| Parameter | Description |
+| --- | --- |
+| `anchor` | A preset, words or edges. |
+| `rect` | The box. |
+| `parent` | The parent's size. |
+| `margin` | Distance to the edges. |
+
+### `offsets`
+
+```python
+offsets(rect, parent)
+```
+
+The distances `(left, top, right, bottom)` from each side of the parent to a box.
+
+| Parameter | Description |
+| --- | --- |
+| `rect` | The box. |
+| `parent` | The parent's size. |
+
+### `pivot_offset`
+
+```python
+pivot_offset(size, pivot, rotate=0.0, scale=1.0)
+```
+
+The translation that makes a rotation and a scale (which turn around a box's center) turn around `pivot` instead.
+
+| Parameter | Description |
+| --- | --- |
+| `size` | The box's size. |
+| `pivot` | `(x, y)` from `0` to `1`. |
+| `rotate` | Degrees clockwise. |
+| `scale` | Scale factor. |
+
 ### `resizable`
 
 ```python

@@ -288,6 +288,30 @@ nombres de función handler. `layout` guarda opciones que lee el layout del padr
 
 **Métodos y propiedades**
 
+#### `Control.min_size`
+
+```python
+Control.min_size  # property
+```
+
+El `(ancho, alto)` mínimo cuando el control se estira (0: sin límite).
+
+#### `Control.max_size`
+
+```python
+Control.max_size  # property
+```
+
+El `(ancho, alto)` máximo cuando el control se estira (0: sin límite).
+
+#### `Control.pivot`
+
+```python
+Control.pivot  # property
+```
+
+El punto `(x, y)` de 0 a 1 alrededor del que giran la rotación y la escala, y que se queda quieto cuando un límite de tamaño frena el estiramiento.
+
 #### `Control.rect`
 
 ```python
@@ -743,6 +767,38 @@ Document.toggle_anchor(name, edge)
 ```
 
 Añade `edge` a los anclajes del control `name`, o lo quita si ya estaba.
+
+#### `Document.parent_size`
+
+```python
+Document.parent_size(name)
+```
+
+El tamaño del padre del control `name` (su contenedor o el formulario).
+
+#### `Document.set_anchor`
+
+```python
+Document.set_anchor(name, anchor, *, move=False, margin=0.0)
+```
+
+Ancla el control `name` con un preset, palabras o bordes; con `move=True` también lo lleva a ese sitio, a `margin` píxeles del borde.
+
+#### `Document.set_offset`
+
+```python
+Document.set_offset(name, side, value)
+```
+
+Fija la distancia de un lado (`left`, `top`, `right`, `bottom`) del control `name` al de su padre.
+
+#### `Document.set_pivot`
+
+```python
+Document.set_pivot(name, x, y)
+```
+
+Fija el pivote del control `name` (de 0 a 1 en cada eje).
 
 #### `Document.set_form`
 

@@ -407,14 +407,6 @@ def outline(d: "Designer", t: Theme) -> Any:
 # -- properties ------------------------------------------------------------------
 
 
-def _anchor_editor(d: "Designer", name: str, anchor, t: Theme) -> Any:
-    edges = (("left", "arrow-left-to-line"), ("top", "arrow-up-to-line"), ("right", "arrow-right-to-line"),
-             ("bottom", "arrow-down-to-line"))
-    return _core.row([ui.icon_button(icon, lambda e=edge: d.toggle_anchor(name, e), size="sm",
-                                     selected=edge in anchor, tooltip=f"Anchor {edge}", theme=t)
-                      for edge, icon in edges], spacing=2)
-
-
 def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
     from . import layout as _layout
 
@@ -448,14 +440,9 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
                  _core.container(ui.label(f"Placed by {parent.name}: drag it to reorder.", size="xs",
                                           color="text_muted", theme=t), padding=(2, 12))]
     else:
-        rows += [
-            prop_row("X", num("x"), t),
-            prop_row("Y", num("y"), t),
-            prop_row("Width", num("width"), t),
-            prop_row("Height", num("height"), t),
-            prop_row(tr("Anchor"), _anchor_editor(d, c.name, c.anchor, t), t,
-                     tip="Edges that follow the window (or the container) when it is resized"),
-        ]
+        from . import anchor_panel
+
+        rows += anchor_panel.position_rows(d, c, t, prop_row)
     return rows + [
         Group("Behavior"),
         prop_row("Visible", _core.container(ui.switch(c.visible, lambda v: d.set_field(c.name, "visible", v),

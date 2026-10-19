@@ -181,7 +181,8 @@ def form(name: str, *, title: str = "", width: float = 480, height: float = 320,
     Each control is ``{"type", "name"?, "props"?, "events"?, "x"?, "y"?, "width"?, "height"?,
     "parent"?, "anchor"?}``; ``type`` is a designer toolbox type (``button``, ``input``, ``label``...),
     ``events`` a list of event names (wired to ``<control>_<event>``) or a mapping of event to handler
-    name. Controls without a position are stacked from the top-left corner. ``form_events`` wires the
+    name, and ``anchor`` a list of edges or a preset of ``pyzed.anchors.PRESETS`` (``"bottom_wide"``).
+    Controls without a position are stacked from the top-left corner. ``form_events`` wires the
     form's own events (``load``, ``close``, ``key``, ``resize``).
     """
     from ..designer import code as code_mod
@@ -207,7 +208,12 @@ def form(name: str, *, title: str = "", width: float = 480, height: float = 320,
         if spec.get("parent"):
             control.parent = str(spec["parent"])
         if spec.get("anchor"):
-            control.anchor = tuple(spec["anchor"])
+            from .. import anchors
+
+            try:
+                control.anchor = anchors.edges(spec["anchor"])
+            except ValueError as err:
+                warnings.append(str(err))
         wanted = spec.get("name")
         control = doc.add(control)
         if wanted and control.name != wanted:

@@ -1108,6 +1108,47 @@ dict(_w)["Layout"].update({
             "basis": "A fixed main size in pixels, instead of growing.", "align": "Cross-axis alignment for this child.",
         },
     },
+    "pyzed.anchor": {
+        "desc": "Places a child of `pz.anchor_layout` at `x`, `y` with `width` and `height` (in the layout's design size) and says how it follows a resize.",
+        "params": {
+            "content": "The widget.", "x": "Left edge in the design size.", "y": "Top edge in the design size.",
+            "width": "Width in the design size.", "height": "Height in the design size.",
+            "anchor": "A preset of `pyzed.anchors.PRESETS` (`\"top_right\"`, `\"bottom_wide\"`, `\"center\"`, `\"full\"`...), words (`\"left right bottom\"`) or a tuple of edges.",
+            "min_width": "Smallest width when it stretches (`0`: no limit).", "min_height": "Smallest height when it stretches.",
+            "max_width": "Largest width when it stretches (`0`: no limit).", "max_height": "Largest height when it stretches.",
+            "pivot": "`(x, y)` from `0` to `1`: the point that stays put when a limit stops it, and that `rotate` turns around.",
+            "rotate": "Degrees clockwise.",
+        },
+        "example": 'pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right")',
+    },
+    "pyzed.anchor_layout": {
+        "desc": "Places children made with `pz.anchor` freely, like a designed form: when it is resized, each child keeps its distance to the edges it is anchored to, stretches between opposite ones and stays centered otherwise. Later children are drawn on top. See [Anchored layouts](/pyzed/guides/layout/#anchored-layouts).",
+        "params": {"children": "Children made with `pz.anchor(...)` (`None` is skipped).",
+                   "design": "`(width, height)` the children were laid out in; by default the smallest size that holds them.",
+                   "width": "Width.", "height": "Height."},
+        "example": """
+            pz.anchor_layout([
+                pz.anchor(ui.heading("Report"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+                pz.anchor(ui.button("Close", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+            ], design=(400, 300))
+        """,
+    },
+    "pyzed.anchors.place": {
+        "desc": "Where a box designed in a parent of size `design` goes in a parent of size `actual`, following its anchor, with size limits and a pivot. The math behind `pz.anchor_layout` and designed forms.",
+        "params": {"rect": "`(x, y, width, height)` in the design size.", "anchor": "A preset, words or edges.",
+                   "design": "The parent's design size.", "actual": "The parent's current size.",
+                   "min_size": "`(width, height)` lower limits (`0`: none).", "max_size": "`(width, height)` upper limits (`0`: none).",
+                   "pivot": "The point that stays put when a limit stops the box from stretching."},
+        "example": 'anchors.place((20, 20, 100, 30), "top_right", design=(400, 300), actual=(600, 300))  # (220, 20, 100, 30)',
+    },
+    "pyzed.anchors.PRESETS": {"desc": "The 16 anchor presets by name (`top_left`, `top_center`, `top_right`, `top_wide`, `center_left`, `center`, `center_right`, `center_wide`, `bottom_left`, `bottom_center`, `bottom_right`, `bottom_wide`, `left_tall`, `center_tall`, `right_tall`, `full`), each the tuple of edges it anchors to.", "no_signature": True},
+    "pyzed.anchors.edges": {"desc": "The edges of an anchor given as a preset name, words or edges. Raises `ValueError` for anything else.", "params": {"anchor": "What to read."}},
+    "pyzed.anchors.preset_of": {"desc": "The name of the preset a set of edges matches (every set is one of the 16).", "params": {"edges": "Edges."}},
+    "pyzed.anchors.preset": {"desc": "The preset placed `horizontal` (`left`, `center`, `right`, `wide`) and `vertical` (`top`, `center`, `bottom`, `tall`).", "params": {"horizontal": "Placement on the x axis.", "vertical": "Placement on the y axis."}},
+    "pyzed.anchors.axes": {"desc": "The `(horizontal, vertical)` placement of a set of edges, such as `(\"right\", \"top\")`.", "params": {"edges": "Edges."}},
+    "pyzed.anchors.snap_to": {"desc": "A box moved (and sized, on stretched axes) to sit where an anchor points: against the anchored edges, centered or filling the parent, `margin` pixels in.", "params": {"anchor": "A preset, words or edges.", "rect": "The box.", "parent": "The parent's size.", "margin": "Distance to the edges."}},
+    "pyzed.anchors.offsets": {"desc": "The distances `(left, top, right, bottom)` from each side of the parent to a box.", "params": {"rect": "The box.", "parent": "The parent's size."}},
+    "pyzed.anchors.pivot_offset": {"desc": "The translation that makes a rotation and a scale (which turn around a box's center) turn around `pivot` instead.", "params": {"size": "The box's size.", "pivot": "`(x, y)` from `0` to `1`.", "rotate": "Degrees clockwise.", "scale": "Scale factor."}},
     "pyzed.resizable": {
         "desc": "A panel whose `edge` can be dragged to resize it. It keeps the size the user drags it to; `on_resize(size)` is called when a drag ends so you can save it. Changing `size` later resets it.",
         "params": {

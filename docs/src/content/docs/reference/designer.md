@@ -290,6 +290,30 @@ value must be (see `designer.binding`).
 
 **Methods and properties**
 
+#### `Control.min_size`
+
+```python
+Control.min_size  # property
+```
+
+`(min_width, min_height)` from `layout` (`0` means no limit).
+
+#### `Control.max_size`
+
+```python
+Control.max_size  # property
+```
+
+`(max_width, max_height)` from `layout` (`0` means no limit).
+
+#### `Control.pivot`
+
+```python
+Control.pivot  # property
+```
+
+The point rotation and scale turn around, and that stays put when a size limit stops the control from stretching: `(0, 0)` is the top-left corner, `(0.5, 0.5)` (the default) the center.
+
 #### `Control.rect`
 
 ```python
@@ -745,6 +769,38 @@ Document.toggle_anchor(name, edge)
 ```
 
 Adds `edge` to the anchors of control `name`, or removes it if it was there.
+
+#### `Document.parent_size`
+
+```python
+Document.parent_size(name)
+```
+
+The design size of what control `name` is anchored to: its container, or the form.
+
+#### `Document.set_anchor`
+
+```python
+Document.set_anchor(name, anchor, *, move=False, margin=0.0)
+```
+
+Anchors control `name` with a preset (`"top_right"`, `"full"`...) or edges. With `move` it is also moved (and, on stretched axes, sized) to where the anchor points, `margin` pixels in.
+
+#### `Document.set_offset`
+
+```python
+Document.set_offset(name, side, value)
+```
+
+Sets the distance from the `side` (`left`, `top`, `right`, `bottom`) of the container to control `name`; the opposite side stays where it is, so the control grows or shrinks.
+
+#### `Document.set_pivot`
+
+```python
+Document.set_pivot(name, x, y)
+```
+
+Sets the pivot of control `name` (`0` to `1` on each axis; the center is the default).
 
 #### `Document.set_form`
 
@@ -1508,7 +1564,8 @@ Where a control goes when its form is resized from `design` to `actual` size.
 
 Like WinForms anchors: an edge anchored to the form keeps its distance to that
 side; anchored to both sides it stretches; anchored to neither it keeps its
-relative position (centered controls stay centered).
+relative position (centered controls stay centered). The control's minimum and
+maximum size and its pivot (`Control.layout`) apply too; see `pyzed.anchors.place`.
 
 ## Designer app
 

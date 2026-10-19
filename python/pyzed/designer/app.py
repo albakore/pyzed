@@ -188,6 +188,8 @@ class Designer(App):
         #: A theme and a language to look at the form in (canvas and Run), without changing the form.
         self.preview_theme: Optional[str] = None
         self.icon_value = ""
+        self.anchor_presets: Optional[str] = None
+        self.anchor_move = False
         self.icon_pick: Optional[Callable[[str], Any]] = None
         self.preview_language: Optional[str] = None
         self.console = ConsoleController(self)
@@ -887,6 +889,23 @@ class Designer(App):
     def toggle_anchor(self, name: str, edge: str) -> None:
         """Turns the anchor of the control ``name`` to the ``edge`` of its container on or off."""
         self.doc.toggle_anchor(name, edge)
+
+    def toggle_anchor_presets(self, name: str) -> None:
+        """Shows or hides the anchor presets of control ``name`` in the Position section."""
+        self.anchor_presets = None if self.anchor_presets == name else name
+
+    def set_anchor(self, name: str, preset: str) -> None:
+        """Anchors control ``name`` with ``preset``; with "Also move" on it is also moved to where it points."""
+        self.doc.set_anchor(name, preset, move=self.anchor_move)
+        self.anchor_presets = None
+
+    def set_offset(self, name: str, side: str, value: float) -> None:
+        """Sets the distance from the ``side`` of the container to control ``name``."""
+        self.doc.set_offset(name, side, value)
+
+    def set_pivot(self, name: str, x: float, y: float) -> None:
+        """Sets the point control ``name`` turns and scales around."""
+        self.doc.set_pivot(name, x, y)
 
     def prop_setter(self, name: str, prop: Prop) -> Callable[[Any], None]:
         """Returns a callback that sets the property ``prop`` of the control ``name``.

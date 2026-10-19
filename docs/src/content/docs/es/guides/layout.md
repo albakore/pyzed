@@ -149,6 +149,28 @@ pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], 
 `pz.flex_item` indica cuánto espacio libre toma un hijo (`grow`) o un tamaño fijo (`basis`).
 `wrap=True` hace que una fila salte a nuevas líneas.
 
+## Disposiciones ancladas
+
+`pz.anchor_layout` coloca hijos libremente, como un formulario hecho en Pyzed Design, y cada hijo sigue a su
+**anclaje** cuando la ventana cambia de tamaño: mantiene su distancia a los bordes a los que está anclado, se estira
+entre bordes opuestos y se queda centrado en los demás casos.
+
+```python
+pz.anchor_layout([
+    pz.anchor(ui.heading("Informe"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+    pz.anchor(cuerpo, x=16, y=48, width=368, height=192, anchor="full", max_width=720),
+    pz.anchor(ui.button("Cerrar", on_close), x=284, y=252, width=100, height=32, anchor="bottom_right"),
+], design=(400, 300))
+```
+
+`x`, `y`, `width` y `height` están en el tamaño `design` (por defecto, el más pequeño que contiene a todos los
+hijos). `anchor` es uno de los 16 presets de `pyzed.anchors.PRESETS` (`"top_left"`, `"top_center"`, `"top_right"`,
+`"top_wide"`, `"center_left"`, `"center"`... `"bottom_wide"`, `"left_tall"`, `"center_tall"`, `"right_tall"` y
+`"full"`), palabras como `"left right bottom"` o una tupla de bordes. `min_width`, `min_height`, `max_width` y
+`max_height` limitan el tamaño cuando un hijo se estira; `pivot` (de `0` a `1` en cada eje) es el punto que queda
+fijo cuando un límite lo frena, y alrededor del que gira `rotate` (grados en sentido horario). `pyzed.anchors.place`
+hace la cuenta por su cuenta si colocas cajas tú mismo.
+
 ## Paneles acoplables y redimensionables
 
 `pz.resizable(contenido, edge="right", size=240)` da a un panel un borde que el usuario

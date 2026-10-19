@@ -506,6 +506,54 @@ class Document:
         control.anchor = tuple(a for a in ("left", "top", "right", "bottom") if a in anchor)
         self.commit()
 
+    def parent_size(self, name: str) -> Tuple[float, float]:
+        """The design size of what control ``name`` is anchored to: its container, or the form."""
+        control = self.form[name]
+        parent = self.form.get(control.parent) if control.parent else None
+        return (parent.width, parent.height) if parent is not None else (self.form.width, self.form.height)
+
+    def set_anchor(self, name: str, anchor: Any, *, move: bool = False, margin: float = 0.0) -> None:
+        """Anchors control ``name`` with a preset (``"top_right"``, ``"full"``...) or edges. With ``move`` it is
+        also moved (and, on stretched axes, sized) to where the anchor points, ``margin`` pixels in."""
+        from .. import anchors
+
+        control = self.form[name]
+        control.anchor = anchors.edges(anchor)
+        if move:
+            x, y, w, h = anchors.snap_to(control.anchor, control.rect, self.parent_size(name), margin)
+            control.x, control.y, control.width, control.height = round(x), round(y), round(w), round(h)
+        self.commit()
+
+    def set_offset(self, name: str, side: str, value: float) -> None:
+        """Sets the distance from the ``side`` (``left``, ``top``, ``right``, ``bottom``) of the container to
+        control ``name``; the opposite side stays where it is, so the control grows or shrinks."""
+        control = self.form[name]
+        pw, ph = self.parent_size(name)
+        value = float(value)
+        if side == "left":
+            right = control.x + control.width
+            control.x, control.width = value, max(right - value, geometry.MIN_SIZE)
+        elif side == "right":
+            control.width = max(pw - value - control.x, geometry.MIN_SIZE)
+        elif side == "top":
+            bottom = control.y + control.height
+            control.y, control.height = value, max(bottom - value, geometry.MIN_SIZE)
+        elif side == "bottom":
+            control.height = max(ph - value - control.y, geometry.MIN_SIZE)
+        else:
+            raise ValueError(f"unknown side {side!r}")
+        self.commit(group=f"offset:{name}:{side}")
+
+    def set_pivot(self, name: str, x: float, y: float) -> None:
+        """Sets the pivot of control ``name`` (``0`` to ``1`` on each axis; the center is the default)."""
+        control = self.form[name]
+        pivot = [min(max(round(float(x), 3), 0.0), 1.0), min(max(round(float(y), 3), 0.0), 1.0)]
+        if pivot == [0.5, 0.5]:
+            control.layout.pop("pivot", None)
+        else:
+            control.layout["pivot"] = pivot
+        self.commit(group=f"pivot:{name}")
+
     def set_form(self, key: str, value: Any) -> None:
         """Sets attribute ``key`` of the form (a new ``name`` is made a valid identifier first)."""
         if key == "name":

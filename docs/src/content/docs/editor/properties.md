@@ -99,16 +99,26 @@ For a control placed freely (on the form, or in a panel, group box or card):
 | Field | Meaning |
 | --- | --- |
 | **Inside** | Only inside a container: the container's name (click it to select the container) and a button to **move out** of it. |
-| **X**, **Y** | Position relative to the form or the container. |
-| **Width**, **Height** | Size in pixels. |
-| **Anchor** | Four toggles (left, top, right, bottom): the edges that follow the window, or the container, when it is resized at run time. |
+| **Anchor** | The anchor preset, drawn as a box in a frame, and its name (`Top · Left`). Click it to open the 4×4 grid of presets (see below). |
+| **X · Width**, **Y · Height** | Position relative to the form or the container, and size in pixels. |
+| **Left · Right**, **Top · Bottom** | Instead of X and Width (or Y and Height) when the control stretches on that axis: its distances to the sides of the container. Changing one keeps the opposite side where it is. |
+| **Min size**, **Max size** | Limits for the width and height when the control stretches (`0`: no limit), so a stretched panel stops at a readable width. |
+| **Pivot** | The point the control turns and scales around, and that stays put when a size limit stops it from stretching: `0 0` is the top-left corner, `0.5 0.5` (the default) the center, `1 1` the bottom-right corner. |
+| **Rotation** | Degrees clockwise, around the pivot (the same value as the style's `rotate`). |
+
+![The Position section with the anchor presets open](../../../../screenshots/editor-anchors.png)
 
 For a child of a **flex row or column**: **Grow** (its share of the free space, 0 keeps its size), **Width** and
 **Height**. For a child of a **grid**: **Column span** (how many columns it takes), **Width** and **Height**.
 These children are placed by their container, so they have no X and Y: drag them to reorder them. See
 [Layouts and containers](/pyzed/editor/layouts/).
 
-Anchors work like WinForms:
+The presets are the anchors of Unity, Unreal and Godot. The columns say how the control follows the width
+(**Left**, **Center**, **Right** or **Stretch**) and the rows how it follows the height (**Top**, **Middle**,
+**Bottom** or **Stretch**); the last cell, **Stretch · Stretch**, fills the container. Picking a preset only
+changes how the control follows a resize; turn on **Also move it there** to also put it against the edges it is
+anchored to (centered, or filling the container on stretched axes). Under the hood a preset is a set of edges, as
+in WinForms:
 
 | Anchors | When the window grows |
 | --- | --- |
