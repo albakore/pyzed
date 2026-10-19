@@ -70,6 +70,10 @@ def test_download_checks_the_sha256_and_extracts(tmp_path):
     with pytest.raises(updater.UpdateError, match="SHA-256"):
         updater.download(bad, tmp_path / "bad")
     assert not list((tmp_path / "bad").iterdir())
+    unchecked = updater.Asset(archive.name, archive.as_uri(), 0, None)
+    with pytest.raises(updater.UpdateError, match="cannot be checked"):
+        updater.download(unchecked, tmp_path / "unchecked")
+    assert not list((tmp_path / "unchecked").iterdir())
 
 
 def test_extract_needs_one_app(tmp_path):

@@ -10,7 +10,7 @@ from __future__ import annotations
 import fnmatch
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from .agent import Tool, tool
 
@@ -107,6 +107,16 @@ def pyzed_tools() -> List[Tool]:
             new_app, new_component_code, validate_code, validate_form]
 
 
+#: Files the file tools never list, read, search or write: keys and credentials a prompt injection could
+#: otherwise send to the model's provider. Matched against the file name.
+SECRET_FILES = (".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "id_rsa*", "id_ecdsa*", "id_ed25519*",
+                ".netrc", ".pypirc", ".npmrc", ".git-credentials")
+
+
+def _secret(path: Path, hidden: Sequence[str]) -> bool:
+    return any(fnmatch.fnmatch(path.name, pattern) for pattern in hidden)
+
+
 def _inside(root: Path, path: str) -> Path:
     """``path`` resolved under ``root``; raises when it points outside it."""
     target = (root / path).resolve()
@@ -115,9 +125,16 @@ def _inside(root: Path, path: str) -> Path:
     return target
 
 
-def file_tools(root: Path) -> List[Tool]:
-    """Tools to list, read, search and write files in ``root`` (and never outside it)."""
+def file_tools(root: Path, hidden: Sequence[str] = SECRET_FILES) -> List[Tool]:
+    """Tools to list, read, search and write files in ``root`` (and never outside it). Files whose name
+    matches a pattern of ``hidden`` (keys, ``.env``... see ``SECRET_FILES``) are out of their reach."""
     root = Path(root).resolve()
+
+    def target_of(path: str) -> Path:
+        target = _inside(root, path)
+        if _secret(target, hidden):
+            raise PermissionError(f"{path} may hold secrets, so the agent cannot open it")
+        return target
 
     @tool(title="Listing files")
     def list_files(pattern: str = "*", limit: int = 200) -> Any:
@@ -128,7 +145,7 @@ def file_tools(root: Path) -> List[Tool]:
         out: List[str] = []
         for path in sorted(root.rglob("*")):
             rel = path.relative_to(root)
-            if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file():
+            if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file() or _secret(path, hidden):
                 continue
             if fnmatch.fnmatch(rel.as_posix(), pattern) or fnmatch.fnmatch(path.name, pattern):
                 out.append(rel.as_posix())
@@ -142,7 +159,7 @@ def file_tools(root: Path) -> List[Tool]:
 
         path: relative to the project folder.
         """
-        target = _inside(root, path)
+        target = target_of(path)
         data = target.read_bytes()[:READ_LIMIT]
         return data.decode("utf-8", "replace")
 
@@ -152,7 +169,7 @@ def file_tools(root: Path) -> List[Tool]:
         hits: List[str] = []
         for path in sorted(root.rglob("*")):
             rel = path.relative_to(root)
-            if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file():
+            if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file() or _secret(path, hidden):
                 continue
             if not (fnmatch.fnmatch(rel.as_posix(), pattern) or fnmatch.fnmatch(path.name, pattern)):
                 continue
@@ -173,7 +190,7 @@ def file_tools(root: Path) -> List[Tool]:
 
         path: relative to the project folder; folders are created.
         """
-        target = _inside(root, path)
+        target = target_of(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         existed = target.exists()
         target.write_bytes(content.encode("utf-8"))  # as given: no newline translation on Windows
