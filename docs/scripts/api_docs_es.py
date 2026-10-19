@@ -1687,6 +1687,55 @@ _section("app", "Idiomas", {
 _section("widgets", "Layout", {
     "pyzed.layout.FlexItem": _d("Un hijo de `pz.flex` con su propio tamaño; se crea con `pz.flex_item`."),
 })
+_section("app", "Referencia integrada", {
+    "pyzed.reference.Browser": _d("""
+        Lo que muestra un visor de la referencia: el texto buscado, la página abierta y el historial atrás/adelante.
+
+        `ui.reference_browser(browser)` lo dibuja; sus botones y enlaces llaman a los métodos de abajo.
+    """),
+    "pyzed.reference.Entry": _d("Una página de la referencia, tal como la muestran los resultados de búsqueda y la lista de clases."),
+    "pyzed.reference.Page": _d("Una página completa: la entrada a la que pertenece y su cuerpo en Markdown."),
+    "pyzed.reference.Provider": _d("""
+        Una sección de la referencia que viene de otro sitio que no son las páginas de la API de la librería.
+
+        `entries(lang)` lista sus páginas, `page(id, lang)` construye una (`None` si el id no es suyo)
+        y `lookup(symbol)` convierte un nombre escrito en código en uno de sus ids.
+    """),
+    "pyzed.reference.register": _d("Añade una sección a la referencia (reemplaza la que tenga el mismo `name`)."),
+    "pyzed.reference.entries": _d("Todas las páginas de la referencia, en el orden de la lista de clases (primero los controles del diseñador, luego la librería)."),
+    "pyzed.reference.sections": _d("La lista de clases: `[(sección, [(grupo, [entradas]), ...]), ...]` en orden."),
+    "pyzed.reference.search": _d("""
+        Las entradas que coinciden con `query`: primero los nombres exactos, luego los que empiezan por él y después el resto.
+
+        Cada palabra debe aparecer en el título, el grupo o el resumen (`"tab bar"` encuentra `ui.tab_bar`).
+    """),
+    "pyzed.reference.page": _d("La página con `id` (`KeyError` si no existe)."),
+    "pyzed.reference.lookup": _d('El id de la página sobre un nombre escrito en código (`"pz.text"`, `"ui.button"`, `"Theme"`...).'),
+    "pyzed.reference.languages": _d("Los idiomas en los que están las descripciones de la API."),
+    "pyzed.reference.tables_as_lists": _d("""
+        Tablas de Markdown convertidas en listas (`- primera celda: las otras celdas`).
+
+        Para visores cuyas tablas no parten las celdas largas, como `ui.reference_browser` en una pestaña estrecha.
+        Los bloques de código no se tocan.
+    """),
+    "pyzed.reference.display_name": _d('`"pyzed.text"` -> `"pz.text"`, `"pyzed.ui.button"` -> `"ui.button"`.'),
+    "pyzed.reference.summary": _d("La primera frase de un texto Markdown, sin formato (para listas y resultados de búsqueda)."),
+})
+_section("ui", "Consola y ayuda", {
+    "pyzed.ui.reference_browser": _d("""
+        La referencia integrada, como la de Godot: una lista de clases con búsqueda junto a la página abierta.
+
+        `browser` es un `pyzed.reference.Browser` (guárdalo en el estado de tu app); al hacer clic en entradas,
+        enlaces y en los botones atrás/adelante cambia. `on_open_url(url)` recibe los enlaces que salen de la
+        referencia (la web, GitHub...):
+
+        ```python
+        self.help = reference.Browser("pyzed.ui.button")
+        ...
+        ui.reference_browser(self.help, on_open_url=abrir_en_navegador)
+        ```
+    """),
+})
 _section("widgets", "Estilos", {
     "pyzed.style.global_style": _d("El estilo fijado con `set_style` (`None` si no hay)."),
     "pyzed.style.named_styles": _d("Los estilos definidos con `define_style`, por nombre."),
@@ -1905,6 +1954,20 @@ PAGES.append({
 # -- Métodos y propiedades ------------------------------------------------------
 # El texto de cada miembro de clase en "Métodos y propiedades" (en inglés sale del docstring).
 MEMBERS = {
+    # Referencia integrada
+    "pyzed.reference.Browser.open": "Muestra la página `id` (devuelve `False` si no existe).",
+    "pyzed.reference.Browser.open_symbol": "Muestra la página sobre un nombre escrito en código; devuelve si encontró una.",
+    "pyzed.reference.Browser.back": "Vuelve a la página anterior.",
+    "pyzed.reference.Browser.forward": "Va a la página siguiente después de volver atrás.",
+    "pyzed.reference.Browser.set_query": "Cambia el texto buscado.",
+    "pyzed.reference.Browser.toggle": "Pliega o despliega una sección de la lista de clases.",
+    "pyzed.reference.Browser.results": "Las entradas que coinciden con el texto buscado.",
+    "pyzed.reference.Browser.page": "La página mostrada (`None` antes de abrir una).",
+    "pyzed.reference.Browser.follow": "Gestiona un enlace de una página: los internos abren su página; si no, devuelve la URL que hay que abrir.",
+    "pyzed.reference.Page.id": "El id de la entrada.",
+    "pyzed.reference.Page.title": "El título de la entrada.",
+    "pyzed.Theme.is_dark": "Si el aspecto del tema es oscuro.",
+    "pyzed.AutoTheme.pick": "Devuelve el tema oscuro si `dark` es verdadero; si no, el claro.",
     # App y Window
     "pyzed.App.subscriptions": "Temporizadores y streams que deben estar activos ahora mismo (se reevalúa tras cada update).",
     "pyzed.App.run": "Abre la ventana y bloquea hasta que la app termina.",

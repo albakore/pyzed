@@ -148,6 +148,13 @@ completa por su cuenta:
 
 ![form. completa los controles del propio formulario](../../../../../screenshots/designer-completion-form.png)
 
+## Ayuda contextual
+
+<kbd>Shift</kbd>+<kbd>F1</kbd> abre la [referencia integrada](/pyzed/es/editor/reference/) en el nombre bajo el
+cursor: `form.email` o `form.email.text` abre la página del tipo del control, `form` y `event` abren las páginas del
+código del formulario, y los nombres de la librería (`pz.text`, `ui.button`, `Theme`) abren su página de la API. Si
+no hay coincidencia, busca el nombre en la referencia.
+
 ## Diagnósticos y code lens
 
 ![Errores en línea, la lista de problemas y code lens](../../../../../screenshots/designer-diagnostics.png)

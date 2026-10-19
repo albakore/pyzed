@@ -133,6 +133,7 @@ Right-click a control on the canvas, its row in the outline or a container's gri
 | Entry | Does |
 | --- | --- |
 | **View code** | Opens the handler of the control's main event (or opens a designed component in its own tab). |
+| **Help** | Opens the control's page in the [reference](/pyzed/editor/reference/) (<kbd>Shift</kbd>+<kbd>F1</kbd>). |
 | **Add inside…** | Containers only: the Add control list, adding inside this container. |
 | **Group in a row / column / grid / panel** | Wraps the selection in a new flex row, flex column, grid or panel. |
 | **Move out of *container*** | Takes the control out of its container, into the container's parent. |

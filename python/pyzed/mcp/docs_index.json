@@ -175,6 +175,12 @@
    "path": "docs/src/content/docs/editor/properties.md"
   },
   {
+   "slug": "editor/reference",
+   "title": "Built-in reference",
+   "description": "The searchable class reference inside Pyzed Design, contextual help with Shift+F1, and the same reference in your own apps with pyzed.reference.",
+   "path": "docs/src/content/docs/editor/reference.md"
+  },
+  {
    "slug": "editor/settings",
    "title": "Settings",
    "description": "The preferences of Pyzed Design and of its code editor, where they are saved and how to translate the editor.",
@@ -1447,6 +1453,20 @@
     }
    },
    "pyzed.i18n.normalize": {},
+   "pyzed.reference.Browser": {},
+   "pyzed.reference.Entry": {},
+   "pyzed.reference.Page": {},
+   "pyzed.reference.Provider": {},
+   "pyzed.reference.register": {},
+   "pyzed.reference.entries": {},
+   "pyzed.reference.sections": {},
+   "pyzed.reference.search": {},
+   "pyzed.reference.page": {},
+   "pyzed.reference.lookup": {},
+   "pyzed.reference.languages": {},
+   "pyzed.reference.tables_as_lists": {},
+   "pyzed.reference.display_name": {},
+   "pyzed.reference.summary": {},
    "pyzed.Command": {
     "desc": "The command class. Don't instantiate it directly: use its static methods."
    },
@@ -2419,6 +2439,7 @@
      "links": "`(label, on_press)` buttons."
     }
    },
+   "pyzed.ui.reference_browser": {},
    "pyzed.ui.callout": {
     "desc": "An inline notice (Zed's `Callout`/`Banner`).",
     "params": {

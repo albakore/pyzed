@@ -20,6 +20,7 @@ when nothing is selected, with the handler wired to each one (`—` when there i
 | **Double-click** an event, or press its **`<>`** button | Wires it if needed (creating the handler stub) and opens the handler in the code editor. |
 | **Unlink** button (wired events only) | Disconnects the event **and deletes its handler's code**. |
 | Hover an event | A tooltip says when it runs and what `event.value` holds. |
+| The **book** button in the header | Opens the control's page in the [reference](/pyzed/editor/reference/), with every event and its handler name (<kbd>Shift</kbd>+<kbd>F1</kbd>). |
 
 The event being edited is highlighted. With several controls selected, the panel asks you to pick one: events
 belong to a single control.

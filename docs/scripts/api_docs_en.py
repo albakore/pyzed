@@ -1653,6 +1653,14 @@ _section("app", "Events and components", {
 })
 _section("app", "Languages", _doc("pyzed.i18n.normalize"))
 _section("widgets", "Layout", _doc("pyzed.layout.FlexItem"))
+_section("app", "Built-in reference", {
+    **_doc("pyzed.reference.Browser", "pyzed.reference.Entry", "pyzed.reference.Page", "pyzed.reference.Provider",
+           "pyzed.reference.register", "pyzed.reference.entries", "pyzed.reference.sections",
+           "pyzed.reference.search", "pyzed.reference.page", "pyzed.reference.lookup",
+           "pyzed.reference.languages", "pyzed.reference.tables_as_lists", "pyzed.reference.display_name",
+           "pyzed.reference.summary"),
+})
+_section("ui", "Console and help", _doc("pyzed.ui.reference_browser"))
 _section("widgets", "Styles", _doc(
     "pyzed.style.global_style", "pyzed.style.named_styles", "pyzed.style.apply_global", "pyzed.style.themed",
     "pyzed.style.to_hex", "pyzed.style.paint_from_dict",

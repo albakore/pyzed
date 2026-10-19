@@ -32,6 +32,7 @@ These work anywhere, even while you type in the code editor.
 | <kbd>Shift</kbd>+<kbd>F5</kbd> | Stop |
 | <kbd>F7</kbd> | Edit code file |
 | <kbd>F1</kbd> | Keyboard shortcuts |
+| <kbd>Shift</kbd>+<kbd>F1</kbd> | [Reference](/pyzed/editor/reference/) of the selected control or of the name under the cursor |
 
 While a dialog is open, only the palette, Settings and Keyboard shortcuts keys act; the others wait until it is
 closed.

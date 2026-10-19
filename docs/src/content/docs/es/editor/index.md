@@ -120,6 +120,7 @@ flowchart LR
 - [Archivos, plantillas y scripting](/pyzed/es/editor/files-and-scripting/): pestañas, archivos `.pzform`,
   plantillas y la API de Python.
 - [Menús y comandos](/pyzed/es/editor/menus-and-commands/): cada entrada de menú, la paleta de comandos y los docks.
+- [Referencia integrada](/pyzed/es/editor/reference/): la documentación con buscador de cada control y función, con <kbd>Shift</kbd>+<kbd>F1</kbd>.
 - [Atajos de teclado](/pyzed/es/editor/keyboard-shortcuts/): la lista completa.
 - [Ajustes](/pyzed/es/editor/settings/): las preferencias del editor y del editor de código.
 - [Trucos y consejos](/pyzed/es/editor/tips-and-tricks/).

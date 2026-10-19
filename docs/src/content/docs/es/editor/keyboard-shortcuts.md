@@ -32,6 +32,7 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>Shift</kbd>+<kbd>F5</kbd> | Detener |
 | <kbd>F7</kbd> | Editar el código |
 | <kbd>F1</kbd> | Atajos de teclado |
+| <kbd>Shift</kbd>+<kbd>F1</kbd> | [Referencia](/pyzed/es/editor/reference/) del control seleccionado o del nombre bajo el cursor |
 
 Con un diálogo abierto solo actúan las teclas de la paleta, Ajustes y Atajos de teclado; las demás esperan a que se
 cierre.

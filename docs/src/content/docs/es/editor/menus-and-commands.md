@@ -71,6 +71,7 @@ Los interruptores se recuerdan entre sesiones.
 | Entrada | Teclas | Hace |
 | --- | --- | --- |
 | Atajos de teclado | <kbd>F1</kbd> | Una lista con buscador de todos los atajos. |
+| Referencia | <kbd>Shift</kbd>+<kbd>F1</kbd> | La [referencia integrada](/pyzed/es/editor/reference/), en la página del control seleccionado o del nombre bajo el cursor. |
 | Documentación | | Abre esta documentación en el navegador. |
 | Informar un problema | | Abre el gestor de incidencias. |
 | Novedades | | Una pestaña con las notas de esta versión (o de la actualización pendiente de instalar). |
