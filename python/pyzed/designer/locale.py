@@ -519,6 +519,7 @@ i18n.add("es", {"designer": {
     "Preview the form in a language…": "Ver el formulario en un idioma…",
     "The form's theme ({name})": "El tema del formulario ({name})",
     "The current language ({name})": "El idioma actual ({name})",
+    "Choose an icon…": "Elegir un icono…",
 }})
 
 from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

@@ -45,7 +45,7 @@ a property decides its editor:
 | Switch | An on/off switch. | `checked`, `secure`, `wrap`. |
 | Choice | A drop-down. | A button's `variant`, a label's `size`. |
 | Color | A swatch and a field for a theme token (`accent`, `text_muted`) or `#hex`. | A label's `color`. |
-| Icon | A preview and a field for a [Lucide](https://lucide.dev) icon name. | A button's `icon`. |
+| Icon | A preview, a field for a [Lucide](https://lucide.dev) icon name and a **…** button: click the preview or **…** to pick from the icon dialog (see below). | A button's `icon`. |
 | List | One field per item (see below). | A drop-down's `options`, a list box's `items`, a tab bar's `tabs`. |
 | Rows | A small spreadsheet (see below). | A table's `data`. |
 
@@ -54,6 +54,18 @@ every property of every component.
 
 Controls that hold a value also show **Bind to** and their validation rules (**Required**, **Minimum length**,
 **Pattern**...) in the **Data** section: see [Data binding and validation](/pyzed/editor/data-binding/).
+
+### The icon dialog
+
+Clicking an icon property's preview or its **…** button opens **Choose an icon**: a search box, a category
+drop-down and a grid of every bundled icon. The search matches names and Lucide's tags ("person" finds `user`,
+"trash" finds `trash-2`), Enter picks the first match, and a click on an icon sets the property and closes the dialog.
+The icon in use is highlighted and shown at the bottom, next to the number of matches; **×** clears the property.
+
+![The icon dialog opened from a button's Icon property](../../../../screenshots/editor-icon-picker.png)
+
+The same dialog picks the **Icon** of a [designed component](/pyzed/editor/component-designer/) and the default of
+its icon properties. In your own apps it is [`ui.IconPicker`](/pyzed/library/icon-picker/).
 
 ### The list editor
 

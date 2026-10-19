@@ -2426,3 +2426,123 @@ Un damero claro/oscuro para dibujar bajo colores translúcidos.
 | `width` | Ancho. |
 | `height` | Alto. |
 | `size` | Tamaño de celda. |
+
+## Selector de iconos
+
+### `IconPicker`
+
+```python
+class IconPicker
+```
+
+Un componente para elegir un icono de Lucide: un buscador (nombres y etiquetas), un desplegable de categorías y una cuadrícula que solo construye las filas visibles. Enter elige la primera coincidencia. `on_change` recibe el nombre del icono (`""` si se quita); devuélvelo en `value`. Ver la página [Selector de iconos](/pyzed/es/library/icon-picker/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | El nombre del icono elegido. |
+| `columns` | Iconos por fila. |
+| `height` | Alto de la cuadrícula. |
+| `clearable` | Muestra un botón que quita el icono. |
+| `autofocus` | Da el foco al buscador al aparecer. |
+| `on_change` | Recibe `event.value`. |
+
+```python
+ui.IconPicker(value=self.icon, on_change=lambda e: setattr(self, "icon", e.value))
+```
+
+**Métodos y propiedades**
+
+#### `IconPicker.set_query`
+
+```python
+IconPicker.set_query(text)
+```
+
+Filtra la cuadrícula por `text` (nombres y etiquetas).
+
+#### `IconPicker.set_group`
+
+```python
+IconPicker.set_group(key)
+```
+
+Muestra solo los iconos de la categoría `key` (`""` para todos).
+
+#### `IconPicker.matches`
+
+```python
+IconPicker.matches()
+```
+
+Los iconos que se muestran: los de la categoría elegida que coinciden con la búsqueda, los mejores primero.
+
+#### `IconPicker.pick`
+
+```python
+IconPicker.pick(name)
+```
+
+Selecciona `name` y emite `change`.
+
+### `icon_picker_dialog`
+
+```python
+icon_picker_dialog(
+    value,
+    on_pick,
+    *,
+    on_close=None,
+    title=None,
+    columns=10,
+    clearable=True,
+    key='icon-picker',
+    theme=None,
+)
+```
+
+Un diálogo con un `IconPicker` que elige con un clic; úsalo como diálogo de `ui.dialog_layer`. El buscador recibe el foco.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | El icono actual. |
+| `on_pick` | Se llama con el nombre del icono pulsado (`""` si se quita). |
+| `on_close` | El botón de cerrar. |
+| `title` | Por defecto: "Elegir un icono", traducido. |
+| `columns` | Iconos por fila. |
+| `clearable` | Muestra el botón "Sin icono". |
+| `key` | Clave del componente, para varios selectores en una vista. |
+| `theme` | Tema. |
+
+```python
+ui.dialog_layer(page, ui.icon_picker_dialog(self.icon, self.pick, on_close=self.close) if self.picking else None,
+                on_dismiss=self.close)
+```
+
+### `icon_grid`
+
+```python
+icon_grid(
+    names,
+    on_pick,
+    *,
+    selected=None,
+    columns=8,
+    cell=34,
+    height=288,
+    id=None,
+    theme=None,
+)
+```
+
+La cuadrícula de iconos sola, virtualizada: solo se construyen las filas visibles, así que miles de iconos cuestan lo mismo que unos pocos.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `names` | Nombres de iconos, en orden. |
+| `on_pick` | Se llama con el nombre pulsado. |
+| `selected` | El nombre resaltado. |
+| `columns` | Iconos por fila. |
+| `cell` | Lado de cada celda en píxeles. |
+| `height` | Alto de la cuadrícula. |
+| `id` | Id del desplazable, para `Command.scroll_to`. |
+| `theme` | Tema. |

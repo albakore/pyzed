@@ -85,7 +85,7 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
 | Sección | Campos |
 | --- | --- |
 | **Class** | **Name** (el nombre de la clase de Python, en CamelCase), **Description** (el docstring de la clase, que la caja de herramientas muestra como tooltip) e **Inherits** (un componente diseñado del que heredar, ver [Herencia](#herencia)). |
-| **Toolbox** | **Label**, **Icon** (un nombre de Lucide) y **Category**: cómo aparece el componente en la caja de herramientas de los formularios y de otros componentes. |
+| **Toolbox** | **Label**, **Icon** (un nombre de Lucide, o elígelo en el [diálogo de iconos](/pyzed/es/editor/properties/#el-diálogo-de-iconos)) y **Category**: cómo aparece el componente en la caja de herramientas de los formularios y de otros componentes. |
 | **Layout** | **Width**, **Height**, **Background** (transparente si está vacío) y **Grid size** de la superficie de diseño. |
 | **Inherited** | Solo con una base: lo que viene de cada clase base, de solo lectura. |
 | **Properties** | Una fila por propiedad (icono del tipo, nombre y valor), y los botones **Public** / **Private** para añadir una. |

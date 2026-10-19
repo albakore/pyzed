@@ -234,6 +234,15 @@ def bound_login(app):
 
 
 @shot
+def icon_picker():
+    app = login()
+    app.doc.select("sign_in")
+    app._selection_changed()
+    app.open_icon_picker("log-in", lambda name: app.doc.set_prop("sign_in", "icon", name))
+    save(app, "icon-picker")
+
+
+@shot
 def data():
     app = bound_login(login())
     app.doc.select("email")

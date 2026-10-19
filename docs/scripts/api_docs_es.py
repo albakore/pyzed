@@ -856,6 +856,16 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"name": "Nombre del icono."},
                 },
                 "pyzed.icons.names": {"desc": "Lista ordenada de todos los nombres de iconos."},
+                "pyzed.icons.search": {
+                    "desc": 'Los iconos que coinciden con una búsqueda por nombre y etiqueta, los mejores primero: nombres exactos, luego los que empiezan por la búsqueda, los que tienen todas las palabras y los encontrados por sus etiquetas (`search("person")` encuentra `user`).',
+                    "params": {"query": "Palabras que deben aparecer todas en el nombre o las etiquetas.", "among": "Buscar solo en estos nombres (por defecto, todos los iconos)."},
+                    "example": 'icons.search("arrow up")[:3]  # ["arrow-up", "arrow-up-01", "arrow-up-10"]',
+                },
+                "pyzed.icons.tags": {"desc": 'Las etiquetas de búsqueda de un icono, de Lucide (`tags("user")` es `["person", "account", "contact"]`).',
+                                     "params": {"name": "Nombre del icono."}},
+                "pyzed.icons.category": {"desc": "Los iconos de una categoría de `CATEGORIES`, ordenados. Un icono puede estar en varias.",
+                                         "params": {"key": 'Una clave de `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...).', "among": "Mirar solo estos nombres."}},
+                "pyzed.icons.CATEGORIES": {"desc": "Grupos para explorar iconos (flechas, texto, archivos, diseño, multimedia, comunicación, personas, dispositivos, desarrollo, formas, clima, comercio, mapas, estado), cada uno con las palabras de nombres y etiquetas que meten un icono en él.", "no_signature": True},
                 "pyzed.icons.for_file": {
                     "desc": 'Devuelve `(icono, color_o_None)` para un nombre de archivo, como en el panel de proyecto de Zed.',
                     "params": {"name": "Nombre del archivo."},
@@ -1634,6 +1644,35 @@ _section("ui", "Selector de color", {
                               "params": {"width": "Ancho.", "height": "Alto.", "size": "Tamaño de celda."}},
 })
 
+_section("ui", "Selector de iconos", {
+    "pyzed.ui.IconPicker": {
+        "desc": "Un componente para elegir un icono de Lucide: un buscador (nombres y etiquetas), un desplegable de categorías y una cuadrícula que solo construye las filas visibles. Enter elige la primera coincidencia. `on_change` recibe el nombre del icono (`\"\"` si se quita); devuélvelo en `value`. Ver la página [Selector de iconos](/pyzed/es/library/icon-picker/).",
+        "params": {"value": "El nombre del icono elegido.", "columns": "Iconos por fila.", "height": "Alto de la cuadrícula.",
+                   "clearable": "Muestra un botón que quita el icono.", "autofocus": "Da el foco al buscador al aparecer.",
+                   "on_change": "Recibe `event.value`."},
+        "example": """
+            ui.IconPicker(value=self.icon, on_change=lambda e: setattr(self, "icon", e.value))
+        """,
+    },
+    "pyzed.ui.icon_picker_dialog": {
+        "desc": "Un diálogo con un `IconPicker` que elige con un clic; úsalo como diálogo de `ui.dialog_layer`. El buscador recibe el foco.",
+        "params": {"value": "El icono actual.", "on_pick": "Se llama con el nombre del icono pulsado (`\"\"` si se quita).",
+                   "on_close": "El botón de cerrar.", "title": "Por defecto: \"Elegir un icono\", traducido.", "columns": "Iconos por fila.",
+                   "clearable": "Muestra el botón \"Sin icono\".", "key": "Clave del componente, para varios selectores en una vista.",
+                   "theme": "Tema."},
+        "example": """
+            ui.dialog_layer(page, ui.icon_picker_dialog(self.icon, self.pick, on_close=self.close) if self.picking else None,
+                            on_dismiss=self.close)
+        """,
+    },
+    "pyzed.ui.icon_grid": {
+        "desc": "La cuadrícula de iconos sola, virtualizada: solo se construyen las filas visibles, así que miles de iconos cuestan lo mismo que unos pocos.",
+        "params": {"names": "Nombres de iconos, en orden.", "on_pick": "Se llama con el nombre pulsado.", "selected": "El nombre resaltado.",
+                   "columns": "Iconos por fila.", "cell": "Lado de cada celda en píxeles.", "height": "Alto de la cuadrícula.",
+                   "id": "Id del desplazable, para `Command.scroll_to`.", "theme": "Tema."},
+    },
+})
+
 # -- Todo lo demás, descrito por los docstrings del código ---------------------
 # Las entradas con "docstring": True no muestran tabla de parámetros (se describen en el texto);
 # en español cada una necesita su "desc", traducción del docstring completo.
@@ -2139,6 +2178,12 @@ MEMBERS = {
     "pyzed.ui.TreeNode.sort": "Ordena los hijos recursivamente: primero las carpetas, luego por nombre sin distinguir mayúsculas.",
     "pyzed.ui.Tab.for_file": "Una pestaña para el archivo `path`: su nombre como etiqueta y el icono y color de archivo correspondientes.",
     # ColorPicker
+    # IconPicker
+    "pyzed.ui.IconPicker.set_query": "Filtra la cuadrícula por `text` (nombres y etiquetas).",
+    "pyzed.ui.IconPicker.set_group": "Muestra solo los iconos de la categoría `key` (`\"\"` para todos).",
+    "pyzed.ui.IconPicker.matches": "Los iconos que se muestran: los de la categoría elegida que coinciden con la búsqueda, los mejores primero.",
+    "pyzed.ui.IconPicker.pick": "Selecciona `name` y emite `change`.",
+    "pyzed.ui.IconPicker.on_mount": "Desplaza la cuadrícula hasta el icono elegido y, con `autofocus`, da el foco al buscador.",
     "pyzed.ui.ColorPicker.parts": "`(stops, angle, mask, opacity)`: una sola parada y sin ángulo para un color liso.",
     "pyzed.ui.ColorPicker.build": "Convierte `(stops, angle, mask, opacity)` de nuevo en un color, un `Gradient` o un `Paint`.",
     "pyzed.ui.ColorPicker.publish": "Fija el valor a partir de las partes, descarta el texto hex a medio escribir y emite `change`.",

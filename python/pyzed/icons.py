@@ -2,12 +2,13 @@
 
     pz.icon("folder", size=16, color="#74ade8")
 
-Any of the ~2000 Lucide names works; ``icons.names()`` lists them.
+Any of the ~2000 Lucide names works; ``icons.names()`` lists them, ``icons.search("user")``
+finds them by name and tag, and ``ui.IconPicker`` lets the user pick one.
 """
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from . import _core
 from ._lucide import CODEPOINTS
@@ -24,6 +25,86 @@ def glyph(name: str) -> str:
 def names() -> List[str]:
     """Returns every bundled Lucide icon name, sorted."""
     return sorted(CODEPOINTS)
+
+
+def tags(name: str) -> List[str]:
+    """Returns the search tags of an icon (``tags("user")`` is ``["person", "account", "contact"]``)."""
+    from ._lucide_tags import TAGS
+
+    text = TAGS.get(name)
+    return text.split(", ") if text else []
+
+
+#: Groups of icons for browsing, each matched by the words of the icon's name and tags.
+CATEGORIES: Dict[str, Tuple[str, ...]] = {
+    "arrows": ("arrow", "arrows", "chevron", "chevrons", "move", "corner", "undo", "redo", "refresh", "rotate",
+               "direction"),
+    "text": ("text", "type", "heading", "pilcrow", "align", "bold", "italic", "underline", "strikethrough", "quote",
+             "letter", "font", "formatting", "list"),
+    "files": ("file", "files", "folder", "folders", "archive", "document", "save", "clipboard", "paperclip"),
+    "layout": ("layout", "panel", "columns", "rows", "grid", "table", "sidebar", "window", "frame", "kanban"),
+    "media": ("play", "pause", "music", "video", "camera", "image", "film", "mic", "volume", "speaker", "headphones",
+              "audio", "radio", "tv", "podcast"),
+    "communication": ("mail", "message", "messages", "phone", "send", "chat", "inbox", "bell", "megaphone",
+                      "notification", "email"),
+    "people": ("user", "users", "person", "people", "baby", "account", "smile", "hand", "face"),
+    "devices": ("monitor", "laptop", "smartphone", "tablet", "keyboard", "mouse", "printer", "cpu", "drive", "server",
+                "battery", "plug", "usb", "wifi", "bluetooth", "device", "computer"),
+    "development": ("code", "terminal", "git", "bug", "braces", "brackets", "database", "binary", "variable",
+                    "function", "regex", "webhook", "programming", "developer"),
+    "shapes": ("circle", "square", "triangle", "hexagon", "pentagon", "octagon", "diamond", "shape", "shapes"),
+    "weather": ("sun", "moon", "cloud", "rain", "snow", "wind", "thermometer", "umbrella", "weather", "storm"),
+    "commerce": ("shopping", "cart", "card", "wallet", "dollar", "euro", "coins", "banknote", "receipt", "store",
+                 "money", "payment", "gift", "currency"),
+    "maps": ("map", "navigation", "compass", "pin", "globe", "route", "location", "plane", "car", "bus", "train",
+             "bike", "ship", "travel"),
+    "status": ("check", "alert", "info", "help", "ban", "shield", "lock", "unlock", "loader", "warning", "error",
+               "success", "security"),
+}
+
+_words_cache: Dict[str, frozenset] = {}
+
+
+def _words(name: str) -> frozenset:
+    words = _words_cache.get(name)
+    if words is None:
+        words = frozenset(name.split("-")) | frozenset(w for tag in tags(name) for w in tag.split())
+        _words_cache[name] = words
+    return words
+
+
+def category(key: str, among: Optional[Iterable[str]] = None) -> List[str]:
+    """Returns the icons of category ``key`` (one of ``CATEGORIES``), sorted. An icon can be in several."""
+    keywords = frozenset(CATEGORIES[key])
+    return [n for n in (sorted(CODEPOINTS) if among is None else among) if _words(n) & keywords]
+
+
+def search(query: str, among: Optional[Iterable[str]] = None) -> List[str]:
+    """Returns the icons matching ``query`` by name and tag, best first.
+
+    Every word of the query must appear in the name or the tags (``"arrow up"``, ``"person"``). Exact names
+    come first, then names that start with the query, names with every word, and icons found by their tags.
+    """
+    pool = sorted(CODEPOINTS) if among is None else list(among)
+    words = query.lower().replace("-", " ").split()
+    if not words:
+        return pool
+    joined = "-".join(words)
+    scored = []
+    for name in pool:
+        if name == joined:
+            rank = 0
+        elif name.startswith(joined):
+            rank = 1
+        elif all(w in name for w in words):
+            rank = 2
+        else:
+            haystack = name + " " + " ".join(tags(name))
+            if not all(w in haystack for w in words):
+                continue
+            rank = 3
+        scored.append((rank, len(name), name))
+    return [name for _rank, _length, name in sorted(scored)]
 
 
 def icon(name: str, *, size: float = 16, color: Optional[str] = None) -> _core.Widget:

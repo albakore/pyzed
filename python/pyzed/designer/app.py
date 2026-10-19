@@ -187,6 +187,8 @@ class Designer(App):
         self.preview: Optional[FormWindow] = None
         #: A theme and a language to look at the form in (canvas and Run), without changing the form.
         self.preview_theme: Optional[str] = None
+        self.icon_value = ""
+        self.icon_pick: Optional[Callable[[str], Any]] = None
         self.preview_language: Optional[str] = None
         self.console = ConsoleController(self)
         # the uv project the form belongs to (Project panel)
@@ -1158,6 +1160,18 @@ class Designer(App):
             _binding.load_texts(self.doc.path)
         self.open_dialog_named(f"preview_{which}")
         return _core.Command.focus(dialogs.PICKER_ID)
+
+    def open_icon_picker(self, value: str, on_pick: Callable[[str], Any]) -> None:
+        """Opens the icon dialog on ``value``; the icon clicked there goes to ``on_pick(name)``."""
+        self.open_dialog_named("icon_picker")
+        self.icon_value = value or ""
+        self.icon_pick = on_pick
+
+    def pick_icon(self, name: str) -> Any:
+        """The icon dialog's choice: hands ``name`` to the property that opened it and closes the dialog."""
+        on_pick, self.icon_pick = self.icon_pick, None
+        self.dialog = None
+        return on_pick(name) if on_pick is not None else None
 
     def set_preview(self, which: str, value: Optional[str]) -> None:
         """Previews the form in theme or language ``value`` (``None`` goes back to the form's own) on the canvas
@@ -2159,6 +2173,9 @@ class Designer(App):
                     _core.container(_core.scrollable(_core.column(rows, width="fill")), height=260),
                 ], spacing=10),
                 title="Open form or component", on_close=self.close_dialog, width=520, theme=t)
+        if self.dialog == "icon_picker":
+            return ui.icon_picker_dialog(self.icon_value, self.pick_icon, on_close=self.close_dialog,
+                                         theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
         if self.dialog == "agent_settings":

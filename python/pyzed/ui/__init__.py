@@ -21,6 +21,7 @@ from .base import (
     tooltip_text as tooltip,
 )
 from .color import ColorPicker, checkerboard, color_swatch
+from .icon_picker import IconPicker, icon_grid, icon_picker_dialog
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
 from .help import about, reference_browser, shortcuts
 from .controls import (
@@ -74,6 +75,9 @@ from .workspace import panel, panel_header, status_bar, status_item, title_bar, 
 
 __all__ = [
     "ColorPicker",
+    "IconPicker",
+    "icon_grid",
+    "icon_picker_dialog",
     "LOG_LEVELS",
     "Log",
     "LogEntry",

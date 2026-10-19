@@ -46,6 +46,52 @@ names()
 
 Lista ordenada de todos los nombres de iconos.
 
+### `search`
+
+```python
+search(query, among=None)
+```
+
+Los iconos que coinciden con una búsqueda por nombre y etiqueta, los mejores primero: nombres exactos, luego los que empiezan por la búsqueda, los que tienen todas las palabras y los encontrados por sus etiquetas (`search("person")` encuentra `user`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `query` | Palabras que deben aparecer todas en el nombre o las etiquetas. |
+| `among` | Buscar solo en estos nombres (por defecto, todos los iconos). |
+
+```python
+icons.search("arrow up")[:3]  # ["arrow-up", "arrow-up-01", "arrow-up-10"]
+```
+
+### `tags`
+
+```python
+tags(name)
+```
+
+Las etiquetas de búsqueda de un icono, de Lucide (`tags("user")` es `["person", "account", "contact"]`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre del icono. |
+
+### `category`
+
+```python
+category(key, among=None)
+```
+
+Los iconos de una categoría de `CATEGORIES`, ordenados. Un icono puede estar en varias.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `key` | Una clave de `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...). |
+| `among` | Mirar solo estos nombres. |
+
+### `CATEGORIES`
+
+Grupos para explorar iconos (flechas, texto, archivos, diseño, multimedia, comunicación, personas, dispositivos, desarrollo, formas, clima, comercio, mapas, estado), cada uno con las palabras de nombres y etiquetas que meten un icono en él.
+
 ### `for_file`
 
 ```python

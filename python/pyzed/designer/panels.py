@@ -74,6 +74,26 @@ def swatch(color: Optional[str], t: Theme, on_press: Any = None, *, selected: bo
     return _core.button(box, on_press, padding=0, bg="transparent", hover_bg="transparent")
 
 
+def icon_editor(d: "Designer", value: Any, on_change: Callable[[Any], Any], t: Theme, *,
+                placeholder: str = "lucide name", size: str = "sm") -> Any:
+    """An icon property: its preview (click it to pick from the icon dialog), the name and a "…" button."""
+    from ..icons import CODEPOINTS
+
+    name = str(value or "")
+    known = name in CODEPOINTS
+    preview = _core.button(
+        _core.container(_icon(name if known else "circle-dashed", size=14,
+                              color=None if known else t.icon_muted), center=True),
+        lambda: d.open_icon_picker(name, on_change), padding=0, width=22, height=22, radius=t.radius_sm,
+        bg="transparent", hover_bg=t.element_hover, color=t.icon)
+    return _core.row([
+        ui.tooltip(preview, tr("Choose an icon…"), theme=t),
+        ui.input(name, on_change, placeholder=tr(placeholder), size=size, mono=True, theme=t),
+        ui.icon_button("ellipsis", lambda: d.open_icon_picker(name, on_change), size="xs",
+                       tooltip=tr("Choose an icon…"), theme=t),
+    ], spacing=4, align="center")
+
+
 def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any], Any], key: str, t: Theme) -> Any:
     """The property-grid editor for one property, picked by ``prop.kind``."""
     kind = prop.kind
@@ -102,9 +122,7 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return _core.row([swatch(resolved, t), ui.input(str(value or ""), on_change, placeholder="token or #hex",
                                                         size="sm", mono=True, theme=t)], spacing=6, align="center")
     if kind == "icon":
-        preview = _icon(str(value), size=14) if value else _icon("circle-dashed", size=14, color=t.icon_muted)
-        return _core.row([preview, ui.input(str(value or ""), on_change, placeholder="lucide name", size="sm",
-                                            theme=t)], spacing=6, align="center")
+        return icon_editor(d, value, on_change, t)
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
 
 

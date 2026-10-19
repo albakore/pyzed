@@ -46,6 +46,52 @@ names()
 
 Sorted list of all icon names.
 
+### `search`
+
+```python
+search(query, among=None)
+```
+
+Icons matching a search by name and tag, best first: exact names, then names that start with the query, names with every word and icons found by their tags (`search("person")` finds `user`).
+
+| Parameter | Description |
+| --- | --- |
+| `query` | Words that must all appear in the name or the tags. |
+| `among` | Only search these names (default: every icon). |
+
+```python
+icons.search("arrow up")[:3]  # ["arrow-up", "arrow-up-01", "arrow-up-10"]
+```
+
+### `tags`
+
+```python
+tags(name)
+```
+
+The search tags of an icon, from Lucide (`tags("user")` is `["person", "account", "contact"]`).
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Icon name. |
+
+### `category`
+
+```python
+category(key, among=None)
+```
+
+The icons of a category of `CATEGORIES`, sorted. An icon can be in several.
+
+| Parameter | Description |
+| --- | --- |
+| `key` | A key of `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...). |
+| `among` | Only look at these names. |
+
+### `CATEGORIES`
+
+Groups for browsing icons (arrows, text, files, layout, media, communication, people, devices, development, shapes, weather, commerce, maps, status), each with the words of names and tags that put an icon in it.
+
 ### `for_file`
 
 ```python
