@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from .. import _core, ui
+from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import intellisense as _intel
@@ -116,6 +117,11 @@ class CodeAssist:
         """Server updates arrive as posted messages, which re-render the designer by themselves."""
 
     @property
+    def plain(self) -> bool:
+        """True while the editor shows a project file: no language servers or completion, only editing."""
+        return self.d.buffers.current is not None
+
+    @property
     def handler(self) -> Optional[str]:
         """The name of the handler being edited, or ``None`` when editing the whole file or nothing."""
         editing = self.d.editing
@@ -137,6 +143,12 @@ class CodeAssist:
         self.completion = None
         self.cursor = (1, 1)
         self.scroll = (0.0, 0.0)
+        buffer = self.d.buffers.current
+        if buffer is not None:
+            self._text = buffer.text
+            if self.search is not None:
+                self._find()
+            return
         if self.d.editing is None:
             return
         self._text = self.d.editing[1]
@@ -153,7 +165,7 @@ class CodeAssist:
         self.intel.shutdown()
 
     def _sync(self) -> None:
-        if self.d.editing is None:
+        if self.d.editing is None or self.plain:
             return
         self.intel.update(self.d.doc.code, self.handler, self.d.editing[1])
         self.intel.refresh_lenses(self.d.doc.form)
@@ -165,7 +177,8 @@ class CodeAssist:
         if len(text) < len(self._text) and self.completion is not None:
             self._typed = True  # deleting inside a word keeps the list open and refilters it
         self._text = text
-        self.intel.update(self.d.doc.code, self.handler, text)
+        if not self.plain:
+            self.intel.update(self.d.doc.code, self.handler, text)
         if self.search is not None:
             self._find()
 
@@ -186,7 +199,7 @@ class CodeAssist:
             else:
                 self._refilter(word)
                 return None
-        if typed and self.settings.autocomplete and _intel.should_complete(current, column):
+        if typed and not self.plain and self.settings.autocomplete and _intel.should_complete(current, column):
             self.open_completion()
         return None
 
@@ -298,7 +311,8 @@ class CodeAssist:
     def on_key(self, combo: str) -> Any:
         """Keys pressed while the editor has focus; returns ``(handled, result)``."""
         if combo in ("ctrl-space", "ctrl- "):
-            self.open_completion()
+            if not self.plain:
+                self.open_completion()
             return True, None
         panel = {
             "ctrl-f": lambda: self.open_search(),
@@ -340,12 +354,16 @@ class CodeAssist:
     # -- diagnostics and lenses -----------------------------------------------------
     def diagnostics(self) -> List[Diagnostic]:
         """Returns the language servers' errors, warnings and information (hints left out) for the code."""
+        if self.plain:
+            return []
         return [d for d in self.intel.diagnostics() if d.severity <= 3]
 
     def annotations(self, t: Theme) -> Dict[int, Any]:
         """Returns the end-of-line annotations by line: code lens texts and, if enabled, the most severe
         diagnostic of each line as ``(text, color)`` in theme ``t``."""
         out: Dict[int, Any] = {}
+        if self.plain:
+            return out
         if self.settings.code_lens:
             out.update(self.intel.lens_annotations())
         if self.settings.inline_diagnostics:
@@ -784,8 +802,95 @@ def problems_list(a: CodeAssist, diags: List[Diagnostic], t: Theme) -> Tuple[Any
 
 
 def code_panel(d: "Designer", t: Theme) -> Any:
-    """Builds the code editor panel: header with the problems toggle and actions, the editor with its
-    completion list, and the error line and problems list below it."""
+    """Builds the Code panel: a tab per open project file (and the form's code) over the file or the form
+    code being edited."""
+    b = d.buffers
+    if b.current is None and d.editing is None and b.items:
+        b.select(len(b.items) - 1)
+    body = file_view(d, t) if b.current is not None else form_code(d, t)
+    tabs = code_tabs(d, t)
+    return _core.column([tabs, body], width="fill", height="fill") if tabs is not None else body
+
+
+def code_tabs(d: "Designer", t: Theme) -> Optional[Any]:
+    """The Code panel's tabs while project files are open: the form's code first, then each file."""
+    b = d.buffers
+    if not b.items:
+        return None
+    tabs: List[ui.Tab] = []
+    if d.editing is not None:
+        name = d.doc.code_path.name if d.doc.code_path else f"{d.doc.form.name}.py"
+        tabs.append(ui.Tab("form", name, icon="layout-template", icon_color="accent"))
+    for i, buffer in enumerate(b.items):
+        icon, color = for_file(buffer.name)
+        tabs.append(ui.Tab(f"file:{i}", buffer.name, icon=icon, icon_color=color, dirty=buffer.dirty))
+    active = "form" if b.current is None else f"file:{b.active}"
+
+    def select(tab: str) -> None:
+        if tab == "form":
+            d.show_form_code()
+        else:
+            b.select(int(tab.split(":")[1]))
+
+    def close(tab: str) -> None:
+        if tab == "form":
+            b.select(None)
+            d.close_code()
+        else:
+            b.close(int(tab.split(":")[1]))
+
+    return ui.tab_bar(tabs, active, on_select=select, on_close=close, height=30, theme=t)
+
+
+def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any], et: Theme) -> Any:
+    a = d.assist
+    s = a.settings
+    return ui.editor(
+        d.editor_id, text, language=language, on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
+        on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
+        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
+        annotations=annotations, capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
+        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
+        on_action=a.action_ran, highlights=a.search.matches if a.search else None,
+        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
+
+
+def _bars(d: "Designer", t: Theme) -> List[Any]:
+    a = d.assist
+    bars = []
+    if a.search is not None:
+        bars.append(search_bar(a, t))
+    if a.goto is not None:
+        bars.append(goto_bar(a, t))
+    return bars
+
+
+def file_view(d: "Designer", t: Theme) -> Any:
+    """A project file in the editor: its path, Save and Close over the text."""
+    buffer = d.buffers.current
+    assert buffer is not None
+    a = d.assist
+    root = d.projects.files.root
+    try:
+        title = buffer.path.relative_to(root).as_posix() if root is not None else str(buffer.path)
+    except ValueError:
+        title = str(buffer.path)
+    icon, _ = for_file(buffer.name)
+    header = ui.panel_header(title, icon=icon, actions=[
+        ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
+        ui.button(tr("Save"), d.buffers.save, icon="save", variant="tinted", size="sm", disabled=not buffer.dirty,
+                  theme=t),
+        ui.icon_button("x", d.close_code, size="sm", tooltip=tr("Close"), theme=t),
+    ], theme=t)
+    et = a.editor_theme(t)
+    editor = _editor(d, buffer.text, buffer.language, {}, et)
+    area = _editor_area(a, editor, [], a.settings.font_size, buffer.text.count("\n") + 1, a.settings.line_numbers)
+    return _core.column([header, *_bars(d, t), area], width="fill", height="fill")
+
+
+def form_code(d: "Designer", t: Theme) -> Any:
+    """The form's code: header with the problems toggle and actions, the editor with its completion list,
+    and the error line and problems list below it."""
     assert d.editing is not None
     a = d.assist
     s = a.settings
@@ -815,20 +920,9 @@ def code_panel(d: "Designer", t: Theme) -> Any:
     if diags and a.problems_open:
         below.append(problems_list(a, diags, t))
     et = a.editor_theme(t)
-    editor = ui.editor(
-        d.editor_id, text, language="py", on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
-        on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
-        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
-        annotations=a.annotations(et), capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
-        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
-        on_action=a.action_ran, highlights=a.search.matches if a.search else None,
-        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
+    editor = _editor(d, text, "py", a.annotations(et), et)
     area = _editor_area(a, editor, below, s.font_size, text.count("\n") + 1, s.line_numbers)
-    bars = []
-    if a.search is not None:
-        bars.append(search_bar(a, t))
-    if a.goto is not None:
-        bars.append(goto_bar(a, t))
+    bars = _bars(d, t)
     from .agent_panel import inline_bar
 
     inline = inline_bar(d, t)

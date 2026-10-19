@@ -7,7 +7,7 @@ sidebar:
 
 The **Code** panel (bottom dock) is a Python editor in the style of Zed, backed by two language servers from
 Astral: **ty** (types, completion, references) and **ruff** (linting and formatting). It shows up when you open a
-handler and goes away when you close it.
+handler or a project file and goes away when you close it.
 
 ![Writing the code of a button's click event](../../../../screenshots/designer-code.png)
 
@@ -19,6 +19,7 @@ The editor shows either **one handler** or the **whole code file**:
 | --- | --- | --- |
 | One handler | Double-click a control or an event, <kbd>Enter</kbd> on a selected control, **View code**, a method in the [Component panel](/pyzed/editor/component-designer/#the-component-panel). | `login.py › sign_in_click()` |
 | Whole file | <kbd>F7</kbd>, **Edit code file** (toolbar, ☰ menu, palette), or **Whole file** in the header. | `login.py` |
+| A project file | A click on a text file in the [Project tab](/pyzed/editor/projects/#files), or <kbd>Ctrl</kbd>+<kbd>P</kbd>. | `src/shop/cart.py` |
 
 **Whole file** and **This handler** in the header switch between the two. In handler mode you only see the
 function, but the language servers always see the whole module with that handler swapped in, so the imports and
