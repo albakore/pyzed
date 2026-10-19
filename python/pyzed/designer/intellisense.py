@@ -254,6 +254,12 @@ _FORM_MEMBERS = [
     ("size", "property", "tuple[float, float]", "The current size of the window."),
     ("window", "property", "Window", "The Pyzed window running this form (for `Command` helpers)."),
     ("close", "method", "() -> Command", "Returns a command that closes the window."),
+    ("data", "property", "Any", "The form's data: bound controls show its fields and inputs write back to it."),
+    ("errors", "property", "dict[str, str]", "The validation messages on show, by control name."),
+    ("valid", "property", "bool", "Whether no control shows a validation message."),
+    ("validate", "method", "() -> bool", "Checks every control's rules, shows the messages and returns whether all "
+                                         "passed."),
+    ("open", "method", "(form, *, data=None) -> Command", "Opens another form in a new window."),
 ]
 _CONTROL_MEMBERS = [
     ("name", "property", "str", "The control's name."),
@@ -263,6 +269,8 @@ _CONTROL_MEMBERS = [
     ("show", "method", "() -> None", "Makes the control visible."),
     ("hide", "method", "() -> None", "Hides the control."),
     ("focus", "method", "() -> Command", "A command that focuses this control (text boxes and text areas)."),
+    ("error", "property", "str | None", "The validation message under the control; set it to show your own."),
+    ("validate", "method", "() -> bool", "Checks the control's rules now and returns whether it passed."),
 ]
 _EVENT_MEMBERS = [
     ("sender", "property", "Control | Form", "The control (or form) that raised the event."),

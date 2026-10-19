@@ -43,6 +43,9 @@ class App(pz.App):
 `on_key` also receives keys already handled by a focused field (for example, the letters you
 type in an `input`). Only respond to the combos you care about, and check the state when a
 shortcut only makes sense in a given context (`if self.palette_open and combo == "escape"`).
+
+<kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd> also move the focus between fields when no
+widget used them; see [Accessibility](/pyzed/guides/accessibility/#moving-between-fields-with-tab).
 :::
 
 ## Showing shortcuts

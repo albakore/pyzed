@@ -1103,7 +1103,7 @@ table(
 )
 ```
 
-A data table with a fixed header, optional sorting and row selection. Sorting happens here when `sort_by` names a column: clicking a header calls `on_sort(title)` and you update `sort_by`/`descending` in your state.
+A data table with a fixed header, optional sorting and row selection. Sorting happens here when `sort_by` names a column: clicking a header calls `on_sort(title)` and you update `sort_by`/`descending` in your state. Rows are virtualized: only the ones in view are built, so hundreds of thousands of rows scroll smoothly.
 
 | Parameter | Description |
 | --- | --- |
@@ -1476,6 +1476,41 @@ A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a 
 ### `SEPARATOR`
 
 Separator for `ui.menu`.
+
+### `virtual_list`
+
+```python
+virtual_list(
+    items,
+    render,
+    *,
+    item_height=26,
+    spacing=0,
+    width='fill',
+    height='fill',
+    padding=None,
+    overscan=4,
+    id=None,
+    on_scroll=None,
+    theme=None,
+)
+```
+
+A scrolling list that only builds the rows in view, for thousands or millions of items. `render(item)` returns the widget for one item and is called when it scrolls into view. Every row has the same height.
+
+| Parameter | Description |
+| --- | --- |
+| `items` | The items: a list or any sequence (other iterables are turned into a list). |
+| `render` | Function that receives an item and returns its widget. |
+| `item_height` | Height of every row, in pixels. |
+| `spacing` | Space between children, in pixels. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `padding` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
+| `overscan` | Extra rows built above and below the visible ones. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
+| `on_scroll` | Callable that receives the scroll viewport, as in `pz.scrollable`. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ## Navigation
 

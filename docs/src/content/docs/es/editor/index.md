@@ -113,6 +113,8 @@ flowchart LR
 - [Estilos y temas](/pyzed/es/editor/styles-and-themes/): la sección Estilo, el selector de color, degradados y
   temas.
 - [Eventos y manejadores](/pyzed/es/editor/events/): todos los eventos y cómo escribir su código.
+- [Enlace de datos y validación](/pyzed/es/editor/data-binding/): `form.data`, reglas de validación, traducciones con
+  `@clave` y vista previa con otro tema o idioma.
 - [Editor de código](/pyzed/es/editor/code-editor/): autocompletado, diagnósticos, code lens, plegado y sus ajustes.
 - [Ejecutar y la consola](/pyzed/es/editor/console-and-running/): F5, la consola, `uv run` y recarga en caliente.
 - [Diseñador de componentes](/pyzed/es/editor/component-designer/): componentes reutilizables con props, estado,

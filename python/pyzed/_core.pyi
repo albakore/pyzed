@@ -9,7 +9,6 @@ class Command:
     Commands are values: build them with the static methods below and return them (or a
     list of them) from `update`, `on_start`, `on_key` or any widget callback.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     @staticmethod
     def batch(commands: Any) -> Any:
         """Runs several commands."""
@@ -44,6 +43,14 @@ class Command:
     @staticmethod
     def focus(id: Any) -> Any:
         """Focuses the `text_input` (or editor) with the given `id`."""
+        ...
+    @staticmethod
+    def focus_next() -> Any:
+        """Moves the keyboard focus to the next field of the window (what Tab does), wrapping around."""
+        ...
+    @staticmethod
+    def focus_previous() -> Any:
+        """Moves the keyboard focus to the previous field of the window (what Shift+Tab does)."""
         ...
     @staticmethod
     def focus_window(window: Any = ...) -> Any:
@@ -142,7 +149,7 @@ ICED_VERSION: Any
 
 class Span:
     """A styled fragment of `rich_text`. Create it with `pyzed.span`."""
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    ...
 
 
 class Subscription:
@@ -151,13 +158,11 @@ class Subscription:
     Subscriptions are identified by their `key`: as long as `subscriptions()` keeps
     returning one with the same key it keeps running; when it disappears it stops.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     key: Any
 
 
 class Widget:
     """An immutable node of the UI tree. Create them with the functions in `pyzed`."""
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def animate(self, *animations: Any, **options: Any) -> Any:
         """Animates the widget and returns the wrapped widget.
 
@@ -351,3 +356,8 @@ def text(content: Any, *, size: Any = ..., color: Any = ..., font: Any = ..., we
 def text_input(value: Any, *, placeholder: Any = ..., on_input: Any = ..., on_submit: Any = ..., id: Any = ..., size: Any = ..., font: Any = ..., padding: Any = ..., width: Any = ..., secure: Any = ..., icon: Any = ..., icon_size: Any = ..., bg: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., focus_border_color: Any = ..., border_width: Any = ..., radius: Any = ..., color: Any = ..., placeholder_color: Any = ..., selection_color: Any = ..., icon_color: Any = ..., align_x: Any = ...) -> Any: ...
 def toggler(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any = ..., text_size: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., knob_color: Any = ..., color: Any = ...) -> Any: ...
 def tooltip(content: Any, tip: Any, *, position: Any = ..., gap: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ...) -> Any: ...
+def virtual_column(count: Any, item: Any, *, item_height: Any, spacing: Any = ..., overscan: Any = ..., width: Any = ...) -> Any:
+    """A column of `count` rows of the same height that only builds the rows in view:
+    `item(index)` is called when row `index` scrolls into view. Put it in a `scrollable`.
+    """
+    ...

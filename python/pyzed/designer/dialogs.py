@@ -258,3 +258,34 @@ def palette(d: "Designer", t: Theme) -> Any:
     chosen = matches[index][0].on_press if matches else None
     return ui.picker(d.picker_query, d.set_picker_query, matches, selected=index,
                      placeholder=tr("Run a command…"), input_id=PICKER_ID, on_submit=chosen, theme=t)
+
+
+def _preview_picker(d: "Designer", which: str, options: List[str], own: str, t: Theme) -> Any:
+    current = getattr(d, f"preview_{which}")
+    items = [ui.PaletteItem(own, lambda: d.set_preview(which, None), icon="undo-2",
+                            detail=tr("current") if current is None else "")]
+    for option in options:
+        items.append(ui.PaletteItem(option, lambda o=option: d.set_preview(which, o),
+                                    icon="palette" if which == "theme" else "languages",
+                                    detail=tr("current") if option == current else ""))
+    matches = ui.fuzzy_filter(d.picker_query, items, key=lambda i: i.label)
+    index = min(d.picker_index, max(len(matches) - 1, 0))
+    chosen = matches[index][0].on_press if matches else None
+    placeholder = tr("Preview the form in a theme…") if which == "theme" else tr("Preview the form in a language…")
+    return ui.picker(d.picker_query, d.set_picker_query, matches, selected=index, placeholder=placeholder,
+                     input_id=PICKER_ID, on_submit=chosen, theme=t)
+
+
+def preview_theme(d: "Designer", t: Theme) -> Any:
+    """The themes to look at the form in, first the form's own."""
+    from ..theme import themes
+
+    return _preview_picker(d, "theme", themes.names(), tr("The form's theme ({name})", name=d.doc.form.theme), t)
+
+
+def preview_language(d: "Designer", t: Theme) -> Any:
+    """The languages with translations (``locales/`` next to the form), first the designer's own."""
+    from .. import i18n
+
+    return _preview_picker(d, "language", i18n.languages(),
+                           tr("The current language ({name})", name=i18n.language()), t)

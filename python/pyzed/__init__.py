@@ -64,6 +64,7 @@ from ._core import (
     text_input,
     toggler,
     tooltip,
+    virtual_column,
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
@@ -74,10 +75,12 @@ from .i18n import t
 from .hints import Color, Icon, Multiline, Range
 from .style import Gradient, Mask, Paint, Style, define_style, set_style
 from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
+from .accessibility import system_reduced_motion
 from .events import Event, on
+from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import animation, component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
+from . import accessibility, animation, component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -130,6 +133,7 @@ __all__ = [
     "Theme",
     "Widget",
     "Window",
+    "accessibility",
     "animation",
     "asyncio_loop",
     "button",
@@ -137,6 +141,7 @@ __all__ = [
     "cell",
     "center",
     "checkbox",
+    "clear_memos",
     "code_editor",
     "column",
     "container",
@@ -164,6 +169,8 @@ __all__ = [
     "listen",
     "load_font",
     "markdown",
+    "memo",
+    "memo_stats",
     "mouse_area",
     "on",
     "opaque",
@@ -187,6 +194,7 @@ __all__ = [
     "span",
     "spawn",
     "set_reduced_motion",
+    "system_reduced_motion",
     "set_style",
     "split",
     "stack",
@@ -203,5 +211,6 @@ __all__ = [
     "tooltip",
     "ui",
     "vertical_slider",
+    "virtual_column",
     "vspace",
 ]

@@ -174,6 +174,12 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                     "desc": "Enfoca el `text_input` (o editor) con ese `id`.",
                     "params": {"id": "El `id` que pasaste al widget."},
                 },
+                "pyzed.Command.focus_next": {
+                    "desc": "Mueve el foco del teclado al siguiente campo de la ventana, volviendo al primero tras el último (lo que hace Tab).",
+                },
+                "pyzed.Command.focus_previous": {
+                    "desc": "Mueve el foco del teclado al campo anterior de la ventana (lo que hace Shift+Tab).",
+                },
                 "pyzed.Command.select_all": {
                     "desc": "Da el foco al `text_input` con ese `id` y selecciona todo su texto (lo que se escriba lo reemplaza).",
                     "params": {"id": "El `id` del campo."},
@@ -929,6 +935,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
+| `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
 
@@ -1250,7 +1257,7 @@ _section("ui", "Datos y feedback", {
         "params": {"title": "Encabezado (y nombre para ordenar).", "key": "Cómo obtener el valor de cada fila.", "align": '`"start"`, `"center"` o `"end"`.', "render": "Función valor → widget.", "sortable": "Si el encabezado se puede pulsar para ordenar."},
     },
     "pyzed.ui.table": {
-        "desc": "Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado.",
+        "desc": "Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado. Las filas están virtualizadas: solo se construyen las visibles, así que cientos de miles de filas se desplazan con fluidez.",
         "params": {
             "columns": "`ui.Column` o claves simples.", "rows": "Dicts u objetos.", "sort_by": "Título de la columna por la que se ordena.",
             "descending": "Orden descendente.", "on_sort": "Callable que recibe el título pulsado.", "on_row_press": "Callable que recibe la fila pulsada.",
@@ -1830,6 +1837,25 @@ PAGES.append({
                 formulario al hacer `save`. `selection` guarda nombres de controles, el principal primero.
             """),
         }),
+        ("Enlace de datos y validación", {
+            "pyzed.designer.binding.check": _d("""
+                El mensaje de la primera regla que `value` incumple, o `None` si las cumple todas.
+
+                `required` (una casilla marcada para casillas e interruptores), `min_length`, `max_length`, `pattern`
+                (una expresión regular que todo el texto debe cumplir), `min` y `max`. `message`, si está, sustituye
+                el mensaje predeterminado. Los valores vacíos solo incumplen `required`.
+            """),
+            "pyzed.designer.binding.translate": _d('`value` con los textos `@clave` buscados en el idioma actual (o el indicado); las listas se traducen elemento a elemento y `@@` representa una `@` literal.'),
+            "pyzed.designer.binding.read": _d('El campo en `path` de `data` (dicts, listas y objetos), o `default` si falta.'),
+            "pyzed.designer.binding.write": _d('Fija el campo en `path` de `data`, creando por el camino los dicts que falten.'),
+            "pyzed.designer.binding.has": _d('Si `data` tiene un campo en `path`.'),
+            "pyzed.designer.binding.evaluate": _d('El valor de `bind` para `data`: el campo si es una ruta, si no la expresión de Python evaluada sobre los campos de los datos. Lanza un error si falta el campo o la expresión es incorrecta.'),
+            "pyzed.designer.binding.bound_prop": _d('La propiedad que enlaza un control de tipo `type_` (`None` si no se puede enlazar).'),
+            "pyzed.designer.binding.two_way": _d('Si un control de tipo `type_` escribe en los datos lo que cambia el usuario.'),
+            "pyzed.designer.binding.rules_for": _d('Las reglas de validación que tienen sentido para `type_` (ninguna para los controles de visualización).'),
+            "pyzed.designer.binding.load_texts": _d('Carga los catálogos de traducción del formulario en `path`: `locales/` junto a él y en las carpetas superiores, hasta la raíz del proyecto. Devuelve los idiomas encontrados.'),
+            "pyzed.designer.binding.BIND_PROPS": {"desc": "La propiedad que enlaza cada tipo de control y si el usuario la edita (en los dos sentidos): `{tipo: (propiedad, dos_sentidos)}`.", "no_signature": True},
+        }),
         ("Caja de herramientas", {
             "pyzed.designer.Component": _d("Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`."),
             "pyzed.designer.Prop": _d("""
@@ -1997,9 +2023,12 @@ _section("widgets", "Animación", {
     "pyzed.set_reduced_motion": _d("""
         Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
 
-        Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
-        de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+        Por defecto Pyzed sigue el ajuste de accesibilidad "reducir movimiento" del sistema (se lee al
+        arrancar la app, ver `pyzed.system_reduced_motion`). `True` o `False` lo reemplazan (por ejemplo
+        desde los ajustes de tu app, o en tests) y `None` vuelve a seguir al sistema. La variable de
+        entorno `PYZED_REDUCED_MOTION` (`1` o `0`) también lo reemplaza.
     """),
+    "pyzed.system_reduced_motion": _d("Si el sistema pide a las apps reducir el movimiento (`None` si no se sabe)."),
     "pyzed.animation.reduced_motion": _d("Si el movimiento reducido está encendido."),
     "pyzed.animation.animation": _d("La animación llamada `name` (un preset o una definida con `define_animation`)."),
     "pyzed.animation.presets": _d("Las animaciones con nombre (todas, o una `category`: entrance, exit, attention, interaction, loop)."),
@@ -2186,7 +2215,13 @@ MEMBERS = {
     "pyzed.designer.Document.delete": "Quita los controles seleccionados (y lo que contienen); devuelve los nombres quitados.",
     "pyzed.designer.Document.copy": "Copia la selección, con lo que haya dentro de los contenedores seleccionados.",
     "pyzed.designer.Document.cut": "Copia la selección al portapapeles y la borra; devuelve cuántos controles se copiaron.",
-    "pyzed.designer.Document.paste": "Añade copias del portapapeles (desplazadas `offset`) con nombres nuevos, conservando sus eventos.",
+    "pyzed.designer.Document.paste": "Añade copias del portapapeles (desplazadas `offset`) sin sus eventos; conservan su nombre si está libre en este formulario.",
+    "pyzed.designer.Document.clipboard": "Los controles copiados (como datos de `Control.to_dict()`), compartidos por todos los documentos.",
+    "pyzed.designer.Document.clipboard_text": "Los controles copiados como JSON para el portapapeles del sistema, para que otro formulario, otra ventana de Pyzed Design o un archivo de texto puedan tomarlos (ver `paste_text`).",
+    "pyzed.designer.Document.parse_clipboard": "Los controles del texto del portapapeles escrito por `clipboard_text`, o `None` si contiene otra cosa. Se descartan los controles de un tipo que este Pyzed no conoce.",
+    "pyzed.designer.Document.paste_text": "Pega los controles del texto del portapapeles del sistema (ver `clipboard_text`); devuelve los nombres nuevos, o `None` si el texto no contiene controles de Pyzed.",
+    "pyzed.designer.Document.set_bind": "Enlaza el control `name` al campo (o, en los controles de visualización, a la expresión) `bind` de `form.data`; `None` o `\"\"` lo desenlaza.",
+    "pyzed.designer.Document.set_rule": "Fija la regla de validación `rule` (`required`, `min_length`, `pattern`...) del control `name`; `None`, `\"\"` o `False` la quita.",
     "pyzed.designer.Document.duplicate": "Pega al momento una copia de la selección sin tocar el portapapeles; devuelve los nombres nuevos.",
     "pyzed.designer.Document.size": "El `(width, height)` del formulario en píxeles.",
     "pyzed.designer.Document.nudge": "Mueve `dx`, `dy` píxeles los controles seleccionados (los que no coloca un layout), sin salirse de su contenedor cuando comparten uno; los empujones repetidos se unen en un solo paso de deshacer.",
@@ -2269,3 +2304,48 @@ MEMBERS = {
     "pyzed.designer.History.undo": "Retrocede una instantánea; devuelve el formulario anterior (un objeto nuevo) o `None` si no hay.",
     "pyzed.designer.History.redo": "Avanza una instantánea; devuelve el formulario restaurado (un objeto nuevo) o `None` si no hay.",
 }
+
+
+# -- Muchos datos: virtualización y memoización -----------------------------
+_section("widgets", "Muchos datos", {
+    "pyzed.virtual_column": {
+        "desc": "Una columna de `count` filas de la misma altura que solo construye las filas visibles: `item(índice)` se llama cuando la fila entra en la vista, y las que salen se descartan. Una columna de un millón de filas cuesta lo mismo que una de cincuenta. Ponla dentro de un `scrollable` (se virtualiza contra el área visible del más cercano, o de la ventana).",
+        "params": {
+            "count": "Número de filas.",
+            "item": "Función que recibe el índice de una fila y devuelve su widget.",
+            "item_height": "Altura de cada fila, en píxeles.",
+            "spacing": "Espacio entre filas, en píxeles.",
+            "overscan": "Filas extra construidas por encima y por debajo de las visibles, para que el scroll rápido no deje huecos.",
+        },
+        "example": """rows = load_logs()          # una lista con 500 000 entradas
+
+pz.scrollable(
+    pz.virtual_column(len(rows), lambda i: pz.text(rows[i]), item_height=20),
+    id="logs", height="fill",
+)""",
+    },
+    "pyzed.memo": {
+        "desc": "Decorador que guarda lo que devuelve una función de la vista según sus argumentos, para que el siguiente `view()` reutilice el mismo árbol de widgets mientras no cambien. Pasa como argumentos todo lo que usa el subárbol. Las listas, dicts y sets se comparan por contenido y otros objetos no hashables por identidad; el tema y el idioma actuales siempre forman parte de la clave. `funcion.cache_clear()` vacía su caché.",
+        "params": {
+            "function": "La función a memoizar (al usarlo como `@pz.memo`).",
+            "maxsize": "Cuántos resultados guardar por función (se descartan los usados hace más tiempo).",
+        },
+        "example": """@pz.memo
+def sidebar(files: tuple, selected: str):
+    return pz.column([ui.list_item(f, selected=f == selected) for f in files])""",
+    },
+    "pyzed.clear_memos": {"desc": "Vacía la caché de todas las funciones `@pz.memo`."},
+    "pyzed.memo_stats": {"desc": "Devuelve `{\"hits\": n, \"misses\": m}`: cuántas llamadas a funciones memoizadas se respondieron desde la caché y cuántas construyeron su resultado."},
+})
+_section("ui", "Listas, árbol y menús", {
+    "pyzed.ui.virtual_list": {
+        "desc": "Una lista con scroll que solo construye las filas visibles, para miles o millones de elementos. `render(elemento)` devuelve el widget de un elemento y se llama cuando entra en la vista. Todas las filas tienen la misma altura.",
+        "params": {
+            "items": "Los elementos: una lista o cualquier secuencia (otros iterables se convierten en lista).",
+            "render": "Función que recibe un elemento y devuelve su widget.",
+            "item_height": "Altura de cada fila, en píxeles.",
+            "overscan": "Filas extra construidas por encima y por debajo de las visibles.",
+            "on_scroll": "Callable que recibe el viewport del scroll, como en `pz.scrollable`.",
+        },
+    },
+})

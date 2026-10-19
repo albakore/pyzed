@@ -71,6 +71,36 @@ def list_header(title: str, *, end: Any = None, theme: Optional[Theme] = None) -
     )
 
 
+def virtual_list(
+    items: Sequence[Any],
+    render: Callable[[Any], Any],
+    *,
+    item_height: float = 26,
+    spacing: float = 0,
+    width: Any = "fill",
+    height: Any = "fill",
+    padding: Any = None,
+    overscan: int = 4,
+    id: Optional[str] = None,
+    on_scroll: Any = None,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """A scrolling list that only builds the rows in view, for thousands or millions of items.
+
+    ``render(item)`` returns the widget for one item (a ``ui.list_item``, a row...). It is
+    called when the item scrolls into view, so building the list costs the same whatever
+    its length. Every row is ``item_height`` tall. ``items`` is a list or any sequence; to
+    scroll to item ``i``, scroll the list's ``id`` to ``i * (item_height + spacing)``.
+    """
+    t = _theme(theme)
+    if not isinstance(items, Sequence):
+        items = list(items)
+    rows = _core.virtual_column(len(items), lambda i: render(items[i]), item_height=item_height,
+                                spacing=spacing, overscan=overscan)
+    return _core.scrollable(rows, width=width, height=height, padding=padding, id=id, on_scroll=on_scroll,
+                            scroller=t.scrollbar, scroller_hover=t.scrollbar_hover, scrollbar_width=6)
+
+
 # ---------------------------------------------------------------------------
 # Tree (project panel)
 # ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 title: "Tabla"
 description: "Una tabla de datos con cabecera fija, ordenación y selección."
 sidebar:
-  order: 85
+  order: 86
   label: "Tabla"
 ---
 
@@ -113,7 +113,7 @@ table(
 )
 ```
 
-Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado.
+Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado. Las filas están virtualizadas: solo se construyen las visibles, así que cientos de miles de filas se desplazan con fluidez.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -155,6 +155,7 @@ Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o u
 
 <CardGrid>
 <LinkCard title="Fila de lista" description="Una fila de lista con icono, texto y un hueco al final." href="/pyzed/es/library/list-item/" />
+<LinkCard title="Lista virtual" description="Una lista que solo construye las filas visibles, para millones de elementos." href="/pyzed/es/library/virtual-list/" />
 <LinkCard title="Cifra" description="Una cifra de dashboard con variación y minigráfico." href="/pyzed/es/library/stat/" />
 <LinkCard title="Grupo de ajustes" description="Un bloque con título de filas de ajustes, como en Zed." href="/pyzed/es/library/settings-group/" />
 </CardGrid>

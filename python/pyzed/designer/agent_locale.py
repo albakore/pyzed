@@ -90,6 +90,8 @@ ES = {
     "Ask before writing files": "Preguntar antes de escribir archivos",
     "Creating forms and saving files waits for your OK": "Crear formularios y guardar archivos espera tu permiso",
     "Show thinking": "Mostrar el razonamiento", "Rules": "Reglas",
+    "Keep conversations": "Guardar conversaciones",
+    "Save threads on this computer, readable only by you": "Guarda las conversaciones en este equipo, solo legibles por ti",
     "e.g. Answer in Spanish. Use snake_case names.": "p. ej. Responde en español. Usa nombres snake_case.",
     "Instructions added to every thread": "Instrucciones añadidas a cada conversación",
     # Providers

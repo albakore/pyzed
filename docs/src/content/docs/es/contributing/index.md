@@ -15,7 +15,7 @@ repositorio.
 
 ## Entorno de desarrollo
 
-Necesitas **Python 3.9+**, una toolchain estable de **Rust** (`rustup`) y, en Linux, las bibliotecas de
+Necesitas **Python 3.10+**, una toolchain estable de **Rust** (`rustup`) y, en Linux, las bibliotecas de
 desarrollo habituales de X11/Wayland. Pyzed es una extensión de Rust (PyO3 + Iced) con un paquete de Python
 encima, compilada con [maturin](https://www.maturin.rs).
 
@@ -58,7 +58,9 @@ pytest tests                  # o: uv run pytest tests
 ```
 
 Los tests se ejecutan sin pantalla: las ventanas se dibujan con `App.screenshot` en archivos PNG, así que no
-necesitan GPU ni display. Opcionales:
+necesitan GPU ni display. `tests/test_visual.py` compara capturas con imágenes de referencia; si cambias el
+aspecto de un componente, regenéralas con `pytest tests/test_visual.py --update-snapshots` (mira
+[Tests](/pyzed/es/contributing/testing/)). Opcionales:
 
 ```bash
 uv run ty check                            # comprueba los tipos del paquete de Python
@@ -163,3 +165,5 @@ Los commits deben ser de tu autoría: no añadas trailers `Co-authored-by` ni pi
 - [Documentar un componente](/pyzed/es/contributing/documenting-components/): docstrings, referencia de la API,
   biblioteca de componentes, capturas, traducciones y el changelog.
 - [Editar la documentación](/pyzed/es/contributing/docs/): cómo está organizada y cómo se compila esta web.
+- [Tests](/pyzed/es/contributing/testing/): probar componentes de `ui` y los tests de regresión visual con
+  sus imágenes de referencia.

@@ -37,7 +37,8 @@ def check_format(fmt: Any, current: str, what: str) -> None:
 
 
 #: Names a control cannot take because handlers use them on the form (``form.title``...).
-RESERVED = frozenset({"name", "title", "size", "window", "close"} | set(keyword.kwlist))
+RESERVED = frozenset({"name", "title", "size", "window", "close", "data", "errors", "valid", "validate"}
+                     | set(keyword.kwlist))
 
 #: Edges a control can be anchored to. Anchoring to opposite edges stretches it.
 ANCHORS = ("left", "top", "right", "bottom")
@@ -54,7 +55,9 @@ class Control:
     handler function names. ``layout`` holds options read by the parent's layout, such as
     ``grow`` in a flex row or ``span`` in a grid. ``style`` holds CSS-like style properties
     (``pz.Style.to_dict()``: background, border, radius, font...) drawn on top of the props.
-    ``animations`` lists the control's animations (see ``designer.motion``).
+    ``animations`` lists the control's animations (see ``designer.motion``). ``bind`` names the
+    field of ``form.data`` the control shows (and edits, for inputs), and ``rules`` what its
+    value must be (see ``designer.binding``).
     """
 
     name: str
@@ -73,6 +76,8 @@ class Control:
     layout: Dict[str, Any] = field(default_factory=dict)
     style: Dict[str, Any] = field(default_factory=dict)
     animations: List[Dict[str, Any]] = field(default_factory=list)
+    bind: str = ""
+    rules: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
@@ -90,8 +95,9 @@ class Control:
             del data["layout"]
         if not data["style"]:
             del data["style"]
-        if not data["animations"]:
-            del data["animations"]
+        for key in ("animations", "bind", "rules"):
+            if not data[key]:
+                del data[key]
         return data
 
     @classmethod
@@ -105,6 +111,9 @@ class Control:
         known["style"] = dict(known.get("style") or {})
         known["animations"] = [dict(a) for a in known.get("animations") or [] if isinstance(a, dict)]
         known["parent"] = known.get("parent") or None
+        known["bind"] = str(known.get("bind") or "")
+        known["rules"] = {k: v for k, v in (known.get("rules") or {}).items() if v not in (None, "", False)} \
+            if isinstance(known.get("rules"), dict) else {}
         return cls(**known)
 
     def copy(self) -> "Control":

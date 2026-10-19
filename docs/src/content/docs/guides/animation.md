@@ -161,8 +161,10 @@ and `glow_color` too: the `glow`, `bloom`, `glow_pulse` and `glow_flash` presets
 ## Reduced motion and tests
 
 `pz.set_reduced_motion(True)` turns motion off: every animation shows its resting state at
-once. Offer it as an accessibility setting; the `PYZED_REDUCED_MOTION=1` environment variable
-turns it on at startup.
+once. By default Pyzed follows the system's "reduce motion" setting, read when the app
+starts; `set_reduced_motion(False)` or `True` overrides it (offer it as a setting of your
+app), `None` follows the system again and the `PYZED_REDUCED_MOTION` environment variable
+(`1` or `0`) overrides both. See [Accessibility](/pyzed/guides/accessibility/#reduce-motion).
 
 Screenshots (`App.screenshot`, `pz.screenshot`) always show the resting state too: what a
 mount animation ends on, so tests and docs images are stable. To test behavior, check the

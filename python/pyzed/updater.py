@@ -221,7 +221,11 @@ def download(asset: Asset, folder: Optional[Union[str, Path]] = None, *, progres
     except (urllib.error.URLError, OSError) as err:
         partial.unlink(missing_ok=True)
         raise UpdateError(f"the download failed: {getattr(err, 'reason', err)}") from err
-    if asset.sha256 and digest.hexdigest() != asset.sha256.lower():
+    if not asset.sha256:
+        # Without the release's checksum nothing proves the file is the one published: never install it.
+        partial.unlink(missing_ok=True)
+        raise UpdateError("the release does not publish a SHA-256 for this file, so it cannot be checked")
+    if digest.hexdigest() != asset.sha256.lower():
         partial.unlink(missing_ok=True)
         raise UpdateError("the download is corrupt (its SHA-256 does not match the release)")
     partial.replace(target)

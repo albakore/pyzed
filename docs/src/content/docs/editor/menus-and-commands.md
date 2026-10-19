@@ -60,6 +60,7 @@ keyboard and in the command palette.
 | Snap to grid | | Toggles snapping. |
 | Smart guides | | Toggles the alignment guides. |
 | Show hidden controls | | Draws hidden controls dimmed on the canvas, or leaves them out. |
+| Preview theme…, Preview language… | | Shows the canvas (and the next run) in another theme or language without changing the form (checked while on). See [Preview in another theme or language](/pyzed/editor/data-binding/#preview-in-another-theme-or-language). |
 | Reset panel layout | | Puts every panel back in its default dock and size. |
 | *Panels* | | One entry per panel, with the dock it is in (`Properties · Right`): click to bring it to the front. |
 

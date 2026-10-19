@@ -21,6 +21,7 @@ from .. import _core, ui
 from ..app import App
 from ..icons import icon as _icon
 from ..theme import themes
+from . import binding as _binding
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
@@ -181,6 +182,9 @@ class Designer(App):
         self.pending: Optional[Callable[[], Any]] = None
         self.toasts: List[Toast] = []
         self.preview: Optional[FormWindow] = None
+        #: A theme and a language to look at the form in (canvas and Run), without changing the form.
+        self.preview_theme: Optional[str] = None
+        self.preview_language: Optional[str] = None
         self.console = ConsoleController(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
@@ -761,8 +765,7 @@ class Designer(App):
             ui.SEPARATOR,
             ui.MenuItem(tr("Cut"), self._menu_action(self.cut), icon="scissors", keys="ctrl-x"),
             ui.MenuItem(tr("Copy"), self._menu_action(self.copy), icon="copy", keys="ctrl-c"),
-            ui.MenuItem(tr("Paste"), self._menu_action(self.paste), icon="clipboard", keys="ctrl-v",
-                        disabled=not self.doc.clipboard),
+            ui.MenuItem(tr("Paste"), self._menu_action(self.paste), icon="clipboard", keys="ctrl-v"),
             ui.MenuItem(tr("Duplicate"), self._menu_action(self.duplicate), icon="copy-plus", keys="ctrl-d"),
             ui.SEPARATOR,
             ui.MenuItem(tr("Bring to front"), self._menu_action(lambda: self.reorder("front")), icon="bring-to-front"),
@@ -822,20 +825,29 @@ class Designer(App):
         self.doc.delete()
         self._selection_changed()
 
-    def cut(self) -> None:
-        """Cuts the selected controls to the clipboard."""
-        self.doc.cut()
+    def cut(self) -> Any:
+        """Cuts the selected controls to the clipboard (the system's too, so another form can paste them)."""
+        count = self.doc.cut()
         self._selection_changed()
+        return _core.Command.copy(self.doc.clipboard_text()) if count else None
 
-    def copy(self) -> None:
-        """Copies the selected controls to the clipboard and tells how many were copied."""
+    def copy(self) -> Any:
+        """Copies the selected controls to the clipboard, the system's too, and tells how many were copied."""
         count = self.doc.copy()
-        if count:
-            self.notify(f"Copied {count} control{'s' if count > 1 else ''}")
+        if not count:
+            return None
+        self.notify(tr("Copied {count} controls", count=count) if count > 1 else tr("Copied 1 control"))
+        return _core.Command.copy(self.doc.clipboard_text())
 
-    def paste(self) -> None:
-        """Pastes the clipboard's controls into the form and selects them."""
-        self.doc.paste()
+    def paste(self) -> Any:
+        """Pastes the controls on the system clipboard (copied in any form or Pyzed Design window) and selects
+        them; returns the command that reads the clipboard."""
+        return _core.Command.paste(self.paste_text)
+
+    def paste_text(self, text: str) -> None:
+        """Pastes the controls in system clipboard ``text``, or the last ones copied here when it holds none."""
+        if self.doc.paste_text(text) is None:
+            self.doc.paste()
         self._selection_changed()
 
     def duplicate(self) -> None:
@@ -1136,6 +1148,19 @@ class Designer(App):
         """Opens the command palette and returns the command that focuses its search field."""
         self.open_dialog_named("palette")
         return _core.Command.focus(dialogs.PICKER_ID)
+
+    def open_preview_picker(self, which: str) -> Any:
+        """Opens the list of themes (``which="theme"``) or languages (``"language"``) to preview the form in."""
+        if self.doc.path is not None:
+            _binding.load_texts(self.doc.path)
+        self.open_dialog_named(f"preview_{which}")
+        return _core.Command.focus(dialogs.PICKER_ID)
+
+    def set_preview(self, which: str, value: Optional[str]) -> None:
+        """Previews the form in theme or language ``value`` (``None`` goes back to the form's own) on the canvas
+        and when it runs."""
+        setattr(self, f"preview_{which}", value or None)
+        self.dialog = None
 
     def toggle_app_menu(self, name: str) -> None:
         """Opens the title bar menu ``name`` ("file", "view" or "help"), or closes it if open."""
@@ -1620,6 +1645,7 @@ class Designer(App):
         except (OSError, ValueError) as err:
             self.notify("Could not open the form", str(err), kind="error", seconds=5)
             return
+        _binding.load_texts(path)  # the form's own translations, for @key texts and Preview language
         self.dialog = None
         self.editing = None
         self._selection_changed()
@@ -1714,7 +1740,9 @@ class Designer(App):
             # The designer does not have the project's dependencies: run it with `uv run`.
             self.save()
             self.console.start(name, "uv run")
-            self.projects.run_form(Path(self.doc.path), capture=True)
+            env = {k: v for k, v in (("PYZED_PREVIEW_THEME", self.preview_theme),
+                                     ("PYZED_PREVIEW_LANGUAGE", self.preview_language)) if v}
+            self.projects.run_form(Path(self.doc.path), capture=True, env=env)
             self.console.pipe(self.projects.process)
             return None
         self.console.start(name)
@@ -1730,7 +1758,8 @@ class Designer(App):
         commands = []
         if self.preview is not None and self.preview.is_open:
             commands.append(self.preview.close())
-        self.preview = FormWindow(self.doc.form, handlers, path=self.doc.path)
+        self.preview = FormWindow(self.doc.form, handlers, path=self.doc.path, theme=self.preview_theme,
+                                  language=self.preview_language)
         self.preview.app = self
         self.preview.runtime.log = self.console.event
         commands.append(self.preview.open())
@@ -1767,7 +1796,7 @@ class Designer(App):
             handled, result = self.assist.on_key(combo)
             if handled:
                 return result
-        if self.dialog in ("palette", "add_control") and combo in ("up", "down"):
+        if self.dialog in ("palette", "add_control", "preview_theme", "preview_language") and combo in ("up", "down"):
             self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
             return None
         if combo == "escape":
@@ -2036,6 +2065,10 @@ class Designer(App):
                            color="accent") if tool else None,
         ]
         end = [
+            ui.status_item(self.preview_theme, lambda: self.open_preview_picker("theme"), icon="palette",
+                           color="accent") if self.preview_theme else None,
+            ui.status_item(self.preview_language, lambda: self.open_preview_picker("language"), icon="languages",
+                           color="accent") if self.preview_language else None,
             ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers"),
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
@@ -2083,7 +2116,8 @@ class Designer(App):
         if self.dialog == "agent_settings":
             return agent_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
-                 "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette}
+                 "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette,
+                 "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language}
         if self.dialog in named:
             return named[self.dialog](self, t)
         return None

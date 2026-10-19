@@ -6,6 +6,7 @@ mod editor;
 mod editor_widgets;
 mod events;
 mod extra;
+mod focus;
 mod fonts;
 mod highlighter;
 mod layout;
@@ -13,6 +14,7 @@ mod render;
 mod sticky;
 mod style;
 mod styled;
+mod virtualize;
 mod widget;
 
 use pyo3::prelude::*;

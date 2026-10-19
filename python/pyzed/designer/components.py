@@ -84,6 +84,8 @@ class RenderContext:
     """
 
     live = False
+    #: The language ``@key`` texts are shown in (``None``: the current one).
+    language: Optional[str] = None
 
     def __init__(self, theme: Optional[Theme] = None, form_name: str = "form") -> None:
         self.theme = theme or current()
@@ -183,8 +185,11 @@ def categories() -> Dict[str, List[Component]]:
 
 def render(control: Control, ctx: RenderContext) -> Any:
     """Draws ``control`` at its size (its own props, falling back to the component defaults)."""
+    from .binding import translate
+
     spec = get(control.type)
-    merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
+    props = {k: translate(v, ctx.language) for k, v in {**spec.defaults(), **control.props}.items()}
+    merged = Control(**{**control.__dict__, "props": props})
     widget = styled(spec.render(merged, ctx), control, ctx)
     widget = animated(widget, control, ctx)
     # shadows, glows and motion are drawn outside the box: clipping would cut them off

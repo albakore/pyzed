@@ -1281,5 +1281,41 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             })
             .into()
         }
+        Kind::Virtual {
+            count,
+            item,
+            item_height,
+            spacing,
+            overscan,
+            width,
+        } => {
+            let item = item.clone();
+            crate::virtualize::VirtualColumn::new(
+                *count,
+                *item_height,
+                *spacing,
+                *overscan,
+                width.unwrap_or(Length::Fill),
+                move |index| {
+                    Python::attach(|py| {
+                        let result = item
+                            .0
+                            .bind(py)
+                            .call1((index,))
+                            .and_then(|w| crate::widget::child(&w));
+                        match result {
+                            Ok(node) => build(py, &node, ctx),
+                            Err(err) => {
+                                err.print(py);
+                                text(crate::app::format_error(py, &err))
+                                    .color(Color::from_rgb8(0xd0, 0x72, 0x77))
+                                    .into()
+                            }
+                        }
+                    })
+                },
+            )
+            .into()
+        }
     }
 }

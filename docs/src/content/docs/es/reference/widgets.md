@@ -1730,8 +1730,18 @@ set_reduced_motion(on=True)
 
 Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
 
-Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
-de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+Por defecto Pyzed sigue el ajuste de accesibilidad "reducir movimiento" del sistema (se lee al
+arrancar la app, ver `pyzed.system_reduced_motion`). `True` o `False` lo reemplazan (por ejemplo
+desde los ajustes de tu app, o en tests) y `None` vuelve a seguir al sistema. La variable de
+entorno `PYZED_REDUCED_MOTION` (`1` o `0`) también lo reemplaza.
+
+### `system_reduced_motion`
+
+```python
+system_reduced_motion()
+```
+
+Si el sistema pide a las apps reducir el movimiento (`None` si no se sabe).
 
 ### `reduced_motion`
 
@@ -1798,3 +1808,66 @@ Las propiedades que cambian las animaciones y transiciones: `opacity`, `x`, `y`,
 ### `WINDOW_TRANSITIONS`
 
 Nombres para `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) asociados a sus presets `(apertura, cierre)`.
+
+## Muchos datos
+
+### `virtual_column`
+
+```python
+virtual_column(count, item, *, item_height, spacing=0.0, overscan=4, width=None)
+```
+
+Una columna de `count` filas de la misma altura que solo construye las filas visibles: `item(índice)` se llama cuando la fila entra en la vista, y las que salen se descartan. Una columna de un millón de filas cuesta lo mismo que una de cincuenta. Ponla dentro de un `scrollable` (se virtualiza contra el área visible del más cercano, o de la ventana).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `count` | Número de filas. |
+| `item` | Función que recibe el índice de una fila y devuelve su widget. |
+| `item_height` | Altura de cada fila, en píxeles. |
+| `spacing` | Espacio entre filas, en píxeles. |
+| `overscan` | Filas extra construidas por encima y por debajo de las visibles, para que el scroll rápido no deje huecos. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+
+```python
+rows = load_logs()          # una lista con 500 000 entradas
+
+pz.scrollable(
+    pz.virtual_column(len(rows), lambda i: pz.text(rows[i]), item_height=20),
+    id="logs", height="fill",
+)
+```
+
+### `memo`
+
+```python
+memo(function=None, *, maxsize=64)
+```
+
+Decorador que guarda lo que devuelve una función de la vista según sus argumentos, para que el siguiente `view()` reutilice el mismo árbol de widgets mientras no cambien. Pasa como argumentos todo lo que usa el subárbol. Las listas, dicts y sets se comparan por contenido y otros objetos no hashables por identidad; el tema y el idioma actuales siempre forman parte de la clave. `funcion.cache_clear()` vacía su caché.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `function` | La función a memoizar (al usarlo como `@pz.memo`). |
+| `maxsize` | Cuántos resultados guardar por función (se descartan los usados hace más tiempo). |
+
+```python
+@pz.memo
+def sidebar(files: tuple, selected: str):
+    return pz.column([ui.list_item(f, selected=f == selected) for f in files])
+```
+
+### `clear_memos`
+
+```python
+clear_memos()
+```
+
+Vacía la caché de todas las funciones `@pz.memo`.
+
+### `memo_stats`
+
+```python
+memo_stats()
+```
+
+Devuelve `{"hits": n, "misses": m}`: cuántas llamadas a funciones memoizadas se respondieron desde la caché y cuántas construyeron su resultado.

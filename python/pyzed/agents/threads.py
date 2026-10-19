@@ -7,6 +7,7 @@ messages and the model only; keys never go there.
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -68,8 +69,13 @@ class ThreadStore:
         thread.updated = time.time()
         path = self._path(thread.id)
         try:
-            self.folder.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps(thread.to_dict(), ensure_ascii=False), encoding="utf-8")
+            self.folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+            text = json.dumps(thread.to_dict(), ensure_ascii=False)
+            # Threads can hold project code and files the agent read: only the user may read them.
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as file:
+                file.write(text)
+            os.chmod(path, 0o600)
         except (OSError, TypeError, ValueError):
             return None
         self._prune()

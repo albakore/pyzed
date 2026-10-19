@@ -71,6 +71,7 @@ agent = agents.Agent(tools=[stock], settings=settings)
 | `profile` | `"write"` (every tool), `"ask"` (only tools without `writes=True`) or `"minimal"` (no tools). |
 | `confirm_writes` | Call `confirm(tool, args)` before a tool marked `writes=True` (on by default). Without a `confirm` callback those tools are refused; turn it off to let them run unasked. |
 | `rules` | Text added to the system prompt. |
+| `keep_history` | Whether Pyzed Design saves threads on this computer (on by default). |
 | `providers[id].base_url` / `.models` | Server URL and the models offered for a provider. |
 
 `agents.providers.load()` and `save()` read and write `agents.json` in Pyzed's settings folder (the designer's
@@ -100,7 +101,9 @@ an exception, goes back to the model as an error so it can fix its call.
 
 Ready-made tools: `agents.pyzed_tools()` (Pyzed's components, icons, themes, docs, generators and checks, the
 same as the [MCP server](/pyzed/guides/mcp/)) and `agents.file_tools(folder)` (list, read, search and write files,
-never outside `folder`).
+never outside `folder`). The file tools never open keys or credentials (`.env`, `*.pem`, `*.key`, SSH keys...;
+`agents.tools.SECRET_FILES`), so a prompt injection in a project file cannot send them to the provider; pass
+`hidden=` to change the list.
 
 ## Streaming into the UI
 
@@ -174,7 +177,7 @@ store = agents.ThreadStore()                      # agents/threads in Pyzed's se
 thread = agents.Thread(model="ollama:qwen3:8b")
 agent = agents.Agent(thread.model, messages=thread.messages)
 agent.run("Hello")
-store.save(thread)                                # JSON on this computer; no keys
+store.save(thread)                                # JSON only you can read; no keys
 store.list()                                      # newest first
 ```
 

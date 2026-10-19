@@ -105,6 +105,8 @@ pub enum Message {
     },
     Scrolled(PyMsg, scrollable::Viewport),
     Key(String),
+    /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
+    TabKey(String, bool),
     /// A message produced inside the given window.
     Windowed(window::Id, Box<Message>),
     WindowOpened(window::Id),
@@ -131,6 +133,8 @@ impl Message {
 enum CommandKind {
     Exit,
     Focus(String),
+    /// Next (`true`) or previous field of the current window.
+    FocusNext(bool),
     SelectAll(String),
     SetEditorText(String, String),
     SetEditorCursor(String, usize, usize),
@@ -186,6 +190,18 @@ impl Command {
     #[staticmethod]
     fn focus(id: String) -> Self {
         cmd(CommandKind::Focus(id))
+    }
+
+    /// Moves the keyboard focus to the next field of the window (what Tab does), wrapping around.
+    #[staticmethod]
+    fn focus_next() -> Self {
+        cmd(CommandKind::FocusNext(true))
+    }
+
+    /// Moves the keyboard focus to the previous field of the window (what Shift+Tab does).
+    #[staticmethod]
+    fn focus_previous() -> Self {
+        cmd(CommandKind::FocusNext(false))
     }
 
     /// Focuses the `text_input` with the given `id` and selects all its text.
@@ -403,6 +419,8 @@ impl Command {
         match self.kind {
             CommandKind::Exit => "Command.exit()",
             CommandKind::Focus(_) => "Command.focus(...)",
+            CommandKind::FocusNext(true) => "Command.focus_next()",
+            CommandKind::FocusNext(false) => "Command.focus_previous()",
             CommandKind::SelectAll(_) => "Command.select_all(...)",
             CommandKind::SetEditorText(..) => "Command.set_editor_text(...)",
             CommandKind::SetEditorCursor(..) => "Command.set_editor_cursor(...)",
@@ -509,6 +527,10 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
     match &command.get().kind {
         CommandKind::Exit => iced::exit(),
         CommandKind::Focus(id) => iced::widget::operation::focus(id.clone()),
+        CommandKind::FocusNext(forward) => match state.current.or(state.main) {
+            Some(window) => crate::focus::cycle(window, *forward),
+            None => Task::none(),
+        },
         CommandKind::SelectAll(id) => Task::batch([
             iced::widget::operation::focus(id.clone()),
             iced::widget::operation::select_all(id.clone()),
@@ -894,6 +916,30 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     None => return Task::none(),
                 }
             }
+            Message::TabKey(combo, back) => {
+                let main = state.app.bind(py).clone();
+                let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
+                    None if !target.is(&main) => call_hook(&main, "on_key", (combo,)),
+                    other => other,
+                };
+                match hooked {
+                    // `on_key` handled Tab itself (it returned a message or a command).
+                    Some(Ok(value)) if !value.is_none() => return command_task(py, state, &value),
+                    Some(Err(err)) => err.print(py),
+                    _ => {}
+                }
+                let enabled = |obj: &Bound<'_, PyAny>| {
+                    obj.getattr("tab_focus")
+                        .and_then(|v| v.is_truthy())
+                        .unwrap_or(true)
+                };
+                return match state.current.or(state.main) {
+                    Some(window) if enabled(&target) && enabled(&main) => {
+                        crate::focus::cycle(window, !back)
+                    }
+                    _ => Task::none(),
+                };
+            }
             Message::Editor {
                 id,
                 action,
@@ -1108,7 +1154,10 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
             .call_method0(method)
             .and_then(|w| crate::widget::child(&w));
         match root {
-            Ok(root) => render::build(py, &root, Ctx::new(&state.caches)),
+            Ok(root) => {
+                crate::focus::Scope::new(id, render::build(py, &root, Ctx::new(&state.caches)))
+                    .into()
+            }
             Err(err) => {
                 let reload_failed = err
                     .get_type(py)
@@ -1285,10 +1334,25 @@ fn key_message(event: keyboard::Event) -> Option<Message> {
 
 fn key_event(
     event: iced::Event,
-    _status: iced::event::Status,
+    status: iced::event::Status,
     window: window::Id,
 ) -> Option<Message> {
     match event {
+        // Tab that no widget used (a code editor indents with it) moves the focus.
+        iced::Event::Keyboard(keyboard::Event::KeyPressed {
+            key: Key::Named(Named::Tab),
+            modifiers,
+            ..
+        }) if status == iced::event::Status::Ignored
+            && !(modifiers.control() || modifiers.alt() || modifiers.logo()) =>
+        {
+            let combo = if modifiers.shift() {
+                "shift-tab"
+            } else {
+                "tab"
+            };
+            Some(Message::TabKey(combo.into(), modifiers.shift()).in_window(window))
+        }
         iced::Event::Keyboard(event) => key_message(event).map(|m| m.in_window(window)),
         _ => None,
     }

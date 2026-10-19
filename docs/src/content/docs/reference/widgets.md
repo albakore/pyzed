@@ -1730,8 +1730,10 @@ set_reduced_motion(on=True)
 
 Turns motion off (`True`) or back on: animations show their resting state at once.
 
-Respect the user's choice (an accessibility setting) or use it in tests. The
-`PYZED_REDUCED_MOTION=1` environment variable turns it on at startup.
+By default Pyzed follows the system's "reduce motion" accessibility setting (read when
+the app starts, see `pyzed.system_reduced_motion`). `True` or `False` overrides it
+(for example from your app's own settings, or in tests) and `None` follows the system
+again. The `PYZED_REDUCED_MOTION` environment variable (`1` or `0`) overrides it too.
 
 ### `reduced_motion`
 
@@ -1740,6 +1742,14 @@ reduced_motion()
 ```
 
 Whether reduced motion is on.
+
+### `system_reduced_motion`
+
+```python
+system_reduced_motion()
+```
+
+Whether the system asks apps to reduce motion (`None` if unknown).
 
 ### `animation`
 
@@ -1799,3 +1809,66 @@ The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, 
 ### `WINDOW_TRANSITIONS`
 
 Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.
+
+## Large data
+
+### `virtual_column`
+
+```python
+virtual_column(count, item, *, item_height, spacing=0.0, overscan=4, width=None)
+```
+
+A column of `count` rows of the same height that only builds the rows in view: `item(index)` is called when row `index` scrolls into view, and rows that leave it are dropped. A column of a million rows costs the same as one of fifty. Put it in a `scrollable` (it virtualizes against the visible area of the closest one, or the window).
+
+| Parameter | Description |
+| --- | --- |
+| `count` | Number of rows. |
+| `item` | Function that receives a row index and returns its widget. |
+| `item_height` | Height of every row, in pixels. |
+| `spacing` | Space between rows, in pixels. |
+| `overscan` | Extra rows built above and below the visible ones, so fast scrolling shows no gaps. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+
+```python
+rows = load_logs()          # a list with 500 000 entries
+
+pz.scrollable(
+    pz.virtual_column(len(rows), lambda i: pz.text(rows[i]), item_height=20),
+    id="logs", height="fill",
+)
+```
+
+### `memo`
+
+```python
+memo(function=None, *, maxsize=64)
+```
+
+Decorator that caches what a view function returns by its arguments, so the next `view()` reuses the same widget tree while they don't change. Pass everything the subtree depends on as arguments. Lists, dicts and sets compare by contents, other unhashable objects by identity; the current theme and language are always part of the key. `function.cache_clear()` empties its cache.
+
+| Parameter | Description |
+| --- | --- |
+| `function` | The function to memoize (when used as `@pz.memo`). |
+| `maxsize` | How many results to keep per function (least recently used are dropped). |
+
+```python
+@pz.memo
+def sidebar(files: tuple, selected: str):
+    return pz.column([ui.list_item(f, selected=f == selected) for f in files])
+```
+
+### `clear_memos`
+
+```python
+clear_memos()
+```
+
+Empties the cache of every `@pz.memo` function.
+
+### `memo_stats`
+
+```python
+memo_stats()
+```
+
+Returns `{"hits": n, "misses": m}`: how many calls of memoized functions were answered from the cache and how many built their result.
