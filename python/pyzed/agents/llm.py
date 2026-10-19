@@ -81,11 +81,10 @@ _FEDERATED: Dict[Any, Any] = {}
 def _identity_token(fed: "_providers.FederationSettings") -> Callable[[], str]:
     """Where the identity token (a JWT from your identity provider) comes from."""
     if fed.token_source == "command":
-        import shlex
         import subprocess
 
         def from_command() -> str:
-            result = subprocess.run(shlex.split(fed.token_command, posix=os.name != "nt"), capture_output=True,
+            result = subprocess.run(_providers.split_command(fed.token_command), capture_output=True,
                                     text=True, timeout=60)
             token = result.stdout.strip()
             if result.returncode != 0 or not token:

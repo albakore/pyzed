@@ -587,3 +587,11 @@ def test_slash_app_and_screenshot_mention(tmp_path, monkeypatch):
     _until(lambda: not c.running, d)
     sent = stream.calls[0]["messages"][0]["content"]
     assert any(b["type"] == "image" for b in sent)
+
+
+def test_commands_are_split_like_the_platform_shell(monkeypatch):
+    assert providers.split_command('npx -y "my server"') == ["npx", "-y", "my server"]
+    monkeypatch.setattr(providers.os, "name", "nt")
+    parts = providers.split_command(r'"C:\Program Files\Py\python.exe" -c "print(1)" C:\data')
+    monkeypatch.undo()
+    assert parts == [r"C:\Program Files\Py\python.exe", "-c", "print(1)", r"C:\data"]

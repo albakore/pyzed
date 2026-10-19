@@ -1206,11 +1206,9 @@ class AgentController:
         config = self.settings.mcp_server(name) if kind == "mcp" else self.settings.acp_agent(name)
         if config is None:
             return
-        import shlex
-
         hidden = _mcp.get_secrets(name if kind == "mcp" else f"acp.{name}")
         self.server_draft = {"kind": kind, "name": config.name, "url": getattr(config, "url", ""),
-                             "command": shlex.join([config.command, *config.args]) if config.command else "",
+                             "command": _agents.providers.join_command([config.command, *config.args]) if config.command else "",
                              "secrets": "; ".join(f"{k}={v}" for k, v in hidden.items()),
                              "title": getattr(config, "title", ""), "editing": name}
 
@@ -1223,14 +1221,12 @@ class AgentController:
 
     def save_draft(self) -> None:
         """Saves the MCP server or external agent being edited; its secrets go to the keychain."""
-        import shlex
-
         draft = self.server_draft
         if draft is None:
             return
         name = re.sub(r"[^A-Za-z0-9_-]+", "-", draft["name"].strip()).strip("-")
         try:
-            parts = shlex.split(draft["command"].strip(), posix=True) if draft["command"].strip() else []
+            parts = _agents.providers.split_command(draft["command"].strip()) if draft["command"].strip() else []
         except ValueError as err:
             self.d.notify(tr("The command is not valid: {error}", error=str(err)), kind="error", seconds=5)
             return

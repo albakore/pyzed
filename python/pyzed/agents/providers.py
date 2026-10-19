@@ -422,6 +422,26 @@ def _access_token(provider_id: str, saved: str, store: _secrets.SecretStore, set
     return token.get("access_token") or None
 
 
+def split_command(text: str) -> List[str]:
+    """A command line typed by the user as a program and its arguments, the way this platform's
+    shell splits it (backslashes in Windows paths are kept). Raises ``ValueError`` on unbalanced quotes."""
+    import shlex
+
+    if os.name != "nt":
+        return shlex.split(text)
+    lexer = shlex.shlex(text, posix=True)
+    lexer.whitespace_split, lexer.escape = True, ""  # Windows paths use backslashes, not escapes
+    return list(lexer)
+
+
+def join_command(parts: List[str]) -> str:
+    """The inverse of ``split_command``."""
+    import shlex
+    import subprocess
+
+    return subprocess.list2cmdline(parts) if os.name == "nt" else shlex.join(parts)
+
+
 def looks_like_key(provider_id: str, text: str) -> bool:
     """Whether ``text`` (say, what was just copied) looks like a key of ``provider_id``."""
     text = text.strip()
