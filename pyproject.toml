@@ -34,7 +34,7 @@ dev = [
     "ty>=0.0.89",
 ]
 # The build backend, the test runner and the type checker; `uv sync` installs them (default-groups below).
-test = ["maturin>=1.7,<2.0", "pytest", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
+test = ["maturin>=1.7,<2.0", "pytest", "pillow", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
 
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"
