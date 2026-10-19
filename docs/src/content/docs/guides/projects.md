@@ -149,6 +149,32 @@ python -m pip install pyzed-ui pyinstaller uv
 python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
 ```
 
+### Updates
+
+Like Zed, Pyzed Design checks GitHub once a day for a newer release (turn it off in
+**Help → Check for updates automatically**, or check now with **Help → Check for updates**). When there is
+one, the status bar shows **Update to X.Y.Z**: it opens a **What's new** tab with the release notes and a
+**Download and install** button. The download for your platform is checked against the release's SHA-256 and
+unpacked in the background; **Restart to update** then quits, swaps the app folder (the `.app` on macOS) for
+the new one and starts it again. After an update, the What's new tab opens on its own with the notes of the new
+version, and **Help → What's new** shows them at any time. **Skip this version** hides an update until a newer
+one comes out.
+
+The app replaces itself only when it can write to its own folder; otherwise download the new zip again. When the
+designer runs from Python (`pip` or `uv`), the tab shows the command that upgrades the package instead.
+
+The same updater is available to your own compiled apps in `pyzed.updater`:
+
+```python
+from pyzed import updater
+
+release = updater.latest("me/my-app")              # the newest GitHub Release
+if updater.is_newer(release.version, "1.0.0"):
+    asset = release.asset_for(updater.asset_name("my-app"))   # my-app-<os>-<arch>.zip
+    app = updater.extract(updater.download(asset))
+    updater.replace_on_exit(app)                    # then quit; the new version starts
+```
+
 ## From Python
 
 ```python

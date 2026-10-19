@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -71,11 +70,16 @@ def main() -> int:
     print(" ".join(command))
     subprocess.run(command, check=True)
     if not args.no_zip:
-        system = {"darwin": "macos", "win32": "windows"}.get(sys.platform, sys.platform)
-        machine = platform.machine().lower().replace("amd64", "x86_64")
+        from pyzed import updater
+
+        # the same name the designer's updater looks for in each release
         bundle = out / (f"{NAME}.app" if sys.platform == "darwin" else NAME)
-        archive = shutil.make_archive(str(out / f"pyzed-design-{system}-{machine}"), "zip", bundle.parent,
-                                      bundle.name)
+        archive = str(out / updater.asset_name("pyzed-design"))
+        if sys.platform == "darwin":
+            # ditto keeps the bundle's symlinks and signature, which the updater unpacks with ditto too
+            subprocess.run(["ditto", "-c", "-k", "--keepParent", str(bundle), archive], check=True)
+        else:
+            archive = shutil.make_archive(archive[:-4], "zip", bundle.parent, bundle.name)
         print(f"Wrote {archive}")
     return 0
 
