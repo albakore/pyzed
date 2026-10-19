@@ -154,6 +154,10 @@ editor(
     cursor_width=2.0,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    match_brackets=True,
+    selection_highlight=True,
     theme=None,
 )
 ```
@@ -189,6 +193,10 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `cursor_width` | `2.0` | Width of the bar cursor. |
 | `cursor_color` | `None` | Cursor color (the theme's player color by default). |
 | `on_zoom` | `None` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
+| `on_action` | `None` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…), e.g. to count them. |
+| `highlights` | `None` | Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
+| `match_brackets` | `True` | Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it). |
+| `selection_highlight` | `True` | Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#editor)
@@ -251,6 +259,11 @@ code_editor(
     cursor_blink=True,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    highlight_color=None,
+    match_brackets=True,
+    selection_highlight=True,
 )
 ```
 
@@ -300,6 +313,11 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
 | `cursor_blink` | `True` | Whether the cursor blinks. |
 | `cursor_color` | `None` | Cursor color. |
 | `on_zoom` | `None` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
+| `on_action` | `None` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…). |
+| `highlights` | `None` | Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
+| `highlight_color` | `None` | Color of `highlights`. |
+| `match_brackets` | `True` | Outlines the bracket that matches the one next to the cursor. |
+| `selection_highlight` | `True` | Highlights the other occurrences of the selected text. |
 
 [Full reference →](/pyzed/reference/widgets/#code_editor)
 

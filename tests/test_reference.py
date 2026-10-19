@@ -122,6 +122,8 @@ def test_browser_history_and_links():
         browser.set_query(query)
         assert repr(ui.reference_browser(browser, on_open_url=lambda url: None)).startswith("<Widget row")
     assert repr(ui.reference_browser(reference.Browser())).startswith("<Widget row")
+    # the start page's section is unfolded, like a page opened later
+    assert reference.page("pyzed.ui.button").entry.section in reference.Browser("pyzed.ui.button").expanded
 
 
 def test_designer_reference_tab(tmp_path):

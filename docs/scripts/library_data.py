@@ -2512,6 +2512,32 @@ add(
     related=["modal", "shortcuts"],
 )
 
+add(
+    slug="reference-browser",
+    name=T("Reference browser", "Visor de referencia"),
+    category="code",
+    api=["pyzed.ui.reference_browser"],
+    blurb=T("Built-in, searchable docs like Godot's: a class list next to the open page.",
+            "Documentación integrada con buscador, como la de Godot: una lista de clases junto a la página abierta."),
+    desc=T("The built-in reference: a searchable class list (the library, your components and any section you "
+           "`reference.register`) next to the page that is open, with back and forward, internal links and an "
+           "Open online button. Keep a `pyzed.reference.Browser` in your state; the browser changes it. Links that "
+           "leave the reference go to `on_open_url`. See [Built-in reference](/pyzed/editor/reference/).",
+           "La referencia integrada: una lista de clases con buscador (la librería, tus componentes y las secciones "
+           "que añadas con `reference.register`) junto a la página abierta, con atrás y adelante, enlaces internos y "
+           "un botón Abrir en la web. Guarda un `pyzed.reference.Browser` en tu estado; el visor lo cambia. Los "
+           "enlaces que salen de la referencia van a `on_open_url`. Ver [Referencia integrada](/pyzed/es/editor/reference/)."),
+    when=T(["In a Help tab or window of an app built on Pyzed, so its users can read the API offline.",
+            "With your own `reference.Provider` sections, as your app's help."],
+           ["En una pestaña o ventana de Ayuda de una app hecha con Pyzed, para leer la API sin conexión.",
+            "Con tus propias secciones `reference.Provider`, como la ayuda de tu app."]),
+    preview={"code": """from pyzed import reference
+
+help = reference.Browser("pyzed.ui.button")
+ui.reference_browser(help, on_open_url=open_in_browser, sidebar_width=230)""", "size": (900, 520), "fill": True},
+    related=["shortcuts", "about", "markdown"],
+)
+
 # ----------------------------------------------------------------------------------------- layout
 # Base widgets of ``pyzed``. ``box`` (a small labeled tile) keeps the snippets short.
 

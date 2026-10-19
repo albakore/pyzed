@@ -154,6 +154,10 @@ editor(
     cursor_width=2.0,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    match_brackets=True,
+    selection_highlight=True,
     theme=None,
 )
 ```
@@ -189,6 +193,10 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `cursor_width` | `2.0` | Ancho del cursor de barra. |
 | `cursor_color` | `None` | Color del cursor (por defecto, el color de jugador del tema). |
 | `on_zoom` | `None` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
+| `on_action` | `None` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…), por ejemplo para contarlas. |
+| `highlights` | `None` | Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
+| `match_brackets` | `True` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
+| `selection_highlight` | `True` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#editor)
@@ -251,6 +259,11 @@ code_editor(
     cursor_blink=True,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    highlight_color=None,
+    match_brackets=True,
+    selection_highlight=True,
 )
 ```
 
@@ -300,6 +313,11 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 | `cursor_blink` | `True` | Si el cursor parpadea. |
 | `cursor_color` | `None` | Color del cursor. |
 | `on_zoom` | `None` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
+| `on_action` | `None` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…). |
+| `highlights` | `None` | Rangos pintados detrás del texto (resultados de búsqueda): `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
+| `highlight_color` | `None` | Color de `highlights`. |
+| `match_brackets` | `True` | Remarca el corchete pareja del que está junto al cursor. |
+| `selection_highlight` | `True` | Resalta las demás apariciones del texto seleccionado. |
 
 [Referencia completa →](/pyzed/es/reference/widgets/#code_editor)
 
