@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-sqlalchemy-contacts"
+version = "0.1.0"
+description = "A Pyzed contacts manager on SQLAlchemy 2.0 and SQLite, with 20,000 rows in a virtual table."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "sqlalchemy>=2.0"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }
