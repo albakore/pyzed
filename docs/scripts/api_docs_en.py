@@ -627,11 +627,17 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                 },
                 "pyzed.ui.tab": {
                     "desc": "A single tab. You normally use `tab_bar`.",
-                    "params": {"item": "The `Tab`.", "active": "Whether it is the active one.", "height": "Height."},
+                    "params": {"item": "The `Tab`.", "active": "Whether it is the active one.", "height": "Height.",
+                               "dimmed": "Mutes the label (the tab being dragged)."},
                 },
                 "pyzed.ui.tab_bar": {
-                    "desc": "A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover.",
-                    "params": {"tabs": "List of `Tab`.", "active": "Id of the active tab.", "height": "Height."},
+                    "desc": "A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover. Tabs can be dragged to reorder them or out of the window: see [Draggable tabs](/pyzed/guides/windows/#draggable-tabs-and-detachable-windows).",
+                    "params": {"tabs": "List of `Tab`.", "active": "Id of the active tab.", "height": "Height.",
+                               "on_drag": "Called with the tab id when a tab starts being dragged.",
+                               "on_drop": "Called with the tab id and the `Event` when the dragged tab is released: `event.window_x`/`window_y` (outside the window if it was dropped outside) and `event.screen`.",
+                               "on_drag_over": "While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar.",
+                               "dragging": "Id of the tab being dragged (dims it and turns on `on_drag_over`).",
+                               "drop_index": "Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one)."},
                 },
                 "pyzed.ui.breadcrumbs": {
                     "desc": "`src › main.rs › fn main`. Parts can be strings or `(icon, text)` tuples.",
@@ -987,6 +993,7 @@ forwards them to `app.update()`.
 | `style` | `None` | Its own global style; `None` uses the app's. |
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
+| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
 
 | Method | Description |
 | --- | --- |
@@ -1516,7 +1523,7 @@ _section("app", "Events and components", {
         """,
     },
     "pyzed.Event": {
-        "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.",
+        "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (the pointer in the window and on the screen), and `value`/`source` for custom events.",
     },
     "pyzed.Dock": {
         "desc": "A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
@@ -1586,6 +1593,11 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "width": "Widget width.", "height": "Widget height.", "button": '`"left"`, `"right"`, `"middle"`...',
     "key": 'Key combo, such as `"ctrl-s"`.', "shift": "Shift held.", "ctrl": "Control held.", "alt": "Alt held.",
     "logo": "Cmd/Windows key held.", "value": "Value of a custom event.", "source": "Component that emitted it.",
+    "window_x": "Pointer x in the window (outside it when a drag is released outside).",
+    "window_y": "Pointer y in the window.",
+    "screen_x": "Pointer x on the screen, or `None` where the platform does not say where windows are (Wayland). `event.screen` gives `(screen_x, screen_y)`.",
+    "screen_y": "Pointer y on the screen, or `None`.",
+    "screen": "`(screen_x, screen_y)`, or `None` when the platform does not report window positions.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, in declaration order.",

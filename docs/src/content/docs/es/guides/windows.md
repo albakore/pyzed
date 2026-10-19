@@ -90,7 +90,7 @@ Atributos de clase o de instancia:
 | `theme` | Un `Theme`, un nombre o `themes.auto(...)`. `None` usa el de la app. |
 | `transition`, `exit_transition` | Cómo se anima al abrirse y al cerrarse: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... un preset o una `pz.Animation`. Ver [Animación](/pyzed/es/guides/animation/#transiciones-de-ventana). |
 
-`window_size` contiene el tamaño actual (lo actualiza el runtime).
+`window_size` contiene el tamaño actual y `window_position` dónde está la ventana en la pantalla (los actualiza el runtime; la posición es `None` en Wayland).
 
 ## Ganchos
 
@@ -132,6 +132,65 @@ class Frameless(pz.App):
         )
         return pz.column([bar, self.contenido()])
 ```
+
+### Pestañas arrastrables y ventanas desprendibles
+
+Las pestañas de `ui.tab_bar` se pueden arrastrar. `on_drag(id)` avisa de que empezó un arrastre; mientras
+`dragging` nombra la pestaña, `on_drag_over(index)` informa del punto de inserción bajo el puntero (o `None`
+fuera de la fila) y `drop_index` dibuja la marca ahí. `on_drop(id, event)` llega al soltarla, con el puntero en la
+ventana (`event.window_x`, `event.window_y`, fuera de ella si se soltó fuera) y en la pantalla (`event.screen`).
+El `window_position` y el `window_size` de cada ventana dicen dónde está, así que puedes abrir la pestaña en una
+ventana nueva o apilarla en la ventana que hay bajo el puntero:
+
+```python
+class Detached(pz.Window):
+    size = (640, 420)
+
+    def __init__(self, name, position):
+        self.name = self.title = name
+        if position is not None:
+            self.position = position
+
+    def view(self):
+        return ui.tab_bar([ui.Tab.for_file(self.name)], self.name)
+
+
+class Editor(pz.App):
+    def __init__(self):
+        self.files, self.active = ["main.py", "app.py", "README.md"], "main.py"
+        self.dragging, self.over = None, None
+
+    def start(self, name):
+        self.dragging = name
+
+    def hover(self, index):
+        self.over = index
+
+    def drop(self, name, event):
+        over, self.dragging, self.over = self.over, None, None
+        if over is not None:  # soltada en la fila: reordenar
+            i = self.files.index(name)
+            self.files.insert(over - (over > i), self.files.pop(i))
+            return None
+        width, height = self.window_size or self.size
+        if 0 <= event.window_x < width and 0 <= event.window_y < height:
+            return None  # soltada dentro de la ventana, fuera de la fila
+        self.files.remove(name)
+        self.active = self.files[0] if self.files else None
+        where = (event.screen_x - 80, event.screen_y - 12) if event.screen else None
+        return Detached(name, where).open()
+
+    def view(self):
+        return ui.tab_bar([ui.Tab.for_file(f) for f in self.files], self.active,
+                          on_select=lambda f: setattr(self, "active", f),
+                          on_drag=self.start, on_drop=self.drop, on_drag_over=self.hover,
+                          dragging=self.dragging, drop_index=self.over)
+```
+
+Para apilar una pestaña en otra de tus ventanas, compara `event.screen` con el `window_position` y el
+`window_size` de esa ventana. Wayland no les dice a las apps dónde están sus ventanas: ahí `event.screen` y
+`window_position` son `None`, así que ofrece también un comando de menú (Pyzed Design tiene **Mover la pestaña a
+una ventana nueva** y **Mover la pestaña a la ventana principal**).
 
 :::note
 `pz.run()` solo puede llamarse una vez por proceso (limitación de winit). Para más ventanas,

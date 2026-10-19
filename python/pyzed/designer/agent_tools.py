@@ -125,7 +125,7 @@ def designer_tools(d: "Designer") -> List[Tool]:
             "controls": [_control_info(c) for c in f.controls],
             "selection": list(doc.selection),
             "code": doc.code,
-            "open_tabs": [x.display_name for x in d.docs],
+            "open_tabs": [x.display_name for x in d.panes.all_docs()],
         }
 
     @tool(ui=True, title="Adding a control")
@@ -446,7 +446,7 @@ def context_note(d: "Designer") -> str:
     project = getattr(d.projects, "project", None)
     parts = [f"Project: {project.name} in {project.root}." if project is not None else
              f"No project is open; the folder is {d.agent.project_root()}."]
-    others = [x.display_name for x in d.docs if x is not doc]
+    others = [x.display_name for x in d.panes.all_docs() if x is not doc]
     parts.append(f"Open {kind}: {doc.display_name} ({len(doc.form.controls)} controls"
                  + (f", saved as {doc.path.name}" if doc.path is not None else ", not saved yet") + ").")
     if others:

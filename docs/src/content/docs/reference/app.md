@@ -162,6 +162,7 @@ forwards them to `app.update()`.
 | `style` | `None` | Its own global style; `None` uses the app's. |
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
+| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
 
 | Method | Description |
 | --- | --- |
@@ -390,7 +391,7 @@ pz.container(card, padding=12).on(click=self.select, drag=lambda e: self.move(e.
 class Event
 ```
 
-What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.
+What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (the pointer in the window and on the screen), and `value`/`source` for custom events.
 
 | Parameter | Description |
 | --- | --- |
@@ -409,6 +410,10 @@ What happened, passed to event handlers: `type`, `x`, `y` (relative to the widge
 | `logo` | Cmd/Windows key held. |
 | `value` | Value of a custom event. |
 | `source` | Component that emitted it. |
+| `window_x` | Pointer x in the window (outside it when a drag is released outside). |
+| `window_y` | Pointer y in the window. |
+| `screen_x` | Pointer x on the screen, or `None` where the platform does not say where windows are (Wayland). `event.screen` gives `(screen_x, screen_y)`. |
+| `screen_y` | Pointer y on the screen, or `None`. |
 
 **Methods and properties**
 
@@ -427,6 +432,14 @@ Event.size  # property
 ```
 
 `(width, height)`.
+
+#### `Event.screen`
+
+```python
+Event.screen  # property
+```
+
+`(screen_x, screen_y)`, or `None` when the platform does not report window positions.
 
 ### `Dock`
 

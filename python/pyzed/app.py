@@ -71,6 +71,9 @@ class Window:
     app: Optional["App"] = None
     #: The current size of the window in logical pixels (updated by the runtime).
     window_size: Optional[Tuple[float, float]] = None
+    #: Where the window is on the screen (its outer top-left corner, in logical pixels), updated
+    #: when it opens and moves. ``None`` until known, and always on Wayland.
+    window_position: Optional[Tuple[float, float]] = None
     _pyzed_window_open: bool = False
 
     def view(self) -> _core.Widget:  # pragma: no cover - meant to be overridden

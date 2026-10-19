@@ -72,25 +72,33 @@ class Event:
     """What happened, passed to handlers that take an argument.
 
     ``type`` is the event name (``"click"``, ``"drag"``, or a component's custom event).
-    ``x``/``y`` are the pointer position relative to the widget, ``dx``/``dy`` the scroll
+    ``x``/``y`` are the pointer position relative to the widget, ``window_x``/``window_y``
+    relative to the window (outside it while a drag leaves the window) and
+    ``screen_x``/``screen_y`` on the screen (``None`` where the platform does not say where
+    windows are, such as Wayland), ``dx``/``dy`` the scroll
     or drag amount, ``width``/``height`` the widget's size, ``button`` the mouse button
     (``"left"``, ``"right"``...), ``key`` the key combo, ``shift``/``ctrl``/``alt``/``logo``
     the modifiers held. Custom events carry ``value`` and the emitting ``source``.
     """
 
     __slots__ = ("type", "x", "y", "dx", "dy", "width", "height", "button", "key",
-                 "shift", "ctrl", "alt", "logo", "value", "source")
+                 "shift", "ctrl", "alt", "logo", "value", "source", "window_x", "window_y",
+                 "screen_x", "screen_y")
 
     def __init__(self, type: str, *, x: float = 0.0, y: float = 0.0, dx: float = 0.0, dy: float = 0.0,  # noqa: A002
                  width: float = 0.0, height: float = 0.0, button: Optional[str] = None,
                  key: Optional[str] = None, shift: bool = False, ctrl: bool = False, alt: bool = False,
-                 logo: bool = False, value: Any = None, source: Any = None) -> None:
+                 logo: bool = False, value: Any = None, source: Any = None, window_x: float = 0.0,
+                 window_y: float = 0.0, screen_x: Optional[float] = None,
+                 screen_y: Optional[float] = None) -> None:
         self.type = type
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.width, self.height = width, height
         self.button, self.key = button, key
         self.shift, self.ctrl, self.alt, self.logo = shift, ctrl, alt, logo
         self.value, self.source = value, source
+        self.window_x, self.window_y = window_x, window_y
+        self.screen_x, self.screen_y = screen_x, screen_y
 
     @property
     def position(self) -> Tuple[float, float]:
@@ -101,6 +109,13 @@ class Event:
     def size(self) -> Tuple[float, float]:
         """``(width, height)``."""
         return (self.width, self.height)
+
+    @property
+    def screen(self) -> Optional[Tuple[float, float]]:
+        """``(screen_x, screen_y)``, or ``None`` when the platform does not report window positions."""
+        if self.screen_x is None or self.screen_y is None:
+            return None
+        return (self.screen_x, self.screen_y)
 
     def __repr__(self) -> str:
         fields = [f"{name}={getattr(self, name)!r}" for name in self.__slots__[1:]

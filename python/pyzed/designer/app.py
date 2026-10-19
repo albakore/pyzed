@@ -39,6 +39,7 @@ from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from .windows import Pane, PaneController
 from ..i18n import t as _t
 from .runtime import FormWindow
 from . import scene as _scene
@@ -118,6 +119,8 @@ class Designer(App):
 
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
+        # the open documents: the main window's tabs, and those moved to windows of their own
+        self.panes = PaneController(self)
         if path is not None and Path(path).exists():
             self.doc = _scene.open_document(path)
         elif path is not None and Path(path).suffix == _scene.SUFFIX:
@@ -791,7 +794,7 @@ class Designer(App):
         assert self.menu is not None
         items = self._context_items()
         _, x, y = self.menu
-        width, height = self.window_size or self.size
+        width, height = self.panes.window_size()
         separators = sum(1 for i in items if i == ui.SEPARATOR)
         tall = (len(items) - separators) * 28 + separators * 10 + 12  # a little more than drawn: never clipped
         if x + CONTEXT_MENU_WIDTH > width - 4:
@@ -1426,25 +1429,40 @@ class Designer(App):
 
     # -- open documents (tabs) ------------------------------------------------
     @property
+    def docs(self) -> List[Document]:
+        """The documents of the window being worked in (the active pane), as tabs."""
+        return self.panes.active.docs
+
+    @property
+    def active_doc(self) -> int:
+        """The index of the tab in front in the active pane."""
+        return self.panes.active.active
+
+    @active_doc.setter
+    def active_doc(self, index: int) -> None:
+        self.panes.active.active = index
+
+    @property
     def doc(self) -> Document:
         """The document of the active tab."""
         return self.docs[self.active_doc]
 
     @doc.setter
     def doc(self, value: Document) -> None:
-        """Opens ``value`` in a tab: the tab of the same file, an untouched empty tab, or a new one."""
+        """Opens ``value`` in a tab: the tab of the same file (in any window), an untouched empty tab, or a new one."""
         self.__dict__["help_active"] = False  # show the document, not the Reference tab
-        docs: List[Document] = self.__dict__.setdefault("docs", [])
+        docs: List[Document] = self.docs
         if not docs:
             docs.append(value)
             self.active_doc = 0
             return
-        if value.path is not None:
-            for i, other in enumerate(docs):
-                if other.path is not None and other.path.resolve() == value.path.resolve():
-                    docs[i] = value
-                    self.active_doc = i
-                    return
+        found = self.panes.find_path(value.path) if value.path is not None else None
+        if found is not None:
+            pane, i = found
+            pane.docs[i] = value
+            pane.active = i
+            self.panes.active = pane
+            return
         current = docs[self.active_doc]
         if current.path is None and not current.dirty and not current.form.controls and current is not value:
             docs[self.active_doc] = value  # an empty untitled form: reuse its tab
@@ -1470,7 +1488,7 @@ class Designer(App):
         self.code_revision += 1
         self._selection_changed()
 
-    def close_doc(self, index: Optional[int] = None) -> None:
+    def close_doc(self, index: Optional[int] = None) -> Any:
         """Closes a tab (the active one by default), asking first when it has unsaved changes."""
         index = self.active_doc if index is None else index
         if not 0 <= index < len(self.docs):
@@ -1481,20 +1499,24 @@ class Designer(App):
             if index == self.active_doc:
                 self.editing = None
             self.docs.pop(index)
+            pane = self.panes.active
             if not self.docs:
-                self.docs.append(Document())
+                closing = self.panes.emptied(pane)
+                self._selection_changed()
+                return closing
             if self.active_doc >= index and self.active_doc > 0:
                 self.active_doc -= 1
             self.active_doc = min(self.active_doc, len(self.docs) - 1)
             self._selection_changed()
+            return None
 
         if doc.dirty:
             if index != self.active_doc:
                 self.select_doc(index)
             self.pending = close
             self.dialog = "confirm"
-            return
-        close()
+            return None
+        return close()
 
     def open_component_of(self, name: str) -> bool:
         """Opens the designed component placed as ``name`` in its own Component tab (double-click)."""
@@ -1505,31 +1527,43 @@ class Designer(App):
             return False
         if not self._leave_doc():
             return True
-        for i, other in enumerate(self.docs):
-            if other.path is not None and other.path.resolve() == Path(path).resolve():
-                self.select_doc(i)
-                return True
+        found = self.panes.find_path(Path(path))
+        if found is not None:
+            self._show_tab(*found)
+            return True
         self.open_path(path)
         return True
 
-    def doc_tabs(self, t) -> Any:
-        """One tab per open file: forms open in the Form view, components in the Component view."""
+    def _show_tab(self, pane: Pane, index: int) -> Any:
+        """Brings the tab ``index`` of ``pane`` to the front (and its window, when it has one of its own)."""
+        if not self.panes.activate(pane):
+            return None
+        self.select_doc(index)
+        return pane.window.focus() if pane.window is not None and pane.window.is_open else None
+
+    def doc_tabs(self, t, pane: Optional[Pane] = None) -> Any:
+        """One tab per open file of ``pane`` (the main window's by default): forms open in the Form view,
+        components in the Component view. Tabs can be dragged to reorder them or to another window."""
+        pane = pane or self.panes.main
+        main = pane is self.panes.main
         tabs = []
-        for i, doc in enumerate(self.docs):
+        for i, doc in enumerate(pane.docs):
             scene = getattr(doc, "is_scene", False)
             kind = tr("Component") if scene else tr("Form")
             tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
                                icon="component" if scene else "app-window",
                                icon_color="accent" if scene else None, dirty=doc.dirty))
-        notes = self.updates.tab()
+        notes = self.updates.tab() if main else None
         if notes is not None:
             tabs.append(notes)
-        if self.help_open:
+        if self.help_open and main:
             tabs.append(ui.Tab(id=HELP_TAB, label=_t("pyzed.reference.title"), icon="book-open", icon_color="accent"))
-        view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
-        active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
-        return ui.tab_bar(tabs, active, on_select=self._select_tab, on_close=self._close_tab,
-                          end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
+        view = tr("Component view") if getattr(pane.doc, "is_scene", False) else tr("Form view")
+        active = str(pane.active)
+        if main:
+            active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else active
+        end = [ui.label(view, size="xs", color="text_muted", theme=t)]
+        return self.panes.tab_bar(pane, tabs, active, end, t)
 
     def _select_tab(self, tab_id: str) -> None:
         """Switches to a document tab, or to the What's new tab."""
@@ -1707,7 +1741,7 @@ class Designer(App):
         self.dialog = "open"
         self.dialog_path = ""
 
-    def open_path(self, path: Union[str, Path]) -> None:
+    def open_path(self, path: Union[str, Path]) -> Any:
         """Opens the form or component at ``path`` in a tab (``.pzform`` is added when there is no suffix).
 
         Switches to its tab if it is already open, and remembers it among the recent files.
@@ -1715,11 +1749,10 @@ class Designer(App):
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
-        for i, other in enumerate(self.docs):
-            if other.path is not None and path.exists() and other.path.resolve() == path.resolve():
-                self.dialog = None
-                self.select_doc(i)  # already open: keep its unsaved changes
-                return
+        found = self.panes.find_path(path) if path.exists() else None
+        if found is not None:
+            self.dialog = None
+            return self._show_tab(*found)  # already open: keep its unsaved changes
         if not self._leave_doc():
             return
         try:
@@ -1953,18 +1986,10 @@ class Designer(App):
         """
         self.sync_code()
         t = self.theme_obj
-        canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        if self.help_shown:
-            center = _core.column([self.doc_tabs(t), ui.reference_browser(self.help, on_open_url=self.open_url,
-                                                                          theme=t)], width="fill", height="fill")
-        elif self.updates.notes_active:
-            center = _core.column([self.doc_tabs(t), self.updates.notes_view(t)], width="fill", height="fill")
-        else:
-            center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
-                                  width="fill", height="fill")
+        main = self.panes.main
         body = _core.container(_core.column([
             self.title_bar(t),
-            docks.workspace(self, center, t),
+            docks.workspace(self, self.center_view(main, t), t),
             self.status_bar(t) if self.prefs.show_status_bar else None,
         ], width="fill", height="fill"), width="fill", height="fill", bg=t.background)
         if self.app_menu is not None:
@@ -1974,9 +1999,6 @@ class Designer(App):
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
                 right = 8 + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
-        if self.menu is not None:
-            menu, mx, my = self.context_menu_at(t)
-            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
         if self.projects.files.menu is not None:
             menu, mx, my = self.projects.files.menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)
@@ -1989,11 +2011,40 @@ class Designer(App):
         if ghost is not None:
             gx, gy = self.window_pointer
             body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
+        return self.window_overlays(body, main, t)
+
+    def center_view(self, pane: Pane, t) -> Any:
+        """What sits under the tabs of ``pane``: its document's toolbar and canvas (or, in the main window,
+        the Reference or What's new tab)."""
+        main = pane is self.panes.main
+        tabs = self.doc_tabs(t, pane)
+        if main and self.help_shown:
+            return _core.column([tabs, ui.reference_browser(self.help, on_open_url=self.open_url, theme=t)],
+                                width="fill", height="fill")
+        if main and self.updates.notes_active:
+            return _core.column([tabs, self.updates.notes_view(t)], width="fill", height="fill")
+        with self.panes.showing(pane):
+            canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
+            content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                                   width="fill", height="fill")
+        return _core.column([tabs, self.panes.asleep(pane, content)], width="fill", height="fill")
+
+    def window_overlays(self, body: Any, pane: Pane, t) -> Any:
+        """Adds what opens over a window to ``body``, the view of the window of ``pane``: the context menu,
+        toasts and dialogs show in the window used last; the window reports the pointer for menus and drags."""
+        here = pane is self.panes.here
+        if here and self.menu is not None:
+            menu, mx, my = self.context_menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        # a press anywhere marks this window as the one in use (the top layer sees it first, keeps nothing)
+        body = _core.stack([body, _core.space(width="fill", height="fill").on(mouse_down=lambda: self.panes.used(pane))],
+                           width="fill", height="fill")
         # the whole window reports the pointer, for menus and for drags that leave a panel
         body = _core.mouse_area(body, on_move=self.window_moved, on_release=self.window_release)
+        toasts = self.toasts if here else []
         body = ui.toasts(body, [ui.toast(x.title, x.message, kind=x.kind, on_dismiss=lambda x=x: self.dismiss_toast(x),
-                                         theme=t) for x in self.toasts])
-        return ui.layer(body, self.dialog_view(t), on_dismiss=self.close_dialog)
+                                         theme=t) for x in toasts])
+        return ui.layer(body, self.dialog_view(t) if here else None, on_dismiss=self.close_dialog)
 
     @property
     def theme_obj(self):

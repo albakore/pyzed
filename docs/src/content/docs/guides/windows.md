@@ -90,7 +90,7 @@ Class or instance attributes:
 | `theme` | A `Theme`, a name or `themes.auto(...)`. `None` uses the app's theme. |
 | `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/guides/animation/#window-transitions). |
 
-`window_size` holds the current size (updated by the runtime).
+`window_size` holds the current size and `window_position` where the window is on the screen (both updated by the runtime; the position is `None` on Wayland).
 
 ## Hooks
 
@@ -132,6 +132,65 @@ class Frameless(pz.App):
         )
         return pz.column([bar, self.content()])
 ```
+
+### Draggable tabs and detachable windows
+
+`ui.tab_bar` tabs can be dragged. `on_drag(id)` says a drag started; while `dragging` names the tab,
+`on_drag_over(index)` reports the insertion point under the pointer (or `None` off the row) and `drop_index`
+draws the mark there. `on_drop(id, event)` comes when it is released, with the pointer in the window
+(`event.window_x`, `event.window_y`, outside it when the tab was dropped outside) and on the screen
+(`event.screen`). Each window's `window_position` and `window_size` say where it is, so you can open the tab
+in a new window, or stack it into the window under the pointer:
+
+```python
+class Detached(pz.Window):
+    size = (640, 420)
+
+    def __init__(self, name, position):
+        self.name = self.title = name
+        if position is not None:
+            self.position = position
+
+    def view(self):
+        return ui.tab_bar([ui.Tab.for_file(self.name)], self.name)
+
+
+class Editor(pz.App):
+    def __init__(self):
+        self.files, self.active = ["main.py", "app.py", "README.md"], "main.py"
+        self.dragging, self.over = None, None
+
+    def start(self, name):
+        self.dragging = name
+
+    def hover(self, index):
+        self.over = index
+
+    def drop(self, name, event):
+        over, self.dragging, self.over = self.over, None, None
+        if over is not None:  # released on the row: reorder
+            i = self.files.index(name)
+            self.files.insert(over - (over > i), self.files.pop(i))
+            return None
+        width, height = self.window_size or self.size
+        if 0 <= event.window_x < width and 0 <= event.window_y < height:
+            return None  # released inside the window, off the row
+        self.files.remove(name)
+        self.active = self.files[0] if self.files else None
+        where = (event.screen_x - 80, event.screen_y - 12) if event.screen else None
+        return Detached(name, where).open()
+
+    def view(self):
+        return ui.tab_bar([ui.Tab.for_file(f) for f in self.files], self.active,
+                          on_select=lambda f: setattr(self, "active", f),
+                          on_drag=self.start, on_drop=self.drop, on_drag_over=self.hover,
+                          dragging=self.dragging, drop_index=self.over)
+```
+
+To stack a tab into another of your windows, compare `event.screen` with that window's `window_position` and
+`window_size`. Wayland does not tell apps where their windows are: there `event.screen` and `window_position`
+are `None`, so offer a menu command too (Pyzed Design has **Move tab to new window** and **Move tab to main
+window**).
 
 :::note
 `pz.run()` can only be called once per process (a winit limitation). For more windows, use

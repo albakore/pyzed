@@ -39,16 +39,18 @@ def tab(
     on_select: Any = None,
     on_close: Any = None,
     height: float = 32,
+    dimmed: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-style editor tab for ``item``; the active one joins the content below it.
 
     The label is colored by the git ``status``; a dirty tab shows a dot that turns into the close button
-    on hover (``on_close``). ``on_select`` is called when the tab is pressed.
+    on hover (``on_close``). ``on_select`` is called when the tab is pressed. ``dimmed`` mutes the label
+    (the tab being dragged).
     """
     t = _theme(theme)
     status_color = {"modified": t.modified, "created": t.created, "deleted": t.deleted}.get(item.status or "")
-    text_color = status_color or (t.text if active else t.text_muted)
+    text_color = status_color or (t.text if active and not dimmed else t.text_muted)
 
     close = icon_button("x", on_close, size="xs", theme=t) if on_close is not None else _core.space(width=18)
     if item.dirty:
@@ -99,11 +101,25 @@ def tab_bar(
     start: Iterable[Any] = (),
     end: Iterable[Any] = (),
     height: float = 32,
+    on_drag: Optional[Callable[[str], Any]] = None,
+    on_drop: Optional[Callable[[str, Any], Any]] = None,
+    on_drag_over: Optional[Callable[[Optional[int]], Any]] = None,
+    dragging: Optional[str] = None,
+    drop_index: Optional[int] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A row of editor tabs with optional leading/trailing controls (navigation, split, +)."""
+    """A row of editor tabs with optional leading/trailing controls (navigation, split, +).
+
+    Tabs can be dragged: ``on_drag(tab_id)`` is called when a drag starts and
+    ``on_drop(tab_id, event)`` when it is released, with the pointer in ``event.window_x``/
+    ``window_y`` (outside the window when it was dropped outside) and ``event.screen``.
+    While ``dragging`` names a tab, ``on_drag_over(index)`` reports where it would land
+    (the insertion index, or ``None`` once the pointer leaves the bar) and ``drop_index``
+    draws the insertion mark there.
+    """
     t = _theme(theme)
     items: List[Any] = []
+    tracking = dragging is not None and on_drag_over is not None
     start = list(start)
     if start:
         items.append(
@@ -113,34 +129,58 @@ def tab_bar(
             ], width="shrink", height=height)
         )
         items.append(_core.rule(vertical=True, thickness=1, color=t.border))
-    for item in tabs:
-        items.append(
-            tab(
-                item,
-                active=item.id == active,
-                on_select=(lambda i=item.id: on_select(i)) if on_select else None,
-                on_close=(lambda i=item.id: on_close(i)) if on_close else None,
-                height=height,
-                theme=t,
-            )
-        )
-    items.append(
-        _core.column(
-            [
-                _core.container(_core.row(list(end), spacing=2, align="center"), width="fill", height="fill",
-                                align_x="end", align_y="center", padding=(0, 6)),
-                _core.rule(thickness=1, color=t.border),
-            ],
-            width="fill",
+    tabs = list(tabs)
+    # The insertion marks are always there (zero wide when unused) so a drag never changes the
+    # tree's shape: that would reset the dragged tab's state and lose the drop.
+    marks = on_drag_over is not None
+    for index, item in enumerate(tabs):
+        if marks:
+            items.append(_drop_mark(drop_index == index, height, t))
+        widget = tab(
+            item,
+            active=item.id == active,
+            on_select=(lambda i=item.id: on_select(i)) if on_select else None,
+            on_close=(lambda i=item.id: on_close(i)) if on_close else None,
             height=height,
+            dimmed=item.id == dragging,
+            theme=t,
         )
+        handlers: dict = {}
+        if on_drag is not None:
+            handlers["drag_start"] = lambda i=item.id: on_drag(i)
+        if on_drop is not None:
+            handlers["drag_end"] = lambda e, i=item.id: on_drop(i, e)
+        if tracking:  # the left half of a tab inserts before it, the right half after it
+            handlers["mouse_move"] = lambda e, k=index: on_drag_over(k if e.x < e.width / 2 else k + 1)
+        items.append(widget.on(cursor="grabbing" if item.id == dragging else None, **handlers) if handlers else widget)
+    if marks:
+        items.append(_drop_mark(drop_index is not None and drop_index >= len(tabs), height, t))
+    filler = _core.column(
+        [
+            _core.container(_core.row(list(end), spacing=2, align="center"), width="fill", height="fill",
+                            align_x="end", align_y="center", padding=(0, 6)),
+            _core.rule(thickness=1, color=t.border),
+        ],
+        width="fill",
+        height=height,
     )
-    return _core.container(
+    if marks:  # past the last tab: append
+        filler = filler.on(mouse_move=(lambda: on_drag_over(len(tabs))) if tracking else None)
+    items.append(filler)
+    bar = _core.container(
         _core.row(items, height=height, clip=True),
         bg=t.tab_bar,
         width="fill",
         height=height,
     )
+    if marks:
+        bar = bar.on(mouse_leave=(lambda: on_drag_over(None)) if tracking else None)
+    return bar
+
+
+def _drop_mark(shown: bool, height: float, t: Theme) -> _core.Widget:
+    """The accent bar between two tabs where a dragged tab would land (zero wide when not ``shown``)."""
+    return _core.container(width=2 if shown else 0, height=height, bg=t.accent if shown else None)
 
 
 def breadcrumbs(

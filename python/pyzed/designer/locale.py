@@ -53,7 +53,9 @@ _ES = {
     "Fit selection to grid": "Ajustar la selección a la cuadrícula",
     # Panels and docks
     "Design": "Diseño", "Project": "Proyecto", "Properties": "Propiedades", "Events": "Eventos",
-    "Move {panel} to": "Mover {panel} a", "Left": "Izquierda", "Right": "Derecha", "Bottom": "Abajo",
+    "Move tab to new window": "Mover la pestaña a una ventana nueva",
+    "Move tab to main window": "Mover la pestaña a la ventana principal",
+        "Move {panel} to": "Mover {panel} a", "Left": "Izquierda", "Right": "Derecha", "Bottom": "Abajo",
     "Top": "Arriba", "Hide dock": "Ocultar el panel", "Move this panel": "Mover este panel",
     "Toolbox": "Herramientas", "Outline": "Estructura", "Search components…": "Buscar componentes…",
     "Window": "Ventana", "Look": "Aspecto", "Designer": "Diseñador", "Data": "Datos", "Behavior": "Comportamiento",
