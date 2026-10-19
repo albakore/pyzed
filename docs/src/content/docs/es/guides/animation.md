@@ -164,8 +164,10 @@ en un [canvas](/pyzed/es/guides/canvas/) con las mismas curvas.
 ## Movimiento reducido y tests
 
 `pz.set_reduced_motion(True)` apaga el movimiento: cada animación muestra al instante su estado
-de reposo. Ofrécelo como ajuste de accesibilidad; la variable de entorno
-`PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+de reposo. Por defecto Pyzed sigue el ajuste "reducir movimiento" del sistema, leído al
+arrancar la app; `set_reduced_motion(False)` o `True` lo reemplaza (ofrécelo como ajuste de tu
+app), `None` vuelve a seguir al sistema y la variable de entorno `PYZED_REDUCED_MOTION` (`1` o
+`0`) se impone a ambos. Ver [Accesibilidad](/pyzed/es/guides/accessibility/#reducir-movimiento).
 
 Las capturas (`App.screenshot`, `pz.screenshot`) también muestran siempre el estado de reposo:
 donde termina una animación de entrada, para que los tests y las imágenes de la documentación

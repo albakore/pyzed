@@ -174,6 +174,12 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                     "desc": "Enfoca el `text_input` (o editor) con ese `id`.",
                     "params": {"id": "El `id` que pasaste al widget."},
                 },
+                "pyzed.Command.focus_next": {
+                    "desc": "Mueve el foco del teclado al siguiente campo de la ventana, volviendo al primero tras el último (lo que hace Tab).",
+                },
+                "pyzed.Command.focus_previous": {
+                    "desc": "Mueve el foco del teclado al campo anterior de la ventana (lo que hace Shift+Tab).",
+                },
                 "pyzed.Command.select_all": {
                     "desc": "Da el foco al `text_input` con ese `id` y selecciona todo su texto (lo que se escriba lo reemplaza).",
                     "params": {"id": "El `id` del campo."},
@@ -929,6 +935,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
+| `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
 
@@ -1997,9 +2004,12 @@ _section("widgets", "Animación", {
     "pyzed.set_reduced_motion": _d("""
         Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
 
-        Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
-        de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+        Por defecto Pyzed sigue el ajuste de accesibilidad "reducir movimiento" del sistema (se lee al
+        arrancar la app, ver `pyzed.system_reduced_motion`). `True` o `False` lo reemplazan (por ejemplo
+        desde los ajustes de tu app, o en tests) y `None` vuelve a seguir al sistema. La variable de
+        entorno `PYZED_REDUCED_MOTION` (`1` o `0`) también lo reemplaza.
     """),
+    "pyzed.system_reduced_motion": _d("Si el sistema pide a las apps reducir el movimiento (`None` si no se sabe)."),
     "pyzed.animation.reduced_motion": _d("Si el movimiento reducido está encendido."),
     "pyzed.animation.animation": _d("La animación llamada `name` (un preset o una definida con `define_animation`)."),
     "pyzed.animation.presets": _d("Las animaciones con nombre (todas, o una `category`: entrance, exit, attention, interaction, loop)."),
