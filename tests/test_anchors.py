@@ -144,3 +144,65 @@ def test_anchor_layout_places_widgets_in_a_running_app(tmp_path):
     assert pz.anchor_layout([item]) is not None  # design size from the children
     with pytest.raises(TypeError):
         pz.anchor_layout([ui.button("Not anchored")])
+
+
+def _anchored_form():
+    form = Form(width=400, height=300)
+    form.controls += [
+        Control("ok", "button", 290, 260, 100, 32, anchor=("right", "bottom")),
+        Control("header", "panel", 10, 10, 380, 60, anchor=("left", "top", "right")),
+        Control("close", "button", 340, 14, 32, 32, parent="header", anchor=("top", "right")),
+        Control("title", "label", 8, 8, 100, 20, anchor=("left", "top")),
+    ]
+    return form
+
+
+def test_resizing_the_form_in_the_designer_moves_controls_by_their_anchors():
+    doc = Document(_anchored_form())
+    doc.set_form("width", 600)
+    form = doc.form
+    assert (form["ok"].x, form["ok"].y) == (490, 260)
+    assert form["header"].width == 580 and form["close"].x == 540  # the container passes it on
+    assert (form["title"].x, form["title"].y) == (8, 8)
+    doc.set_form("height", 400)
+    assert form["ok"].y == 360
+    doc.undo()
+    assert doc.form["ok"].y == 260
+    doc.follow_anchors = False
+    doc.set_form("width", 700)
+    assert doc.form["ok"].x == 490
+
+
+def test_resizing_a_container_moves_its_children():
+    doc = Document(_anchored_form())
+    doc.set_field("header", "width", 300)
+    assert doc.form["close"].x == 260
+    doc.set_offset("header", "right", 10)  # width back to 380
+    assert doc.form["close"].x == 340
+    doc.set_anchor("header", "full", move=True, margin=0)
+    assert doc.form["header"].width == 400 and doc.form["close"].x == 360
+
+
+def test_dragging_the_form_grip_or_a_resize_handle_follows_anchors():
+    app = Designer(language_servers=False)
+    app.doc = Document(_anchored_form())
+    app.pointer_moved_view(0, 0)
+    app.press_form_grip()
+    for x in (40, 100, 200):  # every step starts from where the drag began: no rounding drift
+        app.pointer_moved_view(x, 0)
+    assert app.doc.form.width == 600 and app.doc.form["ok"].x == 490
+    app.release()
+    assert app.doc.form["ok"].x == 490
+    app.doc.select("header")
+    app.pointer_moved_view(0, 0)
+    app.press_handle("e")
+    app.pointer_moved_view(-100, 0)
+    assert app.doc.form["close"].x == app.doc.form["header"].width - 40
+    app.release()
+    app.toggle_follow_anchors()
+    assert not app.doc.follow_anchors
+    app.press_form_grip()
+    app.pointer_moved_view(-200, 0)
+    app.release()
+    assert app.doc.form["ok"].x == 490
+    app.view()

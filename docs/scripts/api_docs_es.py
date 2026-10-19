@@ -73,7 +73,7 @@ PAGES = [
     {
         "slug": "app",
         "title": "App y ejecución",
-        "description": "La clase App, run, screenshot, post y load_font.",
+        "description": "Referencia de la API de pyzed.App: la clase de aplicación, run, screenshot, post, load_font y las opciones de ventana de una app de escritorio.",
         "order": 1,
         "intro": """
             Todo lo que necesitas para arrancar una aplicación. Ver también la guía de
@@ -148,7 +148,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
     {
         "slug": "command",
         "title": "Command",
-        "description": "Efectos secundarios que devuelven update y los callbacks.",
+        "description": "Referencia de la API de los comandos de Pyzed: los efectos que devuelven update y los callbacks, como enfocar campos, cerrar y tareas en segundo plano.",
         "order": 2,
         "intro": """
             Un `Command` es un efecto que el runtime ejecuta por ti. Devuélvelo desde `update`,
@@ -250,7 +250,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
     {
         "slug": "widgets",
         "title": "Widgets base",
-        "description": "Los widgets nativos de pyzed: layout, texto, controles, editor, svg e iconos.",
+        "description": "Referencia de la API de los widgets nativos de Pyzed: layout, texto, controles, el editor de código, SVG e iconos, renderizados en Rust por Iced.",
         "order": 3,
         "intro": """
             Los widgets base están implementados en Rust y se importan desde `pyzed`. Son los
@@ -453,7 +453,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
     {
         "slug": "ui",
         "title": "Componentes (pyzed.ui)",
-        "description": "Referencia de todos los componentes al estilo de Zed.",
+        "description": "Referencia de la API de pyzed.ui: cada componente estilo Zed con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python.",
         "order": 4,
         "intro": """
             Firmas y parámetros de todos los componentes. Para verlos con imágenes y ejemplos,
@@ -792,7 +792,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
     {
         "slug": "theme",
         "title": "Temas",
-        "description": "Theme, los temas incluidos y las utilidades de color.",
+        "description": "Referencia de la API de Theme en Pyzed: los temas incluidos, los tokens de color de Zed, cómo derivar temas propios y utilidades de color.",
         "order": 5,
         "intro": """
             Ver la guía de [temas](/pyzed/es/guides/theming/) para la lista de tokens y cómo crear los tuyos.
@@ -842,7 +842,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
     {
         "slug": "icons",
         "title": "Iconos",
-        "description": "Iconos de Lucide incluidos y utilidades por tipo de archivo.",
+        "description": "Referencia de la API de pyzed.icons: el conjunto de iconos de Lucide incluido, sus nombres y las utilidades de iconos por tipo de archivo.",
         "order": 6,
         "intro": """
             Pyzed incluye la fuente de [Lucide](https://lucide.dev) (licencia ISC) con unos 2000 iconos.
@@ -1451,7 +1451,7 @@ _paint = {"fill": "Color de relleno.", "stroke": "Color del trazo.", "width": "G
 PAGES.append({
     "slug": "draw",
     "title": "Dibujo (pyzed.draw)",
-    "description": "Formas, texto y transformaciones para pz.canvas.",
+    "description": "Referencia de la API de pyzed.draw: formas, trazados, texto y transformaciones para dibujar gráficos 2D propios en un pz.canvas de tu app.",
     "order": 7,
     "intro": """
         Las formas de `pyzed.draw` son diccionarios simples que se pasan a [`pz.canvas`](/pyzed/es/reference/widgets/#canvas).
@@ -1877,7 +1877,7 @@ _section("widgets", "Estilos", {
 PAGES.append({
     "slug": "designer",
     "title": "Diseñador visual (pyzed.designer)",
-    "description": "Ejecuta, abre y crea formularios desde código, y registra componentes y plantillas de la caja de herramientas.",
+    "description": "Referencia de la API de pyzed.designer: ejecuta, abre y crea formularios desde código Python, y registra componentes y plantillas de la caja de herramientas.",
     "order": 10,
     "intro": """
         `pyzed.designer` es el lado en código del [diseñador visual](/pyzed/es/editor/): ejecuta archivos
@@ -2346,6 +2346,7 @@ MEMBERS = {
     "pyzed.designer.Document.set_anchor": "Ancla el control `name` con un preset, palabras o bordes; con `move=True` también lo lleva a ese sitio, a `margin` píxeles del borde.",
     "pyzed.designer.Document.set_offset": "Fija la distancia de un lado (`left`, `top`, `right`, `bottom`) del control `name` al de su padre.",
     "pyzed.designer.Document.set_pivot": "Fija el pivote del control `name` (de 0 a 1 en cada eje).",
+    "pyzed.designer.Document.reflow": "Tras cambiar el tamaño del formulario (`parent` `None`) o del contenedor `parent` desde `size`, mueve y dimensiona lo que hay dentro según sus anclajes (salvo con `follow_anchors` desactivado).",
     "pyzed.designer.Document.set_layout": "Fija una opción que lee el layout del padre (`grow`, `span`).",
     "pyzed.designer.Document.delete": "Quita los controles seleccionados (y lo que contienen); devuelve los nombres quitados.",
     "pyzed.designer.Document.copy": "Copia la selección, con lo que haya dentro de los contenedores seleccionados.",

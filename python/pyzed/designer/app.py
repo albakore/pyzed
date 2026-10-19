@@ -76,6 +76,8 @@ class Drag:
     moved: bool = False
     #: absolute rectangles of ``rects`` when the gesture started (they differ inside containers)
     absolute: Dict[str, Rect] = field(default_factory=dict)
+    #: rectangles of what is inside the form or container being resized, to follow their anchors
+    inside: Dict[str, Rect] = field(default_factory=dict)
 
 
 @dataclass
@@ -565,11 +567,14 @@ class Designer(App):
         primary = self.doc.primary
         if primary is not None:
             self.focus = "canvas"
-            self._start("resize", rects={primary.name: primary.rect}, handle=handle)
+            inside = {c.name: c.rect for c in self.doc.form.descendants(primary.name)}
+            self._start("resize", rects={primary.name: primary.rect}, handle=handle, inside=inside)
 
     def press_form_grip(self) -> None:
         """Mouse press on the form's corner grip: starts resizing the form."""
-        self._start("form", rects={"": (0.0, 0.0, self.doc.form.width, self.doc.form.height)})
+        form = self.doc.form
+        self._start("form", rects={"": (0.0, 0.0, form.width, form.height)},
+                    inside={c.name: c.rect for c in form.controls})
 
     def press_empty(self) -> None:
         """Mouse press on an empty spot of the form.
@@ -611,6 +616,7 @@ class Designer(App):
                 w, h = min(w, limit[0] - x), min(h, limit[1] - y)
             if control is not None:
                 control.x, control.y, control.width, control.height = x, y, w, h
+                self._follow_anchors(name, start)
         elif drag.mode == "create":
             sx, sy = drag.start
             self.drop_name = self._container_under(sx, sy)
@@ -618,6 +624,15 @@ class Designer(App):
             start = drag.rects[""]
             form.width = max(geometry.snap(start[2] + dx, grid, self.snap), 120)
             form.height = max(geometry.snap(start[3] + dy, grid, self.snap), 80)
+            self._follow_anchors(None, start)
+
+    def _follow_anchors(self, parent: Optional[str], start: Rect) -> None:
+        """While the form or container ``parent`` is resized from ``start``, what is inside follows its anchors."""
+        drag, form = self.drag, self.doc.form
+        if drag is None or not self.doc.follow_anchors:
+            return
+        box = form if parent is None else form[parent]
+        _layout.reflow(form, parent, drag.inside, (start[2], start[3]), (box.width, box.height))
 
     def _drag_move(self, dx: float, dy: float) -> None:
         drag = self.drag
@@ -1044,6 +1059,10 @@ class Designer(App):
             self.name_buffer = self.doc.rename(primary.name, self.name_buffer)
             if self.editing and self.editing[0] != "*":
                 self.close_code()
+
+    def toggle_follow_anchors(self) -> None:
+        """Turns on or off moving what is inside the form or a container by its anchors when it is resized."""
+        self.doc.follow_anchors = not self.doc.follow_anchors
 
     def toggle(self, attr: str) -> Callable[[], None]:
         """Returns a callback that flips the designer's boolean attribute ``attr`` (``show_grid``, ...)."""
@@ -2150,6 +2169,8 @@ class Designer(App):
             tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
             tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
             tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
+            tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
+                 selected=doc.follow_anchors),
             tool("scaling", doc.snap_to_grid, "Fit selection to grid"),
             sep,
             tool("code", self.edit_whole_file, "Edit code file", keys="f7"),

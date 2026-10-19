@@ -86,6 +86,7 @@ See [Layouts and containers](/pyzed/editor/layouts/).
 | **Show grid** | Toolbar, status bar, **View → Grid**, <kbd>G</kbd> | Shows or hides the dots of the grid. |
 | **Snap to grid** | Toolbar (magnet), status bar, **View** | Rounds positions and sizes to the grid step while you drag, place and resize. |
 | **Smart guides** | Toolbar (ruler), **View** | Snaps a moving control to the edges and centers of the other controls and of the form, and draws a red guide line while they line up. |
+| **Resize contents with their anchors** | Toolbar (anchor) | Resizing the form, a component or a free container moves and stretches what is inside by its anchors, as the running window does. On by default. |
 | **Fit selection to grid** | Toolbar | Moves and resizes the selected controls (all of them when nothing is selected) onto the grid. |
 | **Grid size** | Properties of the form (**Designer** section) | The grid step of this form (2 to 64 px, 8 by default). New forms take the default from [Settings](/pyzed/editor/settings/). |
 

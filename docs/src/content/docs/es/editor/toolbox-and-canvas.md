@@ -91,6 +91,7 @@ pestaña abre el menú contextual del contenedor. Ver [Disposición y contenedor
 | **Mostrar la cuadrícula** | Barra de herramientas, barra de estado, **Ver → Cuadrícula**, <kbd>G</kbd> | Muestra u oculta los puntos de la cuadrícula. |
 | **Ajustar a la cuadrícula** | Barra de herramientas (imán), barra de estado, **Ver** | Redondea posiciones y tamaños al paso de la cuadrícula al arrastrar, colocar y redimensionar. |
 | **Guías inteligentes** | Barra de herramientas (regla), **Ver** | Ajusta el control que mueves a los bordes y centros de los demás controles y del formulario, y dibuja una línea roja mientras coinciden. |
+| **Redimensionar el contenido con sus anclajes** | Barra de herramientas (ancla) | Al redimensionar el formulario, un componente o un contenedor libre, lo que hay dentro se mueve y se estira según sus anclajes, como en la ventana en ejecución. Activado por defecto. |
 | **Ajustar la selección a la cuadrícula** | Barra de herramientas | Mueve y redimensiona los controles seleccionados (todos si no hay selección) sobre la cuadrícula. |
 | **Tamaño de cuadrícula** | Propiedades del formulario (sección **Diseñador**) | El paso de cuadrícula de este formulario (2 a 64 px, 8 por defecto). Los formularios nuevos toman el valor de [Ajustes](/pyzed/es/editor/settings/). |
 

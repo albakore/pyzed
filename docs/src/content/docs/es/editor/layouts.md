@@ -96,6 +96,12 @@ Se eligen en la sección **Posición** de [Propiedades](/pyzed/es/editor/propert
 formulario en ejecución los aplica todos; en código sin el diseñador,
 [`pz.anchor_layout`](/pyzed/es/guides/layout/#disposiciones-ancladas) hace lo mismo.
 
+Los anclajes también funcionan mientras diseñas: al cambiar el tamaño del formulario (o de un componente) con su
+esquina o con **Ancho** y **Alto**, o al redimensionar un contenedor libre, lo que hay dentro se mueve y se estira
+igual que en la ventana en ejecución, con límites de tamaño y pivote incluidos. Desactívalo con el botón del ancla
+de la barra de herramientas (**Redimensionar el contenido con sus anclajes**) para cambiar el tamaño sin tocar los
+controles.
+
 Una receta habitual para una ventana redimensionable:
 
 1. Una **columna flex** anclada por los cuatro lados llena la ventana.

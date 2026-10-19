@@ -744,7 +744,7 @@ Removes every style property of a control (or of the form's global style).
 Document.set_field(name, key, value)
 ```
 
-Sets a `Control` attribute (x, y, width, height, visible, enabled, locked, anchor).
+Sets a `Control` attribute (x, y, width, height, visible, enabled, locked, anchor); a container's new width or height moves what is inside it as its anchors say.
 
 #### `Document.set_bind`
 
@@ -809,6 +809,14 @@ Document.set_form(key, value)
 ```
 
 Sets attribute `key` of the form (a new `name` is made a valid identifier first).
+
+#### `Document.reflow`
+
+```python
+Document.reflow(parent, size)
+```
+
+After the form (`parent` `None`) or container `parent` was resized from `size`, moves and sizes what is inside it the way the anchors say (unless `follow_anchors` is off).
 
 #### `Document.rename`
 
