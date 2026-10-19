@@ -21,6 +21,9 @@ python examples/<name>.py
 | [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Five steps: window, state, layout and themes, async, notes app. | [5-step tutorial](/pyzed/tutorials/step-by-step/) |
 | [`todos.py`](https://github.com/albakore/pyzed/blob/main/examples/todos.py) | Iced's *todos*: add, edit, complete, filter and save. |  |
 | [`game_of_life.py`](https://github.com/albakore/pyzed/blob/main/examples/game_of_life.py) | `pz.canvas` with thousands of cells and `pz.every` as the engine. | [Canvas](/pyzed/guides/canvas/) |
+| [`games/snake.py`](https://github.com/albakore/pyzed/blob/main/examples/games/snake.py) | Snake on a fixed timer, key queue and a glass game-over card. | [Snake](/pyzed/games/snake/) |
+| [`games/breakout.py`](https://github.com/albakore/pyzed/blob/main/examples/games/breakout.py) | 60 fps loop with `pz.frames`, held keys, collisions, particles and shake. | [Breakout](/pyzed/games/breakout/) |
+| [`games/neon_invaders.py`](https://github.com/albakore/pyzed/blob/main/examples/games/neon_invaders.py) | A space shooter: pixel-art sprites, neon glow and a HUD with glass and bloom. | [Neon Invaders](/pyzed/games/neon-invaders/) |
 | [`clock.py`](https://github.com/albakore/pyzed/blob/main/examples/clock.py) | Analog clock drawn on a canvas. | [Canvas](/pyzed/guides/canvas/) |
 | [`stopwatch.py`](https://github.com/albakore/pyzed/blob/main/examples/stopwatch.py) | Stopwatch with laps and shortcuts. | [Async](/pyzed/guides/async/) |
 | [`download_progress.py`](https://github.com/albakore/pyzed/blob/main/examples/download_progress.py) | Concurrent downloads with `async` generators and progress. | [Async](/pyzed/guides/async/) |

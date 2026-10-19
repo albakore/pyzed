@@ -215,6 +215,26 @@ Texto anclado en `(x, y)`; `align_x`/`align_y` eligen qué lado del texto queda 
 | `align_x` | `"start"`, `"center"` o `"end"`. |
 | `align_y` | `"top"`, `"center"` o `"bottom"`. |
 
+### `image`
+
+```python
+image(source, x, y, w, h, *, rotation=0.0, opacity=1.0, pixelated=False, size=None)
+```
+
+Un mapa de bits (sprite) dibujado en la caja `(x, y, w, h)`. Se decodifica una vez por origen y queda en caché, así que dibujarlo en cada fotograma es barato. Ver [Crear videojuegos](/pyzed/es/games/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `source` | Una ruta, bytes de una imagen (PNG, JPEG…) o bytes RGBA con `size`. |
+| `x` | Izquierda. |
+| `y` | Arriba. |
+| `w` | Ancho. |
+| `h` | Alto. |
+| `rotation` | Grados, alrededor de su centro. |
+| `opacity` | De 0 a 1. |
+| `pixelated` | Escalado por vecino más cercano, para pixel art. |
+| `size` | `(ancho, alto)` de los bytes RGBA. |
+
 ## Transformaciones
 
 ### `translate`

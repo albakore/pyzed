@@ -1,0 +1,150 @@
+---
+title: Making games
+description: Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Pyzed is a UI library, but everything a 2D game needs is already in it: a GPU-drawn
+`pz.canvas`, a loop that runs once per displayed frame, the keys held down right now, and
+the whole widget library to build menus and HUDs on top of the action. The three games
+below grow in difficulty and are complete, playable programs in
+[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games).
+
+![Neon Invaders, the most complete demo](../../../assets/games/neon-invaders.png)
+
+<CardGrid>
+	<LinkCard title="1. Snake" href="/pyzed/games/snake/" description="Grid movement on a fixed timer, a key queue, game over and restart. ~150 lines." />
+	<LinkCard title="2. Breakout" href="/pyzed/games/breakout/" description="A 60 fps loop with pz.frames, held keys and the mouse, ball physics, particles and shake." />
+	<LinkCard title="3. Neon Invaders" href="/pyzed/games/neon-invaders/" description="Pixel-art sprites, waves, power-ups, neon glow and a glass HUD with bloom." />
+</CardGrid>
+
+```bash
+python examples/games/snake.py
+python examples/games/breakout.py
+python examples/games/neon_invaders.py
+```
+
+## The building blocks
+
+| What | API | Used for |
+| --- | --- | --- |
+| Frame loop | `pz.frames(callback)` in `subscriptions()` | `callback(dt)` once per frame (in sync with the screen); `dt` is the seconds since the last one. |
+| Fixed-rate timer | `pz.every(seconds, callback)` | Turn-based or grid games that step at a set pace (Snake). |
+| Key presses | `on_key(combo)` | One-off actions: jump, pause, restart (`"space"`, `"enter"`, `"ctrl-r"`). |
+| Key releases | `on_key_up(key)` | Charge-and-release mechanics, stopping a sound. |
+| Held keys | `pz.pressed()`, `pz.is_pressed("left", "a")` | Continuous movement and auto-fire, polled every frame. |
+| Movement | `game.axis(neg, pos)`, `game.vector()` | -1/0/1 from two key groups; a normalized direction from arrows/WASD. |
+| Drawing | `pz.canvas([...])` with `pyzed.draw` | Rectangles, circles, paths, text, transforms. |
+| Sprites | `draw.image(src, x, y, w, h)` and `game.sprite(rows, palette)` | Image files (decoded once and cached) or pixel art written as text. |
+| Collisions | `game.Rect`, `game.circle_rect` | Box overlaps; where a ball hits a box, to bounce it. |
+| Effects | `game.glow`, `game.Particles`, `game.Shake` | Neon lights, explosions and sparks, screen shake. |
+| HUD and menus | `pz.stack([canvas, widgets])` | Scores, health bars and pause screens with `glass`, `bloom` and animations. |
+
+### The loop
+
+A game is a regular `pz.App`. Return `pz.frames(self.tick)` from `subscriptions()` and
+the runtime calls `tick(dt)` before every frame. Move things by *speed × dt* so they go
+just as fast at 60, 120 or 144 Hz:
+
+```python
+import pyzed as pz
+from pyzed import draw, game
+
+class Ship(pz.App):
+    size = (480, 320)
+
+    def __init__(self):
+        self.x, self.y = 240, 160
+
+    def subscriptions(self):
+        return [pz.frames(self.tick)]
+
+    def tick(self, dt):
+        dx, dy = game.vector()             # arrows / WASD, diagonals normalized
+        self.x += dx * 300 * dt
+        self.y += dy * 300 * dt
+
+    def view(self):
+        return pz.canvas([draw.background("#0b0e14"),
+                          *game.glow(self.x, self.y, 14, "#22d3ee")], width=480, height=320)
+
+pz.run(Ship)
+```
+
+`dt` is capped at a quarter of a second, so dragging the window or hitting a breakpoint
+never makes the game jump ahead. Where the display does not wait for vsync (software
+rendering), `max_fps` (240 by default) keeps the loop from spinning the CPU.
+
+<Aside type="tip">
+Stop the loop when nothing moves: `subscriptions()` is evaluated after every update, so
+`return [] if self.paused else [pz.frames(self.tick)]` pauses the game and the CPU.
+</Aside>
+
+### Input
+
+`on_key` is for actions that happen once per press; `pz.pressed()` is for things that
+happen *while* a key is down. Both see every key, whatever widget has focus.
+
+```python
+def on_key(self, combo):          # "space", "p", "shift-r"...
+    if combo == "p":
+        self.paused = not self.paused
+
+def tick(self, dt):
+    if pz.is_pressed("space") and self.cooldown <= 0:
+        self.fire()               # auto-fire while Space is held
+```
+
+Mouse input comes from the canvas itself: `on_move(x, y)`, `on_press(x, y)`,
+`on_release()`, `on_right_press(x, y)` and `on_scroll(dx, dy)`, in canvas coordinates.
+
+### Sprites
+
+`draw.image` draws a PNG/JPEG (or raw RGBA bytes) into a box, optionally rotated and
+faded. It is decoded once per source and cached, so drawing the same sprite hundreds of
+times per frame is cheap. Use `pixelated=True` for pixel art scaled up.
+
+```python
+draw.image("assets/ship.png", self.x - 16, self.y - 16, 32, 32, rotation=self.angle)
+```
+
+For retro games you don't even need files: `game.sprite` turns text into pixel art, with
+one shape per color however big the sprite is.
+
+```python
+INVADER = ["..#.....#..",
+           "...#...#...",
+           "..#######..",
+           ".##.###.##.",
+           "###########"]
+game.sprite(INVADER, {"#": "#a3e635"}, x, y, scale=4)
+```
+
+### HUD and menus are just widgets
+
+Stack widgets over the canvas with `pz.stack`. Scores, health bars, badges and pause
+menus are ordinary Pyzed components, so they get themes, `glass` panels, `bloom`, and
+entrance animations for free — the hard part of game UI is already done.
+
+```python
+hud = pz.container(pz.row([score, pz.hspace(), ui.badge(f"Wave {self.wave}")]),
+                   padding=(8, 14)).style(glass=True, radius=12)
+return pz.stack([self.scene(), hud], width=W, height=H)
+```
+
+## Performance tips
+
+- Keep the per-frame work in Python small: plain lists and numbers, no allocations of big
+  structures every frame.
+- Batch shapes: `draw.rects` draws many rectangles of one color as a single shape (that is
+  what `game.sprite` uses).
+- Cap particles (`game.Particles(limit=...)`) and drop bullets that leave the screen.
+- Only the canvas changes every frame; widgets in the HUD are cheap to rebuild, but
+  `pz.memo` can cache expensive ones.
+- Test game logic without a window: call `tick(1 / 60)` in a loop and assert on the state,
+  as [`tests/test_game.py`](https://github.com/albakore/pyzed/blob/main/tests/test_game.py)
+  does. `App.screenshot` renders any moment of the game to a PNG.

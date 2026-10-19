@@ -33,6 +33,7 @@ from ._core import (
     column,
     container,
     every,
+    frames,
     grid,
     hover,
     image,
@@ -78,10 +79,11 @@ from .animation import Animation, define_animation, presence, set_reduced_motion
 from .accessibility import system_reduced_motion
 from .events import Event, on
 from .forms import validation_errors
+from .game import is_pressed, pressed
 from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import accessibility, animation, component, designer, dock, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
+from . import accessibility, animation, component, designer, dock, forms, i18n, layout, style, draw, events, game, hot_reload, theme, icons, reference, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -155,6 +157,8 @@ __all__ = [
     "draw",
     "events",
     "every",
+    "frames",
+    "game",
     "anchor",
     "anchor_layout",
     "flex",
@@ -163,6 +167,7 @@ __all__ = [
     "grid",
     "hot_reload",
     "hover",
+    "is_pressed",
     "hspace",
     "i18n",
     "icon",
@@ -182,6 +187,7 @@ __all__ = [
     "pin",
     "post",
     "presence",
+    "pressed",
     "progress_bar",
     "qr_code",
     "radio",
