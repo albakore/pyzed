@@ -276,7 +276,8 @@ rm -f "$0"
 _WINDOWS_SCRIPT = """@echo off
 rem Waits for the old app to exit, swaps in the new one and starts it.
 :wait
-tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (timeout /t 1 /nobreak >NUL & goto wait)
+rem (ping, not timeout: timeout fails without a console, which this detached script has none of)
+tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >NUL & goto wait)
 if exist {old} rmdir /S /Q {old}
 move {target} {old} >NUL || exit /b 1
 move {new} {target} >NUL || (move {old} {target} >NUL & exit /b 1)
@@ -286,13 +287,29 @@ del "%~f0"
 """
 
 
+def _fresh_environment() -> Dict[str, str]:
+    """This process's environment without what PyInstaller set for it, so the new version starts as a fresh app."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("_PYI_")}
+    if is_frozen():
+        for key in ("LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"):  # pointed at this app's own libraries
+            original = env.pop(key + "_ORIG", None)
+            if original is not None:
+                env[key] = original
+            else:
+                env.pop(key, None)
+    env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"  # PyInstaller >= 6.9: not a child of this app
+    return env
+
+
 def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]] = None, *,
                     relaunch: bool = True, args: Tuple[str, ...] = ()) -> Path:
     """Swaps ``target`` (this app by default) for ``bundle`` once this process exits, then restarts it.
 
     A small shell (or ``.cmd`` on Windows) script waits for the current process to end,
     moves the old app aside, moves the new one in and starts it; if the move fails the
-    old app is put back. Returns the script's path. Quit the app right after calling it.
+    old app is put back. What the script prints goes to a ``.log`` next to it. Returns the
+    script's path. Quit the app right after calling it, and make sure the process really
+    ends (``os._exit``): the swap waits for it, so a busy background thread delays the restart.
     """
     bundle = Path(bundle).resolve()
     target = Path(target).resolve() if target else install_dir()
@@ -300,6 +317,7 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         raise UpdateError("only a packaged app can replace itself; update with pip or uv instead")
     old = target.with_name(target.name + ".old")
     exe_name = Path(sys.executable).name
+    env = _fresh_environment()
     if os.name == "nt":
         q = lambda p: f'"{p}"'  # noqa: E731
         launch = f'start "" {q(target / exe_name)} {" ".join(q(a) for a in args)}' if relaunch else ""
@@ -307,7 +325,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
         flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-        subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True)  # noqa: S603, S607
+        with open(script.with_suffix(".log"), "w") as log:
+            subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True, env=env,  # noqa: S603, S607
+                             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
         return script
     import shlex
 
@@ -320,8 +340,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
     script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.sh"
     script.write_text(text, encoding="utf-8")
     script.chmod(0o755)
-    subprocess.Popen(["/bin/sh", str(script)], start_new_session=True, close_fds=True,  # noqa: S603
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    with open(script.with_suffix(".log"), "w") as log:
+        subprocess.Popen(["/bin/sh", str(script)], start_new_session=True, close_fds=True, env=env,  # noqa: S603
+                         stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
     return script
 
 
