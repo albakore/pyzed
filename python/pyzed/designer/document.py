@@ -41,6 +41,8 @@ class Document:
         self.history = History(self.form)
         self.dirty = False
         self.revision = 0
+        #: Whether resizing the form or a container moves and sizes what is inside it the way the anchors say.
+        self.follow_anchors = True
 
     @property
     def clipboard(self) -> List[Dict[str, Any]]:
@@ -476,10 +478,14 @@ class Document:
             self.commit()
 
     def set_field(self, name: str, key: str, value: Any) -> None:
-        """Sets a ``Control`` attribute (x, y, width, height, visible, enabled, locked, anchor)."""
+        """Sets a ``Control`` attribute (x, y, width, height, visible, enabled, locked, anchor); a container's
+        new width or height moves what is inside it as its anchors say."""
+        control = self.form[name]
+        size = (control.width, control.height)
         if key in ("width", "height"):
             value = max(float(value), geometry.MIN_SIZE)
-        setattr(self.form[name], key, value)
+        setattr(control, key, value)
+        self.reflow(name, size)
         self.commit(group=f"field:{name}:{key}")
 
     def set_bind(self, name: str, bind: Optional[str]) -> None:
@@ -518,16 +524,19 @@ class Document:
         from .. import anchors
 
         control = self.form[name]
+        size = (control.width, control.height)
         control.anchor = anchors.edges(anchor)
         if move:
             x, y, w, h = anchors.snap_to(control.anchor, control.rect, self.parent_size(name), margin)
             control.x, control.y, control.width, control.height = round(x), round(y), round(w), round(h)
+            self.reflow(name, size)
         self.commit()
 
     def set_offset(self, name: str, side: str, value: float) -> None:
         """Sets the distance from the ``side`` (``left``, ``top``, ``right``, ``bottom``) of the container to
         control ``name``; the opposite side stays where it is, so the control grows or shrinks."""
         control = self.form[name]
+        size = (control.width, control.height)
         pw, ph = self.parent_size(name)
         value = float(value)
         if side == "left":
@@ -542,6 +551,7 @@ class Document:
             control.height = max(ph - value - control.y, geometry.MIN_SIZE)
         else:
             raise ValueError(f"unknown side {side!r}")
+        self.reflow(name, size)
         self.commit(group=f"offset:{name}:{side}")
 
     def set_pivot(self, name: str, x: float, y: float) -> None:
@@ -558,8 +568,20 @@ class Document:
         """Sets attribute ``key`` of the form (a new ``name`` is made a valid identifier first)."""
         if key == "name":
             value = identifier(value) or self.form.name
+        size = (self.form.width, self.form.height)
         setattr(self.form, key, value)
+        self.reflow(None, size)
         self.commit(group=f"form:{key}")
+
+    def reflow(self, parent: Optional[str], size: Tuple[float, float]) -> None:
+        """After the form (``parent`` ``None``) or container ``parent`` was resized from ``size``, moves and
+        sizes what is inside it the way the anchors say (unless ``follow_anchors`` is off)."""
+        new = (self.form.width, self.form.height) if parent is None else \
+            (self.form[parent].width, self.form[parent].height)
+        if not self.follow_anchors or tuple(new) == tuple(size):
+            return
+        inside = self.form.descendants(parent) if parent else self.form.controls
+        _layout.reflow(self.form, parent, {c.name: c.rect for c in inside}, size, new)
 
     def rename(self, old: str, new: str) -> str:
         """Renames a control, its selection entry and the handlers that follow the naming convention."""

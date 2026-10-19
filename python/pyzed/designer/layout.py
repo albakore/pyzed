@@ -58,6 +58,31 @@ def _padding(p: Dict[str, Any]) -> float:
     return max(_num(p.get("padding")), 0.0)
 
 
+def reflow(form: Form, parent: Optional[str], starts: Dict[str, Rect], design: Tuple[float, float],
+           actual: Tuple[float, float]) -> None:
+    """Moves and sizes the controls inside ``parent`` (the form when ``None``) the way their anchors say, after
+    it was resized from ``design`` to ``actual`` in the designer.
+
+    ``starts`` holds their rectangles from before the resize, so a drag can call it on every step without the
+    rounding adding up. Containers that change size pass it on to their own children. Children of a flex or grid
+    container are left alone (the container lays them out).
+    """
+    from .. import anchors
+
+    container = form.get(parent) if parent else None
+    if container is not None and kind(container) != "free":
+        return
+    for c in form.children(parent):
+        start = starts.get(c.name)
+        if start is None:
+            continue
+        x, y, w, h = anchors.place(start, c.anchor, design, actual, min_size=c.min_size, max_size=c.max_size,
+                                   pivot=c.pivot)
+        c.x, c.y, c.width, c.height = round(x), round(y), round(w), round(h)
+        if (c.width, c.height) != (start[2], start[3]):
+            reflow(form, c.name, starts, (start[2], start[3]), (c.width, c.height))
+
+
 def managed(form: Form, control: Control) -> bool:
     """``True`` when the parent lays the control out (its x and y are ignored)."""
     parent = form.get(control.parent) if control.parent else None

@@ -88,7 +88,7 @@ Bajo las pestañas de documentos, de izquierda a derecha: **Nuevo formulario**, 
 componente**; **Deshacer**, **Rehacer**; **Alinear a la izquierda, los centros, a la derecha, arriba, al medio,
 abajo**; **Distribuir horizontalmente, verticalmente**, **Mismo ancho, alto**, **Centrar horizontal y verticalmente
 en el formulario**; **Traer al frente**, **Enviar al fondo**, **Eliminar**. Al final: **Mostrar la cuadrícula**,
-**Ajustar a la cuadrícula**, **Guías inteligentes**, **Ajustar la selección a la cuadrícula** y **Editar el
+**Ajustar a la cuadrícula**, **Guías inteligentes**, **Redimensionar el contenido con sus anclajes**, **Ajustar la selección a la cuadrícula** y **Editar el
 código**. Cada botón tiene un tooltip con su atajo, los que no se aplican a la selección están deshabilitados y la
 barra se desplaza de lado cuando la ventana es estrecha. Ocúltala con **Ver → Barra de herramientas**. Ver
 [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#alinear-distribuir-e-igualar-tamaños).
