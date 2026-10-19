@@ -27,6 +27,7 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -236,21 +237,22 @@ def extract(archive: Union[str, Path], folder: Optional[Union[str, Path]] = None
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
-    if sys.platform == "darwin" and shutil.which("ditto"):
-        # ditto keeps the bundle's symlinks, permissions and code signature
-        done = subprocess.run(["ditto", "-x", "-k", str(archive), str(folder)], capture_output=True, text=True)
-        if done.returncode != 0:
-            raise UpdateError(done.stderr.strip() or "could not unpack the update")
-    else:
-        try:
-            with zipfile.ZipFile(archive) as zf:
-                for info in zf.infolist():
-                    path = Path(zf.extract(info, folder))
-                    mode = info.external_attr >> 16
-                    if mode and not info.is_dir():
-                        path.chmod(mode & 0o777)  # zipfile drops the executable bit
-        except (zipfile.BadZipFile, OSError) as err:
-            raise UpdateError(f"could not unpack the update: {err}") from err
+    ditto = sys.platform == "darwin" and shutil.which("ditto")
+    try:
+        if ditto:
+            # ditto keeps the bundle's symlinks and code signature
+            done = subprocess.run(["ditto", "-x", "-k", str(archive), str(folder)], capture_output=True, text=True)
+            if done.returncode != 0:
+                raise UpdateError(done.stderr.strip() or "could not unpack the update")
+        with zipfile.ZipFile(archive) as zf:
+            for info in zf.infolist():
+                path = folder / info.filename if ditto else Path(zf.extract(info, folder))
+                mode = info.external_attr >> 16
+                # zipfile (and ditto, for zips it did not make) drops the executable bit
+                if stat.S_ISREG(mode) and path.is_file() and not path.is_symlink():
+                    path.chmod(mode & 0o777)
+    except (zipfile.BadZipFile, OSError) as err:
+        raise UpdateError(f"could not unpack the update: {err}") from err
     entries = [p for p in folder.iterdir() if not p.name.startswith(".") and p.name != "__MACOSX"]
     if len(entries) != 1:
         raise UpdateError("the update does not contain exactly one app")

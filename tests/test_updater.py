@@ -49,7 +49,7 @@ def _zip(path, files):
     with zipfile.ZipFile(path, "w") as zf:
         for name, mode in files:
             info = zipfile.ZipInfo(name)
-            info.external_attr = mode << 16
+            info.external_attr = (0o100000 | mode) << 16  # a regular file, as zip tools write it
             zf.writestr(info, "#!/bin/sh\n")
     return path
 
