@@ -444,6 +444,8 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "highlight_color": "Color de `highlights`.",
                         "match_brackets": "Remarca el corchete pareja del que está junto al cursor.",
                         "selection_highlight": "Resalta las demás apariciones del texto seleccionado.",
+                        "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción).',
+                        "scrollbar": '`False` oculta las barras de desplazamiento.',
                     },
                 },
             }),
@@ -828,6 +830,8 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "highlights": "Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido.",
                         "match_brackets": "Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él).",
                         "selection_highlight": "Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor).",
+                        "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`.',
+                        "scrollbar": '`False` oculta las barras de desplazamiento.',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -2571,4 +2575,56 @@ except ValidationError as error:
 
 ui.field("Precio", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))""",
     },
+})
+
+# -- Juegos ---------------------------------------------------------------------------------
+_G = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "game",
+    "title": "Juegos (pyzed.game)",
+    "description": "Referencia de la API de pyzed.game: teclas mantenidas, movimiento, colisiones, sprites de píxeles, partículas y temblor de pantalla para juegos en un pz.canvas.",
+    "order": 11,
+    "intro": """
+        `pyzed.game` reúne pequeñas ayudas para juegos en tiempo real: teclas mantenidas, movimiento,
+        colisiones, sprites de píxeles, partículas y temblor de pantalla. Son Python puro sobre
+        [`pyzed.draw`](/pyzed/es/reference/draw/), así que también funcionan en capturas y tests. Mira
+        [Crear videojuegos](/pyzed/es/games/) para ver ejemplos completos.
+
+        ```python
+        from pyzed import draw, game
+
+        def tick(self, dt):                      # pz.frames(self.tick) en subscriptions()
+            self.x += game.axis(("left", "a"), ("right", "d")) * 300 * dt
+            self.chispas.update(dt)
+
+        def view(self):
+            return pz.canvas([draw.background("#0b0e14"), *game.glow(self.x, 200, 18, "#74ade8"),
+                              *self.chispas.shapes()], width=400, height=300)
+        ```
+    """,
+    "sections": [
+        ("Teclado", {
+            "pyzed.game.pressed": {**_G, "desc": 'Las teclas pulsadas ahora mismo, como un `frozenset` de nombres sin modificadores (`"left"`, `"space"`, `"a"`…). También está disponible como `pz.pressed()`.'},
+            "pyzed.game.is_pressed": {**_G, "desc": "Si alguna de las teclas de `keys` está pulsada (`held` sustituye a `pressed()`, para tests). También está disponible como `pz.is_pressed()`."},
+            "pyzed.game.axis": {**_G, "desc": '`-1`, `0` o `1` a partir de dos grupos de teclas: `axis(("left", "a"), ("right", "d"))`.'},
+            "pyzed.game.vector": {**_G, "desc": "Una dirección `(x, y)` de longitud 0 o 1 a partir de cuatro grupos de teclas (flechas y WASD por defecto); las diagonales se normalizan."},
+        }),
+        ("Cálculo", {
+            "pyzed.game.clamp": {**_G, "desc": "`value` limitado a `[low, high]`."},
+            "pyzed.game.lerp": {**_G, "desc": "El valor que está a una fracción `t` del camino de `a` a `b` (`t` de 0 a 1)."},
+        }),
+        ("Colisiones", {
+            "pyzed.game.Rect": {**_G, "desc": "Una caja alineada con los ejes (`x`, `y` es la esquina superior izquierda) con `left`, `right`, `top`, `bottom`, `center`, `overlaps(other)`, `contains(x, y)`, `moved(dx, dy)` y `shape(**paint)` (un `draw.rect`)."},
+            "pyzed.game.circle_rect": {**_G, "desc": "Dónde choca un círculo con un `Rect`: la dirección hacia la que empujarlo `(nx, ny)`, o `None`. Una pelota rebota con `if nx: vx = abs(vx) * nx` y `if ny: vy = abs(vy) * ny`."},
+        }),
+        ("Dibujo", {
+            "pyzed.game.rgba": {**_G, "desc": '`color` (`"#rrggbb[aa]"` o una tupla) como una tupla `(r, g, b, a)` con `alpha` aplicado.'},
+            "pyzed.game.glow": {**_G, "desc": "Una luz suave: círculos translúcidos que crecen alrededor de `(x, y)` (bloom en un lienzo). `strength` es la opacidad del halo interior; `core=False` omite el círculo sólido."},
+            "pyzed.game.sprite": {**_G, "desc": "Pixel art a partir de texto: cada carácter de `rows` es un píxel con el color de `palette` (los caracteres que no están son transparentes). Una forma por color, así que un sprite sigue siendo barato sea cual sea su tamaño."},
+        }),
+        ("Efectos", {
+            "pyzed.game.Particles": {**_G, "desc": "Chispas, humo, explosiones: puntos de vida corta que se mueven, caen y se desvanecen. Llama a `burst(x, y, …)` cuando pase algo, a `update(dt)` en cada fotograma y dibuja `shapes()`; `gravity`, `drag` y `limit` los ajustan."},
+            "pyzed.game.Shake": {**_G, "desc": "Temblor de pantalla: `kick(8)` al recibir un golpe, `update(dt)` en cada fotograma, y empieza las formas del lienzo con `*shake.shapes()` (un translate) para que todo se mueva a la vez."},
+        }),
+    ],
 })

@@ -1587,6 +1587,8 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 | `highlight_color` | Color de `highlights`. |
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor. |
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado. |
+| `keymap` | Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción). |
+| `scrollbar` | `False` oculta las barras de desplazamiento. |
 
 ## Estilos
 

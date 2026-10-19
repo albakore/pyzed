@@ -48,6 +48,31 @@ shortcut only makes sense in a given context (`if self.palette_open and combo ==
 widget used them; see [Accessibility](/pyzed/guides/accessibility/#moving-between-fields-with-tab).
 :::
 
+## Held keys and key releases
+
+`on_key` fires once per press. For keys that act *while* they are
+held, define `on_key_up(self, key)`, which receives each release by name (`"left"`, `"space"`,
+`"a"`, without modifiers), or ask at any moment which keys are down:
+
+- `pz.pressed()` returns the keys held right now as a `frozenset` of names.
+- `pz.is_pressed("left", "a")` is `True` while any of them is held.
+
+```python
+class Game(pz.App):
+    def on_key_up(self, key):
+        if key == "space":
+            self.charging = False
+
+    def tick(self, dt):
+        if pz.is_pressed("left", "a"):
+            self.x -= 200 * dt
+```
+
+Key presses and releases only become messages when the app or one of its windows defines
+`on_key` or `on_key_up`, so an app without them does not redraw on every key. `pz.pressed()`
+works either way. The [games section](/pyzed/games/#input) shows them in a frame loop, along
+with `pyzed.game` helpers such as `axis` and `vector`.
+
 ## Showing shortcuts
 
 - `ui.kbd("ctrl-shift-p")` draws the keys. On macOS it uses symbols (⌃⇧P), elsewhere words.

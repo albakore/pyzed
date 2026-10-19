@@ -39,6 +39,7 @@ The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…
 | `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |
 | `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |
 | `on_key(combo)` | Optional. Receives every key as `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Optional. Receives key releases by name (`"left"`, `"space"`). |
 | `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |
 | `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |
 | `run()` | Opens the window and blocks until the app exits. |

@@ -2271,6 +2271,8 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `match_brackets` | Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it). |
 | `selection_highlight` | Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor). |
 | `font` | Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat's message box. |
+| `keymap` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
+| `scrollbar` | `False` hides the scrollbars. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

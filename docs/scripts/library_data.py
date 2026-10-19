@@ -2303,7 +2303,66 @@ add(
     [ui.facepile(["Ana", "Luis"]), ui.icon_button("bell", on_bell, size="sm"), ui.avatar("KV")],
     center=ui.muted("notes.py"),
 )""", "size": (720, 120)},
-    related=["workspace", "status-bar", "facepile"],
+    related=["workspace", "status-bar", "facepile", "window-frame"],
+)
+
+add(
+    slug="window-frame",
+    name=T("Window frame", "Marco de ventana"),
+    category="workspace",
+    api=["pyzed.ui.window_frame", "pyzed.ui.Menu", "pyzed.ui.window_title_bar", "pyzed.ui.window_controls",
+         "pyzed.ui.system_platform"],
+    blurb=T("Your own title bar, window buttons and menus.",
+            "Tu propia barra de título, botones de ventana y menús."),
+    desc=T(
+        "Draws the whole frame of a window opened without system decorations (`frame = \"custom\"`): a "
+        "title bar that moves the window (double click maximizes), the minimize, maximize and close "
+        "buttons in the style of a platform, menus on the left like Zed (`ui.Menu`) and borders that "
+        "resize the window. `ui.window_title_bar` is the bar alone, `ui.window_controls` the three buttons "
+        "and `ui.system_platform()` says which style this system uses.",
+        "Dibuja el marco completo de una ventana abierta sin decoraciones del sistema (`frame = \"custom\"`): "
+        "una barra de título que mueve la ventana (doble clic la maximiza), los botones de minimizar, "
+        "maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed (`ui.Menu`) "
+        "y bordes que cambian el tamaño de la ventana. `ui.window_title_bar` es la barra sola, "
+        "`ui.window_controls` los tres botones y `ui.system_platform()` dice qué estilo usa este sistema.",
+    ),
+    when=T(["For apps that want a Zed-like window: menus and pickers in the title bar instead of the system's frame. "
+            "See [Window frames](/pyzed/guides/windows/#window-frames-your-own-title-bar).",
+            "With no callbacks, `ui.window_title_bar` and `ui.window_controls` only show: use them to preview "
+            "a window in the frame of each platform."],
+           ["Para apps que quieren una ventana como la de Zed: menús y selectores en la barra de título en lugar "
+            "del marco del sistema. Mira [Marcos de ventana](/pyzed/guides/windows/#marcos-de-ventana-tu-propia-barra-de-título).",
+            "Sin callbacks, `ui.window_title_bar` y `ui.window_controls` solo se muestran: úsalos para previsualizar "
+            "una ventana con el marco de cada plataforma."]),
+    preview={"code": """ui.window_frame(
+    ui.editor("frame-main", "import pyzed as pz\\n\\npz.run(App)\\n", path="main.py"),
+    title="notes.py",
+    menus=[ui.Menu("File", [ui.MenuItem("Open…", on_open, keys="ctrl-o")]),
+           ui.Menu("Edit", [ui.MenuItem("Undo", on_undo, keys="ctrl-z")])],
+    start=[ui.title_button("pyzed", on_projects, chevron=True)],
+    style="windows",
+)""", "size": (720, 240), "fill": True},
+    usage="""class Notes(pz.App):
+    title = "Notes"
+    frame = "custom"  # or "macos", "windows", "gnome", "ubuntu", "kde"
+
+    def view(self):
+        return ui.window_frame(
+            self.editor(),
+            menus=[ui.Menu("File", [ui.MenuItem("Open…", self.open, keys="ctrl-o"), ui.SEPARATOR,
+                                    ui.MenuItem("Quit", self.close)])],
+            start=[ui.title_button("pyzed", chevron=True)],
+            end=[ui.button("Run", self.run, icon="play", size="sm")],
+        )""",
+    notes=T(
+        "With only menus, define `frame_menus()` on the window and skip `ui.window_frame`: the runtime "
+        "frames the view for you. `style` defaults to the window's `frame`, or this system's style.",
+        "Si solo necesitas menús, define `frame_menus()` en la ventana y no llames a `ui.window_frame`: el "
+        "entorno de ejecución enmarca la vista por ti. `style` toma por defecto el `frame` de la ventana, "
+        "o el estilo de este sistema.",
+    ),
+    related=["title-bar", "workspace", "menu"],
+    badge="new",
 )
 
 add(

@@ -1587,6 +1587,8 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
 | `highlight_color` | Color of `highlights`. |
 | `match_brackets` | Outlines the bracket that matches the one next to the cursor. |
 | `selection_highlight` | Highlights the other occurrences of the selected text. |
+| `keymap` | Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides). |
+| `scrollbar` | `False` hides the scrollbars. |
 
 ## Styles
 
