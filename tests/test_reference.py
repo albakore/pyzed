@@ -150,8 +150,10 @@ def test_shipped_descriptions_match_the_docs_sources():
     if not (scripts / "gen_api.py").is_file():
         pytest.skip("not a source checkout")
     code = ("import sys; sys.path.insert(0, %r); import gen_api; "
-            "sys.stdout.write(gen_api.export(sys.argv[1]))") % str(scripts)
+            "sys.stdout.buffer.write(gen_api.export(sys.argv[1]).encode('utf-8'))") % str(scripts)
     for lang in reference.languages():
-        fresh = subprocess.run([sys.executable, "-c", code, lang], capture_output=True, text=True, check=True).stdout
+        # bytes, not text: the console encoding on Windows can't hold every character of the descriptions
+        out = subprocess.run([sys.executable, "-c", code, lang], capture_output=True, check=True).stdout
+        fresh = out.decode("utf-8")
         shipped = (Path(reference.__file__).parent / "_reference" / f"{lang}.json").read_text(encoding="utf-8")
         assert json.loads(fresh) == json.loads(shipped), f"run docs/scripts/gen_api.py ({lang})"
