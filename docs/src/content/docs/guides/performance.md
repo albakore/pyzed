@@ -10,6 +10,39 @@ widgets. For most apps that takes well under a millisecond. Two things make it s
 **many rows** that are not even on screen, and rebuilding **big subtrees** that did not change.
 Pyzed has a tool for each.
 
+## Fast by default
+
+You don't have to turn any of this on. Pyzed does it in every app, learning from how Zed keeps
+its UI fast: start drawing as soon as possible, and don't redo work nobody asked for.
+
+- **Fast start.** `import pyzed` loads only what an app needs to open a window. The designer,
+  the API reference, asyncio and the package metadata load the first time you use them.
+- **Fonts in parallel.** Scanning the system fonts starts the moment Pyzed is imported, on its
+  own thread, while Python runs the rest of your imports.
+- **Native GPU APIs first.** The GPU renderer starts Vulkan, Metal or DirectX 12. The OpenGL
+  backend, slower to start and heavier on memory, is started only when none of those works.
+- **Cheap widget trees.** Building containers, buttons and theme colors costs less, and the
+  native core allocates with [mimalloc](https://github.com/microsoft/mimalloc), which is much
+  faster than the system allocator with the many small objects every `view()` creates.
+- **No rebuilds for keys nobody listens to.** Key presses and releases only reach your app
+  (and rebuild the view) when a window defines `on_key` or `on_key_up`. Typing in a field
+  rebuilds the view once per key instead of three times.
+
+Measured with the [benchmark app](/pyzed/why/benchmarks/) (640×480 window, a label and a
+button per row, Xvfb without a GPU, medians of 5 launches) on the same machine:
+
+| | Before | Now |
+| --- | --- | --- |
+| `import pyzed` | 178 ms | 78 ms |
+| First frame, 10 rows | 454 ms | 323 ms |
+| Update of 1,000 rows | 40.7 ms | 34.9 ms |
+| Memory, 10 rows (RSS) | 174 MB | 146 MB |
+
+:::note
+`WGPU_BACKEND=gl` (or `vulkan`, `metal`, `dx12`) still picks a GPU backend yourself, and
+`ICED_BACKEND=tiny-skia` uses the CPU renderer.
+:::
+
 ## Virtual lists and tables
 
 A virtual list builds only the rows in view. Rows are built when they scroll into view and
