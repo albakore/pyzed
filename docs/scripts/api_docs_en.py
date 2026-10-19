@@ -601,6 +601,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "left_width": "Width of the left dock.",
                         "right_width": "Width of the right dock.",
                         "bottom_height": "Height of the bottom dock.",
+                        "on_resize": "Called with `(side, size)` when the user finishes resizing a dock by dragging its inner border.",
                     },
                 },
                 "pyzed.ui.title_bar": {
@@ -617,8 +618,12 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"content": "Text.", "tooltip": "Tooltip text."},
                 },
                 "pyzed.ui.panel": {
-                    "desc": "A dockable panel. `side` decides which edge gets the border line.",
-                    "params": {"header": "Header (`ui.panel_header`).", "side": '`"left"`, `"right"` or `"bottom"`.'},
+                    "desc": "A dockable panel. `side` decides which edge gets the border line; with a numeric `width` (`height` for the bottom) that border can be dragged to resize it.",
+                    "params": {
+                        "header": "Header (`ui.panel_header`).", "side": '`"left"`, `"right"` or `"bottom"`.',
+                        "resizable": "`False` keeps the size fixed.", "on_resize": "Called with the new size when a drag ends.",
+                        "min_size": "Smallest size when resizing.",
+                    },
                 },
                 "pyzed.ui.panel_header": {"desc": "A panel header: icon, title and actions.", "params": {"height": "Height."}},
             }),
@@ -976,15 +981,71 @@ _section("command", "Windows and clipboard", {
 _w = _page("widgets")["sections"]
 dict(_w)["Layout"].update({
     "pyzed.grid": {
-        "desc": "Lays out its children in a grid with a fixed number of `columns`, or as many columns of at most `max_width` as fit.",
-        "params": {"columns": "Number of columns.", "height": "Height of each row.", "aspect_ratio": "Keeps cells at this width/height ratio."},
-        "example": "pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)",
+        "desc": "Lays out its children in a grid. With `columns=3` the columns are equal (or `max_width` fits as many as possible). With track lists (`columns=[200, \"1fr\", \"auto\"]`, `rows=...`) it works like a CSS grid: numbers are pixels, `\"auto\"` fits the content and `\"<n>fr\"` shares the space left. Wrap children in `pz.cell` to place them and make them span; the rest fill the free cells row by row. See [Layout](/pyzed/guides/layout/#grids).",
+        "params": {
+            "columns": "Number of equal columns, or tracks: a list (`[200, \"1fr\", \"auto\"]`) or a string (`\"200 1fr auto\"`).",
+            "rows": "Row tracks, like `columns`. Rows beyond the list are `\"auto\"`.",
+            "spacing": "Space between cells.", "row_spacing": "Space between rows, if different.",
+            "height": "With `columns=<int>`: height of each row. With tracks: the grid's height.",
+            "width": "With `columns=<int>`: pixels. With tracks: the grid's width (default `\"fill\"`).",
+            "aspect_ratio": "Keeps cells at this width/height ratio (`columns=<int>` only).",
+            "max_width": "Fits as many columns of at most this width as possible (`columns=<int>` only).",
+            "padding": "Space around the cells.",
+            "align_x": "Horizontal alignment of items in their cells: `\"start\"`, `\"center\"`, `\"end\"`.",
+            "align_y": "Vertical alignment of items in their cells.",
+        },
+        "example": """
+            pz.grid([pz.cell(header, column=0, row=0, column_span=2), sidebar, content],
+                    columns=[200, "1fr"], rows=[48, "1fr"], spacing=8, height="fill")
+        """,
+    },
+    "pyzed.cell": {
+        "desc": "Places a child in a track grid: its column and row (from 0) and how many it spans. Children without a cell fill the free cells row by row. Outside a grid it is just the child.",
+        "params": {
+            "content": "The widget.", "column": "Column index (from 0).", "row": "Row index (from 0).",
+            "column_span": "Columns it covers.", "row_span": "Rows it covers.",
+            "align_x": "Horizontal alignment in the cell.", "align_y": "Vertical alignment in the cell.",
+        },
+        "example": 'pz.cell(ui.button("Save"), column=2, row=3, align_x="end")',
+    },
+    "pyzed.flex": {
+        "desc": "Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.",
+        "params": {
+            "children": "The widgets, or `pz.flex_item(...)` for children with their own sizing.",
+            "direction": "`\"row\"` or `\"column\"`.",
+            "justify": "`\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` or `\"evenly\"`. No effect when a child grows.",
+            "align": "Cross-axis alignment: `\"start\"`, `\"center\"` or `\"end\"`.",
+            "gap": "Space between children.", "wrap": "Wraps onto new lines (rows with `justify=\"start\"` only).",
+            "padding": "Space around the children.", "width": "Width.", "height": "Height.",
+        },
+        "example": 'pz.flex([logo, title, pz.flex_item(search, grow=1), avatar], justify="between", align="center", gap=8)',
+    },
+    "pyzed.flex_item": {
+        "desc": "Sizes a child of `pz.flex`.",
+        "params": {
+            "content": "The widget.", "grow": "Share of the free space on the main axis (`0` keeps its natural size).",
+            "basis": "A fixed main size in pixels, instead of growing.", "align": "Cross-axis alignment for this child.",
+        },
+    },
+    "pyzed.resizable": {
+        "desc": "A panel whose `edge` can be dragged to resize it. It keeps the size the user drags it to; `on_resize(size)` is called when a drag ends so you can save it. Changing `size` later resets it.",
+        "params": {
+            "content": "The panel's content.",
+            "edge": "The edge with the handle: `\"right\"` (a left sidebar), `\"left\"`, `\"top\"` (a bottom panel) or `\"bottom\"`.",
+            "size": "Starting width (height for top/bottom edges).",
+            "min_size": "Smallest size.", "max_size": "Largest size.",
+            "on_resize": "Called with the new size when a drag ends.",
+            "color": "Line color.", "hover_color": "Line color while hovered or dragged.",
+            "thickness": "Line thickness.", "handle": "Width of the area that can be grabbed.",
+            "width": "Width for top/bottom edges.", "height": "Height for left/right edges.",
+        },
+        "example": 'pz.row([pz.resizable(sidebar, edge="right", size=240, on_resize=self.save_width), editor])',
     },
     "pyzed.split": {
         "desc": "Two panes with a draggable divider. For the theme style use `ui.split`.",
         "params": {
             "first": "First pane.", "second": "Second pane.",
-            "ratio": "Proportion of the first pane (0–1).",
+            "ratio": "Proportion of the first pane (0–1). The split keeps the ratio the user drags to until this changes.",
             "on_resize": "Callable that receives the new ratio while dragging.",
             "vertical": "Stacks the panes top/bottom.",
             "min_size": "Minimum size of the first pane.", "min_size_second": "Minimum size of the second pane.",
@@ -1280,6 +1341,28 @@ _section("app", "Events and components", {
     },
     "pyzed.Event": {
         "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.",
+    },
+    "pyzed.Dock": {
+        "desc": "A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
+        "params": {
+            "args": "Props by position: `center`, `panels`, `layout`.", "kwargs": "Props and handlers by name, plus `key=`.",
+            "center": "The main area.", "panels": "A list of `pz.DockPanel`.",
+            "layout": "A saved layout (from `on_layout`) to restore.",
+            "on_layout": "Called with `event.value` = `{positions, sizes, active, hidden}` when panels move, resize or switch.",
+        },
+        "example": """
+            pz.Dock(center=editor, panels=[
+                pz.DockPanel("project", "Project", tree, icon="folder", side="left"),
+                pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+            ], layout=self.layout, on_layout=lambda e: setattr(self, "layout", e.value))
+        """,
+    },
+    "pyzed.DockPanel": {
+        "desc": "A panel for `pz.Dock`.",
+        "params": {
+            "id": "Stable id (used in the saved layout).", "title": "Tab title.", "content": "The panel's widget.",
+            "icon": "Lucide icon for the tab.", "side": 'Starting side: `"left"`, `"right"`, `"bottom"` or `"top"`.',
+        },
     },
     "pyzed.Component": {
         "desc": "Base class for custom components, like React components: annotated class attributes are props, other attributes are state kept between renders, `render()` returns widgets and `events` declares custom events raised with `self.emit(name, value)`. Calling the class returns a widget. Components appear in the designer's toolbox. See [Custom components](/pyzed/guides/components/).",
