@@ -258,7 +258,8 @@ and saves it with `set_key`. Your app can do the same.
 
 Keys live in the system keychain (`keyring`, service `pyzed`); `PYZED_KEYRING=0` disables it, and
 `agents.secrets.use(SecretStore(my_backend))` plugs in your own vault (any object with keyring's
-`get_password` / `set_password` / `delete_password`).
+`get_password` / `set_password` / `delete_password`). The lookup order, the environment variable of each provider
+and how to keep keys safe are in [API keys and credentials](/pyzed/ai/api-keys/).
 
 ### Claude without an API key
 

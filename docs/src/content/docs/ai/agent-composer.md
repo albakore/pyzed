@@ -1,80 +1,53 @@
 ---
-title: Agent composer in Pyzed Design
-description: "The AI agent built into Pyzed Design: a Zed-like composer with permission modes, model picker, effort, @ context and / commands that builds forms and components and writes their Python code."
+title: The agent in Pyzed Design
+description: "The AI agent built into Pyzed Design at a glance: a Zed-like composer that builds forms, components and whole apps, sees images, uses MCP servers and external agents, and signs in to many model providers."
 sidebar:
   order: 2
+  label: Agent in Pyzed Design
 ---
 
 Pyzed Design, the visual designer, has an AI agent in its right dock. You describe a screen in words and the agent
-places the controls, wires the events, writes the Python handlers, creates new forms and components, and checks
-its own code. Every change it makes to the open form is an ordinary undo step, and **Reject** puts back everything
-a run touched.
+places the controls, wires the events, writes the Python handlers, creates new forms, components or a whole project,
+looks at the result and checks its own code. Every change it makes to the open form is an ordinary undo step, and
+**Reject** puts back everything a run touched.
 
 ![The agent added a switch and wired its event](../../../../screenshots/designer-agent.png)
 
-The full manual of the panel is in [Pyzed Design → AI agents](/pyzed/editor/ai-agents/). This page is a tour of
-the composer and of how to get good results from it.
+This page is a summary. The complete manual, with every button, command and setting, is
+[Pyzed Design → AI agents](/pyzed/editor/ai-agents/).
 
-## The composer
+## At a glance
 
-The message box at the bottom of the panel is modelled on Zed's agent composer:
-
-| Part | What it does |
-| --- | --- |
-| **Message** | <kbd>Enter</kbd> sends. While the agent works, the send button becomes **Stop**. |
-| **@ context** | Type <kbd>@</kbd> (or click **+**) to attach the **selection**, the open **form**, its **code**, one **control** or a **file** of the project. What you pick goes with the message, so the agent doesn't have to search for it. Files that may hold secrets (`.env`, keys) are never offered. |
-| **/ commands** | `/new`, `/history`, `/settings`, `/form`, `/component`, `/explain`, `/fix` and `/tidy`. `/fix` runs `validate_code` on the form's code and fixes what it finds; `/tidy` aligns the controls and evens out the margins. |
-| **Permission mode** | **Ask before writing** (the default: edits the form freely, asks before creating or writing files), **Bypass permissions**, **Read only** or **Chat only**. |
-| **Model** | Every provider and its models. A provider that is not set up shows **Connect…**, which signs in right there. |
-| **Effort** and **Fast** | How much the model thinks before answering, and fast mode, on the models that support them. |
-| **Expand** | The panel fills the window for long conversations; click again to dock it. |
+| Feature | What it does | Details |
+| --- | --- | --- |
+| **Composer** | A Zed-style message box: <kbd>@</kbd> attaches the selection, the form, its code, a control or a file; <kbd>/</kbd> runs commands such as `/app`, `/fix`, `/tidy` and `/look`. | [The panel](/pyzed/editor/ai-agents/#the-panel) |
+| **Permission modes** | **Ask before writing** (the default), **Bypass permissions**, **Read only** and **Chat only**. Edits to the open form never ask, since they can be undone. | [Permission modes](/pyzed/editor/ai-agents/#the-panel) |
+| **Many providers** | Anthropic, OpenAI, Gemini, Vertex AI, GitHub Copilot, OpenRouter, xAI, Mistral, DeepSeek, Groq, Ollama, LM Studio and any OpenAI-compatible server, with effort and fast mode on Claude. | [Providers](/pyzed/editor/ai-agents/#providers) |
+| **Sign in** | Sign in with the browser (the copied key is picked up), OpenRouter OAuth, **Sign in with GitHub** (device flow) and **Sign in with Google** for Vertex AI. | [Signing in](/pyzed/editor/ai-agents/#signing-in) |
+| **Claude without a key** | Workload identity federation exchanges your identity provider's token for a short-lived Claude token. | [Claude without an API key](/pyzed/editor/ai-agents/#claude-without-an-api-key) |
+| **Images** | Attach or paste pictures, or a screenshot of the form; the agent also looks at the form itself with `screenshot_form`. | [Images](/pyzed/editor/ai-agents/#images) |
+| **Whole apps** | `/app` creates a project, adds packages, writes forms and components, looks at them and runs the checks. | [Building an application](/pyzed/editor/ai-agents/#building-an-application) |
+| **MCP servers** | Add the tools of any Model Context Protocol server (local command or URL); their secrets go to the keychain. | [MCP servers](/pyzed/editor/ai-agents/#mcp-servers) |
+| **External agents** | Run Claude Code, Gemini CLI, Codex or any Agent Client Protocol agent inside the panel, sharing Pyzed's MCP server. | [External agents](/pyzed/editor/ai-agents/#external-agents) |
+| **Inline assist** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> in the code editor rewrites a handler or the file in place. | [Inline assist](/pyzed/editor/ai-agents/#inline-assist) |
+| **Credentials** | Keys and tokens live in the system keychain, never in settings or the project. | [API keys and credentials](/pyzed/ai/api-keys/) |
 
 ![Adding context with @](../../../../screenshots/designer-agent-mention.png)
 
-## Connecting a model
+## A first session
 
-The first time, the panel lists the main providers. Click one to sign in: Pyzed opens the provider's API keys page,
-notices the key when you copy it, checks it and saves it in the **system keychain** (never in a settings file or in
-the project). OpenRouter signs in with OAuth. Local models through **Ollama** or **LM Studio** need nothing, and any
-**OpenAI-compatible** server (vLLM, llama.cpp, a company gateway) works with its URL.
+1. Open the panel: the **Agent** tab in the right dock, or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd>.
+2. Connect a model: click a provider and sign in, or pick a local model. See
+   [API keys and credentials](/pyzed/ai/api-keys/) for keys, environment variables and good practices.
+3. Ask for a screen: *"A customer form: name, email, a country drop-down and Save / Cancel; Save validates the email
+   and shows a toast"*. Then refine it: select controls and ask, attach a mock-up, or run `/look` and `/fix`.
+4. Review the run with **Keep** or **Reject**, and press <kbd>F5</kbd> to run the form.
 
-![Every provider in the model picker](../../../../screenshots/designer-agent-models.png)
-
-## What the agent can touch
-
-The agent works through tools, the same way an MCP client uses the [MCP server](/pyzed/ai/mcp/):
-
-- **The open document**: read it, add, change, move and remove controls, set the form's title, size, theme and style,
-  select controls so you can see them.
-- **Code**: wire events, write one handler or the whole module (it must parse), validate it.
-- **New documents**: create forms and components next to the open one and open them in tabs.
-- **Knowledge**: components, icons, themes and these docs.
-- **Project files**: list, read, search and write files, never outside the project folder and never secret files.
-
-Each message carries a short note of where you are (the open document, the selected controls, the handler in the
-code editor), so *"align these"* or *"validate this field"* mean what you are looking at.
-
-## Inline assist
-
-In the code editor, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> (or the ✦ button) opens a bar over the code.
-Describe the change and the model rewrites the handler or the file; **Undo** and **Keep** decide, and nothing is
-applied to the form until you click **Apply**.
-
-![Inline assist over a handler](../../../../screenshots/designer-agent-inline.png)
-
-## Getting good results
-
-- **Start from the screen, not the widgets.** *"A customer form: name, email, a country drop-down and Save / Cancel;
-  Save validates the email and shows a toast"* gives the agent the goal and the rules at once.
-- **Select, then ask.** Select a group of controls and say *"put these in a row with 8 px spacing"*.
-- **Use @ for precision.** `@email_input` plus *"only accept company addresses"* leaves no doubt about which control.
-- **Let it check itself.** Finish requests with *"then run /fix"*, or ask it to validate before it answers.
-- **Keep rules in the settings.** *Rules* in the AI agents settings are added to every thread: *"Answer in
-  Spanish"*, *"Name buttons with a `_button` suffix"*, *"Use the Gruvbox Dark theme"*.
-- **Review, then keep.** After a run, the **Agent changes** bar offers **Keep** or **Reject** for the whole run.
+Tips for good prompts are in [Getting good results](/pyzed/editor/ai-agents/#getting-good-results) and the
+[prompting guide](/pyzed/ai/prompting/).
 
 ## The same agent in your own app
 
-The panel runs on `pyzed.agents`, which any Pyzed app can use: the same providers, keychain storage, tools written
-as Python functions and streamed events. See [Building AI apps](/pyzed/ai/ai-apps/) and
-[AI agents in your app](/pyzed/guides/agents/).
+The panel runs on `pyzed.agents`, which any Pyzed app can use: the same providers, keychain storage, images, MCP
+servers, external agents, tools written as Python functions and streamed events. See
+[Building AI apps](/pyzed/ai/ai-apps/) and [AI agents in your app](/pyzed/guides/agents/).

@@ -257,6 +257,9 @@ Secret Service (GNOME Keyring, KWallet) on Linux, under the service `pyzed`. The
 settings files, to threads, or to the project. If no keychain is available, a key you paste is kept in memory until
 the designer closes, and the settings say so; use an environment variable instead in that case.
 
+Environment variables, apps opened from the Finder or the Start menu, MCP secrets and good practices are covered in
+[API keys and credentials](/pyzed/ai/api-keys/).
+
 The rest stays on your computer too: the settings in `agents.json` and the threads in `agents/threads/`, both in
 [Pyzed's settings folder](/pyzed/editor/settings/#where-they-are-saved). Nothing is sent anywhere except the
 requests to the provider you picked.
@@ -271,6 +274,20 @@ requests to the provider you picked.
 | **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |
 | **Rules** | Instructions added to every thread, like Zed's rules: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
+
+## Getting good results
+
+- **Start from the screen, not the widgets.** *"A customer form: name, email, a country drop-down and Save / Cancel;
+  Save validates the email and shows a toast"* gives the agent the goal and the rules at once.
+- **Select, then ask.** Select a group of controls and say *"put these in a row with 8 px spacing"*.
+- **Use @ for precision.** `@email_input` plus *"only accept company addresses"* leaves no doubt about which control.
+- **Show it a picture.** Attach a mock-up or a screenshot of the bug, or ask for `/look` to have it check the form.
+- **Let it check itself.** Finish requests with *"then run /fix"*, or ask it to validate before it answers.
+- **Keep rules in the settings.** *Rules* are added to every thread: *"Answer in Spanish"*, *"Use the Gruvbox Dark
+  theme"*.
+- **Review, then keep.** After a run, **Agent changes** offers **Keep** or **Reject** for the whole run.
+
+More prompts that work well are in the [prompting guide](/pyzed/ai/prompting/).
 
 ## History
 

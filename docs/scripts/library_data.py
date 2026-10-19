@@ -3124,6 +3124,48 @@ add(
 )
 
 add(
+    slug="shader",
+    name=T("Shader", "Shader"),
+    category="content",
+    api=["pyzed.shader"],
+    badge="new",
+    blurb=T("A widget painted on the GPU by your own WGSL code.",
+            "Un widget pintado en la GPU por tu propio código WGSL."),
+    desc=T(
+        "`pz.shader` runs a function you write in WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, for "
+        "every pixel of the widget, every frame, on the GPU: animated backgrounds, plasma, fire or a radar "
+        "sweep cost Python nothing. Each entry of `uniforms` becomes a WGSL function of the same name, and "
+        "`mouse()` gives the pointer. Without a GPU the widget shows `fallback`. See the "
+        "[Shaders guide](/pyzed/guides/shaders/) and the [showcase](/pyzed/showcase/).",
+        "`pz.shader` ejecuta una función que escribes en WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, "
+        "para cada píxel del widget, en cada fotograma, en la GPU: fondos animados, plasma, fuego o el barrido "
+        "de un radar no le cuestan nada a Python. Cada entrada de `uniforms` se convierte en una función WGSL "
+        "con el mismo nombre, y `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. "
+        "Ver la [guía de shaders](/pyzed/es/guides/shaders/) y las [demos](/pyzed/es/showcase/).",
+    ),
+    when=T(
+        ["For animated backgrounds behind glass panels, menus and HUDs.",
+         "For game visuals and effects that would be too slow to draw from Python every frame."],
+        ["Para fondos animados detrás de paneles de cristal, menús y HUDs.",
+         "Para gráficos y efectos de juegos que serían demasiado lentos de dibujar desde Python en cada fotograma."],
+    ),
+    preview={"code": '''pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * speed());
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"speed": 2.0, "tint": "#c678dd"}, width=640, height=240, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#c678dd"], angle=0))''', "size": (720, 300)},
+    notes=T(
+        "Shaders need the GPU renderer. Always pass a `fallback` that looks right on its own: it is what "
+        "the software renderer and machines without a GPU draw.",
+        "Los shaders necesitan el renderizador de GPU. Pasa siempre un `fallback` que se vea bien por sí "
+        "solo: es lo que dibujan el renderizador por software y los equipos sin GPU.",
+    ),
+    related=["effects", "canvas", "animation"],
+)
+
+add(
     slug="effects",
     name=T("Effects", "Efectos"),
     category="content",

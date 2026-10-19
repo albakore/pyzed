@@ -127,3 +127,17 @@
 	background-clip: text;
 	color: transparent;
 }
+
+/* A centered "see more" link under a landing-page section. */
+.pz-center-link {
+	margin: 1.5rem 0 0 !important;
+	text-align: center;
+}
+.pz-center-link a {
+	font-weight: 600;
+	color: var(--pz-accent-text);
+	text-decoration: none;
+}
+.pz-center-link a:hover {
+	text-decoration: underline;
+}

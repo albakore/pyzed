@@ -1,0 +1,131 @@
+---
+// A mosaic of screenshots, each linking to its page with a caption over the image. The first one is large.
+import { Image } from 'astro:assets';
+import { shot } from './shots';
+
+interface Props {
+	items: { name: string; alt: string; title: string; text?: string; href: string }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="pz-gallery not-content">
+	{
+		items.map((item, i) => {
+			const image = shot(item.name);
+			const widths = [480, 960, 1440, 1920].filter((w) => w <= image.width);
+			return (
+				<a class:list={['pz-gallery-item', { big: i === 0 }]} href={item.href}>
+					<Image
+						src={image}
+						alt={item.alt}
+						widths={widths}
+						sizes={i === 0 ? '(min-width: 50rem) 40rem, 100vw' : '(min-width: 50rem) 20rem, 100vw'}
+						loading="lazy"
+						decoding="async"
+					/>
+					<span class="caption">
+						<span class="title">{item.title}</span>
+						{item.text && <span class="text">{item.text}</span>}
+					</span>
+				</a>
+			);
+		})
+	}
+</div>
+
+<style>
+	.pz-gallery {
+		position: relative;
+		isolation: isolate;
+		display: grid;
+		grid-template-columns: 100%;
+		gap: 0.9rem;
+		margin-block-start: 2.5rem !important;
+	}
+	.pz-gallery::before {
+		content: '';
+		position: absolute;
+		inset: 10% 8%;
+		background: var(--pz-glow-strong);
+		filter: blur(60px);
+		opacity: 0.6;
+		z-index: -1;
+	}
+	@media (min-width: 40rem) {
+		.pz-gallery {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.big {
+			grid-column: span 2;
+		}
+	}
+	@media (min-width: 64rem) {
+		.pz-gallery {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+		.big {
+			grid-row: span 2;
+		}
+	}
+	.pz-gallery-item {
+		position: relative;
+		display: block;
+		margin: 0;
+		aspect-ratio: 16 / 10;
+		border-radius: 0.8rem;
+		overflow: hidden;
+		border: 1px solid var(--pz-frame-border);
+		box-shadow: var(--pz-frame-shadow);
+		background: #0b0d14;
+		text-decoration: none;
+		transition:
+			transform 0.2s ease,
+			border-color 0.2s ease;
+	}
+	@media (min-width: 64rem) {
+		.big {
+			aspect-ratio: auto;
+		}
+	}
+	.pz-gallery-item:hover {
+		transform: translateY(-3px);
+		border-color: var(--sl-color-accent);
+	}
+	.pz-gallery-item img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.4s ease;
+	}
+	.big img {
+		object-position: left center;
+	}
+	.pz-gallery-item:hover img {
+		transform: scale(1.03);
+	}
+	.caption {
+		position: absolute;
+		inset: auto 0 0 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 2.5rem 1rem 0.85rem;
+		background: linear-gradient(180deg, transparent, rgb(5 7 12 / 0.88));
+		color: #e6e9f0;
+		line-height: 1.35;
+	}
+	.title {
+		font-weight: 650;
+		font-size: var(--sl-text-base);
+		color: #fff;
+	}
+	.big .title {
+		font-size: var(--sl-text-xl);
+	}
+	.text {
+		font-size: var(--sl-text-xs);
+		color: #c9cfdb;
+	}
+</style>

@@ -262,7 +262,8 @@ portapapeles unos minutos; cuando se copia un texto que cumple `looks_like_key`,
 
 Las claves viven en el llavero del sistema (`keyring`, servicio `pyzed`); `PYZED_KEYRING=0` lo desactiva y
 `agents.secrets.use(SecretStore(mi_backend))` conecta tu propia bóveda (cualquier objeto con `get_password` /
-`set_password` / `delete_password` de keyring).
+`set_password` / `delete_password` de keyring). El orden de búsqueda, la variable de entorno de cada proveedor y
+cómo mantener las claves seguras están en [Claves de API y credenciales](/pyzed/es/ai/api-keys/).
 
 ### Claude sin clave de API
 

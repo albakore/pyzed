@@ -1,0 +1,171 @@
+---
+// A compact comparison table: one row per capability, one column per toolkit. The first column is highlighted.
+// A cell is [mark, note?] where mark is 'yes', 'partial' or 'no'.
+
+type Mark = 'yes' | 'partial' | 'no';
+interface Props {
+	columns: string[];
+	rows: { label: string; cells: [Mark, string?][] }[];
+	caption: string;
+	labels: { yes: string; partial: string; no: string };
+}
+const { columns, rows, caption, labels } = Astro.props;
+const paths = {
+	yes: 'M5 12.5l4.5 4.5L19 7.5',
+	partial: 'M5 13.5c2.3-3 4.7-3 7 0s4.7 3 7 0',
+	no: 'M7 12h10',
+} as const;
+const marks = ['yes', 'partial', 'no'] as const;
+---
+
+<div class="pz-compare not-content">
+	<div class="scroll" tabindex="0" role="region" aria-label={caption}>
+		<table>
+			<caption class="sr-only">{caption}</caption>
+			<thead>
+				<tr>
+					<th scope="col"><span class="sr-only">{caption}</span></th>
+					{columns.map((name, i) => <th scope="col" class:list={{ ours: i === 0 }}>{name}</th>)}
+				</tr>
+			</thead>
+			<tbody>
+				{
+					rows.map((row) => (
+						<tr>
+							<th scope="row">{row.label}</th>
+							{row.cells.map(([mark, note], i) => (
+								<td class:list={[mark, { ours: i === 0 }]}>
+									<span class="mark" title={labels[mark]}>
+										<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d={paths[mark]} /></svg>
+										<span class="sr-only">{labels[mark]}</span>
+									</span>
+									{note && <span class="note">{note}</span>}
+								</td>
+							))}
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+	<p class="legend">
+		{
+			marks.map((mark) => (
+				<span class={mark}>
+					<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d={paths[mark]} /></svg>
+					{labels[mark]}
+				</span>
+			))
+		}
+	</p>
+</div>
+
+<style>
+	.pz-compare {
+		margin-block-start: 2.5rem !important;
+	}
+	.scroll {
+		position: relative;
+		overflow-x: auto;
+		border-radius: 0.9rem;
+		border: 1px solid var(--pz-frame-border);
+		background: var(--pz-tile-bg);
+	}
+	table {
+		width: 100%;
+		min-width: 40rem;
+		border-collapse: collapse;
+		font-size: var(--sl-text-sm);
+	}
+	th,
+	td {
+		padding: 0.7rem 0.8rem;
+		text-align: center;
+		vertical-align: middle;
+		border-bottom: 1px solid var(--pz-frame-border);
+	}
+	tbody tr:last-child > * {
+		border-bottom: 0;
+	}
+	thead th {
+		font-weight: 650;
+		color: var(--sl-color-white);
+		white-space: nowrap;
+	}
+	tbody th {
+		text-align: start;
+		font-weight: 550;
+		color: var(--sl-color-white);
+	}
+	.ours {
+		background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+	}
+	thead .ours {
+		color: var(--pz-accent-text);
+	}
+	.mark {
+		position: relative;
+		display: inline-grid;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.6rem;
+		border-radius: 50%;
+	}
+	td.yes .mark,
+	.legend .yes {
+		color: #3fa66b;
+	}
+	td.yes .mark {
+		background: color-mix(in srgb, #3fa66b 16%, transparent);
+	}
+	td.partial .mark,
+	.legend .partial {
+		color: #c0841a;
+	}
+	td.partial .mark {
+		background: color-mix(in srgb, #c0841a 16%, transparent);
+	}
+	td.no .mark,
+	.legend .no {
+		color: var(--sl-color-gray-3);
+	}
+	.note {
+		display: block;
+		margin-top: 0.2rem;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+		line-height: 1.3;
+	}
+	svg {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.4rem 1.25rem;
+		margin: 0.9rem 0 0;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+	.legend span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+</style>

@@ -1,6 +1,6 @@
 ---
 title: Pyzed
-description: "Pyzed es un framework de código abierto para GUIs de escritorio nativas en Python: renderizado en Rust con Iced, 90+ componentes estilo Zed y diseñador visual."
+description: "Pyzed es un framework de código abierto para GUIs de escritorio nativas en Python: renderizado en Rust con Iced, 90+ componentes estilo Zed, diseñador visual, efectos y shaders en la GPU, videojuegos y un agente de IA integrado. Una alternativa moderna a tkinter, Kivy y PyQt."
 template: splash
 hero:
   title: Apps de escritorio preciosas en <span class="pz-gradient-text">Python puro</span>
@@ -28,6 +28,8 @@ import Feature from '../../../components/landing/Feature.astro';
 import Tiles from '../../../components/landing/Tiles.astro';
 import CodeShowcase from '../../../components/landing/CodeShowcase.astro';
 import Cta from '../../../components/landing/Cta.astro';
+import Gallery from '../../../components/landing/Gallery.astro';
+import Compare from '../../../components/landing/Compare.astro';
 
 <LatestRelease />
 
@@ -136,6 +138,28 @@ import Cta from '../../../components/landing/Cta.astro';
 </Feature>
 
 <Feature
+	id="ai-agents"
+	icon="comment-alt"
+	eyebrow="Agentes de IA"
+	title="Un agente de IA que construye contigo"
+	shot="designer-agent"
+	alt="El panel del agente de Pyzed Design tras añadir un interruptor a un formulario y conectar su evento"
+	overlay="ai/ai-chat"
+	overlayAlt="Una app de chat hecha con pyzed.agents mostrando una respuesta en streaming"
+	href="/pyzed/es/ai/"
+	more="Pyzed para agentes de IA"
+>
+	Describe una pantalla y el agente de Pyzed Design coloca los controles, escribe los manejadores, mira el
+	resultado y comprueba su código; cada cambio se puede deshacer. Tu propio agente de programación recibe el mismo
+	conocimiento por MCP.
+
+	- **Cualquier modelo**: Claude, GPT, Gemini, Copilot, OpenRouter, modelos locales con Ollama y agentes externos
+	- Adjunta **imágenes**, añade **servidores MCP** y guarda las claves en el **llavero del sistema**
+	- Un **servidor MCP** y **llms.txt** para que Cursor, VS Code o Zed escriban código Pyzed correcto
+	- **`pyzed.agents`** lleva el mismo bucle de agente a tus propias apps
+</Feature>
+
+<Feature
 	id="components"
 	icon="list-format"
 	eyebrow="Biblioteca de componentes"
@@ -143,6 +167,7 @@ import Cta from '../../../components/landing/Cta.astro';
 	shot="components-dark"
 	light="components-light"
 	alt="Una galería de componentes de Pyzed: botones, campos, pestañas, un editor, un árbol, menús y notificaciones"
+	reverse
 	href="/pyzed/es/library/"
 	more="Ver la biblioteca de componentes"
 >
@@ -152,6 +177,25 @@ import Cta from '../../../components/landing/Cta.astro';
 
 	- Créalos desde código con `pyzed.ui` o colócalos desde la caja de herramientas del diseñador
 	- Fuentes IBM Plex y unos **2000 iconos Lucide** incluidos
+</Feature>
+
+<Feature
+	id="blocks"
+	icon="puzzle"
+	eyebrow="Bloques"
+	title="Pantallas completas, listas para copiar"
+	shot="blocks/dashboard-dark"
+	light="blocks/dashboard-light"
+	alt="El bloque de panel de control: tarjetas de métricas, un gráfico y una tabla de pedidos recientes"
+	href="/pyzed/es/blocks/"
+	more="Ver los bloques"
+>
+	Paneles de control, un inicio de sesión, ajustes, un chat, un tablero kanban, una tabla de datos, un reproductor
+	de música y más: pantallas completas y probadas hechas con la biblioteca de componentes. Copia una en tu proyecto y
+	cambia lo que necesites.
+
+	- Cada bloque tiene vista previa **oscura y clara** y su código completo
+	- Archivos pequeños y legibles: un buen punto de partida para ti o para tu agente de IA
 </Feature>
 
 <Feature
@@ -175,35 +219,108 @@ import Cta from '../../../components/landing/Cta.astro';
 	- Temas y colores de acento por ventana
 </Feature>
 
+<SectionTitle id="effects" eyebrow="Efectos e interfaces de videojuego" title="Interfaces que brillan">
+	Pyzed dibuja en la GPU, así que una app de Python puede parecer un videojuego moderno: **cristal** esmerilado
+	con desenfoque real del fondo, **bloom** que derrama luz desde las partes brillantes, transparencia, rotación y tus
+	propios **shaders** WGSL.
+</SectionTitle>
+
+<Gallery
+	items={[
+		{ name: 'showcase/main-menu', href: '/pyzed/es/showcase/main-menu/', title: 'Menú principal de videojuego', text: 'Fondo con shader, título brillante, botones de cristal', alt: 'Un menú principal synthwave con un título brillante y botones de cristal sobre un shader animado' },
+		{ name: 'showcase/hud', href: '/pyzed/es/showcase/hud/', title: 'HUD de videojuego', text: 'Barras de vida, radar con shader, enfriamientos', alt: 'Un HUD con barras de vida y maná, un minimapa de radar y una barra de habilidades' },
+		{ name: 'showcase/glass-dashboard', href: '/pyzed/es/showcase/glass-dashboard/', title: 'Centro de control de cristal', text: 'Desenfoque del fondo y transparencia', alt: 'Un centro de control hecho de paneles de cristal esmerilado sobre un fondo de colores' },
+		{ name: 'showcase/inventory', href: '/pyzed/es/showcase/inventory/', title: 'Inventario de RPG', text: 'Brillo de rareza y bloom', alt: 'Un inventario de RPG donde los objetos raros brillan' },
+		{ name: 'showcase/shaders', href: '/pyzed/es/showcase/shaders/', title: 'Shaders', text: 'Tu propio WGSL con pz.shader', alt: 'Una cuadrícula de shaders animados en la GPU' },
+	]}
+/>
+
+<p class="pz-center-link not-content"><a href="/pyzed/es/showcase/">Ver todas las demos y cómo están hechas <span aria-hidden="true">→</span></a></p>
+
 <Feature
-	id="layout"
-	icon="seti:html"
-	eyebrow="Layout"
-	title="Filas, columnas, grids y docks"
-	shot="tutorials/layout"
-	alt="Un layout en grid con una cabecera que ocupa tres columnas y filas flex con cada modo de justify"
-	href="/pyzed/es/guides/layout/"
-	more="Guía de layout"
+	id="games"
+	icon="rocket"
+	eyebrow="Crea videojuegos"
+	title="De Snake a un shoot 'em up de neón"
+	shot="games/neon-invaders"
+	alt="Neon Invaders: invasores en pixel art, brillo de neón y un HUD de cristal"
+	overlay="games/breakout"
+	overlayAlt="Breakout con partículas y un bucle a 60 fps"
+	href="/pyzed/es/games/"
+	more="Crear videojuegos con Pyzed"
 >
-	Filas y columnas flex, grids al estilo CSS con pistas `fr` y `auto`, padding, alineación y scroll, además de
-	un workspace con docks que se arrastran y redimensionan, igual que los paneles de Zed.
+	Todo lo que necesita un juego 2D ya está en Pyzed: un canvas en la GPU, un bucle que se ejecuta una vez por
+	fotograma, las teclas pulsadas en este momento, sprites y partículas, y toda la biblioteca de widgets para menús
+	y HUDs.
+
+	- Tres juegos completos explicados paso a paso: **Snake**, **Breakout** y **Neon Invaders**
+	- `pz.frames` para un bucle fluido a 60 fps, teclas mantenidas y ratón
+	- Bloom, brillo y cristal sobre la acción, escritos en Python normal
 </Feature>
 
 <Feature
-	id="async"
-	icon="random"
-	eyebrow="Async y varias ventanas"
-	title="Fluida por defecto"
-	shot="tutorials/multi-window"
-	alt="Tres ventanas con temas distintos que comparten el mismo estado"
+	id="integrations"
+	icon="seti:db"
+	eyebrow="Conecta tu backend"
+	title="Las librerías que ya usas"
+	shot="integrations/sqlalchemy"
+	alt="Una app de contactos con 20.000 filas de SQLAlchemy en una tabla virtual y un panel de edición"
+	overlay="integrations/fastapi"
+	overlayAlt="Un cliente de escritorio para un servidor FastAPI"
 	reverse
-	href="/pyzed/es/guides/windows/"
-	more="Guía de ventanas"
+	href="/pyzed/es/integrations/overview/"
+	more="Tutoriales de integración"
 >
-	`update` y los callbacks pueden ser `async`, así que las llamadas de red nunca congelan la interfaz.
-	`pz.every` y `pz.listen` gestionan temporizadores y streams, y cada `pz.Window` tiene su propia vista y tema
-	compartiendo el estado de la app.
+	Pyzed es solo la interfaz: el resto de tu app es Python normal. Demos ejecutables muestran cómo poner un frontend
+	de escritorio nativo sobre el backend que ya conoces.
+
+	- Cliente de **FastAPI** con el servidor dentro del mismo proceso
+	- **SQLAlchemy** y **SQLModel**: 20.000 filas en una tabla virtual y formularios validados por tus modelos
+	- El ORM async de **Django**, **httpx** y **Pydantic**, **aiosqlite** y más
 </Feature>
+
+<SectionTitle id="why" eyebrow="Por qué Pyzed" title="Una GUI de Python para una nueva generación">
+	tkinter, Kivy y PyQt hicieron posibles las apps de escritorio en Python. Pyzed hace que se vean y se sientan como
+	las herramientas que usas cada día, y es honesto sobre dónde los demás siguen ganando.
+</SectionTitle>
+
+<Compare
+	caption="Pyzed comparado con otros toolkits de GUI para Python"
+	labels={{ yes: 'Sí', partial: 'En parte o de terceros', no: 'No' }}
+	columns={['Pyzed', 'tkinter', 'PyQt / PySide', 'Kivy', 'Flet']}
+	rows={[
+		{ label: 'Aspecto moderno y modo oscuro de serie', cells: [['yes', '11 temas'], ['no'], ['partial', 'personalizable'], ['partial', 'KivyMD'], ['yes', 'Material']] },
+		{ label: 'Renderizado en la GPU', cells: [['yes', 'wgpu'], ['no'], ['partial', 'Qt Quick'], ['yes', 'OpenGL'], ['yes', 'Flutter']] },
+		{ label: 'Diseñador visual', cells: [['yes', 'integrado'], ['partial', 'de terceros'], ['yes', 'Qt Designer'], ['no'], ['no']] },
+		{ label: 'Recarga en caliente que conserva el estado', cells: [['yes'], ['no'], ['partial', 'solo QML'], ['partial', 'de terceros'], ['partial', 'reinicia']] },
+		{ label: 'Callbacks async', cells: [['yes'], ['no'], ['partial', 'QtAsyncio'], ['yes'], ['yes']] },
+		{ label: 'Herramientas de IA (MCP, llms.txt, agentes)', cells: [['yes'], ['no'], ['partial', 'C++/QML'], ['no'], ['yes', 'servidor MCP']] },
+		{ label: 'Móvil y web', cells: [['no', 'solo escritorio'], ['no'], ['partial', 'Android en preview'], ['yes', 'móvil'], ['yes']] },
+	]}
+/>
+
+<Tiles
+	items={[
+		{
+			title: 'Comparativa de funciones',
+			text: 'Pyzed junto a tkinter, CustomTkinter, PyQt/PySide, wxPython, Kivy, Dear PyGui, Flet, Toga y NiceGUI.',
+			href: '/pyzed/es/why/comparison/',
+			icon: 'list-format',
+		},
+		{
+			title: 'Benchmarks',
+			text: 'Tiempo de arranque, memoria, actualizar 1.000 filas, tamaño de instalación y líneas de código, medidos igual para cada toolkit.',
+			href: '/pyzed/es/why/benchmarks/',
+			icon: 'random',
+		},
+		{
+			title: 'Experiencia de desarrollo',
+			text: 'Instalación, primera ventana, recarga en caliente, diseñador, autocompletado, mensajes de error, empaquetado e IA, paso a paso.',
+			href: '/pyzed/es/why/developer-experience/',
+			icon: 'laptop',
+		},
+	]}
+/>
 
 <SectionTitle id="more" eyebrow="Y mucho más" title="Con todo incluido">
 	Los detalles que convierten un prototipo en una app que da gusto usar.
@@ -229,11 +346,19 @@ import Cta from '../../../components/landing/Cta.astro';
 			wide: true,
 		},
 		{
-			title: 'Lista para la IA: servidor MCP',
-			text: 'Conecta tu agente de programación al servidor MCP de Pyzed: consulta componentes, aprende la API y las buenas prácticas, y crea componentes por ti.',
-			href: '/pyzed/es/guides/mcp/',
-			icon: 'comment-alt',
+			title: 'Filas, columnas, grids y docks',
+			text: 'Layouts flex, grids al estilo CSS con pistas <code>fr</code>, scroll y un workspace con docks que se arrastran y redimensionan.',
+			href: '/pyzed/es/guides/layout/',
+			icon: 'seti:html',
+			shot: 'tutorials/layout',
+			alt: 'Un layout en grid con una cabecera que ocupa varias columnas y filas flex',
 			wide: true,
+		},
+		{
+			title: 'Async y varias ventanas',
+			text: 'Los callbacks <code>async</code> nunca congelan la interfaz; <code>pz.every</code> y <code>pz.listen</code> gestionan temporizadores y streams; cada <code>pz.Window</code> tiene su propio tema.',
+			href: '/pyzed/es/guides/windows/',
+			icon: 'random',
 		},
 		{
 			title: 'Idiomas',
@@ -317,13 +442,16 @@ pz.run(Counter)
 </SectionTitle>
 
 <CardGrid>
+	<LinkCard title="Inicio rápido" href="/pyzed/es/getting-started/quickstart/" description="Instala Pyzed y crea tu primera ventana." />
 	<LinkCard title="Biblioteca de componentes" href="/pyzed/es/library/" description="Cada componente con su vista previa, qué hace y cómo usarlo." />
 	<LinkCard title="Manual de Pyzed Design" href="/pyzed/es/editor/" description="Cada panel del editor explicado, con trucos y atajos." />
-	<LinkCard title="Inicio rápido" href="/pyzed/es/getting-started/quickstart/" description="Instala Pyzed y crea tu primera ventana." />
+	<LinkCard title="Bloques" href="/pyzed/es/blocks/" description="Pantallas completas para copiar: panel de control, inicio de sesión, ajustes, chat, kanban…" />
+	<LinkCard title="Demos" href="/pyzed/es/showcase/" description="Cristal, bloom, shaders e interfaces de videojuego, con su código." />
+	<LinkCard title="Crear videojuegos" href="/pyzed/es/games/" description="Snake, Breakout y Neon Invaders, paso a paso." />
+	<LinkCard title="Integraciones" href="/pyzed/es/integrations/overview/" description="FastAPI, SQLAlchemy, SQLModel, Django, httpx y Pydantic." />
+	<LinkCard title="Pyzed para agentes de IA" href="/pyzed/es/ai/" description="El agente del diseñador, el servidor MCP, llms.txt y pyzed.agents." />
+	<LinkCard title="Por qué Pyzed" href="/pyzed/es/why/" description="Cómo se compara Pyzed con tkinter, Kivy, PyQt y Flet, con benchmarks." />
 	<LinkCard title="Tutorial: lista de tareas" href="/pyzed/es/tutorials/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
-	<LinkCard title="Tutorial: un mini editor tipo Zed" href="/pyzed/es/tutorials/zed-like-editor/" description="Workspace, árbol de archivos, pestañas, editor y paleta." />
-	<LinkCard title="Temas" href="/pyzed/es/guides/theming/" description="Tokens de color, temas incluidos y cómo crear los tuyos." />
-	<LinkCard title="Preguntas frecuentes" href="/pyzed/es/faq/" description="Pyzed frente a tkinter, Kivy, PyQt y Flet, licencia, plataformas, rendimiento e IA." />
 </CardGrid>
 
 <Cta

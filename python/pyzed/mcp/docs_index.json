@@ -1,232 +1,346 @@
 {
  "docs": [
   {
+   "slug": "ai/agent-composer",
+   "title": "The agent in Pyzed Design",
+   "description": "The AI agent built into Pyzed Design at a glance: a Zed-like composer that builds forms, components and whole apps, sees images, uses MCP servers and external agents, and signs in to many model providers.",
+   "path": "docs/src/content/docs/ai/agent-composer.md"
+  },
+  {
+   "slug": "ai/ai-apps",
+   "title": "Building AI apps",
+   "description": "Build a streaming AI chat desktop app in Python with Pyzed: an OpenAI-compatible API over httpx, async generators that stream tokens into the UI, stop, errors and tests without network.",
+   "path": "docs/src/content/docs/ai/ai-apps.md"
+  },
+  {
+   "slug": "ai/api-keys",
+   "title": "API keys and credentials",
+   "description": "How Pyzed Design and pyzed.agents find model provider credentials: the system keychain, environment variables, browser sign-in, Google Cloud credentials and workload identity federation, and how to keep keys safe.",
+   "path": "docs/src/content/docs/ai/api-keys.md"
+  },
+  {
+   "slug": "ai/index",
+   "title": "Pyzed for AI agents",
+   "description": "Pyzed is an AI-native Python GUI framework: an MCP server, llms.txt, editor rules, an agent inside Pyzed Design and pyzed.agents let AI agents build, check and see desktop apps.",
+   "path": "docs/src/content/docs/ai/index.md"
+  },
+  {
+   "slug": "ai/llms-txt",
+   "title": "llms.txt and editor rules",
+   "description": "Feed the Pyzed docs to any LLM or AI IDE: llms.txt, llms-full.txt, Markdown pages, plus copy-ready AGENTS.md, Cursor rules and Copilot instructions for Pyzed projects.",
+   "path": "docs/src/content/docs/ai/llms-txt.md"
+  },
+  {
+   "slug": "ai/mcp",
+   "title": "MCP server",
+   "description": "Connect Cursor, VS Code, Zed, Claude Desktop or any MCP client to Pyzed: components, docs, code generators, validation and off-screen screenshots for AI agents.",
+   "path": "docs/src/content/docs/ai/mcp.md"
+  },
+  {
+   "slug": "ai/prompting",
+   "title": "Prompting guide",
+   "description": "How to prompt AI agents to build Pyzed desktop apps, with a worked example: an agent builds a Pomodoro timer using the Pyzed MCP tools, with their real outputs.",
+   "path": "docs/src/content/docs/ai/prompting.md"
+  },
+  {
+   "slug": "blocks/chat",
+   "title": "Chat",
+   "description": "A team chat UI in Python: channels with unread counts, direct messages with presence, grouped messages with Markdown, attachments, reactions and a rich composer.",
+   "path": "docs/src/content/docs/blocks/chat.mdx"
+  },
+  {
+   "slug": "blocks/dashboard",
+   "title": "Dashboard",
+   "description": "An analytics dashboard in Python: sidebar navigation, KPI cards with sparklines, a revenue bar chart with ranges, a traffic donut and a sortable orders table.",
+   "path": "docs/src/content/docs/blocks/dashboard.mdx"
+  },
+  {
+   "slug": "blocks/data-table",
+   "title": "Data table",
+   "description": "A data table with filters in Python: search, status chips, a role select, sortable columns, row selection, pagination, CSV export and an invite dialog.",
+   "path": "docs/src/content/docs/blocks/data-table.mdx"
+  },
+  {
+   "slug": "blocks/file-explorer",
+   "title": "File explorer and IDE",
+   "description": "An IDE layout in Python like Zed or VS Code: project tree, editor tabs, breadcrumbs, a code editor with minimap and git markers, terminal tabs, an outline and a status bar.",
+   "path": "docs/src/content/docs/blocks/file-explorer.mdx"
+  },
+  {
+   "slug": "blocks/index",
+   "title": "Blocks",
+   "description": "Ready-made Python desktop UI screens to copy: login, dashboard, settings, data table, chat, IDE layout, onboarding wizard, music player and kanban, built with Pyzed components.",
+   "path": "docs/src/content/docs/blocks/index.mdx"
+  },
+  {
+   "slug": "blocks/kanban",
+   "title": "Kanban board",
+   "description": "A kanban board in Python: columns with counters, cards with tags, priorities, due dates, checklists and assignees, filters and moving cards between columns.",
+   "path": "docs/src/content/docs/blocks/kanban.mdx"
+  },
+  {
+   "slug": "blocks/login",
+   "title": "Login",
+   "description": "A split sign-in screen for Python desktop apps: brand panel with a gradient, SSO and passkey buttons, email and password fields with validation.",
+   "path": "docs/src/content/docs/blocks/login.mdx"
+  },
+  {
+   "slug": "blocks/music-player",
+   "title": "Music player",
+   "description": "A music player UI in Python: library sidebar, album header with gradient art, a track list with an animated equalizer and a player bar with live progress and volume.",
+   "path": "docs/src/content/docs/blocks/music-player.mdx"
+  },
+  {
+   "slug": "blocks/onboarding",
+   "title": "Onboarding wizard",
+   "description": "A multi-step onboarding wizard in Python: a vertical stepper, profile form, template cards, team invites, a summary and validation between steps.",
+   "path": "docs/src/content/docs/blocks/onboarding.mdx"
+  },
+  {
+   "slug": "blocks/settings",
+   "title": "Settings",
+   "description": "A settings page for Python desktop apps: sectioned navigation, profile fields, theme and accent pickers, notification switches, a save bar and a danger zone with confirmation.",
+   "path": "docs/src/content/docs/blocks/settings.mdx"
+  },
+  {
    "slug": "components/basics",
    "title": "Basics",
-   "description": "Buttons, text, badges, shortcuts, avatars, tooltips and cards.",
+   "description": "Pyzed basics components for Python desktop GUIs: buttons, text, badges, keyboard shortcuts, avatars, tooltips and cards in the Zed style.",
    "path": "docs/src/content/docs/components/basics.md"
   },
   {
    "slug": "components/code",
    "title": "Code",
-   "description": "The code editor with syntax highlighting and git markers, and the terminal view.",
+   "description": "A code editor with syntax highlighting and git markers, and a terminal view: Zed-style components for Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/code.md"
   },
   {
    "slug": "components/content",
    "title": "Content and panels",
-   "description": "Markdown, rich text, images, QR codes, resizable panels, grids and popovers.",
+   "description": "Markdown, rich text, images, QR codes, resizable panels, grids and popovers: content components for Python desktop GUIs built with Pyzed.",
    "path": "docs/src/content/docs/components/content.md"
   },
   {
    "slug": "components/controls",
    "title": "More controls",
-   "description": "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections.",
+   "description": "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: Zed-style input controls for Python desktop apps.",
    "path": "docs/src/content/docs/components/controls.md"
   },
   {
    "slug": "components/data",
    "title": "Data and feedback",
-   "description": "Tables, callouts, empty states, grouped settings, stats, charts and indicators.",
+   "description": "Tables, callouts, empty states, grouped settings, stats, charts and indicators: data display components for Python desktop GUIs with Pyzed.",
    "path": "docs/src/content/docs/components/data.md"
   },
   {
    "slug": "components/dialogs",
    "title": "Dialogs and tools",
-   "description": "Ready-made dialogs, accordions, a log console, a shortcuts list, an About box and the color picker.",
+   "description": "Ready-made dialogs, accordions, a log console, a shortcuts list, an About box and a color picker for Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/dialogs.md"
   },
   {
    "slug": "components/forms",
    "title": "Forms",
-   "description": "Text fields, switches, checkboxes, sliders, progress bars and segmented groups.",
+   "description": "Text fields, switches, checkboxes, sliders, progress bars and segmented groups: form components for native Python desktop GUIs with Pyzed.",
    "path": "docs/src/content/docs/components/forms.md"
   },
   {
    "slug": "components/lists",
    "title": "Lists, tree and menus",
-   "description": "List rows, the project panel's file tree and context menus.",
+   "description": "List rows, a project file tree and context menus: Zed-style list and navigation components for native Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/lists.md"
   },
   {
    "slug": "components/navigation",
    "title": "Navigation",
-   "description": "Editor tabs, breadcrumbs and the toolbar.",
+   "description": "Editor tabs, breadcrumbs and the toolbar: Zed-style navigation components for building IDE-like Python desktop GUIs with Pyzed.",
    "path": "docs/src/content/docs/components/navigation.md"
   },
   {
    "slug": "components/overlays",
    "title": "Overlays",
-   "description": "Layers, modals, the command palette, fuzzy-search pickers and notifications.",
+   "description": "Layers, modals, a command palette, fuzzy-search pickers and toast notifications: overlay components for Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/overlays.md"
   },
   {
    "slug": "components/overview",
    "title": "Overview",
-   "description": "The pyzed.ui components, inspired by the Zed editor.",
+   "description": "Overview of pyzed.ui, the Zed-inspired component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more.",
    "path": "docs/src/content/docs/components/overview.md"
   },
   {
    "slug": "components/workspace",
    "title": "Workspace",
-   "description": "The layout of a Zed window, with title bar, docks and status bar.",
+   "description": "Build a Zed-style window in Python: title bar, resizable docks, panels and status bar with the Pyzed workspace components.",
    "path": "docs/src/content/docs/components/workspace.md"
   },
   {
    "slug": "contributing/adding-components",
    "title": "Adding a component to the editor",
-   "description": "Step by step, from a pyzed.ui function (and the Rust widget behind it) to a toolbox entry with properties, events, saved forms, generated handlers and tests.",
+   "description": "Add a component to Pyzed step by step: a pyzed.ui function and its Rust widget, a toolbox entry with properties and events, saved forms and tests.",
    "path": "docs/src/content/docs/contributing/adding-components.md"
   },
   {
    "slug": "contributing/docs",
    "title": "Editing the documentation",
-   "description": "How this site is organized, how to preview it, how translations work and how to regenerate the reference and images.",
+   "description": "How the Pyzed documentation site is organized, how to preview it, how translations work and how to regenerate the API reference and screenshots.",
    "path": "docs/src/content/docs/contributing/docs.md"
   },
   {
    "slug": "contributing/documenting-components",
    "title": "Documenting a component",
-   "description": "Docstrings, the API reference, the component library, screenshots, translations and the changelog for a new component.",
+   "description": "Document a new Pyzed component: docstrings, the API reference, the component library page, screenshots, translations and the changelog.",
    "path": "docs/src/content/docs/contributing/documenting-components.md"
   },
   {
    "slug": "contributing/index",
    "title": "Contributing to Pyzed",
-   "description": "Set up a development environment, run the checks CI runs, and follow the commit and pull request conventions.",
+   "description": "Contribute to Pyzed: set up a Python and Rust development environment, run the checks CI runs, and follow the commit and pull request conventions.",
    "path": "docs/src/content/docs/contributing/index.md"
+  },
+  {
+   "slug": "contributing/seo",
+   "title": "SEO and llms.txt",
+   "description": "How the Pyzed docs are optimized for search engines and AI answer engines: meta tags, social cards, JSON-LD, hreflang, sitemap, robots.txt and llms.txt.",
+   "path": "docs/src/content/docs/contributing/seo.md"
   },
   {
    "slug": "contributing/testing",
    "title": "Testing",
-   "description": "How the test suite is organized, how to test ui components without a window and how the visual regression tests and their reference images work.",
+   "description": "How the Pyzed test suite is organized, how to test UI components without a window and how visual regression tests and reference images work.",
    "path": "docs/src/content/docs/contributing/testing.md"
   },
   {
    "slug": "download",
    "title": "Download Pyzed Design",
-   "description": "Download Pyzed Design, the visual designer of Pyzed, as a standalone app for Windows, macOS and Linux.",
+   "description": "Download Pyzed Design, the free drag-and-drop visual designer for Python desktop GUIs, as a standalone app for Windows, macOS and Linux.",
    "path": "docs/src/content/docs/download.mdx"
   },
   {
    "slug": "editor/ai-agents",
    "title": "AI agents",
-   "description": "The Agent panel of Pyzed Design - an AI agent that builds forms and components, writes their code and edits the open form, with inline assist in the code editor, several model providers and keys kept in the system keychain.",
+   "description": "The Agent panel of Pyzed Design: an AI agent that builds forms and components and writes their Python code, with inline assist and several model providers.",
    "path": "docs/src/content/docs/editor/ai-agents.md"
   },
   {
    "slug": "editor/animations-and-effects",
    "title": "Animations and effects",
-   "description": "Give controls rotation, blur, glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.",
+   "description": "Give controls rotation, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them on appear, hover, press, focus or click.",
    "path": "docs/src/content/docs/editor/animations-and-effects.md"
   },
   {
    "slug": "editor/code-editor",
    "title": "Code editor",
-   "description": "The Python editor of Pyzed Design - completion, diagnostics, code lens, folding, the minimap, language servers, keys and settings.",
+   "description": "The Python code editor inside Pyzed Design: completion, diagnostics, code lens, folding, minimap, ty and ruff language servers, keys and settings.",
    "path": "docs/src/content/docs/editor/code-editor.md"
   },
   {
    "slug": "editor/component-designer",
    "title": "Component designer",
-   "description": "Draw reusable components with properties, state, methods and custom events, and nest them like Godot scenes.",
+   "description": "Draw reusable components in Pyzed Design with properties, state, methods and custom events, and nest them like Godot scenes.",
    "path": "docs/src/content/docs/editor/component-designer.md"
   },
   {
    "slug": "editor/console-and-running",
    "title": "Running and the console",
-   "description": "Run forms and components with F5, read their output, events and errors in the console, and update them live on save.",
+   "description": "Run forms and components with F5 in Pyzed Design, read output, events and errors in the console, and see changes live with hot reload on save.",
    "path": "docs/src/content/docs/editor/console-and-running.md"
   },
   {
    "slug": "editor/data-binding",
    "title": "Data binding and validation",
-   "description": "Bind controls to the form's data, check what the user types with validation rules, translate texts with @keys and preview a form in another theme or language.",
+   "description": "Bind controls to form data in Pyzed Design, validate user input with rules, translate texts with @keys and preview forms in other themes or languages.",
    "path": "docs/src/content/docs/editor/data-binding.md"
   },
   {
    "slug": "editor/events",
    "title": "Events and handlers",
-   "description": "The Events panel, every event of every component and the form, and how to write handlers in Pyzed Design.",
+   "description": "The Events panel of Pyzed Design: every event of every component and form, and how to write Python event handlers with a double click.",
    "path": "docs/src/content/docs/editor/events.md"
   },
   {
    "slug": "editor/files-and-scripting",
    "title": "Files, templates and scripting",
-   "description": "Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the designer's Python API.",
+   "description": "Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the Python scripting API of Pyzed Design.",
    "path": "docs/src/content/docs/editor/files-and-scripting.md"
   },
   {
    "slug": "editor/index",
    "title": "Pyzed Design",
-   "description": "The manual of Pyzed's visual editor. Draw windows and components, wire their events to Python, run them and ship them.",
+   "description": "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, wire events to Python, run them and ship them.",
    "path": "docs/src/content/docs/editor/index.md"
   },
   {
    "slug": "editor/keyboard-shortcuts",
    "title": "Keyboard shortcuts",
-   "description": "Every keyboard shortcut of Pyzed Design - global commands, the canvas, dialogs and the code editor.",
+   "description": "Every keyboard shortcut of Pyzed Design, the Python GUI designer: global commands, the canvas, dialogs and the built-in code editor.",
    "path": "docs/src/content/docs/editor/keyboard-shortcuts.md"
   },
   {
    "slug": "editor/layouts",
    "title": "Layouts and containers",
-   "description": "Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors in Pyzed Design.",
+   "description": "Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors: arrange controls of Python desktop forms in Pyzed Design.",
    "path": "docs/src/content/docs/editor/layouts.md"
   },
   {
    "slug": "editor/menus-and-commands",
    "title": "Menus and commands",
-   "description": "The title bar, every menu entry, the toolbar, the command palette, Add control and the dockable panels of Pyzed Design.",
+   "description": "The title bar, every menu entry, the toolbar, the command palette, Add control and the dockable panels of Pyzed Design, the Python GUI builder.",
    "path": "docs/src/content/docs/editor/menus-and-commands.md"
   },
   {
    "slug": "editor/projects",
    "title": "Projects",
-   "description": "Create and open uv projects, browse and search their files, manage dependencies, run ruff and ty and create the git repository from the Project and Dependencies panels.",
+   "description": "Create and open uv projects in Pyzed Design, browse and search files, manage dependencies, run ruff and ty, and create the git repository.",
    "path": "docs/src/content/docs/editor/projects.md"
   },
   {
    "slug": "editor/properties",
    "title": "Properties",
-   "description": "The property grid of Pyzed Design, section by section - the form, a control, several controls, and the list and table editors.",
+   "description": "The property grid of Pyzed Design section by section: the form, a control, several controls at once, and the list and table editors.",
    "path": "docs/src/content/docs/editor/properties.md"
   },
   {
    "slug": "editor/reference",
    "title": "Built-in reference",
-   "description": "The searchable class reference inside Pyzed Design, contextual help with Shift+F1, and the same reference in your own apps with pyzed.reference.",
+   "description": "The searchable class reference inside Pyzed Design, contextual help with Shift+F1, and the same reference browser in your own apps.",
    "path": "docs/src/content/docs/editor/reference.md"
   },
   {
    "slug": "editor/settings",
    "title": "Settings",
-   "description": "The preferences of Pyzed Design and of its code editor, where they are saved and how to translate the editor.",
+   "description": "The preferences of Pyzed Design and its code editor: themes, fonts, keys, where settings are saved and how to translate the visual designer.",
    "path": "docs/src/content/docs/editor/settings.md"
   },
   {
    "slug": "editor/styles-and-themes",
    "title": "Styles and themes",
-   "description": "The Style section, the color picker with gradients and masks, the form's global style and themes in Pyzed Design.",
+   "description": "Style controls in Pyzed Design: the Style section, a color picker with gradients and masks, the form's global style and built-in themes.",
    "path": "docs/src/content/docs/editor/styles-and-themes.md"
   },
   {
    "slug": "editor/tips-and-tricks",
    "title": "Tips and tricks",
-   "description": "Small habits that make you faster in Pyzed Design.",
+   "description": "Small habits that make you faster in Pyzed Design: shortcuts, multi-selection, smart guides, templates and quick ways to build Python forms.",
    "path": "docs/src/content/docs/editor/tips-and-tricks.md"
   },
   {
    "slug": "editor/toolbox-and-canvas",
    "title": "Toolbox and canvas",
-   "description": "Place, select, move, resize and arrange controls; snapping, smart guides, alignment, z-order and the outline.",
+   "description": "Place, select, move, resize and arrange controls in Pyzed Design: snapping, smart guides, alignment, z-order and the outline of your form.",
    "path": "docs/src/content/docs/editor/toolbox-and-canvas.md"
   },
   {
    "slug": "examples",
    "title": "Examples",
-   "description": "Example apps included in the repository, ready to run.",
+   "description": "Ready-to-run Pyzed example apps: to-do lists, a Zed-like editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more.",
    "path": "docs/src/content/docs/examples.md"
+  },
+  {
+   "slug": "faq",
+   "title": "Frequently asked questions",
+   "description": "Pyzed FAQ: what it is, how it compares with tkinter, Kivy, PyQt and Flet, license, platforms, performance, the visual designer and AI agent support.",
+   "path": "docs/src/content/docs/faq.md"
   },
   {
    "slug": "games/breakout",
@@ -255,127 +369,127 @@
   {
    "slug": "getting-started/installation",
    "title": "Installation",
-   "description": "How to install Pyzed on Linux, macOS and Windows.",
+   "description": "Install Pyzed with pip or uv on Windows, macOS and Linux. Prebuilt wheels include the Rust engine, so Python 3.10+ is all you need to start.",
    "path": "docs/src/content/docs/getting-started/installation.mdx"
   },
   {
    "slug": "getting-started/introduction",
    "title": "Introduction",
-   "description": "What Pyzed is, how it works and when to use it.",
+   "description": "What Pyzed is: a Python desktop GUI framework rendered natively by Rust (Iced), with Zed-style components. How it works and when to use it.",
    "path": "docs/src/content/docs/getting-started/introduction.md"
   },
   {
    "slug": "getting-started/new-project",
    "title": "Create a project",
-   "description": "Generate a Pyzed app as a uv project, with the UI in its own folder and ruff, ty and git ready.",
+   "description": "Generate a Pyzed desktop app as a standard uv project with one command: the UI in its own folder, plus ruff, ty and git ready to go.",
    "path": "docs/src/content/docs/getting-started/new-project.md"
   },
   {
    "slug": "getting-started/quickstart",
    "title": "Quickstart",
-   "description": "Your first Pyzed window in five minutes.",
+   "description": "Your first native Python desktop window with Pyzed in five minutes: install the package, write a small counter app and run it anywhere.",
    "path": "docs/src/content/docs/getting-started/quickstart.md"
   },
   {
    "slug": "guides/accessibility",
    "title": "Accessibility",
-   "description": "Keyboard focus with Tab, the system's reduce motion setting and the state of screen reader support.",
+   "description": "Accessibility in Pyzed desktop apps: keyboard focus with Tab, the system's reduce motion setting and the state of screen reader support.",
    "path": "docs/src/content/docs/guides/accessibility.md"
   },
   {
    "slug": "guides/agents",
    "title": "AI agents in your app",
-   "description": "pyzed.agents - talk to Claude, OpenAI, Gemini, OpenRouter, Ollama and OpenAI-compatible servers, give the model tools, stream its answer into your UI and keep keys in the system keychain.",
+   "description": "pyzed.agents: add AI to Python desktop apps with Anthropic, OpenAI, Gemini, OpenRouter or Ollama, give models tools and stream answers into your UI.",
    "path": "docs/src/content/docs/guides/agents.md"
   },
   {
    "slug": "guides/animation",
    "title": "Animation and effects",
-   "description": "Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add rotation, blur, bloom, glass and opacity.",
+   "description": "Animate any Pyzed widget like the web (presets, keyframes, transitions, presence) and add rotation, blur, glow, bloom, glass and opacity.",
    "path": "docs/src/content/docs/guides/animation.md"
   },
   {
    "slug": "guides/architecture",
    "title": "App architecture",
-   "description": "State, view, update, messages and callables. Iced's Elm model in Python.",
+   "description": "Pyzed app architecture: state, view, update, messages and callables. The Elm architecture of Iced, explained for Python desktop developers.",
    "path": "docs/src/content/docs/guides/architecture.md"
   },
   {
    "slug": "guides/async",
    "title": "Async and subscriptions",
-   "description": "Coroutines, generators, timers and streams without blocking the interface.",
+   "description": "Async in Pyzed: run coroutines, generators, timers and streams in Python desktop apps without blocking or freezing the user interface.",
    "path": "docs/src/content/docs/guides/async.md"
   },
   {
    "slug": "guides/canvas",
    "title": "Drawing with canvas",
-   "description": "Shapes, text, transforms and mouse events with pz.canvas and pyzed.draw.",
+   "description": "Draw custom graphics in Python desktop apps with pz.canvas and pyzed.draw: shapes, text, transforms and mouse events, rendered in Rust.",
    "path": "docs/src/content/docs/guides/canvas.md"
   },
   {
    "slug": "guides/commands",
    "title": "Commands and tasks",
-   "description": "Focusing fields, closing the app, editing the editor, background work and messages from threads.",
+   "description": "Pyzed commands: focus fields, close the app, edit the code editor, run background work and send messages from threads in Python GUIs.",
    "path": "docs/src/content/docs/guides/commands.md"
   },
   {
    "slug": "guides/component-designer",
    "title": "Component designer",
-   "description": "Draw reusable components with properties, state, methods and custom events, and nest them like Godot scenes.",
+   "description": "Draw reusable Pyzed components visually, with properties, state, methods and custom events, and nest them like Godot scenes.",
    "path": "docs/src/content/docs/guides/component-designer.md"
   },
   {
    "slug": "guides/components",
    "title": "Custom components",
-   "description": "Build reusable components with their own props, state, logic and events, like React components, and use them in the designer.",
+   "description": "Build reusable Pyzed components with their own props, state, logic and events, like React components, and use them in the visual designer.",
    "path": "docs/src/content/docs/guides/components.md"
   },
   {
    "slug": "guides/designer",
    "title": "Visual designer",
-   "description": "Build windows by drag and drop, wire their events to Python and run them, like Visual Basic or Qt Designer.",
+   "description": "Build Python desktop windows by drag and drop, wire their events to Python and run them: a visual GUI designer like Visual Basic or Qt Designer.",
    "path": "docs/src/content/docs/guides/designer.md"
   },
   {
    "slug": "guides/events",
    "title": "Events",
-   "description": "The common events every widget has (click, double click, drag, hover, focus, keys, resize) and how handlers receive them.",
+   "description": "The common events every Pyzed widget has (click, double click, drag, hover, focus, keys, resize) and how your Python handlers receive them.",
    "path": "docs/src/content/docs/guides/events.md"
   },
   {
    "slug": "guides/how-it-works",
    "title": "How it works",
-   "description": "The bridge between Python and Iced, the widget tree, editor state and performance.",
+   "description": "How Pyzed works: the bridge between Python and Iced (Rust), the immutable widget tree, editor state and why the GUI stays fast.",
    "path": "docs/src/content/docs/guides/how-it-works.md"
   },
   {
    "slug": "guides/i18n",
    "title": "Languages and dialogs",
-   "description": "Translate an app and switch its language while it runs; ready-made dialogs.",
+   "description": "Translate a Pyzed desktop app into several languages, switch the language while it runs, and use the ready-made translated dialogs.",
    "path": "docs/src/content/docs/guides/i18n.md"
   },
   {
    "slug": "guides/icons-fonts",
    "title": "Icons and fonts",
-   "description": "Lucide icons, file-type icons and how to load your own fonts.",
+   "description": "Use about 2000 bundled Lucide icons and file-type icons in Python desktop GUIs with Pyzed, and load your own fonts such as IBM Plex.",
    "path": "docs/src/content/docs/guides/icons-fonts.md"
   },
   {
    "slug": "guides/keyboard",
    "title": "Keyboard and shortcuts",
-   "description": "Zed-style shortcuts with on_key and how to show them in the UI.",
+   "description": "Keyboard shortcuts in Pyzed apps: Zed-style key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI.",
    "path": "docs/src/content/docs/guides/keyboard.md"
   },
   {
    "slug": "guides/layout",
    "title": "Layout and styling",
-   "description": "Rows, columns, containers, sizes, padding, alignment and colors.",
+   "description": "Layout in Pyzed: rows, columns, containers, sizes, padding, alignment and colors to arrange native Python desktop interfaces.",
    "path": "docs/src/content/docs/guides/layout.md"
   },
   {
    "slug": "guides/mcp",
    "title": "MCP server for AI agents",
-   "description": "Connect Claude, Cursor, VS Code and other AI agents to Pyzed so they know its components, its best practices and can generate and check code.",
+   "description": "Connect AI coding agents (Cursor, VS Code, Zed and other MCP clients) to Pyzed's MCP server so they know its API, generate and check GUI code.",
    "path": "docs/src/content/docs/guides/mcp.md"
   },
   {
@@ -387,13 +501,13 @@
   {
    "slug": "guides/performance",
    "title": "Large data and performance",
-   "description": "Show hundreds of thousands of rows with virtual lists and tables, and skip rebuilding parts of the view that did not change with @pz.memo.",
+   "description": "Python GUI performance with Pyzed: show hundreds of thousands of rows with virtual lists and tables, and skip unchanged views with @pz.memo.",
    "path": "docs/src/content/docs/guides/performance.md"
   },
   {
    "slug": "guides/projects",
    "title": "Projects with uv",
-   "description": "Create and manage Pyzed apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready.",
+   "description": "Create and manage Pyzed desktop apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready from the first command.",
    "path": "docs/src/content/docs/guides/projects.md"
   },
   {
@@ -405,37 +519,37 @@
   {
    "slug": "guides/stability",
    "title": "Stability and known limitations",
-   "description": "What Pyzed 1.x promises about its API, how features are deprecated, and what it does not do yet.",
+   "description": "What Pyzed 1.x promises about its Python API, how features are deprecated over releases, and what the framework does not do yet.",
    "path": "docs/src/content/docs/guides/stability.md"
   },
   {
    "slug": "guides/styles",
    "title": "Styles",
-   "description": "Style any widget like CSS, reuse styles and set the app's global style.",
+   "description": "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app.",
    "path": "docs/src/content/docs/guides/styles.md"
   },
   {
    "slug": "guides/testing",
    "title": "Tests and screenshots",
-   "description": "Render your app without a window for tests, documentation and CI.",
+   "description": "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration.",
    "path": "docs/src/content/docs/guides/testing.md"
   },
   {
    "slug": "guides/theming",
    "title": "Themes",
-   "description": "The bundled themes, Zed's color tokens, and how to create and switch themes.",
+   "description": "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime.",
    "path": "docs/src/content/docs/guides/theming.md"
   },
   {
    "slug": "guides/windows",
    "title": "Multiple windows",
-   "description": "Open, close and control windows with pz.Window.",
+   "description": "Multiple windows in Pyzed: open, close, move, resize and control native desktop windows from Python with pz.Window, each with its own theme.",
    "path": "docs/src/content/docs/guides/windows.md"
   },
   {
    "slug": "index",
    "title": "Pyzed",
-   "description": "Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor and a visual designer.",
+   "description": "Pyzed is an open-source Python framework for native desktop GUIs: Rust rendering with Iced, 90+ Zed-style components, a drag-and-drop visual designer, GPU effects and shaders, games and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt.",
    "path": "docs/src/content/docs/index.mdx"
   },
   {
@@ -483,619 +597,625 @@
   {
    "slug": "library/about",
    "title": "About",
-   "description": "An About box with icon, version, details and links.",
+   "description": "An About box with icon, version, details and links. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/about.mdx"
   },
   {
    "slug": "library/accordion",
    "title": "Accordion",
-   "description": "Stacked collapsible sections, like Zed's settings panels.",
+   "description": "Stacked collapsible sections, like Zed's settings panels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/accordion.mdx"
   },
   {
    "slug": "library/alert",
    "title": "Alert",
-   "description": "A message with one button.",
+   "description": "A message with one button. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/alert.mdx"
   },
   {
    "slug": "library/animation",
    "title": "Animation",
-   "description": "Presets, keyframes and transitions for any widget.",
+   "description": "Presets, keyframes and transitions for any widget. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/animation.mdx"
   },
   {
    "slug": "library/avatar",
    "title": "Avatar",
-   "description": "A round avatar with initials in a collaborator color.",
+   "description": "A round avatar with initials in a collaborator color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/avatar.mdx"
   },
   {
    "slug": "library/badge",
    "title": "Badge",
-   "description": "A small pill for statuses, versions and counters.",
+   "description": "A small pill for statuses, versions and counters. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/badge.mdx"
   },
   {
    "slug": "library/bar-chart",
    "title": "Bar chart",
-   "description": "A vertical bar chart with labels.",
+   "description": "A vertical bar chart with labels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/bar-chart.mdx"
   },
   {
    "slug": "library/breadcrumbs",
    "title": "Breadcrumbs",
-   "description": "`src › main.rs › fn main`, optionally clickable.",
+   "description": "`src › main.rs › fn main`, optionally clickable. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/breadcrumbs.mdx"
   },
   {
    "slug": "library/button",
    "title": "Button",
-   "description": "The Zed button: variants, sizes, icons and shortcuts.",
+   "description": "The Zed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/button.mdx"
   },
   {
    "slug": "library/callout",
    "title": "Callout",
-   "description": "An inline notice with a title, text and actions.",
+   "description": "An inline notice with a title, text and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/callout.mdx"
   },
   {
    "slug": "library/canvas",
    "title": "Canvas",
-   "description": "2D drawing with shapes, paths, text and mouse events.",
+   "description": "2D drawing with shapes, paths, text and mouse events. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/canvas.mdx"
   },
   {
    "slug": "library/card",
    "title": "Card",
-   "description": "A bordered surface with an optional title and actions.",
+   "description": "A bordered surface with an optional title and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/card.mdx"
   },
   {
    "slug": "library/checkbox",
    "title": "Checkbox",
-   "description": "A checkbox with an optional label.",
+   "description": "A checkbox with an optional label. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/checkbox.mdx"
   },
   {
    "slug": "library/chip",
    "title": "Chip",
-   "description": "A compact tag: clickable as a filter, removable with an ✕.",
+   "description": "A compact tag: clickable as a filter, removable with an ✕. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/chip.mdx"
   },
   {
    "slug": "library/choice",
    "title": "Choice",
-   "description": "A message with your own buttons.",
+   "description": "A message with your own buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/choice.mdx"
   },
   {
    "slug": "library/color-picker",
    "title": "Color picker",
-   "description": "Pick a color, a gradient or a masked fill; swatches show them.",
+   "description": "Pick a color, a gradient or a masked fill; swatches show them. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/color-picker.mdx"
   },
   {
    "slug": "library/column",
    "title": "Column",
-   "description": "Stacks children vertically.",
+   "description": "Stacks children vertically. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/column.mdx"
   },
   {
    "slug": "library/command-palette",
    "title": "Command palette",
-   "description": "Zed's command palette with fuzzy search and shortcuts.",
+   "description": "Zed's command palette with fuzzy search and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/command-palette.mdx"
   },
   {
    "slug": "library/confirm",
    "title": "Confirm",
-   "description": "A yes/no question, red for destructive actions.",
+   "description": "A yes/no question, red for destructive actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/confirm.mdx"
   },
   {
    "slug": "library/console",
    "title": "Console",
-   "description": "A dev-tools style log with levels, filter, copy and clear.",
+   "description": "A dev-tools style log with levels, filter, copy and clear. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/console.mdx"
   },
   {
    "slug": "library/container",
    "title": "Container",
-   "description": "Size, padding, alignment, background, border and shadow for one child.",
+   "description": "Size, padding, alignment, background, border and shadow for one child. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/container.mdx"
   },
   {
    "slug": "library/count-badge",
    "title": "Count badge",
-   "description": "A round counter that shows 99+ above its max.",
+   "description": "A round counter that shows 99+ above its max. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/count-badge.mdx"
   },
   {
    "slug": "library/dialog-layer",
    "title": "Dialog layer",
-   "description": "Centers a dialog over your view with a dimmed backdrop.",
+   "description": "Centers a dialog over your view with a dimmed backdrop. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/dialog-layer.mdx"
   },
   {
    "slug": "library/diff-stat",
    "title": "Diff stat",
-   "description": "`+12 −3` with GitHub-style blocks.",
+   "description": "`+12 −3` with GitHub-style blocks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/diff-stat.mdx"
   },
   {
    "slug": "library/disclosure",
    "title": "Disclosure",
-   "description": "One collapsible section with an arrow.",
+   "description": "One collapsible section with an arrow. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/disclosure.mdx"
   },
   {
    "slug": "library/divider",
    "title": "Divider",
-   "description": "A thin line in the theme's border color.",
+   "description": "A thin line in the theme's border color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/divider.mdx"
   },
   {
    "slug": "library/donut",
    "title": "Donut",
-   "description": "A donut chart with a label in the middle.",
+   "description": "A donut chart with a label in the middle. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/donut.mdx"
   },
   {
    "slug": "library/editor",
    "title": "Editor",
-   "description": "Zed's code editor: highlighting, folding, minimap, git markers.",
+   "description": "Zed's code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/editor.mdx"
   },
   {
    "slug": "library/effects",
    "title": "Effects",
-   "description": "Glow, bloom, glass and opacity as style properties.",
+   "description": "Glow, bloom, glass and opacity as style properties. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/effects.mdx"
   },
   {
    "slug": "library/empty-state",
    "title": "Empty state",
-   "description": "A centered placeholder for empty lists and searches.",
+   "description": "A centered placeholder for empty lists and searches. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/empty-state.mdx"
   },
   {
    "slug": "library/facepile",
    "title": "Facepile",
-   "description": "Overlapping collaborator avatars with +N.",
+   "description": "Overlapping collaborator avatars with +N. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/facepile.mdx"
   },
   {
    "slug": "library/field",
    "title": "Field",
-   "description": "A settings row: title and description left, control right.",
+   "description": "A settings row: title and description left, control right. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/field.mdx"
   },
   {
    "slug": "library/flex",
    "title": "Flex",
-   "description": "CSS flexbox: justify, align, gap, wrap and grow.",
+   "description": "CSS flexbox: justify, align, gap, wrap and grow. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/flex.mdx"
   },
   {
    "slug": "library/grid",
    "title": "Grid",
-   "description": "Equal columns, or CSS-like tracks with spans.",
+   "description": "Equal columns, or CSS-like tracks with spans. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/grid.mdx"
   },
   {
    "slug": "library/heading",
    "title": "Heading",
-   "description": "Semibold titles in three levels.",
+   "description": "Semibold titles in three levels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/heading.mdx"
   },
   {
    "slug": "library/icon-button",
    "title": "Icon button",
-   "description": "A square button with just an icon and an optional tooltip.",
+   "description": "A square button with just an icon and an optional tooltip. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/icon-button.mdx"
   },
   {
    "slug": "library/icon-picker",
    "title": "Icon picker",
-   "description": "Pick one of the ~2000 Lucide icons from a searchable grid.",
+   "description": "Pick one of the ~2000 Lucide icons from a searchable grid. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/icon-picker.mdx"
   },
   {
    "slug": "library/icon",
    "title": "Icon",
-   "description": "Lucide icons by name, and SVG images.",
+   "description": "Lucide icons by name, and SVG images. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/icon.mdx"
   },
   {
    "slug": "library/image",
    "title": "Image",
-   "description": "Bitmaps with fit, opacity, radius; a pan-and-zoom viewer.",
+   "description": "Bitmaps with fit, opacity, radius; a pan-and-zoom viewer. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/image.mdx"
   },
   {
    "slug": "library/index",
    "title": "Components",
-   "description": "Every Pyzed component with a preview, examples and its API, grouped by category.",
+   "description": "Browse 90+ Pyzed UI components for Python desktop GUIs: buttons, tables, trees, editors, charts and dialogs, each with a preview, examples and its API.",
    "path": "docs/src/content/docs/library/index.mdx"
   },
   {
    "slug": "library/indicator",
    "title": "Indicator",
-   "description": "A colored dot for status, presence or unsaved changes.",
+   "description": "A colored dot for status, presence or unsaved changes. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/indicator.mdx"
   },
   {
    "slug": "library/input",
    "title": "Input",
-   "description": "A controlled text field with icon, placeholder and password mode.",
+   "description": "A controlled text field with icon, placeholder and password mode. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/input.mdx"
   },
   {
    "slug": "library/kbd",
    "title": "Kbd",
-   "description": "Keyboard shortcuts drawn as keys, with symbols on macOS.",
+   "description": "Keyboard shortcuts drawn as keys, with symbols on macOS. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/kbd.mdx"
   },
   {
    "slug": "library/keybinding-hint",
    "title": "Keybinding hint",
-   "description": "A muted “Open file Ctrl P” hint.",
+   "description": "A muted “Open file Ctrl P” hint. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/keybinding-hint.mdx"
   },
   {
    "slug": "library/label",
    "title": "Label",
-   "description": "Text with a theme color, size and weight; `muted` for secondary text.",
+   "description": "Text with a theme color, size and weight; `muted` for secondary text. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/label.mdx"
   },
   {
    "slug": "library/layer",
    "title": "Layer",
-   "description": "Draws an overlay over your view; clicking outside dismisses it.",
+   "description": "Draws an overlay over your view; clicking outside dismisses it. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/layer.mdx"
   },
   {
    "slug": "library/list-header",
    "title": "List header",
-   "description": "A small section title for lists, with an end slot.",
+   "description": "A small section title for lists, with an end slot. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/list-header.mdx"
   },
   {
    "slug": "library/list-item",
    "title": "List item",
-   "description": "A list row with icon, text and an end slot.",
+   "description": "A list row with icon, text and an end slot. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/list-item.mdx"
   },
   {
    "slug": "library/markdown",
    "title": "Markdown",
-   "description": "Renders Markdown with the theme's colors.",
+   "description": "Renders Markdown with the theme's colors. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/markdown.mdx"
   },
   {
    "slug": "library/menu",
    "title": "Menu",
-   "description": "A context menu with icons, shortcuts and checks.",
+   "description": "A context menu with icons, shortcuts and checks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/menu.mdx"
   },
   {
    "slug": "library/modal",
    "title": "Modal",
-   "description": "A dialog surface with title, content and footer buttons.",
+   "description": "A dialog surface with title, content and footer buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/modal.mdx"
   },
   {
    "slug": "library/number-field",
    "title": "Number field",
-   "description": "A number with −/+ buttons, limits, step and suffix.",
+   "description": "A number with −/+ buttons, limits, step and suffix. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/number-field.mdx"
   },
   {
    "slug": "library/panel-header",
    "title": "Panel header",
-   "description": "Icon, title and actions on top of a dock.",
+   "description": "Icon, title and actions on top of a dock. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/panel-header.mdx"
   },
   {
    "slug": "library/panel",
    "title": "Panel",
-   "description": "A dockable, resizable side panel.",
+   "description": "A dockable, resizable side panel. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/panel.mdx"
   },
   {
    "slug": "library/picker",
    "title": "Picker",
-   "description": "A searchable list on a floating surface, with fuzzy matching.",
+   "description": "A searchable list on a floating surface, with fuzzy matching. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/picker.mdx"
   },
   {
    "slug": "library/popover",
    "title": "Popover",
-   "description": "Floating content at a point: context menus, color pickers.",
+   "description": "Floating content at a point: context menus, color pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/popover.mdx"
   },
   {
    "slug": "library/progress",
    "title": "Progress",
-   "description": "A thin progress bar in a semantic color.",
+   "description": "A thin progress bar in a semantic color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/progress.mdx"
   },
   {
    "slug": "library/prompt",
    "title": "Prompt",
-   "description": "Asks for a line of text.",
+   "description": "Asks for a line of text. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/prompt.mdx"
   },
   {
    "slug": "library/qr-code",
    "title": "QR code",
-   "description": "A QR code for any text or URL.",
+   "description": "A QR code for any text or URL. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/qr-code.mdx"
   },
   {
    "slug": "library/radio-group",
    "title": "Radio group",
-   "description": "Mutually exclusive options as radio buttons.",
+   "description": "Mutually exclusive options as radio buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/radio-group.mdx"
   },
   {
    "slug": "library/reference-browser",
    "title": "Reference browser",
-   "description": "Built-in, searchable docs like Godot's: a class list next to the open page.",
+   "description": "Built-in, searchable docs like Godot's: a class list next to the open page. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/reference-browser.mdx"
   },
   {
    "slug": "library/resizable",
    "title": "Resizable",
-   "description": "A panel whose edge can be dragged to resize it.",
+   "description": "A panel whose edge can be dragged to resize it. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/resizable.mdx"
   },
   {
    "slug": "library/responsive",
    "title": "Responsive",
-   "description": "Builds its content from the space actually available.",
+   "description": "Builds its content from the space actually available. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/responsive.mdx"
   },
   {
    "slug": "library/rich-text",
    "title": "Rich text",
-   "description": "One block of text mixing colors, weights and links.",
+   "description": "One block of text mixing colors, weights and links. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/rich-text.mdx"
   },
   {
    "slug": "library/row",
    "title": "Row",
-   "description": "Lays out children horizontally.",
+   "description": "Lays out children horizontally. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/row.mdx"
   },
   {
    "slug": "library/scrollable",
    "title": "Scrollable",
-   "description": "Scrolls content that doesn't fit.",
+   "description": "Scrolls content that doesn't fit. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/scrollable.mdx"
   },
   {
    "slug": "library/search-input",
    "title": "Search input",
-   "description": "An input with a magnifying glass, for filtering.",
+   "description": "An input with a magnifying glass, for filtering. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/search-input.mdx"
   },
   {
    "slug": "library/segmented",
    "title": "Segmented",
-   "description": "A group of mutually exclusive text buttons.",
+   "description": "A group of mutually exclusive text buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/segmented.mdx"
   },
   {
    "slug": "library/select",
    "title": "Select",
-   "description": "A dropdown to choose one option.",
+   "description": "A dropdown to choose one option. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/select.mdx"
   },
   {
    "slug": "library/settings-group",
    "title": "Settings group",
-   "description": "A titled block of field rows, like Zed's settings.",
+   "description": "A titled block of field rows, like Zed's settings. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/settings-group.mdx"
+  },
+  {
+   "slug": "library/shader",
+   "title": "Shader",
+   "description": "A widget painted on the GPU by your own WGSL code. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/shader.mdx"
   },
   {
    "slug": "library/shortcuts",
    "title": "Shortcuts",
-   "description": "A searchable list of key bindings, grouped.",
+   "description": "A searchable list of key bindings, grouped. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/shortcuts.mdx"
   },
   {
    "slug": "library/slider",
    "title": "Slider",
-   "description": "Pick a number in a range by dragging.",
+   "description": "Pick a number in a range by dragging. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/slider.mdx"
   },
   {
    "slug": "library/spacing",
    "title": "Space",
-   "description": "Fixed gaps and flexible spacers.",
+   "description": "Fixed gaps and flexible spacers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/spacing.mdx"
   },
   {
    "slug": "library/sparkline",
    "title": "Sparkline",
-   "description": "A tiny line chart for trends.",
+   "description": "A tiny line chart for trends. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/sparkline.mdx"
   },
   {
    "slug": "library/spinner",
    "title": "Spinner",
-   "description": "A spinning arc for loading states.",
+   "description": "A spinning arc for loading states. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/spinner.mdx"
   },
   {
    "slug": "library/split-button",
    "title": "Split button",
-   "description": "A main action plus an arrow that opens more options.",
+   "description": "A main action plus an arrow that opens more options. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/split-button.mdx"
   },
   {
    "slug": "library/split",
    "title": "Split",
-   "description": "Two panes with a draggable divider.",
+   "description": "Two panes with a draggable divider. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/split.mdx"
   },
   {
    "slug": "library/stack",
    "title": "Stack",
-   "description": "Layers children on top of each other; `pin` places one at x, y.",
+   "description": "Layers children on top of each other; `pin` places one at x, y. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/stack.mdx"
   },
   {
    "slug": "library/stat",
    "title": "Stat",
-   "description": "A dashboard number with change and sparkline.",
+   "description": "A dashboard number with change and sparkline. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/stat.mdx"
   },
   {
    "slug": "library/status-bar",
    "title": "Status bar",
-   "description": "The bottom bar: diagnostics, cursor position, language.",
+   "description": "The bottom bar: diagnostics, cursor position, language. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/status-bar.mdx"
   },
   {
    "slug": "library/switch",
    "title": "Switch",
-   "description": "An on/off switch for settings that apply at once.",
+   "description": "An on/off switch for settings that apply at once. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/switch.mdx"
   },
   {
    "slug": "library/tab-bar",
    "title": "Tab bar",
-   "description": "Editor tabs with icons, dirty dots and close buttons.",
+   "description": "Editor tabs with icons, dirty dots and close buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/tab-bar.mdx"
   },
   {
    "slug": "library/table",
    "title": "Table",
-   "description": "A data table with a fixed header, sorting and selection.",
+   "description": "A data table with a fixed header, sorting and selection. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/table.mdx"
   },
   {
    "slug": "library/terminal",
    "title": "Terminal",
-   "description": "A read-only terminal view with ANSI colors.",
+   "description": "A read-only terminal view with ANSI colors. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/terminal.mdx"
   },
   {
    "slug": "library/text",
    "title": "Text",
-   "description": "A piece of text with size, color, font and weight.",
+   "description": "A piece of text with size, color, font and weight. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/text.mdx"
   },
   {
    "slug": "library/title-bar",
    "title": "Title bar",
-   "description": "The top bar with project and branch pickers.",
+   "description": "The top bar with project and branch pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/title-bar.mdx"
   },
   {
    "slug": "library/toast",
    "title": "Toast",
-   "description": "Notifications stacked in the bottom-right corner.",
+   "description": "Notifications stacked in the bottom-right corner. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/toast.mdx"
   },
   {
    "slug": "library/toggle-group",
    "title": "Toggle group",
-   "description": "An icon-only segmented control.",
+   "description": "An icon-only segmented control. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/toggle-group.mdx"
   },
   {
    "slug": "library/toolbar",
    "title": "Toolbar",
-   "description": "The bar under the tabs: breadcrumbs and buffer actions.",
+   "description": "The bar under the tabs: breadcrumbs and buffer actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/toolbar.mdx"
   },
   {
    "slug": "library/tooltip",
    "title": "Tooltip",
-   "description": "A hint shown on hover, optionally with its shortcut.",
+   "description": "A hint shown on hover, optionally with its shortcut. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/tooltip.mdx"
   },
   {
    "slug": "library/tree",
    "title": "Tree",
-   "description": "A collapsible file tree with icons and git colors.",
+   "description": "A collapsible file tree with icons and git colors. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/tree.mdx"
   },
   {
    "slug": "library/unsaved-changes",
    "title": "Unsaved changes",
-   "description": "“Save your changes before closing?”",
+   "description": "“Save your changes before closing?”. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/unsaved-changes.mdx"
   },
   {
    "slug": "library/virtual-list",
    "title": "Virtual list",
-   "description": "A list that only builds the rows in view, for millions of items.",
+   "description": "A list that only builds the rows in view, for millions of items. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/virtual-list.mdx"
   },
   {
    "slug": "library/workspace",
    "title": "Workspace",
-   "description": "The layout of a Zed window: title bar, docks, center, status bar.",
+   "description": "The layout of a Zed window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/workspace.mdx"
   },
   {
    "slug": "reference/app",
    "title": "App and running",
-   "description": "The App class, run, screenshot, post and load_font.",
+   "description": "API reference for pyzed.App: the application class, run, screenshot, post, load_font and the window options of a Python desktop app.",
    "path": "docs/src/content/docs/reference/app.md"
   },
   {
    "slug": "reference/cli",
    "title": "CLI",
-   "description": "Every pyzed command - projects, dependencies, running, building, icons and the MCP server.",
+   "description": "Every pyzed command-line command: create projects, manage dependencies, run and build apps, generate icons and start the MCP server.",
    "path": "docs/src/content/docs/reference/cli.md"
   },
   {
    "slug": "reference/command",
    "title": "Command",
-   "description": "Side effects returned by update and callbacks.",
+   "description": "API reference for Pyzed commands: the side effects returned by update and callbacks, such as focusing fields, closing and background tasks.",
    "path": "docs/src/content/docs/reference/command.md"
   },
   {
    "slug": "reference/designer",
    "title": "Visual designer (pyzed.designer)",
-   "description": "Run, open and build forms from code, register toolbox components and templates.",
+   "description": "API reference for pyzed.designer: run, open and build forms from Python code, and register toolbox components and templates.",
    "path": "docs/src/content/docs/reference/designer.md"
   },
   {
    "slug": "reference/draw",
    "title": "Drawing (pyzed.draw)",
-   "description": "Shapes, text and transforms for pz.canvas.",
+   "description": "API reference for pyzed.draw: shapes, paths, text and transforms for drawing custom 2D graphics on a pz.canvas in Python desktop apps.",
    "path": "docs/src/content/docs/reference/draw.md"
   },
   {
    "slug": "reference/icons",
    "title": "Icons",
-   "description": "Bundled Lucide icons and file-type utilities.",
+   "description": "API reference for pyzed.icons: the bundled Lucide icon set, icon names and file-type icon utilities for Python desktop interfaces.",
    "path": "docs/src/content/docs/reference/icons.md"
   },
   {
    "slug": "reference/theme",
    "title": "Themes",
-   "description": "Theme, the built-in themes and the color utilities.",
+   "description": "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs.",
    "path": "docs/src/content/docs/reference/theme.md"
   },
   {
    "slug": "reference/ui",
    "title": "Components (pyzed.ui)",
-   "description": "Reference for every Zed-style component.",
+   "description": "API reference for pyzed.ui: every Zed-style component, its parameters, defaults and events, for building native Python desktop apps.",
    "path": "docs/src/content/docs/reference/ui.md"
   },
   {
    "slug": "reference/widgets",
    "title": "Core widgets",
-   "description": "Pyzed's native widgets: layout, text, controls, editor, svg and icons.",
+   "description": "API reference for Pyzed's native widgets: layout, text, controls, the code editor, SVG and icons, all rendered in Rust by Iced.",
    "path": "docs/src/content/docs/reference/widgets.md"
   },
   {
@@ -1137,29 +1257,88 @@
   {
    "slug": "tutorials/background-tasks",
    "title": "Background tasks",
-   "description": "Downloads with progress, blocking work and notifications without freezing the UI.",
+   "description": "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface.",
    "path": "docs/src/content/docs/tutorials/background-tasks.mdx"
   },
   {
    "slug": "tutorials/step-by-step",
    "title": "5-step tutorial",
-   "description": "From an empty window to a notes app with Markdown, async and a second window.",
+   "description": "Learn Pyzed in five steps: go from an empty window to a notes app with Markdown, async work and a second window, in pure Python.",
    "path": "docs/src/content/docs/tutorials/step-by-step.mdx"
   },
   {
    "slug": "tutorials/todo-app",
    "title": "To-do list",
-   "description": "Your first complete app with state, forms, lists, filters and shortcuts.",
+   "description": "Build your first complete Python desktop app with Pyzed: a to-do list with state, forms, lists, filters and keyboard shortcuts.",
    "path": "docs/src/content/docs/tutorials/todo-app.mdx"
   },
   {
    "slug": "tutorials/zed-like-editor",
    "title": "A Zed-like mini editor",
-   "description": "Workspace, file tree, tabs, code editor, saving and a command palette.",
+   "description": "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette.",
    "path": "docs/src/content/docs/tutorials/zed-like-editor.mdx"
+  },
+  {
+   "slug": "why/benchmarks",
+   "title": "Python GUI benchmarks — Pyzed vs tkinter, Qt, Kivy, Flet…",
+   "description": "Measured, reproducible benchmarks of Python GUI toolkits: import time, time to first frame, memory, update latency with 1,000 rows, install size and lines of code for Pyzed, tkinter, CustomTkinter, PySide6, Kivy, Dear PyGui, Flet and Toga.",
+   "path": "docs/src/content/docs/why/benchmarks.mdx"
+  },
+  {
+   "slug": "why/comparison",
+   "title": "Python GUI frameworks compared (2026)",
+   "description": "Pyzed compared with tkinter, PyQt/PySide (Qt), Kivy, Dear PyGui, Flet, Toga, NiceGUI, wxPython and CustomTkinter: license, rendering, look, designer, hot reload, async, mobile and web, packaging, typing and AI tooling.",
+   "path": "docs/src/content/docs/why/comparison.mdx"
+  },
+  {
+   "slug": "why/developer-experience",
+   "title": "Developer experience with Pyzed",
+   "description": "What building a Python desktop app with Pyzed feels like day to day: install, first window, hot reload, visual designer, autocomplete and type checking, error messages, packaging and AI assistants, compared with other Python GUI toolkits.",
+   "path": "docs/src/content/docs/why/developer-experience.mdx"
+  },
+  {
+   "slug": "why/index",
+   "title": "Why Pyzed? A modern Python GUI framework for a new generation",
+   "description": "Why choose Pyzed for Python desktop apps: a modern look out of the box, native GPU rendering from Rust, a Pythonic API, a visual designer, hot reload and AI-ready tooling. A modern alternative to tkinter, Kivy and PyQt.",
+   "path": "docs/src/content/docs/why/index.mdx"
+  },
+  {
+   "slug": "why/vs-dear-pygui",
+   "title": "Pyzed vs Dear PyGui",
+   "description": "Pyzed vs Dear PyGui for Python desktop GUIs: retained Elm-style UI vs immediate-mode ImGui, look, tooling and measured numbers, with the same apps side by side and when each one fits.",
+   "path": "docs/src/content/docs/why/vs-dear-pygui.mdx"
+  },
+  {
+   "slug": "why/vs-flet",
+   "title": "Pyzed vs Flet for Python desktop apps",
+   "description": "Pyzed vs Flet (Flutter for Python): architecture, platforms, look, tooling and measured startup and memory, with the same apps side by side and how to move a Flet desktop app to Pyzed.",
+   "path": "docs/src/content/docs/why/vs-flet.mdx"
+  },
+  {
+   "slug": "why/vs-kivy",
+   "title": "Pyzed vs Kivy for Python desktop apps",
+   "description": "Pyzed vs Kivy: both draw their own GPU widgets, but differ in platforms, look, programming model and tooling. Same apps side by side, measured numbers and how to move from Kivy and KV to Pyzed.",
+   "path": "docs/src/content/docs/why/vs-kivy.mdx"
+  },
+  {
+   "slug": "why/vs-pyqt-pyside",
+   "title": "Pyzed vs PyQt and PySide (Qt for Python)",
+   "description": "Pyzed vs PyQt6 and PySide6: license, size, look, programming model, designer and hot reload, with the same apps side by side, measured numbers and a guide to migrate Qt Widgets code to Pyzed.",
+   "path": "docs/src/content/docs/why/vs-pyqt-pyside.mdx"
+  },
+  {
+   "slug": "why/vs-tkinter",
+   "title": "Pyzed vs tkinter — a modern tkinter alternative",
+   "description": "Pyzed vs tkinter (and CustomTkinter) for Python desktop apps: the same apps side by side, measured startup, memory and speed, concept mapping and how to migrate from tkinter to Pyzed.",
+   "path": "docs/src/content/docs/why/vs-tkinter.mdx"
   }
  ],
  "examples": [
+  {
+   "name": "ai_chat",
+   "summary": "A streaming AI chat: any OpenAI-compatible server through httpx, with a built-in demo stream.",
+   "path": "examples/ai_chat.py"
+  },
   {
    "name": "animations",
    "summary": "Animations and effects: presets, hover and press motion, transitions, presence and glass.",
@@ -1251,6 +1430,11 @@
    "path": "examples/panes.py"
   },
   {
+   "name": "pomodoro",
+   "summary": "A Pomodoro timer: the app built step by step in the AI prompting guide.",
+   "path": "examples/pomodoro.py"
+  },
+  {
    "name": "qr_code",
    "summary": "Type something and get its QR code, after Iced's ``qr_code`` demo.",
    "path": "examples/qr_code.py"
@@ -1314,6 +1498,51 @@
    "name": "tutorial/step5_notes",
    "summary": "Tutorial, step 5: a small notes app that puts it all together.",
    "path": "examples/tutorial/step5_notes.py"
+  },
+  {
+   "name": "blocks/chat",
+   "summary": "Chat block: a team messenger with channels, direct messages, a message thread and a composer.",
+   "path": "examples/blocks/chat.py"
+  },
+  {
+   "name": "blocks/dashboard",
+   "summary": "Dashboard block: sidebar navigation, KPI cards, a revenue chart, traffic sources and recent orders.",
+   "path": "examples/blocks/dashboard.py"
+  },
+  {
+   "name": "blocks/data_table",
+   "summary": "Data table block: a team members table with search, status filters, sorting, selection and paging.",
+   "path": "examples/blocks/data_table.py"
+  },
+  {
+   "name": "blocks/file_explorer",
+   "summary": "IDE layout block: a project tree, editor tabs with breadcrumbs, a terminal, an outline panel and a status bar.",
+   "path": "examples/blocks/file_explorer.py"
+  },
+  {
+   "name": "blocks/kanban",
+   "summary": "Kanban block: a project board with columns, labelled cards, assignees, progress and moving cards along.",
+   "path": "examples/blocks/kanban.py"
+  },
+  {
+   "name": "blocks/login",
+   "summary": "Login block: a split sign-in screen with a brand panel, single sign-on, passkey and an email form.",
+   "path": "examples/blocks/login.py"
+  },
+  {
+   "name": "blocks/music_player",
+   "summary": "Music player block: a library sidebar, an album page with a track list and a player bar with live progress.",
+   "path": "examples/blocks/music_player.py"
+  },
+  {
+   "name": "blocks/onboarding",
+   "summary": "Onboarding block: a multi-step setup wizard with a stepper, choice cards, validation and a summary.",
+   "path": "examples/blocks/onboarding.py"
+  },
+  {
+   "name": "blocks/settings",
+   "summary": "Settings block: a sectioned settings page with profile, appearance, notifications and a danger zone.",
+   "path": "examples/blocks/settings.py"
   },
   {
    "name": "designer/login",

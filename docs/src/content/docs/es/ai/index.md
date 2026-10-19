@@ -36,7 +36,7 @@ flowchart LR
 | | Qué es | Empieza aquí |
 | --- | --- | --- |
 | **Agentes que escriben Pyzed** | Conecta cualquier agente que hable [MCP](https://modelcontextprotocol.io) y tendrá los componentes, la documentación, los generadores, las comprobaciones y las capturas de Pyzed. Los agentes sin MCP pueden leer la documentación como texto. | [Servidor MCP](/pyzed/es/ai/mcp/), [llms.txt y reglas para editores](/pyzed/es/ai/llms-txt/) |
-| **El agente de Pyzed Design** | El diseñador visual tiene un panel de agente que coloca controles, conecta eventos, escribe handlers y crea formularios y componentes; todo se puede deshacer. | [Compositor del agente](/pyzed/es/ai/agent-composer/) |
+| **El agente de Pyzed Design** | El diseñador visual tiene un panel de agente que coloca controles, conecta eventos, escribe handlers y crea formularios, componentes y apps completas; ve imágenes, usa servidores MCP y ejecuta agentes externos, y todo se puede deshacer. | [Agente en Pyzed Design](/pyzed/es/ai/agent-composer/), [Claves de API](/pyzed/es/ai/api-keys/) |
 | **IA dentro de tu app** | `pyzed.agents` habla con muchos proveedores de modelos con herramientas y streaming, y el modelo async de Pyzed muestra las respuestas a medida que llegan sin congelar la interfaz. | [Crear apps con IA](/pyzed/es/ai/ai-apps/) |
 
 ## Por qué los agentes escriben buen código Pyzed
