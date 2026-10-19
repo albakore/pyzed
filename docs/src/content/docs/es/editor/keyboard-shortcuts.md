@@ -84,6 +84,26 @@ en el lienzo para recuperar sus atajos.
 | <kbd>Enter</kbd> | Ejecutar el comando resaltado, añadir el control resaltado, enviar el campo de un diálogo |
 | <kbd>Esc</kbd> | Cerrar el diálogo, la paleta o el menú |
 
+## Árbol del proyecto
+
+Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/projects/#archivos), como en el panel de
+proyecto de Zed:
+
+| Teclas | Acción |
+| --- | --- |
+| <kbd>↑</kbd> <kbd>↓</kbd> | Mover la selección |
+| <kbd>←</kbd> <kbd>→</kbd> | Cerrar / abrir la carpeta |
+| <kbd>Enter</kbd> | Abrir el archivo |
+| <kbd>Ctrl</kbd>+<kbd>N</kbd> / <kbd>Alt</kbd>+<kbd>N</kbd> | Nuevo archivo / nueva carpeta |
+| <kbd>F2</kbd> | Renombrar |
+| <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>V</kbd> | Cortar / copiar / pegar |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicar |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer / rehacer un cambio de archivos |
+| <kbd>Supr</kbd> / <kbd>Ctrl</kbd>+<kbd>Supr</kbd> | Mover a la papelera / borrar para siempre |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> | Mostrar en el gestor de archivos |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | Abrir con la app predeterminada |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Copiar la ruta / la ruta relativa |
+
 ## Editor de código
 
 | Teclas | Acción |

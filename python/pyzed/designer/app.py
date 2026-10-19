@@ -1259,8 +1259,11 @@ class Designer(App):
         self.dialog = "save_as"
         self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
 
-    def focus_panel(self) -> None:
-        """Gives the keyboard to a side panel, so canvas shortcuts stop acting."""
+    def focus_panel(self, panel: Optional[str] = None) -> None:
+        """Gives the keyboard to a side panel, so canvas shortcuts stop acting (the Project tree keeps it
+        when the pointer comes back to its panel)."""
+        if panel == "project" and self.focus == "files":
+            return
         self.focus = "panel"
 
     def focus_code(self) -> None:
@@ -1916,6 +1919,10 @@ class Designer(App):
         Global shortcuts come first, then the code editor's, the picker's arrows, Escape (closes what is
         open or cancels a drag) and, when the canvas has the keyboard, editing and nudging shortcuts.
         """
+        if self.focus == "files" and not self.dialog and not self.app_menu:
+            handled, result = self.projects.files.on_key(combo)  # the tree's own keys, like Zed's
+            if handled:
+                return result
         action = _commands.by_keys(combo, global_only=True)
         if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
             self.app_menu = None

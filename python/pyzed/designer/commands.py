@@ -138,6 +138,11 @@ ISSUES_URL = "https://github.com/albakore/pyzed/issues"
 EXTRA_SHORTCUTS: Tuple[Tuple[str, Sequence[Tuple[str, str]]], ...] = (
     ("Canvas", (("Move by one pixel", "left"), ("Move by one grid step", "shift-left"),
                 ("Open the main event", "enter"), ("Cancel the current gesture", "escape"))),
+    ("Project tree", (("New file", "ctrl-n"), ("New folder", "alt-n"), ("Rename", "f2"), ("Cut", "ctrl-x"),
+                      ("Copy", "ctrl-c"), ("Paste", "ctrl-v"), ("Duplicate", "ctrl-d"), ("Undo", "ctrl-z"),
+                      ("Redo", "ctrl-shift-z"), ("Move to the trash", "delete"), ("Delete", "ctrl-delete"),
+                      ("Reveal in File Manager", "ctrl-alt-r"), ("Open in Default App", "ctrl-shift-enter"),
+                      ("Copy Path", "alt-shift-c"), ("Copy Relative Path", "ctrl-alt-shift-c"))),
     ("Code", (("Show completions", "ctrl-space"), ("Accept completion", "enter"), ("Close completions", "escape"),
               ("Find", "ctrl-f"), ("Find and replace", "ctrl-h"), ("Next and previous match", "f3"),
               ("Go to line", "ctrl-g"), ("Undo", "ctrl-z"), ("Redo", "ctrl-shift-z"),
