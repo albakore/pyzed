@@ -79,6 +79,12 @@ def components_setup(app):
     app.log = ["double_click", "drag_end", "drag +12, +4", "drag +20, +8", "drag_start", "focus"]
 
 
+def layout_setup(app):
+    app.layout = {"positions": {"outline": "right"}, "sizes": {"left": 220, "right": 260, "bottom": 150},
+                  "active": {"right": "outline"}, "hidden": []}
+    app.log = ["layout → outline: right", "Drag a tab onto a drop zone, or a panel edge to resize it."]
+
+
 def life_setup(app):
     random.seed(4)
     app.randomize()
@@ -92,6 +98,7 @@ SHOTS = {
     "tutorials/game-of-life": (app("game_of_life", "Life", life_setup), None),
     "tutorials/styling": (app("styling", "Styling"), (1000, 400)),
     "tutorials/components": (app("components", "Demo", components_setup), None),
+    "tutorials/layout": (app("layout", "LayoutDemo", layout_setup), (1100, 680)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),
