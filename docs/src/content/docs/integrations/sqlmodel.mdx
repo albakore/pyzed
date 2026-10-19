@@ -1,0 +1,109 @@
+---
+title: SQLModel
+description: Validate a Pyzed form with the same SQLModel class that defines the database table, and show Pydantic errors on each field.
+sidebar:
+  order: 4
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
+import models from '../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
+
+SQLModel joins Pydantic and SQLAlchemy: one class describes the fields, their rules and the
+table. In a desktop app that means the form and the database agree by construction. This demo is
+an inventory with stock levels, a donut chart and a dialog whose fields show Pydantic's errors.
+
+![An inventory table with stock badges and an edit dialog showing validation errors](../../../assets/integrations/sqlmodel.png)
+
+```bash
+cd examples/integrations/sqlmodel_inventory
+uv run main.py
+```
+
+<Steps>
+
+1. **Put the rules in a base class.** The table and the form's validator both inherit from it:
+
+   ```python
+   class ProductBase(SQLModel):
+       name: str = Field(min_length=2, max_length=60)
+       sku: str
+       category: str = "Keyboards"
+       price: float = Field(gt=0)
+       stock: int = Field(ge=0)
+
+       @field_validator("sku")
+       @classmethod
+       def sku_format(cls, sku):
+           sku = sku.strip().upper()
+           if not re.fullmatch(r"[A-Z]{3}-\d{4}", sku):
+               raise ValueError("Expected something like KEY-0001")
+           return sku
+
+   class Product(ProductBase, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       sku: str = Field(unique=True, index=True)
+
+   class ProductIn(ProductBase):
+       """Validates what the form typed."""
+   ```
+
+2. **Validate with `ProductIn`, not `Product`.** SQLModel skips validation on `table=True`
+   models (SQLAlchemy builds them), so a separate class without `table=True` does it. The form
+   keeps everything as text and Pydantic coerces it: `"12.5"` becomes `12.5`, `"abc"` becomes an
+   error.
+
+   ```python
+   def save(self):
+       try:
+           data = ProductIn.model_validate(self.draft)
+       except ValidationError as error:
+           self.errors = pz.validation_errors(error)
+           return None
+       product_id = None if self.editing == "new" else self.editing.id
+       return Command.perform(lambda: models.save(product_id, data), self.saved)
+   ```
+
+3. **Store it in a thread.** `models.save` copies the validated data onto the row with
+   `sqlmodel_update` and returns `{field: message}` when something only the database knows is
+   wrong, like a duplicated SKU:
+
+   ```python
+   def save(product_id, data):
+       with Session(engine, expire_on_commit=False) as session:
+           clash = session.exec(select(Product).where(Product.sku == data.sku, Product.id != product_id)).first()
+           if clash:
+               return {"sku": f"Already used by “{clash.name}”"}
+           product = session.get(Product, product_id) if product_id else Product.model_validate(data)
+           product.sqlmodel_update(data.model_dump())
+           session.add(product)
+           session.commit()
+           return product
+   ```
+
+4. **Show the errors in a dialog.** `ui.layer` puts a `ui.modal` over the page; each
+   `ui.field` takes its message from `self.errors`:
+
+   ```python
+   ui.field("Price", ui.input(self.draft["price"], self.edit("price")), error=self.errors.get("price"))
+   ```
+
+5. **Render cells with widgets.** A `ui.Column` can draw anything; the stock column shows
+   buttons and a badge that turns amber or red when stock runs low:
+
+   ```python
+   ui.Column("Stock", lambda p: p, width=180, align="center", render=self.stock_cell, sortable=False)
+   ```
+
+</Steps>
+
+<Aside>
+The same `ProductIn` can be the body of a FastAPI endpoint. If your app grows a server, the
+desktop client and the API validate with one model. See [FastAPI](/pyzed/integrations/fastapi/).
+</Aside>
+
+## Full code
+
+<Code code={main} lang="py" title="examples/integrations/sqlmodel_inventory/main.py" />
+
+<Code code={models} lang="py" title="examples/integrations/sqlmodel_inventory/models.py" />

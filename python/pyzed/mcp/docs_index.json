@@ -433,6 +433,48 @@
    "path": "docs/src/content/docs/index.mdx"
   },
   {
+   "slug": "integrations/django",
+   "title": "Django",
+   "description": "Use Django's ORM, async queries and model validation in a Pyzed desktop app that shares its database with the Django admin.",
+   "path": "docs/src/content/docs/integrations/django.mdx"
+  },
+  {
+   "slug": "integrations/fastapi",
+   "title": "FastAPI",
+   "description": "Build a desktop client for a FastAPI REST API with Pyzed and httpx, embed the server in the same process and show 422 validation errors on each field.",
+   "path": "docs/src/content/docs/integrations/fastapi.mdx"
+  },
+  {
+   "slug": "integrations/httpx-pydantic",
+   "title": "httpx and Pydantic",
+   "description": "Call web APIs from a Pyzed app with httpx, stream concurrent responses into the window and parse them into Pydantic models.",
+   "path": "docs/src/content/docs/integrations/httpx-pydantic.mdx"
+  },
+  {
+   "slug": "integrations/other-libraries",
+   "title": "Other libraries",
+   "description": "Recipes for aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.",
+   "path": "docs/src/content/docs/integrations/other-libraries.mdx"
+  },
+  {
+   "slug": "integrations/overview",
+   "title": "Integrations overview",
+   "description": "Use Pyzed as the desktop frontend for FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic and aiosqlite, with runnable demos.",
+   "path": "docs/src/content/docs/integrations/overview.md"
+  },
+  {
+   "slug": "integrations/sqlalchemy",
+   "title": "SQLAlchemy",
+   "description": "A desktop database app with Pyzed and SQLAlchemy 2.0, with 20,000 rows in a virtual table, search and sorting in SQL, and editing without freezing the window.",
+   "path": "docs/src/content/docs/integrations/sqlalchemy.mdx"
+  },
+  {
+   "slug": "integrations/sqlmodel",
+   "title": "SQLModel",
+   "description": "Validate a Pyzed form with the same SQLModel class that defines the database table, and show Pydantic errors on each field.",
+   "path": "docs/src/content/docs/integrations/sqlmodel.mdx"
+  },
+  {
    "slug": "library/about",
    "title": "About",
    "description": "An About box with icon, version, details and links.",
@@ -1592,6 +1634,13 @@
    "pyzed.reference.tables_as_lists": {},
    "pyzed.reference.display_name": {},
    "pyzed.reference.summary": {},
+   "pyzed.validation_errors": {
+    "desc": "Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{\"detail\": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `\"\"`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).",
+    "params": {
+     "error": "The error, or the JSON of the response."
+    },
+    "example": "try:\n    item = ItemIn.model_validate(self.draft)\nexcept ValidationError as error:\n    self.errors = pz.validation_errors(error)\n\nui.field(\"Price\", ui.input(self.draft[\"price\"], self.set_price), error=self.errors.get(\"price\"))"
+   },
    "pyzed.Command": {
     "desc": "The command class. Don't instantiate it directly: use its static methods."
    },
@@ -2529,7 +2578,8 @@
     "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
     "params": {
      "control": "The control (switch, input…).",
-     "description": "Help text."
+     "description": "Help text.",
+     "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."
     }
    },
    "pyzed.ui.dialog_layer": {
@@ -2592,7 +2642,7 @@
     }
    },
    "pyzed.ui.select": {
-    "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.",
+    "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
     "params": {
      "selected": "Current option.",
      "size": "`\"sm\"`, `\"md\"` or `\"lg\"`."
@@ -2741,7 +2791,7 @@
     }
    },
    "pyzed.ui.Column": {
-    "desc": "A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `\"fill\"`, a number or `(\"fill\", 2)`.",
+    "desc": "A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `\"fill\"`, a number or a portion such as `\"fill:2\"`.",
     "params": {
      "title": "Header (and name used for sorting).",
      "key": "How to get the value from each row.",

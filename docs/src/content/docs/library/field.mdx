@@ -55,7 +55,7 @@ pz.column([
 ### `ui.field`
 
 ```python
-field(title, control, *, description=None, theme=None)
+field(title, control, *, description=None, error=None, theme=None)
 ```
 
 A form row: title and description on the left, control on the right (like Zed's settings).
@@ -65,6 +65,7 @@ A form row: title and description on the left, control on the right (like Zed's 
 | `title` | *required* | Title. |
 | `control` | *required* | The control (switch, input…). |
 | `description` | `None` | Help text. |
+| `error` | `None` | A validation message shown under the title in the error color (see `pz.validation_errors`). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#field)

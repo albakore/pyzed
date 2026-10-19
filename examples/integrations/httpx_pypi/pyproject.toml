@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-httpx-pypi"
+version = "0.1.0"
+description = "A Pyzed PyPI explorer: concurrent requests with httpx, responses parsed by Pydantic."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "httpx>=0.27", "pydantic>=2.6"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

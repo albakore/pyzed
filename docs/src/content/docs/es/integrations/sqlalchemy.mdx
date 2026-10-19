@@ -1,0 +1,113 @@
+---
+title: SQLAlchemy
+description: Una app de escritorio con base de datos usando Pyzed y SQLAlchemy 2.0, con 20.000 filas en una tabla virtual, búsqueda y orden en SQL y edición sin congelar la ventana.
+sidebar:
+  order: 3
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
+import db from '../../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+
+Un gestor de contactos sobre SQLAlchemy 2.0 y SQLite. La tabla tiene 20.000 filas y se desplaza
+con fluidez porque `ui.table` solo construye las filas visibles; la búsqueda y el orden se hacen
+en SQL, en un hilo de trabajo, así que la ventana nunca espera a la base de datos.
+
+![Una tabla de contactos con 20.000 filas, estadísticas y un panel de edición](../../../../assets/integrations/sqlalchemy.png)
+
+```bash
+cd examples/integrations/sqlalchemy_contacts
+uv run main.py
+```
+
+La demo separa el código de base de datos en `db.py`, sin nada de Pyzed, y la ventana en
+`main.py`. Vale la pena copiar esa división: el mismo `db.py` podría servir a una app de FastAPI
+o a una CLI.
+
+<Steps>
+
+1. **Los modelos son SQLAlchemy 2.0 normal.**
+
+   ```python
+   class Contact(Base):
+       __tablename__ = "contacts"
+
+       id: Mapped[int] = mapped_column(primary_key=True)
+       name: Mapped[str] = mapped_column(String(80), index=True)
+       email: Mapped[str] = mapped_column(String(120), unique=True)
+       company: Mapped[str] = mapped_column(String(80), default="")
+       city: Mapped[str] = mapped_column(String(60), default="")
+   ```
+
+2. **Cada consulta es una función con su propia sesión.** Las sesiones de SQLAlchemy no se
+   comparten entre hilos, así que cada función abre una y la cierra. Los objetos cargados
+   conservan sus valores al cerrarse la sesión, que es todo lo que necesita la vista:
+
+   ```python
+   def search(text, sort, descending):
+       column = COLUMNS[sort]
+       query = select(Contact).order_by(column.desc() if descending else column, Contact.id)
+       if text:
+           pattern = f"%{text}%"
+           query = query.where(or_(Contact.name.ilike(pattern), Contact.email.ilike(pattern),
+                                   Contact.company.ilike(pattern)))
+       with Session(engine) as session:
+           return list(session.scalars(query))
+   ```
+
+3. **Ejecútala con `Command.perform`.** La función corre en un hilo y `then` recibe el
+   resultado en el hilo de la UI. Devolver una lista de comandos los ejecuta juntos:
+
+   ```python
+   def reload(self):
+       query, sort, descending = self.query, self.sort, self.descending
+       return [
+           Command.perform(lambda: db.search(query, sort, descending), lambda rows: self.loaded(query, rows)),
+           Command.perform(db.stats, lambda stats: setattr(self, "stats", stats)),
+       ]
+
+   def loaded(self, query, rows):
+       if query == self.query:          # viene una búsqueda más nueva: hay que esperarla
+           self.rows, self.loading = rows, False
+   ```
+
+   Copia antes a variables locales el estado que necesitas (`query, sort, ...`): la lambda se
+   ejecuta más tarde, en otro hilo, y no debería leer `self` mientras el usuario sigue escribiendo.
+
+4. **Pasa todas las filas a `ui.table`.** Está virtualizada, así que 20.000 filas cuestan lo
+   mismo que 20. Al pulsar una cabecera se llama a `on_sort`, que aquí repite la consulta con
+   otro `ORDER BY`:
+
+   ```python
+   ui.table(columns, self.rows, sort_by=self.sort, descending=self.descending, on_sort=self.sort_by,
+            on_row_press=self.open, selected=self.editing, striped=True, height="fill")
+   ```
+
+5. **Convierte los errores de la base de datos en errores de campo.** `save` devuelve el
+   contacto o `{campo: mensaje}`. Una restricción unique se convierte en un mensaje bajo el campo
+   Email:
+
+   ```python
+   try:
+       session.commit()
+   except IntegrityError:
+       return {"email": "Another contact already uses this email"}
+   ```
+
+   ```python
+   ui.field("Email", ui.input(self.draft["email"], ...), error=self.errors.get("email"))
+   ```
+
+</Steps>
+
+<Aside type="tip">
+¿Prefieres `asyncio`? La `AsyncSession` de SQLAlchemy con `aiosqlite` o `asyncpg` también
+funciona: devuelve la corrutina en lugar de usar `Command.perform`. Mira
+[Otras librerías](/pyzed/es/integrations/other-libraries/#sqlalchemy-asyncio).
+</Aside>
+
+## Código completo
+
+<Code code={main} lang="py" title="examples/integrations/sqlalchemy_contacts/main.py" />
+
+<Code code={db} lang="py" title="examples/integrations/sqlalchemy_contacts/db.py" />

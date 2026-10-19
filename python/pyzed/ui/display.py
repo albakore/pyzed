@@ -198,7 +198,7 @@ class Column:
 
     ``key`` is a dict key, an attribute name or a function of the row; ``render`` (optional)
     turns the value into a widget. ``width`` is ``"fill"``, a number or a fill portion
-    such as ``("fill", 2)``. ``align`` is ``"start"``, ``"center"`` or ``"end"``.
+    such as ``"fill:2"``. ``align`` is ``"start"``, ``"center"`` or ``"end"``.
     """
 
     title: str
