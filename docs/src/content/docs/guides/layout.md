@@ -107,3 +107,70 @@ Bundled fonts: IBM Plex Sans (`"sans"`, the default), IBM Plex Mono (`"mono"`) a
 - `pz.hover(base, overlay)` shows `overlay` only on mouse hover.
 - `pz.mouse_area(w, on_right_press=..., on_double_click=..., cursor="pointer")` detects mouse
   events.
+
+## Grids
+
+`pz.grid(children, columns=2)` still gives a uniform grid. Pass **tracks** instead and it
+becomes a CSS-like grid: each track is a pixel size, a share of the free space (`"1fr"`,
+`"2fr"`) or `"auto"` (as big as its content). Tracks can be a list or a string.
+
+![Track grid, flex rows and a dock](../../../assets/tutorials/layout.png)
+
+```python
+pz.grid(
+    [
+        pz.cell(header, column=0, row=0, column_span=3),
+        pz.cell(sidebar, column=0, row=1, row_span=2),
+        main, details,
+        pz.cell(pz.text("centered"), align_x="center", align_y="center"),
+    ],
+    columns=[140, "1fr", "auto"],   # or "140 1fr auto"
+    rows="44 1fr 1fr",
+    spacing=8,                      # row_spacing= for a different vertical gap
+    height=240,
+)
+```
+
+`pz.cell` places a child in a given column/row, makes it span several tracks and aligns it
+inside its cell. Children without a position fill the free cells row by row.
+
+## Flex
+
+`pz.flex` lays children out along one axis, like CSS flexbox:
+
+```python
+pz.flex([a, b, c], justify="between", align="center", gap=6)
+pz.flex([a, b], direction="column", justify="end")
+pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], gap=6)
+```
+
+`justify` is `"start"`, `"center"`, `"end"`, `"between"`, `"around"` or `"evenly"`.
+`pz.flex_item` sets how much of the free space a child takes (`grow`), or a fixed size
+(`basis`). `wrap=True` wraps a row onto new lines.
+
+## Docks and resizable panels
+
+`pz.resizable(content, edge="right", size=240)` gives a panel a handle on one edge that the
+user can drag. `min_size`/`max_size` limit it and `on_resize(size)` reports the new size
+when the drag ends. `ui.panel` and `ui.workspace` use it, so their side panels can be
+resized out of the box, and `pz.split` keeps the ratio the user drags to.
+
+`pz.Dock` is a Zed-style dock: a center area with panels on its sides. Drag a tab onto a
+drop zone (or right-click it) to move a panel to another side, and drag a panel's inner
+edge to resize it.
+
+```python
+pz.Dock(
+    center=editor,
+    panels=[
+        pz.DockPanel("project", "Project", tree, icon="folder", side="left"),
+        pz.DockPanel("outline", "Outline", outline, icon="list-tree", side="left"),
+        pz.DockPanel("log", "Log", log, icon="terminal", side="bottom"),
+    ],
+    layout=self.layout,               # restore a saved layout
+    on_layout=lambda e: setattr(self, "layout", e.value),
+)
+```
+
+`on_layout` receives a plain dict (positions, sizes, active tabs and hidden sides) you can
+save and pass back as `layout=`. See [`examples/layout.py`](https://github.com/albakore/pyzed/blob/main/examples/layout.py).

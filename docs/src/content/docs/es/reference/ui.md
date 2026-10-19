@@ -1183,6 +1183,7 @@ workspace(
     left_width=240,
     right_width=320,
     bottom_height=220,
+    on_resize=None,
     theme=None,
 )
 ```
@@ -1200,6 +1201,7 @@ El layout de una ventana de Zed: barra de título, docks izquierdo, derecho e in
 | `left_width` | Ancho del dock izquierdo. |
 | `right_width` | Ancho del dock derecho. |
 | `bottom_height` | Alto del dock inferior. |
+| `on_resize` | Se llama con `(side, size)` cuando el usuario termina de cambiar el tamaño de un panel arrastrando su borde interior. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `title_bar`
@@ -1292,10 +1294,21 @@ Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, l
 ### `panel`
 
 ```python
-panel(content, *, header=None, width=None, height=None, side='left', theme=None)
+panel(
+    content,
+    *,
+    header=None,
+    width=None,
+    height=None,
+    side='left',
+    resizable=True,
+    on_resize=None,
+    min_size=120,
+    theme=None,
+)
 ```
 
-Un panel acoplable. `side` decide en qué borde va la línea.
+Un panel acoplable. `side` decide en qué borde va la línea; con un `width` numérico (`height` para el inferior) ese borde se arrastra para cambiar su tamaño.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1304,6 +1317,9 @@ Un panel acoplable. `side` decide en qué borde va la línea.
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `side` | `"left"`, `"right"` o `"bottom"`. |
+| `resizable` | `False` mantiene el tamaño fijo. |
+| `on_resize` | Se llama con el nuevo tamaño al terminar de arrastrar. |
+| `min_size` | Tamaño mínimo al redimensionar. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `panel_header`

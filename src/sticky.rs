@@ -297,6 +297,9 @@ pub struct Split<'a, Message, Theme, Renderer> {
 #[derive(Default)]
 struct SplitState {
     dragging: bool,
+    /// The ratio the user dragged to, until the `ratio` prop changes.
+    dragged: Option<f32>,
+    prop: Option<f32>,
 }
 
 pub struct SplitStyle {
@@ -336,9 +339,9 @@ impl<'a, Message, Theme, Renderer> Split<'a, Message, Theme, Renderer> {
     }
 
     /// Main-axis length available to both panes, and the first pane's length.
-    fn split(&self, total: f32) -> (f32, f32) {
+    fn split(&self, total: f32, ratio: f32) -> (f32, f32) {
         let available = (total - self.line).max(0.0);
-        let mut first = (available * self.ratio).round();
+        let mut first = (available * ratio).round();
         let max_first = (available - self.min_second).max(0.0);
         first = first.min(max_first).max(self.min_first.min(available));
         (available, first)
@@ -432,7 +435,13 @@ where
         } else {
             size.width
         };
-        let (available, first_len) = self.split(total);
+        let state = tree.state.downcast_mut::<SplitState>();
+        if state.prop != Some(self.ratio) {
+            state.prop = Some(self.ratio);
+            state.dragged = None;
+        }
+        let ratio = state.dragged.unwrap_or(self.ratio);
+        let (available, first_len) = self.split(total, ratio);
         let second_len = (available - first_len).max(0.0);
         let (first_size, second_size, offset) = if self.vertical {
             (
@@ -516,24 +525,28 @@ where
                 return;
             }
             Event::Mouse(mouse::Event::CursorMoved { position }) if state.dragging => {
+                let (start, total) = if self.vertical {
+                    (bounds.y, bounds.height)
+                } else {
+                    (bounds.x, bounds.width)
+                };
+                let available = (total - self.line).max(1.0);
+                let pos = if self.vertical {
+                    position.y
+                } else {
+                    position.x
+                };
+                let first = (pos - start - self.line / 2.0).clamp(
+                    self.min_first.min(available),
+                    (available - self.min_second).max(0.0),
+                );
+                // Without `on_resize` the split keeps the dragged ratio itself.
+                state.dragged = Some(first / available);
                 if let Some(on_resize) = &self.on_resize {
-                    let (start, total) = if self.vertical {
-                        (bounds.y, bounds.height)
-                    } else {
-                        (bounds.x, bounds.width)
-                    };
-                    let available = (total - self.line).max(1.0);
-                    let pos = if self.vertical {
-                        position.y
-                    } else {
-                        position.x
-                    };
-                    let first = (pos - start - self.line / 2.0).clamp(
-                        self.min_first.min(available),
-                        (available - self.min_second).max(0.0),
-                    );
                     shell.publish(on_resize(first / available));
                 }
+                shell.invalidate_layout();
+                shell.request_redraw();
                 shell.capture_event();
                 return;
             }
@@ -559,9 +572,7 @@ where
         renderer: &Renderer,
     ) -> mouse::Interaction {
         let state = tree.state.downcast_ref::<SplitState>();
-        if self.on_resize.is_some()
-            && (state.dragging || cursor.is_over(self.handle_bounds(layout)))
-        {
+        if state.dragging || cursor.is_over(self.handle_bounds(layout)) {
             return if self.vertical {
                 mouse::Interaction::ResizingVertically
             } else {
@@ -613,8 +624,7 @@ where
             viewport,
         );
         let state = tree.state.downcast_ref::<SplitState>();
-        let active = self.on_resize.is_some()
-            && (state.dragging || cursor.is_over(self.handle_bounds(layout)));
+        let active = state.dragging || cursor.is_over(self.handle_bounds(layout));
         let line = self.line_bounds(layout);
         let color = if active { self.hover_color } else { self.color };
         let bounds = if active && self.line < 2.0 {

@@ -946,6 +946,47 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             }
             g.into()
         }
+        Kind::TrackGrid(props) => {
+            let items = props
+                .children
+                .iter()
+                .map(|c| match &c.bind(py).get().kind {
+                    Kind::Cell { child, placement } => (build(py, child, ctx), *placement),
+                    _ => (
+                        build(py, c, ctx),
+                        crate::layout::Placement {
+                            column_span: 1,
+                            row_span: 1,
+                            ..Default::default()
+                        },
+                    ),
+                })
+                .collect();
+            crate::layout::TrackGrid::new(items, props).into()
+        }
+        Kind::Cell { child, .. } => build(py, child, ctx),
+        Kind::Resizable(props) => {
+            let on_resize = props.on_resize.clone().map(|cb| {
+                Box::new(move |size: f32| Message::Slide(cb.clone(), size))
+                    as Box<dyn Fn(f32) -> Message + 'a>
+            });
+            let color = props.color.unwrap_or(Color::from_rgb8(0x46, 0x4b, 0x57));
+            crate::layout::Resizable::new(
+                build(py, &props.child, ctx),
+                props.edge,
+                props.size,
+                (props.min, props.max),
+                crate::layout::ResizeStyle {
+                    color,
+                    hover_color: props.hover_color.unwrap_or(color),
+                    line: props.thickness,
+                    handle: props.handle,
+                },
+                props.cross,
+                on_resize,
+            )
+            .into()
+        }
         Kind::Responsive(callback) => {
             let callback = callback.clone();
             widget::responsive(move |size| {

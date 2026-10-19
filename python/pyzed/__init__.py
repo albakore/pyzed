@@ -27,6 +27,7 @@ from ._core import (
     Widget,
     button,
     canvas,
+    cell,
     checkbox,
     code_editor,
     column,
@@ -47,6 +48,7 @@ from ._core import (
     progress_bar,
     qr_code,
     radio,
+    resizable,
     responsive,
     rich_text,
     row,
@@ -66,10 +68,12 @@ from ._core import (
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
 from .component import Component, state
+from .dock import Dock, DockPanel
+from .layout import flex, flex_item
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import component, designer, draw, events, hot_reload, theme, icons, ui
+from . import component, designer, dock, layout, draw, events, hot_reload, theme, icons, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -105,6 +109,8 @@ __all__ = [
     "AutoTheme",
     "Command",
     "Component",
+    "Dock",
+    "DockPanel",
     "Event",
     "Span",
     "Subscription",
@@ -114,16 +120,20 @@ __all__ = [
     "asyncio_loop",
     "button",
     "canvas",
+    "cell",
     "center",
     "checkbox",
     "code_editor",
     "column",
     "container",
     "designer",
+    "dock",
     "component",
     "draw",
     "events",
     "every",
+    "flex",
+    "flex_item",
     "grid",
     "hot_reload",
     "hover",
@@ -132,6 +142,7 @@ __all__ = [
     "icons",
     "image",
     "image_viewer",
+    "layout",
     "listen",
     "load_font",
     "markdown",
@@ -144,6 +155,7 @@ __all__ = [
     "progress_bar",
     "qr_code",
     "radio",
+    "resizable",
     "responsive",
     "rich_text",
     "row",

@@ -262,28 +262,161 @@ grid(
     children=None,
     *,
     columns=None,
+    rows=None,
     max_width=None,
     spacing=0.0,
+    row_spacing=None,
     height=None,
     aspect_ratio=None,
     width=None,
+    padding=None,
+    align_x=None,
+    align_y=None,
 )
 ```
 
-Lays out its children in a grid with a fixed number of `columns`, or as many columns of at most `max_width` as fit.
+Lays out its children in a grid. With `columns=3` the columns are equal (or `max_width` fits as many as possible). With track lists (`columns=[200, "1fr", "auto"]`, `rows=...`) it works like a CSS grid: numbers are pixels, `"auto"` fits the content and `"<n>fr"` shares the space left. Wrap children in `pz.cell` to place them and make them span; the rest fill the free cells row by row. See [Layout](/pyzed/guides/layout/#grids).
 
 | Parameter | Description |
 | --- | --- |
 | `children` | List of children. Nested lists are flattened and `None` and `False` are ignored, so you can write `cond and widget`. |
-| `columns` | Number of columns. |
-| `max_width` | Maximum width in pixels. |
-| `spacing` | Space between children, in pixels. |
-| `height` | Height of each row. |
-| `aspect_ratio` | Keeps cells at this width/height ratio. |
-| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `columns` | Number of equal columns, or tracks: a list (`[200, "1fr", "auto"]`) or a string (`"200 1fr auto"`). |
+| `rows` | Row tracks, like `columns`. Rows beyond the list are `"auto"`. |
+| `max_width` | Fits as many columns of at most this width as possible (`columns=<int>` only). |
+| `spacing` | Space between cells. |
+| `row_spacing` | Space between rows, if different. |
+| `height` | With `columns=<int>`: height of each row. With tracks: the grid's height. |
+| `aspect_ratio` | Keeps cells at this width/height ratio (`columns=<int>` only). |
+| `width` | With `columns=<int>`: pixels. With tracks: the grid's width (default `"fill"`). |
+| `padding` | Space around the cells. |
+| `align_x` | Horizontal alignment of items in their cells: `"start"`, `"center"`, `"end"`. |
+| `align_y` | Vertical alignment of items in their cells. |
 
 ```python
-pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)
+pz.grid([pz.cell(header, column=0, row=0, column_span=2), sidebar, content],
+        columns=[200, "1fr"], rows=[48, "1fr"], spacing=8, height="fill")
+```
+
+### `cell`
+
+```python
+cell(
+    content,
+    *,
+    column=None,
+    row=None,
+    column_span=1,
+    row_span=1,
+    align_x=None,
+    align_y=None,
+)
+```
+
+Places a child in a track grid: its column and row (from 0) and how many it spans. Children without a cell fill the free cells row by row. Outside a grid it is just the child.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The widget. |
+| `column` | Column index (from 0). |
+| `row` | Row index (from 0). |
+| `column_span` | Columns it covers. |
+| `row_span` | Rows it covers. |
+| `align_x` | Horizontal alignment in the cell. |
+| `align_y` | Vertical alignment in the cell. |
+
+```python
+pz.cell(ui.button("Save"), column=2, row=3, align_x="end")
+```
+
+### `flex`
+
+```python
+flex(
+    children=(),
+    *,
+    direction='row',
+    justify='start',
+    align='start',
+    gap=0,
+    wrap=False,
+    padding=None,
+    width=None,
+    height=None,
+)
+```
+
+Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.
+
+| Parameter | Description |
+| --- | --- |
+| `children` | The widgets, or `pz.flex_item(...)` for children with their own sizing. |
+| `direction` | `"row"` or `"column"`. |
+| `justify` | `"start"`, `"center"`, `"end"`, `"between"`, `"around"` or `"evenly"`. No effect when a child grows. |
+| `align` | Cross-axis alignment: `"start"`, `"center"` or `"end"`. |
+| `gap` | Space between children. |
+| `wrap` | Wraps onto new lines (rows with `justify="start"` only). |
+| `padding` | Space around the children. |
+| `width` | Width. |
+| `height` | Height. |
+
+```python
+pz.flex([logo, title, pz.flex_item(search, grow=1), avatar], justify="between", align="center", gap=8)
+```
+
+### `flex_item`
+
+```python
+flex_item(content, *, grow=1, basis=None, align=None)
+```
+
+Sizes a child of `pz.flex`.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The widget. |
+| `grow` | Share of the free space on the main axis (`0` keeps its natural size). |
+| `basis` | A fixed main size in pixels, instead of growing. |
+| `align` | Cross-axis alignment for this child. |
+
+### `resizable`
+
+```python
+resizable(
+    content,
+    *,
+    edge='right',
+    size=240.0,
+    min_size=80.0,
+    max_size=None,
+    on_resize=None,
+    color=None,
+    hover_color=None,
+    thickness=1.0,
+    handle=8.0,
+    width=None,
+    height=None,
+)
+```
+
+A panel whose `edge` can be dragged to resize it. It keeps the size the user drags it to; `on_resize(size)` is called when a drag ends so you can save it. Changing `size` later resets it.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The panel's content. |
+| `edge` | The edge with the handle: `"right"` (a left sidebar), `"left"`, `"top"` (a bottom panel) or `"bottom"`. |
+| `size` | Starting width (height for top/bottom edges). |
+| `min_size` | Smallest size. |
+| `max_size` | Largest size. |
+| `on_resize` | Called with the new size when a drag ends. |
+| `color` | Line color. |
+| `hover_color` | Line color while hovered or dragged. |
+| `thickness` | Line thickness. |
+| `handle` | Width of the area that can be grabbed. |
+| `width` | Width for top/bottom edges. |
+| `height` | Height for left/right edges. |
+
+```python
+pz.row([pz.resizable(sidebar, edge="right", size=240, on_resize=self.save_width), editor])
 ```
 
 ### `split`
@@ -313,7 +446,7 @@ Two panes with a draggable divider. For the theme style use `ui.split`.
 | --- | --- |
 | `first` | First pane. |
 | `second` | Second pane. |
-| `ratio` | Proportion of the first pane (0–1). |
+| `ratio` | Proportion of the first pane (0–1). The split keeps the ratio the user drags to until this changes. |
 | `on_resize` | Callable that receives the new ratio while dragging. |
 | `vertical` | Stacks the panes top/bottom. |
 | `min_size` | Minimum size of the first pane. |
