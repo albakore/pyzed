@@ -481,6 +481,7 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    align='center',
     theme=None,
 )
 ```
@@ -496,6 +497,7 @@ Un campo numérico con botones −/+ (el `NumericStepper` de Zed). `on_change(va
 | `step` | Paso de los botones. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `suffix` | Unidad que se muestra al final (`"px"`, `"%"`…). |
+| `align` | Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -573,6 +575,56 @@ Una sección plegable: cabecera con flecha que muestra u oculta `content`. El es
 | `on_toggle` | Mensaje o callable al pulsar la cabecera. |
 | `end` | Widgets al final (derecha). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `AccordionSection`
+
+```python
+class AccordionSection
+```
+
+Una sección de `ui.accordion`: `key`, `title`, `content` y, opcionales, `icon` y un widget `end` en la cabecera.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `key` | Clave que identifica la suscripción (por defecto, el mensaje o la función). |
+| `title` | Título. |
+| `content` | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
+| `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `end` | Widgets al final (derecha). |
+
+### `accordion`
+
+```python
+accordion(
+    sections,
+    *,
+    open=(),
+    on_toggle=None,
+    icons=None,
+    spacing=8,
+    padding=(6, 12, 10, 12),
+    theme=None,
+)
+```
+
+Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `sections` | Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`). |
+| `open` | El conjunto de ids abiertos, un dict `{id: bool}` o `True` para todos. |
+| `on_toggle` | Se llama con la clave de la cabecera pulsada. |
+| `icons` | `{id: icono}`: un icono de Lucide para cada cabecera. |
+| `spacing` | Espacio alrededor de los divisores entre secciones. |
+| `padding` | Relleno alrededor del contenido de una sección abierta. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.accordion([
+    ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+    ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
+```
 
 ## Datos y feedback
 
@@ -1131,6 +1183,7 @@ workspace(
     left_width=240,
     right_width=320,
     bottom_height=220,
+    on_resize=None,
     theme=None,
 )
 ```
@@ -1148,6 +1201,7 @@ El layout de una ventana de Zed: barra de título, docks izquierdo, derecho e in
 | `left_width` | Ancho del dock izquierdo. |
 | `right_width` | Ancho del dock derecho. |
 | `bottom_height` | Alto del dock inferior. |
+| `on_resize` | Se llama con `(side, size)` cuando el usuario termina de cambiar el tamaño de un panel arrastrando su borde interior. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `title_bar`
@@ -1240,10 +1294,21 @@ Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, l
 ### `panel`
 
 ```python
-panel(content, *, header=None, width=None, height=None, side='left', theme=None)
+panel(
+    content,
+    *,
+    header=None,
+    width=None,
+    height=None,
+    side='left',
+    resizable=True,
+    on_resize=None,
+    min_size=120,
+    theme=None,
+)
 ```
 
-Un panel acoplable. `side` decide en qué borde va la línea.
+Un panel acoplable. `side` decide en qué borde va la línea; con un `width` numérico (`height` para el inferior) ese borde se arrastra para cambiar su tamaño.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1252,6 +1317,9 @@ Un panel acoplable. `side` decide en qué borde va la línea.
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `side` | `"left"`, `"right"` o `"bottom"`. |
+| `resizable` | `False` mantiene el tamaño fijo. |
+| `on_resize` | Se llama con el nuevo tamaño al terminar de arrastrar. |
+| `min_size` | Tamaño mínimo al redimensionar. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `panel_header`
@@ -1523,6 +1591,11 @@ editor(
     active_line=True,
     height='fill',
     placeholder=None,
+    annotations=None,
+    show_whitespace=False,
+    tab_size=None,
+    capture_keys=(),
+    on_scroll=None,
     theme=None,
 )
 ```
@@ -1545,6 +1618,7 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `active_line` | Color de fondo de la línea del cursor. |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `placeholder` | Texto de ayuda cuando está vacío. |
+| `on_scroll` | Se llama al desplazar. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

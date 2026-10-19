@@ -259,6 +259,43 @@ Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget),
 | `value` | Valor de un evento propio. |
 | `source` | Componente que lo emitió. |
 
+### `Dock`
+
+```python
+class Dock
+```
+
+Un espacio de trabajo como el de Zed: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `args` | Props por posición: `center`, `panels`, `layout`. |
+| `key` | Clave que identifica la suscripción (por defecto, el mensaje o la función). |
+| `kwargs` | Props y handlers por nombre, además de `key=`. |
+
+```python
+pz.Dock(center=editor, panels=[
+    pz.DockPanel("project", "Proyecto", arbol, icon="folder", side="left"),
+    pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+], layout=self.disposicion, on_layout=lambda e: setattr(self, "disposicion", e.value))
+```
+
+### `DockPanel`
+
+```python
+class DockPanel
+```
+
+Un panel para `pz.Dock`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | Id estable (se usa en la disposición guardada). |
+| `title` | Título de la pestaña. |
+| `content` | El widget del panel. |
+| `icon` | Icono de Lucide para la pestaña. |
+| `side` | Lado inicial: `"left"`, `"right"`, `"bottom"` o `"top"`. |
+
 ### `Component`
 
 ```python
@@ -282,4 +319,23 @@ class Rating(pz.Component):
         return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
 
 Rating(value=3, on_change=lambda e: print(e.value))
+```
+
+### `state`
+
+```python
+state(default=None, *, doc='')
+```
+
+Declara una variable de estado privada en la clase de un componente: el padre no puede pasarla y cada instancia empieza con su propia copia del valor (listas y diccionarios son seguros). El diseñador la muestra junto a las props. Ver [Componentes propios](/pyzed/es/guides/components/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `default` | Valor inicial, copiado para cada instancia. |
+| `doc` | Descripción que muestra el diseñador. |
+
+```python
+class Counter(pz.Component):
+    step: int = 1
+    count: int = pz.state(0)
 ```

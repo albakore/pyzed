@@ -191,6 +191,7 @@ pub enum Kind {
         layout: Layout,
         secure: bool,
         icon: Option<(char, f32)>,
+        align_x: Option<Horizontal>,
         style: InputStyle,
     },
     Scrollable {
@@ -314,6 +315,14 @@ pub enum Kind {
         width: Option<f32>,
     },
     Responsive(PyMsg),
+    /// A grid with sized column and row tracks (`grid(columns=[...])`).
+    TrackGrid(Box<crate::layout::TrackGridProps>),
+    /// A child placed in a track grid cell (`cell(...)`).
+    Cell {
+        child: Py<Widget>,
+        placement: crate::layout::Placement,
+    },
+    Resizable(Box<crate::layout::ResizableProps>),
     /// Common events attached with `.on(...)` (see `events.rs`).
     Events {
         child: Py<Widget>,
@@ -370,6 +379,12 @@ impl Widget {
             Kind::Pin { .. } => "pin",
             Kind::Grid { .. } => "grid",
             Kind::Responsive(_) => "responsive",
+            Kind::TrackGrid(props) => return format!("<Widget grid [{}]>", props.children.len()),
+            Kind::Cell { child, .. } => {
+                let inner = Python::attach(|py| child.bind(py).get().__repr__());
+                return format!("<Widget cell {inner}>");
+            }
+            Kind::Resizable(_) => "resizable",
             Kind::Events {
                 child, handlers, ..
             } => {
@@ -786,7 +801,7 @@ pub fn button(
 #[pyo3(signature = (value, *, placeholder="", on_input=None, on_submit=None, id=None, size=None,
     font=None, padding=None, width=None, secure=false, icon=None, icon_size=None, bg=None,
     border_color=None, hover_border_color=None, focus_border_color=None, border_width=None,
-    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None))]
+    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None, align_x=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn text_input(
     py: Python<'_>,
@@ -812,6 +827,7 @@ pub fn text_input(
     placeholder_color: Any<'_>,
     selection_color: Any<'_>,
     icon_color: Any<'_>,
+    align_x: Option<&str>,
 ) -> PyResult<Py<Widget>> {
     let radius = match &radius {
         Some(r) if !r.is_none() => Some(style::radius(&Some(r.clone()))?),
@@ -830,6 +846,7 @@ pub fn text_input(
             layout: Layout::new(&width, &None, &padding)?,
             secure,
             icon: icon_char(&icon)?.map(|c| (c, icon_size.unwrap_or(14.0))),
+            align_x: style::align_x(align_x)?,
             style: InputStyle {
                 background: style::opt_color(&bg)?,
                 border_color: style::opt_color(&border_color)?,

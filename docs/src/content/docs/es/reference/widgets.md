@@ -262,28 +262,161 @@ grid(
     children=None,
     *,
     columns=None,
+    rows=None,
     max_width=None,
     spacing=0.0,
+    row_spacing=None,
     height=None,
     aspect_ratio=None,
     width=None,
+    padding=None,
+    align_x=None,
+    align_y=None,
 )
 ```
 
-Coloca los hijos en una rejilla con un número fijo de `columns`, o tantas columnas de como mucho `max_width` como quepan.
+Coloca los hijos en una rejilla. Con `columns=3` las columnas son iguales (o `max_width` mete tantas como quepan). Con listas de pistas (`columns=[200, "1fr", "auto"]`, `rows=...`) funciona como un grid de CSS: los números son píxeles, `"auto"` se ajusta al contenido y `"<n>fr"` reparte el espacio que sobra. Envuelve los hijos en `pz.cell` para colocarlos y hacer que ocupen varias celdas; el resto llena las celdas libres fila a fila. Ver [Layout](/pyzed/es/guides/layout/#rejillas).
 
 | Parámetro | Descripción |
 | --- | --- |
 | `children` | Lista de hijos. Se aplanan listas anidadas y se ignoran `None` y `False`, así que puedes escribir `cond and widget`. |
-| `columns` | Número de columnas. |
-| `max_width` | Ancho máximo en píxeles. |
-| `spacing` | Separación entre hijos, en píxeles. |
-| `height` | Alto de cada fila. |
-| `aspect_ratio` | Mantiene las celdas en esta proporción ancho/alto. |
-| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `columns` | Número de columnas iguales, o pistas: una lista (`[200, "1fr", "auto"]`) o un texto (`"200 1fr auto"`). |
+| `rows` | Pistas de las filas, como `columns`. Las filas que no están en la lista son `"auto"`. |
+| `max_width` | Mete tantas columnas de como mucho este ancho como quepan (solo con `columns=<int>`). |
+| `spacing` | Espacio entre celdas. |
+| `row_spacing` | Espacio entre filas, si es distinto. |
+| `height` | Con `columns=<int>`: alto de cada fila. Con pistas: alto de la rejilla. |
+| `aspect_ratio` | Mantiene las celdas en esta proporción ancho/alto (solo con `columns=<int>`). |
+| `width` | Con `columns=<int>`: píxeles. Con pistas: ancho de la rejilla (por defecto `"fill"`). |
+| `padding` | Espacio alrededor de las celdas. |
+| `align_x` | Alineación horizontal de cada elemento en su celda: `"start"`, `"center"`, `"end"`. |
+| `align_y` | Alineación vertical de cada elemento en su celda. |
 
 ```python
-pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)
+pz.grid([pz.cell(header, column=0, row=0, column_span=2), sidebar, content],
+        columns=[200, "1fr"], rows=[48, "1fr"], spacing=8, height="fill")
+```
+
+### `cell`
+
+```python
+cell(
+    content,
+    *,
+    column=None,
+    row=None,
+    column_span=1,
+    row_span=1,
+    align_x=None,
+    align_y=None,
+)
+```
+
+Coloca un hijo en una rejilla con pistas: su columna y fila (desde 0) y cuántas ocupa. Los hijos sin celda llenan las celdas libres fila a fila. Fuera de una rejilla es solo el hijo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | El widget. |
+| `column` | Índice de columna (desde 0). |
+| `row` | Índice de fila (desde 0). |
+| `column_span` | Columnas que ocupa. |
+| `row_span` | Filas que ocupa. |
+| `align_x` | Alineación horizontal en la celda. |
+| `align_y` | Alineación vertical en la celda. |
+
+```python
+pz.cell(ui.button("Guardar"), column=2, row=3, align_x="end")
+```
+
+### `flex`
+
+```python
+flex(
+    children=(),
+    *,
+    direction='row',
+    justify='start',
+    align='start',
+    gap=0,
+    wrap=False,
+    padding=None,
+    width=None,
+    height=None,
+)
+```
+
+Coloca los hijos a lo largo de un eje, como flexbox de CSS, con `justify` en el eje principal y `align` en el transversal. Usa `pz.flex_item` para que un hijo crezca o tenga un tamaño fijo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `children` | Los widgets, o `pz.flex_item(...)` para hijos con su propio tamaño. |
+| `direction` | `"row"` o `"column"`. |
+| `justify` | `"start"`, `"center"`, `"end"`, `"between"`, `"around"` o `"evenly"`. No tiene efecto si algún hijo crece. |
+| `align` | Alineación transversal: `"start"`, `"center"` o `"end"`. |
+| `gap` | Espacio entre hijos. |
+| `wrap` | Pasa a nuevas líneas (solo filas con `justify="start"`). |
+| `padding` | Espacio alrededor de los hijos. |
+| `width` | Ancho. |
+| `height` | Alto. |
+
+```python
+pz.flex([logo, titulo, pz.flex_item(buscador, grow=1), avatar], justify="between", align="center", gap=8)
+```
+
+### `flex_item`
+
+```python
+flex_item(content, *, grow=1, basis=None, align=None)
+```
+
+Da tamaño a un hijo de `pz.flex`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | El widget. |
+| `grow` | Parte del espacio libre en el eje principal (`0` mantiene su tamaño natural). |
+| `basis` | Un tamaño fijo en píxeles en el eje principal, en lugar de crecer. |
+| `align` | Alineación transversal de este hijo. |
+
+### `resizable`
+
+```python
+resizable(
+    content,
+    *,
+    edge='right',
+    size=240.0,
+    min_size=80.0,
+    max_size=None,
+    on_resize=None,
+    color=None,
+    hover_color=None,
+    thickness=1.0,
+    handle=8.0,
+    width=None,
+    height=None,
+)
+```
+
+Un panel cuyo borde `edge` se arrastra para cambiar su tamaño. Conserva el tamaño al que lo arrastra el usuario; `on_resize(size)` se llama al terminar de arrastrar para que puedas guardarlo. Si `size` cambia después, vuelve a ese valor.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | El contenido del panel. |
+| `edge` | El borde con el asa: `"right"` (una barra lateral izquierda), `"left"`, `"top"` (un panel inferior) o `"bottom"`. |
+| `size` | Ancho inicial (alto con los bordes top/bottom). |
+| `min_size` | Tamaño mínimo. |
+| `max_size` | Tamaño máximo. |
+| `on_resize` | Se llama con el nuevo tamaño al terminar de arrastrar. |
+| `color` | Color de la línea. |
+| `hover_color` | Color de la línea al pasar el ratón o arrastrar. |
+| `thickness` | Grosor de la línea. |
+| `handle` | Ancho de la zona que se puede agarrar. |
+| `width` | Ancho con los bordes top/bottom. |
+| `height` | Alto con los bordes left/right. |
+
+```python
+pz.row([pz.resizable(barra, edge="right", size=240, on_resize=self.guardar_ancho), editor])
 ```
 
 ### `split`
@@ -313,7 +446,7 @@ Dos paneles con un divisor que se arrastra. Para el estilo del tema usa `ui.spli
 | --- | --- |
 | `first` | Primer panel. |
 | `second` | Segundo panel. |
-| `ratio` | Proporción del primer panel (0–1). |
+| `ratio` | Proporción del primer panel (0–1). El divisor conserva la proporción a la que lo arrastra el usuario hasta que esto cambia. |
 | `on_resize` | Callable que recibe la nueva proporción mientras se arrastra. |
 | `vertical` | Apila los paneles arriba/abajo. |
 | `min_size` | Tamaño mínimo del primer panel. |
@@ -732,6 +865,7 @@ text_input(
     placeholder_color=None,
     selection_color=None,
     icon_color=None,
+    align_x=None,
 )
 ```
 
@@ -761,6 +895,7 @@ Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_
 | `placeholder_color` | Color del placeholder. |
 | `selection_color` | Color de la selección. |
 | `icon_color` | Color del icono. |
+| `align_x` | Alineación horizontal: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ### `mouse_area`
 
@@ -1130,6 +1265,11 @@ code_editor(
     on_cursor=None,
     active_line=None,
     scrollbar_color=None,
+    annotations=None,
+    whitespace=None,
+    tab_size=None,
+    capture_keys=None,
+    on_scroll=None,
 )
 ```
 
@@ -1165,3 +1305,4 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 | `on_cursor` | Callable que recibe `(línea, columna)`, desde 1. |
 | `active_line` | Color de fondo de la línea del cursor. |
 | `scrollbar_color` | Color de la barra de desplazamiento. |
+| `on_scroll` | Se llama al desplazar. |

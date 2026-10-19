@@ -1,0 +1,90 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Reviews",
+    "title": "Reviews",
+    "width": 600,
+    "height": 240,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "ada",
+      "type": "profile_card",
+      "x": 16,
+      "y": 16,
+      "width": 280,
+      "height": 128,
+      "props": {
+        "person": "Ada Lovelace",
+        "job": "Mathematician",
+        "score": 4
+      },
+      "events": {
+        "rated": "ada_rated"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "grace",
+      "type": "profile_card",
+      "x": 304,
+      "y": 16,
+      "width": 280,
+      "height": 128,
+      "props": {
+        "person": "Grace Hopper",
+        "job": "Computer scientist",
+        "score": 5
+      },
+      "events": {
+        "rated": "grace_rated"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 16,
+      "y": 168,
+      "width": 568,
+      "height": 24,
+      "props": {
+        "text": "Rate someone.",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}

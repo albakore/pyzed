@@ -259,6 +259,43 @@ What happened, passed to event handlers: `type`, `x`, `y` (relative to the widge
 | `value` | Value of a custom event. |
 | `source` | Component that emitted it. |
 
+### `Dock`
+
+```python
+class Dock
+```
+
+A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).
+
+| Parameter | Description |
+| --- | --- |
+| `args` | Props by position: `center`, `panels`, `layout`. |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `kwargs` | Props and handlers by name, plus `key=`. |
+
+```python
+pz.Dock(center=editor, panels=[
+    pz.DockPanel("project", "Project", tree, icon="folder", side="left"),
+    pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+], layout=self.layout, on_layout=lambda e: setattr(self, "layout", e.value))
+```
+
+### `DockPanel`
+
+```python
+class DockPanel
+```
+
+A panel for `pz.Dock`.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | Stable id (used in the saved layout). |
+| `title` | Tab title. |
+| `content` | The panel's widget. |
+| `icon` | Lucide icon for the tab. |
+| `side` | Starting side: `"left"`, `"right"`, `"bottom"` or `"top"`. |
+
 ### `Component`
 
 ```python
@@ -282,4 +319,23 @@ class Rating(pz.Component):
         return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
 
 Rating(value=3, on_change=lambda e: print(e.value))
+```
+
+### `state`
+
+```python
+state(default=None, *, doc='')
+```
+
+Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).
+
+| Parameter | Description |
+| --- | --- |
+| `default` | Initial value, copied for each instance. |
+| `doc` | Description shown in the designer. |
+
+```python
+class Counter(pz.Component):
+    step: int = 1
+    count: int = pz.state(0)
 ```
