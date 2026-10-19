@@ -486,3 +486,41 @@ def test_drag_from_the_outline_onto_the_form(tmp_path):
     app.exit_form()
     app.window_release()  # released over a panel: nothing changes
     assert app.doc.form["nav2"].parent == "content"
+
+
+def test_containers_show_a_grip_that_selects_and_drags_them(tmp_path):
+    from pyzed.designer import surface
+
+    app = sidebar_app(tmp_path)
+    assert surface.grips(app) == []
+    app.enter_form()
+    app.pointer_moved(100, 20)  # over nav1, inside the sidebar
+    assert surface.grips(app) == [("sidebar", 7.0, 1.0)]  # touches the top: the tab goes inside
+    app.press_control("nav1")  # a press on the child still picks the child
+    assert [c.name for c in app.doc.selected] == ["nav1"]
+    app.release()
+    app.exit_form()
+    assert [g[0] for g in surface.grips(app)] == ["sidebar"]  # the parent of the selection keeps its tab
+    app.window_moved(50, 50)
+    app.pointer_moved_view(50, 50)
+    app.press_control("sidebar")  # what the grip does
+    assert [c.name for c in app.doc.selected] == ["sidebar"] and app.drag.mode == "move"
+    assert surface.grips(app) == []  # hidden while dragging
+    app.pointer_moved_view(90, 70)
+    app.release()
+    assert app.doc.form.get("sidebar").x != 0 or app.doc.form.get("sidebar").y != 0
+    assert app.view() is not None
+
+
+def test_empty_containers_and_plain_controls_have_no_grip(tmp_path):
+    from pyzed.designer import surface
+
+    app = sidebar_app(tmp_path)
+    app.doc.select("title1")
+    assert [g[0] for g in surface.grips(app)] == ["content"]
+    empty = app.doc.add("row", 300, 300, 200, 48)
+    app.doc.select(empty.name)
+    assert surface.grips(app) == []
+    app.doc.select("title1")
+    app.tool = "button"
+    assert surface.grips(app) == []

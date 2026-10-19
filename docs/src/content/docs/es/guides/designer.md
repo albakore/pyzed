@@ -90,6 +90,10 @@ fila / columna / cuadrícula**.
 Los hijos de un flex o una grilla aparecen en su orden en el outline; arrástralos ahí, o en el formulario, para
 reordenarlos. Mover o redimensionar un contenedor mueve a sus hijos, y copiar, pegar y borrar los incluyen.
 
+Los hijos cubren casi todo el contenedor, así que un clic ahí elige a un hijo. Para elegir o mover el propio
+contenedor, usa la pestaña con su nombre sobre su esquina superior izquierda: aparece al pasar el ratón por el
+contenedor y mientras él, o un control de dentro, está seleccionado.
+
 ![Un formulario con barra lateral: una columna flexible y sus hijos](../../../../../screenshots/designer-layout.png)
 
 ## Menús, ajustes y paleta de comandos
