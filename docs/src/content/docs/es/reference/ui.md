@@ -796,7 +796,7 @@ ui.console(log.entries, on_clear=log.clear)
 
 ```python
 @dataclass
-class LogEntry(level, text, time=1792370385.0771632, count=1)
+class LogEntry(level, text, time=1792371280.840671, count=1)
 ```
 
 Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
