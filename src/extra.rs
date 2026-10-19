@@ -454,7 +454,7 @@ impl<Theme> iced::advanced::Widget<Message, Theme, iced::Renderer> for Picture<'
             filter_method: self.filter,
             rotation: Radians(0.0),
             border_radius: Default::default(),
-            opacity: self.opacity,
+            opacity: self.opacity * crate::animation::opacity(),
             snap: true,
         };
         let overflows =
@@ -1245,9 +1245,14 @@ pub fn render_markdown<'a>(props: &MarkdownProps, items: &'a [md::Item]) -> Elem
         None => Message::Noop,
     });
     let text_color = props.text_color;
-    let mut c = widget::container(view).style(move |_| widget::container::Style {
-        text_color,
-        ..Default::default()
+    let mut c = widget::container(view).style(move |theme| {
+        crate::animation::container_style(
+            widget::container::Style {
+                text_color,
+                ..Default::default()
+            },
+            theme,
+        )
     });
     if let Some(w) = props.width {
         c = c.width(w);
@@ -1475,7 +1480,7 @@ pub fn render_pick_list<'a>(props: &PickListProps) -> Element<'a, Message> {
         {
             out.border.color = c;
         }
-        out
+        crate::animation::fade_pick_list(out)
     })
     .menu_style(move |theme: &Theme| {
         let mut out = iced::overlay::menu::default(theme);
@@ -1594,7 +1599,7 @@ pub fn render_radio<'a>(props: &RadioProps) -> Element<'a, Message> {
         if text_color.is_some() {
             out.text_color = text_color;
         }
-        out
+        crate::animation::fade_radio(out)
     })
     .into()
 }

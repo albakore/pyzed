@@ -6,6 +6,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 
 from . import _core
 from . import _platform
+from . import animation as _animation
 from . import component as _component
 from . import style as _style
 from . import hot_reload as _hot_reload
@@ -41,6 +42,11 @@ class Window:
     uses the app's theme) and ``style`` (a ``pz.Style`` applied to the whole view, on top
     of ``pz.set_style``; ``None`` uses the app's).
 
+    ``transition`` animates the window's content when it opens: a window transition
+    (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
+    ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
+    closes (a window transition name also gives the matching exit).
+
     Optional hooks: ``on_open()``, ``on_close()`` (return ``False`` to keep the window
     open), ``on_resize(width, height)``, ``on_key(combo)`` and ``subscriptions()``.
     """
@@ -58,6 +64,8 @@ class Window:
     scale: float = 1.0
     theme: ThemeLike = None
     style: Any = None
+    transition: Any = None
+    exit_transition: Any = None
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -117,7 +125,11 @@ class Window:
         _hot_reload.check()
         _theme.use(self.resolved_theme())
         with _component.render_pass(self):
-            return _style.apply_global(self.view(), self.resolved_style())
+            root = _style.apply_global(self.view(), self.resolved_style())
+        return _animation._window_root(self, root)
+
+    def __pyzed_exit__(self) -> float:
+        return _animation._window_exit(self)
 
     def __pyzed_palette__(self):
         return self.resolved_theme().palette()

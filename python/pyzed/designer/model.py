@@ -40,6 +40,7 @@ class Control:
     handler function names. ``layout`` holds options read by the parent's layout, such as
     ``grow`` in a flex row or ``span`` in a grid. ``style`` holds CSS-like style properties
     (``pz.Style.to_dict()``: background, border, radius, font...) drawn on top of the props.
+    ``animations`` lists the control's animations (see ``designer.motion``).
     """
 
     name: str
@@ -57,6 +58,7 @@ class Control:
     parent: Optional[str] = None
     layout: Dict[str, Any] = field(default_factory=dict)
     style: Dict[str, Any] = field(default_factory=dict)
+    animations: List[Dict[str, Any]] = field(default_factory=list)
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
@@ -74,6 +76,8 @@ class Control:
             del data["layout"]
         if not data["style"]:
             del data["style"]
+        if not data["animations"]:
+            del data["animations"]
         return data
 
     @classmethod
@@ -85,6 +89,7 @@ class Control:
         known["events"] = dict(known.get("events") or {})
         known["layout"] = dict(known.get("layout") or {})
         known["style"] = dict(known.get("style") or {})
+        known["animations"] = [dict(a) for a in known.get("animations") or [] if isinstance(a, dict)]
         known["parent"] = known.get("parent") or None
         return cls(**known)
 

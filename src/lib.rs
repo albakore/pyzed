@@ -1,5 +1,6 @@
 //! Native core of Pyzed: a thin, fast bridge between Python and the Iced GUI toolkit.
 
+mod animation;
 mod app;
 mod editor;
 mod editor_widgets;
@@ -29,6 +30,11 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
     m.add_function(wrap_pyfunction!(fonts::load_font, m)?)?;
+    m.add_function(wrap_pyfunction!(animation::presence, m)?)?;
+    m.add_function(wrap_pyfunction!(animation::set_reduced_motion, m)?)?;
+    m.add_function(wrap_pyfunction!(animation::reduced_motion, m)?)?;
+    m.add_function(wrap_pyfunction!(animation::ease, m)?)?;
+    m.add("EASINGS", animation::EASINGS.to_vec())?;
     m.add("ICED_VERSION", "0.14")?;
     Ok(())
 }

@@ -15,6 +15,12 @@ Properties:
   ``align_x``/``align_y`` (where the content sits) and ``clip``.
 - Text, inherited by every text inside: ``color``, ``font`` (``"sans"``, ``"mono"``,
   ``"serif"`` or a loaded family), ``weight``, ``italic``, ``size`` and ``line_height``.
+- Effects: ``opacity`` (0 to 1, for everything inside), ``translate`` (``(x, y)`` in pixels
+  or ``"50%"`` of the size), ``scale``, ``glow`` (a color, a blur radius or
+  ``(color, radius)``: a soft halo around the box), ``bloom`` (a color, an intensity from 0
+  to 1 or ``(color, intensity)``: a wide, bright glow) and ``glass`` (``True``, a tint color
+  or ``{"tint": ..., "strength": ...}``: a translucent, frosted panel). Glow, bloom and
+  glass set the shadow, background and border, so properties given with them win.
 
 Colors may be theme tokens (``"accent"``, ``"text_muted"``, ``"panel"``...), so styles follow
 theme switches. ``pz.Style`` keeps a style to reuse and combine (``base | accent``), and
@@ -33,7 +39,10 @@ PROPERTIES = (
     "background", "color", "font", "weight", "italic", "size", "line_height",
     "border_color", "border_width", "radius", "shadow", "padding", "margin",
     "width", "height", "max_width", "max_height", "align_x", "align_y", "clip",
+    "opacity", "translate", "scale", "glow", "bloom", "glass",
 )
+#: The effect properties (``glow``, ``bloom`` and ``glass`` expand into box properties).
+EFFECT_PROPERTIES = ("opacity", "translate", "scale", "glow", "bloom", "glass")
 TEXT_PROPERTIES = ("color", "font", "weight", "italic", "size", "line_height")
 ALIASES = {"bg": "background", "text_color": "color", "font_size": "size", "font_weight": "weight",
            "font_family": "font"}
@@ -424,6 +433,76 @@ def apply_global(view: Any, style: Any = None) -> Any:
     return view.style(props, defaults=True)
 
 
+def _alpha(color: Any, alpha: float) -> str:
+    r, g, b, a = _rgba(color)
+    return _hex(r, g, b, a * alpha)
+
+
+def _accent() -> str:
+    try:
+        return _theme.current().accent
+    except AttributeError:  # pragma: no cover - every theme has an accent
+        return "#61afef"
+
+
+def _effects(merged: Mapping[str, Any]) -> Dict[str, Any]:
+    """The box properties ``glow``, ``bloom`` and ``glass`` stand for."""
+    out: Dict[str, Any] = {}
+    glass = merged.get("glass")
+    if glass:
+        tint, strength = "#ffffff", 0.08
+        if isinstance(glass, Mapping):
+            tint, strength = glass.get("tint", tint), float(glass.get("strength", strength))
+        elif not isinstance(glass, bool):
+            tint = glass
+        strength = min(max(strength, 0.0), 1.0)
+        out["background"] = Gradient([_alpha(tint, min(strength * 1.6, 1.0)), _alpha(tint, strength * 0.6)])
+        out["border_color"] = _alpha(tint, min(0.08 + strength * 1.5, 1.0))
+        out["border_width"] = 1
+        out["radius"] = 12
+        out["shadow"] = ("#00000059", (0, 10), 30)
+    glow = merged.get("glow")
+    if glow is not None and glow is not False:
+        color, radius = _accent(), 12.0
+        if isinstance(glow, (tuple, list)) and len(glow) == 2 and isinstance(glow[1], (int, float)):
+            color, radius = glow[0], float(glow[1])
+        elif isinstance(glow, (int, float)) and not isinstance(glow, bool):
+            radius = float(glow)
+        elif glow is not True:
+            color = glow
+        out["shadow"] = (_alpha(color, 0.85), (0, 0), radius)
+    bloom = merged.get("bloom")
+    if bloom is not None and bloom is not False:
+        color, intensity = _accent(), 0.6
+        if isinstance(bloom, (tuple, list)) and len(bloom) == 2 and isinstance(bloom[1], (int, float)):
+            color, intensity = bloom[0], float(bloom[1])
+        elif isinstance(bloom, (int, float)) and not isinstance(bloom, bool):
+            intensity = float(bloom)
+        elif bloom is not True:
+            color = bloom
+        intensity = min(max(intensity, 0.0), 1.0)
+        out["shadow"] = (_alpha(color, 0.5 + 0.45 * intensity), (0, 0), 12 + 36 * intensity)
+        out["border_color"] = _alpha(color, 0.35 + 0.6 * intensity)
+        out["border_width"] = 1
+    return out
+
+
+def _translate(value: Any) -> Tuple[Any, Any]:
+    if isinstance(value, (int, float)):
+        value = (value, 0)
+    x, y = value
+
+    def one(v: Any) -> Any:
+        if isinstance(v, str):
+            text = v.strip()
+            if text.endswith("%"):
+                return ("pct", float(text[:-1]) / 100.0)
+            return float(text.removesuffix("px"))
+        return float(v)
+
+    return one(x), one(y)
+
+
 def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
              props: Optional[Mapping[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Merges a widget's styles (called by ``Widget.style``).
@@ -436,8 +515,9 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
         merged.update(_props_of(style))
     merged.update(_normalize(props or {}))
     merged = {k: v for k, v in merged.items() if v is not None}
+    drawn = {**_effects(merged), **{k: v for k, v in merged.items() if k not in ("glow", "bloom", "glass")}}
     out: Dict[str, Any] = {}
-    for key, value in merged.items():
+    for key, value in drawn.items():
         if key == "background":
             if isinstance(value, Gradient):
                 out["gradient"] = value.to_value()
@@ -453,6 +533,10 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
         elif key == "shadow":
             color, offset, blur = value
             out[key] = (to_hex(color), tuple(offset), blur)
+        elif key == "translate":
+            out[key] = _translate(value)
+        elif key in ("opacity", "scale"):
+            out[key] = float(value)
         else:
             out[key] = value
     return merged, out

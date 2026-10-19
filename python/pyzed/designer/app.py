@@ -157,6 +157,8 @@ class Designer(App):
         self.folded: set = set()  # containers folded in the outline
         self.members_open: set = set()  # placed components whose properties and methods the outline lists
         self.collapsed_sections: set = set()  # property groups folded in the Properties panel
+        self.motion_preview: Dict[str, int] = {}  # controls whose animations play on the canvas (restart counter)
+        self.motion_open: Optional[Tuple[str, int]] = None  # (control, index) of the animation being edited
         self.add_parent: Optional[str] = None  # container the "Add control" picker adds into
         self.picker_query = ""
         self.picker_index = 0
@@ -886,6 +888,62 @@ class Designer(App):
     def clear_style(self, name: Optional[str]) -> None:
         """Removes every style override of the control ``name`` (the form's when ``None``)."""
         self.doc.clear_style(name)
+
+    # -- animations ------------------------------------------------------------------
+
+    def add_animation(self, name: str, trigger: str = "mount") -> None:
+        """Adds an animation (a preset that suits ``trigger``) to the control ``name`` and previews it."""
+        from . import motion
+
+        animations = [*self.doc.form[name].animations, motion.new_entry(trigger)]
+        self.doc.set_animations(name, animations)
+        self.motion_open = (name, len(animations) - 1)
+        self.preview_animations(name)
+
+    def open_animation(self, name: str, index: int) -> None:
+        """Opens (or closes) the editor of animation ``index`` of the control ``name``."""
+        self.motion_open = None if self.motion_open == (name, index) else (name, index)
+
+    def set_animation(self, name: str, index: int, key: str, value: Any) -> None:
+        """Sets ``key`` (preset, on, duration, delay, easing, repeat) of animation ``index`` of the control
+        ``name``; ``None`` or ``""`` goes back to the preset's own value. Changing it previews it."""
+        animations = [dict(a) for a in self.doc.form[name].animations]
+        if not 0 <= index < len(animations):
+            return
+        entry = animations[index]
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        if value in (None, ""):
+            entry.pop(key, None)
+        else:
+            entry[key] = value
+        if key == "preset":  # a new preset brings its own timing
+            for k in ("duration", "delay", "easing", "repeat"):
+                entry.pop(k, None)
+        self.doc.set_animations(name, animations, group=f"animation:{name}:{index}:{key}")
+        if key != "on":
+            self.preview_animations(name)
+
+    def remove_animation(self, name: str, index: int) -> None:
+        """Removes animation ``index`` of the control ``name``."""
+        animations = list(self.doc.form[name].animations)
+        if 0 <= index < len(animations):
+            del animations[index]
+            self.doc.set_animations(name, animations)
+            self.motion_open = None
+            if not animations:
+                self.stop_preview(name)
+
+    def preview_animations(self, name: str) -> None:
+        """Plays the animations of the control ``name`` on the canvas (again, if they were playing)."""
+        self.motion_preview[name] = self.motion_preview.get(name, 0) + 1
+
+    def stop_preview(self, name: Optional[str] = None) -> None:
+        """Stops the canvas preview of one control's animations (every control's when ``name`` is ``None``)."""
+        if name is None:
+            self.motion_preview.clear()
+        else:
+            self.motion_preview.pop(name, None)
 
     def toggle_color_picker(self, name: Optional[str], key: str) -> None:
         """Opens the color picker of a Style row as a floating card next to the pointer (or closes it)."""
