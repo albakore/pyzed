@@ -170,6 +170,7 @@ class Designer(App):
         self.picker_index = 0
         # code editor: (handler name or "*" for the whole file, text being edited)
         self.editing: Optional[Tuple[str, str]] = None
+        self._code_base: Optional[Tuple[Any, str]] = None  # what the code editor's text was last synced with
         self.last_handler: Optional[str] = None
         self.code_error: Optional[str] = None
         self.code_revision = 0
@@ -1274,8 +1275,51 @@ class Designer(App):
         self.app_menu = None
         self.dialog = "editor_settings"
 
+    def _code_scope(self) -> str:
+        """The document's text of what the code editor shows: the whole file or one handler."""
+        assert self.editing is not None
+        handler = self.editing[0]
+        return self.doc.code if handler == "*" else self.doc.handler_source(handler)
+
+    def sync_code(self) -> None:
+        """Brings changes made outside the code editor (Properties, the Events tab, undo) into it.
+
+        Text typed in the editor and not applied yet is kept: both changes are merged, and the merge is
+        applied to the document when it parses.
+        """
+        if self.editing is None:
+            self._code_base = None
+            return
+        key = (id(self.doc), self.editing[0], self.code_revision)
+        theirs = self._code_scope()
+        if self._code_base is None or self._code_base[0] != key:
+            self._code_base = (key, theirs)
+            return
+        base, ours = self._code_base[1], self.editing[1]
+        if theirs == base:
+            return
+        if ours == theirs:
+            self._code_base = (key, theirs)
+            return
+        merged = theirs if ours == base else _code.merge3(base, ours, theirs)
+        if merged != theirs:
+            try:
+                ast.parse(merged)
+            except SyntaxError:
+                pass  # keep the document as it is; the editor shows the merge until it parses
+            else:
+                if self.editing[0] == "*":
+                    self.doc.set_code(merged)
+                else:
+                    self.doc.set_handler_source(self.editing[0], merged)
+                theirs = self._code_scope()
+        self.editing = (self.editing[0], merged)
+        self.code_revision += 1  # a new editor buffer with the merged text
+        self._code_base = ((id(self.doc), self.editing[0], self.code_revision), theirs)
+
     def _flush_code(self) -> bool:
         """Applies the open editor to the document; ``False`` (and an error shown) if it does not parse."""
+        self.sync_code()
         if self.editing is None:
             return True
         handler, text = self.editing
@@ -1290,6 +1334,7 @@ class Designer(App):
             self.code_error = f"Line {err.lineno}: {err.msg}"
             return False
         self.code_error = None
+        self._code_base = ((id(self.doc), handler, self.code_revision), self._code_scope())
         return True
 
     def apply_code(self) -> Any:
@@ -1864,6 +1909,7 @@ class Designer(App):
         """Builds the whole window: title bar, docks around the tabs, toolbar and surface, the status bar,
         and the menus, popovers, toasts and dialog over them.
         """
+        self.sync_code()
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
         if self.help_shown:

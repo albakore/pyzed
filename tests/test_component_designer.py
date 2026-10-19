@@ -553,3 +553,123 @@ def test_reusable_methods_and_children_from_the_tree(tmp_path):
     app.assist.cursor = (3, 5)
     scene_panel.insert_snippet(app, "self.rating1.bump()")
     assert "    self.rating1.bump()" in app.editing[1]
+
+
+def test_properties_reach_the_open_code_and_survive_saving(tmp_path):
+    doc = make_rating(tmp_path)
+    doc.save()
+    app = designer.Designer(tmp_path / "rating.pzcomp", language_servers=False)
+    app.edit_whole_file()
+    app.view()
+    app.doc.add_member("speed", "float", 1.5)  # from Properties, while the whole file is open
+    app.view()
+    assert "speed: float = 1.5" in app.editing[1]
+    app.save()
+    assert "speed: float = 1.5" in (tmp_path / "rating.py").read_text()
+
+    # text typed in the editor and not applied yet is merged with the change from Properties
+    typed = app.editing[1].rstrip() + "\n\n    def extra(self):\n        return 1\n"
+    app.set_code_buffer(typed)
+    app.doc.update_member("speed", default=2.5)
+    app.view()
+    assert "speed: float = 2.5" in app.editing[1] and "def extra(self)" in app.editing[1]
+    app.save()
+    saved = (tmp_path / "rating.py").read_text()
+    assert "speed: float = 2.5" in saved and "def extra(self)" in saved
+
+
+def test_merge3_keeps_both_sides():
+    from pyzed.designer.code import merge3
+
+    base = "a\nb\nc\nd\ne\n"
+    assert merge3(base, "a\nB\nc\nd\ne\n", "a\nb\nc\nd\nE\n") == "a\nB\nc\nd\nE\n"
+    assert merge3(base, base, "z\n" + base) == "z\n" + base
+    assert merge3(base, "a\nO\nc\nd\ne\n", "a\nT\nc\nd\ne\n") == "a\nO\nc\nd\ne\n"  # the editor wins a clash
+
+
+def test_any_annotation_parses_to_an_editor_type():
+    from pyzed.designer import type_editor as te
+
+    cases = {
+        "int | str | list[str] | dict[str, int]": ("union", "0"),
+        "Optional[float]": ("optional", "None"),
+        "float | None": ("optional", "None"),
+        "tuple[int, int]": ("tuple", "(0, 0)"),
+        "tuple[str, ...]": ("list", "()"),
+        "set[int]": ("set", "set()"),
+        "dict[str, int]": ("dict", "{}"),
+        "list[Point]": ("list", "[]"),
+        "Point": ("class", "Point()"),
+        "Literal['a', 'b']": ("choice", "'a'".replace("'", '"')),
+        "Annotated[int, pz.Range(2, 5)]": ("range", "2"),
+        "pz.Color": ("Color", '"accent"'),
+        "Any": ("any", "None"),
+    }
+    for annotation, (kind, default) in cases.items():
+        t = te.parse_type(annotation)
+        assert (t.kind, te.default_source(t)) == (kind, default), annotation
+    assert te.fits(te.parse_type("int | None"), "None") and not te.fits(te.parse_type("int"), '"x"')
+
+
+def test_typed_editors_write_python_source():
+    from pyzed.designer import type_editor as te
+
+    out = []
+    classes = te.class_resolver(te.module_classes("class Point:\n    x: int = 0\n    label: str = ''\n"))
+    ctx = te.Context(None, pz.themes.ONE_DARK, classes)
+
+    def build(annotation, source):
+        out.clear()
+        return te.build(te.parse_type(annotation), source, out.append, ctx, "k")
+
+    head, rows = build("list[str]", '["a", "b"]')
+    assert [r.label for r in rows] == ["[0]", "[1]"]
+    head, rows = build("dict[str, int]", '{"a": 1}')
+    assert len(rows) == 1
+    head, rows = build("Point", "Point(x=3)")
+    assert [r.label for r in rows] == ["x", "label"]
+    head, rows = build("Point | None", "None")
+    assert rows == []
+    head, rows = build("Point", "Point()")
+    assert [r.label for r in rows] == ["x", "label"]  # the fields show their defaults
+
+
+def test_any_type_of_property_in_the_class(tmp_path):
+    doc = make_rating(tmp_path)
+    doc.set_code(doc.code.replace("from pyzed.designer import SceneComponent",
+                                  "from dataclasses import dataclass\n\nfrom pyzed.designer import SceneComponent"
+                                  "\n\n\n@dataclass\nclass Point:\n    x: int = 0\n    y: int = 0"))
+    assert doc.scene.name == "Rating"  # a helper class before the component does not rename it
+    doc.add_member("mixed", "int | str | list[str] | dict[str, int]")
+    doc.add_member("maybe", "Optional[float]")
+    doc.add_member("origin", "Point")
+    doc.add_member("tags", "list[str]")
+    doc.set_member_source("tags", '["red", "blue"]')
+    assert doc.member("mixed").default == 0 and doc.member("maybe").default is None
+    assert doc.member("origin").default_source == "Point()" and doc.member("tags").default == ["red", "blue"]
+    doc.update_member("tags", type="dict[str, int]")
+    assert doc.member("tags").default == {}
+    assert "from typing import Optional\n" in doc.code and "origin: Point = Point()" in doc.code
+    cls = load_component(doc.save())
+    rating = cls.create()
+    assert rating.mixed == 0 and rating.maybe is None and rating.origin.x == 0
+
+
+def test_component_props_of_any_type_get_the_typed_editor():
+    from typing import Optional
+
+    from pyzed.component import _designer_prop
+
+    class Gauge(pz.Component):
+        designer = False
+        limit: Optional[float] = None
+        marks: dict[str, int] = {}
+        names: list[str] = []
+
+        def render(self):
+            return pz.text("")
+
+    props = {p.name: p for p in (_designer_prop(i, components.Prop) for i in Gauge.__props__.values())}
+    assert (props["limit"].kind, props["limit"].type) == ("typed", "Optional[float]")
+    assert (props["marks"].kind, props["marks"].type) == ("typed", "dict[str, int]")
+    assert props["names"].kind == "list"

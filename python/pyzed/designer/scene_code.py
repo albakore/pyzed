@@ -136,14 +136,18 @@ def _parse(source: str) -> Optional[ast.Module]:
 
 
 def find_class(source: str, name: Optional[str] = None) -> Optional[ast.ClassDef]:
-    """The top-level class ``name`` (or the first class when ``name`` is None)."""
+    """The top-level class ``name``; when ``name`` is None, the component class: the one with a ``scene=``
+    keyword, else the first one deriving from a component, else the first class (the module may also
+    hold helper classes, such as dataclasses for its properties)."""
     tree = _parse(source)
     if tree is None:
         return None
-    for node in tree.body:
-        if isinstance(node, ast.ClassDef) and (name is None or node.name == name):
-            return node
-    return None
+    classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
+    if name is not None:
+        return next((node for node in classes if node.name == name), None)
+    return next((c for c in classes if any(k.arg == "scene" for k in c.keywords)), None) or next(
+        (c for c in classes if any("Component" in ast.unparse(b) for b in c.bases)), None) or (
+        classes[0] if classes else None)
 
 
 def _is_state_call(node: Optional[ast.expr]) -> bool:
@@ -288,10 +292,24 @@ def set_members(source: str, members: Sequence[Member], cls_name: Optional[str] 
     source = _replace_statements(source, cls.name, picked, block)
     if any(not m.public or "pz." in m.type for m in members):
         source = ensure_import(source)
-    wanted = [name for name in ("Annotated", "Literal") if any(m.type.startswith(f"{name}[") for m in members)]
+    wanted = sorted({name for m in members for name in typing_names(m.type)})
     if wanted:
         source = ensure_typing(source, wanted)
     return source
+
+
+#: Names an annotation can take from ``typing`` (``from typing import ...`` is added for them).
+TYPING = {"Annotated", "Any", "Callable", "Dict", "FrozenSet", "Iterable", "List", "Literal", "Mapping",
+          "Optional", "Sequence", "Set", "Tuple", "Union"}
+
+
+def typing_names(annotation: str) -> List[str]:
+    """The bare ``typing`` names an annotation uses (``Optional``, ``Literal``...)."""
+    try:
+        tree = ast.parse(annotation, mode="eval")
+    except SyntaxError:
+        return []
+    return sorted({n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id in TYPING})
 
 
 def ensure_typing(source: str, names: Sequence[str]) -> str:

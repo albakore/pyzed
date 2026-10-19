@@ -87,16 +87,17 @@ With nothing selected, the Properties tab shows the component itself, in collaps
 | **Toolbox** | **Label**, **Icon** (a Lucide name) and **Category**: how the component shows in the toolbox of forms and other components. |
 | **Layout** | **Width**, **Height**, **Background** (transparent when empty) and **Grid size** of the design surface. |
 | **Inherited** | Only with a base: what comes from each base class, read only. |
-| **Properties** | A card per property, and **Public** / **Private** buttons to add one. |
+| **Properties** | A row per property (type icon, name and value), and **Public** / **Private** buttons to add one. |
 | **Custom events** | A card per event (name and description), and **Event** to add one. |
 | **Methods** | The class's code, grouped, a field to add a method and **Edit the class**. |
 
-- **Properties**: each card has the property's **name**, **move up** and **remove** buttons, **Access**, **Type**
-  and **Default**. A **public** property is a prop the parent passes (`Rating(value=4)`); a **private** one is
-  state, declared with `pz.state`. Both are attributes in the code: `self.value`, `self.clicks`. The type decides
-  the editor the property gets, here and in the Properties tab of the forms that use the component (see
-  [Property types](#property-types)). Defaults that are not plain literals (lists, dicts, expressions) are edited
-  as Python.
+- **Properties**: like Unreal's details panel, each property is one compact row: its type icon, its name (a lock
+  marks a private one) and its default value. Lists, dicts and instances list their items below it. The arrow
+  before the name opens its settings: **Name**, **Type**, **Annotation**, **Access**, **Description**, move and
+  **Remove**. A **public** property is a prop the parent passes (`Rating(value=4)`); a **private** one is state,
+  declared with `pz.state`. Both are attributes in the code: `self.value`, `self.clicks`. The type decides the
+  editor the property gets, here and in the Properties tab of the forms that use the component (see
+  [Property types](#property-types)).
 - **Custom events**: the events the component raises with `self.emit("change", value)`, with a description.
   The parent handles them with `on_change=...` in code, or in the Events tab of a form.
 - **Methods**: every method of the class, grouped in **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
@@ -109,8 +110,9 @@ code has a syntax error, the panel shows the last version that parsed, with a wa
 
 ## Property types
 
-As in the Godot inspector, the type of a property picks its editor. Choose it in the **Type** list of the
-property's card:
+As in the Godot inspector and Unreal's details panel, the type of a property picks its editor, and each type has
+its own colored icon. Pick a common type in the **Type** list of the property's settings, or write any annotation in
+**Annotation**:
 
 | Type | Annotation in the class | Editor |
 | --- | --- | --- |
@@ -120,11 +122,36 @@ property's card:
 | Multiline | `pz.Multiline` | Text area. |
 | Choice | `Literal["fast", "slow"]` | Drop-down; the card has an **Options** field. |
 | Range | `Annotated[int, pz.Range(0, 5)]` | Number box with limits; the card has **Min**, **Max** and **Step**. |
-| list, dict, Any | `list`... | A Python expression. |
+| Optional | `float \| None`, `Optional[float]` | **None** with **+** to set a value, or the value's editor with **×** to empty it. |
+| Union | `int \| str` | A list of the types, then the editor of the picked one. |
+| list, set, tuple | `list[str]`, `set[int]`, `tuple[int, int]` | The item count with **+**, and a row per item (`[0]`, `[1]`...) with its own editor. |
+| dict | `dict[str, int]` | The entry count with **+**, and a row per entry: its key and its value. |
+| Class | `Point`, `Point \| None` | **New Point** creates an instance with its defaults; then a row per field. **×** empties it. |
+| Any | `Any`, anything else | A Python expression. |
+
+Types nest: `list[Point]`, `dict[str, list[int]]` or `Optional[tuple[int, int]]` show their items inside one
+another. A class can be a dataclass or any class of the module with annotated fields, or another component.
 
 ![Properties of several types](../../../../screenshots/designer-component-members.png)
 
-The designer writes the imports these types need (`import pyzed as pz`, `from typing import Annotated`).
+```python
+@dataclass
+class Point:
+    x: int = 0
+    y: int = 0
+
+
+class Gadget(SceneComponent, scene="gadget.pzcomp"):
+    mixed: int | str | list[str] = 0
+    maybe: Optional[float] = None
+    scores: dict[str, int] = {"ada": 5}
+    origin: Point = Point()
+```
+
+The Properties panel and the code are the same thing: what you change in the panel is written to the class at once,
+even with the class open in the code editor (what you typed there and did not apply yet is kept), and what you
+write in the class shows up in the panel. The designer adds the imports these types need (`import pyzed as pz`,
+`from typing import Annotated, Optional`).
 
 ```python
 class Rating(SceneComponent, scene="rating.pzcomp"):

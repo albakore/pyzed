@@ -14,6 +14,7 @@ helpers, comments) is never touched.
 from __future__ import annotations
 
 import ast
+import difflib
 import itertools
 import sys
 import textwrap
@@ -147,6 +148,7 @@ def load_module(path: Union[str, Path]) -> ModuleType:
     path = Path(path).resolve()
     module = ModuleType(f"pyzed_form_{path.stem}_{next(_counter)}")
     module.__file__ = str(path)
+    sys.modules[module.__name__] = module  # dataclasses and typing look the module up while it runs
     folder = str(path.parent)
     added = folder not in sys.path
     if added:
@@ -164,3 +166,42 @@ def handlers(module: Optional[ModuleType]) -> Dict[str, object]:
     if module is None:
         return {}
     return {k: v for k, v in vars(module).items() if callable(v) and not k.startswith("_")}
+
+
+def merge3(base: str, ours: str, theirs: str) -> str:
+    """Merges two edits of ``base`` line by line, like a three-way merge in version control.
+
+    Changes to different lines are both kept; where both sides changed the same lines, ``ours`` wins.
+    """
+    b, o, t = (text.splitlines(keepends=True) for text in (base, ours, theirs))
+
+    def changes(other: List[str], side: int) -> List[Tuple[int, int, List[str], int]]:
+        matcher = difflib.SequenceMatcher(None, b, other, autojunk=False)
+        return [(i1, i2, other[j1:j2], side) for tag, i1, i2, j1, j2 in matcher.get_opcodes() if tag != "equal"]
+
+    events = sorted(changes(o, 0) + changes(t, 1), key=lambda e: (e[0], e[1], e[3]))
+    out: List[str] = []
+    pos = i = 0
+    while i < len(events):
+        group = [events[i]]
+        start, end = events[i][0], events[i][1]
+        i += 1
+        while i < len(events) and events[i][0] <= end and (events[i][0] < end or events[i][3] != group[-1][3]):
+            group.append(events[i])
+            end = max(end, events[i][1])
+            i += 1
+
+        def version(side: int) -> List[str]:
+            lines, at = [], start
+            for i1, i2, new, s in group:
+                if s == side:
+                    lines += b[at:i1] + new
+                    at = i2
+            return lines + b[at:end]
+
+        sides = {e[3] for e in group}
+        out += b[pos:start]
+        out += version(0) if 0 in sides else version(1)
+        pos = end
+    out += b[pos:]
+    return "".join(out)

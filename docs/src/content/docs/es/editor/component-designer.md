@@ -88,16 +88,17 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
 | **Toolbox** | **Label**, **Icon** (un nombre de Lucide) y **Category**: cómo aparece el componente en la caja de herramientas de los formularios y de otros componentes. |
 | **Layout** | **Width**, **Height**, **Background** (transparente si está vacío) y **Grid size** de la superficie de diseño. |
 | **Inherited** | Solo con una base: lo que viene de cada clase base, de solo lectura. |
-| **Properties** | Una tarjeta por propiedad, y los botones **Public** / **Private** para añadir una. |
+| **Properties** | Una fila por propiedad (icono del tipo, nombre y valor), y los botones **Public** / **Private** para añadir una. |
 | **Custom events** | Una tarjeta por evento (nombre y descripción), y **Event** para añadir uno. |
 | **Methods** | El código de la clase, agrupado, un campo para añadir un método y **Edit the class**. |
 
-- **Properties**: cada tarjeta tiene el **nombre** de la propiedad, botones para **subirla** y **quitarla**,
-  **Access**, **Type** y **Default**. Una propiedad **pública** es una prop que pasa el padre (`Rating(value=4)`);
-  una **privada** es estado, declarado con `pz.state`. Las dos son atributos en el código: `self.value`,
-  `self.clicks`. El tipo decide el editor de la propiedad, aquí y en la pestaña Propiedades de los formularios que
-  usan el componente (ver [Tipos de propiedad](#tipos-de-propiedad)). Los valores por defecto que no son literales
-  simples (listas, diccionarios, expresiones) se editan como Python.
+- **Properties**: como en el panel de detalles de Unreal, cada propiedad es una fila compacta: el icono de su tipo,
+  su nombre (un candado marca una privada) y su valor por defecto. Las listas, diccionarios e instancias muestran
+  sus elementos debajo. La flecha antes del nombre abre sus ajustes: **Name**, **Type**, **Annotation**,
+  **Access**, **Description**, mover y **Remove**. Una propiedad **pública** es una prop que pasa el padre
+  (`Rating(value=4)`); una **privada** es estado, declarado con `pz.state`. Las dos son atributos en el código:
+  `self.value`, `self.clicks`. El tipo decide el editor de la propiedad, aquí y en la pestaña Propiedades de los
+  formularios que usan el componente (ver [Tipos de propiedad](#tipos-de-propiedad)).
 - **Custom events**: los eventos que el componente lanza con `self.emit("change", valor)`, con su descripción. El
   padre los recibe con `on_change=...` en código, o en la pestaña Eventos de un formulario.
 - **Methods**: todos los métodos de la clase, agrupados en **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
@@ -111,8 +112,9 @@ tiene un error de sintaxis, el panel muestra la última versión válida, con un
 
 ## Tipos de propiedad
 
-Como en el inspector de Godot, el tipo de una propiedad elige su editor. Elígelo en la lista **Type** de la tarjeta
-de la propiedad:
+Como en el inspector de Godot y el panel de detalles de Unreal, el tipo de una propiedad elige su editor, y cada
+tipo tiene su propio icono de color. Elige un tipo común en la lista **Type** de los ajustes de la propiedad, o
+escribe cualquier anotación en **Annotation**:
 
 | Tipo | Anotación en la clase | Editor |
 | --- | --- | --- |
@@ -122,11 +124,37 @@ de la propiedad:
 | Multiline | `pz.Multiline` | Área de texto. |
 | Choice | `Literal["fast", "slow"]` | Desplegable; la tarjeta tiene un campo **Options**. |
 | Range | `Annotated[int, pz.Range(0, 5)]` | Campo numérico con límites; la tarjeta tiene **Min**, **Max** y **Step**. |
-| list, dict, Any | `list`... | Una expresión de Python. |
+| Optional | `float \| None`, `Optional[float]` | **None** con **+** para darle un valor, o el editor del valor con **×** para vaciarlo. |
+| Unión | `int \| str` | Una lista de los tipos y el editor del elegido. |
+| list, set, tuple | `list[str]`, `set[int]`, `tuple[int, int]` | El número de elementos con **+**, y una fila por elemento (`[0]`, `[1]`...) con su editor. |
+| dict | `dict[str, int]` | El número de entradas con **+**, y una fila por entrada: su clave y su valor. |
+| Clase | `Point`, `Point \| None` | **New Point** crea una instancia con sus valores por defecto; luego una fila por campo. **×** la vacía. |
+| Any | `Any`, cualquier otra | Una expresión de Python. |
+
+Los tipos se anidan: `list[Point]`, `dict[str, list[int]]` u `Optional[tuple[int, int]]` muestran sus elementos
+unos dentro de otros. Una clase puede ser una dataclass o cualquier clase del módulo con campos anotados, u otro
+componente.
 
 ![Propiedades de varios tipos](../../../../../screenshots/designer-component-members.png)
 
-El diseñador escribe los imports que necesitan estos tipos (`import pyzed as pz`, `from typing import Annotated`).
+```python
+@dataclass
+class Point:
+    x: int = 0
+    y: int = 0
+
+
+class Gadget(SceneComponent, scene="gadget.pzcomp"):
+    mixed: int | str | list[str] = 0
+    maybe: Optional[float] = None
+    scores: dict[str, int] = {"ada": 5}
+    origin: Point = Point()
+```
+
+El panel Properties y el código son lo mismo: lo que cambias en el panel se escribe en la clase al instante, aunque
+la clase esté abierta en el editor de código (lo que escribiste allí y no aplicaste se conserva), y lo que escribes
+en la clase aparece en el panel. El diseñador añade los imports que necesitan estos tipos (`import pyzed as pz`,
+`from typing import Annotated, Optional`).
 
 ```python
 class Rating(SceneComponent, scene="rating.pzcomp"):

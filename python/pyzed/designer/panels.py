@@ -13,6 +13,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import components as _components
 from . import help as _help
+from . import scene_code as _scene_code
 from .components import Prop
 from .locale import tr
 
@@ -83,6 +84,8 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return ui.number_field(number, on_change, min=prop.min, max=prop.max, step=prop.step, width="fill", theme=t)
     if kind == "choice":
         return ui.select(list(prop.choices), str(value), on_change, width="fill", size="sm", theme=t)
+    if kind == "typed":
+        return typed_editor(d, prop, value, on_change, key, t)
     if kind == "list" and key not in d.text_editors:
         return list_editor(value, on_change, t)
     if kind == "rows" and key not in d.text_editors:
@@ -105,7 +108,28 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
 
 
-TALL_KINDS = ("multiline", "list", "rows")
+TALL_KINDS = ("multiline", "list", "rows", "typed")
+
+
+def typed_editor(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any], Any], key: str, t: Theme) -> Any:
+    """The editor of a property of any annotation (``int | None``, ``dict[str, int]``...): its value on one
+    line and its items (list items, dict entries) below, like a details panel."""
+    import ast
+
+    from . import type_editor
+
+    def change(source: str) -> None:
+        try:
+            on_change(ast.literal_eval(source))
+        except (ValueError, SyntaxError):
+            pass  # a form keeps plain values: lists, dicts, numbers, text and None
+
+    kind = type_editor.parse_type(prop.type)
+    ctx = type_editor.Context(d, t, drafts=d.__dict__.setdefault("_type_drafts", {}))
+    head, items = type_editor.build(kind, _scene_code.literal(value), change, ctx, key)
+    if not items:
+        return head
+    return _core.column([head, type_editor.rows_view(items, t, LABEL_WIDTH)], spacing=4, width="fill")
 
 
 def _text_toggle(d: "Designer", prop: Prop, key: str, t: Theme) -> Any:

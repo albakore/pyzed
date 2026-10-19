@@ -963,7 +963,7 @@ Un control nuevo de este tipo con las propiedades por defecto.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
 ```
 
 Una propiedad que se muestra en la rejilla de propiedades del diseñador.
@@ -1268,6 +1268,14 @@ SceneDocument.update_member(member, **changes)
 ```
 
 Cambia una propiedad (`name`, `type`, `default`, `public`, `description`); devuelve su nombre.
+
+#### `SceneDocument.set_member_source`
+
+```python
+SceneDocument.set_member_source(name, source)
+```
+
+Pone como valor por defecto de la propiedad `name` la expresión de Python `source` (`[1, 2]`, `Point(x=1)`...).
 
 #### `SceneDocument.remove_member`
 

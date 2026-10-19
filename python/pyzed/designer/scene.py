@@ -23,6 +23,7 @@ join the toolbox and can be used by forms.
 
 from __future__ import annotations
 
+import ast
 import dataclasses
 import json
 import os
@@ -35,6 +36,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 from . import code as _code
 from . import components as _components
 from . import scene_code
+from . import type_editor as _type_editor
 from .document import Document
 from .model import Control, Form, check_format
 
@@ -439,10 +441,16 @@ class SceneDocument(Document):
     def add_member(self, name: str = "", type_: str = "str", default: Any = None, *, public: bool = True,
                    description: str = "") -> scene_code.Member:
         """Declares a new property (``public=False`` makes it private state)."""
+        source = None
         if default is None:
             kind = scene_code.kind_of(type_)
-            default = convert(None, type_) if kind in ("Choice", "Range") else DEFAULTS.get(kind)
-        member = scene_code.Member(self.unique_member(name or "value"), type_, default, public, description)
+            if kind in DEFAULTS:
+                default = DEFAULTS[kind]
+            elif kind in ("Choice", "Range"):
+                default = convert(None, type_)
+            else:  # int | None, list[str], Point...: the editor's default for the type
+                default, source = _typed_default(type_)
+        member = scene_code.Member(self.unique_member(name or "value"), type_, default, public, description, source)
         self._write_members([*self.members, member])
         return member
 
@@ -459,14 +467,28 @@ class SceneDocument(Document):
                     new = self.unique_member(new)
                 changes["name"] = new
                 self._rename_in_bindings(member, new)
-        if "type" in changes and "default" not in changes and changes["type"] != m.type:
-            changes["default"] = convert(m.default, changes["type"])
+        if "type" in changes and "default" not in changes and "source" not in changes and changes["type"] != m.type:
+            new_type = changes["type"]
+            kind = scene_code.kind_of(new_type)
+            if kind in DEFAULTS or kind in ("Choice", "Range"):
+                changes["default"] = convert(m.default, new_type)
+            elif not _type_editor.fits(_type_editor.parse_type(new_type), m.default_source):
+                changes["default"], changes["source"] = _typed_default(new_type)
         if "default" in changes:
             changes.setdefault("source", None)
         for key, value in changes.items():
             setattr(m, key, value)
         self._write_members(members)
         return m.name
+
+    def set_member_source(self, name: str, source: str) -> None:
+        """Sets the default of property ``name`` to the Python expression ``source`` (``[1, 2]``,
+        ``Point(x=1)``...)."""
+        try:
+            value = ast.literal_eval(source)
+        except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+            value = None
+        self.update_member(name, default=value, source=source)
 
     def remove_member(self, name: str) -> None:
         """Removes property ``name`` from the class."""
@@ -695,6 +717,16 @@ def _chain(file: Optional[Path]) -> List[Path]:
 #: The default value of a new property of each type.
 DEFAULTS: Dict[str, Any] = {"str": "", "int": 0, "float": 0.0, "bool": False, "list": [], "dict": {}, "Any": None,
                             "Color": "accent", "Icon": "star", "Multiline": ""}
+
+
+def _typed_default(type_: str) -> Tuple[Any, Optional[str]]:
+    """The default of a new value of any annotation, as ``(value, source)`` (``source`` is ``None`` for a
+    literal)."""
+    source = _type_editor.default_source(_type_editor.parse_type(type_))
+    try:
+        return ast.literal_eval(source), None
+    except (ValueError, SyntaxError):
+        return None, source
 
 
 def convert(value: Any, type_: str) -> Any:

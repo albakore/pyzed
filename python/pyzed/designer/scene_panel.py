@@ -24,15 +24,13 @@ from ..icons import icon as _icon
 from ..theme import Theme
 from . import components as _components
 from . import scene_code
+from . import type_editor as _type_editor
 from .scene import SceneDocument
 from .scene_runtime import SceneComponent, scenes
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
-TYPE_ICONS = {"str": "type", "int": "hash", "float": "percent", "bool": "toggle-right", "list": "list",
-              "Color": "palette", "Icon": "image", "Multiline": "text", "Choice": "list-checks", "Range": "sliders-horizontal",
-              "dict": "braces", "Any": "asterisk"}
 NONE = "—"
 EXPRESSION = "Expression…"
 
@@ -237,23 +235,45 @@ def _add_button(label: str, icon: str, action: Callable[[], Any], t: Theme) -> A
 
 
 def member_section(d: "Designer", t: Theme) -> Any:
-    """Builds the Properties section: a card per declared property or state, and buttons to add public or
-    private ones."""
+    """Builds the Properties section, like Unreal's details panel: a compact row per property (its type icon,
+    name and value), with its settings (name, type, access, description) one click away."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
-    rows: List[Any] = [_card_of_member(d, m, t) for m in doc.members]
+    ctx = type_context(d, t)
+    rows: List[Any] = [_member_rows(d, m, ctx, t) for m in doc.members]
     if not rows:
         rows.append(_hint("Public properties are props the parent passes (Rating(value=3)); private ones are "
                           "state kept between renders. Both are attributes: self.value.", t))
     rows.append(_core.row([
-        _add_button("Public", "plus", lambda: _guard(d, lambda: doc.add_member("value")), t),
-        _add_button("Private", "lock", lambda: _guard(d, lambda: doc.add_member("state", "int", public=False)), t),
+        _add_button("Public", "plus", lambda: _guard(d, lambda: _open_member(d, doc.add_member("value").name)), t),
+        _add_button("Private", "lock", lambda: _guard(d, lambda: _open_member(
+            d, doc.add_member("state", "int", public=False).name)), t),
     ], spacing=4))
     return ui.AccordionSection("properties", f"Properties ({len(doc.members)})", _stack(rows), icon="list")
 
 
 CARD_PADDING = 8.0
 CARD_INSET = CARD_PADDING + 1  # padding plus border: rows inside a card use it to line up with the panel
+MEMBER_LABEL = 116.0  # the name column of the property rows (icon, name and the settings arrow)
+
+#: The types the Type list offers; any other annotation can be typed in the Annotation field.
+PRESETS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "Choice", "Range", "int | None",
+           "list[str]", "dict[str, int]", "Any")
+
+
+def type_context(d: "Designer", t: Theme) -> _type_editor.Context:
+    """What the property editors need: the classes they can create (the module's and the components')."""
+    doc = d.doc
+    classes = _type_editor.class_resolver(_type_editor.module_classes(doc.code), _type_editor.registered_classes())
+    return _type_editor.Context(d, t, classes, d.__dict__.setdefault("_type_drafts", {}))
+
+
+def _open_members(d: "Designer") -> set:
+    return d.__dict__.setdefault("_member_open", set())
+
+
+def _open_member(d: "Designer", name: str) -> None:
+    _open_members(d).add(name)
 
 
 def _card(rows: List[Any], t: Theme) -> Any:
@@ -261,36 +281,91 @@ def _card(rows: List[Any], t: Theme) -> Any:
                            border_color=t.border_variant, border_width=1, radius=t.radius)
 
 
-def _card_of_member(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
+def _member_rows(d: "Designer", m: scene_code.Member, ctx: _type_editor.Context, t: Theme) -> Any:
+    """One property: its row (type icon, name, value), the rows of its items, and its settings when open."""
+    doc = d.doc
+    assert isinstance(doc, SceneDocument)
+    kind = _type_editor.parse_type(m.type)
+    opened = m.name in _open_members(d)
+
+    def flip() -> None:
+        _open_members(d).symmetric_difference_update({m.name})
+
+    def set_source(source: str) -> None:
+        _guard(d, lambda: doc.set_member_source(m.name, source))
+
+    value, items = _type_editor.build(kind, m.default_source, set_source, ctx, f"member:{m.name}")
+    name = ui.tooltip(_core.text(m.name, size=13, font="mono", color=t.text, wrap=False),
+                      f"{m.name}: {m.type}" + (f"\n{m.description}" if m.description else ""), theme=t)
+    label = _core.row([w for w in [
+        ui.icon_button("chevron-down" if opened else "chevron-right", flip, size="xs",
+                       tooltip="Hide the settings" if opened else "Name, type and access", theme=t),
+        _type_editor.type_badge(kind, t),
+        _core.container(name, width="fill", clip=True),
+        None if m.public else _icon("lock", size=11, color=t.icon_muted),
+    ] if w is not None], spacing=4, align="center")
+    head = _core.row([_core.container(label, width=MEMBER_LABEL, clip=True), _core.container(value, width="fill")],
+                     spacing=8, align="center", width="fill")
+    parts: List[Any] = [head]
+    if items:
+        parts.append(_type_editor.rows_view(items, t, MEMBER_LABEL, gap=4))
+    if opened:
+        parts.append(_member_settings(d, m, t))
+    return _core.column(parts, spacing=4, width="fill")
+
+
+def _member_settings(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
+    """The settings of a property: name, type (a preset or any annotation), access and description."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
 
     def update(**changes: Any) -> None:
-        _guard(d, lambda: doc.update_member(m.name, **changes))
+        name = _guard(d, lambda: doc.update_member(m.name, **changes))
+        if name and name != m.name:  # renamed: keep its settings open
+            _open_members(d).discard(m.name)
+            _open_member(d, name)
 
     kind = scene_code.kind_of(m.type)
-    kinds = list(scene_code.KINDS)
-    if kind not in kinds:
-        kinds.append(kind)
-    head = _core.row([
-        _core.container(ui.input(m.name, lambda v: update(name=v), mono=True,
-                                 icon=TYPE_ICONS.get(kind, "asterisk"), theme=t), width="fill"),
+    preset = kind if kind in PRESETS else m.type if m.type in PRESETS else "Custom"
+    drafts = d.__dict__.setdefault("_type_drafts", {})
+    key = f"annotation:{m.name}"
+
+    def set_annotation(text: str) -> None:
+        drafts[key] = text
+        if text.strip() and _type_editor.parse_value(text) is not None:
+            drafts.pop(key, None)
+            update(type=text.strip())
+
+    def pick(label: str) -> None:
+        if label != preset and label != "Custom":
+            update(type=scene_code.type_for(label, m.type))
+
+    access = ui.segmented(["public", "private"], "public" if m.public else "private",
+                          lambda v: update(public=v == "public"), theme=t)
+    actions = _core.row([
         ui.icon_button("chevron-up", lambda: _guard(d, lambda: doc.move_member(m.name, -1)), size="xs",
                        tooltip="Move up", theme=t),
-        ui.icon_button("trash-2", lambda: _guard(d, lambda: doc.remove_member(m.name)), size="xs",
-                       tooltip="Remove", theme=t),
-    ], spacing=4, align="center")
-    access = ui.select(["public", "private"], "public" if m.public else "private",
-                       lambda v: update(public=v == "public"), width="fill", theme=t)
-    type_ = ui.select(kinds, kind, lambda v: update(type=scene_code.type_for(v, m.type)), width="fill", theme=t)
+        ui.icon_button("chevron-down", lambda: _guard(d, lambda: doc.move_member(m.name, 1)), size="xs",
+                       tooltip="Move down", theme=t),
+        _core.space(width="fill"),
+        ui.button("Remove", lambda: _guard(d, lambda: doc.remove_member(m.name)), icon="trash-2", variant="ghost",
+                  size="sm", theme=t),
+    ], spacing=4, align="center", width="fill")
     return _card([
-        head,
-        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state.",
+        field("Name", ui.input(m.name, lambda v: update(name=v), mono=True, size="sm", theme=t), t,
               inset=CARD_INSET),
-        field("Type", type_, t, inset=CARD_INSET,
-              tip="Like Godot's export hints, the type picks the editor this property gets in Properties."),
+        field("Type", ui.select([*PRESETS, "Custom"], preset, pick, width="fill", size="sm", theme=t), t,
+              inset=CARD_INSET, tip="Like Godot's export hints and Unreal's variable types, the type picks the "
+                                    "editor this property gets."),
+        field("Annotation", ui.input(drafts.get(key, m.type), set_annotation, mono=True, size="sm",
+                                     placeholder="int | None", theme=t), t, inset=CARD_INSET,
+              tip="Any Python annotation: int | str, Optional[float], list[str], dict[str, int], a class..."),
         *_kind_rows(m, kind, update, t),
-        field("Default", _default_editor(d, m, lambda v: update(default=v), t), t, inset=CARD_INSET),
+        field("Access", access, t, inset=CARD_INSET,
+              tip="Public: a prop the parent passes. Private: state declared with pz.state."),
+        field("Description", ui.input(m.description, lambda v: update(description=v), size="sm",
+                                      placeholder="Shown as a tooltip", theme=t), t, inset=CARD_INSET),
+        actions,
     ], t)
 
 
@@ -341,46 +416,6 @@ def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
     if kind == "Choice":
         return Prop(m.name, "choice", m.default, choices=tuple(scene_code.choices_of(m.type)))
     return None
-
-
-def _default_editor(d: "Designer", m: scene_code.Member, on_change: Callable[[Any], None], t: Theme) -> Any:
-    prop = member_prop(m)
-    if m.source is not None or prop is None:  # not a literal, or a list or dict: edit it as Python
-        text = m.source if m.source is not None else repr(m.default)
-        return ui.input(text, lambda v: _literal_change(v, on_change), mono=True, placeholder="a Python literal",
-                        theme=t)
-    base = scene_code.range_of(m.type)[0] if scene_code.kind_of(m.type) == "Range" else m.type
-    cast = int if base == "int" else float if base == "float" else (lambda v: v)
-    text = "" if m.default is None else str(m.default)
-    if prop.kind == "text":
-        return ui.input(text, on_change, theme=t)
-    if prop.kind == "choice":
-        return ui.select(list(prop.choices), text if text in prop.choices else None, on_change, width="fill", theme=t)
-    if prop.kind == "number":
-        value = m.default if isinstance(m.default, (int, float)) else 0
-        return _number(float(value), lambda v: on_change(cast(v)), t, min=prop.min, max=prop.max, step=prop.step)
-    if prop.kind == "color":
-        from .panels import swatch
-
-        try:
-            resolved = t.color(text) if text else None
-        except (AttributeError, KeyError, ValueError):
-            resolved = None
-        return _core.row([swatch(resolved, t), _core.container(ui.input(text, on_change, mono=True,
-                                                                       placeholder="accent or #rrggbb", theme=t),
-                                                              width="fill")], spacing=6, align="center")
-    if prop.kind == "icon":
-        return ui.input(text, on_change, mono=True, icon=text or "circle-dashed", placeholder="lucide name", theme=t)
-    from .panels import editor_for  # bool and multiline: the same editors as the Properties panel
-
-    return editor_for(d, prop, m.default, on_change, f"member:{m.name}", t)
-
-
-def _literal_change(text: str, on_change: Callable[[Any], None]) -> None:
-    try:
-        on_change(ast.literal_eval(text))
-    except (ValueError, SyntaxError):
-        pass  # keep the last valid value until the text parses
 
 
 def event_section(d: "Designer", t: Theme) -> Any:

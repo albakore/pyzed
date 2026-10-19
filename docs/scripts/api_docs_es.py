@@ -2278,6 +2278,7 @@ MEMBERS = {
     "pyzed.designer.SceneDocument.unique_member": "Devuelve `base` (convertido en identificador), o `base2`, `base3`... si ya lo usa un miembro, método, control o nombre reservado.",
     "pyzed.designer.SceneDocument.add_member": "Declara una propiedad nueva (`public=False` la convierte en estado privado).",
     "pyzed.designer.SceneDocument.update_member": "Cambia una propiedad (`name`, `type`, `default`, `public`, `description`); devuelve su nombre.",
+    "pyzed.designer.SceneDocument.set_member_source": "Pone como valor por defecto de la propiedad `name` la expresión de Python `source` (`[1, 2]`, `Point(x=1)`...).",
     "pyzed.designer.SceneDocument.remove_member": "Quita la propiedad `name` de la clase.",
     "pyzed.designer.SceneDocument.move_member": "Mueve la propiedad `name` `offset` posiciones en el orden de declaración de la clase (dentro de los límites).",
     "pyzed.designer.SceneDocument.custom_events": "Los eventos que declara el componente, como `{nombre: descripción}` (una copia).",
