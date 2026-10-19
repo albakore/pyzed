@@ -73,7 +73,9 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 | <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Open the completion list. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Fold / unfold at the cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Font bigger, smaller, default. |
-| <kbd>Esc</kbd> | Close the completion list, or leave the editor. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo, redo (typing is grouped into one step). |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>H</kbd> / <kbd>G</kbd> | Find, replace, go to line (see below). |
+| <kbd>Esc</kbd> | Back to one cursor, close the completion list, or leave the editor. |
 
 On macOS, <kbd>Cmd</kbd> works where these say <kbd>Ctrl</kbd>. The editor's global commands (<kbd>F5</kbd>,
 <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) work while you type; the canvas

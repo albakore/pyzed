@@ -76,7 +76,9 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 | <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> | Abrir la lista de sugerencias. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Plegar / desplegar en el cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Letra más grande, más pequeña, por defecto. |
-| <kbd>Esc</kbd> | Cerrar la lista de sugerencias, o salir del editor. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer, rehacer (lo escrito seguido es un solo paso). |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>H</kbd> / <kbd>G</kbd> | Buscar, reemplazar, ir a la línea (ver abajo). |
+| <kbd>Esc</kbd> | Volver a un cursor, cerrar la lista de sugerencias, o salir del editor. |
 
 En macOS, <kbd>Cmd</kbd> funciona donde aquí pone <kbd>Ctrl</kbd>. Los comandos globales del editor
 (<kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) funcionan mientras

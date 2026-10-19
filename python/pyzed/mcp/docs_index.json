@@ -1447,6 +1447,12 @@
      "id": "The `id` you passed to the widget."
     }
    },
+   "pyzed.Command.select_all": {
+    "desc": "Focuses the `text_input` with that `id` and selects all its text (typing replaces it).",
+    "params": {
+     "id": "The input's `id`."
+    }
+   },
    "pyzed.Command.set_editor_text": {
     "desc": "Replaces the content of the `code_editor` with that `id`. Editors are uncontrolled: `text` is only the initial value.",
     "params": {
@@ -1475,6 +1481,30 @@
      "id": "The editor's `id`.",
      "line": "Line (from 1) where the block starts.",
      "fold": "`True` to fold, `False` to unfold."
+    }
+   },
+   "pyzed.Command.editor_action": {
+    "desc": "Runs a named editor action in the editor with that `id`, as if its key was pressed: Zed's action name in snake case (`\"undo\"`, `\"select_next\"`, `\"move_line_up\"`, `\"toggle_comments\"`…). Raises `ValueError` for an unknown name.",
+    "params": {
+     "id": "The editor's `id`.",
+     "name": "The action's name (`Command.editor_actions()` lists them; `\"editor::SelectNext\"` works too)."
+    }
+   },
+   "pyzed.Command.editor_actions": {
+    "desc": "The names `Command.editor_action` accepts."
+   },
+   "pyzed.Command.select_editor_ranges": {
+    "desc": "Selects ranges of the editor, one cursor each; the first one is the primary cursor. Unfolds what hides them and works even if the editor hasn't been drawn yet.",
+    "params": {
+     "id": "The editor's `id`.",
+     "ranges": "`[(line, column, end_line, end_column)]`, from 1, with exclusive ends (an empty range is a plain cursor)."
+    }
+   },
+   "pyzed.Command.replace_editor_ranges": {
+    "desc": "Replaces ranges of the editor with texts as one undo step, and calls the editor's `on_change` (search and replace).",
+    "params": {
+     "id": "The editor's `id`.",
+     "edits": "`[((line, column, end_line, end_column), text)]`, from 1, with exclusive ends."
     }
    },
    "pyzed.Command.scroll_to_end": {
@@ -1979,7 +2009,12 @@
      "cursor_width": "Width of the bar cursor.",
      "cursor_blink": "Whether the cursor blinks.",
      "cursor_color": "Cursor color.",
-     "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel."
+     "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
+     "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…).",
+     "highlights": "Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
+     "highlight_color": "Color of `highlights`.",
+     "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
+     "selection_highlight": "Highlights the other occurrences of the selected text."
     }
    },
    "pyzed.Style": {
@@ -2759,7 +2794,11 @@
      "cursor_blink": "Whether the cursor blinks.",
      "cursor_width": "Width of the bar cursor.",
      "cursor_color": "Cursor color (the theme's player color by default).",
-     "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel."
+     "on_zoom": "Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.",
+     "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…), e.g. to count them.",
+     "highlights": "Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
+     "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
+     "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor)."
     }
    },
    "pyzed.ui.language_token": {
