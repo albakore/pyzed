@@ -6,6 +6,9 @@ of the tree into its own layer group that is composited with a rotation, an opac
 a bloom or a blurred backdrop (`src/effect.rs` in each crate). Pyzed's animations and the
 `rotate`, `blur`, `backdrop_blur`, `bloom` and `glass` styles use them.
 
+`iced_tiny_skia` also clips box shadows to the region being redrawn (in `engine.rs`), so a
+dialog's shadow no longer darkens it when only part of the window changes.
+
 `iced_wgpu` also starts the native GPU APIs (Vulkan, Metal, DirectX 12) before OpenGL: the GL
 backend is only started when none of them has an adapter, since starting it at every launch
 costs time and memory (`src/window/compositor.rs`).

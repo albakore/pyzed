@@ -2229,6 +2229,8 @@ editor(
     match_brackets=True,
     selection_highlight=True,
     font=None,
+    keymap=None,
+    scrollbar=True,
     theme=None,
 )
 ```

@@ -126,6 +126,7 @@ proyecto de Zed:
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Buscar / buscar y reemplazar |
 | <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> | Coincidencia siguiente / anterior |
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Ir a la línea |
+| <kbd>Alt</kbd>+<kbd>Z</kbd> | Activar o desactivar el ajuste de líneas largas |
 | <kbd>Alt</kbd>+clic | Añadir un cursor |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añadir un cursor arriba / abajo |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Seleccionar la siguiente coincidencia como otro cursor |
@@ -137,3 +138,5 @@ proyecto de Zed:
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Plegar / desplegar todo |
 
 La lista completa está en [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed).
+Todas estas teclas se pueden cambiar en **Ajustes del editor → Atajos de teclado**
+([cómo](/pyzed/es/editor/code-editor/#atajos-de-teclado)).

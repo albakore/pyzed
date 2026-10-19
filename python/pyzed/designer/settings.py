@@ -10,13 +10,15 @@ from __future__ import annotations
 import json
 import os
 import sys
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 
 MIN_FONT, MAX_FONT, DEFAULT_FONT = 8.0, 32.0, 14.0
 CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
+#: Line heights, as a multiple of the font size.
+LINE_HEIGHTS = {"compact": 1.35, "standard": 1.6, "comfortable": 1.85}
 
 
 @dataclass
@@ -44,12 +46,19 @@ class EditorSettings:
     #: ``"bar"``, ``"block"``, ``"underline"`` or ``"hollow"``.
     cursor_shape: str = "bar"
     cursor_blink: bool = True
+    #: Width of the bar cursor, in pixels.
+    cursor_width: float = 2.0
+    #: ``"compact"``, ``"standard"`` or ``"comfortable"`` (see ``LINE_HEIGHTS``).
+    line_height: str = "standard"
+    scrollbar: bool = True
     #: Outline the bracket that matches the one next to the cursor.
     match_brackets: bool = True
     #: Highlight the other occurrences of the selected text.
     selection_highlight: bool = True
     ty: bool = True
     ruff: bool = True
+    #: Keys changed by the user: action name -> bindings separated by commas (``""``: no key).
+    keymap: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Returns the settings as a JSON-ready dict."""
@@ -73,6 +82,10 @@ class EditorSettings:
         out.font_size = min(max(out.font_size, MIN_FONT), MAX_FONT)
         if out.cursor_shape not in CURSOR_SHAPES:
             out.cursor_shape = "bar"
+        if out.line_height not in LINE_HEIGHTS:
+            out.line_height = "standard"
+        out.cursor_width = min(max(out.cursor_width, 1.0), 4.0)
+        out.keymap = {k: v for k, v in out.keymap.items() if isinstance(k, str) and isinstance(v, str)}
         return out
 
 

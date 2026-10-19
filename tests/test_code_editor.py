@@ -7,7 +7,7 @@ import pytest
 
 from pyzed import designer
 from pyzed.designer import intellisense as intel
-from pyzed.designer import lsp, settings
+from pyzed.designer import code_panel, lsp, settings
 from pyzed.designer.app import Designer
 from pyzed.designer.intellisense import CodeIntel, CompletionItem
 from pyzed.designer.model import Form
@@ -222,7 +222,7 @@ def test_designer_completion_flow(tmp_path):
     d.set_code_buffer(text)  # one character typed
     d.set_code_cursor(line, 12)
     assert d.assist.completion is not None
-    assert d.assist.captured_keys and d.assist.completion.selected.label == "email"
+    assert "up" in d.assist.captured_keys and d.assist.completion.selected.label == "email"
     assert d.focus == "code"
     commands = d.on_key("enter")
     assert isinstance(commands, list) and len(commands) == 2
@@ -233,7 +233,7 @@ def test_designer_completion_flow(tmp_path):
     labels = [i.label for i in d.assist.completion.shown]
     assert "text" in labels and "placeholder" in labels
     d.on_key("escape")
-    assert d.assist.completion is None and not d.assist.captured_keys
+    assert d.assist.completion is None and d.assist.captured_keys == ("alt-z",)
 
 
 def test_designer_settings_dialog_and_status(tmp_path):
@@ -251,6 +251,63 @@ def test_designer_settings_dialog_and_status(tmp_path):
     d.assist.set("minimap", False)
     d.assist.set("folding", False)
     assert d.view() is not None
+
+    for key in code_panel.SETTINGS_SECTIONS + tuple(f"keys:{page}" for page, _, _ in code_panel.KEY_GROUPS):
+        d.assist.show_settings_section(key)
+        assert d.dialog_view(t) is not None
+    d.assist.edit_keys("delete_line")
+    assert d.dialog_view(t) is not None
+
+
+def test_new_editor_settings_are_sanitized():
+    s = settings.EditorSettings.from_dict({"line_height": "huge", "cursor_width": 9, "keymap": {"undo": "ctrl-q", 3: "x"}})
+    assert s.line_height == "standard" and s.cursor_width == 4.0 and s.keymap == {"undo": "ctrl-q"}
+    assert settings.EditorSettings().scrollbar and not settings.EditorSettings().wrap
+
+
+def test_key_bindings_parse_like_zed():
+    from pyzed.ui.editor import DEFAULT_KEYS, keymap_for, parse_keys
+
+    assert parse_keys("Ctrl+Shift+K") == "ctrl-shift-k"
+    assert parse_keys("shift-alt-ctrl-up") == "ctrl-alt-shift-up"
+    assert parse_keys("ctrl-k ctrl-c") == "ctrl-k ctrl-c"
+    assert parse_keys("ctrl--") == "ctrl--" and parse_keys("esc") == "escape"
+    assert parse_keys("ctrl-a ctrl-b") is None and parse_keys("hyper-x") is None and parse_keys("") is None
+    keymap = keymap_for({"delete_line": "ctrl-shift-d, alt-d", "select_next": ""})
+    assert keymap["ctrl-shift-d"] == "delete_line" and keymap["alt-d"] == "delete_line"
+    assert all(keymap[k] is None for k in DEFAULT_KEYS["delete_line"] + DEFAULT_KEYS["select_next"])
+    # The editor accepts every default binding and action name.
+    from pyzed import ui
+
+    ui.editor("keys", keymap={k: a for a, keys in DEFAULT_KEYS.items() for k in keys})
+    with pytest.raises(ValueError):
+        ui.editor("keys", keymap={"ctrl-d": "no_such_action"})
+    with pytest.raises(ValueError):
+        ui.editor("keys", keymap={"hyper-d": "undo"})
+
+
+def test_designer_key_bindings(tmp_path):
+    d = Designer(tmp_path / "x.pzform", language_servers=False)
+    d.edit_whole_file()
+    a = d.assist
+    a.set_keys("delete_line", "ctrl-shift-")
+    assert a.key_error("delete_line") and "delete_line" not in a.settings.keymap
+    a.set_keys("delete_line", "Ctrl+Shift+D")
+    assert a.settings.keymap == {"delete_line": "ctrl-shift-d"} and settings.load().keymap == a.settings.keymap
+    assert a.editor_keymap()["ctrl-shift-d"] == "delete_line" and a.editor_keymap()["ctrl-shift-k"] is None
+    a.set_keys("delete_line", "ctrl-shift-k")  # back to the default: no override left
+    assert a.settings.keymap == {}
+    # Alt+Z toggles wrapping, and the code panel's keys can move too.
+    assert not a.settings.wrap
+    d.on_key("alt-z")
+    assert a.settings.wrap
+    a.set_keys("go_to_line", "ctrl-alt-g")
+    d.on_key("ctrl-g")
+    assert a.goto is None
+    d.on_key("ctrl-alt-g")
+    assert a.goto == ""
+    a.reset_keys()
+    assert a.settings.keymap == {} and a.key_bindings("go_to_line") == "ctrl-g"
 
 
 # -- real language servers ------------------------------------------------------------

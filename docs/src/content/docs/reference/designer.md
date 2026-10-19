@@ -1589,10 +1589,10 @@ The visual form editor.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_size=14.0, tab_size=4, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True)
+class EditorSettings(theme='', font_size=14.0, tab_size=4, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True, keymap={})
 ```
 
-EditorSettings(theme: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, show_whitespace: 'bool' = False, wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True)
+EditorSettings(theme: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4, show_whitespace: 'bool' = False, wrap: 'bool' = False, line_numbers: 'bool' = True, highlight_line: 'bool' = True, autocomplete: 'bool' = True, code_lens: 'bool' = True, inline_diagnostics: 'bool' = True, format_on_apply: 'bool' = False, auto_close: 'bool' = True, folding: 'bool' = True, minimap: 'bool' = True, cursor_shape: 'str' = 'bar', cursor_blink: 'bool' = True, cursor_width: 'float' = 2.0, line_height: 'str' = 'standard', scrollbar: 'bool' = True, match_brackets: 'bool' = True, selection_highlight: 'bool' = True, ty: 'bool' = True, ruff: 'bool' = True, keymap: 'Dict[str, str]' = <factory>)
 
 **Methods and properties**
 

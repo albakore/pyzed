@@ -57,7 +57,10 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 - **Whitespace**: optionally draws spaces as `·` and tabs as `→`.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> or <kbd>Ctrl</kbd>+wheel change the font size;
   <kbd>Ctrl</kbd>+<kbd>0</kbd> resets it. The size is saved.
-- The view **scrolls** to keep the cursor visible, like Zed, and scrolls sideways for long lines unless *Wrap* is on.
+- **Scrolling**: the mouse wheel scrolls the code (<kbd>Shift</kbd>+wheel sideways) and the scrollbars sit right of
+  the minimap. The view also follows the cursor, like Zed.
+- **Long lines** scroll sideways by default; <kbd>Alt</kbd>+<kbd>Z</kbd> (or *Wrap long lines* in the settings) wraps
+  them at the editor's width instead.
 
 ![The whole file with two handlers folded and the minimap](../../../../screenshots/designer-code-folding.png)
 
@@ -212,28 +215,51 @@ sequenceDiagram
 
 The **gear** in the code panel header, the server dots in the status bar, or **Settings → Code editor → Editor
 settings…** open them. They are saved per user, in the same `designer.json` as the
-[editor's settings](/pyzed/editor/settings/).
+[editor's settings](/pyzed/editor/settings/). Like Zed's settings, an index on the left lists the sections and
+the right side shows the one you pick.
 
-![Editor settings with the language servers' status](../../../../screenshots/designer-editor-settings.png)
+![Editor settings with the index of sections](../../../../screenshots/designer-editor-settings.png)
 
-| Group | Setting | What it does |
+| Section | Setting | What it does |
 | --- | --- | --- |
-| Language servers | **ty**, **ruff** | Turn each server on or off. Each row shows its state and version. Below: the project root and the Python in use. |
-| | **Restart servers** (footer) | Restarts both; use it after `uv sync` or after installing them. |
 | Appearance | **Theme** | *Same as the designer*, or any theme for the editor alone. |
 | | **Font size** | 8 to 32 (also <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> and <kbd>Ctrl</kbd>+wheel). |
+| | **Line height** | Compact, Standard or Comfortable. |
 | | **Line numbers**, **Highlight current line** | The gutter and the current-line band. |
 | | **Show whitespace** | Spaces as `·`, tabs as `→`. |
-| | **Wrap long lines** | Soft wrap instead of horizontal scrolling. |
-| | **Minimap** | The zoomed-out code on the right. |
 | Cursor | **Shape** | Bar, Block, Underline or Hollow, like Zed. |
 | | **Blink** | Whether the cursor blinks. |
+| | **Width** | 1 to 4 pixels, for the bar cursor. |
 | Editing | **Tab size** | 1 to 8 spaces per level. |
 | | **Autocomplete while typing** | Off: the list only opens with <kbd>Ctrl</kbd>+<kbd>Space</kbd>. |
 | | **Auto-close brackets and quotes** | Pairs, wrapping the selection and stepping over the closer. |
 | | **Code folding** | The chevrons and the fold keys. |
-| | **Format with ruff on Apply** | Runs `ruff format` on the code when you press Apply. |
 | | **Match brackets** | Outlines the bracket that pairs with the one at the cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> jumps to it). |
 | | **Highlight selection matches** | Highlights the other places with the selected text. |
+| | **Format with ruff on Apply** | Runs `ruff format` on the code when you press Apply. |
+| Scrolling and wrapping | **Wrap long lines** | Off by default: long lines scroll sideways. <kbd>Alt</kbd>+<kbd>Z</kbd> toggles it. |
+| | **Scrollbars** | Shows or hides the scrollbars. |
+| | **Minimap** | The zoomed-out code on the right. |
 | Code lens and diagnostics | **Code lens** | References, implementations and wired events at the end of definitions. |
 | | **Inline diagnostics** | Problems at the end of the line. |
+| Language servers | **ty**, **ruff** | Turn each server on or off. Each row shows its state and version. Below: the project root and the Python in use. |
+| | **Restart servers** | Restarts both; use it after `uv sync` or after installing them. |
+
+### Key bindings
+
+Under **Key bindings**, the index groups every action of the editor and the code panel: Code panel, Editing,
+Multiple cursors, Lines, Moving and Folding. Each row shows the action, its name in Zed (`delete_line`) and its
+keys. The pencil changes them: type the keys in Zed's syntax (`ctrl-shift-d`, `alt-up`, `f2`, or a chord such as
+`ctrl-k ctrl-c`), several separated by commas, or leave the field empty for no key. The new keys replace the
+default ones; the arrow next to a changed action puts its defaults back, and **Reset all** does it for every action.
+
+![Changing the keys of the code editor](../../../../screenshots/designer-editor-keys.png)
+
+The changes are saved under `"keymap"` in `designer.json`, as action → keys:
+
+```json
+{"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
+```
+
+In your own apps, `ui.editor(keymap=...)` takes Zed's form (keys → action, `None` to take a default key away), and
+`pyzed.ui.editor.keymap_for` turns per-action changes like the ones above into it.

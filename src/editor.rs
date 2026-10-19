@@ -23,6 +23,7 @@ use iced::{
 };
 
 mod actions;
+pub mod keymap;
 
 pub(crate) use actions::EditKind;
 pub use actions::{ActionContext, EditorAction};
@@ -38,6 +39,8 @@ type Paragraph = <iced::Renderer as core_text::Renderer>::Paragraph;
 pub const PAD_Y: f32 = 4.0;
 pub const PAD_LEFT: f32 = 4.0;
 const PAD_RIGHT: f32 = 12.0;
+/// Width of the editor's scrollbars.
+const SCROLLBAR: f32 = 8.0;
 const MARKER_WIDTH: f32 = 3.0;
 /// Width of the fold chevrons column, taken from the right padding of the line numbers.
 const FOLD_WIDTH: f32 = 14.0;
@@ -1552,7 +1555,9 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let lh = props.line_height;
     let line_count = state.content.line_count().max(1);
     let cursor_line = state.content.cursor().position.line.min(line_count - 1);
-    let minimap_width = props.minimap.map_or(0.0, |m| m.width);
+    // The minimap sits left of the vertical scrollbar, so it reserves the bar's width too.
+    let bar_width = if props.scrollbar { SCROLLBAR } else { 0.0 };
+    let minimap_width = props.minimap.map_or(0.0, |m| m.width + bar_width);
 
     // Real line number of each visible line.
     let mut reals = Vec::with_capacity(line_count);
@@ -1653,6 +1658,12 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let folding = props.folding;
     let key_props = props.clone();
     let capture = props.capture_keys.clone();
+    // Captured keys with modifiers (`"alt-z"`) are left to the app only with exactly those modifiers.
+    let capture_strokes: Vec<keymap::Keystroke> = capture
+        .iter()
+        .filter(|k| k.contains(['-', '+']))
+        .filter_map(|k| keymap::Keystroke::parse(k))
+        .collect();
     let ctx = Arc::new(ActionContext {
         size: props.tab_size,
         pairs: props.auto_close,
@@ -1723,6 +1734,9 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             {
                 return None;
             }
+            if capture_strokes.iter().any(|k| k.matches(&press)) {
+                return None;
+            }
             let run = |action: EditorAction| {
                 Some(Binding::Custom(Message::EditorAction {
                     id: props.id.clone(),
@@ -1748,14 +1762,27 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             ) {
                 return Binding::from_key_press(press);
             }
+            let target = |target: Option<keymap::Target>| match target {
+                Some(keymap::Target::Action(action)) => run(action),
+                Some(keymap::Target::Fold(op)) if folding => fold(op),
+                _ => Some(Binding::Custom(Message::Noop)),
+            };
             if state.chord.replace(false) {
                 // Second key of a Ctrl+K chord.
+                if let Some(bound) = keymap::lookup(&props.keymap, &press, true) {
+                    return target(bound);
+                }
                 let action = chord_action(&press);
                 return match action {
                     Some(Chord::Fold(op)) if folding => fold(op),
                     Some(Chord::Action(action)) => run(action),
                     _ => Some(Binding::Custom(Message::Noop)),
                 };
+            }
+            match keymap::lookup(&props.keymap, &press, false) {
+                Some(None) => return Binding::from_key_press(press),
+                Some(bound) => return target(bound),
+                None => {}
             }
             if press.modifiers.command()
                 && !press.modifiers.alt()
@@ -2210,7 +2237,13 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         code
     };
 
-    let bar = scrollable::Scrollbar::new().width(8.0).scroller_width(8.0);
+    let bar = if props.scrollbar {
+        scrollable::Scrollbar::new()
+            .width(SCROLLBAR)
+            .scroller_width(SCROLLBAR)
+    } else {
+        scrollable::Scrollbar::hidden()
+    };
     let direction = if props.wrap {
         scrollable::Direction::Vertical(bar)
     } else {
@@ -2220,13 +2253,14 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         }
     };
     let scroller_color = props.scrollbar_color;
-    let mut scroller =
-        widget::Scrollable::with_direction(Probe::new(body, &state.viewport), direction)
-            .id(scroll_id(&props.id));
+    let mut scroller = widget::Scrollable::with_direction(
+        Probe::new(body, &state.viewport).keep_wheel(),
+        direction,
+    )
+    .id(scroll_id(&props.id));
     if let Some(cb) = props.on_scroll.clone() {
         scroller = scroller.on_scroll(move |viewport| Message::Scrolled(cb.clone(), viewport));
     }
-    let has_minimap = props.minimap.is_some();
     let scroller: Element<'a, Message> = scroller
         .style(move |theme: &Theme, status| {
             let mut out = scrollable::default(theme, status);
@@ -2240,10 +2274,6 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 rail.scroller.background = Background::Color(color);
                 rail.scroller.border = Border::default();
             }
-            if has_minimap {
-                // The minimap covers the vertical scrollbar and replaces it.
-                out.vertical_rail.scroller.background = Background::Color(Color::TRANSPARENT);
-            }
             out
         })
         .width(Length::Fill)
@@ -2255,10 +2285,14 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     match props.minimap {
         Some(minimap) => {
             update_minimap(state, &lines, &token, theme_id, props);
-            // Over the right edge of the scrollable, covering its vertical scrollbar (a `row`
+            // Over the right edge of the scrollable, just left of its vertical scrollbar (a `row`
             // would give the scrollable finite limits and let the gutter fill them).
-            let bar = 8.0;
-            let height = (size.height - if props.wrap { 0.0 } else { bar }).max(0.0);
+            let bar = if props.wrap || !props.scrollbar {
+                0.0
+            } else {
+                SCROLLBAR
+            };
+            let height = (size.height - bar).max(0.0);
             let minimap = Minimap {
                 state,
                 id: props.id.clone(),

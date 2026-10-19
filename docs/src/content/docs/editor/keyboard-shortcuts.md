@@ -124,6 +124,7 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree, like Z
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Find / find and replace |
 | <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> | Next / previous match |
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Go to line |
+| <kbd>Alt</kbd>+<kbd>Z</kbd> | Wrap long lines on or off |
 | <kbd>Alt</kbd>+click | Add a cursor |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Select the next match as another cursor |
@@ -134,4 +135,6 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree, like Z
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo / redo |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Fold / unfold everything |
 
-The full list is in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys).
+The full list is in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys). Every one
+of these keys can be changed in **Editor settings → Key bindings**
+([how](/pyzed/editor/code-editor/#key-bindings)).

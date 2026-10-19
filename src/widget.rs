@@ -164,6 +164,10 @@ pub struct EditorProps {
     pub match_brackets: bool,
     /// Highlight the other occurrences of the selected text.
     pub selection_highlight: bool,
+    /// The user's key bindings, checked before the default keys.
+    pub keymap: Vec<crate::editor::keymap::KeyBinding>,
+    /// Show the scrollbars.
+    pub scrollbar: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1385,7 +1389,7 @@ pub fn progress_bar(
     tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
     cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
-    match_brackets=true, selection_highlight=true))]
+    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1433,6 +1437,8 @@ pub fn code_editor(
     highlight_color: Any<'_>,
     match_brackets: bool,
     selection_highlight: bool,
+    keymap: Option<Bound<'_, PyDict>>,
+    scrollbar: bool,
 ) -> PyResult<Py<Widget>> {
     let shape = crate::editor_widgets::CaretShape::parse(cursor_shape).ok_or_else(|| {
         pyo3::exceptions::PyValueError::new_err(format!(
@@ -1474,6 +1480,18 @@ pub fn code_editor(
                 _ => (value.extract::<String>()?, None),
             };
             annotation_list.push((line.extract::<usize>()?, label, color));
+        }
+    }
+    // keymap: {"ctrl-shift-d": "duplicate_line_down", "ctrl-d": None}
+    let mut bindings = Vec::new();
+    if let Some(keymap) = keymap {
+        for (keys, action) in keymap.iter() {
+            let keys: String = keys.extract()?;
+            let action: Option<String> = action.extract()?;
+            bindings.push(
+                crate::editor::keymap::KeyBinding::parse(&keys, action.as_deref())
+                    .map_err(pyo3::exceptions::PyValueError::new_err)?,
+            );
         }
     }
     let font = style::font(Some(font.unwrap_or("mono")), &None, false)?.unwrap_or(Font::MONOSPACE);
@@ -1527,6 +1545,8 @@ pub fn code_editor(
             highlight_color: style::opt_color(&highlight_color)?,
             match_brackets,
             selection_highlight,
+            keymap: bindings,
+            scrollbar,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),

@@ -703,6 +703,7 @@ where
 pub struct Probe<'a, Message, Theme, Renderer> {
     content: Element<'a, Message, Theme, Renderer>,
     sink: &'a std::cell::Cell<Option<Rectangle>>,
+    keep_wheel: bool,
 }
 
 impl<'a, Message, Theme, Renderer> Probe<'a, Message, Theme, Renderer> {
@@ -713,7 +714,15 @@ impl<'a, Message, Theme, Renderer> Probe<'a, Message, Theme, Renderer> {
         Self {
             content: content.into(),
             sink,
+            keep_wheel: false,
         }
+    }
+
+    /// Keeps mouse wheel events from the content, so the scrollable around scrolls even when
+    /// the content would capture them (a text editor laid out at its full height does).
+    pub fn keep_wheel(mut self) -> Self {
+        self.keep_wheel = true;
+        self
     }
 
     fn record(&self, layout: Layout<'_>, viewport: &Rectangle) {
@@ -785,6 +794,9 @@ where
         viewport: &Rectangle,
     ) {
         self.record(layout, viewport);
+        if self.keep_wheel && matches!(event, Event::Mouse(mouse::Event::WheelScrolled { .. })) {
+            return;
+        }
         self.content.as_widget_mut().update(
             tree, event, layout, cursor, renderer, clipboard, shell, viewport,
         );

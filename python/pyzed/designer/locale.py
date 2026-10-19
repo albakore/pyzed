@@ -440,6 +440,24 @@ _ES = {
     "The text in the box: what the user typed, or set it from code.":
     "El texto del cuadro: lo que escribió el usuario, o lo que pongas desde el código.",
     "The Markdown source to show.": "El texto Markdown que se muestra.",
+    # Editor settings: index, scrolling and key bindings
+    "Code panel": "Panel de código", "Comfortable": "Amplio", "Compact": "Compacto", "Standard": "Normal",
+    "Default keys": "Teclas por defecto", "Delete the next word": "Borrar la palabra siguiente",
+    "Delete the previous word": "Borrar la palabra anterior", "Duplicate line up": "Duplicar la línea hacia arriba",
+    "Go to the start of the line": "Ir al inicio de la línea", "Key bindings": "Atajos de teclado",
+    "Lower case": "Minúsculas", "Upper case": "Mayúsculas", "Moving": "Movimiento", "No key": "Sin tecla",
+    "Of the bar cursor, in pixels": "Del cursor de barra, en píxeles",
+    "Off: long lines scroll sideways (Shift+wheel). Alt+Z toggles it":
+    "Desactivado: las líneas largas se desplazan en horizontal (Mayús+rueda). Alt+Z lo alterna",
+    "Reset all": "Restablecer todo", "Scroll down one line": "Desplazar una línea hacia abajo",
+    "Scroll up one line": "Desplazar una línea hacia arriba", "Scrollbars": "Barras de desplazamiento",
+    "Scrolling and wrapping": "Desplazamiento y ajuste de línea",
+    "Select the previous match": "Seleccionar la coincidencia anterior",
+    "Select to the start of the line": "Seleccionar hasta el inicio de la línea", "Sort lines": "Ordenar líneas",
+    "Toggle soft wrap": "Alternar el ajuste de línea", "Change": "Cambiar",
+    "Unknown keys: {keys}": "Teclas no válidas: {keys}",
+    "Zed's syntax: ctrl-shift-k, alt-up, f2 or ctrl-k ctrl-c; commas for several, empty for none":
+    "Sintaxis de Zed: ctrl-shift-k, alt-up, f2 o ctrl-k ctrl-c; comas para varias, vacío para ninguna",
 }
 
 i18n.add("es", {"designer": _ES})
