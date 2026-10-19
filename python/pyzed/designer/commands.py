@@ -105,7 +105,7 @@ ACTIONS: Tuple[Action, ...] = (
            global_keys=True),
     Action("docs", "Documentation", "Help", lambda d: d.open_docs(), "book-open"),
     Action("issue", "Report a problem", "Help", lambda d: d.open_url(ISSUES_URL), "bug"),
-    Action("about", "About Pyzed Designer", "Help", lambda d: d.open_dialog_named("about"), "info"),
+    Action("about", "About Pyzed Design", "Help", lambda d: d.open_dialog_named("about"), "info"),
 )
 
 DOCS_URL = "https://albakore.github.io/pyzed/guides/designer/"

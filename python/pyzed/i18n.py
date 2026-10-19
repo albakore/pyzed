@@ -190,6 +190,8 @@ add("en", {
         "confirm": "Are you sure?",
         "unsaved": {"title": "Unsaved changes", "message": "Save your changes to {name} before closing?"},
         "dock": {"left": "Dock Left", "right": "Dock Right", "bottom": "Dock Bottom", "top": "Dock Top"},
+        "color": {"solid": "Solid", "gradient": "Gradient", "angle": "Angle", "mask": "Mask", "opacity": "Opacity",
+                  "remove_stop": "Remove stop"},
     }
 })
 add("es", {
@@ -206,5 +208,7 @@ add("es", {
         "unsaved": {"title": "Cambios sin guardar", "message": "¿Guardar los cambios de {name} antes de cerrar?"},
         "dock": {"left": "Acoplar a la izquierda", "right": "Acoplar a la derecha", "bottom": "Acoplar abajo",
                  "top": "Acoplar arriba"},
+        "color": {"solid": "Sólido", "gradient": "Degradado", "angle": "Ángulo", "mask": "Máscara",
+                  "opacity": "Opacidad", "remove_stop": "Quitar parada"},
     }
 })

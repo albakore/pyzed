@@ -108,3 +108,30 @@ def test_project_new_form(tmp_path):
     created = project.find(tmp_path)
     path = created.new_form("settings", title="Settings")
     assert path == created.ui_dir / "settings.pzform" and path in created.forms()
+
+
+def test_designer_menus_code_panel_and_color_picker_are_translated(tmp_path):
+    import re
+    from pathlib import Path
+
+    from pyzed.designer import code_panel, locale, new
+    from pyzed.designer.app import Designer
+
+    # Every text the code panel shows has a Spanish translation.
+    source = Path(code_panel.__file__).read_text(encoding="utf-8")
+    texts = set(re.findall(r'tr\("([^"]+)"', source))
+    assert len(texts) > 30
+    assert [text for text in texts if text not in locale._ES] == []
+
+    app = Designer(new.new_form(tmp_path / "shell", template="sidebar"), language_servers=False)
+    app.window_size = (1440, 900)
+    i18n.set_language("es")
+    app.open_context_menu("nav1")
+    labels = [item.label for item in app._context_items() if item != ui.SEPARATOR]
+    assert labels[0] == "Ver código" and "Bloquear" in labels and "Eliminar" in labels
+    assert pz.t("pyzed.color.gradient") == "Degradado"
+    assert ui.ColorPicker(pz.Gradient(["#000", "#fff"])) is not None
+    assert app.window_title().endswith("— Pyzed Design")
+    assert app.status_bar(app.theme_obj) is not None
+    from pyzed.designer import components
+    assert all(components.get(type_).description in locale._ES for type_ in ("label", "button", "table", "timer"))

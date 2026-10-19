@@ -674,7 +674,7 @@ def new_module(class_name: str, scene_file: str, doc: str = "") -> str:
     """The code of a brand-new component: imports and an empty class tied to its scene."""
     doc = doc or f"The {class_name} component."
     return (
-        f'"""{class_name}: a component designed in Pyzed Designer.\n\n'
+        f'"""{class_name}: a component designed in Pyzed Design.\n\n'
         f"The layout is in {scene_file}; properties, events and logic are below. Use it like\n"
         f"any component: ``{class_name}(...)`` in a view, or from the designer's toolbox.\n"
         f'"""\n\n'

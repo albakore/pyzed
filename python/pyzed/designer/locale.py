@@ -37,7 +37,7 @@ _ES = {
     "Smart guides": "Guías inteligentes", "Show hidden controls": "Mostrar controles ocultos",
     "Reset panel layout": "Restablecer los paneles", "Stop": "Detener", "Edit code file": "Editar el código",
     "Keyboard shortcuts": "Atajos de teclado", "Documentation": "Documentación",
-    "Report a problem": "Informar un problema", "About Pyzed Designer": "Acerca de Pyzed Designer",
+    "Report a problem": "Informar un problema", "About Pyzed Design": "Acerca de Pyzed Design",
     "Canvas": "Lienzo", "Code": "Código", "Move by one pixel": "Mover un píxel",
     "Move by one grid step": "Mover un paso de la cuadrícula", "Open the main event": "Abrir el evento principal",
     "Cancel the current gesture": "Cancelar el gesto actual", "Show completions": "Mostrar sugerencias",
@@ -147,6 +147,76 @@ _ES = {
         "Diseña ventanas visualmente, conecta sus eventos con Python y ejecútalas.",
     # Console
     "Running…": "Ejecutando…", "Idle": "Inactivo",
+    # Context menu
+    "View code": "Ver código", "Add inside…": "Añadir dentro…", "Group in a panel": "Agrupar en un panel",
+    "Move out of {parent}": "Sacar de {parent}", "Lock": "Bloquear", "Unlock": "Desbloquear",
+    # Code panel
+    "Problems": "Problemas", "Editor settings": "Ajustes del editor", "Whole file": "Archivo completo",
+    "This handler": "Este manejador", "Apply": "Aplicar", "Close": "Cerrar", "Loading…": "Cargando…",
+    "↵ insert  esc close": "↵ insertar  esc cerrar", "private": "privado",
+    "Language servers": "Servidores de lenguaje", "Types, completion and references": "Tipos, completado y referencias",
+    "Linting": "Análisis de estilo", "Restart servers": "Reiniciar servidores",
+    "Same as the designer": "Igual que el diseñador", "Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets":
+    "Ctrl+= y Ctrl+- (o Ctrl+rueda); Ctrl+0 restablece", "Highlight current line": "Resaltar la línea actual",
+    "Show whitespace": "Mostrar espacios", "Spaces as · and tabs as →": "Espacios como · y tabulaciones como →",
+    "Wrap long lines": "Ajustar líneas largas", "Minimap": "Minimapa",
+    "Click or drag it to scroll": "Haz clic o arrastra para desplazarte", "Cursor": "Cursor", "Shape": "Forma",
+    "Bar": "Barra", "Block": "Bloque", "Underline": "Subrayado", "Hollow": "Hueco", "Blink": "Parpadeo",
+    "Editing": "Edición", "Tab size": "Tamaño de tabulación",
+    "Tab inserts spaces; Enter keeps the indentation": "Tab inserta espacios; Enter mantiene la sangría",
+    "Autocomplete while typing": "Autocompletar al escribir", "Ctrl+Space opens it anytime":
+    "Ctrl+Espacio lo abre en cualquier momento", "Auto-close brackets and quotes": "Cerrar paréntesis y comillas",
+    "Also wraps the selection and steps over the closing one": "También envuelve la selección y salta el cierre",
+    "Code folding": "Plegado de código", "Chevrons in the gutter; Ctrl+Shift+[ and ]":
+    "Flechas en el margen; Ctrl+Mayús+[ y ]", "Format with ruff on Apply": "Formatear con ruff al aplicar",
+    "Code lens and diagnostics": "Code lens y diagnósticos", "Code lens": "Code lens",
+    "References, implementations and wired events": "Referencias, implementaciones y eventos conectados",
+    "Inline diagnostics": "Diagnósticos en línea", "Problems at the end of the line": "Problemas al final de la línea",
+    # Component descriptions
+    "Static text.": "Texto fijo.", "A title.": "Un título.", "Runs code when pressed.": "Ejecuta código al pulsarlo.",
+    "Single-line text entry.": "Entrada de texto de una línea.",
+    "Multi-line text, with optional syntax highlighting.": "Texto de varias líneas, con resaltado de sintaxis opcional.",
+    "An on/off option.": "Una opción de sí o no.", "A toggle, like Zed's settings switches.":
+    "Un interruptor, como los de los ajustes de Zed.", "Pick one of several options.": "Elige una de varias opciones.",
+    "A drop-down list.": "Una lista desplegable.", "Choose a number by dragging.": "Elige un número arrastrando.",
+    "A numeric field with steppers.": "Un campo numérico con botones de paso.",
+    "A scrollable list of items.": "Una lista de elementos con desplazamiento.",
+    "Shows how far a task has got.": "Muestra cuánto avanzó una tarea.", "A small status label.": "Una etiqueta de estado pequeña.",
+    "A picture from a file.": "Una imagen desde un archivo.", "A Lucide icon.": "Un icono de Lucide.",
+    "Formatted text.": "Texto con formato.", "An activity indicator.": "Un indicador de actividad.",
+    "A surface to group related controls; drop controls on it to put them inside.":
+    "Una superficie para agrupar controles relacionados; suelta controles encima para meterlos dentro.",
+    "A separator line.": "Una línea separadora.",
+    "Lines up the controls inside it side by side, like CSS flexbox.":
+    "Alinea sus controles uno al lado del otro, como flexbox en CSS.",
+    "Stacks the controls inside it from top to bottom.": "Apila sus controles de arriba abajo.",
+    "Places the controls inside it in cells, left to right.": "Coloca sus controles en celdas, de izquierda a derecha.",
+    "Empty space that grows to push its neighbours apart in a flex row or column.":
+    "Espacio vacío que crece para separar a sus vecinos en una fila o columna.",
+    "A titled frame around related controls.": "Un marco con título alrededor de controles relacionados.",
+    "A raised surface holding other controls.": "Una superficie elevada que contiene otros controles.",
+    "Clickable text.": "Texto en el que se puede hacer clic.", "A text box with a search icon.":
+    "Un cuadro de texto con icono de búsqueda.", "Pick one of a few options, side by side.":
+    "Elige una de pocas opciones, una al lado de otra.",
+    "Tabs; show or hide panels from its change event.": "Pestañas; muestra u oculta paneles desde su evento change.",
+    "A compact, clickable tag.": "Una etiqueta compacta y pulsable.", "A highlighted message.": "Un mensaje destacado.",
+    "Initials in a circle.": "Iniciales en un círculo.", "Keys shown as key caps.": "Teclas dibujadas como teclas.",
+    "A figure with its change and trend.": "Una cifra con su variación y tendencia.",
+    "A bar, line or donut chart.": "Un gráfico de barras, líneas o anillo.",
+    "Rows and columns from comma-separated text; change gives the row index.":
+    "Filas y columnas desde texto separado por comas; change da el índice de la fila.",
+    "Runs its tick event periodically. Invisible at run time.":
+    "Lanza su evento tick periódicamente. Invisible al ejecutar.",
+    # Status bar and Style placeholders
+    "{count} selected": "{count} seleccionados", "at {x}, {y}": "en {x}, {y}",
+    "Placing {tool}: click or drag on the form": "Colocando {tool}: haz clic o arrastra en el formulario",
+    "{count} controls": "{count} controles", "Grid {size}px": "Cuadrícula {size}px", "Snap": "Imán",
+    "None": "Ninguno", "Masked": "Con máscara", "token or #rrggbbaa": "token o #rrggbbaa", "none": "ninguna",
+    "theme default": "el del tema", "Ln {line}, Col {column}": "Lín {line}, Col {column}",
+    # Code lens
+    "{count} reference": "{count} referencia", "{count} references": "{count} referencias",
+    "{count} implementation": "{count} implementación", "{count} implementations": "{count} implementaciones",
+    "on {event}": "en {event}",
 }
 
 i18n.add("es", {"designer": _ES})
