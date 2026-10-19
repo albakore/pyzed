@@ -114,6 +114,10 @@ class Component:
     events: Tuple[str, ...] = ()
     description: str = ""
     visual: bool = True
+    #: ``"free"``, ``"flex"`` or ``"grid"`` when other controls can be placed inside (see ``layout``).
+    container: Optional[str] = None
+    #: Layout options given to new controls of this type (``(("grow", 1),)`` for a spacer).
+    child_layout: Tuple[Tuple[str, Any], ...] = ()
 
     @property
     def default_event(self) -> Optional[str]:
@@ -139,7 +143,7 @@ class Component:
         """A new control of this type with default properties."""
         w, h = self.size
         return Control(name=name, type=self.type, x=x, y=y, width=width or w, height=height or h,
-                       props=self.defaults())
+                       props=self.defaults(), layout=dict(self.child_layout))
 
 
 _REGISTRY: Dict[str, Component] = {}
@@ -386,6 +390,161 @@ def _timer(c: Control, ctx: RenderContext) -> Any:
         border_color=t.border_variant, border_width=1)
 
 
+def _outline(ctx: RenderContext, widget: Any, background: Any = None) -> Any:
+    """A layout container: invisible when running, a faint dashed-looking frame while designing."""
+    t = ctx.theme
+    bg = t.color(background) if background else None
+    if ctx.live:
+        return _core.container(widget, width="fill", height="fill", bg=bg)
+    from ..theme import alpha
+
+    return _core.container(widget, width="fill", height="fill", bg=bg or alpha(t.accent, 0.03),
+                           border_color=alpha(t.accent, 0.35), border_width=1, radius=2)
+
+
+def _flex(c: Control, ctx: RenderContext) -> Any:
+    return _outline(ctx, None, c.props["background"])
+
+
+def _grid(c: Control, ctx: RenderContext) -> Any:
+    return _outline(ctx, None, c.props["background"])
+
+
+def _spacer(c: Control, ctx: RenderContext) -> Any:
+    if ctx.live:
+        return _core.space(width="fill", height="fill")
+    t = ctx.theme
+    from ..theme import alpha
+
+    return _core.container(_icon("move-horizontal", size=12, color=alpha(t.text_muted, 0.6)), width="fill",
+                           height="fill", center=True, border_color=alpha(t.text_muted, 0.25), border_width=1,
+                           radius=2)
+
+
+def _group_box(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    title = _core.container(ui.label(p["title"], size="sm", weight="medium", color="text_muted", wrap=False, theme=t),
+                            padding=(0, 6), bg=t.background)
+    frame = _core.container(None, width="fill", height="fill", border_color=t.border, border_width=1,
+                            radius=t.radius_sm)
+    return _core.stack([_core.container(frame, width="fill", height="fill", padding=(9, 0, 0, 0)),
+                        _core.pin(title, x=10, y=0)] if p["title"] else [frame], width="fill", height="fill")
+
+
+def _card(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    header = None
+    if p["title"]:
+        header = _core.container(ui.label(p["title"], weight="semibold", theme=t), padding=(12, 16, 0, 16),
+                                 width="fill")
+    return _core.container(
+        _core.column([w for w in (header,) if w is not None], width="fill"),
+        width="fill", height="fill", bg=t.elevated, border_color=t.border_variant, border_width=1,
+        # No blurred shadow while designing: wgpu redraws it over later layers of the scrolled surface.
+        radius=t.radius + 2, shadow=(t.shadow, (0, 2), 8) if p["shadow"] and ctx.live else None)
+
+
+def _link(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    text = ui.label(p["text"], size="sm", color="text_accent", wrap=False, theme=t)
+    return _fill(_core.mouse_area(text, on_press=ctx.on(c, "click") if c.enabled else None,
+                                  cursor="pointer" if ctx.live else None), c, align_x=_align(p["align"]))
+
+
+def _segmented(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    options = _lines(p["options"])
+    selected = p["selected"] if p["selected"] in options else (options[0] if options else "")
+    return _fill(ui.segmented(options, selected, ctx.on(c, "change", "selected") if c.enabled else None,
+                              theme=ctx.theme), c)
+
+
+def _tabs(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    names = _lines(p["tabs"])
+    tabs = [ui.Tab(n, n) for n in names]
+    selected = p["selected"] if p["selected"] in names else (names[0] if names else None)
+    return _core.container(ui.tab_bar(tabs, selected, on_select=ctx.on(c, "change", "selected"),
+                                      height=max(c.height, 24), theme=ctx.theme),
+                           width="fill", height="fill", align_y="center")
+
+
+def _search(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _fill(ui.search_input(str(p["text"]), ctx.on(c, "change", "text") if c.enabled else None,
+                                 placeholder=p["placeholder"], on_submit=ctx.on(c, "submit"), id=ctx.key(c),
+                                 theme=ctx.theme), c)
+
+
+def _callout(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _core.container(ui.callout(p["title"], p["text"] or None, tint=p["tint"], icon=p["icon"] or None,
+                                      theme=ctx.theme), width="fill", height="fill")
+
+
+def _avatar(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    size = min(c.width, c.height)
+    return _core.container(ui.avatar(p["initials"] or "?", color=p["color"] or None, size=size, theme=ctx.theme),
+                           width="fill", height="fill", center=True)
+
+
+def _chip(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _fill(ui.chip(p["text"], on_press=ctx.on(c, "click") if ctx.live else None, selected=bool(p["selected"]),
+                         icon=p["icon"] or None, theme=ctx.theme), c)
+
+
+def _kbd(c: Control, ctx: RenderContext) -> Any:
+    return _fill(ui.kbd(c.props["keys"] or "ctrl-s", theme=ctx.theme), c)
+
+
+def _stat(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    delta = None if p["delta"] in (None, "") else _num(p["delta"])
+    trend = [_num(v) for v in _lines(p["trend"])] or None
+    return ui.stat(p["title"], p["value"], delta=delta, trend=trend, width="fill", theme=ctx.theme)
+
+
+def _values(value: Any) -> List[float]:
+    return [_num(v) for v in str(value or "").replace(",", " ").split()]
+
+
+def _chart(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    values = _values(p["values"])
+    t = ctx.theme
+    if p["kind"] == "line":
+        return ui.sparkline(values, width=c.width, height=c.height, tint=p["tint"], theme=t)
+    if p["kind"] == "donut":
+        size = min(c.width, c.height)
+        return _core.container(ui.donut(values, size=size, thickness=max(size / 7, 4), theme=t), width="fill",
+                               height="fill", center=True)
+    labels = _lines(p["labels"]) or None
+    return ui.bar_chart(values, labels=labels, width=c.width, height=c.height, tint=p["tint"], theme=t)
+
+
+def _table(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    lines = _lines(p["data"])
+    if not lines:
+        return _core.space()
+    header = [h.strip() for h in lines[0].split(",")]
+    rows = [dict(zip(header, (v.strip() for v in line.split(",")))) for line in lines[1:]]
+    selected = p["selected"]
+    on_row = ctx.on(c, "change", "selected")
+    return _core.container(
+        ui.table(header, rows, striped=bool(p["striped"]), height="fill",
+                 on_row_press=(lambda row: on_row(rows.index(row) if row in rows else row)) if ctx.live else None,
+                 selected=rows[int(selected)] if isinstance(selected, int) and 0 <= selected < len(rows) else None,
+                 theme=ctx.theme),
+        width="fill", height="fill", border_color=ctx.theme.border_variant, border_width=1,
+        radius=ctx.theme.radius_sm, clip=True)
+
+
 ALIGN = Prop("align", "choice", "left", choices=("left", "center", "right"))
 
 for _component in (
@@ -459,10 +618,86 @@ for _component in (
               (), "An activity indicator."),
     Component("panel", "Panel", "panel-top", "Containers", _panel, (240, 160),
               (Prop("title", "text", ""), Prop("background", "color", ""), Prop("border", "bool", True)),
-              (), "A surface to group related controls (place it behind them)."),
+              (), "A surface to group related controls; drop controls on it to put them inside.",
+              container="free"),
     Component("divider", "Divider", "minus", "Containers", _divider, (200, 8),
               (Prop("vertical", "bool", False),),
               (), "A separator line."),
+    Component("row", "Flex row", "columns-3", "Layout", _flex, (320, 48),
+              (Prop("direction", "choice", "row", choices=("row", "column"), group="Layout"),
+               Prop("gap", "number", 8, min=0, group="Layout"), Prop("padding", "number", 0, min=0, group="Layout"),
+               Prop("justify", "choice", "start",
+                    choices=("start", "center", "end", "space-between", "space-around", "space-evenly"),
+                    group="Layout"),
+               Prop("align", "choice", "stretch", choices=("stretch", "start", "center", "end"), group="Layout"),
+               Prop("background", "color", "")),
+              (), "Lines up the controls inside it side by side, like CSS flexbox.", container="flex"),
+    Component("column", "Flex column", "rows-3", "Layout", _flex, (200, 200),
+              (Prop("direction", "choice", "column", choices=("row", "column"), group="Layout"),
+               Prop("gap", "number", 8, min=0, group="Layout"), Prop("padding", "number", 0, min=0, group="Layout"),
+               Prop("justify", "choice", "start",
+                    choices=("start", "center", "end", "space-between", "space-around", "space-evenly"),
+                    group="Layout"),
+               Prop("align", "choice", "stretch", choices=("stretch", "start", "center", "end"), group="Layout"),
+               Prop("background", "color", "")),
+              (), "Stacks the controls inside it from top to bottom.", container="flex"),
+    Component("grid", "Grid", "layout-grid", "Layout", _grid, (320, 160),
+              (Prop("columns", "number", 2, min=1, max=24, group="Layout"),
+               Prop("gap", "number", 8, min=0, group="Layout"), Prop("padding", "number", 0, min=0, group="Layout"),
+               Prop("row_height", "number", 0, min=0, label="Row height (0 = share)", group="Layout"),
+               Prop("align", "choice", "stretch", choices=("stretch", "start", "center", "end"), group="Layout"),
+               Prop("background", "color", "")),
+              (), "Places the controls inside it in cells, left to right.", container="grid"),
+    Component("spacer", "Spacer", "move-horizontal", "Layout", _spacer, (24, 24), (),
+              (), "Empty space that grows to push its neighbours apart in a flex row or column.",
+              child_layout=(("grow", 1),)),
+    Component("group_box", "Group box", "square-dashed", "Containers", _group_box, (240, 140),
+              (Prop("title", "text", "Group"),),
+              (), "A titled frame around related controls.", container="free"),
+    Component("card", "Card", "square", "Containers", _card, (260, 160),
+              (Prop("title", "text", "Card"), Prop("shadow", "bool", True)),
+              (), "A raised surface holding other controls.", container="free"),
+    Component("link", "Link", "link", "Common", _link, (100, 22),
+              (Prop("text", "text", "Learn more"), ALIGN),
+              ("click",), "Clickable text."),
+    Component("search", "Search box", "search", "Common", _search, (220, 28),
+              (Prop("text", "text", "", group="Data"), Prop("placeholder", "text", "Search…")),
+              ("change", "submit"), "A text box with a search icon."),
+    Component("segmented", "Segmented", "toggle-left", "Common", _segmented, (240, 28),
+              (Prop("options", "list", "Day\nWeek\nMonth", group="Data"),
+               Prop("selected", "text", "Day", group="Data")),
+              ("change",), "Pick one of a few options, side by side."),
+    Component("tabs", "Tab bar", "panels-top-left", "Navigation", _tabs, (320, 32),
+              (Prop("tabs", "list", "General\nAdvanced\nAbout", group="Data"),
+               Prop("selected", "text", "General", group="Data")),
+              ("change",), "Tabs; show or hide panels from its change event."),
+    Component("chip", "Chip", "tag", "Display", _chip, (90, 26),
+              (Prop("text", "text", "Filter"), Prop("icon", "icon", ""), Prop("selected", "bool", False, group="Data")),
+              ("click",), "A compact, clickable tag."),
+    Component("callout", "Callout", "info", "Display", _callout, (320, 64),
+              (Prop("title", "text", "Heads up"), Prop("text", "text", "Something worth knowing."),
+               Prop("tint", "choice", "info", choices=TINTS), Prop("icon", "icon", "")),
+              (), "A highlighted message."),
+    Component("avatar", "Avatar", "circle-user", "Display", _avatar, (32, 32),
+              (Prop("initials", "text", "PZ"), Prop("color", "color", "")),
+              (), "Initials in a circle."),
+    Component("kbd", "Key binding", "keyboard", "Display", _kbd, (80, 22),
+              (Prop("keys", "text", "ctrl-s"),),
+              (), "Keys shown as key caps."),
+    Component("stat", "Stat", "trending-up", "Display", _stat, (180, 84),
+              (Prop("title", "text", "Revenue"), Prop("value", "text", "$12.4k"), Prop("delta", "number", 4.2),
+               Prop("trend", "list", "", label="Trend values")),
+              (), "A figure with its change and trend."),
+    Component("chart", "Chart", "chart-column", "Display", _chart, (280, 140),
+              (Prop("kind", "choice", "bar", choices=("bar", "line", "donut")),
+               Prop("values", "text", "3 5 2 8 6 9", group="Data"), Prop("labels", "list", "", group="Data"),
+               Prop("tint", "choice", "accent", choices=TINTS)),
+              (), "A bar, line or donut chart."),
+    Component("table", "Table", "table", "Display", _table, (360, 160),
+              (Prop("data", "multiline", "Name, Role\nAda, Engineer\nGrace, Admiral", group="Data",
+                    label="Rows (CSV)"),
+               Prop("selected", "number", None, group="Data"), Prop("striped", "bool", True)),
+              ("change",), "Rows and columns from comma-separated text; change gives the row index."),
     Component("timer", "Timer", "timer", "Components", _timer, (88, 24),
               (Prop("interval", "number", 1000, label="Interval (ms)", min=10, group="Behavior"),
                Prop("running", "bool", True, group="Behavior")),

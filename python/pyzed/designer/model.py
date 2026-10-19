@@ -34,8 +34,11 @@ class Control:
     """One component placed on a form.
 
     ``x``, ``y``, ``width`` and ``height`` are in logical pixels relative to the form's
-    client area. ``props`` holds the component's own properties (``text``, ``checked``...)
-    and ``events`` maps event names (``"click"``) to handler function names.
+    client area, or to the top-left corner of ``parent`` when the control sits inside a
+    container (a panel, a group box, a flex row...). ``props`` holds the component's own
+    properties (``text``, ``checked``...) and ``events`` maps event names (``"click"``) to
+    handler function names. ``layout`` holds options read by the parent's layout, such as
+    ``grow`` in a flex row or ``span`` in a grid.
     """
 
     name: str
@@ -50,6 +53,8 @@ class Control:
     visible: bool = True
     enabled: bool = True
     locked: bool = False
+    parent: Optional[str] = None
+    layout: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
@@ -58,6 +63,11 @@ class Control:
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data["anchor"] = list(self.anchor)
+        # Only containers' children carry these, so plain forms stay as they were.
+        if not data["parent"]:
+            del data["parent"]
+        if not data["layout"]:
+            del data["layout"]
         return data
 
     @classmethod
@@ -66,6 +76,8 @@ class Control:
         known["anchor"] = tuple(a for a in known.get("anchor", ("left", "top")) if a in ANCHORS)
         known["props"] = dict(known.get("props") or {})
         known["events"] = dict(known.get("events") or {})
+        known["layout"] = dict(known.get("layout") or {})
+        known["parent"] = known.get("parent") or None
         return cls(**known)
 
     def copy(self) -> "Control":
@@ -111,6 +123,54 @@ class Form:
     def names(self) -> List[str]:
         return [c.name for c in self.controls]
 
+    # -- hierarchy ----------------------------------------------------------
+    def children(self, name: Optional[str]) -> List[Control]:
+        """The controls directly inside ``name`` (the form itself when ``None``), in z-order."""
+        return [c for c in self.controls if c.parent == name]
+
+    def descendants(self, name: str) -> List[Control]:
+        """Every control inside ``name``, at any depth (parents before their children)."""
+        out: List[Control] = []
+        for child in self.children(name):
+            out.append(child)
+            out.extend(self.descendants(child.name))
+        return out
+
+    def ancestors(self, name: str) -> List[Control]:
+        """The containers holding ``name``, nearest first."""
+        out: List[Control] = []
+        control = self.get(name)
+        while control is not None and control.parent:
+            control = self.get(control.parent)
+            if control is None or control in out:
+                break
+            out.append(control)
+        return out
+
+    def walk(self, parent: Optional[str] = None, depth: int = 0) -> Iterable[Tuple[Control, int]]:
+        """``(control, depth)`` in drawing order: each control, then what it contains."""
+        for child in self.children(parent):
+            yield child, depth
+            yield from self.walk(child.name, depth + 1)
+
+    def is_inside(self, name: str, container: str) -> bool:
+        return any(a.name == container for a in self.ancestors(name))
+
+    def _repair_parents(self) -> None:
+        """Drops parents that do not exist or that would make a cycle."""
+        for control in self.controls:
+            if control.parent and (self.get(control.parent) is None or control.parent == control.name):
+                control.parent = None
+        for control in self.controls:
+            seen = {control.name}
+            node = control
+            while node is not None and node.parent:
+                if node.parent in seen:
+                    control.parent = None
+                    break
+                seen.add(node.parent)
+                node = self.get(node.parent)
+
     def unique_name(self, base: str) -> str:
         """The first free ``base1``, ``base2``... (Visual Basic style)."""
         base = re.sub(r"\d+$", "", identifier(base)) or "control"
@@ -124,11 +184,16 @@ class Form:
     def add(self, control: Control) -> Control:
         if not control.name or control.name in RESERVED or self.get(control.name) is not None:
             control.name = self.unique_name(control.name or control.type)
+        if control.parent and self.get(control.parent) is None:
+            control.parent = None
         self.controls.append(control)
         return control
 
     def remove(self, names: Iterable[str]) -> List[Control]:
+        """Removes controls and everything inside them."""
         names = set(names)
+        for name in list(names):
+            names.update(c.name for c in self.descendants(name))
         removed = [c for c in self.controls if c.name in names]
         self.controls = [c for c in self.controls if c.name not in names]
         return removed
@@ -142,6 +207,9 @@ class Form:
         if not new or new in RESERVED or self.get(new) is not None or new == self.name:
             new = self.unique_name(new or control.type)
         control.name = new
+        for child in self.controls:
+            if child.parent == old:
+                child.parent = new
         return new
 
     def reorder(self, names: Iterable[str], where: str) -> None:
@@ -170,6 +238,7 @@ class Form:
         form = cls(**settings)
         form.events = dict(form.events or {})
         form.controls = [Control.from_dict(c) for c in data.get("controls", [])]
+        form._repair_parents()
         return form
 
     def to_json(self) -> str:

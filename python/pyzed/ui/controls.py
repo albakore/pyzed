@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 from .. import _core
 from ..icons import glyph as _glyph
@@ -105,14 +105,16 @@ def number_field(
     min: Optional[float] = None,  # noqa: A002
     max: Optional[float] = None,  # noqa: A002
     step: float = 1,
-    width: float = 120,
+    width: Any = 120,
     suffix: Optional[str] = None,
+    align: str = "center",
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A numeric input with −/+ buttons (Zed's ``NumericStepper``).
 
     ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
-    accepted as long as it parses; anything else is ignored.
+    accepted as long as it parses; anything else is ignored. The number is centered
+    between the buttons (``align="start"`` or ``"end"`` to change it).
     """
     t = _theme(theme)
 
@@ -161,6 +163,7 @@ def number_field(
                     border_width=0.0,
                     color=t.text,
                     selection_color=t.selection,
+                    align_x=align,
                 ),
                 label(suffix, size="sm", color="text_muted", theme=t) if suffix else None,
                 side("plus", step, max is not None and value >= max),
@@ -279,6 +282,50 @@ def disclosure(
         radius=t.radius_sm,
     )
     return _core.column([header, _core.container(content, padding=(4, 0, 4, 26)) if open else None], spacing=2)
+
+
+def accordion(
+    sections: Sequence[Tuple[str, str, Any]],
+    *,
+    open: Any = (),  # noqa: A002
+    on_toggle: Optional[Callable[[str], Any]] = None,
+    icons: Optional[Dict[str, str]] = None,
+    spacing: float = 8,
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """Collapsible sections, each in its own bordered box: ``[(id, title, content), ...]``.
+
+    ``open`` holds the ids of the expanded sections (or is ``True`` for all of them);
+    ``on_toggle(id)`` is called when a header is clicked. Use it for property panels,
+    settings and FAQs.
+    """
+    t = _theme(theme)
+    boxes = []
+    for key, title, content in sections:
+        expanded = open is True or key in open
+        icon = (icons or {}).get(key)
+        header = _core.button(
+            _core.container(_core.row([
+                _icon("chevron-down" if expanded else "chevron-right", size=14, color=t.icon_muted),
+                _icon(icon, size=14, color=t.icon_muted) if icon else None,
+                label(title, size="sm", weight="semibold", theme=t),
+                _core.space(width="fill"),
+            ], spacing=6, align="center"), height="fill", width="fill", align_y="center"),
+            (lambda k=key: on_toggle(k)) if on_toggle else None,
+            width="fill",
+            height=32,
+            padding=(0, 10),
+            bg="transparent",
+            hover_bg=t.ghost_hover,
+            radius=t.radius,
+        )
+        body = None
+        if expanded:
+            body = _core.column([_core.rule(thickness=1, color=t.border_variant),
+                                 _core.container(content, padding=(6, 0, 8, 0), width="fill")], width="fill")
+        boxes.append(_core.container(_core.column([header, body], width="fill"), width="fill", bg=t.surface,
+                                     border_color=t.border_variant, border_width=1.0, radius=t.radius + 2))
+    return _core.column(boxes, spacing=spacing, width="fill")
 
 
 def toggle_group(

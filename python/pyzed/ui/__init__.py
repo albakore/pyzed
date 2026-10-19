@@ -20,7 +20,9 @@ from .base import (
     muted,
     tooltip_text as tooltip,
 )
-from .controls import chip, disclosure, number_field, radio_group, select, split_button, toggle_group
+from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
+from .help import about, shortcuts
+from .controls import accordion, chip, disclosure, number_field, radio_group, select, split_button, toggle_group
 from .display import (
     Column,
     bar_chart,
@@ -59,6 +61,13 @@ from .overlays import (
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 
 __all__ = [
+    "LOG_LEVELS",
+    "Log",
+    "LogEntry",
+    "about",
+    "accordion",
+    "console",
+    "shortcuts",
     "ansi",
     "avatar",
     "badge",

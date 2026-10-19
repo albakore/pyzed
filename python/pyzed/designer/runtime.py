@@ -16,6 +16,7 @@ Handlers may return anything a Pyzed callback can (a ``Command``, a coroutine...
 
 from __future__ import annotations
 
+import sys
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,7 +28,7 @@ from ..app import run as _run_app
 from ..theme import Theme, themes
 from . import code as _code
 from . import components as _components
-from .geometry import anchored
+from . import layout as _layout
 from .model import Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
@@ -161,6 +162,37 @@ class FormProxy:
     def close(self) -> _core.Command:
         return self._runtime.window.close()
 
+    def open_form(self, path: Union[str, Path], **values: Any) -> _core.Command:
+        """A command that opens another form in a new window: ``return form.open_form("settings")``.
+
+        ``path`` is relative to this form's folder (``.pzform`` may be left out). Keyword
+        arguments set properties on the new form's controls, e.g. ``name__text="Ada"`` sets
+        ``name.text``. Its handlers run like this form's, and its window is listed in
+        ``form.windows`` while open.
+        """
+        runtime = self._runtime
+        target = Path(path)
+        if not target.suffix:
+            target = target.with_suffix(".pzform")
+        if not target.is_absolute() and runtime.path is not None:
+            target = runtime.path.parent / target
+        form = load(target)
+        for key, value in values.items():
+            control, _, prop = key.partition("__")
+            if form.get(control) is None or not prop:
+                raise TypeError(f"{target.name} has no control {control!r} (use control__property=value)")
+            form[control].props[prop] = value
+        window = FormWindow(form, load_handlers(target, form), path=target)
+        window.runtime.log = runtime.log
+        window.app = runtime.window.app if runtime.window.app is not None else runtime.window
+        runtime.opened.append(window)
+        return window.open()
+
+    @property
+    def windows(self) -> list:
+        """The other forms opened with ``open_form`` that are still open."""
+        return [w.form for w in self._runtime.opened if w.is_open]
+
 
 class LiveContext(_components.RenderContext):
     live = True
@@ -186,8 +218,13 @@ class LiveContext(_components.RenderContext):
 class FormRuntime:
     """The engine behind ``FormApp``/``FormWindow``: state, event dispatch and drawing."""
 
-    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *, window: Window) -> None:
+    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *, window: Window,
+                 path: Optional[Union[str, Path]] = None) -> None:
         self.form = form.copy()
+        self.path: Optional[Path] = Path(path) if path else None
+        self.opened: list = []
+        #: Called as ``log(level, text)`` for events and handler errors (the designer's console).
+        self.log: Optional[Callable[[str, str], None]] = None
         self.design_size = (form.width, form.height)
         self.handlers = dict(handlers or {})
         self.window = window
@@ -213,11 +250,19 @@ class FormRuntime:
             self.error = f"{owner}.{event}: handler {name}() not found in the code file"
             return None
         sender = ControlProxy(control, self) if control is not None else self.proxy
+        if self.log is not None and event not in ("tick", "mouse_enter", "mouse_leave"):
+            shown = "" if value is None else f" ({value!r})"[:80]
+            self.log("event", f"{owner}.{event}{shown} → {name}()")
         try:
             return handler(self.proxy, Event(sender, event, value))
         except Exception:  # noqa: BLE001 - a handler bug must not kill the app
             self.error = f"{owner}.{event}: " + traceback.format_exc(limit=-1).strip().splitlines()[-1]
-            traceback.print_exc()
+            if self.log is not None:
+                kind, err, tb = sys.exc_info()
+                frames = traceback.format_exception(kind, err, tb.tb_next if tb is not None else None)
+                self.log("error", f"{owner}.{event}: {name}() raised\n" + "".join(frames).rstrip())
+            else:
+                traceback.print_exc()
             return None
 
     def load(self) -> Any:
@@ -252,11 +297,17 @@ class FormRuntime:
         t = self.theme
         size = self.size
         layers = [_core.container(width="fill", height="fill", bg=t.background)]
-        for control in self.form.controls:
+        form = self.form
+        rects = _layout.resolve(form, size)
+        hidden: set = set()
+        for control, _depth in form.walk():
             spec = _components.get(control.type)
-            if not control.visible or not spec.visual:
+            if not control.visible or (control.parent and control.parent in hidden):
+                hidden.add(control.name)
                 continue
-            x, y, w, h = anchored(control, self.design_size, size)
+            if not spec.visual:
+                continue
+            x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
             widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
             layers.append(_core.pin(widget, x=x, y=y))
@@ -304,8 +355,8 @@ class _FormHost:
 
     runtime: FormRuntime
 
-    def _host(self, form: Form, handlers: Optional[Dict[str, Any]]) -> None:
-        self.runtime = FormRuntime(form, handlers, window=self)  # type: ignore[arg-type]
+    def _host(self, form: Form, handlers: Optional[Dict[str, Any]], path: Optional[Union[str, Path]] = None) -> None:
+        self.runtime = FormRuntime(form, handlers, window=self, path=path)  # type: ignore[arg-type]
         self.size = (form.width, form.height)
         self.resizable = form.resizable
         self.theme = self.runtime.theme
@@ -353,7 +404,7 @@ class FormApp(_FormHost, App):
 
     def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None,
                  path: Optional[Union[str, Path]] = None) -> None:
-        self._host(form, handlers)
+        self._host(form, handlers, path)
         self.path = Path(path) if path else None
 
     def on_start(self) -> Any:
@@ -371,8 +422,9 @@ class FormApp(_FormHost, App):
 class FormWindow(_FormHost, Window):
     """A form in an extra window (the designer uses it for the live preview)."""
 
-    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None) -> None:
-        self._host(form, handlers)
+    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None,
+                 path: Optional[Union[str, Path]] = None) -> None:
+        self._host(form, handlers, path)
 
     def on_open(self) -> Any:
         return self.runtime.load()

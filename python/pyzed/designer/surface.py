@@ -21,6 +21,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import components as _components
 from .geometry import HANDLES
+from .model import Control
 from .runtime import theme_for
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -91,39 +92,54 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         layers.append(_core.canvas(dot_grid(w, h, form.grid, alpha(ft.text_muted, 0.35)), width=w, height=h,
                                    id="designer-grid"))
 
-    # 2. the controls, as they will look
-    for c in form.controls:
-        if not c.visible and not d.show_hidden:
-            continue
-        widget = _components.render(c, ctx)
-        if not c.visible:
-            widget = _core.container(widget, width=c.width, height=c.height, bg=alpha(ft.background, 0.5))
-        layers.append(_core.pin(widget, x=c.x, y=c.y))
+    # 2. the controls, as they will look, containers before what they hold
+    rects = d.rects
+    shown = []
+    hidden: set = set()
+    for c, _depth in form.walk():
+        if not c.visible or (c.parent and c.parent in hidden):
+            hidden.add(c.name)
+            if not d.show_hidden:
+                continue
+        x, y, cw, ch = rects[c.name]
+        placed = Control(**{**c.__dict__, "width": cw, "height": ch})
+        widget = _components.render(placed, ctx)
+        if c.name in hidden:
+            widget = _core.container(widget, width=cw, height=ch, bg=alpha(ft.background, 0.5))
+        layers.append(_core.pin(widget, x=x, y=y))
+        shown.append(c)
+
+    # the container a dragged control (or the one being placed) will drop into
+    target = d.drop_target
+    if target is not None and target.name in rects:
+        tx, ty, tw, th = rects[target.name]
+        layers.append(_core.pin(_core.container(width=tw, height=th, bg=alpha(t.accent, 0.06),
+                                                border_color=t.accent, border_width=2, radius=2), x=tx, y=ty))
 
     # 3. hit boxes: select, drag, double-click to open the default event, right-click menu
-    for c in form.controls:
-        if not c.visible and not d.show_hidden:
-            continue
-        box = _core.container(width=c.width, height=c.height)
+    for c in shown:
+        x, y, cw, ch = rects[c.name]
+        box = _core.container(width=cw, height=ch)
         layers.append(_core.pin(_core.mouse_area(
             box,
             on_press=lambda n=c.name: d.press_control(n),
             on_double_click=lambda n=c.name: d.open_default_event(n),
             on_right_press=lambda n=c.name: d.open_context_menu(n),
             cursor="crosshair" if d.tool else ("default" if c.locked else "move"),
-        ), x=c.x, y=c.y))
+        ), x=x, y=y))
 
     # 4. selection, handles, rubber band
     for c in doc.selected:
         primary = c is doc.primary
+        x, y, cw, ch = rects.get(c.name, c.rect)
         layers.append(_core.pin(_core.container(
-            width=c.width + 2, height=c.height + 2,
+            width=cw + 2, height=ch + 2,
             border_color=t.accent if primary else alpha(t.accent, 0.6), border_width=1.5 if primary else 1,
-        ), x=c.x - 1, y=c.y - 1))
+        ), x=x - 1, y=y - 1))
         if c.locked:
-            layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=c.x + c.width - 12, y=c.y - 14))
+            layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=x + cw - 12, y=y - 14))
     if len(doc.selected) == 1 and not doc.primary.locked:  # type: ignore[union-attr]
-        layers.extend(_handles(d, doc.primary.rect, t))  # type: ignore[union-attr]
+        layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
     band = d.band_rect
     if band is not None:
         bx, by, bw, bh = band

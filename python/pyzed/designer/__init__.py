@@ -31,6 +31,7 @@ from .document import Document
 from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
+from .new import Template, new_form, register_template, templates
 from .runtime import Event, FormApp, FormWindow, open_form, run, theme_for
 from .settings import EditorSettings
 
@@ -63,6 +64,7 @@ __all__ = [
     "FormApp",
     "FormWindow",
     "History",
+    "Template",
     "Prop",
     "RenderContext",
     "align",
@@ -73,13 +75,16 @@ __all__ = [
     "design",
     "distribute",
     "load",
+    "new_form",
     "open_form",
     "register",
+    "register_template",
     "render",
     "run",
     "same_size",
     "save",
     "smart_guides",
+    "templates",
     "snap",
     "theme_for",
 ]

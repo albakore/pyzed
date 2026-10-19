@@ -192,6 +192,7 @@ pub enum Kind {
         secure: bool,
         icon: Option<(char, f32)>,
         style: InputStyle,
+        align_x: Option<Horizontal>,
     },
     Scrollable {
         child: Py<Widget>,
@@ -786,7 +787,8 @@ pub fn button(
 #[pyo3(signature = (value, *, placeholder="", on_input=None, on_submit=None, id=None, size=None,
     font=None, padding=None, width=None, secure=false, icon=None, icon_size=None, bg=None,
     border_color=None, hover_border_color=None, focus_border_color=None, border_width=None,
-    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None))]
+    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None,
+    align_x=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn text_input(
     py: Python<'_>,
@@ -812,6 +814,7 @@ pub fn text_input(
     placeholder_color: Any<'_>,
     selection_color: Any<'_>,
     icon_color: Any<'_>,
+    align_x: Option<&str>,
 ) -> PyResult<Py<Widget>> {
     let radius = match &radius {
         Some(r) if !r.is_none() => Some(style::radius(&Some(r.clone()))?),
@@ -842,6 +845,7 @@ pub fn text_input(
                 selection_color: style::opt_color(&selection_color)?,
                 icon_color: style::opt_color(&icon_color)?,
             },
+            align_x: style::align_x(align_x)?,
         },
     )
 }
