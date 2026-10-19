@@ -230,6 +230,8 @@ _ES = {
     "Delete…": "Eliminar…", "In {folder}": "En {folder}", "Type a name": "Escribe un nombre",
     "Could not do that": "No se pudo hacer", "Could not open {name}": "No se pudo abrir {name}",
     "Could not delete {name}": "No se pudo eliminar {name}", "Open a project first": "Abre primero un proyecto",
+    "Open in the code editor": "Abrir en el editor de código", "{name} is not a text file": "{name} no es un archivo de texto",
+    "Could not save {name}": "No se pudo guardar {name}", "Saved {name}": "{name} guardado",
     "Delete {name}? This cannot be undone.": "¿Eliminar {name}? No se puede deshacer.",
     "Delete the folder {name} and everything in it? This cannot be undone.":
         "¿Eliminar la carpeta {name} con todo su contenido? No se puede deshacer.",

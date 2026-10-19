@@ -33,7 +33,7 @@ MAX_ENTRIES = 5000
 MENU_WIDTH = 240
 FIND_ID = "workspace-find"
 NAME_ID = "workspace-name"
-#: Files the designer opens itself; everything else opens in the system's app.
+#: Files the designer opens in its own tabs; text files open in the code editor, the rest in the system's app.
 DESIGN_SUFFIXES = (".pzform", ".pzcomp")
 
 
@@ -219,8 +219,9 @@ class Workspace:
         self.selected = rel.rstrip("/")
 
     def open(self, rel: str) -> Any:
-        """Opens the file ``rel``: forms and components in a designer tab, a form's code in the code
-        panel, any other file in the system's app. A folder is revealed and opened in the tree."""
+        """Opens the file ``rel``: forms and components in a designer tab, a form's code with its form,
+        any other text file in the code editor and the rest (images, binaries) in the system's app. A
+        folder is revealed and opened in the tree."""
         path = self.path_of(rel)
         self.menu = None
         if path.is_dir():
@@ -236,10 +237,21 @@ class Workspace:
             if design is not None:  # the code of a form or component: open it with the code panel
                 self.d._guard(lambda: self.d.open_path(design))
                 return self.d.edit_whole_file()
+        if self.d.buffers.open(path):
+            return _core.Command.focus(self.d.editor_id)
         try:
             open_with_system(path)
         except OSError as err:
             self.d.notify(tr("Could not open {name}", name=path.name), str(err), kind="error", seconds=5)
+        return None
+
+    def edit(self, rel: str) -> Any:
+        """Opens the file ``rel`` as text in the code editor, whatever it is (a form's ``.py`` too)."""
+        path = self.path_of(rel)
+        self.selected = rel
+        if self.d.buffers.open(path):
+            return _core.Command.focus(self.d.editor_id)
+        self.d.notify(tr("{name} is not a text file", name=path.name), kind="error", seconds=4)
         return None
 
     def pick(self, rel: str) -> Any:
@@ -279,6 +291,8 @@ class Workspace:
         relative = rel.rstrip("/") or "."
         items = [
             None if is_dir else ui.MenuItem(tr("Open"), self._act(lambda: self.open(rel)), icon="file"),
+            None if is_dir or path.suffix in DESIGN_SUFFIXES else ui.MenuItem(
+                tr("Open in the code editor"), self._act(lambda: self.edit(rel)), icon="file-code"),
             None if is_dir else ui.MenuItem(tr("Open with the system app"), self._act(lambda: open_with_system(path)),
                                             icon="external-link"),
             ui.MenuItem(tr("Reveal in file manager"), self._act(lambda: reveal(path)), icon="folder-search"),
@@ -339,6 +353,7 @@ class Workspace:
                 if dest.exists():
                     raise FileExistsError(f"{dest.name} already exists")
                 source.rename(dest)
+                self.d.buffers.moved(source, dest)
                 rel = dest.relative_to(self.root).as_posix()
             else:
                 dest = self.root / target / name
@@ -379,6 +394,8 @@ class Workspace:
                 path.unlink()
         except OSError as err:
             self.d.notify(tr("Could not delete {name}", name=path.name), str(err), kind="error", seconds=5)
+        else:
+            self.d.buffers.deleted(path)
         self.refresh()
 
     # -- Go to file ---------------------------------------------------------------------------------

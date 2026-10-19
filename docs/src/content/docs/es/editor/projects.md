@@ -90,7 +90,17 @@ Al hacer clic en un archivo se abre donde corresponde:
 | --- | --- |
 | `.pzform`, `.pzcomp` | En una pestaña del diseñador. |
 | El `.py` de un formulario o componente | Su formulario, con el archivo de código entero en el [panel de código](/pyzed/es/editor/code-editor/). |
-| Cualquier otro | Con la app del sistema para ese tipo de archivo. |
+| Cualquier otro archivo de texto (`.py`, `.toml`, `.md`, `.json`...) | En una pestaña del panel de código, para editarlo ahí mismo. |
+| Imágenes y otros archivos binarios | Con la app del sistema para ese tipo de archivo. |
+
+![Un archivo del proyecto abierto en el panel de código, junto al README](../../../../../screenshots/designer-file-editor.png)
+
+Cada archivo abierto tiene una pestaña en el panel de código, después del código del formulario si está abierto.
+El editor resalta la sintaxis según el lenguaje del archivo y tiene buscar y reemplazar
+(<kbd>Ctrl</kbd>+<kbd>F</kbd>), ir a una línea (<kbd>Ctrl</kbd>+<kbd>G</kbd>) y todos los atajos de edición; el
+autocompletado y los diagnósticos son solo para el código del formulario. Un punto en la pestaña indica cambios sin
+guardar: **Save** o <kbd>Ctrl</kbd>+<kbd>S</kbd> (con el foco en el archivo) lo guarda, y al cerrarlo pregunta
+antes. Si renombras o borras un archivo en el árbol, su pestaña se actualiza.
 
 La barra sobre el árbol tiene un **buscador** de archivos y carpetas (busca las letras en orden, como el buscador
 de archivos de Zed, y el nombre del archivo cuenta más que las carpetas: `crt` encuentra `ui/cart.pzform`),
@@ -103,6 +113,7 @@ proyecto) abre su menú:
 | Opción | Qué hace |
 | --- | --- |
 | **Open** / **Open with the system app** | Abre el archivo en el editor o con su app predeterminada. |
+| **Open in the code editor** | Abre cualquier archivo de texto como texto, también el `.py` de un formulario por separado. |
 | **Reveal in file manager** | Lo muestra en Archivos, Finder o el Explorador. |
 | **New file…** / **New folder…** | Crea uno en esa carpeta (un archivo nuevo se abre al momento). |
 | **Copy path** / **Copy relative path** | Copia la ruta completa o la ruta desde la carpeta del proyecto. |
