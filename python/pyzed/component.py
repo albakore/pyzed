@@ -238,11 +238,13 @@ class Component:
                 props[name] = PropInfo(name, annotation, vars(klass).get(name, _MISSING))
         cls.__props__ = props
         cls.__state__ = states
-        declared = cls.events
-        if isinstance(declared, Mapping):
-            custom = {str(k): str(v) for k, v in declared.items()}
-        else:
-            custom = {str(name): "" for name in declared}
+        custom: Dict[str, str] = {}
+        for klass in reversed(cls.__mro__):  # a subclass adds events to the ones it inherits
+            declared = vars(klass).get("events") if issubclass(klass, Component) else None
+            if isinstance(declared, Mapping):
+                custom.update({str(k): str(v) for k, v in declared.items()})
+            elif declared:
+                custom.update({str(name): "" for name in declared})
         cls.__events__ = {**custom, **LIFECYCLE_EVENTS}
         if not vars(cls).get("type_name"):  # not inherited: each subclass is its own toolbox entry
             cls.type_name = _snake(cls.__name__)

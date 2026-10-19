@@ -23,8 +23,10 @@ join the toolbox and can be used by forms.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
+import sys
 import traceback
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -63,6 +65,8 @@ class Scene(Form):
     icon: str = "component"
     category: str = "Custom"
     description: str = ""
+    #: The ``.pzcomp`` this component inherits from, relative to this file ("" for none).
+    extends: str = ""
     bindings: Dict[str, Dict[str, str]] = field(default_factory=dict)
 
     @property
@@ -86,6 +90,8 @@ class Scene(Form):
 
     def to_dict(self) -> Dict[str, Any]:
         data = {k: v for k, v in asdict(self).items() if k not in ("controls", "bindings", "title", "events")}
+        if not data["extends"]:
+            del data["extends"]
         return {
             "format": FORMAT,
             "component": data,
@@ -129,6 +135,47 @@ def save(scene: Scene, path: Union[str, Path]) -> Path:
     return path
 
 
+def merge(base: Scene, own: Scene) -> Scene:
+    """``own`` drawn on top of the scene it extends, like an inherited scene in Godot.
+
+    The base's controls come first (replaced by ``own``'s version of a control with the
+    same name, which is how a child changes an inherited control), then ``own``'s new
+    ones. Bindings and root events add up; an empty binding removes an inherited one.
+    """
+    mine = {c.name: c for c in own.controls}
+    controls = [(mine[c.name] if c.name in mine else c).copy() for c in base.controls]
+    taken = {c.name for c in base.controls}
+    controls += [c.copy() for c in own.controls if c.name not in taken]
+    bindings = {k: dict(v) for k, v in base.bindings.items()}
+    for name, props in own.bindings.items():
+        bindings.setdefault(name, {}).update(props)
+    bindings = {k: {p: e for p, e in v.items() if e} for k, v in bindings.items()}
+    return dataclasses.replace(own, controls=controls, bindings={k: v for k, v in bindings.items() if v},
+                               events={**base.events, **own.events})
+
+
+def base_path(scene: Scene, path: Optional[Union[str, Path]]) -> Optional[Path]:
+    """The file of the scene ``scene`` (saved at ``path``) extends, or ``None``."""
+    if not scene.extends:
+        return None
+    base = Path(scene.extends)
+    if not base.is_absolute():
+        base = (Path(path).resolve().parent if path else Path.cwd()) / base
+    return base.resolve()
+
+
+def full_scene(scene: Scene, path: Optional[Union[str, Path]], _seen: Optional[set] = None) -> Scene:
+    """``scene`` with everything it inherits (its base, the base of its base...)."""
+    base = base_path(scene, path)
+    if base is None:
+        return scene
+    seen = _seen if _seen is not None else {Path(path).resolve() if path else None}
+    if base in seen or not base.exists():
+        return scene  # a cycle or a missing base: draw what there is
+    seen.add(base)
+    return merge(full_scene(load(base), base, seen), scene)
+
+
 def code_path(scene_path: Union[str, Path], scene: Optional[Scene] = None) -> Path:
     scene_path = Path(scene_path)
     if scene is not None and scene.code:
@@ -160,6 +207,12 @@ class SceneDocument(Document):
         file = Path(path).name if path else f"{scene.name.lower()}{SUFFIX}"
         if code is None:
             code = scene_code.new_module(scene.name, file, scene.description)
+        self.path = Path(path) if path else None
+        self.form = scene
+        self._base: Tuple[Any, Optional[Scene]] = (None, None)
+        base = self.base
+        if base is not None:
+            scene = merge(base, scene)  # the inherited controls are shown, and can be changed
         super().__init__(scene, path, code)
         self._info: Tuple[str, Optional[scene_code.ClassInfo]] = ("", None)
         self._last_info: scene_code.ClassInfo = scene_code.ClassInfo(scene.name)
@@ -188,11 +241,16 @@ class SceneDocument(Document):
 
     def save(self, path: Optional[Union[str, Path]] = None) -> Path:
         """Writes the scene and its class, then reloads the class so the toolbox shows the changes."""
+        base = self.base_file
         if path is not None:
             self.path = Path(path) if Path(path).suffix else Path(path).with_suffix(SUFFIX)
         if self.path is None:
             raise ValueError("this component has no file yet; pass a path")
-        save(self.scene, self.path)
+        if base is not None:  # keep pointing at the same base from the (maybe new) folder
+            self.scene.extends = _relative(base, self.path)
+            self.code = scene_code.set_base(self.code, self._base_class_name(base), self.scene.extends,
+                                            self._class())
+        save(self.own_scene(), self.path)
         self.code = scene_code.set_scene_file(self.code, self.path.name, self._class())
         module = self.code_path
         assert module is not None
@@ -202,7 +260,122 @@ class SceneDocument(Document):
 
         scenes.overrides.pop(self.path.resolve(), None)
         load_component(self.path)
+        reload_dependents(self.path)
         return self.path
+
+    # -- inheritance --------------------------------------------------------
+    @property
+    def base_file(self) -> Optional[Path]:
+        """The ``.pzcomp`` this component extends, or ``None``."""
+        return base_path(self.form, self.path) if isinstance(self.form, Scene) else None
+
+    @property
+    def base(self) -> Optional[Scene]:
+        """The scene this component extends, with everything it inherits itself (``None`` if none)."""
+        file = self.base_file
+        try:
+            stamp = (file, file.stat().st_mtime) if file is not None else None
+        except OSError:
+            stamp = (file, None)
+        if self._base[0] != stamp:
+            loaded = None
+            if file is not None and file.exists():
+                loaded = full_scene(load(file), file, {self.path.resolve() if self.path else None, file})
+            self._base = (stamp, loaded)
+        return self._base[1]
+
+    def inherited(self, name: str) -> bool:
+        """``True`` for a control that comes from the base component."""
+        base = self.base
+        return base is not None and base.get(name) is not None
+
+    def own_scene(self) -> Scene:
+        """What this component's own ``.pzcomp`` holds: its controls, and the inherited ones it changed."""
+        base = self.base
+        scene = self.scene
+        if base is None:
+            return scene
+        controls = []
+        for control in scene.controls:
+            original = base.get(control.name)
+            if original is None or original.to_dict() != control.to_dict():
+                controls.append(control)
+        bindings: Dict[str, Dict[str, str]] = {}
+        for name in {*base.bindings, *scene.bindings}:
+            mine, theirs = scene.bindings.get(name, {}), base.bindings.get(name, {})
+            changed = {p: e for p, e in mine.items() if theirs.get(p) != e}
+            changed.update({p: "" for p in theirs if p not in mine})  # an inherited binding removed here
+            if changed:
+                bindings[name] = changed
+        events = {k: v for k, v in scene.events.items() if base.events.get(k) != v}
+        return dataclasses.replace(scene, controls=controls, bindings=bindings, events=events)
+
+    def set_base(self, path: Optional[Union[str, Path]]) -> None:
+        """Makes this component inherit from the one saved at ``path`` (``None`` inherits from nothing).
+
+        The class then derives from the base class, so it gets its properties, events and
+        methods; the base's controls show on the canvas and can be changed but not removed.
+        """
+        own = self.own_scene()
+        if path is None:
+            own.extends = ""
+            self.code = scene_code.set_base(self.code, None, None, self._class())
+        else:
+            file = Path(path).with_suffix(SUFFIX).resolve()
+            if self.path is not None and file == self.path.resolve():
+                raise ValueError("a component cannot inherit from itself")
+            if not file.exists():
+                raise FileNotFoundError(file)
+            if self.path is not None and any(p == self.path.resolve() for p in _chain(file)):
+                raise ValueError(f"{file.name} already inherits from this component")
+            own.extends = _relative(file, self.path) if self.path else str(file)
+            self.code = scene_code.set_base(self.code, self._base_class_name(file), own.extends, self._class())
+        self.form = own
+        base = self.base
+        if base is not None:
+            self.form = merge(base, own)
+        self.selection = [n for n in self.selection if self.form.get(n) is not None]
+        self.dirty = True
+        self.commit()
+
+    def _base_class_name(self, file: Path) -> str:
+        try:
+            name = load(file).name
+        except (OSError, ValueError):
+            name = scene_code.class_identifier(file.stem)
+        return f"Base{name}" if name == self.scene.name else name
+
+    def base_info(self) -> List[Tuple[str, scene_code.ClassInfo]]:
+        """The classes this component inherits from (nearest first) as ``(scene file name, class info)``."""
+        out: List[Tuple[str, scene_code.ClassInfo]] = []
+        for file in _chain(self.base_file) if self.base_file else []:
+            try:
+                info = scene_code.read(code_path(file, load(file)).read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                info = None
+            if info is not None:
+                out.append((file.name, info))
+        return out
+
+    @property
+    def all_members(self) -> List[scene_code.Member]:
+        """This component's properties and the ones it inherits (bindings can use both)."""
+        seen = {m.name for m in self.members}
+        out = list(self.members)
+        for _file, info in self.base_info():
+            for m in info.members:
+                if m.name not in seen:
+                    seen.add(m.name)
+                    out.append(m)
+        return out
+
+    def delete(self) -> List[str]:
+        """Deletes the selected controls, except inherited ones (the base component owns them)."""
+        kept = [n for n in self.selection if self.inherited(n)]
+        self.selection = [n for n in self.selection if not self.inherited(n)]
+        removed = super().delete()
+        self.selection = kept
+        return removed
 
     # -- the class ----------------------------------------------------------
     @property
@@ -435,7 +608,7 @@ class SceneDocument(Document):
     def rename(self, old: str, new: str) -> str:
         """Renames a control, its bindings and the methods that follow the naming convention."""
         control = self.scene.get(old)
-        if control is None:
+        if control is None or self.inherited(old):  # the base's code uses that name
             return old
         new = self.scene.rename(old, new)
         if new == old:
@@ -448,6 +621,27 @@ class SceneDocument(Document):
                 control.events[event] = renamed
         self.commit()
         return new
+
+
+def _relative(file: Path, scene_path: Optional[Path]) -> str:
+    if scene_path is None:
+        return str(file)
+    try:
+        return Path(os.path.relpath(file, Path(scene_path).resolve().parent)).as_posix()
+    except ValueError:  # another drive on Windows
+        return str(file)
+
+
+def _chain(file: Optional[Path]) -> List[Path]:
+    """``file`` and the files it inherits from, nearest first (stops at a cycle)."""
+    out: List[Path] = []
+    while file is not None and file.exists() and file not in out:
+        out.append(file)
+        try:
+            file = base_path(load(file), file)
+        except (OSError, ValueError):
+            break
+    return out
 
 
 #: The default value of a new property of each type.
@@ -476,12 +670,23 @@ def convert(value: Any, type_: str) -> Any:
 
 def new_component(name: str = "Component1", path: Optional[Union[str, Path]] = None, *,
                   width: float = 240, height: float = 120, label: str = "", icon: str = "component",
-                  category: str = "Custom", description: str = "") -> SceneDocument:
-    """A new designed component (not saved yet; call ``save()``): its scene and an empty class."""
+                  category: str = "Custom", description: str = "",
+                  extends: Optional[Union[str, Path]] = None) -> SceneDocument:
+    """A new designed component (not saved yet; call ``save()``): its scene and an empty class.
+
+    ``extends`` is the ``.pzcomp`` of a component to inherit from: the new class derives
+    from it and starts with its controls, properties, events and methods.
+    """
     class_name = scene_code.class_identifier(name)
     scene = Scene(name=class_name, title=class_name, width=width, height=height, label=label, icon=icon,
                   category=category, description=description)
-    return SceneDocument(scene, path)
+    doc = SceneDocument(scene, path)
+    if extends is not None:
+        base = load(Path(extends).with_suffix(SUFFIX))
+        doc.scene.width, doc.scene.height = base.width, base.height
+        doc.set_base(extends)
+        doc.history.reset(doc.form)
+    return doc
 
 
 # -- loading the classes ------------------------------------------------------------
@@ -490,6 +695,10 @@ SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "
 
 #: Import errors of the last ``load_component``/``discover`` calls, by ``.pzcomp`` path.
 errors: Dict[Path, str] = {}
+
+#: The last class imported for each ``.pzcomp``, with the time its code was changed.
+_classes: Dict[Path, Tuple[float, type]] = {}
+_importing: List[Path] = []
 
 
 def load_component(path: Union[str, Path]) -> Optional[type]:
@@ -516,9 +725,57 @@ def load_component(path: Union[str, Path]) -> Optional[type]:
     for value in vars(module).values():
         if isinstance(value, type) and issubclass(value, SceneComponent) and value is not SceneComponent \
                 and value.scene_path() == path:
+            _classes[path] = (module_path.stat().st_mtime, value)
             return value
     errors[path] = f"{module_path.name} has no SceneComponent class for {path.name}"
     return None
+
+
+def import_component(scene: Union[str, Path]) -> type:
+    """The class of the designed component saved at ``scene``, to inherit from it.
+
+    A relative path is relative to the module calling it, so a component can extend
+    another one next to it::
+
+        Rating = import_component("rating.pzcomp")
+
+        class BigRating(Rating, scene="big_rating.pzcomp"):
+            ...
+
+    The class is imported once and reused until its code changes.
+    """
+    path = Path(scene)
+    if not path.is_absolute():
+        caller = sys._getframe(1).f_globals.get("__file__")
+        path = (Path(caller).resolve().parent if caller else Path.cwd()) / path
+    path = path.with_suffix(SUFFIX).resolve()
+    if path in _importing:
+        raise ImportError(f"{path.name} inherits from itself")
+    cached = _classes.get(path)
+    try:
+        stamp = code_path(path, load(path)).stat().st_mtime
+    except (OSError, ValueError) as err:
+        raise ImportError(f"cannot import the component {path}: {err}") from err
+    if cached is not None and cached[0] == stamp:
+        return cached[1]
+    _importing.append(path)
+    try:
+        cls = load_component(path)
+    finally:
+        _importing.remove(path)
+    if cls is None:
+        raise ImportError(errors.get(path, f"cannot import the component {path}"))
+    return cls
+
+
+def reload_dependents(path: Union[str, Path]) -> None:
+    """Re-imports the components that inherit from ``path`` (after it was saved), so they get its changes."""
+    path = Path(path).resolve()
+    for other, (_stamp, cls) in list(_classes.items()):
+        if other != path and any(getattr(base, "scene_file", None) == path for base in cls.__mro__[1:]):
+            _classes.pop(other, None)
+            if load_component(other) is not None:
+                reload_dependents(other)
 
 
 def open_document(path: Union[str, Path]) -> Document:

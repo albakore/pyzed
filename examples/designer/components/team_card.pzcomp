@@ -1,0 +1,74 @@
+{
+  "format": "pyzed.component/1",
+  "component": {
+    "name": "TeamCard",
+    "width": 280,
+    "height": 156,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": false,
+    "grid": 8,
+    "code": null,
+    "label": "",
+    "icon": "users",
+    "category": "Example",
+    "description": "A profile card that also shows the team.",
+    "extends": "profile_card.pzcomp"
+  },
+  "events": {},
+  "controls": [
+    {
+      "name": "frame",
+      "type": "panel",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 280,
+      "height": 156,
+      "props": {
+        "title": "",
+        "background": "",
+        "border": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "team_label",
+      "type": "badge",
+      "x": 16,
+      "y": 120,
+      "width": 248,
+      "height": 24,
+      "props": {
+        "text": "New",
+        "tint": "accent",
+        "icon": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ],
+  "bindings": {
+    "team_label": {
+      "text": "f\"Team: {team}\""
+    }
+  }
+}

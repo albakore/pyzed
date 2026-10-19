@@ -190,6 +190,16 @@ def component_designer_shots(scale):
         rating.screenshot(OUT / "designer-component-code.png", size=(1440, 900), scale=scale)
 
         designer.open_form(folder / "reviews.pzform").screenshot(OUT / "designer-component-run.png", scale=2)
+        narrow = designer.open_form(folder / "reviews.pzform")
+        narrow.window_size = (440, 240)  # the cards shrink with the window
+        narrow.screenshot(OUT / "designer-component-responsive.png", size=(440, 240), scale=2)
+
+        team = designer.Designer(folder / "team_card.pzcomp", language_servers=False)
+        team.screenshot(OUT / "designer-component-inherit.png", size=(1440, 900), scale=scale)
+        team.new_component()
+        team.set_new("name", "compact card")
+        team.set_new("extends", str(folder / "profile_card.pzcomp"))
+        team.screenshot(OUT / "designer-component-new.png", size=(1440, 900), scale=scale)
 
         preview = scene_panel.ComponentPreview(scene_panel.compile_class(rating.doc))
         preview.log = ["10:42:05  mount  None", "10:42:07  change  3"]

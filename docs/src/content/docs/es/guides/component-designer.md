@@ -17,11 +17,19 @@ normal, así que dibujarlo y escribirlo a mano son lo mismo, y puedes pasar de u
 
 ## Crear uno
 
-Pulsa **New** (Ctrl+N) y elige **New component**, o abre un archivo `.pzcomp`:
+Pulsa **New component** en la barra de herramientas (Ctrl+Shift+N), o **New** (Ctrl+N) y elige la tarjeta
+**Component**. Ponle un nombre y una carpeta; **Inherits from** puede partir de otro componente (mira
+[Herencia](#herencia)). **Create component** guarda los dos archivos y lo abre. También puedes abrir un `.pzcomp`:
+
+![El diálogo New component](../../../../../screenshots/designer-component-new.png)
 
 ```bash
 pyzed design ui/rating.pzcomp     # se crea al guardar si no existe
 ```
+
+Un componente no es un formulario: no tiene ventana, título ni menú, y solo existe dentro de un formulario o de otro
+componente. El diseñador lo muestra así: una etiqueta **Component** en la barra de título, y un marco de color con el
+nombre de la clase en el lienzo en vez de los botones de ventana.
 
 Un componente son dos archivos juntos:
 
@@ -134,6 +142,60 @@ def ada_rated(form, event):
     form.status.text = f"{event.sender.person} now has {event.value} stars"
 ```
 
+## Componentes responsive
+
+Un componente colocado en un formulario, o dentro de otro componente, toma el tamaño de su rectángulo ahí, y sus
+controles siguen sus **anclas** como en un formulario: anclado a izquierda y derecha, un control se estira con el
+componente; anclado a la derecha, se mueve con el borde derecho. Las filas, columnas y rejillas flex dentro del
+componente también se reparten el nuevo tamaño.
+
+En el ejemplo, el marco de `ProfileCard` está anclado a los cuatro lados y el título, el puesto y la valoración a
+izquierda, arriba y derecha. `Reviews` pone sus dos tarjetas en una **fila flex** con `grow` 1 cada una, así que se
+reparten el ancho de la ventana y se encogen con ella:
+
+![Las dos tarjetas se encogen con una ventana estrecha](../../../../../screenshots/designer-component-responsive.png)
+
+Desde código, un componente ocupa el ancho que haya, hasta su ancho de diseño, y la altura de su diseño.
+
+## Herencia
+
+Un componente puede heredar de otro para reutilizar su diseño y su lógica. Elige la base en **Inherits from** al
+crearlo, o después en el campo **Inherits** de la sección Class. La clase pasa a derivar de la clase base:
+
+```python
+from pyzed.designer import import_component
+
+ProfileCard = import_component("profile_card.pzcomp")
+
+
+class TeamCard(ProfileCard, scene="team_card.pzcomp"):
+    """A profile card that also shows the team."""
+
+    team: str = "Analytical Engine"
+
+    def stars_change(self, event):
+        """Does what a ProfileCard does, and the badge turns green with five stars."""
+        result = super().stars_change(event)
+        self.team_label.tint = "success" if event.value == 5 else "accent"
+        return result
+```
+
+`import_component` importa la clase de un `.pzcomp` relativo al módulo, así que la base y el nuevo componente pueden
+estar en cualquier carpeta. Lo que recibe el nuevo componente:
+
+- **Controles**: los controles de la base aparecen en el lienzo, con los tuyos encima. Puedes mover o cambiar un
+  control heredado (el cambio solo se guarda en tu `.pzcomp`), pero no renombrarlo ni borrarlo, porque el código de
+  la base lo usa. Al guardar se escriben solo tus controles y los heredados que cambiaste.
+- **Propiedades, eventos propios y métodos**: todo lo de la clase base, como en cualquier subclase de Python. Los
+  enlaces pueden usar propiedades heredadas. Define de nuevo un método para sobrescribirlo y llama a `super()` para
+  ejecutar el de la base.
+- **Cambios en la base**: al guardar la base se recargan los componentes que heredan de ella, así que reciben sus
+  nuevos controles y su código.
+
+La sección **Inherited** del panel lista lo que viene de cada base:
+
+![TeamCard hereda de ProfileCard](../../../../../screenshots/designer-component-inherit.png)
+
 ## Ejecutarlo y usarlo
 
 Pulsa **F5** para abrir el componente en una ventana de vista previa. La ventana lista los eventos propios que
@@ -171,8 +233,11 @@ doc.set_binding("button1", "variant", '"solid" if value >= 1 else "ghost"')
 doc.wire("button1", "click")
 doc.save()
 
+big = designer.new_component("BigRating", "ui/big_rating.pzcomp", extends="ui/rating.pzcomp")
+big.save()
+
 designer.discover("ui")  # importa todos los componentes diseñados de una carpeta
 ```
 
 Mira [`examples/designer/components`](https://github.com/albakore/pyzed/tree/main/examples/designer/components)
-para el ejemplo de Rating, ProfileCard y Reviews.
+para el ejemplo de Rating, ProfileCard, TeamCard y Reviews.

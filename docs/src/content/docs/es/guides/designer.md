@@ -60,7 +60,7 @@ La barra de título tiene el menú principal (☰: Archivo y Ejecutar), **Ejecut
 | Ctrl+Z, Ctrl+Shift+Z | Deshacer, rehacer |
 | Enter | Abrir el código del evento principal del control |
 | Escape | Cancelar un arrastre, cerrar un menú, volver al puntero |
-| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N | Guardar, guardar como, abrir, nuevo |
+| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N, Ctrl+Shift+N | Guardar, guardar como, abrir, nuevo formulario, nuevo componente |
 | Ctrl+Shift+P | Paleta de comandos |
 | Ctrl+Shift+A | Añadir un control (lista con búsqueda) |
 | Ctrl+B, Ctrl+Alt+B, Ctrl+J | Mostrar u ocultar los docks izquierdo, derecho e inferior |

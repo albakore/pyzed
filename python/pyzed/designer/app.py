@@ -11,6 +11,7 @@ new window with all its logic.
 from __future__ import annotations
 
 import ast
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,6 +37,7 @@ from .model import SUFFIX
 from .project_panel import ProjectController
 from .runtime import FormWindow
 from . import scene as _scene
+from . import scene_code as _scene_code
 from . import scene_panel
 from ..project import Project
 
@@ -836,24 +838,63 @@ class Designer(App):
             return None
         return action()
 
-    def new(self) -> Any:
-        """Shows the "New form" dialog (name, title, template and folder)."""
+    def new(self, kind: str = "form") -> Any:
+        """Shows the "New" dialog: a form (name, title, template and folder) or a component (``kind``)."""
         folder = self.doc.path.parent if self.doc.path else (
             self.projects.project.ui_dir if self.projects.project else Path.cwd())
         try:
             folder = folder.resolve().relative_to(Path.cwd())
         except ValueError:
             pass
-        taken = {p.stem for p in Path(folder).glob(f"*{SUFFIX}")} if Path(folder).is_dir() else set()
-        n = 1
-        while f"form{n}" in taken:
-            n += 1
-        self.new_state = {"name": f"form{n}", "title": "", "folder": str(folder), "template": "blank"}
+        self.new_state = {"title": "", "folder": str(folder), "template": "blank", "extends": ""}
+        self.set_new("kind", kind)
         self.dialog = "new"
         return _core.Command.focus("new-form-name")
 
+    def new_component(self) -> Any:
+        """Shows the "New component" dialog."""
+        return self.new("component")
+
     def set_new(self, key: str, value: str) -> None:
         self.new_state[key] = value
+        if key in ("kind", "folder"):  # a free default name for that kind in that folder
+            s = self.new_state
+            base, suffix = ("component", _scene.SUFFIX) if s["kind"] == "component" else ("form", SUFFIX)
+            folder = Path(s["folder"] or ".")
+            taken = {p.stem for p in folder.glob(f"*{suffix}")} if folder.is_dir() else set()
+            if not s.get("name") or re.fullmatch(r"(form|component)\d+", s["name"]):
+                n = 1
+                while f"{base}{n}" in taken:
+                    n += 1
+                s["name"] = f"{base}{n}"
+
+    def base_components(self) -> List[Path]:
+        """The designed components of the project, to inherit from."""
+        root = self.projects.project.root if self.projects.project else Path.cwd()
+        return _scene.component_files(root)
+
+    def create_new_component(self) -> None:
+        """Creates the component described in the "New" dialog, saves it and opens it."""
+        s = self.new_state
+        name = s.get("name") or "component1"
+        path = Path(s.get("folder") or ".") / f"{_scene_code.member_identifier(name)}{_scene.SUFFIX}"
+        if path.exists():
+            self.notify(f"{path.name} already exists", kind="warning")
+            return
+
+        def create() -> None:
+            try:
+                doc = _scene.new_component(name, path, extends=s.get("extends") or None)
+                doc.form.grid = self.prefs.grid
+                doc.save()
+            except (OSError, ValueError, SyntaxError) as err:
+                self.notify("Could not create the component", str(err), kind="error", seconds=5)
+                return
+            self.dialog = None
+            self.open_path(path)
+
+        self.dialog = None
+        self._guard(create)
 
     def create_new_form(self) -> None:
         """Creates the form described in the "New form" dialog and opens it (after asking to keep unsaved changes)."""
@@ -1214,9 +1255,12 @@ class Designer(App):
 
         sep = _core.container(ui.divider(vertical=True, theme=t), height=18, padding=(0, 4))
         start = [
-            tool("file-plus", self.new, "New form or component", keys="ctrl-n"),
+            tool("file-plus", self.new, "New form", keys="ctrl-n"),
             tool("folder-open", self.open_dialog, "Open", keys="ctrl-o"),
             tool("save", self.save, "Save", keys="ctrl-s"),
+            ui.tooltip(ui.button(tr("New component"), self.new_component, icon="component", variant="tinted",
+                                 tint="accent", size="sm", theme=t),
+                       tr("A reusable piece for forms and other components, not a window"), theme=t),
             sep,
             tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
             tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z"),

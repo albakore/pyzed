@@ -82,6 +82,10 @@ def flex(box: Rect, items: Sequence[Tuple[float, float, float]], *, direction: s
         total = sum(grows)
         mains = [m + free * g / total for m, g in zip(mains, grows)]
         free = 0.0
+    elif free < 0:  # too little room: shrink every item by its share of the space, like CSS flex-shrink
+        total = sum(mains)
+        mains = [max(m + free * m / total, MIN_SIZE) for m in mains]
+        free = 0.0
     start, between = 0.0, gap
     if free > 0:
         if justify == "center":

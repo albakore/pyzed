@@ -38,7 +38,7 @@ from .history import History
 from .model import Control, Form, load, save
 from .new import Template, new_form, register_template, templates
 from .runtime import Event, FormApp, FormWindow, form_window, open_form, open_window, run, theme_for
-from .scene import Scene, SceneDocument, discover, load_component, new_component, open_document
+from .scene import Scene, SceneDocument, discover, import_component, load_component, new_component, open_document
 from .scene_runtime import SceneComponent
 from .settings import EditorSettings
 
@@ -87,6 +87,7 @@ __all__ = [
     "distribute",
     "load",
     "new_form",
+    "import_component",
     "load_component",
     "new_component",
     "open_document",

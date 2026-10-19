@@ -454,6 +454,83 @@ def set_scene_file(source: str, scene_file: str, cls_name: Optional[str] = None)
     return "".join(lines)
 
 
+def _is_import_component(node: ast.stmt) -> bool:
+    return isinstance(node, ast.Assign) and isinstance(node.value, ast.Call) \
+        and isinstance(node.value.func, ast.Name) and node.value.func.id == "import_component"
+
+
+def base_of(source: str, cls_name: Optional[str] = None) -> Optional[Tuple[str, str]]:
+    """``(name, scene file)`` of the designed component the class inherits from, or ``None``."""
+    tree = _parse(source)
+    cls = find_class(source, cls_name)
+    if tree is None or cls is None or not cls.bases or not isinstance(cls.bases[0], ast.Name):
+        return None
+    for node in tree.body:
+        if _is_import_component(node) and any(isinstance(t, ast.Name) and t.id == cls.bases[0].id
+                                              for t in node.targets):  # type: ignore[attr-defined]
+            args = node.value.args  # type: ignore[attr-defined]
+            if args and isinstance(args[0], ast.Constant) and isinstance(args[0].value, str):
+                return cls.bases[0].id, args[0].value
+    return None
+
+
+def set_base(source: str, base_name: Optional[str], base_file: Optional[str], cls_name: Optional[str] = None) -> str:
+    """Makes the class inherit from the designed component in ``base_file`` (``None``: from ``SceneComponent``).
+
+    Writes ``Base = import_component("base.pzcomp")`` above the class and puts ``Base``
+    first in its bases, fixing the ``from pyzed.designer import ...`` line.
+    """
+    if base_of(source, cls_name) == ((base_name, base_file) if base_name and base_file else None):
+        return source
+    tree = _parse(source)
+    if tree is None:
+        raise SyntaxError("the class does not parse")
+    lines = _lines(source)
+    # drop the old import_component lines (and the blank lines after them)
+    for node in reversed([n for n in tree.body if _is_import_component(n)]):
+        end = node.end_lineno or node.lineno
+        while end < len(lines) and not lines[end].strip():
+            end += 1
+        del lines[node.lineno - 1:end]
+    source = "".join(lines)
+    cls = find_class(source, cls_name)
+    if cls is None:
+        return source
+    lines = _lines(source)
+    first = cls.bases[0] if cls.bases else None
+    parent = base_name if base_name and base_file else "SceneComponent"
+    i = cls.lineno - 1
+    if first is not None and first.lineno == first.end_lineno == cls.lineno:
+        line = lines[i].encode()
+        lines[i] = (line[:first.col_offset] + parent.encode() + line[first.end_col_offset:]).decode()
+    if base_name and base_file:
+        lines[i:i] = [f"{base_name} = import_component({literal(base_file)})\n", "\n", "\n"]
+    return _designer_imports("".join(lines))
+
+
+def _designer_imports(source: str) -> str:
+    """Keeps ``from pyzed.designer import`` naming exactly the helpers the module uses."""
+    tree = _parse(source)
+    if tree is None:
+        return source
+    node = next((n for n in tree.body if isinstance(n, ast.ImportFrom) and n.module == "pyzed.designer"), None)
+    used = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
+    wanted = [name for name in ("SceneComponent", "import_component") if name in used]
+    lines = _lines(source)
+    if node is None:
+        if wanted:
+            where = next((n.end_lineno or n.lineno for n in reversed(tree.body)
+                          if isinstance(n, (ast.Import, ast.ImportFrom))), 0)
+            lines.insert(where, f"from pyzed.designer import {', '.join(wanted)}\n")
+        return "".join(lines)
+    others = [a for a in node.names if a.name not in ("SceneComponent", "import_component")]
+    names = [*wanted, *(f"{a.name} as {a.asname}" if a.asname else a.name for a in others)]
+    if node.lineno != node.end_lineno:
+        return source  # a wrapped import: leave it to the user
+    lines[node.lineno - 1:node.end_lineno] = [f"from pyzed.designer import {', '.join(names)}\n"] if names else []
+    return "".join(lines)
+
+
 def set_docstring(source: str, doc: str, cls_name: Optional[str] = None) -> str:
     cls = find_class(source, cls_name)
     if cls is None:
