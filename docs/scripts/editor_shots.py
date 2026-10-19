@@ -221,6 +221,70 @@ def reference_search():
     save(app, "reference-search")
 
 
+def bound_login(app):
+    """The login form with its inputs bound to form.data and validated, as the Data section docs show."""
+    form = app.doc.form
+    form["email"].bind = "email"
+    form["email"].rules = {"required": True, "pattern": r"[^@]+@[^@]+\.\w+", "message": "Enter a valid email"}
+    form["password"].bind = "password"
+    form["password"].rules = {"required": True, "min_length": 8}
+    form["remember"].bind = "remember"
+    form["status"].bind = 'f"Signing in as {email}" if email else ""'
+    return app
+
+
+@shot
+def data():
+    app = bound_login(login())
+    app.doc.select("email")
+    app._selection_changed()
+    save(app, "data")
+
+
+@shot
+def validation():
+    from pyzed.designer.runtime import FormWindow
+
+    app = bound_login(login())
+    window = FormWindow(app.doc.form, path=app.doc.path)
+    runtime = window.runtime
+    runtime.ctx.on(runtime.form["email"], "change", "text")("ada@")
+    runtime.validate()
+    form = app.doc.form
+    pz.screenshot(_Host(window), OUT / "editor-validation.png", size=(int(form.width), int(form.height)),
+                  scale=SCALE)
+    print("wrote editor-validation.png")
+
+
+class _Host(pz.App):
+    """Shows a form window's view as an app, for an off-screen screenshot."""
+
+    def __init__(self, window=None):
+        self.window_ = window
+        self.theme = window.runtime.theme if window else None
+
+    def view(self):
+        return self.window_.view()
+
+
+@shot
+def preview():
+    from pyzed import i18n
+
+    i18n.add("es", {"login": {"title": "Iniciar sesión", "welcome": "Hola de nuevo", "email": "Correo",
+                              "password": "Contraseña", "remember": "Recordarme", "sign_in": "Entrar"}})
+    app = login()
+    form = app.doc.form
+    form.title = "@login.title"
+    for name, key in (("title", "welcome"), ("user_label", "email"), ("password_label", "password"),
+                      ("remember", "remember"), ("sign_in", "sign_in")):
+        form[name].props["text"] = f"@login.{key}"
+    app.set_preview("theme", "One Light")
+    app.set_preview("language", "es")
+    app.open_preview_picker("language")
+    save(app, "preview")
+
+
 @shot
 def about():
     app = login()

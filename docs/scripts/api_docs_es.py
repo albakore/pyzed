@@ -1837,6 +1837,25 @@ PAGES.append({
                 formulario al hacer `save`. `selection` guarda nombres de controles, el principal primero.
             """),
         }),
+        ("Enlace de datos y validación", {
+            "pyzed.designer.binding.check": _d("""
+                El mensaje de la primera regla que `value` incumple, o `None` si las cumple todas.
+
+                `required` (una casilla marcada para casillas e interruptores), `min_length`, `max_length`, `pattern`
+                (una expresión regular que todo el texto debe cumplir), `min` y `max`. `message`, si está, sustituye
+                el mensaje predeterminado. Los valores vacíos solo incumplen `required`.
+            """),
+            "pyzed.designer.binding.translate": _d('`value` con los textos `@clave` buscados en el idioma actual (o el indicado); las listas se traducen elemento a elemento y `@@` representa una `@` literal.'),
+            "pyzed.designer.binding.read": _d('El campo en `path` de `data` (dicts, listas y objetos), o `default` si falta.'),
+            "pyzed.designer.binding.write": _d('Fija el campo en `path` de `data`, creando por el camino los dicts que falten.'),
+            "pyzed.designer.binding.has": _d('Si `data` tiene un campo en `path`.'),
+            "pyzed.designer.binding.evaluate": _d('El valor de `bind` para `data`: el campo si es una ruta, si no la expresión de Python evaluada sobre los campos de los datos. Lanza un error si falta el campo o la expresión es incorrecta.'),
+            "pyzed.designer.binding.bound_prop": _d('La propiedad que enlaza un control de tipo `type_` (`None` si no se puede enlazar).'),
+            "pyzed.designer.binding.two_way": _d('Si un control de tipo `type_` escribe en los datos lo que cambia el usuario.'),
+            "pyzed.designer.binding.rules_for": _d('Las reglas de validación que tienen sentido para `type_` (ninguna para los controles de visualización).'),
+            "pyzed.designer.binding.load_texts": _d('Carga los catálogos de traducción del formulario en `path`: `locales/` junto a él y en las carpetas superiores, hasta la raíz del proyecto. Devuelve los idiomas encontrados.'),
+            "pyzed.designer.binding.BIND_PROPS": {"desc": "La propiedad que enlaza cada tipo de control y si el usuario la edita (en los dos sentidos): `{tipo: (propiedad, dos_sentidos)}`.", "no_signature": True},
+        }),
         ("Caja de herramientas", {
             "pyzed.designer.Component": _d("Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`."),
             "pyzed.designer.Prop": _d("""
@@ -2196,7 +2215,13 @@ MEMBERS = {
     "pyzed.designer.Document.delete": "Quita los controles seleccionados (y lo que contienen); devuelve los nombres quitados.",
     "pyzed.designer.Document.copy": "Copia la selección, con lo que haya dentro de los contenedores seleccionados.",
     "pyzed.designer.Document.cut": "Copia la selección al portapapeles y la borra; devuelve cuántos controles se copiaron.",
-    "pyzed.designer.Document.paste": "Añade copias del portapapeles (desplazadas `offset`) con nombres nuevos, conservando sus eventos.",
+    "pyzed.designer.Document.paste": "Añade copias del portapapeles (desplazadas `offset`) sin sus eventos; conservan su nombre si está libre en este formulario.",
+    "pyzed.designer.Document.clipboard": "Los controles copiados (como datos de `Control.to_dict()`), compartidos por todos los documentos.",
+    "pyzed.designer.Document.clipboard_text": "Los controles copiados como JSON para el portapapeles del sistema, para que otro formulario, otra ventana de Pyzed Design o un archivo de texto puedan tomarlos (ver `paste_text`).",
+    "pyzed.designer.Document.parse_clipboard": "Los controles del texto del portapapeles escrito por `clipboard_text`, o `None` si contiene otra cosa. Se descartan los controles de un tipo que este Pyzed no conoce.",
+    "pyzed.designer.Document.paste_text": "Pega los controles del texto del portapapeles del sistema (ver `clipboard_text`); devuelve los nombres nuevos, o `None` si el texto no contiene controles de Pyzed.",
+    "pyzed.designer.Document.set_bind": "Enlaza el control `name` al campo (o, en los controles de visualización, a la expresión) `bind` de `form.data`; `None` o `\"\"` lo desenlaza.",
+    "pyzed.designer.Document.set_rule": "Fija la regla de validación `rule` (`required`, `min_length`, `pattern`...) del control `name`; `None`, `\"\"` o `False` la quita.",
     "pyzed.designer.Document.duplicate": "Pega al momento una copia de la selección sin tocar el portapapeles; devuelve los nombres nuevos.",
     "pyzed.designer.Document.size": "El `(width, height)` del formulario en píxeles.",
     "pyzed.designer.Document.nudge": "Mueve `dx`, `dy` píxeles los controles seleccionados (los que no coloca un layout), sin salirse de su contenedor cuando comparten uno; los empujones repetidos se unen en un solo paso de deshacer.",

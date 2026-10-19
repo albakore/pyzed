@@ -121,9 +121,14 @@ panel Propiedades muestra las mismas herramientas cuando hay varios controles se
 ## Portapapeles e historial
 
 - <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>: copiar, cortar y pegar.
-  Los controles pegados reciben nombres nuevos y se desplazan un poco para que se vean; un contenedor se copia con
-  todo lo que tiene dentro. Los controles pegados **no** están conectados: sus eventos empiezan vacíos, así no
-  comparten manejadores con los originales.
+  Los controles pegados se desplazan un poco para que se vean; un contenedor se copia con todo lo que tiene dentro.
+  Los controles pegados **no** están conectados: sus eventos empiezan vacíos, así no comparten manejadores con los
+  originales.
+- Lo copiado va al **portapapeles del sistema**, así que puedes pegar controles en **otro formulario**: otra
+  pestaña, otra ventana de Pyzed Design o el mismo formulario tras reiniciar. En otro formulario, un control pegado
+  conserva su nombre si allí está libre (si no, recibe uno nuevo), junto con sus propiedades, estilo,
+  [enlace y reglas](/pyzed/es/editor/data-binding/). Pegar un texto que no son controles de Pyzed pega lo último
+  que se copió en esta ventana.
 - <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica la selección sin tocar el portapapeles.
 - <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshace, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> (o <kbd>Ctrl</kbd>+<kbd>Y</kbd>)
   rehace. Cada documento tiene su propio historial; las ediciones repetidas de un campo (escribir un título,

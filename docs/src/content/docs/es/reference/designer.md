@@ -273,7 +273,7 @@ Devuelve una copia profunda del formulario y sus controles.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[])
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={})
 ```
 
 Un componente colocado en un formulario.
@@ -381,6 +381,14 @@ Un formulario abierto en el diseñador.
 formulario al hacer `save`. `selection` guarda nombres de controles, el principal primero.
 
 **Métodos y propiedades**
+
+#### `Document.clipboard`
+
+```python
+Document.clipboard  # property
+```
+
+Los controles copiados (como datos de `Control.to_dict()`), compartidos por todos los documentos.
 
 #### `Document.open`
 
@@ -551,6 +559,31 @@ Document.copy()
 
 Copia la selección, con lo que haya dentro de los contenedores seleccionados.
 
+#### `Document.clipboard_text`
+
+```python
+Document.clipboard_text()
+```
+
+Los controles copiados como JSON para el portapapeles del sistema, para que otro formulario, otra ventana de Pyzed Design o un archivo de texto puedan tomarlos (ver `paste_text`).
+
+#### `Document.parse_clipboard`
+
+```python
+@staticmethod
+Document.parse_clipboard(text)
+```
+
+Los controles del texto del portapapeles escrito por `clipboard_text`, o `None` si contiene otra cosa. Se descartan los controles de un tipo que este Pyzed no conoce.
+
+#### `Document.paste_text`
+
+```python
+Document.paste_text(text, offset=16)
+```
+
+Pega los controles del texto del portapapeles del sistema (ver `clipboard_text`); devuelve los nombres nuevos, o `None` si el texto no contiene controles de Pyzed.
+
 #### `Document.cut`
 
 ```python
@@ -565,7 +598,7 @@ Copia la selección al portapapeles y la borra; devuelve cuántos controles se c
 Document.paste(offset=16)
 ```
 
-Añade copias del portapapeles (desplazadas `offset`) con nombres nuevos, conservando sus eventos.
+Añade copias del portapapeles (desplazadas `offset`) sin sus eventos; conservan su nombre si está libre en este formulario.
 
 #### `Document.duplicate`
 
@@ -687,6 +720,22 @@ Document.set_field(name, key, value)
 
 Fija un atributo de `Control` (x, y, width, height, visible, enabled, locked, anchor).
 
+#### `Document.set_bind`
+
+```python
+Document.set_bind(name, bind)
+```
+
+Enlaza el control `name` al campo (o, en los controles de visualización, a la expresión) `bind` de `form.data`; `None` o `""` lo desenlaza.
+
+#### `Document.set_rule`
+
+```python
+Document.set_rule(name, rule, value)
+```
+
+Fija la regla de validación `rule` (`required`, `min_length`, `pattern`...) del control `name`; `None`, `""` o `False` la quita.
+
 #### `Document.toggle_anchor`
 
 ```python
@@ -766,6 +815,96 @@ Document.set_code(source)
 ```
 
 Reemplaza todo el texto del módulo de handlers y marca el documento como modificado.
+
+## Enlace de datos y validación
+
+### `check`
+
+```python
+check(value, rules, type_='input')
+```
+
+El mensaje de la primera regla que `value` incumple, o `None` si las cumple todas.
+
+`required` (una casilla marcada para casillas e interruptores), `min_length`, `max_length`, `pattern`
+(una expresión regular que todo el texto debe cumplir), `min` y `max`. `message`, si está, sustituye
+el mensaje predeterminado. Los valores vacíos solo incumplen `required`.
+
+### `translate`
+
+```python
+translate(value, language=None)
+```
+
+`value` con los textos `@clave` buscados en el idioma actual (o el indicado); las listas se traducen elemento a elemento y `@@` representa una `@` literal.
+
+### `read`
+
+```python
+read(data, path, default=None)
+```
+
+El campo en `path` de `data` (dicts, listas y objetos), o `default` si falta.
+
+### `write`
+
+```python
+write(data, path, value)
+```
+
+Fija el campo en `path` de `data`, creando por el camino los dicts que falten.
+
+### `has`
+
+```python
+has(data, path)
+```
+
+Si `data` tiene un campo en `path`.
+
+### `evaluate`
+
+```python
+evaluate(expression, data, **extra)
+```
+
+El valor de `bind` para `data`: el campo si es una ruta, si no la expresión de Python evaluada sobre los campos de los datos. Lanza un error si falta el campo o la expresión es incorrecta.
+
+### `bound_prop`
+
+```python
+bound_prop(type_)
+```
+
+La propiedad que enlaza un control de tipo `type_` (`None` si no se puede enlazar).
+
+### `two_way`
+
+```python
+two_way(type_)
+```
+
+Si un control de tipo `type_` escribe en los datos lo que cambia el usuario.
+
+### `rules_for`
+
+```python
+rules_for(type_)
+```
+
+Las reglas de validación que tienen sentido para `type_` (ninguna para los controles de visualización).
+
+### `load_texts`
+
+```python
+load_texts(path)
+```
+
+Carga los catálogos de traducción del formulario en `path`: `locales/` junto a él y en las carpetas superiores, hasta la raíz del proyecto. Devuelve los idiomas encontrados.
+
+### `BIND_PROPS`
+
+La propiedad que enlaza cada tipo de control y si el usuario la edita (en los dos sentidos): `{tipo: (propiedad, dos_sentidos)}`.
 
 ## Caja de herramientas
 
@@ -1456,7 +1595,7 @@ Avanza una instantánea; devuelve el formulario restaurado (un objeto nuevo) o `
 ### `theme_for`
 
 ```python
-theme_for(form)
+theme_for(form, theme_name=None)
 ```
 
 El tema con el que se ejecuta un formulario: su tema base más los ajustes de acento, radio, fuente y fondo.

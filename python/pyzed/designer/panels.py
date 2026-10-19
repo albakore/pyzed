@@ -453,6 +453,8 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     groups: dict = {}
     for prop in spec.props:
         groups.setdefault(prop.group, []).append(prop)
+    # the binding and validation rows join the control's Data group (or make one)
+    data = data_rows(d, c, t) if not getattr(d.doc, "is_scene", False) else []
     for group, props in groups.items():
         rows.append(Group(group))
         for prop in props:
@@ -461,6 +463,11 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             rows.append(prop_row(prop.title, editor_for(d, prop, value, d.prop_setter(c.name, prop), key, t), t,
                                  tip=_help.prop_doc(c.type, prop.name) or None, tall=prop.kind in TALL_KINDS,
                                  end=_text_toggle(d, prop, key, t)))
+        if group == "Data":
+            rows.extend(data)
+            data = []
+    if data:
+        rows += [Group("Data"), *data]
     rows.extend(style_rows(d, c.name, c.style, t))
     if spec.visual:
         from . import motion_panel
@@ -468,6 +475,65 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
         rows.extend(motion_panel.effect_rows(d, c, t))
         rows.extend(motion_panel.animation_rows(d, c, t))
     rows.extend(_layout_rows(d, c, t))
+    return rows
+
+
+def data_rows(d: "Designer", c, t: Theme) -> List[Any]:
+    """The binding rows of a control's Data section: the field of ``form.data`` it is bound to and its
+    validation rules (empty when it cannot be bound)."""
+    from . import binding
+
+    prop = binding.bound_prop(c.type)
+    if prop is None:
+        return []
+    doc = d.doc
+    two_way = binding.two_way(c.type)
+    hint = (tr("The field of form.data this control shows and edits ({prop})", prop=prop) if two_way else
+            tr("The field of form.data, or a Python expression over its fields, this control shows ({prop})",
+               prop=prop))
+    rows: List[Any] = [prop_row(
+        "Bind to", ui.input(c.bind, lambda v: doc.set_bind(c.name, v), size="sm", mono=True,
+                            placeholder="customer.name" if two_way else 'f"{first} {last}"', theme=t), t, tip=hint)]
+
+    def number(rule: str, title: str, tip: str, integer: bool = True) -> Any:
+        def set_value(text: str) -> None:
+            text = text.strip()
+            try:
+                value = (int(text) if integer else float(text)) if text else None
+            except ValueError:
+                return
+            doc.set_rule(c.name, rule, value)
+        current = c.rules.get(rule)
+        shown = "" if current is None else (f"{current:g}" if isinstance(current, float) else str(current))
+        return prop_row(title, ui.input(shown, set_value, size="sm", mono=True, placeholder=tr("none"), theme=t), t,
+                        tip=tr(tip))
+
+    for rule in binding.rules_for(c.type):
+        if rule == "required":
+            tip = ("The box must be checked (to accept terms, for example)" if c.type in ("checkbox", "switch")
+                   else "The value cannot be empty")
+            rows.append(prop_row("Required", _core.container(
+                ui.switch(bool(c.rules.get("required")), lambda v: doc.set_rule(c.name, "required", v), theme=t),
+                width="fill", align_x="end"), t, tip=tr(tip)))
+        elif rule == "min_length":
+            rows.append(number("min_length", "Minimum length", "Fewest characters allowed"))
+        elif rule == "max_length":
+            rows.append(number("max_length", "Maximum length", "Most characters allowed"))
+        elif rule == "pattern":
+            rows.append(prop_row("Pattern", ui.input(c.rules.get("pattern", ""),
+                                                     lambda v: doc.set_rule(c.name, "pattern", v), size="sm",
+                                                     mono=True, placeholder=r"[^@]+@[^@]+\.\w+", theme=t), t,
+                                 tip=tr("A regular expression the whole text must match")))
+        elif rule == "min":
+            rows.append(number("min", "Minimum", "Smallest value allowed", integer=False))
+        elif rule == "max":
+            rows.append(number("max", "Maximum", "Largest value allowed", integer=False))
+        elif rule == "message":
+            rows.append(prop_row("Message", ui.input(c.rules.get("message", ""),
+                                                     lambda v: doc.set_rule(c.name, "message", v), size="sm",
+                                                     placeholder=tr("built-in message"), theme=t), t,
+                                 tip=tr("Shown instead of the built-in message when a rule fails (@key translates "
+                                        "it)")))
     return rows
 
 

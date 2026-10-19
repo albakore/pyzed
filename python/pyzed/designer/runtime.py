@@ -16,6 +16,8 @@ Handlers may return anything a Pyzed callback can (a ``Command``, a coroutine...
 
 from __future__ import annotations
 
+import dataclasses
+import os
 import sys
 import traceback
 from dataclasses import dataclass
@@ -26,6 +28,7 @@ from .. import _core, hot_reload, ui
 from ..app import App, Window
 from ..app import run as _run_app
 from ..theme import Theme, themes
+from . import binding as _binding
 from . import code as _code
 from . import components as _components
 from . import layout as _layout
@@ -42,8 +45,11 @@ _VALUE_PROPS = {
 }
 
 
-def theme_for(form: Form) -> Theme:
-    """The theme a form runs with: its base theme plus accent, radius, font and background tweaks."""
+def theme_for(form: Form, theme_name: Optional[str] = None) -> Theme:
+    """The theme a form runs with: its base theme (or ``theme_name``, to preview it with another one) plus
+    accent, radius, font and background tweaks."""
+    if theme_name:
+        form = dataclasses.replace(form, theme=theme_name)
     try:
         theme = themes.get(form.theme)
     except KeyError:
@@ -122,6 +128,9 @@ class ControlProxy:
         if key in _FIELDS:
             setattr(self._control, key, value)
             return
+        if key == "error":
+            self._runtime.set_error(self._control.name, value)
+            return
         instance = self.instance
         if instance is not None and key in getattr(type(instance), "__state__", {}):
             setattr(instance, key, value)  # private state of a placed component
@@ -132,6 +141,16 @@ class ControlProxy:
     def instance(self) -> Any:
         """The ``pz.Component`` drawn for this control (a component placed here), or ``None``."""
         return vars(self._runtime).get("_pyzed_children", {}).get(self._control.name)
+
+    @property
+    def error(self) -> Optional[str]:
+        """The validation message shown under the control (``None`` when it is valid). Set it to show your own
+        (``form.email.error = "Already registered"``) and to ``None`` to clear it."""
+        return self._runtime.errors.get(self._control.name)
+
+    def validate(self) -> bool:
+        """Checks the control's rules now, shows the message if one fails and returns whether it passed."""
+        return self._runtime.validate([self._control.name])
 
     def show(self) -> None:
         """Makes the control visible."""
@@ -172,6 +191,8 @@ class FormProxy:
     def __setattr__(self, key: str, value: Any) -> None:
         if key == "title":
             self._runtime.form.title = value
+        elif key == "data":
+            self._runtime.set_data(value)
         else:
             raise AttributeError(f"cannot set {key!r} on the form; use form.<control>.<property>")
 
@@ -183,7 +204,7 @@ class FormProxy:
     @property
     def title(self) -> str:
         """The window's title (handlers can also set it: ``form.title = "..."``)."""
-        return self._runtime.form.title
+        return _binding.translate(self._runtime.form.title, self._runtime.language)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -197,8 +218,33 @@ class FormProxy:
 
     @property
     def data(self) -> Any:
-        """What the form that opened this one passed as ``data=`` (``None`` otherwise)."""
+        """The form's data: what the form that opened it passed as ``data=`` (a dict, a list or any object).
+
+        Bound controls show its fields and inputs write back what the user types. When nothing was passed and
+        some control is bound, it starts as a dict with the designed values. Assign ``form.data = record`` to
+        show another record.
+        """
         return self._runtime.data
+
+    @property
+    def errors(self) -> Dict[str, str]:
+        """The validation messages on show, by control name (empty when every checked control is valid)."""
+        return dict(self._runtime.errors)
+
+    @property
+    def valid(self) -> bool:
+        """Whether no control shows a validation message."""
+        return not self._runtime.errors
+
+    def validate(self) -> bool:
+        """Checks the rules of every visible, enabled control, shows the messages and returns whether all
+        passed; call it before saving::
+
+            def save_click(form, event):
+                if form.validate():
+                    store(form.data)
+        """
+        return self._runtime.validate()
 
     def close(self) -> _core.Command:
         """Returns the command that closes this form's window (return it from a handler)."""
@@ -235,6 +281,7 @@ class LiveContext(_components.RenderContext):
     def __init__(self, runtime: "FormRuntime") -> None:
         super().__init__(runtime.theme, runtime.form.name)
         self.runtime = runtime
+        self.language = runtime.language
 
     def on(self, control: Control, event: str, prop: Optional[str] = None) -> Callable[..., Any]:
         runtime = self.runtime
@@ -245,6 +292,7 @@ class LiveContext(_components.RenderContext):
             value = args[0] if len(args) == 1 else (args or None)
             if prop is not None:
                 target.props[prop] = value
+                runtime.changed(target, prop, value)
             return runtime.dispatch(target, event, value)
 
         return callback
@@ -254,17 +302,25 @@ class FormRuntime:
     """The engine behind ``FormApp``/``FormWindow``: state, event dispatch and drawing."""
 
     def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *, window: Window,
-                 path: Optional[Union[str, Path]] = None, data: Any = None) -> None:
+                 path: Optional[Union[str, Path]] = None, data: Any = None, theme: Optional[str] = None,
+                 language: Optional[str] = None) -> None:
         self.form = form.copy()
         self.path: Optional[Path] = Path(path) if path else None
+        #: A theme and a language to preview the form with (Pyzed Design's View menu), else the form's own.
+        self.preview_theme = theme or os.environ.get("PYZED_PREVIEW_THEME") or None
+        self.language = language or os.environ.get("PYZED_PREVIEW_LANGUAGE") or None
+        _binding.load_texts(self.path)
+        #: Validation messages on show, by control name.
+        self.errors: Dict[str, str] = {}
         self.data = data
+        self._fill_data()
         self.opened: list = []
         #: Called as ``log(level, text)`` for events and handler errors (the designer's console).
         self.log: Optional[Callable[[str, str], None]] = None
         self.design_size = (form.width, form.height)
         self.handlers = dict(handlers or {})
         self.window = window
-        self.theme = theme_for(form)
+        self.theme = theme_for(form, self.preview_theme)
         self.ctx = LiveContext(self)
         self.proxy = FormProxy(self)
         self.error: Optional[str] = None
@@ -301,6 +357,88 @@ class FormRuntime:
             else:
                 traceback.print_exc()
             return None
+
+    # -- data binding and validation -----------------------------------------
+    def _fill_data(self) -> None:
+        """Starts ``data`` as a dict when some control is bound and nothing was passed, and copies the designed
+        value of each bound input whose field is missing, so ``form.data`` always holds every field."""
+        bound = [c for c in self.form.controls if c.bind and _binding.two_way(c.type) and _binding.is_path(c.bind)]
+        if self.data is None and any(c.bind for c in self.form.controls):
+            self.data = {}
+        for control in bound:
+            if not _binding.has(self.data, control.bind):
+                prop = _binding.bound_prop(control.type)
+                spec = _components.get(control.type)
+                try:
+                    _binding.write(self.data, control.bind, control.props.get(prop, spec.defaults().get(prop)))
+                except (AttributeError, TypeError):
+                    pass  # read-only data: the control keeps its own value
+
+    def set_data(self, data: Any) -> None:
+        """Shows ``data`` in the bound controls (``form.data = record``) and clears the validation messages."""
+        self.data = data
+        self.errors.clear()
+        self._fill_data()
+
+    def changed(self, control: Control, prop: str, value: Any) -> None:
+        """The user changed ``prop`` of ``control``: writes it to the bound field and re-checks its rules."""
+        if control.bind and prop == _binding.bound_prop(control.type) and _binding.two_way(control.type) \
+                and _binding.is_path(control.bind) and self.data is not None:
+            try:
+                _binding.write(self.data, control.bind, value)
+            except (AttributeError, TypeError) as err:
+                self.error = f"{control.name}.bind = {control.bind}: {err}"
+        if control.rules:
+            self._check(control)
+
+    def _check(self, control: Control) -> bool:
+        prop = _binding.bound_prop(control.type)
+        if prop is None:
+            return True
+        value = control.props.get(prop, _components.get(control.type).defaults().get(prop))
+        message = _binding.check(value, control.rules, control.type)
+        if message is None:
+            self.errors.pop(control.name, None)
+            return True
+        self.errors[control.name] = message
+        return False
+
+    def validate(self, names: Optional[list] = None) -> bool:
+        """Checks the rules of the controls ``names`` (every visible, enabled one by default); returns whether
+        they all passed."""
+        hidden: set = set()
+        ok = True
+        for control, _depth in self.form.walk():
+            if not control.visible or (control.parent and control.parent in hidden):
+                hidden.add(control.name)
+                continue
+            if names is not None and control.name not in names:
+                continue
+            if not control.rules or not control.enabled:
+                self.errors.pop(control.name, None)
+                continue
+            ok = self._check(control) and ok
+        return ok
+
+    def set_error(self, name: str, message: Optional[str]) -> None:
+        """Shows ``message`` under control ``name`` (``None`` or ``""`` clears it)."""
+        if message:
+            self.errors[name] = str(message)
+        else:
+            self.errors.pop(name, None)
+
+    def _apply_binding(self, control: Control) -> None:
+        """Copies the bound field (or expression) of ``data`` into the control's bound property."""
+        prop = _binding.bound_prop(control.type)
+        if prop is None or self.data is None:
+            return
+        try:
+            control.props[prop] = _binding.evaluate(control.bind, self.data, form=self.proxy)
+        except (KeyError, AttributeError, IndexError):
+            if not _binding.is_path(control.bind):
+                self.error = f"{control.name}.bind = {control.bind}: {sys.exc_info()[1]!r}"
+        except Exception as err:  # noqa: BLE001 - shown in the window
+            self.error = f"{control.name}.bind = {control.bind}: {type(err).__name__}: {err}"
 
     def load(self) -> Any:
         """Raises the form's ``load`` event the first time it is called; returns the handler's result."""
@@ -344,6 +482,7 @@ class FormRuntime:
             layers.append(painted)
         rects = _layout.resolve(form, size)
         hidden: set = set()
+        bubbles: list = []  # validation messages, over every control
         for control, _depth in form.walk():
             spec = _components.get(control.type)
             if not control.visible or (control.parent and control.parent in hidden):
@@ -351,11 +490,23 @@ class FormRuntime:
                 continue
             if not spec.visual:
                 continue
+            if control.bind:
+                self._apply_binding(control)
             x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
             widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
             remember_instance(self, control, self.ctx)
+            message = self.errors.get(control.name)
+            if message:
+                widget = _core.container(widget, width=w, height=h, border_color=t.error, border_width=1,
+                                         radius=t.radius_sm)
             layers.append(_core.pin(widget, x=x, y=y))
+            if message:
+                bubbles.append(_core.pin(_core.container(
+                    _core.text(message, size=max(t.ui_font_size - 2, 10), color=t.error),
+                    padding=(3, 8), bg=t.elevated, border_color=t.error, border_width=1, radius=t.radius_sm,
+                ), x=x, y=y + h + 4))
+        layers.extend(bubbles)
         if self.error:
             layers.append(_core.container(
                 ui.callout("Event handler error", self.error, tint="error", on_dismiss=self._dismiss_error,
@@ -388,7 +539,7 @@ class FormRuntime:
         self.form = form
         self.design_size = (form.width, form.height)
         self.handlers = handlers
-        self.theme = theme_for(form)
+        self.theme = theme_for(form, self.preview_theme)
         self.ctx = LiveContext(self)
         self.window.theme = self.theme
         self.error = None
@@ -401,8 +552,9 @@ class _FormHost:
     runtime: FormRuntime
 
     def _host(self, form: Form, handlers: Optional[Dict[str, Any]], path: Optional[Union[str, Path]] = None,
-              data: Any = None) -> None:
-        self.runtime = FormRuntime(form, handlers, window=self, path=path, data=data)  # type: ignore[arg-type]
+              data: Any = None, theme: Optional[str] = None, language: Optional[str] = None) -> None:
+        self.runtime = FormRuntime(form, handlers, window=self, path=path, data=data,  # type: ignore[arg-type]
+                                   theme=theme, language=language)
         self.size = (form.width, form.height)
         self.resizable = form.resizable
         self.theme = self.runtime.theme
@@ -413,7 +565,7 @@ class _FormHost:
 
     @property  # type: ignore[override]
     def title(self) -> str:
-        return self.runtime.form.title
+        return _binding.translate(self.runtime.form.title, self.runtime.language)
 
     @title.setter
     def title(self, value: str) -> None:  # pragma: no cover - set by Window defaults
@@ -470,8 +622,9 @@ class FormWindow(_FormHost, Window):
     """A form in an extra window (``form.open(...)``, ``designer.open_window`` and the designer's preview)."""
 
     def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *,
-                 path: Optional[Union[str, Path]] = None, data: Any = None) -> None:
-        self._host(form, handlers, path, data)
+                 path: Optional[Union[str, Path]] = None, data: Any = None, theme: Optional[str] = None,
+                 language: Optional[str] = None) -> None:
+        self._host(form, handlers, path, data, theme, language)
 
     def on_open(self) -> Any:
         """Raises the form's ``load`` event when the window opens."""

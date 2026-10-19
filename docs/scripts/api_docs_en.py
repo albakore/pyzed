@@ -1699,6 +1699,10 @@ PAGES.append({
             "pyzed.designer.Form", "pyzed.designer.Control", "pyzed.designer.Event", "pyzed.designer.FormApp",
             "pyzed.designer.FormWindow", "pyzed.designer.Document",
         )),
+        ("Data binding and validation", {
+            **_doc("pyzed.designer.binding.check", "pyzed.designer.binding.translate", "pyzed.designer.binding.read", "pyzed.designer.binding.write", "pyzed.designer.binding.has", "pyzed.designer.binding.evaluate", "pyzed.designer.binding.bound_prop", "pyzed.designer.binding.two_way", "pyzed.designer.binding.rules_for", "pyzed.designer.binding.load_texts"),
+            "pyzed.designer.binding.BIND_PROPS": {"desc": "The property each control type binds, and whether the user edits it (two-way): `{type: (property, two_way)}`.", "no_signature": True},
+        }),
         ("Toolbox", _doc(
             "pyzed.designer.Component", "pyzed.designer.Prop", "pyzed.designer.RenderContext",
             "pyzed.designer.register", "pyzed.designer.component", "pyzed.designer.all_components",

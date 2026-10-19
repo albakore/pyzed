@@ -139,6 +139,12 @@
    "path": "docs/src/content/docs/editor/console-and-running.md"
   },
   {
+   "slug": "editor/data-binding",
+   "title": "Data binding and validation",
+   "description": "Bind controls to the form's data, check what the user types with validation rules, translate texts with @keys and preview a form in another theme or language.",
+   "path": "docs/src/content/docs/editor/data-binding.md"
+  },
+  {
    "slug": "editor/events",
    "title": "Events and handlers",
    "description": "The Events panel, every event of every component and the form, and how to write handlers in Pyzed Design.",
@@ -3392,6 +3398,19 @@
    "pyzed.designer.FormApp": {},
    "pyzed.designer.FormWindow": {},
    "pyzed.designer.Document": {},
+   "pyzed.designer.binding.check": {},
+   "pyzed.designer.binding.translate": {},
+   "pyzed.designer.binding.read": {},
+   "pyzed.designer.binding.write": {},
+   "pyzed.designer.binding.has": {},
+   "pyzed.designer.binding.evaluate": {},
+   "pyzed.designer.binding.bound_prop": {},
+   "pyzed.designer.binding.two_way": {},
+   "pyzed.designer.binding.rules_for": {},
+   "pyzed.designer.binding.load_texts": {},
+   "pyzed.designer.binding.BIND_PROPS": {
+    "desc": "The property each control type binds, and whether the user edits it (two-way): `{type: (property, two_way)}`."
+   },
    "pyzed.designer.Component": {},
    "pyzed.designer.Prop": {},
    "pyzed.designer.RenderContext": {},

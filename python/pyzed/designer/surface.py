@@ -27,6 +27,7 @@ from . import styling
 from .geometry import HANDLES
 from .locale import tr
 from .model import Control
+from .binding import translate
 from .runtime import theme_for
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -139,9 +140,10 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     """The form frame (title bar + client area) with every designer layer on top."""
     doc = d.doc
     form = doc.form
-    ft = theme_for(form)
+    ft = theme_for(form, d.preview_theme)
     ctx = _components.RenderContext(ft, form.name)
     ctx.preview = d.motion_preview
+    ctx.language = d.preview_language
     w, h = form.width, form.height
 
     layers: List[Any] = [_core.container(width="fill", height="fill", bg=ft.background)]
@@ -231,7 +233,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     # A soft outline instead of a blurred shadow: wgpu redraws blurred shadows of a scrolled
     # layer over its content while a later layer (the code editor's completion list) is shown.
     frame = _core.container(
-        _core.container(_core.column([_chrome(form.title, w, ft, getattr(d.doc, "is_scene", False)), client]),
+        _core.container(_core.column([_chrome(translate(form.title, d.preview_language), w, ft,
+                                              getattr(d.doc, "is_scene", False)), client]),
                         border_color=t.accent if getattr(d.doc, "is_scene", False) else t.border, border_width=1,
                         radius=t.radius, clip=True),
         padding=3, radius=t.radius + 3, border_color=alpha(t.shadow, 0.5), border_width=3,

@@ -110,6 +110,8 @@ flowchart LR
 - [Layouts and containers](/pyzed/editor/layouts/): panels, flex rows and columns, grids and anchors.
 - [Styles and themes](/pyzed/editor/styles-and-themes/): the Style section, the color picker, gradients and themes.
 - [Events and handlers](/pyzed/editor/events/): every event and how to write its code.
+- [Data binding and validation](/pyzed/editor/data-binding/): `form.data`, validation rules, `@key` translations and
+  previewing another theme or language.
 - [Code editor](/pyzed/editor/code-editor/): completion, diagnostics, code lens, folding and its settings.
 - [Running and the console](/pyzed/editor/console-and-running/): F5, the console, `uv run` and hot reload.
 - [Component designer](/pyzed/editor/component-designer/): reusable components with props, state, methods and
