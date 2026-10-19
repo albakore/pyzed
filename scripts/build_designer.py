@@ -16,6 +16,10 @@ Signing is optional and driven by environment variables, so builds without certi
   also notarized and the ticket stapled.
 - Windows: ``PYZED_SIGN_PFX`` (a .pfx file) and ``PYZED_SIGN_PASSWORD`` sign the executables with
   Authenticode and a timestamp.
+
+The OAuth apps the Agent panel signs in with are optional too: ``PYZED_GITHUB_CLIENT_ID``,
+``PYZED_GOOGLE_CLIENT_ID`` and ``PYZED_GOOGLE_CLIENT_SECRET`` are bundled as the ``pyzed_oauth_apps``
+module, so they stay out of the repository and of the PyPI wheels.
 """
 
 from __future__ import annotations
@@ -92,6 +96,20 @@ def notarize(bundle: Path, archive: str) -> bool:
     return True
 
 
+def oauth_apps(work: Path) -> "Path | None":
+    """Writes the OAuth apps given in the environment as a module for the bundle (``None`` when none is)."""
+    names = ("GITHUB_CLIENT_ID", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET")
+    values = {name: os.environ.get(f"PYZED_{name}", "").strip() for name in names}
+    path = work / "oauth" / "pyzed_oauth_apps.py"
+    shutil.rmtree(path.parent, ignore_errors=True)
+    if not any(values.values()):
+        return None
+    path.parent.mkdir(parents=True)
+    path.write_text("".join(f"{name} = {value!r}\n" for name, value in values.items()), encoding="utf-8")
+    print(f"Bundling the OAuth apps: {', '.join(n for n, v in values.items() if v)}")
+    return path
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "dist"), help="output folder")
@@ -110,6 +128,9 @@ def main() -> int:
         # uv goes next to the executable, where pyzed.project.find_uv() looks for it
         "--add-binary", f"{uv_binary()}{os.pathsep}.",
     ]
+    apps = oauth_apps(work)
+    if apps:
+        command += ["--paths", str(apps.parent), "--hidden-import", apps.stem]
     # the Agent panel's optional dependencies (Claude's SDK and the system keychain), when installed
     for package in ("anthropic", "keyring"):
         if importlib.util.find_spec(package):
