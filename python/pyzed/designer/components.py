@@ -177,8 +177,18 @@ def render(control: Control, ctx: RenderContext) -> Any:
     """Draws ``control`` at its size (its own props, falling back to the component defaults)."""
     spec = get(control.type)
     merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
-    widget = spec.render(merged, ctx)
-    return _core.container(widget, width=control.width, height=control.height, clip=True)
+    widget = styled(spec.render(merged, ctx), control, ctx)
+    # a shadow is drawn outside the box: clipping would cut it off
+    return _core.container(widget, width=control.width, height=control.height, clip=not control.style.get("shadow"))
+
+
+def styled(widget: Any, control: Control, ctx: RenderContext) -> Any:
+    """``widget`` with the control's own style (see ``designer.styling``)."""
+    if not control.style:
+        return widget
+    from . import styling
+
+    return styling.apply(widget, control.style, ctx.theme)
 
 
 # -- helpers -------------------------------------------------------------------

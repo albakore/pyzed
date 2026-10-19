@@ -5,7 +5,9 @@ Layers, bottom to top (one ``stack`` sized like the form):
 1. the form background and the dot grid (a cached ``canvas``);
 2. every control, drawn by its component exactly as it will run, but inert;
 3. one transparent hit box per control that selects, drags and double-clicks;
-4. selection outlines, resize handles and the rubber band / new-control preview.
+4. selection outlines, resize handles and the rubber band / new-control preview;
+5. a grip tab on containers that hold controls, to select and drag the container itself
+   (its own area is mostly covered by its children's hit boxes).
 
 The stack sits in a ``mouse_area`` whose ``on_move`` reports the pointer in form
 coordinates (where a click lands); the scroll view around it has another one that
@@ -20,6 +22,8 @@ from .. import _core, draw, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import components as _components
+from . import layout as _layout
+from . import styling
 from .geometry import HANDLES
 from .locale import tr
 from .model import Control
@@ -31,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
 CHROME_HEIGHT = 30.0
 MARGIN = 48.0
 HANDLE = 7.0
+GRIP_HEIGHT = 16.0
 
 _grid_cache: dict = {}
 
@@ -87,6 +92,49 @@ def _handles(d: "Designer", rect: Tuple[float, float, float, float], t: Theme) -
     return out
 
 
+def grips(d: "Designer") -> List[Tuple[str, float, float]]:
+    """``(name, x, y)`` of the grip tab for each container that holds controls and is selected,
+    holds the selection or is under the pointer. The tab sits just above the container's top-left
+    corner, or inside it when the container touches the top of the form, clear of the corner's
+    resize handle."""
+    doc = d.doc
+    form = doc.form
+    if d.tool or (d.drag is not None and d.drag.mode != "band") or d.carry is not None:
+        return []
+    rects = d.rects
+    wanted = set()
+    for c in doc.selected:
+        wanted.add(c.name)
+        wanted.update(a.name for a in form.ancestors(c.name))
+    if d.over_form:
+        px, py = d.pointer
+        for name, (x, y, w, h) in rects.items():
+            if x <= px <= x + w and y - GRIP_HEIGHT <= py <= y + h:
+                wanted.add(name)
+    out = []
+    for c, _depth in form.walk():
+        if c.name not in wanted or c.name not in rects or _layout.kind(c) is None or not form.children(c.name):
+            continue
+        if not c.visible and not d.show_hidden:
+            continue
+        x, y, _w, _h = rects[c.name]
+        out.append((c.name, x + HANDLE, y - GRIP_HEIGHT - 1 if y >= GRIP_HEIGHT + 1 else y + 1))
+    return out
+
+
+def _grip(d: "Designer", name: str, t: Theme) -> Any:
+    selected = d.doc.is_selected(name)
+    chip = _core.container(
+        _core.row([_icon("grip-vertical", size=11, color=t.background if selected else t.accent),
+                   ui.label(name, size="xs", color=t.background if selected else t.accent, theme=t, wrap=False)],
+                  spacing=3, align="center"),
+        height=GRIP_HEIGHT, padding=(0, 5, 0, 3), align_y="center", radius=3,
+        bg=t.accent if selected else t.background, border_color=t.accent, border_width=1,
+    )
+    return _core.mouse_area(chip, on_press=lambda: d.press_control(name),
+                            on_right_press=lambda: d.open_context_menu(name), cursor="move")
+
+
 def form_surface(d: "Designer", t: Theme) -> Any:
     """The form frame (title bar + client area) with every designer layer on top."""
     doc = d.doc
@@ -96,6 +144,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     w, h = form.width, form.height
 
     layers: List[Any] = [_core.container(width="fill", height="fill", bg=ft.background)]
+    painted = styling.background_layer(form.style, ft)
+    if painted is not None:
+        layers.append(painted)
     if d.show_grid:
         layers.append(_core.canvas(dot_grid(w, h, form.grid, alpha(ft.text_muted, 0.35)), width=w, height=h,
                                    id="designer-grid"))
@@ -103,6 +154,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     # 2. the controls, as they will look, containers before what they hold
     rects = d.rects
     shown = []
+    drawn: List[Any] = []
     hidden: set = set()
     for c, _depth in form.walk():
         if not c.visible or (c.parent and c.parent in hidden):
@@ -114,8 +166,10 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         widget = _components.render(placed, ctx)
         if c.name in hidden:
             widget = _core.container(widget, width=cw, height=ch, bg=alpha(ft.background, 0.5))
-        layers.append(_core.pin(widget, x=x, y=y))
+        drawn.append(_core.pin(widget, x=x, y=y))
         shown.append(c)
+    # the form's global style: texts inside take its font, color and size
+    layers.append(styling.apply_global(_core.stack(drawn, width=w, height=h), form.style, ft, background=False))
 
     # the container a dragged control (or the one being placed) will drop into
     target = d.drop_target
@@ -148,6 +202,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
             layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=x + cw - 12, y=y - 14))
     if len(doc.selected) == 1 and not doc.primary.locked:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
+    # 5. grip tabs on containers, above everything they hold
+    for name, gx, gy in grips(d):
+        layers.append(_core.pin(_grip(d, name, t), x=gx, y=gy))
     band = d.band_rect
     if band is not None:
         bx, by, bw, bh = band

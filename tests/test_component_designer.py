@@ -431,3 +431,19 @@ def test_new_component_dialog(tmp_path, monkeypatch):
     assert app.new_state["kind"] == "form" and app.new_state["name"] == "form1"
     app.set_new("kind", "component")
     assert app.new_state["name"] == "component1"
+
+
+def test_component_draws_its_styles(tmp_path):
+    doc = make_rating(tmp_path)
+    doc.set_style("label1", "weight", "bold")
+    doc.set_style(None, "font", "serif")
+    doc.set_style(None, "background", {"type": "linear", "angle": 90, "stops": [[0, "#112233"], [1, "#334455"]]})
+    cls = load_component(doc.save())
+    assert cls.scene_model().style["font"] == "serif"
+    assert cls.scene_model()["label1"].style == {"weight": "bold"}
+    assert isinstance(cls.create(value=4).render(), pz.Widget)
+    form = designer.Form(width=300, height=200)
+    form.add(components.get("rating").create("rating1", 10, 10))
+    designer.save(form, tmp_path / "main.pzform")
+    designer.open_form(tmp_path / "main.pzform").screenshot(tmp_path / "run.png", scale=1)
+    assert (tmp_path / "run.png").exists()

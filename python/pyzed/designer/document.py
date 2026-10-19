@@ -362,6 +362,25 @@ class Document:
         self.form[name].props[key] = value
         self.commit(group=f"prop:{name}:{key}")
 
+    def set_style(self, name: Optional[str], key: str, value: Any) -> None:
+        """Sets one style property of a control, or of the form's global style when ``name`` is
+        ``None``; ``None`` removes it."""
+        style = self.form.style if name is None else self.form[name].style
+        if value is None:
+            if key not in style:
+                return
+            del style[key]
+        else:
+            style[key] = value
+        self.commit(group=f"style:{name}:{key}")
+
+    def clear_style(self, name: Optional[str]) -> None:
+        """Removes every style property of a control (or of the form's global style)."""
+        target = self.form if name is None else self.form[name]
+        if target.style:
+            target.style = {}
+            self.commit()
+
     def set_field(self, name: str, key: str, value: Any) -> None:
         """Sets a ``Control`` attribute (x, y, width, height, visible, enabled, locked, anchor)."""
         if key in ("width", "height"):

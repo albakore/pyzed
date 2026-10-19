@@ -90,6 +90,10 @@ fila / columna / cuadrícula**.
 Los hijos de un flex o una grilla aparecen en su orden en el outline; arrástralos ahí, o en el formulario, para
 reordenarlos. Mover o redimensionar un contenedor mueve a sus hijos, y copiar, pegar y borrar los incluyen.
 
+Los hijos cubren casi todo el contenedor, así que un clic ahí elige a un hijo. Para elegir o mover el propio
+contenedor, usa la pestaña con su nombre sobre su esquina superior izquierda: aparece al pasar el ratón por el
+contenedor y mientras él, o un control de dentro, está seleccionado.
+
 ![Un formulario con barra lateral: una columna flexible y sus hijos](../../../../../screenshots/designer-layout.png)
 
 ## Menús, ajustes y paleta de comandos
@@ -135,6 +139,26 @@ el fondo, el radio de las esquinas y el tamaño de letra. El tema del propio dis
 (**Ajustes**).
 
 ![Un formulario con el tema Gruvbox Light y acento propio](../../../../../screenshots/designer-light.png)
+
+
+### Estilos
+
+Cada control tiene una sección **Estilo** en Propiedades, como CSS solo para ese control (ver [Estilos](../styles/)):
+fondo, color del texto, fuente, peso, cursiva, tamaño de letra, interlineado, color y grosor del borde, radio de
+esquina, sombra, relleno, margen, ancho y alto máximos, alineación del contenido y recorte. Los campos vacíos dejan
+el aspecto propio del componente, y **Restablecer el estilo** los borra todos.
+
+Haz clic en la muestra de un color para abrir la paleta, con alfa. La paleta del fondo también crea degradados
+lineales (arrastra las paradas, ajusta el ángulo) y máscaras de opacidad. Los colores pueden ser tokens del tema
+(`accent`, `text_muted`...), así el estilo sigue al tema del formulario. El radio de esquina acepta un número o cuatro
+(arriba a la izquierda, arriba a la derecha, abajo a la derecha, abajo a la izquierda); el relleno y el margen, uno,
+dos o cuatro.
+
+Sin nada seleccionado, la sección **Estilo** del formulario es el estilo global de la ventana: su fuente, color y
+tamaño se aplican a todos los textos que no fijan los suyos, y su fondo, color de borde y radio pasan al tema. Al
+ejecutar funciona igual (`Window.style`), y también en los componentes hechos en el diseñador.
+
+![Un botón con un degradado con máscara, la fuente serif global y la paleta abierta](../../../../../screenshots/designer-style.png)
 
 ## Archivos
 

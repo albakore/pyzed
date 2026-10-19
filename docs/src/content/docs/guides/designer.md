@@ -88,6 +88,10 @@ out to take it back to the form, or select a few controls and use **Edit → Gro
 Children of a flex or grid are listed in their order in the outline; drag them there, or on the form, to reorder
 them. Moving or resizing a container moves its children with it, and copy, paste and delete take them along.
 
+A container's children cover most of it, so a press there picks a child. To pick or move the container itself, use
+the tab with its name above its top-left corner: it shows while the pointer is over the container and while the
+container, or a control inside it, is selected.
+
 ![A sidebar form: a flex column with its children](../../../../screenshots/designer-layout.png)
 
 ## Menus, settings and the command palette
@@ -129,6 +133,24 @@ Each form picks any registered theme (One, Ayu, Gruvbox or your own) and can ove
 background, corner radius and font size. The designer's own theme is independent (**Settings**).
 
 ![A form with the Gruvbox Light theme and a custom accent](../../../../screenshots/designer-light.png)
+
+### Styles
+
+Every control has a **Style** section in Properties, like CSS for that one control (see [Styles](../styles/)):
+background, text color, font, weight, italic, font size, line height, border color and width, corner radius,
+shadow, padding, margin, max width and height, content alignment and clipping. Empty fields keep the component's own
+look, and **Reset style** clears them all.
+
+Click a color's swatch to open the color picker, with alpha. The background's picker also makes linear gradients
+(drag the stops, set the angle) and opacity masks. Colors may be theme tokens (`accent`, `text_muted`...), so a
+style follows the form's theme. Corner radius takes one number or four (top-left, top-right, bottom-right,
+bottom-left); padding and margin take one, two or four.
+
+With nothing selected, the form's own **Style** section is the window's global style: its font, text color and
+size apply to every text that doesn't set its own, and its background, border color and radius become the theme's.
+It runs the same way (`Window.style`), and so do components made in the designer.
+
+![A button with a masked gradient, a serif global font and the color picker open](../../../../screenshots/designer-style.png)
 
 ## Files
 
