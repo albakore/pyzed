@@ -1,0 +1,177 @@
+---
+title: Otras librerías
+description: Recetas para aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis y Matplotlib en una app de escritorio de Pyzed.
+sidebar:
+  order: 7
+---
+
+import { Code } from '@astrojs/starlight/components';
+import journal from '../../../../../../examples/integrations/aiosqlite_journal/main.py?raw';
+
+Cada librería cae en uno de los casos del [resumen](/pyzed/es/integrations/overview/#dónde-se-ejecuta-tu-código):
+async, bloqueante, un servidor o un stream. Estas recetas cubren las que más se preguntan.
+
+## aiosqlite
+
+[aiosqlite](https://aiosqlite.omnilib.dev/) le da a SQLite una API async. Como Pyzed ejecuta
+todas las corrutinas en un mismo loop, una sola conexión abierta en `on_start` sirve a toda la app:
+
+![Una app de diario que guarda las entradas con aiosqlite](../../../../assets/integrations/aiosqlite.png)
+
+```python
+class Journal(pz.App):
+    async def on_start(self):
+        self.db = await aiosqlite.connect("journal.db")
+        self.db.row_factory = aiosqlite.Row
+        await self.db.execute("CREATE TABLE IF NOT EXISTS entries (...)")
+        return await self.load()
+
+    async def load(self):
+        async with self.db.execute("SELECT * FROM entries ORDER BY id DESC") as cursor:
+            return ("loaded", await cursor.fetchall())
+```
+
+```bash
+cd examples/integrations/aiosqlite_journal
+uv run main.py
+```
+
+<details>
+<summary>Código completo: <code>examples/integrations/aiosqlite_journal/main.py</code></summary>
+
+<Code code={journal} lang="py" />
+
+</details>
+
+## SQLAlchemy asyncio
+
+La [demo de SQLAlchemy](/pyzed/es/integrations/sqlalchemy/) usa hilos. Con un driver async
+(`aiosqlite`, `asyncpg`, `aiomysql`) puedes devolver corrutinas. El engine se ata al loop que lo
+usa primero, que siempre es el de Pyzed:
+
+```python
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+engine = create_async_engine("sqlite+aiosqlite:///contacts.db")
+Session = async_sessionmaker(engine, expire_on_commit=False)
+
+
+class Contacts(pz.App):
+    def on_start(self):
+        return self.load()
+
+    async def load(self):
+        async with Session() as session:
+            rows = (await session.scalars(select(Contact).order_by(Contact.name))).all()
+        return ("loaded", rows)
+```
+
+Carga las relaciones de antemano (`selectinload`) antes de cerrar la sesión: la carga perezosa
+necesita un `await`, y `view()` no puede hacerlo.
+
+## pandas y Polars
+
+`ui.table` recibe una lista de dicts, que está a una llamada de un DataFrame. Lee los archivos
+grandes en un hilo para que la ventana siga respondiendo:
+
+```python
+import pandas as pd
+
+
+class Sales(pz.App):
+    def __init__(self):
+        self.frame = pd.DataFrame()
+
+    def open(self, path):
+        return pz.Command.perform(lambda: pd.read_csv(path), self.loaded)
+
+    def loaded(self, frame):
+        self.frame = frame
+        self.rows = frame.to_dict("records")       # Polars: frame.to_dicts()
+
+    def view(self):
+        columns = [ui.Column(name, name) for name in self.frame.columns]
+        return ui.table(columns, self.rows, height="fill")
+```
+
+La tabla está virtualizada, así que cientos de miles de filas se desplazan con fluidez. Para
+filtrar, haz la consulta sobre el DataFrame (`frame[frame.city == city]`) y reconstruye
+`self.rows`.
+
+## requests y otros clientes bloqueantes
+
+Cualquier llamada bloqueante pasa por `Command.perform`. Conviene capturar los errores dentro de
+la función para que `then` siempre reciba algo que mostrar:
+
+```python
+import requests
+
+
+def fetch_weather(city):
+    try:
+        response = requests.get("https://wttr.in/" + city, params={"format": "j1"}, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        return {"error": str(error)}
+
+
+class Weather(pz.App):
+    def search(self, city):
+        return pz.Command.perform(lambda: fetch_weather(city), self.show)
+```
+
+## Pub/sub de Redis y otros streams
+
+Un flujo de eventos es una suscripción: `pz.listen` ejecuta un generador async mientras aparece
+en `subscriptions()` y lo detiene cuando deja de aparecer:
+
+```python
+import redis.asyncio as redis
+
+
+async def events():
+    client = redis.Redis()
+    async with client.pubsub() as pubsub:
+        await pubsub.subscribe("orders")
+        async for message in pubsub.listen():
+            if message["type"] == "message":
+                yield ("order", message["data"].decode())
+
+
+class Orders(pz.App):
+    def subscriptions(self):
+        return [pz.listen(events)] if self.live else []
+```
+
+Los WebSockets funcionan igual; mira `examples/websocket_stream.py` y la
+[guía de async](/pyzed/es/guides/async/).
+
+## Matplotlib
+
+Pyzed dibuja sus propios gráficos (`ui.bar_chart`, `ui.sparkline`, `ui.donut`, `pz.canvas`),
+pero una figura de Matplotlib se puede mostrar como imagen. `pz.image` acepta bytes PNG; crea la
+figura con `matplotlib.figure.Figure` (no con `pyplot`) para poder dibujarla en un hilo sin
+riesgo:
+
+```python
+import io
+from matplotlib.figure import Figure
+
+
+def render(values) -> bytes:
+    figure = Figure(figsize=(6, 3), dpi=144)
+    figure.subplots().plot(values)
+    buffer = io.BytesIO()
+    figure.savefig(buffer, format="png", transparent=True)
+    return buffer.getvalue()
+
+
+class Plot(pz.App):
+    def refresh(self):
+        return pz.Command.perform(lambda: render(self.values), lambda png: setattr(self, "png", png))
+
+    def view(self):
+        return pz.image(self.png) if self.png else ui.spinner()
+```

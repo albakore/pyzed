@@ -1,0 +1,107 @@
+---
+title: httpx y Pydantic
+description: Llama a APIs web desde una app de Pyzed con httpx, recibe en la ventana respuestas concurrentes a medida que llegan y conviértelas en modelos de Pydantic.
+sidebar:
+  order: 6
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../../examples/integrations/httpx_pypi/main.py?raw';
+import pypi from '../../../../../../examples/integrations/httpx_pypi/pypi.py?raw';
+
+Casi todas las apps de escritorio hablan con alguna API web. Esta demo explora paquetes de PyPI:
+pide ocho paquetes a la vez, muestra cada uno en cuanto llega, convierte el JSON en modelos de
+Pydantic y dibuja el historial de versiones.
+
+![Un explorador de PyPI con la lista de paquetes y sus versiones, y los detalles de FastAPI](../../../../assets/integrations/httpx.png)
+
+```bash
+cd examples/integrations/httpx_pypi
+uv run main.py
+uv run main.py rich textual polars      # otros paquetes
+```
+
+<Steps>
+
+1. **Describe solo lo que usas.** Pydantic ignora el resto de la respuesta, convierte las
+   fechas y avisa claramente si la API cambia de forma:
+
+   ```python
+   class Info(BaseModel):
+       name: str
+       version: str
+       summary: str | None = None
+       requires_python: str | None = None
+       project_urls: dict[str, str] | None = None
+
+   class File(BaseModel):
+       upload_time_iso_8601: datetime
+
+   class Package(BaseModel):
+       info: Info
+       releases: dict[str, list[File]]
+   ```
+
+2. **Devuelve un mensaje, no una excepción.** Una función que convierte cada resultado en un
+   valor es fácil de mostrar: el modelo, o un texto corto para la lista:
+
+   ```python
+   async def fetch(client, name):
+       try:
+           response = await client.get(f"https://pypi.org/pypi/{name}/json")
+       except httpx.HTTPError as error:
+           return f"Network error: {error}"
+       if response.status_code == 404:
+           return "Not on PyPI"
+       try:
+           return Package.model_validate_json(response.content)
+       except ValidationError as error:
+           return f"Unexpected response: {error.error_count()} problems"
+   ```
+
+3. **Peticiones concurrentes con un generador async.** Cada `yield` llega a `update` en el
+   momento, así que la lista se completa a medida que llegan las respuestas en lugar de esperar a
+   la más lenta:
+
+   ```python
+   async def fetch_all(names):
+       async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+           async def one(name):
+               return name, await fetch(client, name)
+
+           for done in asyncio.as_completed([one(n) for n in names]):
+               yield await done
+
+   class Explorer(pz.App):
+       def on_start(self):
+           return fetch_all(self.names)
+
+       def update(self, message):
+           name, result = message
+           self.packages[name] = result
+   ```
+
+4. **Muestra los tres estados.** `None` mientras carga, un texto si falla, un modelo si va bien:
+
+   ```python
+   if package is None:
+       end = ui.spinner(size=12)
+   elif isinstance(package, str):
+       end = pz.icon("circle-alert", size=14, color=t.error)
+   else:
+       end = ui.muted(package.info.version, size="sm", mono=True)
+   ```
+
+</Steps>
+
+<Aside type="tip">
+Con un cliente bloqueante como `requests`, usa `Command.perform(lambda: requests.get(url).json(),
+self.loaded)`; corre en un hilo. Los clientes async escalan mejor cuando hay muchas peticiones a
+la vez.
+</Aside>
+
+## Código completo
+
+<Code code={main} lang="py" title="examples/integrations/httpx_pypi/main.py" />
+
+<Code code={pypi} lang="py" title="examples/integrations/httpx_pypi/pypi.py" />

@@ -1,0 +1,111 @@
+---
+title: SQLModel
+description: Valida un formulario de Pyzed con la misma clase de SQLModel que define la tabla de la base de datos y muestra los errores de Pydantic en cada campo.
+sidebar:
+  order: 4
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
+import models from '../../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
+
+SQLModel une Pydantic y SQLAlchemy: una clase describe los campos, sus reglas y la tabla. En una
+app de escritorio eso significa que el formulario y la base de datos coinciden por construcción.
+Esta demo es un inventario con niveles de stock, un gráfico de anillo y un diálogo cuyos campos
+muestran los errores de Pydantic.
+
+![Una tabla de inventario con insignias de stock y un diálogo de edición con errores de validación](../../../../assets/integrations/sqlmodel.png)
+
+```bash
+cd examples/integrations/sqlmodel_inventory
+uv run main.py
+```
+
+<Steps>
+
+1. **Pon las reglas en una clase base.** La tabla y el validador del formulario heredan de ella:
+
+   ```python
+   class ProductBase(SQLModel):
+       name: str = Field(min_length=2, max_length=60)
+       sku: str
+       category: str = "Keyboards"
+       price: float = Field(gt=0)
+       stock: int = Field(ge=0)
+
+       @field_validator("sku")
+       @classmethod
+       def sku_format(cls, sku):
+           sku = sku.strip().upper()
+           if not re.fullmatch(r"[A-Z]{3}-\d{4}", sku):
+               raise ValueError("Expected something like KEY-0001")
+           return sku
+
+   class Product(ProductBase, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       sku: str = Field(unique=True, index=True)
+
+   class ProductIn(ProductBase):
+       """Valida lo que se escribió en el formulario."""
+   ```
+
+2. **Valida con `ProductIn`, no con `Product`.** SQLModel no valida los modelos con
+   `table=True` (los construye SQLAlchemy), así que lo hace una clase aparte sin `table=True`. El
+   formulario guarda todo como texto y Pydantic lo convierte: `"12.5"` pasa a ser `12.5`, `"abc"`
+   un error.
+
+   ```python
+   def save(self):
+       try:
+           data = ProductIn.model_validate(self.draft)
+       except ValidationError as error:
+           self.errors = pz.validation_errors(error)
+           return None
+       product_id = None if self.editing == "new" else self.editing.id
+       return Command.perform(lambda: models.save(product_id, data), self.saved)
+   ```
+
+3. **Guárdalo en un hilo.** `models.save` copia los datos validados en la fila con
+   `sqlmodel_update` y devuelve `{campo: mensaje}` cuando algo que solo sabe la base de datos
+   está mal, como un SKU repetido:
+
+   ```python
+   def save(product_id, data):
+       with Session(engine, expire_on_commit=False) as session:
+           clash = session.exec(select(Product).where(Product.sku == data.sku, Product.id != product_id)).first()
+           if clash:
+               return {"sku": f"Already used by “{clash.name}”"}
+           product = session.get(Product, product_id) if product_id else Product.model_validate(data)
+           product.sqlmodel_update(data.model_dump())
+           session.add(product)
+           session.commit()
+           return product
+   ```
+
+4. **Muestra los errores en un diálogo.** `ui.layer` pone un `ui.modal` sobre la página; cada
+   `ui.field` toma su mensaje de `self.errors`:
+
+   ```python
+   ui.field("Price", ui.input(self.draft["price"], self.edit("price")), error=self.errors.get("price"))
+   ```
+
+5. **Dibuja celdas con widgets.** Una `ui.Column` puede mostrar cualquier cosa; la columna de
+   stock tiene botones y una insignia que se vuelve ámbar o roja cuando queda poco:
+
+   ```python
+   ui.Column("Stock", lambda p: p, width=180, align="center", render=self.stock_cell, sortable=False)
+   ```
+
+</Steps>
+
+<Aside>
+El mismo `ProductIn` puede ser el cuerpo de un endpoint de FastAPI. Si tu app crece y tiene
+servidor, el cliente de escritorio y la API validan con un solo modelo. Mira
+[FastAPI](/pyzed/es/integrations/fastapi/).
+</Aside>
+
+## Código completo
+
+<Code code={main} lang="py" title="examples/integrations/sqlmodel_inventory/main.py" />
+
+<Code code={models} lang="py" title="examples/integrations/sqlmodel_inventory/models.py" />

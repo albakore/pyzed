@@ -34,6 +34,21 @@ python examples/<name>.py
 | [`context_menu.py`](https://github.com/albakore/pyzed/blob/main/examples/context_menu.py) | Context menu with `ui.popover` and `ui.menu`. | [Content](/pyzed/components/content/#popover) |
 | [`screenshots.py`](https://github.com/albakore/pyzed/blob/main/examples/screenshots.py) | Regenerates the documentation screenshots. | [Tests and screenshots](/pyzed/guides/testing/) |
 
+## Integrations
+
+[`examples/integrations/`](https://github.com/albakore/pyzed/tree/main/examples/integrations) holds
+desktop apps built on backend and data libraries. Each one is a uv project: `cd` into it and run
+`uv run main.py`.
+
+| Example | Libraries | Tutorial |
+| --- | --- | --- |
+| [`fastapi_notes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_notes) | FastAPI, uvicorn, httpx | [FastAPI](/pyzed/integrations/fastapi/) |
+| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | [SQLAlchemy](/pyzed/integrations/sqlalchemy/) |
+| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | [SQLModel](/pyzed/integrations/sqlmodel/) |
+| [`django_library`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_library) | Django | [Django](/pyzed/integrations/django/) |
+| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | [httpx and Pydantic](/pyzed/integrations/httpx-pydantic/) |
+| [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | [Other libraries](/pyzed/integrations/other-libraries/#aiosqlite) |
+
 ## Zed-like editor
 
 ```bash

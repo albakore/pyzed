@@ -1,0 +1,115 @@
+---
+title: Django
+description: Usa el ORM de Django, sus consultas async y la validación de modelos en una app de escritorio de Pyzed que comparte la base de datos con el admin de Django.
+sidebar:
+  order: 5
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../../examples/integrations/django_library/main.py?raw';
+import models from '../../../../../../examples/integrations/django_library/catalog/models.py?raw';
+
+Django es más que un framework web: su ORM, sus migraciones, sus validadores y su admin
+funcionan en cualquier proceso de Python. Esta demo es el catálogo de una biblioteca cuyos
+modelos son una app de Django normal. La ventana de Pyzed los consulta con el **ORM async** de
+Django, valida los cambios con `full_clean()` y los mismos datos se pueden editar en el admin.
+
+![El catálogo de una biblioteca con autores, libros, interruptores de disponibilidad y un diálogo con errores de validación de Django](../../../../assets/integrations/django.png)
+
+```bash
+cd examples/integrations/django_library
+uv run main.py                     # la app de escritorio
+uv run manage.py createsuperuser   # y luego: uv run manage.py runserver → http://127.0.0.1:8000/admin/
+```
+
+La carpeta es un proyecto de Django normal (`manage.py`, `library_site/settings.py`, una app
+`catalog` con migraciones) más `main.py`. Para añadir una app de escritorio a tu propio proyecto,
+basta con un `main.py` junto a `manage.py`.
+
+<Steps>
+
+1. **Configura Django antes de importar los modelos.** Igual que hace `manage.py`:
+
+   ```python
+   os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_site.settings")
+   django.setup()
+
+   from catalog.models import Author, Book
+   ```
+
+   Antes de abrir la ventana, `prepare_database()` ejecuta `call_command("migrate")` y añade
+   algunos libros la primera vez.
+
+2. **Consulta con el ORM async.** Los métodos con prefijo `a` de Django (`aget`, `acount`,
+   `aupdate`, `adelete`, `asave`) y `async for` sobre un queryset ejecutan la consulta en el hilo
+   propio de Django y se pueden esperar. Devolver la corrutina desde un callback la ejecuta en el
+   loop de Pyzed:
+
+   ```python
+   async def fetch(self, author_id, query):
+       authors = [a async for a in Author.objects.annotate(count=Count("books"))]
+       books = Book.objects.select_related("author")
+       if author_id:
+           books = books.filter(author_id=author_id)
+       if query:
+           books = books.filter(Q(title__icontains=query) | Q(author__name__icontains=query))
+       return ("loaded", query, authors, [b async for b in books])
+
+   def pick_author(self, author_id):
+       self.author_id = author_id
+       return self.fetch(author_id, self.query)
+   ```
+
+   `select_related("author")` importa: la tabla lee `book.author.name`, y una relación perezosa
+   intentaría consultar desde el hilo de la UI.
+
+3. **Valida con el modelo.** `full_clean()` ejecuta los validadores de los campos, las
+   comprobaciones unique y `Model.clean()`. Toca la base de datos, así que se envuelve en
+   `sync_to_async`:
+
+   ```python
+   async def store(self, book_id, draft):
+       book = await Book.objects.aget(pk=book_id) if book_id else Book()
+       book.title, book.isbn, book.year = draft["title"], draft["isbn"], draft["year"]
+       book.author = draft["author"]
+       try:
+           await sync_to_async(book.full_clean)()
+       except ValidationError as error:
+           return ("invalid", error)
+       await book.asave()
+       return ("saved",)
+   ```
+
+   `pz.validation_errors` lee el `message_dict` del `ValidationError`, así que "“abc” value must
+   be an integer." aparece bajo Year y "Book with this ISBN already exists." bajo ISBN.
+
+4. **Elige objetos relacionados con `ui.select`.** Muestra cualquier objeto con `str()` y lo
+   devuelve tal cual, así que el campo de autor guarda instancias de `Author`:
+
+   ```python
+   ui.field("Author", ui.select(self.authors, self.draft["author"], self.edit("author")))
+   ```
+
+5. **Cambios pequeños sin cargar el objeto.** El interruptor de disponibilidad de cada fila
+   ejecuta un único `UPDATE`:
+
+   ```python
+   async def set_available(self, book_id, available):
+       await Book.objects.filter(pk=book_id).aupdate(available=available)
+       return ("changed",)
+   ```
+
+</Steps>
+
+<Aside type="caution">
+No hagas consultas al ORM en `view()` ni en callbacks síncronos: bloquearían la ventana mientras
+responde la base de datos. Dentro de una corrutina usa los métodos `a`: una consulta síncrona ahí
+lanza `SynchronousOnlyOperation`. El código síncrono de Django también funciona dentro de
+`Command.perform`.
+</Aside>
+
+## Código completo
+
+<Code code={main} lang="py" title="examples/integrations/django_library/main.py" />
+
+<Code code={models} lang="py" title="examples/integrations/django_library/catalog/models.py" />
