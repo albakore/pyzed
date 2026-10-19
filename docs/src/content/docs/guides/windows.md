@@ -84,13 +84,14 @@ Class or instance attributes:
 | `title` | Text or callable. |
 | `size`, `min_size`, `max_size` | Sizes in logical pixels. |
 | `position` | `"center"` or `(x, y)`. |
-| `resizable`, `decorations` | `decorations=False` removes the system frame (custom title bar). |
+| `resizable`, `decorations` | `decorations=False` removes the system frame entirely. |
+| `frame` | `"custom"` draws the title bar, window buttons and menus in Pyzed (see [Window frames](#window-frames-your-own-title-bar)). |
 | `transparent`, `maximized`, `fullscreen` | Initial state. |
 | `scale` | Interface scale. |
 | `theme` | A `Theme`, a name or `themes.auto(...)`. `None` uses the app's theme. |
 | `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/guides/animation/#window-transitions). |
 
-`window_size` holds the current size and `window_position` where the window is on the screen (both updated by the runtime; the position is `None` on Wayland).
+`window_size` holds the current size and `window_position` where the window is on the screen (both updated by the runtime; the position is `None` on Wayland). `window_maximized` and `window_focused` say whether it is maximized and has the keyboard focus.
 
 ## Hooks
 
@@ -111,27 +112,73 @@ the message.
 | `Command.open_window(w)` / `w.open()` | Opens the window. |
 | `Command.close_window(w)` / `w.close()` | Closes it. |
 | `Command.drag_window(w)` / `w.drag()` | Starts moving it with the mouse (for custom title bars). |
-| `Command.minimize_window(w)` | Minimizes it. |
-| `Command.toggle_maximize_window(w)` | Maximizes or restores it. |
+| `Command.minimize_window(w)` / `w.minimize()` | Minimizes it. |
+| `Command.toggle_maximize_window(w)` / `w.toggle_maximize()` | Maximizes or restores it. |
+| `Command.maximize_window(True, w)` | Maximizes it (`False` restores it). |
+| `Command.drag_resize_window("se", w)` | Starts resizing it from an edge or corner (for custom frames). |
+| `Command.show_window_menu(w)` | Shows the system's window menu (Windows only). |
 | `Command.set_fullscreen(True, w)` | Fullscreen. |
 | `Command.resize_window(width, height, w)` | Resizes it. |
 | `Command.move_window(x, y, w)` | Moves it. |
 | `Command.focus_window(w)` | Brings it to the front. |
 
-### Custom title bar
+### Window frames: your own title bar
+
+`frame = "custom"` replaces the system's frame with one drawn by Pyzed, like Zed's: a title bar that moves
+the window (double click maximizes it), the minimize, maximize and close buttons in the style of this system,
+menus on the left and borders that resize the window. `frame_menus()` returns the menus.
+
+![Window frames of every platform](../../../assets/tutorials/window-frames.png)
 
 ```python
-class Frameless(pz.App):
-    decorations = False
+class Notes(pz.App):
+    title = "Notes"
+    frame = "custom"          # or "macos", "windows", "gnome", "ubuntu", "kde"
+
+    def frame_menus(self):
+        return [
+            ui.Menu("File", [ui.MenuItem("Open…", self.open, keys="ctrl-o"), ui.SEPARATOR,
+                             ui.MenuItem("Quit", self.close)]),
+            ui.Menu("Edit", [ui.MenuItem("Undo", self.undo, keys="ctrl-z")]),
+        ]
 
     def view(self):
-        bar = pz.mouse_area(
-            ui.title_bar([ui.title_button("My app")], [ui.icon_button("x", self.close)]),
-            on_press=self.drag,
-            on_double_click=lambda: pz.Command.toggle_maximize_window(),
-        )
-        return pz.column([bar, self.content()])
+        return self.editor()
 ```
+
+The menus sit behind a ☰ button, like Zed: a click opens the first one and shows every menu's name, and
+moving the pointer to another name opens that one. To put more in the bar (a project picker, a Run button),
+call `ui.window_frame` in `view()` yourself; then the window is not framed twice:
+
+```python
+def view(self):
+    return ui.window_frame(
+        self.editor(),
+        menus=self.frame_menus(),
+        start=[ui.title_button("pyzed", chevron=True)],
+        end=[ui.button("Run", self.run, icon="play", size="sm")],
+    )
+```
+
+| Value of `frame` | What you get |
+| --- | --- |
+| `None` (default) or `"system"` | The system's frame. |
+| `"custom"` or `True` | Pyzed's title bar with this system's buttons. On macOS the system keeps drawing its own traffic lights over the bar. |
+| `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"`, `"kde"` | That platform's buttons on every system. |
+
+`window_maximized` and `window_focused` say whether the window is maximized and has the focus (the
+runtime updates them), so the maximize button shows the restore symbol and the bar dims in the
+background. Maximized, the window has no border to resize.
+
+The pieces work on their own too: `ui.window_title_bar` is the bar alone (with no callbacks it only shows,
+which is how Pyzed Design previews forms), `ui.window_controls` the three buttons and `pz.window_edges`
+the borders that resize a window without decorations. For a bar made from scratch, use the commands
+`Command.drag_window`, `Command.drag_resize_window`, `Command.toggle_maximize_window` and
+`Command.show_window_menu`.
+
+**Platform notes.** On Windows the window keeps the system's shadow and rounded corners. Wayland moves and
+resizes the window as on X11 (the compositor does it). Under WSL Pyzed uses X11, and `"custom"` draws
+Windows buttons, the desktop the window shows up on. `ui.system_platform()` tells which style `"custom"` picks.
 
 ### Draggable tabs and detachable windows
 

@@ -117,6 +117,8 @@ ACTIONS: Tuple[Action, ...] = (
            checked=lambda d: bool(d.preview_theme)),
     Action("preview_language", "Preview language…", "View", lambda d: d.open_preview_picker("language"),
            "languages", checked=lambda d: bool(d.preview_language)),
+    Action("preview_frame", "Preview window frame…", "View", lambda d: d.open_preview_picker("frame"),
+           "app-window", checked=lambda d: bool(d.preview_frame)),
     Action("reset_layout", "Reset panel layout", "View", lambda d: d.reset_layout(), "layout-dashboard"),
     # Run
     Action("run", "Run", "Run", lambda d: d.run_form(), "play", "f5", global_keys=True),

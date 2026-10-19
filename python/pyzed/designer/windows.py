@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple
 
 from .. import _core, ui
 from ..app import Window
+from ..ui import frame as ui_frame
 from .document import Document
 from .locale import tr
 
@@ -64,6 +65,7 @@ class DocWindow(Window):
         self.pane = pane
         pane.window = self
         self.size = size or WINDOW_SIZE
+        self.frame = designer.frame  # the same frame as the main window, with the document as its title
         if position is not None:
             self.position = position
         self.title = self.window_title
@@ -235,10 +237,11 @@ class PaneController:
         if source is not self.main and len(source.docs) == 1:  # already alone: just move its window
             if screen is None or source.window is None:
                 return None
-            return _core.Command.move_window(screen[0] - GRAB_OFFSET[0], screen[1] - GRAB_OFFSET[1],
-                                             source.window)
+            dx, dy = self.grab_offset()
+            return _core.Command.move_window(screen[0] - dx, screen[1] - dy, source.window)
         pane = Pane()
-        position = (screen[0] - GRAB_OFFSET[0], screen[1] - GRAB_OFFSET[1]) if screen is not None else None
+        dx, dy = self.grab_offset()
+        position = (screen[0] - dx, screen[1] - dy) if screen is not None else None
         width, height = self.window_size(self.main)
         window = DocWindow(self.d, pane, size=(min(width, WINDOW_SIZE[0]), min(height, WINDOW_SIZE[1])),
                            position=position)
@@ -249,6 +252,12 @@ class PaneController:
             pane.window = None
             return None
         return [c for c in (window.open(), closing) if c is not None]
+
+    def grab_offset(self) -> Tuple[float, float]:
+        """Where the pointer ends up inside a new document window: over its first tab, under the title bar
+        when the designer draws its own frame."""
+        style = ui_frame.resolve(self.d.frame)
+        return GRAB_OFFSET[0], GRAB_OFFSET[1] + (ui_frame.HEIGHTS[style] if style else 0.0)
 
     def detach_active(self) -> Any:
         """**Move tab to new window**: the document in front gets a window of its own."""

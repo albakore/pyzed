@@ -55,7 +55,13 @@ def dot_grid(width: float, height: float, step: int, color: str) -> List[Any]:
     return shapes
 
 
-def _chrome(title: str, width: float, t: Theme, component: bool = False) -> Any:
+def frame_style(d: "Designer") -> str:
+    """The platform whose window frame the canvas shows around the form: the one picked in the designer, or
+    this system's."""
+    return d.preview_frame or ui.system_platform()
+
+
+def _chrome(title: str, width: float, t: Theme, component: bool = False, style: str = "macos") -> Any:
     if component:  # not a window: no window buttons, and the bar says what it is
         return _core.container(
             _core.row([_icon("component", size=13, color=t.accent),
@@ -63,16 +69,8 @@ def _chrome(title: str, width: float, t: Theme, component: bool = False) -> Any:
                       spacing=6, align="center"),
             width=width, height=CHROME_HEIGHT, padding=(0, 10), align_y="center", bg=alpha(t.accent, 0.12),
         )
-    dots = _core.row([_core.container(width=10, height=10, bg=color, radius=5)
-                      for color in ("#ff5f57", "#febc2e", "#28c840")], spacing=6)
-    return _core.container(
-        _core.stack([
-            _core.container(dots, width="fill", height="fill", align_y="center", padding=(0, 10)),
-            _core.container(ui.label(title, size="sm", color="text_muted", theme=t, wrap=False),
-                            width="fill", height="fill", center=True),
-        ]),
-        width=width, height=CHROME_HEIGHT, bg=t.title_bar,
-    )
+    # the title bar the form gets on that platform, drawn but inert
+    return ui.window_title_bar(title, style=style, width=width, theme=t)
 
 
 def _handles(d: "Designer", rect: Tuple[float, float, float, float], t: Theme) -> List[Any]:
@@ -234,7 +232,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     # layer over its content while a later layer (the code editor's completion list) is shown.
     frame = _core.container(
         _core.container(_core.column([_chrome(translate(form.title, d.preview_language), w, ft,
-                                              getattr(d.doc, "is_scene", False)), client]),
+                                              getattr(d.doc, "is_scene", False), frame_style(d)), client]),
                         border_color=t.accent if getattr(d.doc, "is_scene", False) else t.border, border_width=1,
                         radius=t.radius, clip=True),
         padding=3, radius=t.radius + 3, border_color=alpha(t.shadow, 0.5), border_width=3,

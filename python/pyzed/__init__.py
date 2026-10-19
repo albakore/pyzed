@@ -67,6 +67,7 @@ from ._core import (
     toggler,
     tooltip,
     virtual_column,
+    window_edges,
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
@@ -194,6 +195,7 @@ __all__ = [
     "shader",
     "radio",
     "resizable",
+    "window_edges",
     "responsive",
     "rich_text",
     "row",

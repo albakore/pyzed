@@ -178,6 +178,7 @@ timer, and to move controls between containers precisely.
 
 From left to right: the pointer's position on the form, what is selected (`sign_in 344×32 at 48, 304`, or
 `3 selected`, or the form and its size) and, while a component is picked, the placing hint. On the right: the
+window frame shown around the form (**GNOME**, **macOS**...: click to preview another platform's), the
 number of controls, **Grid 8px** (click to show or hide the grid) and **Snap** (click to toggle snapping). While
 the code editor is open it also shows the cursor's line and column and the state of the language servers. Hide it
 with **View → Status bar**.

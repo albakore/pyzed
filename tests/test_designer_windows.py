@@ -36,7 +36,8 @@ def test_detach_opens_a_window_with_the_tab():
     assert isinstance(commands[0], _core.Command)
     main, pane = d.panes.panes
     assert names(main) == ["a", "c"] and names(pane) == ["b"]
-    assert isinstance(pane.window, DocWindow) and pane.window.position == (410.0, 286.0)
+    dx, dy = d.panes.grab_offset()
+    assert isinstance(pane.window, DocWindow) and pane.window.position == (500.0 - dx, 300.0 - dy)
     # the new window is the one being worked in: the panels follow its document
     assert d.panes.active is pane and d.doc.form.name == "b"
     assert "b" in pane.window.window_title()
