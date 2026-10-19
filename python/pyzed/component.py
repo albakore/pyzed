@@ -489,12 +489,31 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
 
 
 def _annotation_text(annotation: Any) -> str:
-    """An annotation as source text: ``int | None``, ``dict[str, int]``, ``Point``."""
+    """An annotation as source text: ``int | None``, ``dict[str, int]``, ``Point``.
+
+    Unions are always written with ``|`` (``Optional[float]`` is ``float | None``), the same on every
+    Python version.
+    """
     if isinstance(annotation, str):
         return annotation
-    if isinstance(annotation, type) and not typing.get_args(annotation):
+    if annotation is None or annotation is type(None):
+        return "None"
+    if annotation is Ellipsis:
+        return "..."
+    origin, args = typing.get_origin(annotation), typing.get_args(annotation)
+    if origin is typing.Union or (_UnionType is not None and origin is _UnionType):
+        return " | ".join(_annotation_text(a) for a in args)
+    if origin is typing.Literal:
+        return f"Literal[{', '.join(repr(a) for a in args)}]"
+    if origin is not None and args and origin is not typing.Annotated:
+        name = getattr(origin, "__name__", None) or repr(origin).rsplit(".", 1)[-1]
+        return f"{name}[{', '.join(_annotation_text(a) for a in args)}]"
+    if isinstance(annotation, type) and not args:
         return annotation.__name__
     return re.sub(r"\b(?:[A-Za-z_]\w*\.)+([A-Za-z_]\w*)", r"\1", repr(annotation)).replace("NoneType", "None")
+
+
+_UnionType = getattr(__import__("types"), "UnionType", None)  # int | str (Python 3.10+)
 
 
 def _needs_typed_editor(annotation: Any) -> bool:

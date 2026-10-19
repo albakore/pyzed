@@ -670,6 +670,6 @@ def test_component_props_of_any_type_get_the_typed_editor():
             return pz.text("")
 
     props = {p.name: p for p in (_designer_prop(i, components.Prop) for i in Gauge.__props__.values())}
-    assert (props["limit"].kind, props["limit"].type) == ("typed", "Optional[float]")
+    assert (props["limit"].kind, props["limit"].type) == ("typed", "float | None")
     assert (props["marks"].kind, props["marks"].type) == ("typed", "dict[str, int]")
     assert props["names"].kind == "list"
