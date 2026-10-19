@@ -40,6 +40,8 @@ def docs() -> list:
         rel = path.relative_to(DOCS)
         if rel.parts[0] == "es" or path.suffix not in (".md", ".mdx"):
             continue
+        if rel.as_posix() == "changelog.md":  # written from CHANGELOG.md by the site build, not in git
+            continue
         meta = _frontmatter(path.read_text(encoding="utf-8"))
         slug = rel.with_suffix("").as_posix()
         pages.append({"slug": slug, "title": meta.get("title", slug), "description": meta.get("description", ""),
