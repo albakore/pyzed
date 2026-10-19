@@ -37,6 +37,9 @@ uv run python examples/gallery.py
 `uv run` or `uv sync` rebuilds the core (`[tool.uv] cache-keys` in
 `pyproject.toml`). Add `--extra designer` for ty and ruff.
 
+If you add or change a function or class in the Rust core, regenerate its type stubs with
+`python scripts/gen_stubs.py` (`python/pyzed/_core.pyi`); a test fails when they are out of date.
+
 With pip:
 
 ```sh

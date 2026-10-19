@@ -57,6 +57,9 @@ def test_unique_names_and_rename():
 def test_rejects_foreign_json():
     with pytest.raises(ValueError):
         Form.from_dict({"format": "something/1"})
+    with pytest.raises(ValueError, match="newer Pyzed"):
+        Form.from_dict({"format": "pyzed.form/2"})
+    assert Form.from_dict({"format": "pyzed.form/1"}).controls == []
 
 
 def test_every_component_has_defaults_and_renders():

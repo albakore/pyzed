@@ -173,6 +173,11 @@ def test_profiles_confirmations_and_bad_inputs():
     results = agent.messages[2]["content"]
     assert asked == ["write"] and results[0]["is_error"] and "did not allow" in results[0]["content"]
     assert results[1]["is_error"] and "INVALID_INPUT" in results[1]["content"]
+    unasked = agents.Agent("x", tools=[write], settings=providers.AgentSettings(),
+                           stream=scripted([{"type": "tool_use", "id": "3", "name": "write", "input": {"path": "x"}}],
+                                           [{"type": "text", "text": "ok"}]))
+    unasked.run("go")
+    assert unasked.messages[2]["content"][0]["is_error"] and "confirmation" in unasked.messages[2]["content"][0]["content"]
     ask = agents.Agent("x", tools=[write, read], settings=providers.AgentSettings(profile="ask"))
     assert [t.name for t in ask.active_tools()] == ["read"]
     assert agents.Agent("x", tools=[read], settings=providers.AgentSettings(profile="minimal")).active_tools() == []

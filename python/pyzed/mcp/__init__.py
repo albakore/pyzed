@@ -16,14 +16,14 @@ from . import knowledge, scaffold, validate
 __all__ = ["create", "knowledge", "main", "scaffold", "validate"]
 
 
-def create():
-    """Builds the MCP server (needs the ``mcp`` package)."""
+def create(allow_code: bool = True):
+    """Builds the MCP server (needs the ``mcp`` package). ``allow_code=False`` leaves out ``screenshot``."""
     from .server import create as _create
 
-    return _create()
+    return _create(allow_code)
 
 
-def main(transport: str = "stdio") -> int:
+def main(transport: str = "stdio", allow_code=None) -> int:
     """Runs the MCP server until the client disconnects. Returns the exit code."""
     try:
         from .server import main as _main
@@ -33,5 +33,5 @@ def main(transport: str = "stdio") -> int:
         print(f"error: the MCP server needs the MCP SDK ({err}); install it with: pip install \"pyzed-ui[mcp]\"",
               file=sys.stderr)
         return 1
-    _main(transport)
+    _main(transport, allow_code)
     return 0

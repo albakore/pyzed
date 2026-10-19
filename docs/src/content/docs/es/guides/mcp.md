@@ -22,6 +22,8 @@ pyzed mcp                       # arranca el servidor por stdio (también python
 Casi nunca lo ejecutas tú: lo arranca el agente. Con [uv](https://docs.astral.sh/uv/) el agente puede
 ejecutarlo sin instalar nada antes, con `uvx --from "pyzed-ui[mcp]" pyzed mcp`.
 
+`pyzed mcp --transport streamable-http` lo sirve por HTTP en `127.0.0.1`. Ahí cualquier programa de tu equipo puede usarlo sin iniciar sesión, así que la herramienta `screenshot`, que ejecuta el código que recibe, se omite salvo que añadas `--allow-code`.
+
 ## Conecta tu agente
 
 ### Claude Code

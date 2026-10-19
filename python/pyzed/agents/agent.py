@@ -13,7 +13,8 @@
 ``run`` blocks until the model is done (call it from a worker thread in a GUI) and reports what
 happens through ``on_event(Event)``: text and reasoning as they stream, every tool call and its
 result, and the end of each turn. Tools marked ``writes=True`` ask ``confirm(tool, args)`` first when
-the settings say so. ``stop()`` cancels from any thread.
+the settings say so (``confirm_writes``, on by default); with no ``confirm`` they are refused, so pass
+one, or turn ``confirm_writes`` off to let them run unasked. ``stop()`` cancels from any thread.
 """
 
 from __future__ import annotations
@@ -202,8 +203,10 @@ class Agent:
             result, error = f"No tool named {name!r} is available.", True
         elif (problem := tool_.validate(args)) is not None:
             result, error = json.dumps({"INVALID_INPUT": problem, "received": args}, default=str), True
-        elif tool_.writes and self.settings.confirm_writes and self.confirm is not None \
-                and not self.confirm(tool_, args):
+        elif tool_.writes and self.settings.confirm_writes and self.confirm is None:
+            # Nobody can be asked, so writing is refused rather than allowed silently.
+            result, error = "This action needs the user's confirmation, and nobody can be asked.", True
+        elif tool_.writes and self.settings.confirm_writes and not self.confirm(tool_, args):
             result, error = "The user did not allow this action.", True
         elif self._cancel.is_set():
             result, error = "Cancelled by the user.", True

@@ -30,8 +30,9 @@ def _json(data: Any) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False, default=repr)
 
 
-def create() -> Any:
-    """Builds the server with every tool, resource and prompt registered."""
+def create(allow_code: bool = True) -> Any:
+    """Builds the server with every tool, resource and prompt registered. ``allow_code=False`` leaves out
+    ``screenshot``, the one tool that runs the code it is given."""
     try:
         server = _Server("pyzed", instructions=INSTRUCTIONS, version=knowledge.version())
     except TypeError:  # mcp 1.x takes no version
@@ -135,7 +136,7 @@ def create() -> Any:
         handlers module is given, that it defines every handler the form calls."""
         return _json(validate.check_form(form, handlers))
 
-    @server.tool()
+    @(server.tool() if allow_code else (lambda func: func))
     def screenshot(code: str, width: int = 800, height: int = 600, scale: float = 1.0) -> Any:
         """Runs Pyzed code off-screen (no window, no GPU) and returns a PNG of its UI.
 
@@ -211,6 +212,11 @@ def create() -> Any:
     return server
 
 
-def main(transport: str = "stdio") -> None:
-    """Runs the server (blocks). ``transport`` is ``"stdio"`` (the default) or ``"streamable-http"``."""
-    create().run(transport)  # type: ignore[arg-type]
+def main(transport: str = "stdio", allow_code: Optional[bool] = None) -> None:
+    """Runs the server (blocks). ``transport`` is ``"stdio"`` (the default) or ``"streamable-http"``.
+
+    Over HTTP any local program can reach the server without signing in, so ``screenshot`` (which runs
+    code) is only offered there when ``allow_code`` is true; over stdio only the agent that started it can."""
+    if allow_code is None:
+        allow_code = transport == "stdio"
+    create(allow_code).run(transport)  # type: ignore[arg-type]

@@ -232,6 +232,11 @@ def test_server_registers_everything():
 
     asyncio.run(check())
 
+    async def no_code():
+        assert "screenshot" not in {t.name for t in await create(allow_code=False).list_tools()}
+
+    asyncio.run(no_code())
+
 
 def test_cli_without_the_sdk_explains_how_to_install(tmp_path):
     # A stub `mcp` package that fails to import, as when the SDK is missing.

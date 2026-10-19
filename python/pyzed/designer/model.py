@@ -22,6 +22,20 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 FORMAT = "pyzed.form/1"
 SUFFIX = ".pzform"
 
+
+
+def check_format(fmt: Any, current: str, what: str) -> None:
+    """Raises ``ValueError`` unless ``fmt`` is ``current``'s kind (``pyzed.form/``) at a version this
+    Pyzed can read: a file saved by a newer Pyzed would otherwise lose what it does not know."""
+    kind, _, supported = current.rpartition("/")
+    fmt = str(fmt)
+    if not fmt.startswith(kind + "/"):
+        raise ValueError(f"not a Pyzed {what} (format {fmt!r})")
+    version = fmt[len(kind) + 1:]
+    if not version.isdigit() or int(version) > int(supported):
+        raise ValueError(f"this {what} was saved by a newer Pyzed (format {fmt!r}); update Pyzed to open it")
+
+
 #: Names a control cannot take because handlers use them on the form (``form.title``...).
 RESERVED = frozenset({"name", "title", "size", "window", "close"} | set(keyword.kwlist))
 
@@ -259,9 +273,7 @@ class Form:
     def from_dict(cls, data: Dict[str, Any]) -> "Form":
         """Builds a form from saved ``data`` (see ``to_dict``), ignoring unknown settings and repairing broken
         parents; raises ``ValueError`` if it is not a Pyzed form."""
-        fmt = data.get("format", FORMAT)
-        if not str(fmt).startswith("pyzed.form/"):
-            raise ValueError(f"not a Pyzed form (format {fmt!r})")
+        check_format(data.get("format", FORMAT), FORMAT, "form")
         settings = {k: v for k, v in (data.get("form") or {}).items() if k in cls.__dataclass_fields__}
         settings.pop("controls", None)
         form = cls(**settings)

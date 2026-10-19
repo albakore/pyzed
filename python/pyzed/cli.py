@@ -255,6 +255,8 @@ def main(argv=None) -> int:
     p_icons.add_argument("filter", nargs="?", default="")
     p_mcp = sub.add_parser("mcp", help="run the MCP server for AI agents (stdio)")
     p_mcp.add_argument("--transport", choices=("stdio", "streamable-http"), default="stdio")
+    p_mcp.add_argument("--allow-code", action="store_true",
+                       help="offer the screenshot tool (it runs code) over streamable-http too")
     args = parser.parse_args(argv)
     if args.command in ("new", "init"):
         options = dict(app=args.app, git=not args.no_git, python=args.python, sync=not args.no_sync)
@@ -288,7 +290,7 @@ def main(argv=None) -> int:
     if args.command == "mcp":
         from .mcp import main as mcp_main
 
-        return mcp_main(args.transport)
+        return mcp_main(args.transport, True if args.allow_code else None)
     return icons(args.filter)
 
 
