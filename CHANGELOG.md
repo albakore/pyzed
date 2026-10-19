@@ -16,6 +16,19 @@ stable version.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-19
+
+### Fixes
+
+- 🔒️ AI agents refuse tools marked `writes=True` when `confirm_writes` is on (the default) and no `confirm` callback was given, instead of running them without asking. Pass `confirm=` or set `confirm_writes=False` to keep the old behavior.
+- 🔒️ `pyzed mcp --transport streamable-http` no longer offers the `screenshot` tool, which runs the code it receives, unless you add `--allow-code`. Over stdio nothing changes.
+- 🐛 Pyzed Design refuses a `.pzform` or component saved by a newer Pyzed instead of opening it and losing what it does not know.
+- 🏷️ Type stubs for the Rust core (`_core.pyi`) and `py.typed`, so editors and type checkers see every widget and command.
+
+### Docs
+
+- 📝 Add the *Stability and known limitations* guide: the versioning and deprecation policy and what Pyzed does not do yet.
+
 ## [1.0.0] - 2026-10-19
 
 First stable version. From 1.0.0 on, the public API follows semantic versioning: breaking changes only land in a new major version.

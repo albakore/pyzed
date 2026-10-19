@@ -69,7 +69,7 @@ agent = agents.Agent(tools=[stock], settings=settings)
 | `model` | Default model. |
 | `effort` | `low`, `medium`, `high`, `xhigh` or `max` (Claude). |
 | `profile` | `"write"` (every tool), `"ask"` (only tools without `writes=True`) or `"minimal"` (no tools). |
-| `confirm_writes` | Call `confirm(tool, args)` before a tool marked `writes=True`. |
+| `confirm_writes` | Call `confirm(tool, args)` before a tool marked `writes=True` (on by default). Without a `confirm` callback those tools are refused; turn it off to let them run unasked. |
 | `rules` | Text added to the system prompt. |
 | `providers[id].base_url` / `.models` | Server URL and the models offered for a provider. |
 

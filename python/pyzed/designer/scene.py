@@ -36,7 +36,7 @@ from . import code as _code
 from . import components as _components
 from . import scene_code
 from .document import Document
-from .model import Control, Form
+from .model import Control, Form, check_format
 
 FORMAT = "pyzed.component/1"
 SUFFIX = ".pzcomp"
@@ -108,9 +108,7 @@ class Scene(Form):
     def from_dict(cls, data: Dict[str, Any]) -> "Scene":
         """Builds a scene from saved ``data`` (see ``to_dict``), ignoring unknown settings; raises
         ``ValueError`` if it is not a Pyzed component."""
-        fmt = str(data.get("format", FORMAT))
-        if not fmt.startswith("pyzed.component/"):
-            raise ValueError(f"not a Pyzed component (format {fmt!r})")
+        check_format(data.get("format", FORMAT), FORMAT, "component")
         settings = {k: v for k, v in (data.get("component") or {}).items() if k in cls.__dataclass_fields__}
         for key in ("controls", "bindings", "events"):
             settings.pop(key, None)
