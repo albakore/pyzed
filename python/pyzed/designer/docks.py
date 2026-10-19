@@ -1,6 +1,6 @@
 """The designer's dockable, resizable panels.
 
-Panels (toolbox and outline, project, properties, events, code, console) live in four
+Panels (toolbox and outline, project, properties, events, agent, code, console) live in four
 docks around the form: left, right, bottom and top. Each dock shows one panel at a time
 with a tab per panel; the dock menu moves a panel to another dock, as in Zed, and the
 splitters between docks and the form resize them. Where each panel is, which dock is
@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
 #: Default sizes in pixels: width of side docks, height of top and bottom docks.
-SIZES = {"left": 240.0, "right": 320.0, "bottom": 300.0, "top": 220.0}
+SIZES = {"left": 240.0, "right": 360.0, "bottom": 300.0, "top": 220.0}
 MIN_SIZE = {"left": 170.0, "right": 220.0, "bottom": 120.0, "top": 120.0}
 DOCK_ICONS = {"left": "panel-left", "right": "panel-right", "bottom": "panel-bottom", "top": "panel-top"}
 TAB_HEIGHT = 32.0
@@ -80,6 +80,12 @@ def _code(d: "Designer", t: Theme) -> Any:
     return _core.mouse_area(code_panel.code_panel(d, t), on_enter=d.focus_code)
 
 
+def _agent(d: "Designer", t: Theme) -> Any:
+    from . import agent_panel
+
+    return agent_panel.view(d, t)
+
+
 def _console(d: "Designer", t: Theme) -> Any:
     from . import console
 
@@ -91,6 +97,7 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("project", "Project", "package", "left", _project),
     Panel("properties", "Properties", "settings-2", "right", _properties),
     Panel("events", "Events", "zap", "right", _events),
+    Panel("agent", "Agent", "sparkles", "right", _agent),
     Panel("code", "Code", "code", "bottom", _code, lambda d: d.editing is not None),
     Panel("console", "Console", "terminal", "bottom", _console, lambda d: d.console.visible),
 )}

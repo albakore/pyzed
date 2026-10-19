@@ -801,6 +801,7 @@ def code_panel(d: "Designer", t: Theme) -> Any:
     problems = ui.tooltip(problems, tr("Problems"), theme=t)
     header = ui.panel_header(title, icon="code", actions=[
         problems,
+        ui.icon_button("sparkles", d.agent.open_inline, size="sm", tooltip=tr("Inline assist (Ctrl+Alt+I)"), theme=t),
         ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
         ui.button(tr("Whole file") if not whole else tr("This handler"), d.toggle_whole_file, variant="ghost", size="sm",
                   theme=t),
@@ -828,6 +829,11 @@ def code_panel(d: "Designer", t: Theme) -> Any:
         bars.append(search_bar(a, t))
     if a.goto is not None:
         bars.append(goto_bar(a, t))
+    from .agent_panel import inline_bar
+
+    inline = inline_bar(d, t)
+    if inline is not None:
+        bars.append(inline)
     return _core.column([header, *bars, area], width="fill", height="fill")
 
 

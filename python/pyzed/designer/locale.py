@@ -152,6 +152,7 @@ _ES = {
     "Move out of {parent}": "Sacar de {parent}", "Lock": "Bloquear", "Unlock": "Desbloquear",
     # Code panel
     "Problems": "Problemas", "Editor settings": "Ajustes del editor", "Whole file": "Archivo completo",
+    "Inline assist (Ctrl+Alt+I)": "Asistente en línea (Ctrl+Alt+I)",
     "This handler": "Este manejador", "Apply": "Aplicar", "Close": "Cerrar", "Loading…": "Cargando…",
     "↵ insert  esc close": "↵ insertar  esc cerrar", "private": "privado",
     "Language servers": "Servidores de lenguaje", "Types, completion and references": "Tipos, completado y referencias",
@@ -278,3 +279,5 @@ _ES = {
 }
 
 i18n.add("es", {"designer": _ES})
+
+from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

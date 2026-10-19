@@ -44,6 +44,7 @@ diálogo.
 | --- | --- |
 | **Disposición → Restablecer** | Devuelve cada panel a su dock y tamaño iniciales. |
 | **Editor de código → Ajustes del editor…** | Los [ajustes del editor de código](/pyzed/es/editor/code-editor/#ajustes-del-editor): fuente, tabulación, cursor, sugerencias, servidores de lenguaje. |
+| **Agentes de IA → Ajustes de los agentes de IA…** | Los [ajustes del agente](/pyzed/es/editor/ai-agents/#ajustes): proveedores de modelos, claves e inicio de sesión con el navegador, modelo predeterminado, esfuerzo y permisos. |
 
 ## Telemetría
 

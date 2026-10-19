@@ -348,6 +348,51 @@ def code_editor_shots(scale):
     app.assist.shutdown()
 
 
+def agent_shots(scale):
+    """The Agent panel: a finished thread, an empty one, the AI agents settings and inline assist.
+
+    The thread is written out by hand (no model is called), so the images do not change between runs.
+    """
+    from pyzed import agents
+
+    os.environ.setdefault("ANTHROPIC_API_KEY", "sk-ant-screenshots")
+    login = HERE / "designer" / "login.pzform"
+    app = designer.Designer(login, language_servers=False)
+    app.show_panel("agent")
+    thread = app.agent.thread
+    thread.model = "anthropic:claude-opus-5-5"
+    thread.messages = [
+        {"role": "user", "content": [{"type": "text", "text": "Add a 'Remember me' switch under the password and wire it"}]},
+        {"role": "assistant", "provider": "anthropic", "content": [
+            {"type": "thinking", "thinking": "The form has email and password inputs; a switch goes below them."},
+            {"type": "tool_use", "id": "a", "name": "get_document", "input": {}},
+            {"type": "tool_use", "id": "b", "name": "add_control",
+             "input": {"type": "switch", "name": "remember", "x": 24, "y": 180}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "a", "content": "{}"},
+                                     {"type": "tool_result", "tool_use_id": "b", "content": "{}"}]},
+        {"role": "assistant", "provider": "anthropic", "content": [
+            {"type": "tool_use", "id": "c", "name": "wire_event", "input": {"control": "remember", "event": "change"}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "c", "content": "{}"}]},
+        {"role": "assistant", "provider": "anthropic", "content": [{"type": "text", "text": (
+            "Added a **Remember me** switch (`remember`) under the password and wired `remember_change`, "
+            "which keeps the choice in `form.state`.")}]},
+    ]
+    app.agent.snapshot = [(app.doc, app.doc.form.copy(), app.doc.code)]
+    app.agent.changed = True
+    app.screenshot(OUT / "designer-agent.png", size=(1440, 900), scale=scale)
+    app.agent.snapshot, app.agent.changed = [], False
+    app.agent.thread = agents.Thread(model="anthropic:claude-opus-5-5")
+    app.screenshot(OUT / "designer-agent-empty.png", size=(1440, 900), scale=scale)
+    app.agent.provider_open = "openrouter"
+    app.dialog = "agent_settings"
+    app.screenshot(OUT / "designer-agent-settings.png", size=(1440, 900), scale=scale)
+    app.dialog = None
+    app.open_default_event("sign_in")
+    app.agent.open_inline()
+    app.agent.set_inline("Validate the email before signing in")
+    app.screenshot(OUT / "designer-agent-inline.png", size=(1440, 900), scale=scale)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     # Logical sizes stay the same; scale 2 renders sharp HiDPI images for the docs.
@@ -384,6 +429,7 @@ def main():
     component_designer_shots(scale)
     project_shot(scale)
     code_editor_shots(scale)
+    agent_shots(scale)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 

@@ -65,6 +65,7 @@ flowchart TB
 | **Canvas** | The form exactly as it will run, with a dot grid, selection, handles and smart guides. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
 | **Properties** | The selected control's (or the form's) properties, style, position and behavior. | [Properties](/pyzed/editor/properties/) |
 | **Events** | The events of the selected control and the handler wired to each one. | [Events and handlers](/pyzed/editor/events/) |
+| **Agent** | An AI agent that builds forms and components, writes their code and edits the open form. | [AI agents](/pyzed/editor/ai-agents/) |
 | **Code** | A Python editor with completion, diagnostics, code lens, folding and a minimap. | [Code editor](/pyzed/editor/code-editor/) |
 | **Console** | What the running form prints, the events it handles and its errors. | [Running and the console](/pyzed/editor/console-and-running/) |
 | **Status bar** | Pointer position, the selection's size and place, the control count, grid and snap toggles, and while coding the cursor and the language servers. | [Settings](/pyzed/editor/settings/) |

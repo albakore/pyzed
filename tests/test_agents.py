@@ -1,0 +1,524 @@
+"""AI agents: providers, secrets, the agent loop, streaming parsers, browser sign-in and the Agent panel."""
+
+import http.server
+import json
+import sys
+import threading
+import urllib.request
+
+import pytest
+
+from pyzed import agents
+from pyzed.agents import llm, login, providers, secrets
+
+
+class FakeKeyring:
+    name = "Fake keychain"
+
+    def __init__(self):
+        self.data = {}
+
+    def get_password(self, service, key):
+        return self.data.get((service, key))
+
+    def set_password(self, service, key, value):
+        self.data[(service, key)] = value
+
+    def delete_password(self, service, key):
+        self.data.pop((service, key), None)
+
+
+@pytest.fixture(autouse=True)
+def keychain(monkeypatch):
+    for name in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ANTHROPIC_CONFIG_DIR", "/nonexistent-ant-config")
+    fake = FakeKeyring()
+    secrets.use(secrets.SecretStore(fake))
+    yield fake
+    secrets.use(secrets.SecretStore(None))
+
+
+# -- secrets and settings ---------------------------------------------------------------------------
+
+def test_keys_go_to_the_keychain_never_to_settings(keychain, tmp_path):
+    assert agents.set_key("openai", "  sk-test-123456789  ") is True
+    assert keychain.data[("pyzed", "agents.openai")] == "sk-test-123456789"
+    assert agents.get_key("openai") == "sk-test-123456789"
+    assert providers.credential_source("openai") == "keychain"
+    path = providers.save(providers.AgentSettings(), tmp_path / "agents.json")
+    assert "sk-test" not in path.read_text()
+    agents.delete_key("openai")
+    assert agents.get_key("openai") is None and providers.credential_source("openai") == ""
+
+
+def test_without_a_keychain_secrets_last_for_the_session(monkeypatch):
+    store = secrets.SecretStore(None)
+    secrets.use(store)
+    assert not store.secure and "memory" in store.backend_name
+    assert agents.set_key("anthropic", "sk-ant-abc") is False
+    assert agents.get_key("anthropic") == "sk-ant-abc"
+    assert providers.credential_source("anthropic") == "session"
+
+
+def test_environment_keys_and_local_providers(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-env")
+    assert providers.credential_source("openai") == "env"
+    assert providers.credential_source("ollama") == "none needed"
+    assert providers.is_ready("ollama") and not providers.is_ready("google")
+    assert secrets.mask("sk-ant-0123456789abcd") == "sk-ant…abcd" and secrets.mask("short") == "•••••"
+
+
+def test_model_names_and_settings_roundtrip(tmp_path):
+    assert providers.split_model("ollama:qwen3:8b") == ("ollama", "qwen3:8b")
+    assert providers.split_model("openrouter:anthropic/claude-opus-5-5") == ("openrouter", "anthropic/claude-opus-5-5")
+    assert providers.split_model("claude-opus-5-5") == ("anthropic", "claude-opus-5-5")
+    s = providers.AgentSettings(model="ollama:llama3", effort="max", profile="ask", rules="Be brief")
+    s.provider("ollama").base_url = "http://box:11434/v1/"
+    s.provider("ollama").models = ["llama3", "qwen3:8b"]
+    providers.save(s, tmp_path / "a.json")
+    back = providers.load(tmp_path / "a.json")
+    assert back == s
+    assert back.base_url("ollama") == "http://box:11434/v1"
+    assert back.models_of("anthropic")[0] == "claude-opus-5-5"
+    bad = providers.AgentSettings.from_dict({"effort": "huge", "profile": "?", "providers": {"nope": {}}})
+    assert bad.effort == "high" and bad.profile == "write" and not bad.providers
+
+
+# -- tools and the agent loop -------------------------------------------------------------------------
+
+def test_tool_schema_from_signature_and_validation():
+    @agents.tool(writes=True)
+    def resize(name: str, width: float, keep: bool = True, tags: list = None):
+        """Resizes a control.
+
+        name: the control.
+        width: in pixels.
+        """
+
+    assert resize.writes and resize.description == "Resizes a control."
+    assert resize.schema["required"] == ["name", "width"]
+    assert resize.schema["properties"]["width"] == {"type": "number", "description": "in pixels."}
+    assert resize.schema["properties"]["tags"]["type"] == "array"
+    assert resize.validate({"name": "a", "width": 3}) is None
+    assert "missing" in resize.validate({"name": "a"})
+    assert "type number" in resize.validate({"name": "a", "width": "wide"})
+    assert "unknown" in resize.validate({"name": "a", "width": 1, "height": 2})
+    assert "JSON" in resize.validate({"INVALID_JSON": "{"})
+
+
+def scripted(*turns):
+    """A fake ``stream_turn`` answering with ``turns`` in order (each a list of blocks or a Turn)."""
+    calls = []
+
+    def stream(model, system, messages, tools, *, settings, on_event, cancel, **kw):
+        calls.append({"model": model, "messages": [dict(m) for m in messages], "tools": [t.name for t in tools]})
+        turn = turns[len(calls) - 1]
+        if not isinstance(turn, llm.Turn):
+            uses = any(b["type"] == "tool_use" for b in turn)
+            turn = llm.Turn(turn, "tool_use" if uses else "end_turn", {"input": 10, "output": 5})
+        for b in turn.content:
+            if b["type"] == "text":
+                on_event("text", b["text"])
+        return turn
+
+    stream.calls = calls
+    return stream
+
+
+def test_agent_runs_tools_until_the_model_answers():
+    seen = []
+
+    @agents.tool
+    def add(a: int, b: int) -> int:
+        """Adds two numbers."""
+        return a + b
+
+    stream = scripted(
+        [{"type": "text", "text": "Let me add."}, {"type": "tool_use", "id": "t1", "name": "add", "input": {"a": 2, "b": 3}}],
+        [{"type": "text", "text": "It is 5."}],
+    )
+    agent = agents.Agent("anthropic:claude-opus-5-5", tools=[add], stream=stream,
+                         settings=providers.AgentSettings())
+    assert agent.run("2+3?", on_event=seen.append) == "It is 5."
+    kinds = [e.kind for e in seen]
+    assert kinds.count("turn") == 2 and kinds[-1] == "done" and "tool_result" in kinds
+    result = agent.messages[2]["content"][0]
+    assert result == {"type": "tool_result", "tool_use_id": "t1", "content": "5", "is_error": False}
+    assert agent.messages[1]["provider"] == "anthropic"
+    assert agent.usage == {"input": 20, "output": 10}
+    assert stream.calls[0]["tools"] == ["add"]
+
+
+def test_profiles_confirmations_and_bad_inputs():
+    @agents.tool(writes=True)
+    def write(path: str) -> str:
+        """Writes."""
+        raise AssertionError("must not run")
+
+    @agents.tool
+    def read(path: str) -> str:
+        """Reads."""
+        return "data"
+
+    stream = scripted(
+        [{"type": "tool_use", "id": "1", "name": "write", "input": {"path": "x"}},
+         {"type": "tool_use", "id": "2", "name": "read", "input": {"nope": 1}}],
+        [{"type": "text", "text": "ok"}],
+    )
+    asked = []
+    agent = agents.Agent("x", tools=[write, read], stream=stream, settings=providers.AgentSettings(),
+                         confirm=lambda tool, args: asked.append(tool.name) or False)
+    agent.run("go")
+    results = agent.messages[2]["content"]
+    assert asked == ["write"] and results[0]["is_error"] and "did not allow" in results[0]["content"]
+    assert results[1]["is_error"] and "INVALID_INPUT" in results[1]["content"]
+    ask = agents.Agent("x", tools=[write, read], settings=providers.AgentSettings(profile="ask"))
+    assert [t.name for t in ask.active_tools()] == ["read"]
+    assert agents.Agent("x", tools=[read], settings=providers.AgentSettings(profile="minimal")).active_tools() == []
+
+
+def test_refusals_cut_outputs_and_errors_never_raise():
+    @agents.tool
+    def noop() -> str:
+        """Nothing."""
+        return ""
+
+    refused = llm.Turn([{"type": "text", "text": "No."}, {"type": "tool_use", "id": "1", "name": "noop", "input": {}}],
+                       "refusal")
+    events = []
+    agent = agents.Agent("x", tools=[noop], stream=scripted(refused), settings=providers.AgentSettings())
+    agent.run("hi", on_event=events.append)
+    assert all(b["type"] != "tool_use" for b in agent.messages[-1]["content"])
+    assert any(e.kind == "error" and "declined" in e.text for e in events)
+
+    cut = llm.Turn([{"type": "tool_use", "id": "9", "name": "noop", "input": {}}], "max_tokens")
+    agent = agents.Agent("x", tools=[noop], stream=scripted(cut, [{"type": "text", "text": "done"}]),
+                         settings=providers.AgentSettings())
+    agent.run("hi")
+    assert agent.messages[2]["content"][0]["is_error"] and "cut off" in agent.messages[2]["content"][0]["content"]
+
+    def broken(*a, **k):
+        raise llm.AgentError("bad key")
+
+    events = []
+    agent = agents.Agent("x", stream=broken, settings=providers.AgentSettings())
+    assert agent.run("hi", on_event=events.append) == "bad key"
+    assert [e.kind for e in events] == ["error", "done"] and not agent.running
+
+
+def test_pyzed_and_file_tools(tmp_path):
+    tools = {t.name: t for t in agents.pyzed_tools() + agents.file_tools(tmp_path)}
+    assert any(c["name"] == "designer:button" for c in tools["list_components"].func(kind="designer"))
+    assert tools["validate_code"].func(code="import pyzed as pz\npz.colum()\n")["issues"]
+    tools["write_file"].func(path="ui/a.py", content="x = 1\n")
+    assert tools["read_file"].func(path="ui/a.py") == "x = 1\n"
+    assert tools["list_files"].func(pattern="*.py")["files"] == ["ui/a.py"]
+    assert tools["search_text"].func(text="x =")["matches"] == ["ui/a.py:1: x = 1"]
+    with pytest.raises(PermissionError):
+        tools["read_file"].func(path="../outside.txt")
+    assert tools["write_file"].writes and not tools["read_file"].writes
+
+
+def test_threads_are_saved_locally(tmp_path):
+    store = agents.ThreadStore(tmp_path)
+    thread = agents.Thread(model="ollama:llama3", messages=[{"role": "user", "content": [{"type": "text", "text": "Hola\nmundo"}]}])
+    store.save(thread)
+    assert [t.id for t in store.list()] == [thread.id]
+    assert store.load(thread.id).display_title == "Hola"
+    store.delete(thread.id)
+    assert store.list() == [] and agents.Thread().display_title == "New thread"
+
+
+# -- OpenAI-compatible streaming ------------------------------------------------------------------------
+
+def test_openai_stream_with_tool_calls_and_reasoning():
+    lines = [
+        'data: {"model":"m","choices":[{"delta":{"reasoning_content":"hmm"}}]}',
+        'data: {"choices":[{"delta":{"content":"Hi "}}]}',
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"c1","function":{"name":"add","arguments":"{\\"a\\":"}}]}}]}',
+        'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"1}"}}]},"finish_reason":"tool_calls"}]}',
+        'data: {"choices":[],"usage":{"prompt_tokens":7,"completion_tokens":3}}',
+        "data: [DONE]",
+    ]
+    events = []
+    turn = llm.parse_sse([line.encode() for line in lines], lambda k, t: events.append((k, t)), threading.Event())
+    assert events == [("thinking", "hmm"), ("text", "Hi ")]
+    assert turn.stop_reason == "tool_use" and turn.usage == {"input": 7, "output": 3}
+    assert turn.content[1] == {"type": "tool_use", "id": "c1", "name": "add", "input": {"a": 1}}
+
+
+def test_conversation_converts_to_openai_messages():
+    history = [
+        {"role": "user", "content": [{"type": "text", "text": "q"}]},
+        {"role": "assistant", "provider": "anthropic", "content": [
+            {"type": "thinking", "thinking": "…", "signature": "s"}, {"type": "text", "text": "a"},
+            {"type": "tool_use", "id": "t", "name": "f", "input": {"x": 1}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": "r"}]},
+    ]
+    out = llm._openai_messages("sys", history)
+    assert out[0] == {"role": "system", "content": "sys"}
+    assert out[2]["tool_calls"][0]["function"] == {"name": "f", "arguments": '{"x": 1}'}
+    assert out[3] == {"role": "tool", "tool_call_id": "t", "content": "r"}
+    # Claude gets its own blocks back unchanged, and other providers' blocks without extras
+    assert llm._anthropic_messages(history)[1]["content"][0]["type"] == "thinking"
+    foreign = [{"role": "assistant", "provider": "openai", "content": [{"type": "x"}, {"type": "text", "text": "a"}]}]
+    assert llm._anthropic_messages(foreign)[0]["content"] == [{"type": "text", "text": "a"}]
+
+
+class _Server(http.server.ThreadingHTTPServer):
+    daemon_threads = True
+
+
+def _serve(handler):
+    server = _Server(("127.0.0.1", 0), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server, f"http://127.0.0.1:{server.server_address[1]}"
+
+
+def test_openai_compatible_server_end_to_end():
+    bodies = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            bodies.append((self.headers.get("Authorization"), json.loads(self.rfile.read(int(self.headers["Content-Length"])))))
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            self.wfile.write(b'data: {"choices":[{"delta":{"content":"pong"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'{"data":[{"id":"b"},{"id":"a"}]}')
+
+        def log_message(self, *a):
+            pass
+
+    server, url = _serve(Handler)
+    try:
+        s = providers.AgentSettings()
+        s.provider("custom").base_url = url
+        agents.set_key("custom", "tok")
+        turn = agents.stream_turn("custom:tiny", "be nice", [{"role": "user", "content": [{"type": "text", "text": "ping"}]}],
+                                  settings=s)
+        assert turn.text == "pong" and turn.stop_reason == "end_turn"
+        assert bodies[0][0] == "Bearer tok" and bodies[0][1]["messages"][0]["role"] == "system"
+        assert agents.list_models("custom", s) == ["a", "b"]
+    finally:
+        server.shutdown()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="the anthropic SDK needs Python 3.10+")
+def test_claude_through_the_sdk(monkeypatch):
+    pytest.importorskip("anthropic")
+    seen = []
+    events = [
+        ("message_start", {"type": "message_start", "message": {"id": "m", "type": "message", "role": "assistant",
+                                                               "model": "claude-opus-5-5", "content": [],
+                                                               "stop_reason": None, "usage": {"input_tokens": 9,
+                                                                                              "output_tokens": 1}}}),
+        ("content_block_start", {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}),
+        ("content_block_delta", {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hola"}}),
+        ("content_block_stop", {"type": "content_block_stop", "index": 0}),
+        ("content_block_start", {"type": "content_block_start", "index": 1, "content_block": {
+            "type": "tool_use", "id": "tu1", "name": "get_document", "input": {}}}),
+        ("content_block_delta", {"type": "content_block_delta", "index": 1, "delta": {
+            "type": "input_json_delta", "partial_json": "{}"}}),
+        ("content_block_stop", {"type": "content_block_stop", "index": 1}),
+        ("message_delta", {"type": "message_delta", "delta": {"stop_reason": "tool_use"}, "usage": {"output_tokens": 4}}),
+        ("message_stop", {"type": "message_stop"}),
+    ]
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            seen.append((self.path, {k.lower(): v for k, v in self.headers.items()}, json.loads(self.rfile.read(int(self.headers["Content-Length"])))))
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            for name, data in events:
+                self.wfile.write(f"event: {name}\ndata: {json.dumps(data)}\n\n".encode())
+
+        def log_message(self, *a):
+            pass
+
+    server, url = _serve(Handler)
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", url)
+    try:
+        agents.set_key("anthropic", "sk-ant-test")
+        deltas = []
+        tools = [llm.ToolSpec("get_document", "Reads.", {"type": "object", "properties": {}, "required": []})]
+        turn = agents.stream_turn("anthropic:claude-opus-5-5", "sys", [{"role": "user", "content": [{"type": "text", "text": "hi"}]}],
+                                  tools, settings=providers.AgentSettings(effort="xhigh"),
+                                  on_event=lambda k, t: deltas.append((k, t)))
+    finally:
+        server.shutdown()
+    path, headers, body = seen[0]
+    assert path.startswith("/v1/messages") and headers["x-api-key"] == "sk-ant-test"
+    assert "server-side-fallback-2026-07-01" in headers.get("anthropic-beta", "") and body["fallbacks"] == "default"
+    assert body["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert body["output_config"] == {"effort": "xhigh"} and body["tools"][0]["eager_input_streaming"] is True
+    assert body["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert deltas == [("text", "Hola")]
+    assert turn.stop_reason == "tool_use" and turn.tool_uses[0]["name"] == "get_document"
+    assert turn.usage["output"] == 4
+
+
+# -- browser sign-in ---------------------------------------------------------------------------------------
+
+def test_pkce_and_the_openrouter_browser_flow():
+    import base64
+    import hashlib
+
+    verifier, challenge = login.pkce_pair()
+    assert base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode() == challenge
+
+    def browser(url):  # the provider redirects back to the local callback with a code
+        query = dict(p.split("=", 1) for p in url.split("?", 1)[1].split("&"))
+        callback = urllib.request.unquote(query["callback_url"])
+        assert callback.startswith("http://localhost:") and query["code_challenge_method"] == "S256"
+        threading.Thread(target=lambda: urllib.request.urlopen(callback.replace("localhost", "127.0.0.1") + "?code=abc"),
+                         daemon=True).start()
+
+    posted = {}
+    key = login.openrouter_login(open_url=browser, post=lambda url, data: posted.update(data) or {"key": "sk-or-1"},
+                                 timeout=10)
+    assert key == "sk-or-1" and posted["code"] == "abc" and posted["code_verifier"]
+
+
+def test_ant_cli_sign_in(monkeypatch, tmp_path):
+    monkeypatch.setattr(login, "ant_path", lambda: None)
+    with pytest.raises(login.LoginError):
+        login.ant_login()
+    monkeypatch.setattr(login, "ant_path", lambda: "/usr/bin/ant")
+    calls = []
+
+    class Done:
+        returncode, stdout, stderr = 0, "", ""
+
+    login.ant_login(run=lambda args, **kw: calls.append(args) or Done())
+    assert calls == [["/usr/bin/ant", "auth", "login"]]
+    monkeypatch.setenv("ANTHROPIC_CONFIG_DIR", str(tmp_path))
+    assert not login.ant_signed_in()
+    (tmp_path / "credentials").mkdir()
+    (tmp_path / "credentials" / "default.json").write_text("{}")
+    assert login.ant_signed_in() and providers.credential_source("anthropic") == "ant"
+
+
+# -- the Agent panel ---------------------------------------------------------------------------------------
+
+def _drain(d, limit=2000):
+    for _ in range(limit):
+        d.agent.poll()
+        if not d.agent.active:
+            return
+        threading.Event().wait(0.005)
+    raise AssertionError("the agent did not finish")
+
+
+def test_agent_panel_builds_a_form_and_can_reject_it(tmp_path):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    stream = scripted(
+        [{"type": "tool_use", "id": "1", "name": "get_document", "input": {}},
+         {"type": "tool_use", "id": "2", "name": "add_control", "input": {
+             "type": "button", "name": "send", "x": 16, "y": 60, "props": {"text": "Send"}}}],
+        [{"type": "tool_use", "id": "3", "name": "wire_event", "input": {"control": "send", "event": "click"}}],
+        [{"type": "tool_use", "id": "4", "name": "set_handler", "input": {
+            "handler": "send_click", "code": "def send_click(form, event):\n    form.send.text = 'Sent'\n"}}],
+        [{"type": "text", "text": "Added a **Send** button."}],
+    )
+    d = Designer()
+    d.agent = AgentController(d, store=agents.ThreadStore(tmp_path), stream=stream)
+    d.agent.settings.model = "ollama:llama3"  # no key needed
+    d.agent.thread.model = "ollama:llama3"
+    d.layout.show("agent")
+    d.agent.send("Add a send button")
+    assert d.agent.running
+    d.view()  # draws while it works
+    _drain(d)
+    send = d.doc.form.get("send")
+    assert send is not None and send.props["text"] == "Send" and send.events == {"click": "send_click"}
+    assert "form.send.text = 'Sent'" in d.doc.code
+    assert "<context>" in stream.calls[0]["messages"][0]["content"][1]["text"]
+    assert d.agent.changed and d.agent.store.list()[0].id == d.agent.thread.id
+    d.view()
+    d.agent.reject()
+    assert d.doc.form.get("send") is None and "send_click" not in d.doc.code
+
+
+def test_agent_panel_asks_before_creating_files(tmp_path, monkeypatch):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.chdir(tmp_path)
+    stream = scripted(
+        [{"type": "tool_use", "id": "1", "name": "new_document", "input": {"kind": "component", "name": "user card"}}],
+        [{"type": "text", "text": "Done"}],
+    )
+    d = Designer()
+    d.agent = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"), stream=stream)
+    d.agent.thread.model = "ollama:llama3"
+    d.agent.send("Make a user card")
+    for _ in range(400):
+        d.agent.poll()
+        if d.agent.pending is not None:
+            break
+        threading.Event().wait(0.005)
+    assert d.agent.pending is not None and d.agent.pending.tool.name == "new_document"
+    d.view()
+    d.agent.answer(True)
+    _drain(d)
+    assert (tmp_path / "user_card.pzcomp").exists() and d.doc.display_name == "user_card.pzcomp"
+
+
+def test_inline_assist_rewrites_the_open_code(tmp_path):
+    from pyzed.designer.agent_panel import AgentController, extract_code
+    from pyzed.designer.app import Designer
+
+    assert extract_code("Sure:\n```python\nx = 1\n```\n") == "x = 1\n"
+    assert extract_code("y = 2") == "y = 2\n" and extract_code("``` broken") is None
+    d = Designer()
+    d.doc.add("button", 10, 10)
+    d.open_default_event("button1")
+    before = d.editing[1]
+    new = "def button1_click(form, event):\n    print('hi')\n"
+    d.agent = AgentController(d, store=agents.ThreadStore(tmp_path),
+                              stream=scripted([{"type": "text", "text": f"```python\n{new}```"}]))
+    d.agent.thread.model = "ollama:llama3"
+    d.agent.open_inline()
+    d.agent.set_inline("print hi")
+    d.agent.submit_inline()
+    d.view()
+    _drain(d)
+    assert d.editing[1] == new
+    d.view()
+    d.agent.undo_inline()
+    assert d.editing[1] == before and d.agent.inline is None
+
+
+def test_agent_texts_are_translated():
+    import ast
+    from pathlib import Path
+
+    from pyzed.designer import agent_locale, agent_panel, agent_tools, commands
+
+    keys = set(agent_locale.ES)
+    from pyzed.designer import locale
+
+    keys |= set(locale._ES)
+    for module in (agent_panel, agent_tools):
+        tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "tr" and node.args \
+                    and isinstance(node.args[0], ast.Constant):
+                assert node.args[0].value in keys, node.args[0].value
+            if isinstance(node, ast.keyword) and node.arg == "title" and isinstance(node.value, ast.Constant) \
+                    and module is agent_tools:
+                assert node.value.value in keys, node.value.value
+    for action in commands.ACTIONS:
+        if action.id.startswith(("agent", "generate", "inline")):
+            assert action.text in keys
+    for text in (*agents.PROFILES.values(), *(p.description for p in agents.PROVIDERS.values())):
+        assert text in keys
