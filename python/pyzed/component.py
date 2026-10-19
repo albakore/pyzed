@@ -59,6 +59,7 @@ Components show up in the designer's toolbox automatically (see ``label``, ``ico
 from __future__ import annotations
 
 import copy
+import inspect
 import re
 import sys
 import typing
@@ -192,6 +193,16 @@ def _defer(callback: Callable[[], Any]) -> None:
         callback()
 
 
+
+def _own_annotations(klass: type) -> Dict[str, Any]:
+    """The annotations written in ``klass``'s own body. Python 3.14 evaluates them lazily (PEP 649), so
+    they are no longer in ``vars(klass)``; names not defined yet stay as forward references."""
+    try:
+        import annotationlib  # Python 3.14+
+    except ImportError:
+        return dict(inspect.get_annotations(klass))
+    return dict(annotationlib.get_annotations(klass, format=annotationlib.Format.FORWARDREF))
+
 class Component:
     """Base class for components; see the module documentation for a full example.
 
@@ -230,7 +241,7 @@ class Component:
         for klass in reversed(cls.__mro__):
             if klass is Component or not issubclass(klass, Component):
                 continue
-            annotations = vars(klass).get("__annotations__", {})
+            annotations = _own_annotations(klass)
             for name, value in vars(klass).items():
                 if isinstance(value, State):
                     props.pop(name, None)

@@ -15,7 +15,7 @@ repositorio.
 
 ## Entorno de desarrollo
 
-Necesitas **Python 3.9+**, una toolchain estable de **Rust** (`rustup`) y, en Linux, las bibliotecas de
+Necesitas **Python 3.10+**, una toolchain estable de **Rust** (`rustup`) y, en Linux, las bibliotecas de
 desarrollo habituales de X11/Wayland. Pyzed es una extensión de Rust (PyO3 + Iced) con un paquete de Python
 encima, compilada con [maturin](https://www.maturin.rs).
 

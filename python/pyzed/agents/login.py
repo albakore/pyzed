@@ -97,9 +97,18 @@ _PAGE = """<!doctype html><meta charset="utf-8"><title>Pyzed</title>
 class _Callback(http.server.BaseHTTPRequestHandler):
     codes: List[str]
     errors: List[str]
+    #: The callback's path, with a random part only this sign-in knows (it plays OAuth's ``state``).
+    path_secret: str
 
     def do_GET(self) -> None:  # noqa: N802 - http.server API
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        url = urllib.parse.urlparse(self.path)
+        if url.path != self.path_secret:
+            # Anything else (a favicon, another page, a forged callback) neither signs in nor cancels.
+            self.send_response(404)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        query = urllib.parse.parse_qs(url.query)
         if "code" in query:
             self.codes.append(query["code"][0])
             body = _PAGE.format(title="Signed in", text="You can close this tab and go back to Pyzed.")
@@ -121,10 +130,11 @@ def wait_for_code(open_url: Callable[[str], None], build_url: Callable[[str], st
                   timeout: float = TIMEOUT) -> str:
     """Starts a one-shot server on ``127.0.0.1``, opens ``build_url(callback)`` and returns the ``code``
     the browser brings back."""
-    handler = type("Callback", (_Callback,), {"codes": [], "errors": []})
+    path = f"/callback/{_random.token_urlsafe(16)}"
+    handler = type("Callback", (_Callback,), {"codes": [], "errors": [], "path_secret": path})
     server = http.server.HTTPServer(("127.0.0.1", 0), handler)
     server.timeout = 0.5
-    callback = f"http://localhost:{server.server_address[1]}/callback"
+    callback = f"http://localhost:{server.server_address[1]}{path}"
     try:
         open_url(build_url(callback))
         deadline = time.monotonic() + timeout

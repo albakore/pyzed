@@ -97,6 +97,8 @@ class AgentSettings:
     confirm_writes: bool = True
     #: Show the model's reasoning summaries in the thread.
     show_thinking: bool = True
+    #: Keep conversations on this computer (``ThreadStore``) so they show up in the history.
+    keep_history: bool = True
     #: Extra instructions added to every thread (like Zed's rules).
     rules: str = ""
     providers: Dict[str, ProviderSettings] = field(default_factory=dict)

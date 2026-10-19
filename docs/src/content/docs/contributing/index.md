@@ -15,7 +15,7 @@ repository.
 
 ## Development setup
 
-You need **Python 3.9+**, a stable **Rust** toolchain (`rustup`) and, on Linux, the usual X11/Wayland
+You need **Python 3.10+**, a stable **Rust** toolchain (`rustup`) and, on Linux, the usual X11/Wayland
 development libraries. Pyzed is a Rust extension (PyO3 + Iced) with a Python package on top, built with
 [maturin](https://www.maturin.rs).
 

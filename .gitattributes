@@ -1,0 +1,6 @@
+# Text files are checked out with LF on every platform, so package data (templates, JSON, Markdown)
+# and the tests that compare it are byte-for-byte the same on Windows.
+* text=auto eol=lf
+
+# Kept exactly as upstream ships it.
+assets/fonts/LICENSE-IBM-Plex.txt -text
