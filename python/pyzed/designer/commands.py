@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from . import telemetry as _telemetry
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -119,7 +120,21 @@ ISSUES_URL = "https://github.com/albakore/pyzed/issues"
 EXTRA_SHORTCUTS: Tuple[Tuple[str, Sequence[Tuple[str, str]]], ...] = (
     ("Canvas", (("Move by one pixel", "left"), ("Move by one grid step", "shift-left"),
                 ("Open the main event", "enter"), ("Cancel the current gesture", "escape"))),
-    ("Code", (("Show completions", "ctrl-space"), ("Accept completion", "enter"), ("Close completions", "escape"))),
+    ("Code", (("Show completions", "ctrl-space"), ("Accept completion", "enter"), ("Close completions", "escape"),
+              ("Find", "ctrl-f"), ("Find and replace", "ctrl-h"), ("Next and previous match", "f3"),
+              ("Go to line", "ctrl-g"), ("Undo", "ctrl-z"), ("Redo", "ctrl-shift-z"),
+              ("Bigger, smaller and default font", "ctrl-="))),
+    ("Multiple cursors", (("Add a cursor", "alt-click"), ("Add a cursor above", "alt-shift-up"),
+                          ("Add a cursor below", "alt-shift-down"), ("Select the next match", "ctrl-d"),
+                          ("Select every match", "ctrl-shift-l"), ("A cursor on each selected line", "alt-shift-i"),
+                          ("Undo the last cursor change", "ctrl-u"), ("Back to one cursor", "escape"))),
+    ("Lines", (("Move line up", "alt-up"), ("Move line down", "alt-down"),
+               ("Duplicate line down", "ctrl-alt-shift-down"), ("Delete line", "ctrl-shift-k"),
+               ("Select line", "ctrl-l"), ("Join lines", "ctrl-shift-j"), ("New line below", "ctrl-enter"),
+               ("New line above", "ctrl-shift-enter"), ("Indent", "ctrl-]"), ("Outdent", "ctrl-["),
+               ("Toggle comment", "ctrl-/"), ("Go to matching bracket", "ctrl-m"))),
+    ("Folding", (("Fold", "ctrl-shift-["), ("Unfold", "ctrl-shift-]"), ("Fold everything", "ctrl-k ctrl-0"),
+                 ("Unfold everything", "ctrl-k ctrl-j"), ("Toggle fold", "ctrl-k ctrl-l"))),
 )
 
 BY_ID: Dict[str, Action] = {a.id: a for a in ACTIONS}
@@ -128,7 +143,10 @@ BY_ID: Dict[str, Action] = {a.id: a for a in ACTIONS}
 def run(action_id: str, d: "Designer") -> Any:
     """Runs the command ``action_id`` on designer ``d`` if it is enabled; returns its result or ``None``."""
     action = BY_ID[action_id]
-    return action.run(d) if action.enabled(d) else None
+    if not action.enabled(d):
+        return None
+    with _telemetry.get().timed(f"command.{action_id}"):
+        return action.run(d)
 
 
 def by_keys(combo: str, *, global_only: bool = False) -> Optional[Action]:

@@ -49,6 +49,10 @@ See [Panels and docks](/pyzed/editor/menus-and-commands/#panels-and-docks).
 See [Code editor](/pyzed/editor/code-editor/): completion, diagnostics, code lens, folding and the ty and ruff
 language servers.
 
+## Telemetry
+
+See [Settings → Telemetry](/pyzed/editor/settings/#telemetry).
+
 ## Components
 
 **Common**: Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,

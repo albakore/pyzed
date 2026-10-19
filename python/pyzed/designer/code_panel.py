@@ -1,13 +1,15 @@
-"""The designer's code editor: event code with completion, diagnostics, code lens and settings.
+"""The designer's code editor: event code with completion, diagnostics, code lens, search and settings.
 
-``CodeAssist`` holds the editor's state (cursor, completion list, settings) and talks to the
+``CodeAssist`` holds the editor's state (cursor, completion list, search, settings) and talks to the
 language servers through ``CodeIntel``; ``code_panel`` and ``settings_dialog`` are its views.
 The designer forwards the editor's callbacks and the keys pressed while it has focus.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import bisect
+import re
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -16,6 +18,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import intellisense as _intel
 from . import settings as _settings
+from . import telemetry as _telemetry
 from .intellisense import CodeIntel, CompletionItem, Diagnostic
 from .locale import tr
 
@@ -36,6 +39,31 @@ FOOTER = 34.0
 LIST_WIDTH = 320.0
 DOC_WIDTH = 340.0
 CAPTURED = ("up", "down", "enter", "tab", "escape", "pageup", "pagedown")
+FIND_ID = "designer-code-find"
+REPLACE_ID = "designer-code-replace"
+GOTO_ID = "designer-code-goto"
+#: Most matches the search highlights.
+MAX_MATCHES = 5000
+
+#: A match as 1-based ``(line, column, end_line, end_column)``, with byte columns like the editor's.
+Range = Tuple[int, int, int, int]
+
+
+@dataclass
+class Search:
+    """The find (and replace) bar, like Zed's buffer search."""
+
+    query: str = ""
+    replacement: str = ""
+    case: bool = False
+    word: bool = False
+    regex: bool = False
+    replacing: bool = False
+    #: Index of the current match in ``matches``.
+    index: int = 0
+    matches: List[Range] = field(default_factory=list)
+    #: The regular expression's error, if it does not compile.
+    error: str = ""
 
 
 @dataclass
@@ -69,6 +97,9 @@ class CodeAssist:
         self.scroll: Tuple[float, float] = (0.0, 0.0)
         self.completion: Optional[Completion] = None
         self.problems_open = True
+        self.search: Optional[Search] = None
+        #: The "go to line" field's text while it is open.
+        self.goto: Optional[str] = None
         self._typed = False
         self._text = ""
 
@@ -135,6 +166,8 @@ class CodeAssist:
             self._typed = True  # deleting inside a word keeps the list open and refilters it
         self._text = text
         self.intel.update(self.d.doc.code, self.handler, text)
+        if self.search is not None:
+            self._find()
 
     def moved(self, line: int, column: int) -> Any:
         """The editor's cursor moved to ``line``, ``column`` (1-based).
@@ -267,6 +300,21 @@ class CodeAssist:
         if combo in ("ctrl-space", "ctrl- "):
             self.open_completion()
             return True, None
+        panel = {
+            "ctrl-f": lambda: self.open_search(),
+            "ctrl-h": lambda: self.open_search(replacing=True),
+            "ctrl-g": self.open_goto,
+        }
+        if combo in panel:
+            return True, panel[combo]()
+        if self.search is not None and combo in ("f3", "shift-f3", "shift-enter", "alt-enter", "escape"):
+            if combo == "escape":
+                return True, self.close_search()
+            if combo == "alt-enter":
+                return True, self.select_all_matches()
+            return True, self.next_match(-1 if combo.startswith("shift") else 1)
+        if self.goto is not None and combo == "escape":
+            return True, self.close_goto()
         c = self.completion
         if c is None:
             return False, None
@@ -338,6 +386,149 @@ class CodeAssist:
         if size != self.settings.font_size:
             self.set("font_size", size)
 
+    def action_ran(self, name: str) -> None:
+        """An editor action ran (``on_action``): counted by the telemetry when it is on."""
+        _telemetry.get().count(f"editor.{name}")
+
+    # -- search -----------------------------------------------------------------------
+    def open_search(self, replacing: bool = False) -> Any:
+        """Opens the find bar (``replacing`` also shows the replace field), seeded with the word under the
+        cursor when it is empty; returns the command that focuses it."""
+        if self.search is None:
+            self.search = Search()
+        s = self.search
+        s.replacing = s.replacing or replacing
+        if not s.query:
+            line, column = self.cursor
+            word = _word_at(self._line(line), _char_index(self._line(line), column))
+            s.query = word
+        self._find()
+        _telemetry.get().count("editor.search" if not replacing else "editor.replace_open")
+        # Selected, so typing replaces the seeded word (like Zed).
+        return _core.Command.select_all(FIND_ID)
+
+    def close_search(self) -> Any:
+        """Closes the find bar and gives the keyboard back to the editor."""
+        self.search = None
+        return _core.Command.focus(self.d.editor_id)
+
+    def set_query(self, query: str) -> Any:
+        """The find field changed: searches again and selects the match nearest the cursor."""
+        if self.search is None:
+            return None
+        self.search.query = query
+        self._find(nearest=True)
+        return self._select_current()
+
+    def set_replacement(self, text: str) -> None:
+        """The replace field changed."""
+        if self.search is not None:
+            self.search.replacement = text
+
+    def toggle_option(self, name: str) -> Any:
+        """Toggles a search option: ``"case"``, ``"word"``, ``"regex"`` or ``"replacing"``."""
+        if self.search is None:
+            return None
+        setattr(self.search, name, not getattr(self.search, name))
+        self._find(nearest=True)
+        return None if name == "replacing" else self._select_current()
+
+    def _find(self, nearest: bool = False) -> None:
+        s = self.search
+        if s is None:
+            return
+        s.matches, s.error = find_matches(self._text, s.query, case=s.case, word=s.word, regex=s.regex)
+        if not s.matches:
+            s.index = 0
+        elif nearest:
+            here = (self.cursor[0], self.cursor[1])
+            s.index = next((i for i, m in enumerate(s.matches) if (m[2], m[3]) > here), 0)
+        else:
+            s.index = min(s.index, len(s.matches) - 1)
+
+    def _select_current(self) -> Any:
+        s = self.search
+        if s is None or not s.matches:
+            return None
+        return _core.Command.select_editor_ranges(self.d.editor_id, [s.matches[s.index]])
+
+    def next_match(self, step: int = 1) -> Any:
+        """Selects the next (``step=1``) or previous (``-1``) match, wrapping around."""
+        s = self.search
+        if s is None or not s.matches:
+            return None
+        s.index = (s.index + step) % len(s.matches)
+        return self._select_current()
+
+    def select_all_matches(self) -> Any:
+        """Puts a cursor on every match (Zed's Alt+Enter) and focuses the editor."""
+        s = self.search
+        if s is None or not s.matches:
+            return None
+        ordered = s.matches[s.index:] + s.matches[: s.index]
+        _telemetry.get().count("editor.select_all_matches")
+        return _core.Command.batch([_core.Command.select_editor_ranges(self.d.editor_id, ordered),
+                                    _core.Command.focus(self.d.editor_id)])
+
+    def _replacement(self, match: Range) -> str:
+        s = self.search
+        assert s is not None
+        if not s.regex:
+            return s.replacement
+        text = _slice(self._text, match)
+        pattern = _pattern(s.query, case=s.case, word=s.word, regex=True)
+        found = pattern.fullmatch(text) if pattern else None
+        try:
+            return found.expand(s.replacement) if found else s.replacement
+        except (re.error, IndexError):
+            return s.replacement
+
+    def replace_current(self) -> Any:
+        """Replaces the current match and moves on to the next one."""
+        s = self.search
+        if s is None or not s.matches:
+            return None
+        match = s.matches[s.index]
+        _telemetry.get().count("editor.replace")
+        return _core.Command.replace_editor_ranges(self.d.editor_id, [(match, self._replacement(match))])
+
+    def replace_all(self) -> Any:
+        """Replaces every match, as one undo step."""
+        s = self.search
+        if s is None or not s.matches:
+            return None
+        _telemetry.get().count("editor.replace_all")
+        return _core.Command.replace_editor_ranges(self.d.editor_id,
+                                                   [(m, self._replacement(m)) for m in s.matches])
+
+    # -- go to line -------------------------------------------------------------------
+    def open_goto(self) -> Any:
+        """Opens the "go to line" field (Ctrl+G); returns the command that focuses it."""
+        self.goto = ""
+        return _core.Command.focus(GOTO_ID)
+
+    def set_goto(self, text: str) -> None:
+        """The "go to line" field changed."""
+        self.goto = text
+
+    def close_goto(self) -> Any:
+        """Closes the "go to line" field and gives the keyboard back to the editor."""
+        self.goto = None
+        return _core.Command.focus(self.d.editor_id)
+
+    def submit_goto(self) -> Any:
+        """Moves the cursor to the typed ``line`` or ``line:column`` and closes the field."""
+        target = parse_goto(self.goto or "", self._text.count("\n") + 1)
+        self.goto = None
+        commands = [_core.Command.focus(self.d.editor_id)]
+        if target is not None:
+            line, column = target
+            byte = len(self._line(line)[: column - 1].encode("utf-8")) + 1
+            self.cursor = (line, byte)
+            commands.insert(0, _core.Command.set_editor_cursor(self.d.editor_id, line, byte))
+            _telemetry.get().count("editor.go_to_line")
+        return _core.Command.batch(commands)
+
     def restart_servers(self) -> None:
         """Restarts the language servers, re-attaching them to the code file if the editor is open."""
         if self.servers and self.d.editing is not None:
@@ -360,6 +551,93 @@ class CodeAssist:
             except (KeyError, ValueError):
                 return t
         return t
+
+
+# ---------------------------------------------------------------------------
+# Search helpers
+# ---------------------------------------------------------------------------
+
+
+def _pattern(query: str, *, case: bool, word: bool, regex: bool) -> Optional["re.Pattern[str]"]:
+    body = query if regex else re.escape(query)
+    if word:
+        body = rf"\b(?:{body})\b"
+    try:
+        return re.compile(body, 0 if case else re.IGNORECASE)
+    except re.error:
+        return None
+
+
+def find_matches(text: str, query: str, *, case: bool = False, word: bool = False,
+                 regex: bool = False) -> Tuple[List[Range], str]:
+    """Finds ``query`` in ``text``; returns the matches as 1-based ``(line, column, end_line, end_column)``
+    ranges with byte columns (like the editor's) and exclusive ends, and the regular expression's error
+    (``""`` if none). Empty matches are skipped."""
+    if not query:
+        return [], ""
+    pattern = _pattern(query, case=case, word=word, regex=regex)
+    if pattern is None:
+        try:
+            re.compile(query)
+        except re.error as err:
+            return [], str(err)
+        return [], ""
+    lines = text.split("\n")
+    starts = [0]
+    for line in lines[:-1]:
+        starts.append(starts[-1] + len(line) + 1)
+
+    def where(offset: int) -> Tuple[int, int]:
+        index = bisect.bisect_right(starts, offset) - 1
+        line = lines[index]
+        return index + 1, len(line[: offset - starts[index]].encode("utf-8")) + 1
+
+    out: List[Range] = []
+    for m in pattern.finditer(text):
+        if m.end() == m.start():
+            continue
+        out.append((*where(m.start()), *where(m.end())))
+        if len(out) >= MAX_MATCHES:
+            break
+    return out, ""
+
+
+def _slice(text: str, match: Range) -> str:
+    lines = text.split("\n")
+    (l1, c1, l2, c2) = match
+
+    def offset(line: int, column: int) -> int:
+        head = lines[line - 1].encode("utf-8")[: column - 1].decode("utf-8", "ignore")
+        return sum(len(x) + 1 for x in lines[: line - 1]) + len(head)
+
+    return text[offset(l1, c1):offset(l2, c2)]
+
+
+def _char_index(line: str, column: int) -> int:
+    """The character index of 1-based byte ``column`` in ``line``."""
+    return len(line.encode("utf-8")[: column - 1].decode("utf-8", "ignore"))
+
+
+def _word_at(line: str, index: int) -> str:
+    start = index
+    while start > 0 and (line[start - 1].isalnum() or line[start - 1] == "_"):
+        start -= 1
+    end = index
+    while end < len(line) and (line[end].isalnum() or line[end] == "_"):
+        end += 1
+    return line[start:end]
+
+
+def parse_goto(text: str, line_count: int) -> Optional[Tuple[int, int]]:
+    """Parses "go to line" input: ``"12"`` or ``"12:5"`` (1-based, clamped to the text); ``None`` if it is
+    not a number."""
+    parts = text.strip().split(":")
+    try:
+        line = int(parts[0])
+        column = int(parts[1]) if len(parts) > 1 and parts[1].strip() else 1
+    except ValueError:
+        return None
+    return min(max(line, 1), max(line_count, 1)), max(column, 1)
 
 
 # ---------------------------------------------------------------------------
@@ -541,9 +819,77 @@ def code_panel(d: "Designer", t: Theme) -> Any:
         on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
         active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
         annotations=a.annotations(et), capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
-        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom, theme=et)
+        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
+        on_action=a.action_ran, highlights=a.search.matches if a.search else None,
+        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
     area = _editor_area(a, editor, below, s.font_size, text.count("\n") + 1, s.line_numbers)
-    return _core.column([header, area], width="fill", height="fill")
+    bars = []
+    if a.search is not None:
+        bars.append(search_bar(a, t))
+    if a.goto is not None:
+        bars.append(goto_bar(a, t))
+    return _core.column([header, *bars, area], width="fill", height="fill")
+
+
+def search_bar(a: CodeAssist, t: Theme) -> Any:
+    """The find and replace bar over the editor (Ctrl+F, Ctrl+H), like Zed's buffer search."""
+    s = a.search
+    assert s is not None
+
+    def option(name: str, icon: str, tip: str) -> Any:
+        return ui.icon_button(icon, lambda: a.toggle_option(name), size="sm", selected=getattr(s, name),
+                              tooltip=tr(tip), theme=t)
+
+    if s.error:
+        count = ui.label(tr("Invalid pattern"), size="sm", color="error", theme=t)
+    elif not s.query:
+        count = ui.label("", size="sm", theme=t)
+    elif s.matches:
+        more = "+" if len(s.matches) >= MAX_MATCHES else ""
+        count = ui.label(f"{s.index + 1}/{len(s.matches)}{more}", size="sm", color="text_muted", mono=True, theme=t)
+    else:
+        count = ui.label(tr("No results"), size="sm", color="text_muted", theme=t)
+    find = _core.row([
+        ui.icon_button("chevron-right" if not s.replacing else "chevron-down", lambda: a.toggle_option("replacing"),
+                       size="sm", tooltip=tr("Toggle replace"), theme=t),
+        ui.input(s.query, a.set_query, placeholder=tr("Find"), id=FIND_ID, on_submit=lambda: a.next_match(1),
+                 size="sm", mono=True, theme=t),
+        option("case", "case-sensitive", "Match case"),
+        option("word", "whole-word", "Match whole words"),
+        option("regex", "regex", "Use regular expressions"),
+        _core.container(count, width=74, align_x="center"),
+        ui.icon_button("arrow-up", lambda: a.next_match(-1), size="sm", tooltip=tr("Previous match") + "  ⇧F3",
+                       theme=t),
+        ui.icon_button("arrow-down", lambda: a.next_match(1), size="sm", tooltip=tr("Next match") + "  F3", theme=t),
+        ui.icon_button("text-cursor", a.select_all_matches, size="sm", tooltip=tr("Select all matches") + "  Alt+Enter",
+                       theme=t),
+        ui.icon_button("x", a.close_search, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+    ], spacing=4, align="center")
+    rows = [find]
+    if s.replacing:
+        rows.append(_core.row([
+            _core.space(width=26),
+            ui.input(s.replacement, a.set_replacement, placeholder=tr("Replace"), id=REPLACE_ID,
+                     on_submit=a.replace_current, size="sm", mono=True, theme=t),
+            ui.button(tr("Replace"), a.replace_current, variant="ghost", size="sm", theme=t),
+            ui.button(tr("Replace all"), a.replace_all, variant="ghost", size="sm", theme=t),
+        ], spacing=4, align="center"))
+    return _core.container(_core.column(rows, spacing=4), padding=(4, 8), width="fill", bg=t.tab_bar)
+
+
+def goto_bar(a: CodeAssist, t: Theme) -> Any:
+    """The "go to line" field (Ctrl+G): a line, or ``line:column``."""
+    lines = a._text.count("\n") + 1
+    line, column = a.cursor
+    hint = tr("Current line {line} of {lines} (column {column})", line=line, lines=lines, column=column)
+    return _core.container(_core.row([
+        _icon("hash", size=14, color=t.icon_muted),
+        ui.input(a.goto or "", a.set_goto, placeholder=tr("Line or line:column"), id=GOTO_ID,
+                 on_submit=a.submit_goto, size="sm", mono=True, width=180, theme=t),
+        ui.label(hint, size="sm", color="text_muted", theme=t),
+        _core.space(width="fill"),
+        ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+    ], spacing=8, align="center"), padding=(4, 8), width="fill", bg=t.tab_bar)
 
 
 # ---------------------------------------------------------------------------
@@ -606,6 +952,11 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
                  description=tr("Also wraps the selection and steps over the closing one"), theme=t),
         ui.field(tr("Code folding"), switch("folding"), description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"),
                  theme=t),
+        ui.field(tr("Match brackets"), switch("match_brackets"),
+                 description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
+                 theme=t),
+        ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
+                 description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
         ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
     ], theme=t)
     lens = ui.settings_group(tr("Code lens and diagnostics"), [

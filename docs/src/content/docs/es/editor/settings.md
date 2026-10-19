@@ -45,6 +45,33 @@ diálogo.
 | **Disposición → Restablecer** | Devuelve cada panel a su dock y tamaño iniciales. |
 | **Editor de código → Ajustes del editor…** | Los [ajustes del editor de código](/pyzed/es/editor/code-editor/#ajustes-del-editor): fuente, tabulación, cursor, sugerencias, servidores de lenguaje. |
 
+## Telemetría
+
+El diseñador puede guardar datos de uso y rendimiento para ayudar a mejorarlo, pero solo si la activas: viene
+**desactivada**. En **Ajustes → Telemetría**, *Recopilar datos de uso y rendimiento* registra:
+
+- cuántas veces usas cada comando y cada acción del editor (`command.save`, `editor.select_next`…);
+- cuánto tarda el diseñador en arrancar, en dibujar un fotograma y en ejecutar cada comando (cantidad, total,
+  máximo y un histograma);
+- el número de sesiones y su duración.
+
+Nunca registra tu código, textos, nombres de formularios o de archivos, ni rutas. Los datos se guardan en
+`telemetry.json` en la carpeta de configuración de Pyzed; **Ver** lo abre y **Borrar** lo vacía (y cambia el id
+aleatorio de la instalación).
+
+Nada sale de tu equipo salvo que además indiques un **Destino**: entonces el diseñador envía allí los datos como
+JSON al cerrarse y vuelve a contar desde cero. Si el envío falla, se reintenta la próxima vez.
+`PYZED_TELEMETRY=0` desactiva la telemetría digan lo que digan los ajustes.
+
+```json
+{"schema": 1, "installation": "4f0c…", "app": "pyzed-designer", "version": "0.4.0", "os": "linux",
+ "arch": "x86_64", "python": "3.13", "since": "…", "until": "…", "sessions": 3,
+ "counters": {"command.save": 12, "editor.select_next": 7},
+ "timings": {"render": {"count": 840, "total_ms": 2210.4, "max_ms": 41.2, "buckets": [690, 120, 25, 5, 0, 0, 0, 0]}}}
+```
+
+Los `buckets` cuentan duraciones de hasta 4, 8, 16, 33, 50, 100 y 250 ms, y las más largas.
+
 ## Dónde se guardan
 
 Todo lo que recuerda el editor va a un único archivo, `designer.json`, en la carpeta de ajustes de Pyzed:

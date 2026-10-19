@@ -1997,6 +1997,10 @@ editor(
     cursor_width=2.0,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    match_brackets=True,
+    selection_highlight=True,
     theme=None,
 )
 ```
@@ -2032,6 +2036,10 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `cursor_width` | Width of the bar cursor. |
 | `cursor_color` | Cursor color (the theme's player color by default). |
 | `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
+| `on_action` | Callable that receives the name of each editor action that runs (`"undo"`, `"select_next"`…), e.g. to count them. |
+| `highlights` | Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends. |
+| `match_brackets` | Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it). |
+| `selection_highlight` | Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`

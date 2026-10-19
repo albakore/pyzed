@@ -98,3 +98,17 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | <kbd>Ctrl</kbd>+<kbd>Home</kbd> / <kbd>End</kbd> | Start or end of the code |
 | <kbd>Shift</kbd>+movement | Select |
 | <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd> | Select all, copy, cut, paste |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Find / find and replace |
+| <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> | Next / previous match |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> | Go to line |
+| <kbd>Alt</kbd>+click | Add a cursor |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Select the next match as another cursor |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Select every match |
+| <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Move the line up / down |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Duplicate / delete the line |
+| <kbd>Ctrl</kbd>+<kbd>/</kbd> | Toggle comment |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo / redo |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Fold / unfold everything |
+
+The full list is in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys).

@@ -44,6 +44,10 @@ class EditorSettings:
     #: ``"bar"``, ``"block"``, ``"underline"`` or ``"hollow"``.
     cursor_shape: str = "bar"
     cursor_blink: bool = True
+    #: Outline the bracket that matches the one next to the cursor.
+    match_brackets: bool = True
+    #: Highlight the other occurrences of the selected text.
+    selection_highlight: bool = True
     ty: bool = True
     ruff: bool = True
 

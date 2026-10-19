@@ -73,11 +73,31 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 | <kbd>Ctrl</kbd>+<kbd>Space</kbd> | Open the completion list. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Fold / unfold at the cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Font bigger, smaller, default. |
-| <kbd>Esc</kbd> | Close the completion list, or leave the editor. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo, redo (typing is grouped into one step). |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>H</kbd> / <kbd>G</kbd> | Find, replace, go to line (see below). |
+| <kbd>Esc</kbd> | Back to one cursor, close the completion list, or leave the editor. |
 
 On macOS, <kbd>Cmd</kbd> works where these say <kbd>Ctrl</kbd>. The editor's global commands (<kbd>F5</kbd>,
 <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) work while you type; the canvas
 shortcuts (<kbd>Delete</kbd>, arrows, <kbd>Ctrl</kbd>+<kbd>D</kbd>) do not, so typing never moves a control.
+
+## Find, replace and multiple cursors
+
+![Find (Ctrl+F) with every form.status selected as a cursor](../../../../screenshots/designer-code-multicursor.png)
+
+- <kbd>Ctrl</kbd>+<kbd>F</kbd> opens the find bar with the word under the cursor; matches are highlighted in the
+  code and the bar counts them. <kbd>Enter</kbd> or <kbd>F3</kbd> go to the next one, <kbd>Shift</kbd>+<kbd>F3</kbd>
+  to the previous one, and <kbd>Alt</kbd>+<kbd>Enter</kbd> puts a cursor on every match. The buttons match case,
+  whole words or a regular expression.
+- <kbd>Ctrl</kbd>+<kbd>H</kbd> also shows the replace field: **Replace** changes the current match, **Replace all**
+  every match in one undo step. With a regular expression, `\1` in the replacement inserts a group.
+- <kbd>Ctrl</kbd>+<kbd>G</kbd> goes to a line (`42`) or a line and column (`42:8`).
+- The editor has Zed's multiple cursors and editing keys: <kbd>Alt</kbd>+click,
+  <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> to move lines,
+  <kbd>Ctrl</kbd>+<kbd>/</kbd> to comment, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
+  and more. See the full list in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys)
+  or press <kbd>F1</kbd> in the designer.
 
 ## Completion
 
@@ -201,5 +221,7 @@ settings…** open them. They are saved per user, in the same `designer.json` as
 | | **Auto-close brackets and quotes** | Pairs, wrapping the selection and stepping over the closer. |
 | | **Code folding** | The chevrons and the fold keys. |
 | | **Format with ruff on Apply** | Runs `ruff format` on the code when you press Apply. |
+| | **Match brackets** | Outlines the bracket that pairs with the one at the cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> jumps to it). |
+| | **Highlight selection matches** | Highlights the other places with the selected text. |
 | Code lens and diagnostics | **Code lens** | References, implementations and wired events at the end of definitions. |
 | | **Inline diagnostics** | Problems at the end of the line. |

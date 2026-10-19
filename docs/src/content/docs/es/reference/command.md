@@ -46,6 +46,18 @@ Enfoca el `text_input` (o editor) con ese `id`.
 | --- | --- |
 | `id` | El `id` que pasaste al widget. |
 
+### `select_all`
+
+```python
+select_all(id)
+```
+
+Da el foco al `text_input` con ese `id` y selecciona todo su texto (lo que se escriba lo reemplaza).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del campo. |
+
 ### `set_editor_text`
 
 ```python
@@ -99,6 +111,53 @@ Pliega (o despliega) el bloque que empieza en `line`, según la sangría. Funcio
 | `id` | El `id` del editor. |
 | `line` | Línea (desde 1) donde empieza el bloque. |
 | `fold` | `True` para plegar, `False` para desplegar. |
+
+### `editor_action`
+
+```python
+editor_action(id, name)
+```
+
+Ejecuta una acción del editor con ese `id`, como si se pulsara su atajo: el nombre de la acción de Zed en snake case (`"undo"`, `"select_next"`, `"move_line_up"`, `"toggle_comments"`…). Lanza `ValueError` si el nombre no existe.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del editor. |
+| `name` | El nombre de la acción (`Command.editor_actions()` las lista; también vale `"editor::SelectNext"`). |
+
+### `editor_actions`
+
+```python
+editor_actions()
+```
+
+Los nombres que acepta `Command.editor_action`.
+
+### `select_editor_ranges`
+
+```python
+select_editor_ranges(id, ranges)
+```
+
+Selecciona rangos del editor, un cursor por rango; el primero es el cursor principal. Despliega lo que los oculta y funciona aunque el editor aún no se haya dibujado.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del editor. |
+| `ranges` | `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido (un rango vacío es un cursor sin selección). |
+
+### `replace_editor_ranges`
+
+```python
+replace_editor_ranges(id, edits)
+```
+
+Reemplaza rangos del editor por textos en un solo paso de deshacer y llama al `on_change` del editor (buscar y reemplazar).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del editor. |
+| `edits` | `[((línea, columna, línea_final, columna_final), texto)]`, desde 1, con el final excluido. |
 
 ### `scroll_to_end`
 

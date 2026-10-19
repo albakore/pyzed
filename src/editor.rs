@@ -1,7 +1,8 @@
 //! The code editor: iced's `text_editor` plus a gutter with line numbers, git markers and fold
 //! chevrons, horizontal scrolling, soft wrap (with line numbers that follow wrapped lines),
 //! Zed-style autoscroll that keeps the cursor visible, auto-closing brackets and quotes, code
-//! folding, a minimap and a configurable cursor.
+//! folding, a minimap, a configurable cursor and, in `actions`, multiple cursors, undo/redo and
+//! Zed's editing actions and keys.
 //!
 //! Folding hides lines by taking them out of the `text_editor` content (the editor only ever
 //! holds the visible lines); `Fold`s keep the hidden text, so callbacks and commands always see
@@ -21,8 +22,13 @@ use iced::{
     Theme, keyboard,
 };
 
+mod actions;
+
+pub(crate) use actions::EditKind;
+pub use actions::{ActionContext, EditorAction};
+
 use crate::app::Message;
-use crate::editor_widgets::{Caret, Minimap, ZoomWheel};
+use crate::editor_widgets::{self, Boxes, Caret, EditorInput, Minimap};
 use crate::highlighter::{self, Highlighter};
 use crate::sticky::{Probe, StickyLeft};
 use crate::widget::EditorProps;
@@ -38,6 +44,12 @@ const FOLD_WIDTH: f32 = 14.0;
 const ICONS: Font = Font::with_name(crate::style::ICONS);
 const CHEVRON_DOWN: char = '\u{e06d}';
 const CHEVRON_RIGHT: char = '\u{e06f}';
+
+/// A range of real lines and byte columns, `(line, column, end_line, end_column)`, with an
+/// exclusive end: 0-based inside the editor, 1-based in Python.
+pub type TextRange = (usize, usize, usize, usize);
+/// A range and the text that replaces it.
+pub type RangeEdit = (TextRange, String);
 
 /// Layout facts captured while rendering, used to keep the cursor in view.
 #[derive(Default, Clone)]
@@ -81,6 +93,8 @@ pub enum FoldOp {
     AtCursor,
     /// Unfolds the fold on the cursor's line.
     UnfoldAtCursor,
+    /// Unfolds the cursor's line if it is folded, or folds the block around the cursor.
+    ToggleAtCursor,
     FoldAll,
     UnfoldAll,
 }
@@ -111,6 +125,15 @@ pub struct EditorState {
     /// Whether the text editor has focus (recorded while drawing it).
     pub(crate) focused: Cell<bool>,
     pub(crate) minimap: RefCell<MinimapCache>,
+    /// The other cursors (the primary one is the `text_editor`'s), in visible lines.
+    pub(crate) extra: Vec<text_editor::Cursor>,
+    pub(crate) history: actions::History,
+    /// Keyboard modifiers, tracked by `EditorInput` (Alt+click adds a cursor).
+    pub(crate) modifiers: Cell<keyboard::Modifiers>,
+    /// Ctrl+K was pressed and the next key completes the chord.
+    pub(crate) chord: Cell<bool>,
+    /// The action context of the last render, for actions run from Python commands.
+    pub(crate) context: RefCell<Option<Arc<ActionContext>>>,
 }
 
 impl EditorState {
@@ -123,12 +146,19 @@ impl EditorState {
             viewport: Cell::new(None),
             focused: Cell::new(false),
             minimap: RefCell::default(),
+            extra: Vec::new(),
+            history: actions::History::default(),
+            modifiers: Cell::new(keyboard::Modifiers::default()),
+            chord: Cell::new(false),
+            context: RefCell::new(None),
         }
     }
 
     pub fn reset(&mut self, text: &str) {
         self.content = text_editor::Content::with_text(text);
         self.folds.clear();
+        self.extra.clear();
+        self.history.clear();
     }
 
     /// The whole text, folded lines included.
@@ -205,6 +235,10 @@ impl EditorState {
             position: map(cursor.position),
             selection: cursor.selection.map(&map),
         });
+        for c in &mut self.extra {
+            c.position = map(c.position);
+            c.selection = c.selection.map(&map);
+        }
     }
 
     /// The lines folded under `line` (by indentation), as an inclusive range of visible lines.
@@ -344,6 +378,12 @@ impl EditorState {
                 let line = self.content.cursor().position.line;
                 self.unfold(line);
             }
+            FoldOp::ToggleAtCursor => {
+                let line = self.content.cursor().position.line;
+                if !self.unfold(line) {
+                    return self.fold_op(id, FoldOp::AtCursor);
+                }
+            }
             FoldOp::FoldAll => {
                 let mut line = 0;
                 while line < self.content.line_count() {
@@ -355,7 +395,9 @@ impl EditorState {
                 if !self.folds.is_empty() {
                     let real = before;
                     let text = self.text();
+                    let history = std::mem::take(&mut self.history);
                     self.reset(&text);
+                    self.history = history;
                     self.content.move_to(text_editor::Cursor {
                         position: real,
                         selection: None,
@@ -374,6 +416,8 @@ impl EditorState {
             } else {
                 Task::none()
             },
+            action: None,
+            clipboard: None,
         }
     }
 
@@ -560,6 +604,10 @@ pub struct Outcome {
     pub cursor: (usize, usize),
     pub text: String,
     pub scroll: Task<Message>,
+    /// The name of the editor action that ran (for `on_action`).
+    pub action: Option<&'static str>,
+    /// Text to put in the clipboard (copy and cut with several cursors).
+    pub clipboard: Option<String>,
 }
 
 pub fn scroll_id(id: &str) -> String {
@@ -572,6 +620,60 @@ impl EditorState {
         let before = self.real_position(self.content.cursor().position);
         let is_edit = action.is_edit();
         let follows = !matches!(action, Action::Scroll { .. });
+        let mut edited = is_edit;
+        match action {
+            Action::Click(_) if self.modifiers.get().alt() => self.alt_click(action),
+            Action::Click(_) | Action::SelectAll => {
+                self.extra.clear();
+                self.content.perform(action);
+            }
+            Action::Edit(edit) => {
+                let kind = match &edit {
+                    Edit::Insert(c) if c.is_alphanumeric() || *c == '_' => EditKind::Typing,
+                    Edit::Backspace | Edit::Delete if self.content.cursor().selection.is_none() => {
+                        EditKind::Deleting
+                    }
+                    _ => EditKind::Other,
+                };
+                self.record(kind);
+                edited = match edit {
+                    Edit::Paste(text) => self.paste(text),
+                    edit => self.each_cursor(|s, _| s.perform_one(Action::Edit(edit.clone()))),
+                };
+                if !edited {
+                    self.unrecord();
+                }
+            }
+            Action::Move(_) | Action::Select(_) if !self.extra.is_empty() => {
+                self.each_cursor(|s, _| s.perform_one(action.clone()));
+            }
+            action => self.content.perform(action),
+        }
+        self.outcome(id, before, edited, follows)
+    }
+
+    /// Alt+click adds a cursor where it clicks, or removes the cursor that is there.
+    fn alt_click(&mut self, action: text_editor::Action) {
+        self.remember_selections();
+        let previous = self.primary();
+        self.content.perform(action);
+        let clicked = self.content.cursor().position;
+        if let Some(i) = self.extra.iter().position(|c| c.position == clicked) {
+            self.extra.remove(i);
+            self.set_cursor(previous);
+        } else if clicked == previous.position {
+            if let Some(next) = self.extra.pop() {
+                self.set_cursor(next);
+            }
+        } else {
+            self.extra.push(previous);
+        }
+    }
+
+    /// Applies one action to the primary cursor, keeping the folds intact; `true` if it edited.
+    fn perform_one(&mut self, action: text_editor::Action) -> bool {
+        use text_editor::{Action, Edit};
+        let is_edit = action.is_edit();
         if is_edit {
             let cursor = self.content.cursor();
             let column = cursor.position.column;
@@ -595,7 +697,7 @@ impl EditorState {
         } else {
             self.content.perform(action);
         }
-        self.outcome(id, before, is_edit, follows)
+        is_edit
     }
 
     /// Keys the editor handles itself, computed on the text as it is when the key arrives.
@@ -607,9 +709,28 @@ impl EditorState {
     /// steps over it, Backspace between an empty pair deletes both and Enter between brackets
     /// opens an indented line.
     pub fn key(&mut self, id: &str, key: EditKey, size: Option<usize>, pairs: bool) -> Outcome {
+        let before = self.real_position(self.content.cursor().position);
+        let kind = match key {
+            EditKey::Char(_) => EditKind::Typing,
+            EditKey::Backspace => EditKind::Deleting,
+            EditKey::Tab | EditKey::Enter => EditKind::Other,
+        };
+        let text = self.content.text();
+        self.record(kind);
+        let mut edited = self.each_cursor(|s, _| s.key_one(key, size, pairs));
+        // Typing a closer that is already there steps over it.
+        if edited && self.content.text() == text {
+            edited = false;
+        }
+        if !edited {
+            self.unrecord();
+        }
+        self.outcome(id, before, edited, true)
+    }
+
+    fn key_one(&mut self, key: EditKey, size: Option<usize>, pairs: bool) -> bool {
         use text_editor::{Action, Edit};
         let cursor = self.content.cursor();
-        let before = self.real_position(cursor.position);
         let line = self
             .content
             .line(cursor.position.line)
@@ -713,7 +834,7 @@ impl EditorState {
             }
         }
         self.end_edit(edit);
-        self.outcome(id, before, edited, true)
+        edited
     }
 
     /// Moves the cursor by a page (iced's own page motion assumes a fixed-height editor).
@@ -723,13 +844,16 @@ impl EditorState {
         let height = self.viewport.get().map(|v| v.height).unwrap_or(lh * 20.0);
         let lines = ((height / lh).floor() as usize).saturating_sub(1).max(1);
         let motion = if down { Motion::Down } else { Motion::Up };
-        for _ in 0..lines {
-            self.content.perform(if select {
-                text_editor::Action::Select(motion)
-            } else {
-                text_editor::Action::Move(motion)
-            });
-        }
+        self.each_cursor(|s, _| {
+            for _ in 0..lines {
+                s.content.perform(if select {
+                    text_editor::Action::Select(motion)
+                } else {
+                    text_editor::Action::Move(motion)
+                });
+            }
+            false
+        });
         self.outcome(id, before, false, true)
     }
 
@@ -739,7 +863,8 @@ impl EditorState {
         while hidden && self.unfold(line) {
             (line, hidden) = self.visible_line(position.line);
         }
-        self.content.move_to(text_editor::Cursor {
+        self.extra.clear();
+        self.set_cursor(text_editor::Cursor {
             position: text_editor::Position {
                 line,
                 column: position.column,
@@ -747,6 +872,62 @@ impl EditorState {
             selection: None,
         });
         self.autoscroll(id)
+    }
+
+    /// Selects real ranges `(line, column, end_line, end_column)` (0-based, exclusive end),
+    /// one cursor each; the first one is the primary cursor.
+    pub fn select_ranges(&mut self, id: &str, ranges: &[TextRange]) -> Task<Message> {
+        if ranges.is_empty() {
+            return Task::none();
+        }
+        for &(line, _, end, _) in ranges {
+            for real in [line, end] {
+                let (mut visible, mut hidden) = self.visible_line(real);
+                while hidden && self.unfold(visible) {
+                    (visible, hidden) = self.visible_line(real);
+                }
+            }
+        }
+        let cursors = ranges
+            .iter()
+            .map(|&(line, column, end, end_column)| text_editor::Cursor {
+                position: text_editor::Position {
+                    line: self.visible_line(end).0,
+                    column: end_column,
+                },
+                selection: Some(text_editor::Position {
+                    line: self.visible_line(line).0,
+                    column,
+                }),
+            })
+            .collect();
+        self.extra.clear();
+        self.set_cursors(cursors);
+        self.autoscroll(id)
+    }
+
+    /// Replaces real ranges `(line, column, end_line, end_column)` with texts, as one undo step.
+    pub fn replace_ranges(&mut self, id: &str, edits: &[RangeEdit]) -> Outcome {
+        let before = self.real_position(self.content.cursor().position);
+        if edits.is_empty() {
+            return self.outcome(id, before, false, false);
+        }
+        let ranges: Vec<_> = edits.iter().map(|(r, _)| *r).collect();
+        let _ = self.select_ranges(id, &ranges);
+        self.record(EditKind::Other);
+        // `each_cursor` visits the cursors in text order through their index.
+        let mut texts: Vec<(usize, Arc<String>)> = edits
+            .iter()
+            .map(|((line, column, _, _), text)| (line * 1_000_000 + column, Arc::new(text.clone())))
+            .collect();
+        texts.sort_by_key(|(k, _)| *k);
+        let edited = self.each_cursor(|s, i| {
+            s.perform_one(text_editor::Action::Edit(text_editor::Edit::Paste(
+                texts[i].1.clone(),
+            )))
+        });
+        self.extra.clear();
+        self.outcome(id, before, edited, true)
     }
 
     /// `before` is the real cursor position before the change.
@@ -769,6 +950,8 @@ impl EditorState {
             } else {
                 Task::none()
             },
+            action: None,
+            clipboard: None,
         }
     }
 
@@ -892,6 +1075,120 @@ pub fn view<'a>(state: &'a EditorState, props: &EditorProps) -> Element<'a, Mess
         .into()
 }
 
+/// The line comment prefix of a language (by file extension or name).
+fn comment_prefix(language: &str) -> Option<&'static str> {
+    Some(match language.to_lowercase().as_str() {
+        "py" | "python" | "pyi" | "sh" | "bash" | "zsh" | "toml" | "yaml" | "yml" | "rb"
+        | "ruby" | "r" | "pl" | "perl" | "ini" | "conf" | "dockerfile" | "makefile" | "cmake"
+        | "nim" => "#",
+        "rs" | "rust" | "js" | "javascript" | "ts" | "typescript" | "jsx" | "tsx" | "c" | "h"
+        | "cpp" | "cc" | "hpp" | "cs" | "java" | "kt" | "kotlin" | "go" | "swift" | "dart"
+        | "scala" | "zig" | "php" | "json5" | "jsonc" | "proto" | "glsl" | "wgsl" => "//",
+        "sql" | "lua" | "hs" | "haskell" | "elm" => "--",
+        "tex" | "latex" | "erl" | "erlang" => "%",
+        "lisp" | "clj" | "clojure" | "scm" | "el" => ";",
+        "vim" => "\"",
+        _ => return None,
+    })
+}
+
+/// What the second key of a Ctrl+K chord does.
+enum Chord {
+    Fold(FoldOp),
+    Action(EditorAction),
+}
+
+/// Zed's Ctrl+K chords: Ctrl+K Ctrl+0 folds everything, Ctrl+K Ctrl+J unfolds everything,
+/// Ctrl+K Ctrl+L toggles the fold at the cursor, Ctrl+K Ctrl+[ / ] fold and unfold, and
+/// Ctrl+K Ctrl+C / Ctrl+U comment and uncomment (toggle).
+fn chord_action(press: &text_editor::KeyPress) -> Option<Chord> {
+    let keyboard::Key::Character(c) = press.key.as_ref() else {
+        return None;
+    };
+    Some(match c.to_lowercase().as_str() {
+        "0" => Chord::Fold(FoldOp::FoldAll),
+        "j" => Chord::Fold(FoldOp::UnfoldAll),
+        "l" => Chord::Fold(FoldOp::ToggleAtCursor),
+        "[" => Chord::Fold(FoldOp::AtCursor),
+        "]" => Chord::Fold(FoldOp::UnfoldAtCursor),
+        "c" | "u" | "/" => Chord::Action(EditorAction::ToggleComments),
+        _ => return None,
+    })
+}
+
+/// Zed's default editor keys (Linux and Windows, with Cmd in place of Ctrl on macOS).
+fn zed_action(press: &text_editor::KeyPress, state: &EditorState) -> Option<EditorAction> {
+    use EditorAction as A;
+    use keyboard::key::Named;
+    let m = press.modifiers;
+    let (ctrl, alt, shift) = (m.command(), m.alt(), m.shift());
+    match press.key.as_ref() {
+        keyboard::Key::Named(named) => Some(match (named, ctrl, alt, shift) {
+            (Named::ArrowUp, true, true, true) => A::DuplicateLineUp,
+            (Named::ArrowDown, true, true, true) => A::DuplicateLineDown,
+            (Named::ArrowUp, false, true, true) | (Named::ArrowUp, true, true, false) => {
+                A::AddCursorAbove
+            }
+            (Named::ArrowDown, false, true, true) | (Named::ArrowDown, true, true, false) => {
+                A::AddCursorBelow
+            }
+            (Named::ArrowUp, false, true, false) => A::MoveLineUp,
+            (Named::ArrowDown, false, true, false) => A::MoveLineDown,
+            (Named::ArrowUp, true, false, true) => A::SelectPrevious,
+            (Named::ArrowDown, true, false, true) => A::SelectNext,
+            (Named::ArrowUp, true, false, false) => A::LineUp,
+            (Named::ArrowDown, true, false, false) => A::LineDown,
+            (Named::Enter, true, false, false) => A::NewlineBelow,
+            (Named::Enter, true, false, true) => A::NewlineAbove,
+            (Named::Backspace, true, false, false) => A::DeleteToPreviousWordStart,
+            (Named::Delete, true, false, false) => A::DeleteToNextWordEnd,
+            (Named::Home, false, false, false) => A::MoveToBeginningOfLine,
+            (Named::Home, false, false, true) => A::SelectToBeginningOfLine,
+            (Named::Tab, false, false, true) => A::Outdent,
+            (Named::Tab, false, false, false) => {
+                let c = state.content.cursor();
+                let multiline = c.selection.is_some_and(|s| s.line != c.position.line);
+                if multiline {
+                    A::Indent
+                } else {
+                    return None;
+                }
+            }
+            (Named::F2, true, false, false) => A::SelectAllMatches,
+            (Named::Escape, false, false, false) if state.can_cancel() => A::Cancel,
+            _ => return None,
+        }),
+        keyboard::Key::Character(c) if ctrl => {
+            let c = c.to_lowercase();
+            Some(match (c.as_str(), alt, shift) {
+                ("z", false, false) => A::Undo,
+                ("y", false, false) | ("z", false, true) => A::Redo,
+                ("d", false, false) => A::SelectNext,
+                ("l", false, true) => A::SelectAllMatches,
+                ("l", false, false) => A::SelectLine,
+                ("u", false, false) => A::UndoSelection,
+                ("k", false, true) => A::DeleteLine,
+                ("j", false, true) => A::JoinLines,
+                ("/", false, _) => A::ToggleComments,
+                ("]", false, false) => A::Indent,
+                ("[", false, false) => A::Outdent,
+                ("m", false, false) | ("|", false, true) => A::MoveToEnclosingBracket,
+                // Copy and cut take whole lines without a selection, and every cursor's text.
+                ("c", false, false) | ("x", false, false)
+                    if !state.extra.is_empty() || state.content.cursor().selection.is_none() =>
+                {
+                    if c == "c" { A::Copy } else { A::Cut }
+                }
+                _ => return None,
+            })
+        }
+        keyboard::Key::Character(c) if alt && shift && !ctrl && c.eq_ignore_ascii_case("i") => {
+            Some(A::SplitSelectionIntoLines)
+        }
+        _ => None,
+    }
+}
+
 fn key_name(key: keyboard::key::Named) -> Option<&'static str> {
     use keyboard::key::Named;
     Some(match key {
@@ -994,32 +1291,251 @@ fn chevrons<'a>(
     col.into()
 }
 
-/// Where the cursor is drawn, relative to the text area, as `(x, y, glyph under it)`.
+/// Where a cursor at `position` is drawn, relative to the text area, as
+/// `(x, y, glyph under it)`.
 fn caret_position(
-    state: &EditorState,
+    _state: &EditorState,
     props: &EditorProps,
+    lines: &[String],
     starts: &[u32],
     wrap_width: Option<f32>,
+    position: text_editor::Position,
 ) -> (f32, f32, Option<char>) {
     let lh = props.line_height;
-    let position = state.content.cursor().position;
-    let line = state
-        .content
-        .line(position.line)
-        .map(|l| l.text.into_owned())
-        .unwrap_or_default();
-    let prefix: String = line.chars().take(position.column).collect();
-    let under = line.chars().nth(position.column);
+    let line = lines.get(position.line).map_or("", |l| l.as_str());
+    let column = actions::floor(line, position.column);
+    let prefix = &line[..column];
+    let under = line[column..].chars().next();
     let row = starts.get(position.line).copied().unwrap_or(0);
     if prefix.is_empty() {
         return (0.0, row as f32 * lh, under);
     }
-    let p = paragraph(&prefix, props.font, props.size, lh, wrap_width);
+    let p = paragraph(prefix, props.font, props.size, lh, wrap_width);
     let rows = ((p.min_bounds().height / lh).round() as usize).max(1);
     let x = p
         .grapheme_position(rows - 1, usize::MAX)
         .map_or(0.0, |p| p.x);
     (x, (row as usize + rows - 1) as f32 * lh, under)
+}
+
+/// Where `position` is, relative to the text area (without wrapping the width is cached).
+fn point_at(
+    props: &EditorProps,
+    lines: &[String],
+    starts: &[u32],
+    wrap_width: Option<f32>,
+    measure: &mut Measure,
+    position: text_editor::Position,
+) -> (f32, f32) {
+    let lh = props.line_height;
+    let row = starts.get(position.line).copied().unwrap_or(0);
+    let line = lines.get(position.line).map_or("", |l| l.as_str());
+    let prefix = &line[..actions::floor(line, position.column)];
+    match wrap_width {
+        None => (
+            measure.width(prefix, props.font, props.size, lh),
+            row as f32 * lh,
+        ),
+        Some(_) if prefix.is_empty() => (0.0, row as f32 * lh),
+        Some(width) => {
+            let p = paragraph(prefix, props.font, props.size, lh, Some(width));
+            let rows = ((p.min_bounds().height / lh).round() as usize).max(1);
+            let x = p
+                .grapheme_position(rows - 1, usize::MAX)
+                .map_or(0.0, |p| p.x);
+            (x, (row as usize + rows - 1) as f32 * lh)
+        }
+    }
+}
+
+/// The rectangles covering `start..end`, relative to the text layer (`right` is where full
+/// rows end).
+#[allow(clippy::too_many_arguments)]
+fn span(
+    props: &EditorProps,
+    lines: &[String],
+    starts: &[u32],
+    wrap_width: Option<f32>,
+    measure: &mut Measure,
+    start: text_editor::Position,
+    end: text_editor::Position,
+    right: f32,
+) -> Vec<Rectangle> {
+    let lh = props.line_height;
+    let (x0, y0) = point_at(props, lines, starts, wrap_width, measure, start);
+    let (x1, y1) = point_at(props, lines, starts, wrap_width, measure, end);
+    let rect = |x: f32, y: f32, w: f32, h: f32| {
+        Rectangle::new(
+            iced::Point::new(PAD_LEFT + x, PAD_Y + y),
+            Size::new(w.max(0.0), h),
+        )
+    };
+    if (y0 - y1).abs() < 0.5 {
+        return vec![rect(x0, y0, x1 - x0, lh)];
+    }
+    let mut out = vec![rect(x0, y0, right - PAD_LEFT - x0, lh)];
+    if y1 - y0 > lh + 0.5 {
+        out.push(rect(0.0, y0 + lh, right - PAD_LEFT, y1 - y0 - lh));
+    }
+    out.push(rect(0.0, y1, x1, lh));
+    out
+}
+
+/// What goes behind the text: search results (`highlights`), the other occurrences of the
+/// selected text and the selections of the other cursors.
+fn behind_text(
+    state: &EditorState,
+    props: &EditorProps,
+    lines: &[String],
+    starts: &[u32],
+    wrap_width: Option<f32>,
+    measure: &mut Measure,
+    right: f32,
+) -> Vec<editor_widgets::BoxRect> {
+    use text_editor::Position;
+    let mut rects = Vec::new();
+    let line_count = lines.len();
+    let found = props
+        .highlight_color
+        .unwrap_or(Color::from_rgba(0.95, 0.68, 0.22, 0.3));
+    for &(line, column, end_line, end_column) in &props.highlights {
+        if line == 0 || end_line == 0 {
+            continue;
+        }
+        let (a, hidden_a) = state.visible_line(line - 1);
+        let (b, hidden_b) = state.visible_line(end_line - 1);
+        if hidden_a || hidden_b || a >= line_count || b >= line_count {
+            continue;
+        }
+        let start = Position {
+            line: a,
+            column: column.saturating_sub(1),
+        };
+        let end = Position {
+            line: b,
+            column: end_column.saturating_sub(1),
+        };
+        for bounds in span(props, lines, starts, wrap_width, measure, start, end, right) {
+            rects.push(editor_widgets::BoxRect {
+                bounds,
+                fill: Some(found),
+                alpha: 1.0,
+                border: None,
+            });
+        }
+    }
+    // Zed's selection highlight: the other places with the selected text.
+    let primary = state.content.cursor();
+    if props.selection_highlight
+        && let Some(anchor) = primary.selection
+        && anchor.line == primary.position.line
+        && anchor != primary.position
+    {
+        let line = &lines[primary.position.line.min(line_count - 1)];
+        let (a, b) = (
+            actions::floor(line, anchor.column.min(primary.position.column)),
+            actions::floor(line, anchor.column.max(primary.position.column)),
+        );
+        let needle = &line[a..b];
+        if !needle.trim().is_empty() && needle.len() <= 200 {
+            let text = lines.join("\n");
+            let whole = needle.chars().all(|c| c.is_alphanumeric() || c == '_');
+            let own = actions::offset_of(
+                lines,
+                Position {
+                    line: primary.position.line,
+                    column: a,
+                },
+            );
+            let mut taken: Vec<usize> = vec![own];
+            taken.extend(
+                state
+                    .extra
+                    .iter()
+                    .map(|c| actions::offset_of(lines, actions::range(c).0)),
+            );
+            for start in actions::all_matches(&text, needle, whole)
+                .into_iter()
+                .filter(|s| !taken.contains(s))
+                .take(2000)
+            {
+                let s = actions::position_at(lines, start);
+                let e = actions::position_at(lines, start + needle.len());
+                for bounds in span(props, lines, starts, wrap_width, measure, s, e, right) {
+                    rects.push(editor_widgets::BoxRect {
+                        bounds,
+                        fill: props.selection_color,
+                        alpha: 0.45,
+                        border: None,
+                    });
+                }
+            }
+        }
+    }
+    for c in &state.extra {
+        let (s, e) = actions::range(c);
+        if s == e {
+            continue;
+        }
+        for bounds in span(props, lines, starts, wrap_width, measure, s, e, right) {
+            rects.push(editor_widgets::BoxRect {
+                bounds,
+                fill: props.selection_color,
+                alpha: 1.0,
+                border: None,
+            });
+        }
+    }
+    rects
+}
+
+/// Outlines of the bracket next to the cursor and its match.
+fn bracket_boxes(
+    state: &EditorState,
+    props: &EditorProps,
+    lines: &[String],
+    starts: &[u32],
+    wrap_width: Option<f32>,
+    measure: &mut Measure,
+) -> Vec<editor_widgets::BoxRect> {
+    let cursor = state.content.cursor();
+    if cursor.selection.is_some() {
+        return Vec::new();
+    }
+    let text = lines.join("\n");
+    let bytes = text.as_bytes();
+    let at = actions::offset_of(lines, cursor.position);
+    let found = [Some(at), at.checked_sub(1)]
+        .into_iter()
+        .flatten()
+        .find_map(|i| actions::matching_bracket(bytes, i).map(|m| (i, m)));
+    let Some((a, b)) = found else {
+        return Vec::new();
+    };
+    let tint = props
+        .text_color
+        .unwrap_or(Color::from_rgb8(0xd0, 0xd4, 0xda));
+    [a, b]
+        .into_iter()
+        .map(|i| {
+            let s = actions::position_at(lines, i);
+            let e = text_editor::Position {
+                line: s.line,
+                column: s.column + 1,
+            };
+            let (x0, y) = point_at(props, lines, starts, wrap_width, measure, s);
+            let (x1, _) = point_at(props, lines, starts, wrap_width, measure, e);
+            editor_widgets::BoxRect {
+                bounds: Rectangle::new(
+                    iced::Point::new(PAD_LEFT + x0, PAD_Y + y + 1.0),
+                    Size::new((x1 - x0).max(2.0), props.line_height - 2.0),
+                ),
+                fill: Some(tint),
+                alpha: 0.08,
+                border: Some(with_alpha(tint, 0.45)),
+            }
+        })
+        .collect()
 }
 
 fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Element<'a, Message> {
@@ -1127,9 +1643,19 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let folding = props.folding;
     let key_props = props.clone();
     let capture = props.capture_keys.clone();
+    let ctx = Arc::new(ActionContext {
+        size: props.tab_size,
+        pairs: props.auto_close,
+        comment: comment_prefix(&props.language).map(Arc::from),
+        on_change: props.on_change.clone(),
+        on_cursor: props.on_cursor.clone(),
+        on_action: props.on_action.clone(),
+    });
+    *state.context.borrow_mut() = Some(ctx.clone());
     let focused = &state.focused;
     let (editor_bg, active_line) = (props.background, props.active_line);
     let mut editor = widget::text_editor(&state.content)
+        .id(props.id.to_string())
         .font(props.font)
         .size(props.size)
         .line_height(LineHeight::Absolute(Pixels(lh)))
@@ -1182,6 +1708,51 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 && capture.iter().any(|k| key_name(named) == Some(k.as_str()))
             {
                 return None;
+            }
+            let run = |action: EditorAction| {
+                Some(Binding::Custom(Message::EditorAction {
+                    id: props.id.clone(),
+                    action,
+                    ctx: ctx.clone(),
+                }))
+            };
+            let fold = |op: FoldOp| {
+                Some(Binding::Custom(Message::EditorFold {
+                    id: props.id.clone(),
+                    op,
+                    on_cursor: props.on_cursor.clone(),
+                }))
+            };
+            if matches!(
+                press.key.as_ref(),
+                keyboard::Key::Named(
+                    keyboard::key::Named::Control
+                        | keyboard::key::Named::Shift
+                        | keyboard::key::Named::Alt
+                        | keyboard::key::Named::Super
+                )
+            ) {
+                return Binding::from_key_press(press);
+            }
+            if state.chord.replace(false) {
+                // Second key of a Ctrl+K chord.
+                let action = chord_action(&press);
+                return match action {
+                    Some(Chord::Fold(op)) if folding => fold(op),
+                    Some(Chord::Action(action)) => run(action),
+                    _ => Some(Binding::Custom(Message::Noop)),
+                };
+            }
+            if press.modifiers.command()
+                && !press.modifiers.alt()
+                && !press.modifiers.shift()
+                && matches!(press.key.as_ref(), keyboard::Key::Character("k"))
+            {
+                state.chord.set(true);
+                return Some(Binding::Custom(Message::Noop));
+            }
+            if let Some(action) = zed_action(&press, state) {
+                return run(action);
             }
             let select = press.modifiers.shift();
             // Zoom (Ctrl/Cmd with + - 0) and folding (Ctrl/Cmd+Shift with [ ]).
@@ -1295,6 +1866,21 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         // A stack takes the size of its first child, so the band spans the whole text.
         .height(Length::Fixed(total_height));
         layers.push(band.into());
+    }
+    let right = editor_width - PAD_RIGHT;
+    {
+        let mut measure = state.measure.borrow_mut();
+        let rects = behind_text(
+            state,
+            props,
+            &lines,
+            &starts,
+            wrap_width,
+            &mut measure,
+            right,
+        );
+        // Always there, even empty, so the editor's widget state (its focus) keeps its place.
+        layers.push(Boxes { rects }.into());
     }
     layers.push(editor.into());
 
@@ -1440,36 +2026,55 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         );
     }
 
-    // The cursor, drawn by us so it can take any shape.
-    let (cx, cy, under) = caret_position(state, props, &starts, wrap_width);
-    let char_width = under
-        .filter(|c| !c.is_whitespace())
-        .map(|c| measure.width(&c.to_string(), props.font, props.size, lh))
-        .unwrap_or(props.size * 0.6)
-        .max(props.size * 0.3);
-    drop(measure);
+    // The bracket matching the one next to the cursor.
+    if props.match_brackets {
+        let rects = bracket_boxes(state, props, &lines, &starts, wrap_width, &mut measure);
+        if !rects.is_empty() {
+            layers.push(Boxes { rects }.into());
+        }
+    }
+
+    // The cursors, drawn by us so they can take any shape.
     let caret_color = props
         .cursor
         .color
         .or(props.text_color)
         .unwrap_or(Color::WHITE);
-    layers.push(
-        Caret {
-            state,
-            origin: iced::Point::new(PAD_LEFT + cx, PAD_Y + cy),
-            char_width,
-            line_height: lh,
-            shape: props.cursor.shape,
-            width: props.cursor.width,
-            blink: props.cursor.blink,
-            color: caret_color,
-            under: under.filter(|c| !c.is_whitespace()),
-            under_color: props.background.unwrap_or(Color::BLACK),
-            font: props.font,
-            size: props.size,
-        }
-        .into(),
+    let primary = state.content.cursor();
+    let mut carets = vec![(primary.position, primary.selection.is_some())];
+    carets.extend(
+        state
+            .extra
+            .iter()
+            .map(|c| (c.position, c.selection.is_some_and(|s| s != c.position))),
     );
+    for (position, selecting) in carets {
+        let (cx, cy, under) = caret_position(state, props, &lines, &starts, wrap_width, position);
+        let char_width = under
+            .filter(|c| !c.is_whitespace())
+            .map(|c| measure.width(&c.to_string(), props.font, props.size, lh))
+            .unwrap_or(props.size * 0.6)
+            .max(props.size * 0.3);
+        layers.push(
+            Caret {
+                state,
+                origin: iced::Point::new(PAD_LEFT + cx, PAD_Y + cy),
+                char_width,
+                line_height: lh,
+                shape: props.cursor.shape,
+                width: props.cursor.width,
+                blink: props.cursor.blink,
+                color: caret_color,
+                under: under.filter(|c| !c.is_whitespace()),
+                under_color: props.background.unwrap_or(Color::BLACK),
+                font: props.font,
+                size: props.size,
+                selecting,
+            }
+            .into(),
+        );
+    }
+    drop(measure);
 
     let code: Element<'a, Message> = widget::Stack::with_children(layers).into();
 
@@ -1631,10 +2236,8 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         .height(Length::Fill)
         .into();
 
-    let scroller: Element<'a, Message> = match &props.on_zoom {
-        Some(cb) => ZoomWheel::new(scroller, cb.clone()).into(),
-        None => scroller,
-    };
+    let scroller: Element<'a, Message> =
+        EditorInput::new(scroller, state, props.on_zoom.clone()).into();
     match props.minimap {
         Some(minimap) => {
             update_minimap(state, &lines, &token, theme_id, props);

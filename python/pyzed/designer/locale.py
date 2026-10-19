@@ -237,6 +237,44 @@ _ES = {
     "Upgrade the package to get it:": "Actualiza el paquete para tenerla:",
     "you have {version}": "tienes la {version}", "Open on GitHub": "Abrir en GitHub",
     "No notes for this version.": "Esta versión no tiene notas.",
+    # Code editor: the search bar, its shortcut groups and the telemetry settings
+    "Invalid pattern": "Patrón no válido", "No results": "Sin resultados", "Toggle replace": "Mostrar reemplazar",
+    "Find": "Buscar", "Match case": "Distinguir mayúsculas", "Match whole words": "Palabras completas",
+    "Use regular expressions": "Usar expresiones regulares", "Previous match": "Coincidencia anterior",
+    "Next match": "Coincidencia siguiente", "Select all matches": "Seleccionar todas las coincidencias",
+    "Replace": "Reemplazar", "Replace all": "Reemplazar todo",
+    "Current line {line} of {lines} (column {column})": "Línea actual {line} de {lines} (columna {column})",
+    "Line or line:column": "Línea o línea:columna",
+    "Find and replace": "Buscar y reemplazar", "Next and previous match": "Coincidencia siguiente y anterior",
+    "Go to line": "Ir a la línea", "Bigger, smaller and default font": "Letra más grande, más pequeña y normal",
+    "Multiple cursors": "Varios cursores", "Add a cursor": "Añadir un cursor",
+    "Add a cursor above": "Añadir un cursor arriba", "Add a cursor below": "Añadir un cursor abajo",
+    "Select the next match": "Seleccionar la siguiente coincidencia",
+    "Select every match": "Seleccionar todas las coincidencias",
+    "A cursor on each selected line": "Un cursor en cada línea seleccionada",
+    "Undo the last cursor change": "Deshacer el último cambio de cursores", "Back to one cursor": "Volver a un cursor",
+    "Lines": "Líneas", "Move line up": "Subir la línea", "Move line down": "Bajar la línea",
+    "Duplicate line down": "Duplicar la línea", "Delete line": "Borrar la línea", "Select line": "Seleccionar la línea",
+    "Join lines": "Unir líneas", "New line below": "Nueva línea debajo", "New line above": "Nueva línea encima",
+    "Indent": "Sangrar", "Outdent": "Quitar sangría", "Toggle comment": "Comentar o descomentar",
+    "Go to matching bracket": "Ir al corchete pareja", "Folding": "Plegado", "Fold": "Plegar", "Unfold": "Desplegar",
+    "Fold everything": "Plegar todo", "Unfold everything": "Desplegar todo", "Toggle fold": "Plegar o desplegar",
+    "Telemetry": "Telemetría", "Collect usage and performance data": "Recopilar datos de uso y rendimiento",
+    "Counts of the commands and editor actions you use, and startup, render and command times. Never your code, "
+    "texts or file names.": "Cuántas veces usas cada comando y acción del editor, y los tiempos de inicio, dibujo y "
+                            "comandos. Nunca tu código, textos ni nombres de archivo.",
+    "Kept on this computer only": "Solo se guardan en este equipo", "Last sent {when}": "Último envío: {when}",
+    "Sent when the designer closes": "Se envían al cerrar el diseñador", "Could not send: {error}":
+        "No se pudieron enviar: {error}",
+    "Endpoint": "Destino", "Where to post the data as JSON; leave it empty to send nothing":
+        "Dónde enviar los datos como JSON; déjalo vacío para no enviar nada",
+    "Collected data": "Datos recopilados",
+    "Match brackets": "Remarcar corchetes",
+    "Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it":
+        "Remarca el corchete pareja del que está junto al cursor; Ctrl+M salta a él",
+    "Highlight selection matches": "Resaltar coincidencias de la selección",
+    "Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them":
+        "Ctrl+D añade la siguiente como cursor y Ctrl+Shift+L todas",
 }
 
 i18n.add("es", {"designer": _ES})

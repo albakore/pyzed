@@ -99,3 +99,17 @@ en el lienzo para recuperar sus atajos.
 | <kbd>Ctrl</kbd>+<kbd>Inicio</kbd> / <kbd>Fin</kbd> | Principio o final del código |
 | <kbd>Shift</kbd>+movimiento | Seleccionar |
 | <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd> | Seleccionar todo, copiar, cortar, pegar |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd> | Buscar / buscar y reemplazar |
+| <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> | Coincidencia siguiente / anterior |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> | Ir a la línea |
+| <kbd>Alt</kbd>+clic | Añadir un cursor |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añadir un cursor arriba / abajo |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Seleccionar la siguiente coincidencia como otro cursor |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Seleccionar todas las coincidencias |
+| <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Subir / bajar la línea |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Duplicar / borrar la línea |
+| <kbd>Ctrl</kbd>+<kbd>/</kbd> | Comentar o descomentar |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer / rehacer |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Plegar / desplegar todo |
+
+La lista completa está en [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed).

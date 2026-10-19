@@ -76,12 +76,34 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 | <kbd>Ctrl</kbd>+<kbd>Espacio</kbd> | Abrir la lista de sugerencias. |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> / <kbd>]</kbd> | Plegar / desplegar en el cursor. |
 | <kbd>Ctrl</kbd>+<kbd>=</kbd> / <kbd>-</kbd> / <kbd>0</kbd> | Letra más grande, más pequeña, por defecto. |
-| <kbd>Esc</kbd> | Cerrar la lista de sugerencias, o salir del editor. |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer, rehacer (lo escrito seguido es un solo paso). |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>H</kbd> / <kbd>G</kbd> | Buscar, reemplazar, ir a la línea (ver abajo). |
+| <kbd>Esc</kbd> | Volver a un cursor, cerrar la lista de sugerencias, o salir del editor. |
 
 En macOS, <kbd>Cmd</kbd> funciona donde aquí pone <kbd>Ctrl</kbd>. Los comandos globales del editor
 (<kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) funcionan mientras
 escribes; los atajos del lienzo (<kbd>Supr</kbd>, flechas, <kbd>Ctrl</kbd>+<kbd>D</kbd>) no, así que escribir nunca
 mueve un control.
+
+## Buscar, reemplazar y varios cursores
+
+![Buscar (Ctrl+F) con cada form.status seleccionado como cursor](../../../../../screenshots/designer-code-multicursor.png)
+
+- <kbd>Ctrl</kbd>+<kbd>F</kbd> abre la barra de búsqueda con la palabra bajo el cursor; las coincidencias se
+  resaltan en el código y la barra las cuenta. <kbd>Enter</kbd> o <kbd>F3</kbd> van a la siguiente,
+  <kbd>Shift</kbd>+<kbd>F3</kbd> a la anterior y <kbd>Alt</kbd>+<kbd>Enter</kbd> pone un cursor en cada una. Los
+  botones distinguen mayúsculas, buscan palabras completas o usan una expresión regular.
+- <kbd>Ctrl</kbd>+<kbd>H</kbd> muestra también el campo de reemplazo: **Reemplazar** cambia la coincidencia actual y
+  **Reemplazar todo** todas, en un solo paso de deshacer. Con una expresión regular, `\1` en el reemplazo inserta un
+  grupo.
+- <kbd>Ctrl</kbd>+<kbd>G</kbd> va a una línea (`42`) o a una línea y columna (`42:8`).
+- El editor tiene los cursores múltiples y los atajos de edición de Zed: <kbd>Alt</kbd>+clic,
+  <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> para mover líneas,
+  <kbd>Ctrl</kbd>+<kbd>/</kbd> para comentar, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
+  y más. La lista completa está en
+  [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed) o con
+  <kbd>F1</kbd> en el diseñador.
 
 ## Autocompletado
 
@@ -209,5 +231,7 @@ Los abren el **engranaje** de la cabecera del panel de código, los puntos de lo
 | | **Auto-close brackets and quotes** | Parejas, envolver la selección y saltar el cierre. |
 | | **Code folding** | Los chevrons y las teclas de plegado. |
 | | **Format with ruff on Apply** | Ejecuta `ruff format` sobre el código al pulsar Apply. |
+| | **Match brackets** | Remarca el corchete pareja del que está junto al cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> salta a él). |
+| | **Highlight selection matches** | Resalta los demás sitios con el texto seleccionado. |
 | Code lens and diagnostics | **Code lens** | Referencias, implementaciones y eventos conectados al final de las definiciones. |
 | | **Inline diagnostics** | Problemas al final de la línea. |

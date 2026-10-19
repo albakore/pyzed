@@ -240,6 +240,25 @@ def editor_features():
                         width=560, height=250)
 
 
+MULTI_CODE = """prices = {
+    "apple": 3,
+    "pear": 5,
+    "fig": 8,
+}
+
+
+def total(prices):
+    return sum(prices.values())
+"""
+
+
+def editor_multicursor():
+    # Three cursors (Alt+Shift+Down) and the search results for `prices` (see START).
+    return pz.container(ui.editor("doc-editor-multi", MULTI_CODE, path="prices.py",
+                                  highlights=[(1, 1, 1, 7), (8, 11, 8, 17), (9, 16, 9, 22)]),
+                        width=560, height=250)
+
+
 def terminal():
     out = ("$ pytest -q\n\x1b[32m........................\x1b[0m\n\x1b[32m24 passed\x1b[0m in 1.21s\n"
            "$ maturin develop --release\n\x1b[2m   Compiling pyzed v0.1.0\x1b[0m\n\x1b[32m✓\x1b[0m Installed pyzed-0.1.0\n$ ")
@@ -468,6 +487,7 @@ SHOTS = {
     "toasts": (toasts, (380, 270)),
     "editor": (editor, (600, 290)),
     "editor-features": (editor_features, (600, 290)),
+    "editor-multicursor": (editor_multicursor, (600, 290)),
     "terminal": (terminal, (560, 210)),
     "controls": (controls, (600, 210)),
     "feedback": (feedback, (640, 210)),
@@ -493,6 +513,9 @@ SHOTS = {
 #: Commands run before a shot is drawn.
 START = {
     "editor-features": lambda: pz.Command.batch([pz.Command.fold_line("doc-editor-features", n) for n in (6, 9)]),
+    "editor-multicursor": lambda: pz.Command.batch([
+        pz.Command.select_editor_ranges("doc-editor-multi", [(4, 10, 4, 10), (2, 12, 2, 12), (3, 11, 3, 11)]),
+        pz.Command.focus("doc-editor-multi")]),
 }
 
 
