@@ -1,0 +1,87 @@
+---
+title: Pyzed vs PyQt and PySide (Qt for Python)
+description: "Pyzed vs PyQt6 and PySide6: license, size, look, programming model, designer and hot reload, with the same apps side by side, measured numbers and a guide to migrate Qt Widgets code to Pyzed."
+sidebar:
+  label: Pyzed vs PyQt / PySide
+  order: 6
+---
+
+import SideBySide from '../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import qtCounter from '../../../../../benchmarks/apps/pyside6/counter.py?raw';
+import pyzedTodo from '../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import qtTodo from '../../../../../benchmarks/apps/pyside6/todo.py?raw';
+
+[Qt](https://www.qt.io) is the most complete GUI framework you can use from Python, through
+[PySide6](https://doc.qt.io/qtforpython-6/) (by The Qt Company, LGPL) or
+[PyQt6](https://www.riverbankcomputing.com/software/pyqt/) (by Riverbank, GPL or commercial). It has
+everything: charts, multimedia, an embedded Chromium, 3D, printing, accessibility, and thirty years of
+production use. That breadth comes with weight: a large download, a C++ object model (signals, slots,
+parents, layouts) and licensing to think about.
+
+## In short
+
+| | Pyzed | PyQt6 / PySide6 |
+| --- | --- | --- |
+| License | MIT | PyQt: GPL v3 or commercial · PySide: LGPL v3 or commercial |
+| Model | State + `view()`; plain Python callbacks | Object tree, signals and slots, or declarative QML |
+| Look | Zed-style components and themes, out of the box | Native-like styles; modern looks through QSS or QML |
+| Designer | Pyzed Design, generates Python | Qt Designer / Creator (`.ui` files), Qt Design Studio (QML) |
+| Hot reload | `pyzed dev`, keeps state | QML preview in Qt tools; Widgets code needs a restart |
+| Breadth | Desktop app essentials + IDE components | Almost anything, through dozens of modules |
+| Mobile | – | PySide6 on Android (technical preview) |
+| Accessibility | Keyboard; no screen readers yet | Full screen reader support |
+
+## The same counter
+
+<SideBySide left={pyzedCounter} right={qtCounter} leftTitle="Pyzed" rightTitle="PySide6 (Qt Widgets)" />
+
+## The same to-do list
+
+In Qt Widgets you build the widgets once and keep them in sync with your data by hand (`refresh()` deletes
+and recreates the rows). In Pyzed you only describe the rows for the current data.
+
+<SideBySide left={pyzedTodo} right={qtTodo} leftTitle="Pyzed" rightTitle="PySide6 (Qt Widgets)" />
+
+## Measured
+
+Medians from [the benchmarks](/pyzed/why/benchmarks/) (Linux, no GPU: software rendering). The install size
+for Qt is `pyside6-essentials` only; the full `pyside6` package with add-ons is several times larger.
+
+<VsNumbers other="pyside6" />
+
+## From Qt concepts to Pyzed
+
+| Qt | Pyzed |
+| --- | --- |
+| `QApplication` + `QMainWindow` + `app.exec()` | `class MyApp(pz.App)` + `pz.run(MyApp)` |
+| `QVBoxLayout`, `QHBoxLayout`, `QGridLayout` | `pz.column`, `pz.row`, `pz.grid` |
+| `QLabel`, `QPushButton`, `QLineEdit`, `QCheckBox` | `ui.label`, `ui.button`, `ui.input`, `ui.checkbox` |
+| `clicked.connect(slot)` | `on_press=method` |
+| custom signals | messages sent to `update()`, or `pz.post(message)` from a thread |
+| `QTimer` | `pz.every(...)` in `subscriptions()` |
+| `QThread` / `QRunnable` | `async def` callbacks, generators, or plain threads |
+| `QDockWidget`, `QTabWidget`, `QSplitter` | [`ui.workspace`](/pyzed/library/workspace/), [`ui.tab_bar`](/pyzed/library/tab-bar/), [`ui.split`](/pyzed/library/split/) |
+| `QTreeView` / `QTableView` + models | [`ui.tree`](/pyzed/library/tree/), [`ui.table`](/pyzed/library/table/), [`ui.virtual_list`](/pyzed/library/virtual-list/) from Python lists |
+| QSS stylesheets | [themes](/pyzed/guides/theming/) and [`pz.Style`](/pyzed/guides/styles/) |
+| `QShortcut`, `QAction` | `on_key(combo)`, [commands](/pyzed/guides/commands/) and `keys="ctrl-s"` on buttons |
+| Qt Designer `.ui` files | [Pyzed Design](/pyzed/editor/) `.pzform` files with Python handlers |
+
+## Migration tips
+
+1. **Start from the data, not the widgets.** List what your `QWidget` subclasses store (`self.items`,
+   `self.current`…) and make those the attributes of your `App`. Everything that copies them into widgets
+   (`setText`, `setChecked`, model resets) disappears.
+2. **Turn slots into methods.** A slot connected with `clicked.connect(self.save)` becomes `on_press=self.save`.
+3. **Replace models with lists.** A `QAbstractListModel` over a Python list becomes the list itself plus
+   `ui.virtual_list` when it is long.
+4. **Keep Qt where you depend on it.** If the app needs `QtWebEngine`, `QtMultimedia`, printing or 3D, Qt is
+   still the right tool for that app.
+
+## When to choose which
+
+- **Choose Qt** when you need its breadth, a screen-reader-accessible app today, or decades-proven stability
+  across a large team, and its size and license fit your project.
+- **Choose Pyzed** when you want a modern-looking desktop app with far less code and ceremony, a permissive
+  MIT license, a much smaller install, hot reload and AI assistance built into the workflow.

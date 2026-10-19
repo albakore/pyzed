@@ -1,0 +1,97 @@
+---
+title: Pyzed vs tkinter — a modern tkinter alternative
+description: "Pyzed vs tkinter (and CustomTkinter) for Python desktop apps: the same apps side by side, measured startup, memory and speed, concept mapping and how to migrate from tkinter to Pyzed."
+sidebar:
+  label: Pyzed vs tkinter
+  order: 5
+---
+
+import SideBySide from '../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import tkCounter from '../../../../../benchmarks/apps/tkinter/counter.py?raw';
+import pyzedTodo from '../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import tkTodo from '../../../../../benchmarks/apps/tkinter/todo.py?raw';
+
+[tkinter](https://docs.python.org/3/library/tkinter.html) is the GUI toolkit that comes with Python. It is
+everywhere, it is small and it is fast to start, which is why most people meet it first. It also shows
+its age: widgets that look like the 2000s, a layout model split between `pack`, `grid` and `place`, and no
+answer for dark mode, hot reload or a visual designer.
+[CustomTkinter](https://customtkinter.tomschimansky.com) modernises the look on top of tkinter, and is
+included in the numbers below too.
+
+## In short
+
+| | Pyzed | tkinter |
+| --- | --- | --- |
+| Install | `pip install pyzed-ui` | Already there (on Linux, sometimes a `python3-tk` package) |
+| Look | Zed-style components, themes, dark mode | Classic Tk, or `ttk` themes |
+| Programming model | State + `view()`: the UI is rebuilt from your data | Widgets you create, keep references to and mutate |
+| Layout | Rows, columns, grids, stacks, docks, anchors | `pack`, `grid`, `place` |
+| Drawing | GPU (wgpu), CPU fallback | Tk, on the CPU |
+| Designer, hot reload | Pyzed Design, `pyzed dev` | Third-party designers; no hot reload |
+| Rich widgets | Code editor, command palette, file tree, tabs, toasts, markdown… | Text, Canvas, Treeview; the rest is DIY |
+| Accessibility | Keyboard; no screen readers yet | Limited |
+
+## The same counter
+
+Both files are the reference apps from [the benchmarks](/pyzed/why/benchmarks/), counted line by line.
+
+<SideBySide left={pyzedCounter} right={tkCounter} leftTitle="Pyzed" rightTitle="tkinter" />
+
+## The same to-do list
+
+Add with the button or <kbd>Enter</kbd>, tick tasks off, delete them, and show how many are left. In
+tkinter, keeping the screen in sync with the data is your job (`refresh()` destroys and recreates the rows);
+in Pyzed, `view()` always describes the current data.
+
+<SideBySide left={pyzedTodo} right={tkTodo} leftTitle="Pyzed" rightTitle="tkinter" />
+
+## Measured
+
+Medians from [the benchmarks](/pyzed/why/benchmarks/) (Linux, no GPU: software rendering, which penalises
+Pyzed's GPU renderer and favours tkinter's CPU drawing).
+
+<VsNumbers other="tkinter" />
+
+tkinter wins on startup and size: it is a few megabytes of C that is already loaded with Python, and it
+draws with the CPU, which is exactly what a machine without a GPU does well. Pyzed brings a GPU renderer,
+a text engine and dozens of components, and still opens a 1,000-row window in a fraction of a second.
+
+## From tkinter concepts to Pyzed
+
+| tkinter | Pyzed |
+| --- | --- |
+| `root = tk.Tk()` … `root.mainloop()` | `class MyApp(pz.App)` … `pz.run(MyApp)` |
+| `root.title(...)`, `root.geometry("400x300")` | class attributes `title = ...`, `size = (400, 300)` |
+| `tk.StringVar`, `IntVar` | plain attributes: `self.name = ""` |
+| `widget.configure(text=...)` | change the attribute; `view()` shows it |
+| `ttk.Label`, `ttk.Button`, `ttk.Entry` | `ui.label`, `ui.button`, `ui.input` |
+| `command=callback` | `on_press=callback` (or a message for `update()`) |
+| `pack(side="left")` / `grid(row, column)` | `pz.row([...])`, `pz.column([...])`, `pz.grid(...)` |
+| `Canvas` + `Scrollbar` + inner `Frame` | `pz.scrollable(...)` |
+| `ttk.Treeview` | [`ui.tree`](/pyzed/library/tree/), [`ui.table`](/pyzed/library/table/) |
+| `root.after(ms, fn)` | `pz.every(seconds, message)` in `subscriptions()`, or an `async` callback |
+| `messagebox` | [`ui.confirm`](/pyzed/library/confirm/), [`ui.prompt`](/pyzed/library/prompt/), [`ui.modal`](/pyzed/library/modal/) |
+| `filedialog` | No native file dialog yet: use a [`ui.tree`](/pyzed/library/tree/) of files or keep a helper library for it |
+| `ttk.Style` | [themes](/pyzed/guides/theming/) and [styles](/pyzed/guides/styles/) |
+
+## Migration tips
+
+1. **Move state out of the widgets.** Every `StringVar`, `IntVar` and every value you read with `.get()`
+   becomes an attribute of your `App`. That is most of the work.
+2. **Replace update code with `view()`.** Functions that destroy and rebuild frames, or `configure` labels,
+   disappear: write `view()` once from the attributes.
+3. **Map layouts one-to-one.** A `Frame` packed horizontally is a `pz.row`, vertically a `pz.column`; `grid`
+   becomes `pz.grid`; spacing and padding are arguments instead of `padx`/`pady` on every widget.
+4. **Timers and threads.** `root.after` loops become `subscriptions()`; long work goes in an `async def`
+   callback or a thread, and its result comes back as a message.
+5. **Keep tkinter where it fits.** A five-line dialog in a script that must run on a bare Python is still a
+   good tkinter use case.
+
+## When to choose which
+
+- **Choose tkinter** for tiny utilities and teaching material that must run with nothing installed, or when
+  your users need screen readers on platforms where Tk supports them.
+- **Choose Pyzed** when the app should look current, grow beyond a few windows, be designed visually, reload
+  while you work and ship as a polished executable.

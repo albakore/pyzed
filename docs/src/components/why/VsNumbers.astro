@@ -1,0 +1,69 @@
+---
+// Pyzed next to one other toolkit, for every measured metric (medians from src/data/benchmarks.json).
+import { fmt, NAMES, points, UNITS, version, type Metric } from './bench';
+
+interface Props {
+	other: string;
+	lang?: 'en' | 'es';
+}
+const { other, lang = 'en' } = Astro.props;
+const es = lang === 'es';
+const rows: { metric: Metric; rows?: string; app?: string; label: string }[] = [
+	{ metric: 'import', label: es ? 'Importar la biblioteca' : 'Import the library' },
+	{ metric: 'first_frame', rows: '10', label: es ? 'Primer fotograma, 10 filas' : 'First frame, 10 rows' },
+	{ metric: 'first_frame', rows: '1000', label: es ? 'Primer fotograma, 1.000 filas' : 'First frame, 1,000 rows' },
+	{ metric: 'rss', rows: '10', label: es ? 'Memoria (RSS), 10 filas' : 'Memory (RSS), 10 rows' },
+	{ metric: 'rss', rows: '1000', label: es ? 'Memoria (RSS), 1.000 filas' : 'Memory (RSS), 1,000 rows' },
+	{ metric: 'update', rows: '1000', label: es ? 'Actualizar 1.000 filas' : 'Update 1,000 rows' },
+	{ metric: 'install', label: es ? 'Tamaño instalado' : 'Install size' },
+	{ metric: 'loc', app: 'counter', label: es ? 'Líneas: contador' : 'Lines: counter' },
+	{ metric: 'loc', app: 'todo', label: es ? 'Líneas: lista de tareas' : 'Lines: to-do list' },
+];
+const table = rows
+	.map((r) => {
+		const all = new Map(points(r.metric, r).map((p) => [p.lib, p]));
+		return { ...r, a: all.get('pyzed'), b: all.get(other) };
+	})
+	.filter((r) => r.a && r.b);
+const head = es ? 'Medición' : 'Measurement';
+const lower = es ? 'menor es mejor en todas las filas' : 'lower is better in every row';
+---
+
+<table class="vs-numbers">
+	<thead>
+		<tr>
+			<th>{head} <small>({lower})</small></th>
+			<th>Pyzed <small>{version('pyzed')}</small></th>
+			<th>{NAMES[other]} <small>{version(other)}</small></th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			table.map((r) => (
+				<tr>
+					<td>{r.label}</td>
+					<td class:list={{ win: r.a!.value < r.b!.value }}>
+						{fmt(r.a!.value, r.metric)} {UNITS[r.metric][lang]}
+					</td>
+					<td class:list={{ win: r.b!.value < r.a!.value }}>
+						{fmt(r.b!.value, r.metric)} {UNITS[r.metric][lang]}
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>
+
+<style>
+	td {
+		font-variant-numeric: tabular-nums;
+	}
+	.win {
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	small {
+		color: var(--sl-color-gray-3);
+		font-weight: 400;
+	}
+</style>

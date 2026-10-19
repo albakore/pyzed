@@ -1,0 +1,33 @@
+---
+// Two code listings of the same app, one after the other, each with its toolkit as the title.
+// (Starlight's content column is too narrow to put two listings next to each other legibly.)
+import { Code } from '@astrojs/starlight/components';
+
+interface Props {
+	left: string;
+	right: string;
+	leftTitle: string;
+	rightTitle: string;
+	lang?: string;
+}
+const { left, right, leftTitle, rightTitle, lang = 'py' } = Astro.props;
+---
+
+<div class="side-by-side">
+	<div><Code code={left.trimEnd()} lang={lang} title={leftTitle} wrap /></div>
+	<div><Code code={right.trimEnd()} lang={lang} title={rightTitle} wrap /></div>
+</div>
+
+<style>
+	.side-by-side {
+		display: grid;
+		gap: 1rem;
+		margin-block: 1.25rem;
+	}
+	.side-by-side > div {
+		min-width: 0;
+	}
+	.side-by-side :global(.expressive-code) {
+		margin: 0;
+	}
+</style>

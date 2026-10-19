@@ -1,0 +1,79 @@
+---
+title: Pyzed vs Kivy for Python desktop apps
+description: "Pyzed vs Kivy: both draw their own GPU widgets, but differ in platforms, look, programming model and tooling. Same apps side by side, measured numbers and how to move from Kivy and KV to Pyzed."
+sidebar:
+  label: Pyzed vs Kivy
+  order: 7
+---
+
+import SideBySide from '../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import kivyCounter from '../../../../../benchmarks/apps/kivy/counter.py?raw';
+import pyzedTodo from '../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import kivyTodo from '../../../../../benchmarks/apps/kivy/todo.py?raw';
+
+[Kivy](https://kivy.org) and Pyzed have the same basic idea: draw every widget yourself on the GPU instead
+of asking the operating system for native ones. Kivy was built for touch screens and **runs on Android and
+iOS**, which Pyzed does not. Pyzed is built for **desktop productivity apps** and comes with the components,
+themes and tooling for them.
+
+## In short
+
+| | Pyzed | Kivy |
+| --- | --- | --- |
+| Platforms | Windows, macOS, Linux | Windows, macOS, Linux, **Android, iOS** |
+| Drawing | wgpu (Vulkan, Metal, DX12, GL), CPU fallback | OpenGL ES 2 |
+| Look | Zed-style desktop components, themes, dark mode | Kivy's own minimal style; Material with [KivyMD](https://kivymd.readthedocs.io) |
+| UI description | Python only | Python plus the KV language |
+| State | Plain attributes, `view()` rebuilt on change | Kivy properties and bindings |
+| Desktop details | Menus, shortcuts, tabs, trees, docks, code editor, multi-window | Touch-first; desktop conventions are up to you |
+| Designer, hot reload | Pyzed Design, `pyzed dev` | Third-party tools |
+| Accessibility | Keyboard; no screen readers yet | No screen readers |
+
+## The same counter
+
+<SideBySide left={pyzedCounter} right={kivyCounter} leftTitle="Pyzed" rightTitle="Kivy (Python + KV)" />
+
+## The same to-do list
+
+The Kivy version uses a `RecycleView`, Kivy's recommended way to show lists, with its row layout in KV.
+
+<SideBySide left={pyzedTodo} right={kivyTodo} leftTitle="Pyzed" rightTitle="Kivy (Python + KV)" />
+
+## Measured
+
+Medians from [the benchmarks](/pyzed/why/benchmarks/) (Linux, no GPU: both toolkits render through Mesa's
+software OpenGL/Vulkan, so the comparison between these two is like for like).
+
+<VsNumbers other="kivy" />
+
+## From Kivy concepts to Pyzed
+
+| Kivy | Pyzed |
+| --- | --- |
+| `App.build()` returns the root widget | `App.view()` returns the tree, every time state changes |
+| `NumericProperty`, `StringProperty`, `ListProperty` | plain attributes |
+| KV rules (`<MyRow>:`) | Python functions that return widgets, or [components](/pyzed/guides/components/) |
+| `BoxLayout(orientation=...)` | `pz.row` / `pz.column` |
+| `GridLayout`, `AnchorLayout`, `FloatLayout` | `pz.grid`, `pz.center` / alignment, `pz.stack` + [`pz.anchor_layout`](/pyzed/guides/layout/) |
+| `ScrollView`, `RecycleView` | `pz.scrollable`, [`ui.virtual_list`](/pyzed/library/virtual-list/) |
+| `on_press: app.do()` | `on_press=self.do` |
+| `Clock.schedule_interval` | `pz.every(...)` in `subscriptions()` |
+| `Animation(...)` | [`pz.Animation` and transitions](/pyzed/guides/animation/) |
+| `Window.clearcolor`, KivyMD themes | [themes](/pyzed/guides/theming/) |
+
+## Migration tips
+
+1. **Collapse KV into `view()`.** Each KV rule becomes a function that takes data and returns widgets.
+   Bindings such as `text: str(app.count)` become plain expressions: `ui.heading(str(self.count))`.
+2. **Drop the properties.** Kivy properties exist so bindings can observe changes; Pyzed re-runs `view()`
+   after every event, so ordinary attributes are enough.
+3. **Rethink touch-only patterns.** Desktop users expect menus, keyboard shortcuts and hover states, which
+   Pyzed components provide.
+
+## When to choose which
+
+- **Choose Kivy** when the same app must run on phones and tablets, or for touch kiosks and multimedia apps.
+- **Choose Pyzed** for desktop apps that should look and behave like modern desktop software, with a
+  designer, hot reload and AI tooling, and no second language to learn.

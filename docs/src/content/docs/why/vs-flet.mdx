@@ -1,0 +1,77 @@
+---
+title: Pyzed vs Flet for Python desktop apps
+description: "Pyzed vs Flet (Flutter for Python): architecture, platforms, look, tooling and measured startup and memory, with the same apps side by side and how to move a Flet desktop app to Pyzed."
+sidebar:
+  label: Pyzed vs Flet
+  order: 8
+---
+
+import SideBySide from '../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import fletCounter from '../../../../../benchmarks/apps/flet/counter.py?raw';
+import pyzedTodo from '../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import fletTodo from '../../../../../benchmarks/apps/flet/todo.py?raw';
+
+[Flet](https://flet.dev) lets you build [Flutter](https://flutter.dev) apps in Python. Your Python code runs
+in one process and sends the control tree to a Flutter client that draws it, on the desktop, on the web or
+on a phone. That reach is Flet's big strength. Pyzed draws in the same process as your Python code, through
+a Rust renderer, and focuses on the desktop.
+
+## In short
+
+| | Pyzed | Flet |
+| --- | --- | --- |
+| Architecture | One process: Python + Rust renderer (Iced) | Python process + Flutter client process, talking over a protocol |
+| Platforms | Windows, macOS, Linux | Windows, macOS, Linux, **web, Android, iOS** |
+| Look | Zed-style, dense, desktop-first | Material 3 or Cupertino, mobile-first |
+| Model | State + `view()` rebuilt from data | Mutable controls + `page.update()`; Flet 1.0 adds declarative components with hooks |
+| Packaging | `pyzed build` (PyInstaller), no extra SDK | `flet build` (needs the Flutter SDK) |
+| Designer | Pyzed Design | – |
+| Hot reload | Keeps app state | `flet run` restarts the app on save |
+| Accessibility | Keyboard; no screen readers yet | Screen readers through Flutter's semantics |
+
+## The same counter
+
+<SideBySide left={pyzedCounter} right={fletCounter} leftTitle="Pyzed" rightTitle="Flet" />
+
+## The same to-do list
+
+<SideBySide left={pyzedTodo} right={fletTodo} leftTitle="Pyzed" rightTitle="Flet" />
+
+## Measured
+
+Medians from [the benchmarks](/pyzed/why/benchmarks/) (Linux, no GPU: software rendering for both). Flet's
+memory includes its Flutter client process, which is where the window lives. Its install size counts the
+Python packages plus the desktop client that `flet` downloads on first run.
+
+<VsNumbers other="flet" />
+
+## From Flet concepts to Pyzed
+
+| Flet | Pyzed |
+| --- | --- |
+| `ft.run(main)` with `main(page)` | `pz.run(MyApp)` with a `pz.App` class |
+| `page.add(...)`, `page.update()` | return the tree from `view()`; no manual update |
+| `ft.Column`, `ft.Row`, `ft.Container` | `pz.column`, `pz.row`, `pz.container` |
+| `ft.Text`, `ft.Button`, `ft.TextField`, `ft.Checkbox` | `ui.label`, `ui.button`, `ui.input`, `ui.checkbox` |
+| `on_click=handler(e)` | `on_press=method` (no event argument needed) |
+| `page.theme_mode = ft.ThemeMode.DARK` | `theme = "One Dark"` or `pz.themes.auto(...)` |
+| `page.run_task(coro)` | return a coroutine from a callback |
+| `ft.ListView` | [`ui.virtual_list`](/pyzed/library/virtual-list/) |
+| `ft.NavigationRail`, `ft.Tabs` | [`ui.workspace`](/pyzed/library/workspace/) panels, [`ui.tab_bar`](/pyzed/library/tab-bar/) |
+
+## Migration tips
+
+1. **Move control state into the app.** Values you read back from controls (`field.value`,
+   `checkbox.value`) become attributes, set by the controls' callbacks.
+2. **Delete `page.update()` calls.** Pyzed redraws after every callback.
+3. **Expect a denser UI.** Material spacing is made for touch; Pyzed's components are sized like a desktop
+   editor. Use `size="lg"` variants or [styles](/pyzed/guides/styles/) if you want more air.
+
+## When to choose which
+
+- **Choose Flet** when one codebase must run on the web and on phones, or you want Flutter's Material
+  widgets.
+- **Choose Pyzed** for desktop-first apps: one process, no Flutter SDK to package, a visual designer, hot
+  reload that keeps your state, and a dense, professional look.

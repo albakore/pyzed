@@ -1,0 +1,93 @@
+---
+title: Comparativa de frameworks GUI para Python (2026)
+description: "Pyzed comparado con tkinter, PyQt/PySide (Qt), Kivy, Dear PyGui, Flet, Toga, NiceGUI, wxPython y CustomTkinter: licencia, renderizado, aspecto, diseñador, recarga en caliente, async, móvil y web, empaquetado, tipos y herramientas de IA."
+sidebar:
+  label: Comparativa de funciones
+  order: 2
+---
+
+Cada toolkit GUI de Python hace concesiones distintas. Esta página las pone lado a lado, incluidos los casos
+en los que Pyzed **no** es la mejor elección. Para números medidos, mira los [Benchmarks](/pyzed/es/why/benchmarks/).
+
+:::note[Cómo leer las tablas]
+Los datos se comprobaron con la documentación de cada proyecto en octubre de 2026. «De terceros» significa
+que existe pero fuera del proyecto; «–» significa que el proyecto no lo ofrece (hasta donde pudimos
+encontrar). Si algo está desactualizado, [abre un issue](https://github.com/albakore/pyzed/issues) y lo
+corregimos.
+:::
+
+## Los contendientes
+
+| Toolkit | Qué es | Desde |
+| --- | --- | --- |
+| **[Pyzed](https://github.com/albakore/pyzed)** | API de Python sobre [Iced](https://iced.rs) (Rust), con componentes al estilo de Zed | 2026 |
+| **[tkinter](https://docs.python.org/es/3/library/tkinter.html)** | El binding estándar de Python a Tcl/Tk | años 90 |
+| **[CustomTkinter](https://customtkinter.tomschimansky.com)** | Widgets de aspecto moderno dibujados sobre tkinter | 2021 |
+| **[PyQt](https://www.riverbankcomputing.com/software/pyqt/) / [PySide](https://doc.qt.io/qtforpython-6/)** | Bindings al framework Qt (C++) | 1998 / 2009 |
+| **[wxPython](https://wxpython.org)** | Bindings a wxWidgets, que envuelve los widgets nativos | 1998 |
+| **[Kivy](https://kivy.org)** | Widgets dibujados con OpenGL, con su propio lenguaje KV, para escritorio y móvil | 2011 |
+| **[Dear PyGui](https://github.com/hoffstadt/DearPyGui)** | Bindings a Dear ImGui, un toolkit en modo inmediato por GPU | 2020 |
+| **[Flet](https://flet.dev)** | Python controlando una interfaz Flutter | 2022 |
+| **[Toga](https://toga.readthedocs.io)** | El toolkit de BeeWare sobre los widgets nativos de cada plataforma | 2014 |
+| **[NiceGUI](https://nicegui.io)** | Interfaz web (Vue + Quasar) servida desde Python, en un navegador o un webview | 2021 |
+
+## Renderizado, aspecto y plataformas
+
+| Toolkit | Licencia | Cómo dibuja | Aspecto por defecto | Escritorio | Móvil | Web |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Pyzed** | MIT | Rust: wgpu (GPU), tiny-skia (CPU de respaldo) | Editor Zed, temas, modo oscuro | Win, macOS, Linux | – | – |
+| tkinter | PSF + Tcl/Tk (estilo BSD) | Widgets propios de Tk; `ttk` usa temas nativos en Windows y macOS | Clásico; ttk más cercano a lo nativo | Win, macOS, Linux | – | – |
+| CustomTkinter | MIT | Dibujo en canvas de Tk | Moderno, claro y oscuro | Win, macOS, Linux | – | – |
+| PyQt / PySide | GPL o comercial / LGPL o comercial | Qt Widgets (raster por CPU) o Qt Quick (grafo de escena por GPU) | Estilos casi nativos, totalmente personalizables | Win, macOS, Linux | PySide: Android (vista previa técnica) | – |
+| wxPython | wxWindows Library Licence | Widgets nativos de cada sistema | Nativo | Win, macOS, Linux | – | – |
+| Kivy | MIT | OpenGL (ES 2) | Propio de Kivy; Material con KivyMD | Win, macOS, Linux | Android, iOS | – |
+| Dear PyGui | MIT | Dear ImGui sobre DirectX 11, Metal u OpenGL | Estilo de herramienta ImGui | Win, macOS, Linux | – | – |
+| Flet | Apache 2.0 | Flutter (Skia / Impeller) en un proceso cliente aparte | Material o Cupertino | Win, macOS, Linux | Android, iOS | Sí |
+| Toga | BSD 3-Clause | Widgets nativos (GTK, Cocoa, WinForms, Android, iOS) | Nativo | Win, macOS, Linux | Android, iOS | Experimental |
+| NiceGUI | MIT | El navegador (HTML, CSS, JavaScript) | Quasar (Material) | En navegador o webview | A través del navegador | Sí |
+
+## Herramientas y experiencia de desarrollo
+
+| Toolkit | Diseñador visual | Recarga en caliente | `async` | Tipos | Empaquetado |
+| --- | --- | --- | --- | --- | --- |
+| **Pyzed** | **[Pyzed Design](/pyzed/es/editor/)**, incluido | **Sí, conserva el estado** (`pyzed dev`) | Sí (corrutinas y generadores async en callbacks) | Sí (`py.typed`, stubs del núcleo) | `pyzed build` (PyInstaller) |
+| tkinter | De terceros (PAGE, Pygubu) | – | – (integración manual del bucle) | Stubs en typeshed | PyInstaller, Nuitka… |
+| CustomTkinter | – | – | – | Parcial | PyInstaller, Nuitka… |
+| PyQt / PySide | Qt Designer, Qt Creator, Qt Design Studio | Vista previa de QML en las herramientas de Qt; no para código Widgets | PySide: QtAsyncio; `qasync` de terceros | Sí (stubs incluidos) | `pyside6-deploy` (Nuitka), PyInstaller |
+| wxPython | De terceros (wxFormBuilder, wxGlade) | – | De terceros (`wxasync`) | Parcial | PyInstaller… |
+| Kivy | – | De terceros | Sí (bucles de asyncio y trio) | Parcial | Buildozer, python-for-android, kivy-ios, PyInstaller |
+| Dear PyGui | – | – | – (bucle de render propio) | Sí (API anotada) | PyInstaller… |
+| Flet | – | Sí (`flet run` reinicia la app al guardar) | Sí | Sí | `flet build` (requiere el SDK de Flutter) |
+| Toga | – | – | Sí (asyncio) | Parcial | [Briefcase](https://briefcase.readthedocs.io) |
+| NiceGUI | – | Sí (recarga del servidor, el estado de la página se reinicia) | Sí | Sí | Despliegue web; `nicegui-pack` para escritorio |
+
+## Asistentes de IA, accesibilidad y madurez
+
+| Toolkit | Herramientas de IA del proyecto | Lectores de pantalla | Madurez y ecosistema |
+| --- | --- | --- | --- |
+| **Pyzed** | **[Servidor MCP](/pyzed/es/guides/mcp/), [`llms.txt`](https://albakore.github.io/pyzed/llms.txt), [`pyzed.agents`](/pyzed/es/guides/agents/), panel de agente en el diseñador** | **Todavía no** ([por qué](/pyzed/es/guides/accessibility/#lectores-de-pantalla)) | **Nuevo (2026)**, ecosistema pequeño |
+| tkinter | – | Limitado | Décadas de respuestas, tutoriales y libros; en toda instalación de Python |
+| CustomTkinter | – | Limitado (como tkinter) | Popular, un mantenedor principal |
+| PyQt / PySide | Qt AI Assistant en Qt Creator (comercial, orientado a C++/QML) | Sí | El toolkit más completo: gráficas, multimedia, motor web, 3D… |
+| wxPython | – | Sí (widgets nativos) | Longevo, comunidad más pequeña hoy |
+| Kivy | – | – | Maduro, fuerte en táctil y móvil |
+| Dear PyGui | – | – | Excelente para herramientas y gráficas; modelo en modo inmediato |
+| Flet | [Servidor MCP](https://flet.dev/docs/cookbook/flet-mcp) | Sí (semántica de Flutter) | Crece rápido, gran conjunto de widgets de Flutter |
+| Toga | – | Sí (widgets nativos) | Parte de BeeWare; todavía antes de la 1.0 |
+| NiceGUI | Servidores MCP de la comunidad (de terceros) | Accesibilidad del navegador | Activo; lo mejor para paneles web |
+
+## ¿Cuál debería usar?
+
+- **Necesitas Android o iOS:** Kivy, Flet o Toga. Pyzed es solo para escritorio.
+- **Necesitas una app web:** NiceGUI o Flet (o un framework web). Pyzed dibuja ventanas nativas.
+- **El soporte de lectores de pantalla es un requisito hoy:** Qt, wxPython, Toga o Flet.
+- **Necesitas un conjunto enorme de widgets** (gráficas, vídeo, un navegador embebido, 3D) y te encajan su
+  tamaño y su licencia: Qt. Mira [Pyzed vs PyQt/PySide](/pyzed/es/why/vs-pyqt-pyside/).
+- **Un script diminuto que debe funcionar sin instalar nada:** tkinter, que viene con Python. Mira
+  [Pyzed vs tkinter](/pyzed/es/why/vs-tkinter/).
+- **Gráficas en tiempo real y herramientas de depuración:** Dear PyGui es excelente. Mira
+  [Pyzed vs Dear PyGui](/pyzed/es/why/vs-dear-pygui/).
+- **Una app de escritorio moderna** (una herramienta interna, un editor, un panel, un lanzador, un cliente
+  para tu API) que se vea bien sin trabajo de diseño, arranque rápido, se construya visualmente y con ayuda
+  de IA, y se distribuya como un único ejecutable: **para eso está Pyzed.** Empieza con el
+  [inicio rápido](/pyzed/es/getting-started/quickstart/).

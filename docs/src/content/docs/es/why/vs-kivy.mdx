@@ -1,0 +1,81 @@
+---
+title: Pyzed vs Kivy para apps de escritorio en Python
+description: "Pyzed vs Kivy: los dos dibujan sus propios widgets por GPU, pero difieren en plataformas, aspecto, modelo de programación y herramientas. Las mismas apps lado a lado, números medidos y cómo pasar de Kivy y KV a Pyzed."
+sidebar:
+  label: Pyzed vs Kivy
+  order: 7
+---
+
+import SideBySide from '../../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import kivyCounter from '../../../../../../benchmarks/apps/kivy/counter.py?raw';
+import pyzedTodo from '../../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import kivyTodo from '../../../../../../benchmarks/apps/kivy/todo.py?raw';
+
+[Kivy](https://kivy.org) y Pyzed comparten la idea básica: dibujar cada widget por su cuenta en la GPU en vez
+de pedir widgets nativos al sistema operativo. Kivy nació para pantallas táctiles y **funciona en Android e
+iOS**, algo que Pyzed no hace. Pyzed está hecho para **apps de productividad de escritorio** y trae los
+componentes, temas y herramientas para ellas.
+
+## En resumen
+
+| | Pyzed | Kivy |
+| --- | --- | --- |
+| Plataformas | Windows, macOS, Linux | Windows, macOS, Linux, **Android, iOS** |
+| Dibujo | wgpu (Vulkan, Metal, DX12, GL), CPU de respaldo | OpenGL ES 2 |
+| Aspecto | Componentes de escritorio al estilo de Zed, temas, modo oscuro | Estilo mínimo propio; Material con [KivyMD](https://kivymd.readthedocs.io) |
+| Descripción de la interfaz | Solo Python | Python más el lenguaje KV |
+| Estado | Atributos normales, `view()` se reconstruye al cambiar | Propiedades y bindings de Kivy |
+| Detalles de escritorio | Menús, atajos, pestañas, árboles, docks, editor de código, varias ventanas | Pensado para táctil; las convenciones de escritorio son cosa tuya |
+| Diseñador, recarga | Pyzed Design, `pyzed dev` | Herramientas de terceros |
+| Accesibilidad | Teclado; sin lectores de pantalla todavía | Sin lectores de pantalla |
+
+## El mismo contador
+
+<SideBySide left={pyzedCounter} right={kivyCounter} leftTitle="Pyzed" rightTitle="Kivy (Python + KV)" />
+
+## La misma lista de tareas
+
+La versión de Kivy usa un `RecycleView`, la forma recomendada por Kivy para mostrar listas, con el diseño de
+la fila en KV.
+
+<SideBySide left={pyzedTodo} right={kivyTodo} leftTitle="Pyzed" rightTitle="Kivy (Python + KV)" />
+
+## Medido
+
+Medianas de [los benchmarks](/pyzed/es/why/benchmarks/) (Linux, sin GPU: los dos toolkits renderizan con el
+OpenGL/Vulkan por software de Mesa, así que entre ellos la comparación es justa).
+
+<VsNumbers other="kivy" lang="es" />
+
+## De los conceptos de Kivy a Pyzed
+
+| Kivy | Pyzed |
+| --- | --- |
+| `App.build()` devuelve el widget raíz | `App.view()` devuelve el árbol, cada vez que cambia el estado |
+| `NumericProperty`, `StringProperty`, `ListProperty` | atributos normales |
+| Reglas KV (`<MiFila>:`) | funciones de Python que devuelven widgets, o [componentes](/pyzed/es/guides/components/) |
+| `BoxLayout(orientation=...)` | `pz.row` / `pz.column` |
+| `GridLayout`, `AnchorLayout`, `FloatLayout` | `pz.grid`, `pz.center` / alineación, `pz.stack` + [`pz.anchor_layout`](/pyzed/es/guides/layout/) |
+| `ScrollView`, `RecycleView` | `pz.scrollable`, [`ui.virtual_list`](/pyzed/es/library/virtual-list/) |
+| `on_press: app.hacer()` | `on_press=self.hacer` |
+| `Clock.schedule_interval` | `pz.every(...)` en `subscriptions()` |
+| `Animation(...)` | [`pz.Animation` y transiciones](/pyzed/es/guides/animation/) |
+| `Window.clearcolor`, temas de KivyMD | [temas](/pyzed/es/guides/theming/) |
+
+## Consejos de migración
+
+1. **Pasa el KV a `view()`.** Cada regla KV se convierte en una función que recibe datos y devuelve widgets.
+   Los bindings como `text: str(app.count)` pasan a ser expresiones normales: `ui.heading(str(self.count))`.
+2. **Olvídate de las propiedades.** Las propiedades de Kivy existen para que los bindings observen cambios;
+   Pyzed vuelve a ejecutar `view()` después de cada evento, así que bastan atributos normales.
+3. **Repiensa los patrones solo táctiles.** En escritorio se esperan menús, atajos de teclado y estados al
+   pasar el ratón, y los componentes de Pyzed los traen.
+
+## Cuándo elegir cada uno
+
+- **Elige Kivy** cuando la misma app deba funcionar en móviles y tablets, o para quioscos táctiles y apps
+  multimedia.
+- **Elige Pyzed** para apps de escritorio que deban verse y comportarse como software de escritorio moderno,
+  con diseñador, recarga en caliente y herramientas de IA, y sin un segundo lenguaje que aprender.

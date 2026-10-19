@@ -1,0 +1,180 @@
+---
+title: Benchmarks de GUI en Python — Pyzed vs tkinter, Qt, Kivy, Flet…
+description: "Benchmarks medidos y reproducibles de toolkits GUI de Python: tiempo de importación, tiempo hasta el primer fotograma, memoria, latencia al actualizar 1.000 filas, tamaño instalado y líneas de código de Pyzed, tkinter, CustomTkinter, PySide6, Kivy, Dear PyGui, Flet y Toga."
+sidebar:
+  label: Benchmarks
+  order: 3
+---
+
+import BenchChart from '../../../../components/why/BenchChart.astro';
+import BenchTable from '../../../../components/why/BenchTable.astro';
+import { bench, versionsLine } from '../../../../components/why/bench';
+
+export const m = bench.machine;
+
+Estos números se **midieron**, no se estimaron: cada gráfica de esta página se dibuja a partir del archivo
+JSON que escribió el script de benchmarks, y puedes ejecutar el mismo script en tu máquina. Vienen de una
+sola máquina sin GPU, así que léelos como una comparación entre toolkits en las mismas condiciones, no como
+números absolutos para tu ordenador.
+
+:::caution[Renderizado por software]
+La máquina no tiene GPU. Las ventanas se mostraron en un servidor X virtual (Xvfb) y todos los toolkits que
+usan OpenGL o Vulkan (Pyzed, Kivy, Dear PyGui, Flet) renderizaron en la CPU con los drivers llvmpipe y lavapipe
+de Mesa. Es el peor caso para los toolkits por GPU y el caso normal para tkinter, Qt Widgets y GTK, que dibujan
+en la CPU de todos modos. En un ordenador con GPU, la parte de dibujo de los toolkits por GPU sale de la CPU.
+:::
+
+## Conclusiones principales
+
+- **El arranque es rápido en todos salvo en Flet y, con muchos widgets, en Kivy y Toga.** Pyzed muestra una
+  ventana de 10 filas en unos 0,23 s desde el lanzamiento y una de 1.000 filas en unos 0,25 s: construir y
+  distribuir 2.000 widgets más le cuesta unos 25 ms. tkinter, Dear PyGui y Qt arrancan antes; Kivy, Toga y
+  Flet necesitan casi un segundo para 1.000 filas.
+- **Actualizar 1.000 filas le lleva a Pyzed unos 19 ms** desde el cambio de estado hasta la pantalla, aunque
+  reconstruye toda la vista desde Python cada vez. Es algo más rápido que Qt Widgets, unas 3 veces más rápido
+  que Kivy y 9 veces más que Flet; tkinter y Dear PyGui son aún más rápidos. Toga (GTK) necesitó unos 37 s por
+  actualización en esta prueba, porque cada cambio de etiqueta provoca un nuevo cálculo del diseño.
+- **La memoria depende del renderizador.** Con el driver Vulkan por software usado aquí, el renderizador por
+  GPU de Pyzed ocupa unos 176 MB; la misma app con el renderizador por CPU de Pyzed (tiny-skia, activado con
+  `ICED_BACKEND=tiny-skia`) ocupa unos 51 MB, entre tkinter (25 MB) y Qt (72 MB). Los demás toolkits por GPU
+  pagan un coste de driver parecido aquí (Dear PyGui 123 MB, Kivy 146 MB, Flet 268 MB).
+- **Tamaño instalado:** unos 30 MB para Pyzed, frente a 238 MB de lo esencial de Qt, 83 MB de Kivy y 51 MB de
+  Flet con su cliente. tkinter, Dear PyGui, Toga (que usa el GTK del sistema) y CustomTkinter (que usa tkinter)
+  son más pequeños.
+- **Código:** la lista de tareas ocupa 31 líneas en Pyzed, la mitad que en PySide6 (62) y muy por debajo de
+  Kivy (81). La de Flet es la más corta (22).
+
+## Arranque
+
+**Importar** es el tiempo de hacer `import` del toolkit en un proceso de Python nuevo. **Primer fotograma** es
+el tiempo desde que se lanza el proceso de la app hasta que su ventana está en pantalla con su contenido: el
+script vigila la pantalla buscando una barra de color en la parte inferior de la ventana.
+
+<BenchChart metric="import" title="Importar el toolkit" lang="es" />
+<BenchChart metric="first_frame" rows="10" title="Del lanzamiento al primer fotograma: ventana con 10 filas" lang="es" />
+<BenchChart metric="first_frame" rows="1000" title="Del lanzamiento al primer fotograma: ventana con 1.000 filas" lang="es" note="Un widget real por fila (una etiqueta y un botón), sin listas virtualizadas. Falta CustomTkinter: su app de 1.000 filas falló (mira las advertencias)." />
+
+## Memoria
+
+Memoria residente (RSS) de los procesos de la app un segundo después del primer fotograma. En Flet incluye el
+proceso cliente de Flutter que dibuja la ventana.
+
+<BenchChart metric="rss" rows="10" title="Memoria: ventana con 10 filas" lang="es" />
+<BenchChart metric="rss" rows="1000" title="Memoria: ventana con 1.000 filas" lang="es" />
+
+## Actualizar 1.000 filas
+
+Cada 250 ms la app cambia el texto de las 1.000 etiquetas y el color de la barra inferior en la misma
+actualización. La latencia es el tiempo desde que la app cambia su estado hasta que el color nuevo está en
+pantalla; 10 actualizaciones por lanzamiento, 7 lanzamientos.
+
+<BenchChart metric="update" rows="1000" cap={250} title="Actualizar 1.000 etiquetas: del cambio de estado a la pantalla" lang="es" note="El eje se corta en 250 ms: la barra de Toga aparece partida y su valor real se muestra a la derecha." />
+<BenchChart metric="update" rows="10" title="Actualizar 10 etiquetas: del cambio de estado a la pantalla" lang="es" />
+
+## Tamaño instalado
+
+Cuánto crece un entorno virtual nuevo al instalar el toolkit con sus dependencias. tkinter cuenta los archivos
+de Tcl/Tk que vienen con Python. Flet incluye el cliente de escritorio que descarga en la primera ejecución.
+Toga no incluye GTK, que viene del sistema operativo. NiceGUI aparece solo como referencia: dibuja en un
+navegador web, así que no formó parte de los benchmarks de ventanas.
+
+<BenchChart metric="install" title="Tamaño instalado, con dependencias" lang="es" />
+
+## Líneas de código
+
+Las mismas apps de contador y lista de tareas escritas en cada toolkit
+([código](https://github.com/albakore/pyzed/tree/main/benchmarks/apps)), contando las líneas que no son
+vacías, comentarios ni docstrings. Mira [Experiencia de desarrollo](/pyzed/es/why/developer-experience/#cuánto-código)
+para las gráficas y qué hacen esas líneas.
+
+## Números en bruto
+
+Mediana en negrita; debajo, el mínimo–máximo y el número de muestras.
+
+<BenchTable
+	lang="es"
+	columns={[
+		{ metric: 'import', label: 'Importar' },
+		{ metric: 'first_frame', rows: '10', label: 'Primer fotograma, 10 filas' },
+		{ metric: 'first_frame', rows: '1000', label: 'Primer fotograma, 1.000 filas' },
+		{ metric: 'rss', rows: '10', label: 'RSS, 10 filas' },
+		{ metric: 'rss', rows: '1000', label: 'RSS, 1.000 filas' },
+	]}
+/>
+
+<BenchTable
+	lang="es"
+	columns={[
+		{ metric: 'update', rows: '10', label: 'Actualizar, 10 filas' },
+		{ metric: 'update', rows: '1000', label: 'Actualizar, 1.000 filas' },
+		{ metric: 'install', label: 'Tamaño instalado' },
+		{ metric: 'loc', app: 'counter', label: 'Contador' },
+		{ metric: 'loc', app: 'todo', label: 'Tareas' },
+	]}
+/>
+
+Los resultados completos, con cada muestra, están en
+[`benchmarks/results/`](https://github.com/albakore/pyzed/tree/main/benchmarks/results).
+
+## Máquina y versiones
+
+<ul>
+	<li>Fecha: {bench.date}</li>
+	<li>Sistema: {m.os}</li>
+	<li>CPU: {m.cpu}, {m.cores} núcleos; {m.ram_gb} GB de RAM (un contenedor en la nube)</li>
+	<li>Pantalla: Xvfb (framebuffer virtual de X, sin GPU); OpenGL/Vulkan con llvmpipe/lavapipe de Mesa {m.mesa}</li>
+	<li>Python {m.python} (python-build-standalone, con uv); Tk {m.tk}</li>
+	<li>
+		Toolkits:{' '}
+		{versionsLine()}
+	</li>
+</ul>
+
+## Método
+
+- **La misma app en todos.** El `bench.py` de cada toolkit construye una ventana de 640×480 con una lista
+  desplazable de N filas (una etiqueta y un botón «Open» cada una) y una barra de 40 px abajo pintada con un
+  color centinela. Las listas se construyen de la forma sencilla que documenta cada toolkit, con un widget por
+  fila: sin `RecycleView` en Kivy, sin `ListView` perezoso en Flet, sin `virtual_list` en Pyzed.
+- **El primer fotograma** se mide desde fuera: el harness lanza el proceso y captura la pantalla más o menos
+  cada milisegundo (con [mss](https://github.com/BoboTiG/python-mss)) hasta que hay 8.000 píxeles visibles del
+  color centinela.
+- **La memoria** es el RSS del proceso y sus hijos ([psutil](https://github.com/giampaolo/psutil)), un segundo
+  después del primer fotograma.
+- **Las actualizaciones** se miden entre la marca de tiempo de la propia app (`time.monotonic()`, impresa justo
+  antes de cambiar su estado) y el momento en que el harness ve el nuevo color de la barra.
+- **Repeticiones:** 7 lanzamientos por toolkit y tamaño, 10 actualizaciones por lanzamiento, 10 importaciones;
+  las gráficas muestran la mediana y una línea fina del mínimo al máximo.
+- **Pyzed (CPU renderer)** es la misma app de Pyzed arrancada con `ICED_BACKEND=tiny-skia`, que hace que Iced
+  use su renderizador por CPU en vez de wgpu: lo que Pyzed usa en máquinas sin un driver de GPU que funcione.
+- **Tamaño instalado:** un `uv venv` nuevo, `uv pip install --link-mode=copy <paquete>`, diferencia de tamaño.
+
+## Reprodúcelo
+
+```bash
+git clone https://github.com/albakore/pyzed && cd pyzed
+uv venv --python 3.13 .bench && source .bench/bin/activate
+uv pip install pyzed-ui pyside6 kivy dearpygui "flet[desktop]" toga customtkinter psutil mss numpy
+python benchmarks/run.py
+```
+
+Sin pantalla, arranca Xvfb por su cuenta; en un escritorio, deja las ventanas del benchmark a la vista
+mientras se ejecuta. Mira [`benchmarks/README.md`](https://github.com/albakore/pyzed/blob/main/benchmarks/README.md)
+para las opciones y los paquetes del sistema que necesitan algunos toolkits. Los resultados en otras máquinas
+son muy bienvenidos en un [issue](https://github.com/albakore/pyzed/issues).
+
+## Advertencias
+
+- **Una máquina, sin GPU** (ver arriba). Los resultados en Windows y macOS, y con una GPU real, serán distintos.
+- **El harness comparte la CPU** con la app: capturar la pantalla cuesta más o menos un núcleo mientras sondea.
+- **Tk dibuja widget a widget**, así que en tkinter la barra puede aparecer un momento antes de que se hayan
+  dibujado todas las filas; los toolkits por GPU presentan fotogramas completos.
+- **Dear PyGui redibuja continuamente**, así que su latencia de actualización incluye esperar a su siguiente
+  fotograma; además usa CPU en reposo, algo que aquí no se mide.
+- **CustomTkinter no tiene resultados con 1.000 filas**: su app murió en Xvfb con un error de X (BadAlloc o
+  BadValue en `CreatePixmap`) cuando su marco desplazable tenía más de unas 100 filas.
+- **No medidos:** wxPython no tiene wheels para Linux en PyPI y compilarlo desde el código fuente no era
+  práctico aquí; NiceGUI se ejecuta en un navegador web, así que medir una ventana de escritorio mediría el
+  navegador.
+- **Las líneas de código** dependen del estilo; las apps siguen las formas documentadas de cada toolkit, y las
+  mejoras son bienvenidas.
