@@ -245,20 +245,36 @@ impl graphics::Compositor for Compositor {
     async fn with_backend(
         settings: graphics::Settings,
         _display: impl compositor::Display,
-        compatible_window: impl compositor::Window,
+        compatible_window: impl compositor::Window + Clone,
         shell: Shell,
         backend: Option<&str>,
     ) -> Result<Self, graphics::Error> {
         match backend {
             None | Some("wgpu") => {
                 let mut settings = Settings::from(settings);
+                let chosen = wgpu::Backends::from_env();
 
-                if let Some(backends) = wgpu::Backends::from_env() {
+                if let Some(backends) = chosen {
                     settings.backends = backends;
                 }
 
                 if let Some(present_mode) = settings::present_mode_from_env() {
                     settings.present_mode = present_mode;
+                }
+
+                // pyzed: try the native APIs (Vulkan, Metal, DX12) first. Starting the GL
+                // backend too costs time and memory at every launch (and prints driver
+                // warnings on Mesa), so it is only started when none of them has an adapter.
+                if chosen.is_none() && settings.backends == wgpu::Backends::all() {
+                    let native = Settings {
+                        backends: wgpu::Backends::PRIMARY,
+                        ..settings
+                    };
+                    if let Ok(compositor) =
+                        new(native, compatible_window.clone(), shell.clone()).await
+                    {
+                        return Ok(compositor);
+                    }
                 }
 
                 Ok(new(settings, compatible_window, shell).await?)

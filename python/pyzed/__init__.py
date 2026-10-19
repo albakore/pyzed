@@ -20,7 +20,15 @@ Layout and primitives live at the top level (``pz.column``, ``pz.text``, ``pz.ca
 ready-made Zed-style components in ``pz.ui`` and colors in ``pz.themes``.
 """
 
-from ._core import (
+import os as _os
+
+# The native core allocates with mimalloc, which reads its options when the core loads. On
+# Linux it would commit whole memory arenas up front; committing on demand keeps the resident
+# memory where it was without the system allocator (and keeps mimalloc's speed).
+_os.environ.setdefault("MIMALLOC_ARENA_EAGER_COMMIT", "0")
+del _os
+
+from ._core import (  # noqa: E402 - after the allocator options above
     Command,
     Span,
     Subscription,
@@ -71,7 +79,6 @@ from ._core import (
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
 from .component import Component, state
-from .dock import Dock, DockPanel
 from .layout import anchor, anchor_layout, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
@@ -80,19 +87,51 @@ from .animation import Animation, define_animation, presence, set_reduced_motion
 from .accessibility import system_reduced_motion
 from .events import Event, on
 from .forms import validation_errors
-from .game import is_pressed, pressed
 from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import accessibility, animation, component, designer, dock, forms, i18n, layout, style, draw, events, game, hot_reload, theme, icons, reference, ui
+from . import accessibility, animation, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
 
-try:
-    # The version lives only in Cargo.toml; read it from the installed package metadata.
-    from importlib.metadata import version as _version
+# Loaded on first use, so ``import pyzed`` stays fast (an app that never opens the designer
+# or reads the reference doesn't pay for them). ``pz.Dock`` and ``from pyzed import Dock``
+# work the same as eager imports.
+_LAZY = {
+    "designer": ("designer", None),
+    "reference": ("reference", None),
+    "dock": ("dock", None),
+    "game": ("game", None),
+    "Dock": ("dock", "Dock"),
+    "DockPanel": ("dock", "DockPanel"),
+    "is_pressed": ("game", "is_pressed"),
+    "pressed": ("game", "pressed"),
+}
 
-    __version__ = _version("pyzed-ui")
-except Exception:  # pragma: no cover - running from a source tree without metadata
-    __version__ = "0+unknown"
+
+def __getattr__(name):
+    if name == "__version__":
+        # The version lives only in Cargo.toml; read it from the installed package metadata
+        # (importlib.metadata is slow to import, so only when someone asks).
+        try:
+            from importlib.metadata import version as _version
+
+            value = _version("pyzed-ui")
+        except Exception:  # pragma: no cover - running from a source tree without metadata
+            value = "0+unknown"
+    elif name in _LAZY:
+        import importlib
+
+        module, attr = _LAZY[name]
+        value = importlib.import_module(f".{module}", __name__)
+        if attr is not None:
+            value = getattr(value, attr)
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted({*globals(), *_LAZY, "__version__"})
 
 
 def hspace(width="fill"):

@@ -21,7 +21,6 @@ Components made with ``pz.Component`` also emit their own (custom) events with
 
 from __future__ import annotations
 
-import inspect
 from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple
 
 from . import _core
@@ -130,6 +129,8 @@ def accepts_argument(handler: Callable[..., Any]) -> bool:
     cached = _ARITY.get(cache_key)
     if cached is not None:
         return cached
+    import inspect  # only when a handler is first seen (it is slow to import)
+
     try:
         params = list(inspect.signature(handler).parameters.values())
     except (TypeError, ValueError):
