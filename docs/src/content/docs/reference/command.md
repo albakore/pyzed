@@ -73,6 +73,33 @@ Moves the editor cursor (line and column start at 1). Works even if the editor h
 | `line` | Line (from 1). |
 | `column` | Column (from 1). |
 
+### `fold_all`
+
+```python
+fold_all(id, fold=True)
+```
+
+Folds every block of the editor (`fold=False` unfolds them all). Works even if the editor hasn't been drawn yet.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The editor's `id`. |
+| `fold` | `True` to fold, `False` to unfold. |
+
+### `fold_line`
+
+```python
+fold_line(id, line, fold=True)
+```
+
+Folds (or unfolds) the block that starts at `line`, by indentation. Works even if the editor hasn't been drawn yet.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The editor's `id`. |
+| `line` | Line (from 1) where the block starts. |
+| `fold` | `True` to fold, `False` to unfold. |
+
 ### `scroll_to_end`
 
 ```python

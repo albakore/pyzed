@@ -183,6 +183,29 @@ def test_settings_roundtrip():
     assert settings.EditorSettings.from_dict({"tab_size": 99, "font_size": "x"}).tab_size == 16
 
 
+def test_editor_feature_settings():
+    s = settings.EditorSettings()
+    assert s.auto_close and s.folding and s.minimap and s.cursor_shape == "bar" and s.cursor_blink
+    assert settings.EditorSettings.from_dict({"cursor_shape": "triangle"}).cursor_shape == "bar"
+    assert settings.EditorSettings.from_dict({"cursor_shape": "block", "minimap": False}).cursor_shape == "block"
+
+
+def test_zoom_changes_and_resets_the_font_size(tmp_path):
+    d = Designer(tmp_path / "x.pzform", language_servers=False)
+    d.edit_whole_file()
+    a = d.assist
+    a.zoom(1)
+    a.zoom(1)
+    assert a.settings.font_size == settings.DEFAULT_FONT + 2 and settings.load().font_size == a.settings.font_size
+    a.zoom(-1)
+    assert a.settings.font_size == settings.DEFAULT_FONT + 1
+    a.zoom(0)
+    assert a.settings.font_size == settings.DEFAULT_FONT
+    for _ in range(40):
+        a.zoom(1)
+    assert a.settings.font_size == settings.MAX_FONT
+
+
 # -- the designer ------------------------------------------------------------------
 
 
@@ -221,6 +244,12 @@ def test_designer_settings_dialog_and_status(tmp_path):
     assert d.dialog_view(t) is not None
     d.assist.set("show_whitespace", True)
     assert settings.load().show_whitespace
+    assert d.view() is not None
+    for shape in settings.CURSOR_SHAPES:
+        d.assist.set("cursor_shape", shape)
+        assert d.view() is not None
+    d.assist.set("minimap", False)
+    d.assist.set("folding", False)
     assert d.view() is not None
 
 

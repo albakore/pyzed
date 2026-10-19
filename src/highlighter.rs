@@ -80,6 +80,8 @@ pub struct Settings {
     pub token: String,
     pub theme: u64,
     pub font: Font,
+    /// Color of text no rule matches (`None`: the iced theme's text color).
+    pub default: Option<Color>,
 }
 
 #[derive(Debug)]
@@ -89,16 +91,21 @@ pub struct Highlight {
 }
 
 impl Highlight {
-    pub fn to_format(&self, _theme: &iced::Theme) -> Format<Font> {
+    pub fn to_format(&self, theme: &iced::Theme) -> Format<Font> {
         Format {
-            color: self.color,
+            color: Some(self.color.unwrap_or_else(|| theme.palette().text)),
             font: self.font,
         }
+    }
+
+    pub fn color(&self) -> Option<Color> {
+        self.color
     }
 }
 
 pub struct Highlighter {
     syntax: &'static parsing::SyntaxReference,
+    default: Option<Color>,
     highlighter: highlighting::Highlighter<'static>,
     font: Font,
     caches: Vec<(parsing::ParseState, parsing::ScopeStack)>,
@@ -120,6 +127,7 @@ impl highlighter::Highlighter for Highlighter {
         let syntax = syntax(&settings.token);
         Highlighter {
             syntax,
+            default: settings.default,
             highlighter: highlighting::Highlighter::new(theme(settings.theme)),
             font: settings.font,
             caches: vec![(parsing::ParseState::new(syntax), parsing::ScopeStack::new())],
@@ -131,6 +139,7 @@ impl highlighter::Highlighter for Highlighter {
         self.syntax = syntax(&new_settings.token);
         self.highlighter = highlighting::Highlighter::new(theme(new_settings.theme));
         self.font = new_settings.font;
+        self.default = new_settings.default;
         self.change_line(0);
     }
 
@@ -167,6 +176,7 @@ impl highlighter::Highlighter for Highlighter {
         let ops = parser.parse_line(line, &SYNTAXES).unwrap_or_default();
         let highlighter = &self.highlighter;
         let font = self.font;
+        let default = self.default;
 
         Box::new(
             ScopeRangeIterator {
@@ -183,7 +193,8 @@ impl highlighter::Highlighter for Highlighter {
                 let style = highlighter.style_mod_for_stack(&stack.scopes);
                 let color = style
                     .foreground
-                    .map(|c| Color::from_rgba8(c.r, c.g, c.b, f32::from(c.a) / 255.0));
+                    .map(|c| Color::from_rgba8(c.r, c.g, c.b, f32::from(c.a) / 255.0))
+                    .or(default);
                 let font = style.font_style.and_then(|fs| {
                     if fs.is_empty() {
                         return None;

@@ -59,6 +59,8 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 | F5, Shift+F5 | Run the form, close the running form |
 | F7 | Edit the whole code file |
 | Ctrl+Space | Open the completion list (in the code editor) |
+| Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+wheel | Bigger, smaller or default font in the code editor |
+| Ctrl+Shift+[ / Ctrl+Shift+] | Fold / unfold the block around the cursor (in the code editor) |
 
 Right-click a control for a context menu with the same actions.
 
@@ -255,13 +257,19 @@ or `~/.config/pyzed`).
 | Setting | What it does |
 | --- | --- |
 | Language servers | Turns ty and ruff on or off, shows whether each is ready (and its version), the project root and the Python in use. **Restart servers** after `uv sync`. |
-| Theme, font size | The editor can use a different theme from the designer. |
+| Theme, font size | The editor can use a different theme from the designer. Ctrl+= / Ctrl+- (or Ctrl+wheel) change the size and Ctrl+0 resets it. |
 | Line numbers, highlight current line, wrap | Gutter and layout. |
 | Show whitespace | Draws spaces as `·` and tabs as `→`. |
+| Minimap | The code zoomed out on the right; click or drag it to scroll. |
+| Cursor shape, blink | Bar, block, underline or hollow, like Zed. |
 | Tab size | Tab inserts spaces, Enter keeps the indentation (one level more after `:`), Backspace removes a level. |
 | Autocomplete while typing | Off means the list only opens with Ctrl+Space. |
+| Auto-close brackets and quotes | Typing `(`, `[`, `{` or a quote inserts its pair (or wraps the selection); typing the closer steps over it. |
+| Code folding | Chevrons in the gutter fold blocks; Ctrl+Shift+[ and Ctrl+Shift+] fold and unfold at the cursor. |
 | Format with ruff on Apply | Runs `ruff format` on the code when you apply it. |
 | Code lens, inline diagnostics | Show or hide the notes at the end of lines. |
+
+![The whole file with two handlers folded and the minimap](../../../../screenshots/designer-code-folding.png)
 
 ## Components
 

@@ -2,6 +2,7 @@
 
 mod app;
 mod editor;
+mod editor_widgets;
 mod events;
 mod extra;
 mod fonts;

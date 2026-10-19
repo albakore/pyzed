@@ -292,6 +292,13 @@ class CodeAssist:
     def setter(self, key: str) -> Any:
         return lambda value: self.set(key, value)
 
+    def zoom(self, step: float) -> None:
+        """Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel in the editor: one point bigger, smaller or back to default."""
+        size = _settings.DEFAULT_FONT if step == 0 else self.settings.font_size + (1 if step > 0 else -1)
+        size = min(max(size, _settings.MIN_FONT), _settings.MAX_FONT)
+        if size != self.settings.font_size:
+            self.set("font_size", size)
+
     def restart_servers(self) -> None:
         if self.servers and self.d.editing is not None:
             self.intel.attach(self.code_file())
@@ -483,7 +490,8 @@ def code_panel(d: "Designer", t: Theme) -> Any:
         d.editor_id, text, language="py", on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
         on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
         active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
-        annotations=a.annotations(et), capture_keys=a.captured_keys, theme=et)
+        annotations=a.annotations(et), capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
+        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom, theme=et)
     area = _editor_area(a, editor, below, s.font_size, text.count("\n") + 1, s.line_numbers)
     return _core.column([header, area], width="fill", height="fill")
 
@@ -521,17 +529,29 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
                                     lambda name: a.set("theme", "" if name == theme_names[0] else name), width=200,
                                     theme=t), theme=t),
         ui.field("Font size", ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1, width=110,
-                                              theme=t), theme=t),
+                                              theme=t), description="Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets",
+                 theme=t),
         ui.field("Line numbers", switch("line_numbers"), theme=t),
         ui.field("Highlight current line", switch("highlight_line"), theme=t),
         ui.field("Show whitespace", switch("show_whitespace"), description="Spaces as · and tabs as →", theme=t),
         ui.field("Wrap long lines", switch("wrap"), theme=t),
+        ui.field("Minimap", switch("minimap"), description="Click or drag it to scroll", theme=t),
+    ], theme=t)
+    cursor = ui.settings_group("Cursor", [
+        ui.field("Shape", ui.segmented([shape.capitalize() for shape in _settings.CURSOR_SHAPES],
+                                       s.cursor_shape.capitalize(),
+                                       lambda name: a.set("cursor_shape", name.lower()), theme=t), theme=t),
+        ui.field("Blink", switch("cursor_blink"), theme=t),
     ], theme=t)
     editing = ui.settings_group("Editing", [
         ui.field("Tab size", ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1, max=8,
                                              step=1, width=110, theme=t),
                  description="Tab inserts spaces; Enter keeps the indentation", theme=t),
         ui.field("Autocomplete while typing", switch("autocomplete"), description="Ctrl+Space opens it anytime",
+                 theme=t),
+        ui.field("Auto-close brackets and quotes", switch("auto_close"),
+                 description="Also wraps the selection and steps over the closing one", theme=t),
+        ui.field("Code folding", switch("folding"), description="Chevrons in the gutter; Ctrl+Shift+[ and ]",
                  theme=t),
         ui.field("Format with ruff on Apply", switch("format_on_apply"), theme=t),
     ], theme=t)
@@ -558,7 +578,7 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
             ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
         ], spacing=2))
     servers = ui.settings_group("Language servers", rows, theme=t)
-    body = _core.scrollable(_core.column([servers, appearance, editing, lens], spacing=14, padding=(0, 6, 0, 0)),
+    body = _core.scrollable(_core.column([servers, appearance, cursor, editing, lens], spacing=14, padding=(0, 6, 0, 0)),
                             height=580, scrollbar_width=4)
     return ui.modal(body, title="Editor settings", on_close=d.close_dialog, width=560, footer=[
         ui.button("Restart servers", a.restart_servers, icon="refresh-cw", variant="ghost", theme=t),

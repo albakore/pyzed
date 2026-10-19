@@ -1130,6 +1130,20 @@ code_editor(
     on_cursor=None,
     active_line=None,
     scrollbar_color=None,
+    annotations=None,
+    whitespace=None,
+    tab_size=None,
+    capture_keys=None,
+    on_scroll=None,
+    auto_close=False,
+    folding=False,
+    minimap=None,
+    minimap_thumb=None,
+    cursor_shape='bar',
+    cursor_width=2.0,
+    cursor_blink=True,
+    cursor_color=None,
+    on_zoom=None,
 )
 ```
 
@@ -1165,3 +1179,17 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
 | `on_cursor` | Callable that receives `(line, column)`, from 1. |
 | `active_line` | Background color of the cursor line. |
 | `scrollbar_color` | Scrollbar color. |
+| `annotations` | `{line: "text"}` or `{line: ("text", color)}`: virtual text at the end of the line (code lens, diagnostics). |
+| `whitespace` | Draws spaces as `·` and tabs as `→` in this color. |
+| `tab_size` | Tab inserts spaces up to the next multiple; Enter keeps the indentation; Backspace removes a level. |
+| `capture_keys` | Keys the editor leaves to the app's `on_key` (`"up"`, `"enter"`…), e.g. while a completion list is open. |
+| `on_scroll` | Called on scroll. |
+| `auto_close` | Typing a bracket or quote also inserts its closing pair. |
+| `folding` | Fold chevrons in the gutter and Ctrl+Shift+[ / ]. |
+| `minimap` | Width of the minimap in pixels (`None`: no minimap). |
+| `minimap_thumb` | Color of the minimap's visible-area highlight. |
+| `cursor_shape` | `"bar"`, `"block"`, `"underline"` or `"hollow"`. |
+| `cursor_width` | Width of the bar cursor. |
+| `cursor_blink` | Whether the cursor blinks. |
+| `cursor_color` | Cursor color. |
+| `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |

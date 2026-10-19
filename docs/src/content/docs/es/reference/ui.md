@@ -1523,6 +1523,19 @@ editor(
     active_line=True,
     height='fill',
     placeholder=None,
+    annotations=None,
+    show_whitespace=False,
+    tab_size=None,
+    capture_keys=(),
+    on_scroll=None,
+    auto_close=True,
+    folding=True,
+    minimap=False,
+    cursor_shape='bar',
+    cursor_blink=True,
+    cursor_width=2.0,
+    cursor_color=None,
+    on_zoom=None,
     theme=None,
 )
 ```
@@ -1545,6 +1558,19 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `active_line` | Color de fondo de la línea del cursor. |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `placeholder` | Texto de ayuda cuando está vacío. |
+| `annotations` | `{línea: "texto"}` o `{línea: ("texto", color)}`: texto virtual al final de la línea (code lens, diagnósticos). |
+| `show_whitespace` | Dibuja los espacios como `·` y los tabuladores como `→`. |
+| `tab_size` | Tab inserta espacios hasta el siguiente múltiplo; Enter mantiene la sangría (un nivel más tras `:`); Backspace quita un nivel. |
+| `capture_keys` | Teclas que el editor deja al `on_key` de la app (`"up"`, `"enter"`…), por ejemplo con una lista de autocompletado abierta. |
+| `on_scroll` | Se llama al desplazar. |
+| `auto_close` | Cierra paréntesis, corchetes, llaves y comillas al escribir (y envuelve la selección). |
+| `folding` | Flechas de plegado en el margen; Ctrl+Shift+[ pliega y Ctrl+Shift+] despliega. |
+| `minimap` | `True` (o un ancho en píxeles) muestra un minimapa a la derecha. |
+| `cursor_shape` | `"bar"`, `"block"`, `"underline"` o `"hollow"`. |
+| `cursor_blink` | Si el cursor parpadea. |
+| `cursor_width` | Ancho del cursor de barra. |
+| `cursor_color` | Color del cursor (por defecto, el color de jugador del tema). |
+| `on_zoom` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

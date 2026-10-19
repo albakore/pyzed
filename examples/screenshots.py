@@ -227,6 +227,14 @@ def code_editor_shots(scale):
     _wait(lambda: all(lens.parts and "reference" in lens.parts[0] for lens in intel.lenses), 5)
     app.screenshot(OUT / "designer-diagnostics.png", size=(1440, 900), scale=scale)
 
+    # The whole file with two handlers folded and the minimap.
+    app.edit_whole_file()
+    lines = app.editing[1].split("\n")
+    folded = [n for n, line in enumerate(lines, 1) if line.startswith(("def sign_in_click", "def ticker_tick"))]
+    app.on_start = lambda: pz.Command.batch([pz.Command.fold_line(app.editor_id, n) for n in folded])
+    app.screenshot(OUT / "designer-code-folding.png", size=(1440, 900), scale=scale)
+    del app.on_start
+
     app.assist.settings = designer.EditorSettings(show_whitespace=True)
     app.open_editor_settings()
     app.screenshot(OUT / "designer-editor-settings.png", size=(1440, 900), scale=scale)

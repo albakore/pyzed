@@ -1523,6 +1523,19 @@ editor(
     active_line=True,
     height='fill',
     placeholder=None,
+    annotations=None,
+    show_whitespace=False,
+    tab_size=None,
+    capture_keys=(),
+    on_scroll=None,
+    auto_close=True,
+    folding=True,
+    minimap=False,
+    cursor_shape='bar',
+    cursor_blink=True,
+    cursor_width=2.0,
+    cursor_color=None,
+    on_zoom=None,
     theme=None,
 )
 ```
@@ -1545,6 +1558,19 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `active_line` | Background color of the cursor line. |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `placeholder` | Hint text shown when empty. |
+| `annotations` | `{line: "text"}` or `{line: ("text", color)}`: virtual text at the end of the line (code lens, diagnostics). |
+| `show_whitespace` | Draws spaces as `·` and tabs as `→`. |
+| `tab_size` | Tab inserts spaces up to the next multiple; Enter keeps the indentation (one more level after `:`); Backspace removes a level. |
+| `capture_keys` | Keys the editor leaves to the app's `on_key` (`"up"`, `"enter"`…), e.g. while a completion list is open. |
+| `on_scroll` | Called on scroll. |
+| `auto_close` | Closes brackets and quotes as you type (and wraps the selection). |
+| `folding` | Fold chevrons in the gutter; Ctrl+Shift+[ folds and Ctrl+Shift+] unfolds. |
+| `minimap` | `True` (or a width in pixels) shows a minimap on the right. |
+| `cursor_shape` | `"bar"`, `"block"`, `"underline"` or `"hollow"`. |
+| `cursor_blink` | Whether the cursor blinks. |
+| `cursor_width` | Width of the bar cursor. |
+| `cursor_color` | Cursor color (the theme's player color by default). |
+| `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`
