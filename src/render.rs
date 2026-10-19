@@ -28,6 +28,8 @@ use crate::widget::{Kind, SvgSource, Widget};
 pub struct Caches {
     editors: FrozenMap<String, Box<EditorState>>,
     pending_cursors: RefCell<HashMap<String, text_editor::Position>>,
+    /// Fold commands for editors not rendered yet (applied when they are created).
+    pending_folds: RefCell<HashMap<String, Vec<crate::editor::FoldOp>>>,
     images: RefCell<HashMap<u64, extra::Decoded>>,
     image_masks: extra::MaskCache,
     svgs: RefCell<HashMap<u64, svg::Handle>>,
@@ -68,14 +70,34 @@ impl Caches {
         Some(editor.perform(id, action))
     }
 
-    pub fn indent_editor(
+    pub fn key_editor(
         &mut self,
         id: &str,
-        key: crate::editor::IndentKey,
-        size: usize,
+        key: crate::editor::EditKey,
+        size: Option<usize>,
+        pairs: bool,
     ) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
-        Some(editor.indent(id, key, size))
+        Some(editor.key(id, key, size, pairs))
+    }
+
+    pub fn fold_editor_command(&mut self, id: &str, op: crate::editor::FoldOp) -> Task<Message> {
+        match self.fold_editor(id, op) {
+            Some(outcome) => outcome.scroll,
+            None => {
+                self.pending_folds
+                    .borrow_mut()
+                    .entry(id.to_owned())
+                    .or_default()
+                    .push(op);
+                Task::none()
+            }
+        }
+    }
+
+    pub fn fold_editor(&mut self, id: &str, op: crate::editor::FoldOp) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.fold_op(id, op))
     }
 
     pub fn page_editor(&mut self, id: &str, down: bool, select: bool) -> Option<Outcome> {
@@ -115,6 +137,14 @@ impl Caches {
                 position,
                 selection: None,
             });
+        }
+        for op in self
+            .pending_folds
+            .borrow_mut()
+            .remove(id)
+            .unwrap_or_default()
+        {
+            let _ = state.fold_op(id, op);
         }
         self.editors.insert(id.to_owned(), Box::new(state))
     }

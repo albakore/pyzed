@@ -1,6 +1,11 @@
-//! The code editor: iced's `text_editor` plus a gutter with line numbers and git markers,
-//! horizontal scrolling, soft wrap (with line numbers that follow wrapped lines) and
-//! Zed-style autoscroll that keeps the cursor visible.
+//! The code editor: iced's `text_editor` plus a gutter with line numbers, git markers and fold
+//! chevrons, horizontal scrolling, soft wrap (with line numbers that follow wrapped lines),
+//! Zed-style autoscroll that keeps the cursor visible, auto-closing brackets and quotes, code
+//! folding, a minimap and a configurable cursor.
+//!
+//! Folding hides lines by taking them out of the `text_editor` content (the editor only ever
+//! holds the visible lines); `Fold`s keep the hidden text, so callbacks and commands always see
+//! and use real line numbers.
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -17,20 +22,26 @@ use iced::{
 };
 
 use crate::app::Message;
+use crate::editor_widgets::{Caret, Minimap, ZoomWheel};
 use crate::highlighter::{self, Highlighter};
 use crate::sticky::{Probe, StickyLeft};
 use crate::widget::EditorProps;
 
 type Paragraph = <iced::Renderer as core_text::Renderer>::Paragraph;
 
-const PAD_Y: f32 = 4.0;
-const PAD_LEFT: f32 = 4.0;
+pub const PAD_Y: f32 = 4.0;
+pub const PAD_LEFT: f32 = 4.0;
 const PAD_RIGHT: f32 = 12.0;
 const MARKER_WIDTH: f32 = 3.0;
+/// Width of the fold chevrons column, taken from the right padding of the line numbers.
+const FOLD_WIDTH: f32 = 14.0;
+const ICONS: Font = Font::with_name(crate::style::ICONS);
+const CHEVRON_DOWN: char = '\u{e06d}';
+const CHEVRON_RIGHT: char = '\u{e06f}';
 
 /// Layout facts captured while rendering, used to keep the cursor in view.
 #[derive(Default, Clone)]
-struct Metrics {
+pub(crate) struct Metrics {
     ready: bool,
     /// Width of the gutter (markers + numbers); text starts after it plus `PAD_LEFT`.
     left: f32,
@@ -39,7 +50,7 @@ struct Metrics {
     font: Font,
     wrap_width: Option<f32>,
     /// `starts[i]` = visual rows before logical line `i` (has `line_count + 1` entries).
-    starts: Vec<u32>,
+    pub(crate) starts: Vec<u32>,
 }
 
 #[derive(Default)]
@@ -49,36 +60,424 @@ struct Measure {
     rows: HashMap<u64, u32>,
 }
 
-/// A key the editor indents for (see `EditorState::indent`).
+/// A key the editor handles itself (see `EditorState::key`).
 #[derive(Debug, Clone, Copy)]
-pub enum IndentKey {
+pub enum EditKey {
     Tab,
     Enter,
     Backspace,
+    /// A typed bracket or quote (auto-closing).
+    Char(char),
+}
+
+/// What the editor does with its folds.
+#[derive(Debug, Clone, Copy)]
+pub enum FoldOp {
+    /// Folds or unfolds the block that starts at the given visible line.
+    Toggle(usize),
+    /// Folds (`true`) or unfolds the block that starts at the given real line.
+    Line(usize, bool),
+    /// Folds the innermost block around the cursor.
+    AtCursor,
+    /// Unfolds the fold on the cursor's line.
+    UnfoldAtCursor,
+    FoldAll,
+    UnfoldAll,
+}
+
+/// Lines hidden under the (visible) line `header`.
+#[derive(Debug, Clone)]
+struct Fold {
+    header: usize,
+    hidden: Vec<String>,
+}
+
+/// Minimap colors per line: `(column, length, color)` runs of non-blank text.
+#[derive(Default)]
+pub(crate) struct MinimapCache {
+    key: u64,
+    pub(crate) lines: Vec<Vec<(u16, u16, Color)>>,
 }
 
 /// The persistent state of one editor (keyed by its `id`).
 pub struct EditorState {
     pub content: text_editor::Content,
-    metrics: RefCell<Metrics>,
+    /// Folded blocks, sorted by header line.
+    folds: Vec<Fold>,
+    pub(crate) metrics: RefCell<Metrics>,
     measure: RefCell<Measure>,
     /// The visible area of the scrollable, in content coordinates (updated every frame).
-    viewport: Cell<Option<Rectangle>>,
+    pub(crate) viewport: Cell<Option<Rectangle>>,
+    /// Whether the text editor has focus (recorded while drawing it).
+    pub(crate) focused: Cell<bool>,
+    pub(crate) minimap: RefCell<MinimapCache>,
 }
 
 impl EditorState {
     pub fn new(text: &str) -> Self {
         Self {
             content: text_editor::Content::with_text(text),
+            folds: Vec::new(),
             metrics: RefCell::default(),
             measure: RefCell::default(),
             viewport: Cell::new(None),
+            focused: Cell::new(false),
+            minimap: RefCell::default(),
         }
     }
 
     pub fn reset(&mut self, text: &str) {
         self.content = text_editor::Content::with_text(text);
+        self.folds.clear();
     }
+
+    /// The whole text, folded lines included.
+    pub fn text(&self) -> String {
+        if self.folds.is_empty() {
+            return self.content.text();
+        }
+        self.real_lines().join("\n")
+    }
+
+    fn visible_lines(&self) -> Vec<String> {
+        self.content.lines().map(|l| l.text.into_owned()).collect()
+    }
+
+    fn real_lines(&self) -> Vec<String> {
+        let mut out = Vec::with_capacity(self.content.line_count());
+        let mut folds = self.folds.iter().peekable();
+        for (i, line) in self.content.lines().enumerate() {
+            out.push(line.text.into_owned());
+            while let Some(fold) = folds.next_if(|f| f.header == i) {
+                out.extend(fold.hidden.iter().cloned());
+            }
+        }
+        out
+    }
+
+    /// The real (0-based) line number of a visible line.
+    pub fn real_line(&self, visible: usize) -> usize {
+        visible
+            + self
+                .folds
+                .iter()
+                .take_while(|f| f.header < visible)
+                .map(|f| f.hidden.len())
+                .sum::<usize>()
+    }
+
+    /// The visible line showing a real line, and whether that line is hidden in a fold.
+    pub fn visible_line(&self, real: usize) -> (usize, bool) {
+        let mut offset = 0;
+        for fold in &self.folds {
+            let header = fold.header + offset;
+            if real <= header {
+                break;
+            }
+            if real <= header + fold.hidden.len() {
+                return (fold.header, true);
+            }
+            offset += fold.hidden.len();
+        }
+        (real - offset, false)
+    }
+
+    fn real_position(&self, p: text_editor::Position) -> text_editor::Position {
+        text_editor::Position {
+            line: self.real_line(p.line),
+            column: p.column,
+        }
+    }
+
+    pub fn is_folded(&self, visible: usize) -> bool {
+        self.folds.iter().any(|f| f.header == visible)
+    }
+
+    /// Replaces the visible lines (after a fold change), moving the cursor with `map`.
+    fn rebuild(
+        &mut self,
+        lines: &[String],
+        map: impl Fn(text_editor::Position) -> text_editor::Position,
+    ) {
+        let cursor = self.content.cursor();
+        self.content = text_editor::Content::with_text(&lines.join("\n"));
+        self.content.move_to(text_editor::Cursor {
+            position: map(cursor.position),
+            selection: cursor.selection.map(&map),
+        });
+    }
+
+    /// The lines folded under `line` (by indentation), as an inclusive range of visible lines.
+    fn fold_range(&self, lines: &[String], line: usize) -> Option<(usize, usize)> {
+        let base = indent_of(lines.get(line)?)?;
+        let mut end = None;
+        for (i, text) in lines.iter().enumerate().skip(line + 1) {
+            match indent_of(text) {
+                None => continue,
+                Some(indent) if indent > base => end = Some(i),
+                Some(_) => break,
+            }
+        }
+        end.map(|end| (line + 1, end))
+    }
+
+    fn fold(&mut self, line: usize) -> bool {
+        if self.is_folded(line) {
+            return false;
+        }
+        let lines = self.visible_lines();
+        let Some((start, end)) = self.fold_range(&lines, line) else {
+            return false;
+        };
+        // Nested folds are absorbed: their hidden lines go back in place.
+        let mut hidden = Vec::new();
+        let mut kept = Vec::new();
+        for fold in std::mem::take(&mut self.folds) {
+            if fold.header >= start && fold.header <= end {
+                kept.push(fold);
+            } else {
+                self.folds.push(fold);
+            }
+        }
+        let mut nested = kept.into_iter().peekable();
+        for (i, text) in lines.iter().enumerate().take(end + 1).skip(start) {
+            hidden.push(text.clone());
+            while let Some(fold) = nested.next_if(|f| f.header == i) {
+                hidden.extend(fold.hidden);
+            }
+        }
+        let count = end - start + 1;
+        for fold in &mut self.folds {
+            if fold.header > end {
+                fold.header -= count;
+            }
+        }
+        let header_len = lines[line].chars().count();
+        let at = self.folds.partition_point(|f| f.header < line);
+        self.folds.insert(
+            at,
+            Fold {
+                header: line,
+                hidden,
+            },
+        );
+        let mut rest = lines;
+        rest.drain(start..=end);
+        self.rebuild(&rest, |p| {
+            if p.line >= start && p.line <= end {
+                text_editor::Position {
+                    line,
+                    column: header_len,
+                }
+            } else if p.line > end {
+                text_editor::Position {
+                    line: p.line - count,
+                    column: p.column,
+                }
+            } else {
+                p
+            }
+        });
+        true
+    }
+
+    fn unfold(&mut self, header: usize) -> bool {
+        let Some(index) = self.folds.iter().position(|f| f.header == header) else {
+            return false;
+        };
+        let fold = self.folds.remove(index);
+        let count = fold.hidden.len();
+        for f in &mut self.folds {
+            if f.header > header {
+                f.header += count;
+            }
+        }
+        let mut lines = self.visible_lines();
+        let at = (header + 1).min(lines.len());
+        lines.splice(at..at, fold.hidden);
+        self.rebuild(&lines, |p| {
+            if p.line > header {
+                text_editor::Position {
+                    line: p.line + count,
+                    column: p.column,
+                }
+            } else {
+                p
+            }
+        });
+        true
+    }
+
+    /// Applies a fold operation; the outcome reports the cursor if it moved.
+    pub fn fold_op(&mut self, id: &str, op: FoldOp) -> Outcome {
+        let before = self.real_position(self.content.cursor().position);
+        match op {
+            FoldOp::Toggle(line) => {
+                if !self.unfold(line) {
+                    self.fold(line);
+                }
+            }
+            FoldOp::Line(real, fold) => {
+                let (line, hidden) = self.visible_line(real);
+                if !hidden {
+                    if fold {
+                        self.fold(line);
+                    } else {
+                        self.unfold(line);
+                    }
+                }
+            }
+            FoldOp::AtCursor => {
+                let lines = self.visible_lines();
+                let cursor = self.content.cursor().position.line;
+                let target = (0..=cursor).rev().find(|&l| {
+                    !self.is_folded(l)
+                        && self
+                            .fold_range(&lines, l)
+                            .is_some_and(|(_, end)| l == cursor || end >= cursor)
+                });
+                if let Some(line) = target {
+                    self.fold(line);
+                }
+            }
+            FoldOp::UnfoldAtCursor => {
+                let line = self.content.cursor().position.line;
+                self.unfold(line);
+            }
+            FoldOp::FoldAll => {
+                let mut line = 0;
+                while line < self.content.line_count() {
+                    self.fold(line);
+                    line += 1;
+                }
+            }
+            FoldOp::UnfoldAll => {
+                if !self.folds.is_empty() {
+                    let real = before;
+                    let text = self.text();
+                    self.reset(&text);
+                    self.content.move_to(text_editor::Cursor {
+                        position: real,
+                        selection: None,
+                    });
+                }
+            }
+        }
+        let after = self.real_position(self.content.cursor().position);
+        Outcome {
+            edited: false,
+            cursor_moved: before != after,
+            cursor: (after.line, after.column),
+            text: String::new(),
+            scroll: if before != after {
+                self.autoscroll(id)
+            } else {
+                Task::none()
+            },
+        }
+    }
+
+    /// Before an edit: unfolds the folds the edit could break (`safe` edits stay on one line)
+    /// and returns what `end_edit` needs to move the folds below it.
+    fn begin_edit(&mut self, safe: bool) -> (usize, usize) {
+        let range = |content: &text_editor::Content| {
+            let cursor = content.cursor();
+            let anchor = cursor.selection.unwrap_or(cursor.position);
+            (
+                cursor.position.line.min(anchor.line),
+                cursor.position.line.max(anchor.line),
+            )
+        };
+        if self.folds.is_empty() {
+            return (usize::MAX, self.content.line_count());
+        }
+        if !safe {
+            let (lo, hi) = range(&self.content);
+            let touched: Vec<usize> = self
+                .folds
+                .iter()
+                .map(|f| f.header)
+                .filter(|h| *h + 1 >= lo && *h <= hi)
+                .collect();
+            for header in touched.into_iter().rev() {
+                self.unfold(header);
+            }
+        }
+        (range(&self.content).1, self.content.line_count())
+    }
+
+    fn end_edit(&mut self, (hi, before): (usize, usize)) {
+        let delta = self.content.line_count() as isize - before as isize;
+        if delta == 0 {
+            return;
+        }
+        for fold in &mut self.folds {
+            if fold.header > hi {
+                fold.header = (fold.header as isize + delta).max(0) as usize;
+            }
+        }
+    }
+}
+
+/// Indentation width of a line (a tab counts as 4), or `None` if it is blank.
+fn indent_of(line: &str) -> Option<usize> {
+    let mut width = 0;
+    for ch in line.chars() {
+        match ch {
+            ' ' => width += 1,
+            '\t' => width += 4,
+            _ => return Some(width),
+        }
+    }
+    None
+}
+
+fn closing_of(c: char) -> Option<char> {
+    Some(match c {
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        '"' => '"',
+        '\'' => '\'',
+        '`' => '`',
+        _ => return None,
+    })
+}
+
+fn is_quote(c: char) -> bool {
+    matches!(c, '"' | '\'' | '`')
+}
+
+/// The characters the editor intercepts to auto-close pairs.
+pub fn is_pair_char(c: char) -> bool {
+    closing_of(c).is_some() || matches!(c, ')' | ']' | '}')
+}
+
+/// Whether typing `open` between `prev` and `next` should insert its closing pair too
+/// (like VS Code and Zed: before whitespace, a closer or punctuation; quotes not inside words,
+/// except after a string prefix such as `f` or `rb`).
+fn should_close(open: char, head: &str, next: Option<char>) -> bool {
+    let next_ok = match next {
+        None => true,
+        Some(n) => n.is_whitespace() || matches!(n, ')' | ']' | '}' | ',' | ';' | ':'),
+    };
+    if !next_ok {
+        return false;
+    }
+    if !is_quote(open) {
+        return true;
+    }
+    let word: String = head
+        .chars()
+        .rev()
+        .take_while(|c| c.is_alphanumeric() || *c == '_')
+        .collect();
+    let prefix = matches!(
+        word.to_lowercase().as_str(),
+        "f" | "r" | "b" | "u" | "rb" | "br" | "fr" | "rf" | "t"
+    );
+    let prev = head.chars().last();
+    (word.is_empty() || prefix) && prev != Some(open)
 }
 
 pub fn hash_of(bytes: &[u8]) -> u64 {
@@ -169,60 +568,157 @@ pub fn scroll_id(id: &str) -> String {
 
 impl EditorState {
     pub fn perform(&mut self, id: &str, action: text_editor::Action) -> Outcome {
-        let before = self.content.cursor().position;
+        use text_editor::{Action, Edit};
+        let before = self.real_position(self.content.cursor().position);
         let is_edit = action.is_edit();
-        let follows = !matches!(action, text_editor::Action::Scroll { .. });
-        self.content.perform(action);
+        let follows = !matches!(action, Action::Scroll { .. });
+        if is_edit {
+            let cursor = self.content.cursor();
+            let column = cursor.position.column;
+            let len = self
+                .content
+                .line(cursor.position.line)
+                .map(|l| l.text.chars().count())
+                .unwrap_or(0);
+            let safe = cursor.selection.is_none()
+                && match &action {
+                    Action::Edit(Edit::Insert(c)) => *c != '\n',
+                    Action::Edit(Edit::Paste(text)) => !text.contains('\n'),
+                    Action::Edit(Edit::Backspace) => column > 0,
+                    Action::Edit(Edit::Delete) => column < len,
+                    Action::Edit(Edit::Indent | Edit::Unindent) => true,
+                    _ => false,
+                };
+            let edit = self.begin_edit(safe);
+            self.content.perform(action);
+            self.end_edit(edit);
+        } else {
+            self.content.perform(action);
+        }
         self.outcome(id, before, is_edit, follows)
     }
 
-    /// Python-style indentation, computed on the text as it is when the key arrives: Tab inserts
-    /// spaces up to the next multiple of `size`, Enter keeps the indentation (one level more
-    /// after `:`) and Backspace in leading spaces removes a whole level.
-    pub fn indent(&mut self, id: &str, key: IndentKey, size: usize) -> Outcome {
+    /// Keys the editor handles itself, computed on the text as it is when the key arrives.
+    ///
+    /// With `size` (Python-style indentation) Tab inserts spaces up to the next multiple of
+    /// `size`, Enter keeps the indentation (one level more after `:`) and Backspace in leading
+    /// spaces removes a whole level. With `pairs`, typing an opening bracket or quote also
+    /// inserts its closing one (or wraps the selection), typing a closer that is already next
+    /// steps over it, Backspace between an empty pair deletes both and Enter between brackets
+    /// opens an indented line.
+    pub fn key(&mut self, id: &str, key: EditKey, size: Option<usize>, pairs: bool) -> Outcome {
         use text_editor::{Action, Edit};
         let cursor = self.content.cursor();
-        let before = cursor.position;
+        let before = self.real_position(cursor.position);
         let line = self
             .content
-            .line(before.line)
+            .line(cursor.position.line)
             .map(|l| l.text.into_owned())
             .unwrap_or_default();
-        let head: String = line.chars().take(before.column).collect();
+        let head: String = line.chars().take(cursor.position.column).collect();
         let column = head.chars().count();
+        let prev = head.chars().last();
+        let next = line.chars().nth(column);
         let selecting = cursor.selection.is_some();
-        let spaces = |content: &mut text_editor::Content, n: usize| {
+        let step = size.unwrap_or(4);
+        let safe = !selecting
+            && match key {
+                EditKey::Enter => false,
+                EditKey::Backspace => column > 0,
+                EditKey::Tab | EditKey::Char(_) => true,
+            };
+        let edit = self.begin_edit(safe);
+        let content = &mut self.content;
+        let run = |content: &mut text_editor::Content, action: Action, n: usize| {
             for _ in 0..n {
-                content.perform(Action::Edit(Edit::Insert(' ')));
+                content.perform(action.clone());
             }
         };
+        let mut edited = true;
         match key {
-            IndentKey::Tab => spaces(&mut self.content, size - column % size),
-            IndentKey::Enter => {
+            EditKey::Tab => run(
+                content,
+                Action::Edit(Edit::Insert(' ')),
+                step - column % step,
+            ),
+            EditKey::Enter => {
                 let mut indent = head.chars().take_while(|c| *c == ' ').count();
-                if head.trim_end().ends_with(':') {
-                    indent += size;
+                let between = pairs
+                    && !selecting
+                    && matches!(
+                        (prev, next),
+                        (Some('('), Some(')')) | (Some('['), Some(']')) | (Some('{'), Some('}'))
+                    );
+                if size.is_some() && head.trim_end().ends_with(':') || between {
+                    indent += step;
                 }
-                self.content.perform(Action::Edit(Edit::Enter));
-                spaces(&mut self.content, indent);
+                content.perform(Action::Edit(Edit::Enter));
+                run(content, Action::Edit(Edit::Insert(' ')), indent);
+                if between {
+                    content.perform(Action::Edit(Edit::Enter));
+                    run(content, Action::Edit(Edit::Insert(' ')), indent - step);
+                    content.perform(Action::Move(Motion::Up));
+                    content.perform(Action::Move(Motion::End));
+                }
             }
-            IndentKey::Backspace => {
-                let n = if !selecting && column > 0 && head.chars().all(|c| c == ' ') {
-                    (column - 1) % size + 1
+            EditKey::Backspace => {
+                let pair = pairs
+                    && !selecting
+                    && prev
+                        .and_then(closing_of)
+                        .is_some_and(|close| next == Some(close));
+                if pair {
+                    content.perform(Action::Edit(Edit::Backspace));
+                    content.perform(Action::Edit(Edit::Delete));
                 } else {
-                    1
-                };
-                for _ in 0..n {
-                    self.content.perform(Action::Edit(Edit::Backspace));
+                    let n = if size.is_some()
+                        && !selecting
+                        && column > 0
+                        && head.chars().all(|c| c == ' ')
+                    {
+                        (column - 1) % step + 1
+                    } else {
+                        1
+                    };
+                    run(content, Action::Edit(Edit::Backspace), n);
+                }
+            }
+            EditKey::Char(c) => {
+                let close = closing_of(c).filter(|_| pairs);
+                if let (Some(close), true) = (close, selecting) {
+                    // Wrap the selection, keeping it selected.
+                    let selected = content.selection().unwrap_or_default();
+                    let wrapped = format!("{c}{selected}{close}");
+                    content.perform(Action::Edit(Edit::Paste(Arc::new(wrapped))));
+                    content.perform(Action::Move(Motion::Left));
+                    run(
+                        content,
+                        Action::Select(Motion::Left),
+                        selected.chars().count(),
+                    );
+                } else if pairs
+                    && !selecting
+                    && next == Some(c)
+                    && (is_quote(c) || matches!(c, ')' | ']' | '}'))
+                {
+                    content.perform(Action::Move(Motion::Right));
+                    edited = false;
+                } else if let Some(close) = close.filter(|_| should_close(c, &head, next)) {
+                    content.perform(Action::Edit(Edit::Insert(c)));
+                    content.perform(Action::Edit(Edit::Insert(close)));
+                    content.perform(Action::Move(Motion::Left));
+                } else {
+                    content.perform(Action::Edit(Edit::Insert(c)));
                 }
             }
         }
-        self.outcome(id, before, true, true)
+        self.end_edit(edit);
+        self.outcome(id, before, edited, true)
     }
 
     /// Moves the cursor by a page (iced's own page motion assumes a fixed-height editor).
     pub fn page(&mut self, id: &str, down: bool, select: bool) -> Outcome {
-        let before = self.content.cursor().position;
+        let before = self.real_position(self.content.cursor().position);
         let lh = self.metrics.borrow().line_height.max(1.0);
         let height = self.viewport.get().map(|v| v.height).unwrap_or(lh * 20.0);
         let lines = ((height / lh).floor() as usize).saturating_sub(1).max(1);
@@ -237,14 +733,23 @@ impl EditorState {
         self.outcome(id, before, false, true)
     }
 
+    /// Moves the cursor to a real position, unfolding the fold that hides it.
     pub fn move_to(&mut self, id: &str, position: text_editor::Position) -> Task<Message> {
+        let (mut line, mut hidden) = self.visible_line(position.line);
+        while hidden && self.unfold(line) {
+            (line, hidden) = self.visible_line(position.line);
+        }
         self.content.move_to(text_editor::Cursor {
-            position,
+            position: text_editor::Position {
+                line,
+                column: position.column,
+            },
             selection: None,
         });
         self.autoscroll(id)
     }
 
+    /// `before` is the real cursor position before the change.
     fn outcome(
         &mut self,
         id: &str,
@@ -252,17 +757,13 @@ impl EditorState {
         edited: bool,
         follows: bool,
     ) -> Outcome {
-        let after = self.content.cursor().position;
+        let after = self.real_position(self.content.cursor().position);
         let cursor_moved = before != after || edited;
         Outcome {
             edited,
             cursor_moved,
             cursor: (after.line, after.column),
-            text: if edited {
-                self.content.text()
-            } else {
-                String::new()
-            },
+            text: if edited { self.text() } else { String::new() },
             scroll: if cursor_moved && follows {
                 self.autoscroll(id)
             } else {
@@ -346,6 +847,16 @@ impl EditorState {
     }
 }
 
+/// `top` drawn over an opaque `base`.
+fn blend(base: Color, top: Color) -> Color {
+    let a = top.a;
+    Color::from_rgb(
+        base.r * (1.0 - a) + top.r * a,
+        base.g * (1.0 - a) + top.g * a,
+        base.b * (1.0 - a) + top.b * a,
+    )
+}
+
 fn with_alpha(color: Color, a: f32) -> Color {
     Color {
         a: color.a * a,
@@ -401,6 +912,7 @@ fn key_name(key: keyboard::key::Named) -> Option<&'static str> {
 
 fn numbers<'a>(
     starts: &[u32],
+    reals: &[usize],
     range: std::ops::Range<usize>,
     color: Color,
     props: &EditorProps,
@@ -411,7 +923,7 @@ fn numbers<'a>(
         if n > range.start {
             content.push('\n');
         }
-        content.push_str(&(n + 1).to_string());
+        content.push_str(&(reals[n] + 1).to_string());
         let rows = starts[n + 1] - starts[n];
         for _ in 1..rows {
             content.push('\n');
@@ -430,13 +942,107 @@ fn numbers<'a>(
         .into()
 }
 
+/// A column of fold chevrons for `lines` (visible lines), each on the first row of its line.
+fn chevrons<'a>(
+    lines: &[(usize, bool)],
+    starts: &[u32],
+    props: &Arc<EditorProps>,
+    color: Color,
+    hover: Color,
+) -> Element<'a, Message> {
+    let lh = props.line_height;
+    let mut col = column![].width(Length::Fixed(FOLD_WIDTH)).padding(Padding {
+        top: PAD_Y,
+        ..Padding::ZERO
+    });
+    let mut row_at = 0u32;
+    for &(line, folded) in lines {
+        let gap = starts[line] - row_at;
+        if gap > 0 {
+            col = col.push(Space::new().height(Length::Fixed(gap as f32 * lh)));
+        }
+        let glyph = if folded { CHEVRON_RIGHT } else { CHEVRON_DOWN };
+        let message = Message::EditorFold {
+            id: props.id.clone(),
+            op: FoldOp::Toggle(line),
+            on_cursor: props.on_cursor.clone(),
+        };
+        col = col.push(
+            widget::button(
+                text(glyph.to_string())
+                    .font(ICONS)
+                    .size(props.size * 0.8)
+                    .line_height(LineHeight::Absolute(Pixels(lh)))
+                    .width(Length::Fill)
+                    .align_x(iced::alignment::Horizontal::Center),
+            )
+            .on_press(message)
+            .padding(0)
+            .width(Length::Fixed(FOLD_WIDTH))
+            .height(Length::Fixed(lh))
+            .style(move |_, status| widget::button::Style {
+                text_color: if matches!(status, widget::button::Status::Hovered) {
+                    hover
+                } else {
+                    color
+                },
+                ..Default::default()
+            }),
+        );
+        row_at = starts[line] + 1;
+    }
+    col.into()
+}
+
+/// Where the cursor is drawn, relative to the text area, as `(x, y, glyph under it)`.
+fn caret_position(
+    state: &EditorState,
+    props: &EditorProps,
+    starts: &[u32],
+    wrap_width: Option<f32>,
+) -> (f32, f32, Option<char>) {
+    let lh = props.line_height;
+    let position = state.content.cursor().position;
+    let line = state
+        .content
+        .line(position.line)
+        .map(|l| l.text.into_owned())
+        .unwrap_or_default();
+    let prefix: String = line.chars().take(position.column).collect();
+    let under = line.chars().nth(position.column);
+    let row = starts.get(position.line).copied().unwrap_or(0);
+    if prefix.is_empty() {
+        return (0.0, row as f32 * lh, under);
+    }
+    let p = paragraph(&prefix, props.font, props.size, lh, wrap_width);
+    let rows = ((p.min_bounds().height / lh).round() as usize).max(1);
+    let x = p
+        .grapheme_position(rows - 1, usize::MAX)
+        .map_or(0.0, |p| p.x);
+    (x, (row as usize + rows - 1) as f32 * lh, under)
+}
+
 fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Element<'a, Message> {
     let lh = props.line_height;
     let line_count = state.content.line_count().max(1);
     let cursor_line = state.content.cursor().position.line.min(line_count - 1);
+    let minimap_width = props.minimap.map_or(0.0, |m| m.width);
+
+    // Real line number of each visible line.
+    let mut reals = Vec::with_capacity(line_count);
+    {
+        let mut folds = state.folds.iter().peekable();
+        let mut offset = 0;
+        for i in 0..line_count {
+            reals.push(i + offset);
+            while let Some(fold) = folds.next_if(|f| f.header == i) {
+                offset += fold.hidden.len();
+            }
+        }
+    }
 
     let gutter_width = if props.gutter {
-        let digits = line_count.to_string().len().max(2) as f32;
+        let digits = (reals[line_count - 1] + 1).to_string().len().max(2) as f32;
         props
             .gutter_width
             .unwrap_or(digits * props.size * 0.62 + 28.0)
@@ -450,12 +1056,13 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     };
     let wrap_width = props
         .wrap
-        .then(|| (size.width - left - PAD_LEFT - PAD_RIGHT).max(props.size * 4.0));
+        .then(|| (size.width - left - PAD_LEFT - PAD_RIGHT - minimap_width).max(props.size * 4.0));
 
     // Measure every line once (results are cached per line text).
     let mut starts = Vec::with_capacity(line_count + 1);
     starts.push(0u32);
     let mut max_width = 0.0f32;
+    let mut lines: Vec<String> = Vec::with_capacity(line_count);
     {
         let mut measure = state.measure.borrow_mut();
         measure.reset_if(hash(&(
@@ -476,16 +1083,19 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             };
             total += rows;
             starts.push(total);
+            lines.push(line.text.into_owned());
         }
         while starts.len() < line_count + 1 {
             total += 1;
             starts.push(total);
+            lines.push(String::new());
         }
     }
 
     let editor_width = match wrap_width {
-        Some(_) => (size.width - left).max(1.0),
-        None => (max_width + PAD_LEFT + PAD_RIGHT + props.size * 2.0).max(size.width - left),
+        Some(_) => (size.width - left - minimap_width).max(1.0),
+        None => (max_width + PAD_LEFT + PAD_RIGHT + props.size * 2.0)
+            .max(size.width - left - minimap_width),
     };
 
     *state.metrics.borrow_mut() = Metrics {
@@ -501,11 +1111,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let id = props.id.clone();
     let on_change = props.on_change.clone();
     let on_cursor = props.on_cursor.clone();
-    let (fg, sel, placeholder_color) = (
-        props.text_color,
-        props.selection_color,
-        props.placeholder_color,
-    );
+    let (sel, placeholder_color) = (props.selection_color, props.placeholder_color);
 
     let theme_id = highlighter::theme_id(&props.syntax);
     let token = if highlighter::has_syntax(&props.language) {
@@ -517,10 +1123,12 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let page_id = props.id.clone();
     let page_cursor = props.on_cursor.clone();
     let indent_size = props.tab_size;
-    let indent_id = props.id.clone();
-    let indent_change = props.on_change.clone();
-    let indent_cursor = props.on_cursor.clone();
+    let pairs = props.auto_close;
+    let folding = props.folding;
+    let key_props = props.clone();
     let capture = props.capture_keys.clone();
+    let focused = &state.focused;
+    let (editor_bg, active_line) = (props.background, props.active_line);
     let mut editor = widget::text_editor(&state.content)
         .font(props.font)
         .size(props.size)
@@ -545,12 +1153,23 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             on_cursor: on_cursor.clone(),
         })
         .key_binding(move |press| {
+            let props = &key_props;
             let page = |down: bool, select: bool| {
                 Some(Binding::Custom(Message::EditorPage {
                     id: page_id.clone(),
                     down,
                     select,
                     on_cursor: page_cursor.clone(),
+                }))
+            };
+            let edit = |key: EditKey| {
+                Some(Binding::Custom(Message::EditorIndent {
+                    id: props.id.clone(),
+                    key,
+                    size: indent_size,
+                    pairs,
+                    on_change: props.on_change.clone(),
+                    on_cursor: props.on_cursor.clone(),
                 }))
             };
             if !matches!(press.status, text_editor::Status::Focused { .. }) {
@@ -565,37 +1184,76 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 return None;
             }
             let select = press.modifiers.shift();
+            // Zoom (Ctrl/Cmd with + - 0) and folding (Ctrl/Cmd+Shift with [ ]).
+            if press.modifiers.command()
+                && !press.modifiers.alt()
+                && let keyboard::Key::Character(c) = press.key.as_ref()
+            {
+                if let Some(cb) = &props.on_zoom {
+                    let step = match c {
+                        "=" | "+" => Some(1.0),
+                        "-" | "_" => Some(-1.0),
+                        "0" => Some(0.0),
+                        _ => None,
+                    };
+                    if let Some(step) = step {
+                        return Some(Binding::Custom(Message::Slide(cb.clone(), step)));
+                    }
+                }
+                if folding && select {
+                    let op = match c {
+                        "[" | "{" => Some(FoldOp::AtCursor),
+                        "]" | "}" => Some(FoldOp::UnfoldAtCursor),
+                        _ => None,
+                    };
+                    if let Some(op) = op {
+                        return Some(Binding::Custom(Message::EditorFold {
+                            id: props.id.clone(),
+                            op,
+                            on_cursor: props.on_cursor.clone(),
+                        }));
+                    }
+                }
+            }
             match press.key.as_ref() {
                 keyboard::Key::Named(keyboard::key::Named::PageDown) => page(true, select),
                 keyboard::Key::Named(keyboard::key::Named::PageUp) => page(false, select),
-                keyboard::Key::Named(named) if plain && !select && indent_size.is_some() => {
-                    let key = match named {
-                        keyboard::key::Named::Tab => Some(IndentKey::Tab),
-                        keyboard::key::Named::Enter => Some(IndentKey::Enter),
-                        keyboard::key::Named::Backspace => Some(IndentKey::Backspace),
-                        _ => None,
-                    };
-                    match key {
-                        Some(key) => Some(Binding::Custom(Message::EditorIndent {
-                            id: indent_id.clone(),
-                            key,
-                            size: indent_size.unwrap_or(4),
-                            on_change: indent_change.clone(),
-                            on_cursor: indent_cursor.clone(),
-                        })),
-                        None => Binding::from_key_press(press),
+                keyboard::Key::Named(named) if plain && !select => match named {
+                    keyboard::key::Named::Tab if indent_size.is_some() => edit(EditKey::Tab),
+                    keyboard::key::Named::Enter if indent_size.is_some() || pairs => {
+                        edit(EditKey::Enter)
+                    }
+                    keyboard::key::Named::Backspace if indent_size.is_some() || pairs => {
+                        edit(EditKey::Backspace)
+                    }
+                    _ => Binding::from_key_press(press),
+                },
+                _ if pairs && plain => {
+                    let typed = press.text.as_deref().and_then(|t| {
+                        let mut chars = t.chars();
+                        chars.next().filter(|_| chars.next().is_none())
+                    });
+                    match typed {
+                        Some(c) if is_pair_char(c) => edit(EditKey::Char(c)),
+                        _ => Binding::from_key_press(press),
                     }
                 }
                 _ => Binding::from_key_press(press),
             }
         })
         .style(move |theme: &Theme, status| {
+            focused.set(matches!(status, text_editor::Status::Focused { .. }));
             let mut out = text_editor::default(theme, status);
             out.background = Background::Color(Color::TRANSPARENT);
             out.border = Border::default();
-            if let Some(c) = fg {
-                out.value = c;
-            }
+            // The cursor is drawn by `Caret`. iced draws its own in `value`, which only matters
+            // for its alpha (it scales the text's) since every highlight span sets a color, so
+            // it gets the color under the cursor (the active line over the background).
+            let base = editor_bg.unwrap_or(theme.palette().background);
+            out.value = match active_line {
+                Some(band) => blend(base, band),
+                None => Color { a: 1.0, ..base },
+            };
             if let Some(c) = sel {
                 out.selection = c;
             }
@@ -609,9 +1267,10 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     }
     let editor = editor.highlight_with::<Highlighter>(
         highlighter::Settings {
-            token,
+            token: token.clone(),
             theme: theme_id,
             font: props.font,
+            default: props.text_color,
         },
         highlighter::Highlight::to_format,
     );
@@ -642,12 +1301,12 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     // Visible whitespace: a copy of the text where only spaces and tabs are drawn.
     if let (Some(color), None) = (props.whitespace, wrap_width) {
         let mut dots = String::new();
-        for (i, line) in state.content.lines().enumerate() {
+        for (i, line) in lines.iter().enumerate() {
             if i > 0 {
                 dots.push('\n');
             }
             let mut col = 0usize;
-            for ch in line.text.chars() {
+            for ch in line.chars() {
                 match ch {
                     ' ' => {
                         dots.push('·');
@@ -686,57 +1345,133 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         );
     }
 
-    // End-of-line annotations (diagnostics, code lens), placed after the last glyph.
-    if !props.annotations.is_empty() {
-        let fallback = props
-            .gutter_color
-            .unwrap_or(Color::from_rgb8(0x6b, 0x72, 0x80));
-        let mut measure = state.measure.borrow_mut();
-        for (line, label, color) in &props.annotations {
-            let index = line.saturating_sub(1);
-            if *line == 0 || index >= line_count || label.is_empty() {
-                continue;
-            }
-            let content = state
-                .content
-                .line(index)
-                .map(|l| l.text.into_owned())
-                .unwrap_or_default();
-            let rows = starts[index + 1] - starts[index];
-            let (x, y) = match wrap_width {
-                // A wrapped line puts its note on its last row, right-aligned.
-                Some(width) if rows > 1 => (
-                    PAD_LEFT + width - measure.width(label, props.font, props.size * 0.9, lh),
-                    starts[index + 1] - 1,
-                ),
-                _ => (
-                    PAD_LEFT
-                        + measure.width(&content, props.font, props.size, lh)
-                        + props.size * 2.0,
-                    starts[index],
-                ),
-            };
-            layers.push(
-                widget::pin(
-                    text(label.clone())
-                        .font(props.font)
-                        .size(props.size * 0.9)
-                        .line_height(LineHeight::Absolute(Pixels(lh)))
-                        .color(color.unwrap_or(fallback))
-                        .wrapping(Wrapping::None),
-                )
-                .x(x)
-                .y(PAD_Y + y as f32 * lh)
-                .into(),
-            );
+    let fallback = props
+        .gutter_color
+        .unwrap_or(Color::from_rgb8(0x6b, 0x72, 0x80));
+    let mut measure = state.measure.borrow_mut();
+    // Where a note goes after line `index`: after its last glyph, or right-aligned on the last
+    // row of a wrapped line.
+    let end_of = |measure: &mut Measure, index: usize, extra: f32, label_width: f32| {
+        let rows = starts[index + 1] - starts[index];
+        match wrap_width {
+            Some(width) if rows > 1 => (PAD_LEFT + width - label_width, starts[index + 1] - 1),
+            _ => (
+                PAD_LEFT
+                    + measure.width(&lines[index], props.font, props.size, lh)
+                    + props.size * 0.6
+                    + extra,
+                starts[index],
+            ),
         }
+    };
+
+    // Folded lines end with a `⋯` button that unfolds them.
+    let fold_marker = props.size * 2.2;
+    for fold in &state.folds {
+        let (x, y) = end_of(&mut measure, fold.header, 0.0, fold_marker);
+        let id = props.id.clone();
+        let on_cursor = props.on_cursor.clone();
+        let tint = props.text_color.unwrap_or(fallback);
+        layers.push(
+            widget::pin(
+                widget::button(
+                    text("⋯")
+                        .font(props.font)
+                        .size(props.size)
+                        .line_height(LineHeight::Absolute(Pixels(lh - 4.0)))
+                        .align_x(iced::alignment::Horizontal::Center),
+                )
+                .on_press(Message::EditorFold {
+                    id,
+                    op: FoldOp::Toggle(fold.header),
+                    on_cursor,
+                })
+                .padding(0)
+                .width(Length::Fixed(fold_marker))
+                .height(Length::Fixed(lh - 4.0))
+                .style(move |_, status| {
+                    let a = if matches!(status, widget::button::Status::Hovered) {
+                        0.3
+                    } else {
+                        0.16
+                    };
+                    widget::button::Style {
+                        background: Some(Background::Color(with_alpha(tint, a))),
+                        text_color: with_alpha(tint, 0.8),
+                        border: Border::default().rounded(4.0),
+                        ..Default::default()
+                    }
+                }),
+            )
+            .x(x)
+            .y(PAD_Y + y as f32 * lh + 2.0)
+            .into(),
+        );
     }
 
-    let code: Element<'a, Message> = if layers.len() == 1 {
-        layers.pop().unwrap()
-    } else {
-        widget::Stack::with_children(layers).into()
-    };
+    // End-of-line annotations (diagnostics, code lens), placed after the last glyph.
+    for (line, label, color) in &props.annotations {
+        if *line == 0 || label.is_empty() {
+            continue;
+        }
+        let (index, hidden) = state.visible_line(line - 1);
+        if hidden || index >= line_count {
+            continue;
+        }
+        let extra = if state.is_folded(index) {
+            fold_marker + props.size * 0.6
+        } else {
+            props.size * 1.4
+        };
+        let label_width = measure.width(label, props.font, props.size * 0.9, lh);
+        let (x, y) = end_of(&mut measure, index, extra, label_width);
+        layers.push(
+            widget::pin(
+                text(label.clone())
+                    .font(props.font)
+                    .size(props.size * 0.9)
+                    .line_height(LineHeight::Absolute(Pixels(lh)))
+                    .color(color.unwrap_or(fallback))
+                    .wrapping(Wrapping::None),
+            )
+            .x(x)
+            .y(PAD_Y + y as f32 * lh)
+            .into(),
+        );
+    }
+
+    // The cursor, drawn by us so it can take any shape.
+    let (cx, cy, under) = caret_position(state, props, &starts, wrap_width);
+    let char_width = under
+        .filter(|c| !c.is_whitespace())
+        .map(|c| measure.width(&c.to_string(), props.font, props.size, lh))
+        .unwrap_or(props.size * 0.6)
+        .max(props.size * 0.3);
+    drop(measure);
+    let caret_color = props
+        .cursor
+        .color
+        .or(props.text_color)
+        .unwrap_or(Color::WHITE);
+    layers.push(
+        Caret {
+            state,
+            origin: iced::Point::new(PAD_LEFT + cx, PAD_Y + cy),
+            char_width,
+            line_height: lh,
+            shape: props.cursor.shape,
+            width: props.cursor.width,
+            blink: props.cursor.blink,
+            color: caret_color,
+            under: under.filter(|c| !c.is_whitespace()),
+            under_color: props.background.unwrap_or(Color::BLACK),
+            font: props.font,
+            size: props.size,
+        }
+        .into(),
+    );
+
+    let code: Element<'a, Message> = widget::Stack::with_children(layers).into();
 
     let body: Element<'_, Message> = if props.gutter {
         let dim = props
@@ -745,29 +1480,49 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         let active = props
             .gutter_active_color
             .unwrap_or(Color::from_rgb8(0xd0, 0xd4, 0xda));
+        let numbers_width = if folding {
+            gutter_width - FOLD_WIDTH
+        } else {
+            gutter_width
+        };
         let mut gutter = column![]
-            .width(Length::Fixed(gutter_width))
+            .width(Length::Fixed(numbers_width))
             .padding(Padding {
                 top: PAD_Y,
                 bottom: PAD_Y,
                 left: 0.0,
-                right: 14.0,
+                right: if folding { 4.0 } else { 14.0 },
             });
         if cursor_line > 0 {
-            gutter = gutter.push(numbers(&starts, 0..cursor_line, dim, props));
+            gutter = gutter.push(numbers(&starts, &reals, 0..cursor_line, dim, props));
         }
         gutter = gutter.push(numbers(
             &starts,
+            &reals,
             cursor_line..cursor_line + 1,
             active,
             props,
         ));
         if cursor_line + 1 < line_count {
-            gutter = gutter.push(numbers(&starts, cursor_line + 1..line_count, dim, props));
+            gutter = gutter.push(numbers(
+                &starts,
+                &reals,
+                cursor_line + 1..line_count,
+                dim,
+                props,
+            ));
         }
 
         // Git-style change markers drawn as thin bars on the left edge of the gutter.
-        let mut markers = props.markers.clone();
+        let mut markers: Vec<(usize, Color)> = props
+            .markers
+            .iter()
+            .filter(|(line, _)| *line > 0)
+            .filter_map(|(line, color)| {
+                let (index, hidden) = state.visible_line(line - 1);
+                (!hidden).then_some((index + 1, *color))
+            })
+            .collect();
         markers.sort_by_key(|(line, _)| *line);
         let mut bars = column![]
             .width(Length::Fixed(MARKER_WIDTH))
@@ -796,8 +1551,42 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             );
             next = line + 1;
         }
+        let gutter: Element<'a, Message> = if folding {
+            // Folded lines always show their chevron; the others only while hovering the gutter.
+            let mut folded = Vec::new();
+            let mut foldable = Vec::new();
+            let indents: Vec<Option<usize>> = lines.iter().map(|l| indent_of(l)).collect();
+            let mut next_indent: Option<usize> = None;
+            let mut can_fold = vec![false; line_count];
+            for i in (0..line_count).rev() {
+                if let (Some(own), Some(below)) = (indents[i], next_indent) {
+                    can_fold[i] = below > own;
+                }
+                if indents[i].is_some() {
+                    next_indent = indents[i];
+                }
+            }
+            for (i, foldable_line) in can_fold.into_iter().enumerate() {
+                if state.is_folded(i) {
+                    folded.push((i, true));
+                } else if foldable_line {
+                    foldable.push((i, false));
+                }
+            }
+            let hover = active;
+            let left_part = MARKER_WIDTH + numbers_width;
+            widget::hover(
+                row![bars, gutter, chevrons(&folded, &starts, props, dim, hover)],
+                row![
+                    Space::new().width(Length::Fixed(left_part)),
+                    chevrons(&foldable, &starts, props, dim, hover)
+                ],
+            )
+        } else {
+            row![bars, gutter].into()
+        };
         let gutter_bg = props.background.or(Some(Color::TRANSPARENT));
-        StickyLeft::new(row![bars, gutter], code, gutter_bg).into()
+        StickyLeft::new(gutter, code, gutter_bg).into()
     } else {
         code
     };
@@ -818,7 +1607,8 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     if let Some(cb) = props.on_scroll.clone() {
         scroller = scroller.on_scroll(move |viewport| Message::Scrolled(cb.clone(), viewport));
     }
-    scroller
+    let has_minimap = props.minimap.is_some();
+    let scroller: Element<'a, Message> = scroller
         .style(move |theme: &Theme, status| {
             let mut out = scrollable::default(theme, status);
             let color = scroller_color.unwrap_or(with_alpha(
@@ -831,9 +1621,257 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 rail.scroller.background = Background::Color(color);
                 rail.scroller.border = Border::default();
             }
+            if has_minimap {
+                // The minimap covers the vertical scrollbar and replaces it.
+                out.vertical_rail.scroller.background = Background::Color(Color::TRANSPARENT);
+            }
             out
         })
         .width(Length::Fill)
         .height(Length::Fill)
-        .into()
+        .into();
+
+    let scroller: Element<'a, Message> = match &props.on_zoom {
+        Some(cb) => ZoomWheel::new(scroller, cb.clone()).into(),
+        None => scroller,
+    };
+    match props.minimap {
+        Some(minimap) => {
+            update_minimap(state, &lines, &token, theme_id, props);
+            // Over the right edge of the scrollable, covering its vertical scrollbar (a `row`
+            // would give the scrollable finite limits and let the gutter fill them).
+            let bar = 8.0;
+            let height = (size.height - if props.wrap { 0.0 } else { bar }).max(0.0);
+            let minimap = Minimap {
+                state,
+                id: props.id.clone(),
+                width: minimap.width,
+                height,
+                line_height: lh,
+                thumb: minimap.thumb,
+                background: props.background,
+            };
+            widget::Stack::with_children([
+                scroller,
+                widget::pin(minimap)
+                    .x((size.width - minimap_width).max(0.0))
+                    .into(),
+            ])
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        }
+        None => scroller,
+    }
+}
+
+/// Recomputes the minimap's colored runs when the visible text or the theme changed.
+fn update_minimap(
+    state: &EditorState,
+    lines: &[String],
+    token: &str,
+    theme_id: u64,
+    props: &EditorProps,
+) {
+    use iced::advanced::text::Highlighter as _;
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    lines.hash(&mut hasher);
+    token.hash(&mut hasher);
+    theme_id.hash(&mut hasher);
+    let key = hasher.finish();
+    let mut cache = state.minimap.borrow_mut();
+    if cache.key == key && !cache.lines.is_empty() {
+        return;
+    }
+    let mut highlighter = Highlighter::new(&highlighter::Settings {
+        token: token.to_owned(),
+        theme: theme_id,
+        font: props.font,
+        default: props.text_color,
+    });
+    let fallback = props.text_color.unwrap_or(Color::WHITE);
+    cache.key = key;
+    cache.lines = lines
+        .iter()
+        .map(|line| {
+            let mut runs: Vec<(u16, u16, Color)> = Vec::new();
+            // Byte offset -> column, with tabs every 4 columns.
+            let mut columns = Vec::with_capacity(line.len() + 1);
+            let mut col = 0u16;
+            for (i, ch) in line.char_indices() {
+                while columns.len() <= i {
+                    columns.push(col);
+                }
+                col = if ch == '\t' {
+                    (col / 4 + 1) * 4
+                } else {
+                    col.saturating_add(1)
+                };
+            }
+            while columns.len() <= line.len() {
+                columns.push(col);
+            }
+            for (range, highlight) in highlighter.highlight_line(line) {
+                let color = highlight.color().unwrap_or(fallback);
+                let text = &line[range.clone()];
+                // Split the span at whitespace so blank stretches stay empty.
+                let mut start = None;
+                for (i, ch) in text
+                    .char_indices()
+                    .chain(std::iter::once((text.len(), ' ')))
+                {
+                    let at = range.start + i;
+                    match (ch.is_whitespace(), start) {
+                        (false, None) => start = Some(at),
+                        (true, Some(s)) => {
+                            let (a, b) = (columns[s], columns[at]);
+                            runs.push((a, b.saturating_sub(a).max(1), color));
+                            start = None;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            runs
+        })
+        .collect();
+}
+
+// The crate links against Python only when loaded by it, so run these with libpython:
+// `cargo rustc --lib --profile test -- -l python3.13` and then the binary it builds
+// (`target/debug/deps/_core-*`).
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use text_editor::{Action, Edit, Position};
+
+    fn at(text: &str, line: usize, column: usize) -> EditorState {
+        let mut s = EditorState::new(text);
+        s.content.move_to(text_editor::Cursor {
+            position: Position { line, column },
+            selection: None,
+        });
+        s
+    }
+
+    fn typed(s: &mut EditorState, text: &str) {
+        for c in text.chars() {
+            if is_pair_char(c) {
+                s.key("e", EditKey::Char(c), Some(4), true);
+            } else {
+                s.perform("e", Action::Edit(Edit::Insert(c)));
+            }
+        }
+    }
+
+    fn cursor(s: &EditorState) -> (usize, usize) {
+        let p = s.real_position(s.content.cursor().position);
+        (p.line, p.column)
+    }
+
+    #[test]
+    fn closes_brackets_and_quotes() {
+        let mut s = at("", 0, 0);
+        typed(&mut s, "print(");
+        assert_eq!((s.text().as_str(), cursor(&s)), ("print()", (0, 6)));
+        typed(&mut s, "\"hi");
+        assert_eq!(s.text(), "print(\"hi\")");
+        // Typing the closers steps over them.
+        typed(&mut s, "\")");
+        assert_eq!((s.text().as_str(), cursor(&s)), ("print(\"hi\")", (0, 11)));
+    }
+
+    #[test]
+    fn quotes_inside_words_stay_single() {
+        let mut s = at("don", 0, 3);
+        typed(&mut s, "'");
+        assert_eq!(s.text(), "don'");
+        let mut s = at("x = f", 0, 5);
+        typed(&mut s, "\"");
+        assert_eq!(s.text(), "x = f\"\"");
+        // Not before a word.
+        let mut s = at("word", 0, 0);
+        typed(&mut s, "(");
+        assert_eq!(s.text(), "(word");
+    }
+
+    #[test]
+    fn backspace_deletes_empty_pair_and_enter_opens_block() {
+        let mut s = at("x = []", 0, 5);
+        s.key("e", EditKey::Backspace, Some(4), true);
+        assert_eq!(s.text(), "x = ");
+        let mut s = at("    d = {}", 0, 9);
+        s.key("e", EditKey::Enter, Some(4), true);
+        assert_eq!(s.text(), "    d = {\n        \n    }");
+        assert_eq!(cursor(&s), (1, 8));
+    }
+
+    #[test]
+    fn wraps_selection() {
+        let mut s = at("a word here", 0, 2);
+        s.content.move_to(text_editor::Cursor {
+            position: Position { line: 0, column: 6 },
+            selection: Some(Position { line: 0, column: 2 }),
+        });
+        s.key("e", EditKey::Char('('), Some(4), true);
+        assert_eq!(s.text(), "a (word) here");
+        assert_eq!(s.content.selection().as_deref(), Some("word"));
+    }
+
+    const CODE: &str = "def a():\n    x = 1\n    if x:\n        y = 2\n\n    return x\nz = 3";
+
+    #[test]
+    fn folds_by_indentation_and_keeps_real_lines() {
+        let mut s = at(CODE, 0, 0);
+        s.fold_op("e", FoldOp::Toggle(0));
+        assert_eq!(s.content.line_count(), 2);
+        assert_eq!(s.text(), CODE);
+        assert_eq!(s.real_line(1), 6);
+        assert_eq!(s.visible_line(6), (1, false));
+        assert_eq!(s.visible_line(3), (0, true));
+        // Editing below the fold keeps it, and the text stays whole.
+        s.content.move_to(text_editor::Cursor {
+            position: Position { line: 1, column: 5 },
+            selection: None,
+        });
+        typed(&mut s, "0");
+        assert_eq!(s.text(), CODE.replace("z = 3", "z = 30"));
+        assert_eq!(cursor(&s), (6, 6));
+        assert!(s.is_folded(0));
+        s.fold_op("e", FoldOp::Toggle(0));
+        assert_eq!(s.content.line_count(), 7);
+    }
+
+    #[test]
+    fn enter_on_a_folded_line_unfolds_it_and_lines_below_shift() {
+        let mut s = at(CODE, 2, 0);
+        s.fold_op("e", FoldOp::AtCursor);
+        // The `if` block (line 2) is the innermost one around the cursor.
+        assert!(s.is_folded(2));
+        s.content.move_to(text_editor::Cursor {
+            position: Position { line: 0, column: 8 },
+            selection: None,
+        });
+        s.key("e", EditKey::Enter, Some(4), true);
+        assert!(s.is_folded(3));
+        assert_eq!(s.text(), CODE.replacen("def a():", "def a():\n    ", 1));
+        s.content.move_to(text_editor::Cursor {
+            position: Position { line: 3, column: 9 },
+            selection: None,
+        });
+        s.key("e", EditKey::Enter, Some(4), true);
+        assert!(s.folds.is_empty());
+    }
+
+    #[test]
+    fn moving_into_a_fold_unfolds_it() {
+        let mut s = at(CODE, 0, 0);
+        s.fold_op("e", FoldOp::FoldAll);
+        assert_eq!(s.content.line_count(), 2);
+        let _ = s.move_to("e", Position { line: 3, column: 2 });
+        assert_eq!(cursor(&s), (3, 2));
+        s.fold_op("e", FoldOp::UnfoldAll);
+        assert_eq!(s.content.line_count(), 7);
+        assert_eq!(s.text(), CODE);
+    }
 }

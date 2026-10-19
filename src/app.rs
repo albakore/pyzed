@@ -76,10 +76,21 @@ pub enum Message {
     },
     EditorIndent {
         id: Arc<str>,
-        key: crate::editor::IndentKey,
-        size: usize,
+        key: crate::editor::EditKey,
+        size: Option<usize>,
+        pairs: bool,
         on_change: Option<PyMsg>,
         on_cursor: Option<PyMsg>,
+    },
+    EditorFold {
+        id: Arc<str>,
+        op: crate::editor::FoldOp,
+        on_cursor: Option<PyMsg>,
+    },
+    /// Scrolls the editor's scrollable (with this id) to `y` (from the minimap).
+    EditorScroll {
+        id: String,
+        y: f32,
     },
     Scrolled(PyMsg, scrollable::Viewport),
     Key(String),
@@ -111,6 +122,7 @@ enum CommandKind {
     Focus(String),
     SetEditorText(String, String),
     SetEditorCursor(String, usize, usize),
+    FoldEditor(String, crate::editor::FoldOp),
     Batch(Vec<Py<Command>>),
     Message(PyMsg),
     Perform(PyMsg, Option<PyMsg>),
@@ -172,6 +184,32 @@ impl Command {
     #[staticmethod]
     fn set_editor_cursor(id: String, line: usize, column: usize) -> Self {
         cmd(CommandKind::SetEditorCursor(id, line, column))
+    }
+
+    /// Folds every block of the `code_editor` with the given `id` (`fold=False` unfolds them).
+    #[staticmethod]
+    #[pyo3(signature = (id, fold=true))]
+    fn fold_all(id: String, fold: bool) -> Self {
+        use crate::editor::FoldOp;
+        cmd(CommandKind::FoldEditor(
+            id,
+            if fold {
+                FoldOp::FoldAll
+            } else {
+                FoldOp::UnfoldAll
+            },
+        ))
+    }
+
+    /// Folds the block that starts at `line` (1-based) of the `code_editor` with the given
+    /// `id` (`fold=False` unfolds it).
+    #[staticmethod]
+    #[pyo3(signature = (id, line, fold=true))]
+    fn fold_line(id: String, line: usize, fold: bool) -> Self {
+        cmd(CommandKind::FoldEditor(
+            id,
+            crate::editor::FoldOp::Line(line.saturating_sub(1), fold),
+        ))
     }
 
     /// Scrolls the `scrollable` with the given `id` to its end.
@@ -309,6 +347,7 @@ impl Command {
             CommandKind::Focus(_) => "Command.focus(...)",
             CommandKind::SetEditorText(..) => "Command.set_editor_text(...)",
             CommandKind::SetEditorCursor(..) => "Command.set_editor_cursor(...)",
+            CommandKind::FoldEditor(..) => "Command.fold_line(...)",
             CommandKind::Batch(_) => "Command.batch(...)",
             CommandKind::Message(_) => "Command.message(...)",
             CommandKind::Perform(..) => "Command.perform(...)",
@@ -424,6 +463,7 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             };
             state.caches.set_editor_cursor(id, position)
         }
+        CommandKind::FoldEditor(id, op) => state.caches.fold_editor_command(id, *op),
         CommandKind::Batch(commands) => Task::batch(
             commands
                 .iter()
@@ -720,13 +760,29 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 id,
                 key,
                 size,
+                pairs,
                 on_change,
                 on_cursor,
             } => {
-                let Some(outcome) = state.caches.indent_editor(&id, key, size) else {
+                let Some(outcome) = state.caches.key_editor(&id, key, size, pairs) else {
                     return Task::none();
                 };
                 return editor_outcome(py, state, &target, outcome, on_change, on_cursor);
+            }
+            Message::EditorFold { id, op, on_cursor } => {
+                let Some(outcome) = state.caches.fold_editor(&id, op) else {
+                    return Task::none();
+                };
+                return editor_outcome(py, state, &target, outcome, None, on_cursor);
+            }
+            Message::EditorScroll { id, y } => {
+                return iced::widget::operation::scroll_to(
+                    id,
+                    scrollable::AbsoluteOffset {
+                        x: None,
+                        y: Some(y),
+                    },
+                );
             }
             Message::EditorPage {
                 id,

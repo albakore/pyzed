@@ -15,11 +15,15 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+MIN_FONT, MAX_FONT, DEFAULT_FONT = 8.0, 32.0, 14.0
+CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
+
+
 @dataclass
 class EditorSettings:
     #: Theme of the code editor; empty to follow the designer's theme.
     theme: str = ""
-    font_size: float = 14.0
+    font_size: float = DEFAULT_FONT
     tab_size: int = 4
     show_whitespace: bool = False
     wrap: bool = False
@@ -32,6 +36,14 @@ class EditorSettings:
     inline_diagnostics: bool = True
     #: Run ``ruff format`` on the code when it is applied.
     format_on_apply: bool = False
+    #: Typing a bracket or quote inserts its closing pair.
+    auto_close: bool = True
+    #: Fold chevrons in the gutter (Ctrl+Shift+[ and ] fold and unfold).
+    folding: bool = True
+    minimap: bool = True
+    #: ``"bar"``, ``"block"``, ``"underline"`` or ``"hollow"``.
+    cursor_shape: str = "bar"
+    cursor_blink: bool = True
     ty: bool = True
     ruff: bool = True
 
@@ -51,7 +63,9 @@ class EditorSettings:
                     continue
                 setattr(out, f.name, value)
         out.tab_size = min(max(out.tab_size, 1), 16)
-        out.font_size = min(max(out.font_size, 8.0), 32.0)
+        out.font_size = min(max(out.font_size, MIN_FONT), MAX_FONT)
+        if out.cursor_shape not in CURSOR_SHAPES:
+            out.cursor_shape = "bar"
         return out
 
 

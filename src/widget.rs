@@ -146,6 +146,28 @@ pub struct EditorProps {
     /// Keys the editor ignores (handled by the app's `on_key` instead), e.g. `"up"`, `"enter"`.
     pub capture_keys: Vec<String>,
     pub on_scroll: Option<PyMsg>,
+    /// Typing a bracket or quote also inserts its closing pair.
+    pub auto_close: bool,
+    /// Fold chevrons in the gutter and Ctrl+Shift+[ / ] to fold and unfold.
+    pub folding: bool,
+    pub minimap: Option<MinimapProps>,
+    pub cursor: CursorProps,
+    /// `on_zoom(step)` with +1, -1 or 0 (reset) for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.
+    pub on_zoom: Option<PyMsg>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MinimapProps {
+    pub width: f32,
+    pub thumb: Option<Color>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CursorProps {
+    pub shape: crate::editor_widgets::CaretShape,
+    pub width: f32,
+    pub blink: bool,
+    pub color: Option<Color>,
 }
 
 pub enum Kind {
@@ -1208,7 +1230,9 @@ pub fn progress_bar(
     placeholder=None, placeholder_color=None, gutter=true, gutter_color=None,
     gutter_active_color=None, gutter_width=None, markers=None, wrap=false, on_change=None,
     on_cursor=None, active_line=None, scrollbar_color=None, annotations=None, whitespace=None,
-    tab_size=None, capture_keys=None, on_scroll=None))]
+    tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
+    minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
+    cursor_color=None, on_zoom=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1242,7 +1266,21 @@ pub fn code_editor(
     tab_size: Option<usize>,
     capture_keys: Option<Vec<String>>,
     on_scroll: Any<'_>,
+    auto_close: bool,
+    folding: bool,
+    minimap: Option<f32>,
+    minimap_thumb: Any<'_>,
+    cursor_shape: &str,
+    cursor_width: f32,
+    cursor_blink: bool,
+    cursor_color: Any<'_>,
+    on_zoom: Any<'_>,
 ) -> PyResult<Py<Widget>> {
+    let shape = crate::editor_widgets::CaretShape::parse(cursor_shape).ok_or_else(|| {
+        pyo3::exceptions::PyValueError::new_err(format!(
+            "cursor_shape must be \"bar\", \"block\", \"underline\" or \"hollow\", not {cursor_shape:?}"
+        ))
+    })?;
     // syntax: {"keyword": "#b477cf", "comment": ("#5d636f", "italic"), ...}
     let mut rules = Vec::new();
     if let Some(syntax) = syntax {
@@ -1310,6 +1348,22 @@ pub fn code_editor(
             tab_size: tab_size.filter(|n| *n > 0),
             capture_keys: capture_keys.unwrap_or_default(),
             on_scroll: PyMsg::maybe(&on_scroll),
+            auto_close,
+            folding,
+            minimap: match minimap {
+                Some(width) if width > 0.0 => Some(MinimapProps {
+                    width,
+                    thumb: style::opt_color(&minimap_thumb)?,
+                }),
+                _ => None,
+            },
+            cursor: CursorProps {
+                shape,
+                width: cursor_width,
+                blink: cursor_blink,
+                color: style::opt_color(&cursor_color)?,
+            },
+            on_zoom: PyMsg::maybe(&on_zoom),
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),

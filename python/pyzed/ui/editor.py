@@ -14,6 +14,12 @@ _EXT_TOKENS = {"py": "py", "rs": "rs", "js": "js", "ts": "ts", "tsx": "tsx", "js
                "c": "c", "h": "c", "cpp": "cpp", "rb": "rb", "java": "java", "sql": "sql", "lua": "lua"}
 
 
+#: Default width of the editor's minimap, in pixels.
+MINIMAP_WIDTH = 100.0
+#: Shapes accepted by ``editor(cursor_shape=...)``.
+CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
+
+
 def language_token(path: str) -> str:
     """The highlighter token for a file path, from its extension (``"main.rs"`` -> ``"rs"``)."""
     ext = path.rsplit(".", 1)[-1].lower() if "." in path else "txt"
@@ -41,6 +47,14 @@ def editor(
     tab_size: Optional[int] = None,
     capture_keys: Sequence[str] = (),
     on_scroll: Any = None,
+    auto_close: bool = True,
+    folding: bool = True,
+    minimap: Union[bool, float] = False,
+    cursor_shape: str = "bar",
+    cursor_blink: bool = True,
+    cursor_width: float = 2.0,
+    cursor_color: Optional[str] = None,
+    on_zoom: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -67,6 +81,21 @@ def editor(
     ``:``) and Backspace removes a whole level. Keys in ``capture_keys`` (``"up"``, ``"down"``,
     ``"enter"``, ``"tab"``, ``"escape"``...) are left to the app's ``on_key``, e.g. while a
     completion list is open. ``on_scroll(info)`` gets the scroll offset (``info["x"]``, ``info["y"]``).
+
+    Like Zed:
+
+    - ``auto_close`` inserts the closing bracket or quote as you type the opening one, wraps a
+      selection in it, steps over a closer that is already there, deletes an empty pair with
+      Backspace and opens an indented line when Enter is pressed between brackets.
+    - ``folding`` shows chevrons in the gutter (on hover, and always on folded lines) that fold
+      a block by indentation; a folded line ends in ``⋯`` (click it to unfold). Ctrl+Shift+[
+      folds the block around the cursor and Ctrl+Shift+] unfolds it; ``Command.fold_all(id)``
+      folds everything. Callbacks, markers and annotations keep using real line numbers.
+    - ``minimap=True`` (or a width in pixels) adds a minimap on the right; click or drag it to scroll.
+    - ``cursor_shape`` is ``"bar"``, ``"block"``, ``"underline"`` or ``"hollow"``; ``cursor_blink``,
+      ``cursor_width`` (of the bar) and ``cursor_color`` (the theme's player color by default).
+    - ``on_zoom(step)`` is called with ``1``, ``-1`` or ``0`` (reset) for Ctrl+= / Ctrl+- / Ctrl+0
+      and Ctrl+mouse wheel; change ``font_size`` in response.
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -98,6 +127,15 @@ def editor(
         tab_size=tab_size,
         capture_keys=list(capture_keys),
         on_scroll=on_scroll,
+        auto_close=auto_close,
+        folding=folding,
+        minimap=(MINIMAP_WIDTH if minimap is True else float(minimap)) if minimap else None,
+        minimap_thumb=t.scrollbar_hover,
+        cursor_shape=cursor_shape,
+        cursor_blink=cursor_blink,
+        cursor_width=cursor_width,
+        cursor_color=cursor_color or (t.players[0] if t.players else t.accent),
+        on_zoom=on_zoom,
     )
 
 

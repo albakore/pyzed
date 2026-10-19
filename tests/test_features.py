@@ -394,3 +394,27 @@ def test_images_from_files_render_on_first_frame(tmp_path):
     out = tmp_path / "file.png"
     Demo().screenshot(out, scale=1)
     assert read_png(out)[50][50][:3] == (0, 200, 0)
+
+
+def test_editor_folding_minimap_and_cursor_options(tmp_path):
+    code = "def a():\n    x = 1\n    return x\n\n\nclass B:\n    def c(self):\n        pass\n"
+
+    class Demo(pz.App):
+        size = (500, 240)
+
+        def on_start(self):
+            # Folds sent before the editor is first drawn wait for it.
+            return pz.Command.batch([pz.Command.fold_line("ed", 1), pz.Command.fold_all("other")])
+
+        def view(self):
+            return pz.column([
+                ui.editor("ed", code, language="py", minimap=True, cursor_shape="block", on_zoom=lambda step: None),
+                ui.editor("other", code, language="py", minimap=80, folding=False, auto_close=False,
+                          cursor_shape="underline", cursor_blink=False, height=100),
+            ])
+
+    out = tmp_path / "editor.png"
+    Demo().screenshot(out, scale=1)
+    assert png_size(out) == (500, 240)
+    with pytest.raises(ValueError, match="cursor_shape"):
+        ui.editor("bad", "", cursor_shape="triangle")

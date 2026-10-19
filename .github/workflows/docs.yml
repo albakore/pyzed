@@ -68,7 +68,8 @@ jobs:
       - name: Build and install
         run: |
           python -m venv .venv
-          .venv/bin/pip install maturin
+          # maturin develop installs the `dev` dependency group, which needs pip 25.1+ (`--group`).
+          .venv/bin/pip install -U pip maturin
           .venv/bin/maturin develop --release
       - name: Check (warnings only)
         run: |

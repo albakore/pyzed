@@ -47,6 +47,42 @@ def changed(self, text):
 - **Active line.** The cursor line is highlighted and scrolling follows the cursor (also with
   <kbd>PgUp</kbd>/<kbd>PgDn</kbd>).
 
+### Editing like Zed
+
+![Folded blocks, code lens and the minimap](../../../assets/components/editor-features.png)
+
+```python
+ui.editor(
+    "app.py", code, path="app.py",
+    minimap=True,                  # or a width in pixels
+    cursor_shape="block",          # "bar" (default), "block", "underline", "hollow"
+    on_zoom=self.zoom,             # 1, -1 or 0 from Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel
+    font_size=self.font_size,
+)
+
+def zoom(self, step):
+    self.font_size = 14 if step == 0 else self.font_size + step
+```
+
+- **Auto-closing pairs** (`auto_close=True`, the default). Typing `(`, `[`, `{`, `"`, `'` or `` ` ``
+  also inserts its closing pair and leaves the cursor in between. With a selection, the pair wraps
+  it. Typing a closer that is already next steps over it, <kbd>Backspace</kbd> inside an empty pair
+  deletes both, and <kbd>Enter</kbd> between brackets opens an indented line. Quotes are not paired
+  inside words (`don't`), but they are after a string prefix (`f"`, `rb'`).
+- **Folding** (`folding=True`, the default). Blocks fold by indentation: hover the gutter to see
+  the chevrons, and click one to fold its block. A folded line ends in `⋯` (click it to unfold).
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> folds the innermost block around the cursor and
+  <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> unfolds it. `Command.fold_line(id, line)` and
+  `Command.fold_all(id)` do it from code. Line numbers, `markers`, `annotations`, `on_change`,
+  `on_cursor` and `set_editor_cursor` keep using real lines; editing a folded line or moving the
+  cursor into a fold unfolds it.
+- **Minimap.** `minimap=True` draws the code zoomed out on the right with the visible area
+  highlighted; click to jump, drag to scroll, or use the wheel over it.
+- **Font zoom.** The editor reports <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd>,
+  <kbd>Ctrl</kbd>+<kbd>0</kbd> and <kbd>Ctrl</kbd>+wheel to `on_zoom`; change `font_size` in response.
+- **Cursor.** `cursor_shape`, `cursor_blink`, `cursor_width` (of the bar) and `cursor_color` (the
+  theme's player color by default), like Zed's `cursor_shape` setting.
+
 ## Terminal
 
 ![Terminal](../../../assets/components/terminal.png)

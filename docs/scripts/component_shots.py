@@ -213,6 +213,33 @@ class Counter(pz.App):
                         width=560, height=250)
 
 
+FEATURES_CODE = '''import pyzed as pz
+from pyzed import ui
+
+
+class Counter(pz.App):
+    def __init__(self):
+        self.count = 0
+
+    def increment(self):
+        self.count += 1
+
+    def view(self):
+        return ui.button(f"Clicks: {self.count}", self.increment)
+
+
+def main():
+    pz.run(Counter())
+'''
+
+
+def editor_features():
+    # `__init__` (line 6) and `increment` (line 9) start folded (see START).
+    return pz.container(ui.editor("doc-editor-features", FEATURES_CODE, path="counter.py", minimap=True,
+                                  annotations={5: "1 reference"}),
+                        width=560, height=250)
+
+
 def terminal():
     out = ("$ pytest -q\n\x1b[32m........................\x1b[0m\n\x1b[32m24 passed\x1b[0m in 1.21s\n"
            "$ maturin develop --release\n\x1b[2m   Compiling pyzed v0.1.0\x1b[0m\n\x1b[32m✓\x1b[0m Installed pyzed-0.1.0\n$ ")
@@ -389,6 +416,7 @@ SHOTS = {
     "modal": (modal, (460, 170)),
     "toasts": (toasts, (380, 270)),
     "editor": (editor, (600, 290)),
+    "editor-features": (editor_features, (600, 290)),
     "terminal": (terminal, (560, 210)),
     "controls": (controls, (600, 210)),
     "feedback": (feedback, (640, 210)),
@@ -405,9 +433,18 @@ SHOTS = {
 }
 
 
+#: Commands run before a shot is drawn.
+START = {
+    "editor-features": lambda: pz.Command.batch([pz.Command.fold_line("doc-editor-features", n) for n in (6, 9)]),
+}
+
+
 class Shot(pz.App):
-    def __init__(self, build, full=False):
-        self.build, self.full = build, full
+    def __init__(self, build, full=False, start=None):
+        self.build, self.full, self.start = build, full, start
+
+    def on_start(self):
+        return self.start() if self.start else None
 
     def view(self):
         if self.full:
@@ -419,7 +456,7 @@ def main(names):
     OUT.mkdir(parents=True, exist_ok=True)
     for name in names or SHOTS:
         build, size = SHOTS[name]
-        Shot(build, full=name in ("workspace", "split")).screenshot(OUT / f"{name}.png", size=size, scale=2)
+        Shot(build, full=name in ("workspace", "split"), start=START.get(name)).screenshot(OUT / f"{name}.png", size=size, scale=2)
         print(f"wrote {name}.png")
 
 

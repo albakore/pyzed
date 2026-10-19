@@ -73,6 +73,33 @@ Mueve el cursor del editor (línea y columna empiezan en 1). Funciona aunque el 
 | `line` | Línea (desde 1). |
 | `column` | Columna (desde 1). |
 
+### `fold_all`
+
+```python
+fold_all(id, fold=True)
+```
+
+Pliega todos los bloques del editor (`fold=False` los despliega). Funciona aunque el editor aún no se haya dibujado.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del editor. |
+| `fold` | `True` para plegar, `False` para desplegar. |
+
+### `fold_line`
+
+```python
+fold_line(id, line, fold=True)
+```
+
+Pliega (o despliega) el bloque que empieza en `line`, según la sangría. Funciona aunque el editor aún no se haya dibujado.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `id` | El `id` del editor. |
+| `line` | Línea (desde 1) donde empieza el bloque. |
+| `fold` | `True` para plegar, `False` para desplegar. |
+
 ### `scroll_to_end`
 
 ```python

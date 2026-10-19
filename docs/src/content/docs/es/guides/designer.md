@@ -59,6 +59,8 @@ pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el f
 | F5, Shift+F5 | Ejecutar el formulario, cerrarlo |
 | F7 | Editar el archivo de código completo |
 | Ctrl+Espacio | Abrir la lista de autocompletado (en el editor de código) |
+| Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+rueda | Fuente más grande, más pequeña o por defecto en el editor de código |
+| Ctrl+Shift+[ / Ctrl+Shift+] | Plegar / desplegar el bloque del cursor (en el editor de código) |
 
 Clic derecho en un control abre un menú contextual con las mismas acciones.
 
@@ -261,13 +263,19 @@ configuración del editor. Se guarda por usuario en `designer.json`, dentro de l
 | Opción | Qué hace |
 | --- | --- |
 | Servidores de lenguaje | Activa o desactiva ty y ruff, muestra si cada uno está listo (y su versión), la raíz del proyecto y el Python que se usa. **Restart servers** después de `uv sync`. |
-| Tema, tamaño de fuente | El editor puede usar un tema distinto del diseñador. |
+| Tema, tamaño de fuente | El editor puede usar un tema distinto del diseñador. Ctrl+= / Ctrl+- (o Ctrl+rueda) cambian el tamaño y Ctrl+0 lo restablece. |
 | Números de línea, resaltar la línea actual, ajuste de línea | Margen y disposición. |
 | Mostrar espacios | Dibuja los espacios como `·` y los tabuladores como `→`. |
+| Minimapa | El código en miniatura a la derecha; haz clic o arrástralo para desplazarte. |
+| Forma del cursor, parpadeo | Barra, bloque, subrayado o hueco, como en Zed. |
 | Tamaño de tabulación | Tab inserta espacios, Enter mantiene la sangría (un nivel más después de `:`) y Retroceso quita un nivel. |
 | Autocompletar al escribir | Desactivado, la lista solo se abre con Ctrl+Espacio. |
+| Cerrar paréntesis y comillas | Escribir `(`, `[`, `{` o una comilla inserta su pareja (o envuelve la selección); escribir el cierre lo salta. |
+| Plegado de código | Las flechas del margen pliegan bloques; Ctrl+Shift+[ y Ctrl+Shift+] pliegan y despliegan en el cursor. |
 | Formatear con ruff al aplicar | Ejecuta `ruff format` sobre el código al pulsar Apply. |
 | Code lens, diagnósticos en línea | Muestran u ocultan las notas al final de las líneas. |
+
+![El archivo completo con dos handlers plegados y el minimapa](../../../../../screenshots/designer-code-folding.png)
 
 ## Componentes
 
