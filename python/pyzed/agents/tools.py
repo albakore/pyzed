@@ -130,7 +130,7 @@ def file_tools(root: Path) -> List[Tool]:
             rel = path.relative_to(root)
             if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file():
                 continue
-            if fnmatch.fnmatch(str(rel), pattern) or fnmatch.fnmatch(path.name, pattern):
+            if fnmatch.fnmatch(rel.as_posix(), pattern) or fnmatch.fnmatch(path.name, pattern):
                 out.append(rel.as_posix())
                 if len(out) >= limit:
                     break
@@ -154,7 +154,7 @@ def file_tools(root: Path) -> List[Tool]:
             rel = path.relative_to(root)
             if any(part in SKIP_DIRS for part in rel.parts) or not path.is_file():
                 continue
-            if not (fnmatch.fnmatch(str(rel), pattern) or fnmatch.fnmatch(path.name, pattern)):
+            if not (fnmatch.fnmatch(rel.as_posix(), pattern) or fnmatch.fnmatch(path.name, pattern)):
                 continue
             try:
                 lines = path.read_text(encoding="utf-8").splitlines()
@@ -176,7 +176,7 @@ def file_tools(root: Path) -> List[Tool]:
         target = _inside(root, path)
         target.parent.mkdir(parents=True, exist_ok=True)
         existed = target.exists()
-        target.write_text(content, encoding="utf-8")
+        target.write_bytes(content.encode("utf-8"))  # as given: no newline translation on Windows
         return json.dumps({"path": target.relative_to(root).as_posix(), "created": not existed,
                            "bytes": len(content.encode())})
 
