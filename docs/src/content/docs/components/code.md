@@ -150,6 +150,14 @@ Names include `undo`, `redo`, `add_selection_above`, `add_selection_below`, `sel
 `move_to_enclosing_bracket`, `convert_to_upper_case`, `convert_to_lower_case` and
 `sort_lines_case_sensitive`.
 
+### Input methods
+
+Chinese, Japanese, Korean and other languages typed through an input method (IME) work in the editor.
+While you compose, the IME's text is drawn in a box at the cursor and the caret is hidden; the committed text goes in at every cursor, and consecutive commits are undone
+in one step, like typing. The IME follows the cursor as you move it.
+
+![Composing 你好 with a pinyin input method](../../../assets/components/editor-ime.png)
+
 ## Terminal
 
 ![Terminal](../../../assets/components/terminal.png)

@@ -9,7 +9,7 @@ use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer::{self, Quad};
 use iced::advanced::text::{self as core_text, Renderer as _};
 use iced::advanced::widget::{self, Tree, Widget, tree};
-use iced::advanced::{Clipboard, Shell, mouse, overlay};
+use iced::advanced::{Clipboard, Shell, input_method, mouse, overlay};
 use iced::widget::text::LineHeight;
 use iced::{
     Background, Border, Color, Element, Event, Font, Length, Pixels, Point, Rectangle, Size, Theme,
@@ -75,7 +75,11 @@ struct CaretState {
 
 impl Caret<'_> {
     fn visible(&self, state: &CaretState) -> bool {
-        if !self.state.focused.get() || !state.window_focused.get() || self.selecting {
+        if !self.state.focused.get()
+            || !state.window_focused.get()
+            || self.selecting
+            || self.state.composing.get()
+        {
             return false;
         }
         let now = Instant::now();
@@ -651,6 +655,24 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
         viewport: &Rectangle,
     ) {
         let state = tree.state.downcast_mut::<ZoomState>();
+        // The text editor draws the input method's preedit itself; the caret hides meanwhile
+        // and the committed text is grouped with typing for undo.
+        if let Event::InputMethod(ime) = event
+            && self.state.focused.get()
+        {
+            match ime {
+                input_method::Event::Preedit(content, _) => {
+                    self.state.composing.set(!content.is_empty())
+                }
+                input_method::Event::Commit(_) => {
+                    self.state.composing.set(false);
+                    self.state.ime_commit.set(true);
+                }
+                input_method::Event::Opened | input_method::Event::Closed => {
+                    self.state.composing.set(false)
+                }
+            }
+        }
         match event {
             Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) => {
                 state.modifiers = *modifiers;

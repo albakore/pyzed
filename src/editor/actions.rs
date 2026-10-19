@@ -1712,4 +1712,23 @@ mod tests {
         let _ = s.perform("e", Action::Edit(Edit::Paste(Arc::new("1\n2".into()))));
         assert_eq!(s.text(), "a1\nb2");
     }
+
+    #[test]
+    fn input_method_text_undoes_like_typing() {
+        let mut s = editor("x");
+        at(&mut s, 0, 1);
+        for text in ["你好", "吗"] {
+            s.ime_commit.set(true);
+            let _ = s.perform("e", Action::Edit(Edit::Paste(Arc::new(text.into()))));
+        }
+        assert_eq!(s.text(), "x你好吗");
+        assert!(!s.ime_commit.get());
+        run(&mut s, EditorAction::Undo);
+        assert_eq!(s.text(), "x");
+        // A real paste stays its own step.
+        let _ = s.perform("e", Action::Edit(Edit::Paste(Arc::new("ab".into()))));
+        let _ = s.perform("e", Action::Edit(Edit::Paste(Arc::new("cd".into()))));
+        run(&mut s, EditorAction::Undo);
+        assert_eq!(s.text(), "xab");
+    }
 }

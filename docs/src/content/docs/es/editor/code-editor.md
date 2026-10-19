@@ -53,6 +53,8 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> pliega el bloque más interior alrededor del cursor y
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> lo despliega.
 - **Minimapa**: el código en miniatura a la derecha; haz clic o arrastra en él para desplazarte.
+- **Métodos de entrada**: los métodos de entrada (IME) de chino, japonés y coreano funcionan: el texto que se
+  está componiendo se dibuja en el cursor y el texto confirmado se inserta en cada cursor.
 - **Espacios en blanco**: opcionalmente dibuja los espacios como `·` y los tabuladores como `→`.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> o <kbd>Ctrl</kbd>+rueda cambian el tamaño de
   letra; <kbd>Ctrl</kbd>+<kbd>0</kbd> lo restablece. El tamaño se guarda.
