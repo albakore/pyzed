@@ -154,16 +154,35 @@ def panel(
     width: Any = None,
     height: Any = None,
     side: str = "left",
+    resizable: bool = True,
+    on_resize: Any = None,
+    min_size: float = 120,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A dock panel (project panel, outline, terminal, assistant...). ``side`` picks the border edge."""
+    """A dock panel (project panel, outline, terminal, assistant...). ``side`` picks the border edge.
+
+    With a numeric ``width`` (``height`` for ``side="bottom"``) the border facing the center
+    can be dragged to resize the panel; ``on_resize(size)`` is called when a drag ends.
+    ``resizable=False`` keeps it fixed.
+    """
     t = _theme(theme)
     body = _core.container(
         _core.column([header, content], width="fill", height="fill"),
-        width="fill" if side in ("left", "right") else "fill",
+        width="fill",
         height="fill",
         bg=t.panel,
     )
+    size = height if side == "bottom" else width
+    if resizable and isinstance(size, (int, float)) and side in INNER_EDGES:
+        return _core.resizable(
+            body,
+            edge=INNER_EDGES[side],
+            size=size,
+            min_size=min_size,
+            on_resize=on_resize,
+            color=t.border,
+            hover_color=t.accent,
+        )
     edge = _core.rule(vertical=side in ("left", "right"), thickness=1, color=t.border)
     if side == "left":
         layout = _core.row([body, edge], width=width, height=height or "fill")
@@ -172,6 +191,10 @@ def panel(
     else:
         layout = _core.column([edge, body], width=width or "fill", height=height)
     return layout
+
+
+# The edge of a docked panel that faces the center (where its resize handle goes).
+INNER_EDGES = {"left": "right", "right": "left", "bottom": "top"}
 
 
 def workspace(
@@ -185,23 +208,34 @@ def workspace(
     left_width: float = 240,
     right_width: float = 320,
     bottom_height: float = 220,
+    on_resize: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """Lays out a full Zed-like window. Pass ``None`` for any dock to hide it."""
+    """Lays out a full Zed-like window. Pass ``None`` for any dock to hide it.
+
+    The docks can be resized by dragging their inner border; ``on_resize(side, size)`` is
+    called when a drag ends (``side`` is "left", "right" or "bottom"). For panels the user
+    can also move between sides, use ``pz.Dock``.
+    """
+
+    def resized(side: str) -> Any:
+        return None if on_resize is None else (lambda size: on_resize(side, size))
+
     t = _theme(theme)
     middle = _core.column(
         [
             _core.container(center, width="fill", height="fill", bg=t.editor),
-            panel(bottom, side="bottom", height=bottom_height, theme=t) if bottom is not None else None,
+            panel(bottom, side="bottom", height=bottom_height, on_resize=resized("bottom"), min_size=80,
+                  theme=t) if bottom is not None else None,
         ],
         width="fill",
         height="fill",
     )
     body = _core.row(
         [
-            panel(left, side="left", width=left_width, theme=t) if left is not None else None,
+            panel(left, side="left", width=left_width, on_resize=resized("left"), theme=t) if left is not None else None,
             middle,
-            panel(right, side="right", width=right_width, theme=t) if right is not None else None,
+            panel(right, side="right", width=right_width, on_resize=resized("right"), theme=t) if right is not None else None,
         ],
         width="fill",
         height="fill",

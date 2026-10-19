@@ -278,6 +278,9 @@ List box, Progress bar, Badge, Image, Icon, Markdown, Spinner, Panel, Divider an
 
 ![Every built-in component](../../../../screenshots/designer-components.png)
 
+To draw your own components, with properties, state, methods and events, use the
+[component designer](/pyzed/guides/component-designer/). They join this toolbox when you save them.
+
 Register your own and it shows up in the toolbox:
 
 ```python
@@ -315,6 +318,27 @@ doc.save("hello.pzform")
 designer.run("hello.pzform")
 ```
 
+### New forms and other windows
+
+`designer.new_form(path)` creates an empty form and its handlers module (in a project,
+`project.find().new_form("settings")` puts it in `ui/`). From a handler, `form.open(...)`
+opens another form in a new window; the name is looked up next to the current form,
+then in the project's `ui/` folder. Whatever you pass as `data` arrives as `form.data`:
+
+```python
+designer.new_form("ui/details.pzform", title="Details")
+
+def details_button_click(form, event):
+    return form.open("details", data=form.order_id.text)
+
+# details.py
+def form_load(form, event):
+    form.title = f"Order {form.data}"
+```
+
+`designer.open_window(form_or_path, data=...)` returns the same `Command` from any app, and
+also accepts a `designer.Form` built in code (with `handlers={"name": function}`).
+
 ## How it is built
 
 ```mermaid
@@ -342,6 +366,8 @@ classDiagram
 - `document.py`: every editing command, with no UI, so it is fully testable.
 - `project_panel.py`: the Project tab (uv projects, dependencies, ruff, ty and git; see [Projects with uv](/pyzed/guides/projects/)).
 - `surface.py` and `panels.py`: the views; `app.py`: the `Designer` app wiring clicks and keys to the document.
+- `scene.py`, `scene_code.py`, `scene_runtime.py` and `scene_panel.py`: the [component designer](/pyzed/guides/component-designer/)
+  (the `.pzcomp` model, the class code, `SceneComponent` and the Component panel).
 - `runtime.py`: `FormApp` and `FormWindow`, which draw a form and call its handlers.
 - `lsp.py`: a small JSON-RPC client for language servers and the detection of the project and its `.venv`.
 - `intellisense.py`: `CodeIntel`, which keeps ty and ruff in sync with the open handler, and the completion,

@@ -415,6 +415,150 @@ A form row: title and description on the left, control on the right (like Zed's 
 | `description` | Help text. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
+## Dialogs
+
+### `dialog_layer`
+
+```python
+dialog_layer(base, dialog=None, *, on_dismiss=None, theme=None)
+```
+
+Shows a dialog centered over `base` with a dimmed backdrop. With `dialog=None` it returns `base` unchanged, so it can always wrap the view. See [Dialogs](/pyzed/guides/i18n/#dialogs).
+
+| Parameter | Description |
+| --- | --- |
+| `base` | The UI underneath. |
+| `dialog` | A dialog from the functions below, or `ui.modal`. |
+| `on_dismiss` | Sent when the backdrop is clicked. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.dialog_layer(self.main_view(), ui.confirm("Delete 3 files?", self.delete, self.cancel, danger=True)
+                if self.asking else None, on_dismiss=self.cancel)
+```
+
+### `alert`
+
+```python
+alert(message, on_close, *, title=None, kind=None, ok_label=None, width=400, theme=None)
+```
+
+A message with one button.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Text or widget. |
+| `on_close` | The button and the close icon. |
+| `title` | Title. |
+| `kind` | `"info"`, `"success"`, `"warning"` or `"error"` adds an icon. |
+| `ok_label` | Button text (default: OK, translated). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `confirm`
+
+```python
+confirm(
+    message,
+    on_confirm,
+    on_cancel,
+    *,
+    title=None,
+    confirm_label=None,
+    cancel_label=None,
+    danger=False,
+    kind=None,
+    width=420,
+    theme=None,
+)
+```
+
+Asks a yes/no question.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Text or widget. |
+| `on_confirm` | The confirm button. |
+| `on_cancel` | Cancel, the close icon. |
+| `title` | Title. |
+| `confirm_label` | Confirm button text. |
+| `cancel_label` | Cancel button text. |
+| `danger` | Paints the confirm button red and labels it Delete. |
+| `kind` | Adds an icon, as in `alert`. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `prompt`
+
+```python
+prompt(
+    title,
+    value,
+    on_input,
+    on_submit,
+    on_cancel,
+    *,
+    message=None,
+    placeholder='',
+    submit_label=None,
+    cancel_label=None,
+    id=None,
+    width=440,
+    theme=None,
+)
+```
+
+Asks for a line of text.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | Title. |
+| `value` | Current text. |
+| `on_input` | Receives each edit. |
+| `on_submit` | Enter or the submit button. |
+| `on_cancel` | Cancel, the close icon. |
+| `message` | Text above the field. |
+| `placeholder` | Hint text shown when empty. |
+| `submit_label` | Submit button text. |
+| `cancel_label` | Cancel button text. |
+| `id` | Field id (for `Command.focus`). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `choice`
+
+```python
+choice(message, options, on_cancel, *, title=None, width=440, theme=None)
+```
+
+A message with your own buttons.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Any Python value, or a callable. |
+| `options` | `(label, on_press)` pairs; the last one is the main button. |
+| `on_cancel` | The close icon. |
+| `title` | Title. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `unsaved_changes`
+
+```python
+unsaved_changes(name, on_save, on_discard, on_cancel, *, width=440, theme=None)
+```
+
+"Save your changes to *name* before closing?" with Don't save, Cancel and Save.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | File or document name. |
+| `on_save` | Save. |
+| `on_discard` | Don't save. |
+| `on_cancel` | Cancel. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
 ## Controls
 
 ### `select`
@@ -481,6 +625,7 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    align='center',
     theme=None,
 )
 ```
@@ -496,6 +641,7 @@ A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` 
 | `step` | Button step. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `suffix` | Unit shown at the end (`"px"`, `"%"`…). |
+| `align` | Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -573,6 +719,56 @@ A collapsible section: a header with an arrow that shows or hides `content`. You
 | `on_toggle` | Message or callable when the header is clicked. |
 | `end` | Widgets at the end (right). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `AccordionSection`
+
+```python
+class AccordionSection
+```
+
+One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget.
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `title` | Title. |
+| `content` | Content: a `Widget`, a string or a number (converted to text). |
+| `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `end` | Widgets at the end (right). |
+
+### `accordion`
+
+```python
+accordion(
+    sections,
+    *,
+    open=(),
+    on_toggle=None,
+    icons=None,
+    spacing=8,
+    padding=(6, 12, 10, 12),
+    theme=None,
+)
+```
+
+Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.
+
+| Parameter | Description |
+| --- | --- |
+| `sections` | `ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples). |
+| `open` | The set of open ids, a `{id: bool}` dict, or `True` for all. |
+| `on_toggle` | Called with the key of the clicked header. |
+| `icons` | `{id: icon}`: a Lucide icon for each header. |
+| `spacing` | Space around the dividers between sections. |
+| `padding` | Padding around the content of an open section. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.accordion([
+    ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+    ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
+```
 
 ## Data and feedback
 
@@ -1131,6 +1327,7 @@ workspace(
     left_width=240,
     right_width=320,
     bottom_height=220,
+    on_resize=None,
     theme=None,
 )
 ```
@@ -1148,6 +1345,7 @@ The layout of a Zed window: title bar, left, right and bottom docks, center and 
 | `left_width` | Width of the left dock. |
 | `right_width` | Width of the right dock. |
 | `bottom_height` | Height of the bottom dock. |
+| `on_resize` | Called with `(side, size)` when the user finishes resizing a dock by dragging its inner border. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `title_bar`
@@ -1240,10 +1438,21 @@ An icon and/or text in the status bar (diagnostics, cursor position, language…
 ### `panel`
 
 ```python
-panel(content, *, header=None, width=None, height=None, side='left', theme=None)
+panel(
+    content,
+    *,
+    header=None,
+    width=None,
+    height=None,
+    side='left',
+    resizable=True,
+    on_resize=None,
+    min_size=120,
+    theme=None,
+)
 ```
 
-A dockable panel. `side` decides which edge gets the border line.
+A dockable panel. `side` decides which edge gets the border line; with a numeric `width` (`height` for the bottom) that border can be dragged to resize it.
 
 | Parameter | Description |
 | --- | --- |
@@ -1252,6 +1461,9 @@ A dockable panel. `side` decides which edge gets the border line.
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `side` | `"left"`, `"right"` or `"bottom"`. |
+| `resizable` | `False` keeps the size fixed. |
+| `on_resize` | Called with the new size when a drag ends. |
+| `min_size` | Smallest size when resizing. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `panel_header`

@@ -4,6 +4,8 @@
     pyzed run app.pzform        # run the form with its logic
 
 A form is two files: ``app.pzform`` (JSON layout) and ``app.py`` (event handlers).
+A component designed visually is ``rating.pzcomp`` (layout) and ``rating.py`` (a
+``SceneComponent`` class with its properties, events and methods); see ``designer.scene``.
 Everything is also scriptable::
 
     from pyzed import designer
@@ -13,6 +15,9 @@ Everything is also scriptable::
     form["greet"].events["click"] = "greet_click"
     designer.save(form, "hello.pzform")
     designer.run("hello.pzform")
+
+Handlers open other forms in new windows with ``form.open("settings")``;
+``designer.new_form("ui/settings.pzform")`` creates an empty one.
 """
 
 from .components import (
@@ -31,7 +36,9 @@ from .document import Document
 from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
-from .runtime import Event, FormApp, FormWindow, open_form, run, theme_for
+from .runtime import Event, FormApp, FormWindow, form_window, new_form, open_form, open_window, run, theme_for
+from .scene import Scene, SceneDocument, discover, load_component, new_component, open_document
+from .scene_runtime import SceneComponent
 from .settings import EditorSettings
 
 
@@ -65,15 +72,25 @@ __all__ = [
     "History",
     "Prop",
     "RenderContext",
+    "Scene",
+    "SceneComponent",
+    "SceneDocument",
     "align",
     "all_components",
     "anchored",
     "categories",
     "component",
     "design",
+    "discover",
     "distribute",
+    "form_window",
     "load",
+    "load_component",
+    "new_component",
+    "new_form",
+    "open_document",
     "open_form",
+    "open_window",
     "register",
     "render",
     "run",

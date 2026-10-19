@@ -623,6 +623,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "left_width": "Width of the left dock.",
                         "right_width": "Width of the right dock.",
                         "bottom_height": "Height of the bottom dock.",
+                        "on_resize": "Called with `(side, size)` when the user finishes resizing a dock by dragging its inner border.",
                     },
                 },
                 "pyzed.ui.title_bar": {
@@ -639,8 +640,12 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"content": "Text.", "tooltip": "Tooltip text."},
                 },
                 "pyzed.ui.panel": {
-                    "desc": "A dockable panel. `side` decides which edge gets the border line.",
-                    "params": {"header": "Header (`ui.panel_header`).", "side": '`"left"`, `"right"` or `"bottom"`.'},
+                    "desc": "A dockable panel. `side` decides which edge gets the border line; with a numeric `width` (`height` for the bottom) that border can be dragged to resize it.",
+                    "params": {
+                        "header": "Header (`ui.panel_header`).", "side": '`"left"`, `"right"` or `"bottom"`.',
+                        "resizable": "`False` keeps the size fixed.", "on_resize": "Called with the new size when a drag ends.",
+                        "min_size": "Smallest size when resizing.",
+                    },
                 },
                 "pyzed.ui.panel_header": {"desc": "A panel header: icon, title and actions.", "params": {"height": "Height."}},
             }),
@@ -1010,15 +1015,71 @@ _section("command", "Windows and clipboard", {
 _w = _page("widgets")["sections"]
 dict(_w)["Layout"].update({
     "pyzed.grid": {
-        "desc": "Lays out its children in a grid with a fixed number of `columns`, or as many columns of at most `max_width` as fit.",
-        "params": {"columns": "Number of columns.", "height": "Height of each row.", "aspect_ratio": "Keeps cells at this width/height ratio."},
-        "example": "pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)",
+        "desc": "Lays out its children in a grid. With `columns=3` the columns are equal (or `max_width` fits as many as possible). With track lists (`columns=[200, \"1fr\", \"auto\"]`, `rows=...`) it works like a CSS grid: numbers are pixels, `\"auto\"` fits the content and `\"<n>fr\"` shares the space left. Wrap children in `pz.cell` to place them and make them span; the rest fill the free cells row by row. See [Layout](/pyzed/guides/layout/#grids).",
+        "params": {
+            "columns": "Number of equal columns, or tracks: a list (`[200, \"1fr\", \"auto\"]`) or a string (`\"200 1fr auto\"`).",
+            "rows": "Row tracks, like `columns`. Rows beyond the list are `\"auto\"`.",
+            "spacing": "Space between cells.", "row_spacing": "Space between rows, if different.",
+            "height": "With `columns=<int>`: height of each row. With tracks: the grid's height.",
+            "width": "With `columns=<int>`: pixels. With tracks: the grid's width (default `\"fill\"`).",
+            "aspect_ratio": "Keeps cells at this width/height ratio (`columns=<int>` only).",
+            "max_width": "Fits as many columns of at most this width as possible (`columns=<int>` only).",
+            "padding": "Space around the cells.",
+            "align_x": "Horizontal alignment of items in their cells: `\"start\"`, `\"center\"`, `\"end\"`.",
+            "align_y": "Vertical alignment of items in their cells.",
+        },
+        "example": """
+            pz.grid([pz.cell(header, column=0, row=0, column_span=2), sidebar, content],
+                    columns=[200, "1fr"], rows=[48, "1fr"], spacing=8, height="fill")
+        """,
+    },
+    "pyzed.cell": {
+        "desc": "Places a child in a track grid: its column and row (from 0) and how many it spans. Children without a cell fill the free cells row by row. Outside a grid it is just the child.",
+        "params": {
+            "content": "The widget.", "column": "Column index (from 0).", "row": "Row index (from 0).",
+            "column_span": "Columns it covers.", "row_span": "Rows it covers.",
+            "align_x": "Horizontal alignment in the cell.", "align_y": "Vertical alignment in the cell.",
+        },
+        "example": 'pz.cell(ui.button("Save"), column=2, row=3, align_x="end")',
+    },
+    "pyzed.flex": {
+        "desc": "Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.",
+        "params": {
+            "children": "The widgets, or `pz.flex_item(...)` for children with their own sizing.",
+            "direction": "`\"row\"` or `\"column\"`.",
+            "justify": "`\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` or `\"evenly\"`. No effect when a child grows.",
+            "align": "Cross-axis alignment: `\"start\"`, `\"center\"` or `\"end\"`.",
+            "gap": "Space between children.", "wrap": "Wraps onto new lines (rows with `justify=\"start\"` only).",
+            "padding": "Space around the children.", "width": "Width.", "height": "Height.",
+        },
+        "example": 'pz.flex([logo, title, pz.flex_item(search, grow=1), avatar], justify="between", align="center", gap=8)',
+    },
+    "pyzed.flex_item": {
+        "desc": "Sizes a child of `pz.flex`.",
+        "params": {
+            "content": "The widget.", "grow": "Share of the free space on the main axis (`0` keeps its natural size).",
+            "basis": "A fixed main size in pixels, instead of growing.", "align": "Cross-axis alignment for this child.",
+        },
+    },
+    "pyzed.resizable": {
+        "desc": "A panel whose `edge` can be dragged to resize it. It keeps the size the user drags it to; `on_resize(size)` is called when a drag ends so you can save it. Changing `size` later resets it.",
+        "params": {
+            "content": "The panel's content.",
+            "edge": "The edge with the handle: `\"right\"` (a left sidebar), `\"left\"`, `\"top\"` (a bottom panel) or `\"bottom\"`.",
+            "size": "Starting width (height for top/bottom edges).",
+            "min_size": "Smallest size.", "max_size": "Largest size.",
+            "on_resize": "Called with the new size when a drag ends.",
+            "color": "Line color.", "hover_color": "Line color while hovered or dragged.",
+            "thickness": "Line thickness.", "handle": "Width of the area that can be grabbed.",
+            "width": "Width for top/bottom edges.", "height": "Height for left/right edges.",
+        },
+        "example": 'pz.row([pz.resizable(sidebar, edge="right", size=240, on_resize=self.save_width), editor])',
     },
     "pyzed.split": {
         "desc": "Two panes with a draggable divider. For the theme style use `ui.split`.",
         "params": {
             "first": "First pane.", "second": "Second pane.",
-            "ratio": "Proportion of the first pane (0–1).",
+            "ratio": "Proportion of the first pane (0–1). The split keeps the ratio the user drags to until this changes.",
             "on_resize": "Callable that receives the new ratio while dragging.",
             "vertical": "Stacks the panes top/bottom.",
             "min_size": "Minimum size of the first pane.", "min_size_second": "Minimum size of the second pane.",
@@ -1109,7 +1170,7 @@ _section("ui", "Controls", {
     },
     "pyzed.ui.number_field": {
         "desc": "A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
-        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…)."},
+        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.'},
     },
     "pyzed.ui.split_button": {
         "desc": "A button with a separate arrow for more options (Zed's `SplitButton`). `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
@@ -1126,6 +1187,19 @@ _section("ui", "Controls", {
     "pyzed.ui.disclosure": {
         "desc": "A collapsible section: a header with an arrow that shows or hides `content`. You own the open state: change it in `on_toggle`.",
         "params": {"title": "Title (text or widget).", "content": "Content.", "open": "Whether it is open.", "on_toggle": "Message or callable when the header is clicked."},
+    },
+    "pyzed.ui.AccordionSection": {
+        "desc": "One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget.",
+    },
+    "pyzed.ui.accordion": {
+        "desc": "Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
+        "params": {"sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).", "open": "The set of open ids, a `{id: bool}` dict, or `True` for all.", "on_toggle": "Called with the key of the clicked header.", "icons": "`{id: icon}`: a Lucide icon for each header.", "spacing": "Space around the dividers between sections.", "padding": "Padding around the content of an open section."},
+        "example": """
+            ui.accordion([
+                ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+                ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
+        """,
     },
 }, before="Lists, tree and menus")
 _section("ui", "Data and feedback", {
@@ -1315,6 +1389,28 @@ _section("app", "Events and components", {
     "pyzed.Event": {
         "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.",
     },
+    "pyzed.Dock": {
+        "desc": "A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
+        "params": {
+            "args": "Props by position: `center`, `panels`, `layout`.", "kwargs": "Props and handlers by name, plus `key=`.",
+            "center": "The main area.", "panels": "A list of `pz.DockPanel`.",
+            "layout": "A saved layout (from `on_layout`) to restore.",
+            "on_layout": "Called with `event.value` = `{positions, sizes, active, hidden}` when panels move, resize or switch.",
+        },
+        "example": """
+            pz.Dock(center=editor, panels=[
+                pz.DockPanel("project", "Project", tree, icon="folder", side="left"),
+                pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+            ], layout=self.layout, on_layout=lambda e: setattr(self, "layout", e.value))
+        """,
+    },
+    "pyzed.DockPanel": {
+        "desc": "A panel for `pz.Dock`.",
+        "params": {
+            "id": "Stable id (used in the saved layout).", "title": "Tab title.", "content": "The panel's widget.",
+            "icon": "Lucide icon for the tab.", "side": 'Starting side: `"left"`, `"right"`, `"bottom"` or `"top"`.',
+        },
+    },
     "pyzed.Component": {
         "desc": "Base class for custom components, like React components: annotated class attributes are props, other attributes are state kept between renders, `render()` returns widgets and `events` declares custom events raised with `self.emit(name, value)`. Calling the class returns a widget. Components appear in the designer's toolbox. See [Custom components](/pyzed/guides/components/).",
         "example": """
@@ -1326,6 +1422,15 @@ _section("app", "Events and components", {
                     return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
 
             Rating(value=3, on_change=lambda e: print(e.value))
+        """,
+    },
+    "pyzed.state": {
+        "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
+        "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},
+        "example": """
+            class Counter(pz.Component):
+                step: int = 1
+                count: int = pz.state(0)
         """,
     },
 })
@@ -1340,3 +1445,65 @@ _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, in declaration order.",
     "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move.",
 }
+
+# -- Dialogs and translations -------------------------------------------------
+_section("ui", "Dialogs", {
+    "pyzed.ui.dialog_layer": {
+        "desc": "Shows a dialog centered over `base` with a dimmed backdrop. With `dialog=None` it returns `base` unchanged, so it can always wrap the view. See [Dialogs](/pyzed/guides/i18n/#dialogs).",
+        "params": {"base": "The UI underneath.", "dialog": "A dialog from the functions below, or `ui.modal`.",
+                   "on_dismiss": "Sent when the backdrop is clicked."},
+        "example": """
+            ui.dialog_layer(self.main_view(), ui.confirm("Delete 3 files?", self.delete, self.cancel, danger=True)
+                            if self.asking else None, on_dismiss=self.cancel)
+        """,
+    },
+    "pyzed.ui.alert": {
+        "desc": "A message with one button.",
+        "params": {"message": "Text or widget.", "on_close": "The button and the close icon.",
+                   "kind": '`"info"`, `"success"`, `"warning"` or `"error"` adds an icon.', "ok_label": "Button text (default: OK, translated)."},
+    },
+    "pyzed.ui.confirm": {
+        "desc": "Asks a yes/no question.",
+        "params": {"message": "Text or widget.", "on_confirm": "The confirm button.", "on_cancel": "Cancel, the close icon.",
+                   "danger": "Paints the confirm button red and labels it Delete.", "kind": "Adds an icon, as in `alert`.",
+                   "confirm_label": "Confirm button text.", "cancel_label": "Cancel button text."},
+    },
+    "pyzed.ui.prompt": {
+        "desc": "Asks for a line of text.",
+        "params": {"value": "Current text.", "on_input": "Receives each edit.", "on_submit": "Enter or the submit button.",
+                   "on_cancel": "Cancel, the close icon.", "message": "Text above the field.", "id": "Field id (for `Command.focus`).",
+                   "submit_label": "Submit button text.", "cancel_label": "Cancel button text."},
+    },
+    "pyzed.ui.choice": {
+        "desc": "A message with your own buttons.",
+        "params": {"options": "`(label, on_press)` pairs; the last one is the main button.", "on_cancel": "The close icon."},
+    },
+    "pyzed.ui.unsaved_changes": {
+        "desc": "\"Save your changes to *name* before closing?\" with Don't save, Cancel and Save.",
+        "params": {"name": "File or document name.", "on_save": "Save.", "on_discard": "Don't save.", "on_cancel": "Cancel."},
+    },
+}, before="Controls")
+
+_section("app", "Languages", {
+    "pyzed.t": {
+        "desc": "The text for `key` in the current language, formatted with `values`. Falls back from `\"es_AR\"` to `\"es\"`, then to the fallback language, then to the key. See [Languages](/pyzed/guides/i18n/).",
+        "params": {"key": "Dotted key, like `\"menu.open\"`.", "language": "Look it up in another language.",
+                   "default": "Returned when the key is missing (default: the key).",
+                   "values": "Values for `{name}` placeholders; `count=` also picks the plural form."},
+        "example": """
+            i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+            i18n.set_language("es")
+            pz.t("greeting", name="Kev"), pz.t("files", count=3)
+        """,
+    },
+    "pyzed.i18n.add": {"desc": "Adds or overrides texts for a language. Nested tables become dotted keys; `{\"one\": ..., \"other\": ...}` tables are plural forms.",
+                       "params": {"language": "Language code, like `\"es\"` or `\"pt_BR\"`.", "catalog": "Dict of texts."}},
+    "pyzed.i18n.load": {"desc": "Loads every `<language>.json` and `<language>.toml` in `folder`; returns the languages found.", "params": {"folder": "Folder with the catalog files."}},
+    "pyzed.i18n.set_language": {"desc": "Switches the language. The app shows it on its next render, so call it from a handler.", "params": {"language": "Language code, like `\"es\"`."}},
+    "pyzed.i18n.language": {"desc": "The current language, normalized (`\"es_ar\"`)."},
+    "pyzed.i18n.languages": {"desc": "The languages with a catalog."},
+    "pyzed.i18n.set_fallback": {"desc": "The language used when a text is missing (default `\"en\"`).", "params": {"language": "Language code."}},
+    "pyzed.i18n.on_change": {"desc": "Calls `listener(language)` after every switch; returns a function that removes it.", "params": {"listener": "Callable that receives the new language."}},
+    "pyzed.i18n.system_language": {"desc": "The operating system's language (`LANG`, `LC_ALL` or the locale).", "params": {"default": "Returned when the system reports none."}},
+    "pyzed.i18n.has": {"desc": "Whether `key` has a text in the language or its fallbacks.", "params": {"key": "Dotted key.", "language": "Language to check (default: the current one)."}},
+})

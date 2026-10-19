@@ -25,8 +25,11 @@ classifiers = [
 designer = ["ty", "ruff"]
 
 [dependency-groups]
-# The build backend and the test runner; `uv sync` installs them (default-groups below).
-test = ["maturin>=1.7,<2.0", "pytest"]
+dev = [
+    "ty>=0.0.89",
+]
+# The build backend, the test runner and the type checker; `uv sync` installs them (default-groups below).
+test = ["maturin>=1.7,<2.0", "pytest", "ty"]
 
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"

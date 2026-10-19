@@ -259,6 +259,43 @@ What happened, passed to event handlers: `type`, `x`, `y` (relative to the widge
 | `value` | Value of a custom event. |
 | `source` | Component that emitted it. |
 
+### `Dock`
+
+```python
+class Dock
+```
+
+A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).
+
+| Parameter | Description |
+| --- | --- |
+| `args` | Props by position: `center`, `panels`, `layout`. |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `kwargs` | Props and handlers by name, plus `key=`. |
+
+```python
+pz.Dock(center=editor, panels=[
+    pz.DockPanel("project", "Project", tree, icon="folder", side="left"),
+    pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+], layout=self.layout, on_layout=lambda e: setattr(self, "layout", e.value))
+```
+
+### `DockPanel`
+
+```python
+class DockPanel
+```
+
+A panel for `pz.Dock`.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | Stable id (used in the saved layout). |
+| `title` | Tab title. |
+| `content` | The panel's widget. |
+| `icon` | Lucide icon for the tab. |
+| `side` | Starting side: `"left"`, `"right"`, `"bottom"` or `"top"`. |
+
 ### `Component`
 
 ```python
@@ -283,3 +320,147 @@ class Rating(pz.Component):
 
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
+
+### `state`
+
+```python
+state(default=None, *, doc='')
+```
+
+Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).
+
+| Parameter | Description |
+| --- | --- |
+| `default` | Initial value, copied for each instance. |
+| `doc` | Description shown in the designer. |
+
+```python
+class Counter(pz.Component):
+    step: int = 1
+    count: int = pz.state(0)
+```
+
+## Languages
+
+### `t`
+
+```python
+t(key, *, language=None, default=None, **values)
+```
+
+The text for `key` in the current language, formatted with `values`. Falls back from `"es_AR"` to `"es"`, then to the fallback language, then to the key. See [Languages](/pyzed/guides/i18n/).
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Dotted key, like `"menu.open"`. |
+| `language` | Look it up in another language. |
+| `default` | Returned when the key is missing (default: the key). |
+| `values` | Values for `{name}` placeholders; `count=` also picks the plural form. |
+
+```python
+i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+i18n.set_language("es")
+pz.t("greeting", name="Kev"), pz.t("files", count=3)
+```
+
+### `add`
+
+```python
+add(language, catalog)
+```
+
+Adds or overrides texts for a language. Nested tables become dotted keys; `{"one": ..., "other": ...}` tables are plural forms.
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code, like `"es"` or `"pt_BR"`. |
+| `catalog` | Dict of texts. |
+
+### `load`
+
+```python
+load(folder)
+```
+
+Loads every `<language>.json` and `<language>.toml` in `folder`; returns the languages found.
+
+| Parameter | Description |
+| --- | --- |
+| `folder` | Folder with the catalog files. |
+
+### `set_language`
+
+```python
+set_language(language)
+```
+
+Switches the language. The app shows it on its next render, so call it from a handler.
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code, like `"es"`. |
+
+### `language`
+
+```python
+language()
+```
+
+The current language, normalized (`"es_ar"`).
+
+### `languages`
+
+```python
+languages()
+```
+
+The languages with a catalog.
+
+### `set_fallback`
+
+```python
+set_fallback(language)
+```
+
+The language used when a text is missing (default `"en"`).
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code. |
+
+### `on_change`
+
+```python
+on_change(listener)
+```
+
+Calls `listener(language)` after every switch; returns a function that removes it.
+
+| Parameter | Description |
+| --- | --- |
+| `listener` | Callable that receives the new language. |
+
+### `system_language`
+
+```python
+system_language(default='en')
+```
+
+The operating system's language (`LANG`, `LC_ALL` or the locale).
+
+| Parameter | Description |
+| --- | --- |
+| `default` | Returned when the system reports none. |
+
+### `has`
+
+```python
+has(key, *, language=None)
+```
+
+Whether `key` has a text in the language or its fallbacks.
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Dotted key. |
+| `language` | Language to check (default: the current one). |

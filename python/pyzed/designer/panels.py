@@ -277,6 +277,10 @@ def properties(d: "Designer", t: Theme) -> Any:
         rows = control_properties(d, t)
     else:
         rows = form_properties(d, t)
+    if getattr(d.doc, "is_scene", False):  # component mode: the component itself, and bindings
+        from . import scene_panel
+
+        rows = scene_panel.properties(d, t, rows)
     return _core.scrollable(_core.column(rows, width="fill", padding=(0, 0, 16, 0)), height="fill")
 
 

@@ -130,6 +130,40 @@ def designer_shots(scale):
     designer.FormApp(form).screenshot(OUT / "designer-components.png", scale=scale)
 
 
+def component_designer_shots(scale):
+    """The designer's component mode on examples/designer/components (Rating inside ProfileCard)."""
+    from pyzed.designer import scene_panel
+
+    folder = HERE / "designer" / "components"
+    cwd = Path.cwd()
+    os.chdir(folder)  # the designer discovers the components of the current folder
+    try:
+        app = designer.Designer(folder / "profile_card.pzcomp", language_servers=False)
+        app.screenshot(OUT / "designer-component.png", size=(1440, 900), scale=scale)
+
+        app.select_from_outline("headline")
+        app.screenshot(OUT / "designer-component-bindings.png", size=(1440, 900), scale=scale)
+
+        rating = designer.Designer(folder / "rating.pzcomp", language_servers=False)
+        scene_panel.open_method(rating, "pick")
+        rating.screenshot(OUT / "designer-component-code.png", size=(1440, 900), scale=scale)
+
+        designer.open_form(folder / "reviews.pzform").screenshot(OUT / "designer-component-run.png", scale=2)
+
+        preview = scene_panel.ComponentPreview(scene_panel.compile_class(rating.doc))
+        preview.log = ["10:42:05  mount  None", "10:42:07  change  3"]
+
+        class Preview(pz.App):
+            size = preview.size
+
+            def view(self):
+                return preview.view()
+
+        Preview().screenshot(OUT / "designer-component-preview.png", scale=2)
+    finally:
+        os.chdir(cwd)
+
+
 PROJECT_TOML = """[project]
 name = "shop"
 version = "0.1.0"
@@ -269,6 +303,7 @@ def main():
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
     designer_shots(1.0)
+    component_designer_shots(1.0)
     project_shot(1.0)
     code_editor_shots(1.0)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")

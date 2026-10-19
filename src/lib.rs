@@ -7,6 +7,7 @@ mod events;
 mod extra;
 mod fonts;
 mod highlighter;
+mod layout;
 mod render;
 mod sticky;
 mod style;
@@ -18,6 +19,7 @@ use pyo3::prelude::*;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     widget::register(m)?;
     extra::register(m)?;
+    layout::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;

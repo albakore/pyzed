@@ -1,0 +1,122 @@
+{
+  "format": "pyzed.component/1",
+  "component": {
+    "name": "ProfileCard",
+    "width": 280,
+    "height": 128,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": false,
+    "grid": 8,
+    "code": null,
+    "label": "",
+    "icon": "id-card",
+    "category": "Example",
+    "description": "A person with a rating."
+  },
+  "events": {},
+  "controls": [
+    {
+      "name": "frame",
+      "type": "panel",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 280,
+      "height": 128,
+      "props": {
+        "title": "",
+        "background": "",
+        "border": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "headline",
+      "type": "heading",
+      "x": 16,
+      "y": 16,
+      "width": 248,
+      "height": 28,
+      "props": {
+        "text": "Heading",
+        "level": "3",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "role",
+      "type": "label",
+      "x": 16,
+      "y": 48,
+      "width": 248,
+      "height": 20,
+      "props": {
+        "text": "Label",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "stars",
+      "type": "rating",
+      "x": 16,
+      "y": 82,
+      "width": 232,
+      "height": 28,
+      "props": {
+        "value": 3,
+        "readonly": false
+      },
+      "events": {
+        "change": "stars_change"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ],
+  "bindings": {
+    "headline": {
+      "text": "person"
+    },
+    "role": {
+      "text": "job"
+    },
+    "stars": {
+      "value": "score"
+    }
+  }
+}

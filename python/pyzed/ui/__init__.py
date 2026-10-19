@@ -20,7 +20,17 @@ from .base import (
     muted,
     tooltip_text as tooltip,
 )
-from .controls import chip, disclosure, number_field, radio_group, select, split_button, toggle_group
+from .controls import (
+    AccordionSection,
+    accordion,
+    chip,
+    disclosure,
+    number_field,
+    radio_group,
+    select,
+    split_button,
+    toggle_group,
+)
 from .display import (
     Column,
     bar_chart,
@@ -40,6 +50,7 @@ from .display import (
     stat,
     table,
 )
+from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
 from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree
@@ -59,6 +70,14 @@ from .overlays import (
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 
 __all__ = [
+    "alert",
+    "choice",
+    "confirm",
+    "dialog_layer",
+    "prompt",
+    "unsaved_changes",
+    "AccordionSection",
+    "accordion",
     "ansi",
     "avatar",
     "badge",

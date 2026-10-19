@@ -1,8 +1,8 @@
-"""Form controls: selects, radio groups, number fields, split buttons, chips and disclosures."""
+"""Form controls: selects, radio groups, number fields, split buttons, chips, disclosures and accordions."""
 
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 
 from .. import _core
 from ..icons import glyph as _glyph
@@ -107,12 +107,14 @@ def number_field(
     step: float = 1,
     width: float = 120,
     suffix: Optional[str] = None,
+    align: str = "center",
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A numeric input with −/+ buttons (Zed's ``NumericStepper``).
 
     ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
-    accepted as long as it parses; anything else is ignored.
+    accepted as long as it parses; anything else is ignored. The number is centered
+    between the buttons; ``align="start"`` or ``"end"`` moves it.
     """
     t = _theme(theme)
 
@@ -161,6 +163,7 @@ def number_field(
                     border_width=0.0,
                     color=t.text,
                     selection_color=t.selection,
+                    align_x=align,
                 ),
                 label(suffix, size="sm", color="text_muted", theme=t) if suffix else None,
                 side("plus", step, max is not None and value >= max),
@@ -279,6 +282,76 @@ def disclosure(
         radius=t.radius_sm,
     )
     return _core.column([header, _core.container(content, padding=(4, 0, 4, 26)) if open else None], spacing=2)
+
+
+class AccordionSection(NamedTuple):
+    """One section of an ``accordion``: a ``key``, its ``title``, its ``content`` and an optional header ``end``."""
+
+    key: str
+    title: str
+    content: Any
+    icon: Optional[str] = None
+    end: Any = None
+
+
+def accordion(
+    sections: Sequence[Any],
+    *,
+    open: Any = (),  # noqa: A002
+    on_toggle: Optional[Callable[[str], Any]] = None,
+    icons: Optional[Mapping[str, str]] = None,
+    spacing: float = 8,
+    padding: Any = (6, 12, 10, 12),
+    theme: Optional[Theme] = None,
+) -> _core.Widget:
+    """Stacked collapsible sections separated by dividers, like the panels of Zed's settings.
+
+    ``sections`` are ``(id, title, content)`` tuples or ``AccordionSection`` items; ``open``
+    is the set of open ids (or a ``{id: bool}`` dict, or ``True`` for all) and
+    ``on_toggle(id)`` flips one. ``icons`` maps ids to Lucide icons and ``spacing`` is the
+    space around the dividers between sections. Headers span the
+    whole width, so content lines up with the rest of the panel.
+    """
+    t = _theme(theme)
+    if open is True:
+        is_open = lambda k: True  # noqa: E731
+    elif isinstance(open, Mapping):
+        is_open = lambda k: bool(open.get(k, False))  # noqa: E731
+    else:
+        is_open = lambda k: k in open  # noqa: E731
+    parts: list = []
+    for index, raw in enumerate(sections):
+        section = raw if isinstance(raw, AccordionSection) else AccordionSection(*raw)
+        shown = is_open(section.key)
+        icon_name = section.icon or (icons or {}).get(section.key)
+        header = _core.button(
+            _core.row(
+                [
+                    _icon("chevron-down" if shown else "chevron-right", size=14, color=t.icon_muted),
+                    _icon(icon_name, size=14, color=t.icon_muted) if icon_name else None,
+                    label(section.title, size="sm", weight="semibold", wrap=False, theme=t),
+                    _core.space(width="fill"),
+                ],
+                spacing=8,
+                align="center",
+            ),
+            (lambda k=section.key: on_toggle(k)) if on_toggle else None,
+            width="fill",
+            padding=(8, 12),
+            bg="transparent",
+            hover_bg=t.ghost_hover,
+            radius=0,
+        )
+        if section.end is not None:
+            header = _core.stack([header, _core.container(section.end, width="fill", height="fill",
+                                                          align_x="end", align_y="center", padding=(0, 8))])
+        if index:
+            parts.append(_core.container(_core.container(width="fill", height=1, bg=t.border_variant),
+                                         width="fill", padding=(spacing / 2, 0)))
+        parts.append(header)
+        if shown:
+            parts.append(_core.container(section.content, width="fill", padding=padding))
+    return _core.column(parts, width="fill")
 
 
 def toggle_group(

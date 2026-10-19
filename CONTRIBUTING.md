@@ -32,7 +32,7 @@ uv run pytest tests
 uv run python examples/gallery.py
 ```
 
-`uv sync` installs the `test` group (maturin, pytest). Python changes under
+`uv sync` installs the `test` group (maturin, pytest, ty; `uv run ty check` type checks). Python changes under
 `python/pyzed/` are picked up directly, and after changing Rust code the next
 `uv run` or `uv sync` rebuilds the core (`[tool.uv] cache-keys` in
 `pyproject.toml`). Add `--extra designer` for ty and ruff.
@@ -42,7 +42,7 @@ With pip:
 ```sh
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install maturin pytest
+pip install maturin pytest ty
 maturin develop --release            # builds the Rust core and installs pyzed
 pytest tests
 ```
