@@ -51,9 +51,9 @@ component really renders, build it inside an `App` and call `App.screenshot` (se
 it, pixel by pixel, with its reference image in `tests/visual/references/`. A pixel counts as changed
 when a channel differs by more than 16; the test fails when more than 0.05% of the pixels change.
 
-The references are rendered on **Linux with the CPU renderer** (tiny-skia; `tests/conftest.py` sets
+The references are rendered on **Linux x86-64 with the CPU renderer** (tiny-skia; `tests/conftest.py` sets
 `WGPU_BACKEND=dx12`, which has no backend on Linux, so iced falls back to it). Other platforms rasterize text
-slightly differently, so there the comparisons are skipped unless `PYZED_VISUAL=1` is set. The visual tests
+slightly differently (ARM too), so there the comparisons are skipped unless `PYZED_VISUAL=1` is set. The visual tests
 need Pillow (`pip install pillow`; it is in the `test` group of `pyproject.toml`).
 
 ### When a comparison fails
@@ -63,7 +63,7 @@ The test writes two images to `tests/visual/output/` (ignored by git):
 - `<scene>.actual.png`: what the code renders now.
 - `<scene>.diff.png`: the reference, faded, with the changed pixels in red.
 
-In CI they are uploaded as the **visual-diffs** artifact of the Linux test job.
+In CI they are uploaded as the **visual-diffs-…** artifact of the Linux test job.
 
 ### Updating the references
 

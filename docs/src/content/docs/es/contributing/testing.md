@@ -52,9 +52,9 @@ de `tests/test_ui_workspace.py`).
 píxel a píxel, con su imagen de referencia en `tests/visual/references/`. Un píxel cuenta como cambiado si
 un canal difiere en más de 16; el test falla si cambia más del 0,05 % de los píxeles.
 
-Las referencias se dibujan en **Linux con el renderizador por CPU** (tiny-skia; `tests/conftest.py` pone
+Las referencias se dibujan en **Linux x86-64 con el renderizador por CPU** (tiny-skia; `tests/conftest.py` pone
 `WGPU_BACKEND=dx12`, que no existe en Linux, así que iced recurre a él). Otras plataformas rasterizan el texto
-de forma algo distinta, así que allí las comparaciones se omiten salvo con `PYZED_VISUAL=1`. Los tests
+de forma algo distinta (también ARM), así que allí las comparaciones se omiten salvo con `PYZED_VISUAL=1`. Los tests
 visuales necesitan Pillow (`pip install pillow`; está en el grupo `test` de `pyproject.toml`).
 
 ### Cuando falla una comparación
@@ -64,7 +64,7 @@ El test escribe dos imágenes en `tests/visual/output/` (ignorada por git):
 - `<escena>.actual.png`: lo que dibuja el código ahora.
 - `<escena>.diff.png`: la referencia, atenuada, con los píxeles cambiados en rojo.
 
-En la CI se suben como el artefacto **visual-diffs** del job de tests de Linux.
+En la CI se suben como el artefacto **visual-diffs-…** del job de tests de Linux.
 
 ### Actualizar las referencias
 

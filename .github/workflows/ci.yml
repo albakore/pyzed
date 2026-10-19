@@ -79,7 +79,7 @@ jobs:
         if: failure() && runner.os == 'Linux'
         uses: actions/upload-artifact@v7
         with:
-          name: visual-diffs
+          name: visual-diffs-${{ matrix.os }}-py${{ matrix.python }}
           path: tests/visual/output/
           if-no-files-found: ignore
 

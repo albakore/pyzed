@@ -7,11 +7,12 @@ When a change to the UI is intended, regenerate the references and commit them::
     pytest tests/test_visual.py --update-snapshots -k palette  # only some
 
 A failing comparison writes ``<scene>.actual.png`` and ``<scene>.diff.png`` (changed pixels in red) to
-``tests/visual/output``. The references are rendered on Linux with the CPU renderer; on other platforms the
+``tests/visual/output``. The references are rendered on Linux x86-64 with the CPU renderer; on other platforms the
 comparisons are skipped unless ``PYZED_VISUAL=1`` is set.
 """
 
 import os
+import platform
 import sys
 from pathlib import Path
 
@@ -34,8 +35,11 @@ MAX_CHANGED = 0.0005
 
 pytestmark = [
     pytest.mark.visual,
-    pytest.mark.skipif(not sys.platform.startswith("linux") and os.environ.get("PYZED_VISUAL") != "1",
-                       reason="reference images are rendered on Linux (set PYZED_VISUAL=1 to compare anyway)"),
+    pytest.mark.skipif(
+        not (sys.platform.startswith("linux") and platform.machine() in ("x86_64", "AMD64"))
+        and os.environ.get("PYZED_VISUAL") != "1",
+        reason="reference images are rendered on Linux x86-64 (set PYZED_VISUAL=1 to compare anyway)",
+    ),
 ]
 
 
