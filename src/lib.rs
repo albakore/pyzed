@@ -14,6 +14,7 @@ mod render;
 mod sticky;
 mod style;
 mod styled;
+mod virtualize;
 mod widget;
 
 use pyo3::prelude::*;

@@ -1103,7 +1103,7 @@ table(
 )
 ```
 
-Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado.
+Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El orden se hace aquí cuando `sort_by` nombra una columna: pulsar un encabezado llama a `on_sort(título)` y tú cambias `sort_by`/`descending` en tu estado. Las filas están virtualizadas: solo se construyen las visibles, así que cientos de miles de filas se desplazan con fluidez.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1476,6 +1476,41 @@ Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto e
 ### `SEPARATOR`
 
 Separador para `ui.menu`.
+
+### `virtual_list`
+
+```python
+virtual_list(
+    items,
+    render,
+    *,
+    item_height=26,
+    spacing=0,
+    width='fill',
+    height='fill',
+    padding=None,
+    overscan=4,
+    id=None,
+    on_scroll=None,
+    theme=None,
+)
+```
+
+Una lista con scroll que solo construye las filas visibles, para miles o millones de elementos. `render(elemento)` devuelve el widget de un elemento y se llama cuando entra en la vista. Todas las filas tienen la misma altura.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `items` | Los elementos: una lista o cualquier secuencia (otros iterables se convierten en lista). |
+| `render` | Función que recibe un elemento y devuelve su widget. |
+| `item_height` | Altura de cada fila, en píxeles. |
+| `spacing` | Separación entre hijos, en píxeles. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `padding` | Relleno interior: `8`, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |
+| `overscan` | Filas extra construidas por encima y por debajo de las visibles. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `on_scroll` | Callable que recibe el viewport del scroll, como en `pz.scrollable`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Navegación
 

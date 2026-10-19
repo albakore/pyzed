@@ -1795,6 +1795,42 @@ pub fn responsive(py: Python<'_>, function: &Bound<'_, PyAny>) -> PyResult<Py<Wi
     new(py, Kind::Responsive(PyMsg::new(function)))
 }
 
+/// A column of `count` rows of the same height that only builds the rows in view:
+/// `item(index)` is called when row `index` scrolls into view. Put it in a `scrollable`.
+#[pyfunction]
+#[pyo3(signature = (count, item, *, item_height, spacing=0.0, overscan=4, width=None))]
+pub fn virtual_column(
+    py: Python<'_>,
+    count: usize,
+    item: &Bound<'_, PyAny>,
+    item_height: f32,
+    spacing: f32,
+    overscan: usize,
+    width: Any<'_>,
+) -> PyResult<Py<Widget>> {
+    if !item.is_callable() {
+        return Err(PyTypeError::new_err(
+            "virtual_column() needs a function (index) -> widget",
+        ));
+    }
+    if !(item_height.is_finite() && item_height > 0.0) {
+        return Err(PyValueError::new_err(
+            "item_height must be a positive number",
+        ));
+    }
+    new(
+        py,
+        Kind::Virtual {
+            count,
+            item: PyMsg::new(item),
+            item_height,
+            spacing,
+            overscan,
+            width: style::opt_length(&width)?,
+        },
+    )
+}
+
 pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Span>()?;
     m.add_function(wrap_pyfunction!(self::image, m)?)?;
@@ -1810,5 +1846,6 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(pin, m)?)?;
     m.add_function(wrap_pyfunction!(grid, m)?)?;
     m.add_function(wrap_pyfunction!(responsive, m)?)?;
+    m.add_function(wrap_pyfunction!(virtual_column, m)?)?;
     Ok(())
 }
