@@ -412,8 +412,12 @@ _ES_MOTION = {
     "How visible the control and everything inside it is (1 is opaque)":
         "Cuánto se ve el control y todo lo que contiene (1 es opaco)",
     "A soft halo around the box": "Un halo suave alrededor de la caja",
-    "A wide, bright glow that spills out of the box": "Un brillo amplio e intenso que desborda la caja",
-    "A translucent, frosted panel with a light edge": "Un panel translúcido y esmerilado con un borde claro",
+    "Light that spills from the bright parts of the control": "Luz que desborda de las partes brillantes del control",
+    "A translucent panel that blurs what is behind it": "Un panel translúcido que desenfoca lo que tiene detrás",
+    "Rotation": "Rotación", "Backdrop blur": "Desenfoque del fondo",
+    "Degrees, clockwise, around the center": "Grados, en sentido horario, alrededor del centro",
+    "Blurs the control and everything inside it, in pixels": "Desenfoca el control y todo lo que contiene, en píxeles",
+    "Blurs what is behind the box, in pixels": "Desenfoca lo que hay detrás de la caja, en píxeles",
     "How much of the tint shows": "Cuánto se nota el tinte",
     "No animations yet: add one to play it when the control appears, on hover, on click...":
         "Aún no hay animaciones: añade una para reproducirla cuando el control aparece, al pasar el ratón, al "

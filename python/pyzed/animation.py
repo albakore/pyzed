@@ -21,10 +21,14 @@ Every widget has ``animate()`` and ``transition()``::
   ``"none"``), like CSS.
 - ``key``: a new value restarts the animation. ``active``: plays while true.
 - ``on_start``/``on_end``: callables or messages sent when it starts and ends.
-- Property values (``opacity``, ``x``, ``y``, ``scale``, ``background``, ``border_color``,
-  ``color``, ``radius``, ``border_width``, ``glow``, ``glow_color``): without a preset they
-  make the animation. On ``mount`` the widget starts from them; on the other triggers it
-  goes to them. ``x`` and ``y`` take pixels or ``"50%"`` of the widget's own size.
+- Property values (``opacity``, ``x``, ``y``, ``scale``, ``rotate``, ``blur``, ``background``,
+  ``border_color``, ``color``, ``radius``, ``border_width``, ``glow``, ``glow_color``,
+  ``width``, ``height``, ``padding``, ``font_size``): without a preset they make the
+  animation. On ``mount`` the widget starts from them; on the other triggers it goes to
+  them. ``x`` and ``y`` take pixels or ``"50%"`` of the widget's own size, ``rotate``
+  degrees clockwise (or ``"0.5turn"``, ``"1rad"``) and ``blur`` pixels. ``width``,
+  ``height``, ``padding`` and ``font_size`` change the layout, so the widgets around move
+  with it.
 
 ``Animation(keyframes=...)`` describes any keyframe animation, ``define_animation`` names
 one, ``presence`` animates content in and out when it changes, ``stagger`` delays a list
@@ -51,8 +55,10 @@ EASINGS: Tuple[str, ...] = tuple(_core.EASINGS)
 #: What plays an animation.
 TRIGGERS = ("mount", "hover", "press", "focus", "click", "active")
 #: The properties animations and transitions change.
-PROPERTIES = ("opacity", "x", "y", "scale", "background", "border_color", "color", "radius",
-              "border_width", "glow", "glow_color")
+PROPERTIES = ("opacity", "x", "y", "scale", "rotate", "blur", "background", "border_color", "color", "radius",
+              "border_width", "glow", "glow_color", "width", "height", "padding", "font_size")
+#: The properties that change the layout (the widget's size), not only how it is drawn.
+LAYOUT_PROPERTIES = ("width", "height", "padding", "font_size")
 COLOR_PROPERTIES = ("background", "border_color", "color", "glow_color")
 DIRECTIONS = ("normal", "reverse", "alternate", "alternate_reverse")
 FILLS = ("both", "forwards", "backwards", "none")
@@ -151,8 +157,14 @@ def _value(prop: str, value: Any) -> Any:
         if text.endswith("px"):
             text = text[:-2]
         return float(text)
+    if prop == "rotate" and isinstance(value, str):
+        return _style.degrees(value)
+    if prop in LAYOUT_PROPERTIES and isinstance(value, str) and value.strip().endswith("px"):
+        return float(value.strip()[:-2])
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{prop} must be a number, not {value!r}")
+    if prop in ("blur", "width", "height", "padding", "font_size") and value < 0:
+        raise ValueError(f"{prop} can't be negative, not {value!r}")
     return float(value)
 
 
@@ -387,8 +399,10 @@ _preset("bounce_in", {0: {"opacity": 0, "scale": 0.3}, 0.5: {"opacity": 1, "scal
         "entrance", "Bounces in from small.", duration=600, easing="ease_out")
 _preset("drop_in", [{"opacity": 0, "y": "-40%"}, {"opacity": 1, "y": 0}], "entrance",
         "Falls into place with a bounce.", duration=520, easing="ease_out_bounce")
-_preset("blur_in", [{"opacity": 0, "scale": 1.06}, {"opacity": 1, "scale": 1}], "entrance",
-        "Settles in from slightly larger, like a lens focusing.", duration=360, easing=_E)
+_preset("blur_in", [{"opacity": 0, "blur": 12, "scale": 1.04}, {"opacity": 1, "blur": 0, "scale": 1}], "entrance",
+        "Comes into focus, like a lens.", duration=360, easing=_E)
+_preset("rotate_in", [{"opacity": 0, "rotate": -90, "scale": 0.8}, {"opacity": 1, "rotate": 0, "scale": 1}],
+        "entrance", "Turns in from a quarter turn.", duration=420, easing=_E)
 
 for _name, _frames_, _desc in (
     ("fade_out", [{"opacity": 1}, {"opacity": 0}], "Fades out."),
@@ -405,6 +419,10 @@ for _name, _frames_, _desc in (
     _preset(_name, _frames_, "exit", _desc, duration=220, easing="ease_in_cubic")
 _preset("pop_out", {0: {"scale": 1}, 0.35: {"scale": 1.04, "opacity": 1}, 1: {"opacity": 0, "scale": 0.8}},
         "exit", "Swells a little, then pops away.", duration=260, easing="ease_in")
+_preset("blur_out", [{"opacity": 1, "blur": 0}, {"opacity": 0, "blur": 12}], "exit", "Goes out of focus.",
+        duration=260, easing="ease_in_cubic")
+_preset("rotate_out", [{"opacity": 1, "rotate": 0, "scale": 1}, {"opacity": 0, "rotate": 90, "scale": 0.8}],
+        "exit", "Turns away a quarter turn.", duration=320, easing="ease_in_cubic")
 
 _preset("pulse", {0: {"scale": 1}, 0.5: {"scale": 1.05}, 1: {"scale": 1}}, "attention",
         "Grows and shrinks once.", duration=600, easing="ease_in_out")
@@ -421,8 +439,12 @@ _preset("flash", {0: {"opacity": 1}, 0.25: {"opacity": 0}, 0.5: {"opacity": 1}, 
 _preset("rubber_band", {0: {"scale": 1}, 0.3: {"scale": 1.12}, 0.45: {"scale": 0.94}, 0.6: {"scale": 1.05},
                         0.75: {"scale": 0.98}, 1: {"scale": 1}}, "attention", "Stretches and snaps back.",
         duration=800, easing="ease")
-_preset("tada", {0: {"scale": 1}, 0.1: {"scale": 0.92}, 0.3: {"scale": 1.08}, 0.5: {"scale": 1.08},
-                 0.8: {"scale": 1.04}, 1: {"scale": 1}}, "attention", "A celebratory pop.", duration=900)
+_preset("tada", {0: {"scale": 1, "rotate": 0}, 0.1: {"scale": 0.92, "rotate": -3}, 0.3: {"scale": 1.08, "rotate": 3},
+                 0.5: {"scale": 1.08, "rotate": -3}, 0.7: {"rotate": 3}, 0.8: {"scale": 1.04, "rotate": -2},
+                 1: {"scale": 1, "rotate": 0}}, "attention", "A celebratory pop with a wiggle.", duration=900)
+_preset("swing", {0: {"rotate": 0}, 0.2: {"rotate": 15}, 0.4: {"rotate": -10}, 0.6: {"rotate": 5},
+                  0.8: {"rotate": -5}, 1: {"rotate": 0}}, "attention", "Swings like a hanging sign.",
+        duration=900, easing="ease_in_out")
 _preset("glow_flash", {0: {"glow": 0}, 0.3: {"glow": 22}, 1: {"glow": 0}}, "attention",
         "A burst of glow around the box.", duration=700, easing="ease_out")
 
@@ -440,6 +462,8 @@ _preset("bloom", [{"glow": None, "scale": 1}, {"glow": 28, "scale": 1.02}], "int
         "A strong, wide glow that blooms out of the box.", duration=260, easing=_E, on="hover")
 _preset("nudge_right", [{"x": 0}, {"x": 4}], "interaction", "Moves a little to the right (links, chevrons).",
         duration=140, easing=_E, on="hover")
+_preset("tilt", [{"rotate": 0}, {"rotate": -4}], "interaction", "Tilts a little (stickers, cards).",
+        duration=180, easing=_E, on="hover")
 
 _preset("float", {0: {"y": 0}, 0.5: {"y": -6}, 1: {"y": 0}}, "loop", "Floats up and down.",
         duration=2400, easing="ease_in_out_sine", repeat="infinite")
@@ -455,6 +479,8 @@ _preset("throb", {0: {"scale": 1}, 0.5: {"scale": 1.08}, 1: {"scale": 1}}, "loop
         "Pulses forever (notifications).", duration=1200, easing="ease_in_out", repeat="infinite")
 _preset("drift", {0: {"x": 0}, 0.5: {"x": 6}, 1: {"x": 0}}, "loop", "Drifts sideways.",
         duration=3000, easing="ease_in_out_sine", repeat="infinite")
+_preset("spin", [{"rotate": 0}, {"rotate": 360}], "loop", "Turns forever (spinners, loading icons).",
+        duration=1000, easing="linear", repeat="infinite")
 
 #: The presets, by name (``define_animation`` adds more).
 PRESETS = _presets

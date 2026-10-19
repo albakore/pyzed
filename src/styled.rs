@@ -200,14 +200,44 @@ fn effects(d: &Bound<'_, PyDict>) -> PyResult<Option<crate::animation::Base>> {
     let opacity = get("opacity")?.map(|v| v.extract::<f32>()).transpose()?;
     let scale = get("scale")?.map(|v| v.extract::<f32>()).transpose()?;
     let translate = get("translate")?;
-    if opacity.is_none() && scale.is_none() && translate.is_none() {
+    let float =
+        |key: &str| -> PyResult<Option<f32>> { get(key)?.map(|v| v.extract::<f32>()).transpose() };
+    let rotate = float("rotate")?;
+    let blur = float("blur")?;
+    let backdrop_blur = float("backdrop_blur")?;
+    let bloom = get("bloom_light")?
+        .map(|v| v.extract::<(Bound<'_, PyAny>, f32)>())
+        .transpose()?;
+    if opacity.is_none()
+        && scale.is_none()
+        && translate.is_none()
+        && rotate.is_none()
+        && blur.is_none()
+        && backdrop_blur.is_none()
+        && bloom.is_none()
+    {
         return Ok(None);
     }
     let mut base = Base {
         opacity: opacity.unwrap_or(1.0).clamp(0.0, 1.0),
         scale: scale.unwrap_or(1.0).max(0.0),
+        rotate: rotate.unwrap_or(0.0),
+        blur: blur.unwrap_or(0.0).max(0.0),
+        backdrop_blur: backdrop_blur.unwrap_or(0.0).max(0.0),
         ..Base::default()
     };
+    if let Some((color, intensity)) = bloom {
+        let tint = if color.is_none() {
+            None
+        } else {
+            Some(style::color(&color)?)
+        };
+        base.bloom = Some((tint, intensity.clamp(0.0, 1.0)));
+    }
+    if let Some(r) = get("radius")? {
+        let r = style::radius(&Some(r))?;
+        base.radius = [r.top_left, r.top_right, r.bottom_right, r.bottom_left];
+    }
     if let Some(t) = translate {
         let (x, y): (Bound<'_, PyAny>, Bound<'_, PyAny>) = t.extract()?;
         let value = |v: &Bound<'_, PyAny>| -> PyResult<Value> {

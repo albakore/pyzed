@@ -145,7 +145,8 @@ def moves(animations: Optional[List[Mapping[str, Any]]], style: Optional[Mapping
     """Whether a control draws outside its box (animations, glow, bloom, glass or a shadow), so its
     frame must not clip it."""
     style = style or {}
-    return bool(animations) or any(style.get(k) for k in ("shadow", "glow", "bloom", "glass", "translate", "scale"))
+    return bool(animations) or any(style.get(k) for k in ("shadow", "glow", "bloom", "glass", "translate", "scale",
+                                                                "rotate", "blur"))
 
 
 # -- effects (style properties) --------------------------------------------------------

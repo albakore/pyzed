@@ -44,7 +44,7 @@ def _named_select(options: Any, value: str, on_change: Callable[[str], Any], t: 
 
 
 def effect_rows(d: "Designer", c: Control, t: Theme) -> List[Any]:
-    """The Effects section: opacity, glow, bloom and glass (all saved in the control's style)."""
+    """The Effects section: opacity, rotation, blur, glow, bloom and glass (all saved in the control's style)."""
     style = c.style
     name = c.name
     rows: List[Any] = [Group("Effects")]
@@ -54,10 +54,18 @@ def effect_rows(d: "Designer", c: Control, t: Theme) -> List[Any]:
                                             lambda v: d.set_style_value(name, "opacity", None if v >= 1 else round(v, 3)),
                                             t, min=0, max=1, step=0.05),
                          t, tip="How visible the control and everything inside it is (1 is opaque)"))
+    for key, title, maximum, step, tip in (
+        ("rotate", "Rotation", 360, 1, "Degrees, clockwise, around the center"),
+        ("blur", "Blur", 64, 1, "Blurs the control and everything inside it, in pixels"),
+        ("backdrop_blur", "Backdrop blur", 64, 1, "Blurs what is behind the box, in pixels"),
+    ):
+        rows.append(prop_row(title, _number(style.get(key) or 0, lambda v, key=key: d.set_style_value(
+            name, key, None if not v else round(v, 2)), t, min=-maximum if key == "rotate" else 0, max=maximum,
+            step=step), t, tip=tip))
 
     for key, title, size_title, default, maximum, step, tip in (
         ("glow", "Glow", "Glow size", 12.0, 96, 1, "A soft halo around the box"),
-        ("bloom", "Bloom", "Intensity", 0.6, 1, 0.1, "A wide, bright glow that spills out of the box"),
+        ("bloom", "Bloom", "Intensity", 0.6, 1, 0.1, "Light that spills from the bright parts of the control"),
     ):
         color, size = motion.glow_parts(style.get(key), default)
 
@@ -74,7 +82,7 @@ def effect_rows(d: "Designer", c: Control, t: Theme) -> List[Any]:
     on, tint, strength = motion.glass_parts(style.get("glass"))
     rows.append(prop_row("Glass", _core.container(
         ui.switch(on, lambda v: d.set_style_value(name, "glass", motion.glass_value(v, tint, strength)), theme=t),
-        width="fill", align_x="end"), t, tip="A translucent, frosted panel with a light edge"))
+        width="fill", align_x="end"), t, tip="A translucent panel that blurs what is behind it"))
     if on:
         rows.append(prop_row("Tint", _color_editor(
             d, name, "glass", tint, lambda v: d.set_style_value(name, "glass", motion.glass_value(True, str(v or ""),

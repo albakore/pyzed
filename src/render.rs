@@ -220,6 +220,10 @@ pub struct Ctx<'a> {
     text: crate::styled::TextStyle,
     /// Text properties that only fill in what texts leave unset (`App.style`).
     text_defaults: crate::styled::TextStyle,
+    /// The next box takes the animated padding of an `Animated` parent (`PadSlot`).
+    pad_slot: bool,
+    /// Texts follow the animated font size of an `Animated` ancestor (`SizedText`).
+    font_slot: bool,
 }
 
 impl<'a> Ctx<'a> {
@@ -228,6 +232,8 @@ impl<'a> Ctx<'a> {
             caches,
             text: Default::default(),
             text_defaults: Default::default(),
+            pad_slot: false,
+            font_slot: false,
         }
     }
 }
@@ -248,6 +254,20 @@ fn build_box<'a>(
     over: Option<&crate::styled::StyleProps>,
 ) -> Element<'a, Message> {
     let node = node_ref.bind(py).get();
+    let pad_slot = ctx.pad_slot;
+    let ctx = Ctx {
+        pad_slot: false,
+        ..ctx
+    };
+    // The box's content, inside a `PadSlot` when an `Animated` parent animates the padding.
+    let content = |child: &Py<Widget>, padding: Option<iced::Padding>| -> Element<'a, Message> {
+        let element = build(py, child, ctx);
+        if pad_slot {
+            crate::animation::PadSlot::new(element, padding.unwrap_or(iced::Padding::ZERO)).into()
+        } else {
+            element
+        }
+    };
     match &node.kind {
         Kind::Container {
             child,
@@ -258,8 +278,8 @@ fn build_box<'a>(
             clip,
         } => {
             let layout = &crate::styled::layout(layout, over);
-            let mut c =
-                container(build(py, child, ctx)).clip(*clip || over.is_some_and(|o| o.clip));
+            let mut c = container(content(child, layout.padding))
+                .clip(*clip || over.is_some_and(|o| o.clip));
             if let Some(w) = layout.width {
                 c = c.width(w);
             }
@@ -293,9 +313,12 @@ fn build_box<'a>(
             clip,
         } => {
             let layout = &crate::styled::layout(layout, over);
-            let mut b = button(build(py, child, ctx))
-                .on_press_maybe(on_press.clone().map(Message::Py))
-                .clip(*clip || over.is_some_and(|o| o.clip));
+            let mut b = button(content(
+                child,
+                layout.padding.or(Some(button::DEFAULT_PADDING)),
+            ))
+            .on_press_maybe(on_press.clone().map(Message::Py))
+            .clip(*clip || over.is_some_and(|o| o.clip));
             if let Some(w) = layout.width {
                 b = b.width(w);
             }
@@ -448,43 +471,55 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
 
     match &node.kind {
         Kind::Text(t) => {
-            let mut w = text(t.content.clone());
             let font = ctx.text.font(t.font, &ctx.text_defaults);
-            if let Some(size) = ctx.text.size(t.size, t.font, &ctx.text_defaults) {
-                w = w.size(size);
-            }
-            if let Some(color) = ctx.text.color.or(t.color).or(ctx.text_defaults.color) {
-                w = w.style(move |_| text::Style {
-                    color: Some(crate::animation::fade(color)),
-                });
-            }
-            if let Some(font) = font {
-                w = w.font(font);
-            }
-            if let Some(lh) = ctx
+            let size = ctx.text.size(t.size, t.font, &ctx.text_defaults);
+            let color = ctx.text.color.or(t.color).or(ctx.text_defaults.color);
+            let line_height = ctx
                 .text
                 .line_height
                 .or(t.line_height)
-                .or(ctx.text_defaults.line_height)
-            {
-                w = w.line_height(LineHeight::Relative(lh));
+                .or(ctx.text_defaults.line_height);
+            let content = t.content.clone();
+            let (align_x, align_y, width, height, wrap) =
+                (t.align_x, t.align_y, t.width, t.height, t.wrap);
+            let make = move |size: Option<f32>| {
+                let mut w = text(content.clone());
+                if let Some(size) = size {
+                    w = w.size(size);
+                }
+                if let Some(color) = color {
+                    w = w.style(move |_| text::Style {
+                        color: Some(crate::animation::fade(color)),
+                    });
+                }
+                if let Some(font) = font {
+                    w = w.font(font);
+                }
+                if let Some(lh) = line_height {
+                    w = w.line_height(LineHeight::Relative(lh));
+                }
+                if let Some(a) = align_x {
+                    w = w.align_x(a);
+                }
+                if let Some(a) = align_y {
+                    w = w.align_y(a);
+                }
+                if let Some(width) = width {
+                    w = w.width(width);
+                }
+                if let Some(height) = height {
+                    w = w.height(height);
+                }
+                if !wrap {
+                    w = w.wrapping(Wrapping::None);
+                }
+                w
+            };
+            if ctx.font_slot {
+                crate::animation::SizedText::new(size, make).into()
+            } else {
+                make(size).into()
             }
-            if let Some(a) = t.align_x {
-                w = w.align_x(a);
-            }
-            if let Some(a) = t.align_y {
-                w = w.align_y(a);
-            }
-            if let Some(width) = t.width {
-                w = w.width(width);
-            }
-            if let Some(height) = t.height {
-                w = w.height(height);
-            }
-            if !t.wrap {
-                w = w.wrapping(Wrapping::None);
-            }
-            w.into()
         }
         Kind::Column {
             children,
@@ -824,9 +859,22 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     )
                     .into()
                 }
+                _ if inner.pad_slot => {
+                    let child = build(
+                        py,
+                        &props.child,
+                        Ctx {
+                            pad_slot: false,
+                            ..inner
+                        },
+                    );
+                    let own = props.padding.unwrap_or(iced::Padding::ZERO);
+                    crate::styled::wrap(crate::animation::PadSlot::new(child, own).into(), props)
+                }
                 _ => crate::styled::wrap(build(py, &props.child, inner), props),
             };
-            crate::styled::effects_of(crate::styled::margin(element, props), props)
+            // The margin goes outside the effects, so a rotated or blurred box keeps its spacing.
+            crate::styled::margin(crate::styled::effects_of(element, props), props)
         }
         Kind::Events {
             child,
@@ -834,7 +882,13 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             cursor,
         } => crate::events::EventArea::new(build(py, child, ctx), handlers.clone(), *cursor).into(),
         Kind::Animated { child, spec } => {
-            let mut element = build(py, child, ctx);
+            let pad_inside = spec.has_padding() && draws_box(py, child);
+            let inner = Ctx {
+                pad_slot: ctx.pad_slot || pad_inside,
+                font_slot: ctx.font_slot || spec.has_font_size(),
+                ..ctx
+            };
+            let mut element = build(py, child, inner);
             if spec.has_paint() && !draws_box(py, child) {
                 // Box paints need a box: give the element one.
                 element = container(element)
@@ -843,7 +897,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     })
                     .into();
             }
-            crate::animation::Animated::new(element, spec.clone()).into()
+            crate::animation::Animated::new(element, spec.clone())
+                .pad_inside(pad_inside)
+                .into()
         }
         Kind::Presence(props) => build_presence(py, props, ctx),
         Kind::Hover { base, top } => widget::hover(build(py, base, ctx), build(py, top, ctx)),

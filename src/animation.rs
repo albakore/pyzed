@@ -304,6 +304,14 @@ pub enum Prop {
     BorderWidth,
     Glow,
     GlowColor,
+    /// Degrees, clockwise, around the center.
+    Rotate,
+    /// Blur of the content, in pixels.
+    Blur,
+    Width,
+    Height,
+    Padding,
+    FontSize,
 }
 
 impl Prop {
@@ -320,6 +328,12 @@ impl Prop {
             "border_width" => Prop::BorderWidth,
             "glow" => Prop::Glow,
             "glow_color" => Prop::GlowColor,
+            "rotate" => Prop::Rotate,
+            "blur" => Prop::Blur,
+            "width" => Prop::Width,
+            "height" => Prop::Height,
+            "padding" => Prop::Padding,
+            "font_size" => Prop::FontSize,
             _ => {
                 return Err(PyValueError::new_err(format!(
                     "unknown animated property {name:?}"
@@ -329,7 +343,24 @@ impl Prop {
     }
 
     fn is_paint(self) -> bool {
-        !matches!(self, Prop::Opacity | Prop::X | Prop::Y | Prop::Scale)
+        matches!(
+            self,
+            Prop::Background
+                | Prop::BorderColor
+                | Prop::Color
+                | Prop::Radius
+                | Prop::BorderWidth
+                | Prop::Glow
+                | Prop::GlowColor
+        )
+    }
+
+    /// Properties that change the layout (the element is laid out again every frame).
+    fn is_layout(self) -> bool {
+        matches!(
+            self,
+            Prop::Width | Prop::Height | Prop::Padding | Prop::FontSize
+        )
     }
 }
 
@@ -1020,13 +1051,22 @@ impl TransitionSpec {
     }
 }
 
-/// Values set without animating (`style(opacity=..., translate=..., scale=...)`).
+/// Values set without animating (`style(opacity=..., translate=..., scale=..., rotate=...,
+/// blur=..., backdrop_blur=..., bloom=...)`).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Base {
     pub opacity: f32,
     pub x: Value,
     pub y: Value,
     pub scale: f32,
+    /// Degrees, clockwise.
+    pub rotate: f32,
+    pub blur: f32,
+    pub backdrop_blur: f32,
+    /// Light from the bright parts: `(tint, intensity)`.
+    pub bloom: Option<(Option<Color>, f32)>,
+    /// Corner radii of the box (the shape of the backdrop blur).
+    pub radius: [f32; 4],
 }
 
 impl Default for Base {
@@ -1036,6 +1076,11 @@ impl Default for Base {
             x: Value::Num(0.0),
             y: Value::Num(0.0),
             scale: 1.0,
+            rotate: 0.0,
+            blur: 0.0,
+            backdrop_blur: 0.0,
+            bloom: None,
+            radius: [0.0; 4],
         }
     }
 }
@@ -1054,6 +1099,27 @@ impl Spec {
             .iter()
             .any(|a| a.tracks.iter().any(|t| t.prop.is_paint()))
             || self.transitions.iter().any(|t| t.prop.is_paint())
+    }
+
+    /// Whether any animation or transition changes `prop`.
+    fn animates(&self, prop: impl Fn(Prop) -> bool) -> bool {
+        self.anims
+            .iter()
+            .any(|a| a.tracks.iter().any(|t| prop(t.prop)))
+            || self.transitions.iter().any(|t| prop(t.prop))
+    }
+
+    /// Whether it animates the size, padding or font size (laid out again every frame).
+    pub fn has_layout(&self) -> bool {
+        self.animates(Prop::is_layout)
+    }
+
+    pub fn has_padding(&self) -> bool {
+        self.animates(|p| p == Prop::Padding)
+    }
+
+    pub fn has_font_size(&self) -> bool {
+        self.animates(|p| p == Prop::FontSize)
     }
 
     /// The longest finite time any of the animations runs (for exit animations).
@@ -1166,7 +1232,7 @@ impl Paint {
             Prop::Radius => self.radius = Some(n),
             Prop::BorderWidth => self.border_width = Some(n),
             Prop::Glow => self.glow = Some(n),
-            Prop::Opacity | Prop::X | Prop::Y | Prop::Scale => {}
+            _ => {}
         }
     }
 
@@ -1274,6 +1340,8 @@ struct State {
     transitions: Vec<TransitionState>,
     /// The element's last size (resolves `%` values when a transition starts).
     size: Size,
+    /// The layout moved last frame (lay out once more when it stops).
+    relayout: bool,
 }
 
 impl State {
@@ -1412,13 +1480,50 @@ struct Frame {
     x: f32,
     y: f32,
     scale: f32,
+    /// Degrees.
+    rotate: f32,
+    blur: f32,
     paint: Paint,
+    layout: Sizing,
+}
+
+/// Animated size, padding and font size (`None`: the element's own).
+#[derive(Debug, Clone, Copy, Default)]
+struct Sizing {
+    width: Option<Mix<f32>>,
+    height: Option<Mix<f32>>,
+    padding: Option<Mix<f32>>,
+    font_size: Option<Mix<f32>>,
+}
+
+impl Sizing {
+    fn set(&mut self, prop: Prop, a: Value, b: Value, t: f32, w: f32) {
+        let number = |v: Value| match v {
+            Value::Num(n) | Value::Pct(n) => Some(n),
+            _ => None,
+        };
+        let m = Some(Mix {
+            a: number(a),
+            b: number(b),
+            t,
+            w,
+        });
+        match prop {
+            Prop::Width => self.width = m,
+            Prop::Height => self.height = m,
+            Prop::Padding => self.padding = m,
+            Prop::FontSize => self.font_size = m,
+            _ => {}
+        }
+    }
 }
 
 /// Wraps an element and plays its animations, transitions and effects.
 pub struct Animated<'a, Renderer> {
     content: Element<'a, Message, Theme, Renderer>,
     spec: Arc<Spec>,
+    /// The child box has a [`PadSlot`] that takes the animated padding.
+    pad_inside: bool,
 }
 
 impl<'a, Renderer> Animated<'a, Renderer> {
@@ -1426,7 +1531,39 @@ impl<'a, Renderer> Animated<'a, Renderer> {
         Self {
             content: content.into(),
             spec,
+            pad_inside: false,
         }
+    }
+
+    /// The animated padding goes to the [`PadSlot`] inside the child's box (built with
+    /// `Ctx::pad_slot`) instead of around the child.
+    pub fn pad_inside(mut self, inside: bool) -> Self {
+        self.pad_inside = inside;
+        self
+    }
+
+    /// Whether drawing needs an effect layer (rotation, blur, backdrop blur or bloom).
+    fn effect(&self, frame: &Frame, bounds: Rectangle) -> Option<Fx> {
+        let base = &self.spec.base;
+        let bloom = base.bloom.filter(|(_, i)| *i > 0.0);
+        if frame.rotate == 0.0 && frame.blur <= 0.0 && base.backdrop_blur <= 0.0 && bloom.is_none()
+        {
+            return None;
+        }
+        Some(Fx {
+            bounds,
+            radius: base.radius,
+            rotation: frame.rotate.to_radians(),
+            opacity: frame.opacity,
+            blur: frame.blur.max(0.0),
+            backdrop_blur: base.backdrop_blur,
+            bloom: bloom.map(|(color, intensity)| FxBloom {
+                intensity,
+                radius: 10.0 + 30.0 * intensity.min(1.0),
+                threshold: 0.5,
+                color,
+            }),
+        })
     }
 
     fn condition(&self, anim: &Anim, state: &State) -> bool {
@@ -1495,11 +1632,18 @@ impl<'a, Renderer> Animated<'a, Renderer> {
             x: px(base.x, bounds.width),
             y: px(base.y, bounds.height),
             scale: base.scale,
+            rotate: base.rotate,
+            blur: base.blur,
             paint: Paint::default(),
+            layout: Sizing::default(),
         };
         let apply = |prop: Prop, a: Value, b: Value, t: f32, w: f32, frame: &mut Frame| {
             if prop.is_paint() {
                 frame.paint.set(prop, a, b, t, w);
+                return;
+            }
+            if prop.is_layout() {
+                frame.layout.set(prop, a, b, t, w);
                 return;
             }
             let (identity, along) = match prop {
@@ -1517,6 +1661,8 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 Prop::Scale => frame.scale *= value.max(0.0),
                 Prop::X => frame.x += value,
                 Prop::Y => frame.y += value,
+                Prop::Rotate => frame.rotate += value,
+                Prop::Blur => frame.blur += value,
                 _ => {}
             }
         };
@@ -1537,6 +1683,8 @@ impl<'a, Renderer> Animated<'a, Renderer> {
             // Transitions set the value (they don't stack on the identity like animations).
             if s.prop.is_paint() {
                 frame.paint.set(s.prop, s.from, s.to, t, 1.0);
+            } else if s.prop.is_layout() {
+                frame.layout.set(s.prop, s.from, s.to, t, 1.0);
             } else {
                 let along = if s.prop == Prop::Y {
                     bounds.height
@@ -1558,6 +1706,8 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                     Prop::Scale => frame.scale *= value.max(0.0),
                     Prop::X => frame.x += value,
                     Prop::Y => frame.y += value,
+                    Prop::Rotate => frame.rotate += value,
+                    Prop::Blur => frame.blur += value,
                     _ => {}
                 }
             }
@@ -1678,7 +1828,7 @@ impl<'a, Renderer> Animated<'a, Renderer> {
 
 impl<Renderer> Widget<Message, Theme, Renderer> for Animated<'_, Renderer>
 where
-    Renderer: iced::advanced::Renderer,
+    Renderer: iced::advanced::Renderer + Effects,
 {
     fn tag(&self) -> widget::tree::Tag {
         widget::tree::Tag::of::<State>()
@@ -1711,9 +1861,50 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        self.content
-            .as_widget_mut()
-            .layout(&mut tree.children[0], renderer, limits)
+        let sizing = if self.spec.has_layout() {
+            let state = tree.state.downcast_ref::<State>();
+            self.frame(state, Rectangle::with_size(state.size)).layout
+        } else {
+            Sizing::default()
+        };
+        let child = &mut tree.children[0];
+        let content = &mut self.content;
+        let previous_font = FONT_SIZE.with(|f| f.replace(sizing.font_size));
+        let outer_padding = if self.pad_inside {
+            None
+        } else {
+            sizing.padding
+        };
+        let mut lay = |limits: &layout::Limits| {
+            if self.pad_inside {
+                PADDING.with(|p| p.set(sizing.padding));
+            }
+            let node = content.as_widget_mut().layout(child, renderer, limits);
+            PADDING.with(|p| p.set(None));
+            node
+        };
+        // Padding around a child that has no box of its own.
+        let pad = outer_padding
+            .map(|m| m.resolve(0.0).max(0.0))
+            .unwrap_or(0.0);
+        let inner = limits.shrink(Size::new(pad * 2.0, pad * 2.0));
+        let mut node = if sizing.width.is_some() || sizing.height.is_some() {
+            let natural = lay(&inner).size();
+            let width = sizing.width.map(|m| m.resolve(natural.width).max(0.0));
+            let height = sizing.height.map(|m| m.resolve(natural.height).max(0.0));
+            let (min, max) = (inner.min(), inner.max());
+            let forced = layout::Limits::new(
+                Size::new(width.unwrap_or(min.width), height.unwrap_or(min.height)),
+                Size::new(width.unwrap_or(max.width), height.unwrap_or(max.height)),
+            );
+            lay(&forced)
+        } else {
+            lay(&inner)
+        };
+        FONT_SIZE.with(|f| f.set(previous_font));
+        node = node.move_to(iced::Point::new(pad, pad));
+        let size = node.size().expand(Size::new(pad * 2.0, pad * 2.0));
+        layout::Node::with_children(size, vec![node])
     }
 
     fn operate(
@@ -1723,9 +1914,12 @@ where
         renderer: &Renderer,
         operation: &mut dyn widget::Operation,
     ) {
-        self.content
-            .as_widget_mut()
-            .operate(&mut tree.children[0], layout, renderer, operation);
+        self.content.as_widget_mut().operate(
+            &mut tree.children[0],
+            child_layout(layout),
+            renderer,
+            operation,
+        );
     }
 
     fn update(
@@ -1742,7 +1936,7 @@ where
         self.content.as_widget_mut().update(
             &mut tree.children[0],
             event,
-            layout,
+            child_layout(layout),
             cursor,
             renderer,
             clipboard,
@@ -1786,11 +1980,18 @@ where
                 }
             }
             Event::Window(window::Event::RedrawRequested(now)) => {
-                if self.tick(state, *now, shell) {
+                let moving = self.tick(state, *now, shell);
+                if moving {
                     shell.request_redraw();
                 } else {
                     state.last = None;
                 }
+                // The size, padding or font size changed: lay out again (once more when it
+                // stops, for the final values).
+                if self.spec.has_layout() && (moving || state.relayout) {
+                    shell.invalidate_layout();
+                }
+                state.relayout = moving;
                 return;
             }
             _ => {}
@@ -1812,7 +2013,7 @@ where
     ) -> mouse::Interaction {
         self.content.as_widget().mouse_interaction(
             &tree.children[0],
-            layout,
+            child_layout(layout),
             cursor,
             viewport,
             renderer,
@@ -1835,18 +2036,42 @@ where
         if frame.opacity <= 0.001 || frame.scale <= 0.001 {
             return;
         }
+        let effect = self.effect(&frame, bounds);
         let outer = opacity();
-        OPACITY.with(|o| o.set(outer * frame.opacity));
+        // An effect layer fades the whole group at once; otherwise every color fades.
+        let own_opacity = if effect.is_some() { 1.0 } else { frame.opacity };
+        OPACITY.with(|o| o.set(outer * own_opacity));
         let previous =
             (!frame.paint.is_empty()).then(|| PAINT.with(|p| p.borrow_mut().replace(frame.paint)));
         let style = renderer::Style {
-            text_color: style.text_color.scale_alpha(frame.opacity),
+            text_color: style.text_color.scale_alpha(own_opacity),
         };
         let child = &tree.children[0];
+        let child_layout = child_layout(layout);
+        let draw = |renderer: &mut Renderer, viewport: &Rectangle| match &effect {
+            Some(fx) => renderer.with_effect(fx, |renderer| {
+                self.content.as_widget().draw(
+                    child,
+                    renderer,
+                    theme,
+                    &style,
+                    child_layout,
+                    cursor,
+                    viewport,
+                );
+            }),
+            None => self.content.as_widget().draw(
+                child,
+                renderer,
+                theme,
+                &style,
+                child_layout,
+                cursor,
+                viewport,
+            ),
+        };
         if frame.x == 0.0 && frame.y == 0.0 && frame.scale == 1.0 {
-            self.content
-                .as_widget()
-                .draw(child, renderer, theme, &style, layout, cursor, viewport);
+            draw(renderer, viewport);
         } else {
             let center = bounds.center();
             let transformation = Transformation::translate(center.x + frame.x, center.y + frame.y)
@@ -1855,9 +2080,7 @@ where
             // What the viewport covers in the child's own (untransformed) coordinates.
             let visible = *viewport * transformation.inverse();
             renderer.with_transformation(transformation, |renderer| {
-                self.content
-                    .as_widget()
-                    .draw(child, renderer, theme, &style, layout, cursor, &visible);
+                draw(renderer, &visible);
             });
         }
         OPACITY.with(|o| o.set(outer));
@@ -1876,7 +2099,7 @@ where
     ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
         self.content.as_widget_mut().overlay(
             &mut tree.children[0],
-            layout,
+            child_layout(layout),
             renderer,
             viewport,
             translation,
@@ -1884,12 +2107,328 @@ where
     }
 }
 
+/// The layout of the only child of a wrapper widget.
+fn child_layout(layout: Layout<'_>) -> Layout<'_> {
+    layout.children().next().unwrap_or(layout)
+}
+
 impl<'a, Renderer> From<Animated<'a, Renderer>> for Element<'a, Message, Theme, Renderer>
 where
-    Renderer: iced::advanced::Renderer + 'a,
+    Renderer: iced::advanced::Renderer + Effects + 'a,
 {
     fn from(animated: Animated<'a, Renderer>) -> Self {
         Element::new(animated)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Effect layers: rotation, blur, backdrop blur and bloom (see vendor/README.md)
+// ---------------------------------------------------------------------------
+
+/// How a group of drawing is composited (both renderers take the same values).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Fx {
+    pub bounds: Rectangle,
+    pub radius: [f32; 4],
+    /// Radians, clockwise.
+    pub rotation: f32,
+    pub opacity: f32,
+    pub blur: f32,
+    pub backdrop_blur: f32,
+    pub bloom: Option<FxBloom>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FxBloom {
+    pub intensity: f32,
+    pub radius: f32,
+    pub threshold: f32,
+    pub color: Option<Color>,
+}
+
+/// Renderers that draw effect layers.
+pub trait Effects {
+    fn with_effect(&mut self, fx: &Fx, draw: impl FnOnce(&mut Self));
+}
+
+impl Effects for iced::Renderer {
+    fn with_effect(&mut self, fx: &Fx, draw: impl FnOnce(&mut Self)) {
+        use iced_renderer::fallback::Renderer as Fallback;
+        match self {
+            Fallback::Primary(wgpu) => wgpu.start_effect(iced_wgpu::effect::Effect {
+                bounds: fx.bounds,
+                radius: fx.radius,
+                rotation: fx.rotation,
+                opacity: fx.opacity,
+                blur: fx.blur,
+                backdrop_blur: fx.backdrop_blur,
+                bloom: fx.bloom.map(|b| iced_wgpu::effect::Bloom {
+                    intensity: b.intensity,
+                    radius: b.radius,
+                    threshold: b.threshold,
+                    color: b.color,
+                }),
+            }),
+            Fallback::Secondary(skia) => skia.start_effect(iced_tiny_skia::effect::Effect {
+                bounds: fx.bounds,
+                radius: fx.radius,
+                rotation: fx.rotation,
+                opacity: fx.opacity,
+                blur: fx.blur,
+                backdrop_blur: fx.backdrop_blur,
+                bloom: fx.bloom.map(|b| iced_tiny_skia::effect::Bloom {
+                    intensity: b.intensity,
+                    radius: b.radius,
+                    threshold: b.threshold,
+                    color: b.color,
+                }),
+            }),
+        }
+        draw(self);
+        match self {
+            Fallback::Primary(wgpu) => wgpu.end_effect(),
+            Fallback::Secondary(skia) => skia.end_effect(),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Animated padding and font size, handed down while laying out
+// ---------------------------------------------------------------------------
+
+thread_local! {
+    /// The animated padding for the next [`PadSlot`] laid out.
+    static PADDING: Cell<Option<Mix<f32>>> = const { Cell::new(None) };
+    /// The animated font size of the texts being laid out ([`SizedText`]).
+    static FONT_SIZE: Cell<Option<Mix<f32>>> = const { Cell::new(None) };
+}
+
+/// The content of a box whose `Animated` parent animates its padding: it adds the
+/// difference between the animated padding and the box's own, inside the box.
+pub struct PadSlot<'a> {
+    content: Element<'a, Message>,
+    own: iced::Padding,
+}
+
+impl<'a> PadSlot<'a> {
+    pub fn new(content: impl Into<Element<'a, Message>>, own: iced::Padding) -> Self {
+        Self {
+            content: content.into(),
+            own,
+        }
+    }
+}
+
+impl Widget<Message, Theme, iced::Renderer> for PadSlot<'_> {
+    fn children(&self) -> Vec<Tree> {
+        vec![Tree::new(&self.content)]
+    }
+
+    fn diff(&self, tree: &mut Tree) {
+        tree.diff_children(std::slice::from_ref(&self.content));
+    }
+
+    fn size(&self) -> Size<Length> {
+        self.content.as_widget().size()
+    }
+
+    fn layout(
+        &mut self,
+        tree: &mut Tree,
+        renderer: &iced::Renderer,
+        limits: &layout::Limits,
+    ) -> layout::Node {
+        let own = self.own;
+        let extra = PADDING
+            .with(Cell::take)
+            .map(|m| iced::Padding {
+                top: (m.resolve(own.top) - own.top).max(-own.top),
+                right: (m.resolve(own.right) - own.right).max(-own.right),
+                bottom: (m.resolve(own.bottom) - own.bottom).max(-own.bottom),
+                left: (m.resolve(own.left) - own.left).max(-own.left),
+            })
+            .unwrap_or(iced::Padding::ZERO);
+        layout::padded(limits, Length::Shrink, Length::Shrink, extra, |limits| {
+            self.content
+                .as_widget_mut()
+                .layout(&mut tree.children[0], renderer, limits)
+        })
+    }
+
+    fn operate(
+        &mut self,
+        tree: &mut Tree,
+        layout: Layout<'_>,
+        renderer: &iced::Renderer,
+        operation: &mut dyn widget::Operation,
+    ) {
+        self.content.as_widget_mut().operate(
+            &mut tree.children[0],
+            child_layout(layout),
+            renderer,
+            operation,
+        );
+    }
+
+    fn update(
+        &mut self,
+        tree: &mut Tree,
+        event: &Event,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        renderer: &iced::Renderer,
+        clipboard: &mut dyn Clipboard,
+        shell: &mut Shell<'_, Message>,
+        viewport: &Rectangle,
+    ) {
+        self.content.as_widget_mut().update(
+            &mut tree.children[0],
+            event,
+            child_layout(layout),
+            cursor,
+            renderer,
+            clipboard,
+            shell,
+            viewport,
+        );
+    }
+
+    fn mouse_interaction(
+        &self,
+        tree: &Tree,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+        renderer: &iced::Renderer,
+    ) -> mouse::Interaction {
+        self.content.as_widget().mouse_interaction(
+            &tree.children[0],
+            child_layout(layout),
+            cursor,
+            viewport,
+            renderer,
+        )
+    }
+
+    fn draw(
+        &self,
+        tree: &Tree,
+        renderer: &mut iced::Renderer,
+        theme: &Theme,
+        style: &renderer::Style,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        self.content.as_widget().draw(
+            &tree.children[0],
+            renderer,
+            theme,
+            style,
+            child_layout(layout),
+            cursor,
+            viewport,
+        );
+    }
+
+    fn overlay<'b>(
+        &'b mut self,
+        tree: &'b mut Tree,
+        layout: Layout<'b>,
+        renderer: &iced::Renderer,
+        viewport: &Rectangle,
+        translation: Vector,
+    ) -> Option<overlay::Element<'b, Message, Theme, iced::Renderer>> {
+        self.content.as_widget_mut().overlay(
+            &mut tree.children[0],
+            child_layout(layout),
+            renderer,
+            viewport,
+            translation,
+        )
+    }
+}
+
+impl<'a> From<PadSlot<'a>> for Element<'a, Message> {
+    fn from(slot: PadSlot<'a>) -> Self {
+        Element::new(slot)
+    }
+}
+
+/// A text whose size follows the animated font size of its `Animated` ancestors.
+/// `make` builds the text at a given size; `size` is its own (`None`: the default size).
+pub struct SizedText<'a> {
+    make: Box<dyn Fn(Option<f32>) -> iced::widget::Text<'a, Theme, iced::Renderer> + 'a>,
+    size: Option<f32>,
+}
+
+impl<'a> SizedText<'a> {
+    pub fn new(
+        size: Option<f32>,
+        make: impl Fn(Option<f32>) -> iced::widget::Text<'a, Theme, iced::Renderer> + 'a,
+    ) -> Self {
+        Self {
+            make: Box::new(make),
+            size,
+        }
+    }
+}
+
+impl Widget<Message, Theme, iced::Renderer> for SizedText<'_> {
+    fn tag(&self) -> widget::tree::Tag {
+        Widget::<Message, Theme, iced::Renderer>::tag(&(self.make)(self.size))
+    }
+
+    fn state(&self) -> widget::tree::State {
+        Widget::<Message, Theme, iced::Renderer>::state(&(self.make)(self.size))
+    }
+
+    fn size(&self) -> Size<Length> {
+        Widget::<Message, Theme, iced::Renderer>::size(&(self.make)(self.size))
+    }
+
+    fn layout(
+        &mut self,
+        tree: &mut Tree,
+        renderer: &iced::Renderer,
+        limits: &layout::Limits,
+    ) -> layout::Node {
+        use iced::advanced::text::Renderer as _;
+        let size = FONT_SIZE.with(Cell::get).map(|m| {
+            let own = self.size.unwrap_or(renderer.default_size().0);
+            m.resolve(own).max(1.0)
+        });
+        let mut text = (self.make)(size.or(self.size));
+        Widget::<Message, Theme, iced::Renderer>::layout(&mut text, tree, renderer, limits)
+    }
+
+    fn draw(
+        &self,
+        tree: &Tree,
+        renderer: &mut iced::Renderer,
+        theme: &Theme,
+        style: &renderer::Style,
+        layout: Layout<'_>,
+        cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        // Draws the paragraph laid out last (its size comes from the layout).
+        Widget::<Message, Theme, iced::Renderer>::draw(
+            &(self.make)(self.size),
+            tree,
+            renderer,
+            theme,
+            style,
+            layout,
+            cursor,
+            viewport,
+        );
+    }
+}
+
+impl<'a> From<SizedText<'a>> for Element<'a, Message> {
+    fn from(text: SizedText<'a>) -> Self {
+        Element::new(text)
     }
 }
 
@@ -1918,7 +2457,7 @@ impl<'a, Renderer> Presence<'a, Renderer> {
 
 impl<Renderer> Widget<Message, Theme, Renderer> for Presence<'_, Renderer>
 where
-    Renderer: iced::advanced::Renderer,
+    Renderer: iced::advanced::Renderer + Effects,
 {
     fn children(&self) -> Vec<Tree> {
         vec![Tree::new(&self.leaving), Tree::new(&self.current)]
@@ -2076,7 +2615,7 @@ where
 
 impl<'a, Renderer> From<Presence<'a, Renderer>> for Element<'a, Message, Theme, Renderer>
 where
-    Renderer: iced::advanced::Renderer + 'a,
+    Renderer: iced::advanced::Renderer + Effects + 'a,
 {
     fn from(presence: Presence<'a, Renderer>) -> Self {
         Element::new(presence)

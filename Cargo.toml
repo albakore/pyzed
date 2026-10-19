@@ -30,6 +30,10 @@ iced = { version = "0.14", default-features = false, features = [
     "linux-theme-detection",
 ] }
 iced_test = "0.14"
+# Named directly to draw effect layers (rotation, blur, bloom, backdrop blur) on each renderer.
+iced_renderer = { version = "0.14", default-features = false }
+iced_wgpu = { version = "0.14", default-features = false }
+iced_tiny_skia = { version = "0.14", default-features = false }
 pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
 two-face = { version = "0.5", default-features = false, features = ["syntect-default-fancy"] }
 elsa = "1.11"
@@ -41,3 +45,8 @@ bytes = "1"
 lto = "thin"
 codegen-units = 4
 strip = true
+
+# iced's renderers with effect layers added (see vendor/README.md).
+[patch.crates-io]
+iced_wgpu = { path = "vendor/iced_wgpu" }
+iced_tiny_skia = { path = "vendor/iced_tiny_skia" }

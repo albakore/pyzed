@@ -117,7 +117,7 @@
   {
    "slug": "editor/animations-and-effects",
    "title": "Animations and effects",
-   "description": "Give controls glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.",
+   "description": "Give controls rotation, blur, glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.",
    "path": "docs/src/content/docs/editor/animations-and-effects.md"
   },
   {
@@ -267,7 +267,7 @@
   {
    "slug": "guides/animation",
    "title": "Animation and effects",
-   "description": "Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add glow, bloom, glass and opacity.",
+   "description": "Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add rotation, blur, bloom, glass and opacity.",
    "path": "docs/src/content/docs/guides/animation.md"
   },
   {
@@ -1090,6 +1090,11 @@
    "name": "downloads",
    "summary": "Background work without freezing the UI: Command.perform, pz.post from threads, progress bars and toasts.",
    "path": "examples/downloads.py"
+  },
+  {
+   "name": "effects",
+   "summary": "Effects drawn by the renderer: rotation, blur, backdrop blur, glass and bloom, animated.",
+   "path": "examples/effects.py"
   },
   {
    "name": "gallery",
