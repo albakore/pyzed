@@ -4,11 +4,13 @@ federation, and how the Agent panel uses them (multi-line box, attachments, sett
 import base64
 import http.server
 import json
+import os
 import sys
 import textwrap
 import threading
 import time
 import urllib.request
+from pathlib import Path
 
 import pytest
 
@@ -595,3 +597,24 @@ def test_commands_are_split_like_the_platform_shell(monkeypatch):
     parts = providers.split_command(r'"C:\Program Files\Py\python.exe" -c "print(1)" C:\data')
     monkeypatch.undo()
     assert parts == [r"C:\Program Files\Py\python.exe", "-c", "print(1)", r"C:\data"]
+
+
+def test_release_builds_bundle_the_oauth_apps(tmp_path, monkeypatch):
+    import importlib.util
+    import subprocess
+
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location("build_designer", root / "scripts" / "build_designer.py")
+    build = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(build)
+    for name in ("PYZED_GITHUB_CLIENT_ID", "PYZED_GOOGLE_CLIENT_ID", "PYZED_GOOGLE_CLIENT_SECRET"):
+        monkeypatch.delenv(name, raising=False)
+    assert build.oauth_apps(tmp_path) is None
+    monkeypatch.setenv("PYZED_GITHUB_CLIENT_ID", "Iv23-test")
+    module = build.oauth_apps(tmp_path)
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(module.parent), os.environ.get("PYTHONPATH", "")])}
+    env.pop("PYZED_GITHUB_CLIENT_ID")
+    out = subprocess.run([sys.executable, "-c", "from pyzed.agents import providers as p; "
+                          "print(p.GITHUB_CLIENT_ID, p.AgentSettings().client_id('github'), repr(p.GOOGLE_CLIENT_ID))"],
+                         capture_output=True, text=True, env=env, check=True).stdout.split()
+    assert out == ["Iv23-test", "Iv23-test", "''"]
