@@ -81,12 +81,14 @@ def settings(d: "Designer", t: Theme) -> Any:
 
 
 def shortcuts(d: "Designer", t: Theme) -> Any:
+    """The keyboard shortcuts dialog: every command's keys, grouped and searchable."""
     return ui.modal(ui.shortcuts(_commands.shortcut_groups(), query=d.picker_query, on_query=d.set_picker_query,
                                  theme=t),
                     title=tr("Keyboard shortcuts"), on_close=d.close_dialog, width=520, theme=t)
 
 
 def about(d: "Designer", t: Theme) -> Any:
+    """The About dialog: versions of Pyzed, Python and Iced, the platform, and links."""
     from .. import __version__
 
     details = [(tr("Version"), __version__), ("Python", platform.python_version()),
@@ -212,6 +214,7 @@ def add_control(d: "Designer", t: Theme) -> Any:
 
 
 def palette(d: "Designer", t: Theme) -> Any:
+    """The command palette: a fuzzy-searchable list of the enabled commands with their keys."""
     items = []
     for action in _commands.ACTIONS:
         if not action.enabled(d):

@@ -24,6 +24,7 @@ class Tab:
 
     @classmethod
     def for_file(cls, path: str, **kwargs) -> "Tab":
+        """A tab for a file ``path``: its name as label and the matching file icon and color."""
         name = path.rsplit("/", 1)[-1]
         icon_name, color = for_file(name)
         kwargs.setdefault("icon", icon_name)
@@ -40,6 +41,11 @@ def tab(
     height: float = 32,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
+    """A Zed-style editor tab for ``item``; the active one joins the content below it.
+
+    The label is colored by the git ``status``; a dirty tab shows a dot that turns into the close button
+    on hover (``on_close``). ``on_select`` is called when the tab is pressed.
+    """
     t = _theme(theme)
     status_color = {"modified": t.modified, "created": t.created, "deleted": t.deleted}.get(item.status or "")
     text_color = status_color or (t.text if active else t.text_muted)

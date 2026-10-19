@@ -93,6 +93,7 @@ class PropInfo(typing.NamedTuple):
 
     @property
     def required(self) -> bool:
+        """Whether the prop has no default and must be passed."""
         return self.default is _MISSING
 
 

@@ -71,9 +71,11 @@ class Scene(Form):
 
     @property
     def class_name(self) -> str:
+        """The name of the component's class (the scene's ``name``)."""
         return self.name
 
     def bound(self, control: str) -> Dict[str, str]:
+        """Returns the bindings of ``control`` as ``{property: expression}`` (empty if it has none)."""
         return self.bindings.get(control, {})
 
     def rename(self, old: str, new: str) -> str:
@@ -89,6 +91,9 @@ class Scene(Form):
         return removed
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the scene as JSON-ready data: ``{"format", "component": settings, "events",
+        "controls", "bindings"}`` (empty bindings and ``extends`` are left out).
+        """
         data = {k: v for k, v in asdict(self).items() if k not in ("controls", "bindings", "title", "events")}
         if not data["extends"]:
             del data["extends"]
@@ -102,6 +107,9 @@ class Scene(Form):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scene":
+        """Builds a scene from saved ``data`` (see ``to_dict``), ignoring unknown settings; raises
+        ``ValueError`` if it is not a Pyzed component.
+        """
         fmt = str(data.get("format", FORMAT))
         if not fmt.startswith("pyzed.component/"):
             raise ValueError(f"not a Pyzed component (format {fmt!r})")
@@ -118,6 +126,7 @@ class Scene(Form):
 
     @classmethod
     def from_json(cls, text: str) -> "Scene":
+        """Builds a scene from the JSON ``text`` of a ``.pzcomp`` file."""
         return cls.from_dict(json.loads(text))
 
 
@@ -127,6 +136,9 @@ def load(path: Union[str, Path]) -> Scene:
 
 
 def save(scene: Scene, path: Union[str, Path]) -> Path:
+    """Writes ``scene`` to ``path`` (``.pzcomp`` is added when there is no suffix), creating the folder;
+    returns the path written.
+    """
     path = Path(path)
     if not path.suffix:
         path = path.with_suffix(SUFFIX)
@@ -177,6 +189,9 @@ def full_scene(scene: Scene, path: Optional[Union[str, Path]], _seen: Optional[s
 
 
 def code_path(scene_path: Union[str, Path], scene: Optional[Scene] = None) -> Path:
+    """The class module of a component: ``scene.code`` if set (relative to the scene), else the same name
+    with ``.py``.
+    """
     scene_path = Path(scene_path)
     if scene is not None and scene.code:
         return (scene_path.parent / scene.code).resolve()
@@ -219,12 +234,14 @@ class SceneDocument(Document):
 
     @property
     def scene(self) -> Scene:
+        """The component's scene (the document's ``form``, typed as a ``Scene``)."""
         assert isinstance(self.form, Scene)
         return self.form
 
     # -- files --------------------------------------------------------------
     @classmethod
     def open(cls, path: Union[str, Path]) -> "SceneDocument":
+        """Loads the component at ``path`` and its class module (if the file exists) into a new document."""
         path = Path(path)
         scene = load(path)
         module = code_path(path, scene)
@@ -233,10 +250,12 @@ class SceneDocument(Document):
 
     @property
     def code_path(self) -> Optional[Path]:
+        """Where the class module is saved, or ``None`` while the component has no file."""
         return code_path(self.path, self.scene) if self.path else None
 
     @property
     def display_name(self) -> str:
+        """The name shown for the document: its file name, or ``<name>.pzcomp`` in lowercase if unsaved."""
         return self.path.name if self.path else f"{self.scene.name.lower()}{SUFFIX}"
 
     def save(self, path: Optional[Union[str, Path]] = None) -> Path:
@@ -390,14 +409,17 @@ class SceneDocument(Document):
 
     @property
     def code_ok(self) -> bool:
+        """Whether the class code currently parses (``info`` falls back to the last good parse otherwise)."""
         _ = self.info
         return self._info[1] is not None
 
     @property
     def members(self) -> List[scene_code.Member]:
+        """The component's properties and private state as declared in its class, in order (a copy)."""
         return list(self.info.members)
 
     def member(self, name: str) -> Optional[scene_code.Member]:
+        """Returns the declared property or state called ``name``, or ``None``."""
         return next((m for m in self.info.members if m.name == name), None)
 
     def _write_members(self, members: List[scene_code.Member]) -> None:
@@ -408,6 +430,9 @@ class SceneDocument(Document):
         return self.info.name
 
     def unique_member(self, base: str = "value") -> str:
+        """Returns ``base`` (made an identifier), or ``base2``, ``base3``... if it is taken by a member,
+        method, control or reserved name.
+        """
         taken = {m.name for m in self.info.members} | set(self.info.methods) | set(self.scene.names()) \
             | scene_code.RESERVED | {"emit", "render", "handles", "create"}
         base = scene_code.member_identifier(base) or "value"
@@ -451,9 +476,11 @@ class SceneDocument(Document):
         return m.name
 
     def remove_member(self, name: str) -> None:
+        """Removes property ``name`` from the class."""
         self._write_members([m for m in self.members if m.name != name])
 
     def move_member(self, name: str, offset: int) -> None:
+        """Moves property ``name`` by ``offset`` places in the class's declaration order (clamped)."""
         members = self.members
         index = next((i for i, m in enumerate(members) if m.name == name), None)
         if index is None:
@@ -471,6 +498,7 @@ class SceneDocument(Document):
     # custom events
     @property
     def custom_events(self) -> Dict[str, str]:
+        """The events the component declares, as ``{name: description}`` (a copy)."""
         return dict(self.info.events)
 
     def _write_events(self, events: Dict[str, str]) -> None:
@@ -478,6 +506,7 @@ class SceneDocument(Document):
         self.dirty = True
 
     def add_event(self, name: str = "changed", description: str = "") -> str:
+        """Declares a new event called ``name`` (made unique) with ``description``; returns its name."""
         events = self.custom_events
         base = scene_code.member_identifier(name) or "changed"
         name, n = base, 2
@@ -488,6 +517,9 @@ class SceneDocument(Document):
         return name
 
     def update_event(self, name: str, *, new_name: Optional[str] = None, description: Optional[str] = None) -> str:
+        """Renames event ``name`` to ``new_name`` (if valid and free) and/or changes its ``description``,
+        keeping its place; returns the event's name. Raises ``KeyError`` if it does not exist.
+        """
         events = self.custom_events
         if name not in events:
             raise KeyError(name)
@@ -506,11 +538,15 @@ class SceneDocument(Document):
         return result
 
     def remove_event(self, name: str) -> None:
+        """Removes the declared event ``name`` from the class."""
         events = self.custom_events
         events.pop(name, None)
         self._write_events(events)
 
     def set_class_name(self, name: str) -> str:
+        """Renames the component's class (made a valid class name) in the code and the scene; returns
+        the new name.
+        """
         new = scene_code.class_identifier(name)
         old = self.info.name
         if new == old:
@@ -522,6 +558,7 @@ class SceneDocument(Document):
         return new
 
     def set_description(self, text: str) -> None:
+        """Sets the component's description, also as its class's docstring."""
         self.scene.description = text
         self.code = scene_code.set_docstring(self.code, text or f"The {self.scene.name} component.", self._class())
         self.dirty = True
@@ -533,6 +570,7 @@ class SceneDocument(Document):
         self.commit(group=f"scene:{key}")
 
     def set_form(self, key: str, value: Any) -> None:
+        """Sets attribute ``key`` of the scene; ``name`` renames the class as well."""
         if key == "name":
             self.set_class_name(value)
         else:
@@ -552,6 +590,7 @@ class SceneDocument(Document):
 
     # -- events and code ----------------------------------------------------
     def events_of(self, name: Optional[str]) -> Tuple[str, ...]:
+        """Returns the events of control ``name``, or the component's own lifecycle events when ``None``."""
         if name is None:
             return tuple(ROOT_EVENTS)
         return super().events_of(name)
@@ -589,6 +628,9 @@ class SceneDocument(Document):
         self.commit()
 
     def handler_source(self, handler: str) -> str:
+        """Returns the source of method ``handler`` in the class, or a new stub (with the lifecycle
+        signature for ``setup``, ``on_mount``...) if it is not there yet.
+        """
         source = scene_code.get_method(self.code, handler, self._class())
         if source is not None:
             return source
@@ -614,6 +656,7 @@ class SceneDocument(Document):
         self.dirty = True
 
     def set_code(self, source: str) -> None:
+        """Replaces the whole class module; if the class was renamed by hand, the scene takes the new name."""
         super().set_code(source)
         parsed = scene_code.read(source)
         if parsed is not None and parsed.name != self.scene.name:

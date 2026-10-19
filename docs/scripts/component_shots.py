@@ -401,6 +401,57 @@ def picker():
     return ui.picker("app", noop, items, selected=0, placeholder="Search files…", width=480)
 
 
+def dialogs():
+    base = pz.container(ui.muted("main.py"), width="fill", height="fill", padding=12)
+    return pz.row([
+        pz.container(ui.dialog_layer(base, ui.confirm("Delete main.py? This can't be undone.", noop, noop,
+                                                      title="Delete file", danger=True, width=300)),
+                     width=340, height=200),
+        pz.container(ui.dialog_layer(base, ui.prompt("Rename", "main.py", noop, noop, noop, width=300)),
+                     width=340, height=200),
+    ], spacing=16)
+
+
+def accordion():
+    rows = lambda *items: pz.column([ui.field(k, ui.switch(v, noop)) for k, v in items], spacing=8)
+    return pz.container(ui.accordion([
+        ("editor", "Editor", rows(("Soft wrap", True), ("Minimap", False))),
+        ("files", "Files", rows(("Autosave", True))),
+        ("git", "Git", ui.muted("Collapsed sections only show their header.")),
+    ], open={"editor", "files"}, on_toggle=noop, icons={"editor": "file-code", "files": "folder", "git": "git-branch"}),
+        width=380)
+
+
+def console():
+    log = ui.Log()
+    log.write("info", "Loaded ui/main.pzform")
+    log.write("event", "button1.click")
+    log.write("stdout", "Saving 3 files…")
+    log.write("warning", "settings.json not found, using defaults")
+    log.write("error", "ValueError: invalid literal for int()")
+    return pz.container(ui.console(log.entries, on_clear=noop, on_copy=noop, on_query=noop), width=560, height=200)
+
+
+def shortcuts():
+    return pz.container(ui.shortcuts([
+        ("File", [("Save", "ctrl-s"), ("Open file", "ctrl-p")]),
+        ("View", [("Command palette", "ctrl-shift-p"), ("Toggle left dock", "ctrl-b")]),
+    ], on_query=noop, height=200), width=380)
+
+
+def about():
+    return ui.about("Notes", "1.2.0", "A small notes app built with Pyzed.", icon="notebook-pen",
+                    details=[("Python", "3.12"), ("Pyzed", "0.3")], links=[("Website", noop), ("GitHub", noop)])
+
+
+def color_picker():
+    return pz.row([
+        ui.ColorPicker(value="#3b82f6cc", on_change=noop),
+        pz.column([ui.color_swatch(c, size=28) for c in ["#3b82f6", "#a1c181aa", pz.Gradient(["#f97316", "#7c3aed"], angle=90)]],
+                  spacing=8),
+    ], spacing=16)
+
+
 SHOTS = {
     "buttons": (buttons, (600, 150)),
     "text": (text, (320, 230)),
@@ -430,6 +481,12 @@ SHOTS = {
     "canvas": (canvas, (490, 210)),
     "popover": (popover, (420, 220)),
     "picker": (picker, (520, 200)),
+    "dialogs": (dialogs, (736, 240)),
+    "accordion": (accordion, (420, 230)),
+    "console": (console, (600, 180)),
+    "shortcuts": (shortcuts, (420, 250)),
+    "about": (about, (420, 320)),
+    "color-picker": (color_picker, (420, 450)),
 }
 
 

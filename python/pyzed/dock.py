@@ -79,16 +79,19 @@ class Dock(Component):
 
     # -- state ------------------------------------------------------------------
     def side_of(self, panel: DockPanel) -> str:
+        """Returns the side a panel is docked on: its saved position if valid, else ``panel.side``."""
         side = self.positions.get(panel.id, panel.side)
         return side if side in SIDES else panel.side
 
     def groups(self) -> Dict[str, List[DockPanel]]:
+        """Returns the panels grouped by side (every side present, possibly with an empty list)."""
         out: Dict[str, List[DockPanel]] = {side: [] for side in SIDES}
         for panel in self.panels:
             out[self.side_of(panel)].append(panel)
         return out
 
     def snapshot(self) -> dict:
+        """Returns the layout as a plain dict (``positions``, ``sizes``, ``active``, ``hidden``)."""
         return {
             "positions": dict(self.positions),
             "sizes": dict(self.sizes),
@@ -97,6 +100,7 @@ class Dock(Component):
         }
 
     def changed(self) -> Any:
+        """Emits ``layout`` with the current snapshot."""
         return self.emit("layout", self.snapshot())
 
     def move(self, panel_id: str, side: str) -> Any:
@@ -110,6 +114,7 @@ class Dock(Component):
         return self.changed()
 
     def select(self, side: str, panel_id: str) -> Any:
+        """Makes ``panel_id`` the active tab on ``side`` (a tab click) and emits ``layout``."""
         self.active[side] = panel_id
         return self.changed()
 
@@ -119,19 +124,23 @@ class Dock(Component):
         return self.changed()
 
     def resized(self, side: str, size: float) -> Any:
+        """Records the new ``size`` (pixels) of ``side`` after its edge is dragged and emits ``layout``."""
         self.sizes[side] = size
         return self.changed()
 
     # -- drag and drop ----------------------------------------------------------
     def start_drag(self, panel_id: str) -> None:
+        """Starts dragging a panel's tab: the drop zones show and the tab menu closes."""
         self.dragging = panel_id
         self.menu = None
 
     def end_drag(self) -> None:
+        """Ends a tab drag and hides the drop zones, remembering the panel for a late ``drop``."""
         # The drop zone's mouse_up may arrive after this; remember what was dragged.
         self._dropped, self.dragging, self.hover_zone = self.dragging, None, None
 
     def drop(self, side: str) -> Any:
+        """Moves the dragged panel to ``side`` when released on that drop zone; no-op without one."""
         panel_id = self.dragging or self._dropped
         self.dragging = self._dropped = self.hover_zone = None
         if panel_id is None:
@@ -140,6 +149,11 @@ class Dock(Component):
 
     # -- view -------------------------------------------------------------------
     def tab(self, panel: DockPanel, side: str, active: bool, t: Any) -> Any:
+        """Builds a panel's tab in a side's header.
+
+        Clicking selects it, right-clicking opens its move menu and dragging starts a move.
+        ``t`` is the theme.
+        """
         label = _core.row(
             [
                 _icon(panel.icon, size=13, color=t.icon if active else t.icon_muted) if panel.icon else None,
@@ -165,6 +179,7 @@ class Dock(Component):
         )
 
     def move_menu(self, panel: DockPanel, side: str, t: Any) -> Any:
+        """Builds the right-click menu that moves ``panel`` to any side other than ``side``."""
         options = [
             _core.button(
                 _core.row([_icon(SIDE_ICONS[s], size=13, color=t.icon_muted), _core.text(_t(f"pyzed.dock.{s}"), size=12.5)],
@@ -190,6 +205,10 @@ class Dock(Component):
         return menu.on(mouse_leave=lambda: setattr(self, "menu", None))
 
     def side_view(self, side: str, panels: List[DockPanel], t: Any) -> Any:
+        """Builds one side: a header with the panels' tabs above the active panel's content.
+
+        The whole side is resizable from its inner edge; the active tab falls back to the first panel.
+        """
         active_id = self.active.get(side)
         if active_id not in {p.id for p in panels}:
             active_id = panels[0].id
@@ -224,6 +243,7 @@ class Dock(Component):
         )
 
     def drop_zones(self, t: Any) -> Any:
+        """Builds the four drop zones (one per side) shown over the dock while a tab is dragged."""
         def zone(side: str, **size: Any) -> Any:
             hovered = self.hover_zone == side
             box = _core.container(

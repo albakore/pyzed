@@ -47,6 +47,7 @@ class Environment:
 
     @property
     def python(self) -> str:
+        """The Python interpreter of the environment: the venv's, or the designer's own if it has none."""
         if self.venv is not None:
             exe = self.venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
             if exe.exists():
@@ -55,6 +56,7 @@ class Environment:
 
     @property
     def bin_dirs(self) -> List[Path]:
+        """Folders searched for tools: the venv's scripts folder (if any), then the designer's."""
         dirs = []
         if self.venv is not None:
             dirs.append(self.venv / ("Scripts" if os.name == "nt" else "bin"))
@@ -134,6 +136,7 @@ def _pyzed_project(folder: Path) -> Optional[Environment]:
 
 
 def uri(path: Path) -> str:
+    """Returns the ``file://`` URI of ``path`` (made absolute, percent-encoded)."""
     text = Path(path).resolve().as_posix()
     if not text.startswith("/"):
         text = "/" + text
@@ -141,6 +144,7 @@ def uri(path: Path) -> str:
 
 
 def path_of(uri_: str) -> Path:
+    """Returns the file path of a ``file://`` URI (without the leading slash of a Windows drive)."""
     parsed = urlparse(uri_)
     text = unquote(parsed.path)
     if os.name == "nt" and text.startswith("/") and len(text) > 2 and text[2] == ":":
@@ -220,6 +224,9 @@ class LanguageServer:
 
     # -- lifecycle ----------------------------------------------------------
     def start(self) -> None:
+        """Launches the server process and sends ``initialize``; the status becomes ``"starting"`` (or
+        ``"error"``). Does nothing if it is running or not installed.
+        """
         if self.command is None or self.process is not None:
             return
         try:
@@ -265,6 +272,9 @@ class LanguageServer:
         self._set_status("ready", " ".join(x for x in (info.get("name"), info.get("version")) if x))
 
     def stop(self) -> None:
+        """Asks the server to shut down and exit (killing it after a second), and forgets pending requests
+        and open documents.
+        """
         process, self.process = self.process, None
         if process is None:
             return
@@ -279,14 +289,17 @@ class LanguageServer:
         self._set_status("stopped", "")
 
     def restart(self) -> None:
+        """Stops the server and starts it again."""
         self.stop()
         self.start()
 
     @property
     def ready(self) -> bool:
+        """Whether the server is initialized and accepting requests."""
         return self.status == "ready"
 
     def supports(self, capability: str) -> bool:
+        """Whether the server announced ``capability`` (a key of its ``capabilities``) when it started."""
         return bool(self.capabilities.get(capability))
 
     # -- messages -----------------------------------------------------------
@@ -301,10 +314,12 @@ class LanguageServer:
         return id_
 
     def cancel(self, id_: Optional[int]) -> None:
+        """Cancels pending request ``id_`` (its callback will not run) and tells the server."""
         if id_ is not None and self._pending.pop(id_, None) is not None:
             self.notify("$/cancelRequest", {"id": id_})
 
     def notify(self, method: str, params: Any) -> None:
+        """Sends notification ``method``; queued while the server starts, dropped when it is not running."""
         if self.status == "starting":
             self._queue.append((method, params))
         elif self.ready:
@@ -312,6 +327,7 @@ class LanguageServer:
 
     # -- documents (full sync) ----------------------------------------------
     def open(self, uri_: str, text: str, language: str = "python") -> None:
+        """Opens document ``uri_`` with ``text`` on the server (sends a change if it is already open)."""
         if uri_ in self.versions:
             return self.change(uri_, text)
         self.versions[uri_] = 1
@@ -319,6 +335,7 @@ class LanguageServer:
                     {"textDocument": {"uri": uri_, "languageId": language, "version": 1, "text": text}})
 
     def change(self, uri_: str, text: str) -> None:
+        """Sends the new full ``text`` of document ``uri_`` (opening it if needed) with the next version."""
         if uri_ not in self.versions:
             return self.open(uri_, text)
         self.versions[uri_] += 1
@@ -326,6 +343,7 @@ class LanguageServer:
                                                "contentChanges": [{"text": text}]})
 
     def close(self, uri_: str) -> None:
+        """Closes document ``uri_`` on the server if it was open."""
         if self.versions.pop(uri_, None) is not None:
             self.notify("textDocument/didClose", {"textDocument": {"uri": uri_}})
 
@@ -422,6 +440,9 @@ class LanguageServer:
 
 
 def ty_server(env: Environment, **kwargs: Any) -> LanguageServer:
+    """Returns a (not started) ``ty server`` for ``env``, configured with its interpreter and import
+    roots; ``kwargs`` go to ``LanguageServer``.
+    """
     exe = env.tool("ty")
     settings = {"ty": {"configuration": env.settings()}}
     return LanguageServer(
@@ -431,6 +452,7 @@ def ty_server(env: Environment, **kwargs: Any) -> LanguageServer:
 
 
 def ruff_server(env: Environment, **kwargs: Any) -> LanguageServer:
+    """Returns a (not started) ``ruff server`` for ``env``; ``kwargs`` go to ``LanguageServer``."""
     exe = env.tool("ruff")
     return LanguageServer("ruff", [exe, "server"] if exe else None, env.root,
                           settings={"ruff": {}}, initialization_options={"settings": {}}, **kwargs)

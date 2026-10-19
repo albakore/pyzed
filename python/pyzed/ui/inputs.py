@@ -55,6 +55,7 @@ def input(  # noqa: A001 - mirrors HTML naming
 
 
 def search_input(value: str, on_input: Any = None, *, placeholder: str = "Search…", **kwargs) -> _core.Widget:
+    """An ``input`` with a search icon and a "Search…" placeholder."""
     return input(value, on_input, placeholder=placeholder, icon="search", **kwargs)
 
 
@@ -87,6 +88,7 @@ def checkbox(
     label: Optional[str] = None,  # noqa: F811
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
+    """A themed checkbox with an optional ``label``; ``on_toggle`` receives the new state."""
     t = _theme(theme)
     return _core.checkbox(
         checked,
@@ -112,6 +114,7 @@ def slider(
     width: Any = "fill",
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
+    """A themed slider from ``min`` to ``max`` in ``step`` increments; ``on_change`` receives the value."""
     t = _theme(theme)
     return _core.slider(
         min, max, value, step=step, on_change=on_change, width=width,
@@ -121,6 +124,7 @@ def slider(
 
 def progress(value: float, *, max: float = 1.0, tint: str = "accent", height: float = 4,  # noqa: A002
              width: Any = "fill", theme: Optional[Theme] = None) -> _core.Widget:
+    """A thin rounded progress bar filled to ``value`` out of ``max``, in the ``tint`` color."""
     t = _theme(theme)
     return _core.progress_bar(value, min=0.0, max=max, width=width, height=height,
                               accent=t.color(tint), bg=alpha(t.text, 0.1), radius=height / 2)

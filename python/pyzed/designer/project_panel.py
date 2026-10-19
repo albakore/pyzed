@@ -71,6 +71,7 @@ class ProjectController:
         return self._task("Checking tools", lambda: _project.tools(project), self._got_tools, quiet=True)
 
     def refresh(self) -> None:
+        """Rereads the open project's files: its dependencies and current git branch."""
         if self.project is None:
             return
         self.project.reload()
@@ -81,6 +82,9 @@ class ProjectController:
         self.tools = found
 
     def open(self, path: str) -> Any:
+        """Opens the project at ``path`` (a notification on failure), closes the dialog, shows the
+        Project panel and opens its main form if it has one; returns the task that checks its tools.
+        """
         path = path.strip()
         if not path:
             return None
@@ -98,6 +102,9 @@ class ProjectController:
         return self.load_tools()
 
     def create(self) -> Any:
+        """Creates a project named ``new_name`` in ``new_folder`` with ``uv init`` in the background, then
+        opens it; refuses a non-empty folder that is not a project. Returns the background task.
+        """
         name = self.new_name.strip()
         if not name:
             return None
@@ -156,6 +163,9 @@ class ProjectController:
                           lambda r: self.d.notify(label, kind="success", seconds=2) if r.ok else None)
 
     def add(self) -> Any:
+        """Adds the packages typed in ``add_text`` (as dev dependencies with ``add_dev``) with ``uv add``
+        and clears the input; returns the background task.
+        """
         specs = self.add_text.split()
         if not specs:
             return None
@@ -164,21 +174,27 @@ class ProjectController:
         return self._uv(f"Adding {' '.join(specs)}", lambda p: p.add(*specs, dev=dev))
 
     def remove(self, dep: Dependency) -> Any:
+        """Removes dependency ``dep`` from its group with ``uv remove``; returns the background task."""
         return self._uv(f"Removing {dep.name}", lambda p: p.remove(dep.name, dev=dep.group == "dev",
                                                                     group=None if dep.group in ("main", "dev")
                                                                     else dep.group))
 
     def upgrade(self, dep: Optional[Dependency] = None) -> Any:
+        """Upgrades ``dep``, or every package when ``None``, with uv; returns the background task."""
         if dep is None:
             return self._uv("Upgrading every package", lambda p: p.upgrade())
         return self._uv(f"Upgrading {dep.name}", lambda p: p.upgrade(dep.name))
 
     def start_change(self, dep: Dependency) -> None:
+        """Opens the dialog that changes the version spec of ``dep``, prefilled with its current one."""
         self.change_target = dep
         self.change_text = dep.spec
         self.d.dialog = "project:change"
 
     def change(self) -> Any:
+        """Applies the spec typed in the change dialog to the dependency being changed (in its group) and
+        closes the dialog; returns the background task.
+        """
         dep, spec = self.change_target, self.change_text.strip()
         self.d.dialog = None
         if dep is None or not spec:
@@ -188,9 +204,13 @@ class ProjectController:
         return self._uv(f"Changing {dep.name}", lambda p: p.change(spec, dev=dev, group=group))
 
     def sync(self) -> Any:
+        """Syncs the project's environment with ``uv sync``; returns the background task."""
         return self._uv("Syncing the environment", lambda p: p.sync())
 
     def check_updates(self) -> Any:
+        """Looks up newer versions of the dependencies in the background, stores them in ``latest`` and
+        notifies how many there are.
+        """
         project = self.project
         if project is None or self.busy:
             return None
@@ -203,15 +223,19 @@ class ProjectController:
         return self._task("Checking for updates", project.outdated, found)
 
     def lint(self) -> Any:
+        """Runs ``ruff check`` on the project; returns the background task."""
         return self._uv("ruff check", lambda p: p.check())
 
     def format(self) -> Any:
+        """Runs ``ruff format`` on the project; returns the background task."""
         return self._uv("ruff format", lambda p: p.format())
 
     def typecheck(self) -> Any:
+        """Runs ``ty check`` on the project; returns the background task."""
         return self._uv("ty check", lambda p: p.typecheck())
 
     def git_init(self) -> Any:
+        """Creates a git repository in the project; returns the background task."""
         return self._uv("Creating the git repository", lambda p: p.git_init())
 
     # -- running forms -------------------------------------------------------------------
@@ -232,18 +256,21 @@ class ProjectController:
         self.d.notify(f"Running {form.name}", "With uv run; saving updates the window", seconds=3)
 
     def stop(self) -> None:
+        """Terminates the form process started with ``run_form``, if it is still running."""
         if self.process is not None and self.process.poll() is None:
             self.process.terminate()
         self.process = None
 
     # -- input setters ---------------------------------------------------------------------
     def setter(self, attr: str) -> Callable[[Any], None]:
+        """Returns a callback that stores the value it receives in attribute ``attr`` (for input widgets)."""
         def set_value(value: Any) -> None:
             setattr(self, attr, value)
 
         return set_value
 
     def show(self, dialog: str) -> Callable[[], None]:
+        """Returns a callback that opens the project dialog ``dialog`` (``"open"``, ``"new"``...)."""
         def open_dialog() -> None:
             self.d.dialog = f"project:{dialog}"
 

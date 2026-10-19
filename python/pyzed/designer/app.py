@@ -181,14 +181,20 @@ class Designer(App):
         self.title = self.window_title
 
     def on_start(self) -> Any:
+        """Loads the project's tools when the app starts; returns the command that does it."""
         return self.projects.load_tools()
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
+        """Returns the window title: the document's name, after a ``●`` when it has unsaved changes."""
         return f"{'● ' if self.doc.dirty else ''}{self.doc.display_name} — Pyzed Designer"
 
     # -- messages -------------------------------------------------------------
     def notify(self, title: str, message: Optional[str] = None, kind: str = "info", seconds: float = 3.0) -> None:
+        """Shows a toast for ``seconds`` (``kind`` is "info", "success", "warning" or "error").
+
+        Only the four most recent toasts are kept.
+        """
         self.toasts.append(Toast(title, message, kind, time.monotonic() + seconds))
         del self.toasts[:-4]
 
@@ -197,6 +203,7 @@ class Designer(App):
         self.toasts = [t for t in self.toasts if t.expires > now]
 
     def dismiss_toast(self, toast: Toast) -> None:
+        """Removes ``toast`` from the screen (its close button was clicked)."""
         if toast in self.toasts:
             self.toasts.remove(toast)
 
@@ -216,18 +223,22 @@ class Designer(App):
         self.color_picker = None
 
     def select_form(self) -> None:
+        """Clears the selection, so the Properties panel shows the form itself."""
         self.doc.select(None)
         self._selection_changed()
 
     def select_from_outline(self, name: str) -> None:
+        """Selects the control ``name`` from an outline row and gives the keyboard to the canvas."""
         self.doc.select(name)
         self.focus = "canvas"
         self._selection_changed()
 
     def toggle_section(self, title: str) -> None:
+        """Folds or unfolds the property group ``title`` in the Properties panel."""
         self.collapsed_sections ^= {title}
 
     def toggle_folded(self, name: str) -> None:
+        """Folds or unfolds the children of the container ``name`` in the outline."""
         self.folded ^= {name}
 
     def toggle_members(self, name: str) -> None:
@@ -256,17 +267,21 @@ class Designer(App):
         self._selection_changed()
 
     def set_picker_query(self, text: str) -> None:
+        """Filters the component picker or palette by ``text`` and moves the highlight to the first row."""
         self.picker_query = text
         self.picker_index = 0
 
     def move_out(self, name: str) -> None:
+        """Moves the control ``name`` out of its container, into the container's parent."""
         self.doc.move_out(name)
 
     def wrap(self, type_: str) -> None:
+        """Groups the selected controls in a new ``type_`` container (row, column, grid or panel)."""
         if self.doc.wrap(type_) is not None:
             self._selection_changed()
 
     def set_layout(self, name: str, key: str, value: Any) -> None:
+        """Sets the layout option ``key`` of the control ``name`` (whole floats are stored as ints)."""
         if isinstance(value, float) and value.is_integer():
             value = int(value)
         self.doc.set_layout(name, key, value)
@@ -278,12 +293,14 @@ class Designer(App):
         self.menu = (name, *self.window_pointer)
 
     def pick_tool(self, type_: Optional[str]) -> Callable[[], None]:
+        """Returns a callback that picks ``type_`` as the placing tool, or drops it if already picked."""
         def pick() -> None:
             self.tool = None if self.tool == type_ else type_
             self.focus = "canvas"
         return pick
 
     def set_toolbox_query(self, text: str) -> None:
+        """Filters the toolbox by ``text``."""
         self.toolbox_query = text
 
     # -- pointer gestures on the surface ------------------------------------
@@ -302,9 +319,11 @@ class Designer(App):
             carry.moved = abs(x - ox) + abs(y - oy) > CARRY_THRESHOLD
 
     def enter_form(self) -> None:
+        """The pointer entered the form being designed."""
         self.over_form = True
 
     def exit_form(self) -> None:
+        """The pointer left the form being designed: a control carried out of a panel has no drop target."""
         self.over_form = False
         if self.carry is not None:
             self.drop_name = None
@@ -346,13 +365,16 @@ class Designer(App):
         self.outline_target = target
 
     def enter_row(self, key: str) -> None:
+        """The pointer entered the toolbox or outline row ``key``, which is drawn highlighted."""
         self.hovered_row = key
 
     def leave_row(self, key: str) -> None:
+        """The pointer left the row ``key``: clears the highlight if it is still on that row."""
         if self.hovered_row == key:
             self.hovered_row = None
 
     def leave_outline(self, name: str) -> None:
+        """The pointer left the outline row ``name``: forgets it as the drop target of a carry."""
         if self.outline_target is not None and self.outline_target[0] == name:
             self.outline_target = None
 
@@ -472,6 +494,11 @@ class Designer(App):
         return found.name if found is not None else None
 
     def press_control(self, name: str) -> None:
+        """Mouse press on the control ``name``: selects it and starts moving the selection.
+
+        Pressing a control that is already selected makes it the primary one (the alignment reference).
+        With a tool picked, the press starts placing a new control instead. Locked controls do not move.
+        """
         self.focus = "canvas"
         self.menu = None
         if self.tool:
@@ -498,15 +525,22 @@ class Designer(App):
             self._start("move", rects=rects, absolute=starts)
 
     def press_handle(self, handle: str) -> None:
+        """Mouse press on the resize ``handle`` ("n", "se", ...) of the primary control: resizes it."""
         primary = self.doc.primary
         if primary is not None:
             self.focus = "canvas"
             self._start("resize", rects={primary.name: primary.rect}, handle=handle)
 
     def press_form_grip(self) -> None:
+        """Mouse press on the form's corner grip: starts resizing the form."""
         self._start("form", rects={"": (0.0, 0.0, self.doc.form.width, self.doc.form.height)})
 
     def press_empty(self) -> None:
+        """Mouse press on an empty spot of the form.
+
+        With a tool picked it starts placing a control (click or drag a rectangle); otherwise it clears
+        the selection and starts a rubber band selection.
+        """
         self.focus = "canvas"
         self.menu = None
         if self.tool:
@@ -589,6 +623,11 @@ class Designer(App):
 
     @property
     def band_rect(self) -> Optional[Rect]:
+        """The rectangle being dragged to select or to place a control, in form coordinates.
+
+        ``None`` when no such drag is in progress or the pointer has not moved yet. While placing a
+        control its corners snap to the grid.
+        """
         drag = self.drag
         if drag is None or drag.mode not in ("create", "band") or not drag.moved:
             return None
@@ -603,6 +642,11 @@ class Designer(App):
         return geometry.normalize(sx, sy, ex, ey)
 
     def release(self) -> None:
+        """Mouse button released on the surface: finishes the drag in progress.
+
+        Places the new control (a dragged rectangle of at least 6x6 sets its size), selects what the band
+        touched, drops moved controls into the container under them, or commits a resize to the history.
+        """
         drag = self.drag
         if drag is None:
             return
@@ -654,12 +698,14 @@ class Designer(App):
 
     # -- context menu ---------------------------------------------------------
     def open_context_menu(self, name: str) -> None:
+        """Right-click on the control ``name``: selects it and opens its context menu at the pointer."""
         if not self.doc.is_selected(name):
             self.doc.select(name)
             self._selection_changed()
         self.menu = (name, *self.window_pointer)
 
     def close_menu(self) -> None:
+        """Closes the control context menu."""
         self.menu = None
 
     def _menu_action(self, action: Callable[[], Any]) -> Callable[[], Any]:
@@ -669,6 +715,7 @@ class Designer(App):
         return run
 
     def context_menu(self, t) -> Any:
+        """Returns the control context menu widget, themed with ``t``."""
         return ui.menu(self._context_items(), width=CONTEXT_MENU_WIDTH, theme=t)
 
     def _context_items(self) -> List[Any]:
@@ -738,56 +785,74 @@ class Designer(App):
 
     # -- editing commands -------------------------------------------------------
     def undo(self) -> None:
+        """Undoes the last change to the document."""
         if self.doc.undo():
             self._selection_changed()
 
     def redo(self) -> None:
+        """Redoes the last undone change."""
         if self.doc.redo():
             self._selection_changed()
 
     def delete(self) -> None:
+        """Deletes the selected controls."""
         self.doc.delete()
         self._selection_changed()
 
     def cut(self) -> None:
+        """Cuts the selected controls to the clipboard."""
         self.doc.cut()
         self._selection_changed()
 
     def copy(self) -> None:
+        """Copies the selected controls to the clipboard and tells how many were copied."""
         count = self.doc.copy()
         if count:
             self.notify(f"Copied {count} control{'s' if count > 1 else ''}")
 
     def paste(self) -> None:
+        """Pastes the clipboard's controls into the form and selects them."""
         self.doc.paste()
         self._selection_changed()
 
     def duplicate(self) -> None:
+        """Duplicates the selected controls."""
         self.doc.duplicate()
         self._selection_changed()
 
     def align(self, edge: str) -> None:
+        """Aligns the selected controls on ``edge`` ("left", "center", "right", "top", "middle", "bottom")."""
         self.doc.align(edge)
 
     def distribute(self, axis: str) -> None:
+        """Spaces the selected controls evenly along ``axis`` ("horizontal" or "vertical")."""
         self.doc.distribute(axis)
 
     def same_size(self, which: str) -> None:
+        """Gives the selected controls the primary one's ``which`` ("width" or "height")."""
         self.doc.same_size(which)
 
     def center(self, axis: str) -> None:
+        """Centers the selected controls in the form along ``axis`` ("horizontal" or "vertical")."""
         self.doc.center(axis)
 
     def reorder(self, where: str) -> None:
+        """Moves the selected controls to the front or the back (``where`` is "front" or "back")."""
         self.doc.reorder(where)
 
     def set_field(self, name: str, key: str, value: Any) -> None:
+        """Sets the field ``key`` (``locked``, ``visible``, ...) of the control ``name`` to ``value``."""
         self.doc.set_field(name, key, value)
 
     def toggle_anchor(self, name: str, edge: str) -> None:
+        """Turns the anchor of the control ``name`` to the ``edge`` of its container on or off."""
         self.doc.toggle_anchor(name, edge)
 
     def prop_setter(self, name: str, prop: Prop) -> Callable[[Any], None]:
+        """Returns a callback that sets the property ``prop`` of the control ``name``.
+
+        Whole floats given to number properties are stored as ints.
+        """
         def setter(value: Any) -> None:
             if prop.kind == "number" and isinstance(value, float) and value.is_integer():
                 value = int(value)
@@ -795,6 +860,7 @@ class Designer(App):
         return setter
 
     def set_form(self, key: str, value: Any) -> None:
+        """Sets the form's own setting ``key`` (title, size, grid, ...) to ``value``."""
         self.doc.set_form(key, value)
 
     def set_style(self, name: Optional[str], key: str, value: Any) -> None:
@@ -812,6 +878,7 @@ class Designer(App):
         self.doc.set_style(name, key, value)
 
     def clear_style(self, name: Optional[str]) -> None:
+        """Removes every style override of the control ``name`` (the form's when ``None``)."""
         self.doc.clear_style(name)
 
     def toggle_color_picker(self, name: Optional[str], key: str) -> None:
@@ -827,6 +894,7 @@ class Designer(App):
         self.text_editors ^= {key}
 
     def close_color_picker(self) -> None:
+        """Closes the floating color picker."""
         self.color_picker = None
 
     def color_picker_at(self, t) -> Optional[Tuple[Any, float, float]]:
@@ -843,9 +911,14 @@ class Designer(App):
         return card, x, y
 
     def set_name_buffer(self, text: str) -> None:
+        """Keeps the text typed in the Name field until it is committed."""
         self.name_buffer = text
 
     def commit_name(self) -> None:
+        """Renames the primary control to the Name field's text (the document may adjust it).
+
+        Closes the handler being edited, since its name may follow the control's.
+        """
         primary = self.doc.primary
         if primary is not None:
             self.name_buffer = self.doc.rename(primary.name, self.name_buffer)
@@ -853,6 +926,7 @@ class Designer(App):
                 self.close_code()
 
     def toggle(self, attr: str) -> Callable[[], None]:
+        """Returns a callback that flips the designer's boolean attribute ``attr`` (``show_grid``, ...)."""
         def flip() -> None:
             setattr(self, attr, not getattr(self, attr))
         return flip
@@ -869,6 +943,7 @@ class Designer(App):
 
     @property
     def right_tab(self) -> str:
+        """The panel shown on the inspector side: "events" or "properties", wherever it is docked."""
         return "events" if self.layout.is_showing("events", self) else "properties"
 
     @right_tab.setter
@@ -876,15 +951,19 @@ class Designer(App):
         self.layout.show(tab)
 
     def set_left_tab(self, tab: str) -> None:
+        """Shows the panel ``tab`` ("design" or "project")."""
         self.left_tab = tab
 
     def set_right_tab(self, tab: str) -> None:
+        """Shows the panel ``tab`` ("properties" or "events")."""
         self.right_tab = tab
 
     def resize_left(self, ratio: float) -> None:
+        """Sets how much of the left column the upper panel takes (``ratio`` from 0 to 1)."""
         self.left_ratio = ratio
 
     def show_panel(self, panel: str) -> None:
+        """Shows the panel ``panel`` in its dock and saves the layout (the console stays pinned open)."""
         if panel == "console":
             self.console.pinned = True
         self.layout.show(panel)
@@ -892,10 +971,12 @@ class Designer(App):
         self._save_layout()
 
     def move_panel(self, panel: str, dock: str) -> None:
+        """Moves the panel ``panel`` to the dock ``dock`` and saves the layout."""
         self.layout.move(panel, dock)
         self._save_layout()
 
     def toggle_dock(self, dock: str) -> None:
+        """Shows or hides the dock ``dock`` and saves the layout."""
         self.layout.toggle(dock)
         self.layout.menu = None
         self._save_layout()
@@ -906,15 +987,19 @@ class Designer(App):
         self._save_layout()
 
     def dock_visible(self, dock: str) -> bool:
+        """Returns whether the dock ``dock`` is open and has a panel to show."""
         return self.layout.shown(dock, self) is not None
 
     def open_dock_menu(self, dock: str) -> None:
+        """Opens the panel menu of the dock ``dock``, or closes it if it is already open."""
         self.layout.menu = None if self.layout.menu == dock else dock
 
     def close_dock_menu(self) -> None:
+        """Closes the dock's panel menu."""
         self.layout.menu = None
 
     def reset_layout(self) -> None:
+        """Puts every panel back in its default dock and size, and saves that layout."""
         self.layout = docks.DockLayout()
         self._save_layout()
 
@@ -926,26 +1011,34 @@ class Designer(App):
 
     # -- preferences, menus and help ---------------------------------------------
     def set_pref(self, key: str, value: Any) -> None:
+        """Sets the preference ``key`` to ``value`` and saves the preferences.
+
+        The view options (``show_grid``, ``snap``, ``smart_guides``, ``show_hidden``) apply at once.
+        """
         setattr(self.prefs, key, value)
         if key in ("show_grid", "snap", "smart_guides", "show_hidden"):
             setattr(self, key, value)
         preferences.save(self.prefs)
 
     def toggle_pref(self, key: str) -> None:
+        """Flips the boolean preference ``key`` and saves it."""
         current = getattr(self, key) if key in ("show_grid", "snap", "smart_guides", "show_hidden") else \
             getattr(self.prefs, key)
         self.set_pref(key, not current)
 
     def set_language(self, code: str) -> None:
+        """Switches the designer's language to ``code`` and remembers it in the preferences."""
         self.prefs.language = code
         preferences.save(self.prefs)
         _locale.apply(code)
 
     def open_settings(self) -> None:
+        """Opens the Settings dialog."""
         self.app_menu = None
         self.dialog = "settings"
 
     def open_dialog_named(self, name: str) -> Any:
+        """Opens the dialog ``name`` with an empty search and the first row highlighted; returns ``None``."""
         self.app_menu = None
         self.picker_query = ""
         self.picker_index = 0
@@ -953,14 +1046,17 @@ class Designer(App):
         return None
 
     def open_palette(self) -> Any:
+        """Opens the command palette and returns the command that focuses its search field."""
         self.open_dialog_named("palette")
         return _core.Command.focus(dialogs.PICKER_ID)
 
     def toggle_app_menu(self, name: str) -> None:
+        """Opens the title bar menu ``name`` ("file", "view" or "help"), or closes it if open."""
         self.app_menu = None if self.app_menu == name else name
         self.layout.menu = None
 
     def close_app_menu(self) -> None:
+        """Closes the title bar menu."""
         self.app_menu = None
 
     def run_action(self, action_id: str) -> Any:
@@ -971,30 +1067,40 @@ class Designer(App):
         return _commands.run(action_id, self)
 
     def open_url(self, url: str) -> None:
+        """Opens ``url`` in the web browser, in a background thread so the UI does not wait."""
         import threading
         import webbrowser
 
         threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
 
     def open_docs(self) -> None:
+        """Opens Pyzed's documentation in the web browser."""
         self.open_url(_commands.DOCS_URL)
 
     def select_all(self) -> None:
+        """Selects every control of the form."""
         self.doc.select_all()
         self._selection_changed()
 
     def show_save_as(self) -> None:
+        """Opens the "Save as" dialog, filled with the current path or a name made from the form's."""
         self.dialog = "save_as"
         self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
 
     def focus_panel(self) -> None:
+        """Gives the keyboard to a side panel, so canvas shortcuts stop acting."""
         self.focus = "panel"
 
     def focus_code(self) -> None:
+        """Gives the keyboard to the code editor."""
         self.focus = "code"
 
     # -- events and code ----------------------------------------------------
     def open_default_event(self, name: str) -> None:
+        """Double-click on the control ``name``: opens the code of its main event.
+
+        A placed designed component opens its own file in a Component tab instead.
+        """
         self.drag = None
         control = self.doc.form.get(name)
         if control is None:
@@ -1006,6 +1112,10 @@ class Designer(App):
             self.edit_event(name, event)
 
     def edit_event(self, target: Optional[str], event: str) -> None:
+        """Opens the handler of ``event`` on ``target`` (the form when ``None``) in the code editor.
+
+        Wires the event first if it has no handler yet. Does nothing if the open code does not parse.
+        """
         if not self._flush_code():
             return
         if target is not None and self.doc.selection != [target]:
@@ -1022,6 +1132,7 @@ class Designer(App):
         self.assist.opened()
 
     def unwire(self, target: Optional[str], event: str) -> None:
+        """Disconnects ``event`` of ``target`` and deletes its handler's code (closing it if it is open)."""
         _, events = self.doc.owner(target)
         handler = events.get(event)
         if self.editing and self.editing[0] == handler:
@@ -1035,16 +1146,19 @@ class Designer(App):
         return f"code:{handler}:{self.code_revision}"
 
     def set_code_buffer(self, text: str) -> None:
+        """Keeps the code editor's text as it is typed and tells the code assistant."""
         if self.editing is not None:
             self.editing = (self.editing[0], text)
             self.focus = "code"
             self.assist.changed(text)
 
     def set_code_cursor(self, line: int, column: int) -> Any:
+        """The editor's cursor moved to ``line``, ``column``; returns the assistant's command, if any."""
         self.focus = "code"
         return self.assist.moved(line, column)
 
     def open_editor_settings(self) -> None:
+        """Opens the code editor settings dialog."""
         self.app_menu = None
         self.dialog = "editor_settings"
 
@@ -1067,6 +1181,11 @@ class Designer(App):
         return True
 
     def apply_code(self) -> Any:
+        """Applies the editor's code to the document and formats it.
+
+        Returns the command that puts the formatted text in the editor, or ``None`` if nothing changed
+        or the code does not parse.
+        """
         if self.editing is None or not self._flush_code():
             return None
         self.notify("Code applied", kind="success", seconds=1.5)
@@ -1078,6 +1197,7 @@ class Designer(App):
         return _core.Command.set_editor_text(self.editor_id, formatted)
 
     def toggle_whole_file(self) -> None:
+        """Switches the code editor between the current handler and the whole code file."""
         if self.editing is None or not self._flush_code():
             return
         if self.editing[0] == "*":
@@ -1091,11 +1211,13 @@ class Designer(App):
         self.assist.opened()
 
     def close_code(self) -> None:
+        """Closes the code editor, unless its code does not parse."""
         if self._flush_code():
             self.editing = None
             self.assist.closed()
 
     def edit_whole_file(self) -> None:
+        """Opens the form's whole code file in the code editor (F7)."""
         if self._flush_code():
             self.editing = ("*", self.doc.code)
             self.code_revision += 1
@@ -1227,6 +1349,10 @@ class Designer(App):
         return self.new("component")
 
     def set_new(self, key: str, value: str) -> None:
+        """Sets the field ``key`` of the "New" dialog to ``value``.
+
+        Changing the kind or the folder picks a free default name (``form1``, ``component2``, ...).
+        """
         self.new_state[key] = value
         if key in ("kind", "folder"):  # a free default name for that kind in that folder
             s = self.new_state
@@ -1311,6 +1437,7 @@ class Designer(App):
         self._selection_changed()
 
     def open_dialog(self) -> None:
+        """Opens the "Open" dialog to pick a form or component file."""
         self._guard(self._show_open)
 
     def _show_open(self) -> None:
@@ -1318,6 +1445,10 @@ class Designer(App):
         self.dialog_path = ""
 
     def open_path(self, path: Union[str, Path]) -> None:
+        """Opens the form or component at ``path`` in a tab (``.pzform`` is added when there is no suffix).
+
+        Switches to its tab if it is already open, and remembers it among the recent files.
+        """
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
@@ -1341,6 +1472,10 @@ class Designer(App):
         self.notify(f"Opened {path.name}")
 
     def save(self) -> None:
+        """Saves the active document, asking for a path first if it has none.
+
+        Does not save if the open code does not parse. A running preview reloads what was saved.
+        """
         if self.doc.path is None:
             self.dialog = "save_as"
             self.dialog_path = f"{self.doc.form.name.lower()}{getattr(self.doc, 'suffix', SUFFIX)}"
@@ -1355,6 +1490,7 @@ class Designer(App):
             self.preview.runtime.reload(path)
 
     def save_as(self, path: str) -> None:
+        """Saves the active document at ``path`` (the document's suffix is added when it has none)."""
         if not path.strip():
             return
         suffix = getattr(self.doc, "suffix", SUFFIX)
@@ -1363,9 +1499,11 @@ class Designer(App):
         self.save()
 
     def set_dialog_path(self, text: str) -> None:
+        """Keeps the path or filter typed in the Open or Save as dialog."""
         self.dialog_path = text
 
     def close_dialog(self) -> None:
+        """Closes the dialog and drops the action waiting on it."""
         self.dialog = None
         self.pending = None
 
@@ -1382,12 +1520,17 @@ class Designer(App):
         return self.confirm_discard()
 
     def confirm_discard(self) -> Any:
+        """"Don't save" in the unsaved-changes dialog: drops the changes and runs the waiting action."""
         action, self.pending = self.pending, None
         self.dialog = None
         self.doc.dirty = False
         return action() if action else None
 
     def form_files(self, limit: int = 40) -> List[Path]:
+        """Returns up to ``limit`` form and component files under the working folder, relative to it.
+
+        Folders such as ``.git``, ``.venv`` and ``node_modules`` are skipped.
+        """
         found: List[Path] = []
         root = Path.cwd()
         for path in sorted(p for suffix in DOCUMENT_SUFFIXES for p in root.rglob(f"*{suffix}")):
@@ -1446,6 +1589,7 @@ class Designer(App):
         return _code.handlers(module)
 
     def stop_form(self) -> Any:
+        """Stops the running form (its uv process or preview window) and the console capture."""
         self.projects.stop()
         self.console.stop()
         if self.preview is not None and self.preview.is_open:
@@ -1454,6 +1598,11 @@ class Designer(App):
 
     # -- keyboard -------------------------------------------------------------
     def on_key(self, combo: str) -> Any:
+        """Handles a key ``combo`` the focused widget did not use.
+
+        Global shortcuts come first, then the code editor's, the picker's arrows, Escape (closes what is
+        open or cancels a drag) and, when the canvas has the keyboard, editing and nudging shortcuts.
+        """
         action = _commands.by_keys(combo, global_only=True)
         if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
             self.app_menu = None
@@ -1527,6 +1676,9 @@ class Designer(App):
 
     # -- view -------------------------------------------------------------------
     def view(self):
+        """Builds the whole window: title bar, docks around the tabs, toolbar and surface, the status bar,
+        and the menus, popovers, toasts and dialog over them.
+        """
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
         center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
@@ -1563,6 +1715,7 @@ class Designer(App):
 
     @property
     def theme_obj(self):
+        """The resolved theme the window is drawn with."""
         return self.resolved_theme()
 
     def title_menu(self, name: str, t) -> Any:
@@ -1595,6 +1748,7 @@ class Designer(App):
         return ui.menu(items, width=260, theme=t)
 
     def run_panel(self, panel: str) -> None:
+        """Shows the panel ``panel`` from the View menu, closing the menu."""
         self.app_menu = None
         self.show_panel(panel)
 
@@ -1603,6 +1757,7 @@ class Designer(App):
         self._guard(lambda: self.open_path(path))
 
     def title_bar(self, t) -> Any:
+        """Returns the title bar: menu, project and file buttons, Run and Stop, View, Help and Settings."""
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
@@ -1630,11 +1785,16 @@ class Designer(App):
         return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
 
     def set_designer_theme(self, name: str) -> None:
+        """Switches the designer to the theme ``name`` and saves it in the preferences."""
         self.theme = themes.get(name)
         self.prefs.theme = name
         preferences.save(self.prefs)
 
     def toolbar(self, t) -> Any:
+        """Returns the toolbar: file, undo, alignment, sizing, order, grid and code tools.
+
+        It scrolls sideways when the window is too narrow.
+        """
         doc = self.doc
         has = bool(doc.selection)
         many = len(doc.selection) > 1
@@ -1692,6 +1852,10 @@ class Designer(App):
             padding=(0, 8), height=36, width="fill", align_y="center", bg=t.editor)
 
     def status_bar(self, t) -> Any:
+        """Returns the status bar: pointer position, selection, tool hint, control count, grid and snap.
+
+        While editing code it also shows the cursor position and the language servers.
+        """
         doc = self.doc
         x, y = self.pointer
         primary = doc.primary
@@ -1720,6 +1884,7 @@ class Designer(App):
         return ui.status_bar(start, end, theme=t)
 
     def dialog_view(self, t) -> Any:
+        """Returns the widget of the open dialog, or ``None`` when no dialog is open."""
         if self.dialog and self.dialog.startswith("project:"):
             return project_panel.dialog(self, t)
         if self.dialog == "confirm":

@@ -80,6 +80,7 @@ class Result:
 
     @property
     def ok(self) -> bool:
+        """Whether the command exited with code 0."""
         return self.code == 0
 
     def __bool__(self) -> bool:
@@ -87,6 +88,7 @@ class Result:
 
     @property
     def command(self) -> str:
+        """The command line as text, with the program shown by its file name only."""
         return " ".join(Path(self.args[0]).name if i == 0 else a for i, a in enumerate(self.args)) if self.args else ""
 
 
@@ -100,6 +102,7 @@ class Tool:
 
     @property
     def available(self) -> bool:
+        """Whether the tool was found (``path`` is set)."""
         return self.path is not None
 
 
@@ -263,10 +266,12 @@ class Dependency:
 
     @property
     def dev(self) -> bool:
+        """Whether the dependency belongs to a dependency group rather than the main dependencies."""
         return self.group != "main"
 
     @property
     def outdated(self) -> bool:
+        """Whether a newer release than the locked version is known."""
         return bool(self.latest and self.locked and self.latest != self.locked)
 
 
@@ -327,27 +332,33 @@ class Project:
 
     @property
     def is_pyzed(self) -> bool:
+        """Whether ``pyproject.toml`` has a ``[tool.pyzed]`` table."""
         return "pyzed" in self.data.get("tool", {})
 
     @property
     def name(self) -> str:
+        """The project name from ``pyproject.toml``, or the folder's name."""
         return str(self.data.get("project", {}).get("name") or self.root.name)
 
     @property
     def version(self) -> str:
+        """The project version from ``pyproject.toml`` (``"0.0.0"`` if missing)."""
         return str(self.data.get("project", {}).get("version") or "0.0.0")
 
     @property
     def ui_dir(self) -> Path:
+        """The folder that holds the forms (``ui`` in ``[tool.pyzed]``, by default ``ui/``)."""
         return self.root / str(self.config.get("ui", DEFAULT_UI))
 
     @property
     def main_form(self) -> Path:
+        """The path of the main ``.pzform`` file (``main`` in ``[tool.pyzed]``)."""
         main = str(self.config.get("main", f"{DEFAULT_UI}/{DEFAULT_MAIN}.pzform"))
         return self.root / main
 
     @property
     def src_dir(self) -> Optional[Path]:
+        """The ``src/`` folder, or ``None`` for a flat layout."""
         src = self.root / "src"
         return src if src.is_dir() else None
 
@@ -364,6 +375,7 @@ class Project:
     # -- environment -----------------------------------------------------------------------
     @property
     def venv(self) -> Path:
+        """The project's virtual environment (``UV_PROJECT_ENVIRONMENT`` or ``.venv``)."""
         return Path(os.environ.get("UV_PROJECT_ENVIRONMENT") or self.root / ".venv")
 
     def python_executable(self) -> Optional[Path]:
@@ -523,6 +535,7 @@ class Project:
         return self.uv("sync")
 
     def lock(self) -> Result:
+        """Runs ``uv lock`` to update ``uv.lock``."""
         return self.uv("lock")
 
     # -- quality -----------------------------------------------------------------------------
@@ -548,9 +561,11 @@ class Project:
     # -- git -----------------------------------------------------------------------------------
     @property
     def is_git(self) -> bool:
+        """Whether the project is inside a git repository (here or in a parent folder)."""
         return any((folder / ".git").exists() for folder in (self.root, *self.root.parents))
 
     def git(self, *args: str) -> Result:
+        """Runs ``git`` with ``args`` in the project folder (exit code 127 if git is not installed)."""
         git = shutil.which("git")
         if git is None:
             return Result(["git", *args], 127, "git is not installed")
@@ -572,6 +587,7 @@ class Project:
         return result
 
     def git_branch(self) -> Optional[str]:
+        """Returns the current git branch, or ``None`` outside a repository or on a detached HEAD."""
         result = self.git("branch", "--show-current") if self.is_git else None
         return result.output or None if result and result.ok else None
 
@@ -771,6 +787,7 @@ def remember(project: Project) -> None:
 
 
 def iter_python_files(folder: Path) -> Iterator[Path]:
+    """Yields the ``.py`` files under ``folder``, sorted, skipping venvs, caches, ``.git`` and builds."""
     skip = {".venv", "venv", "__pycache__", ".git", "build", "dist"}
     for path in sorted(folder.rglob("*.py")):
         if not skip.intersection(path.relative_to(folder).parts):

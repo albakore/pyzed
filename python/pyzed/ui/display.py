@@ -209,6 +209,10 @@ class Column:
     sortable: bool = True
 
     def value(self, row: Any) -> Any:
+        """Returns this column's value for ``row``: ``key(row)``, a dict item or an attribute.
+
+        ``None`` when the row has no such item or attribute.
+        """
         if callable(self.key):
             return self.key(row)
         if isinstance(row, dict):

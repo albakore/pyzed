@@ -103,6 +103,10 @@ class BuildOptions:
 
     @classmethod
     def from_project(cls, project: Project, **overrides: Any) -> "BuildOptions":
+        """Reads the options from the project's ``[tool.pyzed.build]`` table.
+
+        Keyword ``overrides`` that are not ``None`` replace the values found there.
+        """
         table: Dict[str, Any] = dict(project.config.get("build", {}))
         opts = cls(
             name=table.get("name"),

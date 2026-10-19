@@ -1598,3 +1598,85 @@ _section("ui", "Color picker", {
     "pyzed.ui.checkerboard": {"desc": "A light/dark checkerboard to draw under translucent colors.",
                               "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
 })
+
+# -- Everything else, described by the code's own docstrings ------------------
+# Entries with "docstring": True show the full docstring (parameters are described in its text).
+# The Spanish file must give each of them a "desc".
+_D = {"docstring": True}
+
+
+def _doc(*names):
+    return {name: dict(_D) for name in names}
+
+
+_section("app", "Hot reload", {
+    **_doc("pyzed.hot_reload.enable", "pyzed.hot_reload.current", "pyzed.hot_reload.is_reloading",
+           "pyzed.hot_reload.enabled_by_env", "pyzed.hot_reload.Reloader", "pyzed.hot_reload.ReloadError"),
+}, before="Languages")
+_section("app", "Events and components", _doc(
+    "pyzed.component.State", "pyzed.component.StateInfo", "pyzed.component.PropInfo", "pyzed.component.find",
+    "pyzed.component.registered", "pyzed.component.render_pass", "pyzed.events.EventInfo",
+    "pyzed.events.accepts_argument",
+))
+_section("app", "Events and components", {
+    "pyzed.component.LIFECYCLE_EVENTS": {"desc": "Names of the lifecycle events every component raises (`mount`, `unmount`...).", "no_signature": True},
+    "pyzed.events.CATALOG": {"desc": "Every event name Pyzed knows, mapped to its `EventInfo` (what raises it and what `event.value` holds).", "no_signature": True},
+    "pyzed.events.COMMON": {"desc": "The events every widget accepts through `widget.on(...)` (click, hover, focus, keys...).", "no_signature": True},
+})
+_section("app", "Languages", _doc("pyzed.i18n.normalize"))
+_section("widgets", "Layout", _doc("pyzed.layout.FlexItem"))
+_section("widgets", "Styles", _doc(
+    "pyzed.style.global_style", "pyzed.style.named_styles", "pyzed.style.apply_global", "pyzed.style.themed",
+    "pyzed.style.to_hex", "pyzed.style.paint_from_dict",
+))
+
+PAGES.append({
+    "slug": "designer",
+    "title": "Visual designer (pyzed.designer)",
+    "description": "Run, open and build forms from code, register toolbox components and templates.",
+    "order": 10,
+    "intro": """
+        `pyzed.designer` is the code side of the [visual designer](/pyzed/guides/designer/): run `.pzform` files,
+        open forms as windows, build forms in code, and extend the toolbox with your own components and
+        templates. [Designed components](/pyzed/guides/component-designer/) (`.pzcomp`) are loaded from here too.
+
+        ```python
+        from pyzed import designer
+
+        designer.run("ui/main.pzform", reload=True)
+        ```
+    """,
+    "sections": [
+        ("Running forms", _doc(
+            "pyzed.designer.run", "pyzed.designer.load", "pyzed.designer.open_form", "pyzed.designer.open_window",
+            "pyzed.designer.form_window", "pyzed.designer.new_form", "pyzed.designer.save",
+            "pyzed.designer.open_document", "pyzed.designer.design",
+        )),
+        ("Forms and controls", _doc(
+            "pyzed.designer.Form", "pyzed.designer.Control", "pyzed.designer.Event", "pyzed.designer.FormApp",
+            "pyzed.designer.FormWindow", "pyzed.designer.Document",
+        )),
+        ("Toolbox", _doc(
+            "pyzed.designer.Component", "pyzed.designer.Prop", "pyzed.designer.RenderContext",
+            "pyzed.designer.register", "pyzed.designer.component", "pyzed.designer.all_components",
+            "pyzed.designer.categories", "pyzed.designer.Template", "pyzed.designer.register_template",
+            "pyzed.designer.templates",
+        )),
+        ("Designed components", _doc(
+            "pyzed.designer.new_component", "pyzed.designer.load_component", "pyzed.designer.import_component",
+            "pyzed.designer.discover", "pyzed.designer.SceneDocument", "pyzed.designer.Scene",
+            "pyzed.designer.SceneComponent", "pyzed.designer.render",
+        )),
+        ("Layout helpers", _doc(
+            "pyzed.designer.align", "pyzed.designer.distribute", "pyzed.designer.same_size", "pyzed.designer.snap",
+            "pyzed.designer.smart_guides", "pyzed.designer.anchored",
+        )),
+        ("Designer app", {
+            "pyzed.designer.Designer": {"docstring": True, "members": False},
+            **_doc("pyzed.designer.EditorSettings", "pyzed.designer.History",
+                   "pyzed.designer.theme_for"),
+            "pyzed.designer.COMMON_EVENTS": {"desc": "Events every control can handle in the designer's Events dock.", "no_signature": True},
+            "pyzed.designer.FORM_EVENTS": {"desc": "Events of the form itself (`load`, `close`, `resize`, `key`...).", "no_signature": True},
+        }),
+    ],
+})

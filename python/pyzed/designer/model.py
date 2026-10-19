@@ -60,9 +60,11 @@ class Control:
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
+        """The control's ``(x, y, width, height)``, relative to its parent (or the form)."""
         return (self.x, self.y, self.width, self.height)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the control as JSON-ready data; empty ``parent``, ``layout`` and ``style`` are left out."""
         data = asdict(self)
         data["anchor"] = list(self.anchor)
         # Only containers' children carry these, so plain forms stay as they were.
@@ -76,6 +78,7 @@ class Control:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Control":
+        """Builds a control from saved ``data``, ignoring unknown keys and invalid anchors."""
         known = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
         known["anchor"] = tuple(a for a in known.get("anchor", ("left", "top")) if a in ANCHORS)
         known["props"] = dict(known.get("props") or {})
@@ -86,6 +89,7 @@ class Control:
         return cls(**known)
 
     def copy(self) -> "Control":
+        """Returns a deep copy of the control."""
         return copy.deepcopy(self)
 
 
@@ -116,6 +120,7 @@ class Form:
 
     # -- lookup -------------------------------------------------------------
     def get(self, name: str) -> Optional[Control]:
+        """Returns the control called ``name``, or ``None`` if there is none."""
         for control in self.controls:
             if control.name == name:
                 return control
@@ -128,6 +133,7 @@ class Form:
         return control
 
     def names(self) -> List[str]:
+        """Returns the names of all controls, in z-order."""
         return [c.name for c in self.controls]
 
     # -- hierarchy ----------------------------------------------------------
@@ -161,6 +167,7 @@ class Form:
             yield from self.walk(child.name, depth + 1)
 
     def is_inside(self, name: str, container: str) -> bool:
+        """Whether control ``name`` is inside ``container``, at any depth."""
         return any(a.name == container for a in self.ancestors(name))
 
     def _repair_parents(self) -> None:
@@ -189,6 +196,11 @@ class Form:
 
     # -- editing ------------------------------------------------------------
     def add(self, control: Control) -> Control:
+        """Appends ``control`` (on top of the z-order) and returns it.
+
+        An empty, reserved or taken name is replaced with a unique one, and a parent that does not
+        exist is dropped.
+        """
         if not control.name or control.name in RESERVED or self.get(control.name) is not None:
             control.name = self.unique_name(control.name or control.type)
         if control.parent and self.get(control.parent) is None:
@@ -228,6 +240,7 @@ class Form:
 
     # -- serialization ------------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the form as JSON-ready data: ``{"format", "form": settings, "controls": [...]}``."""
         data = {k: v for k, v in asdict(self).items() if k not in ("controls",)}
         if not data["style"]:
             del data["style"]
@@ -239,6 +252,9 @@ class Form:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Form":
+        """Builds a form from saved ``data`` (see ``to_dict``), ignoring unknown settings and repairing
+        broken parents; raises ``ValueError`` if it is not a Pyzed form.
+        """
         fmt = data.get("format", FORMAT)
         if not str(fmt).startswith("pyzed.form/"):
             raise ValueError(f"not a Pyzed form (format {fmt!r})")
@@ -252,13 +268,16 @@ class Form:
         return form
 
     def to_json(self) -> str:
+        """Returns the form as indented JSON text (the contents of a ``.pzform`` file)."""
         return json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n"
 
     @classmethod
     def from_json(cls, text: str) -> "Form":
+        """Builds a form from the JSON ``text`` of a ``.pzform`` file."""
         return cls.from_dict(json.loads(text))
 
     def copy(self) -> "Form":
+        """Returns a deep copy of the form and its controls."""
         return copy.deepcopy(self)
 
 

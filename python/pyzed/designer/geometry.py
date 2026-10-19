@@ -43,11 +43,13 @@ def normalize(x1: float, y1: float, x2: float, y2: float) -> Rect:
 
 
 def contains(rect: Rect, x: float, y: float) -> bool:
+    """Whether the point ``(x, y)`` is inside ``rect`` (edges included)."""
     rx, ry, rw, rh = rect
     return rx <= x <= rx + rw and ry <= y <= ry + rh
 
 
 def intersects(a: Rect, b: Rect) -> bool:
+    """Whether rectangles ``a`` and ``b`` overlap (touching edges do not count)."""
     ax, ay, aw, ah = a
     bx, by, bw, bh = b
     return ax < bx + bw and bx < ax + aw and ay < by + bh and by < ay + ah

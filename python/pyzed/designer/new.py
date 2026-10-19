@@ -41,11 +41,13 @@ _TEMPLATES: Dict[str, Template] = {}
 
 
 def register_template(template: Template) -> Template:
+    """Adds (or replaces, by name) a template offered in the "New form" dialog; returns it."""
     _TEMPLATES[template.name] = template
     return template
 
 
 def templates() -> List[Template]:
+    """Returns the registered form templates, in registration order."""
     return list(_TEMPLATES.values())
 
 

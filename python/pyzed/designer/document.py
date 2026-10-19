@@ -40,6 +40,9 @@ class Document:
     # -- files --------------------------------------------------------------
     @classmethod
     def open(cls, path: Union[str, Path]) -> "Document":
+        """Loads the form at ``path`` and the text of its handlers module (if the file exists) into a new
+        document.
+        """
         path = Path(path)
         form = load(path)
         module = code_path(path, form)
@@ -48,10 +51,12 @@ class Document:
 
     @property
     def code_path(self) -> Optional[Path]:
+        """Where the handlers module is saved, or ``None`` while the form has no file."""
         return code_path(self.path, self.form) if self.path else None
 
     @property
     def display_name(self) -> str:
+        """The name shown for the document: its file name, or ``<form name>.pzform`` if unsaved."""
         return self.path.name if self.path else f"{self.form.name}{SUFFIX}"
 
     def save(self, path: Optional[Union[str, Path]] = None) -> Path:
@@ -84,22 +89,31 @@ class Document:
         return True
 
     def undo(self) -> bool:
+        """Goes back one undo step; returns ``False`` if there was nothing to undo."""
         return self._restore(self.history.undo())
 
     def redo(self) -> bool:
+        """Redoes one undone step; returns ``False`` if there was nothing to redo."""
         return self._restore(self.history.redo())
 
     # -- selection ----------------------------------------------------------
     @property
     def selected(self) -> List[Control]:
+        """The selected controls, primary first (names that no longer exist are skipped)."""
         return [c for c in (self.form.get(n) for n in self.selection) if c is not None]
 
     @property
     def primary(self) -> Optional[Control]:
+        """The primary (first) selected control, or ``None`` when nothing is selected."""
         selected = self.selected
         return selected[0] if selected else None
 
     def select(self, names: Union[str, Iterable[str], None], *, add: bool = False) -> None:
+        """Selects the controls ``names`` (one name, several, or ``None`` for none); unknown names are
+        ignored.
+
+        With ``add``, each name is toggled in the current selection instead of replacing it.
+        """
         if names is None:
             names = []
         elif isinstance(names, str):
@@ -115,9 +129,11 @@ class Document:
             self.selection = list(dict.fromkeys(names))
 
     def select_all(self) -> None:
+        """Selects every control of the form."""
         self.selection = self.form.names()
 
     def is_selected(self, name: str) -> bool:
+        """Whether the control ``name`` is selected."""
         return name in self.selection
 
     # -- creating and deleting ---------------------------------------------
@@ -154,6 +170,9 @@ class Document:
         return _layout.resolve(self.form)
 
     def can_contain(self, container: Optional[str], name: str) -> bool:
+        """Whether control ``name`` can be moved into ``container`` (``None`` is the form, which takes
+        anything): it must be a container other than the control itself and not inside it.
+        """
         if container is None:
             return True
         target = self.form.get(container)
@@ -245,6 +264,7 @@ class Document:
         self.commit(group=f"layout:{name}:{key}")
 
     def delete(self) -> List[str]:
+        """Removes the selected controls (and what is inside them); returns the removed names."""
         removed = [c.name for c in self.form.remove(self.selection)]
         self.selection = []
         if removed:
@@ -263,6 +283,7 @@ class Document:
         return len(picked)
 
     def cut(self) -> int:
+        """Copies the selection to the clipboard and deletes it; returns how many controls were copied."""
         count = self.copy()
         self.delete()
         return count
@@ -299,6 +320,8 @@ class Document:
         return names
 
     def duplicate(self) -> List[str]:
+        """Pastes a copy of the selection right away, leaving the clipboard as it was; returns the new names.
+        """
         saved = self.clipboard
         self.copy()
         names = self.paste()
@@ -308,9 +331,13 @@ class Document:
     # -- geometry -----------------------------------------------------------
     @property
     def size(self) -> Tuple[float, float]:
+        """The form's ``(width, height)`` in pixels."""
         return (self.form.width, self.form.height)
 
     def nudge(self, dx: float, dy: float) -> None:
+        """Moves the selected controls (those not placed by a layout) by ``dx``, ``dy`` pixels, kept inside
+        their container when they share one; repeated nudges merge into one undo step.
+        """
         selected = [c for c in self.selected if not _layout.managed(self.form, c)]
         parents = {c.parent for c in selected}
         limit = self.size
@@ -321,6 +348,9 @@ class Document:
         self.commit(group="nudge")
 
     def align(self, edge: str, *, to_form: bool = False) -> None:
+        """Aligns the selected controls on ``edge`` (see ``geometry.align``): to each other, or to the form
+        with ``to_form`` or when only one control is selected.
+        """
         selected = self.selected
         to = (0.0, 0.0, self.form.width, self.form.height) if to_form or len(selected) == 1 else None
         geometry.align(selected, edge, to=to)
@@ -337,28 +367,37 @@ class Document:
         self.commit()
 
     def distribute(self, axis: str) -> None:
+        """Spaces the selected controls evenly along ``axis`` (see ``geometry.distribute``)."""
         geometry.distribute(self.selected, axis)
         self.commit()
 
     def same_size(self, which: str = "both") -> None:
+        """Gives the selected controls the primary one's width, height or both (``which``)."""
         geometry.same_size(self.selected, which)
         self.commit()
 
     def snap_to_grid(self) -> None:
+        """Snaps the selected controls (or all of them if nothing is selected) to the form's grid."""
         geometry.snap_controls(self.selected or self.form.controls, self.form.grid)
         self.commit()
 
     def reorder(self, where: str) -> None:
+        """Moves the selected controls in the z-order (``where``: see ``Form.reorder``)."""
         self.form.reorder(self.selection, where)
         self.commit()
 
     def set_rect(self, name: str, rect: Sequence[float], *, group: Optional[str] = None) -> None:
+        """Sets the position and size of control ``name`` from ``rect`` ``(x, y, width, height)``, rounded
+        to whole pixels; edits with the same ``group`` merge into one undo step.
+        """
         control = self.form[name]
         control.x, control.y, control.width, control.height = (round(v) for v in rect)
         self.commit(group)
 
     # -- properties ---------------------------------------------------------
     def set_prop(self, name: str, key: str, value: Any) -> None:
+        """Sets property ``key`` of control ``name`` to ``value`` (repeated edits merge into one undo step).
+        """
         self.form[name].props[key] = value
         self.commit(group=f"prop:{name}:{key}")
 
@@ -389,6 +428,7 @@ class Document:
         self.commit(group=f"field:{name}:{key}")
 
     def toggle_anchor(self, name: str, edge: str) -> None:
+        """Adds ``edge`` to the anchors of control ``name``, or removes it if it was there."""
         control = self.form[name]
         anchor = set(control.anchor)
         anchor ^= {edge}
@@ -396,6 +436,7 @@ class Document:
         self.commit()
 
     def set_form(self, key: str, value: Any) -> None:
+        """Sets attribute ``key`` of the form (a new ``name`` is made a valid identifier first)."""
         if key == "name":
             value = identifier(value) or self.form.name
         setattr(self.form, key, value)
@@ -427,6 +468,7 @@ class Document:
         return control.name, control.events
 
     def events_of(self, name: Optional[str]) -> Tuple[str, ...]:
+        """Returns the events of control ``name``, or the form's events when ``name`` is ``None``."""
         if name is None:
             return _components.FORM_EVENTS
         return _components.get(self.form[name].type).all_events
@@ -459,6 +501,7 @@ class Document:
         self.commit()
 
     def handler_source(self, handler: str) -> str:
+        """Returns the source of ``handler`` in the code, or a new stub if it is not there yet."""
         return _code.get_function(self.code, handler) or _code.stub(handler)
 
     def set_handler_source(self, handler: str, source: str) -> None:
@@ -467,5 +510,6 @@ class Document:
         self.dirty = True
 
     def set_code(self, source: str) -> None:
+        """Replaces the whole text of the handlers module and marks the document as changed."""
         self.code = source
         self.dirty = True

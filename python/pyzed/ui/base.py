@@ -57,11 +57,13 @@ def label(
 
 
 def muted(content: Any, **kwargs) -> _core.Widget:
+    """A ``label`` in the theme's muted text color (unless ``color`` is given)."""
     kwargs.setdefault("color", "text_muted")
     return label(content, **kwargs)
 
 
 def heading(content: Any, *, level: int = 1, theme: Optional[Theme] = None, **kwargs) -> _core.Widget:
+    """A semibold ``label`` sized by ``level``: 1 is ``2xl``, 2 ``xl``, 3 ``lg`` and deeper ``md``."""
     size = {1: "2xl", 2: "xl", 3: "lg"}.get(level, "md")
     return label(content, size=size, weight="semibold", theme=theme, **kwargs)
 
@@ -276,6 +278,7 @@ def kbd(keys: str, *, size: str = "sm", theme: Optional[Theme] = None) -> _core.
 
 
 def divider(*, vertical: bool = False, color: Optional[str] = None, theme: Optional[Theme] = None) -> _core.Widget:
+    """A 1px horizontal (or ``vertical``) line, in the theme's border color unless ``color`` is given."""
     t = _theme(theme)
     return _core.rule(vertical=vertical, thickness=1, color=t.color(color) if color else t.border_variant)
 

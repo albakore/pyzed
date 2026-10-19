@@ -15,6 +15,16 @@ See the [theming](/pyzed/guides/theming/) guide for the list of tokens and how t
 
 A theme: an immutable dataclass with Zed's color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark.
 
+**Methods and properties**
+
+#### `Theme.is_dark`
+
+```python
+Theme.is_dark  # property
+```
+
+Whether the theme's appearance is dark.
+
 ### `derive`
 
 ```python
@@ -248,6 +258,16 @@ A theme that follows the system's light/dark mode.
 ### `AutoTheme`
 
 What `themes.auto` returns: a `(light, dark)` pair. `pick(dark)` returns the right one.
+
+**Methods and properties**
+
+#### `AutoTheme.pick`
+
+```python
+AutoTheme.pick(dark)
+```
+
+Returns the dark theme when `dark` is true, else the light one.
 
 ## Utilities (pyzed.theme)
 
