@@ -84,6 +84,9 @@ class Quotes(pz.App):
         self.quote, self.loading = quote, False
 ```
 
+`then` se llama aunque `funcion` no devuelva nada (con `None`), así que también sirve para
+"avísame cuando termine": `Command.perform(db.migrate, lambda _: self.reload())`.
+
 ## Progreso: generadores async
 
 Cada `yield` llega a `update` mientras el trabajo sigue en segundo plano:
