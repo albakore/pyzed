@@ -19,7 +19,7 @@ release notes readable. By taking part you agree to follow the
 
 ## Development setup
 
-You need Python 3.10+, a stable Rust toolchain (`rustup`) and, on Linux, the
+You need Python 3.10+, Rust 1.88+ (`rustup update` upgrades an older toolchain) and, on Linux, the
 usual X11/Wayland development libraries.
 
 With [uv](https://docs.astral.sh/uv/):
