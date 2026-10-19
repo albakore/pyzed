@@ -237,10 +237,12 @@ def _button(c: Control, ctx: RenderContext) -> Any:
     border = colors.pop("border_color", None)
     parts = [_icon(p["icon"], size=14) if p["icon"] else None,
              _core.text(p["text"], size=13.5, wrap=False) if p["text"] else None]
+    parts = [w for w in parts if w is not None]
     return _core.button(
         _core.container(_core.row(parts, spacing=6, align="center"), width="fill", height="fill", center=True),
         ctx.on(c, "click") if c.enabled else None,
-        padding=(0, 10), width="fill", height="fill", radius=t.radius_sm, border_color=border,
+        # an icon-only button has no side padding, so the icon stays centered in small buttons
+        padding=(0, 10) if p["text"] else 0, width="fill", height="fill", radius=t.radius_sm, border_color=border,
         border_width=1.0 if border else 0.0, disabled_color=t.text_disabled, **colors)
 
 

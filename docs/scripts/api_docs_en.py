@@ -1136,7 +1136,7 @@ _section("ui", "Controls", {
     },
     "pyzed.ui.number_field": {
         "desc": "A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
-        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…)."},
+        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.'},
     },
     "pyzed.ui.split_button": {
         "desc": "A button with a separate arrow for more options (Zed's `SplitButton`). `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
@@ -1153,6 +1153,19 @@ _section("ui", "Controls", {
     "pyzed.ui.disclosure": {
         "desc": "A collapsible section: a header with an arrow that shows or hides `content`. You own the open state: change it in `on_toggle`.",
         "params": {"title": "Title (text or widget).", "content": "Content.", "open": "Whether it is open.", "on_toggle": "Message or callable when the header is clicked."},
+    },
+    "pyzed.ui.AccordionSection": {
+        "desc": "One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget.",
+    },
+    "pyzed.ui.accordion": {
+        "desc": "Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
+        "params": {"sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).", "open": "The set of open ids, a `{id: bool}` dict, or `True` for all.", "on_toggle": "Called with the key of the clicked header.", "icons": "`{id: icon}`: a Lucide icon for each header.", "spacing": "Space around the dividers between sections.", "padding": "Padding around the content of an open section."},
+        "example": """
+            ui.accordion([
+                ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+                ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
+        """,
     },
 }, before="Lists, tree and menus")
 _section("ui", "Data and feedback", {
@@ -1375,6 +1388,15 @@ _section("app", "Events and components", {
                     return pz.row([pz.text("★").on(click=lambda i=i: self.emit("change", i)) for i in range(1, 6)])
 
             Rating(value=3, on_change=lambda e: print(e.value))
+        """,
+    },
+    "pyzed.state": {
+        "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
+        "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},
+        "example": """
+            class Counter(pz.Component):
+                step: int = 1
+                count: int = pz.state(0)
         """,
     },
 })

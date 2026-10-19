@@ -276,6 +276,9 @@ List box, Progress bar, Badge, Image, Icon, Markdown, Spinner, Panel, Divider an
 
 ![Todos los componentes incluidos](../../../../../screenshots/designer-components.png)
 
+Para dibujar tus propios componentes, con propiedades, estado, métodos y eventos, usa el
+[diseñador de componentes](/pyzed/es/guides/component-designer/). Se suman a esta biblioteca al guardarlos.
+
 Registra los tuyos y aparecen en la toolbox:
 
 ```python
@@ -361,6 +364,8 @@ classDiagram
 - `document.py`: todos los comandos de edición, sin UI, así que se puede testear entero.
 - `project_panel.py`: la pestaña Project (proyectos de uv, dependencias, ruff, ty y git; consulta [Proyectos con uv](/pyzed/es/guides/projects/)).
 - `surface.py` y `panels.py`: las vistas; `app.py`: la app `Designer` que traduce clics y teclas al documento.
+- `scene.py`, `scene_code.py`, `scene_runtime.py` y `scene_panel.py`: el [diseñador de componentes](/pyzed/es/guides/component-designer/)
+  (el modelo `.pzcomp`, el código de la clase, `SceneComponent` y el panel Component).
 - `runtime.py`: `FormApp` y `FormWindow`, que dibujan un formulario y llaman a sus handlers.
 - `lsp.py`: un pequeño cliente JSON-RPC para servidores de lenguaje y la detección del proyecto y su `.venv`.
 - `intellisense.py`: `CodeIntel`, que mantiene ty y ruff sincronizados con el handler abierto, y la lógica de

@@ -865,6 +865,7 @@ text_input(
     placeholder_color=None,
     selection_color=None,
     icon_color=None,
+    align_x=None,
 )
 ```
 
@@ -894,6 +895,7 @@ A controlled text field: it shows `value` and notifies you of changes through `o
 | `placeholder_color` | Placeholder color. |
 | `selection_color` | Selection color. |
 | `icon_color` | Icon color. |
+| `align_x` | Horizontal alignment: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ### `mouse_area`
 
