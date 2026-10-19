@@ -30,11 +30,17 @@ The code editor's language servers (**ty** and **ruff**) are installed per proje
 
 ## Updates
 
-A new build of Pyzed Design is published with every Pyzed release, for all three platforms. The buttons above always
-point to the latest stable release; the [changelog](/pyzed/changelog/) lists what changed, and
-[all releases](https://github.com/albakore/pyzed/releases) (including previous versions and pre-releases) are on
-GitHub. To update, download the new zip and replace the old folder (or `Pyzed Design.app`); your projects and
-settings are kept, since they live outside the app.
+Like Zed, Pyzed Design updates itself. Once a day it checks GitHub for a newer release (turn it off in
+**Help → Check for updates automatically**, or check now with **Help → Check for updates**). When there is one,
+the status bar shows **Update to X.Y.Z**: it opens a **What's new** tab with the release notes and a
+**Download and install** button. The download is verified against the release's SHA-256 and unpacked in the
+background, and **Restart to update** swaps the app for the new version. **Help → What's new** shows the notes at
+any time. Your projects and settings live outside the app, so they are kept.
+
+If the app cannot write to its own folder, download the new zip from this page and replace the old folder (or
+`Pyzed Design.app`). The [changelog](/pyzed/changelog/) lists what changed, and
+[all releases](https://github.com/albakore/pyzed/releases) are on GitHub. More in
+[Projects → Updates](/pyzed/guides/projects/#updates).
 
 ## Install with pip instead
 

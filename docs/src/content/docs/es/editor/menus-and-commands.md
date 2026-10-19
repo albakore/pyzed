@@ -73,7 +73,10 @@ Los interruptores se recuerdan entre sesiones.
 | Atajos de teclado | <kbd>F1</kbd> | Una lista con buscador de todos los atajos. |
 | Documentación | | Abre esta documentación en el navegador. |
 | Informar un problema | | Abre el gestor de incidencias. |
-| Acerca de Pyzed Designer | | Las versiones de Pyzed, Python e Iced, la plataforma y enlaces. |
+| Novedades | | Una pestaña con las notas de esta versión (o de la actualización pendiente de instalar). |
+| Buscar actualizaciones | | Busca ahora una versión nueva en GitHub; consulta [Actualizaciones](/pyzed/es/download/#actualizaciones). |
+| Buscar actualizaciones automáticamente | | Activa o desactiva la búsqueda diaria (activada por defecto). |
+| Acerca de Pyzed Design | | Las versiones de Pyzed, Python e Iced, la plataforma y enlaces. |
 
 ![El diálogo Acerca de](../../../../../screenshots/editor-about.png)
 
