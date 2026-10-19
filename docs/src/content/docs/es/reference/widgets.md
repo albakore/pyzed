@@ -1513,6 +1513,8 @@ code_editor(
     highlight_color=None,
     match_brackets=True,
     selection_highlight=True,
+    keymap=None,
+    scrollbar=True,
 )
 ```
 

@@ -40,7 +40,8 @@ impl Engine {
             return;
         }
 
-        let clip_mask = (!physical_bounds.is_within(&clip_bounds)).then_some(clip_mask as &_);
+        let mask: &tiny_skia::Mask = clip_mask;
+        let clip_mask = (!physical_bounds.is_within(&clip_bounds)).then_some(mask);
 
         let transform = into_transform(transformation);
 
@@ -116,6 +117,9 @@ impl Engine {
                 })
                 .collect();
 
+            // pyzed: clip the shadow too, or redrawing a damaged region darkens the rest of the shadowed box.
+            let shadow_clip =
+                (!shadow_bounds.is_within(&clip_bounds)).then_some(mask);
             if let Some(pixmap) = tiny_skia::IntSize::from_wh(width, height)
                 .and_then(|size| tiny_skia::Pixmap::from_vec(bytemuck::cast_vec(colors), size))
             {
@@ -125,7 +129,7 @@ impl Engine {
                     pixmap.as_ref(),
                     &tiny_skia::PixmapPaint::default(),
                     tiny_skia::Transform::default(),
-                    None,
+                    shadow_clip,
                 );
             }
         }

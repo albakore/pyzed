@@ -140,7 +140,7 @@ EXTRA_SHORTCUTS: Tuple[Tuple[str, Sequence[Tuple[str, str]]], ...] = (
                 ("Open the main event", "enter"), ("Cancel the current gesture", "escape"))),
     ("Code", (("Show completions", "ctrl-space"), ("Accept completion", "enter"), ("Close completions", "escape"),
               ("Find", "ctrl-f"), ("Find and replace", "ctrl-h"), ("Next and previous match", "f3"),
-              ("Go to line", "ctrl-g"), ("Undo", "ctrl-z"), ("Redo", "ctrl-shift-z"),
+              ("Go to line", "ctrl-g"), ("Toggle soft wrap", "alt-z"), ("Undo", "ctrl-z"), ("Redo", "ctrl-shift-z"),
               ("Bigger, smaller and default font", "ctrl-="))),
     ("Multiple cursors", (("Add a cursor", "alt-click"), ("Add a cursor above", "alt-shift-up"),
                           ("Add a cursor below", "alt-shift-down"), ("Select the next match", "ctrl-d"),

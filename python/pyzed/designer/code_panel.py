@@ -17,6 +17,7 @@ from .. import _core, ui
 from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
+from ..ui.editor import DEFAULT_KEYS, keymap_for, parse_keys
 from . import intellisense as _intel
 from . import settings as _settings
 from . import telemetry as _telemetry
@@ -42,9 +43,20 @@ LIST_WIDTH = 320.0
 SCROLLBAR = 4.0
 DOC_WIDTH = 340.0
 CAPTURED = ("up", "down", "enter", "tab", "escape", "pageup", "pagedown")
+#: Keys of the code panel (not of the editor itself), by Zed's action names; they can be changed too.
+PANEL_KEYS: Dict[str, Tuple[str, ...]] = {
+    "show_completions": ("ctrl-space",),
+    "find": ("ctrl-f",),
+    "replace": ("ctrl-h",),
+    "go_to_line": ("ctrl-g",),
+    "toggle_soft_wrap": ("alt-z",),
+}
+#: The sections of the editor settings, in the order of the index.
+SETTINGS_SECTIONS = ("appearance", "cursor", "editing", "scrolling", "diagnostics", "servers")
 FIND_ID = "designer-code-find"
 REPLACE_ID = "designer-code-replace"
 GOTO_ID = "designer-code-goto"
+KEYS_ID = "designer-editor-keys"
 #: Most matches the search highlights.
 MAX_MATCHES = 5000
 
@@ -107,6 +119,12 @@ class CodeAssist:
         self.search: Optional[Search] = None
         #: The "go to line" field's text while it is open.
         self.goto: Optional[str] = None
+        #: The section shown in the editor settings.
+        self.settings_section = "appearance"
+        #: Text typed in the key binding fields, kept while it is not a valid binding.
+        self.key_drafts: Dict[str, str] = {}
+        #: The action whose keys are being changed in the settings.
+        self.key_editing: Optional[str] = None
         self._typed = False
         self._text = ""
 
@@ -325,19 +343,33 @@ class CodeAssist:
         """Closes the completion list."""
         self.completion = None
 
+    def panel_keys(self) -> Dict[str, str]:
+        """The code panel's keys (``"ctrl-f"`` -> ``"find"``), with the user's changes."""
+        keys: Dict[str, str] = {}
+        for action, defaults in PANEL_KEYS.items():
+            override = self.settings.keymap.get(action)
+            bindings = defaults if override is None else [k.strip() for k in override.split(",") if k.strip()]
+            for key in bindings:
+                normalized = parse_keys(key)
+                if normalized:
+                    keys[normalized] = action
+        return keys
+
     def on_key(self, combo: str) -> Any:
         """Keys pressed while the editor has focus; returns ``(handled, result)``."""
-        if combo in ("ctrl-space", "ctrl- "):
+        action = self.panel_keys().get(parse_keys(combo.replace("- ", "-space")) or "")
+        if action == "show_completions":
             if not self.plain:
                 self.open_completion()
             return True, None
         panel = {
-            "ctrl-f": lambda: self.open_search(),
-            "ctrl-h": lambda: self.open_search(replacing=True),
-            "ctrl-g": self.open_goto,
+            "find": lambda: self.open_search(),
+            "replace": lambda: self.open_search(replacing=True),
+            "go_to_line": self.open_goto,
+            "toggle_soft_wrap": lambda: self.set("wrap", not self.settings.wrap),
         }
-        if combo in panel:
-            return True, panel[combo]()
+        if action in panel:
+            return True, panel[action]()
         if self.search is not None and combo in ("f3", "shift-f3", "shift-enter", "alt-enter", "escape"):
             if combo == "escape":
                 return True, self.close_search()
@@ -366,7 +398,9 @@ class CodeAssist:
     def captured_keys(self) -> Tuple[str, ...]:
         """Keys the editor must hand to the designer instead of handling them: the list navigation keys while
         a completion list is shown, else none."""
-        return CAPTURED if self.completion is not None and self.completion.shown else ()
+        # Panel keys without Ctrl would be typed into the text (Alt+Z), so the editor leaves them too.
+        panel = tuple(k for k in self.panel_keys() if not k.startswith("ctrl-"))
+        return (CAPTURED if self.completion is not None and self.completion.shown else ()) + panel
 
     # -- diagnostics and lenses -----------------------------------------------------
     def diagnostics(self) -> List[Diagnostic]:
@@ -408,6 +442,59 @@ class CodeAssist:
         self.intel.apply_settings(self.settings)
         if key == "code_lens" and value:
             self.intel.refresh_lenses(self.d.doc.form)
+
+    def key_bindings(self, action: str) -> str:
+        """The keys of ``action`` as shown in the settings: the user's, or the default ones."""
+        if action in self.settings.keymap:
+            return self.settings.keymap[action]
+        return ", ".join(DEFAULT_KEYS.get(action) or PANEL_KEYS.get(action, ()))
+
+    def key_error(self, action: str) -> Optional[str]:
+        """Why the keys typed for ``action`` are not valid, or ``None``."""
+        draft = self.key_drafts.get(action)
+        if draft is None:
+            return None
+        bad = [k.strip() for k in draft.split(",") if k.strip() and parse_keys(k) is None]
+        return tr("Unknown keys: {keys}").format(keys=", ".join(bad)) if bad else None
+
+    def set_keys(self, action: str, text: str) -> None:
+        """Changes the keys of ``action`` (several separated by commas, empty for none) once they are valid."""
+        self.key_drafts[action] = text
+        if self.key_error(action) is not None:
+            return
+        del self.key_drafts[action]
+        keys = ", ".join(parse_keys(k) or "" for k in text.split(",") if k.strip())
+        keymap = dict(self.settings.keymap)
+        if keys == ", ".join(DEFAULT_KEYS.get(action) or PANEL_KEYS.get(action, ())):
+            keymap.pop(action, None)
+        else:
+            keymap[action] = keys
+        self.set("keymap", keymap)
+
+    def reset_keys(self, action: Optional[str] = None) -> None:
+        """Puts back the default keys of ``action``, or of every action."""
+        keymap = {} if action is None else {k: v for k, v in self.settings.keymap.items() if k != action}
+        if action is None:
+            self.key_drafts.clear()
+        else:
+            self.key_drafts.pop(action, None)
+        self.set("keymap", keymap)
+
+    def editor_keymap(self) -> Dict[str, Optional[str]]:
+        """The ``ui.editor(keymap=...)`` for the user's changes to the editor's own keys."""
+        return keymap_for({k: v for k, v in self.settings.keymap.items() if k in DEFAULT_KEYS})
+
+    def show_settings_section(self, section: str) -> None:
+        """Shows ``section`` of the editor settings."""
+        self.settings_section = section
+
+    def edit_keys(self, action: Optional[str]) -> Any:
+        """Starts changing the keys of ``action`` in the settings (``None`` stops); returns the command that
+        focuses the field."""
+        if self.key_editing is not None and self.key_error(self.key_editing) is not None:
+            self.key_drafts.pop(self.key_editing, None)
+        self.key_editing = action
+        return _core.Command.focus(KEYS_ID) if action is not None else None
 
     def setter(self, key: str) -> Any:
         """Returns a callback that sets editor setting ``key`` to the value it receives (for settings
@@ -905,7 +992,9 @@ def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any]
         annotations=annotations, capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
         minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
         on_action=a.action_ran, highlights=a.search.matches if a.search else None,
-        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
+        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, cursor_width=s.cursor_width,
+        line_height=round(s.font_size * _settings.LINE_HEIGHTS[s.line_height]), scrollbar=s.scrollbar,
+        keymap=a.editor_keymap(), theme=et)
 
 
 def _bars(d: "Designer", t: Theme) -> List[Any]:
@@ -1065,81 +1154,211 @@ def server_status_items(a: CodeAssist, t: Theme, on_press: Any = None) -> List[A
     return items
 
 
-def settings_dialog(d: "Designer", t: Theme) -> Any:
-    """Builds the editor settings dialog: language servers, appearance, cursor, editing and code lens."""
-    a = d.assist
+#: The pages of the key bindings, each a group of actions: (page, title, ((action, label), ...)).
+KEY_GROUPS: Tuple[Tuple[str, str, Tuple[Tuple[str, str], ...]], ...] = (
+    ("code_panel", "Code panel", (("show_completions", "Show completions"), ("find", "Find"), ("replace", "Find and replace"),
+                    ("go_to_line", "Go to line"), ("toggle_soft_wrap", "Toggle soft wrap"))),
+    ("editing", "Editing", (("undo", "Undo"), ("redo", "Redo"), ("copy", "Copy"), ("cut", "Cut"),
+                 ("delete_to_previous_word_start", "Delete the previous word"),
+                 ("delete_to_next_word_end", "Delete the next word"), ("toggle_comments", "Toggle comment"),
+                 ("convert_to_upper_case", "Upper case"), ("convert_to_lower_case", "Lower case"),
+                 ("sort_lines_case_sensitive", "Sort lines"))),
+    ("cursors", "Multiple cursors", (("select_next", "Select the next match"), ("select_previous", "Select the previous match"),
+                          ("select_all_matches", "Select every match"), ("add_selection_above", "Add a cursor above"),
+                          ("add_selection_below", "Add a cursor below"),
+                          ("split_selection_into_lines", "A cursor on each selected line"),
+                          ("undo_selection", "Undo the last cursor change"), ("cancel", "Back to one cursor"))),
+    ("lines", "Lines", (("select_line", "Select line"), ("move_line_up", "Move line up"), ("move_line_down", "Move line down"),
+               ("duplicate_line_up", "Duplicate line up"), ("duplicate_line_down", "Duplicate line down"),
+               ("delete_line", "Delete line"), ("join_lines", "Join lines"), ("newline_below", "New line below"),
+               ("newline_above", "New line above"), ("indent", "Indent"), ("outdent", "Outdent"))),
+    ("moving", "Moving", (("move_to_enclosing_bracket", "Go to matching bracket"),
+                ("move_to_beginning_of_line", "Go to the start of the line"),
+                ("select_to_beginning_of_line", "Select to the start of the line"),
+                ("line_up", "Scroll up one line"), ("line_down", "Scroll down one line"))),
+    ("folding", "Folding", (("fold", "Fold"), ("unfold_lines", "Unfold"), ("toggle_fold", "Toggle fold"),
+                 ("fold_all", "Fold everything"), ("unfold_all", "Unfold everything"))),
+)
+
+
+def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any]]:
+    """The editor settings by section: ``{key: (title, icon, build)}``, in the order of the index."""
     s = a.settings
 
     def switch(key: str) -> Any:
         return ui.switch(bool(getattr(s, key)), a.setter(key), theme=t)
 
-    shapes = {tr(shape.capitalize()): shape for shape in _settings.CURSOR_SHAPES}
-    theme_names = [tr("Same as the designer"), *themes.names()]
-    appearance = ui.settings_group(tr("Appearance"), [
-        ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
-                                    lambda name: a.set("theme", "" if name == theme_names[0] else name), width=200,
-                                    theme=t), theme=t),
-        ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1, width=110,
-                                              theme=t),
-                 description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"),
-                 theme=t),
-        ui.field(tr("Line numbers"), switch("line_numbers"), theme=t),
-        ui.field(tr("Highlight current line"), switch("highlight_line"), theme=t),
-        ui.field(tr("Show whitespace"), switch("show_whitespace"), description=tr("Spaces as · and tabs as →"),
-                 theme=t),
-        ui.field(tr("Wrap long lines"), switch("wrap"), theme=t),
-        ui.field(tr("Minimap"), switch("minimap"), description=tr("Click or drag it to scroll"), theme=t),
-    ], theme=t)
-    cursor = ui.settings_group(tr("Cursor"), [
-        ui.field(tr("Shape"), ui.segmented(list(shapes), tr(s.cursor_shape.capitalize()),
-                                           lambda name: a.set("cursor_shape", shapes[name]), theme=t), theme=t),
-        ui.field(tr("Blink"), switch("cursor_blink"), theme=t),
-    ], theme=t)
-    editing = ui.settings_group(tr("Editing"), [
-        ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1, max=8,
-                                             step=1, width=110, theme=t),
-                 description=tr("Tab inserts spaces; Enter keeps the indentation"), theme=t),
-        ui.field(tr("Autocomplete while typing"), switch("autocomplete"), description=tr("Ctrl+Space opens it anytime"),
-                 theme=t),
-        ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
-                 description=tr("Also wraps the selection and steps over the closing one"), theme=t),
-        ui.field(tr("Code folding"), switch("folding"), description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"),
-                 theme=t),
-        ui.field(tr("Match brackets"), switch("match_brackets"),
-                 description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
-                 theme=t),
-        ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
-                 description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
-        ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
-    ], theme=t)
-    lens = ui.settings_group(tr("Code lens and diagnostics"), [
-        ui.field(tr("Code lens"), switch("code_lens"), description=tr("References, implementations and wired events"),
-                 theme=t),
-        ui.field(tr("Inline diagnostics"), switch("inline_diagnostics"),
-                 description=tr("Problems at the end of the line"),
-                 theme=t),
-    ], theme=t)
-    rows = []
-    for name, status, detail in a.intel.statuses():
-        color = STATUS_COLORS.get(status, "text_muted")
-        what = {"ty": tr("Types, completion and references"), "ruff": tr("Linting")}[name]
-        rows.append(_core.row([
-            _core.container(width=10, height=10, radius=5, bg=t.color(color)),
-            _core.column([ui.label(f"{name}  ·  {status}", theme=t),
-                          ui.label(detail or what, size="sm", color="text_muted", theme=t)], spacing=2, width="fill"),
-            switch(name),
-        ], spacing=10, align="center"))
-    env = a.intel.env
-    if env is not None:
-        rows.append(_core.column([
-            ui.label(f"{tr('Project')}  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
-            ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
-        ], spacing=2))
-    servers = ui.settings_group(tr("Language servers"), rows, theme=t)
-    body = _core.scrollable(_core.column([servers, appearance, cursor, editing, lens], spacing=14, padding=(0, 6, 0, 0)),
-                            height=580, scrollbar_width=4)
-    return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=560, footer=[
-        ui.button(tr("Restart servers"), a.restart_servers, icon="refresh-cw", variant="ghost", theme=t),
+    def appearance() -> List[Any]:
+        theme_names = [tr("Same as the designer"), *themes.names()]
+        heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
+        return [ui.settings_group(tr("Appearance"), [
+            ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
+                                            lambda name: a.set("theme", "" if name == theme_names[0] else name),
+                                            width=200, theme=t), theme=t),
+            ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1,
+                                                      width=110, theme=t),
+                     description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"), theme=t),
+            ui.field(tr("Line height"), ui.segmented(list(heights), tr(s.line_height.capitalize()),
+                                                     lambda name: a.set("line_height", heights[name]), theme=t),
+                     theme=t),
+            ui.field(tr("Line numbers"), switch("line_numbers"), theme=t),
+            ui.field(tr("Highlight current line"), switch("highlight_line"), theme=t),
+            ui.field(tr("Show whitespace"), switch("show_whitespace"), description=tr("Spaces as · and tabs as →"),
+                     theme=t),
+        ], theme=t)]
+
+    def cursor() -> List[Any]:
+        shapes = {tr(shape.capitalize()): shape for shape in _settings.CURSOR_SHAPES}
+        return [ui.settings_group(tr("Cursor"), [
+            ui.field(tr("Shape"), ui.segmented(list(shapes), tr(s.cursor_shape.capitalize()),
+                                               lambda name: a.set("cursor_shape", shapes[name]), theme=t), theme=t),
+            ui.field(tr("Blink"), switch("cursor_blink"), theme=t),
+            ui.field(tr("Width"), ui.number_field(s.cursor_width, a.setter("cursor_width"), min=1, max=4, step=1,
+                                                  width=110, theme=t),
+                     description=tr("Of the bar cursor, in pixels"), theme=t),
+        ], theme=t)]
+
+    def editing() -> List[Any]:
+        return [ui.settings_group(tr("Editing"), [
+            ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1,
+                                                     max=8, step=1, width=110, theme=t),
+                     description=tr("Tab inserts spaces; Enter keeps the indentation"), theme=t),
+            ui.field(tr("Autocomplete while typing"), switch("autocomplete"),
+                     description=tr("Ctrl+Space opens it anytime"), theme=t),
+            ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
+                     description=tr("Also wraps the selection and steps over the closing one"), theme=t),
+            ui.field(tr("Code folding"), switch("folding"),
+                     description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"), theme=t),
+            ui.field(tr("Match brackets"), switch("match_brackets"),
+                     description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
+                     theme=t),
+            ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
+                     description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
+            ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
+        ], theme=t)]
+
+    def scrolling() -> List[Any]:
+        return [ui.settings_group(tr("Scrolling and wrapping"), [
+            ui.field(tr("Wrap long lines"), switch("wrap"),
+                     description=tr("Off: long lines scroll sideways (Shift+wheel). Alt+Z toggles it"), theme=t),
+            ui.field(tr("Scrollbars"), switch("scrollbar"), theme=t),
+            ui.field(tr("Minimap"), switch("minimap"), description=tr("Click or drag it to scroll"), theme=t),
+        ], theme=t)]
+
+    def diagnostics() -> List[Any]:
+        return [ui.settings_group(tr("Code lens and diagnostics"), [
+            ui.field(tr("Code lens"), switch("code_lens"),
+                     description=tr("References, implementations and wired events"), theme=t),
+            ui.field(tr("Inline diagnostics"), switch("inline_diagnostics"),
+                     description=tr("Problems at the end of the line"), theme=t),
+        ], theme=t)]
+
+    def servers() -> List[Any]:
+        rows = []
+        for name, status, detail in a.intel.statuses():
+            color = STATUS_COLORS.get(status, "text_muted")
+            what = {"ty": tr("Types, completion and references"), "ruff": tr("Linting")}[name]
+            rows.append(_core.row([
+                _core.container(width=10, height=10, radius=5, bg=t.color(color)),
+                _core.column([ui.label(f"{name}  ·  {status}", theme=t),
+                              ui.label(detail or what, size="sm", color="text_muted", theme=t)], spacing=2,
+                             width="fill"),
+                switch(name),
+            ], spacing=10, align="center"))
+        env = a.intel.env
+        if env is not None:
+            rows.append(_core.column([
+                ui.label(f"{tr('Project')}  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
+                ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
+            ], spacing=2))
+        return [ui.settings_group(tr("Language servers"), rows, theme=t),
+                ui.button(tr("Restart servers"), a.restart_servers, icon="refresh-cw", variant="ghost", theme=t)]
+
+    return {
+        "appearance": (tr("Appearance"), "palette", appearance),
+        "cursor": (tr("Cursor"), "text-cursor", cursor),
+        "editing": (tr("Editing"), "pencil", editing),
+        "scrolling": (tr("Scrolling and wrapping"), "wrap-text", scrolling),
+        "diagnostics": (tr("Code lens and diagnostics"), "circle-alert", diagnostics),
+        "servers": (tr("Language servers"), "server", servers),
+    }
+
+
+def _key_row(a: CodeAssist, action: str, label: str, t: Theme) -> Any:
+    """One action of the key bindings: its name, its keys and the buttons to change or reset them."""
+    changed = action in a.settings.keymap
+    reset = ui.icon_button("rotate-ccw", lambda: a.reset_keys(action), size="sm", tooltip=tr("Default keys"),
+                           theme=t) if changed else None
+    if a.key_editing == action:
+        error = a.key_error(action)
+        keys = _core.row([
+            ui.input(a.key_drafts.get(action, a.key_bindings(action)), lambda text: a.set_keys(action, text),
+                     placeholder=tr("No key"), size="sm", mono=True, width=220, on_submit=lambda: a.edit_keys(None),
+                     id=KEYS_ID, theme=t),
+            reset,
+            ui.icon_button("check", lambda: a.edit_keys(None), size="sm", tooltip=tr("Done"), theme=t),
+        ], spacing=6, align="center")
+        name = ui.label(error, size="sm", color="error", theme=t) if error else None
+    else:
+        current = a.key_bindings(action)
+        caps = [ui.kbd(k, theme=t) for k in current.split(",") if k.strip()]
+        keys = _core.row([
+            *(caps or [ui.label(tr("No key"), size="sm", color="text_muted", theme=t)]),
+            reset,
+            ui.icon_button("pencil", lambda: a.edit_keys(action), size="sm", tooltip=tr("Change"), theme=t),
+        ], spacing=6, align="center")
+        name = None
+    title = _core.row([ui.label(tr(label), weight="medium" if changed else None, theme=t),
+                       ui.label(action, size="sm", color="text_muted", mono=True, theme=t)], spacing=8,
+                      align="center")
+    return _core.row([_core.column([title, name], spacing=2, width="fill"), keys], spacing=8, align="center",
+                     height=34)
+
+
+def _keys_page(a: CodeAssist, page: str, t: Theme) -> List[Any]:
+    """A page of the key bindings: a hint and Reset all above the group's actions."""
+    _, title, actions = next(g for g in KEY_GROUPS if g[0] == page)
+    hint = tr("Zed's syntax: ctrl-shift-k, alt-up, f2 or ctrl-k ctrl-c; commas for several, empty for none")
+    return [
+        _core.row([
+            ui.label(hint, size="sm", color="text_muted", theme=t, width="fill"),
+            ui.button(tr("Reset all"), lambda: a.reset_keys(), icon="rotate-ccw", variant="ghost", size="sm",
+                      disabled=not a.settings.keymap, theme=t),
+        ], spacing=8, align="center"),
+        _core.scrollable(_core.column([
+            ui.settings_group(tr(title), [_key_row(a, action, label, t) for action, label in actions], theme=t),
+        ], padding=(0, 10, 0, 0)), height="fill", scrollbar_width=4, width="fill"),
+    ]
+
+
+def settings_dialog(d: "Designer", t: Theme) -> Any:
+    """Builds the editor settings dialog, like Zed's: an index of sections on the left and the chosen one
+    (appearance, cursor, editing, scrolling, diagnostics, language servers or key bindings) on the right."""
+    a = d.assist
+    sections = _settings_sections(a, t)
+    pages = [g[0] for g in KEY_GROUPS]
+    current = a.settings_section
+    if current not in sections and current.removeprefix("keys:") not in pages:
+        current = SETTINGS_SECTIONS[0]
+
+    def item(key: str, title: str, icon: Optional[str] = None, indent: float = 0) -> Any:
+        return ui.list_item(title, lambda: a.show_settings_section(key), icon=icon, selected=key == current,
+                            inset=True, height=28, indent=indent, theme=t)
+
+    index = _core.column([
+        *(item(key, title, icon) for key, (title, icon, _) in sections.items()),
+        _core.container(ui.label(tr("Key bindings"), size="sm", color="text_muted", theme=t), padding=(10, 8, 2, 8)),
+        *(item(f"keys:{page}", tr(title), indent=4) for page, title, _ in KEY_GROUPS),
+    ], spacing=2, width=210)
+    if current.startswith("keys:"):
+        content = _core.column(_keys_page(a, current.removeprefix("keys:"), t), spacing=12, width="fill", height=520)
+    else:
+        _, _, build = sections[current]
+        content = _core.scrollable(_core.column(build(), spacing=14, padding=(0, 10, 0, 0)), height=520,
+                                   scrollbar_width=4, width="fill")
+    body = _core.row([index, _core.rule(vertical=True, thickness=1, color=t.border_variant), content], spacing=14,
+                     height=520)
+    return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=820, footer=[
         _core.space(width="fill"),
         ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t),
     ], theme=t)

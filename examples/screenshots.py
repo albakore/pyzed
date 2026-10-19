@@ -424,6 +424,14 @@ def code_editor_shots(scale):
     app.assist.settings = designer.EditorSettings(show_whitespace=True)
     app.open_editor_settings()
     app.screenshot(OUT / "designer-editor-settings.png", size=(1440, 900), scale=scale)
+
+    # The key bindings: Delete line moved to Ctrl+Shift+D, and Join lines being changed.
+    app.assist.settings = designer.EditorSettings(show_whitespace=True, keymap={"delete_line": "ctrl-shift-d"})
+    app.assist.show_settings_section("keys:lines")
+    app.assist.edit_keys("join_lines")
+    app.screenshot(OUT / "designer-editor-keys.png", size=(1440, 900), scale=scale)
+    app.assist.edit_keys(None)
+    app.assist.show_settings_section("appearance")
     app.assist.shutdown()
 
 

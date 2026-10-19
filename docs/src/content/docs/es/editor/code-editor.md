@@ -59,8 +59,10 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 - **Espacios en blanco**: opcionalmente dibuja los espacios como `·` y los tabuladores como `→`.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> o <kbd>Ctrl</kbd>+rueda cambian el tamaño de
   letra; <kbd>Ctrl</kbd>+<kbd>0</kbd> lo restablece. El tamaño se guarda.
-- La vista se **desplaza** para mantener el cursor visible, como Zed, y se desplaza de lado en las líneas largas
-  salvo con *Wrap* activo.
+- **Desplazamiento**: la rueda del ratón desplaza el código (<kbd>Mayús</kbd>+rueda, de lado) y las barras de
+  desplazamiento quedan a la derecha del minimapa. La vista también sigue al cursor, como Zed.
+- **Líneas largas**: por defecto se desplazan de lado; <kbd>Alt</kbd>+<kbd>Z</kbd> (o *Ajustar líneas largas* en los
+  ajustes) las ajusta al ancho del editor.
 
 ![El archivo entero con dos manejadores plegados y el minimapa](../../../../../screenshots/designer-code-folding.png)
 
@@ -222,28 +224,52 @@ sequenceDiagram
 
 Los abren el **engranaje** de la cabecera del panel de código, los puntos de los servidores en la barra de estado o
 **Ajustes → Editor de código → Ajustes del editor…**. Se guardan por usuario, en el mismo `designer.json` que los
-[ajustes del editor](/pyzed/es/editor/settings/). El diálogo está en inglés.
+[ajustes del editor](/pyzed/es/editor/settings/). Como en Zed, un índice a la izquierda lista las secciones y a la
+derecha se ve la que eliges.
 
-![Ajustes del editor con el estado de los servidores de lenguaje](../../../../../screenshots/designer-editor-settings.png)
+![Ajustes del editor con el índice de secciones](../../../../../screenshots/designer-editor-settings.png)
 
-| Grupo | Ajuste | Qué hace |
+| Sección | Ajuste | Qué hace |
 | --- | --- | --- |
-| Language servers | **ty**, **ruff** | Enciende o apaga cada servidor. Cada fila muestra su estado y versión. Debajo: la raíz del proyecto y el Python en uso. |
-| | **Restart servers** (pie) | Reinicia los dos; úsalo después de `uv sync` o de instalarlos. |
-| Appearance | **Theme** | *Same as the designer* (el del editor), o cualquier tema solo para el código. |
-| | **Font size** | De 8 a 32 (también <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> y <kbd>Ctrl</kbd>+rueda). |
-| | **Line numbers**, **Highlight current line** | El margen y la franja de la línea actual. |
-| | **Show whitespace** | Espacios como `·`, tabuladores como `→`. |
-| | **Wrap long lines** | Ajuste de línea en lugar de desplazamiento horizontal. |
-| | **Minimap** | El código en miniatura a la derecha. |
-| Cursor | **Shape** | Barra, bloque, subrayado o hueco (Bar, Block, Underline, Hollow), como Zed. |
-| | **Blink** | Si el cursor parpadea. |
-| Editing | **Tab size** | De 1 a 8 espacios por nivel. |
-| | **Autocomplete while typing** | Apagado: la lista solo se abre con <kbd>Ctrl</kbd>+<kbd>Espacio</kbd>. |
-| | **Auto-close brackets and quotes** | Parejas, envolver la selección y saltar el cierre. |
-| | **Code folding** | Los chevrons y las teclas de plegado. |
-| | **Format with ruff on Apply** | Ejecuta `ruff format` sobre el código al pulsar Apply. |
-| | **Match brackets** | Remarca el corchete pareja del que está junto al cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> salta a él). |
-| | **Highlight selection matches** | Resalta los demás sitios con el texto seleccionado. |
-| Code lens and diagnostics | **Code lens** | Referencias, implementaciones y eventos conectados al final de las definiciones. |
-| | **Inline diagnostics** | Problemas al final de la línea. |
+| Apariencia | **Tema** | *Igual que el diseñador*, o cualquier tema solo para el editor. |
+| | **Tamaño de letra** | De 8 a 32 (también <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> y <kbd>Ctrl</kbd>+rueda). |
+| | **Interlineado** | Compacto, Normal o Amplio. |
+| | **Números de línea**, **Resaltar la línea actual** | El margen y la franja de la línea actual. |
+| | **Mostrar espacios** | Espacios como `·`, tabulaciones como `→`. |
+| Cursor | **Forma** | Barra, bloque, subrayado o hueco, como Zed. |
+| | **Parpadeo** | Si el cursor parpadea. |
+| | **Ancho** | De 1 a 4 píxeles, para el cursor de barra. |
+| Edición | **Tamaño de tabulación** | De 1 a 8 espacios por nivel. |
+| | **Autocompletar al escribir** | Apagado: la lista solo se abre con <kbd>Ctrl</kbd>+<kbd>Espacio</kbd>. |
+| | **Cerrar paréntesis y comillas** | Pares, envolviendo la selección y saltando el de cierre. |
+| | **Plegado de código** | Los chevrones y las teclas de plegado. |
+| | **Remarcar corchetes** | Marca el paréntesis que hace pareja con el del cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> salta a él). |
+| | **Resaltar coincidencias de la selección** | Resalta los otros sitios con el texto seleccionado. |
+| | **Formatear con ruff al aplicar** | Ejecuta `ruff format` sobre el código al pulsar Aplicar. |
+| Desplazamiento y ajuste de línea | **Ajustar líneas largas** | Apagado por defecto: las líneas largas se desplazan de lado. <kbd>Alt</kbd>+<kbd>Z</kbd> lo alterna. |
+| | **Barras de desplazamiento** | Muestra u oculta las barras. |
+| | **Minimapa** | El código en miniatura a la derecha. |
+| Code lens y diagnósticos | **Code lens** | Referencias, implementaciones y eventos conectados al final de las definiciones. |
+| | **Diagnósticos en línea** | Los problemas al final de la línea. |
+| Servidores de lenguaje | **ty**, **ruff** | Enciende o apaga cada servidor. Cada fila muestra su estado y versión. Debajo: la raíz del proyecto y el Python en uso. |
+| | **Reiniciar servidores** | Reinicia los dos; úsalo después de `uv sync` o de instalarlos. |
+
+### Atajos de teclado
+
+En **Atajos de teclado**, el índice agrupa todas las acciones del editor y del panel de código: Panel de código,
+Edición, Varios cursores, Líneas, Movimiento y Plegado. Cada fila muestra la acción, su nombre en Zed
+(`delete_line`) y sus teclas. El lápiz las cambia: escribe las teclas con la sintaxis de Zed (`ctrl-shift-d`,
+`alt-up`, `f2` o un acorde como `ctrl-k ctrl-c`), varias separadas por comas, o deja el campo vacío para ninguna.
+Las teclas nuevas sustituyen a las de por defecto; la flecha junto a una acción cambiada recupera las suyas, y
+**Restablecer todo** lo hace con todas.
+
+![Cambiar las teclas del editor de código](../../../../../screenshots/designer-editor-keys.png)
+
+Los cambios se guardan en `"keymap"` dentro de `designer.json`, como acción → teclas:
+
+```json
+{"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
+```
+
+En tus propias apps, `ui.editor(keymap=...)` usa la forma de Zed (teclas → acción, `None` para quitar una tecla por
+defecto), y `pyzed.ui.editor.keymap_for` convierte en ella cambios por acción como los de arriba.

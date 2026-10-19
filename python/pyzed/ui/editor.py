@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .. import _core
 from ..theme import Theme, alpha
@@ -18,6 +18,99 @@ _EXT_TOKENS = {"py": "py", "rs": "rs", "js": "js", "ts": "ts", "tsx": "tsx", "js
 MINIMAP_WIDTH = 100.0
 #: Shapes accepted by ``editor(cursor_shape=...)``.
 CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
+
+#: The editor's default keys for each action (Zed's names and keys; Ctrl is Cmd on macOS).
+DEFAULT_KEYS: Dict[str, Tuple[str, ...]] = {
+    "undo": ("ctrl-z",),
+    "redo": ("ctrl-y", "ctrl-shift-z"),
+    "copy": ("ctrl-c",),
+    "cut": ("ctrl-x",),
+    "select_next": ("ctrl-d", "ctrl-shift-down"),
+    "select_previous": ("ctrl-shift-up",),
+    "select_all_matches": ("ctrl-shift-l", "ctrl-f2"),
+    "add_selection_above": ("alt-shift-up", "ctrl-alt-up"),
+    "add_selection_below": ("alt-shift-down", "ctrl-alt-down"),
+    "split_selection_into_lines": ("alt-shift-i",),
+    "undo_selection": ("ctrl-u",),
+    "cancel": ("escape",),
+    "select_line": ("ctrl-l",),
+    "move_line_up": ("alt-up",),
+    "move_line_down": ("alt-down",),
+    "duplicate_line_up": ("ctrl-alt-shift-up",),
+    "duplicate_line_down": ("ctrl-alt-shift-down",),
+    "delete_line": ("ctrl-shift-k",),
+    "join_lines": ("ctrl-shift-j",),
+    "newline_below": ("ctrl-enter",),
+    "newline_above": ("ctrl-shift-enter",),
+    "indent": ("ctrl-]",),
+    "outdent": ("ctrl-[", "shift-tab"),
+    "toggle_comments": ("ctrl-/", "ctrl-k ctrl-c"),
+    "move_to_enclosing_bracket": ("ctrl-m",),
+    "delete_to_previous_word_start": ("ctrl-backspace",),
+    "delete_to_next_word_end": ("ctrl-delete",),
+    "move_to_beginning_of_line": ("home",),
+    "select_to_beginning_of_line": ("shift-home",),
+    "line_up": ("ctrl-up",),
+    "line_down": ("ctrl-down",),
+    "fold": ("ctrl-shift-[", "ctrl-k ctrl-["),
+    "unfold_lines": ("ctrl-shift-]", "ctrl-k ctrl-]"),
+    "toggle_fold": ("ctrl-k ctrl-l",),
+    "fold_all": ("ctrl-k ctrl-0",),
+    "unfold_all": ("ctrl-k ctrl-j",),
+    "convert_to_upper_case": (),
+    "convert_to_lower_case": (),
+    "sort_lines_case_sensitive": (),
+}
+
+_MODIFIERS = {"ctrl": "ctrl", "control": "ctrl", "cmd": "ctrl", "super": "ctrl", "win": "ctrl", "secondary": "ctrl",
+              "alt": "alt", "option": "alt", "opt": "alt", "shift": "shift"}
+_KEY_ALIASES = {"esc": "escape", "return": "enter", "del": "delete", "pgup": "pageup", "pgdown": "pagedown"}
+_NAMED_KEYS = {"up", "down", "left", "right", "enter", "tab", "escape", "pageup", "pagedown", "home", "end",
+               "backspace", "delete", "space", "insert", *(f"f{n}" for n in range(1, 13))}
+
+
+def _keystroke(text: str) -> Optional[str]:
+    rest = text.strip().lower()
+    mods = set()
+    while True:
+        cut = min((i for i in (rest.find("-"), rest.find("+")) if i >= 0), default=-1)
+        if cut < 0 or cut == len(rest) - 1:
+            break
+        modifier = _MODIFIERS.get(rest[:cut])
+        if modifier is None:
+            return None
+        mods.add(modifier)
+        rest = rest[cut + 1:]
+    key = _KEY_ALIASES.get(rest, rest)
+    if len(key) != 1 and key not in _NAMED_KEYS:
+        return None
+    return "-".join([m for m in ("ctrl", "alt", "shift") if m in mods] + [key])
+
+
+def parse_keys(text: str) -> Optional[str]:
+    """Normalizes a Zed-style binding (``"Ctrl+Shift+K"`` -> ``"ctrl-shift-k"``, ``"ctrl-k ctrl-c"``), or
+    ``None`` when it is not one the editor understands (chords must start with Ctrl+K)."""
+    strokes = [_keystroke(part) for part in text.split()]
+    if not strokes or len(strokes) > 2 or None in strokes:
+        return None
+    if len(strokes) == 2 and strokes[0] != "ctrl-k":
+        return None
+    return " ".join(strokes)  # type: ignore[arg-type]
+
+
+def keymap_for(overrides: Mapping[str, str]) -> Dict[str, Optional[str]]:
+    """Turns per-action overrides (``{"delete_line": "ctrl-shift-d"}``, ``""`` for no key, several keys
+    separated by commas) into an ``editor(keymap=...)``: each overridden action loses its default keys."""
+    keymap: Dict[str, Optional[str]] = {}
+    for action, keys in overrides.items():
+        for key in DEFAULT_KEYS.get(action, ()):
+            keymap.setdefault(key, None)
+    for action, keys in overrides.items():
+        for key in (k.strip() for k in keys.split(",")):
+            normalized = parse_keys(key) if key else None
+            if normalized:
+                keymap[normalized] = action
+    return keymap
 
 
 def language_token(path: str) -> str:
@@ -60,6 +153,8 @@ def editor(
     match_brackets: bool = True,
     selection_highlight: bool = True,
     font: Optional[str] = None,
+    keymap: Optional[Mapping[str, Optional[str]]] = None,
+    scrollbar: bool = True,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -118,6 +213,10 @@ def editor(
       that matches the one next to the cursor and ``selection_highlight`` the other occurrences of
       the selected text.
 
+    ``keymap`` changes the keys, like Zed's keymap: it maps a binding (``"ctrl-shift-d"``, ``"alt-up"``,
+    ``"ctrl-k ctrl-u"``) to an action name (see ``DEFAULT_KEYS``), or to ``None`` to take a default key
+    away; ``keymap_for`` builds one from per-action overrides. ``scrollbar=False`` hides the scrollbars.
+
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
     """
@@ -166,6 +265,8 @@ def editor(
         highlight_color=t.search_match,
         match_brackets=match_brackets,
         selection_highlight=selection_highlight,
+        keymap=dict(keymap) if keymap else None,
+        scrollbar=scrollbar,
     )
 
 
