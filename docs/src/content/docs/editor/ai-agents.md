@@ -15,8 +15,8 @@ reject the whole run at once.
 ## Getting started
 
 1. Open the panel: the **Agent** tab in the right dock, **View → Agent panel**, or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd>.
-2. The first time, the panel asks you to **connect a model**. **Set up AI agents…** opens the
-   [settings](#settings): paste an API key or click **Sign in with the browser**.
+2. The first time, the panel asks you to **connect a model** and lists the main providers. Click one to
+   [sign in with the browser](#signing-in), or **All providers…** for the rest.
 3. Type what you want and press <kbd>Enter</kbd>, or click one of the suggestions.
 
 Claude needs the optional dependencies (`anthropic` and `keyring`); the compiled Pyzed Design already has them:
@@ -27,19 +27,72 @@ pip install "pyzed-ui[agents]"     # or: uv add "pyzed-ui[agents]"
 
 ![An empty thread with suggestions](../../../../screenshots/designer-agent-empty.png)
 
+### Signing in
+
+Signing in happens inside Pyzed Design; no other program is needed.
+
+- **Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: these providers don't let other apps sign in
+  with OAuth, so Pyzed opens the provider's API keys page in your browser. Create a key there and click its
+  **Copy** button. Pyzed notices the copied key, checks it with the provider, saves it in the system keychain and
+  loads the provider's models. While it waits, a **Signing in** card offers **Paste key** (read the clipboard
+  now), **Open the page again** and **Cancel**. The clipboard is read only while that card is showing (at most
+  five minutes), and only a text that looks like that provider's key is used.
+- **OpenRouter**: real OAuth with PKCE. You approve Pyzed on OpenRouter's page and the key it issues comes back to
+  Pyzed directly; nothing to copy.
+- **Ollama, LM Studio**: nothing to sign in to. Clicking them asks the local server for its models.
+
+You can always paste a key by hand in the [settings](#settings) or set the provider's environment variable.
+
+![Signing in to Anthropic: the key page is open and Pyzed waits for the copied key](../../../../screenshots/designer-agent-connect.png)
+
 ## The panel
 
 | Part | What it does |
 | --- | --- |
-| **Header** | The thread's title, **New thread** (<kbd>+</kbd>), **History** and the agent's **settings**. |
+| **Header** | The thread's title, **New thread** (<kbd>+</kbd>), **History**, **Expand the panel** (it fills the window; click again to put it back in its dock) and the agent's **settings**. |
 | **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per tool it used: a spinner while it runs, a check when it worked, a red cross when it failed. Click a line to see the tool's input and result. |
 | **Agent changes** | After a run that changed something: **Reject** puts every form and code file it touched back as they were before the run; **Keep** hides the bar. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
-| **Message box** | <kbd>Enter</kbd> sends. While the agent works the send button becomes **Stop**. |
-| **Model** | The model of this thread (and of new ones). Only providers that are set up are listed. |
-| **Profile** | **Write**: may change the open form, its code and files in the project. **Ask**: reads only, answers and suggests code. **Minimal**: no tools, a plain chat. |
+| **Message box** | <kbd>Enter</kbd> sends. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-). While the agent works the send button becomes **Stop**. |
+| **+** | Starts an @ mention, like typing <kbd>@</kbd>. |
+| **Permission mode** | What the agent may do without asking (see below). |
+| **Model** | Every provider with its models. A provider that is not set up shows **Connect…**, which signs in right there. |
+| **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
+| **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
+
+| Permission mode | What the agent may do |
+| --- | --- |
+| **Ask before writing** | Edits the open form and its code freely (every change can be undone); asks before creating documents or writing files. The default. |
+| **Bypass permissions** | Never asks. |
+| **Read only** | Reads only: answers questions and suggests code without changing anything. |
+| **Chat only** | No tools: a plain conversation with the model. |
+
+![Every provider in the model picker](../../../../screenshots/designer-agent-models.png)
 
 Each message carries a short note of where you are (the open document, the selected controls, the handler in the
 code editor), so "align these" or "validate this field" refer to what you are looking at.
+
+### Adding context with @
+
+Type <kbd>@</kbd> (or click **+**) and pick what to attach: the **selection**, the open **form**, its **code**,
+one of its **controls**, or a **file** of the project. Keep typing to filter the list; <kbd>Enter</kbd> picks the
+highlighted row. What you pick shows as a chip above the message and its content goes with the message, so the
+agent doesn't have to look for it. Files that may hold secrets (`.env`, keys…) are never offered.
+
+![Adding context with @](../../../../screenshots/designer-agent-mention.png)
+
+### Commands with /
+
+Type <kbd>/</kbd> at the start of the message:
+
+| Command | Does |
+| --- | --- |
+| `/new` | Starts a new thread. |
+| `/history` | Shows the past threads. |
+| `/settings` | Opens the AI agents settings. |
+| `/form`, `/component` | Starts a request to generate a form or a component. |
+| `/explain` | Explains the open form and its handlers. |
+| `/fix` | Checks the form's code with `validate_code` and fixes what it finds. |
+| `/tidy` | Aligns the controls and evens out the margins. |
 
 ### What the agent can do
 
@@ -54,8 +107,8 @@ code editor), so "align these" or "validate this field" refer to what you are lo
 | `validate_code`, `validate_form` | Check code and forms before handing them back. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Work with files of the project, never outside its folder. |
 
-Tools that **create or write files** ask first: a card shows **Allow**, **Always allow** (for the rest of the
-session) and **Deny**. Turn **Ask before writing files** off in the settings to skip it. Changes to the open
+Tools that **create or write files** ask first in the **Ask before writing** mode: a card shows **Allow**,
+**Always allow** (for the rest of the session) and **Deny**. **Bypass permissions** skips it. Changes to the open
 document never ask, since they can be undone.
 
 ## Generating forms and components
@@ -90,16 +143,17 @@ command palette.
 
 | Provider | How to connect | Notes |
 | --- | --- | --- |
-| **Anthropic** | API key, `ANTHROPIC_API_KEY`, or **Sign in with the browser** | Sign-in runs the official Anthropic CLI (`ant auth login`); the CLI keeps the short-lived token in its own folder and Pyzed never sees it. Claude models stream their reasoning summaries and use adaptive thinking. |
-| **OpenAI** | API key or `OPENAI_API_KEY` | |
-| **Google Gemini** | AI Studio key or `GEMINI_API_KEY` | Through Gemini's OpenAI-compatible endpoint. |
-| **OpenRouter** | **Sign in with the browser**, API key or `OPENROUTER_API_KEY` | Sign-in uses OAuth with PKCE: OpenRouter's page opens, and the key it issues for Pyzed goes to the keychain. |
+| **Anthropic** | **Sign in with the browser**, API key or `ANTHROPIC_API_KEY` | Claude models stream their reasoning summaries, use adaptive thinking and take effort and fast mode. An existing Anthropic CLI profile (`ant auth login`) is also used, but the CLI is not needed. |
+| **OpenAI** | **Sign in with the browser**, API key or `OPENAI_API_KEY` | |
+| **Google Gemini** | **Sign in with the browser**, AI Studio key or `GEMINI_API_KEY` | Through Gemini's OpenAI-compatible endpoint. |
+| **OpenRouter** | **Sign in with the browser** (OAuth), API key or `OPENROUTER_API_KEY` | OAuth with PKCE: the key OpenRouter issues for Pyzed goes to the keychain. |
+| **xAI**, **Mistral**, **DeepSeek**, **Groq** | **Sign in with the browser**, API key or `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` | Their models are listed after signing in. |
 | **Ollama**, **LM Studio** | Nothing: they run on your computer | Change the **Server URL** if they run elsewhere. |
-| **OpenAI-compatible** | Server URL, and a key if the server needs one | vLLM, llama.cpp, Groq, Mistral, DeepSeek, a company gateway… |
+| **OpenAI-compatible** | Server URL, and a key if the server needs one | vLLM, llama.cpp, a company gateway… |
 
-Click a provider to open it: paste a key and **Save**, **Sign in with the browser**, **Get a key** (opens the
-provider's key page), **Remove key** / **Sign out**, and **Refresh models**, which asks the provider for its list
-of models so they show up in the model picker.
+Click a provider to open it: **Sign in with the browser** (see [Signing in](#signing-in)), paste a key and
+**Save**, **Get a key** (opens the provider's key page), **Remove key**, and **Refresh models**, which asks the
+provider for its list of models so they show up in the model picker.
 
 ### Where keys are stored
 
@@ -118,7 +172,8 @@ requests to the provider you picked.
 | --- | --- |
 | **Default model** | The model new threads start with. |
 | **Effort** | How much the model thinks before answering (`low` … `max`). Claude only; `high` by default. |
-| **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default. |
+| **Fast mode** | Faster answers at a higher price (Claude Opus 5.5 and Opus 5). Also in the message box. |
+| **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |
 | **Rules** | Instructions added to every thread, like Zed's rules: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
 

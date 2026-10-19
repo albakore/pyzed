@@ -369,7 +369,7 @@ def test_claude_through_the_sdk(monkeypatch):
         deltas = []
         tools = [llm.ToolSpec("get_document", "Reads.", {"type": "object", "properties": {}, "required": []})]
         turn = agents.stream_turn("anthropic:claude-opus-5-5", "sys", [{"role": "user", "content": [{"type": "text", "text": "hi"}]}],
-                                  tools, settings=providers.AgentSettings(effort="xhigh"),
+                                  tools, settings=providers.AgentSettings(effort="xhigh", fast=True),
                                   on_event=lambda k, t: deltas.append((k, t)))
     finally:
         server.shutdown()
@@ -379,6 +379,7 @@ def test_claude_through_the_sdk(monkeypatch):
     assert body["thinking"] == {"type": "adaptive", "display": "summarized"}
     assert body["output_config"] == {"effort": "xhigh"} and body["tools"][0]["eager_input_streaming"] is True
     assert body["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert body["speed"] == "fast" and "fast-mode-2026-02-01" in headers.get("anthropic-beta", "")
     assert deltas == [("text", "Hola")]
     assert turn.stop_reason == "tool_use" and turn.tool_uses[0]["name"] == "get_document"
     assert turn.usage["output"] == 4
@@ -550,3 +551,119 @@ def test_agent_texts_are_translated():
             assert action.text in keys
     for text in (*agents.PROFILES.values(), *(p.description for p in agents.PROVIDERS.values())):
         assert text in keys
+
+
+# -- signing in without other programs, every provider, Zed-like composer ---------------------------------
+
+def test_copied_keys_are_recognised_per_provider():
+    assert providers.looks_like_key("anthropic", "sk-ant-api03-" + "a" * 40)
+    assert not providers.looks_like_key("openai", "sk-ant-api03-" + "a" * 40)
+    assert providers.looks_like_key("openai", "sk-proj-" + "b" * 40)
+    assert providers.looks_like_key("google", "AIza" + "c" * 35)
+    assert providers.looks_like_key("openrouter", "sk-or-v1-" + "d" * 40)
+    assert not providers.looks_like_key("anthropic", "just some copied text, not a key at all")
+    assert not providers.looks_like_key("anthropic", "sk-ant-short")
+    assert {"anthropic", "openai", "google", "openrouter", "xai", "mistral", "deepseek", "groq", "ollama"} \
+        <= set(providers.PROVIDERS)
+    assert all(p.login in ("browser", "oauth") for p in providers.PROVIDERS.values() if p.needs_key)
+    with pytest.raises(login.LoginError):
+        login.login("anthropic")  # Anthropic signs in by copying a key, never through a CLI
+    opened = []
+    assert login.key_page("anthropic", open_url=opened.append) == opened[0] and "anthropic" in opened[0]
+
+
+def test_permission_modes_map_to_the_settings():
+    s = providers.AgentSettings()
+    assert s.mode == "ask"
+    for mode in providers.MODES:
+        s.mode = mode
+        assert s.mode == mode
+        assert providers.AgentSettings.from_dict(s.to_dict()).mode == mode
+
+
+def _until(check, d, limit=2000):
+    for _ in range(limit):
+        d.agent.poll()
+        if check():
+            return
+        threading.Event().wait(0.005)
+    raise AssertionError("timed out")
+
+
+def test_signing_in_by_copying_a_key(tmp_path, monkeypatch, keychain):
+    from pyzed.designer import agent_panel
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    opened = []
+    monkeypatch.setattr(login, "key_page", lambda pid, **kw: opened.append(pid))
+    checked = []
+
+    def fake_models(pid, settings=None, key=None):
+        checked.append(key)
+        if key.endswith("bad"):
+            raise agents.AgentError("401")
+        return ["claude-opus-5-5", "claude-sonnet-5-5"]
+
+    monkeypatch.setattr(agent_panel._agents, "list_models", fake_models)
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    assert not c.ready
+    d.view()  # the empty panel offers every main provider
+    c.connect("anthropic")
+    assert opened == ["anthropic"] and c.capture is not None and c.active and d.dialog == "agent_settings"
+    d.view()
+    assert c.poll() is not None  # reads the clipboard about once a second
+    c.on_clipboard("hello")  # not a key: ignored
+    assert not checked
+    c.on_clipboard("sk-ant-api03-" + "x" * 40 + "bad")
+    _until(lambda: c.busy_provider is None, d)
+    assert c.capture is not None and not providers.is_ready("anthropic")  # refused: still waiting
+    key = "sk-ant-api03-" + "y" * 40
+    c.on_clipboard(key)
+    _until(lambda: c.capture is None, d)
+    assert providers.api_key("anthropic") == key and c.ready and len(checked) == 2
+    assert key in keychain.data.values() and key not in (tmp_path / "agents.json").read_text()
+    assert c.settings.models_of("anthropic")[:2] == ["claude-opus-5-5", "claude-sonnet-5-5"]
+
+
+def test_composer_mentions_commands_menus_and_expand(tmp_path):
+    from pyzed.designer.agent_panel import AgentController, model_label
+    from pyzed.designer.app import Designer
+
+    stream = scripted([{"type": "text", "text": "Looked at it."}])
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    assert model_label("anthropic:claude-opus-5-5") == "Opus 5.5" and model_label("ollama:qwen3:8b") == "qwen3:8b"
+    c.set_input("/ex")
+    assert c.trigger() == ("slash", "ex") and [i[1] for i in c.popup_items()] == ["/explain"]
+    c.set_input("Look at @co")
+    assert c.trigger() == ("mention", "co")
+    labels = [i[1] for i in c.popup_items()]
+    assert "code" in labels
+    d.view()
+    c.send()  # Enter with the popup open picks its first row
+    assert c.input.endswith("@code ") and c.mentions[0].kind == "code" and c.trigger() is None
+    c.set_input(c.input + "and explain it")
+    for name in ("mode", "model", "effort"):
+        c.toggle_menu(name)
+        d.view()
+    c.set_mode("read")
+    assert c.settings.profile == "ask" and c.menu is None
+    c.toggle_fast()
+    assert c.settings.fast
+    c.toggle_expand()
+    assert c.expanded
+    d.view()
+    c.toggle_expand()
+    assert not c.expanded
+    c.send()
+    _drain(d)
+    sent = stream.calls[0]["messages"][0]["content"]
+    assert any(b["text"].startswith("<context>@code (code):") for b in sent)
+    assert not c.mentions
+    c.set_input("/new")
+    c.send()
+    assert not c.thread.messages

@@ -142,6 +142,10 @@ def _stream_anthropic(provider_id: str, model: str, system: str, messages: Seque
         # When the model declines, the API answers with the right fallback model in the same call.
         betas.append("server-side-fallback-2026-07-01")
         params["fallbacks"] = "default"
+    if settings.fast and model in _providers.FAST_MODELS and not (own and own.base_url):
+        # Fast mode: faster output at a higher price, on the Claude API only.
+        betas.append("fast-mode-2026-02-01")
+        params["speed"] = "fast"
     stream_fn = client.beta.messages.stream if betas else client.messages.stream
     if betas:
         params["betas"] = betas
@@ -322,7 +326,7 @@ def stream_turn(model: str, system: str, messages: Sequence[Dict[str, Any]], too
     provider_id, name = _providers.split_model(model)
     provider = _providers.PROVIDERS[provider_id]
     key = key if key is not None else _providers.api_key(provider_id)
-    if provider.needs_key and not key and not (provider.login == "ant" and _providers.credential_source(provider_id)):
+    if provider.needs_key and not key and not (provider_id == "anthropic" and _providers.credential_source(provider_id)):
         raise AgentError(f"{provider.name} is not set up: add a key in Settings → AI agents")
     fn = _stream_anthropic if provider.protocol == "anthropic" else _stream_openai
     turn = fn(provider_id, name, system, messages, tools, settings, key, on_event or (lambda k, t: None),

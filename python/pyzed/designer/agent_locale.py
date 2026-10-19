@@ -105,6 +105,56 @@ ES = {
     "Models served by LM Studio on this computer": "Modelos servidos por LM Studio en este equipo",
     "Any server that speaks the OpenAI Chat Completions API":
         "Cualquier servidor compatible con la API Chat Completions de OpenAI",
+    # Sign-in without other programs, all providers, and the composer (like Zed's)
+    "Commands": "Comandos", "Add context": "Añadir contexto", "Checking the key…": "Comprobando la clave…",
+    "Create a key on the page that opened and copy it: Pyzed picks it up, checks it and saves it in the system "
+    "keychain.": "Crea una clave en la página que se abrió y cópiala: Pyzed la detecta, la comprueba y la guarda "
+                 "en el llavero del sistema.",
+    "Signing in to {provider}": "Iniciando sesión en {provider}",
+    "Message the agent (@ context, / commands)": "Escribe al agente (@ contexto, / comandos)",
+    "No key was copied; sign in again when you are ready":
+        "No se copió ninguna clave; vuelve a iniciar sesión cuando quieras",
+    "The open form": "El formulario abierto", "Its handlers module": "Su módulo de manejadores",
+    "{provider} refused that key: {error}": "{provider} rechazó esa clave: {error}",
+    "Fast": "Rápido", "Fast mode": "Modo rápido", "{count} selected controls": "{count} controles seleccionados",
+    "The clipboard has no {provider} key": "El portapapeles no tiene una clave de {provider}",
+    "Connect {provider}…": "Conectar {provider}…", "Connect {provider}": "Conectar {provider}",
+    "No matches": "Sin resultados", "Enter to pick": "Intro para elegir", "Add context (@)": "Añadir contexto (@)",
+    "Model": "Modelo", "Fast mode: faster answers at a higher price (Claude Opus)":
+        "Modo rápido: respuestas más rápidas a mayor precio (Claude Opus)",
+    "Paste key": "Pegar la clave", "Open the page again": "Abrir la página otra vez",
+    "All providers…": "Todos los proveedores…",
+    "Sign in with the browser or paste a key. Keys are kept in the system keychain.":
+        "Inicia sesión con el navegador o pega una clave. Las claves se guardan en el llavero del sistema.",
+    "Back to the dock": "Volver al dock", "Expand the panel": "Expandir el panel",
+    "Signed in with the Anthropic CLI profile": "Sesión con el perfil de la CLI de Anthropic", "File": "Archivo",
+    "Claude models; sign in with the browser or paste an API key":
+        "Modelos Claude; inicia sesión con el navegador o pega una clave de API",
+    "GPT models; sign in with the browser or paste an API key":
+        "Modelos GPT; inicia sesión con el navegador o pega una clave de API",
+    "Grok models with an xAI API key": "Modelos Grok con una clave de API de xAI",
+    "Mistral and Codestral models with an API key": "Modelos Mistral y Codestral con una clave de API",
+    "DeepSeek models with an API key": "Modelos DeepSeek con una clave de API",
+    "Open models on Groq's fast inference": "Modelos abiertos en la inferencia rápida de Groq",
+    "Start a new thread": "Empezar una conversación nueva", "Show the past threads": "Ver las conversaciones pasadas",
+    "Generate a new form": "Generar un formulario nuevo", "Generate a reusable component": "Generar un componente reutilizable",
+    "Explain this form and its code": "Explicar este formulario y su código",
+    "Explain what this form does and how its handlers work.":
+        "Explica qué hace este formulario y cómo funcionan sus manejadores.",
+    "Check this form's code and fix the issues": "Revisar el código de este formulario y corregir los problemas",
+    "Check the code of this form with validate_code and fix every issue it finds.":
+        "Revisa el código de este formulario con validate_code y corrige cada problema que encuentre.",
+    "Align the controls and even out the margins": "Alinear los controles e igualar los márgenes",
+    "Align the controls of this form and give them consistent margins.":
+        "Alinea los controles de este formulario y dales márgenes uniformes.",
+    "Ask before writing": "Preguntar antes de escribir",
+    "Edits the form freely; asks before creating or writing files.":
+        "Edita el formulario libremente; pregunta antes de crear o escribir archivos.",
+    "Bypass permissions": "Omitir permisos",
+    "Never asks: writes files and creates documents on its own.":
+        "Nunca pregunta: escribe archivos y crea documentos por su cuenta.",
+    "Read only": "Solo lectura", "Chat only": "Solo conversación", "Low": "Bajo", "Medium": "Medio", "High": "Alto",
+    "Extra high": "Muy alto", "Max": "Máximo",
 }
 
 i18n.add("es", {"designer": ES})

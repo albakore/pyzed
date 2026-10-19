@@ -44,10 +44,11 @@ A model is named `"<provider>:<model>"`:
 
 | Provider | Example | Credentials |
 | --- | --- | --- |
-| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY`, or an `ant auth login` profile |
+| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY` (an `ant auth login` profile also works) |
 | `openai` | `openai:<model>` | `set_key` or `OPENAI_API_KEY` |
 | `google` | `google:<gemini model>` | `set_key` or `GEMINI_API_KEY` |
 | `openrouter` | `openrouter:anthropic/claude-opus-5-5` | `set_key`, `OPENROUTER_API_KEY` or `agents.login.openrouter_login()` |
+| `xai`, `mistral`, `deepseek`, `groq` | `groq:<model>` | `set_key` or `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` |
 | `ollama`, `lmstudio` | `ollama:qwen3:8b` | none (local) |
 | `custom` | `custom:<model>` | the server URL in the settings, and a key if needed |
 
@@ -68,7 +69,9 @@ agent = agents.Agent(tools=[stock], settings=settings)
 | --- | --- |
 | `model` | Default model. |
 | `effort` | `low`, `medium`, `high`, `xhigh` or `max` (Claude). |
+| `fast` | Fast mode on the models in `providers.FAST_MODELS` (Claude Opus 5.5 and Opus 5, Claude API only): faster output at a higher price. |
 | `profile` | `"write"` (every tool), `"ask"` (only tools without `writes=True`) or `"minimal"` (no tools). |
+| `mode` | The Agent panel's permission mode, a shortcut over `profile` and `confirm_writes`: `"ask"`, `"bypass"`, `"read"` or `"chat"`. |
 | `confirm_writes` | Call `confirm(tool, args)` before a tool marked `writes=True` (on by default). Without a `confirm` callback those tools are refused; turn it off to let them run unasked. |
 | `rules` | Text added to the system prompt. |
 | `keep_history` | Whether Pyzed Design saves threads on this computer (on by default). |
@@ -161,10 +164,16 @@ agents.get_key("openai")              # the saved key, or the environment variab
 agents.delete_key("openai")
 agents.secrets.store().backend_name   # "Keyring" backend in use, or "memory (this session only)"
 
-agents.login.ant_login()              # Anthropic: runs `ant auth login` (browser); the SDK reads the profile
 key = agents.login.openrouter_login() # OpenRouter: browser + PKCE, returns a key
 agents.set_key("openrouter", key)
+
+agents.login.key_page("anthropic")    # the others: opens the provider's API keys page...
+agents.providers.looks_like_key("anthropic", copied_text)  # ...and tells whether a copied text is its key
 ```
+
+Only OpenRouter offers OAuth to other apps. For the rest, Pyzed Design opens the key page and watches the
+clipboard for a few minutes; when a text that `looks_like_key` is copied, it checks it with `list_models(key=...)`
+and saves it with `set_key`. Your app can do the same.
 
 Keys live in the system keychain (`keyring`, service `pyzed`); `PYZED_KEYRING=0` disables it, and
 `agents.secrets.use(SecretStore(my_backend))` plugs in your own vault (any object with keyring's
