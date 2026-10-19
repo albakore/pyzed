@@ -134,6 +134,24 @@ background, corner radius and font size. The designer's own theme is independent
 
 ![A form with the Gruvbox Light theme and a custom accent](../../../../screenshots/designer-light.png)
 
+### Styles
+
+Every control has a **Style** section in Properties, like CSS for that one control (see [Styles](../styles/)):
+background, text color, font, weight, italic, font size, line height, border color and width, corner radius,
+shadow, padding, margin, max width and height, content alignment and clipping. Empty fields keep the component's own
+look, and **Reset style** clears them all.
+
+Click a color's swatch to open the color picker, with alpha. The background's picker also makes linear gradients
+(drag the stops, set the angle) and opacity masks. Colors may be theme tokens (`accent`, `text_muted`...), so a
+style follows the form's theme. Corner radius takes one number or four (top-left, top-right, bottom-right,
+bottom-left); padding and margin take one, two or four.
+
+With nothing selected, the form's own **Style** section is the window's global style: its font, text color and
+size apply to every text that doesn't set its own, and its background, border color and radius become the theme's.
+It runs the same way (`Window.style`), and so do components made in the designer.
+
+![A button with a masked gradient, a serif global font and the color picker open](../../../../screenshots/designer-style.png)
+
 ## Files
 
 A form is two files side by side, both meant to be committed:

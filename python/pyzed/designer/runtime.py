@@ -29,6 +29,7 @@ from ..theme import Theme, themes
 from . import code as _code
 from . import components as _components
 from . import layout as _layout
+from . import styling
 from .model import SUFFIX, Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
@@ -56,7 +57,10 @@ def theme_for(form: Form) -> Theme:
         changes["background"] = form.background
     if form.font_size and form.font_size != theme.ui_font_size:
         changes["ui_font_size"] = float(form.font_size)
-    return theme.derive(**changes) if changes else theme
+    theme = theme.derive(**changes) if changes else theme
+    if form.style:
+        theme = styling.themed(theme, form.style)
+    return theme
 
 
 @dataclass
@@ -295,6 +299,9 @@ class FormRuntime:
         size = self.size
         layers = [_core.container(width="fill", height="fill", bg=t.background)]
         form = self.form
+        painted = styling.background_layer(form.style, t)
+        if painted is not None:
+            layers.append(painted)
         rects = _layout.resolve(form, size)
         hidden: set = set()
         for control, _depth in form.walk():
@@ -313,7 +320,7 @@ class FormRuntime:
                 ui.callout("Event handler error", self.error, tint="error", on_dismiss=self._dismiss_error,
                            theme=t),
                 width="fill", height="fill", align_y="end", padding=12))
-        return _core.stack(layers, width="fill", height="fill")
+        return styling.apply_global(_core.stack(layers, width="fill", height="fill"), form.style, t, background=False)
 
     def _dismiss_error(self) -> None:
         self.error = None

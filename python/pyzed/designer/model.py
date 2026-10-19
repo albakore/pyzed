@@ -38,7 +38,8 @@ class Control:
     container (a panel, a group box, a flex row...). ``props`` holds the component's own
     properties (``text``, ``checked``...) and ``events`` maps event names (``"click"``) to
     handler function names. ``layout`` holds options read by the parent's layout, such as
-    ``grow`` in a flex row or ``span`` in a grid.
+    ``grow`` in a flex row or ``span`` in a grid. ``style`` holds CSS-like style properties
+    (``pz.Style.to_dict()``: background, border, radius, font...) drawn on top of the props.
     """
 
     name: str
@@ -55,6 +56,7 @@ class Control:
     locked: bool = False
     parent: Optional[str] = None
     layout: Dict[str, Any] = field(default_factory=dict)
+    style: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def rect(self) -> Tuple[float, float, float, float]:
@@ -68,6 +70,8 @@ class Control:
             del data["parent"]
         if not data["layout"]:
             del data["layout"]
+        if not data["style"]:
+            del data["style"]
         return data
 
     @classmethod
@@ -77,6 +81,7 @@ class Control:
         known["props"] = dict(known.get("props") or {})
         known["events"] = dict(known.get("events") or {})
         known["layout"] = dict(known.get("layout") or {})
+        known["style"] = dict(known.get("style") or {})
         known["parent"] = known.get("parent") or None
         return cls(**known)
 
@@ -89,7 +94,8 @@ class Form:
     """A window designed visually: its settings, its controls (in z-order) and its events.
 
     ``theme`` is any registered theme name; ``accent``, ``radius`` and ``font_size``
-    tweak it without writing a theme file. ``grid`` is the designer's snapping step.
+    tweak it without writing a theme file. ``style`` is the form's global style
+    (``pz.Style.to_dict()``), applied to the whole window. ``grid`` is the designer's snapping step.
     """
 
     name: str = "Form1"
@@ -103,6 +109,7 @@ class Form:
     font_size: float = 14.0
     resizable: bool = True
     grid: int = 8
+    style: Dict[str, Any] = field(default_factory=dict)
     controls: List[Control] = field(default_factory=list)
     events: Dict[str, str] = field(default_factory=dict)
     code: Optional[str] = None
@@ -222,6 +229,8 @@ class Form:
     # -- serialization ------------------------------------------------------
     def to_dict(self) -> Dict[str, Any]:
         data = {k: v for k, v in asdict(self).items() if k not in ("controls",)}
+        if not data["style"]:
+            del data["style"]
         return {
             "format": FORMAT,
             "form": data,
@@ -237,6 +246,7 @@ class Form:
         settings.pop("controls", None)
         form = cls(**settings)
         form.events = dict(form.events or {})
+        form.style = dict(form.style or {})
         form.controls = [Control.from_dict(c) for c in data.get("controls", [])]
         form._repair_parents()
         return form

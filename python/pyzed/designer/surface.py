@@ -23,6 +23,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import components as _components
 from . import layout as _layout
+from . import styling
 from .geometry import HANDLES
 from .locale import tr
 from .model import Control
@@ -143,6 +144,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     w, h = form.width, form.height
 
     layers: List[Any] = [_core.container(width="fill", height="fill", bg=ft.background)]
+    painted = styling.background_layer(form.style, ft)
+    if painted is not None:
+        layers.append(painted)
     if d.show_grid:
         layers.append(_core.canvas(dot_grid(w, h, form.grid, alpha(ft.text_muted, 0.35)), width=w, height=h,
                                    id="designer-grid"))
@@ -150,6 +154,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     # 2. the controls, as they will look, containers before what they hold
     rects = d.rects
     shown = []
+    drawn: List[Any] = []
     hidden: set = set()
     for c, _depth in form.walk():
         if not c.visible or (c.parent and c.parent in hidden):
@@ -161,8 +166,10 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         widget = _components.render(placed, ctx)
         if c.name in hidden:
             widget = _core.container(widget, width=cw, height=ch, bg=alpha(ft.background, 0.5))
-        layers.append(_core.pin(widget, x=x, y=y))
+        drawn.append(_core.pin(widget, x=x, y=y))
         shown.append(c)
+    # the form's global style: texts inside take its font, color and size
+    layers.append(styling.apply_global(_core.stack(drawn, width=w, height=h), form.style, ft, background=False))
 
     # the container a dragged control (or the one being placed) will drop into
     target = d.drop_target
