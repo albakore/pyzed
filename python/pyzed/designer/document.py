@@ -408,6 +408,15 @@ class Document:
             style[key] = value
         self.commit(group=f"style:{name}:{key}")
 
+    def set_animations(self, name: str, animations: List[Dict[str, Any]], *, group: Optional[str] = None) -> None:
+        """Replaces the animations of control ``name`` (see ``designer.motion``). Edits with the same
+        ``group`` in a row undo together (typing a duration)."""
+        control = self.form[name]
+        if control.animations == animations:
+            return
+        control.animations = [dict(a) for a in animations]
+        self.commit(group=group)
+
     def clear_style(self, name: Optional[str]) -> None:
         """Removes every style property of a control (or of the form's global style)."""
         target = self.form if name is None else self.form[name]

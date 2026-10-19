@@ -186,8 +186,27 @@ def render(control: Control, ctx: RenderContext) -> Any:
     spec = get(control.type)
     merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
     widget = styled(spec.render(merged, ctx), control, ctx)
-    # a shadow is drawn outside the box: clipping would cut it off
-    return _core.container(widget, width=control.width, height=control.height, clip=not control.style.get("shadow"))
+    widget = animated(widget, control, ctx)
+    # shadows, glows and motion are drawn outside the box: clipping would cut them off
+    from . import motion
+
+    return _core.container(widget, width=control.width, height=control.height,
+                           clip=not motion.moves(control.animations, control.style))
+
+
+def animated(widget: Any, control: Control, ctx: RenderContext) -> Any:
+    """``widget`` with the control's animations: always in a running form, and in the designer only
+    while its Preview plays (``ctx.preview`` maps control names to a restart counter)."""
+    if not control.animations:
+        return widget
+    from . import motion
+
+    if ctx.live:
+        return motion.apply(widget, control.animations)
+    generation = (getattr(ctx, "preview", None) or {}).get(control.name)
+    if generation is None:
+        return widget
+    return motion.apply(widget, control.animations, preview=generation)
 
 
 def styled(widget: Any, control: Control, ctx: RenderContext) -> Any:

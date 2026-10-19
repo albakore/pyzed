@@ -35,6 +35,8 @@ button). Other widgets get a box around them that carries the style.
 | `width`, `height` | Pixels, `"fill"`, `"shrink"` or `"fill:N"`; `max_width`, `max_height` in pixels. |
 | `align_x`, `align_y` | Where the content sits inside the box. |
 | `clip` | Clips the content to the box. |
+| `opacity`, `translate`, `scale` | Fades, moves or scales how the widget is drawn, without changing the layout. |
+| `glow`, `bloom`, `glass` | Visual effects: a halo, a bright spill of light and a frosted panel. See [Animation and effects](/pyzed/guides/animation/#effects). |
 
 Colors can be hex strings (with alpha, `"#3b82f680"`), `(r, g, b[, a])` tuples or theme tokens
 such as `"accent"`, `"panel"` or `"text_muted"`, so styles follow theme switches.

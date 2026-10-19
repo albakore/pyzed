@@ -24,7 +24,8 @@ ROW_HEIGHT = 28.0
 #: Icons of the property groups in the accordion.
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
-                 "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket"}
+                 "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket",
+                 "Effects": "sparkles", "Animation": "clapperboard"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -461,6 +462,11 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
                                  tip=_help.prop_doc(c.type, prop.name) or None, tall=prop.kind in TALL_KINDS,
                                  end=_text_toggle(d, prop, key, t)))
     rows.extend(style_rows(d, c.name, c.style, t))
+    if spec.visual:
+        from . import motion_panel
+
+        rows.extend(motion_panel.effect_rows(d, c, t))
+        rows.extend(motion_panel.animation_rows(d, c, t))
     rows.extend(_layout_rows(d, c, t))
     return rows
 
@@ -662,6 +668,19 @@ def color_popover(d: "Designer", t: Theme) -> Any:
 
         def pick(v: Any) -> None:
             d.set_style_value(name, "shadow", shadow_value(picked(v) or "", x, y, blur))
+    elif key in ("glow", "bloom", "glass"):
+        from . import motion
+
+        if key == "glass":
+            _on, value, strength = motion.glass_parts(style.get("glass"))
+
+            def pick(v: Any) -> None:
+                d.set_style_value(name, "glass", motion.glass_value(True, picked(v) or "", strength))
+        else:
+            value, size = motion.glow_parts(style.get(key), 12.0 if key == "glow" else 0.6)
+
+            def pick(v: Any) -> None:
+                d.set_style_value(name, key, motion.glow_value(picked(v) or "", size))
     else:
         value = style.get(key)
 

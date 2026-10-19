@@ -404,4 +404,90 @@ _ES = {
 
 i18n.add("es", {"designer": _ES})
 
+# Effects and animations (designer.motion_panel): section texts, triggers and the preset names
+_ES_MOTION = {
+    "Effects": "Efectos", "Animation": "Animación", "Opacity": "Opacidad", "Glow": "Resplandor",
+    "Glow size": "Tamaño del resplandor", "Bloom": "Bloom", "Intensity": "Intensidad", "Glass": "Cristal",
+    "Strength": "Intensidad del tinte", "none": "ninguno",
+    "How visible the control and everything inside it is (1 is opaque)":
+        "Cuánto se ve el control y todo lo que contiene (1 es opaco)",
+    "A soft halo around the box": "Un halo suave alrededor de la caja",
+    "A wide, bright glow that spills out of the box": "Un brillo amplio e intenso que desborda la caja",
+    "A translucent, frosted panel with a light edge": "Un panel translúcido y esmerilado con un borde claro",
+    "How much of the tint shows": "Cuánto se nota el tinte",
+    "No animations yet: add one to play it when the control appears, on hover, on click...":
+        "Aún no hay animaciones: añade una para reproducirla cuando el control aparece, al pasar el ratón, al "
+        "hacer clic...",
+    "Add animation": "Añadir animación", "Preview": "Vista previa", "Remove": "Quitar",
+    "Unknown animation": "Animación desconocida",
+    "When it appears": "Al aparecer", "While hovered": "Con el ratón encima", "While pressed": "Mientras se pulsa",
+    "While focused": "Mientras tiene el foco", "On click": "Al hacer clic", "When": "Cuándo",
+    "What plays it: appearing, hovering, pressing, focusing or clicking the control":
+        "Qué la reproduce: aparecer, pasar el ratón, pulsar, enfocar o hacer clic en el control",
+    "Duration": "Duración", "Delay": "Retardo", "Easing": "Curva", "Repeat": "Repetir", "Milliseconds": "Milisegundos",
+    "Milliseconds before it starts": "Milisegundos antes de empezar",
+    "How the speed changes along the way": "Cómo cambia la velocidad durante el recorrido",
+    "Infinite": "Infinito", "Linear": "Lineal", "Spring": "Muelle",
+    # preset names
+    "Blink": "Parpadeo", "Blur in": "Enfocar", "Bounce": "Rebote", "Bounce in": "Entrar rebotando",
+    "Breathe": "Respirar", "Dim": "Atenuar", "Drift": "Deriva", "Drop in": "Caer", "Fade in": "Aparecer",
+    "Fade in down": "Aparecer bajando", "Fade in left": "Aparecer desde la izquierda",
+    "Fade in right": "Aparecer desde la derecha", "Fade in up": "Aparecer subiendo", "Fade out": "Desvanecer",
+    "Fade out down": "Desvanecer bajando", "Fade out left": "Desvanecer a la izquierda",
+    "Fade out right": "Desvanecer a la derecha", "Fade out up": "Desvanecer subiendo", "Flash": "Destello",
+    "Float": "Flotar", "Glow flash": "Destello de luz", "Glow pulse": "Pulso de luz", "Grow": "Crecer",
+    "Heartbeat": "Latido", "Lift": "Elevar", "Nudge right": "Empujar a la derecha", "Pop in": "Entrar de golpe",
+    "Pop out": "Salir de golpe", "Pulse": "Pulso", "Rubber band": "Goma elástica", "Shake": "Sacudir",
+    "Shrink": "Encoger", "Slide in down": "Deslizar desde arriba", "Slide in left": "Deslizar desde la izquierda",
+    "Slide in right": "Deslizar desde la derecha", "Slide in up": "Deslizar desde abajo",
+    "Slide out down": "Salir hacia abajo", "Slide out left": "Salir a la izquierda",
+    "Slide out right": "Salir a la derecha", "Slide out up": "Salir hacia arriba", "Tada": "Tachán",
+    "Throb": "Palpitar", "Wobble": "Tambalear", "Zoom in": "Acercar", "Zoom out": "Alejar",
+    # preset descriptions
+    "A burst of glow around the box.": "Un estallido de luz alrededor de la caja.",
+    "A celebratory pop.": "Un salto de celebración.",
+    "A strong, wide glow that blooms out of the box.": "Un brillo fuerte y amplio que sale de la caja.",
+    "Blinks (status lights, cursors).": "Parpadea (luces de estado, cursores).",
+    "Blinks twice.": "Parpadea dos veces.", "Bounces in from small.": "Entra rebotando desde pequeño.",
+    "Drifts sideways.": "Se desliza de lado a lado.", "Fades a little.": "Se atenúa un poco.",
+    "Fades in from the left.": "Aparece desde la izquierda.", "Fades in from the right.": "Aparece desde la derecha.",
+    "Fades in while dropping.": "Aparece mientras baja.", "Fades in while rising.": "Aparece mientras sube.",
+    "Fades in.": "Aparece poco a poco.", "Fades out to the left.": "Se desvanece hacia la izquierda.",
+    "Fades out to the right.": "Se desvanece hacia la derecha.",
+    "Fades out while dropping.": "Se desvanece mientras baja.", "Fades out while rising.": "Se desvanece mientras sube.",
+    "Fades out.": "Se desvanece.", "Falls into place with a bounce.": "Cae en su sitio con un rebote.",
+    "Floats up and down.": "Flota arriba y abajo.", "Glows around the box.": "Brilla alrededor de la caja.",
+    "Grows a little.": "Crece un poco.", "Grows and shrinks once.": "Crece y encoge una vez.",
+    "Grows in from slightly smaller.": "Entra creciendo desde un poco más pequeño.",
+    "Jumps twice.": "Salta dos veces.",
+    "Moves a little to the right (links, chevrons).": "Se mueve un poco a la derecha (enlaces, flechas).",
+    "Pops in with a small overshoot.": "Entra de golpe pasándose un poco.",
+    "Presses in (for press).": "Se hunde (al pulsar).", "Pulses forever (notifications).":
+        "Late sin parar (notificaciones).",
+    "Rises with a soft glow (for cards and buttons).": "Se eleva con un brillo suave (tarjetas y botones).",
+    "Settles in from slightly larger, like a lens focusing.":
+        "Se asienta desde un poco más grande, como una lente que enfoca.",
+    "Shakes sideways (wrong input).": "Se sacude de lado (dato incorrecto).", "Shrinks away.": "Se encoge y desaparece.",
+    "Slides in from above.": "Entra deslizándose desde arriba.",
+    "Slides in from below its own height.": "Entra deslizándose desde abajo.",
+    "Slides in from the left.": "Entra deslizándose desde la izquierda.",
+    "Slides in from the right.": "Entra deslizándose desde la derecha.",
+    "Slides out downwards.": "Sale deslizándose hacia abajo.", "Slides out to the left.":
+        "Sale deslizándose a la izquierda.",
+    "Slides out to the right.": "Sale deslizándose a la derecha.", "Slides out upwards.":
+        "Sale deslizándose hacia arriba.",
+    "Slowly fades and shrinks, like breathing.": "Se atenúa y encoge despacio, como respirando.",
+    "Stretches and snaps back.": "Se estira y vuelve de golpe.",
+    "Swells a little, then pops away.": "Se hincha un poco y desaparece de golpe.",
+    "The glow swells and fades (recording, live).": "El brillo crece y se apaga (grabando, en directo).",
+    "Two quick beats.": "Dos latidos rápidos.", "Wobbles and settles.": "Se tambalea y se detiene.",
+}
+
+i18n.add("es", {"designer": _ES_MOTION})
+i18n.add("es", {"designer": {
+    "Ease": "Suave", "Ease in": "Acelerar", "Ease out": "Frenar", "Ease in out": "Acelerar y frenar",
+    "Ease out cubic": "Frenar (cúbica)", "Ease in out sine": "Acelerar y frenar (seno)",
+    "Ease out back": "Frenar pasándose", "Ease out elastic": "Elástica", "Ease out bounce": "Rebote al final",
+}})
+
 from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

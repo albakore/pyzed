@@ -170,6 +170,22 @@ def list_editors():
 
 
 @shot
+def motion():
+    app = login()
+    app.doc.select("sign_in")
+    app._selection_changed()
+    app.set_style_value("sign_in", "glow", ["accent", 16])
+    app.add_animation("sign_in", "mount")
+    app.add_animation("sign_in", "hover")
+    app.set_animation("sign_in", 1, "duration", 180.0)
+    app.add_animation("sign_in", "press")
+    app.open_animation("sign_in", 1)
+    app.stop_preview("sign_in")
+    app.collapsed_sections |= {"Style", "Behavior", "Position", "Button", "Appearance", "Text"}
+    save(app, "motion")
+
+
+@shot
 def outline():
     app = login()
     app.doc.form["subtitle"].visible = False

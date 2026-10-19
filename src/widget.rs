@@ -362,6 +362,13 @@ pub enum Kind {
         cursor: Option<iced::mouse::Interaction>,
     },
     Styled(Box<crate::styled::StyleProps>),
+    /// Animations, transitions and transform/opacity effects (`.animate`, `.transition`).
+    Animated {
+        child: Py<Widget>,
+        spec: Arc<crate::animation::Spec>,
+    },
+    /// Content that animates out while its replacement animates in (`presence(...)`).
+    Presence(Box<crate::animation::PresenceProps>),
 }
 
 pub enum SvgSource {
@@ -418,6 +425,18 @@ impl Widget {
                 return format!("<Widget cell {inner}>");
             }
             Kind::Resizable(_) => "resizable",
+            Kind::Presence(_) => "presence",
+            Kind::Animated { child, spec } => {
+                let inner = Python::attach(|py| child.bind(py).get().__repr__());
+                let mut parts = Vec::new();
+                if !spec.anims.is_empty() {
+                    parts.push(format!("{} animation(s)", spec.anims.len()));
+                }
+                if !spec.transitions.is_empty() {
+                    parts.push(format!("{} transition(s)", spec.transitions.len()));
+                }
+                return format!("{inner}.animate({})", parts.join(", "));
+            }
             Kind::Styled(props) => {
                 let inner = Python::attach(|py| props.child.bind(py).get().__repr__());
                 return format!("{inner}.style()");
@@ -450,6 +469,54 @@ impl Widget {
         props: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<Widget>> {
         crate::styled::apply(slf, styles, defaults, props)
+    }
+
+    /// Animates the widget and returns the wrapped widget.
+    ///
+    /// Takes preset names (``"fade_in"``, ``"pulse"``...), ``pz.Animation`` objects and
+    /// options: ``on`` (``"mount"``, ``"hover"``, ``"press"``, ``"focus"``, ``"click"`` or
+    /// ``"active"``), ``duration`` and ``delay`` (milliseconds), ``easing``, ``repeat``
+    /// (a count or ``"infinite"``), ``direction``, ``fill``, ``key`` (a new value restarts
+    /// it), ``active`` (plays while true), ``on_start``/``on_end`` and property values
+    /// (``opacity``, ``x``, ``y``, ``scale``, ``background``, ``border_color``, ``color``,
+    /// ``radius``, ``border_width``, ``glow``, ``glow_color``). Calling it again adds more.
+    /// See ``pyzed.animation``.
+    #[pyo3(signature = (*animations, **options))]
+    fn animate(
+        slf: &Bound<'_, Self>,
+        animations: &Bound<'_, PyTuple>,
+        options: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<Widget>> {
+        let py = slf.py();
+        let compiled = py
+            .import("pyzed.animation")?
+            .getattr("_compile")?
+            .call1((animations.clone(), options.cloned()))?;
+        let anims = crate::animation::parse_anims(&compiled)?;
+        wrap_animated(slf, |spec| spec.anims.extend(anims))
+    }
+
+    /// Animates property changes, like CSS transitions, and returns the wrapped widget.
+    ///
+    /// ``widget.transition(opacity=1 if shown else 0, duration=200, easing="ease_out")``:
+    /// when a value differs from the last render, the widget moves to it over ``duration``
+    /// milliseconds. Properties are the ones ``animate`` takes.
+    #[pyo3(signature = (**props))]
+    fn transition(
+        slf: &Bound<'_, Self>,
+        props: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<Widget>> {
+        let py = slf.py();
+        let compiled = py
+            .import("pyzed.animation")?
+            .getattr("_compile_transition")?
+            .call1((props.cloned(),))?;
+        let transitions = crate::animation::parse_transitions(&compiled)?;
+        wrap_animated(slf, |spec| {
+            spec.transitions
+                .retain(|t| !transitions.iter().any(|n| n.same_prop(t)));
+            spec.transitions.extend(transitions);
+        })
     }
 
     /// The style properties set with ``style()`` (an empty dict if none).
@@ -519,6 +586,27 @@ impl Widget {
             },
         )
     }
+}
+
+/// `slf` inside an `Animated` node (reusing it when `slf` already is one), with `change`
+/// applied to its spec.
+fn wrap_animated(
+    slf: &Bound<'_, Widget>,
+    change: impl FnOnce(&mut crate::animation::Spec),
+) -> PyResult<Py<Widget>> {
+    let py = slf.py();
+    let (child, mut spec) = match &slf.get().kind {
+        Kind::Animated { child, spec } => (child.clone_ref(py), (**spec).clone()),
+        _ => (slf.clone().unbind(), crate::animation::Spec::default()),
+    };
+    change(&mut spec);
+    new(
+        py,
+        Kind::Animated {
+            child,
+            spec: Arc::new(spec),
+        },
+    )
 }
 
 /// The names of the common events, in catalog order.

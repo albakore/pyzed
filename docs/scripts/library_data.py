@@ -2960,3 +2960,93 @@ add(
 ], width=450, height=170)"""},
     related=["bar-chart", "donut", "stack"],
 )
+
+add(
+    slug="animation",
+    name=T("Animation", "Animación"),
+    category="content",
+    api=["pyzed.Animation", "pyzed.stagger", "pyzed.presence", "pyzed.define_animation",
+         "pyzed.set_reduced_motion"],
+    badge="new",
+    blurb=T("Presets, keyframes and transitions for any widget.",
+            "Presets, keyframes y transiciones para cualquier widget."),
+    desc=T(
+        "Every widget has `animate()` and `transition()`. `animate` plays one of 47 presets or a "
+        "`pz.Animation` when the widget appears, on hover, press, focus, click or while `active`; "
+        "`transition` animates property changes like CSS. `pz.stagger` cascades a list in and "
+        "`pz.presence` animates content in and out when it changes. Everything runs natively, without "
+        "calling Python per frame. See the [Animation guide](/pyzed/guides/animation/).",
+        "Todo widget tiene `animate()` y `transition()`. `animate` reproduce uno de los 47 presets o una "
+        "`pz.Animation` cuando el widget aparece, en hover, al pulsar, con foco, al hacer clic o mientras "
+        "`active`; `transition` anima los cambios de propiedades como CSS. `pz.stagger` hace entrar una "
+        "lista en cascada y `pz.presence` anima la entrada y salida del contenido cuando cambia. Todo se "
+        "reproduce de forma nativa, sin llamar a Python en cada fotograma. Ver la "
+        "[guía de animación](/pyzed/es/guides/animation/).",
+    ),
+    when=T(
+        ["To show that something appeared, changed or needs attention: a toast, a new row, an error shake.",
+         "For hover and press feedback on cards and custom buttons.",
+         "For page and tab transitions with `pz.presence`."],
+        ["Para mostrar que algo apareció, cambió o necesita atención: un aviso, una fila nueva, la sacudida de un error.",
+         "Para la respuesta en hover y al pulsar de tarjetas y botones propios.",
+         "Para transiciones entre páginas y pestañas con `pz.presence`."],
+    ),
+    preview={"code": """pz.column(pz.stagger([
+    ui.card(ui.label(name), width=320).animate("lift", on="hover")
+    for name in ("fade_in_up", "lift on hover", "stagger")
+], "fade_in_up", step=60), spacing=10)"""},
+    usage="""class Inbox(pz.App):
+    errors = 0
+    page = 0
+
+    def view(self):
+        return pz.column([
+            ui.input(self.query, self.search).animate("shake", key=self.errors),
+            pz.presence(self.page_view(), key=self.page, enter="fade_in_right", exit="fade_out"),
+            ui.button("Record", self.record).animate("glow_pulse", active=self.recording),
+        ], spacing=12)""",
+    notes=T(
+        "Screenshots and `pz.set_reduced_motion(True)` show every animation at rest, so tests are stable. "
+        "Respect users who turn motion off.",
+        "Las capturas y `pz.set_reduced_motion(True)` muestran cada animación en reposo, así que los tests "
+        "son estables. Respeta a quien apaga el movimiento.",
+    ),
+    related=["effects", "card", "toast"],
+)
+
+add(
+    slug="effects",
+    name=T("Effects", "Efectos"),
+    category="content",
+    api=["pyzed.Style"],
+    badge="new",
+    blurb=T("Glow, bloom, glass and opacity as style properties.",
+            "Glow, bloom, glass y opacidad como propiedades de estilo."),
+    desc=T(
+        "Visual effects are [style](/pyzed/guides/styles/) properties: `glow` (a soft halo), `bloom` (a wide, "
+        "bright spill of light), `glass` (a translucent, frosted panel), `opacity`, and `translate` and "
+        "`scale`, which move or scale the drawing without changing the layout. Animations can change "
+        "`glow` too.",
+        "Los efectos visuales son propiedades de [estilo](/pyzed/es/guides/styles/): `glow` (un halo suave), "
+        "`bloom` (un resplandor amplio y brillante), `glass` (un panel translúcido y esmerilado), `opacity`, "
+        "y `translate` y `scale`, que desplazan o escalan el dibujo sin cambiar el layout. Las animaciones "
+        "también pueden cambiar `glow`.",
+    ),
+    when=T(
+        ["To highlight the primary action or a live state (recording, connected).",
+         "For floating panels over colorful backgrounds (glass)."],
+        ["Para destacar la acción principal o un estado en vivo (grabando, conectado).",
+         "Para paneles flotantes sobre fondos coloridos (glass)."],
+    ),
+    preview={"code": """pz.container(pz.row([
+    pz.container(ui.label("Glass"), width=150, height=70, padding=14).style(glass=True, radius=12),
+    pz.container(ui.label("Glow"), width=150, height=70, padding=14).style(
+        background="#0b1220", radius=12, glow=("#22d3ee", 18)),
+    pz.container(ui.label("Bloom"), width=150, height=70, padding=14).style(
+        background="#1a0b16", radius=12, bloom=("#f472b6", 0.8)),
+    pz.container(ui.label("Opacity"), width=150, height=70, padding=14).style(
+        background="#0b1220", radius=12, opacity=0.5),
+], spacing=24), padding=32).style(
+    background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=14)""", "size": (820, 220)},
+    related=["animation", "card"],
+)

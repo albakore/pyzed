@@ -118,6 +118,8 @@ pub struct StyleProps {
     pub clip: bool,
     /// The text properties only fill in what texts don't set themselves (`App.style`).
     pub defaults: bool,
+    /// `opacity`, `translate` and `scale`: drawn by an `Animated` around the element.
+    pub effects: Option<crate::animation::Base>,
 }
 
 pub fn apply(
@@ -188,7 +190,51 @@ fn parse(child: Py<Widget>, source: Py<PyDict>, d: &Bound<'_, PyDict>) -> PyResu
             .transpose()?
             .unwrap_or(false),
         defaults: false,
+        effects: effects(d)?,
     })
+}
+
+fn effects(d: &Bound<'_, PyDict>) -> PyResult<Option<crate::animation::Base>> {
+    use crate::animation::{Base, Value};
+    let get = |key: &str| -> PyResult<Any<'_>> { Ok(d.get_item(key)?.filter(|v| !v.is_none())) };
+    let opacity = get("opacity")?.map(|v| v.extract::<f32>()).transpose()?;
+    let scale = get("scale")?.map(|v| v.extract::<f32>()).transpose()?;
+    let translate = get("translate")?;
+    if opacity.is_none() && scale.is_none() && translate.is_none() {
+        return Ok(None);
+    }
+    let mut base = Base {
+        opacity: opacity.unwrap_or(1.0).clamp(0.0, 1.0),
+        scale: scale.unwrap_or(1.0).max(0.0),
+        ..Base::default()
+    };
+    if let Some(t) = translate {
+        let (x, y): (Bound<'_, PyAny>, Bound<'_, PyAny>) = t.extract()?;
+        let value = |v: &Bound<'_, PyAny>| -> PyResult<Value> {
+            match v.extract::<(String, f32)>() {
+                Ok((_, p)) => Ok(Value::Pct(p)),
+                Err(_) => Ok(Value::Num(v.extract()?)),
+            }
+        };
+        base.x = value(&x)?;
+        base.y = value(&y)?;
+    }
+    Ok(Some(base))
+}
+
+/// The element with a style's `opacity`, `translate` and `scale` applied.
+pub fn effects_of<'a>(element: Element<'a, Message>, props: &StyleProps) -> Element<'a, Message> {
+    match props.effects {
+        Some(base) => crate::animation::Animated::new(
+            element,
+            std::sync::Arc::new(crate::animation::Spec {
+                base,
+                ..Default::default()
+            }),
+        )
+        .into(),
+        None => element,
+    }
 }
 
 /// A container's or button's layout with a style's size and padding on top.
@@ -277,12 +323,9 @@ pub fn wrap<'a>(element: Element<'a, Message>, props: &StyleProps) -> Element<'a
     if let Some(a) = props.align_y {
         c = c.align_y(a);
     }
-    let style = boxed(&BoxStyle::default(), Some(props));
-    if !style.is_empty() {
-        let style = style.container();
-        c = c.style(move |_| style);
-    }
-    c.into()
+    let style = boxed(&BoxStyle::default(), Some(props)).container();
+    c.style(move |theme| crate::animation::container_style(style, theme))
+        .into()
 }
 
 /// The margin: space around the styled box, which keeps the box's fill sizes.

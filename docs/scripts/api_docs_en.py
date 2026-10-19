@@ -253,7 +253,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -1591,7 +1591,7 @@ _section("widgets", "Styles", {
     "pyzed.Style": {
         "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).",
         "params": {"styles": "Styles, dicts or style names to start from.",
-                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Colors may be theme tokens."},
+                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."},
         "example": """
             card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1715,4 +1715,17 @@ PAGES.append({
             "pyzed.designer.FORM_EVENTS": {"desc": "Events of the form itself (`load`, `close`, `resize`, `key`...).", "no_signature": True},
         }),
     ],
+})
+
+# -- Animation ----------------------------------------------------------------
+_section("widgets", "Animation", {
+    **_doc("pyzed.Animation", "pyzed.define_animation", "pyzed.presence", "pyzed.stagger",
+           "pyzed.set_reduced_motion", "pyzed.animation.reduced_motion", "pyzed.animation.animation",
+           "pyzed.animation.presets", "pyzed.animation.ease", "pyzed.animation.window_animations"),
+    "pyzed.animation.PRESETS": {"desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets).", "no_signature": True},
+    "pyzed.animation.CATEGORIES": {"desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`.", "no_signature": True},
+    "pyzed.animation.EASINGS": {"desc": "Easing names (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` also takes `(x1, y1, x2, y2)` cubic Béziers and `\"steps(n)\"`.", "no_signature": True},
+    "pyzed.animation.TRIGGERS": {"desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click` and `active`.", "no_signature": True},
+    "pyzed.animation.PROPERTIES": {"desc": "The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`.", "no_signature": True},
+    "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.", "no_signature": True},
 })
