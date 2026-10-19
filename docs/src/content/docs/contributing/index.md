@@ -57,7 +57,9 @@ pytest tests                  # or: uv run pytest tests
 ```
 
 The test suite runs off-screen: windows are rendered with `App.screenshot` into PNG files, so it needs no
-GPU or display. Optional extras:
+GPU or display. `tests/test_visual.py` compares screenshots with reference images; when you change how
+a component looks, regenerate them with `pytest tests/test_visual.py --update-snapshots` (see
+[Testing](/pyzed/contributing/testing/)). Optional extras:
 
 ```bash
 uv run ty check                            # type checks the Python package
@@ -162,3 +164,5 @@ Commits must be authored by you: do not add `Co-authored-by` trailers or generat
 - [Documenting a component](/pyzed/contributing/documenting-components/): docstrings, API reference,
   component library, screenshots, translations and the changelog.
 - [Editing the documentation](/pyzed/contributing/docs/): how this site is organized and built.
+- [Testing](/pyzed/contributing/testing/): testing `ui` components and the visual regression tests with
+  their reference images.

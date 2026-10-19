@@ -37,6 +37,11 @@ uv run python examples/gallery.py
 `uv run` or `uv sync` rebuilds the core (`[tool.uv] cache-keys` in
 `pyproject.toml`). Add `--extra designer` for ty and ruff.
 
+`tests/test_visual.py` compares screenshots with the images in `tests/visual/references`. When you change
+how a component looks on purpose, regenerate them on Linux with
+`pytest tests/test_visual.py --update-snapshots` and commit the PNGs (see the
+[testing guide](https://albakore.github.io/pyzed/contributing/testing/)).
+
 If you add or change a function or class in the Rust core, regenerate its type stubs with
 `python scripts/gen_stubs.py` (`python/pyzed/_core.pyi`); a test fails when they are out of date.
 

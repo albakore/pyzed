@@ -9,3 +9,4 @@ dist/
 .pytest_cache/
 build/
 uv.lock
+tests/visual/output/
