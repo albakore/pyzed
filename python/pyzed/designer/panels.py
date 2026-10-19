@@ -98,6 +98,43 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
 # -- toolbox ---------------------------------------------------------------------
 
 
+def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], t: Theme, *, icon: Optional[str] = None,
+              selected: bool = False, height: float = 26, indent: float = 0, start: Any = None, end: Any = None,
+              color: Optional[str] = None, on_right_press: Any = None, on_move: Any = None, on_exit: Any = None,
+              drop: Optional[str] = None) -> Any:
+    """A list row that reacts on press (not on click, like ``ui.list_item``), so it can start a drag.
+
+    ``drop`` marks where a dragged control would land: a line ``"before"`` or ``"after"`` the
+    row, or a frame around it for ``"inside"``.
+    """
+    hovered = d.hovered_row == key
+    text_color = t.color(color) if color else t.text
+    row = _core.row([
+        _core.space(width=indent) if indent else None,
+        start,
+        _icon(icon, size=14, color=t.icon_muted) if icon else None,
+        _core.container(_core.text(label, size=13.5, color=text_color, wrap=False), width="fill", clip=True),
+        end,
+    ], spacing=6, align="center")
+    body = _core.container(row, padding=(0, 6), width="fill", height=height, align_y="center",
+                           bg=t.ghost_selected if selected else (t.ghost_hover if hovered else None),
+                           border_color=t.accent if drop == "inside" else None,
+                           border_width=1.5 if drop == "inside" else 0)
+    if drop in ("before", "after"):
+        line = _core.container(width="fill", height=2, bg=t.accent)
+        body = _core.stack([body, _core.container(line, width="fill", height=height,
+                                                  align_y="start" if drop == "before" else "end")],
+                           width="fill", height=height)
+
+    def leave() -> None:
+        d.leave_row(key)
+        if on_exit is not None:
+            on_exit()
+
+    return _core.mouse_area(body, on_press=on_press, on_right_press=on_right_press,
+                            on_enter=lambda: d.enter_row(key), on_exit=leave, on_move=on_move)
+
+
 def toolbox(d: "Designer", t: Theme) -> Any:
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
@@ -111,15 +148,19 @@ def toolbox(d: "Designer", t: Theme) -> Any:
             continue
         rows.append(section(tr(category), t))
         for spec in shown:
+            # press and drag onto the form (or a container), or click to pick it and then click on the form
             rows.append(ui.tooltip(
-                ui.list_item(tr(spec.label), d.pick_tool(spec.type), icon=spec.icon, selected=d.tool == spec.type,
-                             height=26, theme=t),
+                press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
+                          icon=spec.icon, selected=d.tool == spec.type),
                 spec.description or tr(spec.label), position="right", theme=t))
     return _core.column([
         _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
                                         size="sm", theme=t), padding=8),
         _core.scrollable(_core.column(rows, width="fill", padding=(0, 0, 8, 0)), height="fill"),
     ], width="fill", height="fill")
+
+
+OUTLINE_ROW = 24
 
 
 def outline(d: "Designer", t: Theme) -> Any:
@@ -156,11 +197,16 @@ def outline(d: "Designer", t: Theme) -> Any:
                                          lambda n=c.name: d.toggle_folded(n), size="xs", theme=t)
             else:
                 chevron = _core.space(width=20)
-            rows.append(ui.list_item(c.name, lambda n=c.name: d.select_from_outline(n), icon=spec.icon,
-                                     selected=doc.is_selected(c.name), indent=4 + depth * 14, start=chevron,
-                                     height=24, end=_core.row(buttons, spacing=0),
-                                     on_right_press=lambda n=c.name: d.open_outline_menu(n),
-                                     color=None if c.visible else "text_muted", theme=t))
+            target = d.outline_target
+            # press to select, drag to reorder or to move into another container (or onto the form)
+            rows.append(press_row(
+                d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=spec.icon,
+                selected=doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
+                end=_core.row(buttons, spacing=0), color=None if c.visible else "text_muted",
+                on_right_press=lambda n=c.name: d.open_outline_menu(n),
+                on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
+                on_exit=lambda n=c.name: d.leave_outline(n),
+                drop=target[1] if target is not None and target[0] == c.name else None))
             if container and not folded:
                 add(c.name, depth + 1)
 

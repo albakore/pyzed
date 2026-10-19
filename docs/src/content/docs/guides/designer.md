@@ -21,8 +21,8 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 
 | Area | What it does |
 | --- | --- |
-| **Toolbox** (left) | The component library. Click a component, then click on the form to place it at its default size, or drag a rectangle to give it a size. Search filters the list. |
-| **Outline** (left) | Every control as a tree: containers list their children (fold them with the chevron). Click to select; the eye and lock buttons hide or lock a control, **+** adds a control inside a container and right-click opens a menu. |
+| **Toolbox** (left) | The component library. Drag a component onto the form, or into a container, to place it there; or click it, then click on the form to place it at its default size or drag a rectangle to give it a size. Search filters the list. |
+| **Outline** (left) | Every control as a tree: containers list their children (fold them with the chevron). Click to select; drag a row to reorder it, into another container or onto the form. The eye and lock buttons hide or lock a control, **+** adds a control inside a container and right-click opens a menu. |
 | **Form** (center) | The design surface with a dot grid. Drag to move, use the eight handles to resize, drag on empty space to select with a rubber band. The grip under the bottom-right corner resizes the form. |
 | **Properties** (right) | Name, then the component's properties in collapsible sections: its own groups, position (X, Y, size, anchors, or grow and span inside a flex or grid) and behavior (visible, enabled, locked). With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
 | **Events** (right) | The events of the selected control (or of the form). Double-click one to create its handler and open it in the code editor. |
@@ -72,7 +72,7 @@ The title bar holds the main menu (☰: File and Run), **Run** and **Stop**, the
 | Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+wheel | Bigger, smaller or default font in the code editor |
 | Ctrl+Shift+[ / Ctrl+Shift+] | Fold / unfold the block around the cursor (in the code editor) |
 
-Right-click a control for a context menu with the same actions.
+Right-click a control, on the form or in the outline, for a context menu with the same actions where the pointer is.
 
 ## Containers and layouts
 
