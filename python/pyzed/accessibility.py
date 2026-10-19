@@ -16,7 +16,6 @@ it when an app starts and turns off animations when it is on (see
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import Callable, List, Optional
@@ -25,6 +24,8 @@ __all__ = ["system_reduced_motion"]
 
 
 def _run(args: List[str]) -> Optional[str]:
+    import subprocess  # only when the setting is read
+
     try:
         out = subprocess.run(args, capture_output=True, text=True, timeout=1.5, check=False)
     except (OSError, subprocess.SubprocessError):

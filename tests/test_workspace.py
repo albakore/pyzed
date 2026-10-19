@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-from pyzed import project
+from pyzed import project, ui
 from pyzed.designer import docks, workspace
 from pyzed.designer.app import Designer
 
@@ -211,3 +211,108 @@ def test_read_text(tmp_path):
     assert files.read_text(tmp_path / "a.txt") == "one\ntwo"
     assert files.read_text(tmp_path / "b.bin") is None and files.read_text(tmp_path / "c.txt") is None
     assert files.language_of(tmp_path / "Makefile") == "makefile" and files.language_of(tmp_path / "x.RS") == "rs"
+
+
+def test_cut_copy_paste_duplicate_undo(tmp_path):
+    d = _designer(tmp_path)
+    w = d.projects.files
+    root = tmp_path / "shop"
+    (root / "src").mkdir()
+    w.refresh()
+    w.copy("ui/notes.txt")
+    w.paste("ui/notes.txt")  # into its own folder: a copy with a free name
+    assert (root / "ui/notes copy.txt").read_text() == "hi"
+    w.paste("src/")
+    assert (root / "src/notes.txt").is_file()
+    w.cut("ui/notes copy.txt")
+    w.paste("src/")
+    assert (root / "src/notes copy.txt").is_file() and not (root / "ui/notes copy.txt").exists() and w.clipboard is None
+    w.undo()  # the move goes back
+    assert (root / "ui/notes copy.txt").is_file() and not (root / "src/notes copy.txt").exists()
+    w.redo()
+    assert (root / "src/notes copy.txt").is_file()
+    w.undo()
+    w.undo()  # the copy into src/ is removed
+    assert not (root / "src/notes.txt").exists()
+    w.duplicate("ui/notes.txt")
+    assert (root / "ui/notes copy 2.txt").is_file() and d.dialog == "project:name"
+    assert w.naming == ("rename", "ui/notes copy 2.txt")
+    w.cut("ui/")
+    w.paste("ui/")  # a folder cannot go inside itself
+    assert (root / "ui").is_dir()
+
+
+def test_tree_keys_and_menu(tmp_path, monkeypatch):
+    d = _designer(tmp_path)
+    w = d.projects.files
+    root = tmp_path / "shop"
+    trashed = []
+    monkeypatch.setattr(workspace._ops, "send_to_trash", trashed.append)
+    w.toggle("ui")
+    w.toggle("ui")  # a click gives the tree the keyboard
+    assert d.focus == "files" and "ui" in w.expanded
+    d.on_key("down")
+    assert w.selected_rel() == "ui/notes.txt"
+    d.on_key("ctrl-c")
+    assert w.clipboard == ("copy", ["ui/notes.txt"])
+    d.on_key("ctrl-v")
+    assert (root / "ui/notes copy.txt").is_file()
+    d.on_key("ctrl-z")
+    assert not (root / "ui/notes copy.txt").exists() and w.selected is None
+    w.selected = "ui/notes.txt"
+    d.on_key("ctrl-n")  # a new file here, not a new form
+    assert d.dialog == "project:name" and w.naming == ("file", "ui/")
+    d.close_dialog()
+    d.on_key("f2")
+    assert w.naming == ("rename", "ui/notes.txt")
+    d.close_dialog()
+    d.on_key("delete")
+    assert [p.name for p in trashed] == ["notes.txt"] and w.selected is None
+    w.selected = "ui/notes.txt"
+    d.on_key("ctrl-delete")
+    assert d.dialog == "project:delete"
+    d.close_dialog()
+    d.on_key("left")
+    assert w.selected == "ui"
+    d.on_key("left")
+    assert "ui" not in w.expanded
+    labels = [i.label for i in w.menu_items("ui/notes.txt") if isinstance(i, ui.MenuItem)]
+    assert labels[:3] == ["New File", "New Folder", "Reveal in File Manager"]
+    assert {"Cut", "Copy", "Duplicate", "Paste", "Undo", "Redo", "Copy Path", "Copy Relative Path",
+            "Add to .gitignore", "Rename", "Trash", "Delete", "Open in Terminal"} <= set(labels)
+    root_labels = [i.label for i in w.menu_items("") if isinstance(i, ui.MenuItem)]
+    assert "Cut" not in root_labels and "Paste" in root_labels
+    d.focus_panel("project")  # the pointer coming back keeps the tree's keyboard
+    assert d.focus == "files"
+    d.focus_panel("properties")
+    assert d.focus == "panel"
+
+
+def test_ignore_files_and_permalinks(tmp_path):
+    from pyzed.designer import file_ops
+
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text(".venv/")
+    assert file_ops.add_ignore(gitignore, "build/") and not file_ops.add_ignore(gitignore, "build/")
+    assert gitignore.read_text() == ".venv/\n/build/\n"
+    assert file_ops.web_url("git@github.com:me/app.git") == "https://github.com/me/app"
+    assert file_ops.web_url("https://token@gitlab.com/me/app.git") == "https://gitlab.com/me/app"
+    assert file_ops.web_url("ssh://git@codeberg.org/me/app") == "https://codeberg.org/me/app"
+    assert file_ops.web_url("/some/local/path") is None
+
+
+def test_free_names_and_freedesktop_trash(tmp_path):
+    from pyzed.designer import file_ops
+
+    (tmp_path / "a.txt").write_text("1")
+    assert file_ops.free_name(tmp_path / "a.txt").name == "a copy.txt"
+    (tmp_path / "a copy.txt").write_text("2")
+    assert file_ops.free_name(tmp_path / "a copy.txt").name == "a copy 2.txt"
+    (tmp_path / "pkg").mkdir()
+    assert file_ops.free_name(tmp_path / "pkg").name == "pkg copy"
+    went = file_ops.freedesktop_trash(tmp_path / "a.txt", data_home=tmp_path / "data")
+    assert went.read_text() == "1" and not (tmp_path / "a.txt").exists()
+    info = (tmp_path / "data/Trash/info/a.txt.trashinfo").read_text()
+    assert info.startswith("[Trash Info]\nPath=") and "DeletionDate=" in info
+    (tmp_path / "a.txt").write_text("3")
+    assert file_ops.freedesktop_trash(tmp_path / "a.txt", data_home=tmp_path / "data").name == "a.2.txt"

@@ -200,7 +200,7 @@ def dock_view(d: "Designer", dock: str, t: Theme) -> Optional[Any]:
         body = ui.popover(body, _dock_menu(d, dock, panel, t), x=6, y=TAB_HEIGHT, align_x="end",
                           on_dismiss=d.close_dock_menu)
     return _core.mouse_area(_core.container(body, width="fill", height="fill", bg=t.panel, clip=True),
-                            on_enter=d.focus_code if panel.id == "code" else d.focus_panel)
+                            on_enter=d.focus_code if panel.id == "code" else lambda: d.focus_panel(panel.id))
 
 
 #: The edge of each dock that carries its resize handle (the one facing the form).

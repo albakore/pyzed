@@ -106,7 +106,7 @@ def animation_rows(d: "Designer", c: Control, t: Theme) -> List[Any]:
     if not c.animations:
         rows.append(_core.container(ui.label(tr("No animations yet: add one to play it when the control appears, "
                                                 "on hover, on click..."), size="xs", color="text_muted", theme=t),
-                                    padding=(4, 10), width="fill"))
+                                    padding=(4, 0), width="fill"))
     previewing = name in d.motion_preview
     buttons = [ui.button(tr("Add animation"), lambda: d.add_animation(name), icon="plus", variant="ghost", size="sm",
                          theme=t)]
@@ -115,7 +115,7 @@ def animation_rows(d: "Designer", c: Control, t: Theme) -> List[Any]:
         buttons.append(ui.button(tr("Stop") if previewing else tr("Preview"),
                                  (lambda: d.stop_preview(name)) if previewing else (lambda: d.preview_animations(name)),
                                  icon="square" if previewing else "play", variant="ghost", size="sm", theme=t))
-    rows.append(_core.container(_core.row(buttons, spacing=6, align="center"), padding=(4, 10), width="fill"))
+    rows.append(_core.container(_core.row(buttons, spacing=6, align="center"), padding=(4, 0), width="fill"))
     return rows
 
 

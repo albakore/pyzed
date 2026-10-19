@@ -385,7 +385,7 @@ def view(d: "Designer", t: Theme) -> Any:
     if project is None:
         return _empty(p, t)
     tree = _core.mouse_area(_core.container(_workspace.tree_view(p.files, t), padding=(0, 4, 24, 4), width="fill"),
-                            on_right_press=lambda: p.files.open_menu(""))
+                            on_press=p.files.focus, on_right_press=lambda: p.files.open_menu(""))
     return _core.column([
         _header(d, p, project, t),
         _busy(p, t),

@@ -21,8 +21,20 @@ mod widget;
 
 use pyo3::prelude::*;
 
+/// Every view builds and drops thousands of small objects (widget nodes, layout nodes,
+/// shaped text); mimalloc handles that churn much faster than the system allocator.
+/// Only Rust's allocations use it: Python keeps its own.
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    // Scanning the system fonts and parsing the bundled ones takes from a few to a few hundred
+    // milliseconds (it grows with the fonts installed). Start it now, so it runs while Python
+    // imports the rest of the app; `run` and `screenshot` wait for it before drawing.
+    let _ = std::thread::Builder::new()
+        .name("pyzed-fonts".into())
+        .spawn(fonts::ensure_loaded);
     widget::register(m)?;
     extra::register(m)?;
     shader::register(m)?;

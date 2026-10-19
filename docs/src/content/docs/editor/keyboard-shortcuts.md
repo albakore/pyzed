@@ -83,6 +83,25 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | <kbd>Enter</kbd> | Run the highlighted command, add the highlighted control, submit a dialog's field |
 | <kbd>Esc</kbd> | Close the dialog, palette or menu |
 
+## Project tree
+
+After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree, like Zed's project panel:
+
+| Keys | Action |
+| --- | --- |
+| <kbd>↑</kbd> <kbd>↓</kbd> | Move the selection |
+| <kbd>←</kbd> <kbd>→</kbd> | Close / open the folder |
+| <kbd>Enter</kbd> | Open the file |
+| <kbd>Ctrl</kbd>+<kbd>N</kbd> / <kbd>Alt</kbd>+<kbd>N</kbd> | New file / new folder |
+| <kbd>F2</kbd> | Rename |
+| <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>V</kbd> | Cut / copy / paste |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicate |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo / redo a file change |
+| <kbd>Delete</kbd> / <kbd>Ctrl</kbd>+<kbd>Delete</kbd> | Move to the trash / delete for good |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> | Reveal in the file manager |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | Open in the default app |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Copy the path / the relative path |
+
 ## Code editor
 
 | Keys | Action |

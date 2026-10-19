@@ -10,6 +10,42 @@ widgets de Iced. En la mayoría de apps eso tarda mucho menos de un milisegundo.
 hacen lento: construir **muchas filas** que ni siquiera están en pantalla y reconstruir
 **subárboles grandes** que no cambiaron. Pyzed tiene una herramienta para cada una.
 
+## Rápido por defecto
+
+No hace falta activar nada de esto. Pyzed lo hace en todas las apps, aprendiendo de cómo Zed
+mantiene rápida su interfaz: empezar a dibujar cuanto antes y no repetir trabajo que nadie pidió.
+
+- **Arranque rápido.** `import pyzed` carga solo lo que una app necesita para abrir una
+  ventana. El diseñador, la referencia de la API, asyncio y los metadatos del paquete se cargan
+  la primera vez que los usas.
+- **Fuentes en paralelo.** La búsqueda de las fuentes del sistema empieza en cuanto se importa
+  Pyzed, en su propio hilo, mientras Python ejecuta el resto de tus imports.
+- **Primero las APIs nativas de la GPU.** El renderizador de GPU arranca Vulkan, Metal o
+  DirectX 12. El backend de OpenGL, más lento de arrancar y con más memoria, solo se arranca si
+  ninguno de ellos funciona.
+- **Árboles de widgets baratos.** Construir contenedores, botones y colores del tema cuesta
+  menos, y el núcleo nativo reserva memoria con [mimalloc](https://github.com/microsoft/mimalloc),
+  mucho más rápido que el asignador del sistema con los muchos objetos pequeños que crea cada
+  `view()`.
+- **Sin reconstrucciones por teclas que nadie escucha.** Las pulsaciones y liberaciones de
+  teclas solo llegan a tu app (y reconstruyen la vista) cuando una ventana define `on_key` u
+  `on_key_up`. Escribir en un campo reconstruye la vista una vez por tecla en lugar de tres.
+
+Medido con la [app del benchmark](/pyzed/es/why/benchmarks/) (ventana de 640×480, una etiqueta
+y un botón por fila, Xvfb sin GPU, medianas de 5 arranques) en la misma máquina:
+
+| | Antes | Ahora |
+| --- | --- | --- |
+| `import pyzed` | 178 ms | 78 ms |
+| Primer frame, 10 filas | 454 ms | 323 ms |
+| Actualizar 1.000 filas | 40,7 ms | 34,9 ms |
+| Memoria, 10 filas (RSS) | 174 MB | 146 MB |
+
+:::note
+`WGPU_BACKEND=gl` (o `vulkan`, `metal`, `dx12`) sigue eligiendo el backend de GPU a mano, e
+`ICED_BACKEND=tiny-skia` usa el renderizador de CPU.
+:::
+
 ## Listas y tablas virtuales
 
 Una lista virtual solo construye las filas visibles. Las filas se construyen cuando entran en

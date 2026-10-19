@@ -17,7 +17,7 @@ use iced::widget::{column, container, scrollable, text, text_editor};
 use iced::{Color, Element, Font, Length, Point, Size, Subscription, Task, Theme, window};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyTuple, PyType};
+use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyString, PyTuple, PyType};
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
@@ -562,6 +562,17 @@ impl Command {
 
 /// Whether `value` is a coroutine, awaitable, generator or async generator.
 fn is_deferred(value: &Bound<'_, PyAny>) -> bool {
+    // The usual messages and return values (None, strings, numbers, tuples) without the
+    // failing attribute lookups below, which each raise and discard an AttributeError.
+    if value.is_none()
+        || value.is_instance_of::<PyString>()
+        || value.is_instance_of::<pyo3::types::PyInt>()
+        || value.is_instance_of::<pyo3::types::PyFloat>()
+        || value.is_instance_of::<PyTuple>()
+        || value.is_instance_of::<PyDict>()
+    {
+        return false;
+    }
     value.hasattr("__await__").unwrap_or(false)
         || value.hasattr("__anext__").unwrap_or(false)
         || (value.hasattr("send").unwrap_or(false) && value.hasattr("__next__").unwrap_or(false))
@@ -1667,12 +1678,28 @@ pub fn key_combo(key: &Key, modifiers: keyboard::Modifiers) -> Option<String> {
 static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
     LazyLock::new(|| Mutex::new(std::collections::BTreeSet::new()));
 
+/// Which key hooks the app and its windows define (`on_key`, `on_key_up`), refreshed with the
+/// subscriptions after every update. A key message nobody listens to would still rebuild every
+/// window's view, so presses and releases only become messages when a hook will receive them
+/// (typing in a field then rebuilds the view once per key instead of three times).
+static KEY_HOOKS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+const ON_KEY: u8 = 1;
+const ON_KEY_UP: u8 = 2;
+
+fn key_hooks(obj: &Bound<'_, PyAny>) -> u8 {
+    let has = |name: &str| obj.hasattr(name).unwrap_or(false);
+    (if has("on_key") { ON_KEY } else { 0 }) | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+}
+
 fn key_message(event: keyboard::Event) -> Option<Message> {
+    let hooks = KEY_HOOKS.load(std::sync::atomic::Ordering::Relaxed);
     match event {
-        keyboard::Event::KeyPressed { key, modifiers, .. } => {
+        keyboard::Event::KeyPressed { key, modifiers, .. } if hooks & ON_KEY != 0 => {
             key_combo(&key, modifiers).map(Message::Key)
         }
-        keyboard::Event::KeyReleased { key, .. } => key_name(&key).map(Message::KeyUp),
+        keyboard::Event::KeyReleased { key, .. } if hooks & ON_KEY_UP != 0 => {
+            key_name(&key).map(Message::KeyUp)
+        }
         _ => None,
     }
 }
@@ -2008,11 +2035,14 @@ fn subscription(state: &State) -> Subscription<Message> {
     ];
     Python::attach(|py| {
         let mut recipes = python_subscriptions(py, state.app.bind(py), None);
+        let mut hooks = key_hooks(state.app.bind(py));
         for (id, obj) in &state.windows {
+            hooks |= key_hooks(obj.bind(py));
             if Some(*id) != state.main {
                 recipes.extend(python_subscriptions(py, obj.bind(py), Some(*id)));
             }
         }
+        KEY_HOOKS.store(hooks, std::sync::atomic::Ordering::Relaxed);
         let (frames, recipes): (Vec<_>, Vec<_>) =
             recipes.into_iter().partition(|r| r.frame.is_some());
         if frames.is_empty() {
@@ -2117,7 +2147,7 @@ pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
             "pz.run() can only be called once per process; open more windows with Command.open_window",
         ));
     }
-    fonts::ensure_loaded();
+    py.detach(fonts::ensure_loaded);
     window_settings(app.bind(py))?;
     let size = font_size(app.bind(py))?;
     open_post_channel();
@@ -2137,7 +2167,7 @@ pub fn screenshot(
     scale: f32,
     wait: f64,
 ) -> PyResult<()> {
-    fonts::ensure_loaded();
+    py.detach(fonts::ensure_loaded);
     let settings = window_settings(app.bind(py))?;
     let viewport = size.map(|(w, h)| Size::new(w, h)).unwrap_or(settings.size);
     let font_size = font_size(app.bind(py))?;

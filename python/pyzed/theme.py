@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, fields, replace
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -659,12 +660,14 @@ def _hex(r, g, b, a=1.0) -> str:
     return out if a >= 1.0 else out + f"{clamp(a * 255):02x}"
 
 
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
 def alpha(color: str, value: float) -> str:
     """``color`` with its opacity multiplied by ``value``."""
     r, g, b, a = _rgba(color)
     return _hex(r, g, b, a * value)
 
 
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
 def mix(a: str, b: str, amount: float = 0.5) -> str:
     """Blends two colors; ``amount=0`` is ``a`` and ``amount=1`` is ``b``."""
     ra, ga, ba, aa = _rgba(a)
@@ -688,6 +691,7 @@ def contrast(a: str, b: str) -> float:
     return (la + 0.05) / (lb + 0.05)
 
 
+@lru_cache(maxsize=4096)  # views mix the same few colors on every render
 def readable_on(background: str, light: str = "#fafafa", dark: str = "#1c2025") -> str:
     """Whichever of ``light``/``dark`` text reads better on ``background``."""
     return light if contrast(background, light) >= contrast(background, dark) else dark
