@@ -796,7 +796,7 @@ ui.console(log.entries, on_clear=log.clear)
 
 ```python
 @dataclass
-class LogEntry(level, text, time=1792376217.9637494, count=1)
+class LogEntry(level, text, time=1792376682.206853, count=1)
 ```
 
 Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
@@ -1948,3 +1948,54 @@ Convierte texto con colores ANSI en líneas de segmentos `(texto, nombre_de_colo
 | Parámetro | Descripción |
 | --- | --- |
 | `text` | Texto con escapes ANSI. |
+
+## Selector de color
+
+### `ColorPicker`
+
+```python
+class ColorPicker
+```
+
+Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `"#rrggbb[aa]"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/guides/styles/#selector-de-color).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Un color, token del tema, `pz.Gradient` o `pz.Paint`. |
+| `alpha` | Muestra la barra y el campo de alfa. |
+| `gradients` | Muestra el cambio Sólido/Gradiente. |
+| `masks` | Muestra el editor de máscara. |
+| `swatches` | Colores rápidos (por defecto: el acento y los colores de estado del tema). |
+| `on_change` | Recibe `event.value`. |
+
+```python
+ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+```
+
+### `color_swatch`
+
+```python
+color_swatch(value, *, size=20, on_press=None)
+```
+
+Un cuadrito que muestra un color, gradiente o pintura sobre un damero.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `value` | Qué mostrar. |
+| `size` | Lado en píxeles. |
+| `on_press` | Lo hace pulsable. |
+
+### `checkerboard`
+
+```python
+checkerboard(width, height, size=6)
+```
+
+Un damero claro/oscuro para dibujar bajo colores translúcidos.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `width` | Ancho. |
+| `height` | Alto. |
+| `size` | Tamaño de celda. |

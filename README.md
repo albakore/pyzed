@@ -278,6 +278,7 @@ Cambiar `self.theme` en `update` cambia el estilo de toda la interfaz al momento
 | [`examples/layout.py`](examples/layout.py) | Rejillas con pistas (`pz.grid`, `pz.cell`), `pz.flex` y un dock tipo Zed (`pz.Dock`) con paneles que se mueven y redimensionan. |
 | [`examples/dialogs.py`](examples/dialogs.py) | Diálogos listos (`ui.confirm`, `ui.prompt`...) y cambio de idioma en vivo con `pyzed.i18n`. |
 | [`examples/styles.py`](examples/styles.py) | Estilos tipo CSS en cualquier widget (`widget.style`), estilos con nombre, gradientes, máscaras y el estilo global (`App.style`). |
+| [`examples/color_picker.py`](examples/color_picker.py) | Selector de color con alfa, gradientes y máscaras (`ui.ColorPicker`). |
 | [`examples/components.py`](examples/components.py) | Componentes propios (puntuación, etiquetas) y eventos comunes: arrastrar, doble clic, foco y teclas. |
 | [`examples/hot_reload/`](examples/hot_reload) | Hot reload con dos módulos: ejecútalo con `pyzed dev examples/hot_reload/main.py` y edítalo. |
 | [`examples/tutorial/`](examples/tutorial) | Tutorial en cinco pasos, de una ventana vacía a una app de notas. |

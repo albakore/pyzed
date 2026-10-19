@@ -1565,3 +1565,19 @@ _section("widgets", "Styles", {
                     "params": {"fill": "A color or a `Gradient`.", "opacity": "0 to 1, multiplies the fill's own alpha.", "mask": "A `pz.Mask`."},
                     "example": 'pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # fades out downwards'},
 })
+
+_section("ui", "Color picker", {
+    "pyzed.ui.ColorPicker": {
+        "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).",
+        "params": {"value": "A color, theme token, `pz.Gradient` or `pz.Paint`.", "alpha": "Shows the alpha bar and field.",
+                   "gradients": "Shows the Solid/Gradient switch.", "masks": "Shows the mask editor.",
+                   "swatches": "Quick colors (default: the theme's accent and status colors).", "on_change": "Receives `event.value`."},
+        "example": """
+            ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+        """,
+    },
+    "pyzed.ui.color_swatch": {"desc": "A small square showing a color, gradient or paint over a checkerboard.",
+                              "params": {"value": "What to show.", "size": "Side in pixels.", "on_press": "Makes it clickable."}},
+    "pyzed.ui.checkerboard": {"desc": "A light/dark checkerboard to draw under translucent colors.",
+                              "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
+})

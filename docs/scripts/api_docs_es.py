@@ -1565,3 +1565,19 @@ _section("widgets", "Estilos", {
                     "params": {"fill": "Un color o un `Gradient`.", "opacity": "De 0 a 1; multiplica el alfa del relleno.", "mask": "Una `pz.Mask`."},
                     "example": 'pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # se desvanece hacia abajo'},
 })
+
+_section("ui", "Selector de color", {
+    "pyzed.ui.ColorPicker": {
+        "desc": "Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `\"#rrggbb[aa]\"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/guides/styles/#selector-de-color).",
+        "params": {"value": "Un color, token del tema, `pz.Gradient` o `pz.Paint`.", "alpha": "Muestra la barra y el campo de alfa.",
+                   "gradients": "Muestra el cambio Sólido/Gradiente.", "masks": "Muestra el editor de máscara.",
+                   "swatches": "Colores rápidos (por defecto: el acento y los colores de estado del tema).", "on_change": "Recibe `event.value`."},
+        "example": """
+            ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+        """,
+    },
+    "pyzed.ui.color_swatch": {"desc": "Un cuadrito que muestra un color, gradiente o pintura sobre un damero.",
+                              "params": {"value": "Qué mostrar.", "size": "Lado en píxeles.", "on_press": "Lo hace pulsable."}},
+    "pyzed.ui.checkerboard": {"desc": "Un damero claro/oscuro para dibujar bajo colores translúcidos.",
+                              "params": {"width": "Ancho.", "height": "Alto.", "size": "Tamaño de celda."}},
+})

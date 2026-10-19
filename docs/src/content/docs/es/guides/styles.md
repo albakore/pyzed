@@ -74,6 +74,22 @@ caja.style(background=pz.Paint(atardecer, mask=pz.Mask([1, 0.15])))     # se des
   `angle`).
 - `pz.Paint(relleno, opacity=, mask=)`: un color o gradiente con opacidad general y máscara.
 
+## Selector de color
+
+`ui.ColorPicker` edita cualquiera de ellos: un color con alfa, un gradiente (un clic en la barra
+añade una parada, las paradas se arrastran y la papelera quita la seleccionada) o una máscara.
+Devuelve un texto hex, un `pz.Gradient` o un `pz.Paint`, listos para `background`:
+
+```python
+ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+```
+
+![El selector de color editando un gradiente](../../../../assets/tutorials/color-picker.png)
+
+`alpha=False`, `gradients=False` y `masks=False` ocultan esas partes; `swatches=[...]` fija los
+colores rápidos. `ui.color_swatch(valor)` muestra un valor como un cuadrito. Ver
+[`examples/color_picker.py`](https://github.com/albakore/pyzed/blob/main/examples/color_picker.py).
+
 ## El estilo global
 
 `App.style` da estilo a toda la ventana, y `pz.set_style(...)` fija un estilo para todas las

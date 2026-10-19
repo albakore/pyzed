@@ -105,6 +105,7 @@ SHOTS = {
     "tutorials/layout": (app("layout", "LayoutDemo", layout_setup), (1100, 680)),
     "tutorials/dialogs": (app("dialogs", "DialogsDemo", dialogs_setup), (720, 420)),
     "tutorials/styles": (app("styles", "StylesDemo"), (860, 480)),
+    "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

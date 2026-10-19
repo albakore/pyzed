@@ -74,6 +74,22 @@ box.style(background=pz.Paint(sunset, mask=pz.Mask([1, 0.15])))     # fades out
   `angle`).
 - `pz.Paint(fill, opacity=, mask=)`: a color or gradient with an overall opacity and a mask.
 
+## Color picker
+
+`ui.ColorPicker` edits any of these: a color with alpha, a gradient (click the bar to add a
+stop, drag stops, trash removes the selected one) or a mask. It sends back a hex string, a
+`pz.Gradient` or a `pz.Paint`, ready for `background`:
+
+```python
+ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+```
+
+![The color picker editing a gradient](../../../assets/tutorials/color-picker.png)
+
+`alpha=False`, `gradients=False` and `masks=False` hide those parts; `swatches=[...]` sets the
+quick colors. `ui.color_swatch(value)` shows a value as a small square. See
+[`examples/color_picker.py`](https://github.com/albakore/pyzed/blob/main/examples/color_picker.py).
+
 ## The global style
 
 `App.style` styles the whole window, and `pz.set_style(...)` sets a style for every window
