@@ -56,7 +56,7 @@ from .display import (
 from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
 from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
-from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree
+from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree, virtual_list
 from .navigation import Tab, breadcrumbs, tab, tab_bar, toolbar
 from .overlays import (
     PaletteItem,
@@ -167,6 +167,7 @@ __all__ = [
     "toolbar",
     "tooltip",
     "tree",
+    "virtual_list",
     "TreeNode",
     "workspace",
 ]

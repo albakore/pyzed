@@ -1250,7 +1250,7 @@ _section("ui", "Data and feedback", {
         "params": {"title": "Header (and name used for sorting).", "key": "How to get the value from each row.", "align": '`"start"`, `"center"` or `"end"`.', "render": "Function value → widget.", "sortable": "Whether the header can be clicked to sort."},
     },
     "pyzed.ui.table": {
-        "desc": "A data table with a fixed header, optional sorting and row selection. Sorting happens here when `sort_by` names a column: clicking a header calls `on_sort(title)` and you update `sort_by`/`descending` in your state.",
+        "desc": "A data table with a fixed header, optional sorting and row selection. Sorting happens here when `sort_by` names a column: clicking a header calls `on_sort(title)` and you update `sort_by`/`descending` in your state. Rows are virtualized: only the ones in view are built, so hundreds of thousands of rows scroll smoothly.",
         "params": {
             "columns": "`ui.Column` or plain keys.", "rows": "Dicts or objects.", "sort_by": "Title of the column to sort by.",
             "descending": "Descending order.", "on_sort": "Callable that receives the clicked title.", "on_row_press": "Callable that receives the clicked row.",
@@ -1728,4 +1728,49 @@ _section("widgets", "Animation", {
     "pyzed.animation.TRIGGERS": {"desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click` and `active`.", "no_signature": True},
     "pyzed.animation.PROPERTIES": {"desc": "The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`.", "no_signature": True},
     "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.", "no_signature": True},
+})
+
+
+# -- Large data: virtualization and memoization -----------------------------
+_section("widgets", "Large data", {
+    "pyzed.virtual_column": {
+        "desc": "A column of `count` rows of the same height that only builds the rows in view: `item(index)` is called when row `index` scrolls into view, and rows that leave it are dropped. A column of a million rows costs the same as one of fifty. Put it in a `scrollable` (it virtualizes against the visible area of the closest one, or the window).",
+        "params": {
+            "count": "Number of rows.",
+            "item": "Function that receives a row index and returns its widget.",
+            "item_height": "Height of every row, in pixels.",
+            "spacing": "Space between rows, in pixels.",
+            "overscan": "Extra rows built above and below the visible ones, so fast scrolling shows no gaps.",
+        },
+        "example": """rows = load_logs()          # a list with 500 000 entries
+
+pz.scrollable(
+    pz.virtual_column(len(rows), lambda i: pz.text(rows[i]), item_height=20),
+    id="logs", height="fill",
+)""",
+    },
+    "pyzed.memo": {
+        "desc": "Decorator that caches what a view function returns by its arguments, so the next `view()` reuses the same widget tree while they don't change. Pass everything the subtree depends on as arguments. Lists, dicts and sets compare by contents, other unhashable objects by identity; the current theme and language are always part of the key. `function.cache_clear()` empties its cache.",
+        "params": {
+            "function": "The function to memoize (when used as `@pz.memo`).",
+            "maxsize": "How many results to keep per function (least recently used are dropped).",
+        },
+        "example": """@pz.memo
+def sidebar(files: tuple, selected: str):
+    return pz.column([ui.list_item(f, selected=f == selected) for f in files])""",
+    },
+    "pyzed.clear_memos": {"desc": "Empties the cache of every `@pz.memo` function."},
+    "pyzed.memo_stats": {"desc": "Returns `{\"hits\": n, \"misses\": m}`: how many calls of memoized functions were answered from the cache and how many built their result."},
+})
+_section("ui", "Lists, tree and menus", {
+    "pyzed.ui.virtual_list": {
+        "desc": "A scrolling list that only builds the rows in view, for thousands or millions of items. `render(item)` returns the widget for one item and is called when it scrolls into view. Every row has the same height.",
+        "params": {
+            "items": "The items: a list or any sequence (other iterables are turned into a list).",
+            "render": "Function that receives an item and returns its widget.",
+            "item_height": "Height of every row, in pixels.",
+            "overscan": "Extra rows built above and below the visible ones.",
+            "on_scroll": "Callable that receives the scroll viewport, as in `pz.scrollable`.",
+        },
+    },
 })

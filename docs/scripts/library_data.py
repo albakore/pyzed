@@ -1325,7 +1325,70 @@ pz.container(ui.table(
     rows,
 ), width=400)""", "size": (720, 200)},
     ],
-    related=["list-item", "stat", "settings-group"],
+    related=["list-item", "virtual-list", "stat", "settings-group"],
+)
+
+add(
+    slug="virtual-list",
+    name=T("Virtual list", "Lista virtual"),
+    category="lists",
+    api=["pyzed.ui.virtual_list", "pyzed.virtual_column"],
+    blurb=T("A list that only builds the rows in view, for millions of items.",
+            "Una lista que solo construye las filas visibles, para millones de elementos."),
+    desc=T(
+        "A scrolling list for thousands or millions of items. Only the rows in view are built: "
+        "`render(item)` is called when an item scrolls into view, so the list costs the same whatever "
+        "its length. Every row has the same `item_height`. `pz.virtual_column` is the building block "
+        "underneath (rows by index, inside any `scrollable`), and [Table](/pyzed/library/table/) uses it "
+        "for its rows too.",
+        "Una lista con scroll para miles o millones de elementos. Solo se construyen las filas visibles: "
+        "`render(elemento)` se llama cuando un elemento entra en la vista, así que la lista cuesta lo mismo "
+        "sea cual sea su longitud. Todas las filas tienen la misma `item_height`. `pz.virtual_column` es la "
+        "pieza de debajo (filas por índice, dentro de cualquier `scrollable`), y la "
+        "[Tabla](/pyzed/es/library/table/) también la usa para sus filas.",
+    ),
+    when=T(
+        ["For logs, search results, file lists or any list that can grow past a few hundred rows.",
+         "For short lists, a `pz.column` of [List items](/pyzed/library/list-item/) is simpler."],
+        ["Para logs, resultados de búsqueda, listas de archivos o cualquier lista que pueda pasar de unos cientos de filas.",
+         "Para listas cortas, una `pz.column` de [Filas](/pyzed/es/library/list-item/) es más sencilla."],
+    ),
+    preview={"code": """files = [f"src/module_{i:06}.py" for i in range(1_000_000)]
+pz.container(ui.virtual_list(
+    files, lambda f: ui.list_item(f, icon="file-code", selected=f.endswith("02.py")),
+    height=240,
+), width=420)""", "size": (720, 300)},
+    usage="""class Logs(pz.App):
+    def __init__(self):
+        self.lines = [f"[{i:06}] request handled" for i in range(500_000)]
+
+    def view(self):
+        return ui.virtual_list(self.lines, lambda line: pz.text(line, font="mono", size=12),
+                               item_height=20, id="logs")""",
+    examples=[
+        {"title": T("Rows by index", "Filas por índice"),
+         "text": T("`pz.virtual_column(count, item, item_height=...)` calls `item(index)`, handy when the rows "
+                   "come from an array, a database cursor or a computed value. Scroll it like any `scrollable`: "
+                   "row `i` starts at `i * (item_height + spacing)`.",
+                   "`pz.virtual_column(count, item, item_height=...)` llama a `item(índice)`, útil cuando las filas "
+                   "salen de un array, un cursor de base de datos o un cálculo. Se desplaza como cualquier "
+                   "`scrollable`: la fila `i` empieza en `i * (item_height + spacing)`."),
+         "code": """pz.container(pz.scrollable(
+    pz.virtual_column(10_000_000, lambda i: pz.text(f"{i:>10,}  {i * i:>22,}", font="mono", size=12),
+                      item_height=22),
+    height=150,
+), width=420)""", "size": (720, 200)},
+    ],
+    notes=T(
+        "- Rows are built again when they scroll back into view, so keep `render` cheap or wrap it in "
+        "`@pz.memo`.\n"
+        "- `items` should be a list or another sequence: other iterables are copied into a list on every `view()`.",
+        "- Las filas se vuelven a construir cuando vuelven a la vista, así que mantén `render` ligero o "
+        "envuélvelo en `@pz.memo`.\n"
+        "- `items` debería ser una lista u otra secuencia: otros iterables se copian a una lista en cada `view()`.",
+    ),
+    related=["list-item", "table"],
+    badge="new",
 )
 
 add(

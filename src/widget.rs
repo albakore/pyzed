@@ -347,6 +347,15 @@ pub enum Kind {
         width: Option<f32>,
     },
     Responsive(PyMsg),
+    /// A column that builds only its visible rows (`virtual_column(...)`).
+    Virtual {
+        count: usize,
+        item: PyMsg,
+        item_height: f32,
+        spacing: f32,
+        overscan: usize,
+        width: Option<Length>,
+    },
     /// A grid with sized column and row tracks (`grid(columns=[...])`).
     TrackGrid(Box<crate::layout::TrackGridProps>),
     /// A child placed in a track grid cell (`cell(...)`).
@@ -419,6 +428,7 @@ impl Widget {
             Kind::Pin { .. } => "pin",
             Kind::Grid { .. } => "grid",
             Kind::Responsive(_) => "responsive",
+            Kind::Virtual { count, .. } => return format!("<Widget virtual_column [{count}]>"),
             Kind::TrackGrid(props) => return format!("<Widget grid [{}]>", props.children.len()),
             Kind::Cell { child, .. } => {
                 let inner = Python::attach(|py| child.bind(py).get().__repr__());

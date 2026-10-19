@@ -240,6 +240,11 @@ def table(
     Sorting is done here when ``sort_by`` names a column title: clicking a header calls
     ``on_sort(title)`` and you flip ``sort_by``/``descending`` in your state.
     ``on_row_press(row)`` makes rows clickable; the row equal to ``selected`` is highlighted.
+
+    Rows are virtualized: only the ones in view are built, so a table with hundreds of
+    thousands of rows scrolls as smoothly as a short one. ``rows`` should be a list (or any
+    sequence); sorting a huge list on every ``view()`` is the remaining cost, so keep it
+    sorted in your state or sort it in a ``@pz.memo`` function.
     """
     t = _theme(theme)
     cols = [c if isinstance(c, Column) else Column(str(c), c) for c in columns]
@@ -270,24 +275,28 @@ def table(
     header = _core.container(_core.row(header_cells, align="center", height="fill"), height=row_height,
                              width="fill", bg=t.surface)
 
-    body = []
-    for i, row in enumerate(rows):
+    if not isinstance(rows, Sequence):
+        rows = list(rows)
+
+    def body_row(i: int) -> _core.Widget:
+        row = rows[i]
         cells = [cell(col.render(col.value(row)) if col.render else col.value(row), col, t.text) for col in cols]
         content = _core.row(cells, align="center", height="fill")
         is_selected = selected is not None and row == selected
         bg = t.ghost_selected if is_selected else (alpha(t.text, 0.03) if striped and i % 2 else "transparent")
         if on_row_press is not None:
-            body.append(_core.button(content, lambda r=row: on_row_press(r), width="fill", height=row_height,
-                                     padding=0, bg=bg, hover_bg=t.ghost_selected if is_selected else t.ghost_hover,
-                                     radius=0))
-        else:
-            body.append(_core.container(content, width="fill", height=row_height, bg=bg))
+            return _core.button(content, lambda r=row: on_row_press(r), width="fill", height=row_height,
+                                padding=0, bg=bg, hover_bg=t.ghost_selected if is_selected else t.ghost_hover,
+                                radius=0)
+        return _core.container(content, width="fill", height=row_height, bg=bg)
+
+    body = _core.virtual_column(len(rows), body_row, item_height=row_height)
     return _core.container(
         _core.column(
             [
                 header,
                 _core.rule(thickness=1, color=t.border_variant),
-                _core.scrollable(_core.column(body, width="fill"), height="fill" if height else None,
+                _core.scrollable(body, height="fill" if height else None,
                                  scroller=t.scrollbar, scroller_hover=t.scrollbar_hover, scrollbar_width=6),
             ]
         ),
