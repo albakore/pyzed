@@ -16,6 +16,8 @@ property) are applied on every render.
 
 from __future__ import annotations
 
+import dataclasses
+import math
 import sys
 import traceback
 from pathlib import Path
@@ -24,11 +26,16 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Tuple
 from .. import _core, ui
 from ..component import Component
 from . import components as _components
+from . import layout as _layout
 from .model import Control
 from .runtime import ControlProxy, Event, theme_for
 
 #: Component types being rendered right now (a scene that contains itself draws a placeholder).
 _rendering: list = []
+#: Not empty while a form or a parent component renders a designed component at a given size.
+_placed: list = []
+#: Scenes of components that inherit from another one: (base scene, own scene, merged).
+_merged: Dict[type, Tuple[Any, Any, Any]] = {}
 
 
 class _Scenes:
@@ -119,8 +126,39 @@ class SceneComponent(Component):
 
     @classmethod
     def scene_model(cls) -> Any:
-        """The scene as currently saved (or previewed by the designer), or ``None``."""
-        return scenes.get(cls.scene_file) if cls.scene_file is not None else None
+        """The scene as currently saved (or previewed by the designer), or ``None``.
+
+        A component that inherits from another designed component gets the base's
+        controls too, under its own (see ``designer.scene.merge``).
+        """
+        own = scenes.get(cls.scene_file) if cls.scene_file is not None else None
+        base = next((b for b in cls.__mro__[1:] if isinstance(b, type) and issubclass(b, SceneComponent)
+                     and b.scene_file is not None and b.scene_file != cls.scene_file), None)
+        if base is None or own is None:
+            return own
+        inherited = base.scene_model()
+        if inherited is None:
+            return own
+        cached = _merged.get(cls)
+        if cached is None or cached[0] is not inherited or cached[1] is not own:
+            from .scene import merge
+
+            cached = _merged[cls] = (inherited, own, merge(inherited, own))  # same object while unchanged
+        return cached[2]
+
+    @classmethod
+    def designer_spec(cls) -> Any:
+        spec = super().designer_spec()
+        inner = spec.render
+
+        def render(control: Control, ctx: Any) -> Any:
+            _placed.append(cls)  # the form gives it the size of the control: fill it
+            try:
+                return inner(control, ctx)
+            finally:
+                _placed.pop()
+
+        return dataclasses.replace(spec, render=render)
 
     def _set_props(self, props: Dict[str, Any]) -> None:
         """Like Godot's exported variables: a property the component changed itself keeps its
@@ -201,36 +239,59 @@ class SceneComponent(Component):
 
     def render(self) -> Any:
         cls = type(self)
+        placed = bool(_placed)  # sized by a form or a parent component (read before rendering children)
         model = self.scene_model()
         if model is None:
             return ui.callout(f"{cls.__name__}: scene not found", str(cls.scene_file or "no scene= given"),
                               tint="error")
         if cls in _rendering:
             return _core.container(ui.label(f"{cls.__name__} (inside itself)", size="sm", color="text_muted"),
-                                   width=model.width, height=model.height, center=True)
+                                   width="fill" if placed else model.width,
+                                   height="fill" if placed else model.height, center=True)
         controls = self._controls()
         self._bind(controls, model)
         theme = theme_for(model)
         ctx = SceneContext(self, theme)
-        layers = []
-        if model.background:
-            layers.append(_core.container(width="fill", height="fill", bg=theme.color(model.background)))
+        view = dataclasses.replace(model, controls=list(controls.values()))
+        # The controls are rendered now (nested components keep their state between renders)
+        # and placed when the size is known, following their anchors and containers.
+        widgets: Dict[str, Any] = {}
+        hidden: set = set()
         _rendering.append(cls)
         try:
-            for control in controls.values():
+            for control, _depth in view.walk():
                 spec = _components.get(control.type)
-                if not control.visible or not spec.visual:
+                if not control.visible or (control.parent and control.parent in hidden):
+                    hidden.add(control.name)
                     continue
-                layers.append(_core.pin(_wrap_mouse(ctx, control, _components.render(control, ctx)),
-                                        x=control.x, y=control.y))
+                if spec.visual:
+                    merged = Control(**{**control.__dict__, "props": {**spec.defaults(), **control.props}})
+                    widgets[control.name] = _wrap_mouse(ctx, control, spec.render(merged, ctx))
         finally:
             _rendering.pop()
+        background = theme.color(model.background) if model.background else None
         error = self.__dict__.get("_pyzed_error")
-        if error:
-            layers.append(_core.container(ui.callout("Component error", error, tint="error",
-                                                     on_dismiss=self._dismiss_error),
-                                          width="fill", height="fill", align_y="end"))
-        return _core.stack(layers, width=model.width, height=model.height)
+
+        def draw(width: float, height: float) -> Any:
+            size = (width if 0 < width < math.inf else model.width, height if 0 < height < math.inf else model.height)
+            rects = _layout.resolve(view, size)
+            layers = []
+            if background is not None:
+                layers.append(_core.container(width="fill", height="fill", bg=background))
+            for name, widget in widgets.items():
+                x, y, w, h = rects[name]
+                layers.append(_core.pin(_core.container(widget, width=w, height=h, clip=True), x=x, y=y))
+            if error:
+                layers.append(_core.container(ui.callout("Component error", error, tint="error",
+                                                         on_dismiss=self._dismiss_error),
+                                              width="fill", height="fill", align_y="end"))
+            return _core.stack(layers, width="fill", height="fill")
+
+        body = _core.responsive(draw)
+        if placed:
+            return body
+        # used from code: as wide as there is room for, up to its design size
+        return _core.container(body, width="fill", max_width=model.width, height=model.height)
 
     def _dismiss_error(self) -> None:
         self.__dict__["_pyzed_error"] = None

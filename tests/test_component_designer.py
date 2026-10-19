@@ -295,3 +295,139 @@ def test_designed_component_keeps_the_values_it_changes(tmp_path):
     with render_pass(owner):
         cls(value=5)  # a new value from the parent wins
     assert instance.value == 5
+
+
+# -- responsive layouts -----------------------------------------------------------------
+
+
+def test_designed_component_follows_its_anchors(tmp_path):
+    from pyzed.designer import scene_runtime
+
+    doc = make_rating(tmp_path)
+    doc.scene["label1"].anchor = ["left", "top", "right"]
+    cls = load_component(doc.save())
+    instance = cls.create()
+    assert repr(instance.render()) == "<Widget container>"  # from code: up to its design size
+    # placed by a form: the component fills the control's rectangle instead of its design size
+    scene_runtime._placed.append(cls)
+    try:
+        assert repr(instance.render()) == "<Widget responsive>"
+    finally:
+        scene_runtime._placed.pop()
+    form = designer.Form(width=400, height=200)
+    form.add(components.get("rating").create("r", 0, 0, 400, 60))
+    designer.save(form, tmp_path / "main.pzform")
+    app = designer.open_form(tmp_path / "main.pzform")
+    app.screenshot(tmp_path / "wide.png", scale=1)
+
+
+def test_flex_items_shrink_when_there_is_no_room():
+    from pyzed.designer import layout
+
+    rects = layout.flex((0, 0, 300, 50), [(200, 50, 1), (200, 50, 1)], gap=0)
+    assert [r[2] for r in rects] == [150, 150]
+    assert rects[1][0] == 150
+
+
+# -- inheritance -----------------------------------------------------------------------
+
+
+def test_component_inherits_from_another(tmp_path):
+    from pyzed.designer.scene import load as load_scene
+
+    make_rating(tmp_path).save()
+    doc = new_component("Big rating", tmp_path / "sub" / "big.pzcomp", extends=tmp_path / "rating.pzcomp")
+    assert 'Rating = import_component("../rating.pzcomp")' in doc.code
+    assert "class BigRating(Rating, scene=" in doc.code and "SceneComponent" not in doc.code
+    assert [c.name for c in doc.scene.controls] == ["label1", "button1"] and doc.inherited("label1")
+    doc.add("button", 8, 30, 80, 24)
+    doc.scene["label1"].x = 50  # an inherited control changed here
+    doc.add_member("extra", "int", 1)
+    doc.save()
+    own = load_scene(doc.path)
+    assert own.extends == "../rating.pzcomp"
+    assert [c.name for c in own.controls] == ["label1", "button2"]  # only what is new or changed
+
+    cls = load_component(doc.path)
+    assert cls.__mro__[1].__name__ == "Rating"
+    assert list(cls.__props__) == ["value", "extra"] and "change" in cls.__events__
+    instance = cls.create(value=2)
+    instance.render()
+    assert instance.label1.text == "2 stars" and instance._controls()["label1"].x == 50  # inherited binding
+    instance._dispatch(instance._controls()["button1"], "click")  # inherited method
+    assert instance.value == 3
+
+    reopened = open_document(doc.path)
+    assert [c.name for c in reopened.scene.controls] == ["label1", "button1", "button2"]
+    assert {m.name for m in reopened.all_members} == {"extra", "value", "hover"}
+    reopened.select(["label1", "button2"])
+    assert reopened.delete() == ["button2"]  # inherited controls stay
+    assert reopened.rename("label1", "other") == "label1"
+    reopened.set_base(None)
+    assert "class BigRating(SceneComponent" in reopened.code and "import_component" not in reopened.code
+    assert [c.name for c in reopened.scene.controls] == ["label1"]
+    compile(reopened.code, "big.py", "exec")
+
+
+def test_base_changes_reach_the_components_that_inherit(tmp_path):
+    from pyzed.designer.scene import import_component
+
+    rating = make_rating(tmp_path)
+    rating.save()
+    new_component("Big", tmp_path / "big.pzcomp", extends=tmp_path / "rating.pzcomp").save()
+    assert import_component(tmp_path / "rating.pzcomp") is import_component(tmp_path / "rating.pzcomp")
+    rating.add("label", 8, 40)
+    rating.save()
+    big = components.get("big")
+    assert big is not None
+    from pyzed.component import find
+
+    cls = find("big")
+    assert "label2" in cls.create()._controls()
+
+
+def test_set_base_rejects_cycles(tmp_path):
+    make_rating(tmp_path).save()
+    new_component("Big", tmp_path / "big.pzcomp", extends=tmp_path / "rating.pzcomp").save()
+    rating = open_document(tmp_path / "rating.pzcomp")
+    with pytest.raises(ValueError):
+        rating.set_base(tmp_path / "big.pzcomp")
+    with pytest.raises(ValueError):
+        rating.set_base(tmp_path / "rating.pzcomp")
+
+
+def test_set_base_code_edits():
+    source = scene_code.new_module("Card", "card.pzcomp")
+    out = scene_code.set_base(source, "Rating", "rating.pzcomp")
+    assert scene_code.base_of(out) == ("Rating", "rating.pzcomp")
+    assert "from pyzed.designer import import_component\n" in out
+    again = scene_code.set_base(out, "Stars", "stars.pzcomp")
+    assert again.count("import_component(") == 1 and scene_code.base_of(again) == ("Stars", "stars.pzcomp")
+    back = scene_code.set_base(again, None, None)
+    assert scene_code.base_of(back) is None and "class Card(SceneComponent, " in back
+    assert "from pyzed.designer import SceneComponent\n" in back
+    compile(back, "card.py", "exec")
+
+
+def test_new_component_dialog(tmp_path, monkeypatch):
+    make_rating(tmp_path).save()
+    monkeypatch.chdir(tmp_path)
+    app = designer.Designer(tmp_path / "rating.pzcomp", language_servers=False)
+    app.new_component()
+    assert app.dialog == "new" and app.new_state["kind"] == "component"
+    assert app.new_state["name"] == "component1"
+    app.view()
+    app.set_new("name", "big rating")
+    app.set_new("extends", str(tmp_path / "rating.pzcomp"))
+    app.view()
+    app.create_new_component()
+    assert (tmp_path / "big_rating.pzcomp").exists() and app.doc.path.name == "big_rating.pzcomp"
+    assert app.doc.inherited("label1")
+    app.select_from_outline("label1")
+    app.view()  # the "inherited" note
+    app.select_form()
+    app.view()  # the Inherited section
+    app.new()
+    assert app.new_state["kind"] == "form" and app.new_state["name"] == "form1"
+    app.set_new("kind", "component")
+    assert app.new_state["name"] == "component1"

@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import platform
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from .. import _core, ui
+from ..icons import icon as _icon
 from ..theme import Theme, themes
 from . import commands as _commands
 from . import components as _components
@@ -98,25 +99,43 @@ def about(d: "Designer", t: Theme) -> Any:
                     on_close=d.close_dialog, width=400, theme=t)
 
 
+KINDS = (
+    ("form", "Form", "app-window", "A window of your app, with its own handlers."),
+    ("component", "Component", "component",
+     "A reusable piece, not a window: you place it in forms and in other components."),
+)
+
+
+def _choice_card(title: str, description: str, selected: bool, on_press: Any, t: Theme, icon: Optional[str] = None) -> Any:
+    head = ui.label(title, weight="semibold", size="sm", theme=t)
+    if icon:
+        head = _core.row([_icon(icon, size=14, color=t.accent if selected else t.text_muted), head], spacing=6,
+                         align="center")
+    return _core.button(
+        _core.column([head, ui.label(description, size="xs", color="text_muted", theme=t)], spacing=2, width="fill"),
+        on_press, padding=(8, 10), width="fill", bg=t.element_selected if selected else t.surface,
+        hover_bg=t.element_hover, border_color=t.border_selected if selected else t.border_variant,
+        border_width=1, radius=t.radius)
+
+
 def new_form(d: "Designer", t: Theme) -> Any:
-    """Name, title, template and folder of a new form."""
+    """The "New" dialog: a form (name, title, template and folder) or a component (name, folder, base)."""
     s = d.new_state
-    cards = []
-    for template in _new.templates():
-        selected = template.name == s["template"]
-        cards.append(_core.button(
-            _core.column([ui.label(tr(template.label), weight="semibold", size="sm", theme=t),
-                          ui.label(tr(template.description), size="xs", color="text_muted", theme=t)],
-                         spacing=2, width="fill"),
-            lambda name=template.name: d.set_new("template", name),
-            padding=(8, 10), width="fill", bg=t.element_selected if selected else t.surface,
-            hover_bg=t.element_hover, border_color=t.border_selected if selected else t.border_variant,
-            border_width=1, radius=t.radius))
+    component = s.get("kind") == "component"
+    kinds = _core.grid([_choice_card(tr(label), tr(text), s.get("kind", "form") == key,
+                                     lambda k=key: d.set_new("kind", k), t, icon=icon)
+                        for key, label, icon, text in KINDS], columns="1fr 1fr", spacing=8)
+    if component:
+        return _new_component(d, t, kinds)
+    cards = [_choice_card(tr(template.label), tr(template.description), template.name == s["template"],
+                          lambda name=template.name: d.set_new("template", name), t)
+             for template in _new.templates()]
     grid = _core.grid(cards, columns="1fr 1fr", spacing=8)
     folder = Path(s["folder"] or ".")
     path = folder / f"{s['name'] or 'form1'}.pzform"
     exists = path.exists()
     body = _core.column([
+        kinds,
         ui.field(tr("Name"), ui.input(s["name"], lambda v: d.set_new("name", v), mono=True, width=240,
                                   on_submit=d.create_new_form, id="new-form-name", theme=t),
                  description=tr("File name and handler prefix"), theme=t),
@@ -129,17 +148,53 @@ def new_form(d: "Designer", t: Theme) -> Any:
         ui.callout(tr("{name} already exists", name=path.name), tr("Pick another name or folder."), tint="warning", theme=t)
         if exists else None,
     ], spacing=10)
-    from .app import NEW_DOCUMENT_KINDS
-
-    others = [ui.button(tr("New {kind}", kind=tr(label).lower()), lambda f=factory: d._new(f), icon=icon, variant="ghost", theme=t)
-              for label, icon, _suffix, factory in NEW_DOCUMENT_KINDS if label != "Form"]
     return ui.modal(body, title=tr("New form"), on_close=d.close_dialog, width=560, theme=t, footer=[
-        *others,
         ui.button(tr("Unsaved form"), d.create_untitled_form, variant="ghost", theme=t),
         _core.space(width="fill"),
         ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
         ui.button(tr("Create"), d.create_new_form, variant="solid", disabled=exists, theme=t),
     ])
+
+
+def _new_component(d: "Designer", t: Theme, kinds: Any) -> Any:
+    from . import scene as _scene
+    from . import scene_code as _scene_code
+
+    s = d.new_state
+    folder = Path(s["folder"] or ".")
+    name = s["name"] or "component1"
+    path = folder / f"{_scene_code.member_identifier(name)}{_scene.SUFFIX}"
+    exists = path.exists()
+    bases = {_base_label(p): str(p) for p in d.base_components()}
+    none = tr("Nothing (a new component)")
+    chosen = next((label for label, p in bases.items() if p == s.get("extends")), none)
+    body = _core.column([
+        kinds,
+        ui.field(tr("Name"), ui.input(name, lambda v: d.set_new("name", v), mono=True, width=240,
+                                  on_submit=d.create_new_component, id="new-form-name", theme=t),
+                 description=tr("Class {name}", name=_scene_code.class_identifier(name)), theme=t),
+        ui.field(tr("Folder"), ui.input(s["folder"], lambda v: d.set_new("folder", v), mono=True, width=240, theme=t),
+                 description=tr("Creates {path}", path=path), theme=t),
+        ui.field(tr("Inherits from"),
+                 ui.select([none, *bases], chosen, lambda v: d.set_new("extends", bases.get(v, "")), width=240,
+                           theme=t),
+                 description=tr("Starts with its controls, properties, events and methods"), theme=t),
+        ui.callout(tr("{name} already exists", name=path.name), tr("Pick another name or folder."), tint="warning", theme=t)
+        if exists else None,
+    ], spacing=10)
+    return ui.modal(body, title=tr("New component"), on_close=d.close_dialog, width=560, theme=t, footer=[
+        _core.space(width="fill"),
+        ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+        ui.button(tr("Create component"), d.create_new_component, variant="solid", icon="component",
+                  disabled=exists, theme=t),
+    ])
+
+
+def _base_label(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(Path.cwd()))
+    except ValueError:
+        return str(path)
 
 
 def add_control(d: "Designer", t: Theme) -> Any:

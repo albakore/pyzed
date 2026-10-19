@@ -34,7 +34,9 @@
       "events": {},
       "anchor": [
         "left",
-        "top"
+        "top",
+        "right",
+        "bottom"
       ],
       "visible": true,
       "enabled": true,
@@ -55,7 +57,8 @@
       "events": {},
       "anchor": [
         "left",
-        "top"
+        "top",
+        "right"
       ],
       "visible": true,
       "enabled": true,
@@ -79,7 +82,8 @@
       "events": {},
       "anchor": [
         "left",
-        "top"
+        "top",
+        "right"
       ],
       "visible": true,
       "enabled": true,
@@ -90,7 +94,7 @@
       "type": "rating",
       "x": 16,
       "y": 82,
-      "width": 232,
+      "width": 248,
       "height": 28,
       "props": {
         "value": 3,
@@ -101,7 +105,8 @@
       },
       "anchor": [
         "left",
-        "top"
+        "top",
+        "right"
       ],
       "visible": true,
       "enabled": true,

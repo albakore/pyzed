@@ -21,6 +21,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import components as _components
 from .geometry import HANDLES
+from .locale import tr
 from .model import Control
 from .runtime import theme_for
 
@@ -48,7 +49,14 @@ def dot_grid(width: float, height: float, step: int, color: str) -> List[Any]:
     return shapes
 
 
-def _chrome(title: str, width: float, t: Theme) -> Any:
+def _chrome(title: str, width: float, t: Theme, component: bool = False) -> Any:
+    if component:  # not a window: no window buttons, and the bar says what it is
+        return _core.container(
+            _core.row([_icon("component", size=13, color=t.accent),
+                       ui.label(f"{tr('Component')} · {title}", size="sm", color="accent", theme=t, wrap=False)],
+                      spacing=6, align="center"),
+            width=width, height=CHROME_HEIGHT, padding=(0, 10), align_y="center", bg=alpha(t.accent, 0.12),
+        )
     dots = _core.row([_core.container(width=10, height=10, bg=color, radius=5)
                       for color in ("#ff5f57", "#febc2e", "#28c840")], spacing=6)
     return _core.container(
@@ -165,8 +173,9 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     # A soft outline instead of a blurred shadow: wgpu redraws blurred shadows of a scrolled
     # layer over its content while a later layer (the code editor's completion list) is shown.
     frame = _core.container(
-        _core.container(_core.column([_chrome(form.title, w, ft), client]),
-                        border_color=t.border, border_width=1, radius=t.radius, clip=True),
+        _core.container(_core.column([_chrome(form.title, w, ft, getattr(d.doc, "is_scene", False)), client]),
+                        border_color=t.accent if getattr(d.doc, "is_scene", False) else t.border, border_width=1,
+                        radius=t.radius, clip=True),
         padding=3, radius=t.radius + 3, border_color=alpha(t.shadow, 0.5), border_width=3,
     )
     # A size grip under the bottom-right corner resizes the form itself.

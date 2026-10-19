@@ -54,7 +54,7 @@ def _guard(d: "Designer", action: Callable[[], Any]) -> Any:
 # -- layout helpers ------------------------------------------------------------------
 
 LABEL = 84.0
-SECTIONS = ("class", "toolbox", "layout", "properties", "events", "methods", "bindings")
+SECTIONS = ("class", "toolbox", "layout", "inherited", "properties", "events", "methods", "bindings")
 
 
 def _open(d: "Designer") -> set:
@@ -103,7 +103,15 @@ def properties(d: "Designer", t: Theme, rows: List[Any]) -> List[Any]:
         return component_rows(d, t)
     if len(doc.selection) == 1 and doc.primary is not None:
         bindings = binding_section(d, t)
-        return rows + ([_core.container(_accordion(d, [bindings], t), padding=(12, 0, 0, 0))] if bindings else [])
+        note = None
+        if doc.inherited(doc.primary.name):
+            base = doc.base.name if doc.base is not None else "the base"
+            note = _core.container(ui.callout(f"Inherited from {base}",
+                                              "Changes here apply to this component only. It cannot be renamed "
+                                              "or deleted: the base component owns it.", tint="info", theme=t),
+                                   padding=(0, 12, 12, 12))
+        return [note, *rows] + ([_core.container(_accordion(d, [bindings], t), padding=(12, 0, 0, 0))]
+                                if bindings else [])
     return rows
 
 
@@ -133,6 +141,8 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
             field("Description", ui.input(scene.description, lambda v: _guard(d, lambda: doc.set_description(v)),
                                           placeholder="What it is for", theme=t), t,
                   tip="The docstring of the class; the toolbox shows it as a tooltip."),
+            field("Inherits", _base_picker(d, t), t,
+                  tip="A designed component to extend: this one gets its controls, properties, events and methods."),
         ]), icon="braces"),
         ui.AccordionSection("toolbox", "Toolbox", _stack([
             field("Label", ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name),
@@ -148,11 +158,67 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
                                          placeholder="transparent", mono=True, theme=t), t),
             field("Grid size", _number(scene.grid, lambda v: d.set_form("grid", int(v)), t, min=2, max=64), t),
         ]), icon="ruler"),
+        inherited_section(d, t),
         member_section(d, t),
         event_section(d, t),
         method_section(d, t),
     ]
-    return [header, warning, _accordion(d, sections, t)]
+    return [header, warning, _accordion(d, [s for s in sections if s is not None], t)]
+
+
+def _base_picker(d: "Designer", t: Theme) -> Any:
+    doc = d.doc
+    assert isinstance(doc, SceneDocument)
+    mine = doc.path.resolve() if doc.path else None
+    options = {NONE: None}
+    for path in d.base_components():
+        if path.resolve() != mine:
+            options[_relative_label(path)] = path
+    current = doc.base_file
+    if current is not None and current not in options.values():
+        options[_relative_label(current)] = current
+    chosen = next((label for label, path in options.items() if path == current), NONE)
+
+    def pick(label: str) -> None:
+        try:
+            _guard(d, lambda: doc.set_base(options.get(label)))
+        except (ValueError, OSError) as err:
+            d.notify("Cannot inherit from it", str(err), kind="error", seconds=4)
+
+    return ui.select(list(options), chosen, pick, width="fill", theme=t)
+
+
+def _relative_label(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(Path.cwd()))
+    except ValueError:
+        return path.name
+
+
+def inherited_section(d: "Designer", t: Theme) -> Any:
+    """What the component gets from the components it extends (read only: edit them in their own file)."""
+    doc = d.doc
+    assert isinstance(doc, SceneDocument)
+    chain = doc.base_info()
+    if not chain:
+        return None
+    rows: List[Any] = []
+    for file, info in chain:
+        rows.append(_core.row([_icon("component", size=14, color=t.accent),
+                               ui.label(info.name, weight="semibold", theme=t),
+                               ui.label(file, size="xs", color="text_muted", mono=True, theme=t)],
+                              spacing=6, align="center"))
+        details = [
+            ("Properties", ", ".join(m.name for m in info.members)),
+            ("Events", ", ".join(info.events)),
+            ("Methods", ", ".join(f"{m}()" for m in info.methods)),
+        ]
+        rows.extend(field(label, ui.label(text or NONE, size="sm", mono=True, theme=t), t)
+                    for label, text in details)
+    rows.append(_hint("Override a method by defining it again in this class; super() calls the base's.", t))
+    base = doc.base
+    controls = len(base.controls) if base is not None else 0
+    return ui.AccordionSection("inherited", f"Inherited ({controls} controls)", _stack(rows), icon="git-fork")
 
 
 def _spaced(name: str) -> str:
@@ -314,7 +380,7 @@ def binding_section(d: "Designer", t: Theme) -> Any:
     if not spec.props:
         return None
     bound = doc.scene.bound(control.name)
-    members = [m.name for m in doc.members]
+    members = [m.name for m in doc.all_members]
     expressions: Dict[Any, bool] = d.__dict__.setdefault("_scene_expressions", {})
     rows: List[Any] = []
     if not members:
@@ -397,7 +463,7 @@ def compile_class(doc: SceneDocument) -> type:
         if isinstance(value, type) and issubclass(value, SceneComponent) and value is not SceneComponent \
                 and value.__module__ == module.__name__:
             if value.scene_file is not None:
-                scenes.overrides[value.scene_file] = doc.scene.copy()  # preview the unsaved layout
+                scenes.overrides[value.scene_file] = doc.own_scene().copy()  # preview the unsaved layout
             value.size = (doc.scene.width, doc.scene.height)
             return value
     raise TypeError(f"the code has no SceneComponent subclass (class {doc.scene.name}(SceneComponent, scene=...))")

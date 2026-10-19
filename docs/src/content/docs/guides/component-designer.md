@@ -17,11 +17,19 @@ class, so drawing it and writing it by hand are the same thing, and you can swit
 
 ## Creating one
 
-Press **New** (Ctrl+N) and choose **New component**, or open a `.pzcomp` file:
+Press **New component** in the toolbar (Ctrl+Shift+N), or **New** (Ctrl+N) and pick the **Component** card. Give it
+a name and a folder; **Inherits from** can start it from another component (see [Inheritance](#inheritance)).
+**Create component** saves both files and opens it. You can also open a `.pzcomp` file:
+
+![The New component dialog](../../../../screenshots/designer-component-new.png)
 
 ```bash
 pyzed design ui/rating.pzcomp     # created on first save if it does not exist
 ```
+
+A component is not a form: it has no window, title or menu, and it only exists inside a form or another component.
+The designer shows it that way: a **Component** badge in the title bar, and an accent frame with the class name on
+the canvas instead of window buttons.
 
 A component is two files next to each other:
 
@@ -134,6 +142,60 @@ def ada_rated(form, event):
     form.status.text = f"{event.sender.person} now has {event.value} stars"
 ```
 
+## Responsive components
+
+A component placed on a form, or inside another component, takes the size of its rectangle there, and its controls
+follow their **anchors** like on a form: anchored left and right, a control stretches with the component; anchored
+right, it moves with the right edge. Flex rows, columns and grids inside the component lay out at the new size too.
+
+In the example, the frame of `ProfileCard` is anchored on all four sides and the headline, the role and the rating
+on left, top and right. `Reviews` puts its two cards in a **flex row** with `grow` 1 each, so they share the width
+of the window and shrink with it:
+
+![The two cards shrink with a narrow window](../../../../screenshots/designer-component-responsive.png)
+
+Used from code, a component is as wide as there is room for, up to its design width, and as tall as its design
+height.
+
+## Inheritance
+
+A component can inherit from another one to reuse its layout and its logic. Pick the base in **Inherits from**
+when you create it, or later in the **Inherits** field of the Class section. The class then derives from the base
+class:
+
+```python
+from pyzed.designer import import_component
+
+ProfileCard = import_component("profile_card.pzcomp")
+
+
+class TeamCard(ProfileCard, scene="team_card.pzcomp"):
+    """A profile card that also shows the team."""
+
+    team: str = "Analytical Engine"
+
+    def stars_change(self, event):
+        """Does what a ProfileCard does, and the badge turns green with five stars."""
+        result = super().stars_change(event)
+        self.team_label.tint = "success" if event.value == 5 else "accent"
+        return result
+```
+
+`import_component` imports the class of a `.pzcomp` relative to the module, so the base and the new component can
+live in any folder. What the new component gets:
+
+- **Controls**: the base's controls show on the canvas, with yours on top. You can move or change an inherited
+  control (the change is saved in your `.pzcomp` only), but not rename or delete it, because the base's code uses
+  it. Saving writes only your controls and the inherited ones you changed.
+- **Properties, custom events and methods**: everything of the base class, as in any Python subclass. Bindings can
+  use inherited properties. Define a method again to override it, and call `super()` to run the base's.
+- **Changes to the base**: saving the base reloads the components that inherit from it, so they pick up its new
+  controls and code.
+
+The **Inherited** section of the panel lists what comes from each base:
+
+![TeamCard inherits from ProfileCard](../../../../screenshots/designer-component-inherit.png)
+
 ## Running and using it
 
 Press **F5** to open the component in a preview window. The window lists the custom events it raises, so you can
@@ -171,8 +233,11 @@ doc.set_binding("button1", "variant", '"solid" if value >= 1 else "ghost"')
 doc.wire("button1", "click")
 doc.save()
 
+big = designer.new_component("BigRating", "ui/big_rating.pzcomp", extends="ui/rating.pzcomp")
+big.save()
+
 designer.discover("ui")  # import every designed component of a folder
 ```
 
 See [`examples/designer/components`](https://github.com/albakore/pyzed/tree/main/examples/designer/components)
-for the Rating, ProfileCard and Reviews example.
+for the Rating, ProfileCard, TeamCard and Reviews example.

@@ -59,7 +59,7 @@ The title bar holds the main menu (☰: File and Run), **Run** and **Stop**, the
 | Ctrl+Z, Ctrl+Shift+Z | Undo, redo |
 | Enter | Open the code of the selected control's main event |
 | Escape | Cancel a drag, close a menu, go back to the pointer |
-| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N | Save, save as, open, new |
+| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N, Ctrl+Shift+N | Save, save as, open, new form, new component |
 | Ctrl+Shift+P | Command palette |
 | Ctrl+Shift+A | Add a control (searchable list) |
 | Ctrl+B, Ctrl+Alt+B, Ctrl+J | Show or hide the left, right and bottom docks |

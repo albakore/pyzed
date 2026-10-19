@@ -105,6 +105,15 @@ _ES = {
     "File name and handler prefix": "Nombre del archivo y prefijo de los manejadores",
     "Same as the name": "Igual que el nombre", "Creates {path}": "Crea {path}", "New {kind}": "Nuevo {kind}",
     "Form": "Formulario", "Component": "Componente",
+    "New component": "Nuevo componente", "New component…": "Nuevo componente…",
+    "A window of your app, with its own handlers.": "Una ventana de tu aplicación, con sus propios manejadores.",
+    "A reusable piece, not a window: you place it in forms and in other components.":
+        "Una pieza reutilizable, no una ventana: la colocas en formularios y en otros componentes.",
+    "A reusable piece for forms and other components, not a window":
+        "Una pieza reutilizable para formularios y otros componentes, no una ventana",
+    "Class {name}": "Clase {name}", "Inherits from": "Hereda de", "Nothing (a new component)": "Nada (un componente nuevo)",
+    "Starts with its controls, properties, events and methods": "Empieza con sus controles, propiedades, eventos y métodos",
+    "Create component": "Crear componente",
     "Blank": "En blanco", "An empty window.": "Una ventana vacía.", "Dialog": "Diálogo",
     "A message with OK and Cancel buttons.": "Un mensaje con los botones Aceptar y Cancelar.",
     "Sign in": "Inicio de sesión", "Email and password in a centered column.": "Correo y contraseña en una columna centrada.",
