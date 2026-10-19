@@ -197,3 +197,43 @@ def test_telemetry_settings_render(tmp_path):
     assert "Widget" in repr(dialogs.telemetry_group(d, d.theme_obj))
     tel.configure(enabled=True, endpoint="https://example.com/t")
     assert "Widget" in repr(dialogs.settings(d, d.theme_obj))
+
+
+# -- completion list ---------------------------------------------------------------
+
+
+def test_completion_rows_fit_the_list():
+    room = code_panel.LIST_WIDTH - 60
+    label, detail = code_panel.fit_row("greeting", "def greeting(name: str, polite: bool = True) -> str", room)
+    assert label == "greeting" and detail.endswith("…")
+    assert len(label) * 13 * code_panel.CHAR_WIDTH + len(detail) * 6.2 <= room
+    # too little room left for the detail: only the label shows
+    assert code_panel.fit_row("pyzed.designer.agent_locale", "(import pyzed.designer.agent_locale)", room)[1] == ""
+    long_label, dropped = code_panel.fit_row("a_really_long_module_name_that_never_fits_in_the_list", "x", room)
+    assert long_label.endswith("…") and dropped == ""
+    assert len(long_label) * 13 * code_panel.CHAR_WIDTH <= room
+
+
+def test_completion_list_scrolls(tmp_path):
+    from pyzed.designer.intellisense import CompletionItem
+
+    d = Designer(tmp_path / "x.pzform", language_servers=False)
+    d.edit_whole_file()
+    a = d.assist
+    items = [CompletionItem(label=f"name{i}", kind="variable") for i in range(40)]
+    a.completion = code_panel.Completion(1, 1, items, items)
+    t = d.theme_obj
+    code_panel.completion_popup(a, t, visible_rows=5)
+    assert a.completion.top == 0
+    a.move_selection(12)
+    code_panel.completion_popup(a, t, visible_rows=5)
+    assert a.completion.top == 8  # the highlighted row is the last one on screen
+    a.scroll_completion(0, -2)  # the wheel scrolls without moving the selection
+    code_panel.completion_popup(a, t, visible_rows=5)
+    assert a.completion.top == 14 and a.completion.index == 12
+    a.scroll_completion(0, -100)
+    code_panel.completion_popup(a, t, visible_rows=5)
+    assert a.completion.top == 35
+    a.move_selection(1)
+    code_panel.completion_popup(a, t, visible_rows=5)
+    assert a.completion.top == 13

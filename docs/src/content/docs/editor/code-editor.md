@@ -112,6 +112,8 @@ shortcuts (<kbd>Delete</kbd>, arrows, <kbd>Ctrl</kbd>+<kbd>D</kbd>) do not, so t
 - <kbd>↑</kbd>/<kbd>↓</kbd> move (wrapping around), <kbd>Page Up</kbd>/<kbd>Page Down</kbd> jump nine rows,
   <kbd>Enter</kbd> or <kbd>Tab</kbd> insert, <kbd>Esc</kbd> closes; a click inserts too. The footer shows the
   position (`3/42`).
+- The mouse wheel scrolls the list without moving the highlighted entry, and a scrollbar on its right shows where
+  you are. Long names and signatures are cut with `…` to fit; the pane beside the list shows them whole.
 - Typing keeps filtering the list: names that start with what you typed come first, then names that contain the
   letters in order (`gtx` finds `get_text`).
 - Each entry has an icon for its kind and, beside the list, a pane with its **signature** and **documentation**
