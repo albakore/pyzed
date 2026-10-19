@@ -22,8 +22,6 @@ if TYPE_CHECKING:  # pragma: no cover
 #: Default sizes in pixels: width of side docks, height of top and bottom docks.
 SIZES = {"left": 240.0, "right": 320.0, "bottom": 300.0, "top": 220.0}
 MIN_SIZE = {"left": 170.0, "right": 220.0, "bottom": 120.0, "top": 120.0}
-#: The form keeps at least this much room.
-MIN_CENTER = 320.0
 DOCK_ICONS = {"left": "panel-left", "right": "panel-right", "bottom": "panel-bottom", "top": "panel-top"}
 TAB_HEIGHT = 32.0
 
@@ -173,49 +171,22 @@ def dock_view(d: "Designer", dock: str, t: Theme) -> Optional[Any]:
                             on_enter=d.focus_code if panel.id == "code" else d.focus_panel)
 
 
-def _clamp(dock: str, size: float, total: float) -> float:
-    return max(MIN_SIZE[dock], min(size, max(total - MIN_CENTER, MIN_SIZE[dock])))
+#: The edge of each dock that carries its resize handle (the one facing the form).
+INNER_EDGE = {"left": "right", "right": "left", "bottom": "top", "top": "bottom"}
 
 
 def workspace(d: "Designer", center: Any, t: Theme) -> Any:
-    """``center`` (toolbar and form) surrounded by the open docks, with draggable splitters."""
-    views = {dock: dock_view(d, dock, t) for dock in DOCKS}
+    """``center`` (toolbar and form) surrounded by the open docks, each resizable from its inner edge."""
     layout = d.layout
 
-    def build(width: float, height: float) -> Any:
-        column = center
-        middle_h = height
-        top, bottom = views["top"], views["bottom"]
-        left, right = views["left"], views["right"]
-        if top is not None:
-            middle_h = height - _clamp("top", layout.sizes["top"], height) - 1
-        if bottom is not None:
-            size = _clamp("bottom", layout.sizes["bottom"], middle_h)
-            avail = max(middle_h - 1, 1)
-            column = ui.split(column, bottom, vertical=True, ratio=(avail - size) / avail,
-                              on_resize=lambda r, a=avail: d.resize_dock("bottom", a * (1 - r)),
-                              min_size=MIN_CENTER / 2, min_size_second=MIN_SIZE["bottom"], theme=t)
-        if top is not None:
-            size = _clamp("top", layout.sizes["top"], height)
-            avail = max(height - 1, 1)
-            column = ui.split(top, column, vertical=True, ratio=size / avail,
-                              on_resize=lambda r, a=avail: d.resize_dock("top", a * r),
-                              min_size=MIN_SIZE["top"], min_size_second=MIN_CENTER / 2, theme=t)
-        row = column
-        inner_w = width
-        if left is not None:
-            inner_w = width - _clamp("left", layout.sizes["left"], width) - 1
-        if right is not None:
-            size = _clamp("right", layout.sizes["right"], inner_w)
-            avail = max(inner_w - 1, 1)
-            row = ui.split(row, right, ratio=(avail - size) / avail,
-                           on_resize=lambda r, a=avail: d.resize_dock("right", a * (1 - r)),
-                           min_size=MIN_CENTER, min_size_second=MIN_SIZE["right"], theme=t)
-        if left is not None:
-            size = _clamp("left", layout.sizes["left"], width)
-            avail = max(width - 1, 1)
-            row = ui.split(left, row, ratio=size / avail, on_resize=lambda r, a=avail: d.resize_dock("left", a * r),
-                           min_size=MIN_SIZE["left"], min_size_second=MIN_CENTER, theme=t)
-        return row
+    def sized(dock: str) -> Optional[Any]:
+        view = dock_view(d, dock, t)
+        if view is None:
+            return None
+        return _core.resizable(view, edge=INNER_EDGE[dock], size=layout.sizes[dock], min_size=MIN_SIZE[dock],
+                               on_resize=lambda size, dock=dock: d.resize_dock(dock, size), color=t.border,
+                               hover_color=t.border_focused)
 
-    return _core.responsive(build)
+    middle = _core.column([sized("top"), _core.container(center, width="fill", height="fill", clip=True),
+                           sized("bottom")], width="fill", height="fill")
+    return _core.row([sized("left"), middle, sized("right")], width="fill", height="fill")

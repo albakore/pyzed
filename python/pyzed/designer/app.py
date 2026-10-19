@@ -623,12 +623,9 @@ class Designer(App):
         self._save_layout()
 
     def resize_dock(self, dock: str, size: float) -> None:
-        """Splitter dragged: the new size is saved at most twice a second while dragging."""
+        """A dock's edge was dragged (called when it is let go)."""
         self.layout.resize(dock, size)
-        now = time.monotonic()
-        if now - getattr(self, "_layout_saved", 0.0) > 0.5:
-            self._layout_saved = now
-            self._save_layout()
+        self._save_layout()
 
     def dock_visible(self, dock: str) -> bool:
         return self.layout.shown(dock, self) is not None
