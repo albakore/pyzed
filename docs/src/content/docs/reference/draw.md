@@ -215,6 +215,26 @@ Text anchored at `(x, y)`; `align_x`/`align_y` choose which side of the text sit
 | `align_x` | `"start"`, `"center"` or `"end"`. |
 | `align_y` | `"top"`, `"center"` or `"bottom"`. |
 
+### `image`
+
+```python
+image(source, x, y, w, h, *, rotation=0.0, opacity=1.0, pixelated=False, size=None)
+```
+
+A bitmap (sprite) drawn in the box `(x, y, w, h)`. Decoded once per source and cached, so drawing it every frame is cheap. See [Making games](/pyzed/games/).
+
+| Parameter | Description |
+| --- | --- |
+| `source` | A path, encoded image bytes (PNG, JPEG…) or raw RGBA bytes with `size`. |
+| `x` | Left. |
+| `y` | Top. |
+| `w` | Width. |
+| `h` | Height. |
+| `rotation` | Degrees, around its center. |
+| `opacity` | From 0 to 1. |
+| `pixelated` | Nearest-neighbor scaling, for pixel art. |
+| `size` | `(width, height)` of raw RGBA bytes. |
+
 ## Transforms
 
 ### `translate`

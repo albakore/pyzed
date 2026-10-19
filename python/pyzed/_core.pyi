@@ -242,6 +242,14 @@ def event_names() -> Any:
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
     ...
+def frames(callback: Any, *, key: Any = ..., max_fps: Any = ...) -> Any:
+    """Calls `callback(dt)` once per displayed frame (usually 60 times a second, in sync
+    with the screen), with `dt` the seconds since the previous one. Made for games and
+    simulations: move things by `speed * dt` and they go equally fast at any frame rate.
+
+    `max_fps` caps the rate where the display does not wait for vsync (software rendering).
+    """
+    ...
 def grid(children: Any = ..., *, columns: Any = ..., rows: Any = ..., max_width: Any = ..., spacing: Any = ..., row_spacing: Any = ..., height: Any = ..., aspect_ratio: Any = ..., width: Any = ..., padding: Any = ..., align_x: Any = ..., align_y: Any = ...) -> Any:
     """Lays children out in a grid.
 
@@ -297,6 +305,13 @@ def post(message: Any) -> Any:
 def presence(content: Any, *, id: Any, key: Any, enter: Any, exit: Any) -> Any:
     """Shows `content` and animates it when `key` changes: the old content plays `exit`
     while the new one plays `enter` (compiled by ``pyzed.animation.presence``).
+    """
+    ...
+def pressed_keys() -> Any:
+    """The names of the keys held down right now, such as `["left", "space"]`.
+
+    Modifiers are left out (read them from the combo `on_key` receives). Games poll
+    this every frame instead of counting presses and releases.
     """
     ...
 def progress_bar(value: Any, *, min: Any = ..., max: Any = ..., width: Any = ..., height: Any = ..., accent: Any = ..., bg: Any = ..., radius: Any = ...) -> Any: ...

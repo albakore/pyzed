@@ -285,6 +285,7 @@ EXAMPLES = sorted(
     [p for p in (ROOT / "examples").glob("*.py") if p.stem not in ("screenshots",)]
     + list((ROOT / "examples" / "tutorial").glob("*.py"))
     + list((ROOT / "examples" / "showcase").glob("*.py"))
+    + list((ROOT / "examples" / "games").glob("*.py"))
     + [ROOT / "examples" / "hot_reload" / "main.py"]
 )
 

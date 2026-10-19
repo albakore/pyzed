@@ -30,6 +30,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;
     m.add_function(wrap_pyfunction!(app::listen, m)?)?;
+    m.add_function(wrap_pyfunction!(app::frames, m)?)?;
+    m.add_function(wrap_pyfunction!(app::pressed_keys, m)?)?;
     m.add_function(wrap_pyfunction!(app::run, m)?)?;
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
