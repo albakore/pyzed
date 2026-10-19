@@ -142,7 +142,7 @@ def panel_header(
             spacing=6,
             align="center",
         ),
-        padding=(0, 6, 0, 10),
+        padding=(0, 6, 0, 12),
         height=height,
         width="fill",
         align_y="center",

@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, List
 
 from .. import _core, anchors, draw, ui
+from . import spacing
 from ..theme import Theme
 from .locale import tr
 
@@ -108,7 +109,7 @@ def position_rows(d: "Designer", c: "Control", t: Theme, prop_row: Callable[...,
             preset_grid(preset, lambda name: d.set_anchor(c.name, name), t),
             _core.row([ui.switch(d.anchor_move, lambda on: setattr(d, "anchor_move", on), theme=t),
                        ui.label(tr("Also move it there"), size="sm", theme=t)], spacing=8, align="center"),
-        ], spacing=8), padding=(4, 12, 8, 120)))
+        ], spacing=8), padding=(4, 0, 8, spacing.LABEL_WIDTH + spacing.LABEL_GAP)))
 
     def num(field: str) -> Any:
         return _number(round(getattr(c, field)), lambda val, f=field: d.set_field(c.name, f, val), t, step=1)
