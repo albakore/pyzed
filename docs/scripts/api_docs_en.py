@@ -1411,3 +1411,96 @@ _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, in declaration order.",
     "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move.",
 }
+
+# -- Dialogs and translations -------------------------------------------------
+_section("ui", "Dialogs", {
+    "pyzed.ui.dialog_layer": {
+        "desc": "Shows a dialog centered over `base` with a dimmed backdrop. With `dialog=None` it returns `base` unchanged, so it can always wrap the view. See [Dialogs](/pyzed/guides/i18n/#dialogs).",
+        "params": {"base": "The UI underneath.", "dialog": "A dialog from the functions below, or `ui.modal`.",
+                   "on_dismiss": "Sent when the backdrop is clicked."},
+        "example": """
+            ui.dialog_layer(self.main_view(), ui.confirm("Delete 3 files?", self.delete, self.cancel, danger=True)
+                            if self.asking else None, on_dismiss=self.cancel)
+        """,
+    },
+    "pyzed.ui.alert": {
+        "desc": "A message with one button.",
+        "params": {"message": "Text or widget.", "on_close": "The button and the close icon.",
+                   "kind": '`"info"`, `"success"`, `"warning"` or `"error"` adds an icon.', "ok_label": "Button text (default: OK, translated)."},
+    },
+    "pyzed.ui.confirm": {
+        "desc": "Asks a yes/no question.",
+        "params": {"message": "Text or widget.", "on_confirm": "The confirm button.", "on_cancel": "Cancel, the close icon.",
+                   "danger": "Paints the confirm button red and labels it Delete.", "kind": "Adds an icon, as in `alert`.",
+                   "confirm_label": "Confirm button text.", "cancel_label": "Cancel button text."},
+    },
+    "pyzed.ui.prompt": {
+        "desc": "Asks for a line of text.",
+        "params": {"value": "Current text.", "on_input": "Receives each edit.", "on_submit": "Enter or the submit button.",
+                   "on_cancel": "Cancel, the close icon.", "message": "Text above the field.", "id": "Field id (for `Command.focus`).",
+                   "submit_label": "Submit button text.", "cancel_label": "Cancel button text."},
+    },
+    "pyzed.ui.choice": {
+        "desc": "A message with your own buttons.",
+        "params": {"options": "`(label, on_press)` pairs; the last one is the main button.", "on_cancel": "The close icon."},
+    },
+    "pyzed.ui.unsaved_changes": {
+        "desc": "\"Save your changes to *name* before closing?\" with Don't save, Cancel and Save.",
+        "params": {"name": "File or document name.", "on_save": "Save.", "on_discard": "Don't save.", "on_cancel": "Cancel."},
+    },
+}, before="Controls")
+
+_section("app", "Languages", {
+    "pyzed.t": {
+        "desc": "The text for `key` in the current language, formatted with `values`. Falls back from `\"es_AR\"` to `\"es\"`, then to the fallback language, then to the key. See [Languages](/pyzed/guides/i18n/).",
+        "params": {"key": "Dotted key, like `\"menu.open\"`.", "language": "Look it up in another language.",
+                   "default": "Returned when the key is missing (default: the key).",
+                   "values": "Values for `{name}` placeholders; `count=` also picks the plural form."},
+        "example": """
+            i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+            i18n.set_language("es")
+            pz.t("greeting", name="Kev"), pz.t("files", count=3)
+        """,
+    },
+    "pyzed.i18n.add": {"desc": "Adds or overrides texts for a language. Nested tables become dotted keys; `{\"one\": ..., \"other\": ...}` tables are plural forms.",
+                       "params": {"language": "Language code, like `\"es\"` or `\"pt_BR\"`.", "catalog": "Dict of texts."}},
+    "pyzed.i18n.load": {"desc": "Loads every `<language>.json` and `<language>.toml` in `folder`; returns the languages found.", "params": {"folder": "Folder with the catalog files."}},
+    "pyzed.i18n.set_language": {"desc": "Switches the language. The app shows it on its next render, so call it from a handler.", "params": {"language": "Language code, like `\"es\"`."}},
+    "pyzed.i18n.language": {"desc": "The current language, normalized (`\"es_ar\"`)."},
+    "pyzed.i18n.languages": {"desc": "The languages with a catalog."},
+    "pyzed.i18n.set_fallback": {"desc": "The language used when a text is missing (default `\"en\"`).", "params": {"language": "Language code."}},
+    "pyzed.i18n.on_change": {"desc": "Calls `listener(language)` after every switch; returns a function that removes it.", "params": {"listener": "Callable that receives the new language."}},
+    "pyzed.i18n.system_language": {"desc": "The operating system's language (`LANG`, `LC_ALL` or the locale).", "params": {"default": "Returned when the system reports none."}},
+    "pyzed.i18n.has": {"desc": "Whether `key` has a text in the language or its fallbacks.", "params": {"key": "Dotted key.", "language": "Language to check (default: the current one)."}},
+})
+
+_section("ui", "Console and help", {
+    "pyzed.ui.Log": {
+        "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.",
+        "params": {"limit": "Most entries kept.", "on_write": "Called after every write (from any thread)."},
+        "example": """
+            log = ui.Log()
+            with log:
+                print("hello")          # still reaches the terminal
+            ui.console(log.entries, on_clear=log.clear)
+        """,
+    },
+    "pyzed.ui.LogEntry": {"desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).", "params": {"level": "Level name.", "text": "The line.", "time": "When it was written (`time.time()`).", "count": "Identical lines in a row."}},
+    "pyzed.ui.LOG_LEVELS": {"desc": "The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error."},
+    "pyzed.ui.console": {
+        "desc": "A log view like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear, and the entries in a monospace list that keeps scrolling to the newest one.",
+        "params": {"entries": "`ui.LogEntry` items (`log.entries`).", "query": "Filter text.", "on_query": "Receives each edit of the filter.",
+                   "hidden": "Levels not shown.", "on_toggle_level": "Called with the level of the clicked toggle.",
+                   "on_clear": "Adds a Clear button.", "on_copy": "Adds a Copy button.", "actions": "Extra widgets at the end of the toolbar.",
+                   "font_size": "Size of the entries.", "id": "Scrollable id."},
+    },
+    "pyzed.ui.shortcuts": {
+        "desc": "A searchable list of key bindings, grouped (for a Keyboard shortcuts dialog).",
+        "params": {"groups": "`[(title, [(label, keys), ...]), ...]`, keys like `\"ctrl-s\"`.", "query": "Filter text.", "on_query": "Adds a search box.", "height": "Height of the list."},
+    },
+    "pyzed.ui.about": {
+        "desc": "An About box: icon, name, version, a description, a few details and link buttons.",
+        "params": {"name": "App name.", "version": "Version text.", "description": "One or two sentences.", "icon": "Lucide icon.",
+                   "details": "`(label, value)` rows.", "links": "`(label, on_press)` buttons."},
+    },
+}, before="Data and feedback")

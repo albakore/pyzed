@@ -11,6 +11,8 @@ A template is a function that fills an empty ``Form``; add your own with
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Union
@@ -133,7 +135,7 @@ def create(name: str = "Form1", *, title: Optional[str] = None, template: str = 
         spec = _TEMPLATES[template]
     except KeyError:
         raise KeyError(f"unknown template {template!r}; available: {sorted(_TEMPLATES)}") from None
-    name = identifier(name) or "form1"
+    name = name if name.isidentifier() else (identifier(name) or "form1")
     form = Form(name=name, title=title or name.replace("_", " ").title(), width=float(width or spec.size[0]),
                 height=float(height or spec.size[1]))
     spec.build(form)
@@ -152,6 +154,8 @@ def new_form(path: Union[str, Path], *, title: Optional[str] = None, template: s
              width: Optional[float] = None, height: Optional[float] = None, overwrite: bool = False) -> Path:
     """Creates ``path`` (``.pzform`` added if missing) and its handlers module from ``template``.
 
+    The form is named after the file (``order-details.pzform`` -> ``OrderDetails``).
+
     Returns the form's path. Raises ``FileExistsError`` if it exists, unless ``overwrite``.
     """
     path = Path(path)
@@ -159,5 +163,7 @@ def new_form(path: Union[str, Path], *, title: Optional[str] = None, template: s
         path = path.with_suffix(SUFFIX)
     if path.exists() and not overwrite:
         raise FileExistsError(f"{path} already exists")
-    doc = create(path.stem, title=title, template=template, width=width, height=height)
+    # settings.pzform -> Settings, order-details.pzform -> OrderDetails
+    name = "".join(part.capitalize() for part in re.split(r"[^0-9a-zA-Z]+", path.stem) if part) or "Form1"
+    doc = create(name, title=title, template=template, width=width, height=height)
     return doc.save(path)

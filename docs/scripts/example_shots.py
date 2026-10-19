@@ -85,6 +85,10 @@ def layout_setup(app):
     app.log = ["layout → outline: right", "Drag a tab onto a drop zone, or a panel edge to resize it."]
 
 
+def dialogs_setup(app):
+    app.dialog = "confirm"
+
+
 def life_setup(app):
     random.seed(4)
     app.randomize()
@@ -99,6 +103,7 @@ SHOTS = {
     "tutorials/styling": (app("styling", "Styling"), (1000, 400)),
     "tutorials/components": (app("components", "Demo", components_setup), None),
     "tutorials/layout": (app("layout", "LayoutDemo", layout_setup), (1100, 680)),
+    "tutorials/dialogs": (app("dialogs", "DialogsDemo", dialogs_setup), (720, 420)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

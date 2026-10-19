@@ -204,7 +204,7 @@ def test_new_form_dialog(tmp_path, monkeypatch):
     app.set_new("template", "settings")
     assert app.dialog_view(app.theme_obj) is not None
     app.create_new_form()
-    assert (tmp_path / "settings.pzform").exists() and app.doc.form.name == "settings"
+    assert (tmp_path / "settings.pzform").exists() and app.doc.form.name == "Settings"
     assert app.prefs.recent and app.prefs.recent[0].endswith("settings.pzform")
 
 
@@ -212,12 +212,12 @@ def test_running_forms_open_other_forms(tmp_path):
     designer.new_form(tmp_path / "main")
     designer.new_form(tmp_path / "other", template="login")
     app = open_form(tmp_path / "main.pzform")
-    command = app.form.open_form("other", email__text="ada@example.com")
-    assert command is not None
+    logged = []
+    app.runtime.log = lambda level, text: logged.append(level)
+    assert app.form.open("other", data={"email": "ada@example.com"}) is not None
     window = app.runtime.opened[0]
-    assert window.runtime.form["email"].props["text"] == "ada@example.com"
-    with pytest.raises(TypeError):
-        app.form.open_form("other", nothing__text="x")
+    assert window.form.data == {"email": "ada@example.com"} and window.runtime.log is app.runtime.log
+    assert app.form.windows == []  # not open until the command runs
 
 
 # -- console -------------------------------------------------------------------------

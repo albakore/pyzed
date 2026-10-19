@@ -415,6 +415,150 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `description` | Texto de ayuda. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
+## Diálogos
+
+### `dialog_layer`
+
+```python
+dialog_layer(base, dialog=None, *, on_dismiss=None, theme=None)
+```
+
+Muestra un diálogo centrado sobre `base` con un fondo oscurecido. Con `dialog=None` devuelve `base` sin cambios, así que puede envolver siempre la vista. Ver [Diálogos](/pyzed/es/guides/i18n/#diálogos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `base` | La interfaz de debajo. |
+| `dialog` | Un diálogo de las funciones de abajo, o `ui.modal`. |
+| `on_dismiss` | Se envía al hacer clic en el fondo. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.dialog_layer(self.vista_principal(), ui.confirm("¿Eliminar 3 archivos?", self.eliminar, self.cancelar,
+                danger=True) if self.preguntando else None, on_dismiss=self.cancelar)
+```
+
+### `alert`
+
+```python
+alert(message, on_close, *, title=None, kind=None, ok_label=None, width=400, theme=None)
+```
+
+Un mensaje con un botón.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Texto o widget. |
+| `on_close` | El botón y el icono de cerrar. |
+| `title` | Título. |
+| `kind` | `"info"`, `"success"`, `"warning"` o `"error"` añade un icono. |
+| `ok_label` | Texto del botón (por defecto: Aceptar, traducido). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `confirm`
+
+```python
+confirm(
+    message,
+    on_confirm,
+    on_cancel,
+    *,
+    title=None,
+    confirm_label=None,
+    cancel_label=None,
+    danger=False,
+    kind=None,
+    width=420,
+    theme=None,
+)
+```
+
+Hace una pregunta de sí o no.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Texto o widget. |
+| `on_confirm` | El botón de confirmar. |
+| `on_cancel` | Cancelar, el icono de cerrar. |
+| `title` | Título. |
+| `confirm_label` | Texto del botón de confirmar. |
+| `cancel_label` | Texto del botón de cancelar. |
+| `danger` | Pinta el botón de rojo y lo llama Eliminar. |
+| `kind` | Añade un icono, como en `alert`. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `prompt`
+
+```python
+prompt(
+    title,
+    value,
+    on_input,
+    on_submit,
+    on_cancel,
+    *,
+    message=None,
+    placeholder='',
+    submit_label=None,
+    cancel_label=None,
+    id=None,
+    width=440,
+    theme=None,
+)
+```
+
+Pide una línea de texto.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | Título. |
+| `value` | Texto actual. |
+| `on_input` | Recibe cada edición. |
+| `on_submit` | Enter o el botón de aceptar. |
+| `on_cancel` | Cancelar, el icono de cerrar. |
+| `message` | Texto sobre el campo. |
+| `placeholder` | Texto de ayuda cuando está vacío. |
+| `submit_label` | Texto del botón de aceptar. |
+| `cancel_label` | Texto del botón de cancelar. |
+| `id` | Id del campo (para `Command.focus`). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `choice`
+
+```python
+choice(message, options, on_cancel, *, title=None, width=440, theme=None)
+```
+
+Un mensaje con tus propios botones.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Cualquier valor de Python, o un callable. |
+| `options` | Pares `(texto, on_press)`; el último es el botón principal. |
+| `on_cancel` | El icono de cerrar. |
+| `title` | Título. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `unsaved_changes`
+
+```python
+unsaved_changes(name, on_save, on_discard, on_cancel, *, width=440, theme=None)
+```
+
+«¿Guardar los cambios de *nombre* antes de cerrar?» con No guardar, Cancelar y Guardar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre del archivo o documento. |
+| `on_save` | Guardar. |
+| `on_discard` | No guardar. |
+| `on_cancel` | Cancelar. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
 ## Controles
 
 ### `select`
@@ -625,6 +769,130 @@ ui.accordion([
     ui.AccordionSection("events", "Events", event_rows, icon="zap"),
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
+
+## Consola y ayuda
+
+### `Log`
+
+```python
+class Log
+```
+
+Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `limit` | Máximo de entradas guardadas. |
+| `on_write` | Se llama tras cada escritura (desde cualquier hilo). |
+
+```python
+log = ui.Log()
+with log:
+    print("hola")           # sigue llegando a la terminal
+ui.console(log.entries, on_clear=log.clear)
+```
+
+### `LogEntry`
+
+```python
+@dataclass
+class LogEntry(level, text, time=1792370385.0771632, count=1)
+```
+
+Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `level` | Nivel. |
+| `text` | La línea. |
+| `time` | Cuándo se escribió (`time.time()`). |
+| `count` | Líneas idénticas seguidas. |
+
+### `LOG_LEVELS`
+
+```python
+LOG_LEVELS(...)
+```
+
+Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error.
+
+### `console`
+
+```python
+console(
+    entries,
+    *,
+    query='',
+    on_query=None,
+    hidden=(),
+    on_toggle_level=None,
+    on_clear=None,
+    on_copy=None,
+    actions=(),
+    font_size=12.5,
+    id=None,
+    theme=None,
+)
+```
+
+Una vista de registro como la consola de las herramientas de desarrollo del navegador: filtro, un botón por nivel con su cuenta, copiar y limpiar, y las entradas en monoespaciada, siempre desplazada a la más nueva.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `entries` | Elementos `ui.LogEntry` (`log.entries`). |
+| `query` | Texto del filtro. |
+| `on_query` | Recibe cada edición del filtro. |
+| `hidden` | Niveles ocultos. |
+| `on_toggle_level` | Se llama con el nivel del botón pulsado. |
+| `on_clear` | Añade el botón Limpiar. |
+| `on_copy` | Añade el botón Copiar. |
+| `actions` | Widgets extra al final de la barra. |
+| `font_size` | Tamaño de las entradas. |
+| `id` | Id del scrollable. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `shortcuts`
+
+```python
+shortcuts(groups, *, query='', on_query=None, height=380, theme=None)
+```
+
+Una lista de atajos de teclado agrupada y con búsqueda (para un diálogo de atajos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `groups` | `[(título, [(etiqueta, teclas), ...]), ...]`, teclas como `"ctrl-s"`. |
+| `query` | Texto del filtro. |
+| `on_query` | Añade un buscador. |
+| `height` | Alto de la lista. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `about`
+
+```python
+about(
+    name,
+    version='',
+    description='',
+    *,
+    icon='app-window',
+    details=(),
+    links=(),
+    theme=None,
+)
+```
+
+Un cuadro Acerca de: icono, nombre, versión, una descripción, algunos detalles y botones de enlace.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre de la app. |
+| `version` | Versión. |
+| `description` | Una o dos frases. |
+| `icon` | Icono de Lucide. |
+| `details` | Filas `(etiqueta, valor)`. |
+| `links` | Botones `(etiqueta, on_press)`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Datos y feedback
 
@@ -1557,7 +1825,7 @@ Muestra `items` (normalmente `toast(...)`) apilados en la esquina inferior derec
 ### `popover`
 
 ```python
-popover(base, content=None, *, x=0, y=0, on_dismiss=None)
+popover(base, content=None, *, x=0, y=0, on_dismiss=None, align_x='start')
 ```
 
 Muestra `content` (un `ui.menu`, una tarjeta…) sobre `base` en `(x, y)`. Hacer clic en cualquier otro sitio llama a `on_dismiss`. Para un menú de clic derecho, guarda la posición del ratón con `mouse_area(on_move=...)` y abre el popover desde `on_right_press` (ver `examples/context_menu.py`).
@@ -1569,6 +1837,7 @@ Muestra `content` (un `ui.menu`, una tarjeta…) sobre `base` en `(x, y)`. Hacer
 | `x` | Posición horizontal. |
 | `y` | Posición vertical. |
 | `on_dismiss` | Mensaje o callable que se envía al cerrar. |
+| `align_x` | Alineación horizontal: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ## Código
 

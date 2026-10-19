@@ -29,7 +29,7 @@ from ..theme import Theme, themes
 from . import code as _code
 from . import components as _components
 from . import layout as _layout
-from .model import Control, Form, code_path, load
+from .model import SUFFIX, Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
 
@@ -159,38 +159,34 @@ class FormProxy:
         """The Pyzed window running this form (for ``Command`` helpers)."""
         return self._runtime.window
 
+    @property
+    def data(self) -> Any:
+        """What the form that opened this one passed as ``data=`` (``None`` otherwise)."""
+        return self._runtime.data
+
     def close(self) -> _core.Command:
         return self._runtime.window.close()
 
-    def open_form(self, path: Union[str, Path], **values: Any) -> _core.Command:
-        """A command that opens another form in a new window: ``return form.open_form("settings")``.
+    def open(self, form: Union[str, Path, Form], *, data: Any = None) -> _core.Command:
+        """Opens another form in a new window; return the result from a handler::
 
-        ``path`` is relative to this form's folder (``.pzform`` may be left out). Keyword
-        arguments set properties on the new form's controls, e.g. ``name__text="Ada"`` sets
-        ``name.text``. Its handlers run like this form's, and its window is listed in
-        ``form.windows`` while open.
+            def settings_click(form, event):
+                return form.open("settings", data=form.name_input.text)
+
+        ``form`` is a name (``"settings"``) or path, relative to this form's folder, or a
+        ``Form`` built in code. The new form reads ``data`` as ``form.data``; its window is
+        listed in ``form.windows`` while open.
         """
         runtime = self._runtime
-        target = Path(path)
-        if not target.suffix:
-            target = target.with_suffix(".pzform")
-        if not target.is_absolute() and runtime.path is not None:
-            target = runtime.path.parent / target
-        form = load(target)
-        for key, value in values.items():
-            control, _, prop = key.partition("__")
-            if form.get(control) is None or not prop:
-                raise TypeError(f"{target.name} has no control {control!r} (use control__property=value)")
-            form[control].props[prop] = value
-        window = FormWindow(form, load_handlers(target, form), path=target)
+        base = runtime.path.parent if runtime.path is not None else None
+        window = form_window(form, data=data, folder=base)
         window.runtime.log = runtime.log
-        window.app = runtime.window.app if runtime.window.app is not None else runtime.window
         runtime.opened.append(window)
-        return window.open()
+        return _core.Command.open_window(window)
 
     @property
     def windows(self) -> list:
-        """The other forms opened with ``open_form`` that are still open."""
+        """The other forms opened with ``open`` that are still open."""
         return [w.form for w in self._runtime.opened if w.is_open]
 
 
@@ -219,9 +215,10 @@ class FormRuntime:
     """The engine behind ``FormApp``/``FormWindow``: state, event dispatch and drawing."""
 
     def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *, window: Window,
-                 path: Optional[Union[str, Path]] = None) -> None:
+                 path: Optional[Union[str, Path]] = None, data: Any = None) -> None:
         self.form = form.copy()
         self.path: Optional[Path] = Path(path) if path else None
+        self.data = data
         self.opened: list = []
         #: Called as ``log(level, text)`` for events and handler errors (the designer's console).
         self.log: Optional[Callable[[str, str], None]] = None
@@ -355,8 +352,9 @@ class _FormHost:
 
     runtime: FormRuntime
 
-    def _host(self, form: Form, handlers: Optional[Dict[str, Any]], path: Optional[Union[str, Path]] = None) -> None:
-        self.runtime = FormRuntime(form, handlers, window=self, path=path)  # type: ignore[arg-type]
+    def _host(self, form: Form, handlers: Optional[Dict[str, Any]], path: Optional[Union[str, Path]] = None,
+              data: Any = None) -> None:
+        self.runtime = FormRuntime(form, handlers, window=self, path=path, data=data)  # type: ignore[arg-type]
         self.size = (form.width, form.height)
         self.resizable = form.resizable
         self.theme = self.runtime.theme
@@ -420,11 +418,11 @@ class FormApp(_FormHost, App):
 
 
 class FormWindow(_FormHost, Window):
-    """A form in an extra window (the designer uses it for the live preview)."""
+    """A form in an extra window (``form.open(...)``, ``designer.open_window`` and the designer's preview)."""
 
-    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None,
-                 path: Optional[Union[str, Path]] = None) -> None:
-        self._host(form, handlers, path)
+    def __init__(self, form: Form, handlers: Optional[Dict[str, Any]] = None, *,
+                 path: Optional[Union[str, Path]] = None, data: Any = None) -> None:
+        self._host(form, handlers, path, data)
 
     def on_open(self) -> Any:
         return self.runtime.load()
@@ -452,6 +450,48 @@ def open_form(path: Union[str, Path]) -> FormApp:
     discover(project.root if project is not None else Path(path).resolve().parent)  # designed components
     form = load(path)
     return FormApp(form, load_handlers(path, form), path)
+
+
+def resolve(name: Union[str, Path], folder: Optional[Union[str, Path]] = None) -> Path:
+    """The ``.pzform`` file for ``name``: adds the suffix and looks next to ``folder``, then in the project's UI folder."""
+    path = Path(name)
+    if not path.suffix:
+        path = path.with_suffix(SUFFIX)
+    if path.is_absolute():
+        return path
+    candidates = [Path(folder) / path] if folder is not None else []
+    from ..project import find
+
+    project = find(Path(folder) if folder is not None else Path.cwd())
+    if project is not None:
+        candidates.append(project.ui_dir / path)
+    candidates.append(path)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f"form not found: {name} (looked in {', '.join(str(c.parent) for c in candidates)})")
+
+
+def form_window(form: Union[str, Path, Form], *, data: Any = None, handlers: Optional[Dict[str, Any]] = None,
+                folder: Optional[Union[str, Path]] = None) -> FormWindow:
+    """A ``FormWindow`` for ``form`` (a ``.pzform`` path or name, or a ``Form``), ready to open.
+
+    A form loaded from a file gets its handlers module; a ``Form`` built in code uses
+    ``handlers`` (a dict of functions). ``data`` reaches the new form as ``form.data``.
+    """
+    path: Optional[Path] = None
+    if not isinstance(form, Form):
+        path = resolve(form, folder)
+        form = load(path)
+        if handlers is None:
+            handlers = load_handlers(path, form)
+    return FormWindow(form, handlers, path=path, data=data)
+
+
+def open_window(form: Union[str, Path, Form], *, data: Any = None, handlers: Optional[Dict[str, Any]] = None,
+                folder: Optional[Union[str, Path]] = None) -> _core.Command:
+    """A ``Command`` that opens ``form`` in a new window (see ``form_window`` for the arguments)."""
+    return _core.Command.open_window(form_window(form, data=data, handlers=handlers, folder=folder))
 
 
 def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
