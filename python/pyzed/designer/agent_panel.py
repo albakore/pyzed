@@ -9,9 +9,11 @@ run there too, so every change is an ordinary undo step.
 
 from __future__ import annotations
 
+import fnmatch
 import queue
 import re
 import threading
+import time
 import webbrowser
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -75,6 +77,70 @@ class InlineAssist:
     error: str = ""
 
 
+@dataclass
+class KeyCapture:
+    """Signing in by copying a key: the provider's key page is open and the clipboard is watched."""
+
+    provider: str
+    deadline: float
+    next_check: float = 0.0
+    #: A copied key is being checked with the provider.
+    checking: bool = False
+    #: Keys already tried (so a refused key is not checked again and again).
+    tried: set = field(default_factory=set)
+
+
+@dataclass
+class Mention:
+    """Something added to the message with @: a file, the form, its code, the selection or a control."""
+
+    kind: str  # "file" | "form" | "code" | "selection" | "control"
+    key: str
+    label: str
+    icon: str
+
+
+#: How long the clipboard is watched for a copied key.
+CAPTURE_SECONDS = 300.0
+
+#: Slash commands: (name, icon, description, prompt to send or None for an action).
+SLASH_COMMANDS = (
+    ("new", "plus", "Start a new thread", None),
+    ("history", "history", "Show the past threads", None),
+    ("settings", "settings-2", "AI agents settings", None),
+    ("form", "layout-template", "Generate a new form", None),
+    ("component", "component", "Generate a reusable component", None),
+    ("explain", "book-open", "Explain this form and its code", "Explain what this form does and how its handlers work."),
+    ("fix", "wrench", "Check this form's code and fix the issues",
+     "Check the code of this form with validate_code and fix every issue it finds."),
+    ("tidy", "wand-sparkles", "Align the controls and even out the margins",
+     "Align the controls of this form and give them consistent margins."),
+)
+
+#: Permission modes as shown in the composer: mode -> (label, icon, description).
+MODE_TEXT = {
+    "ask": ("Ask before writing", "shield-check", "Edits the form freely; asks before creating or writing files."),
+    "bypass": ("Bypass permissions", "shield-off", "Never asks: writes files and creates documents on its own."),
+    "read": ("Read only", "eye", "Reads only: answers questions and suggests code without changing anything."),
+    "chat": ("Chat only", "message-circle", "No tools: a plain conversation with the model."),
+}
+EFFORT_TEXT = {"low": "Low", "medium": "Medium", "high": "High", "xhigh": "Extra high", "max": "Max"}
+
+_TRIGGER = re.compile(r"(?:^|\s)@([^\s@]*)$")
+_FILE_SUFFIXES = (".py", ".pzform", ".pzcomp", ".md", ".toml", ".json", ".txt", ".css", ".yaml", ".yml")
+
+
+def model_label(model: str) -> str:
+    """A short name for the model picker: ``"anthropic:claude-opus-5-5"`` -> ``"Opus 5.5"``."""
+    name = model.partition(":")[2] or model
+    match = re.fullmatch(r"claude-(opus|sonnet|haiku|fable)-(\d+)(?:-(\d+))?", name)
+    if match:
+        family, major, minor = match.groups()
+        return f"{family.capitalize()} {major}{'.' + minor if minor else ''}"
+    name = name.rpartition("/")[2]
+    return name if len(name) <= 18 else name[:17] + "…"
+
+
 def extract_code(answer: str) -> Optional[str]:
     """The code of the first fenced block of ``answer`` (or the whole answer when it has no fence)."""
     match = _FENCE.search(answer)
@@ -113,6 +179,12 @@ class AgentController:
         self.key_buffer: Dict[str, str] = {}
         self.url_buffer: Dict[str, str] = {}
         self.busy_provider: Optional[str] = None
+        self.capture: Optional[KeyCapture] = None
+        # composer
+        self.menu: Optional[str] = None  # "mode" | "model" | "effort" while its menu is open
+        self.mentions: List[Mention] = []
+        self.picked = 0  # highlighted row of the @ / slash popup
+        self._files: Optional[Tuple[float, List[str]]] = None
         self._queue: "queue.Queue[Tuple[Any, ...]]" = queue.Queue()
         self._agent: Optional[_agents.Agent] = None
         self._stream = stream
@@ -129,7 +201,12 @@ class AgentController:
     def active(self) -> bool:
         """Whether something is in flight (the poll subscription runs while it is)."""
         return self.running or bool(self.inline and self.inline.running) or self.busy_provider is not None \
-            or not self._queue.empty()
+            or self.capture is not None or not self._queue.empty()
+
+    @property
+    def expanded(self) -> bool:
+        """Whether the panel fills the window (the expand button in its header)."""
+        return self.d.layout.zoomed == "agent"
 
     def project_root(self) -> Path:
         """The folder the file tools may use: the uv project, else the open file's folder, else the cwd."""
@@ -147,7 +224,7 @@ class AgentController:
         return self._tools
 
     def models(self) -> List[str]:
-        """``provider:model`` names offered in the model picker (providers that are set up first)."""
+        """``provider:model`` names of the providers that are set up (for the default model setting)."""
         out: List[str] = []
         for pid in _providers.PROVIDERS:
             if not _providers.is_ready(pid):
@@ -179,8 +256,24 @@ class AgentController:
         return bool(box.value)
 
     # -- the UI thread's side ------------------------------------------------------------------------
-    def poll(self) -> None:
-        """Applies what the worker sent: streamed text, tool calls to run, confirmations, the end."""
+    def poll(self) -> Any:
+        """Applies what the worker sent: streamed text, tool calls to run, confirmations, the end. While
+        signing in by copying a key, it also reads the clipboard about once a second."""
+        self._drain()
+        capture = self.capture
+        if capture is None or capture.checking:
+            return None
+        now = time.monotonic()
+        if now > capture.deadline:
+            self.capture = None
+            self.d.notify(tr("No key was copied; sign in again when you are ready"), kind="info", seconds=5)
+            return None
+        if now < capture.next_check:
+            return None
+        capture.next_check = now + 1.0
+        return _core.Command.paste(self.on_clipboard)
+
+    def _drain(self) -> None:
         for _ in range(500):
             try:
                 item = self._queue.get_nowait()
@@ -213,6 +306,11 @@ class AgentController:
                 self.settings.provider(pid).models = names
                 self.save_settings()
                 self.d.notify(tr("{count} models found", count=len(names)), kind="success")
+                current, _ = _providers.split_model(self.thread.model or self.settings.model)
+                if names and not _providers.is_ready(current) and _providers.is_ready(pid):
+                    self.set_model(f"{pid}:{self.settings.models_of(pid)[0]}")
+            elif kind == "key":
+                self._on_key_checked(*item[1:])
 
     def _remember_documents(self) -> None:
         doc = self.d.doc
@@ -246,16 +344,30 @@ class AgentController:
 
     # -- actions ------------------------------------------------------------------------------------
     def set_input(self, text: str) -> None:
+        if self.trigger() != self._trigger_of(text):
+            self.picked = 0
         self.input = text
+        self.menu = None
+        # a mention whose @label was deleted from the text is dropped
+        self.mentions = [m for m in self.mentions if f"@{m.label}" in text]
 
     def send(self, text: Optional[str] = None) -> Any:
-        """Sends the input (or ``text``) to the agent in the current thread."""
+        """Sends the input (or ``text``) to the agent in the current thread. With the @ or / popup open,
+        Enter picks its highlighted row instead."""
+        if text is None and self.trigger() is not None:
+            items = self.popup_items()
+            if items:
+                return items[min(self.picked, len(items) - 1)][3]()
         prompt = (text if text is not None else self.input).strip()
         if not prompt or self.running:
             return None
         if not self.ready:
             self.error = tr("Set up a model provider first.")
-            return self.open_settings()
+            provider_id, _ = _providers.split_model(self.thread.model or self.settings.model)
+            return self.open_settings(provider_id)
+        extra = self._mention_blocks() if text is None else []
+        self.mentions = []
+        self.menu = None
         self.input = ""
         self.error = ""
         self.view = "thread"
@@ -266,7 +378,8 @@ class AgentController:
         model = self.thread.model or self.settings.model
         self.thread.model = model
         note = agent_tools.context_note(self.d)
-        content = [{"type": "text", "text": prompt}, {"type": "text", "text": f"<context>{note}</context>"}]
+        content = [{"type": "text", "text": prompt}, *extra,
+                   {"type": "text", "text": f"<context>{note}</context>"}]
         tools = agent_tools.designer_tools(self.d)
         agent = _agents.Agent(model, tools=tools, system=agent_tools.SYSTEM, settings=self.settings,
                               confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
@@ -335,6 +448,7 @@ class AgentController:
         """Picks the model of the current thread (and of new threads)."""
         self.thread.model = label
         self.settings.model = label
+        self.menu = None
         self.save_settings()
 
     def set_profile(self, label: str) -> None:
@@ -377,9 +491,179 @@ class AgentController:
         self.input = text
         return _core.Command.focus(INPUT_ID)
 
-    def open_settings(self) -> Any:
+    def open_settings(self, provider: Optional[str] = None) -> Any:
+        """Opens Settings → AI agents (with ``provider`` unfolded)."""
+        self.menu = None
+        if provider in _providers.PROVIDERS:
+            self.provider_open = provider
         self.d.dialog = "agent_settings"
         return None
+
+    # -- composer: menus, @ mentions and / commands ---------------------------------------------------
+    def toggle_menu(self, name: str) -> None:
+        self.menu = None if self.menu == name else name
+
+    def close_menu(self) -> None:
+        self.menu = None
+
+    def set_mode(self, mode: str) -> None:
+        self.settings.mode = mode
+        self.menu = None
+        self.save_settings()
+
+    def set_effort(self, effort: str) -> None:
+        self.settings.effort = effort
+        self.menu = None
+        self.save_settings()
+
+    def toggle_fast(self) -> None:
+        self.settings.fast = not self.settings.fast
+        self.save_settings()
+
+    def toggle_expand(self) -> None:
+        """Lets the panel fill the window, or puts it back in its dock."""
+        layout = self.d.layout
+        layout.zoomed = None if layout.zoomed == "agent" else "agent"
+        if layout.zoomed:
+            layout.show("agent")
+
+    @staticmethod
+    def _trigger_of(text: str) -> Optional[Tuple[str, str]]:
+        if text.startswith("/") and " " not in text:
+            return "slash", text[1:].lower()
+        match = _TRIGGER.search(text)
+        if match:
+            return "mention", match.group(1).lower()
+        return None
+
+    def trigger(self) -> Optional[Tuple[str, str]]:
+        """``("slash", query)`` while typing a command, ``("mention", query)`` after an @, else ``None``."""
+        return self._trigger_of(self.input)
+
+    def start_mention(self) -> Any:
+        """The + button: starts an @ mention at the end of the message."""
+        self.input = self.input + ("" if not self.input or self.input.endswith(" ") else " ") + "@"
+        self.picked = 0
+        self.menu = None
+        return _core.Command.focus(INPUT_ID)
+
+    def move_pick(self, step: int) -> None:
+        items = self.popup_items()
+        if items:
+            self.picked = (self.picked + step) % len(items)
+
+    def popup_items(self) -> List[Tuple[str, str, str, Callable[[], Any]]]:
+        """Rows of the @ / slash popup: (icon, label, detail, action)."""
+        trig = self.trigger()
+        if trig is None:
+            return []
+        kind, query = trig
+        if kind == "slash":
+            return [(icon, f"/{name}", tr(text), lambda name=name, prompt=prompt: self.run_command(name, prompt))
+                    for name, icon, text, prompt in SLASH_COMMANDS if name.startswith(query)]
+        rows = [(m.icon, m.label, detail, lambda m=m: self.add_mention(m))
+                for m, detail in self.mention_candidates() if query in m.label.lower()]
+        return rows[:40]
+
+    def run_command(self, name: str, prompt: Optional[str]) -> Any:
+        self.input = ""
+        self.picked = 0
+        if prompt is not None:
+            return self.send(tr(prompt))
+        if name == "new":
+            return self.new_thread()
+        if name == "history":
+            self.view = "history"
+            return None
+        if name == "settings":
+            return self.open_settings()
+        if name == "form":
+            return self.compose(tr("Create a new form for "))
+        if name == "component":
+            return self.compose(tr("Create a reusable component that "))
+        return None
+
+    def project_files(self) -> List[str]:
+        """Files of the project the @ popup offers (no hidden, build or secret files), cached briefly."""
+        now = time.monotonic()
+        if self._files is not None and now - self._files[0] < 10:
+            return self._files[1]
+        from ..agents.tools import SECRET_FILES, SKIP_DIRS
+
+        root = self.project_root()
+        out: List[str] = []
+        try:
+            for path in sorted(root.rglob("*")):
+                rel = path.relative_to(root)
+                if any(part in SKIP_DIRS or part.startswith(".") for part in rel.parts):
+                    continue
+                if path.suffix in _FILE_SUFFIXES and path.is_file() and \
+                        not any(fnmatch.fnmatch(path.name, p) for p in SECRET_FILES):
+                    out.append(rel.as_posix())
+                    if len(out) >= 300:
+                        break
+        except OSError:
+            pass
+        self._files = (now, out)
+        return out
+
+    def mention_candidates(self) -> List[Tuple[Mention, str]]:
+        """Everything that can be added with @, with a short detail for each."""
+        doc = self.d.doc
+        out: List[Tuple[Mention, str]] = []
+        if doc.selection:
+            out.append((Mention("selection", "", "selection", "square-dashed-mouse-pointer"),
+                        tr("{count} selected controls", count=len(doc.selection))))
+        out.append((Mention("form", "", doc.display_name, "layout-template"), tr("The open form")))
+        out.append((Mention("code", "", "code", "file-code"), tr("Its handlers module")))
+        for control in doc.form.controls[:200]:
+            out.append((Mention("control", control.name, control.name, "box"), control.type))
+        for rel in self.project_files():
+            out.append((Mention("file", rel, rel, "file"), tr("File")))
+        return out
+
+    def add_mention(self, mention: Mention) -> Any:
+        """Replaces the @query being typed with ``@label`` and attaches what it names to the message."""
+        self.input = _TRIGGER.sub(lambda m: m.group(0)[: m.group(0).index("@")] + f"@{mention.label} ", self.input)
+        if not any((m.kind, m.key, m.label) == (mention.kind, mention.key, mention.label) for m in self.mentions):
+            self.mentions.append(mention)
+        self.picked = 0
+        return _core.Command.focus(INPUT_ID)
+
+    def remove_mention(self, index: int) -> None:
+        if 0 <= index < len(self.mentions):
+            m = self.mentions.pop(index)
+            self.input = self.input.replace(f"@{m.label} ", "").replace(f"@{m.label}", "")
+
+    def _mention_blocks(self) -> List[Dict[str, Any]]:
+        """The text of every @ mention, as hidden context blocks of the message."""
+        import json
+
+        doc = self.d.doc
+        blocks = []
+        for m in self.mentions:
+            if m.kind == "file":
+                try:
+                    path = self.project_root() / m.key
+                    body = path.read_bytes()[:40_000].decode("utf-8", "replace")
+                except OSError:
+                    continue
+            elif m.kind == "form":
+                body = json.dumps({"form": doc.form.name, "controls": [agent_tools._control_info(c)
+                                                                        for c in doc.form.controls]},
+                                  ensure_ascii=False)[:40_000]
+            elif m.kind == "code":
+                body = doc.code[:40_000]
+            elif m.kind == "selection":
+                chosen = [c for c in doc.form.controls if c.name in doc.selection]
+                body = json.dumps([agent_tools._control_info(c) for c in chosen], ensure_ascii=False)[:40_000]
+            else:
+                found = next((c for c in doc.form.controls if c.name == m.key), None)
+                if found is None:
+                    continue
+                body = json.dumps(agent_tools._control_info(found), ensure_ascii=False)
+            blocks.append({"type": "text", "text": f"<context>@{m.label} ({m.kind}):\n{body}</context>"})
+        return blocks
 
     # -- creating documents (used by the new_document tool, on the UI thread) ------------------------
     def create_document(self, kind: str, name: str, folder: str = "", title: str = "") -> Dict[str, Any]:
@@ -505,6 +789,9 @@ class AgentController:
         else:
             self.d.notify(tr("No system keychain: the key is kept until you close the designer"), kind="warning",
                           seconds=6)
+        if self.capture is not None and self.capture.provider == pid:
+            self.capture = None
+        self.refresh_models(pid)
 
     def remove_key(self, pid: str) -> None:
         _agents.delete_key(pid)
@@ -531,14 +818,96 @@ class AgentController:
         threading.Thread(target=run, daemon=True, name="pyzed-agent-settings").start()
 
     def sign_in(self, pid: str) -> None:
-        """Signs in to ``pid`` with the browser (the key it returns goes to the keychain)."""
+        """Signs in to ``pid`` with the browser, with no other program needed. OpenRouter uses OAuth; the
+        others open their key page and the key is picked up as soon as it is copied."""
+        provider = _providers.PROVIDERS[pid]
+        self.provider_open = pid
+        if provider.login == "oauth":
 
-        def work() -> None:
-            key = _agents.login.login(pid)
-            if key:
-                _agents.set_key(pid, key)
+            def work() -> None:
+                key = _agents.login.login(pid)
+                if key:
+                    _agents.set_key(pid, key)
+                    self._queue.put(("models", pid, _agents.list_models(pid, self.settings, key=key)))
 
-        self._background(pid, work, tr("Signed in to {provider}", provider=_providers.PROVIDERS[pid].name))
+            self._background(pid, work, tr("Signed in to {provider}", provider=provider.name))
+            return
+        try:
+            _agents.login.key_page(pid)
+        except Exception as err:  # noqa: BLE001 - no browser
+            self.d.notify(str(err), kind="error", seconds=6)
+        self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+
+    def connect(self, pid: str) -> None:
+        """Connects ``pid`` from the panel: signs in with the browser, or (local servers) asks for models."""
+        provider = _providers.PROVIDERS[pid]
+        self.menu = None
+        self.open_settings(pid)
+        if provider.login:
+            self.sign_in(pid)
+        elif not provider.needs_key and provider.base_url:
+            self.refresh_models(pid)
+
+    def cancel_capture(self) -> None:
+        self.capture = None
+
+    def paste_key(self, pid: str) -> Any:
+        """Reads a key from the clipboard right now (the Paste button)."""
+        if self.capture is None or self.capture.provider != pid:
+            self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+        self.capture.tried.clear()
+        return _core.Command.paste(lambda text: self.on_clipboard(text, explicit=True))
+
+    def on_clipboard(self, text: str, explicit: bool = False) -> None:
+        """Checks what was copied: a key of the provider being signed in to is verified and saved."""
+        capture = self.capture
+        if capture is None or capture.checking:
+            return
+        key = (text or "").strip()
+        if not _providers.looks_like_key(capture.provider, key):
+            if explicit:
+                self.d.notify(tr("The clipboard has no {provider} key",
+                                 provider=_providers.PROVIDERS[capture.provider].name), kind="warning", seconds=5)
+            return
+        if key in capture.tried:
+            return
+        capture.tried.add(key)
+        capture.checking = True
+        self.busy_provider = capture.provider
+        pid, settings, put = capture.provider, self.settings, self._queue.put
+
+        def check() -> None:
+            try:
+                put(("key", pid, key, _agents.list_models(pid, settings, key=key), ""))
+            except Exception as err:  # noqa: BLE001 - shown to the user
+                put(("key", pid, key, None, str(err)))
+
+        threading.Thread(target=check, daemon=True, name="pyzed-agent-key").start()
+
+    def _on_key_checked(self, pid: str, key: str, models: Optional[List[str]], error: str) -> None:
+        self.busy_provider = None
+        capture = self.capture
+        if capture is not None and capture.provider == pid:
+            capture.checking = False
+        if models is None:
+            self.d.notify(tr("{provider} refused that key: {error}", provider=_providers.PROVIDERS[pid].name,
+                             error=error), kind="error", seconds=7)
+            return
+        self.capture = None
+        secure = _agents.set_key(pid, key)
+        if models:
+            self.settings.provider(pid).models = models
+            self.save_settings()
+        self.d.notify(tr("Signed in to {provider}", provider=_providers.PROVIDERS[pid].name) + ". "
+                      + (tr("Key saved in the system keychain") if secure else
+                         tr("No system keychain: the key is kept until you close the designer")),
+                      kind="success" if secure else "warning", seconds=5)
+        # the thread's model now works if it belongs to this provider; else offer the provider's first model
+        current, _ = _providers.split_model(self.thread.model or self.settings.model)
+        if not _providers.is_ready(current):
+            first = self.settings.models_of(pid)
+            if first:
+                self.set_model(f"{pid}:{first[0]}")
 
     def refresh_models(self, pid: str) -> None:
         self.busy_provider = pid
@@ -666,14 +1035,31 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
     return rows
 
 
+#: Providers offered first in an empty panel that is not set up yet.
+QUICK_PROVIDERS = ("anthropic", "openai", "google", "openrouter", "ollama")
+
+
 def _empty(c: AgentController, t: Theme) -> Any:
     if not c.ready:
+        quick = [_core.button(_core.row([
+            _icon(_providers.PROVIDERS[pid].icon, size=14, color=t.text_accent),
+            _core.column([ui.label(tr("Connect {provider}", provider=_providers.PROVIDERS[pid].name), size="sm",
+                                   theme=t),
+                          ui.label(tr(_providers.PROVIDERS[pid].description), size="xs", color="text_muted",
+                                   theme=t)], width="fill"),
+            _icon("chevron-right", size=12, color=t.text_placeholder)], spacing=8, align="center"),
+            lambda pid=pid: c.connect(pid), padding=(6, 8), width="fill", bg=None, hover_bg=t.element_hover,
+            radius=t.radius) for pid in QUICK_PROVIDERS]
         return _core.column([
-            ui.empty_state(tr("Connect a model"), tr("Add an API key or sign in with the browser to start. Keys are "
-                                                     "kept in the system keychain."), icon="key-round",
-                           actions=[ui.button(tr("Set up AI agents…"), c.open_settings, icon="settings", variant="solid",
-                                              theme=t)], theme=t),
-        ], width="fill", align="center", padding=(24, 12))
+            _core.column([_icon("key-round", size=22, color=t.text_accent),
+                          ui.label(tr("Connect a model"), weight="semibold", theme=t),
+                          ui.label(tr("Sign in with the browser or paste a key. Keys are kept in the system "
+                                      "keychain."), size="sm", color="text_muted", theme=t)],
+                         spacing=6, align="center", width="fill", padding=(20, 12, 10, 12)),
+            _core.column(quick, spacing=2, width="fill"),
+            _core.container(ui.button(tr("All providers…"), c.open_settings, icon="settings-2", variant="ghost",
+                                      size="sm", theme=t), width="fill", align_x="center"),
+        ], spacing=8, width="fill")
     items = [_core.button(_core.row([_icon(icon, size=14, color=t.text_muted),
                                      _core.container(ui.label(tr(text), size="sm", theme=t), width="fill")],
                                     spacing=8, align="center"),
@@ -737,26 +1123,162 @@ def _history(c: AgentController, t: Theme) -> Any:
                             scrollbar_width=4)
 
 
+def _chip(label: str, on_press: Any, t: Theme, *, icon: Optional[str] = None, selected: bool = False,
+          menu: bool = True, tooltip: Optional[str] = None, disabled: bool = False) -> Any:
+    """A small text button of the composer's bottom row (a menu opener when ``menu``)."""
+    color = t.text_placeholder if disabled else t.text if selected else t.text_muted
+    parts = [_icon(icon, size=12, color=t.text_accent if selected else color) if icon else None,
+             ui.label(label, size="xs", color=color, theme=t),
+             _icon("chevron-down", size=10, color=t.text_placeholder) if menu else None]
+    button = _core.button(_core.row(parts, spacing=3, align="center"), None if disabled else on_press,
+                          padding=(3, 5), bg=alpha(t.accent, 0.12) if selected else None, hover_bg=t.element_hover,
+                          radius=t.radius)
+    return ui.tooltip(button, tooltip, theme=t) if tooltip else button
+
+
+def _menu_card(content: Any, t: Theme, height: Optional[float] = None) -> Any:
+    body = _core.scrollable(content, height=height, scrollbar_width=4) if height else content
+    return _core.container(body, padding=4, width="fill", bg=t.elevated_surface if hasattr(t, "elevated_surface")
+                           else t.panel, border_color=t.border, border_width=1, radius=t.radius + 2)
+
+
+def _menu_row(icon: Optional[str], label: str, detail: str, on_press: Any, t: Theme, *, checked: bool = False,
+              highlighted: bool = False, disabled: bool = False) -> Any:
+    lead = _icon("check" if checked else icon, size=13,
+                 color=t.text_accent if checked else t.text_placeholder if disabled else t.text_muted) \
+        if checked or icon else _core.space(width=13)
+    row = _core.row([
+        lead,
+        _core.column([ui.label(label, size="sm", color="text_placeholder" if disabled else "text", theme=t),
+                      ui.label(detail, size="xs", color="text_muted", theme=t) if detail else None], width="fill"),
+    ], spacing=8, align="center")
+    return _core.button(row, None if disabled else on_press, padding=(4, 8), width="fill",
+                        bg=t.element_hover if highlighted else None, hover_bg=t.element_hover, radius=t.radius)
+
+
+def _menu_header(text: str, t: Theme) -> Any:
+    return _core.container(ui.label(text, size="xs", weight="medium", color="text_placeholder", theme=t),
+                           padding=(6, 8, 2, 8))
+
+
+def _model_menu(c: AgentController, t: Theme) -> Any:
+    """Every provider with its models; one that is not set up offers to connect it."""
+    current = c.thread.model or c.settings.model
+    rows: List[Any] = []
+    for pid, p in _providers.PROVIDERS.items():
+        rows.append(_menu_header(p.name, t))
+        if not _providers.is_ready(pid):
+            rows.append(_menu_row("log-in", tr("Connect {provider}…", provider=p.name), tr(p.description),
+                                  lambda pid=pid: c.connect(pid), t))
+            continue
+        names = c.settings.models_of(pid)
+        if not names:
+            rows.append(_menu_row("refresh-cw", tr("Refresh models"), "", lambda pid=pid: c.refresh_models(pid), t))
+        for name in names:
+            full = f"{pid}:{name}"
+            rows.append(_menu_row(None, model_label(full), name if model_label(full) != name else "",
+                                  lambda full=full: c.set_model(full), t, checked=full == current))
+    return _menu_card(_core.column(rows, spacing=0, width="fill"), t, height=320)
+
+
+def _mode_menu(c: AgentController, t: Theme) -> Any:
+    rows = [_menu_row(icon, tr(label), tr(text), lambda m=mode: c.set_mode(m), t, checked=c.settings.mode == mode)
+            for mode, (label, icon, text) in MODE_TEXT.items()]
+    return _menu_card(_core.column(rows, spacing=0, width="fill"), t)
+
+
+def _effort_menu(c: AgentController, t: Theme) -> Any:
+    rows = [_menu_header(tr("How much the model thinks before answering (Claude)"), t)]
+    rows += [_menu_row(None, tr(EFFORT_TEXT[e]), "", lambda e=e: c.set_effort(e), t, checked=c.settings.effort == e)
+             for e in _providers.EFFORTS]
+    return _menu_card(_core.column(rows, spacing=0, width="fill"), t)
+
+
+def _popup(c: AgentController, t: Theme) -> Optional[Any]:
+    """The @ mention / slash command list above the message box."""
+    trig = c.trigger()
+    if trig is None:
+        return None
+    items = c.popup_items()
+    title = tr("Commands") if trig[0] == "slash" else tr("Add context")
+    if not items:
+        body: List[Any] = [_menu_header(title, t), _core.container(
+            ui.label(tr("No matches"), size="sm", color="text_muted", theme=t), padding=(4, 8))]
+    else:
+        picked = min(c.picked, len(items) - 1)
+        body = [_menu_header(title + "  ·  " + tr("Enter to pick"), t)]
+        body += [_menu_row(icon, label, detail, action, t, highlighted=i == picked)
+                 for i, (icon, label, detail, action) in enumerate(items)]
+    return _menu_card(_core.column(body, spacing=0, width="fill"), t, height=min(260, 34 + 40 * max(1, len(items))))
+
+
+def _mentions_row(c: AgentController, t: Theme) -> Optional[Any]:
+    if not c.mentions:
+        return None
+    chips = [_core.container(_core.row([
+        _icon(m.icon, size=11, color=t.text_muted), ui.label(m.label, size="xs", theme=t),
+        _core.button(_icon("x", size=10, color=t.text_placeholder), lambda i=i: c.remove_mention(i), padding=1,
+                     bg=None, hover_bg=t.element_hover, radius=t.radius)], spacing=3, align="center"),
+        padding=(1, 4), bg=t.element, border_color=t.border_variant, border_width=1, radius=t.radius)
+        for i, m in enumerate(c.mentions)]
+    return _core.row(chips, spacing=4, wrap=True)
+
+
 def _composer(c: AgentController, t: Theme) -> Any:
+    """The message box, like Zed's: the text, then the permission mode, model, effort and fast mode."""
+    s = c.settings
     send = ui.icon_button("square", c.stop, size="sm", tooltip=tr("Stop"), theme=t) if c.running else \
-        ui.icon_button("arrow-up", c.send, size="sm", variant="solid", tooltip=tr("Send (Enter)"), theme=t)
+        ui.icon_button("arrow-up", c.send, size="sm", variant="solid", tooltip=tr("Send (Enter)"),
+                       disabled=not c.input.strip(), theme=t)
     field_ = _core.row([
-        ui.input(c.input, c.set_input, placeholder=tr("Ask, or describe what to build…"),
+        ui.input(c.input, c.set_input, placeholder=tr("Message the agent (@ context, / commands)"),
                  on_submit=c.send, id=INPUT_ID, borderless=True, theme=t),
         send,
     ], spacing=4, align="center")
-    profiles = [tr("Write"), tr("Ask"), tr("Minimal")]
-    current = {"write": profiles[0], "ask": profiles[1], "minimal": profiles[2]}[c.settings.profile]
-    model = c.thread.model or c.settings.model
-    labels = {m.partition(":")[2] or m: m for m in c.models()}
+    model = c.thread.model or s.model
+    provider_id, name = _providers.split_model(model)
+    claude = _providers.PROVIDERS[provider_id].protocol == "anthropic"
+    mode_label, mode_icon, mode_text = MODE_TEXT[s.mode]
     controls = _core.row([
-        ui.select(list(labels), model.partition(":")[2] or model, lambda v: c.set_model(labels.get(v, v)), size="sm",
-                  width="fill", theme=t),
-        ui.tooltip(ui.select(profiles, current, c.set_profile, size="sm", theme=t),
-                   tr(_agents.PROFILES[c.settings.profile]), theme=t),
-    ], spacing=6, align="center")
-    return _core.container(_core.column([field_, controls], spacing=6), padding=(6, 8), width="fill",
-                           bg=t.editor, border_color=t.border, border_width=1, radius=t.radius + 2)
+        ui.icon_button("plus", c.start_mention, size="sm", tooltip=tr("Add context (@)"), theme=t),
+        _chip(tr(mode_label), lambda: c.toggle_menu("mode"), t, icon=mode_icon, selected=c.menu == "mode",
+              tooltip=tr(mode_text)),
+        _core.space(width="fill"),
+        _chip(model_label(model), lambda: c.toggle_menu("model"), t, selected=c.menu == "model",
+              tooltip=tr("Model")),
+        _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t, selected=c.menu == "effort",
+              tooltip=tr("Effort"), disabled=not claude),
+        _chip(tr("Fast"), c.toggle_fast, t, icon="zap", selected=s.fast and name in _providers.FAST_MODELS,
+              menu=False, disabled=name not in _providers.FAST_MODELS,
+              tooltip=tr("Fast mode: faster answers at a higher price (Claude Opus)")),
+    ], spacing=2, align="center")
+    return _core.container(_core.column([_mentions_row(c, t), field_, controls], spacing=6), padding=(6, 6, 4, 8),
+                           width="fill", bg=t.editor, border_color=t.border, border_width=1, radius=t.radius + 2)
+
+
+def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
+    """While signing in by copying a key: what to do, and Paste / Cancel."""
+    cap = c.capture
+    if cap is None:
+        return None
+    name = _providers.PROVIDERS[cap.provider].name
+    detail = tr("Checking the key…") if cap.checking else tr(
+        "Create a key on the page that opened and copy it: Pyzed picks it up, checks it and saves it in the system "
+        "keychain.")
+    lead = ui.spinner(size=14, theme=t) if cap.checking else _icon("key-round", size=14, color=t.text_accent)
+    return _core.container(_core.column([
+        _core.row([lead, ui.label(tr("Signing in to {provider}", provider=name), size="sm", weight="medium",
+                                  theme=t)], spacing=8, align="center"),
+        ui.label(detail, size="xs", color="text_muted", theme=t),
+        _core.row([
+            ui.button(tr("Paste key"), lambda: c.paste_key(cap.provider), icon="clipboard-paste", variant="tinted",
+                      size="sm", theme=t),
+            ui.button(tr("Open the page again"), lambda: c.open_key_page(cap.provider), variant="ghost", size="sm",
+                      theme=t),
+            ui.button(tr("Cancel"), c.cancel_capture, variant="ghost", size="sm", theme=t),
+        ], spacing=4, align="center", wrap=True),
+    ], spacing=6, width="fill"), padding=(8, 10), width="fill", bg=alpha(t.accent, 0.08), border_color=t.border_variant,
+        border_width=1, radius=t.radius + 2)
 
 
 def view(d: "Designer", t: Theme) -> Any:
@@ -768,7 +1290,10 @@ def view(d: "Designer", t: Theme) -> Any:
         ui.icon_button("plus", c.new_thread, size="sm", tooltip=tr("New thread"), theme=t),
         ui.icon_button("history", c.toggle_history, size="sm", selected=c.view == "history",
                        tooltip=tr("History"), theme=t),
-        ui.icon_button("settings-2", c.open_settings, size="sm", tooltip=tr("AI agents settings"), theme=t),
+        ui.icon_button("minimize-2" if c.expanded else "maximize-2", c.toggle_expand, size="sm",
+                       tooltip=tr("Back to the dock") if c.expanded else tr("Expand the panel"), theme=t),
+        ui.icon_button("settings-2", lambda: c.open_settings(), size="sm", tooltip=tr("AI agents settings"),
+                       theme=t),
     ], theme=t)
     if c.view == "history":
         return _core.column([header, _history(c, t)], width="fill", height="fill")
@@ -776,18 +1301,27 @@ def view(d: "Designer", t: Theme) -> Any:
     if c.error and not c.running:
         rows.append(ui.callout(tr("The agent stopped"), c.error, tint="error", icon="triangle-alert", actions=[
             ui.button(tr("Retry"), c.retry, icon="refresh-cw", variant="ghost", size="sm", theme=t),
-            ui.button(tr("Settings"), c.open_settings, variant="ghost", size="sm", theme=t),
+            ui.button(tr("Settings"), lambda: c.open_settings(), variant="ghost", size="sm", theme=t),
         ], theme=t))
     thread = _core.scrollable(_core.column(rows, spacing=10, width="fill", padding=(10, 12)), height="fill",
                               id=SCROLL_ID, anchor_bottom=True, scrollbar_width=4)
     bottom: List[Any] = []
+    if c.capture is not None and d.dialog != "agent_settings":
+        bottom.append(_capture_callout(c, t))
     if c.pending is not None:
         bottom.append(_confirmation(c, t))
     if c.snapshot and c.changed and not c.running:
         bottom.append(_review_bar(c, t))
+    menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu}
+    bottom.append(menus[c.menu](c, t) if c.menu in menus else _popup(c, t))
     bottom.append(_composer(c, t))
-    return _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
+    body = _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
                         width="fill", height="fill")
+    if c.expanded:  # a readable column in the middle of the window, like Zed's zoomed panel
+        body = _core.container(_core.container(body, max_width=860, width="fill", height="fill"), width="fill",
+                               height="fill", align_x="center")
+    return body
+
 
 
 def inline_bar(d: "Designer", t: Theme) -> Optional[Any]:
@@ -821,7 +1355,7 @@ _SOURCE_TEXT = {
     "keychain": "Key saved in the system keychain",
     "session": "Key kept for this session only",
     "env": "Key from the environment",
-    "ant": "Signed in with the Anthropic CLI",
+    "ant": "Signed in with the Anthropic CLI profile",
     "none needed": "No key needed",
 }
 
@@ -854,10 +1388,12 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
                       disabled=not c.key_buffer.get(pid), theme=t),
         ], spacing=4, align="center"), description=tr("Or set {env}", env=p.key_env) if p.key_env else None, theme=t))
     actions: List[Any] = []
-    if p.login:
+    capturing = c.capture is not None and c.capture.provider == pid
+    if p.login and not capturing:
         actions.append(ui.button(tr("Sign in with the browser"), lambda: c.sign_in(pid), icon="log-in",
-                                 variant="solid", size="sm", disabled=busy, theme=t))
-    if p.key_url:
+                                 variant="solid" if not source or source == "none needed" else "ghost", size="sm",
+                                 disabled=busy, theme=t))
+    if p.key_url and not capturing:
         actions.append(ui.button(tr("Get a key"), lambda: c.open_key_page(pid), icon="external-link", variant="ghost",
                                  size="sm", theme=t))
     if source in ("keychain", "session", "ant"):
@@ -867,7 +1403,9 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
                              size="sm", disabled=busy or not source, theme=t))
     if busy:
         actions.append(ui.spinner(size=14, theme=t))
-    rows.append(_core.row(actions, spacing=4, align="center"))
+    rows.append(_core.row(actions, spacing=4, align="center", wrap=True))
+    if capturing:
+        rows.append(_capture_callout(c, t))
     if p.custom_url:
         rows.append(ui.field(tr("Server URL"), ui.input(c.settings.base_url(pid), lambda v: c.set_url(pid, v),
                                                         placeholder="http://localhost:11434/v1", mono=True, size="sm",
@@ -899,6 +1437,8 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Effort"), ui.select(efforts, s.effort, lambda v: c.set_setting("effort", v), width=120, size="sm",
                                          theme=t),
                  description=tr("How much the model thinks before answering (Claude)"), theme=t),
+        ui.field(tr("Fast mode"), ui.switch(s.fast, lambda v: c.set_setting("fast", v), theme=t),
+                 description=tr("Fast mode: faster answers at a higher price (Claude Opus)"), theme=t),
         ui.field(tr("Ask before writing files"), ui.switch(s.confirm_writes, lambda v: c.set_setting("confirm_writes", v),
                                                            theme=t),
                  description=tr("Creating forms and saving files waits for your OK"), theme=t),

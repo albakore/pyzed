@@ -1,12 +1,15 @@
-"""Signing in with the browser instead of pasting a key.
+"""Signing in with the browser instead of typing a key. Nothing here needs another program.
 
-* Anthropic: the official Anthropic CLI (``ant auth login``) opens the browser and keeps a short-lived
-  OAuth profile in its own folder; the ``anthropic`` SDK picks it up by itself, so Pyzed stores nothing.
-* OpenRouter: OAuth with PKCE. Pyzed opens the browser on OpenRouter's consent page, receives the code
-  on a one-shot server bound to ``127.0.0.1``, exchanges it for a key and saves the key in the system
-  keychain.
+* OpenRouter (``login="oauth"``): OAuth with PKCE. Pyzed opens the browser on OpenRouter's consent page,
+  receives the code on a one-shot server bound to ``127.0.0.1``, exchanges it for a key and saves the key
+  in the system keychain.
+* Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq (``login="browser"``): these providers do not
+  let other apps sign in with OAuth, so Pyzed opens their key page (``key_page``) and the designer picks
+  the key up as soon as it is copied (``providers.looks_like_key``), checks it and saves it in the keychain.
+* An Anthropic CLI profile (``ant auth login``), when one exists, is still used by the ``anthropic`` SDK;
+  it is optional.
 
-Both block, so the designer runs them in a worker thread.
+``openrouter_login`` blocks, so the designer runs it in a worker thread.
 """
 
 from __future__ import annotations
@@ -37,7 +40,7 @@ class LoginError(RuntimeError):
     """Signing in did not finish (cancelled, timed out, refused or the tool is missing)."""
 
 
-# -- Anthropic CLI -------------------------------------------------------------------------------
+# -- Anthropic CLI (optional) --------------------------------------------------------------------
 
 def ant_path() -> Optional[str]:
     """The ``ant`` executable, if installed."""
@@ -178,12 +181,22 @@ def openrouter_login(*, open_url: Callable[[str], None] = webbrowser.open,
     return str(key)
 
 
+def key_page(provider_id: str, *, open_url: Callable[[str], None] = webbrowser.open) -> str:
+    """Opens the provider's page for creating a key (the first step of ``login="browser"``)."""
+    from .providers import PROVIDERS
+
+    url = PROVIDERS[provider_id].key_url
+    if not url:
+        raise LoginError(f"{PROVIDERS[provider_id].name} has no key page; paste a key instead")
+    open_url(url)
+    return url
+
+
 def login(provider_id: str) -> Optional[str]:
-    """Signs in to ``provider_id`` with the browser. Returns a key to save in the keychain, or ``None``
-    when the credentials are kept elsewhere (the Anthropic CLI)."""
-    if provider_id == "anthropic":
-        ant_login()
-        return None
-    if provider_id == "openrouter":
+    """Signs in to an OAuth provider (``login="oauth"``) with the browser and returns its key. For the
+    other providers the designer opens ``key_page`` and picks the copied key up."""
+    from .providers import PROVIDERS
+
+    if PROVIDERS[provider_id].login == "oauth":
         return openrouter_login()
-    raise LoginError(f"{provider_id} has no browser sign-in; paste a key instead")
+    raise LoginError(f"{PROVIDERS[provider_id].name} signs in by copying a key from its page; use key_page()")

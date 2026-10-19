@@ -117,6 +117,8 @@ class DockLayout:
         self.active: Dict[str, Optional[str]] = {dock: None for dock in DOCKS}
         #: dock whose "move panel" menu is open
         self.menu: Optional[str] = None
+        #: a panel that fills the window (the Agent panel's expand button), or ``None``
+        self.zoomed: Optional[str] = None
 
     def panels_in(self, dock: str, d: "Designer") -> List[Panel]:
         """Returns the panels docked in ``dock`` that currently have something to show."""
@@ -198,6 +200,11 @@ INNER_EDGE = {"left": "right", "right": "left", "bottom": "top", "top": "bottom"
 def workspace(d: "Designer", center: Any, t: Theme) -> Any:
     """``center`` (toolbar and form) surrounded by the open docks, each resizable from its inner edge."""
     layout = d.layout
+    if layout.zoomed is not None:
+        view = dock_view(d, layout.docks[layout.zoomed], t) if layout.is_showing(layout.zoomed, d) else None
+        if view is not None:
+            return view
+        layout.zoomed = None
 
     def sized(dock: str) -> Optional[Any]:
         view = dock_view(d, dock, t)

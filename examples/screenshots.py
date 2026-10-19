@@ -420,10 +420,27 @@ def agent_shots(scale):
     app.agent.snapshot, app.agent.changed = [], False
     app.agent.thread = agents.Thread(model="anthropic:claude-opus-5-5")
     app.screenshot(OUT / "designer-agent-empty.png", size=(1440, 900), scale=scale)
+    app.agent.toggle_menu("model")
+    app.screenshot(OUT / "designer-agent-models.png", size=(1440, 900), scale=scale)
+    app.agent.set_input("Validate @")
+    app.screenshot(OUT / "designer-agent-mention.png", size=(1440, 900), scale=scale)
+    app.agent.set_input("")
     app.agent.provider_open = "openrouter"
     app.dialog = "agent_settings"
     app.screenshot(OUT / "designer-agent-settings.png", size=(1440, 900), scale=scale)
     app.dialog = None
+    # signing in to a provider that is not set up yet: the key page is open and the copied key is picked up
+    import time
+
+    from pyzed.designer.agent_panel import KeyCapture
+
+    key = os.environ.pop("ANTHROPIC_API_KEY", None)
+    app.agent.thread = agents.Thread(model="anthropic:claude-opus-5-5")
+    app.agent.capture = KeyCapture("anthropic", deadline=time.monotonic() + 300)
+    app.screenshot(OUT / "designer-agent-connect.png", size=(1440, 900), scale=scale)
+    app.agent.capture = None
+    if key:
+        os.environ["ANTHROPIC_API_KEY"] = key
     app.open_default_event("sign_in")
     app.agent.open_inline()
     app.agent.set_inline("Validate the email before signing in")

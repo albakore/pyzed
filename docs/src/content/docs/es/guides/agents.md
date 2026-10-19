@@ -46,10 +46,11 @@ Un modelo se nombra `"<proveedor>:<modelo>"`:
 
 | Proveedor | Ejemplo | Credenciales |
 | --- | --- | --- |
-| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY` o un perfil de `ant auth login` |
+| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY` (también sirve un perfil de `ant auth login`) |
 | `openai` | `openai:<modelo>` | `set_key` u `OPENAI_API_KEY` |
 | `google` | `google:<modelo gemini>` | `set_key` o `GEMINI_API_KEY` |
 | `openrouter` | `openrouter:anthropic/claude-opus-5-5` | `set_key`, `OPENROUTER_API_KEY` o `agents.login.openrouter_login()` |
+| `xai`, `mistral`, `deepseek`, `groq` | `groq:<modelo>` | `set_key` o `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` |
 | `ollama`, `lmstudio` | `ollama:qwen3:8b` | ninguna (local) |
 | `custom` | `custom:<modelo>` | la URL del servidor en los ajustes y una clave si hace falta |
 
@@ -70,7 +71,9 @@ agent = agents.Agent(tools=[stock], settings=settings)
 | --- | --- |
 | `model` | Modelo predeterminado. |
 | `effort` | `low`, `medium`, `high`, `xhigh` o `max` (Claude). |
+| `fast` | Modo rápido en los modelos de `providers.FAST_MODELS` (Claude Opus 5.5 y Opus 5, solo la API de Claude): respuestas más rápidas a mayor precio. |
 | `profile` | `"write"` (todas las herramientas), `"ask"` (solo las que no tienen `writes=True`) o `"minimal"` (ninguna). |
+| `mode` | El modo de permisos del panel del agente, un atajo sobre `profile` y `confirm_writes`: `"ask"`, `"bypass"`, `"read"` o `"chat"`. |
 | `confirm_writes` | Llama a `confirm(tool, args)` antes de una herramienta con `writes=True` (activo por defecto). Sin un callback `confirm` esas herramientas se rechazan; desactívalo para que se ejecuten sin preguntar. |
 | `rules` | Texto añadido al prompt de sistema. |
 | `keep_history` | Si Pyzed Design guarda las conversaciones en este equipo (activo por defecto). |
@@ -164,10 +167,16 @@ agents.get_key("openai")              # la clave guardada o la variable de entor
 agents.delete_key("openai")
 agents.secrets.store().backend_name   # backend de keyring en uso, o "memory (this session only)"
 
-agents.login.ant_login()              # Anthropic: ejecuta `ant auth login` (navegador); el SDK lee el perfil
 key = agents.login.openrouter_login() # OpenRouter: navegador + PKCE, devuelve una clave
 agents.set_key("openrouter", key)
+
+agents.login.key_page("anthropic")    # los demás: abre la página de claves de API del proveedor...
+agents.providers.looks_like_key("anthropic", texto_copiado)  # ...y dice si un texto copiado es su clave
 ```
+
+Solo OpenRouter ofrece OAuth a otras apps. Para el resto, Pyzed Design abre la página de claves y vigila el
+portapapeles unos minutos; cuando se copia un texto que cumple `looks_like_key`, lo comprueba con
+`list_models(key=...)` y lo guarda con `set_key`. Tu app puede hacer lo mismo.
 
 Las claves viven en el llavero del sistema (`keyring`, servicio `pyzed`); `PYZED_KEYRING=0` lo desactiva y
 `agents.secrets.use(SecretStore(mi_backend))` conecta tu propia bóveda (cualquier objeto con `get_password` /
