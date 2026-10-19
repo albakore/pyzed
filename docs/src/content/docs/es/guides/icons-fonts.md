@@ -25,6 +25,21 @@ pyzed icons git
 `pyzed.icons.names()` devuelve la lista completa y `pyzed.icons.glyph("folder")` el carácter,
 para mezclarlo con texto usando `font="icons"`.
 
+### Buscar y elegir iconos
+
+`icons.search` busca iconos por nombre y por las etiquetas de Lucide (en inglés), los mejores primero, e
+`icons.category` los agrupa para explorarlos:
+
+```python
+from pyzed import icons
+
+icons.search("person")      # ["person-standing", "user", "contact", ...]
+icons.category("arrows")    # todas las flechas, chevrons, deshacer...
+```
+
+Para que el usuario elija uno, usa [`ui.IconPicker`](/pyzed/es/library/icon-picker/), o `ui.icon_picker_dialog` en
+una `ui.dialog_layer`: un buscador, categorías y una cuadrícula con todos los iconos.
+
 ### Iconos por tipo de archivo
 
 ```python

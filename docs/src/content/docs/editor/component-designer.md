@@ -84,7 +84,7 @@ With nothing selected, the Properties tab shows the component itself, in collaps
 | Section | Fields |
 | --- | --- |
 | **Class** | **Name** (the Python class name, CamelCase), **Description** (the class docstring, shown as the toolbox tooltip) and **Inherits** (a designed component to extend, see [Inheritance](#inheritance)). |
-| **Toolbox** | **Label**, **Icon** (a Lucide name) and **Category**: how the component shows in the toolbox of forms and other components. |
+| **Toolbox** | **Label**, **Icon** (a Lucide name, or pick it from the [icon dialog](/pyzed/editor/properties/#the-icon-dialog)) and **Category**: how the component shows in the toolbox of forms and other components. |
 | **Layout** | **Width**, **Height**, **Background** (transparent when empty) and **Grid size** of the design surface. |
 | **Inherited** | Only with a base: what comes from each base class, read only. |
 | **Properties** | A row per property (type icon, name and value), and **Public** / **Private** buttons to add one. |

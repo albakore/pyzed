@@ -2426,3 +2426,123 @@ A light/dark checkerboard to draw under translucent colors.
 | `width` | Width. |
 | `height` | Height. |
 | `size` | Cell size. |
+
+## Icon picker
+
+### `IconPicker`
+
+```python
+class IconPicker
+```
+
+A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`""` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | The picked icon's name. |
+| `columns` | Icons per row. |
+| `height` | Height of the grid. |
+| `clearable` | Shows a button that clears the icon. |
+| `autofocus` | Focuses the search box when it appears. |
+| `on_change` | Receives `event.value`. |
+
+```python
+ui.IconPicker(value=self.icon, on_change=lambda e: setattr(self, "icon", e.value))
+```
+
+**Methods and properties**
+
+#### `IconPicker.set_query`
+
+```python
+IconPicker.set_query(text)
+```
+
+Filters the grid by `text` (names and tags).
+
+#### `IconPicker.set_group`
+
+```python
+IconPicker.set_group(key)
+```
+
+Shows only the icons of category `key` (`""` for every icon).
+
+#### `IconPicker.matches`
+
+```python
+IconPicker.matches()
+```
+
+The icons shown: those of the chosen category that match the search, best first.
+
+#### `IconPicker.pick`
+
+```python
+IconPicker.pick(name)
+```
+
+Selects `name` and emits `change`.
+
+### `icon_picker_dialog`
+
+```python
+icon_picker_dialog(
+    value,
+    on_pick,
+    *,
+    on_close=None,
+    title=None,
+    columns=10,
+    clearable=True,
+    key='icon-picker',
+    theme=None,
+)
+```
+
+A dialog with an `IconPicker` that picks on a click; use it as the dialog of `ui.dialog_layer`. The search box gets the focus.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | The current icon. |
+| `on_pick` | Called with the clicked icon's name (`""` when cleared). |
+| `on_close` | The close button. |
+| `title` | Default: "Choose an icon", translated. |
+| `columns` | Icons per row. |
+| `clearable` | Shows the "No icon" button. |
+| `key` | Component key, for several pickers in one view. |
+| `theme` | Theme. |
+
+```python
+ui.dialog_layer(page, ui.icon_picker_dialog(self.icon, self.pick, on_close=self.close) if self.picking else None,
+                on_dismiss=self.close)
+```
+
+### `icon_grid`
+
+```python
+icon_grid(
+    names,
+    on_pick,
+    *,
+    selected=None,
+    columns=8,
+    cell=34,
+    height=288,
+    id=None,
+    theme=None,
+)
+```
+
+The bare grid of icons, virtualized: only the rows in view are built, so thousands of icons cost the same as a few.
+
+| Parameter | Description |
+| --- | --- |
+| `names` | Icon names, in order. |
+| `on_pick` | Called with the clicked name. |
+| `selected` | The highlighted name. |
+| `columns` | Icons per row. |
+| `cell` | Side of each cell in pixels. |
+| `height` | Height of the grid. |
+| `id` | Id of the scrollable, for `Command.scroll_to`. |
+| `theme` | Theme. |

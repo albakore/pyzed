@@ -1041,6 +1041,52 @@ add(
     related=["popover", "card"],
 )
 
+add(
+    slug="icon-picker",
+    name=T("Icon picker", "Selector de iconos"),
+    category="forms",
+    api=["pyzed.ui.IconPicker", "pyzed.ui.icon_picker_dialog", "pyzed.ui.icon_grid", "pyzed.icons.search",
+         "pyzed.icons.category"],
+    badge="new",
+    blurb=T("Pick one of the ~2000 Lucide icons from a searchable grid.",
+            "Elige uno de los ~2000 iconos de Lucide en una cuadrícula con buscador."),
+    desc=T(
+        "`ui.IconPicker` is a component with a search box, a category drop-down and a grid of every bundled "
+        "Lucide icon. The search matches names and tags (\"person\" finds `user`), Enter picks the first "
+        "match and `on_change` receives the icon's name in `event.value`. `ui.icon_picker_dialog` puts it in "
+        "a dialog that picks on a click, and `ui.icon_grid` is the bare grid, which only builds the rows in view.",
+        "`ui.IconPicker` es un componente con un buscador, un desplegable de categorías y una cuadrícula con "
+        "todos los iconos de Lucide incluidos. La búsqueda mira nombres y etiquetas (\"person\" encuentra "
+        "`user`), Enter elige la primera coincidencia y `on_change` recibe el nombre del icono en `event.value`. "
+        "`ui.icon_picker_dialog` lo pone en un diálogo que elige con un clic, y `ui.icon_grid` es la cuadrícula "
+        "sola, que solo construye las filas visibles.",
+    ),
+    when=T(
+        ["To let users choose an icon for a folder, a tag, a shortcut or a toolbar button.",
+         "Show the current icon as a button and open `icon_picker_dialog` in a "
+         "[Dialog layer](/pyzed/library/dialog-layer/) when it is pressed."],
+        ["Para que el usuario elija el icono de una carpeta, una etiqueta, un atajo o un botón de la barra.",
+         "Muestra el icono actual como un botón y abre `icon_picker_dialog` en una "
+         "[capa de diálogo](/pyzed/es/library/dialog-layer/) al pulsarlo."],
+    ),
+    preview={"code": """ui.IconPicker(value="rocket", columns=10, height=200, clearable=True, on_change=on_change)""",
+             "size": (720, 340)},
+    usage="""class Shortcuts(pz.App):
+    def __init__(self):
+        self.icon = "rocket"
+        self.picking = False
+
+    def pick(self, name):
+        self.icon, self.picking = name or "circle-dashed", False
+
+    def view(self):
+        page = ui.button("Change icon", lambda: setattr(self, "picking", True), icon=self.icon)
+        dialog = ui.icon_picker_dialog(self.icon, self.pick, on_close=lambda: setattr(self, "picking", False))
+        return ui.dialog_layer(page, dialog if self.picking else None,
+                               on_dismiss=lambda: setattr(self, "picking", False))""",
+    related=["icon", "dialog-layer", "color-picker"],
+)
+
 # --------------------------------------------------------------------------------------- feedback
 
 add(

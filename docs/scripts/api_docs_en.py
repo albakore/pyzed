@@ -856,6 +856,16 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"name": "Icon name."},
                 },
                 "pyzed.icons.names": {"desc": "Sorted list of all icon names."},
+                "pyzed.icons.search": {
+                    "desc": 'Icons matching a search by name and tag, best first: exact names, then names that start with the query, names with every word and icons found by their tags (`search("person")` finds `user`).',
+                    "params": {"query": "Words that must all appear in the name or the tags.", "among": "Only search these names (default: every icon)."},
+                    "example": 'icons.search("arrow up")[:3]  # ["arrow-up", "arrow-up-01", "arrow-up-10"]',
+                },
+                "pyzed.icons.tags": {"desc": 'The search tags of an icon, from Lucide (`tags("user")` is `["person", "account", "contact"]`).',
+                                     "params": {"name": "Icon name."}},
+                "pyzed.icons.category": {"desc": "The icons of a category of `CATEGORIES`, sorted. An icon can be in several.",
+                                         "params": {"key": 'A key of `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...).', "among": "Only look at these names."}},
+                "pyzed.icons.CATEGORIES": {"desc": "Groups for browsing icons (arrows, text, files, layout, media, communication, people, devices, development, shapes, weather, commerce, maps, status), each with the words of names and tags that put an icon in it.", "no_signature": True},
                 "pyzed.icons.for_file": {
                     "desc": 'Returns `(icon, color_or_None)` for a file name, as in Zed\'s project panel.',
                     "params": {"name": "File name."},
@@ -1632,6 +1642,35 @@ _section("ui", "Color picker", {
                               "params": {"value": "What to show.", "size": "Side in pixels.", "on_press": "Makes it clickable."}},
     "pyzed.ui.checkerboard": {"desc": "A light/dark checkerboard to draw under translucent colors.",
                               "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
+})
+
+_section("ui", "Icon picker", {
+    "pyzed.ui.IconPicker": {
+        "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",
+        "params": {"value": "The picked icon's name.", "columns": "Icons per row.", "height": "Height of the grid.",
+                   "clearable": "Shows a button that clears the icon.", "autofocus": "Focuses the search box when it appears.",
+                   "on_change": "Receives `event.value`."},
+        "example": """
+            ui.IconPicker(value=self.icon, on_change=lambda e: setattr(self, "icon", e.value))
+        """,
+    },
+    "pyzed.ui.icon_picker_dialog": {
+        "desc": "A dialog with an `IconPicker` that picks on a click; use it as the dialog of `ui.dialog_layer`. The search box gets the focus.",
+        "params": {"value": "The current icon.", "on_pick": "Called with the clicked icon's name (`\"\"` when cleared).",
+                   "on_close": "The close button.", "title": "Default: \"Choose an icon\", translated.", "columns": "Icons per row.",
+                   "clearable": "Shows the \"No icon\" button.", "key": "Component key, for several pickers in one view.",
+                   "theme": "Theme."},
+        "example": """
+            ui.dialog_layer(page, ui.icon_picker_dialog(self.icon, self.pick, on_close=self.close) if self.picking else None,
+                            on_dismiss=self.close)
+        """,
+    },
+    "pyzed.ui.icon_grid": {
+        "desc": "The bare grid of icons, virtualized: only the rows in view are built, so thousands of icons cost the same as a few.",
+        "params": {"names": "Icon names, in order.", "on_pick": "Called with the clicked name.", "selected": "The highlighted name.",
+                   "columns": "Icons per row.", "cell": "Side of each cell in pixels.", "height": "Height of the grid.",
+                   "id": "Id of the scrollable, for `Command.scroll_to`.", "theme": "Theme."},
+    },
 })
 
 # -- Everything else, described by the code's own docstrings ------------------

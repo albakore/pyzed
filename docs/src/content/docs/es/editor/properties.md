@@ -46,7 +46,7 @@ Cada componente agrupa sus propiedades en secciones **Apariencia**, **Datos**, *
 | Interruptor | Un switch de encendido y apagado. | `checked`, `secure`, `wrap`. |
 | Opción | Un desplegable. | El `variant` de un botón, el `size` de una etiqueta. |
 | Color | Una muestra y un campo para un token del tema (`accent`, `text_muted`) o `#hex`. | El `color` de una etiqueta. |
-| Icono | Una vista previa y un campo para un nombre de icono de [Lucide](https://lucide.dev). | El `icon` de un botón. |
+| Icono | Una vista previa, un campo para un nombre de icono de [Lucide](https://lucide.dev) y un botón **…**: pulsa la vista previa o **…** para elegirlo en el diálogo de iconos (ver abajo). | El `icon` de un botón. |
 | Lista | Un campo por elemento (ver abajo). | Las `options` de un desplegable, los `items` de una lista, las `tabs` de una barra de pestañas. |
 | Filas | Una pequeña hoja de cálculo (ver abajo). | Los `data` de una tabla. |
 
@@ -56,6 +56,19 @@ Pasa el ratón por el nombre de una propiedad para leer qué hace, cuando tiene 
 Los controles que guardan un valor muestran además **Enlazar a** y sus reglas de validación (**Obligatorio**,
 **Longitud mínima**, **Patrón**...) en la sección **Datos**: consulta
 [Enlace de datos y validación](/pyzed/es/editor/data-binding/).
+
+### El diálogo de iconos
+
+Al pulsar la vista previa de una propiedad de icono o su botón **…** se abre **Elegir un icono**: un buscador, un
+desplegable de categorías y una cuadrícula con todos los iconos incluidos. La búsqueda mira los nombres y las
+etiquetas de Lucide (en inglés: "person" encuentra `user`, "trash" encuentra `trash-2`), Enter elige la primera
+coincidencia y un clic en un icono fija la propiedad y cierra el diálogo. El icono en uso aparece resaltado y abajo,
+junto al número de coincidencias; **×** deja la propiedad sin icono.
+
+![El diálogo de iconos abierto desde la propiedad Icono de un botón](../../../../../screenshots/editor-icon-picker.png)
+
+El mismo diálogo elige el **Icon** de un [componente diseñado](/pyzed/es/editor/component-designer/) y el valor por
+defecto de sus propiedades de icono. En tus propias apps es [`ui.IconPicker`](/pyzed/es/library/icon-picker/).
 
 ### El editor de listas
 

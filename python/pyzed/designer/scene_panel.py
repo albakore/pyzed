@@ -28,6 +28,12 @@ from . import type_editor as _type_editor
 from .scene import SceneDocument
 from .scene_runtime import SceneComponent, scenes
 
+
+def _icon_editor(*args: Any, **kwargs: Any) -> Any:
+    from .panels import icon_editor
+
+    return icon_editor(*args, **kwargs)
+
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
@@ -149,8 +155,8 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
         ui.AccordionSection("toolbox", "Toolbox", _stack([
             field("Label", ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name),
                                     theme=t), t),
-            field("Icon", ui.input(scene.icon, scene_setter("icon"), placeholder="lucide name", mono=True,
-                                   icon=scene.icon or "component", theme=t), t),
+            field("Icon", _icon_editor(d, scene.icon, scene_setter("icon"), t, placeholder="component", size="md"),
+                  t),
             field("Category", ui.input(scene.category, scene_setter("category"), theme=t), t),
         ]), icon="component"),
         ui.AccordionSection("layout", "Layout", _stack([
