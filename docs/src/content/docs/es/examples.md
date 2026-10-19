@@ -45,11 +45,15 @@ en su carpeta y ejecuta `uv run main.py`.
 
 | Ejemplo | Librerías | Tutorial |
 | --- | --- | --- |
-| [`fastapi_notes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_notes) | FastAPI, uvicorn, httpx | [FastAPI](/pyzed/es/integrations/fastapi/) |
-| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | [SQLAlchemy](/pyzed/es/integrations/sqlalchemy/) |
-| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | [SQLModel](/pyzed/es/integrations/sqlmodel/) |
-| [`django_library`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_library) | Django | [Django](/pyzed/es/integrations/django/) |
-| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | [httpx y Pydantic](/pyzed/es/integrations/httpx-pydantic/) |
+| [`fastapi_heroes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_heroes) | FastAPI, SQLModel, httpx | [FastAPI](/pyzed/es/integrations/fastapi/) |
+| [`django_polls`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_polls) | Django, httpx | [Django](/pyzed/es/integrations/django/) |
+| [`sqlalchemy_quickstart`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_quickstart) | SQLAlchemy 2.0, aiosqlite | [SQLAlchemy](/pyzed/es/integrations/sqlalchemy/) |
+| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | [SQLAlchemy](/pyzed/es/integrations/sqlalchemy/#muchas-filas-la-demo-de-contactos) |
+| [`sqlmodel_heroes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_heroes) | SQLModel | [SQLModel](/pyzed/es/integrations/sqlmodel/) |
+| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | [SQLModel](/pyzed/es/integrations/sqlmodel/#un-modelo-para-el-formulario-y-la-tabla-la-demo-de-inventario) |
+| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | [httpx](/pyzed/es/integrations/httpx/) |
+| [`httpx_download`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_download) | httpx | [httpx](/pyzed/es/integrations/httpx/#descargas-en-streaming-con-progreso) |
+| [`pydantic_signup`](https://github.com/albakore/pyzed/tree/main/examples/integrations/pydantic_signup) | Pydantic | [Pydantic](/pyzed/es/integrations/pydantic/) |
 | [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | [Otras librerías](/pyzed/es/integrations/other-libraries/#aiosqlite) |
 
 ## Editor tipo Zed

@@ -3,7 +3,7 @@
     uv run main.py
     uv run main.py rich textual polars      # start with other packages
 
-Walkthrough: https://albakore.github.io/pyzed/integrations/httpx-pydantic/
+Walkthrough: https://albakore.github.io/pyzed/integrations/httpx/
 """
 
 from __future__ import annotations

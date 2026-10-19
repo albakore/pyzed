@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-sqlalchemy-quickstart"
+version = "0.1.0"
+description = "SQLAlchemy's ORM Quick Start models in a Pyzed window, with a sync and an asyncio backend."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "sqlalchemy[asyncio]>=2.0", "aiosqlite>=0.20"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

@@ -1,20 +1,135 @@
 ---
 title: SQLModel
-description: Valida un formulario de Pyzed con la misma clase de SQLModel que define la tabla de la base de datos y muestra los errores de Pydantic en cada campo.
+description: El tutorial de SQLModel (equipos, héroes, filtros where, relaciones) en una app de escritorio de Pyzed, más un inventario cuyo formulario y tabla comparten un solo modelo.
 sidebar:
-  order: 4
+  order: 6
 ---
 
-import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import hMain from '../../../../../../examples/integrations/sqlmodel_heroes/main.py?raw';
+import hModels from '../../../../../../examples/integrations/sqlmodel_heroes/models.py?raw';
+import hDb from '../../../../../../examples/integrations/sqlmodel_heroes/db.py?raw';
 import main from '../../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
 import models from '../../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
 
-SQLModel une Pydantic y SQLAlchemy: una clase describe los campos, sus reglas y la tabla. En una
-app de escritorio eso significa que el formulario y la base de datos coinciden por construcción.
-Esta demo es un inventario con niveles de stock, un gráfico de anillo y un diálogo cuyos campos
+SQLModel corre en el mismo proceso que la ventana (la arquitectura 1 de
+[Arquitecturas](/pyzed/es/integrations/architectures/)); cuando los mismos modelos se tienen que
+compartir por HTTP, ponlos detrás de FastAPI como en la [demo de FastAPI](/pyzed/es/integrations/fastapi/).
+Hay dos demos:
+
+- **`sqlmodel_heroes`**: las tablas `Team` y `Hero` del [tutorial de SQLModel](https://sqlmodel.tiangolo.com/tutorial/),
+  con sus datos de ejemplo, filtros `where()`, relaciones y un modelo de datos para el formulario.
+- **`sqlmodel_inventory`**: un inventario cuyas reglas de validación y cuya tabla salen de una
+  sola clase.
+
+## Los héroes del tutorial en una ventana
+
+![Héroes agrupados por equipo, filtrados por edad, con un panel de edición](../../../../assets/integrations/sqlmodel-heroes.png)
+
+```bash
+cd examples/integrations/sqlmodel_heroes
+uv run main.py
+```
+
+<Steps>
+
+1. **Define las tablas** como en el capítulo
+   [Relationship Attributes](https://sqlmodel.tiangolo.com/tutorial/relationship-attributes/) del tutorial:
+
+   ```python
+   class Team(SQLModel, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       name: str = Field(index=True)
+       headquarters: str
+
+       heroes: list["Hero"] = Relationship(back_populates="team")
+
+   class Hero(SQLModel, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       name: str = Field(index=True)
+       secret_name: str
+       age: int | None = Field(default=None, index=True)
+
+       team_id: int | None = Field(default=None, foreign_key="team.id")
+       team: Team | None = Relationship(back_populates="heroes")
+   ```
+
+2. **Crea el engine y las tablas**, y añade los héroes del tutorial la primera vez:
+
+   ```python
+   sqlite_file_name = "database.db"
+   sqlite_url = f"sqlite:///{sqlite_file_name}"
+   engine = create_engine(sqlite_url)
+
+   def create_db_and_tables():
+       SQLModel.metadata.create_all(engine)
+   ```
+
+3. **Consulta con `select()` y `where()`.** Los filtros se añaden uno a uno; `col()` le da al
+   comprobador de tipos una columna para la comparación, como recomienda el tutorial:
+
+   ```python
+   def heroes(team_id, min_age):
+       statement = select(Hero).options(selectinload(Hero.team)).order_by(Hero.name)
+       if team_id != "all":
+           statement = statement.where(Hero.team_id == team_id)
+       if min_age is not None:
+           statement = statement.where(col(Hero.age) >= min_age)
+       with Session(engine) as session:
+           return list(session.exec(statement))
+   ```
+
+   `selectinload` carga el equipo de cada héroe antes de que se cierre la sesión, para que la
+   tabla pueda mostrar `hero.team.name`.
+
+4. **Valida el formulario con un modelo de datos.** Los modelos con `table=True` no validan (los
+   crea SQLAlchemy), así que se aplica el enfoque de
+   [Multiple Models](https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/) del tutorial:
+   un `HeroCreate` sin `table=True` comprueba lo que se escribió en el formulario.
+
+   ```python
+   class HeroCreate(SQLModel):
+       name: str = Field(min_length=1)
+       secret_name: str = Field(min_length=1)
+       age: int | None = Field(default=None, ge=0)
+       team_id: int | None = None
+
+   def save(self):
+       try:
+           data = HeroCreate.model_validate({**self.draft, "age": self.draft["age"] or None, ...})
+       except ValidationError as error:
+           self.errors = pz.validation_errors(error)
+           return None
+       return Command.perform(lambda: db.save(hero_id, data), lambda _: self.reload())
+   ```
+
+5. **Crea o actualiza con `sqlmodel_update`:**
+
+   ```python
+   def save(hero_id, data: HeroCreate):
+       with Session(engine) as session:
+           hero = session.get(Hero, hero_id) if hero_id else Hero.model_validate(data)
+           hero.sqlmodel_update(data.model_dump())
+           session.add(hero)
+           session.commit()
+   ```
+
+</Steps>
+
+<Tabs>
+<TabItem label="main.py"><Code code={hMain} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={hModels} lang="py" /></TabItem>
+<TabItem label="db.py"><Code code={hDb} lang="py" /></TabItem>
+</Tabs>
+
+## Un modelo para el formulario y la tabla: la demo de inventario
+
+SQLModel une Pydantic y SQLAlchemy: una sola clase describe los campos, sus reglas y la tabla. En
+una app de escritorio eso significa que el formulario y la base de datos coinciden por diseño.
+Esta demo es un inventario con niveles de stock, un gráfico de dona y un diálogo cuyos campos
 muestran los errores de Pydantic.
 
-![Una tabla de inventario con insignias de stock y un diálogo de edición con errores de validación](../../../../assets/integrations/sqlmodel.png)
+![Una tabla de inventario con badges de stock y un diálogo de edición con errores de validación](../../../../assets/integrations/sqlmodel.png)
 
 ```bash
 cd examples/integrations/sqlmodel_inventory
@@ -46,13 +161,13 @@ uv run main.py
        sku: str = Field(unique=True, index=True)
 
    class ProductIn(ProductBase):
-       """Valida lo que se escribió en el formulario."""
+       """Validates what the form typed."""
    ```
 
-2. **Valida con `ProductIn`, no con `Product`.** SQLModel no valida los modelos con
-   `table=True` (los construye SQLAlchemy), así que lo hace una clase aparte sin `table=True`. El
-   formulario guarda todo como texto y Pydantic lo convierte: `"12.5"` pasa a ser `12.5`, `"abc"`
-   un error.
+2. **Valida con `ProductIn`, no con `Product`.** SQLModel no valida los modelos con `table=True`
+   (los construye SQLAlchemy), así que lo hace una clase aparte sin `table=True`. El formulario
+   guarda todo como texto y Pydantic lo convierte: `"12.5"` pasa a ser `12.5` y `"abc"`, un
+   error.
 
    ```python
    def save(self):
@@ -66,8 +181,8 @@ uv run main.py
    ```
 
 3. **Guárdalo en un hilo.** `models.save` copia los datos validados en la fila con
-   `sqlmodel_update` y devuelve `{campo: mensaje}` cuando algo que solo sabe la base de datos
-   está mal, como un SKU repetido:
+   `sqlmodel_update` y devuelve `{campo: mensaje}` cuando algo que solo sabe la base de datos está
+   mal, como un SKU repetido:
 
    ```python
    def save(product_id, data):
@@ -89,8 +204,8 @@ uv run main.py
    ui.field("Price", ui.input(self.draft["price"], self.edit("price")), error=self.errors.get("price"))
    ```
 
-5. **Dibuja celdas con widgets.** Una `ui.Column` puede mostrar cualquier cosa; la columna de
-   stock tiene botones y una insignia que se vuelve ámbar o roja cuando queda poco:
+5. **Dibuja las celdas con widgets.** Una `ui.Column` puede dibujar cualquier cosa; la columna de
+   stock muestra botones y un badge que se vuelve ámbar o rojo cuando queda poco stock:
 
    ```python
    ui.Column("Stock", lambda p: p, width=180, align="center", render=self.stock_cell, sortable=False)
@@ -99,13 +214,12 @@ uv run main.py
 </Steps>
 
 <Aside>
-El mismo `ProductIn` puede ser el cuerpo de un endpoint de FastAPI. Si tu app crece y tiene
+El mismo `ProductIn` puede ser el cuerpo de un endpoint de FastAPI. Si tu app acaba teniendo un
 servidor, el cliente de escritorio y la API validan con un solo modelo. Mira
 [FastAPI](/pyzed/es/integrations/fastapi/).
 </Aside>
 
-## Código completo
-
-<Code code={main} lang="py" title="examples/integrations/sqlmodel_inventory/main.py" />
-
-<Code code={models} lang="py" title="examples/integrations/sqlmodel_inventory/models.py" />
+<Tabs>
+<TabItem label="main.py"><Code code={main} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={models} lang="py" /></TabItem>
+</Tabs>

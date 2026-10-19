@@ -1,8 +1,8 @@
 ---
 title: Otras librerías
-description: Recetas para aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis y Matplotlib en una app de escritorio de Pyzed.
+description: Recetas para aiosqlite, pandas, Polars, requests, Redis y Matplotlib en una app de escritorio de Pyzed.
 sidebar:
-  order: 7
+  order: 9
 ---
 
 import { Code } from '@astrojs/starlight/components';
@@ -45,30 +45,9 @@ uv run main.py
 
 ## SQLAlchemy asyncio
 
-La [demo de SQLAlchemy](/pyzed/es/integrations/sqlalchemy/) usa hilos. Con un driver async
-(`aiosqlite`, `asyncpg`, `aiomysql`) puedes devolver corrutinas. El engine se ata al loop que lo
-usa primero, que siempre es el de Pyzed:
-
-```python
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-engine = create_async_engine("sqlite+aiosqlite:///contacts.db")
-Session = async_sessionmaker(engine, expire_on_commit=False)
-
-
-class Contacts(pz.App):
-    def on_start(self):
-        return self.load()
-
-    async def load(self):
-        async with Session() as session:
-            rows = (await session.scalars(select(Contact).order_by(Contact.name))).all()
-        return ("loaded", rows)
-```
-
-Carga las relaciones de antemano (`selectinload`) antes de cerrar la sesión: la carga perezosa
-necesita un `await`, y `view()` no puede hacerlo.
+Se explica en la [página de SQLAlchemy](/pyzed/es/integrations/sqlalchemy/#la-versión-asyncio): la
+demo `sqlalchemy_quickstart` ejecuta la misma ventana sobre una `Session` síncrona o sobre una
+`AsyncSession` con aiosqlite (`uv run main.py --async`).
 
 ## pandas y Polars
 
@@ -101,8 +80,8 @@ filtrar, haz la consulta sobre el DataFrame (`frame[frame.city == city]`) y reco
 
 ## requests y otros clientes bloqueantes
 
-Cualquier llamada bloqueante pasa por `Command.perform`. Conviene capturar los errores dentro de
-la función para que `then` siempre reciba algo que mostrar:
+Cualquier llamada bloqueante pasa por `Command.perform`. Conviene capturar los errores de
+`raise_for_status` dentro de la función para que `then` siempre reciba algo que mostrar:
 
 ```python
 import requests
@@ -146,7 +125,7 @@ class Orders(pz.App):
 ```
 
 Los WebSockets funcionan igual; mira `examples/websocket_stream.py` y la
-[guía de async](/pyzed/es/guides/async/).
+[guía de async](/pyzed/es/guides/async/#suscripciones-temporizadores-y-streams).
 
 ## Matplotlib
 

@@ -1,0 +1,119 @@
+---
+title: Pydantic
+description: Validate Pyzed forms with Pydantic models, show the errors on each field, and parse or save JSON with model_validate_json and model_dump_json.
+sidebar:
+  order: 8
+---
+
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import main from '../../../../../examples/integrations/pydantic_signup/main.py?raw';
+import models from '../../../../../examples/integrations/pydantic_signup/models.py?raw';
+
+[Pydantic](https://docs.pydantic.dev/) checks data against type hints. In a desktop app it does
+two jobs: it validates what the user typed in a form, and it parses JSON from files and APIs.
+It runs in the same process as the window, with no thread or loop needed, because validation is fast.
+
+![A sign-up form with Pydantic errors and the saved accounts as JSON](../../../assets/integrations/pydantic.png)
+
+```bash
+cd examples/integrations/pydantic_signup
+uv run main.py
+```
+
+<Steps>
+
+1. **Write the rules as a model.** [Fields](https://docs.pydantic.dev/latest/concepts/fields/)
+   carry the constraints, special types like `EmailStr` (from `pydantic[email]`) and `SecretStr`
+   do the rest, and [validators](https://docs.pydantic.dev/latest/concepts/validators/) add custom
+   checks. An `after` model validator compares two fields:
+
+   ```python
+   class SignUp(BaseModel):
+       username: str = Field(min_length=3, max_length=20, pattern=r"^[a-z0-9_]+$")
+       email: EmailStr
+       birthday: date
+       plan: Literal["free", "pro", "team"] = "free"
+       password: SecretStr
+       password_repeat: SecretStr
+       newsletter: bool = False
+
+       @field_validator("username", mode="before")
+       @classmethod
+       def lowercase(cls, value: str) -> str:
+           return value.strip().lower()
+
+       @model_validator(mode="after")
+       def passwords_match(self) -> "SignUp":
+           if self.password.get_secret_value() != self.password_repeat.get_secret_value():
+               raise ValueError("The passwords don't match")
+           return self
+   ```
+
+2. **Keep the form as plain values and validate on submit.** Inputs give strings; Pydantic
+   converts `"1990-05-02"` to a `date` and reports every problem at once:
+
+   ```python
+   def submit(self, *_):
+       try:
+           signup = SignUp.model_validate(self.draft)
+       except ValidationError as error:
+           self.errors = pz.validation_errors(error)
+           return
+       ...
+   ```
+
+3. **Show each error under its field.** `pz.validation_errors` returns `{field: message}`; errors
+   from a model validator have the key `""`:
+
+   ```python
+   ui.field("Email", ui.input(d["email"], self.edit("email")), error=self.errors.get("email"))
+   ui.callout(self.errors[""], tint="error") if self.errors.get("") else None
+   ```
+
+4. **Save and load JSON.** [Serialization](https://docs.pydantic.dev/latest/concepts/serialization/)
+   with `model_dump` and `model_dump_json`, and a `TypeAdapter` for a whole list:
+
+   ```python
+   account = Account.model_validate(signup.model_dump(exclude={"password", "password_repeat"}))
+
+   Accounts = TypeAdapter(list[Account])
+   FILE.write_bytes(Accounts.dump_json(self.accounts, indent=2))
+   accounts = Accounts.validate_json(FILE.read_bytes())
+   ```
+
+</Steps>
+
+## Parsing API responses
+
+The same models parse JSON from the network. Declare only the fields you use; Pydantic ignores
+the rest, converts dates and fails clearly if the API changes shape. From the
+[PyPI explorer](/pyzed/integrations/httpx/#concurrent-requests-the-pypi-explorer):
+
+```python
+class Info(BaseModel):
+    name: str
+    version: str
+    summary: str | None = None
+
+class File(BaseModel):
+    upload_time_iso_8601: datetime
+
+class Package(BaseModel):
+    info: Info
+    releases: dict[str, list[File]]
+
+package = Package.model_validate_json(response.content)
+```
+
+<Aside type="tip">
+Pydantic models are what FastAPI uses for request bodies and what SQLModel builds on. A model
+written for the desktop form can become the body of an API endpoint later; see
+[FastAPI](/pyzed/integrations/fastapi/) and [SQLModel](/pyzed/integrations/sqlmodel/).
+</Aside>
+
+## Full code
+
+<Tabs>
+<TabItem label="main.py"><Code code={main} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={models} lang="py" /></TabItem>
+</Tabs>

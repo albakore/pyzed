@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-fastapi-heroes"
+version = "0.1.0"
+description = "FastAPI's SQL tutorial app with a Pyzed desktop client, in three architectures."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "fastapi[standard]>=0.115", "sqlmodel>=0.0.22", "httpx>=0.27"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

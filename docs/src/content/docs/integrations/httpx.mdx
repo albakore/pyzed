@@ -1,0 +1,176 @@
+---
+title: httpx
+description: "Call web APIs from a Pyzed app with httpx, following its quickstart: requests, an AsyncClient, concurrent calls, errors and streaming downloads with a progress bar."
+sidebar:
+  order: 7
+---
+
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import pypiMain from '../../../../../examples/integrations/httpx_pypi/main.py?raw';
+import pypi from '../../../../../examples/integrations/httpx_pypi/pypi.py?raw';
+import download from '../../../../../examples/integrations/httpx_download/main.py?raw';
+
+[httpx](https://www.python-httpx.org/) is the HTTP client a Pyzed window uses to talk to any API:
+a public one, your own [FastAPI](/pyzed/integrations/fastapi/) or [Django](/pyzed/integrations/django/)
+server (the client and server [architecture](/pyzed/integrations/architectures/)). Two demos:
+
+- **`httpx_pypi`**: concurrent requests to PyPI's JSON API, shown as they arrive.
+- **`httpx_download`**: a download manager with streaming responses and a progress bar.
+
+## The basics, from httpx's quickstart
+
+httpx has the same API in sync and async form. In a Pyzed app use either:
+
+<Tabs>
+<TabItem label="AsyncClient (recommended)">
+
+```python
+import httpx
+
+class App(pz.App):
+    async def load(self):
+        # A coroutine returned from a callback runs on Pyzed's asyncio loop.
+        async with httpx.AsyncClient() as client:
+            response = await client.get("https://pypi.org/pypi/httpx/json")
+        response.raise_for_status()
+        return ("loaded", response.json())
+
+    def update(self, message):
+        kind, data = message
+        self.info = data["info"]
+```
+
+</TabItem>
+<TabItem label="Sync API in a thread">
+
+```python
+import httpx
+
+def fetch():
+    response = httpx.get("https://pypi.org/pypi/httpx/json")
+    response.raise_for_status()
+    return response.json()
+
+class App(pz.App):
+    def load(self):
+        # A blocking call runs in a worker thread; then() receives the result.
+        return Command.perform(fetch, lambda data: setattr(self, "info", data["info"]))
+```
+
+</TabItem>
+</Tabs>
+
+The rest of the quickstart applies unchanged:
+
+| Task | httpx |
+| --- | --- |
+| Query parameters | `client.get(url, params={"q": "pyzed", "page": 2})` |
+| Send JSON | `client.post(url, json={"name": "Deadpond"})` |
+| Send a form or files | `client.post(url, data={...}, files={"upload": open("a.png", "rb")})` |
+| Headers and auth | `httpx.AsyncClient(headers={"Authorization": f"Bearer {token}"})`, `auth=("user", "pass")` |
+| A base URL | `httpx.AsyncClient(base_url="https://api.example.com")` then `client.get("/items/")` |
+| Timeouts | `httpx.AsyncClient(timeout=10)` |
+| Errors | `response.raise_for_status()`; catch `httpx.HTTPStatusError` and `httpx.RequestError` |
+
+<Aside type="tip">
+Create one `AsyncClient` and reuse it, as [httpx recommends](https://www.python-httpx.org/advanced/clients/),
+to keep connections open. All of Pyzed's coroutines share one asyncio loop, so a client created
+inside a coroutine can be stored on `self` and used by later ones (the FastAPI demo does this).
+</Aside>
+
+## Concurrent requests: the PyPI explorer
+
+![A PyPI explorer listing packages with versions, and the details of FastAPI](../../../assets/integrations/httpx.png)
+
+```bash
+cd examples/integrations/httpx_pypi
+uv run main.py
+uv run main.py rich textual polars      # other packages
+```
+
+<Steps>
+
+1. **Return a value for every outcome.** The model, or a short text for the list:
+
+   ```python
+   async def fetch(client, name):
+       try:
+           response = await client.get(f"https://pypi.org/pypi/{name}/json")
+       except httpx.HTTPError as error:
+           return f"Network error: {error}"
+       if response.status_code == 404:
+           return "Not on PyPI"
+       return Package.model_validate_json(response.content)  # see the Pydantic page
+   ```
+
+2. **Send the requests at once and yield each answer.** An async generator returned from
+   `on_start` or a callback sends every `yield` to `update`, so the list fills in as answers arrive:
+
+   ```python
+   async def fetch_all(names):
+       async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+           async def one(name):
+               return name, await fetch(client, name)
+
+           for done in asyncio.as_completed([one(n) for n in names]):
+               yield await done
+
+   class Explorer(pz.App):
+       def on_start(self):
+           return fetch_all(self.names)
+
+       def update(self, message):
+           name, result = message
+           self.packages[name] = result
+   ```
+
+</Steps>
+
+<Tabs>
+<TabItem label="main.py"><Code code={pypiMain} lang="py" /></TabItem>
+<TabItem label="pypi.py"><Code code={pypi} lang="py" /></TabItem>
+</Tabs>
+
+## Streaming downloads with progress
+
+![A download manager with progress bars](../../../assets/integrations/httpx-download.png)
+
+```bash
+cd examples/integrations/httpx_download
+uv run main.py
+```
+
+httpx's [streaming responses](https://www.python-httpx.org/quickstart/#streaming-responses) read
+the body in chunks instead of loading it into memory, and its
+[download progress](https://www.python-httpx.org/advanced/clients/#monitoring-download-progress)
+recipe uses `response.num_bytes_downloaded`. In Pyzed the loop becomes an async generator that
+yields after every chunk, and the window redraws the bar each time:
+
+```python
+async def download(item):
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        async with client.stream("GET", item.url) as response:
+            response.raise_for_status()
+            item.total = int(response.headers["Content-Length"])
+            with open(FOLDER / item.name, "wb") as file:
+                async for chunk in response.aiter_bytes():
+                    if item.cancel:          # set by the Cancel button
+                        break
+                    file.write(chunk)
+                    item.done = response.num_bytes_downloaded
+                    yield item               # reaches update(), which redraws
+
+class Downloads(pz.App):
+    def start(self, *_):
+        item = Download(self.url)
+        self.items.insert(0, item)
+        return download(item)
+
+    def view(self):
+        ...
+        ui.progress(item.done / item.total)
+```
+
+Several downloads can run at the same time: each one is its own generator on the same loop.
+
+<Code code={download} lang="py" title="examples/integrations/httpx_download/main.py" />
