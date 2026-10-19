@@ -40,6 +40,18 @@ El inicio de sesión ocurre dentro de Pyzed Design; no hace falta ningún otro p
   proveedor.
 - **OpenRouter**: OAuth real con PKCE. Apruebas a Pyzed en la página de OpenRouter y la clave que emite vuelve a
   Pyzed directamente; no hay nada que copiar.
+- **GitHub Copilot**: **Iniciar sesión con GitHub** usa el flujo de dispositivo de GitHub. Pyzed abre
+  `github.com/login/device` y muestra un código corto; escríbelo allí, aprueba a Pyzed y el token vuelve solo (la
+  tarjeta tiene un botón para copiar el código y **Cancelar**). Da acceso a los modelos de tu cuenta de GitHub y tu
+  plan de Copilot a través de GitHub Models. Iniciar sesión necesita el client ID de una GitHub App en los ajustes
+  del proveedor; sin ella, **Iniciar sesión con un token** acepta un token de acceso personal detallado con el
+  permiso **Models**.
+- **Google Vertex AI**: **Iniciar sesión con Google** abre la página de consentimiento de Google (OAuth con PKCE) y
+  el token vuelve a Pyzed; se renueva solo. Si ya ejecutaste `gcloud auth application-default login`, se usan esas
+  credenciales y no hace falta nada más. Elige el **Proyecto de Google Cloud** (con Vertex AI activado) en los
+  ajustes del proveedor, o pulsa **Listar mis proyectos**.
+- **Anthropic sin clave**: la [federación de identidades](#claude-sin-clave-de-api) cambia un token de tu proveedor
+  de identidad por un token de Claude de corta duración.
 - **Ollama, LM Studio**: no hay que iniciar sesión. Al pulsarlos se piden los modelos al servidor local.
 
 Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la variable de entorno del proveedor.
@@ -53,10 +65,10 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 | **Cabecera** | El título de la conversación, **Nueva conversación** (<kbd>+</kbd>), **Historial**, **Expandir el panel** (ocupa toda la ventana; púlsalo otra vez para devolverlo a su dock) y los **ajustes** del agente. |
 | **Conversación** | Tus mensajes, las respuestas del agente (Markdown), su razonamiento (**Razonamiento**, plegado) y una línea por cada herramienta que usa: un indicador mientras corre, una marca cuando funcionó y una cruz roja cuando falló. Pulsa una línea para ver la entrada y el resultado. |
 | **Cambios del agente** | Tras una ejecución que cambió algo: **Rechazar** deja cada formulario y archivo de código que tocó como estaban antes; **Conservar** oculta la barra. Deshacer (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) sigue retrocediendo un cambio cada vez. |
-| **Cuadro de mensaje** | <kbd>Intro</kbd> envía. Escribe <kbd>@</kbd> para [añadir contexto](#añadir-contexto-con-) y <kbd>/</kbd> para [comandos](#comandos-con-). Mientras el agente trabaja, el botón de enviar pasa a ser **Detener**. |
-| **+** | Empieza una mención con @, como escribir <kbd>@</kbd>. |
+| **Cuadro de mensaje** | Crece con el texto. <kbd>Intro</kbd> envía y <kbd>Mayús</kbd>+<kbd>Intro</kbd> empieza otra línea. Escribe <kbd>@</kbd> para [añadir contexto](#añadir-contexto-con-) y <kbd>/</kbd> para [comandos](#comandos-con-); en su lista <kbd>↑</kbd> <kbd>↓</kbd> te mueven, <kbd>Intro</kbd> elige y <kbd>Esc</kbd> la cierra. Mientras el agente trabaja, el botón de enviar pasa a ser **Detener**. |
+| **+** | **Archivos, el formulario, su código, controles** (una mención con @), **Adjuntar imágenes…**, **Pegar imagen** y **Captura del formulario**. Ver [Imágenes](#imágenes). |
 | **Modo de permisos** | Qué puede hacer el agente sin preguntar (ver abajo). |
-| **Modelo** | Todos los proveedores con sus modelos. Un proveedor sin configurar muestra **Conectar…**, que inicia sesión ahí mismo. |
+| **Modelo** | Todos los proveedores con sus modelos, y los [agentes externos](#agentes-externos). Un proveedor sin configurar muestra **Conectar…**, que inicia sesión ahí mismo. |
 | **Esfuerzo** | Cuánto piensa el modelo antes de responder: **Bajo**, **Medio**, **Alto**, **Muy alto**, **Máximo**. Solo modelos Claude. |
 | **Rápido** | Modo rápido: respuestas más rápidas a mayor precio, en Claude Opus 5.5 y Opus 5 a través de la API de Claude. |
 
@@ -75,7 +87,8 @@ del editor de código), así que "alinea estos" o "valida este campo" se refiere
 ### Añadir contexto con @
 
 Escribe <kbd>@</kbd> (o pulsa **+**) y elige qué adjuntar: la **selección**, el **formulario** abierto, su
-**código**, uno de sus **controles** o un **archivo** del proyecto. Sigue escribiendo para filtrar la lista;
+**código**, uno de sus **controles**, un **archivo** del proyecto (un archivo de imagen va como imagen) o una
+**captura** del formulario abierto. Sigue escribiendo para filtrar la lista;
 <kbd>Intro</kbd> elige la fila resaltada. Lo que elijas aparece como una etiqueta sobre el mensaje y su contenido
 va con el mensaje, así el agente no tiene que buscarlo. Los archivos que pueden tener secretos (`.env`, claves…)
 nunca se ofrecen.
@@ -89,12 +102,14 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | Comando | Hace |
 | --- | --- |
 | `/new` | Empieza una conversación nueva. |
+| `/app` | Empieza una petición para [crear una aplicación completa](#crear-una-aplicación). |
 | `/history` | Muestra las conversaciones pasadas. |
 | `/settings` | Abre los ajustes de los agentes de IA. |
 | `/form`, `/component` | Empieza una petición para generar un formulario o un componente. |
 | `/explain` | Explica el formulario abierto y sus manejadores. |
 | `/fix` | Revisa el código del formulario con `validate_code` y corrige lo que encuentre. |
 | `/tidy` | Alinea los controles e iguala los márgenes. |
+| `/look` | Hace una captura del formulario, la mira y mejora su distribución y su diseño. |
 
 ### Qué puede hacer el agente
 
@@ -108,10 +123,41 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | `list_components`, `describe_component`, `search_icons`, `list_themes`, `read_docs`… | El mismo conocimiento que el [servidor MCP](/pyzed/es/guides/mcp/): componentes, iconos, temas y esta documentación. |
 | `validate_code`, `validate_form` | Revisan código y formularios antes de devolverlos. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Trabajan con archivos del proyecto, nunca fuera de su carpeta. |
+| `screenshot_form` | Dibuja el formulario abierto en una imagen y la mira, para revisar la distribución tal como la ves. |
+| `get_project`, `create_project`, `add_dependency`, `check_project`, `open_document` | Leen el proyecto abierto (formularios, componentes, dependencias, punto de entrada), crean uno nuevo y lo abren, añaden un paquete con uv, ejecutan las comprobaciones del proyecto y abren cualquiera de sus archivos en una pestaña. |
+| `list_examples`, `read_example`, `new_form` | Los ejemplos de Pyzed para aprender de ellos, y un formulario inicial escrito a partir de una descripción. |
+| `mcp_<servidor>_<herramienta>` | Las herramientas de los [servidores MCP](#servidores-mcp) que añadiste. |
 
 En el modo **Preguntar antes de escribir**, las herramientas que **crean o escriben archivos** preguntan antes: una
 tarjeta muestra **Permitir**, **Permitir siempre** (el resto de la sesión) y **Denegar**. **Omitir permisos** se la
 salta. Los cambios al documento abierto nunca preguntan, porque se pueden deshacer.
+
+## Imágenes
+
+El agente puede mirar imágenes: una maqueta que reconstruir, una captura de un error, el formulario tal como se ve
+ahora. Añádelas con **+**:
+
+- **Adjuntar imágenes…** abre el diálogo de archivos del sistema (PNG, JPEG, GIF o WebP, hasta 5 MB cada una).
+- **Pegar imagen** toma la imagen que copiaste (una captura, una imagen del navegador).
+- **Captura del formulario** dibuja el formulario abierto y la adjunta.
+
+Aparecen como miniaturas sobre el mensaje y en la conversación. Las herramientas también pueden responder con
+imágenes: `screenshot_form` y las de los servidores MCP que devuelven imágenes. El modelo tiene que admitir
+imágenes (Claude, GPT-4.1 y posteriores, Gemini, la mayoría de modelos de visión de Ollama…).
+
+## Crear una aplicación
+
+`/app`, la sugerencia **Crea una app de notas…** o una petición normal ("Crea una app para llevar mis gastos")
+empiezan una aplicación entera, no solo un formulario. El agente conoce el editor (proyectos, formularios,
+componentes, estilos, enlace de datos, el [servidor MCP](/pyzed/es/guides/mcp/) y esta documentación) y, en cada
+mensaje, lo que está abierto: el proyecto y sus archivos, el formulario, la selección y las demás pestañas. Luego:
+
+1. Crea un [proyecto](/pyzed/es/editor/projects/) con `create_project` (o usa el abierto) y añade los paquetes que
+   necesita con `add_dependency`.
+2. Escribe los formularios y componentes, coloca sus controles, conecta los eventos y escribe el código, leyendo
+   los ejemplos y la documentación de Pyzed cuando los necesita.
+3. Mira cada formulario con `screenshot_form` y arregla lo que no se ve bien.
+4. Ejecuta `check_project` y `validate_code` hasta que pasan, y te dice cómo ejecutarla (<kbd>F5</kbd>).
 
 ## Generar formularios y componentes
 
@@ -146,17 +192,70 @@ los agentes de IA…** en la paleta de comandos.
 
 | Proveedor | Cómo conectarlo | Notas |
 | --- | --- | --- |
-| **Anthropic** | **Iniciar sesión con el navegador**, clave de API o `ANTHROPIC_API_KEY` | Los modelos Claude transmiten resúmenes de su razonamiento, usan pensamiento adaptativo y admiten esfuerzo y modo rápido. Si existe un perfil de la CLI de Anthropic (`ant auth login`) también se usa, pero la CLI no hace falta. |
+| **Anthropic** | **Iniciar sesión con el navegador**, clave de API, `ANTHROPIC_API_KEY` o [federación de identidades](#claude-sin-clave-de-api) | Los modelos Claude transmiten resúmenes de su razonamiento, usan pensamiento adaptativo y admiten esfuerzo y modo rápido. Si existe un perfil de la CLI de Anthropic (`ant auth login`) también se usa, pero la CLI no hace falta. |
 | **OpenAI** | **Iniciar sesión con el navegador**, clave de API u `OPENAI_API_KEY` | |
 | **Google Gemini** | **Iniciar sesión con el navegador**, clave de AI Studio o `GEMINI_API_KEY` | A través del endpoint compatible con OpenAI de Gemini. |
 | **OpenRouter** | **Iniciar sesión con el navegador** (OAuth), clave de API u `OPENROUTER_API_KEY` | OAuth con PKCE: la clave que OpenRouter emite para Pyzed va al llavero. |
 | **xAI**, **Mistral**, **DeepSeek**, **Groq** | **Iniciar sesión con el navegador**, clave de API o `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` | Sus modelos aparecen tras iniciar sesión. |
+| **GitHub Copilot** | **Iniciar sesión con GitHub** (flujo de dispositivo), un token detallado con el permiso **Models** o `GITHUB_TOKEN` | Los modelos de GitHub Models (`openai/gpt-4.1`, …) con los límites de tu cuenta. Iniciar sesión necesita el **Client ID de la GitHub App** (o `PYZED_GITHUB_CLIENT_ID`). |
+| **Google Vertex AI** | **Iniciar sesión con Google**, o las credenciales de Google Cloud de este equipo (`gcloud auth application-default login`) | Gemini a través del endpoint compatible con OpenAI de Vertex AI, sin clave. Necesita un **Proyecto de Google Cloud** y una **Ubicación** (`global` por defecto); iniciar sesión con Google necesita un **Cliente OAuth** (app de escritorio) cuyo secreto va al llavero. |
 | **Ollama**, **LM Studio** | Nada: corren en tu equipo | Cambia la **URL del servidor** si corren en otra máquina. |
 | **Compatible con OpenAI** | URL del servidor y una clave si la necesita | vLLM, llama.cpp, una pasarela de empresa… |
 
 Pulsa un proveedor para abrirlo: **Iniciar sesión con el navegador** (ver [Iniciar sesión](#iniciar-sesión)), pega
 una clave y **Guardar**, **Obtener una clave** (abre la página de claves del proveedor), **Quitar la clave** y
 **Actualizar modelos**, que pide al proveedor su lista de modelos para que aparezcan en el selector.
+
+**Probar la conexión** comprueba el proveedor con lo que esté configurado y muestra de dónde salen las credenciales.
+
+### Claude sin clave de API
+
+Abre **Anthropic** y rellena **Federación de identidad de cargas de trabajo**. Un token de tu proveedor de
+identidad (GitHub Actions, Google Cloud, Azure, Okta, Kubernetes…) se cambia por un token de Claude de corta
+duración, así que no se guarda ninguna clave de API. Primero crea el emisor y la regla de federación en la Claude
+Console y luego rellena:
+
+| Campo | Qué va ahí |
+| --- | --- |
+| **Regla de federación** | El ID de la regla, `fdrl_…`. |
+| **ID de la organización** | El UUID de tu organización. |
+| **Cuenta de servicio** | `svac_…`, cuando la regla no nombra una. Opcional. |
+| **Espacio de trabajo** | `wrkspc_…` o `default`. Opcional. |
+| **Token de identidad** | De dónde sale el token: un **Archivo** (la ruta del JWT, o `ANTHROPIC_IDENTITY_TOKEN_FILE`), un **Comando** que imprime uno nuevo (por ejemplo `gcloud auth print-identity-token`) o una **Variable** (`ANTHROPIC_IDENTITY_TOKEN`). |
+
+Una clave de API guardada tiene prioridad sobre la federación; quítala para usar la federación. También sirven las
+variables `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID` y `ANTHROPIC_IDENTITY_TOKEN_FILE`.
+
+### Servidores MCP
+
+**Servidores MCP** suma las herramientas de cualquier servidor del
+[Model Context Protocol](https://modelcontextprotocol.io) a las del agente, como los servidores de contexto de Zed.
+**Añadir un servidor MCP** pide:
+
+- un **Nombre**;
+- el **Comando**, como lo escribirías en una terminal (`npx -y @modelcontextprotocol/server-github`,
+  `uvx mcp-server-fetch`…), **o la URL** de un servidor remoto (Streamable HTTP);
+- **Secretos**: pares `NOMBRE=valor` separados por `;`, que se pasan como variables de entorno (o como cabeceras
+  para una URL). Van al llavero del sistema, nunca a `agents.json`.
+
+**Probar** arranca el servidor y lista sus herramientas; el interruptor lo apaga sin quitarlo. Sus herramientas
+aparecen como `mcp_<servidor>_<herramienta>`. Las que el servidor no marca como de solo lectura preguntan antes en
+**Preguntar antes de escribir**, como al escribir archivos; en **Solo lectura** se dejan fuera.
+
+### Agentes externos
+
+**Agentes externos** ejecuta Claude Code, Gemini CLI, Codex o cualquier agente que hable el
+[Agent Client Protocol](https://agentclientprotocol.com) dentro del panel, como en Zed. **Añadir un agente
+externo…** ofrece los conocidos (Claude Code con `@zed-industries/claude-code-acp`, `gemini --experimental-acp`,
+Codex con `@zed-industries/codex-acp`) u **Otro…** para cualquier comando. Una vez añadido, elígelo en el selector
+de modelos en **Agentes externos**.
+
+El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera (su propia cuenta o
+clave; pon las claves en **Secretos**). Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
+proyecto y nunca los que pueden tener secretos, y pregunta antes de actuar según el modo de permisos (**Solo
+lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas). Con **Compartir el servidor MCP
+de Pyzed** activado, el agente también recibe los componentes, la documentación, los generadores y las
+comprobaciones de Pyzed (necesita el paquete `mcp`).
 
 ### Dónde se guardan las claves
 

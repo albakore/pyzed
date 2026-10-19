@@ -2063,6 +2063,7 @@ editor(
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
+    font=None,
     theme=None,
 )
 ```
@@ -2102,6 +2103,7 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `highlights` | Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |
+| `font` | Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

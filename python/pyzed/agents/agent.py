@@ -19,11 +19,13 @@ one, or turn ``confirm_writes`` off to let them run unasked. ``stop()`` cancels 
 
 from __future__ import annotations
 
+import base64
 import inspect
 import json
 import threading
 import traceback
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union, get_type_hints
 
 from . import llm
@@ -32,6 +34,50 @@ from . import providers as _providers
 _JSON_TYPES = {str: "string", int: "integer", float: "number", bool: "boolean", list: "array", dict: "object"}
 #: Characters of a tool result sent back to the model (the rest is cut, with a note).
 RESULT_LIMIT = 40_000
+#: Largest image sent to a model, in bytes (Claude takes up to 5 MB per image).
+IMAGE_LIMIT = 5 * 1024 * 1024
+_MAGIC = ((b"\x89PNG", "image/png"), (b"\xff\xd8\xff", "image/jpeg"), (b"GIF8", "image/gif"))
+
+
+@dataclass(frozen=True)
+class Image:
+    """An image for the model: attach it to a message (``image_block``) or return it from a tool."""
+
+    data: bytes
+    media_type: str = ""
+
+    @classmethod
+    def open(cls, path: Union[str, Path]) -> "Image":
+        """Reads a PNG, JPEG, GIF or WebP file."""
+        return cls(Path(path).read_bytes())
+
+    @property
+    def type(self) -> str:
+        """The media type, from ``media_type`` or the file's first bytes."""
+        if self.media_type:
+            return self.media_type
+        for magic, kind in _MAGIC:
+            if self.data.startswith(magic):
+                return kind
+        if self.data[:4] == b"RIFF" and self.data[8:12] == b"WEBP":
+            return "image/webp"
+        raise ValueError("not a PNG, JPEG, GIF or WebP image")
+
+    def block(self) -> Dict[str, Any]:
+        """The image as a content block of a message (Anthropic's shape, converted for other providers)."""
+        if len(self.data) > IMAGE_LIMIT:
+            raise ValueError(f"the image is {len(self.data) // 1024} KB; the limit is {IMAGE_LIMIT // 1048576} MB")
+        return {"type": "image", "source": {"type": "base64", "media_type": self.type,
+                                            "data": base64.b64encode(self.data).decode("ascii")}}
+
+
+def image_block(image: Union[Image, bytes, str, Path], media_type: str = "") -> Dict[str, Any]:
+    """A message content block for ``image`` (an ``Image``, its bytes or a file path)."""
+    if isinstance(image, (str, Path)):
+        image = Image.open(image)
+    elif isinstance(image, (bytes, bytearray)):
+        image = Image(bytes(image), media_type)
+    return image.block()
 
 
 @dataclass
@@ -64,15 +110,23 @@ class Tool:
             if name not in args:
                 return f"missing required argument {name!r}"
         checks = {"string": str, "integer": int, "number": (int, float), "boolean": bool, "array": list,
-                  "object": dict}
+                  "object": dict, "null": type(None)}
+        extra = self.schema.get("additionalProperties", False) is not False
         for name, value in args.items():
-            expected = props.get(name, {}).get("type")
             if name not in props:
+                if extra:
+                    continue
                 return f"unknown argument {name!r}"
-            if expected in checks and value is not None and not isinstance(value, checks[expected]):
-                return f"{name!r} must be of type {expected}"
-            if expected == "integer" and isinstance(value, bool):
-                return f"{name!r} must be of type integer"
+            expected = props[name].get("type") if isinstance(props[name], dict) else None
+            kinds = [expected] if isinstance(expected, str) else list(expected or [])
+            if not kinds or value is None:
+                continue
+            known = [k for k in kinds if k in checks]
+            if len(known) < len(kinds):
+                continue  # a type we do not check
+            if not any(isinstance(value, checks[k]) and not (k in ("integer", "number") and isinstance(value, bool))
+                       for k in known):
+                return f"{name!r} must be of type {' or '.join(kinds)}"
         return None
 
 
@@ -196,6 +250,7 @@ class Agent:
 
     def _call(self, block: Dict[str, Any], on_event: Callable[[Event], None]) -> Dict[str, Any]:
         name, args, call_id = block.get("name", ""), block.get("input") or {}, block.get("id", "")
+        images: List[Dict[str, Any]] = []
         on_event(Event("tool_call", tool=name, args=args if isinstance(args, dict) else {}, call_id=call_id))
         tool_ = self.tools.get(name)
         allowed = {t.name for t in self.active_tools()}
@@ -214,8 +269,16 @@ class Agent:
             try:
                 work = lambda: tool_.func(**args)  # noqa: E731
                 value = self.executor(work) if tool_.ui and self.executor is not None else work()
-                result = value if isinstance(value, str) else json.dumps(value, indent=1, ensure_ascii=False,
-                                                                         default=str)
+                parts = list(value) if isinstance(value, (list, tuple)) and any(isinstance(v, Image) for v in value) \
+                    else [value]
+                images = [v.block() for v in parts if isinstance(v, Image)]
+                rest = [v for v in parts if not isinstance(v, Image)]
+                if images:
+                    rest = rest[0] if len(rest) == 1 else rest or "The image is attached."
+                else:
+                    rest = value
+                result = rest if isinstance(rest, str) else json.dumps(rest, indent=1, ensure_ascii=False,
+                                                                       default=str)
                 error = False
             except Exception as err:  # noqa: BLE001 - the model sees the error and can fix its call
                 result, error = f"{type(err).__name__}: {err}", True
@@ -225,6 +288,9 @@ class Agent:
             result = result[:RESULT_LIMIT] + f"\n… ({len(result) - RESULT_LIMIT} more characters cut)"
         on_event(Event("tool_result", tool=name, args=args if isinstance(args, dict) else {}, call_id=call_id,
                        result=result, error=error))
+        if not error and images:
+            return {"type": "tool_result", "tool_use_id": call_id, "is_error": False,
+                    "content": [{"type": "text", "text": result}, *images]}
         return {"type": "tool_result", "tool_use_id": call_id, "content": result, "is_error": error}
 
     # -- running ----------------------------------------------------------------------------------

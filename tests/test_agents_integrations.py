@@ -1,0 +1,597 @@
+"""AI agents: images, MCP servers, external agents (ACP), GitHub and Google sign-in, workload identity
+federation, and how the Agent panel uses them (multi-line box, attachments, settings, building apps)."""
+
+import base64
+import http.server
+import json
+import sys
+import textwrap
+import threading
+import time
+import urllib.request
+
+import pytest
+
+from pyzed import agents
+from pyzed.agents import acp, llm, login, mcp_client, providers, secrets
+
+PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
+
+
+class FakeKeyring:
+    name = "Fake keychain"
+
+    def __init__(self):
+        self.data = {}
+
+    def get_password(self, service, key):
+        return self.data.get((service, key))
+
+    def set_password(self, service, key, value):
+        self.data[(service, key)] = value
+
+    def delete_password(self, service, key):
+        self.data.pop((service, key), None)
+
+
+@pytest.fixture(autouse=True)
+def keychain(monkeypatch, tmp_path):
+    for name in ("ANTHROPIC_API_KEY", "GITHUB_TOKEN", "ANTHROPIC_FEDERATION_RULE_ID", "ANTHROPIC_ORGANIZATION_ID",
+                 "GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_CLOUD_PROJECT", "PYZED_GITHUB_CLIENT_ID"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ANTHROPIC_CONFIG_DIR", "/nonexistent-ant-config")
+    monkeypatch.setenv("CLOUDSDK_CONFIG", str(tmp_path / "no-gcloud"))
+    monkeypatch.setattr(providers, "_last", None)
+    fake = FakeKeyring()
+    secrets.use(secrets.SecretStore(fake))
+    yield fake
+    secrets.use(secrets.SecretStore(None))
+
+
+def scripted(*turns):
+    calls = []
+
+    def stream(model, system, messages, tools, *, settings, on_event, cancel):
+        calls.append({"model": model, "messages": json.loads(json.dumps(messages)), "tools": [t.name for t in tools]})
+        blocks = turns[min(len(calls) - 1, len(turns) - 1)]
+        for b in blocks:
+            if b["type"] == "text":
+                on_event("text", b["text"])
+        return llm.Turn(blocks, "tool_use" if any(b["type"] == "tool_use" for b in blocks) else "end_turn")
+
+    stream.calls = calls
+    return stream
+
+
+# -- images ------------------------------------------------------------------------------------------------
+
+def test_images_in_messages_and_tool_results():
+    image = agents.Image(PNG)
+    assert image.type == "image/png" and agents.Image(b"\xff\xd8\xff\xe0rest").type == "image/jpeg"
+    with pytest.raises(ValueError):
+        agents.Image(b"not an image").type
+    block = agents.image_block(PNG)
+    assert block["type"] == "image" and base64.b64decode(block["source"]["data"]) == PNG
+
+    @agents.tool
+    def look() -> list:
+        """Takes a picture."""
+        return ["The picture.", agents.Image(PNG)]
+
+    stream = scripted([{"type": "tool_use", "id": "1", "name": "look", "input": {}}], [{"type": "text", "text": "Ok"}])
+    agent = agents.Agent("x", tools=[look], stream=stream, settings=providers.AgentSettings())
+    agent.run([{"type": "text", "text": "Look"}, block])
+    result = stream.calls[1]["messages"][2]["content"][0]
+    assert result["type"] == "tool_result" and result["content"][0] == {"type": "text", "text": "The picture."}
+    assert result["content"][1]["type"] == "image"
+    # OpenAI-compatible servers get the images as image_url parts (tool messages carry text only)
+    converted = llm._openai_messages("sys", stream.calls[1]["messages"])
+    assert converted[1]["content"][1]["image_url"]["url"].startswith("data:image/png;base64,")
+    assert converted[3] == {"role": "tool", "tool_call_id": "1", "content": "The picture."}
+    assert converted[4]["role"] == "user" and converted[4]["content"][1]["type"] == "image_url"
+    assert llm._anthropic_messages(stream.calls[1]["messages"])[0]["content"][1]["type"] == "image"
+
+
+def test_validation_accepts_union_types_and_open_schemas():
+    tool = agents.Tool("t", "", {"type": "object", "properties": {"a": {"type": ["string", "null"]},
+                                                                 "n": {"type": "integer"}}, "required": []}, print)
+    assert tool.validate({"a": "x"}) is None and tool.validate({"a": None}) is None
+    assert "must be of type" in tool.validate({"a": 3}) and "must be of type" in tool.validate({"n": True})
+    assert "unknown argument" in tool.validate({"b": 1})
+    open_ = agents.Tool("t", "", {"type": "object", "properties": {}, "additionalProperties": True}, print)
+    assert open_.validate({"anything": 1}) is None
+
+
+# -- MCP servers ---------------------------------------------------------------------------------------------
+
+MCP_SERVER = textwrap.dedent('''
+    import json, os, sys
+    for line in sys.stdin:
+        msg = json.loads(line)
+        if "id" not in msg:
+            continue
+        method, ident = msg["method"], msg["id"]
+        if method == "initialize":
+            result = {"protocolVersion": msg["params"]["protocolVersion"], "capabilities": {"tools": {}},
+                      "serverInfo": {"name": "fake", "version": "1"}}
+        elif method == "tools/list":
+            result = {"tools": [
+                {"name": "echo", "description": "Echoes.", "annotations": {"readOnlyHint": True},
+                 "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}},
+                {"name": "secret", "description": "Tells the token.", "inputSchema": {"type": "object"}},
+                {"name": "fail", "description": "Fails.", "inputSchema": {"type": "object"}}]}
+        elif method == "tools/call":
+            name, args = msg["params"]["name"], msg["params"]["arguments"]
+            if name == "echo":
+                result = {"content": [{"type": "text", "text": args["text"].upper()}]}
+            elif name == "secret":
+                result = {"content": [{"type": "text", "text": os.environ.get("TOKEN", "")}]}
+            else:
+                result = {"content": [{"type": "text", "text": "it broke"}], "isError": True}
+        else:
+            print(json.dumps({"jsonrpc": "2.0", "id": ident, "error": {"code": -32601, "message": "no"}}), flush=True)
+            continue
+        print(json.dumps({"jsonrpc": "2.0", "id": ident, "result": result}), flush=True)
+''')
+
+
+def test_mcp_server_tools_over_stdio(tmp_path, keychain):
+    script = tmp_path / "server.py"
+    script.write_text(MCP_SERVER)
+    config = providers.MCPServerConfig("fake", sys.executable, [str(script)], secret_names=["TOKEN"])
+    assert mcp_client.set_secrets("fake", {"TOKEN": "s3cret"}) is True
+    assert "s3cret" in keychain.data[("pyzed", "agents.mcp.fake")]
+    servers = mcp_client.Servers([config], cwd=str(tmp_path))
+    try:
+        tools = {t.name: t for t in servers.tools()}
+        assert set(tools) == {"mcp_fake_echo", "mcp_fake_secret", "mcp_fake_fail"}
+        assert not tools["mcp_fake_echo"].writes and tools["mcp_fake_secret"].writes
+        assert tools["mcp_fake_echo"].func(text="hi") == "HI"
+        assert tools["mcp_fake_secret"].func() == "s3cret"  # the secret reached the server's environment
+        with pytest.raises(RuntimeError, match="it broke"):
+            tools["mcp_fake_fail"].func()
+        # in an agent: read-only tools run, the others ask first
+        stream = scripted([{"type": "tool_use", "id": "1", "name": "mcp_fake_echo", "input": {"text": "x"}},
+                           {"type": "tool_use", "id": "2", "name": "mcp_fake_secret", "input": {}}],
+                          [{"type": "text", "text": "done"}])
+        agent = agents.Agent("x", tools=list(tools.values()), stream=stream, settings=providers.AgentSettings())
+        agent.run("go")
+        results = stream.calls[1]["messages"][2]["content"]
+        assert results[0]["content"] == "X" and results[1]["is_error"]
+    finally:
+        servers.close()
+    # settings keep the server, never its secrets
+    s = providers.AgentSettings(mcp_servers=[config])
+    data = json.dumps(s.to_dict())
+    assert "s3cret" not in data and providers.AgentSettings.from_dict(json.loads(data)).mcp_servers == [config]
+
+
+def test_a_server_that_does_not_start_is_reported(tmp_path):
+    servers = mcp_client.Servers([providers.MCPServerConfig("ghost", str(tmp_path / "missing-program"))])
+    failed = []
+    assert servers.tools(lambda name, why: failed.append(name)) == [] and failed == ["ghost"]
+    assert "ghost" in servers.errors
+
+
+def test_mcp_server_over_http():
+    seen = []
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            msg = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            seen.append((msg.get("method"), self.headers.get("Authorization"), self.headers.get("Mcp-Session-Id")))
+            if "id" not in msg:
+                self.send_response(202)
+                self.end_headers()
+                return
+            result = {"tools": [{"name": "ping", "inputSchema": {"type": "object"}}]} \
+                if msg["method"] == "tools/list" else {"protocolVersion": "2025-06-18", "capabilities": {}}
+            if msg["method"] == "tools/call":
+                result = {"content": [{"type": "text", "text": "pong"}]}
+            body = json.dumps({"jsonrpc": "2.0", "id": msg["id"], "result": result})
+            self.send_response(200)
+            self.send_header("Mcp-Session-Id", "abc")
+            if msg["method"] == "tools/call":  # answered as an event stream
+                self.send_header("Content-Type", "text/event-stream")
+                self.end_headers()
+                self.wfile.write(f"event: message\ndata: {body}\n\n".encode())
+            else:
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(body.encode())
+
+        def log_message(self, *a):
+            pass
+
+    server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        mcp_client.set_secrets("remote", {"Authorization": "Bearer t0k"})
+        servers = mcp_client.Servers([providers.MCPServerConfig(
+            "remote", url=f"http://127.0.0.1:{server.server_address[1]}/mcp")])
+        tool, = servers.tools()
+        assert tool.func() == "pong"
+    finally:
+        server.shutdown()
+    assert seen[0] == ("initialize", "Bearer t0k", None) and seen[-1][2] == "abc"
+
+
+# -- external agents (ACP) ----------------------------------------------------------------------------------
+
+ACP_AGENT = textwrap.dedent('''
+    import json, sys, threading
+    pending = {}
+    next_id = [100]
+
+    def send(msg):
+        print(json.dumps(msg), flush=True)
+
+    def request(method, params):
+        next_id[0] += 1
+        ident = next_id[0]
+        event = threading.Event()
+        pending[ident] = [event, None]
+        send({"jsonrpc": "2.0", "id": ident, "method": method, "params": params})
+        event.wait(10)
+        return pending.pop(ident)[1]
+
+    def update(session, body):
+        send({"jsonrpc": "2.0", "method": "session/update", "params": {"sessionId": session, "update": body}})
+
+    def prompt(ident, params):
+        s = params["sessionId"]
+        text = params["prompt"][0]["text"]
+        update(s, {"sessionUpdate": "agent_thought_chunk", "content": {"type": "text", "text": "Thinking"}})
+        update(s, {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "Reading. "}})
+        update(s, {"sessionUpdate": "tool_call", "toolCallId": "c1", "title": "Read notes.txt", "kind": "read",
+                   "status": "pending", "rawInput": {"path": "notes.txt"}})
+        read = request("fs/read_text_file", {"sessionId": s, "path": "notes.txt"})
+        update(s, {"sessionUpdate": "tool_call_update", "toolCallId": "c1", "status": "completed",
+                   "content": [{"type": "content", "content": {"type": "text", "text": read["result"]["content"]}}]})
+        secret = request("fs/read_text_file", {"sessionId": s, "path": ".env"})
+        update(s, {"sessionUpdate": "tool_call", "toolCallId": "c2", "title": "Write out.txt", "kind": "edit",
+                   "status": "pending"})
+        answer = request("session/request_permission", {"sessionId": s, "toolCall": {"toolCallId": "c2"}, "options": [
+            {"optionId": "yes", "name": "Allow", "kind": "allow_once"},
+            {"optionId": "no", "name": "Reject", "kind": "reject_once"}]})
+        chosen = answer["result"]["outcome"].get("optionId")
+        if chosen == "yes":
+            request("fs/write_text_file", {"sessionId": s, "path": "out.txt", "content": text})
+        update(s, {"sessionUpdate": "tool_call_update", "toolCallId": "c2",
+                   "status": "completed" if chosen == "yes" else "failed"})
+        update(s, {"sessionUpdate": "agent_message_chunk", "content": {"type": "text",
+                   "text": "Done: " + chosen + (" (no secrets)" if "error" in secret else "")}})
+        send({"jsonrpc": "2.0", "id": ident, "result": {"stopReason": "end_turn"}})
+
+    for line in sys.stdin:
+        msg = json.loads(line)
+        if "method" not in msg:
+            pending[msg["id"]][1] = msg
+            pending[msg["id"]][0].set()
+            continue
+        method, ident, params = msg["method"], msg.get("id"), msg.get("params") or {}
+        if method == "initialize":
+            send({"jsonrpc": "2.0", "id": ident, "result": {"protocolVersion": 1, "agentCapabilities": {
+                "promptCapabilities": {"image": True}}, "authMethods": []}})
+        elif method == "session/new":
+            servers = [s["name"] for s in params["mcpServers"]]
+            send({"jsonrpc": "2.0", "id": ident, "result": {"sessionId": "s-" + ",".join(servers)}})
+        elif method == "session/prompt":
+            threading.Thread(target=prompt, args=(ident, params)).start()
+''')
+
+
+def test_external_agent_through_acp(tmp_path):
+    script = tmp_path / "agent.py"
+    script.write_text(ACP_AGENT)
+    (tmp_path / "notes.txt").write_text("buy milk")
+    (tmp_path / ".env").write_text("SECRET=1")
+    config = providers.ACPAgentConfig("fake", sys.executable, [str(script)], title="Fake agent")
+    asked = []
+    settings = providers.AgentSettings()
+    agent = acp.ACPAgent(config, cwd=tmp_path, settings=settings, mcp_servers=[{"name": "pyzed", "command": "x",
+                                                                                 "args": [], "env": []}],
+                         confirm=lambda tool, args: asked.append(tool.title) or True)
+    events = []
+    try:
+        answer = agent.run("hello", on_event=events.append)
+        assert agent.session == "s-pyzed"  # Pyzed's MCP server was handed to the agent
+        assert answer.startswith("Reading. ") or "Done: yes" in answer
+        assert (tmp_path / "out.txt").read_text() == "hello" and asked == ["Write out.txt"]
+        kinds = [e.kind for e in events]
+        assert kinds[0] == "thinking" and "tool_call" in kinds and "tool_result" in kinds and kinds[-1] == "done"
+        texts = [b["text"] for m in agent.messages if m["role"] == "assistant" for b in m["content"]
+                 if b["type"] == "text"]
+        assert texts[0] == "Reading. " and texts[-1] == "Done: yes (no secrets)"
+        results = [b for m in agent.messages if m["role"] == "user" for b in m["content"] if b["type"] == "tool_result"]
+        assert results[0]["content"] == "buy milk"
+        # read-only mode: the agent's edits are refused without asking
+        settings.mode = "read"
+        (tmp_path / "out.txt").unlink()
+        agent.run("again", on_event=events.append)
+        assert not (tmp_path / "out.txt").exists() and asked == ["Write out.txt"]
+        assert agent.messages[-1]["role"] == "assistant" or agent.messages[-2]["role"] == "assistant"
+    finally:
+        agent.close()
+    # other models get the external agent's conversation as text only
+    for m in llm._anthropic_messages(agent.messages):
+        assert all(b["type"] == "text" for b in m["content"])
+
+
+def test_acp_presets_and_a_missing_program(tmp_path):
+    claude = acp.preset("claude-code")
+    assert claude.label == "Claude Code" and claude.command == "npx"
+    missing = providers.ACPAgentConfig("ghost", str(tmp_path / "nope"))
+    assert not acp.installed(missing)
+    events = []
+    acp.ACPAgent(missing, cwd=tmp_path, mcp_servers=[]).run("hi", on_event=events.append)
+    assert events[-2].kind == "error" and "Could not start" in events[-2].text
+
+
+# -- GitHub and Google sign-in ------------------------------------------------------------------------------
+
+def test_github_device_flow(keychain):
+    with pytest.raises(login.LoginError, match="GitHub App"):
+        login.github_device_code("")
+    answers = iter([{"error": "authorization_pending"}, {"error": "slow_down", "interval": 0},
+                    {"access_token": "ghu_abc", "refresh_token": "ghr_x", "expires_in": 28800}])
+    posted = []
+
+    def post(url, data):
+        posted.append((url, data))
+        if url == login.GITHUB_DEVICE:
+            return {"device_code": "dc", "user_code": "ABCD-1234", "verification_uri": "https://github.com/login/device",
+                    "interval": 0, "expires_in": 60}
+        return next(answers)
+
+    code = login.github_device_code("Iv23client", post=post)
+    assert code.user_code == "ABCD-1234"
+    token = login.github_device_token("Iv23client", code, post=post, sleep=lambda s: None)
+    assert token["access_token"] == "ghu_abc" and token["refresh_token"] == "ghr_x" and token["expires_at"] > time.time()
+    assert posted[1][1]["grant_type"] == "urn:ietf:params:oauth:grant-type:device_code"
+    providers.save_token("github", token)
+    assert providers.credential_source("github") == "oauth" and providers.api_key("github") == "ghu_abc"
+    with pytest.raises(login.LoginError, match="declined"):
+        login.github_device_token("Iv23client", code, post=lambda u, d: {"error": "access_denied"},
+                                  sleep=lambda s: None)
+
+
+def test_expired_tokens_are_refreshed(keychain, monkeypatch):
+    providers.save_token("vertex", {"access_token": "old", "refresh_token": "r1", "expires_at": time.time() - 10})
+    calls = []
+
+    def refresh(pid, token, settings, **kw):
+        calls.append((pid, token["refresh_token"]))
+        return {"access_token": "new", "refresh_token": "r1", "expires_at": time.time() + 3600}
+
+    monkeypatch.setattr(login, "refresh", refresh)
+    assert providers.api_key("vertex") == "new" and calls == [("vertex", "r1")]
+    assert json.loads(keychain.data[("pyzed", "agents.vertex")])["access_token"] == "new"
+    assert providers.api_key("vertex") == "new" and len(calls) == 1  # still valid: no second refresh
+
+
+def test_google_sign_in_and_vertex(monkeypatch, tmp_path):
+    def browser(url):
+        query = dict(p.split("=", 1) for p in url.split("?", 1)[1].split("&"))
+        callback = urllib.request.unquote(query["redirect_uri"])
+        assert callback.startswith("http://127.0.0.1:") and query["access_type"] == "offline"
+        threading.Thread(target=lambda: urllib.request.urlopen(callback + "?code=g0"), daemon=True).start()
+
+    posted = {}
+    token = login.google_login("cid.apps.googleusercontent.com", "sec", open_url=browser, timeout=10,
+                               post=lambda u, d: posted.update(d) or {"access_token": "ya29", "expires_in": 3599,
+                                                                      "refresh_token": "1//r"})
+    assert token["refresh_token"] == "1//r" and posted["code"] == "g0" and posted["code_verifier"]
+    assert posted["client_secret"] == "sec" and posted["grant_type"] == "authorization_code"
+    s = providers.AgentSettings()
+    assert s.base_url("vertex") == ""  # no project yet
+    s.provider("vertex").project = "my-proj"
+    assert s.base_url("vertex") == \
+        "https://aiplatform.googleapis.com/v1/projects/my-proj/locations/global/endpoints/openapi"
+    s.provider("vertex").location = "us-central1"
+    assert s.base_url("vertex").startswith("https://us-central1-aiplatform.googleapis.com/")
+    # the Google Cloud credentials of this computer (gcloud auth application-default login)
+    folder = tmp_path / "no-gcloud"
+    folder.mkdir()
+    (folder / "application_default_credentials.json").write_text(json.dumps({
+        "type": "authorized_user", "client_id": "c", "client_secret": "s", "refresh_token": "r",
+        "quota_project_id": "adc-proj"}))
+    assert providers.credential_source("vertex") == "gcloud" and providers.google_project() == "adc-proj"
+    monkeypatch.setitem(sys.modules, "google", None)  # no google-auth: refreshed by hand
+    login._default_token.clear()
+    token = login.google_default_token(post=lambda u, d: {"access_token": "ya29.adc", "expires_in": 3600})
+    assert token == "ya29.adc"
+
+
+# -- workload identity federation ---------------------------------------------------------------------------
+
+def test_claude_with_workload_identity_federation(tmp_path):
+    anthropic = pytest.importorskip("anthropic")
+    try:
+        from anthropic.lib.credentials import WorkloadIdentityCredentials  # noqa: F401
+    except ImportError:
+        pytest.skip("this anthropic version has no workload identity federation")
+    jwt = tmp_path / "token.jwt"
+    jwt.write_text("eyJ.fake.jwt")
+    s = providers.AgentSettings()
+    assert providers.credential_source("anthropic", settings=s) == ""
+    s.federation = providers.FederationSettings(rule_id="fdrl_1", organization_id="00000000-0000-0000-0000-000000000000",
+                                                token_file=str(jwt))
+    assert s.federation.enabled and providers.credential_source("anthropic", settings=s) == "federation"
+    assert llm._credential("anthropic", s) is None  # no key is sent
+    client = llm._anthropic_client("anthropic", s, None)
+    assert isinstance(client, anthropic.Anthropic) and client is llm._anthropic_client("anthropic", s, None)
+    back = providers.AgentSettings.from_dict(json.loads(json.dumps(s.to_dict())))
+    assert back.federation == s.federation
+    # a token printed by a command
+    s.federation.token_source, s.federation.token_command = "command", f'"{sys.executable}" -c "print(123)"'
+    assert llm._identity_token(s.federation)() == "123"
+
+
+# -- the Agent panel ------------------------------------------------------------------------------------------
+
+def _until(check, d, limit=3000):
+    for _ in range(limit):
+        d.agent.poll()
+        if check():
+            return
+        threading.Event().wait(0.005)
+    raise AssertionError("timed out")
+
+
+def test_message_box_keys_attachments_and_images(tmp_path):
+    from pyzed import _core
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    stream = scripted([{"type": "text", "text": "Nice picture."}])
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    d.layout.show("agent")
+    c.set_input("first line\nsecond line")
+    assert d.focus == "agent" and c.captured_keys() == ["enter"]
+    d.view()
+    c.set_input("@co")
+    assert {"up", "down", "escape"} <= set(c.captured_keys())
+    first = c.popup_items()[0][1]
+    d.on_key("down")
+    assert c.picked == 1
+    d.on_key("escape")
+    assert not c.popup_open and not c.popup_items()
+    c.set_input("@cod")
+    assert c.popup_open  # typing again shows it
+    c.set_input("Look at this")
+    assert first
+    (tmp_path / "shot.png").write_bytes(PNG)
+    (tmp_path / "bad.png").write_bytes(b"nope")
+    c.on_picked([str(tmp_path / "shot.png"), str(tmp_path / "bad.png")])
+    assert [a.name for a in c.attachments] == ["shot.png"]
+    c.on_clipboard_image(PNG)
+    c.on_clipboard_image(None)
+    assert len(c.attachments) == 2
+    assert isinstance(c.pick_images(), _core.Command) and isinstance(c.paste_image(), _core.Command)
+    c.toggle_add_menu()
+    d.view()
+    c.close_menu()
+    d.view()  # thumbnails in the composer
+    result = d.on_key("enter")  # Enter sends
+    assert isinstance(result, _core.Command) and c.running and not c.attachments
+    _until(lambda: not c.running, d)
+    sent = stream.calls[0]["messages"][0]["content"]
+    assert sent[0]["text"] == "Look at this" and [b["type"] for b in sent].count("image") == 2
+    d.view()  # the thread shows the pictures
+
+
+def test_settings_add_mcp_servers_and_external_agents(tmp_path, monkeypatch, keychain):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    script = tmp_path / "server.py"
+    script.write_text(MCP_SERVER)
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.open_settings()
+    d.view()
+    c.new_server("mcp")
+    c.set_draft("name", "fake server")
+    c.set_draft("command", f'"{sys.executable}" "{script}"')
+    c.set_draft("secrets", "TOKEN=abc; OTHER=2")
+    d.view()
+    c.save_draft()
+    server = c.settings.mcp_server("fake-server")
+    assert server is not None and server.command == sys.executable and server.secret_names == ["OTHER", "TOKEN"]
+    assert "abc" not in (tmp_path / "agents.json").read_text()
+    assert json.loads(keychain.data[("pyzed", "agents.mcp.fake-server")]) == {"TOKEN": "abc", "OTHER": "2"}
+    _until(lambda: c.busy_provider is None, d)
+    assert c.mcp_status["fake-server"] == "3 tools"
+    c.edit_server("mcp", "fake-server")
+    assert "TOKEN=abc" in c.server_draft["secrets"]
+    c.cancel_draft()
+    c.new_server("acp", "gemini")
+    assert c.server_draft["command"] == "gemini --experimental-acp"
+    c.save_draft()
+    assert c.settings.acp_agent("gemini").args == ["--experimental-acp"] and "acp:gemini" in c.models()
+    d.view()
+    c.toggle_menu("model")
+    d.view()  # the model menu lists the external agent
+    c.set_model("acp:gemini")
+    assert c.ready
+    d.view()
+    c.toggle_server("mcp", "fake-server")
+    assert not c.settings.mcp_server("fake-server").enabled
+    c.remove_server("acp", "gemini")
+    assert c.settings.acp_agent("gemini") is None and c.thread.model == providers.DEFAULT_MODEL
+    c.remove_server("mcp", "fake-server")
+    assert ("pyzed", "agents.mcp.fake-server") not in keychain.data
+    for pid in ("github", "vertex", "anthropic"):
+        c.toggle_provider(pid)
+        d.view()
+    c.set_federation("rule_id", "fdrl_9")
+    c.set_federation("organization_id", "org")
+    assert providers.load(tmp_path / "agents.json").federation.rule_id == "fdrl_9"
+    c.shutdown()
+
+
+def test_the_agent_uses_mcp_tools_and_knows_the_project(tmp_path):
+    from pyzed.designer import agent_tools
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    script = tmp_path / "server.py"
+    script.write_text(MCP_SERVER)
+    stream = scripted([{"type": "tool_use", "id": "1", "name": "mcp_fake_echo", "input": {"text": "hey"}},
+                       {"type": "tool_use", "id": "2", "name": "get_project", "input": {}}],
+                      [{"type": "text", "text": "Done."}])
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    c.settings.mcp_servers = [providers.MCPServerConfig("fake", sys.executable, [str(script)])]
+    c.mcp.update(c.settings.mcp_servers)
+    try:
+        c.send("Use the server")
+        _until(lambda: not c.running, d)
+    finally:
+        c.shutdown()
+    call = stream.calls[0]
+    assert "mcp_fake_echo" in call["tools"] and {"create_project", "screenshot_form", "list_examples",
+                                                 "screenshot"} <= set(call["tools"])
+    results = stream.calls[1]["messages"][2]["content"]
+    assert results[0]["content"] == "HEY" and json.loads(results[1]["content"])["project"] is None
+    prompt = agent_tools.system_prompt(d)
+    assert "create_project" in prompt and "Pyzed Design" in prompt
+    assert "No project is open" in agent_tools.context_note(d)
+
+
+def test_slash_app_and_screenshot_mention(tmp_path, monkeypatch):
+    from pyzed.designer import agent_tools
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    stream = scripted([{"type": "text", "text": "Seen."}])
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    c.set_input("/app")
+    assert [i[1] for i in c.popup_items()] == ["/app"]
+    c.send()
+    assert c.input == "Create an application that "
+    monkeypatch.setattr(agent_tools, "screenshot_job", lambda d: lambda: PNG)
+    c.set_input("@screen")
+    c.send()  # picks @screenshot
+    assert c.mentions[0].kind == "screenshot"
+    c.set_input(c.input + "how does it look?")
+    c.send()
+    _until(lambda: not c.running, d)
+    sent = stream.calls[0]["messages"][0]["content"]
+    assert any(b["type"] == "image" for b in sent)
+
+
+def test_commands_are_split_like_the_platform_shell(monkeypatch):
+    assert providers.split_command('npx -y "my server"') == ["npx", "-y", "my server"]
+    monkeypatch.setattr(providers.os, "name", "nt")
+    parts = providers.split_command(r'"C:\Program Files\Py\python.exe" -c "print(1)" C:\data')
+    monkeypatch.undo()
+    assert parts == [r"C:\Program Files\Py\python.exe", "-c", "print(1)", r"C:\data"]

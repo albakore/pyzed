@@ -752,6 +752,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "markers": '`{línea: "created" | "modified" | "deleted"}`.',
                         "on_cursor": "Callable que recibe `(línea, columna)`.",
                         "font_size": "Tamaño de la fuente (por defecto, el del tema).",
+                        "font": 'Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat.',
                         "line_height": "Alto de línea.",
                         "gutter": "Muestra los números de línea.",
                         "wrap": "Ajuste de línea.",
@@ -1064,6 +1065,8 @@ _page("command")["sections"][0][1].update({
     },
     "pyzed.Command.copy": {"desc": "Copia `text` al portapapeles del sistema.", "params": {"text": "El texto."}},
     "pyzed.Command.paste": {"desc": "Lee el portapapeles y llama a `then(texto)` (cadena vacía si está vacío).", "params": {"then": "Callable que recibe el texto."}},
+    "pyzed.Command.paste_image": {"desc": "Lee una imagen del portapapeles (una captura, una imagen copiada) y llama a `then(png)` con sus bytes PNG, o a `then(None)` si el portapapeles no tiene una imagen.", "params": {"then": "Callable que recibe los bytes PNG o `None`."}},
+    "pyzed.Command.pick_files": {"desc": "Abre el diálogo de archivos del sistema y llama a `then(rutas)` con las rutas elegidas (una lista vacía si se cancela).", "params": {"then": "Callable que recibe la lista de rutas.", "title": "El título del diálogo.", "filters": "Una lista de pares `(nombre, extensiones)`, como `[(\"Imágenes\", [\"png\", \"jpg\"])]`.", "directory": "La carpeta en la que se abre.", "multiple": "`False` elige un solo archivo.", "folder": "`True` elige carpetas en vez de archivos."}},
 })
 _page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (
     "Ejecuta `function()` en segundo plano y entrega el resultado a `then(resultado)` en el hilo de la "

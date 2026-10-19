@@ -752,6 +752,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "markers": '`{line: "created" | "modified" | "deleted"}`.',
                         "on_cursor": "Callable that receives `(line, column)`.",
                         "font_size": "Font size (defaults to the theme's).",
+                        "font": 'Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat\'s message box.',
                         "line_height": "Line height.",
                         "gutter": "Shows line numbers.",
                         "wrap": "Line wrapping.",
@@ -1063,6 +1064,8 @@ _page("command")["sections"][0][1].update({
     },
     "pyzed.Command.copy": {"desc": "Copies `text` to the system clipboard.", "params": {"text": "The text."}},
     "pyzed.Command.paste": {"desc": "Reads the clipboard and calls `then(text)` (empty string if it is empty).", "params": {"then": "Callable that receives the text."}},
+    "pyzed.Command.paste_image": {"desc": "Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.", "params": {"then": "Callable that receives the PNG bytes or `None`."}},
+    "pyzed.Command.pick_files": {"desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).", "params": {"then": "Callable that receives the list of paths.", "title": "The dialog's title.", "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.", "directory": "The folder it opens in.", "multiple": "`False` picks a single file.", "folder": "`True` picks folders instead of files."}},
 })
 _page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (
     "Runs `function()` in the background and delivers the result to `then(result)` on the UI "

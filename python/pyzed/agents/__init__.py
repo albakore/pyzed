@@ -8,26 +8,30 @@
     agent = agents.Agent("anthropic:claude-opus-5-5", tools=agents.pyzed_tools())
     print(agent.run("Which pz.ui component shows a list of files?"))
 
-Providers: Anthropic (API key or ``ant auth login``), OpenAI, Google Gemini, OpenRouter (key or browser
-sign-in), Ollama, LM Studio and any OpenAI-compatible server. Settings live in ``agents.json`` in the
-Pyzed config folder; keys and tokens live in the operating system's keychain, never in a file.
+Providers: Anthropic (API key, workload identity federation or ``ant auth login``), OpenAI, Google Gemini,
+Google Vertex AI (Google sign-in), GitHub Copilot (GitHub sign-in), OpenRouter, xAI, Mistral, DeepSeek,
+Groq, Ollama, LM Studio and any OpenAI-compatible server; external agents (Claude Code, Gemini CLI...)
+through the Agent Client Protocol (``agents.acp``); and the tools of MCP servers (``agents.mcp_client``).
+Settings live in ``agents.json`` in the Pyzed config folder; keys and tokens live in the operating
+system's keychain, never in a file.
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-from . import llm, login, providers, secrets
-from .agent import PROFILES, Agent, Event, Tool, tool
+from . import acp, llm, login, mcp_client, providers, secrets
+from .agent import PROFILES, Agent, Event, Image, Tool, image_block, tool
 from .llm import AgentError, Turn, list_models, stream_turn
 from .providers import DEFAULT_MODEL, PROVIDERS, AgentSettings, Provider, split_model
 from .threads import Thread, ThreadStore
 from .tools import file_tools, pyzed_tools
 
 __all__ = [
-    "PROFILES", "PROVIDERS", "DEFAULT_MODEL", "Agent", "AgentError", "AgentSettings", "Event", "Provider", "Thread",
-    "ThreadStore", "Tool", "Turn", "delete_key", "file_tools", "get_key", "list_models", "llm", "login",
-    "providers", "pyzed_tools", "secrets", "set_key", "split_model", "stream_turn", "tool",
+    "PROFILES", "PROVIDERS", "DEFAULT_MODEL", "Agent", "AgentError", "AgentSettings", "Event", "Image", "Provider",
+    "Thread", "ThreadStore", "Tool", "Turn", "acp", "delete_key", "file_tools", "get_key", "image_block",
+    "list_models", "llm", "login", "mcp_client", "providers", "pyzed_tools", "secrets", "set_key", "split_model",
+    "stream_turn", "tool",
 ]
 
 

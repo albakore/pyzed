@@ -17,7 +17,7 @@ use iced::widget::{column, container, scrollable, text, text_editor};
 use iced::{Color, Element, Font, Length, Point, Size, Subscription, Task, Theme, window};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyCFunction, PyDict, PyList, PyTuple, PyType};
+use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyTuple, PyType};
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
@@ -162,6 +162,18 @@ enum CommandKind {
     Window(WindowOp, Option<PyMsg>),
     CopyToClipboard(String),
     ReadClipboard(PyMsg),
+    ReadClipboardImage(PyMsg),
+    PickFiles(PickFiles),
+}
+
+/// What `Command.pick_files` asks the system file dialog for.
+struct PickFiles {
+    then: PyMsg,
+    title: Option<String>,
+    filters: Vec<(String, Vec<String>)>,
+    directory: Option<String>,
+    multiple: bool,
+    folder: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -425,6 +437,39 @@ impl Command {
         cmd(CommandKind::ReadClipboard(PyMsg::new(then)))
     }
 
+    /// Reads an image from the system clipboard (a screenshot, a copied picture) and calls
+    /// `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.
+    #[staticmethod]
+    fn paste_image(then: &Bound<'_, PyAny>) -> Self {
+        cmd(CommandKind::ReadClipboardImage(PyMsg::new(then)))
+    }
+
+    /// Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
+    /// list when it is cancelled).
+    ///
+    /// `filters` is a list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`;
+    /// `directory` is the folder it opens in; `multiple=False` picks one file and `folder=True`
+    /// picks folders.
+    #[staticmethod]
+    #[pyo3(signature = (then, *, title=None, filters=None, directory=None, multiple=true, folder=false))]
+    fn pick_files(
+        then: &Bound<'_, PyAny>,
+        title: Option<String>,
+        filters: Option<Vec<(String, Vec<String>)>>,
+        directory: Option<String>,
+        multiple: bool,
+        folder: bool,
+    ) -> Self {
+        cmd(CommandKind::PickFiles(PickFiles {
+            then: PyMsg::new(then),
+            title,
+            filters: filters.unwrap_or_default(),
+            directory,
+            multiple,
+            folder,
+        }))
+    }
+
     fn __repr__(&self) -> &'static str {
         match self.kind {
             CommandKind::Exit => "Command.exit()",
@@ -448,6 +493,8 @@ impl Command {
             CommandKind::Window(..) => "Command.<window operation>(...)",
             CommandKind::CopyToClipboard(_) => "Command.copy(...)",
             CommandKind::ReadClipboard(_) => "Command.paste(...)",
+            CommandKind::ReadClipboardImage(_) => "Command.paste_image(...)",
+            CommandKind::PickFiles(_) => "Command.pick_files(...)",
         }
     }
 }
@@ -635,7 +682,67 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 })
             })
         }
+        CommandKind::ReadClipboardImage(then) => {
+            let then = then.clone();
+            Task::perform(async { clipboard_png() }, move |png| {
+                Python::attach(|py| {
+                    let value = match png {
+                        Some(data) => PyBytes::new(py, &data).into_any(),
+                        None => py.None().into_bound(py),
+                    };
+                    Message::Call(then.clone(), PyMsg::new(&value))
+                })
+            })
+        }
+        CommandKind::PickFiles(pick) => {
+            let then = pick.then.clone();
+            let mut dialog = rfd::AsyncFileDialog::new();
+            if let Some(title) = &pick.title {
+                dialog = dialog.set_title(title);
+            }
+            for (name, extensions) in &pick.filters {
+                dialog = dialog.add_filter(name, extensions);
+            }
+            if let Some(directory) = &pick.directory {
+                dialog = dialog.set_directory(directory);
+            }
+            let (multiple, folder) = (pick.multiple, pick.folder);
+            Task::perform(
+                async move {
+                    let chosen: Vec<rfd::FileHandle> = match (folder, multiple) {
+                        (true, true) => dialog.pick_folders().await.unwrap_or_default(),
+                        (true, false) => dialog.pick_folder().await.into_iter().collect(),
+                        (false, true) => dialog.pick_files().await.unwrap_or_default(),
+                        (false, false) => dialog.pick_file().await.into_iter().collect(),
+                    };
+                    chosen
+                        .iter()
+                        .map(|h| h.path().to_string_lossy().into_owned())
+                        .collect::<Vec<String>>()
+                },
+                move |paths| {
+                    Python::attach(|py| match PyList::new(py, paths) {
+                        Ok(list) => Message::Call(then.clone(), PyMsg::new(list.as_any())),
+                        Err(_) => Message::Noop,
+                    })
+                },
+            )
+        }
     }
+}
+
+/// The image on the system clipboard, encoded as PNG.
+fn clipboard_png() -> Option<Vec<u8>> {
+    let image = arboard::Clipboard::new().ok()?.get_image().ok()?;
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, image.width as u32, image.height as u32);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().ok()?;
+        writer.write_image_data(&image.bytes).ok()?;
+    }
+    Some(out)
 }
 
 // ---------------------------------------------------------------------------
