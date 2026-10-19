@@ -601,13 +601,15 @@ class Project:
         return [_uv(), *args]
 
     def spawn(self, form: Optional[PathLike] = None, *, reload: bool = False,
-              capture: bool = False) -> "subprocess.Popen[bytes]":
+              capture: bool = False, env: Optional[Dict[str, str]] = None) -> "subprocess.Popen[bytes]":
         """Starts the form in its own process with ``uv run`` (returns immediately).
 
-        With ``capture`` its output (stdout and stderr together) is readable from ``.stdout``.
+        With ``capture`` its output (stdout and stderr together) is readable from ``.stdout``; ``env`` adds
+        environment variables.
         """
         pipes = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT} if capture else {}
-        env = _clean_env()
+        extra = env or {}
+        env = {**_clean_env(), **extra}
         if capture:
             env["PYTHONUNBUFFERED"] = "1"  # lines reach the designer's console as they are printed
         return subprocess.Popen(self.run_args(form, reload=reload), cwd=str(self.root), env=env, **pipes)

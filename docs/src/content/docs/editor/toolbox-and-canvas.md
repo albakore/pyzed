@@ -116,9 +116,13 @@ the form. The Properties panel shows the same tools while several controls are s
 ## Clipboard and history
 
 - <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>: copy, cut and paste.
-  Pasted controls get fresh names and are shifted a little so you can see them; a container is copied with
-  everything inside it. Pasted controls are **not** wired: their events start empty, so they do not share
-  handlers with the originals.
+  Pasted controls are shifted a little so you can see them; a container is copied with everything inside it.
+  Pasted controls are **not** wired: their events start empty, so they do not share handlers with the originals.
+- Copies go to the **system clipboard**, so you can paste controls into **another form**: another tab, another
+  Pyzed Design window, or the same form after restarting. In another form a pasted control keeps its name when
+  it is free there (fresh names otherwise), along with its properties, style,
+  [binding and rules](/pyzed/editor/data-binding/). Pasting text that is not Pyzed controls pastes the last copy
+  made in this window.
 - <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates the selection without touching the clipboard.
 - <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> (or <kbd>Ctrl</kbd>+<kbd>Y</kbd>)
   redoes. Each document keeps its own history; repeated edits of one field (typing a title, nudging) merge into

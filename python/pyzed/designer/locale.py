@@ -490,4 +490,31 @@ i18n.add("es", {"designer": {
     "Ease out back": "Frenar pasándose", "Ease out elastic": "Elástica", "Ease out bounce": "Rebote al final",
 }})
 
+# Clipboard, data binding, validation and preview
+i18n.add("es", {"designer": {
+    "Copied {count} controls": "{count} controles copiados", "Copied 1 control": "1 control copiado",
+    "Bind to": "Enlazar a",
+    "The field of form.data this control shows and edits ({prop})":
+        "El campo de form.data que este control muestra y edita ({prop})",
+    "The field of form.data, or a Python expression over its fields, this control shows ({prop})":
+        "El campo de form.data, o una expresión de Python sobre sus campos, que muestra este control ({prop})",
+    "Required": "Obligatorio", "The box must be checked (to accept terms, for example)":
+        "La casilla tiene que estar marcada (para aceptar condiciones, por ejemplo)",
+    "The value cannot be empty": "El valor no puede quedar vacío",
+    "Minimum length": "Longitud mínima", "Fewest characters allowed": "Mínimo de caracteres",
+    "Maximum length": "Longitud máxima", "Most characters allowed": "Máximo de caracteres",
+    "Pattern": "Patrón", "A regular expression the whole text must match":
+        "Una expresión regular que todo el texto debe cumplir",
+    "Minimum": "Mínimo", "Smallest value allowed": "Valor más pequeño permitido",
+    "Maximum": "Máximo", "Largest value allowed": "Valor más grande permitido",
+    "Message": "Mensaje", "built-in message": "mensaje predeterminado",
+    "Shown instead of the built-in message when a rule fails (@key translates it)":
+        "Se muestra en lugar del mensaje predeterminado cuando falla una regla (@clave lo traduce)",
+    "Preview theme…": "Vista previa con tema…", "Preview language…": "Vista previa con idioma…",
+    "current": "actual", "Preview the form in a theme…": "Ver el formulario con un tema…",
+    "Preview the form in a language…": "Ver el formulario en un idioma…",
+    "The form's theme ({name})": "El tema del formulario ({name})",
+    "The current language ({name})": "El idioma actual ({name})",
+}})
+
 from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

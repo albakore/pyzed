@@ -239,12 +239,13 @@ class ProjectController:
         """Forms of this project run through ``uv run`` (the designer lacks its dependencies)."""
         return self.project is not None and not self.project.can_run_in_process
 
-    def run_form(self, form: Path, *, capture: bool = False) -> None:
-        """Starts ``form`` with ``uv run pyzed run --reload`` in the project (``capture``: pipe its output)."""
+    def run_form(self, form: Path, *, capture: bool = False, env: Optional[Dict[str, str]] = None) -> None:
+        """Starts ``form`` with ``uv run pyzed run --reload`` in the project (``capture``: pipe its output;
+        ``env``: extra environment variables)."""
         assert self.project is not None
         self.stop()
         try:
-            self.process = self.project.spawn(form, reload=True, capture=capture)
+            self.process = self.project.spawn(form, reload=True, capture=capture, env=env)
         except (OSError, FileNotFoundError) as err:
             self.d.notify("Could not start the form", str(err), kind="error", seconds=5)
             return

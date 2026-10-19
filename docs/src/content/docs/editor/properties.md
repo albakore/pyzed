@@ -52,6 +52,9 @@ a property decides its editor:
 Hover a property's name to read what it does, when it has a tip. The [component library](/pyzed/library/) documents
 every property of every component.
 
+Controls that hold a value also show **Bind to** and their validation rules (**Required**, **Minimum length**,
+**Pattern**...) in the **Data** section: see [Data binding and validation](/pyzed/editor/data-binding/).
+
 ### The list editor
 
 ![A list box's items, one field per item](../../../../screenshots/editor-items.png)

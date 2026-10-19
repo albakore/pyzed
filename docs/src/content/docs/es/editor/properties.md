@@ -53,6 +53,10 @@ Cada componente agrupa sus propiedades en secciones **Apariencia**, **Datos**, *
 Pasa el ratón por el nombre de una propiedad para leer qué hace, cuando tiene ayuda. La
 [biblioteca de componentes](/pyzed/es/library/) documenta cada propiedad de cada componente.
 
+Los controles que guardan un valor muestran además **Enlazar a** y sus reglas de validación (**Obligatorio**,
+**Longitud mínima**, **Patrón**...) en la sección **Datos**: consulta
+[Enlace de datos y validación](/pyzed/es/editor/data-binding/).
+
 ### El editor de listas
 
 ![Los elementos de una lista, un campo por elemento](../../../../../screenshots/editor-items.png)

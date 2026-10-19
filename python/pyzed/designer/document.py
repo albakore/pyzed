@@ -6,6 +6,7 @@ behavior lives here, so it can be tested (and scripted) without opening a window
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -14,9 +15,14 @@ from . import components as _components
 from . import geometry
 from . import layout as _layout
 from .history import History
-from .model import SUFFIX, Control, Form, code_path, identifier, load, save
+from .model import RESERVED, SUFFIX, Control, Form, code_path, identifier, load, save
 
 PASTE_OFFSET = 16
+#: The ``format`` of copied controls on the system clipboard (``clipboard_text`` / ``paste_text``).
+CLIPBOARD_FORMAT = "pyzed.controls/1"
+
+#: What the last copy took, shared by every open document so controls paste into another form.
+_clipboard: List[Dict[str, Any]] = []
 
 
 class Document:
@@ -34,8 +40,16 @@ class Document:
         self.selection: List[str] = []
         self.history = History(self.form)
         self.dirty = False
-        self.clipboard: List[Dict[str, Any]] = []
         self.revision = 0
+
+    @property
+    def clipboard(self) -> List[Dict[str, Any]]:
+        """The copied controls (as ``Control.to_dict()`` data), shared by every document."""
+        return _clipboard
+
+    @clipboard.setter
+    def clipboard(self, controls: List[Dict[str, Any]]) -> None:
+        _clipboard[:] = controls
 
     # -- files --------------------------------------------------------------
     @classmethod
@@ -280,6 +294,40 @@ class Document:
         self.clipboard = out
         return len(picked)
 
+    def clipboard_text(self) -> str:
+        """The copied controls as JSON for the system clipboard, so another form, another Pyzed Design
+        window or a text file can take them (see ``paste_text``)."""
+        return json.dumps({"format": CLIPBOARD_FORMAT, "controls": self.clipboard}, indent=1)
+
+    @staticmethod
+    def parse_clipboard(text: str) -> Optional[List[Dict[str, Any]]]:
+        """The controls in clipboard ``text`` written by ``clipboard_text``, or ``None`` when it holds
+        something else. Controls of a type this Pyzed does not know are left out."""
+        try:
+            data = json.loads(text)
+        except (TypeError, ValueError):
+            return None
+        if not isinstance(data, dict) or data.get("format") != CLIPBOARD_FORMAT:
+            return None
+        known = {spec.type for spec in _components.all_components()}
+        controls = [c for c in data.get("controls") or [] if isinstance(c, dict) and c.get("type") in known
+                    and isinstance(c.get("name"), str)]
+        names = {c["name"] for c in controls}
+        for c in controls:  # a child whose container was left out lands on the form
+            if c.get("parent") and c["parent"] not in names:
+                c["parent"] = None
+        return controls
+
+    def paste_text(self, text: str, offset: float = PASTE_OFFSET) -> Optional[List[str]]:
+        """Pastes the controls in system clipboard ``text`` (see ``clipboard_text``); returns the new
+        names, or ``None`` when the text holds no Pyzed controls."""
+        controls = self.parse_clipboard(text)
+        if controls is None:
+            return None
+        if controls != self.clipboard:
+            self.clipboard = controls
+        return self.paste(offset)
+
     def cut(self) -> int:
         """Copies the selection to the clipboard and deletes it; returns how many controls were copied."""
         count = self.copy()
@@ -287,14 +335,17 @@ class Document:
         return count
 
     def paste(self, offset: float = PASTE_OFFSET) -> List[str]:
-        """Adds copies of the clipboard (shifted by ``offset``) with fresh names, keeping their events."""
+        """Adds copies of the clipboard (shifted by ``offset``) without their events; they keep their names when
+        those are free in this form."""
         names: List[str] = []
         renamed: Dict[str, str] = {}
         copied = {d.get("name") for d in self.clipboard}
         for data in self.clipboard:
             control = Control.from_dict(data)
             old = control.name
-            control.name = self.form.unique_name(control.type)
+            # into another form a control keeps its name when it is free there
+            if self.form.get(old) is not None or old in RESERVED or old == self.form.name or identifier(old) != old:
+                control.name = self.form.unique_name(control.type)
             renamed[old] = control.name
             control.events = {}
             if control.parent in copied:  # inside a pasted container: keep its place there
@@ -430,6 +481,22 @@ class Document:
             value = max(float(value), geometry.MIN_SIZE)
         setattr(self.form[name], key, value)
         self.commit(group=f"field:{name}:{key}")
+
+    def set_bind(self, name: str, bind: Optional[str]) -> None:
+        """Binds control ``name`` to the field (or, for display controls, the expression) ``bind`` of
+        ``form.data``; ``None`` or ``""`` unbinds it."""
+        self.form[name].bind = (bind or "").strip()
+        self.commit(group=f"bind:{name}")
+
+    def set_rule(self, name: str, rule: str, value: Any) -> None:
+        """Sets validation ``rule`` (``required``, ``min_length``, ``pattern``...) of control ``name``;
+        ``None``, ``""`` or ``False`` removes it."""
+        rules = self.form[name].rules
+        if value in (None, "", False):
+            rules.pop(rule, None)
+        else:
+            rules[rule] = value
+        self.commit(group=f"rule:{name}:{rule}")
 
     def toggle_anchor(self, name: str, edge: str) -> None:
         """Adds ``edge`` to the anchors of control ``name``, or removes it if it was there."""

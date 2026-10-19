@@ -272,7 +272,7 @@ Returns a deep copy of the form and its controls.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[])
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={})
 ```
 
 One component placed on a form.
@@ -284,7 +284,9 @@ properties (`text`, `checked`...) and `events` maps event names (`"click"`) to
 handler function names. `layout` holds options read by the parent's layout, such as
 `grow` in a flex row or `span` in a grid. `style` holds CSS-like style properties
 (`pz.Style.to_dict()`: background, border, radius, font...) drawn on top of the props.
-`animations` lists the control's animations (see `designer.motion`).
+`animations` lists the control's animations (see `designer.motion`). `bind` names the
+field of `form.data` the control shows (and edits, for inputs), and `rules` what its
+value must be (see `designer.binding`).
 
 **Methods and properties**
 
@@ -381,6 +383,14 @@ A form open in the designer.
 the form on `save`. `selection` holds control names, primary first.
 
 **Methods and properties**
+
+#### `Document.clipboard`
+
+```python
+Document.clipboard  # property
+```
+
+The copied controls (as `Control.to_dict()` data), shared by every document.
 
 #### `Document.open`
 
@@ -551,6 +561,31 @@ Document.copy()
 
 Copies the selection, with whatever is inside the selected containers.
 
+#### `Document.clipboard_text`
+
+```python
+Document.clipboard_text()
+```
+
+The copied controls as JSON for the system clipboard, so another form, another Pyzed Design window or a text file can take them (see `paste_text`).
+
+#### `Document.parse_clipboard`
+
+```python
+@staticmethod
+Document.parse_clipboard(text)
+```
+
+The controls in clipboard `text` written by `clipboard_text`, or `None` when it holds something else. Controls of a type this Pyzed does not know are left out.
+
+#### `Document.paste_text`
+
+```python
+Document.paste_text(text, offset=16)
+```
+
+Pastes the controls in system clipboard `text` (see `clipboard_text`); returns the new names, or `None` when the text holds no Pyzed controls.
+
 #### `Document.cut`
 
 ```python
@@ -565,7 +600,7 @@ Copies the selection to the clipboard and deletes it; returns how many controls 
 Document.paste(offset=16)
 ```
 
-Adds copies of the clipboard (shifted by `offset`) with fresh names, keeping their events.
+Adds copies of the clipboard (shifted by `offset`) without their events; they keep their names when those are free in this form.
 
 #### `Document.duplicate`
 
@@ -687,6 +722,22 @@ Document.set_field(name, key, value)
 
 Sets a `Control` attribute (x, y, width, height, visible, enabled, locked, anchor).
 
+#### `Document.set_bind`
+
+```python
+Document.set_bind(name, bind)
+```
+
+Binds control `name` to the field (or, for display controls, the expression) `bind` of `form.data`; `None` or `""` unbinds it.
+
+#### `Document.set_rule`
+
+```python
+Document.set_rule(name, rule, value)
+```
+
+Sets validation `rule` (`required`, `min_length`, `pattern`...) of control `name`; `None`, `""` or `False` removes it.
+
 #### `Document.toggle_anchor`
 
 ```python
@@ -766,6 +817,99 @@ Document.set_code(source)
 ```
 
 Replaces the whole text of the handlers module and marks the document as changed.
+
+## Data binding and validation
+
+### `check`
+
+```python
+check(value, rules, type_='input')
+```
+
+The message of the first rule `value` breaks, or `None` when it passes them all.
+
+`required` (a checked box for check boxes and switches), `min_length`, `max_length`, `pattern`
+(a regular expression the whole text must match), `min` and `max`. `message`, when set, replaces
+the built-in message. Empty values only fail `required`.
+
+### `translate`
+
+```python
+translate(value, language=None)
+```
+
+`value` with `@key` texts looked up in the current (or given) language; lists are translated item by
+item and `@@` stands for a literal `@`.
+
+### `read`
+
+```python
+read(data, path, default=None)
+```
+
+The field at `path` in `data` (dicts, lists and objects), or `default` when it is missing.
+
+### `write`
+
+```python
+write(data, path, value)
+```
+
+Sets the field at `path` in `data`, creating missing dicts on the way.
+
+### `has`
+
+```python
+has(data, path)
+```
+
+Whether `data` has a field at `path`.
+
+### `evaluate`
+
+```python
+evaluate(expression, data, **extra)
+```
+
+The value of `bind` for `data`: the field when it is a path, else the Python expression evaluated
+over the data's fields. Raises on a missing field or a bad expression.
+
+### `bound_prop`
+
+```python
+bound_prop(type_)
+```
+
+The property a control of `type_` binds (`None` if it cannot be bound).
+
+### `two_way`
+
+```python
+two_way(type_)
+```
+
+Whether a control of `type_` writes the user's changes back to the data.
+
+### `rules_for`
+
+```python
+rules_for(type_)
+```
+
+The validation rules that make sense for `type_` (none for display controls).
+
+### `load_texts`
+
+```python
+load_texts(path)
+```
+
+Loads the translation catalogs of the form at `path`: `locales/` next to it and in the folders
+above, up to the project root. Returns the languages found.
+
+### `BIND_PROPS`
+
+The property each control type binds, and whether the user edits it (two-way): `{type: (property, two_way)}`.
 
 ## Toolbox
 
@@ -1456,10 +1600,11 @@ Steps forward one snapshot; returns the restored form (a new object) or `None` i
 ### `theme_for`
 
 ```python
-theme_for(form)
+theme_for(form, theme_name=None)
 ```
 
-The theme a form runs with: its base theme plus accent, radius, font and background tweaks.
+The theme a form runs with: its base theme (or `theme_name`, to preview it with another one) plus
+accent, radius, font and background tweaks.
 
 ### `COMMON_EVENTS`
 
