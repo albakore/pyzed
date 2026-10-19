@@ -40,4 +40,4 @@ no conoce.
 | Muchos datos | Cada actualización reconstruye la vista y `ui.table` crea todas las filas: todavía no hay listas virtualizadas. |
 | Entrada de texto | El editor de código no tiene soporte de métodos de entrada (IME) para chino, japonés o coreano; `text_input` sí. |
 | Plataformas | En Linux los wheels necesitan glibc 2.28 o posterior; no hay wheels musllinux (Alpine). Las builds de Pyzed Design todavía no están firmadas. |
-| Python | Python free-threaded (3.13t, 3.14t) no está soportado. Los extras `agents` y `mcp` necesitan Python 3.10 o posterior. |
+| Python | Python free-threaded (3.13t, 3.14t) no está soportado. Pyzed necesita Python 3.10 o posterior. |

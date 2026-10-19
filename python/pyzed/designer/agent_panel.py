@@ -237,6 +237,11 @@ class AgentController:
             self.running = False
             self.live_text = self.live_thinking = ""
             self._agent = None
+            self._keep()
+
+    def _keep(self) -> None:
+        """Saves the current thread, unless the settings say not to keep conversations."""
+        if self.settings.keep_history:
             self.store.save(self.thread)
 
     # -- actions ------------------------------------------------------------------------------------
@@ -298,7 +303,7 @@ class AgentController:
         if self.running:
             return None
         if self.thread.messages:
-            self.store.save(self.thread)
+            self._keep()
         self.thread = _agents.Thread(model=self.settings.model)
         self.view = "thread"
         self.error = ""
@@ -899,6 +904,9 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
                  description=tr("Creating forms and saving files waits for your OK"), theme=t),
         ui.field(tr("Show thinking"), ui.switch(s.show_thinking, lambda v: c.set_setting("show_thinking", v), theme=t),
                  theme=t),
+        ui.field(tr("Keep conversations"), ui.switch(s.keep_history, lambda v: c.set_setting("keep_history", v),
+                                                     theme=t),
+                 description=tr("Save threads on this computer, readable only by you"), theme=t),
         ui.field(tr("Rules"), ui.input(s.rules, lambda v: c.set_setting("rules", v),
                                        placeholder=tr("e.g. Answer in Spanish. Use snake_case names."), size="sm",
                                        width=280, theme=t),

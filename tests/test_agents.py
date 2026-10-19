@@ -2,8 +2,10 @@
 
 import http.server
 import json
+import os
 import sys
 import threading
+import urllib.error
 import urllib.request
 
 import pytest
@@ -224,12 +226,25 @@ def test_pyzed_and_file_tools(tmp_path):
         tools["read_file"].func(path="../outside.txt")
     assert tools["write_file"].writes and not tools["read_file"].writes
 
+    # Keys and credentials stay out of the agent's reach, even when it names them.
+    (tmp_path / ".env").write_text("TOKEN=secret\n")
+    (tmp_path / "ui" / "server.key").write_text("x = 1\n")
+    assert ".env" not in tools["list_files"].func(pattern="*")["files"]
+    assert tools["search_text"].func(text="x =", pattern="*")["matches"] == ["ui/a.py:1: x = 1"]
+    for name in (".env", "ui/server.key"):
+        with pytest.raises(PermissionError, match="secrets"):
+            tools["read_file"].func(path=name)
+    with pytest.raises(PermissionError, match="secrets"):
+        tools["write_file"].func(path=".env.local", content="")
+
 
 def test_threads_are_saved_locally(tmp_path):
     store = agents.ThreadStore(tmp_path)
     thread = agents.Thread(model="ollama:llama3", messages=[{"role": "user", "content": [{"type": "text", "text": "Hola\nmundo"}]}])
-    store.save(thread)
+    path = store.save(thread)
     assert [t.id for t in store.list()] == [thread.id]
+    if os.name != "nt":  # only the user can read saved threads
+        assert path.stat().st_mode & 0o777 == 0o600
     assert store.load(thread.id).display_title == "Hola"
     store.delete(thread.id)
     assert store.list() == [] and agents.Thread().display_title == "New thread"
@@ -382,8 +397,16 @@ def test_pkce_and_the_openrouter_browser_flow():
         query = dict(p.split("=", 1) for p in url.split("?", 1)[1].split("&"))
         callback = urllib.request.unquote(query["callback_url"])
         assert callback.startswith("http://localhost:") and query["code_challenge_method"] == "S256"
-        threading.Thread(target=lambda: urllib.request.urlopen(callback.replace("localhost", "127.0.0.1") + "?code=abc"),
-                         daemon=True).start()
+        local = callback.replace("localhost", "127.0.0.1")
+
+        def visit():
+            # A request to another path (a forged callback, the favicon) neither signs in nor cancels.
+            for wrong in (local.rsplit("/", 1)[0] + "/guess?code=evil", local.split("/callback")[0] + "/favicon.ico"):
+                with pytest.raises(urllib.error.HTTPError):
+                    urllib.request.urlopen(wrong)
+            urllib.request.urlopen(local + "?code=abc")
+
+        threading.Thread(target=visit, daemon=True).start()
 
     posted = {}
     key = login.openrouter_login(open_url=browser, post=lambda url, data: posted.update(data) or {"key": "sk-or-1"},

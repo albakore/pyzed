@@ -73,6 +73,7 @@ agent = agents.Agent(tools=[stock], settings=settings)
 | `profile` | `"write"` (todas las herramientas), `"ask"` (solo las que no tienen `writes=True`) o `"minimal"` (ninguna). |
 | `confirm_writes` | Llama a `confirm(tool, args)` antes de una herramienta con `writes=True` (activo por defecto). Sin un callback `confirm` esas herramientas se rechazan; desactívalo para que se ejecuten sin preguntar. |
 | `rules` | Texto añadido al prompt de sistema. |
+| `keep_history` | Si Pyzed Design guarda las conversaciones en este equipo (activo por defecto). |
 | `providers[id].base_url` / `.models` | URL del servidor y modelos ofrecidos para un proveedor. |
 
 `agents.providers.load()` y `save()` leen y escriben `agents.json` en la carpeta de ajustes de Pyzed (los ajustes
@@ -103,7 +104,9 @@ ausente, o una excepción, vuelve al modelo como error para que corrija la llama
 
 Herramientas listas: `agents.pyzed_tools()` (componentes, iconos, temas, documentación, generadores y
 comprobaciones de Pyzed, lo mismo que el [servidor MCP](/pyzed/es/guides/mcp/)) y `agents.file_tools(carpeta)`
-(listar, leer, buscar y escribir archivos, nunca fuera de `carpeta`).
+(listar, leer, buscar y escribir archivos, nunca fuera de `carpeta`). Las herramientas de archivos nunca abren
+claves ni credenciales (`.env`, `*.pem`, `*.key`, claves SSH...; `agents.tools.SECRET_FILES`), así que una
+inyección de prompt en un archivo del proyecto no puede enviarlas al proveedor; pasa `hidden=` para cambiar la lista.
 
 ## Streaming en la UI
 
@@ -177,7 +180,7 @@ store = agents.ThreadStore()                      # agents/threads en la carpeta
 thread = agents.Thread(model="ollama:qwen3:8b")
 agent = agents.Agent(thread.model, messages=thread.messages)
 agent.run("Hola")
-store.save(thread)                                # JSON en este equipo; sin claves
+store.save(thread)                                # JSON que solo tú puedes leer; sin claves
 store.list()                                      # la más reciente primero
 ```
 
