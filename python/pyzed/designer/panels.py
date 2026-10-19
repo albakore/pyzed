@@ -15,14 +15,15 @@ from ..theme import Theme, alpha, themes
 from . import components as _components
 from . import help as _help
 from . import scene_code as _scene_code
+from . import spacing
 from .components import Prop
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
-LABEL_WIDTH = 92.0
-ROW_HEIGHT = 28.0
+LABEL_WIDTH = spacing.LABEL_WIDTH
+ROW_HEIGHT = spacing.ROW_HEIGHT
 #: Icons of the property groups in the accordion.
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
@@ -39,7 +40,13 @@ def section(title: str, t: Theme, end: Any = None) -> Any:
     return _core.container(
         _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
-        padding=(10, 12, 4, 12), width="fill")
+        padding=(10, spacing.GUTTER, 4, spacing.GUTTER), width="fill")
+
+
+def scroll_panel(content: Any) -> Any:
+    """A dock panel's scrolling body, with room for the scroll bar so the gutter shows on both sides."""
+    return _core.scrollable(_core.container(content, padding=(0, spacing.SCROLLBAR, 0, 0), width="fill"),
+                            height="fill")
 
 
 class Group:
@@ -58,12 +65,13 @@ def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, ta
         label = ui.tooltip(label, tip, theme=t)
     if tall:
         head = _core.row([label, _core.space(width="fill"), end], align="center", height=ROW_HEIGHT - 4)
-        return _core.container(_core.column([head, editor], spacing=4, width="fill"), padding=(3, 10), width="fill")
+        return _core.container(_core.column([head, editor], spacing=4, width="fill"), padding=(spacing.ROW_PAD, 0),
+                               width="fill")
     return _core.container(
         _core.row([_core.container(label, width=LABEL_WIDTH, clip=True),
                    _core.container(editor, width="fill", height=ROW_HEIGHT, align_y="center")],
-                  spacing=10, align="center"),
-        padding=(3, 10), width="fill")
+                  spacing=spacing.LABEL_GAP, align="center"),
+        padding=(spacing.ROW_PAD, 0), width="fill")
 
 
 _HEX = re.compile(r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})")
@@ -289,7 +297,7 @@ def rows_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
 
 
 def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], t: Theme, *, icon: Optional[str] = None,
-              selected: bool = False, height: float = 26, indent: float = 0, start: Any = None, end: Any = None,
+              selected: bool = False, height: float = spacing.ITEM_HEIGHT, indent: float = 0, start: Any = None, end: Any = None,
               color: Optional[str] = None, on_right_press: Any = None, on_move: Any = None, on_exit: Any = None,
               drop: Optional[str] = None) -> Any:
     """A list row that reacts on press (not on click, like ``ui.list_item``), so it can start a drag.
@@ -306,7 +314,7 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
         _core.container(_core.text(label, size=13.5, color=text_color, wrap=False), width="fill", clip=True),
         end,
     ], spacing=6, align="center")
-    body = _core.container(row, padding=(0, 6), width="fill", height=height, align_y="center",
+    body = _core.container(row, padding=(0, spacing.GUTTER), width="fill", height=height, align_y="center",
                            bg=t.ghost_selected if selected else (t.ghost_hover if hovered else None),
                            border_color=t.accent if drop == "inside" else None,
                            border_width=1.5 if drop == "inside" else 0)
@@ -330,8 +338,7 @@ def toolbox(d: "Designer", t: Theme) -> Any:
     picked or dragged onto the form."""
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
-        ui.list_item(tr("Pointer"), d.pick_tool(None), icon="mouse-pointer-2", selected=d.tool is None, height=26,
-                     theme=t),
+        press_row(d, "tool:", tr("Pointer"), d.pick_tool(None), t, icon="mouse-pointer-2", selected=d.tool is None),
     ]
     for category, items in _components.categories().items():
         shown = [c for c in items if not query or query in c.label.lower() or query in tr(c.label).lower()
@@ -347,8 +354,8 @@ def toolbox(d: "Designer", t: Theme) -> Any:
                 tr(spec.description) if spec.description else tr(spec.label), position="right", theme=t))
     return _core.column([
         _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
-                                        size="sm", theme=t), padding=8),
-        _core.scrollable(_core.column(rows, width="fill", padding=(0, 0, 8, 0)), height="fill"),
+                                        size="sm", theme=t), padding=(spacing.BLOCK, spacing.GUTTER)),
+        scroll_panel(_core.column(rows, width="fill", padding=(0, 0, spacing.BLOCK, 0))),
     ], width="fill", height="fill")
 
 
@@ -361,10 +368,10 @@ def outline(d: "Designer", t: Theme) -> Any:
 
     doc = d.doc
     form = doc.form
-    rows: List[Any] = [ui.list_item(form.name, d.select_form, icon="app-window", selected=not doc.selection,
-                                    height=24, end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
-                                                                  tooltip="Add a control", theme=t),
-                                    theme=t)]
+    rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="app-window",
+                                 selected=not doc.selection, height=OUTLINE_ROW,
+                                 end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
+                                                    tooltip="Add a control", theme=t))]
 
     def add(parent: Optional[str], depth: int) -> None:
         children = form.children(parent)
@@ -413,7 +420,7 @@ def outline(d: "Designer", t: Theme) -> Any:
                 rows.extend(scene_panel.member_rows(d, c, members, 4 + (depth + 1) * 14 + 20, t))
 
     add(None, 0)
-    return _core.scrollable(_core.column(rows, width="fill"), height="fill")
+    return scroll_panel(_core.column(rows, width="fill"))
 
 
 # -- properties ------------------------------------------------------------------
@@ -450,7 +457,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
                                                                 max=24, step=1, width="fill", theme=t), t))
         rows += [prop_row("Width", num("width"), t), prop_row("Height", num("height"), t),
                  _core.container(ui.label(f"Placed by {parent.name}: drag it to reorder.", size="xs",
-                                          color="text_muted", theme=t), padding=(2, 12))]
+                                          color="text_muted", theme=t), padding=(2, 0))]
     else:
         from . import anchor_panel
 
@@ -485,11 +492,12 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
                                                  ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
                                                 width="fill"),
                                    _help_button(d, c.name, t)],
-                                  spacing=10, align="center"), padding=(10, 12), width="fill"),
+                                  spacing=10, align="center"), padding=spacing.HEADER_PADDING, width="fill"),
         # inset like the rows inside the sections below, so every label and field lines up
         _core.container(prop_row("Name", ui.input(d.name_buffer, d.set_name_buffer, on_submit=d.commit_name, size="sm",
                                                   mono=True, theme=t), t,
-                                 tip="Press Enter to rename (handlers are renamed too)"), padding=(0, 11), width="fill"),
+                                 tip="Press Enter to rename (handlers are renamed too)"), padding=(0, spacing.GUTTER),
+                        width="fill"),
     ]
     groups: dict = {}
     for prop in spec.props:
@@ -589,11 +597,11 @@ def multi_properties(d: "Designer", t: Theme) -> List[Any]:
                                                                       "Bottom edges")]),
     ]
     rows: List[Any] = [_core.container(ui.label(f"{count} controls selected", weight="semibold", theme=t),
-                                       padding=(10, 12))]
+                                       padding=spacing.HEADER_PADDING)]
     for title, items in tools:
         rows.append(Group(title))
         rows.append(_core.container(_core.row([ui.icon_button(icon, lambda e=edge: d.align(e), tooltip=tip, theme=t)
-                                               for icon, edge, tip in items], spacing=2), padding=(0, 12)))
+                                               for icon, edge, tip in items], spacing=2)))
     rows.append(Group("Spacing and size"))
     rows.append(_core.container(_core.row([
         ui.icon_button("align-horizontal-distribute-center", lambda: d.distribute("horizontal"),
@@ -602,7 +610,7 @@ def multi_properties(d: "Designer", t: Theme) -> List[Any]:
                        tooltip="Distribute vertically", theme=t),
         ui.icon_button("stretch-horizontal", lambda: d.same_size("width"), tooltip="Same width", theme=t),
         ui.icon_button("stretch-vertical", lambda: d.same_size("height"), tooltip="Same height", theme=t),
-    ], spacing=2), padding=(0, 12)))
+    ], spacing=2)))
     return rows
 
 
@@ -621,7 +629,7 @@ def form_properties(d: "Designer", t: Theme) -> List[Any]:
     return [
         _core.container(_core.row([_icon("app-window", size=16, color=t.accent),
                                    ui.label("Form", weight="semibold", theme=t)], spacing=10, align="center"),
-                        padding=(10, 12)),
+                        padding=spacing.HEADER_PADDING),
         Group("Window"),
         prop_row("Name", ui.input(form.name, setter("name"), size="sm", mono=True, theme=t), t),
         prop_row("Title", ui.input(form.title, setter("title"), size="sm", theme=t), t),
@@ -674,12 +682,13 @@ def properties(d: "Designer", t: Theme) -> Any:
             groups[-1][1].append(row)
         else:
             head.append(row)
-    sections = [(title, tr(title), _core.column(items, width="fill", spacing=2)) for title, items in groups]
+    sections = [(title, tr(title), _core.column(items, width="fill", spacing=spacing.ROW_GAP))
+                for title, items in groups]
     body = ui.accordion(sections, open={title for title, _ in groups} - d.collapsed_sections,
-                        on_toggle=d.toggle_section, icons=SECTION_ICONS, theme=t)
-    top = _core.container(_core.column(head, width="fill", spacing=2), padding=(0, 11, 6, 11), width="fill")
-    return _core.scrollable(_core.column([top, _core.container(body, padding=(0, 10, 16, 10), width="fill")],
-                                         width="fill"), height="fill")
+                        on_toggle=d.toggle_section, icons=SECTION_ICONS, padding=spacing.GROUP_PADDING, theme=t)
+    top = _core.column(head, width="fill", spacing=spacing.ROW_GAP, padding=(0, 0, spacing.ROW_GAP * 2, 0))
+    return scroll_panel(_core.column([top, _core.container(body, padding=(0, 0, 16, 0), width="fill")],
+                                     width="fill"))
 
 
 # -- events ----------------------------------------------------------------------
@@ -704,7 +713,7 @@ def events(d: "Designer", t: Theme) -> Any:
                                                    width="fill"),
                                       _help_button(d, control.name, t) if control is not None else None],
                                      spacing=10, align="center"),
-                           padding=(10, 12), width="fill")
+                           padding=spacing.HEADER_PADDING, width="fill")
     rows: List[Any] = []
     for event in doc.events_of(target):
         handler = wired.get(event)
@@ -723,17 +732,17 @@ def events(d: "Designer", t: Theme) -> Any:
                                 clip=True),
                 _core.container(name, width="fill", clip=True),
                 actions,
-            ], spacing=10, align="center"), padding=(3, 10), width="fill", height=ROW_HEIGHT + 6, align_y="center",
+            ], spacing=spacing.LABEL_GAP, align="center"), padding=(spacing.ROW_PAD, 0), width="fill",
+                height=ROW_HEIGHT + 2 * spacing.ROW_PAD, align_y="center",
                 radius=t.radius_sm, bg=alpha(t.accent, 0.08) if d.editing and d.editing[0] == handler else None),
             on_double_click=lambda e=event: d.edit_event(target, e)), doc_text, position="left", theme=t))
     rows.append(_core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
-                                         size="xs", color="text_muted", theme=t), padding=(6, 10)))
-    body = ui.accordion([("Events", tr("Events"), _core.column(rows, width="fill", spacing=2))], open={"Events"},
-                        icons={"Events": "zap"}, theme=t)
+                                         size="xs", color="text_muted", theme=t), padding=(6, 0)))
+    body = ui.accordion([("Events", tr("Events"), _core.column(rows, width="fill", spacing=spacing.ROW_GAP))],
+                        open={"Events"}, icons={"Events": "zap"}, padding=spacing.GROUP_PADDING, theme=t)
     # the same insets as the property grid, so both docks line up
-    top = _core.container(head, padding=(0, 11, 6, 11), width="fill")
-    return _core.scrollable(_core.column([top, _core.container(body, padding=(0, 10, 16, 10), width="fill")],
-                                         width="fill"), height="fill")
+    return scroll_panel(_core.column([head, _core.container(body, padding=(0, 0, 16, 0), width="fill")],
+                                     width="fill"))
 
 
 # -- style -----------------------------------------------------------------------
@@ -919,5 +928,5 @@ def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fie
         rows.append(prop_row(field.title, editor, t, tip=field.tip))
     if style:
         rows.append(_core.container(ui.button(tr("Reset style"), lambda: d.clear_style(name), icon="rotate-ccw",
-                                              variant="ghost", size="sm", theme=t), padding=(4, 10)))
+                                              variant="ghost", size="sm", theme=t), padding=(4, 0)))
     return rows

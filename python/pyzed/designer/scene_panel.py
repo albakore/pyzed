@@ -23,7 +23,7 @@ from ..app import Window
 from ..icons import icon as _icon
 from ..theme import Theme
 from . import components as _components
-from . import scene_code
+from . import scene_code, spacing
 from . import type_editor as _type_editor
 from .scene import SceneDocument
 from .scene_runtime import SceneComponent, scenes
@@ -95,7 +95,7 @@ def _number(value: float, on_change: Callable[[Any], Any], t: Theme, **kwargs: A
 
 
 def _accordion(d: "Designer", sections: List[Any], t: Theme) -> Any:
-    return ui.accordion(sections, open=_open(d), on_toggle=_toggle(d), theme=t)
+    return ui.accordion(sections, open=_open(d), on_toggle=_toggle(d), padding=spacing.GROUP_PADDING, theme=t)
 
 
 # -- the Component panel -------------------------------------------------------------
@@ -136,7 +136,7 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
         ui.label(scene.name, weight="semibold", theme=t),
         _core.space(width="fill"),
         ui.badge("Component", tint="accent", theme=t),
-    ], spacing=10, align="center"), padding=(12, 12), width="fill")
+    ], spacing=10, align="center"), padding=spacing.HEADER_PADDING, width="fill")
     warning = None
     if not doc.code_ok:
         warning = _core.container(ui.callout("The class does not parse",
