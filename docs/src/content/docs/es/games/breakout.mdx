@@ -1,0 +1,148 @@
+---
+title: "Tutorial: Breakout"
+description: Un Breakout a 60 fps con pz.frames, teclas mantenidas y ratón, física de la pelota, partículas, combos y temblor de pantalla.
+sidebar:
+  order: 2
+  label: Breakout
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import source from '../../../../../../examples/games/breakout.py?raw';
+
+Breakout necesita movimiento fluido, así que en lugar de un temporizador usa `pz.frames`: una
+función que se ejecuta una vez por fotograma con el tiempo transcurrido desde el anterior.
+Aprenderás el bucle por fotograma, la entrada continua con `pz.pressed()`, las colisiones con
+`pyzed.game` y los detalles que hacen que un juego se sienta bien: partículas, combos y
+temblor de pantalla.
+
+![Breakout](../../../../assets/games/breakout.png)
+
+<Steps>
+
+1. **Ladrillos como cajas.** `game.Rect` es una caja con ayudas de colisión. Cada ladrillo
+   guarda su rectángulo, color, puntos y cuántos golpes aguanta:
+
+   ```python
+   from pyzed import draw, game, ui
+
+   def build_level(self):
+       self.bricks = []
+       for row in range(BRICK_ROWS):
+           for col in range(BRICK_COLS):
+               rect = game.Rect(left + col * (BRICK_W + BRICK_GAP),
+                                BRICK_TOP + row * (BRICK_H + BRICK_GAP), BRICK_W, BRICK_H)
+               hits = 2 if self.level > 1 and row < self.level - 1 else 1
+               self.bricks.append({"rect": rect, "color": ROW_COLORS[row], "hits": hits,
+                                   "points": (BRICK_ROWS - row) * 10})
+   ```
+
+2. **El bucle por fotograma.** Devuelve `pz.frames(self.tick)` y Pyzed llama a `tick(dt)`
+   antes de cada fotograma. Todo se mueve *velocidad × dt*, así que el juego va igual de
+   rápido en un portátil a 60 Hz que en un monitor de 144 Hz:
+
+   ```python
+   def subscriptions(self):
+       return [pz.frames(self.tick)]
+
+   def tick(self, dt):
+       self.sparks.update(dt)
+       self.shake.update(dt)
+       if self.paused or self.over:
+           return
+       move = game.axis(("left", "a"), ("right", "d"))    # -1, 0 o 1 según las teclas pulsadas
+       self.paddle_x = game.clamp(self.paddle_x + move * 520 * dt, PADDLE_W / 2, W - PADDLE_W / 2)
+       ...
+   ```
+
+   `game.axis` lee `pz.pressed()`, el conjunto de teclas pulsadas ahora mismo. Eso hace que el
+   movimiento sea continuo: `on_key` solo saltaría al pulsar (y con la repetición del teclado).
+
+3. **También con ratón.** El canvas informa del puntero en sus propias coordenadas, así que
+   la pala puede seguirlo y un clic puede lanzar la pelota:
+
+   ```python
+   pz.canvas(shapes, width=W, height=H, on_move=self.mouse,
+             on_press=lambda x, y: self.launch(), cursor="crosshair")
+
+   def mouse(self, x, y):
+       self.paddle_x = game.clamp(x, PADDLE_W / 2, W - PADDLE_W / 2)
+   ```
+
+4. **Mover la pelota sin atravesar ladrillos.** Una pelota rápida podría saltarse un ladrillo
+   fino en un fotograma. Dividir el fotograma en subpasos no más largos que el radio lo evita:
+
+   ```python
+   steps = max(1, math.ceil(self.speed * dt / BALL_R))
+   for _ in range(steps):
+       if self.advance(dt / steps):     # True si se perdió la pelota
+           break
+   ```
+
+5. **Rebotar.** `game.circle_rect` dice si un círculo toca una caja y por qué lado, como una
+   dirección `(nx, ny)`. Rebotar es entonces una línea por eje. En la pala, el punto de
+   contacto elige el ángulo, que es lo que permite apuntar:
+
+   ```python
+   for brick in self.bricks:
+       normal = game.circle_rect(self.ball_x, self.ball_y, BALL_R, brick["rect"])
+       if normal:
+           nx, ny = normal
+           if nx:
+               self.vx = abs(self.vx) * nx
+           if ny:
+               self.vy = abs(self.vy) * ny
+           ...
+
+   if self.vy > 0 and game.circle_rect(self.ball_x, self.ball_y, BALL_R, self.paddle):
+       offset = (self.ball_x - self.paddle_x) / (PADDLE_W / 2)      # -1 … 1
+       angle = math.radians(-90 + 60 * game.clamp(offset, -1, 1))
+       self.vx, self.vy = math.cos(angle) * self.speed, math.sin(angle) * self.speed
+   ```
+
+6. **Sensaciones: partículas, combos y temblor.** `game.Particles` es un pequeño sistema de
+   partículas: `burst` cuando pasa algo, `update(dt)` en cada fotograma y `shapes()` para
+   dibujar. Un combo multiplica los puntos de los ladrillos rotos sin tocar la pala, y
+   `game.Shake` mueve toda la escena unos píxeles en cada golpe:
+
+   ```python
+   self.sparks = game.Particles(gravity=420, drag=1.5)
+   self.shake = game.Shake()
+
+   # cuando se rompe un ladrillo:
+   self.combo += 1
+   self.score += brick["points"] * self.combo
+   self.sparks.burst(cx, cy, count=22, color=[brick["color"], "#ffffff"])
+   self.shake.kick(2 + min(self.combo, 6))
+
+   # en la escena, el translate va primero para que tiemble todo lo que sigue:
+   shapes = [draw.background("#101216"), *self.shake.shapes()]
+   ...
+   shapes += self.sparks.shapes(glow=True)
+   shapes += game.glow(self.ball_x, self.ball_y, BALL_R, "#ffffff", layers=3)
+   ```
+
+7. **HUD.** Las vidas son tres iconos `heart`, el combo es una insignia que solo aparece a
+   partir de ×2 y el aviso "Level 1 · Space to launch" es una tarjeta `glass` apilada sobre
+   el canvas:
+
+   ```python
+   hearts = pz.row([pz.icon("heart", size=15, color="#d07277" if i < self.lives else t.border)
+                    for i in range(3)], spacing=3)
+   board = pz.stack([self.scene(t), self.banner()], width=W, height=H)
+   ```
+
+</Steps>
+
+<Aside type="tip">
+La lógica que solo depende de `dt` es fácil de probar: crea la app, llama a `tick(1 / 60)`
+unos cientos de veces y comprueba la puntuación, las vidas o los ladrillos que quedan. No
+hace falta ninguna ventana.
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/breakout.py" />
+
+```bash
+python examples/games/breakout.py
+```

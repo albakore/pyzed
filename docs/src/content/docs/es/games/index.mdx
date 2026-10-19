@@ -1,0 +1,156 @@
+---
+title: Crear videojuegos
+description: Juegos en tiempo real con Pyzed — un bucle por fotograma, teclas mantenidas, sprites, partículas, efectos neón y un HUD hecho con widgets normales.
+sidebar:
+  order: 0
+  label: Introducción
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Pyzed es una librería de interfaces, pero ya trae todo lo que necesita un juego 2D: un
+`pz.canvas` dibujado por la GPU, un bucle que se ejecuta una vez por fotograma, las teclas
+que están pulsadas ahora mismo y toda la biblioteca de widgets para construir menús y HUD
+encima de la acción. Los tres juegos de abajo crecen en dificultad y son programas
+completos y jugables en
+[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games).
+
+![Neon Invaders, la demo más completa](../../../../assets/games/neon-invaders.png)
+
+<CardGrid>
+	<LinkCard title="1. Snake" href="/pyzed/es/games/snake/" description="Movimiento en cuadrícula con un temporizador fijo, cola de teclas, game over y reinicio. ~150 líneas." />
+	<LinkCard title="2. Breakout" href="/pyzed/es/games/breakout/" description="Un bucle a 60 fps con pz.frames, teclas mantenidas y ratón, física de la pelota, partículas y temblor." />
+	<LinkCard title="3. Neon Invaders" href="/pyzed/es/games/neon-invaders/" description="Sprites pixel art, oleadas, power-ups, brillo neón y un HUD de cristal con bloom." />
+</CardGrid>
+
+```bash
+python examples/games/snake.py
+python examples/games/breakout.py
+python examples/games/neon_invaders.py
+```
+
+## Las piezas
+
+| Qué | API | Para qué |
+| --- | --- | --- |
+| Bucle por fotograma | `pz.frames(callback)` en `subscriptions()` | `callback(dt)` una vez por fotograma (sincronizado con la pantalla); `dt` son los segundos desde el anterior. |
+| Temporizador fijo | `pz.every(segundos, callback)` | Juegos por turnos o en cuadrícula que avanzan a ritmo fijo (Snake). |
+| Pulsaciones | `on_key(combo)` | Acciones puntuales: saltar, pausar, reiniciar (`"space"`, `"enter"`, `"ctrl-r"`). |
+| Soltar teclas | `on_key_up(key)` | Mecánicas de cargar y soltar, parar un sonido. |
+| Teclas mantenidas | `pz.pressed()`, `pz.is_pressed("left", "a")` | Movimiento continuo y disparo automático, consultados en cada fotograma. |
+| Movimiento | `game.axis(neg, pos)`, `game.vector()` | -1/0/1 a partir de dos grupos de teclas; una dirección normalizada con flechas/WASD. |
+| Dibujo | `pz.canvas([...])` con `pyzed.draw` | Rectángulos, círculos, trazados, texto, transformaciones. |
+| Sprites | `draw.image(src, x, y, w, h)` y `game.sprite(filas, paleta)` | Imágenes (se decodifican una vez y quedan en caché) o pixel art escrito como texto. |
+| Colisiones | `game.Rect`, `game.circle_rect` | Solapamiento de cajas; por dónde golpea una pelota a una caja, para rebotar. |
+| Efectos | `game.glow`, `game.Particles`, `game.Shake` | Luces neón, explosiones y chispas, temblor de pantalla. |
+| HUD y menús | `pz.stack([canvas, widgets])` | Puntuaciones, barras de vida y pantallas de pausa con `glass`, `bloom` y animaciones. |
+
+### El bucle
+
+Un juego es un `pz.App` normal. Devuelve `pz.frames(self.tick)` desde `subscriptions()` y
+el runtime llama a `tick(dt)` antes de cada fotograma. Mueve las cosas *velocidad × dt*
+para que vayan igual de rápido a 60, 120 o 144 Hz:
+
+```python
+import pyzed as pz
+from pyzed import draw, game
+
+class Ship(pz.App):
+    size = (480, 320)
+
+    def __init__(self):
+        self.x, self.y = 240, 160
+
+    def subscriptions(self):
+        return [pz.frames(self.tick)]
+
+    def tick(self, dt):
+        dx, dy = game.vector()             # flechas / WASD, diagonales normalizadas
+        self.x += dx * 300 * dt
+        self.y += dy * 300 * dt
+
+    def view(self):
+        return pz.canvas([draw.background("#0b0e14"),
+                          *game.glow(self.x, self.y, 14, "#22d3ee")], width=480, height=320)
+
+pz.run(Ship)
+```
+
+`dt` se limita a un cuarto de segundo, así que arrastrar la ventana o parar en un
+breakpoint nunca hace que el juego salte hacia delante. Donde la pantalla no espera a la
+sincronización vertical (renderizado por software), `max_fps` (240 por defecto) evita que
+el bucle consuma toda la CPU.
+
+<Aside type="tip">
+Para el bucle cuando nada se mueve: `subscriptions()` se evalúa tras cada actualización,
+así que `return [] if self.paused else [pz.frames(self.tick)]` pausa el juego y la CPU.
+</Aside>
+
+### Entrada
+
+`on_key` es para acciones que ocurren una vez por pulsación; `pz.pressed()` para lo que
+ocurre *mientras* una tecla está pulsada. Ambos ven todas las teclas, tenga el foco el
+widget que lo tenga.
+
+```python
+def on_key(self, combo):          # "space", "p", "shift-r"...
+    if combo == "p":
+        self.paused = not self.paused
+
+def tick(self, dt):
+    if pz.is_pressed("space") and self.cooldown <= 0:
+        self.fire()               # disparo automático mientras Space está pulsada
+```
+
+El ratón llega desde el propio canvas: `on_move(x, y)`, `on_press(x, y)`, `on_release()`,
+`on_right_press(x, y)` y `on_scroll(dx, dy)`, en coordenadas del canvas.
+
+### Sprites
+
+`draw.image` dibuja un PNG/JPEG (o bytes RGBA) dentro de una caja, opcionalmente girado y
+con transparencia. Se decodifica una vez por origen y queda en caché, así que dibujar el
+mismo sprite cientos de veces por fotograma es barato. Usa `pixelated=True` para pixel art
+ampliado.
+
+```python
+draw.image("assets/ship.png", self.x - 16, self.y - 16, 32, 32, rotation=self.angle)
+```
+
+Para juegos retro ni siquiera hacen falta archivos: `game.sprite` convierte texto en pixel
+art, con una forma por color sea cual sea el tamaño del sprite.
+
+```python
+INVADER = ["..#.....#..",
+           "...#...#...",
+           "..#######..",
+           ".##.###.##.",
+           "###########"]
+game.sprite(INVADER, {"#": "#a3e635"}, x, y, scale=4)
+```
+
+### El HUD y los menús son widgets
+
+Apila widgets sobre el canvas con `pz.stack`. Puntuaciones, barras de vida, insignias y
+menús de pausa son componentes normales de Pyzed, así que tienen temas, paneles `glass`,
+`bloom` y animaciones de entrada sin esfuerzo: la parte difícil de la interfaz de un juego
+ya está hecha.
+
+```python
+hud = pz.container(pz.row([score, pz.hspace(), ui.badge(f"Wave {self.wave}")]),
+                   padding=(8, 14)).style(glass=True, radius=12)
+return pz.stack([self.scene(), hud], width=W, height=H)
+```
+
+## Consejos de rendimiento
+
+- Haz poco trabajo Python por fotograma: listas y números simples, sin crear estructuras
+  grandes cada vez.
+- Agrupa formas: `draw.rects` dibuja muchos rectángulos de un color como una sola forma
+  (es lo que usa `game.sprite`).
+- Limita las partículas (`game.Particles(limit=...)`) y elimina las balas que salen de la
+  pantalla.
+- Solo el canvas cambia en cada fotograma; los widgets del HUD son baratos de reconstruir,
+  pero `pz.memo` puede cachear los costosos.
+- Prueba la lógica sin ventana: llama a `tick(1 / 60)` en un bucle y comprueba el estado,
+  como hace [`tests/test_game.py`](https://github.com/albakore/pyzed/blob/main/tests/test_game.py).
+  `App.screenshot` renderiza cualquier momento del juego a un PNG.
