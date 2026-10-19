@@ -487,11 +487,13 @@ def _effects(merged: Mapping[str, Any]) -> Dict[str, Any]:
         elif bloom is not True:
             color = bloom
         intensity = min(max(intensity, 0.0), 1.0)
-        # Real bloom (light from the bright parts, tinted) over a softer halo and a lit edge.
+        # Real bloom: light from the bright parts, tinted. A box (a background or glass) also
+        # gets a softer halo and a lit edge; a bare text or icon glows on its own.
         out["bloom_light"] = (color, intensity)
-        out["shadow"] = (_alpha(color, 0.3 + 0.35 * intensity), (0, 0), 8 + 20 * intensity)
-        out["border_color"] = _alpha(color, 0.35 + 0.6 * intensity)
-        out["border_width"] = 1
+        if merged.get("background") is not None or glass:
+            out["shadow"] = (_alpha(color, 0.3 + 0.35 * intensity), (0, 0), 8 + 20 * intensity)
+            out["border_color"] = _alpha(color, 0.35 + 0.6 * intensity)
+            out["border_width"] = 1
     return out
 
 

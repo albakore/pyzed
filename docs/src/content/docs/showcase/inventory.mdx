@@ -1,0 +1,48 @@
+---
+title: "RPG inventory"
+description: "An RPG inventory screen in Python where item rarity glows and blooms, with an animated glass details panel over a shader of embers."
+sidebar:
+  order: 3
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../examples/showcase/inventory.py?raw';
+
+An inventory where rarity is light: rare items glow, epic and legendary items bloom, and legendary ones pulse. Clicking an item swaps the glass details panel with `presence`, and its stat bars grow with `transition(width=...)`.
+
+![RPG inventory](../../../assets/showcase/inventory.png)
+
+```sh
+python examples/showcase/inventory.py
+```
+
+## How it is made
+
+### Rarity as light
+
+Glow for rare, bloom for epic and legendary.
+
+```python
+style.update(bloom=(color, 0.8))
+tile.animate("glow_pulse", repeat="infinite", duration=2000)
+```
+
+### Animated stats
+
+Bar widths are layout properties, so they animate and push nothing out of place.
+
+```python
+bar.transition(width=240 * value, duration=320, easing="ease_out_cubic")
+```
+
+### Panel swaps
+
+`pz.presence` plays the old panel out and the new one in.
+
+```python
+pz.presence(panel, key=self.selected, enter="fade_in_right", exit="fade_out")
+```
+
+## Full code
+
+<Code code={source} lang="py" title="examples/showcase/inventory.py" />

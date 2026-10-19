@@ -3,7 +3,9 @@
     python docs/scripts/example_shots.py              # all of them
     python docs/scripts/example_shots.py styling      # only some
 
-They are drawn off-screen with ``App.screenshot`` (no window or GPU).
+They are drawn off-screen with ``App.screenshot`` (no window or GPU). The showcase shots use
+``pz.shader``, which needs a GPU: on Linux without one, install Mesa's software Vulkan driver
+(``mesa-vulkan-drivers``) so they render the shaders instead of their fallback colors.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "docs" / "src" / "assets"
 sys.path.insert(0, str(ROOT / "examples"))
 sys.path.insert(0, str(ROOT / "examples" / "tutorial"))
+sys.path.insert(0, str(ROOT / "examples" / "showcase"))
 
 import pyzed as pz  # noqa: E402
 from pyzed import ui  # noqa: E402
@@ -108,6 +111,11 @@ SHOTS = {
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
     "tutorials/effects": (app("effects", "Effects"), (900, 460)),
+    "showcase/hud": (app("hud", "Hud"), (1280, 720)),
+    "showcase/main-menu": (app("main_menu", "MainMenu"), (1280, 720)),
+    "showcase/inventory": (app("inventory", "Inventory"), (1180, 640)),
+    "showcase/glass-dashboard": (app("glass_dashboard", "Dashboard"), (1180, 700)),
+    "showcase/shaders": (app("shaders", "Shaders"), (1140, 720)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

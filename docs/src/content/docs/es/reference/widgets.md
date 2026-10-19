@@ -958,6 +958,33 @@ Un código QR que codifica `data`.
 | `color` | Color del texto o del icono. |
 | `bg` | Color de fondo (`"#rrggbb[aa]"`, `(r, g, b[, a])` o `"transparent"`). |
 
+### `shader`
+
+```python
+shader(
+    code,
+    *,
+    uniforms=None,
+    width=None,
+    height=None,
+    animate=True,
+    time=None,
+    fallback=None,
+)
+```
+
+Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel. Cada entrada de `uniforms` se convierte en una función con su nombre (`{"speed": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `code` | Código WGSL que define `shade` (y las funciones auxiliares que quieras). |
+| `uniforms` | Hasta 8 valores con nombre: un número, de 2 a 4 números o un color. |
+| `width` | Ancho (`"fill"` por defecto). |
+| `height` | Alto (`"fill"` por defecto). |
+| `animate` | Redibuja en cada frame para que avance `time` (`True`). |
+| `time` | Un `time` fijo en segundos, para un fotograma quieto. |
+| `fallback` | Color o degradado que se muestra sin GPU. |
+
 ### `canvas`
 
 ```python

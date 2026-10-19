@@ -1212,6 +1212,18 @@ _section("widgets", "Imágenes y contenido", {
         "desc": "Un código QR que codifica `data`.",
         "params": {"data": "El texto o URL a codificar.", "cell_size": "Tamaño de cada módulo en píxeles."},
     },
+    "pyzed.shader": {
+        "desc": "Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel. Cada entrada de `uniforms` se convierte en una función con su nombre (`{\"speed\": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).",
+        "params": {
+            "code": "Código WGSL que define `shade` (y las funciones auxiliares que quieras).",
+            "uniforms": "Hasta 8 valores con nombre: un número, de 2 a 4 números o un color.",
+            "width": "Ancho (`\"fill\"` por defecto).",
+            "height": "Alto (`\"fill\"` por defecto).",
+            "animate": "Redibuja en cada frame para que avance `time` (`True`).",
+            "time": "Un `time` fijo en segundos, para un fotograma quieto.",
+            "fallback": "Color o degradado que se muestra sin GPU.",
+        },
+    },
     "pyzed.canvas": {
         "desc": "Una superficie de dibujo 2D. `shapes` es una lista creada con [`pyzed.draw`](/pyzed/es/reference/draw/). Los callbacks del ratón reciben coordenadas relativas al canvas. Con un `id`, la geometría se cachea entre frames y solo se recalcula cuando cambian las formas. Ver la guía de [dibujo con canvas](/pyzed/es/guides/canvas/).",
         "params": {

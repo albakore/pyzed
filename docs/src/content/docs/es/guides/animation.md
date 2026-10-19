@@ -167,7 +167,8 @@ pegatina.style(rotate=-8)
 
 La rotación, el desenfoque, el desenfoque del fondo y el bloom los dibuja el renderer: el widget se
 dibuja en su propia capa, que luego se gira, se desenfoca o se ilumina antes de llegar a la ventana.
-Bloom añade además un halo suave y un borde iluminado, y glass un degradado tintado, un borde y una
+En una caja (un widget con fondo o glass) bloom
+añade además un halo suave y un borde iluminado; en un texto o icono sin caja solo brilla, y glass un degradado tintado, un borde y una
 sombra; los que fijes tú mismo tienen prioridad. Glass luce mejor sobre un fondo colorido (un
 degradado o una imagen). Las animaciones también pueden cambiar `glow` y `glow_color`: los presets
 `glow`, `bloom`, `glow_pulse` y `glow_flash` los usan.

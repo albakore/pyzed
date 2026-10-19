@@ -1212,6 +1212,18 @@ _section("widgets", "Images and content", {
         "desc": "A QR code that encodes `data`.",
         "params": {"data": "The text or URL to encode.", "cell_size": "Size of each module in pixels."},
     },
+    "pyzed.shader": {
+        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+        "params": {
+            "code": "WGSL source that defines `shade` (and any helper functions).",
+            "uniforms": "Up to 8 named values: a number, 2 to 4 numbers or a color.",
+            "width": "Width (`\"fill\"` by default).",
+            "height": "Height (`\"fill\"` by default).",
+            "animate": "Redraw every frame so `time` moves (`True`).",
+            "time": "A fixed `time` in seconds, for a still frame.",
+            "fallback": "Color or gradient shown without a GPU.",
+        },
+    },
     "pyzed.canvas": {
         "desc": "A 2D drawing surface. `shapes` is a list created with [`pyzed.draw`](/pyzed/reference/draw/). Mouse callbacks receive coordinates relative to the canvas. With an `id`, the geometry is cached between frames and only recomputed when the shapes change. See the [drawing with canvas](/pyzed/guides/canvas/) guide.",
         "params": {

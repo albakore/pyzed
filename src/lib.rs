@@ -11,6 +11,7 @@ mod fonts;
 mod highlighter;
 mod layout;
 mod render;
+mod shader;
 mod sticky;
 mod style;
 mod styled;
@@ -23,6 +24,7 @@ use pyo3::prelude::*;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     widget::register(m)?;
     extra::register(m)?;
+    shader::register(m)?;
     layout::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;

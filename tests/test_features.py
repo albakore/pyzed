@@ -284,6 +284,7 @@ def test_new_widgets_render(tmp_path):
 EXAMPLES = sorted(
     [p for p in (ROOT / "examples").glob("*.py") if p.stem not in ("screenshots",)]
     + list((ROOT / "examples" / "tutorial").glob("*.py"))
+    + list((ROOT / "examples" / "showcase").glob("*.py"))
     + [ROOT / "examples" / "hot_reload" / "main.py"]
 )
 

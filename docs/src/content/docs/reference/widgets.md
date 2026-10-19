@@ -958,6 +958,33 @@ A QR code that encodes `data`.
 | `color` | Text or icon color. |
 | `bg` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
 
+### `shader`
+
+```python
+shader(
+    code,
+    *,
+    uniforms=None,
+    width=None,
+    height=None,
+    animate=True,
+    time=None,
+    fallback=None,
+)
+```
+
+A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{"speed": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.
+
+| Parameter | Description |
+| --- | --- |
+| `code` | WGSL source that defines `shade` (and any helper functions). |
+| `uniforms` | Up to 8 named values: a number, 2 to 4 numbers or a color. |
+| `width` | Width (`"fill"` by default). |
+| `height` | Height (`"fill"` by default). |
+| `animate` | Redraw every frame so `time` moves (`True`). |
+| `time` | A fixed `time` in seconds, for a still frame. |
+| `fallback` | Color or gradient shown without a GPU. |
+
 ### `canvas`
 
 ```python
