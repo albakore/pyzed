@@ -1,0 +1,83 @@
+---
+// The big screenshot under the landing hero, with a glow and floating highlights.
+import Shot from './Shot.astro';
+
+interface Props {
+	name: string;
+	light?: string;
+	alt: string;
+	/** Short labels floating around the screenshot (hidden on small screens). */
+	tags?: string[];
+}
+
+const { name, light, alt, tags = [] } = Astro.props;
+---
+
+<div class="pz-hero-shot not-content">
+	<div class="pz-hero-glow" aria-hidden="true"></div>
+	<Shot name={name} light={light} alt={alt} eager sizes="(min-width: 72rem) 67rem, 100vw" />
+	{
+		tags.length > 0 && (
+			<ul class="pz-hero-tags" aria-hidden="true">
+				{tags.map((tag, i) => (
+					<li class={`tag-${i}`}>{tag}</li>
+				))}
+			</ul>
+		)
+	}
+</div>
+
+<style>
+	.pz-hero-shot {
+		position: relative;
+		isolation: isolate;
+		margin-block: 1rem 0 !important;
+	}
+	.pz-hero-glow {
+		position: absolute;
+		inset: -4% 4% 10%;
+		z-index: -1;
+		background: var(--pz-glow-strong);
+		filter: blur(70px);
+		opacity: 0.7;
+	}
+	.pz-hero-shot :global(.pz-shot) {
+		border-radius: 1rem;
+		transform: perspective(2400px) rotateX(4deg);
+		transform-origin: 50% 0;
+	}
+	.pz-hero-tags {
+		display: none;
+	}
+	@media (min-width: 64rem) {
+		.pz-hero-tags {
+			display: block;
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+		.pz-hero-tags li {
+			position: absolute;
+			padding: 0.4rem 0.85rem;
+			border-radius: 999px;
+			font-size: var(--sl-text-sm);
+			font-weight: 600;
+			color: var(--sl-color-white);
+			background: color-mix(in srgb, var(--sl-color-black) 78%, transparent);
+			border: 1px solid var(--pz-frame-border);
+			backdrop-filter: blur(8px);
+			box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+			animation: pz-float 6s ease-in-out infinite;
+		}
+		.tag-0 { top: 14%; left: -1rem; }
+		.tag-1 { top: 42%; right: -1rem; animation-delay: -1.5s; }
+		.tag-2 { bottom: 16%; left: 4%; animation-delay: -3s; }
+		.tag-3 { bottom: 6%; right: 8%; animation-delay: -4.5s; }
+	}
+	@keyframes pz-float {
+		50% { transform: translateY(-6px); }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.pz-hero-tags li { animation: none; }
+	}
+</style>

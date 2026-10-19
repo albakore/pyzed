@@ -5,352 +5,49 @@ sidebar:
   order: 13
 ---
 
-Pyzed Designer is a form editor in the spirit of Visual Basic, the WinForms designer in Visual Studio and
+Pyzed Design is a form editor in the spirit of Visual Basic, the WinForms designer in Visual Studio and
 Qt Designer, built with Pyzed itself. You draw a window with the mouse, set properties in a grid, double-click a
 control to write the code of its event, and press **F5** to run it with all its logic.
 
 ```bash
-pyzed design login.pzform      # open (or create) a form
-pyzed run login.pzform         # run it, no designer needed
+pyzed design login.pzform        # open (or create) a form
+pyzed run login.pzform           # run it, no designer needed
 pyzed run login.pzform --reload  # ...and update it every time the form or its code is saved
 ```
 
 ![The designer with the login example open](../../../../screenshots/designer.png)
 
-## The window
+Everything about it now lives in its own manual, **[Pyzed Design](/pyzed/editor/)**:
 
-| Area | What it does |
+| Topic | Page |
 | --- | --- |
-| **Toolbox** (left) | The component library. Drag a component onto the form, or into a container, to place it there; or click it, then click on the form to place it at its default size or drag a rectangle to give it a size. Search filters the list. |
-| **Outline** (left) | Every control as a tree: containers list their children (fold them with the chevron). Click to select; drag a row to reorder it, into another container or onto the form. The eye and lock buttons hide or lock a control, **+** adds a control inside a container and right-click opens a menu. |
-| **Form** (center) | The design surface with a dot grid. Drag to move, use the eight handles to resize, drag on empty space to select with a rubber band. The grip under the bottom-right corner resizes the form. |
-| **Properties** (right) | Name, then the component's properties in collapsible sections: its own groups, position (X, Y, size, anchors, or grow and span inside a flex or grid) and behavior (visible, enabled, locked). Lists (a list box's items, tabs, options) get one field per item with buttons to reorder, remove and add; a table's rows are a small spreadsheet with add and remove buttons for rows and columns. The page icon next to them switches to plain text. With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
-| **Events** (right) | The events of the selected control (or of the form). Double-click one to create its handler and open it in the code editor. |
-| **Code** (bottom) | The source of one handler, or of the whole file (**F7**). **Apply** checks the syntax before touching the file. |
-| **Console** (bottom) | What the running form prints, the events it handles and its errors (see [Debug console](#debug-console)). |
-
-The title bar holds the main menu (☰: File and Run), **Run** and **Stop**, the **View** and **Help** menus and the
-**Settings** gear. Every panel can be moved to another dock and every dock resized; see [Panels](#panels).
-
-![Writing the code of a button's click event](../../../../screenshots/designer-code.png)
-
-## Alignment, grid and snapping
-
-- **Snap to grid** (magnet) rounds positions and sizes to the grid step (8 px by default, set per form). Press
-  **G** to show or hide the dots.
-- **Smart guides** (ruler) snap a moving control to the edges and centers of the others and of the form, and draw a
-  red guide line while they line up.
-- The toolbar aligns the selection by **left, center, right, top, middle or bottom** edges, **distributes** three or
-  more controls evenly, gives them the **same width or height**, **centers** them in the form and changes the
-  **z-order**. With one control selected, alignment is relative to the form.
-- **Anchors** decide what happens when the running window is resized, like WinForms: anchored to left and right a
-  control stretches, anchored only to the right it follows that edge, anchored to neither it stays centered.
-
-![Three controls selected, ready to align](../../../../screenshots/designer-align.png)
-
-### Keyboard
-
-| Keys | Action |
-| --- | --- |
-| Arrows / Shift+arrows | Nudge by 1 px / one grid step |
-| Delete | Delete the selection |
-| Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+D | Copy, cut, paste, duplicate |
-| Ctrl+A | Select every control |
-| Ctrl+Z, Ctrl+Shift+Z | Undo, redo |
-| Enter | Open the code of the selected control's main event |
-| Escape | Cancel a drag, close a menu, go back to the pointer |
-| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N, Ctrl+Shift+N | Save, save as, open, new form, new component |
-| Ctrl+Shift+P | Command palette |
-| Ctrl+Shift+A | Add a control (searchable list) |
-| Ctrl+B, Ctrl+Alt+B, Ctrl+J | Show or hide the left, right and bottom docks |
-| Ctrl+Shift+Y | Console |
-| Ctrl+, | Settings |
-| F1 | Keyboard shortcuts |
-| F5, Shift+F5 | Run the form, close the running form |
-| F7 | Edit the whole code file |
-| Ctrl+Space | Open the completion list (in the code editor) |
-| Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+wheel | Bigger, smaller or default font in the code editor |
-| Ctrl+Shift+[ / Ctrl+Shift+] | Fold / unfold the block around the cursor (in the code editor) |
-
-Right-click a control, on the form or in the outline, for a context menu with the same actions where the pointer is.
-
-## Containers and layouts
-
-Some components hold other controls. Drop a control on one (it lights up while you drag) to put it inside, drag it
-out to take it back to the form, or select a few controls and use **Edit → Group in a row / column / grid**.
-
-| Container | How it places its children |
-| --- | --- |
-| **Panel**, **Group box**, **Card** | Freely, like the form: positions are relative to the container and anchors follow its edges. |
-| **Flex row**, **Flex column** | One after another with a **gap**, **padding**, **justify** (start, center, end, space between) and **align** (stretch, start, center, end). A child's **Grow** shares the space left; a **Spacer** pushes the next ones to the end. |
-| **Grid** | In **columns** of equal width, row by row, with a **gap** and a **row height** (0 shares the height). A child's **Column span** makes it wider. |
-
-Children of a flex or grid are listed in their order in the outline; drag them there, or on the form, to reorder
-them. Moving or resizing a container moves its children with it, and copy, paste and delete take them along.
-
-A container's children cover most of it, so a press there picks a child. To pick or move the container itself, use
-the tab with its name above its top-left corner: it shows while the pointer is over the container and while the
-container, or a control inside it, is selected.
-
-![A sidebar form: a flex column with its children](../../../../screenshots/designer-layout.png)
-
-## Menus, settings and the command palette
-
-- **☰ (File)**: new form, open, save, save as, recent files, settings, and Run, Stop and Edit code file.
-- **View**: the command palette, the docks, the console, toolbar and status bar, grid, snapping, smart guides,
-  hidden controls, reset the panel layout, and where each panel is.
-- **Help**: keyboard shortcuts (searchable), the documentation, report a problem and About.
-- **Settings** (Ctrl+,): the designer's theme and language, toolbar and status bar, the canvas defaults, what Run
-  does (save first, open the console, log events) and a link to the code editor settings. They are kept in
-  `designer.json` in Pyzed's settings folder (`PYZED_CONFIG_DIR` overrides it).
-- **Command palette** (Ctrl+Shift+P) runs any of these by name; **Add control** (Ctrl+Shift+A) does the same for
-  components, inside the selected container.
-
-The designer's language (English or Spanish) follows the system or the one picked in Settings, and uses
-[`pz.t`](/pyzed/guides/i18n/): add a catalog under the `designer` key to translate it to another language.
-
-![The View menu](../../../../screenshots/designer-menu.png)
-
-## Panels
-
-Design (toolbox and outline), Project, Properties, Events, Code and Console are panels in four docks: left, right,
-bottom and top. Each dock shows one panel at a time, with a tab per panel. The dock button next to the tabs moves the
-panel to another dock, the × hides the dock (Ctrl+B, Ctrl+Alt+B and Ctrl+J bring them back) and the edge facing the
-form resizes it. The layout is remembered; **View → Reset panel layout** restores it.
+| The window and its areas | [Overview](/pyzed/editor/) |
+| Placing, moving, aligning, snapping, the outline | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
+| The property grid, lists and tables | [Properties](/pyzed/editor/properties/) |
+| Panels, flex rows and columns, grids, anchors | [Layouts and containers](/pyzed/editor/layouts/) |
+| The Style section, the color picker, themes | [Styles and themes](/pyzed/editor/styles-and-themes/) |
+| Events and writing handlers | [Events and handlers](/pyzed/editor/events/) |
+| Completion, diagnostics, language servers | [Code editor](/pyzed/editor/code-editor/) |
+| F5, the debug console, hot reload | [Running and the console](/pyzed/editor/console-and-running/) |
+| uv projects, dependencies, ruff, ty, git | [Projects](/pyzed/editor/projects/) |
+| Reusable components | [Component designer](/pyzed/editor/component-designer/) |
+| New forms, templates, `.pzform` files, scripting | [Files, templates and scripting](/pyzed/editor/files-and-scripting/) |
+| Menus, the command palette, docks | [Menus and commands](/pyzed/editor/menus-and-commands/) |
+| Every shortcut | [Keyboard shortcuts](/pyzed/editor/keyboard-shortcuts/) |
+| Preferences | [Settings](/pyzed/editor/settings/) |
 
 ## Debug console
 
-**Run** (F5) opens the Console panel, which shows what the form prints, each event it handles with its value and
-the handler it calls, and the traceback of any error, without leaving the designer. Filter by text, hide levels with
-the toggles, copy everything or clear it. Forms run with `uv run` (a project whose dependencies the designer doesn't
-have) have their output piped in too. Settings decide whether Run opens the console and whether events are logged.
+See [Running and the console](/pyzed/editor/console-and-running/#the-console).
 
-![The console after a few clicks and an error](../../../../screenshots/designer-console.png)
+## Panels
 
-## Look and feel
-
-Each form picks any registered theme (One, Ayu, Gruvbox or your own) and can override its accent color,
-background, corner radius and font size. The designer's own theme is independent (**Settings**).
-
-![A form with the Gruvbox Light theme and a custom accent](../../../../screenshots/designer-light.png)
-
-### Styles
-
-Every control has a **Style** section in Properties, like CSS for that one control (see [Styles](../styles/)):
-background, text color, font, weight, italic, font size, line height, border color and width, corner radius,
-shadow, padding, margin, max width and height, content alignment and clipping. Empty fields keep the component's own
-look, and **Reset style** clears them all.
-
-Click a color's swatch to open the color picker, with alpha, floating next to the panel (click outside it to close it). The background's picker also makes linear gradients
-(drag the stops, set the angle) and opacity masks. Colors may be theme tokens (`accent`, `text_muted`...), so a
-style follows the form's theme. Corner radius takes one number or four (top-left, top-right, bottom-right,
-bottom-left); padding and margin take one, two or four.
-
-With nothing selected, the form's own **Style** section is the window's global style: its font, text color and
-size apply to every text that doesn't set its own, and its background, border color and radius become the theme's.
-It runs the same way (`Window.style`), and so do components made in the designer.
-
-![A button with a masked gradient, a serif global font and the color picker open](../../../../screenshots/designer-style.png)
-
-## Files
-
-A form is two files side by side, both meant to be committed:
-
-```
-login.pzform   ← layout: JSON, diffs nicely
-login.py       ← event handlers: plain Python
-```
-
-```mermaid
-flowchart LR
-    subgraph Designer["pyzed design"]
-        T[Toolbox] --> S[Design surface]
-        S --> P[Properties]
-        S --> E[Events]
-        E --> C[Code editor]
-    end
-    S -- save --> F[(login.pzform)]
-    C -- save --> H[(login.py)]
-    F --> R["pyzed run / designer.run()"]
-    H --> R
-    R --> W[Native window rendered by Iced]
-```
-
-The `.pzform` file stores the form settings and, for each control, its type, position, size, properties, anchors
-and which handler each event calls:
-
-```json
-{
-  "format": "pyzed.form/1",
-  "form": { "name": "login", "title": "Sign in", "width": 440, "height": 400, "theme": "One Dark", "events": { "load": "form_load" } },
-  "controls": [
-    { "name": "sign_in", "type": "button", "x": 48, "y": 304, "width": 344, "height": 32,
-      "props": { "text": "Sign in", "variant": "solid", "icon": "log-in" },
-      "events": { "click": "sign_in_click" }, "anchor": ["left", "top"] }
-  ]
-}
-```
-
-## Live updates
-
-Forms work with hot reload (`pyzed.hot_reload`): run them with `pyzed run app.pzform --reload` (or
-`designer.run(path, reload=True)`, or `PYZED_RELOAD=1`) and every save of `app.pzform` or `app.py`, from the
-designer or from your editor, updates the open window without restarting it. Layout, properties and code are
-replaced; what the user typed or picked in each control stays. Inside the designer, **Save** also refreshes the
-form opened with **F5**.
-
-## Writing event handlers
-
-Handlers are named `<control>_<event>` and receive the running `form` and an `event`. Controls are attributes of
-the form and their properties are attributes of the control; changing them updates the window.
-
-```python
-def sign_in_click(form, event):
-    if "@" not in form.email.text:
-        form.status.text = "Enter a valid email address."
-        return form.email.focus()          # handlers may return commands
-    form.sign_in.enabled = False
-    form.progress.show()
-    form.ticker.running = True             # a Timer control starts ticking
-```
-
-`event.sender` is the control that raised it, `event.name` the event and `event.value` its value (the new text of a
-text box, the state of a check box, the key combo of the form's `key` event...). Handlers can return anything a
-Pyzed callback can: a `Command`, a coroutine, a generator. If a handler raises, the error appears at the bottom of
-the running window instead of closing it.
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Iced as Iced (Rust)
-    participant RT as FormRuntime
-    participant H as login.py
-    User->>Iced: clicks "Sign in"
-    Iced->>RT: callback for sign_in.click
-    RT->>H: sign_in_click(form, event)
-    H->>RT: form.status.text = "..."
-    RT->>Iced: view() with the new properties
-    Iced->>User: redraws the window
-```
-
-### Events
-
-Every visible control has `mouse_enter`, `mouse_leave` and `right_click`. On top of that:
-
-| Component | Events |
-| --- | --- |
-| Button | `click` |
-| Label | `click`, `double_click` |
-| Text box | `change`, `submit` |
-| Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box, List box | `change` |
-| Timer (invisible at run time) | `tick` |
-| Form | `load`, `close` (return `False` to keep it open), `key`, `resize` |
+See [Panels and docks](/pyzed/editor/menus-and-commands/#panels-and-docks).
 
 ## Code editor
 
-The code panel is a Python editor backed by two language servers from Astral: **ty** (types, completion,
-references) and **ruff** (linting). They run in the form's own project, so completion knows your dependencies.
-
-![Completing a function of the re module, with its signature and docstring](../../../../screenshots/designer-completion.png)
-
-### Completion
-
-- The list opens while you type a name or after a `.`, and **Ctrl+Space** opens it anywhere. **Up**/**Down**
-  move, **Enter** or **Tab** insert, **Escape** closes it.
-- Each entry has an icon for its kind and a pane with its signature and documentation (the docstring):
-
-  | Icon color | Kind |
-  | --- | --- |
-  | Purple | Functions and methods |
-  | Yellow | Classes, enums, type parameters |
-  | Blue | Variables, attributes and properties |
-  | Cyan | Constants |
-  | Red | Modules |
-  | Accent | Controls of the form |
-
-  Private names (`_cache`) are dimmed, carry a lock and are listed after public ones; dunders (`__init__`) come last.
-- `form.` lists the controls of the form, `form.email.` the properties of that text box and `event.` the event's
-  fields: the designer completes them itself, since a handler's `form` has no type the servers could read.
-- Picking a name that is not imported yet (an *auto-import* entry) also adds its `import` at the top of the file.
-
-![form. completes the form's own controls](../../../../screenshots/designer-completion-form.png)
-
-### Your project and its dependencies
-
-The servers start in the folder of the nearest `pyproject.toml` above the form (or `uv.lock`, `setup.py`,
-`.git`) and use its `.venv`, which is where `uv sync` installs your dependencies (`$VIRTUAL_ENV` otherwise). The
-form's own folder and `src/` are added as import roots, so a UI kept in its own folder still resolves both:
-
-```
-myapp/
-├── pyproject.toml      ← uv add httpx
-├── .venv/              ← uv sync
-├── src/myapp/
-└── ui/
-    ├── login.pzform
-    ├── login.py        ← import httpx / from helpers import greet / from myapp import api
-    └── helpers.py
-```
-
-Install the servers in the project with `uv add --dev ty ruff`, or next to the designer with
-`pip install "pyzed-ui[designer]"`. The designer looks in the project's `.venv` first, then in its own environment,
-then on `PATH`. Ruff reads its rules from `[tool.ruff]` in `pyproject.toml`.
-
-```mermaid
-sequenceDiagram
-    participant E as Code editor
-    participant A as CodeAssist
-    participant I as CodeIntel
-    participant T as ty server
-    participant R as ruff server
-    E->>A: on_change(text), on_cursor(line, col)
-    A->>I: update(module, handler, text)
-    I->>T: didChange (whole module, handler swapped in)
-    I->>R: didChange
-    T-->>I: publishDiagnostics
-    R-->>I: publishDiagnostics
-    A->>I: complete(line, col)
-    I->>T: textDocument/completion
-    T-->>A: items (via pyzed.post, on the UI thread)
-    A->>E: popup, inline errors, code lens
-```
-
-The editor shows one handler, but the servers always see the whole module with that handler swapped in, so imports
-and helpers at the top of the file are known; positions are translated between the two.
-
-### Diagnostics and code lens
-
-![Inline errors, the problems list and code lens](../../../../screenshots/designer-diagnostics.png)
-
-- The first problem of a line is shown at its end (error lens), and every problem is listed under the editor;
-  click one to jump to it. The header counts errors and warnings.
-- **Code lens** at the end of each `def` and `class` line shows how many references it has (from ty), how many
-  classes implement it, and which events call it (`on sign_in.click`).
-
-### Editor settings
-
-The gear button in the code panel (or the server dots in the status bar) opens the editor settings. They are saved
-per user in `designer.json` inside the Pyzed config folder (`%APPDATA%\pyzed`, `~/Library/Application Support/pyzed`
-or `~/.config/pyzed`).
-
-![Editor settings with the language servers' status](../../../../screenshots/designer-editor-settings.png)
-
-| Setting | What it does |
-| --- | --- |
-| Language servers | Turns ty and ruff on or off, shows whether each is ready (and its version), the project root and the Python in use. **Restart servers** after `uv sync`. |
-| Theme, font size | The editor can use a different theme from the designer. Ctrl+= / Ctrl+- (or Ctrl+wheel) change the size and Ctrl+0 resets it. |
-| Line numbers, highlight current line, wrap | Gutter and layout. |
-| Show whitespace | Draws spaces as `·` and tabs as `→`. |
-| Minimap | The code zoomed out on the right; click or drag it to scroll. |
-| Cursor shape, blink | Bar, block, underline or hollow, like Zed. |
-| Tab size | Tab inserts spaces, Enter keeps the indentation (one level more after `:`), Backspace removes a level. |
-| Autocomplete while typing | Off means the list only opens with Ctrl+Space. |
-| Auto-close brackets and quotes | Typing `(`, `[`, `{` or a quote inserts its pair (or wraps the selection); typing the closer steps over it. |
-| Code folding | Chevrons in the gutter fold blocks; Ctrl+Shift+[ and Ctrl+Shift+] fold and unfold at the cursor. |
-| Format with ruff on Apply | Runs `ruff format` on the code when you apply it. |
-| Code lens, inline diagnostics | Show or hide the notes at the end of lines. |
-
-![The whole file with two handlers folded and the minimap](../../../../screenshots/designer-code-folding.png)
+See [Code editor](/pyzed/editor/code-editor/): completion, diagnostics, code lens, folding and the ty and ruff
+language servers.
 
 ## Components
 
@@ -361,102 +58,9 @@ Stat, Chart, Table, Image, Icon, Markdown, Spinner, Divider and Timer.
 
 ![Every built-in component](../../../../screenshots/designer-components.png)
 
-To draw your own components, with properties, state, methods and events, use the
-[component designer](/pyzed/guides/component-designer/). They join this toolbox when you save them.
-
-Register your own and it shows up in the toolbox:
-
-```python
-from pyzed import ui
-from pyzed.designer import Component, Prop, register
-
-register(Component(
-    type="rating", label="Rating", icon="star", category="Custom", size=(120, 24),
-    props=(Prop("value", "number", 3, min=0, max=5),),
-    events=("change",),
-    render=lambda control, ctx: ui.label("★" * int(control.props["value"])),
-))
-```
-
-`render` is used both in the designer (inert) and at run time; use `ctx.on(control, "change", "value")` for
-callbacks so the same code works in both.
-
-## Scripting forms
-
-Everything the designer does is available from Python, which is handy for generating forms or for tests:
-
-```python
-from pyzed import designer
-from pyzed.designer import Document
-
-doc = Document(designer.Form(name="hello", title="Hello", width=320, height=140))
-doc.add("input", 16, 16, 200, 28)
-doc.add("button", 224, 16)
-doc.select_all()
-doc.align("middle")
-handler = doc.wire("button1", "click")
-doc.set_handler_source(handler, "def button1_click(form, event):\n    form.button1.text = form.input1.text\n")
-doc.save("hello.pzform")
-
-designer.run("hello.pzform")
-```
-
-### New forms and other windows
-
-**☰ → New form** (Ctrl+N) asks for a name, title and folder and offers templates: blank, dialog (OK and Cancel
-already wired), sign in, sidebar and settings. In code, `designer.new_form(path, template="dialog")` creates the
-form and its handlers module (in a project, `project.find().new_form("settings")` puts it in `ui/`), and
-`designer.register_template(...)` adds your own templates to the dialog. From a handler, `form.open(...)`
-opens another form in a new window; the name is looked up next to the current form,
-then in the project's `ui/` folder. Whatever you pass as `data` arrives as `form.data`:
-
-```python
-designer.new_form("ui/details.pzform", title="Details")
-
-def details_button_click(form, event):
-    return form.open("details", data=form.order_id.text)
-
-# details.py
-def form_load(form, event):
-    form.title = f"Order {form.data}"
-```
-
-`designer.open_window(form_or_path, data=...)` returns the same `Command` from any app, and
-also accepts a `designer.Form` built in code (with `handlers={"name": function}`).
-
-![The New form dialog with its templates](../../../../screenshots/designer-new.png)
+To add your own, see [Files, templates and scripting](/pyzed/editor/files-and-scripting/#adding-your-own-components)
+and the [component designer](/pyzed/editor/component-designer/).
 
 ## How it is built
 
-```mermaid
-classDiagram
-    class Form { controls; events; theme; grid }
-    class Control { name; type; x; y; width; height; props; events; anchor }
-    class Component { type; props; events; render() }
-    class Document { form; code; selection; history; add(); align(); wire() }
-    class History { push(); undo(); redo() }
-    class Designer { pyzed App: docks and gestures }
-    class FormRuntime { dispatch(); view() }
-    Form "1" *-- "*" Control
-    Control ..> Component : type
-    Document --> Form
-    Document --> History
-    Designer --> Document
-    FormRuntime --> Form
-```
-
-- `model.py`: the form and its controls, saved as JSON.
-- `components.py`: the component library and the `render` shared by designer and runtime.
-- `geometry.py`: snapping, alignment, distribution, resizing, anchors and smart guides (pure functions).
-- `history.py`: undo/redo as snapshots; repeated edits of one field merge into one step.
-- `code.py`: finds, adds, renames and replaces handler functions with `ast` without touching the rest of the file.
-- `document.py`: every editing command, with no UI, so it is fully testable.
-- `project_panel.py`: the Project tab (uv projects, dependencies, ruff, ty and git; see [Projects with uv](/pyzed/guides/projects/)).
-- `surface.py` and `panels.py`: the views; `app.py`: the `Designer` app wiring clicks and keys to the document.
-- `scene.py`, `scene_code.py`, `scene_runtime.py` and `scene_panel.py`: the [component designer](/pyzed/guides/component-designer/)
-  (the `.pzcomp` model, the class code, `SceneComponent` and the Component panel).
-- `runtime.py`: `FormApp` and `FormWindow`, which draw a form and call its handlers.
-- `lsp.py`: a small JSON-RPC client for language servers and the detection of the project and its `.venv`.
-- `intellisense.py`: `CodeIntel`, which keeps ty and ruff in sync with the open handler, and the completion,
-  diagnostics and code lens logic (no UI).
-- `code_panel.py`: the code editor's view and `CodeAssist`, its state; `settings.py`: the editor settings.
+See [Files, templates and scripting → How it is built](/pyzed/editor/files-and-scripting/#how-it-is-built).

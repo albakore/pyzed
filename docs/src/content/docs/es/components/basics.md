@@ -5,6 +5,11 @@ sidebar:
   order: 1
 ---
 
+:::tip[Biblioteca de componentes]
+Cada componente tiene ahora su propia página, con vista previa, ejemplos y su API completa, en la
+[biblioteca de componentes](/pyzed/es/library/). Esta página se mantiene como resumen.
+:::
+
 ## Botones
 
 ![Botones](../../../../assets/components/buttons.png)

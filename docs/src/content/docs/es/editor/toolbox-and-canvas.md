@@ -1,0 +1,183 @@
+---
+title: Herramientas y lienzo
+description: Colocar, seleccionar, mover, redimensionar y ordenar controles; snap, guías inteligentes, alineación, orden y la estructura.
+sidebar:
+  order: 2
+---
+
+El panel **Diseño** (dock izquierdo) tiene la caja de **Herramientas** arriba y la **Estructura** abajo; arrastra la
+barra entre ellas para dar más sitio a una. El **lienzo** del centro muestra el documento exactamente como se
+ejecutará, pero inerte: los botones no hacen clic y los campos de texto no escriben, así el ratón queda libre para
+editar.
+
+## La caja de herramientas
+
+Todos los componentes que puedes colocar, por categoría: **Comunes**, **Presentación**, **Contenedores**,
+**Disposición**, **Navegación**, **Componentes** (el temporizador) y una categoría por cada grupo de
+[componentes diseñados](/pyzed/es/editor/component-designer/) de tu proyecto. Pasa el ratón por una fila para ver
+la descripción del componente.
+
+- **Buscar componentes…** filtra la lista por nombre (en inglés o en el idioma del editor) o por tipo.
+- **Puntero** (la primera fila) es la herramienta normal de selección. Está resaltada cuando no hay componente
+  elegido.
+
+### Colocar un control
+
+Hay cuatro formas; usa la que te venga mejor:
+
+| Gesto | Resultado |
+| --- | --- |
+| **Arrastrar** una fila de herramientas al formulario | El control cae donde lo sueltas, con su tamaño por defecto, dentro del contenedor que hay bajo el puntero (se ilumina mientras arrastras). |
+| **Clic** en una fila y luego **clic** en el formulario | Lo mismo, en el punto donde hiciste clic. |
+| **Clic** en una fila y luego **arrastrar un rectángulo** en el formulario | El control toma el tamaño del rectángulo (al menos 6×6 px); sus esquinas se ajustan a la cuadrícula. |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> (**Añadir control…**) | Una lista con buscador; <kbd>Enter</kbd> añade el componente resaltado centrado en el formulario. |
+
+![Colocar un botón: arrastra un rectángulo con la herramienta elegida](../../../../../screenshots/editor-placing.png)
+
+Mientras hay un componente elegido, el puntero es una cruz y la barra de estado dice
+`Placing Button: click or drag on the form`. <kbd>Esc</kbd> (o clic en **Puntero**, o en la misma fila otra vez)
+suelta la herramienta. Los controles nuevos reciben un nombre libre según su tipo (`button1`, `button2`...) y quedan
+seleccionados, con el panel Propiedades al frente.
+
+![Añadir control: una lista de componentes con búsqueda difusa](../../../../../screenshots/editor-add-control.png)
+
+:::tip
+El **+** de la fila de un contenedor en la estructura, y **Add inside…** en su menú contextual, abren la misma lista
+pero añaden el control nuevo *dentro* de ese contenedor.
+:::
+
+## Seleccionar
+
+| Gesto | Selecciona |
+| --- | --- |
+| Clic en un control | Ese control (los demás se deseleccionan). |
+| Clic en un control ya seleccionado | Mantiene la selección y convierte ese control en el **principal**: la referencia para alinear e igualar tamaños, dibujado con un borde más grueso. |
+| Arrastrar en un hueco | Un rectángulo de selección: todos los controles que toca. Un contenedor y lo que tiene dentro cuentan una vez (el contenedor). |
+| <kbd>Ctrl</kbd>+<kbd>A</kbd> | Todos los controles. |
+| Clic en un hueco | Nada: el panel Propiedades muestra entonces el propio formulario. |
+| Una fila de la estructura | Ese control, aunque esté tapado por otros. |
+
+Con varios controles seleccionados, el panel Propiedades muestra las herramientas de alineación y espaciado en lugar
+de propiedades, y el panel Eventos pide que elijas un solo control.
+
+## Mover y redimensionar
+
+- **Arrastra** un control seleccionado para mover toda la selección. Las posiciones se ajustan a la cuadrícula
+  (con el snap activo) y el grupo no sale del formulario.
+- **Suéltalo** sobre un contenedor para meterlo dentro, o sobre el formulario vacío para sacarlo de su contenedor.
+  El destino se ilumina con un marco de color de acento mientras arrastras.
+- Las **ocho asas** de un único control seleccionado lo redimensionan desde ese borde o esquina; el borde opuesto
+  no se mueve. Los controles nunca son más pequeños que el tamaño mínimo y no salen de su contenedor.
+- El **tirador** bajo la esquina inferior derecha del formulario lo redimensiona (al menos 120×80, ajustado a la
+  cuadrícula).
+- <kbd>Esc</kbd> durante cualquier arrastre lo cancela y deja todo como estaba.
+- Las **flechas** mueven la selección 1 px; <kbd>Shift</kbd>+flechas la mueven un paso de cuadrícula (1 px con el
+  snap apagado). Varios empujones seguidos son un solo paso de deshacer.
+
+Los controles bloqueados no se mueven ni se redimensionan (muestran un candadito sobre su esquina), y las
+herramientas de alineación los saltan.
+
+### Los contenedores y su pestaña
+
+Los hijos de un contenedor lo cubren casi entero, así que un clic ahí elige un hijo. Para elegir o arrastrar el
+propio contenedor, usa la **pestaña** con su nombre sobre su esquina superior izquierda: aparece mientras el
+puntero está sobre el contenedor y mientras el contenedor, o un control suyo, está seleccionado. Clic derecho en la
+pestaña abre el menú contextual del contenedor. Ver [Disposición y contenedores](/pyzed/es/editor/layouts/).
+
+## Snap, cuadrícula y guías inteligentes
+
+| Herramienta | Dónde | Qué hace |
+| --- | --- | --- |
+| **Mostrar la cuadrícula** | Barra de herramientas, barra de estado, **Ver → Cuadrícula**, <kbd>G</kbd> | Muestra u oculta los puntos de la cuadrícula. |
+| **Ajustar a la cuadrícula** | Barra de herramientas (imán), barra de estado, **Ver** | Redondea posiciones y tamaños al paso de la cuadrícula al arrastrar, colocar y redimensionar. |
+| **Guías inteligentes** | Barra de herramientas (regla), **Ver** | Ajusta el control que mueves a los bordes y centros de los demás controles y del formulario, y dibuja una línea roja mientras coinciden. |
+| **Ajustar la selección a la cuadrícula** | Barra de herramientas | Mueve y redimensiona los controles seleccionados (todos si no hay selección) sobre la cuadrícula. |
+| **Tamaño de cuadrícula** | Propiedades del formulario (sección **Diseñador**) | El paso de cuadrícula de este formulario (2 a 64 px, 8 por defecto). Los formularios nuevos toman el valor de [Ajustes](/pyzed/es/editor/settings/). |
+
+![Una guía inteligente: la casilla se alinea con los centros de los demás controles](../../../../../screenshots/editor-guides.png)
+
+Las guías ajustan a menos de 4 px de un objetivo, en los dos ejes a la vez, así que un control puede alinearse con
+el borde izquierdo de uno y el centro de otro en el mismo arrastre.
+
+## Alinear, distribuir e igualar tamaños
+
+La barra de herramientas actúa sobre la selección:
+
+| Botón | Efecto |
+| --- | --- |
+| **Alinear a la izquierda / los centros / a la derecha** | Alinea los bordes izquierdos, los centros horizontales o los bordes derechos. |
+| **Alinear arriba / al medio / abajo** | Alinea los bordes superiores, los centros verticales o los bordes inferiores. |
+| **Distribuir horizontalmente / verticalmente** | Reparte tres o más controles a la misma distancia entre el primero y el último. |
+| **Mismo ancho / alto** | Da a todos los seleccionados el ancho o el alto del control principal. |
+| **Centrar horizontalmente / verticalmente en el formulario** | Centra la selección en el formulario. |
+| **Traer al frente / Enviar al fondo** | Cambia el orden de dibujo (qué queda encima). |
+| **Eliminar** | Borra la selección (<kbd>Supr</kbd> o <kbd>Retroceso</kbd>). |
+
+Con varios controles, la alineación usa los límites de la selección; con uno solo, alinea con el formulario. El
+panel Propiedades muestra las mismas herramientas cuando hay varios controles seleccionados.
+
+![Tres controles seleccionados, listos para alinear](../../../../../screenshots/designer-align.png)
+
+## Portapapeles e historial
+
+- <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd>: copiar, cortar y pegar.
+  Los controles pegados reciben nombres nuevos y se desplazan un poco para que se vean; un contenedor se copia con
+  todo lo que tiene dentro. Los controles pegados **no** están conectados: sus eventos empiezan vacíos, así no
+  comparten manejadores con los originales.
+- <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica la selección sin tocar el portapapeles.
+- <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshace, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> (o <kbd>Ctrl</kbd>+<kbd>Y</kbd>)
+  rehace. Cada documento tiene su propio historial; las ediciones repetidas de un campo (escribir un título,
+  empujar con las flechas) se juntan en un paso.
+
+## El menú contextual
+
+Clic derecho en un control del lienzo, en su fila de la estructura o en la pestaña de un contenedor:
+
+![El menú contextual de un botón](../../../../../screenshots/editor-context-menu.png)
+
+| Entrada | Hace |
+| --- | --- |
+| **View code** | Abre el manejador del evento principal del control (o abre un componente diseñado en su pestaña). |
+| **Add inside…** | Solo contenedores: la lista Añadir control, añadiendo dentro de este contenedor. |
+| **Group in a row / column / grid / panel** | Envuelve la selección en una fila flex, una columna flex, una grilla o un panel nuevos. |
+| **Move out of *contenedor*** | Saca el control de su contenedor, al padre del contenedor. |
+| **Cut, Copy, Paste, Duplicate** | Como los atajos. |
+| **Bring to front, Send to back** | Orden de dibujo. |
+| **Lock / Unlock** | Bloquea el control en su sitio. |
+| **Delete** | Borra la selección. |
+
+El menú se abre en el puntero y no sale de la ventana. <kbd>Esc</kbd> o un clic fuera lo cierran.
+
+## La estructura
+
+La **Estructura** lista todos los controles del documento en árbol. La primera fila es el propio formulario (o
+componente): clic para seleccionarlo, **+** le añade un control.
+
+![La estructura: un control bloqueado y otro oculto](../../../../../screenshots/editor-outline.png)
+
+- **Orden**: el de más arriba primero, como las capas de un programa de dibujo. Los hijos de una fila flex, una
+  columna flex o una grilla aparecen en su orden de disposición.
+- **Flecha**: pliega o despliega los hijos de un contenedor. En un componente diseñado colocado, lista sus
+  propiedades y métodos públicos; haz clic en uno para insertar `form.ada.rate()` (o `self.stars.pick()` en un
+  componente) en el cursor del editor de código, o para copiarlo si no hay código abierto.
+- **Ojo**: oculta el control. Los controles ocultos no se ven al ejecutar el formulario; en el lienzo se dibujan
+  atenuados (o no se dibujan con **Ver → Mostrar controles ocultos** apagado) y su nombre sale en gris.
+- **Candado**: bloquea el control para no moverlo ni redimensionarlo sin querer.
+- **+** (contenedores): añade un control dentro.
+- **Arrastra una fila** para reordenarla: una línea muestra dónde va (antes o después de una fila), y un marco
+  cuando iría *dentro* de un contenedor. Suéltala en el lienzo para meterla en el contenedor bajo el puntero, o en el
+  formulario.
+- **Clic derecho** en una fila abre el menú contextual.
+
+:::tip
+La estructura es la forma más fácil de elegir un control tapado por otros, o uno sin tamaño como el temporizador, y
+de mover controles entre contenedores con precisión.
+:::
+
+## La barra de estado
+
+De izquierda a derecha: la posición del puntero en el formulario, lo seleccionado (`sign_in 344×32 at 48, 304`,
+`3 selected`, o el formulario y su tamaño) y, con un componente elegido, la pista para colocarlo. A la derecha: el
+número de controles, **Grid 8px** (clic para mostrar u ocultar la cuadrícula) y **Snap** (clic para activar o
+desactivar el ajuste). Con el editor de código abierto muestra además la línea y columna del cursor y el estado de
+los servidores de lenguaje. Ocúltala con **Ver → Barra de estado**.

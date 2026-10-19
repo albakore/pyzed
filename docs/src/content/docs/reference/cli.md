@@ -43,7 +43,7 @@ Adds Pyzed to the uv project at `path` (default: the current folder), with the s
 
 | Command | Does |
 | --- | --- |
-| `pyzed design [form or folder]` | Opens the [visual designer](/pyzed/guides/designer/). Inside a project and without a form, opens its main form. |
+| `pyzed design [form or folder]` | Opens the [visual designer](/pyzed/editor/). Inside a project and without a form, opens its main form. |
 | `pyzed run [form] [--reload]` | Runs a form with its handlers; default: the project's main form. `--reload` updates the window on save. |
 | `pyzed dev script.py [--watch PATH]` | Runs a script with hot reload: saving a file updates the open window. |
 

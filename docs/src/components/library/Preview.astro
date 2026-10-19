@@ -1,0 +1,51 @@
+---
+// A component preview of the library (docs/scripts/library_shots.py renders the PNGs), drawn in
+// One Dark or One Light to match the site's theme.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/library/*.png', { eager: true });
+
+interface Props {
+	/** File name without the theme suffix: `button` or `button-1`. */
+	name: string;
+	alt: string;
+}
+
+const { name, alt } = Astro.props;
+const pick = (theme: string) => images[`../../assets/library/${name}.${theme}.png`]?.default;
+const dark = pick('dark');
+const light = pick('light') ?? dark;
+if (!dark) throw new Error(`Missing library preview: ${name}.dark.png (run docs/scripts/library_shots.py)`);
+---
+
+<figure class="lib-preview not-content">
+	<Image class="on-dark" src={dark} alt={alt} loading="lazy" />
+	{light && <Image class="on-light" src={light} alt={alt} loading="lazy" />}
+</figure>
+
+<style>
+	.lib-preview {
+		margin: 0;
+		padding: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.75rem;
+		overflow: hidden;
+		background: var(--sl-color-gray-6);
+		box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+	}
+	.lib-preview img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.on-light {
+		display: none !important;
+	}
+	:global([data-theme='light']) .lib-preview .on-light {
+		display: block !important;
+	}
+	:global([data-theme='light']) .lib-preview .on-dark {
+		display: none !important;
+	}
+</style>

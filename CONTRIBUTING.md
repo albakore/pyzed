@@ -72,9 +72,13 @@ uv run pytest tests                  # or: pytest tests
 ### Writing docs
 
 The site is in `docs/`; see the
-[docs contributing guide](https://albakore.github.io/pyzed/guides/contributing-docs/)
+[docs contributing guide](https://albakore.github.io/pyzed/contributing/docs/)
 for how to run it locally, regenerate the API reference and the component
 screenshots. If you add or change public API, document it in the same PR.
+
+To add a component to the visual editor, follow the
+[component guide](https://albakore.github.io/pyzed/contributing/adding-components/) and
+[how to document it](https://albakore.github.io/pyzed/contributing/documenting-components/).
 
 The docs are bilingual: English pages live at the root of `docs/src/content/docs/` and
 the Spanish translation under `docs/src/content/docs/es/`, with the same paths. Add or

@@ -112,7 +112,7 @@ ACTIONS: Tuple[Action, ...] = (
     Action("about", "About Pyzed Designer", "Help", lambda d: d.open_dialog_named("about"), "info"),
 )
 
-DOCS_URL = "https://albakore.github.io/pyzed/guides/designer/"
+DOCS_URL = "https://albakore.github.io/pyzed/editor/"
 ISSUES_URL = "https://github.com/albakore/pyzed/issues"
 
 #: Shortcuts that are not commands of their own, for the reference list.

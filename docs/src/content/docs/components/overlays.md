@@ -5,6 +5,11 @@ sidebar:
   order: 6
 ---
 
+:::tip[Component library]
+Every component now has its own page, with a live preview, examples and its full API, in the
+[component library](/pyzed/library/). This page is kept as a summary.
+:::
+
 ## Layers
 
 `ui.layer(base, overlay, on_dismiss=...)` draws `overlay` on top of the UI. Clicking outside

@@ -5,6 +5,11 @@ sidebar:
   order: 5
 ---
 
+:::tip[Biblioteca de componentes]
+Cada componente tiene ahora su propia página, con vista previa, ejemplos y su API completa, en la
+[biblioteca de componentes](/pyzed/es/library/). Esta página se mantiene como resumen.
+:::
+
 `ui.workspace` monta la estructura de una ventana de Zed: barra de título arriba, docks a la
 izquierda, derecha y abajo, el área central y la barra de estado.
 
