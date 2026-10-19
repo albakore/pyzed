@@ -714,6 +714,11 @@ class Browser:
         self.expanded: set = set()
         #: Bumped when the page changes, so the view can scroll back to the top.
         self.revision = 0
+        if start is not None:
+            try:
+                self.expanded.add(page(start, lang).entry.section)
+            except KeyError:
+                pass
 
     def open(self, id: str) -> bool:  # noqa: A002
         """Shows the page ``id`` (returns ``False`` when there is no such page)."""

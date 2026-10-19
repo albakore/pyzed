@@ -733,6 +733,12 @@
    "path": "docs/src/content/docs/library/radio-group.mdx"
   },
   {
+   "slug": "library/reference-browser",
+   "title": "Reference browser",
+   "description": "Built-in, searchable docs like Godot's: a class list next to the open page.",
+   "path": "docs/src/content/docs/library/reference-browser.mdx"
+  },
+  {
    "slug": "library/resizable",
    "title": "Resizable",
    "description": "A panel whose edge can be dragged to resize it.",
