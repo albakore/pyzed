@@ -109,6 +109,12 @@
    "path": "docs/src/content/docs/editor/ai-agents.md"
   },
   {
+   "slug": "editor/animations-and-effects",
+   "title": "Animations and effects",
+   "description": "Give controls glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.",
+   "path": "docs/src/content/docs/editor/animations-and-effects.md"
+  },
+  {
    "slug": "editor/code-editor",
    "title": "Code editor",
    "description": "The Python editor of Pyzed Design - completion, diagnostics, code lens, folding, the minimap, language servers, keys and settings.",
@@ -239,6 +245,12 @@
    "title": "AI agents in your app",
    "description": "pyzed.agents - talk to Claude, OpenAI, Gemini, OpenRouter, Ollama and OpenAI-compatible servers, give the model tools, stream its answer into your UI and keep keys in the system keychain.",
    "path": "docs/src/content/docs/guides/agents.md"
+  },
+  {
+   "slug": "guides/animation",
+   "title": "Animation and effects",
+   "description": "Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add glow, bloom, glass and opacity.",
+   "path": "docs/src/content/docs/guides/animation.md"
   },
   {
    "slug": "guides/architecture",
@@ -385,6 +397,12 @@
    "path": "docs/src/content/docs/library/alert.mdx"
   },
   {
+   "slug": "library/animation",
+   "title": "Animation",
+   "description": "Presets, keyframes and transitions for any widget.",
+   "path": "docs/src/content/docs/library/animation.mdx"
+  },
+  {
    "slug": "library/avatar",
    "title": "Avatar",
    "description": "A round avatar with initials in a collaborator color.",
@@ -527,6 +545,12 @@
    "title": "Editor",
    "description": "Zed's code editor: highlighting, folding, minimap, git markers.",
    "path": "docs/src/content/docs/library/editor.mdx"
+  },
+  {
+   "slug": "library/effects",
+   "title": "Effects",
+   "description": "Glow, bloom, glass and opacity as style properties.",
+   "path": "docs/src/content/docs/library/effects.mdx"
   },
   {
    "slug": "library/empty-state",
@@ -980,6 +1004,11 @@
   }
  ],
  "examples": [
+  {
+   "name": "animations",
+   "summary": "Animations and effects: presets, hover and press motion, transitions, presence and glass.",
+   "path": "examples/animations.py"
+  },
   {
    "name": "clock",
    "summary": "An analog clock drawn on a canvas, after Iced's ``clock`` demo.",
@@ -1642,7 +1671,7 @@
     }
    },
    "pyzed.Widget": {
-    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/)."
+    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
    },
    "pyzed.column": {
     "desc": "Stacks its children vertically.",
@@ -2053,7 +2082,7 @@
     "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).",
     "params": {
      "styles": "Styles, dicts or style names to start from.",
-     "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Colors may be theme tokens."
+     "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."
     },
     "example": "\n            card = pz.Style(background=\"panel\", border=(1, \"border\"), radius=8, padding=12)\n            pz.column([...]).style(card | pz.Style(shadow=(\"#0006\", (0, 4), 12)))\n        "
    },
@@ -2102,6 +2131,34 @@
    "pyzed.style.themed": {},
    "pyzed.style.to_hex": {},
    "pyzed.style.paint_from_dict": {},
+   "pyzed.Animation": {},
+   "pyzed.define_animation": {},
+   "pyzed.presence": {},
+   "pyzed.stagger": {},
+   "pyzed.set_reduced_motion": {},
+   "pyzed.animation.reduced_motion": {},
+   "pyzed.animation.animation": {},
+   "pyzed.animation.presets": {},
+   "pyzed.animation.ease": {},
+   "pyzed.animation.window_animations": {},
+   "pyzed.animation.PRESETS": {
+    "desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets)."
+   },
+   "pyzed.animation.CATEGORIES": {
+    "desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`."
+   },
+   "pyzed.animation.EASINGS": {
+    "desc": "Easing names (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` also takes `(x1, y1, x2, y2)` cubic Béziers and `\"steps(n)\"`."
+   },
+   "pyzed.animation.TRIGGERS": {
+    "desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click` and `active`."
+   },
+   "pyzed.animation.PROPERTIES": {
+    "desc": "The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`."
+   },
+   "pyzed.animation.WINDOW_TRANSITIONS": {
+    "desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets."
+   },
    "pyzed.ui.label": {
     "desc": "Text with a theme color.",
     "params": {

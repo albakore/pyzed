@@ -38,6 +38,8 @@ pub struct Caches {
     canvases: FrozenMap<String, Box<CanvasCache>>,
     markdown: FrozenMap<u64, Vec<markdown::Item>>,
     qr: FrozenMap<u64, Box<qr_code::Data>>,
+    /// `presence(...)` nodes: the key shown and the content leaving.
+    presence: RefCell<HashMap<String, crate::animation::PresenceEntry>>,
 }
 
 impl Caches {
@@ -279,12 +281,9 @@ fn build_box<'a>(
             if let Some(a) = over.and_then(|o| o.align_y).or(*align_y) {
                 c = c.align_y(a);
             }
-            let style = crate::styled::boxed(style, over);
-            if !style.is_empty() {
-                let style = style.container();
-                c = c.style(move |_| style);
-            }
-            c.into()
+            let style = crate::styled::boxed(style, over).container();
+            c.style(move |theme| crate::animation::container_style(style, theme))
+                .into()
         }
         Kind::Button {
             child,
@@ -310,55 +309,138 @@ fn build_box<'a>(
                 (s, Some(o)) => Some(crate::styled::button(s.unwrap_or_default(), o)),
                 (s, None) => s,
             };
-            if let Some(s) = style {
-                b = b.style(move |theme: &Theme, status| {
-                    let text_color = s
-                        .base
-                        .text_color
-                        .unwrap_or(theme.extended_palette().background.base.text);
-                    let mut out = button::Style {
-                        background: s
+            match style {
+                None => {
+                    b = b.style(|theme: &Theme, status| {
+                        crate::animation::button_style(button::primary(theme, status), theme)
+                    });
+                }
+                Some(s) => {
+                    b = b.style(move |theme: &Theme, status| {
+                        let text_color = s
                             .base
-                            .gradient
-                            .map(Background::Gradient)
-                            .or(s.base.background.map(Background::Color)),
-                        text_color,
-                        border: s.base.border(),
-                        shadow: s.base.shadow.unwrap_or_default(),
-                        snap: true,
-                    };
-                    match status {
-                        button::Status::Active => {}
-                        button::Status::Hovered | button::Status::Pressed => {
-                            let pressed = matches!(status, button::Status::Pressed);
-                            let bg = if pressed {
-                                s.pressed_background.or(s.hover_background)
-                            } else {
-                                s.hover_background
-                            };
-                            if let Some(bg) = bg {
-                                out.background = Some(Background::Color(bg));
+                            .text_color
+                            .unwrap_or(theme.extended_palette().background.base.text);
+                        let mut out = button::Style {
+                            background: s
+                                .base
+                                .gradient
+                                .map(Background::Gradient)
+                                .or(s.base.background.map(Background::Color)),
+                            text_color,
+                            border: s.base.border(),
+                            shadow: s.base.shadow.unwrap_or_default(),
+                            snap: true,
+                        };
+                        match status {
+                            button::Status::Active => {}
+                            button::Status::Hovered | button::Status::Pressed => {
+                                let pressed = matches!(status, button::Status::Pressed);
+                                let bg = if pressed {
+                                    s.pressed_background.or(s.hover_background)
+                                } else {
+                                    s.hover_background
+                                };
+                                if let Some(bg) = bg {
+                                    out.background = Some(Background::Color(bg));
+                                }
+                                if let Some(c) = s.hover_text_color {
+                                    out.text_color = c;
+                                }
+                                if let Some(c) = s.hover_border_color {
+                                    out.border.color = c;
+                                }
                             }
-                            if let Some(c) = s.hover_text_color {
-                                out.text_color = c;
-                            }
-                            if let Some(c) = s.hover_border_color {
-                                out.border.color = c;
+                            button::Status::Disabled => {
+                                out.text_color =
+                                    s.disabled_text_color.unwrap_or(with_alpha(text_color, 0.5));
+                                out.background = out.background.map(|bg| bg.scale_alpha(0.5));
                             }
                         }
-                        button::Status::Disabled => {
-                            out.text_color =
-                                s.disabled_text_color.unwrap_or(with_alpha(text_color, 0.5));
-                            out.background = out.background.map(|bg| bg.scale_alpha(0.5));
-                        }
-                    }
-                    out
-                });
+                        crate::animation::button_style(out, theme)
+                    })
+                }
             }
             b.into()
         }
         _ => build(py, node_ref, ctx),
     }
+}
+
+/// Whether the widget's first drawn style is its own box (container or button), which
+/// takes the box paints of an `Animated` around it.
+fn draws_box(py: Python<'_>, node: &Py<Widget>) -> bool {
+    match &node.bind(py).get().kind {
+        Kind::Container { .. } | Kind::Button { .. } | Kind::Styled(_) => true,
+        Kind::Events { child, .. } | Kind::Animated { child, .. } => draws_box(py, child),
+        _ => false,
+    }
+}
+
+fn build_presence<'a>(
+    py: Python<'_>,
+    props: &crate::animation::PresenceProps,
+    ctx: Ctx<'a>,
+) -> Element<'a, Message> {
+    use crate::animation::{Animated, Presence, PresenceEntry, Spec};
+    let salted = |spec: &Spec, salt: &str| {
+        Arc::new(Spec {
+            anims: spec.anims.iter().cloned().map(|a| a.salted(salt)).collect(),
+            ..spec.clone()
+        })
+    };
+    let now = std::time::Instant::now();
+    // Take what we need, then release the map: the children may hold presences too.
+    let leaving = {
+        let mut map = ctx.caches.presence.borrow_mut();
+        if map.len() > 256 {
+            map.clear();
+        }
+        let entry = map
+            .entry(props.id.clone())
+            .or_insert_with(|| PresenceEntry {
+                key: props.key.clone(),
+                current: props.child.clone_ref(py),
+                exit: props.exit.clone(),
+                leaving: None,
+            });
+        if entry.key != props.key {
+            let old_key = std::mem::replace(&mut entry.key, props.key.clone());
+            let old = std::mem::replace(&mut entry.current, props.child.clone_ref(py));
+            entry.leaving = Some((old, old_key, entry.exit.clone(), now));
+        } else {
+            entry.current = props.child.clone_ref(py);
+        }
+        entry.exit = props.exit.clone();
+        let over = |spec: &Spec, start: std::time::Instant| {
+            crate::animation::reduced_motion()
+                || now.saturating_duration_since(start).as_secs_f32() > spec.longest() + 0.05
+        };
+        if entry
+            .leaving
+            .as_ref()
+            .is_some_and(|(_, _, spec, start)| over(spec, *start))
+        {
+            entry.leaving = None;
+        }
+        entry
+            .leaving
+            .as_ref()
+            .map(|(w, key, spec, _)| (w.clone_ref(py), key.clone(), spec.clone()))
+    };
+    let leaving: Element<'a, Message> = match leaving {
+        Some((widget, key, spec)) => Animated::new(
+            build(py, &widget, ctx),
+            salted(&spec, &format!("exit:{key}")),
+        )
+        .into(),
+        None => Space::new().into(),
+    };
+    let current = Animated::new(
+        build(py, &props.child, ctx),
+        salted(&props.enter, &format!("enter:{}", props.key)),
+    );
+    Presence::new(leaving, current).into()
 }
 
 pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a, Message> {
@@ -372,7 +454,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 w = w.size(size);
             }
             if let Some(color) = ctx.text.color.or(t.color).or(ctx.text_defaults.color) {
-                w = w.color(color);
+                w = w.style(move |_| text::Style {
+                    color: Some(crate::animation::fade(color)),
+                });
             }
             if let Some(font) = font {
                 w = w.font(font);
@@ -546,7 +630,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 if let Some(c) = s.icon_color {
                     out.icon = c;
                 }
-                out
+                crate::animation::fade_text_input(out)
             });
             t.into()
         }
@@ -619,7 +703,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     rail.border = Border::default();
                     rail.scroller.border.radius = (st.scroller_width / 2.0).into();
                 }
-                out
+                crate::animation::fade_scrollable(out)
             });
             s.into()
         }
@@ -630,11 +714,13 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             color,
         } => {
             let color = *color;
-            let style = move |theme: &Theme| rule::Style {
-                color: color.unwrap_or(theme.extended_palette().background.strong.color),
-                radius: 0.0.into(),
-                fill_mode: rule::FillMode::Full,
-                snap: true,
+            let style = move |theme: &Theme| {
+                crate::animation::fade_rule(rule::Style {
+                    color: color.unwrap_or(theme.extended_palette().background.strong.color),
+                    radius: 0.0.into(),
+                    fill_mode: rule::FillMode::Full,
+                    snap: true,
+                })
             };
             if *horizontal {
                 rule::horizontal(*thickness).style(style).into()
@@ -740,13 +826,26 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 }
                 _ => crate::styled::wrap(build(py, &props.child, inner), props),
             };
-            crate::styled::margin(element, props)
+            crate::styled::effects_of(crate::styled::margin(element, props), props)
         }
         Kind::Events {
             child,
             handlers,
             cursor,
         } => crate::events::EventArea::new(build(py, child, ctx), handlers.clone(), *cursor).into(),
+        Kind::Animated { child, spec } => {
+            let mut element = build(py, child, ctx);
+            if spec.has_paint() && !draws_box(py, child) {
+                // Box paints need a box: give the element one.
+                element = container(element)
+                    .style(|theme| {
+                        crate::animation::container_style(container::Style::default(), theme)
+                    })
+                    .into();
+            }
+            crate::animation::Animated::new(element, spec.clone()).into()
+        }
+        Kind::Presence(props) => build_presence(py, props, ctx),
         Kind::Hover { base, top } => widget::hover(build(py, base, ctx), build(py, top, ctx)),
         Kind::Tooltip {
             child,
@@ -765,7 +864,8 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             let style = style.container();
             tooltip(
                 build(py, child, ctx),
-                container(build(py, tip, ctx)).style(move |_| style),
+                container(build(py, tip, ctx))
+                    .style(move |theme| crate::animation::container_style(style, theme)),
                 position,
             )
             .gap(*gap)
@@ -819,7 +919,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 if st.text_color.is_some() {
                     out.text_color = st.text_color;
                 }
-                out
+                crate::animation::fade_checkbox(out)
             })
             .into()
         }
@@ -869,7 +969,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 if st.text_color.is_some() {
                     out.text_color = st.text_color;
                 }
-                out
+                crate::animation::fade_toggler(out)
             })
             .into()
         }
@@ -907,7 +1007,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     out.handle.border_color = b;
                     out.handle.border_width = 1.0;
                 }
-                out
+                crate::animation::fade_slider(out)
             };
             if *vertical {
                 let mut s = vertical_slider(*min..=*max, *value, on_change)
@@ -967,7 +1067,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                     radius: radius.into(),
                     ..Border::default()
                 };
-                out
+                crate::animation::fade_progress(out)
             })
             .into()
         }
@@ -994,7 +1094,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 s = s.content_fit(*f);
             }
             if let Some(c) = *color {
-                s = s.style(move |_, _| svg::Style { color: Some(c) });
+                s = s.style(move |_, _| svg::Style {
+                    color: Some(crate::animation::fade(c)),
+                });
             }
             s.into()
         }

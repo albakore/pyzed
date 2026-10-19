@@ -78,6 +78,10 @@ radio de esquina, sombra, relleno, margen, tamaño máximo, alineación del cont
 mantienen el aspecto propio del componente y **Restablecer el estilo** los borra todos. Ver
 [Estilos y temas](/pyzed/es/editor/styles-and-themes/).
 
+Debajo, **Efectos** (opacidad, resplandor, bloom, cristal) y **Animación** (lo que se reproduce cuando el control
+aparece, con el ratón encima, al pulsarlo, con el foco o al hacer clic) se explican en
+[Animaciones y efectos](/pyzed/es/editor/animations-and-effects/).
+
 ### Posición
 
 Para un control colocado libremente (en el formulario, o en un panel, un group box o una tarjeta):

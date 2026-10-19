@@ -273,7 +273,7 @@ Devuelve una copia profunda del formulario y sus controles.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={})
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[])
 ```
 
 Un componente colocado en un formulario.
@@ -662,6 +662,14 @@ Document.set_style(name, key, value)
 ```
 
 Fija una propiedad de estilo de un control, o del estilo global del formulario si `name` es `None`; `None` la quita.
+
+#### `Document.set_animations`
+
+```python
+Document.set_animations(name, animations, *, group=None)
+```
+
+Fija la lista de animaciones del control `name` (dicts con `preset` y, opcionalmente, `on`, `duration`, `delay`, `easing` y `repeat`); las ediciones con el mismo `group` se unen en un paso de deshacer.
 
 #### `Document.clear_style`
 

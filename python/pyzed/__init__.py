@@ -73,10 +73,11 @@ from .layout import flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
 from .style import Gradient, Mask, Paint, Style, define_style, set_style
+from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
+from . import animation, component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -108,6 +109,7 @@ def vertical_slider(min, max, value, **kwargs):  # noqa: A002 - mirrors slider()
 
 
 __all__ = [
+    "Animation",
     "App",
     "Color",
     "Gradient",
@@ -128,6 +130,7 @@ __all__ = [
     "Theme",
     "Widget",
     "Window",
+    "animation",
     "asyncio_loop",
     "button",
     "canvas",
@@ -137,6 +140,7 @@ __all__ = [
     "code_editor",
     "column",
     "container",
+    "define_animation",
     "define_style",
     "designer",
     "reference",
@@ -166,6 +170,7 @@ __all__ = [
     "pick_list",
     "pin",
     "post",
+    "presence",
     "progress_bar",
     "qr_code",
     "radio",
@@ -181,9 +186,11 @@ __all__ = [
     "space",
     "span",
     "spawn",
+    "set_reduced_motion",
     "set_style",
     "split",
     "stack",
+    "stagger",
     "style",
     "state",
     "svg",

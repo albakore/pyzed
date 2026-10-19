@@ -74,6 +74,9 @@ background (color, gradient or mask), text color, font, weight, italic, font siz
 radius, shadow, padding, margin, maximum size, content alignment and clipping. Empty fields keep the component's
 own look and **Reset style** clears them all. See [Styles and themes](/pyzed/editor/styles-and-themes/).
 
+Below it, **Effects** (opacity, glow, bloom, glass) and **Animation** (what plays when the control appears, on
+hover, press, focus or click) are covered in [Animations and effects](/pyzed/editor/animations-and-effects/).
+
 ### Position
 
 For a control placed freely (on the form, or in a panel, group box or card):

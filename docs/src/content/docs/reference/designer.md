@@ -272,7 +272,7 @@ Returns a deep copy of the form and its controls.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={})
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[])
 ```
 
 One component placed on a form.
@@ -284,6 +284,7 @@ properties (`text`, `checked`...) and `events` maps event names (`"click"`) to
 handler function names. `layout` holds options read by the parent's layout, such as
 `grow` in a flex row or `span` in a grid. `style` holds CSS-like style properties
 (`pz.Style.to_dict()`: background, border, radius, font...) drawn on top of the props.
+`animations` lists the control's animations (see `designer.motion`).
 
 **Methods and properties**
 
@@ -661,6 +662,14 @@ Document.set_style(name, key, value)
 ```
 
 Sets one style property of a control, or of the form's global style when `name` is `None`; `None` removes it.
+
+#### `Document.set_animations`
+
+```python
+Document.set_animations(name, animations, *, group=None)
+```
+
+Replaces the animations of control `name` (see `designer.motion`). Edits with the same `group` in a row undo together (typing a duration).
 
 #### `Document.clear_style`
 

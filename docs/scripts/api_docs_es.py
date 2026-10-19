@@ -253,7 +253,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).",
+                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -1591,7 +1591,7 @@ _section("widgets", "Estilos", {
     "pyzed.Style": {
         "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/guides/styles/).",
         "params": {"styles": "Estilos, dicts o nombres de estilo de partida.",
-                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Los colores pueden ser tokens del tema."},
+                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Los colores pueden ser tokens del tema."},
         "example": """
             tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(tarjeta | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1953,6 +1953,70 @@ PAGES.append({
 
 # -- Métodos y propiedades ------------------------------------------------------
 # El texto de cada miembro de clase en "Métodos y propiedades" (en inglés sale del docstring).
+_section("widgets", "Animación", {
+    "pyzed.Animation": _d("""
+        Una animación por keyframes, como una regla CSS `@keyframes` con su timing.
+
+        `keyframes` es una lista de frames `{propiedad: valor}` (repartidos por igual; un frame puede
+        fijar `offset` y `easing`) o un dict de offsets (`0` a `1`, `"50%"`, `"from"`, `"to"`) a
+        frames. Una propiedad que falte al principio o al final sale del valor propio del widget o
+        vuelve a él, y `None` nombra ese valor explícitamente:
+
+        ```python
+        pz.Animation([{"opacity": 0, "y": 12}, {"opacity": 1, "y": 0}], duration=250)
+        pz.Animation({0: {"scale": 1}, "50%": {"scale": 1.1}, 1: {"scale": 1}}, repeat="infinite")
+        ```
+
+        Los demás campos son los valores por defecto que sobrescriben las opciones de `animate()`.
+        `category` y `description` dicen a los editores dónde y cómo mostrar un preset.
+    """),
+    "pyzed.define_animation": _d("""
+        Da nombre a una animación para que `animate(nombre)` la reproduzca; la devuelve.
+
+        `define_animation("wiggle", [{"x": 0}, {"x": -4}, {"x": 4}, {"x": 0}], duration=300)`
+    """),
+    "pyzed.presence": _d("""
+        Muestra `content` y, cuando cambia `key`, anima la salida del contenido anterior (`exit`)
+        mientras entra el nuevo (`enter`), como transiciones entre páginas:
+
+        ```python
+        pz.presence(self.vista_pagina(), key=self.pagina, enter="slide_in_right", exit="fade_out")
+        ```
+
+        `id` distingue unas presences de otras (por defecto es el lugar desde donde se llama, así que
+        da uno cuando la misma línea crea varias). `duration` y `easing` sobrescriben los de ambas animaciones.
+    """),
+    "pyzed.stagger": _d("""
+        `items` con la misma animación, cada uno empezando `step` milisegundos después del anterior
+        (una lista que entra en cascada):
+
+        ```python
+        pz.column(pz.stagger([fila(i) for i in items], "fade_in_up", step=30))
+        ```
+    """),
+    "pyzed.set_reduced_motion": _d("""
+        Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
+
+        Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
+        de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+    """),
+    "pyzed.animation.reduced_motion": _d("Si el movimiento reducido está encendido."),
+    "pyzed.animation.animation": _d("La animación llamada `name` (un preset o una definida con `define_animation`)."),
+    "pyzed.animation.presets": _d("Las animaciones con nombre (todas, o una `category`: entrance, exit, attention, interaction, loop)."),
+    "pyzed.animation.ease": _d("""
+        `easing` en `t` (0 a 1), la curva que usan las animaciones: `ease("ease_out", 0.5)`.
+
+        Útil para animar tus propios dibujos (`pz.canvas`) con las mismas curvas.
+    """),
+    "pyzed.animation.window_animations": _d("La animación que reproduce una ventana al abrirse (o cerrarse), según su `transition` y `exit_transition` (una lista vacía si no tiene)."),
+    "pyzed.animation.PRESETS": {"desc": "Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/guides/animation/#presets).", "no_signature": True},
+    "pyzed.animation.CATEGORIES": {"desc": "Categorías de presets: `entrance` (entrada), `exit` (salida), `attention` (atención), `interaction` (interacción) y `loop` (bucle).", "no_signature": True},
+    "pyzed.animation.EASINGS": {"desc": "Nombres de easing (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` también acepta Béziers cúbicas `(x1, y1, x2, y2)` y `\"steps(n)\"`.", "no_signature": True},
+    "pyzed.animation.TRIGGERS": {"desc": "Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click` y `active`.", "no_signature": True},
+    "pyzed.animation.PROPERTIES": {"desc": "Las propiedades que cambian las animaciones y transiciones: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` y `glow_color`.", "no_signature": True},
+    "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Nombres para `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) asociados a sus presets `(apertura, cierre)`.", "no_signature": True},
+})
+
 MEMBERS = {
     # Referencia integrada
     "pyzed.reference.Browser.open": "Muestra la página `id` (devuelve `False` si no existe).",
@@ -2134,6 +2198,13 @@ MEMBERS = {
     "pyzed.designer.Document.reorder": "Mueve los controles seleccionados en el orden z (`where`: ver `Form.reorder`).",
     "pyzed.designer.Document.set_rect": "Fija la posición y el tamaño del control `name` a partir de `rect` `(x, y, width, height)`, redondeados a píxeles enteros; las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_prop": "Fija la propiedad `key` del control `name` a `value` (las ediciones repetidas se unen en un paso de deshacer).",
+    "pyzed.Animation.properties": "Las propiedades que cambian los keyframes, en orden de aparición.",
+    "pyzed.Animation.total": "Milisegundos del principio al final (`inf` si se repite para siempre).",
+    "pyzed.Animation.with_options": "Una copia con otro timing o disparador (`duration`, `easing`, `on`...).",
+    "pyzed.Animation.compile": "Los datos simples que reproduce la parte nativa (los usa `animate()`).",
+    "pyzed.Animation.to_dict": "Datos listos para JSON (`Animation.from_dict` los vuelve a leer).",
+    "pyzed.Animation.from_dict": "Reconstruye una animación guardada con `to_dict`.",
+    "pyzed.designer.Document.set_animations": "Fija la lista de animaciones del control `name` (dicts con `preset` y, opcionalmente, `on`, `duration`, `delay`, `easing` y `repeat`); las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_style": "Fija una propiedad de estilo de un control, o del estilo global del formulario si `name` es `None`; `None` la quita.",
     "pyzed.designer.Document.clear_style": "Quita todas las propiedades de estilo de un control (o del estilo global del formulario).",
     "pyzed.designer.Document.set_field": "Fija un atributo de `Control` (x, y, width, height, visible, enabled, locked, anchor).",

@@ -559,7 +559,7 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
         }
         CommandKind::OpenWindow(obj) => open_window(py, state, obj.0.bind(py)),
         CommandKind::CloseWindow(obj) => match resolve_window(py, state, obj) {
-            Some(id) => window::close(id),
+            Some(id) => close_animated(py, state, id),
             None => Task::none(),
         },
         CommandKind::Window(op, obj) => {
@@ -623,6 +623,32 @@ fn open_window(py: Python<'_>, state: &mut State, obj: &Bound<'_, PyAny>) -> Tas
     let (id, task) = window::open(settings);
     state.windows.insert(id, obj.clone().unbind());
     task.map(Message::WindowOpened)
+}
+
+/// Closes window `id` once its exit transition (``Window.exit_transition``) has played.
+fn close_animated(py: Python<'_>, state: &State, id: window::Id) -> Task<Message> {
+    let obj = state.window(id).bind(py);
+    let seconds = match obj.call_method0("__pyzed_exit__") {
+        Ok(value) => value.extract::<f64>().unwrap_or(0.0),
+        Err(err) => {
+            if !err.is_instance_of::<pyo3::exceptions::PyAttributeError>(py) {
+                err.print(py);
+            }
+            0.0
+        }
+    };
+    if seconds <= 0.0 || crate::animation::reduced_motion() {
+        return window::close(id);
+    }
+    let (sender, receiver) = iced::futures::channel::oneshot::channel::<()>();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs_f64(seconds));
+        let _ = sender.send(());
+    });
+    Task::future(async move {
+        let _ = receiver.await;
+    })
+    .then(move |_| window::close(id))
 }
 
 fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
@@ -996,7 +1022,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     }
                 };
                 return if allowed {
-                    window::close(id)
+                    close_animated(py, state, id)
                 } else {
                     Task::none()
                 };
@@ -1588,6 +1614,8 @@ pub fn screenshot(
         .and_then(|k| build_theme(&k))
         .unwrap_or(Theme::Dark);
     open_post_channel();
+    // Animations show their resting state, so a screenshot doesn't depend on timing.
+    crate::animation::set_screenshot(true);
     let shot = py.detach(move || {
         let program = daemon(app, font_size, true);
         iced_test::screenshot(
@@ -1599,6 +1627,7 @@ pub fn screenshot(
         )
     });
     *POST.lock().unwrap() = None;
+    crate::animation::set_screenshot(false);
 
     let file = std::fs::File::create(&path)?;
     let mut encoder = png::Encoder::new(

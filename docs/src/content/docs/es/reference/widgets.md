@@ -19,6 +19,8 @@ Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven 
 
 Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).
 
+`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).
+
 ## Layout
 
 ### `column`
@@ -1362,7 +1364,7 @@ Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `
 | Parámetro | Descripción |
 | --- | --- |
 | `styles` | Estilos, dicts o nombres de estilo de partida. |
-| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Los colores pueden ser tokens del tema. |
+| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Los colores pueden ser tokens del tema. |
 
 ```python
 tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
@@ -1596,3 +1598,203 @@ paint_from_dict(data)
 ```
 
 Reconstruye un `Gradient` o un `Paint` guardado con `to_dict()`.
+
+## Animación
+
+### `Animation`
+
+```python
+@dataclass
+class Animation(keyframes=(), duration=300, delay=0, easing='ease', repeat=1, direction='normal', fill='both', on='mount', category='custom', description='', _frames=())
+```
+
+Una animación por keyframes, como una regla CSS `@keyframes` con su timing.
+
+`keyframes` es una lista de frames `{propiedad: valor}` (repartidos por igual; un frame puede
+fijar `offset` y `easing`) o un dict de offsets (`0` a `1`, `"50%"`, `"from"`, `"to"`) a
+frames. Una propiedad que falte al principio o al final sale del valor propio del widget o
+vuelve a él, y `None` nombra ese valor explícitamente:
+
+```python
+pz.Animation([{"opacity": 0, "y": 12}, {"opacity": 1, "y": 0}], duration=250)
+pz.Animation({0: {"scale": 1}, "50%": {"scale": 1.1}, 1: {"scale": 1}}, repeat="infinite")
+```
+
+Los demás campos son los valores por defecto que sobrescriben las opciones de `animate()`.
+`category` y `description` dicen a los editores dónde y cómo mostrar un preset.
+
+**Métodos y propiedades**
+
+#### `Animation.properties`
+
+```python
+Animation.properties  # property
+```
+
+Las propiedades que cambian los keyframes, en orden de aparición.
+
+#### `Animation.total`
+
+```python
+Animation.total  # property
+```
+
+Milisegundos del principio al final (`inf` si se repite para siempre).
+
+#### `Animation.with_options`
+
+```python
+Animation.with_options(**options)
+```
+
+Una copia con otro timing o disparador (`duration`, `easing`, `on`...).
+
+#### `Animation.compile`
+
+```python
+Animation.compile(**options)
+```
+
+Los datos simples que reproduce la parte nativa (los usa `animate()`).
+
+#### `Animation.to_dict`
+
+```python
+Animation.to_dict()
+```
+
+Datos listos para JSON (`Animation.from_dict` los vuelve a leer).
+
+#### `Animation.from_dict`
+
+```python
+@classmethod
+Animation.from_dict(data)
+```
+
+Reconstruye una animación guardada con `to_dict`.
+
+### `define_animation`
+
+```python
+define_animation(name, animation=None, **options)
+```
+
+Da nombre a una animación para que `animate(nombre)` la reproduzca; la devuelve.
+
+`define_animation("wiggle", [{"x": 0}, {"x": -4}, {"x": 4}, {"x": 0}], duration=300)`
+
+### `presence`
+
+```python
+presence(
+    content,
+    key,
+    *,
+    enter='fade_in',
+    exit='fade_out',
+    id=None,
+    duration=None,
+    easing=None,
+)
+```
+
+Muestra `content` y, cuando cambia `key`, anima la salida del contenido anterior (`exit`)
+mientras entra el nuevo (`enter`), como transiciones entre páginas:
+
+```python
+pz.presence(self.vista_pagina(), key=self.pagina, enter="slide_in_right", exit="fade_out")
+```
+
+`id` distingue unas presences de otras (por defecto es el lugar desde donde se llama, así que
+da uno cuando la misma línea crea varias). `duration` y `easing` sobrescriben los de ambas animaciones.
+
+### `stagger`
+
+```python
+stagger(items, animation='fade_in_up', *, step=40, delay=0, **options)
+```
+
+`items` con la misma animación, cada uno empezando `step` milisegundos después del anterior
+(una lista que entra en cascada):
+
+```python
+pz.column(pz.stagger([fila(i) for i in items], "fade_in_up", step=30))
+```
+
+### `set_reduced_motion`
+
+```python
+set_reduced_motion(on=True)
+```
+
+Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
+
+Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
+de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+
+### `reduced_motion`
+
+```python
+reduced_motion()
+```
+
+Si el movimiento reducido está encendido.
+
+### `animation`
+
+```python
+animation(name)
+```
+
+La animación llamada `name` (un preset o una definida con `define_animation`).
+
+### `presets`
+
+```python
+presets(category=None)
+```
+
+Las animaciones con nombre (todas, o una `category`: entrance, exit, attention, interaction, loop).
+
+### `ease`
+
+```python
+ease(easing, t)
+```
+
+`easing` en `t` (0 a 1), la curva que usan las animaciones: `ease("ease_out", 0.5)`.
+
+Útil para animar tus propios dibujos (`pz.canvas`) con las mismas curvas.
+
+### `window_animations`
+
+```python
+window_animations(window, closing=False)
+```
+
+La animación que reproduce una ventana al abrirse (o cerrarse), según su `transition` y `exit_transition` (una lista vacía si no tiene).
+
+### `PRESETS`
+
+Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/guides/animation/#presets).
+
+### `CATEGORIES`
+
+Categorías de presets: `entrance` (entrada), `exit` (salida), `attention` (atención), `interaction` (interacción) y `loop` (bucle).
+
+### `EASINGS`
+
+Nombres de easing (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` también acepta Béziers cúbicas `(x1, y1, x2, y2)` y `"steps(n)"`.
+
+### `TRIGGERS`
+
+Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click` y `active`.
+
+### `PROPERTIES`
+
+Las propiedades que cambian las animaciones y transiciones: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` y `glow_color`.
+
+### `WINDOW_TRANSITIONS`
+
+Nombres para `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) asociados a sus presets `(apertura, cierre)`.
