@@ -355,6 +355,12 @@ class Project:
         """The ``.pzform`` files of the UI folder, sorted."""
         return sorted(self.ui_dir.rglob("*.pzform")) if self.ui_dir.is_dir() else []
 
+    def new_form(self, name: str, *, title: Optional[str] = None, width: float = 480, height: float = 320) -> Path:
+        """Creates ``ui/<name>.pzform`` and its handlers module; returns the form path."""
+        from .designer import new_form
+
+        return new_form(self.ui_dir / name, title=title, width=width, height=height)
+
     # -- environment -----------------------------------------------------------------------
     @property
     def venv(self) -> Path:

@@ -320,3 +320,128 @@ class Rating(pz.Component):
 
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
+
+## Languages
+
+### `t`
+
+```python
+t(key, *, language=None, default=None, **values)
+```
+
+The text for `key` in the current language, formatted with `values`. Falls back from `"es_AR"` to `"es"`, then to the fallback language, then to the key. See [Languages](/pyzed/guides/i18n/).
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Dotted key, like `"menu.open"`. |
+| `language` | Look it up in another language. |
+| `default` | Returned when the key is missing (default: the key). |
+| `values` | Values for `{name}` placeholders; `count=` also picks the plural form. |
+
+```python
+i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+i18n.set_language("es")
+pz.t("greeting", name="Kev"), pz.t("files", count=3)
+```
+
+### `add`
+
+```python
+add(language, catalog)
+```
+
+Adds or overrides texts for a language. Nested tables become dotted keys; `{"one": ..., "other": ...}` tables are plural forms.
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code, like `"es"` or `"pt_BR"`. |
+| `catalog` | Dict of texts. |
+
+### `load`
+
+```python
+load(folder)
+```
+
+Loads every `<language>.json` and `<language>.toml` in `folder`; returns the languages found.
+
+| Parameter | Description |
+| --- | --- |
+| `folder` | Folder with the catalog files. |
+
+### `set_language`
+
+```python
+set_language(language)
+```
+
+Switches the language. The app shows it on its next render, so call it from a handler.
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code, like `"es"`. |
+
+### `language`
+
+```python
+language()
+```
+
+The current language, normalized (`"es_ar"`).
+
+### `languages`
+
+```python
+languages()
+```
+
+The languages with a catalog.
+
+### `set_fallback`
+
+```python
+set_fallback(language)
+```
+
+The language used when a text is missing (default `"en"`).
+
+| Parameter | Description |
+| --- | --- |
+| `language` | Language code. |
+
+### `on_change`
+
+```python
+on_change(listener)
+```
+
+Calls `listener(language)` after every switch; returns a function that removes it.
+
+| Parameter | Description |
+| --- | --- |
+| `listener` | Callable that receives the new language. |
+
+### `system_language`
+
+```python
+system_language(default='en')
+```
+
+The operating system's language (`LANG`, `LC_ALL` or the locale).
+
+| Parameter | Description |
+| --- | --- |
+| `default` | Returned when the system reports none. |
+
+### `has`
+
+```python
+has(key, *, language=None)
+```
+
+Whether `key` has a text in the language or its fallbacks.
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Dotted key. |
+| `language` | Language to check (default: the current one). |

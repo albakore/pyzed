@@ -415,6 +415,150 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `description` | Texto de ayuda. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
+## Diálogos
+
+### `dialog_layer`
+
+```python
+dialog_layer(base, dialog=None, *, on_dismiss=None, theme=None)
+```
+
+Muestra un diálogo centrado sobre `base` con un fondo oscurecido. Con `dialog=None` devuelve `base` sin cambios, así que puede envolver siempre la vista. Ver [Diálogos](/pyzed/es/guides/i18n/#diálogos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `base` | La interfaz de debajo. |
+| `dialog` | Un diálogo de las funciones de abajo, o `ui.modal`. |
+| `on_dismiss` | Se envía al hacer clic en el fondo. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+```python
+ui.dialog_layer(self.vista_principal(), ui.confirm("¿Eliminar 3 archivos?", self.eliminar, self.cancelar,
+                danger=True) if self.preguntando else None, on_dismiss=self.cancelar)
+```
+
+### `alert`
+
+```python
+alert(message, on_close, *, title=None, kind=None, ok_label=None, width=400, theme=None)
+```
+
+Un mensaje con un botón.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Texto o widget. |
+| `on_close` | El botón y el icono de cerrar. |
+| `title` | Título. |
+| `kind` | `"info"`, `"success"`, `"warning"` o `"error"` añade un icono. |
+| `ok_label` | Texto del botón (por defecto: Aceptar, traducido). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `confirm`
+
+```python
+confirm(
+    message,
+    on_confirm,
+    on_cancel,
+    *,
+    title=None,
+    confirm_label=None,
+    cancel_label=None,
+    danger=False,
+    kind=None,
+    width=420,
+    theme=None,
+)
+```
+
+Hace una pregunta de sí o no.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Texto o widget. |
+| `on_confirm` | El botón de confirmar. |
+| `on_cancel` | Cancelar, el icono de cerrar. |
+| `title` | Título. |
+| `confirm_label` | Texto del botón de confirmar. |
+| `cancel_label` | Texto del botón de cancelar. |
+| `danger` | Pinta el botón de rojo y lo llama Eliminar. |
+| `kind` | Añade un icono, como en `alert`. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `prompt`
+
+```python
+prompt(
+    title,
+    value,
+    on_input,
+    on_submit,
+    on_cancel,
+    *,
+    message=None,
+    placeholder='',
+    submit_label=None,
+    cancel_label=None,
+    id=None,
+    width=440,
+    theme=None,
+)
+```
+
+Pide una línea de texto.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | Título. |
+| `value` | Texto actual. |
+| `on_input` | Recibe cada edición. |
+| `on_submit` | Enter o el botón de aceptar. |
+| `on_cancel` | Cancelar, el icono de cerrar. |
+| `message` | Texto sobre el campo. |
+| `placeholder` | Texto de ayuda cuando está vacío. |
+| `submit_label` | Texto del botón de aceptar. |
+| `cancel_label` | Texto del botón de cancelar. |
+| `id` | Id del campo (para `Command.focus`). |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `choice`
+
+```python
+choice(message, options, on_cancel, *, title=None, width=440, theme=None)
+```
+
+Un mensaje con tus propios botones.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `message` | Cualquier valor de Python, o un callable. |
+| `options` | Pares `(texto, on_press)`; el último es el botón principal. |
+| `on_cancel` | El icono de cerrar. |
+| `title` | Título. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `unsaved_changes`
+
+```python
+unsaved_changes(name, on_save, on_discard, on_cancel, *, width=440, theme=None)
+```
+
+«¿Guardar los cambios de *nombre* antes de cerrar?» con No guardar, Cancelar y Guardar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre del archivo o documento. |
+| `on_save` | Guardar. |
+| `on_discard` | No guardar. |
+| `on_cancel` | Cancelar. |
+| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
 ## Controles
 
 ### `select`

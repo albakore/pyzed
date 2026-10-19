@@ -13,6 +13,9 @@ Everything is also scriptable::
     form["greet"].events["click"] = "greet_click"
     designer.save(form, "hello.pzform")
     designer.run("hello.pzform")
+
+Handlers open other forms in new windows with ``form.open("settings")``;
+``designer.new_form("ui/settings.pzform")`` creates an empty one.
 """
 
 from .components import (
@@ -31,7 +34,7 @@ from .document import Document
 from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
-from .runtime import Event, FormApp, FormWindow, open_form, run, theme_for
+from .runtime import Event, FormApp, FormWindow, form_window, new_form, open_form, open_window, run, theme_for
 from .settings import EditorSettings
 
 
@@ -73,7 +76,10 @@ __all__ = [
     "design",
     "distribute",
     "load",
+    "form_window",
+    "new_form",
     "open_form",
+    "open_window",
     "register",
     "render",
     "run",

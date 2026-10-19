@@ -1389,3 +1389,65 @@ _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, en el orden en que se declaran.",
     "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes) y `key=` para conservar el estado cuando los elementos se mueven.",
 }
+
+# -- Diálogos y traducciones --------------------------------------------------
+_section("ui", "Diálogos", {
+    "pyzed.ui.dialog_layer": {
+        "desc": "Muestra un diálogo centrado sobre `base` con un fondo oscurecido. Con `dialog=None` devuelve `base` sin cambios, así que puede envolver siempre la vista. Ver [Diálogos](/pyzed/es/guides/i18n/#diálogos).",
+        "params": {"base": "La interfaz de debajo.", "dialog": "Un diálogo de las funciones de abajo, o `ui.modal`.",
+                   "on_dismiss": "Se envía al hacer clic en el fondo."},
+        "example": """
+            ui.dialog_layer(self.vista_principal(), ui.confirm("¿Eliminar 3 archivos?", self.eliminar, self.cancelar,
+                            danger=True) if self.preguntando else None, on_dismiss=self.cancelar)
+        """,
+    },
+    "pyzed.ui.alert": {
+        "desc": "Un mensaje con un botón.",
+        "params": {"message": "Texto o widget.", "on_close": "El botón y el icono de cerrar.",
+                   "kind": '`"info"`, `"success"`, `"warning"` o `"error"` añade un icono.', "ok_label": "Texto del botón (por defecto: Aceptar, traducido)."},
+    },
+    "pyzed.ui.confirm": {
+        "desc": "Hace una pregunta de sí o no.",
+        "params": {"message": "Texto o widget.", "on_confirm": "El botón de confirmar.", "on_cancel": "Cancelar, el icono de cerrar.",
+                   "danger": "Pinta el botón de rojo y lo llama Eliminar.", "kind": "Añade un icono, como en `alert`.",
+                   "confirm_label": "Texto del botón de confirmar.", "cancel_label": "Texto del botón de cancelar."},
+    },
+    "pyzed.ui.prompt": {
+        "desc": "Pide una línea de texto.",
+        "params": {"value": "Texto actual.", "on_input": "Recibe cada edición.", "on_submit": "Enter o el botón de aceptar.",
+                   "on_cancel": "Cancelar, el icono de cerrar.", "message": "Texto sobre el campo.", "id": "Id del campo (para `Command.focus`).",
+                   "submit_label": "Texto del botón de aceptar.", "cancel_label": "Texto del botón de cancelar."},
+    },
+    "pyzed.ui.choice": {
+        "desc": "Un mensaje con tus propios botones.",
+        "params": {"options": "Pares `(texto, on_press)`; el último es el botón principal.", "on_cancel": "El icono de cerrar."},
+    },
+    "pyzed.ui.unsaved_changes": {
+        "desc": "«¿Guardar los cambios de *nombre* antes de cerrar?» con No guardar, Cancelar y Guardar.",
+        "params": {"name": "Nombre del archivo o documento.", "on_save": "Guardar.", "on_discard": "No guardar.", "on_cancel": "Cancelar."},
+    },
+}, before="Controles")
+
+_section("app", "Idiomas", {
+    "pyzed.t": {
+        "desc": "El texto de `key` en el idioma actual, formateado con `values`. Si falta, prueba de `\"es_AR\"` a `\"es\"`, luego el idioma de respaldo y por último devuelve la clave. Ver [Idiomas](/pyzed/es/guides/i18n/).",
+        "params": {"key": "Clave con puntos, como `\"menu.open\"`.", "language": "Busca en otro idioma.",
+                   "default": "Lo que devuelve si falta la clave (por defecto, la clave).",
+                   "values": "Valores para los `{nombre}`; `count=` además elige el plural."},
+        "example": """
+            i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+            i18n.set_language("es")
+            pz.t("greeting", name="Kev"), pz.t("files", count=3)
+        """,
+    },
+    "pyzed.i18n.add": {"desc": "Añade o reemplaza textos de un idioma. Las tablas anidadas se vuelven claves con puntos; las tablas `{\"one\": ..., \"other\": ...}` son plurales.",
+                       "params": {"language": "Código de idioma, como `\"es\"` o `\"pt_BR\"`.", "catalog": "Dict de textos."}},
+    "pyzed.i18n.load": {"desc": "Carga todos los `<idioma>.json` y `<idioma>.toml` de `folder`; devuelve los idiomas encontrados.", "params": {"folder": "Carpeta con los catálogos."}},
+    "pyzed.i18n.set_language": {"desc": "Cambia el idioma. La app lo muestra en el siguiente render, así que llámalo desde un handler.", "params": {"language": "Código de idioma, como `\"es\"`."}},
+    "pyzed.i18n.language": {"desc": "El idioma actual, normalizado (`\"es_ar\"`)."},
+    "pyzed.i18n.languages": {"desc": "Los idiomas con catálogo."},
+    "pyzed.i18n.set_fallback": {"desc": "El idioma que se usa cuando falta un texto (por defecto `\"en\"`).", "params": {"language": "Código de idioma."}},
+    "pyzed.i18n.on_change": {"desc": "Llama a `listener(idioma)` tras cada cambio; devuelve una función que lo quita.", "params": {"listener": "Función que recibe el nuevo idioma."}},
+    "pyzed.i18n.system_language": {"desc": "El idioma del sistema operativo (`LANG`, `LC_ALL` o el locale).", "params": {"default": "Lo que devuelve si el sistema no informa ninguno."}},
+    "pyzed.i18n.has": {"desc": "Si `key` tiene texto en el idioma o sus respaldos.", "params": {"key": "Clave con puntos.", "language": "Idioma a consultar (por defecto, el actual)."}},
+})
