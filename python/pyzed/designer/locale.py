@@ -95,6 +95,13 @@ _ES = {
     "Thin": "Fina", "Light": "Ligera", "Normal": "Normal", "Medium": "Media", "Semibold": "Seminegrita",
     "Bold": "Negrita", "Black": "Gruesa", "On": "Sí", "Off": "No", "Start": "Inicio", "Center": "Centro",
     "End": "Final",
+    # List and table editors
+    "Rows": "Filas", "Add item": "Añadir elemento", "Item": "Elemento", "Add row": "Añadir fila",
+    "Add column": "Añadir columna", "Column": "Columna", "Header": "Encabezado",
+    # Events dock
+    "Edit code": "Editar el código", "Create handler": "Crear el manejador", "Disconnect": "Desconectar",
+    "Double-click an event, or a control on the form, to write its code.":
+        "Doble clic en un evento, o en un control del formulario, para escribir su código.",
     # Settings dialog
     "Appearance": "Apariencia", "Theme": "Tema", "Language": "Idioma", "System default": "Idioma del sistema",
     "Language of the designer's menus and panels": "Idioma de los menús y paneles del diseñador",

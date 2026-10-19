@@ -73,7 +73,8 @@ def tab(
     return _core.row(
         [
             _core.column(
-                [body, None if active else _core.rule(thickness=1, color=t.border)],
+                # the active tab joins the content below; the same 1px line keeps both labels at one height
+                [body, _core.rule(thickness=1, color=t.tab_active if active else t.border)],
                 width="shrink",
                 height=height,
             ),

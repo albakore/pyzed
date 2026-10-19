@@ -24,7 +24,7 @@ pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el f
 | **Toolbox** (izquierda) | La biblioteca de componentes. Arrastra un componente al formulario, o dentro de un contenedor, para colocarlo ahí; o haz clic en uno y luego en el formulario para colocarlo con su tamaño por defecto, o arrastra un rectángulo para darle tamaño. La búsqueda filtra la lista. |
 | **Outline** (izquierda) | Todos los controles en árbol: los contenedores muestran sus hijos (se pliegan con la flecha). Clic para seleccionar; arrastra una fila para reordenarla, meterla en otro contenedor o soltarla en el formulario. El ojo y el candado ocultan o bloquean un control, **+** añade un control dentro de un contenedor y el clic derecho abre un menú. |
 | **Formulario** (centro) | La superficie de diseño con grilla de puntos. Arrastra para mover, usa las ocho asas para redimensionar y arrastra en un hueco para seleccionar con un rectángulo. El tirador de la esquina inferior derecha cambia el tamaño del formulario. |
-| **Properties** (derecha) | Nombre y luego las propiedades en secciones plegables: los grupos propios del componente, posición (X, Y, tamaño, anclajes, o crecer y columnas dentro de un flex o una grilla) y comportamiento (visible, habilitado, bloqueado). Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
+| **Properties** (derecha) | Nombre y luego las propiedades en secciones plegables: los grupos propios del componente, posición (X, Y, tamaño, anclajes, o crecer y columnas dentro de un flex o una grilla) y comportamiento (visible, habilitado, bloqueado). Las listas (los elementos de una lista, las pestañas, las opciones) tienen un campo por elemento con botones para reordenar, quitar y añadir; las filas de una tabla son una pequeña hoja de cálculo con botones para añadir y quitar filas y columnas. El icono de página junto a ellas cambia a texto plano. Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
 | **Events** (derecha) | Los eventos del control seleccionado (o del formulario). Doble clic en uno crea su handler y lo abre en el editor de código. |
 | **Código** (abajo) | El código de un handler, o del archivo entero (**F7**). **Apply** comprueba la sintaxis antes de tocar el archivo. |
 | **Consola** (abajo) | Lo que imprime el formulario en ejecución, los eventos que atiende y sus errores (ver [Consola de depuración](#consola-de-depuración)). |
@@ -148,7 +148,7 @@ fondo, color del texto, fuente, peso, cursiva, tamaño de letra, interlineado, c
 esquina, sombra, relleno, margen, ancho y alto máximos, alineación del contenido y recorte. Los campos vacíos dejan
 el aspecto propio del componente, y **Restablecer el estilo** los borra todos.
 
-Haz clic en la muestra de un color para abrir la paleta, con alfa. La paleta del fondo también crea degradados
+Haz clic en la muestra de un color para abrir la paleta, con alfa, flotando junto al panel (un clic fuera la cierra). La paleta del fondo también crea degradados
 lineales (arrastra las paradas, ajusta el ángulo) y máscaras de opacidad. Los colores pueden ser tokens del tema
 (`accent`, `text_muted`...), así el estilo sigue al tema del formulario. El radio de esquina acepta un número o cuatro
 (arriba a la izquierda, arriba a la derecha, abajo a la derecha, abajo a la izquierda); el relleno y el margen, uno,
