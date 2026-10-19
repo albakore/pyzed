@@ -72,7 +72,7 @@ The toggles are remembered between sessions.
 | Keyboard shortcuts | <kbd>F1</kbd> | A searchable list of every shortcut. |
 | Documentation | | Opens this documentation in the browser. |
 | Report a problem | | Opens the issue tracker. |
-| About Pyzed Design | | The versions of Pyzed, Python and Iced, the platform, and links. |
+| About Pyzed Designer | | The versions of Pyzed, Python and Iced, the platform, and links. |
 
 ![The About dialog](../../../../screenshots/editor-about.png)
 

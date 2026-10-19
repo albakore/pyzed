@@ -73,7 +73,7 @@ Los interruptores se recuerdan entre sesiones.
 | Atajos de teclado | <kbd>F1</kbd> | Una lista con buscador de todos los atajos. |
 | Documentación | | Abre esta documentación en el navegador. |
 | Informar un problema | | Abre el gestor de incidencias. |
-| Acerca de Pyzed Design | | Las versiones de Pyzed, Python e Iced, la plataforma y enlaces. |
+| Acerca de Pyzed Designer | | Las versiones de Pyzed, Python e Iced, la plataforma y enlaces. |
 
 ![El diálogo Acerca de](../../../../../screenshots/editor-about.png)
 
