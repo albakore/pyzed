@@ -43,6 +43,7 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 | [Más controles](/pyzed/es/components/controls/) | `select`, `radio_group`, `number_field`, `split_button`, `toggle_group`, `chip`, `disclosure` |
 | [Datos y feedback](/pyzed/es/components/data/) | `table` + `Column`, `callout`, `empty_state`, `settings_group`, `stat`, `sparkline`, `bar_chart`, `donut`, `spinner`, `count_badge`, `facepile`, `diff_stat`, `keybinding_hint` |
 | [Contenido y paneles](/pyzed/es/components/content/) | `markdown`, `split`, `popover`; widgets base `pz.image`, `pz.image_viewer`, `pz.rich_text`, `pz.qr_code`, `pz.grid` |
+| [Diálogos y herramientas](/pyzed/es/components/dialogs/) | `dialog_layer`, `alert`, `confirm`, `prompt`, `choice`, `unsaved_changes`, `accordion`, `Log` + `console`, `shortcuts`, `about`, `ColorPicker`, `color_swatch` |
 
 Para ver todos funcionando, ejecuta la galería:
 

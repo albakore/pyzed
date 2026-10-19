@@ -22,6 +22,7 @@ def glyph(name: str) -> str:
 
 
 def names() -> List[str]:
+    """Returns every bundled Lucide icon name, sorted."""
     return sorted(CODEPOINTS)
 
 
@@ -92,5 +93,6 @@ LANGUAGES = {
 
 
 def language_for(name: str) -> str:
+    """Returns the language name for a file name from its extension (``"Plain Text"`` if unknown)."""
     ext = name.rsplit(".", 1)[-1].lower() if "." in name else "txt"
     return LANGUAGES.get(ext, "Plain Text")

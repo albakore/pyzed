@@ -38,6 +38,7 @@ EXPRESSION = "Expression…"
 
 
 def is_scene(d: "Designer") -> bool:
+    """Whether the designer is editing a component (rather than a form)."""
     return isinstance(d.doc, SceneDocument)
 
 
@@ -117,6 +118,8 @@ def properties(d: "Designer", t: Theme, rows: List[Any]) -> List[Any]:
 
 
 def component_rows(d: "Designer", t: Theme) -> List[Any]:
+    """Returns the property grid rows shown for the component itself (nothing selected): its class, toolbox
+    look, size, properties, events and base, with a warning while the class does not parse."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     scene = doc.scene
@@ -234,6 +237,8 @@ def _add_button(label: str, icon: str, action: Callable[[], Any], t: Theme) -> A
 
 
 def member_section(d: "Designer", t: Theme) -> Any:
+    """Builds the Properties section: a card per declared property or state, and buttons to add public or
+    private ones."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     rows: List[Any] = [_card_of_member(d, m, t) for m in doc.members]
@@ -379,6 +384,8 @@ def _literal_change(text: str, on_change: Callable[[Any], None]) -> None:
 
 
 def event_section(d: "Designer", t: Theme) -> Any:
+    """Builds the Events section: a card per declared custom event (name and description), and a button to add
+    one."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     events = doc.custom_events
@@ -481,6 +488,8 @@ def open_method(d: "Designer", name: str) -> None:
 
 
 def binding_section(d: "Designer", t: Theme) -> Any:
+    """Builds the Bindings section of the selected control: for each of its properties, the component property
+    or Python expression it follows. ``None`` if the control has no properties."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     control = doc.primary
@@ -541,6 +550,8 @@ class ComponentPreview(Window):
         del self.log[:-50]
 
     def view(self):
+        """Draws one instance of the component (or the error that stops it from rendering) above the log of
+        the custom events it raised."""
         t = self.resolved_theme()
         handlers = {f"on_{name}": (lambda e, name=name: self._record(name, e))
                     for name in self.cls.__events__}

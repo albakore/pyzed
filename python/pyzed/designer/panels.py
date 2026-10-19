@@ -31,6 +31,7 @@ ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#f
 
 
 def section(title: str, t: Theme, end: Any = None) -> Any:
+    """Builds a section heading of a panel: ``title`` in small capitals, with ``end`` at the right."""
     return _core.container(
         _core.row([ui.label(title.upper(), size="xs", weight="semibold", color="text_muted", theme=t),
                    _core.space(width="fill"), end], align="center"),
@@ -62,6 +63,7 @@ def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, ta
 
 
 def swatch(color: Optional[str], t: Theme, on_press: Any = None, *, selected: bool = False) -> Any:
+    """Builds a 16-pixel color square (outlined when ``selected``); a button when ``on_press`` is given."""
     box = _core.container(width=16, height=16, bg=color or "transparent", radius=4,
                           border_color=t.text if selected else t.border, border_width=2 if selected else 1)
     if on_press is None:
@@ -114,6 +116,10 @@ def _text_toggle(d: "Designer", prop: Prop, key: str, t: Theme) -> Any:
 
 
 def text_area(d: "Designer", key: str, value: Any, on_change: Callable[[Any], Any], t: Theme, height: float = 132) -> Any:
+    """Builds a small code-editor text area for a property (a list value is shown one item per line).
+
+    Its id includes the document's revision, so undo and redo reload its text.
+    """
     text = value if isinstance(value, str) else "\n".join(map(str, value or []))
     return _core.container(
         ui.editor(f"prop:{key}:{d.doc.revision}", text, on_change=on_change, gutter=False, wrap=True,
@@ -172,6 +178,8 @@ def parse_rows(value: Any) -> List[List[str]]:
 
 
 def format_rows(rows: List[List[str]]) -> str:
+    """Returns ``rows`` as CSV text, one line per row (commas inside cells become spaces); the reverse of
+    ``parse_rows``."""
     return "\n".join(", ".join(cell.replace(",", " ").strip() for cell in row) for row in rows)
 
 
@@ -262,6 +270,8 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
 
 
 def toolbox(d: "Designer", t: Theme) -> Any:
+    """Builds the toolbox: a search box, the pointer, and the components by category, each of which can be
+    picked or dragged onto the form."""
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
         ui.list_item(tr("Pointer"), d.pick_tool(None), icon="mouse-pointer-2", selected=d.tool is None, height=26,
@@ -415,6 +425,8 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
 
 
 def control_properties(d: "Designer", t: Theme) -> List[Any]:
+    """Returns the property grid rows of the primary selected control: its name, its properties by group, then
+    its style and layout rows."""
     c = d.doc.primary
     assert c is not None
     spec = _components.get(c.type)
@@ -445,6 +457,8 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
 
 
 def multi_properties(d: "Designer", t: Theme) -> List[Any]:
+    """Returns the property grid rows shown when several controls are selected: align, distribute and
+    same-size tools."""
     count = len(d.doc.selection)
     tools = [
         ("Align", [("align-start-vertical", "left", "Left edges"), ("align-center-vertical", "center", "Centers"),
@@ -471,6 +485,8 @@ def multi_properties(d: "Designer", t: Theme) -> List[Any]:
 
 
 def form_properties(d: "Designer", t: Theme) -> List[Any]:
+    """Returns the property grid rows of the form itself: window, look (theme, accent, background, style...)
+    and designer settings."""
     form = d.doc.form
 
     def setter(key: str, cast: Callable[[Any], Any] = lambda v: v):
@@ -548,6 +564,8 @@ def properties(d: "Designer", t: Theme) -> Any:
 
 
 def events(d: "Designer", t: Theme) -> Any:
+    """Builds the Events panel for the selected control (or the form): each event with its handler and buttons
+    to edit or disconnect it."""
     doc = d.doc
     target = None if len(doc.selection) != 1 else doc.selection[0]
     if len(doc.selection) > 1:

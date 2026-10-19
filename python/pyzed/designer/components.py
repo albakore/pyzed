@@ -72,6 +72,7 @@ class Prop:
 
     @property
     def title(self) -> str:
+        """The label shown in the property grid: ``label``, or the name with underscores as spaces."""
         return self.label or self.name.replace("_", " ").capitalize()
 
 
@@ -128,12 +129,15 @@ class Component:
 
     @property
     def all_events(self) -> Tuple[str, ...]:
+        """The control's own events followed, for visual components, by the common mouse events."""
         return self.events + (COMMON_EVENTS if self.visual else ())
 
     def defaults(self) -> Dict[str, Any]:
+        """Returns a new dict of the default value of each property, by name."""
         return {p.name: p.default for p in self.props}
 
     def prop(self, name: str) -> Optional[Prop]:
+        """Returns the property called ``name``, or ``None`` if the component has none."""
         for p in self.props:
             if p.name == name:
                 return p
@@ -157,6 +161,7 @@ def register(component: Component) -> Component:
 
 
 def get(type_: str) -> Component:
+    """Returns the registered component for ``type_``; raises ``KeyError`` listing the known types."""
     try:
         return _REGISTRY[type_]
     except KeyError:
@@ -164,10 +169,12 @@ def get(type_: str) -> Component:
 
 
 def all_components() -> List[Component]:
+    """Returns every registered component, in registration order."""
     return list(_REGISTRY.values())
 
 
 def categories() -> Dict[str, List[Component]]:
+    """Returns the registered components grouped by ``category`` (toolbox sections), in registration order."""
     out: Dict[str, List[Component]] = {}
     for c in _REGISTRY.values():
         out.setdefault(c.category, []).append(c)

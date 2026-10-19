@@ -79,10 +79,12 @@ class Diagnostic:
 
     @property
     def level(self) -> str:
+        """The severity's name: ``"error"``, ``"warning"``, ``"info"`` or ``"hint"``."""
         return SEVERITIES.get(self.severity, "info")
 
     @property
     def label(self) -> str:
+        """The message, prefixed with the rule's code in brackets when there is one."""
         code = f"[{self.code}] " if self.code else ""
         return f"{code}{self.message}"
 
@@ -102,18 +104,22 @@ class CompletionItem:
 
     @property
     def private(self) -> bool:
+        """Whether the name starts with an underscore and is not a dunder."""
         return self.label.startswith("_") and not self.is_dunder
 
     @property
     def is_dunder(self) -> bool:
+        """Whether the name is a ``__dunder__`` name."""
         return self.label.startswith("__") and self.label.endswith("__") and len(self.label) > 4
 
     @property
     def text(self) -> str:
+        """The text inserted when the item is accepted (``insert_text``, or the label)."""
         return self.insert_text or self.label
 
     @property
     def icon(self) -> Tuple[str, str]:
+        """The ``(icon, color)`` shown for the item's kind."""
         return KIND_STYLE.get(self.kind, KIND_STYLE["text"])
 
 
@@ -127,10 +133,13 @@ class Lens:
 
     @property
     def text(self) -> str:
+        """The lens's parts joined into the note shown on the line."""
         return " · ".join(self.parts)
 
 
 def item_from_lsp(data: Dict[str, Any]) -> CompletionItem:
+    """Builds a ``CompletionItem`` from an LSP completion item ``data`` (documentation, details, insert text
+    from a ``textEdit`` and the extra edits of auto-imports)."""
     doc = data.get("documentation") or ""
     if isinstance(doc, dict):
         doc = doc.get("value") or ""
@@ -369,10 +378,13 @@ class CodeIntel:
         self._changed()
 
     def apply_settings(self, settings: EditorSettings) -> None:
+        """Uses the new editor ``settings``, starting or stopping servers that were enabled or disabled."""
         self.settings = settings
         self._sync_enabled()
 
     def restart(self, name: Optional[str] = None) -> None:
+        """Restarts server ``name`` (or all with ``None``), forgetting its diagnostics and reopening the
+        text."""
         for key, server in list(self.servers.items()):
             if name in (None, key):
                 self._raw.pop(key, None)
@@ -382,6 +394,7 @@ class CodeIntel:
         self._changed()
 
     def shutdown(self) -> None:
+        """Stops every server and the pending code lens refresh, and forgets their diagnostics."""
         if self._lens_timer is not None:
             self._lens_timer.cancel()
         for server in self.servers.values():
@@ -540,6 +553,7 @@ class CodeIntel:
         self._changed()
 
     def lens_annotations(self) -> Dict[int, str]:
+        """Returns the code lens notes by editor line (lenses with nothing to say are left out)."""
         return {lens.line: lens.text for lens in self.lenses if lens.parts}
 
 

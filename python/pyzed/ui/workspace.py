@@ -72,6 +72,7 @@ def status_bar(
     height: float = 28,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
+    """The bottom status bar: ``start`` items on the left and ``end`` items on the right."""
     t = _theme(theme)
     return _core.column(
         [
@@ -128,6 +129,7 @@ def panel_header(
     height: float = 32,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
+    """A panel's title row with an optional ``icon`` and ``actions`` on the right."""
     t = _theme(theme)
     return _core.container(
         _core.row(

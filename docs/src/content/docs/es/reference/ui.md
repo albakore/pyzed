@@ -792,11 +792,77 @@ with log:
 ui.console(log.entries, on_clear=log.clear)
 ```
 
+**Métodos y propiedades**
+
+#### `Log.write`
+
+```python
+Log.write(level, text)
+```
+
+Añade una línea con nivel `level` y llama a `on_write`.
+
+#### `Log.clear`
+
+```python
+Log.clear()
+```
+
+Quita todas las entradas.
+
+#### `Log.counts`
+
+```python
+Log.counts()
+```
+
+Devuelve cuántas líneas hay por nivel, contando las repeticiones plegadas.
+
+#### `Log.text`
+
+```python
+Log.text()
+```
+
+Todo como texto plano (para copiar).
+
+#### `Log.capturing`
+
+```python
+Log.capturing  # property
+```
+
+Si `sys.stdout`/`sys.stderr` se están copiando al log.
+
+#### `Log.capture`
+
+```python
+Log.capture()
+```
+
+Copia `sys.stdout`/`sys.stderr` al log (siguen llegando a la terminal).
+
+#### `Log.release`
+
+```python
+Log.release()
+```
+
+Deja de capturar y restaura los streams originales.
+
+#### `Log.pipe`
+
+```python
+Log.pipe(stream, level='stdout', on_end=None)
+```
+
+Lee una tubería de un subproceso (bytes o texto) línea a línea hacia el log, en un hilo en segundo plano.
+
 ### `LogEntry`
 
 ```python
 @dataclass
-class LogEntry(level, text, time=1792376682.206853, count=1)
+class LogEntry(level, text, time=time.time(), count=1)
 ```
 
 Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
@@ -807,6 +873,16 @@ Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas 
 | `text` | La línea. |
 | `time` | Cuándo se escribió (`time.time()`). |
 | `count` | Líneas idénticas seguidas. |
+
+**Métodos y propiedades**
+
+#### `LogEntry.clock`
+
+```python
+LogEntry.clock  # property
+```
+
+La hora local de la entrada como `HH:MM:SS`.
 
 ### `LOG_LEVELS`
 
@@ -971,6 +1047,16 @@ Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o u
 | `align` | `"start"`, `"center"` o `"end"`. |
 | `render` | Función valor → widget. |
 | `sortable` | Si el encabezado se puede pulsar para ordenar. |
+
+**Métodos y propiedades**
+
+#### `Column.value`
+
+```python
+Column.value(row)
+```
+
+Devuelve el valor de esta columna para `row`: `key(row)`, un elemento de dict o un atributo.
 
 ### `table`
 
@@ -1272,6 +1358,33 @@ Un archivo o carpeta para `ui.tree`. Las carpetas tienen `children` (lista). `st
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `icon_color` | Color del icono: un token del tema o un color hex. |
 
+**Métodos y propiedades**
+
+#### `TreeNode.is_folder`
+
+```python
+TreeNode.is_folder  # property
+```
+
+Si el nodo es una carpeta (tiene una lista `children`, aunque esté vacía).
+
+#### `TreeNode.from_paths`
+
+```python
+@classmethod
+TreeNode.from_paths(paths, status=None)
+```
+
+Crea un árbol a partir de rutas del estilo `"src/main.rs"`. Las carpetas van primero.
+
+#### `TreeNode.sort`
+
+```python
+TreeNode.sort()
+```
+
+Ordena los hijos recursivamente: primero las carpetas, luego por nombre sin distinguir mayúsculas.
+
 ### `tree`
 
 ```python
@@ -1358,6 +1471,17 @@ Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono de
 | `dirty` | Cambios sin guardar (muestra un punto). |
 | `preview` | Pestaña de vista previa (en cursiva). |
 | `status` | Estado de git (tiñe el nombre). |
+
+**Métodos y propiedades**
+
+#### `Tab.for_file`
+
+```python
+@classmethod
+Tab.for_file(path, **kwargs)
+```
+
+Una pestaña para el archivo `path`: su nombre como etiqueta y el icono y color de archivo correspondientes.
 
 ### `tab`
 
@@ -1971,6 +2095,240 @@ Un componente para elegir un color con alfa, un gradiente lineal (paradas que se
 ```python
 ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
 ```
+
+**Métodos y propiedades**
+
+#### `ColorPicker.parts`
+
+```python
+ColorPicker.parts()
+```
+
+`(stops, angle, mask, opacity)`: una sola parada y sin ángulo para un color liso.
+
+#### `ColorPicker.build`
+
+```python
+ColorPicker.build(stops, angle, mask, opacity)
+```
+
+Convierte `(stops, angle, mask, opacity)` de nuevo en un color, un `Gradient` o un `Paint`.
+
+#### `ColorPicker.publish`
+
+```python
+ColorPicker.publish(*parts)
+```
+
+Fija el valor a partir de las partes, descarta el texto hex a medio escribir y emite `change`.
+
+#### `ColorPicker.current`
+
+```python
+ColorPicker.current()
+```
+
+Devuelve el color hex que se está editando (el de la parada seleccionada).
+
+#### `ColorPicker.set_color`
+
+```python
+ColorPicker.set_color(color)
+```
+
+Cambia el color de la parada seleccionada por `color` y publica el resultado.
+
+#### `ColorPicker.hsva`
+
+```python
+ColorPicker.hsva()
+```
+
+Devuelve el color editado como `(h, s, v, a)`, cada uno de 0 a 1.
+
+#### `ColorPicker.pick_sv`
+
+```python
+ColorPicker.pick_sv(event)
+```
+
+Fija la saturación y el valor al pulsar o arrastrar en el área de saturación/valor.
+
+#### `ColorPicker.pick_hue`
+
+```python
+ColorPicker.pick_hue(event)
+```
+
+Fija el tono al pulsar o arrastrar en la barra de tono.
+
+#### `ColorPicker.pick_alpha`
+
+```python
+ColorPicker.pick_alpha(event)
+```
+
+Fija el alfa al pulsar o arrastrar en la barra de alfa.
+
+#### `ColorPicker.type_hex`
+
+```python
+ColorPicker.type_hex(text)
+```
+
+Gestiona lo que se escribe en el campo hex: aplica el texto en cuanto es un color hex válido.
+
+#### `ColorPicker.set_alpha_percent`
+
+```python
+ColorPicker.set_alpha_percent(value)
+```
+
+Fija el alfa desde el campo de porcentaje (0 a 100).
+
+#### `ColorPicker.set_mode`
+
+```python
+ColorPicker.set_mode(mode)
+```
+
+Cambia entre `"Solid"` y `"Gradient"`.
+
+#### `ColorPicker.set_angle`
+
+```python
+ColorPicker.set_angle(value)
+```
+
+Fija el ángulo del gradiente en grados (o el de la máscara, sobre un color liso).
+
+#### `ColorPicker.select_stop`
+
+```python
+ColorPicker.select_stop(index)
+```
+
+Selecciona para editar la parada del gradiente en `index`.
+
+#### `ColorPicker.move_stop`
+
+```python
+ColorPicker.move_stop(index, event)
+```
+
+Mueve una parada del gradiente adonde se pulsa la barra o según el `dx` de un arrastre.
+
+#### `ColorPicker.add_stop`
+
+```python
+ColorPicker.add_stop(event)
+```
+
+Añade una parada del gradiente donde se hace clic en la barra, con el color que el gradiente tiene ahí.
+
+#### `ColorPicker.remove_stop`
+
+```python
+ColorPicker.remove_stop()
+```
+
+Quita la parada del gradiente seleccionada (un gradiente conserva al menos dos).
+
+#### `ColorPicker.toggle_mask`
+
+```python
+ColorPicker.toggle_mask(on)
+```
+
+Con `on` añade una máscara que va de opaco a transparente; si no, quita la máscara.
+
+#### `ColorPicker.select_mask_stop`
+
+```python
+ColorPicker.select_mask_stop(index)
+```
+
+Selecciona para editar la parada de la máscara en `index`.
+
+#### `ColorPicker.move_mask_stop`
+
+```python
+ColorPicker.move_mask_stop(index, event)
+```
+
+Mueve una parada de la máscara adonde se pulsa la barra o según el `dx` de un arrastre, manteniendo las paradas ordenadas.
+
+#### `ColorPicker.add_mask_stop`
+
+```python
+ColorPicker.add_mask_stop(event)
+```
+
+Añade una parada de la máscara donde se hace clic en la barra, con la opacidad que la máscara tiene ahí (como mucho 8).
+
+#### `ColorPicker.set_mask_opacity`
+
+```python
+ColorPicker.set_mask_opacity(value)
+```
+
+Fija la opacidad de la parada de la máscara seleccionada (0 a 1).
+
+#### `ColorPicker.remove_mask_stop`
+
+```python
+ColorPicker.remove_mask_stop()
+```
+
+Quita la parada de la máscara seleccionada (una máscara conserva al menos dos).
+
+#### `ColorPicker.marker`
+
+```python
+ColorPicker.marker(x, y, color, *, size=14, selected=True, **events)
+```
+
+Un tirador redondo de color `color` centrado en `(x, y)`.
+
+#### `ColorPicker.area`
+
+```python
+ColorPicker.area(layers, height, markers, on_pick, *, width=248)
+```
+
+Una franja redondeada de capas apiladas que informa de dónde se pulsa y se arrastra.
+
+#### `ColorPicker.sv_area`
+
+```python
+ColorPicker.sv_area()
+```
+
+El cuadrado de saturación/valor del tono actual, con un marcador en el color actual.
+
+#### `ColorPicker.hue_bar`
+
+```python
+ColorPicker.hue_bar()
+```
+
+La barra de tono arcoíris con un marcador en el tono actual.
+
+#### `ColorPicker.alpha_bar`
+
+```python
+ColorPicker.alpha_bar()
+```
+
+La barra de alfa (sobre un damero) con un marcador en el alfa actual.
+
+#### `ColorPicker.stops_bar`
+
+```python
+ColorPicker.stops_bar(points, preview, selected, on_select, on_move, on_add, *, colors=True)
+```
+
+Una barra que previsualiza `preview` con un tirador arrastrable por cada punto `(offset, value)`.
 
 ### `color_swatch`
 

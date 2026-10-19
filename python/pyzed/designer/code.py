@@ -38,10 +38,13 @@ def handler_name(owner: str, event: str) -> str:
 
 
 def new_module(form_name: str) -> str:
+    """Returns the text of a new, empty handlers module for the form ``form_name`` (just its docstring)."""
     return HEADER.format(form=form_name)
 
 
 def stub(name: str, doc: str = "") -> str:
+    """Returns the source of an empty handler ``name(form, event)`` with ``doc`` as its docstring (``"Event
+    handler."`` if empty)."""
     doc = doc or "Event handler."
     return f'def {name}(form, event):\n    """{doc}"""\n    pass\n'
 
@@ -69,6 +72,7 @@ def functions(source: str) -> List[str]:
 
 
 def get_function(source: str, name: str) -> Optional[str]:
+    """Returns the source of top-level function ``name`` (decorators included), or ``None`` if missing."""
     span = find_function(source, name)
     if span is None:
         return None

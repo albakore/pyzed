@@ -52,6 +52,7 @@ class ConsoleController:
         self.log.capture()
 
     def stop(self, *, quiet: bool = False) -> None:
+        """Ends the capture of the running form's output, logging that it stopped unless ``quiet``."""
         if self.running is None:
             return
         self.log.release()
@@ -72,15 +73,19 @@ class ConsoleController:
 
     # -- toolbar --------------------------------------------------------------------
     def set_query(self, text: str) -> None:
+        """Sets the text that filters the console's lines (typed in its search box)."""
         self.query = text
 
     def toggle_level(self, level: str) -> None:
+        """Hides the lines of ``level`` if they are shown, or shows them again."""
         self.hidden ^= {level}
 
     def clear(self) -> None:
+        """Empties the console's log."""
         self.log.clear()
 
     def copy(self) -> Any:
+        """Returns the command that copies the whole log, as text, to the clipboard."""
         return _core.Command.copy(self.log.text())
 
     def poll(self) -> None:
@@ -96,6 +101,7 @@ class ConsoleController:
 
 
 def view(d: "Designer", t: Theme) -> Any:
+    """Builds the Console panel: the log with its filters and the run, stop and status controls."""
     c = d.console
     running = c.running is not None
     actions = [

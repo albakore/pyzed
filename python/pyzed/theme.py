@@ -115,6 +115,7 @@ class Theme:
 
     @property
     def is_dark(self) -> bool:
+        """Whether the theme's appearance is dark."""
         return self.appearance == "dark"
 
     def derive(self, **changes) -> "Theme":
@@ -634,6 +635,7 @@ class AutoTheme:
     dark: Theme
 
     def pick(self, dark: bool) -> Theme:
+        """Returns the dark theme when ``dark`` is true, else the light one."""
         return self.dark if dark else self.light
 
 
@@ -692,10 +694,12 @@ def readable_on(background: str, light: str = "#fafafa", dark: str = "#1c2025") 
 
 
 def lighten(color: str, amount: float = 0.1) -> str:
+    """Mixes ``color`` with white by ``amount`` (0 to 1)."""
     return mix(color, "#ffffff", amount)
 
 
 def darken(color: str, amount: float = 0.1) -> str:
+    """Mixes ``color`` with black by ``amount`` (0 to 1)."""
     return mix(color, "#000000", amount)
 
 
@@ -840,6 +844,7 @@ class themes:  # noqa: N801 - namespace
 
     @staticmethod
     def names() -> List[str]:
+        """The names of every registered theme, in registration order."""
         return list(_registry)
 
     @staticmethod

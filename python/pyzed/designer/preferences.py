@@ -46,10 +46,13 @@ class DesignerSettings:
     sizes: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the preferences as a JSON-ready dict."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DesignerSettings":
+        """Builds preferences from saved ``data``, keeping defaults for missing or invalid values and clamping
+        the grid, docks, sizes and recent files to valid ones."""
         out = cls()
         for f in fields(cls):
             if f.name not in data:
@@ -77,6 +80,7 @@ class DesignerSettings:
 
 
 def load() -> DesignerSettings:
+    """Returns the designer's saved preferences (defaults if there are none)."""
     section = _read().get("designer")
     return DesignerSettings.from_dict(section) if isinstance(section, dict) else DesignerSettings()
 

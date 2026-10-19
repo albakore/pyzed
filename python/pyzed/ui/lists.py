@@ -61,6 +61,7 @@ def list_item(
 
 
 def list_header(title: str, *, end: Any = None, theme: Optional[Theme] = None) -> _core.Widget:
+    """A small muted section title for a list, with an optional ``end`` widget on the right."""
     t = _theme(theme)
     return _core.container(
         _core.row([_core.text(title, size=12, weight="medium", color=t.text_muted, wrap=False), _core.space(width="fill"), end],
@@ -88,6 +89,7 @@ class TreeNode:
 
     @property
     def is_folder(self) -> bool:
+        """Whether the node is a folder (it has a ``children`` list, even if empty)."""
         return self.children is not None
 
     @classmethod
@@ -124,6 +126,7 @@ class TreeNode:
         return root.children
 
     def sort(self) -> None:
+        """Sorts the children recursively: folders first, then by name ignoring case."""
         if self.children:
             self.children.sort(key=lambda c: (not c.is_folder, c.name.lower()))
             for c in self.children:

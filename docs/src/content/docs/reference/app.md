@@ -45,6 +45,32 @@ The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…
 
 If `view()` raises an exception, the window shows the traceback instead of closing.
 
+**Methods and properties**
+
+#### `App.subscriptions`
+
+```python
+App.subscriptions()
+```
+
+Timers and streams that should run right now (re-evaluated after every update).
+
+#### `App.run`
+
+```python
+App.run(*, reload=None, watch=())
+```
+
+Opens the window and blocks until the app exits.
+
+#### `App.screenshot`
+
+```python
+App.screenshot(path, *, size=None, scale=2.0, wait=0.1)
+```
+
+Renders the current state off-screen (no GPU or display needed) into a PNG.
+
 ### `run`
 
 ```python
@@ -147,6 +173,80 @@ forwards them to `app.update()`.
 | `on_close()` | When the user asks to close it; return `False` to prevent it. |
 | `on_resize(width, height)` | When it is resized. |
 | `on_key(combo)`, `subscriptions()` | As in `App`. |
+
+**Methods and properties**
+
+#### `Window.view`
+
+```python
+Window.view()
+```
+
+Returns the window's root widget; subclasses must override it.
+
+#### `Window.update`
+
+```python
+Window.update(message)
+```
+
+Handles a message produced in this window (forwards to the app by default).
+
+#### `Window.on_close`
+
+```python
+Window.on_close()
+```
+
+Called when the user asks to close the window. Return `False` to keep it open.
+
+#### `Window.is_open`
+
+```python
+Window.is_open  # property
+```
+
+Whether the window is currently open.
+
+#### `Window.open`
+
+```python
+Window.open()
+```
+
+A command that opens this window: `return settings.open()`.
+
+#### `Window.close`
+
+```python
+Window.close()
+```
+
+A command that closes this window: `on_press=self.close`.
+
+#### `Window.drag`
+
+```python
+Window.drag()
+```
+
+A command that starts moving the window (for custom title bars).
+
+#### `Window.resolved_theme`
+
+```python
+Window.resolved_theme()
+```
+
+The concrete theme this window uses right now (with its global style's colors and sizes).
+
+#### `Window.resolved_style`
+
+```python
+Window.resolved_style()
+```
+
+The global style of this window: `pz.set_style` with its own (or the app's) `style` on top.
 
 ## Async and subscriptions
 
@@ -261,6 +361,24 @@ What happened, passed to event handlers: `type`, `x`, `y` (relative to the widge
 | `value` | Value of a custom event. |
 | `source` | Component that emitted it. |
 
+**Methods and properties**
+
+#### `Event.position`
+
+```python
+Event.position  # property
+```
+
+`(x, y)`.
+
+#### `Event.size`
+
+```python
+Event.size  # property
+```
+
+`(width, height)`.
+
 ### `Dock`
 
 ```python
@@ -281,6 +399,128 @@ pz.Dock(center=editor, panels=[
     pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
 ], layout=self.layout, on_layout=lambda e: setattr(self, "layout", e.value))
 ```
+
+**Methods and properties**
+
+#### `Dock.side_of`
+
+```python
+Dock.side_of(panel)
+```
+
+Returns the side a panel is docked on: its saved position if valid, else `panel.side`.
+
+#### `Dock.groups`
+
+```python
+Dock.groups()
+```
+
+Returns the panels grouped by side (every side present, possibly with an empty list).
+
+#### `Dock.snapshot`
+
+```python
+Dock.snapshot()
+```
+
+Returns the layout as a plain dict (`positions`, `sizes`, `active`, `hidden`).
+
+#### `Dock.changed`
+
+```python
+Dock.changed()
+```
+
+Emits `layout` with the current snapshot.
+
+#### `Dock.move`
+
+```python
+Dock.move(panel_id, side)
+```
+
+Docks a panel on another side and makes it the active tab there.
+
+#### `Dock.select`
+
+```python
+Dock.select(side, panel_id)
+```
+
+Makes `panel_id` the active tab on `side` (a tab click) and emits `layout`.
+
+#### `Dock.toggle`
+
+```python
+Dock.toggle(side)
+```
+
+Shows or hides a whole side.
+
+#### `Dock.resized`
+
+```python
+Dock.resized(side, size)
+```
+
+Records the new `size` (pixels) of `side` after its edge is dragged and emits `layout`.
+
+#### `Dock.start_drag`
+
+```python
+Dock.start_drag(panel_id)
+```
+
+Starts dragging a panel's tab: the drop zones show and the tab menu closes.
+
+#### `Dock.end_drag`
+
+```python
+Dock.end_drag()
+```
+
+Ends a tab drag and hides the drop zones, remembering the panel for a late `drop`.
+
+#### `Dock.drop`
+
+```python
+Dock.drop(side)
+```
+
+Moves the dragged panel to `side` when released on that drop zone; no-op without one.
+
+#### `Dock.tab`
+
+```python
+Dock.tab(panel, side, active, t)
+```
+
+Builds a panel's tab in a side's header.
+
+#### `Dock.move_menu`
+
+```python
+Dock.move_menu(panel, side, t)
+```
+
+Builds the right-click menu that moves `panel` to any side other than `side`.
+
+#### `Dock.side_view`
+
+```python
+Dock.side_view(side, panels, t)
+```
+
+Builds one side: a header with the panels' tabs above the active panel's content.
+
+#### `Dock.drop_zones`
+
+```python
+Dock.drop_zones(t)
+```
+
+Builds the four drop zones (one per side) shown over the dock while a tab is dragged.
 
 ### `DockPanel`
 
@@ -322,6 +562,83 @@ class Rating(pz.Component):
 
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
+
+**Methods and properties**
+
+#### `Component.create`
+
+```python
+@classmethod
+Component.create(*args, **kwargs)
+```
+
+A standalone instance (not rendered, no lifecycle), handy in tests: `c.render()`.
+
+#### `Component.setup`
+
+```python
+Component.setup()
+```
+
+Called once before the first render (props are already set): initialize state here.
+
+#### `Component.render`
+
+```python
+Component.render()
+```
+
+Returns the widgets of this component (called on every render).
+
+#### `Component.on_mount`
+
+```python
+Component.on_mount()
+```
+
+Called after the first render; may return a `Command` or a message.
+
+#### `Component.on_unmount`
+
+```python
+Component.on_unmount()
+```
+
+Called when the component is no longer rendered.
+
+#### `Component.emit`
+
+```python
+Component.emit(name, value=None)
+```
+
+Raises the custom event `name`: calls the handler the parent passed as `on_<name>`.
+
+#### `Component.handles`
+
+```python
+Component.handles(name)
+```
+
+Whether the parent passed a handler for the custom event `name`.
+
+#### `Component.describe`
+
+```python
+@classmethod
+Component.describe()
+```
+
+The first paragraph of the docstring (shown in the designer).
+
+#### `Component.designer_spec`
+
+```python
+@classmethod
+Component.designer_spec()
+```
+
+This component as an entry of the designer's toolbox (`pyzed.designer.Component`).
 
 ### `Color`
 
@@ -396,6 +713,204 @@ class Counter(pz.Component):
     step: int = 1
     count: int = pz.state(0)
 ```
+
+### `State`
+
+```python
+class State
+```
+
+The default of a state variable declared on the class (see `state`).
+
+### `StateInfo`
+
+```python
+class StateInfo
+```
+
+A state variable declared with `pz.state`: its name, annotation, default and description.
+
+### `PropInfo`
+
+```python
+class PropInfo
+```
+
+A prop: its name, type annotation (may be a string) and default.
+
+**Methods and properties**
+
+#### `PropInfo.required`
+
+```python
+PropInfo.required  # property
+```
+
+Whether the prop has no default and must be passed.
+
+### `find`
+
+```python
+find(type_name)
+```
+
+The component class registered as `type_name` (see `Component.type_name`).
+
+### `registered`
+
+```python
+registered()
+```
+
+Every `Component` subclass defined so far that should appear in the designer.
+
+### `render_pass`
+
+```python
+render_pass(owner)
+```
+
+Tracks the components rendered while `owner` (a window) runs its `view()`.
+
+Components not rendered again are unmounted at the end. The runtime does this for
+every window; use it yourself only to render components outside a window.
+
+### `EventInfo`
+
+```python
+class EventInfo
+```
+
+Documentation of one event: its group and what it reports.
+
+### `accepts_argument`
+
+```python
+accepts_argument(handler)
+```
+
+Whether `handler` takes the event: it has a required positional parameter or `*args`.
+
+Parameters with defaults do not count, so `lambda i=i: ...` is called with nothing.
+The answer is cached per function.
+
+### `LIFECYCLE_EVENTS`
+
+Names of the lifecycle events every component raises (`mount`, `unmount`...).
+
+### `CATALOG`
+
+Every event name Pyzed knows, mapped to its `EventInfo` (what raises it and what `event.value` holds).
+
+### `COMMON`
+
+The events every widget accepts through `widget.on(...)` (click, hover, focus, keys...).
+
+## Hot reload
+
+### `enable`
+
+```python
+enable(app, paths=(), *, interval=0.25)
+```
+
+Starts hot reload for `app` (a running `App` instance) and returns the reloader.
+
+### `current`
+
+```python
+current()
+```
+
+The active `Reloader`, or `None` when hot reload is off.
+
+### `is_reloading`
+
+```python
+is_reloading()
+```
+
+True while modules are being re-executed by a reload.
+
+### `enabled_by_env`
+
+```python
+enabled_by_env()
+```
+
+Whether `PYZED_RELOAD` asks for hot reload (`1`, `true`, `yes` or `on`).
+
+### `Reloader`
+
+```python
+class Reloader
+```
+
+Watches the project's files and reloads changed code into a running app.
+
+`app` is the running `App` instance. `paths` are extra folders or files to
+watch; by default the folder of the module that defines the app's class is watched.
+`interval` is how often, in seconds, files are checked for changes.
+
+Most programs never create one directly: `pz.run(app, reload=True)` does it.
+
+**Methods and properties**
+
+#### `Reloader.watch`
+
+```python
+Reloader.watch(path, callback)
+```
+
+Calls `callback(path)` on the UI thread whenever `path` changes.
+
+#### `Reloader.project_modules`
+
+```python
+Reloader.project_modules()
+```
+
+The loaded modules whose files belong to the project, by file path.
+
+#### `Reloader.scan`
+
+```python
+Reloader.scan()
+```
+
+Checks every watched file once and returns the ones that changed.
+
+#### `Reloader.start`
+
+```python
+Reloader.start()
+```
+
+Starts the watcher thread and makes this the current reloader.
+
+#### `Reloader.stop`
+
+```python
+Reloader.stop()
+```
+
+Stops watching files.
+
+#### `Reloader.reload`
+
+```python
+Reloader.reload(changed)
+```
+
+Reloads the code in `changed` files now (call it on the UI thread).
+
+### `ReloadError`
+
+```python
+class ReloadError
+```
+
+Raised by `view()` while the last reload failed; the window shows its message.
 
 ## Languages
 
@@ -521,3 +1036,11 @@ Whether `key` has a text in the language or its fallbacks.
 | --- | --- |
 | `key` | Dotted key. |
 | `language` | Language to check (default: the current one). |
+
+### `normalize`
+
+```python
+normalize(language)
+```
+
+`"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.

@@ -66,6 +66,7 @@ class Window:
     _pyzed_window_open: bool = False
 
     def view(self) -> _core.Widget:  # pragma: no cover - meant to be overridden
+        """Returns the window's root widget; subclasses must override it."""
         raise NotImplementedError(f"{type(self).__name__}.view() must return a widget")
 
     def update(self, message: Any) -> Any:

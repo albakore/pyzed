@@ -47,6 +47,7 @@ class LogEntry:
 
     @property
     def clock(self) -> str:
+        """The entry's local time as ``HH:MM:SS``."""
         return time.strftime("%H:%M:%S", time.localtime(self.time))
 
 
@@ -95,6 +96,11 @@ class Log:
         self.revision = 0
 
     def write(self, level: str, text: str) -> None:
+        """Adds a line at ``level`` and calls ``on_write``.
+
+        A line equal to the last one only bumps its count and time; the oldest entries
+        are dropped past ``limit``.
+        """
         text = str(text).rstrip("\r\n")  # pipes from Windows processes end lines with \r\n
         with self._lock:
             last = self.entries[-1] if self.entries else None
@@ -109,11 +115,13 @@ class Log:
             self.on_write()
 
     def clear(self) -> None:
+        """Removes every entry."""
         with self._lock:
             self.entries.clear()
             self.revision += 1
 
     def counts(self) -> Dict[str, int]:
+        """Returns how many lines there are per level, counting folded repeats."""
         out: Dict[str, int] = {}
         with self._lock:
             for e in self.entries:
@@ -129,6 +137,7 @@ class Log:
     # -- capturing print() and tracebacks ---------------------------------------
     @property
     def capturing(self) -> bool:
+        """Whether ``sys.stdout``/``sys.stderr`` are being copied into the log."""
         return self._saved is not None
 
     def capture(self) -> "Log":

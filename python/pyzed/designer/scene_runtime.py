@@ -123,6 +123,7 @@ class SceneComponent(Component):
 
     @classmethod
     def scene_path(cls) -> Optional[Path]:
+        """Returns the ``.pzcomp`` file the class is tied to, or ``None``."""
         return cls.scene_file
 
     @classmethod
@@ -149,6 +150,8 @@ class SceneComponent(Component):
 
     @classmethod
     def designer_spec(cls) -> Any:
+        """Returns the toolbox component of this class, whose ``render`` makes each instance fill the control
+        it is placed in."""
         spec = super().designer_spec()
         inner = spec.render
 
@@ -206,6 +209,8 @@ class SceneComponent(Component):
 
     @property
     def ctx(self) -> SceneContext:  # what ControlProxy.focus() needs
+        """A render context for this instance, in the theme of its scene (what ``ControlProxy.focus()``
+        needs)."""
         return SceneContext(self, theme_for(self.scene_model()) if self.scene_model() is not None else None)
 
     # -- events ------------------------------------------------------------------------

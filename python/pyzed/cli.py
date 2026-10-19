@@ -74,6 +74,11 @@ def init(path: str = ".", *, app: bool = False, git: bool = True, python=None, s
 
 
 def deps(outdated: bool = False) -> int:
+    """``pyzed deps``: prints each dependency with its locked version and group.
+
+    With ``outdated`` only those with a newer release are listed, as ``locked -> latest``.
+    Returns the exit code.
+    """
     project = _project()
     if project is None:
         return 1
@@ -88,6 +93,10 @@ def deps(outdated: bool = False) -> int:
 
 
 def check(fix: bool = False) -> int:
+    """``pyzed check``: lints with ruff (fixing what it can when ``fix``) and type checks with ty.
+
+    Prints both commands and their output; returns 0 only when both pass.
+    """
     project = _project()
     if project is None:
         return 1
@@ -101,6 +110,12 @@ def check(fix: bool = False) -> int:
 
 
 def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = False, workflow: bool = False) -> int:
+    """``pyzed build``: packages the project with PyInstaller and prints where the result is.
+
+    ``workflow`` writes a GitHub Actions workflow instead, and ``dry_run`` only prints the PyInstaller
+    command. ``onefile``, ``console`` and ``name`` override the project's build settings.
+    Returns the exit code.
+    """
     from . import build as _build
 
     project = _project()
@@ -142,6 +157,7 @@ def dev(script: str, args: list, watch: list) -> int:
 
 
 def icons(pattern: str = "") -> int:
+    """``pyzed icons``: prints the bundled Lucide icon names that contain ``pattern``."""
     from .icons import names
 
     for name in names():
@@ -151,6 +167,10 @@ def icons(pattern: str = "") -> int:
 
 
 def design(path=None) -> int:
+    """``pyzed design``: opens the form designer on ``path``.
+
+    With no path, or a project folder, it opens the Pyzed project's main form.
+    """
     from .designer import design as open_designer
     from .project import activate_for
 
@@ -163,6 +183,10 @@ def design(path=None) -> int:
 
 
 def run_form(path=None, reload: bool = False) -> int:
+    """``pyzed run``: runs a ``.pzform`` file, by default the current project's main form.
+
+    ``reload`` updates the window when the form or its code is saved. Returns 1 when there is no form to run.
+    """
     from .designer import run
     from .project import Project
 
@@ -180,6 +204,10 @@ def run_form(path=None, reload: bool = False) -> int:
 
 
 def main(argv=None) -> int:
+    """The ``pyzed`` command line: parses ``argv`` (``sys.argv`` by default) and runs the subcommand.
+
+    Returns the process exit code.
+    """
     parser = argparse.ArgumentParser(prog="pyzed", description="Pyzed: fast GUIs for Python powered by Iced")
     sub = parser.add_subparsers(dest="command", required=True)
     p_new = sub.add_parser("new", help="create a project (uv, ruff, ty, git) with the UI in ui/")

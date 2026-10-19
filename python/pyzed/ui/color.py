@@ -87,21 +87,25 @@ class ColorPicker(Component):
 
     def build(self, stops: List[Tuple[float, str]], angle: Optional[float], mask: Optional[Mask],
               opacity: float) -> Any:
+        """Turns ``(stops, angle, mask, opacity)`` back into a color, ``Gradient`` or ``Paint``."""
         fill: Any = Gradient(stops, angle=angle or 0.0) if angle is not None else stops[0][1]
         if mask is None and opacity >= 1.0:
             return fill
         return Paint(fill, opacity=opacity, mask=mask)
 
     def publish(self, *parts: Any) -> Any:
+        """Sets the value from parts, drops any half-typed hex text and emits ``change``."""
         self.value = self.build(*parts)
         self.hex_text = None
         return self.emit("change", self.value)
 
     def current(self) -> str:
+        """Returns the hex color being edited (the selected stop's color)."""
         stops = self.parts()[0]
         return stops[min(self.stop, len(stops) - 1)][1]
 
     def set_color(self, color: str) -> Any:
+        """Replaces the selected stop's color with ``color`` and publishes the result."""
         stops, angle, mask, opacity = self.parts()
         i = min(self.stop, len(stops) - 1)
         stops[i] = (stops[i][0], color)
@@ -109,12 +113,17 @@ class ColorPicker(Component):
 
     # -- editing ---------------------------------------------------------------
     def hsva(self) -> Tuple[float, float, float, float]:
+        """Returns the edited color as ``(h, s, v, a)``, each 0 to 1.
+
+        Grays keep the hue last picked so the hue marker does not jump.
+        """
         h, s, v, a = _hsva(self.current())
         if self.hue is not None and (s == 0 or v == 0):
             h = self.hue  # grays have no hue of their own: keep the one picked
         return h, s, v, a
 
     def pick_sv(self, event: Any) -> Any:
+        """Sets saturation and value from a press or drag on the saturation/value area."""
         h, _s, _v, a = self.hsva()
         s = _clamp(event.x / max(event.width, 1))
         v = 1 - _clamp(event.y / max(event.height, 1))
@@ -122,15 +131,21 @@ class ColorPicker(Component):
         return self.set_color(_from_hsva(h, s, v, a))
 
     def pick_hue(self, event: Any) -> Any:
+        """Sets the hue from a press or drag on the hue bar."""
         _h, s, v, a = self.hsva()
         self.hue = min(_clamp(event.x / max(event.width, 1)), 0.9999)
         return self.set_color(_from_hsva(self.hue, s, v, a))
 
     def pick_alpha(self, event: Any) -> Any:
+        """Sets the alpha from a press or drag on the alpha bar."""
         h, s, v, _a = self.hsva()
         return self.set_color(_from_hsva(h, s, v, _clamp(event.x / max(event.width, 1))))
 
     def type_hex(self, text: str) -> Any:
+        """Handles typing in the hex field: applies the text once it is a valid hex color.
+
+        The ``#`` is optional; incomplete or invalid text is kept in the field without changing the value.
+        """
         self.hex_text = text
         candidate = text.strip()
         if not candidate.startswith("#"):
@@ -147,10 +162,16 @@ class ColorPicker(Component):
         return None
 
     def set_alpha_percent(self, value: float) -> Any:
+        """Sets the alpha from the percent field (0 to 100)."""
         h, s, v, _a = self.hsva()
         return self.set_color(_from_hsva(h, s, v, _clamp(value / 100)))
 
     def set_mode(self, mode: str) -> Any:
+        """Switches between ``"Solid"`` and ``"Gradient"``.
+
+        A new gradient runs at 90 degrees from the current color to a lighter tint;
+        going solid keeps the edited color.
+        """
         stops, angle, mask, opacity = self.parts()
         if mode == "Gradient" and angle is None:
             first = stops[0][1]
@@ -162,6 +183,10 @@ class ColorPicker(Component):
         return self.publish(stops, angle, mask, opacity)
 
     def set_angle(self, value: float) -> Any:
+        """Sets the gradient's angle in degrees (or the mask's, on a plain color).
+
+        Does nothing on a plain color without a mask.
+        """
         stops, angle, mask, opacity = self.parts()
         if angle is None:
             if mask is None:
@@ -172,11 +197,16 @@ class ColorPicker(Component):
 
     # -- gradient and mask stops ----------------------------------------------------
     def select_stop(self, index: int) -> None:
+        """Selects the gradient stop at ``index`` for editing."""
         self.stop = index
         self.hue = None
         self.hex_text = None
 
     def move_stop(self, index: int, event: Any) -> Any:
+        """Moves a gradient stop to where the bar is pressed or by a drag's ``dx``.
+
+        Stops are kept sorted by offset and the moved one stays selected.
+        """
         stops, angle, mask, opacity = self.parts()
         offset = _clamp(event.x / max(event.width, 1)) if event.type != "drag" else \
             _clamp(stops[index][0] + event.dx / WIDTH)
@@ -186,6 +216,10 @@ class ColorPicker(Component):
         return self.publish([stops[i] for i in order], angle, mask, opacity)
 
     def add_stop(self, event: Any) -> Any:
+        """Adds a gradient stop where the bar is clicked, with the color the gradient has there.
+
+        Gradients only, and at most 8 stops; the new stop is selected.
+        """
         stops, angle, mask, opacity = self.parts()
         if angle is None or len(stops) >= 8:
             return None
@@ -197,6 +231,7 @@ class ColorPicker(Component):
         return self.publish(stops, angle, mask, opacity)
 
     def remove_stop(self) -> Any:
+        """Removes the selected gradient stop (a gradient keeps at least two)."""
         stops, angle, mask, opacity = self.parts()
         if angle is None or len(stops) <= 2:
             return None
@@ -205,14 +240,17 @@ class ColorPicker(Component):
         return self.publish(stops, angle, mask, opacity)
 
     def toggle_mask(self, on: bool) -> Any:
+        """Adds a mask fading from opaque to transparent when ``on``, or removes the mask."""
         stops, angle, mask, opacity = self.parts()
         self.mask_stop = 0
         return self.publish(stops, angle, Mask([1.0, 0.0], angle=angle or 180.0) if on else None, opacity)
 
     def select_mask_stop(self, index: int) -> None:
+        """Selects the mask stop at ``index`` for editing."""
         self.mask_stop = index
 
     def move_mask_stop(self, index: int, event: Any) -> Any:
+        """Moves a mask stop to where the bar is pressed or by a drag's ``dx``, keeping stops sorted."""
         stops, angle, mask, opacity = self.parts()
         points = list(mask.stops)
         offset = _clamp(points[index][0] + event.dx / WIDTH) if event.type == "drag" else \
@@ -223,6 +261,7 @@ class ColorPicker(Component):
         return self.publish(stops, angle, Mask([points[i] for i in order], angle=mask.angle), opacity)
 
     def add_mask_stop(self, event: Any) -> Any:
+        """Adds a mask stop where the bar is clicked, with the opacity the mask has there (at most 8)."""
         stops, angle, mask, opacity = self.parts()
         if len(mask.stops) >= 8:
             return None
@@ -232,6 +271,7 @@ class ColorPicker(Component):
         return self.publish(stops, angle, Mask(points, angle=mask.angle), opacity)
 
     def set_mask_opacity(self, value: float) -> Any:
+        """Sets the selected mask stop's opacity (0 to 1)."""
         stops, angle, mask, opacity = self.parts()
         points = list(mask.stops)
         i = min(self.mask_stop, len(points) - 1)
@@ -239,6 +279,7 @@ class ColorPicker(Component):
         return self.publish(stops, angle, Mask(points, angle=mask.angle), opacity)
 
     def remove_mask_stop(self) -> Any:
+        """Removes the selected mask stop (a mask keeps at least two)."""
         stops, angle, mask, opacity = self.parts()
         if len(mask.stops) <= 2:
             return None
@@ -250,6 +291,10 @@ class ColorPicker(Component):
     # -- view -------------------------------------------------------------------
     def marker(self, x: float, y: float, color: str, *, size: float = HANDLE, selected: bool = True,
                **events: Any) -> Any:
+        """A round handle of ``color`` centered on ``(x, y)``.
+
+        A white ring marks it ``selected``; ``events`` are attached to it (e.g. ``drag``).
+        """
         ring = "#ffffff" if selected else "#9ca3af"
         dot = _core.container(None, width=size, height=size, bg=color, radius=size / 2,
                               border_color=ring, border_width=2, shadow=("#00000080", (0, 1), 3))
@@ -265,6 +310,7 @@ class ColorPicker(Component):
         return _core.stack([area, *markers], width=width + HANDLE, height=height + HANDLE)
 
     def sv_area(self) -> Any:
+        """The saturation/value square for the current hue, with a marker on the current color."""
         h, s, v, _a = self.hsva()
         hue = _from_hsva(h, 1, 1, 1)
         layers = [
@@ -275,12 +321,14 @@ class ColorPicker(Component):
         return self.area(layers, SV_HEIGHT, [marker], self.pick_sv)
 
     def hue_bar(self) -> Any:
+        """The rainbow hue bar with a marker on the current hue."""
         h = self.hsva()[0]
         layers = [_core.container(None, width="fill", height="fill", gradient=(90, HUES))]
         marker = self.marker(h * WIDTH + HANDLE / 2, BAR / 2 + HANDLE / 2, _from_hsva(h, 1, 1, 1))
         return self.area(layers, BAR, [marker], self.pick_hue)
 
     def alpha_bar(self) -> Any:
+        """The alpha bar (over a checkerboard) with a marker on the current alpha."""
         h, s, v, a = self.hsva()
         solid = _from_hsva(h, s, v, 1)
         layers = [checkerboard(WIDTH, BAR, 4),
@@ -290,6 +338,12 @@ class ColorPicker(Component):
 
     def stops_bar(self, points: List[Tuple[float, Any]], preview: Tuple[float, list], selected: int,
                   on_select: Any, on_move: Any, on_add: Any, *, colors: bool = True) -> Any:
+        """A bar previewing ``preview`` with a draggable handle per ``(offset, value)`` point.
+
+        Used for gradient stops (``colors``) and mask stops (opacities shown as grays). ``on_select(i)``,
+        ``on_move(i, event)`` and ``on_add(event)`` are called on a handle press, a handle drag
+        and a bar press.
+        """
         layers = [checkerboard(WIDTH, BAR + 4, 4),
                   _core.container(None, width="fill", height="fill", gradient=(90, preview[1]))]
         handles = []

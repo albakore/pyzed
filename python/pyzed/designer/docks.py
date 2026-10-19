@@ -42,6 +42,7 @@ class Panel:
 
     @property
     def title(self) -> str:
+        """The panel's title in the designer's language."""
         return tr(self.name)
 
 
@@ -111,6 +112,7 @@ class DockLayout:
         self.menu: Optional[str] = None
 
     def panels_in(self, dock: str, d: "Designer") -> List[Panel]:
+        """Returns the panels docked in ``dock`` that currently have something to show."""
         return [p for pid, p in PANELS.items() if self.docks.get(pid) == dock and p.available(d)]
 
     def shown(self, dock: str, d: "Designer") -> Optional[Panel]:
@@ -130,18 +132,22 @@ class DockLayout:
         self.closed[dock] = False
 
     def is_showing(self, panel: str, d: "Designer") -> bool:
+        """Whether ``panel`` is the one its dock currently shows."""
         shown = self.shown(self.docks[panel], d)
         return shown is not None and shown.id == panel
 
     def move(self, panel: str, dock: str) -> None:
+        """Moves ``panel`` to ``dock``, shows it there and closes the dock menu."""
         self.docks[panel] = dock
         self.show(panel)
         self.menu = None
 
     def toggle(self, dock: str) -> None:
+        """Hides ``dock`` if it is open, or opens it again."""
         self.closed[dock] = not self.closed.get(dock)
 
     def resize(self, dock: str, size: float) -> None:
+        """Sets the size of ``dock`` in pixels (rounded, and at least its minimum size)."""
         self.sizes[dock] = max(round(size), MIN_SIZE[dock])
 
 
@@ -159,6 +165,7 @@ def _dock_menu(d: "Designer", dock: str, panel: Panel, t: Theme) -> Any:
 
 
 def dock_view(d: "Designer", dock: str, t: Theme) -> Optional[Any]:
+    """Builds ``dock`` with its panel tabs, menu and the shown panel's body; ``None`` if it shows nothing."""
     layout = d.layout
     panel = layout.shown(dock, d)
     if panel is None:

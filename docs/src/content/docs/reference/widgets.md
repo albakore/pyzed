@@ -488,6 +488,14 @@ Builds its content with `function(width, height)` using the space actually avail
 | --- | --- |
 | `function` | Function that receives `(width, height)` and returns a widget. |
 
+### `FlexItem`
+
+```python
+class FlexItem
+```
+
+A child of `pz.flex` with its own sizing; made with `pz.flex_item`.
+
 ## Text and icons
 
 ### `text`
@@ -1351,6 +1359,57 @@ card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
 pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
 ```
 
+**Methods and properties**
+
+#### `Style.get`
+
+```python
+Style.get(key, default=None)
+```
+
+Returns a property's value (aliases accepted), or `default` when it is not set.
+
+#### `Style.merge`
+
+```python
+Style.merge(*styles, **props)
+```
+
+A new style with `styles` and `props` on top of this one.
+
+#### `Style.without`
+
+```python
+Style.without(*keys)
+```
+
+A new style without these properties.
+
+#### `Style.text`
+
+```python
+Style.text()
+```
+
+Only the text properties (what a style passes down to the texts inside).
+
+#### `Style.to_dict`
+
+```python
+Style.to_dict()
+```
+
+JSON-friendly properties (gradients and paints become dicts).
+
+#### `Style.from_dict`
+
+```python
+@classmethod
+Style.from_dict(data)
+```
+
+Builds a style from data made by `to_dict` (aliases accepted).
+
 ### `define_style`
 
 ```python
@@ -1395,6 +1454,24 @@ A linear gradient for backgrounds. Angles follow CSS: 0 up, 90 right, 180 (the d
 pz.container(None, height=80).style(background=pz.Gradient(["#f97316", "#7c3aed"], angle=90))
 ```
 
+**Methods and properties**
+
+#### `Gradient.to_value`
+
+```python
+Gradient.to_value()
+```
+
+`(angle, [(offset, "#rrggbbaa"), ...])`, the form widgets take as `gradient=`.
+
+#### `Gradient.to_dict`
+
+```python
+Gradient.to_dict()
+```
+
+Returns the gradient as JSON-ready data: `{"type": "linear", "angle", "stops"}`.
+
 ### `Mask`
 
 ```python
@@ -1407,6 +1484,24 @@ An opacity mask for a `Paint`: how visible the fill is along a direction. On a g
 | --- | --- |
 | `stops` | Opacities (0 to 1), spread evenly, or `(offset, opacity)` pairs. |
 | `angle` | Direction when the fill is a plain color. |
+
+**Methods and properties**
+
+#### `Mask.at`
+
+```python
+Mask.at(offset)
+```
+
+Returns the opacity (0 to 1) at `offset` (0 to 1), interpolating between stops.
+
+#### `Mask.to_dict`
+
+```python
+Mask.to_dict()
+```
+
+Returns the mask as JSON-ready data: `{"angle", "stops"}`.
 
 ### `Paint`
 
@@ -1425,3 +1520,69 @@ A fill: a color or `Gradient` with an overall opacity and an optional `Mask`. Wo
 ```python
 pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # fades out downwards
 ```
+
+**Methods and properties**
+
+#### `Paint.resolve`
+
+```python
+Paint.resolve()
+```
+
+`(color, gradient)`: what a container draws (one of them is `None`).
+
+#### `Paint.to_dict`
+
+```python
+Paint.to_dict()
+```
+
+Returns the paint as JSON-ready data: `fill`, `opacity` and `mask` when there is one.
+
+### `global_style`
+
+```python
+global_style()
+```
+
+The style set with `set_style` (`None` if none).
+
+### `named_styles`
+
+```python
+named_styles()
+```
+
+The styles defined with `define_style`, by name.
+
+### `apply_global`
+
+```python
+apply_global(view, style=None)
+```
+
+`view` with a window's global style: text properties fill in what texts leave unset.
+
+### `themed`
+
+```python
+themed(theme, style)
+```
+
+`theme` with a global style's text color, background, border color, size and radius.
+
+### `to_hex`
+
+```python
+to_hex(color)
+```
+
+Any color as `"#rrggbb"` or `"#rrggbbaa"` (theme tokens resolved).
+
+### `paint_from_dict`
+
+```python
+paint_from_dict(data)
+```
+
+Rebuilds a `Gradient` or `Paint` saved with `to_dict()`.

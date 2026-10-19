@@ -43,6 +43,7 @@ ui.button("Save", self.save, icon="save", variant="solid", keys="ctrl-s")
 | [More controls](/pyzed/components/controls/) | `select`, `radio_group`, `number_field`, `split_button`, `toggle_group`, `chip`, `disclosure` |
 | [Data and feedback](/pyzed/components/data/) | `table` + `Column`, `callout`, `empty_state`, `settings_group`, `stat`, `sparkline`, `bar_chart`, `donut`, `spinner`, `count_badge`, `facepile`, `diff_stat`, `keybinding_hint` |
 | [Content and panels](/pyzed/components/content/) | `markdown`, `split`, `popover`; base widgets `pz.image`, `pz.image_viewer`, `pz.rich_text`, `pz.qr_code`, `pz.grid` |
+| [Dialogs and tools](/pyzed/components/dialogs/) | `dialog_layer`, `alert`, `confirm`, `prompt`, `choice`, `unsaved_changes`, `accordion`, `Log` + `console`, `shortcuts`, `about`, `ColorPicker`, `color_swatch` |
 
 To see them all in action, run the gallery:
 

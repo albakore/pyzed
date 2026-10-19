@@ -133,6 +133,7 @@ class Gradient:
         return self.angle, [(o, to_hex(c)) for o, c in self.stops]
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the gradient as JSON-ready data: ``{"type": "linear", "angle", "stops"}``."""
         return {"type": "linear", "angle": self.angle, "stops": [[o, c] for o, c in self.stops]}
 
 
@@ -157,9 +158,11 @@ class Mask:
         return f"Mask({self.stops!r}, angle={self.angle:g})"
 
     def at(self, offset: float) -> float:
+        """Returns the opacity (0 to 1) at ``offset`` (0 to 1), interpolating between stops."""
         return _interpolate(self.stops, offset, lambda a, b, t: a + (b - a) * t)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the mask as JSON-ready data: ``{"angle", "stops"}``."""
         return {"angle": self.angle, "stops": [[o, a] for o, a in self.stops]}
 
 
@@ -212,6 +215,7 @@ class Paint:
         return None, (angle, out)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Returns the paint as JSON-ready data: ``fill``, ``opacity`` and ``mask`` when there is one."""
         out: Dict[str, Any] = {"fill": _value_to_json(self.fill), "opacity": self.opacity}
         if self.mask is not None:
             out["mask"] = self.mask.to_dict()
@@ -309,6 +313,7 @@ class Style:
         return self.props[ALIASES.get(key, key)]
 
     def get(self, key: str, default: Any = None) -> Any:
+        """Returns a property's value (aliases accepted), or ``default`` when it is not set."""
         return self.props.get(ALIASES.get(key, key), default)
 
     def __repr__(self) -> str:
@@ -333,6 +338,7 @@ class Style:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Style":
+        """Builds a style from data made by ``to_dict`` (aliases accepted)."""
         return cls(**{k: _value_from_json(ALIASES.get(k, k), v) for k, v in data.items()})
 
 

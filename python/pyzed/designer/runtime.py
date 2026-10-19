@@ -96,10 +96,12 @@ class ControlProxy:
 
     @property
     def name(self) -> str:
+        """The control's name."""
         return self._control.name
 
     @property
     def type(self) -> str:  # noqa: A003
+        """The control's component type (``"button"``, ``"textbox"``...)."""
         return self._control.type
 
     def __getattr__(self, key: str) -> Any:
@@ -132,9 +134,11 @@ class ControlProxy:
         return vars(self._runtime).get("_pyzed_children", {}).get(self._control.name)
 
     def show(self) -> None:
+        """Makes the control visible."""
         self._control.visible = True
 
     def hide(self) -> None:
+        """Hides the control (and whatever is inside it)."""
         self._control.visible = False
 
     def focus(self) -> _core.Command:
@@ -173,14 +177,17 @@ class FormProxy:
 
     @property
     def name(self) -> str:
+        """The form's name."""
         return self._runtime.form.name
 
     @property
     def title(self) -> str:
+        """The window's title (handlers can also set it: ``form.title = "..."``)."""
         return self._runtime.form.title
 
     @property
     def size(self) -> Tuple[float, float]:
+        """The window's current ``(width, height)`` in pixels."""
         return self._runtime.size
 
     @property
@@ -194,6 +201,7 @@ class FormProxy:
         return self._runtime.data
 
     def close(self) -> _core.Command:
+        """Returns the command that closes this form's window (return it from a handler)."""
         return self._runtime.window.close()
 
     def open(self, form: Union[str, Path, Form], *, data: Any = None) -> _core.Command:
@@ -220,6 +228,8 @@ class FormProxy:
 
 
 class LiveContext(_components.RenderContext):
+    """The render context of a running form: callbacks store the new value and dispatch the event to its
+    handler."""
     live = True
 
     def __init__(self, runtime: "FormRuntime") -> None:
@@ -262,6 +272,7 @@ class FormRuntime:
 
     @property
     def size(self) -> Tuple[float, float]:
+        """The window's current ``(width, height)``, or the designed size before it is known."""
         return tuple(self.window.window_size or self.design_size)  # type: ignore[return-value]
 
     def dispatch(self, control: Optional[Control], event: str, value: Any = None) -> Any:
@@ -292,12 +303,14 @@ class FormRuntime:
             return None
 
     def load(self) -> Any:
+        """Raises the form's ``load`` event the first time it is called; returns the handler's result."""
         if self.loaded:
             return None
         self.loaded = True
         return self.dispatch(None, "load")
 
     def subscriptions(self):
+        """Returns a timer subscription for every running, enabled timer whose ``tick`` event is wired."""
         subs = []
         for c in self.form.controls:
             if c.type != "timer" or not c.events.get("tick"):
@@ -320,6 +333,8 @@ class FormRuntime:
         )
 
     def view(self) -> Any:
+        """Draws the running form: its background, every visible control at its laid-out position and, after a
+        handler error, the error callout."""
         t = self.theme
         size = self.size
         layers = [_core.container(width="fill", height="fill", bg=t.background)]
@@ -439,6 +454,7 @@ class FormApp(_FormHost, App):
         self.path = Path(path) if path else None
 
     def on_start(self) -> Any:
+        """Watches the form and its handlers module for hot reload (when it is on), then raises ``load``."""
         reloader = hot_reload.current()
         if reloader is not None and self.path is not None:
             for file in (self.path, code_path(self.path, self.runtime.form)):
@@ -458,6 +474,7 @@ class FormWindow(_FormHost, Window):
         self._host(form, handlers, path, data)
 
     def on_open(self) -> Any:
+        """Raises the form's ``load`` event when the window opens."""
         return self.runtime.load()
 
 

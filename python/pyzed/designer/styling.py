@@ -151,6 +151,8 @@ def shadow_parts(value: Any) -> Tuple[str, float, float, float]:
 
 
 def shadow_value(color: str, x: float, y: float, blur: float) -> Optional[List[Any]]:
+    """Returns a shadow as it is saved, ``[color, [x, y], blur]`` (whole numbers as ints), or ``None`` when
+    ``color`` is empty (no shadow)."""
     color = (color or "").strip()
     if not color:
         return None

@@ -41,6 +41,7 @@ class History:
         return True
 
     def reset(self, form: Form) -> None:
+        """Forgets all undo and redo steps and starts again from ``form``'s current state."""
         self._group = None
         self._past.clear()
         self._future.clear()
@@ -48,13 +49,16 @@ class History:
 
     @property
     def can_undo(self) -> bool:
+        """Whether there is a step to undo."""
         return bool(self._past)
 
     @property
     def can_redo(self) -> bool:
+        """Whether there is an undone step to redo."""
         return bool(self._future)
 
     def undo(self) -> Optional[Form]:
+        """Steps back one snapshot; returns the previous form (a new object) or ``None`` if there is none."""
         if not self._past:
             return None
         self._group = None
@@ -63,6 +67,8 @@ class History:
         return self._kind.from_json(self._current)
 
     def redo(self) -> Optional[Form]:
+        """Steps forward one snapshot; returns the restored form (a new object) or ``None`` if there is
+        none."""
         if not self._future:
             return None
         self._group = None

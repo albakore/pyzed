@@ -45,6 +45,32 @@ El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`
 
 Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de cerrarse.
 
+**Métodos y propiedades**
+
+#### `App.subscriptions`
+
+```python
+App.subscriptions()
+```
+
+Temporizadores y streams que deben estar activos ahora mismo (se reevalúa tras cada update).
+
+#### `App.run`
+
+```python
+App.run(*, reload=None, watch=())
+```
+
+Abre la ventana y bloquea hasta que la app termina.
+
+#### `App.screenshot`
+
+```python
+App.screenshot(path, *, size=None, scale=2.0, wait=0.1)
+```
+
+Renderiza el estado actual fuera de pantalla (sin GPU ni display) en un PNG.
+
 ### `run`
 
 ```python
@@ -147,6 +173,80 @@ reenvía a `app.update()`.
 | `on_close()` | Cuando el usuario pide cerrarla; devuelve `False` para impedirlo. |
 | `on_resize(width, height)` | Al cambiar de tamaño. |
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
+
+**Métodos y propiedades**
+
+#### `Window.view`
+
+```python
+Window.view()
+```
+
+Devuelve el widget raíz de la ventana; las subclases deben sobrescribirlo.
+
+#### `Window.update`
+
+```python
+Window.update(message)
+```
+
+Gestiona un mensaje producido en esta ventana (por defecto lo reenvía a la app).
+
+#### `Window.on_close`
+
+```python
+Window.on_close()
+```
+
+Se llama cuando el usuario pide cerrar la ventana. Devuelve `False` para mantenerla abierta.
+
+#### `Window.is_open`
+
+```python
+Window.is_open  # property
+```
+
+Si la ventana está abierta ahora.
+
+#### `Window.open`
+
+```python
+Window.open()
+```
+
+Un comando que abre esta ventana: `return settings.open()`.
+
+#### `Window.close`
+
+```python
+Window.close()
+```
+
+Un comando que cierra esta ventana: `on_press=self.close`.
+
+#### `Window.drag`
+
+```python
+Window.drag()
+```
+
+Un comando que empieza a mover la ventana (para barras de título propias).
+
+#### `Window.resolved_theme`
+
+```python
+Window.resolved_theme()
+```
+
+El tema concreto que usa ahora esta ventana (con los colores y tamaños de su estilo global).
+
+#### `Window.resolved_style`
+
+```python
+Window.resolved_style()
+```
+
+El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.
 
 ## Async y suscripciones
 
@@ -261,6 +361,24 @@ Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget),
 | `value` | Valor de un evento propio. |
 | `source` | Componente que lo emitió. |
 
+**Métodos y propiedades**
+
+#### `Event.position`
+
+```python
+Event.position  # property
+```
+
+`(x, y)`.
+
+#### `Event.size`
+
+```python
+Event.size  # property
+```
+
+`(width, height)`.
+
 ### `Dock`
 
 ```python
@@ -281,6 +399,128 @@ pz.Dock(center=editor, panels=[
     pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
 ], layout=self.disposicion, on_layout=lambda e: setattr(self, "disposicion", e.value))
 ```
+
+**Métodos y propiedades**
+
+#### `Dock.side_of`
+
+```python
+Dock.side_of(panel)
+```
+
+Devuelve el lado en que está acoplado un panel: su posición guardada si es válida, si no `panel.side`.
+
+#### `Dock.groups`
+
+```python
+Dock.groups()
+```
+
+Devuelve los paneles agrupados por lado (están todos los lados, quizá con una lista vacía).
+
+#### `Dock.snapshot`
+
+```python
+Dock.snapshot()
+```
+
+Devuelve la disposición como un dict simple (`positions`, `sizes`, `active`, `hidden`).
+
+#### `Dock.changed`
+
+```python
+Dock.changed()
+```
+
+Emite `layout` con la instantánea actual.
+
+#### `Dock.move`
+
+```python
+Dock.move(panel_id, side)
+```
+
+Acopla un panel en otro lado y lo hace la pestaña activa allí.
+
+#### `Dock.select`
+
+```python
+Dock.select(side, panel_id)
+```
+
+Hace de `panel_id` la pestaña activa en `side` (un clic en la pestaña) y emite `layout`.
+
+#### `Dock.toggle`
+
+```python
+Dock.toggle(side)
+```
+
+Muestra u oculta un lado entero.
+
+#### `Dock.resized`
+
+```python
+Dock.resized(side, size)
+```
+
+Guarda el nuevo `size` (en píxeles) de `side` tras arrastrar su borde y emite `layout`.
+
+#### `Dock.start_drag`
+
+```python
+Dock.start_drag(panel_id)
+```
+
+Empieza a arrastrar la pestaña de un panel: aparecen las zonas de soltar y se cierra el menú de la pestaña.
+
+#### `Dock.end_drag`
+
+```python
+Dock.end_drag()
+```
+
+Termina el arrastre de una pestaña y oculta las zonas de soltar, recordando el panel para un `drop` tardío.
+
+#### `Dock.drop`
+
+```python
+Dock.drop(side)
+```
+
+Mueve el panel arrastrado a `side` al soltarlo en esa zona; no hace nada si no hay ninguno.
+
+#### `Dock.tab`
+
+```python
+Dock.tab(panel, side, active, t)
+```
+
+Construye la pestaña de un panel en la cabecera de un lado.
+
+#### `Dock.move_menu`
+
+```python
+Dock.move_menu(panel, side, t)
+```
+
+Construye el menú contextual que mueve `panel` a cualquier lado distinto de `side`.
+
+#### `Dock.side_view`
+
+```python
+Dock.side_view(side, panels, t)
+```
+
+Construye un lado: una cabecera con las pestañas de los paneles sobre el contenido del panel activo.
+
+#### `Dock.drop_zones`
+
+```python
+Dock.drop_zones(t)
+```
+
+Construye las cuatro zonas de soltar (una por lado) que se muestran sobre el dock mientras se arrastra una pestaña.
 
 ### `DockPanel`
 
@@ -322,6 +562,83 @@ class Rating(pz.Component):
 
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
+
+**Métodos y propiedades**
+
+#### `Component.create`
+
+```python
+@classmethod
+Component.create(*args, **kwargs)
+```
+
+Una instancia suelta (sin renderizar ni ciclo de vida), útil en tests: `c.render()`.
+
+#### `Component.setup`
+
+```python
+Component.setup()
+```
+
+Se llama una vez antes del primer render (las props ya están puestas): inicializa aquí el estado.
+
+#### `Component.render`
+
+```python
+Component.render()
+```
+
+Devuelve los widgets de este componente (se llama en cada render).
+
+#### `Component.on_mount`
+
+```python
+Component.on_mount()
+```
+
+Se llama tras el primer render; puede devolver un `Command` o un mensaje.
+
+#### `Component.on_unmount`
+
+```python
+Component.on_unmount()
+```
+
+Se llama cuando el componente deja de renderizarse.
+
+#### `Component.emit`
+
+```python
+Component.emit(name, value=None)
+```
+
+Lanza el evento personalizado `name`: llama al handler que el padre pasó como `on_<name>`.
+
+#### `Component.handles`
+
+```python
+Component.handles(name)
+```
+
+Si el padre pasó un handler para el evento personalizado `name`.
+
+#### `Component.describe`
+
+```python
+@classmethod
+Component.describe()
+```
+
+El primer párrafo del docstring (se muestra en el diseñador).
+
+#### `Component.designer_spec`
+
+```python
+@classmethod
+Component.designer_spec()
+```
+
+Este componente como entrada de la caja de herramientas del diseñador (`pyzed.designer.Component`).
 
 ### `Color`
 
@@ -396,6 +713,204 @@ class Counter(pz.Component):
     step: int = 1
     count: int = pz.state(0)
 ```
+
+### `State`
+
+```python
+class State
+```
+
+El valor por defecto de una variable de estado declarada en la clase (ver `state`).
+
+### `StateInfo`
+
+```python
+class StateInfo
+```
+
+Una variable de estado declarada con `pz.state`: su nombre, anotación, valor por defecto y descripción.
+
+### `PropInfo`
+
+```python
+class PropInfo
+```
+
+Una prop: su nombre, anotación de tipo (puede ser un texto) y valor por defecto.
+
+**Métodos y propiedades**
+
+#### `PropInfo.required`
+
+```python
+PropInfo.required  # property
+```
+
+Si la prop no tiene valor por defecto y hay que pasarla.
+
+### `find`
+
+```python
+find(type_name)
+```
+
+La clase de componente registrada como `type_name` (ver `Component.type_name`).
+
+### `registered`
+
+```python
+registered()
+```
+
+Todas las subclases de `Component` definidas hasta ahora que deben aparecer en el diseñador.
+
+### `render_pass`
+
+```python
+render_pass(owner)
+```
+
+Registra los componentes renderizados mientras `owner` (una ventana) ejecuta su `view()`.
+
+Los componentes que no se vuelven a renderizar se desmontan al final. El runtime lo hace
+en cada ventana; úsalo tú solo para renderizar componentes fuera de una ventana.
+
+### `EventInfo`
+
+```python
+class EventInfo
+```
+
+La documentación de un evento: su grupo y qué informa.
+
+### `accepts_argument`
+
+```python
+accepts_argument(handler)
+```
+
+Si `handler` recibe el evento: tiene un parámetro posicional obligatorio o `*args`.
+
+Los parámetros con valor por defecto no cuentan, así que `lambda i=i: ...` se llama sin nada.
+La respuesta se guarda en caché por función.
+
+### `LIFECYCLE_EVENTS`
+
+Los nombres de los eventos de ciclo de vida que lanza todo componente (`mount`, `unmount`...).
+
+### `CATALOG`
+
+Todos los nombres de evento que conoce Pyzed, con su `EventInfo` (qué lo lanza y qué contiene `event.value`).
+
+### `COMMON`
+
+Los eventos que acepta todo widget con `widget.on(...)` (clic, hover, foco, teclas...).
+
+## Hot reload
+
+### `enable`
+
+```python
+enable(app, paths=(), *, interval=0.25)
+```
+
+Inicia el hot reload para `app` (una instancia de `App` en marcha) y devuelve el reloader.
+
+### `current`
+
+```python
+current()
+```
+
+El `Reloader` activo, o `None` cuando el hot reload está apagado.
+
+### `is_reloading`
+
+```python
+is_reloading()
+```
+
+`True` mientras una recarga vuelve a ejecutar los módulos.
+
+### `enabled_by_env`
+
+```python
+enabled_by_env()
+```
+
+Si `PYZED_RELOAD` pide hot reload (`1`, `true`, `yes` u `on`).
+
+### `Reloader`
+
+```python
+class Reloader
+```
+
+Vigila los archivos del proyecto y recarga el código modificado en una app en marcha.
+
+`app` es la instancia de `App` en marcha. `paths` son carpetas o archivos extra que
+vigilar; por defecto se vigila la carpeta del módulo que define la clase de la app.
+`interval` es cada cuántos segundos se comprueba si hay cambios.
+
+La mayoría de los programas nunca crean uno a mano: lo hace `pz.run(app, reload=True)`.
+
+**Métodos y propiedades**
+
+#### `Reloader.watch`
+
+```python
+Reloader.watch(path, callback)
+```
+
+Llama a `callback(path)` en el hilo de la UI cada vez que cambia `path`.
+
+#### `Reloader.project_modules`
+
+```python
+Reloader.project_modules()
+```
+
+Los módulos cargados cuyos archivos pertenecen al proyecto, por ruta de archivo.
+
+#### `Reloader.scan`
+
+```python
+Reloader.scan()
+```
+
+Revisa una vez cada archivo vigilado y devuelve los que cambiaron.
+
+#### `Reloader.start`
+
+```python
+Reloader.start()
+```
+
+Arranca el hilo vigilante y hace de este el reloader actual.
+
+#### `Reloader.stop`
+
+```python
+Reloader.stop()
+```
+
+Deja de vigilar archivos.
+
+#### `Reloader.reload`
+
+```python
+Reloader.reload(changed)
+```
+
+Recarga ahora el código de los archivos de `changed` (llámalo en el hilo de la UI).
+
+### `ReloadError`
+
+```python
+class ReloadError
+```
+
+Lo lanza `view()` mientras la última recarga haya fallado; la ventana muestra su mensaje.
 
 ## Idiomas
 
@@ -521,3 +1036,11 @@ Si `key` tiene texto en el idioma o sus respaldos.
 | --- | --- |
 | `key` | Clave con puntos. |
 | `language` | Idioma a consultar (por defecto, el actual). |
+
+### `normalize`
+
+```python
+normalize(language)
+```
+
+`"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.

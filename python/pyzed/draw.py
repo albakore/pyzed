@@ -137,6 +137,7 @@ def restore() -> Shape:
 
 
 def translate(x: float, y: float) -> Shape:
+    """Moves the origin of the following shapes by ``(x, y)``."""
     return {"type": "translate", "x": x, "y": y}
 
 
@@ -146,6 +147,7 @@ def rotate(degrees: float) -> Shape:
 
 
 def scale(x: float, y: Optional[float] = None) -> Shape:
+    """Scales the following shapes by ``x`` horizontally and ``y`` vertically (``y`` defaults to ``x``)."""
     return {"type": "scale", "x": x, "y": x if y is None else y}
 
 

@@ -42,6 +42,7 @@ class Action:
 
     @property
     def label(self) -> str:
+        """The command's text in the designer's language."""
         return tr(self.text)
 
 
@@ -121,11 +122,16 @@ BY_ID: Dict[str, Action] = {a.id: a for a in ACTIONS}
 
 
 def run(action_id: str, d: "Designer") -> Any:
+    """Runs the command ``action_id`` on designer ``d`` if it is enabled; returns its result or ``None``."""
     action = BY_ID[action_id]
     return action.run(d) if action.enabled(d) else None
 
 
 def by_keys(combo: str, *, global_only: bool = False) -> Optional[Action]:
+    """Returns the command bound to key ``combo`` (``cmd-`` also matches ``ctrl-`` for global keys).
+
+    With ``global_only``, only commands whose keys work anywhere are considered.
+    """
     for action in ACTIONS:
         if action.keys == combo and (action.global_keys or not global_only):
             return action
@@ -135,10 +141,13 @@ def by_keys(combo: str, *, global_only: bool = False) -> Optional[Action]:
 
 
 def groups() -> List[Tuple[str, List[Action]]]:
+    """Returns the commands of each menu, in menu order, as ``(group, actions)`` pairs."""
     return [(g, [a for a in ACTIONS if a.group == g]) for g in GROUPS]
 
 
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:
+    """Returns the keyboard shortcut reference as ``(title, [(label, keys), ...])`` groups, translated, with
+    the extra non-command shortcuts and without empty groups."""
     out = [(tr(g), [(a.label.rstrip("…"), a.keys) for a in items if a.keys]) for g, items in groups()]
     out += [(tr(title), [(tr(label), keys) for label, keys in items]) for title, items in EXTRA_SHORTCUTS]
     return [(g, items) for g, items in out if items]
