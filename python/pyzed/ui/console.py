@@ -164,6 +164,7 @@ class Log:
                     line = raw.decode("utf-8", "replace") if isinstance(raw, bytes) else raw
                     if not line:
                         break
+                    line = line.rstrip("\r\n")  # Windows pipes end lines with \r\n
                     self.write("stderr" if level == "auto" and _looks_like_error(line) else
                                ("stdout" if level == "auto" else level), line)
             except (OSError, ValueError):
