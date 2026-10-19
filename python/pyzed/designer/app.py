@@ -33,11 +33,22 @@ from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .runtime import FormWindow
+from . import scene as _scene
+from . import scene_panel
 from ..project import Project
 
 Rect = Tuple[float, float, float, float]
 TITLE_HEIGHT = 34.0
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build"}
+
+#: Files the designer opens: forms and components designed visually.
+DOCUMENT_SUFFIXES = (SUFFIX, _scene.SUFFIX)
+
+#: What "New" can create: (label, icon, suffix, factory returning a new document).
+NEW_DOCUMENT_KINDS: List[Tuple[str, str, str, Callable[[], Document]]] = [
+    ("Form", "app-window", SUFFIX, Document),
+    ("Component", "component", _scene.SUFFIX, _scene.new_component),
+]
 
 
 @dataclass
@@ -72,7 +83,9 @@ class Designer(App):
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
         if path is not None and Path(path).exists():
-            self.doc = Document.open(path)
+            self.doc = _scene.open_document(path)
+        elif path is not None and Path(path).suffix == _scene.SUFFIX:
+            self.doc = _scene.new_component(Path(path).stem, path)
         else:
             self.doc = Document(path=Path(path).with_suffix(SUFFIX) if path else None)
         if theme is not None:
@@ -124,6 +137,8 @@ class Designer(App):
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
+        # Designed components (.pzcomp) of the project join the toolbox.
+        _scene.discover(found.root if found is not None else Path(path).resolve().parent if path else Path.cwd())
         self.title = self.window_title
 
     def on_start(self) -> Any:
@@ -875,8 +890,9 @@ class Designer(App):
         self.dialog = None
         self._guard(create)
 
-    def _new(self) -> None:
-        self.doc = Document()
+    def _new(self, factory: Callable[[], Document] = Document) -> None:
+        self.dialog = None
+        self.doc = factory()
         self.doc.form.grid = self.prefs.grid
         self.editing = None
         self._selection_changed()
@@ -893,7 +909,7 @@ class Designer(App):
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
         try:
-            self.doc = Document.open(path)
+            self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
             self.notify("Could not open the form", str(err), kind="error", seconds=5)
             return
@@ -907,7 +923,7 @@ class Designer(App):
     def save(self) -> None:
         if self.doc.path is None:
             self.dialog = "save_as"
-            self.dialog_path = f"{self.doc.form.name.lower()}{SUFFIX}"
+            self.dialog_path = f"{self.doc.form.name.lower()}{getattr(self.doc, 'suffix', SUFFIX)}"
             return
         if not self._flush_code():
             self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
@@ -921,7 +937,8 @@ class Designer(App):
     def save_as(self, path: str) -> None:
         if not path.strip():
             return
-        self.doc.path = Path(path.strip()) if Path(path.strip()).suffix else Path(path.strip()).with_suffix(SUFFIX)
+        suffix = getattr(self.doc, "suffix", SUFFIX)
+        self.doc.path = Path(path.strip()) if Path(path.strip()).suffix else Path(path.strip()).with_suffix(suffix)
         self.dialog = None
         self.save()
 
@@ -941,7 +958,7 @@ class Designer(App):
     def form_files(self, limit: int = 40) -> List[Path]:
         found: List[Path] = []
         root = Path.cwd()
-        for path in sorted(root.rglob(f"*{SUFFIX}")):
+        for path in sorted(p for suffix in DOCUMENT_SUFFIXES for p in root.rglob(f"*{suffix}")):
             if any(part in SKIP_DIRS for part in path.relative_to(root).parts):
                 continue
             found.append(path.relative_to(root))
@@ -955,6 +972,8 @@ class Designer(App):
         if not self._flush_code():
             self.notify("Fix the code before running", self.code_error, kind="error", seconds=4)
             return None
+        if scene_panel.is_scene(self):
+            return scene_panel.run(self)
         if self.prefs.save_on_run and self.doc.path is not None:
             self.save()
         if self.prefs.console_on_run:
@@ -1148,6 +1167,7 @@ class Designer(App):
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
+            ui.badge("Component", tint="accent", icon="component", theme=t) if scene_panel.is_scene(self) else None,
         ]
         end = [
             ui.button("Run", self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
@@ -1180,7 +1200,7 @@ class Designer(App):
 
         sep = _core.container(ui.divider(vertical=True, theme=t), height=18, padding=(0, 4))
         start = [
-            tool("file-plus", self.new, "New form", keys="ctrl-n"),
+            tool("file-plus", self.new, "New form or component", keys="ctrl-n"),
             tool("folder-open", self.open_dialog, "Open", keys="ctrl-o"),
             tool("save", self.save, "Save", keys="ctrl-s"),
             sep,
@@ -1272,7 +1292,7 @@ class Designer(App):
             rows = [ui.list_item(str(p), lambda p=p: self.open_path(p), icon="layout-template", inset=True, theme=t)
                     for p in files if not self.dialog_path or self.dialog_path.lower() in str(p).lower()]
             if not rows:
-                rows = [ui.label("No .pzform files here; type a path above.", size="sm", color="text_muted",
+                rows = [ui.label("No .pzform or .pzcomp files here; type a path above.", size="sm", color="text_muted",
                                  theme=t)]
             return ui.modal(
                 _core.column([
@@ -1280,7 +1300,7 @@ class Designer(App):
                              icon="search", on_submit=lambda: self.open_path(self.dialog_path), theme=t),
                     _core.container(_core.scrollable(_core.column(rows, width="fill")), height=260),
                 ], spacing=10),
-                title="Open form", on_close=self.close_dialog, width=520, theme=t)
+                title="Open form or component", on_close=self.close_dialog, width=520, theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,

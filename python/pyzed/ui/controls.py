@@ -1,8 +1,8 @@
-"""Form controls: selects, radio groups, number fields, split buttons, chips and disclosures."""
+"""Form controls: selects, radio groups, number fields, split buttons, chips, disclosures and accordions."""
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 
 from .. import _core
 from ..icons import glyph as _glyph
@@ -105,7 +105,7 @@ def number_field(
     min: Optional[float] = None,  # noqa: A002
     max: Optional[float] = None,  # noqa: A002
     step: float = 1,
-    width: Any = 120,
+    width: float = 120,
     suffix: Optional[str] = None,
     align: str = "center",
     theme: Optional[Theme] = None,
@@ -114,7 +114,7 @@ def number_field(
 
     ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
     accepted as long as it parses; anything else is ignored. The number is centered
-    between the buttons (``align="start"`` or ``"end"`` to change it).
+    between the buttons; ``align="start"`` or ``"end"`` moves it.
     """
     t = _theme(theme)
 
@@ -284,48 +284,63 @@ def disclosure(
     return _core.column([header, _core.container(content, padding=(4, 0, 4, 26)) if open else None], spacing=2)
 
 
+class AccordionSection(NamedTuple):
+    """One section of an ``accordion``: a ``key``, its ``title``, its ``content`` and an optional header ``end``."""
+
+    key: str
+    title: str
+    content: Any
+    icon: Optional[str] = None
+    end: Any = None
+
+
 def accordion(
-    sections: Sequence[Tuple[str, str, Any]],
-    *,
-    open: Any = (),  # noqa: A002
+    sections: Sequence[Any],
+    open: Any,  # noqa: A002
     on_toggle: Optional[Callable[[str], Any]] = None,
-    icons: Optional[Dict[str, str]] = None,
-    spacing: float = 8,
+    *,
+    padding: Any = (6, 12, 10, 12),
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """Collapsible sections, each in its own bordered box: ``[(id, title, content), ...]``.
+    """Stacked collapsible sections separated by dividers, like the panels of Zed's settings.
 
-    ``open`` holds the ids of the expanded sections (or is ``True`` for all of them);
-    ``on_toggle(id)`` is called when a header is clicked. Use it for property panels,
-    settings and FAQs.
+    ``sections`` are ``AccordionSection`` (or ``(key, title, content)`` tuples); ``open`` is
+    the set of open keys (or a ``{key: bool}`` dict) and ``on_toggle(key)`` flips one. The
+    header spans the whole width, so content lines up with the rest of the panel.
     """
     t = _theme(theme)
-    boxes = []
-    for key, title, content in sections:
-        expanded = open is True or key in open
-        icon = (icons or {}).get(key)
+    is_open = (lambda k: bool(open.get(k, False))) if isinstance(open, Mapping) else (lambda k: k in open)
+    parts: list = []
+    for index, raw in enumerate(sections):
+        section = raw if isinstance(raw, AccordionSection) else AccordionSection(*raw)
+        shown = is_open(section.key)
         header = _core.button(
-            _core.container(_core.row([
-                _icon("chevron-down" if expanded else "chevron-right", size=14, color=t.icon_muted),
-                _icon(icon, size=14, color=t.icon_muted) if icon else None,
-                label(title, size="sm", weight="semibold", theme=t),
-                _core.space(width="fill"),
-            ], spacing=6, align="center"), height="fill", width="fill", align_y="center"),
-            (lambda k=key: on_toggle(k)) if on_toggle else None,
+            _core.row(
+                [
+                    _icon("chevron-down" if shown else "chevron-right", size=14, color=t.icon_muted),
+                    _icon(section.icon, size=14, color=t.icon_muted) if section.icon else None,
+                    label(section.title, size="sm", weight="semibold", wrap=False, theme=t),
+                    _core.space(width="fill"),
+                ],
+                spacing=8,
+                align="center",
+            ),
+            (lambda k=section.key: on_toggle(k)) if on_toggle else None,
             width="fill",
-            height=32,
-            padding=(0, 10),
+            padding=(8, 12),
             bg="transparent",
             hover_bg=t.ghost_hover,
-            radius=t.radius,
+            radius=0,
         )
-        body = None
-        if expanded:
-            body = _core.column([_core.rule(thickness=1, color=t.border_variant),
-                                 _core.container(content, padding=(6, 0, 8, 0), width="fill")], width="fill")
-        boxes.append(_core.container(_core.column([header, body], width="fill"), width="fill", bg=t.surface,
-                                     border_color=t.border_variant, border_width=1.0, radius=t.radius + 2))
-    return _core.column(boxes, spacing=spacing, width="fill")
+        if section.end is not None:
+            header = _core.stack([header, _core.container(section.end, width="fill", height="fill",
+                                                          align_x="end", align_y="center", padding=(0, 8))])
+        if index:
+            parts.append(_core.container(width="fill", height=1, bg=t.border_variant))
+        parts.append(header)
+        if shown:
+            parts.append(_core.container(section.content, width="fill", padding=padding))
+    return _core.column(parts, width="fill")
 
 
 def toggle_group(

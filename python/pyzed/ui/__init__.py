@@ -22,7 +22,17 @@ from .base import (
 )
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
 from .help import about, shortcuts
-from .controls import accordion, chip, disclosure, number_field, radio_group, select, split_button, toggle_group
+from .controls import (
+    AccordionSection,
+    accordion,
+    chip,
+    disclosure,
+    number_field,
+    radio_group,
+    select,
+    split_button,
+    toggle_group,
+)
 from .display import (
     Column,
     bar_chart,
@@ -65,9 +75,10 @@ __all__ = [
     "Log",
     "LogEntry",
     "about",
-    "accordion",
     "console",
     "shortcuts",
+    "AccordionSection",
+    "accordion",
     "ansi",
     "avatar",
     "badge",

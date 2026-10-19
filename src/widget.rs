@@ -191,8 +191,8 @@ pub enum Kind {
         layout: Layout,
         secure: bool,
         icon: Option<(char, f32)>,
-        style: InputStyle,
         align_x: Option<Horizontal>,
+        style: InputStyle,
     },
     Scrollable {
         child: Py<Widget>,
@@ -801,8 +801,7 @@ pub fn button(
 #[pyo3(signature = (value, *, placeholder="", on_input=None, on_submit=None, id=None, size=None,
     font=None, padding=None, width=None, secure=false, icon=None, icon_size=None, bg=None,
     border_color=None, hover_border_color=None, focus_border_color=None, border_width=None,
-    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None,
-    align_x=None))]
+    radius=None, color=None, placeholder_color=None, selection_color=None, icon_color=None, align_x=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn text_input(
     py: Python<'_>,
@@ -847,6 +846,7 @@ pub fn text_input(
             layout: Layout::new(&width, &None, &padding)?,
             secure,
             icon: icon_char(&icon)?.map(|c| (c, icon_size.unwrap_or(14.0))),
+            align_x: style::align_x(align_x)?,
             style: InputStyle {
                 background: style::opt_color(&bg)?,
                 border_color: style::opt_color(&border_color)?,
@@ -859,7 +859,6 @@ pub fn text_input(
                 selection_color: style::opt_color(&selection_color)?,
                 icon_color: style::opt_color(&icon_color)?,
             },
-            align_x: style::align_x(align_x)?,
         },
     )
 }

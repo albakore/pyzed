@@ -446,7 +446,10 @@ def open_form(path: Union[str, Path]) -> FormApp:
     """
     from ..project import activate_for
 
-    activate_for(path)
+    from .scene import discover
+
+    project = activate_for(path)
+    discover(project.root if project is not None else Path(path).resolve().parent)  # designed components
     form = load(path)
     return FormApp(form, load_handlers(path, form), path)
 
@@ -458,4 +461,8 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
     or its handlers module updates the running window without restarting it. ``None``
     follows ``PYZED_RELOAD``, like ``pz.run``.
     """
+    if Path(path).suffix == ".pzcomp":  # a designed component on its own
+        from .scene_panel import run_file
+
+        return run_file(path)
     _run_app(open_form(path), reload=reload)

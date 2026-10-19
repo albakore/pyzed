@@ -21,6 +21,7 @@ class History:
         self._future: List[str] = []
         self._current = form.to_json()
         self._group: Optional[str] = None
+        self._kind = type(form)  # snapshots come back as the same kind (a Form or a component Scene)
 
     def push(self, form: Form, group: Optional[str] = None) -> bool:
         """Records the form's current state; returns ``False`` if nothing changed.
@@ -59,7 +60,7 @@ class History:
         self._group = None
         self._future.append(self._current)
         self._current = self._past.pop()
-        return Form.from_json(self._current)
+        return self._kind.from_json(self._current)
 
     def redo(self) -> Optional[Form]:
         if not self._future:
@@ -67,4 +68,4 @@ class History:
         self._group = None
         self._past.append(self._current)
         self._current = self._future.pop()
-        return Form.from_json(self._current)
+        return self._kind.from_json(self._current)

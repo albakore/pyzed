@@ -126,7 +126,12 @@ def new_form(d: "Designer", t: Theme) -> Any:
         ui.callout(f"{path.name} already exists", "Pick another name or folder.", tint="warning", theme=t)
         if exists else None,
     ], spacing=10)
+    from .app import NEW_DOCUMENT_KINDS
+
+    others = [ui.button(f"New {label.lower()}", lambda f=factory: d._new(f), icon=icon, variant="ghost", theme=t)
+              for label, icon, _suffix, factory in NEW_DOCUMENT_KINDS if label != "Form"]
     return ui.modal(body, title="New form", on_close=d.close_dialog, width=560, theme=t, footer=[
+        *others,
         ui.button("Unsaved form", d.create_untitled_form, variant="ghost", theme=t),
         _core.space(width="fill"),
         ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),

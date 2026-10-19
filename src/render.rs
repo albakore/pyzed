@@ -353,8 +353,8 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             layout,
             secure,
             icon,
-            style,
             align_x,
+            style,
         } => {
             let mut t = text_input(placeholder, value).secure(*secure);
             if let Some(a) = align_x {

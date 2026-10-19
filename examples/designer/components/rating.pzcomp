@@ -1,0 +1,182 @@
+{
+  "format": "pyzed.component/1",
+  "component": {
+    "name": "Rating",
+    "width": 232,
+    "height": 28,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": false,
+    "grid": 8,
+    "code": null,
+    "label": "",
+    "icon": "star",
+    "category": "Example",
+    "description": "Five stars the user can click."
+  },
+  "events": {},
+  "controls": [
+    {
+      "name": "star1",
+      "type": "button",
+      "x": 0.0,
+      "y": 0,
+      "width": 28,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "filled",
+        "icon": "star"
+      },
+      "events": {
+        "click": "star1_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "star2",
+      "type": "button",
+      "x": 32,
+      "y": 0,
+      "width": 28,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "filled",
+        "icon": "star"
+      },
+      "events": {
+        "click": "star2_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "star3",
+      "type": "button",
+      "x": 64,
+      "y": 0,
+      "width": 28,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "filled",
+        "icon": "star"
+      },
+      "events": {
+        "click": "star3_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "star4",
+      "type": "button",
+      "x": 96,
+      "y": 0,
+      "width": 28,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "filled",
+        "icon": "star"
+      },
+      "events": {
+        "click": "star4_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "star5",
+      "type": "button",
+      "x": 128,
+      "y": 0,
+      "width": 28,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "filled",
+        "icon": "star"
+      },
+      "events": {
+        "click": "star5_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "caption",
+      "type": "label",
+      "x": 168,
+      "y": 0,
+      "width": 64,
+      "height": 28,
+      "props": {
+        "text": "Label",
+        "size": "md",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ],
+  "bindings": {
+    "star1": {
+      "variant": "\"solid\" if value >= 1 else \"ghost\""
+    },
+    "star2": {
+      "variant": "\"solid\" if value >= 2 else \"ghost\""
+    },
+    "star3": {
+      "variant": "\"solid\" if value >= 3 else \"ghost\""
+    },
+    "star4": {
+      "variant": "\"solid\" if value >= 4 else \"ghost\""
+    },
+    "star5": {
+      "variant": "\"solid\" if value >= 5 else \"ghost\""
+    },
+    "caption": {
+      "text": "f\"{value} / 5\""
+    }
+  }
+}
