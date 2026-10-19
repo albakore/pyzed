@@ -1,8 +1,8 @@
 ---
 title: Other libraries
-description: Recipes for aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.
+description: Recipes for aiosqlite, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.
 sidebar:
-  order: 7
+  order: 9
 ---
 
 import { Code } from '@astrojs/starlight/components';
@@ -45,30 +45,9 @@ uv run main.py
 
 ## SQLAlchemy asyncio
 
-The [SQLAlchemy demo](/pyzed/integrations/sqlalchemy/) uses threads. With an async driver
-(`aiosqlite`, `asyncpg`, `aiomysql`) you can return coroutines instead. The engine attaches to
-the loop that first uses it, which is always Pyzed's:
-
-```python
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-engine = create_async_engine("sqlite+aiosqlite:///contacts.db")
-Session = async_sessionmaker(engine, expire_on_commit=False)
-
-
-class Contacts(pz.App):
-    def on_start(self):
-        return self.load()
-
-    async def load(self):
-        async with Session() as session:
-            rows = (await session.scalars(select(Contact).order_by(Contact.name))).all()
-        return ("loaded", rows)
-```
-
-Load relationships eagerly (`selectinload`) before the session closes: lazy loading needs an
-`await`, which `view()` can't do.
+Covered on the [SQLAlchemy page](/pyzed/integrations/sqlalchemy/#the-asyncio-version): the
+`sqlalchemy_quickstart` demo runs the same window on a sync `Session` or on an `AsyncSession`
+with aiosqlite (`uv run main.py --async`).
 
 ## pandas and Polars
 

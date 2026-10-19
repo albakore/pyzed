@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-sqlmodel-heroes"
+version = "0.1.0"
+description = "SQLModel's tutorial heroes and teams in a Pyzed window."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "sqlmodel>=0.0.22"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

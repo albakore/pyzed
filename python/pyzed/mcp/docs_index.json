@@ -439,45 +439,57 @@
    "path": "docs/src/content/docs/index.mdx"
   },
   {
+   "slug": "integrations/architectures",
+   "title": "Architectures",
+   "description": "The ways a Pyzed desktop app can live with FastAPI, Django, SQLAlchemy, SQLModel and other backends, with a diagram and a runnable demo for each.",
+   "path": "docs/src/content/docs/integrations/architectures.md"
+  },
+  {
    "slug": "integrations/django",
    "title": "Django",
-   "description": "Use Django's ORM, async queries and model validation in a Pyzed desktop app that shares its database with the Django admin.",
+   "description": "Follow Django's polls tutorial, then use the project from a Pyzed desktop window through the ORM in the same process or as an HTTP client of runserver.",
    "path": "docs/src/content/docs/integrations/django.mdx"
   },
   {
    "slug": "integrations/fastapi",
    "title": "FastAPI",
-   "description": "Build a desktop client for a FastAPI REST API with Pyzed and httpx, embed the server in the same process and show 422 validation errors on each field.",
+   "description": "Build FastAPI's SQL tutorial API as written in its documentation, then use it from a Pyzed desktop window as a separate server, an embedded server or in-process.",
    "path": "docs/src/content/docs/integrations/fastapi.mdx"
   },
   {
-   "slug": "integrations/httpx-pydantic",
-   "title": "httpx and Pydantic",
-   "description": "Call web APIs from a Pyzed app with httpx, stream concurrent responses into the window and parse them into Pydantic models.",
-   "path": "docs/src/content/docs/integrations/httpx-pydantic.mdx"
+   "slug": "integrations/httpx",
+   "title": "httpx",
+   "description": "Call web APIs from a Pyzed app with httpx, following its quickstart: requests, an AsyncClient, concurrent calls, errors and streaming downloads with a progress bar.",
+   "path": "docs/src/content/docs/integrations/httpx.mdx"
   },
   {
    "slug": "integrations/other-libraries",
    "title": "Other libraries",
-   "description": "Recipes for aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.",
+   "description": "Recipes for aiosqlite, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.",
    "path": "docs/src/content/docs/integrations/other-libraries.mdx"
   },
   {
    "slug": "integrations/overview",
    "title": "Integrations overview",
-   "description": "Use Pyzed as the desktop frontend for FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic and aiosqlite, with runnable demos.",
+   "description": "Use Pyzed as the desktop frontend for FastAPI, Django, SQLAlchemy, SQLModel, httpx, Pydantic and aiosqlite, with demos that follow each library's official tutorial.",
    "path": "docs/src/content/docs/integrations/overview.md"
+  },
+  {
+   "slug": "integrations/pydantic",
+   "title": "Pydantic",
+   "description": "Validate Pyzed forms with Pydantic models, show the errors on each field, and parse or save JSON with model_validate_json and model_dump_json.",
+   "path": "docs/src/content/docs/integrations/pydantic.mdx"
   },
   {
    "slug": "integrations/sqlalchemy",
    "title": "SQLAlchemy",
-   "description": "A desktop database app with Pyzed and SQLAlchemy 2.0, with 20,000 rows in a virtual table, search and sorting in SQL, and editing without freezing the window.",
+   "description": "SQLAlchemy's ORM Quick Start in a Pyzed desktop app, with a sync Session in worker threads or an AsyncSession on Pyzed's asyncio loop, plus a 20,000-row table.",
    "path": "docs/src/content/docs/integrations/sqlalchemy.mdx"
   },
   {
    "slug": "integrations/sqlmodel",
    "title": "SQLModel",
-   "description": "Validate a Pyzed form with the same SQLModel class that defines the database table, and show Pydantic errors on each field.",
+   "description": "SQLModel's tutorial (teams, heroes, where filters, relationships) in a Pyzed desktop app, plus an inventory whose form and table share one model.",
    "path": "docs/src/content/docs/integrations/sqlmodel.mdx"
   },
   {

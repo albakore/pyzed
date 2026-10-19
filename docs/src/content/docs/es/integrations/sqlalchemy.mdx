@@ -1,13 +1,145 @@
 ---
 title: SQLAlchemy
-description: Una app de escritorio con base de datos usando Pyzed y SQLAlchemy 2.0, con 20.000 filas en una tabla virtual, búsqueda y orden en SQL y edición sin congelar la ventana.
+description: El ORM Quick Start de SQLAlchemy en una app de escritorio de Pyzed, con una Session síncrona en hilos de trabajo o una AsyncSession en el loop de asyncio de Pyzed, más una tabla de 20.000 filas.
 sidebar:
-  order: 3
+  order: 5
 ---
 
-import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import qsMain from '../../../../../../examples/integrations/sqlalchemy_quickstart/main.py?raw';
+import qsModels from '../../../../../../examples/integrations/sqlalchemy_quickstart/models.py?raw';
+import qsSync from '../../../../../../examples/integrations/sqlalchemy_quickstart/sync_backend.py?raw';
+import qsAsync from '../../../../../../examples/integrations/sqlalchemy_quickstart/async_backend.py?raw';
 import main from '../../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
 import db from '../../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+
+SQLAlchemy corre en el mismo proceso que la ventana (la arquitectura 1 de
+[Arquitecturas](/pyzed/es/integrations/architectures/)). Hay dos demos:
+
+- **`sqlalchemy_quickstart`**: los modelos `User` y `Address` del
+  [ORM Quick Start](https://docs.sqlalchemy.org/en/20/orm/quickstart.html) de SQLAlchemy, con la
+  misma ventana sobre una `Session` síncrona o sobre la [extensión asyncio](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html).
+- **`sqlalchemy_contacts`**: 20.000 filas en una tabla virtual, con búsqueda y orden en SQL.
+
+## El Quick Start en una ventana
+
+![Usuarios y sus direcciones de email del Quick Start de SQLAlchemy](../../../../assets/integrations/sqlalchemy-quickstart.png)
+
+```bash
+cd examples/integrations/sqlalchemy_quickstart
+uv run main.py            # Session en hilos de trabajo
+uv run main.py --async    # AsyncSession con aiosqlite en el loop de Pyzed
+```
+
+<Steps>
+
+1. **Declara los modelos** igual que el Quick Start, con `DeclarativeBase`, `Mapped` y
+   `relationship`. La cascada borra las direcciones de un usuario junto con el usuario:
+
+   ```python
+   class Base(DeclarativeBase):
+       pass
+
+   class User(Base):
+       __tablename__ = "user_account"
+
+       id: Mapped[int] = mapped_column(primary_key=True)
+       name: Mapped[str] = mapped_column(String(30))
+       fullname: Mapped[Optional[str]]
+       addresses: Mapped[List["Address"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+   class Address(Base):
+       __tablename__ = "address"
+
+       id: Mapped[int] = mapped_column(primary_key=True)
+       email_address: Mapped[str]
+       user_id: Mapped[int] = mapped_column(ForeignKey("user_account.id"))
+       user: Mapped["User"] = relationship(back_populates="addresses")
+   ```
+
+2. **Crea un Engine y las tablas:**
+
+   ```python
+   engine = create_engine("sqlite:///quickstart.db")
+   Base.metadata.create_all(engine)
+   ```
+
+3. **Abre una Session por unidad de trabajo.** Cada función del backend abre su propia `Session`,
+   así que se puede ejecutar sin riesgo en cualquier hilo de trabajo. `selectinload` carga las
+   direcciones antes de que se cierre la sesión, para que la ventana pueda leer `user.addresses`
+   después:
+
+   ```python
+   def users() -> list[User]:
+       stmt = select(User).options(selectinload(User.addresses)).order_by(User.name)
+       with Session(engine) as session:
+           return list(session.scalars(stmt))
+
+   def add_address(user_id: int, email_address: str) -> None:
+       with Session(engine) as session:
+           user = session.get(User, user_id)
+           user.addresses.append(Address(email_address=email_address))
+           session.commit()
+   ```
+
+4. **Llámalo desde la ventana con `Command.perform`.** La función corre en un hilo y `then`
+   recibe el resultado en el hilo de la UI:
+
+   ```python
+   def on_start(self):
+       return Command.perform(backend.setup, lambda _: self.reload())
+
+   def reload(self):
+       return Command.perform(backend.users, self.loaded)
+
+   def add_address(self, *_):
+       user_id, email = self.selected_id, self.new_email.strip()
+       return Command.perform(lambda: backend.add_address(user_id, email), lambda _: self.reload())
+   ```
+
+</Steps>
+
+### La versión asyncio
+
+`async_backend.py` tiene las mismas funciones escritas con `create_async_engine`, un
+`async_sessionmaker` y el driver aiosqlite. `Command.perform` ve que son funciones de corrutina y
+las ejecuta en el loop de asyncio de Pyzed en lugar de en un hilo, así que `main.py` no cambia:
+
+```python
+engine = create_async_engine("sqlite+aiosqlite:///quickstart.db")
+async_session = async_sessionmaker(engine, expire_on_commit=False)
+
+async def setup() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def users() -> list[User]:
+    stmt = select(User).options(selectinload(User.addresses)).order_by(User.name)
+    async with async_session() as session:
+        return list(await session.scalars(stmt))
+```
+
+<Aside>
+Con `AsyncSession`, la carga perezosa necesitaría un `await`, así que las relaciones se cargan
+de antemano con `selectinload`, y `expire_on_commit=False` mantiene los objetos legibles después
+de `commit()`. Instala `sqlalchemy[asyncio]` y `aiosqlite`; el extra trae `greenlet`, que la
+extensión necesita.
+</Aside>
+
+| | `Session` | `AsyncSession` |
+| --- | --- | --- |
+| Dónde corre | Un hilo de trabajo por llamada | El loop de asyncio de Pyzed |
+| Llamada de Pyzed | `Command.perform(función_síncrona, then)` | `Command.perform(función_async, then)` o devolver la corrutina |
+| Úsala cuando | La mayoría de las apps de escritorio; cualquier driver | Ya usas drivers de asyncio (asyncpg, aiosqlite) |
+
+<Tabs>
+<TabItem label="main.py"><Code code={qsMain} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={qsModels} lang="py" /></TabItem>
+<TabItem label="sync_backend.py"><Code code={qsSync} lang="py" /></TabItem>
+<TabItem label="async_backend.py"><Code code={qsAsync} lang="py" /></TabItem>
+</Tabs>
+
+## Muchas filas: la demo de contactos
 
 Un gestor de contactos sobre SQLAlchemy 2.0 y SQLite. La tabla tiene 20.000 filas y se desplaza
 con fluidez porque `ui.table` solo construye las filas visibles; la búsqueda y el orden se hacen
@@ -20,9 +152,9 @@ cd examples/integrations/sqlalchemy_contacts
 uv run main.py
 ```
 
-La demo separa el código de base de datos en `db.py`, sin nada de Pyzed, y la ventana en
-`main.py`. Vale la pena copiar esa división: el mismo `db.py` podría servir a una app de FastAPI
-o a una CLI.
+La demo guarda el código de la base de datos en `db.py`, sin nada de Pyzed, y la ventana en
+`main.py`. Vale la pena copiar esa separación: el mismo `db.py` podría servir a una app de
+FastAPI o a una CLI.
 
 <Steps>
 
@@ -41,7 +173,7 @@ o a una CLI.
 
 2. **Cada consulta es una función con su propia sesión.** Las sesiones de SQLAlchemy no se
    comparten entre hilos, así que cada función abre una y la cierra. Los objetos cargados
-   conservan sus valores al cerrarse la sesión, que es todo lo que necesita la vista:
+   conservan sus valores después de cerrar la sesión, que es todo lo que necesita la vista:
 
    ```python
    def search(text, sort, descending):
@@ -55,8 +187,8 @@ o a una CLI.
            return list(session.scalars(query))
    ```
 
-3. **Ejecútala con `Command.perform`.** La función corre en un hilo y `then` recibe el
-   resultado en el hilo de la UI. Devolver una lista de comandos los ejecuta juntos:
+3. **Ejecútala con `Command.perform`.** La función corre en un hilo y `then` recibe el resultado
+   en el hilo de la UI. Devolver una lista de comandos los ejecuta juntos:
 
    ```python
    def reload(self):
@@ -67,25 +199,24 @@ o a una CLI.
        ]
 
    def loaded(self, query, rows):
-       if query == self.query:          # viene una búsqueda más nueva: hay que esperarla
+       if query == self.query:          # a newer search is on its way: keep waiting for it
            self.rows, self.loading = rows, False
    ```
 
-   Copia antes a variables locales el estado que necesitas (`query, sort, ...`): la lambda se
+   Copia primero en variables locales el estado que necesitas (`query, sort, ...`): la lambda se
    ejecuta más tarde, en otro hilo, y no debería leer `self` mientras el usuario sigue escribiendo.
 
-4. **Pasa todas las filas a `ui.table`.** Está virtualizada, así que 20.000 filas cuestan lo
-   mismo que 20. Al pulsar una cabecera se llama a `on_sort`, que aquí repite la consulta con
-   otro `ORDER BY`:
+4. **Pasa todas las filas a `ui.table`.** Está virtualizada, así que 20.000 filas cuestan lo mismo
+   que 20. Al pulsar una cabecera se llama a `on_sort`, que aquí vuelve a ejecutar la consulta con
+   un nuevo `ORDER BY`:
 
    ```python
    ui.table(columns, self.rows, sort_by=self.sort, descending=self.descending, on_sort=self.sort_by,
             on_row_press=self.open, selected=self.editing, striped=True, height="fill")
    ```
 
-5. **Convierte los errores de la base de datos en errores de campo.** `save` devuelve el
-   contacto o `{campo: mensaje}`. Una restricción unique se convierte en un mensaje bajo el campo
-   Email:
+5. **Convierte los errores de la base de datos en errores de campo.** `save` devuelve el contacto
+   o `{campo: mensaje}`. Una restricción de unicidad se convierte en un mensaje bajo el campo Email:
 
    ```python
    try:
@@ -106,8 +237,7 @@ funciona: devuelve la corrutina en lugar de usar `Command.perform`. Mira
 [Otras librerías](/pyzed/es/integrations/other-libraries/#sqlalchemy-asyncio).
 </Aside>
 
-## Código completo
-
-<Code code={main} lang="py" title="examples/integrations/sqlalchemy_contacts/main.py" />
-
-<Code code={db} lang="py" title="examples/integrations/sqlalchemy_contacts/db.py" />
+<Tabs>
+<TabItem label="main.py"><Code code={main} lang="py" /></TabItem>
+<TabItem label="db.py"><Code code={db} lang="py" /></TabItem>
+</Tabs>

@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-pydantic-signup"
+version = "0.1.0"
+description = "A Pyzed sign-up form validated by a Pydantic model and saved as JSON."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "pydantic[email]>=2.6"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

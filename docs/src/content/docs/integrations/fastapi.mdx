@@ -1,138 +1,210 @@
 ---
 title: FastAPI
-description: Build a desktop client for a FastAPI REST API with Pyzed and httpx, embed the server in the same process and show 422 validation errors on each field.
+description: Build FastAPI's SQL tutorial API as written in its documentation, then use it from a Pyzed desktop window as a separate server, an embedded server or in-process.
 sidebar:
-  order: 2
+  order: 3
 ---
 
-import { Code, Steps, Aside } from '@astrojs/starlight/components';
-import client from '../../../../../examples/integrations/fastapi_notes/main.py?raw';
-import api from '../../../../../examples/integrations/fastapi_notes/api.py?raw';
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import api from '../../../../../examples/integrations/fastapi_heroes/main.py?raw';
+import window from '../../../../../examples/integrations/fastapi_heroes/heroes_window.py?raw';
+import client from '../../../../../examples/integrations/fastapi_heroes/client.py?raw';
+import embedded from '../../../../../examples/integrations/fastapi_heroes/embedded.py?raw';
+import inProcess from '../../../../../examples/integrations/fastapi_heroes/in_process.py?raw';
 
-FastAPI and Pyzed fit together naturally: both are typed, both are async, and both use Pydantic.
-This demo is a notes app whose data lives behind a FastAPI REST API. The window talks to it with
-`httpx.AsyncClient` on Pyzed's asyncio loop, and when the API rejects a note, its 422 response is
-shown next to each field.
+The API in this demo is FastAPI's own [SQL (Relational) Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
+tutorial, copied without changes: heroes stored with SQLModel, with separate models for creating,
+reading and updating. The Pyzed window is a desktop client for it, and the same window runs in
+the three [architectures](/pyzed/integrations/architectures/) that involve an API.
 
-![A notes client for a FastAPI API, with validation errors under Title and Tags](../../../assets/integrations/fastapi.png)
+![A desktop window listing heroes from the FastAPI API, with an edit form](../../../assets/integrations/fastapi.png)
 
-```bash
-cd examples/integrations/fastapi_notes
-uv run main.py                          # starts the API in the background and opens the window
-uv run main.py http://127.0.0.1:8000    # or talk to an API that is already running
-uv run uvicorn api:app --reload         # serve the API alone (docs at /docs)
+```text
+fastapi_heroes/
+├── main.py            # the API, exactly as in FastAPI's tutorial
+├── heroes_window.py   # the Pyzed window, which only speaks HTTP (httpx)
+├── client.py          # 2. client and server
+├── embedded.py        # 3. embedded server
+└── in_process.py      # 4. in process
 ```
+
+## 1. The API, as FastAPI teaches it
 
 <Steps>
 
-1. **The API is ordinary FastAPI.** Pydantic models declare the rules; FastAPI enforces them and
-   answers 422 with the details when a request breaks them:
+1. **Install FastAPI with its standard extras**, which bring the `fastapi` CLI and Uvicorn. The
+   demo's `pyproject.toml` already lists them:
 
-   ```python
-   class NoteIn(BaseModel):
-       title: str = Field(min_length=1, max_length=60)
-       body: str = ""
-       tags: list[str] = []
-
-       @field_validator("tags")
-       @classmethod
-       def short_tags(cls, tags):
-           if any(len(tag) > 16 for tag in tags):
-               raise ValueError("each tag must be 16 characters or fewer")
-           return tags
-
-   @app.post("/notes", status_code=201)
-   def create_note(data: NoteIn) -> Note: ...
+   ```bash
+   cd examples/integrations/fastapi_heroes
+   uv add "fastapi[standard]" sqlmodel httpx   # in your own project
    ```
 
-2. **Embed the server (optional).** For a self-contained app, run uvicorn in a daemon thread
-   before opening the window. uvicorn skips its signal handlers outside the main thread, and the
-   thread ends with the app:
+2. **Write the models.** `HeroBase` holds the shared fields, `Hero` is the table, `HeroPublic`
+   is what the API returns (never the `secret_name`), and `HeroCreate` and `HeroUpdate` describe
+   the request bodies:
 
    ```python
-   def serve_in_background() -> str:
-       with socket.socket() as probe:          # a free port
-           probe.bind(("127.0.0.1", 0))
-           port = probe.getsockname()[1]
-       server = uvicorn.Server(uvicorn.Config(api, host="127.0.0.1", port=port, log_level="warning"))
-       threading.Thread(target=server.run, daemon=True).start()
-       while not server.started:
-           time.sleep(0.02)
-       return f"http://127.0.0.1:{port}"
+   class HeroBase(SQLModel):
+       name: str = Field(index=True)
+       age: int | None = Field(default=None, index=True)
 
-   pz.run(NotesClient(serve_in_background()))
+   class Hero(HeroBase, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       secret_name: str
+
+   class HeroPublic(HeroBase):
+       id: int
+
+   class HeroCreate(HeroBase):
+       secret_name: str
+
+   class HeroUpdate(HeroBase):
+       name: str | None = None
+       age: int | None = None
+       secret_name: str | None = None
    ```
 
-   The same client works against a remote API: pass its URL instead.
-
-3. **Requests are coroutines.** Returning a coroutine from a callback runs it on Pyzed's loop,
-   and what it returns goes to `update`. The `AsyncClient` is created once, inside a coroutine, so
-   it belongs to that loop:
+3. **Declare a session dependency** so every request gets its own `Session`:
 
    ```python
-   async def http(self):
-       if self.client is None:
-           self.client = httpx.AsyncClient(base_url=self.base_url, timeout=5)
-       return self.client
+   def get_session():
+       with Session(engine) as session:
+           yield session
 
-   async def fetch(self, query):
-       try:
-           response = await (await self.http()).get("/notes", params={"q": query})
-           response.raise_for_status()
-       except httpx.HTTPError as error:
-           return ("offline", str(error))
-       return ("loaded", query, response.json())
-
-   def search(self, text):
-       self.query = text
-       return self.fetch(text)
+   SessionDep = Annotated[Session, Depends(get_session)]
    ```
 
-4. **Drop stale answers.** Typing "py" sends two requests; the answer for "p" may arrive last.
-   The query travels with the answer and `update` keeps only the current one:
+4. **Write the path operations.** `response_model` filters the output and FastAPI validates the
+   input, returning **422** with one entry per invalid field:
 
    ```python
-   def update(self, message):
-       kind, *rest = message
-       if kind == "loaded":
-           query, notes = rest
-           if query == self.query:
-               self.notes = notes
+   @app.post("/heroes/", response_model=HeroPublic)
+   def create_hero(hero: HeroCreate, session: SessionDep):
+       db_hero = Hero.model_validate(hero)
+       session.add(db_hero)
+       session.commit()
+       session.refresh(db_hero)
+       return db_hero
+
+   @app.patch("/heroes/{hero_id}", response_model=HeroPublic)
+   def update_hero(hero_id: int, hero: HeroUpdate, session: SessionDep):
+       hero_db = session.get(Hero, hero_id)
+       if not hero_db:
+           raise HTTPException(status_code=404, detail="Hero not found")
+       hero_data = hero.model_dump(exclude_unset=True)
+       hero_db.sqlmodel_update(hero_data)
+       ...
    ```
 
-5. **Show 422 errors on each field.** `pz.validation_errors` reads FastAPI's
-   `{"detail": [{"loc": ["body", "title"], "msg": ...}]}` and returns `{"title": msg}`, ready for
-   `ui.field(error=)`:
+5. **Run it with the FastAPI CLI** and open the interactive docs at
+   [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs):
 
-   ```python
-   async def send(self, note_id, payload):
-       client = await self.http()
-       response = await client.put(f"/notes/{note_id}", json=payload)
-       if response.is_error:
-           return ("invalid", response.json())
-       return ("saved", response.json())
-
-   # update():
-   elif kind == "invalid":
-       self.errors = pz.validation_errors(rest[0])
-
-   # view():
-   ui.field("Title", ui.input(self.draft["title"], self.edit("title")), error=self.errors.get("title"))
+   ```bash
+   uv run fastapi dev main.py
    ```
 
-   A plain error such as `{"detail": "Note not found"}` lands under the key `""`, shown in a
-   `ui.callout` above the form.
+   `fastapi dev` reloads on every change; `fastapi run main.py` is the production command.
 
 </Steps>
 
-<Aside type="tip">
-Share the models. If the client and the API are in the same project, import `NoteIn` in the
-client and validate before sending (`NoteIn.model_validate(...)`) to show errors without a round
-trip; the server still validates, as it must.
+## The desktop client
+
+`heroes_window.py` is a `pz.App` that talks to the API with an `httpx.AsyncClient`. It receives a
+function that creates the client, so the same window works with any of the architectures below.
+
+<Steps>
+
+1. **Send requests from coroutines.** Returning a coroutine from a callback runs it on Pyzed's
+   asyncio loop; its return value reaches `update`. The client is created on first use, so it
+   belongs to that loop:
+
+   ```python
+   async def api(self, method, url, **kwargs):
+       if self.client is None:
+           self.client = self.make_client()
+       try:
+           return await self.client.request(method, url, **kwargs)
+       except httpx.HTTPError as error:
+           return f"Can't reach the API: {error}"
+
+   async def load(self):
+       response = await self.api("GET", "/heroes/", params={"limit": 100})
+       if isinstance(response, str):
+           return ("offline", response)
+       return ("loaded", response.json())
+   ```
+
+2. **Create with POST and edit with PATCH.** Only the fields the user filled in are sent, which is
+   what `HeroUpdate` and `exclude_unset=True` expect:
+
+   ```python
+   async def save(self):
+       body = {key: value for key, value in self.draft.items() if value != ""}
+       if self.selected is None:
+           response = await self.api("POST", "/heroes/", json=body)
+       else:
+           response = await self.api("PATCH", f"/heroes/{self.selected['id']}", json=body)
+       if response.status_code == 422:
+           return ("invalid", response.json())
+       ...
+   ```
+
+3. **Show FastAPI's 422 on each field.** `pz.validation_errors` reads `{"detail": [...]}` and
+   returns `{"age": "Input should be a valid integer, ..."}`:
+
+   ```python
+   def update(self, message):
+       kind, value = message
+       if kind == "invalid":
+           self.errors = pz.validation_errors(value)
+   ```
+
+</Steps>
+
+## 2. Client and server
+
+The API and the window are two programs. This is how a deployed API is used, and how you work
+on both at once with reload:
+
+```bash
+uv run fastapi dev main.py     # terminal 1
+uv run client.py               # terminal 2 (or: uv run client.py https://api.example.com)
+```
+
+<Code code={client} lang="py" title="client.py" />
+
+## 3. Embedded server
+
+One command starts the API in a background thread with Uvicorn, the server `fastapi run` uses,
+and opens the window. While the window is open, [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+works in a browser too.
+
+```bash
+uv run embedded.py
+```
+
+<Code code={embedded} lang="py" title="embedded.py" />
+
+## 4. In process
+
+No server and no port: `httpx.ASGITransport` hands each request to the FastAPI app as a function
+call. The program works offline, and the API code stays the same.
+
+```bash
+uv run in_process.py
+```
+
+<Code code={inProcess} lang="py" title="in_process.py" />
+
+<Aside type="caution">
+`ASGITransport` doesn't send startup or lifespan events, so code in `@app.on_event("startup")`
+or a `lifespan` function doesn't run. `in_process.py` calls `create_db_and_tables()` itself.
 </Aside>
 
 ## Full code
 
-<Code code={client} lang="py" title="examples/integrations/fastapi_notes/main.py" />
-
-<Code code={api} lang="py" title="examples/integrations/fastapi_notes/api.py" />
+<Tabs>
+<TabItem label="main.py (API)"><Code code={api} lang="py" /></TabItem>
+<TabItem label="heroes_window.py"><Code code={window} lang="py" /></TabItem>
+</Tabs>

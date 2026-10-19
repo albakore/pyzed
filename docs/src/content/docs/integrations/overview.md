@@ -1,6 +1,6 @@
 ---
 title: Integrations overview
-description: Use Pyzed as the desktop frontend for FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic and aiosqlite, with runnable demos.
+description: Use Pyzed as the desktop frontend for FastAPI, Django, SQLAlchemy, SQLModel, httpx, Pydantic and aiosqlite, with demos that follow each library's official tutorial.
 sidebar:
   order: 1
   label: Overview
@@ -8,16 +8,26 @@ sidebar:
 
 Pyzed is only the interface: everything else in your app is ordinary Python. That means the
 libraries you already use for web backends, databases and HTTP work unchanged in a desktop app.
-This section shows how to wire the most common ones, each with a demo you can run.
+This section shows how to wire the most common ones. Each demo starts from the library's own
+official tutorial (FastAPI's SQL tutorial, Django's polls app, SQLAlchemy's Quick Start,
+SQLModel's heroes) and adds a Pyzed window to it.
 
-| Demo | Library | What it shows | Tutorial |
+When a backend has to run alongside the window, [Architectures](/pyzed/integrations/architectures/)
+explains the four ways to combine them, with a diagram for each: same process, client and server,
+embedded server and in-process API.
+
+| Demo | Libraries | What it shows | Tutorial |
 | --- | --- | --- | --- |
-| [`fastapi_notes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_notes) | FastAPI, uvicorn, httpx | A desktop client for a REST API, with the server embedded in the same process and 422 errors shown on each field. | [FastAPI](/pyzed/integrations/fastapi/) |
-| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | 20,000 rows in a virtual table, searched and sorted in SQL, edited in a side panel. | [SQLAlchemy](/pyzed/integrations/sqlalchemy/) |
-| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | One model for the form validation and the table. | [SQLModel](/pyzed/integrations/sqlmodel/) |
-| [`django_library`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_library) | Django | Django's async ORM and model validation in a desktop app that shares its data with the Django admin. | [Django](/pyzed/integrations/django/) |
-| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | Concurrent requests streamed into the window, responses parsed into models. | [httpx and Pydantic](/pyzed/integrations/httpx-pydantic/) |
-| [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | An async SQLite connection living on Pyzed's event loop. | [Other libraries](/pyzed/integrations/other-libraries/#aiosqlite) |
+| [`fastapi_heroes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_heroes) | FastAPI, SQLModel, httpx | FastAPI's SQL tutorial API and a desktop client for it, run three ways: separate server, embedded server and in-process. | [FastAPI](/pyzed/integrations/fastapi/) |
+| [`django_polls`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_polls) | Django, httpx | Django's polls tutorial, used from a window through the ORM in the same process or over HTTP while runserver runs. | [Django](/pyzed/integrations/django/) |
+| [`sqlalchemy_quickstart`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_quickstart) | SQLAlchemy 2.0, aiosqlite | The ORM Quick Start's users and addresses, with a sync Session in threads or an AsyncSession on the loop. | [SQLAlchemy](/pyzed/integrations/sqlalchemy/) |
+| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | 20,000 rows in a virtual table, searched and sorted in SQL from a worker thread. | [SQLAlchemy](/pyzed/integrations/sqlalchemy/#many-rows-the-contacts-demo) |
+| [`sqlmodel_heroes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_heroes) | SQLModel | SQLModel's tutorial: teams, heroes, where() filters, relationships and a validated form. | [SQLModel](/pyzed/integrations/sqlmodel/) |
+| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | One model validates the form and defines the table. | [SQLModel](/pyzed/integrations/sqlmodel/#one-model-for-the-form-and-the-table-the-inventory-demo) |
+| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | Concurrent requests streamed into the window and parsed into models. | [httpx](/pyzed/integrations/httpx/) |
+| [`httpx_download`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_download) | httpx | Streaming downloads with progress bars and cancel. | [httpx](/pyzed/integrations/httpx/#streaming-downloads-with-progress) |
+| [`pydantic_signup`](https://github.com/albakore/pyzed/tree/main/examples/integrations/pydantic_signup) | Pydantic | A sign-up form validated by a model, saved and loaded as JSON. | [Pydantic](/pyzed/integrations/pydantic/) |
+| [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | An async SQLite connection on Pyzed's event loop. | [Other libraries](/pyzed/integrations/other-libraries/#aiosqlite) |
 
 ## Running a demo
 
@@ -53,7 +63,7 @@ flowchart LR
 | --- | --- | --- |
 | **async** (`await ...`) | Return a coroutine or an async generator from `update`, a callback or `on_start`. Its result goes to `update`. | httpx `AsyncClient`, aiosqlite, Django's async ORM, SQLAlchemy `AsyncSession`, websockets, redis.asyncio |
 | **blocking** | `Command.perform(function, then)`: `function` runs in a thread and `then(result)` on the UI thread. | SQLAlchemy and SQLModel sessions, requests, pandas, file I/O |
-| **a server** | Start it in a daemon thread before `pz.run`. | uvicorn (FastAPI, Starlette), a Django dev server |
+| **a server** | Run it apart (`fastapi dev`, `manage.py runserver`) or in a daemon thread before `pz.run`. See [Architectures](/pyzed/integrations/architectures/). | FastAPI, Django, Starlette |
 | **a stream** | `pz.listen(async_generator)` in `subscriptions()`. | websockets, server-sent events, Redis pub/sub |
 
 Three rules keep it safe:

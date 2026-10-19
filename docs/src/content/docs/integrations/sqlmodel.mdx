@@ -1,13 +1,125 @@
 ---
 title: SQLModel
-description: Validate a Pyzed form with the same SQLModel class that defines the database table, and show Pydantic errors on each field.
+description: SQLModel's tutorial (teams, heroes, where filters, relationships) in a Pyzed desktop app, plus an inventory whose form and table share one model.
 sidebar:
-  order: 4
+  order: 6
 ---
 
-import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import hMain from '../../../../../examples/integrations/sqlmodel_heroes/main.py?raw';
+import hModels from '../../../../../examples/integrations/sqlmodel_heroes/models.py?raw';
+import hDb from '../../../../../examples/integrations/sqlmodel_heroes/db.py?raw';
 import main from '../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
 import models from '../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
+
+SQLModel runs in the same process as the window (architecture 1 in
+[Architectures](/pyzed/integrations/architectures/)); when the same models must be shared over
+HTTP, put them behind FastAPI as in the [FastAPI demo](/pyzed/integrations/fastapi/). There are two demos:
+
+- **`sqlmodel_heroes`**: the `Team` and `Hero` tables of [SQLModel's tutorial](https://sqlmodel.tiangolo.com/tutorial/),
+  with its sample data, `where()` filters, relationships and a data model for the form.
+- **`sqlmodel_inventory`**: an inventory whose validation rules and table come from one class.
+
+## The tutorial's heroes in a window
+
+![Heroes grouped by team, filtered by age, with an edit panel](../../../assets/integrations/sqlmodel-heroes.png)
+
+```bash
+cd examples/integrations/sqlmodel_heroes
+uv run main.py
+```
+
+<Steps>
+
+1. **Define the tables** as in the tutorial's
+   [Relationship Attributes](https://sqlmodel.tiangolo.com/tutorial/relationship-attributes/) chapter:
+
+   ```python
+   class Team(SQLModel, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       name: str = Field(index=True)
+       headquarters: str
+
+       heroes: list["Hero"] = Relationship(back_populates="team")
+
+   class Hero(SQLModel, table=True):
+       id: int | None = Field(default=None, primary_key=True)
+       name: str = Field(index=True)
+       secret_name: str
+       age: int | None = Field(default=None, index=True)
+
+       team_id: int | None = Field(default=None, foreign_key="team.id")
+       team: Team | None = Relationship(back_populates="heroes")
+   ```
+
+2. **Create the engine and the tables**, and add the tutorial's heroes the first time:
+
+   ```python
+   sqlite_file_name = "database.db"
+   sqlite_url = f"sqlite:///{sqlite_file_name}"
+   engine = create_engine(sqlite_url)
+
+   def create_db_and_tables():
+       SQLModel.metadata.create_all(engine)
+   ```
+
+3. **Query with `select()` and `where()`.** Filters are added one by one; `col()` gives the type
+   checker a column for the comparison, as the tutorial recommends:
+
+   ```python
+   def heroes(team_id, min_age):
+       statement = select(Hero).options(selectinload(Hero.team)).order_by(Hero.name)
+       if team_id != "all":
+           statement = statement.where(Hero.team_id == team_id)
+       if min_age is not None:
+           statement = statement.where(col(Hero.age) >= min_age)
+       with Session(engine) as session:
+           return list(session.exec(statement))
+   ```
+
+   `selectinload` loads each hero's team before the session closes, so the table can show
+   `hero.team.name`.
+
+4. **Validate the form with a data model.** `table=True` models don't validate (SQLAlchemy creates
+   them), so the tutorial's [Multiple Models](https://sqlmodel.tiangolo.com/tutorial/fastapi/multiple-models/)
+   approach applies: a `HeroCreate` without `table=True` checks what the form typed.
+
+   ```python
+   class HeroCreate(SQLModel):
+       name: str = Field(min_length=1)
+       secret_name: str = Field(min_length=1)
+       age: int | None = Field(default=None, ge=0)
+       team_id: int | None = None
+
+   def save(self):
+       try:
+           data = HeroCreate.model_validate({**self.draft, "age": self.draft["age"] or None, ...})
+       except ValidationError as error:
+           self.errors = pz.validation_errors(error)
+           return None
+       return Command.perform(lambda: db.save(hero_id, data), lambda _: self.reload())
+   ```
+
+5. **Create or update with `sqlmodel_update`:**
+
+   ```python
+   def save(hero_id, data: HeroCreate):
+       with Session(engine) as session:
+           hero = session.get(Hero, hero_id) if hero_id else Hero.model_validate(data)
+           hero.sqlmodel_update(data.model_dump())
+           session.add(hero)
+           session.commit()
+   ```
+
+</Steps>
+
+<Tabs>
+<TabItem label="main.py"><Code code={hMain} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={hModels} lang="py" /></TabItem>
+<TabItem label="db.py"><Code code={hDb} lang="py" /></TabItem>
+</Tabs>
+
+## One model for the form and the table: the inventory demo
 
 SQLModel joins Pydantic and SQLAlchemy: one class describes the fields, their rules and the
 table. In a desktop app that means the form and the database agree by construction. This demo is
@@ -102,8 +214,7 @@ The same `ProductIn` can be the body of a FastAPI endpoint. If your app grows a 
 desktop client and the API validate with one model. See [FastAPI](/pyzed/integrations/fastapi/).
 </Aside>
 
-## Full code
-
-<Code code={main} lang="py" title="examples/integrations/sqlmodel_inventory/main.py" />
-
-<Code code={models} lang="py" title="examples/integrations/sqlmodel_inventory/models.py" />
+<Tabs>
+<TabItem label="main.py"><Code code={main} lang="py" /></TabItem>
+<TabItem label="models.py"><Code code={models} lang="py" /></TabItem>
+</Tabs>
