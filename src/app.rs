@@ -510,6 +510,7 @@ fn is_deferred(value: &Bound<'_, PyAny>) -> bool {
 /// produced value into a message.
 fn background(source: PyMsg, call: bool, then: Option<PyMsg>) -> Task<Message> {
     let (sender, receiver) = mpsc::unbounded::<Message>();
+    let has_then = then.is_some();
     std::thread::spawn(move || {
         Python::attach(|py| {
             let source = source.0.bind(py);
@@ -535,8 +536,11 @@ fn background(source: PyMsg, call: bool, then: Option<PyMsg>) -> Task<Message> {
             );
             let result = value.and_then(|value| {
                 let emit = emit?;
+                // With a `then`, a function that returns nothing still calls it (with None).
+                let kwargs = PyDict::new(py);
+                kwargs.set_item("keep_none", has_then)?;
                 py.import("pyzed._async")?
-                    .call_method1("drain", (value, emit))
+                    .call_method("drain", (value, emit), Some(&kwargs))
                     .map(|_| ())
             });
             if let Err(err) = result {

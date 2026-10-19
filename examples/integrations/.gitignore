@@ -1,0 +1,5 @@
+# Databases the demos create on their first run
+*.db
+*.sqlite3
+uv.lock
+.venv/

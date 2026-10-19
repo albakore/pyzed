@@ -403,7 +403,7 @@ A group of mutually exclusive buttons (Zed's `ToggleButtonGroup`).
 ### `field`
 
 ```python
-field(title, control, *, description=None, theme=None)
+field(title, control, *, description=None, error=None, theme=None)
 ```
 
 A form row: title and description on the left, control on the right (like Zed's settings).
@@ -413,6 +413,7 @@ A form row: title and description on the left, control on the right (like Zed's 
 | `title` | Title. |
 | `control` | The control (switch, input…). |
 | `description` | Help text. |
+| `error` | A validation message shown under the title in the error color (see `pz.validation_errors`). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ## Dialogs
@@ -576,7 +577,7 @@ select(
 )
 ```
 
-A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.
+A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.
 
 | Parameter | Description |
 | --- | --- |
@@ -1063,7 +1064,7 @@ A titled block of `ui.field` rows separated by lines (Zed's settings UI).
 class Column(title, key, width='fill', align='start', render=None, sortable=True)
 ```
 
-A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or `("fill", 2)`.
+A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or a portion such as `"fill:2"`.
 
 | Parameter | Description |
 | --- | --- |

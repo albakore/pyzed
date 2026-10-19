@@ -167,14 +167,22 @@ def segmented(
     )
 
 
-def field(title: str, control: Any, *, description: Optional[str] = None,
+def field(title: str, control: Any, *, description: Optional[str] = None, error: Optional[str] = None,
           theme: Optional[Theme] = None) -> _core.Widget:
-    """A labelled form row: title + optional description on the left, control on the right."""
+    """A labelled form row: title + optional description on the left, control on the right.
+
+    ``error`` shows a validation message in the theme's error color under the title (see
+    ``pz.validation_errors`` to get them from Pydantic, SQLModel, Django or a FastAPI 422).
+    """
     t = _theme(theme)
     return _core.row(
         [
             _core.column(
-                [label(title, theme=t), label(description, size="sm", color="text_muted", theme=t) if description else None],
+                [
+                    label(title, theme=t),
+                    label(description, size="sm", color="text_muted", theme=t) if description else None,
+                    label(error, size="sm", color="error", theme=t) if error else None,
+                ],
                 spacing=2,
                 width="fill",
             ),

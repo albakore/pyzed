@@ -1,0 +1,110 @@
+---
+title: SQLAlchemy
+description: A desktop database app with Pyzed and SQLAlchemy 2.0, with 20,000 rows in a virtual table, search and sorting in SQL, and editing without freezing the window.
+sidebar:
+  order: 3
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
+import db from '../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+
+A contacts manager on SQLAlchemy 2.0 and SQLite. The table holds 20,000 rows and scrolls
+smoothly because `ui.table` only builds the rows in view; search and sorting run in SQL, in a
+worker thread, so the window never waits for the database.
+
+![A contacts table with 20,000 rows, statistics and an edit panel](../../../assets/integrations/sqlalchemy.png)
+
+```bash
+cd examples/integrations/sqlalchemy_contacts
+uv run main.py
+```
+
+The demo keeps the database code in `db.py`, with no Pyzed in it, and the window in `main.py`.
+That split is worth copying: the same `db.py` could serve a FastAPI app or a CLI.
+
+<Steps>
+
+1. **Models are plain SQLAlchemy 2.0.**
+
+   ```python
+   class Contact(Base):
+       __tablename__ = "contacts"
+
+       id: Mapped[int] = mapped_column(primary_key=True)
+       name: Mapped[str] = mapped_column(String(80), index=True)
+       email: Mapped[str] = mapped_column(String(120), unique=True)
+       company: Mapped[str] = mapped_column(String(80), default="")
+       city: Mapped[str] = mapped_column(String(60), default="")
+   ```
+
+2. **Each query is a function with its own session.** SQLAlchemy sessions are not shared
+   between threads, so every function opens one and closes it. The loaded objects keep their
+   values after the session closes, which is all the view needs:
+
+   ```python
+   def search(text, sort, descending):
+       column = COLUMNS[sort]
+       query = select(Contact).order_by(column.desc() if descending else column, Contact.id)
+       if text:
+           pattern = f"%{text}%"
+           query = query.where(or_(Contact.name.ilike(pattern), Contact.email.ilike(pattern),
+                                   Contact.company.ilike(pattern)))
+       with Session(engine) as session:
+           return list(session.scalars(query))
+   ```
+
+3. **Run it with `Command.perform`.** The function runs in a thread and `then` gets the
+   result on the UI thread. Returning a list of commands runs them together:
+
+   ```python
+   def reload(self):
+       query, sort, descending = self.query, self.sort, self.descending
+       return [
+           Command.perform(lambda: db.search(query, sort, descending), lambda rows: self.loaded(query, rows)),
+           Command.perform(db.stats, lambda stats: setattr(self, "stats", stats)),
+       ]
+
+   def loaded(self, query, rows):
+       if query == self.query:          # a newer search is on its way: keep waiting for it
+           self.rows, self.loading = rows, False
+   ```
+
+   Copy the state you need into locals first (`query, sort, ...`): the lambda runs later, in
+   another thread, and should not read `self` while the user keeps typing.
+
+4. **Hand all the rows to `ui.table`.** It is virtualized, so 20,000 rows cost the same as 20.
+   Clicking a header calls `on_sort`, which here re-runs the query with a new `ORDER BY`:
+
+   ```python
+   ui.table(columns, self.rows, sort_by=self.sort, descending=self.descending, on_sort=self.sort_by,
+            on_row_press=self.open, selected=self.editing, striped=True, height="fill")
+   ```
+
+5. **Turn database errors into field errors.** `save` returns either the contact or
+   `{field: message}`. A unique constraint becomes a message under the Email field:
+
+   ```python
+   try:
+       session.commit()
+   except IntegrityError:
+       return {"email": "Another contact already uses this email"}
+   ```
+
+   ```python
+   ui.field("Email", ui.input(self.draft["email"], ...), error=self.errors.get("email"))
+   ```
+
+</Steps>
+
+<Aside type="tip">
+Prefer `asyncio`? SQLAlchemy's `AsyncSession` with `aiosqlite` or `asyncpg` works too: return the
+coroutine instead of using `Command.perform`. See
+[Other libraries](/pyzed/integrations/other-libraries/#sqlalchemy-asyncio).
+</Aside>
+
+## Full code
+
+<Code code={main} lang="py" title="examples/integrations/sqlalchemy_contacts/main.py" />
+
+<Code code={db} lang="py" title="examples/integrations/sqlalchemy_contacts/db.py" />

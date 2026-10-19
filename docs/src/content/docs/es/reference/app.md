@@ -1313,3 +1313,26 @@ summary(markdown)
 ```
 
 La primera frase de un texto Markdown, sin formato (para listas y resultados de búsqueda).
+
+## Formularios y validación
+
+### `validation_errors`
+
+```python
+validation_errors(error)
+```
+
+Convierte un error de validación en `{campo: mensaje}`, listo para `ui.field(..., error=)`. Acepta un `ValidationError` de Pydantic o SQLModel, un `ValidationError` de Django, el JSON de una respuesta 422 de FastAPI (`{"detail": [...]}`) o su lista `detail`. Los campos anidados se unen con puntos y los errores que no son de ningún campo usan la clave `""`. Se guarda solo el primer mensaje de cada campo. Mira [Integraciones](/pyzed/es/integrations/overview/#errores-de-validación-en-cada-campo).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `error` | El error, o el JSON de la respuesta. |
+
+```python
+try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Precio", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))
+```
