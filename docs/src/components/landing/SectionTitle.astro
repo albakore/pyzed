@@ -1,0 +1,46 @@
+---
+// A centered section heading with an eyebrow and a lead paragraph.
+interface Props {
+	id?: string;
+	eyebrow?: string;
+	title: string;
+}
+const { id, eyebrow, title } = Astro.props;
+---
+
+<header id={id} class="pz-section-title not-content">
+	{eyebrow && <p class="eyebrow">{eyebrow}</p>}
+	<h2>{title}</h2>
+	<div class="lead"><slot /></div>
+</header>
+
+<style>
+	.pz-section-title {
+		max-width: 44rem;
+		margin: 6rem auto 0 !important;
+		text-align: center;
+	}
+	.eyebrow {
+		margin: 0 0 0.5rem;
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--pz-accent-text);
+	}
+	h2 {
+		margin: 0;
+		font-size: clamp(var(--sl-text-3xl), 1.2rem + 2.4vw, var(--sl-text-5xl));
+		line-height: 1.1;
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.lead {
+		margin-top: 1rem;
+		font-size: var(--sl-text-lg);
+		color: var(--sl-color-gray-2);
+	}
+	.lead :global(p) {
+		margin: 0;
+	}
+</style>

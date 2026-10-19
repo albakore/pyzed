@@ -1,31 +1,284 @@
 ---
 title: Pyzed
-description: Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor.
+description: Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor and a visual designer.
 template: splash
 hero:
-  tagline: Fast, modern desktop interfaces in Python. You describe the UI; Iced, in Rust, draws it. With 70+ Zed-style components, async and multiple windows.
-  image:
-    file: ../../../screenshots/zed-one-dark.png
-    alt: A Zed-like editor built with Pyzed
+  title: Beautiful desktop apps in <span class="pz-gradient-text">pure Python</span>
+  tagline: You describe the interface, Iced draws it natively in Rust. Design windows by drag and drop in Pyzed Design, wire them to Python with a real code editor, and ship them to Windows, macOS and Linux.
   actions:
+    - text: Download Pyzed Design
+      link: /pyzed/download/
+      icon: download
     - text: Get started
-      link: getting-started/quickstart/
+      link: /pyzed/getting-started/quickstart/
       icon: right-arrow
-    - text: Browse components
-      link: components/overview/
-      variant: minimal
+      variant: secondary
     - text: GitHub
       link: https://github.com/albakore/pyzed
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import LatestRelease from '../../components/LatestRelease.astro';
+import HeroShot from '../../components/landing/HeroShot.astro';
+import Stats from '../../components/landing/Stats.astro';
+import SectionTitle from '../../components/landing/SectionTitle.astro';
+import Feature from '../../components/landing/Feature.astro';
+import Tiles from '../../components/landing/Tiles.astro';
+import CodeShowcase from '../../components/landing/CodeShowcase.astro';
+import Cta from '../../components/landing/Cta.astro';
 
 <LatestRelease />
 
-## An app in 20 lines
+<HeroShot
+	name="designer"
+	light="designer-light"
+	alt="Pyzed Design with a sign-in form open: toolbox and outline on the left, the form in the center and its properties on the right"
+	tags={['Drag & drop', 'Properties & events', 'Press F5 to run', '70+ components']}
+/>
+
+<Stats
+	items={[
+		{ value: '70+', label: 'Zed-style components' },
+		{ value: '11', label: 'built-in themes' },
+		{ value: '~2000', label: 'Lucide icons' },
+		{ value: '3', label: 'desktop platforms' },
+		{ value: 'Rust', label: 'native rendering (Iced)' },
+	]}
+/>
+
+<SectionTitle id="features" eyebrow="Features" title="Everything you need to build a desktop app">
+	From the first sketch to the executable you ship: a visual designer, a component system, a code editor that
+	knows your project, and a UI toolkit with the look and feel of Zed.
+</SectionTitle>
+
+<Feature
+	id="visual-designer"
+	icon="pencil"
+	eyebrow="Pyzed Design"
+	title="Draw your windows, then press F5"
+	shot="designer"
+	light="designer-light"
+	alt="The designer with a sign-in form and the properties of the selected button"
+	overlay="designer-run"
+	overlayAlt="The sign-in form running as a real window"
+	href="/pyzed/guides/designer/"
+	more="Visual designer guide"
+>
+	A form editor in the spirit of Visual Basic and Qt Designer, built with Pyzed itself. What you draw is what
+	runs: no code generation step, no surprises.
+
+	- Drag components from the **toolbox**, nest them in panels, flex rows and grids
+	- **Smart guides**, snap to grid, align, distribute and anchors like WinForms
+	- **Properties** and **Events** panels: double-click an event to write its handler
+	- Saved as a readable `.pzform` plus a plain Python file, run with `pyzed run`
+</Feature>
+
+<Feature
+	id="component-designer"
+	icon="puzzle"
+	eyebrow="Component designer"
+	title="Reusable components, like Godot scenes"
+	shot="designer-component"
+	alt="A ProfileCard component with its class, toolbox entry, layout and properties"
+	overlay="designer-component-run"
+	overlayAlt="Cards built from the component, running"
+	reverse
+	href="/pyzed/guides/component-designer/"
+	more="Component designer guide"
+>
+	Design a component once and drop it into any form, or inside other components. Each one is an ordinary
+	`pz.Component` class, so drawing it and writing it by hand are the same thing.
+
+	- Typed **properties**, internal state, methods and custom **events**
+	- **Bindings** that keep child controls in sync with properties
+	- **Inheritance** and nesting, with responsive layouts
+	- Appears in the toolbox with its own label, icon and category
+</Feature>
+
+<Feature
+	id="code-editor"
+	icon="seti:python"
+	eyebrow="Code editor"
+	title="A Python editor that knows your project"
+	shot="designer-completion"
+	alt="Completing a function of the re module with its signature, and inline errors"
+	href="/pyzed/guides/designer/#code-editor"
+	more="Code editor features"
+>
+	Event handlers are written right inside the designer, backed by Astral's **ty** and **ruff** language
+	servers running in your project's own environment.
+
+	- **Completion** with signatures and docstrings, auto-imports and `form.` controls
+	- **Inline diagnostics** (error lens), a problems list and **code lens** references
+	- Code folding, minimap, auto-closing brackets, cursor styles and a separate theme
+	- **Format with ruff** when you apply your changes
+</Feature>
+
+<Feature
+	id="projects"
+	icon="seti:folder"
+	eyebrow="Projects"
+	title="Real projects, managed for you"
+	shot="designer-project"
+	alt="The Project tab with forms, dependencies and tools of a uv project"
+	reverse
+	href="/pyzed/guides/projects/"
+	more="Projects guide"
+>
+	Every app is a normal [uv](https://docs.astral.sh/uv/) project with its own `.venv`. Pyzed Design creates it,
+	installs packages and runs the tools, so your forms can import any library from PyPI.
+
+	- Add, upgrade and remove **dependencies** from the Project tab
+	- One click to **lint**, **format** and **type-check** with ruff and ty
+	- Create a git repository and keep the UI next to your backend code
+</Feature>
+
+<Feature
+	id="components"
+	icon="list-format"
+	eyebrow="Component library"
+	title="70+ components with the look of Zed"
+	shot="components-dark"
+	light="components-light"
+	alt="A gallery of Pyzed components: buttons, inputs, tabs, an editor, a tree, menus and notifications"
+	href="/pyzed/library/"
+	more="Browse the component library"
+>
+	Buttons, inputs, tabs, a file tree, a command palette, tables, charts, toasts, dialogs, a code editor with
+	syntax highlighting, a terminal and a whole workspace with resizable docks. All of them follow the active
+	theme and can be styled per instance.
+
+	- Build them from code with `pyzed.ui`, or place them from the designer's toolbox
+	- IBM Plex fonts and about **2000 Lucide icons** included
+</Feature>
+
+<Feature
+	id="themes"
+	icon="seti:pipeline"
+	eyebrow="Themes"
+	title="Light, dark, and every Zed theme"
+	shot="zed-one-dark"
+	light="zed-one-light"
+	alt="A Zed-like editor built with Pyzed in One Dark (One Light in the light theme)"
+	overlay="zed-file-finder"
+	overlayAlt="The same app in Gruvbox Dark with the file finder open"
+	reverse
+	href="/pyzed/guides/theming/"
+	more="Theming guide"
+>
+	One, Ayu and Gruvbox ship with Zed's color tokens, in light and dark variants. Follow the system appearance,
+	switch themes at runtime, derive your own in one line or import any Zed theme.
+
+	- 11 built-in themes, one set of color tokens for every component
+	- Per-window themes and accent colors
+</Feature>
+
+<Feature
+	id="layout"
+	icon="seti:html"
+	eyebrow="Layout"
+	title="Rows, columns, grids and docks"
+	shot="tutorials/layout"
+	alt="A grid layout with a spanning header and flex rows showing every justify mode"
+	href="/pyzed/guides/layout/"
+	more="Layout guide"
+>
+	Flex rows and columns, CSS-like grids with `fr` and `auto` tracks, padding, alignment and scrolling, plus a
+	workspace with docks you can drag and resize, just like Zed's panels.
+</Feature>
+
+<Feature
+	id="async"
+	icon="random"
+	eyebrow="Async and multiple windows"
+	title="Responsive by default"
+	shot="tutorials/multi-window"
+	alt="Three windows with different themes sharing the same state"
+	reverse
+	href="/pyzed/guides/windows/"
+	more="Windows guide"
+>
+	`update` and callbacks can be `async`, so network calls never freeze the UI. `pz.every` and `pz.listen`
+	handle timers and streams, and every `pz.Window` has its own view and theme while sharing the app's state.
+</Feature>
+
+<SectionTitle id="more" eyebrow="And much more" title="Batteries included">
+	The details that turn a prototype into an app people enjoy using.
+</SectionTitle>
+
+<Tiles
+	items={[
+		{
+			title: 'Hot reload',
+			text: 'Save a form or a Python file and the open window updates in place, keeping its state. <code>pyzed dev</code> and <code>pyzed run --reload</code>.',
+			href: '/pyzed/reference/app/#run',
+			icon: 'rocket',
+			shot: 'hot-reload-after',
+			alt: 'An app updated by hot reload, keeping its click count',
+		},
+		{
+			title: 'Command palette and shortcuts',
+			text: 'Zed-style commands with key bindings, fuzzy search and a file finder, ready to drop into your app.',
+			href: '/pyzed/guides/keyboard/',
+			icon: 'magnifier',
+			shot: 'zed-command-palette',
+			alt: 'The command palette open over the editor',
+			wide: true,
+		},
+		{
+			title: 'AI-ready: MCP server for agents',
+			text: 'Connect your coding agent to the Pyzed MCP server: it looks up components, learns the API and best practices, and creates components for you.',
+			href: '/pyzed/guides/mcp/',
+			icon: 'comment-alt',
+			wide: true,
+		},
+		{
+			title: 'Languages',
+			text: 'Translate with <code>pz.t</code> and switch the language while the app runs, plurals included.',
+			href: '/pyzed/guides/i18n/',
+			icon: 'translate',
+		},
+		{
+			title: 'Ship it: pyzed build',
+			text: 'One command packages your project as a standalone app for Windows, macOS or Linux, with Python inside.',
+			href: '/pyzed/guides/packaging/',
+			icon: 'download',
+		},
+		{
+			title: 'Cross-platform',
+			text: 'Linux, macOS and Windows, rendered with wgpu and a tiny-skia fallback when there is no GPU.',
+			href: '/pyzed/getting-started/installation/',
+			icon: 'laptop',
+		},
+		{
+			title: 'Canvas and charts',
+			text: 'Draw shapes, paths and text with transforms and mouse events, or use the ready-made charts.',
+			href: '/pyzed/guides/canvas/',
+			icon: 'analytics',
+		},
+		{
+			title: 'Headless screenshots',
+			text: '<code>app.screenshot("ui.png")</code> renders off-screen for tests and docs. Every image on this site is made that way.',
+			href: '/pyzed/guides/testing/',
+			icon: 'approve-check-circle',
+			wide: true,
+		},
+		{
+			title: 'Simple architecture',
+			text: 'State, <code>update</code> and <code>view</code> without the ceremony: a button can call <code>self.save</code> directly.',
+			href: '/pyzed/guides/how-it-works/',
+			icon: 'information',
+		},
+	]}
+/>
+
+<SectionTitle id="code" eyebrow="Code first, too" title="An app in 20 lines">
+	Prefer to write everything by hand? Pyzed is a regular Python library. This is a complete app:
+</SectionTitle>
+
+<CodeShowcase shot="counter" alt="The counter app: a number above the -1, +1 and reset buttons" caption="python counter.py">
 
 ```python title="counter.py"
 import pyzed as pz
@@ -39,58 +292,43 @@ class Counter(pz.App):
     def __init__(self):
         self.count = 0
 
+    def add(self, step):
+        self.count += step
+
     def view(self):
-        return pz.center(
+        return pz.center(pz.column([
+            ui.heading(str(self.count)),
             pz.row([
-                ui.button("-1", lambda: setattr(self, "count", self.count - 1), icon="minus"),
-                ui.heading(str(self.count)),
-                ui.button("+1", lambda: setattr(self, "count", self.count + 1), icon="plus", variant="solid"),
-            ], spacing=12, align="center"),
-            bg=self.resolved_theme().editor,
-        )
+                ui.button("-1", lambda: self.add(-1), icon="minus"),
+                ui.button("+1", lambda: self.add(1), icon="plus", variant="solid"),
+                ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0)),
+            ], spacing=8),
+        ], spacing=16, align="center"), bg=self.theme.editor)
 
 
 pz.run(Counter)
 ```
 
-## Why Pyzed
+</CodeShowcase>
+
+<SectionTitle id="learn" eyebrow="Learn" title="Explore the docs">
+	Pick a starting point.
+</SectionTitle>
 
 <CardGrid>
-	<Card title="Native performance" icon="rocket">
-		Python only describes the UI. Layout, text and drawing (wgpu, with tiny-skia as fallback)
-		are handled by Iced 0.14 in Rust through PyO3.
-	</Card>
-	<Card title="Simple" icon="pencil">
-		Iced's Elm architecture (state, `update`, `view`) without the ceremony: a button can call
-		`self.save` directly.
-	</Card>
-	<Card title="Zed components" icon="puzzle">
-		Buttons, tabs, file tree, command palette, editor with syntax highlighting, terminal,
-		menus, toasts and a workspace with docks.
-	</Card>
-	<Card title="Themes" icon="seti:pipeline">
-		One, Ayu and Gruvbox with Zed's color tokens, system light/dark mode and import of any
-		Zed theme. Derive your own in one line and switch it at runtime.
-	</Card>
-	<Card title="Async and multiple windows" icon="random">
-		`update` and callbacks can be `async`; `pz.every` and `pz.listen` for timers and
-		streams. Each `pz.Window` has its own view and theme, with shared state.
-	</Card>
-	<Card title="Cross-platform" icon="laptop">
-		Linux, macOS and Windows. IBM Plex fonts and Lucide icons (~2000) included.
-	</Card>
-	<Card title="Headless screenshots" icon="seti:image">
-		`app.screenshot("ui.png")` renders off-screen, without a GPU. Every image on this
-		site is generated that way.
-	</Card>
+	<LinkCard title="Component library" href="/pyzed/library/" description="Every component with a preview, what it does and how to use it." />
+	<LinkCard title="Pyzed Design manual" href="/pyzed/editor/" description="Each panel of the editor explained, with tips and shortcuts." />
+	<LinkCard title="Quickstart" href="/pyzed/getting-started/quickstart/" description="Install Pyzed and create your first window." />
+	<LinkCard title="Tutorial: to-do list" href="/pyzed/tutorials/todo-app/" description="State, forms, lists and shortcuts, step by step." />
+	<LinkCard title="Tutorial: a mini Zed-like editor" href="/pyzed/tutorials/zed-like-editor/" description="Workspace, file tree, tabs, editor and palette." />
+	<LinkCard title="Themes" href="/pyzed/guides/theming/" description="Color tokens, built-in themes and how to create your own." />
 </CardGrid>
 
-## Next steps
-
-<CardGrid>
-	<LinkCard title="Quickstart" href="getting-started/quickstart/" description="Install Pyzed and create your first window." />
-	<LinkCard title="Tutorial: to-do list" href="tutorials/todo-app/" description="State, forms, lists and shortcuts, step by step." />
-	<LinkCard title="Tutorial: a mini Zed-like editor" href="tutorials/zed-like-editor/" description="Workspace, file tree, tabs, editor and palette." />
-	<LinkCard title="5-step tutorial" href="tutorials/step-by-step/" description="From an empty window to a notes app with async and two windows." />
-	<LinkCard title="Themes" href="guides/theming/" description="Color tokens, built-in themes and how to create your own." />
-</CardGrid>
+<Cta
+	title="Start building today"
+	primary={{ text: 'Download Pyzed Design', href: '/pyzed/download/' }}
+	secondary={{ text: 'Get started', href: '/pyzed/getting-started/quickstart/' }}
+	command="pip install pyzed-ui"
+>
+	Free and open source. Get the designer as a standalone app, or install the library with pip.
+</Cta>
