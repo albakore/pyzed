@@ -107,6 +107,7 @@ SHOTS = {
     "tutorials/styles": (app("styles", "StylesDemo"), (860, 480)),
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
+    "tutorials/effects": (app("effects", "Effects"), (900, 460)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

@@ -60,8 +60,8 @@ def test_invalid_options_explain_what_is_valid():
         anim._compile(["fade_in"], {"repeat": -1})
     with pytest.raises(KeyError, match="no animation named 'nope'"):
         anim._compile(["nope"], {})
-    with pytest.raises(TypeError, match="unknown animated property 'rotate'"):
-        pz.Animation([{"rotate": 0}, {"rotate": 90}])
+    with pytest.raises(TypeError, match="unknown animated property 'skew'"):
+        pz.Animation([{"skew": 0}, {"skew": 90}])
     with pytest.raises(ValueError, match="offsets go from 0 to 1"):
         pz.Animation({2: {"opacity": 0}})
 
@@ -150,9 +150,15 @@ def test_effects_expand_into_box_properties():
     _, out = pzstyle._resolve(None, (), {"glow": 8})
     assert out["shadow"][1:] == ((0, 0), 8.0) and out["shadow"][0].startswith(pz.themes.ONE_DARK.accent.lower()[:7])
     _, out = pzstyle._resolve(None, (), {"bloom": ("#00ff00", 1.0)})
-    assert out["shadow"][2] == 48.0 and out["border_width"] == 1
+    assert out["shadow"][2] == 28.0 and out["border_width"] == 1
+    assert out["bloom_light"] == ("#00ff00", 1.0)
     _, out = pzstyle._resolve(None, (), {"glass": True, "radius": 4})
     assert "gradient" in out and out["radius"] == 4 and out["border_width"] == 1  # given properties win
+    assert out["backdrop_blur"] == 20.0
+    _, out = pzstyle._resolve(None, (), {"glass": {"blur": 6}})
+    assert out["backdrop_blur"] == 6.0
+    _, out = pzstyle._resolve(None, (), {"rotate": "0.25turn", "blur": 3})
+    assert out == {"rotate": 90.0, "blur": 3.0}
     _, out = pzstyle._resolve(None, (), {"glass": {"tint": "#000000", "strength": 0.5}})
     assert out["border_color"].startswith("#000000")
     _, out = pzstyle._resolve(None, (), {"opacity": 0.5, "translate": (4, "50%"), "scale": 2})
@@ -195,6 +201,106 @@ def test_transforms_move_the_drawing(tmp_path):
     pz.screenshot(Demo, out, size=(60, 60), scale=1)
     column = _png_column(out, 30)
     assert column[10][0] < 20 and column[30][0] > 240  # drawn 20 px lower than laid out
+
+
+def _shot(tmp_path, view, size=(60, 60)):
+    class Demo(pz.App):
+        theme = pz.themes.ONE_DARK
+
+        def view(self):
+            return pz.container(view(), width="fill", height="fill").style(background="#000000")
+
+    Demo.size = size
+    out = tmp_path / f"shot{len(list(tmp_path.iterdir()))}.png"
+    pz.screenshot(Demo, out, size=size, scale=1)
+    return lambda x, y: _png_column(out, x)[y]
+
+
+def _centered(child):
+    return pz.container(child, width="fill", height="fill", align_x="center", align_y="center")
+
+
+def test_rotation_turns_the_drawing(tmp_path):
+    bar = lambda **s: _centered(pz.container(None, width=40, height=8).style(background="#ff0000", **s))  # noqa: E731
+    flat = _shot(tmp_path, bar)
+    assert flat(12, 30)[0] > 240 and flat(30, 12)[0] < 20
+    turned = _shot(tmp_path, lambda: bar(rotate=90))
+    assert turned(12, 30)[0] < 20 and turned(30, 12)[0] > 240  # now a vertical bar
+    turned = _shot(tmp_path, lambda: _centered(pz.container(None, width=40, height=8).style(background="#ff0000")
+                                               .transition(rotate="0.25turn")))
+    assert turned(30, 12)[0] > 240  # animated rotation rests on its value
+
+
+def test_blur_spreads_the_drawing(tmp_path):
+    square = lambda **s: _centered(pz.container(None, width=20, height=20).style(background="#ff0000", **s))  # noqa: E731
+    sharp = _shot(tmp_path, square)
+    soft = _shot(tmp_path, lambda: square(blur=6))
+    assert sharp(17, 30)[0] < 20 and 20 < soft(17, 30)[0] < 200  # light leaks past the edge
+    assert soft(30, 30)[0] > 200 and soft(30, 30)[0] <= sharp(30, 30)[0]
+
+
+def test_backdrop_blur_blurs_what_is_behind(tmp_path):
+    def view(**s):
+        stripes = pz.row([pz.container(None, width=30, height=60).style(background=c) for c in ("#ff0000", "#0000ff")],
+                         spacing=0)
+        panel = pz.container(None, width=60, height=60).style(**s)
+        return pz.stack([stripes, panel])
+
+    sharp = _shot(tmp_path, view)
+    frosted = _shot(tmp_path, lambda: view(backdrop_blur=10))
+    assert sharp(28, 30)[2] < 20 and sharp(31, 30)[0] < 20
+    assert frosted(28, 30)[2] > 40 and frosted(31, 30)[0] > 40  # the colors mix across the edge
+    assert frosted(5, 5)[0] > 200  # far from the edge it stays red
+
+
+def test_bloom_lights_around_bright_parts(tmp_path):
+    def view(**s):
+        return _centered(pz.container(None, width=16, height=16).style(background="#ffffff", **s))
+
+    plain = _shot(tmp_path, view)
+    lit = _shot(tmp_path, lambda: view(bloom=("#00ff00", 1.0)))
+    assert plain(30, 4)[1] < 10 and lit(30, 4)[1] > plain(30, 4)[1]  # light spills far out of the box
+    assert lit(30, 30)[1] > 240
+
+
+def test_layout_properties_resize_and_push_neighbors(tmp_path):
+    def view(**t):
+        box = pz.container(None, width=20, height=20).style(background="#ff0000")
+        if t:
+            box = box.transition(**t)
+        after = pz.container(None, width=10, height=20).style(background="#00ff00")
+        return pz.row([box, after], spacing=0)
+
+    plain = _shot(tmp_path, view)
+    assert plain(25, 10)[1] > 240  # the green box starts at x = 20
+    wide = _shot(tmp_path, lambda: view(width=40))
+    assert wide(25, 10)[0] > 240 and wide(45, 10)[1] > 240  # the red box is 40 wide and pushes it
+    tall = _shot(tmp_path, lambda: view(height=40))
+    assert tall(10, 35)[0] > 240
+
+
+def test_padding_and_font_size_animate(tmp_path):
+    def view(**t):
+        inner = pz.container(None, width=10, height=10).style(background="#ff0000")
+        box = pz.container(inner).style(background="#0000ff", padding=2)
+        return box.transition(**t) if t else box
+
+    plain = _shot(tmp_path, view)
+    assert plain(4, 4)[0] > 240
+    padded = _shot(tmp_path, lambda: view(padding=10))
+    assert padded(4, 4)[2] > 240 and padded(15, 15)[0] > 240  # padding grows inside the blue box
+
+    def text(**t):
+        label = pz.text("MMMM").style(color="#ffffff", size=10)
+        return pz.row([(label.transition(**t) if t else label),
+                       pz.container(None, width=4, height=4).style(background="#00ff00")], spacing=0)
+
+    def green_x(px):
+        return next(x for x in range(120) if px(x, 2)[1] > 240 and px(x, 2)[0] < 20)
+
+    small = green_x(_shot(tmp_path, text, size=(120, 40)))
+    big = green_x(_shot(tmp_path, lambda: text(font_size=20), size=(120, 40)))
+    assert big > small * 1.6  # the text got wider and pushed the green box
 
 
 def test_presence_shows_the_current_content(tmp_path):

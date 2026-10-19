@@ -1,6 +1,6 @@
 ---
 title: Animaciones y efectos
-description: Da a los controles glow, bloom, glass y opacidad, y anímalos al aparecer, en hover, al pulsar, con foco o al hacer clic.
+description: Da a los controles rotación, desenfoque, glow, bloom, glass y opacidad, y anímalos al aparecer, en hover, al pulsar, con foco o al hacer clic.
 sidebar:
   order: 5.5
 ---
@@ -16,12 +16,15 @@ el mismo sistema que [`widget.animate()` y los efectos de estilo](/pyzed/es/guid
 | Campo | Qué hace |
 | --- | --- |
 | **Opacidad** | Cuánto se ve el control y todo lo que tiene dentro (1 es opaco). |
+| **Rotación** | Grados, en sentido horario, alrededor del centro. |
+| **Desenfoque** | Desenfoca el control y todo lo que contiene, en píxeles. |
+| **Desenfoque del fondo** | Desenfoca lo que hay detrás de la caja, en píxeles. |
 | **Resplandor** | Un halo suave alrededor de la caja. Elige un color (o un token del tema como `accent`); **Tamaño del resplandor** fija cuánto se extiende. |
-| **Bloom** | Un resplandor amplio y brillante que se desborda de la caja. **Intensidad** va de 0 a 1. |
-| **Cristal** | Un panel translúcido y esmerilado con un borde claro. **Matiz** lo colorea e **Intensidad del tinte** fija cuánto se nota el tinte. |
+| **Bloom** | Luz que desborda de las partes brillantes del control. **Intensidad** va de 0 a 1. |
+| **Cristal** | Un panel translúcido que desenfoca lo que tiene detrás, con un borde claro. **Matiz** lo colorea e **Intensidad del tinte** fija cuánto se nota el tinte. |
 
 Los subcampos solo aparecen mientras el efecto está activo. Borra el color (o apaga **Cristal**) para
-quitarlo. Los efectos son propiedades de estilo (`opacity`, `glow`, `bloom`, `glass`), así que en el código
+quitarlo. Los efectos son propiedades de estilo (`opacity`, `rotate`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), así que en el código
 aparecen en `control.style` y **Restablecer el estilo** también los quita. El cristal luce mejor sobre un fondo
 colorido, como un panel con degradado.
 

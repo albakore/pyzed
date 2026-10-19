@@ -1,6 +1,6 @@
 ---
 title: Animation and effects
-description: Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add glow, bloom, glass and opacity.
+description: Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add rotation, blur, bloom, glass and opacity.
 sidebar:
   order: 3.5
 ---
@@ -54,9 +54,27 @@ pz.text("Hi").animate(opacity=0, y=12, duration=250)          # appears from bel
 card.animate(on="hover", scale=1.03, background="elevated")    # grows and lightens on hover
 ```
 
-The animatable properties are `opacity`, `x`, `y` (pixels or `"50%"` of the widget's own size),
-`scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`.
-Colors take hex strings or theme tokens.
+The animatable properties are:
+
+| Property | Values |
+| --- | --- |
+| `opacity`, `scale` | Numbers (`scale` around the center). |
+| `x`, `y` | Pixels or `"50%"` of the widget's own size. |
+| `rotate` | Degrees clockwise around the center, or `"0.25turn"`, `"1.5rad"`, `"90deg"`. |
+| `blur` | A gaussian blur of the widget, in pixels. |
+| `background`, `border_color`, `color`, `glow_color` | Hex strings or theme tokens. |
+| `radius`, `border_width`, `glow` | Pixels. |
+| `width`, `height`, `padding`, `font_size` | Pixels. These change the layout, so the widgets around move with it. |
+
+```python
+icon.animate("spin")                                            # a loading spinner
+card.animate(on="hover", rotate=-3, scale=1.02)                 # tilts on hover
+sidebar.transition(width=240 if self.open else 56, duration=200)   # the content beside it reflows
+title.transition(font_size=28 if self.big else 16)
+```
+
+`padding` animates the padding inside a container or button (all four sides follow the same
+value); on any other widget it adds space around it. `font_size` changes every text inside.
 
 ## Keyframes
 
@@ -127,9 +145,12 @@ and named styles:
 | Property | What it does |
 | --- | --- |
 | `opacity` | 0 to 1. Fades the widget and everything inside it. |
+| `rotate` | Degrees clockwise (or `"0.25turn"`, `"1rad"`): draws the widget turned around its center. |
+| `blur` | Pixels: blurs the widget and everything inside it. |
+| `backdrop_blur` | Pixels: blurs what is behind the box, inside its rounded corners. |
 | `glow` | A soft halo around the box: a color, a size (accent color) or `(color, size)`. |
-| `bloom` | A wide, bright glow that spills out: a color or `(color, intensity)` with an intensity from 0 to 1. |
-| `glass` | A translucent, frosted panel with a light edge: `True`, a tint color or `{"tint": ..., "strength": 0.08}`. |
+| `bloom` | Light that spills from the bright parts of the widget: a color or `(color, intensity)` with an intensity from 0 to 1. |
+| `glass` | A translucent panel that blurs what is behind it, with a light edge: `True`, a tint color or `{"tint": ..., "strength": 0.08, "blur": 20}`. |
 | `translate` | `(x, y)` in pixels or `"50%"`: draws the widget moved, without changing the layout. |
 | `scale` | Draws the widget bigger or smaller around its center. |
 
@@ -137,11 +158,16 @@ and named styles:
 pz.container(card).style(glass=True, radius=12, padding=16)
 ui.button("Go", self.go).style(glow=("#22d3ee", 18))
 badge.style(bloom=("accent", 0.8), opacity=0.9)
+sticker.style(rotate=-8)
 ```
 
-Glow, bloom and glass become a shadow, a gradient and a border; any of those you set yourself win.
-Glass works best over a colorful background (a gradient or an image). Animations can change `glow`
-and `glow_color` too: the `glow`, `bloom`, `glow_pulse` and `glow_flash` presets use them.
+![Rotation, glass, bloom and blur over a gradient](../../../assets/tutorials/effects.png)
+
+Rotation, blur, backdrop blur and bloom are drawn by the renderer: the widget is drawn on its own
+layer, which is then turned, blurred or lit before it lands on the window. Bloom also adds a soft
+halo and a lit edge, and glass a tinted gradient, a border and a shadow; any of those you set
+yourself win. Glass shows best over a colorful background (a gradient or an image). Animations can
+change `glow` and `glow_color` too: the `glow`, `bloom`, `glow_pulse` and `glow_flash` presets use them.
 
 ## Presets
 
@@ -149,11 +175,11 @@ and `glow_color` too: the `glow`, `bloom`, `glow_pulse` and `glow_flash` presets
 
 | Category | Presets |
 | --- | --- |
-| Entrance | `fade_in`, `fade_in_up`, `fade_in_down`, `fade_in_left`, `fade_in_right`, `slide_in_up`, `slide_in_down`, `slide_in_left`, `slide_in_right`, `zoom_in`, `pop_in`, `bounce_in`, `drop_in`, `blur_in` |
-| Exit | `fade_out`, `fade_out_up`, `fade_out_down`, `fade_out_left`, `fade_out_right`, `slide_out_up`, `slide_out_down`, `slide_out_left`, `slide_out_right`, `zoom_out`, `pop_out` |
-| Attention | `pulse`, `heartbeat`, `shake`, `wobble`, `bounce`, `flash`, `rubber_band`, `tada`, `glow_flash` |
-| Interaction (hover, press, focus) | `lift`, `grow`, `shrink`, `dim`, `glow`, `bloom`, `nudge_right` |
-| Loop | `float`, `breathe`, `blink`, `glow_pulse`, `throb`, `drift` |
+| Entrance | `fade_in`, `fade_in_up`, `fade_in_down`, `fade_in_left`, `fade_in_right`, `slide_in_up`, `slide_in_down`, `slide_in_left`, `slide_in_right`, `zoom_in`, `pop_in`, `bounce_in`, `drop_in`, `blur_in`, `rotate_in` |
+| Exit | `fade_out`, `fade_out_up`, `fade_out_down`, `fade_out_left`, `fade_out_right`, `slide_out_up`, `slide_out_down`, `slide_out_left`, `slide_out_right`, `zoom_out`, `pop_out`, `blur_out`, `rotate_out` |
+| Attention | `pulse`, `heartbeat`, `shake`, `wobble`, `bounce`, `flash`, `rubber_band`, `tada`, `swing`, `glow_flash` |
+| Interaction (hover, press, focus) | `lift`, `grow`, `shrink`, `dim`, `glow`, `bloom`, `nudge_right`, `tilt` |
+| Loop | `float`, `breathe`, `blink`, `glow_pulse`, `throb`, `drift`, `spin` |
 
 `pz.animation.ease(easing, t)` evaluates any easing, handy to animate your own
 [canvas](/pyzed/guides/canvas/) drawings with the same curves.
@@ -172,7 +198,13 @@ widget tree: `repr(widget)` ends with `.animate(2 animation(s), 1 transition(s))
 
 ## Limits
 
-- Transforms are translation and uniform scale; there is no rotation or skew.
-- `glass` is a frosted look (a tinted gradient and a light edge), not a real background blur.
+- Transforms are translation, uniform scale and rotation; there is no skew.
+- A rotated or blurred widget takes input where its box is laid out, not where it is drawn.
+- A widget with rotation, blur, backdrop blur or bloom is drawn above its siblings, so its bloom
+  can light the widgets next to it.
+- `backdrop_blur` blurs what the window drew before the widget, inside the same parent layer
+  (scrollables and other clipping widgets start a new layer).
+- `width`, `height`, `padding` and `font_size` lay the view out again on every frame while they move,
+  so prefer `x`, `y` and `scale` for large views.
 - Animations restart when a widget leaves the tree and comes back. Give a stable `key`, or use
   `presence`, to control when they replay.

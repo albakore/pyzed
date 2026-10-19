@@ -16,11 +16,14 @@ Properties:
 - Text, inherited by every text inside: ``color``, ``font`` (``"sans"``, ``"mono"``,
   ``"serif"`` or a loaded family), ``weight``, ``italic``, ``size`` and ``line_height``.
 - Effects: ``opacity`` (0 to 1, for everything inside), ``translate`` (``(x, y)`` in pixels
-  or ``"50%"`` of the size), ``scale``, ``glow`` (a color, a blur radius or
+  or ``"50%"`` of the size), ``scale``, ``rotate`` (degrees clockwise, or ``"0.25turn"``,
+  ``"1rad"``), ``blur`` (a gaussian blur of the widget, in pixels), ``backdrop_blur`` (blurs
+  what is behind the box, in pixels), ``glow`` (a color, a blur radius or
   ``(color, radius)``: a soft halo around the box), ``bloom`` (a color, an intensity from 0
-  to 1 or ``(color, intensity)``: a wide, bright glow) and ``glass`` (``True``, a tint color
-  or ``{"tint": ..., "strength": ...}``: a translucent, frosted panel). Glow, bloom and
-  glass set the shadow, background and border, so properties given with them win.
+  to 1 or ``(color, intensity)``: light that spills from the bright parts) and ``glass``
+  (``True``, a tint color or ``{"tint": ..., "strength": ..., "blur": ...}``: a translucent
+  panel that blurs what is behind it). Glow, bloom and glass also set the shadow,
+  background and border, so properties given with them win.
 
 Colors may be theme tokens (``"accent"``, ``"text_muted"``, ``"panel"``...), so styles follow
 theme switches. ``pz.Style`` keeps a style to reuse and combine (``base | accent``), and
@@ -39,10 +42,11 @@ PROPERTIES = (
     "background", "color", "font", "weight", "italic", "size", "line_height",
     "border_color", "border_width", "radius", "shadow", "padding", "margin",
     "width", "height", "max_width", "max_height", "align_x", "align_y", "clip",
-    "opacity", "translate", "scale", "glow", "bloom", "glass",
+    "opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom", "glass",
 )
-#: The effect properties (``glow``, ``bloom`` and ``glass`` expand into box properties).
-EFFECT_PROPERTIES = ("opacity", "translate", "scale", "glow", "bloom", "glass")
+#: The effect properties (``glow``, ``bloom`` and ``glass`` also add box properties).
+EFFECT_PROPERTIES = ("opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom",
+                     "glass")
 TEXT_PROPERTIES = ("color", "font", "weight", "italic", "size", "line_height")
 ALIASES = {"bg": "background", "text_color": "color", "font_size": "size", "font_weight": "weight",
            "font_family": "font"}
@@ -461,6 +465,8 @@ def _effects(merged: Mapping[str, Any]) -> Dict[str, Any]:
         out["border_width"] = 1
         out["radius"] = 12
         out["shadow"] = ("#00000059", (0, 10), 30)
+        blur = glass.get("blur", 20) if isinstance(glass, Mapping) else 20
+        out["backdrop_blur"] = float(blur)
     glow = merged.get("glow")
     if glow is not None and glow is not False:
         color, radius = _accent(), 12.0
@@ -481,10 +487,23 @@ def _effects(merged: Mapping[str, Any]) -> Dict[str, Any]:
         elif bloom is not True:
             color = bloom
         intensity = min(max(intensity, 0.0), 1.0)
-        out["shadow"] = (_alpha(color, 0.5 + 0.45 * intensity), (0, 0), 12 + 36 * intensity)
+        # Real bloom (light from the bright parts, tinted) over a softer halo and a lit edge.
+        out["bloom_light"] = (color, intensity)
+        out["shadow"] = (_alpha(color, 0.3 + 0.35 * intensity), (0, 0), 8 + 20 * intensity)
         out["border_color"] = _alpha(color, 0.35 + 0.6 * intensity)
         out["border_width"] = 1
     return out
+
+
+def degrees(value: Any) -> float:
+    """An angle in degrees from a number (degrees) or ``"45deg"``, ``"0.25turn"``, ``"1.2rad"``."""
+    if isinstance(value, str):
+        text = value.strip().lower()
+        for unit, factor in (("deg", 1.0), ("turn", 360.0), ("grad", 0.9), ("rad", 57.29577951308232)):
+            if text.endswith(unit):
+                return float(text[: -len(unit)]) * factor
+        return float(text)
+    return float(value)
 
 
 def _translate(value: Any) -> Tuple[Any, Any]:
@@ -535,8 +554,12 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
             out[key] = (to_hex(color), tuple(offset), blur)
         elif key == "translate":
             out[key] = _translate(value)
-        elif key in ("opacity", "scale"):
+        elif key in ("opacity", "scale", "blur", "backdrop_blur"):
             out[key] = float(value)
+        elif key == "rotate":
+            out[key] = degrees(value)
+        elif key == "bloom_light":
+            out[key] = (to_hex(value[0]), float(value[1]))
         else:
             out[key] = value
     return merged, out

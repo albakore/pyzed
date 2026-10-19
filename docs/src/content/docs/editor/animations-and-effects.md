@@ -1,6 +1,6 @@
 ---
 title: Animations and effects
-description: Give controls glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.
+description: Give controls rotation, blur, glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.
 sidebar:
   order: 5.5
 ---
@@ -16,12 +16,15 @@ system as [`widget.animate()` and the style effects](/pyzed/guides/animation/) o
 | Field | What it does |
 | --- | --- |
 | **Opacity** | How visible the control and everything inside it is (1 is opaque). |
+| **Rotation** | Degrees, clockwise, around the center. |
+| **Blur** | Blurs the control and everything inside it, in pixels. |
+| **Backdrop blur** | Blurs what is behind the box, in pixels. |
 | **Glow** | A soft halo around the box. Pick a color (or a theme token such as `accent`); **Glow size** sets how far it spreads. |
-| **Bloom** | A wide, bright glow that spills out of the box. **Intensity** goes from 0 to 1. |
-| **Glass** | A translucent, frosted panel with a light edge. **Tint** colors it and **Strength** sets how much of the tint shows. |
+| **Bloom** | Light that spills from the bright parts of the control. **Intensity** goes from 0 to 1. |
+| **Glass** | A translucent panel that blurs what is behind it, with a light edge. **Tint** colors it and **Strength** sets how much of the tint shows. |
 
 Sub-fields only show while the effect is on. Clear the color (or turn **Glass** off) to remove it.
-Effects are style properties (`opacity`, `glow`, `bloom`, `glass`), so they also show in code as
+Effects are style properties (`opacity`, `rotate`, `blur`, `backdrop_blur`, `glow`, `bloom`, `glass`), so they also show in code as
 `control.style` and work with **Reset style**. Glass looks best over a colorful background, such as a
 panel with a gradient.
 
