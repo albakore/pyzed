@@ -572,6 +572,24 @@ La traslación que hace que una rotación y una escala (que giran alrededor del 
 | `rotate` | Grados en sentido horario. |
 | `scale` | Factor de escala. |
 
+### `window_edges`
+
+```python
+window_edges(content, *, border=6.0, enabled=True)
+```
+
+Envuelve la vista entera de una ventana sin decoraciones del sistema para que pulsar cerca de sus bordes cambie el tamaño de la ventana (las esquinas ocupan el doble). `ui.window_frame` ya lo usa.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `content` | La vista entera de la ventana. |
+| `border` | Ancho en píxeles de la zona que redimensiona. |
+| `enabled` | `False` lo desactiva (para una ventana maximizada). |
+
+```python
+pz.window_edges(view, enabled=not self.window_maximized)
+```
+
 ### `resizable`
 
 ```python

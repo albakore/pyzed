@@ -1482,6 +1482,11 @@
    "path": "examples/websocket_stream.py"
   },
   {
+   "name": "window_frame",
+   "summary": "A window with a frame drawn by Pyzed: title bar, menus on the left like Zed and the window buttons.",
+   "path": "examples/window_frame.py"
+  },
+  {
    "name": "zed_editor",
    "summary": "A recreation of the Zed editor written with Pyzed.",
    "path": "examples/zed_editor.py"
@@ -1684,7 +1689,7 @@
     }
    },
    "pyzed.Window": {
-    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n"
+    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n"
    },
    "pyzed.every": {
     "desc": "A subscription that sends `message` to `update` every `seconds` seconds (like Iced's `time::every`). If `message` is a callable, it is called. Return it from `subscriptions()`.",
@@ -1741,7 +1746,7 @@
     "example": "\n            pz.container(card, padding=12).on(click=self.select, drag=lambda e: self.move(e.dx, e.dy))\n        "
    },
    "pyzed.Event": {
-    "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, and `value`/`source` for custom events.",
+    "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (the pointer in the window and on the screen), and `value`/`source` for custom events.",
     "params": {
      "type": "Event name.",
      "x": "Pointer x, relative to the widget.",
@@ -1757,7 +1762,12 @@
      "alt": "Alt held.",
      "logo": "Cmd/Windows key held.",
      "value": "Value of a custom event.",
-     "source": "Component that emitted it."
+     "source": "Component that emitted it.",
+     "window_x": "Pointer x in the window (outside it when a drag is released outside).",
+     "window_y": "Pointer y in the window.",
+     "screen_x": "Pointer x on the screen, or `None` where the platform does not say where windows are (Wayland). `event.screen` gives `(screen_x, screen_y)`.",
+     "screen_y": "Pointer y on the screen, or `None`.",
+     "screen": "`(screen_x, screen_y)`, or `None` when the platform does not report window positions."
     }
    },
    "pyzed.Dock": {
@@ -2092,6 +2102,26 @@
      "window": "The window (`pz.Window`). Without it, the one that produced the message."
     }
    },
+   "pyzed.Command.maximize_window": {
+    "desc": "Maximizes the window, or restores it with `maximized=False`.",
+    "params": {
+     "maximized": "`False` restores it.",
+     "window": "The window (`pz.Window`). Without it, the one that produced the message."
+    }
+   },
+   "pyzed.Command.drag_resize_window": {
+    "desc": "Starts resizing the window with the mouse from an edge or corner (for windows without system decorations; `ui.window_frame` and `pz.window_edges` already do it).",
+    "params": {
+     "direction": "`\"n\"`, `\"s\"`, `\"e\"`, `\"w\"`, `\"ne\"`, `\"nw\"`, `\"se\"` or `\"sw\"`.",
+     "window": "The window (`pz.Window`). Without it, the one that produced the message."
+    }
+   },
+   "pyzed.Command.show_window_menu": {
+    "desc": "Shows the system's window menu (move, size, close…) under the pointer. Only Windows has one.",
+    "params": {
+     "window": "The window (`pz.Window`). Without it, the one that produced the message."
+    }
+   },
    "pyzed.Command.set_fullscreen": {
     "desc": "Enters or leaves fullscreen.",
     "params": {
@@ -2326,6 +2356,15 @@
      "rotate": "Degrees clockwise.",
      "scale": "Scale factor."
     }
+   },
+   "pyzed.window_edges": {
+    "desc": "Wraps the whole view of a window without system decorations so that pressing near its edges resizes the window (the corners take twice as much room). `ui.window_frame` already uses it.",
+    "params": {
+     "content": "The window's whole view.",
+     "border": "Width in pixels of the area that resizes.",
+     "enabled": "`False` turns it off (for a maximized window)."
+    },
+    "example": "pz.window_edges(view, enabled=not self.window_maximized)"
    },
    "pyzed.resizable": {
     "desc": "A panel whose `edge` can be dragged to resize it. It keeps the size the user drags it to; `on_resize(size)` is called when a drag ends so you can save it. Changing `size` later resets it.",
@@ -3281,15 +3320,21 @@
     "params": {
      "item": "The `Tab`.",
      "active": "Whether it is the active one.",
-     "height": "Height."
+     "height": "Height.",
+     "dimmed": "Mutes the label (the tab being dragged)."
     }
    },
    "pyzed.ui.tab_bar": {
-    "desc": "A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover.",
+    "desc": "A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover. Tabs can be dragged to reorder them or out of the window: see [Draggable tabs](/pyzed/guides/windows/#draggable-tabs-and-detachable-windows).",
     "params": {
      "tabs": "List of `Tab`.",
      "active": "Id of the active tab.",
-     "height": "Height."
+     "height": "Height.",
+     "on_drag": "Called with the tab id when a tab starts being dragged.",
+     "on_drop": "Called with the tab id and the `Event` when the dragged tab is released: `event.window_x`/`window_y` (outside the window if it was dropped outside) and `event.screen`.",
+     "on_drag_over": "While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar.",
+     "dragging": "Id of the tab being dragged (dims it and turns on `on_drag_over`).",
+     "drop_index": "Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one)."
     }
    },
    "pyzed.ui.breadcrumbs": {
@@ -3364,6 +3409,66 @@
     "params": {
      "height": "Height."
     }
+   },
+   "pyzed.ui.window_frame": {
+    "desc": "The whole frame of a window opened with `frame=\"custom\"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed, and borders that resize the window.",
+    "params": {
+     "content": "The window's content, under the title bar.",
+     "title": "Title shown in the bar. By default the window's `title`.",
+     "menus": "Menus on the left of the bar: a list of `ui.Menu`.",
+     "menu_button": "Shows the menus behind a ☰ button, like Zed (`False` always shows their names).",
+     "start": "Items after the menus (project, branch…).",
+     "center": "Your own widget in the middle instead of the title.",
+     "end": "Items before the window buttons.",
+     "style": "`\"macos\"`, `\"windows\"`, `\"gnome\"`, `\"ubuntu\"` or `\"kde\"`. By default the window's `frame`, or this system's.",
+     "window": "The window the buttons act on. By default the one whose `view()` is running.",
+     "height": "Height of the bar. By default the platform's.",
+     "resize_border": "Width in pixels of the borders that resize the window.",
+     "resize_edges": "`False` leaves the resize borders to you (`pz.window_edges`), to put them over menus and dialogs."
+    },
+    "example": "class Notes(pz.App):\n    frame = \"custom\"\n\n    def view(self):\n        return ui.window_frame(self.editor(), menus=[ui.Menu(\"File\", [ui.MenuItem(\"Open\", self.open)])],\n                               end=[ui.icon_button(\"settings\", self.settings)])"
+   },
+   "pyzed.ui.window_title_bar": {
+    "desc": "A window's title bar alone: window buttons in the style of `style` (on the left for macOS), `start` items, the title and `end` items. Without callbacks it only shows, which is how Pyzed Design previews a form in the frame of each platform.",
+    "params": {
+     "title": "Title (centered, or on the left on Windows).",
+     "style": "`\"macos\"`, `\"windows\"`, `\"gnome\"`, `\"ubuntu\"` or `\"kde\"` (`None`: this system's).",
+     "start": "Items at the start.",
+     "center": "Widget in the middle instead of the title.",
+     "end": "Items at the end.",
+     "on_drag": "Called when the empty part of the bar is dragged (return `Command.drag_window()`).",
+     "on_minimize": "Minimize button.",
+     "on_maximize": "Maximize button and double click on the bar.",
+     "on_close": "Close button.",
+     "on_menu": "Right click on the bar.",
+     "maximized": "Shows the restore symbol.",
+     "focused": "`False` dims it like a window in the background.",
+     "height": "Height. By default the platform's.",
+     "border": "Line under the bar."
+    }
+   },
+   "pyzed.ui.window_controls": {
+    "desc": "The minimize, maximize and close buttons in the style of a platform. A button without a callback is drawn but does nothing.",
+    "params": {
+     "style": "`\"macos\"`, `\"windows\"`, `\"gnome\"`, `\"ubuntu\"` or `\"kde\"` (`None`: this system's).",
+     "on_minimize": "Minimize button.",
+     "on_maximize": "Maximize button.",
+     "on_close": "Close button.",
+     "maximized": "Shows the restore symbol.",
+     "focused": "`False` dims them.",
+     "height": "Height."
+    }
+   },
+   "pyzed.ui.Menu": {
+    "desc": "A menu of a window frame's menu bar: a name and its items (`ui.MenuItem`, `ui.SEPARATOR` or a header string).",
+    "params": {
+     "label": "The menu's name.",
+     "items": "Its entries: `ui.MenuItem`, `ui.SEPARATOR` or a header string."
+    },
+    "example": "ui.Menu(\"File\", [ui.MenuItem(\"Open…\", self.open, keys=\"ctrl-o\"), ui.SEPARATOR, ui.MenuItem(\"Quit\", self.close)])"
+   },
+   "pyzed.ui.system_platform": {
+    "desc": "The style of this system's window buttons: `\"macos\"`, `\"windows\"`, `\"kde\"`, `\"ubuntu\"` or `\"gnome\"` (other Linux desktops). Under WSL it is `\"windows\"`."
    },
    "pyzed.ui.layer": {
     "desc": "Stacks `overlay` on top of `base`. Clicking outside sends `on_dismiss`. With `overlay=None` it returns `base` unchanged.",

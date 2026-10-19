@@ -370,6 +370,44 @@ Maximizes the window, or restores it if it already is.
 | --- | --- |
 | `window` | The window (`pz.Window`). Without it, the one that produced the message. |
 
+### `maximize_window`
+
+```python
+maximize_window(maximized=True, window=None)
+```
+
+Maximizes the window, or restores it with `maximized=False`.
+
+| Parameter | Description |
+| --- | --- |
+| `maximized` | `False` restores it. |
+| `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+
+### `drag_resize_window`
+
+```python
+drag_resize_window(direction, window=None)
+```
+
+Starts resizing the window with the mouse from an edge or corner (for windows without system decorations; `ui.window_frame` and `pz.window_edges` already do it).
+
+| Parameter | Description |
+| --- | --- |
+| `direction` | `"n"`, `"s"`, `"e"`, `"w"`, `"ne"`, `"nw"`, `"se"` or `"sw"`. |
+| `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+
+### `show_window_menu`
+
+```python
+show_window_menu(window=None)
+```
+
+Shows the system's window menu (move, size, close…) under the pointer. Only Windows has one.
+
+| Parameter | Description |
+| --- | --- |
+| `window` | The window (`pz.Window`). Without it, the one that produced the message. |
+
 ### `set_fullscreen`
 
 ```python

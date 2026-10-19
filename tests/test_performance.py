@@ -1,4 +1,4 @@
-"""Tests for large data: virtualized columns, lists and tables, and memoized subtrees."""
+"""Tests for performance: fast defaults, virtualized columns, lists and tables, and memoized subtrees."""
 
 from dataclasses import dataclass
 
@@ -6,6 +6,72 @@ import pytest
 
 import pyzed as pz
 from pyzed import i18n, theme, ui
+
+
+# -- fast defaults ----------------------------------------------------------------------
+
+
+def test_import_leaves_heavy_modules_for_later():
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, pyzed;"
+        "heavy = ['asyncio', 'importlib.metadata', 'pyzed.designer', 'pyzed.reference', 'pyzed.game'];"
+        "print([m for m in heavy if m in sys.modules])"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "[]"
+
+
+def test_lazy_names_still_work():
+    import pyzed.dock
+
+    from pyzed import Dock, __version__
+
+    assert Dock is pz.Dock is pyzed.dock.Dock
+    assert pz.is_pressed is pz.game.is_pressed
+    assert pz.designer.__name__ == "pyzed.designer"
+    assert isinstance(__version__, str) and __version__
+    assert {"designer", "Dock", "__version__"} <= set(dir(pz))
+    with pytest.raises(AttributeError):
+        pz.not_a_thing  # noqa: B018
+
+
+def test_children_accept_any_iterable_and_skip_none_and_false():
+    t = pz.text("a")
+    nested = pz.column([t, None, False, (t, [t]), (x for x in [t]), "b", 3])
+    assert repr(nested) == "<Widget column [6]>"
+
+
+def test_button_colors_are_cached_per_theme_and_copied():
+    from pyzed.ui import base
+
+    first = base._button_colors(theme.ONE_DARK, "accent", None, False)
+    first["bg"] = "#000000"  # callers change their copy
+    again = base._button_colors(theme.ONE_DARK, "accent", None, False)
+    assert again["bg"] != "#000000"
+    assert base._button_colors(theme.ONE_LIGHT, "accent", None, False) == base._mix_button_colors(
+        theme.ONE_LIGHT, "accent", None, False
+    )
+
+
+def test_async_drain_handles_every_kind_of_result():
+    from pyzed import _async
+
+    async def coro():
+        return 2
+
+    async def agen():
+        yield 3
+
+    def gen():
+        yield 4
+
+    out = []
+    for value in (1, coro(), agen(), gen(), None):
+        _async.drain(value, out.append)
+    assert out == [1, 2, 3, 4]
 
 
 # -- virtual columns ------------------------------------------------------------------

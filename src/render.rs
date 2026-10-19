@@ -1316,6 +1316,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             )
             .into()
         }
+        Kind::WindowEdges { child, border } => {
+            crate::frame::WindowEdges::new(build(py, child, ctx), *border).into()
+        }
         Kind::Responsive(callback) => {
             let callback = callback.clone();
             widget::responsive(move |size| {

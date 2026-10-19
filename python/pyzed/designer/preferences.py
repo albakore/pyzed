@@ -31,6 +31,10 @@ class DesignerSettings:
     grid: int = 8
     show_toolbar: bool = True
     show_status_bar: bool = True
+    #: Draw the window's title bar and buttons in Pyzed (False keeps the system's frame).
+    window_frame: bool = True
+    #: Platform whose window frame the canvas shows around the form ("" follows this system).
+    preview_frame: str = ""
     #: Save the form before running it.
     save_on_run: bool = False
     #: Open the console when a form starts running.

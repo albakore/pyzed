@@ -17,7 +17,7 @@ use iced::widget::{column, container, scrollable, text, text_editor};
 use iced::{Color, Element, Font, Length, Point, Size, Subscription, Task, Theme, window};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyTuple, PyType};
+use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyString, PyTuple, PyType};
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
@@ -29,6 +29,8 @@ pub struct State {
     app: Py<PyAny>,
     main: Option<window::Id>,
     windows: HashMap<window::Id, Py<PyAny>>,
+    /// Where each window is on the screen (its outer top-left corner), when the platform says.
+    positions: HashMap<window::Id, Point>,
     /// The window whose message is being handled (commands without a window target it).
     current: Option<window::Id>,
     caches: Caches,
@@ -123,6 +125,14 @@ pub enum Message {
     CloseRequested(window::Id),
     WindowClosed(window::Id),
     WindowResized(window::Id, Size),
+    /// Whether the window is maximized now (asked after it opens or changes size).
+    WindowMaximized(window::Id, bool),
+    /// The window gained (`true`) or lost the keyboard focus.
+    WindowFocused(window::Id, bool),
+    /// A press on the border of a window without decorations (`window_edges`).
+    DragResize(window::Direction),
+    /// A window was opened (with its size) or moved to this screen position (`None` on Wayland).
+    WindowPlaced(window::Id, Option<Point>, Option<Size>),
     SystemTheme(iced::theme::Mode),
     Noop,
 }
@@ -179,6 +189,9 @@ struct PickFiles {
 #[derive(Clone, Copy)]
 enum WindowOp {
     Drag,
+    DragResize(window::Direction),
+    Maximize(bool),
+    SystemMenu,
     Minimize,
     ToggleMaximize,
     Fullscreen(bool),
@@ -368,6 +381,54 @@ impl Command {
         cmd(CommandKind::Window(WindowOp::Drag, PyMsg::maybe(&window)))
     }
 
+    /// Starts resizing the window with the mouse from one of its edges or corners:
+    /// `direction` is "n", "s", "e", "w", "ne", "nw", "se" or "sw" (use it on press of
+    /// a custom border; `ui.window_frame` already does).
+    #[staticmethod]
+    #[pyo3(signature = (direction, window=None))]
+    fn drag_resize_window(direction: &str, window: Option<Bound<'_, PyAny>>) -> PyResult<Self> {
+        let direction = match direction {
+            "n" => window::Direction::North,
+            "s" => window::Direction::South,
+            "e" => window::Direction::East,
+            "w" => window::Direction::West,
+            "ne" => window::Direction::NorthEast,
+            "nw" => window::Direction::NorthWest,
+            "se" => window::Direction::SouthEast,
+            "sw" => window::Direction::SouthWest,
+            other => {
+                return Err(PyValueError::new_err(format!(
+                    "invalid direction {other:?}: use \"n\", \"s\", \"e\", \"w\", \"ne\", \"nw\", \"se\" or \"sw\""
+                )));
+            }
+        };
+        Ok(cmd(CommandKind::Window(
+            WindowOp::DragResize(direction),
+            PyMsg::maybe(&window),
+        )))
+    }
+
+    /// Maximizes the window (or restores it with `maximized=False`).
+    #[staticmethod]
+    #[pyo3(signature = (maximized=true, window=None))]
+    fn maximize_window(maximized: bool, window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::Window(
+            WindowOp::Maximize(maximized),
+            PyMsg::maybe(&window),
+        ))
+    }
+
+    /// Shows the system's window menu (move, size, close...) under the pointer.
+    /// Only Windows has one; elsewhere it does nothing.
+    #[staticmethod]
+    #[pyo3(signature = (window=None))]
+    fn show_window_menu(window: Option<Bound<'_, PyAny>>) -> Self {
+        cmd(CommandKind::Window(
+            WindowOp::SystemMenu,
+            PyMsg::maybe(&window),
+        ))
+    }
+
     /// Minimizes the window.
     #[staticmethod]
     #[pyo3(signature = (window=None))]
@@ -501,6 +562,17 @@ impl Command {
 
 /// Whether `value` is a coroutine, awaitable, generator or async generator.
 fn is_deferred(value: &Bound<'_, PyAny>) -> bool {
+    // The usual messages and return values (None, strings, numbers, tuples) without the
+    // failing attribute lookups below, which each raise and discard an AttributeError.
+    if value.is_none()
+        || value.is_instance_of::<PyString>()
+        || value.is_instance_of::<pyo3::types::PyInt>()
+        || value.is_instance_of::<pyo3::types::PyFloat>()
+        || value.is_instance_of::<PyTuple>()
+        || value.is_instance_of::<PyDict>()
+    {
+        return false;
+    }
     value.hasattr("__await__").unwrap_or(false)
         || value.hasattr("__anext__").unwrap_or(false)
         || (value.hasattr("send").unwrap_or(false) && value.hasattr("__next__").unwrap_or(false))
@@ -651,6 +723,9 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             };
             match *op {
                 WindowOp::Drag => window::drag(id),
+                WindowOp::DragResize(direction) => window::drag_resize(id, direction),
+                WindowOp::Maximize(on) => window::maximize(id, on),
+                WindowOp::SystemMenu => window::show_system_menu(id),
                 WindowOp::Minimize => window::minimize(id, true),
                 WindowOp::ToggleMaximize => window::toggle_maximize(id),
                 WindowOp::Fullscreen(on) => window::set_mode(
@@ -823,19 +898,54 @@ fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
             }
         },
     };
+    // `Window.frame`: `None` keeps the system's frame; otherwise Python draws the title bar
+    // (`ui.window_frame`) and the system draws none, except on macOS ("overlay"), where
+    // its buttons stay over a transparent title bar.
+    let frame = match obj.call_method0("__pyzed_frame__") {
+        Ok(v) if !v.is_none() => Some(v.extract::<String>()?),
+        Ok(_) => None,
+        Err(err) if err.is_instance_of::<pyo3::exceptions::PyAttributeError>(obj.py()) => None,
+        Err(err) => return Err(err),
+    };
+    let overlay = frame.as_deref() == Some("overlay");
+    let decorations = flag("decorations", true)? && (frame.is_none() || overlay);
     Ok(window::Settings {
         size: size_of("size")?.unwrap_or(Size::new(1280.0, 800.0)),
         min_size: size_of("min_size")?,
         max_size: size_of("max_size")?,
         position,
         resizable: flag("resizable", true)?,
-        decorations: flag("decorations", true)?,
+        decorations,
         transparent: flag("transparent", false)?,
         maximized: flag("maximized", false)?,
         fullscreen: flag("fullscreen", false)?,
         exit_on_close_request: false,
+        platform_specific: platform_specific(frame.is_some(), overlay),
         ..Default::default()
     })
+}
+
+#[cfg(target_os = "macos")]
+fn platform_specific(_custom: bool, overlay: bool) -> window::settings::PlatformSpecific {
+    window::settings::PlatformSpecific {
+        title_hidden: overlay,
+        titlebar_transparent: overlay,
+        fullsize_content_view: overlay,
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn platform_specific(custom: bool, _overlay: bool) -> window::settings::PlatformSpecific {
+    window::settings::PlatformSpecific {
+        // the drop shadow and rounded corners of Windows 11 for windows without decorations
+        undecorated_shadow: custom,
+        ..Default::default()
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn platform_specific(_custom: bool, _overlay: bool) -> window::settings::PlatformSpecific {
+    window::settings::PlatformSpecific::default()
 }
 
 // ---------------------------------------------------------------------------
@@ -886,11 +996,18 @@ fn deliver_event<'py>(
     target: &Bound<'py, PyAny>,
     handler: &Bound<'py, PyAny>,
     data: &crate::events::EventData,
+    origin: Option<Point>,
 ) -> PyResult<Bound<'py, PyAny>> {
     let py = target.py();
     let kwargs = PyDict::new(py);
     kwargs.set_item("x", data.x)?;
     kwargs.set_item("y", data.y)?;
+    kwargs.set_item("window_x", data.window_x)?;
+    kwargs.set_item("window_y", data.window_y)?;
+    if let Some(origin) = origin {
+        kwargs.set_item("screen_x", origin.x + data.window_x)?;
+        kwargs.set_item("screen_y", origin.y + data.window_y)?;
+    }
     kwargs.set_item("button", data.button)?;
     kwargs.set_item("dx", data.dx)?;
     kwargs.set_item("dy", data.dy)?;
@@ -1025,7 +1142,12 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::Slide(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Point(cb, x, y) => callback(&target, cb.0.bind(py), (x, y)),
             Message::Call(cb, value) => callback(&target, cb.0.bind(py), (value.0.bind(py),)),
-            Message::Event(cb, data) => deliver_event(&target, cb.0.bind(py), &data),
+            Message::Event(cb, data) => {
+                let origin = state
+                    .target()
+                    .and_then(|id| state.positions.get(&id).copied());
+                deliver_event(&target, cb.0.bind(py), &data, origin)
+            }
             Message::Key(combo) => {
                 let main = state.app.bind(py).clone();
                 match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1181,10 +1303,8 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::WindowOpened(id) => {
                 let obj = state.window(id).bind(py).clone();
                 let _ = obj.setattr("_pyzed_window_open", true);
-                match call_hook(&obj, "on_open", ()) {
-                    Some(result) => result,
-                    None => return Task::none(),
-                }
+                let hook = run_hook(py, state, call_hook(&obj, "on_open", ()));
+                return Task::batch([ask_maximized(id), hook]);
             }
             Message::CloseRequested(id) => {
                 let obj = state.window(id).bind(py).clone();
@@ -1207,6 +1327,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 };
             }
             Message::WindowClosed(id) => {
+                state.positions.remove(&id);
                 if let Some(obj) = state.windows.remove(&id) {
                     let _ = obj.bind(py).setattr("_pyzed_window_open", false);
                 }
@@ -1218,10 +1339,41 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::WindowResized(id, size) => {
                 let obj = state.window(id).bind(py).clone();
                 let _ = obj.setattr("window_size", (size.width, size.height));
-                match call_hook(&obj, "on_resize", (size.width, size.height)) {
-                    Some(result) => result,
-                    None => return Task::none(),
+                let hook = run_hook(
+                    py,
+                    state,
+                    call_hook(&obj, "on_resize", (size.width, size.height)),
+                );
+                return Task::batch([ask_maximized(id), hook]);
+            }
+            Message::WindowMaximized(id, maximized) => {
+                if let Some(obj) = state.windows.get(&id) {
+                    let _ = obj.bind(py).setattr("window_maximized", maximized);
                 }
+                return Task::none();
+            }
+            Message::WindowFocused(id, focused) => {
+                if let Some(obj) = state.windows.get(&id) {
+                    let _ = obj.bind(py).setattr("window_focused", focused);
+                }
+                return Task::none();
+            }
+            Message::DragResize(direction) => {
+                return match state.target() {
+                    Some(id) => window::drag_resize(id, direction),
+                    None => Task::none(),
+                };
+            }
+            Message::WindowPlaced(id, at, size) => {
+                let obj = state.window(id).bind(py).clone();
+                if let Some(at) = at {
+                    state.positions.insert(id, at);
+                    let _ = obj.setattr("window_position", (at.x, at.y));
+                }
+                if let Some(size) = size {
+                    let _ = obj.setattr("window_size", (size.width, size.height));
+                }
+                return Task::none();
             }
             Message::SystemTheme(mode) => {
                 let dark = !matches!(mode, iced::theme::Mode::Light);
@@ -1237,6 +1389,27 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             }
         }
     })
+}
+
+/// Asks whether window `id` is maximized, for `Window.window_maximized`.
+fn ask_maximized(id: window::Id) -> Task<Message> {
+    window::is_maximized(id).map(move |maximized| Message::WindowMaximized(id, maximized))
+}
+
+/// The command returned by a hook (`on_open`, `on_resize`...), if it has one.
+fn run_hook(
+    py: Python<'_>,
+    state: &mut State,
+    result: Option<PyResult<Bound<'_, PyAny>>>,
+) -> Task<Message> {
+    match result {
+        Some(Ok(value)) => command_task(py, state, &value),
+        Some(Err(err)) => {
+            err.print(py);
+            Task::none()
+        }
+        None => Task::none(),
+    }
 }
 
 /// Calls every `pz.frames` callback with the seconds since the previous frame.
@@ -1505,12 +1678,28 @@ pub fn key_combo(key: &Key, modifiers: keyboard::Modifiers) -> Option<String> {
 static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
     LazyLock::new(|| Mutex::new(std::collections::BTreeSet::new()));
 
+/// Which key hooks the app and its windows define (`on_key`, `on_key_up`), refreshed with the
+/// subscriptions after every update. A key message nobody listens to would still rebuild every
+/// window's view, so presses and releases only become messages when a hook will receive them
+/// (typing in a field then rebuilds the view once per key instead of three times).
+static KEY_HOOKS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+const ON_KEY: u8 = 1;
+const ON_KEY_UP: u8 = 2;
+
+fn key_hooks(obj: &Bound<'_, PyAny>) -> u8 {
+    let has = |name: &str| obj.hasattr(name).unwrap_or(false);
+    (if has("on_key") { ON_KEY } else { 0 }) | (if has("on_key_up") { ON_KEY_UP } else { 0 })
+}
+
 fn key_message(event: keyboard::Event) -> Option<Message> {
+    let hooks = KEY_HOOKS.load(std::sync::atomic::Ordering::Relaxed);
     match event {
-        keyboard::Event::KeyPressed { key, modifiers, .. } => {
+        keyboard::Event::KeyPressed { key, modifiers, .. } if hooks & ON_KEY != 0 => {
             key_combo(&key, modifiers).map(Message::Key)
         }
-        keyboard::Event::KeyReleased { key, .. } => key_name(&key).map(Message::KeyUp),
+        keyboard::Event::KeyReleased { key, .. } if hooks & ON_KEY_UP != 0 => {
+            key_name(&key).map(Message::KeyUp)
+        }
         _ => None,
     }
 }
@@ -1541,6 +1730,28 @@ fn track_keys(event: &iced::Event) {
 #[pyfunction]
 pub fn pressed_keys() -> Vec<String> {
     PRESSED.lock().unwrap().iter().cloned().collect()
+}
+
+/// Where a window is on the screen and how big: reported when it opens, and each time it moves
+/// (positions are not reported on Wayland). Also whether it has the keyboard focus.
+fn window_moved(
+    event: iced::Event,
+    _status: iced::event::Status,
+    window: window::Id,
+) -> Option<Message> {
+    match event {
+        iced::Event::Window(window::Event::Opened { position, size }) => {
+            Some(Message::WindowPlaced(window, position, Some(size)))
+        }
+        iced::Event::Window(window::Event::Moved(at)) => {
+            Some(Message::WindowPlaced(window, Some(at), None))
+        }
+        iced::Event::Window(window::Event::Focused) => Some(Message::WindowFocused(window, true)),
+        iced::Event::Window(window::Event::Unfocused) => {
+            Some(Message::WindowFocused(window, false))
+        }
+        _ => None,
+    }
 }
 
 fn key_event(
@@ -1819,15 +2030,19 @@ fn subscription(state: &State) -> Subscription<Message> {
         window::close_requests().map(Message::CloseRequested),
         window::close_events().map(Message::WindowClosed),
         window::resize_events().map(|(id, size)| Message::WindowResized(id, size)),
+        iced::event::listen_with(window_moved),
         iced::system::theme_changes().map(Message::SystemTheme),
     ];
     Python::attach(|py| {
         let mut recipes = python_subscriptions(py, state.app.bind(py), None);
+        let mut hooks = key_hooks(state.app.bind(py));
         for (id, obj) in &state.windows {
+            hooks |= key_hooks(obj.bind(py));
             if Some(*id) != state.main {
                 recipes.extend(python_subscriptions(py, obj.bind(py), Some(*id)));
             }
         }
+        KEY_HOOKS.store(hooks, std::sync::atomic::Ordering::Relaxed);
         let (frames, recipes): (Vec<_>, Vec<_>) =
             recipes.into_iter().partition(|r| r.frame.is_some());
         if frames.is_empty() {
@@ -1871,6 +2086,7 @@ fn daemon(
                 app: app.clone_ref(py),
                 main: None,
                 windows: HashMap::new(),
+                positions: HashMap::new(),
                 current: None,
                 caches: Caches::default(),
                 themes: RefCell::new(HashMap::new()),
@@ -1931,7 +2147,7 @@ pub fn run(py: Python<'_>, app: Py<PyAny>) -> PyResult<()> {
             "pz.run() can only be called once per process; open more windows with Command.open_window",
         ));
     }
-    fonts::ensure_loaded();
+    py.detach(fonts::ensure_loaded);
     window_settings(app.bind(py))?;
     let size = font_size(app.bind(py))?;
     open_post_channel();
@@ -1951,7 +2167,7 @@ pub fn screenshot(
     scale: f32,
     wait: f64,
 ) -> PyResult<()> {
-    fonts::ensure_loaded();
+    py.detach(fonts::ensure_loaded);
     let settings = window_settings(app.bind(py))?;
     let viewport = size.map(|(w, h)| Size::new(w, h)).unwrap_or(settings.size);
     let font_size = font_size(app.bind(py))?;

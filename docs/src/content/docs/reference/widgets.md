@@ -572,6 +572,24 @@ The translation that makes a rotation and a scale (which turn around a box's cen
 | `rotate` | Degrees clockwise. |
 | `scale` | Scale factor. |
 
+### `window_edges`
+
+```python
+window_edges(content, *, border=6.0, enabled=True)
+```
+
+Wraps the whole view of a window without system decorations so that pressing near its edges resizes the window (the corners take twice as much room). `ui.window_frame` already uses it.
+
+| Parameter | Description |
+| --- | --- |
+| `content` | The window's whole view. |
+| `border` | Width in pixels of the area that resizes. |
+| `enabled` | `False` turns it off (for a maximized window). |
+
+```python
+pz.window_edges(view, enabled=not self.window_maximized)
+```
+
 ### `resizable`
 
 ```python

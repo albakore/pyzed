@@ -17,6 +17,14 @@ icon). A dot marks unsaved changes, and the end of the tab bar says which view y
 - Opening a file that is already open switches to its tab, keeping its unsaved changes. An untouched empty
   untitled form is replaced instead of piling up tabs.
 - Double-clicking a placed [designed component](/pyzed/editor/component-designer/) opens its file in a tab.
+- Drag a tab along the row to reorder it. Drag it out of the window to open it in a **window of its own**, with
+  its own tabs, toolbar and canvas; drag a tab onto another Pyzed Design window to stack it among that window's
+  tabs. **Move tab to new window** and **Move tab to main window** (View menu, command palette) do the same
+  without the mouse, also on Wayland, where apps cannot tell where their windows are.
+- The panels (Properties, Outline, Code, Events...) stay in the main window and follow the document you used
+  last. A window that is not the active one shows its form as it is; its first click only makes it active, so a
+  click never changes a form you were not looking at. Closing a document window moves its tabs back to the main
+  window.
 
 The window title shows the active document, after a `●` when it has unsaved changes.
 

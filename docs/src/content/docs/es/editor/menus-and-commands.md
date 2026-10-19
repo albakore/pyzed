@@ -61,6 +61,7 @@ en el teclado y en la paleta de comandos.
 | Ajustar a la cuadrícula | | Activa o desactiva el snap. |
 | Guías inteligentes | | Activa o desactiva las guías de alineación. |
 | Mostrar controles ocultos | | Dibuja atenuados en el lienzo los controles ocultos, o los omite. |
+| Vista previa del marco de ventana… | | Muestra el formulario en el lienzo con el marco de ventana de otra plataforma: macOS, Windows 11, GNOME, Ubuntu o KDE Plasma (marcada mientras no es el de este sistema). |
 | Vista previa con tema…, Vista previa con idioma… | | Muestra el lienzo (y la próxima ejecución) con otro tema o idioma sin cambiar el formulario (marcada mientras está activa). Consulta [Vista previa con otro tema o idioma](/pyzed/es/editor/data-binding/#vista-previa-con-otro-tema-o-idioma). |
 | Restablecer los paneles | | Devuelve cada panel a su dock y tamaño iniciales. |
 | *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`): clic para traerlo al frente. |

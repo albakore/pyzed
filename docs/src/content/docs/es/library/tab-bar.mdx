@@ -75,11 +75,16 @@ tab_bar(
     start=(),
     end=(),
     height=32,
+    on_drag=None,
+    on_drop=None,
+    on_drag_over=None,
+    dragging=None,
+    drop_index=None,
     theme=None,
 )
 ```
 
-Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón.
+Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón. Las pestañas se pueden arrastrar para reordenarlas o sacarlas de la ventana: ver [Pestañas arrastrables](/pyzed/es/guides/windows/#pestañas-arrastrables-y-ventanas-desprendibles).
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -90,6 +95,11 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 | `start` | `()` | Widgets al inicio (izquierda). |
 | `end` | `()` | Widgets al final (derecha). |
 | `height` | `32` | Alto. |
+| `on_drag` | `None` | Se llama con el id de la pestaña cuando empieza a arrastrarse. |
+| `on_drop` | `None` | Se llama con el id de la pestaña y el `Event` al soltar la pestaña arrastrada: `event.window_x`/`window_y` (fuera de la ventana si se soltó fuera) y `event.screen`. |
+| `on_drag_over` | `None` | Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra. |
+| `dragging` | `None` | Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`). |
+| `drop_index` | `None` | Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#tab_bar)
@@ -118,7 +128,7 @@ Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono de
 ### `ui.tab`
 
 ```python
-tab(item, *, active, on_select=None, on_close=None, height=32, theme=None)
+tab(item, *, active, on_select=None, on_close=None, height=32, dimmed=False, theme=None)
 ```
 
 Una sola pestaña. Normalmente se usa `tab_bar`.
@@ -130,6 +140,7 @@ Una sola pestaña. Normalmente se usa `tab_bar`.
 | `on_select` | `None` | Callable que recibe el elemento elegido. |
 | `on_close` | `None` | Mensaje o callable que se envía al pulsar la X. |
 | `height` | `32` | Alto. |
+| `dimmed` | `False` | Apaga la etiqueta (la pestaña que se arrastra). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#tab-1)

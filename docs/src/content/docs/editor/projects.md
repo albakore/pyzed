@@ -104,17 +104,31 @@ file finder, and file names count more than folders: `crt` finds `ui/cart.pzform
 folder** (in the selected folder), **Collapse all** and **Refresh**. The tree reloads by itself when you save and
 after uv commands.
 
-**Right-click** a file or folder (or the empty space below the tree, for the project folder) for its menu:
+**Right-click** a file or folder (or the empty space below the tree, for the project folder) for its menu, the
+same as Zed's project panel:
 
-| Item | What it does |
-| --- | --- |
-| **Open** / **Open with the system app** | Opens the file in the editor or with its default app. |
-| **Open in the code editor** | Opens any text file as text, a form's `.py` on its own too. |
-| **Reveal in file manager** | Shows it in Files, Finder or Explorer. |
-| **New file…** / **New folder…** | Creates one in that folder (a new file opens right away). |
-| **Copy path** / **Copy relative path** | Copies the full path or the path from the project folder. |
-| **Rename…** | Renames it in place. |
-| **Delete…** | Deletes it after asking (a folder with everything in it); it cannot be undone. |
+![The right-click menu of a file in the Project tab](../../../../screenshots/designer-project-menu.png)
+
+| Item | Keys | What it does |
+| --- | --- | --- |
+| **New File** / **New Folder** | <kbd>Ctrl</kbd>+<kbd>N</kbd> / <kbd>Alt</kbd>+<kbd>N</kbd> | Creates one in that folder (a new file opens right away). |
+| **Reveal in File Manager** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> | Shows it in Files, Finder or Explorer. |
+| **Open in Default App** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | Opens the file with the system's app for its type. |
+| **Open in the code editor** | | Opens any text file as text (a form's `.py` on its own too). |
+| **Open in Terminal** | | Opens the system's terminal in that folder (`$TERMINAL` first on Linux). |
+| **Cut** / **Copy** / **Paste** | <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>C</kbd> / <kbd>V</kbd> | Moves or copies it into the folder you paste on; a taken name gets ` copy`. |
+| **Duplicate** | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Copies it next to itself and asks for the copy's name. |
+| **Undo** / **Redo** | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Reverts or repeats the last new file or folder, rename, move or copy made here. |
+| **Copy Path** / **Copy Relative Path** | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Copies the full path or the path from the project folder. |
+| **Add to .gitignore** / **Add to .git/info/exclude** | | Ignores it in git, for everyone or only in your copy. |
+| **Open File Permalink** / **Copy File Permalink** | | The link to it at the current commit on GitHub, GitLab or another remote (only with a remote). |
+| **Rename** | <kbd>F2</kbd> | Renames it. |
+| **Trash** | <kbd>Delete</kbd> | Moves it to the system's trash, where you can restore it. |
+| **Delete** | <kbd>Ctrl</kbd>+<kbd>Delete</kbd> | Deletes it for good after asking (a folder with everything in it). |
+
+The keys work once you click in the tree, and also <kbd>↑</kbd> <kbd>↓</kbd> to move the selection,
+<kbd>←</kbd> <kbd>→</kbd> to close and open folders and <kbd>Enter</kbd> to open the selected file. A file open in
+the code panel follows its renames and moves, and closes when it is deleted (unless it has unsaved changes).
 
 ### Go to file
 

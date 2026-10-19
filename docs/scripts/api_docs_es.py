@@ -627,11 +627,17 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                 },
                 "pyzed.ui.tab": {
                     "desc": "Una sola pestaña. Normalmente se usa `tab_bar`.",
-                    "params": {"item": "El `Tab`.", "active": "Si es la activa.", "height": "Alto."},
+                    "params": {"item": "El `Tab`.", "active": "Si es la activa.", "height": "Alto.",
+                               "dimmed": "Apaga la etiqueta (la pestaña que se arrastra)."},
                 },
                 "pyzed.ui.tab_bar": {
-                    "desc": "Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón.",
-                    "params": {"tabs": "Lista de `Tab`.", "active": "Id de la pestaña activa.", "height": "Alto."},
+                    "desc": "Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón. Las pestañas se pueden arrastrar para reordenarlas o sacarlas de la ventana: ver [Pestañas arrastrables](/pyzed/es/guides/windows/#pestañas-arrastrables-y-ventanas-desprendibles).",
+                    "params": {"tabs": "Lista de `Tab`.", "active": "Id de la pestaña activa.", "height": "Alto.",
+                               "on_drag": "Se llama con el id de la pestaña cuando empieza a arrastrarse.",
+                               "on_drop": "Se llama con el id de la pestaña y el `Event` al soltar la pestaña arrastrada: `event.window_x`/`window_y` (fuera de la ventana si se soltó fuera) y `event.screen`.",
+                               "on_drag_over": "Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra.",
+                               "dragging": "Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`).",
+                               "drop_index": "Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última)."},
                 },
                 "pyzed.ui.breadcrumbs": {
                     "desc": "`src › main.rs › fn main`. Las partes pueden ser textos o tuplas `(icono, texto)`.",
@@ -680,6 +686,56 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     },
                 },
                 "pyzed.ui.panel_header": {"desc": "La cabecera de un panel: icono, título y acciones.", "params": {"height": "Alto."}},
+            }),
+            ("Marco de ventana", {
+                "pyzed.ui.window_frame": {
+                    "desc": "El marco entero de una ventana abierta con `frame=\"custom\"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed y bordes que cambian el tamaño de la ventana.",
+                    "params": {
+                        "content": "El contenido de la ventana, bajo la barra de título.",
+                        "title": "Título de la barra. Por defecto el `title` de la ventana.",
+                        "menus": "Menús a la izquierda de la barra: una lista de `ui.Menu`.",
+                        "menu_button": "Muestra los menús tras un botón ☰, como Zed (`False` muestra siempre sus nombres).",
+                        "start": "Elementos después de los menús (proyecto, rama…).",
+                        "center": "Tu propio widget en el centro en lugar del título.",
+                        "end": "Elementos antes de los botones de ventana.",
+                        "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"`. Por defecto el `frame` de la ventana, o el del sistema.',
+                        "window": "La ventana sobre la que actúan los botones. Por defecto aquella cuyo `view()` se está ejecutando.",
+                        "height": "Alto de la barra. Por defecto el de la plataforma.",
+                        "resize_border": "Ancho en píxeles de los bordes que cambian el tamaño de la ventana.",
+                        "resize_edges": "`False` deja los bordes de redimensionar a tu cargo (`pz.window_edges`), para ponerlos encima de menús y diálogos.",
+                    },
+                    "example": 'class Notes(pz.App):\n    frame = "custom"\n\n    def view(self):\n        return ui.window_frame(self.editor(), menus=[ui.Menu("Archivo", [ui.MenuItem("Abrir", self.open)])],\n                               end=[ui.icon_button("settings", self.settings)])',
+                },
+                "pyzed.ui.window_title_bar": {
+                    "desc": "La barra de título de una ventana, sola: botones de ventana con el estilo de `style` (a la izquierda en macOS), elementos `start`, el título y elementos `end`. Sin callbacks solo se muestra, que es como Pyzed Design previsualiza un formulario con el marco de cada plataforma.",
+                    "params": {
+                        "title": "Título (centrado, o a la izquierda en Windows).",
+                        "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema).',
+                        "start": "Elementos al principio.", "center": "Widget en el centro en lugar del título.",
+                        "end": "Elementos al final.",
+                        "on_drag": "Se llama al arrastrar la parte vacía de la barra (devuelve `Command.drag_window()`).",
+                        "on_minimize": "Botón de minimizar.", "on_maximize": "Botón de maximizar y doble clic en la barra.",
+                        "on_close": "Botón de cerrar.", "on_menu": "Clic derecho en la barra.",
+                        "maximized": "Muestra el símbolo de restaurar.", "focused": "`False` la atenúa como una ventana en segundo plano.",
+                        "height": "Alto. Por defecto el de la plataforma.", "border": "Línea bajo la barra.",
+                    },
+                },
+                "pyzed.ui.window_controls": {
+                    "desc": "Los botones de minimizar, maximizar y cerrar con el estilo de una plataforma. Un botón sin callback se dibuja pero no hace nada.",
+                    "params": {
+                        "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema).',
+                        "on_minimize": "Botón de minimizar.", "on_maximize": "Botón de maximizar.", "on_close": "Botón de cerrar.",
+                        "maximized": "Muestra el símbolo de restaurar.", "focused": "`False` los atenúa.", "height": "Alto.",
+                    },
+                },
+                "pyzed.ui.Menu": {
+                    "desc": "Un menú de la barra de menús de un marco de ventana: un nombre y sus elementos (`ui.MenuItem`, `ui.SEPARATOR` o un texto de cabecera).",
+                    "params": {"label": "El nombre del menú.", "items": "Sus elementos: `ui.MenuItem`, `ui.SEPARATOR` o un texto de cabecera."},
+                    "example": 'ui.Menu("Archivo", [ui.MenuItem("Abrir…", self.open, keys="ctrl-o"), ui.SEPARATOR, ui.MenuItem("Salir", self.close)])',
+                },
+                "pyzed.ui.system_platform": {
+                    "desc": 'El estilo de los botones de ventana de este sistema: `"macos"`, `"windows"`, `"kde"`, `"ubuntu"` o `"gnome"` (otros escritorios Linux). En WSL es `"windows"`.',
+                },
             }),
             ("Overlays", {
                 "pyzed.ui.layer": {
@@ -988,6 +1044,7 @@ reenvía a `app.update()`.
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
+| `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
 
 | Método | Descripción |
 | --- | --- |
@@ -1081,6 +1138,9 @@ _section("command", "Ventanas y portapapeles", {
     "pyzed.Command.drag_window": {"desc": "Empieza a mover la ventana con el ratón (úsalo al pulsar una barra de título propia).", "params": {"window": _win}},
     "pyzed.Command.minimize_window": {"desc": "Minimiza la ventana.", "params": {"window": _win}},
     "pyzed.Command.toggle_maximize_window": {"desc": "Maximiza la ventana o la restaura si ya lo está.", "params": {"window": _win}},
+    "pyzed.Command.maximize_window": {"desc": "Maximiza la ventana, o la restaura con `maximized=False`.", "params": {"maximized": "`False` la restaura.", "window": _win}},
+    "pyzed.Command.drag_resize_window": {"desc": "Empieza a cambiar el tamaño de la ventana con el ratón desde un borde o una esquina (para ventanas sin decoraciones del sistema; `ui.window_frame` y `pz.window_edges` ya lo hacen).", "params": {"direction": '`"n"`, `"s"`, `"e"`, `"w"`, `"ne"`, `"nw"`, `"se"` o `"sw"`.', "window": _win}},
+    "pyzed.Command.show_window_menu": {"desc": "Muestra el menú de ventana del sistema (mover, tamaño, cerrar…) bajo el puntero. Solo Windows tiene uno.", "params": {"window": _win}},
     "pyzed.Command.set_fullscreen": {"desc": "Pone o quita la pantalla completa.", "params": {"fullscreen": "`True` para pantalla completa.", "window": _win}},
     "pyzed.Command.resize_window": {"desc": "Cambia el tamaño de la ventana (píxeles lógicos).", "params": {"width": "Ancho.", "height": "Alto.", "window": _win}},
     "pyzed.Command.move_window": {"desc": "Mueve la ventana a una posición de la pantalla.", "params": {"x": "Posición horizontal.", "y": "Posición vertical.", "window": _win}},
@@ -1178,6 +1238,11 @@ dict(_w)["Layout"].update({
     "pyzed.anchors.snap_to": {"desc": "Una caja movida (y redimensionada en los ejes estirados) adonde apunta un anclaje: contra los bordes anclados, centrada o llenando el padre, a `margin` píxeles.", "params": {"anchor": "Un preset, palabras o bordes.", "rect": "La caja.", "parent": "El tamaño del padre.", "margin": "Distancia a los bordes."}},
     "pyzed.anchors.offsets": {"desc": "Las distancias `(izquierda, arriba, derecha, abajo)` de cada lado del padre a una caja.", "params": {"rect": "La caja.", "parent": "El tamaño del padre."}},
     "pyzed.anchors.pivot_offset": {"desc": "La traslación que hace que una rotación y una escala (que giran alrededor del centro de la caja) giren alrededor de `pivot`.", "params": {"size": "El tamaño de la caja.", "pivot": "`(x, y)` de `0` a `1`.", "rotate": "Grados en sentido horario.", "scale": "Factor de escala."}},
+    "pyzed.window_edges": {
+        "desc": "Envuelve la vista entera de una ventana sin decoraciones del sistema para que pulsar cerca de sus bordes cambie el tamaño de la ventana (las esquinas ocupan el doble). `ui.window_frame` ya lo usa.",
+        "params": {"content": "La vista entera de la ventana.", "border": "Ancho en píxeles de la zona que redimensiona.", "enabled": "`False` lo desactiva (para una ventana maximizada)."},
+        "example": "pz.window_edges(view, enabled=not self.window_maximized)",
+    },
     "pyzed.resizable": {
         "desc": "Un panel cuyo borde `edge` se arrastra para cambiar su tamaño. Conserva el tamaño al que lo arrastra el usuario; `on_resize(size)` se llama al terminar de arrastrar para que puedas guardarlo. Si `size` cambia después, vuelve a ese valor.",
         "params": {
@@ -1517,7 +1582,7 @@ _section("app", "Eventos y componentes", {
         """,
     },
     "pyzed.Event": {
-        "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, y `value`/`source` en eventos propios.",
+        "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (el puntero en la ventana y en la pantalla), y `value`/`source` en eventos propios.",
     },
     "pyzed.Dock": {
         "desc": "Un espacio de trabajo como el de Zed: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).",
@@ -1587,6 +1652,11 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "width": "Ancho del widget.", "height": "Alto del widget.", "button": '`"left"`, `"right"`, `"middle"`...',
     "key": 'Combinación de teclas, como `"ctrl-s"`.', "shift": "Shift pulsado.", "ctrl": "Control pulsado.", "alt": "Alt pulsado.",
     "logo": "Tecla Cmd/Windows pulsada.", "value": "Valor de un evento propio.", "source": "Componente que lo emitió.",
+    "window_x": "X del puntero en la ventana (fuera de ella si un arrastre se suelta fuera).",
+    "window_y": "Y del puntero en la ventana.",
+    "screen_x": "X del puntero en la pantalla, o `None` donde la plataforma no dice dónde están las ventanas (Wayland). `event.screen` da `(screen_x, screen_y)`.",
+    "screen_y": "Y del puntero en la pantalla, o `None`.",
+    "screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de la posición de las ventanas.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, en el orden en que se declaran.",
@@ -2194,10 +2264,14 @@ MEMBERS = {
     "pyzed.Window.open": "Un comando que abre esta ventana: `return settings.open()`.",
     "pyzed.Window.close": "Un comando que cierra esta ventana: `on_press=self.close`.",
     "pyzed.Window.drag": "Un comando que empieza a mover la ventana (para barras de título propias).",
+    "pyzed.Window.minimize": "Un comando que minimiza la ventana.",
+    "pyzed.Window.toggle_maximize": "Un comando que maximiza la ventana, o la restaura si está maximizada.",
+    "pyzed.Window.frame_menus": "Los menús a la izquierda de la barra de título de un marco propio (`frame = \"custom\"`): una lista de `ui.Menu`.",
     "pyzed.Window.resolved_theme": "El tema concreto que usa ahora esta ventana (con los colores y tamaños de su estilo global).",
     "pyzed.Window.resolved_style": "El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.",
     "pyzed.Event.position": "`(x, y)`.",
     "pyzed.Event.size": "`(width, height)`.",
+    "pyzed.Event.screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de dónde están las ventanas.",
     # Dock
     "pyzed.Dock.side_of": "Devuelve el lado en que está acoplado un panel: su posición guardada si es válida, si no `panel.side`.",
     "pyzed.Dock.groups": "Devuelve los paneles agrupados por lado (están todos los lados, quizá con una lista vacía).",

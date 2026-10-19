@@ -37,8 +37,8 @@ class Window:
 
     Window options (class or instance attributes): ``title`` (str or callable), ``size``,
     ``min_size``, ``max_size``, ``position`` (``"center"`` or ``(x, y)``), ``resizable``,
-    ``decorations`` (``False`` for a custom title bar, see ``Command.drag_window``),
-    ``transparent``, ``maximized``, ``fullscreen``, ``scale``, ``theme`` (``None``
+    ``decorations`` (``False`` for no frame at all), ``frame`` (``"custom"`` draws the title bar
+    in Pyzed with ``ui.window_frame``, see below), ``transparent``, ``maximized``, ``fullscreen``, ``scale``, ``theme`` (``None``
     uses the app's theme) and ``style`` (a ``pz.Style`` applied to the whole view, on top
     of ``pz.set_style``; ``None`` uses the app's).
 
@@ -46,6 +46,14 @@ class Window:
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
     closes (a window transition name also gives the matching exit).
+
+    ``frame = "custom"`` replaces the system's frame with one drawn by Pyzed: a title bar
+    that moves the window (double click maximizes), the minimize, maximize and close buttons
+    of this system, and borders that resize it. ``frame_menus()`` returns menus for its left
+    side (``[ui.Menu("File", [...]), ...]``). A platform name (``"macos"``, ``"windows"``,
+    ``"gnome"``, ``"ubuntu"``, ``"kde"``) draws that platform's buttons everywhere. Call
+    ``ui.window_frame`` in ``view()`` yourself to put more in the bar. ``None`` (the
+    default) keeps the system's frame.
 
     Optional hooks: ``on_open()``, ``on_close()`` (return ``False`` to keep the window
     open), ``on_resize(width, height)``, ``on_key(combo)`` and ``subscriptions()``.
@@ -58,6 +66,7 @@ class Window:
     position: Union[str, Tuple[float, float], None] = None
     resizable: bool = True
     decorations: bool = True
+    frame: Union[str, bool, None] = None
     transparent: bool = False
     maximized: bool = False
     fullscreen: bool = False
@@ -71,6 +80,13 @@ class Window:
     app: Optional["App"] = None
     #: The current size of the window in logical pixels (updated by the runtime).
     window_size: Optional[Tuple[float, float]] = None
+    #: Whether the window is maximized (updated by the runtime).
+    window_maximized: bool = False
+    #: Whether the window has the keyboard focus (updated by the runtime).
+    window_focused: bool = True
+    #: Where the window is on the screen (its outer top-left corner, in logical pixels), updated
+    #: when it opens and moves. ``None`` until known, and always on Wayland.
+    window_position: Optional[Tuple[float, float]] = None
     _pyzed_window_open: bool = False
 
     def view(self) -> _core.Widget:  # pragma: no cover - meant to be overridden
@@ -105,6 +121,18 @@ class Window:
         """A command that starts moving the window (for custom title bars)."""
         return _core.Command.drag_window(self)
 
+    def minimize(self) -> _core.Command:
+        """A command that minimizes the window."""
+        return _core.Command.minimize_window(self)
+
+    def toggle_maximize(self) -> _core.Command:
+        """A command that maximizes the window, or restores it when it is maximized."""
+        return _core.Command.toggle_maximize_window(self)
+
+    def frame_menus(self) -> Optional[Sequence[Any]]:
+        """The menus on the left of a custom frame's title bar (``frame = "custom"``): a list of ``ui.Menu``."""
+        return None
+
     def resolved_theme(self) -> _theme.Theme:
         """The concrete theme this window uses right now (with its global style's colors and sizes)."""
         dark = getattr(self.app, "system_dark", True) if self.app is not None else True
@@ -124,9 +152,19 @@ class Window:
         _hot_reload.note_window(self)
         _hot_reload.check()
         _theme.use(self.resolved_theme())
-        with _component.render_pass(self):
-            root = _style.apply_global(self.view(), self.resolved_style())
+        from .ui import frame as _frame
+
+        with _component.render_pass(self), _frame.drawing(self) as drawing:
+            root = self.view()
+            if drawing.style is not None and not drawing.drawn:
+                root = _frame.window_frame(root, menus=self.frame_menus())
+            root = _style.apply_global(root, self.resolved_style())
         return _animation._window_root(self, root)
+
+    def __pyzed_frame__(self) -> Optional[str]:
+        from .ui import frame as _frame
+
+        return _frame.resolve(self.frame)
 
     def __pyzed_exit__(self) -> float:
         return _animation._window_exit(self)
@@ -200,7 +238,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
         reload = _hot_reload.enabled_by_env()
     reloader = _hot_reload.enable(app, [*watch, *_hot_reload.watched_by_env()]) if reload else None
     _platform.prepare()
-    _animation._follow_system()
+    _animation._follow_system(background=True)
     try:
         _core.run(app)
     finally:

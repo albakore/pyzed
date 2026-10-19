@@ -636,13 +636,24 @@ def reduced_motion() -> bool:
     return _core.reduced_motion()
 
 
-def _follow_system() -> None:
-    """Applies the system preference unless the app or the environment chose (called by ``run``)."""
+def _follow_system(background: bool = False) -> None:
+    """Applies the system preference unless the app or the environment chose (called by ``run``).
+
+    ``background`` reads it on a thread: asking the system can start a process (``gsettings``,
+    ``defaults``) that would otherwise delay the first frame.
+    """
     if _reduced_motion_choice is not None:
+        return
+    if background:
+        import threading
+
+        threading.Thread(target=_follow_system, name="pyzed-reduced-motion", daemon=True).start()
         return
     from .accessibility import system_reduced_motion
 
-    _core.set_reduced_motion(bool(system_reduced_motion()))
+    found = bool(system_reduced_motion())
+    if _reduced_motion_choice is None:  # the app may have chosen while we asked
+        _core.set_reduced_motion(found)
 
 
 _env = os.environ.get("PYZED_REDUCED_MOTION", "").strip().lower()

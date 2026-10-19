@@ -185,6 +185,7 @@ de mover controles entre contenedores con precisión.
 
 De izquierda a derecha: la posición del puntero en el formulario, lo seleccionado (`sign_in 344×32 at 48, 304`,
 `3 selected`, o el formulario y su tamaño) y, con un componente elegido, la pista para colocarlo. A la derecha: el
-número de controles, **Grid 8px** (clic para mostrar u ocultar la cuadrícula) y **Snap** (clic para activar o
+marco de ventana que se muestra alrededor del formulario (**GNOME**, **macOS**...: clic para ver el de otra
+plataforma), el número de controles, **Grid 8px** (clic para mostrar u ocultar la cuadrícula) y **Snap** (clic para activar o
 desactivar el ajuste). Con el editor de código abierto muestra además la línea y columna del cursor y el estado de
 los servidores de lenguaje. Ocúltala con **Ver → Barra de estado**.

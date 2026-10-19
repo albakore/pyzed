@@ -20,6 +20,15 @@ barra de pestañas dice en qué vista estás: **Vista de formulario** o **Vista 
   sin título que no has tocado se sustituye en lugar de acumular pestañas.
 - Doble clic en un [componente diseñado](/pyzed/es/editor/component-designer/) colocado abre su archivo en una
   pestaña.
+- Arrastra una pestaña a lo largo de la fila para reordenarla. Sácala de la ventana para abrirla en una **ventana
+  propia**, con sus pestañas, su barra de herramientas y su lienzo; arrastra una pestaña sobre otra ventana de
+  Pyzed Design para apilarla entre sus pestañas. **Mover la pestaña a una ventana nueva** y **Mover la pestaña a
+  la ventana principal** (menú Ver, paleta de comandos) hacen lo mismo sin ratón, también en Wayland, donde las
+  apps no saben dónde están sus ventanas.
+- Los paneles (Propiedades, Esquema, Código, Eventos...) se quedan en la ventana principal y siguen al documento
+  que usaste por última vez. Una ventana que no es la activa muestra su formulario tal cual; su primer clic solo la
+  activa, así que un clic nunca cambia un formulario que no estabas mirando. Cerrar una ventana de documento
+  devuelve sus pestañas a la ventana principal.
 
 El título de la ventana muestra el documento activo, tras un `●` cuando tiene cambios sin guardar.
 

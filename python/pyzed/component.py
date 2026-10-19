@@ -59,7 +59,6 @@ Components show up in the designer's toolbox automatically (see ``label``, ``ico
 from __future__ import annotations
 
 import copy
-import inspect
 import re
 import sys
 import typing
@@ -200,7 +199,9 @@ def _own_annotations(klass: type) -> Dict[str, Any]:
     try:
         import annotationlib  # Python 3.14+
     except ImportError:
-        return dict(inspect.get_annotations(klass))
+        # What ``inspect.get_annotations(klass)`` returns, without importing ``inspect``.
+        own = klass.__dict__.get("__annotations__")
+        return dict(own) if isinstance(own, dict) else {}
     return dict(annotationlib.get_annotations(klass, format=annotationlib.Format.FORWARDREF))
 
 class Component:

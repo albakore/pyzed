@@ -344,6 +344,11 @@ def project_shot(scale):
         app.projects.files.selected = "src/shop/cart.py"
         app.buffers.set_text(CART_PY + "\n")  # unsaved: the tab shows a dot
         app.screenshot(OUT / "designer-file-editor.png", size=(1440, 900), scale=scale)
+        app.window_pointer = (150, 250)
+        app.projects.files.copy("README.md")  # so Paste is on
+        app.projects.files.open_menu("src/shop/cart.py")
+        app.screenshot(OUT / "designer-project-menu.png", size=(1440, 900), scale=scale)
+        app.projects.files.close_menu()
         os.chdir(cwd)  # opening a project makes its folder the current one
 
 

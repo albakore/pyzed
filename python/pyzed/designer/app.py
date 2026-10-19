@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from .. import _core, ui
 from ..app import App
+from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from . import binding as _binding
@@ -40,6 +41,7 @@ from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from .windows import Pane, PaneController
 from ..i18n import t as _t
 from .runtime import FormWindow
 from . import scene as _scene
@@ -121,6 +123,8 @@ class Designer(App):
 
     def __init__(self, path: Optional[Union[str, Path]] = None, *, theme: Any = None,
                  language_servers: bool = True) -> None:
+        # the open documents: the main window's tabs, and those moved to windows of their own
+        self.panes = PaneController(self)
         if path is not None and Path(path).exists():
             self.doc = _scene.open_document(path)
         elif path is not None and Path(path).suffix == _scene.SUFFIX:
@@ -152,6 +156,9 @@ class Designer(App):
         self.focus = "canvas"
         # preferences and view options
         self.prefs = preferences.load()
+        # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
+        self.frame = "custom" if self.prefs.window_frame else None
+        self.preview_frame: Optional[str] = self.prefs.preview_frame or None
         self.show_grid = self.prefs.show_grid
         self.snap = self.prefs.snap
         self.smart_guides = self.prefs.smart_guides
@@ -809,7 +816,7 @@ class Designer(App):
         assert self.menu is not None
         items = self._context_items()
         _, x, y = self.menu
-        width, height = self.window_size or self.size
+        width, height = self.panes.window_size()
         separators = sum(1 for i in items if i == ui.SEPARATOR)
         tall = (len(items) - separators) * 28 + separators * 10 + 12  # a little more than drawn: never clipped
         if x + CONTEXT_MENU_WIDTH > width - 4:
@@ -1218,9 +1225,21 @@ class Designer(App):
 
     def set_preview(self, which: str, value: Optional[str]) -> None:
         """Previews the form in theme or language ``value`` (``None`` goes back to the form's own) on the canvas
-        and when it runs."""
+        and when it runs, or (``which="frame"``) in the window frame of platform ``value`` on the canvas
+        (``None`` is this system's; remembered in the preferences)."""
         setattr(self, f"preview_{which}", value or None)
+        if which == "frame":
+            self.prefs.preview_frame = value or ""
+            preferences.save(self.prefs)
         self.dialog = None
+
+    def set_window_frame(self, custom: bool) -> None:
+        """Draws the designer's own title bar and window buttons (``custom``) or uses the system's frame.
+        Saved in the preferences; it applies the next time the designer opens."""
+        if custom == bool(self.prefs.window_frame):
+            return
+        self.set_pref("window_frame", custom)
+        self.notify(tr("Window frame"), tr("Restart Pyzed Design to apply the change"), kind="info")
 
     def toggle_app_menu(self, name: str) -> None:
         """Opens the title bar menu ``name`` ("file", "view" or "help"), or closes it if open."""
@@ -1259,8 +1278,11 @@ class Designer(App):
         self.dialog = "save_as"
         self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
 
-    def focus_panel(self) -> None:
-        """Gives the keyboard to a side panel, so canvas shortcuts stop acting."""
+    def focus_panel(self, panel: Optional[str] = None) -> None:
+        """Gives the keyboard to a side panel, so canvas shortcuts stop acting (the Project tree keeps it
+        when the pointer comes back to its panel)."""
+        if panel == "project" and self.focus == "files":
+            return
         self.focus = "panel"
 
     def focus_code(self) -> None:
@@ -1467,25 +1489,40 @@ class Designer(App):
 
     # -- open documents (tabs) ------------------------------------------------
     @property
+    def docs(self) -> List[Document]:
+        """The documents of the window being worked in (the active pane), as tabs."""
+        return self.panes.active.docs
+
+    @property
+    def active_doc(self) -> int:
+        """The index of the tab in front in the active pane."""
+        return self.panes.active.active
+
+    @active_doc.setter
+    def active_doc(self, index: int) -> None:
+        self.panes.active.active = index
+
+    @property
     def doc(self) -> Document:
         """The document of the active tab."""
         return self.docs[self.active_doc]
 
     @doc.setter
     def doc(self, value: Document) -> None:
-        """Opens ``value`` in a tab: the tab of the same file, an untouched empty tab, or a new one."""
+        """Opens ``value`` in a tab: the tab of the same file (in any window), an untouched empty tab, or a new one."""
         self.__dict__["help_active"] = False  # show the document, not the Reference tab
-        docs: List[Document] = self.__dict__.setdefault("docs", [])
+        docs: List[Document] = self.docs
         if not docs:
             docs.append(value)
             self.active_doc = 0
             return
-        if value.path is not None:
-            for i, other in enumerate(docs):
-                if other.path is not None and other.path.resolve() == value.path.resolve():
-                    docs[i] = value
-                    self.active_doc = i
-                    return
+        found = self.panes.find_path(value.path) if value.path is not None else None
+        if found is not None:
+            pane, i = found
+            pane.docs[i] = value
+            pane.active = i
+            self.panes.active = pane
+            return
         current = docs[self.active_doc]
         if current.path is None and not current.dirty and not current.form.controls and current is not value:
             docs[self.active_doc] = value  # an empty untitled form: reuse its tab
@@ -1511,7 +1548,7 @@ class Designer(App):
         self.code_revision += 1
         self._selection_changed()
 
-    def close_doc(self, index: Optional[int] = None) -> None:
+    def close_doc(self, index: Optional[int] = None) -> Any:
         """Closes a tab (the active one by default), asking first when it has unsaved changes."""
         index = self.active_doc if index is None else index
         if not 0 <= index < len(self.docs):
@@ -1522,20 +1559,24 @@ class Designer(App):
             if index == self.active_doc:
                 self.editing = None
             self.docs.pop(index)
+            pane = self.panes.active
             if not self.docs:
-                self.docs.append(Document())
+                closing = self.panes.emptied(pane)
+                self._selection_changed()
+                return closing
             if self.active_doc >= index and self.active_doc > 0:
                 self.active_doc -= 1
             self.active_doc = min(self.active_doc, len(self.docs) - 1)
             self._selection_changed()
+            return None
 
         if doc.dirty:
             if index != self.active_doc:
                 self.select_doc(index)
             self.pending = close
             self.dialog = "confirm"
-            return
-        close()
+            return None
+        return close()
 
     def open_component_of(self, name: str) -> bool:
         """Opens the designed component placed as ``name`` in its own Component tab (double-click)."""
@@ -1546,31 +1587,43 @@ class Designer(App):
             return False
         if not self._leave_doc():
             return True
-        for i, other in enumerate(self.docs):
-            if other.path is not None and other.path.resolve() == Path(path).resolve():
-                self.select_doc(i)
-                return True
+        found = self.panes.find_path(Path(path))
+        if found is not None:
+            self._show_tab(*found)
+            return True
         self.open_path(path)
         return True
 
-    def doc_tabs(self, t) -> Any:
-        """One tab per open file: forms open in the Form view, components in the Component view."""
+    def _show_tab(self, pane: Pane, index: int) -> Any:
+        """Brings the tab ``index`` of ``pane`` to the front (and its window, when it has one of its own)."""
+        if not self.panes.activate(pane):
+            return None
+        self.select_doc(index)
+        return pane.window.focus() if pane.window is not None and pane.window.is_open else None
+
+    def doc_tabs(self, t, pane: Optional[Pane] = None) -> Any:
+        """One tab per open file of ``pane`` (the main window's by default): forms open in the Form view,
+        components in the Component view. Tabs can be dragged to reorder them or to another window."""
+        pane = pane or self.panes.main
+        main = pane is self.panes.main
         tabs = []
-        for i, doc in enumerate(self.docs):
+        for i, doc in enumerate(pane.docs):
             scene = getattr(doc, "is_scene", False)
             kind = tr("Component") if scene else tr("Form")
             tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
                                icon="component" if scene else "app-window",
                                icon_color="accent" if scene else None, dirty=doc.dirty))
-        notes = self.updates.tab()
+        notes = self.updates.tab() if main else None
         if notes is not None:
             tabs.append(notes)
-        if self.help_open:
+        if self.help_open and main:
             tabs.append(ui.Tab(id=HELP_TAB, label=_t("pyzed.reference.title"), icon="book-open", icon_color="accent"))
-        view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
-        active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
-        return ui.tab_bar(tabs, active, on_select=self._select_tab, on_close=self._close_tab,
-                          end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
+        view = tr("Component view") if getattr(pane.doc, "is_scene", False) else tr("Form view")
+        active = str(pane.active)
+        if main:
+            active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else active
+        end = [ui.label(view, size="xs", color="text_muted", theme=t)]
+        return self.panes.tab_bar(pane, tabs, active, end, t)
 
     def _select_tab(self, tab_id: str) -> None:
         """Switches to a document tab, or to the What's new tab."""
@@ -1748,7 +1801,7 @@ class Designer(App):
         self.dialog = "open"
         self.dialog_path = ""
 
-    def open_path(self, path: Union[str, Path]) -> None:
+    def open_path(self, path: Union[str, Path]) -> Any:
         """Opens the form or component at ``path`` in a tab (``.pzform`` is added when there is no suffix).
 
         Switches to its tab if it is already open, and remembers it among the recent files.
@@ -1756,11 +1809,10 @@ class Designer(App):
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
-        for i, other in enumerate(self.docs):
-            if other.path is not None and path.exists() and other.path.resolve() == path.resolve():
-                self.dialog = None
-                self.select_doc(i)  # already open: keep its unsaved changes
-                return
+        found = self.panes.find_path(path) if path.exists() else None
+        if found is not None:
+            self.dialog = None
+            return self._show_tab(*found)  # already open: keep its unsaved changes
         if not self._leave_doc():
             return
         try:
@@ -1916,6 +1968,10 @@ class Designer(App):
         Global shortcuts come first, then the code editor's, the picker's arrows, Escape (closes what is
         open or cancels a drag) and, when the canvas has the keyboard, editing and nudging shortcuts.
         """
+        if self.focus == "files" and not self.dialog and not self.app_menu:
+            handled, result = self.projects.files.on_key(combo)  # the tree's own keys, like Zed's
+            if handled:
+                return result
         action = _commands.by_keys(combo, global_only=True)
         if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
             self.app_menu = None
@@ -1928,7 +1984,8 @@ class Designer(App):
             handled, result = self.assist.on_key(combo)
             if handled:
                 return result
-        if self.dialog in ("palette", "add_control", "preview_theme", "preview_language") and combo in ("up", "down"):
+        if self.dialog in ("palette", "add_control", "preview_theme", "preview_language", "preview_frame") \
+                and combo in ("up", "down"):
             self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
             return None
         if combo == "escape":
@@ -1998,30 +2055,25 @@ class Designer(App):
         """
         self.sync_code()
         t = self.theme_obj
-        canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        if self.help_shown:
-            center = _core.column([self.doc_tabs(t), ui.reference_browser(self.help, on_open_url=self.open_url,
-                                                                          theme=t)], width="fill", height="fill")
-        elif self.updates.notes_active:
-            center = _core.column([self.doc_tabs(t), self.updates.notes_view(t)], width="fill", height="fill")
+        main = self.panes.main
+        frame = self.__pyzed_frame__()
+        inside = [docks.workspace(self, self.center_view(main, t), t),
+                  self.status_bar(t) if self.prefs.show_status_bar else None]
+        if frame is not None:  # Pyzed's own window frame, with the title bar's items in it
+            start, end = self.title_items(t)
+            body = ui.window_frame(_core.column(inside, width="fill", height="fill"), start=start, end=end,
+                                   height=TITLE_HEIGHT, resize_edges=False, theme=t)
         else:
-            center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
-                                  width="fill", height="fill")
-        body = _core.container(_core.column([
-            self.title_bar(t),
-            docks.workspace(self, center, t),
-            self.status_bar(t) if self.prefs.show_status_bar else None,
-        ], width="fill", height="fill"), width="fill", height="fill", bg=t.background)
+            body = _core.column([self.title_bar(t), *inside], width="fill", height="fill")
+        body = _core.container(body, width="fill", height="fill", bg=t.background)
         if self.app_menu is not None:
             menu = self.title_menu(self.app_menu, t)
             if self.app_menu == "file":
-                body = ui.popover(body, menu, x=8, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
+                x = ui_frame.start_x(frame) if frame else 8
+                body = ui.popover(body, menu, x=x, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
-                right = 8 + 30 * (1 if self.app_menu == "help" else 2)
+                right = (ui_frame.end_x(frame) if frame else 8) + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
-        if self.menu is not None:
-            menu, mx, my = self.context_menu_at(t)
-            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
         if self.projects.files.menu is not None:
             menu, mx, my = self.projects.files.menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)
@@ -2034,11 +2086,43 @@ class Designer(App):
         if ghost is not None:
             gx, gy = self.window_pointer
             body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
+        body = self.window_overlays(body, main, t)
+        if frame is not None:  # the borders resize the window, above the menus and dialogs
+            body = _core.window_edges(body, enabled=not self.window_maximized and frame != "overlay")
+        return body
+
+    def center_view(self, pane: Pane, t) -> Any:
+        """What sits under the tabs of ``pane``: its document's toolbar and canvas (or, in the main window,
+        the Reference or What's new tab)."""
+        main = pane is self.panes.main
+        tabs = self.doc_tabs(t, pane)
+        if main and self.help_shown:
+            return _core.column([tabs, ui.reference_browser(self.help, on_open_url=self.open_url, theme=t)],
+                                width="fill", height="fill")
+        if main and self.updates.notes_active:
+            return _core.column([tabs, self.updates.notes_view(t)], width="fill", height="fill")
+        with self.panes.showing(pane):
+            canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
+            content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                                   width="fill", height="fill")
+        return _core.column([tabs, self.panes.asleep(pane, content)], width="fill", height="fill")
+
+    def window_overlays(self, body: Any, pane: Pane, t) -> Any:
+        """Adds what opens over a window to ``body``, the view of the window of ``pane``: the context menu,
+        toasts and dialogs show in the window used last; the window reports the pointer for menus and drags."""
+        here = pane is self.panes.here
+        if here and self.menu is not None:
+            menu, mx, my = self.context_menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        # a press anywhere marks this window as the one in use (the top layer sees it first, keeps nothing)
+        body = _core.stack([body, _core.space(width="fill", height="fill").on(mouse_down=lambda: self.panes.used(pane))],
+                           width="fill", height="fill")
         # the whole window reports the pointer, for menus and for drags that leave a panel
         body = _core.mouse_area(body, on_move=self.window_moved, on_release=self.window_release)
+        toasts = self.toasts if here else []
         body = ui.toasts(body, [ui.toast(x.title, x.message, kind=x.kind, on_dismiss=lambda x=x: self.dismiss_toast(x),
-                                         theme=t) for x in self.toasts])
-        return ui.layer(body, self.dialog_view(t), on_dismiss=self.close_dialog)
+                                         theme=t) for x in toasts])
+        return ui.layer(body, self.dialog_view(t) if here else None, on_dismiss=self.close_dialog)
 
     @property
     def theme_obj(self):
@@ -2086,6 +2170,11 @@ class Designer(App):
 
     def title_bar(self, t) -> Any:
         """Returns the title bar: menu, project and file buttons, Run and Stop, View, Help and Settings."""
+        start, end = self.title_items(t)
+        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+
+    def title_items(self, t) -> Tuple[List[Any], List[Any]]:
+        """The items at the start (menu, project, file) and end (Run, Stop, View, Help, Settings) of the title bar."""
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
@@ -2110,7 +2199,7 @@ class Designer(App):
                            tooltip=None if self.app_menu else tr("Help"), theme=t),
             ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
         ]
-        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+        return start, end
 
     def set_designer_theme(self, name: str) -> None:
         """Switches the designer to the theme ``name`` and saves it in the preferences."""
@@ -2208,6 +2297,8 @@ class Designer(App):
                            color="accent") if self.preview_theme else None,
             ui.status_item(self.preview_language, lambda: self.open_preview_picker("language"), icon="languages",
                            color="accent") if self.preview_language else None,
+            ui.status_item(ui_frame.PLATFORM_LABELS[surface.frame_style(self)], lambda: self.open_preview_picker("frame"),
+                           icon="app-window", tooltip=tr("Window frame shown around the form")),
             ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers"),
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
@@ -2266,7 +2357,8 @@ class Designer(App):
             return agent_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
                  "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette,
-                 "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language}
+                 "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language,
+                 "preview_frame": dialogs.preview_frame}
         if self.dialog in named:
             return named[self.dialog](self, t)
         return None

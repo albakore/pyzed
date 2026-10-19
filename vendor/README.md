@@ -9,5 +9,9 @@ a bloom or a blurred backdrop (`src/effect.rs` in each crate). Pyzed's animation
 `iced_tiny_skia` also clips box shadows to the region being redrawn (in `engine.rs`), so a
 dialog's shadow no longer darkens it when only part of the window changes.
 
+`iced_wgpu` also starts the native GPU APIs (Vulkan, Metal, DirectX 12) before OpenGL: the GL
+backend is only started when none of them has an adapter, since starting it at every launch
+costs time and memory (`src/window/compositor.rs`).
+
 Everything else is unchanged. To update iced, copy the new releases over these folders and
 re-apply the changes marked `pyzed:` in the code.

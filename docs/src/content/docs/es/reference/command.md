@@ -370,6 +370,44 @@ Maximiza la ventana o la restaura si ya lo está.
 | --- | --- |
 | `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
 
+### `maximize_window`
+
+```python
+maximize_window(maximized=True, window=None)
+```
+
+Maximiza la ventana, o la restaura con `maximized=False`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `maximized` | `False` la restaura. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `drag_resize_window`
+
+```python
+drag_resize_window(direction, window=None)
+```
+
+Empieza a cambiar el tamaño de la ventana con el ratón desde un borde o una esquina (para ventanas sin decoraciones del sistema; `ui.window_frame` y `pz.window_edges` ya lo hacen).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `direction` | `"n"`, `"s"`, `"e"`, `"w"`, `"ne"`, `"nw"`, `"se"` o `"sw"`. |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
+### `show_window_menu`
+
+```python
+show_window_menu(window=None)
+```
+
+Muestra el menú de ventana del sistema (mover, tamaño, cerrar…) bajo el puntero. Solo Windows tiene uno.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `window` | La ventana (`pz.Window`). Sin ella, la que produjo el mensaje. |
+
 ### `set_fullscreen`
 
 ```python
