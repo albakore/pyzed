@@ -25,6 +25,9 @@ classifiers = [
 designer = ["ty", "ruff"]
 
 [dependency-groups]
+dev = [
+    "ty>=0.0.89",
+]
 # The build backend and the test runner; `uv sync` installs them (default-groups below).
 test = ["maturin>=1.7,<2.0", "pytest"]
 
