@@ -1507,3 +1507,34 @@ _section("app", "Languages", {
     "pyzed.i18n.system_language": {"desc": "The operating system's language (`LANG`, `LC_ALL` or the locale).", "params": {"default": "Returned when the system reports none."}},
     "pyzed.i18n.has": {"desc": "Whether `key` has a text in the language or its fallbacks.", "params": {"key": "Dotted key.", "language": "Language to check (default: the current one)."}},
 })
+
+_section("ui", "Console and help", {
+    "pyzed.ui.Log": {
+        "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.",
+        "params": {"limit": "Most entries kept.", "on_write": "Called after every write (from any thread)."},
+        "example": """
+            log = ui.Log()
+            with log:
+                print("hello")          # still reaches the terminal
+            ui.console(log.entries, on_clear=log.clear)
+        """,
+    },
+    "pyzed.ui.LogEntry": {"desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).", "params": {"level": "Level name.", "text": "The line.", "time": "When it was written (`time.time()`).", "count": "Identical lines in a row."}},
+    "pyzed.ui.LOG_LEVELS": {"desc": "The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error."},
+    "pyzed.ui.console": {
+        "desc": "A log view like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear, and the entries in a monospace list that keeps scrolling to the newest one.",
+        "params": {"entries": "`ui.LogEntry` items (`log.entries`).", "query": "Filter text.", "on_query": "Receives each edit of the filter.",
+                   "hidden": "Levels not shown.", "on_toggle_level": "Called with the level of the clicked toggle.",
+                   "on_clear": "Adds a Clear button.", "on_copy": "Adds a Copy button.", "actions": "Extra widgets at the end of the toolbar.",
+                   "font_size": "Size of the entries.", "id": "Scrollable id."},
+    },
+    "pyzed.ui.shortcuts": {
+        "desc": "A searchable list of key bindings, grouped (for a Keyboard shortcuts dialog).",
+        "params": {"groups": "`[(title, [(label, keys), ...]), ...]`, keys like `\"ctrl-s\"`.", "query": "Filter text.", "on_query": "Adds a search box.", "height": "Height of the list."},
+    },
+    "pyzed.ui.about": {
+        "desc": "An About box: icon, name, version, a description, a few details and link buttons.",
+        "params": {"name": "App name.", "version": "Version text.", "description": "One or two sentences.", "icon": "Lucide icon.",
+                   "details": "`(label, value)` rows.", "links": "`(label, on_press)` buttons."},
+    },
+}, before="Data and feedback")

@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 from . import code as _code
 from . import components as _components
 from . import geometry
+from . import layout as _layout
 from .history import History
 from .model import SUFFIX, Control, Form, code_path, identifier, load, save
 
@@ -121,20 +122,127 @@ class Document:
 
     # -- creating and deleting ---------------------------------------------
     def add(self, type_: str, x: float, y: float, width: Optional[float] = None,
-            height: Optional[float] = None, *, snap: bool = True) -> Control:
-        """Places a new ``type_`` control (snapped to the grid) and selects it."""
+            height: Optional[float] = None, *, snap: bool = True, parent: Optional[str] = None) -> Control:
+        """Places a new ``type_`` control (snapped to the grid) and selects it.
+
+        With ``parent`` (a container's name) it goes inside it, and ``x``/``y`` are
+        relative to the container.
+        """
         spec = _components.get(type_)
         grid = self.form.grid
+        container = self.form.get(parent) if parent else None
+        if container is not None and _layout.kind(container) is None:
+            container = None
         w, h = width or spec.size[0], height or spec.size[1]
+        bounds = (container.width, container.height) if container is not None else self.size
+        if container is not None and _layout.kind(container) != "free":
+            w, h = min(w, bounds[0]), min(h, bounds[1])
         x = geometry.snap(x, grid, snap)
         y = geometry.snap(y, grid, snap)
-        x = max(0.0, min(x, self.form.width - min(w, self.form.width)))
-        y = max(0.0, min(y, self.form.height - min(h, self.form.height)))
+        x = max(0.0, min(x, bounds[0] - min(w, bounds[0])))
+        y = max(0.0, min(y, bounds[1] - min(h, bounds[1])))
         control = spec.create(self.form.unique_name(type_), x, y, w, h)
+        control.parent = container.name if container is not None else None
         self.form.add(control)
         self.selection = [control.name]
         self.commit()
         return control
+
+    # -- hierarchy ----------------------------------------------------------
+    def rects(self) -> Dict[str, Tuple[float, float, float, float]]:
+        """The absolute rectangle of every control (see ``layout.resolve``)."""
+        return _layout.resolve(self.form)
+
+    def can_contain(self, container: Optional[str], name: str) -> bool:
+        if container is None:
+            return True
+        target = self.form.get(container)
+        return (target is not None and _layout.kind(target) is not None and container != name
+                and not self.form.is_inside(container, name))
+
+    def reparent(self, names: Sequence[str], parent: Optional[str], *, index: Optional[int] = None,
+                 at: Optional[Tuple[float, float]] = None, commit: bool = True,
+                 rects: Optional[Dict[str, Tuple[float, float, float, float]]] = None) -> List[str]:
+        """Moves controls into ``parent`` (or onto the form with ``None``), keeping them where they are.
+
+        ``index`` is the position among the new siblings (flex and grid containers lay
+        them out in that order); ``at`` an absolute point for the first control's
+        top-left corner instead of its current one; ``rects`` the absolute rectangles to
+        start from (``self.rects()`` by default). Returns the names actually moved.
+        """
+        rects = rects if rects is not None else self.rects()
+        moved = [n for n in names if self.form.get(n) is not None and self.can_contain(parent, n)]
+        # skip controls whose container is moving with them: they follow it
+        moved = [n for n in moved if not any(a.name in moved for a in self.form.ancestors(n))]
+        if not moved:
+            return []
+        ox, oy = _layout.origin(self.form, rects, parent)
+        shift = (0.0, 0.0)
+        if at is not None and moved[0] in rects:
+            shift = (at[0] - rects[moved[0]][0], at[1] - rects[moved[0]][1])
+        controls = [self.form[n] for n in moved]
+        for control in controls:
+            ax, ay = rects[control.name][0] + shift[0], rects[control.name][1] + shift[1]
+            control.x, control.y = round(ax - ox), round(ay - oy)
+            control.parent = parent
+        if index is not None:
+            rest = [c for c in self.form.controls if c not in controls]
+            siblings = [c for c in rest if c.parent == parent]
+            if index < len(siblings):
+                at_pos = rest.index(siblings[index])
+            else:
+                at_pos = rest.index(siblings[-1]) + 1 if siblings else len(rest)
+            self.form.controls = rest[:at_pos] + controls + rest[at_pos:]
+        if commit:
+            self.commit()
+        return moved
+
+    def wrap(self, type_: str, names: Optional[Sequence[str]] = None) -> Optional[Control]:
+        """Puts controls (the selection by default) inside a new container of ``type_`` around them."""
+        form = self.form
+        picked = [form[n] for n in (names if names is not None else self.selection) if form.get(n) is not None]
+        picked = [c for c in picked if not any(a in picked for a in form.ancestors(c.name))]
+        if not picked:
+            return None
+        parent = picked[0].parent
+        picked = [c for c in picked if c.parent == parent]
+        rects = self.rects()
+        ox, oy = _layout.origin(form, rects, parent)
+        boxes = [rects[c.name] for c in picked]
+        x1, y1 = min(b[0] for b in boxes), min(b[1] for b in boxes)
+        x2, y2 = max(b[0] + b[2] for b in boxes), max(b[1] + b[3] for b in boxes)
+        spec = _components.get(type_)
+        container = spec.create(form.unique_name(type_), x1 - ox, y1 - oy, max(x2 - x1, 8), max(y2 - y1, 8))
+        container.parent = parent
+        # the new container takes the place of the first wrapped control in the z-order
+        index = form.controls.index(picked[0])
+        form.controls.insert(index, container)
+        if spec.container in ("flex", "grid"):
+            column = container.props.get("direction") == "column"
+            picked.sort(key=lambda c: (rects[c.name][1], rects[c.name][0]) if column or spec.container == "grid"
+                        else (rects[c.name][0], rects[c.name][1]))
+        self.reparent([c.name for c in picked], container.name, index=0 if spec.container != "free" else None,
+                      rects=rects, commit=False)
+        self.selection = [container.name]
+        self.commit()
+        return container
+
+    def move_out(self, name: str) -> None:
+        """Moves a control out of its container, into the container's own parent."""
+        control = self.form.get(name)
+        if control is None or not control.parent:
+            return
+        parent = self.form[control.parent]
+        self.reparent([name], parent.parent)
+
+    def set_layout(self, name: str, key: str, value: Any) -> None:
+        """Sets an option the parent's layout reads (``grow``, ``span``)."""
+        control = self.form[name]
+        if value in (None, "", 0) and key in control.layout:
+            del control.layout[key]
+        elif value not in (None, ""):
+            control.layout[key] = value
+        self.commit(group=f"layout:{name}:{key}")
 
     def delete(self) -> List[str]:
         removed = [c.name for c in self.form.remove(self.selection)]
@@ -144,8 +252,15 @@ class Document:
         return removed
 
     def copy(self) -> int:
-        self.clipboard = [c.to_dict() for c in self.selected]
-        return len(self.clipboard)
+        """Copies the selection, with whatever is inside the selected containers."""
+        picked = [c for c in self.selected
+                  if not any(self.is_selected(a.name) for a in self.form.ancestors(c.name))]
+        out: List[Dict[str, Any]] = []
+        for control in picked:
+            out.append(control.to_dict())
+            out.extend(c.to_dict() for c in self.form.descendants(control.name))
+        self.clipboard = out
+        return len(picked)
 
     def cut(self) -> int:
         count = self.copy()
@@ -154,18 +269,32 @@ class Document:
 
     def paste(self, offset: float = PASTE_OFFSET) -> List[str]:
         """Adds copies of the clipboard (shifted by ``offset``) with fresh names, keeping their events."""
-        names = []
+        names: List[str] = []
+        renamed: Dict[str, str] = {}
+        copied = {d.get("name") for d in self.clipboard}
         for data in self.clipboard:
             control = Control.from_dict(data)
+            old = control.name
             control.name = self.form.unique_name(control.type)
-            control.x = min(control.x + offset, max(self.form.width - control.width, 0))
-            control.y = min(control.y + offset, max(self.form.height - control.height, 0))
+            renamed[old] = control.name
             control.events = {}
+            if control.parent in copied:  # inside a pasted container: keep its place there
+                control.parent = renamed.get(control.parent)
+                self.form.add(control)
+                continue
+            if control.parent and self.form.get(control.parent) is None:
+                control.parent = None
+            limit = self.size
+            if control.parent:
+                parent = self.form[control.parent]
+                limit = (parent.width, parent.height)
+            control.x = min(control.x + offset, max(limit[0] - control.width, 0))
+            control.y = min(control.y + offset, max(limit[1] - control.height, 0))
             self.form.add(control)
             names.append(control.name)
         if names:
             self.selection = names
-            self.clipboard = [self.form[n].to_dict() for n in names]
+            self.copy()
             self.commit()
         return names
 
@@ -182,7 +311,13 @@ class Document:
         return (self.form.width, self.form.height)
 
     def nudge(self, dx: float, dy: float) -> None:
-        geometry.move(self.selected, dx, dy, limit=self.size)
+        selected = [c for c in self.selected if not _layout.managed(self.form, c)]
+        parents = {c.parent for c in selected}
+        limit = self.size
+        if len(parents) == 1 and None not in parents:
+            parent = self.form[next(iter(parents))]
+            limit = (parent.width, parent.height)
+        geometry.move(selected, dx, dy, limit=limit if len(parents) == 1 else None)
         self.commit(group="nudge")
 
     def align(self, edge: str, *, to_form: bool = False) -> None:

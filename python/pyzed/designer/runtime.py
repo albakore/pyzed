@@ -16,7 +16,7 @@ Handlers may return anything a Pyzed callback can (a ``Command``, a coroutine...
 
 from __future__ import annotations
 
-import re
+import sys
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,8 +28,8 @@ from ..app import run as _run_app
 from ..theme import Theme, themes
 from . import code as _code
 from . import components as _components
-from .geometry import anchored
-from .model import SUFFIX, Control, Form, code_path, load, save
+from . import layout as _layout
+from .model import SUFFIX, Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
 
@@ -174,10 +174,20 @@ class FormProxy:
                 return form.open("settings", data=form.name_input.text)
 
         ``form`` is a name (``"settings"``) or path, relative to this form's folder, or a
-        ``Form`` built in code. The new form reads ``data`` as ``form.data``.
+        ``Form`` built in code. The new form reads ``data`` as ``form.data``; its window is
+        listed in ``form.windows`` while open.
         """
-        base = self._runtime.path.parent if self._runtime.path is not None else None
-        return open_window(form, data=data, folder=base)
+        runtime = self._runtime
+        base = runtime.path.parent if runtime.path is not None else None
+        window = form_window(form, data=data, folder=base)
+        window.runtime.log = runtime.log
+        runtime.opened.append(window)
+        return _core.Command.open_window(window)
+
+    @property
+    def windows(self) -> list:
+        """The other forms opened with ``open`` that are still open."""
+        return [w.form for w in self._runtime.opened if w.is_open]
 
 
 class LiveContext(_components.RenderContext):
@@ -209,6 +219,9 @@ class FormRuntime:
         self.form = form.copy()
         self.path: Optional[Path] = Path(path) if path else None
         self.data = data
+        self.opened: list = []
+        #: Called as ``log(level, text)`` for events and handler errors (the designer's console).
+        self.log: Optional[Callable[[str, str], None]] = None
         self.design_size = (form.width, form.height)
         self.handlers = dict(handlers or {})
         self.window = window
@@ -234,11 +247,19 @@ class FormRuntime:
             self.error = f"{owner}.{event}: handler {name}() not found in the code file"
             return None
         sender = ControlProxy(control, self) if control is not None else self.proxy
+        if self.log is not None and event not in ("tick", "mouse_enter", "mouse_leave"):
+            shown = "" if value is None else f" ({value!r})"[:80]
+            self.log("event", f"{owner}.{event}{shown} → {name}()")
         try:
             return handler(self.proxy, Event(sender, event, value))
         except Exception:  # noqa: BLE001 - a handler bug must not kill the app
             self.error = f"{owner}.{event}: " + traceback.format_exc(limit=-1).strip().splitlines()[-1]
-            traceback.print_exc()
+            if self.log is not None:
+                kind, err, tb = sys.exc_info()
+                frames = traceback.format_exception(kind, err, tb.tb_next if tb is not None else None)
+                self.log("error", f"{owner}.{event}: {name}() raised\n" + "".join(frames).rstrip())
+            else:
+                traceback.print_exc()
             return None
 
     def load(self) -> Any:
@@ -273,11 +294,17 @@ class FormRuntime:
         t = self.theme
         size = self.size
         layers = [_core.container(width="fill", height="fill", bg=t.background)]
-        for control in self.form.controls:
+        form = self.form
+        rects = _layout.resolve(form, size)
+        hidden: set = set()
+        for control, _depth in form.walk():
             spec = _components.get(control.type)
-            if not control.visible or not spec.visual:
+            if not control.visible or (control.parent and control.parent in hidden):
+                hidden.add(control.name)
                 continue
-            x, y, w, h = anchored(control, self.design_size, size)
+            if not spec.visual:
+                continue
+            x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
             widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
             layers.append(_core.pin(widget, x=x, y=y))
@@ -465,26 +492,6 @@ def open_window(form: Union[str, Path, Form], *, data: Any = None, handlers: Opt
                 folder: Optional[Union[str, Path]] = None) -> _core.Command:
     """A ``Command`` that opens ``form`` in a new window (see ``form_window`` for the arguments)."""
     return _core.Command.open_window(form_window(form, data=data, handlers=handlers, folder=folder))
-
-
-def new_form(path: Union[str, Path], *, title: Optional[str] = None, width: float = 480, height: float = 320,
-             overwrite: bool = False) -> Path:
-    """Creates an empty ``.pzform`` and its handlers module; returns the form path.
-
-    The form's name comes from the file name (``settings.pzform`` -> ``Settings``).
-    """
-    path = Path(path)
-    if not path.suffix:
-        path = path.with_suffix(SUFFIX)
-    if path.exists() and not overwrite:
-        raise FileExistsError(f"{path} already exists")
-    name = "".join(part.capitalize() for part in re.split(r"[^0-9a-zA-Z]+", path.stem) if part) or "Form1"
-    form = Form(name=name, title=title or name, width=width, height=height)
-    save(form, path)
-    module = code_path(path, form)
-    if not module.exists():
-        module.write_text(_code.new_module(name), encoding="utf-8")
-    return path
 
 
 def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:

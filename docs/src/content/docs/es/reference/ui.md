@@ -770,6 +770,130 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
+## Consola y ayuda
+
+### `Log`
+
+```python
+class Log
+```
+
+Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `limit` | Máximo de entradas guardadas. |
+| `on_write` | Se llama tras cada escritura (desde cualquier hilo). |
+
+```python
+log = ui.Log()
+with log:
+    print("hola")           # sigue llegando a la terminal
+ui.console(log.entries, on_clear=log.clear)
+```
+
+### `LogEntry`
+
+```python
+@dataclass
+class LogEntry(level, text, time=1792371280.840671, count=1)
+```
+
+Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `level` | Nivel. |
+| `text` | La línea. |
+| `time` | Cuándo se escribió (`time.time()`). |
+| `count` | Líneas idénticas seguidas. |
+
+### `LOG_LEVELS`
+
+```python
+LOG_LEVELS(...)
+```
+
+Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error.
+
+### `console`
+
+```python
+console(
+    entries,
+    *,
+    query='',
+    on_query=None,
+    hidden=(),
+    on_toggle_level=None,
+    on_clear=None,
+    on_copy=None,
+    actions=(),
+    font_size=12.5,
+    id=None,
+    theme=None,
+)
+```
+
+Una vista de registro como la consola de las herramientas de desarrollo del navegador: filtro, un botón por nivel con su cuenta, copiar y limpiar, y las entradas en monoespaciada, siempre desplazada a la más nueva.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `entries` | Elementos `ui.LogEntry` (`log.entries`). |
+| `query` | Texto del filtro. |
+| `on_query` | Recibe cada edición del filtro. |
+| `hidden` | Niveles ocultos. |
+| `on_toggle_level` | Se llama con el nivel del botón pulsado. |
+| `on_clear` | Añade el botón Limpiar. |
+| `on_copy` | Añade el botón Copiar. |
+| `actions` | Widgets extra al final de la barra. |
+| `font_size` | Tamaño de las entradas. |
+| `id` | Id del scrollable. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `shortcuts`
+
+```python
+shortcuts(groups, *, query='', on_query=None, height=380, theme=None)
+```
+
+Una lista de atajos de teclado agrupada y con búsqueda (para un diálogo de atajos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `groups` | `[(título, [(etiqueta, teclas), ...]), ...]`, teclas como `"ctrl-s"`. |
+| `query` | Texto del filtro. |
+| `on_query` | Añade un buscador. |
+| `height` | Alto de la lista. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `about`
+
+```python
+about(
+    name,
+    version='',
+    description='',
+    *,
+    icon='app-window',
+    details=(),
+    links=(),
+    theme=None,
+)
+```
+
+Un cuadro Acerca de: icono, nombre, versión, una descripción, algunos detalles y botones de enlace.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre de la app. |
+| `version` | Versión. |
+| `description` | Una o dos frases. |
+| `icon` | Icono de Lucide. |
+| `details` | Filas `(etiqueta, valor)`. |
+| `links` | Botones `(etiqueta, on_press)`. |
+| `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
 ## Datos y feedback
 
 ### `callout`
@@ -1701,7 +1825,7 @@ Muestra `items` (normalmente `toast(...)`) apilados en la esquina inferior derec
 ### `popover`
 
 ```python
-popover(base, content=None, *, x=0, y=0, on_dismiss=None)
+popover(base, content=None, *, x=0, y=0, on_dismiss=None, align_x='start')
 ```
 
 Muestra `content` (un `ui.menu`, una tarjeta…) sobre `base` en `(x, y)`. Hacer clic en cualquier otro sitio llama a `on_dismiss`. Para un menú de clic derecho, guarda la posición del ratón con `mouse_area(on_move=...)` y abre el popover desde `on_right_press` (ver `examples/context_menu.py`).
@@ -1713,6 +1837,7 @@ Muestra `content` (un `ui.menu`, una tarjeta…) sobre `base` en `(x, y)`. Hacer
 | `x` | Posición horizontal. |
 | `y` | Posición vertical. |
 | `on_dismiss` | Mensaje o callable que se envía al cerrar. |
+| `align_x` | Alineación horizontal: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ## Código
 

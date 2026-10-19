@@ -22,11 +22,15 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 | Area | What it does |
 | --- | --- |
 | **Toolbox** (left) | The component library. Click a component, then click on the form to place it at its default size, or drag a rectangle to give it a size. Search filters the list. |
-| **Outline** (left) | Every control in z-order (top first). Click to select; the eye and lock buttons hide or lock a control. |
+| **Outline** (left) | Every control as a tree: containers list their children (fold them with the chevron). Click to select; the eye and lock buttons hide or lock a control, **+** adds a control inside a container and right-click opens a menu. |
 | **Form** (center) | The design surface with a dot grid. Drag to move, use the eight handles to resize, drag on empty space to select with a rubber band. The grip under the bottom-right corner resizes the form. |
-| **Properties** (right) | Name, the component's own properties, layout (X, Y, size, anchors) and behavior (visible, enabled, locked). With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
+| **Properties** (right) | Name, then the component's properties in collapsible sections: its own groups, position (X, Y, size, anchors, or grow and span inside a flex or grid) and behavior (visible, enabled, locked). With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
 | **Events** (right) | The events of the selected control (or of the form). Double-click one to create its handler and open it in the code editor. |
 | **Code** (bottom) | The source of one handler, or of the whole file (**F7**). **Apply** checks the syntax before touching the file. |
+| **Console** (bottom) | What the running form prints, the events it handles and its errors (see [Debug console](#debug-console)). |
+
+The title bar holds the main menu (☰: File and Run), **Run** and **Stop**, the **View** and **Help** menus and the
+**Settings** gear. Every panel can be moved to another dock and every dock resized; see [Panels](#panels).
 
 ![Writing the code of a button's click event](../../../../screenshots/designer-code.png)
 
@@ -55,7 +59,13 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 | Ctrl+Z, Ctrl+Shift+Z | Undo, redo |
 | Enter | Open the code of the selected control's main event |
 | Escape | Cancel a drag, close a menu, go back to the pointer |
-| Ctrl+S, Ctrl+O, Ctrl+N | Save, open, new |
+| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N | Save, save as, open, new |
+| Ctrl+Shift+P | Command palette |
+| Ctrl+Shift+A | Add a control (searchable list) |
+| Ctrl+B, Ctrl+Alt+B, Ctrl+J | Show or hide the left, right and bottom docks |
+| Ctrl+Shift+Y | Console |
+| Ctrl+, | Settings |
+| F1 | Keyboard shortcuts |
 | F5, Shift+F5 | Run the form, close the running form |
 | F7 | Edit the whole code file |
 | Ctrl+Space | Open the completion list (in the code editor) |
@@ -64,10 +74,59 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 
 Right-click a control for a context menu with the same actions.
 
+## Containers and layouts
+
+Some components hold other controls. Drop a control on one (it lights up while you drag) to put it inside, drag it
+out to take it back to the form, or select a few controls and use **Edit → Group in a row / column / grid**.
+
+| Container | How it places its children |
+| --- | --- |
+| **Panel**, **Group box**, **Card** | Freely, like the form: positions are relative to the container and anchors follow its edges. |
+| **Flex row**, **Flex column** | One after another with a **gap**, **padding**, **justify** (start, center, end, space between) and **align** (stretch, start, center, end). A child's **Grow** shares the space left; a **Spacer** pushes the next ones to the end. |
+| **Grid** | In **columns** of equal width, row by row, with a **gap** and a **row height** (0 shares the height). A child's **Column span** makes it wider. |
+
+Children of a flex or grid are listed in their order in the outline; drag them there, or on the form, to reorder
+them. Moving or resizing a container moves its children with it, and copy, paste and delete take them along.
+
+![A sidebar form: a flex column with its children](../../../../screenshots/designer-layout.png)
+
+## Menus, settings and the command palette
+
+- **☰ (File)**: new form, open, save, save as, recent files, settings, and Run, Stop and Edit code file.
+- **View**: the command palette, the docks, the console, toolbar and status bar, grid, snapping, smart guides,
+  hidden controls, reset the panel layout, and where each panel is.
+- **Help**: keyboard shortcuts (searchable), the documentation, report a problem and About.
+- **Settings** (Ctrl+,): the designer's theme and language, toolbar and status bar, the canvas defaults, what Run
+  does (save first, open the console, log events) and a link to the code editor settings. They are kept in
+  `designer.json` in Pyzed's settings folder (`PYZED_CONFIG_DIR` overrides it).
+- **Command palette** (Ctrl+Shift+P) runs any of these by name; **Add control** (Ctrl+Shift+A) does the same for
+  components, inside the selected container.
+
+The designer's language (English or Spanish) follows the system or the one picked in Settings, and uses
+[`pz.t`](/pyzed/guides/i18n/): add a catalog under the `designer` key to translate it to another language.
+
+![The View menu](../../../../screenshots/designer-menu.png)
+
+## Panels
+
+Design (toolbox and outline), Project, Properties, Events, Code and Console are panels in four docks: left, right,
+bottom and top. Each dock shows one panel at a time, with a tab per panel. The dock button next to the tabs moves the
+panel to another dock, the × hides the dock (Ctrl+B, Ctrl+Alt+B and Ctrl+J bring them back) and the edge facing the
+form resizes it. The layout is remembered; **View → Reset panel layout** restores it.
+
+## Debug console
+
+**Run** (F5) opens the Console panel, which shows what the form prints, each event it handles with its value and
+the handler it calls, and the traceback of any error, without leaving the designer. Filter by text, hide levels with
+the toggles, copy everything or clear it. Forms run with `uv run` (a project whose dependencies the designer doesn't
+have) have their output piped in too. Settings decide whether Run opens the console and whether events are logged.
+
+![The console after a few clicks and an error](../../../../screenshots/designer-console.png)
+
 ## Look and feel
 
 Each form picks any registered theme (One, Ayu, Gruvbox or your own) and can override its accent color,
-background, corner radius and font size. The designer's own theme is independent (top-right selector).
+background, corner radius and font size. The designer's own theme is independent (**Settings**).
 
 ![A form with the Gruvbox Light theme and a custom accent](../../../../screenshots/designer-light.png)
 
@@ -273,8 +332,10 @@ or `~/.config/pyzed`).
 
 ## Components
 
-Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,
-List box, Progress bar, Badge, Image, Icon, Markdown, Spinner, Panel, Divider and Timer.
+**Common**: Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,
+List box, Link and Search box. **Containers**: Panel, Group box, Card. **Layout**: Flex row, Flex column, Grid,
+Spacer. **Navigation**: Tab bar, Segmented. **Display**: Progress bar, Badge, Chip, Callout, Avatar, Key binding,
+Stat, Chart, Table, Image, Icon, Markdown, Spinner, Divider and Timer.
 
 ![Every built-in component](../../../../screenshots/designer-components.png)
 
@@ -320,8 +381,10 @@ designer.run("hello.pzform")
 
 ### New forms and other windows
 
-`designer.new_form(path)` creates an empty form and its handlers module (in a project,
-`project.find().new_form("settings")` puts it in `ui/`). From a handler, `form.open(...)`
+**☰ → New form** (Ctrl+N) asks for a name, title and folder and offers templates: blank, dialog (OK and Cancel
+already wired), sign in, sidebar and settings. In code, `designer.new_form(path, template="dialog")` creates the
+form and its handlers module (in a project, `project.find().new_form("settings")` puts it in `ui/`), and
+`designer.register_template(...)` adds your own templates to the dialog. From a handler, `form.open(...)`
 opens another form in a new window; the name is looked up next to the current form,
 then in the project's `ui/` folder. Whatever you pass as `data` arrives as `form.data`:
 
@@ -338,6 +401,8 @@ def form_load(form, event):
 
 `designer.open_window(form_or_path, data=...)` returns the same `Command` from any app, and
 also accepts a `designer.Form` built in code (with `handlers={"name": function}`).
+
+![The New form dialog with its templates](../../../../screenshots/designer-new.png)
 
 ## How it is built
 

@@ -22,7 +22,13 @@ from ..icons import icon as _icon
 from ..theme import themes
 from . import code as _code
 from . import components as _components
-from . import code_panel, geometry, panels, project_panel, surface
+from . import code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
+from . import commands as _commands
+from . import layout as _layout
+from . import new as _new
+from .console import ConsoleController
+from . import locale as _locale
+from .locale import tr
 from .code_panel import CodeAssist
 from .components import Prop
 from .document import Document
@@ -34,6 +40,7 @@ from . import scene_panel
 from ..project import Project
 
 Rect = Tuple[float, float, float, float]
+TITLE_HEIGHT = 34.0
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build"}
 
 #: Files the designer opens: forms and components designed visually.
@@ -56,6 +63,8 @@ class Drag:
     rects: Dict[str, Rect] = field(default_factory=dict)
     handle: Optional[str] = None
     moved: bool = False
+    #: absolute rectangles of ``rects`` when the gesture started (they differ inside containers)
+    absolute: Dict[str, Rect] = field(default_factory=dict)
 
 
 @dataclass
@@ -89,17 +98,31 @@ class Designer(App):
         self.pointer: Tuple[float, float] = (0.0, 0.0)
         self.view_pointer: Tuple[float, float] = (0.0, 0.0)
         self.guides: List[Rect] = []
+        self.drop_name: Optional[str] = None
         self.menu: Optional[Tuple[str, float, float]] = None
         self.focus = "canvas"
-        # view options
-        self.show_grid = True
-        self.snap = True
-        self.smart_guides = True
-        self.show_hidden = True
-        self.right_tab = "properties"
+        # preferences and view options
+        self.prefs = preferences.load()
+        self.show_grid = self.prefs.show_grid
+        self.snap = self.prefs.snap
+        self.smart_guides = self.prefs.smart_guides
+        self.show_hidden = self.prefs.show_hidden
+        if self.prefs.language:
+            _locale.apply(self.prefs.language)
+        if theme is None and self.prefs.theme and self.prefs.theme in themes.names():
+            self.theme = themes.get(self.prefs.theme)
+        self.layout = docks.DockLayout(self.prefs.docks, self.prefs.sizes,
+                                       {k: not v for k, v in self.prefs.panels.items()})
+        self.app_menu: Optional[str] = None  # the title bar menu that is open: "file", "view" or "help"
+        self.new_state: Dict[str, str] = {}
         self.left_ratio = 0.62
         self.toolbox_query = ""
         self.name_buffer = ""
+        self.folded: set = set()  # containers folded in the outline
+        self.collapsed_sections: set = set()  # property groups folded in the Properties panel
+        self.add_parent: Optional[str] = None  # container the "Add control" picker adds into
+        self.picker_query = ""
+        self.picker_index = 0
         # code editor: (handler name or "*" for the whole file, text being edited)
         self.editing: Optional[Tuple[str, str]] = None
         self.last_handler: Optional[str] = None
@@ -112,8 +135,8 @@ class Designer(App):
         self.pending: Optional[Callable[[], Any]] = None
         self.toasts: List[Toast] = []
         self.preview: Optional[FormWindow] = None
-        # the uv project the form belongs to (Project tab)
-        self.left_tab = "design"
+        self.console = ConsoleController(self)
+        # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
@@ -146,6 +169,8 @@ class Designer(App):
         subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
         if self.projects.busy:  # keeps the spinner of a running uv command moving
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
+        if self.console.running is not None:  # notices when the running form's window is closed
+            subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
         return subs
 
     # -- selection ------------------------------------------------------------
@@ -162,6 +187,56 @@ class Designer(App):
         self.doc.select(name)
         self.focus = "canvas"
         self._selection_changed()
+
+    def toggle_section(self, title: str) -> None:
+        self.collapsed_sections ^= {title}
+
+    def toggle_folded(self, name: str) -> None:
+        self.folded ^= {name}
+
+    def open_add_child(self, parent: Optional[str]) -> Any:
+        """Shows the component picker to add a control inside ``parent`` (the form when ``None``)."""
+        self.add_parent = parent
+        self.menu = None
+        self.open_dialog_named("add_control")
+        return _core.Command.focus(dialogs.PICKER_ID)
+
+    def add_child(self, type_: str) -> None:
+        """Adds a ``type_`` control inside the container chosen with ``open_add_child``."""
+        doc = self.doc
+        parent = doc.form.get(self.add_parent) if self.add_parent else None
+        self.dialog = None
+        if parent is not None:
+            doc.add(type_, 8, 8, snap=self.snap, parent=parent.name)
+            self.folded.discard(parent.name)
+        else:
+            spec = _components.get(type_)
+            doc.add(type_, (doc.form.width - spec.size[0]) / 2, (doc.form.height - spec.size[1]) / 2, snap=self.snap)
+        self.right_tab = "properties"
+        self._selection_changed()
+
+    def set_picker_query(self, text: str) -> None:
+        self.picker_query = text
+        self.picker_index = 0
+
+    def move_out(self, name: str) -> None:
+        self.doc.move_out(name)
+
+    def wrap(self, type_: str) -> None:
+        if self.doc.wrap(type_) is not None:
+            self._selection_changed()
+
+    def set_layout(self, name: str, key: str, value: Any) -> None:
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        self.doc.set_layout(name, key, value)
+
+    def open_outline_menu(self, name: str) -> None:
+        """Right-click in the outline: the control's context menu, under it on the form."""
+        self.doc.select(name)
+        self._selection_changed()
+        x, y, _, h = self.rects.get(name, (0.0, 0.0, 0.0, 0.0))
+        self.menu = (name, x, y + h)
 
     def pick_tool(self, type_: Optional[str]) -> Callable[[], None]:
         def pick() -> None:
@@ -186,6 +261,22 @@ class Designer(App):
     def _start(self, mode: str, **kwargs: Any) -> None:
         self.drag = Drag(mode, self.view_pointer, start=self.pointer, **kwargs)
 
+    @property
+    def rects(self) -> Dict[str, Rect]:
+        """Where every control is drawn; controls being dragged follow the pointer, even out of a flex row."""
+        drag = self.drag
+        free = drag.rects.keys() if drag is not None and drag.mode == "move" and drag.moved else ()
+        return _layout.resolve(self.doc.form, free=free)
+
+    @property
+    def drop_target(self):
+        """The container highlighted as the place a dragged or new control will go."""
+        return self.doc.form.get(self.drop_name) if self.drop_name else None
+
+    def _container_under(self, x: float, y: float, exclude=()) -> Optional[str]:
+        found = _layout.container_at(self.doc.form, self.rects, x, y, exclude)
+        return found.name if found is not None else None
+
     def press_control(self, name: str) -> None:
         self.focus = "canvas"
         self.menu = None
@@ -199,9 +290,18 @@ class Designer(App):
             doc.selection.remove(name)
             doc.selection.insert(0, name)
         self._selection_changed()
-        rects = {c.name: c.rect for c in doc.selected if not c.locked}
+        form = doc.form
+        absolute = self.rects
+        moving = [c for c in doc.selected if not c.locked
+                  and not any(doc.is_selected(a.name) for a in form.ancestors(c.name))]
+        for c in moving:  # a control laid out by a flex or grid container starts from where it is drawn
+            if _layout.managed(form, c) and c.name in absolute:
+                ox, oy = _layout.origin(form, absolute, c.parent)
+                c.x, c.y = absolute[c.name][0] - ox, absolute[c.name][1] - oy
+        rects = {c.name: c.rect for c in moving}
         if rects:
-            self._start("move", rects=rects)
+            starts = {n: (*absolute[n][:2], r[2], r[3]) if n in absolute else r for n, r in rects.items()}
+            self._start("move", rects=rects, absolute=starts)
 
     def press_handle(self, handle: str) -> None:
         primary = self.doc.primary
@@ -239,11 +339,17 @@ class Designer(App):
         elif drag.mode == "resize":
             (name, start), = drag.rects.items()
             x, y, w, h = geometry.resize(start, drag.handle or "se", dx, dy, grid=grid, snapping=self.snap)
-            x, y = max(x, 0), max(y, 0)
-            w, h = min(w, form.width - x), min(h, form.height - y)
             control = form.get(name)
+            parent = form.get(control.parent) if control is not None and control.parent else None
+            limit = (parent.width, parent.height) if parent is not None else (form.width, form.height)
+            if control is not None and not _layout.managed(form, control):
+                x, y = max(x, 0), max(y, 0)
+                w, h = min(w, limit[0] - x), min(h, limit[1] - y)
             if control is not None:
                 control.x, control.y, control.width, control.height = x, y, w, h
+        elif drag.mode == "create":
+            sx, sy = drag.start
+            self.drop_name = self._container_under(sx, sy)
         elif drag.mode == "form":
             start = drag.rects[""]
             form.width = max(geometry.snap(start[2] + dx, grid, self.snap), 120)
@@ -255,27 +361,33 @@ class Designer(App):
         doc = self.doc
         form = doc.form
         primary = doc.primary
-        if primary is None or primary.name not in drag.rects:
-            primary_rect = next(iter(drag.rects.values()))
+        absolute = drag.absolute or drag.rects
+        if primary is None or primary.name not in absolute:
+            primary_rect = next(iter(absolute.values()))
         else:
-            primary_rect = drag.rects[primary.name]
+            primary_rect = absolute[primary.name]
         px, py = primary_rect[0], primary_rect[1]
         nx = geometry.snap(px + dx, form.grid, self.snap)
         ny = geometry.snap(py + dy, form.grid, self.snap)
-        # keep the whole group inside the form
-        x1 = min(r[0] for r in drag.rects.values())
-        y1 = min(r[1] for r in drag.rects.values())
-        x2 = max(r[0] + r[2] for r in drag.rects.values())
-        y2 = max(r[1] + r[3] for r in drag.rects.values())
+        # keep the whole group inside the form (in absolute coordinates: some may be in containers)
+        x1 = min(r[0] for r in absolute.values())
+        y1 = min(r[1] for r in absolute.values())
+        x2 = max(r[0] + r[2] for r in absolute.values())
+        y2 = max(r[1] + r[3] for r in absolute.values())
         ddx = max(-x1, min(nx - px, form.width - x2))
         ddy = max(-y1, min(ny - py, form.height - y2))
         self.guides = []
         if self.smart_guides:
             moving = (x1 + ddx, y1 + ddy, x2 - x1, y2 - y1)
-            others = [c.rect for c in form.controls if c.name not in drag.rects and c.visible]
+            inside = {c.name for n in drag.rects for c in form.descendants(n)}
+            rects = _layout.resolve(form, free=drag.rects.keys())
+            others = [rects[c.name] for c in form.controls
+                      if c.name not in drag.rects and c.name not in inside and c.visible and c.name in rects]
             gx, gy, self.guides = geometry.smart_guides(moving, others, (form.width, form.height))
             ddx += gx
             ddy += gy
+        sx, sy = drag.start
+        self.drop_name = self._container_under(sx + dx, sy + dy, exclude=drag.rects.keys())
         for name, (x, y, _, _) in drag.rects.items():
             control = form.get(name)
             if control is not None:
@@ -301,23 +413,50 @@ class Designer(App):
         if drag is None:
             return
         doc = self.doc
+        form = doc.form
         band = self.band_rect
+        moving_rects = self.rects  # still following the pointer
         self.drag = None
         self.guides = []
+        target, self.drop_name = self.drop_name, None
         if drag.mode == "create" and self.tool:
+            rects = _layout.resolve(form)
+            parent = self._container_under(*drag.start)
+            ox, oy = _layout.origin(form, rects, parent)
             if band is not None and band[2] >= 6 and band[3] >= 6:
-                doc.add(self.tool, band[0], band[1], band[2], band[3], snap=self.snap)
+                doc.add(self.tool, band[0] - ox, band[1] - oy, band[2], band[3], snap=self.snap, parent=parent)
             else:
-                doc.add(self.tool, drag.start[0], drag.start[1], snap=self.snap)
+                doc.add(self.tool, drag.start[0] - ox, drag.start[1] - oy, snap=self.snap, parent=parent)
             self.tool = None
             self.right_tab = "properties"
             self._selection_changed()
         elif drag.mode == "band":
             if band is not None:
-                doc.select([c.name for c in geometry.in_rect(doc.form.controls, band)])
+                rects = _layout.resolve(form)
+                hit = [c.name for c in form.controls if c.name in rects and geometry.intersects(rects[c.name], band)]
+                # a container and what is inside it move together: keep the outermost
+                doc.select([n for n in hit if not any(a.name in hit for a in form.ancestors(n))])
                 self._selection_changed()
+        elif drag.mode == "move" and drag.moved:
+            self._drop(list(drag.rects), target, moving_rects)
         elif drag.moved:
             doc.commit()
+
+    def _drop(self, names: List[str], target: Optional[str], rects: Dict[str, Rect]) -> None:
+        """Ends a move: controls dropped on another container go inside it, in the spot they landed."""
+        doc = self.doc
+        form = doc.form
+        container = form.get(target) if target else None
+        flowing = container is not None and _layout.kind(container) in ("flex", "grid")
+        changed = [n for n in names if form.get(n) is not None and form[n].parent != target]
+        if flowing or changed:
+            index = None
+            if flowing:
+                first = rects[names[0]]
+                cx, cy = first[0] + first[2] / 2, first[1] + first[3] / 2
+                index = _layout.drop_index(form, rects, container, cx, cy, exclude=names)
+            doc.reparent(names, target, index=index, rects=rects, commit=False)
+        doc.commit()
 
     # -- context menu ---------------------------------------------------------
     def open_context_menu(self, name: str) -> None:
@@ -340,8 +479,18 @@ class Designer(App):
         name = self.menu[0]
         control = self.doc.form.get(name)
         locked = bool(control and control.locked)
+        container = control is not None and _layout.kind(control) is not None
         items = [
             ui.MenuItem("View code", self._menu_action(lambda: self.open_default_event(name)), icon="code"),
+            ui.MenuItem("Add inside…", self._menu_action(lambda: self.open_add_child(name)), icon="plus")
+            if container else None,
+            ui.SEPARATOR,
+            ui.MenuItem("Group in a row", self._menu_action(lambda: self.wrap("row")), icon="columns-3"),
+            ui.MenuItem("Group in a column", self._menu_action(lambda: self.wrap("column")), icon="rows-3"),
+            ui.MenuItem("Group in a grid", self._menu_action(lambda: self.wrap("grid")), icon="layout-grid"),
+            ui.MenuItem("Group in a panel", self._menu_action(lambda: self.wrap("panel")), icon="panel-top"),
+            ui.MenuItem(f"Move out of {control.parent}", self._menu_action(lambda: self.move_out(name)),
+                        icon="arrow-up-left") if control is not None and control.parent else None,
             ui.SEPARATOR,
             ui.MenuItem("Cut", self._menu_action(self.cut), icon="scissors", keys="ctrl-x"),
             ui.MenuItem("Copy", self._menu_action(self.copy), icon="copy", keys="ctrl-c"),
@@ -356,7 +505,7 @@ class Designer(App):
             ui.SEPARATOR,
             ui.MenuItem("Delete", self._menu_action(self.delete), icon="trash-2", keys="delete", danger=True),
         ]
-        return ui.menu(items, width=220, theme=t)
+        return ui.menu([i for i in items if i is not None], width=220, theme=t)
 
     # -- editing commands -------------------------------------------------------
     def undo(self) -> None:
@@ -435,6 +584,23 @@ class Designer(App):
         return flip
 
     # -- docks ------------------------------------------------------------------
+    @property
+    def left_tab(self) -> str:
+        """The panel shown with the toolbox ("design" or "project"), wherever it is docked."""
+        return "project" if self.layout.is_showing("project", self) else "design"
+
+    @left_tab.setter
+    def left_tab(self, tab: str) -> None:
+        self.layout.show(tab)
+
+    @property
+    def right_tab(self) -> str:
+        return "events" if self.layout.is_showing("events", self) else "properties"
+
+    @right_tab.setter
+    def right_tab(self, tab: str) -> None:
+        self.layout.show(tab)
+
     def set_left_tab(self, tab: str) -> None:
         self.left_tab = tab
 
@@ -443,6 +609,109 @@ class Designer(App):
 
     def resize_left(self, ratio: float) -> None:
         self.left_ratio = ratio
+
+    def show_panel(self, panel: str) -> None:
+        if panel == "console":
+            self.console.pinned = True
+        self.layout.show(panel)
+        self.layout.menu = None
+        self._save_layout()
+
+    def move_panel(self, panel: str, dock: str) -> None:
+        self.layout.move(panel, dock)
+        self._save_layout()
+
+    def toggle_dock(self, dock: str) -> None:
+        self.layout.toggle(dock)
+        self.layout.menu = None
+        self._save_layout()
+
+    def resize_dock(self, dock: str, size: float) -> None:
+        """A dock's edge was dragged (called when it is let go)."""
+        self.layout.resize(dock, size)
+        self._save_layout()
+
+    def dock_visible(self, dock: str) -> bool:
+        return self.layout.shown(dock, self) is not None
+
+    def open_dock_menu(self, dock: str) -> None:
+        self.layout.menu = None if self.layout.menu == dock else dock
+
+    def close_dock_menu(self) -> None:
+        self.layout.menu = None
+
+    def reset_layout(self) -> None:
+        self.layout = docks.DockLayout()
+        self._save_layout()
+
+    def _save_layout(self) -> None:
+        self.prefs.docks = dict(self.layout.docks)
+        self.prefs.sizes = dict(self.layout.sizes)
+        self.prefs.panels = {dock: not closed for dock, closed in self.layout.closed.items()}
+        preferences.save(self.prefs)
+
+    # -- preferences, menus and help ---------------------------------------------
+    def set_pref(self, key: str, value: Any) -> None:
+        setattr(self.prefs, key, value)
+        if key in ("show_grid", "snap", "smart_guides", "show_hidden"):
+            setattr(self, key, value)
+        preferences.save(self.prefs)
+
+    def toggle_pref(self, key: str) -> None:
+        current = getattr(self, key) if key in ("show_grid", "snap", "smart_guides", "show_hidden") else \
+            getattr(self.prefs, key)
+        self.set_pref(key, not current)
+
+    def set_language(self, code: str) -> None:
+        self.prefs.language = code
+        preferences.save(self.prefs)
+        _locale.apply(code)
+
+    def open_settings(self) -> None:
+        self.app_menu = None
+        self.dialog = "settings"
+
+    def open_dialog_named(self, name: str) -> Any:
+        self.app_menu = None
+        self.picker_query = ""
+        self.picker_index = 0
+        self.dialog = name
+        return None
+
+    def open_palette(self) -> Any:
+        self.open_dialog_named("palette")
+        return _core.Command.focus(dialogs.PICKER_ID)
+
+    def toggle_app_menu(self, name: str) -> None:
+        self.app_menu = None if self.app_menu == name else name
+        self.layout.menu = None
+
+    def close_app_menu(self) -> None:
+        self.app_menu = None
+
+    def run_action(self, action_id: str) -> Any:
+        """Runs a command from the menus or the palette (closing them first)."""
+        self.app_menu = None
+        if self.dialog in ("palette",):
+            self.dialog = None
+        return _commands.run(action_id, self)
+
+    def open_url(self, url: str) -> None:
+        import threading
+        import webbrowser
+
+        threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
+
+    def open_docs(self) -> None:
+        self.open_url(_commands.DOCS_URL)
+
+    def select_all(self) -> None:
+        self.doc.select_all()
+        self._selection_changed()
+
+    def show_save_as(self) -> None:
+        self.dialog = "save_as"
+        self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
 
     def focus_panel(self) -> None:
         self.focus = "panel"
@@ -472,6 +741,7 @@ class Designer(App):
         self.code_revision += 1
         self.code_error = None
         self.right_tab = "events"
+        self.layout.show("code")
         self.focus = "code"
         self.assist.opened()
 
@@ -499,6 +769,7 @@ class Designer(App):
         return self.assist.moved(line, column)
 
     def open_editor_settings(self) -> None:
+        self.app_menu = None
         self.dialog = "editor_settings"
 
     def _flush_code(self) -> bool:
@@ -552,6 +823,7 @@ class Designer(App):
         if self._flush_code():
             self.editing = ("*", self.doc.code)
             self.code_revision += 1
+            self.layout.show("code")
             self.focus = "code"
             self.assist.opened()
 
@@ -564,12 +836,65 @@ class Designer(App):
             return None
         return action()
 
-    def new(self) -> None:
-        self._guard(lambda: setattr(self, "dialog", "new"))
+    def new(self) -> Any:
+        """Shows the "New form" dialog (name, title, template and folder)."""
+        folder = self.doc.path.parent if self.doc.path else (
+            self.projects.project.ui_dir if self.projects.project else Path.cwd())
+        try:
+            folder = folder.resolve().relative_to(Path.cwd())
+        except ValueError:
+            pass
+        taken = {p.stem for p in Path(folder).glob(f"*{SUFFIX}")} if Path(folder).is_dir() else set()
+        n = 1
+        while f"form{n}" in taken:
+            n += 1
+        self.new_state = {"name": f"form{n}", "title": "", "folder": str(folder), "template": "blank"}
+        self.dialog = "new"
+        return _core.Command.focus("new-form-name")
+
+    def set_new(self, key: str, value: str) -> None:
+        self.new_state[key] = value
+
+    def create_new_form(self) -> None:
+        """Creates the form described in the "New form" dialog and opens it (after asking to keep unsaved changes)."""
+        s = self.new_state
+        path = Path(s.get("folder") or ".") / f"{s.get('name') or 'form1'}{SUFFIX}"
+        if path.exists():
+            self.notify(f"{path.name} already exists", kind="warning")
+            return
+
+        def create() -> None:
+            try:
+                created = _new.new_form(path, title=s.get("title") or None, template=s.get("template", "blank"))
+            except (OSError, ValueError, KeyError) as err:
+                self.notify("Could not create the form", str(err), kind="error", seconds=5)
+                return
+            self.dialog = None
+            self.open_path(created)
+            self.doc.form.grid = self.prefs.grid
+
+        self.dialog = None
+        self._guard(create)
+
+    def create_untitled_form(self) -> None:
+        """A new form that is only saved when the user saves it."""
+        s = self.new_state
+
+        def create() -> None:
+            self.doc = _new.create(s.get("name") or "form1", title=s.get("title") or None,
+                                   template=s.get("template", "blank"))
+            self.doc.form.grid = self.prefs.grid
+            self.editing = None
+            self.dialog = None
+            self._selection_changed()
+
+        self.dialog = None
+        self._guard(create)
 
     def _new(self, factory: Callable[[], Document] = Document) -> None:
         self.dialog = None
         self.doc = factory()
+        self.doc.form.grid = self.prefs.grid
         self.editing = None
         self._selection_changed()
 
@@ -592,6 +917,8 @@ class Designer(App):
         self.dialog = None
         self.editing = None
         self._selection_changed()
+        self.prefs.remember(path)
+        preferences.save(self.prefs)
         self.notify(f"Opened {path.name}")
 
     def save(self) -> None:
@@ -623,6 +950,18 @@ class Designer(App):
         self.dialog = None
         self.pending = None
 
+    def confirm_save(self) -> Any:
+        """"Save" in the unsaved-changes dialog: saves, then goes on with what was asked (a new file is saved as first)."""
+        if self.doc.path is None:
+            self.pending = None
+            return self.save()
+        self.save()
+        if self.doc.dirty:  # the code has an error: stay on this form
+            self.dialog = None
+            self.pending = None
+            return None
+        return self.confirm_discard()
+
     def confirm_discard(self) -> Any:
         action, self.pending = self.pending, None
         self.dialog = None
@@ -648,21 +987,34 @@ class Designer(App):
             return None
         if scene_panel.is_scene(self):
             return scene_panel.run(self)
+        if self.prefs.save_on_run and self.doc.path is not None:
+            self.save()
+        if self.prefs.console_on_run:
+            self.layout.show("console")
+        name = self.doc.display_name
         if self.projects.runs_outside and self.doc.path is not None:
             # The designer does not have the project's dependencies: run it with `uv run`.
             self.save()
-            self.projects.run_form(Path(self.doc.path))
+            self.console.start(name, "uv run")
+            self.projects.run_form(Path(self.doc.path), capture=True)
+            self.console.pipe(self.projects.process)
             return None
+        self.console.start(name)
         try:
             handlers = self._compile_handlers()
         except Exception as err:  # noqa: BLE001 - show any import-time error to the user
+            import traceback
+
+            self.console.event("error", "The code file has an error\n" + traceback.format_exc().rstrip())
+            self.console.stop()
             self.notify("The code file has an error", f"{type(err).__name__}: {err}", kind="error", seconds=6)
             return None
         commands = []
         if self.preview is not None and self.preview.is_open:
             commands.append(self.preview.close())
-        self.preview = FormWindow(self.doc.form, handlers)
+        self.preview = FormWindow(self.doc.form, handlers, path=self.doc.path)
         self.preview.app = self
+        self.preview.runtime.log = self.console.event
         commands.append(self.preview.open())
         return commands
 
@@ -676,30 +1028,31 @@ class Designer(App):
 
     def stop_form(self) -> Any:
         self.projects.stop()
+        self.console.stop()
         if self.preview is not None and self.preview.is_open:
             return self.preview.close()
         return None
 
     # -- keyboard -------------------------------------------------------------
     def on_key(self, combo: str) -> Any:
-        commands: Dict[str, Callable[[], Any]] = {
-            "ctrl-s": self.save,
-            "cmd-s": self.save,
-            "ctrl-o": self.open_dialog,
-            "ctrl-n": self.new,
-            "f5": self.run_form,
-            "shift-f5": self.stop_form,
-            "f7": self.edit_whole_file,
-        }
-        if combo in commands:
-            return commands[combo]()
+        action = _commands.by_keys(combo, global_only=True)
+        if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
+            self.app_menu = None
+            return _commands.run(action.id, self)
         if self.focus == "code" and self.editing is not None and not self.dialog:
             handled, result = self.assist.on_key(combo)
             if handled:
                 return result
+        if self.dialog in ("palette", "add_control") and combo in ("up", "down"):
+            self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
+            return None
         if combo == "escape":
             if self.dialog:
                 return self.close_dialog()
+            if self.app_menu or self.layout.menu:
+                self.app_menu = None
+                self.layout.menu = None
+                return None
             if self.menu:
                 return self.close_menu()
             if self.drag:
@@ -744,6 +1097,7 @@ class Designer(App):
         self.guides = []
         if drag is None:
             return
+        self.drop_name = None
         form = self.doc.form
         for name, (x, y, w, h) in drag.rects.items():
             if name == "":
@@ -755,22 +1109,21 @@ class Designer(App):
     # -- view -------------------------------------------------------------------
     def view(self):
         t = self.theme_obj
-        center = _core.column([self.toolbar(t), _core.container(surface.form_surface(self, t), width="fill",
-                                                                 height="fill", bg=t.background)],
-                              width="fill", height="fill")
-        if self.editing is not None:
-            center = ui.split(center, _core.mouse_area(code_panel.code_panel(self, t), on_enter=self.focus_code),
-                              vertical=True, ratio=0.6, theme=t)
-        body = ui.workspace(
-            center,
-            title_bar=self.title_bar(t),
-            left=_core.mouse_area(panels.left_dock(self, t), on_enter=self.focus_panel),
-            right=_core.mouse_area(panels.right_dock(self, t), on_enter=self.focus_panel),
-            status_bar=self.status_bar(t),
-            left_width=230,
-            right_width=320,
-            theme=t,
-        )
+        canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
+        center = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas], width="fill",
+                              height="fill")
+        body = _core.container(_core.column([
+            self.title_bar(t),
+            docks.workspace(self, center, t),
+            self.status_bar(t) if self.prefs.show_status_bar else None,
+        ], width="fill", height="fill"), width="fill", height="fill", bg=t.background)
+        if self.app_menu is not None:
+            menu = self.title_menu(self.app_menu, t)
+            if self.app_menu == "file":
+                body = ui.popover(body, menu, x=8, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
+            else:  # the View and Help buttons sit at the end of the title bar, before the gear
+                right = 8 + 30 * (1 if self.app_menu == "help" else 2)
+                body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
         body = ui.toasts(body, [ui.toast(x.title, x.message, kind=x.kind, on_dismiss=lambda x=x: self.dismiss_toast(x),
                                          theme=t) for x in self.toasts])
         return ui.layer(body, self.dialog_view(t), on_dismiss=self.close_dialog)
@@ -779,28 +1132,74 @@ class Designer(App):
     def theme_obj(self):
         return self.resolved_theme()
 
+    def title_menu(self, name: str, t) -> Any:
+        """The File, View or Help menu, built from the command table."""
+        groups = {"file": ("File", "Run"), "view": ("View",), "help": ("Help",)}[name]
+        items: List[Any] = []
+        for group, actions in _commands.groups():
+            if group not in groups:
+                continue
+            if items:
+                items.append(ui.SEPARATOR)
+            for a in actions:
+                if not a.menu:
+                    continue
+                items.append(ui.MenuItem(a.label, (lambda a=a: self.run_action(a.id)) if a.enabled(self) else None,
+                                         icon=None if a.checked else a.icon, keys=a.keys,
+                                         checked=a.checked(self) if a.checked else None,
+                                         disabled=not a.enabled(self)))
+            if group == "File" and self.prefs.recent:
+                items += [ui.SEPARATOR, tr("Recent")]
+                for path in self.prefs.recent[:5]:
+                    items.append(ui.MenuItem(Path(path).name, lambda path=path: self._open_recent(path),
+                                             icon="layout-template"))
+            if group == "View":
+                items += [ui.SEPARATOR, tr("Panels")]
+                for pid, panel in docks.PANELS.items():
+                    items.append(ui.MenuItem(f"{panel.title}  ·  {tr(self.layout.docks[pid].capitalize())}",
+                                             lambda pid=pid: self.run_panel(pid), icon=panel.icon,
+                                             disabled=pid == "code" and self.editing is None))
+        return ui.menu(items, width=260, theme=t)
+
+    def run_panel(self, panel: str) -> None:
+        self.app_menu = None
+        self.show_panel(panel)
+
+    def _open_recent(self, path: str) -> None:
+        self.app_menu = None
+        self._guard(lambda: self.open_path(path))
+
     def title_bar(self, t) -> Any:
         doc = self.doc
         start = [
-            _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 8)),
-            ui.title_button(self.projects.project.name, lambda: self.set_left_tab("project"), icon="package")
-            if self.projects.project else ui.title_button("Pyzed Designer", lambda: self.set_left_tab("project")),
+            ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
+                           tooltip=None if self.app_menu else tr("Menu"), theme=t),
+            _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
+            ui.title_button(self.projects.project.name, lambda: self.show_panel("project"), icon="package")
+            if self.projects.project else ui.title_button("Pyzed Designer", lambda: self.show_panel("project")),
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
             ui.badge("Component", tint="accent", icon="component", theme=t) if scene_panel.is_scene(self) else None,
         ]
         end = [
-            ui.select(themes.names(), t.name, self.set_designer_theme, size="sm", width=150, theme=t),
-            _core.space(width=6),
-            ui.button("Run", self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
                       theme=t),
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
+                           disabled=self.console.running is None, theme=t),
             _core.space(width=8),
+            ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
+                           tooltip=None if self.app_menu else tr("View"), theme=t),
+            ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
+                           tooltip=None if self.app_menu else tr("Help"), theme=t),
+            ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
         ]
-        return ui.title_bar(start, end, theme=t)
+        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
 
     def set_designer_theme(self, name: str) -> None:
         self.theme = themes.get(name)
+        self.prefs.theme = name
+        preferences.save(self.prefs)
 
     def toolbar(self, t) -> Any:
         doc = self.doc
@@ -809,6 +1208,7 @@ class Designer(App):
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
                  keys: Optional[str] = None) -> Any:
+            tip = tr(tip)
             label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
             return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
 
@@ -887,11 +1287,8 @@ class Designer(App):
         if self.dialog and self.dialog.startswith("project:"):
             return project_panel.dialog(self, t)
         if self.dialog == "confirm":
-            return ui.modal(
-                ui.label("The current form has unsaved changes. Discard them?", theme=t),
-                title="Unsaved changes", on_close=self.close_dialog, width=420, theme=t,
-                footer=[ui.button("Cancel", self.close_dialog, variant="ghost", theme=t),
-                        ui.button("Discard", self.confirm_discard, variant="solid", tint="error", theme=t)])
+            return ui.unsaved_changes(self.doc.display_name, self.confirm_save, self.confirm_discard,
+                                      self.close_dialog, theme=t)
         if self.dialog == "save_as":
             return ui.modal(
                 ui.field("File", ui.input(self.dialog_path, self.set_dialog_path,
@@ -915,15 +1312,12 @@ class Designer(App):
                     _core.container(_core.scrollable(_core.column(rows, width="fill")), height=260),
                 ], spacing=10),
                 title="Open form or component", on_close=self.close_dialog, width=520, theme=t)
-        if self.dialog == "new":
-            rows = [ui.list_item(f"New {label.lower()}", lambda f=factory: self._new(f), icon=icon,
-                                 end=ui.label(suffix, size="sm", mono=True, color="text_muted", theme=t),
-                                 inset=True, theme=t)
-                    for label, icon, suffix, factory in NEW_DOCUMENT_KINDS]
-            return ui.modal(_core.column(rows, width="fill"), title="New", on_close=self.close_dialog, width=420,
-                            theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
+        named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
+                 "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette}
+        if self.dialog in named:
+            return named[self.dialog](self, t)
         return None
 
 

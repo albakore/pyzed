@@ -301,19 +301,27 @@ def table(
 # ---------------------------------------------------------------------------
 
 
-def popover(base: Any, content: Any = None, *, x: float = 0, y: float = 0, on_dismiss: Any = None) -> _core.Widget:
+def popover(base: Any, content: Any = None, *, x: float = 0, y: float = 0, on_dismiss: Any = None,
+            align_x: str = "start") -> _core.Widget:
     """Shows ``content`` (a ``ui.menu``, a card...) over ``base`` at ``(x, y)``.
 
     Clicking anywhere else calls ``on_dismiss``. With ``content=None`` only ``base`` is shown.
     For a right-click menu, remember the pointer with ``mouse_area(on_move=...)`` and open
-    the popover from ``on_right_press``; see ``examples/context_menu.py``.
+    the popover from ``on_right_press``; see ``examples/context_menu.py``. With
+    ``align_x="end"``, ``x`` is the distance from the right edge to the content's right
+    side (for menus opened from buttons at the end of a title bar).
     """
     if content is None:
         return base
     shade = _core.container(None, width="fill", height="fill")
     if on_dismiss is not None:
         shade = _core.mouse_area(shade, on_press=on_dismiss, on_right_press=on_dismiss)
-    return _core.stack([base, shade, _core.pin(_core.opaque(content), x=x, y=y)], width="fill", height="fill")
+    if align_x == "end":
+        placed = _core.container(_core.opaque(content), width="fill", height="fill", align_x="end",
+                                 align_y="start", padding=(y, x, 0, 0))
+    else:
+        placed = _core.pin(_core.opaque(content), x=x, y=y)
+    return _core.stack([base, shade, placed], width="fill", height="fill")
 
 
 # ---------------------------------------------------------------------------

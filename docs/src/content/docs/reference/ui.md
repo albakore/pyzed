@@ -770,6 +770,130 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
+## Console and help
+
+### `Log`
+
+```python
+class Log
+```
+
+The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.
+
+| Parameter | Description |
+| --- | --- |
+| `limit` | Most entries kept. |
+| `on_write` | Called after every write (from any thread). |
+
+```python
+log = ui.Log()
+with log:
+    print("hello")          # still reaches the terminal
+ui.console(log.entries, on_clear=log.clear)
+```
+
+### `LogEntry`
+
+```python
+@dataclass
+class LogEntry(level, text, time=1792371280.8146665, count=1)
+```
+
+One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).
+
+| Parameter | Description |
+| --- | --- |
+| `level` | Level name. |
+| `text` | The line. |
+| `time` | When it was written (`time.time()`). |
+| `count` | Identical lines in a row. |
+
+### `LOG_LEVELS`
+
+```python
+LOG_LEVELS(...)
+```
+
+The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error.
+
+### `console`
+
+```python
+console(
+    entries,
+    *,
+    query='',
+    on_query=None,
+    hidden=(),
+    on_toggle_level=None,
+    on_clear=None,
+    on_copy=None,
+    actions=(),
+    font_size=12.5,
+    id=None,
+    theme=None,
+)
+```
+
+A log view like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear, and the entries in a monospace list that keeps scrolling to the newest one.
+
+| Parameter | Description |
+| --- | --- |
+| `entries` | `ui.LogEntry` items (`log.entries`). |
+| `query` | Filter text. |
+| `on_query` | Receives each edit of the filter. |
+| `hidden` | Levels not shown. |
+| `on_toggle_level` | Called with the level of the clicked toggle. |
+| `on_clear` | Adds a Clear button. |
+| `on_copy` | Adds a Copy button. |
+| `actions` | Extra widgets at the end of the toolbar. |
+| `font_size` | Size of the entries. |
+| `id` | Scrollable id. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `shortcuts`
+
+```python
+shortcuts(groups, *, query='', on_query=None, height=380, theme=None)
+```
+
+A searchable list of key bindings, grouped (for a Keyboard shortcuts dialog).
+
+| Parameter | Description |
+| --- | --- |
+| `groups` | `[(title, [(label, keys), ...]), ...]`, keys like `"ctrl-s"`. |
+| `query` | Filter text. |
+| `on_query` | Adds a search box. |
+| `height` | Height of the list. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `about`
+
+```python
+about(
+    name,
+    version='',
+    description='',
+    *,
+    icon='app-window',
+    details=(),
+    links=(),
+    theme=None,
+)
+```
+
+An About box: icon, name, version, a description, a few details and link buttons.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | App name. |
+| `version` | Version text. |
+| `description` | One or two sentences. |
+| `icon` | Lucide icon. |
+| `details` | `(label, value)` rows. |
+| `links` | `(label, on_press)` buttons. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
 ## Data and feedback
 
 ### `callout`
@@ -1701,7 +1825,7 @@ Shows `items` (usually `toast(...)`) stacked in the bottom-right corner over `ba
 ### `popover`
 
 ```python
-popover(base, content=None, *, x=0, y=0, on_dismiss=None)
+popover(base, content=None, *, x=0, y=0, on_dismiss=None, align_x='start')
 ```
 
 Shows `content` (a `ui.menu`, a card…) over `base` at `(x, y)`. Clicking anywhere else calls `on_dismiss`. For a right-click menu, store the mouse position with `mouse_area(on_move=...)` and open the popover from `on_right_press` (see `examples/context_menu.py`).
@@ -1713,6 +1837,7 @@ Shows `content` (a `ui.menu`, a card…) over `base` at `(x, y)`. Clicking anywh
 | `x` | Horizontal position. |
 | `y` | Vertical position. |
 | `on_dismiss` | Message or callable sent on close. |
+| `align_x` | Horizontal alignment: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ## Code
 

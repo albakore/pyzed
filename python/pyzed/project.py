@@ -584,9 +584,17 @@ class Project:
             args.append("--reload")
         return [_uv(), *args]
 
-    def spawn(self, form: Optional[PathLike] = None, *, reload: bool = False) -> "subprocess.Popen[bytes]":
-        """Starts the form in its own process with ``uv run`` (returns immediately)."""
-        return subprocess.Popen(self.run_args(form, reload=reload), cwd=str(self.root), env=_clean_env())
+    def spawn(self, form: Optional[PathLike] = None, *, reload: bool = False,
+              capture: bool = False) -> "subprocess.Popen[bytes]":
+        """Starts the form in its own process with ``uv run`` (returns immediately).
+
+        With ``capture`` its output (stdout and stderr together) is readable from ``.stdout``.
+        """
+        pipes = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT} if capture else {}
+        env = _clean_env()
+        if capture:
+            env["PYTHONUNBUFFERED"] = "1"  # lines reach the designer's console as they are printed
+        return subprocess.Popen(self.run_args(form, reload=reload), cwd=str(self.root), env=env, **pipes)
 
 
 # -- creating projects --------------------------------------------------------------------------

@@ -36,7 +36,8 @@ from .document import Document
 from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
-from .runtime import Event, FormApp, FormWindow, form_window, new_form, open_form, open_window, run, theme_for
+from .new import Template, new_form, register_template, templates
+from .runtime import Event, FormApp, FormWindow, form_window, open_form, open_window, run, theme_for
 from .scene import Scene, SceneDocument, discover, load_component, new_component, open_document
 from .scene_runtime import SceneComponent
 from .settings import EditorSettings
@@ -70,6 +71,7 @@ __all__ = [
     "FormApp",
     "FormWindow",
     "History",
+    "Template",
     "Prop",
     "RenderContext",
     "Scene",
@@ -83,20 +85,22 @@ __all__ = [
     "design",
     "discover",
     "distribute",
-    "form_window",
     "load",
+    "new_form",
     "load_component",
     "new_component",
-    "new_form",
     "open_document",
+    "form_window",
     "open_form",
     "open_window",
     "register",
+    "register_template",
     "render",
     "run",
     "same_size",
     "save",
     "smart_guides",
+    "templates",
     "snap",
     "theme_for",
 ]

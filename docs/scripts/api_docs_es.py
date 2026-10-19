@@ -1507,3 +1507,34 @@ _section("app", "Idiomas", {
     "pyzed.i18n.system_language": {"desc": "El idioma del sistema operativo (`LANG`, `LC_ALL` o el locale).", "params": {"default": "Lo que devuelve si el sistema no informa ninguno."}},
     "pyzed.i18n.has": {"desc": "Si `key` tiene texto en el idioma o sus respaldos.", "params": {"key": "Clave con puntos.", "language": "Idioma a consultar (por defecto, el actual)."}},
 })
+
+_section("ui", "Consola y ayuda", {
+    "pyzed.ui.Log": {
+        "desc": "Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.",
+        "params": {"limit": "Máximo de entradas guardadas.", "on_write": "Se llama tras cada escritura (desde cualquier hilo)."},
+        "example": """
+            log = ui.Log()
+            with log:
+                print("hola")           # sigue llegando a la terminal
+            ui.console(log.entries, on_clear=log.clear)
+        """,
+    },
+    "pyzed.ui.LogEntry": {"desc": "Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).", "params": {"level": "Nivel.", "text": "La línea.", "time": "Cuándo se escribió (`time.time()`).", "count": "Líneas idénticas seguidas."}},
+    "pyzed.ui.LOG_LEVELS": {"desc": "Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error."},
+    "pyzed.ui.console": {
+        "desc": "Una vista de registro como la consola de las herramientas de desarrollo del navegador: filtro, un botón por nivel con su cuenta, copiar y limpiar, y las entradas en monoespaciada, siempre desplazada a la más nueva.",
+        "params": {"entries": "Elementos `ui.LogEntry` (`log.entries`).", "query": "Texto del filtro.", "on_query": "Recibe cada edición del filtro.",
+                   "hidden": "Niveles ocultos.", "on_toggle_level": "Se llama con el nivel del botón pulsado.",
+                   "on_clear": "Añade el botón Limpiar.", "on_copy": "Añade el botón Copiar.", "actions": "Widgets extra al final de la barra.",
+                   "font_size": "Tamaño de las entradas.", "id": "Id del scrollable."},
+    },
+    "pyzed.ui.shortcuts": {
+        "desc": "Una lista de atajos de teclado agrupada y con búsqueda (para un diálogo de atajos).",
+        "params": {"groups": "`[(título, [(etiqueta, teclas), ...]), ...]`, teclas como `\"ctrl-s\"`.", "query": "Texto del filtro.", "on_query": "Añade un buscador.", "height": "Alto de la lista."},
+    },
+    "pyzed.ui.about": {
+        "desc": "Un cuadro Acerca de: icono, nombre, versión, una descripción, algunos detalles y botones de enlace.",
+        "params": {"name": "Nombre de la app.", "version": "Versión.", "description": "Una o dos frases.", "icon": "Icono de Lucide.",
+                   "details": "Filas `(etiqueta, valor)`.", "links": "Botones `(etiqueta, on_press)`."},
+    },
+}, before="Datos y feedback")

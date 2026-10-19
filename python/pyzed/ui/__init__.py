@@ -20,6 +20,8 @@ from .base import (
     muted,
     tooltip_text as tooltip,
 )
+from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
+from .help import about, shortcuts
 from .controls import (
     AccordionSection,
     accordion,
@@ -70,14 +72,20 @@ from .overlays import (
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 
 __all__ = [
+    "LOG_LEVELS",
+    "Log",
+    "LogEntry",
+    "about",
+    "console",
+    "shortcuts",
+    "AccordionSection",
+    "accordion",
     "alert",
     "choice",
     "confirm",
     "dialog_layer",
     "prompt",
     "unsaved_changes",
-    "AccordionSection",
-    "accordion",
     "ansi",
     "avatar",
     "badge",
