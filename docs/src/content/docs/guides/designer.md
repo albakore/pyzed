@@ -24,7 +24,7 @@ pyzed run login.pzform --reload  # ...and update it every time the form or its c
 | **Toolbox** (left) | The component library. Drag a component onto the form, or into a container, to place it there; or click it, then click on the form to place it at its default size or drag a rectangle to give it a size. Search filters the list. |
 | **Outline** (left) | Every control as a tree: containers list their children (fold them with the chevron). Click to select; drag a row to reorder it, into another container or onto the form. The eye and lock buttons hide or lock a control, **+** adds a control inside a container and right-click opens a menu. |
 | **Form** (center) | The design surface with a dot grid. Drag to move, use the eight handles to resize, drag on empty space to select with a rubber band. The grip under the bottom-right corner resizes the form. |
-| **Properties** (right) | Name, then the component's properties in collapsible sections: its own groups, position (X, Y, size, anchors, or grow and span inside a flex or grid) and behavior (visible, enabled, locked). With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
+| **Properties** (right) | Name, then the component's properties in collapsible sections: its own groups, position (X, Y, size, anchors, or grow and span inside a flex or grid) and behavior (visible, enabled, locked). Lists (a list box's items, tabs, options) get one field per item with buttons to reorder, remove and add; a table's rows are a small spreadsheet with add and remove buttons for rows and columns. The page icon next to them switches to plain text. With nothing selected it edits the form: title, size, theme, accent, background, corner radius, font size and grid. |
 | **Events** (right) | The events of the selected control (or of the form). Double-click one to create its handler and open it in the code editor. |
 | **Code** (bottom) | The source of one handler, or of the whole file (**F7**). **Apply** checks the syntax before touching the file. |
 | **Console** (bottom) | What the running form prints, the events it handles and its errors (see [Debug console](#debug-console)). |
@@ -141,7 +141,7 @@ background, text color, font, weight, italic, font size, line height, border col
 shadow, padding, margin, max width and height, content alignment and clipping. Empty fields keep the component's own
 look, and **Reset style** clears them all.
 
-Click a color's swatch to open the color picker, with alpha. The background's picker also makes linear gradients
+Click a color's swatch to open the color picker, with alpha, floating next to the panel (click outside it to close it). The background's picker also makes linear gradients
 (drag the stops, set the angle) and opacity masks. Colors may be theme tokens (`accent`, `text_muted`...), so a
 style follows the form's theme. Corner radius takes one number or four (top-left, top-right, bottom-right,
 bottom-left); padding and margin take one, two or four.

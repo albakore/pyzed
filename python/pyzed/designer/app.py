@@ -123,6 +123,8 @@ class Designer(App):
         self.carry: Optional[Carry] = None
         self.over_form = False  # the pointer is over the form being designed
         self.color_picker: Optional[Tuple[Optional[str], str]] = None  # (control or None, style key) being picked
+        self.picker_at: Tuple[float, float] = (0.0, 0.0)  # window point where the picker was opened
+        self.text_editors: set = set()  # "control.prop" lists and tables edited as plain text
         #: outline row under the pointer while carrying, and where it would drop: "before", "inside" or "after"
         self.outline_target: Optional[Tuple[str, str]] = None
         self.hovered_row: Optional[str] = None  # toolbox or outline row under the pointer
@@ -802,8 +804,32 @@ class Designer(App):
         self.doc.clear_style(name)
 
     def toggle_color_picker(self, name: Optional[str], key: str) -> None:
-        """Opens the color picker under a Style row (or closes it when it is already open)."""
-        self.color_picker = None if self.color_picker == (name, key) else (name, key)
+        """Opens the color picker of a Style row as a floating card next to the pointer (or closes it)."""
+        if self.color_picker == (name, key):
+            self.color_picker = None
+            return
+        self.color_picker = (name, key)
+        self.picker_at = self.window_pointer
+
+    def toggle_text_editor(self, key: str) -> None:
+        """Switches a list or table property between its item editor and plain text."""
+        self.text_editors ^= {key}
+
+    def close_color_picker(self) -> None:
+        self.color_picker = None
+
+    def color_picker_at(self, t) -> Optional[Tuple[Any, float, float]]:
+        """The color picker card and where it goes: beside the pointer, away from the panel, inside the window."""
+        card = panels.color_popover(self, t)
+        if card is None:
+            return None
+        px, py = self.picker_at
+        width, height = self.window_size or self.size
+        x = px - panels.PICKER_WIDTH - 16  # the Style rows are in a side panel: open towards the form
+        if x < 4:
+            x = min(px + 16, max(width - panels.PICKER_WIDTH - 4, 4))
+        y = min(max(py - 40, 4), max(height - panels.PICKER_HEIGHT - 4, 4))
+        return card, x, y
 
     def set_name_buffer(self, text: str) -> None:
         self.name_buffer = text
@@ -1403,6 +1429,11 @@ class Designer(App):
         if self.menu is not None:
             menu, mx, my = self.context_menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        if self.color_picker is not None:
+            placed = self.color_picker_at(t)
+            if placed is not None:
+                card, cx, cy = placed
+                body = ui.popover(body, card, x=cx, y=cy, on_dismiss=self.close_color_picker)
         ghost = self.carry_ghost(t)
         if ghost is not None:
             gx, gy = self.window_pointer

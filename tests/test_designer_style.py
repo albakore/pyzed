@@ -92,3 +92,47 @@ def test_global_style_reaches_the_theme_and_the_running_form(tmp_path):
     assert any(isinstance(r, panels.Group) and r.title == "Style" for r in panels.form_properties(app, app.theme_obj))
     assert FormApp(form).view() is not None
     assert "style" not in Form().to_dict()["form"]
+
+
+def test_color_picker_floats_beside_the_pointer_inside_the_window(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.doc.select("nav1")
+    app._selection_changed()
+    app.window_moved(1180, 440)  # a swatch in the Properties dock on the right
+    app.toggle_color_picker("nav1", "background")
+    card, x, y = app.color_picker_at(app.theme_obj)
+    assert x + panels.PICKER_WIDTH < 1180 and y + panels.PICKER_HEIGHT <= 900
+    app.close_color_picker()
+    app.window_moved(40, 880)  # a dock on the left, near the bottom: it opens to the right and stays inside
+    app.toggle_color_picker("nav1", "color")
+    _, x, y = app.color_picker_at(app.theme_obj)
+    assert x > 40 and y + panels.PICKER_HEIGHT <= 900
+    app.toggle_color_picker("nav1", "color")  # the same swatch again closes it
+    assert app.color_picker is None and app.view() is not None
+
+
+def test_list_and_table_editors():
+    assert panels.parse_rows("Name, Role\nAda, Engineer\nGrace") == [["Name", "Role"], ["Ada", "Engineer"],
+                                                                     ["Grace", ""]]
+    assert panels.format_rows([["Name", "Role"], ["Ada, Lovelace", "Engineer"]]) == "Name, Role\nAda  Lovelace, Engineer"
+    t = themes.get("One Dark")
+    got = []
+    assert panels.list_editor("First\nSecond", got.append, t) is not None
+    assert panels.rows_editor("Name, Role\nAda, Engineer", got.append, t) is not None
+    assert panels.rows_editor("", got.append, t) is not None
+
+
+def test_items_and_rows_get_their_own_editors(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.doc.add("list_box", 300, 100, 180, 140)
+    app.doc.add("table", 300, 260, 360, 160)
+    for name in ("list_box1", "table1"):
+        app.doc.select(name)
+        app._selection_changed()
+        rows = panels.control_properties(app, app.theme_obj)
+        assert rows and app.view() is not None
+        app.toggle_text_editor(f"{name}.items" if name == "list_box1" else f"{name}.data")  # edit as plain text
+        assert app.view() is not None
+    app.doc.select(None)
+    app._selection_changed()
+    assert panels.events(app, app.theme_obj) is not None

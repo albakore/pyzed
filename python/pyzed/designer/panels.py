@@ -44,10 +44,16 @@ class Group:
         self.title = title
 
 
-def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None) -> Any:
+def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, tall: bool = False,
+             end: Any = None) -> Any:
+    """A property: its name, then its editor on the same line, or below it at full width when ``tall``
+    (lists, tables and text areas). ``end`` goes at the end of a tall row's title line."""
     label = ui.label(tr(title), size="sm", color="text_muted", wrap=False, theme=t)
     if tip:
         label = ui.tooltip(label, tip, theme=t)
+    if tall:
+        head = _core.row([label, _core.space(width="fill"), end], align="center", height=ROW_HEIGHT - 4)
+        return _core.container(_core.column([head, editor], spacing=4, width="fill"), padding=(3, 10), width="fill")
     return _core.container(
         _core.row([_core.container(label, width=LABEL_WIDTH, clip=True),
                    _core.container(editor, width="fill", height=ROW_HEIGHT, align_y="center")],
@@ -73,12 +79,12 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return ui.number_field(number, on_change, min=prop.min, max=prop.max, step=prop.step, width="fill", theme=t)
     if kind == "choice":
         return ui.select(list(prop.choices), str(value), on_change, width="fill", size="sm", theme=t)
-    if kind in ("multiline", "list"):
-        text = value if isinstance(value, str) else "\n".join(map(str, value or []))
-        return _core.container(
-            ui.editor(f"prop:{key}:{d.doc.revision}", text, on_change=on_change, gutter=False, wrap=True,
-                      active_line=False, font_size=12.5, height=88, theme=t),
-            width="fill", height=88, border_color=t.border_variant, border_width=1, radius=t.radius_sm, clip=True)
+    if kind == "list" and key not in d.text_editors:
+        return list_editor(value, on_change, t)
+    if kind == "rows" and key not in d.text_editors:
+        return rows_editor(value, on_change, t)
+    if kind in ("multiline", "list", "rows"):
+        return text_area(d, key, value, on_change, t)
     if kind == "color":
         resolved = None
         if value:
@@ -93,6 +99,126 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return _core.row([preview, ui.input(str(value or ""), on_change, placeholder="lucide name", size="sm",
                                             theme=t)], spacing=6, align="center")
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
+
+
+TALL_KINDS = ("multiline", "list", "rows")
+
+
+def _text_toggle(d: "Designer", prop: Prop, key: str, t: Theme) -> Any:
+    """For lists and tables: switch between the item editor and plain text."""
+    if prop.kind not in ("list", "rows"):
+        return None
+    as_text = key in d.text_editors
+    return ui.icon_button("list" if as_text else "file-text", lambda: d.toggle_text_editor(key), size="xs",
+                          tooltip="Edit item by item" if as_text else "Edit as text", theme=t)
+
+
+def text_area(d: "Designer", key: str, value: Any, on_change: Callable[[Any], Any], t: Theme, height: float = 132) -> Any:
+    text = value if isinstance(value, str) else "\n".join(map(str, value or []))
+    return _core.container(
+        ui.editor(f"prop:{key}:{d.doc.revision}", text, on_change=on_change, gutter=False, wrap=True,
+                  active_line=False, font_size=12.5, height=height, theme=t),
+        width="fill", height=height, border_color=t.border_variant, border_width=1, radius=t.radius_sm, clip=True)
+
+
+def _items(value: Any) -> List[str]:
+    if isinstance(value, str):
+        return value.split("\n") if value else []
+    return [str(v) for v in (value or [])]
+
+
+def list_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
+    """One field per item, with buttons to move and remove it, and Add item at the end."""
+    items = _items(value)
+
+    def save(new: List[str]) -> None:
+        on_change("\n".join(new))
+
+    def edit(i: int, text: str) -> None:
+        save(items[:i] + [text.replace("\n", " ")] + items[i + 1:])
+
+    def move(i: int, step: int) -> None:
+        j = i + step
+        if 0 <= j < len(items):
+            new = list(items)
+            new[i], new[j] = new[j], new[i]
+            save(new)
+
+    rows: List[Any] = []
+    for i, item in enumerate(items):
+        rows.append(_core.row([
+            _core.container(ui.label(str(i + 1), size="xs", color="text_muted", mono=True, theme=t), width=18),
+            ui.input(item, lambda v, i=i: edit(i, v), size="sm", theme=t),
+            ui.icon_button("chevron-up", lambda i=i: move(i, -1), size="xs", tooltip="Move up", disabled=i == 0,
+                           theme=t),
+            ui.icon_button("chevron-down", lambda i=i: move(i, 1), size="xs", tooltip="Move down",
+                           disabled=i == len(items) - 1, theme=t),
+            ui.icon_button("x", lambda i=i: save(items[:i] + items[i + 1:]), size="xs", tooltip="Remove", theme=t),
+        ], spacing=4, align="center"))
+    rows.append(ui.button(tr("Add item"), lambda: save(items + [f"{tr('Item')} {len(items) + 1}"]), icon="plus",
+                          variant="ghost", size="sm", theme=t))
+    return _core.column(rows, spacing=3, width="fill")
+
+
+CELL_WIDTH = 96.0
+
+
+def parse_rows(value: Any) -> List[List[str]]:
+    """CSV text as rows of cells (the first row is the header), every row as long as the longest."""
+    lines = [line for line in str(value or "").splitlines() if line.strip()]
+    rows = [[cell.strip() for cell in line.split(",")] for line in lines]
+    width = max((len(r) for r in rows), default=0)
+    return [r + [""] * (width - len(r)) for r in rows]
+
+
+def format_rows(rows: List[List[str]]) -> str:
+    return "\n".join(", ".join(cell.replace(",", " ").strip() for cell in row) for row in rows)
+
+
+def rows_editor(value: Any, on_change: Callable[[str], Any], t: Theme) -> Any:
+    """A small spreadsheet: the header row, then one row of cells per data row, with add and remove buttons."""
+    rows = parse_rows(value) or [[tr("Column") + " 1"]]
+    columns = len(rows[0])
+
+    def save(new: List[List[str]]) -> None:
+        on_change(format_rows(new))
+
+    def edit(r: int, c: int, text: str) -> None:
+        new = [list(row) for row in rows]
+        new[r][c] = text
+        save(new)
+
+    def add_row() -> None:
+        save(rows + [[""] * columns])
+
+    def add_column() -> None:
+        save([row + [tr("Column") + f" {columns + 1}" if i == 0 else ""] for i, row in enumerate(rows)])
+
+    def remove_column(c: int) -> None:
+        if columns > 1:
+            save([row[:c] + row[c + 1:] for row in rows])
+
+    def cell(r: int, c: int) -> Any:
+        field = ui.input(rows[r][c], lambda v, r=r, c=c: edit(r, c, v), size="sm", width=CELL_WIDTH,
+                         placeholder=tr("Header") if r == 0 else "", theme=t)
+        return field if r else _core.container(field, bg=t.element, radius=t.radius_sm)
+
+    gutter = 22.0
+    lines: List[Any] = [_core.row([_core.space(width=gutter)] + [
+        _core.container(ui.icon_button("x", lambda c=c: remove_column(c), size="xs", tooltip="Remove column",
+                                       disabled=columns == 1, theme=t), width=CELL_WIDTH, align_x="end")
+        for c in range(columns)], spacing=4)]
+    for r in range(len(rows)):
+        start = (_core.container(ui.label(str(r), size="xs", color="text_muted", mono=True, theme=t), width=gutter)
+                 if r else _core.container(_icon("heading", size=12, color=t.icon_muted), width=gutter))
+        end = (ui.icon_button("x", lambda r=r: save(rows[:r] + rows[r + 1:]), size="xs", tooltip="Remove row", theme=t)
+               if r else _core.space(width=22))
+        lines.append(_core.row([start] + [cell(r, c) for c in range(columns)] + [end], spacing=4, align="center"))
+    grid = _core.scrollable(_core.column(lines, spacing=3), direction="horizontal", width="fill")
+    buttons = _core.row([ui.button(tr("Add row"), add_row, icon="plus", variant="ghost", size="sm", theme=t),
+                         ui.button(tr("Add column"), add_column, icon="plus", variant="ghost", size="sm", theme=t)],
+                        spacing=4)
+    return _core.column([grid, buttons], spacing=4, width="fill")
 
 
 # -- toolbox ---------------------------------------------------------------------
@@ -288,8 +414,10 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
                                                  ui.label(spec.description, size="xs", color="text_muted", theme=t)],
                                                 width="fill")],
                                   spacing=10, align="center"), padding=(10, 12), width="fill"),
-        prop_row("Name", ui.input(d.name_buffer, d.set_name_buffer, on_submit=d.commit_name, size="sm", mono=True,
-                                  theme=t), t, tip="Press Enter to rename (handlers are renamed too)"),
+        # inset like the rows inside the sections below, so every label and field lines up
+        _core.container(prop_row("Name", ui.input(d.name_buffer, d.set_name_buffer, on_submit=d.commit_name, size="sm",
+                                                  mono=True, theme=t), t,
+                                 tip="Press Enter to rename (handlers are renamed too)"), padding=(0, 11), width="fill"),
     ]
     groups: dict = {}
     for prop in spec.props:
@@ -298,8 +426,9 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
         rows.append(Group(group))
         for prop in props:
             value = c.props.get(prop.name, prop.default)
-            rows.append(prop_row(prop.title, editor_for(d, prop, value, d.prop_setter(c.name, prop), f"{c.name}.{prop.name}",
-                                                        t), t))
+            key = f"{c.name}.{prop.name}"
+            rows.append(prop_row(prop.title, editor_for(d, prop, value, d.prop_setter(c.name, prop), key, t), t,
+                                 tall=prop.kind in TALL_KINDS, end=_text_toggle(d, prop, key, t)))
     rows.extend(style_rows(d, c.name, c.style, t))
     rows.extend(_layout_rows(d, c, t))
     return rows
@@ -415,29 +544,44 @@ def events(d: "Designer", t: Theme) -> Any:
         return ui.empty_state("Select one control", "Events belong to a single control or to the form.",
                               icon="zap", theme=t)
     owner, wired = doc.owner(target)
-    rows: List[Any] = [_core.container(ui.label(f"Events of {owner}", weight="semibold", theme=t), padding=(10, 12))]
+    control = doc.form.get(target) if target else None
+    spec = _components.get(control.type) if control is not None else None
+    icon = spec.icon if spec is not None else "app-window"
+    kind = tr(spec.label) if spec is not None else tr("Form")
+    head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),
+                                      _core.column([ui.label(owner, weight="semibold", mono=True, theme=t),
+                                                    ui.label(kind, size="xs", color="text_muted", theme=t)],
+                                                   width="fill")], spacing=10, align="center"),
+                           padding=(10, 12), width="fill")
+    rows: List[Any] = []
     for event in doc.events_of(target):
         handler = wired.get(event)
         doc_text = _components.EVENT_DOCS.get(event, "").format(name=owner).replace("``", "")
         name = ui.label(handler or "—", size="sm", mono=True, color="text_accent" if handler else "text_muted",
                         wrap=False, theme=t)
         actions = _core.row([
-            ui.icon_button("code", lambda e=event: d.edit_event(target, e), size="sm",
-                           tooltip="Edit code" if handler else "Create handler", theme=t),
-            ui.icon_button("unlink", lambda e=event: d.unwire(target, e), size="sm", tooltip="Disconnect",
+            ui.icon_button("code", lambda e=event: d.edit_event(target, e), size="xs",
+                           tooltip=tr("Edit code") if handler else tr("Create handler"), theme=t),
+            ui.icon_button("unlink", lambda e=event: d.unwire(target, e), size="xs", tooltip=tr("Disconnect"),
                            theme=t) if handler else None,
-        ], spacing=0)
+        ], spacing=2)
         rows.append(ui.tooltip(_core.mouse_area(
             _core.container(_core.row([
-                _core.container(ui.label(event, size="sm", theme=t), width=LABEL_WIDTH),
+                _core.container(ui.label(event, size="sm", color="text_muted", wrap=False, theme=t), width=LABEL_WIDTH,
+                                clip=True),
                 _core.container(name, width="fill", clip=True),
                 actions,
-            ], spacing=8, align="center"), padding=(2, 12), width="fill", height=ROW_HEIGHT, align_y="center",
-                bg=alpha(t.accent, 0.08) if d.editing and d.editing[0] == handler else None),
+            ], spacing=10, align="center"), padding=(3, 10), width="fill", height=ROW_HEIGHT + 6, align_y="center",
+                radius=t.radius_sm, bg=alpha(t.accent, 0.08) if d.editing and d.editing[0] == handler else None),
             on_double_click=lambda e=event: d.edit_event(target, e)), doc_text, position="left", theme=t))
-    rows.append(_core.container(ui.label("Double-click an event, or a control on the form, to write its code.",
-                                         size="xs", color="text_muted", theme=t), padding=(12, 12)))
-    return _core.scrollable(_core.column(rows, width="fill"), height="fill")
+    rows.append(_core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
+                                         size="xs", color="text_muted", theme=t), padding=(6, 10)))
+    body = ui.accordion([("Events", tr("Events"), _core.column(rows, width="fill", spacing=2))], open={"Events"},
+                        icons={"Events": "zap"}, theme=t)
+    # the same insets as the property grid, so both docks line up
+    top = _core.container(head, padding=(0, 11, 6, 11), width="fill")
+    return _core.scrollable(_core.column([top, _core.container(body, padding=(0, 10, 16, 10), width="fill")],
+                                         width="fill"), height="fill")
 
 
 # -- style -----------------------------------------------------------------------
@@ -451,20 +595,44 @@ def _choice_editor(options: Any, value: str, on_change: Callable[[str], Any], t:
                      theme=t)
 
 
-def _picker_open(d: "Designer", name: Optional[str], key: str) -> bool:
-    return d.color_picker == (name, key)
+#: Size of the floating color picker card (for placing it inside the window).
+PICKER_WIDTH = 290.0
+PICKER_HEIGHT = 520.0
 
 
-def _picker_row(d: "Designer", name: Optional[str], key: str, value: Any, on_pick: Callable[[Any], Any], t: Theme,
-                *, fill: bool = False) -> Any:
-    """The color picker under a color or background row (with gradients and masks for a fill)."""
+def color_popover(d: "Designer", t: Theme) -> Any:
+    """The color picker of the Style row that is open, as a floating card (like the context menu)."""
     from .runtime import theme_for
-    from .styling import unpicked
+    from .styling import picked, shadow_parts, shadow_value, unpicked
 
-    ft = theme_for(d.doc.form)
-    picker = ui.ColorPicker(value=unpicked(value, ft, ft.accent), gradients=fill, masks=fill,
-                            on_change=lambda e: on_pick(e.value), key=f"picker:{name}:{key}")
-    return _core.container(picker, padding=(4, 10, 8, LABEL_WIDTH + 20), width="fill")
+    assert d.color_picker is not None
+    name, key = d.color_picker
+    form = d.doc.form
+    target = form if name is None else form.get(name)
+    if target is None:
+        return None
+    style = target.style
+    if key == "background":
+        value: Any = style.get("background")
+
+        def pick(v: Any) -> None:
+            d.set_style_value(name, "background", picked(v))
+    elif key == "shadow":
+        color, x, y, blur = shadow_parts(style.get("shadow"))
+        value = color
+
+        def pick(v: Any) -> None:
+            d.set_style_value(name, "shadow", shadow_value(picked(v) or "", x, y, blur))
+    else:
+        value = style.get(key)
+
+        def pick(v: Any) -> None:
+            d.set_style(name, key, picked(v))
+    fill = key == "background"
+    ft = theme_for(form)
+    # the picker is already a card: it floats as it is, and a click outside closes it
+    return ui.ColorPicker(value=unpicked(value, ft, ft.accent), gradients=fill, masks=fill,
+                          on_change=lambda e: pick(e.value), key=f"picker:{name}:{key}")
 
 
 def _swatch(d: "Designer", name: Optional[str], key: str, value: Any) -> Any:
@@ -487,10 +655,7 @@ def _color_editor(d: "Designer", name: Optional[str], key: str, value: Any, on_c
 
 def _color_rows(d: "Designer", name: Optional[str], key: str, title: str, value: Any, on_change: Callable[[Any], Any],
                 t: Theme, *, tip: Optional[str] = None, placeholder: str = "token or #rrggbbaa") -> List[Any]:
-    rows = [prop_row(title, _color_editor(d, name, key, value, on_change, t, placeholder), t, tip=tip)]
-    if _picker_open(d, name, key):
-        rows.append(_picker_row(d, name, key, value, on_change, t))
-    return rows
+    return [prop_row(title, _color_editor(d, name, key, value, on_change, t, placeholder), t, tip=tip)]
 
 
 def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -> List[Any]:
@@ -507,10 +672,7 @@ def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -
         ui.icon_button("x", lambda: d.set_style_value(name, "background", None), size="xs", tooltip="No background",
                        theme=t) if value else _core.space(width=0),
     ], spacing=6, align="center")
-    rows = [prop_row("Background", summary, t, tip="A color, a gradient or a masked fill: click to pick")]
-    if _picker_open(d, name, "background"):
-        rows.append(_picker_row(d, name, "background", value, pick, t, fill=True))
-    return rows
+    return [prop_row("Background", summary, t, tip="A color, a gradient or a masked fill: click to pick")]
 
 
 def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fields: Any = None) -> List[Any]:
@@ -539,8 +701,7 @@ def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fie
         elif field.kind == "choice":
             editor = _choice_editor(field.choices, styling.choice_of(field.key, value), on_change, t)
         elif field.kind in ("box", "radius"):
-            editor = ui.input(styling.numbers_text(value), on_change, placeholder="0" if field.kind == "radius" else
-                              "8 · 8 12 · 4 8 4 8", size="sm", mono=True, theme=t)
+            editor = ui.input(styling.numbers_text(value), on_change, placeholder="0", size="sm", mono=True, theme=t)
         elif field.kind == "shadow":
             color, x, y, blur = styling.shadow_parts(value)
 

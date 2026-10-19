@@ -26,7 +26,7 @@ from ..theme import Theme, current
 from .model import Control
 
 #: Property editors the designer knows how to show.
-PROP_KINDS = ("text", "multiline", "number", "bool", "color", "choice", "list", "icon")
+PROP_KINDS = ("text", "multiline", "number", "bool", "color", "choice", "list", "rows", "icon")
 
 #: Mouse events every visible control supports (in addition to its own).
 COMMON_EVENTS = ("mouse_enter", "mouse_leave", "right_click")
@@ -56,7 +56,8 @@ class Prop:
     """A property shown in the designer's property grid.
 
     ``kind`` picks the editor: text, multiline, number, bool, color, choice (from
-    ``choices``), list (one item per line) or icon (a Lucide icon name).
+    ``choices``), list (one item per line), rows (comma-separated rows, the first one the
+    header) or icon (a Lucide icon name).
     """
 
     name: str
@@ -706,8 +707,7 @@ for _component in (
                Prop("tint", "choice", "accent", choices=TINTS)),
               (), "A bar, line or donut chart."),
     Component("table", "Table", "table", "Display", _table, (360, 160),
-              (Prop("data", "multiline", "Name, Role\nAda, Engineer\nGrace, Admiral", group="Data",
-                    label="Rows (CSV)"),
+              (Prop("data", "rows", "Name, Role\nAda, Engineer\nGrace, Admiral", group="Data", label="Rows"),
                Prop("selected", "number", None, group="Data"), Prop("striped", "bool", True)),
               ("change",), "Rows and columns from comma-separated text; change gives the row index."),
     Component("timer", "Timer", "timer", "Components", _timer, (88, 24),
