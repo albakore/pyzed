@@ -339,3 +339,128 @@ class Counter(pz.Component):
     step: int = 1
     count: int = pz.state(0)
 ```
+
+## Idiomas
+
+### `t`
+
+```python
+t(key, *, language=None, default=None, **values)
+```
+
+El texto de `key` en el idioma actual, formateado con `values`. Si falta, prueba de `"es_AR"` a `"es"`, luego el idioma de respaldo y por último devuelve la clave. Ver [Idiomas](/pyzed/es/guides/i18n/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `key` | Clave con puntos, como `"menu.open"`. |
+| `language` | Busca en otro idioma. |
+| `default` | Lo que devuelve si falta la clave (por defecto, la clave). |
+| `values` | Valores para los `{nombre}`; `count=` además elige el plural. |
+
+```python
+i18n.add("es", {"greeting": "¡Hola, {name}!", "files": {"one": "{count} archivo", "other": "{count} archivos"}})
+i18n.set_language("es")
+pz.t("greeting", name="Kev"), pz.t("files", count=3)
+```
+
+### `add`
+
+```python
+add(language, catalog)
+```
+
+Añade o reemplaza textos de un idioma. Las tablas anidadas se vuelven claves con puntos; las tablas `{"one": ..., "other": ...}` son plurales.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `language` | Código de idioma, como `"es"` o `"pt_BR"`. |
+| `catalog` | Dict de textos. |
+
+### `load`
+
+```python
+load(folder)
+```
+
+Carga todos los `<idioma>.json` y `<idioma>.toml` de `folder`; devuelve los idiomas encontrados.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `folder` | Carpeta con los catálogos. |
+
+### `set_language`
+
+```python
+set_language(language)
+```
+
+Cambia el idioma. La app lo muestra en el siguiente render, así que llámalo desde un handler.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `language` | Código de idioma, como `"es"`. |
+
+### `language`
+
+```python
+language()
+```
+
+El idioma actual, normalizado (`"es_ar"`).
+
+### `languages`
+
+```python
+languages()
+```
+
+Los idiomas con catálogo.
+
+### `set_fallback`
+
+```python
+set_fallback(language)
+```
+
+El idioma que se usa cuando falta un texto (por defecto `"en"`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `language` | Código de idioma. |
+
+### `on_change`
+
+```python
+on_change(listener)
+```
+
+Llama a `listener(idioma)` tras cada cambio; devuelve una función que lo quita.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `listener` | Función que recibe el nuevo idioma. |
+
+### `system_language`
+
+```python
+system_language(default='en')
+```
+
+El idioma del sistema operativo (`LANG`, `LC_ALL` o el locale).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `default` | Lo que devuelve si el sistema no informa ninguno. |
+
+### `has`
+
+```python
+has(key, *, language=None)
+```
+
+Si `key` tiene texto en el idioma o sus respaldos.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `key` | Clave con puntos. |
+| `language` | Idioma a consultar (por defecto, el actual). |

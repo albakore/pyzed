@@ -415,6 +415,150 @@ A form row: title and description on the left, control on the right (like Zed's 
 | `description` | Help text. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
+## Dialogs
+
+### `dialog_layer`
+
+```python
+dialog_layer(base, dialog=None, *, on_dismiss=None, theme=None)
+```
+
+Shows a dialog centered over `base` with a dimmed backdrop. With `dialog=None` it returns `base` unchanged, so it can always wrap the view. See [Dialogs](/pyzed/guides/i18n/#dialogs).
+
+| Parameter | Description |
+| --- | --- |
+| `base` | The UI underneath. |
+| `dialog` | A dialog from the functions below, or `ui.modal`. |
+| `on_dismiss` | Sent when the backdrop is clicked. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.dialog_layer(self.main_view(), ui.confirm("Delete 3 files?", self.delete, self.cancel, danger=True)
+                if self.asking else None, on_dismiss=self.cancel)
+```
+
+### `alert`
+
+```python
+alert(message, on_close, *, title=None, kind=None, ok_label=None, width=400, theme=None)
+```
+
+A message with one button.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Text or widget. |
+| `on_close` | The button and the close icon. |
+| `title` | Title. |
+| `kind` | `"info"`, `"success"`, `"warning"` or `"error"` adds an icon. |
+| `ok_label` | Button text (default: OK, translated). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `confirm`
+
+```python
+confirm(
+    message,
+    on_confirm,
+    on_cancel,
+    *,
+    title=None,
+    confirm_label=None,
+    cancel_label=None,
+    danger=False,
+    kind=None,
+    width=420,
+    theme=None,
+)
+```
+
+Asks a yes/no question.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Text or widget. |
+| `on_confirm` | The confirm button. |
+| `on_cancel` | Cancel, the close icon. |
+| `title` | Title. |
+| `confirm_label` | Confirm button text. |
+| `cancel_label` | Cancel button text. |
+| `danger` | Paints the confirm button red and labels it Delete. |
+| `kind` | Adds an icon, as in `alert`. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `prompt`
+
+```python
+prompt(
+    title,
+    value,
+    on_input,
+    on_submit,
+    on_cancel,
+    *,
+    message=None,
+    placeholder='',
+    submit_label=None,
+    cancel_label=None,
+    id=None,
+    width=440,
+    theme=None,
+)
+```
+
+Asks for a line of text.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | Title. |
+| `value` | Current text. |
+| `on_input` | Receives each edit. |
+| `on_submit` | Enter or the submit button. |
+| `on_cancel` | Cancel, the close icon. |
+| `message` | Text above the field. |
+| `placeholder` | Hint text shown when empty. |
+| `submit_label` | Submit button text. |
+| `cancel_label` | Cancel button text. |
+| `id` | Field id (for `Command.focus`). |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `choice`
+
+```python
+choice(message, options, on_cancel, *, title=None, width=440, theme=None)
+```
+
+A message with your own buttons.
+
+| Parameter | Description |
+| --- | --- |
+| `message` | Any Python value, or a callable. |
+| `options` | `(label, on_press)` pairs; the last one is the main button. |
+| `on_cancel` | The close icon. |
+| `title` | Title. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `unsaved_changes`
+
+```python
+unsaved_changes(name, on_save, on_discard, on_cancel, *, width=440, theme=None)
+```
+
+"Save your changes to *name* before closing?" with Don't save, Cancel and Save.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | File or document name. |
+| `on_save` | Save. |
+| `on_discard` | Don't save. |
+| `on_cancel` | Cancel. |
+| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
 ## Controls
 
 ### `select`

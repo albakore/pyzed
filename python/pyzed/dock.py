@@ -25,11 +25,11 @@ from typing import Any, Dict, List, Optional
 
 from . import _core
 from .component import Component
+from .i18n import t as _t
 from .icons import icon as _icon
 from .theme import current as _current_theme
 
 SIDES = ("left", "right", "bottom", "top")
-SIDE_LABELS = {"left": "Dock Left", "right": "Dock Right", "bottom": "Dock Bottom", "top": "Dock Top"}
 SIDE_ICONS = {"left": "panel-left", "right": "panel-right", "bottom": "panel-bottom", "top": "panel-top"}
 DEFAULT_SIZES = {"left": 240, "right": 320, "bottom": 220, "top": 180}
 # The edge of each side's panel that carries the resize handle (the one facing the center).
@@ -167,7 +167,7 @@ class Dock(Component):
     def move_menu(self, panel: DockPanel, side: str, t: Any) -> Any:
         options = [
             _core.button(
-                _core.row([_icon(SIDE_ICONS[s], size=13, color=t.icon_muted), _core.text(SIDE_LABELS[s], size=12.5)],
+                _core.row([_icon(SIDE_ICONS[s], size=13, color=t.icon_muted), _core.text(_t(f"pyzed.dock.{s}"), size=12.5)],
                           spacing=6, align="center"),
                 on_press=lambda s=s: self.move(panel.id, s),
                 padding=(4, 8),
@@ -229,7 +229,7 @@ class Dock(Component):
             box = _core.container(
                 _core.column(
                     [_icon(SIDE_ICONS[side], size=18, color=t.accent if hovered else t.icon_muted),
-                     _core.text(SIDE_LABELS[side], size=12, color=t.text if hovered else t.text_muted)],
+                     _core.text(_t(f"pyzed.dock.{side}"), size=12, color=t.text if hovered else t.text_muted)],
                     spacing=4,
                     align="center",
                 ),

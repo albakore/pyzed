@@ -70,10 +70,11 @@ from .app import App, Window, run, screenshot
 from .component import Component, state
 from .dock import Dock, DockPanel
 from .layout import flex, flex_item
+from .i18n import t
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import component, designer, dock, layout, draw, events, hot_reload, theme, icons, ui
+from . import component, designer, dock, i18n, layout, draw, events, hot_reload, theme, icons, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -138,6 +139,7 @@ __all__ = [
     "hot_reload",
     "hover",
     "hspace",
+    "i18n",
     "icon",
     "icons",
     "image",
@@ -171,6 +173,7 @@ __all__ = [
     "stack",
     "state",
     "svg",
+    "t",
     "text",
     "text_input",
     "theme",

@@ -316,6 +316,27 @@ doc.save("hello.pzform")
 designer.run("hello.pzform")
 ```
 
+### Formularios nuevos y otras ventanas
+
+`designer.new_form(ruta)` crea un formulario vacío y su módulo de handlers (en un proyecto,
+`project.find().new_form("settings")` lo pone en `ui/`). Desde un handler, `form.open(...)`
+abre otro formulario en una ventana nueva; el nombre se busca junto al formulario actual y
+luego en la carpeta `ui/` del proyecto. Lo que pases como `data` llega como `form.data`:
+
+```python
+designer.new_form("ui/details.pzform", title="Detalles")
+
+def details_button_click(form, event):
+    return form.open("details", data=form.order_id.text)
+
+# details.py
+def form_load(form, event):
+    form.title = f"Pedido {form.data}"
+```
+
+`designer.open_window(form_o_ruta, data=...)` devuelve el mismo `Command` desde cualquier app,
+y también acepta un `designer.Form` construido en código (con `handlers={"nombre": función}`).
+
 ## Cómo está hecho
 
 ```mermaid

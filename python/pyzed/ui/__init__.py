@@ -50,6 +50,7 @@ from .display import (
     stat,
     table,
 )
+from .dialogs import alert, choice, confirm, dialog_layer, prompt, unsaved_changes
 from .editor import ansi, editor, language_token, terminal
 from .inputs import checkbox, field, input, progress, search_input, segmented, slider, switch
 from .lists import SEPARATOR, MenuItem, TreeNode, list_header, list_item, menu, tree
@@ -69,6 +70,12 @@ from .overlays import (
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 
 __all__ = [
+    "alert",
+    "choice",
+    "confirm",
+    "dialog_layer",
+    "prompt",
+    "unsaved_changes",
     "AccordionSection",
     "accordion",
     "ansi",
