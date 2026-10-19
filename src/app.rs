@@ -29,6 +29,8 @@ pub struct State {
     app: Py<PyAny>,
     main: Option<window::Id>,
     windows: HashMap<window::Id, Py<PyAny>>,
+    /// Where each window is on the screen (its outer top-left corner), when the platform says.
+    positions: HashMap<window::Id, Point>,
     /// The window whose message is being handled (commands without a window target it).
     current: Option<window::Id>,
     caches: Caches,
@@ -123,6 +125,8 @@ pub enum Message {
     CloseRequested(window::Id),
     WindowClosed(window::Id),
     WindowResized(window::Id, Size),
+    /// A window was opened (with its size) or moved to this screen position (`None` on Wayland).
+    WindowPlaced(window::Id, Option<Point>, Option<Size>),
     SystemTheme(iced::theme::Mode),
     Noop,
 }
@@ -886,11 +890,18 @@ fn deliver_event<'py>(
     target: &Bound<'py, PyAny>,
     handler: &Bound<'py, PyAny>,
     data: &crate::events::EventData,
+    origin: Option<Point>,
 ) -> PyResult<Bound<'py, PyAny>> {
     let py = target.py();
     let kwargs = PyDict::new(py);
     kwargs.set_item("x", data.x)?;
     kwargs.set_item("y", data.y)?;
+    kwargs.set_item("window_x", data.window_x)?;
+    kwargs.set_item("window_y", data.window_y)?;
+    if let Some(origin) = origin {
+        kwargs.set_item("screen_x", origin.x + data.window_x)?;
+        kwargs.set_item("screen_y", origin.y + data.window_y)?;
+    }
     kwargs.set_item("button", data.button)?;
     kwargs.set_item("dx", data.dx)?;
     kwargs.set_item("dy", data.dy)?;
@@ -1025,7 +1036,12 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::Slide(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Point(cb, x, y) => callback(&target, cb.0.bind(py), (x, y)),
             Message::Call(cb, value) => callback(&target, cb.0.bind(py), (value.0.bind(py),)),
-            Message::Event(cb, data) => deliver_event(&target, cb.0.bind(py), &data),
+            Message::Event(cb, data) => {
+                let origin = state
+                    .target()
+                    .and_then(|id| state.positions.get(&id).copied());
+                deliver_event(&target, cb.0.bind(py), &data, origin)
+            }
             Message::Key(combo) => {
                 let main = state.app.bind(py).clone();
                 match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1207,6 +1223,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 };
             }
             Message::WindowClosed(id) => {
+                state.positions.remove(&id);
                 if let Some(obj) = state.windows.remove(&id) {
                     let _ = obj.bind(py).setattr("_pyzed_window_open", false);
                 }
@@ -1222,6 +1239,17 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     Some(result) => result,
                     None => return Task::none(),
                 }
+            }
+            Message::WindowPlaced(id, at, size) => {
+                let obj = state.window(id).bind(py).clone();
+                if let Some(at) = at {
+                    state.positions.insert(id, at);
+                    let _ = obj.setattr("window_position", (at.x, at.y));
+                }
+                if let Some(size) = size {
+                    let _ = obj.setattr("window_size", (size.width, size.height));
+                }
+                return Task::none();
             }
             Message::SystemTheme(mode) => {
                 let dark = !matches!(mode, iced::theme::Mode::Light);
@@ -1543,6 +1571,24 @@ pub fn pressed_keys() -> Vec<String> {
     PRESSED.lock().unwrap().iter().cloned().collect()
 }
 
+/// Where a window is on the screen and how big: reported when it opens, and each time it moves
+/// (positions are not reported on Wayland).
+fn window_moved(
+    event: iced::Event,
+    _status: iced::event::Status,
+    window: window::Id,
+) -> Option<Message> {
+    match event {
+        iced::Event::Window(window::Event::Opened { position, size }) => {
+            Some(Message::WindowPlaced(window, position, Some(size)))
+        }
+        iced::Event::Window(window::Event::Moved(at)) => {
+            Some(Message::WindowPlaced(window, Some(at), None))
+        }
+        _ => None,
+    }
+}
+
 fn key_event(
     event: iced::Event,
     status: iced::event::Status,
@@ -1819,6 +1865,7 @@ fn subscription(state: &State) -> Subscription<Message> {
         window::close_requests().map(Message::CloseRequested),
         window::close_events().map(Message::WindowClosed),
         window::resize_events().map(|(id, size)| Message::WindowResized(id, size)),
+        iced::event::listen_with(window_moved),
         iced::system::theme_changes().map(Message::SystemTheme),
     ];
     Python::attach(|py| {
@@ -1871,6 +1918,7 @@ fn daemon(
                 app: app.clone_ref(py),
                 main: None,
                 windows: HashMap::new(),
+                positions: HashMap::new(),
                 current: None,
                 caches: Caches::default(),
                 themes: RefCell::new(HashMap::new()),

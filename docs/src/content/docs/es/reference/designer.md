@@ -808,14 +808,6 @@ Document.set_form(key, value)
 
 Fija el atributo `key` del formulario (un `name` nuevo se convierte antes en un identificador válido).
 
-#### `Document.reflow`
-
-```python
-Document.reflow(parent, size)
-```
-
-Tras cambiar el tamaño del formulario (`parent` `None`) o del contenedor `parent` desde `size`, mueve y dimensiona lo que hay dentro según sus anclajes (salvo con `follow_anchors` desactivado).
-
 #### `Document.rename`
 
 ```python

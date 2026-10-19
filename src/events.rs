@@ -71,6 +71,9 @@ pub struct EventData {
     /// Pointer position relative to the widget's top-left corner.
     pub x: f32,
     pub y: f32,
+    /// Pointer position in the window (it can be outside it while dragging).
+    pub window_x: f32,
+    pub window_y: f32,
     pub button: Option<&'static str>,
     /// Scroll amount (in lines) or drag movement since the previous drag event.
     pub dx: f32,
@@ -242,6 +245,8 @@ where
             kind,
             x: at.map_or(0.0, |p| p.x - bounds.x),
             y: at.map_or(0.0, |p| p.y - bounds.y),
+            window_x: at.map_or(0.0, |p| p.x),
+            window_y: at.map_or(0.0, |p| p.y),
             button: None,
             dx: 0.0,
             dy: 0.0,
@@ -338,10 +343,16 @@ where
                         ..base(EventKind::MouseUp, position, modifiers)
                     });
                 }
-                if *button == mouse::Button::Left && state.drag.take().is_some() {
+                let dragged = if *button == mouse::Button::Left {
+                    state.drag.take()
+                } else {
+                    None
+                };
+                if let Some(last) = dragged {
+                    // Released outside the window, the cursor is often already gone: use where it was last.
                     publish(EventData {
                         button: name,
-                        ..base(EventKind::DragEnd, position, modifiers)
+                        ..base(EventKind::DragEnd, position.or(Some(last)), modifiers)
                     });
                 } else if over && matches!(pressed, Some((b, _)) if b == *button) {
                     if *button != mouse::Button::Left {

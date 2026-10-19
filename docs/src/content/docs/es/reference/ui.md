@@ -1548,7 +1548,7 @@ Una pestaña para el archivo `path`: su nombre como etiqueta y el icono y color 
 ### `tab`
 
 ```python
-tab(item, *, active, on_select=None, on_close=None, height=32, theme=None)
+tab(item, *, active, on_select=None, on_close=None, height=32, dimmed=False, theme=None)
 ```
 
 Una sola pestaña. Normalmente se usa `tab_bar`.
@@ -1560,6 +1560,7 @@ Una sola pestaña. Normalmente se usa `tab_bar`.
 | `on_select` | Callable que recibe el elemento elegido. |
 | `on_close` | Mensaje o callable que se envía al pulsar la X. |
 | `height` | Alto. |
+| `dimmed` | Apaga la etiqueta (la pestaña que se arrastra). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `tab_bar`
@@ -1574,11 +1575,16 @@ tab_bar(
     start=(),
     end=(),
     height=32,
+    on_drag=None,
+    on_drop=None,
+    on_drag_over=None,
+    dragging=None,
+    drop_index=None,
     theme=None,
 )
 ```
 
-Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón.
+Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón. Las pestañas se pueden arrastrar para reordenarlas o sacarlas de la ventana: ver [Pestañas arrastrables](/pyzed/es/guides/windows/#pestañas-arrastrables-y-ventanas-desprendibles).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1589,6 +1595,11 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 | `start` | Widgets al inicio (izquierda). |
 | `end` | Widgets al final (derecha). |
 | `height` | Alto. |
+| `on_drag` | Se llama con el id de la pestaña cuando empieza a arrastrarse. |
+| `on_drop` | Se llama con el id de la pestaña y el `Event` al soltar la pestaña arrastrada: `event.window_x`/`window_y` (fuera de la ventana si se soltó fuera) y `event.screen`. |
+| `on_drag_over` | Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra. |
+| `dragging` | Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`). |
+| `drop_index` | Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`

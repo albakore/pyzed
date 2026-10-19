@@ -163,6 +163,7 @@ reenvía a `app.update()`.
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
+| `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
 
 | Método | Descripción |
 | --- | --- |
@@ -391,7 +392,7 @@ pz.container(tarjeta, padding=12).on(click=self.seleccionar, drag=lambda e: self
 class Event
 ```
 
-Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, y `value`/`source` en eventos propios.
+Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (el puntero en la ventana y en la pantalla), y `value`/`source` en eventos propios.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -410,6 +411,10 @@ Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget),
 | `logo` | Tecla Cmd/Windows pulsada. |
 | `value` | Valor de un evento propio. |
 | `source` | Componente que lo emitió. |
+| `window_x` | X del puntero en la ventana (fuera de ella si un arrastre se suelta fuera). |
+| `window_y` | Y del puntero en la ventana. |
+| `screen_x` | X del puntero en la pantalla, o `None` donde la plataforma no dice dónde están las ventanas (Wayland). `event.screen` da `(screen_x, screen_y)`. |
+| `screen_y` | Y del puntero en la pantalla, o `None`. |
 
 **Métodos y propiedades**
 
@@ -428,6 +433,14 @@ Event.size  # property
 ```
 
 `(width, height)`.
+
+#### `Event.screen`
+
+```python
+Event.screen  # property
+```
+
+`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de dónde están las ventanas.
 
 ### `Dock`
 

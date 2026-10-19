@@ -1548,7 +1548,7 @@ A tab for a file `path`: its name as label and the matching file icon and color.
 ### `tab`
 
 ```python
-tab(item, *, active, on_select=None, on_close=None, height=32, theme=None)
+tab(item, *, active, on_select=None, on_close=None, height=32, dimmed=False, theme=None)
 ```
 
 A single tab. You normally use `tab_bar`.
@@ -1560,6 +1560,7 @@ A single tab. You normally use `tab_bar`.
 | `on_select` | Callable that receives the chosen item. |
 | `on_close` | Message or callable sent when the X is pressed. |
 | `height` | Height. |
+| `dimmed` | Mutes the label (the tab being dragged). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `tab_bar`
@@ -1574,11 +1575,16 @@ tab_bar(
     start=(),
     end=(),
     height=32,
+    on_drag=None,
+    on_drop=None,
+    on_drag_over=None,
+    dragging=None,
+    drop_index=None,
     theme=None,
 )
 ```
 
-A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover.
+A row of tabs with optional controls at the start and end (navigation, split, +). The close button appears on the active tab and on hover. Tabs can be dragged to reorder them or out of the window: see [Draggable tabs](/pyzed/guides/windows/#draggable-tabs-and-detachable-windows).
 
 | Parameter | Description |
 | --- | --- |
@@ -1589,6 +1595,11 @@ A row of tabs with optional controls at the start and end (navigation, split, +)
 | `start` | Widgets at the start (left). |
 | `end` | Widgets at the end (right). |
 | `height` | Height. |
+| `on_drag` | Called with the tab id when a tab starts being dragged. |
+| `on_drop` | Called with the tab id and the `Event` when the dragged tab is released: `event.window_x`/`window_y` (outside the window if it was dropped outside) and `event.screen`. |
+| `on_drag_over` | While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar. |
+| `dragging` | Id of the tab being dragged (dims it and turns on `on_drag_over`). |
+| `drop_index` | Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`

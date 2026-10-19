@@ -627,11 +627,17 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                 },
                 "pyzed.ui.tab": {
                     "desc": "Una sola pestaña. Normalmente se usa `tab_bar`.",
-                    "params": {"item": "El `Tab`.", "active": "Si es la activa.", "height": "Alto."},
+                    "params": {"item": "El `Tab`.", "active": "Si es la activa.", "height": "Alto.",
+                               "dimmed": "Apaga la etiqueta (la pestaña que se arrastra)."},
                 },
                 "pyzed.ui.tab_bar": {
-                    "desc": "Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón.",
-                    "params": {"tabs": "Lista de `Tab`.", "active": "Id de la pestaña activa.", "height": "Alto."},
+                    "desc": "Una fila de pestañas con controles opcionales al principio y al final (navegación, dividir, +). El botón de cerrar aparece en la activa y al pasar el ratón. Las pestañas se pueden arrastrar para reordenarlas o sacarlas de la ventana: ver [Pestañas arrastrables](/pyzed/es/guides/windows/#pestañas-arrastrables-y-ventanas-desprendibles).",
+                    "params": {"tabs": "Lista de `Tab`.", "active": "Id de la pestaña activa.", "height": "Alto.",
+                               "on_drag": "Se llama con el id de la pestaña cuando empieza a arrastrarse.",
+                               "on_drop": "Se llama con el id de la pestaña y el `Event` al soltar la pestaña arrastrada: `event.window_x`/`window_y` (fuera de la ventana si se soltó fuera) y `event.screen`.",
+                               "on_drag_over": "Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra.",
+                               "dragging": "Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`).",
+                               "drop_index": "Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última)."},
                 },
                 "pyzed.ui.breadcrumbs": {
                     "desc": "`src › main.rs › fn main`. Las partes pueden ser textos o tuplas `(icono, texto)`.",
@@ -988,6 +994,7 @@ reenvía a `app.update()`.
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
+| `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
 
 | Método | Descripción |
 | --- | --- |
@@ -1517,7 +1524,7 @@ _section("app", "Eventos y componentes", {
         """,
     },
     "pyzed.Event": {
-        "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, y `value`/`source` en eventos propios.",
+        "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (el puntero en la ventana y en la pantalla), y `value`/`source` en eventos propios.",
     },
     "pyzed.Dock": {
         "desc": "Un espacio de trabajo como el de Zed: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).",
@@ -1587,6 +1594,11 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "width": "Ancho del widget.", "height": "Alto del widget.", "button": '`"left"`, `"right"`, `"middle"`...',
     "key": 'Combinación de teclas, como `"ctrl-s"`.', "shift": "Shift pulsado.", "ctrl": "Control pulsado.", "alt": "Alt pulsado.",
     "logo": "Tecla Cmd/Windows pulsada.", "value": "Valor de un evento propio.", "source": "Componente que lo emitió.",
+    "window_x": "X del puntero en la ventana (fuera de ella si un arrastre se suelta fuera).",
+    "window_y": "Y del puntero en la ventana.",
+    "screen_x": "X del puntero en la pantalla, o `None` donde la plataforma no dice dónde están las ventanas (Wayland). `event.screen` da `(screen_x, screen_y)`.",
+    "screen_y": "Y del puntero en la pantalla, o `None`.",
+    "screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de la posición de las ventanas.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
     "args": "Props, en el orden en que se declaran.",
@@ -2198,6 +2210,7 @@ MEMBERS = {
     "pyzed.Window.resolved_style": "El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.",
     "pyzed.Event.position": "`(x, y)`.",
     "pyzed.Event.size": "`(width, height)`.",
+    "pyzed.Event.screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de dónde están las ventanas.",
     # Dock
     "pyzed.Dock.side_of": "Devuelve el lado en que está acoplado un panel: su posición guardada si es válida, si no `panel.side`.",
     "pyzed.Dock.groups": "Devuelve los paneles agrupados por lado (están todos los lados, quizá con una lista vacía).",
