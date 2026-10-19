@@ -365,3 +365,29 @@ def test_preferences_roundtrip():
     assert prefs.show_grid is False and prefs.theme == "Ayu Dark" and prefs.language == "es"
     assert Designer(language_servers=False).show_grid is False
     assert preferences.DesignerSettings.from_dict({"grid": 999, "docks": {"x": "nowhere"}}).grid == 64
+
+
+def test_language_switch_translates_the_designer(tmp_path):
+    from pyzed import i18n
+
+    app = Designer(tmp_path / "a.pzform", language_servers=False)
+    try:
+        app.set_language("es")
+        assert commands.BY_ID["save_as"].label == "Guardar como…" and docks.PANELS["properties"].title == "Propiedades"
+        assert app.title_menu("file", app.theme_obj) is not None and app.dialog_view(app.theme_obj) is None
+        app.open_settings()
+        assert app.dialog_view(app.theme_obj) is not None
+        assert preferences.load().language == "es"
+    finally:
+        i18n.set_language("en")
+    assert commands.BY_ID["save_as"].label == "Save as…"
+
+
+def test_unsaved_changes_save_then_continue(tmp_path):
+    app = Designer(tmp_path / "a.pzform", language_servers=False)
+    app.doc.dirty = True
+    opened = []
+    app._guard(lambda: opened.append(1))
+    assert app.dialog == "confirm" and app.dialog_view(app.theme_obj) is not None
+    app.confirm_save()
+    assert opened == [1] and (tmp_path / "a.pzform").exists()

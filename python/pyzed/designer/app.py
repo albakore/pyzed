@@ -27,6 +27,8 @@ from . import commands as _commands
 from . import layout as _layout
 from . import new as _new
 from .console import ConsoleController
+from . import locale as _locale
+from .locale import tr
 from .code_panel import CodeAssist
 from .components import Prop
 from .document import Document
@@ -105,6 +107,8 @@ class Designer(App):
         self.snap = self.prefs.snap
         self.smart_guides = self.prefs.smart_guides
         self.show_hidden = self.prefs.show_hidden
+        if self.prefs.language:
+            _locale.apply(self.prefs.language)
         if theme is None and self.prefs.theme and self.prefs.theme in themes.names():
             self.theme = themes.get(self.prefs.theme)
         self.layout = docks.DockLayout(self.prefs.docks, self.prefs.sizes,
@@ -661,7 +665,7 @@ class Designer(App):
     def set_language(self, code: str) -> None:
         self.prefs.language = code
         preferences.save(self.prefs)
-        self.notify("Language saved", "The designer's texts follow it where translations exist.", seconds=3)
+        _locale.apply(code)
 
     def open_settings(self) -> None:
         self.app_menu = None
@@ -946,6 +950,18 @@ class Designer(App):
         self.dialog = None
         self.pending = None
 
+    def confirm_save(self) -> Any:
+        """"Save" in the unsaved-changes dialog: saves, then goes on with what was asked (a new file is saved as first)."""
+        if self.doc.path is None:
+            self.pending = None
+            return self.save()
+        self.save()
+        if self.doc.dirty:  # the code has an error: stay on this form
+            self.dialog = None
+            self.pending = None
+            return None
+        return self.confirm_discard()
+
     def confirm_discard(self) -> Any:
         action, self.pending = self.pending, None
         self.dialog = None
@@ -1133,14 +1149,14 @@ class Designer(App):
                                          checked=a.checked(self) if a.checked else None,
                                          disabled=not a.enabled(self)))
             if group == "File" and self.prefs.recent:
-                items += [ui.SEPARATOR, "Recent"]
+                items += [ui.SEPARATOR, tr("Recent")]
                 for path in self.prefs.recent[:5]:
                     items.append(ui.MenuItem(Path(path).name, lambda path=path: self._open_recent(path),
                                              icon="layout-template"))
             if group == "View":
-                items += [ui.SEPARATOR, "Panels"]
+                items += [ui.SEPARATOR, tr("Panels")]
                 for pid, panel in docks.PANELS.items():
-                    items.append(ui.MenuItem(f"{panel.title}  ·  {self.layout.docks[pid]}",
+                    items.append(ui.MenuItem(f"{panel.title}  ·  {tr(self.layout.docks[pid].capitalize())}",
                                              lambda pid=pid: self.run_panel(pid), icon=panel.icon,
                                              disabled=pid == "code" and self.editing is None))
         return ui.menu(items, width=260, theme=t)
@@ -1157,7 +1173,7 @@ class Designer(App):
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
-                           tooltip=None if self.app_menu else "Menu", theme=t),
+                           tooltip=None if self.app_menu else tr("Menu"), theme=t),
             _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
             ui.title_button(self.projects.project.name, lambda: self.show_panel("project"), icon="package")
             if self.projects.project else ui.title_button("Pyzed Designer", lambda: self.show_panel("project")),
@@ -1167,16 +1183,16 @@ class Designer(App):
             ui.badge("Component", tint="accent", icon="component", theme=t) if scene_panel.is_scene(self) else None,
         ]
         end = [
-            ui.button("Run", self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
                       theme=t),
-            ui.icon_button("square", self.stop_form, size="sm", tooltip="Stop (Shift+F5)",
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
                            disabled=self.console.running is None, theme=t),
             _core.space(width=8),
             ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
-                           tooltip=None if self.app_menu else "View", theme=t),
+                           tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
-                           tooltip=None if self.app_menu else "Help", theme=t),
-            ui.icon_button("settings", self.open_settings, tooltip="Settings (Ctrl+,)", theme=t),
+                           tooltip=None if self.app_menu else tr("Help"), theme=t),
+            ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
         ]
         return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
 
@@ -1192,6 +1208,7 @@ class Designer(App):
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
                  keys: Optional[str] = None) -> Any:
+            tip = tr(tip)
             label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
             return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
 
@@ -1270,11 +1287,8 @@ class Designer(App):
         if self.dialog and self.dialog.startswith("project:"):
             return project_panel.dialog(self, t)
         if self.dialog == "confirm":
-            return ui.modal(
-                ui.label("The current form has unsaved changes. Discard them?", theme=t),
-                title="Unsaved changes", on_close=self.close_dialog, width=420, theme=t,
-                footer=[ui.button("Cancel", self.close_dialog, variant="ghost", theme=t),
-                        ui.button("Discard", self.confirm_discard, variant="solid", tint="error", theme=t)])
+            return ui.unsaved_changes(self.doc.display_name, self.confirm_save, self.confirm_discard,
+                                      self.close_dialog, theme=t)
         if self.dialog == "save_as":
             return ui.modal(
                 ui.field("File", ui.input(self.dialog_path, self.set_dialog_path,

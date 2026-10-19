@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from ..theme import Theme
+from .locale import tr
 from .preferences import DOCKS
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -31,20 +32,25 @@ class Panel:
     """A panel that can be docked: ``view(designer, theme)`` draws its body."""
 
     id: str
-    title: str
+    #: The English title; ``title`` is the one in the designer's language.
+    name: str
     icon: str
     dock: str
     view: Callable[["Designer", Theme], Any]
     #: ``False`` while the panel has nothing to show (the code panel with no handler open).
     available: Callable[["Designer"], bool] = lambda d: True
 
+    @property
+    def title(self) -> str:
+        return tr(self.name)
+
 
 def _design(d: "Designer", t: Theme) -> Any:
     from . import panels
 
-    top = _core.column([ui.panel_header("Toolbox", icon="component", theme=t), panels.toolbox(d, t)],
+    top = _core.column([ui.panel_header(tr("Toolbox"), icon="component", theme=t), panels.toolbox(d, t)],
                        width="fill", height="fill")
-    bottom = _core.column([ui.panel_header("Outline", icon="layers", theme=t), panels.outline(d, t)],
+    bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), panels.outline(d, t)],
                           width="fill", height="fill")
     return ui.split(top, bottom, vertical=True, ratio=d.left_ratio, on_resize=d.resize_left, min_size=120, theme=t)
 
@@ -144,11 +150,11 @@ class DockLayout:
 
 def _dock_menu(d: "Designer", dock: str, panel: Panel, t: Theme) -> Any:
     layout = d.layout
-    items: List[Any] = [f"Move {panel.title} to"]
+    items: List[Any] = [tr("Move {panel} to", panel=panel.title)]
     for target in DOCKS:
-        items.append(ui.MenuItem(target.capitalize(), lambda target=target: d.move_panel(panel.id, target),
+        items.append(ui.MenuItem(tr(target.capitalize()), lambda target=target: d.move_panel(panel.id, target),
                                  icon=DOCK_ICONS[target], checked=layout.docks[panel.id] == target))
-    items += [ui.SEPARATOR, ui.MenuItem("Hide dock", lambda: d.toggle_dock(dock), icon="eye-off")]
+    items += [ui.SEPARATOR, ui.MenuItem(tr("Hide dock"), lambda: d.toggle_dock(dock), icon="eye-off")]
     return ui.menu(items, width=200, theme=t)
 
 
@@ -160,8 +166,8 @@ def dock_view(d: "Designer", dock: str, t: Theme) -> Optional[Any]:
     panels = layout.panels_in(dock, d)
     tabs = [ui.Tab(p.id, p.title, icon=p.icon) for p in panels]
     end = [ui.icon_button(DOCK_ICONS[dock], lambda: d.open_dock_menu(dock), size="sm", selected=layout.menu == dock,
-                          tooltip="Move this panel", theme=t),
-           ui.icon_button("x", lambda: d.toggle_dock(dock), size="sm", tooltip="Hide dock", theme=t)]
+                          tooltip=tr("Move this panel"), theme=t),
+           ui.icon_button("x", lambda: d.toggle_dock(dock), size="sm", tooltip=tr("Hide dock"), theme=t)]
     bar = ui.tab_bar(tabs, panel.id, on_select=d.show_panel, end=end, height=TAB_HEIGHT, theme=t)
     body = _core.column([bar, panel.view(d, t)], width="fill", height="fill")
     if layout.menu == dock:

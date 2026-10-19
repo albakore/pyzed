@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from .locale import tr
+
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
@@ -24,7 +26,8 @@ def _always(_d: "Designer") -> bool:
 @dataclass(frozen=True)
 class Action:
     id: str
-    label: str
+    #: The English label; ``label`` is the one in the designer's language.
+    text: str
     group: str
     run: Callable[["Designer"], Any]
     icon: Optional[str] = None
@@ -36,6 +39,10 @@ class Action:
     global_keys: bool = False
     #: Hidden from menus (still in the palette and the shortcut list).
     menu: bool = True
+
+    @property
+    def label(self) -> str:
+        return tr(self.text)
 
 
 def _has_selection(d: "Designer") -> bool:
@@ -130,6 +137,6 @@ def groups() -> List[Tuple[str, List[Action]]]:
 
 
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:
-    out = [(g, [(a.label.rstrip("…"), a.keys) for a in items if a.keys]) for g, items in groups()]
-    out += [(title, list(items)) for title, items in EXTRA_SHORTCUTS]
+    out = [(tr(g), [(a.label.rstrip("…"), a.keys) for a in items if a.keys]) for g, items in groups()]
+    out += [(tr(title), [(tr(label), keys) for label, keys in items]) for title, items in EXTRA_SHORTCUTS]
     return [(g, items) for g, items in out if items]

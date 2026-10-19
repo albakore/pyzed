@@ -13,6 +13,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import components as _components
 from .components import Prop
+from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -22,7 +23,7 @@ ROW_HEIGHT = 28.0
 #: Icons of the property groups in the accordion.
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
-                 "Align": "align-start-vertical", "Spacing and size": "ruler"}
+                 "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -44,7 +45,7 @@ class Group:
 
 
 def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None) -> Any:
-    label = ui.label(title, size="sm", color="text_muted", wrap=False, theme=t)
+    label = ui.label(tr(title), size="sm", color="text_muted", wrap=False, theme=t)
     if tip:
         label = ui.tooltip(label, tip, theme=t)
     return _core.container(
@@ -100,21 +101,22 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
 def toolbox(d: "Designer", t: Theme) -> Any:
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
-        ui.list_item("Pointer", d.pick_tool(None), icon="mouse-pointer-2", selected=d.tool is None, height=26,
+        ui.list_item(tr("Pointer"), d.pick_tool(None), icon="mouse-pointer-2", selected=d.tool is None, height=26,
                      theme=t),
     ]
     for category, items in _components.categories().items():
-        shown = [c for c in items if not query or query in c.label.lower() or query in c.type]
+        shown = [c for c in items if not query or query in c.label.lower() or query in tr(c.label).lower()
+                 or query in c.type]
         if not shown:
             continue
-        rows.append(section(category, t))
+        rows.append(section(tr(category), t))
         for spec in shown:
             rows.append(ui.tooltip(
-                ui.list_item(spec.label, d.pick_tool(spec.type), icon=spec.icon, selected=d.tool == spec.type,
+                ui.list_item(tr(spec.label), d.pick_tool(spec.type), icon=spec.icon, selected=d.tool == spec.type,
                              height=26, theme=t),
-                spec.description or spec.label, position="right", theme=t))
+                spec.description or tr(spec.label), position="right", theme=t))
     return _core.column([
-        _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder="Search components…",
+        _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
                                         size="sm", theme=t), padding=8),
         _core.scrollable(_core.column(rows, width="fill", padding=(0, 0, 8, 0)), height="fill"),
     ], width="fill", height="fill")
@@ -187,9 +189,9 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
     form = d.doc.form
     parent = form.get(c.parent) if c.parent else None
     kind = _layout.kind(parent) if parent is not None else None
-    rows: List[Any] = [Group("Layout")]
+    rows: List[Any] = [Group("Position")]
     if parent is not None:
-        rows.append(prop_row("Inside", _core.row([
+        rows.append(prop_row(tr("Inside"), _core.row([
             ui.button(parent.name, lambda: d.select_from_outline(parent.name), icon=_components.get(parent.type).icon,
                       variant="ghost", size="sm", theme=t),
             _core.space(width="fill"),
@@ -198,12 +200,12 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
         ], align="center"), t, tip="The container holding this control"))
     if kind in ("flex", "grid"):
         if kind == "flex":
-            rows.append(prop_row("Grow", ui.number_field(float(c.layout.get("grow", 0)),
+            rows.append(prop_row(tr("Grow"), ui.number_field(float(c.layout.get("grow", 0)),
                                                          lambda v: d.set_layout(c.name, "grow", v), min=0, step=1,
                                                          width="fill", theme=t), t,
                                  tip="Share of the free space this control takes (0 keeps its size)"))
         else:
-            rows.append(prop_row("Column span", ui.number_field(float(c.layout.get("span", 1)),
+            rows.append(prop_row(tr("Column span"), ui.number_field(float(c.layout.get("span", 1)),
                                                                 lambda v: d.set_layout(c.name, "span", int(v)), min=1,
                                                                 max=24, step=1, width="fill", theme=t), t))
         rows += [prop_row("Width", num("width"), t), prop_row("Height", num("height"), t),
@@ -215,7 +217,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
             prop_row("Y", num("y"), t),
             prop_row("Width", num("width"), t),
             prop_row("Height", num("height"), t),
-            prop_row("Anchor", _anchor_editor(d, c.name, c.anchor, t), t,
+            prop_row(tr("Anchor"), _anchor_editor(d, c.name, c.anchor, t), t,
                      tip="Edges that follow the window (or the container) when it is resized"),
         ]
     return rows + [
@@ -236,7 +238,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     spec = _components.get(c.type)
     rows: List[Any] = [
         _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
-                                   _core.column([ui.label(spec.label, weight="semibold", theme=t),
+                                   _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
                                                  ui.label(spec.description, size="xs", color="text_muted", theme=t)],
                                                 width="fill")],
                                   spacing=10, align="center"), padding=(10, 12), width="fill"),
@@ -341,7 +343,7 @@ def properties(d: "Designer", t: Theme) -> Any:
             groups[-1][1].append(row)
         else:
             head.append(row)
-    sections = [(title, title, _core.column(items, width="fill", spacing=2)) for title, items in groups]
+    sections = [(title, tr(title), _core.column(items, width="fill", spacing=2)) for title, items in groups]
     body = ui.accordion(sections, open={title for title, _ in groups} - d.collapsed_sections,
                         on_toggle=d.toggle_section, icons=SECTION_ICONS, theme=t)
     top = _core.container(_core.column(head, width="fill", spacing=2), padding=(0, 11, 6, 11), width="fill")
