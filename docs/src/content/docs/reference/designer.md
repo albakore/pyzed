@@ -966,12 +966,12 @@ The class of the designed component saved at `scene`, to inherit from it.
 A relative path is relative to the module calling it, so a component can extend
 another one next to it:
 
-``python
+```python
 Rating = import_component("rating.pzcomp")
 
 class BigRating(Rating, scene="big_rating.pzcomp"):
     ...
-``
+```
 
 The class is imported once and reused until its code changes.
 

@@ -57,7 +57,11 @@ def signature(name: str, obj) -> str:
             if f.default is not dataclasses.MISSING:
                 fields.append(f"{f.name}={f.default!r}")
             elif f.default_factory is not dataclasses.MISSING:  # type: ignore[misc]
-                fields.append(f"{f.name}={f.default_factory()!r}")
+                factory = f.default_factory  # type: ignore[misc]
+                if factory in (list, dict, set, tuple):
+                    fields.append(f"{f.name}={factory()!r}")
+                else:
+                    fields.append(f"{f.name}={factory.__module__}.{factory.__qualname__}()")
             else:
                 fields.append(f.name)
         return f"@dataclass\nclass {short}({', '.join(fields)})"
@@ -119,7 +123,7 @@ def rst_to_md(text: str) -> str:
             continue
         out.append(line)
         i += 1
-    return re.sub(r"``([^`]+)``", r"`\1`", "\n".join(out)).strip()
+    return re.sub(r"(?<!`)``([^`\n]+)``(?!`)", r"`\1`", "\n".join(out)).strip()
 
 
 def full_doc(obj) -> str:
