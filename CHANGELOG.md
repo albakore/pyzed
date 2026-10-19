@@ -16,6 +16,40 @@ stable version.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-19
+
+### Highlights
+
+- **Large data**: virtual lists and tables that only build the rows in view (200 000 rows in 0.2 ms per view) and `@pz.memo` to reuse view subtrees.
+- **Real effects**: animate rotation, size, padding and font size, with real blur, backdrop blur and bloom on the GPU and in software.
+- **A better Pyzed Design**: copy and paste between forms, data binding and validation, and a theme and language preview.
+- **Accessibility**: Tab focus between fields, the system's reduce motion setting and a screen reader guide.
+- **Input methods**: Chinese, Japanese and Korean input in the code editor.
+- **Safer by default**: private agent threads, hidden secret files, a hardened sign-in and checked updates.
+- **More platforms**: wheels for musllinux, tested on Python 3.10 to 3.14 and on ARM Linux, Pyzed Design builds for Linux ARM and Intel Macs, and build attestations.
+
+### Breaking Changes
+
+- ⬆️ Pyzed now requires Python 3.10 or newer. PR [#52](https://github.com/albakore/pyzed/pull/52) by [@albakore](https://github.com/albakore).
+
+### Features
+
+- ✨ Add virtual lists and tables and memoized view subtrees for large data. PR [#55](https://github.com/albakore/pyzed/pull/55) by [@albakore](https://github.com/albakore).
+- ✨ Add copy and paste between forms, data binding and validation, and theme/language preview to Pyzed Design. PR [#56](https://github.com/albakore/pyzed/pull/56) by [@albakore](https://github.com/albakore).
+- ✨ Support input methods (IME) for Chinese, Japanese and Korean in the code editor. PR [#57](https://github.com/albakore/pyzed/pull/57) by [@albakore](https://github.com/albakore).
+- ✨ Animate rotation, size, padding and font size, with real blur, backdrop blur and bloom. PR [#58](https://github.com/albakore/pyzed/pull/58) by [@albakore](https://github.com/albakore).
+- ♿ Add Tab focus between fields, follow the system's reduce motion setting and document screen reader support. PR [#54](https://github.com/albakore/pyzed/pull/54) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🔒️ Keep agent threads private (`0600`, with a *Keep conversations* switch), hide secret files such as `.env` and keys from agents, ignore forged sign-in callbacks and refuse updates without a checksum. PR [#52](https://github.com/albakore/pyzed/pull/52) by [@albakore](https://github.com/albakore).
+- 🐛 Read component props on Python 3.14, where annotations are lazy. PR [#52](https://github.com/albakore/pyzed/pull/52) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 Test on Python 3.10, 3.12 and 3.14 and on ARM Linux; build musllinux wheels, Pyzed Design for Linux ARM and Intel Macs, optional signing and notarization, and build provenance attestations. PR [#52](https://github.com/albakore/pyzed/pull/52) by [@albakore](https://github.com/albakore).
+- ✅ Add visual regression tests and tests for workspace, navigation, overlays and agent threads. PR [#53](https://github.com/albakore/pyzed/pull/53) by [@albakore](https://github.com/albakore).
+
 ## [1.0.1] - 2026-10-19
 
 ### Fixes
