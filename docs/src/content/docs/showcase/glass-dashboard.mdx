@@ -1,0 +1,48 @@
+---
+title: "Glass control center"
+description: "A professional frosted-glass dashboard in Python: music player, smart lights, climate and schedule cards with real backdrop blur over moving color."
+sidebar:
+  order: 4
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../examples/showcase/glass_dashboard.py?raw';
+
+A smart-home control center in the frosted-glass style of modern operating systems. The colored blobs behind the cards are a shader, so the blur you see through each card moves with them.
+
+![Glass control center](../../../assets/showcase/glass-dashboard.png)
+
+```sh
+python examples/showcase/glass_dashboard.py
+```
+
+## How it is made
+
+### Real backdrop blur
+
+`glass` blurs what is behind the card, not a fake gradient.
+
+```python
+GLASS = {"tint": "#ffffff", "strength": 0.10, "blur": 28}
+card.style(glass=GLASS, radius=22, padding=20)
+```
+
+### Living details
+
+The album cover spins while music plays; lit bulbs bloom.
+
+```python
+cover.animate("spin", duration=12000)
+```
+
+### Real controls
+
+Sliders and switches update the state like in any Pyzed app.
+
+```python
+pz.slider(0, 100, self.volume, on_change=self.set_volume)
+```
+
+## Full code
+
+<Code code={source} lang="py" title="examples/showcase/glass_dashboard.py" />

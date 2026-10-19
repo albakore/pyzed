@@ -45,7 +45,7 @@ static REDUCED_MOTION: AtomicBool = AtomicBool::new(false);
 /// Off-screen screenshots draw the resting state, so they don't depend on timing.
 static SCREENSHOT: AtomicBool = AtomicBool::new(false);
 
-fn settled() -> bool {
+pub(crate) fn settled() -> bool {
     REDUCED_MOTION.load(Ordering::Relaxed) || SCREENSHOT.load(Ordering::Relaxed)
 }
 

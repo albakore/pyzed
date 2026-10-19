@@ -397,6 +397,12 @@
    "path": "docs/src/content/docs/guides/projects.md"
   },
   {
+   "slug": "guides/shaders",
+   "title": "Shaders",
+   "description": "Paint widgets on the GPU with your own WGSL shaders - backgrounds, effects and game visuals - with uniforms from Python and the mouse position.",
+   "path": "docs/src/content/docs/guides/shaders.md"
+  },
+  {
    "slug": "guides/stability",
    "title": "Stability and known limitations",
    "description": "What Pyzed 1.x promises about its API, how features are deprecated, and what it does not do yet.",
@@ -1091,6 +1097,42 @@
    "title": "Core widgets",
    "description": "Pyzed's native widgets: layout, text, controls, editor, svg and icons.",
    "path": "docs/src/content/docs/reference/widgets.md"
+  },
+  {
+   "slug": "showcase/glass-dashboard",
+   "title": "Glass control center",
+   "description": "A professional frosted-glass dashboard in Python: music player, smart lights, climate and schedule cards with real backdrop blur over moving color.",
+   "path": "docs/src/content/docs/showcase/glass-dashboard.mdx"
+  },
+  {
+   "slug": "showcase/hud",
+   "title": "Game HUD",
+   "description": "A game heads-up display in Python: health and mana bars, a radar minimap drawn by a shader, an ability bar with cooldowns and glass panels.",
+   "path": "docs/src/content/docs/showcase/hud.mdx"
+  },
+  {
+   "slug": "showcase/index",
+   "title": "Showcase",
+   "description": "Demos of what Pyzed can draw: game HUDs, menus and inventories, frosted-glass dashboards, bloom and real GPU shaders, all in Python.",
+   "path": "docs/src/content/docs/showcase/index.md"
+  },
+  {
+   "slug": "showcase/inventory",
+   "title": "RPG inventory",
+   "description": "An RPG inventory screen in Python where item rarity glows and blooms, with an animated glass details panel over a shader of embers.",
+   "path": "docs/src/content/docs/showcase/inventory.mdx"
+  },
+  {
+   "slug": "showcase/main-menu",
+   "title": "Game main menu",
+   "description": "A synthwave game main menu in Python with a shader backdrop that follows the mouse, a glowing title and glass buttons that lift on hover.",
+   "path": "docs/src/content/docs/showcase/main-menu.mdx"
+  },
+  {
+   "slug": "showcase/shaders",
+   "title": "Shader gallery",
+   "description": "Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripple, a tunnel, a CRT screen, Voronoi cells and fire.",
+   "path": "docs/src/content/docs/showcase/shaders.mdx"
   },
   {
    "slug": "tutorials/background-tasks",
@@ -2172,6 +2214,18 @@
     "params": {
      "data": "The text or URL to encode.",
      "cell_size": "Size of each module in pixels."
+    }
+   },
+   "pyzed.shader": {
+    "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+    "params": {
+     "code": "WGSL source that defines `shade` (and any helper functions).",
+     "uniforms": "Up to 8 named values: a number, 2 to 4 numbers or a color.",
+     "width": "Width (`\"fill\"` by default).",
+     "height": "Height (`\"fill\"` by default).",
+     "animate": "Redraw every frame so `time` moves (`True`).",
+     "time": "A fixed `time` in seconds, for a still frame.",
+     "fallback": "Color or gradient shown without a GPU."
     }
    },
    "pyzed.canvas": {

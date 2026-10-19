@@ -1,0 +1,56 @@
+---
+title: "HUD de videojuego"
+description: "Un HUD de videojuego en Python: barras de vida y maná, un minimapa de radar hecho con un shader, una barra de habilidades con enfriamientos y paneles de cristal."
+sidebar:
+  order: 1
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../../examples/showcase/hud.py?raw';
+
+Un HUD completo sobre una nebulosa animada. Todo son widgets normales de Pyzed: la nebulosa y el barrido del radar son funciones `pz.shader`, los paneles son `glass`, y la habilidad lista y el cartel de subida de nivel usan `bloom`.
+
+![HUD de videojuego](../../../../assets/showcase/hud.png)
+
+```sh
+python examples/showcase/hud.py
+```
+
+## Cómo está hecho
+
+### Fondo con shader
+
+La nebulosa es ruido fractal en WGSL que la GPU redibuja en cada frame. El barrido del radar es otro shader dentro de un panel de cristal redondo.
+
+```python
+pz.shader(NEBULA, fallback=pz.Gradient(["#05040f", "#2a0c46"]))
+```
+
+### Paneles de cristal
+
+Cada panel desenfoca y tiñe lo que tiene detrás.
+
+```python
+pz.row([...]).style(glass={"tint": "#0f172a", "strength": 0.35, "blur": 18}, radius=16)
+```
+
+### Luz y movimiento
+
+La vida baja palpita; la habilidad definitiva brilla con bloom y late cuando está lista.
+
+```python
+tile.style(bloom=("#fbbf24", 0.9)).animate("pulse", repeat="infinite")
+```
+
+### Enfriamientos
+
+Pulsa del 1 al 6: `pz.every` descuenta los enfriamientos y la capa oscura se encoge con ellos.
+
+```python
+def subscriptions(self):
+    return [pz.every(0.1, self.tick, key="cooldowns")] if self.cooldowns else []
+```
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/showcase/hud.py" />

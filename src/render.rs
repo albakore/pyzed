@@ -1194,6 +1194,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 None => text("QR data too long").into(),
             }
         }
+        Kind::Shader(props) => crate::shader::render(props),
         Kind::PickList(props) => extra::render_pick_list(props),
         Kind::Radio(props) => extra::render_radio(props),
         Kind::Split(props) => {

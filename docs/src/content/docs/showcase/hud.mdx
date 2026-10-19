@@ -1,0 +1,56 @@
+---
+title: "Game HUD"
+description: "A game heads-up display in Python: health and mana bars, a radar minimap drawn by a shader, an ability bar with cooldowns and glass panels."
+sidebar:
+  order: 1
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../examples/showcase/hud.py?raw';
+
+A complete heads-up display over an animated space nebula. Everything is ordinary Pyzed widgets: the nebula and the radar sweep are `pz.shader` functions, the panels are `glass`, and the ready ability and the level-up banner use `bloom`.
+
+![Game HUD](../../../assets/showcase/hud.png)
+
+```sh
+python examples/showcase/hud.py
+```
+
+## How it is made
+
+### Shader backdrop
+
+The nebula is fractal noise in WGSL, redrawn every frame by the GPU. The radar sweep is a second shader inside a round glass panel.
+
+```python
+pz.shader(NEBULA, fallback=pz.Gradient(["#05040f", "#2a0c46"]))
+```
+
+### Glass panels
+
+Each panel blurs what is behind it and tints it.
+
+```python
+pz.row([...]).style(glass={"tint": "#0f172a", "strength": 0.35, "blur": 18}, radius=16)
+```
+
+### Light and motion
+
+Low health pulses, the ultimate ability blooms and pulses when it is ready.
+
+```python
+tile.style(bloom=("#fbbf24", 0.9)).animate("pulse", repeat="infinite")
+```
+
+### Cooldowns
+
+Press 1 to 6: `pz.every` counts the cooldowns down and the overlay shrinks with them.
+
+```python
+def subscriptions(self):
+    return [pz.every(0.1, self.tick, key="cooldowns")] if self.cooldowns else []
+```
+
+## Full code
+
+<Code code={source} lang="py" title="examples/showcase/hud.py" />

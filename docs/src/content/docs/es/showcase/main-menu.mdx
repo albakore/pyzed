@@ -1,0 +1,48 @@
+---
+title: "Menú principal de videojuego"
+description: "Un menú principal synthwave en Python con un fondo de shader que sigue al ratón, un título brillante y botones de cristal que se elevan en hover."
+sidebar:
+  order: 2
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../../examples/showcase/main_menu.py?raw';
+
+Una pantalla de título al estilo de un juego de carreras synthwave. El sol, las estrellas y la cuadrícula infinita son un solo shader que avanza con `time` y se inclina hacia el puntero con `mouse()`.
+
+![Menú principal de videojuego](../../../../assets/showcase/main-menu.png)
+
+```sh
+python examples/showcase/main_menu.py
+```
+
+## Cómo está hecho
+
+### Shader interactivo
+
+`mouse()` devuelve la posición del puntero de 0 a 1; el horizonte y el sol la siguen.
+
+```rust
+var m = mouse();
+let horizon = 0.62 + (m.y - 0.5) * 0.04;
+```
+
+### Título brillante
+
+`bloom` en un texto sin caja lo ilumina desde sus propios trazos.
+
+```python
+pz.text("NEON DRIFT", size=72, weight="black").style(bloom=("#f472b6", 1.0))
+```
+
+### Movimiento del menú
+
+Los botones se elevan en hover, se encogen al pulsar y el seleccionado se desliza con una transición.
+
+```python
+button.animate("lift", on="hover").animate("shrink", on="press").transition(x=6 if selected else 0)
+```
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/showcase/main_menu.py" />

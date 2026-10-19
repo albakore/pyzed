@@ -368,6 +368,17 @@ def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: 
 def set_reduced_motion(on: Any) -> Any:
     """Turns reduced motion on or off: animations show their final state without moving."""
     ...
+def shader(code: Any, *, uniforms: Any = ..., width: Any = ..., height: Any = ..., animate: Any = ..., time: Any = ..., fallback: Any = ...) -> Any:
+    """A widget painted on the GPU by your WGSL function
+    `fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32>`, which
+    returns the color (RGBA, 0 to 1) of every pixel. `uv` goes from 0 to 1 across the widget,
+    `px` and `size` are in pixels, `time` counts seconds and `mouse()` gives the pointer as a
+    `uv`. Each entry of `uniforms` (a number, 2 to 4 numbers or a color; up to 8) becomes a
+    function of the same name: `{"speed": 2}` -> `speed()`. Without a GPU (and in screenshots
+    taken without one) the widget shows `fallback`, a color or gradient. Raises `ValueError`
+    with the compiler's message when the code is not valid WGSL.
+    """
+    ...
 def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any: ...
 def space(width: Any = ..., height: Any = ...) -> Any: ...
 def span(text: Any, *, color: Any = ..., size: Any = ..., font: Any = ..., weight: Any = ..., italic: Any = ..., bg: Any = ..., radius: Any = ..., padding: Any = ..., underline: Any = ..., strikethrough: Any = ..., link: Any = ...) -> Any:

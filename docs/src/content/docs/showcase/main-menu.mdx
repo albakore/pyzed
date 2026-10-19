@@ -1,0 +1,48 @@
+---
+title: "Game main menu"
+description: "A synthwave game main menu in Python with a shader backdrop that follows the mouse, a glowing title and glass buttons that lift on hover."
+sidebar:
+  order: 2
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../examples/showcase/main_menu.py?raw';
+
+A title screen in the style of a synthwave racer. The sun, the stars and the endless grid are one shader that scrolls with `time` and leans towards the pointer with `mouse()`.
+
+![Game main menu](../../../assets/showcase/main-menu.png)
+
+```sh
+python examples/showcase/main_menu.py
+```
+
+## How it is made
+
+### Interactive shader
+
+`mouse()` returns the pointer position from 0 to 1; the horizon and the sun follow it.
+
+```rust
+var m = mouse();
+let horizon = 0.62 + (m.y - 0.5) * 0.04;
+```
+
+### Glowing title
+
+`bloom` on a bare text lights it from its own strokes.
+
+```python
+pz.text("NEON DRIFT", size=72, weight="black").style(bloom=("#f472b6", 1.0))
+```
+
+### Menu motion
+
+Buttons lift on hover, shrink on press and the selected one slides with a transition.
+
+```python
+button.animate("lift", on="hover").animate("shrink", on="press").transition(x=6 if selected else 0)
+```
+
+## Full code
+
+<Code code={source} lang="py" title="examples/showcase/main_menu.py" />
