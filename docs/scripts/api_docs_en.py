@@ -444,6 +444,8 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "highlight_color": "Color of `highlights`.",
                         "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
                         "selection_highlight": "Highlights the other occurrences of the selected text.",
+                        "keymap": 'Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).',
+                        "scrollbar": '`False` hides the scrollbars.',
                     },
                 },
             }),
@@ -828,6 +830,8 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "highlights": "Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
                         "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
                         "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
+                        "keymap": 'Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.',
+                        "scrollbar": '`False` hides the scrollbars.',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -1014,6 +1018,7 @@ The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…
 | `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |
 | `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |
 | `on_key(combo)` | Optional. Receives every key as `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Optional. Receives key releases by name (`"left"`, `"space"`). |
 | `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |
 | `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |
 | `run()` | Opens the window and blocks until the app exits. |
@@ -1987,4 +1992,55 @@ except ValidationError as error:
 
 ui.field("Price", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))""",
     },
+})
+
+# -- Games ----------------------------------------------------------------------------------
+_G = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "game",
+    "title": "Games (pyzed.game)",
+    "description": "API reference for pyzed.game: held keys, movement, collisions, pixel sprites, particles and screen shake for real-time games on a pz.canvas.",
+    "order": 11,
+    "intro": """
+        `pyzed.game` holds small helpers for real-time games: held keys, movement, collisions, pixel
+        sprites, particles and screen shake. They are plain Python built on [`pyzed.draw`](/pyzed/reference/draw/),
+        so they also work in screenshots and tests. See [Making games](/pyzed/games/) for complete examples.
+
+        ```python
+        from pyzed import draw, game
+
+        def tick(self, dt):                      # pz.frames(self.tick) in subscriptions()
+            self.x += game.axis(("left", "a"), ("right", "d")) * 300 * dt
+            self.sparks.update(dt)
+
+        def view(self):
+            return pz.canvas([draw.background("#0b0e14"), *game.glow(self.x, 200, 18, "#74ade8"),
+                              *self.sparks.shapes()], width=400, height=300)
+        ```
+    """,
+    "sections": [
+        ("Keys", {
+            "pyzed.game.pressed": {**_G, "desc": 'The keys held down right now, as a `frozenset` of names without modifiers (`"left"`, `"space"`, `"a"`…). Also available as `pz.pressed()`.'},
+            "pyzed.game.is_pressed": {**_G, "desc": "Whether any of `keys` is held down (`held` replaces `pressed()`, for tests). Also available as `pz.is_pressed()`."},
+            "pyzed.game.axis": {**_G, "desc": '`-1`, `0` or `1` from two groups of keys: `axis(("left", "a"), ("right", "d"))`.'},
+            "pyzed.game.vector": {**_G, "desc": "A direction `(x, y)` of length 0 or 1 from four groups of keys (arrows and WASD by default); diagonals are normalized."},
+        }),
+        ("Math", {
+            "pyzed.game.clamp": {**_G, "desc": "`value` limited to `[low, high]`."},
+            "pyzed.game.lerp": {**_G, "desc": "The value `t` of the way from `a` to `b` (`t` from 0 to 1)."},
+        }),
+        ("Collisions", {
+            "pyzed.game.Rect": {**_G, "desc": "An axis-aligned box (`x`, `y` is the top-left corner) with `left`, `right`, `top`, `bottom`, `center`, `overlaps(other)`, `contains(x, y)`, `moved(dx, dy)` and `shape(**paint)` (a `draw.rect`)."},
+            "pyzed.game.circle_rect": {**_G, "desc": "Where a circle hits a `Rect`: the push-out direction `(nx, ny)`, or `None`. A ball bounces with `if nx: vx = abs(vx) * nx` and `if ny: vy = abs(vy) * ny`."},
+        }),
+        ("Drawing", {
+            "pyzed.game.rgba": {**_G, "desc": '`color` (`"#rrggbb[aa]"` or a tuple) as an `(r, g, b, a)` tuple with `alpha` applied.'},
+            "pyzed.game.glow": {**_G, "desc": "A soft light: translucent circles growing around `(x, y)` (bloom on a canvas). `strength` is the opacity of the innermost halo; `core=False` leaves out the solid circle."},
+            "pyzed.game.sprite": {**_G, "desc": "Pixel art from text: each character of `rows` is a pixel colored by `palette` (missing characters are transparent). One shape per color, so a sprite stays cheap whatever its size."},
+        }),
+        ("Effects", {
+            "pyzed.game.Particles": {**_G, "desc": "Sparks, smoke, explosions: short-lived dots that move, fall and fade out. Call `burst(x, y, …)` when something happens, `update(dt)` every frame and draw `shapes()`; `gravity`, `drag` and `limit` tune them."},
+            "pyzed.game.Shake": {**_G, "desc": "Screen shake: `kick(8)` on a hit, `update(dt)` every frame, and start the canvas shapes with `*shake.shapes()` (a translate) so everything moves together."},
+        }),
+    ],
 })

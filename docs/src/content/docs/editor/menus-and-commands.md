@@ -23,6 +23,7 @@ right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu a
 | New form… | <kbd>Ctrl</kbd>+<kbd>N</kbd> | The New dialog, on Form. |
 | New component… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | The New dialog, on Component. |
 | Open… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lists the forms and components under the working folder. |
+| Go to file… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Finds a project file by name and opens it; see [Go to file](/pyzed/editor/projects/#go-to-file). |
 | Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Saves the document and its code. |
 | Save as… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Saves under a new path. |
 | Settings… | <kbd>Ctrl</kbd>+<kbd>,</kbd> | The [settings](/pyzed/editor/settings/). |
@@ -55,6 +56,7 @@ keyboard and in the command palette.
 | Command palette… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Runs any command by name. |
 | Left dock / Right dock / Bottom dock | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Shows or hides each dock (checked when shown). |
 | Console | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Shows the console and keeps it open. |
+| Move tab to new window / Move tab to main window | | Gives the document in front a window of its own, or brings it back among the main window's tabs. See [Document tabs](/pyzed/editor/files-and-scripting/#document-tabs). |
 | Toolbar, Status bar | | Shows or hides them. |
 | Grid | <kbd>G</kbd> | Shows or hides the dot grid. |
 | Snap to grid | | Toggles snapping. |

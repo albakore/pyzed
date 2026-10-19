@@ -27,16 +27,16 @@ CPU anyway. On a computer with a GPU, the drawing part of the GPU toolkits' numb
 ## Key findings
 
 - **Startup is fast everywhere except Flet and, with many widgets, Kivy and Toga.** Pyzed shows a 10-row
-  window in about 0.23 s from launch and a 1,000-row window in about 0.25 s: building and laying out 2,000
-  more widgets costs it some 25 ms. tkinter, Dear PyGui and Qt start sooner; Kivy, Toga and Flet need close to
+  window in about 0.16 s from launch and a 1,000-row window in about 0.24 s: building and laying out 2,000
+  more widgets costs it some 80 ms. tkinter, Dear PyGui and Qt start sooner; Kivy, Toga and Flet need close to
   a second for 1,000 rows.
-- **Updating 1,000 rows takes Pyzed about 19 ms** from state change to screen, even though it rebuilds the
+- **Updating 1,000 rows takes Pyzed about 18 ms** from state change to screen, even though it rebuilds the
   whole view from Python each time. That is a little faster than Qt Widgets, about 3× faster than Kivy and 9×
   faster than Flet; tkinter and Dear PyGui are faster still. Toga (GTK) needed about 37 s per update in this
   test, because every label change triggers a new layout.
 - **Memory depends on the renderer.** Through the software Vulkan driver used here, Pyzed's GPU renderer
-  takes about 176 MB; the same app on Pyzed's CPU renderer (tiny-skia, set with `ICED_BACKEND=tiny-skia`)
-  takes about 51 MB, between tkinter (25 MB) and Qt (72 MB). The other GPU toolkits pay a similar driver cost
+  takes about 151 MB; the same app on Pyzed's CPU renderer (tiny-skia, set with `ICED_BACKEND=tiny-skia`)
+  takes about 48 MB, between tkinter (25 MB) and Qt (72 MB). The other GPU toolkits pay a similar driver cost
   here (Dear PyGui 123 MB, Kivy 146 MB, Flet 268 MB).
 - **Install size:** about 30 MB for Pyzed, against 238 MB for Qt's essentials, 83 MB for Kivy and 51 MB for Flet
   with its client. tkinter, Dear PyGui, Toga (which uses the system's GTK) and CustomTkinter (which uses

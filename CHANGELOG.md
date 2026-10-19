@@ -16,6 +16,57 @@ stable version.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-20
+
+### Highlights
+
+- **Games**: a game loop (`pz.frames`), held keys (`pz.pressed`), `on_key_up`, sprites and `pyzed.game`, with Snake, Breakout and Neon Invaders demos and tutorials.
+- **Shaders**: `pz.shader` paints a widget with a WGSL function on the GPU, with showcase demos (game HUD, main menu, inventory, glass dashboard).
+- **Integrations**: tutorials and runnable demos for FastAPI, SQLAlchemy, SQLModel, Django, httpx and Pydantic, with `pz.validation_errors` and `ui.field(error=)`.
+- **A stronger AI agent**: images, external MCP servers, external agents through ACP (Gemini CLI, Codex...), GitHub Copilot, Google Vertex AI, Claude through identity federation, sign-in from Pyzed Design and a Zed-like composer.
+- **Pyzed Design feels like Zed**: the project's files with Zed's right-click menu, any text file in the code editor, tabs you drag out into their own windows, a custom window frame, anchors that follow while you design, a compact details panel for properties and an icon picker.
+- **Faster by default**: `import pyzed` takes 78 ms instead of 178 ms, lighter view rebuilds and mimalloc in the native core.
+- **Why Pyzed**: a new docs section comparing Pyzed with tkinter, Qt, Kivy, Flet and others, with measured benchmarks.
+
+### Features
+
+- ✨ Edit component properties of any type in a compact details panel, kept in sync with the code. PR [#61](https://github.com/albakore/pyzed/pull/61) by [@albakore](https://github.com/albakore).
+- ✨ Add an icon picker with search and categories to the library and Pyzed Design. PR [#62](https://github.com/albakore/pyzed/pull/62) by [@albakore](https://github.com/albakore).
+- ✨ Sign in to AI providers from Pyzed Design and add a Zed-like agent composer. PR [#63](https://github.com/albakore/pyzed/pull/63) by [@albakore](https://github.com/albakore).
+- ✨ Show the project's files in Pyzed Design, with file search, a Dependencies tab and a folder browser. PR [#65](https://github.com/albakore/pyzed/pull/65) by [@albakore](https://github.com/albakore).
+- ✨ Add anchor presets, offsets, size limits, pivot and rotation to Position, and `pz.anchor_layout`. PR [#66](https://github.com/albakore/pyzed/pull/66) by [@albakore](https://github.com/albakore).
+- ✨ Add images, MCP servers, external agents, GitHub and Google sign-in and Claude identity federation to the AI agent. PR [#68](https://github.com/albakore/pyzed/pull/68) by [@albakore](https://github.com/albakore).
+- ✨ Add a game loop, held keys and sprites, with three game demos and tutorials. PR [#69](https://github.com/albakore/pyzed/pull/69) by [@albakore](https://github.com/albakore).
+- ✨ Add `pz.shader` and showcase demos: game HUD, main menu, inventory, glass dashboard and shaders. PR [#70](https://github.com/albakore/pyzed/pull/70) by [@albakore](https://github.com/albakore).
+- ✨ Add integration demos and tutorials for FastAPI, SQLAlchemy, SQLModel, Django and httpx, with `pz.validation_errors`, `ui.field(error=)` and object options in `ui.select`. PR [#71](https://github.com/albakore/pyzed/pull/71) by [@albakore](https://github.com/albakore).
+- ✨ Open any text file from the Project tab in the code editor, with a tab per file. PR [#76](https://github.com/albakore/pyzed/pull/76) by [@albakore](https://github.com/albakore).
+- ✨ Follow anchors while designing: resizing the form, a component or a container moves what is inside. PR [#77](https://github.com/albakore/pyzed/pull/77) by [@albakore](https://github.com/albakore).
+- ✨ Drag tabs out into their own windows and stack them back in Pyzed Design. PR [#79](https://github.com/albakore/pyzed/pull/79) by [@albakore](https://github.com/albakore).
+- ✨ Give the Project tree Zed's right-click menu: cut, copy, paste, duplicate, undo, trash, terminal, .gitignore and permalinks, with its keys. PR [#81](https://github.com/albakore/pyzed/pull/81) by [@albakore](https://github.com/albakore).
+- ✨ Add custom window frames: own title bar, platform window buttons, Zed-like menus and resize borders, used by Pyzed Design. PR [#83](https://github.com/albakore/pyzed/pull/83) by [@albakore](https://github.com/albakore).
+- ✨ Wheel scrolling, configurable key bindings and a sectioned settings dialog for the code editor. PR [#84](https://github.com/albakore/pyzed/pull/84) by [@albakore](https://github.com/albakore).
+- ⚡ Start faster and rebuild views with less work by default. PR [#82](https://github.com/albakore/pyzed/pull/82) by [@albakore](https://github.com/albakore).
+- 💄 Normalize margins and spacing across Pyzed Design's panels with shared spacing tokens. PR [#80](https://github.com/albakore/pyzed/pull/80) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Restart Pyzed Design after an update even while background work is running. PR [#60](https://github.com/albakore/pyzed/pull/60) by [@albakore](https://github.com/albakore).
+- 🐛 Write Optional props as `X | None` on every Python version. PR [#64](https://github.com/albakore/pyzed/pull/64) by [@albakore](https://github.com/albakore).
+- 🐛 Pick color properties with the color picker and keep half-typed colors from breaking the view. PR [#67](https://github.com/albakore/pyzed/pull/67) by [@albakore](https://github.com/albakore).
+- 🐛 `ui.select` hands `on_select` the chosen object (a model, an enum) instead of its label, as documented, and `Command.perform` calls its `then` when the function returns `None`. PR [#71](https://github.com/albakore/pyzed/pull/71) by [@albakore](https://github.com/albakore).
+- 🐛 Build with Rust 1.88 again: drop the if-let match guard and check the MSRV in CI. PR [#75](https://github.com/albakore/pyzed/pull/75) by [@albakore](https://github.com/albakore).
+- 🐛 Keep completion rows inside the list and let the list scroll. PR [#78](https://github.com/albakore/pyzed/pull/78) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Add SEO/GEO, llms.txt, Why Pyzed with measured benchmarks, AI agents and Blocks docs. PR [#74](https://github.com/albakore/pyzed/pull/74) by [@albakore](https://github.com/albakore).
+- 📝 Redo the integration demos following the official tutorials, with an architectures page. PR [#73](https://github.com/albakore/pyzed/pull/73) by [@albakore](https://github.com/albakore).
+- 📝 Document the window frame, the editor's `keymap` and `scrollbar`, held keys and `on_key_up`, `pyzed.game` and the release secrets, and re-measure Pyzed's benchmarks with 1.2.0. PR [#85](https://github.com/albakore/pyzed/pull/85) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 Bundle the Agent panel's GitHub and Google sign-in apps into the release builds from Actions secrets. PR [#72](https://github.com/albakore/pyzed/pull/72) by [@albakore](https://github.com/albakore).
+
 ## [1.1.0] - 2026-10-19
 
 ### Highlights

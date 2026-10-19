@@ -48,6 +48,32 @@ atajo solo tiene sentido en cierto contexto (`if self.palette_open and combo == 
 ningún widget las usó; ver [Accesibilidad](/pyzed/es/guides/accessibility/#moverse-entre-campos-con-tab).
 :::
 
+## Teclas mantenidas y teclas soltadas
+
+`on_key` se llama una vez por pulsación. Para teclas que
+actúan *mientras* se mantienen, define `on_key_up(self, key)`, que recibe cada tecla al soltarla
+por su nombre (`"left"`, `"space"`, `"a"`, sin modificadores), o pregunta en cualquier momento
+qué teclas están pulsadas:
+
+- `pz.pressed()` devuelve las teclas pulsadas ahora mismo como un `frozenset` de nombres.
+- `pz.is_pressed("left", "a")` es `True` mientras se mantenga cualquiera de ellas.
+
+```python
+class Juego(pz.App):
+    def on_key_up(self, key):
+        if key == "space":
+            self.cargando = False
+
+    def tick(self, dt):
+        if pz.is_pressed("left", "a"):
+            self.x -= 200 * dt
+```
+
+Las pulsaciones y las teclas soltadas solo se convierten en mensajes cuando la app o alguna de
+sus ventanas define `on_key` u `on_key_up`, así que una app sin ellos no se redibuja con cada
+tecla. `pz.pressed()` funciona en ambos casos. La [sección de juegos](/pyzed/es/games/#entrada)
+los muestra en un bucle de fotogramas, junto con ayudas de `pyzed.game` como `axis` y `vector`.
+
 ## Mostrar atajos
 
 - `ui.kbd("ctrl-shift-p")` dibuja las teclas. En macOS usa símbolos (⌃⇧P) y en el resto palabras.

@@ -24,6 +24,7 @@ engranaje de **Ajustes**.
 | Nuevo formulario… | <kbd>Ctrl</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Formulario. |
 | Nuevo componente… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Componente. |
 | Abrir… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lista los formularios y componentes bajo la carpeta de trabajo. |
+| Ir a un archivo… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Busca un archivo del proyecto por su nombre y lo abre; ver [Ir a un archivo](/pyzed/es/editor/projects/#ir-a-un-archivo). |
 | Guardar | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Guarda el documento y su código. |
 | Guardar como… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Guarda en una ruta nueva. |
 | Ajustes… | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Los [ajustes](/pyzed/es/editor/settings/). |
@@ -56,6 +57,7 @@ en el teclado y en la paleta de comandos.
 | Paleta de comandos… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Ejecuta cualquier comando por su nombre. |
 | Panel izquierdo / Panel derecho / Panel inferior | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Muestra u oculta cada dock (marcado cuando se ve). |
 | Consola | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Muestra la consola y la mantiene abierta. |
+| Mover la pestaña a una ventana nueva / Mover la pestaña a la ventana principal | | Abre el documento que está delante en una ventana propia, o lo devuelve a las pestañas de la ventana principal. Ver [Pestañas de documentos](/pyzed/es/editor/files-and-scripting/#pestañas-de-documentos). |
 | Barra de herramientas, Barra de estado | | Las muestra u oculta. |
 | Cuadrícula | <kbd>G</kbd> | Muestra u oculta la cuadrícula de puntos. |
 | Ajustar a la cuadrícula | | Activa o desactiva el snap. |

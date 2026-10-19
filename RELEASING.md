@@ -47,6 +47,30 @@ The **Release** workflow (`.github/workflows/release.yml`) then:
 - redeploys the documentation site (`docs.yml`), which marks the latest
   stable version.
 
+## Optional secrets
+
+The workflow also builds the standalone Pyzed Design app (`scripts/build_designer.py`)
+on Linux, Windows and macOS. Every secret below is optional: without them the
+release still runs, the app is just unsigned or signs in without a bundled OAuth
+app. Add them under *Settings → Secrets and variables → Actions*.
+
+| Secret | Used for |
+| --- | --- |
+| `PYZED_GITHUB_CLIENT_ID` | Client ID of the GitHub App the Agent panel signs in to GitHub Copilot with (device flow). |
+| `PYZED_GOOGLE_CLIENT_ID` | Client ID of the Google OAuth app (desktop type) for signing in to Vertex AI. |
+| `PYZED_GOOGLE_CLIENT_SECRET` | Its client secret (not confidential for desktop apps). |
+| `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PASSWORD` | A base64 "Developer ID Application" `.p12` and its password, imported into a temporary keychain. |
+| `MACOS_CODESIGN_IDENTITY` | The identity that signs the `.app` with the hardened runtime. |
+| `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` | Notarize the signed app and staple the ticket. |
+| `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` | A base64 `.pfx` and its password: Authenticode signature with a timestamp. |
+
+The three OAuth values are written by `scripts/build_designer.py` as the
+`pyzed_oauth_apps` module and bundled **only into the Pyzed Design builds**; they
+never go into the repository or the PyPI wheels. Without them, signing in with
+GitHub or Google needs the user's own OAuth app (in the provider's settings, or
+`PYZED_GITHUB_CLIENT_ID` / `PYZED_GOOGLE_CLIENT_ID` / `PYZED_GOOGLE_CLIENT_SECRET`
+in the environment); API keys and the other sign-ins work as usual.
+
 ## One-time PyPI setup
 
 Already done for `pyzed-ui`. For reference, the trusted publisher at

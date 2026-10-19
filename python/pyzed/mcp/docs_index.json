@@ -1171,6 +1171,12 @@
    "path": "docs/src/content/docs/library/virtual-list.mdx"
   },
   {
+   "slug": "library/window-frame",
+   "title": "Window frame",
+   "description": "Your own title bar, window buttons and menus. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/window-frame.mdx"
+  },
+  {
    "slug": "library/workspace",
    "title": "Workspace",
    "description": "The layout of a Zed window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API.",
@@ -1205,6 +1211,12 @@
    "title": "Drawing (pyzed.draw)",
    "description": "API reference for pyzed.draw: shapes, paths, text and transforms for drawing custom 2D graphics on a pz.canvas in Python desktop apps.",
    "path": "docs/src/content/docs/reference/draw.md"
+  },
+  {
+   "slug": "reference/game",
+   "title": "Games (pyzed.game)",
+   "description": "API reference for pyzed.game: held keys, movement, collisions, pixel sprites, particles and screen shake for real-time games on a pz.canvas.",
+   "path": "docs/src/content/docs/reference/game.md"
   },
   {
    "slug": "reference/icons",
@@ -1659,7 +1671,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -2671,7 +2683,9 @@
      "highlights": "Ranges painted behind the text (search results): `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
      "highlight_color": "Color of `highlights`.",
      "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
-     "selection_highlight": "Highlights the other occurrences of the selected text."
+     "selection_highlight": "Highlights the other occurrences of the selected text.",
+     "keymap": "Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).",
+     "scrollbar": "`False` hides the scrollbars."
     }
    },
    "pyzed.Style": {
@@ -3588,7 +3602,9 @@
      "on_action": "Callable that receives the name of each editor action that runs (`\"undo\"`, `\"select_next\"`…), e.g. to count them.",
      "highlights": "Ranges painted behind the text in the theme's search color: `[(line, column, end_line, end_column)]`, from 1, with exclusive ends.",
      "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
-     "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor)."
+     "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
+     "keymap": "Zed-style `{binding: action}` dict (`{\"ctrl-shift-d\": \"duplicate_line_down\"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.",
+     "scrollbar": "`False` hides the scrollbars."
     }
    },
    "pyzed.ui.language_token": {
@@ -4137,6 +4153,45 @@
    },
    "pyzed.designer.FORM_EVENTS": {
     "desc": "Events of the form itself (`load`, `close`, `resize`, `key`...)."
+   },
+   "pyzed.game.pressed": {
+    "desc": "The keys held down right now, as a `frozenset` of names without modifiers (`\"left\"`, `\"space\"`, `\"a\"`…). Also available as `pz.pressed()`."
+   },
+   "pyzed.game.is_pressed": {
+    "desc": "Whether any of `keys` is held down (`held` replaces `pressed()`, for tests). Also available as `pz.is_pressed()`."
+   },
+   "pyzed.game.axis": {
+    "desc": "`-1`, `0` or `1` from two groups of keys: `axis((\"left\", \"a\"), (\"right\", \"d\"))`."
+   },
+   "pyzed.game.vector": {
+    "desc": "A direction `(x, y)` of length 0 or 1 from four groups of keys (arrows and WASD by default); diagonals are normalized."
+   },
+   "pyzed.game.clamp": {
+    "desc": "`value` limited to `[low, high]`."
+   },
+   "pyzed.game.lerp": {
+    "desc": "The value `t` of the way from `a` to `b` (`t` from 0 to 1)."
+   },
+   "pyzed.game.Rect": {
+    "desc": "An axis-aligned box (`x`, `y` is the top-left corner) with `left`, `right`, `top`, `bottom`, `center`, `overlaps(other)`, `contains(x, y)`, `moved(dx, dy)` and `shape(**paint)` (a `draw.rect`)."
+   },
+   "pyzed.game.circle_rect": {
+    "desc": "Where a circle hits a `Rect`: the push-out direction `(nx, ny)`, or `None`. A ball bounces with `if nx: vx = abs(vx) * nx` and `if ny: vy = abs(vy) * ny`."
+   },
+   "pyzed.game.rgba": {
+    "desc": "`color` (`\"#rrggbb[aa]\"` or a tuple) as an `(r, g, b, a)` tuple with `alpha` applied."
+   },
+   "pyzed.game.glow": {
+    "desc": "A soft light: translucent circles growing around `(x, y)` (bloom on a canvas). `strength` is the opacity of the innermost halo; `core=False` leaves out the solid circle."
+   },
+   "pyzed.game.sprite": {
+    "desc": "Pixel art from text: each character of `rows` is a pixel colored by `palette` (missing characters are transparent). One shape per color, so a sprite stays cheap whatever its size."
+   },
+   "pyzed.game.Particles": {
+    "desc": "Sparks, smoke, explosions: short-lived dots that move, fall and fade out. Call `burst(x, y, …)` when something happens, `update(dt)` every frame and draw `shapes()`; `gravity`, `drag` and `limit` tune them."
+   },
+   "pyzed.game.Shake": {
+    "desc": "Screen shake: `kick(8)` on a hit, `update(dt)` every frame, and start the canvas shapes with `*shake.shapes()` (a translate) so everything moves together."
    }
   }
  }

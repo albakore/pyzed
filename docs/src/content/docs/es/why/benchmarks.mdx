@@ -27,16 +27,16 @@ en la CPU de todos modos. En un ordenador con GPU, la parte de dibujo de los too
 ## Conclusiones principales
 
 - **El arranque es rápido en todos salvo en Flet y, con muchos widgets, en Kivy y Toga.** Pyzed muestra una
-  ventana de 10 filas en unos 0,23 s desde el lanzamiento y una de 1.000 filas en unos 0,25 s: construir y
-  distribuir 2.000 widgets más le cuesta unos 25 ms. tkinter, Dear PyGui y Qt arrancan antes; Kivy, Toga y
+  ventana de 10 filas en unos 0,16 s desde el lanzamiento y una de 1.000 filas en unos 0,24 s: construir y
+  distribuir 2.000 widgets más le cuesta unos 80 ms. tkinter, Dear PyGui y Qt arrancan antes; Kivy, Toga y
   Flet necesitan casi un segundo para 1.000 filas.
-- **Actualizar 1.000 filas le lleva a Pyzed unos 19 ms** desde el cambio de estado hasta la pantalla, aunque
+- **Actualizar 1.000 filas le lleva a Pyzed unos 18 ms** desde el cambio de estado hasta la pantalla, aunque
   reconstruye toda la vista desde Python cada vez. Es algo más rápido que Qt Widgets, unas 3 veces más rápido
   que Kivy y 9 veces más que Flet; tkinter y Dear PyGui son aún más rápidos. Toga (GTK) necesitó unos 37 s por
   actualización en esta prueba, porque cada cambio de etiqueta provoca un nuevo cálculo del diseño.
 - **La memoria depende del renderizador.** Con el driver Vulkan por software usado aquí, el renderizador por
-  GPU de Pyzed ocupa unos 176 MB; la misma app con el renderizador por CPU de Pyzed (tiny-skia, activado con
-  `ICED_BACKEND=tiny-skia`) ocupa unos 51 MB, entre tkinter (25 MB) y Qt (72 MB). Los demás toolkits por GPU
+  GPU de Pyzed ocupa unos 151 MB; la misma app con el renderizador por CPU de Pyzed (tiny-skia, activado con
+  `ICED_BACKEND=tiny-skia`) ocupa unos 48 MB, entre tkinter (25 MB) y Qt (72 MB). Los demás toolkits por GPU
   pagan un coste de driver parecido aquí (Dear PyGui 123 MB, Kivy 146 MB, Flet 268 MB).
 - **Tamaño instalado:** unos 30 MB para Pyzed, frente a 238 MB de lo esencial de Qt, 83 MB de Kivy y 51 MB de
   Flet con su cliente. tkinter, Dear PyGui, Toga (que usa el GTK del sistema) y CustomTkinter (que usa tkinter)

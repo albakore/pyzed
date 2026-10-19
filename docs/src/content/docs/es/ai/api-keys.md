@@ -49,7 +49,7 @@ credencial, y **Probar la conexión** comprueba que funciona:
 | Anthropic | `anthropic:` | `ANTHROPIC_API_KEY` | Iniciar sesión con el navegador, federación, `ant auth login` |
 | OpenAI | `openai:` | `OPENAI_API_KEY` | Iniciar sesión con el navegador |
 | Google Gemini (AI Studio) | `google:` | `GEMINI_API_KEY` | Iniciar sesión con el navegador |
-| Google Vertex AI | `vertex:` | ninguna | Iniciar sesión con Google, o `gcloud auth application-default login`; el proyecto sale de los ajustes o de `GOOGLE_CLOUD_PROJECT` |
+| Google Vertex AI | `vertex:` | ninguna | Iniciar sesión con Google, `gcloud auth application-default login` o un archivo de cuenta de servicio en `GOOGLE_APPLICATION_CREDENTIALS`; el proyecto sale de los ajustes o de `GOOGLE_CLOUD_PROJECT` |
 | GitHub Copilot (GitHub Models) | `github:` | `GITHUB_TOKEN` | Iniciar sesión con GitHub (flujo de dispositivo), un token detallado con el permiso **Models** |
 | OpenRouter | `openrouter:` | `OPENROUTER_API_KEY` | Iniciar sesión con el navegador (OAuth con PKCE) |
 | xAI | `xai:` | `XAI_API_KEY` | Iniciar sesión con el navegador |
@@ -60,8 +60,10 @@ credencial, y **Probar la conexión** comprueba que funciona:
 | Compatible con OpenAI | `custom:` | `PYZED_AGENT_API_KEY` | Una clave en los ajustes, solo si el servidor la necesita |
 
 Otras variables que lee Pyzed: `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`,
-`ANTHROPIC_IDENTITY_TOKEN_FILE` y `ANTHROPIC_IDENTITY_TOKEN` (federación), `PYZED_GITHUB_CLIENT_ID` y
-`PYZED_GOOGLE_CLIENT_ID` (tus propias apps OAuth para iniciar sesión) y `PYZED_KEYRING=0` (no usar el llavero).
+`ANTHROPIC_IDENTITY_TOKEN_FILE` y `ANTHROPIC_IDENTITY_TOKEN` (federación), `PYZED_GITHUB_CLIENT_ID`,
+`PYZED_GOOGLE_CLIENT_ID` y `PYZED_GOOGLE_CLIENT_SECRET` (tus propias apps OAuth para iniciar sesión),
+`GOOGLE_APPLICATION_CREDENTIALS` (un archivo de cuenta de servicio de Google Cloud para Vertex AI) y
+`PYZED_KEYRING=0` (no usar el llavero).
 
 ## La forma recomendada: el llavero
 

@@ -2271,6 +2271,8 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |
 | `font` | Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat. |
+| `keymap` | Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`. |
+| `scrollbar` | `False` oculta las barras de desplazamiento. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`
