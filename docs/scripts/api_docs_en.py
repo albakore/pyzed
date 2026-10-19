@@ -1098,12 +1098,12 @@ _section("ui", "Controls", {
     },
     "pyzed.ui.accordion": {
         "desc": "Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
-        "params": {"sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).", "open": "The set of open keys, or a `{key: bool}` dict.", "on_toggle": "Called with the key of the clicked header.", "padding": "Padding around the content of an open section."},
+        "params": {"sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).", "open": "The set of open ids, a `{id: bool}` dict, or `True` for all.", "on_toggle": "Called with the key of the clicked header.", "icons": "`{id: icon}`: a Lucide icon for each header.", "spacing": "Space around the dividers between sections.", "padding": "Padding around the content of an open section."},
         "example": """
             ui.accordion([
                 ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
                 ui.AccordionSection("events", "Events", event_rows, icon="zap"),
-            ], self.open_sections, lambda key: self.open_sections.symmetric_difference_update({key}))
+            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
         """,
     },
 }, before="Lists, tree and menus")
