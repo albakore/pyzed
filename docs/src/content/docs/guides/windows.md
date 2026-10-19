@@ -88,6 +88,7 @@ Class or instance attributes:
 | `transparent`, `maximized`, `fullscreen` | Initial state. |
 | `scale` | Interface scale. |
 | `theme` | A `Theme`, a name or `themes.auto(...)`. `None` uses the app's theme. |
+| `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/guides/animation/#window-transitions). |
 
 `window_size` holds the current size (updated by the runtime).
 

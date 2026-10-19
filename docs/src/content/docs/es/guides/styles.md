@@ -35,6 +35,8 @@ un botón). Los demás widgets reciben una caja alrededor que lleva el estilo.
 | `width`, `height` | Píxeles, `"fill"`, `"shrink"` o `"fill:N"`; `max_width`, `max_height` en píxeles. |
 | `align_x`, `align_y` | Dónde se coloca el contenido dentro de la caja. |
 | `clip` | Recorta el contenido a la caja. |
+| `opacity`, `translate`, `scale` | Desvanecen, desplazan o escalan cómo se dibuja el widget, sin cambiar el layout. |
+| `glow`, `bloom`, `glass` | Efectos visuales: un halo, un resplandor brillante y un panel esmerilado. Ver [Animación y efectos](/pyzed/es/guides/animation/#efectos). |
 
 Los colores pueden ser textos hex (con alfa, `"#3b82f680"`), tuplas `(r, g, b[, a])` o tokens
 del tema como `"accent"`, `"panel"` o `"text_muted"`, así que los estilos siguen al tema.

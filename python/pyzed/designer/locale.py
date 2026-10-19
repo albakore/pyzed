@@ -408,7 +408,7 @@ i18n.add("es", {"designer": _ES})
 _ES_MOTION = {
     "Effects": "Efectos", "Animation": "Animación", "Opacity": "Opacidad", "Glow": "Resplandor",
     "Glow size": "Tamaño del resplandor", "Bloom": "Bloom", "Intensity": "Intensidad", "Glass": "Cristal",
-    "Tint": "Tinte", "Strength": "Intensidad del tinte", "none": "ninguno",
+    "Strength": "Intensidad del tinte", "none": "ninguno",
     "How visible the control and everything inside it is (1 is opaque)":
         "Cuánto se ve el control y todo lo que contiene (1 es opaco)",
     "A soft halo around the box": "Un halo suave alrededor de la caja",
