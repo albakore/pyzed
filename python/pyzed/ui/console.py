@@ -95,7 +95,7 @@ class Log:
         self.revision = 0
 
     def write(self, level: str, text: str) -> None:
-        text = str(text).rstrip("\n")
+        text = str(text).rstrip("\r\n")  # pipes from Windows processes end lines with \r\n
         with self._lock:
             last = self.entries[-1] if self.entries else None
             if last is not None and last.level == level and last.text == text:

@@ -68,6 +68,22 @@ class Drag:
 
 
 @dataclass
+class Carry:
+    """Something dragged out of a panel: a component from the toolbox or controls from the outline."""
+
+    kind: str  # "tool" | "outline"
+    names: List[str]  # the component type, or the controls being moved
+    origin: Tuple[float, float]  # pointer in window coordinates when it started
+    moved: bool = False
+
+
+CONTEXT_MENU_WIDTH = 220
+
+#: Pixels the pointer must travel before a press in the toolbox or outline becomes a drag.
+CARRY_THRESHOLD = 4
+
+
+@dataclass
 class Toast:
     title: str
     message: Optional[str] = None
@@ -99,7 +115,14 @@ class Designer(App):
         self.view_pointer: Tuple[float, float] = (0.0, 0.0)
         self.guides: List[Rect] = []
         self.drop_name: Optional[str] = None
+        #: the context menu: control name and where it opens, in window coordinates
         self.menu: Optional[Tuple[str, float, float]] = None
+        self.window_pointer: Tuple[float, float] = (0.0, 0.0)
+        self.carry: Optional[Carry] = None
+        self.over_form = False  # the pointer is over the form being designed
+        #: outline row under the pointer while carrying, and where it would drop: "before", "inside" or "after"
+        self.outline_target: Optional[Tuple[str, str]] = None
+        self.hovered_row: Optional[str] = None  # toolbox or outline row under the pointer
         self.focus = "canvas"
         # preferences and view options
         self.prefs = preferences.load()
@@ -232,11 +255,10 @@ class Designer(App):
         self.doc.set_layout(name, key, value)
 
     def open_outline_menu(self, name: str) -> None:
-        """Right-click in the outline: the control's context menu, under it on the form."""
+        """Right-click in the outline: the control's context menu, where the pointer is."""
         self.doc.select(name)
         self._selection_changed()
-        x, y, _, h = self.rects.get(name, (0.0, 0.0, 0.0, 0.0))
-        self.menu = (name, x, y + h)
+        self.menu = (name, *self.window_pointer)
 
     def pick_tool(self, type_: Optional[str]) -> Callable[[], None]:
         def pick() -> None:
@@ -251,6 +273,161 @@ class Designer(App):
     def pointer_moved(self, x: float, y: float) -> None:
         """Pointer over the form, in form coordinates."""
         self.pointer = (x, y)
+        if self.carry is not None and self.carry.moved:
+            self.drop_name = self._carry_container()
+
+    def window_moved(self, x: float, y: float) -> None:
+        """Pointer anywhere in the window, in window coordinates (menus and drags out of panels)."""
+        self.window_pointer = (x, y)
+        carry = self.carry
+        if carry is not None and not carry.moved:
+            ox, oy = carry.origin
+            carry.moved = abs(x - ox) + abs(y - oy) > CARRY_THRESHOLD
+
+    def enter_form(self) -> None:
+        self.over_form = True
+
+    def exit_form(self) -> None:
+        self.over_form = False
+        if self.carry is not None:
+            self.drop_name = None
+
+    # -- dragging out of the toolbox and the outline ------------------------------
+    def press_tool(self, type_: str) -> None:
+        """Press on a toolbox component: a click picks it as the tool, a drag drops it on the form."""
+        self.focus = "canvas"
+        self.menu = None
+        self.carry = Carry("tool", [type_], self.window_pointer)
+
+    def press_outline(self, name: str) -> None:
+        """Press on an outline row: selects the control and starts a possible drag to reorder it."""
+        self.menu = None
+        if not self.doc.is_selected(name):
+            self.select_from_outline(name)
+        self.focus = "canvas"
+        names = [n for n in self.doc.selection if not any(self.doc.is_selected(a.name)
+                                                           for a in self.doc.form.ancestors(n))]
+        self.carry = Carry("outline", names or [name], self.window_pointer)
+
+    def hover_outline(self, name: str, y: float, height: float) -> None:
+        """The pointer over an outline row while carrying: before, inside (a container) or after it."""
+        if self.carry is None or not self.carry.moved or self.carry.kind != "outline" or name in self.carry.names:
+            self.outline_target = None
+            return
+        control = self.doc.form.get(name)
+        container = control is not None and _layout.kind(control) is not None
+        edge = height / 4 if container else height / 2
+        if y < edge:
+            zone = "before"
+        elif y > height - edge:
+            zone = "after"
+        else:
+            zone = "inside" if container else "after"
+        target = (name, zone)
+        if zone == "inside" and not all(self.doc.can_contain(name, n) for n in self.carry.names):
+            target = None
+        self.outline_target = target
+
+    def enter_row(self, key: str) -> None:
+        self.hovered_row = key
+
+    def leave_row(self, key: str) -> None:
+        if self.hovered_row == key:
+            self.hovered_row = None
+
+    def leave_outline(self, name: str) -> None:
+        if self.outline_target is not None and self.outline_target[0] == name:
+            self.outline_target = None
+
+    def _carry_container(self) -> Optional[str]:
+        carry = self.carry
+        if carry is None or not self.over_form:
+            return None
+        exclude = carry.names if carry.kind == "outline" else ()
+        found = self._container_under(*self.pointer, exclude=exclude)
+        if found is not None and carry.kind == "outline" and not all(self.doc.can_contain(found, n)
+                                                                      for n in carry.names):
+            return None
+        return found
+
+    def window_release(self) -> None:
+        """The mouse button went up anywhere: ends a drag out of the toolbox or the outline."""
+        carry, self.carry = self.carry, None
+        target, self.outline_target = self.outline_target, None
+        if carry is None:
+            return
+        self.drop_name = None
+        if not carry.moved:
+            if carry.kind == "tool":  # a plain click picks the tool, as before
+                self.pick_tool(carry.names[0])()
+            return
+        if carry.kind == "tool":
+            if self.over_form:
+                self.drop_tool(carry.names[0], self.pointer)
+        elif target is not None:
+            self.drop_in_outline(carry.names, *target)
+        elif self.over_form:
+            self.drop_on_form(carry.names, self.pointer)
+
+    def _flow_index(self, parent: Optional[str], x: float, y: float, exclude=()) -> Optional[int]:
+        container = self.doc.form.get(parent) if parent else None
+        if container is None or _layout.kind(container) not in ("flex", "grid"):
+            return None
+        return _layout.drop_index(self.doc.form, self.rects, container, x, y, exclude=exclude)
+
+    def drop_tool(self, type_: str, at: Tuple[float, float]) -> None:
+        """Places a new ``type_`` control with its top-left corner at ``at`` (form coordinates), in the container there."""
+        doc = self.doc
+        rects = self.rects
+        parent = self._container_under(*at)
+        index = self._flow_index(parent, *at)
+        ox, oy = _layout.origin(doc.form, rects, parent)
+        control = doc.add(type_, at[0] - ox, at[1] - oy, snap=self.snap, parent=parent)
+        if index is not None:
+            doc.reparent([control.name], parent, index=index)
+        self.tool = None
+        self.right_tab = "properties"
+        self._selection_changed()
+
+    def drop_on_form(self, names: List[str], at: Tuple[float, float]) -> None:
+        """Controls dragged from the outline onto the form: into the container under the pointer, or onto the form."""
+        doc = self.doc
+        parent = self._container_under(*at, exclude=names)
+        if parent is not None and not all(doc.can_contain(parent, n) for n in names):
+            return
+        index = self._flow_index(parent, *at, exclude=names)
+        if doc.reparent(names, parent, index=index, at=at):
+            self._selection_changed()
+
+    def drop_in_outline(self, names: List[str], target: str, zone: str) -> None:
+        """Controls dropped on an outline row: inside it (a container), or just before or after it."""
+        doc = self.doc
+        form = doc.form
+        control = form.get(target)
+        if control is None or target in names:
+            return
+        at = None
+        if zone == "inside":
+            parent = target
+            index = len([c for c in form.children(target) if c.name not in names])  # last, or top-most
+            rects = self.rects
+            box, first = rects.get(target), rects.get(names[0])
+            if (_layout.kind(control) == "free" and box is not None and first is not None
+                    and not geometry.intersects(box, first)):
+                at = (box[0] + 8, box[1] + 8)  # it would be out of sight: put it in the top-left corner
+        else:
+            parent = control.parent
+            siblings = [c.name for c in form.children(parent) if c.name not in names]
+            position = siblings.index(target)
+            holder = form.get(parent) if parent else None
+            flowing = holder is not None and _layout.kind(holder) in ("flex", "grid")
+            # the outline lists flex and grid children in order, and the others top-most first
+            below = zone == "after"
+            index = position + 1 if below == flowing else position
+        if parent is not None and not all(doc.can_contain(parent, n) for n in names):
+            return
+        if doc.reparent(names, parent, index=index, at=at):
+            self._selection_changed()
 
     def pointer_moved_view(self, x: float, y: float) -> None:
         """Pointer anywhere over the surface's scroll view, in view coordinates."""
@@ -463,7 +640,7 @@ class Designer(App):
         if not self.doc.is_selected(name):
             self.doc.select(name)
             self._selection_changed()
-        self.menu = (name, self.pointer[0], self.pointer[1])
+        self.menu = (name, *self.window_pointer)
 
     def close_menu(self) -> None:
         self.menu = None
@@ -475,6 +652,9 @@ class Designer(App):
         return run
 
     def context_menu(self, t) -> Any:
+        return ui.menu(self._context_items(), width=CONTEXT_MENU_WIDTH, theme=t)
+
+    def _context_items(self) -> List[Any]:
         assert self.menu is not None
         name = self.menu[0]
         control = self.doc.form.get(name)
@@ -505,7 +685,39 @@ class Designer(App):
             ui.SEPARATOR,
             ui.MenuItem("Delete", self._menu_action(self.delete), icon="trash-2", keys="delete", danger=True),
         ]
-        return ui.menu([i for i in items if i is not None], width=220, theme=t)
+        return [i for i in items if i is not None]
+
+    def context_menu_at(self, t) -> Tuple[Any, float, float]:
+        """The context menu and where it goes in the window: at the pointer, kept inside the window."""
+        assert self.menu is not None
+        items = self._context_items()
+        _, x, y = self.menu
+        width, height = self.window_size or self.size
+        separators = sum(1 for i in items if i == ui.SEPARATOR)
+        tall = (len(items) - separators) * 28 + separators * 10 + 12  # a little more than drawn: never clipped
+        if x + CONTEXT_MENU_WIDTH > width - 4:
+            x = max(x - CONTEXT_MENU_WIDTH, 4)
+        if y + tall > height - 4:
+            y = max(height - tall - 4, 4)
+        return ui.menu(items, width=CONTEXT_MENU_WIDTH, theme=t), x, y
+
+    def carry_ghost(self, t) -> Optional[Any]:
+        """A chip that follows the pointer while a component or control is dragged out of a panel."""
+        carry = self.carry
+        if carry is None or not carry.moved:
+            return None
+        if carry.kind == "tool":
+            spec = _components.get(carry.names[0])
+            icon, text = spec.icon, tr(spec.label)
+        else:
+            control = self.doc.form.get(carry.names[0])
+            icon = _components.get(control.type).icon if control is not None else "box"
+            text = carry.names[0] if len(carry.names) == 1 else f"{carry.names[0]} +{len(carry.names) - 1}"
+        return _core.container(_core.row([_icon(icon, size=13, color=t.accent),
+                                          _core.text(text, size=12.5, color=t.text, wrap=False)],
+                                         spacing=6, align="center"),
+                               padding=(4, 8), bg=t.elevated, border_color=t.border_focused,
+                               border_width=1, radius=t.radius_sm)
 
     # -- editing commands -------------------------------------------------------
     def undo(self) -> None:
@@ -1124,6 +1336,15 @@ class Designer(App):
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
                 right = 8 + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
+        if self.menu is not None:
+            menu, mx, my = self.context_menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        ghost = self.carry_ghost(t)
+        if ghost is not None:
+            gx, gy = self.window_pointer
+            body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
+        # the whole window reports the pointer, for menus and for drags that leave a panel
+        body = _core.mouse_area(body, on_move=self.window_moved, on_release=self.window_release)
         body = ui.toasts(body, [ui.toast(x.title, x.message, kind=x.kind, on_dismiss=lambda x=x: self.dismiss_toast(x),
                                          theme=t) for x in self.toasts])
         return ui.layer(body, self.dialog_view(t), on_dismiss=self.close_dialog)

@@ -391,3 +391,98 @@ def test_unsaved_changes_save_then_continue(tmp_path):
     assert app.dialog == "confirm" and app.dialog_view(app.theme_obj) is not None
     app.confirm_save()
     assert opened == [1] and (tmp_path / "a.pzform").exists()
+
+
+# -- context menu and dragging out of the panels -------------------------------------
+
+
+def sidebar_app(tmp_path):
+    path = new.new_form(tmp_path / "shell", template="sidebar")
+    app = Designer(path, language_servers=False)
+    app.window_size = (1440, 900)
+    return app
+
+
+def test_context_menu_opens_at_the_pointer_and_stays_in_the_window(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.window_moved(300, 200)
+    app.open_context_menu("nav1")
+    assert app.menu == ("nav1", 300, 200)
+    _, x, y = app.context_menu_at(app.theme_obj)
+    assert (x, y) == (300, 200) and app.view() is not None
+    app.window_moved(1400, 880)  # near the bottom-right corner: it opens up and to the left
+    app.open_outline_menu("body")
+    _, x, y = app.context_menu_at(app.theme_obj)
+    assert x + 220 <= 1440 and 0 < y < 880 and app.doc.selection == ["body"]
+
+
+def test_drag_a_component_from_the_toolbox_into_a_container(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.window_moved(40, 250)
+    app.press_tool("button")
+    app.window_moved(600, 400)
+    app.enter_form()
+    app.pointer_moved(400, 300)  # inside "content", a flex column
+    assert app.drop_name == "content" and app.carry_ghost(app.theme_obj) is not None
+    app.window_release()
+    button = app.doc.form["button1"]
+    assert button.parent == "content" and app.carry is None and app.tool is None
+    assert [c.name for c in app.doc.form.children("content")][-1] == "button1"
+
+
+def test_a_click_in_the_toolbox_still_picks_the_tool(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.press_tool("label")
+    app.window_release()
+    assert app.tool == "label" and app.doc.form.get("label1") is None
+
+
+def test_dropping_a_component_outside_the_form_does_nothing(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.press_tool("label")
+    app.window_moved(200, 200)
+    app.window_release()
+    assert app.tool is None and app.doc.form.get("label1") is None
+
+
+def test_drag_in_the_outline_reorders_and_moves_into_containers(tmp_path):
+    app = sidebar_app(tmp_path)
+    form = app.doc.form
+
+    def drag(name, target, y):
+        app.window_moved(10, 10)
+        app.press_outline(name)
+        app.window_moved(300, 300)
+        app.hover_outline(target, y, 24)
+        app.window_release()
+
+    drag("nav3", "nav1", 2)  # before nav1, in a flex column: first
+    assert [c.name for c in form.children("sidebar")] == ["nav3", "nav1", "nav2"]
+    drag("nav3", "nav2", 22)  # after nav2: last again
+    assert [c.name for c in form.children("sidebar")] == ["nav1", "nav2", "nav3"]
+    drag("nav1", "content", 12)  # the middle of a container: inside it, at the end
+    assert form["nav1"].parent == "content" and form.children("content")[-1].name == "nav1"
+    app.window_moved(10, 10)
+    app.press_outline("sidebar")
+    app.window_moved(300, 300)
+    app.hover_outline("nav2", 12, 24)  # a container cannot go inside itself
+    assert app.outline_target in (None, ("nav2", "after"))
+    app.hover_outline("content", 12, 24)
+    app.window_release()
+    assert form["sidebar"].parent == "content"
+
+
+def test_drag_from_the_outline_onto_the_form(tmp_path):
+    app = sidebar_app(tmp_path)
+    app.press_outline("nav2")
+    app.window_moved(600, 400)
+    app.enter_form()
+    app.pointer_moved(500, 300)
+    assert app.drop_name == "content"
+    app.window_release()
+    assert app.doc.form["nav2"].parent == "content"
+    app.press_outline("nav2")
+    app.window_moved(620, 420)
+    app.exit_form()
+    app.window_release()  # released over a panel: nothing changes
+    assert app.doc.form["nav2"].parent == "content"

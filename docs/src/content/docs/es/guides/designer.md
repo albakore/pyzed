@@ -21,8 +21,8 @@ pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el f
 
 | Zona | Qué hace |
 | --- | --- |
-| **Toolbox** (izquierda) | La biblioteca de componentes. Haz clic en uno y luego en el formulario para colocarlo con su tamaño por defecto, o arrastra un rectángulo para darle tamaño. La búsqueda filtra la lista. |
-| **Outline** (izquierda) | Todos los controles en árbol: los contenedores muestran sus hijos (se pliegan con la flecha). Clic para seleccionar; el ojo y el candado ocultan o bloquean un control, **+** añade un control dentro de un contenedor y el clic derecho abre un menú. |
+| **Toolbox** (izquierda) | La biblioteca de componentes. Arrastra un componente al formulario, o dentro de un contenedor, para colocarlo ahí; o haz clic en uno y luego en el formulario para colocarlo con su tamaño por defecto, o arrastra un rectángulo para darle tamaño. La búsqueda filtra la lista. |
+| **Outline** (izquierda) | Todos los controles en árbol: los contenedores muestran sus hijos (se pliegan con la flecha). Clic para seleccionar; arrastra una fila para reordenarla, meterla en otro contenedor o soltarla en el formulario. El ojo y el candado ocultan o bloquean un control, **+** añade un control dentro de un contenedor y el clic derecho abre un menú. |
 | **Formulario** (centro) | La superficie de diseño con grilla de puntos. Arrastra para mover, usa las ocho asas para redimensionar y arrastra en un hueco para seleccionar con un rectángulo. El tirador de la esquina inferior derecha cambia el tamaño del formulario. |
 | **Properties** (derecha) | Nombre y luego las propiedades en secciones plegables: los grupos propios del componente, posición (X, Y, tamaño, anclajes, o crecer y columnas dentro de un flex o una grilla) y comportamiento (visible, habilitado, bloqueado). Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
 | **Events** (derecha) | Los eventos del control seleccionado (o del formulario). Doble clic en uno crea su handler y lo abre en el editor de código. |
@@ -73,7 +73,7 @@ La barra de título tiene el menú principal (☰: Archivo y Ejecutar), **Ejecut
 | Ctrl+= / Ctrl+- / Ctrl+0, Ctrl+rueda | Fuente más grande, más pequeña o por defecto en el editor de código |
 | Ctrl+Shift+[ / Ctrl+Shift+] | Plegar / desplegar el bloque del cursor (en el editor de código) |
 
-Clic derecho en un control abre un menú contextual con las mismas acciones.
+Clic derecho en un control, en el formulario o en el outline, abre un menú contextual con las mismas acciones donde está el ratón.
 
 ## Contenedores y layouts
 

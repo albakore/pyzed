@@ -152,14 +152,12 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         gx1, gy1, gx2, gy2 = guide
         layers.append(_core.pin(_core.container(width=max(gx2 - gx1, 1), height=max(gy2 - gy1, 1),
                                                 bg=t.color("error")), x=gx1, y=gy1))
-    if d.menu is not None:
-        layers.append(_core.mouse_area(_core.container(width="fill", height="fill"),
-                                       on_press=d.close_menu, on_right_press=d.close_menu))
-        layers.append(_core.pin(_core.opaque(d.context_menu(t)), x=d.menu[1], y=d.menu[2]))
 
     client = _core.mouse_area(
         _core.container(_core.stack(layers, width=w, height=h), width=w, height=h, clip=True, color=ft.text),
         on_move=d.pointer_moved,
+        on_enter=d.enter_form,
+        on_exit=d.exit_form,
         on_press=d.press_empty,
         on_right_press=d.close_menu,
         cursor="crosshair" if d.tool else None,
