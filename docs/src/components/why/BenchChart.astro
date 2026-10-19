@@ -1,0 +1,159 @@
+---
+// A horizontal bar chart of one benchmark metric (median of every run; the thin line is min-max).
+// Pure HTML and CSS: follows the light/dark theme and needs no JavaScript.
+import { fmt, isPyzed, points, UNITS, type Metric } from './bench';
+
+interface Props {
+	metric: Metric;
+	rows?: string;
+	app?: string;
+	title: string;
+	lang?: 'en' | 'es';
+	note?: string;
+	/** Clip the axis here (in the chart's unit); longer bars are drawn broken, with their value. */
+	cap?: number;
+}
+const { metric, rows, app, title, lang = 'en', note, cap } = Astro.props;
+const data = points(metric, { rows, app });
+const unit = UNITS[metric][lang];
+const highest = Math.max(...data.map((d) => d.max ?? d.value)) * 1.04;
+const top = cap != null ? Math.min(cap, highest) : highest;
+const pct = (v: number) => `${((Math.min(v, top) / top) * 100).toFixed(2)}%`;
+const broken = (v: number) => v > top;
+const better = lang === 'es' ? 'menos es mejor' : 'lower is better';
+const range = lang === 'es' ? 'mín.–máx.' : 'min–max';
+const median = lang === 'es' ? 'mediana' : 'median';
+---
+
+<figure class="bench-chart not-content" aria-label={title}>
+	<figcaption>
+		<span class="bench-title">{title}</span>
+		<span class="bench-sub">{unit} · {better}</span>
+	</figcaption>
+	<ol>
+		{
+			data.map((d) => (
+				<li
+					class:list={{ pyzed: isPyzed(d.lib) }}
+					title={`${d.name} ${d.version}: ${median} ${fmt(d.value, metric)} ${unit}${
+						d.min != null ? ` (${range} ${fmt(d.min, metric)}–${fmt(d.max!, metric)})` : ''
+					}`}
+				>
+					<span class="bench-name">
+						{d.name}
+						<small>{d.version}</small>
+					</span>
+					<span class="bench-track">
+						<span class:list={['bench-bar', { broken: broken(d.value) }]} style={`width:${pct(d.value)}`} />
+						{d.min != null && d.max! > d.min && !broken(d.min) && (
+							<span class="bench-range" style={`left:${pct(d.min)};width:${pct(Math.min(d.max!, top) - d.min)}`} />
+						)}
+					</span>
+					<span class="bench-value">
+						{fmt(d.value, metric)} <small>{unit}</small>
+					</span>
+				</li>
+			))
+		}
+	</ol>
+	{note && <p class="bench-note">{note}</p>}
+</figure>
+
+<style>
+	.bench-chart {
+		margin-block: 1.5rem;
+		padding: 1rem 1.1rem 0.9rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 10px;
+		background: var(--sl-color-black);
+	}
+	figcaption {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.75rem;
+		align-items: baseline;
+		margin-bottom: 0.75rem;
+	}
+	.bench-title {
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	.bench-sub,
+	.bench-note,
+	small {
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+	.bench-note {
+		margin: 0.6rem 0 0;
+	}
+	ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 0.4rem;
+	}
+	li {
+		display: grid;
+		grid-template-columns: minmax(7.5rem, 11rem) 1fr minmax(4.5rem, auto);
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.bench-name {
+		display: flex;
+		flex-direction: column;
+		line-height: 1.15;
+	}
+	.bench-track {
+		position: relative;
+		height: 14px;
+	}
+	.bench-bar {
+		position: absolute;
+		inset-block: 0;
+		left: 0;
+		min-width: 3px;
+		border-radius: 0 4px 4px 0;
+		--bar: var(--sl-color-gray-4);
+		background: var(--bar);
+	}
+	.bench-range {
+		position: absolute;
+		top: 50%;
+		height: 2px;
+		margin-top: -1px;
+		background: var(--sl-color-gray-1);
+		opacity: 0.55;
+	}
+	/* An off-scale bar: a gap near its end marks the broken axis. */
+	.bench-bar.broken {
+		background: linear-gradient(
+			to right,
+			var(--bar) calc(100% - 22px),
+			transparent calc(100% - 22px) calc(100% - 16px),
+			var(--bar) calc(100% - 16px)
+		);
+	}
+	.pyzed {
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+	.pyzed .bench-bar {
+		--bar: var(--sl-color-accent);
+	}
+	.bench-value {
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+		white-space: nowrap;
+	}
+	@media (max-width: 34rem) {
+		li {
+			grid-template-columns: 6.5rem 1fr auto;
+			gap: 0.5rem;
+		}
+	}
+</style>

@@ -1,6 +1,6 @@
 ---
 title: Datos y feedback
-description: Tablas, avisos, estados vacíos, ajustes agrupados, estadísticas, gráficos e indicadores.
+description: "Tablas, avisos, estados vacíos, ajustes agrupados, estadísticas, gráficos e indicadores: componentes de datos para GUIs de escritorio con Pyzed."
 sidebar:
   order: 9
 ---

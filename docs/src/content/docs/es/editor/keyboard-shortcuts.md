@@ -1,6 +1,6 @@
 ---
 title: Atajos de teclado
-description: Todos los atajos de teclado de Pyzed Design - comandos globales, el lienzo, los diálogos y el editor de código.
+description: "Todos los atajos de teclado de Pyzed Design, el diseñador de GUIs para Python: comandos globales, el lienzo, los diálogos y el editor de código."
 sidebar:
   order: 12
 ---

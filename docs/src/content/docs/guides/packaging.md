@@ -1,6 +1,6 @@
 ---
 title: Build and distribute
-description: Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder.
+description: "Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder."
 sidebar:
   order: 15
 ---

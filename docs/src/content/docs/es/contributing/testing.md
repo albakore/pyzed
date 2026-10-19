@@ -1,6 +1,6 @@
 ---
 title: Tests
-description: Cómo se organizan los tests, cómo probar componentes de ui sin ventana y cómo funcionan los tests de regresión visual y sus imágenes de referencia.
+description: "Cómo se organizan los tests de Pyzed, cómo probar componentes de UI sin ventana y cómo funcionan los tests de regresión visual con imágenes de referencia."
 sidebar:
   order: 5
 ---

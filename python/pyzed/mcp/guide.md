@@ -34,7 +34,7 @@ class Counter(pz.App):
         return pz.center(pz.column([
             ui.heading(str(self.count)),
             pz.row([
-                ui.button("+1", lambda: setattr(self, "count", self.count + 1), icon="plus"),
+                ui.button("1", lambda: setattr(self, "count", self.count + 1), icon="plus"),
                 ui.button("Reset", "reset", variant="ghost"),
             ], spacing=8),
         ], spacing=16, align="center"))

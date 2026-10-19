@@ -1,6 +1,6 @@
 ---
 title: Pyzed Design
-description: El manual del editor visual de Pyzed. Dibuja ventanas y componentes, conecta sus eventos a Python, ejecútalos y distribúyelos.
+description: "El manual de Pyzed Design, el diseñador visual de GUIs para Python: dibuja ventanas y componentes, conecta eventos a Python, ejecútalos y distribúyelos."
 sidebar:
   order: 0
   label: Introducción

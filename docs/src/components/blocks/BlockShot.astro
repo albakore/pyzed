@@ -1,0 +1,50 @@
+---
+// The screenshot of a Block (docs/scripts/block_shots.py renders them from examples/blocks), in One Dark or
+// One Light to match the site's theme.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/blocks/*.png', { eager: true });
+
+interface Props {
+	/** The example's file name without `.py`: `login`, `data_table`. */
+	name: string;
+	alt: string;
+}
+
+const { name, alt } = Astro.props;
+const dark = images[`../../assets/blocks/${name}-dark.png`]?.default;
+const light = images[`../../assets/blocks/${name}-light.png`]?.default ?? dark;
+if (!dark) throw new Error(`Missing block screenshot: ${name}-dark.png (run docs/scripts/block_shots.py)`);
+---
+
+<figure class="block-shot not-content">
+	<Image class="on-dark" src={dark} alt={alt} widths={[800, 1200, 2400]} sizes="(min-width: 72rem) 56rem, 100vw" />
+	{light && <Image class="on-light" src={light} alt={alt} widths={[800, 1200, 2400]} sizes="(min-width: 72rem) 56rem, 100vw" />}
+</figure>
+
+<style>
+	.block-shot {
+		margin: 1rem 0 1.5rem;
+		padding: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.75rem;
+		overflow: hidden;
+		background: var(--sl-color-gray-6);
+		box-shadow: 0 12px 36px rgb(0 0 0 / 0.22);
+	}
+	.block-shot img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.on-light {
+		display: none !important;
+	}
+	:global([data-theme='light']) .block-shot .on-light {
+		display: block !important;
+	}
+	:global([data-theme='light']) .block-shot .on-dark {
+		display: none !important;
+	}
+</style>

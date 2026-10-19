@@ -1,6 +1,6 @@
 ---
 title: Cómo funciona por dentro
-description: El puente entre Python y Iced, el árbol de widgets, el estado del editor y el rendimiento.
+description: "Cómo funciona Pyzed: el puente entre Python e Iced (Rust), el árbol de widgets inmutable, el estado del editor y por qué la interfaz es tan rápida."
 sidebar:
   order: 11
 ---

@@ -1,6 +1,6 @@
 ---
 title: Layouts and containers
-description: Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors in Pyzed Design.
+description: "Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors: arrange controls of Python desktop forms in Pyzed Design."
 sidebar:
   order: 4
 ---

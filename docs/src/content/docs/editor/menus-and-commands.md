@@ -1,6 +1,6 @@
 ---
 title: Menus and commands
-description: The title bar, every menu entry, the toolbar, the command palette, Add control and the dockable panels of Pyzed Design.
+description: "The title bar, every menu entry, the toolbar, the command palette, Add control and the dockable panels of Pyzed Design, the Python GUI builder."
 sidebar:
   order: 11
 ---

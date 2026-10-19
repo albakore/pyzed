@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Todos los comandos de pyzed - proyectos, dependencias, ejecución, compilación, iconos y el servidor MCP.
+description: "Todos los comandos de la CLI pyzed: crea proyectos, gestiona dependencias, ejecuta y compila apps, genera iconos e inicia el servidor MCP."
 sidebar:
   order: 9
 ---

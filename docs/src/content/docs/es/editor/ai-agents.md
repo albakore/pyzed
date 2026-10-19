@@ -1,6 +1,6 @@
 ---
 title: Agentes de IA
-description: El panel del agente de Pyzed Design - un agente de IA que crea formularios y componentes, escribe su código y edita el formulario abierto, con asistente en línea en el editor de código, varios proveedores de modelos y claves guardadas en el llavero del sistema.
+description: "El panel del agente de Pyzed Design: un agente de IA que crea formularios y componentes y escribe su código Python, con asistente en línea y varios modelos."
 sidebar:
   order: 10.5
 ---
@@ -265,6 +265,9 @@ archivos de ajustes de Pyzed, en las conversaciones ni en el proyecto. Si no hay
 conserva en memoria hasta que cierres el diseñador, y los ajustes lo indican; en ese caso usa una variable de
 entorno.
 
+Las variables de entorno, las apps abiertas desde el Finder o el menú Inicio, los secretos de MCP y las buenas
+prácticas están en [Claves de API y credenciales](/pyzed/es/ai/api-keys/).
+
 El resto también se queda en tu equipo: los ajustes en `agents.json` y las conversaciones en `agents/threads/`,
 ambos en la [carpeta de ajustes de Pyzed](/pyzed/es/editor/settings/#dónde-se-guardan). No se envía nada a ningún
 sitio salvo las peticiones al proveedor que elijas.
@@ -279,6 +282,22 @@ sitio salvo las peticiones al proveedor que elijas.
 | **Preguntar antes de escribir archivos** | Crear formularios y componentes y guardar archivos esperan tu permiso. Activado por defecto; equivale a los modos **Preguntar antes de escribir** / **Omitir permisos**. |
 | **Mostrar el razonamiento** | Muestra los resúmenes del razonamiento del modelo en la conversación. |
 | **Reglas** | Instrucciones añadidas a cada conversación, como las reglas de Zed: "Responde en español", "Nombra los botones con el sufijo `_button`"… |
+
+## Cómo obtener buenos resultados
+
+- **Empieza por la pantalla, no por los widgets.** *"Un formulario de cliente: nombre, email, un desplegable de país y
+  Guardar / Cancelar; Guardar valida el email y muestra un aviso"* le da al agente el objetivo y las reglas a la vez.
+- **Selecciona y luego pide.** Selecciona un grupo de controles y di *"ponlos en una fila con 8 px de separación"*.
+- **Usa @ para ser preciso.** `@email_input` más *"acepta solo direcciones de empresa"* no deja dudas sobre el control.
+- **Enséñale una imagen.** Adjunta un boceto o una captura del error, o pide `/look` para que revise el formulario.
+- **Deja que se compruebe solo.** Termina las peticiones con *"y luego ejecuta /fix"*, o pídele que valide antes de
+  responder.
+- **Guarda las reglas en los ajustes.** Las *Reglas* se añaden a cada conversación: *"Responde en español"*, *"Usa el
+  tema Gruvbox Dark"*.
+- **Revisa y luego conserva.** Tras una ejecución, **Cambios del agente** ofrece **Conservar** o **Rechazar** para toda
+  la ejecución.
+
+Hay más prompts que funcionan bien en la [guía de prompts](/pyzed/es/ai/prompting/).
 
 ## Historial
 

@@ -208,6 +208,10 @@ class Column:
     render: Optional[Callable[[Any], Any]] = None
     sortable: bool = True
 
+    def __post_init__(self) -> None:
+        if isinstance(self.width, tuple) and len(self.width) == 2 and self.width[0] == "fill":
+            self.width = f"fill:{int(self.width[1])}"  # ("fill", 2) is the documented spelling of "fill:2"
+
     def value(self, row: Any) -> Any:
         """Returns this column's value for ``row``: ``key(row)``, a dict item or an attribute.
 

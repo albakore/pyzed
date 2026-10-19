@@ -1,6 +1,6 @@
 ---
 title: Projects with uv
-description: Create and manage Pyzed apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready.
+description: "Create and manage Pyzed desktop apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready from the first command."
 sidebar:
   order: 14
 ---

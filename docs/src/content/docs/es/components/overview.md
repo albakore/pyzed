@@ -1,6 +1,6 @@
 ---
 title: Visión general
-description: Los componentes de pyzed.ui, inspirados en el editor Zed.
+description: "Resumen de pyzed.ui, los componentes inspirados en Zed para GUIs de escritorio en Python: workspaces, pestañas, árboles, editores, paletas y menús."
 sidebar:
   order: 0
 ---

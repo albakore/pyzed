@@ -1,0 +1,134 @@
+---
+title: ¿Por qué Pyzed? Interfaces Python modernas para una nueva generación
+description: "Por qué elegir Pyzed para apps de escritorio en Python: aspecto moderno sin esfuerzo, renderizado nativo por GPU desde Rust, API pythónica, diseñador visual, recarga en caliente y herramientas listas para IA. Una alternativa moderna a tkinter, Kivy y PyQt."
+sidebar:
+  label: Por qué Pyzed
+  order: 1
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Python es el primer lenguaje de toda una generación de desarrolladores, pero sus interfaces de escritorio
+todavía parecen de 2005: widgets grises, diseños escritos a mano, reiniciar la app para ver un cambio y un
+empaquetado que es un proyecto en sí mismo. **Pyzed** es nuestra respuesta para quienes crecieron con VS Code,
+Figma, el modo oscuro y los asistentes de IA, y esperan que sus herramientas se vean y se sientan así.
+
+![Un espacio de trabajo al estilo de Zed hecho con Pyzed, con el tema One Dark](../../../../../screenshots/zed-one-dark.png)
+
+## Lo que tienes desde el primer día
+
+<CardGrid>
+	<Card title="Aspecto moderno, sin trabajo de estilos" icon="seti:css">
+		Decenas de componentes inspirados en el editor [Zed](https://zed.dev): botones, campos, pestañas,
+		árboles, paletas de comandos, menús, avisos, un editor de código y paneles acoplables. Los temas
+		(One, Ayu, Gruvbox), el modo oscuro y seguir la apariencia del sistema vienen incluidos.
+	</Card>
+	<Card title="Velocidad nativa, dibujada por Rust" icon="rocket">
+		El diseño, el texto y el dibujo se ejecutan en Rust con [Iced](https://iced.rs) y
+		[wgpu](https://wgpu.rs) (Vulkan, Metal, DirectX 12 u OpenGL), con un renderizador por CPU de
+		respaldo. Python solo describe la interfaz.
+	</Card>
+	<Card title="Una API pythónica" icon="seti:python">
+		El estado vive en una clase normal. `view()` devuelve lo que se muestra y los callbacks son métodos o
+		lambdas. Sin señales ni slots, sin archivos `.kv`, sin IDs de widgets que buscar.
+	</Card>
+	<Card title="Un diseñador visual" icon="pencil">
+		[Pyzed Design](/pyzed/es/editor/) te deja dibujar formularios, editar su código con autocompletado y
+		diagnósticos, y ejecutarlos, todo en una sola app.
+	</Card>
+	<Card title="Recarga en caliente que conserva el estado" icon="random">
+		`pyzed dev main.py`: guardas un archivo y la ventana cambia, con tus datos todavía ahí.
+	</Card>
+	<Card title="Lista para asistentes de IA" icon="puzzle">
+		Un [servidor MCP](/pyzed/es/guides/mcp/) da a los agentes de código la API exacta, la documentación
+		y capturas de lo que construyen, y [`pyzed.agents`](/pyzed/es/guides/agents/) pone modelos dentro de
+		tu app.
+	</Card>
+</CardGrid>
+
+## Todo el flujo, en unos pocos comandos
+
+```bash
+pyzed new tienda        # un proyecto uv con ruff, ty y git listos
+cd tienda
+uv run pyzed design     # dibuja la interfaz en Pyzed Design
+uv run pyzed run        # ejecútala
+uv run pyzed build      # una app autónoma para Windows, macOS o Linux
+```
+
+Los proyectos son proyectos [uv](https://docs.astral.sh/uv/) normales, así que las dependencias, los lock
+files, el linter ([ruff](https://docs.astral.sh/ruff/)) y la comprobación de tipos
+([ty](https://docs.astral.sh/ty/)) funcionan como en el resto del Python moderno. Mira
+[Crear un proyecto](/pyzed/es/getting-started/new-project/) y [Compilar y distribuir](/pyzed/es/guides/packaging/).
+
+## Código que se lee como la interfaz
+
+Un contador, completo:
+
+```python title="contador.py"
+import pyzed as pz
+from pyzed import ui
+
+
+class Contador(pz.App):
+    title = "Contador"
+
+    def __init__(self):
+        self.count = 0
+
+    def view(self):
+        return pz.center(pz.row([
+            ui.button(icon="minus", on_press=lambda: setattr(self, "count", self.count - 1)),
+            ui.heading(str(self.count)),
+            ui.button(icon="plus", on_press=lambda: setattr(self, "count", self.count + 1)),
+        ], spacing=12, align="center"))
+
+
+pz.run(Contador)
+```
+
+No hay ningún widget que buscar y actualizar cuando cambia la cuenta: cambias `self.count` y Pyzed vuelve a
+llamar a `view()`. Es la [arquitectura Elm](https://guide.elm-lang.org/architecture/) que usa Iced, la misma
+idea que React o SwiftUI, así que te resultará familiar si vienes de la web o del móvil.
+
+![Componentes de Pyzed con el tema One Dark](../../../../../screenshots/components-dark.png)
+
+## Hecho para cómo se desarrolla hoy
+
+- **Editar, guardar, ver.** La recarga en caliente conserva el estado de la app y, si el código nuevo falla,
+  el error se muestra en la ventana hasta que guardes una corrección.
+
+  ![Una recarga fallida muestra el error dentro de la ventana](../../../../../screenshots/hot-reload-error.png)
+
+- **Tu editor conoce la API.** El paquete incluye información de tipos (`py.typed` y stubs del núcleo en
+  Rust), así que el autocompletado y la comprobación de tipos funcionan en VS Code, PyCharm, Zed y con ty o mypy.
+- **Capturas sin pantalla.** `app.screenshot("vista.png")` renderiza fuera de pantalla, sin ventana ni GPU,
+  para tests, CI y documentación. Todas las imágenes de este sitio se hicieron así.
+- **Agentes que no adivinan.** Conecta el [servidor MCP](/pyzed/es/guides/mcp/) a Claude Code, Cursor,
+  VS Code o Zed y tu asistente consulta firmas reales, lee esta documentación y comprueba el código que
+  escribe. La documentación también se publica como texto plano para modelos de lenguaje en
+  [`llms.txt`](https://albakore.github.io/pyzed/llms.txt).
+- **Async cuando lo necesitas.** Los callbacks pueden ser funciones `async def` o generadores; Pyzed los
+  ejecuta y envía sus resultados a `update`. Mira [Tareas en segundo plano](/pyzed/es/guides/async/).
+
+## Límites, con honestidad
+
+Pyzed es joven: su primera versión salió en 2026, mientras que tkinter, Qt y wxPython tienen décadas detrás.
+Hoy apunta **solo al escritorio** (Windows, macOS y Linux): no genera apps para Android, iOS ni el navegador,
+algo que sí ofrecen [Kivy](/pyzed/es/why/vs-kivy/) y [Flet](/pyzed/es/why/vs-flet/). **Los lectores de
+pantalla todavía no están soportados** porque Iced no expone información de accesibilidad
+([detalles](/pyzed/es/guides/accessibility/#lectores-de-pantalla)), y su ecosistema de widgets de terceros es
+pequeño. La [comparativa](/pyzed/es/why/comparison/) explica cuándo otras bibliotecas son mejor opción.
+
+## Comparar
+
+<CardGrid>
+	<LinkCard title="Comparativa de funciones" description="Pyzed junto a tkinter, Qt, Kivy, Dear PyGui, Flet, Toga, NiceGUI, wxPython y CustomTkinter." href="/pyzed/es/why/comparison/" />
+	<LinkCard title="Benchmarks" description="Arranque, memoria, velocidad de actualización, tamaño instalado y líneas de código, medidos y reproducibles." href="/pyzed/es/why/benchmarks/" />
+	<LinkCard title="Experiencia de desarrollo" description="De la instalación a la app empaquetada: cómo es el día a día." href="/pyzed/es/why/developer-experience/" />
+	<LinkCard title="Pyzed vs tkinter" description="La biblioteca estándar, lado a lado." href="/pyzed/es/why/vs-tkinter/" />
+	<LinkCard title="Pyzed vs PyQt / PySide" description="El toolkit más completo, y cuándo compensa su peso." href="/pyzed/es/why/vs-pyqt-pyside/" />
+	<LinkCard title="Pyzed vs Kivy" description="Widgets dibujados por GPU en escritorio y móvil." href="/pyzed/es/why/vs-kivy/" />
+	<LinkCard title="Pyzed vs Flet" description="Flutter desde Python, para escritorio, web y móvil." href="/pyzed/es/why/vs-flet/" />
+	<LinkCard title="Pyzed vs Dear PyGui" description="Interfaces en modo inmediato para herramientas y gráficas." href="/pyzed/es/why/vs-dear-pygui/" />
+</CardGrid>

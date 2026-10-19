@@ -1,6 +1,6 @@
 ---
 title: Code editor
-description: The Python editor of Pyzed Design - completion, diagnostics, code lens, folding, the minimap, language servers, keys and settings.
+description: "The Python code editor inside Pyzed Design: completion, diagnostics, code lens, folding, minimap, ty and ruff language servers, keys and settings."
 sidebar:
   order: 7
 ---

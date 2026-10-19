@@ -1,6 +1,6 @@
 ---
 title: Layout and styling
-description: Rows, columns, containers, sizes, padding, alignment and colors.
+description: "Layout in Pyzed: rows, columns, containers, sizes, padding, alignment and colors to arrange native Python desktop interfaces."
 sidebar:
   order: 2
 ---

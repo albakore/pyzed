@@ -1,6 +1,6 @@
 ---
 title: Large data and performance
-description: Show hundreds of thousands of rows with virtual lists and tables, and skip rebuilding parts of the view that did not change with @pz.memo.
+description: "Python GUI performance with Pyzed: show hundreds of thousands of rows with virtual lists and tables, and skip unchanged views with @pz.memo."
 sidebar:
   order: 18
 ---

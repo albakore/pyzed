@@ -1,6 +1,6 @@
 ---
 title: Properties
-description: The property grid of Pyzed Design, section by section - the form, a control, several controls, and the list and table editors.
+description: "The property grid of Pyzed Design section by section: the form, a control, several controls at once, and the list and table editors."
 sidebar:
   order: 3
 ---

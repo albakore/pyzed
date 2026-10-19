@@ -1,6 +1,6 @@
 ---
 title: Comandos y tareas
-description: Enfocar campos, cerrar la app, editar el editor, trabajo en segundo plano y mensajes desde hilos.
+description: "Comandos de Pyzed: enfoca campos, cierra la app, edita el editor de código, lanza trabajo en segundo plano y envía mensajes desde hilos."
 sidebar:
   order: 4
 ---

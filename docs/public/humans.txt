@@ -1,0 +1,11 @@
+/* TEAM */
+Creator: albakore
+GitHub: https://github.com/albakore
+Contributors: https://github.com/albakore/pyzed/graphs/contributors
+
+/* SITE */
+Documentation: https://albakore.github.io/pyzed/
+Languages: English, Spanish
+Built with: Astro, Starlight, Pagefind
+Software: Pyzed (Python + Rust, Iced) - https://github.com/albakore/pyzed
+License: MIT

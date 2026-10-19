@@ -1,6 +1,6 @@
 ---
 title: Contributing to Pyzed
-description: Set up a development environment, run the checks CI runs, and follow the commit and pull request conventions.
+description: "Contribute to Pyzed: set up a Python and Rust development environment, run the checks CI runs, and follow the commit and pull request conventions."
 sidebar:
   label: Overview
   order: 1

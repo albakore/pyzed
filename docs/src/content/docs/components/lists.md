@@ -1,6 +1,6 @@
 ---
 title: Lists, tree and menus
-description: List rows, the project panel's file tree and context menus.
+description: "List rows, a project file tree and context menus: Zed-style list and navigation components for native Python desktop apps built with Pyzed."
 sidebar:
   order: 3
 ---

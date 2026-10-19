@@ -1,6 +1,6 @@
 ---
 title: AI agents in your app
-description: pyzed.agents - talk to Claude, OpenAI, Gemini, OpenRouter, Ollama and OpenAI-compatible servers, give the model tools, stream its answer into your UI and keep keys in the system keychain.
+description: "pyzed.agents: add AI to Python desktop apps with Anthropic, OpenAI, Gemini, OpenRouter or Ollama, give models tools and stream answers into your UI."
 sidebar:
   order: 17
 ---
@@ -258,7 +258,8 @@ and saves it with `set_key`. Your app can do the same.
 
 Keys live in the system keychain (`keyring`, service `pyzed`); `PYZED_KEYRING=0` disables it, and
 `agents.secrets.use(SecretStore(my_backend))` plugs in your own vault (any object with keyring's
-`get_password` / `set_password` / `delete_password`).
+`get_password` / `set_password` / `delete_password`). The lookup order, the environment variable of each provider
+and how to keep keys safe are in [API keys and credentials](/pyzed/ai/api-keys/).
 
 ### Claude without an API key
 
@@ -304,3 +305,8 @@ def fake(model, system, messages, tools, *, settings, on_event, cancel):
 agent = agents.Agent("x", tools=[stock], stream=fake, settings=agents.AgentSettings())
 assert agent.run("Desks?") == "No desks left."
 ```
+
+## A complete chat app
+
+[Building AI apps](/pyzed/ai/ai-apps/) builds a full streaming chat with an OpenAI-compatible API, stop, errors and
+tests without network, and shows how to drive `pyzed.agents` from `pz.Command.perform` and `pz.post`.

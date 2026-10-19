@@ -1,6 +1,6 @@
 ---
 title: Contenido y paneles
-description: Markdown, texto enriquecido, imágenes, códigos QR, paneles redimensionables, rejillas y popovers.
+description: "Markdown, texto enriquecido, imágenes, códigos QR, paneles redimensionables, rejillas y popovers: componentes de contenido para GUIs en Python."
 sidebar:
   order: 10
 ---

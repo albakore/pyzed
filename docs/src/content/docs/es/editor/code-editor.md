@@ -1,6 +1,6 @@
 ---
 title: Editor de código
-description: El editor de Python de Pyzed Design - autocompletado, diagnósticos, code lens, plegado, minimapa, servidores de lenguaje, teclas y ajustes.
+description: "El editor de Python de Pyzed Design: autocompletado, diagnósticos, code lens, plegado, minimapa, servidores de lenguaje ty y ruff, teclas y ajustes."
 sidebar:
   order: 7
 ---

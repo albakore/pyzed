@@ -1,6 +1,6 @@
 ---
 title: Componentes propios
-description: Crea componentes reutilizables con sus props, estado, lógica y eventos, como en React, y úsalos en el diseñador.
+description: "Crea componentes reutilizables de Pyzed con sus props, estado, lógica y eventos, como en React, y úsalos en el diseñador visual de formularios."
 sidebar:
   order: 8
 ---

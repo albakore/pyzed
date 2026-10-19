@@ -10,6 +10,11 @@ hold for people too.
   names and color tokens. Run `validate_code` on what you wrote.
 - Prefer a ready-made `pz.ui` component over rebuilding it from `pz.*` primitives: they already
   follow the theme, sizes and hover states of Zed.
+- For a whole screen (login, dashboard, settings, data table, chat, IDE layout, onboarding, media
+  player, kanban), start from a block: `read_example("blocks/dashboard")`. Blocks are tested, use
+  theme tokens and show how the components fit together.
+- Don't name `App` attributes after window options (`title`, `size`, `position`, `theme`, `style`,
+  `scale`...) unless you mean them: the runtime reads them.
 
 ## `view()`
 

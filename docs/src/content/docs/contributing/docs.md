@@ -1,6 +1,6 @@
 ---
 title: Editing the documentation
-description: How this site is organized, how to preview it, how translations work and how to regenerate the reference and images.
+description: "How the Pyzed documentation site is organized, how to preview it, how translations work and how to regenerate the API reference and screenshots."
 sidebar:
   order: 4
 ---

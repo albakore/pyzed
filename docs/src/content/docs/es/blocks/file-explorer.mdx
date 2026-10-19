@@ -1,0 +1,218 @@
+---
+title: "Explorador de archivos e IDE"
+description: "Un diseño de IDE en Python como Zed o VS Code: árbol del proyecto, pestañas, migas de pan, editor con minimapa y marcas de git, terminal, esquema y barra de estado."
+sidebar:
+  order: 6
+---
+
+{/* Generado por docs/scripts/gen_blocks.py desde examples/blocks. No editar. */}
+
+import BlockShot from '../../../../components/blocks/BlockShot.astro';
+
+Una ventana de editor de código hecha con `ui.workspace`: barra de título con proyecto y rama, árbol del proyecto filtrable con colores de git, pestañas y migas de pan, el editor con resaltado, marcas de git y minimapa, una terminal con pestañas, un panel de esquema y la barra de estado.
+
+<BlockShot name="file_explorer" alt="Explorador de archivos e IDE" />
+
+La captura sigue el tema del sitio: cambia entre claro y oscuro arriba de la página para ver el bloque en One Light y One Dark.
+
+## Ejecutarlo
+
+Desde la raíz del repositorio:
+
+```bash
+python examples/blocks/file_explorer.py
+```
+
+## Qué muestra
+
+- `ui.workspace` coloca los paneles; se redimensionan arrastrando.
+- `ui.TreeNode.from_paths` arma el árbol desde rutas, con estados de git.
+- `ui.Tab.for_file` elige el icono y el color de cada tipo de archivo.
+- `ui.terminal` entiende colores ANSI.
+
+## Componentes que usa
+
+| Componente | Para |
+| --- | --- |
+| [Workspace](/pyzed/es/library/workspace/) | El diseño de la ventana |
+| [Tree](/pyzed/es/library/tree/) | Archivos del proyecto |
+| [Tab bar](/pyzed/es/library/tab-bar/) | Archivos abiertos |
+| [Breadcrumbs](/pyzed/es/library/breadcrumbs/) | Ruta |
+| [Editor](/pyzed/es/library/editor/) | Código |
+| [Terminal](/pyzed/es/library/terminal/) | Terminal |
+| [Title bar](/pyzed/es/library/title-bar/) | Barra de título |
+| [Status bar](/pyzed/es/library/status-bar/) | Barra de estado |
+| [Toolbar](/pyzed/es/library/toolbar/) | Barra del editor |
+| [Panel header](/pyzed/es/library/panel-header/) | Títulos de panel |
+| [List item](/pyzed/es/library/list-item/) | Esquema |
+
+## Código
+
+El bloque completo, listo para copiar. Solo necesita `pip install pyzed-ui`.
+
+```python title="examples/blocks/file_explorer.py"
+"""IDE layout block: a project tree, editor tabs with breadcrumbs, a terminal, an outline panel and a status bar."""
+
+import pyzed as pz
+from pyzed import ui
+
+FILES = {
+    "src/app/main.py": '''"""Acme Cloud desktop client."""
+
+import pyzed as pz
+from pyzed import ui
+
+from .api import Client
+from .views import Sidebar, Deployments
+
+
+class AcmeApp(pz.App):
+    title = "Acme Cloud"
+    size = (1280, 800)
+
+    def __init__(self):
+        self.client = Client.from_env()
+        self.deployments = []
+        self.selected = None
+
+    def on_start(self):
+        return self.refresh()
+
+    async def refresh(self):
+        return ("loaded", await self.client.deployments())
+
+    def update(self, message):
+        kind, data = message
+        if kind == "loaded":
+            self.deployments = data
+
+    def view(self):
+        return ui.workspace(
+            Deployments(items=self.deployments),
+            left=Sidebar(selected=self.selected),
+        )
+
+
+if __name__ == "__main__":
+    pz.run(AcmeApp)
+''',
+    "src/app/api.py": "import httpx\n\n\nclass Client:\n    ...\n",
+    "src/app/views.py": "import pyzed as pz\n",
+    "src/app/__init__.py": "",
+    "tests/test_app.py": "def test_refresh():\n    ...\n",
+    "pyproject.toml": "[project]\nname = \"acme-cloud\"\n",
+    "README.md": "# Acme Cloud\n",
+    ".gitignore": "__pycache__/\n",
+}
+STATUS = {"src/app/main.py": "modified", "src/app/views.py": "created", "README.md": "modified"}
+OUTLINE = [("class", "AcmeApp", 0), ("variable", "title", 1), ("variable", "size", 1), ("method", "__init__", 1),
+           ("method", "on_start", 1), ("method", "refresh", 1), ("method", "update", 1), ("method", "view", 1)]
+OUTLINE_ICON = {"class": ("box", "warning"), "method": ("square-function", "accent"), "variable": ("variable", "info")}
+TERMINAL = ("$ uv run pytest -q\n"
+            "\x1b[32m........................................\x1b[0m [100%]\n"
+            "\x1b[32m40 passed\x1b[0m in 1.84s\n"
+            "$ pyzed dev src/app/main.py\n"
+            "\x1b[36m●\x1b[0m watching src/ for changes · hot reload on\n")
+
+
+class FileExplorer(pz.App):
+    title = "acme-cloud — main.py"
+    size = (1200, 760)
+
+    def __init__(self):
+        self.tree = ui.TreeNode.from_paths(list(FILES), status=STATUS)
+        self.expanded = {"src", "src/app", "tests"}
+        self.open = ["src/app/main.py", "src/app/api.py", "README.md"]
+        self.active = "src/app/main.py"
+        self.texts = dict(FILES)
+        self.cursor = (24, 18)
+        self.query = ""
+
+    # -- actions ---------------------------------------------------------------------------
+    def toggle(self, node_id):
+        self.expanded ^= {node_id}
+
+    def select(self, node_id):
+        if node_id in FILES:
+            if node_id not in self.open:
+                self.open.append(node_id)
+            self.active = node_id
+
+    def close(self, path):
+        self.open.remove(path)
+        if self.active == path:
+            self.active = self.open[-1] if self.open else None
+
+    def edit(self, text):
+        self.texts[self.active] = text
+
+    # -- view ------------------------------------------------------------------------------
+    def project(self):
+        return pz.column([
+            ui.panel_header("acme-cloud", [ui.icon_button("file-plus", None, size="xs", tooltip="New file"),
+                                           ui.icon_button("folder-plus", None, size="xs", tooltip="New folder"),
+                                           ui.icon_button("list-collapse", lambda: setattr(self, "expanded", set()),
+                                                          size="xs", tooltip="Collapse all")]),
+            pz.container(ui.search_input(self.query, lambda v: setattr(self, "query", v), placeholder="Filter files…",
+                                         size="sm"), padding=(4, 8)),
+            ui.tree(self.tree, expanded=self.expanded, selected=self.active, on_toggle=self.toggle,
+                    on_select=self.select),
+        ])
+
+    def outline(self):
+        rows = []
+        for kind, name, depth in OUTLINE:
+            icon, color = OUTLINE_ICON[kind]
+            rows.append(ui.list_item(name, None, icon=icon, icon_color=self.resolved_theme().color(color),
+                                     indent=depth * 14, height=26, selected=name == "refresh"))
+        return pz.column([ui.panel_header("Outline", [ui.icon_button("arrow-down-a-z", None, size="xs")],
+                                          icon="list-tree"),
+                          pz.column(rows, padding=(4, 4))])
+
+    def editor(self):
+        if self.active is None:
+            return ui.empty_state("No open files", "Pick a file in the project panel.", icon="file")
+        tabs = [ui.Tab.for_file(p, dirty=p == "src/app/main.py", status=STATUS.get(p)) for p in self.open]
+        parts = self.active.split("/")
+        return pz.column([
+            ui.tab_bar(tabs, self.active, on_select=self.select, on_close=self.close,
+                       end=[ui.icon_button("columns-2", None, size="sm", tooltip="Split right")]),
+            ui.toolbar([ui.breadcrumbs([("folder", parts[0]), *parts[1:], "AcmeApp", "refresh"])],
+                       [ui.icon_button("play", None, size="sm", tooltip="Run"),
+                        ui.icon_button("sparkles", None, size="sm", tooltip="Inline assist")]),
+            ui.editor("ide-editor", self.texts[self.active], path=self.active, on_change=self.edit,
+                      markers={19: "modified", 20: "modified", 24: "created"}, minimap=True),
+        ])
+
+    def view(self):
+        line, col = self.cursor
+        return ui.workspace(
+            self.editor(),
+            title_bar=ui.title_bar(
+                [ui.title_button("acme-cloud", chevron=True), ui.title_button("feat/deployments", icon="git-branch",
+                                                                              muted=True)],
+                [ui.icon_button("bell", None, size="sm"), ui.avatar("KV")],
+                center=ui.title_button("Search files…", icon="search", muted=True)),
+            left=self.project(),
+            right=self.outline(),
+            bottom=pz.column([
+                ui.tab_bar([ui.Tab("zsh", "zsh", icon="terminal"), ui.Tab("tests", "tests", icon="flask-conical")],
+                           "zsh", end=[ui.icon_button("plus", None, size="sm"), ui.icon_button("x", None, size="sm")]),
+                ui.terminal(TERMINAL),
+            ]),
+            status_bar=ui.status_bar(
+                [ui.status_item("feat/deployments", icon="git-branch"), ui.status_item("0", icon="circle-x"),
+                 ui.status_item("2", icon="triangle-alert", icon_color=self.resolved_theme().warning)],
+                [ui.status_item(f"Ln {line}, Col {col}"), ui.status_item("UTF-8"), ui.status_item("Python 3.13"),
+                 ui.status_item(None, icon="sparkles", tooltip="AI agent")]),
+            left_width=250, right_width=220, bottom_height=172,
+        )
+
+
+if __name__ == "__main__":
+    pz.run(FileExplorer)
+```
+
+## Hazlo tuyo
+
+Cambia `theme` (o `self.theme = pz.themes.get("One Dark").with_accent("#e11d48")`), pon tus datos en lugar de los de ejemplo y separa piezas en [componentes](/pyzed/es/guides/components/) cuando crezcan. Un agente de IA con el [servidor MCP](/pyzed/es/ai/mcp/) puede leer este bloque con `read_example("blocks/file_explorer")` y adaptarlo por ti.

@@ -1,6 +1,6 @@
 ---
 title: "Visual designer (pyzed.designer)"
-description: "Run, open and build forms from code, register toolbox components and templates."
+description: "API reference for pyzed.designer: run, open and build forms from Python code, and register toolbox components and templates."
 sidebar:
   order: 10
 ---

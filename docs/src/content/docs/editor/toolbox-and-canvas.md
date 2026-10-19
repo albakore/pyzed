@@ -1,6 +1,6 @@
 ---
 title: Toolbox and canvas
-description: Place, select, move, resize and arrange controls; snapping, smart guides, alignment, z-order and the outline.
+description: "Place, select, move, resize and arrange controls in Pyzed Design: snapping, smart guides, alignment, z-order and the outline of your form."
 sidebar:
   order: 2
 ---

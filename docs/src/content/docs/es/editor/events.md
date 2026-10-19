@@ -1,6 +1,6 @@
 ---
 title: Eventos y manejadores
-description: El panel Eventos, todos los eventos de cada componente y del formulario, y cómo escribir manejadores en Pyzed Design.
+description: "El panel Eventos de Pyzed Design: todos los eventos de cada componente y formulario, y cómo escribir manejadores en Python con un doble clic."
 sidebar:
   order: 6
 ---

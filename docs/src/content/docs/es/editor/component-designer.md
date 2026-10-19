@@ -1,6 +1,6 @@
 ---
 title: Diseñador de componentes
-description: Dibuja componentes reutilizables con propiedades, estado, métodos y eventos propios, y anídalos como escenas de Godot.
+description: "Dibuja componentes reutilizables en Pyzed Design con propiedades, estado, métodos y eventos propios, y anídalos como escenas de Godot."
 sidebar:
   order: 9
 ---

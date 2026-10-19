@@ -1,6 +1,6 @@
 ---
 title: Agentes de IA en tu app
-description: pyzed.agents - habla con Claude, OpenAI, Gemini, OpenRouter, Ollama y servidores compatibles con OpenAI, da herramientas al modelo, transmite su respuesta a tu UI y guarda las claves en el llavero del sistema.
+description: "pyzed.agents: añade IA a apps de escritorio en Python con Anthropic, OpenAI, Gemini, OpenRouter u Ollama, da herramientas al modelo y transmite respuestas."
 sidebar:
   order: 17
 ---
@@ -262,7 +262,8 @@ portapapeles unos minutos; cuando se copia un texto que cumple `looks_like_key`,
 
 Las claves viven en el llavero del sistema (`keyring`, servicio `pyzed`); `PYZED_KEYRING=0` lo desactiva y
 `agents.secrets.use(SecretStore(mi_backend))` conecta tu propia bóveda (cualquier objeto con `get_password` /
-`set_password` / `delete_password` de keyring).
+`set_password` / `delete_password` de keyring). El orden de búsqueda, la variable de entorno de cada proveedor y
+cómo mantener las claves seguras están en [Claves de API y credenciales](/pyzed/es/ai/api-keys/).
 
 ### Claude sin clave de API
 
@@ -308,3 +309,9 @@ def fake(model, system, messages, tools, *, settings, on_event, cancel):
 agent = agents.Agent("x", tools=[stock], stream=fake, settings=agents.AgentSettings())
 assert agent.run("¿Escritorios?") == "No quedan escritorios."
 ```
+
+## Una app de chat completa
+
+[Crear apps con IA](/pyzed/es/ai/ai-apps/) construye un chat completo con streaming sobre una API compatible con
+OpenAI, con detener, errores y tests sin red, y muestra cómo usar `pyzed.agents` desde `pz.Command.perform` y
+`pz.post`.

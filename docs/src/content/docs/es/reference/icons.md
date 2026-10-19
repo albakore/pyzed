@@ -1,6 +1,6 @@
 ---
 title: "Iconos"
-description: "Iconos de Lucide incluidos y utilidades por tipo de archivo."
+description: "Referencia de la API de pyzed.icons: el conjunto de iconos de Lucide incluido, sus nombres y las utilidades de iconos por tipo de archivo."
 sidebar:
   order: 8
 ---

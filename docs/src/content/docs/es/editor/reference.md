@@ -1,6 +1,6 @@
 ---
 title: Referencia integrada
-description: La referencia de clases con buscador dentro de Pyzed Design, la ayuda contextual con Shift+F1 y la misma referencia en tus apps con pyzed.reference.
+description: "La referencia de clases con buscador dentro de Pyzed Design, la ayuda contextual con Shift+F1 y el mismo navegador de referencia en tus propias apps."
 sidebar:
   order: 11.5
 ---

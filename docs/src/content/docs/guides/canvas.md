@@ -1,6 +1,6 @@
 ---
 title: Drawing with canvas
-description: Shapes, text, transforms and mouse events with pz.canvas and pyzed.draw.
+description: "Draw custom graphics in Python desktop apps with pz.canvas and pyzed.draw: shapes, text, transforms and mouse events, rendered in Rust."
 sidebar:
   order: 7
 ---

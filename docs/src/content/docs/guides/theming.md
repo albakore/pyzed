@@ -1,6 +1,6 @@
 ---
 title: Themes
-description: The bundled themes, Zed's color tokens, and how to create and switch themes.
+description: "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime."
 sidebar:
   order: 3
 ---

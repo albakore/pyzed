@@ -1,6 +1,6 @@
 ---
 title: Eventos
-description: Los eventos comunes que tiene cualquier widget (clic, doble clic, arrastre, hover, foco, teclas, cambio de tamaño) y cómo los reciben los handlers.
+description: "Los eventos comunes de cualquier widget de Pyzed (clic, doble clic, arrastre, hover, foco, teclas, cambio de tamaño) y cómo los reciben tus handlers."
 sidebar:
   order: 7
 ---

@@ -1,6 +1,6 @@
 ---
 title: Animaciones y efectos
-description: Da a los controles rotación, desenfoque, glow, bloom, glass y opacidad, y anímalos al aparecer, en hover, al pulsar, con foco o al hacer clic.
+description: "Da a los controles rotación, desenfoque, glow, bloom, glass y opacidad en Pyzed Design, y anímalos al aparecer, en hover, al pulsar o con foco."
 sidebar:
   order: 5.5
 ---

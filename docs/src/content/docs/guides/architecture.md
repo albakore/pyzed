@@ -1,6 +1,6 @@
 ---
 title: App architecture
-description: State, view, update, messages and callables. Iced's Elm model in Python.
+description: "Pyzed app architecture: state, view, update, messages and callables. The Elm architecture of Iced, explained for Python desktop developers."
 sidebar:
   order: 1
 ---

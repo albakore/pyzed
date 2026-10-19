@@ -1,6 +1,6 @@
 ---
 title: Pyzed
-description: Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor and a visual designer.
+description: "Pyzed is an open-source Python framework for native desktop GUIs: Rust rendering with Iced, 90+ Zed-style components, a drag-and-drop visual designer, GPU effects and shaders, games and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt."
 template: splash
 hero:
   title: Beautiful desktop apps in <span class="pz-gradient-text">pure Python</span>
@@ -28,6 +28,8 @@ import Feature from '../../components/landing/Feature.astro';
 import Tiles from '../../components/landing/Tiles.astro';
 import CodeShowcase from '../../components/landing/CodeShowcase.astro';
 import Cta from '../../components/landing/Cta.astro';
+import Gallery from '../../components/landing/Gallery.astro';
+import Compare from '../../components/landing/Compare.astro';
 
 <LatestRelease />
 
@@ -35,12 +37,12 @@ import Cta from '../../components/landing/Cta.astro';
 	name="designer"
 	light="designer-light"
 	alt="Pyzed Design with a sign-in form open: toolbox and outline on the left, the form in the center and its properties on the right"
-	tags={['Drag & drop', 'Properties & events', 'Press F5 to run', '70+ components']}
+	tags={['Drag & drop', 'Properties & events', 'Press F5 to run', '90+ components']}
 />
 
 <Stats
 	items={[
-		{ value: '70+', label: 'Zed-style components' },
+		{ value: '90+', label: 'Zed-style components' },
 		{ value: '11', label: 'built-in themes' },
 		{ value: '~2000', label: 'Lucide icons' },
 		{ value: '3', label: 'desktop platforms' },
@@ -136,13 +138,35 @@ import Cta from '../../components/landing/Cta.astro';
 </Feature>
 
 <Feature
+	id="ai-agents"
+	icon="comment-alt"
+	eyebrow="AI agents"
+	title="An AI agent that builds with you"
+	shot="designer-agent"
+	alt="The agent panel of Pyzed Design after adding a switch to a form and wiring its event"
+	overlay="ai/ai-chat"
+	overlayAlt="A chat app built with pyzed.agents, streaming an answer"
+	href="/pyzed/ai/"
+	more="Pyzed for AI agents"
+>
+	Describe a screen and the agent in Pyzed Design places the controls, writes the handlers, looks at the result
+	and checks its code; every change can be undone. Your own coding agent gets the same knowledge through MCP.
+
+	- **Any model**: Claude, GPT, Gemini, Copilot, OpenRouter, local models with Ollama, and external agents
+	- Attach **images**, add **MCP servers**, keep keys in the **system keychain**
+	- An **MCP server** and **llms.txt** so Cursor, VS Code or Zed write correct Pyzed code
+	- **`pyzed.agents`** puts the same agent loop inside your own apps
+</Feature>
+
+<Feature
 	id="components"
 	icon="list-format"
 	eyebrow="Component library"
-	title="70+ components with the look of Zed"
+	title="90+ components with the look of Zed"
 	shot="components-dark"
 	light="components-light"
 	alt="A gallery of Pyzed components: buttons, inputs, tabs, an editor, a tree, menus and notifications"
+	reverse
 	href="/pyzed/library/"
 	more="Browse the component library"
 >
@@ -152,6 +176,24 @@ import Cta from '../../components/landing/Cta.astro';
 
 	- Build them from code with `pyzed.ui`, or place them from the designer's toolbox
 	- IBM Plex fonts and about **2000 Lucide icons** included
+</Feature>
+
+<Feature
+	id="blocks"
+	icon="puzzle"
+	eyebrow="Blocks"
+	title="Whole screens, ready to copy"
+	shot="blocks/dashboard-dark"
+	light="blocks/dashboard-light"
+	alt="The dashboard block: stat cards, a chart and a table of recent orders"
+	href="/pyzed/blocks/"
+	more="Browse the blocks"
+>
+	Dashboards, a login, settings, a chat, a kanban board, a data table, a music player and more: complete,
+	tested screens built from the component library. Copy one into your project and change what you need.
+
+	- Every block has a **dark and light** preview and its full source
+	- Small, readable files: a good starting point for you or for your AI agent
 </Feature>
 
 <Feature
@@ -175,34 +217,106 @@ import Cta from '../../components/landing/Cta.astro';
 	- Per-window themes and accent colors
 </Feature>
 
+<SectionTitle id="effects" eyebrow="Effects & game-style UIs" title="Interfaces that glow">
+	Pyzed draws on the GPU, so a Python app can look like a modern game: frosted **glass** with real backdrop
+	blur, **bloom** that spills light from bright parts, transparency, rotation and your own WGSL **shaders**.
+</SectionTitle>
+
+<Gallery
+	items={[
+		{ name: 'showcase/main-menu', href: '/pyzed/showcase/main-menu/', title: 'Game main menu', text: 'Shader backdrop, glowing title, glass buttons', alt: 'A synthwave game main menu with a glowing title and glass buttons over an animated shader' },
+		{ name: 'showcase/hud', href: '/pyzed/showcase/hud/', title: 'Game HUD', text: 'Health bars, a shader radar, cooldowns', alt: 'A game HUD with health and mana bars, a radar minimap and an ability bar' },
+		{ name: 'showcase/glass-dashboard', href: '/pyzed/showcase/glass-dashboard/', title: 'Glass control center', text: 'Backdrop blur and transparency', alt: 'A control center made of frosted glass panels over a colorful background' },
+		{ name: 'showcase/inventory', href: '/pyzed/showcase/inventory/', title: 'RPG inventory', text: 'Rarity glow and bloom', alt: 'An RPG inventory where rare items glow' },
+		{ name: 'showcase/shaders', href: '/pyzed/showcase/shaders/', title: 'Shaders', text: 'Your own WGSL with pz.shader', alt: 'A grid of animated GPU shaders' },
+	]}
+/>
+
+<p class="pz-center-link not-content"><a href="/pyzed/showcase/">See every demo and how it is made <span aria-hidden="true">→</span></a></p>
+
 <Feature
-	id="layout"
-	icon="seti:html"
-	eyebrow="Layout"
-	title="Rows, columns, grids and docks"
-	shot="tutorials/layout"
-	alt="A grid layout with a spanning header and flex rows showing every justify mode"
-	href="/pyzed/guides/layout/"
-	more="Layout guide"
+	id="games"
+	icon="rocket"
+	eyebrow="Make games"
+	title="From Snake to a neon shoot 'em up"
+	shot="games/neon-invaders"
+	alt="Neon Invaders: pixel-art invaders, neon glow and a glass HUD"
+	overlay="games/breakout"
+	overlayAlt="Breakout with particles and a 60 fps loop"
+	href="/pyzed/games/"
+	more="Making games with Pyzed"
 >
-	Flex rows and columns, CSS-like grids with `fr` and `auto` tracks, padding, alignment and scrolling, plus a
-	workspace with docks you can drag and resize, just like Zed's panels.
+	Everything a 2D game needs is already in Pyzed: a GPU canvas, a loop that runs once per frame, the keys held
+	down right now, sprites and particles, and the whole widget library for menus and HUDs.
+
+	- Three complete games, explained step by step: **Snake**, **Breakout** and **Neon Invaders**
+	- `pz.frames` for a smooth 60 fps loop, held keys and mouse input
+	- Bloom, glow and glass on top of the action, written in plain Python
 </Feature>
 
 <Feature
-	id="async"
-	icon="random"
-	eyebrow="Async and multiple windows"
-	title="Responsive by default"
-	shot="tutorials/multi-window"
-	alt="Three windows with different themes sharing the same state"
+	id="integrations"
+	icon="seti:db"
+	eyebrow="Connect your backend"
+	title="The libraries you already use"
+	shot="integrations/sqlalchemy"
+	alt="A contacts app with 20,000 rows from SQLAlchemy in a virtual table and an edit panel"
+	overlay="integrations/fastapi"
+	overlayAlt="A desktop client for a FastAPI server"
 	reverse
-	href="/pyzed/guides/windows/"
-	more="Windows guide"
+	href="/pyzed/integrations/overview/"
+	more="Integration tutorials"
 >
-	`update` and callbacks can be `async`, so network calls never freeze the UI. `pz.every` and `pz.listen`
-	handle timers and streams, and every `pz.Window` has its own view and theme while sharing the app's state.
+	Pyzed is only the interface: the rest of your app is ordinary Python. Runnable demos show how to put a native
+	desktop front end on the backend stack you know.
+
+	- **FastAPI** client with the server embedded in the same process
+	- **SQLAlchemy** and **SQLModel**: 20,000 rows in a virtual table, forms validated by your models
+	- **Django**'s async ORM, **httpx** and **Pydantic**, **aiosqlite** and more
 </Feature>
+
+<SectionTitle id="why" eyebrow="Why Pyzed" title="A Python GUI for a new generation">
+	tkinter, Kivy and PyQt made Python desktop apps possible. Pyzed makes them look and feel like the tools you
+	use every day, and is honest about where the others still win.
+</SectionTitle>
+
+<Compare
+	caption="Pyzed compared with other Python GUI toolkits"
+	labels={{ yes: 'Yes', partial: 'Partly or third-party', no: 'No' }}
+	columns={['Pyzed', 'tkinter', 'PyQt / PySide', 'Kivy', 'Flet']}
+	rows={[
+		{ label: 'Modern look and dark mode by default', cells: [['yes', '11 themes'], ['no'], ['partial', 'stylable'], ['partial', 'KivyMD'], ['yes', 'Material']] },
+		{ label: 'GPU rendering', cells: [['yes', 'wgpu'], ['no'], ['partial', 'Qt Quick'], ['yes', 'OpenGL'], ['yes', 'Flutter']] },
+		{ label: 'Visual designer', cells: [['yes', 'built in'], ['partial', 'third-party'], ['yes', 'Qt Designer'], ['no'], ['no']] },
+		{ label: 'Hot reload that keeps state', cells: [['yes'], ['no'], ['partial', 'QML only'], ['partial', 'third-party'], ['partial', 'restarts']] },
+		{ label: 'async callbacks', cells: [['yes'], ['no'], ['partial', 'QtAsyncio'], ['yes'], ['yes']] },
+		{ label: 'AI tooling (MCP, llms.txt, agents)', cells: [['yes'], ['no'], ['partial', 'C++/QML'], ['no'], ['yes', 'MCP server']] },
+		{ label: 'Mobile and web', cells: [['no', 'desktop only'], ['no'], ['partial', 'Android preview'], ['yes', 'mobile'], ['yes']] },
+	]}
+/>
+
+<Tiles
+	items={[
+		{
+			title: 'Feature comparison',
+			text: 'Pyzed side by side with tkinter, CustomTkinter, PyQt/PySide, wxPython, Kivy, Dear PyGui, Flet, Toga and NiceGUI.',
+			href: '/pyzed/why/comparison/',
+			icon: 'list-format',
+		},
+		{
+			title: 'Benchmarks',
+			text: 'Startup time, memory, updating 1,000 rows, install size and lines of code, measured the same way for every toolkit.',
+			href: '/pyzed/why/benchmarks/',
+			icon: 'random',
+		},
+		{
+			title: 'Developer experience',
+			text: 'Install, first window, hot reload, designer, autocomplete, error messages, packaging and AI, step by step.',
+			href: '/pyzed/why/developer-experience/',
+			icon: 'laptop',
+		},
+	]}
+/>
 
 <SectionTitle id="more" eyebrow="And much more" title="Batteries included">
 	The details that turn a prototype into an app people enjoy using.
@@ -228,11 +342,19 @@ import Cta from '../../components/landing/Cta.astro';
 			wide: true,
 		},
 		{
-			title: 'AI-ready: MCP server for agents',
-			text: 'Connect your coding agent to the Pyzed MCP server: it looks up components, learns the API and best practices, and creates components for you.',
-			href: '/pyzed/guides/mcp/',
-			icon: 'comment-alt',
+			title: 'Rows, columns, grids and docks',
+			text: 'Flex layouts, CSS-like grids with <code>fr</code> tracks, scrolling, and a workspace with docks you can drag and resize.',
+			href: '/pyzed/guides/layout/',
+			icon: 'seti:html',
+			shot: 'tutorials/layout',
+			alt: 'A grid layout with a spanning header and flex rows',
 			wide: true,
+		},
+		{
+			title: 'Async and multiple windows',
+			text: '<code>async</code> callbacks never freeze the UI; <code>pz.every</code> and <code>pz.listen</code> handle timers and streams; each <code>pz.Window</code> has its own theme.',
+			href: '/pyzed/guides/windows/',
+			icon: 'random',
 		},
 		{
 			title: 'Languages',
@@ -278,7 +400,7 @@ import Cta from '../../components/landing/Cta.astro';
 	Prefer to write everything by hand? Pyzed is a regular Python library. This is a complete app:
 </SectionTitle>
 
-<CodeShowcase shot="counter" alt="The counter app: a number above the -1, +1 and reset buttons" caption="python counter.py">
+<CodeShowcase shot="counter" alt="The counter app: a number above the minus, plus and reset buttons" caption="python counter.py">
 
 ```python title="counter.py"
 import pyzed as pz
@@ -299,8 +421,8 @@ class Counter(pz.App):
         return pz.center(pz.column([
             ui.heading(str(self.count)),
             pz.row([
-                ui.button("-1", lambda: self.add(-1), icon="minus"),
-                ui.button("+1", lambda: self.add(1), icon="plus", variant="solid"),
+                ui.button("1", lambda: self.add(-1), icon="minus"),
+                ui.button("1", lambda: self.add(1), icon="plus", variant="solid"),
                 ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0)),
             ], spacing=8),
         ], spacing=16, align="center"), bg=self.theme.editor)
@@ -316,12 +438,16 @@ pz.run(Counter)
 </SectionTitle>
 
 <CardGrid>
+	<LinkCard title="Quickstart" href="/pyzed/getting-started/quickstart/" description="Install Pyzed and create your first window." />
 	<LinkCard title="Component library" href="/pyzed/library/" description="Every component with a preview, what it does and how to use it." />
 	<LinkCard title="Pyzed Design manual" href="/pyzed/editor/" description="Each panel of the editor explained, with tips and shortcuts." />
-	<LinkCard title="Quickstart" href="/pyzed/getting-started/quickstart/" description="Install Pyzed and create your first window." />
+	<LinkCard title="Blocks" href="/pyzed/blocks/" description="Complete screens to copy: dashboard, login, settings, chat, kanban…" />
+	<LinkCard title="Showcase" href="/pyzed/showcase/" description="Glass, bloom, shaders and game-style interfaces, with their code." />
+	<LinkCard title="Making games" href="/pyzed/games/" description="Snake, Breakout and Neon Invaders, step by step." />
+	<LinkCard title="Integrations" href="/pyzed/integrations/overview/" description="FastAPI, SQLAlchemy, SQLModel, Django, httpx and Pydantic." />
+	<LinkCard title="Pyzed for AI agents" href="/pyzed/ai/" description="The agent in the designer, the MCP server, llms.txt and pyzed.agents." />
+	<LinkCard title="Why Pyzed" href="/pyzed/why/" description="How Pyzed compares with tkinter, Kivy, PyQt and Flet, with benchmarks." />
 	<LinkCard title="Tutorial: to-do list" href="/pyzed/tutorials/todo-app/" description="State, forms, lists and shortcuts, step by step." />
-	<LinkCard title="Tutorial: a mini Zed-like editor" href="/pyzed/tutorials/zed-like-editor/" description="Workspace, file tree, tabs, editor and palette." />
-	<LinkCard title="Themes" href="/pyzed/guides/theming/" description="Color tokens, built-in themes and how to create your own." />
 </CardGrid>
 
 <Cta

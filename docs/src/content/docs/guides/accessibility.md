@@ -1,6 +1,6 @@
 ---
 title: Accessibility
-description: Keyboard focus with Tab, the system's reduce motion setting and the state of screen reader support.
+description: "Accessibility in Pyzed desktop apps: keyboard focus with Tab, the system's reduce motion setting and the state of screen reader support."
 sidebar:
   order: 18
 ---

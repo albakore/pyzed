@@ -1,6 +1,6 @@
 ---
 title: Archivos, plantillas y scripting
-description: Pestañas de documentos, formularios nuevos y plantillas, abrir y guardar, el formato .pzform, componentes propios y la API de Python del diseñador.
+description: "Pestañas de documentos, formularios nuevos y plantillas, abrir y guardar, el formato .pzform, componentes propios y la API de scripting de Pyzed Design."
 sidebar:
   order: 10
 ---

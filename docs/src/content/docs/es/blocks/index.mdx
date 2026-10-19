@@ -1,0 +1,39 @@
+---
+title: "Bloques"
+description: "Pantallas de interfaz de escritorio en Python listas para copiar: login, dashboard, ajustes, tabla de datos, chat, IDE, asistente de bienvenida, reproductor de música y kanban, con componentes de Pyzed."
+sidebar:
+  order: 0
+  label: "Resumen"
+---
+
+{/* Generado por docs/scripts/gen_blocks.py desde examples/blocks. No editar. */}
+
+import BlockGallery from '../../../../components/blocks/BlockGallery.astro';
+
+Los bloques son **pantallas completas** hechas con los [componentes](/pyzed/es/library/) de Pyzed, en la
+línea de los blocks de shadcn/ui: abre uno, ejecútalo, copia el código en tu app y cambia lo que necesites. Cada
+bloque es un único archivo ejecutable en
+[`examples/blocks/`](https://github.com/albakore/pyzed/tree/main/examples/blocks), probado en CI con tema claro y
+oscuro, así que el código de estas páginas siempre funciona con el Pyzed actual.
+
+<BlockGallery base="/pyzed/es/blocks/" items={[{"slug": "login", "shot": "login", "name": "Inicio de sesión", "blurb": "Pantalla de inicio de sesión para apps de escritorio en Python."}, {"slug": "dashboard", "shot": "dashboard", "name": "Panel de control", "blurb": "Un dashboard de analítica en Python."}, {"slug": "settings", "shot": "settings", "name": "Ajustes", "blurb": "Una página de ajustes para apps de escritorio en Python."}, {"slug": "data-table", "shot": "data_table", "name": "Tabla de datos", "blurb": "Una tabla de datos con filtros en Python."}, {"slug": "chat", "shot": "chat", "name": "Chat", "blurb": "Una interfaz de chat de equipo en Python."}, {"slug": "file-explorer", "shot": "file_explorer", "name": "Explorador de archivos e IDE", "blurb": "Un diseño de IDE en Python como Zed o VS Code."}, {"slug": "onboarding", "shot": "onboarding", "name": "Asistente de bienvenida", "blurb": "Un asistente de configuración en varios pasos en Python."}, {"slug": "music-player", "shot": "music_player", "name": "Reproductor de música", "blurb": "Una interfaz de reproductor de música en Python."}, {"slug": "kanban", "shot": "kanban", "name": "Tablero kanban", "blurb": "Un tablero kanban en Python."}]} />
+
+## Cómo usar un bloque
+
+1. Abre su página y mira la captura en claro y oscuro (cambia el tema del sitio).
+2. Ejecútalo: `python examples/blocks/<nombre>.py`, o copia la sección **Código** en un archivo.
+3. Quédate con lo que necesites. Los bloques son clases `pz.App` normales: sus piezas son métodos (`sidebar()`,
+   `header()`...) que devuelven widgets, así que puedes llevar uno a tu app tal cual.
+
+## Hazlos tuyos
+
+- **Tema.** Pon `theme = "Gruvbox Dark"` (o cualquier [tema](/pyzed/es/guides/theming/)) en la app, o crea uno con
+  el color de tu marca: `pz.themes.get("One Dark").with_accent("#e11d48")`. Todos los bloques usan tokens del tema
+  (`"accent"`, `"panel"`, `"text_muted"`...), nunca colores fijos para sus superficies.
+- **Datos.** Los datos de ejemplo están al principio de cada archivo. Cámbialos por una consulta a la base de datos,
+  una llamada HTTP o archivos; el trabajo lento va en una corrutina para que la ventana nunca se bloquee (mira
+  [Async](/pyzed/es/guides/async/)).
+- **Componentes.** Cuando una pieza tenga estado propio, conviértela en un
+  [`pz.Component`](/pyzed/es/guides/components/) para que también aparezca en la caja de herramientas de Pyzed Design.
+- **IA.** Con el [servidor MCP](/pyzed/es/ai/mcp/) conectado, pide a tu agente: *"Parte del bloque de dashboard y
+  haz que muestre nuestros issues de GitHub"*. Puede leer cada bloque con `read_example("blocks/dashboard")`.

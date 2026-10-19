@@ -1,6 +1,6 @@
 ---
 title: Workspace
-description: The layout of a Zed window, with title bar, docks and status bar.
+description: "Build a Zed-style window in Python: title bar, resizable docks, panels and status bar with the Pyzed workspace components."
 sidebar:
   order: 5
 ---

@@ -1,0 +1,214 @@
+---
+title: "Panel de control"
+description: "Un dashboard de analítica en Python: navegación lateral, tarjetas KPI con sparklines, gráfico de barras de ingresos, donut de tráfico y tabla de pedidos ordenable."
+sidebar:
+  order: 2
+---
+
+{/* Generado por docs/scripts/gen_blocks.py desde examples/blocks. No editar. */}
+
+import BlockShot from '../../../../components/blocks/BlockShot.astro';
+
+Un panel de administración: navegación lateral con una tarjeta de mejora de plan, cabecera con búsqueda y notificaciones, cuatro tarjetas KPI con tendencia, un gráfico de ingresos con selector 7 días / 30 días / 12 meses, fuentes de tráfico con donut y objetivo mensual, y una tabla ordenable de pedidos recientes.
+
+<BlockShot name="dashboard" alt="Panel de control" />
+
+La captura sigue el tema del sitio: cambia entre claro y oscuro arriba de la página para ver el bloque en One Light y One Dark.
+
+## Ejecutarlo
+
+Desde la raíz del repositorio:
+
+```bash
+python examples/blocks/dashboard.py
+```
+
+## Qué muestra
+
+- Tarjetas `ui.stat`: valor, variación y sparkline en una llamada.
+- `ui.bar_chart` y `ui.donut` reciben listas de números; los colores salen del tema.
+- Celdas propias en `ui.table`: avatares y badges de estado con `render=`.
+- Clic en una cabecera para ordenar; la búsqueda filtra los pedidos al escribir.
+
+## Componentes que usa
+
+| Componente | Para |
+| --- | --- |
+| [Stat](/pyzed/es/library/stat/) | Tarjetas KPI |
+| [Bar chart](/pyzed/es/library/bar-chart/) | Ingresos |
+| [Donut](/pyzed/es/library/donut/) | Fuentes de tráfico |
+| [Table](/pyzed/es/library/table/) | Pedidos |
+| [Card](/pyzed/es/library/card/) | Cada panel |
+| [Segmented](/pyzed/es/library/segmented/) | Rango de fechas |
+| [List item](/pyzed/es/library/list-item/) | Navegación |
+| [Search input](/pyzed/es/library/search-input/) | Búsqueda |
+| [Progress](/pyzed/es/library/progress/) | Objetivo mensual |
+| [Badge](/pyzed/es/library/badge/) | Estados |
+| [Avatar](/pyzed/es/library/avatar/) | Clientes |
+| [Sparkline](/pyzed/es/library/sparkline/) | Tendencias |
+
+## Código
+
+El bloque completo, listo para copiar. Solo necesita `pip install pyzed-ui`.
+
+```python title="examples/blocks/dashboard.py"
+"""Dashboard block: sidebar navigation, KPI cards, a revenue chart, traffic sources and recent orders."""
+
+import pyzed as pz
+from pyzed import ui
+
+NAV = [
+    ("layout-dashboard", "Overview"),
+    ("chart-line", "Analytics"),
+    ("shopping-cart", "Orders"),
+    ("users", "Customers"),
+    ("box", "Products"),
+    ("credit-card", "Billing"),
+]
+
+STATS = [
+    ("Revenue", "$48,290", 12.4, [18, 22, 19, 25, 27, 24, 31, 35]),
+    ("Orders", "1,284", 8.1, [40, 38, 44, 47, 45, 52, 55, 58]),
+    ("Customers", "9,431", 3.6, [70, 72, 71, 74, 76, 77, 79, 82]),
+    ("Refund rate", "1.9%", -0.4, [3.1, 2.8, 2.9, 2.5, 2.4, 2.2, 2.0, 1.9]),
+]
+
+REVENUE = {
+    "7 days": ([5.2, 6.8, 6.1, 7.4, 8.9, 9.6, 8.2], ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]),
+    "30 days": ([28, 31, 26, 35, 39, 42], ["W1", "W2", "W3", "W4", "W5", "W6"]),
+    "12 months": ([31, 29, 36, 40, 38, 45, 51, 49, 55, 58, 62, 70],
+                  ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]),
+}
+
+TRAFFIC = [("Organic search", 46, "accent"), ("Direct", 24, "success"), ("Social", 18, "warning"),
+           ("Referral", 12, "error")]
+
+ORDERS = [
+    {"id": "#3210", "customer": "Olivia Martin", "product": "Pro plan · yearly", "status": "Paid", "amount": 1999.00},
+    {"id": "#3209", "customer": "Jackson Lee", "product": "Team plan · 5 seats", "status": "Pending", "amount": 450.00},
+    {"id": "#3208", "customer": "Isabella Nguyen", "product": "Starter plan", "status": "Paid", "amount": 99.00},
+    {"id": "#3207", "customer": "William Kim", "product": "Add-on · Analytics", "status": "Refunded", "amount": 39.00},
+    {"id": "#3206", "customer": "Sofia Davis", "product": "Pro plan · monthly", "status": "Paid", "amount": 199.00},
+]
+
+STATUS_TINT = {"Paid": "success", "Pending": "warning", "Refunded": "error"}
+
+
+class Dashboard(pz.App):
+    title = "Dashboard"
+    size = (1200, 760)
+
+    def __init__(self):
+        self.page = "Overview"
+        self.range = "7 days"
+        self.query = ""
+        self.sort_by, self.descending = "Order", True  # a column title
+
+    def sort(self, key):
+        self.descending = not self.descending if key == self.sort_by else False
+        self.sort_by = key
+
+    # -- pieces ----------------------------------------------------------------------------
+    def sidebar(self):
+        items = [ui.list_item(label, lambda label=label: setattr(self, "page", label), icon=icon,
+                              selected=label == self.page, height=32) for icon, label in NAV]
+        return pz.container(
+            pz.column([
+                pz.row([pz.container(pz.icon("zap", size=16, color="#ffffff"), padding=6).style(
+                    background="accent", radius=8),
+                        ui.label("Acme", size="lg", weight="semibold")], spacing=10, align="center"),
+                pz.column(items, spacing=2),
+                pz.vspace(),
+                ui.card(pz.column([
+                    ui.label("Upgrade to Pro", weight="semibold"),
+                    ui.muted("Unlock forecasting and unlimited seats.", size="sm"),
+                    ui.button("Upgrade", lambda: setattr(self, "page", "Billing"), variant="solid", size="sm", full_width=True),
+                ], spacing=8), padding=12),
+                ui.list_item("Settings", None, icon="settings", height=32),
+            ], spacing=20, height="fill"),
+            width=220, height="fill", padding=(18, 12),
+        ).style(background="panel")
+
+    def header(self):
+        return pz.row([
+            pz.column([ui.heading(self.page, level=2), ui.muted("Here is what happened in your store.")],
+                      spacing=2),
+            pz.hspace(),
+            pz.container(ui.search_input(self.query, lambda v: setattr(self, "query", v),
+                                         placeholder="Search orders…"), width=240),
+            ui.icon_button("bell", None, tooltip="Notifications"),
+            ui.avatar("KV", size=30),
+        ], spacing=12, align="center")
+
+    def revenue(self):
+        values, labels = REVENUE[self.range]
+        return ui.card(
+            pz.column([
+                pz.row([pz.text("$48.3k", size=22, weight="semibold"), ui.badge("+12.4%", tint="success",
+                                                                                icon="trending-up")],
+                       spacing=10, align="center"),
+                ui.bar_chart(values, labels=labels, width=470, height=140),
+            ], spacing=12),
+            title="Revenue",
+            actions=[ui.segmented(list(REVENUE), self.range, lambda v: setattr(self, "range", v))],
+            width="fill",
+        )
+
+    def traffic(self):
+        legend = [pz.row([ui.indicator(color, size=8), ui.label(name, size="sm"), pz.hspace(),
+                          ui.label(f"{share}%", size="sm", weight="medium")], spacing=8, align="center")
+                  for name, share, color in TRAFFIC]
+        colors = [self.resolved_theme().color(c) for _, _, c in TRAFFIC]
+        return ui.card(
+            pz.column([
+                pz.row([ui.donut([s for _, s, _ in TRAFFIC], colors=colors, size=150, thickness=20, label="12.8k"),
+                        pz.column(legend, spacing=12, width="fill")], spacing=20, align="center"),
+                ui.divider(),
+                pz.column([pz.row([ui.label("Monthly goal", size="sm"), pz.hspace(),
+                                   ui.muted("$48.3k of $60k", size="sm")]),
+                           ui.progress(0.805, height=6)], spacing=8),
+            ], spacing=16),
+            title="Traffic sources", width="fill",
+        )
+
+    def orders(self):
+        rows = [o for o in ORDERS if self.query.lower() in (o["customer"] + o["product"]).lower()]
+        columns = [
+            ui.Column("Order", "id", width=80),
+            ui.Column("Customer", "customer", render=lambda name: pz.row(
+                [ui.avatar("".join(p[0] for p in name.split()), size=22, index=len(name)), ui.label(name)], spacing=8,
+                align="center")),
+            ui.Column("Product", "product"),
+            ui.Column("Status", "status", width=110,
+                      render=lambda s: ui.badge(s, tint=STATUS_TINT[s])),
+            ui.Column("Amount", "amount", width=100, align="end", render=lambda a: ui.label(f"${a:,.2f}")),
+        ]
+        return ui.card(
+            ui.table(columns, rows, sort_by=self.sort_by, descending=self.descending, on_sort=self.sort,
+                     row_height=36),
+            title="Recent orders", actions=[ui.button("View all", None, variant="ghost", size="sm",
+                                                       icon="arrow-right", icon_position="end")],
+            width="fill",
+        )
+
+    def view(self):
+        stats = [ui.stat(title, value, delta=delta, trend=trend, width="fill")
+                 for title, value, delta, trend in STATS]
+        body = pz.column([
+            self.header(),
+            pz.row(stats, spacing=16),
+            pz.row([pz.container(self.revenue(), width="fill:3"), pz.container(self.traffic(), width="fill:2")],
+                   spacing=16),
+            self.orders(),
+        ], spacing=20, padding=24)
+        return pz.row([self.sidebar(), ui.divider(vertical=True), pz.scrollable(body, height="fill")], height="fill").style(
+            background="background")
+
+
+if __name__ == "__main__":
+    pz.run(Dashboard)
+```
+
+## Hazlo tuyo
+
+Cambia `theme` (o `self.theme = pz.themes.get("One Dark").with_accent("#e11d48")`), pon tus datos en lugar de los de ejemplo y separa piezas en [componentes](/pyzed/es/guides/components/) cuando crezcan. Un agente de IA con el [servidor MCP](/pyzed/es/ai/mcp/) puede leer este bloque con `read_example("blocks/dashboard")` y adaptarlo por ti.

@@ -1,6 +1,6 @@
 ---
 title: Tests y capturas
-description: Renderiza tu app sin ventana para tests, documentación e integración continua.
+description: "Prueba apps de Pyzed sin ventana: renderiza tu GUI de Python en modo headless para tests unitarios, capturas de documentación e integración continua."
 sidebar:
   order: 10
 ---

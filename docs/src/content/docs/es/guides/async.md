@@ -1,6 +1,6 @@
 ---
 title: Async y suscripciones
-description: Corrutinas, generadores, temporizadores y streams sin bloquear la interfaz.
+description: "Async en Pyzed: ejecuta corrutinas, generadores, temporizadores y streams en apps de escritorio en Python sin bloquear ni congelar la interfaz."
 sidebar:
   order: 5
 ---

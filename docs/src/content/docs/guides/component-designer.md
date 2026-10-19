@@ -1,6 +1,6 @@
 ---
 title: Component designer
-description: Draw reusable components with properties, state, methods and custom events, and nest them like Godot scenes.
+description: "Draw reusable Pyzed components visually, with properties, state, methods and custom events, and nest them like Godot scenes."
 sidebar:
   order: 13.5
 ---

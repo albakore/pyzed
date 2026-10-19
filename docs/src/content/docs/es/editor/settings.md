@@ -1,6 +1,6 @@
 ---
 title: Ajustes
-description: Las preferencias de Pyzed Design y de su editor de código, dónde se guardan y cómo traducir el editor.
+description: "Las preferencias de Pyzed Design y de su editor de código: temas, fuentes, teclas, dónde se guardan los ajustes y cómo traducir el diseñador visual."
 sidebar:
   order: 13
 ---

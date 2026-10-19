@@ -1,6 +1,6 @@
 ---
 title: Arquitectura de una app
-description: Estado, view, update, mensajes y callables. El modelo Elm de Iced en Python.
+description: "Arquitectura de una app de Pyzed: estado, view, update, mensajes y callables. La arquitectura Elm de Iced explicada para desarrolladores de Python."
 sidebar:
   order: 1
 ---

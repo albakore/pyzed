@@ -1,6 +1,6 @@
 ---
 title: "Temas"
-description: "Theme, los temas incluidos y las utilidades de color."
+description: "Referencia de la API de Theme en Pyzed: los temas incluidos, los tokens de color de Zed, cómo derivar temas propios y utilidades de color."
 sidebar:
   order: 5
 ---

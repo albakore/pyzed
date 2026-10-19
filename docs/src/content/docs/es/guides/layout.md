@@ -1,6 +1,6 @@
 ---
 title: Layout y estilo
-description: Filas, columnas, contenedores, tamaños, relleno, alineación y colores.
+description: "Layout en Pyzed: filas, columnas, contenedores, tamaños, relleno, alineación y colores para organizar interfaces de escritorio nativas en Python."
 sidebar:
   order: 2
 ---

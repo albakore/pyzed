@@ -1,6 +1,6 @@
 ---
 title: Proyectos con uv
-description: Crea y gestiona apps de Pyzed como proyectos de uv estándar, con la UI en su propia carpeta y ruff, ty y git listos.
+description: "Crea y gestiona apps de escritorio de Pyzed como proyectos estándar de uv, con la UI en su propia carpeta y ruff, ty y git listos desde el principio."
 sidebar:
   order: 14
 ---

@@ -1,6 +1,6 @@
 ---
 title: Trucos y consejos
-description: Pequeños hábitos que te hacen ir más rápido en Pyzed Design.
+description: "Pequeños hábitos que te hacen más rápido en Pyzed Design: atajos, selección múltiple, guías inteligentes, plantillas y trucos para crear formularios."
 sidebar:
   order: 14
 ---

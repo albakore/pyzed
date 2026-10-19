@@ -1,6 +1,6 @@
 ---
 title: Muchos datos y rendimiento
-description: Muestra cientos de miles de filas con listas y tablas virtuales, y evita reconstruir las partes de la vista que no cambiaron con @pz.memo.
+description: "Rendimiento de GUIs en Python con Pyzed: muestra cientos de miles de filas con listas y tablas virtuales y evita reconstruir vistas con @pz.memo."
 sidebar:
   order: 18
 ---

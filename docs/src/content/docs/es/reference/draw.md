@@ -1,6 +1,6 @@
 ---
 title: "Dibujo (pyzed.draw)"
-description: "Formas, texto y transformaciones para pz.canvas."
+description: "Referencia de la API de pyzed.draw: formas, trazados, texto y transformaciones para dibujar gráficos 2D propios en un pz.canvas de tu app."
 sidebar:
   order: 7
 ---

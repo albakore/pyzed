@@ -1,6 +1,6 @@
 ---
 title: Formularios
-description: Campos de texto, interruptores, casillas, deslizadores, progreso y grupos segmentados.
+description: "Campos de texto, interruptores, casillas, deslizadores, barras de progreso y grupos segmentados: formularios para GUIs nativas en Python con Pyzed."
 sidebar:
   order: 2
 ---

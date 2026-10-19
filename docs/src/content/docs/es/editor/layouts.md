@@ -1,6 +1,6 @@
 ---
 title: Disposición y contenedores
-description: Paneles, group boxes y tarjetas, filas y columnas flex, grillas, espaciadores y anclajes en Pyzed Design.
+description: "Paneles, group boxes y tarjetas, filas y columnas flex, grillas, espaciadores y anclajes: organiza formularios de escritorio en Python con Pyzed Design."
 sidebar:
   order: 4
 ---

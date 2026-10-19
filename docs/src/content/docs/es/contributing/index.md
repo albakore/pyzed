@@ -1,6 +1,6 @@
 ---
 title: Contribuir a Pyzed
-description: Prepara un entorno de desarrollo, ejecuta las comprobaciones de la CI y sigue las convenciones de commits y pull requests.
+description: "Contribuye a Pyzed: prepara un entorno de desarrollo con Python y Rust, ejecuta las comprobaciones de la CI y sigue las convenciones de commits y PRs."
 sidebar:
   label: Introducción
   order: 1

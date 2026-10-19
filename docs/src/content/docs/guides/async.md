@@ -1,6 +1,6 @@
 ---
 title: Async and subscriptions
-description: Coroutines, generators, timers and streams without blocking the interface.
+description: "Async in Pyzed: run coroutines, generators, timers and streams in Python desktop apps without blocking or freezing the user interface."
 sidebar:
   order: 5
 ---

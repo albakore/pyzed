@@ -1,0 +1,169 @@
+---
+title: Experiencia de desarrollo con Pyzed
+description: "Cómo es construir una app de escritorio en Python con Pyzed en el día a día: instalación, primera ventana, recarga en caliente, diseñador visual, autocompletado y tipos, mensajes de error, empaquetado y asistentes de IA, comparado con otros toolkits GUI de Python."
+sidebar:
+  label: Experiencia de desarrollo
+  order: 4
+---
+
+import BenchChart from '../../../../components/why/BenchChart.astro';
+
+Los números de velocidad importan menos que lo que se siente con un toolkit a las once de la noche cuando
+intentas terminar algo. Esta página recorre un proyecto Pyzed desde el primer comando hasta la app
+empaquetada, y compara cada paso con lo que te piden los demás toolkits. Donde decimos «medimos» o «nos
+encontramos», ocurrió al preparar los [benchmarks](/pyzed/es/why/benchmarks/).
+
+## 1. Instalar
+
+```bash
+pip install pyzed-ui          # o: uv add pyzed-ui
+```
+
+Un solo wheel con el núcleo en Rust ya compilado, para Windows, macOS y Linux, y sin dependencias en tiempo
+de ejecución. Compara con lo que nos encontramos en un contenedor Ubuntu 24.04 limpio:
+
+| Toolkit | Qué necesitó `pip install` allí |
+| --- | --- |
+| Pyzed | Nada más (un Linux de escritorio ya tiene la biblioteca `libxkbcommon-x11` que carga; nuestro contenedor mínimo no) |
+| tkinter | No se instala con pip: viene con Python, o con un paquete del sistema `python3-tk` en Debian y Ubuntu |
+| PySide6 | Nada más, pero una descarga grande (mira el [tamaño instalado](/pyzed/es/why/benchmarks/#tamaño-instalado)) |
+| Kivy, Dear PyGui | Nada más |
+| Flet | `flet[desktop]`; el cliente de escritorio se descarga la primera vez que se ejecuta una app, y en Linux necesitó los paquetes del sistema `libsecret` y `libgles2` |
+| Toga | Falló hasta instalar `libgirepository-2.0-dev` y `libcairo2-dev` con apt, porque PyGObject se compiló desde el código fuente |
+| wxPython | Sin wheels para Linux en PyPI: pip compila wxWidgets desde el código fuente (hay wheels para algunas distribuciones en wxpython.org) |
+
+## 2. Primera ventana
+
+```bash
+pyzed new hola --script && cd hola && python main.py
+```
+
+o un [proyecto uv](/pyzed/es/guides/projects/) completo con linter, tipos y git con `pyzed new hola`. La app
+es una clase con un `view()`:
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Hola(pz.App):
+    title = "Hola"
+    nombre = ""
+
+    def view(self):
+        return pz.center(pz.column([
+            ui.input(self.nombre, lambda texto: setattr(self, "nombre", texto), placeholder="Tu nombre"),
+            ui.heading(f"¡Hola, {self.nombre or 'mundo'}!"),
+        ], spacing=12, max_width=320))
+
+
+pz.run(Hola)
+```
+
+Ya tiene tema oscuro, anillos de foco, estados al pasar el ratón y texto bien renderizado; nada que estilizar.
+
+### ¿Cuánto código?
+
+Escribimos las mismas dos apps en cada toolkit, con el estilo de la documentación de cada proyecto
+([código](https://github.com/albakore/pyzed/tree/main/benchmarks/apps)), y contamos las líneas que no son
+vacías, comentarios ni docstrings.
+
+<BenchChart metric="loc" app="counter" title="Contador (−, + y Reset)" lang="es" />
+<BenchChart metric="loc" app="todo" title="Lista de tareas (añadir, marcar, borrar, contar)" lang="es" />
+
+El número de líneas depende del estilo, así que tómalo como guía aproximada. La diferencia mayor es *qué*
+hacen esas líneas: en tkinter, Qt, Flet y Dear PyGui parte del código copia datos a los widgets y los
+mantiene sincronizados; en Pyzed, `view()` es el único lugar que convierte datos en widgets.
+
+## 3. Recarga en caliente
+
+```bash
+pyzed dev main.py
+```
+
+Edita `view()`, un módulo auxiliar o un estilo y guarda: la ventana se actualiza en el sitio, **con tus datos
+todavía ahí** (el objeto de la app se conserva y recibe la clase nueva). Si el código nuevo falla, el error
+aparece en la ventana, y el siguiente guardado que lo corrige devuelve la app.
+
+![Antes de guardar](../../../../../screenshots/hot-reload-before.png)
+
+![Después de guardar: mismos datos, nuevo diseño](../../../../../screenshots/hot-reload-after.png)
+
+Flet reinicia la app al guardar y NiceGUI recarga su servidor, así que el estado en memoria empieza de cero.
+Qt ofrece una vista previa en vivo para QML en sus herramientas, no para código Widgets en Python. tkinter,
+Kivy, Dear PyGui y Toga necesitan reiniciar (o una herramienta de terceros).
+
+## 4. Un diseñador visual que escribe Python
+
+`pyzed design` abre [Pyzed Design](/pyzed/es/editor/): arrastra componentes a un formulario, ajusta sus
+propiedades, conecta eventos a manejadores en Python, edita código con autocompletado y diagnósticos (ty y
+ruff) y ejecuta el formulario.
+
+![Pyzed Design](../../../../../screenshots/designer.png)
+
+Qt tiene los diseñadores más potentes (Qt Designer, Qt Creator, Qt Design Studio). tkinter y wxPython tienen
+diseñadores de terceros; Kivy, Dear PyGui, Flet, Toga y NiceGUI no tienen.
+
+## 5. Autocompletado y comprobación de tipos
+
+El paquete tiene tipos (`py.typed`, con stubs del núcleo en Rust), así que los editores completan los
+argumentos de los widgets y los comprobadores de tipos detectan errores antes de ejecutar nada:
+
+```python
+ui.button("Guardar", self.guardar, variant="solid", size="sm", keys="ctrl-s")
+#                                  ^ el autocompletado lista cada opción, con su documentación
+```
+
+Los proyectos nuevos ejecutan [ty](https://docs.astral.sh/ty/) y [ruff](https://docs.astral.sh/ruff/) con
+`pyzed check`.
+
+## 6. Mensajes de error que dicen qué arreglar
+
+Los errores se detectan al crear el widget, con el valor que estaba mal:
+
+```text
+ValueError: unknown button variant 'soild'
+ValueError: unknown icon 'plsu'; see pyzed.icons.names()
+ValueError: invalid color: "#12345"
+TypeError: text() got an unexpected keyword argument 'colr'
+```
+
+Una excepción dentro de `view()` o de un callback aparece en la ventana (con recarga en caliente) o como un
+traceback normal de Python que apunta a tu línea, no al código C++ o Rust de debajo.
+
+## 7. Capturas y tests sin pantalla
+
+```python
+app = Todo()
+app.tasks = [["Escribir la documentación", False], ["Publicar", True]]
+app.screenshot("tareas.png", size=(420, 320))
+```
+
+`screenshot` renderiza fuera de pantalla con la CPU, así que funciona en CI y en tests; mira
+[Tests y capturas](/pyzed/es/guides/testing/). Otros toolkits necesitan una pantalla virtual (Xvfb) o un
+capturador de pantalla para lo mismo.
+
+## 8. Empaquetado
+
+```bash
+uv run pyzed build             # dist/MiApp (una carpeta) o --onefile
+```
+
+`pyzed build` envuelve PyInstaller y añade lo que los formularios cargan en tiempo de ejecución. En otros:
+Qt tiene `pyside6-deploy` (Nuitka), `flet build` de Flet necesita el SDK de Flutter, Toga usa Briefcase (muy
+bueno, y además apunta a móviles), Kivy usa Buildozer para Android y PyInstaller para escritorio. Mira
+[Compilar y distribuir](/pyzed/es/guides/packaging/).
+
+## 9. Trabajar con asistentes de IA
+
+Los modelos de lenguaje escriben mejor código para APIs que pueden consultar. Pyzed les da:
+
+- un [servidor MCP](/pyzed/es/guides/mcp/) con la firma exacta de cada widget, la documentación,
+  comprobaciones de código y capturas del resultado, para que un agente en Claude Code, Cursor, VS Code o Zed
+  vea lo que ha construido;
+- esta documentación como texto plano en [`llms.txt`](https://albakore.github.io/pyzed/llms.txt);
+- el [panel de agente](/pyzed/es/editor/ai-agents/) del diseñador, que edita formularios contigo;
+- [`pyzed.agents`](/pyzed/es/guides/agents/) para poner modelos con herramientas dentro de tu propia app.
+
+Flet también publica un [servidor MCP](https://flet.dev/docs/cookbook/flet-mcp); Qt ofrece Qt AI Assistant en
+Qt Creator (comercial, orientado a C++ y QML).

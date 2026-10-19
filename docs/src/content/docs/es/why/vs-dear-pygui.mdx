@@ -1,0 +1,68 @@
+---
+title: Pyzed vs Dear PyGui
+description: "Pyzed vs Dear PyGui para interfaces de escritorio en Python: interfaz retenida al estilo Elm frente a ImGui en modo inmediato, aspecto, herramientas y números medidos, con las mismas apps lado a lado y cuándo encaja cada uno."
+sidebar:
+  label: Pyzed vs Dear PyGui
+  order: 9
+---
+
+import SideBySide from '../../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import dpgCounter from '../../../../../../benchmarks/apps/dearpygui/counter.py?raw';
+import pyzedTodo from '../../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import dpgTodo from '../../../../../../benchmarks/apps/dearpygui/todo.py?raw';
+
+[Dear PyGui](https://github.com/hoffstadt/DearPyGui) envuelve [Dear ImGui](https://github.com/ocornut/imgui),
+el toolkit en modo inmediato que usan los motores de videojuegos para sus herramientas de depuración. Se
+dibuja por GPU y es muy rápido, y brilla en gráficas en tiempo real, editores de nodos y herramientas
+internas. Su aspecto es el de «herramienta» de ImGui, y redibuja continuamente, algo que encaja mejor en un
+panel que cambia en cada fotograma que en un formulario que cambia cuando haces clic.
+
+## En resumen
+
+| | Pyzed | Dear PyGui |
+| --- | --- | --- |
+| Modelo | Estado + `view()` (arquitectura Elm) | Elementos creados una vez con etiquetas, cambiados con `set_value` / `configure_item` |
+| Redibujado | Cuando algo cambia | En cada fotograma, por defecto |
+| Aspecto | Componentes al estilo de Zed, temas, modo oscuro | Estilo de herramienta ImGui, configurable con temas |
+| Texto | Shaping completo, cualquier escritura, emoji, texto enriquecido y markdown | Fuentes y rangos de glifos que cargas tú |
+| Gráficas | [Sparklines, barras y donuts](/pyzed/es/library/bar-chart/), un canvas | Excelentes gráficas integradas (ImPlot) |
+| Escritorio | Menús, atajos, varias ventanas, docks, editor de código | Docking y viewports de ImGui |
+| Diseñador, recarga | Pyzed Design, `pyzed dev` | – |
+| Accesibilidad | Teclado; sin lectores de pantalla todavía | Sin lectores de pantalla |
+
+## El mismo contador
+
+<SideBySide left={pyzedCounter} right={dpgCounter} leftTitle="Pyzed" rightTitle="Dear PyGui" />
+
+## La misma lista de tareas
+
+<SideBySide left={pyzedTodo} right={dpgTodo} leftTitle="Pyzed" rightTitle="Dear PyGui" />
+
+## Medido
+
+Medianas de [los benchmarks](/pyzed/es/why/benchmarks/) (Linux, sin GPU: ambos renderizan con los drivers por
+software de Mesa).
+
+<VsNumbers other="dearpygui" lang="es" />
+
+## De los conceptos de Dear PyGui a Pyzed
+
+| Dear PyGui | Pyzed |
+| --- | --- |
+| `create_context`, `create_viewport`, `start_dearpygui` | `pz.run(MiApp)` |
+| `with dpg.window(...)` | la raíz que devuelve `view()` |
+| `dpg.add_text(tag="x")` + `dpg.set_value("x", ...)` | `ui.label(self.x)`: cambia `self.x` |
+| `callback=fn` | `on_press=fn` |
+| `dpg.group(horizontal=True)` | `pz.row` |
+| `dpg.child_window` | `pz.scrollable`, `ui.card`, `ui.panel` |
+| `dpg.theme()` + `bind_item_theme` | [temas](/pyzed/es/guides/theming/) y [estilos](/pyzed/es/guides/styles/) |
+| `dpg.add_plot` | [`ui.bar_chart`](/pyzed/es/library/bar-chart/), [`ui.sparkline`](/pyzed/es/library/sparkline/), o [`pz.canvas`](/pyzed/es/guides/canvas/) para dibujo propio |
+
+## Cuándo elegir cada uno
+
+- **Elige Dear PyGui** para gráficas en tiempo real, editores de nodos, paneles de instrumentos y
+  herramientas de depuración donde el aspecto de ImGui está bien.
+- **Elige Pyzed** para apps de usuario final: formularios, listas, editores y paneles que deban verse
+  pulidos, con texto de calidad, un diseñador, recarga en caliente y empaquetado.

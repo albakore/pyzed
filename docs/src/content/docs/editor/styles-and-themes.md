@@ -1,6 +1,6 @@
 ---
 title: Styles and themes
-description: The Style section, the color picker with gradients and masks, the form's global style and themes in Pyzed Design.
+description: "Style controls in Pyzed Design: the Style section, a color picker with gradients and masks, the form's global style and built-in themes."
 sidebar:
   order: 5
 ---

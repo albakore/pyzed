@@ -1,6 +1,6 @@
 ---
 title: Navigation
-description: Editor tabs, breadcrumbs and the toolbar.
+description: "Editor tabs, breadcrumbs and the toolbar: Zed-style navigation components for building IDE-like Python desktop GUIs with Pyzed."
 sidebar:
   order: 4
 ---

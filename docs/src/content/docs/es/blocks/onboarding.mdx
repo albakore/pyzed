@@ -1,0 +1,217 @@
+---
+title: "Asistente de bienvenida"
+description: "Un asistente de configuración en varios pasos en Python: indicador de pasos vertical, perfil, tarjetas de plantilla, invitaciones, resumen y validación entre pasos."
+sidebar:
+  order: 7
+---
+
+{/* Generado por docs/scripts/gen_blocks.py desde examples/blocks. No editar. */}
+
+import BlockShot from '../../../../components/blocks/BlockShot.astro';
+
+Un asistente de cuatro pasos: indicador de pasos vertical con progreso, formulario de perfil, nombre del espacio con tarjetas de plantilla seleccionables, invitaciones al equipo y un resumen antes de empezar. Cada paso valida antes de seguir.
+
+<BlockShot name="onboarding" alt="Asistente de bienvenida" />
+
+La captura sigue el tema del sitio: cambia entre claro y oscuro arriba de la página para ver el bloque en One Light y One Dark.
+
+## Ejecutarlo
+
+Desde la raíz del repositorio:
+
+```bash
+python examples/blocks/onboarding.py
+```
+
+## Qué muestra
+
+- El paso actual es estado simple (`self.step`); cada paso es un método que devuelve su vista.
+- Tarjetas seleccionables con `pz.container(...).style(...).on(click=...)`.
+- El indicador de pasos usa iconos, `pz.rule` y tokens del tema, así sigue cualquier tema.
+- Botones Atrás / Continuar / Omitir y un aviso de error.
+
+## Componentes que usa
+
+| Componente | Para |
+| --- | --- |
+| [Progress](/pyzed/es/library/progress/) | Progreso total |
+| [Input](/pyzed/es/library/input/) | Campos de texto |
+| [Select](/pyzed/es/library/select/) | Rol |
+| [Badge](/pyzed/es/library/badge/) | Número de paso |
+| [Card](/pyzed/es/library/card/) | Invitaciones y resumen |
+| [List item](/pyzed/es/library/list-item/) | Personas invitadas |
+| [Empty state](/pyzed/es/library/empty-state/) | Sin invitaciones |
+| [Callout](/pyzed/es/library/callout/) | Errores de validación |
+| [Button](/pyzed/es/library/button/) | Navegación |
+
+## Código
+
+El bloque completo, listo para copiar. Solo necesita `pip install pyzed-ui`.
+
+```python title="examples/blocks/onboarding.py"
+"""Onboarding block: a multi-step setup wizard with a stepper, choice cards, validation and a summary."""
+
+import pyzed as pz
+from pyzed import ui
+
+STEPS = [
+    ("user", "Your profile", "Tell us who you are"),
+    ("layout-template", "Workspace", "Pick a template"),
+    ("users", "Invite your team", "Work together from day one"),
+    ("rocket", "All set", "Review and launch"),
+]
+TEMPLATES = [
+    ("layout-dashboard", "Dashboard", "KPIs, charts and tables for internal tools."),
+    ("bot", "AI assistant", "A streaming chat app wired to any LLM."),
+    ("gamepad-2", "Game", "A canvas, a game loop and keyboard input."),
+    ("code", "Developer tool", "A Zed-like editor with docks and a terminal."),
+]
+ROLES = ["Developer", "Designer", "Data scientist", "Student", "Founder"]
+
+
+class Onboarding(pz.App):
+    title = "Welcome"
+    size = (1200, 760)
+
+    def __init__(self):
+        self.step = 1
+        self.name = "Ada Lovelace"
+        self.role = "Developer"
+        self.template = "AI assistant"
+        self.workspace = "analytical-engine"
+        self.invites = ["charles@babbage.dev"]
+        self.invite = ""
+        self.error = ""
+
+    # -- actions ---------------------------------------------------------------------------
+    def next(self):
+        if self.step == 0 and not self.name.strip():
+            self.error = "Please enter your name."
+            return
+        if self.step == 1 and not self.workspace.strip():
+            self.error = "Your workspace needs a name."
+            return
+        self.error = ""
+        self.step = min(self.step + 1, len(STEPS) - 1)
+
+    def back(self):
+        self.error, self.step = "", max(self.step - 1, 0)
+
+    def add_invite(self):
+        if "@" in self.invite and self.invite not in self.invites:
+            self.invites.append(self.invite.strip())
+            self.invite = ""
+
+    # -- pieces ----------------------------------------------------------------------------
+    def stepper(self):
+        items = []
+        for i, (icon, title, subtitle) in enumerate(STEPS):
+            done, current = i < self.step, i == self.step
+            marker = pz.container(
+                pz.icon("check" if done else icon, size=16, color="#ffffff" if done or current else None),
+                width=36, height=36, center=True,
+            ).style(background="accent" if done or current else "element", radius=18,
+                    border=(2, "accent" if current else "border_variant"))
+            items.append(pz.row([
+                marker,
+                pz.column([ui.label(title, weight="semibold" if current else None,
+                                    color="text" if done or current else "text_muted"),
+                           ui.muted(subtitle, size="sm")], spacing=2),
+            ], spacing=12, align="center"))
+            if i < len(STEPS) - 1:
+                items.append(pz.container(pz.rule(vertical=True, thickness=2), height=28, padding=(0, 0, 0, 17)))
+        return pz.column([
+            pz.row([pz.container(pz.icon("zap", size=16, color="#ffffff"), padding=6).style(
+                        background="accent", radius=8),
+                    ui.label("Acme", size="lg", weight="semibold")], spacing=10, align="center"),
+            pz.space(height=24),
+            pz.column(items, spacing=4),
+            pz.vspace(),
+            ui.muted("Step {} of {}".format(self.step + 1, len(STEPS)), size="sm"),
+            ui.progress(self.step + 1, max=len(STEPS), height=4),
+        ], spacing=8, width=290, height="fill", padding=32).style(background="panel")
+
+    def template_card(self, icon, title, text):
+        selected = title == self.template
+        return pz.container(
+            pz.column([
+                pz.row([pz.container(pz.icon(icon, size=20), padding=8).style(
+                            background="accent" if selected else "element", radius=10,
+                            color="#ffffff" if selected else "text"),
+                        pz.hspace(),
+                        pz.icon("circle-check", size=18) if selected else None], align="start"),
+                ui.label(title, weight="semibold"),
+                ui.muted(text, size="sm"),
+            ], spacing=10),
+            padding=16, width="fill", height=150,
+        ).style(background="surface", radius=12, border=(2 if selected else 1, "accent" if selected else "border"),
+                ).on(click=lambda: setattr(self, "template", title), cursor="pointer")
+
+    def profile_step(self):
+        return pz.column([
+            ui.field("Full name", pz.container(ui.input(self.name, lambda v: setattr(self, "name", v)), width=340)),
+            ui.field("What do you do?", ui.select(ROLES, self.role, lambda v: setattr(self, "role", v), width=340)),
+        ], spacing=16)
+
+    def workspace_step(self):
+        cards = [self.template_card(*t) for t in TEMPLATES]
+        return pz.column([
+            pz.column([ui.label("Workspace name", size="sm", weight="medium"),
+                       ui.input(self.workspace, lambda v: setattr(self, "workspace", v), icon="at-sign",
+                                size="lg")], spacing=6),
+            pz.column([ui.label("Start from a template", size="sm", weight="medium"),
+                       pz.row(cards[:2], spacing=14), pz.row(cards[2:], spacing=14)], spacing=10),
+        ], spacing=22)
+
+    def team_step(self):
+        people = [ui.list_item(email, None, icon="mail", end=ui.icon_button(
+            "x", lambda email=email: self.invites.remove(email), size="sm")) for email in self.invites]
+        return pz.column([
+            pz.row([ui.input(self.invite, lambda v: setattr(self, "invite", v), placeholder="teammate@company.com",
+                             icon="mail", on_submit=self.add_invite, size="lg"),
+                    ui.button("Add", self.add_invite, size="lg")], spacing=8),
+            ui.card(pz.column(people, spacing=2) if people else ui.empty_state("No invites yet", icon="users"),
+                    padding=6),
+        ], spacing=14)
+
+    def summary_step(self):
+        rows = [("Name", self.name), ("Role", self.role), ("Workspace", f"@{self.workspace}"),
+                ("Template", self.template), ("Invites", str(len(self.invites)))]
+        return ui.card(pz.column([pz.row([ui.muted(k), pz.hspace(), ui.label(v, weight="medium")]) for k, v in rows],
+                                 spacing=12))
+
+    def view(self):
+        icon, title, subtitle = STEPS[self.step]
+        body = [self.profile_step, self.workspace_step, self.team_step, self.summary_step][self.step]()
+        last = self.step == len(STEPS) - 1
+        content = pz.column([
+            pz.column([ui.badge(f"Step {self.step + 1}", tint="accent"),
+                       ui.heading(["Nice to meet you", "Create your workspace", "Bring your team",
+                                   "You're ready to go"][self.step]),
+                       ui.muted(["We'll tailor Acme to how you work.",
+                                 "A workspace holds your projects, people and settings. You can change it later.",
+                                 "Invite people now or skip this step; they'll get an email.",
+                                 "Here's what we'll set up for you."][self.step])], spacing=8),
+            body,
+            ui.callout(self.error, tint="error", icon="circle-alert") if self.error else None,
+            pz.vspace(),
+            pz.row([
+                ui.button("Back", self.back, icon="arrow-left", variant="ghost", disabled=self.step == 0),
+                pz.hspace(),
+                ui.button("Skip", self.next, variant="ghost") if self.step == 2 else None,
+                ui.button("Launch workspace" if last else "Continue", self.next, variant="solid", size="lg",
+                          icon="rocket" if last else "arrow-right", icon_position="start" if last else "end"),
+            ], spacing=8, align="center"),
+        ], spacing=26, max_width=640, height="fill", padding=(48, 56))
+        return pz.row([self.stepper(), ui.divider(vertical=True),
+                       pz.container(content, width="fill", height="fill", align_x="center")],
+                      height="fill").style(background="background")
+
+
+if __name__ == "__main__":
+    pz.run(Onboarding)
+```
+
+## Hazlo tuyo
+
+Cambia `theme` (o `self.theme = pz.themes.get("One Dark").with_accent("#e11d48")`), pon tus datos en lugar de los de ejemplo y separa piezas en [componentes](/pyzed/es/guides/components/) cuando crezcan. Un agente de IA con el [servidor MCP](/pyzed/es/ai/mcp/) puede leer este bloque con `read_example("blocks/onboarding")` y adaptarlo por ti.

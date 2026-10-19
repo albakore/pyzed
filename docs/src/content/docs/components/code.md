@@ -1,6 +1,6 @@
 ---
 title: Code
-description: The code editor with syntax highlighting and git markers, and the terminal view.
+description: "A code editor with syntax highlighting and git markers, and a terminal view: Zed-style components for Python desktop apps built with Pyzed."
 sidebar:
   order: 7
 ---

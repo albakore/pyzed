@@ -1,6 +1,6 @@
 ---
 title: Iconos y fuentes
-description: Los iconos de Lucide, los iconos por tipo de archivo y cómo cargar fuentes propias.
+description: "Usa unos 2000 iconos de Lucide e iconos por tipo de archivo en GUIs de escritorio en Python con Pyzed, y carga tus propias fuentes como IBM Plex."
 sidebar:
   order: 9
 ---

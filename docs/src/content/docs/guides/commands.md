@@ -1,6 +1,6 @@
 ---
 title: Commands and tasks
-description: Focusing fields, closing the app, editing the editor, background work and messages from threads.
+description: "Pyzed commands: focus fields, close the app, edit the code editor, run background work and send messages from threads in Python GUIs."
 sidebar:
   order: 4
 ---

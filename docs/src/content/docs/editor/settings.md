@@ -1,6 +1,6 @@
 ---
 title: Settings
-description: The preferences of Pyzed Design and of its code editor, where they are saved and how to translate the editor.
+description: "The preferences of Pyzed Design and its code editor: themes, fonts, keys, where settings are saved and how to translate the visual designer."
 sidebar:
   order: 13
 ---

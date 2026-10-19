@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Example apps included in the repository, ready to run.
+description: "Ready-to-run Pyzed example apps: to-do lists, a Zed-like editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more."
 ---
 
 All examples live in [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
@@ -107,5 +107,13 @@ Python recreations of the [Iced demos](https://github.com/iced-rs/iced/tree/mast
 ### Multiple windows
 
 ![Multiple windows](../../assets/tutorials/multi-window.png)
+
+## AI and Blocks
+
+| Example | What it shows | Page |
+| --- | --- | --- |
+| [`ai_chat.py`](https://github.com/albakore/pyzed/blob/main/examples/ai_chat.py) | A streaming AI chat over any OpenAI-compatible API, with a demo mode that needs no network. | [Building AI apps](/pyzed/ai/ai-apps/) |
+| [`pomodoro.py`](https://github.com/albakore/pyzed/blob/main/examples/pomodoro.py) | The timer an agent builds with the MCP tools in the prompting guide. | [Prompting guide](/pyzed/ai/prompting/) |
+| [`blocks/`](https://github.com/albakore/pyzed/tree/main/examples/blocks) | Nine ready-made screens: login, dashboard, settings, data table, chat, IDE, onboarding, music player, kanban. | [Blocks](/pyzed/blocks/) |
 
 The screenshots on this page are generated with `python docs/scripts/example_shots.py`.

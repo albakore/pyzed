@@ -1,6 +1,6 @@
 ---
 title: Propiedades
-description: La grilla de propiedades de Pyzed Design, sección por sección; el formulario, un control, varios controles y los editores de listas y tablas.
+description: "La grilla de propiedades de Pyzed Design sección por sección: el formulario, un control, varios controles a la vez y los editores de listas y tablas."
 sidebar:
   order: 3
 ---

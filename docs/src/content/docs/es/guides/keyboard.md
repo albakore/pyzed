@@ -1,6 +1,6 @@
 ---
 title: Teclado y atajos
-description: Atajos al estilo de Zed con on_key y cómo mostrarlos en la interfaz.
+description: "Atajos de teclado en apps de Pyzed: combinaciones estilo Zed con on_key y cómo mostrar los atajos en menús, botones y el resto de la interfaz."
 sidebar:
   order: 8
 ---

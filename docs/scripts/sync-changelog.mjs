@@ -34,7 +34,7 @@ const LABELS = {
 	en: {
 		file: 'src/content/docs/changelog.md',
 		title: "What's new",
-		description: 'Changes, improvements, fixes and breaking changes in every Pyzed release.',
+		description: 'Pyzed changelog and release notes: new components, designer features, improvements, fixes and breaking changes in every version of the Python GUI framework.',
 		stable: 'Latest stable',
 		pre: 'Pre-release',
 		latest: (v, d) => `The latest stable release is **${v}**${d ? ` (${d})` : ''}.`,
@@ -45,7 +45,7 @@ const LABELS = {
 	es: {
 		file: 'src/content/docs/es/changelog.md',
 		title: 'Novedades',
-		description: 'Cambios, mejoras, correcciones y breaking changes de cada versión de Pyzed.',
+		description: 'Novedades y notas de versión de Pyzed: componentes nuevos, funciones del diseñador, mejoras, correcciones y breaking changes de cada versión.',
 		stable: 'Última estable',
 		pre: 'Preliminar',
 		latest: (v, d) => `La última versión estable es **${v}**${d ? ` (${d})` : ''}.`,

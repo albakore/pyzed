@@ -1,0 +1,78 @@
+---
+title: Pyzed vs Flet para apps de escritorio en Python
+description: "Pyzed vs Flet (Flutter para Python): arquitectura, plataformas, aspecto, herramientas y arranque y memoria medidos, con las mismas apps lado a lado y cómo pasar una app de escritorio de Flet a Pyzed."
+sidebar:
+  label: Pyzed vs Flet
+  order: 8
+---
+
+import SideBySide from '../../../../components/why/SideBySide.astro';
+import VsNumbers from '../../../../components/why/VsNumbers.astro';
+import pyzedCounter from '../../../../../../benchmarks/apps/pyzed/counter.py?raw';
+import fletCounter from '../../../../../../benchmarks/apps/flet/counter.py?raw';
+import pyzedTodo from '../../../../../../benchmarks/apps/pyzed/todo.py?raw';
+import fletTodo from '../../../../../../benchmarks/apps/flet/todo.py?raw';
+
+[Flet](https://flet.dev) te deja construir apps [Flutter](https://flutter.dev) en Python. Tu código Python se
+ejecuta en un proceso y envía el árbol de controles a un cliente Flutter que lo dibuja, en el escritorio, en
+la web o en un móvil. Ese alcance es la gran fortaleza de Flet. Pyzed dibuja en el mismo proceso que tu
+código Python, con un renderizador en Rust, y se centra en el escritorio.
+
+## En resumen
+
+| | Pyzed | Flet |
+| --- | --- | --- |
+| Arquitectura | Un proceso: Python + renderizador en Rust (Iced) | Proceso Python + proceso cliente Flutter, comunicados por un protocolo |
+| Plataformas | Windows, macOS, Linux | Windows, macOS, Linux, **web, Android, iOS** |
+| Aspecto | Al estilo de Zed, denso, pensado para escritorio | Material 3 o Cupertino, pensado para móvil |
+| Modelo | Estado + `view()` reconstruido desde los datos | Controles mutables + `page.update()`; Flet 1.0 añade componentes declarativos con hooks |
+| Empaquetado | `pyzed build` (PyInstaller), sin SDK extra | `flet build` (requiere el SDK de Flutter) |
+| Diseñador | Pyzed Design | – |
+| Recarga en caliente | Conserva el estado de la app | `flet run` reinicia la app al guardar |
+| Accesibilidad | Teclado; sin lectores de pantalla todavía | Lectores de pantalla mediante la semántica de Flutter |
+
+## El mismo contador
+
+<SideBySide left={pyzedCounter} right={fletCounter} leftTitle="Pyzed" rightTitle="Flet" />
+
+## La misma lista de tareas
+
+<SideBySide left={pyzedTodo} right={fletTodo} leftTitle="Pyzed" rightTitle="Flet" />
+
+## Medido
+
+Medianas de [los benchmarks](/pyzed/es/why/benchmarks/) (Linux, sin GPU: renderizado por software en ambos).
+La memoria de Flet incluye su proceso cliente de Flutter, que es donde vive la ventana. Su tamaño instalado
+cuenta los paquetes de Python más el cliente de escritorio que `flet` descarga en la primera ejecución.
+
+<VsNumbers other="flet" lang="es" />
+
+## De los conceptos de Flet a Pyzed
+
+| Flet | Pyzed |
+| --- | --- |
+| `ft.run(main)` con `main(page)` | `pz.run(MiApp)` con una clase `pz.App` |
+| `page.add(...)`, `page.update()` | devuelve el árbol desde `view()`; sin actualizar a mano |
+| `ft.Column`, `ft.Row`, `ft.Container` | `pz.column`, `pz.row`, `pz.container` |
+| `ft.Text`, `ft.Button`, `ft.TextField`, `ft.Checkbox` | `ui.label`, `ui.button`, `ui.input`, `ui.checkbox` |
+| `on_click=manejador(e)` | `on_press=metodo` (sin argumento de evento) |
+| `page.theme_mode = ft.ThemeMode.DARK` | `theme = "One Dark"` o `pz.themes.auto(...)` |
+| `page.run_task(corrutina)` | devuelve una corrutina desde un callback |
+| `ft.ListView` | [`ui.virtual_list`](/pyzed/es/library/virtual-list/) |
+| `ft.NavigationRail`, `ft.Tabs` | paneles de [`ui.workspace`](/pyzed/es/library/workspace/), [`ui.tab_bar`](/pyzed/es/library/tab-bar/) |
+
+## Consejos de migración
+
+1. **Lleva el estado de los controles a la app.** Los valores que lees de los controles (`campo.value`,
+   `casilla.value`) pasan a ser atributos, actualizados por los callbacks de los controles.
+2. **Borra las llamadas a `page.update()`.** Pyzed redibuja después de cada callback.
+3. **Espera una interfaz más densa.** El espaciado de Material está pensado para el tacto; los componentes de
+   Pyzed tienen el tamaño de un editor de escritorio. Usa variantes `size="lg"` o
+   [estilos](/pyzed/es/guides/styles/) si quieres más aire.
+
+## Cuándo elegir cada uno
+
+- **Elige Flet** cuando un mismo código deba funcionar en la web y en móviles, o quieras los widgets Material
+  de Flutter.
+- **Elige Pyzed** para apps pensadas para escritorio: un solo proceso, sin SDK de Flutter para empaquetar, un
+  diseñador visual, recarga en caliente que conserva el estado y un aspecto denso y profesional.

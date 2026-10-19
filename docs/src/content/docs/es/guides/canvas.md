@@ -1,6 +1,6 @@
 ---
 title: Dibujo con canvas
-description: Formas, texto, transformaciones y eventos del ratón con pz.canvas y pyzed.draw.
+description: "Dibuja gráficos propios en apps de escritorio en Python con pz.canvas y pyzed.draw: formas, texto, transformaciones y eventos del ratón, en Rust."
 sidebar:
   order: 7
 ---

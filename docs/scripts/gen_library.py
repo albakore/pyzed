@@ -42,7 +42,11 @@ LANGS = {
     "en": {
         "out": DOCS / "library", "prefix": "/pyzed", "components": "../../../components",
         "title": "Components", "overview": "Overview",
-        "description": "Every Pyzed component with a preview, examples and its API, grouped by category.",
+        "description": "Browse 90+ Pyzed UI components for Python desktop GUIs: buttons, tables, trees, editors, charts and dialogs, each with a preview, examples and its API.",
+        # Appended to each component's blurb for its meta description (search results); see seo_description().
+        "seo": [" A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+                " A Pyzed component for Python desktop GUIs, with examples and its API.",
+                " Pyzed component for Python desktop GUIs."],
         "preview": "Preview", "code": "Code", "when": "When to use", "usage": "Usage", "examples": "Examples",
         "tips": "Tips", "api": "API", "related": "Related", "param": "Parameter", "default": "Default",
         "desc": "Description", "required": "required", "reference": "Full reference",
@@ -68,12 +72,17 @@ ui.button("Save", self.save, icon="save", variant="solid", keys="ctrl-s")
 - **Icons.** `icon=` takes any [Lucide](https://lucide.dev) name (`pyzed icons` lists them).
 
 To see them all running, open the gallery: `python examples/gallery.py`.
+Looking for whole screens built from them (login, dashboard, settings, chat, kanban...)? See
+[Blocks](/pyzed/blocks/).
 """,
     },
     "es": {
         "out": DOCS / "es" / "library", "prefix": "/pyzed/es", "components": "../../../../components",
         "title": "Componentes", "overview": "Vista general",
-        "description": "Todos los componentes de Pyzed con vista previa, ejemplos y su API, agrupados por categoría.",
+        "description": "Más de 90 componentes de UI de Pyzed para GUIs de escritorio en Python: botones, tablas, árboles, editores, gráficos y diálogos, con ejemplos y API.",
+        "seo": [" Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API.",
+                " Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API.",
+                " Componente de Pyzed para GUIs en Python."],
         "preview": "Vista previa", "code": "Código", "when": "Cuándo usarlo", "usage": "Uso",
         "examples": "Ejemplos", "tips": "Consejos", "api": "API", "related": "Relacionados",
         "param": "Parámetro", "default": "Por defecto", "desc": "Descripción", "required": "obligatorio",
@@ -100,6 +109,8 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 - **Iconos.** `icon=` acepta cualquier nombre de [Lucide](https://lucide.dev) (`pyzed icons` los lista).
 
 Para verlos todos funcionando, abre la galería: `python examples/gallery.py`.
+¿Buscas pantallas completas hechas con ellos (login, dashboard, ajustes, chat, kanban...)? Mira los
+[Bloques](/pyzed/es/blocks/).
 """,
     },
 }
@@ -310,6 +321,17 @@ def imports_for(code: str) -> str:
     return "\n".join(lines)
 
 
+def seo_description(blurb: str, lang: str) -> str:
+    """The blurb plus the longest ``seo`` suffix that keeps it within 160 characters (search snippets)."""
+    blurb = blurb.strip()
+    if not blurb.endswith((".", "!", "?")):
+        blurb += "."
+    for suffix in LANGS[lang]["seo"]:
+        if len(blurb) + len(suffix) <= 160:
+            return blurb + suffix
+    return blurb
+
+
 def frontmatter(title: str, description: str, order: int, label: str | None = None, badge: str | None = None) -> str:
     lines = ["---", f"title: {json.dumps(title, ensure_ascii=False)}",
              f"description: {json.dumps(description, ensure_ascii=False)}", "sidebar:", f"  order: {order}"]
@@ -334,7 +356,7 @@ def render_page(entry: dict, order: int, lang: str, api: Api, by_slug: dict) -> 
     badge = labels["new"] if entry.get("badge") == "new" else None
     main = entry["api"][0]
     body = [
-        frontmatter(name, text(entry["blurb"], lang), order, label=name, badge=badge),
+        frontmatter(name, seo_description(text(entry["blurb"], lang), lang), order, label=name, badge=badge),
         f"{{/* {GENERATED} */}}",
         "",
         "import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';",

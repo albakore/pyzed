@@ -1,6 +1,6 @@
 ---
 title: Dialogs and tools
-description: Ready-made dialogs, accordions, a log console, a shortcuts list, an About box and the color picker.
+description: "Ready-made dialogs, accordions, a log console, a shortcuts list, an About box and a color picker for Python desktop apps built with Pyzed."
 sidebar:
   order: 11
 ---

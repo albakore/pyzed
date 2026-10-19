@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Your first Pyzed window in five minutes.
+description: "Your first native Python desktop window with Pyzed in five minutes: install the package, write a small counter app and run it anywhere."
 ---
 
 ## 1. A window
@@ -55,8 +55,8 @@ class Counter(pz.App):
             pz.column([
                 ui.heading(str(self.count)),
                 pz.row([
-                    ui.button("-1", "decrement", icon="minus"),
-                    ui.button("+1", "increment", icon="plus", variant="solid"),
+                    ui.button("1", "decrement", icon="minus"),
+                    ui.button("1", "increment", icon="plus", variant="solid"),
                     ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0), tooltip="Reset"),
                 ], spacing=8),
             ], spacing=16, align="center"),

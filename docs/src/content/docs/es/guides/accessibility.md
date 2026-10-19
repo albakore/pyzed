@@ -1,6 +1,6 @@
 ---
 title: Accesibilidad
-description: Foco del teclado con Tab, el ajuste de reducir movimiento del sistema y el estado del soporte para lectores de pantalla.
+description: "Accesibilidad en apps de escritorio con Pyzed: foco del teclado con Tab, el ajuste de reducir movimiento del sistema y el estado de los lectores de pantalla."
 sidebar:
   order: 18
 ---

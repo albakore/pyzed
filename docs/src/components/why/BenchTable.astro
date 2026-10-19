@@ -1,0 +1,72 @@
+---
+// Raw numbers behind the charts: median, then min-max and the number of samples.
+import { bench, fmt, NAMES, points, UNITS, version, type Metric } from './bench';
+
+interface Column {
+	metric: Metric;
+	rows?: string;
+	app?: string;
+	label: string;
+}
+interface Props {
+	columns: Column[];
+	lang?: 'en' | 'es';
+}
+const { columns, lang = 'en' } = Astro.props;
+const libs = [...Object.keys(bench.libs), ...Object.keys(bench.size_only ?? {})];
+const cells = columns.map((c) => new Map(points(c.metric, c).map((p) => [p.lib, p])));
+const used = libs.filter((lib) => cells.some((m) => m.has(lib)));
+const head = lang === 'es' ? 'Biblioteca' : 'Library';
+---
+
+<div class="bench-table">
+	<table>
+		<thead>
+			<tr>
+				<th>{head}</th>
+				{columns.map((c) => <th>{c.label} <small>({UNITS[c.metric][lang]})</small></th>)}
+			</tr>
+		</thead>
+		<tbody>
+			{
+				used.map((lib) => (
+					<tr>
+						<th scope="row">
+							{NAMES[lib] ?? lib} <small>{version(lib)}</small>
+						</th>
+						{columns.map((c, i) => {
+							const p = cells[i].get(lib);
+							if (!p) return <td>–</td>;
+							return (
+								<td>
+									<strong>{fmt(p.value, c.metric)}</strong>
+									{p.min != null && (
+										<small>
+											<br />
+											{fmt(p.min, c.metric)}–{fmt(p.max!, c.metric)} · n={p.stat!.n}
+										</small>
+									)}
+								</td>
+							);
+						})}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</div>
+
+<style>
+	.bench-table {
+		overflow-x: auto;
+	}
+	td,
+	th {
+		font-variant-numeric: tabular-nums;
+		vertical-align: top;
+	}
+	small {
+		color: var(--sl-color-gray-3);
+		font-weight: 400;
+	}
+</style>

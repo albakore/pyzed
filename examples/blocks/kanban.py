@@ -1,0 +1,135 @@
+"""Kanban block: a project board with columns, labelled cards, assignees, progress and moving cards along."""
+
+from dataclasses import dataclass, field
+from typing import List
+
+import pyzed as pz
+from pyzed import ui
+
+COLUMNS = [("backlog", "Backlog", "circle-dashed", "text_muted"), ("todo", "To do", "circle", "info"),
+           ("doing", "In progress", "circle-dot", "warning"), ("done", "Done", "circle-check", "success")]
+TAGS = {"design": "accent", "backend": "info", "bug": "error", "docs": "success", "ai": "warning"}
+PRIORITY = {"high": ("chevrons-up", "error"), "medium": ("chevron-up", "warning"), "low": ("chevron-down", "info")}
+
+
+@dataclass
+class Card:
+    id: int
+    title: str
+    column: str
+    tags: List[str] = field(default_factory=list)
+    people: List[str] = field(default_factory=list)
+    priority: str = "medium"
+    due: str = ""
+    comments: int = 0
+    checklist: tuple = (0, 0)
+
+
+CARDS = [
+    Card(1, "Research onboarding drop-off", "backlog", ["design"], ["ML"], "low", "Nov 12", 2),
+    Card(2, "Dark mode for the billing page", "backlog", ["design"], [], "low"),
+    Card(3, "Rate limit the public API", "backlog", ["backend"], ["JL"], "medium", "Nov 20"),
+    Card(4, "Streaming answers in the support bot", "todo", ["ai", "backend"], ["KV", "IN"], "high", "Nov 3", 5,
+         (1, 4)),
+    Card(5, "Write the MCP setup guide", "todo", ["docs", "ai"], ["SD"], "medium", "Nov 6", 1),
+    Card(6, "Crash when exporting large CSVs", "doing", ["bug"], ["JL"], "high", "Today", 8, (2, 3)),
+    Card(7, "New pricing table", "doing", ["design"], ["ML", "WK"], "medium", "Oct 30", 3, (3, 5)),
+    Card(8, "Migrate jobs to SQLModel", "doing", ["backend"], ["KV"], "medium", "Nov 1", 0, (4, 6)),
+    Card(9, "Landing page hero", "done", ["design"], ["ML"], "medium", "", 6, (4, 4)),
+    Card(10, "Fix login redirect loop", "done", ["bug"], ["IN"], "high", "", 2, (2, 2)),
+]
+
+
+class Kanban(pz.App):
+    title = "Board"
+    size = (1200, 760)
+
+    def __init__(self):
+        self.cards = [Card(**vars(c)) for c in CARDS]
+        self.query = ""
+        self.mine = False
+        self.selected = 6
+
+    def move(self, card, step):
+        keys = [c[0] for c in COLUMNS]
+        card.column = keys[max(0, min(len(keys) - 1, keys.index(card.column) + step))]
+        self.selected = card.id
+
+    def add(self, column):
+        new_id = max(c.id for c in self.cards) + 1
+        self.cards.append(Card(new_id, "Untitled task", column, [], ["KV"], "low"))
+        self.selected = new_id
+
+    # -- view ------------------------------------------------------------------------------
+    def card(self, card):
+        t = self.resolved_theme()
+        icon, tint = PRIORITY[card.priority]
+        done, total = card.checklist
+        meta = []
+        if card.due:
+            meta.append(pz.row([pz.icon("calendar", size=13, color=t.error if card.due == "Today" else t.icon_muted),
+                                ui.label(card.due, size="xs", color="error" if card.due == "Today" else "text_muted")],
+                               spacing=4, align="center"))
+        if card.comments:
+            meta.append(pz.row([pz.icon("message-square", size=13, color=t.icon_muted),
+                                ui.muted(str(card.comments), size="xs")], spacing=4, align="center"))
+        if total:
+            meta.append(pz.row([pz.icon("list-checks", size=13, color=t.success if done == total else t.icon_muted),
+                                ui.muted(f"{done}/{total}", size="xs")], spacing=4, align="center"))
+        selected = card.id == self.selected
+        body = pz.column([
+            pz.row([*[ui.badge(tag, tint=TAGS[tag]) for tag in card.tags], pz.hspace(),
+                    pz.icon(icon, size=14, color=t.color(tint))], spacing=6, align="center"),
+            ui.label(card.title, weight="medium"),
+            ui.progress(done, max=total, height=3, tint="success" if done == total else "accent") if total else None,
+            pz.row([*meta, pz.hspace(),
+                    ui.facepile(card.people, size=22) if card.people else None], spacing=12, align="center"),
+            pz.row([ui.icon_button("arrow-left", lambda: self.move(card, -1), size="xs", tooltip="Move left"),
+                    pz.hspace(),
+                    ui.icon_button("arrow-right", lambda: self.move(card, 1), size="xs", tooltip="Move right")])
+            if selected else None,
+        ], spacing=10)
+        return pz.container(body, padding=12, width="fill").style(
+            background="elevated", radius=10, border=(1.5 if selected else 1, "accent" if selected else "border_variant"),
+            shadow=("#0000001f", (0, 2), 6),
+        ).on(click=lambda: setattr(self, "selected", card.id), cursor="pointer")
+
+    def column(self, key, title, icon, tint):
+        q = self.query.lower()
+        cards = [c for c in self.cards if c.column == key and q in c.title.lower()
+                 and (not self.mine or "KV" in c.people)]
+        header = pz.row([
+            pz.icon(icon, size=15, color=self.resolved_theme().color(tint)),
+            ui.label(title, weight="semibold"),
+            ui.count_badge(len(cards), tint="accent" if key == "doing" else "info"),
+            pz.hspace(),
+            ui.icon_button("plus", lambda: self.add(key), size="sm", tooltip="Add a card"),
+            ui.icon_button("ellipsis", None, size="sm"),
+        ], spacing=8, align="center")
+        return pz.container(
+            pz.column([header, pz.scrollable(pz.column([self.card(c) for c in cards], spacing=10), height="fill")],
+                      spacing=12, height="fill"),
+            padding=12, width="fill", height="fill",
+        ).style(background="panel", radius=12)
+
+    def view(self):
+        top = pz.row([
+            pz.column([
+                ui.breadcrumbs([("folder", "Acme"), "Product", "Sprint 42"]),
+                pz.row([ui.heading("Sprint 42", level=2), ui.badge("Oct 21 – Nov 3", tint="info", icon="calendar")],
+                       spacing=10, align="center"),
+            ], spacing=6),
+            pz.hspace(),
+            pz.container(ui.search_input(self.query, lambda v: setattr(self, "query", v), placeholder="Filter cards…"),
+                         width=220),
+            ui.button("Only mine", lambda: setattr(self, "mine", not self.mine), icon="user",
+                      selected=self.mine, variant="ghost"),
+            ui.facepile(["ML", "JL", "IN", "SD", "KV", "WK"], size=28, max_shown=5),
+            ui.button("New task", lambda: self.add("todo"), icon="plus", variant="solid"),
+        ], spacing=10, align="center")
+        board = pz.row([self.column(*c) for c in COLUMNS], spacing=14, height="fill")
+        return pz.column([top, board], spacing=20, padding=24, height="fill").style(background="background")
+
+
+if __name__ == "__main__":
+    pz.run(Kanban)

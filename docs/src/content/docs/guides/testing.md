@@ -1,6 +1,6 @@
 ---
 title: Tests and screenshots
-description: Render your app without a window for tests, documentation and CI.
+description: "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration."
 sidebar:
   order: 10
 ---

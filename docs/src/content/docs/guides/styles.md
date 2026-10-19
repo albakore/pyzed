@@ -1,6 +1,6 @@
 ---
 title: Styles
-description: Style any widget like CSS, reuse styles and set the app's global style.
+description: "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app."
 sidebar:
   order: 3
 ---

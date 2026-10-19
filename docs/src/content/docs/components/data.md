@@ -1,6 +1,6 @@
 ---
 title: Data and feedback
-description: Tables, callouts, empty states, grouped settings, stats, charts and indicators.
+description: "Tables, callouts, empty states, grouped settings, stats, charts and indicators: data display components for Python desktop GUIs with Pyzed."
 sidebar:
   order: 9
 ---

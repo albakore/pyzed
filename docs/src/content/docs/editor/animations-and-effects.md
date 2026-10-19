@@ -1,6 +1,6 @@
 ---
 title: Animations and effects
-description: Give controls rotation, blur, glow, bloom, glass and opacity, and animate them when they appear, on hover, press, focus or click.
+description: "Give controls rotation, blur, glow, bloom, glass and opacity in Pyzed Design, and animate them on appear, hover, press, focus or click."
 sidebar:
   order: 5.5
 ---

@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: The pyzed.ui components, inspired by the Zed editor.
+description: "Overview of pyzed.ui, the Zed-inspired component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more."
 sidebar:
   order: 0
 ---
