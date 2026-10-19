@@ -6,6 +6,7 @@ to its methods, so all behavior stays in ``Designer``/``Document``.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 from .. import _core, ui
@@ -65,8 +66,26 @@ def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, ta
         padding=(3, 10), width="fill")
 
 
+_HEX = re.compile(r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})")
+
+
+def valid_color(value: Any, t: Theme) -> Optional[str]:
+    """``value`` (a theme token or ``#hex``) as a color the renderer takes, or ``None`` while it is not one
+    (a half-typed ``#3b8`` or an unknown token)."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        color = t.color(value.strip())
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return None
+    if not isinstance(color, str):
+        return None
+    return color if color == "transparent" or _HEX.fullmatch(color) else None
+
+
 def swatch(color: Optional[str], t: Theme, on_press: Any = None, *, selected: bool = False) -> Any:
     """Builds a 16-pixel color square (outlined when ``selected``); a button when ``on_press`` is given."""
+    color = valid_color(color, t) if color else None
     box = _core.container(width=16, height=16, bg=color or "transparent", radius=4,
                           border_color=t.text if selected else t.border, border_width=2 if selected else 1)
     if on_press is None:
@@ -113,14 +132,7 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
     if kind in ("multiline", "list", "rows"):
         return text_area(d, key, value, on_change, t)
     if kind == "color":
-        resolved = None
-        if value:
-            try:
-                resolved = t.color(str(value))
-            except (KeyError, ValueError):
-                resolved = None
-        return _core.row([swatch(resolved, t), ui.input(str(value or ""), on_change, placeholder="token or #hex",
-                                                        size="sm", mono=True, theme=t)], spacing=6, align="center")
+        return prop_color_editor(d, value, on_change, key, t)
     if kind == "icon":
         return icon_editor(d, value, on_change, t)
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
@@ -740,14 +752,43 @@ PICKER_WIDTH = 290.0
 PICKER_HEIGHT = 520.0
 
 
+PROP_PICKER = "prop:"  # the key prefix of a color picker opened from a property (not a Style row)
+
+
+def prop_color_editor(d: "Designer", value: Any, on_change: Callable[[Any], Any], key: str, t: Theme) -> Any:
+    """A color property: its swatch (click it for the color picker) and the token or ``#hex`` as text.
+
+    Text that is not a color yet (``#`` while typing) leaves the swatch empty."""
+    from .runtime import theme_for
+    from .styling import _using
+
+    picker = PROP_PICKER + key
+    d.picker_targets[picker] = (value, on_change)
+    ft = theme_for(d.doc.form)
+    with _using(ft):
+        box = ui.color_swatch(valid_color(value, ft) or "transparent", size=18,
+                              on_press=lambda: d.toggle_color_picker(None, picker))
+    return _core.row([box, ui.input(str(value or ""), on_change, placeholder=tr("token or #hex"), size="sm",
+                                    mono=True, theme=t)], spacing=6, align="center")
+
+
 def color_popover(d: "Designer", t: Theme) -> Any:
-    """The color picker of the Style row that is open, as a floating card (like the context menu)."""
+    """The color picker of the Style row or color property that is open, as a floating card (like the context
+    menu)."""
     from .runtime import theme_for
     from .styling import picked, shadow_parts, shadow_value, unpicked
 
     assert d.color_picker is not None
     name, key = d.color_picker
     form = d.doc.form
+    if key.startswith(PROP_PICKER):
+        target_prop = d.picker_targets.get(key)
+        if target_prop is None:
+            return None
+        current, change = target_prop
+        ft = theme_for(form)
+        return ui.ColorPicker(value=unpicked(valid_color(current, ft), ft, ft.accent), gradients=False, masks=False,
+                              on_change=lambda e: change(picked(e.value) or ""), key=f"picker:{key}")
     target = form if name is None else form.get(name)
     if target is None:
         return None
