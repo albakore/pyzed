@@ -136,7 +136,7 @@ tweak it without writing a theme file. `style` is the form's global style
 Form.get(name)
 ```
 
-
+Returns the control called `name`, or `None` if there is none.
 
 #### `Form.names`
 
@@ -144,7 +144,7 @@ Form.get(name)
 Form.names()
 ```
 
-
+Returns the names of all controls, in z-order.
 
 #### `Form.children`
 
@@ -184,7 +184,7 @@ Form.walk(parent=None, depth=0)
 Form.is_inside(name, container)
 ```
 
-
+Whether control `name` is inside `container`, at any depth.
 
 #### `Form.unique_name`
 
@@ -200,7 +200,7 @@ The first free `base1`, `base2`... (Visual Basic style).
 Form.add(control)
 ```
 
-
+Appends `control` (on top of the z-order) and returns it.
 
 #### `Form.remove`
 
@@ -232,7 +232,7 @@ Moves controls to the `"front"` or `"back"` of the z-order.
 Form.to_dict()
 ```
 
-
+Returns the form as JSON-ready data: `{"format", "form": settings, "controls": [...]}`.
 
 #### `Form.from_dict`
 
@@ -241,7 +241,7 @@ Form.to_dict()
 Form.from_dict(data)
 ```
 
-
+Builds a form from saved `data` (see `to_dict`), ignoring unknown settings and repairing broken parents; raises `ValueError` if it is not a Pyzed form.
 
 #### `Form.to_json`
 
@@ -249,7 +249,7 @@ Form.from_dict(data)
 Form.to_json()
 ```
 
-
+Returns the form as indented JSON text (the contents of a `.pzform` file).
 
 #### `Form.from_json`
 
@@ -258,7 +258,7 @@ Form.to_json()
 Form.from_json(text)
 ```
 
-
+Builds a form from the JSON `text` of a `.pzform` file.
 
 #### `Form.copy`
 
@@ -266,7 +266,7 @@ Form.from_json(text)
 Form.copy()
 ```
 
-
+Returns a deep copy of the form and its controls.
 
 ### `Control`
 
@@ -293,7 +293,7 @@ handler function names. `layout` holds options read by the parent's layout, such
 Control.rect  # property
 ```
 
-
+The control's `(x, y, width, height)`, relative to its parent (or the form).
 
 #### `Control.to_dict`
 
@@ -301,7 +301,7 @@ Control.rect  # property
 Control.to_dict()
 ```
 
-
+Returns the control as JSON-ready data; empty `parent`, `layout` and `style` are left out.
 
 #### `Control.from_dict`
 
@@ -310,7 +310,7 @@ Control.to_dict()
 Control.from_dict(data)
 ```
 
-
+Builds a control from saved `data`, ignoring unknown keys and invalid anchors.
 
 #### `Control.copy`
 
@@ -318,7 +318,7 @@ Control.from_dict(data)
 Control.copy()
 ```
 
-
+Returns a deep copy of the control.
 
 ### `Event`
 
@@ -348,7 +348,7 @@ or its handlers module updates the running window.
 FormApp.on_start()
 ```
 
-
+Watches the form and its handlers module for hot reload (when it is on), then raises `load`.
 
 ### `FormWindow`
 
@@ -366,7 +366,7 @@ A form in an extra window (`form.open(...)`, `designer.open_window` and the desi
 FormWindow.on_open()
 ```
 
-
+Raises the form's `load` event when the window opens.
 
 ### `Document`
 
@@ -388,7 +388,7 @@ the form on `save`. `selection` holds control names, primary first.
 Document.open(path)
 ```
 
-
+Loads the form at `path` and the text of its handlers module (if the file exists) into a new document.
 
 #### `Document.code_path`
 
@@ -396,7 +396,7 @@ Document.open(path)
 Document.code_path  # property
 ```
 
-
+Where the handlers module is saved, or `None` while the form has no file.
 
 #### `Document.display_name`
 
@@ -404,7 +404,7 @@ Document.code_path  # property
 Document.display_name  # property
 ```
 
-
+The name shown for the document: its file name, or `<form name>.pzform` if unsaved.
 
 #### `Document.save`
 
@@ -428,7 +428,7 @@ Records an undo step after an edit (`group` merges repeated edits of one field).
 Document.undo()
 ```
 
-
+Goes back one undo step; returns `False` if there was nothing to undo.
 
 #### `Document.redo`
 
@@ -436,7 +436,7 @@ Document.undo()
 Document.redo()
 ```
 
-
+Redoes one undone step; returns `False` if there was nothing to redo.
 
 #### `Document.selected`
 
@@ -444,7 +444,7 @@ Document.redo()
 Document.selected  # property
 ```
 
-
+The selected controls, primary first (names that no longer exist are skipped).
 
 #### `Document.primary`
 
@@ -452,7 +452,7 @@ Document.selected  # property
 Document.primary  # property
 ```
 
-
+The primary (first) selected control, or `None` when nothing is selected.
 
 #### `Document.select`
 
@@ -460,7 +460,7 @@ Document.primary  # property
 Document.select(names, *, add=False)
 ```
 
-
+Selects the controls `names` (one name, several, or `None` for none); unknown names are ignored.
 
 #### `Document.select_all`
 
@@ -468,7 +468,7 @@ Document.select(names, *, add=False)
 Document.select_all()
 ```
 
-
+Selects every control of the form.
 
 #### `Document.is_selected`
 
@@ -476,7 +476,7 @@ Document.select_all()
 Document.is_selected(name)
 ```
 
-
+Whether the control `name` is selected.
 
 #### `Document.add`
 
@@ -500,7 +500,7 @@ The absolute rectangle of every control (see `layout.resolve`).
 Document.can_contain(container, name)
 ```
 
-
+Whether control `name` can be moved into `container` (`None` is the form, which takes anything): it must be a container other than the control itself and not inside it.
 
 #### `Document.reparent`
 
@@ -540,7 +540,7 @@ Sets an option the parent's layout reads (`grow`, `span`).
 Document.delete()
 ```
 
-
+Removes the selected controls (and what is inside them); returns the removed names.
 
 #### `Document.copy`
 
@@ -556,7 +556,7 @@ Copies the selection, with whatever is inside the selected containers.
 Document.cut()
 ```
 
-
+Copies the selection to the clipboard and deletes it; returns how many controls were copied.
 
 #### `Document.paste`
 
@@ -572,7 +572,7 @@ Adds copies of the clipboard (shifted by `offset`) with fresh names, keeping the
 Document.duplicate()
 ```
 
-
+Pastes a copy of the selection right away, leaving the clipboard as it was; returns the new names.
 
 #### `Document.size`
 
@@ -580,7 +580,7 @@ Document.duplicate()
 Document.size  # property
 ```
 
-
+The form's `(width, height)` in pixels.
 
 #### `Document.nudge`
 
@@ -588,7 +588,7 @@ Document.size  # property
 Document.nudge(dx, dy)
 ```
 
-
+Moves the selected controls (those not placed by a layout) by `dx`, `dy` pixels, kept inside their container when they share one; repeated nudges merge into one undo step.
 
 #### `Document.align`
 
@@ -596,7 +596,7 @@ Document.nudge(dx, dy)
 Document.align(edge, *, to_form=False)
 ```
 
-
+Aligns the selected controls on `edge` (see `geometry.align`): to each other, or to the form with `to_form` or when only one control is selected.
 
 #### `Document.center`
 
@@ -612,7 +612,7 @@ Centers the selection (as a group) in the form.
 Document.distribute(axis)
 ```
 
-
+Spaces the selected controls evenly along `axis` (see `geometry.distribute`).
 
 #### `Document.same_size`
 
@@ -620,7 +620,7 @@ Document.distribute(axis)
 Document.same_size(which='both')
 ```
 
-
+Gives the selected controls the primary one's width, height or both (`which`).
 
 #### `Document.snap_to_grid`
 
@@ -628,7 +628,7 @@ Document.same_size(which='both')
 Document.snap_to_grid()
 ```
 
-
+Snaps the selected controls (or all of them if nothing is selected) to the form's grid.
 
 #### `Document.reorder`
 
@@ -636,7 +636,7 @@ Document.snap_to_grid()
 Document.reorder(where)
 ```
 
-
+Moves the selected controls in the z-order (`where`: see `Form.reorder`).
 
 #### `Document.set_rect`
 
@@ -644,7 +644,7 @@ Document.reorder(where)
 Document.set_rect(name, rect, *, group=None)
 ```
 
-
+Sets the position and size of control `name` from `rect` `(x, y, width, height)`, rounded to whole pixels; edits with the same `group` merge into one undo step.
 
 #### `Document.set_prop`
 
@@ -652,7 +652,7 @@ Document.set_rect(name, rect, *, group=None)
 Document.set_prop(name, key, value)
 ```
 
-
+Sets property `key` of control `name` to `value` (repeated edits merge into one undo step).
 
 #### `Document.set_style`
 
@@ -684,7 +684,7 @@ Sets a `Control` attribute (x, y, width, height, visible, enabled, locked, ancho
 Document.toggle_anchor(name, edge)
 ```
 
-
+Adds `edge` to the anchors of control `name`, or removes it if it was there.
 
 #### `Document.set_form`
 
@@ -692,7 +692,7 @@ Document.toggle_anchor(name, edge)
 Document.set_form(key, value)
 ```
 
-
+Sets attribute `key` of the form (a new `name` is made a valid identifier first).
 
 #### `Document.rename`
 
@@ -716,7 +716,7 @@ The display name and event map of a control, or of the form when `name` is `None
 Document.events_of(name)
 ```
 
-
+Returns the events of control `name`, or the form's events when `name` is `None`.
 
 #### `Document.wire`
 
@@ -740,7 +740,7 @@ Disconnects `event`; with `delete_code` an untouched stub is removed too.
 Document.handler_source(handler)
 ```
 
-
+Returns the source of `handler` in the code, or a new stub if it is not there yet.
 
 #### `Document.set_handler_source`
 
@@ -756,7 +756,7 @@ Replaces one handler's code (raises `SyntaxError` and changes nothing if it is i
 Document.set_code(source)
 ```
 
-
+Replaces the whole text of the handlers module and marks the document as changed.
 
 ## Toolbox
 
@@ -785,7 +785,7 @@ The event opened by double-clicking the control in the designer.
 Component.all_events  # property
 ```
 
-
+The control's own events followed, for visual components, by the common mouse events.
 
 #### `Component.defaults`
 
@@ -793,7 +793,7 @@ Component.all_events  # property
 Component.defaults()
 ```
 
-
+Returns a new dict of the default value of each property, by name.
 
 #### `Component.prop`
 
@@ -801,7 +801,7 @@ Component.defaults()
 Component.prop(name)
 ```
 
-
+Returns the property called `name`, or `None` if the component has none.
 
 #### `Component.create`
 
@@ -832,7 +832,7 @@ header) or icon (a Lucide icon name).
 Prop.title  # property
 ```
 
-
+The label shown in the property grid: `label`, or the name with underscores as spaces.
 
 ### `RenderContext`
 
@@ -877,7 +877,7 @@ Adds (or replaces) a component in the toolbox.
 component(type_)
 ```
 
-
+Returns the registered component for `type_`; raises `KeyError` listing the known types.
 
 ### `all_components`
 
@@ -885,7 +885,7 @@ component(type_)
 all_components()
 ```
 
-
+Returns every registered component, in registration order.
 
 ### `categories`
 
@@ -893,7 +893,7 @@ all_components()
 categories()
 ```
 
-
+Returns the registered components grouped by `category` (toolbox sections), in registration order.
 
 ### `Template`
 
@@ -910,7 +910,7 @@ A starting point for new forms.
 register_template(template)
 ```
 
-
+Adds (or replaces, by name) a template offered in the "New form" dialog; returns it.
 
 ### `templates`
 
@@ -918,7 +918,7 @@ register_template(template)
 templates()
 ```
 
-
+Returns the registered form templates, in registration order.
 
 ## Designed components
 
@@ -1007,7 +1007,7 @@ Properties and custom events are read from the class and written back to it.
 SceneDocument.scene  # property
 ```
 
-
+The component's scene (the document's `form`, typed as a `Scene`).
 
 #### `SceneDocument.base_file`
 
@@ -1079,7 +1079,7 @@ The class as last parsed (the last good parse while the code has a syntax error)
 SceneDocument.code_ok  # property
 ```
 
-
+Whether the class code currently parses (`info` falls back to the last good parse otherwise).
 
 #### `SceneDocument.members`
 
@@ -1087,7 +1087,7 @@ SceneDocument.code_ok  # property
 SceneDocument.members  # property
 ```
 
-
+The component's properties and private state as declared in its class, in order (a copy).
 
 #### `SceneDocument.member`
 
@@ -1095,7 +1095,7 @@ SceneDocument.members  # property
 SceneDocument.member(name)
 ```
 
-
+Returns the declared property or state called `name`, or `None`.
 
 #### `SceneDocument.unique_member`
 
@@ -1103,7 +1103,7 @@ SceneDocument.member(name)
 SceneDocument.unique_member(base='value')
 ```
 
-
+Returns `base` (made an identifier), or `base2`, `base3`... if it is taken by a member, method, control or reserved name.
 
 #### `SceneDocument.add_member`
 
@@ -1127,7 +1127,7 @@ Changes a property (`name`, `type`, `default`, `public`, `description`); returns
 SceneDocument.remove_member(name)
 ```
 
-
+Removes property `name` from the class.
 
 #### `SceneDocument.move_member`
 
@@ -1135,7 +1135,7 @@ SceneDocument.remove_member(name)
 SceneDocument.move_member(name, offset)
 ```
 
-
+Moves property `name` by `offset` places in the class's declaration order (clamped).
 
 #### `SceneDocument.custom_events`
 
@@ -1143,7 +1143,7 @@ SceneDocument.move_member(name, offset)
 SceneDocument.custom_events  # property
 ```
 
-
+The events the component declares, as `{name: description}` (a copy).
 
 #### `SceneDocument.add_event`
 
@@ -1151,7 +1151,7 @@ SceneDocument.custom_events  # property
 SceneDocument.add_event(name='changed', description='')
 ```
 
-
+Declares a new event called `name` (made unique) with `description`; returns its name.
 
 #### `SceneDocument.update_event`
 
@@ -1159,7 +1159,7 @@ SceneDocument.add_event(name='changed', description='')
 SceneDocument.update_event(name, *, new_name=None, description=None)
 ```
 
-
+Renames event `name` to `new_name` (if valid and free) and/or changes its `description`, keeping its place; returns the event's name. Raises `KeyError` if it does not exist.
 
 #### `SceneDocument.remove_event`
 
@@ -1167,7 +1167,7 @@ SceneDocument.update_event(name, *, new_name=None, description=None)
 SceneDocument.remove_event(name)
 ```
 
-
+Removes the declared event `name` from the class.
 
 #### `SceneDocument.set_class_name`
 
@@ -1175,7 +1175,7 @@ SceneDocument.remove_event(name)
 SceneDocument.set_class_name(name)
 ```
 
-
+Renames the component's class (made a valid class name) in the code and the scene; returns the new name.
 
 #### `SceneDocument.set_description`
 
@@ -1183,7 +1183,7 @@ SceneDocument.set_class_name(name)
 SceneDocument.set_description(text)
 ```
 
-
+Sets the component's description, also as its class's docstring.
 
 #### `SceneDocument.set_scene`
 
@@ -1230,7 +1230,7 @@ expression over them, such as `f"{value} stars"`) is evaluated on every render.
 Scene.class_name  # property
 ```
 
-
+The name of the component's class (the scene's `name`).
 
 #### `Scene.bound`
 
@@ -1238,7 +1238,7 @@ Scene.class_name  # property
 Scene.bound(control)
 ```
 
-
+Returns the bindings of `control` as `{property: expression}` (empty if it has none).
 
 ### `SceneComponent`
 
@@ -1261,7 +1261,7 @@ unless the class sets them.
 SceneComponent.scene_path()
 ```
 
-
+Returns the `.pzcomp` file the class is tied to, or `None`.
 
 #### `SceneComponent.scene_model`
 
@@ -1278,7 +1278,7 @@ The scene as currently saved (or previewed by the designer), or `None`.
 SceneComponent.ctx  # property
 ```
 
-
+A render context for this instance, in the theme of its scene (what `ControlProxy.focus()` needs).
 
 ### `render`
 
@@ -1375,7 +1375,7 @@ EditorSettings(theme: 'str' = '', font_size: 'float' = 14.0, tab_size: 'int' = 4
 EditorSettings.to_dict()
 ```
 
-
+Returns the settings as a JSON-ready dict.
 
 #### `EditorSettings.from_dict`
 
@@ -1384,7 +1384,7 @@ EditorSettings.to_dict()
 EditorSettings.from_dict(data)
 ```
 
-
+Builds settings from saved `data`, keeping defaults for missing or invalid values and clamping the tab size, font size and cursor shape to valid ones.
 
 ### `History`
 
@@ -1410,7 +1410,7 @@ Records the form's current state; returns `False` if nothing changed.
 History.reset(form)
 ```
 
-
+Forgets all undo and redo steps and starts again from `form`'s current state.
 
 #### `History.can_undo`
 
@@ -1418,7 +1418,7 @@ History.reset(form)
 History.can_undo  # property
 ```
 
-
+Whether there is a step to undo.
 
 #### `History.can_redo`
 
@@ -1426,7 +1426,7 @@ History.can_undo  # property
 History.can_redo  # property
 ```
 
-
+Whether there is an undone step to redo.
 
 #### `History.undo`
 
@@ -1434,7 +1434,7 @@ History.can_redo  # property
 History.undo()
 ```
 
-
+Steps back one snapshot; returns the previous form (a new object) or `None` if there is none.
 
 #### `History.redo`
 
@@ -1442,7 +1442,7 @@ History.undo()
 History.redo()
 ```
 
-
+Steps forward one snapshot; returns the restored form (a new object) or `None` if there is none.
 
 ### `theme_for`
 

@@ -862,7 +862,7 @@ Reads a subprocess pipe (bytes or text) line by line into the log, in a backgrou
 
 ```python
 @dataclass
-class LogEntry(level, text, time=1792385203.8233047, count=1)
+class LogEntry(level, text, time=1792385292.996195, count=1)
 ```
 
 One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).
