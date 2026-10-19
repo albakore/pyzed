@@ -26,6 +26,8 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> | Mostrar u ocultar el dock derecho |
 | <kbd>Ctrl</kbd>+<kbd>J</kbd> | Mostrar u ocultar el dock inferior |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Consola |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Mostrar el [panel del agente](/pyzed/es/editor/ai-agents/) |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> | [Asistente en línea](/pyzed/es/editor/ai-agents/#asistente-en-línea) en el editor de código |
 | <kbd>F5</kbd> | Ejecutar |
 | <kbd>Shift</kbd>+<kbd>F5</kbd> | Detener |
 | <kbd>F7</kbd> | Editar el código |

@@ -103,6 +103,12 @@
    "path": "docs/src/content/docs/download.mdx"
   },
   {
+   "slug": "editor/ai-agents",
+   "title": "AI agents",
+   "description": "The Agent panel of Pyzed Design - an AI agent that builds forms and components, writes their code and edits the open form, with inline assist in the code editor, several model providers and keys kept in the system keychain.",
+   "path": "docs/src/content/docs/editor/ai-agents.md"
+  },
+  {
    "slug": "editor/code-editor",
    "title": "Code editor",
    "description": "The Python editor of Pyzed Design - completion, diagnostics, code lens, folding, the minimap, language servers, keys and settings.",
@@ -221,6 +227,12 @@
    "title": "Quickstart",
    "description": "Your first Pyzed window in five minutes.",
    "path": "docs/src/content/docs/getting-started/quickstart.md"
+  },
+  {
+   "slug": "guides/agents",
+   "title": "AI agents in your app",
+   "description": "pyzed.agents - talk to Claude, OpenAI, Gemini, OpenRouter, Ollama and OpenAI-compatible servers, give the model tools, stream its answer into your UI and keep keys in the system keychain.",
+   "path": "docs/src/content/docs/guides/agents.md"
   },
   {
    "slug": "guides/architecture",

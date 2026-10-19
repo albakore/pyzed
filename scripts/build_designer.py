@@ -13,6 +13,7 @@ Run it on each OS (the release workflow does it on Linux, Windows and macOS).
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -63,6 +64,10 @@ def main() -> int:
         # uv goes next to the executable, where pyzed.project.find_uv() looks for it
         "--add-binary", f"{uv_binary()}{os.pathsep}.",
     ]
+    # the Agent panel's optional dependencies (Claude's SDK and the system keychain), when installed
+    for package in ("anthropic", "keyring"):
+        if importlib.util.find_spec(package):
+            command += ["--collect-all", package]
     if icon.exists():
         command += ["--icon", str(icon)]
     if sys.platform == "darwin":

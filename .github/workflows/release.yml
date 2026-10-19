@@ -136,7 +136,7 @@ jobs:
       - name: Build the standalone designer
         shell: bash
         run: |
-          python -m pip install pyinstaller uv
+          python -m pip install pyinstaller uv anthropic keyring
           python -m pip install --no-index --find-links wheels pyzed-ui
           python scripts/build_designer.py --out designer
       - uses: actions/upload-artifact@v7

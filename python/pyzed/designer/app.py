@@ -23,7 +23,7 @@ from ..icons import icon as _icon
 from ..theme import themes
 from . import code as _code
 from . import components as _components
-from . import code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
+from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
 from . import commands as _commands
 from . import layout as _layout
 from . import new as _new
@@ -166,6 +166,8 @@ class Designer(App):
         self.code_error: Optional[str] = None
         self.code_revision = 0
         self.assist = CodeAssist(self, servers=language_servers)
+        # the AI agent (Agent panel, inline assist)
+        self.agent = agent_panel.AgentController(self)
         # dialogs, messages and the running preview
         self.dialog: Optional[str] = None
         self.dialog_path = ""
@@ -216,6 +218,8 @@ class Designer(App):
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
+        if self.agent.active:  # streams the agent's answer and runs its tools on this thread
+            subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
         if self.console.running is not None:  # notices when the running form's window is closed
             subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
         return subs
@@ -975,6 +979,14 @@ class Designer(App):
         self.layout.show(panel)
         self.layout.menu = None
         self._save_layout()
+
+    def toggle_agent(self) -> Any:
+        """Shows the Agent panel and focuses its message box, or hides its dock when it is showing."""
+        if self.layout.is_showing("agent", self):
+            self.toggle_dock(self.layout.docks["agent"])
+            return None
+        self.show_panel("agent")
+        return _core.Command.focus(agent_panel.INPUT_ID)
 
     def move_panel(self, panel: str, dock: str) -> None:
         """Moves the panel ``panel`` to the dock ``dock`` and saves the layout."""
@@ -1944,6 +1956,8 @@ class Designer(App):
                 title="Open form or component", on_close=self.close_dialog, width=520, theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
+        if self.dialog == "agent_settings":
+            return agent_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
                  "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette}
         if self.dialog in named:

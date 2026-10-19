@@ -25,13 +25,15 @@ classifiers = [
 designer = ["ty", "ruff"]
 # The MCP server for AI agents (`pyzed mcp`).
 mcp = ["mcp>=1.2; python_version >= '3.10'"]
+# AI agents (`pyzed.agents` and the designer's Agent panel): Claude's SDK and the system keychain.
+agents = ["anthropic>=1.0; python_version >= '3.10'", "keyring>=25"]
 
 [dependency-groups]
 dev = [
     "ty>=0.0.89",
 ]
 # The build backend, the test runner and the type checker; `uv sync` installs them (default-groups below).
-test = ["maturin>=1.7,<2.0", "pytest", "ty", "mcp>=1.2; python_version >= '3.10'"]
+test = ["maturin>=1.7,<2.0", "pytest", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
 
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"

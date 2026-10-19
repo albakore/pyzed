@@ -75,6 +75,9 @@ def settings(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Code editor"), ui.button(tr("Editor settings…"), d.open_editor_settings, icon="code", variant="ghost",
                                           size="sm", theme=t),
                  description=tr("Font, tabs, completion, language servers"), theme=t),
+        ui.field(tr("AI agents"), ui.button(tr("AI agents settings…"), d.agent.open_settings, icon="sparkles",
+                                            variant="ghost", size="sm", theme=t),
+                 description=tr("Model providers, keys and sign-in, permissions"), theme=t),
     ], theme=t)
     body = _core.scrollable(_core.column([general, canvas, running, panels, telemetry_group(d, t)], spacing=14,
                                          padding=(0, 6, 0, 0)),
