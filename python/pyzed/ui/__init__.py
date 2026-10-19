@@ -20,6 +20,7 @@ from .base import (
     muted,
     tooltip_text as tooltip,
 )
+from .color import ColorPicker, checkerboard, color_swatch
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
 from .help import about, shortcuts
 from .controls import (
@@ -72,6 +73,7 @@ from .overlays import (
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
 
 __all__ = [
+    "ColorPicker",
     "LOG_LEVELS",
     "Log",
     "LogEntry",
@@ -95,7 +97,9 @@ __all__ = [
     "callout",
     "card",
     "checkbox",
+    "checkerboard",
     "chip",
+    "color_swatch",
     "Column",
     "command_palette",
     "count_badge",

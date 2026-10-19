@@ -796,7 +796,7 @@ ui.console(log.entries, on_clear=log.clear)
 
 ```python
 @dataclass
-class LogEntry(level, text, time=1792371280.8146665, count=1)
+class LogEntry(level, text, time=1792376682.0114903, count=1)
 ```
 
 One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).
@@ -1948,3 +1948,54 @@ Converts text with ANSI colors into lines of `(text, color_name)` segments.
 | Parameter | Description |
 | --- | --- |
 | `text` | Text with ANSI escapes. |
+
+## Color picker
+
+### `ColorPicker`
+
+```python
+class ColorPicker
+```
+
+A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `"#rrggbb[aa]"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).
+
+| Parameter | Description |
+| --- | --- |
+| `value` | A color, theme token, `pz.Gradient` or `pz.Paint`. |
+| `alpha` | Shows the alpha bar and field. |
+| `gradients` | Shows the Solid/Gradient switch. |
+| `masks` | Shows the mask editor. |
+| `swatches` | Quick colors (default: the theme's accent and status colors). |
+| `on_change` | Receives `event.value`. |
+
+```python
+ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+```
+
+### `color_swatch`
+
+```python
+color_swatch(value, *, size=20, on_press=None)
+```
+
+A small square showing a color, gradient or paint over a checkerboard.
+
+| Parameter | Description |
+| --- | --- |
+| `value` | What to show. |
+| `size` | Side in pixels. |
+| `on_press` | Makes it clickable. |
+
+### `checkerboard`
+
+```python
+checkerboard(width, height, size=6)
+```
+
+A light/dark checkerboard to draw under translucent colors.
+
+| Parameter | Description |
+| --- | --- |
+| `width` | Width. |
+| `height` | Height. |
+| `size` | Cell size. |

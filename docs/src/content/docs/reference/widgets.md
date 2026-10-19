@@ -17,6 +17,8 @@ See the [layout](/pyzed/guides/layout/) guide for sizes, padding and colors.
 
 An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).
 
+Every widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).
+
 ## Layout
 
 ### `column`
@@ -1328,3 +1330,98 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
 | `cursor_blink` | Whether the cursor blinks. |
 | `cursor_color` | Cursor color. |
 | `on_zoom` | Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel. |
+
+## Styles
+
+### `Style`
+
+```python
+class Style
+```
+
+A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).
+
+| Parameter | Description |
+| --- | --- |
+| `styles` | Styles, dicts or style names to start from. |
+| `props` | Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Colors may be theme tokens. |
+
+```python
+card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
+pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
+```
+
+### `define_style`
+
+```python
+define_style(name, *styles, **props)
+```
+
+Names a style so widgets can use it by name: `widget.style("card")`. Returns it.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | The style's name. |
+| `styles` | Styles to merge. |
+| `props` | Properties on top. |
+
+### `set_style`
+
+```python
+set_style(*styles, **props)
+```
+
+Sets the global style for every window, under each window's `style`. Without arguments it clears it.
+
+| Parameter | Description |
+| --- | --- |
+| `styles` | Styles to merge. |
+| `props` | Properties on top. |
+
+### `Gradient`
+
+```python
+class Gradient
+```
+
+A linear gradient for backgrounds. Angles follow CSS: 0 up, 90 right, 180 (the default) down. Up to 8 stops.
+
+| Parameter | Description |
+| --- | --- |
+| `stops` | Colors, spread evenly, or `(offset, color)` pairs with offsets from 0 to 1. |
+| `angle` | Direction in degrees. |
+
+```python
+pz.container(None, height=80).style(background=pz.Gradient(["#f97316", "#7c3aed"], angle=90))
+```
+
+### `Mask`
+
+```python
+class Mask
+```
+
+An opacity mask for a `Paint`: how visible the fill is along a direction. On a gradient it follows the gradient's direction.
+
+| Parameter | Description |
+| --- | --- |
+| `stops` | Opacities (0 to 1), spread evenly, or `(offset, opacity)` pairs. |
+| `angle` | Direction when the fill is a plain color. |
+
+### `Paint`
+
+```python
+class Paint
+```
+
+A fill: a color or `Gradient` with an overall opacity and an optional `Mask`. Works anywhere a background does.
+
+| Parameter | Description |
+| --- | --- |
+| `fill` | A color or a `Gradient`. |
+| `opacity` | 0 to 1, multiplies the fill's own alpha. |
+| `mask` | A `pz.Mask`. |
+
+```python
+pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # fades out downwards
+```

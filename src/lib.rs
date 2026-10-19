@@ -11,6 +11,7 @@ mod layout;
 mod render;
 mod sticky;
 mod style;
+mod styled;
 mod widget;
 
 use pyo3::prelude::*;

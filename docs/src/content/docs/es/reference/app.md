@@ -27,6 +27,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
+| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
@@ -131,6 +132,7 @@ reenvía a `app.update()`.
 | `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
+| `style` | `None` | Estilo global propio; `None` usa el de la app. |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
 

@@ -169,11 +169,19 @@ impl Caches {
 #[derive(Clone, Copy)]
 pub struct Ctx<'a> {
     caches: &'a Caches,
+    /// Text properties set by the closest `style()` ancestors.
+    text: crate::styled::TextStyle,
+    /// Text properties that only fill in what texts leave unset (`App.style`).
+    text_defaults: crate::styled::TextStyle,
 }
 
 impl<'a> Ctx<'a> {
     pub fn new(caches: &'a Caches) -> Self {
-        Self { caches }
+        Self {
+            caches,
+            text: Default::default(),
+            text_defaults: Default::default(),
+        }
     }
 }
 
@@ -184,22 +192,152 @@ fn with_alpha(color: Color, a: f32) -> Color {
     }
 }
 
-pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a, Message> {
-    let node = node.bind(py).get();
+/// Containers and buttons, with the box properties of a `style()` call (`over`) applied to
+/// the widget itself instead of a wrapper, so `ui.button(...).style(radius=0)` squares it.
+fn build_box<'a>(
+    py: Python<'_>,
+    node_ref: &Py<Widget>,
+    ctx: Ctx<'a>,
+    over: Option<&crate::styled::StyleProps>,
+) -> Element<'a, Message> {
+    let node = node_ref.bind(py).get();
+    match &node.kind {
+        Kind::Container {
+            child,
+            layout,
+            align_x,
+            align_y,
+            style,
+            clip,
+        } => {
+            let layout = &crate::styled::layout(layout, over);
+            let mut c =
+                container(build(py, child, ctx)).clip(*clip || over.is_some_and(|o| o.clip));
+            if let Some(w) = layout.width {
+                c = c.width(w);
+            }
+            if let Some(h) = layout.height {
+                c = c.height(h);
+            }
+            if let Some(p) = layout.padding {
+                c = c.padding(p);
+            }
+            if let Some(m) = layout.max_width {
+                c = c.max_width(m);
+            }
+            if let Some(m) = layout.max_height {
+                c = c.max_height(m);
+            }
+            if let Some(a) = over.and_then(|o| o.align_x).or(*align_x) {
+                c = c.align_x(a);
+            }
+            if let Some(a) = over.and_then(|o| o.align_y).or(*align_y) {
+                c = c.align_y(a);
+            }
+            let style = crate::styled::boxed(style, over);
+            if !style.is_empty() {
+                let style = style.container();
+                c = c.style(move |_| style);
+            }
+            c.into()
+        }
+        Kind::Button {
+            child,
+            on_press,
+            layout,
+            style,
+            clip,
+        } => {
+            let layout = &crate::styled::layout(layout, over);
+            let mut b = button(build(py, child, ctx))
+                .on_press_maybe(on_press.clone().map(Message::Py))
+                .clip(*clip || over.is_some_and(|o| o.clip));
+            if let Some(w) = layout.width {
+                b = b.width(w);
+            }
+            if let Some(h) = layout.height {
+                b = b.height(h);
+            }
+            if let Some(p) = layout.padding {
+                b = b.padding(p);
+            }
+            let style = match (style.clone(), over) {
+                (s, Some(o)) => Some(crate::styled::button(s.unwrap_or_default(), o)),
+                (s, None) => s,
+            };
+            if let Some(s) = style {
+                b = b.style(move |theme: &Theme, status| {
+                    let text_color = s
+                        .base
+                        .text_color
+                        .unwrap_or(theme.extended_palette().background.base.text);
+                    let mut out = button::Style {
+                        background: s
+                            .base
+                            .gradient
+                            .map(Background::Gradient)
+                            .or(s.base.background.map(Background::Color)),
+                        text_color,
+                        border: s.base.border(),
+                        shadow: s.base.shadow.unwrap_or_default(),
+                        snap: true,
+                    };
+                    match status {
+                        button::Status::Active => {}
+                        button::Status::Hovered | button::Status::Pressed => {
+                            let pressed = matches!(status, button::Status::Pressed);
+                            let bg = if pressed {
+                                s.pressed_background.or(s.hover_background)
+                            } else {
+                                s.hover_background
+                            };
+                            if let Some(bg) = bg {
+                                out.background = Some(Background::Color(bg));
+                            }
+                            if let Some(c) = s.hover_text_color {
+                                out.text_color = c;
+                            }
+                            if let Some(c) = s.hover_border_color {
+                                out.border.color = c;
+                            }
+                        }
+                        button::Status::Disabled => {
+                            out.text_color =
+                                s.disabled_text_color.unwrap_or(with_alpha(text_color, 0.5));
+                            out.background = out.background.map(|bg| bg.scale_alpha(0.5));
+                        }
+                    }
+                    out
+                });
+            }
+            b.into()
+        }
+        _ => build(py, node_ref, ctx),
+    }
+}
+
+pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a, Message> {
+    let node = node_ref.bind(py).get();
 
     match &node.kind {
         Kind::Text(t) => {
             let mut w = text(t.content.clone());
-            if let Some(size) = t.size {
+            let font = ctx.text.font(t.font, &ctx.text_defaults);
+            if let Some(size) = ctx.text.size(t.size, t.font, &ctx.text_defaults) {
                 w = w.size(size);
             }
-            if let Some(color) = t.color {
+            if let Some(color) = ctx.text.color.or(t.color).or(ctx.text_defaults.color) {
                 w = w.color(color);
             }
-            if let Some(font) = t.font {
+            if let Some(font) = font {
                 w = w.font(font);
             }
-            if let Some(lh) = t.line_height {
+            if let Some(lh) = ctx
+                .text
+                .line_height
+                .or(t.line_height)
+                .or(ctx.text_defaults.line_height)
+            {
                 w = w.line_height(LineHeight::Relative(lh));
             }
             if let Some(a) = t.align_x {
@@ -274,104 +412,7 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
                 None => r.into(),
             }
         }
-        Kind::Container {
-            child,
-            layout,
-            align_x,
-            align_y,
-            style,
-            clip,
-        } => {
-            let mut c = container(build(py, child, ctx)).clip(*clip);
-            if let Some(w) = layout.width {
-                c = c.width(w);
-            }
-            if let Some(h) = layout.height {
-                c = c.height(h);
-            }
-            if let Some(p) = layout.padding {
-                c = c.padding(p);
-            }
-            if let Some(m) = layout.max_width {
-                c = c.max_width(m);
-            }
-            if let Some(m) = layout.max_height {
-                c = c.max_height(m);
-            }
-            if let Some(a) = align_x {
-                c = c.align_x(*a);
-            }
-            if let Some(a) = align_y {
-                c = c.align_y(*a);
-            }
-            if !style.is_empty() {
-                let style = style.container();
-                c = c.style(move |_| style);
-            }
-            c.into()
-        }
-        Kind::Button {
-            child,
-            on_press,
-            layout,
-            style,
-            clip,
-        } => {
-            let mut b = button(build(py, child, ctx))
-                .on_press_maybe(on_press.clone().map(Message::Py))
-                .clip(*clip);
-            if let Some(w) = layout.width {
-                b = b.width(w);
-            }
-            if let Some(h) = layout.height {
-                b = b.height(h);
-            }
-            if let Some(p) = layout.padding {
-                b = b.padding(p);
-            }
-            if let Some(s) = style.clone() {
-                b = b.style(move |theme: &Theme, status| {
-                    let text_color = s
-                        .base
-                        .text_color
-                        .unwrap_or(theme.extended_palette().background.base.text);
-                    let mut out = button::Style {
-                        background: s.base.background.map(Background::Color),
-                        text_color,
-                        border: s.base.border(),
-                        shadow: s.base.shadow.unwrap_or_default(),
-                        snap: true,
-                    };
-                    match status {
-                        button::Status::Active => {}
-                        button::Status::Hovered | button::Status::Pressed => {
-                            let pressed = matches!(status, button::Status::Pressed);
-                            let bg = if pressed {
-                                s.pressed_background.or(s.hover_background)
-                            } else {
-                                s.hover_background
-                            };
-                            if let Some(bg) = bg.or(s.base.background) {
-                                out.background = Some(Background::Color(bg));
-                            }
-                            if let Some(c) = s.hover_text_color {
-                                out.text_color = c;
-                            }
-                            if let Some(c) = s.hover_border_color {
-                                out.border.color = c;
-                            }
-                        }
-                        button::Status::Disabled => {
-                            out.text_color =
-                                s.disabled_text_color.unwrap_or(with_alpha(text_color, 0.5));
-                            out.background = out.background.map(|bg| bg.scale_alpha(0.5));
-                        }
-                    }
-                    out
-                });
-            }
-            b.into()
-        }
+        Kind::Container { .. } | Kind::Button { .. } => build_box(py, node_ref, ctx, None),
         Kind::TextInput {
             value,
             placeholder,
@@ -399,11 +440,11 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             if let Some(id) = id {
                 t = t.id(id.clone());
             }
-            if let Some(s) = size {
-                t = t.size(*s);
+            if let Some(s) = ctx.text.size(*size, *font, &ctx.text_defaults) {
+                t = t.size(s);
             }
-            if let Some(f) = font {
-                t = t.font(*f);
+            if let Some(f) = ctx.text.font(*font, &ctx.text_defaults) {
+                t = t.font(f);
             }
             if let Some(p) = layout.padding {
                 t = t.padding(p);
@@ -619,6 +660,43 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             s.into()
         }
         Kind::Opaque { child } => widget::opaque(build(py, child, ctx)),
+        Kind::Styled(props) => {
+            let inner = if props.defaults {
+                Ctx {
+                    text_defaults: ctx.text_defaults.merged(&props.text),
+                    ..ctx
+                }
+            } else {
+                Ctx {
+                    text: ctx.text.merged(&props.text),
+                    ..ctx
+                }
+            };
+            let target = props.child.bind(py).get();
+            let element = match &target.kind {
+                Kind::Container { .. } | Kind::Button { .. } => {
+                    build_box(py, &props.child, inner, Some(props))
+                }
+                Kind::Events {
+                    child,
+                    handlers,
+                    cursor,
+                } if matches!(
+                    child.bind(py).get().kind,
+                    Kind::Container { .. } | Kind::Button { .. }
+                ) =>
+                {
+                    crate::events::EventArea::new(
+                        build_box(py, child, inner, Some(props)),
+                        handlers.clone(),
+                        *cursor,
+                    )
+                    .into()
+                }
+                _ => crate::styled::wrap(build(py, &props.child, inner), props),
+            };
+            crate::styled::margin(element, props)
+        }
         Kind::Events {
             child,
             handlers,

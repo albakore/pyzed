@@ -234,7 +234,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).",
                     "no_signature": True,
                 },
             }),
@@ -899,6 +899,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `size` | `(1280, 800)` | Initial window size. |
 | `font_size` | `14` | Default text size. |
 | `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |
+| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 
 The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.
@@ -935,6 +936,7 @@ forwards them to `app.update()`.
 | `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
+| `style` | `None` | Its own global style; `None` uses the app's. |
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
 
@@ -1538,3 +1540,44 @@ _section("ui", "Console and help", {
                    "details": "`(label, value)` rows.", "links": "`(label, on_press)` buttons."},
     },
 }, before="Data and feedback")
+
+# -- Styles -------------------------------------------------------------------
+_section("widgets", "Styles", {
+    "pyzed.Style": {
+        "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).",
+        "params": {"styles": "Styles, dicts or style names to start from.",
+                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Colors may be theme tokens."},
+        "example": """
+            card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
+            pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
+        """,
+    },
+    "pyzed.define_style": {"desc": "Names a style so widgets can use it by name: `widget.style(\"card\")`. Returns it.",
+                           "params": {"name": "The style's name.", "styles": "Styles to merge.", "props": "Properties on top."}},
+    "pyzed.set_style": {"desc": "Sets the global style for every window, under each window's `style`. Without arguments it clears it.",
+                        "params": {"styles": "Styles to merge.", "props": "Properties on top."}},
+    "pyzed.Gradient": {"desc": "A linear gradient for backgrounds. Angles follow CSS: 0 up, 90 right, 180 (the default) down. Up to 8 stops.",
+                       "params": {"stops": "Colors, spread evenly, or `(offset, color)` pairs with offsets from 0 to 1.", "angle": "Direction in degrees."},
+                       "example": 'pz.container(None, height=80).style(background=pz.Gradient(["#f97316", "#7c3aed"], angle=90))'},
+    "pyzed.Mask": {"desc": "An opacity mask for a `Paint`: how visible the fill is along a direction. On a gradient it follows the gradient's direction.",
+                   "params": {"stops": "Opacities (0 to 1), spread evenly, or `(offset, opacity)` pairs.", "angle": "Direction when the fill is a plain color."}},
+    "pyzed.Paint": {"desc": "A fill: a color or `Gradient` with an overall opacity and an optional `Mask`. Works anywhere a background does.",
+                    "params": {"fill": "A color or a `Gradient`.", "opacity": "0 to 1, multiplies the fill's own alpha.", "mask": "A `pz.Mask`."},
+                    "example": 'pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # fades out downwards'},
+})
+
+_section("ui", "Color picker", {
+    "pyzed.ui.ColorPicker": {
+        "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).",
+        "params": {"value": "A color, theme token, `pz.Gradient` or `pz.Paint`.", "alpha": "Shows the alpha bar and field.",
+                   "gradients": "Shows the Solid/Gradient switch.", "masks": "Shows the mask editor.",
+                   "swatches": "Quick colors (default: the theme's accent and status colors).", "on_change": "Receives `event.value`."},
+        "example": """
+            ui.ColorPicker(value=self.fill, on_change=lambda e: setattr(self, "fill", e.value))
+        """,
+    },
+    "pyzed.ui.color_swatch": {"desc": "A small square showing a color, gradient or paint over a checkerboard.",
+                              "params": {"value": "What to show.", "size": "Side in pixels.", "on_press": "Makes it clickable."}},
+    "pyzed.ui.checkerboard": {"desc": "A light/dark checkerboard to draw under translucent colors.",
+                              "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
+})

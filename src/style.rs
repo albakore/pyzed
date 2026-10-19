@@ -182,51 +182,56 @@ pub fn font(family: Option<&str>, weight: &Any<'_>, italic: bool) -> PyResult<Op
     if family.is_none() && weight.as_ref().is_none_or(|w| w.is_none()) && !italic {
         return Ok(None);
     }
-    let family = match family.unwrap_or("sans") {
-        "sans" => Family::Name(SANS),
-        "mono" | "monospace" => Family::Name(MONO),
-        "icons" => Family::Name(ICONS),
-        "serif" => Family::Serif,
-        other => Family::Name(intern(other)),
-    };
-    let weight = match weight {
-        Some(w) if !w.is_none() => {
-            if let Ok(s) = w.cast::<PyString>() {
-                match &*s.to_cow()? {
-                    "thin" => Weight::Thin,
-                    "light" => Weight::Light,
-                    "normal" | "regular" => Weight::Normal,
-                    "medium" => Weight::Medium,
-                    "semibold" => Weight::Semibold,
-                    "bold" => Weight::Bold,
-                    "black" => Weight::Black,
-                    other => {
-                        return Err(PyValueError::new_err(format!("invalid weight: {other:?}")));
-                    }
-                }
-            } else {
-                match w.extract::<u16>()? {
-                    0..=150 => Weight::Thin,
-                    151..=350 => Weight::Light,
-                    351..=450 => Weight::Normal,
-                    451..=550 => Weight::Medium,
-                    551..=650 => Weight::Semibold,
-                    651..=850 => Weight::Bold,
-                    _ => Weight::Black,
-                }
-            }
-        }
-        _ => Weight::Normal,
-    };
     Ok(Some(Font {
-        family,
-        weight,
+        family: self::family(family.unwrap_or("sans")),
+        weight: self::weight(weight)?.unwrap_or(Weight::Normal),
         style: if italic {
             iced::font::Style::Italic
         } else {
             iced::font::Style::Normal
         },
         ..Font::DEFAULT
+    }))
+}
+
+/// `"sans"`, `"mono"`, `"icons"`, `"serif"` or a loaded family name.
+pub fn family(name: &str) -> Family {
+    match name {
+        "sans" => Family::Name(SANS),
+        "mono" | "monospace" => Family::Name(MONO),
+        "icons" => Family::Name(ICONS),
+        "serif" => Family::Serif,
+        other => Family::Name(intern(other)),
+    }
+}
+
+/// `"thin"`...`"black"` or a CSS number (100-900).
+pub fn weight(value: &Any<'_>) -> PyResult<Option<Weight>> {
+    let Some(w) = value.as_ref().filter(|w| !w.is_none()) else {
+        return Ok(None);
+    };
+    if let Ok(s) = w.cast::<PyString>() {
+        return Ok(Some(match &*s.to_cow()? {
+            "thin" => Weight::Thin,
+            "light" => Weight::Light,
+            "normal" | "regular" => Weight::Normal,
+            "medium" => Weight::Medium,
+            "semibold" => Weight::Semibold,
+            "bold" => Weight::Bold,
+            "black" => Weight::Black,
+            other => {
+                return Err(PyValueError::new_err(format!("invalid weight: {other:?}")));
+            }
+        }));
+    }
+    Ok(Some(match w.extract::<u16>()? {
+        0..=150 => Weight::Thin,
+        151..=350 => Weight::Light,
+        351..=450 => Weight::Normal,
+        451..=550 => Weight::Medium,
+        551..=650 => Weight::Semibold,
+        651..=850 => Weight::Bold,
+        _ => Weight::Black,
     }))
 }
 

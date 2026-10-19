@@ -68,6 +68,8 @@ for a star rating, a tag editor and a draggable note.
   without any code. See [Events](/pyzed/guides/events/).
 - **Lifecycle events**: `on_mount` and `on_unmount` tell the parent when the component appears
   and disappears.
+- **`style=`** styles the component like any widget (`Rating(value=3, style="card")`), unless it
+  declares a `style` prop of its own. See [Styles](/pyzed/guides/styles/).
 
 ## State and keys
 
