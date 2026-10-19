@@ -1618,7 +1618,8 @@ pub struct SplitProps {
     pub height: Length,
 }
 
-/// Two panes with a draggable divider. `ratio` (0..1) is the first pane's share and
+/// Two panes with a draggable divider. `ratio` (0..1) is the first pane's share; the
+/// split keeps the ratio the user drags to (changing `ratio` resets it) and
 /// `on_resize(ratio)` is called while dragging. `vertical=True` stacks them top/bottom.
 #[pyfunction]
 #[pyo3(signature = (first, second, *, ratio=0.5, on_resize=None, vertical=false, min_size=80.0,
@@ -1684,31 +1685,90 @@ pub fn pin(
     )
 }
 
-/// Lays children out in a grid with a fixed number of `columns`, or as many columns of
-/// at most `max_width` as fit (`fluid`). `height` is the row height (number, "fill"...)
-/// or `aspect_ratio` keeps cells at width/height.
+/// Lays children out in a grid.
+///
+/// - `columns=3` with no other track options: equal columns; `max_width` instead fits as
+///   many columns of at most that width as possible (`fluid`). `height` is the row height
+///   (number, "fill"...) or `aspect_ratio` keeps cells at width/height.
+/// - `columns` as tracks (`[200, "1fr", "auto"]` or `"200 1fr auto"`), or `rows`: a track
+///   grid. Numbers are pixels, `"auto"` fits the content and `"<n>fr"` shares the space left.
+///   Wrap children in `cell(...)` to pick their column/row and span; the rest fill the
+///   free cells row by row. `row_spacing` overrides `spacing` between rows, `align_x` and
+///   `align_y` align items in their cells, and `width`/`height` size the grid itself.
 #[pyfunction]
-#[pyo3(signature = (children=None, *, columns=None, max_width=None, spacing=0.0, height=None,
-    aspect_ratio=None, width=None))]
+#[pyo3(signature = (children=None, *, columns=None, rows=None, max_width=None, spacing=0.0,
+    row_spacing=None, height=None, aspect_ratio=None, width=None, padding=None, align_x=None,
+    align_y=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn grid(
     py: Python<'_>,
     children: Any<'_>,
-    columns: Option<usize>,
+    columns: Any<'_>,
+    rows: Any<'_>,
     max_width: Option<f32>,
     spacing: f32,
+    row_spacing: Option<f32>,
     height: Any<'_>,
     aspect_ratio: Option<f32>,
-    width: Option<f32>,
+    width: Any<'_>,
+    padding: Any<'_>,
+    align_x: Option<&str>,
+    align_y: Option<&str>,
 ) -> PyResult<Py<Widget>> {
-    if columns.is_none() && max_width.is_none() {
+    let children = crate::widget::children(&children)?;
+    let count = columns
+        .as_ref()
+        .filter(|c| !c.is_none())
+        .and_then(|c| c.extract::<usize>().ok());
+    let has_cells = children
+        .iter()
+        .any(|c| matches!(c.bind(py).get().kind, Kind::Cell { .. }));
+    let tracked = (columns.as_ref().is_some_and(|c| !c.is_none()) && count.is_none())
+        || rows.as_ref().is_some_and(|r| !r.is_none())
+        || has_cells
+        || row_spacing.is_some()
+        || padding.as_ref().is_some_and(|p| !p.is_none())
+        || align_x.is_some()
+        || align_y.is_some();
+    if tracked {
+        if max_width.is_some() || aspect_ratio.is_some() {
+            return Err(PyValueError::new_err(
+                "max_width and aspect_ratio only work with columns=<int>",
+            ));
+        }
+        return new(
+            py,
+            Kind::TrackGrid(Box::new(crate::layout::TrackGridProps {
+                children,
+                columns: crate::layout::tracks(&columns)?,
+                rows: crate::layout::tracks(&rows)?,
+                column_gap: spacing,
+                row_gap: row_spacing.unwrap_or(spacing),
+                padding: match &padding {
+                    Some(p) if !p.is_none() => style::padding(p)?,
+                    _ => iced::Padding::ZERO,
+                },
+                width: style::opt_length(&width)?.unwrap_or(Length::Fill),
+                height: style::opt_length(&height)?.unwrap_or(Length::Shrink),
+                align_x: style::align_x(align_x)?.unwrap_or(iced::alignment::Horizontal::Left),
+                align_y: style::align_y(align_y)?.unwrap_or(iced::alignment::Vertical::Top),
+            })),
+        );
+    }
+    if count.is_none() && max_width.is_none() {
         return Err(PyValueError::new_err("grid needs columns= or max_width="));
     }
+    let width = match &width {
+        Some(w) if !w.is_none() => Some(w.extract::<f32>().map_err(|_| {
+            PyValueError::new_err("with columns=<int>, width is a number of pixels")
+        })?),
+        _ => None,
+    };
     new(
         py,
         Kind::Grid {
-            children: crate::widget::children(&children)?,
-            columns,
+            children,
+            columns: count,
             max_width,
             spacing,
             height: style::opt_length(&height)?,

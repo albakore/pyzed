@@ -107,3 +107,71 @@ Fuentes incluidas: IBM Plex Sans (`"sans"`, por defecto), IBM Plex Mono (`"mono"
 - `pz.hover(base, encima)` muestra `encima` solo al pasar el ratón.
 - `pz.mouse_area(w, on_right_press=..., on_double_click=..., cursor="pointer")` detecta eventos
   del ratón.
+
+## Rejillas
+
+`pz.grid(hijos, columns=2)` sigue dando una rejilla uniforme. Si pasas **pistas**, se
+convierte en una rejilla al estilo CSS: cada pista es un tamaño en píxeles, una parte del
+espacio libre (`"1fr"`, `"2fr"`) o `"auto"` (tan grande como su contenido). Las pistas pueden
+ser una lista o un texto.
+
+![Rejilla con pistas, filas flex y un dock](../../../../assets/tutorials/layout.png)
+
+```python
+pz.grid(
+    [
+        pz.cell(cabecera, column=0, row=0, column_span=3),
+        pz.cell(lateral, column=0, row=1, row_span=2),
+        principal, detalles,
+        pz.cell(pz.text("centrado"), align_x="center", align_y="center"),
+    ],
+    columns=[140, "1fr", "auto"],   # o "140 1fr auto"
+    rows="44 1fr 1fr",
+    spacing=8,                      # row_spacing= para otro hueco vertical
+    height=240,
+)
+```
+
+`pz.cell` coloca un hijo en una columna/fila, hace que ocupe varias pistas y lo alinea dentro
+de su celda. Los hijos sin posición llenan las celdas libres fila a fila.
+
+## Flex
+
+`pz.flex` coloca los hijos en un eje, como flexbox en CSS:
+
+```python
+pz.flex([a, b, c], justify="between", align="center", gap=6)
+pz.flex([a, b], direction="column", justify="end")
+pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], gap=6)
+```
+
+`justify` es `"start"`, `"center"`, `"end"`, `"between"`, `"around"` o `"evenly"`.
+`pz.flex_item` indica cuánto espacio libre toma un hijo (`grow`) o un tamaño fijo (`basis`).
+`wrap=True` hace que una fila salte a nuevas líneas.
+
+## Paneles acoplables y redimensionables
+
+`pz.resizable(contenido, edge="right", size=240)` da a un panel un borde que el usuario
+puede arrastrar. `min_size`/`max_size` lo limitan y `on_resize(tamaño)` avisa del nuevo
+tamaño al soltar. `ui.panel` y `ui.workspace` lo usan, así que sus paneles laterales se
+pueden redimensionar sin más, y `pz.split` conserva la proporción arrastrada.
+
+`pz.Dock` es un dock al estilo Zed: un área central con paneles a los lados. Arrastra una
+pestaña a una zona (o haz clic derecho) para mover el panel a otro lado, y arrastra su borde
+interior para cambiar su tamaño.
+
+```python
+pz.Dock(
+    center=editor,
+    panels=[
+        pz.DockPanel("project", "Proyecto", arbol, icon="folder", side="left"),
+        pz.DockPanel("outline", "Esquema", esquema, icon="list-tree", side="left"),
+        pz.DockPanel("log", "Log", log, icon="terminal", side="bottom"),
+    ],
+    layout=self.layout,               # restaura una disposición guardada
+    on_layout=lambda e: setattr(self, "layout", e.value),
+)
+```
+
+`on_layout` recibe un dict (posiciones, tamaños, pestañas activas y lados ocultos) que puedes
+guardar y devolver como `layout=`. Ver [`examples/layout.py`](https://github.com/albakore/pyzed/blob/main/examples/layout.py).

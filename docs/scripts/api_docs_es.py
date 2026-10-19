@@ -600,6 +600,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "status_bar": "Barra de estado (`ui.status_bar`).",
                         "left_width": "Ancho del dock izquierdo.",
                         "right_width": "Ancho del dock derecho.",
+                        "on_resize": "Se llama con `(side, size)` cuando el usuario termina de cambiar el tamaño de un panel arrastrando su borde interior.",
                         "bottom_height": "Alto del dock inferior.",
                     },
                 },
@@ -617,8 +618,12 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"content": "Texto.", "tooltip": "Texto del tooltip."},
                 },
                 "pyzed.ui.panel": {
-                    "desc": "Un panel acoplable. `side` decide en qué borde va la línea.",
-                    "params": {"header": "Cabecera (`ui.panel_header`).", "side": '`"left"`, `"right"` o `"bottom"`.'},
+                    "desc": "Un panel acoplable. `side` decide en qué borde va la línea; con un `width` numérico (`height` para el inferior) ese borde se arrastra para cambiar su tamaño.",
+                    "params": {
+                        "header": "Cabecera (`ui.panel_header`).", "side": '`"left"`, `"right"` o `"bottom"`.',
+                        "resizable": "`False` mantiene el tamaño fijo.", "on_resize": "Se llama con el nuevo tamaño al terminar de arrastrar.",
+                        "min_size": "Tamaño mínimo al redimensionar.",
+                    },
                 },
                 "pyzed.ui.panel_header": {"desc": "La cabecera de un panel: icono, título y acciones.", "params": {"height": "Alto."}},
             }),
@@ -976,15 +981,71 @@ _section("command", "Ventanas y portapapeles", {
 _w = _page("widgets")["sections"]
 dict(_w)["Layout"].update({
     "pyzed.grid": {
-        "desc": "Coloca los hijos en una rejilla con un número fijo de `columns`, o tantas columnas de como mucho `max_width` como quepan.",
-        "params": {"columns": "Número de columnas.", "height": "Alto de cada fila.", "aspect_ratio": "Mantiene las celdas en esta proporción ancho/alto."},
-        "example": "pz.grid([card(p) for p in photos], max_width=220, spacing=8, aspect_ratio=1)",
+        "desc": "Coloca los hijos en una rejilla. Con `columns=3` las columnas son iguales (o `max_width` mete tantas como quepan). Con listas de pistas (`columns=[200, \"1fr\", \"auto\"]`, `rows=...`) funciona como un grid de CSS: los números son píxeles, `\"auto\"` se ajusta al contenido y `\"<n>fr\"` reparte el espacio que sobra. Envuelve los hijos en `pz.cell` para colocarlos y hacer que ocupen varias celdas; el resto llena las celdas libres fila a fila. Ver [Layout](/pyzed/es/guides/layout/#rejillas).",
+        "params": {
+            "columns": "Número de columnas iguales, o pistas: una lista (`[200, \"1fr\", \"auto\"]`) o un texto (`\"200 1fr auto\"`).",
+            "rows": "Pistas de las filas, como `columns`. Las filas que no están en la lista son `\"auto\"`.",
+            "spacing": "Espacio entre celdas.", "row_spacing": "Espacio entre filas, si es distinto.",
+            "height": "Con `columns=<int>`: alto de cada fila. Con pistas: alto de la rejilla.",
+            "width": "Con `columns=<int>`: píxeles. Con pistas: ancho de la rejilla (por defecto `\"fill\"`).",
+            "aspect_ratio": "Mantiene las celdas en esta proporción ancho/alto (solo con `columns=<int>`).",
+            "max_width": "Mete tantas columnas de como mucho este ancho como quepan (solo con `columns=<int>`).",
+            "padding": "Espacio alrededor de las celdas.",
+            "align_x": "Alineación horizontal de cada elemento en su celda: `\"start\"`, `\"center\"`, `\"end\"`.",
+            "align_y": "Alineación vertical de cada elemento en su celda.",
+        },
+        "example": """
+            pz.grid([pz.cell(header, column=0, row=0, column_span=2), sidebar, content],
+                    columns=[200, "1fr"], rows=[48, "1fr"], spacing=8, height="fill")
+        """,
+    },
+    "pyzed.cell": {
+        "desc": "Coloca un hijo en una rejilla con pistas: su columna y fila (desde 0) y cuántas ocupa. Los hijos sin celda llenan las celdas libres fila a fila. Fuera de una rejilla es solo el hijo.",
+        "params": {
+            "content": "El widget.", "column": "Índice de columna (desde 0).", "row": "Índice de fila (desde 0).",
+            "column_span": "Columnas que ocupa.", "row_span": "Filas que ocupa.",
+            "align_x": "Alineación horizontal en la celda.", "align_y": "Alineación vertical en la celda.",
+        },
+        "example": 'pz.cell(ui.button("Guardar"), column=2, row=3, align_x="end")',
+    },
+    "pyzed.flex": {
+        "desc": "Coloca los hijos a lo largo de un eje, como flexbox de CSS, con `justify` en el eje principal y `align` en el transversal. Usa `pz.flex_item` para que un hijo crezca o tenga un tamaño fijo.",
+        "params": {
+            "children": "Los widgets, o `pz.flex_item(...)` para hijos con su propio tamaño.",
+            "direction": "`\"row\"` o `\"column\"`.",
+            "justify": "`\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` o `\"evenly\"`. No tiene efecto si algún hijo crece.",
+            "align": "Alineación transversal: `\"start\"`, `\"center\"` o `\"end\"`.",
+            "gap": "Espacio entre hijos.", "wrap": "Pasa a nuevas líneas (solo filas con `justify=\"start\"`).",
+            "padding": "Espacio alrededor de los hijos.", "width": "Ancho.", "height": "Alto.",
+        },
+        "example": 'pz.flex([logo, titulo, pz.flex_item(buscador, grow=1), avatar], justify="between", align="center", gap=8)',
+    },
+    "pyzed.flex_item": {
+        "desc": "Da tamaño a un hijo de `pz.flex`.",
+        "params": {
+            "content": "El widget.", "grow": "Parte del espacio libre en el eje principal (`0` mantiene su tamaño natural).",
+            "basis": "Un tamaño fijo en píxeles en el eje principal, en lugar de crecer.", "align": "Alineación transversal de este hijo.",
+        },
+    },
+    "pyzed.resizable": {
+        "desc": "Un panel cuyo borde `edge` se arrastra para cambiar su tamaño. Conserva el tamaño al que lo arrastra el usuario; `on_resize(size)` se llama al terminar de arrastrar para que puedas guardarlo. Si `size` cambia después, vuelve a ese valor.",
+        "params": {
+            "content": "El contenido del panel.",
+            "edge": "El borde con el asa: `\"right\"` (una barra lateral izquierda), `\"left\"`, `\"top\"` (un panel inferior) o `\"bottom\"`.",
+            "size": "Ancho inicial (alto con los bordes top/bottom).",
+            "min_size": "Tamaño mínimo.", "max_size": "Tamaño máximo.",
+            "on_resize": "Se llama con el nuevo tamaño al terminar de arrastrar.",
+            "color": "Color de la línea.", "hover_color": "Color de la línea al pasar el ratón o arrastrar.",
+            "thickness": "Grosor de la línea.", "handle": "Ancho de la zona que se puede agarrar.",
+            "width": "Ancho con los bordes top/bottom.", "height": "Alto con los bordes left/right.",
+        },
+        "example": 'pz.row([pz.resizable(barra, edge="right", size=240, on_resize=self.guardar_ancho), editor])',
     },
     "pyzed.split": {
         "desc": "Dos paneles con un divisor que se arrastra. Para el estilo del tema usa `ui.split`.",
         "params": {
             "first": "Primer panel.", "second": "Segundo panel.",
-            "ratio": "Proporción del primer panel (0–1).",
+            "ratio": "Proporción del primer panel (0–1). El divisor conserva la proporción a la que lo arrastra el usuario hasta que esto cambia.",
             "on_resize": "Callable que recibe la nueva proporción mientras se arrastra.",
             "vertical": "Apila los paneles arriba/abajo.",
             "min_size": "Tamaño mínimo del primer panel.", "min_size_second": "Tamaño mínimo del segundo panel.",
@@ -1280,6 +1341,28 @@ _section("app", "Eventos y componentes", {
     },
     "pyzed.Event": {
         "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, y `value`/`source` en eventos propios.",
+    },
+    "pyzed.Dock": {
+        "desc": "Un espacio de trabajo como el de Zed: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).",
+        "params": {
+            "args": "Props por posición: `center`, `panels`, `layout`.", "kwargs": "Props y handlers por nombre, además de `key=`.",
+            "center": "El área principal.", "panels": "Una lista de `pz.DockPanel`.",
+            "layout": "Una disposición guardada (de `on_layout`) para restaurarla.",
+            "on_layout": "Se llama con `event.value` = `{positions, sizes, active, hidden}` cuando los paneles se mueven, cambian de tamaño o de pestaña.",
+        },
+        "example": """
+            pz.Dock(center=editor, panels=[
+                pz.DockPanel("project", "Proyecto", arbol, icon="folder", side="left"),
+                pz.DockPanel("terminal", "Terminal", terminal, icon="terminal", side="bottom"),
+            ], layout=self.disposicion, on_layout=lambda e: setattr(self, "disposicion", e.value))
+        """,
+    },
+    "pyzed.DockPanel": {
+        "desc": "Un panel para `pz.Dock`.",
+        "params": {
+            "id": "Id estable (se usa en la disposición guardada).", "title": "Título de la pestaña.", "content": "El widget del panel.",
+            "icon": "Icono de Lucide para la pestaña.", "side": 'Lado inicial: `"left"`, `"right"`, `"bottom"` o `"top"`.',
+        },
     },
     "pyzed.Component": {
         "desc": "Clase base de los componentes propios, como en React: los atributos de clase anotados son props, los demás atributos son estado que se conserva entre renders, `render()` devuelve widgets y `events` declara eventos propios que se lanzan con `self.emit(nombre, valor)`. Llamar a la clase devuelve un widget. Aparecen en la biblioteca del diseñador. Ver [Componentes propios](/pyzed/es/guides/components/).",

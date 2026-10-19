@@ -314,6 +314,14 @@ pub enum Kind {
         width: Option<f32>,
     },
     Responsive(PyMsg),
+    /// A grid with sized column and row tracks (`grid(columns=[...])`).
+    TrackGrid(Box<crate::layout::TrackGridProps>),
+    /// A child placed in a track grid cell (`cell(...)`).
+    Cell {
+        child: Py<Widget>,
+        placement: crate::layout::Placement,
+    },
+    Resizable(Box<crate::layout::ResizableProps>),
     /// Common events attached with `.on(...)` (see `events.rs`).
     Events {
         child: Py<Widget>,
@@ -370,6 +378,12 @@ impl Widget {
             Kind::Pin { .. } => "pin",
             Kind::Grid { .. } => "grid",
             Kind::Responsive(_) => "responsive",
+            Kind::TrackGrid(props) => return format!("<Widget grid [{}]>", props.children.len()),
+            Kind::Cell { child, .. } => {
+                let inner = Python::attach(|py| child.bind(py).get().__repr__());
+                return format!("<Widget cell {inner}>");
+            }
+            Kind::Resizable(_) => "resizable",
             Kind::Events {
                 child, handlers, ..
             } => {

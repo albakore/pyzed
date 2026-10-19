@@ -1131,6 +1131,7 @@ workspace(
     left_width=240,
     right_width=320,
     bottom_height=220,
+    on_resize=None,
     theme=None,
 )
 ```
@@ -1148,6 +1149,7 @@ The layout of a Zed window: title bar, left, right and bottom docks, center and 
 | `left_width` | Width of the left dock. |
 | `right_width` | Width of the right dock. |
 | `bottom_height` | Height of the bottom dock. |
+| `on_resize` | Called with `(side, size)` when the user finishes resizing a dock by dragging its inner border. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `title_bar`
@@ -1240,10 +1242,21 @@ An icon and/or text in the status bar (diagnostics, cursor position, language…
 ### `panel`
 
 ```python
-panel(content, *, header=None, width=None, height=None, side='left', theme=None)
+panel(
+    content,
+    *,
+    header=None,
+    width=None,
+    height=None,
+    side='left',
+    resizable=True,
+    on_resize=None,
+    min_size=120,
+    theme=None,
+)
 ```
 
-A dockable panel. `side` decides which edge gets the border line.
+A dockable panel. `side` decides which edge gets the border line; with a numeric `width` (`height` for the bottom) that border can be dragged to resize it.
 
 | Parameter | Description |
 | --- | --- |
@@ -1252,6 +1265,9 @@ A dockable panel. `side` decides which edge gets the border line.
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `side` | `"left"`, `"right"` or `"bottom"`. |
+| `resizable` | `False` keeps the size fixed. |
+| `on_resize` | Called with the new size when a drag ends. |
+| `min_size` | Smallest size when resizing. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `panel_header`
@@ -1523,6 +1539,11 @@ editor(
     active_line=True,
     height='fill',
     placeholder=None,
+    annotations=None,
+    show_whitespace=False,
+    tab_size=None,
+    capture_keys=(),
+    on_scroll=None,
     theme=None,
 )
 ```
@@ -1545,6 +1566,7 @@ Zed's code editor: highlighting with the theme colors, line numbers and git mark
 | `active_line` | Background color of the cursor line. |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `placeholder` | Hint text shown when empty. |
+| `on_scroll` | Called on scroll. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`
