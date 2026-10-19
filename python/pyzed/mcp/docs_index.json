@@ -73,6 +73,126 @@
    "path": "docs/src/content/docs/components/workspace.md"
   },
   {
+   "slug": "contributing/adding-components",
+   "title": "Adding a component to the editor",
+   "description": "Step by step, from a pyzed.ui function (and the Rust widget behind it) to a toolbox entry with properties, events, saved forms, generated handlers and tests.",
+   "path": "docs/src/content/docs/contributing/adding-components.md"
+  },
+  {
+   "slug": "contributing/docs",
+   "title": "Editing the documentation",
+   "description": "How this site is organized, how to preview it, how translations work and how to regenerate the reference and images.",
+   "path": "docs/src/content/docs/contributing/docs.md"
+  },
+  {
+   "slug": "contributing/documenting-components",
+   "title": "Documenting a component",
+   "description": "Docstrings, the API reference, the component library, screenshots, translations and the changelog for a new component.",
+   "path": "docs/src/content/docs/contributing/documenting-components.md"
+  },
+  {
+   "slug": "contributing/index",
+   "title": "Contributing to Pyzed",
+   "description": "Set up a development environment, run the checks CI runs, and follow the commit and pull request conventions.",
+   "path": "docs/src/content/docs/contributing/index.md"
+  },
+  {
+   "slug": "download",
+   "title": "Download Pyzed Design",
+   "description": "Download Pyzed Design, the visual designer of Pyzed, as a standalone app for Windows, macOS and Linux.",
+   "path": "docs/src/content/docs/download.mdx"
+  },
+  {
+   "slug": "editor/code-editor",
+   "title": "Code editor",
+   "description": "The Python editor of Pyzed Design - completion, diagnostics, code lens, folding, the minimap, language servers, keys and settings.",
+   "path": "docs/src/content/docs/editor/code-editor.md"
+  },
+  {
+   "slug": "editor/component-designer",
+   "title": "Component designer",
+   "description": "Draw reusable components with properties, state, methods and custom events, and nest them like Godot scenes.",
+   "path": "docs/src/content/docs/editor/component-designer.md"
+  },
+  {
+   "slug": "editor/console-and-running",
+   "title": "Running and the console",
+   "description": "Run forms and components with F5, read their output, events and errors in the console, and update them live on save.",
+   "path": "docs/src/content/docs/editor/console-and-running.md"
+  },
+  {
+   "slug": "editor/events",
+   "title": "Events and handlers",
+   "description": "The Events panel, every event of every component and the form, and how to write handlers in Pyzed Design.",
+   "path": "docs/src/content/docs/editor/events.md"
+  },
+  {
+   "slug": "editor/files-and-scripting",
+   "title": "Files, templates and scripting",
+   "description": "Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the designer's Python API.",
+   "path": "docs/src/content/docs/editor/files-and-scripting.md"
+  },
+  {
+   "slug": "editor/index",
+   "title": "Pyzed Design",
+   "description": "The manual of Pyzed's visual editor. Draw windows and components, wire their events to Python, run them and ship them.",
+   "path": "docs/src/content/docs/editor/index.md"
+  },
+  {
+   "slug": "editor/keyboard-shortcuts",
+   "title": "Keyboard shortcuts",
+   "description": "Every keyboard shortcut of Pyzed Design - global commands, the canvas, dialogs and the code editor.",
+   "path": "docs/src/content/docs/editor/keyboard-shortcuts.md"
+  },
+  {
+   "slug": "editor/layouts",
+   "title": "Layouts and containers",
+   "description": "Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors in Pyzed Design.",
+   "path": "docs/src/content/docs/editor/layouts.md"
+  },
+  {
+   "slug": "editor/menus-and-commands",
+   "title": "Menus and commands",
+   "description": "The title bar, every menu entry, the toolbar, the command palette, Add control and the dockable panels of Pyzed Design.",
+   "path": "docs/src/content/docs/editor/menus-and-commands.md"
+  },
+  {
+   "slug": "editor/projects",
+   "title": "Projects",
+   "description": "Create and open uv projects, manage dependencies, run ruff and ty and create the git repository from the Project panel.",
+   "path": "docs/src/content/docs/editor/projects.md"
+  },
+  {
+   "slug": "editor/properties",
+   "title": "Properties",
+   "description": "The property grid of Pyzed Design, section by section - the form, a control, several controls, and the list and table editors.",
+   "path": "docs/src/content/docs/editor/properties.md"
+  },
+  {
+   "slug": "editor/settings",
+   "title": "Settings",
+   "description": "The preferences of Pyzed Design and of its code editor, where they are saved and how to translate the editor.",
+   "path": "docs/src/content/docs/editor/settings.md"
+  },
+  {
+   "slug": "editor/styles-and-themes",
+   "title": "Styles and themes",
+   "description": "The Style section, the color picker with gradients and masks, the form's global style and themes in Pyzed Design.",
+   "path": "docs/src/content/docs/editor/styles-and-themes.md"
+  },
+  {
+   "slug": "editor/tips-and-tricks",
+   "title": "Tips and tricks",
+   "description": "Small habits that make you faster in Pyzed Design.",
+   "path": "docs/src/content/docs/editor/tips-and-tricks.md"
+  },
+  {
+   "slug": "editor/toolbox-and-canvas",
+   "title": "Toolbox and canvas",
+   "description": "Place, select, move, resize and arrange controls; snapping, smart guides, alignment, z-order and the outline.",
+   "path": "docs/src/content/docs/editor/toolbox-and-canvas.md"
+  },
+  {
    "slug": "examples",
    "title": "Examples",
    "description": "Example apps included in the repository, ready to run.",
@@ -137,12 +257,6 @@
    "title": "Custom components",
    "description": "Build reusable components with their own props, state, logic and events, like React components, and use them in the designer.",
    "path": "docs/src/content/docs/guides/components.md"
-  },
-  {
-   "slug": "guides/contributing-docs",
-   "title": "Editing the documentation",
-   "description": "How this site is organized, how to preview it, how translations work and how to regenerate the reference and images.",
-   "path": "docs/src/content/docs/guides/contributing-docs.md"
   },
   {
    "slug": "guides/designer",
@@ -231,8 +345,542 @@
   {
    "slug": "index",
    "title": "Pyzed",
-   "description": "Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor.",
+   "description": "Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor and a visual designer.",
    "path": "docs/src/content/docs/index.mdx"
+  },
+  {
+   "slug": "library/about",
+   "title": "About",
+   "description": "An About box with icon, version, details and links.",
+   "path": "docs/src/content/docs/library/about.mdx"
+  },
+  {
+   "slug": "library/accordion",
+   "title": "Accordion",
+   "description": "Stacked collapsible sections, like Zed's settings panels.",
+   "path": "docs/src/content/docs/library/accordion.mdx"
+  },
+  {
+   "slug": "library/alert",
+   "title": "Alert",
+   "description": "A message with one button.",
+   "path": "docs/src/content/docs/library/alert.mdx"
+  },
+  {
+   "slug": "library/avatar",
+   "title": "Avatar",
+   "description": "A round avatar with initials in a collaborator color.",
+   "path": "docs/src/content/docs/library/avatar.mdx"
+  },
+  {
+   "slug": "library/badge",
+   "title": "Badge",
+   "description": "A small pill for statuses, versions and counters.",
+   "path": "docs/src/content/docs/library/badge.mdx"
+  },
+  {
+   "slug": "library/bar-chart",
+   "title": "Bar chart",
+   "description": "A vertical bar chart with labels.",
+   "path": "docs/src/content/docs/library/bar-chart.mdx"
+  },
+  {
+   "slug": "library/breadcrumbs",
+   "title": "Breadcrumbs",
+   "description": "`src › main.rs › fn main`, optionally clickable.",
+   "path": "docs/src/content/docs/library/breadcrumbs.mdx"
+  },
+  {
+   "slug": "library/button",
+   "title": "Button",
+   "description": "The Zed button: variants, sizes, icons and shortcuts.",
+   "path": "docs/src/content/docs/library/button.mdx"
+  },
+  {
+   "slug": "library/callout",
+   "title": "Callout",
+   "description": "An inline notice with a title, text and actions.",
+   "path": "docs/src/content/docs/library/callout.mdx"
+  },
+  {
+   "slug": "library/canvas",
+   "title": "Canvas",
+   "description": "2D drawing with shapes, paths, text and mouse events.",
+   "path": "docs/src/content/docs/library/canvas.mdx"
+  },
+  {
+   "slug": "library/card",
+   "title": "Card",
+   "description": "A bordered surface with an optional title and actions.",
+   "path": "docs/src/content/docs/library/card.mdx"
+  },
+  {
+   "slug": "library/checkbox",
+   "title": "Checkbox",
+   "description": "A checkbox with an optional label.",
+   "path": "docs/src/content/docs/library/checkbox.mdx"
+  },
+  {
+   "slug": "library/chip",
+   "title": "Chip",
+   "description": "A compact tag: clickable as a filter, removable with an ✕.",
+   "path": "docs/src/content/docs/library/chip.mdx"
+  },
+  {
+   "slug": "library/choice",
+   "title": "Choice",
+   "description": "A message with your own buttons.",
+   "path": "docs/src/content/docs/library/choice.mdx"
+  },
+  {
+   "slug": "library/color-picker",
+   "title": "Color picker",
+   "description": "Pick a color, a gradient or a masked fill; swatches show them.",
+   "path": "docs/src/content/docs/library/color-picker.mdx"
+  },
+  {
+   "slug": "library/column",
+   "title": "Column",
+   "description": "Stacks children vertically.",
+   "path": "docs/src/content/docs/library/column.mdx"
+  },
+  {
+   "slug": "library/command-palette",
+   "title": "Command palette",
+   "description": "Zed's command palette with fuzzy search and shortcuts.",
+   "path": "docs/src/content/docs/library/command-palette.mdx"
+  },
+  {
+   "slug": "library/confirm",
+   "title": "Confirm",
+   "description": "A yes/no question, red for destructive actions.",
+   "path": "docs/src/content/docs/library/confirm.mdx"
+  },
+  {
+   "slug": "library/console",
+   "title": "Console",
+   "description": "A dev-tools style log with levels, filter, copy and clear.",
+   "path": "docs/src/content/docs/library/console.mdx"
+  },
+  {
+   "slug": "library/container",
+   "title": "Container",
+   "description": "Size, padding, alignment, background, border and shadow for one child.",
+   "path": "docs/src/content/docs/library/container.mdx"
+  },
+  {
+   "slug": "library/count-badge",
+   "title": "Count badge",
+   "description": "A round counter that shows 99+ above its max.",
+   "path": "docs/src/content/docs/library/count-badge.mdx"
+  },
+  {
+   "slug": "library/dialog-layer",
+   "title": "Dialog layer",
+   "description": "Centers a dialog over your view with a dimmed backdrop.",
+   "path": "docs/src/content/docs/library/dialog-layer.mdx"
+  },
+  {
+   "slug": "library/diff-stat",
+   "title": "Diff stat",
+   "description": "`+12 −3` with GitHub-style blocks.",
+   "path": "docs/src/content/docs/library/diff-stat.mdx"
+  },
+  {
+   "slug": "library/disclosure",
+   "title": "Disclosure",
+   "description": "One collapsible section with an arrow.",
+   "path": "docs/src/content/docs/library/disclosure.mdx"
+  },
+  {
+   "slug": "library/divider",
+   "title": "Divider",
+   "description": "A thin line in the theme's border color.",
+   "path": "docs/src/content/docs/library/divider.mdx"
+  },
+  {
+   "slug": "library/donut",
+   "title": "Donut",
+   "description": "A donut chart with a label in the middle.",
+   "path": "docs/src/content/docs/library/donut.mdx"
+  },
+  {
+   "slug": "library/editor",
+   "title": "Editor",
+   "description": "Zed's code editor: highlighting, folding, minimap, git markers.",
+   "path": "docs/src/content/docs/library/editor.mdx"
+  },
+  {
+   "slug": "library/empty-state",
+   "title": "Empty state",
+   "description": "A centered placeholder for empty lists and searches.",
+   "path": "docs/src/content/docs/library/empty-state.mdx"
+  },
+  {
+   "slug": "library/facepile",
+   "title": "Facepile",
+   "description": "Overlapping collaborator avatars with +N.",
+   "path": "docs/src/content/docs/library/facepile.mdx"
+  },
+  {
+   "slug": "library/field",
+   "title": "Field",
+   "description": "A settings row: title and description left, control right.",
+   "path": "docs/src/content/docs/library/field.mdx"
+  },
+  {
+   "slug": "library/flex",
+   "title": "Flex",
+   "description": "CSS flexbox: justify, align, gap, wrap and grow.",
+   "path": "docs/src/content/docs/library/flex.mdx"
+  },
+  {
+   "slug": "library/grid",
+   "title": "Grid",
+   "description": "Equal columns, or CSS-like tracks with spans.",
+   "path": "docs/src/content/docs/library/grid.mdx"
+  },
+  {
+   "slug": "library/heading",
+   "title": "Heading",
+   "description": "Semibold titles in three levels.",
+   "path": "docs/src/content/docs/library/heading.mdx"
+  },
+  {
+   "slug": "library/icon-button",
+   "title": "Icon button",
+   "description": "A square button with just an icon and an optional tooltip.",
+   "path": "docs/src/content/docs/library/icon-button.mdx"
+  },
+  {
+   "slug": "library/icon",
+   "title": "Icon",
+   "description": "Lucide icons by name, and SVG images.",
+   "path": "docs/src/content/docs/library/icon.mdx"
+  },
+  {
+   "slug": "library/image",
+   "title": "Image",
+   "description": "Bitmaps with fit, opacity, radius; a pan-and-zoom viewer.",
+   "path": "docs/src/content/docs/library/image.mdx"
+  },
+  {
+   "slug": "library/index",
+   "title": "Components",
+   "description": "Every Pyzed component with a preview, examples and its API, grouped by category.",
+   "path": "docs/src/content/docs/library/index.mdx"
+  },
+  {
+   "slug": "library/indicator",
+   "title": "Indicator",
+   "description": "A colored dot for status, presence or unsaved changes.",
+   "path": "docs/src/content/docs/library/indicator.mdx"
+  },
+  {
+   "slug": "library/input",
+   "title": "Input",
+   "description": "A controlled text field with icon, placeholder and password mode.",
+   "path": "docs/src/content/docs/library/input.mdx"
+  },
+  {
+   "slug": "library/kbd",
+   "title": "Kbd",
+   "description": "Keyboard shortcuts drawn as keys, with symbols on macOS.",
+   "path": "docs/src/content/docs/library/kbd.mdx"
+  },
+  {
+   "slug": "library/keybinding-hint",
+   "title": "Keybinding hint",
+   "description": "A muted “Open file Ctrl P” hint.",
+   "path": "docs/src/content/docs/library/keybinding-hint.mdx"
+  },
+  {
+   "slug": "library/label",
+   "title": "Label",
+   "description": "Text with a theme color, size and weight; `muted` for secondary text.",
+   "path": "docs/src/content/docs/library/label.mdx"
+  },
+  {
+   "slug": "library/layer",
+   "title": "Layer",
+   "description": "Draws an overlay over your view; clicking outside dismisses it.",
+   "path": "docs/src/content/docs/library/layer.mdx"
+  },
+  {
+   "slug": "library/list-header",
+   "title": "List header",
+   "description": "A small section title for lists, with an end slot.",
+   "path": "docs/src/content/docs/library/list-header.mdx"
+  },
+  {
+   "slug": "library/list-item",
+   "title": "List item",
+   "description": "A list row with icon, text and an end slot.",
+   "path": "docs/src/content/docs/library/list-item.mdx"
+  },
+  {
+   "slug": "library/markdown",
+   "title": "Markdown",
+   "description": "Renders Markdown with the theme's colors.",
+   "path": "docs/src/content/docs/library/markdown.mdx"
+  },
+  {
+   "slug": "library/menu",
+   "title": "Menu",
+   "description": "A context menu with icons, shortcuts and checks.",
+   "path": "docs/src/content/docs/library/menu.mdx"
+  },
+  {
+   "slug": "library/modal",
+   "title": "Modal",
+   "description": "A dialog surface with title, content and footer buttons.",
+   "path": "docs/src/content/docs/library/modal.mdx"
+  },
+  {
+   "slug": "library/number-field",
+   "title": "Number field",
+   "description": "A number with −/+ buttons, limits, step and suffix.",
+   "path": "docs/src/content/docs/library/number-field.mdx"
+  },
+  {
+   "slug": "library/panel-header",
+   "title": "Panel header",
+   "description": "Icon, title and actions on top of a dock.",
+   "path": "docs/src/content/docs/library/panel-header.mdx"
+  },
+  {
+   "slug": "library/panel",
+   "title": "Panel",
+   "description": "A dockable, resizable side panel.",
+   "path": "docs/src/content/docs/library/panel.mdx"
+  },
+  {
+   "slug": "library/picker",
+   "title": "Picker",
+   "description": "A searchable list on a floating surface, with fuzzy matching.",
+   "path": "docs/src/content/docs/library/picker.mdx"
+  },
+  {
+   "slug": "library/popover",
+   "title": "Popover",
+   "description": "Floating content at a point: context menus, color pickers.",
+   "path": "docs/src/content/docs/library/popover.mdx"
+  },
+  {
+   "slug": "library/progress",
+   "title": "Progress",
+   "description": "A thin progress bar in a semantic color.",
+   "path": "docs/src/content/docs/library/progress.mdx"
+  },
+  {
+   "slug": "library/prompt",
+   "title": "Prompt",
+   "description": "Asks for a line of text.",
+   "path": "docs/src/content/docs/library/prompt.mdx"
+  },
+  {
+   "slug": "library/qr-code",
+   "title": "QR code",
+   "description": "A QR code for any text or URL.",
+   "path": "docs/src/content/docs/library/qr-code.mdx"
+  },
+  {
+   "slug": "library/radio-group",
+   "title": "Radio group",
+   "description": "Mutually exclusive options as radio buttons.",
+   "path": "docs/src/content/docs/library/radio-group.mdx"
+  },
+  {
+   "slug": "library/resizable",
+   "title": "Resizable",
+   "description": "A panel whose edge can be dragged to resize it.",
+   "path": "docs/src/content/docs/library/resizable.mdx"
+  },
+  {
+   "slug": "library/responsive",
+   "title": "Responsive",
+   "description": "Builds its content from the space actually available.",
+   "path": "docs/src/content/docs/library/responsive.mdx"
+  },
+  {
+   "slug": "library/rich-text",
+   "title": "Rich text",
+   "description": "One block of text mixing colors, weights and links.",
+   "path": "docs/src/content/docs/library/rich-text.mdx"
+  },
+  {
+   "slug": "library/row",
+   "title": "Row",
+   "description": "Lays out children horizontally.",
+   "path": "docs/src/content/docs/library/row.mdx"
+  },
+  {
+   "slug": "library/scrollable",
+   "title": "Scrollable",
+   "description": "Scrolls content that doesn't fit.",
+   "path": "docs/src/content/docs/library/scrollable.mdx"
+  },
+  {
+   "slug": "library/search-input",
+   "title": "Search input",
+   "description": "An input with a magnifying glass, for filtering.",
+   "path": "docs/src/content/docs/library/search-input.mdx"
+  },
+  {
+   "slug": "library/segmented",
+   "title": "Segmented",
+   "description": "A group of mutually exclusive text buttons.",
+   "path": "docs/src/content/docs/library/segmented.mdx"
+  },
+  {
+   "slug": "library/select",
+   "title": "Select",
+   "description": "A dropdown to choose one option.",
+   "path": "docs/src/content/docs/library/select.mdx"
+  },
+  {
+   "slug": "library/settings-group",
+   "title": "Settings group",
+   "description": "A titled block of field rows, like Zed's settings.",
+   "path": "docs/src/content/docs/library/settings-group.mdx"
+  },
+  {
+   "slug": "library/shortcuts",
+   "title": "Shortcuts",
+   "description": "A searchable list of key bindings, grouped.",
+   "path": "docs/src/content/docs/library/shortcuts.mdx"
+  },
+  {
+   "slug": "library/slider",
+   "title": "Slider",
+   "description": "Pick a number in a range by dragging.",
+   "path": "docs/src/content/docs/library/slider.mdx"
+  },
+  {
+   "slug": "library/spacing",
+   "title": "Space",
+   "description": "Fixed gaps and flexible spacers.",
+   "path": "docs/src/content/docs/library/spacing.mdx"
+  },
+  {
+   "slug": "library/sparkline",
+   "title": "Sparkline",
+   "description": "A tiny line chart for trends.",
+   "path": "docs/src/content/docs/library/sparkline.mdx"
+  },
+  {
+   "slug": "library/spinner",
+   "title": "Spinner",
+   "description": "A spinning arc for loading states.",
+   "path": "docs/src/content/docs/library/spinner.mdx"
+  },
+  {
+   "slug": "library/split-button",
+   "title": "Split button",
+   "description": "A main action plus an arrow that opens more options.",
+   "path": "docs/src/content/docs/library/split-button.mdx"
+  },
+  {
+   "slug": "library/split",
+   "title": "Split",
+   "description": "Two panes with a draggable divider.",
+   "path": "docs/src/content/docs/library/split.mdx"
+  },
+  {
+   "slug": "library/stack",
+   "title": "Stack",
+   "description": "Layers children on top of each other; `pin` places one at x, y.",
+   "path": "docs/src/content/docs/library/stack.mdx"
+  },
+  {
+   "slug": "library/stat",
+   "title": "Stat",
+   "description": "A dashboard number with change and sparkline.",
+   "path": "docs/src/content/docs/library/stat.mdx"
+  },
+  {
+   "slug": "library/status-bar",
+   "title": "Status bar",
+   "description": "The bottom bar: diagnostics, cursor position, language.",
+   "path": "docs/src/content/docs/library/status-bar.mdx"
+  },
+  {
+   "slug": "library/switch",
+   "title": "Switch",
+   "description": "An on/off switch for settings that apply at once.",
+   "path": "docs/src/content/docs/library/switch.mdx"
+  },
+  {
+   "slug": "library/tab-bar",
+   "title": "Tab bar",
+   "description": "Editor tabs with icons, dirty dots and close buttons.",
+   "path": "docs/src/content/docs/library/tab-bar.mdx"
+  },
+  {
+   "slug": "library/table",
+   "title": "Table",
+   "description": "A data table with a fixed header, sorting and selection.",
+   "path": "docs/src/content/docs/library/table.mdx"
+  },
+  {
+   "slug": "library/terminal",
+   "title": "Terminal",
+   "description": "A read-only terminal view with ANSI colors.",
+   "path": "docs/src/content/docs/library/terminal.mdx"
+  },
+  {
+   "slug": "library/text",
+   "title": "Text",
+   "description": "A piece of text with size, color, font and weight.",
+   "path": "docs/src/content/docs/library/text.mdx"
+  },
+  {
+   "slug": "library/title-bar",
+   "title": "Title bar",
+   "description": "The top bar with project and branch pickers.",
+   "path": "docs/src/content/docs/library/title-bar.mdx"
+  },
+  {
+   "slug": "library/toast",
+   "title": "Toast",
+   "description": "Notifications stacked in the bottom-right corner.",
+   "path": "docs/src/content/docs/library/toast.mdx"
+  },
+  {
+   "slug": "library/toggle-group",
+   "title": "Toggle group",
+   "description": "An icon-only segmented control.",
+   "path": "docs/src/content/docs/library/toggle-group.mdx"
+  },
+  {
+   "slug": "library/toolbar",
+   "title": "Toolbar",
+   "description": "The bar under the tabs: breadcrumbs and buffer actions.",
+   "path": "docs/src/content/docs/library/toolbar.mdx"
+  },
+  {
+   "slug": "library/tooltip",
+   "title": "Tooltip",
+   "description": "A hint shown on hover, optionally with its shortcut.",
+   "path": "docs/src/content/docs/library/tooltip.mdx"
+  },
+  {
+   "slug": "library/tree",
+   "title": "Tree",
+   "description": "A collapsible file tree with icons and git colors.",
+   "path": "docs/src/content/docs/library/tree.mdx"
+  },
+  {
+   "slug": "library/unsaved-changes",
+   "title": "Unsaved changes",
+   "description": "“Save your changes before closing?”",
+   "path": "docs/src/content/docs/library/unsaved-changes.mdx"
+  },
+  {
+   "slug": "library/workspace",
+   "title": "Workspace",
+   "description": "The layout of a Zed window: title bar, docks, center, status bar.",
+   "path": "docs/src/content/docs/library/workspace.mdx"
   },
   {
    "slug": "reference/app",

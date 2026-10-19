@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 from . import code as _code
 from . import components as _components
 from . import lsp
+from .locale import tr
 from .model import Form
 from .settings import EditorSettings
 
@@ -517,7 +518,7 @@ class CodeIntel:
                 continue
             lens = Lens(d.line - self.offset, d.name)
             if form is not None and d.kind == "function" and d.depth == 0:
-                lens.parts.extend(f"on {owner}.{event}" for owner, event in wired_to(form, d.name))
+                lens.parts.extend(tr("on {event}", event=f"{owner}.{event}") for owner, event in wired_to(form, d.name))
             if d.kind == "class":
                 subclasses = [c.name for c in defs if c.kind == "class" and d.name in c.bases]
                 if subclasses:
@@ -558,7 +559,7 @@ class CodeIntel:
 
 
 def _plural(n: int, word: str) -> str:
-    return f"{n} {word}{'' if n == 1 else 's'}"
+    return tr(f"{{count}} {word}" if n == 1 else f"{{count}} {word}s", count=n)
 
 
 def compose(module: str, handler: Optional[str], buffer: str) -> Tuple[str, int]:

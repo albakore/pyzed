@@ -16,6 +16,7 @@ from typing import Any, List, Optional, Tuple
 
 from .. import _core
 from ..component import Component
+from ..i18n import t as _t
 from ..icons import icon as _icon
 from ..style import Gradient, Mask, Paint, _rgba, to_hex
 from ..theme import alpha as _alpha
@@ -361,16 +362,18 @@ class ColorPicker(Component):
         color = self.current()
         rows: List[Any] = []
         if self.gradients:
-            rows.append(segmented(["Solid", "Gradient"], "Gradient" if angle is not None else "Solid", self.set_mode))
+            modes = {_t("pyzed.color.solid"): "Solid", _t("pyzed.color.gradient"): "Gradient"}
+            rows.append(segmented(list(modes), list(modes)[1 if angle is not None else 0],
+                                  lambda name: self.set_mode(modes[name])))
         if angle is not None:
             rows.append(self.stops_bar(stops, (90, [(o, c) for o, c in stops]), self.stop,
                                        self.select_stop, self.move_stop, self.add_stop))
             rows.append(_core.row([
-                label("Angle", size="sm", color="text_muted"),
+                label(_t("pyzed.color.angle"), size="sm", color="text_muted"),
                 number_field(angle, self.set_angle, min=0, max=359, step=15, width=96, suffix="°"),
                 _core.space(width="fill"),
                 icon_button("trash-2", self.remove_stop if len(stops) > 2 else None, size="sm",
-                            tooltip="Remove stop", disabled=len(stops) <= 2),
+                            tooltip=_t("pyzed.color.remove_stop"), disabled=len(stops) <= 2),
             ], spacing=8, align="center"))
         rows += [self.sv_area(), self.hue_bar()]
         if self.alpha:
@@ -394,7 +397,7 @@ class ColorPicker(Component):
             for c in swatches[:10]
         ], spacing=4))
         if self.masks:
-            rows.append(_core.row([_icon("blend", size=14, color=t.icon_muted), label("Mask", size="sm"),
+            rows.append(_core.row([_icon("blend", size=14, color=t.icon_muted), label(_t("pyzed.color.mask"), size="sm"),
                                    _core.space(width="fill"), switch(mask is not None, self.toggle_mask)],
                                   spacing=6, align="center"))
             if mask is not None:
@@ -403,14 +406,14 @@ class ColorPicker(Component):
                                            self.add_mask_stop, colors=False))
                 selected = mask.stops[min(self.mask_stop, len(mask.stops) - 1)][1]
                 rows.append(_core.row([
-                    label("Opacity", size="sm", color="text_muted"),
+                    label(_t("pyzed.color.opacity"), size="sm", color="text_muted"),
                     slider(selected, self.set_mask_opacity, width="fill"),
                     icon_button("trash-2", self.remove_mask_stop if len(mask.stops) > 2 else None, size="sm",
-                                tooltip="Remove stop", disabled=len(mask.stops) <= 2),
+                                tooltip=_t("pyzed.color.remove_stop"), disabled=len(mask.stops) <= 2),
                 ], spacing=8, align="center"))
                 if angle is None:
                     rows.append(_core.row([
-                        label("Angle", size="sm", color="text_muted"),
+                        label(_t("pyzed.color.angle"), size="sm", color="text_muted"),
                         number_field(mask.angle, self.set_angle, min=0, max=359, step=15, width=96, suffix="°"),
                     ], spacing=8, align="center"))
         return _core.container(

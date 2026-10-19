@@ -109,7 +109,7 @@ ACTIONS: Tuple[Action, ...] = (
     Action("check_updates", "Check for updates", "Help", lambda d: d.updates.check(), "refresh-cw"),
     Action("auto_updates", "Check for updates automatically", "Help", lambda d: d.updates.toggle_auto(),
            "calendar-clock", checked=lambda d: d.prefs.check_updates),
-    Action("about", "About Pyzed Designer", "Help", lambda d: d.open_dialog_named("about"), "info"),
+    Action("about", "About Pyzed Design", "Help", lambda d: d.open_dialog_named("about"), "info"),
 )
 
 DOCS_URL = "https://albakore.github.io/pyzed/editor/"
