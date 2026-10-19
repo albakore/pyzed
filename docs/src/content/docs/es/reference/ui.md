@@ -403,7 +403,7 @@ Un grupo de botones mutuamente excluyentes (el `ToggleButtonGroup` de Zed).
 ### `field`
 
 ```python
-field(title, control, *, description=None, theme=None)
+field(title, control, *, description=None, error=None, theme=None)
 ```
 
 Una fila de formulario: título y descripción a la izquierda, control a la derecha (como los ajustes de Zed).
@@ -413,6 +413,7 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `title` | Título. |
 | `control` | El control (switch, input…). |
 | `description` | Texto de ayuda. |
+| `error` | Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Diálogos
@@ -576,7 +577,7 @@ select(
 )
 ```
 
-Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums o dataclasses.
+Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1063,7 +1064,7 @@ Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de 
 class Column(title, key, width='fill', align='start', render=None, sortable=True)
 ```
 
-Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o una función de la fila; `render` (opcional) convierte el valor en un widget. `width` es `"fill"`, un número o `("fill", 2)`.
+Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o una función de la fila; `render` (opcional) convierte el valor en un widget. `width` es `"fill"`, un número o una porción como `"fill:2"`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -2062,6 +2063,7 @@ editor(
     highlights=None,
     match_brackets=True,
     selection_highlight=True,
+    font=None,
     theme=None,
 )
 ```
@@ -2101,6 +2103,7 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `highlights` | Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
 | `match_brackets` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |
+| `font` | Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

@@ -3,7 +3,9 @@
     python docs/scripts/example_shots.py              # all of them
     python docs/scripts/example_shots.py styling      # only some
 
-They are drawn off-screen with ``App.screenshot`` (no window or GPU).
+They are drawn off-screen with ``App.screenshot`` (no window or GPU). The showcase shots use
+``pz.shader``, which needs a GPU: on Linux without one, install Mesa's software Vulkan driver
+(``mesa-vulkan-drivers``) so they render the shaders instead of their fallback colors.
 """
 
 from __future__ import annotations
@@ -16,6 +18,8 @@ ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "docs" / "src" / "assets"
 sys.path.insert(0, str(ROOT / "examples"))
 sys.path.insert(0, str(ROOT / "examples" / "tutorial"))
+sys.path.insert(0, str(ROOT / "examples" / "showcase"))
+sys.path.insert(0, str(ROOT / "examples" / "games"))
 
 import pyzed as pz  # noqa: E402
 from pyzed import ui  # noqa: E402
@@ -96,6 +100,52 @@ def life_setup(app):
         app.tick()
 
 
+def snake_setup(app):
+    path = [(6, 4), (6, 5), (6, 6), (6, 7), (6, 8), (6, 9), (6, 10), (7, 10), (8, 10), (9, 10), (10, 10),
+            (11, 10), (12, 10), (12, 9), (12, 8)]
+    app.body = list(reversed(path))
+    app.direction = (0, -1)
+    app.food = (12, 4)
+    app.score, app.best = 12, 18
+
+
+def snake_over_setup(app):
+    snake_setup(app)
+    app.over = True
+
+
+def breakout_setup(app):
+    """Plays a few seconds with the paddle following the ball, then stops mid-flight."""
+    app.launch()
+    for frame in range(60 * 9):
+        app.paddle_x = app.ball_x + 18
+        app.tick(1 / 60)
+        if app.stuck:
+            app.launch()
+        if frame > 60 * 8 and app.vy < 0 and app.ball_y < 340 and app.combo >= 1:
+            break
+
+
+def invaders_setup(app):
+    app.started = True
+    app.new_game()
+    app.banner = 0
+    for frame in range(60 * 4):
+        if frame % 9 == 0:
+            app.fire()
+        app.x = 380 + 140 * __import__("math").sin(frame / 50)
+        app.hurt = 1  # keep the ship safe while the shot is set up
+        app.tick(1 / 60)
+    app.hurt = 0
+    app.triple = 6
+    app.powerups.append([520, 300])
+
+
+def invaders_title_setup(app):
+    for _ in range(30):
+        app.tick(1 / 60)
+
+
 SHOTS = {
     # Guide illustrations
     "tutorials/multi-window": (Windows, (820, 560)),
@@ -108,6 +158,17 @@ SHOTS = {
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
     "tutorials/effects": (app("effects", "Effects"), (900, 460)),
+    "showcase/hud": (app("hud", "Hud"), (1280, 720)),
+    "showcase/main-menu": (app("main_menu", "MainMenu"), (1280, 720)),
+    "showcase/inventory": (app("inventory", "Inventory"), (1180, 640)),
+    "showcase/glass-dashboard": (app("glass_dashboard", "Dashboard"), (1180, 700)),
+    "showcase/shaders": (app("shaders", "Shaders"), (1140, 720)),
+    # Games (examples/games)
+    "games/snake": (app("snake", "Snake", snake_setup, 2), None),
+    "games/snake-over": (app("snake", "Snake", snake_over_setup, 2), None),
+    "games/breakout": (app("breakout", "Breakout", breakout_setup, 3), None),
+    "games/neon-invaders": (app("neon_invaders", "NeonInvaders", invaders_setup, 5), None),
+    "games/neon-invaders-title": (app("neon_invaders", "NeonInvaders", invaders_title_setup, 5), None),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

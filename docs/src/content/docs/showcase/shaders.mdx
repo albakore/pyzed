@@ -1,0 +1,41 @@
+---
+title: "Shader gallery"
+description: "Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripple, a tunnel, a CRT screen, Voronoi cells and fire."
+sidebar:
+  order: 5
+---
+
+import { Code } from '@astrojs/starlight/components';
+import source from '../../../../../examples/showcase/shaders.py?raw';
+
+Six classic effects, each a short WGSL function. A slider changes the `speed` uniform of all of them at once: uniforms are just values, so changing them never recompiles the shader.
+
+![Shader gallery](../../../assets/showcase/shaders.png)
+
+```sh
+python examples/showcase/shaders.py
+```
+
+## How it is made
+
+### One function per effect
+
+`shade` gets the pixel's `uv`, its position in pixels, the widget size and `time`, and returns a color.
+
+```rust
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    return vec4<f32>(uv.x, uv.y, 0.5 + 0.5 * sin(time), 1.0);
+}
+```
+
+### Uniforms from Python
+
+Each uniform becomes a function you call in WGSL.
+
+```python
+pz.shader(code, uniforms={"speed": self.speed, "tint": "#a78bfa"})
+```
+
+## Full code
+
+<Code code={source} lang="py" title="examples/showcase/shaders.py" />

@@ -251,9 +251,9 @@ pub fn render_image<'a>(
     masks: &'a MaskCache,
 ) -> Element<'a, Message> {
     let filter = if props.nearest {
-        img::FilterMethod::Nearest
+        iced::advanced::image::FilterMethod::Nearest
     } else {
-        img::FilterMethod::Linear
+        iced::advanced::image::FilterMethod::Linear
     };
     if let Some((min, max, step)) = props.viewer {
         let mut v = widget::image::viewer(decoded.handle)
@@ -540,6 +540,14 @@ enum Shape {
         align_x: text::Alignment,
         align_y: iced::alignment::Vertical,
     },
+    /// A bitmap (sprite) decoded once and cached by its source.
+    Image {
+        bounds: Rectangle,
+        handle: img::Handle,
+        rotation: f32,
+        opacity: f32,
+        pixelated: bool,
+    },
     Save,
     Restore,
     Translate(Vector),
@@ -694,6 +702,24 @@ fn parse_shape(value: &Bound<'_, PyAny>) -> PyResult<Shape> {
             )?
             .unwrap_or(iced::alignment::Vertical::Top),
         },
+        "image" => {
+            let source =
+                get(d, "source")?.ok_or_else(|| PyValueError::new_err("image needs a source"))?;
+            let size: Option<(u32, u32)> = get(d, "size")?.map(|v| v.extract()).transpose()?;
+            Shape::Image {
+                bounds: Rectangle::new(
+                    Point::new(num(d, "x", 0.0)?, num(d, "y", 0.0)?),
+                    Size::new(num(d, "w", 0.0)?, num(d, "h", 0.0)?),
+                ),
+                handle: sprite_handle(&image_source(&source, size)?),
+                rotation: num(d, "rotation", 0.0)?.to_radians(),
+                opacity: num(d, "opacity", 1.0)?,
+                pixelated: get(d, "pixelated")?
+                    .map(|v| v.is_truthy())
+                    .transpose()?
+                    .unwrap_or(false),
+            }
+        }
         "save" => Shape::Save,
         "restore" => Shape::Restore,
         "translate" => Shape::Translate(Vector::new(num(d, "x", 0.0)?, num(d, "y", 0.0)?)),
@@ -708,6 +734,16 @@ fn parse_shape(value: &Bound<'_, PyAny>) -> PyResult<Shape> {
             )));
         }
     })
+}
+
+thread_local! {
+    /// Canvas images by source, so a sprite drawn every frame is decoded and uploaded once.
+    static SPRITES: std::cell::RefCell<std::collections::HashMap<u64, Decoded>> =
+        std::cell::RefCell::new(std::collections::HashMap::new());
+}
+
+fn sprite_handle(source: &ImageSource) -> img::Handle {
+    SPRITES.with(|cache| source.decode(cache).handle)
 }
 
 fn cursor_kind(value: Option<&str>) -> PyResult<Option<mouse::Interaction>> {
@@ -891,6 +927,24 @@ fn draw_shapes(frame: &mut Frame, shapes: &[Shape]) {
                 align_y: *align_y,
                 ..cv::Text::default()
             }),
+            Shape::Image {
+                bounds,
+                handle,
+                rotation,
+                opacity,
+                pixelated,
+            } => frame.draw_image(
+                *bounds,
+                iced::advanced::image::Image::new(handle.clone())
+                    .rotation(Radians(*rotation))
+                    .opacity(*opacity)
+                    .filter_method(if *pixelated {
+                        iced::advanced::image::FilterMethod::Nearest
+                    } else {
+                        iced::advanced::image::FilterMethod::Linear
+                    })
+                    .snap(*pixelated),
+            ),
             Shape::Save => frame.push_transform(),
             Shape::Restore => frame.pop_transform(),
             Shape::Translate(v) => frame.translate(*v),

@@ -39,6 +39,7 @@ Angles are in degrees, `y` grows downwards, and colors accept the same values as
 | `draw.arc(x, y, r, start, end, pie=False)` | Arc (0° = 3 o'clock, clockwise); `pie=True` closes it through the center. |
 | `draw.path(ops)` | Free-form path with SVG-like operations: `("M", x, y)`, `("L", x, y)`, `("Q", cx, cy, x, y)`, `("C", ...)`, `("A", cx, cy, r, start, end)`, `("Z",)`. |
 | `draw.text(x, y, text, color=, size=, font=, weight=, align_x=, align_y=)` | Text anchored at `(x, y)`. |
+| `draw.image(source, x, y, w, h, rotation=, opacity=, pixelated=)` | A bitmap (sprite), decoded once and cached. See [Making games](/pyzed/games/). |
 
 ## Transforms
 

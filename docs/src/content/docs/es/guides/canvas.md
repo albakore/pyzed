@@ -39,6 +39,7 @@ Los ángulos van en grados, `y` crece hacia abajo y los colores aceptan lo mismo
 | `draw.arc(x, y, r, inicio, fin, pie=False)` | Arco (0° = las 3 en punto, sentido horario); `pie=True` lo cierra por el centro. |
 | `draw.path(ops)` | Trazado libre con operaciones tipo SVG: `("M", x, y)`, `("L", x, y)`, `("Q", cx, cy, x, y)`, `("C", ...)`, `("A", cx, cy, r, inicio, fin)`, `("Z",)`. |
 | `draw.text(x, y, texto, color=, size=, font=, weight=, align_x=, align_y=)` | Texto anclado en `(x, y)`. |
+| `draw.image(source, x, y, w, h, rotation=, opacity=, pixelated=)` | Un mapa de bits (sprite), decodificado una vez y en caché. Ver [Crear videojuegos](/pyzed/es/games/). |
 
 ## Transformaciones
 

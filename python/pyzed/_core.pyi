@@ -87,6 +87,12 @@ class Command:
         """Reads the system clipboard and calls `then(text)` (an empty string if it is empty)."""
         ...
     @staticmethod
+    def paste_image(then: Any) -> Any:
+        """Reads an image from the system clipboard (a screenshot, a copied picture) and calls
+        `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.
+        """
+        ...
+    @staticmethod
     def perform(function: Any, then: Any = ...) -> Any:
         """Runs `function()` in the background and calls `then(result)` on the UI thread.
 
@@ -94,6 +100,16 @@ class Command:
         coroutine function (run on Pyzed's asyncio loop), or return a generator / async
         generator, in which case `then` is called once per yielded value. An already
         created coroutine or generator (`fetch(url)` rather than `fetch`) works too.
+        """
+        ...
+    @staticmethod
+    def pick_files(then: Any, *, title: Any = ..., filters: Any = ..., directory: Any = ..., multiple: Any = ..., folder: Any = ...) -> Any:
+        """Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
+        list when it is cancelled).
+
+        `filters` is a list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`;
+        `directory` is the folder it opens in; `multiple=False` picks one file and `folder=True`
+        picks folders.
         """
         ...
     @staticmethod
@@ -242,6 +258,14 @@ def event_names() -> Any:
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
     ...
+def frames(callback: Any, *, key: Any = ..., max_fps: Any = ...) -> Any:
+    """Calls `callback(dt)` once per displayed frame (usually 60 times a second, in sync
+    with the screen), with `dt` the seconds since the previous one. Made for games and
+    simulations: move things by `speed * dt` and they go equally fast at any frame rate.
+
+    `max_fps` caps the rate where the display does not wait for vsync (software rendering).
+    """
+    ...
 def grid(children: Any = ..., *, columns: Any = ..., rows: Any = ..., max_width: Any = ..., spacing: Any = ..., row_spacing: Any = ..., height: Any = ..., aspect_ratio: Any = ..., width: Any = ..., padding: Any = ..., align_x: Any = ..., align_y: Any = ...) -> Any:
     """Lays children out in a grid.
 
@@ -299,6 +323,13 @@ def presence(content: Any, *, id: Any, key: Any, enter: Any, exit: Any) -> Any:
     while the new one plays `enter` (compiled by ``pyzed.animation.presence``).
     """
     ...
+def pressed_keys() -> Any:
+    """The names of the keys held down right now, such as `["left", "space"]`.
+
+    Modifiers are left out (read them from the combo `on_key` receives). Games poll
+    this every frame instead of counting presses and releases.
+    """
+    ...
 def progress_bar(value: Any, *, min: Any = ..., max: Any = ..., width: Any = ..., height: Any = ..., accent: Any = ..., bg: Any = ..., radius: Any = ...) -> Any: ...
 def qr_code(data: Any, *, cell_size: Any = ..., color: Any = ..., bg: Any = ...) -> Any:
     """A QR code encoding `data`."""
@@ -336,6 +367,17 @@ def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: 
 def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any: ...
 def set_reduced_motion(on: Any) -> Any:
     """Turns reduced motion on or off: animations show their final state without moving."""
+    ...
+def shader(code: Any, *, uniforms: Any = ..., width: Any = ..., height: Any = ..., animate: Any = ..., time: Any = ..., fallback: Any = ...) -> Any:
+    """A widget painted on the GPU by your WGSL function
+    `fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32>`, which
+    returns the color (RGBA, 0 to 1) of every pixel. `uv` goes from 0 to 1 across the widget,
+    `px` and `size` are in pixels, `time` counts seconds and `mouse()` gives the pointer as a
+    `uv`. Each entry of `uniforms` (a number, 2 to 4 numbers or a color; up to 8) becomes a
+    function of the same name: `{"speed": 2}` -> `speed()`. Without a GPU (and in screenshots
+    taken without one) the widget shows `fallback`, a color or gradient. Raises `ValueError`
+    with the compiler's message when the code is not valid WGSL.
+    """
     ...
 def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any: ...
 def space(width: Any = ..., height: Any = ...) -> Any: ...

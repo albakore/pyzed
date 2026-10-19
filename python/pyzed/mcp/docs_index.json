@@ -183,7 +183,7 @@
   {
    "slug": "editor/projects",
    "title": "Projects",
-   "description": "Create and open uv projects, manage dependencies, run ruff and ty and create the git repository from the Project panel.",
+   "description": "Create and open uv projects, browse and search their files, manage dependencies, run ruff and ty and create the git repository from the Project and Dependencies panels.",
    "path": "docs/src/content/docs/editor/projects.md"
   },
   {
@@ -227,6 +227,30 @@
    "title": "Examples",
    "description": "Example apps included in the repository, ready to run.",
    "path": "docs/src/content/docs/examples.md"
+  },
+  {
+   "slug": "games/breakout",
+   "title": "Tutorial: Breakout",
+   "description": "A 60 fps Breakout with pz.frames, held keys and the mouse, ball physics, particles, combos and screen shake.",
+   "path": "docs/src/content/docs/games/breakout.mdx"
+  },
+  {
+   "slug": "games/index",
+   "title": "Making games",
+   "description": "Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.",
+   "path": "docs/src/content/docs/games/index.mdx"
+  },
+  {
+   "slug": "games/neon-invaders",
+   "title": "Tutorial: Neon Invaders",
+   "description": "A complete space shooter with pixel-art sprites, waves, power-ups, neon glow, particles and a glass HUD with bloom.",
+   "path": "docs/src/content/docs/games/neon-invaders.mdx"
+  },
+  {
+   "slug": "games/snake",
+   "title": "Tutorial: Snake",
+   "description": "Build the classic Snake with a fixed-rate timer, a key queue, a canvas board and a glass game-over card.",
+   "path": "docs/src/content/docs/games/snake.mdx"
   },
   {
    "slug": "getting-started/installation",
@@ -373,6 +397,12 @@
    "path": "docs/src/content/docs/guides/projects.md"
   },
   {
+   "slug": "guides/shaders",
+   "title": "Shaders",
+   "description": "Paint widgets on the GPU with your own WGSL shaders - backgrounds, effects and game visuals - with uniforms from Python and the mouse position.",
+   "path": "docs/src/content/docs/guides/shaders.md"
+  },
+  {
    "slug": "guides/stability",
    "title": "Stability and known limitations",
    "description": "What Pyzed 1.x promises about its API, how features are deprecated, and what it does not do yet.",
@@ -407,6 +437,48 @@
    "title": "Pyzed",
    "description": "Fast, modern desktop interfaces in Python, rendered by Iced (Rust), with components inspired by the Zed editor and a visual designer.",
    "path": "docs/src/content/docs/index.mdx"
+  },
+  {
+   "slug": "integrations/django",
+   "title": "Django",
+   "description": "Use Django's ORM, async queries and model validation in a Pyzed desktop app that shares its database with the Django admin.",
+   "path": "docs/src/content/docs/integrations/django.mdx"
+  },
+  {
+   "slug": "integrations/fastapi",
+   "title": "FastAPI",
+   "description": "Build a desktop client for a FastAPI REST API with Pyzed and httpx, embed the server in the same process and show 422 validation errors on each field.",
+   "path": "docs/src/content/docs/integrations/fastapi.mdx"
+  },
+  {
+   "slug": "integrations/httpx-pydantic",
+   "title": "httpx and Pydantic",
+   "description": "Call web APIs from a Pyzed app with httpx, stream concurrent responses into the window and parse them into Pydantic models.",
+   "path": "docs/src/content/docs/integrations/httpx-pydantic.mdx"
+  },
+  {
+   "slug": "integrations/other-libraries",
+   "title": "Other libraries",
+   "description": "Recipes for aiosqlite, SQLAlchemy asyncio, pandas, Polars, requests, Redis and Matplotlib in a Pyzed desktop app.",
+   "path": "docs/src/content/docs/integrations/other-libraries.mdx"
+  },
+  {
+   "slug": "integrations/overview",
+   "title": "Integrations overview",
+   "description": "Use Pyzed as the desktop frontend for FastAPI, SQLAlchemy, SQLModel, Django, httpx, Pydantic and aiosqlite, with runnable demos.",
+   "path": "docs/src/content/docs/integrations/overview.md"
+  },
+  {
+   "slug": "integrations/sqlalchemy",
+   "title": "SQLAlchemy",
+   "description": "A desktop database app with Pyzed and SQLAlchemy 2.0, with 20,000 rows in a virtual table, search and sorting in SQL, and editing without freezing the window.",
+   "path": "docs/src/content/docs/integrations/sqlalchemy.mdx"
+  },
+  {
+   "slug": "integrations/sqlmodel",
+   "title": "SQLModel",
+   "description": "Validate a Pyzed form with the same SQLModel class that defines the database table, and show Pydantic errors on each field.",
+   "path": "docs/src/content/docs/integrations/sqlmodel.mdx"
   },
   {
    "slug": "library/about",
@@ -1027,6 +1099,42 @@
    "path": "docs/src/content/docs/reference/widgets.md"
   },
   {
+   "slug": "showcase/glass-dashboard",
+   "title": "Glass control center",
+   "description": "A professional frosted-glass dashboard in Python: music player, smart lights, climate and schedule cards with real backdrop blur over moving color.",
+   "path": "docs/src/content/docs/showcase/glass-dashboard.mdx"
+  },
+  {
+   "slug": "showcase/hud",
+   "title": "Game HUD",
+   "description": "A game heads-up display in Python: health and mana bars, a radar minimap drawn by a shader, an ability bar with cooldowns and glass panels.",
+   "path": "docs/src/content/docs/showcase/hud.mdx"
+  },
+  {
+   "slug": "showcase/index",
+   "title": "Showcase",
+   "description": "Demos of what Pyzed can draw: game HUDs, menus and inventories, frosted-glass dashboards, bloom and real GPU shaders, all in Python.",
+   "path": "docs/src/content/docs/showcase/index.md"
+  },
+  {
+   "slug": "showcase/inventory",
+   "title": "RPG inventory",
+   "description": "An RPG inventory screen in Python where item rarity glows and blooms, with an animated glass details panel over a shader of embers.",
+   "path": "docs/src/content/docs/showcase/inventory.mdx"
+  },
+  {
+   "slug": "showcase/main-menu",
+   "title": "Game main menu",
+   "description": "A synthwave game main menu in Python with a shader backdrop that follows the mouse, a glowing title and glass buttons that lift on hover.",
+   "path": "docs/src/content/docs/showcase/main-menu.mdx"
+  },
+  {
+   "slug": "showcase/shaders",
+   "title": "Shader gallery",
+   "description": "Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripple, a tunnel, a CRT screen, Voronoi cells and fire.",
+   "path": "docs/src/content/docs/showcase/shaders.mdx"
+  },
+  {
    "slug": "tutorials/background-tasks",
    "title": "Background tasks",
    "description": "Downloads with progress, blocking work and notifications without freezing the UI.",
@@ -1351,6 +1459,25 @@
     },
     "example": "\n            async def feed():\n                async for message in websocket:\n                    yield message\n\n            def subscriptions(self):\n                return [pz.listen(feed)]\n        "
    },
+   "pyzed.frames": {
+    "desc": "A subscription that calls `callback(dt)` once per displayed frame (in sync with the screen, usually 60 times a second), with `dt` the seconds since the previous frame (at most 0.25). Made for games and simulations: move things by `speed * dt`. See [Making games](/pyzed/games/).",
+    "params": {
+     "callback": "Callable that receives `dt` (a `float`).",
+     "max_fps": "Highest rate where the display does not wait for vsync (software rendering). Default 240."
+    },
+    "example": "\n            def subscriptions(self):\n                return [] if self.paused else [pz.frames(self.tick)]\n\n            def tick(self, dt):\n                self.x += game.axis(\"left\", \"right\") * 300 * dt\n        "
+   },
+   "pyzed.pressed": {
+    "desc": "The keys held down right now, as a `frozenset` of names without modifiers (`\"left\"`, `\"space\"`, `\"a\"`…). Empty when no window is open. Poll it every frame for continuous movement; `on_key` is for one-off presses."
+   },
+   "pyzed.is_pressed": {
+    "desc": "Whether any of `keys` is held down. `held` replaces `pressed()` (handy in tests).",
+    "params": {
+     "keys": "Key names, such as `\"left\"`, `\"a\"`.",
+     "held": "Optional set of keys to use instead of `pressed()`."
+    },
+    "example": "\n            if pz.is_pressed(\"space\") and self.cooldown <= 0:\n                self.fire()\n        "
+   },
    "pyzed.Subscription": {
     "desc": "What `every` and `listen` return. It is identified by its `key`: as long as `subscriptions()` keeps returning one with the same key, it keeps running; when it disappears, it stops."
    },
@@ -1549,6 +1676,13 @@
    "pyzed.reference.tables_as_lists": {},
    "pyzed.reference.display_name": {},
    "pyzed.reference.summary": {},
+   "pyzed.validation_errors": {
+    "desc": "Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{\"detail\": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `\"\"`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).",
+    "params": {
+     "error": "The error, or the JSON of the response."
+    },
+    "example": "try:\n    item = ItemIn.model_validate(self.draft)\nexcept ValidationError as error:\n    self.errors = pz.validation_errors(error)\n\nui.field(\"Price\", ui.input(self.draft[\"price\"], self.set_price), error=self.errors.get(\"price\"))"
+   },
    "pyzed.Command": {
     "desc": "The command class. Don't instantiate it directly: use its static methods."
    },
@@ -1668,6 +1802,23 @@
     "desc": "Reads the clipboard and calls `then(text)` (empty string if it is empty).",
     "params": {
      "then": "Callable that receives the text."
+    }
+   },
+   "pyzed.Command.paste_image": {
+    "desc": "Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.",
+    "params": {
+     "then": "Callable that receives the PNG bytes or `None`."
+    }
+   },
+   "pyzed.Command.pick_files": {
+    "desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).",
+    "params": {
+     "then": "Callable that receives the list of paths.",
+     "title": "The dialog's title.",
+     "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.",
+     "directory": "The folder it opens in.",
+     "multiple": "`False` picks a single file.",
+     "folder": "`True` picks folders instead of files."
     }
    },
    "pyzed.Command.open_window": {
@@ -2063,6 +2214,18 @@
     "params": {
      "data": "The text or URL to encode.",
      "cell_size": "Size of each module in pixels."
+    }
+   },
+   "pyzed.shader": {
+    "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+    "params": {
+     "code": "WGSL source that defines `shade` (and any helper functions).",
+     "uniforms": "Up to 8 named values: a number, 2 to 4 numbers or a color.",
+     "width": "Width (`\"fill\"` by default).",
+     "height": "Height (`\"fill\"` by default).",
+     "animate": "Redraw every frame so `time` moves (`True`).",
+     "time": "A fixed `time` in seconds, for a still frame.",
+     "fallback": "Color or gradient shown without a GPU."
     }
    },
    "pyzed.canvas": {
@@ -2486,7 +2649,8 @@
     "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
     "params": {
      "control": "The control (switch, input…).",
-     "description": "Help text."
+     "description": "Help text.",
+     "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."
     }
    },
    "pyzed.ui.dialog_layer": {
@@ -2549,7 +2713,7 @@
     }
    },
    "pyzed.ui.select": {
-    "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.",
+    "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
     "params": {
      "selected": "Current option.",
      "size": "`\"sm\"`, `\"md\"` or `\"lg\"`."
@@ -2698,7 +2862,7 @@
     }
    },
    "pyzed.ui.Column": {
-    "desc": "A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `\"fill\"`, a number or `(\"fill\", 2)`.",
+    "desc": "A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `\"fill\"`, a number or a portion such as `\"fill:2\"`.",
     "params": {
      "title": "Header (and name used for sorting).",
      "key": "How to get the value from each row.",
@@ -3059,6 +3223,7 @@
      "markers": "`{line: \"created\" | \"modified\" | \"deleted\"}`.",
      "on_cursor": "Callable that receives `(line, column)`.",
      "font_size": "Font size (defaults to the theme's).",
+     "font": "Typeface: `\"mono\"` by default; `\"sans\"` makes a multi-line text box, like a chat's message box.",
      "line_height": "Line height.",
      "gutter": "Shows line numbers.",
      "wrap": "Line wrapping.",
@@ -3513,6 +3678,20 @@
      "weight": "Weight.",
      "align_x": "`\"start\"`, `\"center\"` or `\"end\"`.",
      "align_y": "`\"top\"`, `\"center\"` or `\"bottom\"`."
+    }
+   },
+   "pyzed.draw.image": {
+    "desc": "A bitmap (sprite) drawn in the box `(x, y, w, h)`. Decoded once per source and cached, so drawing it every frame is cheap. See [Making games](/pyzed/games/).",
+    "params": {
+     "source": "A path, encoded image bytes (PNG, JPEG…) or raw RGBA bytes with `size`.",
+     "x": "Left.",
+     "y": "Top.",
+     "w": "Width.",
+     "h": "Height.",
+     "rotation": "Degrees, around its center.",
+     "opacity": "From 0 to 1.",
+     "pixelated": "Nearest-neighbor scaling, for pixel art.",
+     "size": "`(width, height)` of raw RGBA bytes."
     }
    },
    "pyzed.draw.translate": {

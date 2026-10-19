@@ -159,6 +159,21 @@ def test_drain_handles_every_kind_of_value():
     assert collect(None) == []
 
 
+def test_drain_keeps_a_none_result_for_then():
+    async def nothing():
+        await asyncio.sleep(0)
+
+    def gen():
+        yield None
+        yield "a"
+
+    out = []
+    _async.drain(None, out.append, keep_none=True)
+    _async.drain(nothing(), out.append, keep_none=True)
+    _async.drain(gen(), out.append, keep_none=True)  # generators still skip their None items
+    assert out == [None, None, "a"]
+
+
 def test_drain_stops_generators_when_the_app_is_gone():
     closed = []
 
@@ -284,6 +299,8 @@ def test_new_widgets_render(tmp_path):
 EXAMPLES = sorted(
     [p for p in (ROOT / "examples").glob("*.py") if p.stem not in ("screenshots",)]
     + list((ROOT / "examples" / "tutorial").glob("*.py"))
+    + list((ROOT / "examples" / "showcase").glob("*.py"))
+    + list((ROOT / "examples" / "games").glob("*.py"))
     + [ROOT / "examples" / "hot_reload" / "main.py"]
 )
 

@@ -85,6 +85,9 @@ class Quotes(pz.App):
         self.quote, self.loading = quote, False
 ```
 
+`then` is called even when `function` returns nothing (with `None`), so it also works as
+"tell me when it's done": `Command.perform(db.migrate, lambda _: self.reload())`.
+
 ## Progress: async generators
 
 Each `yield` reaches `update` while the work keeps going in the background:

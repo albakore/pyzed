@@ -292,6 +292,54 @@ def subscriptions(self):
     return [pz.listen(feed)]
 ```
 
+### `frames`
+
+```python
+frames(callback, *, key=None, max_fps=240.0)
+```
+
+A subscription that calls `callback(dt)` once per displayed frame (in sync with the screen, usually 60 times a second), with `dt` the seconds since the previous frame (at most 0.25). Made for games and simulations: move things by `speed * dt`. See [Making games](/pyzed/games/).
+
+| Parameter | Description |
+| --- | --- |
+| `callback` | Callable that receives `dt` (a `float`). |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `max_fps` | Highest rate where the display does not wait for vsync (software rendering). Default 240. |
+
+```python
+def subscriptions(self):
+    return [] if self.paused else [pz.frames(self.tick)]
+
+def tick(self, dt):
+    self.x += game.axis("left", "right") * 300 * dt
+```
+
+### `pressed`
+
+```python
+pressed()
+```
+
+The keys held down right now, as a `frozenset` of names without modifiers (`"left"`, `"space"`, `"a"`…). Empty when no window is open. Poll it every frame for continuous movement; `on_key` is for one-off presses.
+
+### `is_pressed`
+
+```python
+is_pressed(*keys, held=None)
+```
+
+Whether any of `keys` is held down. `held` replaces `pressed()` (handy in tests).
+
+| Parameter | Description |
+| --- | --- |
+| `keys` | Key names, such as `"left"`, `"a"`. |
+| `held` | Optional set of keys to use instead of `pressed()`. |
+
+```python
+if pz.is_pressed("space") and self.cooldown <= 0:
+    self.fire()
+```
+
 ### `Subscription`
 
 What `every` and `listen` return. It is identified by its `key`: as long as `subscriptions()` keeps returning one with the same key, it keeps running; when it disappears, it stops.
@@ -1264,3 +1312,26 @@ summary(markdown)
 ```
 
 The first sentence of a Markdown text, without formatting (for lists and search results).
+
+## Forms and validation
+
+### `validation_errors`
+
+```python
+validation_errors(error)
+```
+
+Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{"detail": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `""`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).
+
+| Parameter | Description |
+| --- | --- |
+| `error` | The error, or the JSON of the response. |
+
+```python
+try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Price", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))
+```

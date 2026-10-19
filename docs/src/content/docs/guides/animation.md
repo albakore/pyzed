@@ -164,8 +164,8 @@ sticker.style(rotate=-8)
 ![Rotation, glass, bloom and blur over a gradient](../../../assets/tutorials/effects.png)
 
 Rotation, blur, backdrop blur and bloom are drawn by the renderer: the widget is drawn on its own
-layer, which is then turned, blurred or lit before it lands on the window. Bloom also adds a soft
-halo and a lit edge, and glass a tinted gradient, a border and a shadow; any of those you set
+layer, which is then turned, blurred or lit before it lands on the window. On a box (a widget with a
+background or glass) bloom also adds a soft halo and a lit edge; on a bare text or icon it only glows, and glass a tinted gradient, a border and a shadow; any of those you set
 yourself win. Glass shows best over a colorful background (a gradient or an image). Animations can
 change `glow` and `glow_color` too: the `glow`, `bloom`, `glow_pulse` and `glow_flash` presets use them.
 

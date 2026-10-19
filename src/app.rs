@@ -17,7 +17,7 @@ use iced::widget::{column, container, scrollable, text, text_editor};
 use iced::{Color, Element, Font, Length, Point, Size, Subscription, Task, Theme, window};
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyCFunction, PyDict, PyList, PyTuple, PyType};
+use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyTuple, PyType};
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
@@ -33,6 +33,12 @@ pub struct State {
     current: Option<window::Id>,
     caches: Caches,
     themes: RefCell<HashMap<Vec<String>, Theme>>,
+    /// `pz.frames` callbacks declared by the last `subscriptions()` (window, callback).
+    frames: RefCell<Vec<(Option<window::Id>, PyMsg)>>,
+    /// The shortest time between frames the active `pz.frames` allow (their `max_fps`).
+    frame_interval: std::cell::Cell<f64>,
+    /// When the previous frame was delivered (reset when no `pz.frames` is active).
+    last_frame: std::cell::Cell<Option<iced::time::Instant>>,
 }
 
 impl State {
@@ -105,6 +111,10 @@ pub enum Message {
     },
     Scrolled(PyMsg, scrollable::Viewport),
     Key(String),
+    /// A key was released (its name without modifiers, e.g. `"left"`).
+    KeyUp(String),
+    /// The display is about to draw a new frame (`pz.frames`).
+    Frame(iced::time::Instant),
     /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
     TabKey(String, bool),
     /// A message produced inside the given window.
@@ -152,6 +162,18 @@ enum CommandKind {
     Window(WindowOp, Option<PyMsg>),
     CopyToClipboard(String),
     ReadClipboard(PyMsg),
+    ReadClipboardImage(PyMsg),
+    PickFiles(PickFiles),
+}
+
+/// What `Command.pick_files` asks the system file dialog for.
+struct PickFiles {
+    then: PyMsg,
+    title: Option<String>,
+    filters: Vec<(String, Vec<String>)>,
+    directory: Option<String>,
+    multiple: bool,
+    folder: bool,
 }
 
 #[derive(Clone, Copy)]
@@ -415,6 +437,39 @@ impl Command {
         cmd(CommandKind::ReadClipboard(PyMsg::new(then)))
     }
 
+    /// Reads an image from the system clipboard (a screenshot, a copied picture) and calls
+    /// `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.
+    #[staticmethod]
+    fn paste_image(then: &Bound<'_, PyAny>) -> Self {
+        cmd(CommandKind::ReadClipboardImage(PyMsg::new(then)))
+    }
+
+    /// Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
+    /// list when it is cancelled).
+    ///
+    /// `filters` is a list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`;
+    /// `directory` is the folder it opens in; `multiple=False` picks one file and `folder=True`
+    /// picks folders.
+    #[staticmethod]
+    #[pyo3(signature = (then, *, title=None, filters=None, directory=None, multiple=true, folder=false))]
+    fn pick_files(
+        then: &Bound<'_, PyAny>,
+        title: Option<String>,
+        filters: Option<Vec<(String, Vec<String>)>>,
+        directory: Option<String>,
+        multiple: bool,
+        folder: bool,
+    ) -> Self {
+        cmd(CommandKind::PickFiles(PickFiles {
+            then: PyMsg::new(then),
+            title,
+            filters: filters.unwrap_or_default(),
+            directory,
+            multiple,
+            folder,
+        }))
+    }
+
     fn __repr__(&self) -> &'static str {
         match self.kind {
             CommandKind::Exit => "Command.exit()",
@@ -438,6 +493,8 @@ impl Command {
             CommandKind::Window(..) => "Command.<window operation>(...)",
             CommandKind::CopyToClipboard(_) => "Command.copy(...)",
             CommandKind::ReadClipboard(_) => "Command.paste(...)",
+            CommandKind::ReadClipboardImage(_) => "Command.paste_image(...)",
+            CommandKind::PickFiles(_) => "Command.pick_files(...)",
         }
     }
 }
@@ -453,6 +510,7 @@ fn is_deferred(value: &Bound<'_, PyAny>) -> bool {
 /// produced value into a message.
 fn background(source: PyMsg, call: bool, then: Option<PyMsg>) -> Task<Message> {
     let (sender, receiver) = mpsc::unbounded::<Message>();
+    let has_then = then.is_some();
     std::thread::spawn(move || {
         Python::attach(|py| {
             let source = source.0.bind(py);
@@ -478,8 +536,11 @@ fn background(source: PyMsg, call: bool, then: Option<PyMsg>) -> Task<Message> {
             );
             let result = value.and_then(|value| {
                 let emit = emit?;
+                // With a `then`, a function that returns nothing still calls it (with None).
+                let kwargs = PyDict::new(py);
+                kwargs.set_item("keep_none", has_then)?;
                 py.import("pyzed._async")?
-                    .call_method1("drain", (value, emit))
+                    .call_method("drain", (value, emit), Some(&kwargs))
                     .map(|_| ())
             });
             if let Err(err) = result {
@@ -621,7 +682,67 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 })
             })
         }
+        CommandKind::ReadClipboardImage(then) => {
+            let then = then.clone();
+            Task::perform(async { clipboard_png() }, move |png| {
+                Python::attach(|py| {
+                    let value = match png {
+                        Some(data) => PyBytes::new(py, &data).into_any(),
+                        None => py.None().into_bound(py),
+                    };
+                    Message::Call(then.clone(), PyMsg::new(&value))
+                })
+            })
+        }
+        CommandKind::PickFiles(pick) => {
+            let then = pick.then.clone();
+            let mut dialog = rfd::AsyncFileDialog::new();
+            if let Some(title) = &pick.title {
+                dialog = dialog.set_title(title);
+            }
+            for (name, extensions) in &pick.filters {
+                dialog = dialog.add_filter(name, extensions);
+            }
+            if let Some(directory) = &pick.directory {
+                dialog = dialog.set_directory(directory);
+            }
+            let (multiple, folder) = (pick.multiple, pick.folder);
+            Task::perform(
+                async move {
+                    let chosen: Vec<rfd::FileHandle> = match (folder, multiple) {
+                        (true, true) => dialog.pick_folders().await.unwrap_or_default(),
+                        (true, false) => dialog.pick_folder().await.into_iter().collect(),
+                        (false, true) => dialog.pick_files().await.unwrap_or_default(),
+                        (false, false) => dialog.pick_file().await.into_iter().collect(),
+                    };
+                    chosen
+                        .iter()
+                        .map(|h| h.path().to_string_lossy().into_owned())
+                        .collect::<Vec<String>>()
+                },
+                move |paths| {
+                    Python::attach(|py| match PyList::new(py, paths) {
+                        Ok(list) => Message::Call(then.clone(), PyMsg::new(list.as_any())),
+                        Err(_) => Message::Noop,
+                    })
+                },
+            )
+        }
     }
+}
+
+/// The image on the system clipboard, encoded as PNG.
+fn clipboard_png() -> Option<Vec<u8>> {
+    let image = arboard::Clipboard::new().ok()?.get_image().ok()?;
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, image.width as u32, image.height as u32);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().ok()?;
+        writer.write_image_data(&image.bytes).ok()?;
+    }
+    Some(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -916,6 +1037,18 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     None => return Task::none(),
                 }
             }
+            Message::KeyUp(name) => {
+                let main = state.app.bind(py).clone();
+                match call_hook(&target, "on_key_up", (name.clone(),)) {
+                    Some(result) => result,
+                    None if !target.is(&main) => match call_hook(&main, "on_key_up", (name,)) {
+                        Some(result) => result,
+                        None => return Task::none(),
+                    },
+                    None => return Task::none(),
+                }
+            }
+            Message::Frame(now) => return frame_tick(py, state, now),
             Message::TabKey(combo, back) => {
                 let main = state.app.bind(py).clone();
                 let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1104,6 +1237,49 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             }
         }
     })
+}
+
+/// Calls every `pz.frames` callback with the seconds since the previous frame.
+fn frame_tick(py: Python<'_>, state: &mut State, mut now: iced::time::Instant) -> Task<Message> {
+    // Without vsync (software rendering) frames would come back to back and spin the
+    // CPU: wait out the rest of the shortest frame time `max_fps` allows.
+    if let Some(last) = state.last_frame.get() {
+        let early = state.frame_interval.get() - now.saturating_duration_since(last).as_secs_f64();
+        if early > 0.0 {
+            py.detach(|| std::thread::sleep(Duration::from_secs_f64(early)));
+            now = iced::time::Instant::now();
+        }
+    }
+    // A long pause (a dragged window, a breakpoint) must not make the game jump ahead.
+    let dt = state
+        .last_frame
+        .get()
+        .map(|last| now.saturating_duration_since(last).as_secs_f64())
+        .unwrap_or(1.0 / 60.0)
+        .min(0.25);
+    state.last_frame.set(Some(now));
+    let callbacks = state.frames.borrow().clone();
+    let mut tasks = Vec::new();
+    for (window, cb) in callbacks {
+        let target = match window {
+            Some(id) => state.window(id).bind(py).clone(),
+            None => state.app.bind(py).clone(),
+        };
+        let next = window.or(state.current);
+        let previous = std::mem::replace(&mut state.current, next);
+        match callback(&target, cb.0.bind(py), (dt,)) {
+            Ok(value) => {
+                let task = command_task(py, state, &value);
+                tasks.push(match window {
+                    Some(id) if Some(id) != state.main => task.map(move |m| m.in_window(id)),
+                    _ => task,
+                });
+            }
+            Err(err) => err.print(py),
+        }
+        state.current = previous;
+    }
+    Task::batch(tasks)
 }
 
 fn error_view<'a>(title: &'static str, message: String) -> Element<'a, Message> {
@@ -1325,11 +1501,46 @@ pub fn key_combo(key: &Key, modifiers: keyboard::Modifiers) -> Option<String> {
     Some(combo)
 }
 
+/// The keys held down right now, by name without modifiers (`pz.pressed()`).
+static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
+    LazyLock::new(|| Mutex::new(std::collections::BTreeSet::new()));
+
 fn key_message(event: keyboard::Event) -> Option<Message> {
-    let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
-        return None;
-    };
-    key_combo(&key, modifiers).map(Message::Key)
+    match event {
+        keyboard::Event::KeyPressed { key, modifiers, .. } => {
+            key_combo(&key, modifiers).map(Message::Key)
+        }
+        keyboard::Event::KeyReleased { key, .. } => key_name(&key).map(Message::KeyUp),
+        _ => None,
+    }
+}
+
+/// Keeps `PRESSED` up to date (a window losing focus never sees the releases).
+fn track_keys(event: &iced::Event) {
+    let mut pressed = PRESSED.lock().unwrap();
+    match event {
+        iced::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => {
+            if let Some(name) = key_name(key) {
+                pressed.insert(name);
+            }
+        }
+        iced::Event::Keyboard(keyboard::Event::KeyReleased { key, .. }) => {
+            if let Some(name) = key_name(key) {
+                pressed.remove(&name);
+            }
+        }
+        iced::Event::Window(window::Event::Unfocused) => pressed.clear(),
+        _ => {}
+    }
+}
+
+/// The names of the keys held down right now, such as `["left", "space"]`.
+///
+/// Modifiers are left out (read them from the combo `on_key` receives). Games poll
+/// this every frame instead of counting presses and releases.
+#[pyfunction]
+pub fn pressed_keys() -> Vec<String> {
+    PRESSED.lock().unwrap().iter().cloned().collect()
 }
 
 fn key_event(
@@ -1337,6 +1548,7 @@ fn key_event(
     status: iced::event::Status,
     window: window::Id,
 ) -> Option<Message> {
+    track_keys(&event);
     match event {
         // Tab that no widget used (a code editor indents with it) moves the focus.
         iced::Event::Keyboard(keyboard::Event::KeyPressed {
@@ -1362,6 +1574,7 @@ fn key_event(
 enum SubscriptionKind {
     Every { interval: Duration, message: PyMsg },
     Stream { function: PyMsg },
+    Frames { function: PyMsg, max_fps: f64 },
 }
 
 /// A long-running source of messages, returned from `App.subscriptions()`.
@@ -1382,6 +1595,7 @@ impl PySubscription {
                 format!("<Subscription every {:?} key={:?}>", interval, self.key)
             }
             SubscriptionKind::Stream { .. } => format!("<Subscription stream key={:?}>", self.key),
+            SubscriptionKind::Frames { .. } => format!("<Subscription frames key={:?}>", self.key),
         }
     }
 
@@ -1443,12 +1657,48 @@ pub fn listen(function: &Bound<'_, PyAny>, key: Option<String>) -> PyResult<PySu
     })
 }
 
+/// Calls `callback(dt)` once per displayed frame (usually 60 times a second, in sync
+/// with the screen), with `dt` the seconds since the previous one. Made for games and
+/// simulations: move things by `speed * dt` and they go equally fast at any frame rate.
+///
+/// `max_fps` caps the rate where the display does not wait for vsync (software rendering).
+#[pyfunction]
+#[pyo3(signature = (callback, *, key=None, max_fps=240.0))]
+pub fn frames(
+    callback: &Bound<'_, PyAny>,
+    key: Option<String>,
+    max_fps: f64,
+) -> PyResult<PySubscription> {
+    if max_fps.is_nan() || max_fps <= 0.0 {
+        return Err(PyValueError::new_err("max_fps must be positive"));
+    }
+    if !callback.is_callable() {
+        return Err(pyo3::exceptions::PyTypeError::new_err(
+            "frames() needs a callable that takes dt",
+        ));
+    }
+    Ok(PySubscription {
+        key: format!(
+            "frames:{}",
+            match key {
+                Some(k) => k,
+                None => default_key(callback)?,
+            }
+        ),
+        kind: SubscriptionKind::Frames {
+            function: PyMsg::new(callback),
+            max_fps,
+        },
+    })
+}
+
 #[derive(Clone)]
 struct Recipe {
     key: String,
     window: Option<window::Id>,
     every: Option<(Duration, PyMsg)>,
     stream: Option<PyMsg>,
+    frame: Option<(PyMsg, f64)>,
 }
 
 impl Hash for Recipe {
@@ -1541,12 +1791,21 @@ fn python_subscriptions(
                 window,
                 every: Some((*interval, message.clone())),
                 stream: None,
+                frame: None,
             },
             SubscriptionKind::Stream { function } => Recipe {
                 key: s.key.clone(),
                 window,
                 every: None,
                 stream: Some(function.clone()),
+                frame: None,
+            },
+            SubscriptionKind::Frames { function, max_fps } => Recipe {
+                key: s.key.clone(),
+                window,
+                every: None,
+                stream: None,
+                frame: Some((function.clone(), *max_fps)),
             },
         })
         .collect()
@@ -1569,6 +1828,25 @@ fn subscription(state: &State) -> Subscription<Message> {
                 recipes.extend(python_subscriptions(py, obj.bind(py), Some(*id)));
             }
         }
+        let (frames, recipes): (Vec<_>, Vec<_>) =
+            recipes.into_iter().partition(|r| r.frame.is_some());
+        if frames.is_empty() {
+            state.last_frame.set(None);
+        } else {
+            // One frame clock for all of them, so they advance together.
+            subscriptions.push(window::frames().map(Message::Frame));
+        }
+        let fastest = frames
+            .iter()
+            .filter_map(|r| r.frame.as_ref().map(|(_, fps)| *fps))
+            .fold(0.0, f64::max);
+        state
+            .frame_interval
+            .set(if fastest > 0.0 { 1.0 / fastest } else { 0.0 });
+        *state.frames.borrow_mut() = frames
+            .into_iter()
+            .filter_map(|r| Some((r.window, r.frame?.0)))
+            .collect();
         subscriptions.extend(
             recipes
                 .into_iter()
@@ -1596,6 +1874,9 @@ fn daemon(
                 current: None,
                 caches: Caches::default(),
                 themes: RefCell::new(HashMap::new()),
+                frames: RefCell::new(Vec::new()),
+                frame_interval: std::cell::Cell::new(0.0),
+                last_frame: std::cell::Cell::new(None),
             };
             let bound = app.bind(py).clone();
             let open = open_window(py, &mut state, &bound);

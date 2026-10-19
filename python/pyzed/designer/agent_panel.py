@@ -17,10 +17,12 @@ import time
 import webbrowser
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .. import _core, ui
 from .. import agents as _agents
+from ..agents import acp as _acp
+from ..agents import mcp_client as _mcp
 from ..agents import providers as _providers
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
@@ -33,9 +35,11 @@ if TYPE_CHECKING:  # pragma: no cover
 INPUT_ID = "agent-input"
 INLINE_ID = "agent-inline-input"
 SCROLL_ID = "agent-thread"
+SETTINGS_SCROLL = "agent-settings"
 
 #: Prompts offered in an empty thread (English; shown translated).
 SUGGESTIONS = (
+    ("app-window", "Create a notes app with a list of notes, an editor and a search box"),
     ("layout-template", "Create a login form with email, password and a Sign in button"),
     ("component", "Create a reusable user card component with an avatar, a name and a role"),
     ("wand-sparkles", "Align the controls of this form and give them consistent margins"),
@@ -100,6 +104,31 @@ class Mention:
     icon: str
 
 
+@dataclass
+class Attachment:
+    """An image added to the next message (from a file, the clipboard or a screenshot of the form)."""
+
+    name: str
+    data: bytes
+
+    @property
+    def block(self) -> Dict[str, Any]:
+        return _agents.image_block(self.data)
+
+
+@dataclass
+class DeviceLogin:
+    """GitHub sign-in in progress: the code the user types on GitHub."""
+
+    provider: str
+    user_code: str = ""
+    uri: str = ""
+    cancelled: bool = False
+
+
+#: Image files that can be attached (the file dialog's filter and the @ popup).
+IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+
 #: How long the clipboard is watched for a copied key.
 CAPTURE_SECONDS = 300.0
 
@@ -108,6 +137,7 @@ SLASH_COMMANDS = (
     ("new", "plus", "Start a new thread", None),
     ("history", "history", "Show the past threads", None),
     ("settings", "settings-2", "AI agents settings", None),
+    ("app", "app-window", "Create an application", None),
     ("form", "layout-template", "Generate a new form", None),
     ("component", "component", "Generate a reusable component", None),
     ("explain", "book-open", "Explain this form and its code", "Explain what this form does and how its handlers work."),
@@ -115,6 +145,8 @@ SLASH_COMMANDS = (
      "Check the code of this form with validate_code and fix every issue it finds."),
     ("tidy", "wand-sparkles", "Align the controls and even out the margins",
      "Align the controls of this form and give them consistent margins."),
+    ("look", "camera", "Look at the form and improve its design",
+     "Take a screenshot of this form with screenshot_form, look at it and improve its layout and design."),
 )
 
 #: Permission modes as shown in the composer: mode -> (label, icon, description).
@@ -127,7 +159,8 @@ MODE_TEXT = {
 EFFORT_TEXT = {"low": "Low", "medium": "Medium", "high": "High", "xhigh": "Extra high", "max": "Max"}
 
 _TRIGGER = re.compile(r"(?:^|\s)@([^\s@]*)$")
-_FILE_SUFFIXES = (".py", ".pzform", ".pzcomp", ".md", ".toml", ".json", ".txt", ".css", ".yaml", ".yml")
+_FILE_SUFFIXES = (".py", ".pzform", ".pzcomp", ".md", ".toml", ".json", ".txt", ".css", ".yaml", ".yml",
+                  *IMAGE_SUFFIXES)
 
 
 def model_label(model: str) -> str:
@@ -184,18 +217,37 @@ class AgentController:
         self.menu: Optional[str] = None  # "mode" | "model" | "effort" while its menu is open
         self.mentions: List[Mention] = []
         self.picked = 0  # highlighted row of the @ / slash popup
+        self.attachments: List[Attachment] = []
+        self.popup_closed: Optional[str] = None  # the input when Escape closed the popup
+        self.device: Optional[DeviceLogin] = None
+        # MCP servers and external agents
+        self.mcp = _mcp.Servers(self.settings.mcp_servers)
+        self.mcp_status: Dict[str, str] = {}  # server -> "N tools" or why it failed
+        self.server_draft: Optional[Dict[str, Any]] = None  # the MCP server or agent being added or edited
+        self._acp: Dict[str, Any] = {}  # thread id -> ACPAgent
+        self.google_projects: List[str] = []
+        import atexit
+
+        atexit.register(self.shutdown)
         self._files: Optional[Tuple[float, List[str]]] = None
         self._queue: "queue.Queue[Tuple[Any, ...]]" = queue.Queue()
         self._agent: Optional[_agents.Agent] = None
         self._stream = stream
         self._tools: Optional[Dict[str, _agents.Tool]] = None
 
+    def shutdown(self) -> None:
+        """Stops the MCP servers and external agents this designer started."""
+        self.mcp.close()
+        self.close_external_agents()
+
     # -- setup ------------------------------------------------------------------------------------
     @property
     def ready(self) -> bool:
-        """Whether the selected model's provider is set up."""
-        provider_id, _ = _providers.split_model(self.thread.model or self.settings.model)
-        return _providers.is_ready(provider_id)
+        """Whether the selected model's provider is set up (or the external agent exists)."""
+        provider_id, name = _providers.split_model(self.thread.model or self.settings.model)
+        if provider_id == "acp":
+            return self.settings.acp_agent(name) is not None
+        return _providers.is_ready(provider_id, settings=self.settings)
 
     @property
     def active(self) -> bool:
@@ -227,9 +279,10 @@ class AgentController:
         """``provider:model`` names of the providers that are set up (for the default model setting)."""
         out: List[str] = []
         for pid in _providers.PROVIDERS:
-            if not _providers.is_ready(pid):
+            if pid == "acp" or not _providers.is_ready(pid, settings=self.settings):
                 continue
             out += [f"{pid}:{m}" for m in self.settings.models_of(pid)]
+        out += [f"acp:{a.name}" for a in self.settings.acp_agents if a.enabled]
         current = self.thread.model or self.settings.model
         if current not in out:
             out.insert(0, current)
@@ -242,6 +295,18 @@ class AgentController:
     def _execute(self, fn: Callable[[], Any]) -> Any:
         box = _Box()
         self._queue.put(("call", fn, box))
+        box.done.wait()
+        if box.error is not None:
+            raise box.error
+        return box.value
+
+    def on_ui(self, fn: Callable[[], Any]) -> Any:
+        """Runs ``fn`` on the UI thread from the agent's worker and returns its result; unlike the tools'
+        executor it does not count as a change to review."""
+        if threading.current_thread() is threading.main_thread():
+            return fn()
+        box = _Box()
+        self._queue.put(("read", fn, box))
         box.done.wait()
         if box.error is not None:
             raise box.error
@@ -291,6 +356,13 @@ class AgentController:
                 except BaseException as err:  # noqa: BLE001 - handed back to the worker
                     box.error = err
                 box.done.set()
+            elif kind == "read":
+                _, fn, box = item
+                try:
+                    box.value = fn()
+                except BaseException as err:  # noqa: BLE001 - handed back to the worker
+                    box.error = err
+                box.done.set()
             elif kind == "confirm":
                 _, tool_, args, box = item
                 self.pending = Confirmation(tool_, args, box)
@@ -311,6 +383,35 @@ class AgentController:
                     self.set_model(f"{pid}:{self.settings.models_of(pid)[0]}")
             elif kind == "key":
                 self._on_key_checked(*item[1:])
+            elif kind == "attach":
+                _, name, data = item
+                self.busy_provider = None if self.busy_provider == "screenshot" else self.busy_provider
+                self.attachments.append(Attachment(name, data))
+            elif kind == "mcp":
+                _, server, why = item
+                self.mcp_status[server] = why
+                self.d.notify(tr("The MCP server {name} did not start", name=server), why, kind="warning",
+                              seconds=6)
+            elif kind == "mcp_ready":
+                for server in list(self.mcp.clients):
+                    self.mcp_status[server] = tr("{count} tools", count=len(self.mcp._tools.get(server, [])))
+            elif kind == "mcp_test":
+                _, server, message = item
+                self.busy_provider = None
+                self.mcp_status[server] = message
+            elif kind == "device":
+                _, pid, user_code, uri = item
+                if self.device is not None and self.device.provider == pid:
+                    self.device.user_code, self.device.uri = user_code, uri
+            elif kind == "device_done":
+                self.device = None
+            elif kind == "projects":
+                _, pid, names = item
+                own = self.settings.provider(pid)
+                self.google_projects = names
+                if names and not own.project:
+                    own.project = names[0]
+                    self.save_settings()
 
     def _remember_documents(self) -> None:
         doc = self.d.doc
@@ -348,27 +449,79 @@ class AgentController:
             self.picked = 0
         self.input = text
         self.menu = None
+        self.d.focus = "agent"
         # a mention whose @label was deleted from the text is dropped
         self.mentions = [m for m in self.mentions if f"@{m.label}" in text]
 
+    def focus_box(self, *_: Any) -> None:
+        """The message box got the keyboard (its cursor moved)."""
+        self.d.focus = "agent"
+
+    def _box(self, text: str) -> Any:
+        """Puts ``text`` in the message box with the cursor at its end."""
+        self.input = text
+        lines = text.split("\n")
+        return _core.Command.batch([_core.Command.set_editor_text(INPUT_ID, text),
+                                    _core.Command.set_editor_cursor(INPUT_ID, len(lines), len(lines[-1]) + 1),
+                                    _core.Command.focus(INPUT_ID)])
+
+    @property
+    def popup_open(self) -> bool:
+        """Whether the @ / slash popup shows (Escape hides it until the text changes)."""
+        return self.trigger() is not None and self.popup_closed != self.input
+
+    def captured_keys(self) -> List[str]:
+        """Keys the message box leaves to ``on_key``: Enter sends (Shift+Enter breaks the line), and the
+        arrows, Tab and Escape drive the popup or a menu while one is open."""
+        keys = ["enter"]
+        if self.popup_open or self.menu:
+            keys += ["up", "down", "tab", "escape"]
+        return keys
+
+    def on_key(self, combo: str) -> Tuple[bool, Any]:
+        """A key the message box left to the designer: ``(handled, command)``."""
+        if combo == "enter":
+            return True, self.send()
+        if combo in ("up", "down") and self.popup_open:
+            self.move_pick(1 if combo == "down" else -1)
+            return True, None
+        if combo == "tab" and self.popup_open:
+            items = self.popup_items()
+            return True, items[min(self.picked, len(items) - 1)][3]() if items else None
+        if combo == "escape" and (self.popup_open or self.menu):
+            self.menu = None
+            self.popup_closed = self.input
+            return True, None
+        return False, None
+
     def send(self, text: Optional[str] = None) -> Any:
-        """Sends the input (or ``text``) to the agent in the current thread. With the @ or / popup open,
-        Enter picks its highlighted row instead."""
-        if text is None and self.trigger() is not None:
+        """Sends the input (or ``text``) to the agent in the current thread, with the @ mentions and the
+        attached images. With the @ or / popup open, Enter picks its highlighted row instead."""
+        if text is None and self.popup_open:
             items = self.popup_items()
             if items:
                 return items[min(self.picked, len(items) - 1)][3]()
         prompt = (text if text is not None else self.input).strip()
-        if not prompt or self.running:
+        if (not prompt and not (text is None and self.attachments)) or self.running:
             return None
         if not self.ready:
             self.error = tr("Set up a model provider first.")
             provider_id, _ = _providers.split_model(self.thread.model or self.settings.model)
             return self.open_settings(provider_id)
         extra = self._mention_blocks() if text is None else []
+        images: List[Dict[str, Any]] = []
+        if text is None:
+            for a in self.attachments:
+                try:
+                    images.append(a.block)
+                except ValueError as err:
+                    self.d.notify(tr("{name} was not attached: {error}", name=a.name, error=str(err)), kind="error",
+                                  seconds=6)
+            self.attachments = []
         self.mentions = []
         self.menu = None
         self.input = ""
+        self.popup_closed = None
         self.error = ""
         self.view = "thread"
         self.running = True
@@ -378,17 +531,62 @@ class AgentController:
         model = self.thread.model or self.settings.model
         self.thread.model = model
         note = agent_tools.context_note(self.d)
-        content = [{"type": "text", "text": prompt}, *extra,
+        content = [{"type": "text", "text": prompt or tr("Look at the attached images.")}, *extra, *images,
                    {"type": "text", "text": f"<context>{note}</context>"}]
-        tools = agent_tools.designer_tools(self.d)
-        agent = _agents.Agent(model, tools=tools, system=agent_tools.SYSTEM, settings=self.settings,
-                              confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
-                              stream=self._stream)
-        self._agent = agent
         put = self._queue.put
-        threading.Thread(target=agent.run, args=(content,), kwargs={"on_event": lambda e: put(("event", e))},
-                         daemon=True, name="pyzed-agent").start()
-        return _core.Command.scroll_to_end(SCROLL_ID)
+        emit = lambda e: put(("event", e))  # noqa: E731
+        jobs = [b for b in content if b.get("type") == "screenshot"]
+        provider_id, name = _providers.split_model(model)
+        servers = self.mcp
+        servers.cwd = str(self.project_root())
+        if provider_id == "acp":
+            agent: Any = self._external_agent(name)
+        else:
+            agent = _agents.Agent(model, tools=agent_tools.designer_tools(self.d),
+                                  system=agent_tools.system_prompt(self.d), settings=self.settings,
+                                  confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
+                                  stream=self._stream)
+
+        def target() -> Any:
+            # done here, off the UI thread: the @screenshot pictures and starting the MCP servers
+            for block in jobs:
+                render = block.pop("render")
+                try:
+                    block.update(_agents.image_block(render()))
+                except Exception as err:  # noqa: BLE001 - the message goes without it
+                    block.clear()
+                    block.update(type="text", text=f"<context>The screenshot failed: {err}</context>")
+            if provider_id != "acp" and self.settings.mcp_servers and self.settings.mode != "chat":
+                for tool_ in servers.tools(lambda n, why: put(("mcp", n, why))):  # a failing server is skipped
+                    agent.tools.setdefault(tool_.name, tool_)
+                put(("mcp_ready",))
+            return agent.run(content, on_event=emit)
+
+        self._agent = agent
+        threading.Thread(target=target, daemon=True, name="pyzed-agent").start()
+        return _core.Command.batch([_core.Command.set_editor_text(INPUT_ID, ""),
+                                    _core.Command.scroll_to_end(SCROLL_ID)])
+
+    def _external_agent(self, name: str) -> Any:
+        """The ACP agent of the current thread (one session per thread, started on its first message)."""
+        found = self._acp.get(self.thread.id)
+        config = self.settings.acp_agent(name)
+        assert config is not None
+        if found is not None and found.config == config:
+            return found
+        if found is not None:
+            found.close()
+        agent = _acp.ACPAgent(config, cwd=self.project_root(), settings=self.settings, confirm=self._confirm,
+                              messages=self.thread.messages)
+        self._acp[self.thread.id] = agent
+        return agent
+
+    def close_external_agents(self, keep: Optional[str] = None) -> None:
+        """Stops the external agents' programs (all but the one of thread ``keep``)."""
+        for thread_id, agent in list(self._acp.items()):
+            if thread_id != keep:
+                agent.close()
+                del self._acp[thread_id]
 
     def stop(self) -> None:
         """Stops the agent (a pending confirmation is answered "no")."""
@@ -418,6 +616,7 @@ class AgentController:
         if self.thread.messages:
             self._keep()
         self.thread = _agents.Thread(model=self.settings.model)
+        self.close_external_agents()
         self.view = "thread"
         self.error = ""
         self.snapshot = []
@@ -488,8 +687,7 @@ class AgentController:
         """Shows the panel with ``text`` in the input, ready to finish and send."""
         self.d.layout.show("agent")
         self.view = "thread"
-        self.input = text
-        return _core.Command.focus(INPUT_ID)
+        return self._box(text)
 
     def open_settings(self, provider: Optional[str] = None) -> Any:
         """Opens Settings → AI agents (with ``provider`` unfolded)."""
@@ -541,11 +739,11 @@ class AgentController:
         return self._trigger_of(self.input)
 
     def start_mention(self) -> Any:
-        """The + button: starts an @ mention at the end of the message."""
-        self.input = self.input + ("" if not self.input or self.input.endswith(" ") else " ") + "@"
+        """Starts an @ mention at the end of the message (the + menu's "Add context")."""
         self.picked = 0
         self.menu = None
-        return _core.Command.focus(INPUT_ID)
+        self.popup_closed = None
+        return self._box(self.input + ("" if not self.input or self.input[-1] in " \n" else " ") + "@")
 
     def move_pick(self, step: int) -> None:
         items = self.popup_items()
@@ -555,7 +753,7 @@ class AgentController:
     def popup_items(self) -> List[Tuple[str, str, str, Callable[[], Any]]]:
         """Rows of the @ / slash popup: (icon, label, detail, action)."""
         trig = self.trigger()
-        if trig is None:
+        if trig is None or not self.popup_open:
             return []
         kind, query = trig
         if kind == "slash":
@@ -566,22 +764,25 @@ class AgentController:
         return rows[:40]
 
     def run_command(self, name: str, prompt: Optional[str]) -> Any:
-        self.input = ""
+        clear = self._box("")
         self.picked = 0
         if prompt is not None:
-            return self.send(tr(prompt))
+            return _core.Command.batch([clear, self.send(tr(prompt)) or clear])
         if name == "new":
-            return self.new_thread()
+            return _core.Command.batch([clear, self.new_thread()])
         if name == "history":
             self.view = "history"
-            return None
+            return clear
         if name == "settings":
-            return self.open_settings()
+            self.open_settings()
+            return clear
+        if name == "app":
+            return self.compose(tr("Create an application that "))
         if name == "form":
             return self.compose(tr("Create a new form for "))
         if name == "component":
             return self.compose(tr("Create a reusable component that "))
-        return None
+        return clear
 
     def project_files(self) -> List[str]:
         """Files of the project the @ popup offers (no hidden, build or secret files), cached briefly."""
@@ -618,22 +819,27 @@ class AgentController:
         out.append((Mention("code", "", "code", "file-code"), tr("Its handlers module")))
         for control in doc.form.controls[:200]:
             out.append((Mention("control", control.name, control.name, "box"), control.type))
+        out.append((Mention("screenshot", "", "screenshot", "camera"), tr("A picture of the open form")))
         for rel in self.project_files():
-            out.append((Mention("file", rel, rel, "file"), tr("File")))
+            if rel.lower().endswith(IMAGE_SUFFIXES):
+                out.append((Mention("image", rel, rel, "image"), tr("Image")))
+            else:
+                out.append((Mention("file", rel, rel, "file"), tr("File")))
         return out
 
     def add_mention(self, mention: Mention) -> Any:
         """Replaces the @query being typed with ``@label`` and attaches what it names to the message."""
-        self.input = _TRIGGER.sub(lambda m: m.group(0)[: m.group(0).index("@")] + f"@{mention.label} ", self.input)
+        text = _TRIGGER.sub(lambda m: m.group(0)[: m.group(0).index("@")] + f"@{mention.label} ", self.input)
         if not any((m.kind, m.key, m.label) == (mention.kind, mention.key, mention.label) for m in self.mentions):
             self.mentions.append(mention)
         self.picked = 0
-        return _core.Command.focus(INPUT_ID)
+        return self._box(text)
 
-    def remove_mention(self, index: int) -> None:
+    def remove_mention(self, index: int) -> Any:
         if 0 <= index < len(self.mentions):
             m = self.mentions.pop(index)
-            self.input = self.input.replace(f"@{m.label} ", "").replace(f"@{m.label}", "")
+            return self._box(self.input.replace(f"@{m.label} ", "").replace(f"@{m.label}", ""))
+        return None
 
     def _mention_blocks(self) -> List[Dict[str, Any]]:
         """The text of every @ mention, as hidden context blocks of the message."""
@@ -642,6 +848,18 @@ class AgentController:
         doc = self.d.doc
         blocks = []
         for m in self.mentions:
+            if m.kind in ("image", "screenshot"):
+                try:
+                    blocks.append({"type": "text", "text": f"<context>@{m.label} ({m.kind}) is attached below."
+                                                           "</context>"})
+                    if m.kind == "image":
+                        blocks.append(_agents.image_block(self.project_root() / m.key))
+                    else:  # rendered off the UI thread, just before the message goes
+                        blocks.append({"type": "screenshot", "render": agent_tools.screenshot_job(self.d)})
+                except Exception as err:  # noqa: BLE001 - told to the user, the message still goes
+                    self.d.notify(tr("{name} was not attached: {error}", name=m.label, error=str(err)),
+                                  kind="error", seconds=6)
+                continue
             if m.kind == "file":
                 try:
                     path = self.project_root() / m.key
@@ -664,6 +882,67 @@ class AgentController:
                 body = json.dumps(agent_tools._control_info(found), ensure_ascii=False)
             blocks.append({"type": "text", "text": f"<context>@{m.label} ({m.kind}):\n{body}</context>"})
         return blocks
+
+    # -- images ----------------------------------------------------------------------------------------
+    def toggle_add_menu(self) -> None:
+        self.toggle_menu("add")
+
+    def pick_images(self) -> Any:
+        """Opens the system's file dialog to attach images."""
+        self.menu = None
+        return _core.Command.pick_files(self.on_picked, title=tr("Attach images"),
+                                        filters=[(tr("Images"), [x.lstrip(".") for x in IMAGE_SUFFIXES])],
+                                        directory=str(self.project_root()))
+
+    def on_picked(self, paths: List[str]) -> None:
+        for path in paths:
+            self.attach_file(path)
+
+    def attach_file(self, path: str) -> bool:
+        """Attaches the image at ``path`` to the next message; ``False`` (and a notice) when it is not one."""
+        try:
+            data = Path(path).read_bytes()
+            _agents.Image(data).block()  # checks the format and the size
+        except (OSError, ValueError) as err:
+            self.d.notify(tr("{name} was not attached: {error}", name=Path(path).name, error=str(err)), kind="error",
+                          seconds=6)
+            return False
+        self.attachments.append(Attachment(Path(path).name, data))
+        return True
+
+    def paste_image(self) -> Any:
+        """Attaches the image on the clipboard (a screenshot, a copied picture)."""
+        self.menu = None
+        return _core.Command.paste_image(self.on_clipboard_image)
+
+    def on_clipboard_image(self, png: Optional[bytes]) -> None:
+        if not png:
+            self.d.notify(tr("The clipboard has no image"), kind="warning", seconds=4)
+            return
+        self.attachments.append(Attachment(tr("Pasted image"), bytes(png)))
+
+    def attach_screenshot(self) -> None:
+        """Attaches a picture of the open form (rendered off-screen, in the background)."""
+        self.menu = None
+        try:
+            render = agent_tools.screenshot_job(self.d)
+        except ValueError as err:
+            self.d.notify(str(err), kind="warning", seconds=5)
+            return
+        self.busy_provider = "screenshot"
+        put, name = self._queue.put, f"{self.d.doc.display_name}.png"
+
+        def work() -> None:
+            try:
+                put(("attach", name, render()))
+            except Exception as err:  # noqa: BLE001
+                put(("provider", tr("The screenshot failed: {error}", error=str(err)), False))
+
+        threading.Thread(target=work, daemon=True, name="pyzed-agent-screenshot").start()
+
+    def remove_attachment(self, index: int) -> None:
+        if 0 <= index < len(self.attachments):
+            del self.attachments[index]
 
     # -- creating documents (used by the new_document tool, on the UI thread) ------------------------
     def create_document(self, kind: str, name: str, folder: str = "", title: str = "") -> Dict[str, Any]:
@@ -822,6 +1101,10 @@ class AgentController:
         others open their key page and the key is picked up as soon as it is copied."""
         provider = _providers.PROVIDERS[pid]
         self.provider_open = pid
+        if provider.login == "device" and self.settings.client_id(pid):
+            return self._device_sign_in(pid)
+        if provider.login == "google":
+            return self._google_sign_in(pid)
         if provider.login == "oauth":
 
             def work() -> None:
@@ -838,11 +1121,182 @@ class AgentController:
             self.d.notify(str(err), kind="error", seconds=6)
         self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
 
+    def _device_sign_in(self, pid: str) -> None:
+        """GitHub's device flow: a code to type on github.com, while Pyzed waits for the token."""
+        login = self.device = DeviceLogin(pid)
+        client_id, settings, put = self.settings.client_id(pid), self.settings, self._queue.put
+
+        def work() -> None:
+            try:
+                code = _agents.login.github_device_code(client_id)
+                put(("device", pid, code.user_code, code.verification_uri))
+                webbrowser.open(code.verification_uri)
+                token = _agents.login.github_device_token(client_id, code, cancelled=lambda: login.cancelled)
+                _providers.save_token(pid, token)
+                put(("models", pid, _agents.list_models(pid, settings)))
+            finally:
+                put(("device_done",))
+
+        self._background(pid, work, tr("Signed in to {provider}", provider=_providers.PROVIDERS[pid].name))
+
+    def cancel_device(self) -> None:
+        if self.device is not None:
+            self.device.cancelled = True
+        self.device = None
+
+    def copy_device_code(self) -> Any:
+        return _core.Command.copy(self.device.user_code) if self.device and self.device.user_code else None
+
+    def _google_sign_in(self, pid: str) -> None:
+        """Google sign-in in the browser (PKCE); then the account's Google Cloud projects are listed."""
+        client_id, secret = _agents.login.google_client(self.settings)
+        put = self._queue.put
+
+        def work() -> None:
+            token = _agents.login.google_login(client_id, secret)
+            _providers.save_token(pid, token)
+            put(("projects", pid, _agents.login.google_projects(token["access_token"])))
+
+        self._background(pid, work, tr("Signed in to {provider}", provider=_providers.PROVIDERS[pid].name))
+
+    def load_google_projects(self, pid: str = "vertex") -> None:
+        put, settings = self._queue.put, self.settings
+
+        def work() -> None:
+            token = _providers.api_key(pid, settings=settings)
+            if not token:
+                raise RuntimeError(tr("Sign in with Google first"))
+            put(("projects", pid, _agents.login.google_projects(token)))
+
+        self._background(pid, work, tr("Projects loaded"))
+
+    def set_provider_field(self, pid: str, key: str, value: str) -> None:
+        """Changes a provider's OAuth client ID, Google Cloud project or location."""
+        setattr(self.settings.provider(pid), key, value.strip())
+        self.save_settings()
+
+    def set_google_secret(self, value: str) -> None:
+        """Keeps the Google OAuth client's secret in the keychain."""
+        if value.strip():
+            _agents.secrets.store().set("agents.vertex.client_secret", value.strip())
+        else:
+            _agents.secrets.store().delete("agents.vertex.client_secret")
+
+    # -- workload identity federation (Claude) ---------------------------------------------------------
+    def set_federation(self, key: str, value: str) -> None:
+        setattr(self.settings.federation, key, value.strip() if key != "token_command" else value)
+        self.save_settings()
+
+    def test_provider(self, pid: str) -> None:
+        """Checks the provider's credentials by asking for its models."""
+        self.refresh_models(pid)
+
+    # -- MCP servers and external agents ---------------------------------------------------------------
+    def new_server(self, kind: str, preset: str = "") -> None:
+        """Opens the form to add an MCP server (``kind="mcp"``) or an external agent (``"acp"``)."""
+        if kind == "acp" and preset in _acp.PRESETS:
+            title, command, args = _acp.PRESETS[preset]
+            self.server_draft = {"kind": "acp", "name": preset, "command": " ".join([command, *args]), "url": "",
+                                 "secrets": "", "title": title, "editing": None}
+        else:
+            self.server_draft = {"kind": kind, "name": "", "command": "", "url": "", "secrets": "", "title": "",
+                                 "editing": None}
+
+    def edit_server(self, kind: str, name: str) -> None:
+        config = self.settings.mcp_server(name) if kind == "mcp" else self.settings.acp_agent(name)
+        if config is None:
+            return
+        hidden = _mcp.get_secrets(name if kind == "mcp" else f"acp.{name}")
+        self.server_draft = {"kind": kind, "name": config.name, "url": getattr(config, "url", ""),
+                             "command": _agents.providers.join_command([config.command, *config.args]) if config.command else "",
+                             "secrets": "; ".join(f"{k}={v}" for k, v in hidden.items()),
+                             "title": getattr(config, "title", ""), "editing": name}
+
+    def set_draft(self, key: str, value: str) -> None:
+        if self.server_draft is not None:
+            self.server_draft[key] = value
+
+    def cancel_draft(self) -> None:
+        self.server_draft = None
+
+    def save_draft(self) -> None:
+        """Saves the MCP server or external agent being edited; its secrets go to the keychain."""
+        draft = self.server_draft
+        if draft is None:
+            return
+        name = re.sub(r"[^A-Za-z0-9_-]+", "-", draft["name"].strip()).strip("-")
+        try:
+            parts = _agents.providers.split_command(draft["command"].strip()) if draft["command"].strip() else []
+        except ValueError as err:
+            self.d.notify(tr("The command is not valid: {error}", error=str(err)), kind="error", seconds=5)
+            return
+        url = draft["url"].strip()
+        if not name or not (parts or (draft["kind"] == "mcp" and url)):
+            self.d.notify(tr("Give it a name and a command") if draft["kind"] == "acp" else
+                          tr("Give it a name and a command or a URL"), kind="warning", seconds=5)
+            return
+        hidden: Dict[str, str] = {}
+        for line in re.split(r"[;\n]", draft["secrets"]):
+            key, sep, value = line.partition("=") if "=" in line else line.partition(":")
+            if sep and key.strip():
+                hidden[key.strip()] = value.strip()
+        kind, old = draft["kind"], draft["editing"]
+        items = self.settings.mcp_servers if kind == "mcp" else self.settings.acp_agents
+        others = [c for c in items if c.name not in (old, name)]
+        if kind == "mcp":
+            config: Any = _providers.MCPServerConfig(name, parts[0] if parts else "", parts[1:], "" if parts else url,
+                                                     sorted(hidden))
+        else:
+            config = _providers.ACPAgentConfig(name, parts[0], parts[1:], sorted(hidden), title=draft["title"].strip())
+        items[:] = [*others, config]
+        if old and old != name:
+            _mcp.set_secrets(old if kind == "mcp" else f"acp.{old}", {})
+        _mcp.set_secrets(name if kind == "mcp" else f"acp.{name}", hidden)
+        self.server_draft = None
+        self.save_settings()
+        self.mcp.update(self.settings.mcp_servers)
+        self.mcp_status.pop(name, None)
+        if kind == "mcp":
+            self.test_server(name)
+
+    def remove_server(self, kind: str, name: str) -> None:
+        items = self.settings.mcp_servers if kind == "mcp" else self.settings.acp_agents
+        items[:] = [c for c in items if c.name != name]
+        _mcp.set_secrets(name if kind == "mcp" else f"acp.{name}", {})
+        self.save_settings()
+        self.mcp.update(self.settings.mcp_servers)
+        if kind == "acp" and self.thread.model == f"acp:{name}":
+            self.set_model(_providers.DEFAULT_MODEL)
+
+    def toggle_server(self, kind: str, name: str) -> None:
+        config = self.settings.mcp_server(name) if kind == "mcp" else self.settings.acp_agent(name)
+        if config is not None:
+            config.enabled = not config.enabled
+            self.save_settings()
+            self.mcp.update(self.settings.mcp_servers)
+
+    def test_server(self, name: str) -> None:
+        """Starts the MCP server ``name`` and lists its tools (in the background)."""
+        self.busy_provider = f"mcp:{name}"
+        servers, put = self.mcp, self._queue.put
+        servers.cwd = str(self.project_root())
+
+        def work() -> None:
+            try:
+                specs = servers.tool_specs(name)
+                put(("mcp_test", name, tr("{count} tools", count=len(specs))))
+            except Exception as err:  # noqa: BLE001
+                put(("mcp_test", name, str(err)))
+
+        threading.Thread(target=work, daemon=True, name="pyzed-agent-mcp").start()
+
     def connect(self, pid: str) -> None:
         """Connects ``pid`` from the panel: signs in with the browser, or (local servers) asks for models."""
         provider = _providers.PROVIDERS[pid]
         self.menu = None
         self.open_settings(pid)
+        if pid == "acp":
+            return
         if provider.login:
             self.sign_in(pid)
         elif not provider.needs_key and provider.base_url:
@@ -967,11 +1421,17 @@ def _tool_card(c: AgentController, block: Dict[str, Any], result: Optional[Dict[
         import json
 
         text = json.dumps(block.get("input") or {}, indent=1, ensure_ascii=False)
+        pictures: List[Any] = []
         if result is not None:
             content = result.get("content")
+            if isinstance(content, list):
+                pictures = [_core.image(data, height=160, content_fit="contain", radius=4)
+                            for data in (_image_bytes(b) for b in content if b.get("type") == "image") if data]
+                content = "".join(b.get("text", "") for b in content if b.get("type") == "text")
             text += "\n\n→ " + (content if isinstance(content, str) else json.dumps(content, ensure_ascii=False))
-        body = _core.container(ui.label(text[:4000], size="xs", mono=True, color="text_muted", theme=t),
-                               padding=(6, 8), width="fill", bg=t.editor, radius=t.radius)
+        body = _core.container(_core.column([
+            ui.label(text[:4000], size="xs", mono=True, color="text_muted", theme=t), *pictures], spacing=6),
+            padding=(6, 8), width="fill", bg=t.editor, radius=t.radius)
     return _core.column([
         _core.button(head, lambda: c.toggle_block(key), padding=(3, 6), width="fill", bg=None, hover_bg=t.element_hover,
                      radius=t.radius),
@@ -991,9 +1451,33 @@ def _thinking_card(c: AgentController, key: str, text: str, t: Theme, live: bool
                          _core.container(body, padding=(0, 0, 0, 24)) if body else None], spacing=2, width="fill")
 
 
-def _user_bubble(text: str, t: Theme) -> Any:
-    return _core.container(ui.label(text, size="sm", theme=t), padding=(8, 10), width="fill", bg=t.element,
-                           border_color=t.border_variant, border_width=1, radius=t.radius + 2)
+#: Decoded images of the thread, by their base64 text (decoded once, not on every frame).
+_IMAGES: Dict[int, bytes] = {}
+
+
+def _image_bytes(block: Dict[str, Any]) -> Optional[bytes]:
+    import base64
+
+    data = (block.get("source") or {}).get("data") or ""
+    key = hash(data)
+    if key not in _IMAGES:
+        if len(_IMAGES) > 64:
+            _IMAGES.clear()
+        try:
+            _IMAGES[key] = base64.b64decode(data)
+        except ValueError:
+            return None
+    return _IMAGES[key]
+
+
+def _user_bubble(text: str, t: Theme, images: Sequence[Dict[str, Any]] = ()) -> Any:
+    pictures = [_core.image(data, height=72, content_fit="contain", radius=4)
+                for data in (_image_bytes(b) for b in images) if data]
+    return _core.container(_core.column([
+        ui.label(text, size="sm", theme=t) if text else None,
+        _core.row(pictures, spacing=6, wrap=True) if pictures else None,
+    ], spacing=6), padding=(8, 10), width="fill", bg=t.element, border_color=t.border_variant, border_width=1,
+        radius=t.radius + 2)
 
 
 def _messages(c: AgentController, t: Theme) -> List[Any]:
@@ -1012,8 +1496,9 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
         if m.get("role") == "user":
             texts = [b.get("text", "") for b in blocks if b.get("type") == "text"
                      and not b.get("text", "").startswith("<context>")]
-            if texts:
-                rows.append(_user_bubble("\n".join(texts), t))
+            images = [b for b in blocks if b.get("type") == "image"]
+            if texts or images:
+                rows.append(_user_bubble("\n".join(texts), t, images))
             continue
         for j, b in enumerate(blocks):
             kind = b.get("type")
@@ -1162,12 +1647,14 @@ def _menu_header(text: str, t: Theme) -> Any:
 
 
 def _model_menu(c: AgentController, t: Theme) -> Any:
-    """Every provider with its models; one that is not set up offers to connect it."""
+    """Every provider with its models, then the external agents; one not set up offers to connect it."""
     current = c.thread.model or c.settings.model
     rows: List[Any] = []
     for pid, p in _providers.PROVIDERS.items():
+        if pid == "acp":
+            continue
         rows.append(_menu_header(p.name, t))
-        if not _providers.is_ready(pid):
+        if not _providers.is_ready(pid, settings=c.settings):
             rows.append(_menu_row("log-in", tr("Connect {provider}…", provider=p.name), tr(p.description),
                                   lambda pid=pid: c.connect(pid), t))
             continue
@@ -1178,7 +1665,27 @@ def _model_menu(c: AgentController, t: Theme) -> Any:
             full = f"{pid}:{name}"
             rows.append(_menu_row(None, model_label(full), name if model_label(full) != name else "",
                                   lambda full=full: c.set_model(full), t, checked=full == current))
+    rows.append(_menu_header(tr("External agents"), t))
+    for a in c.settings.acp_agents:
+        if a.enabled:
+            full = f"acp:{a.name}"
+            rows.append(_menu_row("terminal", a.label, " ".join([a.command, *a.args])[:60],
+                                  lambda full=full: c.set_model(full), t, checked=full == current))
+    rows.append(_menu_row("plus", tr("Add an external agent…"), tr("Claude Code, Gemini CLI, Codex or any ACP agent"),
+                          lambda: c.connect("acp"), t))
     return _menu_card(_core.column(rows, spacing=0, width="fill"), t, height=320)
+
+
+def _add_menu(c: AgentController, t: Theme) -> Any:
+    """The + button's menu: context with @, images from a file or the clipboard, a picture of the form."""
+    rows = [
+        _menu_row("at-sign", tr("Add context"), tr("Files, the form, its code, controls (@)"), c.start_mention, t),
+        _menu_row("image-plus", tr("Attach images…"), tr("PNG, JPEG, GIF or WebP files"), c.pick_images, t),
+        _menu_row("clipboard-paste", tr("Paste image"), tr("A screenshot or picture you copied"), c.paste_image, t),
+        _menu_row("camera", tr("Screenshot of the form"), tr("Let the agent see the open form"), c.attach_screenshot,
+                  t),
+    ]
+    return _menu_card(_core.column(rows, spacing=0, width="fill"), t)
 
 
 def _mode_menu(c: AgentController, t: Theme) -> Any:
@@ -1197,7 +1704,7 @@ def _effort_menu(c: AgentController, t: Theme) -> Any:
 def _popup(c: AgentController, t: Theme) -> Optional[Any]:
     """The @ mention / slash command list above the message box."""
     trig = c.trigger()
-    if trig is None:
+    if trig is None or not c.popup_open:
         return None
     items = c.popup_items()
     title = tr("Commands") if trig[0] == "slash" else tr("Add context")
@@ -1206,54 +1713,111 @@ def _popup(c: AgentController, t: Theme) -> Optional[Any]:
             ui.label(tr("No matches"), size="sm", color="text_muted", theme=t), padding=(4, 8))]
     else:
         picked = min(c.picked, len(items) - 1)
-        body = [_menu_header(title + "  ·  " + tr("Enter to pick"), t)]
+        body = [_menu_header(title + "  ·  " + tr("↑↓ to move, Enter to pick, Esc to close"), t)]
         body += [_menu_row(icon, label, detail, action, t, highlighted=i == picked)
                  for i, (icon, label, detail, action) in enumerate(items)]
     return _menu_card(_core.column(body, spacing=0, width="fill"), t, height=min(260, 34 + 40 * max(1, len(items))))
 
 
 def _mentions_row(c: AgentController, t: Theme) -> Optional[Any]:
-    if not c.mentions:
+    """The @ mentions and attached images of the next message, as removable chips."""
+    if not c.mentions and not c.attachments:
         return None
-    chips = [_core.container(_core.row([
-        _icon(m.icon, size=11, color=t.text_muted), ui.label(m.label, size="xs", theme=t),
-        _core.button(_icon("x", size=10, color=t.text_placeholder), lambda i=i: c.remove_mention(i), padding=1,
-                     bg=None, hover_bg=t.element_hover, radius=t.radius)], spacing=3, align="center"),
-        padding=(1, 4), bg=t.element, border_color=t.border_variant, border_width=1, radius=t.radius)
-        for i, m in enumerate(c.mentions)]
+
+    def chip(lead: Any, label: str, remove: Callable[[], Any]) -> Any:
+        return _core.container(_core.row([
+            lead, ui.label(label if len(label) <= 28 else label[:27] + "…", size="xs", theme=t),
+            _core.button(_icon("x", size=10, color=t.text_placeholder), remove, padding=1, bg=None,
+                         hover_bg=t.element_hover, radius=t.radius)], spacing=3, align="center"),
+            padding=(1, 4), bg=t.element, border_color=t.border_variant, border_width=1, radius=t.radius)
+
+    chips = [chip(_icon(m.icon, size=11, color=t.text_muted), m.label, lambda i=i: c.remove_mention(i))
+             for i, m in enumerate(c.mentions)]
+    chips += [chip(_core.image(a.data, width=28, height=28, content_fit="cover", radius=3), a.name,
+                   lambda i=i: c.remove_attachment(i)) for i, a in enumerate(c.attachments)]
+    if c.busy_provider == "screenshot":
+        chips.append(_core.row([ui.spinner(size=11, theme=t),
+                                ui.label(tr("Taking a screenshot…"), size="xs", color="text_muted", theme=t)],
+                               spacing=4, align="center"))
     return _core.row(chips, spacing=4, wrap=True)
 
 
+#: Lines the message box grows to before it scrolls.
+BOX_LINES = 10
+
+
+def _box_height(text: str, chars: int = 52, line: float = 20.0) -> float:
+    """The message box's height for ``text``: one line per wrapped line, up to ``BOX_LINES``."""
+    lines = sum(max(1, -(-len(part) // chars)) for part in text.split("\n")) if text else 1
+    return min(max(lines, 1), BOX_LINES) * line + 10
+
+
 def _composer(c: AgentController, t: Theme) -> Any:
-    """The message box, like Zed's: the text, then the permission mode, model, effort and fast mode."""
+    """The message box, like Zed's: the text (Enter sends, Shift+Enter breaks the line), then the + menu,
+    the permission mode, model, effort and fast mode."""
     s = c.settings
     send = ui.icon_button("square", c.stop, size="sm", tooltip=tr("Stop"), theme=t) if c.running else \
         ui.icon_button("arrow-up", c.send, size="sm", variant="solid", tooltip=tr("Send (Enter)"),
-                       disabled=not c.input.strip(), theme=t)
-    field_ = _core.row([
-        ui.input(c.input, c.set_input, placeholder=tr("Message the agent (@ context, / commands)"),
-                 on_submit=c.send, id=INPUT_ID, borderless=True, theme=t),
-        send,
-    ], spacing=4, align="center")
+                       disabled=not (c.input.strip() or c.attachments), theme=t)
+    box = ui.editor(INPUT_ID, c.input, on_change=c.set_input, on_cursor=c.focus_box, wrap=True, gutter=False,
+                    active_line=False, folding=False, auto_close=False, match_brackets=False,
+                    selection_highlight=False, font="sans", font_size=13, line_height=20,
+                    height=_box_height(c.input), capture_keys=c.captured_keys(),
+                    placeholder=tr("Message the agent (@ context, / commands, Shift+Enter for a new line)"), theme=t)
+    field_ = _core.row([_core.container(box, width="fill"), send], spacing=4, align="end")
     model = c.thread.model or s.model
     provider_id, name = _providers.split_model(model)
     claude = _providers.PROVIDERS[provider_id].protocol == "anthropic"
+    external = provider_id == "acp"
     mode_label, mode_icon, mode_text = MODE_TEXT[s.mode]
+    agent = s.acp_agent(name) if external else None
     controls = _core.row([
-        ui.icon_button("plus", c.start_mention, size="sm", tooltip=tr("Add context (@)"), theme=t),
+        ui.icon_button("plus", c.toggle_add_menu, size="sm", selected=c.menu == "add",
+                       tooltip=tr("Add context or images"), theme=t),
         _chip(tr(mode_label), lambda: c.toggle_menu("mode"), t, icon=mode_icon, selected=c.menu == "mode",
               tooltip=tr(mode_text)),
         _core.space(width="fill"),
-        _chip(model_label(model), lambda: c.toggle_menu("model"), t, selected=c.menu == "model",
-              tooltip=tr("Model")),
-        _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t, selected=c.menu == "effort",
-              tooltip=tr("Effort"), disabled=not claude),
-        _chip(tr("Fast"), c.toggle_fast, t, icon="zap", selected=s.fast and name in _providers.FAST_MODELS,
-              menu=False, disabled=name not in _providers.FAST_MODELS,
-              tooltip=tr("Fast mode: faster answers at a higher price (Claude Opus)")),
+        _chip(agent.label if agent else model_label(model), lambda: c.toggle_menu("model"), t,
+              icon="terminal" if external else None, selected=c.menu == "model", tooltip=tr("Model")),
+        None if external else _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t,
+                                    selected=c.menu == "effort", tooltip=tr("Effort"), disabled=not claude),
+        None if external else _chip(tr("Fast"), c.toggle_fast, t, icon="zap",
+                                    selected=s.fast and name in _providers.FAST_MODELS, menu=False,
+                                    disabled=name not in _providers.FAST_MODELS,
+                                    tooltip=tr("Fast mode: faster answers at a higher price (Claude Opus)")),
     ], spacing=2, align="center")
-    return _core.container(_core.column([_mentions_row(c, t), field_, controls], spacing=6), padding=(6, 6, 4, 8),
+    return _core.container(_core.column([_mentions_row(c, t), field_, controls], spacing=6), padding=(6, 6, 4, 4),
                            width="fill", bg=t.editor, border_color=t.border, border_width=1, radius=t.radius + 2)
+
+
+def _device_callout(c: AgentController, t: Theme) -> Optional[Any]:
+    """While signing in to GitHub: the code to type on github.com."""
+    login = c.device
+    if login is None:
+        return None
+    name = _providers.PROVIDERS[login.provider].name
+    if not login.user_code:
+        body: List[Any] = [_core.row([ui.spinner(size=14, theme=t), ui.label(
+            tr("Signing in to {provider}", provider=name), size="sm", weight="medium", theme=t)], spacing=8,
+            align="center")]
+    else:
+        body = [
+            _core.row([_icon("github", size=14, color=t.text_accent),
+                       ui.label(tr("Signing in to {provider}", provider=name), size="sm", weight="medium", theme=t)],
+                      spacing=8, align="center"),
+            ui.label(tr("Type this code on the GitHub page that opened ({url}):", url=login.uri), size="xs",
+                     color="text_muted", theme=t),
+            _core.row([ui.label(login.user_code, size="lg", weight="semibold", mono=True, theme=t),
+                       ui.icon_button("copy", c.copy_device_code, size="sm", tooltip=tr("Copy"), theme=t),
+                       _core.space(width="fill"), ui.spinner(size=12, theme=t)], spacing=6, align="center"),
+        ]
+    body.append(_core.row([
+        ui.button(tr("Open the page again"), lambda: webbrowser.open(login.uri or "https://github.com/login/device"),
+                  variant="ghost", size="sm", theme=t),
+        ui.button(tr("Cancel"), c.cancel_device, variant="ghost", size="sm", theme=t)], spacing=4, wrap=True))
+    return _core.container(_core.column(body, spacing=6, width="fill"), padding=(8, 10), width="fill",
+                           bg=alpha(t.accent, 0.08), border_color=t.border_variant, border_width=1,
+                           radius=t.radius + 2)
 
 
 def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
@@ -1308,11 +1872,13 @@ def view(d: "Designer", t: Theme) -> Any:
     bottom: List[Any] = []
     if c.capture is not None and d.dialog != "agent_settings":
         bottom.append(_capture_callout(c, t))
+    if c.device is not None and d.dialog != "agent_settings":
+        bottom.append(_device_callout(c, t))
     if c.pending is not None:
         bottom.append(_confirmation(c, t))
     if c.snapshot and c.changed and not c.running:
         bottom.append(_review_bar(c, t))
-    menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu}
+    menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu, "add": _add_menu}
     bottom.append(menus[c.menu](c, t) if c.menu in menus else _popup(c, t))
     bottom.append(_composer(c, t))
     body = _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
@@ -1356,13 +1922,19 @@ _SOURCE_TEXT = {
     "session": "Key kept for this session only",
     "env": "Key from the environment",
     "ant": "Signed in with the Anthropic CLI profile",
+    "oauth": "Signed in",
+    "federation": "Workload identity federation",
+    "gcloud": "Google Cloud credentials of this computer",
     "none needed": "No key needed",
 }
+
+#: The sign-in button of each kind of login.
+_SIGN_IN_TEXT = {"device": "Sign in with GitHub", "google": "Sign in with Google"}
 
 
 def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
     p = _providers.PROVIDERS[pid]
-    source = _providers.credential_source(pid)
+    source = _providers.credential_source(pid, settings=c.settings)
     opened = c.provider_open == pid
     status = ui.badge(tr(_SOURCE_TEXT[source]) if source else tr("Not set up"),
                       tint="success" if source and source != "none needed" else "accent" if source else "warning",
@@ -1379,8 +1951,8 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
         return head
     busy = c.busy_provider == pid
     rows: List[Any] = []
-    if p.needs_key or p.key_env:
-        rows.append(ui.field(tr("API key"), _core.row([
+    if (p.needs_key or p.key_env) and p.login != "google":
+        rows.append(ui.field(tr("API key") if p.login != "device" else tr("Personal access token"), _core.row([
             ui.input(c.key_buffer.get(pid, ""), lambda v: c.set_key_buffer(pid, v),
                      placeholder=_agents.secrets.mask(_providers.api_key(pid)) or tr("Paste a key"), secure=True,
                      on_submit=lambda: c.save_key(pid), mono=True, size="sm", width=220, theme=t),
@@ -1389,16 +1961,19 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
         ], spacing=4, align="center"), description=tr("Or set {env}", env=p.key_env) if p.key_env else None, theme=t))
     actions: List[Any] = []
     capturing = c.capture is not None and c.capture.provider == pid
-    if p.login and not capturing:
-        actions.append(ui.button(tr("Sign in with the browser"), lambda: c.sign_in(pid), icon="log-in",
+    if p.login and not capturing and not (c.device and c.device.provider == pid):
+        label = _SIGN_IN_TEXT.get(p.login, "Sign in with the browser")
+        if p.login == "device" and not c.settings.client_id(pid):
+            label = "Sign in with a token"
+        actions.append(ui.button(tr(label), lambda: c.sign_in(pid), icon="log-in",
                                  variant="solid" if not source or source == "none needed" else "ghost", size="sm",
                                  disabled=busy, theme=t))
     if p.key_url and not capturing:
         actions.append(ui.button(tr("Get a key"), lambda: c.open_key_page(pid), icon="external-link", variant="ghost",
                                  size="sm", theme=t))
-    if source in ("keychain", "session", "ant"):
-        actions.append(ui.button(tr("Sign out") if source == "ant" else tr("Remove key"), lambda: c.remove_key(pid),
-                                 icon="trash-2", variant="ghost", size="sm", theme=t))
+    if source in ("keychain", "session", "ant", "oauth"):
+        actions.append(ui.button(tr("Sign out") if source in ("ant", "oauth") else tr("Remove key"),
+                                 lambda: c.remove_key(pid), icon="trash-2", variant="ghost", size="sm", theme=t))
     actions.append(ui.button(tr("Refresh models"), lambda: c.refresh_models(pid), icon="refresh-cw", variant="ghost",
                              size="sm", disabled=busy or not source, theme=t))
     if busy:
@@ -1406,6 +1981,9 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
     rows.append(_core.row(actions, spacing=4, align="center", wrap=True))
     if capturing:
         rows.append(_capture_callout(c, t))
+    if c.device is not None and c.device.provider == pid:
+        rows.append(_device_callout(c, t))
+    rows += _provider_extra(c, pid, t)
     if p.custom_url:
         rows.append(ui.field(tr("Server URL"), ui.input(c.settings.base_url(pid), lambda v: c.set_url(pid, v),
                                                         placeholder="http://localhost:11434/v1", mono=True, size="sm",
@@ -1416,6 +1994,156 @@ def _provider_row(c: AgentController, pid: str, t: Theme) -> Any:
                                 + ("…" if len(models) > 6 else "")), size="xs", color="text_muted", theme=t))
     return _core.column([head, _core.container(_core.column(rows, spacing=8), padding=(0, 10, 10, 36), width="fill")],
                         width="fill")
+
+
+def _text(value: str, on_change: Callable[[str], Any], placeholder: str, t: Theme, *, width: float = 260,
+          mono: bool = True, secure: bool = False) -> Any:
+    return ui.input(value, on_change, placeholder=placeholder, mono=mono, size="sm", width=width, secure=secure,
+                    theme=t)
+
+
+def _provider_extra(c: AgentController, pid: str, t: Theme) -> List[Any]:
+    """The settings only some providers have: OAuth clients, the Google Cloud project, Claude's workload
+    identity federation."""
+    own = c.settings.provider(pid)
+    if pid == "github":
+        return [ui.field(tr("GitHub App client ID"), _text(own.client_id, lambda v: c.set_provider_field(
+            pid, "client_id", v), c.settings.client_id(pid) or "Iv23…", t), description=tr(
+            "For signing in with GitHub (device flow, Models permission). Without one, use a fine-grained token with "
+            "the Models permission."), theme=t)]
+    if pid == "vertex":
+        projects = c.google_projects
+        project = own.project or _providers.google_project()
+        picker = ui.select(projects, project, lambda v: c.set_provider_field(pid, "project", v), width=220, size="sm",
+                           theme=t) if projects else _text(own.project, lambda v: c.set_provider_field(
+                               pid, "project", v), project or "my-project", t, width=220)
+        return [
+            ui.field(tr("Google Cloud project"), _core.row([
+                picker, ui.icon_button("refresh-cw", lambda: c.load_google_projects(pid), size="sm",
+                                       tooltip=tr("List my projects"), theme=t)], spacing=4, align="center"),
+                     description=tr("Vertex AI must be enabled in it"), theme=t),
+            ui.field(tr("Location"), _text(own.location, lambda v: c.set_provider_field(pid, "location", v), "global",
+                                           t, width=160), theme=t),
+            ui.field(tr("OAuth client"), _core.column([
+                _text(own.client_id, lambda v: c.set_provider_field(pid, "client_id", v),
+                      c.settings.client_id(pid) or tr("Client ID (Desktop app)"), t),
+                _text("", c.set_google_secret, tr("Client secret (kept in the keychain)"), t, secure=True),
+            ], spacing=4), description=tr("Only needed to sign in with Google; gcloud's credentials work without it"),
+                theme=t),
+        ]
+    if pid != "anthropic":
+        return []
+    f = c.settings.federation
+    sources = {"file": tr("File"), "command": tr("Command"), "env": tr("Variable")}
+    source = ui.segmented(list(sources.values()), sources.get(f.token_source, sources["file"]),
+                          lambda v: c.set_federation("token_source", next(k for k, x in sources.items() if x == v)),
+                          theme=t)
+    where = {"file": _text(f.token_file, lambda v: c.set_federation("token_file", v),
+                           tr("Path of the JWT (or ANTHROPIC_IDENTITY_TOKEN_FILE)"), t),
+             "command": _text(f.token_command, lambda v: c.set_federation("token_command", v),
+                              "gcloud auth print-identity-token", t),
+             "env": _text(f.token_env, lambda v: c.set_federation("token_env", v), "ANTHROPIC_IDENTITY_TOKEN", t)}
+    return [
+        _core.container(ui.label(tr("Workload identity federation"), size="xs", weight="medium", color="text_muted",
+                                 theme=t), padding=(6, 0, 0, 0)),
+        ui.label(tr("Use Claude without an API key: a token from your identity provider (GitHub Actions, Google "
+                    "Cloud, Azure, Okta, Kubernetes…) is exchanged for a short-lived Claude token. Create the issuer "
+                    "and the rule in the Claude Console."), size="xs", color="text_muted", theme=t),
+        ui.field(tr("Federation rule"), _text(f.rule_id, lambda v: c.set_federation("rule_id", v), "fdrl_…", t),
+                 theme=t),
+        ui.field(tr("Organization ID"), _text(f.organization_id, lambda v: c.set_federation("organization_id", v),
+                                              "00000000-0000-…", t), theme=t),
+        ui.field(tr("Service account"), _text(f.service_account_id, lambda v: c.set_federation(
+            "service_account_id", v), tr("svac_… (optional)"), t), theme=t),
+        ui.field(tr("Workspace"), _text(f.workspace_id, lambda v: c.set_federation("workspace_id", v),
+                                        tr("wrkspc_… (optional)"), t), theme=t),
+        ui.field(tr("Identity token"), _core.column([source, where.get(f.token_source, where["file"])], spacing=4),
+                 theme=t),
+        _core.row([ui.button(tr("Test the connection"), lambda: c.test_provider(pid), icon="plug-zap",
+                             variant="ghost", size="sm", disabled=not f.enabled or c.busy_provider == pid, theme=t)]),
+    ]
+
+
+def _draft_form(c: AgentController, t: Theme) -> Any:
+    """The form that adds or edits an MCP server or an external agent."""
+    draft = c.server_draft
+    assert draft is not None
+    mcp = draft["kind"] == "mcp"
+    rows = [
+        ui.field(tr("Name"), _text(draft["name"], lambda v: c.set_draft("name", v), "github", t, width=200), theme=t),
+        ui.field(tr("Command"), _text(draft["command"], lambda v: c.set_draft("command", v),
+                                      "npx -y @modelcontextprotocol/server-github" if mcp else
+                                      "npx -y @zed-industries/claude-code-acp", t, width=340),
+                 description=tr("The program and its arguments, as you would type them in a terminal"), theme=t),
+    ]
+    if mcp:
+        rows.append(ui.field(tr("Or the URL"), _text(draft["url"], lambda v: c.set_draft("url", v),
+                                                     "https://example.com/mcp", t, width=340),
+                             description=tr("A remote server (Streamable HTTP)"), theme=t))
+    rows.append(ui.field(tr("Secrets"), _text(draft["secrets"], lambda v: c.set_draft("secrets", v),
+                                              "GITHUB_TOKEN=…; OTHER=…" if mcp else "ANTHROPIC_API_KEY=…", t,
+                                              width=340, secure=True),
+                         description=tr("NAME=value pairs separated by ; (environment variables, or headers for a "
+                                        "URL), kept in the system keychain"), theme=t))
+    rows.append(_core.row([_core.space(width="fill"),
+                           ui.button(tr("Cancel"), c.cancel_draft, variant="ghost", size="sm", theme=t),
+                           ui.button(tr("Save"), c.save_draft, variant="solid", size="sm", theme=t)], spacing=4))
+    return _core.container(_core.column(rows, spacing=8), padding=(8, 10), width="fill", bg=t.editor,
+                           border_color=t.border_variant, border_width=1, radius=t.radius)
+
+
+def _server_row(c: AgentController, kind: str, config: Any, t: Theme) -> Any:
+    status = c.mcp_status.get(config.name, "") if kind == "mcp" else (
+        "" if _acp.installed(config) else tr("{command} is not installed", command=config.command))
+    detail = config.url if getattr(config, "url", "") else " ".join([config.command, *config.args])
+    busy = c.busy_provider == f"mcp:{config.name}"
+    return _core.row([
+        _icon("plug" if kind == "mcp" else "terminal", size=14, color=t.text_accent if config.enabled else t.text_muted),
+        _core.column([ui.label(getattr(config, "label", config.name), size="sm", weight="medium", theme=t),
+                      ui.label(detail[:70], size="xs", mono=True, color="text_muted", theme=t),
+                      ui.label(status, size="xs", color="text_muted", theme=t) if status else None], width="fill"),
+        ui.spinner(size=12, theme=t) if busy else None,
+        ui.icon_button("plug-zap", lambda: c.test_server(config.name), size="sm", tooltip=tr("Test"), theme=t)
+        if kind == "mcp" else None,
+        ui.switch(config.enabled, lambda _v: c.toggle_server(kind, config.name), theme=t),
+        ui.icon_button("pencil", lambda: c.edit_server(kind, config.name), size="sm", tooltip=tr("Edit"), theme=t),
+        ui.icon_button("trash-2", lambda: c.remove_server(kind, config.name), size="sm", tooltip=tr("Remove"),
+                       theme=t),
+    ], spacing=6, align="center")
+
+
+def _servers_group(c: AgentController, t: Theme) -> Any:
+    s = c.settings
+    draft = c.server_draft
+    rows: List[Any] = [_server_row(c, "mcp", m, t) for m in s.mcp_servers]
+    if draft is not None and draft["kind"] == "mcp":
+        rows.append(_draft_form(c, t))
+    else:
+        rows.append(_core.row([ui.button(tr("Add an MCP server"), lambda: c.new_server("mcp"), icon="plus",
+                                         variant="ghost", size="sm", theme=t)]))
+    mcp = ui.settings_group(tr("MCP servers"), [
+        ui.label(tr("Their tools are added to the agent's. Tools that are not read-only ask first, like file writes."),
+                 size="xs", color="text_muted", theme=t), *rows], theme=t)
+    agents: List[Any] = [_server_row(c, "acp", a, t) for a in s.acp_agents]
+    if draft is not None and draft["kind"] == "acp":
+        agents.append(_draft_form(c, t))
+    else:
+        missing = [name for name in _acp.PRESETS if s.acp_agent(name) is None]
+        agents.append(_core.row([
+            *[ui.button(_acp.PRESETS[name][0], lambda name=name: c.new_server("acp", name), icon="plus",
+                        variant="ghost", size="sm", theme=t) for name in missing],
+            ui.button(tr("Other…"), lambda: c.new_server("acp"), icon="plus", variant="ghost", size="sm", theme=t),
+        ], spacing=4, wrap=True))
+    external = ui.settings_group(tr("External agents"), [
+        ui.label(tr("Agents that run as their own program and speak the Agent Client Protocol, like in Zed. They work "
+                    "in the project folder, ask before acting according to the permission mode and get Pyzed's MCP "
+                    "server."), size="xs", color="text_muted", theme=t),
+        *agents,
+        ui.field(tr("Share Pyzed's MCP server"), ui.switch(s.share_pyzed_mcp, lambda v: c.set_setting(
+            "share_pyzed_mcp", v), theme=t), description=tr("Components, docs, generators and checks of Pyzed "
+                                                             "(needs the mcp package)"), theme=t),
+    ], theme=t)
+    return _core.column([mcp, external], spacing=14, width="fill")
 
 
 def settings_dialog(d: "Designer", t: Theme) -> Any:
@@ -1429,7 +2157,8 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
         tr("No system keychain found"), tr("Keys you paste are kept only until you close the designer. Install the "
                                            "keyring package or set the key in an environment variable."),
         tint="warning", icon="lock-open", theme=t)
-    providers = ui.settings_group(tr("Providers"), [_provider_row(c, pid, t) for pid in _providers.PROVIDERS], theme=t)
+    providers = ui.settings_group(tr("Providers"), [_provider_row(c, pid, t) for pid in _providers.PROVIDERS
+                                                    if pid != "acp"], theme=t)
     efforts = list(_providers.EFFORTS)
     agent = ui.settings_group(tr("Agent"), [
         ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=240, size="sm", theme=t),
@@ -1452,7 +2181,7 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
                                        width=280, theme=t),
                  description=tr("Instructions added to every thread"), theme=t),
     ], theme=t)
-    body = _core.scrollable(_core.column([storage, providers, agent], spacing=14, padding=(0, 6, 0, 0)), height=560,
-                            scrollbar_width=4)
+    body = _core.scrollable(_core.column([storage, providers, _servers_group(c, t), agent], spacing=14,
+                                         padding=(0, 6, 0, 0)), height=560, scrollbar_width=4, id=SETTINGS_SCROLL)
     return ui.modal(body, title=tr("AI agents"), on_close=d.close_dialog, width=620, theme=t,
                     footer=[_core.space(width="fill"), ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t)])

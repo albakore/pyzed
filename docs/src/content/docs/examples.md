@@ -21,6 +21,9 @@ python examples/<name>.py
 | [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Five steps: window, state, layout and themes, async, notes app. | [5-step tutorial](/pyzed/tutorials/step-by-step/) |
 | [`todos.py`](https://github.com/albakore/pyzed/blob/main/examples/todos.py) | Iced's *todos*: add, edit, complete, filter and save. |  |
 | [`game_of_life.py`](https://github.com/albakore/pyzed/blob/main/examples/game_of_life.py) | `pz.canvas` with thousands of cells and `pz.every` as the engine. | [Canvas](/pyzed/guides/canvas/) |
+| [`games/snake.py`](https://github.com/albakore/pyzed/blob/main/examples/games/snake.py) | Snake on a fixed timer, key queue and a glass game-over card. | [Snake](/pyzed/games/snake/) |
+| [`games/breakout.py`](https://github.com/albakore/pyzed/blob/main/examples/games/breakout.py) | 60 fps loop with `pz.frames`, held keys, collisions, particles and shake. | [Breakout](/pyzed/games/breakout/) |
+| [`games/neon_invaders.py`](https://github.com/albakore/pyzed/blob/main/examples/games/neon_invaders.py) | A space shooter: pixel-art sprites, neon glow and a HUD with glass and bloom. | [Neon Invaders](/pyzed/games/neon-invaders/) |
 | [`clock.py`](https://github.com/albakore/pyzed/blob/main/examples/clock.py) | Analog clock drawn on a canvas. | [Canvas](/pyzed/guides/canvas/) |
 | [`stopwatch.py`](https://github.com/albakore/pyzed/blob/main/examples/stopwatch.py) | Stopwatch with laps and shortcuts. | [Async](/pyzed/guides/async/) |
 | [`download_progress.py`](https://github.com/albakore/pyzed/blob/main/examples/download_progress.py) | Concurrent downloads with `async` generators and progress. | [Async](/pyzed/guides/async/) |
@@ -33,6 +36,21 @@ python examples/<name>.py
 | [`panes.py`](https://github.com/albakore/pyzed/blob/main/examples/panes.py) | Resizable panes with nested `ui.split`. | [Content](/pyzed/components/content/#resizable-panels) |
 | [`context_menu.py`](https://github.com/albakore/pyzed/blob/main/examples/context_menu.py) | Context menu with `ui.popover` and `ui.menu`. | [Content](/pyzed/components/content/#popover) |
 | [`screenshots.py`](https://github.com/albakore/pyzed/blob/main/examples/screenshots.py) | Regenerates the documentation screenshots. | [Tests and screenshots](/pyzed/guides/testing/) |
+
+## Integrations
+
+[`examples/integrations/`](https://github.com/albakore/pyzed/tree/main/examples/integrations) holds
+desktop apps built on backend and data libraries. Each one is a uv project: `cd` into it and run
+`uv run main.py`.
+
+| Example | Libraries | Tutorial |
+| --- | --- | --- |
+| [`fastapi_notes`](https://github.com/albakore/pyzed/tree/main/examples/integrations/fastapi_notes) | FastAPI, uvicorn, httpx | [FastAPI](/pyzed/integrations/fastapi/) |
+| [`sqlalchemy_contacts`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlalchemy_contacts) | SQLAlchemy 2.0 | [SQLAlchemy](/pyzed/integrations/sqlalchemy/) |
+| [`sqlmodel_inventory`](https://github.com/albakore/pyzed/tree/main/examples/integrations/sqlmodel_inventory) | SQLModel, Pydantic | [SQLModel](/pyzed/integrations/sqlmodel/) |
+| [`django_library`](https://github.com/albakore/pyzed/tree/main/examples/integrations/django_library) | Django | [Django](/pyzed/integrations/django/) |
+| [`httpx_pypi`](https://github.com/albakore/pyzed/tree/main/examples/integrations/httpx_pypi) | httpx, Pydantic | [httpx and Pydantic](/pyzed/integrations/httpx-pydantic/) |
+| [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | [Other libraries](/pyzed/integrations/other-libraries/#aiosqlite) |
 
 ## Zed-like editor
 

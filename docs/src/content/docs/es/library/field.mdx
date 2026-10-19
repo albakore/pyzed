@@ -55,7 +55,7 @@ pz.column([
 ### `ui.field`
 
 ```python
-field(title, control, *, description=None, theme=None)
+field(title, control, *, description=None, error=None, theme=None)
 ```
 
 Una fila de formulario: título y descripción a la izquierda, control a la derecha (como los ajustes de Zed).
@@ -65,6 +65,7 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `title` | *obligatorio* | Título. |
 | `control` | *obligatorio* | El control (switch, input…). |
 | `description` | `None` | Texto de ayuda. |
+| `error` | `None` | Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#field)

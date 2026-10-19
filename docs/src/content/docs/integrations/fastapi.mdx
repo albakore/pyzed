@@ -1,0 +1,138 @@
+---
+title: FastAPI
+description: Build a desktop client for a FastAPI REST API with Pyzed and httpx, embed the server in the same process and show 422 validation errors on each field.
+sidebar:
+  order: 2
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import client from '../../../../../examples/integrations/fastapi_notes/main.py?raw';
+import api from '../../../../../examples/integrations/fastapi_notes/api.py?raw';
+
+FastAPI and Pyzed fit together naturally: both are typed, both are async, and both use Pydantic.
+This demo is a notes app whose data lives behind a FastAPI REST API. The window talks to it with
+`httpx.AsyncClient` on Pyzed's asyncio loop, and when the API rejects a note, its 422 response is
+shown next to each field.
+
+![A notes client for a FastAPI API, with validation errors under Title and Tags](../../../assets/integrations/fastapi.png)
+
+```bash
+cd examples/integrations/fastapi_notes
+uv run main.py                          # starts the API in the background and opens the window
+uv run main.py http://127.0.0.1:8000    # or talk to an API that is already running
+uv run uvicorn api:app --reload         # serve the API alone (docs at /docs)
+```
+
+<Steps>
+
+1. **The API is ordinary FastAPI.** Pydantic models declare the rules; FastAPI enforces them and
+   answers 422 with the details when a request breaks them:
+
+   ```python
+   class NoteIn(BaseModel):
+       title: str = Field(min_length=1, max_length=60)
+       body: str = ""
+       tags: list[str] = []
+
+       @field_validator("tags")
+       @classmethod
+       def short_tags(cls, tags):
+           if any(len(tag) > 16 for tag in tags):
+               raise ValueError("each tag must be 16 characters or fewer")
+           return tags
+
+   @app.post("/notes", status_code=201)
+   def create_note(data: NoteIn) -> Note: ...
+   ```
+
+2. **Embed the server (optional).** For a self-contained app, run uvicorn in a daemon thread
+   before opening the window. uvicorn skips its signal handlers outside the main thread, and the
+   thread ends with the app:
+
+   ```python
+   def serve_in_background() -> str:
+       with socket.socket() as probe:          # a free port
+           probe.bind(("127.0.0.1", 0))
+           port = probe.getsockname()[1]
+       server = uvicorn.Server(uvicorn.Config(api, host="127.0.0.1", port=port, log_level="warning"))
+       threading.Thread(target=server.run, daemon=True).start()
+       while not server.started:
+           time.sleep(0.02)
+       return f"http://127.0.0.1:{port}"
+
+   pz.run(NotesClient(serve_in_background()))
+   ```
+
+   The same client works against a remote API: pass its URL instead.
+
+3. **Requests are coroutines.** Returning a coroutine from a callback runs it on Pyzed's loop,
+   and what it returns goes to `update`. The `AsyncClient` is created once, inside a coroutine, so
+   it belongs to that loop:
+
+   ```python
+   async def http(self):
+       if self.client is None:
+           self.client = httpx.AsyncClient(base_url=self.base_url, timeout=5)
+       return self.client
+
+   async def fetch(self, query):
+       try:
+           response = await (await self.http()).get("/notes", params={"q": query})
+           response.raise_for_status()
+       except httpx.HTTPError as error:
+           return ("offline", str(error))
+       return ("loaded", query, response.json())
+
+   def search(self, text):
+       self.query = text
+       return self.fetch(text)
+   ```
+
+4. **Drop stale answers.** Typing "py" sends two requests; the answer for "p" may arrive last.
+   The query travels with the answer and `update` keeps only the current one:
+
+   ```python
+   def update(self, message):
+       kind, *rest = message
+       if kind == "loaded":
+           query, notes = rest
+           if query == self.query:
+               self.notes = notes
+   ```
+
+5. **Show 422 errors on each field.** `pz.validation_errors` reads FastAPI's
+   `{"detail": [{"loc": ["body", "title"], "msg": ...}]}` and returns `{"title": msg}`, ready for
+   `ui.field(error=)`:
+
+   ```python
+   async def send(self, note_id, payload):
+       client = await self.http()
+       response = await client.put(f"/notes/{note_id}", json=payload)
+       if response.is_error:
+           return ("invalid", response.json())
+       return ("saved", response.json())
+
+   # update():
+   elif kind == "invalid":
+       self.errors = pz.validation_errors(rest[0])
+
+   # view():
+   ui.field("Title", ui.input(self.draft["title"], self.edit("title")), error=self.errors.get("title"))
+   ```
+
+   A plain error such as `{"detail": "Note not found"}` lands under the key `""`, shown in a
+   `ui.callout` above the form.
+
+</Steps>
+
+<Aside type="tip">
+Share the models. If the client and the API are in the same project, import `NoteIn` in the
+client and validate before sending (`NoteIn.model_validate(...)`) to show errors without a round
+trip; the server still validates, as it must.
+</Aside>
+
+## Full code
+
+<Code code={client} lang="py" title="examples/integrations/fastapi_notes/main.py" />
+
+<Code code={api} lang="py" title="examples/integrations/fastapi_notes/api.py" />

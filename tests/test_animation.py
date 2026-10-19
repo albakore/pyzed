@@ -150,6 +150,8 @@ def test_effects_expand_into_box_properties():
     _, out = pzstyle._resolve(None, (), {"glow": 8})
     assert out["shadow"][1:] == ((0, 0), 8.0) and out["shadow"][0].startswith(pz.themes.ONE_DARK.accent.lower()[:7])
     _, out = pzstyle._resolve(None, (), {"bloom": ("#00ff00", 1.0)})
+    assert out == {"bloom_light": ("#00ff00", 1.0)}  # a bare text or icon only glows
+    _, out = pzstyle._resolve(None, (), {"bloom": ("#00ff00", 1.0), "background": "#000000"})
     assert out["shadow"][2] == 28.0 and out["border_width"] == 1
     assert out["bloom_light"] == ("#00ff00", 1.0)
     _, out = pzstyle._resolve(None, (), {"glass": True, "radius": 4})

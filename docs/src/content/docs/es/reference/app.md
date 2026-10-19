@@ -39,6 +39,7 @@ El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`
 | `update(message)` | Recibe los mensajes. Puede devolver un `Command`, una lista de ellos, una corrutina, un generador (normal o async) u otro mensaje. |
 | `on_start()` | Opcional. Se ejecuta una vez al arrancar; puede devolver un `Command` o una corrutina. |
 | `on_key(combo)` | Opcional. Recibe cada tecla como `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Opcional. Recibe las teclas al soltarlas, por nombre (`"left"`, `"space"`). |
 | `subscriptions()` | Opcional. Devuelve las suscripciones activas (`pz.every`, `pz.listen`). Se reevalúa tras cada `update`. |
 | `resolved_theme()` | El `Theme` concreto en uso (resuelve nombres y `themes.auto`). |
 | `run()` | Abre la ventana y bloquea hasta que la app termina. |
@@ -290,6 +291,54 @@ async def feed():
 
 def subscriptions(self):
     return [pz.listen(feed)]
+```
+
+### `frames`
+
+```python
+frames(callback, *, key=None, max_fps=240.0)
+```
+
+Una suscripción que llama a `callback(dt)` una vez por fotograma (sincronizada con la pantalla, normalmente 60 veces por segundo), con `dt` los segundos desde el fotograma anterior (como mucho 0,25). Pensada para juegos y simulaciones: mueve las cosas `velocidad * dt`. Ver [Crear videojuegos](/pyzed/es/games/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `callback` | Callable que recibe `dt` (un `float`). |
+| `key` | Clave que identifica la suscripción (por defecto, el mensaje o la función). |
+| `max_fps` | Tasa máxima donde la pantalla no espera a la sincronización vertical (renderizado por software). 240 por defecto. |
+
+```python
+def subscriptions(self):
+    return [] if self.paused else [pz.frames(self.tick)]
+
+def tick(self, dt):
+    self.x += game.axis("left", "right") * 300 * dt
+```
+
+### `pressed`
+
+```python
+pressed()
+```
+
+Las teclas pulsadas ahora mismo, como un `frozenset` de nombres sin modificadores (`"left"`, `"space"`, `"a"`…). Vacío si no hay ventana abierta. Consúltalo en cada fotograma para movimiento continuo; `on_key` es para pulsaciones puntuales.
+
+### `is_pressed`
+
+```python
+is_pressed(*keys, held=None)
+```
+
+Si alguna de `keys` está pulsada. `held` sustituye a `pressed()` (útil en tests).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `keys` | Nombres de teclas, como `"left"`, `"a"`. |
+| `held` | Conjunto opcional de teclas en lugar de `pressed()`. |
+
+```python
+if pz.is_pressed("space") and self.cooldown <= 0:
+    self.fire()
 ```
 
 ### `Subscription`
@@ -1264,3 +1313,26 @@ summary(markdown)
 ```
 
 La primera frase de un texto Markdown, sin formato (para listas y resultados de búsqueda).
+
+## Formularios y validación
+
+### `validation_errors`
+
+```python
+validation_errors(error)
+```
+
+Convierte un error de validación en `{campo: mensaje}`, listo para `ui.field(..., error=)`. Acepta un `ValidationError` de Pydantic o SQLModel, un `ValidationError` de Django, el JSON de una respuesta 422 de FastAPI (`{"detail": [...]}`) o su lista `detail`. Los campos anidados se unen con puntos y los errores que no son de ningún campo usan la clave `""`. Se guarda solo el primer mensaje de cada campo. Mira [Integraciones](/pyzed/es/integrations/overview/#errores-de-validación-en-cada-campo).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `error` | El error, o el JSON de la respuesta. |
+
+```python
+try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Precio", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))
+```

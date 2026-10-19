@@ -148,7 +148,9 @@ class App(Window):
         ``on_start()``         runs once; may return a ``Command`` or a coroutine.
         ``on_key(combo)``      receives key presses as Zed-style strings like
                                ``"ctrl-shift-p"`` or ``"escape"``.
-        ``subscriptions()``    returns timers and streams (``pz.every``, ``pz.listen``).
+        ``on_key_up(key)``     receives key releases by name (``"left"``, ``"space"``).
+        ``subscriptions()``    returns timers, streams and frame callbacks
+                               (``pz.every``, ``pz.listen``, ``pz.frames``).
 
     ``theme`` may be a ``Theme``, a theme name (``"Ayu Dark"``) or
     ``themes.auto(light, dark)`` to follow the operating system's appearance.

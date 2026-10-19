@@ -103,6 +103,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `update(message)` | Receives messages. Can return a `Command`, a list of them or another message. |
 | `on_start()` | Optional. Runs once at startup; can return a `Command`. |
 | `on_key(combo)` | Optional. Receives every key as `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Optional. Receives key releases by name (`"left"`, `"space"`). |
 | `run()` | Opens the window and blocks until it is closed. |
 | `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |
 
@@ -570,7 +571,8 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                 },
                 "pyzed.ui.field": {
                     "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
-                    "params": {"control": "The control (switch, input…).", "description": "Help text."},
+                    "params": {"control": "The control (switch, input…).", "description": "Help text.",
+                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."},
                 },
             }),
             ("Lists, tree and menus", {
@@ -750,6 +752,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                         "markers": '`{line: "created" | "modified" | "deleted"}`.',
                         "on_cursor": "Callable that receives `(line, column)`.",
                         "font_size": "Font size (defaults to the theme's).",
+                        "font": 'Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat\'s message box.',
                         "line_height": "Line height.",
                         "gutter": "Shows line numbers.",
                         "wrap": "Line wrapping.",
@@ -1021,6 +1024,29 @@ _section("app", "Async and subscriptions", {
                 return [pz.listen(feed)]
         """,
     },
+    "pyzed.frames": {
+        "desc": "A subscription that calls `callback(dt)` once per displayed frame (in sync with the screen, usually 60 times a second), with `dt` the seconds since the previous frame (at most 0.25). Made for games and simulations: move things by `speed * dt`. See [Making games](/pyzed/games/).",
+        "params": {"callback": "Callable that receives `dt` (a `float`).",
+                   "max_fps": "Highest rate where the display does not wait for vsync (software rendering). Default 240."},
+        "example": """
+            def subscriptions(self):
+                return [] if self.paused else [pz.frames(self.tick)]
+
+            def tick(self, dt):
+                self.x += game.axis("left", "right") * 300 * dt
+        """,
+    },
+    "pyzed.pressed": {
+        "desc": "The keys held down right now, as a `frozenset` of names without modifiers (`\"left\"`, `\"space\"`, `\"a\"`…). Empty when no window is open. Poll it every frame for continuous movement; `on_key` is for one-off presses.",
+    },
+    "pyzed.is_pressed": {
+        "desc": "Whether any of `keys` is held down. `held` replaces `pressed()` (handy in tests).",
+        "params": {"keys": "Key names, such as `\"left\"`, `\"a\"`.", "held": "Optional set of keys to use instead of `pressed()`."},
+        "example": """
+            if pz.is_pressed("space") and self.cooldown <= 0:
+                self.fire()
+        """,
+    },
     "pyzed.Subscription": {"desc": "What `every` and `listen` return. It is identified by its `key`: as long as `subscriptions()` keeps returning one with the same key, it keeps running; when it disappears, it stops.", "no_signature": True},
     "pyzed.spawn": {
         "desc": "Schedules a coroutine on Pyzed's asyncio loop without waiting for its result and returns a `concurrent.futures.Future`. To receive the result in the UI, return the coroutine from `update` or use `Command.perform`.",
@@ -1038,6 +1064,8 @@ _page("command")["sections"][0][1].update({
     },
     "pyzed.Command.copy": {"desc": "Copies `text` to the system clipboard.", "params": {"text": "The text."}},
     "pyzed.Command.paste": {"desc": "Reads the clipboard and calls `then(text)` (empty string if it is empty).", "params": {"then": "Callable that receives the text."}},
+    "pyzed.Command.paste_image": {"desc": "Reads an image from the clipboard (a screenshot, a copied picture) and calls `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.", "params": {"then": "Callable that receives the PNG bytes or `None`."}},
+    "pyzed.Command.pick_files": {"desc": "Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty list when it is cancelled).", "params": {"then": "Callable that receives the list of paths.", "title": "The dialog's title.", "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.", "directory": "The folder it opens in.", "multiple": "`False` picks a single file.", "folder": "`True` picks folders instead of files."}},
 })
 _page("command")["sections"][0][1]["pyzed.Command.perform"]["desc"] = (
     "Runs `function()` in the background and delivers the result to `then(result)` on the UI "
@@ -1212,6 +1240,18 @@ _section("widgets", "Images and content", {
         "desc": "A QR code that encodes `data`.",
         "params": {"data": "The text or URL to encode.", "cell_size": "Size of each module in pixels."},
     },
+    "pyzed.shader": {
+        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+        "params": {
+            "code": "WGSL source that defines `shade` (and any helper functions).",
+            "uniforms": "Up to 8 named values: a number, 2 to 4 numbers or a color.",
+            "width": "Width (`\"fill\"` by default).",
+            "height": "Height (`\"fill\"` by default).",
+            "animate": "Redraw every frame so `time` moves (`True`).",
+            "time": "A fixed `time` in seconds, for a still frame.",
+            "fallback": "Color or gradient shown without a GPU.",
+        },
+    },
     "pyzed.canvas": {
         "desc": "A 2D drawing surface. `shapes` is a list created with [`pyzed.draw`](/pyzed/reference/draw/). Mouse callbacks receive coordinates relative to the canvas. With an `id`, the geometry is cached between frames and only recomputed when the shapes change. See the [drawing with canvas](/pyzed/guides/canvas/) guide.",
         "params": {
@@ -1249,7 +1289,7 @@ dict(_w)["Controls"]["pyzed.slider"]["params"]["on_release"] = "Sent when the kn
 # -- UI -----------------------------------------------------------------------------
 _section("ui", "Controls", {
     "pyzed.ui.select": {
-        "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.",
+        "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
         "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.'},
     },
     "pyzed.ui.radio_group": {
@@ -1304,7 +1344,7 @@ _section("ui", "Data and feedback", {
         "params": {"title": "Group title.", "rows": "The rows (usually `ui.field`)."},
     },
     "pyzed.ui.Column": {
-        "desc": 'A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or `("fill", 2)`.',
+        "desc": 'A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or a portion such as `"fill:2"`.',
         "params": {"title": "Header (and name used for sorting).", "key": "How to get the value from each row.", "align": '`"start"`, `"center"` or `"end"`.', "render": "Function value → widget.", "sortable": "Whether the header can be clicked to sort."},
     },
     "pyzed.ui.table": {
@@ -1441,6 +1481,7 @@ PAGES.append({
                 "params": {**_paint, "ops": "List of operations."},
             },
             "pyzed.draw.text": {"desc": "Text anchored at `(x, y)`; `align_x`/`align_y` choose which side of the text sits on that point.", "params": {"x": "X position.", "y": "Y position.", "content": "The text.", "color": "Color.", "size": "Size.", "font": "Family.", "weight": "Weight.", "align_x": '`"start"`, `"center"` or `"end"`.', "align_y": '`"top"`, `"center"` or `"bottom"`.'}},
+            "pyzed.draw.image": {"desc": "A bitmap (sprite) drawn in the box `(x, y, w, h)`. Decoded once per source and cached, so drawing it every frame is cheap. See [Making games](/pyzed/games/).", "params": {"source": "A path, encoded image bytes (PNG, JPEG…) or raw RGBA bytes with `size`.", "x": "Left.", "y": "Top.", "w": "Width.", "h": "Height.", "rotation": "Degrees, around its center.", "opacity": "From 0 to 1.", "pixelated": "Nearest-neighbor scaling, for pixel art.", "size": "`(width, height)` of raw RGBA bytes."}},
         }),
         ("Transforms", {
             "pyzed.draw.translate": {"desc": "Offsets the shapes that come after it.", "params": {"x": "Horizontal.", "y": "Vertical."}},
@@ -1863,5 +1904,17 @@ _section("ui", "Lists, tree and menus", {
             "overscan": "Extra rows built above and below the visible ones.",
             "on_scroll": "Callable that receives the scroll viewport, as in `pz.scrollable`.",
         },
+    },
+})
+_section("app", "Forms and validation", {
+    "pyzed.validation_errors": {
+        "desc": "Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{\"detail\": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `\"\"`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).",
+        "params": {"error": "The error, or the JSON of the response."},
+        "example": """try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Price", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))""",
     },
 })

@@ -59,6 +59,7 @@ def editor(
     highlights: Optional[Sequence[Tuple[int, int, int, int]]] = None,
     match_brackets: bool = True,
     selection_highlight: bool = True,
+    font: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -116,6 +117,9 @@ def editor(
       end_column)`` with exclusive ends (search results). ``match_brackets`` outlines the bracket
       that matches the one next to the cursor and ``selection_highlight`` the other occurrences of
       the selected text.
+
+    ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
+    chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -126,6 +130,7 @@ def editor(
         language=language or (language_token(path) if path else "txt"),
         size=size,
         line_height=line_height or round(size * 1.6),
+        font=font,
         syntax=t.syntax_scopes(),
         bg=t.editor,
         color=t.editor_text,

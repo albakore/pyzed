@@ -22,6 +22,8 @@ from pyzed import Command
 | `Command.scroll_to(id, x, y)` | Desplaza un `scrollable` a una posición en píxeles. |
 | `Command.copy(texto)` | Copia al portapapeles. |
 | `Command.paste(then)` | Lee el portapapeles y llama a `then(texto)`. |
+| `Command.paste_image(then)` | Lee una imagen del portapapeles y llama a `then(png)` con sus bytes PNG (`None` si no hay). |
+| `Command.pick_files(then, ...)` | Abre el diálogo de archivos del sistema y llama a `then(rutas)`; `filters=[("Imágenes", ["png", "jpg"])]`, `multiple=False`, `folder=True`. |
 | `Command.message(msg)` | Envía `msg` a `update` en el siguiente ciclo. |
 | `Command.perform(fn, then)` | Ejecuta `fn()` en segundo plano (un hilo, o el loop de asyncio si es `async def`) y entrega el resultado a `then`. |
 | `Command.batch([...])` | Varios a la vez (también vale devolver una lista). |

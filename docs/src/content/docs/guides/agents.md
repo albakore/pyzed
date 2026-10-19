@@ -44,11 +44,13 @@ A model is named `"<provider>:<model>"`:
 
 | Provider | Example | Credentials |
 | --- | --- | --- |
-| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY` (an `ant auth login` profile also works) |
+| `anthropic` | `anthropic:claude-opus-5-5` | `set_key`, `ANTHROPIC_API_KEY` (an `ant auth login` profile also works), or [identity federation](#claude-without-an-api-key) |
 | `openai` | `openai:<model>` | `set_key` or `OPENAI_API_KEY` |
 | `google` | `google:<gemini model>` | `set_key` or `GEMINI_API_KEY` |
 | `openrouter` | `openrouter:anthropic/claude-opus-5-5` | `set_key`, `OPENROUTER_API_KEY` or `agents.login.openrouter_login()` |
 | `xai`, `mistral`, `deepseek`, `groq` | `groq:<model>` | `set_key` or `XAI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY` |
+| `github` | `github:openai/gpt-4.1` | GitHub Models: `agents.login.github_device_code()` (device flow), a fine-grained token with the Models permission or `GITHUB_TOKEN` |
+| `vertex` | `vertex:google/gemini-2.5-pro` | Gemini on Vertex AI: `agents.login.google_login()` or the gcloud credentials of the computer; `settings.provider("vertex").project` |
 | `ollama`, `lmstudio` | `ollama:qwen3:8b` | none (local) |
 | `custom` | `custom:<model>` | the server URL in the settings, and a key if needed |
 
@@ -107,6 +109,70 @@ same as the [MCP server](/pyzed/guides/mcp/)) and `agents.file_tools(folder)` (l
 never outside `folder`). The file tools never open keys or credentials (`.env`, `*.pem`, `*.key`, SSH keys...;
 `agents.tools.SECRET_FILES`), so a prompt injection in a project file cannot send them to the provider; pass
 `hidden=` to change the list.
+
+## Images
+
+Models that take images can look at them in a message, and tools can return them:
+
+```python
+image = agents.Image.open("mockup.png")           # PNG, JPEG, GIF or WebP, up to agents.agent.IMAGE_LIMIT
+agent.run([{"type": "text", "text": "Build this screen."}, agents.image_block(image)])
+
+
+@agents.tool
+def chart() -> list:
+    """Draws the sales chart."""
+    return ["The chart:", agents.Image(render_png())]   # text and images go back to the model
+```
+
+`image_block` also takes the bytes or a path. A tool that returns an `Image`, or a list with text and images,
+answers with them; providers without images in tool results get them in the next message.
+
+## MCP servers
+
+`agents.mcp_client` connects to [Model Context Protocol](https://modelcontextprotocol.io) servers, local (stdio)
+or remote (Streamable HTTP), and turns their tools into agent tools:
+
+```python
+from pyzed.agents import mcp_client, providers
+
+fetch = providers.MCPServerConfig("fetch", "uvx", ["mcp-server-fetch"])
+github = providers.MCPServerConfig("github", url="https://api.githubcopilot.com/mcp/",
+                                   secret_names=["Authorization"])
+mcp_client.set_secrets("github", {"Authorization": "Bearer …"})   # in the keychain
+
+servers = mcp_client.Servers([fetch, github], cwd=".")
+agent = agents.Agent("anthropic:claude-opus-5-5", tools=servers.tools())
+...
+servers.close()
+```
+
+Tools are named `mcp_<server>_<tool>` and the ones the server doesn't mark `readOnlyHint` are `writes=True`, so
+they are confirmed first. `secret_names` lists the environment variables (stdio) or headers (HTTP) whose values
+`set_secrets` keeps in the keychain. A server that fails is skipped; pass `on_error(server, message)` to
+`tools()` to hear about it. `mcp_client.MCPClient` talks to one server directly (`list_tools`, `call`).
+
+## External agents
+
+`agents.acp` runs agents that speak the [Agent Client Protocol](https://agentclientprotocol.com) (Claude Code,
+Gemini CLI, Codex…) as their own program and streams their work as the same events as `Agent`:
+
+```python
+from pyzed.agents import acp
+
+config = acp.preset("claude-code")        # or "gemini", "codex", or providers.ACPAgentConfig(name, command, args)
+own = acp.pyzed_mcp_server()              # Pyzed's MCP server, or None without the mcp package
+agent = acp.ACPAgent(config, cwd="my_app", confirm=lambda tool, args: True,
+                     mcp_servers=[own] if own else [])
+print(agent.run("Add a dark theme to the app", on_event=print))
+agent.close()
+```
+
+The agent reads and writes files through Pyzed, only inside `cwd` and never `SECRET_FILES`. Its permission
+requests follow `settings.mode`: `"bypass"` allows them, `"read"` allows reads only, `"chat"` refuses them and
+`"ask"` calls `confirm`. `acp.installed(config)` tells whether its program is on the `PATH`, and the settings
+keep them in `AgentSettings.acp_agents` (and MCP servers in `mcp_servers`; `acp.mcp_entries(settings.mcp_servers)`
+hands those to the agent too).
 
 ## Streaming into the UI
 
@@ -171,13 +237,46 @@ agents.login.key_page("anthropic")    # the others: opens the provider's API key
 agents.providers.looks_like_key("anthropic", copied_text)  # ...and tells whether a copied text is its key
 ```
 
-Only OpenRouter offers OAuth to other apps. For the rest, Pyzed Design opens the key page and watches the
+GitHub and Google sign in without a key too, with OAuth apps you register (their IDs go in the provider's
+settings, or `PYZED_GITHUB_CLIENT_ID` / `PYZED_GOOGLE_CLIENT_ID`):
+
+```python
+code = agents.login.github_device_code(client_id)          # show code.user_code and open code.verification_uri
+token = agents.login.github_device_token(client_id, code)  # waits until it is approved
+agents.providers.save_token("github", token)               # in the keychain; refreshed when it expires
+
+token = agents.login.google_login(client_id, client_secret) # browser + PKCE, scope cloud-platform
+agents.providers.save_token("vertex", token)
+```
+
+Without signing in, `vertex` uses the gcloud credentials of the computer (`gcloud auth application-default
+login`) and `github` takes a fine-grained token with the Models permission as its key.
+
+Besides these, only OpenRouter offers OAuth to other apps. For the rest, Pyzed Design opens the key page and watches the
 clipboard for a few minutes; when a text that `looks_like_key` is copied, it checks it with `list_models(key=...)`
 and saves it with `set_key`. Your app can do the same.
 
 Keys live in the system keychain (`keyring`, service `pyzed`); `PYZED_KEYRING=0` disables it, and
 `agents.secrets.use(SecretStore(my_backend))` plugs in your own vault (any object with keyring's
 `get_password` / `set_password` / `delete_password`).
+
+### Claude without an API key
+
+With workload identity federation, a token from your identity provider (GitHub Actions, Google Cloud, Azure, Okta,
+Kubernetes…) is exchanged for a short-lived Claude token, so no API key is stored. Create the issuer and the rule
+in the Claude Console, then:
+
+```python
+settings = agents.AgentSettings()
+settings.federation = agents.providers.FederationSettings(
+    rule_id="fdrl_…", organization_id="…", service_account_id="svac_…",
+    token_source="command", token_command="gcloud auth print-identity-token")
+agent = agents.Agent("anthropic:claude-opus-5-5", settings=settings)
+```
+
+`token_source` is `"file"` (`token_file`, or `ANTHROPIC_IDENTITY_TOKEN_FILE`), `"command"` (prints a fresh token)
+or `"env"` (`token_env`, `ANTHROPIC_IDENTITY_TOKEN` by default). A saved key wins over federation.
+`providers.credential_source("anthropic", settings=settings)` tells where the credentials come from.
 
 ## Threads
 

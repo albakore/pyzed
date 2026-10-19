@@ -1,0 +1,112 @@
+---
+title: Django
+description: Use Django's ORM, async queries and model validation in a Pyzed desktop app that shares its database with the Django admin.
+sidebar:
+  order: 5
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import main from '../../../../../examples/integrations/django_library/main.py?raw';
+import models from '../../../../../examples/integrations/django_library/catalog/models.py?raw';
+
+Django is more than a web framework: its ORM, migrations, validators and admin work in any
+Python process. This demo is a library catalog whose models are a normal Django app. The Pyzed
+window queries them with Django's **async ORM**, validates edits with `full_clean()`, and the
+same data is editable in the Django admin.
+
+![A library catalog with authors, books, availability switches and a dialog with Django validation errors](../../../assets/integrations/django.png)
+
+```bash
+cd examples/integrations/django_library
+uv run main.py                     # the desktop app
+uv run manage.py createsuperuser   # then: uv run manage.py runserver → http://127.0.0.1:8000/admin/
+```
+
+The folder is a regular Django project (`manage.py`, `library_site/settings.py`, a `catalog`
+app with migrations) plus `main.py`. To add a desktop app to your own project, a `main.py` next
+to `manage.py` is all it takes.
+
+<Steps>
+
+1. **Set up Django before importing models.** Exactly what `manage.py` does:
+
+   ```python
+   os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_site.settings")
+   django.setup()
+
+   from catalog.models import Author, Book
+   ```
+
+   Before opening the window, `prepare_database()` runs `call_command("migrate")` and adds a
+   few books the first time.
+
+2. **Query with the async ORM.** Django's `a`-prefixed methods (`aget`, `acount`, `aupdate`,
+   `adelete`, `asave`) and `async for` over a queryset run the query on Django's own thread and
+   can be awaited. Returning the coroutine from a callback runs it on Pyzed's loop:
+
+   ```python
+   async def fetch(self, author_id, query):
+       authors = [a async for a in Author.objects.annotate(count=Count("books"))]
+       books = Book.objects.select_related("author")
+       if author_id:
+           books = books.filter(author_id=author_id)
+       if query:
+           books = books.filter(Q(title__icontains=query) | Q(author__name__icontains=query))
+       return ("loaded", query, authors, [b async for b in books])
+
+   def pick_author(self, author_id):
+       self.author_id = author_id
+       return self.fetch(author_id, self.query)
+   ```
+
+   `select_related("author")` matters: the table reads `book.author.name`, and a lazy relation
+   would try to query from the UI thread.
+
+3. **Validate with the model.** `full_clean()` runs the field validators, the unique checks and
+   `Model.clean()`. It touches the database, so wrap it in `sync_to_async`:
+
+   ```python
+   async def store(self, book_id, draft):
+       book = await Book.objects.aget(pk=book_id) if book_id else Book()
+       book.title, book.isbn, book.year = draft["title"], draft["isbn"], draft["year"]
+       book.author = draft["author"]
+       try:
+           await sync_to_async(book.full_clean)()
+       except ValidationError as error:
+           return ("invalid", error)
+       await book.asave()
+       return ("saved",)
+   ```
+
+   `pz.validation_errors` reads the `ValidationError`'s `message_dict`, so "“abc” value must be
+   an integer." appears under Year and "Book with this ISBN already exists." under ISBN.
+
+4. **Pick related objects with `ui.select`.** It shows any object with `str()` and hands the
+   object back, so the author field holds `Author` instances:
+
+   ```python
+   ui.field("Author", ui.select(self.authors, self.draft["author"], self.edit("author")))
+   ```
+
+5. **Small updates without loading the object.** The availability switch in each row runs a
+   single `UPDATE`:
+
+   ```python
+   async def set_available(self, book_id, available):
+       await Book.objects.filter(pk=book_id).aupdate(available=available)
+       return ("changed",)
+   ```
+
+</Steps>
+
+<Aside type="caution">
+Keep ORM queries out of `view()` and synchronous callbacks: they would block the window while
+the database answers. Inside a coroutine, use the `a` methods: a synchronous query there raises
+`SynchronousOnlyOperation`. Plain synchronous Django code also works inside `Command.perform`.
+</Aside>
+
+## Full code
+
+<Code code={main} lang="py" title="examples/integrations/django_library/main.py" />
+
+<Code code={models} lang="py" title="examples/integrations/django_library/catalog/models.py" />
