@@ -85,14 +85,19 @@ def test_extract_needs_one_app(tmp_path):
 @pytest.mark.skipif(updater.os.name == "nt", reason="POSIX swap script")
 def test_replace_on_exit_writes_a_swap_script(tmp_path, monkeypatch):
     started = []
-    monkeypatch.setattr(updater.subprocess, "Popen", lambda args, **kw: started.append(args))
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda args, **kw: started.append((args, kw["env"])))
+    monkeypatch.setenv("_PYI_PARENT_PROCESS_LEVEL", "1")  # what PyInstaller leaves for its children
     (tmp_path / "app").mkdir()
     (tmp_path / "new").mkdir()
     script = updater.replace_on_exit(tmp_path / "new", tmp_path / "app")
     text = script.read_text()
     assert f"kill -0 {updater.os.getpid()}" in text and str(tmp_path / "app.old") in text
-    assert started == [["/bin/sh", str(script)]]
+    [(args, env)] = started
+    assert args == ["/bin/sh", str(script)]
+    # the new version starts as a fresh app, not as a child of this one
+    assert env["PYINSTALLER_RESET_ENVIRONMENT"] == "1" and "_PYI_PARENT_PROCESS_LEVEL" not in env
     script.unlink()
+    script.with_suffix(".log").unlink()
     with pytest.raises(updater.UpdateError):
         updater.replace_on_exit(tmp_path / "new")  # not a packaged app
 
@@ -104,7 +109,7 @@ def test_state_and_due():
     assert updater.due(every=0)
 
 
-def test_designer_whats_new_tab_and_status(tmp_path):
+def test_designer_whats_new_tab_and_status(tmp_path, monkeypatch):
     from pyzed.designer.app import Designer
     from pyzed.designer.updates import TAB_ID
 
@@ -124,5 +129,8 @@ def test_designer_whats_new_tab_and_status(tmp_path):
     assert len(items) == 1
     app.updates.show_notes()  # the newest release, no download needed
     assert app.updates.notes.version == "0.5.0" and app.view() is not None
+    app.updates.bundle = tmp_path
+    monkeypatch.setattr(updater, "replace_on_exit", lambda bundle: tmp_path / "swap.sh")
+    assert app.updates.restart() is not None and app.updates.restart_pending  # design() then ends the process
     app.updates.skip()
     assert updater.load_state()["skipped"] == "0.5.0" and app.updates.notes is None

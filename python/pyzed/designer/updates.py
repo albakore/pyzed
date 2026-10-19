@@ -43,6 +43,8 @@ class UpdateController:
         #: The release shown in the What's new tab (``None`` when the tab is closed) and whether it is active.
         self.notes: Optional[updater.Release] = None
         self.notes_active = False
+        #: Set by ``restart``: the process must end right after the window closes so the swap can run.
+        self.restart_pending = False
 
     # -- state ----------------------------------------------------------------------------
     @property
@@ -162,6 +164,7 @@ class UpdateController:
             self.d.notify(tr("The update failed"), str(err), kind="error", seconds=6)
             return None
         updater.save_state(last_seen=self.current)
+        self.restart_pending = True
         return _core.Command.exit()
 
     def skip(self) -> None:
