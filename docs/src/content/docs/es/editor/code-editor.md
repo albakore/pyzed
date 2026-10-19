@@ -7,7 +7,7 @@ sidebar:
 
 El panel **Código** (dock inferior) es un editor de Python al estilo de Zed, respaldado por dos servidores de
 lenguaje de Astral: **ty** (tipos, autocompletado, referencias) y **ruff** (lint y formato). Aparece cuando abres un
-manejador y se va cuando lo cierras.
+manejador o un archivo del proyecto y se va cuando lo cierras.
 
 ![Escribiendo el código del evento click de un botón](../../../../../screenshots/designer-code.png)
 
@@ -19,6 +19,7 @@ El editor muestra **un manejador** o **el archivo de código entero**:
 | --- | --- | --- |
 | Un manejador | Doble clic en un control o en un evento, <kbd>Enter</kbd> con un control seleccionado, **View code**, un método del [panel Component](/pyzed/es/editor/component-designer/#el-panel-component). | `login.py › sign_in_click()` |
 | Archivo entero | <kbd>F7</kbd>, **Editar el código** (barra de herramientas, menú ☰, paleta), o **Whole file** en la cabecera. | `login.py` |
+| Un archivo del proyecto | Un clic en un archivo de texto de la [pestaña Proyecto](/pyzed/es/editor/projects/#archivos), o <kbd>Ctrl</kbd>+<kbd>P</kbd>. | `src/shop/cart.py` |
 
 **Whole file** y **This handler** en la cabecera cambian entre los dos. En modo manejador solo ves la función, pero
 los servidores de lenguaje siempre ven el módulo entero con ese manejador dentro, así que el autocompletado y los
@@ -117,6 +118,8 @@ mueve un control.
 - <kbd>↑</kbd>/<kbd>↓</kbd> se mueven (dando la vuelta), <kbd>RePág</kbd>/<kbd>AvPág</kbd> saltan nueve filas,
   <kbd>Enter</kbd> o <kbd>Tab</kbd> insertan, <kbd>Esc</kbd> cierra; un clic también inserta. El pie muestra la
   posición (`3/42`).
+- La rueda del ratón desplaza la lista sin mover la entrada resaltada, y una barra a su derecha indica dónde estás.
+  Los nombres y firmas largos se recortan con `…` para que quepan; el panel junto a la lista los muestra completos.
 - Al seguir escribiendo la lista se filtra: primero los nombres que empiezan por lo escrito, luego los que contienen
   las letras en orden (`gtx` encuentra `get_text`).
 - Cada entrada tiene un icono según su tipo y, junto a la lista, un panel con su **firma** y su **documentación**

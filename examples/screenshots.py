@@ -276,6 +276,29 @@ main = "ui/main.pzform"
 """
 
 
+CART_PY = """from dataclasses import dataclass, field
+
+
+@dataclass
+class Item:
+    name: str
+    price: float
+    quantity: int = 1
+
+
+@dataclass
+class Cart:
+    items: list[Item] = field(default_factory=list)
+
+    def add(self, item: Item) -> None:
+        self.items.append(item)
+
+    @property
+    def total(self) -> float:
+        return sum(i.price * i.quantity for i in self.items)
+"""
+
+
 def project_shot(scale):
     """The designer's Project tab on a sample uv project (no uv or network needed)."""
     import tempfile
@@ -314,6 +337,13 @@ def project_shot(scale):
         app.screenshot(OUT / "designer-project.png", size=(1440, 900), scale=scale)
         app.left_tab = "dependencies"
         app.screenshot(OUT / "designer-dependencies.png", size=(1440, 900), scale=scale)
+        app.left_tab = "project"
+        (root / "src" / "shop" / "cart.py").write_text(CART_PY)
+        app.projects.files.open("README.md")
+        app.projects.files.open("src/shop/cart.py")
+        app.projects.files.selected = "src/shop/cart.py"
+        app.buffers.set_text(CART_PY + "\n")  # unsaved: the tab shows a dot
+        app.screenshot(OUT / "designer-file-editor.png", size=(1440, 900), scale=scale)
         os.chdir(cwd)  # opening a project makes its folder the current one
 
 

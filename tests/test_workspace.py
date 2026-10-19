@@ -79,16 +79,19 @@ def test_tree_actions(tmp_path, monkeypatch):
     w.start_naming("file", "ui/forms/")
     w.set_name("todo.md")
     w.finish_naming()
-    assert (tmp_path / "shop/ui/forms/todo.md").is_file() and [o.resolve() for o in opened] == [(tmp_path / "shop/ui/forms/todo.md").resolve()]
+    assert (tmp_path / "shop/ui/forms/todo.md").is_file() and not opened
+    assert d.buffers.current.path.resolve() == (tmp_path / "shop/ui/forms/todo.md").resolve()
     w.start_naming("rename", "ui/forms/todo.md")
     assert w.name_text == "todo.md"
     w.set_name("done.md")
     w.finish_naming()
     assert (tmp_path / "shop/ui/forms/done.md").is_file() and "ui/forms/done.md" in w.entries
+    assert d.buffers.current.name == "done.md"  # the open file follows the rename
     w.ask_delete("ui/forms/")
     assert d.dialog_view(d.theme_obj) is not None
     w.delete()
     assert not (tmp_path / "shop/ui/forms").exists() and "ui/forms/" not in w.entries
+    assert d.buffers.items == []  # and closes with its folder
     w.query = "note"
     assert w.results() == ["ui/notes.txt"]
     w.pick("ui/")
@@ -116,7 +119,7 @@ def test_go_to_file(tmp_path, monkeypatch):
     assert d.dialog == "project:find" and d.dialog_view(d.theme_obj) is not None
     d.projects.files.set_find("notes")
     d.projects.files.find_first()
-    assert d.dialog is None and [o.resolve() for o in opened] == [(tmp_path / "shop/ui/notes.txt").resolve()]
+    assert d.dialog is None and not opened and d.buffers.current.name == "notes.txt"
 
 
 def test_folder_browser(tmp_path):
@@ -146,3 +149,65 @@ def test_open_and_new_project_dialogs(tmp_path):
     assert d.dialog_view(d.theme_obj) is not None
     d.projects.choose_location()
     assert d.dialog == "project:new" and d.projects.new_folder == str(tmp_path.resolve())
+
+
+def test_text_files_open_in_the_code_editor(tmp_path, monkeypatch):
+    d = _designer(tmp_path)
+    w = d.projects.files
+    root = tmp_path / "shop"
+    (root / "logo.png").write_bytes(b"\x89PNG\r\n\x00\x00")
+    opened = []
+    monkeypatch.setattr(workspace, "open_with_system", opened.append)
+    w.refresh()
+    w.open("logo.png")  # binary: the system's app
+    assert [o.name for o in opened] == ["logo.png"] and d.buffers.items == []
+    w.open("ui/notes.txt")
+    b = d.buffers.current
+    assert b.text == "hi" and b.language == "txt" and d.layout.is_showing("code", d) and d.focus == "code"
+    assert d.editor_id.startswith("file:") and d.view() is not None
+    d.set_code_buffer("hello\n")
+    assert b.dirty and d.assist.diagnostics() == []
+    d.save()  # Ctrl+S with the file focused saves the file, not the form
+    assert (root / "ui/notes.txt").read_text() == "hello\n" and not b.dirty and d.doc.path is None
+    w.open("ui/notes.txt")  # already open: same tab
+    assert len(d.buffers.items) == 1
+    w.edit("pyproject.toml")
+    assert d.buffers.current.language == "toml" and d.buffers.active == 1
+    d.set_code_buffer("changed")
+    d.close_code()
+    assert d.dialog == "file:unsaved" and d.dialog_view(d.theme_obj) is not None
+    d.buffers.confirm_discard()
+    assert [x.name for x in d.buffers.items] == ["notes.txt"] and d.buffers.current.name == "notes.txt"
+    assert "changed" not in (root / "pyproject.toml").read_text()
+    d.close_code()
+    assert d.buffers.items == [] and not d.layout.is_showing("code", d)
+
+
+def test_file_tabs_next_to_the_form_code(tmp_path):
+    d = _designer(tmp_path)
+    d.edit_whole_file()
+    d.projects.files.open("ui/notes.txt")
+    from pyzed.designer import code_panel
+
+    tabs = code_panel.code_tabs(d, d.theme_obj)
+    assert tabs is not None and d.buffers.current is not None
+    d.show_form_code()
+    assert d.buffers.current is None and d.editing[0] == "*" and d.editor_id.startswith("code:")
+    assert docks.PANELS["code"].view(d, d.theme_obj) is not None
+    d.buffers.select(0)
+    d.set_code_buffer("typed")
+    assert d.editing[1] != "typed" and d.buffers.current.text == "typed"
+    d.buffers.select(None)
+    d.close_code()  # closing the form's code shows the file again
+    assert d.editing is None and d.buffers.current.name == "notes.txt"
+
+
+def test_read_text(tmp_path):
+    from pyzed.designer import files
+
+    (tmp_path / "a.txt").write_bytes(b"\xef\xbb\xbfone\r\ntwo")
+    (tmp_path / "b.bin").write_bytes(b"ab\x00cd")
+    (tmp_path / "c.txt").write_bytes(b"\xff\xfe")
+    assert files.read_text(tmp_path / "a.txt") == "one\ntwo"
+    assert files.read_text(tmp_path / "b.bin") is None and files.read_text(tmp_path / "c.txt") is None
+    assert files.language_of(tmp_path / "Makefile") == "makefile" and files.language_of(tmp_path / "x.RS") == "rs"

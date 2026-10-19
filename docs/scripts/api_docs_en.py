@@ -73,7 +73,7 @@ PAGES = [
     {
         "slug": "app",
         "title": "App and running",
-        "description": "The App class, run, screenshot, post and load_font.",
+        "description": "API reference for pyzed.App: the application class, run, screenshot, post, load_font and the window options of a Python desktop app.",
         "order": 1,
         "intro": """
             Everything you need to start an application. See also the
@@ -148,7 +148,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
     {
         "slug": "command",
         "title": "Command",
-        "description": "Side effects returned by update and callbacks.",
+        "description": "API reference for Pyzed commands: the side effects returned by update and callbacks, such as focusing fields, closing and background tasks.",
         "order": 2,
         "intro": """
             A `Command` is an effect the runtime performs for you. Return it from `update`,
@@ -250,7 +250,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
     {
         "slug": "widgets",
         "title": "Core widgets",
-        "description": "Pyzed's native widgets: layout, text, controls, editor, svg and icons.",
+        "description": "API reference for Pyzed's native widgets: layout, text, controls, the code editor, SVG and icons, all rendered in Rust by Iced.",
         "order": 3,
         "intro": """
             The core widgets are implemented in Rust and imported from `pyzed`. They are the
@@ -453,7 +453,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
     {
         "slug": "ui",
         "title": "Components (pyzed.ui)",
-        "description": "Reference for every Zed-style component.",
+        "description": "API reference for pyzed.ui: every Zed-style component, its parameters, defaults and events, for building native Python desktop apps.",
         "order": 4,
         "intro": """
             Signatures and parameters of every component. To see them with images and examples,
@@ -798,7 +798,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
     {
         "slug": "theme",
         "title": "Themes",
-        "description": "Theme, the built-in themes and the color utilities.",
+        "description": "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs.",
         "order": 5,
         "intro": """
             See the [theming](/pyzed/guides/theming/) guide for the list of tokens and how to create your own.
@@ -848,7 +848,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
     {
         "slug": "icons",
         "title": "Icons",
-        "description": "Bundled Lucide icons and file-type utilities.",
+        "description": "API reference for pyzed.icons: the bundled Lucide icon set, icon names and file-type icon utilities for Python desktop interfaces.",
         "order": 6,
         "intro": """
             Pyzed bundles the [Lucide](https://lucide.dev) font (ISC license) with about 2000 icons.
@@ -1457,7 +1457,7 @@ _paint = {"fill": "Fill color.", "stroke": "Stroke color.", "width": "Stroke wid
 PAGES.append({
     "slug": "draw",
     "title": "Drawing (pyzed.draw)",
-    "description": "Shapes, text and transforms for pz.canvas.",
+    "description": "API reference for pyzed.draw: shapes, paths, text and transforms for drawing custom 2D graphics on a pz.canvas in Python desktop apps.",
     "order": 7,
     "intro": """
         `pyzed.draw` shapes are plain dicts you pass to [`pz.canvas`](/pyzed/reference/widgets/#canvas).
@@ -1809,7 +1809,7 @@ _section("widgets", "Styles", _doc(
 PAGES.append({
     "slug": "designer",
     "title": "Visual designer (pyzed.designer)",
-    "description": "Run, open and build forms from code, register toolbox components and templates.",
+    "description": "API reference for pyzed.designer: run, open and build forms from Python code, and register toolbox components and templates.",
     "order": 10,
     "intro": """
         `pyzed.designer` is the code side of the [visual designer](/pyzed/editor/): run `.pzform` files,

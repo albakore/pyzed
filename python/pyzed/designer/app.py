@@ -28,6 +28,7 @@ from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
 from . import commands as _commands
+from . import files as _files
 from . import layout as _layout
 from . import new as _new
 from .console import ConsoleController
@@ -76,6 +77,8 @@ class Drag:
     moved: bool = False
     #: absolute rectangles of ``rects`` when the gesture started (they differ inside containers)
     absolute: Dict[str, Rect] = field(default_factory=dict)
+    #: rectangles of what is inside the form or container being resized, to follow their anchors
+    inside: Dict[str, Rect] = field(default_factory=dict)
 
 
 @dataclass
@@ -182,6 +185,8 @@ class Designer(App):
         self.code_error: Optional[str] = None
         self.code_revision = 0
         self.assist = CodeAssist(self, servers=language_servers)
+        # project files open in the code editor (tabs of the Code panel)
+        self.buffers = _files.Buffers(self)
         # the AI agent (Agent panel, inline assist)
         self.agent = agent_panel.AgentController(self)
         # dialogs, messages and the running preview
@@ -565,11 +570,14 @@ class Designer(App):
         primary = self.doc.primary
         if primary is not None:
             self.focus = "canvas"
-            self._start("resize", rects={primary.name: primary.rect}, handle=handle)
+            inside = {c.name: c.rect for c in self.doc.form.descendants(primary.name)}
+            self._start("resize", rects={primary.name: primary.rect}, handle=handle, inside=inside)
 
     def press_form_grip(self) -> None:
         """Mouse press on the form's corner grip: starts resizing the form."""
-        self._start("form", rects={"": (0.0, 0.0, self.doc.form.width, self.doc.form.height)})
+        form = self.doc.form
+        self._start("form", rects={"": (0.0, 0.0, form.width, form.height)},
+                    inside={c.name: c.rect for c in form.controls})
 
     def press_empty(self) -> None:
         """Mouse press on an empty spot of the form.
@@ -611,6 +619,7 @@ class Designer(App):
                 w, h = min(w, limit[0] - x), min(h, limit[1] - y)
             if control is not None:
                 control.x, control.y, control.width, control.height = x, y, w, h
+                self._follow_anchors(name, start)
         elif drag.mode == "create":
             sx, sy = drag.start
             self.drop_name = self._container_under(sx, sy)
@@ -618,6 +627,15 @@ class Designer(App):
             start = drag.rects[""]
             form.width = max(geometry.snap(start[2] + dx, grid, self.snap), 120)
             form.height = max(geometry.snap(start[3] + dy, grid, self.snap), 80)
+            self._follow_anchors(None, start)
+
+    def _follow_anchors(self, parent: Optional[str], start: Rect) -> None:
+        """While the form or container ``parent`` is resized from ``start``, what is inside follows its anchors."""
+        drag, form = self.drag, self.doc.form
+        if drag is None or not self.doc.follow_anchors:
+            return
+        box = form if parent is None else form[parent]
+        _layout.reflow(form, parent, drag.inside, (start[2], start[3]), (box.width, box.height))
 
     def _drag_move(self, dx: float, dy: float) -> None:
         drag = self.drag
@@ -1045,6 +1063,10 @@ class Designer(App):
             if self.editing and self.editing[0] != "*":
                 self.close_code()
 
+    def toggle_follow_anchors(self) -> None:
+        """Turns on or off moving what is inside the form or a container by its anchors when it is resized."""
+        self.doc.follow_anchors = not self.doc.follow_anchors
+
     def toggle(self, attr: str) -> Callable[[], None]:
         """Returns a callback that flips the designer's boolean attribute ``attr`` (``show_grid``, ...)."""
         def flip() -> None:
@@ -1275,6 +1297,7 @@ class Designer(App):
             self.doc.select(target)
             self._selection_changed()
         handler = self.doc.wire(target, event)
+        self.buffers.active = None
         self.editing = (handler, self.doc.handler_source(handler))
         self.last_handler = handler
         self.code_revision += 1
@@ -1294,13 +1317,20 @@ class Designer(App):
 
     @property
     def editor_id(self) -> str:
-        """The id of the code editor's buffer (a new one for each handler opened)."""
+        """The id of the code editor's buffer (a new one for each handler or file opened)."""
+        buffer = self.buffers.current
+        if buffer is not None:
+            return f"file:{id(buffer)}:{buffer.revision}:{self.code_revision}"
         handler = self.editing[0] if self.editing else ""
         return f"code:{handler}:{self.code_revision}"
 
     def set_code_buffer(self, text: str) -> None:
         """Keeps the code editor's text as it is typed and tells the code assistant."""
-        if self.editing is not None:
+        if self.buffers.current is not None:
+            self.buffers.set_text(text)
+            self.focus = "code"
+            self.assist.changed(text)
+        elif self.editing is not None:
             self.editing = (self.editing[0], text)
             self.focus = "code"
             self.assist.changed(text)
@@ -1408,14 +1438,25 @@ class Designer(App):
         self.assist.opened()
 
     def close_code(self) -> None:
-        """Closes the code editor, unless its code does not parse."""
+        """Closes the file or the form code the code editor shows (the form code only if it parses)."""
+        if self.buffers.current is not None:
+            self.buffers.close()
+            return
         if self._flush_code():
             self.editing = None
             self.assist.closed()
+            if self.buffers.items:
+                self.buffers.select(len(self.buffers.items) - 1)
+
+    def show_form_code(self) -> None:
+        """Shows the form's code (its tab in the Code panel) instead of an open file."""
+        if self.editing is not None:
+            self.buffers.select(None)
 
     def edit_whole_file(self) -> None:
         """Opens the form's whole code file in the code editor (F7)."""
         if self._flush_code():
+            self.buffers.active = None
             self.editing = ("*", self.doc.code)
             self.code_revision += 1
             self.layout.show("code")
@@ -1771,8 +1812,12 @@ class Designer(App):
     def save(self) -> None:
         """Saves the active document, asking for a path first if it has none.
 
-        Does not save if the open code does not parse. A running preview reloads what was saved.
+        Does not save if the open code does not parse. A running preview reloads what was saved. While a
+        project file has the keyboard in the code editor, that file is saved instead.
         """
+        if self.focus == "code" and self.buffers.current is not None:
+            self.buffers.save()
+            return
         if self.doc.path is None:
             self.dialog = "save_as"
             self.dialog_path = f"{self.doc.form.name.lower()}{getattr(self.doc, 'suffix', SUFFIX)}"
@@ -1912,7 +1957,7 @@ class Designer(App):
             handled, result = self.agent.on_key(combo)
             if handled:
                 return result
-        if self.focus == "code" and self.editing is not None and not self.dialog:
+        if self.focus == "code" and (self.editing is not None or self.buffers.current) and not self.dialog:
             handled, result = self.assist.on_key(combo)
             if handled:
                 return result
@@ -2077,7 +2122,8 @@ class Designer(App):
                 for pid, panel in docks.PANELS.items():
                     items.append(ui.MenuItem(f"{panel.title}  ·  {tr(self.layout.docks[pid].capitalize())}",
                                              lambda pid=pid: self.run_panel(pid), icon=panel.icon,
-                                             disabled=pid == "code" and self.editing is None))
+                                             disabled=pid == "code" and self.editing is None
+                                                      and not self.buffers.items))
         return ui.menu(items, width=260, theme=t)
 
     def run_panel(self, panel: str) -> None:
@@ -2174,6 +2220,8 @@ class Designer(App):
             tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
             tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
             tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
+            tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
+                 selected=doc.follow_anchors),
             tool("scaling", doc.snap_to_grid, "Fit selection to grid"),
             sep,
             tool("code", self.edit_whole_file, "Edit code file", keys="f7"),
@@ -2217,7 +2265,10 @@ class Designer(App):
             ui.status_item(tr("Snap"), self.toggle("snap"), icon="magnet", selected=self.snap),
             *self.updates.status_items(t),
         ]
-        if self.editing is not None:
+        if self.buffers.current is not None:
+            line, column = self.assist.cursor
+            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t), *end]
+        elif self.editing is not None:
             line, column = self.assist.cursor
             end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
                    *code_panel.server_status_items(self.assist, t, self.open_editor_settings), *end]
@@ -2227,6 +2278,10 @@ class Designer(App):
         """Returns the widget of the open dialog, or ``None`` when no dialog is open."""
         if self.dialog and self.dialog.startswith("project:"):
             return project_panel.dialog(self, t)
+        if self.dialog == "file:unsaved" and self.buffers.closing is not None:
+            b = self.buffers
+            return ui.unsaved_changes(b.items[b.closing].name, b.confirm_save, b.confirm_discard, b.cancel_close,
+                                      theme=t)
         if self.dialog == "confirm":
             return ui.unsaved_changes(self.doc.display_name, self.confirm_save, self.confirm_discard,
                                       self.close_dialog, theme=t)

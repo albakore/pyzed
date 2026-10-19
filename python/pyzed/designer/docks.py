@@ -105,7 +105,7 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("properties", "Properties", "settings-2", "right", _properties),
     Panel("events", "Events", "zap", "right", _events),
     Panel("agent", "Agent", "sparkles", "right", _agent),
-    Panel("code", "Code", "code", "bottom", _code, lambda d: d.editing is not None),
+    Panel("code", "Code", "code", "bottom", _code, lambda d: d.editing is not None or bool(d.buffers.items)),
     Panel("console", "Console", "terminal", "bottom", _console, lambda d: d.console.visible),
 )}
 

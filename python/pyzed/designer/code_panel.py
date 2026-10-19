@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from .. import _core, ui
+from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import intellisense as _intel
@@ -37,6 +38,8 @@ ROW_HEIGHT = 24.0
 #: Height of the list's padding and footer.
 FOOTER = 34.0
 LIST_WIDTH = 320.0
+#: Width of the completion list's scrollbar.
+SCROLLBAR = 4.0
 DOC_WIDTH = 340.0
 CAPTURED = ("up", "down", "enter", "tab", "escape", "pageup", "pagedown")
 FIND_ID = "designer-code-find"
@@ -78,6 +81,10 @@ class Completion:
     index: int = 0
     #: True while waiting for the language server (``shown`` may already have local items).
     loading: bool = False
+    #: The first row on screen; the wheel scrolls it, moving the selection brings it back into view.
+    top: int = 0
+    #: Keep the highlighted row in view (off after the wheel scrolls the list).
+    follow: bool = True
 
     @property
     def selected(self) -> Optional[CompletionItem]:
@@ -116,6 +123,11 @@ class CodeAssist:
         """Server updates arrive as posted messages, which re-render the designer by themselves."""
 
     @property
+    def plain(self) -> bool:
+        """True while the editor shows a project file: no language servers or completion, only editing."""
+        return self.d.buffers.current is not None
+
+    @property
     def handler(self) -> Optional[str]:
         """The name of the handler being edited, or ``None`` when editing the whole file or nothing."""
         editing = self.d.editing
@@ -137,6 +149,12 @@ class CodeAssist:
         self.completion = None
         self.cursor = (1, 1)
         self.scroll = (0.0, 0.0)
+        buffer = self.d.buffers.current
+        if buffer is not None:
+            self._text = buffer.text
+            if self.search is not None:
+                self._find()
+            return
         if self.d.editing is None:
             return
         self._text = self.d.editing[1]
@@ -153,7 +171,7 @@ class CodeAssist:
         self.intel.shutdown()
 
     def _sync(self) -> None:
-        if self.d.editing is None:
+        if self.d.editing is None or self.plain:
             return
         self.intel.update(self.d.doc.code, self.handler, self.d.editing[1])
         self.intel.refresh_lenses(self.d.doc.form)
@@ -165,7 +183,8 @@ class CodeAssist:
         if len(text) < len(self._text) and self.completion is not None:
             self._typed = True  # deleting inside a word keeps the list open and refilters it
         self._text = text
-        self.intel.update(self.d.doc.code, self.handler, text)
+        if not self.plain:
+            self.intel.update(self.d.doc.code, self.handler, text)
         if self.search is not None:
             self._find()
 
@@ -186,7 +205,7 @@ class CodeAssist:
             else:
                 self._refilter(word)
                 return None
-        if typed and self.settings.autocomplete and _intel.should_complete(current, column):
+        if typed and not self.plain and self.settings.autocomplete and _intel.should_complete(current, column):
             self.open_completion()
         return None
 
@@ -240,6 +259,7 @@ class CodeAssist:
             self.completion = None
             return
         c.index = c.shown.index(selected) if selected in c.shown else 0
+        c.follow = True
 
     def move_selection(self, delta: int) -> None:
         """Moves the highlighted completion by ``delta`` rows: wrapping around for one step, clamped for
@@ -248,6 +268,16 @@ class CodeAssist:
         if c is None or not c.shown:
             return
         c.index = (c.index + delta) % len(c.shown) if abs(delta) == 1 else max(0, min(len(c.shown) - 1, c.index + delta))
+        c.follow = True
+
+    def scroll_completion(self, _x: float, y: float) -> None:
+        """Scrolls the completion list by the mouse wheel (``y`` lines, positive up) without moving the
+        highlighted row; the list keeps the rows in range when it is drawn."""
+        c = self.completion
+        if c is None:
+            return
+        c.top = max(0, c.top - round(y * 3))
+        c.follow = False
 
     def select(self, index: int) -> Any:
         """Highlights completion ``index`` and accepts it (a click in the list); returns the editor
@@ -298,7 +328,8 @@ class CodeAssist:
     def on_key(self, combo: str) -> Any:
         """Keys pressed while the editor has focus; returns ``(handled, result)``."""
         if combo in ("ctrl-space", "ctrl- "):
-            self.open_completion()
+            if not self.plain:
+                self.open_completion()
             return True, None
         panel = {
             "ctrl-f": lambda: self.open_search(),
@@ -340,12 +371,16 @@ class CodeAssist:
     # -- diagnostics and lenses -----------------------------------------------------
     def diagnostics(self) -> List[Diagnostic]:
         """Returns the language servers' errors, warnings and information (hints left out) for the code."""
+        if self.plain:
+            return []
         return [d for d in self.intel.diagnostics() if d.severity <= 3]
 
     def annotations(self, t: Theme) -> Dict[int, Any]:
         """Returns the end-of-line annotations by line: code lens texts and, if enabled, the most severe
         diagnostic of each line as ``(text, color)`` in theme ``t``."""
         out: Dict[int, Any] = {}
+        if self.plain:
+            return out
         if self.settings.code_lens:
             out.update(self.intel.lens_annotations())
         if self.settings.inline_diagnostics:
@@ -669,24 +704,47 @@ def kind_badge(item: CompletionItem, t: Theme, size: float = 16) -> Any:
 
 
 def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, max_height: float = 300) -> Any:
-    """Builds the completion list (at most ``visible_rows`` rows around the highlighted one) and, beside it,
-    the highlighted item's signature and documentation, at most ``max_height`` pixels tall."""
+    """Builds the completion list (``visible_rows`` rows, scrolled with the wheel or to keep the highlighted
+    one in view, with a scrollbar when there are more) and, beside it, the highlighted item's signature and
+    documentation, at most ``max_height`` pixels tall."""
     c = a.completion
     assert c is not None
+    visible_rows = max(1, visible_rows)
+    last_top = max(len(c.shown) - visible_rows, 0)
+    if c.follow:
+        c.top = min(c.top, c.index)
+        c.top = max(c.top, c.index - visible_rows + 1)
+    c.top = min(max(c.top, 0), last_top)
+    scrolls = len(c.shown) > visible_rows
+    room = LIST_WIDTH - 2 * 4 - 2 - 2 * 8 - 16 - 8 - (SCROLLBAR + 2 if scrolls else 0)
     rows: List[Any] = []
-    first = min(max(c.index - visible_rows // 2, 0), max(len(c.shown) - visible_rows, 0))
-    for i, item in enumerate(c.shown[first: first + visible_rows], start=first):
+    for i, item in enumerate(c.shown[c.top: c.top + visible_rows], start=c.top):
         selected = i == c.index
         label_color = t.text_muted if item.private or item.is_dunder else t.text
+        label, detail = fit_row(item.label, " ".join(item.detail.split()), room)
         rows.append(_core.button(
-            _core.row([
+            _core.container(_core.row([
                 kind_badge(item, t),
-                _core.text(item.label, size=13, font="mono", color=label_color, wrap=False),
+                _core.text(label, size=13, font="mono", color=label_color, wrap=False),
                 _core.space(width="fill"),
-                _core.text(_short(item.detail, 28), size=11, color=t.text_muted, wrap=False),
-            ], spacing=8, align="center"),
+                _core.text(detail, size=11, color=t.text_muted, wrap=False) if detail else None,
+            ], spacing=8, align="center"), width="fill", clip=True),
             lambda i=i: a.select(i), padding=(0, 8), height=ROW_HEIGHT, width="fill",
             bg=t.element_selected if selected else "transparent", hover_bg=t.element_hover, radius=4))
+    if scrolls and rows:
+        track = len(rows) * ROW_HEIGHT
+        thumb = max(track * visible_rows / len(c.shown), 16.0)
+        offset = (track - thumb) * c.top / last_top if last_top else 0.0
+        bar = _core.stack([
+            _core.container(_core.space(), width=SCROLLBAR, height=track, radius=SCROLLBAR / 2,
+                            bg=alpha(t.text_muted, 0.08)),
+            _core.pin(_core.container(_core.space(), width=SCROLLBAR, height=thumb, radius=SCROLLBAR / 2,
+                                      bg=alpha(t.text_muted, 0.45)), x=0, y=offset),
+        ], width=SCROLLBAR, height=track)
+        body: Any = _core.row([_core.column(rows, spacing=0, width="fill"), bar], spacing=2)
+    else:
+        body = _core.column(rows, spacing=0, width="fill")
+    body = _core.mouse_area(body, on_scroll=a.scroll_completion)
     if c.loading and not rows:
         rows.append(_core.container(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t), padding=(4, 8)))
     footer = _core.container(
@@ -695,13 +753,13 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
                    _core.space(width="fill"),
                    ui.label(tr("↵ insert  esc close"), size="xs", color="text_muted", theme=t)]),
         padding=(2, 8), width="fill")
-    listing = _core.container(_core.column([*rows, footer], spacing=0), width=LIST_WIDTH, padding=4,
+    listing = _core.container(_core.column([body, footer], spacing=0), width=LIST_WIDTH, padding=4, clip=True,
                               bg=t.elevated, border_color=t.border, border_width=1, radius=6)
     item = c.selected
     if item is None or not (item.detail or item.documentation):
         return listing
     doc_parts = [
-        _core.row([kind_badge(item, t, 18), _core.text(item.label, size=13, font="mono", color=t.text, wrap=False),
+        _core.row([kind_badge(item, t, 18), _core.text(item.label, size=13, font="mono", color=t.text, width="fill"),
                    ui.badge(tr("private"), theme=t) if item.private else None], spacing=8, align="center"),
         _core.text(item.detail, size=12, font="mono", color=t.text_muted) if item.detail else None,
         ui.divider(theme=t) if item.documentation else None,
@@ -712,6 +770,19 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
                            padding=10, bg=t.elevated,
                            border_color=t.border, border_width=1, radius=6)
     return _core.row([listing, docs], spacing=4)
+
+
+def fit_row(label: str, detail: str, room: float) -> Tuple[str, str]:
+    """Cuts a completion row's ``label`` (13 px mono) and ``detail`` (11 px) with "…" so both fit in
+    ``room`` pixels; the label wins, and the detail is dropped when too little of it would show."""
+    label_char, detail_char, gap = 13 * CHAR_WIDTH, 6.2, 12
+    most = max(int(room // label_char), 4)
+    if len(label) > most:
+        return label[: most - 1] + "…", ""
+    left = int((room - len(label) * label_char - gap) // detail_char)
+    if left < 8 or not detail:
+        return label, ""
+    return label, _short(detail, left)
 
 
 def _short_doc(text: str, limit: int = 1200) -> str:
@@ -784,8 +855,95 @@ def problems_list(a: CodeAssist, diags: List[Diagnostic], t: Theme) -> Tuple[Any
 
 
 def code_panel(d: "Designer", t: Theme) -> Any:
-    """Builds the code editor panel: header with the problems toggle and actions, the editor with its
-    completion list, and the error line and problems list below it."""
+    """Builds the Code panel: a tab per open project file (and the form's code) over the file or the form
+    code being edited."""
+    b = d.buffers
+    if b.current is None and d.editing is None and b.items:
+        b.select(len(b.items) - 1)
+    body = file_view(d, t) if b.current is not None else form_code(d, t)
+    tabs = code_tabs(d, t)
+    return _core.column([tabs, body], width="fill", height="fill") if tabs is not None else body
+
+
+def code_tabs(d: "Designer", t: Theme) -> Optional[Any]:
+    """The Code panel's tabs while project files are open: the form's code first, then each file."""
+    b = d.buffers
+    if not b.items:
+        return None
+    tabs: List[ui.Tab] = []
+    if d.editing is not None:
+        name = d.doc.code_path.name if d.doc.code_path else f"{d.doc.form.name}.py"
+        tabs.append(ui.Tab("form", name, icon="layout-template", icon_color="accent"))
+    for i, buffer in enumerate(b.items):
+        icon, color = for_file(buffer.name)
+        tabs.append(ui.Tab(f"file:{i}", buffer.name, icon=icon, icon_color=color, dirty=buffer.dirty))
+    active = "form" if b.current is None else f"file:{b.active}"
+
+    def select(tab: str) -> None:
+        if tab == "form":
+            d.show_form_code()
+        else:
+            b.select(int(tab.split(":")[1]))
+
+    def close(tab: str) -> None:
+        if tab == "form":
+            b.select(None)
+            d.close_code()
+        else:
+            b.close(int(tab.split(":")[1]))
+
+    return ui.tab_bar(tabs, active, on_select=select, on_close=close, height=30, theme=t)
+
+
+def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any], et: Theme) -> Any:
+    a = d.assist
+    s = a.settings
+    return ui.editor(
+        d.editor_id, text, language=language, on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
+        on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
+        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
+        annotations=annotations, capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
+        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
+        on_action=a.action_ran, highlights=a.search.matches if a.search else None,
+        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
+
+
+def _bars(d: "Designer", t: Theme) -> List[Any]:
+    a = d.assist
+    bars = []
+    if a.search is not None:
+        bars.append(search_bar(a, t))
+    if a.goto is not None:
+        bars.append(goto_bar(a, t))
+    return bars
+
+
+def file_view(d: "Designer", t: Theme) -> Any:
+    """A project file in the editor: its path, Save and Close over the text."""
+    buffer = d.buffers.current
+    assert buffer is not None
+    a = d.assist
+    root = d.projects.files.root
+    try:
+        title = buffer.path.relative_to(root).as_posix() if root is not None else str(buffer.path)
+    except ValueError:
+        title = str(buffer.path)
+    icon, _ = for_file(buffer.name)
+    header = ui.panel_header(title, icon=icon, actions=[
+        ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
+        ui.button(tr("Save"), d.buffers.save, icon="save", variant="tinted", size="sm", disabled=not buffer.dirty,
+                  theme=t),
+        ui.icon_button("x", d.close_code, size="sm", tooltip=tr("Close"), theme=t),
+    ], theme=t)
+    et = a.editor_theme(t)
+    editor = _editor(d, buffer.text, buffer.language, {}, et)
+    area = _editor_area(a, editor, [], a.settings.font_size, buffer.text.count("\n") + 1, a.settings.line_numbers)
+    return _core.column([header, *_bars(d, t), area], width="fill", height="fill")
+
+
+def form_code(d: "Designer", t: Theme) -> Any:
+    """The form's code: header with the problems toggle and actions, the editor with its completion list,
+    and the error line and problems list below it."""
     assert d.editing is not None
     a = d.assist
     s = a.settings
@@ -815,20 +973,9 @@ def code_panel(d: "Designer", t: Theme) -> Any:
     if diags and a.problems_open:
         below.append(problems_list(a, diags, t))
     et = a.editor_theme(t)
-    editor = ui.editor(
-        d.editor_id, text, language="py", on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
-        on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
-        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
-        annotations=a.annotations(et), capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
-        minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
-        on_action=a.action_ran, highlights=a.search.matches if a.search else None,
-        match_brackets=s.match_brackets, selection_highlight=s.selection_highlight, theme=et)
+    editor = _editor(d, text, "py", a.annotations(et), et)
     area = _editor_area(a, editor, below, s.font_size, text.count("\n") + 1, s.line_numbers)
-    bars = []
-    if a.search is not None:
-        bars.append(search_bar(a, t))
-    if a.goto is not None:
-        bars.append(goto_bar(a, t))
+    bars = _bars(d, t)
     from .agent_panel import inline_bar
 
     inline = inline_bar(d, t)

@@ -93,6 +93,11 @@ presets, as in Unity, Unreal or Godot, and give a stretched control a **minimum*
 stops growing at a readable width (its **pivot** says which side it keeps then). The running form applies all
 of them; in code without the designer, [`pz.anchor_layout`](/pyzed/guides/layout/#anchored-layouts) does the same.
 
+Anchors work while you design too: resizing the form (or a component) with its corner grip or its **Width** and
+**Height**, or resizing a free container, moves and stretches what is inside exactly as the running window would,
+size limits and pivot included. Turn it off with the anchor button of the toolbar (**Resize contents with their
+anchors**) to change the size without touching the controls.
+
 A common recipe for a resizable window:
 
 1. A **flex column** anchored on all four sides fills the window.

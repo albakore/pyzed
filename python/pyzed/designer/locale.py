@@ -34,7 +34,8 @@ _ES = {
     "Command palette…": "Paleta de comandos…", "Left dock": "Panel izquierdo", "Right dock": "Panel derecho",
     "Bottom dock": "Panel inferior", "Console": "Consola", "Toolbar": "Barra de herramientas",
     "Status bar": "Barra de estado", "Grid": "Cuadrícula", "Snap to grid": "Ajustar a la cuadrícula",
-    "Smart guides": "Guías inteligentes", "Show hidden controls": "Mostrar controles ocultos",
+    "Smart guides": "Guías inteligentes",
+    "Resize contents with their anchors": "Redimensionar el contenido con sus anclajes", "Show hidden controls": "Mostrar controles ocultos",
     "Reset panel layout": "Restablecer los paneles", "Stop": "Detener", "Edit code file": "Editar el código",
     "Keyboard shortcuts": "Atajos de teclado", "Documentation": "Documentación",
     "Report a problem": "Informar un problema", "About Pyzed Design": "Acerca de Pyzed Design",
@@ -232,6 +233,8 @@ _ES = {
     "Delete…": "Eliminar…", "In {folder}": "En {folder}", "Type a name": "Escribe un nombre",
     "Could not do that": "No se pudo hacer", "Could not open {name}": "No se pudo abrir {name}",
     "Could not delete {name}": "No se pudo eliminar {name}", "Open a project first": "Abre primero un proyecto",
+    "Open in the code editor": "Abrir en el editor de código", "{name} is not a text file": "{name} no es un archivo de texto",
+    "Could not save {name}": "No se pudo guardar {name}", "Saved {name}": "{name} guardado",
     "Delete {name}? This cannot be undone.": "¿Eliminar {name}? No se puede deshacer.",
     "Delete the folder {name} and everything in it? This cannot be undone.":
         "¿Eliminar la carpeta {name} con todo su contenido? No se puede deshacer.",

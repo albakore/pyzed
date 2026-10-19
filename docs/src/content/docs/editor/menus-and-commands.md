@@ -86,7 +86,7 @@ The toggles are remembered between sessions.
 Under the document tabs, left to right: **New form**, **Open**, **Save**, **New component**; **Undo**, **Redo**;
 **Align left, centers, right, top, middles, bottom**; **Distribute horizontally, vertically**, **Same width,
 height**, **Center in form horizontally, vertically**; **Bring to front**, **Send to back**, **Delete**. At the
-end: **Show grid**, **Snap to grid**, **Smart guides**, **Fit selection to grid** and **Edit code file**.
+end: **Show grid**, **Snap to grid**, **Smart guides**, **Resize contents with their anchors**, **Fit selection to grid** and **Edit code file**.
 Every button has a tooltip with its shortcut, buttons that do not apply to the selection are disabled, and the
 toolbar scrolls sideways when the window is narrow. Hide it with **View → Toolbar**. See
 [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#align-distribute-and-size).

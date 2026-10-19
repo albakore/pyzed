@@ -88,7 +88,16 @@ Clicking a file opens it where it belongs:
 | --- | --- |
 | `.pzform`, `.pzcomp` | In a designer tab. |
 | The `.py` of a form or component | Its form, with the whole code file in the [code panel](/pyzed/editor/code-editor/). |
-| Anything else | In the system's app for that file type. |
+| Any other text file (`.py`, `.toml`, `.md`, `.json`...) | In a tab of the code panel, to edit it right there. |
+| Images and other binary files | In the system's app for that file type. |
+
+![A project file open in the code panel, next to the README](../../../../screenshots/designer-file-editor.png)
+
+Each open file gets a tab in the code panel, after the form's code when it is open. The editor has syntax
+highlighting for the file's language, search and replace (<kbd>Ctrl</kbd>+<kbd>F</kbd>), go to line
+(<kbd>Ctrl</kbd>+<kbd>G</kbd>) and every editing shortcut; completion and diagnostics stay with the form's code.
+A dot on a tab means unsaved changes: **Save** or <kbd>Ctrl</kbd>+<kbd>S</kbd> (while the file has the keyboard)
+writes it, and closing it asks first. Renaming or deleting a file in the tree updates its tab.
 
 The toolbar above the tree has a **search field** for files and folders (it matches letters in order, like Zed's
 file finder, and file names count more than folders: `crt` finds `ui/cart.pzform`), **New file**, **New
@@ -100,6 +109,7 @@ after uv commands.
 | Item | What it does |
 | --- | --- |
 | **Open** / **Open with the system app** | Opens the file in the editor or with its default app. |
+| **Open in the code editor** | Opens any text file as text, a form's `.py` on its own too. |
 | **Reveal in file manager** | Shows it in Files, Finder or Explorer. |
 | **New file…** / **New folder…** | Creates one in that folder (a new file opens right away). |
 | **Copy path** / **Copy relative path** | Copies the full path or the path from the project folder. |
