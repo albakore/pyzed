@@ -44,7 +44,7 @@ salvo `--script`. Si no hay `pyproject.toml`, ejecuta antes `uv init`. No modifi
 
 | Comando | Hace |
 | --- | --- |
-| `pyzed design [form o carpeta]` | Abre el [diseñador visual](/pyzed/es/guides/designer/). Dentro de un proyecto y sin form, abre su form principal. |
+| `pyzed design [form o carpeta]` | Abre el [diseñador visual](/pyzed/es/editor/). Dentro de un proyecto y sin form, abre su form principal. |
 | `pyzed run [form] [--reload]` | Ejecuta un form con sus handlers; por defecto, el form principal del proyecto. `--reload` actualiza la ventana al guardar. |
 | `pyzed dev script.py [--watch RUTA]` | Ejecuta un script con hot reload: al guardar un archivo se actualiza la ventana abierta. |
 
