@@ -43,9 +43,8 @@ def new_module(form_name: str) -> str:
 
 
 def stub(name: str, doc: str = "") -> str:
-    """Returns the source of an empty handler ``name(form, event)`` with ``doc`` as its docstring
-    (``"Event handler."`` if empty).
-    """
+    """Returns the source of an empty handler ``name(form, event)`` with ``doc`` as its docstring (``"Event
+    handler."`` if empty)."""
     doc = doc or "Event handler."
     return f'def {name}(form, event):\n    """{doc}"""\n    pass\n'
 

@@ -93,8 +93,7 @@ class CodeAssist:
 
     def code_file(self) -> Path:
         """Returns the path of the document's code file (``<form name>.py`` in the working directory if
-        unsaved).
-        """
+        unsaved)."""
         doc = self.d.doc
         if doc.code_path is not None:
             return doc.code_path
@@ -139,8 +138,8 @@ class CodeAssist:
     def moved(self, line: int, column: int) -> Any:
         """The editor's cursor moved to ``line``, ``column`` (1-based).
 
-        Refilters or closes the open completion list, and opens one after a typed character when
-        autocomplete is on and the context calls for it. Returns ``None``.
+        Refilters or closes the open completion list, and opens one after a typed character when autocomplete
+        is on and the context calls for it. Returns ``None``.
         """
         self.cursor = (line, column)
         typed, self._typed = self._typed, False
@@ -158,8 +157,8 @@ class CodeAssist:
         return None
 
     def scrolled(self, info: Dict[str, float]) -> None:
-        """The editor scrolled; stores its ``x``/``y`` offsets in pixels (used to place the completion list).
-        """
+        """The editor scrolled; stores its ``x``/``y`` offsets in pixels (used to place the completion
+        list)."""
         self.scroll = (float(info.get("x", 0.0)), float(info.get("y", 0.0)))
 
     def _line(self, line: int) -> str:
@@ -170,8 +169,8 @@ class CodeAssist:
     def open_completion(self) -> None:
         """Opens the completion list for the word before the cursor.
 
-        Designer completions (controls of the form) are shown right away; otherwise the list waits,
-        marked ``loading``, for the language server. Closes it if there is nothing to show.
+        Designer completions (controls of the form) are shown right away; otherwise the list waits, marked
+        ``loading``, for the language server. Closes it if there is nothing to show.
         """
         line, column = self.cursor
         current = self._line(line)
@@ -210,16 +209,15 @@ class CodeAssist:
 
     def move_selection(self, delta: int) -> None:
         """Moves the highlighted completion by ``delta`` rows: wrapping around for one step, clamped for
-        larger (page) steps.
-        """
+        larger (page) steps."""
         c = self.completion
         if c is None or not c.shown:
             return
         c.index = (c.index + delta) % len(c.shown) if abs(delta) == 1 else max(0, min(len(c.shown) - 1, c.index + delta))
 
     def select(self, index: int) -> Any:
-        """Highlights completion ``index`` and accepts it (a click in the list); returns the editor commands.
-        """
+        """Highlights completion ``index`` and accepts it (a click in the list); returns the editor
+        commands."""
         if self.completion is not None:
             self.completion.index = index
             return self.accept()
@@ -228,8 +226,7 @@ class CodeAssist:
     def accept(self) -> Any:
         """Inserts the highlighted completion (and any auto-import it brings) and closes the list.
 
-        Returns the commands that set the editor's text and cursor, or ``None`` if nothing was
-        highlighted.
+        Returns the commands that set the editor's text and cursor, or ``None`` if nothing was highlighted.
         """
         c, self.completion = self.completion, None
         if c is None or c.selected is None or self.d.editing is None:
@@ -287,9 +284,8 @@ class CodeAssist:
 
     @property
     def captured_keys(self) -> Tuple[str, ...]:
-        """Keys the editor must hand to the designer instead of handling them: the list navigation keys
-        while a completion list is shown, else none.
-        """
+        """Keys the editor must hand to the designer instead of handling them: the list navigation keys while
+        a completion list is shown, else none."""
         return CAPTURED if self.completion is not None and self.completion.shown else ()
 
     # -- diagnostics and lenses -----------------------------------------------------
@@ -299,8 +295,7 @@ class CodeAssist:
 
     def annotations(self, t: Theme) -> Dict[int, Any]:
         """Returns the end-of-line annotations by line: code lens texts and, if enabled, the most severe
-        diagnostic of each line as ``(text, color)`` in theme ``t``.
-        """
+        diagnostic of each line as ``(text, color)`` in theme ``t``."""
         out: Dict[int, Any] = {}
         if self.settings.code_lens:
             out.update(self.intel.lens_annotations())
@@ -311,8 +306,8 @@ class CodeAssist:
         return out
 
     def go_to(self, diag: Diagnostic) -> Any:
-        """Moves the cursor to diagnostic ``diag`` (a click in the problems list); returns the editor command.
-        """
+        """Moves the cursor to diagnostic ``diag`` (a click in the problems list); returns the editor
+        command."""
         self.cursor = (diag.line, diag.column)
         self.completion = None
         return _core.Command.set_editor_cursor(self.d.editor_id, diag.line, diag.column)
@@ -332,8 +327,7 @@ class CodeAssist:
 
     def setter(self, key: str) -> Any:
         """Returns a callback that sets editor setting ``key`` to the value it receives (for settings
-        widgets).
-        """
+        widgets)."""
         return lambda value: self.set(key, value)
 
     def zoom(self, step: float) -> None:
@@ -351,8 +345,7 @@ class CodeAssist:
 
     def format(self, source: str) -> str:
         """Returns ``source`` formatted with ruff when "format on apply" is on (unchanged otherwise or if
-        formatting fails).
-        """
+        formatting fails)."""
         if not self.settings.format_on_apply:
             return source
         formatted = _intel.format_code(source, self.intel.env)
@@ -383,9 +376,8 @@ _ANSI_FOR = {"purple": "magenta", "orange": "red"}
 
 
 def kind_badge(item: CompletionItem, t: Theme, size: float = 16) -> Any:
-    """Returns the colored icon of a completion item's kind, ``size`` pixels square, with a small lock
-    for private names.
-    """
+    """Returns the colored icon of a completion item's kind, ``size`` pixels square, with a small lock for
+    private names."""
     icon, color = item.icon
     color = _kind_color(t, _ANSI_FOR.get(color, color))
     badge = _core.container(_icon(icon, size=size - 5, color=color), width=size, height=size, align_x="center",
@@ -398,9 +390,8 @@ def kind_badge(item: CompletionItem, t: Theme, size: float = 16) -> Any:
 
 
 def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, max_height: float = 300) -> Any:
-    """Builds the completion list (at most ``visible_rows`` rows around the highlighted one) and, beside
-    it, the highlighted item's signature and documentation, at most ``max_height`` pixels tall.
-    """
+    """Builds the completion list (at most ``visible_rows`` rows around the highlighted one) and, beside it,
+    the highlighted item's signature and documentation, at most ``max_height`` pixels tall."""
     c = a.completion
     assert c is not None
     rows: List[Any] = []
@@ -515,8 +506,7 @@ def problems_list(a: CodeAssist, diags: List[Diagnostic], t: Theme) -> Tuple[Any
 
 def code_panel(d: "Designer", t: Theme) -> Any:
     """Builds the code editor panel: header with the problems toggle and actions, the editor with its
-    completion list, and the error line and problems list below it.
-    """
+    completion list, and the error line and problems list below it."""
     assert d.editing is not None
     a = d.assist
     s = a.settings

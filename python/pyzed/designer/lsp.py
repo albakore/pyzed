@@ -225,8 +225,7 @@ class LanguageServer:
     # -- lifecycle ----------------------------------------------------------
     def start(self) -> None:
         """Launches the server process and sends ``initialize``; the status becomes ``"starting"`` (or
-        ``"error"``). Does nothing if it is running or not installed.
-        """
+        ``"error"``). Does nothing if it is running or not installed."""
         if self.command is None or self.process is not None:
             return
         try:
@@ -272,9 +271,8 @@ class LanguageServer:
         self._set_status("ready", " ".join(x for x in (info.get("name"), info.get("version")) if x))
 
     def stop(self) -> None:
-        """Asks the server to shut down and exit (killing it after a second), and forgets pending requests
-        and open documents.
-        """
+        """Asks the server to shut down and exit (killing it after a second), and forgets pending requests and
+        open documents."""
         process, self.process = self.process, None
         if process is None:
             return
@@ -440,9 +438,8 @@ class LanguageServer:
 
 
 def ty_server(env: Environment, **kwargs: Any) -> LanguageServer:
-    """Returns a (not started) ``ty server`` for ``env``, configured with its interpreter and import
-    roots; ``kwargs`` go to ``LanguageServer``.
-    """
+    """Returns a (not started) ``ty server`` for ``env``, configured with its interpreter and import roots;
+    ``kwargs`` go to ``LanguageServer``."""
     exe = env.tool("ty")
     settings = {"ty": {"configuration": env.settings()}}
     return LanguageServer(

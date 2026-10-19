@@ -138,9 +138,8 @@ class Lens:
 
 
 def item_from_lsp(data: Dict[str, Any]) -> CompletionItem:
-    """Builds a ``CompletionItem`` from an LSP completion item ``data`` (documentation, details,
-    insert text from a ``textEdit`` and the extra edits of auto-imports).
-    """
+    """Builds a ``CompletionItem`` from an LSP completion item ``data`` (documentation, details, insert text
+    from a ``textEdit`` and the extra edits of auto-imports)."""
     doc = data.get("documentation") or ""
     if isinstance(doc, dict):
         doc = doc.get("value") or ""
@@ -384,8 +383,8 @@ class CodeIntel:
         self._sync_enabled()
 
     def restart(self, name: Optional[str] = None) -> None:
-        """Restarts server ``name`` (or all with ``None``), forgetting its diagnostics and reopening the text.
-        """
+        """Restarts server ``name`` (or all with ``None``), forgetting its diagnostics and reopening the
+        text."""
         for key, server in list(self.servers.items()):
             if name in (None, key):
                 self._raw.pop(key, None)

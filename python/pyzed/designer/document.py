@@ -41,8 +41,7 @@ class Document:
     @classmethod
     def open(cls, path: Union[str, Path]) -> "Document":
         """Loads the form at ``path`` and the text of its handlers module (if the file exists) into a new
-        document.
-        """
+        document."""
         path = Path(path)
         form = load(path)
         module = code_path(path, form)
@@ -171,8 +170,7 @@ class Document:
 
     def can_contain(self, container: Optional[str], name: str) -> bool:
         """Whether control ``name`` can be moved into ``container`` (``None`` is the form, which takes
-        anything): it must be a container other than the control itself and not inside it.
-        """
+        anything): it must be a container other than the control itself and not inside it."""
         if container is None:
             return True
         target = self.form.get(container)
@@ -320,8 +318,8 @@ class Document:
         return names
 
     def duplicate(self) -> List[str]:
-        """Pastes a copy of the selection right away, leaving the clipboard as it was; returns the new names.
-        """
+        """Pastes a copy of the selection right away, leaving the clipboard as it was; returns the new
+        names."""
         saved = self.clipboard
         self.copy()
         names = self.paste()
@@ -336,8 +334,7 @@ class Document:
 
     def nudge(self, dx: float, dy: float) -> None:
         """Moves the selected controls (those not placed by a layout) by ``dx``, ``dy`` pixels, kept inside
-        their container when they share one; repeated nudges merge into one undo step.
-        """
+        their container when they share one; repeated nudges merge into one undo step."""
         selected = [c for c in self.selected if not _layout.managed(self.form, c)]
         parents = {c.parent for c in selected}
         limit = self.size
@@ -349,8 +346,7 @@ class Document:
 
     def align(self, edge: str, *, to_form: bool = False) -> None:
         """Aligns the selected controls on ``edge`` (see ``geometry.align``): to each other, or to the form
-        with ``to_form`` or when only one control is selected.
-        """
+        with ``to_form`` or when only one control is selected."""
         selected = self.selected
         to = (0.0, 0.0, self.form.width, self.form.height) if to_form or len(selected) == 1 else None
         geometry.align(selected, edge, to=to)
@@ -387,17 +383,16 @@ class Document:
         self.commit()
 
     def set_rect(self, name: str, rect: Sequence[float], *, group: Optional[str] = None) -> None:
-        """Sets the position and size of control ``name`` from ``rect`` ``(x, y, width, height)``, rounded
-        to whole pixels; edits with the same ``group`` merge into one undo step.
-        """
+        """Sets the position and size of control ``name`` from ``rect`` ``(x, y, width, height)``, rounded to
+        whole pixels; edits with the same ``group`` merge into one undo step."""
         control = self.form[name]
         control.x, control.y, control.width, control.height = (round(v) for v in rect)
         self.commit(group)
 
     # -- properties ---------------------------------------------------------
     def set_prop(self, name: str, key: str, value: Any) -> None:
-        """Sets property ``key`` of control ``name`` to ``value`` (repeated edits merge into one undo step).
-        """
+        """Sets property ``key`` of control ``name`` to ``value`` (repeated edits merge into one undo
+        step)."""
         self.form[name].props[key] = value
         self.commit(group=f"prop:{name}:{key}")
 

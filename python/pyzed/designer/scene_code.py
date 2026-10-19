@@ -57,9 +57,8 @@ class Member:
 
     @property
     def default_source(self) -> str:
-        """The default as Python source: ``source`` if set, ``""`` for a ``str`` without a default, else
-        the default as a literal.
-        """
+        """The default as Python source: ``source`` if set, ``""`` for a ``str`` without a default, else the
+        default as a literal."""
         if self.source is not None:
             return self.source
         if self.default is None and self.type in ("str",):
@@ -116,9 +115,8 @@ def class_identifier(text: str) -> str:
 
 
 def member_identifier(text: str) -> str:
-    """Turns any text into a lowercase snake_case member name (``"Max value"`` -> ``"max_value"``);
-    ``""`` for empty text, and a keyword gets a trailing underscore.
-    """
+    """Turns any text into a lowercase snake_case member name (``"Max value"`` -> ``"max_value"``); ``""`` for
+    empty text, and a keyword gets a trailing underscore."""
     name = re.sub(r"\W+", "_", str(text).strip()).strip("_").lower()
     if not name:
         return ""
@@ -353,8 +351,8 @@ def choices_of(type_: str) -> List[str]:
 
 
 def choice_type(options: Sequence[str]) -> str:
-    """Returns the ``Literal[...]`` annotation of a choice between ``options`` (``str`` when there are none).
-    """
+    """Returns the ``Literal[...]`` annotation of a choice between ``options`` (``str`` when there are
+    none)."""
     return f"Literal[{', '.join(literal(str(o)) for o in options)}]" if options else "str"
 
 
@@ -377,9 +375,8 @@ def range_of(type_: str) -> Tuple[str, float, float, float]:
 
 
 def range_type(base: str, low: float, high: float, step: float = 1) -> str:
-    """Returns the ``Annotated[base, pz.Range(low, high[, step])]`` annotation of a bounded number
-    (``step`` is left out when it is 1).
-    """
+    """Returns the ``Annotated[base, pz.Range(low, high[, step])]`` annotation of a bounded number (``step``
+    is left out when it is 1)."""
     def num(v: float) -> str:
         return str(int(v)) if float(v).is_integer() and base == "int" else repr(float(v))
     tail = f", {num(step)}" if step != 1 else ""
@@ -526,8 +523,7 @@ def replace_method(source: str, name: str, new_code: str, cls_name: Optional[str
 def remove_method(source: str, name: str, cls_name: Optional[str] = None) -> str:
     """Removes method ``name`` (and the blank lines above it) from the class; returns the new source.
 
-    The class keeps a ``pass`` if it would be left empty; the source is unchanged if the method is
-    not there.
+    The class keeps a ``pass`` if it would be left empty; the source is unchanged if the method is not there.
     """
     span = find_method(source, name, cls_name)
     if span is None:
@@ -540,9 +536,8 @@ def remove_method(source: str, name: str, cls_name: Optional[str] = None) -> str
 
 
 def rename_method(source: str, old: str, new: str, cls_name: Optional[str] = None) -> str:
-    """Renames the definition of method ``old`` to ``new`` (calls are left alone); does nothing if
-    ``old`` is missing or ``new`` is taken.
-    """
+    """Renames the definition of method ``old`` to ``new`` (calls are left alone); does nothing if ``old`` is
+    missing or ``new`` is taken."""
     span = find_method(source, old, cls_name)
     if span is None or find_method(source, new, cls_name) is not None:
         return source
@@ -555,9 +550,8 @@ def rename_method(source: str, old: str, new: str, cls_name: Optional[str] = Non
 
 
 def rename_class(source: str, old: str, new: str) -> str:
-    """Renames class ``old`` to ``new`` in its ``class`` line; does nothing if ``old`` is missing or
-    ``new`` exists.
-    """
+    """Renames class ``old`` to ``new`` in its ``class`` line; does nothing if ``old`` is missing or ``new``
+    exists."""
     cls = find_class(source, old)
     if cls is None or find_class(source, new) is not None:
         return source
@@ -662,8 +656,7 @@ def _designer_imports(source: str) -> str:
 
 def set_docstring(source: str, doc: str, cls_name: Optional[str] = None) -> str:
     """Sets (or replaces, or with an empty ``doc`` removes) the docstring of the class; returns the new
-    source.
-    """
+    source."""
     cls = find_class(source, cls_name)
     if cls is None:
         return source

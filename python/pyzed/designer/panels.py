@@ -178,9 +178,8 @@ def parse_rows(value: Any) -> List[List[str]]:
 
 
 def format_rows(rows: List[List[str]]) -> str:
-    """Returns ``rows`` as CSV text, one line per row (commas inside cells become spaces); the reverse
-    of ``parse_rows``.
-    """
+    """Returns ``rows`` as CSV text, one line per row (commas inside cells become spaces); the reverse of
+    ``parse_rows``."""
     return "\n".join(", ".join(cell.replace(",", " ").strip() for cell in row) for row in rows)
 
 
@@ -271,9 +270,8 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
 
 
 def toolbox(d: "Designer", t: Theme) -> Any:
-    """Builds the toolbox: a search box, the pointer, and the components by category, each of which can
-    be picked or dragged onto the form.
-    """
+    """Builds the toolbox: a search box, the pointer, and the components by category, each of which can be
+    picked or dragged onto the form."""
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
         ui.list_item(tr("Pointer"), d.pick_tool(None), icon="mouse-pointer-2", selected=d.tool is None, height=26,
@@ -427,9 +425,8 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
 
 
 def control_properties(d: "Designer", t: Theme) -> List[Any]:
-    """Returns the property grid rows of the primary selected control: its name, its properties by
-    group, then its style and layout rows.
-    """
+    """Returns the property grid rows of the primary selected control: its name, its properties by group, then
+    its style and layout rows."""
     c = d.doc.primary
     assert c is not None
     spec = _components.get(c.type)
@@ -461,8 +458,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
 
 def multi_properties(d: "Designer", t: Theme) -> List[Any]:
     """Returns the property grid rows shown when several controls are selected: align, distribute and
-    same-size tools.
-    """
+    same-size tools."""
     count = len(d.doc.selection)
     tools = [
         ("Align", [("align-start-vertical", "left", "Left edges"), ("align-center-vertical", "center", "Centers"),
@@ -489,9 +485,8 @@ def multi_properties(d: "Designer", t: Theme) -> List[Any]:
 
 
 def form_properties(d: "Designer", t: Theme) -> List[Any]:
-    """Returns the property grid rows of the form itself: window, look (theme, accent, background,
-    style...) and designer settings.
-    """
+    """Returns the property grid rows of the form itself: window, look (theme, accent, background, style...)
+    and designer settings."""
     form = d.doc.form
 
     def setter(key: str, cast: Callable[[Any], Any] = lambda v: v):
@@ -569,9 +564,8 @@ def properties(d: "Designer", t: Theme) -> Any:
 
 
 def events(d: "Designer", t: Theme) -> Any:
-    """Builds the Events panel for the selected control (or the form): each event with its handler and
-    buttons to edit or disconnect it.
-    """
+    """Builds the Events panel for the selected control (or the form): each event with its handler and buttons
+    to edit or disconnect it."""
     doc = d.doc
     target = None if len(doc.selection) != 1 else doc.selection[0]
     if len(doc.selection) > 1:

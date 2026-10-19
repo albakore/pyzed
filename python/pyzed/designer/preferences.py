@@ -51,9 +51,8 @@ class DesignerSettings:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "DesignerSettings":
-        """Builds preferences from saved ``data``, keeping defaults for missing or invalid values and
-        clamping the grid, docks, sizes and recent files to valid ones.
-        """
+        """Builds preferences from saved ``data``, keeping defaults for missing or invalid values and clamping
+        the grid, docks, sizes and recent files to valid ones."""
         out = cls()
         for f in fields(cls):
             if f.name not in data:

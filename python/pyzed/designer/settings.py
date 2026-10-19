@@ -53,9 +53,8 @@ class EditorSettings:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "EditorSettings":
-        """Builds settings from saved ``data``, keeping defaults for missing or invalid values and
-        clamping the tab size, font size and cursor shape to valid ones.
-        """
+        """Builds settings from saved ``data``, keeping defaults for missing or invalid values and clamping
+        the tab size, font size and cursor shape to valid ones."""
         out = cls()
         for f in fields(cls):
             if f.name in data:
@@ -74,9 +73,8 @@ class EditorSettings:
 
 
 def config_dir() -> Path:
-    """Returns the folder of the user's Pyzed settings: ``$PYZED_CONFIG_DIR``, or the platform's config
-    folder (``%APPDATA%``, ``~/Library/Application Support`` or ``$XDG_CONFIG_HOME``) plus ``pyzed``.
-    """
+    """Returns the folder of the user's Pyzed settings: ``$PYZED_CONFIG_DIR``, or the platform's config folder
+    (``%APPDATA%``, ``~/Library/Application Support`` or ``$XDG_CONFIG_HOME``) plus ``pyzed``."""
     if os.environ.get("PYZED_CONFIG_DIR"):
         return Path(os.environ["PYZED_CONFIG_DIR"])
     if os.name == "nt":

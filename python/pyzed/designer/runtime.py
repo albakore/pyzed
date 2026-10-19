@@ -228,9 +228,8 @@ class FormProxy:
 
 
 class LiveContext(_components.RenderContext):
-    """The render context of a running form: callbacks store the new value and dispatch the event to
-    its handler.
-    """
+    """The render context of a running form: callbacks store the new value and dispatch the event to its
+    handler."""
     live = True
 
     def __init__(self, runtime: "FormRuntime") -> None:
@@ -334,9 +333,8 @@ class FormRuntime:
         )
 
     def view(self) -> Any:
-        """Draws the running form: its background, every visible control at its laid-out position and,
-        after a handler error, the error callout.
-        """
+        """Draws the running form: its background, every visible control at its laid-out position and, after a
+        handler error, the error callout."""
         t = self.theme
         size = self.size
         layers = [_core.container(width="fill", height="fill", bg=t.background)]

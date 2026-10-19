@@ -38,9 +38,8 @@ def kind(control: Control) -> Optional[str]:
 
 
 def props(control: Control) -> Dict[str, Any]:
-    """Returns the control's properties merged over its component's defaults (just its own for an
-    unknown type).
-    """
+    """Returns the control's properties merged over its component's defaults (just its own for an unknown
+    type)."""
     try:
         defaults = _components.get(control.type).defaults()
     except KeyError:

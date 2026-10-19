@@ -146,9 +146,8 @@ def groups() -> List[Tuple[str, List[Action]]]:
 
 
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:
-    """Returns the keyboard shortcut reference as ``(title, [(label, keys), ...])`` groups, translated,
-    with the extra non-command shortcuts and without empty groups.
-    """
+    """Returns the keyboard shortcut reference as ``(title, [(label, keys), ...])`` groups, translated, with
+    the extra non-command shortcuts and without empty groups."""
     out = [(tr(g), [(a.label.rstrip("…"), a.keys) for a in items if a.keys]) for g, items in groups()]
     out += [(tr(title), [(tr(label), keys) for label, keys in items]) for title, items in EXTRA_SHORTCUTS]
     return [(g, items) for g, items in out if items]

@@ -82,9 +82,8 @@ class ProjectController:
         self.tools = found
 
     def open(self, path: str) -> Any:
-        """Opens the project at ``path`` (a notification on failure), closes the dialog, shows the
-        Project panel and opens its main form if it has one; returns the task that checks its tools.
-        """
+        """Opens the project at ``path`` (a notification on failure), closes the dialog, shows the Project
+        panel and opens its main form if it has one; returns the task that checks its tools."""
         path = path.strip()
         if not path:
             return None
@@ -103,8 +102,7 @@ class ProjectController:
 
     def create(self) -> Any:
         """Creates a project named ``new_name`` in ``new_folder`` with ``uv init`` in the background, then
-        opens it; refuses a non-empty folder that is not a project. Returns the background task.
-        """
+        opens it; refuses a non-empty folder that is not a project. Returns the background task."""
         name = self.new_name.strip()
         if not name:
             return None
@@ -163,9 +161,8 @@ class ProjectController:
                           lambda r: self.d.notify(label, kind="success", seconds=2) if r.ok else None)
 
     def add(self) -> Any:
-        """Adds the packages typed in ``add_text`` (as dev dependencies with ``add_dev``) with ``uv add``
-        and clears the input; returns the background task.
-        """
+        """Adds the packages typed in ``add_text`` (as dev dependencies with ``add_dev``) with ``uv add`` and
+        clears the input; returns the background task."""
         specs = self.add_text.split()
         if not specs:
             return None
@@ -193,8 +190,7 @@ class ProjectController:
 
     def change(self) -> Any:
         """Applies the spec typed in the change dialog to the dependency being changed (in its group) and
-        closes the dialog; returns the background task.
-        """
+        closes the dialog; returns the background task."""
         dep, spec = self.change_target, self.change_text.strip()
         self.d.dialog = None
         if dep is None or not spec:
@@ -209,8 +205,7 @@ class ProjectController:
 
     def check_updates(self) -> Any:
         """Looks up newer versions of the dependencies in the background, stores them in ``latest`` and
-        notifies how many there are.
-        """
+        notifies how many there are."""
         project = self.project
         if project is None or self.busy:
             return None

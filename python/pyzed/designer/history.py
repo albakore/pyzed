@@ -67,8 +67,8 @@ class History:
         return self._kind.from_json(self._current)
 
     def redo(self) -> Optional[Form]:
-        """Steps forward one snapshot; returns the restored form (a new object) or ``None`` if there is none.
-        """
+        """Steps forward one snapshot; returns the restored form (a new object) or ``None`` if there is
+        none."""
         if not self._future:
             return None
         self._group = None

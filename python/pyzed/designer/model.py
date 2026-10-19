@@ -198,8 +198,8 @@ class Form:
     def add(self, control: Control) -> Control:
         """Appends ``control`` (on top of the z-order) and returns it.
 
-        An empty, reserved or taken name is replaced with a unique one, and a parent that does not
-        exist is dropped.
+        An empty, reserved or taken name is replaced with a unique one, and a parent that does not exist is
+        dropped.
         """
         if not control.name or control.name in RESERVED or self.get(control.name) is not None:
             control.name = self.unique_name(control.name or control.type)
@@ -252,9 +252,8 @@ class Form:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Form":
-        """Builds a form from saved ``data`` (see ``to_dict``), ignoring unknown settings and repairing
-        broken parents; raises ``ValueError`` if it is not a Pyzed form.
-        """
+        """Builds a form from saved ``data`` (see ``to_dict``), ignoring unknown settings and repairing broken
+        parents; raises ``ValueError`` if it is not a Pyzed form."""
         fmt = data.get("format", FORMAT)
         if not str(fmt).startswith("pyzed.form/"):
             raise ValueError(f"not a Pyzed form (format {fmt!r})")

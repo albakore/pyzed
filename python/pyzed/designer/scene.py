@@ -91,9 +91,8 @@ class Scene(Form):
         return removed
 
     def to_dict(self) -> Dict[str, Any]:
-        """Returns the scene as JSON-ready data: ``{"format", "component": settings, "events",
-        "controls", "bindings"}`` (empty bindings and ``extends`` are left out).
-        """
+        """Returns the scene as JSON-ready data: ``{"format", "component": settings, "events", "controls",
+        "bindings"}`` (empty bindings and ``extends`` are left out)."""
         data = {k: v for k, v in asdict(self).items() if k not in ("controls", "bindings", "title", "events")}
         if not data["extends"]:
             del data["extends"]
@@ -108,8 +107,7 @@ class Scene(Form):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Scene":
         """Builds a scene from saved ``data`` (see ``to_dict``), ignoring unknown settings; raises
-        ``ValueError`` if it is not a Pyzed component.
-        """
+        ``ValueError`` if it is not a Pyzed component."""
         fmt = str(data.get("format", FORMAT))
         if not fmt.startswith("pyzed.component/"):
             raise ValueError(f"not a Pyzed component (format {fmt!r})")
@@ -137,8 +135,7 @@ def load(path: Union[str, Path]) -> Scene:
 
 def save(scene: Scene, path: Union[str, Path]) -> Path:
     """Writes ``scene`` to ``path`` (``.pzcomp`` is added when there is no suffix), creating the folder;
-    returns the path written.
-    """
+    returns the path written."""
     path = Path(path)
     if not path.suffix:
         path = path.with_suffix(SUFFIX)
@@ -189,9 +186,8 @@ def full_scene(scene: Scene, path: Optional[Union[str, Path]], _seen: Optional[s
 
 
 def code_path(scene_path: Union[str, Path], scene: Optional[Scene] = None) -> Path:
-    """The class module of a component: ``scene.code`` if set (relative to the scene), else the same name
-    with ``.py``.
-    """
+    """The class module of a component: ``scene.code`` if set (relative to the scene), else the same name with
+    ``.py``."""
     scene_path = Path(scene_path)
     if scene is not None and scene.code:
         return (scene_path.parent / scene.code).resolve()
@@ -431,8 +427,7 @@ class SceneDocument(Document):
 
     def unique_member(self, base: str = "value") -> str:
         """Returns ``base`` (made an identifier), or ``base2``, ``base3``... if it is taken by a member,
-        method, control or reserved name.
-        """
+        method, control or reserved name."""
         taken = {m.name for m in self.info.members} | set(self.info.methods) | set(self.scene.names()) \
             | scene_code.RESERVED | {"emit", "render", "handles", "create"}
         base = scene_code.member_identifier(base) or "value"
@@ -518,8 +513,7 @@ class SceneDocument(Document):
 
     def update_event(self, name: str, *, new_name: Optional[str] = None, description: Optional[str] = None) -> str:
         """Renames event ``name`` to ``new_name`` (if valid and free) and/or changes its ``description``,
-        keeping its place; returns the event's name. Raises ``KeyError`` if it does not exist.
-        """
+        keeping its place; returns the event's name. Raises ``KeyError`` if it does not exist."""
         events = self.custom_events
         if name not in events:
             raise KeyError(name)
@@ -544,9 +538,8 @@ class SceneDocument(Document):
         self._write_events(events)
 
     def set_class_name(self, name: str) -> str:
-        """Renames the component's class (made a valid class name) in the code and the scene; returns
-        the new name.
-        """
+        """Renames the component's class (made a valid class name) in the code and the scene; returns the new
+        name."""
         new = scene_code.class_identifier(name)
         old = self.info.name
         if new == old:
@@ -628,9 +621,8 @@ class SceneDocument(Document):
         self.commit()
 
     def handler_source(self, handler: str) -> str:
-        """Returns the source of method ``handler`` in the class, or a new stub (with the lifecycle
-        signature for ``setup``, ``on_mount``...) if it is not there yet.
-        """
+        """Returns the source of method ``handler`` in the class, or a new stub (with the lifecycle signature
+        for ``setup``, ``on_mount``...) if it is not there yet."""
         source = scene_code.get_method(self.code, handler, self._class())
         if source is not None:
             return source
