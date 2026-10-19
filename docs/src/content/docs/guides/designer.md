@@ -327,6 +327,21 @@ and helpers at the top of the file are known; positions are translated between t
 - **Code lens** at the end of each `def` and `class` line shows how many references it has (from ty), how many
   classes implement it, and which events call it (`on sign_in.click`).
 
+### Find, replace and multiple cursors
+
+![Find (Ctrl+F) with every form.status selected as a cursor](../../../../screenshots/designer-code-multicursor.png)
+
+- **Ctrl+F** opens the find bar with the word under the cursor; matches are highlighted in the code and the bar
+  counts them. **Enter** or **F3** go to the next one, **Shift+F3** to the previous one, and **Alt+Enter** puts a
+  cursor on every match. The buttons match case, whole words or a regular expression.
+- **Ctrl+H** also shows the replace field: **Replace** changes the current match, **Replace all** every match in
+  one undo step. With a regular expression, `\1` in the replacement inserts a group.
+- **Ctrl+G** goes to a line (`42`) or a line and column (`42:8`).
+- The editor has Zed's multiple cursors and editing keys: **Alt+click**, **Alt+Shift+Up/Down**, **Ctrl+D**,
+  **Ctrl+Shift+L**, **Alt+Up/Down** to move lines, **Ctrl+/** to comment, **Ctrl+Z** / **Ctrl+Shift+Z** and more.
+  See the full list in [the code editor component](../../components/code/#multiple-cursors-and-zeds-keys) or
+  press **F1** in the designer.
+
 ### Editor settings
 
 The gear button in the code panel (or the server dots in the status bar) opens the editor settings. They are saved
@@ -348,9 +363,37 @@ or `~/.config/pyzed`).
 | Auto-close brackets and quotes | Typing `(`, `[`, `{` or a quote inserts its pair (or wraps the selection); typing the closer steps over it. |
 | Code folding | Chevrons in the gutter fold blocks; Ctrl+Shift+[ and Ctrl+Shift+] fold and unfold at the cursor. |
 | Format with ruff on Apply | Runs `ruff format` on the code when you apply it. |
+| Match brackets | Outlines the bracket that pairs with the one at the cursor. |
+| Highlight selection matches | Highlights the other places with the selected text. |
 | Code lens, inline diagnostics | Show or hide the notes at the end of lines. |
 
 ![The whole file with two handlers folded and the minimap](../../../../screenshots/designer-code-folding.png)
+
+## Telemetry
+
+The designer can keep usage and performance numbers to help improve it, but only if you turn it on: it is
+**off by default**. In **Settings → Telemetry**, *Collect usage and performance data* records:
+
+- how many times each command and editor action is used (`command.save`, `editor.select_next`…);
+- how long the designer takes to start, to draw a frame and to run each command (count, total, maximum and a
+  histogram);
+- the number of sessions and their length.
+
+It never records your code, texts, form or file names, or paths. The data is kept in `telemetry.json` in the
+Pyzed config folder; **View** opens it and **Delete** empties it (and changes the random installation id).
+
+Nothing leaves your computer unless you also set an **Endpoint**: then the designer posts the data there as JSON
+when it closes, and starts counting again. A send that fails is retried the next time. `PYZED_TELEMETRY=0` turns
+telemetry off whatever the settings say.
+
+```json
+{"schema": 1, "installation": "4f0c…", "app": "pyzed-designer", "version": "0.4.0", "os": "linux",
+ "arch": "x86_64", "python": "3.13", "since": "…", "until": "…", "sessions": 3,
+ "counters": {"command.save": 12, "editor.select_next": 7},
+ "timings": {"render": {"count": 840, "total_ms": 2210.4, "max_ms": 41.2, "buckets": [690, 120, 25, 5, 0, 0, 0, 0]}}}
+```
+
+The `buckets` count durations up to 4, 8, 16, 33, 50, 100 and 250 ms, and longer.
 
 ## Components
 

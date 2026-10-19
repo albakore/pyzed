@@ -46,6 +46,18 @@ Focuses the `text_input` (or editor) with that `id`.
 | --- | --- |
 | `id` | The `id` you passed to the widget. |
 
+### `select_all`
+
+```python
+select_all(id)
+```
+
+Focuses the `text_input` with that `id` and selects all its text (typing replaces it).
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The input's `id`. |
+
 ### `set_editor_text`
 
 ```python
@@ -99,6 +111,53 @@ Folds (or unfolds) the block that starts at `line`, by indentation. Works even i
 | `id` | The editor's `id`. |
 | `line` | Line (from 1) where the block starts. |
 | `fold` | `True` to fold, `False` to unfold. |
+
+### `editor_action`
+
+```python
+editor_action(id, name)
+```
+
+Runs a named editor action in the editor with that `id`, as if its key was pressed: Zed's action name in snake case (`"undo"`, `"select_next"`, `"move_line_up"`, `"toggle_comments"`…). Raises `ValueError` for an unknown name.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The editor's `id`. |
+| `name` | The action's name (`Command.editor_actions()` lists them; `"editor::SelectNext"` works too). |
+
+### `editor_actions`
+
+```python
+editor_actions()
+```
+
+The names `Command.editor_action` accepts.
+
+### `select_editor_ranges`
+
+```python
+select_editor_ranges(id, ranges)
+```
+
+Selects ranges of the editor, one cursor each; the first one is the primary cursor. Unfolds what hides them and works even if the editor hasn't been drawn yet.
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The editor's `id`. |
+| `ranges` | `[(line, column, end_line, end_column)]`, from 1, with exclusive ends (an empty range is a plain cursor). |
+
+### `replace_editor_ranges`
+
+```python
+replace_editor_ranges(id, edits)
+```
+
+Replaces ranges of the editor with texts as one undo step, and calls the editor's `on_change` (search and replace).
+
+| Parameter | Description |
+| --- | --- |
+| `id` | The editor's `id`. |
+| `edits` | `[((line, column, end_line, end_column), text)]`, from 1, with exclusive ends. |
 
 ### `scroll_to_end`
 

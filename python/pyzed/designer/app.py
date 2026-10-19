@@ -39,6 +39,7 @@ from .runtime import FormWindow
 from . import scene as _scene
 from . import scene_code as _scene_code
 from . import scene_panel
+from . import telemetry as _telemetry
 from ..project import Project
 
 Rect = Tuple[float, float, float, float]
@@ -1924,4 +1925,13 @@ class Designer(App):
 
 def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> None:
     """Opens the designer (on ``path`` if given; it is created on first save if missing)."""
-    Designer(path, theme=theme).run()
+    started = time.perf_counter()
+    designer = Designer(path, theme=theme)
+    telemetry = _telemetry.get()
+    if telemetry.active:
+        designer.view = telemetry.wrap("render", designer.view)  # type: ignore[method-assign]
+    telemetry.session_started(started)
+    try:
+        designer.run()
+    finally:
+        telemetry.session_ended()

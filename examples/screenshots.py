@@ -18,6 +18,7 @@ from counter import Counter  # noqa: E402
 from gallery import Gallery  # noqa: E402
 from zed_editor import Zed  # noqa: E402
 from pyzed import designer  # noqa: E402
+from pyzed.designer import docks  # noqa: E402
 
 pz.ui.base.KEY_STYLE = "words"
 
@@ -328,6 +329,18 @@ def code_editor_shots(scale):
     app.on_start = lambda: pz.Command.batch([pz.Command.fold_line(app.editor_id, n) for n in folded])
     app.screenshot(OUT / "designer-code-folding.png", size=(1440, 900), scale=scale)
     del app.on_start
+
+    # Zed's search bar (Ctrl+F) with every match of `form.` selected as a cursor (Alt+Enter).
+    app.layout.sizes["bottom"] = 560
+    app.assist.open_search()
+    app.assist.set_query("form.status")
+    matches = app.assist.search.matches
+    app.on_start = lambda: pz.Command.batch([pz.Command.select_editor_ranges(app.editor_id, matches),
+                                             pz.Command.focus(app.editor_id)])
+    app.screenshot(OUT / "designer-code-multicursor.png", size=(1440, 900), scale=scale)
+    del app.on_start
+    app.assist.close_search()
+    app.layout.sizes["bottom"] = docks.SIZES["bottom"]
 
     app.assist.settings = designer.EditorSettings(show_whitespace=True)
     app.open_editor_settings()

@@ -17,6 +17,7 @@ from ..theme import Theme, themes
 from . import commands as _commands
 from . import components as _components
 from . import new as _new
+from . import telemetry as _telemetry
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -75,9 +76,37 @@ def settings(d: "Designer", t: Theme) -> Any:
                                           size="sm", theme=t),
                  description=tr("Font, tabs, completion, language servers"), theme=t),
     ], theme=t)
-    body = _core.scrollable(_core.column([general, canvas, running, panels], spacing=14, padding=(0, 6, 0, 0)),
+    body = _core.scrollable(_core.column([general, canvas, running, panels, telemetry_group(d, t)], spacing=14,
+                                         padding=(0, 6, 0, 0)),
                             height=560, scrollbar_width=4)
     return ui.modal(body, title=tr("Settings"), on_close=d.close_dialog, width=560, footer=_footer_done(d, t), theme=t)
+
+
+def telemetry_group(d: "Designer", t: Theme) -> Any:
+    """The telemetry settings: off by default; the data stays on this computer unless an endpoint is set."""
+    tel = _telemetry.get()
+    rows = [
+        ui.field(tr("Collect usage and performance data"), ui.switch(tel.enabled, lambda v: tel.configure(enabled=v),
+                                                                     theme=t),
+                 description=tr("Counts of the commands and editor actions you use, and startup, render and "
+                                "command times. Never your code, texts or file names."), theme=t),
+    ]
+    if tel.enabled:
+        status = tr("Kept on this computer only") if not tel.endpoint else (
+            tr("Last sent {when}", when=tel.last_sent) if tel.last_sent else tr("Sent when the designer closes"))
+        if tel.last_error:
+            status = tr("Could not send: {error}", error=tel.last_error)
+        rows += [
+            ui.field(tr("Endpoint"), ui.input(tel.endpoint, lambda v: tel.configure(endpoint=v),
+                                              placeholder="https://…", size="sm", width=240, mono=True, theme=t),
+                     description=tr("Where to post the data as JSON; leave it empty to send nothing"), theme=t),
+            ui.field(tr("Collected data"), _core.row([
+                ui.button(tr("View"), lambda: d.open_url(tel.save().as_uri()) if tel.save() else None, icon="file-json",
+                          variant="ghost", size="sm", theme=t),
+                ui.button(tr("Delete"), tel.clear, icon="trash-2", variant="ghost", size="sm", theme=t),
+            ], spacing=4), description=status, theme=t),
+        ]
+    return ui.settings_group(tr("Telemetry"), rows, theme=t)
 
 
 def shortcuts(d: "Designer", t: Theme) -> Any:

@@ -154,6 +154,16 @@ pub struct EditorProps {
     pub cursor: CursorProps,
     /// `on_zoom(step)` with +1, -1 or 0 (reset) for Ctrl+= / Ctrl+- / Ctrl+0 and Ctrl+wheel.
     pub on_zoom: Option<PyMsg>,
+    /// `on_action(name)` after a named editor action runs (undo, select_next, move_line_up...).
+    pub on_action: Option<PyMsg>,
+    /// Ranges painted behind the text (search results): 1-based `(line, column, end_line,
+    /// end_column)` with exclusive ends.
+    pub highlights: Vec<crate::editor::TextRange>,
+    pub highlight_color: Option<Color>,
+    /// Outline the bracket matching the one next to the cursor.
+    pub match_brackets: bool,
+    /// Highlight the other occurrences of the selected text.
+    pub selection_highlight: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1264,7 +1274,8 @@ pub fn progress_bar(
     on_cursor=None, active_line=None, scrollbar_color=None, annotations=None, whitespace=None,
     tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
-    cursor_color=None, on_zoom=None))]
+    cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
+    match_brackets=true, selection_highlight=true))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1307,6 +1318,11 @@ pub fn code_editor(
     cursor_blink: bool,
     cursor_color: Any<'_>,
     on_zoom: Any<'_>,
+    on_action: Any<'_>,
+    highlights: Option<Vec<crate::editor::TextRange>>,
+    highlight_color: Any<'_>,
+    match_brackets: bool,
+    selection_highlight: bool,
 ) -> PyResult<Py<Widget>> {
     let shape = crate::editor_widgets::CaretShape::parse(cursor_shape).ok_or_else(|| {
         pyo3::exceptions::PyValueError::new_err(format!(
@@ -1396,6 +1412,11 @@ pub fn code_editor(
                 color: style::opt_color(&cursor_color)?,
             },
             on_zoom: PyMsg::maybe(&on_zoom),
+            on_action: PyMsg::maybe(&on_action),
+            highlights: highlights.unwrap_or_default(),
+            highlight_color: style::opt_color(&highlight_color)?,
+            match_brackets,
+            selection_highlight,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),

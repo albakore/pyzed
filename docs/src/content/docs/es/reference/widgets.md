@@ -1289,6 +1289,11 @@ code_editor(
     cursor_blink=True,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    highlight_color=None,
+    match_brackets=True,
+    selection_highlight=True,
 )
 ```
 
@@ -1338,6 +1343,11 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 | `cursor_blink` | Si el cursor parpadea. |
 | `cursor_color` | Color del cursor. |
 | `on_zoom` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
+| `on_action` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…). |
+| `highlights` | Rangos pintados detrás del texto (resultados de búsqueda): `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
+| `highlight_color` | Color de `highlights`. |
+| `match_brackets` | Remarca el corchete pareja del que está junto al cursor. |
+| `selection_highlight` | Resalta las demás apariciones del texto seleccionado. |
 
 ## Estilos
 

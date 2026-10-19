@@ -1,5 +1,6 @@
-//! Custom widgets used by the code editor: the cursor (`Caret`), the `Minimap` and
-//! `ZoomWheel` (Ctrl + mouse wheel changes the font size).
+//! Custom widgets used by the code editor: the cursors (`Caret`), the boxes behind and around
+//! the text (`Boxes`: other cursors' selections, search results, matching brackets), the
+//! `Minimap` and `EditorInput` (tracks the modifiers; Ctrl + mouse wheel changes the font size).
 
 use std::cell::Cell;
 use std::time::{Duration, Instant};
@@ -61,6 +62,8 @@ pub struct Caret<'a> {
     pub under_color: Color,
     pub font: Font,
     pub size: f32,
+    /// The cursor has a selection (it is hidden then, like iced's own).
+    pub selecting: bool,
 }
 
 #[derive(Default)]
@@ -72,10 +75,7 @@ struct CaretState {
 
 impl Caret<'_> {
     fn visible(&self, state: &CaretState) -> bool {
-        if !self.state.focused.get()
-            || !state.window_focused.get()
-            || self.state.content.cursor().selection.is_some()
-        {
+        if !self.state.focused.get() || !state.window_focused.get() || self.selecting {
             return false;
         }
         let now = Instant::now();
@@ -221,6 +221,78 @@ impl Widget<Message, Theme, Renderer> for Caret<'_> {
 impl<'a> From<Caret<'a>> for Element<'a, Message> {
     fn from(caret: Caret<'a>) -> Self {
         Element::new(caret)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Boxes
+// ---------------------------------------------------------------------------
+
+/// A rectangle drawn by `Boxes`, relative to the text layer.
+pub struct BoxRect {
+    pub bounds: Rectangle,
+    /// `None`: the theme's selection color.
+    pub fill: Option<Color>,
+    pub alpha: f32,
+    pub border: Option<Color>,
+}
+
+/// Rectangles behind or around the text: the selections of the other cursors, search results,
+/// the other occurrences of the selection and the matching brackets.
+pub struct Boxes {
+    pub rects: Vec<BoxRect>,
+}
+
+impl Widget<Message, Theme, Renderer> for Boxes {
+    fn size(&self) -> Size<Length> {
+        Size::new(Length::Shrink, Length::Shrink)
+    }
+
+    fn layout(&mut self, _: &mut Tree, _: &Renderer, _: &layout::Limits) -> layout::Node {
+        layout::Node::new(Size::ZERO)
+    }
+
+    fn draw(
+        &self,
+        _tree: &Tree,
+        renderer: &mut Renderer,
+        theme: &Theme,
+        _style: &renderer::Style,
+        layout: Layout<'_>,
+        _cursor: mouse::Cursor,
+        viewport: &Rectangle,
+    ) {
+        use iced::advanced::Renderer as _;
+        let origin = layout.bounds().position();
+        let selection = theme.extended_palette().primary.weak.color;
+        for rect in &self.rects {
+            let bounds = rect.bounds + Vector::new(origin.x, origin.y);
+            if !bounds.intersects(viewport) {
+                continue;
+            }
+            let fill = rect.fill.unwrap_or(selection);
+            renderer.fill_quad(
+                Quad {
+                    bounds,
+                    border: Border {
+                        color: rect.border.unwrap_or(Color::TRANSPARENT),
+                        width: if rect.border.is_some() { 1.0 } else { 0.0 },
+                        radius: 2.0.into(),
+                    },
+                    ..Quad::default()
+                },
+                Background::Color(Color {
+                    a: fill.a * rect.alpha,
+                    ..fill
+                }),
+            );
+        }
+    }
+}
+
+impl<'a> From<Boxes> for Element<'a, Message> {
+    fn from(boxes: Boxes) -> Self {
+        Element::new(boxes)
     }
 }
 
@@ -492,20 +564,27 @@ impl<'a> From<Minimap<'a>> for Element<'a, Message> {
 }
 
 // ---------------------------------------------------------------------------
-// ZoomWheel
+// EditorInput
 // ---------------------------------------------------------------------------
 
-/// Turns Ctrl/Cmd + mouse wheel over its content into `on_zoom(+1 | -1)`, before the content
+/// Keeps the editor's keyboard modifiers up to date (Alt+click adds a cursor) and turns
+/// Ctrl/Cmd + mouse wheel over its content into `on_zoom(+1 | -1)`, before the content
 /// (a scrollable) sees the wheel.
-pub struct ZoomWheel<'a> {
+pub struct EditorInput<'a> {
     content: Element<'a, Message>,
-    on_zoom: PyMsg,
+    state: &'a EditorState,
+    on_zoom: Option<PyMsg>,
 }
 
-impl<'a> ZoomWheel<'a> {
-    pub fn new(content: impl Into<Element<'a, Message>>, on_zoom: PyMsg) -> Self {
+impl<'a> EditorInput<'a> {
+    pub fn new(
+        content: impl Into<Element<'a, Message>>,
+        state: &'a EditorState,
+        on_zoom: Option<PyMsg>,
+    ) -> Self {
         Self {
             content: content.into(),
+            state,
             on_zoom,
         }
     }
@@ -516,7 +595,7 @@ struct ZoomState {
     modifiers: keyboard::Modifiers,
 }
 
-impl Widget<Message, Theme, Renderer> for ZoomWheel<'_> {
+impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<ZoomState>()
     }
@@ -578,16 +657,22 @@ impl Widget<Message, Theme, Renderer> for ZoomWheel<'_> {
             }
             // Some X11 setups miss the change when the key goes up.
             Event::Keyboard(keyboard::Event::KeyReleased {
-                key:
-                    keyboard::Key::Named(keyboard::key::Named::Control | keyboard::key::Named::Super),
+                key: keyboard::Key::Named(named),
                 ..
             }) => {
-                state
-                    .modifiers
-                    .remove(keyboard::Modifiers::CTRL | keyboard::Modifiers::LOGO);
+                use keyboard::key::Named;
+                match named {
+                    Named::Control | Named::Super => state
+                        .modifiers
+                        .remove(keyboard::Modifiers::CTRL | keyboard::Modifiers::LOGO),
+                    Named::Alt => state.modifiers.remove(keyboard::Modifiers::ALT),
+                    _ => {}
+                }
             }
             Event::Mouse(mouse::Event::WheelScrolled { delta })
-                if state.modifiers.command() && cursor.is_over(layout.bounds()) =>
+                if state.modifiers.command()
+                    && cursor.is_over(layout.bounds())
+                    && let Some(on_zoom) = &self.on_zoom =>
             {
                 let y = match delta {
                     mouse::ScrollDelta::Lines { y, .. } | mouse::ScrollDelta::Pixels { y, .. } => {
@@ -595,13 +680,14 @@ impl Widget<Message, Theme, Renderer> for ZoomWheel<'_> {
                     }
                 };
                 if y != 0.0 {
-                    shell.publish(Message::Slide(self.on_zoom.clone(), y.signum()));
+                    shell.publish(Message::Slide(on_zoom.clone(), y.signum()));
                 }
                 shell.capture_event();
                 return;
             }
             _ => {}
         }
+        self.state.modifiers.set(state.modifiers);
         self.content.as_widget_mut().update(
             &mut tree.children[0],
             event,
@@ -670,8 +756,8 @@ impl Widget<Message, Theme, Renderer> for ZoomWheel<'_> {
     }
 }
 
-impl<'a> From<ZoomWheel<'a>> for Element<'a, Message> {
-    fn from(wheel: ZoomWheel<'a>) -> Self {
+impl<'a> From<EditorInput<'a>> for Element<'a, Message> {
+    fn from(wheel: EditorInput<'a>) -> Self {
         Element::new(wheel)
     }
 }

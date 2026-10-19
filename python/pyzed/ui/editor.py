@@ -55,6 +55,10 @@ def editor(
     cursor_width: float = 2.0,
     cursor_color: Optional[str] = None,
     on_zoom: Any = None,
+    on_action: Any = None,
+    highlights: Optional[Sequence[Tuple[int, int, int, int]]] = None,
+    match_brackets: bool = True,
+    selection_highlight: bool = True,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -96,6 +100,22 @@ def editor(
       ``cursor_width`` (of the bar) and ``cursor_color`` (the theme's player color by default).
     - ``on_zoom(step)`` is called with ``1``, ``-1`` or ``0`` (reset) for Ctrl+= / Ctrl+- / Ctrl+0
       and Ctrl+mouse wheel; change ``font_size`` in response.
+    - Multiple cursors: Alt+click adds (or removes) a cursor, Alt+Shift+Up/Down adds one above or
+      below, Ctrl+D selects the next match of the selection (the word under the cursor first),
+      Ctrl+Shift+L selects every match and Escape goes back to one cursor. Typing, deleting,
+      pasting (one line per cursor when the counts match) and moving apply to every cursor.
+    - Undo and redo (Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z), with consecutive typing undone at once.
+    - Zed's editing keys: Alt+Up/Down move lines, Ctrl+Alt+Shift+Up/Down duplicate them,
+      Ctrl+Shift+K deletes them, Ctrl+/ toggles comments, Ctrl+] / Ctrl+[ indent and outdent,
+      Ctrl+L selects the line, Ctrl+Shift+J joins lines, Ctrl+Enter / Ctrl+Shift+Enter open a line
+      below or above, Ctrl+M jumps to the matching bracket and Ctrl+K chords fold (Ctrl+K Ctrl+0
+      folds everything, Ctrl+K Ctrl+J unfolds it). ``on_action(name)`` is called after each of them
+      with Zed's action name (``"select_next"``, ``"move_line_up"``...); ``Command.editor_action(id,
+      name)`` runs one and ``Command.editor_actions()`` lists them.
+    - ``highlights`` paints ranges behind the text, as 1-based ``(line, column, end_line,
+      end_column)`` with exclusive ends (search results). ``match_brackets`` outlines the bracket
+      that matches the one next to the cursor and ``selection_highlight`` the other occurrences of
+      the selected text.
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -136,6 +156,11 @@ def editor(
         cursor_width=cursor_width,
         cursor_color=cursor_color or (t.players[0] if t.players else t.accent),
         on_zoom=on_zoom,
+        on_action=on_action,
+        highlights=[tuple(h) for h in highlights or ()],
+        highlight_color=t.search_match,
+        match_brackets=match_brackets,
+        selection_highlight=selection_highlight,
     )
 
 

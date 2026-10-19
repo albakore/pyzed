@@ -87,6 +87,17 @@ pub enum Message {
         op: crate::editor::FoldOp,
         on_cursor: Option<PyMsg>,
     },
+    /// A named editor action (multiple cursors, undo, line operations...).
+    EditorAction {
+        id: Arc<str>,
+        action: crate::editor::EditorAction,
+        ctx: Arc<crate::editor::ActionContext>,
+    },
+    /// Replaces real ranges `(line, column, end_line, end_column)` (0-based) with texts.
+    EditorReplace {
+        id: Arc<str>,
+        edits: Arc<Vec<crate::editor::RangeEdit>>,
+    },
     /// Scrolls the editor's scrollable (with this id) to `y` (from the minimap).
     EditorScroll {
         id: String,
@@ -120,9 +131,13 @@ impl Message {
 enum CommandKind {
     Exit,
     Focus(String),
+    SelectAll(String),
     SetEditorText(String, String),
     SetEditorCursor(String, usize, usize),
     FoldEditor(String, crate::editor::FoldOp),
+    EditorAction(String, crate::editor::EditorAction),
+    SelectEditorRanges(String, Vec<crate::editor::TextRange>),
+    ReplaceEditorRanges(String, Vec<crate::editor::RangeEdit>),
     Batch(Vec<Py<Command>>),
     Message(PyMsg),
     Perform(PyMsg, Option<PyMsg>),
@@ -173,6 +188,12 @@ impl Command {
         cmd(CommandKind::Focus(id))
     }
 
+    /// Focuses the `text_input` with the given `id` and selects all its text.
+    #[staticmethod]
+    fn select_all(id: String) -> Self {
+        cmd(CommandKind::SelectAll(id))
+    }
+
     /// Replaces the contents of the `code_editor` with the given `id`.
     #[staticmethod]
     fn set_editor_text(id: String, text: String) -> Self {
@@ -210,6 +231,43 @@ impl Command {
             id,
             crate::editor::FoldOp::Line(line.saturating_sub(1), fold),
         ))
+    }
+
+    /// Runs the editor action `name` (Zed's name in snake case, like `"undo"`,
+    /// `"select_next"`, `"move_line_up"` or `"toggle_comments"`) in the `code_editor` with the
+    /// given `id`, as if its key was pressed. `Command.editor_actions()` lists them.
+    #[staticmethod]
+    fn editor_action(id: String, name: &str) -> PyResult<Self> {
+        let action = crate::editor::EditorAction::parse(name).ok_or_else(|| {
+            pyo3::exceptions::PyValueError::new_err(format!("unknown editor action {name:?}"))
+        })?;
+        Ok(cmd(CommandKind::EditorAction(id, action)))
+    }
+
+    /// The names of the actions `Command.editor_action` runs.
+    #[staticmethod]
+    fn editor_actions() -> Vec<&'static str> {
+        crate::editor::EditorAction::ALL
+            .iter()
+            .map(|a| a.name())
+            .collect()
+    }
+
+    /// Selects ranges of the `code_editor` with the given `id`, one cursor each (the first is
+    /// the primary one): `(line, column, end_line, end_column)`, 1-based with exclusive ends.
+    #[staticmethod]
+    fn select_editor_ranges(id: String, ranges: Vec<crate::editor::TextRange>) -> Self {
+        cmd(CommandKind::SelectEditorRanges(id, zero_based(ranges)))
+    }
+
+    /// Replaces ranges of the `code_editor` with the given `id` with texts, as one undo step
+    /// (it calls the editor's `on_change`): `[((line, column, end_line, end_column), text)]`,
+    /// 1-based with exclusive ends.
+    #[staticmethod]
+    fn replace_editor_ranges(id: String, edits: Vec<crate::editor::RangeEdit>) -> Self {
+        let (ranges, texts): (Vec<_>, Vec<_>) = edits.into_iter().unzip();
+        let edits = zero_based(ranges).into_iter().zip(texts).collect();
+        cmd(CommandKind::ReplaceEditorRanges(id, edits))
     }
 
     /// Scrolls the `scrollable` with the given `id` to its end.
@@ -345,9 +403,13 @@ impl Command {
         match self.kind {
             CommandKind::Exit => "Command.exit()",
             CommandKind::Focus(_) => "Command.focus(...)",
+            CommandKind::SelectAll(_) => "Command.select_all(...)",
             CommandKind::SetEditorText(..) => "Command.set_editor_text(...)",
             CommandKind::SetEditorCursor(..) => "Command.set_editor_cursor(...)",
             CommandKind::FoldEditor(..) => "Command.fold_line(...)",
+            CommandKind::EditorAction(..) => "Command.editor_action(...)",
+            CommandKind::SelectEditorRanges(..) => "Command.select_editor_ranges(...)",
+            CommandKind::ReplaceEditorRanges(..) => "Command.replace_editor_ranges(...)",
             CommandKind::Batch(_) => "Command.batch(...)",
             CommandKind::Message(_) => "Command.message(...)",
             CommandKind::Perform(..) => "Command.perform(...)",
@@ -447,6 +509,10 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
     match &command.get().kind {
         CommandKind::Exit => iced::exit(),
         CommandKind::Focus(id) => iced::widget::operation::focus(id.clone()),
+        CommandKind::SelectAll(id) => Task::batch([
+            iced::widget::operation::focus(id.clone()),
+            iced::widget::operation::select_all(id.clone()),
+        ]),
         CommandKind::ScrollToEnd(id) => iced::widget::operation::snap_to_end(id.clone()),
         CommandKind::ScrollTo(id, x, y) => iced::widget::operation::scroll_to(
             id.clone(),
@@ -464,6 +530,21 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             state.caches.set_editor_cursor(id, position)
         }
         CommandKind::FoldEditor(id, op) => state.caches.fold_editor_command(id, *op),
+        CommandKind::EditorAction(id, action) => match state.caches.editor_context(id) {
+            Some(ctx) => Task::done(Message::EditorAction {
+                id: Arc::from(id.as_str()),
+                action: *action,
+                ctx,
+            }),
+            None => Task::none(),
+        },
+        CommandKind::SelectEditorRanges(id, ranges) => {
+            state.caches.select_editor_ranges(id, ranges)
+        }
+        CommandKind::ReplaceEditorRanges(id, edits) => Task::done(Message::EditorReplace {
+            id: Arc::from(id.as_str()),
+            edits: Arc::new(edits.clone()),
+        }),
         CommandKind::Batch(commands) => Task::batch(
             commands
                 .iter()
@@ -677,6 +758,20 @@ fn call_hook<'py>(
 }
 
 /// Reports an editor change to Python (`on_change(text)`, then `on_cursor(line, column)`).
+fn zero_based(ranges: Vec<crate::editor::TextRange>) -> Vec<crate::editor::TextRange> {
+    ranges
+        .into_iter()
+        .map(|(a, b, c, d)| {
+            (
+                a.saturating_sub(1),
+                b.saturating_sub(1),
+                c.saturating_sub(1),
+                d.saturating_sub(1),
+            )
+        })
+        .collect()
+}
+
 fn editor_outcome(
     py: Python<'_>,
     state: &mut State,
@@ -685,6 +780,22 @@ fn editor_outcome(
     on_change: Option<PyMsg>,
     on_cursor: Option<PyMsg>,
 ) -> Task<Message> {
+    editor_outcome_with(py, state, target, outcome, on_change, on_cursor, None)
+}
+
+fn editor_outcome_with(
+    py: Python<'_>,
+    state: &mut State,
+    target: &Bound<'_, PyAny>,
+    outcome: crate::editor::Outcome,
+    on_change: Option<PyMsg>,
+    on_cursor: Option<PyMsg>,
+    on_action: Option<PyMsg>,
+) -> Task<Message> {
+    let clipboard = match outcome.clipboard.clone() {
+        Some(text) => iced::clipboard::write(text),
+        None => Task::none(),
+    };
     let mut result = Ok(py.None().into_bound(py));
     if outcome.edited
         && let Some(cb) = on_change
@@ -698,7 +809,19 @@ fn editor_outcome(
         let (line, column) = outcome.cursor;
         result = callback(target, cb.0.bind(py), (line + 1, column + 1));
     }
-    let scroll = outcome.scroll;
+    if let (Some(name), Some(cb)) = (outcome.action, on_action)
+        && result.is_ok()
+    {
+        // A command returned by `on_change` or `on_cursor` wins over this one.
+        let previous = result;
+        result = callback(target, cb.0.bind(py), (name,));
+        if let Ok(value) = &previous
+            && !value.is_none()
+        {
+            result = previous;
+        }
+    }
+    let scroll = Task::batch([outcome.scroll, clipboard]);
     match result {
         Ok(value) => Task::batch([scroll, command_task(py, state, &value)]),
         Err(err) => {
@@ -774,6 +897,31 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     return Task::none();
                 };
                 return editor_outcome(py, state, &target, outcome, None, on_cursor);
+            }
+            Message::EditorAction { id, action, ctx } => {
+                let Some(outcome) = state.caches.run_editor(&id, action, &ctx) else {
+                    return Task::none();
+                };
+                let ctx = (*ctx).clone();
+                return editor_outcome_with(
+                    py,
+                    state,
+                    &target,
+                    outcome,
+                    ctx.on_change,
+                    ctx.on_cursor,
+                    ctx.on_action,
+                );
+            }
+            Message::EditorReplace { id, edits } => {
+                let Some(ctx) = state.caches.editor_context(&id) else {
+                    return Task::none();
+                };
+                let Some(outcome) = state.caches.replace_editor_ranges(&id, &edits) else {
+                    return Task::none();
+                };
+                let ctx = (*ctx).clone();
+                return editor_outcome(py, state, &target, outcome, ctx.on_change, ctx.on_cursor);
             }
             Message::EditorScroll { id, y } => {
                 return iced::widget::operation::scroll_to(

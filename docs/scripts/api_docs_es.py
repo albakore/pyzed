@@ -174,6 +174,10 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                     "desc": "Enfoca el `text_input` (o editor) con ese `id`.",
                     "params": {"id": "El `id` que pasaste al widget."},
                 },
+                "pyzed.Command.select_all": {
+                    "desc": "Da el foco al `text_input` con ese `id` y selecciona todo su texto (lo que se escriba lo reemplaza).",
+                    "params": {"id": "El `id` del campo."},
+                },
                 "pyzed.Command.set_editor_text": {
                     "desc": "Reemplaza el contenido del `code_editor` con ese `id`. Los editores no son controlados: `text` solo es el valor inicial.",
                     "params": {"id": "El `id` del editor.", "text": "El texto nuevo."},
@@ -190,6 +194,21 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                     "desc": "Pliega (o despliega) el bloque que empieza en `line`, según la sangría. Funciona aunque el editor aún no se haya dibujado.",
                     "params": {"id": "El `id` del editor.", "line": "Línea (desde 1) donde empieza el bloque.",
                                "fold": "`True` para plegar, `False` para desplegar."},
+                },
+                "pyzed.Command.editor_action": {
+                    "desc": "Ejecuta una acción del editor con ese `id`, como si se pulsara su atajo: el nombre de la acción de Zed en snake case (`\"undo\"`, `\"select_next\"`, `\"move_line_up\"`, `\"toggle_comments\"`…). Lanza `ValueError` si el nombre no existe.",
+                    "params": {"id": "El `id` del editor.", "name": "El nombre de la acción (`Command.editor_actions()` las lista; también vale `\"editor::SelectNext\"`)."},
+                },
+                "pyzed.Command.editor_actions": {
+                    "desc": "Los nombres que acepta `Command.editor_action`.",
+                },
+                "pyzed.Command.select_editor_ranges": {
+                    "desc": "Selecciona rangos del editor, un cursor por rango; el primero es el cursor principal. Despliega lo que los oculta y funciona aunque el editor aún no se haya dibujado.",
+                    "params": {"id": "El `id` del editor.", "ranges": "`[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido (un rango vacío es un cursor sin selección)."},
+                },
+                "pyzed.Command.replace_editor_ranges": {
+                    "desc": "Reemplaza rangos del editor por textos en un solo paso de deshacer y llama al `on_change` del editor (buscar y reemplazar).",
+                    "params": {"id": "El `id` del editor.", "edits": "`[((línea, columna, línea_final, columna_final), texto)]`, desde 1, con el final excluido."},
                 },
                 "pyzed.Command.scroll_to_end": {
                     "desc": "Desplaza el `scrollable` con ese `id` hasta el final.",
@@ -413,6 +432,11 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "cursor_blink": "Si el cursor parpadea.",
                         "cursor_color": "Color del cursor.",
                         "on_zoom": "Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda.",
+                        "on_action": "Callable que recibe el nombre de cada acción del editor que se ejecuta (`\"undo\"`, `\"select_next\"`…).",
+                        "highlights": "Rangos pintados detrás del texto (resultados de búsqueda): `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido.",
+                        "highlight_color": "Color de `highlights`.",
+                        "match_brackets": "Remarca el corchete pareja del que está junto al cursor.",
+                        "selection_highlight": "Resalta las demás apariciones del texto seleccionado.",
                     },
                 },
             }),
@@ -735,6 +759,10 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                         "cursor_width": "Ancho del cursor de barra.",
                         "cursor_color": "Color del cursor (por defecto, el color de jugador del tema).",
                         "on_zoom": "Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda.",
+                        "on_action": "Callable que recibe el nombre de cada acción del editor que se ejecuta (`\"undo\"`, `\"select_next\"`…), por ejemplo para contarlas.",
+                        "highlights": "Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido.",
+                        "match_brackets": "Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él).",
+                        "selection_highlight": "Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor).",
                     },
                 },
                 "pyzed.ui.language_token": {

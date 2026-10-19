@@ -340,6 +340,22 @@ conocen los imports y las funciones auxiliares del principio del archivo; las po
 - El **code lens** al final de cada línea `def` y `class` muestra cuántas referencias tiene (según ty), cuántas
   clases lo implementan y qué eventos lo llaman (`on sign_in.click`).
 
+### Buscar, reemplazar y varios cursores
+
+![Buscar (Ctrl+F) con cada form.status seleccionado como cursor](../../../../../screenshots/designer-code-multicursor.png)
+
+- **Ctrl+F** abre la barra de búsqueda con la palabra bajo el cursor; las coincidencias se resaltan en el código y
+  la barra las cuenta. **Enter** o **F3** van a la siguiente, **Shift+F3** a la anterior y **Alt+Enter** pone un
+  cursor en cada una. Los botones distinguen mayúsculas, buscan palabras completas o usan una expresión regular.
+- **Ctrl+H** muestra también el campo de reemplazo: **Reemplazar** cambia la coincidencia actual y **Reemplazar
+  todo** todas, en un solo paso de deshacer. Con una expresión regular, `\1` en el reemplazo inserta un grupo.
+- **Ctrl+G** va a una línea (`42`) o a una línea y columna (`42:8`).
+- El editor tiene los cursores múltiples y los atajos de edición de Zed: **Alt+clic**, **Alt+Shift+Arriba/Abajo**,
+  **Ctrl+D**, **Ctrl+Shift+L**, **Alt+Arriba/Abajo** para mover líneas, **Ctrl+/** para comentar,
+  **Ctrl+Z** / **Ctrl+Shift+Z** y más. La lista completa está en
+  [el componente editor de código](../../components/code/#varios-cursores-y-los-atajos-de-zed) o con **F1** en el
+  diseñador.
+
 ### Configuración del editor
 
 El botón del engranaje del panel de código (o los puntos de los servidores en la barra de estado) abre la
@@ -361,9 +377,38 @@ configuración del editor. Se guarda por usuario en `designer.json`, dentro de l
 | Cerrar paréntesis y comillas | Escribir `(`, `[`, `{` o una comilla inserta su pareja (o envuelve la selección); escribir el cierre lo salta. |
 | Plegado de código | Las flechas del margen pliegan bloques; Ctrl+Shift+[ y Ctrl+Shift+] pliegan y despliegan en el cursor. |
 | Formatear con ruff al aplicar | Ejecuta `ruff format` sobre el código al pulsar Apply. |
+| Remarcar corchetes | Remarca el corchete pareja del que está junto al cursor. |
+| Resaltar coincidencias de la selección | Resalta los demás sitios con el texto seleccionado. |
 | Code lens, diagnósticos en línea | Muestran u ocultan las notas al final de las líneas. |
 
 ![El archivo completo con dos handlers plegados y el minimapa](../../../../../screenshots/designer-code-folding.png)
+
+## Telemetría
+
+El diseñador puede guardar datos de uso y rendimiento para ayudar a mejorarlo, pero solo si la activas: viene
+**desactivada**. En **Ajustes → Telemetría**, *Recopilar datos de uso y rendimiento* registra:
+
+- cuántas veces usas cada comando y cada acción del editor (`command.save`, `editor.select_next`…);
+- cuánto tarda el diseñador en arrancar, en dibujar un fotograma y en ejecutar cada comando (cantidad, total,
+  máximo y un histograma);
+- el número de sesiones y su duración.
+
+Nunca registra tu código, textos, nombres de formularios o de archivos, ni rutas. Los datos se guardan en
+`telemetry.json` en la carpeta de configuración de Pyzed; **Ver** lo abre y **Borrar** lo vacía (y cambia el id
+aleatorio de la instalación).
+
+Nada sale de tu equipo salvo que además indiques un **Destino**: entonces el diseñador envía allí los datos como
+JSON al cerrarse y vuelve a contar desde cero. Si el envío falla, se reintenta la próxima vez.
+`PYZED_TELEMETRY=0` desactiva la telemetría digan lo que digan los ajustes.
+
+```json
+{"schema": 1, "installation": "4f0c…", "app": "pyzed-designer", "version": "0.4.0", "os": "linux",
+ "arch": "x86_64", "python": "3.13", "since": "…", "until": "…", "sessions": 3,
+ "counters": {"command.save": 12, "editor.select_next": 7},
+ "timings": {"render": {"count": 840, "total_ms": 2210.4, "max_ms": 41.2, "buckets": [690, 120, 25, 5, 0, 0, 0, 0]}}}
+```
+
+Los `buckets` cuentan duraciones de hasta 4, 8, 16, 33, 50, 100 y 250 ms, y las más largas.
 
 ## Componentes
 

@@ -30,6 +30,8 @@ pub struct Caches {
     pending_cursors: RefCell<HashMap<String, text_editor::Position>>,
     /// Fold commands for editors not rendered yet (applied when they are created).
     pending_folds: RefCell<HashMap<String, Vec<crate::editor::FoldOp>>>,
+    /// Selections for editors not rendered yet.
+    pending_selections: RefCell<HashMap<String, Vec<crate::editor::TextRange>>>,
     images: RefCell<HashMap<u64, extra::Decoded>>,
     image_masks: extra::MaskCache,
     svgs: RefCell<HashMap<u64, svg::Handle>>,
@@ -100,6 +102,46 @@ impl Caches {
         Some(editor.fold_op(id, op))
     }
 
+    pub fn run_editor(
+        &mut self,
+        id: &str,
+        action: crate::editor::EditorAction,
+        ctx: &crate::editor::ActionContext,
+    ) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.run(id, action, ctx))
+    }
+
+    /// The action context of the editor's last render (`None` if it was never rendered).
+    pub fn editor_context(&self, id: &str) -> Option<std::sync::Arc<crate::editor::ActionContext>> {
+        self.editors.get(id)?.context.borrow().clone()
+    }
+
+    pub fn select_editor_ranges(
+        &mut self,
+        id: &str,
+        ranges: &[crate::editor::TextRange],
+    ) -> Task<Message> {
+        match self.editors.as_mut().get_mut(id) {
+            Some(editor) => editor.select_ranges(id, ranges),
+            None => {
+                self.pending_selections
+                    .borrow_mut()
+                    .insert(id.to_owned(), ranges.to_vec());
+                Task::none()
+            }
+        }
+    }
+
+    pub fn replace_editor_ranges(
+        &mut self,
+        id: &str,
+        edits: &[crate::editor::RangeEdit],
+    ) -> Option<Outcome> {
+        let editor = self.editors.as_mut().get_mut(id)?;
+        Some(editor.replace_ranges(id, edits))
+    }
+
     pub fn page_editor(&mut self, id: &str, down: bool, select: bool) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
         Some(editor.page(id, down, select))
@@ -145,6 +187,9 @@ impl Caches {
             .unwrap_or_default()
         {
             let _ = state.fold_op(id, op);
+        }
+        if let Some(ranges) = self.pending_selections.borrow_mut().remove(id) {
+            let _ = state.select_ranges(id, &ranges);
         }
         self.editors.insert(id.to_owned(), Box::new(state))
     }

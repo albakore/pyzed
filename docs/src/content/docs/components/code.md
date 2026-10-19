@@ -83,6 +83,68 @@ def zoom(self, step):
 - **Cursor.** `cursor_shape`, `cursor_blink`, `cursor_width` (of the bar) and `cursor_color` (the
   theme's player color by default), like Zed's `cursor_shape` setting.
 
+### Multiple cursors and Zed's keys
+
+![Three cursors and the search results for prices](../../../assets/components/editor-multicursor.png)
+
+The editor uses Zed's default keys (Linux and Windows; <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd> on macOS):
+
+| Keys | Action |
+| --- | --- |
+| <kbd>Alt</kbd>+click | Add a cursor (or remove the one under the click) |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Select the word under the cursor, then add the next match as a cursor |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Select every match |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | One cursor on each line of the selection |
+| <kbd>Ctrl</kbd>+<kbd>U</kbd> | Undo the last cursor change |
+| <kbd>Esc</kbd> | Back to one cursor, then drop the selection |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo and redo (consecutive typing is one step) |
+| <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Move the lines up / down |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplicate the lines |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Delete the lines |
+| <kbd>Ctrl</kbd>+<kbd>L</kbd> | Select the line (again: the next one too) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> | Join lines |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | New line below / above, indented |
+| <kbd>Ctrl</kbd>+<kbd>]</kbd> / <kbd>Ctrl</kbd>+<kbd>[</kbd>, <kbd>Shift</kbd>+<kbd>Tab</kbd> | Indent / outdent (<kbd>Tab</kbd> indents a selection of several lines) |
+| <kbd>Ctrl</kbd>+<kbd>/</kbd> | Toggle line comments (`#`, `//` or `--`, from `language`) |
+| <kbd>Ctrl</kbd>+<kbd>M</kbd> | Jump to the matching (or enclosing) bracket |
+| <kbd>Ctrl</kbd>+<kbd>Backspace</kbd> / <kbd>Ctrl</kbd>+<kbd>Delete</kbd> | Delete the word before / after |
+| <kbd>Home</kbd> | First non-blank character, then the start of the line |
+| <kbd>Ctrl</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Scroll one line without moving the cursor |
+| <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>X</kbd> | Without a selection, copy / cut the whole line; with several cursors, every cursor's text |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> / <kbd>Ctrl</kbd>+<kbd>L</kbd> | Fold everything / unfold everything / toggle the fold at the cursor |
+
+Typing, deleting and moving apply to every cursor. Pasting text with one line per cursor gives each
+cursor its line, as in Zed. The bracket next to the cursor and its match are outlined
+(`match_brackets`), and selecting text highlights its other occurrences (`selection_highlight`).
+
+Every action has a name (Zed's, in snake case). `on_action(name)` is called after each one runs,
+`Command.editor_action(id, name)` runs one from code (a menu, a command palette) and
+`Command.editor_actions()` lists them:
+
+```python
+ui.editor("main.py", code, path="main.py", on_action=self.ran,
+          highlights=self.found)       # [(line, column, end_line, end_column)], 1-based
+
+def comment(self):
+    return pz.Command.editor_action("main.py", "toggle_comments")
+
+def select_matches(self):
+    # One cursor per range; the first one is the primary cursor.
+    return pz.Command.select_editor_ranges("main.py", self.found)
+
+def replace_all(self):
+    # One undo step; on_change gets the new text.
+    return pz.Command.replace_editor_ranges("main.py", [(r, "total") for r in self.found])
+```
+
+Names include `undo`, `redo`, `add_selection_above`, `add_selection_below`, `select_next`,
+`select_previous`, `select_all_matches`, `split_selection_into_lines`, `undo_selection`, `cancel`,
+`move_line_up`, `move_line_down`, `duplicate_line_up`, `duplicate_line_down`, `delete_line`,
+`newline_above`, `newline_below`, `indent`, `outdent`, `select_line`, `join_lines`, `toggle_comments`,
+`move_to_enclosing_bracket`, `convert_to_upper_case`, `convert_to_lower_case` and
+`sort_lines_case_sensitive`.
+
 ## Terminal
 
 ![Terminal](../../../assets/components/terminal.png)

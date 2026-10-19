@@ -1997,6 +1997,10 @@ editor(
     cursor_width=2.0,
     cursor_color=None,
     on_zoom=None,
+    on_action=None,
+    highlights=None,
+    match_brackets=True,
+    selection_highlight=True,
     theme=None,
 )
 ```
@@ -2032,6 +2036,10 @@ El editor de código de Zed: resaltado con los colores del tema, números de lí
 | `cursor_width` | Ancho del cursor de barra. |
 | `cursor_color` | Color del cursor (por defecto, el color de jugador del tema). |
 | `on_zoom` | Callable que recibe `1`, `-1` o `0` con Ctrl+= / Ctrl+- / Ctrl+0 y Ctrl+rueda. |
+| `on_action` | Callable que recibe el nombre de cada acción del editor que se ejecuta (`"undo"`, `"select_next"`…), por ejemplo para contarlas. |
+| `highlights` | Rangos pintados detrás del texto con el color de búsqueda del tema: `[(línea, columna, línea_final, columna_final)]`, desde 1, con el final excluido. |
+| `match_brackets` | Remarca el corchete pareja del que está junto al cursor (Ctrl+M salta a él). |
+| `selection_highlight` | Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`
