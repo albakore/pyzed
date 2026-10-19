@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Every pyzed command - projects, dependencies, running, building and icons.
+description: Every pyzed command - projects, dependencies, running, building, icons and the MCP server.
 sidebar:
   order: 9
 ---
@@ -66,3 +66,12 @@ Lists the names of the bundled Lucide icons that contain `filter`.
 ```bash
 pyzed icons arrow
 ```
+
+## `pyzed mcp`
+
+Runs the [MCP server for AI agents](/pyzed/guides/mcp/) over stdio, until the client disconnects. It needs the
+`mcp` extra: `pip install "pyzed-ui[mcp]"`.
+
+| Option | Effect |
+| --- | --- |
+| `--transport streamable-http` | Serve over HTTP instead of stdio. |
