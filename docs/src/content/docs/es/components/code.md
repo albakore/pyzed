@@ -151,6 +151,14 @@ Entre los nombres están `undo`, `redo`, `add_selection_above`, `add_selection_b
 `move_to_enclosing_bracket`, `convert_to_upper_case`, `convert_to_lower_case` y
 `sort_lines_case_sensitive`.
 
+### Métodos de entrada
+
+El chino, el japonés, el coreano y otros idiomas que se escriben con un método de entrada (IME) funcionan
+en el editor. Mientras compones, el texto del IME se dibuja en un recuadro en el cursor y el cursor se oculta; el texto confirmado se inserta en cada cursor y varias confirmaciones
+seguidas se deshacen en un solo paso, como al escribir. El IME sigue al cursor cuando lo mueves.
+
+![Componiendo 你好 con un método de entrada pinyin](../../../../assets/components/editor-ime.png)
+
 ## Terminal
 
 ![Terminal](../../../../assets/components/terminal.png)

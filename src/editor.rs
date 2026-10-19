@@ -132,6 +132,11 @@ pub struct EditorState {
     pub(crate) modifiers: Cell<keyboard::Modifiers>,
     /// Ctrl+K was pressed and the next key completes the chord.
     pub(crate) chord: Cell<bool>,
+    /// An input method (IME) is composing text: its preedit is drawn at the cursor, so the
+    /// caret is hidden. Tracked by `EditorInput`.
+    pub(crate) composing: Cell<bool>,
+    /// The next paste is text the input method committed, recorded as typing for undo.
+    pub(crate) ime_commit: Cell<bool>,
     /// The action context of the last render, for actions run from Python commands.
     pub(crate) context: RefCell<Option<Arc<ActionContext>>>,
 }
@@ -150,6 +155,8 @@ impl EditorState {
             history: actions::History::default(),
             modifiers: Cell::new(keyboard::Modifiers::default()),
             chord: Cell::new(false),
+            composing: Cell::new(false),
+            ime_commit: Cell::new(false),
             context: RefCell::new(None),
         }
     }
@@ -628,8 +635,11 @@ impl EditorState {
                 self.content.perform(action);
             }
             Action::Edit(edit) => {
+                let committed = self.ime_commit.take();
                 let kind = match &edit {
                     Edit::Insert(c) if c.is_alphanumeric() || *c == '_' => EditKind::Typing,
+                    // Text from an input method (Chinese, Japanese, Korean...) arrives as a paste.
+                    Edit::Paste(_) if committed => EditKind::Typing,
                     Edit::Backspace | Edit::Delete if self.content.cursor().selection.is_none() => {
                         EditKind::Deleting
                     }

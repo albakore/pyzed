@@ -51,6 +51,8 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>[</kbd> folds the innermost block around the cursor and
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>]</kbd> unfolds it.
 - **Minimap**: the code zoomed out on the right; click or drag it to scroll.
+- **Input methods**: Chinese, Japanese and Korean input methods (IME) work: the text being composed is
+  drawn at the cursor and the committed text goes in at every cursor.
 - **Whitespace**: optionally draws spaces as `·` and tabs as `→`.
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> or <kbd>Ctrl</kbd>+wheel change the font size;
   <kbd>Ctrl</kbd>+<kbd>0</kbd> resets it. The size is saved.

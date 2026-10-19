@@ -36,6 +36,5 @@ older ones, and refuses a file saved by a newer Pyzed instead of silently droppi
 | Effects | `glass`, `bloom` and `glow` are drawn with gradients and shadows: nothing behind a panel is blurred. |
 | Animations | 11 properties can be animated (opacity, position, scale, colors, radius, border width and glow); size, rotation and padding cannot. |
 | Large data | Every update rebuilds the view, and `ui.table` creates every row: there is no virtualized list yet. |
-| Text input | The code editor has no input method (IME) support for Chinese, Japanese or Korean; `text_input` does. |
 | Platforms | Wheels need glibc 2.28 or newer on Linux; there are no musllinux (Alpine) wheels. Pyzed Design builds are not signed yet. |
 | Python | Free-threaded Python (3.13t, 3.14t) is not supported. The `agents` and `mcp` extras need Python 3.10 or newer. |
