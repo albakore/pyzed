@@ -22,7 +22,7 @@ from .base import (
 )
 from .color import ColorPicker, checkerboard, color_swatch
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
-from .help import about, shortcuts
+from .help import about, reference_browser, shortcuts
 from .controls import (
     AccordionSection,
     accordion,
@@ -79,6 +79,7 @@ __all__ = [
     "LogEntry",
     "about",
     "console",
+    "reference_browser",
     "shortcuts",
     "AccordionSection",
     "accordion",

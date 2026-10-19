@@ -23,7 +23,7 @@ Un tema: un dataclass inmutable con los tokens de color de Zed (superficies, bor
 Theme.is_dark  # property
 ```
 
-Whether the theme's appearance is dark.
+Si el aspecto del tema es oscuro.
 
 ### `derive`
 
@@ -267,7 +267,7 @@ Lo que devuelve `themes.auto`: un par `(light, dark)`. `pick(dark)` devuelve el 
 AutoTheme.pick(dark)
 ```
 
-Returns the dark theme when `dark` is true, else the light one.
+Devuelve el tema oscuro si `dark` es verdadero; si no, el claro.
 
 ## Utilidades (pyzed.theme)
 

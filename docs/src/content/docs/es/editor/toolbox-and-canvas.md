@@ -138,6 +138,7 @@ Clic derecho en un control del lienzo, en su fila de la estructura o en la pesta
 | Entrada | Hace |
 | --- | --- |
 | **View code** | Abre el manejador del evento principal del control (o abre un componente diseñado en su pestaña). |
+| **Help** | Abre la página del control en la [referencia](/pyzed/es/editor/reference/) (<kbd>Shift</kbd>+<kbd>F1</kbd>). |
 | **Add inside…** | Solo contenedores: la lista Añadir control, añadiendo dentro de este contenedor. |
 | **Group in a row / column / grid / panel** | Envuelve la selección en una fila flex, una columna flex, una grilla o un panel nuevos. |
 | **Move out of *contenedor*** | Saca el control de su contenedor, al padre del contenedor. |

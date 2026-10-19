@@ -970,6 +970,32 @@ Un cuadro Acerca de: icono, nombre, versión, una descripción, algunos detalles
 | `links` | Botones `(etiqueta, on_press)`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
+### `reference_browser`
+
+```python
+reference_browser(
+    browser,
+    *,
+    on_open_url=None,
+    sidebar_width=270,
+    width='fill',
+    height='fill',
+    theme=None,
+)
+```
+
+La referencia integrada, como la de Godot: una lista de clases con búsqueda junto a la página abierta.
+
+`browser` es un `pyzed.reference.Browser` (guárdalo en el estado de tu app); al hacer clic en entradas,
+enlaces y en los botones atrás/adelante cambia. `on_open_url(url)` recibe los enlaces que salen de la
+referencia (la web, GitHub...):
+
+```python
+self.help = reference.Browser("pyzed.ui.button")
+...
+ui.reference_browser(self.help, on_open_url=abrir_en_navegador)
+```
+
 ## Datos y feedback
 
 ### `callout`

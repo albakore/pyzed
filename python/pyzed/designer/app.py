@@ -36,12 +36,15 @@ from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from ..i18n import t as _t
 from .runtime import FormWindow
 from . import scene as _scene
 from . import scene_code as _scene_code
 from . import scene_panel
 from . import telemetry as _telemetry
 from ..project import Project
+from .. import reference as _reference
+from . import help as _help
 
 Rect = Tuple[float, float, float, float]
 TITLE_HEIGHT = 34.0
@@ -82,6 +85,8 @@ class Carry:
 
 
 CONTEXT_MENU_WIDTH = 220
+#: The id of the Reference tab in the tab bar.
+HELP_TAB = "__reference__"
 
 #: Pixels the pointer must travel before a press in the toolbox or outline becomes a drag.
 CARRY_THRESHOLD = 4
@@ -176,6 +181,10 @@ class Designer(App):
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.updates = UpdateController(self)
+        # the built-in reference (Help → Reference): its own tab next to the documents
+        self.help = _reference.Browser()
+        self.help_open = False
+        self.help_active = False
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
@@ -731,6 +740,8 @@ class Designer(App):
         container = control is not None and _layout.kind(control) is not None
         items = [
             ui.MenuItem(tr("View code"), self._menu_action(lambda: self.open_default_event(name)), icon="code"),
+            ui.MenuItem(tr("Help"), self._menu_action(lambda: self.open_reference(self.help_page_of(name))),
+                        icon="book-marked", keys="shift-f1"),
             ui.MenuItem(tr("Add inside…"), self._menu_action(lambda: self.open_add_child(name)), icon="plus")
             if container else None,
             ui.SEPARATOR,
@@ -1245,6 +1256,7 @@ class Designer(App):
     @doc.setter
     def doc(self, value: Document) -> None:
         """Opens ``value`` in a tab: the tab of the same file, an untouched empty tab, or a new one."""
+        self.__dict__["help_active"] = False  # show the document, not the Reference tab
         docs: List[Document] = self.__dict__.setdefault("docs", [])
         if not docs:
             docs.append(value)
@@ -1335,13 +1347,19 @@ class Designer(App):
         notes = self.updates.tab()
         if notes is not None:
             tabs.append(notes)
+        if self.help_open:
+            tabs.append(ui.Tab(id=HELP_TAB, label=_t("pyzed.reference.title"), icon="book-open", icon_color="accent"))
         view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
-        active = _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
+        active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
         return ui.tab_bar(tabs, active, on_select=self._select_tab, on_close=self._close_tab,
                           end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
 
     def _select_tab(self, tab_id: str) -> None:
         """Switches to a document tab, or to the What's new tab."""
+        self.help_active = tab_id == HELP_TAB
+        if tab_id == HELP_TAB:
+            self.updates.activate_notes(False)
+            return
         if tab_id == _NOTES_TAB:
             self.updates.activate_notes()
             return
@@ -1349,10 +1367,55 @@ class Designer(App):
         self.select_doc(int(tab_id))
 
     def _close_tab(self, tab_id: str) -> None:
-        if tab_id == _NOTES_TAB:
+        if tab_id == HELP_TAB:
+            self.close_reference()
+        elif tab_id == _NOTES_TAB:
             self.updates.close_notes()
         else:
             self.close_doc(int(tab_id))
+
+    # -- built-in reference ---------------------------------------------------
+    def open_reference(self, page: Optional[str] = None) -> None:
+        """Opens the Reference tab, on ``page`` when given (an id of ``pyzed.reference``)."""
+        self.app_menu = None
+        self.menu = None
+        if page is not None:
+            self.help.open(page)
+        self.help_open = self.help_active = True
+        self.updates.activate_notes(False)
+
+    @property
+    def help_shown(self) -> bool:
+        """Whether the Reference tab is the one in front (What's new takes over when it opens)."""
+        return self.help_active and not self.updates.notes_active
+
+    def close_reference(self) -> None:
+        """Closes the Reference tab."""
+        self.help_open = self.help_active = False
+
+    def reference_here(self) -> None:
+        """Opens the reference about what is in front of the user (Shift+F1).
+
+        The name under the cursor in the code editor (``form.button1.text`` opens the Button page,
+        ``ui.button`` its library page), else the selected control, else the reference as it was.
+        """
+        page = None
+        if self.editing is not None and self.focus == "code":
+            line, column = self.assist.cursor
+            symbol = _help.word_at(self.assist._line(line), column - 1)
+            page = _help.lookup_code(symbol, self.doc.form) if symbol else None
+            if page is None and symbol:
+                self.help.set_query(symbol.rsplit(".", 1)[-1])
+        elif self.doc.primary is not None:
+            page = self.help_page_of(self.doc.primary.name)
+        self.open_reference(page)
+
+    def help_page_of(self, name: str) -> Optional[str]:
+        """The reference page of the control ``name`` (its toolbox type, or the component placed there)."""
+        control = self.doc.form.get(name)
+        if control is None:
+            return None
+        return _help.lookup_code(f"form.{name}", self.doc.form)
 
     def new(self, kind: str = "form") -> Any:
         """Shows the "New" dialog: a form (name, title, template and folder) or a component (``kind``)."""
@@ -1704,7 +1767,10 @@ class Designer(App):
         """
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        if self.updates.notes_active:
+        if self.help_shown:
+            center = _core.column([self.doc_tabs(t), ui.reference_browser(self.help, on_open_url=self.open_url,
+                                                                          theme=t)], width="fill", height="fill")
+        elif self.updates.notes_active:
             center = _core.column([self.doc_tabs(t), self.updates.notes_view(t)], width="fill", height="fill")
         else:
             center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],

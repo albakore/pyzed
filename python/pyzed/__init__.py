@@ -76,7 +76,7 @@ from .style import Gradient, Mask, Paint, Style, define_style, set_style
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
+from . import component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, reference, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -139,6 +139,7 @@ __all__ = [
     "container",
     "define_style",
     "designer",
+    "reference",
     "dock",
     "component",
     "draw",

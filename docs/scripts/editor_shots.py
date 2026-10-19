@@ -189,6 +189,23 @@ def new_project():
 
 
 @shot
+def reference():
+    app = login()
+    app.doc.select("sign_in")
+    app._selection_changed()
+    app.reference_here()
+    save(app, "reference")
+
+
+@shot
+def reference_search():
+    app = login()
+    app.open_reference("pyzed.ui.tab_bar")
+    app.help.set_query("tab")
+    save(app, "reference-search")
+
+
+@shot
 def about():
     app = login()
     app.open_dialog_named("about")

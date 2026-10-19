@@ -29,6 +29,10 @@ un nombre nuevo y pulsa <kbd>Enter</kbd> para renombrarlo; los manejadores que s
 (`email_change`) se renombran también en el archivo de código. El editor ajusta los nombres para que sean válidos y
 únicos.
 
+El botón del **libro** a la derecha de la cabecera (<kbd>Shift</kbd>+<kbd>F1</kbd>) abre la página del control en la
+[referencia integrada](/pyzed/es/editor/reference/): cada propiedad con su tipo y valor por defecto, sus eventos y sus
+métodos. Pasa el ratón por la etiqueta de una propiedad para ver una descripción de una línea.
+
 ### Las secciones propias del componente
 
 Cada componente agrupa sus propiedades en secciones **Apariencia**, **Datos**, **Disposición** o

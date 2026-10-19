@@ -104,7 +104,9 @@ ACTIONS: Tuple[Action, ...] = (
     # Help
     Action("shortcuts", "Keyboard shortcuts", "Help", lambda d: d.open_dialog_named("shortcuts"), "keyboard", "f1",
            global_keys=True),
-    Action("docs", "Documentation", "Help", lambda d: d.open_docs(), "book-open"),
+    Action("reference", "Reference", "Help", lambda d: d.reference_here(), "book-marked", "shift-f1",
+           global_keys=True),
+    Action("docs", "Documentation", "Help", lambda d: d.open_docs(), "globe"),
     Action("issue", "Report a problem", "Help", lambda d: d.open_url(ISSUES_URL), "bug"),
     Action("whats_new", "What's new", "Help", lambda d: d.updates.show_notes(), "sparkles"),
     Action("check_updates", "Check for updates", "Help", lambda d: d.updates.check(), "refresh-cw"),

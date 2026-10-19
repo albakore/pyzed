@@ -1044,3 +1044,222 @@ normalize(language)
 ```
 
 `"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.
+
+## Built-in reference
+
+### `Browser`
+
+```python
+class Browser
+```
+
+What a reference viewer shows: the search text, the page open and the back/forward history.
+
+`ui.reference_browser(browser)` draws it; its buttons and links call the methods below.
+
+**Methods and properties**
+
+#### `Browser.open`
+
+```python
+Browser.open(id)
+```
+
+Shows the page `id` (returns `False` when there is no such page).
+
+#### `Browser.open_symbol`
+
+```python
+Browser.open_symbol(symbol)
+```
+
+Shows the page about a name written in code; returns whether one was found.
+
+#### `Browser.back`
+
+```python
+Browser.back()
+```
+
+Goes to the previous page.
+
+#### `Browser.forward`
+
+```python
+Browser.forward()
+```
+
+Goes to the next page after going back.
+
+#### `Browser.set_query`
+
+```python
+Browser.set_query(query)
+```
+
+Changes the search text.
+
+#### `Browser.toggle`
+
+```python
+Browser.toggle(section)
+```
+
+Folds or unfolds a section of the class list.
+
+#### `Browser.results`
+
+```python
+Browser.results()
+```
+
+The entries matching the search text.
+
+#### `Browser.page`
+
+```python
+Browser.page()
+```
+
+The page shown (`None` before one is opened).
+
+#### `Browser.follow`
+
+```python
+Browser.follow(url)
+```
+
+Handles a link of a page: internal links open their page; returns the URL to open otherwise.
+
+### `Entry`
+
+```python
+@dataclass
+class Entry(id, title, section, group='', summary='', icon='book-open', kind='function')
+```
+
+One page of the reference, as search results and the class list show it.
+
+### `Page`
+
+```python
+@dataclass
+class Page(entry, body, url=None)
+```
+
+A full page: the entry it belongs to and its body in Markdown.
+
+**Methods and properties**
+
+#### `Page.id`
+
+```python
+Page.id  # property
+```
+
+The entry's id.
+
+#### `Page.title`
+
+```python
+Page.title  # property
+```
+
+The entry's title.
+
+### `Provider`
+
+```python
+@dataclass
+class Provider(name, entries, page, lookup=None)
+```
+
+A section of the reference that comes from somewhere else than the library's API pages.
+
+`entries(lang)` lists its pages, `page(id, lang)` builds one (`None` when the id is not
+its own) and `lookup(symbol)` turns a name written in code into one of its ids.
+
+### `register`
+
+```python
+register(provider)
+```
+
+Adds a section to the reference (it replaces one with the same `name`).
+
+### `entries`
+
+```python
+entries(lang=None)
+```
+
+Every page of the reference, in class-list order (designer controls first, then the library).
+
+### `sections`
+
+```python
+sections(lang=None)
+```
+
+The class list: `[(section, [(group, [entries]), ...]), ...]` in order.
+
+### `search`
+
+```python
+search(query, lang=None, limit=60)
+```
+
+Entries matching `query`: exact names first, then names that start with it, then the rest.
+
+Every word must appear in the title, group or summary (`"tab bar"` finds `ui.tab_bar`).
+
+### `page`
+
+```python
+page(id, lang=None)
+```
+
+The page with `id` (`KeyError` when there is none).
+
+### `lookup`
+
+```python
+lookup(symbol)
+```
+
+The id of the page about a name written in code (`"pz.text"`, `"ui.button"`, `"Theme"`...).
+
+### `languages`
+
+```python
+languages()
+```
+
+The languages the API descriptions are available in.
+
+### `tables_as_lists`
+
+```python
+tables_as_lists(markdown)
+```
+
+Markdown tables turned into bullet lists (`- first cell: the other cells`).
+
+For viewers whose tables don't wrap long cells, such as `ui.reference_browser` in a narrow tab.
+Code blocks are left alone.
+
+### `display_name`
+
+```python
+display_name(name)
+```
+
+`"pyzed.text"` -> `"pz.text"`, `"pyzed.ui.button"` -> `"ui.button"`.
+
+### `summary`
+
+```python
+summary(markdown)
+```
+
+The first sentence of a Markdown text, without formatting (for lists and search results).
