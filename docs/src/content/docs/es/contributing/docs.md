@@ -1,6 +1,6 @@
 ---
 title: Editar la documentación
-description: Cómo está organizada esta web, cómo previsualizarla, cómo funcionan las traducciones y cómo regenerar la referencia y las imágenes.
+description: "Cómo está organizada la documentación de Pyzed, cómo previsualizarla, cómo funcionan las traducciones y cómo regenerar la referencia y las capturas."
 sidebar:
   order: 4
 ---

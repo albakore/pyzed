@@ -1,0 +1,37 @@
+---
+// Starlight's footer plus links that help readers and search engines find the FAQ and the
+// machine-readable versions of these docs (llms.txt, see contributing/seo.md).
+import Default from '@astrojs/starlight/components/Footer.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const es = Astro.currentLocale === 'es';
+const prefix = `${base}${es ? '/es' : ''}`;
+const links = [
+	{ href: `${prefix}/faq/`, label: es ? 'Preguntas frecuentes' : 'FAQ' },
+	{ href: `${prefix}/changelog/`, label: es ? 'Novedades' : 'Changelog' },
+	{ href: `${prefix}/llms.txt`, label: 'llms.txt' },
+	{ href: 'https://github.com/albakore/pyzed', label: 'GitHub' },
+];
+---
+
+<Default><slot /></Default>
+<nav class="site-footer-links" aria-label={es ? 'Enlaces del pie' : 'Footer links'}>
+	{links.map((link) => <a href={link.href}>{link.label}</a>)}
+</nav>
+
+<style>
+	.site-footer-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.25rem;
+		margin-top: 1.5rem;
+		font-size: var(--sl-text-sm);
+	}
+	.site-footer-links a {
+		color: var(--sl-color-gray-3);
+		text-decoration: none;
+	}
+	.site-footer-links a:hover {
+		color: var(--sl-color-accent-high);
+	}
+</style>

@@ -1,6 +1,6 @@
 ---
 title: Pyzed Design
-description: The manual of Pyzed's visual editor. Draw windows and components, wire their events to Python, run them and ship them.
+description: "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, wire events to Python, run them and ship them."
 sidebar:
   order: 0
   label: Overview

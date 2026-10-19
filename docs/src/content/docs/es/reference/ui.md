@@ -1,6 +1,6 @@
 ---
 title: "Componentes (pyzed.ui)"
-description: "Referencia de todos los componentes al estilo de Zed."
+description: "Referencia de la API de pyzed.ui: cada componente estilo Zed con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python."
 sidebar:
   order: 4
 ---

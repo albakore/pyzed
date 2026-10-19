@@ -1,6 +1,6 @@
 ---
 title: Temas
-description: Los temas incluidos, los tokens de color de Zed y cómo crear y cambiar temas.
+description: "Temas de Pyzed: One, Ayu y Gruvbox en claro y oscuro, los tokens de color de Zed y cómo crear, importar y cambiar temas mientras la app corre."
 sidebar:
   order: 3
 ---

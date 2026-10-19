@@ -1,6 +1,6 @@
 ---
 title: "Diseñador visual (pyzed.designer)"
-description: "Ejecuta, abre y crea formularios desde código, y registra componentes y plantillas de la caja de herramientas."
+description: "Referencia de la API de pyzed.designer: ejecuta, abre y crea formularios desde código Python, y registra componentes y plantillas de la caja de herramientas."
 sidebar:
   order: 10
 ---

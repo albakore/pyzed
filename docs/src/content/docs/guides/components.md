@@ -1,6 +1,6 @@
 ---
 title: Custom components
-description: Build reusable components with their own props, state, logic and events, like React components, and use them in the designer.
+description: "Build reusable Pyzed components with their own props, state, logic and events, like React components, and use them in the visual designer."
 sidebar:
   order: 8
 ---

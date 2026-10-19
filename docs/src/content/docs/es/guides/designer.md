@@ -1,6 +1,6 @@
 ---
 title: Diseñador visual
-description: Crea ventanas arrastrando componentes, conecta sus eventos a Python y ejecútalas, como en Visual Basic o Qt Designer.
+description: "Crea ventanas de escritorio en Python arrastrando componentes, conecta sus eventos a Python y ejecútalas: un diseñador como Visual Basic o Qt Designer."
 sidebar:
   order: 13
 ---

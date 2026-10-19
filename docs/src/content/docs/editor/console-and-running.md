@@ -1,6 +1,6 @@
 ---
 title: Running and the console
-description: Run forms and components with F5, read their output, events and errors in the console, and update them live on save.
+description: "Run forms and components with F5 in Pyzed Design, read output, events and errors in the console, and see changes live with hot reload on save."
 sidebar:
   order: 8
 ---

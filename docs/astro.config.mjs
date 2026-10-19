@@ -21,7 +21,7 @@ export default defineConfig({
 		starlight({
 			title: 'Pyzed',
 			description:
-				'Fast, modern desktop UIs in Python, rendered by Iced (Rust), with components inspired by the Zed editor.',
+				'Pyzed is an open-source Python framework for native desktop GUIs rendered by Rust (Iced), with Zed-style components and a drag-and-drop visual designer.',
 			logo: { src: './src/assets/logo.svg', replacesTitle: false },
 			favicon: '/favicon.svg',
 			defaultLocale: 'root',
@@ -33,8 +33,21 @@ export default defineConfig({
 			editLink: { baseUrl: 'https://github.com/albakore/pyzed/edit/main/docs/' },
 			lastUpdated: true,
 			customCss: ['./src/styles/custom.css'],
+			// SEO/GEO: per-page titles, descriptions, social cards, hreflang and JSON-LD (see contributing/seo.md).
+			routeMiddleware: './src/routeData.ts',
 			head: [
+				{ tag: 'meta', attrs: { name: 'author', content: 'albakore and the Pyzed contributors' } },
+				{ tag: 'meta', attrs: { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#181a1f', media: '(prefers-color-scheme: dark)' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)' } },
+				{ tag: 'meta', attrs: { name: 'application-name', content: 'Pyzed' } },
+				{ tag: 'link', attrs: { rel: 'manifest', href: '/pyzed/manifest.webmanifest' } },
+				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/pyzed/apple-touch-icon.png' } },
+				{ tag: 'link', attrs: { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/pyzed/icon-192.png' } },
+				// For AI assistants and answer engines: https://llmstxt.org
+				{ tag: 'link', attrs: { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/pyzed/llms.txt' } },
 				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
 				{
 					tag: 'link',
 					attrs: {
@@ -43,7 +56,7 @@ export default defineConfig({
 					},
 				},
 			],
-			components: { SiteTitle: './src/components/SiteTitle.astro' },
+			components: { SiteTitle: './src/components/SiteTitle.astro', Footer: './src/components/Footer.astro' },
 			expressiveCode: { themes: ['one-dark-pro', 'one-light'] },
 			sidebar: [
 				{
@@ -67,6 +80,7 @@ export default defineConfig({
 				group('Contributing', 'Contribuir', 'contributing'),
 				group('API reference', 'Referencia de la API', 'reference'),
 				{ slug: 'examples' },
+				{ slug: 'faq' },
 				{ slug: 'changelog', badge: { text: 'releases', variant: 'tip' } },
 			],
 		}),

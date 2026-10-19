@@ -1,6 +1,6 @@
 ---
 title: Listas, árbol y menús
-description: Filas de lista, el árbol de archivos del panel de proyecto y menús contextuales.
+description: "Filas de lista, el árbol de archivos del proyecto y menús contextuales: componentes de listas estilo Zed para apps de escritorio en Python."
 sidebar:
   order: 3
 ---

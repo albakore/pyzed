@@ -1,6 +1,6 @@
 ---
 title: AI agents
-description: The Agent panel of Pyzed Design - an AI agent that builds forms and components, writes their code and edits the open form, with inline assist in the code editor, several model providers and keys kept in the system keychain.
+description: "The Agent panel of Pyzed Design: an AI agent that builds forms and components and writes their Python code, with inline assist and several model providers."
 sidebar:
   order: 10.5
 ---

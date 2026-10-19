@@ -1,6 +1,6 @@
 ---
 title: Introducción
-description: Qué es Pyzed, cómo funciona y cuándo usarlo.
+description: "Qué es Pyzed: un framework de GUI de escritorio para Python renderizado de forma nativa en Rust (Iced), con componentes estilo Zed, y cuándo usarlo."
 ---
 
 **Pyzed** es una librería para crear interfaces de escritorio en Python con el rendimiento de
@@ -37,4 +37,5 @@ App.update() ◄── mensajes ◄────── app.rs: Message, Command �
 Python básico: clases, funciones y lambdas. No hace falta saber Rust ni Iced.
 
 Continúa con la [instalación](/pyzed/es/getting-started/installation/) o salta directamente al
-[inicio rápido](/pyzed/es/getting-started/quickstart/).
+[inicio rápido](/pyzed/es/getting-started/quickstart/). ¿Dudas sobre la licencia, las plataformas o cómo se
+compara Pyzed con tkinter, Kivy, PyQt o Flet? Mira las [preguntas frecuentes](/pyzed/es/faq/).

@@ -1,6 +1,6 @@
 ---
 title: Compilar y distribuir
-description: Empaqueta una app de Pyzed como ejecutable independiente para Windows, macOS y Linux, al estilo de PyInstaller, incluido el código y los datos de fuera de la carpeta de UI.
+description: "Empaqueta una app de Pyzed como ejecutable independiente para Windows, macOS y Linux, al estilo de PyInstaller, con código y datos fuera de la UI."
 sidebar:
   order: 15
 ---

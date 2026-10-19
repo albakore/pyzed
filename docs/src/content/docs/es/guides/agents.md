@@ -1,6 +1,6 @@
 ---
 title: Agentes de IA en tu app
-description: pyzed.agents - habla con Claude, OpenAI, Gemini, OpenRouter, Ollama y servidores compatibles con OpenAI, da herramientas al modelo, transmite su respuesta a tu UI y guarda las claves en el llavero del sistema.
+description: "pyzed.agents: añade IA a apps de escritorio en Python con Anthropic, OpenAI, Gemini, OpenRouter u Ollama, da herramientas al modelo y transmite respuestas."
 sidebar:
   order: 17
 ---
@@ -208,3 +208,9 @@ def fake(model, system, messages, tools, *, settings, on_event, cancel):
 agent = agents.Agent("x", tools=[stock], stream=fake, settings=agents.AgentSettings())
 assert agent.run("¿Escritorios?") == "No quedan escritorios."
 ```
+
+## Una app de chat completa
+
+[Crear apps con IA](/pyzed/es/ai/ai-apps/) construye un chat completo con streaming sobre una API compatible con
+OpenAI, con detener, errores y tests sin red, y muestra cómo usar `pyzed.agents` desde `pz.Command.perform` y
+`pz.post`.

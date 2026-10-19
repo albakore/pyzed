@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Your first Pyzed window in five minutes.
+description: "Your first native Python desktop window with Pyzed in five minutes: install the package, write a small counter app and run it anywhere."
 ---
 
 ## 1. A window

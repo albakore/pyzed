@@ -1,6 +1,6 @@
 ---
 title: "Core widgets"
-description: "Pyzed's native widgets: layout, text, controls, editor, svg and icons."
+description: "API reference for Pyzed's native widgets: layout, text, controls, the code editor, SVG and icons, all rendered in Rust by Iced."
 sidebar:
   order: 3
 ---

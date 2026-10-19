@@ -1,6 +1,6 @@
 ---
 title: "Icons"
-description: "Bundled Lucide icons and file-type utilities."
+description: "API reference for pyzed.icons: the bundled Lucide icon set, icon names and file-type icon utilities for Python desktop interfaces."
 sidebar:
   order: 8
 ---

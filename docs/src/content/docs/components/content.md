@@ -1,6 +1,6 @@
 ---
 title: Content and panels
-description: Markdown, rich text, images, QR codes, resizable panels, grids and popovers.
+description: "Markdown, rich text, images, QR codes, resizable panels, grids and popovers: content components for Python desktop GUIs built with Pyzed."
 sidebar:
   order: 10
 ---

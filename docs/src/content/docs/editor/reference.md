@@ -1,6 +1,6 @@
 ---
 title: Built-in reference
-description: The searchable class reference inside Pyzed Design, contextual help with Shift+F1, and the same reference in your own apps with pyzed.reference.
+description: "The searchable class reference inside Pyzed Design, contextual help with Shift+F1, and the same reference browser in your own apps."
 sidebar:
   order: 11.5
 ---

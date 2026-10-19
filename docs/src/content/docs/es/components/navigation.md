@@ -1,6 +1,6 @@
 ---
 title: Navegación
-description: Pestañas de editor, breadcrumbs y la barra de herramientas.
+description: "Pestañas de editor, breadcrumbs y barra de herramientas: componentes de navegación estilo Zed para crear GUIs tipo IDE en Python con Pyzed."
 sidebar:
   order: 4
 ---

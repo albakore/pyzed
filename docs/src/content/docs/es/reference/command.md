@@ -1,6 +1,6 @@
 ---
 title: "Command"
-description: "Efectos secundarios que devuelven update y los callbacks."
+description: "Referencia de la API de los comandos de Pyzed: los efectos que devuelven update y los callbacks, como enfocar campos, cerrar y tareas en segundo plano."
 sidebar:
   order: 2
 ---

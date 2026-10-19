@@ -1,6 +1,6 @@
 ---
 title: Añadir un componente al editor
-description: Paso a paso, de una función de pyzed.ui (y el widget de Rust que hay detrás) a una entrada de la caja de herramientas con propiedades, eventos, formularios guardados, handlers generados y tests.
+description: "Añade un componente a Pyzed paso a paso: la función de pyzed.ui y su widget en Rust, la entrada en la caja de herramientas, eventos y tests."
 sidebar:
   order: 2
 ---

@@ -1,6 +1,6 @@
 ---
 title: How it works
-description: The bridge between Python and Iced, the widget tree, editor state and performance.
+description: "How Pyzed works: the bridge between Python and Iced (Rust), the immutable widget tree, editor state and why the GUI stays fast."
 sidebar:
   order: 11
 ---

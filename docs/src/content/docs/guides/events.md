@@ -1,6 +1,6 @@
 ---
 title: Events
-description: The common events every widget has (click, double click, drag, hover, focus, keys, resize) and how handlers receive them.
+description: "The common events every Pyzed widget has (click, double click, drag, hover, focus, keys, resize) and how your Python handlers receive them."
 sidebar:
   order: 7
 ---

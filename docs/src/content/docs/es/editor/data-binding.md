@@ -1,6 +1,6 @@
 ---
 title: Enlace de datos y validación
-description: Enlaza controles a los datos del formulario, comprueba lo que escribe el usuario con reglas de validación, traduce textos con @claves y previsualiza un formulario con otro tema o idioma.
+description: "Enlaza controles a los datos en Pyzed Design, valida lo que escribe el usuario, traduce textos con @claves y previsualiza con otro tema o idioma."
 sidebar:
   order: 6.5
 ---

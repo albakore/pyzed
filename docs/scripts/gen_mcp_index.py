@@ -58,7 +58,8 @@ def _summary(path: Path) -> str:
 
 def examples() -> list:
     found = [p for p in sorted(EXAMPLES.glob("*.py")) if p.stem not in SKIP_EXAMPLES]
-    found += sorted(EXAMPLES.glob("tutorial/*.py")) + sorted(EXAMPLES.glob("designer/*.py"))
+    found += sorted(EXAMPLES.glob("tutorial/*.py")) + sorted(EXAMPLES.glob("blocks/*.py"))
+    found += sorted(EXAMPLES.glob("designer/*.py"))
     found += sorted(EXAMPLES.glob("designer/*.pzform"))
     out = []
     for path in found:

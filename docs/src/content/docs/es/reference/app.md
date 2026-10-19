@@ -1,6 +1,6 @@
 ---
 title: "App y ejecución"
-description: "La clase App, run, screenshot, post y load_font."
+description: "Referencia de la API de pyzed.App: la clase de aplicación, run, screenshot, post, load_font y las opciones de ventana de una app de escritorio."
 sidebar:
   order: 1
 ---

@@ -1,6 +1,6 @@
 ---
 title: Data binding and validation
-description: Bind controls to the form's data, check what the user types with validation rules, translate texts with @keys and preview a form in another theme or language.
+description: "Bind controls to form data in Pyzed Design, validate user input with rules, translate texts with @keys and preview forms in other themes or languages."
 sidebar:
   order: 6.5
 ---

@@ -1,6 +1,6 @@
 ---
 title: Documentar un componente
-description: Docstrings, la referencia de la API, la biblioteca de componentes, las capturas, las traducciones y el changelog de un componente nuevo.
+description: "Documenta un componente nuevo de Pyzed: docstrings, referencia de la API, página de la biblioteca, capturas, traducciones y el changelog."
 sidebar:
   order: 3
 ---

@@ -1,6 +1,6 @@
 ---
 title: Overlays
-description: Capas, modales, la paleta de comandos, pickers con búsqueda difusa y notificaciones.
+description: "Capas, modales, paleta de comandos, pickers con búsqueda difusa y notificaciones: componentes superpuestos para apps de escritorio con Pyzed."
 sidebar:
   order: 6
 ---

@@ -1,6 +1,6 @@
 ---
 title: Multiple windows
-description: Open, close and control windows with pz.Window.
+description: "Multiple windows in Pyzed: open, close, move, resize and control native desktop windows from Python with pz.Window, each with its own theme."
 sidebar:
   order: 6
 ---

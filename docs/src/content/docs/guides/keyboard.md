@@ -1,6 +1,6 @@
 ---
 title: Keyboard and shortcuts
-description: Zed-style shortcuts with on_key and how to show them in the UI.
+description: "Keyboard shortcuts in Pyzed apps: Zed-style key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI."
 sidebar:
   order: 8
 ---

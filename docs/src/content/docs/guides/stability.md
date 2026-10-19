@@ -1,6 +1,6 @@
 ---
 title: Stability and known limitations
-description: What Pyzed 1.x promises about its API, how features are deprecated, and what it does not do yet.
+description: "What Pyzed 1.x promises about its Python API, how features are deprecated over releases, and what the framework does not do yet."
 sidebar:
   order: 30
 ---

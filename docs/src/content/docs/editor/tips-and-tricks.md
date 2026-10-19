@@ -1,6 +1,6 @@
 ---
 title: Tips and tricks
-description: Small habits that make you faster in Pyzed Design.
+description: "Small habits that make you faster in Pyzed Design: shortcuts, multi-selection, smart guides, templates and quick ways to build Python forms."
 sidebar:
   order: 14
 ---

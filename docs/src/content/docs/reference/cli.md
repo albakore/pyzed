@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Every pyzed command - projects, dependencies, running, building, icons and the MCP server.
+description: "Every pyzed command-line command: create projects, manage dependencies, run and build apps, generate icons and start the MCP server."
 sidebar:
   order: 9
 ---

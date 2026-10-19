@@ -1,6 +1,6 @@
 ---
 title: Estilos
-description: Da estilo a cualquier widget como en CSS, reutiliza estilos y fija el estilo global de la app.
+description: "Da estilo a cualquier widget de Pyzed como en CSS: colores, bordes, radios, sombras y estados, estilos reutilizables y el estilo global de la app."
 sidebar:
   order: 3
 ---

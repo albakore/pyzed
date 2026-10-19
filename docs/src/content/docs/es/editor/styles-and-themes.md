@@ -1,6 +1,6 @@
 ---
 title: Estilos y temas
-description: La sección Estilo, el selector de color con degradados y máscaras, el estilo global del formulario y los temas en Pyzed Design.
+description: "Da estilo a los controles en Pyzed Design: la sección Estilo, un selector de color con degradados y máscaras, el estilo global y los temas."
 sidebar:
   order: 5
 ---

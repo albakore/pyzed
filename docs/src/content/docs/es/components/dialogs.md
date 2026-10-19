@@ -1,6 +1,6 @@
 ---
 title: Diálogos y herramientas
-description: Diálogos listos para usar, acordeones, una consola de logs, una lista de atajos, una ventana Acerca de y el selector de color.
+description: "Diálogos listos para usar, acordeones, consola de logs, lista de atajos, ventana Acerca de y selector de color para apps de escritorio con Pyzed."
 sidebar:
   order: 11
 ---

@@ -1,6 +1,6 @@
 ---
 title: Visual designer
-description: Build windows by drag and drop, wire their events to Python and run them, like Visual Basic or Qt Designer.
+description: "Build Python desktop windows by drag and drop, wire their events to Python and run them: a visual GUI designer like Visual Basic or Qt Designer."
 sidebar:
   order: 13
 ---

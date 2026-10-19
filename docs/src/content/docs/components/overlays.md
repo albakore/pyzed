@@ -1,6 +1,6 @@
 ---
 title: Overlays
-description: Layers, modals, the command palette, fuzzy-search pickers and notifications.
+description: "Layers, modals, a command palette, fuzzy-search pickers and toast notifications: overlay components for Python desktop apps built with Pyzed."
 sidebar:
   order: 6
 ---

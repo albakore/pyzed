@@ -1,6 +1,6 @@
 ---
 title: Events and handlers
-description: The Events panel, every event of every component and the form, and how to write handlers in Pyzed Design.
+description: "The Events panel of Pyzed Design: every event of every component and form, and how to write Python event handlers with a double click."
 sidebar:
   order: 6
 ---

@@ -1,6 +1,6 @@
 ---
 title: Icons and fonts
-description: Lucide icons, file-type icons and how to load your own fonts.
+description: "Use about 2000 bundled Lucide icons and file-type icons in Python desktop GUIs with Pyzed, and load your own fonts such as IBM Plex."
 sidebar:
   order: 9
 ---

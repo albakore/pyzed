@@ -1,6 +1,6 @@
 ---
 title: Testing
-description: How the test suite is organized, how to test ui components without a window and how the visual regression tests and their reference images work.
+description: "How the Pyzed test suite is organized, how to test UI components without a window and how visual regression tests and reference images work."
 sidebar:
   order: 5
 ---

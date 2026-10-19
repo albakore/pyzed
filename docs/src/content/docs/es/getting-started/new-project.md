@@ -1,6 +1,6 @@
 ---
 title: Crear un proyecto
-description: Genera una app de Pyzed como proyecto de uv, con la UI en su propia carpeta y ruff, ty y git listos.
+description: "Genera una app de escritorio de Pyzed como proyecto estándar de uv con un comando: la UI en su propia carpeta y ruff, ty y git listos para usar."
 ---
 
 Pyzed instala el comando `pyzed`. Con [uv](https://docs.astral.sh/uv/) instalado, crea un proyecto completo:

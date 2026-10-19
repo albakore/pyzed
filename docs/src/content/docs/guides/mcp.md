@@ -1,6 +1,6 @@
 ---
 title: MCP server for AI agents
-description: Connect Claude, Cursor, VS Code and other AI agents to Pyzed so they know its components, its best practices and can generate and check code.
+description: "Connect AI coding agents (Cursor, VS Code, Zed and other MCP clients) to Pyzed's MCP server so they know its API, generate and check GUI code."
 sidebar:
   order: 16
 ---
@@ -118,3 +118,9 @@ window opens. It uses the same off-screen renderer as [tests and screenshots](/p
 
 `pyzed.mcp.knowledge`, `pyzed.mcp.scaffold` and `pyzed.mcp.validate` are plain Python and work without the
 MCP SDK, for example from your own scripts or tests.
+
+## More on AI agents
+
+The [AI agents](/pyzed/ai/) section collects everything else: [prompting guide](/pyzed/ai/prompting/) with a real
+MCP session, [llms.txt and editor rules](/pyzed/ai/llms-txt/) with `AGENTS.md`, Cursor and Copilot templates, and
+[Building AI apps](/pyzed/ai/ai-apps/).

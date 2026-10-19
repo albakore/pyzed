@@ -1,6 +1,6 @@
 ---
 title: Ejecutar y la consola
-description: Ejecuta formularios y componentes con F5, lee su salida, eventos y errores en la consola y actualízalos en vivo al guardar.
+description: "Ejecuta formularios y componentes con F5 en Pyzed Design, lee salida, eventos y errores en la consola y mira los cambios en vivo al guardar."
 sidebar:
   order: 8
 ---

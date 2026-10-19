@@ -1,6 +1,6 @@
 ---
 title: Animación y efectos
-description: Anima cualquier widget como en la web (presets, keyframes, transiciones, presence, transiciones de ventana) y añade rotación, desenfoque, bloom, glass y opacidad.
+description: "Anima cualquier widget de Pyzed como en la web (presets, keyframes, transiciones, presence) y añade rotación, desenfoque, glow, bloom, glass y opacidad."
 sidebar:
   order: 3.5
 ---

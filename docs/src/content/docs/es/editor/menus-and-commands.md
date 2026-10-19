@@ -1,6 +1,6 @@
 ---
 title: Menús y comandos
-description: La barra de título, cada entrada de menú, la barra de herramientas, la paleta de comandos, Añadir control y los paneles acoplables de Pyzed Design.
+description: "La barra de título, cada menú, la barra de herramientas, la paleta de comandos, Añadir control y los paneles acoplables de Pyzed Design."
 sidebar:
   order: 11
 ---

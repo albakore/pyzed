@@ -1,6 +1,6 @@
 ---
 title: Más controles
-description: Desplegables, radios, campos numéricos, botones divididos, chips y secciones plegables.
+description: "Desplegables, radios, campos numéricos, botones divididos, chips y secciones plegables: controles estilo Zed para apps de escritorio en Python."
 sidebar:
   order: 8
 ---

@@ -1,6 +1,6 @@
 ---
 title: Animation and effects
-description: Animate any widget like the web - presets, keyframes, transitions, presence, window transitions - and add rotation, blur, bloom, glass and opacity.
+description: "Animate any Pyzed widget like the web (presets, keyframes, transitions, presence) and add rotation, blur, glow, bloom, glass and opacity."
 sidebar:
   order: 3.5
 ---

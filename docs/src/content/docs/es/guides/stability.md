@@ -1,6 +1,6 @@
 ---
 title: Estabilidad y limitaciones conocidas
-description: Qué promete Pyzed 1.x sobre su API, cómo se retiran funciones y qué no hace todavía.
+description: "Qué promete Pyzed 1.x sobre su API de Python, cómo se retiran funciones de una versión a otra y qué no hace todavía el framework."
 sidebar:
   order: 30
 ---

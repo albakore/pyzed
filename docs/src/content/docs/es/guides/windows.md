@@ -1,6 +1,6 @@
 ---
 title: Varias ventanas
-description: Abre, cierra y controla ventanas con pz.Window.
+description: "Varias ventanas en Pyzed: abre, cierra, mueve, redimensiona y controla ventanas de escritorio nativas desde Python con pz.Window, cada una con su tema."
 sidebar:
   order: 6
 ---

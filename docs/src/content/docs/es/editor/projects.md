@@ -1,6 +1,6 @@
 ---
 title: Proyectos
-description: Crea y abre proyectos de uv, recorre y busca sus archivos, gestiona dependencias, ejecuta ruff y ty y crea el repositorio git desde los paneles Proyecto y Dependencias.
+description: "Crea y abre proyectos de uv en Pyzed Design, busca archivos, gestiona dependencias, ejecuta ruff y ty y crea el repositorio git desde el editor."
 sidebar:
   order: 1
 ---

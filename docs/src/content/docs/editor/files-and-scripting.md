@@ -1,6 +1,6 @@
 ---
 title: Files, templates and scripting
-description: Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the designer's Python API.
+description: "Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the Python scripting API of Pyzed Design."
 sidebar:
   order: 10
 ---

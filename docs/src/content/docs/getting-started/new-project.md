@@ -1,6 +1,6 @@
 ---
 title: Create a project
-description: Generate a Pyzed app as a uv project, with the UI in its own folder and ruff, ty and git ready.
+description: "Generate a Pyzed desktop app as a standard uv project with one command: the UI in its own folder, plus ruff, ty and git ready to go."
 ---
 
 Pyzed installs the `pyzed` command. With [uv](https://docs.astral.sh/uv/) installed, it creates a complete

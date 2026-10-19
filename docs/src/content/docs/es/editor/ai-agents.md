@@ -1,6 +1,6 @@
 ---
 title: Agentes de IA
-description: El panel del agente de Pyzed Design - un agente de IA que crea formularios y componentes, escribe su código y edita el formulario abierto, con asistente en línea en el editor de código, varios proveedores de modelos y claves guardadas en el llavero del sistema.
+description: "El panel del agente de Pyzed Design: un agente de IA que crea formularios y componentes y escribe su código Python, con asistente en línea y varios modelos."
 sidebar:
   order: 10.5
 ---

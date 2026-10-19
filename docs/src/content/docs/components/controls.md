@@ -1,6 +1,6 @@
 ---
 title: More controls
-description: Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections.
+description: "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: Zed-style input controls for Python desktop apps."
 sidebar:
   order: 8
 ---

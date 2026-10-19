@@ -1,6 +1,6 @@
 ---
 title: Herramientas y lienzo
-description: Colocar, seleccionar, mover, redimensionar y ordenar controles; snap, guías inteligentes, alineación, orden y la estructura.
+description: "Coloca, selecciona, mueve, redimensiona y ordena controles en Pyzed Design: snap, guías inteligentes, alineación, orden z y la estructura del formulario."
 sidebar:
   order: 2
 ---

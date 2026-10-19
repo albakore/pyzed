@@ -1,6 +1,6 @@
 ---
 title: "Themes"
-description: "Theme, the built-in themes and the color utilities."
+description: "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs."
 sidebar:
   order: 5
 ---

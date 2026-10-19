@@ -1,6 +1,6 @@
 ---
 title: Basics
-description: Buttons, text, badges, shortcuts, avatars, tooltips and cards.
+description: "Pyzed basics components for Python desktop GUIs: buttons, text, badges, keyboard shortcuts, avatars, tooltips and cards in the Zed style."
 sidebar:
   order: 1
 ---

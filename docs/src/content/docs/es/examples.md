@@ -1,6 +1,6 @@
 ---
 title: Ejemplos
-description: Apps de ejemplo incluidas en el repositorio, listas para ejecutar.
+description: "Apps de ejemplo de Pyzed listas para ejecutar: listas de tareas, un editor tipo Zed, el Juego de la vida, reloj, cronómetro, varias ventanas y datos en vivo."
 ---
 
 Todos los ejemplos están en [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
@@ -85,5 +85,13 @@ Recreaciones en Python de las [demos de Iced](https://github.com/iced-rs/iced/tr
 ### Varias ventanas
 
 ![Varias ventanas](../../../assets/tutorials/multi-window.png)
+
+## IA y Bloques
+
+| Ejemplo | Qué muestra | Página |
+| --- | --- | --- |
+| [`ai_chat.py`](https://github.com/albakore/pyzed/blob/main/examples/ai_chat.py) | Un chat con IA en streaming sobre cualquier API compatible con OpenAI, con un modo demo que no necesita red. | [Crear apps con IA](/pyzed/es/ai/ai-apps/) |
+| [`pomodoro.py`](https://github.com/albakore/pyzed/blob/main/examples/pomodoro.py) | El temporizador que construye un agente con las herramientas MCP en la guía de prompts. | [Guía de prompts](/pyzed/es/ai/prompting/) |
+| [`blocks/`](https://github.com/albakore/pyzed/tree/main/examples/blocks) | Nueve pantallas listas: login, dashboard, ajustes, tabla de datos, chat, IDE, bienvenida, reproductor de música y kanban. | [Bloques](/pyzed/es/blocks/) |
 
 Las capturas de esta página se generan con `python docs/scripts/example_shots.py`.

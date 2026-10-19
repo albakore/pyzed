@@ -1,6 +1,6 @@
 ---
 title: "Widgets base"
-description: "Los widgets nativos de pyzed: layout, texto, controles, editor, svg e iconos."
+description: "Referencia de la API de los widgets nativos de Pyzed: layout, texto, controles, el editor de código, SVG e iconos, renderizados en Rust por Iced."
 sidebar:
   order: 3
 ---

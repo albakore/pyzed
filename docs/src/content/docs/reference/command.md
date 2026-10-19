@@ -1,6 +1,6 @@
 ---
 title: "Command"
-description: "Side effects returned by update and callbacks."
+description: "API reference for Pyzed commands: the side effects returned by update and callbacks, such as focusing fields, closing and background tasks."
 sidebar:
   order: 2
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Drawing (pyzed.draw)"
-description: "Shapes, text and transforms for pz.canvas."
+description: "API reference for pyzed.draw: shapes, paths, text and transforms for drawing custom 2D graphics on a pz.canvas in Python desktop apps."
 sidebar:
   order: 7
 ---

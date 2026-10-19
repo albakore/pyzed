@@ -1,6 +1,6 @@
 ---
 title: Projects
-description: Create and open uv projects, browse and search their files, manage dependencies, run ruff and ty and create the git repository from the Project and Dependencies panels.
+description: "Create and open uv projects in Pyzed Design, browse and search files, manage dependencies, run ruff and ty, and create the git repository."
 sidebar:
   order: 1
 ---

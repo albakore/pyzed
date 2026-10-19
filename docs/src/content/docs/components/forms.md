@@ -1,6 +1,6 @@
 ---
 title: Forms
-description: Text fields, switches, checkboxes, sliders, progress bars and segmented groups.
+description: "Text fields, switches, checkboxes, sliders, progress bars and segmented groups: form components for native Python desktop GUIs with Pyzed."
 sidebar:
   order: 2
 ---

@@ -1,6 +1,6 @@
 ---
 title: Keyboard shortcuts
-description: Every keyboard shortcut of Pyzed Design - global commands, the canvas, dialogs and the code editor.
+description: "Every keyboard shortcut of Pyzed Design, the Python GUI designer: global commands, the canvas, dialogs and the built-in code editor."
 sidebar:
   order: 12
 ---

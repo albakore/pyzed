@@ -1,6 +1,6 @@
 ---
 title: Inicio rápido
-description: Tu primera ventana con Pyzed en cinco minutos.
+description: "Tu primera ventana de escritorio nativa en Python con Pyzed en cinco minutos: instala el paquete, escribe una app contador y ejecútala."
 ---
 
 ## 1. Una ventana

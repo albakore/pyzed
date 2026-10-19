@@ -1,6 +1,6 @@
 ---
 title: Código
-description: El editor de código con resaltado y marcadores de git, y la vista de terminal.
+description: "Un editor de código con resaltado de sintaxis y marcadores de git, y una vista de terminal: componentes estilo Zed para apps de escritorio en Python."
 sidebar:
   order: 7
 ---
