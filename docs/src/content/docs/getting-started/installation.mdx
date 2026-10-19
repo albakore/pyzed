@@ -31,7 +31,7 @@ need to compile anything.
 
 <Aside type="caution" title="Before the first PyPI release">
 If `pip install pyzed-ui` can't find a wheel for your platform, install from source
-(below). You'll need stable Rust.
+(below). You'll need Rust 1.88 or newer.
 </Aside>
 
 ## From source
@@ -41,7 +41,7 @@ uv add git+https://github.com/albakore/pyzed        # uv
 pip install git+https://github.com/albakore/pyzed   # pip
 ```
 
-This compiles the Rust extension, so you need [stable Rust](https://rustup.rs) and your
+This compiles the Rust extension, so you need [Rust 1.88 or newer](https://rustup.rs) (`rustup update` upgrades an older one) and your
 platform's system dependencies:
 
 <Tabs syncKey="os">
@@ -66,7 +66,7 @@ platform's system dependencies:
 
 ## Developing Pyzed
 
-To work on Pyzed itself, clone the repository. You need [stable Rust](https://rustup.rs) and the
+To work on Pyzed itself, clone the repository. You need [Rust 1.88 or newer](https://rustup.rs) (`rustup update` upgrades an older one) and the
 system dependencies above.
 
 <Tabs syncKey="pkg">

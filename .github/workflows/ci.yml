@@ -49,6 +49,19 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy -- -D warnings
 
+  msrv:
+    # Keep in sync with `rust-version` in Cargo.toml: catches syntax that
+    # newer compilers accept but users with an older rustc can't build.
+    name: Rust 1.88 (MSRV)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.88
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: msrv
+      - run: cargo check --locked --all-targets
+
   test:
     name: Test (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}

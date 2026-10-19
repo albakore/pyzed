@@ -694,8 +694,11 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
             Event::Mouse(mouse::Event::WheelScrolled { delta })
                 if state.modifiers.command()
                     && cursor.is_over(layout.bounds())
-                    && let Some(on_zoom) = &self.on_zoom =>
+                    && self.on_zoom.is_some() =>
             {
+                let Some(on_zoom) = &self.on_zoom else {
+                    return;
+                };
                 let y = match delta {
                     mouse::ScrollDelta::Lines { y, .. } | mouse::ScrollDelta::Pixels { y, .. } => {
                         *y

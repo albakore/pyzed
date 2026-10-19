@@ -30,7 +30,7 @@ Incluye componentes listos para usar inspirados en el editor [Zed](https://zed.d
 
 ## Instalación
 
-Por ahora se instala desde el código fuente. Necesitas Rust estable y Python 3.10 o superior.
+Por ahora se instala desde el código fuente. Necesitas Rust 1.88 o superior (`rustup update`) y Python 3.10 o superior.
 
 ```bash
 uv add pyzed-ui             # en un proyecto de uv (o: pip install pyzed-ui)
