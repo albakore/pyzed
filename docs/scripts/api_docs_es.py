@@ -570,7 +570,8 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                 },
                 "pyzed.ui.field": {
                     "desc": "Una fila de formulario: título y descripción a la izquierda, control a la derecha (como los ajustes de Zed).",
-                    "params": {"control": "El control (switch, input…).", "description": "Texto de ayuda."},
+                    "params": {"control": "El control (switch, input…).", "description": "Texto de ayuda.",
+                               "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`)."},
                 },
             }),
             ("Listas, árbol y menús", {
@@ -1249,7 +1250,7 @@ dict(_w)["Controles"]["pyzed.slider"]["params"]["on_release"] = "Se envía al so
 # -- UI -----------------------------------------------------------------------------
 _section("ui", "Controles", {
     "pyzed.ui.select": {
-        "desc": "Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums o dataclasses.",
+        "desc": "Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.",
         "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.'},
     },
     "pyzed.ui.radio_group": {
@@ -1304,7 +1305,7 @@ _section("ui", "Datos y feedback", {
         "params": {"title": "Título del grupo.", "rows": "Las filas (normalmente `ui.field`)."},
     },
     "pyzed.ui.Column": {
-        "desc": 'Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o una función de la fila; `render` (opcional) convierte el valor en un widget. `width` es `"fill"`, un número o `("fill", 2)`.',
+        "desc": 'Una columna de `ui.table`. `key` es una clave de dict, un nombre de atributo o una función de la fila; `render` (opcional) convierte el valor en un widget. `width` es `"fill"`, un número o una porción como `"fill:2"`.',
         "params": {"title": "Encabezado (y nombre para ordenar).", "key": "Cómo obtener el valor de cada fila.", "align": '`"start"`, `"center"` o `"end"`.', "render": "Función valor → widget.", "sortable": "Si el encabezado se puede pulsar para ordenar."},
     },
     "pyzed.ui.table": {
@@ -2441,5 +2442,17 @@ _section("ui", "Listas, árbol y menús", {
             "overscan": "Filas extra construidas por encima y por debajo de las visibles.",
             "on_scroll": "Callable que recibe el viewport del scroll, como en `pz.scrollable`.",
         },
+    },
+})
+_section("app", "Formularios y validación", {
+    "pyzed.validation_errors": {
+        "desc": "Convierte un error de validación en `{campo: mensaje}`, listo para `ui.field(..., error=)`. Acepta un `ValidationError` de Pydantic o SQLModel, un `ValidationError` de Django, el JSON de una respuesta 422 de FastAPI (`{\"detail\": [...]}`) o su lista `detail`. Los campos anidados se unen con puntos y los errores que no son de ningún campo usan la clave `\"\"`. Se guarda solo el primer mensaje de cada campo. Mira [Integraciones](/pyzed/es/integrations/overview/#errores-de-validación-en-cada-campo).",
+        "params": {"error": "El error, o el JSON de la respuesta."},
+        "example": """try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Precio", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))""",
     },
 })

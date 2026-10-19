@@ -570,7 +570,8 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                 },
                 "pyzed.ui.field": {
                     "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
-                    "params": {"control": "The control (switch, input…).", "description": "Help text."},
+                    "params": {"control": "The control (switch, input…).", "description": "Help text.",
+                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."},
                 },
             }),
             ("Lists, tree and menus", {
@@ -1249,7 +1250,7 @@ dict(_w)["Controls"]["pyzed.slider"]["params"]["on_release"] = "Sent when the kn
 # -- UI -----------------------------------------------------------------------------
 _section("ui", "Controls", {
     "pyzed.ui.select": {
-        "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.",
+        "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
         "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.'},
     },
     "pyzed.ui.radio_group": {
@@ -1304,7 +1305,7 @@ _section("ui", "Data and feedback", {
         "params": {"title": "Group title.", "rows": "The rows (usually `ui.field`)."},
     },
     "pyzed.ui.Column": {
-        "desc": 'A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or `("fill", 2)`.',
+        "desc": 'A column of `ui.table`. `key` is a dict key, an attribute name or a function of the row; `render` (optional) turns the value into a widget. `width` is `"fill"`, a number or a portion such as `"fill:2"`.',
         "params": {"title": "Header (and name used for sorting).", "key": "How to get the value from each row.", "align": '`"start"`, `"center"` or `"end"`.', "render": "Function value → widget.", "sortable": "Whether the header can be clicked to sort."},
     },
     "pyzed.ui.table": {
@@ -1863,5 +1864,17 @@ _section("ui", "Lists, tree and menus", {
             "overscan": "Extra rows built above and below the visible ones.",
             "on_scroll": "Callable that receives the scroll viewport, as in `pz.scrollable`.",
         },
+    },
+})
+_section("app", "Forms and validation", {
+    "pyzed.validation_errors": {
+        "desc": "Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{\"detail\": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `\"\"`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).",
+        "params": {"error": "The error, or the JSON of the response."},
+        "example": """try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Price", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))""",
     },
 })
