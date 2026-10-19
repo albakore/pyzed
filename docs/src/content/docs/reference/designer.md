@@ -968,14 +968,15 @@ A new control of this type with default properties.
 
 ```python
 @dataclass
-class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance')
+class Prop(name, kind, default=None, label='', choices=(), min=None, max=None, step=1.0, group='Appearance', type='')
 ```
 
 A property shown in the designer's property grid.
 
 `kind` picks the editor: text, multiline, number, bool, color, choice (from
 `choices`), list (one item per line), rows (comma-separated rows, the first one the
-header) or icon (a Lucide icon name).
+header), icon (a Lucide icon name) or typed (any annotation in `type`: unions, optionals,
+dicts, tuples...).
 
 **Methods and properties**
 
@@ -1273,6 +1274,14 @@ SceneDocument.update_member(member, **changes)
 ```
 
 Changes a property (`name`, `type`, `default`, `public`, `description`); returns its name.
+
+#### `SceneDocument.set_member_source`
+
+```python
+SceneDocument.set_member_source(name, source)
+```
+
+Sets the default of property `name` to the Python expression `source` (`[1, 2]`, `Point(x=1)`...).
 
 #### `SceneDocument.remove_member`
 

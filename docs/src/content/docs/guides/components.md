@@ -126,6 +126,8 @@ Every `pz.Component` subclass appears in the [designer](/pyzed/editor/)'s toolbo
 
 - **Props** become properties. `bool` gets a switch, `int` and `float` a number box, `Literal[...]`
   a drop-down, `list` one item per line, and a prop named `color` or `icon` gets its own picker.
+  Unions, optionals, dicts, sets and tuples (`int | None`, `dict[str, int]`...) get an editor
+  built from the type, with a row per item.
   The type hints of `pyzed` pick a richer editor, like export hints in Godot:
 
   | Annotation | Editor |

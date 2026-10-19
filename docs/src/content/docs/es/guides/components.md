@@ -127,6 +127,8 @@ Cada subclase de `pz.Component` aparece en la biblioteca del [diseñador](/pyzed
 - **Props**: se convierten en propiedades. `bool` muestra un interruptor, `int` y `float` un campo
   numérico, `Literal[...]` un desplegable, `list` un elemento por línea, y un prop llamado
   `color` o `icon` tiene su propio selector.
+  Las uniones, opcionales, diccionarios, sets y tuplas (`int | None`, `dict[str, int]`...) tienen
+  un editor construido a partir del tipo, con una fila por elemento.
   Las anotaciones de `pyzed` eligen un editor más completo, como los export hints de Godot:
 
   | Anotación | Editor |

@@ -57,7 +57,8 @@ class Prop:
 
     ``kind`` picks the editor: text, multiline, number, bool, color, choice (from
     ``choices``), list (one item per line), rows (comma-separated rows, the first one the
-    header) or icon (a Lucide icon name).
+    header), icon (a Lucide icon name) or typed (any annotation in ``type``: unions, optionals,
+    dicts, tuples...).
     """
 
     name: str
@@ -69,6 +70,8 @@ class Prop:
     max: Optional[float] = None  # noqa: A003
     step: float = 1.0
     group: str = "Appearance"
+    #: The annotation of a ``typed`` property (``int | None``, ``dict[str, int]``...), edited by its type.
+    type: str = ""
 
     @property
     def title(self) -> str:

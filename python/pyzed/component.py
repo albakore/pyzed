@@ -473,6 +473,8 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
         if annotation is hint or text.rsplit(".", 1)[-1] == hint.__name__:
             return prop_class(info.name, kind, "" if default is None else default)
     base = text.split("[")[0].replace("typing.", "").lower()
+    if _needs_typed_editor(annotation):  # int | None, dict[str, int], tuple[int, int]...
+        return prop_class(info.name, "typed", default, type=_annotation_text(annotation), group="Data")
     if base == "bool":
         return prop_class(info.name, "bool", bool(default))
     if base in ("int", "float"):
@@ -484,6 +486,25 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
     if info.name == "icon" or info.name.endswith("_icon"):
         return prop_class(info.name, "icon", default or "")
     return prop_class(info.name, "text", "" if default is None else default)
+
+
+def _annotation_text(annotation: Any) -> str:
+    """An annotation as source text: ``int | None``, ``dict[str, int]``, ``Point``."""
+    if isinstance(annotation, str):
+        return annotation
+    if isinstance(annotation, type) and not typing.get_args(annotation):
+        return annotation.__name__
+    return re.sub(r"\b(?:[A-Za-z_]\w*\.)+([A-Za-z_]\w*)", r"\1", repr(annotation)).replace("NoneType", "None")
+
+
+def _needs_typed_editor(annotation: Any) -> bool:
+    """Whether a prop's annotation needs the designer's typed editor (unions, optionals, dicts, sets,
+    tuples, lists of anything but text)."""
+    text = _annotation_text(annotation).replace("typing.", "").replace(" ", "")
+    if "|" in text or text.startswith(("Optional[", "Union[", "dict[", "Dict[", "set[", "Set[", "tuple[", "Tuple[",
+                                       "frozenset[", "Mapping[")):
+        return True
+    return text.startswith(("list[", "List[", "Sequence[")) and text[text.index("[") + 1:-1] != "str"
 
 
 _REGISTRY: Dict[str, type] = {}

@@ -201,8 +201,7 @@ def component_designer_shots(scale):
         tabs.open_default_event("ada")  # double-click: the component opens in its own tab
         tabs.toasts.clear()
         tabs.screenshot(OUT / "designer-component-tabs.png", size=(1440, 900), scale=scale)
-        tabs.__dict__["_scene_open"] = {"properties", "methods"}
-        tabs.screenshot(OUT / "designer-component-members.png", size=(1440, 1100), scale=scale)
+        typed_properties_shot(scale)
 
         team = designer.Designer(folder / "team_card.pzcomp", language_servers=False)
         team.screenshot(OUT / "designer-component-inherit.png", size=(1440, 900), scale=scale)
@@ -223,6 +222,44 @@ def component_designer_shots(scale):
         Preview().screenshot(OUT / "designer-component-preview.png", scale=2)
     finally:
         os.chdir(cwd)
+
+
+POINT = """
+
+@dataclass
+class Point:
+    x: int = 0
+    y: int = 0
+    label: str = ""
+"""
+
+
+def typed_properties_shot(scale):
+    """Properties of many types (unions, optionals, lists, dicts, a dataclass) in a throwaway component."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        doc = designer.new_component("Gadget", Path(tmp) / "gadget.pzcomp", width=240, height=80)
+        doc.set_code(doc.code.replace("from pyzed.designer import SceneComponent",
+                                      "from dataclasses import dataclass\n\nfrom pyzed.designer import SceneComponent\n"
+                                      + POINT))
+        doc.add_member("title", "str", "Hello")
+        doc.add_member("tint", "pz.Color")
+        doc.add_member("mixed", "int | str | list[str]")
+        doc.add_member("maybe", "Optional[float]")
+        doc.add_member("tags", "list[str]")
+        doc.set_member_source("tags", '["red", "blue"]')
+        doc.add_member("scores", "dict[str, int]")
+        doc.set_member_source("scores", '{"ada": 5, "bob": 3}')
+        doc.add_member("origin", "Point")
+        doc.add_member("target", "Point | None")
+        doc.add_member("busy", "bool", public=False)
+        doc.save()
+        app = designer.Designer(Path(tmp) / "gadget.pzcomp", language_servers=False)
+        app.__dict__["_scene_open"] = {"properties"}
+        app.__dict__["_member_open"] = {"mixed"}
+        app.toasts.clear()
+        app.screenshot(OUT / "designer-component-members.png", size=(1440, 1100), scale=scale)
 
 
 PROJECT_TOML = """[project]
