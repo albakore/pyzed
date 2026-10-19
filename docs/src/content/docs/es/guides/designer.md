@@ -22,11 +22,16 @@ pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el f
 | Zona | Qué hace |
 | --- | --- |
 | **Toolbox** (izquierda) | La biblioteca de componentes. Haz clic en uno y luego en el formulario para colocarlo con su tamaño por defecto, o arrastra un rectángulo para darle tamaño. La búsqueda filtra la lista. |
-| **Outline** (izquierda) | Todos los controles por orden Z (el de arriba primero). Clic para seleccionar; el ojo y el candado ocultan o bloquean un control. |
+| **Outline** (izquierda) | Todos los controles en árbol: los contenedores muestran sus hijos (se pliegan con la flecha). Clic para seleccionar; el ojo y el candado ocultan o bloquean un control, **+** añade un control dentro de un contenedor y el clic derecho abre un menú. |
 | **Formulario** (centro) | La superficie de diseño con grilla de puntos. Arrastra para mover, usa las ocho asas para redimensionar y arrastra en un hueco para seleccionar con un rectángulo. El tirador de la esquina inferior derecha cambia el tamaño del formulario. |
-| **Properties** (derecha) | Nombre, propiedades del componente, layout (X, Y, tamaño, anclajes) y comportamiento (visible, habilitado, bloqueado). Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
+| **Properties** (derecha) | Nombre y luego las propiedades en secciones plegables: los grupos propios del componente, posición (X, Y, tamaño, anclajes, o crecer y columnas dentro de un flex o una grilla) y comportamiento (visible, habilitado, bloqueado). Sin selección edita el formulario: título, tamaño, tema, acento, fondo, radio de esquinas, tamaño de letra y grilla. |
 | **Events** (derecha) | Los eventos del control seleccionado (o del formulario). Doble clic en uno crea su handler y lo abre en el editor de código. |
 | **Código** (abajo) | El código de un handler, o del archivo entero (**F7**). **Apply** comprueba la sintaxis antes de tocar el archivo. |
+| **Consola** (abajo) | Lo que imprime el formulario en ejecución, los eventos que atiende y sus errores (ver [Consola de depuración](#consola-de-depuración)). |
+
+La barra de título tiene el menú principal (☰: Archivo y Ejecutar), **Ejecutar** y **Detener**, los menús **Ver** y
+**Ayuda** y el engranaje de **Ajustes**. Cada panel se puede mover a otro dock y cada dock cambiar de tamaño; ver
+[Paneles](#paneles).
 
 ![Escribiendo el código del clic de un botón](../../../../../screenshots/designer-code.png)
 
@@ -55,18 +60,77 @@ pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el f
 | Ctrl+Z, Ctrl+Shift+Z | Deshacer, rehacer |
 | Enter | Abrir el código del evento principal del control |
 | Escape | Cancelar un arrastre, cerrar un menú, volver al puntero |
-| Ctrl+S, Ctrl+O, Ctrl+N | Guardar, abrir, nuevo |
+| Ctrl+S, Ctrl+Shift+S, Ctrl+O, Ctrl+N | Guardar, guardar como, abrir, nuevo |
+| Ctrl+Shift+P | Paleta de comandos |
+| Ctrl+Shift+A | Añadir un control (lista con búsqueda) |
+| Ctrl+B, Ctrl+Alt+B, Ctrl+J | Mostrar u ocultar los docks izquierdo, derecho e inferior |
+| Ctrl+Shift+Y | Consola |
+| Ctrl+, | Ajustes |
+| F1 | Atajos de teclado |
 | F5, Shift+F5 | Ejecutar el formulario, cerrarlo |
 | F7 | Editar el archivo de código completo |
 | Ctrl+Espacio | Abrir la lista de autocompletado (en el editor de código) |
 
 Clic derecho en un control abre un menú contextual con las mismas acciones.
 
+## Contenedores y layouts
+
+Algunos componentes contienen otros controles. Suelta un control sobre uno (se ilumina mientras arrastras) para
+meterlo dentro, arrástralo fuera para devolverlo al formulario, o selecciona varios y usa **Editar → Agrupar en una
+fila / columna / cuadrícula**.
+
+| Contenedor | Cómo coloca a sus hijos |
+| --- | --- |
+| **Panel**, **Marco**, **Tarjeta** | Libremente, como el formulario: las posiciones son relativas al contenedor y los anclajes siguen sus bordes. |
+| **Fila flexible**, **Columna flexible** | Uno tras otro con **separación**, **relleno**, **justificar** (inicio, centro, final, espacio entre) y **alineación** (estirar, inicio, centro, final). **Crecer** en un hijo reparte el espacio libre; un **Espaciador** empuja a los siguientes al final. |
+| **Grilla** | En **columnas** del mismo ancho, fila por fila, con **separación** y **alto de fila** (0 reparte el alto). **Columnas** en un hijo lo hace más ancho. |
+
+Los hijos de un flex o una grilla aparecen en su orden en el outline; arrástralos ahí, o en el formulario, para
+reordenarlos. Mover o redimensionar un contenedor mueve a sus hijos, y copiar, pegar y borrar los incluyen.
+
+![Un formulario con barra lateral: una columna flexible y sus hijos](../../../../../screenshots/designer-layout.png)
+
+## Menús, ajustes y paleta de comandos
+
+- **☰ (Archivo)**: nuevo formulario, abrir, guardar, guardar como, recientes, ajustes, y Ejecutar, Detener y Editar
+  el código.
+- **Ver**: la paleta de comandos, los docks, la consola, la barra de herramientas y la de estado, grilla, snapping,
+  guías inteligentes, controles ocultos, restablecer los paneles, y dónde está cada panel.
+- **Ayuda**: atajos de teclado (con búsqueda), la documentación, informar un problema y Acerca de.
+- **Ajustes** (Ctrl+,): tema e idioma del diseñador, barras de herramientas y de estado, valores por defecto del
+  lienzo, qué hace Ejecutar (guardar antes, abrir la consola, registrar eventos) y un enlace a los ajustes del editor
+  de código. Se guardan en `designer.json`, en la carpeta de ajustes de Pyzed (`PYZED_CONFIG_DIR` la cambia).
+- La **paleta de comandos** (Ctrl+Shift+P) ejecuta cualquiera de estas acciones por nombre; **Añadir control**
+  (Ctrl+Shift+A) hace lo mismo con los componentes, dentro del contenedor seleccionado.
+
+El idioma del diseñador (inglés o español) sigue al del sistema o al elegido en Ajustes, y usa
+[`pz.t`](/pyzed/es/guides/i18n/): añade un catálogo bajo la clave `designer` para traducirlo a otro idioma.
+
+![El menú Ver](../../../../../screenshots/designer-menu.png)
+
+## Paneles
+
+Diseño (herramientas y estructura), Proyecto, Propiedades, Eventos, Código y Consola son paneles en cuatro docks:
+izquierdo, derecho, inferior y superior. Cada dock muestra un panel a la vez, con una pestaña por panel. El botón de
+dock junto a las pestañas mueve el panel a otro dock, la × oculta el dock (Ctrl+B, Ctrl+Alt+B y Ctrl+J lo vuelven a
+mostrar) y el borde que da al formulario lo redimensiona. La disposición se recuerda; **Ver → Restablecer los
+paneles** la devuelve a la inicial.
+
+## Consola de depuración
+
+**Ejecutar** (F5) abre el panel Consola, que muestra lo que imprime el formulario, cada evento que atiende con su
+valor y el handler que llama, y el traceback de cualquier error, sin salir del diseñador. Filtra por texto, oculta
+niveles con los botones, copia todo o límpialo. Los formularios que se ejecutan con `uv run` (un proyecto con
+dependencias que el diseñador no tiene) también envían su salida. En Ajustes decides si Ejecutar abre la consola y
+si se registran los eventos.
+
+![La consola tras unos clics y un error](../../../../../screenshots/designer-console.png)
+
 ## Estética
 
 Cada formulario elige cualquier tema registrado (One, Ayu, Gruvbox o el tuyo) y puede cambiar el color de acento,
-el fondo, el radio de las esquinas y el tamaño de letra. El tema del propio diseñador es independiente (selector
-arriba a la derecha).
+el fondo, el radio de las esquinas y el tamaño de letra. El tema del propio diseñador es independiente
+(**Ajustes**).
 
 ![Un formulario con el tema Gruvbox Light y acento propio](../../../../../screenshots/designer-light.png)
 
@@ -271,8 +335,10 @@ configuración del editor. Se guarda por usuario en `designer.json`, dentro de l
 
 ## Componentes
 
-Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number box,
-List box, Progress bar, Badge, Image, Icon, Markdown, Spinner, Panel, Divider and Timer.
+**Comunes**: Label, Heading, Button, Text box, Text area, Check box, Switch, Radio group, Drop-down, Slider, Number
+box, List box, Link y Search box. **Contenedores**: Panel, Group box, Card. **Layout**: Flex row, Flex column, Grid,
+Spacer. **Navegación**: Tab bar, Segmented. **Presentación**: Progress bar, Badge, Chip, Callout, Avatar, Key
+binding, Stat, Chart, Table, Image, Icon, Markdown, Spinner, Divider y Timer.
 
 ![Todos los componentes incluidos](../../../../../screenshots/designer-components.png)
 
@@ -318,8 +384,10 @@ designer.run("hello.pzform")
 
 ### Formularios nuevos y otras ventanas
 
-`designer.new_form(ruta)` crea un formulario vacío y su módulo de handlers (en un proyecto,
-`project.find().new_form("settings")` lo pone en `ui/`). Desde un handler, `form.open(...)`
+**☰ → Nuevo formulario** (Ctrl+N) pide nombre, título y carpeta y ofrece plantillas: en blanco, diálogo (Aceptar
+y Cancelar ya conectados), inicio de sesión, barra lateral y ajustes. En código, `designer.new_form(ruta,
+template="dialog")` crea el formulario y su módulo de handlers (en un proyecto, `project.find().new_form("settings")`
+lo pone en `ui/`), y `designer.register_template(...)` añade tus propias plantillas al diálogo. Desde un handler, `form.open(...)`
 abre otro formulario en una ventana nueva; el nombre se busca junto al formulario actual y
 luego en la carpeta `ui/` del proyecto. Lo que pases como `data` llega como `form.data`:
 
@@ -336,6 +404,8 @@ def form_load(form, event):
 
 `designer.open_window(form_o_ruta, data=...)` devuelve el mismo `Command` desde cualquier app,
 y también acepta un `designer.Form` construido en código (con `handlers={"nombre": función}`).
+
+![El diálogo Nuevo formulario con sus plantillas](../../../../../screenshots/designer-new.png)
 
 ## Cómo está hecho
 

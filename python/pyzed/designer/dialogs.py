@@ -112,7 +112,7 @@ def new_form(d: "Designer", t: Theme) -> Any:
             padding=(8, 10), width="fill", bg=t.element_selected if selected else t.surface,
             hover_bg=t.element_hover, border_color=t.border_selected if selected else t.border_variant,
             border_width=1, radius=t.radius))
-    grid = _core.grid(cards, columns=2, spacing=8, height=56)
+    grid = _core.grid(cards, columns="1fr 1fr", spacing=8)
     folder = Path(s["folder"] or ".")
     path = folder / f"{s['name'] or 'form1'}.pzform"
     exists = path.exists()

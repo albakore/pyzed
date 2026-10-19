@@ -130,6 +130,47 @@ def designer_shots(scale):
     designer.FormApp(form).screenshot(OUT / "designer-components.png", scale=scale)
 
 
+def designer_layout_shots(scale, folder):
+    """Containers and layouts, the New form dialog, menus, settings and the debug console."""
+    from pyzed.designer import new
+
+    path = new.new_form(folder / "shell.pzform", template="sidebar", title="Shell", overwrite=True)
+    app = designer.Designer(path, language_servers=False)
+    app.doc.select("content")
+    app._selection_changed()
+    app.screenshot(OUT / "designer-layout.png", size=(1440, 900), scale=scale)
+
+    app.doc.select(None)
+    app._selection_changed()
+    app.toggle_app_menu("view")
+    app.screenshot(OUT / "designer-menu.png", size=(1440, 900), scale=scale)
+    app.toggle_app_menu("view")
+
+    here = os.getcwd()
+    os.chdir(folder)  # the dialog shows the folder relative to the current one
+    try:
+        app.new()
+        app.set_new("template", "login")
+        app.screenshot(OUT / "designer-new.png", size=(1440, 900), scale=scale)
+    finally:
+        os.chdir(here)
+    app.close_dialog()
+
+    app.open_settings()
+    app.screenshot(OUT / "designer-settings.png", size=(1440, 900), scale=scale)
+    app.close_dialog()
+
+    log = app.console.log
+    log.write("info", "▶ shell started")
+    log.write("event", "nav1.click → nav1_click()")
+    log.write("stdout", "Opening Home")
+    log.write("event", "nav2.click → nav2_click()")
+    log.write("error", "Traceback (most recent call last):\n  File \"shell.py\", line 9, in nav2_click\n"
+                       "    projects[0].open()\nIndexError: list index out of range")
+    app.show_panel("console")
+    app.screenshot(OUT / "designer-console.png", size=(1440, 900), scale=scale)
+
+
 def component_designer_shots(scale):
     """The designer's component mode on examples/designer/components (Rating inside ProfileCard)."""
     from pyzed.designer import scene_panel
@@ -295,6 +336,10 @@ def main():
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
     designer_shots(1.0)
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        designer_layout_shots(1.0, Path(tmp))
     component_designer_shots(1.0)
     project_shot(1.0)
     code_editor_shots(1.0)
