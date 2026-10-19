@@ -21,6 +21,7 @@ formulario cuando no hay nada seleccionado, con el manejador conectado a cada un
 | **Doble clic** en un evento, o su botón **`<>`** (**Crear el manejador** / **Editar el código**) | Lo conecta si hace falta (creando el esqueleto del manejador) y abre el manejador en el editor de código. |
 | Botón **Desconectar** (solo eventos conectados) | Desconecta el evento **y borra el código de su manejador**. |
 | Pasar el ratón por un evento | Un tooltip dice cuándo se ejecuta y qué contiene `event.value`. |
+| El botón del **libro** de la cabecera | Abre la página del control en la [referencia](/pyzed/es/editor/reference/), con cada evento y el nombre de su manejador (<kbd>Shift</kbd>+<kbd>F1</kbd>). |
 
 El evento que estás editando aparece resaltado. Con varios controles seleccionados, el panel pide que elijas uno:
 los eventos pertenecen a un solo control.

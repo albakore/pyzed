@@ -43,6 +43,7 @@ editor's own preferences. Changes apply at once and are saved right away; **Done
 | --- | --- |
 | **Layout → Reset** | Puts every panel back in its default dock and size. |
 | **Code editor → Editor settings…** | The [code editor's settings](/pyzed/editor/code-editor/#editor-settings): font, tabs, cursor, completion, language servers. |
+| **AI agents → AI agents settings…** | The [agent's settings](/pyzed/editor/ai-agents/#settings): model providers, keys and browser sign-in, default model, effort and permissions. |
 
 ## Telemetry
 
@@ -82,7 +83,9 @@ Everything the editor remembers goes to one file, `designer.json`, in Pyzed's se
 
 Set `PYZED_CONFIG_DIR` to use another folder (handy for a portable setup or for tests). The file has two
 sections: `"designer"` (theme, language, canvas defaults, toolbar and status bar, run options, recent files, and
-where each panel is docked, which docks are hidden and their sizes) and `"editor"` (the code editor). Invalid
+where each panel is docked, which docks are hidden and their sizes) and `"editor"` (the code editor). The
+[AI agent](/pyzed/editor/ai-agents/) keeps its settings in `agents.json` and its threads in `agents/threads/` in
+the same folder; API keys are never written there, they go to the system keychain. Invalid
 values are ignored and the defaults used, so a hand-edited file can not break the editor.
 
 ```json

@@ -12,6 +12,7 @@ from .. import _core, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import components as _components
+from . import help as _help
 from .components import Prop
 from .locale import tr
 
@@ -425,6 +426,12 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
     ]
 
 
+def _help_button(d: "Designer", name: str, t: Theme) -> Any:
+    """The "?" of a control's header: opens its page in the built-in reference (Shift+F1)."""
+    return ui.icon_button("book-marked", lambda: d.open_reference(d.help_page_of(name)), size="sm",
+                          tooltip=tr("Help") + " (Shift+F1)", theme=t)
+
+
 def control_properties(d: "Designer", t: Theme) -> List[Any]:
     """Returns the property grid rows of the primary selected control: its name, its properties by group, then
     its style and layout rows."""
@@ -435,7 +442,8 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
         _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
                                                  ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
-                                                width="fill")],
+                                                width="fill"),
+                                   _help_button(d, c.name, t)],
                                   spacing=10, align="center"), padding=(10, 12), width="fill"),
         # inset like the rows inside the sections below, so every label and field lines up
         _core.container(prop_row("Name", ui.input(d.name_buffer, d.set_name_buffer, on_submit=d.commit_name, size="sm",
@@ -451,7 +459,8 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             value = c.props.get(prop.name, prop.default)
             key = f"{c.name}.{prop.name}"
             rows.append(prop_row(prop.title, editor_for(d, prop, value, d.prop_setter(c.name, prop), key, t), t,
-                                 tall=prop.kind in TALL_KINDS, end=_text_toggle(d, prop, key, t)))
+                                 tip=_help.prop_doc(c.type, prop.name) or None, tall=prop.kind in TALL_KINDS,
+                                 end=_text_toggle(d, prop, key, t)))
     rows.extend(style_rows(d, c.name, c.style, t))
     if spec.visual:
         from . import motion_panel
@@ -585,12 +594,14 @@ def events(d: "Designer", t: Theme) -> Any:
     head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),
                                       _core.column([ui.label(owner, weight="semibold", mono=True, theme=t),
                                                     ui.label(kind, size="xs", color="text_muted", theme=t)],
-                                                   width="fill")], spacing=10, align="center"),
+                                                   width="fill"),
+                                      _help_button(d, control.name, t) if control is not None else None],
+                                     spacing=10, align="center"),
                            padding=(10, 12), width="fill")
     rows: List[Any] = []
     for event in doc.events_of(target):
         handler = wired.get(event)
-        doc_text = _components.EVENT_DOCS.get(event, "").format(name=owner).replace("``", "")
+        doc_text = _help.event_doc(event, owner).replace("``", "")
         name = ui.label(handler or "—", size="sm", mono=True, color="text_accent" if handler else "text_muted",
                         wrap=False, theme=t)
         actions = _core.row([

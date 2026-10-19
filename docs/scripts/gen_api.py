@@ -5,6 +5,9 @@
     python docs/scripts/gen_api.py --lang es    # only one language
     python docs/scripts/gen_api.py --check      # fails if a public name is undocumented
 
+It also writes ``python/pyzed/_reference/<lang>.json``: the same descriptions, shipped with the
+package for the reference inside Pyzed Design (``pyzed.reference``).
+
 Signatures come from ``inspect`` (Rust functions too, PyO3 exposes them), so they always match the
 code. Descriptions live in ``api_docs_<lang>.py`` (``api_docs_en.py`` for English, the site's main
 language, ``api_docs_es.py`` for Spanish); a missing one falls back to the docstring and ``--check``
@@ -27,6 +30,20 @@ DOCS = HERE.parent / "src" / "content" / "docs"
 sys.path.insert(0, str(HERE))
 
 import pyzed  # noqa: E402
+# The same helpers build the reference inside Pyzed Design (``pyzed.reference``), so both match.
+from pyzed.reference import (  # noqa: E402
+    class_members,
+    first_paragraph,
+    full_doc,
+    member_signature,
+    param_names,
+    resolve,
+    rst_to_md,
+    signature,
+)
+
+#: The descriptions shipped with the package, for the reference inside the editor.
+DATA = HERE.parent.parent / "python" / "pyzed" / "_reference"
 
 # Output folder and fixed strings per language. English is the site root.
 LANGS = {
@@ -37,128 +54,6 @@ LANGS = {
            "members": "Métodos y propiedades",
            "generated": "Archivo generado por docs/scripts/gen_api.py. Edita docs/scripts/api_docs_es.py."},
 }
-
-
-def resolve(path: str):
-    obj = pyzed
-    parts = path.split(".")
-    for i, part in enumerate(parts[1:], start=2):
-        if not hasattr(obj, part):  # a submodule that isn't imported yet (pyzed.designer...)
-            importlib.import_module(".".join(parts[:i]))
-        obj = getattr(obj, part)
-    return obj
-
-
-def signature(name: str, obj) -> str:
-    short = name.rsplit(".", 1)[-1]
-    if inspect.isclass(obj) and dataclasses.is_dataclass(obj):
-        fields = []
-        for f in dataclasses.fields(obj):
-            if f.default is not dataclasses.MISSING:
-                fields.append(f"{f.name}={f.default!r}")
-            elif f.default_factory is not dataclasses.MISSING:  # type: ignore[misc]
-                factory = f.default_factory  # type: ignore[misc]
-                if factory in (list, dict, set, tuple):
-                    fields.append(f"{f.name}={factory()!r}")
-                else:
-                    fields.append(f"{f.name}={factory.__module__}.{factory.__qualname__}()")
-            else:
-                fields.append(f.name)
-        return f"@dataclass\nclass {short}({', '.join(fields)})"
-    if inspect.isclass(obj):
-        return f"class {short}"
-    try:
-        sig = obj if isinstance(obj, inspect.Signature) else inspect.signature(obj)
-    except (TypeError, ValueError):
-        return f"{short}(...)"
-    params = []
-    for p in sig.parameters.values():
-        text = str(p.replace(annotation=inspect.Parameter.empty))
-        params.append(text)
-    # Rebuild the keyword-only "*" marker from the signature.
-    rendered, seen_star = [], False
-    for p, text in zip(sig.parameters.values(), params):
-        if p.kind is inspect.Parameter.KEYWORD_ONLY and not seen_star:
-            rendered.append("*")
-            seen_star = True
-        if p.kind is inspect.Parameter.VAR_POSITIONAL:
-            seen_star = True
-        rendered.append(text)
-    one_line = f"{short}({', '.join(rendered)})"
-    if len(one_line) <= 88:
-        return one_line
-    return f"{short}(\n" + "".join(f"    {r},\n" for r in rendered) + ")"
-
-
-def param_names(obj):
-    if inspect.isclass(obj) and dataclasses.is_dataclass(obj):
-        return [f.name for f in dataclasses.fields(obj)]
-    try:
-        return [p for p in inspect.signature(obj).parameters if p not in ("self", "cls")]
-    except (TypeError, ValueError):
-        return []
-
-
-def first_paragraph(doc: str | None) -> str:
-    if not doc:
-        return ""
-    return rst_to_md(inspect.cleandoc(doc).split("\n\n")[0].replace("\n", " "))
-
-
-def rst_to_md(text: str) -> str:
-    """Docstrings use reST ``literals`` and ``::`` blocks; the site uses Markdown."""
-    out, lines, i = [], text.split("\n"), 0
-    while i < len(lines):
-        line = lines[i]
-        if line.rstrip().endswith("::") and i + 1 < len(lines):
-            out.append(line.rstrip()[:-1] if not line.rstrip().endswith(" ::") else line.rstrip()[:-3])
-            block, i = [], i + 1
-            while i < len(lines) and (not lines[i].strip() or lines[i].startswith(" ")):
-                block.append(lines[i])
-                i += 1
-            while block and not block[-1].strip():
-                block.pop()
-            code = inspect.cleandoc("\n".join(block))
-            out += ["", "```python", code, "```", ""]
-            continue
-        out.append(line)
-        i += 1
-    return re.sub(r"(?<!`)``([^`\n]+)``(?!`)", r"`\1`", "\n".join(out)).strip()
-
-
-def full_doc(obj) -> str:
-    doc = inspect.getdoc(obj)
-    return rst_to_md(doc) if doc else ""
-
-
-def class_members(cls) -> list:
-    """Public methods and properties a class defines itself. Inherited ones, and overrides of a
-    parent's method (``Component.render``...), are documented on the parent."""
-    members = []
-    for m, raw in vars(cls).items():
-        if m.startswith("_") or any(m in vars(base) for base in cls.__mro__[1:]):
-            continue
-        if isinstance(raw, property):
-            members.append((m, raw, "property"))
-        elif isinstance(raw, (classmethod, staticmethod)) or inspect.isfunction(raw):
-            members.append((m, raw, "method"))
-    return members
-
-
-def member_signature(cls, m: str, raw, kind: str) -> str:
-    if kind == "property":
-        return f"{cls.__name__}.{m}  # property"
-    func = getattr(cls, m)
-    try:
-        sig = inspect.signature(func)
-    except (TypeError, ValueError):
-        return f"{cls.__name__}.{m}(...)"
-    params = list(sig.parameters.values())
-    if inspect.isfunction(raw) and params and params[0].name in ("self", "cls"):
-        params = params[1:]
-    prefix = "@classmethod\n" if isinstance(raw, classmethod) else "@staticmethod\n" if isinstance(raw, staticmethod) else ""
-    text = signature(f"x.{cls.__name__}.{m}", sig.replace(parameters=params))
-    return prefix + f"{cls.__name__}.{text}"
 
 
 def render_members(name: str, cls, entry: dict, docs, labels: dict, documented_all: set, missing: list) -> str:
@@ -267,6 +162,30 @@ def build(lang: str) -> tuple[dict, list]:
     return pages, missing
 
 
+def _clean(value):
+    """Strings dedented, so the shipped data is compact and renders like the pages."""
+    if isinstance(value, str):
+        return inspect.cleandoc(value)
+    if isinstance(value, dict):
+        return {k: _clean(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_clean(v) for v in value]
+    return value
+
+
+def export(lang: str) -> str:
+    """The descriptions of ``lang`` as the JSON shipped in ``pyzed/_reference`` (read by ``pyzed.reference``)."""
+    docs = importlib.import_module(f"api_docs_{lang}")
+    data = {
+        "pages": [{"slug": p["slug"], "title": p["title"], "description": p["description"],
+                   "intro": p.get("intro", ""), "sections": [[title, items] for title, items in p["sections"]]}
+                  for p in docs.PAGES],
+        "common": docs.COMMON,
+        "members": getattr(docs, "MEMBERS", {}),
+    }
+    return json.dumps(_clean(data), ensure_ascii=False, indent=None, separators=(",", ":")) + "\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="only report undocumented names")
@@ -286,6 +205,9 @@ def main() -> int:
         for slug, text in pages.items():
             (out / f"{slug}.md").write_text(text, encoding="utf-8")
         print(f"[{lang}] wrote {len(pages)} pages to {out}")
+        DATA.mkdir(parents=True, exist_ok=True)
+        (DATA / f"{lang}.json").write_text(export(lang), encoding="utf-8")
+        print(f"[{lang}] wrote {DATA / (lang + '.json')}")
         for m in missing:
             print(f"[{lang}] warning: undocumented: {m}")
     return 1 if failed else 0

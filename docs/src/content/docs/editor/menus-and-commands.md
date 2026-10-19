@@ -70,6 +70,7 @@ The toggles are remembered between sessions.
 | Entry | Keys | Does |
 | --- | --- | --- |
 | Keyboard shortcuts | <kbd>F1</kbd> | A searchable list of every shortcut. |
+| Reference | <kbd>Shift</kbd>+<kbd>F1</kbd> | The [built-in reference](/pyzed/editor/reference/), on the page of the selected control or of the name under the cursor. |
 | Documentation | | Opens this documentation in the browser. |
 | Report a problem | | Opens the issue tracker. |
 | What's new | | A tab with the release notes of this version (or of the update waiting to install). |

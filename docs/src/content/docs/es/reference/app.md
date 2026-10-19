@@ -1044,3 +1044,222 @@ normalize(language)
 ```
 
 `"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.
+
+## Referencia integrada
+
+### `Browser`
+
+```python
+class Browser
+```
+
+Lo que muestra un visor de la referencia: el texto buscado, la página abierta y el historial atrás/adelante.
+
+`ui.reference_browser(browser)` lo dibuja; sus botones y enlaces llaman a los métodos de abajo.
+
+**Métodos y propiedades**
+
+#### `Browser.open`
+
+```python
+Browser.open(id)
+```
+
+Muestra la página `id` (devuelve `False` si no existe).
+
+#### `Browser.open_symbol`
+
+```python
+Browser.open_symbol(symbol)
+```
+
+Muestra la página sobre un nombre escrito en código; devuelve si encontró una.
+
+#### `Browser.back`
+
+```python
+Browser.back()
+```
+
+Vuelve a la página anterior.
+
+#### `Browser.forward`
+
+```python
+Browser.forward()
+```
+
+Va a la página siguiente después de volver atrás.
+
+#### `Browser.set_query`
+
+```python
+Browser.set_query(query)
+```
+
+Cambia el texto buscado.
+
+#### `Browser.toggle`
+
+```python
+Browser.toggle(section)
+```
+
+Pliega o despliega una sección de la lista de clases.
+
+#### `Browser.results`
+
+```python
+Browser.results()
+```
+
+Las entradas que coinciden con el texto buscado.
+
+#### `Browser.page`
+
+```python
+Browser.page()
+```
+
+La página mostrada (`None` antes de abrir una).
+
+#### `Browser.follow`
+
+```python
+Browser.follow(url)
+```
+
+Gestiona un enlace de una página: los internos abren su página; si no, devuelve la URL que hay que abrir.
+
+### `Entry`
+
+```python
+@dataclass
+class Entry(id, title, section, group='', summary='', icon='book-open', kind='function')
+```
+
+Una página de la referencia, tal como la muestran los resultados de búsqueda y la lista de clases.
+
+### `Page`
+
+```python
+@dataclass
+class Page(entry, body, url=None)
+```
+
+Una página completa: la entrada a la que pertenece y su cuerpo en Markdown.
+
+**Métodos y propiedades**
+
+#### `Page.id`
+
+```python
+Page.id  # property
+```
+
+El id de la entrada.
+
+#### `Page.title`
+
+```python
+Page.title  # property
+```
+
+El título de la entrada.
+
+### `Provider`
+
+```python
+@dataclass
+class Provider(name, entries, page, lookup=None)
+```
+
+Una sección de la referencia que viene de otro sitio que no son las páginas de la API de la librería.
+
+`entries(lang)` lista sus páginas, `page(id, lang)` construye una (`None` si el id no es suyo)
+y `lookup(symbol)` convierte un nombre escrito en código en uno de sus ids.
+
+### `register`
+
+```python
+register(provider)
+```
+
+Añade una sección a la referencia (reemplaza la que tenga el mismo `name`).
+
+### `entries`
+
+```python
+entries(lang=None)
+```
+
+Todas las páginas de la referencia, en el orden de la lista de clases (primero los controles del diseñador, luego la librería).
+
+### `sections`
+
+```python
+sections(lang=None)
+```
+
+La lista de clases: `[(sección, [(grupo, [entradas]), ...]), ...]` en orden.
+
+### `search`
+
+```python
+search(query, lang=None, limit=60)
+```
+
+Las entradas que coinciden con `query`: primero los nombres exactos, luego los que empiezan por él y después el resto.
+
+Cada palabra debe aparecer en el título, el grupo o el resumen (`"tab bar"` encuentra `ui.tab_bar`).
+
+### `page`
+
+```python
+page(id, lang=None)
+```
+
+La página con `id` (`KeyError` si no existe).
+
+### `lookup`
+
+```python
+lookup(symbol)
+```
+
+El id de la página sobre un nombre escrito en código (`"pz.text"`, `"ui.button"`, `"Theme"`...).
+
+### `languages`
+
+```python
+languages()
+```
+
+Los idiomas en los que están las descripciones de la API.
+
+### `tables_as_lists`
+
+```python
+tables_as_lists(markdown)
+```
+
+Tablas de Markdown convertidas en listas (`- primera celda: las otras celdas`).
+
+Para visores cuyas tablas no parten las celdas largas, como `ui.reference_browser` en una pestaña estrecha.
+Los bloques de código no se tocan.
+
+### `display_name`
+
+```python
+display_name(name)
+```
+
+`"pyzed.text"` -> `"pz.text"`, `"pyzed.ui.button"` -> `"ui.button"`.
+
+### `summary`
+
+```python
+summary(markdown)
+```
+
+La primera frase de un texto Markdown, sin formato (para listas y resultados de búsqueda).

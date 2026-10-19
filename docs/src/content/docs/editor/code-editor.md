@@ -141,6 +141,13 @@ A handler's `form` and `event` have no type the servers could read, so the edito
 
 ![form. completes the form's own controls](../../../../screenshots/designer-completion-form.png)
 
+## Contextual help
+
+<kbd>Shift</kbd>+<kbd>F1</kbd> opens the [built-in reference](/pyzed/editor/reference/) on the name under the
+cursor: `form.email` or `form.email.text` opens the page of the control's kind, `form` and `event` open the form
+scripting pages, and library names (`pz.text`, `ui.button`, `Theme`) open their API page. With no match it searches
+the reference for the name.
+
 ## Diagnostics and code lens
 
 ![Inline errors, the problems list and code lens](../../../../screenshots/designer-diagnostics.png)

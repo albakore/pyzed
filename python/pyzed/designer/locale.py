@@ -152,6 +152,7 @@ _ES = {
     "Move out of {parent}": "Sacar de {parent}", "Lock": "Bloquear", "Unlock": "Desbloquear",
     # Code panel
     "Problems": "Problemas", "Editor settings": "Ajustes del editor", "Whole file": "Archivo completo",
+    "Inline assist (Ctrl+Alt+I)": "Asistente en línea (Ctrl+Alt+I)",
     "This handler": "Este manejador", "Apply": "Aplicar", "Close": "Cerrar", "Loading…": "Cargando…",
     "↵ insert  esc close": "↵ insertar  esc cerrar", "private": "privado",
     "Language servers": "Servidores de lenguaje", "Types, completion and references": "Tipos, completado y referencias",
@@ -275,6 +276,130 @@ _ES = {
     "Highlight selection matches": "Resaltar coincidencias de la selección",
     "Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them":
         "Ctrl+D añade la siguiente como cursor y Ctrl+Shift+L todas",
+    # Built-in reference
+    "Reference": "Referencia", "Form controls": "Controles del formulario", "Form code": "Código del formulario",
+    "Property": "Propiedad", "Type": "Tipo", "Description": "Descripción", "Event": "Evento", "Handler": "Manejador",
+    "Methods": "Métodos", "Methods and properties": "Métodos y propiedades", "See": "Ver", "In code": "En código",
+    "Read and change them from code as attributes:": "Léelas y cámbialas desde el código como atributos:",
+    "The same component in a Pyzed app written in code:": "El mismo componente en una app de Pyzed escrita en código:",
+    "The running form: its controls, title, size and windows.":
+    "El formulario en ejecución: sus controles, título, tamaño y ventanas.",
+    "A control of the running form: its properties and methods.":
+    "Un control del formulario en ejecución: sus propiedades y métodos.",
+    "What a handler receives besides the form: sender, name and value.":
+    "Lo que recibe un manejador además del formulario: emisor, nombre y valor.",
+    "Every control is an attribute named like it: `form.button1`. `for control in form` goes through all of them "
+    "and `form[\"button1\"]` finds one by name.":
+    "Cada control es un atributo con su nombre: `form.button1`. `for control in form` los recorre todos y "
+    "`form[\"button1\"]` busca uno por nombre.",
+    "Each property of the control reads and writes like an attribute: `form.label1.text = \"Hi\"`. The page of "
+    "each control lists its properties.":
+    "Cada propiedad del control se lee y se escribe como un atributo: `form.label1.text = \"Hola\"`. La página "
+    "de cada control enumera sus propiedades.",
+    "The control that raised the event (or the form).": "El control que lanzó el evento (o el formulario).",
+    "The event name: click, change...": "El nombre del evento: click, change...",
+    "The event's value: the new text, checked state, key combo...":
+    "El valor del evento: el texto nuevo, si está marcado, la combinación de teclas...",
+    # Fields every control has
+    "Horizontal position, in pixels from the left of the form (or of its container).":
+    "Posición horizontal, en píxeles desde la izquierda del formulario (o de su contenedor).",
+    "Vertical position, in pixels from the top.": "Posición vertical, en píxeles desde arriba.",
+    "Width in pixels.": "Ancho en píxeles.", "Height in pixels.": "Alto en píxeles.",
+    "Whether the control is shown (`show()` and `hide()` change it).":
+    "Si el control se muestra (`show()` y `hide()` lo cambian).",
+    "Whether the control reacts to the user.": "Si el control responde al usuario.",
+    # Events
+    "Runs when {name} is clicked.": "Se ejecuta al hacer clic en {name}.",
+    "Runs when {name} is double-clicked.": "Se ejecuta al hacer doble clic en {name}.",
+    "Runs when the value of {name} changes (``event.value``).": "Se ejecuta cuando cambia el valor de {name} (``event.value``).",
+    "Runs when Enter is pressed in {name}.": "Se ejecuta al pulsar Enter en {name}.",
+    "Runs when the user lets go of {name}.": "Se ejecuta cuando el usuario suelta {name}.",
+    "Runs every ``interval`` milliseconds while {name} is enabled.":
+    "Se ejecuta cada ``interval`` milisegundos mientras {name} está activo.",
+    "Runs when the pointer enters {name}.": "Se ejecuta cuando el puntero entra en {name}.",
+    "Runs when the pointer leaves {name}.": "Se ejecuta cuando el puntero sale de {name}.",
+    "Runs when {name} is right-clicked.": "Se ejecuta al hacer clic derecho en {name}.",
+    "Runs once when {name} opens.": "Se ejecuta una vez al abrirse {name}.",
+    "Runs when {name} is closing; return False to keep it open.":
+    "Se ejecuta cuando {name} se está cerrando; devuelve False para mantenerlo abierto.",
+    "Runs on every key press (``event.value`` is a combo such as ``\"ctrl-s\"``).":
+    "Se ejecuta con cada tecla (``event.value`` es una combinación como ``\"ctrl-s\"``).",
+    "Runs when {name} is resized (``event.value`` is ``(width, height)``).":
+    "Se ejecuta cuando {name} cambia de tamaño (``event.value`` es ``(width, height)``).",
+    # Property descriptions
+    "Where the content sits: start, center or end.": "Dónde se coloca el contenido: al inicio, centrado o al final.",
+    "Fill color behind the content (a theme token or a hex color).":
+    "Color de relleno detrás del contenido (un token del tema o un color hex).",
+    "Draws a border around the panel.": "Dibuja un borde alrededor del panel.",
+    "Whether it is on. Changes when the user clicks it (read it in the change event).":
+    "Si está activado. Cambia cuando el usuario hace clic (léelo en el evento change).",
+    "Text or icon color (a theme token or a hex color).": "Color del texto o del icono (un token del tema o un color hex).",
+    "How many columns the cells are laid out in.": "En cuántas columnas se reparten las celdas.",
+    "The table: one row per line, cells separated by commas, the first row is the header.":
+    "La tabla: una fila por línea, celdas separadas por comas; la primera fila es el encabezado.",
+    "The change shown next to the figure (positive is drawn as a rise).":
+    "La variación que se muestra junto a la cifra (si es positiva se dibuja como subida).",
+    "Whether the children run horizontally (row) or vertically (column).":
+    "Si los hijos van en horizontal (fila) o en vertical (columna).",
+    "How the picture fills its box: contain, cover, fill or none.":
+    "Cómo llena la imagen su caja: contain, cover, fill o none.",
+    "Space between the children, in pixels.": "Espacio entre los hijos, en píxeles.",
+    "Lays the options out side by side instead of one per line.":
+    "Coloca las opciones una al lado de otra en lugar de una por línea.",
+    "A Lucide icon name (pick it with the icon button).": "Un nombre de icono de Lucide (elígelo con el botón del icono).",
+    "The letters shown in the circle.": "Las letras que se muestran en el círculo.",
+    "Milliseconds between two tick events.": "Milisegundos entre dos eventos tick.",
+    "The rows of the list, one per line.": "Las filas de la lista, una por línea.",
+    "How the children are spread along the main axis: start, center, end or space between.":
+    "Cómo se reparten los hijos en el eje principal: inicio, centro, final o espacio entre ellos.",
+    "The key combination to draw, such as ctrl-s.": "La combinación de teclas que se dibuja, como ctrl-s.",
+    "The chart type: bar, line or donut.": "El tipo de gráfico: barras, líneas o anillo.",
+    "The label of each value, one per line.": "La etiqueta de cada valor, una por línea.",
+    "The language used to highlight the text (none for plain text).":
+    "El lenguaje con el que se resalta el texto (ninguno para texto plano).",
+    "The heading size: 1 is the biggest.": "El tamaño del título: 1 es el más grande.",
+    "Shows line numbers in a gutter.": "Muestra los números de línea en un margen.",
+    "The highest value.": "El valor más alto.", "The lowest value.": "El valor más bajo.",
+    "The choices, one per line.": "Las opciones, una por línea.",
+    "Space between the border and the children, in pixels.": "Espacio entre el borde y los hijos, en píxeles.",
+    "Hint shown while it is empty.": "Pista que se muestra mientras está vacío.",
+    "Corner radius, in pixels.": "Radio de las esquinas, en píxeles.",
+    "The height of each row of cells (0 sizes them to their content).":
+    "La altura de cada fila de celdas (0 las ajusta a su contenido).",
+    "Whether the timer is ticking. Set it from code to start or stop it.":
+    "Si el temporizador está en marcha. Cámbialo desde el código para iniciarlo o pararlo.",
+    "Hides what is typed (for passwords).": "Oculta lo que se escribe (para contraseñas).",
+    "The option chosen, by its text. Changes when the user picks one.":
+    "La opción elegida, por su texto. Cambia cuando el usuario elige otra.",
+    "Draws a drop shadow under the card.": "Dibuja una sombra debajo de la tarjeta.",
+    "Text size: small, normal or large.": "Tamaño del texto: pequeño, normal o grande.",
+    "Path of the image file, relative to the form.": "Ruta del archivo de imagen, relativa al formulario.",
+    "How much one step changes the value.": "Cuánto cambia el valor en cada paso.",
+    "Shades every other row.": "Sombrea una fila de cada dos.",
+    "The tab titles, one per line.": "Los títulos de las pestañas, uno por línea.",
+    "The text shown.": "El texto que se muestra.",
+    "Semantic color: accent, success, warning, error or info.": "Color semántico: accent, success, warning, error o info.",
+    "The title shown at the top.": "El título que se muestra arriba.",
+    "Values drawn as a small line next to the figure, one per line.":
+    "Valores dibujados como una pequeña línea junto a la cifra, uno por línea.",
+    "The current value. Changes when the user moves it (read it in the change event).":
+    "El valor actual. Cambia cuando el usuario lo mueve (léelo en el evento change).",
+    "The numbers to plot, separated by commas.": "Los números que se dibujan, separados por comas.",
+    "The button style: filled, ghost, outline, solid...": "El estilo del botón: filled, ghost, outline, solid...",
+    "Draws the line vertically.": "Dibuja la línea en vertical.",
+    "Font weight: normal, medium, semibold or bold.": "Grosor de la fuente: normal, medium, semibold o bold.",
+    "Wraps long lines instead of cutting them.": "Parte las líneas largas en lugar de cortarlas.",
+    "Whether the chip is selected. Changes when the user clicks it.":
+    "Si el chip está seleccionado. Cambia cuando el usuario hace clic.",
+    "Index of the selected row (-1 when none). Changes when the user clicks a row.":
+    "Índice de la fila seleccionada (-1 si no hay ninguna). Cambia cuando el usuario hace clic en una fila.",
+    "The title of the open tab.": "El título de la pestaña abierta.", "Icon size, in pixels.": "Tamaño del icono, en píxeles.",
+    "The Lucide icon to draw.": "El icono de Lucide que se dibuja.", "The figure shown, as text.": "La cifra que se muestra, como texto.",
+    "How much is done, between 0 and max.": "Cuánto se ha completado, entre 0 y max.",
+    "What the user typed; set it from code to change it.": "Lo que escribió el usuario; cámbialo desde el código.",
+    "The text in the box: what the user typed, or set it from code.":
+    "El texto del cuadro: lo que escribió el usuario, o lo que pongas desde el código.",
+    "The Markdown source to show.": "El texto Markdown que se muestra.",
 }
 
 i18n.add("es", {"designer": _ES})
@@ -364,3 +489,5 @@ i18n.add("es", {"designer": {
     "Ease out cubic": "Frenar (cúbica)", "Ease in out sine": "Acelerar y frenar (seno)",
     "Ease out back": "Frenar pasándose", "Ease out elastic": "Elástica", "Ease out bounce": "Rebote al final",
 }})
+
+from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts

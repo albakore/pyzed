@@ -66,6 +66,7 @@ flowchart TB
 | **Lienzo** | El formulario tal como se ejecutará, con cuadrícula de puntos, selección, asas y guías inteligentes. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/) |
 | **Propiedades** | Las propiedades, el estilo, la posición y el comportamiento del control seleccionado (o del formulario). | [Propiedades](/pyzed/es/editor/properties/) |
 | **Eventos** | Los eventos del control seleccionado y el manejador conectado a cada uno. | [Eventos y manejadores](/pyzed/es/editor/events/) |
+| **Agente** | Un agente de IA que crea formularios y componentes, escribe su código y edita el formulario abierto. | [Agentes de IA](/pyzed/es/editor/ai-agents/) |
 | **Código** | Un editor de Python con autocompletado, diagnósticos, code lens, plegado y minimapa. | [Editor de código](/pyzed/es/editor/code-editor/) |
 | **Consola** | Lo que imprime el formulario en ejecución, los eventos que atiende y sus errores. | [Ejecutar y la consola](/pyzed/es/editor/console-and-running/) |
 | **Barra de estado** | La posición del puntero, el tamaño y lugar de la selección, el número de controles, la cuadrícula y el snap, y mientras programas el cursor y los servidores de lenguaje. | [Ajustes](/pyzed/es/editor/settings/) |
@@ -119,6 +120,7 @@ flowchart LR
 - [Archivos, plantillas y scripting](/pyzed/es/editor/files-and-scripting/): pestañas, archivos `.pzform`,
   plantillas y la API de Python.
 - [Menús y comandos](/pyzed/es/editor/menus-and-commands/): cada entrada de menú, la paleta de comandos y los docks.
+- [Referencia integrada](/pyzed/es/editor/reference/): la documentación con buscador de cada control y función, con <kbd>Shift</kbd>+<kbd>F1</kbd>.
 - [Atajos de teclado](/pyzed/es/editor/keyboard-shortcuts/): la lista completa.
 - [Ajustes](/pyzed/es/editor/settings/): las preferencias del editor y del editor de código.
 - [Trucos y consejos](/pyzed/es/editor/tips-and-tricks/).

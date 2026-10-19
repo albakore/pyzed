@@ -26,10 +26,13 @@ These work anywhere, even while you type in the code editor.
 | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> | Show or hide the right dock |
 | <kbd>Ctrl</kbd>+<kbd>J</kbd> | Show or hide the bottom dock |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Console |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Show the [Agent panel](/pyzed/editor/ai-agents/) |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>I</kbd> | [Inline assist](/pyzed/editor/ai-agents/#inline-assist) in the code editor |
 | <kbd>F5</kbd> | Run |
 | <kbd>Shift</kbd>+<kbd>F5</kbd> | Stop |
 | <kbd>F7</kbd> | Edit code file |
 | <kbd>F1</kbd> | Keyboard shortcuts |
+| <kbd>Shift</kbd>+<kbd>F1</kbd> | [Reference](/pyzed/editor/reference/) of the selected control or of the name under the cursor |
 
 While a dialog is open, only the palette, Settings and Keyboard shortcuts keys act; the others wait until it is
 closed.

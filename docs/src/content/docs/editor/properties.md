@@ -28,6 +28,10 @@ control's identifier: the attribute you use in code (`form.email`) and the prefi
 and press <kbd>Enter</kbd> to rename it; handlers that follow the naming convention (`email_change`) are renamed
 in the code file too. Names are made valid and unique for you.
 
+The **book** button at the right of the header (<kbd>Shift</kbd>+<kbd>F1</kbd>) opens the control's page in the
+[built-in reference](/pyzed/editor/reference/): every property with its type and default, its events and its
+methods. Hover a property's label for a one-line description.
+
 ### The component's own sections
 
 Each component groups its properties in **Appearance**, **Data**, **Layout** or **Behavior** sections. The kind of
