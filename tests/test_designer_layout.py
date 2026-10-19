@@ -386,11 +386,10 @@ def test_language_switch_translates_the_designer(tmp_path):
 def test_unsaved_changes_save_then_continue(tmp_path):
     app = Designer(tmp_path / "a.pzform", language_servers=False)
     app.doc.dirty = True
-    opened = []
-    app._guard(lambda: opened.append(1))
+    app.close_doc()  # closing a tab with unsaved changes asks first
     assert app.dialog == "confirm" and app.dialog_view(app.theme_obj) is not None
     app.confirm_save()
-    assert opened == [1] and (tmp_path / "a.pzform").exists()
+    assert (tmp_path / "a.pzform").exists() and app.doc.path is None and len(app.docs) == 1
 
 
 # -- context menu and dragging out of the panels -------------------------------------

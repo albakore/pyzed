@@ -194,6 +194,15 @@ def component_designer_shots(scale):
         narrow.window_size = (440, 240)  # the cards shrink with the window
         narrow.screenshot(OUT / "designer-component-responsive.png", size=(440, 240), scale=2)
 
+        tabs = designer.Designer(folder / "reviews.pzform", language_servers=False)
+        tabs.toggle_members("ada")
+        tabs.screenshot(OUT / "designer-component-outline.png", size=(1440, 900), scale=scale)
+        tabs.open_default_event("ada")  # double-click: the component opens in its own tab
+        tabs.toasts.clear()
+        tabs.screenshot(OUT / "designer-component-tabs.png", size=(1440, 900), scale=scale)
+        tabs.__dict__["_scene_open"] = {"properties", "methods"}
+        tabs.screenshot(OUT / "designer-component-members.png", size=(1440, 1100), scale=scale)
+
         team = designer.Designer(folder / "team_card.pzcomp", language_servers=False)
         team.screenshot(OUT / "designer-component-inherit.png", size=(1440, 900), scale=scale)
         team.new_component()

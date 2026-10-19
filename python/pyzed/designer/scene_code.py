@@ -282,9 +282,112 @@ def set_members(source: str, members: Sequence[Member], cls_name: Optional[str] 
     picked = [node for node in cls.body if _member(node, source) is not None]
     block = [m.statement() for m in members]
     source = _replace_statements(source, cls.name, picked, block)
-    if any(not m.public for m in members):
+    if any(not m.public or "pz." in m.type for m in members):
         source = ensure_import(source)
+    wanted = [name for name in ("Annotated", "Literal") if any(m.type.startswith(f"{name}[") for m in members)]
+    if wanted:
+        source = ensure_typing(source, wanted)
     return source
+
+
+def ensure_typing(source: str, names: Sequence[str]) -> str:
+    """Makes sure ``from typing import ...`` names ``names`` (``Literal`` and ``Annotated`` hints use it)."""
+    tree = _parse(source)
+    if tree is None:
+        return source
+    node = next((n for n in tree.body if isinstance(n, ast.ImportFrom) and n.module == "typing"), None)
+    lines = _lines(source)
+    if node is not None:
+        have = [a.name if not a.asname else f"{a.name} as {a.asname}" for a in node.names]
+        missing = [n for n in names if n not in {a.name for a in node.names}]
+        if not missing or node.lineno != node.end_lineno:
+            return source
+        lines[node.lineno - 1] = f"from typing import {', '.join(sorted([*have, *missing]))}\n"
+        return "".join(lines)
+    line = f"from typing import {', '.join(sorted(names))}\n"
+    first = next((n for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))
+                  and getattr(n, "module", None) != "__future__"), None)
+    if first is not None:  # the standard library goes first, then a blank line
+        lines[first.lineno - 1:first.lineno - 1] = [line, "\n"]
+    else:
+        doc = tree.body[0] if tree.body and isinstance(tree.body[0], ast.Expr) else None
+        lines.insert(doc.end_lineno if doc is not None and doc.end_lineno else 0, line)
+    return "".join(lines)
+
+
+# -- property kinds (like Godot's export hints) --------------------------------------
+
+#: What the type drop-down offers: plain types and the hints that pick an editor.
+KINDS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "Choice", "Range", "list", "dict", "Any")
+
+
+def kind_of(type_: str) -> str:
+    """The kind of a property from its annotation (``pz.Color`` is ``Color``, ``Literal[...]`` is ``Choice``)."""
+    text = type_.replace("typing.", "").strip()
+    if text.startswith("Literal["):
+        return "Choice"
+    if text.startswith("Annotated[") and "Range(" in text:
+        return "Range"
+    last = text.rsplit(".", 1)[-1]
+    if last in ("Color", "Icon", "Multiline"):
+        return last
+    return text
+
+
+def choices_of(type_: str) -> List[str]:
+    """The options of a ``Literal[...]`` annotation."""
+    try:
+        node = ast.parse(type_.replace("typing.", ""), mode="eval").body
+    except SyntaxError:
+        return []
+    if not isinstance(node, ast.Subscript):
+        return []
+    items = node.slice.elts if isinstance(node.slice, ast.Tuple) else [node.slice]  # type: ignore[attr-defined]
+    return [str(i.value) for i in items if isinstance(i, ast.Constant)]
+
+
+def choice_type(options: Sequence[str]) -> str:
+    return f"Literal[{', '.join(literal(str(o)) for o in options)}]" if options else "str"
+
+
+def range_of(type_: str) -> Tuple[str, float, float, float]:
+    """``(base type, min, max, step)`` of an ``Annotated[int, pz.Range(0, 10)]`` annotation."""
+    try:
+        node = ast.parse(type_.replace("typing.", ""), mode="eval").body
+    except SyntaxError:
+        return ("int", 0, 100, 1)
+    base, values = "int", [0.0, 100.0, 1.0]
+    if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Tuple):
+        first, *rest = node.slice.elts
+        base = ast.unparse(first)
+        for extra in rest:
+            if isinstance(extra, ast.Call):
+                args = [a.value for a in extra.args if isinstance(a, ast.Constant)]
+                args += [k.value.value for k in extra.keywords if isinstance(k.value, ast.Constant)]
+                values[:len(args)] = [float(a) for a in args[:3]]
+    return (base, values[0], values[1], values[2])
+
+
+def range_type(base: str, low: float, high: float, step: float = 1) -> str:
+    def num(v: float) -> str:
+        return str(int(v)) if float(v).is_integer() and base == "int" else repr(float(v))
+    tail = f", {num(step)}" if step != 1 else ""
+    return f"Annotated[{base}, pz.Range({num(low)}, {num(high)}{tail})]"
+
+
+def type_for(kind: str, previous: str = "") -> str:
+    """The annotation written for a kind picked in the type drop-down."""
+    if kind == "Color":
+        return "pz.Color"
+    if kind == "Icon":
+        return "pz.Icon"
+    if kind == "Multiline":
+        return "pz.Multiline"
+    if kind == "Choice":
+        return previous if kind_of(previous) == "Choice" else choice_type(["first", "second"])
+    if kind == "Range":
+        return previous if kind_of(previous) == "Range" else range_type("int", 0, 100)
+    return kind
 
 
 def set_events(source: str, events: Dict[str, str], cls_name: Optional[str] = None) -> str:
@@ -316,6 +419,9 @@ def ensure_import(source: str) -> str:
     where = 0
     if tree is not None:
         for node in tree.body:
+            if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "pyzed":
+                where = node.lineno - 1  # ``import pyzed`` goes before ``from pyzed... import``
+                break
             if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and where == 0 \
                     and node is tree.body[0]:
                 where = node.end_lineno or node.lineno

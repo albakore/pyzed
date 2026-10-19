@@ -126,6 +126,16 @@ Every `pz.Component` subclass appears in the [designer](/pyzed/guides/designer/)
 
 - **Props** become properties. `bool` gets a switch, `int` and `float` a number box, `Literal[...]`
   a drop-down, `list` one item per line, and a prop named `color` or `icon` gets its own picker.
+  The type hints of `pyzed` pick a richer editor, like export hints in Godot:
+
+  | Annotation | Editor |
+  | --- | --- |
+  | `pz.Color` | A color picker (theme token or `#rrggbb`). |
+  | `pz.Icon` | An icon picker. |
+  | `pz.Multiline` | A text area. |
+  | `Annotated[int, pz.Range(0, 10)]` | A number box limited to 0 to 10 (`step` is optional). |
+
+  They are plain `str` and `int` at run time: `tint: pz.Color = "accent"`.
 - **Custom events** become events you can write code for.
 
 Class attributes control how it appears:

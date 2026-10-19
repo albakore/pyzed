@@ -124,7 +124,7 @@ _ES = {
         "Una pieza reutilizable para formularios y otros componentes, no una ventana",
     "Class {name}": "Clase {name}", "Inherits from": "Hereda de", "Nothing (a new component)": "Nada (un componente nuevo)",
     "Starts with its controls, properties, events and methods": "Empieza con sus controles, propiedades, eventos y métodos",
-    "Create component": "Crear componente",
+    "Create component": "Crear componente", "Component view": "Vista de componente", "Form view": "Vista de formulario",
     "Blank": "En blanco", "An empty window.": "Una ventana vacía.", "Dialog": "Diálogo",
     "A message with OK and Cancel buttons.": "Un mensaje con los botones Aceptar y Cancelar.",
     "Sign in": "Inicio de sesión", "Email and password in a centered column.": "Correo y contraseña en una columna centrada.",

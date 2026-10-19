@@ -72,6 +72,19 @@ class Event:
     value: Any = None
 
 
+def remember_instance(owner: Any, control: Control, ctx: Any) -> None:
+    """Keeps the ``pz.Component`` just rendered for ``control``, so ``owner.control.method()`` reaches it."""
+    from ..component import _passes, find
+
+    cls = find(control.type)
+    if cls is None or not _passes:
+        return
+    current = _passes[-1]
+    instance = current.store.get(current.path + (cls.__qualname__, "key", ctx.key(control)))
+    if instance is not None:
+        vars(owner).setdefault("_pyzed_children", {})[control.name] = instance
+
+
 class ControlProxy:
     """A control of the running form; its properties read and write like attributes."""
 
@@ -98,13 +111,25 @@ class ControlProxy:
         default = _components.get(control.type).defaults()
         if key in default:
             return default[key]
+        instance = self.instance
+        if instance is not None and not key.startswith("_") and hasattr(instance, key):
+            return getattr(instance, key)  # a method or the state of a component placed here
         raise AttributeError(f"{control.type} {control.name!r} has no property {key!r}")
 
     def __setattr__(self, key: str, value: Any) -> None:
         if key in _FIELDS:
             setattr(self._control, key, value)
-        else:
-            self._control.props[key] = value
+            return
+        instance = self.instance
+        if instance is not None and key in getattr(type(instance), "__state__", {}):
+            setattr(instance, key, value)  # private state of a placed component
+            return
+        self._control.props[key] = value
+
+    @property
+    def instance(self) -> Any:
+        """The ``pz.Component`` drawn for this control (a component placed here), or ``None``."""
+        return vars(self._runtime).get("_pyzed_children", {}).get(self._control.name)
 
     def show(self) -> None:
         self._control.visible = True
@@ -314,6 +339,7 @@ class FormRuntime:
             x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
             widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
+            remember_instance(self, control, self.ctx)
             layers.append(_core.pin(widget, x=x, y=y))
         if self.error:
             layers.append(_core.container(

@@ -1426,6 +1426,23 @@ _section("app", "Events and components", {
             Rating(value=3, on_change=lambda e: print(e.value))
         """,
     },
+    "pyzed.Color": {
+        "desc": "Type hint for a component prop that holds a color (a theme token or `\"#rrggbb\"`): the designer shows a color picker for it. A plain `str` at run time.",
+        "example": 'tint: pz.Color = "accent"',
+    },
+    "pyzed.Icon": {
+        "desc": "Type hint for a component prop that holds a Lucide icon name: the designer shows an icon picker for it. A plain `str` at run time.",
+        "example": 'mark: pz.Icon = "star"',
+    },
+    "pyzed.Multiline": {
+        "desc": "Type hint for a component prop that holds long text: the designer shows a text area for it. A plain `str` at run time.",
+        "example": 'notes: pz.Multiline = ""',
+    },
+    "pyzed.Range": {
+        "desc": "Limits of a number prop, used with `typing.Annotated`: the designer shows a number box limited to them. See [Custom components](/pyzed/guides/components/#in-the-designer).",
+        "params": {"min": "Lowest value.", "max": "Highest value.", "step": "Step of the + and - buttons."},
+        "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
+    },
     "pyzed.state": {
         "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
         "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},

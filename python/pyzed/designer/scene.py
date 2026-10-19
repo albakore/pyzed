@@ -422,7 +422,8 @@ class SceneDocument(Document):
                    description: str = "") -> scene_code.Member:
         """Declares a new property (``public=False`` makes it private state)."""
         if default is None:
-            default = DEFAULTS.get(type_)
+            kind = scene_code.kind_of(type_)
+            default = convert(None, type_) if kind in ("Choice", "Range") else DEFAULTS.get(kind)
         member = scene_code.Member(self.unique_member(name or "value"), type_, default, public, description)
         self._write_members([*self.members, member])
         return member
@@ -594,6 +595,20 @@ class SceneDocument(Document):
         args, doc = scene_code.LIFECYCLE.get(handler, ("self, event", ""))
         return scene_code.method_stub(handler, doc, args)
 
+    def add_method(self, name: str = "do_something", args: str = "self", doc: str = "") -> str:
+        """Adds a reusable method (not an event handler) to the class; returns its name."""
+        base = scene_code.member_identifier(name) or "do_something"
+        if name.startswith("_") and not base.startswith("_"):
+            base = "_" + base
+        taken = set(self.info.methods) | {m.name for m in self.members} | set(self.scene.names()) \
+            | scene_code.RESERVED | {"emit", "render", "handles", "create"}
+        name, n = base, 2
+        while name in taken:
+            name, n = f"{base}{n}", n + 1
+        self.code, _ = scene_code.ensure_method(self.code, name, doc or "What this method does.", args, self._class())
+        self.dirty = True
+        return name
+
     def set_handler_source(self, handler: str, source: str) -> None:
         self.code = scene_code.replace_method(self.code, handler, source, self._class())
         self.dirty = True
@@ -645,11 +660,23 @@ def _chain(file: Optional[Path]) -> List[Path]:
 
 
 #: The default value of a new property of each type.
-DEFAULTS: Dict[str, Any] = {"str": "", "int": 0, "float": 0.0, "bool": False, "list": [], "dict": {}, "Any": None}
+DEFAULTS: Dict[str, Any] = {"str": "", "int": 0, "float": 0.0, "bool": False, "list": [], "dict": {}, "Any": None,
+                            "Color": "accent", "Icon": "star", "Multiline": ""}
 
 
 def convert(value: Any, type_: str) -> Any:
     """``value`` as ``type_`` when it can be converted, else that type's default."""
+    kind = scene_code.kind_of(type_)
+    if kind in ("Color", "Icon", "Multiline"):
+        return value if isinstance(value, str) and value else DEFAULTS[kind]
+    if kind == "Choice":
+        options = scene_code.choices_of(type_)
+        return value if value in options else (options[0] if options else "")
+    if kind == "Range":
+        base, low, high, _step = scene_code.range_of(type_)
+        number = convert(value, base)
+        number = low if number is None else min(max(number, low), high)
+        return int(number) if base == "int" else float(number)
     try:
         if type_ == "str":
             return "" if value is None else str(value)

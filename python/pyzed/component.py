@@ -67,6 +67,7 @@ from typing import Any, Callable, ClassVar, Dict, Iterator, List, Mapping, Optio
 
 from . import _core
 from . import events as _events
+from . import hints as _hints
 
 __all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "registered", "render_pass",
            "state"]
@@ -448,6 +449,17 @@ def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:
         choices = typing.get_args(annotation) if origin is typing.Literal else tuple(
             re.findall(r"['\"]([^'\"]*)['\"]", annotation))
         return prop_class(info.name, "choice", default, choices=tuple(str(c) for c in choices))
+    if origin is typing.Annotated:  # Annotated[int, pz.Range(0, 10)]
+        base_type, *extras = typing.get_args(annotation)
+        limits = next((x for x in extras if isinstance(x, _hints.Range)), None)
+        if limits is not None:
+            step = limits.step if base_type is not float or limits.step != 1 else 0.1
+            return prop_class(info.name, "number", default, min=limits.min, max=limits.max, step=step)
+        annotation = base_type
+        text = getattr(base_type, "__name__", str(base_type))
+    for hint, kind in ((_hints.Color, "color"), (_hints.Icon, "icon"), (_hints.Multiline, "multiline")):
+        if annotation is hint or text.rsplit(".", 1)[-1] == hint.__name__:
+            return prop_class(info.name, kind, "" if default is None else default)
     base = text.split("[")[0].replace("typing.", "").lower()
     if base == "bool":
         return prop_class(info.name, "bool", bool(default))

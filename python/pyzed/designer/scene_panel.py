@@ -16,7 +16,7 @@ import ast
 import time
 import types
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from ..app import Window
@@ -31,6 +31,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
 TYPE_ICONS = {"str": "type", "int": "hash", "float": "percent", "bool": "toggle-right", "list": "list",
+              "Color": "palette", "Icon": "image", "Multiline": "text", "Choice": "list-checks", "Range": "sliders-horizontal",
               "dict": "braces", "Any": "asterisk"}
 NONE = "—"
 EXPRESSION = "Expression…"
@@ -262,12 +263,13 @@ def _card_of_member(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
     def update(**changes: Any) -> None:
         _guard(d, lambda: doc.update_member(m.name, **changes))
 
-    types_ = list(scene_code.TYPES)
-    if m.type not in types_:
-        types_.append(m.type)
+    kind = scene_code.kind_of(m.type)
+    kinds = list(scene_code.KINDS)
+    if kind not in kinds:
+        kinds.append(kind)
     head = _core.row([
         _core.container(ui.input(m.name, lambda v: update(name=v), mono=True,
-                                 icon=TYPE_ICONS.get(m.type, "asterisk"), theme=t), width="fill"),
+                                 icon=TYPE_ICONS.get(kind, "asterisk"), theme=t), width="fill"),
         ui.icon_button("chevron-up", lambda: _guard(d, lambda: doc.move_member(m.name, -1)), size="xs",
                        tooltip="Move up", theme=t),
         ui.icon_button("trash-2", lambda: _guard(d, lambda: doc.remove_member(m.name)), size="xs",
@@ -275,27 +277,98 @@ def _card_of_member(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
     ], spacing=4, align="center")
     access = ui.select(["public", "private"], "public" if m.public else "private",
                        lambda v: update(public=v == "public"), width="fill", theme=t)
+    type_ = ui.select(kinds, kind, lambda v: update(type=scene_code.type_for(v, m.type)), width="fill", theme=t)
     return _card([
         head,
-        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state.", inset=CARD_INSET),
-        field("Type", ui.select(types_, m.type, lambda v: update(type=v), width="fill", theme=t), t, inset=CARD_INSET),
-        field("Default", _default_editor(m, lambda v: update(default=v), t), t, inset=CARD_INSET),
+        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state.",
+              inset=CARD_INSET),
+        field("Type", type_, t, inset=CARD_INSET,
+              tip="Like Godot's export hints, the type picks the editor this property gets in Properties."),
+        *_kind_rows(m, kind, update, t),
+        field("Default", _default_editor(d, m, lambda v: update(default=v), t), t, inset=CARD_INSET),
     ], t)
 
 
-def _default_editor(m: scene_code.Member, on_change: Callable[[Any], None], t: Theme) -> Any:
-    if m.source is not None:  # not a literal: edit it as Python
-        return ui.input(m.source, lambda v: _literal_change(v, on_change), mono=True, theme=t)
-    if m.type == "bool":
-        return _core.container(ui.switch(bool(m.default), on_change, theme=t), width="fill", align_x="end")
-    if m.type in ("int", "float"):
+def _kind_rows(m: scene_code.Member, kind: str, update: Callable[..., None], t: Theme) -> List[Any]:
+    """The extra settings of a Choice (its options) or a Range (its limits)."""
+    if kind == "Choice":
+        options = scene_code.choices_of(m.type)
+
+        def set_options(text: str) -> None:
+            picked = [o.strip() for o in text.split(",") if o.strip()]
+            if picked:
+                update(type=scene_code.choice_type(picked))
+
+        return [field("Options", ui.input(", ".join(options), set_options, placeholder="small, medium, large",
+                                          theme=t), t, inset=CARD_INSET, tip="The choices, separated by commas.")]
+    if kind == "Range":
+        base, low, high, step = scene_code.range_of(m.type)
+
+        def limit(which: int) -> Callable[[Any], None]:
+            def change(value: Any) -> None:
+                values = [low, high, step]
+                values[which] = float(value)
+                update(type=scene_code.range_type(base, *values))
+            return change
+
+        return [
+            field("Number", ui.select(["int", "float"], base, lambda v: update(type=scene_code.range_type(
+                v, low, high, step)), width="fill", theme=t), t, inset=CARD_INSET),
+            field("Min", _number(low, limit(0), t), t, inset=CARD_INSET),
+            field("Max", _number(high, limit(1), t), t, inset=CARD_INSET),
+            field("Step", _number(step, limit(2), t, min=0.001, step=0.1 if base == "float" else 1), t,
+                  inset=CARD_INSET),
+        ]
+    return []
+
+
+def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
+    """The property-grid editor a member gets (the same one a placed component shows), or ``None``."""
+    kind = scene_code.kind_of(m.type)
+    Prop = _components.Prop
+    if kind in ("int", "float", "Range"):
+        base, low, high, step = scene_code.range_of(m.type) if kind == "Range" else (
+            kind, None, None, 1.0 if kind == "int" else 0.1)
+        return Prop(m.name, "number", m.default, min=low, max=high, step=step)
+    simple = {"bool": "bool", "str": "text", "Color": "color", "Icon": "icon", "Multiline": "multiline"}
+    if kind in simple:
+        return Prop(m.name, simple[kind], m.default)
+    if kind == "Choice":
+        return Prop(m.name, "choice", m.default, choices=tuple(scene_code.choices_of(m.type)))
+    return None
+
+
+def _default_editor(d: "Designer", m: scene_code.Member, on_change: Callable[[Any], None], t: Theme) -> Any:
+    prop = member_prop(m)
+    if m.source is not None or prop is None:  # not a literal, or a list or dict: edit it as Python
+        text = m.source if m.source is not None else repr(m.default)
+        return ui.input(text, lambda v: _literal_change(v, on_change), mono=True, placeholder="a Python literal",
+                        theme=t)
+    base = scene_code.range_of(m.type)[0] if scene_code.kind_of(m.type) == "Range" else m.type
+    cast = int if base == "int" else float if base == "float" else (lambda v: v)
+    text = "" if m.default is None else str(m.default)
+    if prop.kind == "text":
+        return ui.input(text, on_change, theme=t)
+    if prop.kind == "choice":
+        return ui.select(list(prop.choices), text if text in prop.choices else None, on_change, width="fill", theme=t)
+    if prop.kind == "number":
         value = m.default if isinstance(m.default, (int, float)) else 0
-        return _number(float(value), lambda v: on_change(int(v) if m.type == "int" else float(v)), t,
-                       step=1 if m.type == "int" else 0.1)
-    if m.type == "str":
-        return ui.input("" if m.default is None else str(m.default), on_change, theme=t)
-    return ui.input(repr(m.default), lambda v: _literal_change(v, on_change), mono=True,
-                    placeholder="a Python literal", theme=t)
+        return _number(float(value), lambda v: on_change(cast(v)), t, min=prop.min, max=prop.max, step=prop.step)
+    if prop.kind == "color":
+        from .panels import swatch
+
+        try:
+            resolved = t.color(text) if text else None
+        except (AttributeError, KeyError, ValueError):
+            resolved = None
+        return _core.row([swatch(resolved, t), _core.container(ui.input(text, on_change, mono=True,
+                                                                       placeholder="accent or #rrggbb", theme=t),
+                                                              width="fill")], spacing=6, align="center")
+    if prop.kind == "icon":
+        return ui.input(text, on_change, mono=True, icon=text or "circle-dashed", placeholder="lucide name", theme=t)
+    from .panels import editor_for  # bool and multiline: the same editors as the Properties panel
+
+    return editor_for(d, prop, m.default, on_change, f"member:{m.name}", t)
 
 
 def _literal_change(text: str, on_change: Callable[[Any], None]) -> None:
@@ -329,19 +402,55 @@ def event_section(d: "Designer", t: Theme) -> Any:
 
 
 def method_section(d: "Designer", t: Theme) -> Any:
+    """The class's code: lifecycle methods, the handlers of its controls and its own reusable methods."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     methods = doc.info.methods
+    handlers = {m for c in doc.scene.controls for m in c.events.values()} | set(doc.scene.events.values())
+    groups = (
+        ("Lifecycle", [m for m in scene_code.LIFECYCLE]),
+        ("Event handlers", [m for m in methods if m in handlers and m not in scene_code.LIFECYCLE]),
+        ("Methods", [m for m in methods if m not in handlers and m not in scene_code.LIFECYCLE]),
+    )
     rows: List[Any] = []
-    for name in methods:
-        rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon="square-function",
-                                 selected=bool(d.editing and d.editing[0] == name), height=26, theme=t))
-    for name in (m for m in scene_code.LIFECYCLE if m not in methods):
-        rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon="plus", color="text_muted",
-                                 height=26, theme=t))
+    for title, names in groups:
+        if not names and title != "Methods":
+            continue
+        rows.append(ui.label(title, size="xs", color="text_muted", theme=t))
+        for name in names:
+            exists = name in methods
+            private = name.startswith("_")
+            icon = "square-function" if exists else "plus"
+            rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon=icon,
+                                     color=None if exists else "text_muted",
+                                     selected=bool(d.editing and d.editing[0] == name), height=26,
+                                     end=ui.label("private" if private else "", size="xs", color="text_muted",
+                                                  theme=t) if exists and title == "Methods" else None,
+                                     theme=t))
+        if title == "Methods" and not names:
+            rows.append(_hint("Reusable logic: other methods, the parent (self.card.method()) and forms can call "
+                              "them. A name starting with _ is private.", t))
+    new_name = d.__dict__.get("_scene_new_method", "")
+    rows.append(_core.row([
+        _core.container(ui.input(new_name, lambda v: d.__dict__.__setitem__("_scene_new_method", v),
+                                 placeholder="method_name", mono=True, size="sm",
+                                 on_submit=lambda: add_method(d), theme=t), width="fill"),
+        _add_button("Method", "plus", lambda: add_method(d), t),
+    ], spacing=4, align="center"))
     rows.append(_core.row([_add_button("Edit the class", "code", d.edit_whole_file, t)]))
     return ui.AccordionSection("methods", f"Methods ({len(methods)})",
                                _core.column(rows, spacing=2, width="fill"), icon="square-function")
+
+
+def add_method(d: "Designer", name: Optional[str] = None) -> Optional[str]:
+    """Adds a reusable method to the class and opens it in the code editor."""
+    doc = d.doc
+    assert isinstance(doc, SceneDocument)
+    created = _guard(d, lambda: doc.add_method(name or d.__dict__.get("_scene_new_method") or "do_something"))
+    if created:
+        d.__dict__["_scene_new_method"] = ""
+        open_method(d, created)
+    return created
 
 
 def _hint(text: str, t: Theme) -> Any:
@@ -509,3 +618,61 @@ def run_file(path: Any) -> None:
             return preview.view()
 
     run_app(_Preview())
+
+
+# -- child components in the outline ---------------------------------------------------
+
+#: Methods every component has; the outline lists the ones a component adds.
+_BASE_METHODS = {"render", "setup", "on_mount", "on_unmount", "emit", "handles", "create", "designer_spec",
+                 "describe", "scene_model", "scene_path"}
+
+
+def child_members(type_: str) -> Optional[Dict[str, List[str]]]:
+    """The public properties and methods of a component placed as a control of ``type_`` (``None`` for others)."""
+    from ..component import Component, find
+
+    cls = find(type_)
+    if cls is None:
+        return None
+    methods: List[str] = []
+    scene = cls.scene_model() if isinstance(cls, type) and issubclass(cls, SceneComponent) else None
+    handlers = set(scene.events.values()) | {m for c in scene.controls for m in c.events.values()} if scene else set()
+    for klass in cls.__mro__:
+        if klass in (Component, SceneComponent) or not isinstance(klass, type) or not issubclass(klass, Component):
+            continue
+        for name, value in vars(klass).items():
+            if callable(value) and not name.startswith("_") and name not in _BASE_METHODS | handlers \
+                    and name not in methods:
+                methods.append(name)
+    return {"properties": list(cls.__props__), "methods": methods}
+
+
+def member_rows(d: "Designer", control: Any, members: Dict[str, List[str]], indent: float, t: Theme) -> List[Any]:
+    """Outline rows under a placed component: click one to use it in the code (``self.stars.pick()``)."""
+    owner = "self" if is_scene(d) else "form"
+    rows: List[Any] = []
+    for name in members["properties"]:
+        rows.append(ui.list_item(name, lambda n=name: insert_snippet(d, f"{owner}.{control.name}.{n}"),
+                                 icon="variable", color="text_muted", height=22, indent=indent, theme=t))
+    for name in members["methods"]:
+        rows.append(ui.list_item(f"{name}()", lambda n=name: insert_snippet(d, f"{owner}.{control.name}.{n}()"),
+                                 icon="square-function", color="text_muted", height=22, indent=indent, theme=t))
+    return rows
+
+
+def insert_snippet(d: "Designer", text: str) -> Any:
+    """Types ``text`` at the cursor of the open code editor, or copies it when no code is open."""
+    if d.editing is None:
+        d.notify(f"Copied {text}", "Paste it in a method, or open one first to insert it there.", seconds=2.5)
+        return _core.Command.copy(text)
+    line, column = d.assist.cursor
+    lines = d.editing[1].split("\n")
+    row = max(0, min(line - 1, len(lines) - 1))
+    current = lines[row]
+    col = max(0, min(column - 1, len(current)))
+    lines[row] = current[:col] + text + current[col:]
+    new = "\n".join(lines)
+    d.set_code_buffer(new)
+    d.assist.cursor = (row + 1, col + 1 + len(text))
+    return [_core.Command.set_editor_text(d.editor_id, new),
+            _core.Command.set_editor_cursor(d.editor_id, row + 1, col + 1 + len(text))]
