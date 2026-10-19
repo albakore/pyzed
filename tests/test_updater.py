@@ -62,7 +62,9 @@ def test_download_checks_the_sha256_and_extracts(tmp_path):
     got = updater.download(asset, tmp_path / "dl", progress=seen.append)
     assert got.read_bytes() == archive.read_bytes() and seen[-1] == 1.0
     app = updater.extract(got)
-    assert app.name == "Pyzed Design" and (app / "pyzed-design").stat().st_mode & 0o111
+    assert app.name == "Pyzed Design" and (app / "pyzed-design").is_file()
+    if updater.os.name != "nt":  # Windows has no executable bit
+        assert (app / "pyzed-design").stat().st_mode & 0o111
 
     bad = updater.Asset(archive.name, archive.as_uri(), 0, "0" * 64)
     with pytest.raises(updater.UpdateError, match="SHA-256"):
