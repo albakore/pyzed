@@ -5,6 +5,11 @@ sidebar:
   order: 6
 ---
 
+:::tip[Biblioteca de componentes]
+Cada componente tiene ahora su propia página, con vista previa, ejemplos y su API completa, en la
+[biblioteca de componentes](/pyzed/es/library/). Esta página se mantiene como resumen.
+:::
+
 ## Capas
 
 `ui.layer(base, overlay, on_dismiss=...)` dibuja `overlay` encima de la interfaz. Hacer clic

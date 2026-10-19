@@ -5,6 +5,11 @@ sidebar:
   order: 10
 ---
 
+:::tip[Component library]
+Every component now has its own page, with a live preview, examples and its full API, in the
+[component library](/pyzed/library/). This page is kept as a summary.
+:::
+
 ## Markdown, rich text and QR
 
 ![Markdown, rich_text and QR](../../../assets/components/content.png)
