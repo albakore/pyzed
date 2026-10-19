@@ -103,6 +103,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `update(message)` | Recibe los mensajes. Puede devolver un `Command`, una lista de ellos u otro mensaje. |
 | `on_start()` | Opcional. Se ejecuta una vez al arrancar; puede devolver un `Command`. |
 | `on_key(combo)` | Opcional. Recibe cada tecla como `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Opcional. Recibe las teclas al soltarlas, por nombre (`"left"`, `"space"`). |
 | `run()` | Abre la ventana y bloquea hasta que se cierra. |
 | `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renderiza el estado actual a un PNG sin ventana. |
 
@@ -956,6 +957,7 @@ El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`
 | `update(message)` | Recibe los mensajes. Puede devolver un `Command`, una lista de ellos, una corrutina, un generador (normal o async) u otro mensaje. |
 | `on_start()` | Opcional. Se ejecuta una vez al arrancar; puede devolver un `Command` o una corrutina. |
 | `on_key(combo)` | Opcional. Recibe cada tecla como `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Opcional. Recibe las teclas al soltarlas, por nombre (`"left"`, `"space"`). |
 | `subscriptions()` | Opcional. Devuelve las suscripciones activas (`pz.every`, `pz.listen`). Se reevalúa tras cada `update`. |
 | `resolved_theme()` | El `Theme` concreto en uso (resuelve nombres y `themes.auto`). |
 | `run()` | Abre la ventana y bloquea hasta que la app termina. |
@@ -1020,6 +1022,29 @@ _section("app", "Async y suscripciones", {
 
             def subscriptions(self):
                 return [pz.listen(feed)]
+        """,
+    },
+    "pyzed.frames": {
+        "desc": "Una suscripción que llama a `callback(dt)` una vez por fotograma (sincronizada con la pantalla, normalmente 60 veces por segundo), con `dt` los segundos desde el fotograma anterior (como mucho 0,25). Pensada para juegos y simulaciones: mueve las cosas `velocidad * dt`. Ver [Crear videojuegos](/pyzed/es/games/).",
+        "params": {"callback": "Callable que recibe `dt` (un `float`).",
+                   "max_fps": "Tasa máxima donde la pantalla no espera a la sincronización vertical (renderizado por software). 240 por defecto."},
+        "example": """
+            def subscriptions(self):
+                return [] if self.paused else [pz.frames(self.tick)]
+
+            def tick(self, dt):
+                self.x += game.axis("left", "right") * 300 * dt
+        """,
+    },
+    "pyzed.pressed": {
+        "desc": "Las teclas pulsadas ahora mismo, como un `frozenset` de nombres sin modificadores (`\"left\"`, `\"space\"`, `\"a\"`…). Vacío si no hay ventana abierta. Consúltalo en cada fotograma para movimiento continuo; `on_key` es para pulsaciones puntuales.",
+    },
+    "pyzed.is_pressed": {
+        "desc": "Si alguna de `keys` está pulsada. `held` sustituye a `pressed()` (útil en tests).",
+        "params": {"keys": "Nombres de teclas, como `\"left\"`, `\"a\"`.", "held": "Conjunto opcional de teclas en lugar de `pressed()`."},
+        "example": """
+            if pz.is_pressed("space") and self.cooldown <= 0:
+                self.fire()
         """,
     },
     "pyzed.Subscription": {"desc": "Lo que devuelven `every` y `listen`. Se identifica por su `key`: mientras `subscriptions()` siga devolviendo una con la misma clave, sigue en marcha; cuando desaparece, se detiene.", "no_signature": True},
@@ -1444,6 +1469,7 @@ PAGES.append({
                 "params": {**_paint, "ops": "Lista de operaciones."},
             },
             "pyzed.draw.text": {"desc": "Texto anclado en `(x, y)`; `align_x`/`align_y` eligen qué lado del texto queda en ese punto.", "params": {"x": "Posición x.", "y": "Posición y.", "content": "El texto.", "color": "Color.", "size": "Tamaño.", "font": "Familia.", "weight": "Peso.", "align_x": '`"start"`, `"center"` o `"end"`.', "align_y": '`"top"`, `"center"` o `"bottom"`.'}},
+            "pyzed.draw.image": {"desc": "Un mapa de bits (sprite) dibujado en la caja `(x, y, w, h)`. Se decodifica una vez por origen y queda en caché, así que dibujarlo en cada fotograma es barato. Ver [Crear videojuegos](/pyzed/es/games/).", "params": {"source": "Una ruta, bytes de una imagen (PNG, JPEG…) o bytes RGBA con `size`.", "x": "Izquierda.", "y": "Arriba.", "w": "Ancho.", "h": "Alto.", "rotation": "Grados, alrededor de su centro.", "opacity": "De 0 a 1.", "pixelated": "Escalado por vecino más cercano, para pixel art.", "size": "`(ancho, alto)` de los bytes RGBA."}},
         }),
         ("Transformaciones", {
             "pyzed.draw.translate": {"desc": "Desplaza las formas que vienen después.", "params": {"x": "Horizontal.", "y": "Vertical."}},

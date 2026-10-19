@@ -103,6 +103,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `update(message)` | Receives messages. Can return a `Command`, a list of them or another message. |
 | `on_start()` | Optional. Runs once at startup; can return a `Command`. |
 | `on_key(combo)` | Optional. Receives every key as `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| `on_key_up(key)` | Optional. Receives key releases by name (`"left"`, `"space"`). |
 | `run()` | Opens the window and blocks until it is closed. |
 | `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |
 
@@ -1022,6 +1023,29 @@ _section("app", "Async and subscriptions", {
                 return [pz.listen(feed)]
         """,
     },
+    "pyzed.frames": {
+        "desc": "A subscription that calls `callback(dt)` once per displayed frame (in sync with the screen, usually 60 times a second), with `dt` the seconds since the previous frame (at most 0.25). Made for games and simulations: move things by `speed * dt`. See [Making games](/pyzed/games/).",
+        "params": {"callback": "Callable that receives `dt` (a `float`).",
+                   "max_fps": "Highest rate where the display does not wait for vsync (software rendering). Default 240."},
+        "example": """
+            def subscriptions(self):
+                return [] if self.paused else [pz.frames(self.tick)]
+
+            def tick(self, dt):
+                self.x += game.axis("left", "right") * 300 * dt
+        """,
+    },
+    "pyzed.pressed": {
+        "desc": "The keys held down right now, as a `frozenset` of names without modifiers (`\"left\"`, `\"space\"`, `\"a\"`…). Empty when no window is open. Poll it every frame for continuous movement; `on_key` is for one-off presses.",
+    },
+    "pyzed.is_pressed": {
+        "desc": "Whether any of `keys` is held down. `held` replaces `pressed()` (handy in tests).",
+        "params": {"keys": "Key names, such as `\"left\"`, `\"a\"`.", "held": "Optional set of keys to use instead of `pressed()`."},
+        "example": """
+            if pz.is_pressed("space") and self.cooldown <= 0:
+                self.fire()
+        """,
+    },
     "pyzed.Subscription": {"desc": "What `every` and `listen` return. It is identified by its `key`: as long as `subscriptions()` keeps returning one with the same key, it keeps running; when it disappears, it stops.", "no_signature": True},
     "pyzed.spawn": {
         "desc": "Schedules a coroutine on Pyzed's asyncio loop without waiting for its result and returns a `concurrent.futures.Future`. To receive the result in the UI, return the coroutine from `update` or use `Command.perform`.",
@@ -1444,6 +1468,7 @@ PAGES.append({
                 "params": {**_paint, "ops": "List of operations."},
             },
             "pyzed.draw.text": {"desc": "Text anchored at `(x, y)`; `align_x`/`align_y` choose which side of the text sits on that point.", "params": {"x": "X position.", "y": "Y position.", "content": "The text.", "color": "Color.", "size": "Size.", "font": "Family.", "weight": "Weight.", "align_x": '`"start"`, `"center"` or `"end"`.', "align_y": '`"top"`, `"center"` or `"bottom"`.'}},
+            "pyzed.draw.image": {"desc": "A bitmap (sprite) drawn in the box `(x, y, w, h)`. Decoded once per source and cached, so drawing it every frame is cheap. See [Making games](/pyzed/games/).", "params": {"source": "A path, encoded image bytes (PNG, JPEG…) or raw RGBA bytes with `size`.", "x": "Left.", "y": "Top.", "w": "Width.", "h": "Height.", "rotation": "Degrees, around its center.", "opacity": "From 0 to 1.", "pixelated": "Nearest-neighbor scaling, for pixel art.", "size": "`(width, height)` of raw RGBA bytes."}},
         }),
         ("Transforms", {
             "pyzed.draw.translate": {"desc": "Offsets the shapes that come after it.", "params": {"x": "Horizontal.", "y": "Vertical."}},

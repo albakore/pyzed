@@ -229,6 +229,30 @@
    "path": "docs/src/content/docs/examples.md"
   },
   {
+   "slug": "games/breakout",
+   "title": "Tutorial: Breakout",
+   "description": "A 60 fps Breakout with pz.frames, held keys and the mouse, ball physics, particles, combos and screen shake.",
+   "path": "docs/src/content/docs/games/breakout.mdx"
+  },
+  {
+   "slug": "games/index",
+   "title": "Making games",
+   "description": "Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.",
+   "path": "docs/src/content/docs/games/index.mdx"
+  },
+  {
+   "slug": "games/neon-invaders",
+   "title": "Tutorial: Neon Invaders",
+   "description": "A complete space shooter with pixel-art sprites, waves, power-ups, neon glow, particles and a glass HUD with bloom.",
+   "path": "docs/src/content/docs/games/neon-invaders.mdx"
+  },
+  {
+   "slug": "games/snake",
+   "title": "Tutorial: Snake",
+   "description": "Build the classic Snake with a fixed-rate timer, a key queue, a canvas board and a glass game-over card.",
+   "path": "docs/src/content/docs/games/snake.mdx"
+  },
+  {
    "slug": "getting-started/installation",
    "title": "Installation",
    "description": "How to install Pyzed on Linux, macOS and Windows.",
@@ -1350,6 +1374,25 @@
      "function": "Generator function (regular or `async def`)."
     },
     "example": "\n            async def feed():\n                async for message in websocket:\n                    yield message\n\n            def subscriptions(self):\n                return [pz.listen(feed)]\n        "
+   },
+   "pyzed.frames": {
+    "desc": "A subscription that calls `callback(dt)` once per displayed frame (in sync with the screen, usually 60 times a second), with `dt` the seconds since the previous frame (at most 0.25). Made for games and simulations: move things by `speed * dt`. See [Making games](/pyzed/games/).",
+    "params": {
+     "callback": "Callable that receives `dt` (a `float`).",
+     "max_fps": "Highest rate where the display does not wait for vsync (software rendering). Default 240."
+    },
+    "example": "\n            def subscriptions(self):\n                return [] if self.paused else [pz.frames(self.tick)]\n\n            def tick(self, dt):\n                self.x += game.axis(\"left\", \"right\") * 300 * dt\n        "
+   },
+   "pyzed.pressed": {
+    "desc": "The keys held down right now, as a `frozenset` of names without modifiers (`\"left\"`, `\"space\"`, `\"a\"`…). Empty when no window is open. Poll it every frame for continuous movement; `on_key` is for one-off presses."
+   },
+   "pyzed.is_pressed": {
+    "desc": "Whether any of `keys` is held down. `held` replaces `pressed()` (handy in tests).",
+    "params": {
+     "keys": "Key names, such as `\"left\"`, `\"a\"`.",
+     "held": "Optional set of keys to use instead of `pressed()`."
+    },
+    "example": "\n            if pz.is_pressed(\"space\") and self.cooldown <= 0:\n                self.fire()\n        "
    },
    "pyzed.Subscription": {
     "desc": "What `every` and `listen` return. It is identified by its `key`: as long as `subscriptions()` keeps returning one with the same key, it keeps running; when it disappears, it stops."
@@ -3531,6 +3574,20 @@
      "weight": "Weight.",
      "align_x": "`\"start\"`, `\"center\"` or `\"end\"`.",
      "align_y": "`\"top\"`, `\"center\"` or `\"bottom\"`."
+    }
+   },
+   "pyzed.draw.image": {
+    "desc": "A bitmap (sprite) drawn in the box `(x, y, w, h)`. Decoded once per source and cached, so drawing it every frame is cheap. See [Making games](/pyzed/games/).",
+    "params": {
+     "source": "A path, encoded image bytes (PNG, JPEG…) or raw RGBA bytes with `size`.",
+     "x": "Left.",
+     "y": "Top.",
+     "w": "Width.",
+     "h": "Height.",
+     "rotation": "Degrees, around its center.",
+     "opacity": "From 0 to 1.",
+     "pixelated": "Nearest-neighbor scaling, for pixel art.",
+     "size": "`(width, height)` of raw RGBA bytes."
     }
    },
    "pyzed.draw.translate": {
