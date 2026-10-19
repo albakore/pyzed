@@ -55,8 +55,8 @@ class Counter(pz.App):
             pz.column([
                 ui.heading(str(self.count)),
                 pz.row([
-                    ui.button("-1", "decrement", icon="minus"),
-                    ui.button("+1", "increment", icon="plus", variant="solid"),
+                    ui.button("1", "decrement", icon="minus"),
+                    ui.button("1", "increment", icon="plus", variant="solid"),
                     ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0), tooltip="Reset"),
                 ], spacing=8),
             ], spacing=16, align="center"),

@@ -279,7 +279,7 @@ import Cta from '../../../components/landing/Cta.astro';
 	¿Prefieres escribirlo todo a mano? Pyzed es una librería de Python normal. Esta es una app completa:
 </SectionTitle>
 
-<CodeShowcase shot="counter" alt="La app contador: un número sobre los botones -1, +1 y reiniciar" caption="python counter.py">
+<CodeShowcase shot="counter" alt="La app contador: un número sobre los botones menos, más y reiniciar" caption="python counter.py">
 
 ```python title="counter.py"
 import pyzed as pz
@@ -300,8 +300,8 @@ class Counter(pz.App):
         return pz.center(pz.column([
             ui.heading(str(self.count)),
             pz.row([
-                ui.button("-1", lambda: self.add(-1), icon="minus"),
-                ui.button("+1", lambda: self.add(1), icon="plus", variant="solid"),
+                ui.button("1", lambda: self.add(-1), icon="minus"),
+                ui.button("1", lambda: self.add(1), icon="plus", variant="solid"),
                 ui.icon_button("rotate-ccw", lambda: setattr(self, "count", 0)),
             ], spacing=8),
         ], spacing=16, align="center"), bg=self.theme.editor)
