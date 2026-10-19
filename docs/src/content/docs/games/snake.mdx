@@ -1,0 +1,158 @@
+---
+title: "Tutorial: Snake"
+description: Build the classic Snake with a fixed-rate timer, a key queue, a canvas board and a glass game-over card.
+sidebar:
+  order: 1
+  label: Snake
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import source from '../../../../../examples/games/snake.py?raw';
+
+Snake moves on a grid, one cell at a time, so it doesn't need a frame loop: a timer that
+fires a few times a second is enough. You will learn how to keep the game state in the
+app, step it with `pz.every`, steer with `on_key`, draw the board on a canvas and put a
+menu on top with `pz.stack`.
+
+![Snake](../../../assets/games/snake.png)
+
+<Steps>
+
+1. **The state.** The snake is a list of cells, head first. The direction is a `(dx, dy)`
+   pair, and `turns` queues key presses until the next step (two quick presses between
+   steps would otherwise lose the first one):
+
+   ```python
+   CELL = 22
+   COLS, ROWS = 24, 18
+
+   class Snake(pz.App):
+       title = "Snake"
+       size = (COLS * CELL + 32, ROWS * CELL + 96)
+
+       def __init__(self, seed=None):
+           self.random = random.Random(seed)   # a seed makes games reproducible in tests
+           self.best = 0
+           self.reset()
+
+       def reset(self):
+           middle = (COLS // 2, ROWS // 2)
+           self.body = [middle, (middle[0] - 1, middle[1]), (middle[0] - 2, middle[1])]
+           self.direction = (1, 0)
+           self.turns = []
+           self.food = self.free_cell()
+           self.score = 0
+           self.paused = self.over = False
+   ```
+
+2. **One step.** Move the head; if it lands on the food the snake grows (the tail stays),
+   otherwise the tail moves too. Walls wrap around with `%`, and biting yourself ends the
+   game:
+
+   ```python
+   def step(self):
+       if self.turns:
+           self.direction = self.turns.pop(0)
+       dx, dy = self.direction
+       x, y = self.body[0]
+       head = ((x + dx) % COLS, (y + dy) % ROWS)
+       if head in self.body[:-1]:
+           self.over = True
+           self.best = max(self.best, self.score)
+           return
+       self.body.insert(0, head)
+       if head == self.food:
+           self.score += 1
+           self.food = self.free_cell()
+       else:
+           self.body.pop()
+   ```
+
+3. **The timer.** `subscriptions()` is re-read after every update, so the game decides
+   when the clock runs. Putting the speed in the `key` restarts the timer when the snake
+   speeds up, and returning nothing pauses it:
+
+   ```python
+   @property
+   def speed(self):
+       return min(8 + self.score // 3, 20)      # steps per second
+
+   def subscriptions(self):
+       if self.over or self.paused:
+           return []
+       return [pz.every(1 / self.speed, self.step, key=f"snake-{self.speed}")]
+   ```
+
+4. **Steering.** `on_key` receives every key press as a string. Turning back on yourself
+   (or pressing the same direction twice) is ignored:
+
+   ```python
+   DIRECTIONS = {"up": (0, -1), "w": (0, -1), "down": (0, 1), "s": (0, 1),
+                 "left": (-1, 0), "a": (-1, 0), "right": (1, 0), "d": (1, 0)}
+
+   def on_key(self, combo):
+       if combo in DIRECTIONS:
+           last = self.turns[-1] if self.turns else self.direction
+           new = DIRECTIONS[combo]
+           if new != last and (new[0] + last[0], new[1] + last[1]) != (0, 0):
+               self.turns.append(new)
+       elif combo == "space" and not self.over:
+           self.paused = not self.paused
+       elif combo == "enter" and self.over:
+           self.reset()
+   ```
+
+5. **The board.** A canvas is a list of shapes from `pyzed.draw`. The checkerboard is a
+   single `draw.rects` shape (fast even with hundreds of cells), the food gets a soft halo
+   from a translucent circle and the body is rounded rectangles:
+
+   ```python
+   def board(self, t):
+       shapes = [draw.background(t.editor)]
+       shapes.append(draw.rects(((x * CELL, y * CELL, CELL, CELL)
+                                 for x in range(COLS) for y in range(ROWS) if (x + y) % 2),
+                                fill=t.surface))
+       fx, fy = self.food
+       shapes.append(draw.circle(fx * CELL + CELL / 2, fy * CELL + CELL / 2, CELL / 2 - 3,
+                                 fill="#d07277"))
+       for i, (x, y) in enumerate(self.body):
+           shapes.append(draw.rect(x * CELL + 2, y * CELL + 2, CELL - 4, CELL - 4, radius=6,
+                                   fill=t.accent if i == 0 else "#a1c181"))
+       return pz.canvas(shapes, width=COLS * CELL, height=ROWS * CELL)
+   ```
+
+6. **HUD and game over.** The score is a row of `ui.badge`s. The game-over card is a normal
+   container with `glass=True` (a blurred, tinted panel), stacked over the board:
+
+   ```python
+   def overlay(self, t):
+       if not self.over:
+           return None
+       card = pz.container(pz.column([
+           ui.heading("Game over", level=2),
+           ui.muted(f"Score {self.score}  ·  Best {self.best}"),
+           ui.button("Play again", self.reset, variant="solid", icon="rotate-ccw"),
+       ], spacing=10, align="center"), padding=24).style(glass=True, radius=14)
+       return pz.container(card, width="fill", height="fill", align_x="center", align_y="center")
+
+   def view(self):
+       game = pz.stack([self.board(t), self.overlay(t)], width=COLS * CELL, height=ROWS * CELL)
+   ```
+
+   ![Game over, on a glass card](../../../assets/games/snake-over.png)
+
+</Steps>
+
+<Aside type="tip">
+Ideas to keep going: walls that kill instead of wrapping, golden apples worth three points
+that disappear after a few seconds (a second `pz.every`), or a two-player mode with WASD
+and the arrows.
+</Aside>
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/snake.py" />
+
+```bash
+python examples/games/snake.py
+```

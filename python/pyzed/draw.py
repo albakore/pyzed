@@ -126,6 +126,27 @@ def text(x: float, y: float, content: Any, *, color: Any = "#ffffff", size: floa
     return shape
 
 
+def image(source: Any, x: float, y: float, w: float, h: float, *, rotation: float = 0.0,
+          opacity: float = 1.0, pixelated: bool = False, size: Optional[Tuple[int, int]] = None) -> Shape:
+    """A bitmap (a sprite) drawn in the box ``(x, y, w, h)``.
+
+    ``source`` is a path, the bytes of a PNG/JPEG... or raw RGBA bytes with ``size=(w, h)``,
+    like ``pz.image``. It is decoded once and cached, so drawing it every frame is cheap.
+    ``rotation`` (degrees) turns it around its center; ``pixelated=True`` keeps pixel art
+    sharp when scaled up.
+    """
+    shape: Shape = {"type": "image", "source": source, "x": x, "y": y, "w": w, "h": h}
+    if rotation:
+        shape["rotation"] = rotation
+    if opacity != 1.0:
+        shape["opacity"] = opacity
+    if pixelated:
+        shape["pixelated"] = True
+    if size is not None:
+        shape["size"] = tuple(size)
+    return shape
+
+
 def save() -> Shape:
     """Remembers the current transform (pair it with ``restore``)."""
     return {"type": "save"}

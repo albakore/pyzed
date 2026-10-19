@@ -33,6 +33,12 @@ pub struct State {
     current: Option<window::Id>,
     caches: Caches,
     themes: RefCell<HashMap<Vec<String>, Theme>>,
+    /// `pz.frames` callbacks declared by the last `subscriptions()` (window, callback).
+    frames: RefCell<Vec<(Option<window::Id>, PyMsg)>>,
+    /// The shortest time between frames the active `pz.frames` allow (their `max_fps`).
+    frame_interval: std::cell::Cell<f64>,
+    /// When the previous frame was delivered (reset when no `pz.frames` is active).
+    last_frame: std::cell::Cell<Option<iced::time::Instant>>,
 }
 
 impl State {
@@ -105,6 +111,10 @@ pub enum Message {
     },
     Scrolled(PyMsg, scrollable::Viewport),
     Key(String),
+    /// A key was released (its name without modifiers, e.g. `"left"`).
+    KeyUp(String),
+    /// The display is about to draw a new frame (`pz.frames`).
+    Frame(iced::time::Instant),
     /// Tab or Shift+Tab (`back`) that no widget handled: `on_key` first, then focus moves.
     TabKey(String, bool),
     /// A message produced inside the given window.
@@ -916,6 +926,18 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                     None => return Task::none(),
                 }
             }
+            Message::KeyUp(name) => {
+                let main = state.app.bind(py).clone();
+                match call_hook(&target, "on_key_up", (name.clone(),)) {
+                    Some(result) => result,
+                    None if !target.is(&main) => match call_hook(&main, "on_key_up", (name,)) {
+                        Some(result) => result,
+                        None => return Task::none(),
+                    },
+                    None => return Task::none(),
+                }
+            }
+            Message::Frame(now) => return frame_tick(py, state, now),
             Message::TabKey(combo, back) => {
                 let main = state.app.bind(py).clone();
                 let hooked = match call_hook(&target, "on_key", (combo.clone(),)) {
@@ -1104,6 +1126,49 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             }
         }
     })
+}
+
+/// Calls every `pz.frames` callback with the seconds since the previous frame.
+fn frame_tick(py: Python<'_>, state: &mut State, mut now: iced::time::Instant) -> Task<Message> {
+    // Without vsync (software rendering) frames would come back to back and spin the
+    // CPU: wait out the rest of the shortest frame time `max_fps` allows.
+    if let Some(last) = state.last_frame.get() {
+        let early = state.frame_interval.get() - now.saturating_duration_since(last).as_secs_f64();
+        if early > 0.0 {
+            py.detach(|| std::thread::sleep(Duration::from_secs_f64(early)));
+            now = iced::time::Instant::now();
+        }
+    }
+    // A long pause (a dragged window, a breakpoint) must not make the game jump ahead.
+    let dt = state
+        .last_frame
+        .get()
+        .map(|last| now.saturating_duration_since(last).as_secs_f64())
+        .unwrap_or(1.0 / 60.0)
+        .min(0.25);
+    state.last_frame.set(Some(now));
+    let callbacks = state.frames.borrow().clone();
+    let mut tasks = Vec::new();
+    for (window, cb) in callbacks {
+        let target = match window {
+            Some(id) => state.window(id).bind(py).clone(),
+            None => state.app.bind(py).clone(),
+        };
+        let next = window.or(state.current);
+        let previous = std::mem::replace(&mut state.current, next);
+        match callback(&target, cb.0.bind(py), (dt,)) {
+            Ok(value) => {
+                let task = command_task(py, state, &value);
+                tasks.push(match window {
+                    Some(id) if Some(id) != state.main => task.map(move |m| m.in_window(id)),
+                    _ => task,
+                });
+            }
+            Err(err) => err.print(py),
+        }
+        state.current = previous;
+    }
+    Task::batch(tasks)
 }
 
 fn error_view<'a>(title: &'static str, message: String) -> Element<'a, Message> {
@@ -1325,11 +1390,46 @@ pub fn key_combo(key: &Key, modifiers: keyboard::Modifiers) -> Option<String> {
     Some(combo)
 }
 
+/// The keys held down right now, by name without modifiers (`pz.pressed()`).
+static PRESSED: LazyLock<Mutex<std::collections::BTreeSet<String>>> =
+    LazyLock::new(|| Mutex::new(std::collections::BTreeSet::new()));
+
 fn key_message(event: keyboard::Event) -> Option<Message> {
-    let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
-        return None;
-    };
-    key_combo(&key, modifiers).map(Message::Key)
+    match event {
+        keyboard::Event::KeyPressed { key, modifiers, .. } => {
+            key_combo(&key, modifiers).map(Message::Key)
+        }
+        keyboard::Event::KeyReleased { key, .. } => key_name(&key).map(Message::KeyUp),
+        _ => None,
+    }
+}
+
+/// Keeps `PRESSED` up to date (a window losing focus never sees the releases).
+fn track_keys(event: &iced::Event) {
+    let mut pressed = PRESSED.lock().unwrap();
+    match event {
+        iced::Event::Keyboard(keyboard::Event::KeyPressed { key, .. }) => {
+            if let Some(name) = key_name(key) {
+                pressed.insert(name);
+            }
+        }
+        iced::Event::Keyboard(keyboard::Event::KeyReleased { key, .. }) => {
+            if let Some(name) = key_name(key) {
+                pressed.remove(&name);
+            }
+        }
+        iced::Event::Window(window::Event::Unfocused) => pressed.clear(),
+        _ => {}
+    }
+}
+
+/// The names of the keys held down right now, such as `["left", "space"]`.
+///
+/// Modifiers are left out (read them from the combo `on_key` receives). Games poll
+/// this every frame instead of counting presses and releases.
+#[pyfunction]
+pub fn pressed_keys() -> Vec<String> {
+    PRESSED.lock().unwrap().iter().cloned().collect()
 }
 
 fn key_event(
@@ -1337,6 +1437,7 @@ fn key_event(
     status: iced::event::Status,
     window: window::Id,
 ) -> Option<Message> {
+    track_keys(&event);
     match event {
         // Tab that no widget used (a code editor indents with it) moves the focus.
         iced::Event::Keyboard(keyboard::Event::KeyPressed {
@@ -1362,6 +1463,7 @@ fn key_event(
 enum SubscriptionKind {
     Every { interval: Duration, message: PyMsg },
     Stream { function: PyMsg },
+    Frames { function: PyMsg, max_fps: f64 },
 }
 
 /// A long-running source of messages, returned from `App.subscriptions()`.
@@ -1382,6 +1484,7 @@ impl PySubscription {
                 format!("<Subscription every {:?} key={:?}>", interval, self.key)
             }
             SubscriptionKind::Stream { .. } => format!("<Subscription stream key={:?}>", self.key),
+            SubscriptionKind::Frames { .. } => format!("<Subscription frames key={:?}>", self.key),
         }
     }
 
@@ -1443,12 +1546,48 @@ pub fn listen(function: &Bound<'_, PyAny>, key: Option<String>) -> PyResult<PySu
     })
 }
 
+/// Calls `callback(dt)` once per displayed frame (usually 60 times a second, in sync
+/// with the screen), with `dt` the seconds since the previous one. Made for games and
+/// simulations: move things by `speed * dt` and they go equally fast at any frame rate.
+///
+/// `max_fps` caps the rate where the display does not wait for vsync (software rendering).
+#[pyfunction]
+#[pyo3(signature = (callback, *, key=None, max_fps=240.0))]
+pub fn frames(
+    callback: &Bound<'_, PyAny>,
+    key: Option<String>,
+    max_fps: f64,
+) -> PyResult<PySubscription> {
+    if max_fps.is_nan() || max_fps <= 0.0 {
+        return Err(PyValueError::new_err("max_fps must be positive"));
+    }
+    if !callback.is_callable() {
+        return Err(pyo3::exceptions::PyTypeError::new_err(
+            "frames() needs a callable that takes dt",
+        ));
+    }
+    Ok(PySubscription {
+        key: format!(
+            "frames:{}",
+            match key {
+                Some(k) => k,
+                None => default_key(callback)?,
+            }
+        ),
+        kind: SubscriptionKind::Frames {
+            function: PyMsg::new(callback),
+            max_fps,
+        },
+    })
+}
+
 #[derive(Clone)]
 struct Recipe {
     key: String,
     window: Option<window::Id>,
     every: Option<(Duration, PyMsg)>,
     stream: Option<PyMsg>,
+    frame: Option<(PyMsg, f64)>,
 }
 
 impl Hash for Recipe {
@@ -1541,12 +1680,21 @@ fn python_subscriptions(
                 window,
                 every: Some((*interval, message.clone())),
                 stream: None,
+                frame: None,
             },
             SubscriptionKind::Stream { function } => Recipe {
                 key: s.key.clone(),
                 window,
                 every: None,
                 stream: Some(function.clone()),
+                frame: None,
+            },
+            SubscriptionKind::Frames { function, max_fps } => Recipe {
+                key: s.key.clone(),
+                window,
+                every: None,
+                stream: None,
+                frame: Some((function.clone(), *max_fps)),
             },
         })
         .collect()
@@ -1569,6 +1717,25 @@ fn subscription(state: &State) -> Subscription<Message> {
                 recipes.extend(python_subscriptions(py, obj.bind(py), Some(*id)));
             }
         }
+        let (frames, recipes): (Vec<_>, Vec<_>) =
+            recipes.into_iter().partition(|r| r.frame.is_some());
+        if frames.is_empty() {
+            state.last_frame.set(None);
+        } else {
+            // One frame clock for all of them, so they advance together.
+            subscriptions.push(window::frames().map(Message::Frame));
+        }
+        let fastest = frames
+            .iter()
+            .filter_map(|r| r.frame.as_ref().map(|(_, fps)| *fps))
+            .fold(0.0, f64::max);
+        state
+            .frame_interval
+            .set(if fastest > 0.0 { 1.0 / fastest } else { 0.0 });
+        *state.frames.borrow_mut() = frames
+            .into_iter()
+            .filter_map(|r| Some((r.window, r.frame?.0)))
+            .collect();
         subscriptions.extend(
             recipes
                 .into_iter()
@@ -1596,6 +1763,9 @@ fn daemon(
                 current: None,
                 caches: Caches::default(),
                 themes: RefCell::new(HashMap::new()),
+                frames: RefCell::new(Vec::new()),
+                frame_interval: std::cell::Cell::new(0.0),
+                last_frame: std::cell::Cell::new(None),
             };
             let bound = app.bind(py).clone();
             let open = open_window(py, &mut state, &bound);
