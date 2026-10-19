@@ -1159,12 +1159,12 @@ _section("ui", "Controles", {
     },
     "pyzed.ui.accordion": {
         "desc": "Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.",
-        "params": {"sections": "Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`).", "open": "El conjunto de claves abiertas, o un dict `{clave: bool}`.", "on_toggle": "Se llama con la clave de la cabecera pulsada.", "padding": "Relleno alrededor del contenido de una sección abierta."},
+        "params": {"sections": "Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`).", "open": "El conjunto de ids abiertos, un dict `{id: bool}` o `True` para todos.", "on_toggle": "Se llama con la clave de la cabecera pulsada.", "icons": "`{id: icono}`: un icono de Lucide para cada cabecera.", "spacing": "Espacio alrededor de los divisores entre secciones.", "padding": "Relleno alrededor del contenido de una sección abierta."},
         "example": """
             ui.accordion([
                 ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
                 ui.AccordionSection("events", "Events", event_rows, icon="zap"),
-            ], self.open_sections, lambda key: self.open_sections.symmetric_difference_update({key}))
+            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
         """,
     },
 }, before="Listas, árbol y menús")

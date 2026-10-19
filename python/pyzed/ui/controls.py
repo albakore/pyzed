@@ -296,29 +296,39 @@ class AccordionSection(NamedTuple):
 
 def accordion(
     sections: Sequence[Any],
-    open: Any,  # noqa: A002
-    on_toggle: Optional[Callable[[str], Any]] = None,
     *,
+    open: Any = (),  # noqa: A002
+    on_toggle: Optional[Callable[[str], Any]] = None,
+    icons: Optional[Mapping[str, str]] = None,
+    spacing: float = 8,
     padding: Any = (6, 12, 10, 12),
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """Stacked collapsible sections separated by dividers, like the panels of Zed's settings.
 
-    ``sections`` are ``AccordionSection`` (or ``(key, title, content)`` tuples); ``open`` is
-    the set of open keys (or a ``{key: bool}`` dict) and ``on_toggle(key)`` flips one. The
-    header spans the whole width, so content lines up with the rest of the panel.
+    ``sections`` are ``(id, title, content)`` tuples or ``AccordionSection`` items; ``open``
+    is the set of open ids (or a ``{id: bool}`` dict, or ``True`` for all) and
+    ``on_toggle(id)`` flips one. ``icons`` maps ids to Lucide icons and ``spacing`` is the
+    space around the dividers between sections. Headers span the
+    whole width, so content lines up with the rest of the panel.
     """
     t = _theme(theme)
-    is_open = (lambda k: bool(open.get(k, False))) if isinstance(open, Mapping) else (lambda k: k in open)
+    if open is True:
+        is_open = lambda k: True  # noqa: E731
+    elif isinstance(open, Mapping):
+        is_open = lambda k: bool(open.get(k, False))  # noqa: E731
+    else:
+        is_open = lambda k: k in open  # noqa: E731
     parts: list = []
     for index, raw in enumerate(sections):
         section = raw if isinstance(raw, AccordionSection) else AccordionSection(*raw)
         shown = is_open(section.key)
+        icon_name = section.icon or (icons or {}).get(section.key)
         header = _core.button(
             _core.row(
                 [
                     _icon("chevron-down" if shown else "chevron-right", size=14, color=t.icon_muted),
-                    _icon(section.icon, size=14, color=t.icon_muted) if section.icon else None,
+                    _icon(icon_name, size=14, color=t.icon_muted) if icon_name else None,
                     label(section.title, size="sm", weight="semibold", wrap=False, theme=t),
                     _core.space(width="fill"),
                 ],
@@ -336,7 +346,8 @@ def accordion(
             header = _core.stack([header, _core.container(section.end, width="fill", height="fill",
                                                           align_x="end", align_y="center", padding=(0, 8))])
         if index:
-            parts.append(_core.container(width="fill", height=1, bg=t.border_variant))
+            parts.append(_core.container(_core.container(width="fill", height=1, bg=t.border_variant),
+                                         width="fill", padding=(spacing / 2, 0)))
         parts.append(header)
         if shown:
             parts.append(_core.container(section.content, width="fill", padding=padding))

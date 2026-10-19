@@ -68,12 +68,15 @@ def _toggle(d: "Designer") -> Callable[[str], None]:
     return flip
 
 
-def field(title: str, editor: Any, t: Theme, *, tip: str = "") -> Any:
-    """A label and its editor; every row of the panel shares the label width, so editors line up."""
+def field(title: str, editor: Any, t: Theme, *, tip: str = "", inset: float = 0) -> Any:
+    """A label and its editor; every row of the panel shares the label width, so editors line up.
+
+    ``inset`` is how far the row is pushed right (inside a card), so its editor still lines up.
+    """
     text = ui.label(title, color="text_muted", wrap=False, theme=t)
     if tip:
         text = ui.tooltip(text, tip, theme=t)
-    return _core.row([_core.container(text, width=LABEL, clip=True), _core.container(editor, width="fill")],
+    return _core.row([_core.container(text, width=LABEL - inset, clip=True), _core.container(editor, width="fill")],
                      spacing=8, align="center", width="fill")
 
 
@@ -86,7 +89,7 @@ def _number(value: float, on_change: Callable[[Any], Any], t: Theme, **kwargs: A
 
 
 def _accordion(d: "Designer", sections: List[Any], t: Theme) -> Any:
-    return ui.accordion(sections, _open(d), _toggle(d), theme=t)
+    return ui.accordion(sections, open=_open(d), on_toggle=_toggle(d), theme=t)
 
 
 # -- the Component panel -------------------------------------------------------------
@@ -177,8 +180,12 @@ def member_section(d: "Designer", t: Theme) -> Any:
     return ui.AccordionSection("properties", f"Properties ({len(doc.members)})", _stack(rows), icon="list")
 
 
+CARD_PADDING = 8.0
+CARD_INSET = CARD_PADDING + 1  # padding plus border: rows inside a card use it to line up with the panel
+
+
 def _card(rows: List[Any], t: Theme) -> Any:
-    return _core.container(_core.column(rows, spacing=6, width="fill"), padding=8, width="fill", bg=t.editor,
+    return _core.container(_core.column(rows, spacing=6, width="fill"), padding=CARD_PADDING, width="fill", bg=t.editor,
                            border_color=t.border_variant, border_width=1, radius=t.radius)
 
 
@@ -204,9 +211,9 @@ def _card_of_member(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
                        lambda v: update(public=v == "public"), width="fill", theme=t)
     return _card([
         head,
-        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state."),
-        field("Type", ui.select(types_, m.type, lambda v: update(type=v), width="fill", theme=t), t),
-        field("Default", _default_editor(m, lambda v: update(default=v), t), t),
+        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state.", inset=CARD_INSET),
+        field("Type", ui.select(types_, m.type, lambda v: update(type=v), width="fill", theme=t), t, inset=CARD_INSET),
+        field("Default", _default_editor(m, lambda v: update(default=v), t), t, inset=CARD_INSET),
     ], t)
 
 
@@ -246,7 +253,7 @@ def event_section(d: "Designer", t: Theme) -> Any:
                                tooltip="Remove", theme=t),
             ], spacing=4, align="center"),
             field("Description", ui.input(description, lambda v, n=name: _guard(d, lambda: doc.update_event(
-                n, description=v)), placeholder="What it means", theme=t), t),
+                n, description=v)), placeholder="What it means", theme=t), t, inset=CARD_INSET),
         ], t))
     if not events:
         rows.append(_hint("Raise them from a method with self.emit(\"name\", value); the parent handles them "

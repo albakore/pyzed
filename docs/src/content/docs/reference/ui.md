@@ -595,7 +595,16 @@ One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and
 ### `accordion`
 
 ```python
-accordion(sections, open, on_toggle=None, *, padding=(6, 12, 10, 12), theme=None)
+accordion(
+    sections,
+    *,
+    open=(),
+    on_toggle=None,
+    icons=None,
+    spacing=8,
+    padding=(6, 12, 10, 12),
+    theme=None,
+)
 ```
 
 Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.
@@ -603,8 +612,10 @@ Stacked collapsible sections separated by dividers, like the panels of Zed's set
 | Parameter | Description |
 | --- | --- |
 | `sections` | `ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples). |
-| `open` | The set of open keys, or a `{key: bool}` dict. |
+| `open` | The set of open ids, a `{id: bool}` dict, or `True` for all. |
 | `on_toggle` | Called with the key of the clicked header. |
+| `icons` | `{id: icon}`: a Lucide icon for each header. |
+| `spacing` | Space around the dividers between sections. |
 | `padding` | Padding around the content of an open section. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
@@ -612,7 +623,7 @@ Stacked collapsible sections separated by dividers, like the panels of Zed's set
 ui.accordion([
     ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
     ui.AccordionSection("events", "Events", event_rows, icon="zap"),
-], self.open_sections, lambda key: self.open_sections.symmetric_difference_update({key}))
+], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
 ## Data and feedback

@@ -595,7 +595,16 @@ Una sección de `ui.accordion`: `key`, `title`, `content` y, opcionales, `icon` 
 ### `accordion`
 
 ```python
-accordion(sections, open, on_toggle=None, *, padding=(6, 12, 10, 12), theme=None)
+accordion(
+    sections,
+    *,
+    open=(),
+    on_toggle=None,
+    icons=None,
+    spacing=8,
+    padding=(6, 12, 10, 12),
+    theme=None,
+)
 ```
 
 Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.
@@ -603,8 +612,10 @@ Secciones plegables apiladas y separadas por divisores, como los paneles de los 
 | Parámetro | Descripción |
 | --- | --- |
 | `sections` | Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`). |
-| `open` | El conjunto de claves abiertas, o un dict `{clave: bool}`. |
+| `open` | El conjunto de ids abiertos, un dict `{id: bool}` o `True` para todos. |
 | `on_toggle` | Se llama con la clave de la cabecera pulsada. |
+| `icons` | `{id: icono}`: un icono de Lucide para cada cabecera. |
+| `spacing` | Espacio alrededor de los divisores entre secciones. |
 | `padding` | Relleno alrededor del contenido de una sección abierta. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
@@ -612,7 +623,7 @@ Secciones plegables apiladas y separadas por divisores, como los paneles de los 
 ui.accordion([
     ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
     ui.AccordionSection("events", "Events", event_rows, icon="zap"),
-], self.open_sections, lambda key: self.open_sections.symmetric_difference_update({key}))
+], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
 ## Datos y feedback
