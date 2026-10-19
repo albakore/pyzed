@@ -71,6 +71,20 @@ for a star rating, a tag editor and a draggable note.
 
 ## State and keys
 
+State can also be declared on the class with `pz.state(default)`. Unlike a prop, the parent cannot
+pass it, every instance starts with its own copy of the default (so lists and dicts are safe), and the
+designer lists it next to the props:
+
+```python
+class Counter(pz.Component):
+    step: int = 1             # prop
+    count: int = pz.state(0)  # state
+
+    def render(self):
+        return ui.button(f"{self.count}", lambda: setattr(self, "count", self.count + self.step))
+```
+
+
 State is kept per position in the parent's `view()`: the second `Rating` in a view keeps its own
 state as long as the order stays the same. When components come from a list whose items move,
 give each one a stable `key`:
@@ -124,3 +138,6 @@ Class attributes control how it appears:
 | `type_name` | The class name in snake case; the id saved in forms. |
 
 The docstring's first paragraph is shown as the description.
+
+To build a component by drawing it instead of writing `render()`, use the designer's
+[component mode](/pyzed/guides/component-designer/).

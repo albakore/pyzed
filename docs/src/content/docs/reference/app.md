@@ -320,3 +320,22 @@ class Rating(pz.Component):
 
 Rating(value=3, on_change=lambda e: print(e.value))
 ```
+
+### `state`
+
+```python
+state(default=None, *, doc='')
+```
+
+Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).
+
+| Parameter | Description |
+| --- | --- |
+| `default` | Initial value, copied for each instance. |
+| `doc` | Description shown in the designer. |
+
+```python
+class Counter(pz.Component):
+    step: int = 1
+    count: int = pz.state(0)
+```

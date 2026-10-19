@@ -71,6 +71,20 @@ una puntuación con estrellas, un editor de etiquetas y una nota que se puede ar
 
 ## Estado y claves
 
+El estado también se puede declarar en la clase con `pz.state(valor)`. A diferencia de una prop, el padre
+no puede pasarlo, cada instancia empieza con su propia copia del valor (así que listas y diccionarios son
+seguros) y el diseñador lo muestra junto a las props:
+
+```python
+class Counter(pz.Component):
+    step: int = 1             # prop
+    count: int = pz.state(0)  # estado
+
+    def render(self):
+        return ui.button(f"{self.count}", lambda: setattr(self, "count", self.count + self.step))
+```
+
+
 El estado se guarda por posición dentro del `view()` del padre: el segundo `Rating` de una vista
 conserva su propio estado mientras no cambie el orden. Si los componentes salen de una lista cuyos
 elementos se mueven, dale a cada uno una `key` estable:
@@ -125,3 +139,6 @@ Estos atributos de clase controlan cómo aparece:
 | `type_name` | El nombre de la clase en snake case; el id que se guarda en los formularios. |
 
 El primer párrafo del docstring se muestra como descripción.
+
+Para crear un componente dibujándolo en vez de escribir `render()`, usa el
+[modo componente](/pyzed/es/guides/component-designer/) del diseñador.

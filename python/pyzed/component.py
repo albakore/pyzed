@@ -35,6 +35,14 @@ widgets, and ``events`` declares the custom events it can ``emit``::
 Every component also accepts the common events (``on_click``, ``on_drag``...; see
 ``pyzed.events``) and the lifecycle events ``on_mount`` / ``on_unmount``.
 
+State can also be declared on the class with ``pz.state(default)``: it is private (the
+parent cannot pass it), each instance starts with its own copy of the default, and
+tools such as the designer list it next to the props::
+
+    class Counter(pz.Component):
+        step: int = 1             # prop
+        count: int = pz.state(0)  # state
+
 State is kept per position in the parent's ``view()``: the second ``Rating`` in a view
 keeps its own state, as long as the order does not change. When components are
 created in a loop whose items move, give each one a stable ``key=``.
@@ -49,6 +57,7 @@ Components show up in the designer's toolbox automatically (see ``label``, ``ico
 
 from __future__ import annotations
 
+import copy
 import re
 import sys
 import typing
@@ -58,7 +67,8 @@ from typing import Any, Callable, ClassVar, Dict, Iterator, List, Mapping, Optio
 from . import _core
 from . import events as _events
 
-__all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "find", "registered", "render_pass"]
+__all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "registered", "render_pass",
+           "state"]
 
 _MISSING: Any = object()
 
@@ -82,6 +92,37 @@ class PropInfo(typing.NamedTuple):
     @property
     def required(self) -> bool:
         return self.default is _MISSING
+
+
+class State:
+    """The default of a state variable declared on the class (see ``state``)."""
+
+    __slots__ = ("default", "doc")
+
+    def __init__(self, default: Any = None, doc: str = "") -> None:
+        self.default = default
+        self.doc = doc
+
+    def __repr__(self) -> str:
+        return f"state({self.default!r})"
+
+
+def state(default: Any = None, *, doc: str = "") -> Any:
+    """Declares a private state variable on a component class: ``count: int = pz.state(0)``.
+
+    Unlike a prop, the parent cannot pass it. Every instance gets its own copy of
+    ``default`` before ``setup()`` runs, so lists and dicts are safe defaults.
+    """
+    return State(default, doc)
+
+
+class StateInfo(typing.NamedTuple):
+    """A state variable declared with ``pz.state``: its name, annotation, default and description."""
+
+    name: str
+    annotation: Any
+    default: Any
+    doc: str = ""
 
 
 def _snake(name: str) -> str:
@@ -173,6 +214,8 @@ class Component:
     __props__: ClassVar[Dict[str, PropInfo]] = {}
     #: Custom and lifecycle events with their descriptions (filled in for each subclass).
     __events__: ClassVar[Dict[str, str]] = {}
+    #: The state variables declared with ``pz.state`` (filled in for each subclass).
+    __state__: ClassVar[Dict[str, StateInfo]] = {}
 
     _pyzed_handlers: Dict[str, Any]
     _pyzed_mounted: bool
@@ -180,23 +223,30 @@ class Component:
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         props: Dict[str, PropInfo] = {}
+        states: Dict[str, StateInfo] = {}
         for klass in reversed(cls.__mro__):
             if klass is Component or not issubclass(klass, Component):
                 continue
-            for name, annotation in vars(klass).get("__annotations__", {}).items():
-                if name.startswith("_") or name in _RESERVED or _is_classvar(annotation):
+            annotations = vars(klass).get("__annotations__", {})
+            for name, value in vars(klass).items():
+                if isinstance(value, State):
+                    props.pop(name, None)
+                    states[name] = StateInfo(name, annotations.get(name, Any), value.default, value.doc)
+            for name, annotation in annotations.items():
+                if name.startswith("_") or name in _RESERVED or _is_classvar(annotation) or name in states:
                     continue
                 props[name] = PropInfo(name, annotation, vars(klass).get(name, _MISSING))
         cls.__props__ = props
+        cls.__state__ = states
         declared = cls.events
         if isinstance(declared, Mapping):
             custom = {str(k): str(v) for k, v in declared.items()}
         else:
             custom = {str(name): "" for name in declared}
         cls.__events__ = {**custom, **LIFECYCLE_EVENTS}
-        if not cls.type_name:
+        if not vars(cls).get("type_name"):  # not inherited: each subclass is its own toolbox entry
             cls.type_name = _snake(cls.__name__)
-        if not cls.label:
+        if not vars(cls).get("label"):
             cls.label = re.sub(r"(?<!^)(?=[A-Z])", " ", cls.__name__)
         if cls.designer and not cls.__name__.startswith("_"):
             _REGISTRY[cls.type_name] = cls
@@ -217,9 +267,9 @@ class Component:
         if fresh:
             instance = object.__new__(cls)
             instance._pyzed_mounted = False
+            instance._init_state()
         instance._pyzed_handlers = custom
-        for name, info in cls.__props__.items():
-            setattr(instance, name, props.get(name, info.default))
+        instance._set_props(props)
         if fresh:
             instance.setup()
         if current is not None:
@@ -247,11 +297,20 @@ class Component:
         props, custom, _common = cls._split(args, kwargs)
         instance = object.__new__(cls)
         instance._pyzed_mounted = False
+        instance._init_state()
         instance._pyzed_handlers = custom
-        for name, info in cls.__props__.items():
-            setattr(instance, name, props.get(name, info.default))
+        instance._set_props(props)
         instance.setup()
         return instance
+
+    def _set_props(self, props: Dict[str, Any]) -> None:
+        """Sets the props passed by the parent (and the defaults of the others) before a render."""
+        for name, info in self.__props__.items():
+            setattr(self, name, props.get(name, info.default))
+
+    def _init_state(self) -> None:
+        for name, info in self.__state__.items():
+            setattr(self, name, copy.deepcopy(info.default))
 
     @classmethod
     def _split(cls, args: Sequence[Any], kwargs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:

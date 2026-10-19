@@ -481,6 +481,7 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    align='center',
     theme=None,
 )
 ```
@@ -496,6 +497,7 @@ A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` 
 | `step` | Button step. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `suffix` | Unit shown at the end (`"px"`, `"%"`…). |
+| `align` | Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -573,6 +575,56 @@ A collapsible section: a header with an arrow that shows or hides `content`. You
 | `on_toggle` | Message or callable when the header is clicked. |
 | `end` | Widgets at the end (right). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `AccordionSection`
+
+```python
+class AccordionSection
+```
+
+One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget.
+
+| Parameter | Description |
+| --- | --- |
+| `key` | Key that identifies the subscription (defaults to the message or the function). |
+| `title` | Title. |
+| `content` | Content: a `Widget`, a string or a number (converted to text). |
+| `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `end` | Widgets at the end (right). |
+
+### `accordion`
+
+```python
+accordion(
+    sections,
+    *,
+    open=(),
+    on_toggle=None,
+    icons=None,
+    spacing=8,
+    padding=(6, 12, 10, 12),
+    theme=None,
+)
+```
+
+Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.
+
+| Parameter | Description |
+| --- | --- |
+| `sections` | `ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples). |
+| `open` | The set of open ids, a `{id: bool}` dict, or `True` for all. |
+| `on_toggle` | Called with the key of the clicked header. |
+| `icons` | `{id: icon}`: a Lucide icon for each header. |
+| `spacing` | Space around the dividers between sections. |
+| `padding` | Padding around the content of an open section. |
+| `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+```python
+ui.accordion([
+    ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+    ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
+```
 
 ## Data and feedback
 

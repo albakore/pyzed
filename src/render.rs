@@ -353,9 +353,13 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             layout,
             secure,
             icon,
+            align_x,
             style,
         } => {
             let mut t = text_input(placeholder, value).secure(*secure);
+            if let Some(a) = align_x {
+                t = t.align_x(*a);
+            }
             if let Some(cb) = on_input.clone() {
                 t = t.on_input(move |s| Message::Input(cb.clone(), s));
             }

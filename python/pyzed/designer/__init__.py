@@ -4,6 +4,8 @@
     pyzed run app.pzform        # run the form with its logic
 
 A form is two files: ``app.pzform`` (JSON layout) and ``app.py`` (event handlers).
+A component designed visually is ``rating.pzcomp`` (layout) and ``rating.py`` (a
+``SceneComponent`` class with its properties, events and methods); see ``designer.scene``.
 Everything is also scriptable::
 
     from pyzed import designer
@@ -32,6 +34,8 @@ from .geometry import align, anchored, distribute, same_size, smart_guides, snap
 from .history import History
 from .model import Control, Form, load, save
 from .runtime import Event, FormApp, FormWindow, open_form, run, theme_for
+from .scene import Scene, SceneDocument, discover, load_component, new_component, open_document
+from .scene_runtime import SceneComponent
 from .settings import EditorSettings
 
 
@@ -65,14 +69,21 @@ __all__ = [
     "History",
     "Prop",
     "RenderContext",
+    "Scene",
+    "SceneComponent",
+    "SceneDocument",
     "align",
     "all_components",
     "anchored",
     "categories",
     "component",
     "design",
+    "discover",
     "distribute",
     "load",
+    "load_component",
+    "new_component",
+    "open_document",
     "open_form",
     "register",
     "render",
