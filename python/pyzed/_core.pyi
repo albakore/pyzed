@@ -46,6 +46,14 @@ class Command:
         """Focuses the `text_input` (or editor) with the given `id`."""
         ...
     @staticmethod
+    def focus_next() -> Any:
+        """Moves the keyboard focus to the next field of the window (what Tab does), wrapping around."""
+        ...
+    @staticmethod
+    def focus_previous() -> Any:
+        """Moves the keyboard focus to the previous field of the window (what Shift+Tab does)."""
+        ...
+    @staticmethod
     def focus_window(window: Any = ...) -> Any:
         """Brings the window to the front and focuses it."""
         ...

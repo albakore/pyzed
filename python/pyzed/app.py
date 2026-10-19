@@ -159,6 +159,9 @@ class App(Window):
     theme: ThemeLike = _theme.ONE_DARK
     #: Whether the OS is in dark mode (updated by the runtime).
     system_dark: bool = True
+    #: Tab and Shift+Tab move the keyboard focus between the fields of the window
+    #: (``on_key`` sees the key first; returning something from it keeps the focus).
+    tab_focus: bool = True
 
     def subscriptions(self) -> List[Any]:
         """Timers and streams that should run right now (re-evaluated after every update)."""
@@ -195,6 +198,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
         reload = _hot_reload.enabled_by_env()
     reloader = _hot_reload.enable(app, [*watch, *_hot_reload.watched_by_env()]) if reload else None
     _platform.prepare()
+    _animation._follow_system()
     try:
         _core.run(app)
     finally:

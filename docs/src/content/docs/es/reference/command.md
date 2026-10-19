@@ -46,6 +46,22 @@ Enfoca el `text_input` (o editor) con ese `id`.
 | --- | --- |
 | `id` | El `id` que pasaste al widget. |
 
+### `focus_next`
+
+```python
+focus_next()
+```
+
+Mueve el foco del teclado al siguiente campo de la ventana, volviendo al primero tras el último (lo que hace Tab).
+
+### `focus_previous`
+
+```python
+focus_previous()
+```
+
+Mueve el foco del teclado al campo anterior de la ventana (lo que hace Shift+Tab).
+
 ### `select_all`
 
 ```python

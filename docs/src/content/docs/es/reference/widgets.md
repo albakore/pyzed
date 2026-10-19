@@ -1730,8 +1730,18 @@ set_reduced_motion(on=True)
 
 Apaga el movimiento (`True`) o lo vuelve a encender: las animaciones muestran al instante su estado de reposo.
 
-Respeta la preferencia del usuario (un ajuste de accesibilidad) o úsalo en tests. La variable
-de entorno `PYZED_REDUCED_MOTION=1` lo enciende al arrancar.
+Por defecto Pyzed sigue el ajuste de accesibilidad "reducir movimiento" del sistema (se lee al
+arrancar la app, ver `pyzed.system_reduced_motion`). `True` o `False` lo reemplazan (por ejemplo
+desde los ajustes de tu app, o en tests) y `None` vuelve a seguir al sistema. La variable de
+entorno `PYZED_REDUCED_MOTION` (`1` o `0`) también lo reemplaza.
+
+### `system_reduced_motion`
+
+```python
+system_reduced_motion()
+```
+
+Si el sistema pide a las apps reducir el movimiento (`None` si no se sabe).
 
 ### `reduced_motion`
 

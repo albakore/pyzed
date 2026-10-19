@@ -46,6 +46,22 @@ Focuses the `text_input` (or editor) with that `id`.
 | --- | --- |
 | `id` | The `id` you passed to the widget. |
 
+### `focus_next`
+
+```python
+focus_next()
+```
+
+Moves the keyboard focus to the next field of the window, wrapping around (what Tab does).
+
+### `focus_previous`
+
+```python
+focus_previous()
+```
+
+Moves the keyboard focus to the previous field of the window (what Shift+Tab does).
+
 ### `select_all`
 
 ```python

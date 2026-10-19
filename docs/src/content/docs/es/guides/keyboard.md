@@ -43,6 +43,9 @@ class App(pz.App):
 `on_key` recibe también las teclas que ya procesó un campo con foco (por ejemplo, las letras que
 escribes en un `input`). Responde solo a los combos que te interesen, y comprueba el estado si un
 atajo solo tiene sentido en cierto contexto (`if self.palette_open and combo == "escape"`).
+
+<kbd>Tab</kbd> y <kbd>Shift</kbd>+<kbd>Tab</kbd> además mueven el foco entre campos cuando
+ningún widget las usó; ver [Accesibilidad](/pyzed/es/guides/accessibility/#moverse-entre-campos-con-tab).
 :::
 
 ## Mostrar atajos

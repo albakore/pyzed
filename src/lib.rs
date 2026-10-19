@@ -6,6 +6,7 @@ mod editor;
 mod editor_widgets;
 mod events;
 mod extra;
+mod focus;
 mod fonts;
 mod highlighter;
 mod layout;

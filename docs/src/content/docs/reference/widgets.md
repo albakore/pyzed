@@ -1730,8 +1730,10 @@ set_reduced_motion(on=True)
 
 Turns motion off (`True`) or back on: animations show their resting state at once.
 
-Respect the user's choice (an accessibility setting) or use it in tests. The
-`PYZED_REDUCED_MOTION=1` environment variable turns it on at startup.
+By default Pyzed follows the system's "reduce motion" accessibility setting (read when
+the app starts, see `pyzed.system_reduced_motion`). `True` or `False` overrides it
+(for example from your app's own settings, or in tests) and `None` follows the system
+again. The `PYZED_REDUCED_MOTION` environment variable (`1` or `0`) overrides it too.
 
 ### `reduced_motion`
 
@@ -1740,6 +1742,14 @@ reduced_motion()
 ```
 
 Whether reduced motion is on.
+
+### `system_reduced_motion`
+
+```python
+system_reduced_motion()
+```
+
+Whether the system asks apps to reduce motion (`None` if unknown).
 
 ### `animation`
 
