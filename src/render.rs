@@ -959,7 +959,22 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             aspect_ratio,
             width,
         } => {
-            let mut g = widget::grid(children.iter().map(|c| build(py, c, ctx))).spacing(*spacing);
+            // A fixed height is the height of each row; iced would split it among all rows.
+            let row_height = match (aspect_ratio, height) {
+                (None, Some(Length::Fixed(h))) => Some(*h),
+                _ => None,
+            };
+            let mut g = widget::grid(children.iter().map(|c| {
+                let element = build(py, c, ctx);
+                match row_height {
+                    Some(h) => widget::container(element)
+                        .width(Length::Fill)
+                        .height(h)
+                        .into(),
+                    None => element,
+                }
+            }))
+            .spacing(*spacing);
             if let Some(n) = columns {
                 g = g.columns(*n);
             }
@@ -971,6 +986,8 @@ pub fn build<'a>(py: Python<'_>, node: &Py<Widget>, ctx: Ctx<'a>) -> Element<'a,
             }
             if let Some(r) = aspect_ratio {
                 g = g.height(widget::grid::aspect_ratio(*r, 1.0));
+            } else if row_height.is_some() {
+                g = g.height(Length::Shrink);
             } else if let Some(h) = height {
                 g = g.height(*h);
             }
