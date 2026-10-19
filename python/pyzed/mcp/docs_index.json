@@ -1,12 +1,6 @@
 {
  "docs": [
   {
-   "slug": "changelog",
-   "title": "What's new",
-   "description": "Changes, improvements, fixes and breaking changes in every Pyzed release.",
-   "path": "docs/src/content/docs/changelog.md"
-  },
-  {
    "slug": "components/basics",
    "title": "Basics",
    "description": "Buttons, text, badges, shortcuts, avatars, tooltips and cards.",
