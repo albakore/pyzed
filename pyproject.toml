@@ -11,6 +11,7 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 keywords = ["gui", "iced", "rust", "zed", "ui", "desktop"]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Rust",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython",

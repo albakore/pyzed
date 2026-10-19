@@ -16,6 +16,41 @@ stable version.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-19
+
+First stable version. From 1.0.0 on, the public API follows semantic versioning: breaking changes only land in a new major version.
+
+### Highlights
+
+- **Animations and effects**: animate any widget property, with ready-made animations, transitions between windows and visual effects such as glow, bloom, glass and transparency, in the library and in Pyzed Design.
+- **AI agents**: an Agent panel in Pyzed Design and `pyzed.agents` in the library, to write code and generate components and forms, with browser login or personal tokens kept in the system keychain. `pyzed mcp` also exposes Pyzed to external agents.
+- **Built-in reference**: a searchable, Godot-style reference of every component and function, inside Pyzed Design and from the library.
+- **A Zed-grade code editor**: Zed's actions and keys, multiple cursors, find and replace.
+- **Updates**: Pyzed Design updates itself like Zed, with a What's new tab.
+- **New docs site**: a component library, the Pyzed Design manual and a download page.
+
+### Features
+
+- ✨ Add Zed-style updates to Pyzed Design with a What's new tab. PR [#40](https://github.com/albakore/pyzed/pull/40) by [@albakore](https://github.com/albakore).
+- ✨ Add an MCP server for AI agents (`pyzed mcp`). PR [#41](https://github.com/albakore/pyzed/pull/41) by [@albakore](https://github.com/albakore).
+- ✨ Add Zed's editor actions, keys, multiple cursors, find and replace, and opt-in telemetry. PR [#44](https://github.com/albakore/pyzed/pull/44) by [@albakore](https://github.com/albakore).
+- ✨ Add AI agents to Pyzed Design and the library (`pyzed.agents`). PR [#47](https://github.com/albakore/pyzed/pull/47) by [@albakore](https://github.com/albakore).
+- ✨ Add a built-in, searchable reference to the library and the designer, like Godot's. PR [#46](https://github.com/albakore/pyzed/pull/46) by [@albakore](https://github.com/albakore).
+- ✨ Add animations, transitions and visual effects (glow, bloom, glass) to widgets, windows and Pyzed Design. PR [#48](https://github.com/albakore/pyzed/pull/48) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Fix the MCP docs index after the docs redesign and document self-updates. PR [#45](https://github.com/albakore/pyzed/pull/45) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Redesign the docs site with a component library, the Pyzed Design manual and a download page. PR [#42](https://github.com/albakore/pyzed/pull/42) by [@albakore](https://github.com/albakore).
+- 📝 Add the reference browser to the component library. PR [#49](https://github.com/albakore/pyzed/pull/49) by [@albakore](https://github.com/albakore).
+
+### Translations
+
+- 🌐 Translate the designer's context menu, code panel, color picker and status bar, and rename it to Pyzed Design. PR [#43](https://github.com/albakore/pyzed/pull/43) by [@albakore](https://github.com/albakore).
+
 ## [0.4.0] - 2026-10-19
 
 ### Highlights
