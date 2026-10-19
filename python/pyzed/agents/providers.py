@@ -95,9 +95,15 @@ PROVIDERS: Dict[str, Provider] = {p.id: p for p in (
 
 #: OAuth apps Pyzed signs in with (``PYZED_GITHUB_CLIENT_ID``... or the provider's settings override them).
 #: A GitHub App with the device flow on and the "Models" account permission; a Google "Desktop app" client.
+#: Empty in the repository; the release builds of Pyzed Design fill them from the workflow's secrets
+#: (``scripts/build_designer.py`` bundles them as the ``pyzed_oauth_apps`` module).
 GITHUB_CLIENT_ID = ""
 GOOGLE_CLIENT_ID = ""
 GOOGLE_CLIENT_SECRET = ""  # not confidential for desktop apps (Google's installed-app flow)
+try:
+    from pyzed_oauth_apps import GITHUB_CLIENT_ID, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET  # type: ignore  # noqa: F401
+except ImportError:
+    pass
 
 DEFAULT_MODEL = "anthropic:claude-opus-5-5"
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
