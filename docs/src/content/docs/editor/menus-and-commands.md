@@ -72,6 +72,9 @@ The toggles are remembered between sessions.
 | Keyboard shortcuts | <kbd>F1</kbd> | A searchable list of every shortcut. |
 | Documentation | | Opens this documentation in the browser. |
 | Report a problem | | Opens the issue tracker. |
+| What's new | | A tab with the release notes of this version (or of the update waiting to install). |
+| Check for updates | | Looks for a newer release on GitHub now; see [Updates](/pyzed/download/#updates). |
+| Check for updates automatically | | Toggles the daily check (on by default). |
 | About Pyzed Designer | | The versions of Pyzed, Python and Iced, the platform, and links. |
 
 ![The About dialog](../../../../screenshots/editor-about.png)
