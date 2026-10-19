@@ -87,6 +87,12 @@ class Command:
         """Reads the system clipboard and calls `then(text)` (an empty string if it is empty)."""
         ...
     @staticmethod
+    def paste_image(then: Any) -> Any:
+        """Reads an image from the system clipboard (a screenshot, a copied picture) and calls
+        `then(png)` with its PNG bytes, or `then(None)` when the clipboard holds no image.
+        """
+        ...
+    @staticmethod
     def perform(function: Any, then: Any = ...) -> Any:
         """Runs `function()` in the background and calls `then(result)` on the UI thread.
 
@@ -94,6 +100,16 @@ class Command:
         coroutine function (run on Pyzed's asyncio loop), or return a generator / async
         generator, in which case `then` is called once per yielded value. An already
         created coroutine or generator (`fetch(url)` rather than `fetch`) works too.
+        """
+        ...
+    @staticmethod
+    def pick_files(then: Any, *, title: Any = ..., filters: Any = ..., directory: Any = ..., multiple: Any = ..., folder: Any = ...) -> Any:
+        """Opens the system's file dialog and calls `then(paths)` with the chosen paths (an empty
+        list when it is cancelled).
+
+        `filters` is a list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`;
+        `directory` is the folder it opens in; `multiple=False` picks one file and `folder=True`
+        picks folders.
         """
         ...
     @staticmethod

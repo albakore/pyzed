@@ -155,6 +155,97 @@ ES = {
         "Nunca pregunta: escribe archivos y crea documentos por su cuenta.",
     "Read only": "Solo lectura", "Chat only": "Solo conversación", "Low": "Bajo", "Medium": "Medio", "High": "Alto",
     "Extra high": "Muy alto", "Max": "Máximo",
+    # MCP servers, external agents, images, sign-in and federation (PR "agents: MCP, ACP, images...")
+    "Command": "Comando", "Variable": "Variable", "MCP servers": "Servidores MCP", "External agents": "Agentes externos",
+    "Projects loaded": "Proyectos cargados", "Add an external agent…": "Añadir un agente externo…",
+    "Claude Code, Gemini CLI, Codex or any ACP agent": "Claude Code, Gemini CLI, Codex o cualquier agente ACP",
+    "Files, the form, its code, controls (@)": "Archivos, el formulario, su código, controles (@)",
+    "Attach images…": "Adjuntar imágenes…", "PNG, JPEG, GIF or WebP files": "Archivos PNG, JPEG, GIF o WebP",
+    "Paste image": "Pegar imagen", "A screenshot or picture you copied": "Una captura o imagen que copiaste",
+    "Screenshot of the form": "Captura del formulario", "Let the agent see the open form":
+        "Deja que el agente vea el formulario abierto",
+    "Message the agent (@ context, / commands, Shift+Enter for a new line)":
+        "Escribe al agente (@ contexto, / comandos, Mayús+Intro para otra línea)",
+    "Path of the JWT (or ANTHROPIC_IDENTITY_TOKEN_FILE)": "Ruta del JWT (o ANTHROPIC_IDENTITY_TOKEN_FILE)",
+    "Use Claude without an API key: a token from your identity provider (GitHub Actions, Google Cloud, Azure, Okta, "
+    "Kubernetes…) is exchanged for a short-lived Claude token. Create the issuer and the rule in the Claude Console.":
+        "Usa Claude sin clave de API: un token de tu proveedor de identidad (GitHub Actions, Google Cloud, Azure, Okta, "
+        "Kubernetes…) se cambia por un token de Claude de corta duración. Crea el emisor y la regla en la Claude "
+        "Console.",
+    "Federation rule": "Regla de federación", "Organization ID": "ID de la organización",
+    "Service account": "Cuenta de servicio", "Workspace": "Espacio de trabajo", "Identity token": "Token de identidad",
+    "Secrets": "Secretos", "{command} is not installed": "{command} no está instalado",
+    "Create an application that ": "Crea una aplicación que ", "A picture of the open form":
+        "Una imagen del formulario abierto",
+    "Attach images": "Adjuntar imágenes", "The clipboard has no image": "El portapapeles no tiene una imagen",
+    "Pasted image": "Imagen pegada",
+    "Type this code on the GitHub page that opened ({url}):": "Escribe este código en la página de GitHub que se abrió "
+                                                               "({url}):",
+    "GitHub App client ID": "Client ID de la GitHub App", "Google Cloud project": "Proyecto de Google Cloud",
+    "Location": "Ubicación", "OAuth client": "Cliente OAuth", "Workload identity federation":
+        "Federación de identidad de cargas de trabajo",
+    "svac_… (optional)": "svac_… (opcional)", "wrkspc_… (optional)": "wrkspc_… (opcional)",
+    "The program and its arguments, as you would type them in a terminal":
+        "El programa y sus argumentos, como los escribirías en una terminal",
+    "Or the URL": "O la URL",
+    "NAME=value pairs separated by ; (environment variables, or headers for a URL), kept in the system keychain":
+        "Pares NOMBRE=valor separados por ; (variables de entorno, o cabeceras para una URL), guardados en el llavero "
+        "del sistema",
+    "Their tools are added to the agent's. Tools that are not read-only ask first, like file writes.":
+        "Sus herramientas se suman a las del agente. Las que no son de solo lectura preguntan antes, como al escribir "
+        "archivos.",
+    "Agents that run as their own program and speak the Agent Client Protocol, like in Zed. They work in the project "
+    "folder, ask before acting according to the permission mode and get Pyzed's MCP server.":
+        "Agentes que corren como su propio programa y hablan el Agent Client Protocol, como en Zed. Trabajan en la "
+        "carpeta del proyecto, preguntan antes de actuar según el modo de permisos y reciben el servidor MCP de Pyzed.",
+    "Share Pyzed's MCP server": "Compartir el servidor MCP de Pyzed",
+    "Look at the attached images.": "Mira las imágenes adjuntas.",
+    "{name} was not attached: {error}": "No se adjuntó {name}: {error}",
+    "Sign in with Google first": "Inicia sesión con Google primero",
+    "The command is not valid: {error}": "El comando no es válido: {error}",
+    "Give it a name and a command": "Ponle un nombre y un comando",
+    "Give it a name and a command or a URL": "Ponle un nombre y un comando o una URL",
+    "↑↓ to move, Enter to pick, Esc to close": "↑↓ para moverte, Intro para elegir, Esc para cerrar",
+    "Add context or images": "Añadir contexto o imágenes", "Personal access token": "Token de acceso personal",
+    "For signing in with GitHub (device flow, Models permission). Without one, use a fine-grained token with the "
+    "Models permission.":
+        "Para iniciar sesión con GitHub (flujo de dispositivo, permiso Models). Sin ella, usa un token detallado con el "
+        "permiso Models.",
+    "Vertex AI must be enabled in it": "Debe tener Vertex AI activado",
+    "Only needed to sign in with Google; gcloud's credentials work without it":
+        "Solo hace falta para iniciar sesión con Google; las credenciales de gcloud funcionan sin él",
+    "Test the connection": "Probar la conexión", "A remote server (Streamable HTTP)": "Un servidor remoto "
+                                                                                     "(Streamable HTTP)",
+    "Remove": "Quitar",
+    "Components, docs, generators and checks of Pyzed (needs the mcp package)":
+        "Componentes, documentación, generadores y comprobaciones de Pyzed (necesita el paquete mcp)",
+    "Images": "Imágenes", "{count} tools": "{count} herramientas", "Taking a screenshot…": "Haciendo una captura…",
+    "Test": "Probar", "Add an MCP server": "Añadir un servidor MCP", "Other…": "Otro…",
+    "The screenshot failed: {error}": "La captura falló: {error}",
+    "Client secret (kept in the keychain)": "Secreto del cliente (se guarda en el llavero)",
+    "List my projects": "Listar mis proyectos", "Client ID (Desktop app)": "Client ID (app de escritorio)",
+    "The MCP server {name} did not start": "El servidor MCP {name} no arrancó",
+    "Create a notes app with a list of notes, an editor and a search box":
+        "Crea una app de notas con una lista de notas, un editor y un buscador",
+    "Create an application": "Crear una aplicación",
+    "Look at the form and improve its design": "Mirar el formulario y mejorar su diseño",
+    "Take a screenshot of this form with screenshot_form, look at it and improve its layout and design.":
+        "Haz una captura de este formulario con screenshot_form, mírala y mejora su distribución y su diseño.",
+    "Sign in with GitHub": "Iniciar sesión con GitHub", "Sign in with Google": "Iniciar sesión con Google",
+    "Sign in with a token": "Iniciar sesión con un token", "Signed in": "Sesión iniciada",
+    "Google Cloud credentials of this computer": "Credenciales de Google Cloud de este equipo",
+    "Gemini with your Google account, through Google Cloud; no key":
+        "Gemini con tu cuenta de Google, a través de Google Cloud; sin clave",
+    "The models of your GitHub account and Copilot plan (GitHub Models)":
+        "Los modelos de tu cuenta de GitHub y tu plan de Copilot (GitHub Models)",
+    "Claude Code, Gemini CLI, Codex and other agents, through the Agent Client Protocol":
+        "Claude Code, Gemini CLI, Codex y otros agentes, con el Agent Client Protocol",
+    # tool titles
+    "Looking at the form": "Mirando el formulario", "Reading the project": "Leyendo el proyecto",
+    "Creating a project": "Creando un proyecto", "Adding a dependency": "Añadiendo una dependencia",
+    "Checking the project": "Comprobando el proyecto", "Opening a file": "Abriendo un archivo",
+    "Listing the examples": "Listando los ejemplos", "Reading an example": "Leyendo un ejemplo",
+    "Writing a form": "Escribiendo un formulario", "Taking a screenshot": "Haciendo una captura",
 }
 
 i18n.add("es", {"designer": ES})

@@ -1,7 +1,7 @@
 """Ready-made tools: what an agent needs to know Pyzed, and to work with files in a project.
 
-``pyzed_tools()`` are the same knowledge tools the Pyzed MCP server offers (components, icons,
-themes, docs, generators and checks), without needing the MCP SDK. ``file_tools(root)`` read, search
+``pyzed_tools()`` are the tools of the Pyzed MCP server (components, icons, themes, docs, examples,
+generators, checks and screenshots), without needing the MCP SDK. ``file_tools(root)`` read, search
 and write files, never outside ``root``.
 """
 
@@ -12,15 +12,16 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
-from .agent import Tool, tool
+from .agent import Image, Tool, tool
 
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build", ".ruff_cache"}
 #: Bytes of a file ``read_file`` returns at most.
 READ_LIMIT = 200_000
 
 
-def pyzed_tools() -> List[Tool]:
-    """Knowledge, generator and checking tools about Pyzed (no side effects)."""
+def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
+    """Knowledge, generator, checking and screenshot tools about Pyzed (the Pyzed MCP server's tools; they
+    change nothing). ``screenshots=False`` leaves out ``screenshot``, which runs the code it is given."""
     from ..mcp import knowledge, scaffold, validate
 
     @tool(title="Reading a Pyzed guide")
@@ -74,6 +75,19 @@ def pyzed_tools() -> List[Tool]:
         """Every page of the official documentation, with the slug read_docs takes."""
         return knowledge.list_docs()
 
+    @tool(title="Listing the examples")
+    def list_examples() -> Any:
+        """The example apps of Pyzed (a Zed-like editor, a to-do list, dialogs, canvas...) to learn from."""
+        return knowledge.list_examples()
+
+    @tool(title="Reading an example")
+    def read_example(name: str) -> str:
+        """The full source code of an example app.
+
+        name: from list_examples, e.g. "todo".
+        """
+        return knowledge.read_example(name)
+
     @tool(title="Writing an app skeleton")
     def new_app(title: str = "My App", layout: str = "simple", theme: str = "One Dark") -> str:
         """The code of a runnable pz.App script.
@@ -92,6 +106,17 @@ def pyzed_tools() -> List[Tool]:
         """
         return scaffold.component(name, description=description, props=props or (), events=events)
 
+    @tool(title="Writing a form")
+    def new_form(name: str, title: str = "", controls: Optional[List[Any]] = None, width: float = 480,
+                 height: float = 320, theme: str = "One Dark", form_events: Optional[List[Any]] = None) -> Any:
+        """A visual designer form as files: the <name>.pzform layout and the <name>.py handlers module.
+
+        controls: [{"type": "input", "name": "email", "props": {"placeholder": "Email"}}, {"type": "button", "name": "send", "props": {"text": "Send"}, "events": ["click"]}] (x/y/width/height optional, stacked when missing).
+        form_events: "load", "close", "key", "resize".
+        """
+        return scaffold.form(name, title=title, width=width, height=height, theme=theme, controls=controls or (),
+                             form_events=form_events or ())
+
     @tool(title="Checking code")
     def validate_code(code: str) -> Any:
         """Checks Pyzed code without running it: unknown names, wrong keyword arguments, missing view() or
@@ -103,8 +128,19 @@ def pyzed_tools() -> List[Tool]:
         """Validates the JSON of a .pzform and, when given, that its handlers module defines every handler."""
         return validate.check_form(form, handlers)
 
-    return [get_guide, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
-            new_app, new_component_code, validate_code, validate_form]
+    @tool(writes=True, title="Taking a screenshot")
+    def screenshot(code: str, width: int = 800, height: int = 600) -> Any:
+        """Runs Pyzed code off-screen (no window) and returns a picture of its UI, to check how it looks.
+
+        code: a script defining a pz.App (pz.run is intercepted) or a top-level preview() function that returns a widget.
+        """
+        from ..mcp.preview import render
+
+        return [f"Screenshot of the app at {width}x{height}.", Image(render(code, size=(width, height)), "image/png")]
+
+    out = [get_guide, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
+           list_examples, read_example, new_app, new_component_code, new_form, validate_code, validate_form]
+    return out + [screenshot] if screenshots else out
 
 
 #: Files the file tools never list, read, search or write: keys and credentials a prompt injection could

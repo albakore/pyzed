@@ -271,6 +271,43 @@ Lee el portapapeles y llama a `then(texto)` (cadena vacía si está vacío).
 | --- | --- |
 | `then` | Callable que recibe el texto. |
 
+### `paste_image`
+
+```python
+paste_image(then)
+```
+
+Lee una imagen del portapapeles (una captura, una imagen copiada) y llama a `then(png)` con sus bytes PNG, o a `then(None)` si el portapapeles no tiene una imagen.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Callable que recibe los bytes PNG o `None`. |
+
+### `pick_files`
+
+```python
+pick_files(
+    then,
+    *,
+    title=None,
+    filters=None,
+    directory=None,
+    multiple=True,
+    folder=False,
+)
+```
+
+Abre el diálogo de archivos del sistema y llama a `then(rutas)` con las rutas elegidas (una lista vacía si se cancela).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Callable que recibe la lista de rutas. |
+| `title` | El título del diálogo. |
+| `filters` | Una lista de pares `(nombre, extensiones)`, como `[("Imágenes", ["png", "jpg"])]`. |
+| `directory` | La carpeta en la que se abre. |
+| `multiple` | `False` elige un solo archivo. |
+| `folder` | `True` elige carpetas en vez de archivos. |
+
 ## Ventanas y portapapeles
 
 ### `open_window`

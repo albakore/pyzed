@@ -22,6 +22,8 @@ from pyzed import Command
 | `Command.scroll_to(id, x, y)` | Scrolls a `scrollable` to a position in pixels. |
 | `Command.copy(text)` | Copies to the clipboard. |
 | `Command.paste(then)` | Reads the clipboard and calls `then(text)`. |
+| `Command.paste_image(then)` | Reads an image from the clipboard and calls `then(png)` with its PNG bytes (`None` if there is none). |
+| `Command.pick_files(then, ...)` | Opens the system's file dialog and calls `then(paths)`; `filters=[("Images", ["png", "jpg"])]`, `multiple=False`, `folder=True`. |
 | `Command.message(msg)` | Sends `msg` to `update` on the next cycle. |
 | `Command.perform(fn, then)` | Runs `fn()` in the background (a thread, or the asyncio loop if it is `async def`) and passes the result to `then`. |
 | `Command.batch([...])` | Several at once (returning a list works too). |
