@@ -16,6 +16,48 @@ stable version.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-19
+
+### Highlights
+
+- **Component Designer**: draw reusable components with typed properties, state, methods and events, inherit from them and use them like any widget, with a Component view, tabs and a New component button.
+- **A much richer designer**: containers, dockable panels, menus, templates, a debug console, a Style section with a floating color picker, list and table editors, drag and drop from the outline, and a code editor with completion, diagnostics, folding and a minimap.
+- **Styles and layout**: CSS-like styles for every widget with global styles, gradients and masks, plus track grids, flex, resizable panels and a Zed-style dock.
+- **Apps and projects**: common events for every widget, translations, ready-made dialogs, uv projects and `pyzed build` to package an app.
+- **Full API docs**: every function, method, class and component is documented.
+
+### Features
+
+- ✨ Add uv projects, a Project tab in the designer and `pyzed build`. PR [#18](https://github.com/albakore/pyzed/pull/18) by [@albakore](https://github.com/albakore).
+- ✨ Add common events for every widget, custom components and quiet Linux/WSL startup. PR [#19](https://github.com/albakore/pyzed/pull/19) by [@albakore](https://github.com/albakore).
+- ✨ Add completion, diagnostics, code lens and settings to the designer's code editor. PR [#20](https://github.com/albakore/pyzed/pull/20) by [@albakore](https://github.com/albakore).
+- ✨ Add track grids, flex, resizable panels and a Zed-style dock. PR [#25](https://github.com/albakore/pyzed/pull/25) by [@albakore](https://github.com/albakore).
+- ✨ Add a component designer mode: draw reusable components with properties, state, methods and events. PR [#24](https://github.com/albakore/pyzed/pull/24) by [@albakore](https://github.com/albakore).
+- ✨ Add translations, ready-made dialogs and opening forms from code. PR [#26](https://github.com/albakore/pyzed/pull/26) by [@albakore](https://github.com/albakore).
+- ✨ Add auto-closing pairs, code folding, a minimap, font zoom and cursor shapes to the code editor. PR [#27](https://github.com/albakore/pyzed/pull/27) by [@albakore](https://github.com/albakore).
+- ✨ Add containers, dockable panels, menus, templates, a debug console and translations to the designer. PR [#28](https://github.com/albakore/pyzed/pull/28) by [@albakore](https://github.com/albakore).
+- ✨ Drag components and outline rows onto the form, and open context menus where the pointer is. PR [#30](https://github.com/albakore/pyzed/pull/30) by [@albakore](https://github.com/albakore).
+- ✨ Make designed components responsive, add a New component button and component inheritance. PR [#31](https://github.com/albakore/pyzed/pull/31) by [@albakore](https://github.com/albakore).
+- ✨ Add a grip tab to select and drag containers in the designer. PR [#32](https://github.com/albakore/pyzed/pull/32) by [@albakore](https://github.com/albakore).
+- ✨ Add CSS-like styles for every widget, global styles, gradients, masks and a color picker. PR [#33](https://github.com/albakore/pyzed/pull/33) by [@albakore](https://github.com/albakore).
+- ✨ Add a Style section and the form's global style to the designer, with the color picker. PR [#35](https://github.com/albakore/pyzed/pull/35) by [@albakore](https://github.com/albakore).
+- ✨ Add a Component view with tabs, typed properties, reusable methods and child access. PR [#37](https://github.com/albakore/pyzed/pull/37) by [@albakore](https://github.com/albakore).
+- ✨ Float the color picker, add list and table editors, and line up the Properties and Events docks. PR [#36](https://github.com/albakore/pyzed/pull/36) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Silence "MESA: error: ZINK" with `MESA_LOG=null` (`silent` is not a Mesa option). PR [#22](https://github.com/albakore/pyzed/pull/22) by [@albakore](https://github.com/albakore).
+- 🐛 Make a fixed grid height the height of each row with `columns=<int>`. PR [#29](https://github.com/albakore/pyzed/pull/29) by [@albakore](https://github.com/albakore).
+
+### Upgrades
+
+- ➕ Add ty to the development dependencies. PR [#23](https://github.com/albakore/pyzed/pull/23) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Document setting up Pyzed with uv. PR [#21](https://github.com/albakore/pyzed/pull/21) by [@albakore](https://github.com/albakore).
+- 📝 Document every function, method, class and component. PR [#38](https://github.com/albakore/pyzed/pull/38) by [@albakore](https://github.com/albakore).
+
 ## [0.3.1] - 2026-10-18
 
 ### Fixes
