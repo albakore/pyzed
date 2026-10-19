@@ -65,7 +65,7 @@ from ._core import (
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
-from .component import Component
+from .component import Component, state
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
@@ -157,6 +157,7 @@ __all__ = [
     "spawn",
     "split",
     "stack",
+    "state",
     "svg",
     "text",
     "text_input",

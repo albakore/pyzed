@@ -1294,6 +1294,15 @@ _section("app", "Eventos y componentes", {
             Rating(value=3, on_change=lambda e: print(e.value))
         """,
     },
+    "pyzed.state": {
+        "desc": 'Declara una variable de estado privada en la clase de un componente: el padre no puede pasarla y cada instancia empieza con su propia copia del valor (listas y diccionarios son seguros). El diseñador la muestra junto a las props. Ver [Componentes propios](/pyzed/es/guides/components/).',
+        "params": {'default': 'Valor inicial, copiado para cada instancia.', 'doc': 'Descripción que muestra el diseñador.'},
+        "example": """
+            class Counter(pz.Component):
+                step: int = 1
+                count: int = pz.state(0)
+        """,
+    },
 })
 _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "type": "Nombre del evento.", "x": "X del puntero, relativa al widget.", "y": "Y del puntero, relativa al widget.",

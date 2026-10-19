@@ -1294,6 +1294,15 @@ _section("app", "Events and components", {
             Rating(value=3, on_change=lambda e: print(e.value))
         """,
     },
+    "pyzed.state": {
+        "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
+        "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},
+        "example": """
+            class Counter(pz.Component):
+                step: int = 1
+                count: int = pz.state(0)
+        """,
+    },
 })
 _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "type": "Event name.", "x": "Pointer x, relative to the widget.", "y": "Pointer y, relative to the widget.",
