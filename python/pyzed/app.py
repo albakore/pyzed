@@ -7,6 +7,7 @@ from typing import Any, List, Optional, Sequence, Tuple, Union
 from . import _core
 from . import _platform
 from . import component as _component
+from . import style as _style
 from . import hot_reload as _hot_reload
 from . import theme as _theme
 
@@ -36,8 +37,9 @@ class Window:
     Window options (class or instance attributes): ``title`` (str or callable), ``size``,
     ``min_size``, ``max_size``, ``position`` (``"center"`` or ``(x, y)``), ``resizable``,
     ``decorations`` (``False`` for a custom title bar, see ``Command.drag_window``),
-    ``transparent``, ``maximized``, ``fullscreen``, ``scale`` and ``theme`` (``None``
-    uses the app's theme).
+    ``transparent``, ``maximized``, ``fullscreen``, ``scale``, ``theme`` (``None``
+    uses the app's theme) and ``style`` (a ``pz.Style`` applied to the whole view, on top
+    of ``pz.set_style``; ``None`` uses the app's).
 
     Optional hooks: ``on_open()``, ``on_close()`` (return ``False`` to keep the window
     open), ``on_resize(width, height)``, ``on_key(combo)`` and ``subscriptions()``.
@@ -55,6 +57,7 @@ class Window:
     fullscreen: bool = False
     scale: float = 1.0
     theme: ThemeLike = None
+    style: Any = None
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -94,11 +97,18 @@ class Window:
         return _core.Command.drag_window(self)
 
     def resolved_theme(self) -> _theme.Theme:
-        """The concrete theme this window uses right now."""
+        """The concrete theme this window uses right now (with its global style's colors and sizes)."""
         dark = getattr(self.app, "system_dark", True) if self.app is not None else True
         if self.theme is None and self.app is not None and self.app is not self:
-            return self.app.resolved_theme()
-        return _theme.resolve(self.theme, dark=dark)
+            return _style.themed(self.app.resolved_theme(), self.style)
+        return _style.themed(_theme.resolve(self.theme, dark=dark), self.resolved_style())
+
+    def resolved_style(self) -> Any:
+        """The global style of this window: ``pz.set_style`` with its own (or the app's) ``style`` on top."""
+        style = self.style
+        if style is None and self.app is not None and self.app is not self:
+            style = self.app.style
+        return _style.Style(_style.global_style(), style)
 
     # -- hooks used by the native runtime ---------------------------------
     def __pyzed_view__(self):
@@ -106,7 +116,7 @@ class Window:
         _hot_reload.check()
         _theme.use(self.resolved_theme())
         with _component.render_pass(self):
-            return self.view()
+            return _style.apply_global(self.view(), self.resolved_style())
 
     def __pyzed_palette__(self):
         return self.resolved_theme().palette()

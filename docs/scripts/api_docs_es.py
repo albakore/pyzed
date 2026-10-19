@@ -234,7 +234,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).",
+                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).",
                     "no_signature": True,
                 },
             }),
@@ -899,6 +899,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
+| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 
 El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
@@ -935,6 +936,7 @@ reenvía a `app.update()`.
 | `transparent`, `maximized`, `fullscreen` | `False` | Estado inicial. |
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
+| `style` | `None` | Estilo global propio; `None` usa el de la app. |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
 
@@ -1538,3 +1540,28 @@ _section("ui", "Consola y ayuda", {
                    "details": "Filas `(etiqueta, valor)`.", "links": "Botones `(etiqueta, on_press)`."},
     },
 }, before="Datos y feedback")
+
+# -- Estilos ------------------------------------------------------------------
+_section("widgets", "Estilos", {
+    "pyzed.Style": {
+        "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/guides/styles/).",
+        "params": {"styles": "Estilos, dicts o nombres de estilo de partida.",
+                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Los colores pueden ser tokens del tema."},
+        "example": """
+            tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
+            pz.column([...]).style(tarjeta | pz.Style(shadow=("#0006", (0, 4), 12)))
+        """,
+    },
+    "pyzed.define_style": {"desc": "Pone nombre a un estilo para usarlo así: `widget.style(\"card\")`. Lo devuelve.",
+                           "params": {"name": "Nombre del estilo.", "styles": "Estilos a combinar.", "props": "Propiedades encima."}},
+    "pyzed.set_style": {"desc": "Fija el estilo global de todas las ventanas, por debajo del `style` de cada una. Sin argumentos lo quita.",
+                        "params": {"styles": "Estilos a combinar.", "props": "Propiedades encima."}},
+    "pyzed.Gradient": {"desc": "Un gradiente lineal para fondos. Los ángulos siguen CSS: 0 arriba, 90 derecha, 180 (por defecto) abajo. Hasta 8 paradas.",
+                       "params": {"stops": "Colores, repartidos por igual, o pares `(posición, color)` con posiciones de 0 a 1.", "angle": "Dirección en grados."},
+                       "example": 'pz.container(None, height=80).style(background=pz.Gradient(["#f97316", "#7c3aed"], angle=90))'},
+    "pyzed.Mask": {"desc": "Una máscara de opacidad para un `Paint`: cuánto se ve el relleno a lo largo de una dirección. Sobre un gradiente sigue su dirección.",
+                   "params": {"stops": "Opacidades (0 a 1), repartidas por igual, o pares `(posición, opacidad)`.", "angle": "Dirección cuando el relleno es un color liso."}},
+    "pyzed.Paint": {"desc": "Un relleno: un color o un `Gradient` con opacidad general y una `Mask` opcional. Sirve en cualquier fondo.",
+                    "params": {"fill": "Un color o un `Gradient`.", "opacity": "De 0 a 1; multiplica el alfa del relleno.", "mask": "Una `pz.Mask`."},
+                    "example": 'pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # se desvanece hacia abajo'},
+})

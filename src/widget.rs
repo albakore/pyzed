@@ -351,6 +351,7 @@ pub enum Kind {
         handlers: crate::events::Handlers,
         cursor: Option<iced::mouse::Interaction>,
     },
+    Styled(Box<crate::styled::StyleProps>),
 }
 
 pub enum SvgSource {
@@ -407,6 +408,10 @@ impl Widget {
                 return format!("<Widget cell {inner}>");
             }
             Kind::Resizable(_) => "resizable",
+            Kind::Styled(props) => {
+                let inner = Python::attach(|py| props.child.bind(py).get().__repr__());
+                return format!("{inner}.style()");
+            }
             Kind::Events {
                 child, handlers, ..
             } => {
@@ -416,6 +421,33 @@ impl Widget {
             }
         };
         format!("<Widget {name}>")
+    }
+
+    /// Styles the widget like CSS and returns the wrapped widget.
+    ///
+    /// Accepts ``pz.Style`` objects, dicts and names given to ``pz.define_style``, then
+    /// properties by keyword (later ones win): ``background``, ``color``, ``font``,
+    /// ``weight``, ``italic``, ``size``, ``line_height``, ``border_color``,
+    /// ``border_width``, ``radius``, ``shadow``, ``padding``, ``margin``, ``width``,
+    /// ``height``, ``max_width``, ``max_height``, ``align_x``, ``align_y`` and ``clip``.
+    /// Text properties apply to every text inside; with ``defaults=True`` they only fill in
+    /// what texts don't set themselves (how ``App.style`` works). Calling ``style`` again merges.
+    #[pyo3(signature = (*styles, defaults=false, **props))]
+    fn style(
+        slf: &Bound<'_, Self>,
+        styles: &Bound<'_, pyo3::types::PyTuple>,
+        defaults: bool,
+        props: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Py<Widget>> {
+        crate::styled::apply(slf, styles, defaults, props)
+    }
+
+    /// The style properties set with ``style()`` (an empty dict if none).
+    fn style_props<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyDict>> {
+        match &slf.get().kind {
+            Kind::Styled(props) => Ok(props.source.bind(slf.py()).copy()?),
+            _ => Ok(PyDict::new(slf.py())),
+        }
     }
 
     /// Attaches common event handlers and returns the wrapped widget.

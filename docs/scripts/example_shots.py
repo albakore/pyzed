@@ -104,6 +104,7 @@ SHOTS = {
     "tutorials/components": (app("components", "Demo", components_setup), None),
     "tutorials/layout": (app("layout", "LayoutDemo", layout_setup), (1100, 680)),
     "tutorials/dialogs": (app("dialogs", "DialogsDemo", dialogs_setup), (720, 420)),
+    "tutorials/styles": (app("styles", "StylesDemo"), (860, 480)),
     # Step-by-step tutorial (examples/tutorial)
     "tutorials/step1": (app("step1_hello", "Hello"), None),
     "tutorials/step2": (app("step2_state", "Greeter"), None),

@@ -71,10 +71,11 @@ from .component import Component, state
 from .dock import Dock, DockPanel
 from .layout import flex, flex_item
 from .i18n import t
+from .style import Gradient, Mask, Paint, Style, define_style, set_style
 from .events import Event, on
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import component, designer, dock, i18n, layout, draw, events, hot_reload, theme, icons, ui
+from . import component, designer, dock, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
 
 try:
     # The version lives only in Cargo.toml; read it from the installed package metadata.
@@ -107,6 +108,10 @@ def vertical_slider(min, max, value, **kwargs):  # noqa: A002 - mirrors slider()
 
 __all__ = [
     "App",
+    "Gradient",
+    "Mask",
+    "Paint",
+    "Style",
     "AutoTheme",
     "Command",
     "Component",
@@ -127,6 +132,7 @@ __all__ = [
     "code_editor",
     "column",
     "container",
+    "define_style",
     "designer",
     "dock",
     "component",
@@ -169,8 +175,10 @@ __all__ = [
     "space",
     "span",
     "spawn",
+    "set_style",
     "split",
     "stack",
+    "style",
     "state",
     "svg",
     "t",
