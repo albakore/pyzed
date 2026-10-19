@@ -1,16 +1,17 @@
 ---
 title: Projects
-description: Create and open uv projects, manage dependencies, run ruff and ty and create the git repository from the Project panel.
+description: Create and open uv projects, browse and search their files, manage dependencies, run ruff and ty and create the git repository from the Project and Dependencies panels.
 sidebar:
   order: 1
 ---
 
 A Pyzed app is a normal [uv](https://docs.astral.sh/uv/) project: the interface lives in `ui/`, the backend in
-`src/` and uv manages the dependencies. The **Project** panel (left dock, next to **Design**) does all of it
-without leaving the editor. The background, the layout of a project and the matching `pyzed` commands are in
+`src/` and uv manages the dependencies. The **Project** panel (left dock, next to **Design**) shows the project's
+files, like the project panel of Zed or the explorer of VS Code, and the **Dependencies** panel next to it manages
+packages, tools and checks, all without leaving the editor. The background, the layout of a project and the matching `pyzed` commands are in
 [Projects with uv](/pyzed/guides/projects/).
 
-![The Project panel: forms, dependencies, tools and the output of ruff](../../../../screenshots/designer-project.png)
+![The Project panel: the project's files and folders](../../../../screenshots/designer-project.png)
 
 ## How the editor finds your project
 
@@ -39,7 +40,7 @@ open it).
 | Field | What it does |
 | --- | --- |
 | **Name** | The project's name and folder name. |
-| **Location** | The folder it is created in; the dialog shows the full path it will create. |
+| **Location** | The folder it is created in; the dialog shows the full path it will create. **Browse…** opens the folder browser: walk to a folder and press **Choose this folder**. |
 | **Backend in src/** | `uv init --package`: a `src/<name>/` package importable from the UI and from tests. Off gives a flat layout (`uv init --app`). |
 | **Git repository** | Runs `git init` and writes a `.gitignore`. |
 
@@ -48,23 +49,75 @@ empty, or already be a project.
 
 ### Open project
 
-Type (or paste) a folder that holds a `pyproject.toml` and press <kbd>Enter</kbd> or **Open**, or pick one of the
-recent projects listed below the field. If the project has a main form, it opens in a tab.
+**Open…** shows a folder browser instead of a text field:
+
+![The Open project dialog: places, recent projects and the folders of the current one](../../../../screenshots/editor-open-project.png)
+
+- The bar at the top goes to the **parent folder** (up arrow) or **home**, and every part of the path is
+  clickable. The eye shows or hides hidden folders.
+- The path field below it takes a folder typed or pasted; <kbd>Enter</kbd> goes there.
+- On the left, the usual **places** (home, desktop, documents, downloads, the disks) and your **recent**
+  projects (click one to open it).
+- On the right, the folders of the current one; click a folder to go into it. Folders that are uv projects (they
+  have a `pyproject.toml`) carry a **project** badge and their own **Open** button.
+
+**Open** at the bottom opens the folder you are in when it is a project. If the project has a main form, it
+opens in a tab.
 
 ## The project panel
 
 ### Header
 
 The project's name, version and folder. On the right, the current **git branch**, or **Create repository** when
-the folder is not a repository yet (it runs `git init` and writes a `.gitignore`, like Zed).
+the folder is not a repository yet (it runs `git init` and writes a `.gitignore`, like Zed), and a folder button
+that opens another project.
 
 While a command runs, a bar with a spinner says what is going on (`Adding httpx`, `Syncing the environment`...).
 Commands run on a worker thread, so you can keep designing while uv downloads packages.
 
-### Forms
+### Files
 
-Every `.pzform` in the project's UI folder. Click one to open it in a tab; the open one is highlighted. The
-folder icon at the end of the section opens another project.
+Under the header, the project's files and folders as a tree, like Zed's project panel. Folders open and close with
+a click (the `ui/` and `src/` folders start open); files are colored by their git status (modified, new, deleted,
+conflict) and folders take the color of what changed inside them. Virtual environments, caches and build output
+(`.venv`, `__pycache__`, `build`, `dist`...) are left out; hidden files such as `.gitignore` stay.
+
+Clicking a file opens it where it belongs:
+
+| File | Opens |
+| --- | --- |
+| `.pzform`, `.pzcomp` | In a designer tab. |
+| The `.py` of a form or component | Its form, with the whole code file in the [code panel](/pyzed/editor/code-editor/). |
+| Anything else | In the system's app for that file type. |
+
+The toolbar above the tree has a **search field** for files and folders (it matches letters in order, like Zed's
+file finder, and file names count more than folders: `crt` finds `ui/cart.pzform`), **New file**, **New
+folder** (in the selected folder), **Collapse all** and **Refresh**. The tree reloads by itself when you save and
+after uv commands.
+
+**Right-click** a file or folder (or the empty space below the tree, for the project folder) for its menu:
+
+| Item | What it does |
+| --- | --- |
+| **Open** / **Open with the system app** | Opens the file in the editor or with its default app. |
+| **Reveal in file manager** | Shows it in Files, Finder or Explorer. |
+| **New file…** / **New folder…** | Creates one in that folder (a new file opens right away). |
+| **Copy path** / **Copy relative path** | Copies the full path or the path from the project folder. |
+| **Rename…** | Renames it in place. |
+| **Delete…** | Deletes it after asking (a folder with everything in it); it cannot be undone. |
+
+### Go to file
+
+<kbd>Ctrl</kbd>+<kbd>P</kbd> (or **File → Go to file…**) opens a search over every file and folder of the
+project. Type part of a name and press <kbd>Enter</kbd> for the best match, or click a result; a folder is revealed
+in the Project panel.
+
+## The Dependencies panel
+
+With a project open, the left dock gets a **Dependencies** panel next to **Project** (when the three titles do not
+fit, the panels not shown keep only their icon).
+
+![The Dependencies panel: packages, tools and the output of ruff](../../../../screenshots/designer-dependencies.png)
 
 ### Dependencies
 

@@ -1728,6 +1728,7 @@ class Designer(App):
             return
         path = self.doc.save()
         self.notify(f"Saved {path.name}", kind="success", seconds=2)
+        self.projects.files.refresh()  # a new file, or new git colors, in the Project tab
         if self.preview is not None and self.preview.is_open:
             # the running form picks up the saved layout and code, keeping what was typed in it
             self.preview.runtime.reload(path)
@@ -1951,6 +1952,9 @@ class Designer(App):
         if self.menu is not None:
             menu, mx, my = self.context_menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        if self.projects.files.menu is not None:
+            menu, mx, my = self.projects.files.menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)
         if self.color_picker is not None:
             placed = self.color_picker_at(t)
             if placed is not None:

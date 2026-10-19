@@ -118,15 +118,19 @@ Los comandos de `uv` funcionan igual de bien; Pyzed solo lee `pyproject.toml` y 
 ## La pestaña Project del diseñador
 
 El diseñador tiene una pestaña **Project** junto a la caja de herramientas. Abre el proyecto al que pertenece el
-form o, si no hay ninguno, ofrece **New project** y **Open…** (con tus proyectos recientes).
+form o, si no hay ninguno, ofrece **New project** y **Open…** (un explorador de carpetas con tus proyectos
+recientes).
 
-![La pestaña Project: forms, dependencias, herramientas y la salida de ruff](../../../../../screenshots/designer-project.png)
+![La pestaña Project: los archivos y carpetas del proyecto](../../../../../screenshots/designer-project.png)
 
-- **Forms**: todos los `.pzform` de la carpeta de UI; haz clic en uno para abrirlo.
-- **Dependencies**: añade un paquete (marca *dev* para el grupo de desarrollo), cambia su versión (lápiz),
-  actualízalo o quítalo. La barra sincroniza el entorno, busca actualizaciones (se ven en verde) y actualiza todo.
-- **Tools**: las versiones de uv, git, ruff y ty encontradas. **Lint**, **Format** y **Types** ejecutan ruff y ty
-  y muestran su salida debajo.
+- **Project** muestra los archivos del proyecto en árbol, como Zed o VS Code, coloreados según git. Busca archivos y
+  carpetas desde su barra o con <kbd>Ctrl</kbd>+<kbd>P</kbd>; con clic derecho tienes nuevo archivo, nueva carpeta,
+  renombrar, borrar, copiar la ruta y mostrar en el gestor de archivos. Los forms y componentes se abren en el
+  diseñador; los demás archivos, con la app del sistema.
+- **Dependencies**, una pestaña propia al lado: añade un paquete (marca *dev* para el grupo de desarrollo), cambia
+  su versión (lápiz), actualízalo o quítalo. Su barra sincroniza el entorno, busca actualizaciones (se ven en verde)
+  y actualiza todo. Debajo, **Tools** muestra las versiones de uv, git, ruff y ty; **Lint**, **Format** y **Types**
+  ejecutan ruff y ty y muestran su salida.
 - **Create repository** (en la cabecera) ejecuta `git init` y escribe un `.gitignore`, como Zed. Cuando ya hay
   repositorio, la cabecera muestra su rama.
 

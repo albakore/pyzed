@@ -41,7 +41,7 @@ flowchart TB
     T["Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ · Detener · Ver · Ayuda · ⚙ Ajustes"]
     subgraph W[" "]
         direction LR
-        L["Panel izquierdo<br/>Diseño (Herramientas + Estructura)<br/>Proyecto"]
+        L["Panel izquierdo<br/>Diseño (Herramientas + Estructura)<br/>Proyecto<br/>Dependencias"]
         subgraph C["Centro"]
             direction TB
             D["Pestañas: Formulario · login.pzform | Componente · rating.pzcomp"]
@@ -60,7 +60,8 @@ flowchart TB
 | **Barra de título** | El menú ☰ (Archivo y Ejecutar), el proyecto y el archivo (clic en el archivo para abrir otro), **Ejecutar** y **Detener**, los menús **Ver** y **Ayuda** y el engranaje de **Ajustes**. | [Menús y comandos](/pyzed/es/editor/menus-and-commands/) |
 | **Herramientas** | Todos los componentes que puedes colocar, por categoría, con buscador. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/) |
 | **Estructura** | Los controles del documento en árbol: seleccionarlos, reordenarlos, anidarlos, ocultarlos y bloquearlos. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#la-estructura) |
-| **Proyecto** | El proyecto de uv: sus formularios, dependencias, ruff, ty y git. | [Proyectos](/pyzed/es/editor/projects/) |
+| **Proyecto** | Los archivos y carpetas del proyecto en árbol, con buscador y estado de git. | [Proyectos](/pyzed/es/editor/projects/) |
+| **Dependencias** | Las dependencias del proyecto, ruff y ty (aparece con un proyecto abierto). | [Proyectos](/pyzed/es/editor/projects/#el-panel-dependencias) |
 | **Pestañas** | Una por cada formulario o componente abierto. | [Archivos y documentos](/pyzed/es/editor/files-and-scripting/) |
 | **Barra de herramientas** | Acciones de archivo, deshacer, alinear, distribuir, igualar tamaños, orden y cuadrícula. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#alinear-distribuir-e-igualar-tamaños) |
 | **Lienzo** | El formulario tal como se ejecutará, con cuadrícula de puntos, selección, asas y guías inteligentes. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/) |
@@ -104,7 +105,7 @@ flowchart LR
 
 ## En este manual
 
-- [Proyectos](/pyzed/es/editor/projects/): proyectos de uv, dependencias, ruff, ty y git desde el panel Proyecto.
+- [Proyectos](/pyzed/es/editor/projects/): proyectos de uv, el árbol de archivos, dependencias, ruff, ty y git.
 - [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/): colocar, seleccionar, mover, redimensionar,
   snap, guías, alineación y la estructura.
 - [Propiedades](/pyzed/es/editor/properties/): cada sección de la grilla de propiedades y los editores de listas y

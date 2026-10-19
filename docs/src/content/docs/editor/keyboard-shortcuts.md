@@ -17,6 +17,7 @@ These work anywhere, even while you type in the code editor.
 | <kbd>Ctrl</kbd>+<kbd>N</kbd> | New form |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | New component |
 | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Open |
+| <kbd>Ctrl</kbd>+<kbd>P</kbd> | Go to file |
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Save |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Save as |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Settings |

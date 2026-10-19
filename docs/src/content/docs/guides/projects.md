@@ -118,15 +118,18 @@ Plain `uv` commands work just as well; Pyzed only reads `pyproject.toml` and `uv
 ## The Project tab of the designer
 
 The designer has a **Project** tab next to the toolbox. It opens the project the form belongs to, or offers
-**New project** and **Open…** (with your recent projects) when there is none.
+**New project** and **Open…** (a folder browser with your recent projects) when there is none.
 
-![The Project tab: forms, dependencies, tools and the output of ruff](../../../../screenshots/designer-project.png)
+![The Project tab: the project's files and folders](../../../../screenshots/designer-project.png)
 
-- **Forms**: every `.pzform` in the UI folder; click one to open it.
-- **Dependencies**: add a package (tick *dev* for the dev group), change its version (pencil), upgrade it or
-  remove it. The toolbar syncs the environment, checks for updates (shown in green) and upgrades everything.
-- **Tools**: the versions of uv, git, ruff and ty found. **Lint**, **Format** and **Types** run ruff and ty
-  and show their output below.
+- **Project** shows the project's files as a tree, like Zed or VS Code, colored by git status. Search files and
+  folders from its toolbar or with <kbd>Ctrl</kbd>+<kbd>P</kbd>; right-click for new file, new folder, rename,
+  delete, copy path and reveal in the file manager. Forms and components open in the designer; other files open
+  in the system's app.
+- **Dependencies**, a tab of its own next to it: add a package (tick *dev* for the dev group), change its version
+  (pencil), upgrade it or remove it. Its toolbar syncs the environment, checks for updates (shown in green) and
+  upgrades everything. Below, **Tools** shows the versions of uv, git, ruff and ty found; **Lint**, **Format** and
+  **Types** run ruff and ty and show their output.
 - **Create repository** (in the header) runs `git init` and writes a `.gitignore`, like Zed. Once there is a
   repository the header shows its branch.
 
