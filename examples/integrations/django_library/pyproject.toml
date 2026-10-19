@@ -1,0 +1,10 @@
+[project]
+name = "pyzed-django-library"
+version = "0.1.0"
+description = "A Pyzed desktop app on Django's ORM (async queries, model validation), next to the Django admin."
+requires-python = ">=3.10"
+dependencies = ["pyzed-ui", "django>=5.0"]
+
+# Runs against this checkout of Pyzed; delete these two lines in a copy of the folder.
+[tool.uv.sources]
+pyzed-ui = { path = "../../..", editable = true }

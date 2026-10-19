@@ -59,6 +59,7 @@ export default defineConfig({
 				{ slug: 'download', badge: { text: 'app', variant: 'success' } },
 				group('Tutorials', 'Tutoriales', 'tutorials'),
 				group('Showcase', 'Demos', 'showcase'),
+				group('Integrations', 'Integraciones', 'integrations'),
 				group('Games', 'Videojuegos', 'games'),
 				group('Pyzed Design', 'Pyzed Design', 'editor'),
 				group('Guides', 'Guías', 'guides'),

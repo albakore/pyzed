@@ -1312,3 +1312,26 @@ summary(markdown)
 ```
 
 The first sentence of a Markdown text, without formatting (for lists and search results).
+
+## Forms and validation
+
+### `validation_errors`
+
+```python
+validation_errors(error)
+```
+
+Turns a validation error into `{field: message}`, ready for `ui.field(..., error=)`. Accepts a Pydantic or SQLModel `ValidationError`, a Django `ValidationError`, the JSON of a FastAPI 422 response (`{"detail": [...]}`) or its `detail` list. Nested fields are joined with dots and errors that belong to no field use the key `""`. Only the first message of each field is kept. See [Integrations](/pyzed/integrations/overview/#validation-errors-on-each-field).
+
+| Parameter | Description |
+| --- | --- |
+| `error` | The error, or the JSON of the response. |
+
+```python
+try:
+    item = ItemIn.model_validate(self.draft)
+except ValidationError as error:
+    self.errors = pz.validation_errors(error)
+
+ui.field("Price", ui.input(self.draft["price"], self.set_price), error=self.errors.get("price"))
+```

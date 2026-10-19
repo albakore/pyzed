@@ -30,9 +30,21 @@ def select(
     """
     t = _theme(theme)
     height, pad = {"sm": (22, 6), "md": (28, 8), "lg": (32, 10)}[size]
+    options = list(options)
+    labels = [str(option) for option in options]
+    if callable(on_select) and any(not isinstance(option, str) for option in options):
+        # The dropdown works with labels; hand the callback the option object back (a model, an enum...).
+        by_label: dict = {}
+        for text, option in zip(labels, options):
+            by_label.setdefault(text, option)
+        user_select = on_select
+
+        def on_select(text: str) -> Any:
+            return user_select(by_label.get(text, text))
+
     return _core.pick_list(
-        list(options),
-        selected,
+        labels,
+        None if selected is None else str(selected),
         on_select,
         placeholder=placeholder,
         width=width,

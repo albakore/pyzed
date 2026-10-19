@@ -58,12 +58,13 @@ class _Stop(Exception):
     pass
 
 
-def drain(value: Any, emit: Callable[[Any], None]) -> None:
+def drain(value: Any, emit: Callable[[Any], None], *, keep_none: bool = False) -> None:
     """Resolves ``value`` and passes every result to ``emit`` (called from a worker thread).
 
     - awaitables are awaited on the shared loop (their result is drained again),
     - async generators and generators are iterated, emitting each item,
-    - anything else is emitted as is (``None`` is skipped).
+    - anything else is emitted as is (``None`` is skipped, unless ``keep_none``: then a
+      function that returns nothing still reaches ``Command.perform``'s ``then``).
     """
     if inspect.isawaitable(value):
         value = run(value)
@@ -88,9 +89,19 @@ def drain(value: Any, emit: Callable[[Any], None]) -> None:
             value.close()
         return
     try:
-        _emit(value, emit)
+        if value is None and keep_none:
+            _emit_none(emit)
+        else:
+            _emit(value, emit)
     except _Stop:
         pass
+
+
+def _emit_none(emit: Callable[[Any], None]) -> None:
+    try:
+        emit(None)
+    except RuntimeError as err:  # the app has stopped
+        raise _Stop() from err
 
 
 def _emit(item: Any, emit: Callable[[Any], None]) -> None:

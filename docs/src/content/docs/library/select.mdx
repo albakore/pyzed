@@ -72,7 +72,7 @@ select(
 )
 ```
 
-A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums or dataclasses all work.
+A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
