@@ -108,17 +108,31 @@ de archivos de Zed, y el nombre del archivo cuenta más que las carpetas: `crt` 
 al guardar y después de los comandos de uv.
 
 **Clic derecho** sobre un archivo o carpeta (o sobre el espacio vacío bajo el árbol, para la carpeta del
-proyecto) abre su menú:
+proyecto) abre su menú, el mismo del panel de proyecto de Zed:
 
-| Opción | Qué hace |
-| --- | --- |
-| **Open** / **Open with the system app** | Abre el archivo en el editor o con su app predeterminada. |
-| **Open in the code editor** | Abre cualquier archivo de texto como texto, también el `.py` de un formulario por separado. |
-| **Reveal in file manager** | Lo muestra en Archivos, Finder o el Explorador. |
-| **New file…** / **New folder…** | Crea uno en esa carpeta (un archivo nuevo se abre al momento). |
-| **Copy path** / **Copy relative path** | Copia la ruta completa o la ruta desde la carpeta del proyecto. |
-| **Rename…** | Lo renombra. |
-| **Delete…** | Lo borra después de preguntar (una carpeta, con todo lo que tiene); no se puede deshacer. |
+![El menú de clic derecho de un archivo en la pestaña Proyecto](../../../../../screenshots/designer-project-menu.png)
+
+| Opción | Teclas | Qué hace |
+| --- | --- | --- |
+| **New File** / **New Folder** | <kbd>Ctrl</kbd>+<kbd>N</kbd> / <kbd>Alt</kbd>+<kbd>N</kbd> | Crea uno en esa carpeta (un archivo nuevo se abre al momento). |
+| **Reveal in File Manager** | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> | Lo muestra en Archivos, Finder o el Explorador. |
+| **Open in Default App** | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> | Abre el archivo con la app del sistema para su tipo. |
+| **Open in the code editor** | | Abre cualquier archivo de texto como texto (también el `.py` de un formulario por separado). |
+| **Open in Terminal** | | Abre la terminal del sistema en esa carpeta (en Linux, primero `$TERMINAL`). |
+| **Cut** / **Copy** / **Paste** | <kbd>Ctrl</kbd>+<kbd>X</kbd> / <kbd>C</kbd> / <kbd>V</kbd> | Lo mueve o lo copia a la carpeta donde pegas; si el nombre está ocupado, añade ` copy`. |
+| **Duplicate** | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Lo copia a su lado y pide el nombre de la copia. |
+| **Undo** / **Redo** | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshace o rehace el último archivo o carpeta nuevo, renombrado, movido o copiado aquí. |
+| **Copy Path** / **Copy Relative Path** | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Copia la ruta completa o la ruta desde la carpeta del proyecto. |
+| **Add to .gitignore** / **Add to .git/info/exclude** | | Lo ignora en git, para todos o solo en tu copia. |
+| **Open File Permalink** / **Copy File Permalink** | | El enlace en el commit actual de GitHub, GitLab u otro remoto (solo si hay remoto). |
+| **Rename** | <kbd>F2</kbd> | Lo renombra. |
+| **Trash** | <kbd>Supr</kbd> | Lo mueve a la papelera del sistema, desde donde se puede recuperar. |
+| **Delete** | <kbd>Ctrl</kbd>+<kbd>Supr</kbd> | Lo borra para siempre después de preguntar (una carpeta, con todo lo que tiene). |
+
+Las teclas funcionan después de hacer clic en el árbol, junto con <kbd>↑</kbd> <kbd>↓</kbd> para mover la
+selección, <kbd>←</kbd> <kbd>→</kbd> para cerrar y abrir carpetas y <kbd>Enter</kbd> para abrir el archivo
+seleccionado. Un archivo abierto en el panel de código sigue sus cambios de nombre y de carpeta, y se cierra al
+borrarlo (salvo que tenga cambios sin guardar).
 
 ### Ir a un archivo
 

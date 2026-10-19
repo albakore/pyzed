@@ -19,6 +19,7 @@ from .. import _core, ui
 from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme
+from . import file_ops as _ops
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -30,7 +31,7 @@ SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "
 SKIP_FILES = {".DS_Store", "Thumbs.db"}
 #: Stop listing after this many entries (a huge folder must not freeze the designer).
 MAX_ENTRIES = 5000
-MENU_WIDTH = 240
+MENU_WIDTH = 290
 FIND_ID = "workspace-find"
 NAME_ID = "workspace-name"
 #: Files the designer opens in its own tabs; text files open in the code editor, the rest in the system's app.
@@ -168,6 +169,13 @@ class Workspace:
         self.deleting: Optional[str] = None
         #: The Go to file dialog's text.
         self.find_text = ""
+        #: Entries cut or copied for Paste: ``("cut" | "copy", [relative paths])``.
+        self.clipboard: Optional[Tuple[str, List[str]]] = None
+        #: File changes made here, for Undo and Redo (newest last).
+        self.undo_stack: List[_ops.Op] = []
+        self.redo_stack: List[_ops.Op] = []
+        #: The web address of the project's git remote (for permalinks), if it has one.
+        self.remote: Optional[str] = None
 
     # -- loading ---------------------------------------------------------------------------------
     def attach(self, root: Optional[Path]) -> None:
@@ -176,6 +184,9 @@ class Workspace:
             self.expanded = set()
             self.selected = None
             self.query = ""
+            self.clipboard = None
+            self.undo_stack, self.redo_stack = [], []
+            self.remote = _ops.remote_url(root) if root is not None else None
         self.root = root
         self.refresh()
         if root is not None and not self.expanded:
@@ -199,6 +210,7 @@ class Workspace:
     # -- tree interaction ----------------------------------------------------------------------
     def toggle(self, rel: str) -> None:
         """Opens or closes the folder ``rel``."""
+        self.d.focus = "files"
         self.selected = rel
         if rel in self.expanded:
             self.expanded.discard(rel)
@@ -224,6 +236,7 @@ class Workspace:
         folder is revealed and opened in the tree."""
         path = self.path_of(rel)
         self.menu = None
+        self.d.focus = "files"
         if path.is_dir():
             self.query = ""
             self.reveal_entry(rel)
@@ -271,6 +284,7 @@ class Workspace:
     # -- context menu --------------------------------------------------------------------------
     def open_menu(self, rel: str) -> None:
         """Right-click on ``rel``: selects it and opens its menu at the pointer."""
+        self.d.focus = "files"
         self.selected = rel.rstrip("/") or None
         self.menu = (rel, *self.d.window_pointer)
 
@@ -284,33 +298,63 @@ class Workspace:
         return run
 
     def menu_items(self, rel: str) -> List[Any]:
+        """The right-click menu of ``rel`` (``""`` for the project folder), like Zed's project panel."""
         is_dir = rel == "" or rel.endswith("/")
         path = self.path_of(rel) if rel else self.root
         assert path is not None
-        folder = rel if is_dir else rel.rsplit("/", 1)[0] + "/" if "/" in rel else ""
+        folder = self._folder_for(rel)
         relative = rel.rstrip("/") or "."
-        items = [
-            None if is_dir else ui.MenuItem(tr("Open"), self._act(lambda: self.open(rel)), icon="file"),
+        act = self._act
+        items: List[Any] = [
+            ui.MenuItem(tr("New File"), act(lambda: self.start_naming("file", folder)), icon="file-plus",
+                        keys="ctrl-n"),
+            ui.MenuItem(tr("New Folder"), act(lambda: self.start_naming("folder", folder)), icon="folder-plus",
+                        keys="alt-n"),
+            ui.SEPARATOR,
+            ui.MenuItem(tr("Reveal in File Manager"), act(lambda: reveal(path)), icon="folder-search",
+                        keys="ctrl-alt-r"),
+            None if is_dir else ui.MenuItem(tr("Open in Default App"), act(lambda: self.open_default(rel)),
+                                            icon="external-link", keys="ctrl-shift-enter"),
             None if is_dir or path.suffix in DESIGN_SUFFIXES else ui.MenuItem(
-                tr("Open in the code editor"), self._act(lambda: self.edit(rel)), icon="file-code"),
-            None if is_dir else ui.MenuItem(tr("Open with the system app"), self._act(lambda: open_with_system(path)),
-                                            icon="external-link"),
-            ui.MenuItem(tr("Reveal in file manager"), self._act(lambda: reveal(path)), icon="folder-search"),
+                tr("Open in the code editor"), act(lambda: self.edit(rel)), icon="file-code"),
+            ui.MenuItem(tr("Open in Terminal"), act(lambda: self.open_terminal(rel)), icon="terminal"),
             ui.SEPARATOR,
-            ui.MenuItem(tr("New file…"), self._act(lambda: self.start_naming("file", folder)), icon="file-plus"),
-            ui.MenuItem(tr("New folder…"), self._act(lambda: self.start_naming("folder", folder)),
-                        icon="folder-plus"),
+            None if not rel else ui.MenuItem(tr("Cut"), act(lambda: self.cut(rel)), icon="scissors", keys="ctrl-x"),
+            None if not rel else ui.MenuItem(tr("Copy"), act(lambda: self.copy(rel)), icon="copy", keys="ctrl-c"),
+            None if not rel else ui.MenuItem(tr("Duplicate"), act(lambda: self.duplicate(rel)), icon="copy-plus"),
+            ui.MenuItem(tr("Paste"), act(lambda: self.paste(rel)), icon="clipboard", keys="ctrl-v",
+                        disabled=self.clipboard is None),
+            ui.MenuItem(tr("Undo"), act(self.undo), icon="undo-2", keys="ctrl-z", disabled=not self.undo_stack),
+            ui.MenuItem(tr("Redo"), act(self.redo), icon="redo-2", keys="ctrl-shift-z", disabled=not self.redo_stack),
             ui.SEPARATOR,
-            ui.MenuItem(tr("Copy path"), self._act(lambda: _core.Command.copy(str(path))), icon="copy"),
-            ui.MenuItem(tr("Copy relative path"), self._act(lambda: _core.Command.copy(relative)), icon="copy"),
+            ui.MenuItem(tr("Copy Path"), act(lambda: _core.Command.copy(str(path))), icon="copy", keys="alt-shift-c"),
+            ui.MenuItem(tr("Copy Relative Path"), act(lambda: _core.Command.copy(relative)), icon="copy",
+                        keys="ctrl-alt-shift-c"),
         ]
         if rel:
+            git = (self.root / ".git").exists() if self.root else False
             items += [
                 ui.SEPARATOR,
-                ui.MenuItem(tr("Rename…"), self._act(lambda: self.start_naming("rename", rel)), icon="pencil"),
-                ui.MenuItem(tr("Delete…"), self._act(lambda: self.ask_delete(rel)), icon="trash-2", danger=True),
+                ui.MenuItem(tr("Add to .gitignore"), act(lambda: self.ignore(rel)), icon="eye-off"),
+                ui.MenuItem(tr("Add to .git/info/exclude"), act(lambda: self.ignore(rel, exclude=True)),
+                            icon="eye-off") if git else None,
+                ui.MenuItem(tr("Open File Permalink"), act(lambda: self.permalink(rel, open_it=True)), icon="link")
+                if self.remote else None,
+                ui.MenuItem(tr("Copy File Permalink"), act(lambda: self.permalink(rel)), icon="link")
+                if self.remote else None,
+                ui.SEPARATOR,
+                ui.MenuItem(tr("Rename"), act(lambda: self.start_naming("rename", rel)), icon="pencil", keys="f2"),
+                ui.MenuItem(tr("Trash"), act(lambda: self.trash(rel)), icon="trash", keys="delete"),
+                ui.MenuItem(tr("Delete"), act(lambda: self.ask_delete(rel)), icon="trash-2", keys="ctrl-delete",
+                            danger=True),
             ]
         return [i for i in items if i is not None]
+
+    def _folder_for(self, rel: Optional[str]) -> str:
+        """The folder new and pasted entries go to for ``rel``: itself if it is a folder, else its folder."""
+        if not rel or rel.endswith("/"):
+            return rel or ""
+        return rel.rsplit("/", 1)[0] + "/" if "/" in rel else ""
 
     def menu_at(self, t: Theme) -> Tuple[Any, float, float]:
         """The menu and where it goes, kept inside the window."""
@@ -354,6 +398,7 @@ class Workspace:
                     raise FileExistsError(f"{dest.name} already exists")
                 source.rename(dest)
                 self.d.buffers.moved(source, dest)
+                self._record(_ops.Op("move", dest, source))
                 rel = dest.relative_to(self.root).as_posix()
             else:
                 dest = self.root / target / name
@@ -364,6 +409,7 @@ class Workspace:
                 else:
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.touch()
+                self._record(_ops.Op("create", dest, folder=kind == "folder"))
                 rel = dest.relative_to(self.root).as_posix()
         except OSError as err:
             self.d.notify(tr("Could not do that"), str(err), kind="error", seconds=5)
@@ -397,6 +443,249 @@ class Workspace:
         else:
             self.d.buffers.deleted(path)
         self.refresh()
+
+    # -- clipboard, undo and the rest of the menu ---------------------------------------------------
+    def _rel(self, path: Path) -> str:
+        assert self.root is not None
+        rel = path.relative_to(self.root).as_posix()
+        return rel + "/" if path.is_dir() else rel
+
+    def _record(self, op: _ops.Op) -> None:
+        self.undo_stack.append(op)
+        self.redo_stack.clear()
+
+    def _failed(self, err: OSError) -> None:
+        self.d.notify(tr("Could not do that"), str(err), kind="error", seconds=5)
+
+    def focus(self) -> None:
+        """Gives the keyboard to the tree (a click in it), for its shortcuts."""
+        self.d.focus = "files"
+
+    def cut(self, rel: str) -> None:
+        """Marks ``rel`` to be moved by the next Paste."""
+        self.clipboard = ("cut", [rel])
+
+    def copy(self, rel: str) -> None:
+        """Marks ``rel`` to be copied by Paste."""
+        self.clipboard = ("copy", [rel])
+
+    def paste(self, rel: Optional[str] = None) -> None:
+        """Moves or copies the cut or copied entries into ``rel``'s folder (a copy next to a name already
+        taken is called ``name copy``)."""
+        if self.clipboard is None or self.root is None:
+            return
+        mode, sources = self.clipboard
+        folder = self.root / self._folder_for(self.selected_rel() if rel is None else rel)
+        pasted = None
+        for source_rel in sources:
+            source = self.path_of(source_rel)
+            dest = folder / source.name
+            try:
+                if not source.exists():
+                    raise FileNotFoundError(f"{source.name} is not there anymore")
+                inside = folder.resolve() == source.resolve() or source.resolve() in folder.resolve().parents
+                if source.is_dir() and inside:
+                    raise OSError(f"{source.name} cannot go inside itself")
+                if mode == "cut":
+                    if dest.resolve() == source.resolve():
+                        continue
+                    _ops._check_free(dest)
+                    shutil.move(str(source), str(dest))
+                    self.d.buffers.moved(source, dest)
+                    self._record(_ops.Op("move", dest, source))
+                else:
+                    dest = _ops.free_name(dest)
+                    _ops.copy_entry(source, dest)
+                    self._record(_ops.Op("copy", dest, source, folder=dest.is_dir()))
+            except OSError as err:
+                self._failed(err)
+                continue
+            pasted = dest
+        if mode == "cut":
+            self.clipboard = None
+        self.refresh()
+        if pasted is not None:
+            self.reveal_entry(self._rel(pasted))
+
+    def duplicate(self, rel: str) -> Any:
+        """Copies ``rel`` next to itself and starts renaming the copy, like Zed."""
+        source = self.path_of(rel)
+        dest = _ops.free_name(source)
+        try:
+            _ops.copy_entry(source, dest)
+        except OSError as err:
+            self._failed(err)
+            return None
+        self._record(_ops.Op("copy", dest, source, folder=dest.is_dir()))
+        self.refresh()
+        copy_rel = self._rel(dest)
+        self.reveal_entry(copy_rel)
+        return self.start_naming("rename", copy_rel.rstrip("/"))
+
+    def undo(self) -> None:
+        """Reverts the last file change made here (create, rename, move, copy)."""
+        self._step(self.undo_stack, self.redo_stack, _ops.undo)
+
+    def redo(self) -> None:
+        """Does the last undone file change again."""
+        self._step(self.redo_stack, self.undo_stack, _ops.redo)
+
+    def _step(self, source: List[_ops.Op], target: List[_ops.Op], apply: Callable[[_ops.Op], Any]) -> None:
+        if not source:
+            return
+        op = source.pop()
+        try:
+            paths = apply(op)
+        except OSError as err:
+            self._failed(err)
+            return
+        target.append(op)
+        if len(paths) == 2:
+            self.d.buffers.moved(paths[0], paths[1])
+        else:
+            self.d.buffers.deleted(paths[0])
+        self.refresh()
+        if paths[-1].exists():
+            self.reveal_entry(self._rel(paths[-1]))
+        elif self.selected and not self.path_of(self.selected).exists():
+            self.selected = None
+
+    def trash(self, rel: str) -> None:
+        """Moves ``rel`` to the system's trash (restore it from there)."""
+        path = self.path_of(rel)
+        try:
+            _ops.send_to_trash(path)
+        except (OSError, subprocess.SubprocessError) as err:
+            self.d.notify(tr("Could not move {name} to the trash", name=path.name), str(err), kind="error",
+                          seconds=5)
+            return
+        self.d.buffers.deleted(path)
+        if self.selected and self.selected.startswith(rel.rstrip("/")):
+            self.selected = None
+        self.refresh()
+
+    def open_default(self, rel: str) -> None:
+        path = self.path_of(rel)
+        try:
+            open_with_system(path)
+        except OSError as err:
+            self.d.notify(tr("Could not open {name}", name=path.name), str(err), kind="error", seconds=5)
+
+    def open_terminal(self, rel: str) -> None:
+        """Opens the system's terminal in ``rel``'s folder."""
+        assert self.root is not None
+        try:
+            _ops.open_terminal(self.root / self._folder_for(rel))
+        except OSError as err:
+            self.d.notify(tr("Could not open a terminal"), str(err), kind="error", seconds=5)
+
+    def ignore(self, rel: str, exclude: bool = False) -> None:
+        """Adds ``rel`` to the project's ``.gitignore`` (or ``.git/info/exclude``, which is not shared)."""
+        assert self.root is not None
+        file = self.root / (".git/info/exclude" if exclude else ".gitignore")
+        name = ".git/info/exclude" if exclude else ".gitignore"
+        try:
+            added = _ops.add_ignore(file, rel)
+        except OSError as err:
+            self._failed(err)
+            return
+        self.d.notify(tr("Added to {file}", file=name) if added else tr("Already in {file}", file=name),
+                      kind="success" if added else "info", seconds=2)
+        self.refresh()
+
+    def permalink(self, rel: str, open_it: bool = False) -> Any:
+        """Copies (or opens) the link to ``rel`` at the current commit on the project's remote."""
+        assert self.root is not None
+        url = _ops.permalink(self.root, rel, self.remote)
+        if url is None:
+            self.d.notify(tr("No permalink: the project has no remote or commit"), kind="info", seconds=3)
+            return None
+        if open_it:
+            if sys.platform == "win32":
+                os.startfile(url)  # type: ignore[attr-defined]  # noqa: S606
+            else:
+                subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", url],  # noqa: S603
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return None
+        self.d.notify(tr("Permalink copied"), kind="success", seconds=2)
+        return _core.Command.copy(url)
+
+    # -- keyboard ---------------------------------------------------------------------------------
+    def selected_rel(self) -> str:
+        """The selected entry as a relative path (folders end with ``/``), or ``""``."""
+        if not self.selected or self.root is None:
+            return ""
+        return self.selected + "/" if self.path_of(self.selected).is_dir() else self.selected
+
+    def visible(self) -> List[str]:
+        """The rows the tree shows, top to bottom (the search results while there is a query)."""
+        if self.query.strip():
+            return self.results()
+        rows: List[str] = []
+
+        def walk(nodes: List[ui.TreeNode]) -> None:
+            for node in nodes:
+                node_id = node.id or node.name
+                rows.append(node_id + "/" if node.is_folder else node_id)
+                if node.is_folder and node_id in self.expanded:
+                    walk(node.children or [])
+        walk(self.nodes())
+        return rows
+
+    def move_selection(self, step: int) -> None:
+        rows = self.visible()
+        if not rows:
+            return
+        current = self.selected_rel()
+        index = rows.index(current) + step if current in rows else (0 if step > 0 else len(rows) - 1)
+        self.selected = rows[max(0, min(index, len(rows) - 1))].rstrip("/")
+
+    def on_key(self, combo: str) -> Tuple[bool, Any]:
+        """Keys pressed while the tree has the keyboard, like Zed's project panel; returns
+        ``(handled, result)``."""
+        if self.root is None:
+            return False, None
+        rel = self.selected_rel()
+        folder = self._folder_for(rel)
+        on_entry: Dict[str, Callable[[], Any]] = {
+            "enter": lambda: self.toggle(rel.rstrip("/")) if rel.endswith("/") else self.open(rel),
+            "ctrl-shift-enter": lambda: self.open_default(rel),
+            "ctrl-x": lambda: self.cut(rel),
+            "ctrl-c": lambda: self.copy(rel),
+            "ctrl-d": lambda: self.duplicate(rel),
+            "f2": lambda: self.start_naming("rename", rel.rstrip("/")),
+            "delete": lambda: self.trash(rel),
+            "ctrl-delete": lambda: self.ask_delete(rel),
+            "right": lambda: self.expanded.add(rel.rstrip("/")) if rel.endswith("/") else None,
+            "left": lambda: self._collapse(rel),
+        }
+        always: Dict[str, Callable[[], Any]] = {
+            "ctrl-n": lambda: self.start_naming("file", folder),
+            "alt-n": lambda: self.start_naming("folder", folder),
+            "ctrl-alt-r": lambda: reveal(self.path_of(rel) if rel else self.root),
+            "ctrl-v": lambda: self.paste(rel),
+            "ctrl-z": self.undo,
+            "ctrl-shift-z": self.redo,
+            "ctrl-y": self.redo,
+            "alt-shift-c": lambda: _core.Command.copy(str(self.path_of(rel) if rel else self.root)),
+            "ctrl-alt-shift-c": lambda: _core.Command.copy(rel.rstrip("/") or "."),
+            "up": lambda: self.move_selection(-1),
+            "down": lambda: self.move_selection(1),
+            "escape": lambda: setattr(self, "clipboard", None),
+        }
+        if combo in always:
+            return True, always[combo]()
+        if rel and combo in on_entry:
+            return True, on_entry[combo]()
+        return False, None
+
+    def _collapse(self, rel: str) -> None:
+        """Left: closes the open folder, or goes up to the folder of the entry."""
+        key = rel.rstrip("/")
+        if rel.endswith("/") and key in self.expanded:
+            self.expanded.discard(key)
+        elif "/" in key:
+            self.selected = key.rsplit("/", 1)[0]
 
     # -- Go to file ---------------------------------------------------------------------------------
     def open_finder(self) -> Any:
