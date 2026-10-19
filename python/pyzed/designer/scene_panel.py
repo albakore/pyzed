@@ -24,7 +24,6 @@ from ..icons import icon as _icon
 from ..theme import Theme
 from . import components as _components
 from . import scene_code
-from .panels import prop_row, section
 from .scene import SceneDocument
 from .scene_runtime import SceneComponent, scenes
 
@@ -52,6 +51,44 @@ def _guard(d: "Designer", action: Callable[[], Any]) -> Any:
     return None
 
 
+# -- layout helpers ------------------------------------------------------------------
+
+LABEL = 84.0
+SECTIONS = ("class", "toolbox", "layout", "properties", "events", "methods", "bindings")
+
+
+def _open(d: "Designer") -> set:
+    """The open accordion sections (all of them at first), kept on the designer."""
+    return d.__dict__.setdefault("_scene_open", set(SECTIONS))
+
+
+def _toggle(d: "Designer") -> Callable[[str], None]:
+    def flip(key: str) -> None:
+        _open(d).symmetric_difference_update({key})
+    return flip
+
+
+def field(title: str, editor: Any, t: Theme, *, tip: str = "") -> Any:
+    """A label and its editor; every row of the panel shares the label width, so editors line up."""
+    text = ui.label(title, color="text_muted", wrap=False, theme=t)
+    if tip:
+        text = ui.tooltip(text, tip, theme=t)
+    return _core.row([_core.container(text, width=LABEL, clip=True), _core.container(editor, width="fill")],
+                     spacing=8, align="center", width="fill")
+
+
+def _stack(rows: List[Any]) -> Any:
+    return _core.column([r for r in rows if r is not None], spacing=8, width="fill")
+
+
+def _number(value: float, on_change: Callable[[Any], Any], t: Theme, **kwargs: Any) -> Any:
+    return ui.number_field(value, on_change, width="fill", theme=t, **kwargs)
+
+
+def _accordion(d: "Designer", sections: List[Any], t: Theme) -> Any:
+    return ui.accordion(sections, _open(d), _toggle(d), theme=t)
+
+
 # -- the Component panel -------------------------------------------------------------
 
 
@@ -62,7 +99,8 @@ def properties(d: "Designer", t: Theme, rows: List[Any]) -> List[Any]:
     if not doc.selection:
         return component_rows(d, t)
     if len(doc.selection) == 1 and doc.primary is not None:
-        return rows + binding_rows(d, t)
+        bindings = binding_section(d, t)
+        return rows + ([_core.container(_accordion(d, [bindings], t), padding=(12, 0, 0, 0))] if bindings else [])
     return rows
 
 
@@ -74,46 +112,44 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
     def scene_setter(key: str, cast: Callable[[Any], Any] = lambda v: v) -> Callable[[Any], None]:
         return lambda v: doc.set_scene(key, cast(v))
 
-    rows: List[Any] = [
-        _core.container(_core.row([
-            _icon(scene.icon or "component", size=16, color=t.accent),
-            ui.label(scene.name, weight="semibold", theme=t),
-            _core.space(width="fill"),
-            ui.badge("Component", tint="accent", theme=t),
-        ], spacing=10, align="center"), padding=(10, 12)),
-    ]
+    header = _core.container(_core.row([
+        _icon(scene.icon or "component", size=16, color=t.accent),
+        ui.label(scene.name, weight="semibold", theme=t),
+        _core.space(width="fill"),
+        ui.badge("Component", tint="accent", theme=t),
+    ], spacing=10, align="center"), padding=(12, 12), width="fill")
+    warning = None
     if not doc.code_ok:
-        rows.append(_core.container(ui.callout("The class does not parse",
-                                               "Showing its last good version; fix the code to edit it here.",
-                                               tint="warning", theme=t), padding=(0, 12, 8, 12)))
-    rows += [
-        section("Class", t),
-        prop_row("Name", ui.input(scene.name, lambda v: _guard(d, lambda: doc.set_class_name(v)), size="sm",
-                                  mono=True, theme=t), t, tip="The Python class name (CamelCase)."),
-        prop_row("Description", ui.input(scene.description, lambda v: _guard(d, lambda: doc.set_description(v)),
-                                         placeholder="What it is for", size="sm", theme=t), t,
-                 tip="The docstring of the class; the toolbox shows it as a tooltip."),
-        section("Toolbox", t),
-        prop_row("Label", ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name), size="sm",
-                                   theme=t), t),
-        prop_row("Icon", _core.row([_icon(scene.icon or "component", size=14),
-                                    ui.input(scene.icon, scene_setter("icon"), placeholder="lucide name", size="sm",
-                                             mono=True, theme=t)], spacing=6, align="center"), t),
-        prop_row("Category", ui.input(scene.category, scene_setter("category"), size="sm", theme=t), t),
-        section("Layout", t),
-        prop_row("Width", ui.number_field(scene.width, lambda v: d.set_form("width", float(v)), min=16, step=8,
-                                          width=150, theme=t), t),
-        prop_row("Height", ui.number_field(scene.height, lambda v: d.set_form("height", float(v)), min=16, step=8,
-                                           width=150, theme=t), t),
-        prop_row("Background", ui.input(scene.background or "", lambda v: d.set_form("background", v or None),
-                                        placeholder="transparent", size="sm", mono=True, theme=t), t),
-        prop_row("Grid size", ui.number_field(scene.grid, lambda v: d.set_form("grid", int(v)), min=2, max=64,
-                                              width=150, theme=t), t),
+        warning = _core.container(ui.callout("The class does not parse",
+                                             "Showing its last good version; fix the code to edit it here.",
+                                             tint="warning", theme=t), padding=(0, 12, 12, 12))
+    sections = [
+        ui.AccordionSection("class", "Class", _stack([
+            field("Name", ui.input(scene.name, lambda v: _guard(d, lambda: doc.set_class_name(v)),
+                                   mono=True, theme=t), t, tip="The Python class name (CamelCase)."),
+            field("Description", ui.input(scene.description, lambda v: _guard(d, lambda: doc.set_description(v)),
+                                          placeholder="What it is for", theme=t), t,
+                  tip="The docstring of the class; the toolbox shows it as a tooltip."),
+        ]), icon="braces"),
+        ui.AccordionSection("toolbox", "Toolbox", _stack([
+            field("Label", ui.input(scene.label, scene_setter("label"), placeholder=_spaced(scene.name),
+                                    theme=t), t),
+            field("Icon", ui.input(scene.icon, scene_setter("icon"), placeholder="lucide name", mono=True,
+                                   icon=scene.icon or "component", theme=t), t),
+            field("Category", ui.input(scene.category, scene_setter("category"), theme=t), t),
+        ]), icon="component"),
+        ui.AccordionSection("layout", "Layout", _stack([
+            field("Width", _number(scene.width, lambda v: d.set_form("width", float(v)), t, min=16, step=8), t),
+            field("Height", _number(scene.height, lambda v: d.set_form("height", float(v)), t, min=16, step=8), t),
+            field("Background", ui.input(scene.background or "", lambda v: d.set_form("background", v or None),
+                                         placeholder="transparent", mono=True, theme=t), t),
+            field("Grid size", _number(scene.grid, lambda v: d.set_form("grid", int(v)), t, min=2, max=64), t),
+        ]), icon="ruler"),
+        member_section(d, t),
+        event_section(d, t),
+        method_section(d, t),
     ]
-    rows += member_rows(d, t)
-    rows += event_rows(d, t)
-    rows += method_rows(d, t)
-    return rows
+    return [header, warning, _accordion(d, sections, t)]
 
 
 def _spaced(name: str) -> str:
@@ -123,25 +159,30 @@ def _spaced(name: str) -> str:
     return out
 
 
-def member_rows(d: "Designer", t: Theme) -> List[Any]:
+def _add_button(label: str, icon: str, action: Callable[[], Any], t: Theme) -> Any:
+    return ui.button(label, action, icon=icon, variant="ghost", theme=t)
+
+
+def member_section(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     assert isinstance(doc, SceneDocument)
-    add = _core.row([
-        ui.icon_button("plus", lambda: _guard(d, lambda: doc.add_member("value")), size="xs",
-                       tooltip="Add a public property (a prop)", theme=t),
-        ui.icon_button("lock", lambda: _guard(d, lambda: doc.add_member("state", "int", public=False)), size="xs",
-                       tooltip="Add a private property (state)", theme=t),
-    ], spacing=0)
-    rows: List[Any] = [section("Properties", t, end=add)]
-    if not doc.members:
+    rows: List[Any] = [_card_of_member(d, m, t) for m in doc.members]
+    if not rows:
         rows.append(_hint("Public properties are props the parent passes (Rating(value=3)); private ones are "
                           "state kept between renders. Both are attributes: self.value.", t))
-    for member in doc.members:
-        rows.append(_member_row(d, member, t))
-    return rows
+    rows.append(_core.row([
+        _add_button("Public", "plus", lambda: _guard(d, lambda: doc.add_member("value")), t),
+        _add_button("Private", "lock", lambda: _guard(d, lambda: doc.add_member("state", "int", public=False)), t),
+    ], spacing=4))
+    return ui.AccordionSection("properties", f"Properties ({len(doc.members)})", _stack(rows), icon="list")
 
 
-def _member_row(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
+def _card(rows: List[Any], t: Theme) -> Any:
+    return _core.container(_core.column(rows, spacing=6, width="fill"), padding=8, width="fill", bg=t.editor,
+                           border_color=t.border_variant, border_width=1, radius=t.radius)
+
+
+def _card_of_member(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
     doc = d.doc
     assert isinstance(doc, SceneDocument)
 
@@ -152,38 +193,35 @@ def _member_row(d: "Designer", m: scene_code.Member, t: Theme) -> Any:
     if m.type not in types_:
         types_.append(m.type)
     head = _core.row([
-        ui.tooltip(ui.icon_button("eye" if m.public else "lock", lambda: update(public=not m.public), size="xs",
-                                  selected=not m.public, theme=t),
-                   "Public (a prop): click to make it private state" if m.public else
-                   "Private (state): click to make it a public prop", theme=t),
-        _core.container(ui.input(m.name, lambda v: update(name=v), size="sm", mono=True, theme=t), width="fill"),
-        _core.container(ui.select(types_, m.type, lambda v: update(type=v), size="sm", width="fill", theme=t),
-                        width=84),
+        _core.container(ui.input(m.name, lambda v: update(name=v), mono=True,
+                                 icon=TYPE_ICONS.get(m.type, "asterisk"), theme=t), width="fill"),
         ui.icon_button("chevron-up", lambda: _guard(d, lambda: doc.move_member(m.name, -1)), size="xs",
                        tooltip="Move up", theme=t),
         ui.icon_button("trash-2", lambda: _guard(d, lambda: doc.remove_member(m.name)), size="xs",
                        tooltip="Remove", theme=t),
     ], spacing=4, align="center")
-    return _core.container(_core.column([
+    access = ui.select(["public", "private"], "public" if m.public else "private",
+                       lambda v: update(public=v == "public"), width="fill", theme=t)
+    return _card([
         head,
-        _core.row([_core.container(ui.label("default", size="xs", color="text_muted", theme=t), width=52),
-                   _core.container(_default_editor(m, lambda v: update(default=v), t), width="fill")],
-                  spacing=6, align="center"),
-    ], spacing=4), padding=(4, 12, 6, 12), width="fill")
+        field("Access", access, t, tip="Public: a prop the parent passes. Private: state declared with pz.state."),
+        field("Type", ui.select(types_, m.type, lambda v: update(type=v), width="fill", theme=t), t),
+        field("Default", _default_editor(m, lambda v: update(default=v), t), t),
+    ], t)
 
 
 def _default_editor(m: scene_code.Member, on_change: Callable[[Any], None], t: Theme) -> Any:
     if m.source is not None:  # not a literal: edit it as Python
-        return ui.input(m.source, lambda v: _literal_change(v, on_change), size="sm", mono=True, theme=t)
+        return ui.input(m.source, lambda v: _literal_change(v, on_change), mono=True, theme=t)
     if m.type == "bool":
         return _core.container(ui.switch(bool(m.default), on_change, theme=t), width="fill", align_x="end")
     if m.type in ("int", "float"):
         value = m.default if isinstance(m.default, (int, float)) else 0
-        return ui.number_field(float(value), lambda v: on_change(int(v) if m.type == "int" else float(v)),
-                               step=1 if m.type == "int" else 0.1, width=150, theme=t)
+        return _number(float(value), lambda v: on_change(int(v) if m.type == "int" else float(v)), t,
+                       step=1 if m.type == "int" else 0.1)
     if m.type == "str":
-        return ui.input("" if m.default is None else str(m.default), on_change, size="sm", theme=t)
-    return ui.input(repr(m.default), lambda v: _literal_change(v, on_change), size="sm", mono=True,
+        return ui.input("" if m.default is None else str(m.default), on_change, theme=t)
+    return ui.input(repr(m.default), lambda v: _literal_change(v, on_change), mono=True,
                     placeholder="a Python literal", theme=t)
 
 
@@ -194,50 +232,47 @@ def _literal_change(text: str, on_change: Callable[[Any], None]) -> None:
         pass  # keep the last valid value until the text parses
 
 
-def event_rows(d: "Designer", t: Theme) -> List[Any]:
+def event_section(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     assert isinstance(doc, SceneDocument)
-    add = ui.icon_button("plus", lambda: _guard(d, lambda: doc.add_event("changed")), size="xs",
-                         tooltip="Add a custom event", theme=t)
-    rows: List[Any] = [section("Custom events", t, end=add)]
     events = doc.custom_events
+    rows: List[Any] = []
+    for name, description in events.items():
+        rows.append(_card([
+            _core.row([
+                _core.container(ui.input(name, lambda v, n=name: _guard(d, lambda: doc.update_event(n, new_name=v)),
+                                         mono=True, icon="zap", theme=t), width="fill"),
+                ui.icon_button("trash-2", lambda n=name: _guard(d, lambda: doc.remove_event(n)), size="xs",
+                               tooltip="Remove", theme=t),
+            ], spacing=4, align="center"),
+            field("Description", ui.input(description, lambda v, n=name: _guard(d, lambda: doc.update_event(
+                n, description=v)), placeholder="What it means", theme=t), t),
+        ], t))
     if not events:
         rows.append(_hint("Raise them from a method with self.emit(\"name\", value); the parent handles them "
                           "with on_name=..., or in the Events tab of a form.", t))
-    for name, description in events.items():
-        rows.append(_core.container(_core.column([
-            _core.row([
-                _icon("zap", size=13, color=t.icon_muted),
-                _core.container(ui.input(name, lambda v, n=name: _guard(d, lambda: doc.update_event(n, new_name=v)),
-                                         size="sm", mono=True, theme=t), width="fill"),
-                ui.icon_button("trash-2", lambda n=name: _guard(d, lambda: doc.remove_event(n)), size="xs",
-                               tooltip="Remove", theme=t),
-            ], spacing=6, align="center"),
-            ui.input(description, lambda v, n=name: _guard(d, lambda: doc.update_event(n, description=v)),
-                     placeholder="Description", size="sm", theme=t),
-        ], spacing=4), padding=(4, 12, 6, 12), width="fill"))
-    return rows
+    rows.append(_core.row([_add_button("Event", "plus", lambda: _guard(d, lambda: doc.add_event("changed")), t)]))
+    return ui.AccordionSection("events", f"Custom events ({len(events)})", _stack(rows), icon="zap")
 
 
-def method_rows(d: "Designer", t: Theme) -> List[Any]:
+def method_section(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     methods = doc.info.methods
-    rows: List[Any] = [section("Methods", t, end=ui.icon_button("code", d.edit_whole_file, size="xs",
-                                                                tooltip="Edit the class", theme=t))]
-    lifecycle = [m for m in scene_code.LIFECYCLE if m not in methods]
+    rows: List[Any] = []
     for name in methods:
         rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon="square-function",
-                                 selected=bool(d.editing and d.editing[0] == name), height=24, inset=True,
-                                 theme=t))
-    for name in lifecycle:
-        rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon="plus",
-                                 color="text_muted", height=24, inset=True, theme=t))
-    return rows
+                                 selected=bool(d.editing and d.editing[0] == name), height=26, theme=t))
+    for name in (m for m in scene_code.LIFECYCLE if m not in methods):
+        rows.append(ui.list_item(f"{name}()", lambda n=name: open_method(d, n), icon="plus", color="text_muted",
+                                 height=26, theme=t))
+    rows.append(_core.row([_add_button("Edit the class", "code", d.edit_whole_file, t)]))
+    return ui.AccordionSection("methods", f"Methods ({len(methods)})",
+                               _core.column(rows, spacing=2, width="fill"), icon="square-function")
 
 
 def _hint(text: str, t: Theme) -> Any:
-    return _core.container(ui.label(text, size="xs", color="text_muted", theme=t), padding=(2, 12, 6, 12))
+    return ui.label(text, size="xs", color="text_muted", theme=t)
 
 
 def open_method(d: "Designer", name: str) -> None:
@@ -263,18 +298,18 @@ def open_method(d: "Designer", name: str) -> None:
 # -- bindings ------------------------------------------------------------------------
 
 
-def binding_rows(d: "Designer", t: Theme) -> List[Any]:
+def binding_section(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     control = doc.primary
     assert control is not None
     spec = _components.get(control.type)
+    if not spec.props:
+        return None
     bound = doc.scene.bound(control.name)
     members = [m.name for m in doc.members]
     expressions: Dict[Any, bool] = d.__dict__.setdefault("_scene_expressions", {})
-    rows: List[Any] = [section("Bindings", t)]
-    if not spec.props:
-        return []
+    rows: List[Any] = []
     if not members:
         rows.append(_hint("Add properties to the component (select the empty canvas) to bind them here.", t))
     for prop in spec.props:
@@ -284,7 +319,7 @@ def binding_rows(d: "Designer", t: Theme) -> List[Any]:
         if custom or expressions.get(key):
             editor = _core.row([
                 _core.container(ui.input(expr, lambda v, p=prop.name: doc.set_binding(control.name, p, v),
-                                         placeholder='f"{value} items"', size="sm", mono=True, theme=t),
+                                         placeholder='f"{value} items"', mono=True, theme=t),
                                 width="fill"),
                 ui.icon_button("x", lambda k=key, p=prop.name: (expressions.pop(k, None),
                                                                 doc.set_binding(control.name, p, None)),
@@ -297,10 +332,10 @@ def binding_rows(d: "Designer", t: Theme) -> List[Any]:
                 else:
                     doc.set_binding(control.name, p, None if value == NONE else value)
 
-            editor = ui.select([NONE, *members, EXPRESSION], expr or NONE, pick, size="sm", width="fill", theme=t)
-        rows.append(prop_row(prop.title, editor, t, tip=f"{control.name}.{prop.name} follows this component "
-                                                        f"property (or Python expression) on every render."))
-    return rows
+            editor = ui.select([NONE, *members, EXPRESSION], expr or NONE, pick, width="fill", theme=t)
+        rows.append(field(prop.title, editor, t, tip=f"{control.name}.{prop.name} follows this component "
+                                                     f"property (or Python expression) on every render."))
+    return ui.AccordionSection("bindings", f"Bindings ({len(bound)})", _stack(rows), icon="link")
 
 
 # -- running -------------------------------------------------------------------------
@@ -333,8 +368,8 @@ class ComponentPreview(Window):
             body = ui.callout(f"Cannot render {self.cls.__name__}", f"{type(err).__name__}: {err}", tint="error",
                               theme=t)
         stage = _core.container(body, width="fill", height="fill", center=True, bg=t.background)
-        lines = [ui.label(line, size="sm", mono=True, theme=t) for line in reversed(self.log)] or [
-            ui.label("Custom events raised by the component show up here.", size="sm", color="text_muted",
+        lines = [ui.label(line, mono=True, theme=t) for line in reversed(self.log)] or [
+            ui.label("Custom events raised by the component show up here.", color="text_muted",
                      theme=t)]
         log = _core.column([
             ui.panel_header("Events", icon="zap", theme=t),

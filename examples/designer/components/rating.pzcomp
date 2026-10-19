@@ -3,7 +3,7 @@
   "component": {
     "name": "Rating",
     "width": 232,
-    "height": 32,
+    "height": 28,
     "theme": "One Dark",
     "accent": null,
     "background": null,
@@ -23,7 +23,7 @@
       "name": "star1",
       "type": "button",
       "x": 0.0,
-      "y": 0.0,
+      "y": 0,
       "width": 28,
       "height": 28,
       "props": {
@@ -46,7 +46,7 @@
       "name": "star2",
       "type": "button",
       "x": 32,
-      "y": 0.0,
+      "y": 0,
       "width": 28,
       "height": 28,
       "props": {
@@ -69,7 +69,7 @@
       "name": "star3",
       "type": "button",
       "x": 64,
-      "y": 0.0,
+      "y": 0,
       "width": 28,
       "height": 28,
       "props": {
@@ -92,7 +92,7 @@
       "name": "star4",
       "type": "button",
       "x": 96,
-      "y": 0.0,
+      "y": 0,
       "width": 28,
       "height": 28,
       "props": {
@@ -115,7 +115,7 @@
       "name": "star5",
       "type": "button",
       "x": 128,
-      "y": 0.0,
+      "y": 0,
       "width": 28,
       "height": 28,
       "props": {
@@ -138,9 +138,9 @@
       "name": "caption",
       "type": "label",
       "x": 168,
-      "y": 4,
+      "y": 0,
       "width": 64,
-      "height": 24,
+      "height": 28,
       "props": {
         "text": "Label",
         "size": "md",

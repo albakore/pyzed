@@ -44,9 +44,9 @@
       "name": "headline",
       "type": "heading",
       "x": 16,
-      "y": 14,
+      "y": 16,
       "width": 248,
-      "height": 30,
+      "height": 28,
       "props": {
         "text": "Heading",
         "level": "3",
@@ -65,9 +65,9 @@
       "name": "role",
       "type": "label",
       "x": 16,
-      "y": 46,
+      "y": 48,
       "width": 248,
-      "height": 22,
+      "height": 20,
       "props": {
         "text": "Label",
         "size": "sm",
@@ -89,9 +89,9 @@
       "name": "stars",
       "type": "rating",
       "x": 16,
-      "y": 80,
+      "y": 82,
       "width": 232,
-      "height": 32,
+      "height": 28,
       "props": {
         "value": 3,
         "readonly": false

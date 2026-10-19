@@ -1075,7 +1075,7 @@ _section("ui", "Controles", {
     },
     "pyzed.ui.number_field": {
         "desc": "Un campo numérico con botones −/+ (el `NumericStepper` de Zed). `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
-        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…)."},
+        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.'},
     },
     "pyzed.ui.split_button": {
         "desc": "Un botón con una flecha aparte para más opciones (el `SplitButton` de Zed). `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
@@ -1092,6 +1092,19 @@ _section("ui", "Controles", {
     "pyzed.ui.disclosure": {
         "desc": "Una sección plegable: cabecera con flecha que muestra u oculta `content`. El estado abierto es tuyo: cámbialo en `on_toggle`.",
         "params": {"title": "Título (texto o widget).", "content": "Contenido.", "open": "Si está abierta.", "on_toggle": "Mensaje o callable al pulsar la cabecera."},
+    },
+    "pyzed.ui.AccordionSection": {
+        "desc": "Una sección de `ui.accordion`: `key`, `title`, `content` y, opcionales, `icon` y un widget `end` en la cabecera.",
+    },
+    "pyzed.ui.accordion": {
+        "desc": "Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.",
+        "params": {"sections": "Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`).", "open": "El conjunto de claves abiertas, o un dict `{clave: bool}`.", "on_toggle": "Se llama con la clave de la cabecera pulsada.", "padding": "Relleno alrededor del contenido de una sección abierta."},
+        "example": """
+            ui.accordion([
+                ui.AccordionSection("layout", "Layout", layout_rows, icon="ruler"),
+                ui.AccordionSection("events", "Events", event_rows, icon="zap"),
+            ], self.open_sections, lambda key: self.open_sections.symmetric_difference_update({key}))
+        """,
     },
 }, before="Listas, árbol y menús")
 _section("ui", "Datos y feedback", {

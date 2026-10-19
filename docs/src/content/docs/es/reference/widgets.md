@@ -732,6 +732,7 @@ text_input(
     placeholder_color=None,
     selection_color=None,
     icon_color=None,
+    align_x=None,
 )
 ```
 
@@ -761,6 +762,7 @@ Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_
 | `placeholder_color` | Color del placeholder. |
 | `selection_color` | Color de la selección. |
 | `icon_color` | Color del icono. |
+| `align_x` | Alineación horizontal: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
 
 ### `mouse_area`
 
@@ -1130,6 +1132,11 @@ code_editor(
     on_cursor=None,
     active_line=None,
     scrollbar_color=None,
+    annotations=None,
+    whitespace=None,
+    tab_size=None,
+    capture_keys=None,
+    on_scroll=None,
 )
 ```
 
@@ -1165,3 +1172,4 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 | `on_cursor` | Callable que recibe `(línea, columna)`, desde 1. |
 | `active_line` | Color de fondo de la línea del cursor. |
 | `scrollbar_color` | Color de la barra de desplazamiento. |
+| `on_scroll` | Se llama al desplazar. |
