@@ -140,6 +140,8 @@ class Designer(App):
         self.over_form = False  # the pointer is over the form being designed
         self.color_picker: Optional[Tuple[Optional[str], str]] = None  # (control or None, style key) being picked
         self.picker_at: Tuple[float, float] = (0.0, 0.0)  # window point where the picker was opened
+        #: The value and setter of each color property shown, so its picker can change it.
+        self.picker_targets: Dict[str, Tuple[Any, Callable[[Any], Any]]] = {}
         self.text_editors: set = set()  # "control.prop" lists and tables edited as plain text
         #: outline row under the pointer while carrying, and where it would drop: "before", "inside" or "after"
         self.outline_target: Optional[Tuple[str, str]] = None

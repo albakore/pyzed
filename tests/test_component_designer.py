@@ -673,3 +673,26 @@ def test_component_props_of_any_type_get_the_typed_editor():
     assert (props["limit"].kind, props["limit"].type) == ("typed", "float | None")
     assert (props["marks"].kind, props["marks"].type) == ("typed", "dict[str, int]")
     assert props["names"].kind == "list"
+
+
+def test_color_properties_use_the_color_picker_and_survive_half_typed_values(tmp_path):
+    doc = make_rating(tmp_path)
+    doc.add_member("tint", "pz.Color")
+    doc.save()
+    app = designer.Designer(tmp_path / "rating.pzcomp", language_servers=False)
+    app.view()
+    picker = next(k for k in app.picker_targets if k.endswith("member:tint"))
+    app.toggle_color_picker(None, picker)  # the swatch opens the floating picker
+    app.view()
+    assert app.color_picker_at(app.theme_obj) is not None
+    _value, change = app.picker_targets[picker]
+    change("#")  # typed so far: not a color yet
+    assert app.doc.member("tint").default == "#"
+    app.view()  # the swatch stays empty instead of failing
+    change("#3b82f6")
+    assert app.doc.member("tint").default == "#3b82f6"
+    from pyzed.designer.panels import valid_color
+
+    t = app.theme_obj
+    assert valid_color("#", t) is None and valid_color("nope", t) is None and valid_color("#3b8", t) == "#3b8"
+    assert valid_color("accent", t) == t.accent
