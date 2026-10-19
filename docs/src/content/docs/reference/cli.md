@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Every pyzed command - projects, dependencies, running, building and icons.
+description: Every pyzed command - projects, dependencies, running, building, icons and the MCP server.
 sidebar:
   order: 9
 ---
@@ -43,7 +43,7 @@ Adds Pyzed to the uv project at `path` (default: the current folder), with the s
 
 | Command | Does |
 | --- | --- |
-| `pyzed design [form or folder]` | Opens the [visual designer](/pyzed/guides/designer/). Inside a project and without a form, opens its main form. |
+| `pyzed design [form or folder]` | Opens the [visual designer](/pyzed/editor/). Inside a project and without a form, opens its main form. |
 | `pyzed run [form] [--reload]` | Runs a form with its handlers; default: the project's main form. `--reload` updates the window on save. |
 | `pyzed dev script.py [--watch PATH]` | Runs a script with hot reload: saving a file updates the open window. |
 
@@ -66,3 +66,12 @@ Lists the names of the bundled Lucide icons that contain `filter`.
 ```bash
 pyzed icons arrow
 ```
+
+## `pyzed mcp`
+
+Runs the [MCP server for AI agents](/pyzed/guides/mcp/) over stdio, until the client disconnects. It needs the
+`mcp` extra: `pip install "pyzed-ui[mcp]"`.
+
+| Option | Effect |
+| --- | --- |
+| `--transport streamable-http` | Serve over HTTP instead of stdio. |

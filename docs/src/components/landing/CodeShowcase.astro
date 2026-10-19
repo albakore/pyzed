@@ -1,0 +1,61 @@
+---
+// Code (the slot) next to the window it produces.
+import Shot from './Shot.astro';
+
+interface Props {
+	shot: string;
+	alt: string;
+	caption?: string;
+}
+const { shot, alt, caption } = Astro.props;
+---
+
+<div class="pz-code-showcase">
+	<div class="code"><slot /></div>
+	<div class="result not-content">
+		<Shot name={shot} alt={alt} sizes="(min-width: 50rem) 22rem, 90vw" />
+		{caption && <p>{caption}</p>}
+	</div>
+</div>
+
+<style>
+	.pz-code-showcase {
+		display: grid;
+		grid-template-columns: 100%;
+		gap: 1.5rem;
+		align-items: center;
+		margin-block-start: 2.5rem !important;
+	}
+	.pz-code-showcase > * {
+		margin: 0 !important;
+		min-width: 0;
+	}
+	@media (min-width: 50rem) {
+		.pz-code-showcase {
+			grid-template-columns: minmax(0, 5fr) minmax(0, 2fr);
+			gap: 2.5rem;
+		}
+	}
+	.result {
+		position: relative;
+		isolation: isolate;
+		max-width: 26rem;
+		margin-inline: auto !important;
+		width: 100%;
+	}
+	.result::before {
+		content: '';
+		position: absolute;
+		inset: 10%;
+		z-index: -1;
+		background: var(--pz-glow);
+		filter: blur(40px);
+		opacity: 0.6;
+	}
+	.result p {
+		margin: 0.75rem 0 0;
+		text-align: center;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

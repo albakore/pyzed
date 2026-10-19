@@ -1,0 +1,491 @@
+---
+// Platform picker for the Pyzed Design downloads. Detects the visitor's OS and selects it.
+import { Icon } from '@astrojs/starlight/components';
+import release from '../generated/release.json';
+import { DESIGNER_ASSETS, RELEASES_URL, downloadUrl, type Platform } from './downloads';
+
+const es = Astro.currentLocale === 'es';
+const stable = release.latestStable;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const changelog = `${base}${es ? '/es' : ''}/changelog/`;
+
+const t = es
+	? {
+			latest: 'Última versión estable',
+			notes: 'Novedades',
+			all: 'Todas las versiones',
+			yours: 'Tu sistema',
+			download: 'Descargar para',
+			for: 'Pyzed Design para',
+			install: 'Instalación',
+			file: 'Archivo',
+		}
+	: {
+			latest: 'Latest stable release',
+			notes: "What's new",
+			all: 'All releases',
+			yours: 'Your system',
+			download: 'Download for',
+			for: 'Pyzed Design for',
+			install: 'Install',
+			file: 'File',
+		};
+
+interface Info {
+	name: string;
+	arch: string;
+	requires: string;
+	steps: string[];
+	note: string;
+}
+
+const platforms: Record<Platform, Info> = es
+	? {
+			windows: {
+				name: 'Windows',
+				arch: 'x86_64',
+				requires: 'Windows 10 u 11, 64 bits',
+				steps: [
+					'Descarga el zip y descomprímelo (clic derecho → <strong>Extraer todo</strong>).',
+					'Abre la carpeta <code>Pyzed Design</code> y ejecuta <code>Pyzed Design.exe</code>.',
+					'Opcional: clic derecho en el ejecutable → <strong>Anclar a Inicio</strong>.',
+				],
+				note: 'Si SmartScreen avisa de una app no reconocida, pulsa <strong>Más información → Ejecutar de todas formas</strong>.',
+			},
+			macos: {
+				name: 'macOS',
+				arch: 'Apple Silicon (arm64)',
+				requires: 'Mac con chip M1 o posterior',
+				steps: [
+					'Descarga el zip; Safari lo descomprime solo (si no, haz doble clic).',
+					'Arrastra <code>Pyzed Design.app</code> a la carpeta <strong>Aplicaciones</strong>.',
+					'La primera vez, haz clic derecho (o Control-clic) en la app → <strong>Abrir</strong> y confirma.',
+				],
+				note: 'Si Gatekeeper no te deja abrirla, ejecuta <code>xattr -dr com.apple.quarantine "/Applications/Pyzed Design.app"</code>. En Macs con Intel, instálala con pip (abajo).',
+			},
+			linux: {
+				name: 'Linux',
+				arch: 'x86_64',
+				requires: 'Distribución reciente de 64 bits',
+				steps: [
+					'Descarga el zip y descomprímelo: <code>unzip pyzed-design-linux-x86_64.zip</code>.',
+					'Dale permiso de ejecución: <code>chmod +x "Pyzed Design/Pyzed Design"</code>.',
+					'Ejecútalo: <code>"./Pyzed Design/Pyzed Design"</code>.',
+				],
+				note: 'Funciona en X11 y Wayland. Si no hay GPU usa el renderizador por software (tiny-skia).',
+			},
+		}
+	: {
+			windows: {
+				name: 'Windows',
+				arch: 'x86_64',
+				requires: 'Windows 10 or 11, 64-bit',
+				steps: [
+					'Download the zip and extract it (right-click → <strong>Extract All</strong>).',
+					'Open the <code>Pyzed Design</code> folder and run <code>Pyzed Design.exe</code>.',
+					'Optional: right-click the executable → <strong>Pin to Start</strong>.',
+				],
+				note: 'If SmartScreen warns about an unrecognized app, choose <strong>More info → Run anyway</strong>.',
+			},
+			macos: {
+				name: 'macOS',
+				arch: 'Apple Silicon (arm64)',
+				requires: 'A Mac with an M1 chip or newer',
+				steps: [
+					'Download the zip; Safari unzips it for you (otherwise double-click it).',
+					'Drag <code>Pyzed Design.app</code> into your <strong>Applications</strong> folder.',
+					'The first time, right-click (or Control-click) the app → <strong>Open</strong> and confirm.',
+				],
+				note: 'If Gatekeeper still refuses to open it, run <code>xattr -dr com.apple.quarantine "/Applications/Pyzed Design.app"</code>. On Intel Macs, install it with pip (below).',
+			},
+			linux: {
+				name: 'Linux',
+				arch: 'x86_64',
+				requires: 'A recent 64-bit distribution',
+				steps: [
+					'Download the zip and extract it: <code>unzip pyzed-design-linux-x86_64.zip</code>.',
+					'Make it executable: <code>chmod +x "Pyzed Design/Pyzed Design"</code>.',
+					'Run it: <code>"./Pyzed Design/Pyzed Design"</code>.',
+				],
+				note: 'Works on X11 and Wayland. Without a GPU it falls back to the software renderer (tiny-skia).',
+			},
+		};
+
+// The Linux steps name the zip; keep them in sync with the constant.
+platforms.linux.steps[0] = platforms.linux.steps[0].replace('pyzed-design-linux-x86_64.zip', DESIGNER_ASSETS.linux);
+
+const order: Platform[] = ['windows', 'macos', 'linux'];
+const initial: Platform = 'windows';
+---
+
+<div class="pz-download not-content" data-pz-download>
+	{
+		stable && (
+			<p class="pz-version">
+				<span class="dot" />
+				{t.latest}: <strong>v{stable.version}</strong>
+				{stable.date && <span class="muted"> · {stable.date}</span>}
+				<a href={changelog}>{t.notes} →</a>
+			</p>
+		)
+	}
+
+	<div class="pz-platforms" role="tablist" aria-label="Platform">
+		{
+			order.map((id) => (
+				<button
+					type="button"
+					role="tab"
+					id={`pz-tab-${id}`}
+					aria-controls={`pz-panel-${id}`}
+					aria-selected={id === initial ? 'true' : 'false'}
+					tabindex={id === initial ? 0 : -1}
+					data-platform={id}
+				>
+					<span class="os-icon">
+						{id === 'windows' ? (
+							<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="currentColor">
+								<path d="M3 5.5 10.5 4.4v7.1H3V5.5Zm0 13 7.5 1.1v-7H3v5.9Zm8.4 1.2L21 21V12.6h-9.6v7.1Zm0-15.4v7.2H21V3l-9.6 1.3Z" />
+							</svg>
+						) : (
+							<Icon name={id === 'macos' ? 'apple' : 'linux'} size="28px" />
+						)}
+					</span>
+					<span class="os-text">
+						<span class="os-name">{platforms[id].name}</span>
+						<span class="os-arch">{platforms[id].arch}</span>
+					</span>
+					<span class="yours" hidden>{t.yours}</span>
+				</button>
+			))
+		}
+	</div>
+
+	{
+		order.map((id) => {
+			const p = platforms[id];
+			return (
+				<section
+					class="pz-panel"
+					role="tabpanel"
+					id={`pz-panel-${id}`}
+					aria-labelledby={`pz-tab-${id}`}
+					data-platform={id}
+					hidden={id !== initial}
+				>
+					<div class="pz-panel-head">
+						<div>
+							<h3>
+								{t.for} {p.name}
+							</h3>
+							<p class="muted">
+								{p.requires} · {t.file}: <code>{DESIGNER_ASSETS[id]}</code>
+							</p>
+						</div>
+						<a class="pz-button" href={downloadUrl(id)} data-asset={DESIGNER_ASSETS[id]}>
+							<Icon name="download" size="1.25rem" />
+							{t.download} {p.name}
+						</a>
+					</div>
+					<h4>{t.install}</h4>
+					<ol class="pz-steps">
+						{p.steps.map((step) => (
+							<li set:html={step} />
+						))}
+					</ol>
+					<p class="pz-note">
+						<Icon name="information" size="1.1rem" />
+						<span set:html={p.note} />
+					</p>
+				</section>
+			);
+		})
+	}
+
+	<p class="pz-all">
+		<a href={RELEASES_URL}>
+			{t.all} <Icon name="external" size="0.9rem" />
+		</a>
+	</p>
+</div>
+
+<script>
+	function detect(): 'windows' | 'macos' | 'linux' | null {
+		const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+		const hint = `${nav.userAgentData?.platform ?? ''} ${navigator.platform ?? ''} ${navigator.userAgent}`.toLowerCase();
+		if (/android|iphone|ipad|ipod/.test(hint)) return null;
+		if (hint.includes('win')) return 'windows';
+		if (hint.includes('mac')) return 'macos';
+		if (hint.includes('linux') || hint.includes('x11') || hint.includes('cros')) return 'linux';
+		return null;
+	}
+
+	for (const root of document.querySelectorAll<HTMLElement>('[data-pz-download]')) {
+		const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+		const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+		const select = (platform: string, focus = false) => {
+			for (const tab of tabs) {
+				const on = tab.dataset.platform === platform;
+				tab.setAttribute('aria-selected', String(on));
+				tab.tabIndex = on ? 0 : -1;
+				if (on && focus) tab.focus();
+			}
+			for (const panel of panels) panel.hidden = panel.dataset.platform !== platform;
+		};
+		tabs.forEach((tab, i) => {
+			tab.addEventListener('click', () => select(tab.dataset.platform!));
+			tab.addEventListener('keydown', (event) => {
+				const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+				if (!step) return;
+				event.preventDefault();
+				select(tabs[(i + step + tabs.length) % tabs.length].dataset.platform!, true);
+			});
+		});
+		const mine = detect();
+		if (mine) {
+			const tab = tabs.find((t) => t.dataset.platform === mine);
+			tab?.classList.add('is-yours');
+			tab?.querySelector<HTMLElement>('.yours')?.removeAttribute('hidden');
+			select(mine);
+		}
+	}
+</script>
+
+<style>
+	.pz-download {
+		display: grid;
+		gap: 1rem;
+	}
+	.pz-version {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0;
+		color: var(--sl-color-gray-2);
+	}
+	.pz-version strong {
+		color: var(--sl-color-white);
+	}
+	.pz-version a {
+		margin-inline-start: auto;
+		color: var(--pz-accent-text);
+		text-decoration: none;
+	}
+	.dot {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 50%;
+		background: #a1c181;
+	}
+	.muted {
+		color: var(--sl-color-gray-3);
+	}
+	.pz-platforms {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+	.pz-platforms button {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.9rem 1rem;
+		border-radius: 0.75rem;
+		border: 1px solid var(--pz-frame-border);
+		background: var(--pz-tile-bg);
+		color: var(--sl-color-gray-2);
+		font: inherit;
+		text-align: start;
+		cursor: pointer;
+		transition:
+			border-color 0.15s ease,
+			background-color 0.15s ease;
+	}
+	.pz-platforms button:hover {
+		border-color: var(--sl-color-gray-4);
+	}
+	.pz-platforms button[aria-selected='true'] {
+		border-color: var(--sl-color-accent);
+		background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+		color: var(--sl-color-white);
+		box-shadow: 0 0 0 1px var(--sl-color-accent);
+	}
+	.pz-platforms button:focus-visible {
+		outline: 2px solid var(--sl-color-accent-high);
+		outline-offset: 2px;
+	}
+	.os-icon {
+		display: inline-grid;
+		place-items: center;
+		flex: none;
+		color: var(--sl-color-white);
+	}
+	.os-text {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.os-name {
+		font-weight: 650;
+		color: var(--sl-color-white);
+	}
+	.os-arch {
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+	.yours {
+		position: absolute;
+		top: -0.6rem;
+		inset-inline-end: 0.6rem;
+		padding: 0.05rem 0.5rem;
+		border-radius: 999px;
+		font-size: var(--sl-text-2xs, 0.7rem);
+		font-weight: 600;
+		color: #1d2a12;
+		background: #a1c181;
+	}
+	@media (max-width: 40rem) {
+		.pz-platforms {
+			gap: 0.5rem;
+		}
+		.pz-platforms button {
+			flex-direction: column;
+			gap: 0.35rem;
+			padding: 0.85rem 0.5rem 0.7rem;
+			text-align: center;
+		}
+		.os-text {
+			align-items: center;
+		}
+		.os-arch {
+			display: none;
+		}
+		.yours {
+			inset-inline-end: 50%;
+			transform: translateX(50%);
+			white-space: nowrap;
+		}
+	}
+	.pz-panel {
+		padding: clamp(1rem, 3vw, 1.75rem);
+		border-radius: 0.9rem;
+		border: 1px solid var(--pz-frame-border);
+		background:
+			radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--sl-color-accent) 14%, transparent), transparent 60%),
+			var(--pz-tile-bg);
+	}
+	.pz-panel[hidden] {
+		display: none;
+	}
+	.pz-panel-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.pz-panel h3 {
+		margin: 0;
+		font-size: var(--sl-text-2xl);
+		color: var(--sl-color-white);
+	}
+	.pz-panel-head p {
+		margin: 0.25rem 0 0;
+		font-size: var(--sl-text-sm);
+		overflow-wrap: anywhere;
+	}
+	.pz-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.25rem;
+		border-radius: 999px;
+		font-weight: 600;
+		text-decoration: none;
+		color: var(--sl-color-black);
+		background: var(--sl-color-text-accent);
+		box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+	}
+	.pz-button:hover {
+		background: var(--sl-color-white);
+	}
+	.pz-panel h4 {
+		margin: 1.5rem 0 0.5rem;
+		font-size: var(--sl-text-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--sl-color-gray-3);
+	}
+	.pz-steps {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		counter-reset: step;
+		display: grid;
+		gap: 0.6rem;
+	}
+	.pz-steps li {
+		counter-increment: step;
+		position: relative;
+		padding-inline-start: 2.25rem;
+		color: var(--sl-color-gray-2);
+		line-height: 1.6;
+	}
+	.pz-steps li::before {
+		content: counter(step);
+		position: absolute;
+		inset-inline-start: 0;
+		top: 0.05rem;
+		width: 1.5rem;
+		height: 1.5rem;
+		display: grid;
+		place-items: center;
+		border-radius: 50%;
+		font-size: var(--sl-text-xs);
+		font-weight: 700;
+		color: var(--pz-accent-text);
+		background: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+	}
+	.pz-download :global(code) {
+		font-family: var(--sl-font-mono);
+		font-size: 0.875em;
+		padding: 0.1em 0.35em;
+		border-radius: 0.3em;
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-white);
+		overflow-wrap: anywhere;
+	}
+	.pz-steps :global(strong),
+	.pz-note :global(strong) {
+		color: var(--sl-color-white);
+	}
+	.pz-note {
+		display: flex;
+		gap: 0.5rem;
+		align-items: flex-start;
+		margin: 1.25rem 0 0;
+		padding: 0.75rem 1rem;
+		border-radius: 0.6rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+		background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+	}
+	.pz-note :global(svg) {
+		flex: none;
+		margin-top: 0.15rem;
+		color: var(--pz-accent-text);
+	}
+	.pz-all {
+		margin: 0;
+		text-align: end;
+	}
+	.pz-all a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		color: var(--pz-accent-text);
+		text-decoration: none;
+	}
+</style>

@@ -35,6 +35,7 @@ from .components import Prop
 from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
+from .updates import TAB_ID as _NOTES_TAB, UpdateController
 from .runtime import FormWindow
 from . import scene as _scene
 from . import scene_code as _scene_code
@@ -173,6 +174,7 @@ class Designer(App):
         self.console = ConsoleController(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
+        self.updates = UpdateController(self)
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
@@ -181,8 +183,8 @@ class Designer(App):
         self.title = self.window_title
 
     def on_start(self) -> Any:
-        """Loads the project's tools when the app starts; returns the command that does it."""
-        return self.projects.load_tools()
+        """Loads the project's tools and checks for updates when the app starts; returns the commands."""
+        return [c for c in (self.projects.load_tools(), *self.updates.on_start()) if c is not None]
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
@@ -211,6 +213,8 @@ class Designer(App):
         subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
         if self.projects.busy:  # keeps the spinner of a running uv command moving
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
+        if self.updates.status == "downloading":  # redraws the download progress
+            subs.append(_core.every(0.2, lambda: None, key="designer-update"))
         if self.console.running is not None:  # notices when the running form's window is closed
             subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
         return subs
@@ -1327,10 +1331,27 @@ class Designer(App):
             tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
                                icon="component" if scene else "app-window",
                                icon_color="accent" if scene else None, dirty=doc.dirty))
+        notes = self.updates.tab()
+        if notes is not None:
+            tabs.append(notes)
         view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
-        return ui.tab_bar(tabs, str(self.active_doc), on_select=lambda i: self.select_doc(int(i)),
-                          on_close=lambda i: self.close_doc(int(i)),
+        active = _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
+        return ui.tab_bar(tabs, active, on_select=self._select_tab, on_close=self._close_tab,
                           end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
+
+    def _select_tab(self, tab_id: str) -> None:
+        """Switches to a document tab, or to the What's new tab."""
+        if tab_id == _NOTES_TAB:
+            self.updates.activate_notes()
+            return
+        self.updates.activate_notes(False)
+        self.select_doc(int(tab_id))
+
+    def _close_tab(self, tab_id: str) -> None:
+        if tab_id == _NOTES_TAB:
+            self.updates.close_notes()
+        else:
+            self.close_doc(int(tab_id))
 
     def new(self, kind: str = "form") -> Any:
         """Shows the "New" dialog: a form (name, title, template and folder) or a component (``kind``)."""
@@ -1682,8 +1703,11 @@ class Designer(App):
         """
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
-                              width="fill", height="fill")
+        if self.updates.notes_active:
+            center = _core.column([self.doc_tabs(t), self.updates.notes_view(t)], width="fill", height="fill")
+        else:
+            center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                                  width="fill", height="fill")
         body = _core.container(_core.column([
             self.title_bar(t),
             docks.workspace(self, center, t),
@@ -1879,6 +1903,7 @@ class Designer(App):
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
             ui.status_item(tr("Snap"), self.toggle("snap"), icon="magnet", selected=self.snap),
+            *self.updates.status_items(t),
         ]
         if self.editing is not None:
             line, column = self.assist.cursor

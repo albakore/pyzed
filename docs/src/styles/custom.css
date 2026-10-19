@@ -78,3 +78,52 @@
 	font-family: var(--sl-font-mono);
 	font-size: var(--sl-text-sm);
 }
+
+/* Landing page and download page (src/components/landing, src/components/Download.astro). */
+:root {
+	--pz-accent-text: #74ade8;
+	--pz-gradient: linear-gradient(100deg, #61afef 0%, #c678dd 55%, #e5c07b 100%);
+	--pz-glow: radial-gradient(closest-side, rgb(97 175 239 / 0.55), rgb(198 120 221 / 0.25), transparent);
+	--pz-glow-strong: radial-gradient(closest-side, rgb(97 175 239 / 0.6), rgb(198 120 221 / 0.35) 60%, transparent);
+	--pz-frame-border: color-mix(in srgb, var(--sl-color-gray-5) 80%, transparent);
+	--pz-frame-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 60px -20px rgb(0 0 0 / 0.65);
+	--pz-tile-bg: linear-gradient(180deg, color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent), transparent);
+}
+:root[data-theme='light'] {
+	--pz-accent-text: #2f5fc4;
+	--pz-gradient: linear-gradient(100deg, #2f6fd6 0%, #9a3fbf 55%, #c0841a 100%);
+	--pz-glow: radial-gradient(closest-side, rgb(64 120 242 / 0.35), rgb(166 38 164 / 0.15), transparent);
+	--pz-glow-strong: radial-gradient(closest-side, rgb(64 120 242 / 0.4), rgb(166 38 164 / 0.2) 60%, transparent);
+	--pz-frame-border: var(--sl-color-gray-5);
+	--pz-frame-shadow: 0 24px 60px -24px rgb(30 40 70 / 0.35);
+	--pz-tile-bg: linear-gradient(180deg, var(--sl-color-gray-7), transparent);
+}
+
+/* A hero without an image (the landing page) is centered; the screenshot follows it, full width. */
+.hero:not(:has(> img, > .hero-html)) {
+	grid-template-columns: 100%;
+	padding-block: clamp(2.5rem, 1rem + 8vmin, 6rem) 1rem;
+	position: relative;
+}
+.hero:not(:has(> img, > .hero-html)) .stack {
+	text-align: center;
+}
+.hero:not(:has(> img, > .hero-html)) .copy {
+	align-items: center;
+}
+.hero:not(:has(> img, > .hero-html)) .copy > * {
+	max-width: 46rem;
+}
+.hero:not(:has(> img, > .hero-html)) h1 {
+	font-weight: 750;
+	letter-spacing: -0.02em;
+}
+.hero:not(:has(> img, > .hero-html)) .actions {
+	justify-content: center;
+}
+.pz-gradient-text {
+	background: var(--pz-gradient);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}

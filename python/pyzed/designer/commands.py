@@ -105,10 +105,14 @@ ACTIONS: Tuple[Action, ...] = (
            global_keys=True),
     Action("docs", "Documentation", "Help", lambda d: d.open_docs(), "book-open"),
     Action("issue", "Report a problem", "Help", lambda d: d.open_url(ISSUES_URL), "bug"),
+    Action("whats_new", "What's new", "Help", lambda d: d.updates.show_notes(), "sparkles"),
+    Action("check_updates", "Check for updates", "Help", lambda d: d.updates.check(), "refresh-cw"),
+    Action("auto_updates", "Check for updates automatically", "Help", lambda d: d.updates.toggle_auto(),
+           "calendar-clock", checked=lambda d: d.prefs.check_updates),
     Action("about", "About Pyzed Design", "Help", lambda d: d.open_dialog_named("about"), "info"),
 )
 
-DOCS_URL = "https://albakore.github.io/pyzed/guides/designer/"
+DOCS_URL = "https://albakore.github.io/pyzed/editor/"
 ISSUES_URL = "https://github.com/albakore/pyzed/issues"
 
 #: Shortcuts that are not commands of their own, for the reference list.

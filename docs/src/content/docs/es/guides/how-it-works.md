@@ -69,4 +69,4 @@ cargo fmt --check && cargo clippy -- -D warnings
 ```
 
 La documentación vive en [`docs/`](https://github.com/albakore/pyzed/tree/main/docs). Ver
-[cómo editar la documentación](/pyzed/es/guides/contributing-docs/).
+[cómo editar la documentación](/pyzed/es/contributing/docs/).

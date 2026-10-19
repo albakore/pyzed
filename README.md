@@ -245,6 +245,18 @@ documentación, errores en línea, code lens y una configuración propia (tema, 
 
 ![Autocompletado en el editor de código](https://raw.githubusercontent.com/albakore/pyzed/main/docs/screenshots/designer-completion.png)
 
+## Servidor MCP para agentes de IA
+
+`pyzed mcp` conecta Claude, Cursor, VS Code y otros agentes a Pyzed: consultan cada componente y su firma,
+leen la documentación y las buenas prácticas, generan apps, componentes y formularios, validan el código y ven
+una captura del resultado.
+
+```bash
+claude mcp add pyzed -- uvx --from "pyzed-ui[mcp]" pyzed mcp
+```
+
+Guía completa en `docs/src/content/docs/guides/mcp.md`.
+
 ## Temas
 
 ```python

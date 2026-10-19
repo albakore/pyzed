@@ -5,6 +5,11 @@ sidebar:
   order: 0
 ---
 
+:::tip[Biblioteca de componentes]
+Cada componente tiene ahora su propia página, con vista previa, ejemplos y su API completa, en la
+[biblioteca de componentes](/pyzed/es/library/). Esta página se mantiene como resumen.
+:::
+
 `pyzed.ui` es una colección de componentes listos para usar que reproducen el aspecto del editor
 [Zed](https://zed.dev). Son **funciones** que devuelven widgets, así que se combinan libremente
 con los [widgets base](/pyzed/es/reference/widgets/) y entre sí.

@@ -1,0 +1,108 @@
+---
+// A responsive grid of small feature tiles, each linking to its guide; some with a screenshot.
+import { Icon } from '@astrojs/starlight/components';
+import Shot from './Shot.astro';
+
+type IconName = Parameters<typeof Icon>[0]['name'];
+interface Props {
+	items: { title: string; text: string; href: string; icon: IconName; shot?: string; alt?: string; wide?: boolean }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="pz-tiles not-content">
+	{
+		items.map((item) => (
+			<a class:list={['pz-tile', { wide: item.wide, 'with-shot': item.shot }]} href={item.href}>
+				<span class="icon">
+					<Icon name={item.icon} size="1.25rem" />
+				</span>
+				<span class="title">{item.title}</span>
+				<span class="text" set:html={item.text} />
+				{item.shot && <Shot class="tile-shot" name={item.shot} alt={item.alt ?? ''} sizes="(min-width: 50rem) 32rem, 100vw" />}
+			</a>
+		))
+	}
+</div>
+
+<style>
+	.pz-tiles {
+		display: grid;
+		grid-template-columns: 100%;
+		gap: 1rem;
+		margin-block-start: 2.5rem !important;
+	}
+	@media (min-width: 40rem) {
+		.pz-tiles {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (min-width: 64rem) {
+		.pz-tiles {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+		}
+		.pz-tile.wide {
+			grid-column: span 2;
+		}
+	}
+	.pz-tile {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		padding: 1.25rem;
+		border-radius: 0.9rem;
+		border: 1px solid var(--pz-frame-border);
+		background: var(--pz-tile-bg);
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+		overflow: hidden;
+		transition:
+			border-color 0.15s ease,
+			transform 0.15s ease;
+	}
+	.pz-tile:hover {
+		border-color: var(--sl-color-accent);
+		transform: translateY(-2px);
+	}
+	.icon {
+		display: inline-grid;
+		place-items: center;
+		width: 2.4rem;
+		height: 2.4rem;
+		border-radius: 0.6rem;
+		color: var(--pz-accent-text);
+		background: color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
+		border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+	}
+	.title {
+		margin-top: 0.35rem;
+		font-size: var(--sl-text-lg);
+		font-weight: 650;
+		color: var(--sl-color-white);
+	}
+	.text {
+		font-size: var(--sl-text-sm);
+		line-height: 1.6;
+	}
+	.text :global(code) {
+		font-family: var(--sl-font-mono);
+		font-size: 0.9em;
+		color: var(--sl-color-white);
+	}
+	.pz-tile :global(.tile-shot) {
+		margin-top: auto;
+		transform: translateY(1.25rem);
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		margin-bottom: 0;
+	}
+	.with-shot .text {
+		margin-bottom: 1rem;
+	}
+	.pz-tile :global(.tile-shot img) {
+		height: 13rem;
+		object-fit: cover;
+		object-position: top left;
+	}
+</style>

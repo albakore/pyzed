@@ -1,0 +1,54 @@
+---
+// A framed, optimized screenshot. With `light`, shows that image instead in the light theme.
+import { Image } from 'astro:assets';
+import { shot } from './shots';
+
+interface Props {
+	name: string;
+	light?: string;
+	alt: string;
+	sizes?: string;
+	eager?: boolean;
+	class?: string;
+}
+
+const { name, light, alt, sizes = '(min-width: 72rem) 36rem, 100vw', eager = false, class: className } = Astro.props;
+const dark = shot(name);
+const lightImage = light ? shot(light) : undefined;
+const widths = [640, 960, 1440, 1920, 2880].filter((w) => w <= dark.width);
+if (!widths.length) widths.push(dark.width);
+const attrs = {
+	alt,
+	sizes,
+	widths,
+	loading: eager ? ('eager' as const) : ('lazy' as const),
+	decoding: 'async' as const,
+	fetchpriority: eager ? ('high' as const) : undefined,
+};
+---
+
+<figure class:list={['pz-shot', className]}>
+	<Image src={dark} {...attrs} class={lightImage ? 'pz-only-dark' : undefined} />
+	{lightImage && <Image src={lightImage} {...attrs} class="pz-only-light" />}
+</figure>
+
+<style>
+	.pz-shot {
+		margin: 0;
+		border-radius: 0.75rem;
+		overflow: hidden;
+		border: 1px solid var(--pz-frame-border);
+		box-shadow: var(--pz-frame-shadow);
+		background: var(--sl-color-gray-6);
+		line-height: 0;
+	}
+	.pz-shot :global(img) {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	:global(:root[data-theme='light']) .pz-shot :global(.pz-only-dark),
+	:global(:root:not([data-theme='light'])) .pz-shot :global(.pz-only-light) {
+		display: none;
+	}
+</style>

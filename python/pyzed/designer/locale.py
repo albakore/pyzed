@@ -217,6 +217,26 @@ _ES = {
     "{count} reference": "{count} referencia", "{count} references": "{count} referencias",
     "{count} implementation": "{count} implementación", "{count} implementations": "{count} implementaciones",
     "on {event}": "en {event}",
+    # Updates
+    "Check for updates": "Buscar actualizaciones", "What's new": "Novedades",
+    "Check for updates automatically": "Buscar actualizaciones automáticamente",
+    "Pyzed Design {version} is available": "Pyzed Design {version} está disponible",
+    "Open What's new to see the changes and update.": "Abre Novedades para ver los cambios y actualizar.",
+    "Pyzed Design is up to date": "Pyzed Design está actualizado",
+    "Could not check for updates": "No se pudo buscar actualizaciones",
+    "No build for this platform": "No hay versión para esta plataforma",
+    "Update downloaded": "Actualización descargada",
+    "Restart Pyzed Design to finish.": "Reinicia Pyzed Design para terminar.",
+    "The update failed": "La actualización falló", "Restart to update": "Reiniciar para actualizar",
+    "Loading the release notes…": "Cargando las notas de la versión…",
+    "Could not load the release notes: {error}": "No se pudieron cargar las notas de la versión: {error}",
+    "What's new in {version}": "Novedades de {version}", "Update to {version}": "Actualizar a {version}",
+    "Downloading update… {percent}%": "Descargando actualización… {percent}%",
+    "Installed": "Instalada", "New": "Nueva", "Download and install": "Descargar e instalar",
+    "Skip this version": "Omitir esta versión", "or": "o",
+    "Upgrade the package to get it:": "Actualiza el paquete para tenerla:",
+    "you have {version}": "tienes la {version}", "Open on GitHub": "Abrir en GitHub",
+    "No notes for this version.": "Esta versión no tiene notas.",
 }
 
 i18n.add("es", {"designer": _ES})
