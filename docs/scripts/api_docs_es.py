@@ -1598,3 +1598,512 @@ _section("ui", "Selector de color", {
     "pyzed.ui.checkerboard": {"desc": "Un damero claro/oscuro para dibujar bajo colores translúcidos.",
                               "params": {"width": "Ancho.", "height": "Alto.", "size": "Tamaño de celda."}},
 })
+
+# -- Todo lo demás, descrito por los docstrings del código ---------------------
+# Las entradas con "docstring": True no muestran tabla de parámetros (se describen en el texto);
+# en español cada una necesita su "desc", traducción del docstring completo.
+_D = {"docstring": True}
+
+
+def _d(desc, **extra):
+    """Una entrada ``docstring`` con su traducción (sangría quitada)."""
+    import inspect
+
+    return {**_D, "desc": inspect.cleandoc(desc), **extra}
+
+
+_section("app", "Hot reload", {
+    "pyzed.hot_reload.enable": _d("Inicia el hot reload para `app` (una instancia de `App` en marcha) y devuelve el reloader."),
+    "pyzed.hot_reload.current": _d("El `Reloader` activo, o `None` cuando el hot reload está apagado."),
+    "pyzed.hot_reload.is_reloading": _d("`True` mientras una recarga vuelve a ejecutar los módulos."),
+    "pyzed.hot_reload.enabled_by_env": _d("Si `PYZED_RELOAD` pide hot reload (`1`, `true`, `yes` u `on`)."),
+    "pyzed.hot_reload.Reloader": _d("""
+        Vigila los archivos del proyecto y recarga el código modificado en una app en marcha.
+
+        `app` es la instancia de `App` en marcha. `paths` son carpetas o archivos extra que
+        vigilar; por defecto se vigila la carpeta del módulo que define la clase de la app.
+        `interval` es cada cuántos segundos se comprueba si hay cambios.
+
+        La mayoría de los programas nunca crean uno a mano: lo hace `pz.run(app, reload=True)`.
+    """),
+    "pyzed.hot_reload.ReloadError": _d("Lo lanza `view()` mientras la última recarga haya fallado; la ventana muestra su mensaje."),
+}, before="Idiomas")
+_section("app", "Eventos y componentes", {
+    "pyzed.component.State": _d("El valor por defecto de una variable de estado declarada en la clase (ver `state`)."),
+    "pyzed.component.StateInfo": _d("Una variable de estado declarada con `pz.state`: su nombre, anotación, valor por defecto y descripción."),
+    "pyzed.component.PropInfo": _d("Una prop: su nombre, anotación de tipo (puede ser un texto) y valor por defecto."),
+    "pyzed.component.find": _d("La clase de componente registrada como `type_name` (ver `Component.type_name`)."),
+    "pyzed.component.registered": _d("Todas las subclases de `Component` definidas hasta ahora que deben aparecer en el diseñador."),
+    "pyzed.component.render_pass": _d("""
+        Registra los componentes renderizados mientras `owner` (una ventana) ejecuta su `view()`.
+
+        Los componentes que no se vuelven a renderizar se desmontan al final. El runtime lo hace
+        en cada ventana; úsalo tú solo para renderizar componentes fuera de una ventana.
+    """),
+    "pyzed.events.EventInfo": _d("La documentación de un evento: su grupo y qué informa."),
+    "pyzed.events.accepts_argument": _d("""
+        Si `handler` recibe el evento: tiene un parámetro posicional obligatorio o `*args`.
+
+        Los parámetros con valor por defecto no cuentan, así que `lambda i=i: ...` se llama sin nada.
+        La respuesta se guarda en caché por función.
+    """),
+})
+_section("app", "Eventos y componentes", {
+    "pyzed.component.LIFECYCLE_EVENTS": {"desc": "Los nombres de los eventos de ciclo de vida que lanza todo componente (`mount`, `unmount`...).", "no_signature": True},
+    "pyzed.events.CATALOG": {"desc": "Todos los nombres de evento que conoce Pyzed, con su `EventInfo` (qué lo lanza y qué contiene `event.value`).", "no_signature": True},
+    "pyzed.events.COMMON": {"desc": "Los eventos que acepta todo widget con `widget.on(...)` (clic, hover, foco, teclas...).", "no_signature": True},
+})
+_section("app", "Idiomas", {
+    "pyzed.i18n.normalize": _d('`"es-AR"`, `"es_AR.UTF-8"` -> `"es_ar"`.'),
+})
+_section("widgets", "Layout", {
+    "pyzed.layout.FlexItem": _d("Un hijo de `pz.flex` con su propio tamaño; se crea con `pz.flex_item`."),
+})
+_section("widgets", "Estilos", {
+    "pyzed.style.global_style": _d("El estilo fijado con `set_style` (`None` si no hay)."),
+    "pyzed.style.named_styles": _d("Los estilos definidos con `define_style`, por nombre."),
+    "pyzed.style.apply_global": _d("`view` con el estilo global de una ventana: las propiedades de texto completan lo que los textos no fijan."),
+    "pyzed.style.themed": _d("`theme` con el color de texto, el fondo, el color de borde, el tamaño y el radio de un estilo global."),
+    "pyzed.style.to_hex": _d('Cualquier color como `"#rrggbb"` o `"#rrggbbaa"` (con los tokens del tema resueltos).'),
+    "pyzed.style.paint_from_dict": _d("Reconstruye un `Gradient` o un `Paint` guardado con `to_dict()`."),
+})
+
+PAGES.append({
+    "slug": "designer",
+    "title": "Diseñador visual (pyzed.designer)",
+    "description": "Ejecuta, abre y crea formularios desde código, y registra componentes y plantillas de la caja de herramientas.",
+    "order": 10,
+    "intro": """
+        `pyzed.designer` es el lado en código del [diseñador visual](/pyzed/es/guides/designer/): ejecuta archivos
+        `.pzform`, abre formularios como ventanas, crea formularios en código y amplía la caja de herramientas con
+        tus propios componentes y plantillas. Los [componentes diseñados](/pyzed/es/guides/component-designer/)
+        (`.pzcomp`) también se cargan desde aquí.
+
+        ```python
+        from pyzed import designer
+
+        designer.run("ui/main.pzform", reload=True)
+        ```
+    """,
+    "sections": [
+        ("Ejecutar formularios", {
+            "pyzed.designer.run": _d("""
+                Ejecuta el formulario de `path` con toda la lógica conectada en el diseñador.
+
+                `reload=True` activa el hot reload: guardar el formulario (desde el diseñador o a mano)
+                o su módulo de handlers actualiza la ventana en marcha sin reiniciarla. `None`
+                sigue a `PYZED_RELOAD`, como `pz.run`.
+            """),
+            "pyzed.designer.load": _d("Lee un archivo `.pzform`."),
+            "pyzed.designer.open_form": _d("""
+                Carga un `.pzform` y sus handlers en una `FormApp` lista para `run()` o `screenshot()`.
+
+                Si el formulario pertenece a un proyecto (ver `pyzed.project`), primero se activa el proyecto
+                para que sus handlers puedan importar el backend y los paquetes de su `.venv`.
+            """),
+            "pyzed.designer.open_window": _d("Un `Command` que abre `form` en una ventana nueva (los argumentos son los de `form_window`)."),
+            "pyzed.designer.form_window": _d("""
+                Una `FormWindow` para `form` (una ruta o nombre de `.pzform`, o un `Form`), lista para abrirse.
+
+                Un formulario cargado de un archivo recibe su módulo de handlers; un `Form` creado en código usa
+                `handlers` (un dict de funciones). `data` llega al formulario nuevo como `form.data`.
+            """),
+            "pyzed.designer.new_form": _d("""
+                Crea `path` (se añade `.pzform` si falta) y su módulo de handlers a partir de `template`.
+
+                El formulario toma el nombre del archivo (`order-details.pzform` -> `OrderDetails`).
+
+                Devuelve la ruta del formulario. Lanza `FileExistsError` si ya existe, salvo con `overwrite`.
+            """),
+            "pyzed.designer.save": _d("Escribe `form` en `path` (se añade `.pzform` cuando no tiene extensión)."),
+            "pyzed.designer.open_document": _d("Abre un `.pzform` como `Document` o un `.pzcomp` como `SceneDocument`."),
+            "pyzed.designer.design": _d("Abre el diseñador visual, opcionalmente sobre un archivo `.pzform` (que se crea al guardar por primera vez)."),
+        }),
+        ("Formularios y controles", {
+            "pyzed.designer.Form": _d("""
+                Una ventana diseñada visualmente: sus ajustes, sus controles (en orden z) y sus eventos.
+
+                `theme` es cualquier nombre de tema registrado; `accent`, `radius` y `font_size`
+                lo ajustan sin escribir un archivo de tema. `style` es el estilo global del formulario
+                (`pz.Style.to_dict()`), aplicado a toda la ventana. `grid` es el paso de ajuste del diseñador.
+            """),
+            "pyzed.designer.Control": _d("""
+                Un componente colocado en un formulario.
+
+                `x`, `y`, `width` y `height` están en píxeles lógicos relativos al área cliente del
+                formulario, o a la esquina superior izquierda de `parent` cuando el control está dentro de un
+                contenedor (un panel, un group box, una fila flex...). `props` guarda las propiedades propias
+                del componente (`text`, `checked`...) y `events` asocia nombres de evento (`"click"`) a
+                nombres de función handler. `layout` guarda opciones que lee el layout del padre, como
+                `grow` en una fila flex o `span` en una grid. `style` guarda propiedades de estilo tipo CSS
+                (`pz.Style.to_dict()`: fondo, borde, radio, fuente...) que se dibujan por encima de las props.
+            """),
+            "pyzed.designer.Event": _d("Lo que recibe un handler además del formulario: quién lo lanzó, qué evento y su valor."),
+            "pyzed.designer.FormApp": _d("""
+                Un formulario como ventana principal de la aplicación.
+
+                `path` (lo fija `open_form`) es el archivo `.pzform`; con el hot reload activo, guardarlo
+                o guardar su módulo de handlers actualiza la ventana en marcha.
+            """),
+            "pyzed.designer.FormWindow": _d("Un formulario en una ventana extra (`form.open(...)`, `designer.open_window` y la vista previa del diseñador)."),
+            "pyzed.designer.Document": _d("""
+                Un formulario abierto en el diseñador.
+
+                `code` es el texto del módulo de handlers, guardado en memoria y escrito junto al
+                formulario al hacer `save`. `selection` guarda nombres de controles, el principal primero.
+            """),
+        }),
+        ("Caja de herramientas", {
+            "pyzed.designer.Component": _d("Una entrada de la caja de herramientas: cómo se ve, se comporta y se configura un control de este `type`."),
+            "pyzed.designer.Prop": _d("""
+                Una propiedad que se muestra en la rejilla de propiedades del diseñador.
+
+                `kind` elige el editor: text, multiline, number, bool, color, choice (de
+                `choices`), list (un elemento por línea), rows (filas separadas por comas, la primera es la
+                cabecera) o icon (un nombre de icono de Lucide).
+            """),
+            "pyzed.designer.RenderContext": _d("""
+                Lo que necesita el `render` de un componente: el tema y una forma de lanzar eventos.
+
+                `live` es `False` en el diseñador, donde los callbacks son marcadores inertes para que
+                los controles se vean habilitados pero no hagan nada.
+            """),
+            "pyzed.designer.register": _d("Añade (o reemplaza) un componente en la caja de herramientas."),
+            "pyzed.designer.component": _d("Devuelve el componente registrado para `type_`; lanza `KeyError` con la lista de tipos conocidos."),
+            "pyzed.designer.all_components": _d("Devuelve todos los componentes registrados, en orden de registro."),
+            "pyzed.designer.categories": _d("Devuelve los componentes registrados agrupados por `category` (secciones de la caja de herramientas), en orden de registro."),
+            "pyzed.designer.Template": _d("Un punto de partida para formularios nuevos."),
+            "pyzed.designer.register_template": _d("Añade (o reemplaza, por nombre) una plantilla del diálogo \"Nuevo formulario\"; la devuelve."),
+            "pyzed.designer.templates": _d("Devuelve las plantillas de formulario registradas, en orden de registro."),
+        }),
+        ("Componentes diseñados", {
+            "pyzed.designer.new_component": _d("""
+                Un componente diseñado nuevo (aún sin guardar; llama a `save()`): su escena y una clase vacía.
+
+                `extends` es el `.pzcomp` de un componente del que heredar: la clase nueva deriva
+                de él y empieza con sus controles, propiedades, eventos y métodos.
+            """),
+            "pyzed.designer.load_component": _d("""
+                Importa la clase del componente guardado en `path` (de nuevo, para recoger los cambios).
+
+                Definir la clase la registra en la caja de herramientas, reemplazando una versión anterior. Devuelve
+                la clase, o `None` (con el motivo en `errors`) si su código falla al importarse.
+            """),
+            "pyzed.designer.import_component": _d("""
+                La clase del componente diseñado guardado en `scene`, para heredar de ella.
+
+                Una ruta relativa es relativa al módulo que la llama, así que un componente puede extender
+                otro que esté a su lado:
+
+                ```python
+                Rating = import_component("rating.pzcomp")
+
+                class BigRating(Rating, scene="big_rating.pzcomp"):
+                    ...
+                ```
+
+                La clase se importa una vez y se reutiliza hasta que cambia su código.
+            """),
+            "pyzed.designer.discover": _d("""
+                Importa todos los componentes diseñados bajo `root` (por defecto, la carpeta actual).
+
+                Los componentes pueden usarse entre sí, así que una importación fallida se reintenta cuando
+                los demás ya cargaron (`errors` guarda lo que siga fallando).
+            """),
+            "pyzed.designer.SceneDocument": _d("""
+                Un componente abierto en el diseñador: su escena, el código de su clase, la selección y el deshacer.
+
+                Funcionan todos los comandos de `Document` (colocar, mover, alinear controles...). Los eventos
+                de los controles se convierten en métodos de la clase (`def ok_click(self, event)`), y los
+                eventos propios del componente son sus métodos de ciclo de vida (`setup`, `on_mount`...).
+                Las propiedades y los eventos personalizados se leen de la clase y se escriben de vuelta en ella.
+            """),
+            "pyzed.designer.Scene": _d("""
+                El layout de un componente diseñado: un `Form` cuyo `name` es el nombre de la clase.
+
+                `bindings` asocia un nombre de control a `{propiedad del control: expresión}`; la
+                expresión (normalmente una propiedad del componente, como `value`, o cualquier expresión de
+                Python sobre ellas, como `f"{value} stars"`) se evalúa en cada render.
+            """),
+            "pyzed.designer.SceneComponent": _d("""
+                Clase base de los componentes creados en el modo componente del diseñador.
+
+                `scene` es el archivo `.pzcomp` con el layout, relativo al módulo. La etiqueta, el icono,
+                la categoría, la descripción y el tamaño por defecto en la caja de herramientas salen de la escena
+                salvo que la clase los fije.
+            """),
+            "pyzed.designer.render": _d("Dibuja `control` a su tamaño (con sus props, o los valores por defecto del componente si faltan)."),
+        }),
+        ("Ayudas de layout", {
+            "pyzed.designer.align": _d("""
+                Alinea controles en `edge` (left, center, right, top, middle, bottom).
+
+                Con `to` (p. ej. el rectángulo del formulario) se alinean a él; si no, a los límites de la
+                selección, o al formulario cuando se pasa un solo control mediante `to`.
+            """),
+            "pyzed.designer.distribute": _d('Reparte tres o más controles con el mismo espacio en `"horizontal"` o `"vertical"`.'),
+            "pyzed.designer.same_size": _d('Da a todos los controles el `"width"`, `"height"` o `"both"` de `reference` (el primero).'),
+            "pyzed.designer.snap": _d("Redondea `value` al múltiplo más cercano de `grid` (sin cambios si está desactivado)."),
+            "pyzed.designer.smart_guides": _d("""
+                Ajusta un rectángulo en movimiento a los bordes y centros de `others` y del formulario.
+
+                Devuelve `(dx, dy, lines)`: la corrección a aplicar y las líneas guía a dibujar
+                (como cajas finas `(x1, y1, x2, y2)`), como las guías de alineación de Figma o Qt Designer.
+            """),
+            "pyzed.designer.anchored": _d("""
+                Dónde va un control cuando su formulario pasa del tamaño `design` al tamaño `actual`.
+
+                Como los anclajes de WinForms: un borde anclado al formulario mantiene su distancia a ese
+                lado; anclado a ambos lados se estira; anclado a ninguno mantiene su posición
+                relativa (los controles centrados siguen centrados).
+            """),
+        }),
+        ("App del diseñador", {
+            "pyzed.designer.Designer": _d("El editor visual de formularios.", members=False),
+            "pyzed.designer.EditorSettings": _d(
+                "Los ajustes del editor de código del diseñador (un dataclass): `theme`, `font_size`, `tab_size`, "
+                "`show_whitespace`, `wrap`, `line_numbers`, `highlight_line`, `autocomplete`, `code_lens`, "
+                "`inline_diagnostics`, `format_on_apply`, `auto_close`, `folding`, `minimap`, `cursor_shape`, "
+                "`cursor_blink`, `ty` y `ruff`."
+            ),
+            "pyzed.designer.History": _d("Instantáneas de un formulario: `push` tras una edición, y luego `undo`/`redo` para moverse entre ellas."),
+            "pyzed.designer.theme_for": _d("El tema con el que se ejecuta un formulario: su tema base más los ajustes de acento, radio, fuente y fondo."),
+            "pyzed.designer.COMMON_EVENTS": {"desc": "Los eventos que cualquier control puede manejar en el panel Eventos del diseñador.", "no_signature": True},
+            "pyzed.designer.FORM_EVENTS": {"desc": "Los eventos del propio formulario (`load`, `close`, `resize`, `key`...).", "no_signature": True},
+        }),
+    ],
+})
+
+# -- Métodos y propiedades ------------------------------------------------------
+# El texto de cada miembro de clase en "Métodos y propiedades" (en inglés sale del docstring).
+MEMBERS = {
+    # App y Window
+    "pyzed.App.subscriptions": "Temporizadores y streams que deben estar activos ahora mismo (se reevalúa tras cada update).",
+    "pyzed.App.run": "Abre la ventana y bloquea hasta que la app termina.",
+    "pyzed.App.screenshot": "Renderiza el estado actual fuera de pantalla (sin GPU ni display) en un PNG.",
+    "pyzed.Window.view": "Devuelve el widget raíz de la ventana; las subclases deben sobrescribirlo.",
+    "pyzed.Window.update": "Gestiona un mensaje producido en esta ventana (por defecto lo reenvía a la app).",
+    "pyzed.Window.on_close": "Se llama cuando el usuario pide cerrar la ventana. Devuelve `False` para mantenerla abierta.",
+    "pyzed.Window.is_open": "Si la ventana está abierta ahora.",
+    "pyzed.Window.open": "Un comando que abre esta ventana: `return settings.open()`.",
+    "pyzed.Window.close": "Un comando que cierra esta ventana: `on_press=self.close`.",
+    "pyzed.Window.drag": "Un comando que empieza a mover la ventana (para barras de título propias).",
+    "pyzed.Window.resolved_theme": "El tema concreto que usa ahora esta ventana (con los colores y tamaños de su estilo global).",
+    "pyzed.Window.resolved_style": "El estilo global de esta ventana: `pz.set_style` con su propio `style` (o el de la app) encima.",
+    "pyzed.Event.position": "`(x, y)`.",
+    "pyzed.Event.size": "`(width, height)`.",
+    # Dock
+    "pyzed.Dock.side_of": "Devuelve el lado en que está acoplado un panel: su posición guardada si es válida, si no `panel.side`.",
+    "pyzed.Dock.groups": "Devuelve los paneles agrupados por lado (están todos los lados, quizá con una lista vacía).",
+    "pyzed.Dock.snapshot": "Devuelve la disposición como un dict simple (`positions`, `sizes`, `active`, `hidden`).",
+    "pyzed.Dock.changed": "Emite `layout` con la instantánea actual.",
+    "pyzed.Dock.move": "Acopla un panel en otro lado y lo hace la pestaña activa allí.",
+    "pyzed.Dock.select": "Hace de `panel_id` la pestaña activa en `side` (un clic en la pestaña) y emite `layout`.",
+    "pyzed.Dock.toggle": "Muestra u oculta un lado entero.",
+    "pyzed.Dock.resized": "Guarda el nuevo `size` (en píxeles) de `side` tras arrastrar su borde y emite `layout`.",
+    "pyzed.Dock.start_drag": "Empieza a arrastrar la pestaña de un panel: aparecen las zonas de soltar y se cierra el menú de la pestaña.",
+    "pyzed.Dock.end_drag": "Termina el arrastre de una pestaña y oculta las zonas de soltar, recordando el panel para un `drop` tardío.",
+    "pyzed.Dock.drop": "Mueve el panel arrastrado a `side` al soltarlo en esa zona; no hace nada si no hay ninguno.",
+    "pyzed.Dock.tab": "Construye la pestaña de un panel en la cabecera de un lado.",
+    "pyzed.Dock.move_menu": "Construye el menú contextual que mueve `panel` a cualquier lado distinto de `side`.",
+    "pyzed.Dock.side_view": "Construye un lado: una cabecera con las pestañas de los paneles sobre el contenido del panel activo.",
+    "pyzed.Dock.drop_zones": "Construye las cuatro zonas de soltar (una por lado) que se muestran sobre el dock mientras se arrastra una pestaña.",
+    # Component
+    "pyzed.Component.create": "Una instancia suelta (sin renderizar ni ciclo de vida), útil en tests: `c.render()`.",
+    "pyzed.Component.setup": "Se llama una vez antes del primer render (las props ya están puestas): inicializa aquí el estado.",
+    "pyzed.Component.render": "Devuelve los widgets de este componente (se llama en cada render).",
+    "pyzed.Component.on_mount": "Se llama tras el primer render; puede devolver un `Command` o un mensaje.",
+    "pyzed.Component.on_unmount": "Se llama cuando el componente deja de renderizarse.",
+    "pyzed.Component.emit": "Lanza el evento personalizado `name`: llama al handler que el padre pasó como `on_<name>`.",
+    "pyzed.Component.handles": "Si el padre pasó un handler para el evento personalizado `name`.",
+    "pyzed.Component.describe": "El primer párrafo del docstring (se muestra en el diseñador).",
+    "pyzed.Component.designer_spec": "Este componente como entrada de la caja de herramientas del diseñador (`pyzed.designer.Component`).",
+    "pyzed.component.PropInfo.required": "Si la prop no tiene valor por defecto y hay que pasarla.",
+    # Hot reload
+    "pyzed.hot_reload.Reloader.watch": "Llama a `callback(path)` en el hilo de la UI cada vez que cambia `path`.",
+    "pyzed.hot_reload.Reloader.project_modules": "Los módulos cargados cuyos archivos pertenecen al proyecto, por ruta de archivo.",
+    "pyzed.hot_reload.Reloader.scan": "Revisa una vez cada archivo vigilado y devuelve los que cambiaron.",
+    "pyzed.hot_reload.Reloader.start": "Arranca el hilo vigilante y hace de este el reloader actual.",
+    "pyzed.hot_reload.Reloader.stop": "Deja de vigilar archivos.",
+    "pyzed.hot_reload.Reloader.reload": "Recarga ahora el código de los archivos de `changed` (llámalo en el hilo de la UI).",
+    # Estilos
+    "pyzed.Style.get": "Devuelve el valor de una propiedad (se aceptan alias), o `default` si no está fijada.",
+    "pyzed.Style.merge": "Un estilo nuevo con `styles` y `props` encima de este.",
+    "pyzed.Style.without": "Un estilo nuevo sin estas propiedades.",
+    "pyzed.Style.text": "Solo las propiedades de texto (lo que un estilo pasa a los textos de dentro).",
+    "pyzed.Style.to_dict": "Las propiedades en formato apto para JSON (los gradientes y pinturas pasan a ser dicts).",
+    "pyzed.Style.from_dict": "Crea un estilo a partir de datos hechos con `to_dict` (se aceptan alias).",
+    "pyzed.Gradient.to_value": '`(angle, [(offset, "#rrggbbaa"), ...])`, la forma que los widgets aceptan como `gradient=`.',
+    "pyzed.Gradient.to_dict": 'Devuelve el gradiente como datos listos para JSON: `{"type": "linear", "angle", "stops"}`.',
+    "pyzed.Mask.at": "Devuelve la opacidad (0 a 1) en `offset` (0 a 1), interpolando entre paradas.",
+    "pyzed.Mask.to_dict": 'Devuelve la máscara como datos listos para JSON: `{"angle", "stops"}`.',
+    "pyzed.Paint.resolve": "`(color, gradient)`: lo que dibuja un contenedor (uno de los dos es `None`).",
+    "pyzed.Paint.to_dict": "Devuelve la pintura como datos listos para JSON: `fill`, `opacity` y `mask` cuando la hay.",
+    # pyzed.ui
+    "pyzed.ui.Log.write": "Añade una línea con nivel `level` y llama a `on_write`.",
+    "pyzed.ui.Log.clear": "Quita todas las entradas.",
+    "pyzed.ui.Log.counts": "Devuelve cuántas líneas hay por nivel, contando las repeticiones plegadas.",
+    "pyzed.ui.Log.text": "Todo como texto plano (para copiar).",
+    "pyzed.ui.Log.capturing": "Si `sys.stdout`/`sys.stderr` se están copiando al log.",
+    "pyzed.ui.Log.capture": "Copia `sys.stdout`/`sys.stderr` al log (siguen llegando a la terminal).",
+    "pyzed.ui.Log.release": "Deja de capturar y restaura los streams originales.",
+    "pyzed.ui.Log.pipe": "Lee una tubería de un subproceso (bytes o texto) línea a línea hacia el log, en un hilo en segundo plano.",
+    "pyzed.ui.LogEntry.clock": "La hora local de la entrada como `HH:MM:SS`.",
+    "pyzed.ui.Column.value": "Devuelve el valor de esta columna para `row`: `key(row)`, un elemento de dict o un atributo.",
+    "pyzed.ui.TreeNode.is_folder": "Si el nodo es una carpeta (tiene una lista `children`, aunque esté vacía).",
+    "pyzed.ui.TreeNode.from_paths": 'Crea un árbol a partir de rutas del estilo `"src/main.rs"`. Las carpetas van primero.',
+    "pyzed.ui.TreeNode.sort": "Ordena los hijos recursivamente: primero las carpetas, luego por nombre sin distinguir mayúsculas.",
+    "pyzed.ui.Tab.for_file": "Una pestaña para el archivo `path`: su nombre como etiqueta y el icono y color de archivo correspondientes.",
+    # ColorPicker
+    "pyzed.ui.ColorPicker.parts": "`(stops, angle, mask, opacity)`: una sola parada y sin ángulo para un color liso.",
+    "pyzed.ui.ColorPicker.build": "Convierte `(stops, angle, mask, opacity)` de nuevo en un color, un `Gradient` o un `Paint`.",
+    "pyzed.ui.ColorPicker.publish": "Fija el valor a partir de las partes, descarta el texto hex a medio escribir y emite `change`.",
+    "pyzed.ui.ColorPicker.current": "Devuelve el color hex que se está editando (el de la parada seleccionada).",
+    "pyzed.ui.ColorPicker.set_color": "Cambia el color de la parada seleccionada por `color` y publica el resultado.",
+    "pyzed.ui.ColorPicker.hsva": "Devuelve el color editado como `(h, s, v, a)`, cada uno de 0 a 1.",
+    "pyzed.ui.ColorPicker.pick_sv": "Fija la saturación y el valor al pulsar o arrastrar en el área de saturación/valor.",
+    "pyzed.ui.ColorPicker.pick_hue": "Fija el tono al pulsar o arrastrar en la barra de tono.",
+    "pyzed.ui.ColorPicker.pick_alpha": "Fija el alfa al pulsar o arrastrar en la barra de alfa.",
+    "pyzed.ui.ColorPicker.type_hex": "Gestiona lo que se escribe en el campo hex: aplica el texto en cuanto es un color hex válido.",
+    "pyzed.ui.ColorPicker.set_alpha_percent": "Fija el alfa desde el campo de porcentaje (0 a 100).",
+    "pyzed.ui.ColorPicker.set_mode": 'Cambia entre `"Solid"` y `"Gradient"`.',
+    "pyzed.ui.ColorPicker.set_angle": "Fija el ángulo del gradiente en grados (o el de la máscara, sobre un color liso).",
+    "pyzed.ui.ColorPicker.select_stop": "Selecciona para editar la parada del gradiente en `index`.",
+    "pyzed.ui.ColorPicker.move_stop": "Mueve una parada del gradiente adonde se pulsa la barra o según el `dx` de un arrastre.",
+    "pyzed.ui.ColorPicker.add_stop": "Añade una parada del gradiente donde se hace clic en la barra, con el color que el gradiente tiene ahí.",
+    "pyzed.ui.ColorPicker.remove_stop": "Quita la parada del gradiente seleccionada (un gradiente conserva al menos dos).",
+    "pyzed.ui.ColorPicker.toggle_mask": "Con `on` añade una máscara que va de opaco a transparente; si no, quita la máscara.",
+    "pyzed.ui.ColorPicker.select_mask_stop": "Selecciona para editar la parada de la máscara en `index`.",
+    "pyzed.ui.ColorPicker.move_mask_stop": "Mueve una parada de la máscara adonde se pulsa la barra o según el `dx` de un arrastre, manteniendo las paradas ordenadas.",
+    "pyzed.ui.ColorPicker.add_mask_stop": "Añade una parada de la máscara donde se hace clic en la barra, con la opacidad que la máscara tiene ahí (como mucho 8).",
+    "pyzed.ui.ColorPicker.set_mask_opacity": "Fija la opacidad de la parada de la máscara seleccionada (0 a 1).",
+    "pyzed.ui.ColorPicker.remove_mask_stop": "Quita la parada de la máscara seleccionada (una máscara conserva al menos dos).",
+    "pyzed.ui.ColorPicker.marker": "Un tirador redondo de color `color` centrado en `(x, y)`.",
+    "pyzed.ui.ColorPicker.area": "Una franja redondeada de capas apiladas que informa de dónde se pulsa y se arrastra.",
+    "pyzed.ui.ColorPicker.sv_area": "El cuadrado de saturación/valor del tono actual, con un marcador en el color actual.",
+    "pyzed.ui.ColorPicker.hue_bar": "La barra de tono arcoíris con un marcador en el tono actual.",
+    "pyzed.ui.ColorPicker.alpha_bar": "La barra de alfa (sobre un damero) con un marcador en el alfa actual.",
+    "pyzed.ui.ColorPicker.stops_bar": "Una barra que previsualiza `preview` con un tirador arrastrable por cada punto `(offset, value)`.",
+    # designer.Form y Control
+    "pyzed.designer.Form.get": "Devuelve el control llamado `name`, o `None` si no hay ninguno.",
+    "pyzed.designer.Form.names": "Devuelve los nombres de todos los controles, en orden z.",
+    "pyzed.designer.Form.children": "Los controles directamente dentro de `name` (el propio formulario con `None`), en orden z.",
+    "pyzed.designer.Form.descendants": "Todos los controles dentro de `name`, a cualquier profundidad (los padres antes que sus hijos).",
+    "pyzed.designer.Form.ancestors": "Los contenedores que contienen a `name`, del más cercano al más lejano.",
+    "pyzed.designer.Form.walk": "`(control, depth)` en orden de dibujo: cada control y luego lo que contiene.",
+    "pyzed.designer.Form.is_inside": "Si el control `name` está dentro de `container`, a cualquier profundidad.",
+    "pyzed.designer.Form.unique_name": "El primer `base1`, `base2`... libre (al estilo de Visual Basic).",
+    "pyzed.designer.Form.add": "Añade `control` (encima del orden z) y lo devuelve.",
+    "pyzed.designer.Form.remove": "Quita controles y todo lo que contienen.",
+    "pyzed.designer.Form.rename": "Renombra un control y devuelve el nombre usado en realidad (único y válido).",
+    "pyzed.designer.Form.reorder": 'Mueve controles al frente (`"front"`) o al fondo (`"back"`) del orden z.',
+    "pyzed.designer.Form.to_dict": 'Devuelve el formulario como datos listos para JSON: `{"format", "form": ajustes, "controls": [...]}`.',
+    "pyzed.designer.Form.from_dict": "Crea un formulario a partir de `data` guardados (ver `to_dict`), ignorando ajustes desconocidos y reparando padres rotos; lanza `ValueError` si no es un formulario de Pyzed.",
+    "pyzed.designer.Form.to_json": "Devuelve el formulario como texto JSON indentado (el contenido de un archivo `.pzform`).",
+    "pyzed.designer.Form.from_json": "Crea un formulario a partir del texto JSON `text` de un archivo `.pzform`.",
+    "pyzed.designer.Form.copy": "Devuelve una copia profunda del formulario y sus controles.",
+    "pyzed.designer.Control.rect": "El `(x, y, width, height)` del control, relativo a su padre (o al formulario).",
+    "pyzed.designer.Control.to_dict": "Devuelve el control como datos listos para JSON; `parent`, `layout` y `style` vacíos se omiten.",
+    "pyzed.designer.Control.from_dict": "Crea un control a partir de `data` guardados, ignorando claves desconocidas y anclajes no válidos.",
+    "pyzed.designer.Control.copy": "Devuelve una copia profunda del control.",
+    "pyzed.designer.FormApp.on_start": "Vigila el formulario y su módulo de handlers para el hot reload (si está activo) y luego lanza `load`.",
+    "pyzed.designer.FormWindow.on_open": "Lanza el evento `load` del formulario al abrirse la ventana.",
+    # designer.Document
+    "pyzed.designer.Document.open": "Carga en un documento nuevo el formulario de `path` y el texto de su módulo de handlers (si el archivo existe).",
+    "pyzed.designer.Document.code_path": "Dónde se guarda el módulo de handlers, o `None` mientras el formulario no tenga archivo.",
+    "pyzed.designer.Document.display_name": "El nombre que se muestra para el documento: su nombre de archivo, o `<nombre del formulario>.pzform` si no está guardado.",
+    "pyzed.designer.Document.save": "Escribe el formulario y su módulo de handlers; devuelve la ruta del formulario.",
+    "pyzed.designer.Document.commit": "Guarda un paso de deshacer tras una edición (`group` une ediciones repetidas de un mismo campo).",
+    "pyzed.designer.Document.undo": "Retrocede un paso; devuelve `False` si no había nada que deshacer.",
+    "pyzed.designer.Document.redo": "Rehace un paso deshecho; devuelve `False` si no había nada que rehacer.",
+    "pyzed.designer.Document.selected": "Los controles seleccionados, el principal primero (se saltan los nombres que ya no existen).",
+    "pyzed.designer.Document.primary": "El control seleccionado principal (el primero), o `None` si no hay nada seleccionado.",
+    "pyzed.designer.Document.select": "Selecciona los controles `names` (un nombre, varios, o `None` para ninguno); los nombres desconocidos se ignoran.",
+    "pyzed.designer.Document.select_all": "Selecciona todos los controles del formulario.",
+    "pyzed.designer.Document.is_selected": "Si el control `name` está seleccionado.",
+    "pyzed.designer.Document.add": "Coloca un control nuevo de tipo `type_` (ajustado a la cuadrícula) y lo selecciona.",
+    "pyzed.designer.Document.rects": "El rectángulo absoluto de cada control (ver `layout.resolve`).",
+    "pyzed.designer.Document.can_contain": "Si el control `name` puede moverse dentro de `container` (`None` es el formulario, que admite cualquiera): debe ser un contenedor distinto del propio control y que no esté dentro de él.",
+    "pyzed.designer.Document.reparent": "Mueve controles dentro de `parent` (o al formulario con `None`), dejándolos donde están.",
+    "pyzed.designer.Document.wrap": "Mete controles (por defecto, la selección) dentro de un contenedor nuevo de tipo `type_` que los rodea.",
+    "pyzed.designer.Document.move_out": "Saca un control de su contenedor y lo pasa al padre de ese contenedor.",
+    "pyzed.designer.Document.set_layout": "Fija una opción que lee el layout del padre (`grow`, `span`).",
+    "pyzed.designer.Document.delete": "Quita los controles seleccionados (y lo que contienen); devuelve los nombres quitados.",
+    "pyzed.designer.Document.copy": "Copia la selección, con lo que haya dentro de los contenedores seleccionados.",
+    "pyzed.designer.Document.cut": "Copia la selección al portapapeles y la borra; devuelve cuántos controles se copiaron.",
+    "pyzed.designer.Document.paste": "Añade copias del portapapeles (desplazadas `offset`) con nombres nuevos, conservando sus eventos.",
+    "pyzed.designer.Document.duplicate": "Pega al momento una copia de la selección sin tocar el portapapeles; devuelve los nombres nuevos.",
+    "pyzed.designer.Document.size": "El `(width, height)` del formulario en píxeles.",
+    "pyzed.designer.Document.nudge": "Mueve `dx`, `dy` píxeles los controles seleccionados (los que no coloca un layout), sin salirse de su contenedor cuando comparten uno; los empujones repetidos se unen en un solo paso de deshacer.",
+    "pyzed.designer.Document.align": "Alinea los controles seleccionados en `edge` (ver `geometry.align`): entre sí, o al formulario con `to_form` o cuando solo hay un control seleccionado.",
+    "pyzed.designer.Document.center": "Centra la selección (como grupo) en el formulario.",
+    "pyzed.designer.Document.distribute": "Reparte los controles seleccionados con el mismo espacio a lo largo de `axis` (ver `geometry.distribute`).",
+    "pyzed.designer.Document.same_size": "Da a los controles seleccionados el ancho, el alto o ambos (`which`) del principal.",
+    "pyzed.designer.Document.snap_to_grid": "Ajusta a la cuadrícula del formulario los controles seleccionados (o todos si no hay selección).",
+    "pyzed.designer.Document.reorder": "Mueve los controles seleccionados en el orden z (`where`: ver `Form.reorder`).",
+    "pyzed.designer.Document.set_rect": "Fija la posición y el tamaño del control `name` a partir de `rect` `(x, y, width, height)`, redondeados a píxeles enteros; las ediciones con el mismo `group` se unen en un paso de deshacer.",
+    "pyzed.designer.Document.set_prop": "Fija la propiedad `key` del control `name` a `value` (las ediciones repetidas se unen en un paso de deshacer).",
+    "pyzed.designer.Document.set_style": "Fija una propiedad de estilo de un control, o del estilo global del formulario si `name` es `None`; `None` la quita.",
+    "pyzed.designer.Document.clear_style": "Quita todas las propiedades de estilo de un control (o del estilo global del formulario).",
+    "pyzed.designer.Document.set_field": "Fija un atributo de `Control` (x, y, width, height, visible, enabled, locked, anchor).",
+    "pyzed.designer.Document.toggle_anchor": "Añade `edge` a los anclajes del control `name`, o lo quita si ya estaba.",
+    "pyzed.designer.Document.set_form": "Fija el atributo `key` del formulario (un `name` nuevo se convierte antes en un identificador válido).",
+    "pyzed.designer.Document.rename": "Renombra un control, su entrada en la selección y los handlers que siguen la convención de nombres.",
+    "pyzed.designer.Document.owner": "El nombre visible y el mapa de eventos de un control, o del formulario si `name` es `None`.",
+    "pyzed.designer.Document.events_of": "Devuelve los eventos del control `name`, o los del formulario si `name` es `None`.",
+    "pyzed.designer.Document.wire": "Conecta `event` a un handler (creando su esqueleto si hace falta) y devuelve el nombre de la función.",
+    "pyzed.designer.Document.unwire": "Desconecta `event`; con `delete_code` también quita el esqueleto si no se ha tocado.",
+    "pyzed.designer.Document.handler_source": "Devuelve el código de `handler`, o un esqueleto nuevo si aún no existe.",
+    "pyzed.designer.Document.set_handler_source": "Reemplaza el código de un handler (lanza `SyntaxError` y no cambia nada si no es válido).",
+    "pyzed.designer.Document.set_code": "Reemplaza todo el texto del módulo de handlers y marca el documento como modificado.",
+    # designer: caja de herramientas
+    "pyzed.designer.Component.default_event": "El evento que se abre al hacer doble clic en el control en el diseñador.",
+    "pyzed.designer.Component.all_events": "Los eventos propios del control seguidos, en los componentes visuales, de los eventos de ratón comunes.",
+    "pyzed.designer.Component.defaults": "Devuelve un dict nuevo con el valor por defecto de cada propiedad, por nombre.",
+    "pyzed.designer.Component.prop": "Devuelve la propiedad llamada `name`, o `None` si el componente no la tiene.",
+    "pyzed.designer.Component.create": "Un control nuevo de este tipo con las propiedades por defecto.",
+    "pyzed.designer.Prop.title": "La etiqueta que se muestra en la rejilla de propiedades: `label`, o el nombre con espacios en lugar de guiones bajos.",
+    "pyzed.designer.RenderContext.on": "Un callback para `event`; si se da `prop`, el valor también se guarda ahí.",
+    "pyzed.designer.RenderContext.key": "Un id estable para widgets con estado interno (editores, campos de texto).",
+    # designer: componentes diseñados
+    "pyzed.designer.SceneDocument.scene": "La escena del componente (el `form` del documento, tipado como `Scene`).",
+    "pyzed.designer.SceneDocument.base_file": "El `.pzcomp` que extiende este componente, o `None`.",
+    "pyzed.designer.SceneDocument.base": "La escena que extiende este componente, con todo lo que ella misma hereda (`None` si no hay).",
+    "pyzed.designer.SceneDocument.inherited": "`True` para un control que viene del componente base.",
+    "pyzed.designer.SceneDocument.own_scene": "Lo que guarda el `.pzcomp` propio de este componente: sus controles y los heredados que cambió.",
+    "pyzed.designer.SceneDocument.set_base": "Hace que este componente herede del guardado en `path` (`None` no hereda de nada).",
+    "pyzed.designer.SceneDocument.base_info": "Las clases de las que hereda este componente (la más cercana primero) como `(nombre del archivo de escena, info de la clase)`.",
+    "pyzed.designer.SceneDocument.all_members": "Las propiedades de este componente y las que hereda (los bindings pueden usar ambas).",
+    "pyzed.designer.SceneDocument.info": "La clase tal como se analizó por última vez (el último análisis correcto mientras el código tenga un error de sintaxis).",
+    "pyzed.designer.SceneDocument.code_ok": "Si el código de la clase se puede analizar ahora (si no, `info` recurre al último análisis correcto).",
+    "pyzed.designer.SceneDocument.members": "Las propiedades y el estado privado del componente tal como se declaran en su clase, en orden (una copia).",
+    "pyzed.designer.SceneDocument.member": "Devuelve la propiedad o el estado declarado llamado `name`, o `None`.",
+    "pyzed.designer.SceneDocument.unique_member": "Devuelve `base` (convertido en identificador), o `base2`, `base3`... si ya lo usa un miembro, método, control o nombre reservado.",
+    "pyzed.designer.SceneDocument.add_member": "Declara una propiedad nueva (`public=False` la convierte en estado privado).",
+    "pyzed.designer.SceneDocument.update_member": "Cambia una propiedad (`name`, `type`, `default`, `public`, `description`); devuelve su nombre.",
+    "pyzed.designer.SceneDocument.remove_member": "Quita la propiedad `name` de la clase.",
+    "pyzed.designer.SceneDocument.move_member": "Mueve la propiedad `name` `offset` posiciones en el orden de declaración de la clase (dentro de los límites).",
+    "pyzed.designer.SceneDocument.custom_events": "Los eventos que declara el componente, como `{nombre: descripción}` (una copia).",
+    "pyzed.designer.SceneDocument.add_event": "Declara un evento nuevo llamado `name` (hecho único) con `description`; devuelve su nombre.",
+    "pyzed.designer.SceneDocument.update_event": "Renombra el evento `name` a `new_name` (si es válido y está libre) y/o cambia su `description`, manteniendo su posición; devuelve el nombre del evento. Lanza `KeyError` si no existe.",
+    "pyzed.designer.SceneDocument.remove_event": "Quita de la clase el evento declarado `name`.",
+    "pyzed.designer.SceneDocument.set_class_name": "Renombra la clase del componente (convertido en un nombre de clase válido) en el código y la escena; devuelve el nombre nuevo.",
+    "pyzed.designer.SceneDocument.set_description": "Fija la descripción del componente, también como docstring de su clase.",
+    "pyzed.designer.SceneDocument.set_scene": "Fija cómo aparece el componente en la caja de herramientas (`label`, `icon`, `category`) o su tamaño.",
+    "pyzed.designer.SceneDocument.set_binding": "Hace que `prop` de `control` siga a `expression` (`None` o `\"\"` quita el binding).",
+    "pyzed.designer.SceneDocument.add_method": "Añade a la clase un método reutilizable (no un handler de evento); devuelve su nombre.",
+    "pyzed.designer.Scene.class_name": "El nombre de la clase del componente (el `name` de la escena).",
+    "pyzed.designer.Scene.bound": "Devuelve los bindings de `control` como `{propiedad: expresión}` (vacío si no tiene).",
+    "pyzed.designer.SceneComponent.scene_path": "Devuelve el archivo `.pzcomp` al que está ligada la clase, o `None`.",
+    "pyzed.designer.SceneComponent.scene_model": "La escena tal como está guardada (o previsualizada por el diseñador), o `None`.",
+    "pyzed.designer.SceneComponent.ctx": "Un contexto de render para esta instancia, con el tema de su escena (lo que necesita `ControlProxy.focus()`).",
+    # designer: app del diseñador
+    "pyzed.designer.EditorSettings.to_dict": "Devuelve los ajustes como un dict listo para JSON.",
+    "pyzed.designer.EditorSettings.from_dict": "Crea los ajustes a partir de `data` guardados, con los valores por defecto para los que falten o no sean válidos, y limitando el tamaño de tabulación, el de fuente y la forma del cursor a valores válidos.",
+    "pyzed.designer.History.push": "Guarda el estado actual del formulario; devuelve `False` si nada cambió.",
+    "pyzed.designer.History.reset": "Olvida todos los pasos de deshacer y rehacer y empieza de nuevo desde el estado actual de `form`.",
+    "pyzed.designer.History.can_undo": "Si hay un paso que deshacer.",
+    "pyzed.designer.History.can_redo": "Si hay un paso deshecho que rehacer.",
+    "pyzed.designer.History.undo": "Retrocede una instantánea; devuelve el formulario anterior (un objeto nuevo) o `None` si no hay.",
+    "pyzed.designer.History.redo": "Avanza una instantánea; devuelve el formulario restaurado (un objeto nuevo) o `None` si no hay.",
+}

@@ -488,6 +488,14 @@ Construye su contenido con `function(ancho, alto)` usando el espacio realmente d
 | --- | --- |
 | `function` | Función que recibe `(ancho, alto)` y devuelve un widget. |
 
+### `FlexItem`
+
+```python
+class FlexItem
+```
+
+Un hijo de `pz.flex` con su propio tamaño; se crea con `pz.flex_item`.
+
 ## Texto e iconos
 
 ### `text`
@@ -1351,6 +1359,57 @@ tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=1
 pz.column([...]).style(tarjeta | pz.Style(shadow=("#0006", (0, 4), 12)))
 ```
 
+**Métodos y propiedades**
+
+#### `Style.get`
+
+```python
+Style.get(key, default=None)
+```
+
+Devuelve el valor de una propiedad (se aceptan alias), o `default` si no está fijada.
+
+#### `Style.merge`
+
+```python
+Style.merge(*styles, **props)
+```
+
+Un estilo nuevo con `styles` y `props` encima de este.
+
+#### `Style.without`
+
+```python
+Style.without(*keys)
+```
+
+Un estilo nuevo sin estas propiedades.
+
+#### `Style.text`
+
+```python
+Style.text()
+```
+
+Solo las propiedades de texto (lo que un estilo pasa a los textos de dentro).
+
+#### `Style.to_dict`
+
+```python
+Style.to_dict()
+```
+
+Las propiedades en formato apto para JSON (los gradientes y pinturas pasan a ser dicts).
+
+#### `Style.from_dict`
+
+```python
+@classmethod
+Style.from_dict(data)
+```
+
+Crea un estilo a partir de datos hechos con `to_dict` (se aceptan alias).
+
 ### `define_style`
 
 ```python
@@ -1395,6 +1454,24 @@ Un gradiente lineal para fondos. Los ángulos siguen CSS: 0 arriba, 90 derecha, 
 pz.container(None, height=80).style(background=pz.Gradient(["#f97316", "#7c3aed"], angle=90))
 ```
 
+**Métodos y propiedades**
+
+#### `Gradient.to_value`
+
+```python
+Gradient.to_value()
+```
+
+`(angle, [(offset, "#rrggbbaa"), ...])`, la forma que los widgets aceptan como `gradient=`.
+
+#### `Gradient.to_dict`
+
+```python
+Gradient.to_dict()
+```
+
+Devuelve el gradiente como datos listos para JSON: `{"type": "linear", "angle", "stops"}`.
+
 ### `Mask`
 
 ```python
@@ -1407,6 +1484,24 @@ Una máscara de opacidad para un `Paint`: cuánto se ve el relleno a lo largo de
 | --- | --- |
 | `stops` | Opacidades (0 a 1), repartidas por igual, o pares `(posición, opacidad)`. |
 | `angle` | Dirección cuando el relleno es un color liso. |
+
+**Métodos y propiedades**
+
+#### `Mask.at`
+
+```python
+Mask.at(offset)
+```
+
+Devuelve la opacidad (0 a 1) en `offset` (0 a 1), interpolando entre paradas.
+
+#### `Mask.to_dict`
+
+```python
+Mask.to_dict()
+```
+
+Devuelve la máscara como datos listos para JSON: `{"angle", "stops"}`.
 
 ### `Paint`
 
@@ -1425,3 +1520,69 @@ Un relleno: un color o un `Gradient` con opacidad general y una `Mask` opcional.
 ```python
 pz.Paint("#3b82f6", opacity=0.8, mask=pz.Mask([1, 0]))  # se desvanece hacia abajo
 ```
+
+**Métodos y propiedades**
+
+#### `Paint.resolve`
+
+```python
+Paint.resolve()
+```
+
+`(color, gradient)`: lo que dibuja un contenedor (uno de los dos es `None`).
+
+#### `Paint.to_dict`
+
+```python
+Paint.to_dict()
+```
+
+Devuelve la pintura como datos listos para JSON: `fill`, `opacity` y `mask` cuando la hay.
+
+### `global_style`
+
+```python
+global_style()
+```
+
+El estilo fijado con `set_style` (`None` si no hay).
+
+### `named_styles`
+
+```python
+named_styles()
+```
+
+Los estilos definidos con `define_style`, por nombre.
+
+### `apply_global`
+
+```python
+apply_global(view, style=None)
+```
+
+`view` con el estilo global de una ventana: las propiedades de texto completan lo que los textos no fijan.
+
+### `themed`
+
+```python
+themed(theme, style)
+```
+
+`theme` con el color de texto, el fondo, el color de borde, el tamaño y el radio de un estilo global.
+
+### `to_hex`
+
+```python
+to_hex(color)
+```
+
+Cualquier color como `"#rrggbb"` o `"#rrggbbaa"` (con los tokens del tema resueltos).
+
+### `paint_from_dict`
+
+```python
+paint_from_dict(data)
+```
+
+Reconstruye un `Gradient` o un `Paint` guardado con `to_dict()`.
