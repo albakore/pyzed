@@ -5,6 +5,11 @@ sidebar:
   order: 5
 ---
 
+:::tip[Component library]
+Every component now has its own page, with a live preview, examples and its full API, in the
+[component library](/pyzed/library/). This page is kept as a summary.
+:::
+
 `ui.workspace` builds the structure of a Zed window: title bar on top, docks on the left, right
 and bottom, the central area and the status bar.
 

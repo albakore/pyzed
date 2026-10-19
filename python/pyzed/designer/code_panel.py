@@ -13,7 +13,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from .. import _core, i18n, ui
+from .. import _core, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import intellisense as _intel
@@ -47,41 +47,6 @@ MAX_MATCHES = 5000
 
 #: A match as 1-based ``(line, column, end_line, end_column)``, with byte columns like the editor's.
 Range = Tuple[int, int, int, int]
-
-# Spanish texts of the search bar, the editor's shortcut groups and the telemetry settings.
-i18n.add("es", {"designer": {
-    "Invalid pattern": "Patrón no válido", "No results": "Sin resultados", "Toggle replace": "Mostrar reemplazar",
-    "Find": "Buscar", "Match case": "Distinguir mayúsculas", "Match whole words": "Palabras completas",
-    "Use regular expressions": "Usar expresiones regulares", "Previous match": "Coincidencia anterior",
-    "Next match": "Coincidencia siguiente", "Select all matches": "Seleccionar todas las coincidencias",
-    "Close": "Cerrar", "Replace": "Reemplazar", "Replace all": "Reemplazar todo",
-    "Current line {line} of {lines} (column {column})": "Línea actual {line} de {lines} (columna {column})",
-    "Line or line:column": "Línea o línea:columna",
-    "Find and replace": "Buscar y reemplazar", "Next and previous match": "Coincidencia siguiente y anterior",
-    "Go to line": "Ir a la línea", "Bigger, smaller and default font": "Letra más grande, más pequeña y normal",
-    "Multiple cursors": "Varios cursores", "Add a cursor": "Añadir un cursor",
-    "Add a cursor above": "Añadir un cursor arriba", "Add a cursor below": "Añadir un cursor abajo",
-    "Select the next match": "Seleccionar la siguiente coincidencia",
-    "Select every match": "Seleccionar todas las coincidencias",
-    "A cursor on each selected line": "Un cursor en cada línea seleccionada",
-    "Undo the last cursor change": "Deshacer el último cambio de cursores", "Back to one cursor": "Volver a un cursor",
-    "Lines": "Líneas", "Move line up": "Subir la línea", "Move line down": "Bajar la línea",
-    "Duplicate line down": "Duplicar la línea", "Delete line": "Borrar la línea", "Select line": "Seleccionar la línea",
-    "Join lines": "Unir líneas", "New line below": "Nueva línea debajo", "New line above": "Nueva línea encima",
-    "Indent": "Sangrar", "Outdent": "Quitar sangría", "Toggle comment": "Comentar o descomentar",
-    "Go to matching bracket": "Ir al corchete pareja", "Folding": "Plegado", "Fold": "Plegar", "Unfold": "Desplegar",
-    "Fold everything": "Plegar todo", "Unfold everything": "Desplegar todo", "Toggle fold": "Plegar o desplegar",
-    "Telemetry": "Telemetría", "Collect usage and performance data": "Recopilar datos de uso y rendimiento",
-    "Counts of the commands and editor actions you use, and startup, render and command times. Never your code, "
-    "texts or file names.": "Cuántas veces usas cada comando y acción del editor, y los tiempos de inicio, dibujo y "
-                            "comandos. Nunca tu código, textos ni nombres de archivo.",
-    "Kept on this computer only": "Solo se guardan en este equipo", "Last sent {when}": "Último envío: {when}",
-    "Sent when the designer closes": "Se envían al cerrar el diseñador", "Could not send: {error}":
-        "No se pudieron enviar: {error}",
-    "Endpoint": "Destino", "Where to post the data as JSON; leave it empty to send nothing":
-        "Dónde enviar los datos como JSON; déjalo vacío para no enviar nada",
-    "Collected data": "Datos recopilados", "View": "Ver", "Delete": "Borrar",
-}})
 
 
 @dataclass
@@ -723,12 +688,12 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
             lambda i=i: a.select(i), padding=(0, 8), height=ROW_HEIGHT, width="fill",
             bg=t.element_selected if selected else "transparent", hover_bg=t.element_hover, radius=4))
     if c.loading and not rows:
-        rows.append(_core.container(ui.label("Loading…", size="sm", color="text_muted", theme=t), padding=(4, 8)))
+        rows.append(_core.container(ui.label(tr("Loading…"), size="sm", color="text_muted", theme=t), padding=(4, 8)))
     footer = _core.container(
         _core.row([ui.label(f"{c.index + 1}/{len(c.shown)}" if c.shown else "", size="xs", color="text_muted",
                             theme=t),
                    _core.space(width="fill"),
-                   ui.label("↵ insert  esc close", size="xs", color="text_muted", theme=t)]),
+                   ui.label(tr("↵ insert  esc close"), size="xs", color="text_muted", theme=t)]),
         padding=(2, 8), width="fill")
     listing = _core.container(_core.column([*rows, footer], spacing=0), width=LIST_WIDTH, padding=4,
                               bg=t.elevated, border_color=t.border, border_width=1, radius=6)
@@ -737,7 +702,7 @@ def completion_popup(a: CodeAssist, t: Theme, visible_rows: int = POPUP_ROWS, ma
         return listing
     doc_parts = [
         _core.row([kind_badge(item, t, 18), _core.text(item.label, size=13, font="mono", color=t.text, wrap=False),
-                   ui.badge("private", theme=t) if item.private else None], spacing=8, align="center"),
+                   ui.badge(tr("private"), theme=t) if item.private else None], spacing=8, align="center"),
         _core.text(item.detail, size=12, font="mono", color=t.text_muted) if item.detail else None,
         ui.divider(theme=t) if item.documentation else None,
         _core.container(ui.markdown(_short_doc(item.documentation), size=12, theme=t),
@@ -833,14 +798,14 @@ def code_panel(d: "Designer", t: Theme) -> Any:
     warnings = sum(1 for x in diags if x.severity == 2)
     problems = ui.button(f"{errors}  ·  {warnings}", a.toggle_problems, icon="circle-x" if errors else "circle-check",
                          variant="ghost", size="sm", selected=a.problems_open and bool(diags), theme=t)
-    problems = ui.tooltip(problems, "Problems", theme=t)
+    problems = ui.tooltip(problems, tr("Problems"), theme=t)
     header = ui.panel_header(title, icon="code", actions=[
         problems,
-        ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip="Editor settings", theme=t),
-        ui.button("Whole file" if not whole else "This handler", d.toggle_whole_file, variant="ghost", size="sm",
+        ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
+        ui.button(tr("Whole file") if not whole else tr("This handler"), d.toggle_whole_file, variant="ghost", size="sm",
                   theme=t),
-        ui.button("Apply", d.apply_code, icon="check", variant="tinted", size="sm", theme=t),
-        ui.icon_button("x", d.close_code, size="sm", tooltip="Close", theme=t),
+        ui.button(tr("Apply"), d.apply_code, icon="check", variant="tinted", size="sm", theme=t),
+        ui.icon_button("x", d.close_code, size="sm", tooltip=tr("Close"), theme=t),
     ], theme=t)
     below: List[Tuple[Any, float]] = []
     if d.code_error:
@@ -955,53 +920,56 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
     def switch(key: str) -> Any:
         return ui.switch(bool(getattr(s, key)), a.setter(key), theme=t)
 
-    theme_names = ["Same as the designer", *themes.names()]
-    appearance = ui.settings_group("Appearance", [
-        ui.field("Theme", ui.select(theme_names, s.theme or theme_names[0],
+    shapes = {tr(shape.capitalize()): shape for shape in _settings.CURSOR_SHAPES}
+    theme_names = [tr("Same as the designer"), *themes.names()]
+    appearance = ui.settings_group(tr("Appearance"), [
+        ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
                                     lambda name: a.set("theme", "" if name == theme_names[0] else name), width=200,
                                     theme=t), theme=t),
-        ui.field("Font size", ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1, width=110,
-                                              theme=t), description="Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets",
+        ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1, width=110,
+                                              theme=t),
+                 description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"),
                  theme=t),
-        ui.field("Line numbers", switch("line_numbers"), theme=t),
-        ui.field("Highlight current line", switch("highlight_line"), theme=t),
-        ui.field("Show whitespace", switch("show_whitespace"), description="Spaces as · and tabs as →", theme=t),
-        ui.field("Wrap long lines", switch("wrap"), theme=t),
-        ui.field("Minimap", switch("minimap"), description="Click or drag it to scroll", theme=t),
+        ui.field(tr("Line numbers"), switch("line_numbers"), theme=t),
+        ui.field(tr("Highlight current line"), switch("highlight_line"), theme=t),
+        ui.field(tr("Show whitespace"), switch("show_whitespace"), description=tr("Spaces as · and tabs as →"),
+                 theme=t),
+        ui.field(tr("Wrap long lines"), switch("wrap"), theme=t),
+        ui.field(tr("Minimap"), switch("minimap"), description=tr("Click or drag it to scroll"), theme=t),
     ], theme=t)
-    cursor = ui.settings_group("Cursor", [
-        ui.field("Shape", ui.segmented([shape.capitalize() for shape in _settings.CURSOR_SHAPES],
-                                       s.cursor_shape.capitalize(),
-                                       lambda name: a.set("cursor_shape", name.lower()), theme=t), theme=t),
-        ui.field("Blink", switch("cursor_blink"), theme=t),
+    cursor = ui.settings_group(tr("Cursor"), [
+        ui.field(tr("Shape"), ui.segmented(list(shapes), tr(s.cursor_shape.capitalize()),
+                                           lambda name: a.set("cursor_shape", shapes[name]), theme=t), theme=t),
+        ui.field(tr("Blink"), switch("cursor_blink"), theme=t),
     ], theme=t)
-    editing = ui.settings_group("Editing", [
-        ui.field("Tab size", ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1, max=8,
+    editing = ui.settings_group(tr("Editing"), [
+        ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1, max=8,
                                              step=1, width=110, theme=t),
-                 description="Tab inserts spaces; Enter keeps the indentation", theme=t),
-        ui.field("Autocomplete while typing", switch("autocomplete"), description="Ctrl+Space opens it anytime",
+                 description=tr("Tab inserts spaces; Enter keeps the indentation"), theme=t),
+        ui.field(tr("Autocomplete while typing"), switch("autocomplete"), description=tr("Ctrl+Space opens it anytime"),
                  theme=t),
-        ui.field("Auto-close brackets and quotes", switch("auto_close"),
-                 description="Also wraps the selection and steps over the closing one", theme=t),
-        ui.field("Code folding", switch("folding"), description="Chevrons in the gutter; Ctrl+Shift+[ and ]",
+        ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
+                 description=tr("Also wraps the selection and steps over the closing one"), theme=t),
+        ui.field(tr("Code folding"), switch("folding"), description=tr("Chevrons in the gutter; Ctrl+Shift+[ and ]"),
                  theme=t),
-        ui.field("Match brackets", switch("match_brackets"),
-                 description="Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it",
+        ui.field(tr("Match brackets"), switch("match_brackets"),
+                 description=tr("Outline the bracket that pairs with the one at the cursor; Ctrl+M jumps to it"),
                  theme=t),
-        ui.field("Highlight selection matches", switch("selection_highlight"),
-                 description="Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them", theme=t),
-        ui.field("Format with ruff on Apply", switch("format_on_apply"), theme=t),
+        ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
+                 description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
+        ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
     ], theme=t)
-    lens = ui.settings_group("Code lens and diagnostics", [
-        ui.field("Code lens", switch("code_lens"), description="References, implementations and wired events",
+    lens = ui.settings_group(tr("Code lens and diagnostics"), [
+        ui.field(tr("Code lens"), switch("code_lens"), description=tr("References, implementations and wired events"),
                  theme=t),
-        ui.field("Inline diagnostics", switch("inline_diagnostics"), description="Problems at the end of the line",
+        ui.field(tr("Inline diagnostics"), switch("inline_diagnostics"),
+                 description=tr("Problems at the end of the line"),
                  theme=t),
     ], theme=t)
     rows = []
     for name, status, detail in a.intel.statuses():
         color = STATUS_COLORS.get(status, "text_muted")
-        what = {"ty": "Types, completion and references", "ruff": "Linting"}[name]
+        what = {"ty": tr("Types, completion and references"), "ruff": tr("Linting")}[name]
         rows.append(_core.row([
             _core.container(width=10, height=10, radius=5, bg=t.color(color)),
             _core.column([ui.label(f"{name}  ·  {status}", theme=t),
@@ -1011,14 +979,14 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
     env = a.intel.env
     if env is not None:
         rows.append(_core.column([
-            ui.label(f"Project  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
+            ui.label(f"{tr('Project')}  {env.root}", size="sm", color="text_muted", mono=True, theme=t),
             ui.label(f"Python   {env.python}", size="sm", color="text_muted", mono=True, theme=t),
         ], spacing=2))
-    servers = ui.settings_group("Language servers", rows, theme=t)
+    servers = ui.settings_group(tr("Language servers"), rows, theme=t)
     body = _core.scrollable(_core.column([servers, appearance, cursor, editing, lens], spacing=14, padding=(0, 6, 0, 0)),
                             height=580, scrollbar_width=4)
-    return ui.modal(body, title="Editor settings", on_close=d.close_dialog, width=560, footer=[
-        ui.button("Restart servers", a.restart_servers, icon="refresh-cw", variant="ghost", theme=t),
+    return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=560, footer=[
+        ui.button(tr("Restart servers"), a.restart_servers, icon="refresh-cw", variant="ghost", theme=t),
         _core.space(width="fill"),
-        ui.button("Done", d.close_dialog, variant="solid", theme=t),
+        ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t),
     ], theme=t)

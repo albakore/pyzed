@@ -37,6 +37,8 @@ class DesignerSettings:
     console_on_run: bool = True
     #: Log every event the running form raises in the console.
     log_events: bool = True
+    #: Look for a new version of the designer once a day (the compiled app updates itself).
+    check_updates: bool = True
     recent: List[str] = field(default_factory=list)
     #: Panel id -> dock ("left", "right", "bottom", "top").
     docks: Dict[str, str] = field(default_factory=dict)

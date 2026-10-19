@@ -1,4 +1,4 @@
-"""Pyzed Designer: build windows visually, wire their events to Python and run them.
+"""Pyzed Design: build windows visually, wire their events to Python and run them.
 
     pyzed design app.pzform     # the visual editor
     pyzed run app.pzform        # run the form with its logic

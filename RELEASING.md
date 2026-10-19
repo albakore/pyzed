@@ -19,8 +19,10 @@ Translations and Internal.
 
 2. Bump the version in `Cargo.toml` (the only source; `pyproject.toml` reads it
    from there) and refresh `Cargo.lock` with `cargo update -p pyzed`. Use a
-   suffix for a pre-release: `0.3.0-rc.1`, `0.3.0-beta.1`. Merge that change
-   with a PR titled `🔖 Release 0.3.0`.
+   suffix for a pre-release: `0.3.0-rc.1`, `0.3.0-beta.1`. Refresh the list of
+   pages and examples the MCP server ships with
+   `python docs/scripts/gen_mcp_index.py`. Merge that change with a PR titled
+   `🔖 Release 0.3.0`.
 
 3. Create and push the tag from `main`:
 

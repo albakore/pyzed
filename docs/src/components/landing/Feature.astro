@@ -1,0 +1,188 @@
+---
+// One landing-page feature: text on one side, a screenshot (optionally with a smaller one on top) on the other.
+import { Icon } from '@astrojs/starlight/components';
+import Shot from './Shot.astro';
+
+interface Props {
+	id?: string;
+	eyebrow: string;
+	title: string;
+	icon?: Parameters<typeof Icon>[0]['name'];
+	shot: string;
+	light?: string;
+	alt: string;
+	overlay?: string;
+	overlayAlt?: string;
+	reverse?: boolean;
+	href?: string;
+	more?: string;
+}
+
+const { id, eyebrow, title, icon, shot, light, alt, overlay, overlayAlt = '', reverse = false, href, more } = Astro.props;
+---
+
+<section id={id} class:list={['pz-feature not-content', { reverse, 'has-overlay': overlay }]}>
+	<div class="pz-feature-text">
+		<p class="pz-eyebrow">
+			{icon && <Icon name={icon} size="1.1em" />}
+			{eyebrow}
+		</p>
+		<h2>{title}</h2>
+		<div class="pz-feature-body"><slot /></div>
+		{
+			href && more && (
+				<a class="pz-more" href={href}>
+					{more} <span aria-hidden="true">→</span>
+				</a>
+			)
+		}
+	</div>
+	<div class="pz-feature-media">
+		<Shot name={shot} light={light} alt={alt} sizes="(min-width: 72rem) 40rem, (min-width: 50rem) 55vw, 100vw" />
+		{overlay && <Shot class="pz-overlay" name={overlay} alt={overlayAlt} sizes="(min-width: 50rem) 18rem, 50vw" />}
+	</div>
+</section>
+
+<style>
+	.pz-feature {
+		display: grid;
+		grid-template-columns: 100%;
+		gap: 1.75rem;
+		align-items: center;
+		margin-block: 4.5rem 0 !important;
+	}
+	.pz-feature > * {
+		margin: 0;
+		min-width: 0;
+	}
+	@media (min-width: 50rem) {
+		.pz-feature {
+			grid-template-columns: 5fr 7fr;
+			gap: 3.5rem;
+			margin-block-start: 6rem !important;
+		}
+		.pz-feature.reverse {
+			grid-template-columns: 7fr 5fr;
+		}
+		.pz-feature.reverse .pz-feature-text {
+			order: 2;
+		}
+	}
+	.pz-eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin: 0 0 0.6rem;
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--pz-accent-text);
+	}
+	h2 {
+		margin: 0 0 1rem;
+		font-size: clamp(var(--sl-text-2xl), 1.2rem + 1.6vw, var(--sl-text-4xl));
+		line-height: 1.15;
+		font-weight: 650;
+		color: var(--sl-color-white);
+	}
+	.pz-feature-body {
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-base);
+		line-height: 1.65;
+	}
+	.pz-feature-body :global(p) {
+		margin: 0 0 1rem;
+	}
+	.pz-feature-body :global(code) {
+		font-size: 0.875em;
+		padding: 0.1em 0.35em;
+		border-radius: 0.3em;
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-white);
+	}
+	.pz-feature-body :global(ul) {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 1.25rem;
+		display: grid;
+		gap: 0.55rem;
+	}
+	.pz-feature-body :global(li) {
+		position: relative;
+		padding-inline-start: 1.6rem;
+	}
+	.pz-feature-body :global(li)::before {
+		content: '';
+		position: absolute;
+		inset-inline-start: 0;
+		top: 0.35em;
+		width: 1rem;
+		height: 1rem;
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--sl-color-accent) 22%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sl-color-accent) 55%, transparent);
+	}
+	.pz-feature-body :global(li)::after {
+		content: '';
+		position: absolute;
+		inset-inline-start: 0.33rem;
+		top: calc(0.35em + 0.25rem);
+		width: 0.3rem;
+		height: 0.5rem;
+		border: solid var(--pz-accent-text);
+		border-width: 0 2px 2px 0;
+		transform: rotate(45deg);
+	}
+	.pz-feature-body :global(strong) {
+		color: var(--sl-color-white);
+	}
+	.pz-more {
+		display: inline-flex;
+		gap: 0.4rem;
+		font-weight: 600;
+		color: var(--pz-accent-text);
+		text-decoration: none;
+	}
+	.pz-more:hover span {
+		transform: translateX(3px);
+	}
+	.pz-more span {
+		transition: transform 0.15s ease;
+	}
+	.pz-feature-media {
+		position: relative;
+		isolation: isolate;
+	}
+	.pz-feature-media::before {
+		content: '';
+		position: absolute;
+		inset: 8% 6%;
+		background: var(--pz-glow);
+		filter: blur(48px);
+		opacity: 0.55;
+		z-index: -1;
+	}
+	.has-overlay .pz-feature-media {
+		padding-block-end: 2.5rem;
+	}
+	.pz-feature-media :global(.pz-overlay) {
+		position: absolute;
+		width: 42%;
+		inset-block-end: 0;
+		inset-inline-end: -0.75rem;
+		box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+	}
+	.reverse .pz-feature-media :global(.pz-overlay) {
+		inset-inline-end: auto;
+		inset-inline-start: -0.75rem;
+	}
+	@media (max-width: 50rem) {
+		.pz-feature-media :global(.pz-overlay) {
+			inset-inline-end: 0.5rem;
+		}
+		.reverse .pz-feature-media :global(.pz-overlay) {
+			inset-inline-start: 0.5rem;
+		}
+	}
+</style>

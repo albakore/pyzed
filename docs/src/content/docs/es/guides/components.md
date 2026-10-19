@@ -122,7 +122,7 @@ Los hooks se ejecutan después de dibujar la vista, nunca en medio.
 
 ## En el diseñador
 
-Cada subclase de `pz.Component` aparece en la biblioteca del [diseñador](/pyzed/es/guides/designer/):
+Cada subclase de `pz.Component` aparece en la biblioteca del [diseñador](/pyzed/es/editor/):
 
 - **Props**: se convierten en propiedades. `bool` muestra un interruptor, `int` y `float` un campo
   numérico, `Literal[...]` un desplegable, `list` un elemento por línea, y un prop llamado
@@ -153,4 +153,4 @@ Estos atributos de clase controlan cómo aparece:
 El primer párrafo del docstring se muestra como descripción.
 
 Para crear un componente dibujándolo en vez de escribir `render()`, usa el
-[modo componente](/pyzed/es/guides/component-designer/) del diseñador.
+[modo componente](/pyzed/es/editor/component-designer/) del diseñador.

@@ -1702,9 +1702,9 @@ PAGES.append({
     "description": "Ejecuta, abre y crea formularios desde código, y registra componentes y plantillas de la caja de herramientas.",
     "order": 10,
     "intro": """
-        `pyzed.designer` es el lado en código del [diseñador visual](/pyzed/es/guides/designer/): ejecuta archivos
+        `pyzed.designer` es el lado en código del [diseñador visual](/pyzed/es/editor/): ejecuta archivos
         `.pzform`, abre formularios como ventanas, crea formularios en código y amplía la caja de herramientas con
-        tus propios componentes y plantillas. Los [componentes diseñados](/pyzed/es/guides/component-designer/)
+        tus propios componentes y plantillas. Los [componentes diseñados](/pyzed/es/editor/component-designer/)
         (`.pzcomp`) también se cargan desde aquí.
 
         ```python

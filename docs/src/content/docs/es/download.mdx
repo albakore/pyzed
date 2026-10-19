@@ -1,0 +1,79 @@
+---
+title: Descargar Pyzed Design
+description: Descarga Pyzed Design, el diseñador visual de Pyzed, como app independiente para Windows, macOS y Linux.
+tableOfContents:
+  maxHeadingLevel: 2
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Download from '../../../components/Download.astro';
+
+**Pyzed Design** es el diseñador visual de Pyzed como app independiente: dibuja ventanas y componentes, escribe su
+código con autocompletado y diagnósticos, gestiona las dependencias de tu proyecto y ejecútalo todo con **F5**.
+Elige tu plataforma; seleccionamos la que estás usando.
+
+<Download />
+
+![Pyzed Design con un formulario de inicio de sesión abierto](../../../../screenshots/designer.png)
+
+## Qué incluye
+
+Cada descarga es un único zip con todo lo que necesita Pyzed Design, así que no hay que instalar nada más:
+
+- **Python** y **pyzed-ui**, de la misma versión que la release que descargas.
+- El binario de **uv**, que se usa para crear proyectos (`uv init`), añadir dependencias (`uv add`) y ejecutar
+  tus formularios en el `.venv` de cada proyecto. Consulta [Proyectos](/pyzed/es/guides/projects/).
+- Las fuentes IBM Plex y los iconos Lucide.
+
+Los servidores de lenguaje del editor de código (**ty** y **ruff**) se instalan en cada proyecto con
+`uv add --dev ty ruff`, desde la pestaña Proyecto; consulta el [editor de código](/pyzed/es/guides/designer/#editor-de-código).
+
+## Actualizaciones
+
+Con cada release de Pyzed se publica una nueva versión de Pyzed Design para las tres plataformas. Los botones de
+arriba siempre apuntan a la última versión estable; las [novedades](/pyzed/es/changelog/) cuentan qué ha
+cambiado, y [todas las versiones](https://github.com/albakore/pyzed/releases) (incluidas las anteriores y las
+preliminares) están en GitHub. Para actualizar, descarga el zip nuevo y sustituye la carpeta antigua (o
+`Pyzed Design.app`); tus proyectos y tu configuración se conservan, porque viven fuera de la app.
+
+## Instalar con pip
+
+Si ya usas Python (3.9 o posterior), o tu plataforma no tiene descarga precompilada (por ejemplo un Mac con chip
+Intel o Linux en ARM), instala la librería y abre el diseñador desde ella:
+
+<Tabs>
+<TabItem label="pip">
+
+```bash
+pip install "pyzed-ui[designer]"
+python -m pyzed.designer
+```
+
+</TabItem>
+<TabItem label="uv">
+
+```bash
+uv tool install "pyzed-ui[designer]"
+pyzed design
+```
+
+</TabItem>
+</Tabs>
+
+El extra `designer` añade los servidores de lenguaje ty y ruff; un simple `pip install pyzed-ui` también sirve.
+Dentro de un proyecto, `uv run pyzed design` abre el diseñador con el entorno de ese proyecto. Consulta la
+[instalación](/pyzed/es/getting-started/installation/) para más detalles.
+
+## Compilarlo tú mismo
+
+Las descargas las genera `scripts/build_designer.py` con PyInstaller, en cada sistema operativo:
+
+```bash
+python -m pip install pyzed-ui pyinstaller uv
+python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
+```
+
+<Aside type="tip" title="Siguientes pasos">
+	¿Es tu primera vez con el diseñador? Lee la [guía del diseñador visual](/pyzed/es/guides/designer/) y luego crea
+	un widget reutilizable con el [diseñador de componentes](/pyzed/es/guides/component-designer/).
+</Aside>

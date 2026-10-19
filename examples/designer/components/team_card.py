@@ -1,4 +1,4 @@
-"""TeamCard: a component designed in Pyzed Designer.
+"""TeamCard: a component designed in Pyzed Design.
 
 The layout is in team_card.pzcomp; properties, events and logic are below. Use it like
 any component: ``TeamCard(...)`` in a view, or from the designer's toolbox.

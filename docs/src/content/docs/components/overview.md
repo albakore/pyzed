@@ -5,6 +5,11 @@ sidebar:
   order: 0
 ---
 
+:::tip[Component library]
+Every component now has its own page, with a live preview, examples and its full API, in the
+[component library](/pyzed/library/). This page is kept as a summary.
+:::
+
 `pyzed.ui` is a collection of ready-to-use components that reproduce the look of the
 [Zed](https://zed.dev) editor. They are **functions** that return widgets, so they combine freely
 with the [base widgets](/pyzed/reference/widgets/) and with each other.

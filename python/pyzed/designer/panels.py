@@ -288,7 +288,7 @@ def toolbox(d: "Designer", t: Theme) -> Any:
             rows.append(ui.tooltip(
                 press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
                           icon=spec.icon, selected=d.tool == spec.type),
-                spec.description or tr(spec.label), position="right", theme=t))
+                tr(spec.description) if spec.description else tr(spec.label), position="right", theme=t))
     return _core.column([
         _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
                                         size="sm", theme=t), padding=8),
@@ -433,7 +433,7 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
     rows: List[Any] = [
         _core.container(_core.row([_icon(spec.icon, size=16, color=t.accent),
                                    _core.column([ui.label(tr(spec.label), weight="semibold", theme=t),
-                                                 ui.label(spec.description, size="xs", color="text_muted", theme=t)],
+                                                 ui.label(tr(spec.description), size="xs", color="text_muted", theme=t)],
                                                 width="fill")],
                                   spacing=10, align="center"), padding=(10, 12), width="fill"),
         # inset like the rows inside the sections below, so every label and field lines up
@@ -514,7 +514,7 @@ def form_properties(d: "Designer", t: Theme) -> List[Any]:
         prop_row("Custom accent", ui.input(form.accent or "", setter("accent", lambda v: v or None),
                                            placeholder="#rrggbb", size="sm", mono=True, theme=t), t),
         prop_row("Background", ui.input(form.background or "", setter("background", lambda v: v or None),
-                                        placeholder="theme default", size="sm", mono=True, theme=t), t),
+                                        placeholder=tr("theme default"), size="sm", mono=True, theme=t), t),
         prop_row("Corner radius", ui.number_field(form.radius if form.radius is not None else 6,
                                                   setter("radius", float), min=0, max=24, width="fill", theme=t), t),
         prop_row("Font size", ui.number_field(form.font_size, setter("font_size", float), min=8, max=32, width="fill",
@@ -677,7 +677,7 @@ def _swatch(d: "Designer", name: Optional[str], key: str, value: Any) -> Any:
 def _color_editor(d: "Designer", name: Optional[str], key: str, value: Any, on_change: Callable[[str], Any],
                   t: Theme, placeholder: str = "token or #rrggbbaa") -> Any:
     return _core.row([_swatch(d, name, key, value),
-                      ui.input(str(value or ""), on_change, placeholder=placeholder, size="sm", mono=True, theme=t)],
+                      ui.input(str(value or ""), on_change, placeholder=tr(placeholder), size="sm", mono=True, theme=t)],
                      spacing=6, align="center")
 
 

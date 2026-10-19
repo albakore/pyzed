@@ -122,7 +122,7 @@ Hooks run after the view is drawn, never in the middle of it.
 
 ## In the designer
 
-Every `pz.Component` subclass appears in the [designer](/pyzed/guides/designer/)'s toolbox:
+Every `pz.Component` subclass appears in the [designer](/pyzed/editor/)'s toolbox:
 
 - **Props** become properties. `bool` gets a switch, `int` and `float` a number box, `Literal[...]`
   a drop-down, `list` one item per line, and a prop named `color` or `icon` gets its own picker.
@@ -152,4 +152,4 @@ Class attributes control how it appears:
 The docstring's first paragraph is shown as the description.
 
 To build a component by drawing it instead of writing `render()`, use the designer's
-[component mode](/pyzed/guides/component-designer/).
+[component mode](/pyzed/editor/component-designer/).

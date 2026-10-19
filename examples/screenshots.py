@@ -350,7 +350,8 @@ def code_editor_shots(scale):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    scale = 1.5
+    # Logical sizes stay the same; scale 2 renders sharp HiDPI images for the docs.
+    scale = 2
 
     dark = workspace(pz.themes.ONE_DARK, ["src/app.rs", "python/pyzed/ui/overlays.py"], "src/render.rs",
                      expanded={"src", "python", "python/pyzed", "examples"})
@@ -375,14 +376,14 @@ def main():
     Gallery(pz.themes.ONE_LIGHT).screenshot(OUT / "components-light.png", scale=scale)
     Counter().screenshot(OUT / "counter.png", scale=2)
     hot_reload_shots(scale)
-    designer_shots(1.0)
+    designer_shots(scale)
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp:
-        designer_layout_shots(1.0, Path(tmp))
-    component_designer_shots(1.0)
-    project_shot(1.0)
-    code_editor_shots(1.0)
+        designer_layout_shots(scale, Path(tmp))
+    component_designer_shots(scale)
+    project_shot(scale)
+    code_editor_shots(scale)
     print(f"wrote {len(list(OUT.glob('*.png')))} screenshots to {OUT}")
 
 

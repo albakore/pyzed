@@ -1,4 +1,4 @@
-"""Pyzed Designer: a Visual Basic / Qt Designer style editor for Pyzed forms, built with Pyzed.
+"""Pyzed Design: a Visual Basic / Qt Designer style editor for Pyzed forms, built with Pyzed.
 
     pyzed design login.pzform        # or: python -m pyzed.designer login.pzform
 
@@ -35,6 +35,7 @@ from .components import Prop
 from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
+from .updates import TAB_ID as _NOTES_TAB, UpdateController
 from .runtime import FormWindow
 from . import scene as _scene
 from . import scene_code as _scene_code
@@ -103,7 +104,7 @@ def _component_registry() -> Dict[str, type]:
 class Designer(App):
     """The visual form editor."""
 
-    title = "Pyzed Designer"
+    title = "Pyzed Design"
     size = (1440, 900)
     min_size = (960, 600)
 
@@ -174,6 +175,7 @@ class Designer(App):
         self.console = ConsoleController(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
+        self.updates = UpdateController(self)
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
@@ -182,13 +184,13 @@ class Designer(App):
         self.title = self.window_title
 
     def on_start(self) -> Any:
-        """Loads the project's tools when the app starts; returns the command that does it."""
-        return self.projects.load_tools()
+        """Loads the project's tools and checks for updates when the app starts; returns the commands."""
+        return [c for c in (self.projects.load_tools(), *self.updates.on_start()) if c is not None]
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
         """Returns the window title: the document's name, after a ``●`` when it has unsaved changes."""
-        return f"{'● ' if self.doc.dirty else ''}{self.doc.display_name} — Pyzed Designer"
+        return f"{'● ' if self.doc.dirty else ''}{self.doc.display_name} — Pyzed Design"
 
     # -- messages -------------------------------------------------------------
     def notify(self, title: str, message: Optional[str] = None, kind: str = "info", seconds: float = 3.0) -> None:
@@ -212,6 +214,8 @@ class Designer(App):
         subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
         if self.projects.busy:  # keeps the spinner of a running uv command moving
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
+        if self.updates.status == "downloading":  # redraws the download progress
+            subs.append(_core.every(0.2, lambda: None, key="designer-update"))
         if self.console.running is not None:  # notices when the running form's window is closed
             subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
         return subs
@@ -726,29 +730,30 @@ class Designer(App):
         locked = bool(control and control.locked)
         container = control is not None and _layout.kind(control) is not None
         items = [
-            ui.MenuItem("View code", self._menu_action(lambda: self.open_default_event(name)), icon="code"),
-            ui.MenuItem("Add inside…", self._menu_action(lambda: self.open_add_child(name)), icon="plus")
+            ui.MenuItem(tr("View code"), self._menu_action(lambda: self.open_default_event(name)), icon="code"),
+            ui.MenuItem(tr("Add inside…"), self._menu_action(lambda: self.open_add_child(name)), icon="plus")
             if container else None,
             ui.SEPARATOR,
-            ui.MenuItem("Group in a row", self._menu_action(lambda: self.wrap("row")), icon="columns-3"),
-            ui.MenuItem("Group in a column", self._menu_action(lambda: self.wrap("column")), icon="rows-3"),
-            ui.MenuItem("Group in a grid", self._menu_action(lambda: self.wrap("grid")), icon="layout-grid"),
-            ui.MenuItem("Group in a panel", self._menu_action(lambda: self.wrap("panel")), icon="panel-top"),
-            ui.MenuItem(f"Move out of {control.parent}", self._menu_action(lambda: self.move_out(name)),
+            ui.MenuItem(tr("Group in a row"), self._menu_action(lambda: self.wrap("row")), icon="columns-3"),
+            ui.MenuItem(tr("Group in a column"), self._menu_action(lambda: self.wrap("column")), icon="rows-3"),
+            ui.MenuItem(tr("Group in a grid"), self._menu_action(lambda: self.wrap("grid")), icon="layout-grid"),
+            ui.MenuItem(tr("Group in a panel"), self._menu_action(lambda: self.wrap("panel")), icon="panel-top"),
+            ui.MenuItem(tr("Move out of {parent}", parent=control.parent),
+                        self._menu_action(lambda: self.move_out(name)),
                         icon="arrow-up-left") if control is not None and control.parent else None,
             ui.SEPARATOR,
-            ui.MenuItem("Cut", self._menu_action(self.cut), icon="scissors", keys="ctrl-x"),
-            ui.MenuItem("Copy", self._menu_action(self.copy), icon="copy", keys="ctrl-c"),
-            ui.MenuItem("Paste", self._menu_action(self.paste), icon="clipboard", keys="ctrl-v",
+            ui.MenuItem(tr("Cut"), self._menu_action(self.cut), icon="scissors", keys="ctrl-x"),
+            ui.MenuItem(tr("Copy"), self._menu_action(self.copy), icon="copy", keys="ctrl-c"),
+            ui.MenuItem(tr("Paste"), self._menu_action(self.paste), icon="clipboard", keys="ctrl-v",
                         disabled=not self.doc.clipboard),
-            ui.MenuItem("Duplicate", self._menu_action(self.duplicate), icon="copy-plus", keys="ctrl-d"),
+            ui.MenuItem(tr("Duplicate"), self._menu_action(self.duplicate), icon="copy-plus", keys="ctrl-d"),
             ui.SEPARATOR,
-            ui.MenuItem("Bring to front", self._menu_action(lambda: self.reorder("front")), icon="bring-to-front"),
-            ui.MenuItem("Send to back", self._menu_action(lambda: self.reorder("back")), icon="send-to-back"),
-            ui.MenuItem("Unlock" if locked else "Lock", self._menu_action(
+            ui.MenuItem(tr("Bring to front"), self._menu_action(lambda: self.reorder("front")), icon="bring-to-front"),
+            ui.MenuItem(tr("Send to back"), self._menu_action(lambda: self.reorder("back")), icon="send-to-back"),
+            ui.MenuItem(tr("Unlock") if locked else tr("Lock"), self._menu_action(
                 lambda: self.set_field(name, "locked", not locked)), icon="lock-open" if locked else "lock"),
             ui.SEPARATOR,
-            ui.MenuItem("Delete", self._menu_action(self.delete), icon="trash-2", keys="delete", danger=True),
+            ui.MenuItem(tr("Delete"), self._menu_action(self.delete), icon="trash-2", keys="delete", danger=True),
         ]
         return [i for i in items if i is not None]
 
@@ -1327,10 +1332,27 @@ class Designer(App):
             tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
                                icon="component" if scene else "app-window",
                                icon_color="accent" if scene else None, dirty=doc.dirty))
+        notes = self.updates.tab()
+        if notes is not None:
+            tabs.append(notes)
         view = tr("Component view") if getattr(self.doc, "is_scene", False) else tr("Form view")
-        return ui.tab_bar(tabs, str(self.active_doc), on_select=lambda i: self.select_doc(int(i)),
-                          on_close=lambda i: self.close_doc(int(i)),
+        active = _NOTES_TAB if self.updates.notes_active else str(self.active_doc)
+        return ui.tab_bar(tabs, active, on_select=self._select_tab, on_close=self._close_tab,
                           end=[ui.label(view, size="xs", color="text_muted", theme=t)], height=30, theme=t)
+
+    def _select_tab(self, tab_id: str) -> None:
+        """Switches to a document tab, or to the What's new tab."""
+        if tab_id == _NOTES_TAB:
+            self.updates.activate_notes()
+            return
+        self.updates.activate_notes(False)
+        self.select_doc(int(tab_id))
+
+    def _close_tab(self, tab_id: str) -> None:
+        if tab_id == _NOTES_TAB:
+            self.updates.close_notes()
+        else:
+            self.close_doc(int(tab_id))
 
     def new(self, kind: str = "form") -> Any:
         """Shows the "New" dialog: a form (name, title, template and folder) or a component (``kind``)."""
@@ -1682,8 +1704,11 @@ class Designer(App):
         """
         t = self.theme_obj
         canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-        center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
-                              width="fill", height="fill")
+        if self.updates.notes_active:
+            center = _core.column([self.doc_tabs(t), self.updates.notes_view(t)], width="fill", height="fill")
+        else:
+            center = _core.column([self.doc_tabs(t), self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                                  width="fill", height="fill")
         body = _core.container(_core.column([
             self.title_bar(t),
             docks.workspace(self, center, t),
@@ -1765,7 +1790,7 @@ class Designer(App):
                            tooltip=None if self.app_menu else tr("Menu"), theme=t),
             _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
             ui.title_button(self.projects.project.name, lambda: self.show_panel("project"), icon="package")
-            if self.projects.project else ui.title_button("Pyzed Designer", lambda: self.show_panel("project")),
+            if self.projects.project else ui.title_button("Pyzed Design", lambda: self.show_panel("project")),
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
@@ -1861,26 +1886,29 @@ class Designer(App):
         x, y = self.pointer
         primary = doc.primary
         if len(doc.selection) > 1:
-            info = f"{len(doc.selection)} selected"
+            info = tr("{count} selected", count=len(doc.selection))
         elif primary is not None:
-            info = f"{primary.name}  {primary.width:g}×{primary.height:g} at {primary.x:g}, {primary.y:g}"
+            info = f"{primary.name}  {primary.width:g}×{primary.height:g} " + tr(
+                "at {x}, {y}", x=f"{primary.x:g}", y=f"{primary.y:g}")
         else:
             info = f"{doc.form.name}  {doc.form.width:g}×{doc.form.height:g}"
-        tool = _components.get(self.tool).label if self.tool else None
+        tool = tr(_components.get(self.tool).label) if self.tool else None
         start = [
             ui.status_item(f"{x:.0f}, {y:.0f}", icon="mouse-pointer-2"),
             ui.status_item(info, icon="square-dashed"),
-            ui.status_item(f"Placing {tool}: click or drag on the form", icon="plus", color="accent") if tool else None,
+            ui.status_item(tr("Placing {tool}: click or drag on the form", tool=tool), icon="plus",
+                           color="accent") if tool else None,
         ]
         end = [
-            ui.status_item(f"{len(doc.form.controls)} controls", icon="layers"),
-            ui.status_item(f"Grid {doc.form.grid}px", self.toggle("show_grid"), icon="grid-3x3",
+            ui.status_item(tr("{count} controls", count=len(doc.form.controls)), icon="layers"),
+            ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
-            ui.status_item("Snap", self.toggle("snap"), icon="magnet", selected=self.snap),
+            ui.status_item(tr("Snap"), self.toggle("snap"), icon="magnet", selected=self.snap),
+            *self.updates.status_items(t),
         ]
         if self.editing is not None:
             line, column = self.assist.cursor
-            end = [ui.status_item(f"Ln {line}, Col {column}", theme=t),
+            end = [ui.status_item(tr("Ln {line}, Col {column}", line=line, column=column), theme=t),
                    *code_panel.server_status_items(self.assist, t, self.open_editor_settings), *end]
         return ui.status_bar(start, end, theme=t)
 

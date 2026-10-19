@@ -1664,9 +1664,9 @@ PAGES.append({
     "description": "Run, open and build forms from code, register toolbox components and templates.",
     "order": 10,
     "intro": """
-        `pyzed.designer` is the code side of the [visual designer](/pyzed/guides/designer/): run `.pzform` files,
+        `pyzed.designer` is the code side of the [visual designer](/pyzed/editor/): run `.pzform` files,
         open forms as windows, build forms in code, and extend the toolbox with your own components and
-        templates. [Designed components](/pyzed/guides/component-designer/) (`.pzcomp`) are loaded from here too.
+        templates. [Designed components](/pyzed/editor/component-designer/) (`.pzcomp`) are loaded from here too.
 
         ```python
         from pyzed import designer

@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Todos los comandos de pyzed - proyectos, dependencias, ejecución, compilación e iconos.
+description: Todos los comandos de pyzed - proyectos, dependencias, ejecución, compilación, iconos y el servidor MCP.
 sidebar:
   order: 9
 ---
@@ -44,7 +44,7 @@ salvo `--script`. Si no hay `pyproject.toml`, ejecuta antes `uv init`. No modifi
 
 | Comando | Hace |
 | --- | --- |
-| `pyzed design [form o carpeta]` | Abre el [diseñador visual](/pyzed/es/guides/designer/). Dentro de un proyecto y sin form, abre su form principal. |
+| `pyzed design [form o carpeta]` | Abre el [diseñador visual](/pyzed/es/editor/). Dentro de un proyecto y sin form, abre su form principal. |
 | `pyzed run [form] [--reload]` | Ejecuta un form con sus handlers; por defecto, el form principal del proyecto. `--reload` actualiza la ventana al guardar. |
 | `pyzed dev script.py [--watch RUTA]` | Ejecuta un script con hot reload: al guardar un archivo se actualiza la ventana abierta. |
 
@@ -67,3 +67,12 @@ Lista los nombres de los iconos de Lucide incluidos que contienen `filtro`.
 ```bash
 pyzed icons arrow
 ```
+
+## `pyzed mcp`
+
+Arranca el [servidor MCP para agentes de IA](/pyzed/es/guides/mcp/) por stdio, hasta que el cliente se
+desconecta. Necesita el extra `mcp`: `pip install "pyzed-ui[mcp]"`.
+
+| Opción | Efecto |
+| --- | --- |
+| `--transport streamable-http` | Sirve por HTTP en lugar de stdio. |

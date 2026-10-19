@@ -123,7 +123,7 @@ def about(d: "Designer", t: Theme) -> Any:
     details = [(tr("Version"), __version__), ("Python", platform.python_version()),
                (tr("Platform"), f"{platform.system()} {platform.machine()}"), ("Iced", _core.ICED_VERSION)]
     blurb = tr("Build windows visually, wire their events to Python and run them.")
-    return ui.modal(ui.about("Pyzed Designer", __version__, blurb, icon="layout-template", details=details,
+    return ui.modal(ui.about("Pyzed Design", __version__, blurb, icon="layout-template", details=details,
                              links=[(tr("Documentation"), d.open_docs),
                                     (tr("Source code"), lambda: d.open_url("https://github.com/albakore/pyzed"))],
                              theme=t),
