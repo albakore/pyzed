@@ -7,13 +7,18 @@ name = "pyzed-ui"
 dynamic = ["version"]
 description = "Fast, modern GUIs for Python powered by Iced (Rust), with Zed-inspired components"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 keywords = ["gui", "iced", "rust", "zed", "ui", "desktop"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Rust",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: User Interfaces",
     "Operating System :: Microsoft :: Windows",
@@ -25,16 +30,16 @@ classifiers = [
 # Language servers for the designer's code editor (completion, diagnostics, code lens).
 designer = ["ty", "ruff"]
 # The MCP server for AI agents (`pyzed mcp`).
-mcp = ["mcp>=1.2; python_version >= '3.10'"]
+mcp = ["mcp>=1.2"]
 # AI agents (`pyzed.agents` and the designer's Agent panel): Claude's SDK and the system keychain.
-agents = ["anthropic>=1.0; python_version >= '3.10'", "keyring>=25"]
+agents = ["anthropic>=1.0", "keyring>=25"]
 
 [dependency-groups]
 dev = [
     "ty>=0.0.89",
 ]
 # The build backend, the test runner and the type checker; `uv sync` installs them (default-groups below).
-test = ["maturin>=1.7,<2.0", "pytest", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
+test = ["maturin>=1.7,<2.0", "pytest", "pillow", "ty", "mcp>=1.2; python_version >= '3.10'", "anthropic>=1.0; python_version >= '3.10'"]
 
 [project.urls]
 Repository = "https://github.com/albakore/pyzed"

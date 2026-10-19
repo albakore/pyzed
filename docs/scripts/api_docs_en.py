@@ -174,6 +174,12 @@ If `view()` raises an exception, the window shows the traceback instead of closi
                     "desc": "Focuses the `text_input` (or editor) with that `id`.",
                     "params": {"id": "The `id` you passed to the widget."},
                 },
+                "pyzed.Command.focus_next": {
+                    "desc": "Moves the keyboard focus to the next field of the window, wrapping around (what Tab does).",
+                },
+                "pyzed.Command.focus_previous": {
+                    "desc": "Moves the keyboard focus to the previous field of the window (what Shift+Tab does).",
+                },
                 "pyzed.Command.select_all": {
                     "desc": "Focuses the `text_input` with that `id` and selects all its text (typing replaces it).",
                     "params": {"id": "The input's `id`."},
@@ -929,6 +935,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |
 | `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
+| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
 
 The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.
 
@@ -1720,7 +1727,7 @@ PAGES.append({
 # -- Animation ----------------------------------------------------------------
 _section("widgets", "Animation", {
     **_doc("pyzed.Animation", "pyzed.define_animation", "pyzed.presence", "pyzed.stagger",
-           "pyzed.set_reduced_motion", "pyzed.animation.reduced_motion", "pyzed.animation.animation",
+           "pyzed.set_reduced_motion", "pyzed.animation.reduced_motion", "pyzed.system_reduced_motion", "pyzed.animation.animation",
            "pyzed.animation.presets", "pyzed.animation.ease", "pyzed.animation.window_animations"),
     "pyzed.animation.PRESETS": {"desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets).", "no_signature": True},
     "pyzed.animation.CATEGORIES": {"desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`.", "no_signature": True},

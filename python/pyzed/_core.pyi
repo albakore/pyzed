@@ -9,7 +9,6 @@ class Command:
     Commands are values: build them with the static methods below and return them (or a
     list of them) from `update`, `on_start`, `on_key` or any widget callback.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     @staticmethod
     def batch(commands: Any) -> Any:
         """Runs several commands."""
@@ -44,6 +43,14 @@ class Command:
     @staticmethod
     def focus(id: Any) -> Any:
         """Focuses the `text_input` (or editor) with the given `id`."""
+        ...
+    @staticmethod
+    def focus_next() -> Any:
+        """Moves the keyboard focus to the next field of the window (what Tab does), wrapping around."""
+        ...
+    @staticmethod
+    def focus_previous() -> Any:
+        """Moves the keyboard focus to the previous field of the window (what Shift+Tab does)."""
         ...
     @staticmethod
     def focus_window(window: Any = ...) -> Any:
@@ -142,7 +149,7 @@ ICED_VERSION: Any
 
 class Span:
     """A styled fragment of `rich_text`. Create it with `pyzed.span`."""
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    ...
 
 
 class Subscription:
@@ -151,13 +158,11 @@ class Subscription:
     Subscriptions are identified by their `key`: as long as `subscriptions()` keeps
     returning one with the same key it keeps running; when it disappears it stops.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     key: Any
 
 
 class Widget:
     """An immutable node of the UI tree. Create them with the functions in `pyzed`."""
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def animate(self, *animations: Any, **options: Any) -> Any:
         """Animates the widget and returns the wrapped widget.
 

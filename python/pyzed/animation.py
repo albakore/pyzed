@@ -29,8 +29,9 @@ Every widget has ``animate()`` and ``transition()``::
 ``Animation(keyframes=...)`` describes any keyframe animation, ``define_animation`` names
 one, ``presence`` animates content in and out when it changes, ``stagger`` delays a list
 of items one after another and ``set_reduced_motion(True)`` turns motion off (animations
-show their resting state). Windows animate when they open and close with
-``Window.transition`` and ``Window.exit_transition``.
+show their resting state); by default it follows the system's "reduce motion" setting.
+Windows animate when they open and close with ``Window.transition`` and
+``Window.exit_transition``.
 """
 
 from __future__ import annotations
@@ -584,13 +585,24 @@ def stagger(items: Iterable[Any], animation: Any = "fade_in_up", *, step: Any = 
     return out
 
 
-def set_reduced_motion(on: bool = True) -> None:
+#: ``True``/``False`` once the app or ``PYZED_REDUCED_MOTION`` chose; ``None`` follows the system.
+_reduced_motion_choice: Optional[bool] = None
+
+
+def set_reduced_motion(on: Optional[bool] = True) -> None:
     """Turns motion off (``True``) or back on: animations show their resting state at once.
 
-    Respect the user's choice (an accessibility setting) or use it in tests. The
-    ``PYZED_REDUCED_MOTION=1`` environment variable turns it on at startup.
+    By default Pyzed follows the system's "reduce motion" accessibility setting (read when
+    the app starts, see ``pyzed.system_reduced_motion``). ``True`` or ``False`` overrides it
+    (for example from your app's own settings, or in tests) and ``None`` follows the system
+    again. The ``PYZED_REDUCED_MOTION`` environment variable (``1`` or ``0``) overrides it too.
     """
-    _core.set_reduced_motion(bool(on))
+    global _reduced_motion_choice
+    _reduced_motion_choice = None if on is None else bool(on)
+    if on is None:
+        _follow_system()
+    else:
+        _core.set_reduced_motion(bool(on))
 
 
 def reduced_motion() -> bool:
@@ -598,8 +610,21 @@ def reduced_motion() -> bool:
     return _core.reduced_motion()
 
 
-if os.environ.get("PYZED_REDUCED_MOTION", "").lower() in ("1", "true", "yes", "on"):
+def _follow_system() -> None:
+    """Applies the system preference unless the app or the environment chose (called by ``run``)."""
+    if _reduced_motion_choice is not None:
+        return
+    from .accessibility import system_reduced_motion
+
+    _core.set_reduced_motion(bool(system_reduced_motion()))
+
+
+_env = os.environ.get("PYZED_REDUCED_MOTION", "").strip().lower()
+if _env in ("1", "true", "yes", "on"):
     set_reduced_motion(True)
+elif _env in ("0", "false", "no", "off"):
+    set_reduced_motion(False)
+del _env
 
 
 # ---------------------------------------------------------------------------

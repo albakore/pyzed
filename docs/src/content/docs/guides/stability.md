@@ -38,4 +38,4 @@ older ones, and refuses a file saved by a newer Pyzed instead of silently droppi
 | Large data | Virtual lists and tables need rows of the same height. Every update still calls `view()`; [`@pz.memo`](/pyzed/guides/performance/) skips the subtrees that did not change. |
 | Text input | The code editor has no input method (IME) support for Chinese, Japanese or Korean; `text_input` does. |
 | Platforms | Wheels need glibc 2.28 or newer on Linux; there are no musllinux (Alpine) wheels. Pyzed Design builds are not signed yet. |
-| Python | Free-threaded Python (3.13t, 3.14t) is not supported. The `agents` and `mcp` extras need Python 3.10 or newer. |
+| Python | Free-threaded Python (3.13t, 3.14t) is not supported. Pyzed needs Python 3.10 or newer. |

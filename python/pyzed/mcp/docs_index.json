@@ -97,6 +97,12 @@
    "path": "docs/src/content/docs/contributing/index.md"
   },
   {
+   "slug": "contributing/testing",
+   "title": "Testing",
+   "description": "How the test suite is organized, how to test ui components without a window and how the visual regression tests and their reference images work.",
+   "path": "docs/src/content/docs/contributing/testing.md"
+  },
+  {
    "slug": "download",
    "title": "Download Pyzed Design",
    "description": "Download Pyzed Design, the visual designer of Pyzed, as a standalone app for Windows, macOS and Linux.",
@@ -239,6 +245,12 @@
    "title": "Quickstart",
    "description": "Your first Pyzed window in five minutes.",
    "path": "docs/src/content/docs/getting-started/quickstart.md"
+  },
+  {
+   "slug": "guides/accessibility",
+   "title": "Accessibility",
+   "description": "Keyboard focus with Tab, the system's reduce motion setting and the state of screen reader support.",
+   "path": "docs/src/content/docs/guides/accessibility.md"
   },
   {
    "slug": "guides/agents",
@@ -1276,7 +1288,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -1531,6 +1543,12 @@
     "params": {
      "id": "The `id` you passed to the widget."
     }
+   },
+   "pyzed.Command.focus_next": {
+    "desc": "Moves the keyboard focus to the next field of the window, wrapping around (what Tab does)."
+   },
+   "pyzed.Command.focus_previous": {
+    "desc": "Moves the keyboard focus to the previous field of the window (what Shift+Tab does)."
    },
    "pyzed.Command.select_all": {
     "desc": "Focuses the `text_input` with that `id` and selects all its text (typing replaces it).",
@@ -2161,6 +2179,7 @@
    "pyzed.stagger": {},
    "pyzed.set_reduced_motion": {},
    "pyzed.animation.reduced_motion": {},
+   "pyzed.system_reduced_motion": {},
    "pyzed.animation.animation": {},
    "pyzed.animation.presets": {},
    "pyzed.animation.ease": {},
