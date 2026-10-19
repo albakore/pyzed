@@ -45,6 +45,8 @@ bytes = "1"
 # Native file dialogs (Command.pick_files) and images on the clipboard (Command.paste_image).
 rfd = "0.17"
 arboard = { version = "3.7", features = ["wayland-data-control"] }
+# A faster allocator for the many small allocations of each view (widget trees, layout nodes, text).
+mimalloc = { version = "0.1", default-features = false }
 
 [profile.release]
 lto = "thin"

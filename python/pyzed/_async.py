@@ -6,19 +6,34 @@ so libraries that need a single loop (aiohttp sessions, websockets...) just work
 
 from __future__ import annotations
 
-import asyncio
-import inspect
+import sys
 import threading
-from concurrent.futures import Future
-from typing import Any, Awaitable, Callable, Optional
+import types
+from collections.abc import Awaitable as _Awaitable
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
-_loop: Optional[asyncio.AbstractEventLoop] = None
+if TYPE_CHECKING:
+    import asyncio
+    from concurrent.futures import Future
+
+# asyncio and inspect are imported on first use: together they are a third of the time
+# ``import pyzed`` would take otherwise, and many apps never run a coroutine.
+_loop: Optional["asyncio.AbstractEventLoop"] = None
 _lock = threading.Lock()
 
 
-def loop() -> asyncio.AbstractEventLoop:
+def _isawaitable(value: Any) -> bool:
+    """Same as ``inspect``'s ``isawaitable``, without importing ``inspect``."""
+    if isinstance(value, types.GeneratorType):
+        return bool(value.gi_code.co_flags & 0x100)  # CO_ITERABLE_COROUTINE
+    return isinstance(value, _Awaitable)
+
+
+def loop() -> "asyncio.AbstractEventLoop":
     """The asyncio loop Pyzed runs coroutines on (started on first use)."""
     global _loop
+    import asyncio
+
     with _lock:
         if _loop is None or _loop.is_closed():
             _loop = asyncio.new_event_loop()
@@ -31,12 +46,14 @@ async def _await(awaitable: Awaitable[Any]) -> Any:
     return await awaitable
 
 
-def spawn(awaitable: Awaitable[Any]) -> Future:
+def spawn(awaitable: Awaitable[Any]) -> "Future":
     """Schedules a coroutine on Pyzed's loop and returns a ``concurrent.futures.Future``.
 
     Use it for fire-and-forget work; to get the result back into the UI, return the
     coroutine from ``update`` (or use ``Command.perform``) instead.
     """
+    import asyncio
+
     return asyncio.run_coroutine_threadsafe(_await(awaitable), loop())
 
 
@@ -48,6 +65,9 @@ def run(awaitable: Awaitable[Any]) -> Any:
 
 
 def _in_loop() -> bool:
+    asyncio = sys.modules.get("asyncio")
+    if asyncio is None or _loop is None:
+        return False
     try:
         return asyncio.get_running_loop() is _loop
     except RuntimeError:
@@ -66,9 +86,9 @@ def drain(value: Any, emit: Callable[[Any], None], *, keep_none: bool = False) -
     - anything else is emitted as is (``None`` is skipped, unless ``keep_none``: then a
       function that returns nothing still reaches ``Command.perform``'s ``then``).
     """
-    if inspect.isawaitable(value):
+    if _isawaitable(value):
         value = run(value)
-    if inspect.isasyncgen(value) or hasattr(value, "__anext__"):
+    if isinstance(value, types.AsyncGeneratorType) or hasattr(value, "__anext__"):
         agen = value
         try:
             while True:
@@ -81,7 +101,7 @@ def drain(value: Any, emit: Callable[[Any], None], *, keep_none: bool = False) -
             if hasattr(agen, "aclose"):
                 run(agen.aclose())
         return
-    if inspect.isgenerator(value):
+    if isinstance(value, types.GeneratorType):
         try:
             for item in value:
                 _emit(item, emit)
@@ -107,7 +127,7 @@ def _emit_none(emit: Callable[[Any], None]) -> None:
 def _emit(item: Any, emit: Callable[[Any], None]) -> None:
     if item is None:
         return
-    if inspect.isawaitable(item):
+    if _isawaitable(item):
         item = run(item)
         if item is None:
             return

@@ -707,6 +707,12 @@ pub fn flatten<'py>(value: &Bound<'py, PyAny>) -> PyResult<Vec<Bound<'py, PyAny>
 /// Flattens nested lists/tuples of children, skipping `None` and `False`.
 pub fn children(value: &Any<'_>) -> PyResult<Vec<Py<Widget>>> {
     fn collect(value: &Bound<'_, PyAny>, out: &mut Vec<Py<Widget>>) -> PyResult<()> {
+        // Widgets first: they are almost every child, and `hasattr` below raises (and
+        // discards) an AttributeError for each one, which costs more than building the child.
+        if let Ok(w) = value.cast::<Widget>() {
+            out.push(w.clone().unbind());
+            return Ok(());
+        }
         if value.is_none() {
             return Ok(());
         }
@@ -717,9 +723,7 @@ pub fn children(value: &Any<'_>) -> PyResult<Vec<Py<Widget>>> {
         }
         if value.cast::<PyList>().is_ok()
             || value.cast::<PyTuple>().is_ok()
-            || (value.hasattr("__iter__")?
-                && !value.cast::<PyString>().is_ok()
-                && value.cast::<Widget>().is_err())
+            || (!value.is_instance_of::<PyString>() && value.hasattr("__iter__")?)
         {
             for item in value.try_iter()? {
                 collect(&item?, out)?;

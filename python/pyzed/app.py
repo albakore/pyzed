@@ -203,7 +203,7 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
         reload = _hot_reload.enabled_by_env()
     reloader = _hot_reload.enable(app, [*watch, *_hot_reload.watched_by_env()]) if reload else None
     _platform.prepare()
-    _animation._follow_system()
+    _animation._follow_system(background=True)
     try:
         _core.run(app)
     finally:

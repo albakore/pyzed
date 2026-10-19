@@ -68,7 +68,23 @@ def heading(content: Any, *, level: int = 1, theme: Optional[Theme] = None, **kw
     return label(content, size=size, weight="semibold", theme=theme, **kwargs)
 
 
+# Colors of each (theme, variant, tint, selected): mixing them is most of what a button costs
+# to build, and a view builds the same few kinds over and over. Themes are immutable, so the
+# entry stays valid while its theme is alive (the theme is kept to tell a reused id apart).
+_BUTTON_COLORS: dict = {}
+
+
 def _button_colors(t: Theme, variant: str, tint: Optional[str], selected: bool):
+    key = (id(t), variant, tint, selected)
+    cached = _BUTTON_COLORS.get(key)
+    if cached is None or cached[0] is not t:
+        if len(_BUTTON_COLORS) > 512:
+            _BUTTON_COLORS.clear()
+        cached = _BUTTON_COLORS[key] = (t, _mix_button_colors(t, variant, tint, selected))
+    return dict(cached[1])
+
+
+def _mix_button_colors(t: Theme, variant: str, tint: Optional[str], selected: bool):
     if variant in TINTS:
         tint, variant = variant, "tinted"
     if tint and variant not in ("solid", "tinted"):
