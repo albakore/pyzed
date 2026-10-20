@@ -1,6 +1,6 @@
 ---
 title: El agente de Pyzed Design
-description: "El agente de IA de Pyzed Design de un vistazo: un compositor al estilo de Zed que crea formularios, componentes y apps completas, ve imágenes, usa servidores MCP y agentes externos e inicia sesión en muchos proveedores de modelos."
+description: "El agente de IA de Pyzed Design de un vistazo: un compositor que crea formularios, componentes y apps completas, ve imágenes, usa servidores MCP y agentes externos e inicia sesión en muchos proveedores de modelos."
 sidebar:
   order: 2
   label: Agente en Pyzed Design
@@ -20,7 +20,7 @@ Esta página es un resumen. El manual completo, con cada botón, comando y ajust
 
 | Función | Qué hace | Detalles |
 | --- | --- | --- |
-| **Compositor** | Un cuadro de mensaje al estilo de Zed: <kbd>@</kbd> adjunta la selección, el formulario, su código, un control o un archivo; <kbd>/</kbd> ejecuta comandos como `/app`, `/fix`, `/tidy` y `/look`. | [El panel](/pyzed/es/editor/ai-agents/#el-panel) |
+| **Compositor** | Un cuadro de mensaje: <kbd>@</kbd> adjunta la selección, el formulario, su código, un control o un archivo; <kbd>/</kbd> ejecuta comandos como `/app`, `/fix`, `/tidy` y `/look`. | [El panel](/pyzed/es/editor/ai-agents/#el-panel) |
 | **Modos de permisos** | **Preguntar antes de escribir** (por defecto), **Omitir permisos**, **Solo lectura** y **Solo conversación**. Los cambios en el formulario abierto nunca preguntan, porque se pueden deshacer. | [Modos de permisos](/pyzed/es/editor/ai-agents/#el-panel) |
 | **Muchos proveedores** | Anthropic, OpenAI, Gemini, Vertex AI, GitHub Copilot, OpenRouter, xAI, Mistral, DeepSeek, Groq, Ollama, LM Studio y cualquier servidor compatible con OpenAI, con esfuerzo y modo rápido en Claude. | [Proveedores](/pyzed/es/editor/ai-agents/#proveedores) |
 | **Inicio de sesión** | Iniciar sesión con el navegador (se recoge la clave copiada), OAuth de OpenRouter, **Iniciar sesión con GitHub** (flujo de dispositivo) e **Iniciar sesión con Google** para Vertex AI. | [Iniciar sesión](/pyzed/es/editor/ai-agents/#iniciar-sesión) |

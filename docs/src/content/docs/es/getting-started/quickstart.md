@@ -88,7 +88,7 @@ ui.input(self.nombre, lambda texto: setattr(self, "nombre", texto), placeholder=
 
 ## 4. Componentes y temas
 
-`pyzed.ui` trae componentes listos al estilo de Zed. Todos leen el tema actual:
+`pyzed.ui` trae componentes listos para usar. Todos leen el tema actual:
 
 ```python
 class MiApp(pz.App):

@@ -1,11 +1,12 @@
 # Pyzed
 
 **Interfaces modernas y rápidas en Python, renderizadas por [Iced](https://iced.rs) (Rust).**
-Incluye componentes listos para usar inspirados en el editor [Zed](https://zed.dev).
+Incluye componentes listos para usar inspirados en la interfaz del editor [Zed](https://zed.dev), y un diseñador
+visual inspirado en Godot, Unreal Engine, Visual Basic y Qt Designer.
 
 📖 **Documentación:** [albakore.github.io/pyzed](https://albakore.github.io/pyzed/) · [Novedades](CHANGELOG.md)
 
-![Recreación del editor Zed hecha con Pyzed](docs/screenshots/zed-one-dark.png)
+![Un editor de código hecho con Pyzed](docs/screenshots/zed-one-dark.png)
 
 > Esta captura es una app de Python ([`examples/zed_editor.py`](examples/zed_editor.py)):
 > panel de proyecto, pestañas, editor con resaltado de sintaxis, marcadores de git,
@@ -17,7 +18,7 @@ Incluye componentes listos para usar inspirados en el editor [Zed](https://zed.d
   (wgpu, con tiny-skia como respaldo por software) los hace Iced 0.14 en Rust, mediante PyO3.
 - **Sencillo.** Sigue la arquitectura Elm de Iced (estado, `update` y `view`). Un botón puede
   llamar directamente a un método: `on_press=self.guardar`.
-- **Componentes listos.** Unos 40 componentes al estilo Zed (botones, pestañas, árbol de archivos,
+- **Componentes listos.** Unos 40 componentes listos para usar (botones, pestañas, árbol de archivos,
   paleta de comandos, editor de código, terminal, menús, notificaciones…), todos personalizables.
 - **Temas.** Incluye las familias One, Ayu y Gruvbox importadas de Zed, puede leer cualquier
   tema de Zed, generar uno a partir de tres colores y seguir el modo claro/oscuro del sistema.
@@ -150,7 +151,7 @@ atributos nuevos, o define `on_reload(self)` para migrar el estado. Ver
 | Async | `update` y los callbacks pueden devolver una corrutina, un generador o un generador `async`: cada resultado vuelve a `update`. Todo corre en un único loop de asyncio. |
 | Suscripciones | `subscriptions()` devuelve `pz.every(segundos, msg)` (temporizador) y `pz.listen(gen)` (streams). Solo existen mientras las devuelves. |
 | Ventanas | `class Ajustes(pz.Window)` con su propio `view()`, título, tamaño y tema; se abre con `return Ajustes().open()`. Ganchos: `on_open`, `on_close`, `on_resize`. |
-| Atajos | `on_key(self, combo)` recibe cada tecla al estilo Zed: `"ctrl-shift-p"`, `"escape"`, `"up"`… |
+| Atajos | `on_key(self, combo)` recibe cada tecla como texto: `"ctrl-shift-p"`, `"escape"`, `"up"`… |
 | Hilos | `pz.post(mensaje)` envía un mensaje a la app desde cualquier hilo. |
 | Inicio | `on_start()` se ejecuta una vez y puede devolver un `Command` o una corrutina. |
 | Errores | Si `view()` lanza una excepción, la ventana muestra el traceback en vez de cerrarse. |
@@ -284,10 +285,10 @@ Cambiar `self.theme` en `update` cambia el estilo de toda la interfaz al momento
 | [`examples/counter.py`](examples/counter.py) | Lo mínimo: estado, mensajes y callables. |
 | [`examples/todo.py`](examples/todo.py) | Lista de tareas: formularios, listas, filtros, foco y atajos. |
 | [`examples/downloads.py`](examples/downloads.py) | Trabajo en segundo plano con `Command.perform` y `pz.post`, progreso y notificaciones. |
-| [`examples/mini_editor.py`](examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas (árbol, pestañas, editor, paleta). |
+| [`examples/mini_editor.py`](examples/mini_editor.py) | Un editor de código en ~150 líneas (árbol, pestañas, editor, paleta). |
 | [`examples/gallery.py`](examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. |
-| [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor tipo Zed sobre una carpeta real: abrir, editar y guardar (`ctrl-s`), paleta (`ctrl-shift-p`), buscador (`ctrl-p`), docks (`ctrl-b`, `ctrl-j`, `ctrl-alt-b`) y temas. El panel de terminal muestra una salida de ejemplo; no ejecuta una shell. |
-| [`examples/layout.py`](examples/layout.py) | Rejillas con pistas (`pz.grid`, `pz.cell`), `pz.flex` y un dock tipo Zed (`pz.Dock`) con paneles que se mueven y redimensionan. |
+| [`examples/zed_editor.py`](examples/zed_editor.py) | Un editor de código completo sobre una carpeta real: abrir, editar y guardar (`ctrl-s`), paleta (`ctrl-shift-p`), buscador (`ctrl-p`), docks (`ctrl-b`, `ctrl-j`, `ctrl-alt-b`) y temas. El panel de terminal muestra una salida de ejemplo; no ejecuta una shell. |
+| [`examples/layout.py`](examples/layout.py) | Rejillas con pistas (`pz.grid`, `pz.cell`), `pz.flex` y un dock estilo editor (`pz.Dock`) con paneles que se mueven y redimensionan. |
 | [`examples/dialogs.py`](examples/dialogs.py) | Diálogos listos (`ui.confirm`, `ui.prompt`...) y cambio de idioma en vivo con `pyzed.i18n`. |
 | [`examples/styles.py`](examples/styles.py) | Estilos tipo CSS en cualquier widget (`widget.style`), estilos con nombre, gradientes, máscaras y el estilo global (`App.style`). |
 | [`examples/color_picker.py`](examples/color_picker.py) | Selector de color con alfa, gradientes y máscaras (`ui.ColorPicker`). |
@@ -325,7 +326,7 @@ Es la versión 0.2. Limitaciones conocidas:
 
 - `pz.run()` solo puede llamarse una vez por proceso (limitación de winit); usa `pz.Window`
   para más ventanas.
-- Con `wrap=True`, el editor numera la primera fila de cada línea ajustada, como Zed.
+- Con `wrap=True`, el editor numera la primera fila de cada línea ajustada.
 
 ## Licencia
 

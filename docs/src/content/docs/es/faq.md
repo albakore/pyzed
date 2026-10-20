@@ -51,7 +51,7 @@ mejor.
 
 Qt es un toolkit de C++ grande y maduro, con widgets de aspecto nativo y una API enorme. Pyzed es mucho más
 pequeño y sencillo: describes la interfaz a partir de tu estado con funciones de Python, los estilos funcionan
-como CSS y los componentes se ven como el editor Zed desde el principio. Pyzed tiene licencia MIT, mientras que
+como CSS y los componentes tienen un aspecto moderno desde el principio. Pyzed tiene licencia MIT, mientras que
 PyQt es GPL o comercial y PySide es LGPL. Qt sigue teniendo más widgets, soporte de accesibilidad y años de uso
 en producción.
 

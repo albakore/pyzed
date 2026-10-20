@@ -98,7 +98,7 @@ Groups for browsing icons (arrows, text, files, layout, media, communication, pe
 for_file(name)
 ```
 
-Returns `(icon, color_or_None)` for a file name, as in Zed's project panel.
+Returns `(icon, color_or_None)` for a file name, as in the project panel of a code editor.
 
 | Parameter | Description |
 | --- | --- |

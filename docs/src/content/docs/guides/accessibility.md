@@ -17,7 +17,7 @@ After the last field it goes back to the first. Fields are `text_input`s, `text_
 `code_editor`s (and the components built on them, like `ui.input` or `ui.search`); each window
 cycles through its own fields only.
 
-A `code_editor` with `tab_size` keeps <kbd>Tab</kbd> to indent, like Zed. Editors without it
+A `code_editor` with `tab_size` keeps <kbd>Tab</kbd> to indent, like a code editor. Editors without it
 pass the key on, so <kbd>Tab</kbd> leaves them.
 
 `on_key` sees the key first (`"tab"` or `"shift-tab"`). If it returns something (a message or

@@ -123,7 +123,7 @@ recientes).
 
 ![La pestaña Project: los archivos y carpetas del proyecto](../../../../../screenshots/designer-project.png)
 
-- **Project** muestra los archivos del proyecto en árbol, como Zed o VS Code, coloreados según git. Busca archivos y
+- **Project** muestra los archivos del proyecto en árbol, como en un editor de código, coloreados según git. Busca archivos y
   carpetas desde su barra o con <kbd>Ctrl</kbd>+<kbd>P</kbd>; con clic derecho tienes nuevo archivo, nueva carpeta,
   renombrar, borrar, copiar la ruta y mostrar en el gestor de archivos. Los forms y componentes se abren en el
   diseñador; los demás archivos, con la app del sistema.
@@ -131,7 +131,7 @@ recientes).
   su versión (lápiz), actualízalo o quítalo. Su barra sincroniza el entorno, busca actualizaciones (se ven en verde)
   y actualiza todo. Debajo, **Tools** muestra las versiones de uv, git, ruff y ty; **Lint**, **Format** y **Types**
   ejecutan ruff y ty y muestran su salida.
-- **Create repository** (en la cabecera) ejecuta `git init` y escribe un `.gitignore`, como Zed. Cuando ya hay
+- **Create repository** (en la cabecera) ejecuta `git init` y escribe un `.gitignore`. Cuando ya hay
   repositorio, la cabecera muestra su rama.
 
 Los comandos corren en segundo plano, así el diseñador sigue respondiendo mientras uv descarga paquetes.
@@ -156,7 +156,7 @@ python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<
 
 ### Actualizaciones
 
-Como Zed, Pyzed Design consulta GitHub una vez al día por si hay una versión nueva (se desactiva en
+Pyzed Design consulta GitHub una vez al día por si hay una versión nueva (se desactiva en
 **Ayuda → Buscar actualizaciones automáticamente**, o se consulta ya con **Ayuda → Buscar actualizaciones**).
 Si la hay, la barra de estado muestra **Actualizar a X.Y.Z**: abre una pestaña **Novedades** con las notas de la
 versión y un botón **Descargar e instalar**. La descarga de tu plataforma se verifica con el SHA-256 de la

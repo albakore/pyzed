@@ -1,6 +1,6 @@
 ---
 title: "Workspace"
-description: "The layout of a Zed window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API."
+description: "The layout of an editor-style window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
   order: 95
   label: "Workspace"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-Builds the frame of a Zed window: the title bar on top, docks on the left, right and bottom, the center and the status bar. Pass `None` to hide a dock (that is how Ctrl+B works); `left_width`, `right_width` and `bottom_height` set their size and `on_resize` reports drags.
+Builds the frame of an editor-style window: the title bar on top, docks on the left, right and bottom, the center and the status bar. Pass `None` to hide a dock (that is how Ctrl+B works); `left_width`, `right_width` and `bottom_height` set their size and `on_resize` reports drags.
 
 `ui.workspace` · Category: [Workspace](/pyzed/library/#workspace) · [Full reference →](/pyzed/reference/ui/#workspace-1)
 
@@ -92,7 +92,7 @@ workspace(
 )
 ```
 
-The layout of a Zed window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.
+The layout of an editor-style window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.
 
 | Parameter | Default | Description |
 | --- | --- | --- |

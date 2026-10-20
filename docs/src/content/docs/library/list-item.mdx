@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-A list row (Zed's `ListItem`): an icon, the text and `start`/`end` slots for any widget. It supports `selected`, `focused` (focus border), `disabled`, nesting with `indent`, and `on_right_press` for a context menu.
+A list row: an icon, the text and `start`/`end` slots for any widget. It supports `selected`, `focused` (focus border), `disabled`, nesting with `indent`, and `on_right_press` for a context menu.
 
 `ui.list_item` · Category: [Lists and menus](/pyzed/library/#lists-and-menus) · [Full reference →](/pyzed/reference/ui/#list_item)
 
@@ -36,7 +36,7 @@ pz.column([
 ## When to use
 
 - For any vertical list: recent files, search results, settings categories, people.
-- Use `inset=True` inside panels so the highlight has a margin, like Zed.
+- Use `inset=True` inside panels so the highlight has a margin.
 
 ## Usage
 
@@ -82,7 +82,7 @@ list_item(
 )
 ```
 
-A list row (Zed's `ListItem`): icon, text and a slot at the end.
+A list row: icon, text and a slot at the end.
 
 | Parameter | Default | Description |
 | --- | --- | --- |

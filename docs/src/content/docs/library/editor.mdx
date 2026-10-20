@@ -1,6 +1,6 @@
 ---
 title: "Editor"
-description: "Zed's code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API."
+description: "A full code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
   order: 28
   label: "Editor"
@@ -165,7 +165,7 @@ editor(
 )
 ```
 
-Zed's code editor: highlighting with the theme colors, line numbers and git markers.
+A code editor: highlighting with the theme colors, line numbers and git markers.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -278,7 +278,7 @@ code_editor(
 A code editor with syntax highlighting, line numbers and git markers, based on Iced's
 `text_editor`. It is **uncontrolled**: `text` is only the initial value for that `id`; the
 text, cursor and history live in Rust. Use `Command.set_editor_text` to replace it.
-For the Zed style use [`ui.editor`](/pyzed/components/code/).
+For the themed editor use [`ui.editor`](/pyzed/components/code/).
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -336,5 +336,5 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
 <CardGrid>
 <LinkCard title="Terminal" description="A read-only terminal view with ANSI colors." href="/pyzed/library/terminal/" />
 <LinkCard title="Console" description="A dev-tools style log with levels, filter, copy and clear." href="/pyzed/library/console/" />
-<LinkCard title="Workspace" description="The layout of a Zed window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
+<LinkCard title="Workspace" description="The layout of an editor-style window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
 </CardGrid>

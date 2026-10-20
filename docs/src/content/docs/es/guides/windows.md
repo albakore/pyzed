@@ -124,7 +124,7 @@ mensaje.
 
 ### Marcos de ventana: tu propia barra de título
 
-`frame = "custom"` cambia el marco del sistema por uno dibujado por Pyzed, como el de Zed: una barra de título
+`frame = "custom"` cambia el marco del sistema por uno dibujado por Pyzed: una barra de título
 que mueve la ventana (doble clic la maximiza), los botones de minimizar, maximizar y cerrar con el estilo del
 sistema, menús a la izquierda y bordes que cambian el tamaño de la ventana. `frame_menus()` devuelve los menús.
 
@@ -146,7 +146,7 @@ class Notas(pz.App):
         return self.editor()
 ```
 
-Los menús quedan tras un botón ☰, como en Zed: un clic abre el primero y muestra el nombre de todos, y al
+Los menús quedan tras un botón ☰: un clic abre el primero y muestra el nombre de todos, y al
 pasar el puntero a otro nombre se abre ese. Para poner más cosas en la barra (un selector de proyecto, un botón
 Ejecutar), llama tú a `ui.window_frame` en `view()`; así la ventana no se enmarca dos veces:
 

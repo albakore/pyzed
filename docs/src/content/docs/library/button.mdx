@@ -1,6 +1,6 @@
 ---
 title: "Button"
-description: "The Zed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
+description: "The themed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
   order: 9
   label: "Button"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-Displays a button in the Zed style. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `radius`…) overrides the theme's.
+Displays a themed button. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `radius`…) overrides the theme's.
 
 `ui.button` · Category: [Actions](/pyzed/library/#actions) · [Full reference →](/pyzed/reference/ui/#button)
 
@@ -176,7 +176,7 @@ button(
 )
 ```
 
-The Zed button.
+A themed button with variants, sizes, an icon and a shortcut.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -191,7 +191,7 @@ The Zed button.
 | `selected` | `False` | Marks it as selected. |
 | `disabled` | `False` | Disables it (ignores clicks). |
 | `full_width` | `False` | Fills the full width. |
-| `keys` | `None` | Shortcut shown at the end, Zed style: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | `None` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 | `**style` | — | Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…). |
 

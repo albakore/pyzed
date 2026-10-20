@@ -33,7 +33,7 @@ COMMON = {
     "id": "Stable identifier used to focus or scroll it with a `Command`.",
     "icon": "Name of a Lucide icon (`pyzed icons` lists them).",
     "icon_color": "Icon color: a theme token or a hex color.",
-    "keys": 'Shortcut shown at the end, Zed style: `"ctrl-s"`, `"cmd-k cmd-s"`.',
+    "keys": 'Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`.',
     "selected": "Marks it as selected.",
     "disabled": "Disables it (ignores clicks).",
     "size": "Size.",
@@ -342,11 +342,11 @@ If `view()` raises an exception, the window shows the traceback instead of closi
             }),
             ("Interaction", {
                 "pyzed.button": {
-                    "desc": "A button with no predefined style. For the Zed button use `ui.button`.",
+                    "desc": "A button with no predefined style. For the themed button use `ui.button`.",
                     "params": {"content": "Button content."},
                 },
                 "pyzed.text_input": {
-                    "desc": "A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the Zed style use `ui.input`.",
+                    "desc": "A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the themed field use `ui.input`.",
                     "params": {
                         "value": "Current text.",
                         "size": "Font size.",
@@ -380,7 +380,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
                     "desc": "Makes a widget block the mouse for whatever is below it in a `stack`.",
                 },
                 "pyzed.tooltip": {
-                    "desc": "Shows `tip` next to `content` on hover. `ui.tooltip` adds the Zed style.",
+                    "desc": "Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.",
                     "params": {
                         "tip": "Tooltip content.",
                         "position": '`"top"`, `"bottom"`, `"left"`, `"right"` or `"cursor"`.',
@@ -406,7 +406,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
 A code editor with syntax highlighting, line numbers and git markers, based on Iced's
 `text_editor`. It is **uncontrolled**: `text` is only the initial value for that `id`; the
 text, cursor and history live in Rust. Use `Command.set_editor_text` to replace it.
-For the Zed style use [`ui.editor`](/pyzed/components/code/).
+For the themed editor use [`ui.editor`](/pyzed/components/code/).
 """,
                     "params": {
                         "id": "Identifies the buffer. Reuse it to keep state across renders.",
@@ -455,7 +455,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
     {
         "slug": "ui",
         "title": "Components (pyzed.ui)",
-        "description": "API reference for pyzed.ui: every Zed-style component, its parameters, defaults and events, for building native Python desktop apps.",
+        "description": "API reference for pyzed.ui: every ready-made component, its parameters, defaults and events, for building native Python desktop apps.",
         "order": 4,
         "intro": """
             Signatures and parameters of every component. To see them with images and examples,
@@ -484,7 +484,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"level": "1 (26 px), 2 (20 px), 3 (16 px) or 4 (13.5 px).", "kwargs": "Same as `label`."},
                 },
                 "pyzed.ui.button": {
-                    "desc": "The Zed button.",
+                    "desc": "A themed button with variants, sizes, an icon and a shortcut.",
                     "params": {
                         "content": "Text or widget.",
                         "icon_position": '`"start"` or `"end"`.',
@@ -496,7 +496,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     },
                 },
                 "pyzed.ui.icon_button": {
-                    "desc": "A square button with just an icon (Zed's `IconButton`).",
+                    "desc": "A square button with just an icon.",
                     "params": {
                         "name": "Icon name.",
                         "size": _SIZES,
@@ -531,7 +531,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     },
                 },
                 "pyzed.ui.tooltip": {
-                    "desc": "Wraps `content` with a Zed-style tooltip, optionally with its shortcut.",
+                    "desc": "Wraps `content` with a themed tooltip, optionally with its shortcut.",
                     "params": {"text": "Tooltip text.", "position": '`"top"`, `"bottom"`, `"left"`, `"right"` or `"cursor"`.'},
                 },
                 "pyzed.ui.divider": {
@@ -568,18 +568,18 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"max": "Maximum value.", "height": "Thickness."},
                 },
                 "pyzed.ui.segmented": {
-                    "desc": "A group of mutually exclusive buttons (Zed's `ToggleButtonGroup`).",
+                    "desc": "A group of mutually exclusive buttons.",
                     "params": {"options": "List of options (strings).", "selected": "The active option."},
                 },
                 "pyzed.ui.field": {
-                    "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
+                    "desc": "A form row: title and description on the left, control on the right (like a settings screen).",
                     "params": {"control": "The control (switch, input…).", "description": "Help text.",
                                "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."},
                 },
             }),
             ("Lists, tree and menus", {
                 "pyzed.ui.list_item": {
-                    "desc": "A list row (Zed's `ListItem`): icon, text and a slot at the end.",
+                    "desc": "A list row: icon, text and a slot at the end.",
                     "params": {
                         "content": "Text or widget.",
                         "focused": "Draws a focus border.",
@@ -599,7 +599,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     },
                 },
                 "pyzed.ui.tree": {
-                    "desc": "A collapsible file tree (Zed's project panel).",
+                    "desc": "A collapsible file tree, like a code editor's project panel.",
                     "params": {
                         "nodes": "List of `TreeNode`.",
                         "expanded": "Set of open folder ids.",
@@ -652,7 +652,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
             }),
             ("Workspace", {
                 "pyzed.ui.workspace": {
-                    "desc": "The layout of a Zed window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.",
+                    "desc": "The layout of an editor-style window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.",
                     "params": {
                         "center": "Central content (usually tabs + editor).",
                         "title_bar": "Title bar (`ui.title_bar`).",
@@ -691,12 +691,12 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
             }),
             ("Window frame", {
                 "pyzed.ui.window_frame": {
-                    "desc": "The whole frame of a window opened with `frame=\"custom\"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed, and borders that resize the window.",
+                    "desc": "The whole frame of a window opened with `frame=\"custom\"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left, and borders that resize the window.",
                     "params": {
                         "content": "The window's content, under the title bar.",
                         "title": "Title shown in the bar. By default the window's `title`.",
                         "menus": "Menus on the left of the bar: a list of `ui.Menu`.",
-                        "menu_button": "Shows the menus behind a ☰ button, like Zed (`False` always shows their names).",
+                        "menu_button": "Shows the menus behind a ☰ button (`False` always shows their names).",
                         "start": "Items after the menus (project, branch…).",
                         "center": "Your own widget in the middle instead of the title.",
                         "end": "Items before the window buttons.",
@@ -758,7 +758,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"detail": "Secondary text (for example, a file path)."},
                 },
                 "pyzed.ui.command_palette": {
-                    "desc": "Zed's command palette: fuzzy-filters `commands` by `query` and shows their shortcuts.",
+                    "desc": "A command palette: fuzzy-filters `commands` by `query` and shows their shortcuts.",
                     "params": {
                         "query": "Search text.",
                         "on_query": "Callable that receives the new text.",
@@ -802,7 +802,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
             }),
             ("Code", {
                 "pyzed.ui.editor": {
-                    "desc": "Zed's code editor: highlighting with the theme colors, line numbers and git markers.",
+                    "desc": "A code editor: highlighting with the theme colors, line numbers and git markers.",
                     "params": {
                         "id": "Identifies the buffer (use the file path).",
                         "text": "Initial text.",
@@ -852,7 +852,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
     {
         "slug": "theme",
         "title": "Themes",
-        "description": "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs.",
+        "description": "API reference for pyzed Theme: the built-in themes, color tokens, deriving custom themes and color utilities for Python GUIs.",
         "order": 5,
         "intro": """
             See the [theming](/pyzed/theming/themes/) guide for the list of tokens and how to create your own.
@@ -860,7 +860,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
         "sections": [
             ("Theme", {
                 "pyzed.Theme": {
-                    "desc": "A theme: an immutable dataclass with Zed's color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark.",
+                    "desc": "A theme: an immutable dataclass with color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark.",
                     "no_signature": True,
                 },
                 "pyzed.Theme.derive": {
@@ -873,7 +873,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                     "params": {"name": "Token or color."},
                 },
                 "pyzed.Theme.tokens": {"desc": "All tokens as a dict."},
-                "pyzed.Theme.syntax_scopes": {"desc": "Maps Zed's syntax tokens to TextMate scopes for the highlighter."},
+                "pyzed.Theme.syntax_scopes": {"desc": "Maps the theme's syntax tokens to TextMate scopes for the highlighter."},
                 "pyzed.Theme.palette": {"desc": "The base palette passed to Iced for its internal styles. Internal use."},
             }),
             ("Built-in themes", {
@@ -930,7 +930,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
                                          "params": {"key": 'A key of `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...).', "among": "Only look at these names."}},
                 "pyzed.icons.CATEGORIES": {"desc": "Groups for browsing icons (arrows, text, files, layout, media, communication, people, devices, development, shapes, weather, commerce, maps, status), each with the words of names and tags that put an icon in it.", "no_signature": True},
                 "pyzed.icons.for_file": {
-                    "desc": 'Returns `(icon, color_or_None)` for a file name, as in Zed\'s project panel.',
+                    "desc": 'Returns `(icon, color_or_None)` for a file name, as in the project panel of a code editor.',
                     "params": {"name": "File name."},
                 },
                 "pyzed.icons.language_for": {
@@ -1340,7 +1340,7 @@ _section("widgets", "Images and content", {
 dict(_w)["Controls"].update({
     "pyzed.vertical_slider": {"desc": "A vertical slider (`slider(..., vertical=True)`).", "params": {"min": "Minimum.", "max": "Maximum.", "kwargs": "Same as `slider`."}},
     "pyzed.pick_list": {
-        "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the Zed style use `ui.select`.",
+        "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.",
         "params": {
             "selected": "Current option.", "handle": "Arrow icon character.", "handle_size": "Arrow size.",
             "menu_height": "Maximum menu height.", "font": "Font family.",
@@ -1361,7 +1361,7 @@ dict(_w)["Controls"]["pyzed.slider"]["params"]["on_release"] = "Sent when the kn
 # -- UI -----------------------------------------------------------------------------
 _section("ui", "Controls", {
     "pyzed.ui.select": {
-        "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
+        "desc": "A dropdown with the theme style. Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
         "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.'},
     },
     "pyzed.ui.radio_group": {
@@ -1369,11 +1369,11 @@ _section("ui", "Controls", {
         "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column."},
     },
     "pyzed.ui.number_field": {
-        "desc": "A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
+        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
         "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.'},
     },
     "pyzed.ui.split_button": {
-        "desc": "A button with a separate arrow for more options (Zed's `SplitButton`). `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
+        "desc": "A button with a separate arrow for more options. `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
         "params": {"content": "Button text.", "variant": "As in `ui.button`.", "size": _SIZES},
     },
     "pyzed.ui.toggle_group": {
@@ -1392,7 +1392,7 @@ _section("ui", "Controls", {
         "desc": "One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget.",
     },
     "pyzed.ui.accordion": {
-        "desc": "Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
+        "desc": "Stacked collapsible sections separated by dividers, like the panels of a settings screen. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
         "params": {"sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).", "open": "The set of open ids, a `{id: bool}` dict, or `True` for all.", "on_toggle": "Called with the key of the clicked header.", "icons": "`{id: icon}`: a Lucide icon for each header.", "spacing": "Space around the dividers between sections.", "padding": "Padding around the content of an open section."},
         "example": """
             ui.accordion([
@@ -1404,7 +1404,7 @@ _section("ui", "Controls", {
 }, before="Lists, tree and menus")
 _section("ui", "Data and feedback", {
     "pyzed.ui.callout": {
-        "desc": "An inline notice (Zed's `Callout`/`Banner`).",
+        "desc": "An inline notice (a callout or banner).",
         "params": {"title": "Title (text or widget).", "tint": '`"info"`, `"success"`, `"warning"`, `"error"` or `"hint"`: picks the color and icon.', "on_dismiss": "Adds a close button."},
     },
     "pyzed.ui.empty_state": {
@@ -1412,7 +1412,7 @@ _section("ui", "Data and feedback", {
         "params": {"title": "Title."},
     },
     "pyzed.ui.settings_group": {
-        "desc": "A titled block of `ui.field` rows separated by lines (Zed's settings UI).",
+        "desc": "A titled block of `ui.field` rows separated by lines, like a settings screen.",
         "params": {"title": "Group title.", "rows": "The rows (usually `ui.field`)."},
     },
     "pyzed.ui.Column": {
@@ -1452,7 +1452,7 @@ _section("ui", "Data and feedback", {
         "params": {"count": "The number.", "max": "Maximum before showing `N+`."},
     },
     "pyzed.ui.facepile": {
-        "desc": "Overlapping collaborator avatars, as in Zed's title bar. Those beyond `max_shown` are grouped into `+N`.",
+        "desc": "Overlapping collaborator avatars, as in the title bar of a collaborative editor. Those beyond `max_shown` are grouped into `+N`.",
         "params": {"people": "Initials or names.", "overlap": "Overlap in pixels.", "max_shown": "How many to show."},
     },
     "pyzed.ui.diff_stat": {
@@ -1504,7 +1504,7 @@ dict(_t["sections"])["Built-in themes"].update({
     "pyzed.AutoTheme": {"desc": "What `themes.auto` returns: a `(light, dark)` pair. `pick(dark)` returns the right one.", "no_signature": True},
 })
 _t["sections"][1][1]["pyzed.themes"]["desc"] = (
-    "Namespace with the built-in themes (Zed's One, Ayu and Gruvbox families) and the theme "
+    "Namespace with the built-in themes (the One, Ayu and Gruvbox families) and the theme "
     "registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, "
     "`themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
 )
@@ -1591,7 +1591,7 @@ _section("app", "Events and components", {
         "desc": "What happened, passed to event handlers: `type`, `x`, `y` (relative to the widget), `dx`, `dy` (scroll or drag movement), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (the pointer in the window and on the screen), and `value`/`source` for custom events.",
     },
     "pyzed.Dock": {
-        "desc": "A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
+        "desc": "An editor-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
         "params": {
             "args": "Props by position: `center`, `panels`, `layout`.", "kwargs": "Props and handlers by name, plus `key=`.",
             "center": "The main area.", "panels": "A list of `pz.DockPanel`.",

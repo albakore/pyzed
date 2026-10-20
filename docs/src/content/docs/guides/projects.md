@@ -122,7 +122,7 @@ The designer has a **Project** tab next to the toolbox. It opens the project the
 
 ![The Project tab: the project's files and folders](../../../../screenshots/designer-project.png)
 
-- **Project** shows the project's files as a tree, like Zed or VS Code, colored by git status. Search files and
+- **Project** shows the project's files as a tree, like in a code editor, colored by git status. Search files and
   folders from its toolbar or with <kbd>Ctrl</kbd>+<kbd>P</kbd>; right-click for new file, new folder, rename,
   delete, copy path and reveal in the file manager. Forms and components open in the designer; other files open
   in the system's app.
@@ -130,7 +130,7 @@ The designer has a **Project** tab next to the toolbox. It opens the project the
   (pencil), upgrade it or remove it. Its toolbar syncs the environment, checks for updates (shown in green) and
   upgrades everything. Below, **Tools** shows the versions of uv, git, ruff and ty found; **Lint**, **Format** and
   **Types** run ruff and ty and show their output.
-- **Create repository** (in the header) runs `git init` and writes a `.gitignore`, like Zed. Once there is a
+- **Create repository** (in the header) runs `git init` and writes a `.gitignore`. Once there is a
   repository the header shows its branch.
 
 Commands run in the background, so the designer stays responsive while uv downloads packages.
@@ -154,7 +154,7 @@ python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design
 
 ### Updates
 
-Like Zed, Pyzed Design checks GitHub once a day for a newer release (turn it off in
+Pyzed Design checks GitHub once a day for a newer release (turn it off in
 **Help → Check for updates automatically**, or check now with **Help → Check for updates**). When there is
 one, the status bar shows **Update to X.Y.Z**: it opens a **What's new** tab with the release notes and a
 **Download and install** button. The download for your platform is checked against the release's SHA-256 and

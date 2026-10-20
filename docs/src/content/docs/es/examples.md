@@ -1,6 +1,6 @@
 ---
 title: Ejemplos
-description: "Apps de ejemplo de Pyzed listas para ejecutar: listas de tareas, un editor tipo Zed, el Juego de la vida, reloj, cronómetro, varias ventanas y datos en vivo."
+description: "Apps de ejemplo de Pyzed listas para ejecutar: listas de tareas, un editor de código, el Juego de la vida, reloj, cronómetro, varias ventanas y datos en vivo."
 ---
 
 Todos los ejemplos están en [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
@@ -15,7 +15,7 @@ python examples/<nombre>.py
 | [`counter.py`](https://github.com/albakore/pyzed/blob/main/examples/counter.py) | Lo mínimo: estado, mensajes y callables. | [Inicio rápido](/pyzed/es/getting-started/quickstart/) |
 | [`todo.py`](https://github.com/albakore/pyzed/blob/main/examples/todo.py) | Formularios, listas, filtros, foco y atajos. | [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) |
 | [`downloads.py`](https://github.com/albakore/pyzed/blob/main/examples/downloads.py) | `Command.perform`, `pz.post` desde hilos, progreso y notificaciones. | [Tareas en segundo plano](/pyzed/es/tutorials/intermediate/background-tasks/) |
-| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas. | [Mini editor](/pyzed/es/tutorials/advanced/code-editor/) |
+| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | Un editor de código con árbol de archivos y pestañas en ~150 líneas. | [Mini editor](/pyzed/es/tutorials/advanced/code-editor/) |
 | [`gallery.py`](https://github.com/albakore/pyzed/blob/main/examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. | [Componentes](/pyzed/es/components/overview/) |
 | [`zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) | Editor completo: buscador de archivos, paleta, docks, terminal, temas y marcadores de git. | |
 | [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Cinco pasos: ventana, estado, layout y temas, async, app de notas. | [Tutorial en 5 pasos](/pyzed/es/tutorials/basic/step-by-step/) |
@@ -56,7 +56,7 @@ en su carpeta y ejecuta `uv run main.py`.
 | [`pydantic_signup`](https://github.com/albakore/pyzed/tree/main/examples/integrations/pydantic_signup) | Pydantic | [Pydantic](/pyzed/es/integrations/pydantic/) |
 | [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | [Otras librerías](/pyzed/es/integrations/other-libraries/#aiosqlite) |
 
-## Editor tipo Zed
+## Editor de código
 
 ```bash
 python examples/zed_editor.py .
@@ -66,7 +66,7 @@ Atajos: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> paleta, <kbd>Ctrl</kbd>+<k
 buscador de archivos, <kbd>Ctrl</kbd>+<kbd>S</kbd> guardar, <kbd>Ctrl</kbd>+<kbd>B</kbd>,
 <kbd>Ctrl</kbd>+<kbd>J</kbd> y <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> docks.
 
-![Editor tipo Zed en One Dark](../../../../screenshots/zed-one-dark.png)
+![Un editor de código hecho con Pyzed, en One Dark](../../../../screenshots/zed-one-dark.png)
 
 | Paleta de comandos | Buscador de archivos (Gruvbox) |
 | --- | --- |

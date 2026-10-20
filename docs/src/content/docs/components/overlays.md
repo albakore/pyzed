@@ -27,7 +27,7 @@ def dialog(self):
 ```
 
 `align_x`, `align_y` and `offset` control where the overlay appears (by default, centered at the
-top like Zed's palette).
+top, like a command palette).
 
 ## Modal
 

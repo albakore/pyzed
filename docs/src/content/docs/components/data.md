@@ -24,7 +24,7 @@ pz.row([
     ui.count_badge(7),
     ui.count_badge(120, tint="error"),            # shows "99+"
     ui.facepile(["Ana", "Luis", "Kev", "Marta"]), # overlapping avatars
-    ui.diff_stat(42, 9),                          # +42 −9 and blocks, as in Zed
+    ui.diff_stat(42, 9),                          # +42 −9 and colored blocks
     ui.keybinding_hint("Open palette", "ctrl-shift-p"),
 ], spacing=14, align="center")
 ```

@@ -178,7 +178,7 @@ puede arrastrar. `min_size`/`max_size` lo limitan y `on_resize(tamaño)` avisa d
 tamaño al soltar. `ui.panel` y `ui.workspace` lo usan, así que sus paneles laterales se
 pueden redimensionar sin más, y `pz.split` conserva la proporción arrastrada.
 
-`pz.Dock` es un dock al estilo Zed: un área central con paneles a los lados. Arrastra una
+`pz.Dock` es un dock estilo editor: un área central con paneles a los lados. Arrastra una
 pestaña a una zona (o haz clic derecho) para mover el panel a otro lado, y arrastra su borde
 interior para cambiar su tamaño.
 

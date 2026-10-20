@@ -17,7 +17,7 @@ sistema. Los lectores de pantalla todavía no están soportados: en
 componentes construidos con ellos, como `ui.input` o `ui.search`); cada ventana recorre solo
 sus propios campos.
 
-Un `code_editor` con `tab_size` se queda con <kbd>Tab</kbd> para indentar, como Zed. Los
+Un `code_editor` con `tab_size` se queda con <kbd>Tab</kbd> para indentar, como un editor de código. Los
 editores sin él dejan pasar la tecla, así que <kbd>Tab</kbd> sale de ellos.
 
 `on_key` ve la tecla primero (`"tab"` o `"shift-tab"`). Si devuelve algo (un mensaje o un

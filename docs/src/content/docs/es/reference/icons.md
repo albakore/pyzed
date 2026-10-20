@@ -98,7 +98,7 @@ Grupos para explorar iconos (flechas, texto, archivos, diseño, multimedia, comu
 for_file(name)
 ```
 
-Devuelve `(icono, color_o_None)` para un nombre de archivo, como en el panel de proyecto de Zed.
+Devuelve `(icono, color_o_None)` para un nombre de archivo, como en el panel de proyecto de un editor de código.
 
 | Parámetro | Descripción |
 | --- | --- |

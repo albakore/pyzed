@@ -74,7 +74,7 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | --- | --- |
 | `get_guide` | Cómo funciona Pyzed (`"overview"`), sus reglas (`"best-practices"`), recetas ejecutables (`"cookbook"`: estructura de una app, trabajo en segundo plano, formularios, listas virtuales, animación, shaders, juegos, marcos de ventana propios, layouts con anclas) o cualquier tema de `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), en inglés o en español. |
 | `list_guides` | Todos los temas que acepta `get_guide`. |
-| `list_components` | Cada widget (`pz.*`), componente estilo Zed (`pz.ui.*`), tipo de la caja de herramientas del diseñador y clase `pz.Component`, con un resumen de una línea. Filtra por `kind`, `query` o `category`. |
+| `list_components` | Cada widget (`pz.*`), componente listo (`pz.ui.*`), tipo de la caja de herramientas del diseñador y clase `pz.Component`, con un resumen de una línea. Filtra por `kind`, `query` o `category`. |
 | `describe_component` | La firma, la documentación y los parámetros de un widget o componente (`"pz.column"`, `"ui.button"`), o las propiedades y eventos de un tipo del diseñador (`"designer:button"`). |
 | `search_reference`, `read_reference` | Buscan y leen la [referencia](/pyzed/es/reference/) de cada módulo, clase y función (`pyzed.game`, `pyzed.updater`, `ui.virtual_list`...). |
 | `editor_keymap` | Los atajos por defecto del editor de código y cómo cambiarlos. |
@@ -82,7 +82,7 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | `list_themes` | Los temas incluidos y los tokens de color que aceptan los estilos (`"accent"`, `"panel"`...). |
 | `list_docs`, `read_docs` | Las páginas de esta documentación, en inglés o en español. |
 | `list_examples`, `read_example` | El código de los ejemplos, por `kind`: apps, bloques (pantallas completas para copiar), juegos, showcase (shaders, efectos), integraciones con backend (FastAPI, SQLAlchemy, SQLModel, Django), tutorial y diseñador. |
-| `new_app` | Un script `pz.App` ejecutable: un punto de partida simple o un workspace tipo Zed. |
+| `new_app` | Un script `pz.App` ejecutable: un punto de partida simple o un workspace estilo editor. |
 | `new_component` | El esqueleto de un `pz.Component` con sus props, estado y eventos. |
 | `new_form` | Un formulario del diseñador visual: el `.pzform` y su módulo de handlers. |
 | `validate_code` | Revisa el código sin ejecutarlo: nombres que no existen en `pz` o `pz.ui`, argumentos que una función no acepta, apps sin `view()`, componentes sin `render()`, efectos secundarios en `view()`, lambdas en bucles que no capturan la variable y las comprobaciones de pyflakes de ruff si está instalado. |

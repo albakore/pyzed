@@ -74,7 +74,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | --- | --- |
 | `get_guide` | How Pyzed works (`"overview"`), its rules (`"best-practices"`), runnable recipes (`"cookbook"`: app structure, background work, forms, virtual lists, animation, shaders, games, custom window frames, anchored layouts) or any topic of `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), in English or Spanish. |
 | `list_guides` | Every topic `get_guide` takes. |
-| `list_components` | Every widget (`pz.*`), Zed-style component (`pz.ui.*`), designer toolbox type and `pz.Component` class, with a one-line summary. Filter by `kind`, `query` or `category`. |
+| `list_components` | Every widget (`pz.*`), ready-made component (`pz.ui.*`), designer toolbox type and `pz.Component` class, with a one-line summary. Filter by `kind`, `query` or `category`. |
 | `describe_component` | The signature, documentation and parameters of one widget or component (`"pz.column"`, `"ui.button"`), or the props and events of a designer type (`"designer:button"`). |
 | `search_reference`, `read_reference` | Search and read the [reference](/pyzed/reference/) of every module, class and function (`pyzed.game`, `pyzed.updater`, `ui.virtual_list`...). |
 | `editor_keymap` | The default key bindings of the code editor and how to change them. |
@@ -82,7 +82,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | `list_themes` | The built-in themes and the color tokens styles accept (`"accent"`, `"panel"`...). |
 | `list_docs`, `read_docs` | The pages of this documentation, in English or Spanish. |
 | `list_examples`, `read_example` | The source of the examples, by `kind`: apps, blocks (whole screens to copy), games, showcase (shaders, effects), backend integrations (FastAPI, SQLAlchemy, SQLModel, Django), tutorial and designer. |
-| `new_app` | A runnable `pz.App` script: a simple starting point or a Zed-like workspace. |
+| `new_app` | A runnable `pz.App` script: a simple starting point or an editor-style workspace. |
 | `new_component` | A `pz.Component` skeleton with its props, state and events. |
 | `new_form` | A visual-designer form: the `.pzform` layout and its handlers module. |
 | `validate_code` | Checks code without running it: names that don't exist in `pz` or `pz.ui`, keyword arguments a function doesn't take, apps without `view()`, components without `render()`, side effects in `view()`, lambdas in loops that don't capture the loop variable, and ruff's pyflakes checks when ruff is installed. |

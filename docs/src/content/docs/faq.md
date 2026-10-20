@@ -48,7 +48,7 @@ language, and renders through Rust and Iced. If you need Android or iOS, Kivy is
 
 Qt is a large, mature C++ toolkit with native-looking widgets and a huge API. Pyzed is much smaller and simpler:
 you describe the interface from your state with plain Python functions, styles work like CSS, and components look
-like the Zed editor out of the box. Pyzed is MIT licensed, while PyQt is GPL or commercial and PySide is LGPL.
+modern out of the box. Pyzed is MIT licensed, while PyQt is GPL or commercial and PySide is LGPL.
 Qt still has more widgets, accessibility support and years of production use.
 
 ## How is Pyzed different from Flet?

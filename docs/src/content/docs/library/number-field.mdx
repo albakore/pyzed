@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-A numeric field with − and + buttons (Zed's `NumericStepper`). You can also type a value: `on_change` receives the number already clamped to `min`/`max`, and text that is not a number is ignored.
+A numeric field with − and + buttons. You can also type a value: `on_change` receives the number already clamped to `min`/`max`, and text that is not a number is ignored.
 
 `ui.number_field` · Category: [Forms](/pyzed/library/#forms) · [Full reference →](/pyzed/reference/ui/#number_field)
 
@@ -71,7 +71,7 @@ number_field(
 )
 ```
 
-A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.
+A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.
 
 | Parameter | Default | Description |
 | --- | --- | --- |

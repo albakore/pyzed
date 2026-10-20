@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: "Ready-to-run Pyzed example apps: to-do lists, a Zed-like editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more."
+description: "Ready-to-run Pyzed example apps: to-do lists, a code editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more."
 ---
 
 All examples live in [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
@@ -15,7 +15,7 @@ python examples/<name>.py
 | [`counter.py`](https://github.com/albakore/pyzed/blob/main/examples/counter.py) | The bare minimum: state, messages and callables. | [Quickstart](/pyzed/getting-started/quickstart/) |
 | [`todo.py`](https://github.com/albakore/pyzed/blob/main/examples/todo.py) | Forms, lists, filters, focus and shortcuts. | [To-do list](/pyzed/tutorials/basic/todo-app/) |
 | [`downloads.py`](https://github.com/albakore/pyzed/blob/main/examples/downloads.py) | `Command.perform`, `pz.post` from threads, progress and notifications. | [Background tasks](/pyzed/tutorials/intermediate/background-tasks/) |
-| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | A Zed-like editor in ~150 lines. | [Mini editor](/pyzed/tutorials/advanced/code-editor/) |
+| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | A code editor with a file tree and tabs in ~150 lines. | [Mini editor](/pyzed/tutorials/advanced/code-editor/) |
 | [`gallery.py`](https://github.com/albakore/pyzed/blob/main/examples/gallery.py) | Every component, interactive, with a theme picker. | [Components](/pyzed/components/overview/) |
 | [`zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) | Full editor: file finder, palette, docks, terminal, themes and git markers. | |
 | [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Five steps: window, state, layout and themes, async, notes app. | [5-step tutorial](/pyzed/tutorials/basic/step-by-step/) |
@@ -56,7 +56,7 @@ desktop apps built on backend and data libraries. Each one is a uv project: `cd`
 | [`pydantic_signup`](https://github.com/albakore/pyzed/tree/main/examples/integrations/pydantic_signup) | Pydantic | [Pydantic](/pyzed/integrations/pydantic/) |
 | [`aiosqlite_journal`](https://github.com/albakore/pyzed/tree/main/examples/integrations/aiosqlite_journal) | aiosqlite | [Other libraries](/pyzed/integrations/other-libraries/#aiosqlite) |
 
-## Zed-like editor
+## Code editor
 
 ```bash
 python examples/zed_editor.py .
@@ -66,7 +66,7 @@ Shortcuts: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> palette, <kbd>Ctrl</kbd
 file finder, <kbd>Ctrl</kbd>+<kbd>S</kbd> save, <kbd>Ctrl</kbd>+<kbd>B</kbd>,
 <kbd>Ctrl</kbd>+<kbd>J</kbd> and <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> docks.
 
-![Zed-like editor in One Dark](../../../screenshots/zed-one-dark.png)
+![A code editor built with Pyzed, in One Dark](../../../screenshots/zed-one-dark.png)
 
 | Command palette | File finder (Gruvbox) |
 | --- | --- |

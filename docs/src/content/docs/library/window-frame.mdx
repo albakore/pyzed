@@ -14,7 +14,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-Draws the whole frame of a window opened without system decorations (`frame = "custom"`): a title bar that moves the window (double click maximizes), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed (`ui.Menu`) and borders that resize the window. `ui.window_title_bar` is the bar alone, `ui.window_controls` the three buttons and `ui.system_platform()` says which style this system uses.
+Draws the whole frame of a window opened without system decorations (`frame = "custom"`): a title bar that moves the window (double click maximizes), the minimize, maximize and close buttons in the style of a platform, menus on the left (`ui.Menu`) and borders that resize the window. `ui.window_title_bar` is the bar alone, `ui.window_controls` the three buttons and `ui.system_platform()` says which style this system uses.
 
 `ui.window_frame` · Category: [Workspace](/pyzed/library/#workspace) · [Full reference →](/pyzed/reference/ui/#window_frame)
 
@@ -40,7 +40,7 @@ ui.window_frame(
 
 ## When to use
 
-- For apps that want a Zed-like window: menus and pickers in the title bar instead of the system's frame. See [Window frames](/pyzed/guides/windows/#window-frames-your-own-title-bar).
+- For apps that want a modern editor-like window: menus and pickers in the title bar instead of the system's frame. See [Window frames](/pyzed/guides/windows/#window-frames-your-own-title-bar).
 - With no callbacks, `ui.window_title_bar` and `ui.window_controls` only show: use them to preview a window in the frame of each platform.
 
 ## Usage
@@ -91,14 +91,14 @@ window_frame(
 )
 ```
 
-The whole frame of a window opened with `frame="custom"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed, and borders that resize the window.
+The whole frame of a window opened with `frame="custom"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left, and borders that resize the window.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
 | `content` | *required* | The window's content, under the title bar. |
 | `title` | `None` | Title shown in the bar. By default the window's `title`. |
 | `menus` | `None` | Menus on the left of the bar: a list of `ui.Menu`. |
-| `menu_button` | `True` | Shows the menus behind a ☰ button, like Zed (`False` always shows their names). |
+| `menu_button` | `True` | Shows the menus behind a ☰ button (`False` always shows their names). |
 | `start` | `()` | Items after the menus (project, branch…). |
 | `center` | `None` | Your own widget in the middle instead of the title. |
 | `end` | `()` | Items before the window buttons. |
@@ -222,6 +222,6 @@ The style of this system's window buttons: `"macos"`, `"windows"`, `"kde"`, `"ub
 
 <CardGrid>
 <LinkCard title="Title bar" description="The top bar with project and branch pickers." href="/pyzed/library/title-bar/" />
-<LinkCard title="Workspace" description="The layout of a Zed window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
+<LinkCard title="Workspace" description="The layout of an editor-style window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
 <LinkCard title="Menu" description="A context menu with icons, shortcuts and checks." href="/pyzed/library/menu/" />
 </CardGrid>

@@ -1,6 +1,6 @@
 ---
 title: Listas, árbol y menús
-description: "Filas de lista, el árbol de archivos del proyecto y menús contextuales: componentes de listas estilo Zed para apps de escritorio en Python."
+description: "Filas de lista, el árbol de archivos del proyecto y menús contextuales: componentes de listas para apps de escritorio en Python."
 sidebar:
   order: 3
 ---
@@ -35,7 +35,7 @@ Para pasar el elemento al callback, usa un argumento por defecto en la lambda:
 
 ## Árbol de archivos
 
-El panel de proyecto de Zed: carpetas plegables, iconos por tipo de archivo y colores de git.
+Un panel de proyecto como el de los editores de código: carpetas plegables, iconos por tipo de archivo y colores de git.
 
 ![Árbol de archivos](../../../../assets/components/tree.png)
 

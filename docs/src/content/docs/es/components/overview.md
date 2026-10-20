@@ -1,6 +1,6 @@
 ---
 title: Visión general
-description: "Resumen de pyzed.ui, los componentes inspirados en Zed para GUIs de escritorio en Python: workspaces, pestañas, árboles, editores, paletas y menús."
+description: "Resumen de pyzed.ui, los componentes listos para usar para GUIs de escritorio en Python: workspaces, pestañas, árboles, editores, paletas y menús."
 sidebar:
   order: 0
 ---
@@ -32,7 +32,7 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 - **Mensajes o callables.** `on_press`, `on_select`, `on_toggle`… aceptan un mensaje para `update`
   o un callable. Los que producen un valor (texto, `bool`, id) llaman al callable con ese valor.
 - **Iconos.** El parámetro `icon=` acepta cualquier nombre de [Lucide](https://lucide.dev).
-- **Atajos.** `keys="ctrl-shift-p"` muestra el atajo al estilo de Zed (símbolos en macOS).
+- **Atajos.** `keys="ctrl-shift-p"` muestra el atajo (con símbolos en macOS).
 
 ## Grupos
 

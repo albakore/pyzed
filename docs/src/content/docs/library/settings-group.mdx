@@ -1,6 +1,6 @@
 ---
 title: "Settings group"
-description: "A titled block of field rows, like Zed's settings. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
+description: "A titled block of field rows, for settings screens. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
   order: 69
   label: "Settings group"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-A titled block of `ui.field` rows separated by lines, with an optional description (Zed's settings UI).
+A titled block of `ui.field` rows separated by lines, with an optional description, like a settings screen.
 
 `ui.settings_group` · Category: [Data](/pyzed/library/#data) · [Full reference →](/pyzed/reference/ui/#settings_group)
 
@@ -57,7 +57,7 @@ pz.container(ui.settings_group("Editor", [
 settings_group(title, rows, *, description=None, theme=None)
 ```
 
-A titled block of `ui.field` rows separated by lines (Zed's settings UI).
+A titled block of `ui.field` rows separated by lines, like a settings screen.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -72,6 +72,6 @@ A titled block of `ui.field` rows separated by lines (Zed's settings UI).
 
 <CardGrid>
 <LinkCard title="Field" description="A settings row: title and description left, control right." href="/pyzed/library/field/" />
-<LinkCard title="Accordion" description="Stacked collapsible sections, like Zed's settings panels." href="/pyzed/library/accordion/" />
+<LinkCard title="Accordion" description="Stacked collapsible sections, like the panels of a settings screen." href="/pyzed/library/accordion/" />
 <LinkCard title="Card" description="A bordered surface with an optional title and actions." href="/pyzed/library/card/" />
 </CardGrid>

@@ -46,7 +46,7 @@ Many agents read an `AGENTS.md` at the root of the project. Copy this one; `pyze
 ```markdown
 # AGENTS.md
 
-This is a desktop app written with Pyzed (Python UI on Iced/Rust, styled like the Zed editor).
+This is a desktop app written with Pyzed (Python UI on Iced/Rust, with ready-made themed components).
 Docs: https://albakore.github.io/pyzed/llms-small.txt (all of it: /pyzed/llms-full.txt).
 If the `pyzed` MCP server is available, use its tools instead of guessing APIs.
 

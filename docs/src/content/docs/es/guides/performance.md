@@ -12,8 +12,8 @@ hacen lento: construir **muchas filas** que ni siquiera están en pantalla y rec
 
 ## Rápido por defecto
 
-No hace falta activar nada de esto. Pyzed lo hace en todas las apps, aprendiendo de cómo Zed
-mantiene rápida su interfaz: empezar a dibujar cuanto antes y no repetir trabajo que nadie pidió.
+No hace falta activar nada de esto. Pyzed lo hace en todas las apps, siguiendo lo que hacen los editores nativos
+rápidos para mantener ágil su interfaz: empezar a dibujar cuanto antes y no repetir trabajo que nadie pidió.
 
 - **Arranque rápido.** `import pyzed` carga solo lo que una app necesita para abrir una
   ventana. El diseñador, la referencia de la API, asyncio y los metadatos del paquete se cargan

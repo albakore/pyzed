@@ -167,7 +167,7 @@ DATA = [
     },
     {
         "name": "file_explorer", "slug": "file-explorer",
-        "en": ("File explorer and IDE", "An IDE layout in Python like Zed or VS Code: project tree, editor tabs, "
+        "en": ("File explorer and IDE", "An IDE layout in Python, like a modern code editor: project tree, editor tabs, "
                "breadcrumbs, a code editor with minimap and git markers, terminal tabs, an outline and a status bar.",
                "A code editor window built with `ui.workspace`: a title bar with project and branch, a filterable "
                "project tree with git status colors, editor tabs and breadcrumbs, the code editor with syntax "
@@ -176,7 +176,7 @@ DATA = [
                 "`ui.TreeNode.from_paths` builds the tree from a list of paths, with git statuses.",
                 "`ui.Tab.for_file` picks the icon and color of each file type.",
                 "`ui.terminal` understands ANSI colors."]),
-        "es": ("Explorador de archivos e IDE", "Un diseño de IDE en Python como Zed o VS Code: árbol del proyecto, "
+        "es": ("Explorador de archivos e IDE", "Un diseño de IDE en Python, como un editor de código moderno: árbol del proyecto, "
                "pestañas, migas de pan, editor con minimapa y marcas de git, terminal, esquema y barra de estado.",
                "Una ventana de editor de código hecha con `ui.workspace`: barra de título con proyecto y rama, árbol "
                "del proyecto filtrable con colores de git, pestañas y migas de pan, el editor con resaltado, marcas "

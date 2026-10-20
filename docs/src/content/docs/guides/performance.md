@@ -12,8 +12,8 @@ Pyzed has a tool for each.
 
 ## Fast by default
 
-You don't have to turn any of this on. Pyzed does it in every app, learning from how Zed keeps
-its UI fast: start drawing as soon as possible, and don't redo work nobody asked for.
+You don't have to turn any of this on. Pyzed does it in every app, following what fast native editors do to keep
+their UI fast: start drawing as soon as possible, and don't redo work nobody asked for.
 
 - **Fast start.** `import pyzed` loads only what an app needs to open a window. The designer,
   the API reference, asyncio and the package metadata load the first time you use them.

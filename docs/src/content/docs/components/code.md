@@ -1,6 +1,6 @@
 ---
 title: Code
-description: "A code editor with syntax highlighting and git markers, and a terminal view: Zed-style components for Python desktop apps built with Pyzed."
+description: "A code editor with syntax highlighting and git markers, and a terminal view: ready-made components for Python desktop apps built with Pyzed."
 sidebar:
   order: 7
 ---
@@ -48,11 +48,11 @@ def changed(self, text):
 
 - **Long lines.** With `wrap=False` (default) the editor scrolls horizontally and the line
   numbers stay pinned on the left. With `wrap=True` lines wrap and the number appears on the
-  first row of each line, as in Zed.
+  first row of each line.
 - **Active line.** The cursor line is highlighted and scrolling follows the cursor (also with
   <kbd>PgUp</kbd>/<kbd>PgDn</kbd>).
 
-### Editing like Zed
+### Editing like a modern code editor
 
 ![Folded blocks, code lens and the minimap](../../../assets/components/editor-features.png)
 

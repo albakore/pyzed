@@ -88,7 +88,7 @@ ui.input(self.name, lambda text: setattr(self, "name", text), placeholder="Your 
 
 ## 4. Components and themes
 
-`pyzed.ui` ships ready-made Zed-style components. They all read the current theme:
+`pyzed.ui` ships ready-made components. They all read the current theme:
 
 ```python
 class MyApp(pz.App):
