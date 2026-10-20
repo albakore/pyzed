@@ -28,6 +28,8 @@ class Thread:
     updated: float = field(default_factory=time.time)
     #: Tokens in the model's context at the last answer (what the panel's context meter shows).
     context: int = 0
+    #: The folder of the project the thread works on (``""``: none), so each project has its own threads.
+    project: str = ""
 
     @property
     def display_title(self) -> str:
@@ -51,7 +53,7 @@ class Thread:
         return cls(id=str(data.get("id") or uuid.uuid4().hex[:12]), title=str(data.get("title") or ""),
                    model=str(data.get("model") or ""), messages=messages if isinstance(messages, list) else [],
                    created=float(data.get("created") or time.time()), updated=float(data.get("updated") or time.time()),
-                   context=int(data.get("context") or 0))
+                   context=int(data.get("context") or 0), project=str(data.get("project") or ""))
 
 
 class ThreadStore:

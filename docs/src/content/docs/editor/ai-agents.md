@@ -352,6 +352,7 @@ requests to the provider you picked.
 | **Follow the agent** | Opens the files the agent writes as it works. |
 | **Notify when the agent finishes** | A desktop notification while the window is in the background. |
 | **Rules** | Instructions added to every thread: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
+| **Project rules** | The project's own rules file, as in Zed: the first of `.rules`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, `AGENT.md`, `AGENTS.md`, `CLAUDE.md` or `GEMINI.md` at its root. Pyzed Agent reads it in every thread of that project; **Open** edits it, **Create AGENTS.md** starts one. External agents read their own (Claude Code reads `CLAUDE.md`). |
 
 ## Getting good results
 
@@ -372,6 +373,17 @@ More prompts that work well are in the [prompting guide](/pyzed/ai/prompting/).
 **History** in the header lists your threads grouped by date (today, yesterday, this week…), with a search box
 and the agent of each thread. Click one to continue it (the agent remembers the whole conversation), or delete it.
 The last 200 threads are kept.
+
+## Working on the active project
+
+The agents work on the project you have open: its folder is where they read and write files, where external
+agents and MCP servers start, and where skills and project rules are looked up. Each message also tells them where
+the project lives (this computer, or a WSL distribution such as Ubuntu, where commands run in Linux), its Git
+branch and the other projects of the window, so a project in WSL is treated as Linux from the start.
+
+Each project has its own threads, like in Zed: switching to another project (the project picker in the title bar)
+opens a new thread there and the history shows that project's threads. The thread you were in stays in its own
+project's history. A run that is still going finishes on the project where it started.
 
 ## Using agents in your own app
 

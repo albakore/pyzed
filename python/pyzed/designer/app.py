@@ -234,6 +234,7 @@ class Designer(App):
         self.timeline = TimelineEditor(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
+        self.projects.on_change(self.agent.project_changed)  # the agents work on the active project
         self.updates = UpdateController(self)
         # the welcome window and its gallery of example projects (Help → Welcome)
         self.welcome = Welcome(self)
