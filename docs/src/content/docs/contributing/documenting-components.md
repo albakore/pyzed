@@ -253,7 +253,7 @@ For every page you add or change:
 - Anchors come from the heading text, so a link to a section of a Spanish page uses the Spanish heading
   (`/pyzed/es/guides/components/#en-el-diseñador`).
 - Generated content has both languages in its data: `api_docs_es.py`, the Spanish fields of
-  `library_data.py`, and the editor's own texts in `python/pyzed/designer/locale.py`.
+  `library_data.py`, and the editor's own texts in `python/pyzed/designer/locales/es.json`.
 
 If you cannot write the Spanish version, say so in the PR: a missing page falls back to English with a
 notice, and a maintainer or another contributor can translate it in a 🌐 PR.

@@ -5,36 +5,47 @@
     path = designer.new_form("ui/settings", template="dialog", title="Settings")
     designer.design(path)
 
-A template is a function that fills an empty ``Form``; add your own with
-``register_template``.
+The templates are data, not code: each one is a folder in ``designer/templates`` with a
+``template.json`` (label, icon, description), the ``form.pzform`` to start from and, if the
+template wires events, a ``handlers.py.tmpl`` with their code (Python, named ``.tmpl`` so
+packagers keep it as a data file). ``{title}`` in the form's texts becomes the new form's
+title. Add your own folders with ``load_templates``, or build a
+template in Python with ``Template(..., build=fill)`` and ``register_template``.
 """
 
 from __future__ import annotations
 
+import ast
+import json
 import re
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from . import code as _code
 from . import components as _components
 from .document import Document
 from .model import SUFFIX, Control, Form, identifier
 
+#: The templates that come with the designer, one folder each.
+TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+
 
 @dataclass(frozen=True)
 class Template:
-    """A starting point for new forms."""
+    """A starting point for new forms: a ``build`` function that fills an empty ``Form``, or a saved form."""
 
     name: str
     label: str
     icon: str
     description: str
-    build: Callable[[Form], None]
+    build: Optional[Callable[[Form], None]] = None
     size: tuple = (640, 420)
     #: ``(handler, source)`` pairs replacing the generated stubs of handlers the template wires
     handlers: tuple = ()
+    #: The form to copy (the contents of a ``.pzform``), for templates loaded from a folder
+    form: Optional[Dict[str, Any]] = None
 
 
 _TEMPLATES: Dict[str, Template] = {}
@@ -51,83 +62,57 @@ def templates() -> List[Template]:
     return list(_TEMPLATES.values())
 
 
+def _handlers(path: Path) -> tuple:
+    """The ``(name, source)`` of each function in a template's ``handlers.py.tmpl``."""
+    if not path.is_file():
+        return ()
+    text = path.read_text(encoding="utf-8")
+    return tuple((node.name, ast.get_source_segment(text, node) + "\n") for node in ast.parse(text).body
+                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+
+
+def load_template(folder: Union[str, Path]) -> Template:
+    """Reads the template in ``folder`` (``template.json``, ``form.pzform`` and an optional ``handlers.py.tmpl``)."""
+    folder = Path(folder)
+    meta = json.loads((folder / "template.json").read_text(encoding="utf-8"))
+    form = json.loads((folder / "form.pzform").read_text(encoding="utf-8"))
+    size = (form["form"].get("width", 640), form["form"].get("height", 420))
+    return Template(meta.get("name", folder.name), meta.get("label", folder.name.title()), meta.get("icon", "file"),
+                    meta.get("description", ""), size=tuple(size), handlers=_handlers(folder / "handlers.py.tmpl"),
+                    form=form)
+
+
+def load_templates(folder: Union[str, Path]) -> List[Template]:
+    """Registers every template folder inside ``folder`` (sorted by their ``order``); returns them."""
+    found = []
+    for path in sorted(Path(folder).iterdir()):
+        if (path / "template.json").is_file():
+            order = json.loads((path / "template.json").read_text(encoding="utf-8")).get("order", 1000)
+            found.append((order, path.name, load_template(path)))
+    return [register_template(t) for _, _, t in sorted(found, key=lambda x: (x[0], x[1]))]
+
+
 def _place(form: Form, type_: str, name: str, x: float, y: float, w: Optional[float] = None,
            h: Optional[float] = None, *, parent: Optional[str] = None, **props) -> Control:
+    """Adds a control of ``type_`` with its defaults; a helper for ``build`` functions."""
     control = _components.get(type_).create(name, x, y, w, h)
     control.props.update(props)
     control.parent = parent
     return form.add(control)
 
 
-def _blank(form: Form) -> None:
-    return None
+def _titled(value: Any, title: str) -> Any:
+    """``value`` with ``{title}`` replaced, inside strings, lists and dicts."""
+    if isinstance(value, str):
+        return value.replace("{title}", title)
+    if isinstance(value, list):
+        return [_titled(v, title) for v in value]
+    if isinstance(value, dict):
+        return {k: _titled(v, title) for k, v in value.items()}
+    return value
 
 
-def _dialog(form: Form) -> None:
-    _place(form, "heading", "heading", 24, 20, form.width - 48, 32, text=form.title, level="2")
-    _place(form, "label", "message", 24, 64, form.width - 48, form.height - 140, text="Write your message here.")
-    buttons = _place(form, "row", "buttons", 24, form.height - 60, form.width - 48, 36, justify="end")
-    buttons.anchor = ("left", "right", "bottom")
-    _place(form, "button", "cancel", 0, 0, 96, 32, parent="buttons", text="Cancel", variant="ghost")
-    _place(form, "button", "ok", 0, 0, 96, 32, parent="buttons", text="OK", variant="solid")
-    form["ok"].events["click"] = "ok_click"
-    form["cancel"].events["click"] = "cancel_click"
-
-
-_DIALOG_CODE = (
-    ("ok_click", 'def ok_click(form, event):\n    """Accepts the dialog."""\n    return form.close()\n'),
-    ("cancel_click", 'def cancel_click(form, event):\n    """Closes the dialog without changes."""\n    return form.close()\n'),
-)
-
-
-def _login(form: Form) -> None:
-    card = _place(form, "column", "fields", (form.width - 320) / 2, 40, 320, 300, gap=12)
-    card.anchor = ()
-    _place(form, "heading", "heading", 0, 0, 320, 36, parent="fields", text="Sign in", level="2")
-    _place(form, "input", "email", 0, 0, 320, 32, parent="fields", placeholder="Email", icon="mail")
-    _place(form, "input", "password", 0, 0, 320, 32, parent="fields", placeholder="Password", icon="lock",
-           secure=True)
-    _place(form, "checkbox", "remember", 0, 0, 320, 24, parent="fields", text="Remember me")
-    _place(form, "button", "sign_in", 0, 0, 320, 34, parent="fields", text="Sign in", variant="solid")
-    _place(form, "label", "status", 0, 0, 320, 24, parent="fields", text="", color="text_muted", size="sm")
-
-
-def _sidebar(form: Form) -> None:
-    side = _place(form, "column", "sidebar", 0, 0, 200, form.height, gap=4, padding=12, background="surface")
-    side.anchor = ("left", "top", "bottom")
-    for i, label in enumerate(("Home", "Projects", "Settings")):
-        _place(form, "button", f"nav{i + 1}", 0, 0, 176, 30, parent="sidebar", text=label, variant="ghost",
-               icon=("house", "folder", "settings")[i])
-    main = _place(form, "column", "content", 200, 0, form.width - 200, form.height, gap=12, padding=24)
-    main.anchor = ("left", "top", "right", "bottom")
-    _place(form, "heading", "title", 0, 0, 300, 36, parent="content", text="Home")
-    _place(form, "label", "body", 0, 0, 300, 60, parent="content", text="Pick a section on the left.")
-
-
-def _settings(form: Form) -> None:
-    grid = _place(form, "grid", "options", 24, 24, form.width - 48, 168, columns=2, gap=12, row_height=28,
-                  align="center")
-    grid.anchor = ("left", "top", "right")
-    for i, (label, kind) in enumerate((("Name", "input"), ("Theme", "select"), ("Notifications", "switch"),
-                                       ("Volume", "slider"))):
-        _place(form, "label", f"label{i + 1}", 0, 0, 120, 24, parent="options", text=label)
-        _place(form, kind, f"{kind}{i + 1}", 0, 0, 200, 28, parent="options",
-               **({"text": ""} if kind == "switch" else {}))
-    buttons = _place(form, "row", "buttons", 24, form.height - 60, form.width - 48, 36, justify="end")
-    buttons.anchor = ("left", "right", "bottom")
-    _place(form, "button", "save", 0, 0, 96, 32, parent="buttons", text="Save", variant="solid")
-
-
-for _template in (
-    Template("blank", "Blank", "square-dashed", "An empty window.", _blank),
-    Template("dialog", "Dialog", "message-square", "A message with OK and Cancel buttons.", _dialog, (420, 220),
-             _DIALOG_CODE),
-    Template("login", "Sign in", "log-in", "Email and password in a centered column.", _login, (520, 380)),
-    Template("sidebar", "Sidebar", "panel-left", "Navigation on the left and content on the right.", _sidebar,
-             (760, 480)),
-    Template("settings", "Settings", "settings", "Labelled options in a grid.", _settings, (480, 280)),
-):
-    register_template(_template)
+load_templates(TEMPLATES_DIR)
 
 
 def create(name: str = "Form1", *, title: Optional[str] = None, template: str = "blank",
@@ -138,10 +123,20 @@ def create(name: str = "Form1", *, title: Optional[str] = None, template: str = 
     except KeyError:
         raise KeyError(f"unknown template {template!r}; available: {sorted(_TEMPLATES)}") from None
     name = name if name.isidentifier() else (identifier(name) or "form1")
-    form = Form(name=name, title=title or name.replace("_", " ").title(), width=float(width or spec.size[0]),
-                height=float(height or spec.size[1]))
-    spec.build(form)
+    title = title or name.replace("_", " ").title()
+    if spec.form is not None:
+        form = Form.from_dict(_titled(spec.form, title))
+        form.name, form.title = name, title
+    else:
+        form = Form(name=name, title=title, width=float(width or spec.size[0]), height=float(height or spec.size[1]))
+        if spec.build is not None:
+            spec.build(form)
     doc = Document(form, code=_code.new_module(form.name))
+    if spec.form is not None and (width or height):
+        # a saved form drawn at its own size: resize it, moving what is inside as the anchors say
+        size = (form.width, form.height)
+        form.width, form.height = float(width or form.width), float(height or form.height)
+        doc.reflow(None, size)
     for owner, events in [(None, form.events)] + [(c.name, c.events) for c in form.controls]:
         for event in list(events):
             doc.wire(owner, event)

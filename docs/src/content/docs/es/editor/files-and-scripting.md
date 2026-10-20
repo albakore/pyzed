@@ -126,9 +126,28 @@ dibujas en el [diseñador de componentes](/pyzed/es/editor/component-designer/).
 
 ## Tus propias plantillas
 
+Las plantillas de Nuevo formulario son datos, no código. Cada una es una carpeta:
+
+```text
+toolbar/
+├── template.json      {"label": "Toolbar", "icon": "panel-top", "description": "A row of buttons on top.", "order": 10}
+├── form.pzform        el formulario de partida: dibújalo en el diseñador y guárdalo aquí
+└── handlers.py.tmpl   opcional: el código de los eventos que conecta el formulario (Python)
+```
+
+`{title}` en los textos del formulario se cambia por el título del formulario nuevo, y un tamaño pedido en el
+diálogo redimensiona el formulario siguiendo los anclajes. Las incluidas están en `pyzed/designer/templates/`.
+Carga una carpeta tuya con:
+
 ```python
 from pyzed.designer import new
 
+new.load_templates("mis_plantillas")   # cada subcarpeta con un template.json
+```
+
+Una plantilla también puede ser una función de Python que rellena un formulario vacío:
+
+```python
 def toolbar(form):
     ...  # añade controles al formulario vacío
 
@@ -195,4 +214,5 @@ classDiagram
 - `scene.py`, `scene_code.py`, `scene_runtime.py`, `scene_panel.py`: el diseñador de componentes.
 - `runtime.py`: `FormApp` y `FormWindow`, que dibujan un formulario y llaman a sus manejadores.
 - `lsp.py`, `intellisense.py`, `code_panel.py`, `settings.py`: el editor de código y sus servidores de lenguaje.
-- `preferences.py`, `locale.py`: los ajustes del editor y sus traducciones.
+- `preferences.py`, `locale.py`: los ajustes del editor y sus traducciones, leídas de `locales/<idioma>.json`.
+- `new.py`: las plantillas de Nuevo formulario, leídas de las carpetas de `templates/`.

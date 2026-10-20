@@ -531,12 +531,9 @@ def test_agent_texts_are_translated():
     import ast
     from pathlib import Path
 
-    from pyzed.designer import agent_locale, agent_panel, agent_tools, commands
+    from pyzed.designer import agent_panel, agent_tools, commands, locale
 
-    keys = set(agent_locale.ES)
-    from pyzed.designer import locale
-
-    keys |= set(locale._ES)
+    keys = set(locale._ES)
     for module in (agent_panel, agent_tools):
         tree = ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
         for node in ast.walk(tree):

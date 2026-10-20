@@ -1,0 +1,6 @@
+{
+  "label": "Sidebar",
+  "icon": "panel-left",
+  "description": "Navigation on the left and content on the right.",
+  "order": 3
+}

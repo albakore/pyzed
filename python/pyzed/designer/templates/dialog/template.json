@@ -1,0 +1,6 @@
+{
+  "label": "Dialog",
+  "icon": "message-square",
+  "description": "A message with OK and Cancel buttons.",
+  "order": 1
+}

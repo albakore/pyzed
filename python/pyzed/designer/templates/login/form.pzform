@@ -1,0 +1,177 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Form1",
+    "title": "{title}",
+    "width": 520.0,
+    "height": 380.0,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "fields",
+      "type": "column",
+      "x": 100.0,
+      "y": 40,
+      "width": 320,
+      "height": 300,
+      "props": {
+        "direction": "column",
+        "gap": 12,
+        "padding": 0,
+        "justify": "start",
+        "align": "stretch",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "heading",
+      "type": "heading",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 36,
+      "props": {
+        "text": "Sign in",
+        "level": "2",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    },
+    {
+      "name": "email",
+      "type": "input",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 32,
+      "props": {
+        "text": "",
+        "placeholder": "Email",
+        "icon": "mail",
+        "secure": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    },
+    {
+      "name": "password",
+      "type": "input",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 32,
+      "props": {
+        "text": "",
+        "placeholder": "Password",
+        "icon": "lock",
+        "secure": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    },
+    {
+      "name": "remember",
+      "type": "checkbox",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 24,
+      "props": {
+        "text": "Remember me",
+        "checked": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    },
+    {
+      "name": "sign_in",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 34,
+      "props": {
+        "text": "Sign in",
+        "variant": "solid",
+        "icon": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "fields"
+    }
+  ]
+}

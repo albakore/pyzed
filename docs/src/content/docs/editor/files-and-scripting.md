@@ -121,9 +121,27 @@ too (see [Components](/pyzed/guides/components/)), and so do the components you 
 
 ## Your own templates
 
+The New form templates are data, not code. Each one is a folder:
+
+```text
+toolbar/
+├── template.json      {"label": "Toolbar", "icon": "panel-top", "description": "A row of buttons on top.", "order": 10}
+├── form.pzform        the form to start from: draw it in the designer and save it here
+└── handlers.py.tmpl   optional: the code of the events the form wires (Python)
+```
+
+`{title}` in the form's texts becomes the new form's title, and a size asked for in the dialog resizes the form
+following the anchors. The built-in ones live in `pyzed/designer/templates/`. Load a folder of yours with:
+
 ```python
 from pyzed.designer import new
 
+new.load_templates("my_templates")   # every subfolder with a template.json
+```
+
+A template can also be a Python function that fills an empty form:
+
+```python
 def toolbar(form):
     ...  # add controls to the empty form
 
@@ -189,4 +207,5 @@ classDiagram
 - `scene.py`, `scene_code.py`, `scene_runtime.py`, `scene_panel.py`: the component designer.
 - `runtime.py`: `FormApp` and `FormWindow`, which draw a form and call its handlers.
 - `lsp.py`, `intellisense.py`, `code_panel.py`, `settings.py`: the code editor and its language servers.
-- `preferences.py`, `locale.py`: the editor's settings and its translations.
+- `preferences.py`, `locale.py`: the editor's settings and its translations, read from `locales/<language>.json`.
+- `new.py`: the New form templates, read from the folders in `templates/`.

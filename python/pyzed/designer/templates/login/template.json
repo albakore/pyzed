@@ -1,0 +1,6 @@
+{
+  "label": "Sign in",
+  "icon": "log-in",
+  "description": "Email and password in a centered column.",
+  "order": 2
+}

@@ -1,0 +1,19 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Form1",
+    "title": "{title}",
+    "width": 640.0,
+    "height": 420.0,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": []
+}

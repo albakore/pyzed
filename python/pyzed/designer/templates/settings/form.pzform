@@ -1,0 +1,281 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Form1",
+    "title": "{title}",
+    "width": 480.0,
+    "height": 280.0,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "options",
+      "type": "grid",
+      "x": 24,
+      "y": 24,
+      "width": 432.0,
+      "height": 168,
+      "props": {
+        "columns": 2,
+        "gap": 12,
+        "padding": 0,
+        "row_height": 28,
+        "align": "center",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "label1",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 120,
+      "height": 24,
+      "props": {
+        "text": "Name",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "input1",
+      "type": "input",
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 28,
+      "props": {
+        "text": "",
+        "placeholder": "Type here…",
+        "icon": "",
+        "secure": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "label2",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 120,
+      "height": 24,
+      "props": {
+        "text": "Theme",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "select2",
+      "type": "select",
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 28,
+      "props": {
+        "options": "One\nTwo\nThree",
+        "selected": "",
+        "placeholder": "Select…"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "label3",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 120,
+      "height": 24,
+      "props": {
+        "text": "Notifications",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "switch3",
+      "type": "switch",
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 28,
+      "props": {
+        "text": "",
+        "checked": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "label4",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 120,
+      "height": 24,
+      "props": {
+        "text": "Volume",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "slider4",
+      "type": "slider",
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 28,
+      "props": {
+        "value": 50,
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "options"
+    },
+    {
+      "name": "buttons",
+      "type": "row",
+      "x": 24,
+      "y": 220.0,
+      "width": 432.0,
+      "height": 36,
+      "props": {
+        "direction": "row",
+        "gap": 8,
+        "padding": 0,
+        "justify": "end",
+        "align": "stretch",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "save",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 32,
+      "props": {
+        "text": "Save",
+        "variant": "solid",
+        "icon": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "buttons"
+    }
+  ]
+}
