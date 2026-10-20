@@ -1,0 +1,152 @@
+---
+title: "6. A puzzle game: 2048"
+description: "Make 2048 in Python with Pyzed: the rules as plain testable functions, tiles that slide and pop with tweens, a frame loop that only runs while something moves, mouse swipes, and score boxes and dialogs made of widgets."
+sidebar:
+  order: 6
+  label: "6. A puzzle: 2048"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from '../showcase/_run.mdx';
+import source from '../../../../../examples/games/game_2048.py?raw';
+
+Not every game is a race against the clock. In a puzzle game nothing happens until you move, and then a lot
+happens at once: tiles slide, merge, pop and a new one appears. This step builds **2048** and shows how to keep
+the rules separate from the animation, and how a game can use **no CPU at all** while the player is thinking.
+
+<Media clip="game-2048" alt="A 4 by 4 board of colored numbered tiles; the tiles slide down and left, equal tiles merge with a small pop, a new tile grows in, and a +points label floats up from the score box" caption="2048: the rules move the numbers instantly; the slide and the pop are only drawn, for a fifth of a second." eager />
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A complete 2048 with animations, swipes, win and lose dialogs | 45 minutes | Intermediate | [2. Sprites and animation](/pyzed/games/sprites-animation/) (tweens) |
+
+## What you'll learn
+
+- Write the **rules as plain functions** that are easy to read and test.
+- Separate the **game state** (the numbers) from its **animation** (where the tiles are drawn).
+- Run the frame loop **only while something moves**.
+- Read **arrow keys and mouse swipes**.
+- Put **score boxes, buttons and a dialog** made of widgets around and over a canvas.
+
+<Run file="examples/games/game_2048.py" />
+
+<Steps>
+
+1. **The rule, as a function.** Every move slides each row toward one side and merges equal neighbors, once.
+   That is a function of a list of four numbers, with no window and no drawing:
+
+   ```python
+   def slide_line(values):
+       """[2, 2, 4, 0] -> ([4, 4, 0, 0], 4): the new row and the points gained."""
+       tiles = [v for v in values if v]
+       out, gained, i = [], 0, 0
+       while i < len(tiles):
+           if i + 1 < len(tiles) and tiles[i] == tiles[i + 1]:
+               out.append(tiles[i] * 2)
+               gained += tiles[i] * 2
+               i += 2                       # a tile merges only once per move
+           else:
+               out.append(tiles[i])
+               i += 1
+       return out + [0] * (len(values) - len(out)), gained
+   ```
+
+   Sliding right, up or down is the same function on the cells in another order: `lines(direction)` returns
+   each row or column starting from the edge the tiles move toward. The tests check the tricky cases:
+   `[2, 2, 2, 2]` gives `[4, 4, 0, 0]`, not `[8, 0, 0, 0]`.
+
+2. **Tiles remember where they came from.** To animate, each tile is an object with its value, its cell and
+   the cell it came from. A tile that merges into another becomes a *ghost*: it slides to the same cell and
+   disappears when the slide ends:
+
+   ```python
+   class Tile:
+       def __init__(self, value, cell):
+           self.value = value
+           self.cell = self.came_from = cell
+           self.merged = False          # doubled in the last move: shows the old value while sliding
+           self.new = True              # just appeared: grows from nothing
+   ```
+
+   `move()` walks every line exactly like `slide_line`, moves the tiles, and double-checks itself against
+   `slide_line` with an `assert`. Then it adds the score, adds a new tile and restarts the animation clock:
+   `self.anim = 0.0`.
+
+3. **Animation from one clock.** Everything is computed from `anim`, the seconds since the last move: tiles are
+   drawn between `came_from` and `cell` with an ease-out for the first 0.11 s, then merged tiles grow 18% and
+   back, and new tiles grow from nothing:
+
+   ```python
+   slide = game.clamp(self.anim / SLIDE_TIME, 0, 1)
+   ease = 1 - (1 - slide) ** 3
+   x, y = game.lerp(x0, x1, ease), game.lerp(y0, y1, ease)
+   pop = (self.anim - SLIDE_TIME) / POP_TIME            # 0 -> 1 after the slide
+   if tile.new:
+       scale = 0.0 if pop < 0 else min(1.0, 0.3 + pop * 0.9)
+   elif tile.merged and 0 <= pop < 1:
+       scale = 1 + 0.18 * (1 - abs(2 * pop - 1))         # up and back down
+   ```
+
+   The rules already moved the numbers when you pressed the key; the animation only draws the way there. That
+   is why you can press keys faster than the animation and never lose a move.
+
+4. **No loop while you think.** `subscriptions()` returns the frame loop only while something is animating.
+   Between moves the game draws nothing and uses no CPU, like any desktop app:
+
+   ```python
+   @property
+   def animating(self):
+       return self.anim < SLIDE_TIME + POP_TIME or bool(self.floats)
+
+   def subscriptions(self):
+       return [pz.frames(self.tick)] if self.animating else []
+   ```
+
+5. **Keys and swipes.** Arrow keys and WASD map to directions in `on_key`. For the mouse, the canvas reports
+   where a drag starts (`on_press`), where it goes (`on_move`) and when it ends (`on_release`); a long enough
+   drag is a swipe in its main direction:
+
+   ```python
+   def release(self):
+       x0, y0, x1, y1 = self.swipe
+       self.swipe = None
+       dx, dy = x1 - x0, y1 - y0
+       if max(abs(dx), abs(dy)) > 30:                  # a short click is not a swipe
+           self.move((0, 1 if dx > 0 else -1) if abs(dx) > abs(dy) else (1 if dy > 0 else -1, 0))
+
+   pz.canvas(shapes, width=BOARD, height=BOARD, on_press=self.press, on_move=self.drag,
+             on_release=self.release, cursor="grab")
+   ```
+
+6. **Widgets around the board.** The score boxes are containers with the theme's `surface` color; the points
+   you just won rise and fade with `.style(opacity=..., translate=(0, ...))`. When you win or run out of moves,
+   a glass card with buttons appears over the board with a native `.animate("zoom_in")`:
+
+   ```python
+   card = pz.container(pz.column([ui.heading(title, level=2), ui.muted(line), pz.row(buttons, spacing=8)],
+                                 spacing=10, align="center"), padding=(22, 30))
+   card = card.style(glass=True, radius=14).animate("zoom_in", duration=250)
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Rules first, pixels later">
+Keeping the rules in plain functions (`slide_line`, `can_move`) means you can test them in a fraction of a
+second, change the drawing without breaking the game, and even write a solver or an AI player against the same
+functions.
+</Aside>
+
+## Try this
+
+- Add **Undo**: keep the previous `values` and score before each move, and a button that restores them.
+- Make the board size a setting (`SIZE = 5`) and check that everything still works.
+- Save the best score between sessions, as in [step 8](/pyzed/games/high-scores/).
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/game_2048.py" />
+
+## Next
+
+<LinkCard title="7. Menus, HUD, pause and settings" href="/pyzed/games/menus-hud/" description="A title screen, transitions, a pause menu and a settings screen with Pyzed's UI components." />

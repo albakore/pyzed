@@ -1,0 +1,153 @@
+---
+title: "6. Un puzle: 2048"
+description: "Haz 2048 en Python con Pyzed: las reglas como funciones sencillas y comprobables, fichas que se deslizan y crecen con tweens, un bucle que solo corre mientras algo se mueve, gestos con el ratón, y marcadores y diálogos hechos con widgets."
+sidebar:
+  order: 6
+  label: "6. Un puzle: 2048"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import source from '../../../../../../examples/games/game_2048.py?raw';
+
+No todos los juegos son una carrera contra el reloj. En un puzle no pasa nada hasta que mueves, y entonces pasa
+mucho a la vez: las fichas se deslizan, se juntan, crecen y aparece una nueva. Este paso construye **2048** y
+enseña a separar las reglas de la animación, y cómo un juego puede **no usar nada de CPU** mientras el jugador
+piensa.
+
+<Media clip="game-2048" alt="Un tablero de 4 por 4 con fichas numeradas de colores; las fichas se deslizan hacia abajo y a la izquierda, las iguales se juntan con un pequeño salto, aparece una nueva y una etiqueta +puntos sube desde el marcador" caption="2048: las reglas mueven los números al instante; el deslizamiento y el salto solo se dibujan, durante una quinta parte de segundo." eager />
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un 2048 completo con animaciones, gestos y diálogos de victoria y derrota | 45 minutos | Intermedio | [2. Sprites y animación](/pyzed/es/games/sprites-animation/) (tweens) |
+
+## Qué aprenderás
+
+- Escribir las **reglas como funciones** fáciles de leer y de probar.
+- Separar el **estado del juego** (los números) de su **animación** (dónde se dibujan las fichas).
+- Ejecutar el bucle **solo mientras algo se mueve**.
+- Leer **flechas y gestos con el ratón**.
+- Poner **marcadores, botones y un diálogo** hechos con widgets alrededor y encima de un canvas.
+
+<Run file="examples/games/game_2048.py" lang="es" />
+
+<Steps>
+
+1. **La regla, como función.** Cada movimiento desliza cada fila hacia un lado y junta los vecinos iguales, una sola
+   vez. Eso es una función de una lista de cuatro números, sin ventana y sin dibujo:
+
+   ```python
+   def slide_line(values):
+       """[2, 2, 4, 0] -> ([4, 4, 0, 0], 4): the new row and the points gained."""
+       tiles = [v for v in values if v]
+       out, gained, i = [], 0, 0
+       while i < len(tiles):
+           if i + 1 < len(tiles) and tiles[i] == tiles[i + 1]:
+               out.append(tiles[i] * 2)
+               gained += tiles[i] * 2
+               i += 2                       # a tile merges only once per move
+           else:
+               out.append(tiles[i])
+               i += 1
+       return out + [0] * (len(values) - len(out)), gained
+   ```
+
+   Deslizar a la derecha, arriba o abajo es la misma función sobre las celdas en otro orden: `lines(direction)`
+   devuelve cada fila o columna empezando por el borde hacia el que van las fichas. Las pruebas comprueban los casos
+   difíciles: `[2, 2, 2, 2]` da `[4, 4, 0, 0]`, no `[8, 0, 0, 0]`.
+
+2. **Las fichas recuerdan de dónde vienen.** Para animar, cada ficha es un objeto con su valor, su celda y la celda
+   de la que viene. Una ficha que se junta con otra se convierte en un *fantasma*: se desliza a la misma celda y
+   desaparece cuando termina el deslizamiento:
+
+   ```python
+   class Tile:
+       def __init__(self, value, cell):
+           self.value = value
+           self.cell = self.came_from = cell
+           self.merged = False          # doubled in the last move: shows the old value while sliding
+           self.new = True              # just appeared: grows from nothing
+   ```
+
+   `move()` recorre cada línea exactamente como `slide_line`, mueve las fichas y se comprueba a sí mismo contra
+   `slide_line` con un `assert`. Luego suma la puntuación, añade una ficha nueva y reinicia el reloj de la animación:
+   `self.anim = 0.0`.
+
+3. **Animación desde un reloj.** Todo se calcula a partir de `anim`, los segundos desde el último movimiento: las
+   fichas se dibujan entre `came_from` y `cell` con un ease-out durante los primeros 0,11 s; después las fichas
+   juntadas crecen un 18% y vuelven, y las nuevas crecen desde nada:
+
+   ```python
+   slide = game.clamp(self.anim / SLIDE_TIME, 0, 1)
+   ease = 1 - (1 - slide) ** 3
+   x, y = game.lerp(x0, x1, ease), game.lerp(y0, y1, ease)
+   pop = (self.anim - SLIDE_TIME) / POP_TIME            # 0 -> 1 after the slide
+   if tile.new:
+       scale = 0.0 if pop < 0 else min(1.0, 0.3 + pop * 0.9)
+   elif tile.merged and 0 <= pop < 1:
+       scale = 1 + 0.18 * (1 - abs(2 * pop - 1))         # up and back down
+   ```
+
+   Las reglas ya movieron los números al pulsar la tecla; la animación solo dibuja el camino. Por eso puedes pulsar
+   más rápido que la animación sin perder ningún movimiento.
+
+4. **Sin bucle mientras piensas.** `subscriptions()` devuelve el bucle por fotograma solo mientras algo se anima.
+   Entre movimientos el juego no dibuja nada ni usa CPU, como cualquier app de escritorio:
+
+   ```python
+   @property
+   def animating(self):
+       return self.anim < SLIDE_TIME + POP_TIME or bool(self.floats)
+
+   def subscriptions(self):
+       return [pz.frames(self.tick)] if self.animating else []
+   ```
+
+5. **Teclas y gestos.** Las flechas y WASD se convierten en direcciones en `on_key`. Para el ratón, el canvas avisa
+   dónde empieza un arrastre (`on_press`), por dónde va (`on_move`) y cuándo termina (`on_release`); un arrastre lo
+   bastante largo es un gesto en su dirección principal:
+
+   ```python
+   def release(self):
+       x0, y0, x1, y1 = self.swipe
+       self.swipe = None
+       dx, dy = x1 - x0, y1 - y0
+       if max(abs(dx), abs(dy)) > 30:                  # a short click is not a swipe
+           self.move((0, 1 if dx > 0 else -1) if abs(dx) > abs(dy) else (1 if dy > 0 else -1, 0))
+
+   pz.canvas(shapes, width=BOARD, height=BOARD, on_press=self.press, on_move=self.drag,
+             on_release=self.release, cursor="grab")
+   ```
+
+6. **Widgets alrededor del tablero.** Los marcadores son contenedores con el color `surface` del tema; los puntos que
+   acabas de ganar suben y se desvanecen con `.style(opacity=..., translate=(0, ...))`. Cuando ganas o te quedas sin
+   movimientos, aparece sobre el tablero una tarjeta de cristal con botones y un `.animate("zoom_in")` nativo:
+
+   ```python
+   card = pz.container(pz.column([ui.heading(title, level=2), ui.muted(line), pz.row(buttons, spacing=8)],
+                                 spacing=10, align="center"), padding=(22, 30))
+   card = card.style(glass=True, radius=14).animate("zoom_in", duration=250)
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Primero las reglas, después los píxeles">
+Tener las reglas en funciones sencillas (`slide_line`, `can_move`) te permite probarlas en una fracción de segundo,
+cambiar el dibujo sin romper el juego e incluso escribir un solucionador o un jugador automático sobre las mismas
+funciones.
+</Aside>
+
+## Prueba esto
+
+- Añade **Deshacer**: guarda los `values` y la puntuación antes de cada movimiento, y un botón que los restaure.
+- Haz que el tamaño del tablero sea un ajuste (`SIZE = 5`) y comprueba que todo sigue funcionando.
+- Guarda la mejor puntuación entre sesiones, como en el [paso 8](/pyzed/es/games/high-scores/).
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/game_2048.py" />
+
+## Siguiente
+
+<LinkCard title="7. Menús, HUD, pausa y ajustes" href="/pyzed/es/games/menus-hud/" description="Una pantalla de título, transiciones, un menú de pausa y una pantalla de ajustes con los componentes de Pyzed." />

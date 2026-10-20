@@ -1,0 +1,179 @@
+---
+title: Consejos para crear juegos
+description: "Consejos prácticos para hacer juegos con Pyzed en Python: delta time y pasos de tiempo fijos, rendimiento, buffer de entrada, juice y temblor de pantalla, organizar el estado del juego, vistas de depuración y probar juegos sin ventana."
+sidebar:
+  order: 9
+  label: Consejos
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+
+Consejos breves y prácticos sacados de los juegos de esta sección. Cada uno explica el *porqué*, con las pocas
+líneas de código que lo hacen en Pyzed.
+
+## Tiempo
+
+### Multiplica siempre por dt
+
+`pz.frames(self.tick)` llama a `tick(dt)` una vez por fotograma mostrado, y `dt` son los segundos desde el anterior.
+Las velocidades son *por segundo* y cada cambio es `velocidad × dt`, así el juego va igual en un portátil de 60 Hz
+que en un monitor de 144 Hz. Los temporizadores también bajan con `dt`:
+
+```python
+self.x += self.vx * dt
+self.cooldown = max(0.0, self.cooldown - dt)
+```
+
+### Limita dt
+
+Tras una pausa (arrastrar la ventana, un punto de interrupción, un fotograma lento) `dt` puede ser grande, y un paso
+grande deja que las cosas atraviesen paredes. Pyzed ya lo limita a 0,25 s; los juegos con mucha física lo limitan más:
+
+```python
+def tick(self, dt):
+    dt = min(dt, 1 / 30)
+```
+
+### Un paso de tiempo fijo, cuando lo necesites
+
+Algunos juegos necesitan que todos los pasos tengan el mismo tamaño: física que no debe depender de los fotogramas
+por segundo, repeticiones, juego en red, o una simulación que debe dar exactamente el mismo resultado dos veces.
+Acumula tiempo y avanza en trozos fijos:
+
+```python
+STEP = 1 / 120
+
+def tick(self, dt):
+    self.acc += dt
+    while self.acc >= STEP:
+        self.simulate(STEP)        # the game's logic, always with the same dt
+        self.acc -= STEP
+    self.blend = self.acc / STEP   # 0..1: how far between two steps, to interpolate drawing
+```
+
+<Aside type="caution">
+No llames `update` a ese método: en una `pz.App`, `update(message)` es donde llegan los mensajes de los widgets.
+</Aside>
+
+Para juegos por turnos o en cuadrícula, usa `pz.every(segundos, callback)` en lugar de un bucle por fotograma, como
+hace [Snake](/pyzed/es/games/snake/).
+
+### Para el bucle cuando nada se mueve
+
+`subscriptions()` se evalúa tras cada actualización. Devuelve `[]` en pausa, en un menú sin nada animado o entre
+movimientos de un puzle, y el juego no usa CPU:
+
+```python
+def subscriptions(self):
+    return [pz.frames(self.tick)] if self.animating else []
+```
+
+## Rendimiento
+
+- **Que `tick` sea pequeño.** Números, listas y clases pequeñas son rápidos; evita construir estructuras grandes en
+  cada fotograma, y no leas archivos ni la red dentro del bucle.
+- **Agrupa formas.** `draw.rects([...], fill=color)` dibuja muchos rectángulos de un color como una sola forma; así
+  se mantienen baratos `game.sprite` y los tiles del juego de plataformas.
+- **Dibuja solo lo que está en pantalla**, y colisiona solo con lo que está cerca (mira el
+  [juego de plataformas](/pyzed/es/games/platformer/)).
+- **Limita las partículas** con `game.Particles(limit=...)`, y quita las balas y los enemigos que salen de la pantalla.
+- **Las imágenes se guardan en caché.** `draw.image("ship.png", ...)` decodifica un archivo una vez, así que dibujarlo
+  cientos de veces por fotograma está bien.
+- **El HUD es barato**, pero `pz.memo` puede guardar un widget caro de construir que cambia poco.
+- **Mide.** Muestra un contador de FPS (mira [Orb Rush](/pyzed/es/games/menus-hud/)) y lee la guía de
+  [Rendimiento](/pyzed/es/guides/performance/).
+
+## Entrada
+
+- **Mantener vs pulsar.** Usa `game.axis`, `game.vector` y `pz.is_pressed` en `tick` para lo que pasa *mientras* una
+  tecla está pulsada (moverse, disparo automático), y `on_key` para lo que pasa *una vez* por pulsación (saltar,
+  pausar).
+- **Guarda las pulsaciones un momento.** Recuerda una pulsación un rato corto para que no se pierda: un salto pulsado
+  justo antes de aterrizar, o dos giros rápidos en Snake. Basta un temporizador pequeño o una cola:
+
+  ```python
+  def on_key(self, combo):
+      if combo == "space":
+          self.jump_buffer = 0.12          # seconds; tick counts it down and jumps when possible
+  ```
+
+- **Sé indulgente.** El coyote time, cajas de colisión del jugador un poco más pequeñas que su sprite y un poco más
+  grandes para los objetos hacen que un juego parezca justo.
+- **Deja elegir.** Acepta flechas y WASD (`game.vector` lo hace por defecto), y el ratón donde tenga sentido.
+
+## Juice
+
+El "juice" es la respuesta que hace que una acción se sienta bien: el mismo golpe, con y sin ella:
+
+<Media clip="concept-juice" alt="Dos escenas iguales lado a lado: a la izquierda una pelota golpea un bloque y el bloque simplemente desaparece; a la derecha el juego se detiene un instante, el bloque destella en blanco, saltan chispas, la pantalla tiembla y la pelota se aplasta" caption="Izquierda: el golpe. Derecha: el mismo golpe con una pausa de 70 ms, un destello blanco, partículas, temblor de pantalla y un aplastamiento." size="narrow" />
+
+| Efecto | Cómo |
+| --- | --- |
+| Temblor de pantalla | `shake = game.Shake()`, `shake.kick(8)` en un golpe, `shake.update(dt)` en cada fotograma, y empieza el canvas con `*shake.shapes()` |
+| Partículas | `game.Particles(...)`, `burst(x, y, ...)` en los eventos, `update(dt)` y `shapes(glow=True)` |
+| Pausa de impacto (hit-stop) | no actualices el mundo durante 50–100 ms tras un golpe fuerte (deja moverse a las partículas) |
+| Destello | dibuja en blanco lo golpeado durante uno o dos fotogramas |
+| Squash and stretch | `draw.scale(sx, sy)` alrededor de los pies al aterrizar, o en la dirección del movimiento |
+| Easing | tweens con curvas `ease_out` en vez de movimientos lineales (mira [Sprites y animación](/pyzed/es/games/sprites-animation/)) |
+| Brillo | `game.glow(x, y, r, color)` en el canvas; `bloom` y `glow` en los widgets |
+
+<Aside type="tip">
+Añade un ajuste para quitar el temblor y los destellos. Hay personas que lo necesitan, y
+`pz.system_reduced_motion()` dice si el sistema ya pide menos movimiento.
+</Aside>
+
+## Organizar un juego
+
+- **El estado en un sitio.** Los atributos de la app son el estado del juego; `reset()` o `new_game()` los fija
+  todos, así que volver a empezar es una llamada.
+- **Clases pequeñas para las cosas.** `Enemy`, `Rock`, `Tile`: unos pocos atributos cada una. Las listas de ellas son
+  el mundo.
+- **Reglas como funciones.** El código que decide *qué pasa* (`slide_line`, `can_move`, las colisiones) no debería
+  dibujar; el código que dibuja no debería cambiar el estado. Así los dos son fáciles de cambiar y de probar.
+- **Escenas.** Un atributo `scene` (`"title"`, `"play"`, `"pause"`...) decide qué ejecuta `tick` y qué muestra `view`
+  (mira [Menús, HUD y ajustes](/pyzed/es/games/menus-hud/)).
+- **Constantes arriba.** Velocidades, tamaños y tiempos como constantes con nombre son los mandos para afinar el juego.
+- **Azar con semilla.** `self.random = random.Random(seed)` hace un juego reproducible para pruebas e informes de
+  errores; con `seed=None` es aleatorio como siempre.
+
+## Depurar
+
+- **Dibuja lo que ve el código**: cajas de colisión, velocidades, caminos, el tile bajo el ratón. Actívalo con una
+  tecla, como hace [Jump Lab](/pyzed/es/games/collisions-physics/) con <kbd>H</kbd>.
+- **Escribe los números en el canvas** con `draw.text(..., font="mono")` en vez de en la consola, para verlos en su
+  contexto.
+- **Cámara lenta**: multiplica `dt` por 0,25 mientras mantienes una tecla para ver un momento rápido.
+
+## Probar juegos sin ventana
+
+Un juego de Pyzed es un objeto de Python normal: puedes crearlo, llamar a `tick` en un bucle y comprobar el resultado,
+sin ventana. Los juegos de esta sección dejan que las pruebas fijen las teclas que leen con un atributo `held`:
+
+```python
+from coin_chase import CoinChase, SPEED
+
+def test_moves_right():
+    app = CoinChase(seed=1)
+    app.held = {"right"}                  # instead of the real keyboard
+    x = app.x
+    for _ in range(30):
+        app.tick(1 / 60)                  # half a second, frame by frame
+    assert app.x == pytest.approx(x + SPEED * 0.5)
+
+def test_draws(tmp_path):
+    app = CoinChase(seed=1)
+    app.screenshot(tmp_path / "frame.png", scale=1)   # renders off-screen, no window needed
+```
+
+`game.axis`, `game.vector` y `game.is_pressed` aceptan `held=` para esto. `App.screenshot` (o `pz.screenshot(app,
+path)`) dibuja cualquier momento del juego en un PNG, que es también como se grabaron las animaciones de estas
+páginas. Las pruebas de estos juegos están en
+[`tests/test_game_tutorials.py`](https://github.com/albakore/pyzed/blob/main/tests/test_game_tutorials.py).
+
+<Aside type="note" title="Lee también">
+[Pruebas](/pyzed/es/guides/testing/) para probar apps de Pyzed en general, y [Dibujar con canvas](/pyzed/es/guides/canvas/)
+para todas las formas y transformaciones.
+</Aside>
+
+<LinkCard title="Volver a la introducción de juegos" href="/pyzed/es/games/" description="La ruta de aprendizaje y los juegos completos." />

@@ -385,16 +385,46 @@
    "path": "docs/src/content/docs/faq.md"
   },
   {
+   "slug": "games/asteroids",
+   "title": "5. Asteroids with particles",
+   "description": "Make an Asteroids-style space shooter in Python with Pyzed: rotation and thrust with sin and cos, drag, wrap-around space, circle collisions, rocks that split, engine trails, explosions with game.Particles and screen shake.",
+   "path": "docs/src/content/docs/games/asteroids.mdx"
+  },
+  {
    "slug": "games/breakout",
    "title": "Tutorial: Breakout",
    "description": "A 60 fps Breakout with pz.frames, held keys and the mouse, ball physics, particles, combos and screen shake.",
    "path": "docs/src/content/docs/games/breakout.mdx"
   },
   {
+   "slug": "games/collisions-physics",
+   "title": "3. Collisions and physics",
+   "description": "Simple game physics in Python with Pyzed: velocity and gravity, AABB box collisions resolved one axis at a time, circles bouncing off boxes, and a platformer jump with coyote time and jump buffering.",
+   "path": "docs/src/content/docs/games/collisions-physics.mdx"
+  },
+  {
+   "slug": "games/first-game",
+   "title": "1. Your first game: the loop and the keys",
+   "description": "Make a complete little game in Python with Pyzed: a frame loop with pz.frames, movement with speed × dt, held keys, a timer, a score and a pause, in about 100 lines.",
+   "path": "docs/src/content/docs/games/first-game.mdx"
+  },
+  {
+   "slug": "games/high-scores",
+   "title": "8. High scores, saves and sound hooks",
+   "description": "Save a game's leaderboard and settings in Python with Pyzed: a JSON file in the right folder on Windows, macOS and Linux, atomic writes, name entry with ui.input, a leaderboard, sound hooks, and packaging the game.",
+   "path": "docs/src/content/docs/games/high-scores.mdx"
+  },
+  {
    "slug": "games/index",
    "title": "Making games",
-   "description": "Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.",
+   "description": "Learn to make 2D games in Python with Pyzed, from your first game loop to complete platformers, shooters and puzzles: a step-by-step learning path with animated examples, tips and three finished games.",
    "path": "docs/src/content/docs/games/index.mdx"
+  },
+  {
+   "slug": "games/menus-hud",
+   "title": "7. Menus, HUD, pause and settings",
+   "description": "Wrap a Python game in a real interface with Pyzed: scenes, a title menu that works with keys and mouse, animated transitions, a glass HUD with bloom, a pause menu and a settings screen with sliders, switches and segmented controls.",
+   "path": "docs/src/content/docs/games/menus-hud.mdx"
   },
   {
    "slug": "games/neon-invaders",
@@ -403,10 +433,34 @@
    "path": "docs/src/content/docs/games/neon-invaders.mdx"
   },
   {
+   "slug": "games/platformer",
+   "title": "4. A platformer",
+   "description": "Build a side-scrolling platformer in Python with Pyzed: a tile map written as text, collisions with nearby tiles only, a smooth camera with parallax, patrolling enemies you can stomp, coins, spikes, lives and a goal flag.",
+   "path": "docs/src/content/docs/games/platformer.mdx"
+  },
+  {
+   "slug": "games/puzzle-2048",
+   "title": "6. A puzzle game: 2048",
+   "description": "Make 2048 in Python with Pyzed: the rules as plain testable functions, tiles that slide and pop with tweens, a frame loop that only runs while something moves, mouse swipes, and score boxes and dialogs made of widgets.",
+   "path": "docs/src/content/docs/games/puzzle-2048.mdx"
+  },
+  {
    "slug": "games/snake",
    "title": "Tutorial: Snake",
    "description": "Build the classic Snake with a fixed-rate timer, a key queue, a canvas board and a glass game-over card.",
    "path": "docs/src/content/docs/games/snake.mdx"
+  },
+  {
+   "slug": "games/sprites-animation",
+   "title": "2. Sprites and animation",
+   "description": "Animate a pixel-art character in Python with Pyzed: sprites written as text with game.sprite, a sprite sheet played frame by frame, flipping, tweens with easing curves, a jump arc and squash and stretch.",
+   "path": "docs/src/content/docs/games/sprites-animation.mdx"
+  },
+  {
+   "slug": "games/tips",
+   "title": "Game dev tips",
+   "description": "Practical tips for making games with Pyzed in Python: delta time and fixed timesteps, performance, input buffering, juice and screen shake, organizing game state, debugging views and testing games headlessly.",
+   "path": "docs/src/content/docs/games/tips.mdx"
   },
   {
    "slug": "getting-started/installation",
@@ -2109,10 +2163,46 @@
    "path": "examples/blocks/settings.py"
   },
   {
+   "name": "games/asteroids",
+   "kind": "games",
+   "summary": "Rock Storm: an Asteroids-style shooter with thrust, wrap-around space and lots of particles.",
+   "path": "examples/games/asteroids.py"
+  },
+  {
    "name": "games/breakout",
    "kind": "games",
    "summary": "Breakout: a paddle, a ball and a wall of bricks, running at the display's frame rate.",
    "path": "examples/games/breakout.py"
+  },
+  {
+   "name": "games/coin_chase",
+   "kind": "games",
+   "summary": "Coin Chase: your first game. A frame loop, keys held down and a 30-second timer.",
+   "path": "examples/games/coin_chase.py"
+  },
+  {
+   "name": "games/game_2048",
+   "kind": "games",
+   "summary": "2048: the sliding-tiles puzzle, with smooth moves, merges that pop and a widget overlay.",
+   "path": "examples/games/game_2048.py"
+  },
+  {
+   "name": "games/high_scores",
+   "kind": "games",
+   "summary": "Target Rush: a 20-second clicking game that keeps a top-10 table on disk.",
+   "path": "examples/games/high_scores.py"
+  },
+  {
+   "name": "games/jump_lab",
+   "kind": "games",
+   "summary": "Jump Lab: velocity, gravity, box collisions and a jump that feels good.",
+   "path": "examples/games/jump_lab.py"
+  },
+  {
+   "name": "games/menus",
+   "kind": "games",
+   "summary": "Orb Rush: a title screen, a HUD, a pause menu and a settings screen around a small game.",
+   "path": "examples/games/menus.py"
   },
   {
    "name": "games/neon_invaders",
@@ -2121,10 +2211,22 @@
    "path": "examples/games/neon_invaders.py"
   },
   {
+   "name": "games/platformer",
+   "kind": "games",
+   "summary": "Pixel Run: a side-scrolling platformer with a tile map, a camera, enemies and coins.",
+   "path": "examples/games/platformer.py"
+  },
+  {
    "name": "games/snake",
    "kind": "games",
    "summary": "Snake: the classic, in about 150 lines of Pyzed.",
    "path": "examples/games/snake.py"
+  },
+  {
+   "name": "games/walker",
+   "kind": "games",
+   "summary": "Walker: sprites, frame animation and tweening.",
+   "path": "examples/games/walker.py"
   },
   {
    "name": "showcase/glass_dashboard",

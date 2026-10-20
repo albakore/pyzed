@@ -1,0 +1,161 @@
+---
+title: "4. Un juego de plataformas"
+description: "Crea un juego de plataformas con scroll lateral en Python con Pyzed: un mapa de tiles escrito como texto, colisiones solo con los tiles cercanos, una cámara suave con parallax, enemigos que patrullan y se pueden pisar, monedas, pinchos, vidas y una bandera de meta."
+sidebar:
+  order: 4
+  label: "4. Plataformas"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import source from '../../../../../../examples/games/platformer.py?raw';
+
+Con la física de Jump Lab tienes un personaje que corre y salta. Ahora dale un mundo. Este paso construye
+*Pixel Run*: un nivel de tres mil píxeles de ancho escrito en unas pocas líneas de texto, una cámara que sigue al
+jugador, slimes que patrullan y se pueden pisar, monedas, pinchos y una bandera al final.
+
+<Media clip="game-platformer" alt="Un héroe cian corre hacia la derecha por un nivel con scroll de césped y tierra bajo un cielo morado, saltando huecos, escalones y slimes verdes y cogiendo monedas que estallan en chispas" caption="Pixel Run: la cámara sigue al jugador, las colinas se mueven más despacio que el suelo y solo se dibujan los tiles visibles." eager />
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un nivel completo con cámara, enemigos, monedas, vidas y pantalla de victoria | 60 minutos | Intermedio | [3. Colisiones y física](/pyzed/es/games/collisions-physics/) |
+
+## Qué aprenderás
+
+- Escribir un nivel como **mapa de tiles** en texto y convertirlo en objetos.
+- Colisionar solo con los **tiles cerca del jugador**, y dibujar solo los **tiles en pantalla**.
+- Una **cámara** que se acerca suave al jugador y se detiene en los bordes del nivel, y **parallax**.
+- **Enemigos** que patrullan, se dan la vuelta en paredes y bordes, y se pueden **pisar**.
+- **Vidas, reaparición y pantalla de victoria**.
+
+<Run file="examples/games/platformer.py" lang="es" />
+
+<Steps>
+
+1. **El nivel es texto.** Cada carácter es un tile de 32 × 32: `#` suelo, `=` una plataforma, `o` una moneda, `E`
+   un slime, `^` pinchos, `P` el inicio y `F` la bandera. Editar el nivel es editar estas cadenas:
+
+   ```python
+   TILE = 32
+   LEVEL = [
+       "................................................................................................",
+       ...
+       "...P.ooo......ooo.......Eoo.######............Eoo...##...^^.ooE...............E.ooo.......F.....",
+       "##################...####################...######################...###########################",
+       "##################...####################...######################...###########################",
+   ]
+   COLS, ROWS = len(LEVEL[0]), len(LEVEL)
+   SOLID = "#="
+   ```
+
+   Al empezar una partida, `new_game` lo lee una vez: las monedas van a un conjunto de `(col, row)`, cada `E` se
+   convierte en un `Enemy`, `P` fija el inicio y `F` la caja de la bandera.
+
+2. **Solo los tiles que importan.** El nivel tiene más de mil tiles, pero el jugador solo puede tocar los pocos que
+   hay bajo su caja. `tiles_near` convierte la caja del jugador en un rango de columnas y filas y devuelve los tiles
+   sólidos que hay ahí; la colisión es la misma de Jump Lab, eje por eje:
+
+   ```python
+   def solid(col, row):
+       if col < 0 or col >= COLS:
+           return True              # the sides of the level are walls
+       if row < 0 or row >= ROWS:
+           return False             # above and below are open (falling out is a lost life)
+       return LEVEL[row][col] in SOLID
+
+   def tiles_near(rect):
+       out = []
+       for row in range(int(rect.top // TILE), int(rect.bottom // TILE) + 1):
+           for col in range(int(rect.left // TILE), int(rect.right // TILE) + 1):
+               if solid(col, row):
+                   out.append(game.Rect(col * TILE, row * TILE, TILE, TILE))
+       return out
+   ```
+
+3. **Una cámara.** La cámara es un número: cuánto se ha desplazado el mundo. Apunta un poco por delante del jugador
+   (al 40% de la pantalla), no sale del nivel y se acerca a su objetivo con `lerp`, así que se desliza en vez de dar
+   tirones:
+
+   ```python
+   target = game.clamp(self.player.center[0] - W * 0.4, 0, LEVEL_W - W)
+   self.camera = game.lerp(self.camera, target, min(1.0, 8 * dt))
+   ```
+
+   Dibujar el mundo a través de la cámara es una sola transformación: `draw.translate(-cam, 0)` antes del mundo,
+   dentro de `save()`/`restore()` para no mover el cielo. Las colinas se mueven `cam × 0.2` y `cam × 0.45`, lo que
+   las hace parecer lejanas (**parallax**).
+
+4. **Dibuja solo lo que está en pantalla.** Con la cámara sabes la primera y la última columna visibles. Los tiles
+   de un mismo color se juntan y se dibujan con un solo `draw.rects`, así que todo el nivel cuesta tres formas:
+
+   ```python
+   first, last = cam // TILE, (cam + W) // TILE + 1
+   dirt, grass, stone = [], [], []
+   for row, line in enumerate(LEVEL):
+       for col in range(max(0, first), min(COLS, last + 1)):
+           ...
+   shapes += [draw.rects(dirt, fill="#5b3a29"), draw.rects(grass, fill="#65a30d"),
+              draw.rects(stone, fill="#64748b")]
+   ```
+
+5. **Enemigos que patrullan.** Un slime camina hasta que el tile de delante es una pared o el de abajo-delante está
+   vacío; entonces retrocede y se da la vuelta. Esa única regla lo mantiene en su plataforma:
+
+   ```python
+   r.x += e.vx * dt
+   ahead = r.right if e.vx > 0 else r.left
+   col = int(ahead // TILE)
+   row = int((r.bottom - 1) // TILE)
+   if solid(col, row) or not solid(col, row + 1):
+       r.x -= e.vx * dt
+       e.vx = -e.vx
+   ```
+
+6. **Pisar o hacerse daño.** Tocar un slime está bien *si caes sobre él*: la base del jugador estaba por encima de
+   la parte superior del slime en el fotograma anterior. Entonces el slime se aplasta y el jugador rebota.
+   Cualquier otro contacto cuesta una vida:
+
+   ```python
+   if self.vy > 0 and p.bottom - self.vy / 60 <= e.rect.top + 8:   # coming down on it: stomp
+       e.squashed = 0.001
+       self.vy = -JUMP_SPEED * 0.6
+       self.sparks.burst(e.rect.center[0], e.rect.bottom, count=14, color="#a3e635", angle=-90, spread=160)
+       self.shake.kick(3)
+   elif not self.invincible:
+       return self.hurt()
+   ```
+
+   Después de un golpe el jugador reaparece en el inicio y parpadea un segundo (`invincible`), así que un error
+   nunca cuesta dos vidas.
+
+7. **Ganar y perder.** Caer fuera del nivel, los pinchos y los slimes llaman a `hurt()`; llegar a la bandera pone
+   `won`. Las tarjetas son los mismos widgets de cristal de antes, y <kbd>Enter</kbd> llama a `new_game()`.
+
+</Steps>
+
+<Aside type="tip" title="Diseña niveles para el salto que tienes">
+Con `JUMP_SPEED = 680` y `GRAVITY = 1900` el héroe sube unos 120 píxeles (casi cuatro tiles) y recorre unos cinco
+tiles en un salto completo a toda velocidad. Deja los huecos en tres tiles y las paredes en tres tiles de alto y
+todo salto será justo. Cambia la física y el nivel cambia con ella.
+</Aside>
+
+<Aside type="note" title="Mundos más grandes">
+Los mapas de texto son perfectos para unos pocos niveles. Para muchos, guarda cada nivel en su propio `.txt` y léelo
+con `Path("levels/1.txt").read_text().splitlines()`, o exporta como CSV desde un editor de tiles como Tiled.
+</Aside>
+
+## Prueba esto
+
+- Añade una bandera de control a mitad de nivel: al tocarla, `respawn()` usa su posición.
+- Haz que las plataformas `=` sean de un solo sentido: solo colisionan al caer, si la base del jugador estaba por
+  encima de la plataforma.
+- Añade un segundo nivel: una lista de mapas y `level += 1` al llegar a la bandera.
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/platformer.py" />
+
+## Siguiente
+
+<LinkCard title="5. Asteroids con partículas" href="/pyzed/es/games/asteroids/" description="Rotación y empuje, espacio que da la vuelta, colisiones de círculos y muchas partículas." />

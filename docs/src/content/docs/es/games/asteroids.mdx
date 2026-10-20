@@ -1,0 +1,140 @@
+---
+title: "5. Asteroids con partículas"
+description: "Haz un shooter espacial al estilo Asteroids en Python con Pyzed: rotación y empuje con sin y cos, rozamiento, espacio que da la vuelta, colisiones de círculos, rocas que se parten, estelas del motor, explosiones con game.Particles y temblor de pantalla."
+sidebar:
+  order: 5
+  label: "5. Asteroids y partículas"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import source from '../../../../../../examples/games/asteroids.py?raw';
+
+*Rock Storm* es un shooter con el espíritu del clásico de 1979: una nave que gira y acelera, deriva con inercia y
+dispara a rocas que se parten en rocas más pequeñas. Es un buen sitio para aprender un poco de trigonometría (solo
+son `cos` y `sin`) y para llenar la pantalla de vida con **partículas**.
+
+<Media clip="game-asteroids" alt="Una pequeña nave cian gira y dispara tiros brillantes a rocas grises dentadas en un campo de estrellas; las rocas se parten en otras más pequeñas con ráfagas de chispas y una estela naranja sigue a la nave" caption="Rock Storm: cada chispa, cada bocanada del motor y cada explosión es un burst de game.Particles." eager />
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un shooter con inercia, rocas que se parten, oleadas, vidas y efectos de partículas | 50 minutos | Intermedio | [1. Tu primer juego](/pyzed/es/games/first-game/); [3. Colisiones](/pyzed/es/games/collisions-physics/) ayuda |
+
+## Qué aprenderás
+
+- Convertir un **ángulo** en una dirección con `cos` y `sin`; empuje y **rozamiento**.
+- Hacer que las cosas **den la vuelta** por los bordes de la pantalla.
+- **Colisiones de círculos** para rocas, balas y la nave.
+- **Partículas** con `game.Particles`: estela del motor, fogonazos, escombros y explosiones.
+- **Temblor de pantalla**, invulnerabilidad tras un golpe y oleadas.
+
+<Run file="examples/games/asteroids.py" lang="es" />
+
+<Steps>
+
+1. **Un ángulo se convierte en dirección.** La nave guarda hacia dónde apunta en grados. `cos` y `sin` de ese ángulo
+   dan una dirección de longitud 1: a 0° es `(1, 0)` (derecha), a -90° es `(0, -1)` (arriba). El empuje suma esa
+   dirección a la velocidad; el rozamiento le quita una fracción cada segundo:
+
+   ```python
+   def fly(self, dt):
+       self.angle += game.axis(("left", "a"), ("right", "d"), held=self.held) * TURN * dt
+       rad = math.radians(self.angle)
+       fx, fy = math.cos(rad), math.sin(rad)
+       if game.is_pressed("up", "w", held=self.held):
+           self.vx += fx * THRUST * dt
+           self.vy += fy * THRUST * dt
+       damping = max(0.0, 1 - DRAG * dt)
+       self.vx, self.vy = self.vx * damping, self.vy * damping
+   ```
+
+   La nave sigue a la deriva cuando sueltas: esa inercia es lo que hace que Asteroids se sienta como el espacio.
+
+2. **Dar la vuelta.** Lo que sale por un borde vuelve por el contrario. El operador módulo `%` lo hace en una línea;
+   el margen deja que las rocas grandes salgan del todo antes de reaparecer:
+
+   ```python
+   def wrap(x, y, margin=0):
+       return ((x + margin) % (W + 2 * margin) - margin, (y + margin) % (H + 2 * margin) - margin)
+   ```
+
+3. **Rocas con carácter.** Una roca es un círculo para las colisiones, pero se dibuja como un polígono dentado:
+   puntos alrededor de un círculo a distancias un poco aleatorias, girados con su propio ángulo cada fotograma:
+
+   ```python
+   n = 9 + size * 2
+   self.outline = [(math.cos(i / n * math.tau), math.sin(i / n * math.tau), rnd.uniform(0.75, 1.1))
+                   for i in range(n)]
+   ```
+
+4. **Colisiones de círculos.** Una bala da a una roca cuando está más cerca de su centro que su radio; la nave choca
+   con una roca cuando la distancia es menor que los dos radios sumados:
+
+   ```python
+   for b in self.bullets[:]:
+       for rock in self.rocks:
+           if math.hypot(b[0] - rock.x, b[1] - rock.y) < rock.r:
+               self.bullets.remove(b)
+               self.break_rock(rock)
+               break
+   ```
+
+   Recorre una copia (`self.bullets[:]`) cuando quites elementos de la lista dentro del bucle.
+
+5. **Parte la roca.** Una roca grande (tamaño 3) se convierte en dos medianas, una mediana en dos pequeñas, y una
+   pequeña desaparece. Cada trozo sale en una dirección aleatoria, algo más rápido que su madre:
+
+   ```python
+   def break_rock(self, rock):
+       self.rocks.remove(rock)
+       self.score += POINTS[rock.size]
+       self.sparks.burst(rock.x, rock.y, count=10 + rock.size * 10, color=["#cbd5e1", "#94a3b8", "#fbbf24"],
+                         speed=(40, 120 + rock.size * 60), life=(0.3, 0.6 + rock.size * 0.25), size=(1, 3))
+       self.shake.kick(rock.size * 2.5)
+       if rock.size > 1:
+           for _ in range(2):
+               self.rocks.append(Rock(self.random, rock.x, rock.y, rock.size - 1,
+                                      math.hypot(rock.vx, rock.vy) * 1.3 + self.random.uniform(20, 60)))
+   ```
+
+6. **Partículas por todas partes.** `game.Particles` es una lista de puntos de vida corta. `burst` añade unos
+   cuantos, `update(dt)` los mueve y quita los muertos, `shapes()` los dibuja desvaneciéndose. La estela del motor es
+   un pequeño burst *en cada fotograma* mientras aceleras, apuntado hacia atrás:
+
+   ```python
+   self.trail = game.Particles(drag=3.0, limit=400, seed=seed)
+   ...
+   self.trail.burst(self.x - fx * SHIP_R, self.y - fy * SHIP_R, count=3, angle=self.angle + 180, spread=30,
+                    speed=(80, 180), life=(0.15, 0.4), size=(1.5, 3), color=["#fbbf24", "#f97316", "#fde68a"])
+   ```
+
+   <Media clip="concept-particles" alt="Cuatro efectos de partículas lado a lado: una explosión naranja, una fuente cian que cae por la gravedad, chispas rosas brillantes y una estela amarilla verdosa que sigue a un punto en movimiento" caption="Una clase, cuatro efectos: burst(), una fuente (angle=-90, poca dispersión y gravedad), glow=True y una estela emitida en cada fotograma." size="narrow" />
+
+   `angle` y `spread` apuntan un burst (`angle=-90, spread=40` es una fuente), `gravity` y `drag` dan forma a la
+   caída, `life` y `size` son rangos que se eligen al azar por partícula, y `color` puede ser una lista para mezclar.
+
+7. **Recibir un golpe.** Un choque cuesta una vida, sacude fuerte la pantalla y esparce la nave en partículas.
+   Luego la nave vuelve al centro y parpadea dos segundos (`safe`), en los que las rocas no le hacen daño.
+
+</Steps>
+
+<Aside type="tip" title="Las partículas son baratas, pero no gratis">
+Cada partícula es un círculo (dos con `glow=True`). Unos cientos vivas a la vez no es nada; decenas de miles son
+mucho Python por fotograma. Usa `limit=` para limitar cada emisor, y prefiere una `life` más corta a un `count`
+más pequeño.
+</Aside>
+
+## Prueba esto
+
+- Añade un OVNI que cruce la pantalla de vez en cuando y dispare a la nave.
+- Añade una tecla de hiperespacio que lleve la nave a un sitio aleatorio (con un burst donde estaba).
+- Da a las rocas un color por tamaño y haz que las pequeñas destellen en blanco un fotograma al recibir un disparo.
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/asteroids.py" />
+
+## Siguiente
+
+<LinkCard title="6. Un puzle: 2048" href="/pyzed/es/games/puzzle-2048/" description="Reglas como funciones sencillas, fichas con tweens, gestos con el ratón y una capa de widgets." />
