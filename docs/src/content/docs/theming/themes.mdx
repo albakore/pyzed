@@ -49,16 +49,18 @@ pz.run(MyApp)
 
 ## The bundled themes
 
-Pyzed ships three families of themes, each with light and dark variants:
+Pyzed ships four families of themes, each with light and dark variants:
 
 | Family | Dark | Light |
 | --- | --- | --- |
 | **One** (the default) | `One Dark` | `One Light` |
 | **Ayu** | `Ayu Dark`, `Ayu Mirage` | `Ayu Light` |
 | **Gruvbox** | `Gruvbox Dark`, `Gruvbox Dark Hard`, `Gruvbox Dark Soft` | `Gruvbox Light`, `Gruvbox Light Hard`, `Gruvbox Light Soft` |
+| **Pyzed** | `Pyzed Midnight`, `Pyzed Graphite`, `Pyzed Forest`, `Pyzed Rosé` | `Pyzed Dawn`, `Pyzed Glacier` |
 
-They are the themes of the [Zed](https://zed.dev) editor (MIT license), whose interface inspired much of Pyzed's
-look. List them from Python:
+The first three are the themes of the [Zed](https://zed.dev) editor (MIT license), whose interface inspired much of
+Pyzed's look. The Pyzed family is Pyzed's own: each one is made from a small palette with
+`pyzed.theme_palettes.from_palette`, which you can call to make yours (see [Custom themes](/pyzed/theming/custom-themes/)). List them from Python:
 
 <Tabs syncKey="pkg">
 	<TabItem label="uv">

@@ -15,7 +15,7 @@ from ..theme import Theme, alpha, themes
 from . import components as _components
 from . import help as _help
 from . import scene_code as _scene_code
-from . import spacing
+from . import prop_editors, spacing
 from .components import Prop
 from .locale import tr
 
@@ -57,9 +57,10 @@ class Group:
 
 
 def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, tall: bool = False,
-             end: Any = None) -> Any:
+             end: Any = None, lines: int = 1) -> Any:
     """A property: its name, then its editor on the same line, or below it at full width when ``tall``
-    (lists, tables and text areas). ``end`` goes at the end of a tall row's title line."""
+    (lists, tables and text areas). ``end`` goes at the end of a tall row's title line. ``lines`` is how many
+    rows of fields the editor stacks (two for a box edited side by side)."""
     label = ui.label(tr(title), size="sm", color="text_muted", wrap=False, theme=t)
     if tip:
         label = ui.tooltip(label, tip, theme=t)
@@ -69,7 +70,8 @@ def prop_row(title: str, editor: Any, t: Theme, *, tip: Optional[str] = None, ta
                                width="fill")
     return _core.container(
         _core.row([_core.container(label, width=LABEL_WIDTH, clip=True),
-                   _core.container(editor, width="fill", height=ROW_HEIGHT, align_y="center")],
+                   _core.container(editor, width="fill", height=ROW_HEIGHT * lines + 4 * (lines - 1),
+                                   align_y="center")],
                   spacing=spacing.LABEL_GAP, align="center"),
         padding=(spacing.ROW_PAD, 0), width="fill")
 
@@ -130,7 +132,10 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         number = 0.0 if value in (None, "") else float(value)
         return ui.number_field(number, on_change, min=prop.min, max=prop.max, step=prop.step, width="fill", theme=t)
     if kind == "choice":
-        return ui.select(list(prop.choices), str(value), on_change, width="fill", size="sm", theme=t)
+        choices = [str(c) for c in prop.choices]
+        if prop_editors.fits_segmented(choices):
+            return prop_editors.segmented([(c, c, None) for c in choices], str(value), on_change, t)
+        return ui.select(choices, str(value), on_change, width="fill", size="sm", theme=t)
     if kind == "typed":
         return typed_editor(d, prop, value, on_change, key, t)
     if kind == "list" and key not in d.text_editors:
@@ -761,6 +766,26 @@ def _choice_editor(options: Any, value: str, on_change: Callable[[str], Any], t:
                      theme=t)
 
 
+#: Icons of the alignment choices, by field: start, center, end.
+ALIGN_ICONS = {
+    "align_x": ("align-start-vertical", "align-center-vertical", "align-end-vertical"),
+    "align_y": ("align-start-horizontal", "align-center-horizontal", "align-end-horizontal"),
+}
+
+
+def _style_choice_editor(field: Any, value: str, on_change: Callable[[str], Any], t: Theme) -> Any:
+    """On/off/default and alignments side by side; longer lists of choices as a drop-down."""
+    icons = ALIGN_ICONS.get(field.key)
+    if icons:
+        choices = [("", prop_editors.choice_label(""), None)]
+        choices += [(c, prop_editors.choice_label(c), i) for c, i in zip(field.choices[1:], icons)]
+        return prop_editors.segmented(choices, value, on_change, t)
+    if prop_editors.fits_segmented(field.choices):
+        return prop_editors.segmented([(c, prop_editors.choice_label(c), None) for c in field.choices], value,
+                                      on_change, t)
+    return _choice_editor(field.choices, value, on_change, t)
+
+
 #: Size of the floating color picker card (for placing it inside the window).
 PICKER_WIDTH = 290.0
 PICKER_HEIGHT = 520.0
@@ -907,9 +932,13 @@ def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fie
             editor = ui.number_field(number, on_change, min=field.min, max=field.max, step=field.step, width="fill",
                                      theme=t)
         elif field.kind == "choice":
-            editor = _choice_editor(field.choices, styling.choice_of(field.key, value), on_change, t)
+            editor = _style_choice_editor(field, styling.choice_of(field.key, value), on_change, t)
         elif field.kind in ("box", "radius"):
-            editor = ui.input(styling.numbers_text(value), on_change, placeholder="0", size="sm", mono=True, theme=t)
+            box_key = f"{name}:{field.key}"
+            editor = prop_editors.box_editor(d, box_key, value, on_change, t, corners=field.kind == "radius")
+            if prop_editors.is_split(d, box_key, value):
+                rows.append(prop_row(field.title, editor, t, tip=field.tip, lines=2))
+                continue
         elif field.kind == "shadow":
             color, x, y, blur = styling.shadow_parts(value)
 
