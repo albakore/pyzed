@@ -7,7 +7,7 @@ sidebar:
 
 Cada control visual tiene dos secciones en el panel **Propiedades**, debajo de **Estilo**: **Efectos** y
 **Animación**. Lo que fijes ahí se guarda en el `.pzform` y se reproduce cuando el formulario se ejecuta. Es
-el mismo sistema que [`widget.animate()` y los efectos de estilo](/pyzed/es/guides/animation/) de la biblioteca.
+el mismo sistema que [`widget.animate()` y los efectos de estilo](/pyzed/es/animation/) de la biblioteca.
 
 ![Las secciones Efectos y Animación de un botón](../../../../../screenshots/editor-motion.png)
 
@@ -65,16 +65,16 @@ Las animaciones se guardan como datos simples en el control:
 
 `Document.set_animations(name, animations)` las cambia desde un script y `Control.animations` las lee. Para
 animar un control desde sus handlers, usa la biblioteca: `pz.Animation`, `define_animation` y la
-[lista de presets](/pyzed/es/guides/animation/#presets).
+[lista de presets](/pyzed/es/animation/presets/).
 
 ## Animaciones con línea de tiempo
 
 Para animaciones que mueven varios controles a la vez (una entrada, una transición entre estados), abre
 el panel **Animation** desde **View → Animation** (`Ctrl+Shift+M`). Edita **clips**: líneas de tiempo
-guardadas en el `.pzform` que se reproducen igual que con [`pz.AnimationPlayer`](/pyzed/es/guides/timeline/)
+guardadas en el `.pzform` que se reproducen igual que con [`pz.AnimationPlayer`](/pyzed/es/animation/timeline/)
 en código.
 
-![El panel Animation: un clip intro con pistas para la tarjeta, el título y el texto de una etiqueta, y una llamada a intro_done](../../../../../screenshots/editor-animation.png)
+![El panel Animation: al arrastrar el cabezal por un clip intro, el título baja, el subtítulo aparece y el botón Sign in crece en el formulario de arriba](/pyzed/media/animation/editor-scrub.webp)
 
 | Acción | Resultado |
 | --- | --- |
@@ -85,6 +85,9 @@ en código.
 | Pista **Llamadas** (clic derecho en una llamada para quitarla) | Llama a un método del archivo de código del formulario en un tiempo. |
 | **Duración**, **bucle**, **autoplay** | Indican cuánto dura el clip, si se repite y si se reproduce al abrir el formulario. |
 
+![Añadir una pista de escala al título desde el panel, hacer doble clic en su pista para añadir una key, arrastrarla antes y elegirle Ease out back](/pyzed/media/animation/editor-keys.webp)
+
 Los controles dentro de un contenedor animado siguen su opacidad, posición y desenfoque. Todos los
 cambios se pueden deshacer. En un formulario en ejecución, `self.animations` es el reproductor:
-`self.animations.play("intro")`.
+`self.animations.play("intro")`. La [sección Animación](/pyzed/es/animation/) explica a fondo los
+clips, las pistas, las keys, las curvas y el reproductor.

@@ -285,7 +285,7 @@ class Effects(pz.App):
 pz.run(Effects)
 ```
 
-Docs: `guides/animation`, `library/effects`.
+Docs: `animation/index`, `library/effects`.
 
 ## Shaders
 
@@ -449,7 +449,7 @@ class Results(pz.App):
 pz.run(Results)
 ```
 
-Docs: `guides/timeline`, `editor/animations-and-effects`.
+Docs: `animation/timeline`, `editor/animations-and-effects`.
 
 ## States of components
 

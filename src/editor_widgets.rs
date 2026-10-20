@@ -82,7 +82,7 @@ impl Caret<'_> {
         {
             return false;
         }
-        let now = Instant::now();
+        let now = crate::recorder::now();
         let since = match state.moved.get() {
             Some((at, since)) if at == self.origin => since,
             _ => {

@@ -43,6 +43,210 @@
    "path": "docs/src/content/docs/ai/prompting.md"
   },
   {
+   "slug": "animation/animate",
+   "title": "animate() and triggers",
+   "description": "widget.animate() in Pyzed: play a preset or your own animation when a widget appears, on hover, press, focus or click, or while a flag is on, with duration, delay, repeat, direction, fill and easing.",
+   "path": "docs/src/content/docs/animation/animate.md"
+  },
+  {
+   "slug": "animation/effects",
+   "title": "Effects",
+   "description": "Visual effects in Pyzed: opacity, rotation, blur, backdrop blur, glow, bloom, glass, translate and scale as style properties, and which of them animations can change.",
+   "path": "docs/src/content/docs/animation/effects.md"
+  },
+  {
+   "slug": "animation/index",
+   "title": "Animation",
+   "description": "How animation works in Pyzed: animate any widget like the web (presets, keyframes, transitions), move many widgets on one timeline like Godot's AnimationPlayer, and edit clips in Pyzed Design.",
+   "path": "docs/src/content/docs/animation/index.md"
+  },
+  {
+   "slug": "animation/keyframes",
+   "title": "Keyframes and easing",
+   "description": "Write your own Pyzed animations with pz.Animation keyframes (like CSS @keyframes), give each step its own easing, name and save them, and pick easing curves: ease, cubic, back, bounce, spring, Bézier and steps.",
+   "path": "docs/src/content/docs/animation/keyframes.md"
+  },
+  {
+   "slug": "animation/motion-and-tests",
+   "title": "Reduced motion, tests and limits",
+   "description": "Respect the system's reduce-motion setting in Pyzed, test animated views and timeline clips, take stable screenshots, and know the limits of the animation system.",
+   "path": "docs/src/content/docs/animation/motion-and-tests.md"
+  },
+  {
+   "slug": "animation/player",
+   "title": "The animation player",
+   "description": "pz.AnimationPlayer plays Pyzed timeline clips: play, pause, resume, stop, seek, play backwards, speed, queues and events, and saves reusable clips in .pzanim libraries.",
+   "path": "docs/src/content/docs/animation/player.md"
+  },
+  {
+   "slug": "animation/presets",
+   "title": "Preset gallery",
+   "description": "Every named animation preset in Pyzed, playing: entrances, exits, attention seekers, hover and press feedback, and loops, with their durations and when to use them.",
+   "path": "docs/src/content/docs/animation/presets.md"
+  },
+  {
+   "slug": "animation/properties",
+   "title": "Animatable properties",
+   "description": "Every property a Pyzed animation can change: opacity, position, scale, rotation, blur, colors, radius, border, glow, size, padding and font size, with their units and how property values animate.",
+   "path": "docs/src/content/docs/animation/properties.md"
+  },
+  {
+   "slug": "animation/timeline",
+   "title": "Timeline animations",
+   "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer: interpolation, easing per key, loops and attribute tracks.",
+   "path": "docs/src/content/docs/animation/timeline.md"
+  },
+  {
+   "slug": "animation/transitions",
+   "title": "Transitions and states",
+   "description": "Animate changes in Pyzed like CSS: widget.transition() moves to new values, hover and pressed style states animate, pz.presence swaps pages with enter and exit animations, pz.stagger cascades lists, and windows open with transitions.",
+   "path": "docs/src/content/docs/animation/transitions.md"
+  },
+  {
+   "slug": "audio/components/colors",
+   "title": "Colors and behavior",
+   "description": "Customize Pyzed's audio components — color palettes, theme tokens, variants, sizes and how meters move — and build visuals of your own on the same helpers.",
+   "path": "docs/src/content/docs/audio/components/colors.mdx"
+  },
+  {
+   "slug": "audio/components/fader",
+   "title": "Fader",
+   "description": "A mixer fader for Python — a console cap, FL Studio's style or a flat handle, vertical or as a crossfader, with an optional level meter beside the track.",
+   "path": "docs/src/content/docs/audio/components/fader.mdx"
+  },
+  {
+   "slug": "audio/components/knob",
+   "title": "Knob",
+   "description": "A rotary knob for Python audio apps — drag, scroll or double-click to reset, five looks from FL Studio to Eurorack, logarithmic ranges and stepped selectors.",
+   "path": "docs/src/content/docs/audio/components/knob.mdx"
+  },
+  {
+   "slug": "audio/components/pads-and-buttons",
+   "title": "Pads and LED buttons",
+   "description": "Velocity-sensitive drum pads and LED buttons (mute, solo, record) for Python music apps, styled after FL Studio and drum machines.",
+   "path": "docs/src/content/docs/audio/components/pads-and-buttons.mdx"
+  },
+  {
+   "slug": "audio/components/piano",
+   "title": "Piano keyboard",
+   "description": "A clickable piano keyboard for Python synthesizers — glissando, velocity, lit notes from MIDI or a sequencer, and computer-keyboard playing.",
+   "path": "docs/src/content/docs/audio/components/piano.mdx"
+  },
+  {
+   "slug": "audio/components/scope",
+   "title": "Oscilloscope",
+   "description": "An oscilloscope for Python — several traces over a grid, a trigger that holds periodic waves still, XY Lissajous mode, phosphor persistence and glow.",
+   "path": "docs/src/content/docs/audio/components/scope.mdx"
+  },
+  {
+   "slug": "audio/components/spectrogram",
+   "title": "Spectrogram",
+   "description": "A scrolling spectrogram (waterfall) for Python — frequency over time in color, with magma, viridis or any palette, drawn fast enough for live audio.",
+   "path": "docs/src/content/docs/audio/components/spectrogram.mdx"
+  },
+  {
+   "slug": "audio/components/spectrum",
+   "title": "Spectrum analyzer",
+   "description": "A real-time spectrum analyzer for Python — bars, LED blocks, lines, mirrored or radial, log-spaced bands, falloff, peak caps and color palettes.",
+   "path": "docs/src/content/docs/audio/components/spectrum.mdx"
+  },
+  {
+   "slug": "audio/components/step-sequencer",
+   "title": "Step sequencer",
+   "description": "A grid of steps like FL Studio's channel rack for Python — click or paint steps, rows with names, beat grouping and a moving playhead.",
+   "path": "docs/src/content/docs/audio/components/step-sequencer.mdx"
+  },
+  {
+   "slug": "audio/components/vu-meter",
+   "title": "VU meter",
+   "description": "Level meters for Python audio apps — LED segments, a smooth gradient bar or an analog needle VU with ballistics, in decibels, with peak hold and any colors.",
+   "path": "docs/src/content/docs/audio/components/vu-meter.mdx"
+  },
+  {
+   "slug": "audio/components/waveform",
+   "title": "Waveform",
+   "description": "Draw audio waveforms in Python — a music-app bar view with a played/unplayed split, an envelope, a glowing line, a playhead, selections and seeking.",
+   "path": "docs/src/content/docs/audio/components/waveform.mdx"
+  },
+  {
+   "slug": "audio/components/webcam",
+   "title": "Webcam",
+   "description": "Show a live webcam in a Python desktop app with Pyzed — OpenCV or ffmpeg on Windows, macOS and Linux, snapshots, raw RGBA frames and a test pattern.",
+   "path": "docs/src/content/docs/audio/components/webcam.mdx"
+  },
+  {
+   "slug": "audio/demos/drum-machine",
+   "title": "Drum machine",
+   "description": "A drum machine in Python like FL Studio's channel rack — a step grid you paint, a pad per sound, tempo and swing, with sample-accurate timing from the audio engine.",
+   "path": "docs/src/content/docs/audio/demos/drum-machine.mdx"
+  },
+  {
+   "slug": "audio/demos/midi-controller",
+   "title": "MIDI controller",
+   "description": "A MIDI controller in Python like FL Studio's — channel strips with pan knobs, faders, mute and solo, velocity pads, pitch and mod wheels, and a virtual MIDI port for your DAW.",
+   "path": "docs/src/content/docs/audio/demos/midi-controller.mdx"
+  },
+  {
+   "slug": "audio/demos/modular",
+   "title": "Modular synthesizer",
+   "description": "A modular synthesizer in Python like VCV Rack — modules on rails, cables you drag between jacks, a module browser, and patches saved to JSON.",
+   "path": "docs/src/content/docs/audio/demos/modular.mdx"
+  },
+  {
+   "slug": "audio/demos/synth",
+   "title": "Synthesizer",
+   "description": "A playable synthesizer with effects in Python — two oscillators, a resonant filter, an envelope, distortion, chorus, delay and reverb, with FL Studio-style knobs and a piano.",
+   "path": "docs/src/content/docs/audio/demos/synth.mdx"
+  },
+  {
+   "slug": "audio/demos/visualizer",
+   "title": "Music visualizer",
+   "description": "A music visualizer in Python — spectrum analyzers, a radial spectrum, a spectrogram, an oscilloscope and VU meters whose look changes live, fed by a song or the microphone.",
+   "path": "docs/src/content/docs/audio/demos/visualizer.mdx"
+  },
+  {
+   "slug": "audio/demos/webcam",
+   "title": "Webcam viewer",
+   "description": "A webcam viewer in Python — the live picture, a snapshot button that saves PNG files and the measured frame rate, with OpenCV, ffmpeg or a test pattern.",
+   "path": "docs/src/content/docs/audio/demos/webcam.mdx"
+  },
+  {
+   "slug": "audio/engine/getting-started",
+   "title": "The audio engine",
+   "description": "Build synthesizers, effects, drum machines and sequencers in Python with pyzed.audio — modules joined by cables like VCV Rack, computed in Rust with low latency, with or without a window.",
+   "path": "docs/src/content/docs/audio/engine/getting-started.mdx"
+  },
+  {
+   "slug": "audio/engine/latency",
+   "title": "Devices and latency",
+   "description": "How pyzed.audio picks the sound card, the audio API, the buffer and the sample rate on Windows, macOS and Linux, how to measure the latency and how to bring it down.",
+   "path": "docs/src/content/docs/audio/engine/latency.mdx"
+  },
+  {
+   "slug": "audio/engine/modules",
+   "title": "Module catalog",
+   "description": "Every module of the Pyzed audio engine: oscillators, filters, envelopes, LFOs, effects, sequencers, drums, samplers and MIDI, with their ports, ranges and defaults.",
+   "path": "docs/src/content/docs/audio/engine/modules.md"
+  },
+  {
+   "slug": "audio/index",
+   "title": "Audio",
+   "description": "Make music apps in Python with Pyzed — a modular audio engine, FL Studio-style knobs, faders and pads, waveforms, spectrum analyzers, a webcam view and a VCV Rack-style rack with animated cables.",
+   "path": "docs/src/content/docs/audio/index.mdx"
+  },
+  {
+   "slug": "audio/rack/cables",
+   "title": "Animated cables",
+   "description": "How Pyzed's patch cables work — Bézier curves that sag with gravity, a spring that settles them when plugged, signal dots that flow, and how to draw them yourself.",
+   "path": "docs/src/content/docs/audio/rack/cables.mdx"
+  },
+  {
+   "slug": "audio/rack/rack",
+   "title": "The modular rack",
+   "description": "Build a VCV Rack-style modular synthesizer in Python with Pyzed — modules on rails, knobs and jacks laid out from each module's description, a module browser, and patches saved to JSON.",
+   "path": "docs/src/content/docs/audio/rack/rack.mdx"
+  },
+  {
    "slug": "blocks/chat",
    "title": "Chat",
    "description": "A team chat UI in Python: channels with unread counts, direct messages with presence, grouped messages with Markdown, attachments, reactions and a rich composer.",
@@ -385,16 +589,46 @@
    "path": "docs/src/content/docs/faq.md"
   },
   {
+   "slug": "games/asteroids",
+   "title": "5. Asteroids with particles",
+   "description": "Make an Asteroids-style space shooter in Python with Pyzed: rotation and thrust with sin and cos, drag, wrap-around space, circle collisions, rocks that split, engine trails, explosions with game.Particles and screen shake.",
+   "path": "docs/src/content/docs/games/asteroids.mdx"
+  },
+  {
    "slug": "games/breakout",
    "title": "Tutorial: Breakout",
    "description": "A 60 fps Breakout with pz.frames, held keys and the mouse, ball physics, particles, combos and screen shake.",
    "path": "docs/src/content/docs/games/breakout.mdx"
   },
   {
+   "slug": "games/collisions-physics",
+   "title": "3. Collisions and physics",
+   "description": "Simple game physics in Python with Pyzed: velocity and gravity, AABB box collisions resolved one axis at a time, circles bouncing off boxes, and a platformer jump with coyote time and jump buffering.",
+   "path": "docs/src/content/docs/games/collisions-physics.mdx"
+  },
+  {
+   "slug": "games/first-game",
+   "title": "1. Your first game: the loop and the keys",
+   "description": "Make a complete little game in Python with Pyzed: a frame loop with pz.frames, movement with speed × dt, held keys, a timer, a score and a pause, in about 100 lines.",
+   "path": "docs/src/content/docs/games/first-game.mdx"
+  },
+  {
+   "slug": "games/high-scores",
+   "title": "8. High scores, saves and sound",
+   "description": "Save a game's leaderboard and settings in Python with Pyzed: a JSON file in the right folder on Windows, macOS and Linux, atomic writes, name entry with ui.input, a leaderboard, sound effects synthesized with pyzed.audio, and packaging the game.",
+   "path": "docs/src/content/docs/games/high-scores.mdx"
+  },
+  {
    "slug": "games/index",
    "title": "Making games",
-   "description": "Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.",
+   "description": "Learn to make 2D games in Python with Pyzed, from your first game loop to complete platformers, shooters and puzzles: a step-by-step learning path with animated examples, tips and three finished games.",
    "path": "docs/src/content/docs/games/index.mdx"
+  },
+  {
+   "slug": "games/menus-hud",
+   "title": "7. Menus, HUD, pause and settings",
+   "description": "Wrap a Python game in a real interface with Pyzed: scenes, a title menu that works with keys and mouse, animated transitions, a glass HUD with bloom, a pause menu and a settings screen with sliders, switches and segmented controls.",
+   "path": "docs/src/content/docs/games/menus-hud.mdx"
   },
   {
    "slug": "games/neon-invaders",
@@ -403,10 +637,34 @@
    "path": "docs/src/content/docs/games/neon-invaders.mdx"
   },
   {
+   "slug": "games/platformer",
+   "title": "4. A platformer",
+   "description": "Build a side-scrolling platformer in Python with Pyzed: a tile map written as text, collisions with nearby tiles only, a smooth camera with parallax, patrolling enemies you can stomp, coins, spikes, lives and a goal flag.",
+   "path": "docs/src/content/docs/games/platformer.mdx"
+  },
+  {
+   "slug": "games/puzzle-2048",
+   "title": "6. A puzzle game: 2048",
+   "description": "Make 2048 in Python with Pyzed: the rules as plain testable functions, tiles that slide and pop with tweens, a frame loop that only runs while something moves, mouse swipes, and score boxes and dialogs made of widgets.",
+   "path": "docs/src/content/docs/games/puzzle-2048.mdx"
+  },
+  {
    "slug": "games/snake",
    "title": "Tutorial: Snake",
    "description": "Build the classic Snake with a fixed-rate timer, a key queue, a canvas board and a glass game-over card.",
    "path": "docs/src/content/docs/games/snake.mdx"
+  },
+  {
+   "slug": "games/sprites-animation",
+   "title": "2. Sprites and animation",
+   "description": "Animate a pixel-art character in Python with Pyzed: sprites written as text with game.sprite, a sprite sheet played frame by frame, flipping, tweens with easing curves, a jump arc and squash and stretch.",
+   "path": "docs/src/content/docs/games/sprites-animation.mdx"
+  },
+  {
+   "slug": "games/tips",
+   "title": "Game dev tips",
+   "description": "Practical tips for making games with Pyzed in Python: delta time and fixed timesteps, performance, input buffering, juice and screen shake, organizing game state, debugging views and testing games headlessly.",
+   "path": "docs/src/content/docs/games/tips.mdx"
   },
   {
    "slug": "getting-started/installation",
@@ -443,12 +701,6 @@
    "title": "AI agents in your app",
    "description": "pyzed.agents: add AI to Python desktop apps with Anthropic, OpenAI, Gemini, OpenRouter or Ollama, give models tools and stream answers into your UI.",
    "path": "docs/src/content/docs/guides/agents.mdx"
-  },
-  {
-   "slug": "guides/animation",
-   "title": "Animation and effects",
-   "description": "Animate any Pyzed widget like the web (presets, keyframes, transitions, presence) and add rotation, blur, glow, bloom, glass and opacity.",
-   "path": "docs/src/content/docs/guides/animation.md"
   },
   {
    "slug": "guides/architecture",
@@ -557,12 +809,6 @@
    "title": "Tests and screenshots",
    "description": "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration.",
    "path": "docs/src/content/docs/guides/testing.mdx"
-  },
-  {
-   "slug": "guides/timeline",
-   "title": "Timeline animations",
-   "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer, and save them as reusable .pzanim files.",
-   "path": "docs/src/content/docs/guides/timeline.md"
   },
   {
    "slug": "guides/windows",
@@ -2109,10 +2355,46 @@
    "path": "examples/blocks/settings.py"
   },
   {
+   "name": "games/asteroids",
+   "kind": "games",
+   "summary": "Rock Storm: an Asteroids-style shooter with thrust, wrap-around space and lots of particles.",
+   "path": "examples/games/asteroids.py"
+  },
+  {
    "name": "games/breakout",
    "kind": "games",
    "summary": "Breakout: a paddle, a ball and a wall of bricks, running at the display's frame rate.",
    "path": "examples/games/breakout.py"
+  },
+  {
+   "name": "games/coin_chase",
+   "kind": "games",
+   "summary": "Coin Chase: your first game. A frame loop, keys held down and a 30-second timer.",
+   "path": "examples/games/coin_chase.py"
+  },
+  {
+   "name": "games/game_2048",
+   "kind": "games",
+   "summary": "2048: the sliding-tiles puzzle, with smooth moves, merges that pop and a widget overlay.",
+   "path": "examples/games/game_2048.py"
+  },
+  {
+   "name": "games/high_scores",
+   "kind": "games",
+   "summary": "Target Rush: a 20-second clicking game that keeps a top-10 table on disk.",
+   "path": "examples/games/high_scores.py"
+  },
+  {
+   "name": "games/jump_lab",
+   "kind": "games",
+   "summary": "Jump Lab: velocity, gravity, box collisions and a jump that feels good.",
+   "path": "examples/games/jump_lab.py"
+  },
+  {
+   "name": "games/menus",
+   "kind": "games",
+   "summary": "Orb Rush: a title screen, a HUD, a pause menu and a settings screen around a small game.",
+   "path": "examples/games/menus.py"
   },
   {
    "name": "games/neon_invaders",
@@ -2121,10 +2403,22 @@
    "path": "examples/games/neon_invaders.py"
   },
   {
+   "name": "games/platformer",
+   "kind": "games",
+   "summary": "Pixel Run: a side-scrolling platformer with a tile map, a camera, enemies and coins.",
+   "path": "examples/games/platformer.py"
+  },
+  {
    "name": "games/snake",
    "kind": "games",
    "summary": "Snake: the classic, in about 150 lines of Pyzed.",
    "path": "examples/games/snake.py"
+  },
+  {
+   "name": "games/walker",
+   "kind": "games",
+   "summary": "Walker: sprites, frame animation and tweening.",
+   "path": "examples/games/walker.py"
   },
   {
    "name": "showcase/glass_dashboard",
@@ -3074,7 +3368,7 @@
     }
    },
    "pyzed.Widget": {
-    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
+    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/animation/)."
    },
    "pyzed.column": {
     "desc": "Stacks its children vertically.",
@@ -3712,7 +4006,7 @@
    "pyzed.animation.ease": {},
    "pyzed.animation.window_animations": {},
    "pyzed.animation.PRESETS": {
-    "desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets)."
+    "desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/animation/presets/)."
    },
    "pyzed.animation.CATEGORIES": {
     "desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`."

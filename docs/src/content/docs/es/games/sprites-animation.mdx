@@ -1,0 +1,230 @@
+---
+title: "2. Sprites y animación"
+description: "Anima un personaje pixel art en Python con Pyzed: sprites escritos como texto con game.sprite, una hoja de sprites reproducida fotograma a fotograma, voltear, tweens con curvas de easing, un arco de salto y squash and stretch."
+sidebar:
+  order: 2
+  label: "2. Sprites y animación"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import source from '../../../../../../examples/games/walker.py?raw';
+
+En un juego las cosas casi nunca solo se deslizan: los personajes caminan, parpadean y aterrizan; las monedas
+flotan y estallan. Dos técnicas hacen casi todo. La **animación por fotogramas** muestra una serie de dibujos uno
+tras otro, como un folioscopio. El **tweening** lleva un número (una posición, un tamaño, una opacidad) de un valor
+a otro con el tiempo, con la forma de una *curva de easing*. Este paso construye *Walker*, un héroe pixel art que
+usa las dos.
+
+<Media clip="game-sprites" alt="Un pequeño héroe pixel art camina a derecha e izquierda sobre el césped y salta para coger monedas brillantes que estallan con un +1 que sube, mientras una tira de fotogramas en la esquina resalta el que está en pantalla" caption="Walker: la tira de arriba a la izquierda es la hoja de sprites de la animación; el fotograma resaltado es el que se dibuja." eager />
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un personaje animado con estados de caminar, reposo y salto | 35 minutos | Principiante | [1. Tu primer juego](/pyzed/es/games/first-game/) |
+
+## Qué aprenderás
+
+- Dibujar pixel art **desde texto** con `game.sprite`, y reflejarlo con `flip=True`.
+- Guardar una **hoja de sprites** (una lista de fotogramas) y reproducirla a unos pocos fotogramas por segundo.
+- Cambiar de animación con **estados** (`idle`, `walk`, `jump`).
+- Escribir una pequeña clase **`Tween`** y usar **curvas de easing** para el salto, el aplastamiento al aterrizar,
+  un "+1" y un título.
+
+<Run file="examples/games/walker.py" lang="es" />
+
+<Steps>
+
+1. **Un sprite es texto.** Cada cadena es una fila de píxeles; cada carácter elige un color de una paleta, y
+   cualquier carácter que no esté en ella (como `.`) es transparente. `game.sprite` lo convierte en unas pocas
+   formas, una por color, sea cual sea el tamaño del sprite:
+
+   ```python
+   PALETTE = {"h": "#7c4a2d", "s": "#f5c99b", "S": "#e9b385", "e": "#1b1f27", "b": "#3b82f6",
+              "B": "#60a5fa", "p": "#334155", "k": "#111827"}
+
+   HEAD = [
+       "...hhhh...",
+       "..hhhhhh..",
+       "..hhssss..",
+       "..hsssess.",
+       "..hsssssS.",
+       "...ssss...",
+   ]
+   BODY = ["..bbBBbb..", ".sbbBBbbs.", ".sbbbbbbs.", "..bbbbbb.."]
+
+   game.sprite(HEAD + BODY + LEGS["stand"], PALETTE, x, y, scale=4)   # every pixel becomes 4x4
+   ```
+
+2. **Una hoja de sprites es una lista de fotogramas.** El ciclo de caminar reutiliza la cabeza y el cuerpo y cambia
+   las piernas; la animación de reposo es el mismo fotograma seis veces y un parpadeo, así que el héroe parpadea
+   cada par de segundos:
+
+   ```python
+   LEGS = {
+       "stand": ["..pp..pp..", "..pp..pp..", "..kk..kk.."],
+       "apart": ["..pp..pp..", ".pp....pp.", ".kk.....kk"],
+       "pass": ["...pp.pp..", "...pp.pp..", "...kkkkk.."],
+       "air": ["..pp..pp..", "..ppp.ppp.", "....k...k."],
+   }
+   IDLE = [HEAD + BODY + LEGS["stand"]] * 6 + [BLINK + BODY + LEGS["stand"]]
+   WALK = [HEAD + BODY + LEGS["apart"], HEAD + BODY + LEGS["pass"],
+           HEAD + BODY + LEGS["apart"], HEAD + BODY + LEGS["pass"]]
+   JUMP = [HEAD + BODY + LEGS["air"]]
+   ```
+
+3. **Reproduce los fotogramas.** Una animación solo necesita contar el tiempo; el fotograma a mostrar es *tiempo ×
+   fotogramas por segundo*, que vuelve al principio con `%` cuando se repite:
+
+   ```python
+   class FrameAnimation:
+       def __init__(self, frames, fps, loop=True):
+           self.frames, self.fps, self.loop = frames, fps, loop
+           self.time = 0.0
+
+       def update(self, dt):
+           self.time += dt
+
+       @property
+       def index(self):
+           i = int(self.time * self.fps)
+           return i % len(self.frames) if self.loop else min(i, len(self.frames) - 1)
+
+       @property
+       def frame(self):
+           return self.frames[self.index]
+   ```
+
+4. **Elige la animación según el estado.** En cada fotograma el héroe está en reposo, caminando o saltando. Cuando
+   el estado cambia, la nueva animación empieza por su primer fotograma, y la dirección refleja el sprite:
+
+   ```python
+   self.animations = {"idle": FrameAnimation(IDLE, 3), "walk": FrameAnimation(WALK, 10),
+                      "jump": FrameAnimation(JUMP, 1)}
+
+   def set_state(self, state):
+       if state != self.state:
+           self.state = state
+           self.animations[state].time = 0.0
+
+   # in tick(dt):
+   move = game.axis(("left", "a"), ("right", "d"), held=self.held)
+   if move:
+       self.facing = move
+   self.set_state("jump" if self.jump else "walk" if move else "idle")
+   self.animation.update(dt)
+
+   # in board():
+   game.sprite(self.animation.frame, PALETTE, x, y, scale=PIXEL, flip=self.facing < 0)
+   ```
+
+5. **Tweens: de A a B con el tiempo.** Un tween recuerda cuándo empezó y calcula su valor a partir del *progreso*
+   (de 0 a 1) pasado por una función de easing. El easing es lo que hace natural el movimiento: las cosas casi
+   nunca arrancan y paran a toda velocidad.
+
+   ```python
+   def ease_out_cubic(t):
+       return 1 - (1 - t) ** 3
+
+   def ease_out_back(t):          # goes a little past the end, then settles
+       c = 1.70158
+       return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2
+
+   class Tween:
+       def __init__(self, start, end, duration, ease=ease_out_cubic, delay=0.0):
+           self.start, self.end, self.duration, self.ease = start, end, duration, ease
+           self.time = -delay
+
+       def update(self, dt):
+           self.time += dt
+
+       @property
+       def progress(self):
+           return game.clamp(self.time / self.duration, 0.0, 1.0)
+
+       @property
+       def done(self):
+           return self.time >= self.duration
+
+       @property
+       def value(self):
+           return game.lerp(self.start, self.end, self.ease(self.progress))
+   ```
+
+   <Media clip="concept-easing" alt="Cuatro puntos brillantes cruzan de izquierda a derecha en el mismo segundo: linear avanza uniforme, ease_out_cubic sale rápido y frena, ease_in_out_sine acelera y frena, ease_out_back se pasa y vuelve" caption="El mismo tween con cuatro curvas de easing. Los puntos que se desvanecen detrás muestran su velocidad." size="narrow" />
+
+6. **Un salto también es un tween.** El progreso del salto va de 0 a 1 en `JUMP_TIME` segundos; la altura es una
+   parábola, `4t(1 − t)`, que vale 0 en los extremos y 1 en el medio:
+
+   ```python
+   def start_jump(self):
+       if not self.jump:
+           self.jump = Tween(0.0, 1.0, JUMP_TIME, linear)
+
+   @property
+   def height(self):
+       if not self.jump:
+           return 0.0
+       t = self.jump.value
+       return 4 * t * (1 - t) * JUMP_HEIGHT
+   ```
+
+   En el [paso 3](/pyzed/es/games/collisions-physics/) lo cambiarás por gravedad real, que puede aterrizar en
+   plataformas; un tween es perfecto cuando el movimiento siempre es el mismo.
+
+7. **Squash and stretch.** Cuando el salto termina, un segundo tween va de 1 a 0 en un cuarto de segundo. Mientras
+   dura, el sprite se dibuja más ancho y más bajo alrededor de sus pies, con una transformación `scale`:
+
+   ```python
+   s = self.squash.value if self.squash else 0.0
+   sx, sy = 1 + 0.25 * s, 1 - 0.2 * s
+   feet_x, feet_y = self.x + SPRITE_W / 2, GROUND - self.height
+   shapes += [draw.save(), draw.translate(feet_x, feet_y), draw.scale(sx, sy),
+              *game.sprite(self.animation.frame, PALETTE, -SPRITE_W / 2, -SPRITE_H, scale=PIXEL,
+                           flip=self.facing < 0),
+              draw.restore()]
+   ```
+
+   Llevar primero el origen a los pies (`translate`) hace que el sprite se aplaste *contra el suelo* y no hacia
+   su esquina superior izquierda.
+
+8. **Pequeños tweens por todas partes.** El "+1" sobre una moneda sube 40 píxeles y se desvanece en 0,7 s; el título
+   entra con `ease_out_back` 0,2 s después de empezar; las monedas flotan con una onda seno:
+
+   ```python
+   self.popups.append([cx, cy, Tween(0.0, 1.0, 0.7, ease_out_cubic)])
+   ...
+   for x, y, tween in self.popups:
+       shapes.append(draw.text(x, y - 40 * tween.value, "+1", size=18, weight="bold",
+                               color=game.rgba("#fde68a", 1 - tween.progress), align_x="center"))
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Archivos de imagen y hojas de sprites reales">
+`draw.image("hero.png", x, y, w, h, pixelated=True)` dibuja un PNG en vez de píxeles de texto; se decodifica una
+vez y queda en caché, así que dibujarlo en cada fotograma es barato, y `rotation=` y `opacity=` lo giran y lo
+desvanecen. `draw.image` dibuja una imagen entera, así que para una hoja de sprites en un solo archivo, córtala en
+fotogramas una vez al empezar el juego (por ejemplo con `Image.crop` de Pillow, guardando los bytes de cada
+fotograma) y guarda la lista, igual que `WALK` arriba.
+</Aside>
+
+<Aside type="note" title="Los widgets se animan solos">
+Los menús y los widgets del HUD tienen su propio sistema de animación: `.animate("fade_in_up")`, `.transition(...)`
+y `pz.AnimationPlayer` se reproducen de forma nativa, sin tu bucle (mira [Animación](/pyzed/es/guides/animation/)).
+Dentro de un `pz.canvas` no hay widgets, así que animas los números tú mismo, como aquí.
+</Aside>
+
+## Prueba esto
+
+- Añade una animación de correr (6 fotogramas a 14 fps) que se use al mantener Shift, con más `WALK_SPEED`.
+- Haz girar las monedas estrechando su ancho con `abs(math.cos(time))`, como hace Coin Chase.
+- Dale al título un balanceo con `ease_in_out_sine` después de aterrizar.
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/walker.py" />
+
+## Siguiente
+
+<LinkCard title="3. Colisiones y física" href="/pyzed/es/games/collisions-physics/" description="Velocidad, gravedad, colisiones de cajas y un salto que se siente bien." />

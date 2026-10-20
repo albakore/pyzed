@@ -1,0 +1,56 @@
+---
+// A grid of recorded clips (docs/public/media/manifest.json), each one linking to its page, for a section's
+// overview. Every tile is a <Media clip> (an animated WebP loads lazily and shows its poster with "reduce
+// motion"; a video plays only on screen) with its title as a link under it.
+//
+//   <ClipGallery items={[{ clip: 'game-platformer', title: 'Pixel Run', href: '/pyzed/games/platformer/', alt: '...' }]} />
+import Media from './Media.astro';
+
+interface Item {
+	clip: string;
+	title: string;
+	href: string;
+	alt: string;
+}
+interface Props {
+	items: Item[];
+	/** Smallest tile width; more columns fit on wide screens. */
+	min?: string;
+}
+const { items, min = '15rem' } = Astro.props;
+const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+---
+
+<div class="pz-clip-gallery not-content" style={`--min: ${min}`}>
+	{
+		items.map((item) => (
+			<Media
+				clip={item.clip}
+				alt={item.alt}
+				caption={`<a href="${escape(item.href)}">${escape(item.title)}</a>`}
+			/>
+		))
+	}
+</div>
+
+<style>
+	.pz-clip-gallery {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min)), 1fr));
+		gap: 1rem 1.25rem;
+		margin-block: 1.5rem;
+	}
+	.pz-clip-gallery :global(figure.pz-media) {
+		margin: 0;
+	}
+	.pz-clip-gallery :global(figcaption) {
+		margin-top: 0.5rem;
+		font-weight: 600;
+	}
+	.pz-clip-gallery :global(figcaption a) {
+		text-decoration: none;
+	}
+	.pz-clip-gallery :global(figcaption a:hover) {
+		text-decoration: underline;
+	}
+</style>

@@ -12,7 +12,7 @@ the same pull request that adds it; reviewers check it. This page continues the 
 ```mermaid
 flowchart LR
     DS["Docstring<br/>(the code)"] --> API["api_docs_en.py<br/>api_docs_es.py"] --> GEN["gen_api.py"] --> REF["API reference<br/>reference/*.md"]
-    LIB["library_data.py"] --> LS["library_shots.py"] --> IMG["src/assets/library/*.png"]
+    LIB["library_data.py"] --> LS["library_shots.py"] --> IMG["public/library/*.webp"]
     LIB --> GL["gen_library.py"] --> PAGES["Component library pages"]
     CS["component_shots.py"] --> CIMG["src/assets/components/*.png"] --> GUIDE["Components guides"]
     CL["CHANGELOG.md<br/>[Unreleased]"] --> NEW["What's new"]
@@ -23,7 +23,7 @@ flowchart LR
 | Docstring | the function or class in `python/pyzed/` | written by hand |
 | API reference | `docs/src/content/docs/[es/]reference/*.md` | `docs/scripts/gen_api.py` from `api_docs_en.py` / `api_docs_es.py` |
 | Component library | the *Component library* section of the site | `docs/scripts/gen_library.py` from `docs/scripts/library_data.py` |
-| Library previews | `docs/src/assets/library/*.png` | `docs/scripts/library_shots.py` |
+| Library previews (animated) | `docs/public/library/*.webp` | `docs/scripts/library_shots.py` |
 | Guide illustrations | `docs/src/assets/components/*.png` | `docs/scripts/component_shots.py` |
 | Editor screenshots | `docs/screenshots/*.png` | `examples/screenshots.py` |
 | Release notes | `CHANGELOG.md` → [What's new](/pyzed/changelog/) | `docs/scripts/sync-changelog.mjs` on every build |
@@ -158,7 +158,7 @@ add(
 
 | Key | Meaning |
 | --- | --- |
-| `slug` | URL and file name: `library/<slug>.mdx` and `assets/library/<slug>.*.png`. |
+| `slug` | URL and file name: `library/<slug>.mdx` and `public/library/<slug>.*.webp`. |
 | `name` | Title of the page and of its gallery card. |
 | `category` | A key of `CATEGORIES` (`actions`, `display`, `forms`, `feedback`, `data`, `lists`, `navigation`, `overlays`, `dialogs`, `workspace`, `code`, `layout`, `content`). |
 | `api` | The public names documented on the page, the main one first. |
@@ -176,15 +176,22 @@ the widget**. Prose is Markdown inside MDX: write `{`, `}` and `<` only inside b
 Render the previews, generate the pages and check them:
 
 ```bash
-python docs/scripts/library_shots.py rating      # assets/library/rating.dark.png and rating.light.png
+python docs/scripts/library_shots.py rating      # public/library/rating.dark.webp and rating.light.webp
 python docs/scripts/gen_library.py               # library/*.mdx in both languages
 python docs/scripts/gen_library.py --check       # coverage and consistency, writes nothing
 ```
 
-Previews are drawn off-screen at scale 2, centered on the theme background, in One Dark and One Light
-(examples: `<slug>-<n>.<theme>.png`). `--check` fails when a name of `pyzed.ui.__all__` is on no library
-page, when an entry points to an unknown name, category, related slug or image, or when a generated page
-is out of date. Commit the images with the data file.
+Previews are animated WebP recorded off-screen at scale 2 with
+[`anim_webp.py`](/pyzed/contributing/docs/#animated-captures), centered on the theme background, in One
+Dark and One Light (examples: `<slug>-<n>.<theme>.webp`; each with a still `*.still.webp` for reduced
+motion). By default the pointer hovers and presses the middle of the preview, and each variant is
+hovered and pressed (or clicked and typed into when it has a text field); a clip in which nothing changes
+plays a theme cycle instead. Give the new component a script in `docs/scripts/library_anim.py` when it
+does more than that (open a menu, drag a slider, type a query); `library_shots.py --probe rating` prints
+what a script can aim at. `--check` fails when a name of `pyzed.ui.__all__` is on no library
+page, when an entry points to an unknown name, category, related slug or clip, when a clip is missing or
+not animated, or when a generated page is out of date. Commit the clips and `public/library/manifest.json`
+with the data file.
 
 ## 4. Screenshots for the guides
 

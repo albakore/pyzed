@@ -1,5 +1,7 @@
 """Records the short muted clips the docs embed (docs/public/media/): MP4 (H.264) + WebM (VP9) + a WebP
 poster, and an animated WebP when it is smaller than the MP4. ``manifest.json`` there lists every clip.
+Clips registered with ``anim=True`` (short illustrations: the game tutorials and their concepts) are made
+as an animated WebP and its poster only, sized to stay under ``ANIM_TARGET``.
 
     python docs/scripts/record.py                 # every clip
     python docs/scripts/record.py snake shader    # only the clips whose name contains a word
@@ -33,7 +35,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -47,10 +49,18 @@ SCALE = 2
 MAX_WIDTH = 1280
 #: Each encoded file should stay under this many bytes.
 BUDGET = 400_000
+#: An animated-WebP-only clip aims for this size (and never goes over BUDGET).
+ANIM_TARGET = 200_000
+#: Largest width of an animated-WebP-only clip, in pixels.
+ANIM_WIDTH = 640
 
 os.environ.setdefault("PYZED_CONFIG_DIR", tempfile.mkdtemp(prefix="pyzed-record-"))
 for sub in ("", "games", "showcase", "tutorial"):
     sys.path.insert(0, str(EXAMPLES / sub) if sub else str(EXAMPLES))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# The pointer drawn on clips, its ease-in-out glide and the animated WebP encoder are shared with anim_webp.py.
+from anim_webp import draw_pointer, fit_webp, glide, save_poster
 
 
 # -- clips -----------------------------------------------------------------------------------------
@@ -77,26 +87,22 @@ class Clip:
     #: Which frame becomes the poster, as a fraction of the clip.
     poster: float = 0.5
     tags: list[str] = field(default_factory=list)
+    #: Only an animated WebP (and its poster), no MP4/WebM: for short illustrations shown as images.
+    anim: bool = False
+    #: The largest width of the encoded clip (0: MAX_WIDTH, or ANIM_WIDTH for ``anim`` clips).
+    width: int = 0
 
 
 CLIPS: dict[str, Clip] = {}
 
 
 def clip(name: str, title: str, description: str, *, fps: int = 24, live: bool = False, poster: float = 0.5,
-         tags: list[str] | None = None):
+         tags: list[str] | None = None, anim: bool = False, width: int = 0):
     def register(fn):
-        CLIPS[name] = Clip(name, title, description, fps, fn, live, poster, tags or [])
+        CLIPS[name] = Clip(name, title, description, fps, fn, live, poster, tags or [], anim, width)
         return fn
 
     return register
-
-
-def glide(a: tuple[float, float], b: tuple[float, float], frames: int) -> Iterator[tuple[float, float]]:
-    """Points from ``a`` to ``b`` with an ease-in-out, like a hand moving a mouse."""
-    for i in range(1, frames + 1):
-        t = i / frames
-        t = t * t * (3 - 2 * t)
-        yield (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
 
 
 # -- games -----------------------------------------------------------------------------------------
@@ -188,6 +194,497 @@ def life_clip(c: Clip):
     for i in range(c.fps * 7):
         if i % 2 == 0:
             app.tick()
+        yield Frame(app, app.size)
+
+
+# -- the "Make games" path: animated WebP illustrations ---------------------------------------------
+def _ticks(app, n: int, dt: float = 1 / 60) -> None:
+    for _ in range(n):
+        app.tick(dt)
+
+
+def _toward(dx: float, dy: float, dead: float = 6.0) -> set[str]:
+    """The arrow keys that steer along ``(dx, dy)``."""
+    keys = set()
+    if dx > dead:
+        keys.add("right")
+    elif dx < -dead:
+        keys.add("left")
+    if dy > dead:
+        keys.add("down")
+    elif dy < -dead:
+        keys.add("up")
+    return keys
+
+
+@clip("game-first", "Coin Chase", "examples/games/coin_chase.py: an orb steered with held keys collects coins.",
+      fps=15, tags=["games"], anim=True)
+def first_game_clip(c: Clip):
+    from coin_chase import CoinChase
+
+    app = CoinChase(seed=7)
+    for _ in range(c.fps * 6):
+        app.held = _toward(app.coin[0] - app.x, app.coin[1] - app.y)
+        _ticks(app, 60 // c.fps)
+        yield Frame(app, app.size)
+
+
+@clip("game-sprites", "Walker", "examples/games/walker.py: frame animation, flipping, a tweened jump and coins that pop.",
+      fps=15, poster=0.3, tags=["games"], anim=True)
+def sprites_clip(c: Clip):
+    from walker import Walker
+
+    app = Walker()
+    script = [(set(), 0.8), ({"right"}, 1.0), ({"right", "space"}, 0.1), ({"right"}, 1.2), ({"right", "space"}, 0.1),
+              ({"right"}, 0.9), ({"left"}, 1.4), ({"left", "space"}, 0.1), ({"left"}, 0.8), (set(), 1.0)]
+    for keys, seconds in script:
+        app.held = keys
+        for _ in range(max(1, round(seconds * c.fps))):
+            _ticks(app, 60 // c.fps)
+            yield Frame(app, app.size)
+
+
+@clip("game-jump-arc", "Jump Lab", "examples/games/jump_lab.py: gravity, a jump arc traced by the debug view, "
+      "box collisions and bouncing balls.", fps=15, poster=0.45, tags=["games"], anim=True)
+def jump_arc_clip(c: Clip):
+    from jump_lab import JumpLab
+
+    app = JumpLab(seed=3)
+    # (keys held, seconds, press jump at the start)
+    script = [(set(), 0.5, False), ({"right"}, 0.35, False), ({"right", "space"}, 0.7, True),
+              ({"right"}, 0.5, False), ({"right", "space"}, 0.6, True), ({"right"}, 0.3, False),
+              ({"right", "space"}, 0.75, True), ({"right"}, 0.6, False), (set(), 0.5, False),
+              ({"left"}, 0.4, False), ({"left", "space"}, 0.25, True), ({"left"}, 1.2, False), (set(), 0.6, False)]
+    for keys, seconds, jump in script:
+        app.held = keys
+        if jump:
+            app.press_jump()
+        for _ in range(max(1, round(seconds * c.fps))):
+            _ticks(app, 60 // c.fps)
+            yield Frame(app, app.size)
+
+
+def _platformer_bot(app, P) -> None:
+    """Runs right and jumps over walls, gaps, spikes and slimes."""
+    p = app.player
+    held = {"right"}
+    row = int((p.bottom - 1) // P.TILE)
+    wall = P.solid(int((p.right + 10) // P.TILE), row) or P.solid(int((p.right + 10) // P.TILE), row - 1)
+    gap = not P.solid(int((p.right + 22) // P.TILE), row + 1)
+    spikes = 0 <= row < P.ROWS and any(0 <= col < P.COLS and P.LEVEL[row][col] == "^"
+                                       for col in range(int(p.right // P.TILE), int((p.right + 50) // P.TILE) + 1))
+    slime = any(not e.squashed and 0 < e.rect.left - p.right < 70 and abs(e.rect.bottom - p.bottom) < 20
+                for e in app.enemies)
+    if app.on_ground and (wall or gap or spikes or slime):
+        app.buffer = P.BUFFER
+    if not app.on_ground and app.vy < 0:
+        held.add("space")
+    app.held = held
+
+
+@clip("game-platformer", "Pixel Run", "examples/games/platformer.py: a tile map, a following camera, coins and "
+      "slimes to stomp.", fps=12, poster=0.4, tags=["games"], anim=True)
+def platformer_clip(c: Clip):
+    import platformer as P
+
+    app = P.Platformer(seed=1)
+    for _ in range(c.fps * 7):
+        for _ in range(60 // c.fps):
+            _platformer_bot(app, P)
+            app.tick(1 / 60)
+        yield Frame(app, app.size)
+
+
+def _asteroids_pilot(app, A, frame: int) -> None:
+    """Turns toward the nearest rock (where it will be), fires when lined up, thrusts now and then."""
+    if not app.rocks:
+        app.held = set()
+        return
+    rock = min(app.rocks, key=lambda r: math.hypot(r.x - app.x, r.y - app.y))
+    lead = math.hypot(rock.x - app.x, rock.y - app.y) / A.BULLET_SPEED
+    tx, ty = rock.x + rock.vx * lead, rock.y + rock.vy * lead
+    want = math.degrees(math.atan2(ty - app.y, tx - app.x))
+    diff = (want - app.angle + 180) % 360 - 180
+    held = {"right"} if diff > 4 else {"left"} if diff < -4 else set()
+    if abs(diff) < 12:
+        held.add("space")
+    if (frame // 40) % 3 == 0 and math.hypot(rock.x - app.x, rock.y - app.y) > 160:
+        held.add("up")
+    app.held = held
+
+
+@clip("game-asteroids", "Rock Storm", "examples/games/asteroids.py: thrust, wrap-around space, rocks that split "
+      "and particles everywhere.", fps=12, poster=0.55, tags=["games"], anim=True)
+def asteroids_clip(c: Clip):
+    import asteroids as A
+
+    app = A.Asteroids(seed=11)
+    app.safe = 0.0
+    frame = 0
+    for _ in range(c.fps * 7):
+        for _ in range(60 // c.fps):
+            frame += 1
+            _asteroids_pilot(app, A, frame)
+            app.tick(1 / 60)
+        yield Frame(app, app.size)
+
+
+@clip("game-2048", "2048", "examples/games/game_2048.py: tiles slide, merge with a pop, and the score floats up.",
+      fps=15, poster=0.6, tags=["games"], anim=True)
+def puzzle_clip(c: Clip):
+    import game_2048 as G
+
+    app = G.Game2048(seed=5)
+    for i in range(12):                      # a few moves in, so the board is not empty
+        for d in ((1, 0), (0, -1), (0, 1), (-1, 0)):
+            if app.move(d):
+                break
+    _ticks(app, 60)
+    order = [(1, 0), (0, -1), (1, 0), (0, 1), (0, -1), (1, 0), (0, -1), (-1, 0)]
+    for i in range(c.fps * 7):
+        if i % 7 == 3:
+            preferred = order[(i // 7) % len(order)]
+            for d in (preferred, (1, 0), (0, -1), (0, 1), (-1, 0)):
+                if app.move(d):
+                    break
+        _ticks(app, 60 // c.fps)
+        yield Frame(app, app.size)
+
+
+@clip("game-menus", "Orb Rush menus", "examples/games/menus.py: the title menu slides in, the game runs with its "
+      "HUD, pauses, and the settings open.", fps=12, poster=0.12, tags=["games"], anim=True)
+def menus_clip(c: Clip):
+    from menus import OrbRush
+
+    app = OrbRush(seed=2)
+    app.settings["fps"] = True
+
+    def hold(seconds, steer=False):
+        for _ in range(max(1, round(seconds * c.fps))):
+            if steer and app.orbs:
+                orb = min(app.orbs, key=lambda o: abs(o[0] - app.x) + abs(o[1] - app.y) * 0.5)
+                app.held = _toward(orb[0] - app.x, orb[1] - app.y)
+            _ticks(app, 60 // c.fps)
+            yield Frame(app, app.size)
+
+    yield from hold(1.1)
+    for key in ("down", "up"):
+        app.on_key(key)
+        yield from hold(0.35)
+    app.on_key("enter")
+    yield from hold(2.0, steer=True)
+    app.held = set()
+    app.on_key("escape")
+    yield from hold(1.0)
+    app.on_key("down")
+    yield from hold(0.3)
+    app.on_key("enter")
+    yield from hold(0.9)
+    app.settings["difficulty"] = "Hard"
+    yield from hold(0.4)
+    app.settings["shake"] = False
+    yield from hold(0.6)
+    app.on_key("escape")
+    yield from hold(0.5)
+    app.on_key("escape")
+    yield from hold(0.8, steer=True)
+
+
+@clip("game-high-scores", "Target Rush", "examples/games/high_scores.py: click the targets, enter a name, "
+      "and the leaderboard is saved.", fps=15, poster=0.95, tags=["games"], anim=True)
+def high_scores_clip(c: Clip):
+    import high_scores as HS
+
+    work = Path(tempfile.mkdtemp(prefix="pyzed-record-"))
+    scores = HS.HighScores(work / "scores.json")
+    for name, score in (("Grace", 4200), ("Alan", 3100), ("Linus", 1900), ("Margaret", 1200)):
+        scores.add(name, score)
+    app = HS.TargetRush(seed=4, path=work / "scores.json", sound_backend=None)
+    pointer = (320.0, 380.0)
+    yield Frame(app, app.size, pointer, hold=c.fps)
+    pointer = (336.0 + 16, 383.0 + 60)
+    yield Frame(app, app.size, pointer, pressed=True, hold=3)
+    app.start()
+    board = (16, 60)                          # where the canvas is in the window
+
+    for _ in range(c.fps * 4):
+        _ticks(app, 60 // c.fps)
+        if app.targets:
+            t = max(app.targets, key=lambda t: t[2])
+            goal = (t[0] + board[0], t[1] + board[1])
+            step = 0.35
+            pointer = (pointer[0] + (goal[0] - pointer[0]) * step, pointer[1] + (goal[1] - pointer[1]) * step)
+            if math.hypot(goal[0] - pointer[0], goal[1] - pointer[1]) < 8:
+                app.click(t[0], t[1])
+                yield Frame(app, app.size, pointer, pressed=True)
+                continue
+        yield Frame(app, app.size, pointer)
+    app.time_left = 0.05
+    app.score = max(app.score, 3400)
+    _ticks(app, 60 // c.fps)
+    yield Frame(app, app.size, pointer, hold=c.fps // 2)
+    for ch in "Ada":
+        app.set_name(app.name + ch)
+        yield Frame(app, app.size, pointer, hold=4)
+    yield Frame(app, app.size, pointer, hold=c.fps // 3)
+    app.submit_name()
+    yield Frame(app, app.size, pointer, hold=int(c.fps * 2.5))
+
+
+# -- concepts --------------------------------------------------------------------------------------
+class _Concept:
+    """Base for the small record-only scenes that illustrate one idea of the game tutorials."""
+
+    W, H = 640, 300
+    title = "Concept"
+
+    def __init__(self):
+        import pyzed as pz
+
+        self.pz = pz
+        self.t = 0.0
+
+    @property
+    def size(self):
+        return (self.W, self.H)
+
+    def label(self, x, y, text, color="#94a3b8", size=13, align="center"):
+        from pyzed import draw
+
+        return draw.text(x, y, text, color=color, size=size, align_x=align, font="mono")
+
+
+@clip("concept-particles", "Particles", "Four ways to use game.Particles: an explosion, a fountain, glowing sparks "
+      "and a trail.", fps=15, tags=["games"], anim=True)
+def particles_clip(c: Clip):
+    import pyzed as pz
+    from pyzed import draw, game
+
+    class Scene(_Concept, pz.App):
+        def __init__(self):
+            super().__init__()
+            self.boom = game.Particles(drag=1.5, seed=1)
+            self.fountain = game.Particles(gravity=520, seed=2)
+            self.sparks = game.Particles(drag=2.5, seed=3)
+            self.trail = game.Particles(drag=3, seed=4)
+
+        def tick(self, dt):
+            self.t += dt
+            if int(self.t * 60) % 50 == 0:
+                self.boom.burst(80, 140, count=50, color=["#f97316", "#fbbf24", "#ffffff"], speed=(40, 220),
+                                life=(0.4, 1.0))
+            self.fountain.burst(240, 230, count=3, angle=-90, spread=30, speed=(220, 320), life=(0.6, 1.1),
+                                color=["#22d3ee", "#a5f3fc"])
+            if int(self.t * 60) % 30 == 0:
+                self.sparks.burst(400, 140, count=24, color=["#f472b6", "#c084fc"], speed=(60, 260),
+                                  life=(0.2, 0.6), size=(1, 2.5))
+            x, y = 560 + math.cos(self.t * 3) * 50, 140 + math.sin(self.t * 6) * 40
+            self.trail.burst(x, y, count=4, speed=(5, 30), life=(0.3, 0.7), color=["#a3e635", "#facc15"])
+            self.head = (x, y)
+            for p in (self.boom, self.fountain, self.sparks, self.trail):
+                p.update(dt)
+
+        def view(self):
+            shapes = [draw.background("#0b0e14")]
+            for i in range(1, 4):
+                shapes.append(draw.line(i * 160, 20, i * 160, 260, stroke="#ffffff10"))
+            shapes += self.boom.shapes(glow=True) + self.fountain.shapes() + self.sparks.shapes(glow=True)
+            shapes += self.trail.shapes(glow=True) + game.glow(*self.head, 6, "#facc15", layers=3)
+            for x, text in ((80, "burst()"), (240, "fountain"), (400, "glow=True"), (560, "trail")):
+                shapes.append(self.label(x, 270, text))
+            return pz.canvas(shapes, width=self.W, height=self.H)
+
+    app = Scene()
+    _ticks(app, 30)
+    for _ in range(c.fps * 5):
+        _ticks(app, 60 // c.fps)
+        yield Frame(app, app.size)
+
+
+@clip("concept-collisions", "Box and circle collisions", "AABB overlap, the push-out along the shortest axis, and a "
+      "ball bouncing off a box with game.circle_rect.", fps=15, tags=["games"], anim=True)
+def collisions_clip(c: Clip):
+    import pyzed as pz
+    from pyzed import draw, game
+
+    class Scene(_Concept, pz.App):
+        def __init__(self):
+            super().__init__()
+            self.wall = game.Rect(110, 110, 110, 80)
+            self.box = game.Rect(0, 0, 60, 46)
+            self.paddle = game.Rect(410, 170, 150, 22)
+            self.ball = [470.0, 60.0, 130.0, 0.0]
+            self.normal = None
+            self.flash = 0.0
+
+        def tick(self, dt):
+            self.t += dt
+            a = self.t * 1.3
+            self.box.x, self.box.y = 135 + math.cos(a) * 105 - 30, 150 + math.sin(a * 2) * 60 - 23
+            bx, by, vx, vy = self.ball
+            vy += 900 * dt
+            bx, by = bx + vx * dt, by + vy * dt
+            if bx < 340 or bx > 620:
+                vx = -vx
+            hit = game.circle_rect(bx, by, 12, self.paddle)
+            if hit:
+                nx, ny = hit
+                if ny:
+                    vy = abs(vy) * ny
+                    by = self.paddle.top - 12 if ny < 0 else self.paddle.bottom + 12
+                if nx:
+                    vx = abs(vx) * nx
+                self.normal, self.flash = (bx, by, nx, ny), 0.5
+            self.flash = max(0.0, self.flash - dt)
+            self.ball = [bx, by, vx, vy]
+
+        def view(self):
+            shapes = [draw.background("#0b0e14"), draw.line(320, 20, 320, 280, stroke="#ffffff12")]
+            hit = self.box.overlaps(self.wall)
+            color = "#f87171" if hit else "#34d399"
+            shapes.append(self.wall.shape(fill="#1e293b", stroke="#94a3b8", width=1.5))
+            shapes.append(self.box.shape(fill=game.rgba(color, 0.25), stroke=color, width=2))
+            if hit:   # the overlap, and the shortest way out of it
+                ox1, oy1 = max(self.box.left, self.wall.left), max(self.box.top, self.wall.top)
+                ox2, oy2 = min(self.box.right, self.wall.right), min(self.box.bottom, self.wall.bottom)
+                shapes.append(draw.rect(ox1, oy1, ox2 - ox1, oy2 - oy1, fill="#fbbf2466"))
+                cx, cy = self.box.center
+                wx, wy = self.wall.center
+                w, h = ox2 - ox1, oy2 - oy1
+                dx, dy = ((w if cx > wx else -w), 0) if w < h else (0, (h if cy > wy else -h))
+                shapes.append(draw.line(cx, cy, cx + dx, cy + dy, stroke="#fbbf24", width=3, cap="round"))
+            shapes.append(self.label(165, 24, "overlaps: " + ("yes" if hit else "no"), color))
+            shapes.append(self.label(165, 270, "Rect.overlaps + push-out"))
+            lit = self.flash > 0
+            shapes.append(self.paddle.shape(fill="#1e293b", stroke="#fbbf24" if lit else "#94a3b8", width=1.5))
+            bx, by = self.ball[:2]
+            shapes += game.glow(bx, by, 12, "#22d3ee", layers=2, strength=0.3)
+            if self.normal and lit:
+                x, y, nx, ny = self.normal
+                shapes.append(draw.line(x, y, x + nx * 40, y + ny * 40, stroke=game.rgba("#fbbf24", self.flash * 2),
+                                        width=3, cap="round"))
+                shapes.append(self.label(x + 50, y - 30, f"normal ({nx:+.0f}, {ny:+.0f})",
+                                         game.rgba("#fbbf24", min(1, self.flash * 2)), 12))
+            shapes.append(self.label(480, 270, "game.circle_rect"))
+            return pz.canvas(shapes, width=self.W, height=self.H)
+
+    app = Scene()
+    for _ in range(round(c.fps * 4.8)):
+        _ticks(app, 60 // c.fps)
+        yield Frame(app, app.size)
+
+
+@clip("concept-easing", "Easing curves", "Four tweens over the same second: linear, ease-out, ease-in-out and "
+      "ease-out-back.", fps=15, tags=["games"], anim=True)
+def easing_clip(c: Clip):
+    import pyzed as pz
+    from pyzed import draw, game
+    from walker import ease_in_out_sine, ease_out_back, ease_out_cubic, linear
+
+    curves = [("linear", linear, "#94a3b8"), ("ease_out_cubic", ease_out_cubic, "#22d3ee"),
+              ("ease_in_out_sine", ease_in_out_sine, "#a3e635"), ("ease_out_back", ease_out_back, "#f472b6")]
+
+    class Scene(_Concept, pz.App):
+        def tick(self, dt):
+            self.t += dt
+
+        def view(self):
+            cycle = self.t % 2.2
+            k = game.clamp(cycle / 1.2, 0, 1)            # one second of motion, then a pause
+            shapes = [draw.background("#0b0e14")]
+            for i, (name, ease, color) in enumerate(curves):
+                y = 50 + i * 62
+                shapes.append(self.label(20, y - 8, name, color, 12, "start"))
+                shapes.append(draw.line(190, y, 600, y, stroke="#ffffff14", width=2))
+                for j in range(5, 0, -1):            # where it was a moment ago: the gaps show the speed
+                    past = game.clamp((cycle - j * 0.05) / 1.2, 0, 1)
+                    shapes.append(draw.circle(game.lerp(200, 590, ease(past)), y, 4,
+                                              fill=game.rgba(color, 0.12 * (6 - j))))
+                shapes += game.glow(game.lerp(200, 590, ease(k)), y, 10, color, layers=3, strength=0.4)
+            return pz.canvas(shapes, width=self.W, height=270)
+
+        @property
+        def size(self):
+            return (self.W, 270)
+
+    app = Scene()
+    for _ in range(round(c.fps * 4.4)):
+        _ticks(app, 60 // c.fps)
+        yield Frame(app, app.size)
+
+
+@clip("concept-juice", "Juice", "The same hit, plain and with juice: hit-stop, a flash, particles, screen shake "
+      "and a squash.", fps=15, tags=["games"], anim=True)
+def juice_clip(c: Clip):
+    import pyzed as pz
+    from pyzed import draw, game
+
+    class Scene(_Concept, pz.App):
+        def __init__(self):
+            super().__init__()
+            self.sparks = game.Particles(gravity=400, drag=1.2, seed=3)
+            self.shake = game.Shake(seed=3)
+            self.reset()
+
+        def reset(self):
+            self.ball = 40.0          # the balls' x on each side, moving right
+            self.hit = None           # seconds since the hit
+            self.freeze = 0.0
+
+        def tick(self, dt):
+            self.sparks.update(dt)
+            self.shake.update(dt)
+            if self.freeze > 0:       # hit-stop: the world pauses for a few frames
+                self.freeze -= dt
+                return
+            self.t += dt
+            if self.hit is None:
+                self.ball += 420 * dt
+                if self.ball >= 220:
+                    self.hit = 0.0
+                    self.freeze = 0.07
+                    self.sparks.burst(320 + 230, 150, count=40, color=["#fbbf24", "#f97316", "#ffffff"],
+                                      speed=(80, 320))
+                    self.shake.kick(9)
+            else:
+                self.hit += dt
+                if self.hit > 1.4:
+                    self.reset()
+
+        def side(self, x0, juicy):
+            shapes = []
+            block_alive = self.hit is None
+            bx = x0 + self.ball
+            if block_alive:
+                shapes.append(draw.rect(x0 + 230, 120, 40, 60, radius=4, fill="#64748b"))
+            elif juicy and self.hit < 0.08:
+                shapes.append(draw.rect(x0 + 226, 116, 48, 68, radius=6, fill="#ffffff"))   # the flash
+            if block_alive:
+                squash = 1.0
+                if juicy:
+                    shapes += game.glow(bx, 150, 12, "#22d3ee", layers=3, strength=0.3)
+                shapes.append(draw.circle(bx, 150, 12 * squash, fill="#22d3ee"))
+            elif juicy:
+                k = min(1.0, self.hit / 0.25)
+                sx = 1.4 - 0.4 * k
+                shapes += [draw.save(), draw.translate(x0 + 210, 150), draw.scale(sx, 1 / sx),
+                           draw.circle(0, 0, 12, fill="#22d3ee"), draw.restore()]
+            else:
+                shapes.append(draw.circle(x0 + 210, 150, 12, fill="#22d3ee"))
+            return shapes
+
+        def view(self):
+            shapes = [draw.background("#0b0e14"), draw.line(320, 20, 320, 280, stroke="#ffffff12")]
+            shapes += self.side(0, False)
+            shapes += [draw.save(), *self.shake.shapes()] + self.side(320, True) + self.sparks.shapes(glow=True)
+            shapes.append(draw.restore())
+            shapes.append(self.label(160, 30, "plain"))
+            shapes.append(self.label(480, 30, "juicy", "#fbbf24"))
+            return pz.canvas(shapes, width=self.W, height=self.H)
+
+    app = Scene()
+    for _ in range(round(c.fps * 4.0)):
+        _ticks(app, 60 // c.fps)
         yield Frame(app, app.size)
 
 
@@ -621,23 +1118,6 @@ def hover_clip(c: Clip):
 
 
 # -- rendering -------------------------------------------------------------------------------------
-def _cursor(img, at, pressed):
-    """Draws an arrow pointer (and a ring while the button is down) at ``at`` (physical pixels)."""
-    from PIL import ImageDraw
-
-    x, y = at
-    s = SCALE
-    d = ImageDraw.Draw(img, "RGBA")
-    if pressed:
-        r = 13 * s
-        d.ellipse((x - r, y - r, x + r, y + r), fill=(116, 173, 232, 70), outline=(116, 173, 232, 200), width=s)
-    arrow = [(0, 0), (0, 17), (4.2, 13.2), (7, 19.5), (9.6, 18.4), (6.9, 12.3), (12.3, 12.3)]
-    pts = [(x + px * s, y + py * s) for px, py in arrow]
-    d.polygon([(px + s, py + s) for px, py in pts], fill=(0, 0, 0, 90))
-    d.polygon(pts, fill=(255, 255, 255, 255), outline=(20, 20, 24, 255))
-    d.line(pts + [pts[0]], fill=(20, 20, 24, 255), width=max(1, s))
-
-
 def render_offscreen(c: Clip, folder: Path) -> int:
     """Renders the clip's frames to ``folder/00001.png``...; returns how many there are."""
     import pyzed as pz
@@ -652,7 +1132,7 @@ def render_offscreen(c: Clip, folder: Path) -> int:
         with Image.open(path) as im:
             im = im.convert("RGB")
             if frame.pointer is not None:
-                _cursor(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed)
+                draw_pointer(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed, SCALE)
             for _ in range(frame.hold):
                 n += 1
                 last = folder / f"{n:05d}.png"
@@ -793,6 +1273,36 @@ def encode(c: Clip, source: list[str], width: int, frames: int, folder: Path) ->
     return entry
 
 
+def encode_anim(c: Clip, width: int, frames: int, folder: Path) -> dict[str, Any]:
+    """An ``anim`` clip: an animated WebP that loops forever, its quality lowered until it fits ANIM_TARGET,
+    and a poster (shown before it loads and with "reduce motion"). Encoded by anim_webp.fit_webp (Pillow and
+    libwebp's animation encoder, which only stores what changed between frames; identical frames are merged)."""
+    from PIL import Image
+
+    for name in (f"{c.name}.mp4", f"{c.name}.webm"):  # left over from a recording as video
+        (OUT / name).unlink(missing_ok=True)
+    images = []
+    for path in sorted(folder.glob("[0-9]*.png")):
+        with Image.open(path) as im:
+            height = round(im.height * width / im.width)
+            images.append(im.convert("RGB").resize((width, height), Image.LANCZOS))
+    anim = OUT / f"{c.name}.webp"
+    _, quality = fit_webp(images, anim, fps=c.fps, target=ANIM_TARGET, method=4)
+    if anim.stat().st_size > BUDGET:
+        print(f"  WARNING: {anim.stat().st_size / 1000:.0f} KB is over the {BUDGET / 1000:.0f} KB budget; make the clip "
+              "shorter, smaller or slower")
+    poster = OUT / f"{c.name}.poster.webp"
+    save_poster(images[max(0, min(len(images) - 1, int(len(images) * c.poster)))], poster)
+    w, h = images[0].size
+    entry = {"name": c.name, "title": c.title, "description": c.description, "tags": c.tags, "width": w,
+             "height": h, "fps": c.fps, "duration": round(frames / c.fps, 2), "recorded": "off-screen",
+             "quality": quality}
+    for kind, path in (("webp", anim), ("poster", poster)):
+        entry[kind] = f"media/{path.name}"
+        entry[f"{kind}_bytes"] = path.stat().st_size
+    return entry
+
+
 def record(c: Clip) -> dict[str, Any]:
     print(f"recording {c.name}")
     folder = Path(tempfile.mkdtemp(prefix=f"pyzed-{c.name}-"))
@@ -811,9 +1321,9 @@ def record(c: Clip) -> dict[str, Any]:
             with Image.open(folder / "00001.png") as im:
                 natural = im.width
             source = ["-framerate", str(c.fps), "-i", str(folder / "%05d.png")]
-        width = min(MAX_WIDTH, natural)
+        width = min(c.width or (ANIM_WIDTH if c.anim else MAX_WIDTH), natural)
         width -= width % 2
-        entry = encode(c, source, width, count, folder)
+        entry = encode_anim(c, width, count, folder) if c.anim else encode(c, source, width, count, folder)
     finally:
         shutil.rmtree(folder, ignore_errors=True)
     sizes = ", ".join(f"{k.removesuffix('_bytes')} {v / 1000:.0f} KB" for k, v in entry.items() if k.endswith("_bytes"))
@@ -834,7 +1344,7 @@ def main() -> None:
         return
     if args.list:
         for c in CLIPS.values():
-            print(f"{c.name:26} {'live' if c.live else 'off-screen':10} {c.description}")
+            print(f"{c.name:26} {'live' if c.live else 'webp' if c.anim else 'off-screen':10} {c.description}")
         return
     manifest: dict[str, Any] = {"clips": []}
     if MANIFEST.exists():
@@ -851,7 +1361,7 @@ def main() -> None:
     manifest = {
         "about": "Short muted looping clips for the docs, made by docs/scripts/record.py. Paths are relative to "
                  "the site's base URL (public/). Embed with <video autoplay muted loop playsinline poster=...> "
-                 "and a WebM source before the MP4.",
+                 "and a WebM source before the MP4; a clip with only `webp` is an animated image (<img>).",
         "clips": sorted(entries.values(), key=lambda e: order.index(e["name"]) if e["name"] in order else 999),
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

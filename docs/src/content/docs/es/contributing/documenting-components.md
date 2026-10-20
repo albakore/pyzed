@@ -12,7 +12,7 @@ ejemplo de Rating de [Añadir un componente al editor](/pyzed/es/contributing/ad
 ```mermaid
 flowchart LR
     DS["Docstring<br/>(el código)"] --> API["api_docs_en.py<br/>api_docs_es.py"] --> GEN["gen_api.py"] --> REF["Referencia de la API<br/>reference/*.md"]
-    LIB["library_data.py"] --> LS["library_shots.py"] --> IMG["src/assets/library/*.png"]
+    LIB["library_data.py"] --> LS["library_shots.py"] --> IMG["public/library/*.webp"]
     LIB --> GL["gen_library.py"] --> PAGES["Páginas de la biblioteca"]
     CS["component_shots.py"] --> CIMG["src/assets/components/*.png"] --> GUIDE["Guías de componentes"]
     CL["CHANGELOG.md<br/>[Unreleased]"] --> NEW["Novedades"]
@@ -23,7 +23,7 @@ flowchart LR
 | Docstring | la función o clase en `python/pyzed/` | se escribe a mano |
 | Referencia de la API | `docs/src/content/docs/[es/]reference/*.md` | `docs/scripts/gen_api.py` a partir de `api_docs_en.py` / `api_docs_es.py` |
 | Biblioteca de componentes | la sección *Biblioteca de componentes* de la web | `docs/scripts/gen_library.py` a partir de `docs/scripts/library_data.py` |
-| Vistas previas de la biblioteca | `docs/src/assets/library/*.png` | `docs/scripts/library_shots.py` |
+| Vistas previas de la biblioteca (animadas) | `docs/public/library/*.webp` | `docs/scripts/library_shots.py` |
 | Ilustraciones de las guías | `docs/src/assets/components/*.png` | `docs/scripts/component_shots.py` |
 | Capturas del editor | `docs/screenshots/*.png` | `examples/screenshots.py` |
 | Notas de versión | `CHANGELOG.md` → [Novedades](/pyzed/es/changelog/) | `docs/scripts/sync-changelog.mjs` en cada compilación |
@@ -160,7 +160,7 @@ add(
 
 | Clave | Significado |
 | --- | --- |
-| `slug` | URL y nombre de archivo: `library/<slug>.mdx` y `assets/library/<slug>.*.png`. |
+| `slug` | URL y nombre de archivo: `library/<slug>.mdx` y `public/library/<slug>.*.webp`. |
 | `name` | Título de la página y de su tarjeta en la galería. |
 | `category` | Una clave de `CATEGORIES` (`actions`, `display`, `forms`, `feedback`, `data`, `lists`, `navigation`, `overlays`, `dialogs`, `workspace`, `code`, `layout`, `content`). |
 | `api` | Los nombres públicos que documenta la página, el principal primero. |
@@ -179,15 +179,23 @@ comillas invertidas.
 Dibuja las vistas previas, genera las páginas y compruébalas:
 
 ```bash
-python docs/scripts/library_shots.py rating      # assets/library/rating.dark.png y rating.light.png
+python docs/scripts/library_shots.py rating      # public/library/rating.dark.webp y rating.light.webp
 python docs/scripts/gen_library.py               # library/*.mdx en los dos idiomas
 python docs/scripts/gen_library.py --check       # cobertura y coherencia, no escribe nada
 ```
 
-Las vistas previas se dibujan sin pantalla a escala 2, centradas sobre el fondo del tema, en One Dark y One
-Light (ejemplos: `<slug>-<n>.<tema>.png`). `--check` falla cuando un nombre de `pyzed.ui.__all__` no está en
-ninguna página de la biblioteca, cuando una entrada apunta a un nombre, categoría, slug relacionado o imagen
-desconocidos, o cuando una página generada no está al día. Sube las imágenes junto con el archivo de datos.
+Las vistas previas son WebP animados grabados sin pantalla a escala 2 con
+[`anim_webp.py`](/pyzed/es/contributing/docs/#capturas-animadas), centrados sobre el fondo del tema, en One
+Dark y One Light (ejemplos: `<slug>-<n>.<tema>.webp`; cada uno con un `*.still.webp` quieto para el
+movimiento reducido). Por defecto el puntero pasa por encima del centro de la vista previa y lo pulsa, y
+cada variante se sobrevuela y se pulsa (o se hace clic y se escribe si tiene un campo de texto); un clip en
+el que nada cambia recorre algunos temas. Dale al componente nuevo un guion en
+`docs/scripts/library_anim.py` cuando haga algo más (abrir un menú, arrastrar un deslizador, escribir una
+búsqueda); `library_shots.py --probe rating` imprime a qué puede apuntar un guion. `--check` falla cuando un
+nombre de `pyzed.ui.__all__` no está en ninguna página de la biblioteca, cuando una entrada apunta a un
+nombre, categoría, slug relacionado o clip desconocidos, cuando falta un clip o no está animado, o cuando una
+página generada no está al día. Sube los clips y `public/library/manifest.json` junto con el archivo de
+datos.
 
 ## 4. Capturas para las guías
 

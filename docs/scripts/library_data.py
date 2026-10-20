@@ -7,7 +7,7 @@ How to add a component to the library
    checked by ``gen_api.py --check``): the library's API tables come from there.
 2. Add a dict to ``COMPONENTS`` below (the list order does not matter; pages are sorted by name):
 
-   ``slug``      URL and file name: ``library/<slug>.mdx`` and ``assets/library/<slug>.*.png``.
+   ``slug``      URL and file name: ``library/<slug>.mdx`` and ``public/library/<slug>.*.webp``.
    ``name``      Title of the page and of its gallery card (``"Button"``).
    ``category``  A key of ``CATEGORIES`` (the gallery groups cards by it).
    ``api``       Public names documented on the page, the main one first: ``["pyzed.ui.tree",
@@ -51,7 +51,7 @@ How to add a component to the library
 
 3. Render and generate, then build the site::
 
-       python docs/scripts/library_shots.py <slug>     # docs/src/assets/library/<slug>*.png
+       python docs/scripts/library_shots.py <slug>     # docs/public/library/<slug>*.webp
        python docs/scripts/gen_library.py              # library/*.mdx in every language
        python docs/scripts/gen_library.py --check      # coverage and consistency
        cd docs && npm run build
@@ -3655,13 +3655,13 @@ add(
         "`pz.Animation` when the widget appears, on hover, press, focus, click or while `active`; "
         "`transition` animates property changes like CSS. `pz.stagger` cascades a list in and "
         "`pz.presence` animates content in and out when it changes. Everything runs natively, without "
-        "calling Python per frame. See the [Animation guide](/pyzed/guides/animation/).",
+        "calling Python per frame. See the [Animation guide](/pyzed/animation/).",
         "Todo widget tiene `animate()` y `transition()`. `animate` reproduce uno de los 47 presets o una "
         "`pz.Animation` cuando el widget aparece, en hover, al pulsar, con foco, al hacer clic o mientras "
         "`active`; `transition` anima los cambios de propiedades como CSS. `pz.stagger` hace entrar una "
         "lista en cascada y `pz.presence` anima la entrada y salida del contenido cuando cambia. Todo se "
         "reproduce de forma nativa, sin llamar a Python en cada fotograma. Ver la "
-        "[guía de animación](/pyzed/es/guides/animation/).",
+        "[guía de animación](/pyzed/es/animation/).",
     ),
     when=T(
         ["To show that something appeared, changed or needs attention: a toast, a new row, an error shake.",

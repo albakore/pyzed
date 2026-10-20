@@ -38,7 +38,7 @@ un botón). Los demás widgets reciben una caja alrededor que lleva el estilo.
 | `position`, `top`, `right`, `bottom`, `left`, `z_index` | `position="absolute"` coloca un hijo de una [`pz.box`](/pyzed/es/guides/layout/#cajas) por sus desplazamientos, fuera del flujo. |
 | `opacity`, `translate`, `scale`, `rotate` | Desvanecen, desplazan, escalan o giran cómo se dibuja el widget, sin cambiar el layout. |
 | `blur`, `backdrop_blur` | Desenfocan el widget o lo que tiene detrás. |
-| `glow`, `bloom`, `glass` | Efectos visuales: un halo, luz que desborda de las partes brillantes y un panel esmerilado. Ver [Animación y efectos](/pyzed/es/guides/animation/#efectos). |
+| `glow`, `bloom`, `glass` | Efectos visuales: un halo, luz que desborda de las partes brillantes y un panel esmerilado. Ver [Animación y efectos](/pyzed/es/animation/effects/). |
 
 Los colores pueden ser textos hex (con alfa, `"#3b82f680"`), tuplas `(r, g, b[, a])` o tokens
 del tema como `"accent"`, `"panel"` o `"text_muted"`, así que los estilos siguen al tema.
@@ -66,7 +66,7 @@ Un estado puede cambiar `background` (un color), `color`, `border_color`, `borde
 `radius`, `opacity`, `translate`, `scale`, `rotate` y `blur`. Ninguno mueve los widgets de
 alrededor, así que el hover nunca descoloca el layout. Sin `transition` el estado se ve al
 instante. Con ella, los cambios de `opacity`, `translate`, `scale`, `rotate` y `blur` de un
-render al siguiente también se animan. Para algo más, ver [Animación](/pyzed/es/guides/animation/).
+render al siguiente también se animan. Para algo más, ver [Animación](/pyzed/es/animation/).
 
 ## Hojas de estilo
 

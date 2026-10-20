@@ -65,7 +65,7 @@ pz.set_reduced_motion(None)   # follow the system again (the default)
 ```
 
 The `PYZED_REDUCED_MOTION` environment variable (`1` or `0`) overrides both. Screenshots always
-show the resting state. See [Animation](/pyzed/guides/animation/#reduced-motion-and-tests).
+show the resting state. See [Animation](/pyzed/animation/motion-and-tests/).
 
 ## Screen readers
 

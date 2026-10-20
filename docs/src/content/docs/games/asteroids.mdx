@@ -1,0 +1,139 @@
+---
+title: "5. Asteroids with particles"
+description: "Make an Asteroids-style space shooter in Python with Pyzed: rotation and thrust with sin and cos, drag, wrap-around space, circle collisions, rocks that split, engine trails, explosions with game.Particles and screen shake."
+sidebar:
+  order: 5
+  label: "5. Asteroids and particles"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from '../showcase/_run.mdx';
+import source from '../../../../../examples/games/asteroids.py?raw';
+
+*Rock Storm* is a shooter in the spirit of the 1979 classic: a ship that turns and thrusts, drifts with
+inertia, and shoots rocks that split into smaller rocks. It is a good place to learn a bit of trigonometry (it
+is only `cos` and `sin`) and to make the screen come alive with **particles**.
+
+<Media clip="game-asteroids" alt="A small cyan ship turns and fires glowing shots at gray jagged rocks in a starfield; rocks break into smaller ones with bursts of sparks and an orange exhaust trail follows the ship" caption="Rock Storm: every spark, exhaust puff and explosion is a game.Particles burst." eager />
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A shooter with inertia, splitting rocks, waves, lives and particle effects | 50 minutes | Intermediate | [1. Your first game](/pyzed/games/first-game/); [3. Collisions](/pyzed/games/collisions-physics/) helps |
+
+## What you'll learn
+
+- Turn an **angle** into a direction with `cos` and `sin`; thrust and **drag**.
+- **Wrap** things around the edges of the screen.
+- **Circle collisions** for rocks, bullets and the ship.
+- **Particles** with `game.Particles`: an engine trail, muzzle flashes, debris and explosions.
+- **Screen shake**, invulnerability after a hit and waves.
+
+<Run file="examples/games/asteroids.py" />
+
+<Steps>
+
+1. **An angle becomes a direction.** The ship stores where it points in degrees. `cos` and `sin` of that
+   angle give a direction of length 1: at 0° it is `(1, 0)` (right), at -90° it is `(0, -1)` (up). Thrust adds
+   that direction to the velocity; drag takes away a fraction every second:
+
+   ```python
+   def fly(self, dt):
+       self.angle += game.axis(("left", "a"), ("right", "d"), held=self.held) * TURN * dt
+       rad = math.radians(self.angle)
+       fx, fy = math.cos(rad), math.sin(rad)
+       if game.is_pressed("up", "w", held=self.held):
+           self.vx += fx * THRUST * dt
+           self.vy += fy * THRUST * dt
+       damping = max(0.0, 1 - DRAG * dt)
+       self.vx, self.vy = self.vx * damping, self.vy * damping
+   ```
+
+   The ship keeps drifting after you let go: that inertia is what makes Asteroids feel like space.
+
+2. **Wrap around.** What leaves through one edge comes back through the other. The modulo operator `%` does
+   it in one line; the margin lets big rocks leave the screen completely before they reappear:
+
+   ```python
+   def wrap(x, y, margin=0):
+       return ((x + margin) % (W + 2 * margin) - margin, (y + margin) % (H + 2 * margin) - margin)
+   ```
+
+3. **Rocks with character.** A rock is a circle for collisions, but drawn as a jagged polygon: points around a
+   circle at slightly random distances, turned by its own angle every frame:
+
+   ```python
+   n = 9 + size * 2
+   self.outline = [(math.cos(i / n * math.tau), math.sin(i / n * math.tau), rnd.uniform(0.75, 1.1))
+                   for i in range(n)]
+   ```
+
+4. **Circle collisions.** A bullet hits a rock when it is closer to the rock's center than its radius; the
+   ship hits a rock when the distance is less than both radii added:
+
+   ```python
+   for b in self.bullets[:]:
+       for rock in self.rocks:
+           if math.hypot(b[0] - rock.x, b[1] - rock.y) < rock.r:
+               self.bullets.remove(b)
+               self.break_rock(rock)
+               break
+   ```
+
+   Iterate over a copy (`self.bullets[:]`) when you remove items from the list inside the loop.
+
+5. **Split the rock.** A big rock (size 3) becomes two medium ones, a medium becomes two small, a small one is
+   gone. Each piece flies off in a random direction, a little faster than its parent:
+
+   ```python
+   def break_rock(self, rock):
+       self.rocks.remove(rock)
+       self.score += POINTS[rock.size]
+       self.sparks.burst(rock.x, rock.y, count=10 + rock.size * 10, color=["#cbd5e1", "#94a3b8", "#fbbf24"],
+                         speed=(40, 120 + rock.size * 60), life=(0.3, 0.6 + rock.size * 0.25), size=(1, 3))
+       self.shake.kick(rock.size * 2.5)
+       if rock.size > 1:
+           for _ in range(2):
+               self.rocks.append(Rock(self.random, rock.x, rock.y, rock.size - 1,
+                                      math.hypot(rock.vx, rock.vy) * 1.3 + self.random.uniform(20, 60)))
+   ```
+
+6. **Particles everywhere.** `game.Particles` is a list of short-lived dots. `burst` adds some, `update(dt)`
+   moves them and removes the dead ones, `shapes()` draws them fading out. The engine trail is a small burst
+   *every frame* while thrusting, aimed backwards:
+
+   ```python
+   self.trail = game.Particles(drag=3.0, limit=400, seed=seed)
+   ...
+   self.trail.burst(self.x - fx * SHIP_R, self.y - fy * SHIP_R, count=3, angle=self.angle + 180, spread=30,
+                    speed=(80, 180), life=(0.15, 0.4), size=(1.5, 3), color=["#fbbf24", "#f97316", "#fde68a"])
+   ```
+
+   <Media clip="concept-particles" alt="Four particle effects side by side: an orange explosion, a cyan fountain falling back under gravity, pink glowing sparks, and a yellow-green trail following a moving dot" caption="One class, four effects: burst(), a fountain (angle=-90, a narrow spread and gravity), glow=True, and a trail emitted every frame." size="narrow" />
+
+   `angle` and `spread` aim a burst (`angle=-90, spread=40` is a fountain), `gravity` and `drag` shape the
+   fall, `life` and `size` are ranges picked at random per particle, and `color` can be a list to mix.
+
+7. **Getting hit.** A crash costs a life, shakes the screen hard and scatters the ship as particles. Then the
+   ship comes back in the middle and blinks for two seconds (`safe`), when rocks can't hurt it.
+
+</Steps>
+
+<Aside type="tip" title="Particles are cheap, but not free">
+Each particle is a circle (two with `glow=True`). A few hundred alive at once is nothing; tens of thousands is a
+lot of Python per frame. Use `limit=` to cap each emitter, and shorter `life` before smaller `count`.
+</Aside>
+
+## Try this
+
+- Add a UFO that crosses the screen now and then and shoots at the ship.
+- Add a hyperspace key that moves the ship to a random place (with a burst where it left).
+- Give rocks a color per size and make small ones flash white for a frame when hit.
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/asteroids.py" />
+
+## Next
+
+<LinkCard title="6. A puzzle game: 2048" href="/pyzed/games/puzzle-2048/" description="Rules as plain functions, tweened tiles, swipes and a widget overlay." />

@@ -1,0 +1,178 @@
+---
+title: "3. Collisions and physics"
+description: "Simple game physics in Python with Pyzed: velocity and gravity, AABB box collisions resolved one axis at a time, circles bouncing off boxes, and a platformer jump with coyote time and jump buffering."
+sidebar:
+  order: 3
+  label: "3. Collisions and physics"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from '../showcase/_run.mdx';
+import source from '../../../../../examples/games/jump_lab.py?raw';
+
+You don't need a physics engine to make a platformer. A few lines give you **velocity** (how fast something
+moves), **gravity** (a constant pull down), and **collisions** with boxes. This step builds *Jump Lab*, a
+playground where a box runs and jumps between platforms while balls bounce around, with a debug view that shows
+the hitboxes, the velocity and the arc of every jump.
+
+<Media clip="game-jump-arc" alt="A cyan box runs and jumps between dark platforms; a dotted cyan trail draws the arc of each jump, platform edges light up in yellow on contact and three colored balls bounce around" caption="Jump Lab with the debug view: green hitbox, pink velocity, the trail of the last second, and contacts in yellow." eager />
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A box that runs, jumps and lands on platforms, and balls that bounce | 40 minutes | Intermediate | [2. Sprites and animation](/pyzed/games/sprites-animation/) |
+
+## What you'll learn
+
+- **Velocity and gravity**: position changes by velocity × dt, velocity changes by gravity × dt.
+- **AABB collisions** (axis-aligned bounding boxes) with `game.Rect.overlaps`, resolved **one axis at a time**.
+- **Circles against boxes** with `game.circle_rect`, which tells you which side was hit.
+- **Game feel**: acceleration, variable jump height, *coyote time* and *jump buffering*.
+- A **debug view** you can switch on and off.
+
+<Run file="examples/games/jump_lab.py" />
+
+<Media clip="concept-collisions" alt="Left: a green box circles around a gray box; when they overlap both turn red, the overlap is shaded yellow and an arrow shows the shortest way out. Right: a ball falls onto a bar and bounces; a yellow arrow shows the normal returned by circle_rect" caption="Left: two boxes overlap when they overlap on both axes; the shortest way out is along the smaller side of the overlap. Right: game.circle_rect returns the side a ball hit, to bounce it." size="narrow" />
+
+<Steps>
+
+1. **Numbers that feel right.** All the physics is a handful of constants, in pixels and seconds. Changing
+   them is how you *tune* the feel:
+
+   ```python
+   RUN = 250            # top running speed, px/s
+   ACCEL = 2200         # px/s² on the ground (how fast you reach RUN)
+   AIR_ACCEL = 1300     # less control in the air
+   GRAVITY = 1900       # px/s², added to vy every second
+   JUMP_SPEED = 660     # vy right after a jump (upwards, so negative)
+   LOW_JUMP = 2.6       # gravity multiplier while rising without the jump key: short hops
+   MAX_FALL = 900
+   COYOTE = 0.10        # seconds after leaving a ledge when a jump still works
+   BUFFER = 0.12        # seconds a jump press is remembered before landing
+   ```
+
+   With these, the highest jump is `JUMP_SPEED² / (2 × GRAVITY)` ≈ 115 pixels. The test suite checks that.
+
+2. **Velocity and gravity.** `vx` and `vy` are speeds in pixels per second (`y` grows downwards, so up is
+   negative). Instead of setting `vx` to the target speed at once, it moves toward it by at most `ACCEL × dt`
+   per frame, which gives a short, smooth start and stop:
+
+   ```python
+   move = game.axis(("left", "a"), ("right", "d"), held=self.held)
+   jump_held = game.is_pressed(*JUMP_KEYS, held=self.held)
+
+   target = move * RUN
+   accel = (ACCEL if self.on_ground else AIR_ACCEL) * dt
+   self.vx += game.clamp(target - self.vx, -accel, accel)
+
+   g = GRAVITY * (LOW_JUMP if self.vy < 0 and not jump_held else 1)
+   self.vy = min(self.vy + g * dt, MAX_FALL)
+   ```
+
+   The second line of gravity is **variable jump height**: while rising, letting go of the key makes gravity
+   stronger, so a tap is a hop and a long press is a full jump.
+
+3. **Move one axis at a time.** Move horizontally and push out of anything you now overlap; then do the same
+   vertically. Resolving each axis on its own is what lets the box slide along a wall while falling, and land
+   exactly on a floor:
+
+   ```python
+   def move_x(self, dx):
+       self.player.x += dx
+       for i, p in self.solids_hit(self.player):
+           self.player.x = p.left - self.player.w if dx > 0 else p.right
+           self.vx = 0.0
+
+   def move_y(self, dy):
+       self.player.y += dy
+       for i, p in self.solids_hit(self.player):
+           if dy > 0:                       # falling: land on top
+               self.player.y = p.top - self.player.h
+               self.on_ground = True
+           else:                            # rising: bump the head
+               self.player.y = p.bottom
+           self.vy = 0.0
+
+   # in tick:
+   self.move_x(self.vx * dt)
+   self.on_ground = False
+   self.move_y(self.vy * dt)
+   ```
+
+   `on_ground` is only true when the vertical move hit something below, so it is always up to date.
+
+4. **Coyote time and jump buffering.** Two tiny timers make jumps forgiving. *Coyote time* lets you still jump
+   for 0.1 s after running off a ledge (like the cartoon coyote who only falls when he looks down). The *jump
+   buffer* remembers a press made just before landing, so it is not lost:
+
+   ```python
+   def press_jump(self):           # called by on_key for Space, Up and W
+       self.buffer = BUFFER
+
+   # in tick:
+   self.coyote = COYOTE if self.on_ground else max(0.0, self.coyote - dt)
+   self.buffer = max(0.0, self.buffer - dt)
+   if self.buffer > 0 and self.coyote > 0:
+       self.vy = -JUMP_SPEED
+       self.buffer = self.coyote = 0.0
+   ```
+
+   Players never notice these, but they notice when they're missing: the game feels like it "eats" jumps.
+
+5. **Balls bounce off boxes.** `game.circle_rect(cx, cy, r, rect)` returns `None`, or the direction from the
+   box to the circle along the side it hit: `(0, -1)` from above, `(1, 0)` from the right. Flip the speed to
+   point that way, push the ball out, and lose a little energy:
+
+   ```python
+   normal = game.circle_rect(ball.x, ball.y, ball.r, p)
+   if normal:
+       nx, ny = normal
+       if nx:
+           ball.vx = abs(ball.vx) * nx
+           ball.x = (p.right + ball.r) if nx > 0 else (p.left - ball.r)
+       if ny:
+           ball.vy = abs(ball.vy) * ny * 0.82
+           ball.y = (p.bottom + ball.r) if ny > 0 else (p.top - ball.r)
+   ```
+
+6. **A debug view.** Drawing what the code "sees" saves hours. With <kbd>H</kbd> the game outlines the
+   hitboxes, draws the velocity as a line, keeps the last 60 positions as fading dots (the jump arc) and prints
+   the numbers:
+
+   ```python
+   self.trail.append(self.player.center)
+   del self.trail[:-60]
+   ...
+   if self.debug:
+       shapes.append(p.shape(stroke="#34d399", width=1.5))
+       shapes.append(draw.line(cx, cy, cx + self.vx * 0.15, cy + self.vy * 0.15, stroke="#f472b6", width=2.5))
+   ```
+
+</Steps>
+
+<Aside type="caution" title="Tunneling">
+If something moves more than its own size in one frame, it can pass through a thin wall without ever
+overlapping it. Jump Lab caps `dt` at 1/30 s; for fast objects, split the move into smaller steps, as
+[Breakout](/pyzed/games/breakout/) does for its ball (`steps = ceil(speed × dt / radius)`).
+</Aside>
+
+<Aside type="tip" title="When to use what">
+Boxes (`Rect.overlaps`) for characters, platforms, bullets and pickups; circles (`math.hypot`) for round things
+and quick "is it close enough" checks; `circle_rect` when a ball must bounce off a box. Most 2D games need
+nothing else.
+</Aside>
+
+## Try this
+
+- Add a moving platform: a `Rect` whose `x` follows a sine wave; when the player stands on it, add its
+  movement to the player's `x`.
+- Add a double jump: allow one extra jump in the air, reset when landing.
+- Tune `GRAVITY` and `JUMP_SPEED` to make the jump floatier or snappier, and watch the trail change.
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/jump_lab.py" />
+
+## Next
+
+<LinkCard title="4. A platformer" href="/pyzed/games/platformer/" description="A tile map, a camera that follows you, enemies to stomp, coins and a goal." />

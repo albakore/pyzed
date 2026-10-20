@@ -7,7 +7,7 @@ sidebar:
 
 Every visual control has two sections in the **Properties** panel, under **Style**: **Effects** and
 **Animation**. What you set there is saved in the `.pzform` and plays when the form runs. It is the same
-system as [`widget.animate()` and the style effects](/pyzed/guides/animation/) of the library.
+system as [`widget.animate()` and the style effects](/pyzed/animation/) of the library.
 
 ![The Effects and Animation sections of a button](../../../../screenshots/editor-motion.png)
 
@@ -65,15 +65,15 @@ Animations are saved as plain data on the control:
 
 `Document.set_animations(name, animations)` changes them from a script and `Control.animations` reads
 them. To animate a control from its handlers, use the library: `pz.Animation`, `define_animation` and
-the [preset list](/pyzed/guides/animation/#presets).
+the [preset list](/pyzed/animation/presets/).
 
 ## Timeline animations
 
 For animations that move several controls together (an intro, a transition between states), open the
 **Animation** panel from **View → Animation** (`Ctrl+Shift+M`). It edits **clips**: timelines saved in the
-`.pzform` that play the same way as [`pz.AnimationPlayer`](/pyzed/guides/timeline/) does in code.
+`.pzform` that play the same way as [`pz.AnimationPlayer`](/pyzed/animation/timeline/) does in code.
 
-![The Animation panel: an intro clip with tracks for the card, the title and a label's text, and a call to intro_done](../../../../screenshots/editor-animation.png)
+![The Animation panel: dragging the playhead through an intro clip makes the title drop in, the subtitle fade in and the Sign in button grow on the form above](/pyzed/media/animation/editor-scrub.webp)
 
 | Action | Result |
 | --- | --- |
@@ -84,5 +84,8 @@ For animations that move several controls together (an intro, a transition betwe
 | **Calls** lane (right-click a call to remove it) | Calls a method of the form's code file at a time. |
 | **Length**, **loop**, **autoplay** | Set how long the clip lasts, whether it repeats, and whether it plays when the form opens. |
 
+![Adding a scale track for the title from the panel, double-clicking its lane to add a key, dragging the key earlier and choosing Ease out back for it](/pyzed/media/animation/editor-keys.webp)
+
 Controls inside an animated container follow its opacity, position and blur. Every change can be undone.
-In a running form, `self.animations` is the player: `self.animations.play("intro")`.
+In a running form, `self.animations` is the player: `self.animations.play("intro")`. The
+[Animation section](/pyzed/animation/) explains clips, tracks, keys, easing and the player in depth.

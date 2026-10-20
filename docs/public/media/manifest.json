@@ -1,5 +1,5 @@
 {
-  "about": "Short muted looping clips for the docs, made by docs/scripts/record.py. Paths are relative to the site's base URL (public/). Embed with <video autoplay muted loop playsinline poster=...> and a WebM source before the MP4.",
+  "about": "Short muted looping clips for the docs, made by docs/scripts/record.py. Paths are relative to the site's base URL (public/). Embed with <video autoplay muted loop playsinline poster=...> and a WebM source before the MP4; a clip with only `webp` is an animated image (<img>).",
   "clips": [
     {
       "name": "snake",
@@ -76,6 +76,222 @@
       "webm_bytes": 372481,
       "poster": "media/game-of-life.poster.webp",
       "poster_bytes": 32162
+    },
+    {
+      "name": "game-first",
+      "title": "Coin Chase",
+      "description": "examples/games/coin_chase.py: an orb steered with held keys collects coins.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 510,
+      "fps": 15,
+      "duration": 6.0,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/game-first.webp",
+      "webp_bytes": 127480,
+      "poster": "media/game-first.poster.webp",
+      "poster_bytes": 5278
+    },
+    {
+      "name": "game-sprites",
+      "title": "Walker",
+      "description": "examples/games/walker.py: frame animation, flipping, a tweened jump and coins that pop.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 373,
+      "fps": 15,
+      "duration": 7.53,
+      "recorded": "off-screen",
+      "quality": 58,
+      "webp": "media/game-sprites.webp",
+      "webp_bytes": 195232,
+      "poster": "media/game-sprites.poster.webp",
+      "poster_bytes": 6710
+    },
+    {
+      "name": "game-jump-arc",
+      "title": "Jump Lab",
+      "description": "examples/games/jump_lab.py: gravity, a jump arc traced by the debug view, box collisions and bouncing balls.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 419,
+      "fps": 15,
+      "duration": 7.27,
+      "recorded": "off-screen",
+      "quality": 52,
+      "webp": "media/game-jump-arc.webp",
+      "webp_bytes": 206840,
+      "poster": "media/game-jump-arc.poster.webp",
+      "poster_bytes": 6750
+    },
+    {
+      "name": "game-platformer",
+      "title": "Pixel Run",
+      "description": "examples/games/platformer.py: a tile map, a following camera, coins and slimes to stomp.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 442,
+      "fps": 12,
+      "duration": 7.0,
+      "recorded": "off-screen",
+      "quality": 52,
+      "webp": "media/game-platformer.webp",
+      "webp_bytes": 267862,
+      "poster": "media/game-platformer.poster.webp",
+      "poster_bytes": 6332
+    },
+    {
+      "name": "game-asteroids",
+      "title": "Rock Storm",
+      "description": "examples/games/asteroids.py: thrust, wrap-around space, rocks that split and particles everywhere.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 487,
+      "fps": 12,
+      "duration": 7.0,
+      "recorded": "off-screen",
+      "quality": 52,
+      "webp": "media/game-asteroids.webp",
+      "webp_bytes": 239742,
+      "poster": "media/game-asteroids.poster.webp",
+      "poster_bytes": 6560
+    },
+    {
+      "name": "game-2048",
+      "title": "2048",
+      "description": "examples/games/game_2048.py: tiles slide, merge with a pop, and the score floats up.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 773,
+      "fps": 15,
+      "duration": 7.0,
+      "recorded": "off-screen",
+      "quality": 76,
+      "webp": "media/game-2048.webp",
+      "webp_bytes": 186490,
+      "poster": "media/game-2048.poster.webp",
+      "poster_bytes": 12228
+    },
+    {
+      "name": "game-menus",
+      "title": "Orb Rush menus",
+      "description": "examples/games/menus.py: the title menu slides in, the game runs with its HUD, pauses, and the settings open.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 419,
+      "fps": 12,
+      "duration": 8.33,
+      "recorded": "off-screen",
+      "quality": 52,
+      "webp": "media/game-menus.webp",
+      "webp_bytes": 261150,
+      "poster": "media/game-menus.poster.webp",
+      "poster_bytes": 5718
+    },
+    {
+      "name": "game-high-scores",
+      "title": "Target Rush",
+      "description": "examples/games/high_scores.py: click the targets, enter a name, and the leaderboard is saved.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 488,
+      "fps": 15,
+      "duration": 9.27,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/game-high-scores.webp",
+      "webp_bytes": 146902,
+      "poster": "media/game-high-scores.poster.webp",
+      "poster_bytes": 11278
+    },
+    {
+      "name": "concept-particles",
+      "title": "Particles",
+      "description": "Four ways to use game.Particles: an explosion, a fountain, glowing sparks and a trail.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 300,
+      "fps": 15,
+      "duration": 5.0,
+      "recorded": "off-screen",
+      "quality": 52,
+      "webp": "media/concept-particles.webp",
+      "webp_bytes": 199236,
+      "poster": "media/concept-particles.poster.webp",
+      "poster_bytes": 5448
+    },
+    {
+      "name": "concept-collisions",
+      "title": "Box and circle collisions",
+      "description": "AABB overlap, the push-out along the shortest axis, and a ball bouncing off a box with game.circle_rect.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 300,
+      "fps": 15,
+      "duration": 4.8,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/concept-collisions.webp",
+      "webp_bytes": 57748,
+      "poster": "media/concept-collisions.poster.webp",
+      "poster_bytes": 2840
+    },
+    {
+      "name": "concept-easing",
+      "title": "Easing curves",
+      "description": "Four tweens over the same second: linear, ease-out, ease-in-out and ease-out-back.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 270,
+      "fps": 15,
+      "duration": 4.4,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/concept-easing.webp",
+      "webp_bytes": 79196,
+      "poster": "media/concept-easing.poster.webp",
+      "poster_bytes": 4086
+    },
+    {
+      "name": "concept-juice",
+      "title": "Juice",
+      "description": "The same hit, plain and with juice: hit-stop, a flash, particles, screen shake and a squash.",
+      "tags": [
+        "games"
+      ],
+      "width": 640,
+      "height": 300,
+      "fps": 15,
+      "duration": 4.0,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/concept-juice.webp",
+      "webp_bytes": 48580,
+      "poster": "media/concept-juice.poster.webp",
+      "poster_bytes": 1870
     },
     {
       "name": "shaders",
