@@ -10,7 +10,7 @@ Se publica en GitHub Pages en cada push a `main` y en cada release.
 
 ```
 docs/
-├── astro.config.mjs              # barra lateral, tema, idiomas
+├── astro.config.mjs              # secciones (topics), redirecciones, tema, idiomas
 ├── screenshots/                  # capturas grandes (examples/screenshots.py)
 ├── scripts/
 │   ├── api_docs_en.py            # descripciones de la API en inglés
@@ -52,6 +52,37 @@ web; cada traducción vive en una carpeta con el nombre de su idioma:
   `/pyzed/es/guides/...` en las de español.
 - Las rutas relativas a imágenes y ejemplos llevan un `../` más en los archivos en español, porque
   están una carpeta más abajo.
+
+## Secciones y navegación
+
+Las secciones principales (Aprender, Biblioteca, Diseñador, Shading, Temas, Distribuir, Showcase, Integraciones,
+IA y Referencia) son la lista `topics` de `astro.config.mjs`, con el plugin
+[starlight-sidebar-topics](https://starlight-sidebar-topics.netlify.app). Cada una es un enlace en la barra de
+navegación de la cabecera (`src/components/Header.astro`) y tiene su propia barra lateral; en el móvil aparecen
+arriba del menú. Una página pertenece a la sección cuya barra lateral la lista, normalmente por la carpeta donde
+está:
+
+| Sección | Carpetas |
+| --- | --- |
+| Aprender | `getting-started/`, `tutorials/{basic,intermediate,advanced}/`, `guides/`, `why/`, `examples`, `faq` |
+| Biblioteca | `library/`, `blocks/` (y la antigua `components/`) |
+| Diseñador | `editor/`, `download` |
+| Shading, Temas, Distribuir | `shading/`, `theming/`, `packaging/` |
+| Showcase | `showcase/`, `games/` |
+| Integraciones, IA | `integrations/`, `ai/` |
+| Referencia | `reference/`, `changelog`, `contributing/` |
+
+- La página de inicio de una sección lleva un hero cuando su frontmatter tiene `section: { eyebrow, icon, lead }`
+  (`src/components/PageTitle.astro`).
+- Enlaza páginas con `<NavCards>` (`src/components/NavCards.astro`); una tarjeta sin `href` se muestra como
+  "próximamente".
+- Muestra capturas y grabaciones cortas con `<Media>` (`src/components/Media.astro`): una imagen de `src/assets`
+  (opcionalmente con una versión `light`) o un bucle mp4/webm con `poster`, más un pie de foto.
+- Los comandos van en `<Tabs syncKey="pkg">` con una pestaña `uv` y otra `pip`, con bloques de código con título
+  para Windows y para macOS/Linux cuando cambian.
+- **Mover una página:** muévela con `git mv` en los dos idiomas, añade la ruta antigua a `MOVED` en
+  `astro.config.mjs` para que la URL antigua redirija, y actualiza los enlaces (busca la ruta antigua con
+  `git grep`, también en `docs/scripts` y `python/`).
 
 ## Diagramas
 

@@ -1,10 +1,17 @@
 ---
 title: Pyzed para agentes de IA
 description: "Pyzed es un framework de interfaces en Python pensado para la IA: servidor MCP, llms.txt, reglas para editores, un agente dentro de Pyzed Design y pyzed.agents para crear, comprobar y ver apps de escritorio."
+section:
+  eyebrow: "IA"
+  icon: "comment-alt"
 sidebar:
   order: 0
   label: Resumen
 ---
+
+:::tip[Funciona con cualquier modelo]
+Todo lo de esta sección funciona con Claude, GPT, Gemini, modelos locales con Ollama y cualquier cliente MCP. Nada de esto es obligatorio para usar Pyzed.
+:::
 
 Pyzed está hecho para escribirse **con** agentes de IA y para poner IA **dentro** de tus apps. Un agente conectado
 a Pyzed no adivina la API de memoria: consulta la firma exacta de cada componente, sigue las reglas de Pyzed,

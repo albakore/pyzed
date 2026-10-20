@@ -1,10 +1,18 @@
 ---
 title: "Demos"
 description: "Demos de lo que Pyzed puede dibujar: HUD, menús e inventarios de videojuegos, paneles de cristal esmerilado, bloom y shaders de GPU reales, todo en Python."
+section:
+  eyebrow: "Showcase"
+  icon: "laptop"
+  lead: "Lo que Pyzed puede dibujar: interfaces de juegos, paneles de cristal, bloom y shaders de GPU. Cada demo es un archivo de Python que puedes ejecutar y estudiar."
 sidebar:
   order: 0
   label: "Resumen"
 ---
+
+:::note[Más demos en camino]
+Se están añadiendo demos de formularios, utilidades y shaders, cada una con un tutorial que explica cómo está hecha. Los juegos tienen sus propias páginas en esta sección.
+:::
 
 Pyzed dibuja con la GPU, así que una app de escritorio en Python puede verse como un videojuego o un sistema operativo modernos: desenfoque real del fondo (`glass`), luz que desborda de las partes brillantes (`bloom`), rotación, transparencia y tus propios shaders WGSL (`pz.shader`). Cada demo es un archivo de [`examples/showcase`](https://github.com/albakore/pyzed/tree/main/examples/showcase); ejecútala y luego lee cómo está hecha.
 
@@ -38,4 +46,4 @@ Seis shaders de GPU escritos en WGSL y mostrados como widgets de Pyzed: plasma, 
 
 [![Galería de shaders](../../../../assets/showcase/shaders.png)](/pyzed/es/showcase/shaders/)
 
-Aprende las piezas en [Animación y efectos](/pyzed/es/guides/animation/) y [Shaders](/pyzed/es/guides/shaders/).
+Aprende las piezas en [Animación y efectos](/pyzed/es/guides/animation/) y [Shaders](/pyzed/es/shading/shaders/).

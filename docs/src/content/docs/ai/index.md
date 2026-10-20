@@ -1,10 +1,17 @@
 ---
 title: Pyzed for AI agents
 description: "Pyzed is an AI-native Python GUI framework: an MCP server, llms.txt, editor rules, an agent inside Pyzed Design and pyzed.agents let AI agents build, check and see desktop apps."
+section:
+  eyebrow: "AI"
+  icon: "comment-alt"
 sidebar:
   order: 0
   label: Overview
 ---
+
+:::tip[Works with any model]
+Everything in this section works with Claude, GPT, Gemini, local models through Ollama and any MCP client. Nothing here is required to use Pyzed.
+:::
 
 Pyzed is built to be written **with** AI agents, and to put AI **inside** your apps. An agent connected to Pyzed
 does not guess an API from memory: it looks up the exact signature of every component, follows Pyzed's rules,

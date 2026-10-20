@@ -24,13 +24,19 @@ export interface Page {
 const SECTIONS: [string, string, string, string][] = [
 	// folder, English, Spanish, one-line summary used in llms.txt (English)
 	['getting-started', 'Getting started', 'Empezar', 'Install Pyzed and build a first window.'],
+	['tutorials', 'Tutorials', 'Tutoriales', 'Complete apps built step by step, sorted into basic, intermediate and advanced.'],
+	['guides', 'Guides', 'Guías', 'Layout, architecture, events, animation, async, windows, testing and more.'],
 	['why', 'Why Pyzed', 'Por qué Pyzed', 'How Pyzed compares with tkinter, Kivy, PyQt/PySide, Flet and others.'],
-	['tutorials', 'Tutorials', 'Tutoriales', 'Complete apps built step by step.'],
-	['download', 'Pyzed Design download', 'Descargar Pyzed Design', 'The standalone visual designer.'],
-	['editor', 'Pyzed Design manual', 'Manual de Pyzed Design', 'Every panel of the visual designer.'],
-	['guides', 'Guides', 'Guías', 'Layout, styles, themes, animation, async, windows, packaging, testing and more.'],
 	['library', 'Component library', 'Biblioteca de componentes', 'Every Pyzed UI component with usage and API.'],
 	['blocks', 'Blocks', 'Bloques', 'Ready-made screens and sections built from components.'],
+	['download', 'Pyzed Design download', 'Descargar Pyzed Design', 'The standalone visual designer.'],
+	['editor', 'Pyzed Design manual', 'Manual de Pyzed Design', 'Every panel of the visual designer.'],
+	['shading', 'Shading', 'Shading', 'GPU shaders: node-based shader graphs (.pzshad), the Shader view and WGSL.'],
+	['theming', 'Theming', 'Temas', 'Themes, color tokens, styles, icons and fonts.'],
+	['packaging', 'Distribution', 'Distribución', 'Packaging apps for Windows, macOS and Linux with pyzed build.'],
+	['showcase', 'Showcase', 'Showcase', 'Demos of effects, shaders and game-style interfaces, with their code.'],
+	['games', 'Games', 'Videojuegos', 'Real-time games step by step: Snake, Breakout and Neon Invaders.'],
+	['integrations', 'Integrations', 'Integraciones', 'Pyzed as the desktop frontend of FastAPI, Django, SQLAlchemy and more.'],
 	['ai', 'AI agents', 'Agentes de IA', 'Building with AI agents: MCP server, llms.txt, the Agent panel and pyzed.agents.'],
 	['components', 'Components by category', 'Componentes por categoría', 'Older category pages of the pyzed.ui components.'],
 	['reference', 'API reference', 'Referencia de la API', 'Every class, function and parameter.'],
@@ -42,7 +48,7 @@ const SECTIONS: [string, string, string, string][] = [
 /** Sections listed under "## Optional" in llms.txt (an agent can skip them). */
 const OPTIONAL = new Set(['components', 'contributing', 'changelog']);
 /** Sections in llms-small.txt: what you need to write a Pyzed app, without the long reference pages. */
-const SMALL = new Set(['getting-started', 'why', 'tutorials', 'guides', 'ai', 'faq']);
+const SMALL = new Set(['getting-started', 'why', 'tutorials', 'guides', 'theming', 'shading', 'packaging', 'ai', 'faq']);
 
 export function sectionOf(slug: string): string {
 	return slug.split('/')[0] ?? '';
@@ -229,7 +235,7 @@ function shiftHeadings(md: string, by: number): string {
 const INTRO = {
 	en: {
 		summary:
-			'Pyzed is an open-source (MIT) Python framework for building native desktop GUIs. Python describes the interface; Iced, a GPU-accelerated GUI toolkit written in Rust, lays it out and draws it. It ships 90+ components inspired by the Zed editor and Pyzed Design, a drag-and-drop visual designer.',
+			'Pyzed is an open-source (MIT) Python framework for building native desktop GUIs. Python describes the interface; Iced, a GPU-accelerated GUI toolkit written in Rust, lays it out and draws it. It aims to be a frontend framework for desktop apps (mobile and web later), with 90+ components whose look is inspired by the Zed editor, themes, node-based GPU shaders, packaging for every desktop platform and Pyzed Design, a drag-and-drop visual designer in the spirit of Visual Basic, Qt Designer and Godot.',
 		facts: [
 			'Install: `pip install pyzed-ui` (or `uv add pyzed-ui`); import it as `import pyzed as pz` and `from pyzed import ui`. Python 3.10+, prebuilt wheels for Windows, macOS and Linux.',
 			'Model: an `App` subclass with state, `view()` returning a widget tree and callbacks or `update(message)`, like the Elm architecture. Layout, text, syntax highlighting and drawing run in Rust; the GIL is released while the event loop runs.',
@@ -244,7 +250,7 @@ const INTRO = {
 	},
 	es: {
 		summary:
-			'Pyzed es un framework de código abierto (MIT) para crear GUIs de escritorio nativas en Python. Python describe la interfaz; Iced, un toolkit de GUI acelerado por GPU escrito en Rust, la organiza y la dibuja. Incluye más de 90 componentes inspirados en el editor Zed y Pyzed Design, un diseñador visual de arrastrar y soltar.',
+			'Pyzed es un framework de código abierto (MIT) para crear GUIs de escritorio nativas en Python. Python describe la interfaz; Iced, un toolkit de GUI acelerado por GPU escrito en Rust, la organiza y la dibuja. Busca ser un framework de frontend para apps de escritorio (más adelante móvil y web), con más de 90 componentes cuyo aspecto se inspira en el editor Zed, temas, shaders de GPU por nodos, empaquetado para todas las plataformas de escritorio y Pyzed Design, un diseñador visual de arrastrar y soltar al estilo de Visual Basic, Qt Designer y Godot.',
 		facts: [
 			'Instalación: `pip install pyzed-ui` (o `uv add pyzed-ui`); se importa como `import pyzed as pz` y `from pyzed import ui`. Python 3.10+, wheels precompilados para Windows, macOS y Linux.',
 			'Modelo: una subclase de `App` con estado, `view()` que devuelve un árbol de widgets y callbacks o `update(message)`, como la arquitectura Elm. El layout, el texto, el resaltado de sintaxis y el dibujo corren en Rust; el GIL se libera mientras corre el bucle de eventos.',

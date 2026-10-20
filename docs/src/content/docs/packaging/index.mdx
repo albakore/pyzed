@@ -1,0 +1,78 @@
+---
+title: Distribute your app
+description: "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus signing and CI builds."
+section:
+  eyebrow: Distribute
+  icon: rocket
+  lead: Turn your project into an app people can download and run on Windows, macOS and Linux, without installing Python.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+
+When your app works on your machine, `pyzed build` packages it: Python, Pyzed, your dependencies, your code and
+your forms go into one folder (or one file) that runs on its own. Run it from the root of your
+[project](/pyzed/getting-started/new-project/):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS and Linux"
+		uv run pyzed build
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS and Linux"
+		source .venv/bin/activate
+		pyzed build          # or: python -m pyzed build
+		```
+
+		```powershell title="Windows (PowerShell)"
+		.venv\Scripts\activate
+		pyzed build          # or: python -m pyzed build
+		```
+	</TabItem>
+</Tabs>
+
+| You build on | You get | People run it by |
+| --- | --- | --- |
+| Windows | `dist\Shop\Shop.exe` | Double-clicking it, or from a zip or an installer |
+| macOS | `dist/Shop.app` | Opening it (sign and notarize it to share it) |
+| Linux | `dist/Shop/Shop` | `./Shop`, or as an AppImage, .deb or Flatpak |
+
+<Aside type="caution" title="One build per platform">
+A build only runs on the system it was made on: build the Windows app on Windows, the macOS app on macOS and the
+Linux app on Linux. A CI workflow can do all three for you.
+</Aside>
+
+<Aside type="note">
+`pyzed build` runs [PyInstaller](https://pyinstaller.org) inside your project's environment through
+[uv](https://docs.astral.sh/uv/), so uv must be installed even if you use pip for everything else.
+</Aside>
+
+## In this section
+
+<NavCards
+	items={[
+		{ title: 'Build and distribute', text: 'What gets bundled, options, building every platform in CI, signing and troubleshooting.', href: '/pyzed/packaging/build/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'Projects with uv', text: 'The project layout that <code>pyzed build</code> expects, and managing its dependencies.', href: '/pyzed/guides/projects/', icon: 'document' },
+		{ title: 'CLI reference', text: 'Every option of <code>pyzed build</code> and the other commands.', href: '/pyzed/reference/cli/', icon: 'list-format' },
+	]}
+/>
+
+## Coming next
+
+<NavCards
+	items={[
+		{ title: 'Windows', text: 'Icons, installers, code signing and SmartScreen.', icon: 'laptop' },
+		{ title: 'macOS', text: 'App bundles, signing, notarization and DMG images.', icon: 'apple' },
+		{ title: 'Linux', text: 'AppImage, .deb, Flatpak and which distribution to build on.', icon: 'linux' },
+	]}
+/>
+
+<Aside type="note" title="Status of this section">
+Packaging for desktop is ready to use today. Step-by-step guides per platform are being written; mobile and web
+targets are planned for the future and are not available yet.
+</Aside>

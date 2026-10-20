@@ -24,9 +24,9 @@ const TEXT = {
 		ogLocale: 'en_US',
 		home: 'Pyzed',
 		keywords:
-			'Python GUI, Python desktop GUI, desktop apps in Python, native GUI, Rust, Iced, tkinter alternative, Kivy alternative, PyQt alternative, Flet alternative, visual designer, GUI builder, Zed editor components, cross-platform, Windows, macOS, Linux',
+			'Python GUI, Python desktop GUI, desktop apps in Python, native GUI, Rust, Iced, tkinter alternative, Kivy alternative, PyQt alternative, Flet alternative, visual designer, GUI builder, Python frontend framework, shaders, cross-platform, Windows, macOS, Linux',
 		siteDescription:
-			'Pyzed is an open-source Python framework for native desktop GUIs rendered by Iced (Rust), with 90+ Zed-style components and Pyzed Design, a drag-and-drop visual designer.',
+			'Pyzed is an open-source Python frontend framework for native desktop apps rendered by Iced (Rust), with 90+ components, themes, node-based GPU shaders and Pyzed Design, a drag-and-drop visual designer.',
 		designDescription:
 			'Pyzed Design is the free visual designer for Pyzed: draw desktop windows and components by drag and drop, wire their events to Python and run them.',
 		imageAlt: 'Pyzed - native desktop apps in pure Python, with the Pyzed Design visual designer',
@@ -40,9 +40,9 @@ const TEXT = {
 		ogLocale: 'es_ES',
 		home: 'Pyzed',
 		keywords:
-			'GUI en Python, interfaces de escritorio en Python, apps de escritorio con Python, GUI nativa, Rust, Iced, alternativa a tkinter, alternativa a Kivy, alternativa a PyQt, alternativa a Flet, diseñador visual, constructor de interfaces, componentes estilo Zed, multiplataforma, Windows, macOS, Linux',
+			'GUI en Python, interfaces de escritorio en Python, apps de escritorio con Python, GUI nativa, Rust, Iced, alternativa a tkinter, alternativa a Kivy, alternativa a PyQt, alternativa a Flet, diseñador visual, constructor de interfaces, framework de frontend en Python, shaders, multiplataforma, Windows, macOS, Linux',
 		siteDescription:
-			'Pyzed es un framework de código abierto para crear GUIs de escritorio nativas en Python renderizadas por Iced (Rust), con más de 90 componentes estilo Zed y el diseñador visual Pyzed Design.',
+			'Pyzed es un framework de frontend de código abierto para apps de escritorio nativas en Python renderizadas por Iced (Rust), con más de 90 componentes, temas, shaders de GPU por nodos y el diseñador visual Pyzed Design.',
 		designDescription:
 			'Pyzed Design es el diseñador visual gratuito de Pyzed: dibuja ventanas y componentes arrastrando y soltando, conecta sus eventos a Python y ejecútalos.',
 		imageAlt: 'Pyzed - apps de escritorio nativas en Python puro, con el diseñador visual Pyzed Design',
@@ -57,7 +57,7 @@ function cardFor(slug: string): string {
 	if (section === 'editor' || section === 'download' || slug.endsWith('designer')) return 'design';
 	if (['library', 'components', 'blocks'].includes(section)) return 'library';
 	if (section === 'tutorials' || section === 'examples') return 'tutorials';
-	if (['guides', 'reference', 'contributing'].includes(section)) return 'guides';
+	if (['guides', 'reference', 'contributing', 'shading', 'theming', 'packaging'].includes(section)) return 'guides';
 	return 'default';
 }
 
@@ -128,8 +128,23 @@ function trail(entries: SidebarEntry[], path: { label: string; href?: string }[]
 	return null;
 }
 
+/** Every link of a sidebar, nested groups included. */
+function hrefs(entries: SidebarEntry[], out = new Set<string>()): Set<string> {
+	for (const e of entries) {
+		if (e.type === 'link' && e.href) out.add(e.href);
+		if (e.entries) hrefs(e.entries, out);
+	}
+	return out;
+}
+
 export const onRequest = defineRouteMiddleware(async (context) => {
 	const route = context.locals.starlightRoute;
+	// "Previous" and "Next" stay inside the current section (the sidebar of its topic).
+	if (route.hasSidebar && context.locals.starlightSidebarTopics?.isPageWithTopic) {
+		const links = hrefs((route.sidebar ?? []) as SidebarEntry[]);
+		if (route.pagination.prev && !links.has(route.pagination.prev.href)) route.pagination.prev = undefined;
+		if (route.pagination.next && !links.has(route.pagination.next.href)) route.pagination.next = undefined;
+	}
 	const head = route.head as Head;
 	const data = route.entry.data;
 	const { lang, slug } = split(route.id);
@@ -257,12 +272,18 @@ export const onRequest = defineRouteMiddleware(async (context) => {
 
 		const crumbs = trail((route.sidebar ?? []) as SidebarEntry[]) ?? [];
 		const items = [{ name: t.home, item: pageUrl(lang, '') }];
+		// The top-level section of the header navbar (starlight-sidebar-topics), when it is not this page.
+		const topic = context.locals.starlightSidebarTopics?.topics.find((x) => x.isCurrent);
+		if (topic) {
+			const href = new URL(topic.link, SITE).href;
+			if (href !== url) items.push({ name: topic.label, item: href });
+		}
 		crumbs.forEach((c, i) => {
 			// The top group links to its section's overview page when there is one (/library/, /editor/...).
 			const section = slug.split('/')[0];
 			const overview = i === 0 && section !== slug && exists(lang) && all.has(lang === 'es' ? `es/${section}` : section);
 			const href = overview ? pageUrl(lang, section) : c.href ? new URL(c.href, SITE).href : undefined;
-			if (href && href !== url) items.push({ name: c.label, item: href });
+			if (href && href !== url && !items.some((x) => x.item === href)) items.push({ name: c.label, item: href });
 		});
 		items.push({ name: data.title, item: url });
 		graph.push({
@@ -298,7 +319,8 @@ export const onRequest = defineRouteMiddleware(async (context) => {
 				publisher: { '@id': `${HOME}#organization` },
 				isPartOf: { '@id': `${HOME}#website` },
 				about: { '@id': `${HOME}#library` },
-				proficiencyLevel: slug.startsWith('tutorials/') || slug.startsWith('getting-started/') ? 'Beginner' : 'Expert',
+				proficiencyLevel:
+					slug === 'tutorials' || slug.startsWith('tutorials/basic/') || slug.startsWith('getting-started/') ? 'Beginner' : 'Expert',
 			});
 		}
 	}

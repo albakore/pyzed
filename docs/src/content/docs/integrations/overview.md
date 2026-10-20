@@ -1,10 +1,17 @@
 ---
 title: Integrations overview
 description: Use Pyzed as the desktop frontend for FastAPI, Django, SQLAlchemy, SQLModel, httpx, Pydantic and aiosqlite, with demos that follow each library's official tutorial.
+section:
+  eyebrow: "Integrations"
+  icon: "link"
 sidebar:
   order: 1
   label: Overview
 ---
+
+:::note[Runnable demos]
+Every integration has a complete demo in examples/integrations that you can run with uv. More libraries will be added over time.
+:::
 
 Pyzed is only the interface: everything else in your app is ordinary Python. That means the
 libraries you already use for web backends, databases and HTTP work unchanged in a desktop app.
