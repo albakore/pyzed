@@ -94,6 +94,29 @@ Rating(value=3, class_="card", id="featured")       # components take class_= an
   `pz.clear_stylesheet()` removes them all.
 - Styles named with `pz.define_style` also work as classes.
 
+## Responsive styles
+
+Styles can follow the window's size, like CSS media queries:
+
+```python
+pz.stylesheet({
+    ".sidebar": {"width": 260},
+    "@media (max_width: 700)": {".sidebar": {"width": 64}},
+    "@md": {".content": {"padding": 32}},             # a breakpoint: 768 px wide and up
+})
+panel.style(padding=24, media={"max_width: 600": {"padding": 8}})
+```
+
+- A query is `min_width`, `max_width`, `min_height` or `max_height` in pixels
+  (`"max_width: 600"` or `"(max_width: 600px)"`), `orientation` (`portrait` or `landscape`) or
+  `theme` (`dark` or `light`). Join several with `and`.
+- Breakpoints follow Tailwind and apply from that width up: `sm` (640), `md` (768),
+  `lg` (1024), `xl` (1280) and `xxl` (1536).
+- The styles update when the window is resized.
+- In a view, `pz.viewport()` returns the window's size, and `pz.media("max_width: 600")`
+  says whether a query matches. `pz.current_breakpoint()` returns `"xs"`, `"sm"`, `"md"` and so on.
+  `pz.responsive(lambda w, h: ...)` builds content from the space a widget actually gets.
+
 ## Reusing styles
 
 ```python

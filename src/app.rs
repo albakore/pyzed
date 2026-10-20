@@ -2197,6 +2197,9 @@ pub fn screenshot(
         .and_then(|k| build_theme(&k))
         .unwrap_or(Theme::Dark);
     open_post_channel();
+    // Media queries see the screenshot's size.
+    let style = py.import("pyzed.style")?;
+    style.setattr("_screen", (viewport.width, viewport.height))?;
     // Animations show their resting state, so a screenshot doesn't depend on timing.
     crate::animation::set_screenshot(true);
     let shot = py.detach(move || {
@@ -2211,6 +2214,7 @@ pub fn screenshot(
     });
     *POST.lock().unwrap() = None;
     crate::animation::set_screenshot(false);
+    style.setattr("_screen", py.None())?;
 
     let file = std::fs::File::create(&path)?;
     let mut encoder = png::Encoder::new(

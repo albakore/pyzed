@@ -1657,7 +1657,7 @@ Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `
 | Parámetro | Descripción |
 | --- | --- |
 | `styles` | Estilos, dicts o nombres de estilo de partida. |
-| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{"duration", "easing", "delay"}`. Los colores pueden ser tokens del tema. |
+| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{"duration", "easing", "delay"}`. `media`: `{consulta: estilo}` que se aplica cuando la ventana la cumple. Los colores pueden ser tokens del tema. |
 
 ```python
 tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
@@ -1757,6 +1757,39 @@ clear_stylesheet()
 ```
 
 Quita todas las reglas añadidas con `pz.stylesheet`.
+
+### `media`
+
+```python
+media(query=None, **conditions)
+```
+
+Si la ventana que se dibuja cumple una media query, como `@media` en CSS. Ver [Estilos responsive](/pyzed/es/theming/styles/#estilos-responsive).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `query` | `"max_width: 600"`, `"(min_width: 768px) and (orientation: landscape)"` o un breakpoint (`"md"`). |
+| `conditions` | Lo mismo por palabra clave: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`. |
+
+```python
+sidebar = None if pz.media("max_width: 600") else self.sidebar()
+```
+
+### `viewport`
+
+```python
+viewport()
+```
+
+El tamaño de la ventana que se dibuja, `(ancho, alto)` en píxeles lógicos, como `window.innerWidth` e `innerHeight`.
+
+### `current_breakpoint`
+
+```python
+current_breakpoint()
+```
+
+El breakpoint más ancho que alcanza la ventana: `"xs"` (menos de 640 px), `"sm"`, `"md"`, `"lg"`, `"xl"` o `"xxl"`.
 
 ### `set_style`
 

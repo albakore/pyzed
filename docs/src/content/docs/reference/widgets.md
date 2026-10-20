@@ -1657,7 +1657,7 @@ A reusable set of style properties for `widget.style(...)`, a component's `style
 | Parameter | Description |
 | --- | --- |
 | `styles` | Styles, dicts or style names to start from. |
-| `props` | Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `"50%"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{"tint", "strength"}`). States: `hover`, `pressed` (or `active`) and `focus`, each with the properties to show then. `transition`: milliseconds, `True` or `{"duration", "easing", "delay"}`. Colors may be theme tokens. |
+| `props` | Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `"50%"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{"tint", "strength"}`). States: `hover`, `pressed` (or `active`) and `focus`, each with the properties to show then. `transition`: milliseconds, `True` or `{"duration", "easing", "delay"}`. `media`: `{query: style}` applied when the window matches. Colors may be theme tokens. |
 
 ```python
 card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
@@ -1757,6 +1757,39 @@ clear_stylesheet()
 ```
 
 Removes every rule added with `pz.stylesheet`.
+
+### `media`
+
+```python
+media(query=None, **conditions)
+```
+
+Whether the window being drawn matches a media query, like CSS `@media`. See [Responsive styles](/pyzed/theming/styles/#responsive-styles).
+
+| Parameter | Description |
+| --- | --- |
+| `query` | `"max_width: 600"`, `"(min_width: 768px) and (orientation: landscape)"` or a breakpoint (`"md"`). |
+| `conditions` | The same by keyword: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`. |
+
+```python
+sidebar = None if pz.media("max_width: 600") else self.sidebar()
+```
+
+### `viewport`
+
+```python
+viewport()
+```
+
+The size of the window being drawn, `(width, height)` in logical pixels, like `window.innerWidth` and `innerHeight`.
+
+### `current_breakpoint`
+
+```python
+current_breakpoint()
+```
+
+The widest breakpoint the window reaches: `"xs"` (under 640 px), `"sm"`, `"md"`, `"lg"`, `"xl"` or `"xxl"`.
 
 ### `set_style`
 

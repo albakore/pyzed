@@ -85,7 +85,8 @@ from .component import Component, state
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
-from .style import Gradient, Mask, Paint, Style, clear_stylesheet, define_style, set_style, stylesheet
+from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
+                    stylesheet, viewport)
 from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
 from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
@@ -237,6 +238,7 @@ __all__ = [
     "column",
     "clear_stylesheet",
     "container",
+    "current_breakpoint",
     "define_animation",
     "define_style",
     "designer",
@@ -268,6 +270,7 @@ __all__ = [
     "listen",
     "load_font",
     "markdown",
+    "media",
     "memo",
     "memo_stats",
     "mouse_area",
@@ -315,6 +318,7 @@ __all__ = [
     "validation_errors",
     "ui",
     "vertical_slider",
+    "viewport",
     "virtual_column",
     "vspace",
 ]

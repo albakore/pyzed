@@ -61,6 +61,21 @@ A selector is an optional component name, ``.class`` names, an ``#id`` and an op
 state (``:hover``, ``:pressed``/``:active``, ``:focus``); commas list several. More
 specific selectors win (ids, then classes, then names), then later rules; a ``style()``
 call after ``classes()`` goes on top. Named styles (``define_style``) also work as classes.
+
+Responsive styles follow the window's size, like CSS media queries::
+
+    pz.stylesheet({
+        ".sidebar": {"width": 260},
+        "@media (max_width: 700)": {".sidebar": {"width": 64}},
+        "@md": {".grid": {"padding": 24}},          # a breakpoint: 768 px wide and up
+    })
+    panel.style(padding=24, media={"max_width: 600": {"padding": 8}})
+
+Queries: ``min_width``, ``max_width``, ``min_height`` and ``max_height`` (pixels, ``px``
+optional), ``orientation`` (``portrait``/``landscape``) and ``theme`` (``dark``/``light``),
+joined with ``and``, or a breakpoint name of ``BREAKPOINTS`` (``sm``, ``md``, ``lg``,
+``xl``, ``xxl``: that width and up). ``pz.viewport()``, ``pz.media(...)`` and
+``pz.current_breakpoint()`` answer the same questions in a view.
 """
 
 from __future__ import annotations
@@ -97,6 +112,9 @@ STATE_PROPERTIES = ("background", "color", "border_color", "border_width", "radi
 #: The effects a ``transition`` animates when they change between renders.
 TRANSITION_PROPERTIES = ("opacity", "translate", "scale", "rotate", "blur")
 _STATE_TRIGGERS = {"hover": "hover", "pressed": "press", "focus": "focus"}
+#: Breakpoints for ``@md``-style rules and ``media={"md": ...}``: each applies from that window
+#: width (logical pixels) up, like Tailwind's.
+BREAKPOINTS = {"sm": 640, "md": 768, "lg": 1024, "xl": 1280, "xxl": 1536}
 
 _named: Dict[str, "Style"] = {}
 _global: Optional["Style"] = None
@@ -298,6 +316,9 @@ def _value_to_json(value: Any) -> Any:
 
 
 def _value_from_json(key: str, value: Any) -> Any:
+    if key == "media" and isinstance(value, dict):
+        return {q: {k: _value_from_json(ALIASES.get(k, STATE_ALIASES.get(k, k)), v) for k, v in props.items()}
+                for q, props in value.items()}
     if key in STATES and isinstance(value, dict):
         return {k: _value_from_json(ALIASES.get(k, k), v) for k, v in value.items()}
     if key == "background" and isinstance(value, dict):
@@ -338,6 +359,16 @@ def _normalize(props: Mapping[str, Any]) -> Dict[str, Any]:
             _timing(value)  # validates it
             out[key] = value
             continue
+        if key == "media":
+            if value is None:
+                out[key] = None
+                continue
+            if not isinstance(value, Mapping):
+                raise TypeError("media takes {query: style}, such as {\"max_width: 600\": {\"padding\": 8}}")
+            for query in value:
+                _parse_query(str(query))  # validates it
+            out[key] = {str(q): _props_of(v) for q, v in value.items()}
+            continue
         if key == "border":
             if value is None:
                 out["border_width"] = out["border_color"] = None
@@ -372,7 +403,7 @@ def _state(name: str, value: Any) -> Dict[str, Any]:
 def _merge(target: Dict[str, Any], props: Mapping[str, Any]) -> Dict[str, Any]:
     """``props`` on top of ``target``; states merge property by property, like CSS rules."""
     for key, value in props.items():
-        if key in STATES and isinstance(value, dict) and isinstance(target.get(key), dict):
+        if (key in STATES or key == "media") and isinstance(value, dict) and isinstance(target.get(key), dict):
             target[key] = {**target[key], **value}
         else:
             target[key] = value
@@ -640,6 +671,12 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
         _merge(merged, _props_of(style))
     _merge(merged, _normalize(props or {}))
     merged = {k: v for k, v in merged.items() if v is not None}
+    source = merged  # kept with its media queries, so a later style() call checks them again
+    if "media" in merged:
+        merged = {k: v for k, v in merged.items() if k != "media"}
+        for query, extra in source["media"].items():
+            if _matches(_parse_query(query)):
+                _merge(merged, {k: v for k, v in extra.items() if v is not None})
     skip = ("glow", "bloom", "glass", "transition", *STATES)
     drawn = {**_effects(merged), **{k: v for k, v in merged.items() if k not in skip}}
     timing = _timing(merged.get("transition"))
@@ -678,7 +715,7 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
             out[key] = (to_hex(value[0]), float(value[1]))
         else:
             out[key] = value
-    return merged, out
+    return source, out
 
 
 def _anim_values(props: Mapping[str, Any]) -> Dict[str, Any]:
@@ -761,6 +798,8 @@ class Rule(NamedTuple):
     id: Optional[str]
     state: Optional[str]
     props: Dict[str, Any]
+    #: The ``@media`` conditions the rule needs (``None``: always).
+    media: Optional[Tuple[Tuple[str, Any], ...]] = None
 
     @property
     def specificity(self) -> Tuple[int, int, int]:
@@ -769,7 +808,7 @@ class Rule(NamedTuple):
 
     def matches(self, name: Optional[str], classes: FrozenSet[str], id: Optional[str]) -> bool:
         return ((self.name is None or self.name == name) and self.classes <= classes
-                and (self.id is None or self.id == id))
+                and (self.id is None or self.id == id) and (self.media is None or _matches(self.media)))
 
 
 _rules: Dict[str, List[Rule]] = {}
@@ -803,15 +842,26 @@ def stylesheet(rules: Optional[Mapping[str, Any]] = None, **classes: Any) -> Dic
     """
     items = list((rules or {}).items()) + [("." + k, v) for k, v in classes.items()]
     for selector, style in items:
-        props = _props_of(style)
-        parsed = []
-        for one in str(selector).split(","):
-            name, names, element_id, state = _parse_selector(one)
-            body = {state: _state(state, props)} if state else props
-            parsed.append(Rule(one.strip(), name, names, element_id, state, body))
-        _rules.pop(str(selector), None)
-        _rules[str(selector)] = parsed
-    return {selector: Style(*[r.props for r in rules]) for selector, rules in _rules.items()}
+        selector = str(selector)
+        if selector.startswith("@"):
+            if not isinstance(style, Mapping):
+                raise TypeError(f"{selector} takes {{selector: style}} rules")
+            query = selector[1:].strip()
+            query = query[len("media"):].strip() if query.startswith("media") else query
+            conditions = _parse_query(query)
+            parsed = [Rule(one.strip(), *_parse_selector(one), _rule_props(one, inner), conditions)
+                      for inner_selector, inner in style.items() for one in str(inner_selector).split(",")]
+        else:
+            parsed = [Rule(one.strip(), *_parse_selector(one), _rule_props(one, style)) for one in selector.split(",")]
+        _rules.pop(selector, None)
+        _rules[selector] = parsed
+    return {selector: Style(*[r.props for r in rules if r.media is None]) for selector, rules in _rules.items()}
+
+
+def _rule_props(selector: str, style: Any) -> Dict[str, Any]:
+    props = _props_of(style)
+    state = _parse_selector(selector)[3]
+    return {state: _state(state, props)} if state else props
 
 
 def clear_stylesheet() -> None:
@@ -854,3 +904,91 @@ def _apply_classes(widget: Any, names: Iterable[Any], id: Optional[str] = None, 
         return widget
     style = matching(name, names, id)
     return widget.style(style) if style else widget
+
+
+# ---------------------------------------------------------------------------
+# Responsive: the window's size, media queries and breakpoints
+# ---------------------------------------------------------------------------
+
+#: The size of the window whose view is being built (set by the runtime before ``view()``).
+_viewport: Optional[Tuple[float, float]] = None
+#: The size a screenshot renders at (set while ``pz.screenshot`` runs).
+_screen: Optional[Tuple[float, float]] = None
+_QUERY_KEYS = ("min_width", "max_width", "min_height", "max_height", "orientation", "theme")
+
+
+def viewport() -> Tuple[float, float]:
+    """The size of the window being drawn, in logical pixels (like ``window.innerWidth``/``innerHeight``).
+
+    Inside ``view()`` it is that window's size; elsewhere the last one drawn (``(0, 0)`` before any).
+    """
+    return _viewport or (0.0, 0.0)
+
+
+def _px(value: Any) -> float:
+    text = str(value).strip().lower()
+    return float(text[:-2] if text.endswith("px") else text)
+
+
+def _parse_query(text: str) -> Tuple[Tuple[str, Any], ...]:
+    """``"(max_width: 600px) and (orientation: portrait)"`` or ``"md"`` as ``((key, value), ...)``."""
+    text = text.strip()
+    if text in BREAKPOINTS:
+        return (("min_width", float(BREAKPOINTS[text])),)
+    out = []
+    for part in re.split(r"\s+and\s+", text):
+        part = part.strip().strip("()").strip()
+        key, sep, value = part.partition(":")
+        key, value = key.strip().replace("-", "_"), value.strip()
+        if not sep or key not in _QUERY_KEYS:
+            raise ValueError(f"invalid media query {text!r}: use {', '.join(_QUERY_KEYS)} (\"max_width: 600\"), "
+                             f"joined with 'and', or a breakpoint ({', '.join(BREAKPOINTS)})")
+        if key == "orientation" and value not in ("portrait", "landscape"):
+            raise ValueError(f"orientation is portrait or landscape, not {value!r}")
+        if key == "theme" and value not in ("dark", "light"):
+            raise ValueError(f"theme is dark or light, not {value!r}")
+        out.append((key, value if key in ("orientation", "theme") else _px(value)))
+    return tuple(out)
+
+
+def _matches(conditions: Iterable[Tuple[str, Any]]) -> bool:
+    width, height = viewport()
+    for key, value in conditions:
+        if key == "min_width" and not width >= value:
+            return False
+        if key == "max_width" and not width <= value:
+            return False
+        if key == "min_height" and not height >= value:
+            return False
+        if key == "max_height" and not height <= value:
+            return False
+        if key == "orientation" and (value == "portrait") != (height > width):
+            return False
+        if key == "theme":
+            try:
+                dark = _theme.current().is_dark
+            except AttributeError:  # pragma: no cover - every theme says whether it is dark
+                dark = True
+            if (value == "dark") != bool(dark):
+                return False
+    return True
+
+
+def media(query: Optional[str] = None, **conditions: Any) -> bool:
+    """Whether the window being drawn matches a media query, like CSS ``@media``.
+
+    ``pz.media("max_width: 600")``, ``pz.media(min_width=768, orientation="landscape")`` or a
+    breakpoint name: ``pz.media("md")`` (768 px wide and up).
+    """
+    parsed = list(_parse_query(query)) if query else []
+    for key, value in conditions.items():
+        parsed.extend(_parse_query(f"{key}: {value}"))
+    return _matches(parsed)
+
+
+def current_breakpoint() -> str:
+    """The widest breakpoint the window reaches: ``"xs"`` (under 640 px), ``"sm"``, ``"md"``,
+    ``"lg"``, ``"xl"`` or ``"xxl"``."""
+    width = viewport()[0]
+    reached = [name for name, at in BREAKPOINTS.items() if width >= at]
+    return reached[-1] if reached else "xs"

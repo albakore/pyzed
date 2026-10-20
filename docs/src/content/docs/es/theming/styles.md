@@ -95,6 +95,29 @@ Rating(value=3, class_="card", id="featured")       # los componentes aceptan cl
   reglas. `pz.clear_stylesheet()` las quita todas.
 - Los estilos con nombre de `pz.define_style` también sirven como clases.
 
+## Estilos responsive
+
+Los estilos pueden seguir el tamaño de la ventana, como las media queries de CSS:
+
+```python
+pz.stylesheet({
+    ".sidebar": {"width": 260},
+    "@media (max_width: 700)": {".sidebar": {"width": 64}},
+    "@md": {".content": {"padding": 32}},             # un breakpoint: desde 768 px de ancho
+})
+panel.style(padding=24, media={"max_width: 600": {"padding": 8}})
+```
+
+- Una consulta es `min_width`, `max_width`, `min_height` o `max_height` en píxeles
+  (`"max_width: 600"` o `"(max_width: 600px)"`), `orientation` (`portrait` o `landscape`) o
+  `theme` (`dark` o `light`). Se juntan varias con `and`.
+- Los breakpoints siguen a Tailwind y se aplican desde ese ancho en adelante: `sm` (640),
+  `md` (768), `lg` (1024), `xl` (1280) y `xxl` (1536).
+- Los estilos se actualizan al cambiar el tamaño de la ventana.
+- En una vista, `pz.viewport()` devuelve el tamaño de la ventana y `pz.media("max_width: 600")`
+  dice si una consulta se cumple. `pz.current_breakpoint()` devuelve `"xs"`, `"sm"`, `"md"`, etc.
+  `pz.responsive(lambda w, h: ...)` construye contenido con el espacio que recibe de verdad un widget.
+
 ## Reutilizar estilos
 
 ```python

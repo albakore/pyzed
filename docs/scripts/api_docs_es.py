@@ -1846,7 +1846,7 @@ _section("widgets", "Estilos", {
     "pyzed.Style": {
         "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/theming/styles/).",
         "params": {"styles": "Estilos, dicts o nombres de estilo de partida.",
-                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{\"duration\", \"easing\", \"delay\"}`. Los colores pueden ser tokens del tema."},
+                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{\"duration\", \"easing\", \"delay\"}`. `media`: `{consulta: estilo}` que se aplica cuando la ventana la cumple. Los colores pueden ser tokens del tema."},
         "example": """
             tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(tarjeta | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1864,6 +1864,12 @@ _section("widgets", "Estilos", {
                              pz.column([...]).classes("card")
                          """},
     "pyzed.clear_stylesheet": {"desc": "Quita todas las reglas añadidas con `pz.stylesheet`."},
+    "pyzed.media": {"desc": "Si la ventana que se dibuja cumple una media query, como `@media` en CSS. Ver [Estilos responsive](/pyzed/es/theming/styles/#estilos-responsive).",
+                    "params": {"query": "`\"max_width: 600\"`, `\"(min_width: 768px) and (orientation: landscape)\"` o un breakpoint (`\"md\"`).",
+                               "conditions": "Lo mismo por palabra clave: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`."},
+                    "example": 'sidebar = None if pz.media("max_width: 600") else self.sidebar()'},
+    "pyzed.viewport": {"desc": "El tamaño de la ventana que se dibuja, `(ancho, alto)` en píxeles lógicos, como `window.innerWidth` e `innerHeight`."},
+    "pyzed.current_breakpoint": {"desc": "El breakpoint más ancho que alcanza la ventana: `\"xs\"` (menos de 640 px), `\"sm\"`, `\"md\"`, `\"lg\"`, `\"xl\"` o `\"xxl\"`."},
     "pyzed.set_style": {"desc": "Fija el estilo global de todas las ventanas, por debajo del `style` de cada una. Sin argumentos lo quita.",
                         "params": {"styles": "Estilos a combinar.", "props": "Propiedades encima."}},
     "pyzed.Gradient": {"desc": "Un gradiente lineal para fondos. Los ángulos siguen CSS: 0 arriba, 90 derecha, 180 (por defecto) abajo. Hasta 8 paradas.",
