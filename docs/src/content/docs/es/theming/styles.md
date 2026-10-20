@@ -32,7 +32,7 @@ un botón). Los demás widgets reciben una caja alrededor que lleva el estilo.
 | `radius` | Un número, o `(arriba_izq, arriba_der, abajo_der, abajo_izq)`. |
 | `shadow` | `(color, (x, y), desenfoque)`. |
 | `padding`, `margin` | Un número, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |
-| `width`, `height` | Píxeles, `"fill"`, `"shrink"` o `"fill:N"`; `max_width`, `max_height` en píxeles. |
+| `width`, `height` | Píxeles, `"fill"`, `"shrink"` o `"fill:N"`; `max_width`, `max_height`, `min_width` y `min_height` en píxeles. |
 | `align_x`, `align_y` | Dónde se coloca el contenido dentro de la caja. |
 | `clip` | Recorta el contenido a la caja. |
 | `opacity`, `translate`, `scale`, `rotate` | Desvanecen, desplazan, escalan o giran cómo se dibuja el widget, sin cambiar el layout. |
@@ -44,6 +44,55 @@ del tema como `"accent"`, `"panel"` o `"text_muted"`, así que los estilos sigue
 
 Las propiedades de texto se aplican a **todos los textos de dentro** del widget, también a las
 etiquetas de los componentes de `pyzed.ui`. Gana el estilo más cercano.
+
+## Estados y transiciones
+
+Como `:hover`, `:active` y `:focus` en CSS, un estilo puede decir cómo se ve el widget
+mientras el puntero está encima (`hover`), mientras se pulsa (`pressed`, o `active`) y
+mientras tiene el foco del teclado (`focus`). `transition` anima el cambio, como
+`transition` en CSS:
+
+```python
+ui.button("Guardar", self.save).style(
+    background="accent", radius=6,
+    hover={"background": "#4f8cff", "translate": (0, -1)},
+    pressed={"scale": 0.97},
+    transition=120,                      # milisegundos, "0.2s", True o {"duration", "easing", "delay"}
+)
+```
+
+Un estado puede cambiar `background` (un color), `color`, `border_color`, `border_width`,
+`radius`, `opacity`, `translate`, `scale`, `rotate` y `blur`. Ninguno mueve los widgets de
+alrededor, así que el hover nunca descoloca el layout. Sin `transition` el estado se ve al
+instante. Con ella, los cambios de `opacity`, `translate`, `scale`, `rotate` y `blur` de un
+render al siguiente también se animan. Para algo más, ver [Animación](/pyzed/es/guides/animation/).
+
+## Hojas de estilo
+
+`pz.stylesheet` añade reglas por selector, como un archivo CSS. `widget.classes(...)` le da
+clases (y un `id`) a un widget, y las reglas que coinciden le dan estilo:
+
+```python
+pz.stylesheet({
+    ".card": {"background": "panel", "padding": 16, "radius": 8, "border": (1, "border")},
+    ".card:hover": {"border_color": "accent"},
+    ".card.selected, #featured": {"border": (2, "accent")},
+    "Rating": {"padding": 4},                       # todos los componentes Rating
+})
+
+pz.column([...]).classes("card", "selected" if self.chosen else None)
+Rating(value=3, class_="card", id="featured")       # los componentes aceptan class_= e id=
+```
+
+- Selectores: `.clase`, varias clases (`.card.selected`), `#id`, el nombre de la clase de un
+  componente y un `:hover`, `:pressed` (o `:active`) o `:focus` opcional. Las comas juntan
+  varios selectores en una regla.
+- Como en CSS, ganan los selectores más específicos (un id gana a las clases, más clases
+  ganan a menos y las clases ganan al nombre de un componente) y después la regla posterior.
+  Un `style()` después de `classes()` va encima.
+- Definir otra vez un selector reemplaza su regla, así que recargar el código no acumula
+  reglas. `pz.clear_stylesheet()` las quita todas.
+- Los estilos con nombre de `pz.define_style` también sirven como clases.
 
 ## Reutilizar estilos
 

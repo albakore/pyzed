@@ -1686,7 +1686,9 @@ impl<'a, Renderer> Animated<'a, Renderer> {
             };
             let value = lerp(identity, lerp(resolve(a), resolve(b), t), w);
             match prop {
-                Prop::Opacity => frame.opacity *= value.clamp(0.0, 1.0),
+                // Not clamped here: a state style can raise a faded widget (`opacity` 0.5,
+                // hover 1 animates by 2); the total is clamped below.
+                Prop::Opacity => frame.opacity *= value.max(0.0),
                 Prop::Scale => frame.scale *= value.max(0.0),
                 Prop::X => frame.x += value,
                 Prop::Y => frame.y += value,
@@ -1741,6 +1743,8 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 }
             }
         }
+        frame.opacity = frame.opacity.clamp(0.0, 1.0);
+        frame.blur = frame.blur.max(0.0);
         frame
     }
 

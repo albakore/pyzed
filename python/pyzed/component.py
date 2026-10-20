@@ -33,8 +33,10 @@ widgets, and ``events`` declares the custom events it can ``emit``::
     Rating(value=self.stars, on_change=lambda e: setattr(self, "stars", e.value))
 
 Every component also accepts the common events (``on_click``, ``on_drag``...; see
-``pyzed.events``), the lifecycle events ``on_mount`` / ``on_unmount`` and ``style=``
-(a ``pz.Style``, dict or style name, see ``pyzed.style``) unless it declares a ``style`` prop.
+``pyzed.events``), the lifecycle events ``on_mount`` / ``on_unmount``, ``style=`` (a ``pz.Style``, dict or style name, see
+``pyzed.style``) and ``class_=``/``id=`` for the stylesheet's rules (``pz.stylesheet``; rules
+for the component's class name, such as ``"Rating"``, apply to every instance), unless it
+declares props with those names.
 
 State can also be declared on the class with ``pz.state(default)``: it is private (the
 parent cannot pass it), each instance starts with its own copy of the default, and
@@ -68,6 +70,7 @@ from typing import Any, Callable, ClassVar, Dict, Iterator, List, Mapping, Optio
 from . import _core
 from . import events as _events
 from . import hints as _hints
+from . import style as _style
 
 __all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "registered", "render_pass",
            "state"]
@@ -274,8 +277,11 @@ class Component:
     # -- creating -------------------------------------------------------------
     def __new__(cls, *args: Any, key: Any = None, **kwargs: Any) -> Any:
         """``MyComponent(prop=..., on_event=..., style=...)`` renders the component and returns a widget."""
-        # ``style=`` is the common style unless the component declares a prop with that name.
+        # ``style=``, ``class_=`` and ``id=`` are the common ones unless the component declares
+        # props with those names.
         style = kwargs.pop("style", None) if "style" not in cls.__props__ else None
+        classes = kwargs.pop("class_", None) if "class_" not in cls.__props__ else None
+        element_id = kwargs.pop("id", None) if "id" not in cls.__props__ else None
         props, custom, common = cls._split(args, kwargs)
         current = _passes[-1] if _passes else None
         slot = current.key_for(cls, key) if current is not None else None
@@ -308,6 +314,7 @@ class Component:
             _defer(instance._mount)
         if common:
             widget = widget.on(**common)
+        widget = _style._apply_classes(widget, () if classes is None else (classes,), element_id, cls.__name__)
         if style is not None:
             widget = widget.style(style)
         return widget
@@ -315,8 +322,9 @@ class Component:
     @classmethod
     def create(cls, *args: Any, **kwargs: Any) -> "Component":
         """A standalone instance (not rendered, no lifecycle), handy in tests: ``c.render()``."""
-        if "style" not in cls.__props__:
-            kwargs.pop("style", None)
+        for common in ("style", "class_", "id"):
+            if common not in cls.__props__:
+                kwargs.pop(common, None)
         props, custom, _common = cls._split(args, kwargs)
         instance = object.__new__(cls)
         instance._pyzed_mounted = False

@@ -85,7 +85,7 @@ from .component import Component, state
 from .layout import anchor, anchor_layout, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
-from .style import Gradient, Mask, Paint, Style, define_style, set_style
+from .style import Gradient, Mask, Paint, Style, clear_stylesheet, define_style, set_style, stylesheet
 from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
 from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
@@ -235,6 +235,7 @@ __all__ = [
     "clear_memos",
     "code_editor",
     "column",
+    "clear_stylesheet",
     "container",
     "define_animation",
     "define_style",
@@ -300,6 +301,7 @@ __all__ = [
     "stack",
     "stagger",
     "style",
+    "stylesheet",
     "state",
     "svg",
     "t",

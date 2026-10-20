@@ -113,13 +113,16 @@ pub struct StyleProps {
     pub height: Option<Length>,
     pub max_width: Option<f32>,
     pub max_height: Option<f32>,
+    pub min_width: Option<f32>,
+    pub min_height: Option<f32>,
     pub align_x: Option<Horizontal>,
     pub align_y: Option<Vertical>,
     pub clip: bool,
     /// The text properties only fill in what texts don't set themselves (`App.style`).
     pub defaults: bool,
-    /// `opacity`, `translate` and `scale`: drawn by an `Animated` around the element.
-    pub effects: Option<crate::animation::Base>,
+    /// The effects (`opacity`, `translate`, `scale`...), the state styles (`hover`,
+    /// `pressed`, `focus`) and the `transition`: drawn by an `Animated` around the element.
+    pub effects: Option<std::sync::Arc<crate::animation::Spec>>,
 }
 
 pub fn apply(
@@ -183,6 +186,8 @@ fn parse(child: Py<Widget>, source: Py<PyDict>, d: &Bound<'_, PyDict>) -> PyResu
         height: style::opt_length(&get("height")?)?,
         max_width: f32_of("max_width")?,
         max_height: f32_of("max_height")?,
+        min_width: f32_of("min_width")?,
+        min_height: f32_of("min_height")?,
         align_x: style::align_x(str_of("align_x")?.as_deref())?,
         align_y: style::align_y(str_of("align_y")?.as_deref())?,
         clip: get("clip")?
@@ -194,7 +199,28 @@ fn parse(child: Py<Widget>, source: Py<PyDict>, d: &Bound<'_, PyDict>) -> PyResu
     })
 }
 
-fn effects(d: &Bound<'_, PyDict>) -> PyResult<Option<crate::animation::Base>> {
+fn effects(d: &Bound<'_, PyDict>) -> PyResult<Option<std::sync::Arc<crate::animation::Spec>>> {
+    use crate::animation::{Spec, parse_anims, parse_transitions};
+    let anims = match d.get_item("states")? {
+        Some(v) if !v.is_none() => parse_anims(&v)?,
+        _ => Vec::new(),
+    };
+    let transitions = match d.get_item("transitions")? {
+        Some(v) if !v.is_none() => parse_transitions(&v)?,
+        _ => Vec::new(),
+    };
+    let base = base(d)?;
+    if base.is_none() && anims.is_empty() && transitions.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(std::sync::Arc::new(Spec {
+        anims,
+        transitions,
+        base: base.unwrap_or_default(),
+    })))
+}
+
+fn base(d: &Bound<'_, PyDict>) -> PyResult<Option<crate::animation::Base>> {
     use crate::animation::{Base, Value};
     let get = |key: &str| -> PyResult<Any<'_>> { Ok(d.get_item(key)?.filter(|v| !v.is_none())) };
     let opacity = get("opacity")?.map(|v| v.extract::<f32>()).transpose()?;
@@ -252,19 +278,25 @@ fn effects(d: &Bound<'_, PyDict>) -> PyResult<Option<crate::animation::Base>> {
     Ok(Some(base))
 }
 
-/// The element with a style's `opacity`, `translate` and `scale` applied.
+/// The element with a style's effects, state styles and transitions applied.
 pub fn effects_of<'a>(element: Element<'a, Message>, props: &StyleProps) -> Element<'a, Message> {
-    match props.effects {
-        Some(base) => crate::animation::Animated::new(
-            element,
-            std::sync::Arc::new(crate::animation::Spec {
-                base,
-                ..Default::default()
-            }),
-        )
-        .into(),
+    match &props.effects {
+        Some(spec) => crate::animation::Animated::new(element, spec.clone()).into(),
         None => element,
     }
+}
+
+/// The element with a style's `min_width` and `min_height`.
+pub fn min_size<'a>(element: Element<'a, Message>, props: &StyleProps) -> Element<'a, Message> {
+    if props.min_width.is_none() && props.min_height.is_none() {
+        return element;
+    }
+    crate::min_size::MinSize::new(
+        element,
+        props.min_width.unwrap_or(0.0),
+        props.min_height.unwrap_or(0.0),
+    )
+    .into()
 }
 
 /// A container's or button's layout with a style's size and padding on top.

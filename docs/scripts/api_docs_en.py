@@ -260,7 +260,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -1829,7 +1829,7 @@ _section("widgets", "Styles", {
     "pyzed.Style": {
         "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/theming/styles/).",
         "params": {"styles": "Styles, dicts or style names to start from.",
-                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."},
+                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). States: `hover`, `pressed` (or `active`) and `focus`, each with the properties to show then. `transition`: milliseconds, `True` or `{\"duration\", \"easing\", \"delay\"}`. Colors may be theme tokens."},
         "example": """
             card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1837,6 +1837,16 @@ _section("widgets", "Styles", {
     },
     "pyzed.define_style": {"desc": "Names a style so widgets can use it by name: `widget.style(\"card\")`. Returns it.",
                            "params": {"name": "The style's name.", "styles": "Styles to merge.", "props": "Properties on top."}},
+    "pyzed.stylesheet": {"desc": "Adds CSS-like rules, `{selector: style}`, that widgets get with `widget.classes(...)` and components with `class_=`/`id=`. Selectors: `.class`, `.a.b`, `#id`, a component's class name (`\"Rating\"`), an optional `:hover`, `:pressed`/`:active` or `:focus`, and comma lists. More specific selectors win (ids, then classes, then names), then later rules. A selector given again replaces its rule. Returns every rule. See [Stylesheets](/pyzed/theming/styles/#stylesheets).",
+                         "params": {"rules": "A `{selector: style}` dict.", "classes": "Classes by keyword: `card={...}` is `\".card\"`."},
+                         "example": """
+                             pz.stylesheet({
+                                 ".card": {"background": "panel", "padding": 16, "radius": 8},
+                                 ".card:hover": {"border_color": "accent"},
+                             })
+                             pz.column([...]).classes("card")
+                         """},
+    "pyzed.clear_stylesheet": {"desc": "Removes every rule added with `pz.stylesheet`."},
     "pyzed.set_style": {"desc": "Sets the global style for every window, under each window's `style`. Without arguments it clears it.",
                         "params": {"styles": "Styles to merge.", "props": "Properties on top."}},
     "pyzed.Gradient": {"desc": "A linear gradient for backgrounds. Angles follow CSS: 0 up, 90 right, 180 (the default) down. Up to 8 stops.",

@@ -32,7 +32,7 @@ button). Other widgets get a box around them that carries the style.
 | `radius` | A number, or `(top_left, top_right, bottom_right, bottom_left)`. |
 | `shadow` | `(color, (x, y), blur)`. |
 | `padding`, `margin` | A number, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
-| `width`, `height` | Pixels, `"fill"`, `"shrink"` or `"fill:N"`; `max_width`, `max_height` in pixels. |
+| `width`, `height` | Pixels, `"fill"`, `"shrink"` or `"fill:N"`; `max_width`, `max_height`, `min_width` and `min_height` in pixels. |
 | `align_x`, `align_y` | Where the content sits inside the box. |
 | `clip` | Clips the content to the box. |
 | `opacity`, `translate`, `scale`, `rotate` | Fades, moves, scales or turns how the widget is drawn, without changing the layout. |
@@ -44,6 +44,54 @@ such as `"accent"`, `"panel"` or `"text_muted"`, so styles follow theme switches
 
 Text properties apply to **every text inside** the styled widget, including the labels of
 `pyzed.ui` components. The closest style wins.
+
+## States and transitions
+
+Like CSS `:hover`, `:active` and `:focus`, a style can say how the widget looks while the
+pointer is over it (`hover`), while it is pressed (`pressed`, or `active`) and while it has
+the keyboard focus (`focus`). `transition` animates the change, like CSS `transition`:
+
+```python
+ui.button("Save", self.save).style(
+    background="accent", radius=6,
+    hover={"background": "#4f8cff", "translate": (0, -1)},
+    pressed={"scale": 0.97},
+    transition=120,                      # milliseconds, "0.2s", True or {"duration", "easing", "delay"}
+)
+```
+
+A state can change `background` (a color), `color`, `border_color`, `border_width`,
+`radius`, `opacity`, `translate`, `scale`, `rotate` and `blur`. These don't move the widgets
+around, so hovering never shifts the layout. Without `transition` the state shows at once.
+With one, changes of `opacity`, `translate`, `scale`, `rotate` and `blur` from one render to
+the next animate too. For anything more, see [Animation](/pyzed/guides/animation/).
+
+## Stylesheets
+
+`pz.stylesheet` adds rules by selector, like a CSS file. `widget.classes(...)` gives a
+widget classes (and an `id`), and the matching rules style it:
+
+```python
+pz.stylesheet({
+    ".card": {"background": "panel", "padding": 16, "radius": 8, "border": (1, "border")},
+    ".card:hover": {"border_color": "accent"},
+    ".card.selected, #featured": {"border": (2, "accent")},
+    "Rating": {"padding": 4},                       # every Rating component
+})
+
+pz.column([...]).classes("card", "selected" if self.chosen else None)
+Rating(value=3, class_="card", id="featured")       # components take class_= and id=
+```
+
+- Selectors: `.class`, several classes (`.card.selected`), `#id`, a component's class name
+  and an optional `:hover`, `:pressed` (or `:active`) or `:focus`. Commas list several
+  selectors for one rule.
+- Like CSS, more specific selectors win (an id beats classes, more classes beat fewer, and
+  classes beat a component name), then the later rule. A `style()` call after `classes()`
+  goes on top.
+- Defining a selector again replaces its rule, so reloading your code doesn't pile rules up.
+  `pz.clear_stylesheet()` removes them all.
+- Styles named with `pz.define_style` also work as classes.
 
 ## Reusing styles
 

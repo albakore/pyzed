@@ -483,7 +483,10 @@ impl Widget {
     /// properties by keyword (later ones win): ``background``, ``color``, ``font``,
     /// ``weight``, ``italic``, ``size``, ``line_height``, ``border_color``,
     /// ``border_width``, ``radius``, ``shadow``, ``padding``, ``margin``, ``width``,
-    /// ``height``, ``max_width``, ``max_height``, ``align_x``, ``align_y`` and ``clip``.
+    /// ``height``, ``max_width``, ``max_height``, ``min_width``, ``min_height``, ``align_x``,
+    /// ``align_y``, ``clip`` and the effects (see ``pyzed.style``). ``hover``, ``pressed``
+    /// and ``focus`` take the properties to show in that state, and ``transition`` animates
+    /// the change (milliseconds or ``{"duration", "easing", "delay"}``).
     /// Text properties apply to every text inside; with ``defaults=True`` they only fill in
     /// what texts don't set themselves (how ``App.style`` works). Calling ``style`` again merges.
     #[pyo3(signature = (*styles, defaults=false, **props))]
@@ -494,6 +497,26 @@ impl Widget {
         props: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<Widget>> {
         crate::styled::apply(slf, styles, defaults, props)
+    }
+
+    /// Gives the widget stylesheet classes (and an ``id``) and returns it styled by the
+    /// matching rules of ``pz.stylesheet``, like HTML's ``class`` and ``id``.
+    ///
+    /// ``widget.classes("card", "selected")`` or ``widget.classes("card selected", id="main")``.
+    /// Rules apply in CSS order (more specific selectors win, then the later rule), and a
+    /// ``style()`` call afterwards goes on top. See ``pyzed.style``.
+    #[pyo3(signature = (*names, id=None))]
+    fn classes(
+        slf: &Bound<'_, Self>,
+        names: &Bound<'_, pyo3::types::PyTuple>,
+        id: Option<String>,
+    ) -> PyResult<Py<Widget>> {
+        slf.py()
+            .import("pyzed.style")?
+            .getattr("_apply_classes")?
+            .call1((slf, names.clone(), id))?
+            .extract()
+            .map_err(Into::into)
     }
 
     /// Animates the widget and returns the wrapped widget.
