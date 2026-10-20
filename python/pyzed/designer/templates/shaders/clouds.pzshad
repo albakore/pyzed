@@ -5,7 +5,6 @@
  "preview": {
   "width": 320,
   "height": 200,
-  "fallback": "#1e1b4b",
   "animate": true
  },
  "variables": [

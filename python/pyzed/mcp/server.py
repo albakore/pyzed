@@ -31,6 +31,8 @@ list_components / describe_component / search_reference / read_reference / searc
 instead of guessing. Learn from list_examples (blocks are whole screens to copy; also games, showcase and
 backend integrations) and read_example. Generate skeletons with new_app / new_component / new_form, check
 code with validate_code (validate_form for .pzform files) and look at it with screenshot.
+GPU shaders can be node graphs (.pzshad files drawn with pz.shader("x.pzshad")): start one with new_shader,
+look nodes up with list_shader_nodes and compile it with check_shader.
 To build a whole app in a folder: project_info, create_project, write_files (checks what it writes),
 add_dependency, check_project, run_tests and screenshot_project, then fix and repeat until it is clean."""
 
@@ -188,6 +190,33 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         `pyzed run <name>.pzform`."""
         return _json(scaffold.form(name, title=title, width=width, height=height, theme=theme,
                                    controls=controls or (), form_events=form_events or ()))
+
+    # -- shaders (pyzed.shading) -------------------------------------------------------------------------
+    @tool()
+    def list_shader_nodes(query: str = "", category: str = "") -> str:
+        """The nodes of shader graphs (.pzshad, made in Pyzed Design's Shader view or with pyzed.shading.Graph):
+        each entry's key (what Graph.add takes, e.g. "noise", "func:sin", "math:multiply"), node type and
+        params, inputs, outputs and settings. category: Input, Parameters, Constants, Math, Vector, UV, Noise,
+        Patterns, Shapes, Color, Effects, Texture, Logic, Variables, Utility or Output."""
+        from . import shaders
+
+        return _json(shaders.list_nodes(query, category))
+
+    @tool()
+    def check_shader(shader: str) -> str:
+        """Compiles the JSON of a .pzshad to WGSL and checks it with the GPU compiler: the problems by node,
+        the generated code, the uniform each mutable variable becomes, and whether it animates."""
+        from . import shaders
+
+        return _json(shaders.check(shader))
+
+    @tool()
+    def new_shader(template: str = "blank") -> str:
+        """The JSON of a new .pzshad from one of Pyzed Design's templates (blank, plasma, clouds, glow_ring,
+        cells, retro_screen). Save it as <name>.pzshad and draw it with pz.shader("<name>.pzshad")."""
+        from . import shaders
+
+        return shaders.template(template)
 
     # -- checks ----------------------------------------------------------------------------------------
     @tool()

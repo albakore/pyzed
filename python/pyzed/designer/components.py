@@ -400,6 +400,29 @@ def _image(c: Control, ctx: RenderContext) -> Any:
                        radius=_num(c.props["radius"]))
 
 
+def _shader(c: Control, ctx: RenderContext) -> Any:
+    """A ``.pzshad`` made in the Shader view, drawn live (still in the designer); ``variables`` sets its
+    variables by name (``{"speed": 2}``), from the Properties panel or from code."""
+    t = ctx.theme
+    source = str(c.props.get("file") or "")
+    message = None
+    if source:
+        from .. import shader as _shader_widget
+        from ..shading import GraphError
+
+        variables = c.props.get("variables") or {}
+        try:
+            options = {} if ctx.live else {"time": 1.0}
+            return _shader_widget(source, uniforms=dict(variables) if isinstance(variables, dict) else None,
+                                  width="fill", height="fill", **options)
+        except (OSError, ValueError, TypeError, KeyError, GraphError) as err:
+            message = str(err).splitlines()[0]
+    return _core.container(_core.column([_icon("blend", size=24, color=t.icon_muted),
+                                         _core.text(message, size=11, color=t.text_muted, wrap=True)
+                                         if message else None], spacing=4, align="center"),
+                           width="fill", height="fill", center=True, padding=6, bg=t.element, radius=t.radius_sm)
+
+
 def _icon_control(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     color = ctx.theme.color(p["color"]) if p["color"] else None
@@ -655,6 +678,10 @@ for _component in (
                Prop("fit", "choice", "cover", choices=("contain", "cover", "fill", "none", "scale-down")),
                Prop("radius", "number", 0)),
               (), "A picture from a file."),
+    Component("shader", "Shader", "blend", "Display", _shader, (240, 160),
+              (Prop("file", "text", "", label="Shader file"),
+               Prop("variables", "typed", {}, type="dict[str, float | str]", group="Data")),
+              (), "A shader made of nodes (.pzshad) drawn on the GPU; set its variables to animate it."),
     Component("icon", "Icon", "star", "Display", _icon_control, (24, 24),
               (Prop("name", "icon", "star"), Prop("size", "number", 20), Prop("color", "color", "")),
               (), "A Lucide icon."),

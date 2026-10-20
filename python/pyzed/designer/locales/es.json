@@ -1358,6 +1358,21 @@
   "{nodes} nodes · {links} wires": "{nodes} nodos · {links} conexiones",
   "{type} variable": "Variable {type}",
   "Arrange nodes in columns": "Ordenar nodos en columnas",
-  "Small preview": "Vista previa pequeña"
+  "Small preview": "Vista previa pequeña",
+  "A shader made of nodes (.pzshad) drawn on the GPU; set its variables to animate it.": "Un shader hecho de nodos (.pzshad) dibujado en la GPU; cambia sus variables para animarlo.",
+  "Shader file": "Archivo de shader",
+  "Path of the .pzshad shader, relative to the folder the app runs in. Make one with New → Shader.": "Ruta del shader .pzshad, relativa a la carpeta donde se ejecuta la app. Crea uno con Nuevo → Shader.",
+  "Values for the shader's variables by name, such as {\"speed\": 2}. Set it from code to animate the shader.": "Valores de las variables del shader por nombre, como {\"speed\": 2}. Cámbialo desde el código para animar el shader.",
+  "Cells": "Celdas",
+  "Clouds": "Nubes",
+  "Glow ring": "Anillo luminoso",
+  "Plasma": "Plasma",
+  "Retro screen": "Pantalla retro",
+  "A gradient across the UV: the starting point for any shader.": "Un degradado a lo largo del UV: el punto de partida de cualquier shader.",
+  "Voronoi cells that wander, each its own color, with glowing borders.": "Celdas de Voronoi que se mueven, cada una de su color, con bordes luminosos.",
+  "Fractal noise clouds drifting over a sky gradient.": "Nubes de ruido fractal que se desplazan sobre un cielo degradado.",
+  "A neon ring that pulses, with a soft glow around it.": "Un anillo de neón que late, con un resplandor suave alrededor.",
+  "Sine waves summed into a moving plasma, colored by a cosine palette.": "Ondas senoidales sumadas en un plasma en movimiento, coloreado con una paleta de coseno.",
+  "An old CRT look: scanlines, a dark vignette and film grain over a synthwave gradient.": "El aspecto de un CRT antiguo: líneas de barrido, una viñeta oscura y grano sobre un degradado synthwave."
  }
 }

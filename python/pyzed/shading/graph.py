@@ -313,7 +313,7 @@ class Graph:
         self.links: List[Link] = []
         self.variables: List[Variable] = []
         #: How the shader is previewed and drawn by default: size, fallback color without a GPU, animation.
-        self.preview: Dict[str, Any] = {"width": 320, "height": 200, "fallback": "#1e1b4b", "animate": True}
+        self.preview: Dict[str, Any] = {"width": 320, "height": 200, "animate": True}
         #: The ``.pzshad`` file (other files it uses are relative to it).
         self.path: Optional[Path] = None
         #: Goes up on every change, so compiled code can be cached.

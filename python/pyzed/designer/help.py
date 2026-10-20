@@ -65,6 +65,10 @@ PROP_DOCS: Dict[Any, str] = {
     "shadow": "Draws a drop shadow under the card.",
     "size": "Text size: small, normal or large.",
     "source": "Path of the image file, relative to the form.",
+    ("shader", "file"): "Path of the .pzshad shader, relative to the folder the app runs in. Make one with "
+                        "New → Shader.",
+    ("shader", "variables"): "Values for the shader's variables by name, such as {\"speed\": 2}. Set it from "
+                             "code to animate the shader.",
     "step": "How much one step changes the value.",
     "striped": "Shades every other row.",
     "tabs": "The tab titles, one per line.",

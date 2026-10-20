@@ -177,3 +177,22 @@ def test_the_catalog_is_translated():
         assert missing == []
     finally:
         i18n.set_language(previous)
+
+
+def test_the_mcp_shader_tools():
+    from pyzed.mcp import shaders
+
+    noise = shaders.list_nodes("perlin")
+    assert noise and noise[0]["type"] == "noise" and noise[0]["outputs"][0]["name"] == "value"
+    assert {n["category"] for n in shaders.list_nodes(category="Shapes")} == {"Shapes"}
+    source = shaders.template("plasma")
+    result = shaders.check(source)
+    assert result["ok"] and "fn shade" in result["wgsl"] and "speed" in result["uniforms"]
+    broken = json.loads(source)
+    broken["nodes"].append({"id": "99", "type": "expression", "params": {"code": "a +"}})
+    broken["links"].append({"from": "99", "out": "result", "to": next(n["id"] for n in broken["nodes"]
+                                                                       if n["type"] == "output"), "in": "alpha"})
+    result = shaders.check(json.dumps(broken))
+    assert not result["ok"] and "99" in result["errors"]
+    with pytest.raises(ValueError):
+        shaders.template("nope")

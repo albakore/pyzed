@@ -22,6 +22,8 @@ from .model import Form
 SUFFIX = shading.SUFFIX
 #: The ``format`` of nodes copied to the system clipboard.
 CLIPBOARD_FORMAT = "pyzed.shader-nodes/1"
+#: The smallest zoom "fit" goes to: below it the node previews are too small to read.
+FIT_MIN_ZOOM = 0.6
 #: How far pasted and duplicated nodes move from the originals.
 PASTE_OFFSET = 40.0
 
@@ -436,17 +438,30 @@ class ShaderDocument(Document):
         y1 = max(b[1] + b[3] for b in boxes)
         return (x0, y0, x1 - x0, y1 - y0)
 
-    def fit(self) -> None:
-        """Zooms and pans so every node is in view."""
+    def fit(self, whole: bool = False) -> None:
+        """Zooms and pans so every node is in view; a big graph opens at a zoom its previews can be read at,
+        showing its Output end, unless ``whole`` (the Fit button) zooms out as far as it takes."""
         box = self.bounds()
         if box is None:
             self.pan, self.zoom = (60.0, 60.0), 1.0
             return
         x, y, w, h = box
         vw, vh = self.view_size
-        zoom = max(0.3, min(1.0, (vw - 80) / max(w, 1), (vh - 80) / max(h, 1)))
-        self.zoom = zoom
-        self.pan = ((vw - w * zoom) / 2 - x * zoom, (vh - h * zoom) / 2 - y * zoom)
+        zoom = min(1.0, (vw - 80) / max(w, 1), (vh - 80) / max(h, 1))
+        if zoom >= FIT_MIN_ZOOM or whole:
+            zoom = max(0.3, zoom)
+            self.zoom = zoom
+            self.pan = ((vw - w * zoom) / 2 - x * zoom, (vh - h * zoom) / 2 - y * zoom)
+            return
+        # Too big to read whole: show its end, where the Output is, at a zoom the previews are still clear.
+        self.zoom = zoom = FIT_MIN_ZOOM
+        out = self.graph.output_node
+        if out is not None:
+            ow, oh = _layout.size(self.graph, out)
+            cx, cy = out.x + ow, out.y + oh / 2
+        else:
+            cx, cy = x + w, y + h / 2
+        self.pan = (vw - 60 - cx * zoom, vh / 2 - cy * zoom)
 
     def node_at(self, x: float, y: float) -> Optional[str]:
         """The top-most node under the graph point ``(x, y)``."""
@@ -526,7 +541,7 @@ def templates() -> List[Tuple[str, str, str]]:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        out.append((path.stem, str(data.get("title") or data.get("name") or path.stem),
+        out.append((path.stem, str(data.get("title") or path.stem.replace("_", " ").capitalize()),
                     str(data.get("description", ""))))
     order = {"blank": 0}
     out.sort(key=lambda t: (order.get(t[0], 1), t[1]))

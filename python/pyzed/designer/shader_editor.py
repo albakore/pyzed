@@ -407,8 +407,8 @@ class ShaderEditor:
             "right": lambda: doc.nudge(1, 0),
             "up": lambda: doc.nudge(0, -1),
             "down": lambda: doc.nudge(0, 1),
-            "f": doc.fit,
-            "home": doc.fit,
+            "f": lambda: doc.fit(whole=True),
+            "home": lambda: doc.fit(whole=True),
             "ctrl-=": lambda: doc.set_zoom(doc.zoom * 1.2),
             "ctrl-+": lambda: doc.set_zoom(doc.zoom * 1.2),
             "ctrl-shift-=": lambda: doc.set_zoom(doc.zoom * 1.2),
@@ -924,7 +924,8 @@ def _zoom_badge(d: "Designer", t: Theme) -> Any:
             _core.button(_core.text(f"{doc.zoom * 100:.0f}%", size=11, color=t.text_muted, font="mono"),
                          lambda: doc.set_zoom(1.0), padding=(2, 4), bg="transparent", hover_bg=t.ghost_hover),
             ui.icon_button("plus", lambda: doc.set_zoom(doc.zoom * 1.2), size="xs", tooltip=tr("Zoom in"), theme=t),
-            ui.icon_button("maximize", doc.fit, size="xs", tooltip=tr("Fit everything (F)"), theme=t),
+            ui.icon_button("maximize", lambda: doc.fit(whole=True), size="xs", tooltip=tr("Fit everything (F)"),
+                           theme=t),
         ], spacing=2, align="center"),
         padding=(2, 4), bg=t.elevated, radius=t.radius, border_color=t.border, border_width=1)
 
@@ -1045,7 +1046,7 @@ def toolbar(d: "Designer", t: Theme) -> Any:
         tool("plus", lambda: ed.open_search((doc.view_size[0] / 2 - 140, 80)), "Add a node", keys="shift-a"),
         tool("trash-2", d.delete, "Delete", enabled=bool(doc.selection), keys="delete"),
         tool("layout-grid", doc.arrange, "Arrange nodes in columns", keys="ctrl-l"),
-        tool("maximize", doc.fit, "Fit everything", keys="f"),
+        tool("maximize", lambda: doc.fit(whole=True), "Fit everything", keys="f"),
         sep,
         tool("pause" if ed.paused is None else "play", ed.toggle_time,
              "Stop time" if ed.paused is None else "Start time"),
@@ -1304,7 +1305,7 @@ def _value_editor(d: "Designer", key: str, type_: str, value: Any, on_change: Ca
             on_change(new)
 
         cells = [_core.row([_core.text("xyzw"[i], size=11, color=t.text_muted, font="mono"),
-                            ui.number_field(round(parts[i], 4), lambda v, i=i: set_part(i, v), step=step or 0.1,
+                            ui.number_field(round(parts[i], 4), lambda v, i=i: set_part(i, v), step=step or 0.01,
                                             width=112, theme=t)], spacing=4, align="center") for i in range(n)]
         return _core.grid(cells, columns="1fr 1fr", spacing=4)
     if type_ == "texture":

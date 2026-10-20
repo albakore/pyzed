@@ -161,3 +161,17 @@ def test_errors_show_on_their_node(tmp_path, responsive):
     doc.connect(e, "result", doc.graph.output_node.id, "alpha")
     assert e in doc.diagnostics()
     assert d.view() is not None
+
+
+def test_forms_place_shaders_with_the_shader_control(tmp_path):
+    from pyzed.designer import components
+    from pyzed.designer.model import Control
+
+    path = shading.new("sky").save(tmp_path / "sky.pzshad")
+    spec = components.get("shader")
+    assert spec.category == "Display" and {p.name for p in spec.props} == {"file", "variables"}
+    control = Control(name="sky", type="shader", x=0, y=0, width=200, height=100,
+                      props={"file": str(path), "variables": {}})
+    assert components.render(control, components.RenderContext()) is not None
+    control.props["file"] = str(tmp_path / "missing.pzshad")
+    assert components.render(control, components.RenderContext()) is not None  # a placeholder, not an error
