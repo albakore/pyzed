@@ -1836,7 +1836,7 @@ El marco entero de una ventana abierta con `frame="custom"`: una barra de títul
 | `menus` | Menús a la izquierda de la barra: una lista de `ui.Menu`. |
 | `menu_button` | Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres). |
 | `start` | Elementos después de los menús (proyecto, rama…). |
-| `center` | Tu propio widget en el centro en lugar del título. |
+| `center` | Tu propio widget en el centro en lugar del título (un buscador, Run y Stop…); la barra sigue arrastrándose a ambos lados. |
 | `end` | Elementos antes de los botones de ventana. |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"`. Por defecto el `frame` de la ventana, o el del sistema. |
 | `window` | La ventana sobre la que actúan los botones. Por defecto aquella cuyo `view()` se está ejecutando. |
@@ -1887,7 +1887,7 @@ La barra de título de una ventana, sola: botones de ventana con el estilo de `s
 | `title` | Título (centrado, o a la izquierda en Windows). |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema). |
 | `start` | Elementos al principio. |
-| `center` | Widget en el centro en lugar del título. |
+| `center` | Widget en el centro en lugar del título; la barra sigue arrastrándose a ambos lados. |
 | `end` | Elementos al final. |
 | `on_drag` | Se llama al arrastrar la parte vacía de la barra (devuelve `Command.drag_window()`). |
 | `on_minimize` | Botón de minimizar. |

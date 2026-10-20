@@ -698,7 +698,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "menus": "Menus on the left of the bar: a list of `ui.Menu`.",
                         "menu_button": "Shows the menus behind a ☰ button (`False` always shows their names).",
                         "start": "Items after the menus (project, branch…).",
-                        "center": "Your own widget in the middle instead of the title.",
+                        "center": "Your own widget in the middle instead of the title (a search field, Run and Stop…); the bar still drags on both sides of it.",
                         "end": "Items before the window buttons.",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"`. By default the window\'s `frame`, or this system\'s.',
                         "window": "The window the buttons act on. By default the one whose `view()` is running.",
@@ -713,7 +713,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                     "params": {
                         "title": "Title (centered, or on the left on Windows).",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"` (`None`: this system\'s).',
-                        "start": "Items at the start.", "center": "Widget in the middle instead of the title.",
+                        "start": "Items at the start.", "center": "Widget in the middle instead of the title; the bar still drags on both sides of it.",
                         "end": "Items at the end.",
                         "on_drag": "Called when the empty part of the bar is dragged (return `Command.drag_window()`).",
                         "on_minimize": "Minimize button.", "on_maximize": "Maximize button and double click on the bar.",

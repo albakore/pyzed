@@ -29,7 +29,7 @@ Qt Designer, and the node and scene ideas by Godot and Unreal Engine.
 
 ```mermaid
 flowchart TB
-    T["① Title bar: ☰ menu · project / file · Run ▶ Stop · View · Help · ⚙"]
+    T["① Title bar: ☰ menu · project / file · Run ▶ Stop · 🔍 Search · View · Help · ⚙"]
     subgraph W[" "]
         direction LR
         L["② Left dock<br/>Design · Project · Dependencies"]
@@ -48,7 +48,7 @@ flowchart TB
 
 ## ① The title bar
 
-The strip at the very top. From left to right:
+The strip at the very top. From left to right (Run, Stop and the search field sit in the middle):
 
 | Item | What it does |
 | --- | --- |
@@ -61,6 +61,7 @@ The strip at the very top. From left to right:
 | **Component** / **Shader** badge | Says which [view](/pyzed/editor/views/) you are in when it is not a form. |
 | **▶ Run** (<kbd>F5</kbd>) | Runs the form, previews the component, or opens the shader in its own window. |
 | **■ Stop** (<kbd>Shift</kbd>+<kbd>F5</kbd>) | Closes what Run opened. Disabled when nothing is running. |
+| **🔍 Search** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) | Opens the [command palette](/pyzed/editor/menus-and-commands/#command-palette): commands, panels, editor settings, key bindings and recent files. |
 | **View** (panels icon) | Docks, panels, grid and guides, previews of other themes, languages and window frames. |
 | **Help** (? icon) | Shortcuts, the built-in reference, the welcome window, updates and About. |
 | **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Settings](/pyzed/editor/settings/). |
@@ -68,7 +69,7 @@ The strip at the very top. From left to right:
 <Media src={fileMenu} alt="The ☰ menu open with File and Run commands and recent files" caption="The ☰ menu: file commands, recent files and Run." />
 
 Every menu entry is listed with its keys in [Menus and commands](/pyzed/editor/menus-and-commands/). Anything you
-can click in a menu is also in the **command palette** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>): type a few
+can click in a menu is also in the **command palette** (the search field, or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>): type a few
 letters of its name and press <kbd>Enter</kbd>.
 
 ### The window frame

@@ -13,8 +13,8 @@ list always agree. This page lists them all.
 From left to right: the **☰** menu, the environment under WSL, the project's name (click it for the project picker:
 the projects of this window and the recent ones), the git branch (click it to switch), the file name (click
 it to open another file), a dot when there are unsaved changes and a **Component** or **Shader** badge in those
-views. At the right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu and the **Settings**
-gear, followed by the window buttons when Pyzed Design draws its own frame (see
+views. In the middle: **Run** (<kbd>F5</kbd>), **Stop** and the search field, which opens the
+[command palette](#command-palette). At the right: the **View** menu, the **Help** menu and the **Settings** gear, followed by the window buttons when Pyzed Design draws its own frame (see
 [The interface](/pyzed/editor/interface/#the-window-frame)).
 
 ## ☰ File menu
@@ -116,8 +116,10 @@ button has a tooltip with its shortcut, and the editing tools scroll sideways wh
 
 ## Command palette
 
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> opens a search box over every command that can run right now, as
-`Group: Command` with its shortcut. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
+The search field in the middle of the title bar, or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, opens a search box
+over every command that can run right now, as `Group: Command` with its shortcut, and over the places of the editor:
+`Panel: Properties` shows a panel, `Editor settings: Cursor` and `Key bindings: Folding` open that page of the
+[editor settings](/pyzed/editor/code-editor/#editor-settings), and `Recent: login.pzform` opens a recent file. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
 <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to run, <kbd>Esc</kbd> to close. It also reaches commands that
 have no menu, such as the Edit ones.
 

@@ -29,7 +29,7 @@ de propiedades en Visual Basic y Qt Designer, y las ideas de nodos y escenas en 
 
 ```mermaid
 flowchart TB
-    T["① Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ Detener · Ver · Ayuda · ⚙"]
+    T["① Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ Detener · 🔍 Buscar · Ver · Ayuda · ⚙"]
     subgraph W[" "]
         direction LR
         L["② Dock izquierdo<br/>Diseño · Proyecto · Dependencias"]
@@ -48,7 +48,7 @@ flowchart TB
 
 ## ① La barra de título
 
-La franja de arriba del todo. De izquierda a derecha:
+La franja de arriba del todo. De izquierda a derecha (Ejecutar, Detener y el buscador quedan en el centro):
 
 | Elemento | Qué hace |
 | --- | --- |
@@ -61,6 +61,7 @@ La franja de arriba del todo. De izquierda a derecha:
 | Insignia **Componente** / **Shader** | Indica en qué [vista](/pyzed/es/editor/views/) estás cuando no es un formulario. |
 | **▶ Ejecutar** (<kbd>F5</kbd>) | Ejecuta el formulario, previsualiza el componente o abre el shader en su propia ventana. |
 | **■ Detener** (<kbd>Mayús</kbd>+<kbd>F5</kbd>) | Cierra lo que abrió Ejecutar. Desactivado si no hay nada en marcha. |
+| **🔍 Buscar** (<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>) | Abre la [paleta de comandos](/pyzed/es/editor/menus-and-commands/#paleta-de-comandos): comandos, paneles, ajustes del editor, atajos y archivos recientes. |
 | **Ver** (icono de paneles) | Docks, paneles, cuadrícula y guías, vistas previas con otros temas, idiomas y marcos de ventana. |
 | **Ayuda** (icono ?) | Atajos, la referencia integrada, la ventana de bienvenida, actualizaciones y Acerca de. |
 | **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Ajustes](/pyzed/es/editor/settings/). |
@@ -68,7 +69,7 @@ La franja de arriba del todo. De izquierda a derecha:
 <Media src={fileMenu} alt="El menú ☰ abierto con los comandos de archivo, Ejecutar y archivos recientes" caption="El menú ☰: comandos de archivo, archivos recientes y Ejecutar." />
 
 Cada entrada de los menús aparece con sus teclas en [Menús y comandos](/pyzed/es/editor/menus-and-commands/). Todo lo
-que puedes pulsar en un menú está también en la **paleta de comandos** (<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>):
+que puedes pulsar en un menú está también en la **paleta de comandos** (el buscador, o <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>):
 escribe unas letras de su nombre y pulsa <kbd>Enter</kbd>.
 
 ### El marco de la ventana
