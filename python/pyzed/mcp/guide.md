@@ -130,6 +130,17 @@ Run a form with `pyzed run login.pzform` (`--reload` for hot reload). `new_form`
 files from a list of controls and `validate_form` checks a `.pzform`. The designer's toolbox
 types (`button`, `input`, `label`...) are listed by `list_components(kind="designer")`.
 
+Non-visual components (`"visual": false`: `timer`, `shortcut`, `file_watcher`, `process`, `worker`,
+`http_request`, `clipboard`, `settings`, `file_dialog`, `notification`) have properties and events
+but no position: they sit in the tray under the form and draw nothing when it runs. Handlers call
+their methods: `form.process1.start()`, `return form.file_dialog1.show()`,
+`form.worker1.run(value)` (its `work` handler runs in a thread; use `progress` and `done` to change
+controls), `form.settings1["key"] = value`. In plain code the same objects are `pz.Timer`,
+`pz.Shortcut`, `pz.FileWatcher`, `pz.Process`, `pz.Worker`, `pz.HttpRequest`, `pz.Clipboard`,
+`pz.Settings`, `pz.FileDialog` and `pz.Notification` (`on_<event>=` handlers, intervals in ms;
+add `timer.subscriptions()` to the app's `subscriptions` and call `shortcut.handle(combo)` in
+`on_key`). Events from background threads reach handlers on the UI thread.
+
 ## Projects and the CLI
 
 - `pyzed new my_app` creates a uv project (ruff, ty, git) with the UI in `ui/`;

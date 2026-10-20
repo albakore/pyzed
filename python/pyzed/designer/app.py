@@ -385,9 +385,28 @@ class Designer(App):
     def pick_tool(self, type_: Optional[str]) -> Callable[[], None]:
         """Returns a callback that picks ``type_`` as the placing tool, or drops it if already picked."""
         def pick() -> None:
+            if type_ is not None and not _components.get(type_).visual:
+                self.add_non_visual(type_)  # it has no place on the form: straight to the tray
+                return
             self.tool = None if self.tool == type_ else type_
             self.focus = "canvas"
         return pick
+
+    def add_non_visual(self, type_: str) -> None:
+        """Adds a non-visual component (a timer, a file watcher...) to the form's tray and selects it."""
+        self.doc.add(type_, 0, 0, snap=False)
+        self.tool = None
+        self.focus = "canvas"
+        self.right_tab = "properties"
+        self._selection_changed()
+
+    def press_tray(self, name: str) -> None:
+        """Mouse press on a chip of the component tray: selects that non-visual component."""
+        self.focus = "canvas"
+        self.menu = None
+        self.tool = None
+        self.doc.select(name)
+        self._selection_changed()
 
     def set_toolbox_query(self, text: str) -> None:
         """Filters the toolbox by ``text``."""
@@ -717,7 +736,8 @@ class Designer(App):
             inside = {c.name for n in drag.rects for c in form.descendants(n)}
             rects = _layout.resolve(form, free=drag.rects.keys())
             others = [rects[c.name] for c in form.controls
-                      if c.name not in drag.rects and c.name not in inside and c.visible and c.name in rects]
+                      if c.name not in drag.rects and c.name not in inside and c.visible and c.name in rects
+                      and _components.get(c.type).visual]
             gx, gy, self.guides = geometry.smart_guides(moving, others, (form.width, form.height))
             ddx += gx
             ddy += gy
@@ -778,7 +798,8 @@ class Designer(App):
         elif drag.mode == "band":
             if band is not None:
                 rects = _layout.resolve(form)
-                hit = [c.name for c in form.controls if c.name in rects and geometry.intersects(rects[c.name], band)]
+                hit = [c.name for c in form.controls if c.name in rects and _components.get(c.type).visual
+                       and geometry.intersects(rects[c.name], band)]
                 # a container and what is inside it move together: keep the outermost
                 doc.select([n for n in hit if not any(a.name in hit for a in form.ancestors(n))])
                 self._selection_changed()
@@ -831,6 +852,20 @@ class Designer(App):
         control = self.doc.form.get(name)
         locked = bool(control and control.locked)
         container = control is not None and _layout.kind(control) is not None
+        if control is not None and not _components.get(control.type).visual:  # in the tray: nothing to lay out
+            return [
+                ui.MenuItem(tr("View code"), self._menu_action(lambda: self.open_default_event(name)), icon="code"),
+                ui.MenuItem(tr("Help"), self._menu_action(lambda: self.open_reference(self.help_page_of(name))),
+                            icon="book-marked", keys="shift-f1"),
+                ui.SEPARATOR,
+                ui.MenuItem(tr("Cut"), self._menu_action(self.cut), icon="scissors", keys="ctrl-x"),
+                ui.MenuItem(tr("Copy"), self._menu_action(self.copy), icon="copy", keys="ctrl-c"),
+                ui.MenuItem(tr("Duplicate"), self._menu_action(self.duplicate), icon="copy-plus", keys="ctrl-d"),
+                ui.MenuItem(tr("Enable") if not control.enabled else tr("Disable"), self._menu_action(
+                    lambda: self.set_field(name, "enabled", not control.enabled)), icon="power"),
+                ui.SEPARATOR,
+                ui.MenuItem(tr("Delete"), self._menu_action(self.delete), icon="trash-2", keys="delete", danger=True),
+            ]
         items = [
             ui.MenuItem(tr("View code"), self._menu_action(lambda: self.open_default_event(name)), icon="code"),
             ui.MenuItem(tr("Help"), self._menu_action(lambda: self.open_reference(self.help_page_of(name))),
@@ -2620,6 +2655,8 @@ class Designer(App):
         primary = doc.primary
         if len(doc.selection) > 1:
             info = tr("{count} selected", count=len(doc.selection))
+        elif primary is not None and not _components.get(primary.type).visual:
+            info = f"{primary.name}  " + tr("Non-visual")
         elif primary is not None:
             info = f"{primary.name}  {primary.width:g}×{primary.height:g} " + tr(
                 "at {x}, {y}", x=f"{primary.x:g}", y=f"{primary.y:g}")

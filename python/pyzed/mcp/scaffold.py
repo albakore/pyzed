@@ -205,7 +205,9 @@ def form(name: str, *, title: str = "", width: float = 480, height: float = 320,
             if component.prop(key) is None:
                 warnings.append(f"{type_} has no prop {key!r}; known: {', '.join(p.name for p in component.props)}")
             control.props[key] = value
-        if spec.get("parent"):
+        if spec.get("parent") and not component.visual:
+            warnings.append(f"{type_} is non-visual: it belongs to the form, not to {spec['parent']!r}")
+        elif spec.get("parent"):
             control.parent = str(spec["parent"])
         if spec.get("anchor"):
             from .. import anchors

@@ -93,6 +93,39 @@ PROP_DOCS: Dict[Any, str] = {
     ("search", "text"): "What the user typed; set it from code to change it.",
     ("text_area", "text"): "The text in the box: what the user typed, or set it from code.",
     ("markdown", "text"): "The Markdown source to show.",
+    # non-visual components
+    ("timer", "repeat"): "Ticks again and again; turn it off to tick once and stop (a delay).",
+    ("shortcut", "keys"): "The keys that raise activate, such as ctrl-s or ctrl-shift-p; separate several with "
+                          "commas. mod-s is Cmd+S on macOS and Ctrl+S elsewhere.",
+    ("file_watcher", "path"): "The folder (or the one file) to watch, relative to the folder the app runs in.",
+    ("file_watcher", "pattern"): "Which files to watch, such as *.csv; separate several with ;.",
+    ("file_watcher", "recursive"): "Also watches the files in subfolders.",
+    ("file_watcher", "interval"): "Milliseconds between two looks at the files.",
+    ("file_watcher", "running"): "Whether it is watching. Set it from code to start or stop it.",
+    ("process", "command"): "The program and its arguments, such as git status or python script.py.",
+    ("process", "directory"): "The folder the program runs in (empty: the folder the app runs in).",
+    ("process", "shell"): "Runs the command through the system's shell, so pipes and wildcards work.",
+    ("process", "autostart"): "Starts the program when the form opens; otherwise call start() from code.",
+    ("http_request", "url"): "The web address to call.",
+    ("http_request", "method"): "The HTTP method: GET reads, POST sends, PUT and PATCH change, DELETE removes.",
+    ("http_request", "headers"): "Extra headers, one Name: value per line.",
+    ("http_request", "body"): "What to send with POST, PUT or PATCH.",
+    ("http_request", "timeout"): "Seconds to wait for an answer before failed runs.",
+    ("http_request", "send_on_load"): "Sends the request when the form opens; otherwise call send() from code.",
+    ("clipboard", "watch"): "Looks at the clipboard regularly and raises change when something new is copied.",
+    ("clipboard", "interval"): "Milliseconds between two looks at the clipboard.",
+    ("settings", "file"): "The name of the file the values are kept in (empty: the form's and the component's "
+                          "names).",
+    ("settings", "remember"): "Controls whose value is kept between runs, one name per line: they open as the "
+                              "user left them.",
+    ("file_dialog", "mode"): "open picks a file, open_many several, save asks where to save and folder picks a "
+                             "folder.",
+    ("file_dialog", "title"): "The dialog's title.",
+    ("file_dialog", "filters"): "Which files it shows, one Name: extensions per line, such as Images: png, jpg.",
+    ("file_dialog", "directory"): "The folder it opens in.",
+    ("file_dialog", "file_name"): "The name suggested when saving.",
+    ("notification", "title"): "The notification's title.",
+    ("notification", "text"): "The text of the notification (show() can also be given one).",
 }
 
 #: Fields every control has, besides its own properties (read and written like them).
@@ -115,9 +148,9 @@ def prop_doc(type_: str, name: str) -> str:
     return tr(text) if text else ""
 
 
-def event_doc(event: str, owner: str = "the control") -> str:
-    """What the event does, with ``owner`` in it, translated."""
-    text = _components.EVENT_DOCS.get(event, "")
+def event_doc(event: str, owner: str = "the control", type_: Optional[str] = None) -> str:
+    """What the event does (on a control of ``type_``), with ``owner`` in it, translated."""
+    text = _components.event_text(type_, event)
     return tr(text, name=owner) if text else ""
 
 
@@ -209,7 +242,7 @@ def control_markdown(spec: _components.Component, name: Optional[str] = None) ->
                f"`form.{name}.<property>`.\n\n| {tr('Property')} | {tr('Type')} | {tr('Default')} | "
                f"{tr('Description')} |\n| --- | --- | --- | --- |\n" + "\n".join(rows))
     if spec.all_events:
-        rows = [f"| `{e}` | `{name}_{e}(form, event)` | {_inline(event_doc(e, name))} |" for e in spec.all_events]
+        rows = [f"| `{e}` | `{name}_{e}(form, event)` | {_inline(event_doc(e, name, spec.type))} |" for e in spec.all_events]
         out.append(f"## {tr('Events')}\n\n| {tr('Event')} | {tr('Handler')} | {tr('Description')} |\n"
                    "| --- | --- | --- |\n" + "\n".join(rows))
     from . import runtime

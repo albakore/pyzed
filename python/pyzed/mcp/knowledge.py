@@ -297,7 +297,7 @@ def _describe_designer(qualified: str, spec: Any) -> Dict[str, Any]:
                    **({"choices": list(p.choices)} if p.choices else {}),
                    **({"min": p.min} if p.min is not None else {}), **({"max": p.max} if p.max is not None else {})}
                   for p in spec.props],
-        "events": {e: components.EVENT_DOCS.get(e, "").format(name="the control") for e in spec.all_events},
+        "events": {e: components.event_text(spec.type, e).format(name="the control") for e in spec.all_events},
         "handler": "def <control>_<event>(form, event): ...",
         "docs": f"{SITE}guides/designer/",
     }
