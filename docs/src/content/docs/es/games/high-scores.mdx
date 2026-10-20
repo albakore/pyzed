@@ -1,6 +1,6 @@
 ---
-title: "8. Récords, guardado y ganchos de sonido"
-description: "Guarda la tabla de récords y los ajustes de un juego en Python con Pyzed: un archivo JSON en la carpeta correcta de Windows, macOS y Linux, escritura atómica, nombre con ui.input, una tabla de récords, ganchos de sonido y empaquetar el juego."
+title: "8. Récords, guardado y sonido"
+description: "Guarda la tabla de récords y los ajustes de un juego en Python con Pyzed: un archivo JSON en la carpeta correcta de Windows, macOS y Linux, escritura atómica, nombre con ui.input, una tabla de récords, efectos de sonido sintetizados con pyzed.audio y empaquetar el juego."
 sidebar:
   order: 8
   label: "8. Récords y guardado"
@@ -13,21 +13,20 @@ import source from '../../../../../../examples/games/high_scores.py?raw';
 
 Una puntuación vale más si mañana sigue ahí. Este último paso de la ruta construye *Target Rush*, un juego de clics
 de 20 segundos, y le da lo que tienen los juegos terminados: una **tabla de récords guardada en disco**, un
-**nombre** cuando batas un récord, un único sitio para los **sonidos** y una forma de **compartirlo** con tus
-amigos.
+**nombre** cuando batas un récord, **efectos de sonido** y una forma de **compartirlo** con tus amigos.
 
 <Media clip="game-high-scores" alt="Aparecen dianas rosas en un tablero oscuro y el puntero hace clic en ellas, cada una estalla en chispas; al final una tarjeta New high score pide un nombre, se escribe Ada y la tabla muestra a Ada arriba, resaltada" caption="Target Rush: un récord pide un nombre y entra en una tabla de los 10 mejores guardada como JSON." eager />
 
 | Objetivo | Tiempo | Nivel | Necesitas |
 | --- | --- | --- | --- |
-| Un juego que guarda una tabla de los 10 mejores y está listo para el sonido | 35 minutos | Intermedio | [7. Menús, HUD y ajustes](/pyzed/es/games/menus-hud/) |
+| Un juego con sonido que guarda una tabla de los 10 mejores | 35 minutos | Intermedio | [7. Menús, HUD y ajustes](/pyzed/es/games/menus-hud/) |
 
 ## Qué aprenderás
 
 - Encontrar la **carpeta correcta** para las partidas guardadas en Windows, macOS y Linux.
 - **Guardar con seguridad**: escribir un archivo temporal y cambiarlo de golpe, y sobrevivir a un archivo dañado.
 - Pedir un **nombre** con `ui.input` (Enter confirma) y una **tabla de récords** hecha de filas.
-- **Ganchos de sonido**: un método al que se llama donde va un sonido.
+- **Efectos de sonido**: un método al que se llama donde va un sonido, que toca percusión sintetizada con `pyzed.audio`.
 - **Empaquetar** el juego como app.
 
 <Run file="examples/games/high_scores.py" lang="es" />
@@ -118,20 +117,50 @@ amigos.
    def sound(self, name):
        """Called wherever a sound belongs: "start", "hit", "miss", "combo", "end", "record"."""
        self.last_sound, self.sound_age = name, 0.0
+       if self.sounds is None and self.sound_backend:
+           self.sounds = Sounds(self.sound_backend)    # the first sound starts the engine
+       if self.sounds:
+           self.sounds.play(name)
    ```
 
-   Aquí muestra el nombre en el HUD un momento, lo que también sirve para comprobar el ritmo de tus sonidos antes de
-   tenerlos.
+   Además muestra el nombre en el HUD un momento, algo útil para comprobar el ritmo de tus sonidos.
+
+7. **Crea los sonidos.** `Sounds` monta un pequeño patch con [`pyzed.audio`](/pyzed/es/audio/): cuatro voces
+   `drum` que entran en un `mixer` y van a los altavoces. Cada efecto es una voz con su propia afinación, en una
+   tabla al principio del archivo, así que no hay archivos de sonido que distribuir:
+
+   ```python
+   SOUNDS = {                # effect: (drum voice, tune in semitones, decay in seconds)
+       "hit": ("tom", 7, 0.12),
+       "miss": ("kick", -6, 0.25),
+       ...
+   }
+
+   def play(self, name):
+       kind, tune, decay = SOUNDS[name]
+       voice = self.voices[kind]
+       voice.set(tune=tune, decay=decay)
+       voice.trigger()       # returns at once: the sound plays on the audio thread
+   ```
 
 </Steps>
 
-## Ganchos de sonido
+## Efectos de sonido
 
-<Aside type="caution" title="Pyzed no tiene API de audio (todavía)">
-Pyzed dibuja y gestiona la entrada; no reproduce sonido. Para añadir sonido, llama a una librería de audio desde tu
-método `sound()`. Carga los sonidos una vez al empezar, que la llamada sea corta (la mayoría de librerías reproducen
-en segundo plano) y lee el volumen de tus ajustes. Si la librería que eliges bloquea mientras suena, llámala desde un
-hilo (`threading.Thread(target=play, daemon=True).start()`) para que el bucle nunca espere.
+`pyzed.audio` calcula el sonido en Rust, en su propio hilo de tiempo real, así que `trigger()` nunca frena el bucle
+de fotogramas, y sin tarjeta de sonido el motor suena en silencio en vez de fallar. Algunas formas de ir más lejos:
+
+- **Sonidos grabados**: un módulo `sampler` reproduce un archivo WAV. Llama a `node.load("coin.wav")` una vez al
+  empezar y a `node.trigger()` en `sound()`.
+- **Ajustes de volumen**: el módulo `audio_out` tiene un mando `volume`, y el mezclador un `level_1`…`level_4` por
+  canal. Cámbialos desde los sliders de [Orb Rush](/pyzed/es/games/menus-hud/): `self.sounds.out["volume"] = valor`.
+- **Música**: un `clock` y un `sequencer` tocan un bucle solos; mira el [motor de audio](/pyzed/es/audio/engine/getting-started/).
+- **Pruebas**: `sound_backend="offline"` nunca abre un dispositivo; las pruebas llaman a `engine.render(segundos)`
+  para comprobar que cada efecto suena, y `None` silencia el juego.
+
+<Aside type="tip">
+Que los sonidos sean cortos y un poco distintos cada vez (varía `tune` un semitono o dos), para que un sonido que se
+oye cien veces en una partida no canse.
 </Aside>
 
 Guarda los ajustes igual que los récords: un `settings.json` junto a `scores.json`, escrito con el mismo `save()`

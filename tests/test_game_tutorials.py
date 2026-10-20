@@ -340,10 +340,12 @@ def test_high_scores_file(games, tmp_path):
 
 def test_target_rush_round(games, tmp_path):
     hs = games("high_scores")
-    app = hs.TargetRush(seed=3, path=tmp_path / "scores.json")
+    app = hs.TargetRush(seed=3, path=tmp_path / "scores.json", sound_backend="offline")
     assert app.scene == "ready" and not (tmp_path / "scores.json").exists()   # nothing written yet
     app.start()
     assert app.last_sound == "start"
+    left, _ = app.sounds.engine.render(0.1)
+    assert max(map(abs, left)) > 0.01                                 # the start sound plays
     run(app, 1)
     target = app.targets[0]
     app.click(target[0], target[1])
@@ -369,3 +371,17 @@ def test_every_path_game_has_a_tutorial_link():
     for name in names:
         text = (GAMES / f"{name}.py").read_text(encoding="utf-8")
         assert "Tutorial: https://albakore.github.io/pyzed/games/" in text, name
+
+
+def test_target_rush_sounds(games, tmp_path):
+    hs = games("high_scores")
+    sounds = hs.Sounds("offline")
+    for name in hs.SOUNDS:
+        sounds.play(name)
+        left, _ = sounds.engine.render(0.3)
+        assert max(map(abs, left)) > 0.01, name
+    left, _ = sounds.engine.render(1.0)
+    assert max(map(abs, left[-2400:])) < 0.001                         # silent between sounds
+    muted = hs.TargetRush(seed=1, path=tmp_path / "scores.json", sound_backend=None)
+    muted.sound("hit")
+    assert muted.sounds is None and muted.last_sound == "hit"

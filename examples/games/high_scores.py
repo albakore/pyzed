@@ -10,8 +10,9 @@ saved as JSON in your user data folder and is still there next time. Shows:
   to a temporary file first and then swapped in, so a crash never leaves half a file.
   A missing or damaged file just means an empty table.
 - **Name entry** with ``ui.input`` (Enter submits) and a leaderboard made of rows.
-- **Sound hooks**: one ``sound(name)`` method called wherever a sound belongs. Pyzed has
-  no audio API, so it only shows the name in the HUD; connect any audio library there.
+- **Sound effects** from one ``sound(name)`` method called wherever a sound belongs. The
+  sounds are synthesized live by ``pyzed.audio`` (drum voices, no files); with no sound card
+  the game simply stays silent.
 
 Tutorial: https://albakore.github.io/pyzed/games/high-scores/
 """
@@ -26,13 +27,50 @@ import time
 from pathlib import Path
 
 import pyzed as pz
-from pyzed import draw, game, ui
+from pyzed import audio, draw, game, ui
 
 W, H = 640, 420
 ROUND = 20.0
 TARGET_LIFE = 1.4         # seconds a target lives (it shrinks meanwhile)
 TARGET_R = 34
 KEEP = 10                 # entries in the leaderboard
+
+SOUNDS = {                # effect: (drum voice, tune in semitones, decay in seconds)
+    "start": ("tom", 0, 0.3),
+    "hit": ("tom", 7, 0.12),
+    "combo": ("clap", 0, 0.25),
+    "miss": ("kick", -6, 0.25),
+    "end": ("tom", -7, 0.6),
+    "record": ("hihat", 5, 0.5),
+}
+
+
+# -- sound ----------------------------------------------------------------------------------------
+class Sounds:
+    """The game's sound effects, synthesized live by ``pyzed.audio``: there are no files to load.
+
+    Four drum voices go through a mixer to the speakers, and each effect strikes one voice with
+    its own tuning. Without a sound card the engine plays silently, so the game runs anywhere.
+    """
+
+    def __init__(self, backend="auto", volume=0.8):
+        self.engine = audio.Engine(backend)
+        mixer = self.engine.add("mixer")
+        self.out = self.engine.add("audio_out", volume=volume)
+        self.engine.connect(mixer, "left", self.out, "left")
+        self.engine.connect(mixer, "right", self.out, "right")
+        self.voices = {}
+        for i, kind in enumerate(("tom", "clap", "kick", "hihat"), start=1):
+            self.voices[kind] = self.engine.add("drum", sound=kind)
+            self.engine.connect(self.voices[kind], "out", mixer, f"in_{i}")
+        if backend != "offline":         # "offline" never plays: tests render() it instead
+            self.engine.start()
+
+    def play(self, name):
+        kind, tune, decay = SOUNDS[name]
+        voice = self.voices[kind]
+        voice.set(tune=tune, decay=decay)
+        voice.trigger()                  # returns at once: the sound plays on the audio thread
 
 
 # -- saving --------------------------------------------------------------------------------------
@@ -93,7 +131,7 @@ class TargetRush(pz.App):
     size = (W + 32, H + 92)
     theme = "One Dark"
 
-    def __init__(self, seed=None, path=None):
+    def __init__(self, seed=None, path=None, sound_backend="auto"):
         self.random = random.Random(seed)
         self.scores = HighScores(path or data_dir("Target Rush") / "scores.json")
         self.sparks = game.Particles(gravity=500, seed=seed)
@@ -101,6 +139,8 @@ class TargetRush(pz.App):
         self.name = ""
         self.rank = None
         self.last_sound, self.sound_age = None, 9.0
+        self.sound_backend = sound_backend   # "auto", "offline" (tests) or None (muted)
+        self.sounds = None                   # made on the first sound, so a menu costs nothing
         self.reset()
 
     def reset(self):
@@ -119,10 +159,13 @@ class TargetRush(pz.App):
     def sound(self, name):
         """Called wherever a sound belongs: "start", "hit", "miss", "combo", "end", "record".
 
-        Pyzed has no audio API, so here it only shows the name in the HUD for a moment.
-        Play a file with the audio library you prefer from this one place.
+        Plays the effect and shows its name in the HUD for a moment.
         """
         self.last_sound, self.sound_age = name, 0.0
+        if self.sounds is None and self.sound_backend:
+            self.sounds = Sounds(self.sound_backend)
+        if self.sounds:
+            self.sounds.play(name)
 
     # -- update -------------------------------------------------------------------------------
     def subscriptions(self):

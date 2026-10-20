@@ -1,6 +1,6 @@
 ---
-title: "8. High scores, saves and sound hooks"
-description: "Save a game's leaderboard and settings in Python with Pyzed: a JSON file in the right folder on Windows, macOS and Linux, atomic writes, name entry with ui.input, a leaderboard, sound hooks, and packaging the game."
+title: "8. High scores, saves and sound"
+description: "Save a game's leaderboard and settings in Python with Pyzed: a JSON file in the right folder on Windows, macOS and Linux, atomic writes, name entry with ui.input, a leaderboard, sound effects synthesized with pyzed.audio, and packaging the game."
 sidebar:
   order: 8
   label: "8. High scores and saves"
@@ -13,20 +13,20 @@ import source from '../../../../../examples/games/high_scores.py?raw';
 
 A score means more when it is still there tomorrow. This last step of the path builds *Target Rush*, a
 20-second clicking game, and gives it what finished games have: a **leaderboard saved on disk**, a **name
-entry** when you beat a record, one place for **sounds**, and a way to **ship it** to your friends.
+entry** when you beat a record, **sound effects**, and a way to **ship it** to your friends.
 
 <Media clip="game-high-scores" alt="Pink targets appear on a dark board and the pointer clicks them, each bursting into sparks; at the end a New high score card asks for a name, Ada is typed, and the leaderboard shows Ada at the top, highlighted" caption="Target Rush: a high score asks for a name and goes into a top-10 table saved as JSON." eager />
 
 | Goal | Time | Level | You need |
 | --- | --- | --- | --- |
-| A game that saves a top-10 leaderboard and is ready for sound | 35 minutes | Intermediate | [7. Menus, HUD and settings](/pyzed/games/menus-hud/) |
+| A game with sound that saves a top-10 leaderboard | 35 minutes | Intermediate | [7. Menus, HUD and settings](/pyzed/games/menus-hud/) |
 
 ## What you'll learn
 
 - Find the **right folder** for saves on Windows, macOS and Linux.
 - **Save safely**: write a temporary file and swap it in, and survive a damaged file.
 - A **name entry** with `ui.input` (Enter submits) and a **leaderboard** made of rows.
-- **Sound hooks**: one method called wherever a sound belongs.
+- **Sound effects**: one method called wherever a sound belongs, playing drums synthesized by `pyzed.audio`.
 - **Package** the game as an app.
 
 <Run file="examples/games/high_scores.py" />
@@ -117,20 +117,50 @@ entry** when you beat a record, one place for **sounds**, and a way to **ship it
    def sound(self, name):
        """Called wherever a sound belongs: "start", "hit", "miss", "combo", "end", "record"."""
        self.last_sound, self.sound_age = name, 0.0
+       if self.sounds is None and self.sound_backend:
+           self.sounds = Sounds(self.sound_backend)    # the first sound starts the engine
+       if self.sounds:
+           self.sounds.play(name)
    ```
 
-   Here it shows the name in the HUD for a moment, which is also a handy way to check the timing of your
-   sounds before you have any.
+   It also shows the name in the HUD for a moment, a handy way to check the timing of your sounds.
+
+7. **Make the sounds.** `Sounds` builds a tiny patch with [`pyzed.audio`](/pyzed/audio/): four `drum`
+   voices into a `mixer` and the speakers. Each effect is one voice with its own tuning, listed in a table
+   at the top of the file, so there are no sound files to ship:
+
+   ```python
+   SOUNDS = {                # effect: (drum voice, tune in semitones, decay in seconds)
+       "hit": ("tom", 7, 0.12),
+       "miss": ("kick", -6, 0.25),
+       ...
+   }
+
+   def play(self, name):
+       kind, tune, decay = SOUNDS[name]
+       voice = self.voices[kind]
+       voice.set(tune=tune, decay=decay)
+       voice.trigger()       # returns at once: the sound plays on the audio thread
+   ```
 
 </Steps>
 
-## Sound hooks
+## Sound effects
 
-<Aside type="caution" title="Pyzed has no audio API (yet)">
-Pyzed draws and handles input; it does not play sound. To add sound, call an audio library from your
-`sound()` method. Load your sounds once at start, keep the call short (most libraries play in the background),
-and read the volume from your settings. If the library you choose blocks while playing, call it from a thread
-(`threading.Thread(target=play, daemon=True).start()`) so the frame loop never waits.
+`pyzed.audio` computes the sound in Rust on its own real-time thread, so `trigger()` never slows the frame
+loop, and with no sound card the engine plays silently instead of failing. A few ways to go further:
+
+- **Recorded sounds**: a `sampler` module plays a WAV file. Call `node.load("coin.wav")` once at start and
+  `node.trigger()` in `sound()`.
+- **Volume settings**: the `audio_out` module has a `volume` knob, and the mixer a `level_1`…`level_4` per
+  channel. Set them from the sliders of [Orb Rush](/pyzed/games/menus-hud/): `self.sounds.out["volume"] = value`.
+- **Music**: a `clock` and a `sequencer` play a loop on their own; see the [audio engine](/pyzed/audio/engine/getting-started/).
+- **Tests**: `sound_backend="offline"` never opens a device; the tests call `engine.render(seconds)` to check
+  that each effect makes a sound, and `None` mutes the game.
+
+<Aside type="tip">
+Keep sounds short and a little different each time (vary `tune` by a semitone or two), so a sound heard a
+hundred times in a round does not get tiring.
 </Aside>
 
 Save the settings the same way as the scores: a `settings.json` next to `scores.json`, written with the same

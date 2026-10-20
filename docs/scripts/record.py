@@ -403,7 +403,7 @@ def high_scores_clip(c: Clip):
     scores = HS.HighScores(work / "scores.json")
     for name, score in (("Grace", 4200), ("Alan", 3100), ("Linus", 1900), ("Margaret", 1200)):
         scores.add(name, score)
-    app = HS.TargetRush(seed=4, path=work / "scores.json")
+    app = HS.TargetRush(seed=4, path=work / "scores.json", sound_backend=None)
     pointer = (320.0, 380.0)
     yield Frame(app, app.size, pointer, hold=c.fps)
     pointer = (336.0 + 16, 383.0 + 60)
