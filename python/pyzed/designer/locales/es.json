@@ -1391,6 +1391,20 @@
   "No project": "Sin proyecto",
   "detached": "desacoplado",
   "Git worktree": "Worktree de git",
-  "Open recent project…": "Abrir proyecto reciente…"
+  "Open recent project…": "Abrir proyecto reciente…",
+  "Set as Startup File": "Usar como archivo de inicio",
+  "Startup file": "Archivo de inicio",
+  "Could not change the startup file": "No se pudo cambiar el archivo de inicio",
+  "{name} is the startup file": "{name} es el archivo de inicio",
+  "New project": "Nuevo proyecto",
+  "Clone repository": "Clonar repositorio",
+  "Clone repository…": "Clonar repositorio…",
+  "Repository URL": "URL del repositorio",
+  "Clone": "Clonar",
+  "Choose where to clone the repository": "Elige dónde clonar el repositorio",
+  "Cloning {name}": "Clonando {name}",
+  "Could not clone the repository": "No se pudo clonar el repositorio",
+  "The repository has no pyproject.toml": "El repositorio no tiene pyproject.toml",
+  "The folder is not empty": "La carpeta no está vacía"
  }
 }

@@ -46,8 +46,18 @@ Click the project's name in the title bar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kb
 - Type to filter both lists, move with the arrow keys and press <kbd>Enter</kbd> to open the highlighted one.
 - **Open local folder…** and **New project…** at the bottom open those dialogs.
 
-Forms always belong to the active project: they live in its `ui/` folder, and its main form (or its `script`) is
-where the app starts when you press Run.
+Forms always belong to the active project: a new form is saved in its `ui/` folder by default.
+
+### The startup file
+
+Every project has one file the app starts from: its main form (`main` in `[tool.pyzed]`) or, when it has one, its
+`script`. The Project panel marks it with a ▶. Right-click another form or `.py` file and choose
+**Set as Startup File** to change it; `pyproject.toml` is updated for you.
+
+### Clone a repository
+
+**Clone repository…** (in the empty Project panel, the project picker and the welcome window) asks for a git URL
+and a folder, clones it with git and opens it, getting its environment ready like any project you open.
 
 :::tip[Branches]
 Click the branch next to the project's name to switch to another local branch (`git switch`).

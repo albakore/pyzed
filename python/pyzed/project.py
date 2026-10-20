@@ -452,6 +452,23 @@ class Project:
         return self.root / str(script) if script else None
 
     @property
+    def startup(self) -> Path:
+        """The file the app starts from: the ``script`` when the project has one, else the main form."""
+        return self.script if self.script is not None else self.main_form
+
+    def set_startup(self, path: PathLike) -> None:
+        """Makes ``path`` (a ``.pzform`` or ``.py`` file of the project) the file the app starts from: a form becomes
+        ``main`` in ``[tool.pyzed]`` (and the ``script`` is dropped), a script becomes ``script``."""
+        path = Path(path)
+        rel = (path if not path.is_absolute() else path.resolve().relative_to(self.root.resolve())).as_posix()
+        if path.suffix == ".py":
+            _set_pyzed_keys(self, script=rel)
+        elif path.suffix == ".pzform":
+            _set_pyzed_keys(self, main=rel, script=None)
+        else:
+            raise ValueError(f"{path.name} is not a form (.pzform) or a script (.py)")
+
+    @property
     def src_dir(self) -> Optional[Path]:
         """The ``src/`` folder, or ``None`` for a flat layout."""
         src = self.root / "src"
@@ -817,6 +834,29 @@ def _write_main_form(project: Project, title: str) -> None:
         form.add(control)
     form["greet"].events["click"] = "greet_click"
     save(form, project.main_form)
+
+
+def _set_pyzed_keys(project: Project, **values: Optional[str]) -> None:
+    """Sets (or, with ``None``, removes) keys of the ``[tool.pyzed]`` table in ``pyproject.toml``, keeping the
+    rest of the file as it is."""
+    file = project.root / PYPROJECT
+    text = file.read_text(encoding="utf-8")
+    table = re.search(r"^\[tool\.pyzed\][ \t]*\n((?:(?!\[).*\n?)*)", text, re.M)
+    if table is None:
+        text = text.rstrip() + "\n\n[tool.pyzed]\n"
+        table = re.search(r"^\[tool\.pyzed\][ \t]*\n((?:(?!\[).*\n?)*)", text, re.M)
+        assert table is not None
+    body = table.group(1)
+    for key, value in values.items():
+        line = re.compile(rf"^{key}[ \t]*=.*\n?", re.M)
+        new = f"{key} = {json.dumps(value)}\n" if value is not None else ""
+        if line.search(body):
+            body = line.sub(lambda _: new, body, count=1)
+        elif new:
+            body = body.rstrip("\n") + ("\n" if body.strip() else "") + new + ("\n" if body.endswith("\n\n") else "")
+    text = text[:table.start(1)] + body + text[table.end(1):]
+    file.write_text(text, encoding="utf-8")
+    project.reload()
 
 
 def _ensure_config(project: Project, ui: str) -> None:

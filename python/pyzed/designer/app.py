@@ -1297,7 +1297,7 @@ class Designer(App):
     def show_save_as(self) -> None:
         """Opens the "Save as" dialog, filled with the current path or a name made from the form's."""
         self.dialog = "save_as"
-        self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
+        self.dialog_path = str(self.doc.path or self._new_document_path(SUFFIX))
 
     def focus_panel(self, panel: Optional[str] = None) -> None:
         """Gives the keyboard to a side panel, so canvas shortcuts stop acting (the Project tree keeps it
@@ -1886,7 +1886,7 @@ class Designer(App):
             return
         if self.doc.path is None:
             self.dialog = "save_as"
-            self.dialog_path = f"{self.doc.form.name.lower()}{getattr(self.doc, 'suffix', SUFFIX)}"
+            self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
             return
         if not self._flush_code():
             self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
@@ -1897,6 +1897,20 @@ class Designer(App):
         if self.preview is not None and self.preview.is_open:
             # the running form picks up the saved layout and code, keeping what was typed in it
             self.preview.runtime.reload(path)
+
+    def _new_document_path(self, suffix: str) -> str:
+        """Where an unsaved document goes by default: the project's UI folder (forms belong to the project), named
+        after the form."""
+        name = f"{self.doc.form.name.lower()}{suffix}"
+        project = self.projects.project
+        if project is None:
+            return name
+        folder = project.ui_dir
+        try:
+            folder = folder.resolve().relative_to(Path.cwd().resolve())
+        except ValueError:
+            pass
+        return (folder / name).as_posix()
 
     def save_as(self, path: str) -> None:
         """Saves the active document at ``path`` (the document's suffix is added when it has none)."""
