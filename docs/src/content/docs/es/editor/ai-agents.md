@@ -205,8 +205,10 @@ ediciones.
 
 Los ajustes se abren dentro del panel, como en Zed: **⋯ → Ajustes del agente**, **Ajustes → Agentes de IA →
 Ajustes de los agentes de IA…** o **Ajustes de los agentes de IA…** en la paleta de comandos. La flecha de la
-cabecera vuelve a la conversación. Reúnen los proveedores de modelos, los agentes externos, los servidores MCP, las
-skills, las reglas y las opciones del agente.
+cabecera vuelve a la conversación. Primero están los de cada día: el modelo por defecto (con el **Esfuerzo**, el
+**Pensamiento** y el **Modo rápido** de Claude cuando Pyzed Agent responde con Claude; las opciones propias de un
+agente externo están en la caja de mensajes), los proveedores de modelos y los permisos. **Avanzado** despliega los
+agentes externos, los servidores MCP, las skills, las reglas, el MCP de Pyzed en tus agentes y más opciones.
 
 ![Proveedores, claves y opciones del agente](../../../../assets/editor/agent-settings.png)
 
@@ -316,8 +318,8 @@ reinicia los agentes externos que corren en Pyzed; los demás, ciérralos y ábr
 
 **Ajustes → El MCP de Pyzed en tus agentes** lista cada agente con **Añadir** o **Quitar**. Pyzed añade el servidor
 una sola vez a cada agente: si lo quitas, Pyzed no lo vuelve a poner. Solo cambia la entrada `pyzed` de los ajustes
-de cada agente, se guarda una copia del archivo al lado (`.pyzed-backup`) y los archivos de ajustes con comentarios
-no se tocan (ahí añádelo a mano). Apaga **Añadirlo a los agentes nuevos al iniciar** para que no lo haga. Los
+de cada agente, se guarda una copia del archivo al lado (`.pyzed-backup`) y se conservan los comentarios de los archivos
+de ajustes (los de Zed y VS Code los tienen). Apaga **Añadirlo a los agentes nuevos al iniciar** para que no lo haga. Los
 agentes arrancan el servidor con [uv](https://docs.astral.sh/uv/) (`uvx --from "pyzed-ui[mcp]" pyzed mcp`; Pyzed
 Design trae su propio `uv`).
 
@@ -340,6 +342,9 @@ externos**) usa tu plan Claude Pro o Max a través de Claude Code, el agente de 
 deja que sus propias apps inicien sesión con una suscripción:
 
 1. Necesita [Node.js](https://nodejs.org/en/download) 18 o posterior; si no está, Pyzed abre la página de descarga.
+   Pyzed encuentra Node también si se instaló con nvm, volta, fnm o en `~/.local/bin`, aunque Pyzed Design se haya
+   abierto desde el menú del escritorio. Si una respuesta falla porque falta Node.js, **Instalar Node.js** abre la
+   página de descarga y **Usar Pyzed Agent** envía el mensaje al agente propio de Pyzed.
 2. Añade Claude Code como agente externo, lo elige y le deja controlar el editor.
 3. Si Claude Code todavía no inició sesión, se abre en una terminal: elige iniciar sesión con tu cuenta de Claude y
    termina en el navegador. Pyzed detecta el inicio de sesión, vuelve al frente y queda listo.

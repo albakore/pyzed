@@ -334,7 +334,9 @@ def install(agent: RegistryAgent, *, on_progress: Optional[ProgressCallback] = N
 
 
 def _prefetch_npm(agent: RegistryAgent, entry: Dict[str, Any], report: ProgressCallback) -> None:
-    npm = shutil.which("npm")
+    from .. import _platform
+
+    npm = _platform.which("npm")
     if not npm:
         return
     from ..project import execute

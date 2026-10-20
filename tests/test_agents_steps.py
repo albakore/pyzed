@@ -255,7 +255,7 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
     home = tmp_path / "home"
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
     monkeypatch.setenv("APPDATA", str(home / "AppData"))
-    monkeypatch.setattr(mcp_install.shutil, "which", lambda name: None)
+    monkeypatch.setattr(mcp_install._platform, "which", lambda name: None)
     monkeypatch.setattr(mcp_install, "server_command", lambda: ["/bin/uvx", "--from", "pyzed-ui[mcp]", "pyzed", "mcp"])
     found = {c.id: c for c in mcp_install.clients(home)}
     for cid in ("cursor", "codex", "vscode", "zed", "claude-code"):
@@ -265,10 +265,10 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
                                    'A = "1"\n')
     found["zed"].path.write_text('{\n  // my settings\n  "theme": "One Dark"\n}\n')
     assert {c.id for c in mcp_install.detected(home)} == {"cursor", "codex", "vscode", "zed", "claude-code"}
-    assert mcp_install.status(found["codex"]) == "installed" and mcp_install.status(found["zed"]) == "unreadable"
+    assert mcp_install.status(found["codex"]) == "installed" and mcp_install.status(found["zed"]) == "missing"
 
     added, failed = mcp_install.install_missing(["vscode"], home)
-    assert sorted(c.id for c in added) == ["claude-code", "cursor"] and failed == {}
+    assert sorted(c.id for c in added) == ["claude-code", "cursor", "zed"] and failed == {}
     cursor = json.loads(found["cursor"].path.read_text())
     assert cursor["mcpServers"]["other"] == {"command": "x"}  # the rest is kept
     assert cursor["mcpServers"]["pyzed"] == {"command": "/bin/uvx", "args": ["--from", "pyzed-ui[mcp]", "pyzed", "mcp"]}
@@ -284,8 +284,22 @@ def test_pyzed_mcp_is_added_to_the_agents_found(tmp_path, monkeypatch):
     mcp_install.remove(found["cursor"])
     assert mcp_install.status(found["codex"]) == "missing" and 'model = "o3"' in found["codex"].path.read_text()
     assert json.loads(found["cursor"].path.read_text())["mcpServers"] == {"other": {"command": "x"}}
+    # Zed's settings have comments: only the server's lines are added, and taken out again
+    zed = found["zed"].path.read_text()
+    assert "// my settings" in zed and '"theme": "One Dark"' in zed
+    assert mcp_install._loads(zed)["context_servers"]["pyzed"] == {
+        "source": "custom", "command": "/bin/uvx", "args": ["--from", "pyzed-ui[mcp]", "pyzed", "mcp"], "env": {}}
+    assert mcp_install.status(found["zed"]) == "installed"
+    mcp_install.remove(found["zed"])
+    zed = found["zed"].path.read_text()
+    assert "// my settings" in zed and mcp_install._loads(zed) == {"context_servers": {}, "theme": "One Dark"}
+    found["zed"].path.write_text('{\n  "a": 1, /* b */\n  "context_servers": {"x": {"command": "y"},},\n}\n')
+    mcp_install.install(found["zed"])
+    assert set(mcp_install._loads(found["zed"].path.read_text())["context_servers"]) == {"x", "pyzed"}
+    found["zed"].path.write_text("{ not json")
+    assert mcp_install.status(found["zed"]) == "unreadable"
     with pytest.raises(ValueError):
-        mcp_install.install(found["zed"])  # comments: left alone
+        mcp_install.install(found["zed"])  # broken: left alone
 
 
 def test_the_designer_adds_pyzed_mcp_on_start_and_asks_to_restart(tmp_path, monkeypatch):
