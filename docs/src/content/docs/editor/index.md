@@ -104,6 +104,7 @@ flowchart LR
 
 ## In this manual
 
+- [Welcome and examples](/pyzed/editor/examples/): the welcome window and the gallery of example projects.
 - [Projects](/pyzed/editor/projects/): uv projects, the file tree, dependencies, ruff, ty and git.
 - [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/): placing, selecting, moving, resizing, snapping, guides,
   alignment and the outline.

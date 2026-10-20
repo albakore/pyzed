@@ -357,6 +357,12 @@ class Project:
         return self.root / main
 
     @property
+    def script(self) -> Optional[Path]:
+        """The script Run starts when no form is open (``script`` in ``[tool.pyzed]``), if the project has one."""
+        script = self.config.get("script")
+        return self.root / str(script) if script else None
+
+    @property
     def src_dir(self) -> Optional[Path]:
         """The ``src/`` folder, or ``None`` for a flat layout."""
         src = self.root / "src"
@@ -607,12 +613,22 @@ class Project:
         With ``capture`` its output (stdout and stderr together) is readable from ``.stdout``; ``env`` adds
         environment variables.
         """
+        return self._popen(self.run_args(form, reload=reload), capture, env)
+
+    def spawn_script(self, script: Optional[PathLike] = None, *, capture: bool = False,
+                     env: Optional[Dict[str, str]] = None) -> "subprocess.Popen[bytes]":
+        """Starts ``script`` (default: the project's ``script``) with ``uv run`` (returns immediately)."""
+        script = Path(script) if script else self.script
+        if script is None:
+            raise FileNotFoundError("The project has no script in [tool.pyzed]")
+        return self._popen([_uv(), "run", str(script)], capture, env)
+
+    def _popen(self, args: List[str], capture: bool, env: Optional[Dict[str, str]]) -> "subprocess.Popen[bytes]":
         pipes = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT} if capture else {}
-        extra = env or {}
-        env = {**_clean_env(), **extra}
+        env = {**_clean_env(), **(env or {})}
         if capture:
             env["PYTHONUNBUFFERED"] = "1"  # lines reach the designer's console as they are printed
-        return subprocess.Popen(self.run_args(form, reload=reload), cwd=str(self.root), env=env, **pipes)
+        return subprocess.Popen(args, cwd=str(self.root), env=env, **pipes)
 
 
 # -- creating projects --------------------------------------------------------------------------
