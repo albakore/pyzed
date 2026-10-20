@@ -618,3 +618,255 @@ def test_release_builds_bundle_the_oauth_apps(tmp_path, monkeypatch):
                           "print(p.GITHUB_CLIENT_ID, p.AgentSettings().client_id('github'), repr(p.GOOGLE_CLIENT_ID))"],
                          capture_output=True, text=True, env=env, check=True).stdout.split()
     assert out == ["Iv23-test", "Iv23-test", "''"]
+
+
+def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
+    from pyzed.designer import agent_panel, agent_tools
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    plan = [{"step": "Build the form", "status": "done"}, {"step": "Run the app", "status": "in_progress"}]
+    stream = scripted(
+        [{"type": "tool_use", "id": "1", "name": "update_plan", "input": {"steps": plan}},
+         {"type": "tool_use", "id": "2", "name": "add_control",
+          "input": {"type": "button", "name": "send_button", "props": {"text": "Send"}}},
+         {"type": "tool_use", "id": "3", "name": "set_code",
+          "input": {"code": 'print("hello from the app")\n'}},
+         {"type": "tool_use", "id": "4", "name": "save_document", "input": {}},
+         {"type": "tool_use", "id": "5", "name": "run_app", "input": {}}],
+        [{"type": "tool_use", "id": "6", "name": "update_plan",
+          "input": {"steps": [dict(s, status="done") for s in plan]}}],
+        [{"type": "text", "text": "The app runs."}])
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    c.settings.mode = "bypass"
+    c.send("Build me an app")
+    _until(lambda: agent_tools.plan_of(c.thread.messages) == plan, d)
+    assert agent_panel._plan_card(c, d.theme) is not None  # shown while the agent works
+    _until(lambda: not c.running, d, limit=20000)
+    assert agent_tools.plan_of(c.thread.messages)[1]["status"] == "done"
+    assert agent_panel._plan_card(c, d.theme) is None  # all done: folded away
+    results = stream.calls[1]["messages"][2]["content"]
+    run = results[4]
+    assert not run.get("is_error"), run
+    texts = [b["text"] for b in run["content"] if b["type"] == "text"]
+    assert "main.pzform started" in texts[0] and "hello from the app" in texts[0]
+    assert any(b["type"] == "image" for b in run["content"])
+    prompt = agent_tools.system_prompt(d)
+    assert "run_app" in prompt and "update_plan" in prompt
+
+
+def test_run_app_reports_errors_and_plans_are_checked(tmp_path):
+    from pyzed.designer import agent_tools
+    from pyzed.designer.model import Form
+
+    form = tmp_path / "broken.pzform"
+    form.write_text(Form(name="broken").to_json())
+    form.with_suffix(".py").write_text("raise RuntimeError('the backend is down')\n")
+    result = agent_tools.run_form_check(form)
+    assert isinstance(result, dict) and not result["ok"] and "the backend is down" in result["output"]
+    with pytest.raises(ValueError):
+        agent_tools._plan_steps([{"step": "x", "status": "maybe"}])
+    with pytest.raises(ValueError):
+        agent_tools._plan_steps([])
+    assert agent_tools.plan_of([]) == []
+
+
+EDITOR_AGENT = textwrap.dedent('''
+    import json, sys, threading, urllib.request
+    servers = {}
+
+    def send(msg):
+        print(json.dumps(msg), flush=True)
+
+    def update(session, body):
+        send({"jsonrpc": "2.0", "method": "session/update", "params": {"sessionId": session, "update": body}})
+
+    def mcp(method, params, ident=1):
+        server = servers["pyzed_editor"]
+        headers = {h["name"]: h["value"] for h in server["headers"]}
+        headers.update({"Content-Type": "application/json", "Accept": "application/json, text/event-stream"})
+        body = json.dumps({"jsonrpc": "2.0", "id": ident, "method": method, "params": params}).encode()
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(urllib.request.Request(server["url"], data=body, headers=headers), timeout=30) as r:
+            return json.loads(r.read())
+
+    def prompt(ident, params):
+        s = params["sessionId"]
+        update(s, {"sessionUpdate": "plan", "entries": [
+            {"content": "Add the button", "status": "in_progress", "priority": "high"},
+            {"content": "Check the form", "status": "pending", "priority": "medium"}]})
+        info = mcp("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
+                                  "clientInfo": {"name": "fake", "version": "1"}})
+        names = [t["name"] for t in mcp("tools/list", {})["result"]["tools"]]
+        update(s, {"sessionUpdate": "tool_call", "toolCallId": "c1", "title": "add_control", "kind": "other",
+                   "status": "pending"})
+        added = mcp("tools/call", {"name": "add_control", "arguments": {"type": "button", "name": "ok_button",
+                                                                         "props": {"text": "OK"}}})
+        update(s, {"sessionUpdate": "tool_call_update", "toolCallId": "c1", "status": "completed"})
+        doc = mcp("tools/call", {"name": "get_document", "arguments": {}})["result"]["content"][0]["text"]
+        update(s, {"sessionUpdate": "plan", "entries": [
+            {"content": "Add the button", "status": "completed", "priority": "high"},
+            {"content": "Check the form", "status": "completed", "priority": "medium"}]})
+        report = {"instructions": "Pyzed Design" in info["result"].get("instructions", ""),
+                  "tools": names, "added": not added["result"]["isError"], "seen": "ok_button" in doc}
+        update(s, {"sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": json.dumps(report)}})
+        send({"jsonrpc": "2.0", "id": ident, "result": {"stopReason": "end_turn"}})
+
+    for line in sys.stdin:
+        msg = json.loads(line)
+        method, ident, params = msg.get("method"), msg.get("id"), msg.get("params") or {}
+        if method == "initialize":
+            send({"jsonrpc": "2.0", "id": ident, "result": {"protocolVersion": 1, "agentCapabilities": {
+                "mcpCapabilities": {"http": True}}, "authMethods": []}})
+        elif method == "session/new":
+            servers.update({s["name"]: s for s in params["mcpServers"]})
+            send({"jsonrpc": "2.0", "id": ident, "result": {"sessionId": "s1"}})
+        elif method == "session/prompt":
+            threading.Thread(target=prompt, args=(ident, params)).start()
+''')
+
+
+def test_an_external_agent_controls_the_editor_over_mcp(tmp_path):
+    from pyzed.designer import agent_tools
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    script = tmp_path / "agent.py"
+    script.write_text(EDITOR_AGENT)
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.settings.acp_agents.append(providers.ACPAgentConfig("fake", sys.executable, [str(script)], title="Fake"))
+    c.thread.model = c.settings.model = "acp:fake"
+    c.settings.mode = "bypass"
+    plans = []
+    try:
+        c.send("Add an OK button")
+        for _ in range(4000):
+            c.poll()
+            if c.live_plan and c.live_plan not in plans:
+                plans.append(list(c.live_plan))
+            if not c.running:
+                break
+            time.sleep(0.005)
+        else:
+            raise AssertionError("timed out")
+    finally:
+        c.shutdown()
+    assert not c.error, c.error
+    assert any(ctl.name == "ok_button" for ctl in d.doc.form.controls)  # changed live, in the open form
+    text = [b["text"] for m in c.thread.messages if m["role"] == "assistant" for b in m["content"]
+            if b["type"] == "text"][-1]
+    report = json.loads(text)
+    assert report["added"] and report["seen"] and report["instructions"]
+    assert {"add_control", "run_app", "update_plan", "list_components"} <= set(report["tools"])
+    assert "write_file" not in report["tools"]  # files and shell are the agent's own
+    assert plans and plans[0][0] == {"step": "Add the button", "status": "in_progress"}
+    assert [s["status"] for s in agent_tools.plan_of(c.thread.messages)] == ["done", "done"]
+    assert c.changed  # the agent's changes can be kept or rejected like the built-in agent's
+
+
+def test_the_editor_server_checks_its_caller_and_bridges_stdio():
+    import io
+
+    from pyzed.agents import mcp_host
+
+    @agents.tool
+    def shout(text: str) -> str:
+        """Shouts."""
+        return text.upper()
+
+    @agents.tool
+    def picture() -> object:
+        """A picture."""
+        return ["a dot", agents.Image(PNG)]
+
+    server = mcp_host.ToolServer(agents.Agent(tools=[shout, picture]), name="test", instructions="Be nice.")
+    try:
+        headers = {"Authorization": f"Bearer {server.token}"}
+        good = mcp_client.HttpTransport(server.url, headers)
+        assert good.request("initialize", {"protocolVersion": "2025-03-26"})["instructions"] == "Be nice."
+        assert {t["name"] for t in good.request("tools/list")["tools"]} == {"shout", "picture"}
+        assert good.request("tools/call", {"name": "shout", "arguments": {"text": "hi"}})["content"][0]["text"] == "HI"
+        shot = good.request("tools/call", {"name": "picture", "arguments": {}})["content"]
+        assert shot[1]["type"] == "image" and shot[1]["mimeType"] == "image/png"
+        assert good.request("tools/call", {"name": "nope", "arguments": {}})["isError"]
+        with pytest.raises(mcp_client.MCPError):
+            mcp_client.HttpTransport(server.url, {"Authorization": "Bearer wrong"}).request("tools/list")
+        with pytest.raises(mcp_client.MCPError):
+            mcp_client.HttpTransport(server.url + "x", headers).request("tools/list")
+        entry = server.acp_entry()
+        assert entry["type"] == "http" and entry["headers"][0]["value"] == f"Bearer {server.token}"
+        assert server.bridge_entry()["args"][-1] == server.url
+        agent = acp.ACPAgent(providers.ACPAgentConfig("x", "x"), cwd=".", settings=providers.AgentSettings(),
+                             mcp_servers=[entry, server.bridge_entry(), {"name": "other", "command": "y"}])
+        assert [s.get("type", "stdio") for s in agent._servers()] == ["stdio", "stdio"]  # no HTTP: the bridge
+        agent.capabilities = {"mcpCapabilities": {"http": True}}
+        assert [s.get("type", "stdio") for s in agent._servers()] == ["http", "stdio"]
+        out = io.StringIO()
+        mcp_host.bridge(server.url, server.token, io.StringIO(
+            json.dumps({"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                        "params": {"name": "shout", "arguments": {"text": "yo"}}}) + "\n"
+            + json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"}) + "\n"), out)
+        lines = [json.loads(x) for x in out.getvalue().splitlines()]
+        assert len(lines) == 1 and lines[0]["id"] == 7 and lines[0]["result"]["content"][0]["text"] == "YO"
+    finally:
+        server.close()
+
+
+def test_using_a_claude_subscription_through_claude_code(tmp_path, monkeypatch):
+    from pyzed.designer import agent_panel, file_ops
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    home = tmp_path / "claude"
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(home))
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(acp.sys, "platform", "linux")
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    assert not acp.claude_signed_in()
+    opened, terminals = [], []
+    monkeypatch.setattr(agent_panel.webbrowser, "open", opened.append)
+    monkeypatch.setattr(file_ops, "run_in_terminal", lambda args, folder: terminals.append(args))
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    d.view()  # the empty panel offers the subscription first
+
+    monkeypatch.setattr(agent_panel.shutil, "which", lambda name: None)
+    c.use_claude_subscription()  # no Node.js: says so and opens its download page
+    assert opened == [agent_panel.NODE_URL] and c.settings.acp_agent("claude-code") is None
+
+    monkeypatch.setattr(agent_panel.shutil, "which", lambda name: "/usr/bin/npx" if name == "npx" else None)
+    c.use_claude_subscription()
+    assert c.settings.acp_agent("claude-code") is not None and c.thread.model == "acp:claude-code"
+    assert terminals == [["npx", "-y", "@anthropic-ai/claude-code"]] and c.claude_login is not None and c.active
+    d.view()
+    c.poll()
+    assert c.claude_login is not None  # still waiting
+    home.mkdir()
+    (home / ".credentials.json").write_text("{}")
+    c._claude_check = 0
+    c.poll()
+    assert c.claude_login is None and c.raise_window and acp.claude_signed_in()
+    assert c.poll() is not None  # back to the front
+    c.error = "Authentication required"
+    assert c.needs_claude_login
+    d.view()
+
+
+def test_commands_run_in_the_systems_terminal(monkeypatch, tmp_path):
+    from pyzed.designer import file_ops
+
+    monkeypatch.delenv("TERMINAL", raising=False)
+    monkeypatch.setattr(file_ops.sys, "platform", "linux")
+    monkeypatch.setattr(file_ops.shutil, "which", lambda name: "/usr/bin/" + name if name == "konsole" else None)
+    assert file_ops.run_in_terminal_command(["claude"], tmp_path) == ["/usr/bin/konsole", "-e", "claude"]
+    monkeypatch.setattr(file_ops.sys, "platform", "darwin")
+    mac = file_ops.run_in_terminal_command(["claude"], tmp_path)
+    assert mac[0] == "osascript" and "claude" in mac[2]
+    monkeypatch.setattr(file_ops.sys, "platform", "linux")
+    monkeypatch.setattr(file_ops.shutil, "which", lambda name: None)
+    with pytest.raises(OSError):
+        file_ops.run_in_terminal_command(["claude"], tmp_path)

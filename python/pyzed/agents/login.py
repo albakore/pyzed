@@ -12,8 +12,10 @@
   expire. The Google Cloud credentials of this computer (``gcloud auth application-default login``, a
   service account file in ``GOOGLE_APPLICATION_CREDENTIALS``) are used as they are when present.
 * Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq (``login="browser"``): these providers do not
-  let other apps sign in with OAuth, so Pyzed opens their key page (``key_page``) and the designer picks
-  the key up as soon as it is copied (``providers.looks_like_key``), checks it and saves it in the keychain.
+  let other apps sign in with OAuth, so Pyzed opens a page of its own on ``127.0.0.1`` (``key_portal``)
+  that links to their keys page and takes the key the user pastes there; the designer also picks the
+  key up as soon as it is copied (``providers.looks_like_key``). It is checked with the provider and
+  saved in the keychain, and the designer comes back to the front.
 * An Anthropic CLI profile (``ant auth login``), when one exists, is still used by the ``anthropic`` SDK;
   it is optional.
 
@@ -413,6 +415,124 @@ def key_page(provider_id: str, *, open_url: Callable[[str], None] = webbrowser.o
         raise LoginError(f"{PROVIDERS[provider_id].name} has no key page; paste a key instead")
     open_url(url)
     return url
+
+
+_PORTAL = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Connect {name} to Pyzed Design</title>
+<style>body{{font-family:system-ui,sans-serif;background:#282c34;color:#dce0e5;display:grid;place-items:center;
+min-height:90vh;margin:0}}main{{max-width:30rem;padding:2rem}}h1{{font-size:1.4rem}}ol{{padding-left:1.2rem;
+line-height:1.6}}a{{color:#74ade8}}input{{width:100%;box-sizing:border-box;padding:.6rem;border-radius:6px;
+border:1px solid #464b57;background:#2f343e;color:inherit;font:inherit}}button{{margin-top:.8rem;padding:.6rem 1.2rem;
+border:0;border-radius:6px;background:#74ade8;color:#282c34;font:inherit;font-weight:600;cursor:pointer}}
+.error{{color:#d07277}}.ok{{color:#a1c181}}</style>
+<main>{body}</main></html>"""
+
+
+class _Portal(http.server.BaseHTTPRequestHandler):
+    """The local page that connects a provider: the user creates a key on the provider's site and pastes
+    it here (or just copies it; the designer watches the clipboard too)."""
+
+    path_secret: str
+    origin: str
+    name: str
+    key_url: str
+    check: Callable[[str], Optional[str]]
+    looks_like: Callable[[str], bool]
+    keys: List[str]
+    # a browser may open a connection it never uses (a preconnect); don't wait on it forever
+    timeout = 5
+
+    def _send(self, status: int, body: str = "") -> None:
+        data = body.encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Content-Security-Policy",
+                         "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _allowed(self) -> bool:
+        # Only this sign-in's own page, reached by its own address: no other path, and no other host
+        # name pointing here (DNS rebinding) or page posting to it (another site's form).
+        if urllib.parse.urlparse(self.path).path != self.path_secret or self.headers.get("Host") != self.origin:
+            return False
+        origin = self.headers.get("Origin")
+        return self.command == "GET" or origin == f"http://{self.origin}"
+
+    def _page(self, message: str = "", error: bool = False) -> str:
+        import html
+
+        name, url = html.escape(self.name), html.escape(self.key_url, quote=True)
+        note = f'<p class="{"error" if error else "ok"}">{html.escape(message)}</p>' if message else ""
+        return _PORTAL.format(name=name, body=(
+            f"<h1>Connect {name} to Pyzed Design</h1>"
+            f"<ol><li><a href=\"{url}\" target=\"_blank\" rel=\"noopener noreferrer\">Open your {name} keys page</a> "
+            "and create a key for Pyzed Design.</li><li>Paste it here, or just copy it: Pyzed Design picks it up.</li></ol>"
+            f"{note}<form method=\"post\"><input name=\"key\" type=\"password\" autocomplete=\"off\" "
+            f"placeholder=\"Your {name} key\" autofocus required><button>Connect</button></form>"
+            "<p>The key goes straight to Pyzed Design on this computer and is kept in the system keychain.</p>"))
+
+    def do_GET(self) -> None:  # noqa: N802 - http.server API
+        if not self._allowed():
+            return self._send(404)
+        self._send(200, self._page())
+
+    def do_POST(self) -> None:  # noqa: N802 - http.server API
+        if not self._allowed():
+            return self._send(404)
+        length = min(int(self.headers.get("Content-Length") or 0), 8192)
+        form = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
+        key = (form.get("key") or [""])[0].strip()
+        if not self.looks_like(key):
+            return self._send(200, self._page(f"That does not look like a {self.name} key.", error=True))
+        error = self.check(key)
+        if error:
+            return self._send(200, self._page(f"{self.name} refused that key: {error}", error=True))
+        self.keys.append(key)
+        self._send(200, _PORTAL.format(name=self.name, body=(
+            f"<h1>{self.name} is connected</h1><p class=\"ok\">Pyzed Design is ready. You can close this tab "
+            "and go back to it.</p>")))
+
+    def log_message(self, *args) -> None:  # silence the default stderr logging
+        pass
+
+
+def key_portal(provider_id: str, check: Callable[[str], Optional[str]], *,
+               open_url: Callable[[str], None] = webbrowser.open, timeout: float = TIMEOUT,
+               cancelled: Callable[[], bool] = lambda: False) -> Optional[str]:
+    """Signs in to a provider without OAuth (``login="browser"``) through a page Pyzed serves on
+    ``127.0.0.1``: it links to the provider's keys page and takes the key the user pastes. ``check(key)``
+    returns why the provider refused the key (or ``None``); the key it accepts is returned. ``None`` when
+    ``cancelled()`` turns true first (the designer stops waiting once the key arrives another way)."""
+    from .providers import PROVIDERS, looks_like_key
+
+    provider = PROVIDERS[provider_id]
+    if not provider.key_url:
+        raise LoginError(f"{provider.name} has no key page; paste a key instead")
+    path = f"/connect/{_random.token_urlsafe(16)}"
+    handler = type("Portal", (_Portal,), {"path_secret": path, "origin": "", "name": provider.name,
+                                          "key_url": provider.key_url, "check": staticmethod(check),
+                                          "looks_like": staticmethod(lambda k: looks_like_key(provider_id, k)),
+                                          "keys": []})
+    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
+    server.timeout = 0.5
+    handler.origin = f"127.0.0.1:{server.server_address[1]}"
+    try:
+        open_url(f"http://{handler.origin}{path}")
+        deadline = time.monotonic() + timeout
+        while not handler.keys:
+            if cancelled():
+                return None
+            if time.monotonic() > deadline:
+                raise LoginError("Timed out waiting for the browser")
+            server.handle_request()
+    finally:
+        server.server_close()
+    return handler.keys[0]
 
 
 def login(provider_id: str) -> Optional[str]:

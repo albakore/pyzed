@@ -12,6 +12,7 @@ from __future__ import annotations
 import fnmatch
 import queue
 import re
+import shutil
 import threading
 import time
 import webbrowser
@@ -131,6 +132,11 @@ IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 #: How long the clipboard is watched for a copied key.
 CAPTURE_SECONDS = 300.0
+#: How long the panel waits for the Claude Code sign-in in the terminal.
+CLAUDE_LOGIN_SECONDS = 900.0
+NODE_URL = "https://nodejs.org/en/download"
+#: Model answers per message: enough to build, run and fix a whole app on its own.
+MAX_TURNS = 150
 
 #: Slash commands: (name, icon, description, prompt to send or None for an action).
 SLASH_COMMANDS = (
@@ -213,6 +219,15 @@ class AgentController:
         self.url_buffer: Dict[str, str] = {}
         self.busy_provider: Optional[str] = None
         self.capture: Optional[KeyCapture] = None
+        # the designer comes back to the front once a sign-in in the browser is done
+        self.raise_window = False
+        # signing in to Claude Code with a Claude subscription: when to stop checking, and the next check
+        self.claude_login: Optional[float] = None
+        self._claude_check = 0.0
+        # the plan an external agent is following (the built-in agent's is read from its update_plan calls)
+        self.live_plan: List[Dict[str, str]] = []
+        # the designer's tools served over MCP to external agents (started with the first one)
+        self._editor_server: Optional[Any] = None
         # composer
         self.menu: Optional[str] = None  # "mode" | "model" | "effort" while its menu is open
         self.mentions: List[Mention] = []
@@ -239,6 +254,9 @@ class AgentController:
         """Stops the MCP servers and external agents this designer started."""
         self.mcp.close()
         self.close_external_agents()
+        if self._editor_server is not None:
+            self._editor_server.close()
+            self._editor_server = None
 
     # -- setup ------------------------------------------------------------------------------------
     @property
@@ -253,7 +271,8 @@ class AgentController:
     def active(self) -> bool:
         """Whether something is in flight (the poll subscription runs while it is)."""
         return self.running or bool(self.inline and self.inline.running) or self.busy_provider is not None \
-            or self.capture is not None or not self._queue.empty()
+            or self.capture is not None or self.raise_window or self.claude_login is not None \
+            or not self._queue.empty()
 
     @property
     def expanded(self) -> bool:
@@ -325,6 +344,11 @@ class AgentController:
         """Applies what the worker sent: streamed text, tool calls to run, confirmations, the end. While
         signing in by copying a key, it also reads the clipboard about once a second."""
         self._drain()
+        if self.raise_window:
+            self.raise_window = False
+            return _core.Command.focus_window()
+        if self.claude_login is not None:
+            self._check_claude_login()
         capture = self.capture
         if capture is None or capture.checking:
             return None
@@ -430,11 +454,14 @@ class AgentController:
             self.tool_status[event.call_id] = "running"
         elif event.kind == "tool_result":
             self.tool_status[event.call_id] = "error" if event.error else "done"
+        elif event.kind == "plan":
+            self.live_plan = list(event.args.get("steps") or [])
         elif event.kind == "error":
             self.error = event.text
         elif event.kind == "done":
             self.running = False
             self.live_text = self.live_thinking = ""
+            self.live_plan = []
             self._agent = None
             self._keep()
 
@@ -545,7 +572,7 @@ class AgentController:
             agent = _agents.Agent(model, tools=agent_tools.designer_tools(self.d),
                                   system=agent_tools.system_prompt(self.d), settings=self.settings,
                                   confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
-                                  stream=self._stream)
+                                  max_turns=MAX_TURNS, stream=self._stream)
 
         def target() -> Any:
             # done here, off the UI thread: the @screenshot pictures and starting the MCP servers
@@ -576,10 +603,30 @@ class AgentController:
             return found
         if found is not None:
             found.close()
+        servers = _acp.mcp_entries(self.settings.mcp_servers)
+        if self.settings.share_pyzed_mcp:  # the editor itself: the open form, its code, the project, Pyzed's docs
+            editor = self.editor_server()
+            servers[:0] = [entry for entry in (editor.acp_entry(), editor.bridge_entry()) if entry is not None]
         agent = _acp.ACPAgent(config, cwd=self.project_root(), settings=self.settings, confirm=self._confirm,
-                              messages=self.thread.messages)
+                              messages=self.thread.messages, mcp_servers=servers)
         self._acp[self.thread.id] = agent
         return agent
+
+    def editor_server(self) -> Any:
+        """The designer's tools (the same as the built-in agent's, but files and shell, which external agents
+        have their own of) served over MCP on 127.0.0.1, so an external agent controls the editor."""
+        if self._editor_server is None:
+            from ..agents import mcp_host
+            from ..agents.tools import file_tools
+
+            own_files = {t.name for t in file_tools(self.project_root())}
+            tools = [t for t in agent_tools.designer_tools(self.d) if t.name not in own_files]
+            # the external agent already asked (or not) through its permission request
+            runner = _agents.Agent(tools=tools, settings=self.settings, confirm=lambda tool, args: True,
+                                   executor=self._execute)
+            self._editor_server = mcp_host.ToolServer(runner, name="pyzed_editor",
+                                                      instructions=agent_tools.external_prompt(self.d))
+        return self._editor_server
 
     def close_external_agents(self, keep: Optional[str] = None) -> None:
         """Stops the external agents' programs (all but the one of thread ``keep``)."""
@@ -1098,7 +1145,8 @@ class AgentController:
 
     def sign_in(self, pid: str) -> None:
         """Signs in to ``pid`` with the browser, with no other program needed. OpenRouter uses OAuth; the
-        others open their key page and the key is picked up as soon as it is copied."""
+        others open a page Pyzed serves on this computer, which links to the provider's key page and takes
+        the key (a copied key is picked up too). The designer comes back to the front once it is in."""
         provider = _providers.PROVIDERS[pid]
         self.provider_open = pid
         if provider.login == "device" and self.settings.client_id(pid):
@@ -1115,11 +1163,38 @@ class AgentController:
 
             self._background(pid, work, tr("Signed in to {provider}", provider=provider.name))
             return
-        try:
-            _agents.login.key_page(pid)
-        except Exception as err:  # noqa: BLE001 - no browser
-            self.d.notify(str(err), kind="error", seconds=6)
-        self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+        capture = self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+        self._portal(pid, capture)
+
+    def _portal(self, pid: str, capture: KeyCapture) -> None:
+        """Serves the sign-in page (``login.key_portal``) until a key arrives there, the clipboard brings one
+        or the sign-in is cancelled; falls back to opening the provider's key page."""
+        settings, put = self.settings, self._queue.put
+        found: Dict[str, List[str]] = {}
+
+        def check(key: str) -> Optional[str]:
+            try:
+                found[key] = _agents.list_models(pid, settings, key=key)
+            except Exception as err:  # noqa: BLE001 - shown on the page
+                return str(err) or type(err).__name__
+            return None
+
+        def run() -> None:
+            try:
+                key = _agents.login.key_portal(pid, check, timeout=CAPTURE_SECONDS,
+                                               cancelled=lambda: self.capture is not capture)
+            except _agents.login.LoginError:  # the wait ran out (the capture expires too)
+                return
+            except Exception:  # noqa: BLE001 - no local page; open the key page, the clipboard still works
+                try:
+                    _agents.login.key_page(pid)
+                except Exception as err:  # noqa: BLE001
+                    put(("provider", str(err), False))
+                return
+            if key:
+                put(("key", pid, key, found.get(key, []), ""))
+
+        threading.Thread(target=run, daemon=True, name="pyzed-agent-portal").start()
 
     def _device_sign_in(self, pid: str) -> None:
         """GitHub's device flow: a code to type on github.com, while Pyzed waits for the token."""
@@ -1348,6 +1423,7 @@ class AgentController:
                              error=error), kind="error", seconds=7)
             return
         self.capture = None
+        self.raise_window = True
         secure = _agents.set_key(pid, key)
         if models:
             self.settings.provider(pid).models = models
@@ -1375,6 +1451,62 @@ class AgentController:
                 put(("provider", str(err), False))
 
         threading.Thread(target=run, daemon=True, name="pyzed-agent-models").start()
+
+    # -- Claude subscription (through Claude Code) ------------------------------------------------------
+    def use_claude_subscription(self) -> None:
+        """Uses the user's Claude subscription (Pro or Max) through Claude Code, Anthropic's own agent: adds it
+        as an external agent, picks it, and opens Claude Code in a terminal to sign in when it is not yet."""
+        if shutil.which("npx") is None:
+            self.d.notify(tr("Claude Code needs Node.js 18 or later"), tr("Install it, then try again."),
+                          kind="warning", seconds=8)
+            webbrowser.open(NODE_URL)
+            return
+        if self.settings.acp_agent("claude-code") is None:
+            self.settings.acp_agents.append(_acp.preset("claude-code"))
+        self.settings.share_pyzed_mcp = True
+        self.set_model("acp:claude-code")
+        self.d.dialog = None if self.d.dialog == "agent_settings" else self.d.dialog
+        if _acp.claude_signed_in():
+            self.d.notify(tr("Claude Code is ready"), tr("It uses your Claude subscription"), kind="success",
+                          seconds=5)
+            return
+        self.open_claude_login()
+
+    def open_claude_login(self) -> None:
+        """Opens Claude Code in a terminal so the user signs in to their Claude account; the panel waits for it."""
+        from .file_ops import run_in_terminal
+
+        try:
+            run_in_terminal(_acp.claude_login_command(), self.project_root())
+        except OSError as err:
+            self.d.notify(tr("No terminal was found"), tr("Run {command} in a terminal to sign in", command=" ".join(
+                _acp.claude_login_command())) + f" ({err})", kind="warning", seconds=10)
+        self.claude_login = time.monotonic() + CLAUDE_LOGIN_SECONDS
+        self._claude_check = 0.0
+
+    def cancel_claude_login(self) -> None:
+        self.claude_login = None
+
+    def _check_claude_login(self) -> None:
+        now = time.monotonic()
+        if self.claude_login is None or now < self._claude_check:
+            return
+        self._claude_check = now + 2.0
+        if _acp.claude_signed_in():
+            self.claude_login = None
+            self.raise_window = True
+            self.close_external_agents()  # a session opened before the sign-in starts again
+            self.d.notify(tr("Signed in to Claude"), tr("Claude Code uses your Claude subscription"), kind="success",
+                          seconds=6)
+        elif now > self.claude_login:
+            self.claude_login = None
+
+    @property
+    def needs_claude_login(self) -> bool:
+        """Whether the last answer failed because Claude Code is not signed in."""
+        provider, name = _providers.split_model(self.thread.model or self.settings.model)
+        error = self.error.lower()
+        return provider == "acp" and name == "claude-code" and ("auth" in error or "/login" in error)
 
     def open_key_page(self, pid: str) -> None:
         url = _providers.PROVIDERS[pid].key_url
@@ -1520,6 +1652,8 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
     return rows
 
 
+SUBSCRIPTION_TEXT = "Claude Pro or Max through Claude Code, Anthropic's own agent; it controls the editor"
+
 #: Providers offered first in an empty panel that is not set up yet.
 QUICK_PROVIDERS = ("anthropic", "openai", "google", "openrouter", "ollama")
 
@@ -1535,6 +1669,13 @@ def _empty(c: AgentController, t: Theme) -> Any:
             _icon("chevron-right", size=12, color=t.text_placeholder)], spacing=8, align="center"),
             lambda pid=pid: c.connect(pid), padding=(6, 8), width="fill", bg=None, hover_bg=t.element_hover,
             radius=t.radius) for pid in QUICK_PROVIDERS]
+        quick.insert(0, _core.button(_core.row([
+            _icon("sparkles", size=14, color=t.text_accent),
+            _core.column([ui.label(tr("Use my Claude subscription"), size="sm", theme=t),
+                          ui.label(tr(SUBSCRIPTION_TEXT), size="xs", color="text_muted", theme=t)], width="fill"),
+            _icon("chevron-right", size=12, color=t.text_placeholder)], spacing=8, align="center"),
+            c.use_claude_subscription, padding=(6, 8), width="fill", bg=None, hover_bg=t.element_hover,
+            radius=t.radius))
         return _core.column([
             _core.column([_icon("key-round", size=22, color=t.text_accent),
                           ui.label(tr("Connect a model"), weight="semibold", theme=t),
@@ -1574,6 +1715,39 @@ def _confirmation(c: AgentController, t: Theme) -> Any:
                                     theme=t),
                           ui.button(tr("Deny"), lambda: c.answer(False), variant="ghost", size="sm", theme=t),
                       ], theme=t)
+
+
+def _plan_card(c: AgentController, t: Theme) -> Optional[Any]:
+    """The agent's plan (its last ``update_plan``) as a checklist above the message box, while it is running
+    or has steps left. Clicking the header folds it."""
+    steps = c.live_plan if c.running and c.live_plan else agent_tools.plan_of(c.thread.messages)
+    done = sum(1 for s in steps if s["status"] == "done")
+    if not steps or (done == len(steps) and not c.running):
+        return None
+    folded = "plan" in c.open_blocks
+    head = _core.row([
+        _icon("list-checks", size=13, color=t.text_accent),
+        ui.label(tr("Plan"), size="sm", weight="medium", theme=t),
+        ui.label(f"{done}/{len(steps)}", size="xs", color="text_muted", theme=t),
+        _core.space(width="fill"),
+        _icon("chevron-right" if folded else "chevron-down", size=12, color=t.text_placeholder),
+    ], spacing=6, align="center")
+    rows: List[Any] = [_core.button(head, lambda: c.toggle_block("plan"), padding=(2, 4), bg=None,
+                                    hover_bg=t.element_hover, radius=t.radius, width="fill")]
+    if not folded:
+        for step in steps:
+            status = step["status"]
+            if status == "in_progress":
+                lead = ui.spinner(size=12, theme=t) if c.running else _icon("circle-dot", size=12, color=t.accent)
+            else:
+                lead = _icon("circle-check" if status == "done" else "circle", size=12,
+                             color=t.success if status == "done" else t.text_placeholder)
+            rows.append(_core.row([lead, ui.label(step["step"], size="sm", theme=t,
+                                                  color="text_muted" if status == "done" else "text")],
+                                  spacing=8, align="center", padding=(0, 4)))
+    return _core.container(_core.column(rows, spacing=4, width="fill"), padding=(6, 8), width="fill",
+                           bg=t.surface,
+                           border_color=t.border_variant, border_width=1, radius=t.radius + 2)
 
 
 def _review_bar(c: AgentController, t: Theme) -> Any:
@@ -1666,6 +1840,9 @@ def _model_menu(c: AgentController, t: Theme) -> Any:
             rows.append(_menu_row(None, model_label(full), name if model_label(full) != name else "",
                                   lambda full=full: c.set_model(full), t, checked=full == current))
     rows.append(_menu_header(tr("External agents"), t))
+    if c.settings.acp_agent("claude-code") is None:
+        rows.append(_menu_row("sparkles", tr("Use my Claude subscription…"), tr(SUBSCRIPTION_TEXT),
+                              c.use_claude_subscription, t))
     for a in c.settings.acp_agents:
         if a.enabled:
             full = f"acp:{a.name}"
@@ -1820,6 +1997,22 @@ def _device_callout(c: AgentController, t: Theme) -> Optional[Any]:
                            radius=t.radius + 2)
 
 
+def _claude_login_callout(c: AgentController, t: Theme) -> Any:
+    """While Claude Code is open in a terminal for the sign-in."""
+    return _core.container(_core.column([
+        _core.row([ui.spinner(size=14, theme=t), ui.label(tr("Sign in to Claude in the terminal"), size="sm",
+                                                         weight="medium", theme=t)], spacing=8, align="center"),
+        ui.label(tr("Claude Code opened in a terminal. Choose to sign in with your Claude account (Pro or Max) and "
+                    "finish in the browser: Pyzed notices it and comes back."), size="xs", color="text_muted", theme=t),
+        _core.row([
+            ui.button(tr("Open the terminal again"), c.open_claude_login, icon="terminal", variant="ghost", size="sm",
+                      theme=t),
+            ui.button(tr("Cancel"), c.cancel_claude_login, variant="ghost", size="sm", theme=t),
+        ], spacing=4, align="center", wrap=True),
+    ], spacing=6, width="fill"), padding=(8, 10), width="fill", bg=alpha(t.accent, 0.08), border_color=t.border_variant,
+        border_width=1, radius=t.radius + 2)
+
+
 def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
     """While signing in by copying a key: what to do, and Paste / Cancel."""
     cap = c.capture
@@ -1827,8 +2020,8 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         return None
     name = _providers.PROVIDERS[cap.provider].name
     detail = tr("Checking the key…") if cap.checking else tr(
-        "Create a key on the page that opened and copy it: Pyzed picks it up, checks it and saves it in the system "
-        "keychain.")
+        "Follow the page that opened in the browser: create a key and paste it there, or just copy it. Pyzed checks "
+        "it, saves it in the system keychain and comes back to the front.")
     lead = ui.spinner(size=14, theme=t) if cap.checking else _icon("key-round", size=14, color=t.text_accent)
     return _core.container(_core.column([
         _core.row([lead, ui.label(tr("Signing in to {provider}", provider=name), size="sm", weight="medium",
@@ -1837,7 +2030,7 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         _core.row([
             ui.button(tr("Paste key"), lambda: c.paste_key(cap.provider), icon="clipboard-paste", variant="tinted",
                       size="sm", theme=t),
-            ui.button(tr("Open the page again"), lambda: c.open_key_page(cap.provider), variant="ghost", size="sm",
+            ui.button(tr("Open the key page"), lambda: c.open_key_page(cap.provider), variant="ghost", size="sm",
                       theme=t),
             ui.button(tr("Cancel"), c.cancel_capture, variant="ghost", size="sm", theme=t),
         ], spacing=4, align="center", wrap=True),
@@ -1863,17 +2056,25 @@ def view(d: "Designer", t: Theme) -> Any:
         return _core.column([header, _history(c, t)], width="fill", height="fill")
     rows = _messages(c, t) if c.thread.messages else [_empty(c, t)]
     if c.error and not c.running:
-        rows.append(ui.callout(tr("The agent stopped"), c.error, tint="error", icon="triangle-alert", actions=[
+        actions = [
             ui.button(tr("Retry"), c.retry, icon="refresh-cw", variant="ghost", size="sm", theme=t),
             ui.button(tr("Settings"), lambda: c.open_settings(), variant="ghost", size="sm", theme=t),
-        ], theme=t))
+        ]
+        if c.needs_claude_login:
+            actions.insert(0, ui.button(tr("Sign in to Claude"), c.open_claude_login, icon="log-in",
+                                        variant="tinted", size="sm", theme=t))
+        rows.append(ui.callout(tr("The agent stopped"), c.error, tint="error", icon="triangle-alert", actions=actions,
+                               theme=t))
     thread = _core.scrollable(_core.column(rows, spacing=10, width="fill", padding=(10, 12)), height="fill",
                               id=SCROLL_ID, anchor_bottom=True, scrollbar_width=4)
     bottom: List[Any] = []
     if c.capture is not None and d.dialog != "agent_settings":
         bottom.append(_capture_callout(c, t))
+    if c.claude_login is not None:
+        bottom.append(_claude_login_callout(c, t))
     if c.device is not None and d.dialog != "agent_settings":
         bottom.append(_device_callout(c, t))
+    bottom.append(_plan_card(c, t))
     if c.pending is not None:
         bottom.append(_confirmation(c, t))
     if c.snapshot and c.changed and not c.running:
@@ -2139,9 +2340,10 @@ def _servers_group(c: AgentController, t: Theme) -> Any:
                     "in the project folder, ask before acting according to the permission mode and get Pyzed's MCP "
                     "server."), size="xs", color="text_muted", theme=t),
         *agents,
-        ui.field(tr("Share Pyzed's MCP server"), ui.switch(s.share_pyzed_mcp, lambda v: c.set_setting(
-            "share_pyzed_mcp", v), theme=t), description=tr("Components, docs, generators and checks of Pyzed "
-                                                             "(needs the mcp package)"), theme=t),
+        ui.field(tr("Let external agents control the editor"), ui.switch(s.share_pyzed_mcp, lambda v: c.set_setting(
+            "share_pyzed_mcp", v), theme=t), description=tr(
+            "Gives them the built-in agent's tools over MCP: the open form and its code, the project, running the "
+            "app, and Pyzed's components and docs"), theme=t),
     ], theme=t)
     return _core.column([mcp, external], spacing=14, width="fill")
 

@@ -8,7 +8,8 @@ sidebar:
 `pyzed mcp` es un servidor del [Model Context Protocol](https://modelcontextprotocol.io) que viene con Pyzed. Le da
 a un agente de IA lo que sabe una persona experta en Pyzed, sacado de la **versión instalada** del paquete: la firma
 y la documentación de cada componente, los iconos, los temas, esta documentación, los ejemplos y bloques,
-generadores de apps, componentes y formularios, dos validadores y un renderizador sin pantalla.
+generadores de apps, componentes y formularios, dos validadores, un renderizador sin pantalla y herramientas de
+proyecto para construir una app completa en una carpeta.
 
 Esta página es la versión corta. La [referencia completa de MCP](/pyzed/es/guides/mcp/) lista cada herramienta,
 recurso y prompt.
@@ -54,14 +55,15 @@ instalado, `"command": "pyzed", "args": ["mcp"]` también sirve.
 
 | Grupo | Herramientas | Para |
 | --- | --- | --- |
-| Aprender | `get_guide`, `list_docs`, `read_docs` | Leer cómo funciona Pyzed, sus reglas y cualquier página de esta documentación (en inglés o español). |
-| Consultar | `list_components`, `describe_component`, `search_icons`, `list_themes` | Obtener firmas exactas, parámetros, nombres de iconos y tokens de color en vez de adivinarlos. |
-| Reutilizar | `list_examples`, `read_example` | Leer los ejemplos y los [Bloques](/pyzed/es/blocks/) (`read_example("blocks/settings")`). |
+| Aprender | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Leer cómo funciona Pyzed, sus reglas, el recetario de ejemplos ejecutables, temas como juegos o shaders y cualquier página de esta documentación (en inglés o español). |
+| Consultar | `list_components`, `describe_component`, `search_reference`, `read_reference`, `search_icons`, `list_themes`, `editor_keymap` | Obtener firmas exactas, parámetros, nombres de iconos, tokens de color y atajos en vez de adivinarlos. |
+| Reutilizar | `list_examples`, `read_example` | Leer los ejemplos, los [Bloques](/pyzed/es/blocks/) (`read_example("blocks/settings")`), juegos, showcase e integraciones con backend. |
 | Generar | `new_app`, `new_component`, `new_form` | Partir de esqueletos correctos: una app, un `pz.Component`, un formulario del diseñador. |
 | Comprobar | `validate_code`, `validate_form` | Detectar nombres que no existen, argumentos mal escritos, efectos en `view()` y formularios rotos antes de ejecutar. |
 | Ver | `screenshot` | Renderizar la app o un componente sin pantalla y recibir un PNG. |
+| Construir | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Crear un proyecto, escribirlo, añadir librerías, revisarlo, probarlo y mirarlo, en la carpeta donde corre el servidor. |
 
-Los prompts `create_app`, `create_component` y `create_form` empiezan una tarea con los pasos correctos, y los
+Los prompts `create_app`, `create_component`, `create_form` y `build_project` (una app completa, de principio a fin) empiezan una tarea con los pasos correctos, y los
 clientes que admiten recursos pueden adjuntar `pyzed://best-practices` o `pyzed://docs/{slug}`.
 
 ## Peticiones que aprovechan el servidor
@@ -80,10 +82,10 @@ Más en la [guía de prompts](/pyzed/es/ai/prompting/), con una sesión completa
 - `screenshot` **ejecuta el código que recibe** en otro proceso, con un límite de 60 segundos y sin abrir ventanas.
   Trátalo como ejecutar código tú mismo: los agentes suelen pedir permiso antes de usar herramientas; mantenlo así
   con prompts que no sean de confianza.
-- `pyzed mcp --transport streamable-http` lo sirve en `127.0.0.1` sin autenticación; ahí `screenshot` está desactivado
-  salvo que añadas `--allow-code`.
-- El servidor lee la documentación de tu copia del repositorio o de GitHub y nunca lee tus archivos: lo que ve es lo
-  que el agente decide enviarle.
+- Las herramientas de proyecto solo leen y escriben dentro de la carpeta donde arrancó el servidor (o `--root RUTA`),
+  nunca archivos que puedan guardar secretos (`.env`, claves...), y ejecutan uv, ruff, ty y pytest ahí.
+- `pyzed mcp --transport streamable-http` lo sirve en `127.0.0.1` sin autenticación; ahí `screenshot` y las
+  herramientas de proyecto están desactivados salvo que añadas `--allow-code`.
 
 ## Problemas frecuentes
 
