@@ -7,8 +7,17 @@
 
 mod backend;
 mod catalog;
+#[cfg(audio_devices)]
+mod device;
+#[cfg(not(audio_devices))]
+#[path = "no_device.rs"]
+mod device;
 mod dsp;
 mod graph;
+#[cfg(audio_devices)]
+mod midi;
+#[cfg(not(audio_devices))]
+#[path = "no_midi.rs"]
 mod midi;
 
 use std::cmp::Reverse;
@@ -62,7 +71,7 @@ struct Inner {
     started: Option<Instant>,
     planner: FftPlanner<f32>,
     midi_events: Option<Consumer<[u8; 3]>>,
-    midi_inputs: Vec<(String, midir::MidiInputConnection<()>)>,
+    midi_inputs: Vec<(String, midi::InputConnection)>,
     midi_output: Option<midi::Output>,
 }
 
@@ -626,7 +635,7 @@ impl AudioEngine {
             let meters = inner.meters.clone();
             let opened = match backend {
                 "device" | "auto" => {
-                    match backend::open_device(graph.clone(), request.clone(), meters.clone()) {
+                    match device::open_device(graph.clone(), request.clone(), meters.clone()) {
                         Ok(opened) => Ok(opened),
                         Err(error) if backend == "auto" => {
                             let sr = request.sample_rate.unwrap_or(inner.sr as u32);
@@ -946,14 +955,14 @@ fn audio_modules(py: Python<'_>) -> PyResult<Vec<Bound<'_, PyDict>>> {
 
 #[pyfunction]
 fn audio_hosts() -> (Vec<String>, String) {
-    (backend::host_names(), backend::default_host_name())
+    (device::host_names(), device::default_host_name())
 }
 
 #[pyfunction]
 #[pyo3(signature = (host=None))]
 fn audio_devices<'py>(py: Python<'py>, host: Option<&str>) -> PyResult<Vec<Bound<'py, PyDict>>> {
     let list = py
-        .detach(|| backend::devices(host))
+        .detach(|| device::devices(host))
         .map_err(PyRuntimeError::new_err)?;
     list.into_iter()
         .map(|d| {

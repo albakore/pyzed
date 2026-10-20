@@ -36,8 +36,11 @@ with engine:                                       # suena mientras está dentro
 ```
 
 <Aside type="note" title="Compilar desde el código en Linux">
-Las wheels de PyPI no necesitan nada más. Para compilar Pyzed tú mismo en Linux, instala antes las
-cabeceras de ALSA: `sudo apt install libasound2-dev` (Fedora: `sudo dnf install alsa-lib-devel`).
+Las wheels de PyPI no necesitan nada más. Una build de Pyzed desde el código en Linux deja fuera los
+dispositivos de audio y el MIDI salvo que los pidas, así que nunca necesita paquetes extra: `Engine("auto")`
+suena entonces con el reloj silencioso y `engine.info["error"]` explica por qué. Para tener sonido, instala las
+cabeceras de ALSA (`sudo apt install libasound2-dev pkg-config`; Fedora: `sudo dnf install alsa-lib-devel`) y
+compila con `maturin develop --release --features alsa` (con uv, deja exportado `MATURIN_PEP517_ARGS="--features alsa"` y ejecuta `uv sync --reinstall-package pyzed-ui`).
 </Aside>
 
 Cada línea del patch es Python normal, así que puedes cambiarlo mientras suena:

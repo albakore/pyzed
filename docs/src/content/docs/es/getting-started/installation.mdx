@@ -109,6 +109,10 @@ dependencias del sistema de arriba.
   pip, vuelve a ejecutar `maturin develop --release`. Usa `--release`: la build de depuración es mucho más lenta al
   usar la ventana.
 - `uv sync --extra designer` añade ty y ruff para el editor de código del diseñador.
+- En Linux, una build desde el código no suena por defecto, así que compila sin paquetes extra del sistema:
+  `pyzed.audio` renderiza offline y con su reloj silencioso. Para dispositivos de audio y MIDI, instala las
+  cabeceras de ALSA (`sudo apt install libasound2-dev pkg-config`; Fedora: `sudo dnf install alsa-lib-devel`)
+  y compila con `maturin develop --release --features alsa` (con uv, deja exportado `MATURIN_PEP517_ARGS="--features alsa"` y ejecuta `uv sync --reinstall-package pyzed-ui`).
 
 ## Linux y WSL
 

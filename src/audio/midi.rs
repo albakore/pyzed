@@ -12,6 +12,8 @@ use rtrb::{Consumer, Producer};
 
 const CLIENT: &str = "Pyzed";
 
+pub type InputConnection = MidiInputConnection<()>;
+
 pub fn inputs() -> Result<Vec<String>, String> {
     let midi = MidiInput::new(CLIENT).map_err(|e| e.to_string())?;
     Ok(midi

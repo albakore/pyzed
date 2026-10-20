@@ -35,8 +35,11 @@ with engine:                                       # plays while inside the bloc
 ```
 
 <Aside type="note" title="Building from source on Linux">
-The wheels from PyPI need nothing else. To build Pyzed yourself on Linux, install ALSA's headers first:
-`sudo apt install libasound2-dev` (Fedora: `sudo dnf install alsa-lib-devel`).
+The wheels from PyPI need nothing else. A build of Pyzed from source on Linux leaves audio devices and
+MIDI out unless you ask for them, so it never needs extra packages: `Engine("auto")` then plays on the silent
+clock and `engine.info["error"]` says why. For sound, install ALSA's headers
+(`sudo apt install libasound2-dev pkg-config`; Fedora: `sudo dnf install alsa-lib-devel`) and build with
+`maturin develop --release --features alsa` (with uv, keep `MATURIN_PEP517_ARGS="--features alsa"` exported and run `uv sync --reinstall-package pyzed-ui`).
 </Aside>
 
 Every line of the patch is plain Python, so you can change it while it plays:

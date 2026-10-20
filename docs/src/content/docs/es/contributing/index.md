@@ -42,8 +42,10 @@ pytest tests
 
 - Compila siempre con `--release`: las compilaciones de depuración de Iced son demasiado lentas para usar
   una ventana real.
-- En Linux, el motor de audio necesita las cabeceras de ALSA para compilar: `sudo apt install libasound2-dev`
-  (Fedora: `sudo dnf install alsa-lib-devel`).
+- En Linux, una build desde el código no suena por defecto, así que compila sin paquetes extra del sistema:
+  `pyzed.audio` renderiza offline y con su reloj silencioso. Para dispositivos de audio y MIDI, instala las
+  cabeceras de ALSA (`sudo apt install libasound2-dev pkg-config`; Fedora: `sudo dnf install alsa-lib-devel`)
+  y compila con `maturin develop --release --features alsa` (con uv, deja exportado `MATURIN_PEP517_ARGS="--features alsa"` y ejecuta `uv sync --reinstall-package pyzed-ui`).
 - Los cambios en los archivos de Python de `python/pyzed/` se aplican directamente (el paquete se instala en
   modo editable).
 - Después de cambiar código de **Rust** en `src/`, vuelve a compilar: `maturin develop --release` (con uv, el
