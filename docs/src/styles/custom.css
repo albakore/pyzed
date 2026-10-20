@@ -141,3 +141,287 @@
 .pz-center-link a:hover {
 	text-decoration: underline;
 }
+
+/* ------------------------------------------------------------------------------------------------
+ * Site-wide look: header with the section navbar, typography, sidebar, cards, asides, code, tables
+ * and media. Everything keeps the One Dark / One Light palette above.
+ * ---------------------------------------------------------------------------------------------- */
+
+/* Header: two rows on large screens (src/components/Header.astro), one row on phones. */
+:root {
+	--pz-top-height: 3.5rem;
+	--pz-tabs-height: 2.6rem;
+	--pz-hairline-glow: linear-gradient(90deg, transparent, rgb(97 175 239 / 0.45), rgb(198 120 221 / 0.4), transparent);
+}
+:root[data-theme='light'] {
+	--pz-hairline-glow: linear-gradient(90deg, transparent, rgb(64 120 242 / 0.35), rgb(166 38 164 / 0.3), transparent);
+}
+@media (min-width: 50em) {
+	:root {
+		--pz-top-height: 4rem;
+		--pz-tabs-height: 2.75rem;
+		--sl-nav-height: calc(var(--pz-top-height) + var(--pz-tabs-height));
+	}
+}
+@media (max-width: 49.99em) {
+	:root:not([data-has-sidebar]) {
+		--sl-nav-height: calc(var(--pz-top-height) + var(--pz-tabs-height));
+	}
+}
+.site-title {
+	height: calc(var(--pz-top-height) - 2 * var(--sl-nav-pad-y));
+}
+header.header {
+	background-color: color-mix(in srgb, var(--sl-color-bg-nav) 92%, transparent);
+	backdrop-filter: blur(14px) saturate(1.3);
+	-webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+header.header::after {
+	content: '';
+	position: absolute;
+	inset-inline: 0;
+	bottom: -1px;
+	height: 1px;
+	background: var(--pz-hairline-glow);
+	pointer-events: none;
+}
+
+/* The sections in the phone menu (starlight-sidebar-topics); the header shows them on large screens. */
+ul.starlight-sidebar-topics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.35rem;
+}
+ul.starlight-sidebar-topics::after {
+	grid-column: 1 / -1;
+	margin-top: 0.6rem;
+}
+ul.starlight-sidebar-topics li + li {
+	margin-top: 0;
+}
+ul.starlight-sidebar-topics a {
+	font-size: var(--sl-text-sm);
+	font-weight: 500;
+	border-radius: 0.55rem;
+	border: 1px solid var(--sl-color-hairline-light);
+	padding: 0.4rem 0.5rem;
+}
+ul.starlight-sidebar-topics a.starlight-sidebar-topics-current {
+	border-color: color-mix(in srgb, var(--sl-color-accent) 60%, transparent);
+	background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+}
+ul.starlight-sidebar-topics .starlight-sidebar-topics-icon {
+	padding: 0.2rem;
+	border-color: transparent;
+}
+@media (min-width: 50em) {
+	ul.starlight-sidebar-topics {
+		display: none;
+	}
+}
+
+/* Typography. */
+.sl-markdown-content :is(h1, h2, h3, h4) {
+	letter-spacing: -0.015em;
+}
+.sl-markdown-content h2 {
+	font-weight: 700;
+}
+.sl-markdown-content h3 {
+	font-weight: 650;
+}
+.sl-markdown-content h2:not(:where(.not-content *))::before {
+	content: '';
+	display: block;
+	width: 2.25rem;
+	height: 3px;
+	margin-bottom: 0.7rem;
+	border-radius: 3px;
+	background: var(--pz-gradient);
+}
+.sl-markdown-content a:not(:where(.not-content *)) {
+	text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+	text-underline-offset: 0.2em;
+	transition: text-decoration-color 0.15s ease;
+}
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+	text-decoration-color: currentColor;
+}
+.content-panel h1#_top {
+	font-weight: 700;
+	letter-spacing: -0.025em;
+}
+
+/* Sidebar. */
+.sidebar-content .group-label .large {
+	font-size: var(--sl-text-xs);
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: var(--sl-color-gray-3);
+}
+.sidebar-content a {
+	border-radius: 0.45rem;
+	transition:
+		color 0.12s ease,
+		background-color 0.12s ease;
+}
+.sidebar-content a:not([aria-current='page']):hover {
+	background: color-mix(in srgb, var(--sl-color-gray-5) 22%, transparent);
+}
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+	color: var(--sl-color-white);
+	background: linear-gradient(90deg, color-mix(in srgb, var(--sl-color-accent) 30%, transparent), color-mix(in srgb, var(--sl-color-accent) 8%, transparent));
+	box-shadow: inset 2px 0 0 var(--sl-color-accent);
+}
+
+/* Table of contents: the current heading. */
+starlight-toc a[aria-current='true'],
+mobile-starlight-toc a[aria-current='true'] {
+	font-weight: 600;
+}
+
+/* Cards and link cards. */
+.sl-link-card {
+	border-radius: 0.85rem;
+	border-color: var(--pz-frame-border);
+	background: var(--pz-tile-bg);
+	box-shadow: none;
+	transition:
+		border-color 0.15s ease,
+		transform 0.15s ease,
+		box-shadow 0.15s ease;
+}
+.sl-link-card:hover {
+	background: var(--pz-tile-bg);
+	border-color: color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+	box-shadow: 0 10px 30px -14px color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+	transform: translateY(-2px);
+}
+.sl-link-card .icon {
+	transition: transform 0.15s ease;
+}
+.sl-link-card:hover .icon {
+	color: var(--pz-accent-text);
+	transform: translateX(3px);
+}
+article.card {
+	border-radius: 0.9rem;
+	border-color: var(--pz-frame-border);
+	background: var(--pz-tile-bg);
+}
+
+/* Asides (note, tip, caution, danger): rounded, with a soft tint. */
+.starlight-aside {
+	border-radius: 0.75rem;
+	border: 1px solid color-mix(in srgb, var(--sl-color-asides-border) 35%, transparent);
+	border-inline-start: 4px solid var(--sl-color-asides-border);
+	background-color: color-mix(in srgb, var(--sl-color-asides-border) 9%, var(--sl-color-bg));
+	padding: 0.9rem 1.1rem;
+}
+.starlight-aside__title {
+	font-size: var(--sl-text-base);
+	letter-spacing: 0.01em;
+}
+.starlight-aside__content {
+	color: var(--sl-color-gray-1);
+}
+
+/* Code blocks (Expressive Code) and inline code. */
+.expressive-code .frame {
+	box-shadow: 0 12px 34px -20px rgb(0 0 0 / 0.55);
+}
+:root[data-theme='light'] .expressive-code .frame {
+	box-shadow: 0 12px 30px -22px rgb(30 40 70 / 0.35);
+}
+.sl-markdown-content :not(pre) > code {
+	border-radius: 0.3rem;
+	padding: 0.1em 0.35em;
+	border: 1px solid color-mix(in srgb, var(--sl-color-gray-5) 50%, transparent);
+}
+
+/* Tabs (for example uv / pip / python, or Windows / macOS / Linux). */
+starlight-tabs [role='tablist'] {
+	gap: 0.25rem;
+}
+starlight-tabs [role='tab'] {
+	border-radius: 0.5rem 0.5rem 0 0;
+}
+starlight-tabs [role='tab'][aria-selected='true'] {
+	color: var(--sl-color-white);
+	background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+}
+
+/* Tables: a tinted header row and soft row rules. */
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+	border-bottom: 1px solid color-mix(in srgb, var(--sl-color-gray-5) 70%, transparent);
+}
+.sl-markdown-content :is(th, td):first-child:not(:where(.not-content *)) {
+	padding-inline-start: 0.75rem;
+}
+.sl-markdown-content th:not(:where(.not-content *)) {
+	background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+	font-weight: 600;
+	border-bottom-color: var(--sl-color-gray-5);
+}
+.sl-markdown-content th:first-child:not(:where(.not-content *)) {
+	border-start-start-radius: 0.5rem;
+}
+.sl-markdown-content th:last-child:not(:where(.not-content *)) {
+	border-start-end-radius: 0.5rem;
+}
+
+/* Pagination ("Previous" / "Next"). */
+.pagination-links a {
+	border-radius: 0.85rem;
+	border-color: var(--pz-frame-border);
+	box-shadow: none;
+	background: var(--pz-tile-bg);
+	transition: border-color 0.15s ease;
+}
+.pagination-links a:hover {
+	border-color: color-mix(in srgb, var(--sl-color-accent) 70%, transparent);
+}
+
+/* Media (src/components/Media.astro, Shot.astro): show one capture per theme. */
+:root[data-theme='light'] .pz-only-dark,
+:root:not([data-theme='light']) .pz-only-light {
+	display: none !important;
+}
+
+/* A soft glow at the top of every page, like the home page. */
+.main-frame {
+	background:
+		radial-gradient(48rem 18rem at 85% -4rem, color-mix(in srgb, #61afef 9%, transparent), transparent 70%),
+		radial-gradient(36rem 16rem at 35% -6rem, color-mix(in srgb, #c678dd 7%, transparent), transparent 70%);
+	background-repeat: no-repeat;
+}
+
+/* Never scroll sideways on phones. */
+html,
+body {
+	overflow-x: clip;
+}
+
+/* Top-level links of a section sidebar read like the links inside a group. */
+.sidebar-content .top-level > li > a.large {
+	font-size: var(--sl-text-sm);
+	font-weight: 500;
+	color: var(--sl-color-gray-2);
+}
+.sidebar-content .top-level > li > a.large[aria-current='page'] {
+	font-weight: 600;
+	color: var(--sl-color-white);
+}
+@media (max-width: 49.99em) {
+	.sidebar-content .top-level > li > a.large {
+		font-size: var(--sl-text-base);
+	}
+}
+/* A section hero needs no rule between it and the page. */
+.content-panel:has(.pz-page-hero) + .content-panel {
+	border-top: 0;
+	padding-top: 0.5rem;
+}

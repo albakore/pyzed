@@ -1,10 +1,18 @@
 ---
 title: Pyzed Design
 description: "El manual de Pyzed Design, el diseñador visual de GUIs para Python: dibuja ventanas y componentes, conecta eventos a Python, ejecútalos y distribúyelos."
+section:
+  eyebrow: "Diseñador"
+  icon: "pencil"
+  lead: "Un editor visual de interfaces de escritorio: dibuja formularios y componentes, diseña shaders, escribe su código Python y ejecútalos, todo en una sola app."
 sidebar:
   order: 0
   label: Introducción
 ---
+
+:::note[Sobre este manual]
+Este manual se está ampliando: cada panel y cada vista (Formulario, Componente y Shader) tendrá su propia página con capturas nuevas y animaciones cortas.
+:::
 
 **Pyzed Design** es el editor visual de Pyzed, al estilo de Visual Basic, el diseñador de WinForms de Visual Studio
 y Qt Designer, y hecho con el propio Pyzed. Dibujas una ventana con el ratón, ajustas sus propiedades en una
@@ -24,7 +32,7 @@ rápido.
 | `pyzed design` | Dentro de un proyecto: su formulario principal (`[tool.pyzed] main`). Fuera: un formulario vacío sin título. |
 | `pyzed design login.pzform` | Ese formulario, o uno nuevo con ese nombre que se crea al guardar por primera vez. |
 | `pyzed design ui/rating.pzcomp` | Un [componente diseñado](/pyzed/es/editor/component-designer/) (se crea al guardar si no existe). |
-| `pyzed design fx/fuego.pzshad` | Un [shader hecho de nodos](/pyzed/es/editor/shader-designer/) (se crea al guardar si no existe). |
+| `pyzed design fx/fuego.pzshad` | Un [shader hecho de nodos](/pyzed/es/shading/shader-designer/) (se crea al guardar si no existe). |
 | `python -m pyzed.designer [archivo]` | Lo mismo, sin el comando `pyzed` en el `PATH`. |
 | La app **Pyzed Design** | La versión independiente: el editor con su propio Python y `uv`, sin instalar nada más (ver [Proyectos](/pyzed/es/editor/projects/#la-app-independiente)). |
 
@@ -122,7 +130,7 @@ flowchart LR
 - [Ejecutar y la consola](/pyzed/es/editor/console-and-running/): F5, la consola, `uv run` y recarga en caliente.
 - [Diseñador de componentes](/pyzed/es/editor/component-designer/): componentes reutilizables con props, estado,
   métodos y eventos.
-- [Diseñador de shaders](/pyzed/es/editor/shader-designer/): shaders de GPU hechos conectando nodos, con una vista
+- [Diseñador de shaders](/pyzed/es/shading/shader-designer/): shaders de GPU hechos conectando nodos, con una vista
   previa en vivo en cada nodo.
 - [Archivos, plantillas y scripting](/pyzed/es/editor/files-and-scripting/): pestañas, archivos `.pzform`,
   plantillas y la API de Python.

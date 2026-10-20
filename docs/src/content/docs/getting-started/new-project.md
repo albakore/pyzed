@@ -28,7 +28,7 @@ my-app/
 The UI folder keeps the interface apart from the rest of the code, and its handlers can import the backend, any
 module of the project and every dependency. Already have a project made with `uv init`? Run `pyzed init` inside
 it. See [Projects with uv](/pyzed/guides/projects/) for the layout, dependency commands and the designer's
-Project tab, and [Build and distribute](/pyzed/guides/packaging/) to package the app for each platform.
+Project tab, and [Build and distribute](/pyzed/packaging/build/) to package the app for each platform.
 
 ## A single-file app
 

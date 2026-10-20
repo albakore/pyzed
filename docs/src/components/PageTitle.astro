@@ -1,0 +1,82 @@
+---
+// The page title. Pages with `section` in their frontmatter (the overview of a section) get a hero:
+// an eyebrow with an icon, the title and a lead paragraph, over a soft glow.
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import { Icon } from '@astrojs/starlight/components';
+
+type IconName = Parameters<typeof Icon>[0]['name'];
+const { title, description, section } = Astro.locals.starlightRoute.entry.data;
+const lead = section?.lead ?? description;
+---
+
+{
+	section ? (
+		<header class="pz-page-hero">
+			<p class="eyebrow">
+				{section.icon && <Icon name={section.icon as IconName} size="1rem" />}
+				{section.eyebrow}
+			</p>
+			<h1 id="_top">{title}</h1>
+			{lead && <p class="lead">{lead}</p>}
+		</header>
+	) : (
+		<Default />
+	)
+}
+
+<style>
+	.pz-page-hero {
+		position: relative;
+		isolation: isolate;
+		margin-top: 0.5rem;
+		padding: clamp(1.5rem, 1rem + 3vw, 2.75rem) clamp(1.25rem, 0.75rem + 2.5vw, 2.25rem);
+		border-radius: 1.1rem;
+		border: 1px solid var(--pz-frame-border);
+		background:
+			radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, #c678dd 16%, transparent), transparent 55%),
+			radial-gradient(100% 120% at 0% 0%, color-mix(in srgb, #61afef 18%, transparent), transparent 60%),
+			var(--pz-tile-bg);
+		overflow: hidden;
+	}
+	.pz-page-hero::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		background-image:
+			linear-gradient(color-mix(in srgb, var(--sl-color-gray-5) 22%, transparent) 1px, transparent 1px),
+			linear-gradient(90deg, color-mix(in srgb, var(--sl-color-gray-5) 22%, transparent) 1px, transparent 1px);
+		background-size: 2rem 2rem;
+		mask-image: radial-gradient(80% 90% at 100% 0%, #000, transparent 70%);
+	}
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0.25rem 0.7rem;
+		border-radius: 999px;
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--pz-accent-text);
+		background: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+		border: 1px solid color-mix(in srgb, var(--sl-color-accent) 35%, transparent);
+	}
+	h1 {
+		margin: 0.9rem 0 0;
+		font-size: clamp(var(--sl-text-3xl), 1.4rem + 2.4vw, var(--sl-text-5xl));
+		line-height: 1.08;
+		font-weight: 700;
+		letter-spacing: -0.025em;
+		color: var(--sl-color-white);
+	}
+	.lead {
+		max-width: 38rem;
+		margin: 0.9rem 0 0;
+		font-size: var(--sl-text-lg);
+		line-height: 1.6;
+		color: var(--sl-color-gray-2);
+	}
+</style>

@@ -1,0 +1,39 @@
+---
+title: Reference
+description: "The Pyzed API reference: every class, function and parameter of pyzed, pyzed.ui, themes, drawing, icons, games, shader graphs, the designer and the command line."
+section:
+  eyebrow: Reference
+  icon: list-format
+  lead: Every class, function and parameter, generated from the code so it always matches the installed version.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+
+Use these pages when you know what you are looking for and need the exact name, parameters or defaults. To learn
+how the pieces fit together, start with the [tutorials](/pyzed/tutorials/) and the [guides](/pyzed/guides/architecture/).
+
+<NavCards
+	min="14rem"
+	items={[
+		{ title: 'App and running', text: '<code>pz.App</code>, <code>pz.run</code>, windows and screenshots.', href: '/pyzed/reference/app/', icon: 'laptop' },
+		{ title: 'Command', text: 'Side effects returned by <code>update</code> and callbacks.', href: '/pyzed/reference/command/', icon: 'right-arrow' },
+		{ title: 'Core widgets', text: 'Layout, text, controls, the code editor, images and more.', href: '/pyzed/reference/widgets/', icon: 'puzzle' },
+		{ title: 'Components (pyzed.ui)', text: 'Every component, its parameters, defaults and events.', href: '/pyzed/reference/ui/', icon: 'puzzle' },
+		{ title: 'Themes', text: 'Built-in themes, color tokens and custom themes.', href: '/pyzed/reference/theme/', icon: 'moon' },
+		{ title: 'Drawing (pyzed.draw)', text: 'Shapes, paths, text and transforms for the canvas.', href: '/pyzed/reference/draw/', icon: 'pencil' },
+		{ title: 'Icons', text: 'The bundled icon set and file-type icons.', href: '/pyzed/reference/icons/', icon: 'star' },
+		{ title: 'CLI', text: 'Create, run, build and inspect projects from the terminal.', href: '/pyzed/reference/cli/', icon: 'seti:shell' },
+		{ title: 'Visual designer (pyzed.designer)', text: 'Open, run and build forms from Python code.', href: '/pyzed/reference/designer/', icon: 'pencil' },
+		{ title: 'Games (pyzed.game)', text: 'Held keys, movement, collisions, sprites and particles.', href: '/pyzed/reference/game/', icon: 'rocket' },
+		{ title: 'Shader graphs (pyzed.shading)', text: 'Load, build and edit <code>.pzshad</code> graphs in code.', href: '/pyzed/reference/shading/', icon: 'star' },
+	]}
+/>
+
+<Aside type="tip" title="Also available to AI agents">
+The same reference is served by the [MCP server](/pyzed/ai/mcp/) (`search_reference` and `read_reference`), so a
+coding agent reads the exact signature instead of guessing it.
+</Aside>

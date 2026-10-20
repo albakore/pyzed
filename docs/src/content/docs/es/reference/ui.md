@@ -2322,7 +2322,7 @@ Convierte texto con colores ANSI en líneas de segmentos `(texto, nombre_de_colo
 class ColorPicker
 ```
 
-Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `"#rrggbb[aa]"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/guides/styles/#selector-de-color).
+Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `"#rrggbb[aa]"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/theming/styles/#selector-de-color).
 
 | Parámetro | Descripción |
 | --- | --- |

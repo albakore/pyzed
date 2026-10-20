@@ -84,7 +84,7 @@ As with lists, the page icon switches to plain text: one row per line, cells sep
 
 ### Style
 
-Every control has a **Style** section, the same set of properties as [`pz.Style`](/pyzed/guides/styles/):
+Every control has a **Style** section, the same set of properties as [`pz.Style`](/pyzed/theming/styles/):
 background (color, gradient or mask), text color, font, weight, italic, font size, line height, border, corner
 radius, shadow, padding, margin, maximum size, content alignment and clipping. Empty fields keep the component's
 own look and **Reset style** clears them all. See [Styles and themes](/pyzed/editor/styles-and-themes/).

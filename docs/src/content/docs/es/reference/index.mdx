@@ -1,0 +1,40 @@
+---
+title: Referencia
+description: "La referencia de la API de Pyzed: todas las clases, funciones y parámetros de pyzed, pyzed.ui, temas, dibujo, iconos, juegos, grafos de shaders, el diseñador y la línea de comandos."
+section:
+  eyebrow: Referencia
+  icon: list-format
+  lead: Todas las clases, funciones y parámetros, generados a partir del código para que siempre coincidan con la versión instalada.
+sidebar:
+  label: Introducción
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+
+Usa estas páginas cuando sabes lo que buscas y necesitas el nombre exacto, los parámetros o los valores por
+defecto. Para aprender cómo encajan las piezas, empieza por los [tutoriales](/pyzed/es/tutorials/) y las
+[guías](/pyzed/es/guides/architecture/).
+
+<NavCards
+	min="14rem"
+	items={[
+		{ title: 'App y ejecución', text: '<code>pz.App</code>, <code>pz.run</code>, ventanas y capturas.', href: '/pyzed/es/reference/app/', icon: 'laptop' },
+		{ title: 'Command', text: 'Efectos que devuelven <code>update</code> y los callbacks.', href: '/pyzed/es/reference/command/', icon: 'right-arrow' },
+		{ title: 'Widgets base', text: 'Disposición, texto, controles, el editor de código, imágenes y más.', href: '/pyzed/es/reference/widgets/', icon: 'puzzle' },
+		{ title: 'Componentes (pyzed.ui)', text: 'Cada componente, sus parámetros, valores por defecto y eventos.', href: '/pyzed/es/reference/ui/', icon: 'puzzle' },
+		{ title: 'Temas', text: 'Temas incluidos, tokens de color y temas propios.', href: '/pyzed/es/reference/theme/', icon: 'moon' },
+		{ title: 'Dibujo (pyzed.draw)', text: 'Formas, trazados, texto y transformaciones para el canvas.', href: '/pyzed/es/reference/draw/', icon: 'pencil' },
+		{ title: 'Iconos', text: 'El conjunto de iconos incluido e iconos por tipo de archivo.', href: '/pyzed/es/reference/icons/', icon: 'star' },
+		{ title: 'CLI', text: 'Crea, ejecuta, compila e inspecciona proyectos desde la terminal.', href: '/pyzed/es/reference/cli/', icon: 'seti:shell' },
+		{ title: 'Diseñador visual (pyzed.designer)', text: 'Abre, ejecuta y construye formularios desde código Python.', href: '/pyzed/es/reference/designer/', icon: 'pencil' },
+		{ title: 'Juegos (pyzed.game)', text: 'Teclas pulsadas, movimiento, colisiones, sprites y partículas.', href: '/pyzed/es/reference/game/', icon: 'rocket' },
+		{ title: 'Grafos de shaders (pyzed.shading)', text: 'Carga, crea y edita grafos <code>.pzshad</code> en código.', href: '/pyzed/es/reference/shading/', icon: 'star' },
+	]}
+/>
+
+<Aside type="tip" title="También para agentes de IA">
+La misma referencia la sirve el [servidor MCP](/pyzed/es/ai/mcp/) (`search_reference` y `read_reference`), así un
+agente de código lee la firma exacta en vez de adivinarla.
+</Aside>

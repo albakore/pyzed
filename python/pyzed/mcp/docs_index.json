@@ -319,12 +319,6 @@
    "path": "docs/src/content/docs/editor/settings.md"
   },
   {
-   "slug": "editor/shader-designer",
-   "title": "Shader designer",
-   "description": "Build GPU shaders in Pyzed Design by wiring nodes, like Godot's visual shaders: live previews on every node, a sidebar of shading nodes and variables your code changes.",
-   "path": "docs/src/content/docs/editor/shader-designer.md"
-  },
-  {
    "slug": "editor/styles-and-themes",
    "title": "Styles and themes",
    "description": "Style controls in Pyzed Design: the Style section, a color picker with gradients and masks, the form's global style and built-in themes.",
@@ -481,12 +475,6 @@
    "path": "docs/src/content/docs/guides/i18n.md"
   },
   {
-   "slug": "guides/icons-fonts",
-   "title": "Icons and fonts",
-   "description": "Use about 2000 bundled Lucide icons and file-type icons in Python desktop GUIs with Pyzed, and load your own fonts such as IBM Plex.",
-   "path": "docs/src/content/docs/guides/icons-fonts.md"
-  },
-  {
    "slug": "guides/keyboard",
    "title": "Keyboard and shortcuts",
    "description": "Keyboard shortcuts in Pyzed apps: Zed-style key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI.",
@@ -505,12 +493,6 @@
    "path": "docs/src/content/docs/guides/mcp.md"
   },
   {
-   "slug": "guides/packaging",
-   "title": "Build and distribute",
-   "description": "Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder.",
-   "path": "docs/src/content/docs/guides/packaging.md"
-  },
-  {
    "slug": "guides/performance",
    "title": "Large data and performance",
    "description": "Python GUI performance with Pyzed: show hundreds of thousands of rows with virtual lists and tables, and skip unchanged views with @pz.memo.",
@@ -523,40 +505,16 @@
    "path": "docs/src/content/docs/guides/projects.md"
   },
   {
-   "slug": "guides/shader-graphs",
-   "title": "Shader graphs",
-   "description": "Shaders made of nodes (.pzshad): draw them with pz.shader, change their variables from Python, and build or edit graphs in code with pyzed.shading.",
-   "path": "docs/src/content/docs/guides/shader-graphs.md"
-  },
-  {
-   "slug": "guides/shaders",
-   "title": "Shaders",
-   "description": "Paint widgets on the GPU with your own WGSL shaders - backgrounds, effects and game visuals - with uniforms from Python and the mouse position.",
-   "path": "docs/src/content/docs/guides/shaders.md"
-  },
-  {
    "slug": "guides/stability",
    "title": "Stability and known limitations",
    "description": "What Pyzed 1.x promises about its Python API, how features are deprecated over releases, and what the framework does not do yet.",
    "path": "docs/src/content/docs/guides/stability.md"
   },
   {
-   "slug": "guides/styles",
-   "title": "Styles",
-   "description": "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app.",
-   "path": "docs/src/content/docs/guides/styles.md"
-  },
-  {
    "slug": "guides/testing",
    "title": "Tests and screenshots",
    "description": "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration.",
    "path": "docs/src/content/docs/guides/testing.md"
-  },
-  {
-   "slug": "guides/theming",
-   "title": "Themes",
-   "description": "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime.",
-   "path": "docs/src/content/docs/guides/theming.md"
   },
   {
    "slug": "guides/windows",
@@ -567,7 +525,7 @@
   {
    "slug": "index",
    "title": "Pyzed",
-   "description": "Pyzed is an open-source Python framework for native desktop GUIs: Rust rendering with Iced, 90+ Zed-style components, a drag-and-drop visual designer, GPU effects and shaders, games and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt.",
+   "description": "Pyzed is an open-source Python frontend framework for native desktop apps: GPU rendering in Rust with Iced, 90+ components, a drag-and-drop visual designer, themes, node-based shaders, packaging for Windows, macOS and Linux and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt.",
    "path": "docs/src/content/docs/index.mdx"
   },
   {
@@ -1201,6 +1159,18 @@
    "path": "docs/src/content/docs/library/workspace.mdx"
   },
   {
+   "slug": "packaging/build",
+   "title": "Build and distribute",
+   "description": "Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder.",
+   "path": "docs/src/content/docs/packaging/build.md"
+  },
+  {
+   "slug": "packaging/index",
+   "title": "Distribute your app",
+   "description": "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus signing and CI builds.",
+   "path": "docs/src/content/docs/packaging/index.mdx"
+  },
+  {
    "slug": "reference/app",
    "title": "App and running",
    "description": "API reference for pyzed.App: the application class, run, screenshot, post, load_font and the window options of a Python desktop app.",
@@ -1243,6 +1213,12 @@
    "path": "docs/src/content/docs/reference/icons.md"
   },
   {
+   "slug": "reference/index",
+   "title": "Reference",
+   "description": "The Pyzed API reference: every class, function and parameter of pyzed, pyzed.ui, themes, drawing, icons, games, shader graphs, the designer and the command line.",
+   "path": "docs/src/content/docs/reference/index.mdx"
+  },
+  {
    "slug": "reference/shading",
    "title": "Shader graphs (pyzed.shading)",
    "description": "API reference for pyzed.shading: load .pzshad shader graphs, change their variables, and build node graphs in code that compile to the WGSL of pz.shader.",
@@ -1265,6 +1241,30 @@
    "title": "Core widgets",
    "description": "API reference for Pyzed's native widgets: layout, text, controls, the code editor, SVG and icons, all rendered in Rust by Iced.",
    "path": "docs/src/content/docs/reference/widgets.md"
+  },
+  {
+   "slug": "shading/index",
+   "title": "Shading",
+   "description": "GPU shaders in Pyzed: build them by wiring nodes in Pyzed Design, load .pzshad shader graphs from Python, or write WGSL by hand, and paint any widget with them.",
+   "path": "docs/src/content/docs/shading/index.mdx"
+  },
+  {
+   "slug": "shading/shader-designer",
+   "title": "Shader designer",
+   "description": "Build GPU shaders in Pyzed Design by wiring nodes, like Godot's visual shaders: live previews on every node, a sidebar of shading nodes and variables your code changes.",
+   "path": "docs/src/content/docs/shading/shader-designer.md"
+  },
+  {
+   "slug": "shading/shader-graphs",
+   "title": "Shader graphs",
+   "description": "Shaders made of nodes (.pzshad): draw them with pz.shader, change their variables from Python, and build or edit graphs in code with pyzed.shading.",
+   "path": "docs/src/content/docs/shading/shader-graphs.md"
+  },
+  {
+   "slug": "shading/shaders",
+   "title": "Shaders",
+   "description": "Paint widgets on the GPU with your own WGSL shaders - backgrounds, effects and game visuals - with uniforms from Python and the mouse position.",
+   "path": "docs/src/content/docs/shading/shaders.md"
   },
   {
    "slug": "showcase/glass-dashboard",
@@ -1303,28 +1303,58 @@
    "path": "docs/src/content/docs/showcase/shaders.mdx"
   },
   {
-   "slug": "tutorials/background-tasks",
-   "title": "Background tasks",
-   "description": "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface.",
-   "path": "docs/src/content/docs/tutorials/background-tasks.mdx"
+   "slug": "theming/icons-fonts",
+   "title": "Icons and fonts",
+   "description": "Use about 2000 bundled Lucide icons and file-type icons in Python desktop GUIs with Pyzed, and load your own fonts such as IBM Plex.",
+   "path": "docs/src/content/docs/theming/icons-fonts.md"
   },
   {
-   "slug": "tutorials/step-by-step",
+   "slug": "theming/index",
+   "title": "Theming",
+   "description": "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, icons and fonts, in code and in Pyzed Design.",
+   "path": "docs/src/content/docs/theming/index.mdx"
+  },
+  {
+   "slug": "theming/styles",
+   "title": "Styles",
+   "description": "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app.",
+   "path": "docs/src/content/docs/theming/styles.md"
+  },
+  {
+   "slug": "theming/themes",
+   "title": "Themes",
+   "description": "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime.",
+   "path": "docs/src/content/docs/theming/themes.md"
+  },
+  {
+   "slug": "tutorials/advanced/code-editor",
+   "title": "A mini code editor",
+   "description": "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette.",
+   "path": "docs/src/content/docs/tutorials/advanced/code-editor.mdx"
+  },
+  {
+   "slug": "tutorials/basic/step-by-step",
    "title": "5-step tutorial",
    "description": "Learn Pyzed in five steps: go from an empty window to a notes app with Markdown, async work and a second window, in pure Python.",
-   "path": "docs/src/content/docs/tutorials/step-by-step.mdx"
+   "path": "docs/src/content/docs/tutorials/basic/step-by-step.mdx"
   },
   {
-   "slug": "tutorials/todo-app",
+   "slug": "tutorials/basic/todo-app",
    "title": "To-do list",
    "description": "Build your first complete Python desktop app with Pyzed: a to-do list with state, forms, lists, filters and keyboard shortcuts.",
-   "path": "docs/src/content/docs/tutorials/todo-app.mdx"
+   "path": "docs/src/content/docs/tutorials/basic/todo-app.mdx"
   },
   {
-   "slug": "tutorials/zed-like-editor",
-   "title": "A Zed-like mini editor",
-   "description": "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette.",
-   "path": "docs/src/content/docs/tutorials/zed-like-editor.mdx"
+   "slug": "tutorials/index",
+   "title": "Tutorials",
+   "description": "Learn Pyzed by building real Python desktop apps step by step, from a first window to a complete code editor, sorted into basic, intermediate and advanced levels.",
+   "path": "docs/src/content/docs/tutorials/index.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/background-tasks",
+   "title": "Background tasks",
+   "description": "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface.",
+   "path": "docs/src/content/docs/tutorials/intermediate/background-tasks.mdx"
   },
   {
    "slug": "why/benchmarks",
@@ -2077,7 +2107,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -2570,7 +2600,7 @@
     }
    },
    "pyzed.Widget": {
-    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
+    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
    },
    "pyzed.column": {
     "desc": "Stacks its children vertically.",
@@ -2915,7 +2945,7 @@
     }
    },
    "pyzed.shader": {
-    "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+    "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/shading/shaders/) guide.",
     "params": {
      "code": "WGSL source that defines `shade` (and any helper functions), or a `.pzshad` path, `Graph` or `Shader`.",
      "uniforms": "Up to 32 named values: a number, 2 to 4 numbers or a color. With a `.pzshad`, the shader's mutable variables by name.",
@@ -3096,7 +3126,7 @@
     }
    },
    "pyzed.Style": {
-    "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).",
+    "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/theming/styles/).",
     "params": {
      "styles": "Styles, dicts or style names to start from.",
      "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."
@@ -4031,7 +4061,7 @@
     }
    },
    "pyzed.ui.ColorPicker": {
-    "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).",
+    "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/theming/styles/#color-picker).",
     "params": {
      "value": "A color, theme token, `pz.Gradient` or `pz.Paint`.",
      "alpha": "Shows the alpha bar and field.",

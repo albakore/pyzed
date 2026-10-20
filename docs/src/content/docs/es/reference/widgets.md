@@ -17,7 +17,7 @@ Ver la guía de [layout](/pyzed/es/guides/layout/) para los tamaños, el relleno
 
 Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).
 
-Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).
+Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/theming/styles/).
 
 `widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).
 
@@ -992,7 +992,7 @@ shader(
 )
 ```
 
-Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel, o con un grafo de shader hecho de nodos (una ruta `.pzshad` o un `Graph` o `Shader` de [`pyzed.shading`](/pyzed/es/reference/shading/)). Cada entrada de `uniforms` se convierte en una función con su nombre (`{"speed": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).
+Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel, o con un grafo de shader hecho de nodos (una ruta `.pzshad` o un `Graph` o `Shader` de [`pyzed.shading`](/pyzed/es/reference/shading/)). Cada entrada de `uniforms` se convierte en una función con su nombre (`{"speed": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/shading/shaders/).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1602,7 +1602,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
 class Style
 ```
 
-Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/guides/styles/).
+Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/theming/styles/).
 
 | Parámetro | Descripción |
 | --- | --- |

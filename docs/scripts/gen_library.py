@@ -42,6 +42,9 @@ LANGS = {
     "en": {
         "out": DOCS / "library", "prefix": "/pyzed", "components": "../../../components",
         "title": "Components", "overview": "Overview",
+        "hero": {"eyebrow": "Library", "icon": "puzzle",
+                 "lead": "Every building block of a Pyzed interface, with a preview, the code that draws it, "
+                         "its variants and its API."},
         "description": "Browse 90+ Pyzed UI components for Python desktop GUIs: buttons, tables, trees, editors, charts and dialogs, each with a preview, examples and its API.",
         # Appended to each component's blurb for its meta description (search results); see seo_description().
         "seo": [" A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -74,11 +77,19 @@ ui.button("Save", self.save, icon="save", variant="solid", keys="ctrl-s")
 To see them all running, open the gallery: `python examples/gallery.py`.
 Looking for whole screens built from them (login, dashboard, settings, chat, kanban...)? See
 [Blocks](/pyzed/blocks/).
+
+:::note[New captures on the way]
+Every component page is getting new, sharper captures of each variant in light and dark, plus short
+animations of the interactive ones.
+:::
 """,
     },
     "es": {
         "out": DOCS / "es" / "library", "prefix": "/pyzed/es", "components": "../../../../components",
         "title": "Componentes", "overview": "Vista general",
+        "hero": {"eyebrow": "Biblioteca", "icon": "puzzle",
+                 "lead": "Todas las piezas de una interfaz Pyzed, con una vista previa, el código que la dibuja, "
+                         "sus variantes y su API."},
         "description": "Más de 90 componentes de UI de Pyzed para GUIs de escritorio en Python: botones, tablas, árboles, editores, gráficos y diálogos, con ejemplos y API.",
         "seo": [" Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API.",
                 " Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API.",
@@ -111,6 +122,11 @@ ui.button("Guardar", self.guardar, icon="save", variant="solid", keys="ctrl-s")
 Para verlos todos funcionando, abre la galería: `python examples/gallery.py`.
 ¿Buscas pantallas completas hechas con ellos (login, dashboard, ajustes, chat, kanban...)? Mira los
 [Bloques](/pyzed/es/blocks/).
+
+:::note[Capturas nuevas en camino]
+Cada página de componente va a recibir capturas nuevas y más nítidas de cada variante en claro y
+oscuro, y animaciones cortas de los componentes interactivos.
+:::
 """,
     },
 }
@@ -332,9 +348,13 @@ def seo_description(blurb: str, lang: str) -> str:
     return blurb
 
 
-def frontmatter(title: str, description: str, order: int, label: str | None = None, badge: str | None = None) -> str:
+def frontmatter(title: str, description: str, order: int, label: str | None = None, badge: str | None = None,
+                section: dict | None = None) -> str:
     lines = ["---", f"title: {json.dumps(title, ensure_ascii=False)}",
-             f"description: {json.dumps(description, ensure_ascii=False)}", "sidebar:", f"  order: {order}"]
+             f"description: {json.dumps(description, ensure_ascii=False)}"]
+    if section:  # the hero of a section overview (src/components/PageTitle.astro)
+        lines += ["section:"] + [f"  {k}: {json.dumps(v, ensure_ascii=False)}" for k, v in section.items()]
+    lines += ["sidebar:", f"  order: {order}"]
     if label:
         lines.append(f"  label: {json.dumps(label, ensure_ascii=False)}")
     if badge:
@@ -406,7 +426,7 @@ def render_index(lang: str) -> str:
     labels = LANGS[lang]
     entries = ordered(lang)
     body = [
-        frontmatter(labels["title"], labels["description"], 0, label=labels["overview"]),
+        frontmatter(labels["title"], labels["description"], 0, label=labels["overview"], section=labels["hero"]),
         f"{{/* {GENERATED} */}}",
         "",
         f"import Gallery from '{labels['components']}/library/Gallery.astro';",

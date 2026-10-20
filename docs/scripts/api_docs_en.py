@@ -260,7 +260,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/guides/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -855,7 +855,7 @@ For the Zed style use [`ui.editor`](/pyzed/components/code/).
         "description": "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs.",
         "order": 5,
         "intro": """
-            See the [theming](/pyzed/guides/theming/) guide for the list of tokens and how to create your own.
+            See the [theming](/pyzed/theming/themes/) guide for the list of tokens and how to create your own.
         """,
         "sections": [
             ("Theme", {
@@ -1007,7 +1007,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `size` | `(1280, 800)` | Initial window size. |
 | `font_size` | `14` | Default text size. |
 | `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |
-| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |
+| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
 
@@ -1312,7 +1312,7 @@ _section("widgets", "Images and content", {
         "params": {"data": "The text or URL to encode.", "cell_size": "Size of each module in pixels."},
     },
     "pyzed.shader": {
-        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/shading/shaders/) guide.",
         "params": {
             "code": "WGSL source that defines `shade` (and any helper functions), or a `.pzshad` path, `Graph` or `Shader`.",
             "uniforms": "Up to 32 named values: a number, 2 to 4 numbers or a color. With a `.pzshad`, the shader's mutable variables by name.",
@@ -1765,7 +1765,7 @@ _section("ui", "Console and help", {
 # -- Styles -------------------------------------------------------------------
 _section("widgets", "Styles", {
     "pyzed.Style": {
-        "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/guides/styles/).",
+        "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/theming/styles/).",
         "params": {"styles": "Styles, dicts or style names to start from.",
                    "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."},
         "example": """
@@ -1789,7 +1789,7 @@ _section("widgets", "Styles", {
 
 _section("ui", "Color picker", {
     "pyzed.ui.ColorPicker": {
-        "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).",
+        "desc": "A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `\"#rrggbb[aa]\"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/theming/styles/#color-picker).",
         "params": {"value": "A color, theme token, `pz.Gradient` or `pz.Paint`.", "alpha": "Shows the alpha bar and field.",
                    "gradients": "Shows the Solid/Gradient switch.", "masks": "Shows the mask editor.",
                    "swatches": "Quick colors (default: the theme's accent and status colors).", "on_change": "Receives `event.value`."},
@@ -2057,8 +2057,8 @@ PAGES.append({
     "order": 11.5,
     "intro": """
         `pyzed.shading` is the node-based shader system behind the designer's
-        [Shader view](/pyzed/editor/shader-designer/): `.pzshad` graphs of nodes that compile to the WGSL of
-        [`pz.shader`](/pyzed/reference/widgets/). See [Shader graphs](/pyzed/guides/shader-graphs/) for a tour.
+        [Shader view](/pyzed/shading/shader-designer/): `.pzshad` graphs of nodes that compile to the WGSL of
+        [`pz.shader`](/pyzed/reference/widgets/). See [Shader graphs](/pyzed/shading/shader-graphs/) for a tour.
 
         ```python
         from pyzed import shading

@@ -1,0 +1,78 @@
+---
+title: Distribuye tu app
+description: "Empaqueta una app Pyzed para Windows, macOS y Linux: un ejecutable independiente con Python dentro, creado con pyzed build, más firma y compilación en CI."
+section:
+  eyebrow: Distribuir
+  icon: rocket
+  lead: Convierte tu proyecto en una app que la gente pueda descargar y ejecutar en Windows, macOS y Linux, sin instalar Python.
+sidebar:
+  label: Introducción
+  order: 0
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+
+Cuando tu app funciona en tu equipo, `pyzed build` la empaqueta: Python, Pyzed, tus dependencias, tu código y tus
+formularios van a una carpeta (o un solo archivo) que funciona por sí sola. Ejecútalo desde la raíz de tu
+[proyecto](/pyzed/es/getting-started/new-project/):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS y Linux"
+		uv run pyzed build
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS y Linux"
+		source .venv/bin/activate
+		pyzed build          # o: python -m pyzed build
+		```
+
+		```powershell title="Windows (PowerShell)"
+		.venv\Scripts\activate
+		pyzed build          # o: python -m pyzed build
+		```
+	</TabItem>
+</Tabs>
+
+| Compilas en | Obtienes | La gente la ejecuta |
+| --- | --- | --- |
+| Windows | `dist\Shop\Shop.exe` | Con doble clic, o desde un zip o un instalador |
+| macOS | `dist/Shop.app` | Abriéndola (fírmala y notarízala para compartirla) |
+| Linux | `dist/Shop/Shop` | Con `./Shop`, o como AppImage, .deb o Flatpak |
+
+<Aside type="caution" title="Una compilación por plataforma">
+Una compilación solo funciona en el sistema donde se hizo: compila la app de Windows en Windows, la de macOS en
+macOS y la de Linux en Linux. Un flujo de CI puede hacer las tres por ti.
+</Aside>
+
+<Aside type="note">
+`pyzed build` ejecuta [PyInstaller](https://pyinstaller.org) dentro del entorno de tu proyecto mediante
+[uv](https://docs.astral.sh/uv/), así que uv tiene que estar instalado aunque uses pip para todo lo demás.
+</Aside>
+
+## En esta sección
+
+<NavCards
+	items={[
+		{ title: 'Compilar y distribuir', text: 'Qué se incluye, opciones, compilar para todas las plataformas en CI, firma y solución de problemas.', href: '/pyzed/es/packaging/build/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Proyectos con uv', text: 'La estructura de proyecto que espera <code>pyzed build</code> y cómo gestionar sus dependencias.', href: '/pyzed/es/guides/projects/', icon: 'document' },
+		{ title: 'Referencia de la CLI', text: 'Todas las opciones de <code>pyzed build</code> y de los demás comandos.', href: '/pyzed/es/reference/cli/', icon: 'list-format' },
+	]}
+/>
+
+## Próximamente
+
+<NavCards
+	items={[
+		{ title: 'Windows', text: 'Iconos, instaladores, firma de código y SmartScreen.', icon: 'laptop' },
+		{ title: 'macOS', text: 'Paquetes .app, firma, notarización e imágenes DMG.', icon: 'apple' },
+		{ title: 'Linux', text: 'AppImage, .deb, Flatpak y en qué distribución compilar.', icon: 'linux' },
+	]}
+/>
+
+<Aside type="note" title="Estado de esta sección">
+El empaquetado para escritorio ya se puede usar. Las guías paso a paso por plataforma se están escribiendo; los
+destinos móvil y web están planeados para el futuro y todavía no están disponibles.
+</Aside>

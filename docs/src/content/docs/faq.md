@@ -76,7 +76,7 @@ Windows, macOS or Linux.
 
 Yes. Any widget can be animated with presets, keyframes and transitions, and controls can have rotation, blur,
 glow, bloom, glass and opacity effects, with light, dark and custom themes. See
-[Animation and effects](/pyzed/guides/animation/) and [Themes](/pyzed/guides/theming/).
+[Animation and effects](/pyzed/guides/animation/) and [Themes](/pyzed/theming/themes/).
 
 ## Does Pyzed work with AI coding agents?
 
@@ -97,7 +97,7 @@ interface and keeps API keys in the system keychain.
 
 `pyzed build` packages a project as a standalone app (a folder or a single file) for Windows, macOS or Linux that
 runs on machines without Python. It uses PyInstaller underneath; build each platform on that platform or in a CI
-matrix. See [Packaging](/pyzed/guides/packaging/).
+matrix. See [Packaging](/pyzed/packaging/build/).
 
 ## Can I test a Pyzed app without a window?
 

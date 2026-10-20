@@ -111,7 +111,7 @@ ui.color_swatch(self.fill, size=24, on_press=self.open_picker)
 `ui.ColorPicker` is a component: it picks a color with alpha, a linear gradient or a fill with an
 opacity mask, and `on_change` receives a `"#rrggbb[aa]"` string, a `pz.Gradient` or a `pz.Paint`,
 all valid as a `background`. `ui.color_swatch` shows any of them over a checkerboard. See
-[Styles](/pyzed/guides/styles/#color-picker).
+[Styles](/pyzed/theming/styles/#color-picker).
 
 Full reference: [Dialogs](/pyzed/reference/ui/#dialogs), [Console and help](/pyzed/reference/ui/#console-and-help)
 and [Color picker](/pyzed/reference/ui/#color-picker).

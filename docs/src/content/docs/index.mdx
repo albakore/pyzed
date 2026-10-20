@@ -1,10 +1,10 @@
 ---
 title: Pyzed
-description: "Pyzed is an open-source Python framework for native desktop GUIs: Rust rendering with Iced, 90+ Zed-style components, a drag-and-drop visual designer, GPU effects and shaders, games and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt."
+description: "Pyzed is an open-source Python frontend framework for native desktop apps: GPU rendering in Rust with Iced, 90+ components, a drag-and-drop visual designer, themes, node-based shaders, packaging for Windows, macOS and Linux and a built-in AI agent. A modern alternative to tkinter, Kivy and PyQt."
 template: splash
 hero:
-  title: Beautiful desktop apps in <span class="pz-gradient-text">pure Python</span>
-  tagline: You describe the interface, Iced draws it natively in Rust. Design windows by drag and drop in Pyzed Design, wire them to Python with a real code editor, and ship them to Windows, macOS and Linux.
+  title: The Python frontend framework for <span class="pz-gradient-text">desktop&nbsp;apps</span>
+  tagline: Design your interface visually or in code, style it with themes and GPU shaders, and ship it to Windows, macOS and Linux. Pure Python, drawn natively by Rust. Inspired by the UI of the Zed editor and by Godot, Unreal Engine, Visual Basic and Qt Designer; mobile and web are on the roadmap.
   actions:
     - text: Download Pyzed Design
       link: /pyzed/download/
@@ -30,6 +30,7 @@ import CodeShowcase from '../../components/landing/CodeShowcase.astro';
 import Cta from '../../components/landing/Cta.astro';
 import Gallery from '../../components/landing/Gallery.astro';
 import Compare from '../../components/landing/Compare.astro';
+import NavCards from '../../components/NavCards.astro';
 
 <LatestRelease />
 
@@ -42,11 +43,30 @@ import Compare from '../../components/landing/Compare.astro';
 
 <Stats
 	items={[
-		{ value: '90+', label: 'Zed-style components' },
+		{ value: '90+', label: 'ready-made components' },
 		{ value: '11', label: 'built-in themes' },
 		{ value: '~2000', label: 'Lucide icons' },
 		{ value: '3', label: 'desktop platforms' },
 		{ value: 'Rust', label: 'native rendering (Iced)' },
+	]}
+/>
+
+<SectionTitle id="sections" eyebrow="Explore" title="Everything Pyzed covers">
+	Pyzed is a library, a visual designer and a set of tools around them. Jump straight to the part you need.
+</SectionTitle>
+
+<NavCards
+	min="19rem"
+	items={[
+		{ title: 'Learn', text: 'Install Pyzed, build a first window and follow tutorials from basic to advanced.', href: '/pyzed/tutorials/', icon: 'open-book' },
+		{ title: 'Library', text: 'Every component and ready-made screen, with previews, variants and code.', href: '/pyzed/library/', icon: 'puzzle' },
+		{ title: 'Designer', text: 'Pyzed Design: draw forms and components, write their code and run them.', href: '/pyzed/editor/', icon: 'pencil' },
+		{ title: 'Shading', text: 'GPU shaders from nodes or WGSL for backgrounds, effects and games.', href: '/pyzed/shading/', icon: 'star' },
+		{ title: 'Theming', text: 'Themes, color tokens, CSS-like styles, icons and fonts.', href: '/pyzed/theming/', icon: 'moon' },
+		{ title: 'Distribute', text: 'Package your app for Windows, macOS and Linux with one command.', href: '/pyzed/packaging/', icon: 'rocket' },
+		{ title: 'Showcase', text: 'Game interfaces, glass dashboards, shaders and complete games.', href: '/pyzed/showcase/', icon: 'laptop' },
+		{ title: 'Integrations', text: 'FastAPI, Django, SQLAlchemy, SQLModel, httpx and Pydantic.', href: '/pyzed/integrations/overview/', icon: 'link' },
+		{ title: 'AI', text: 'The agent in the designer, the MCP server, llms.txt and pyzed.agents.', href: '/pyzed/ai/', icon: 'comment-alt' },
 	]}
 />
 
@@ -207,7 +227,7 @@ import Compare from '../../components/landing/Compare.astro';
 	overlay="zed-file-finder"
 	overlayAlt="The same app in Gruvbox Dark with the file finder open"
 	reverse
-	href="/pyzed/guides/theming/"
+	href="/pyzed/theming/themes/"
 	more="Theming guide"
 >
 	One, Ayu and Gruvbox ship with Zed's color tokens, in light and dark variants. Follow the system appearance,
@@ -365,7 +385,7 @@ import Compare from '../../components/landing/Compare.astro';
 		{
 			title: 'Ship it: pyzed build',
 			text: 'One command packages your project as a standalone app for Windows, macOS or Linux, with Python inside.',
-			href: '/pyzed/guides/packaging/',
+			href: '/pyzed/packaging/build/',
 			icon: 'download',
 		},
 		{
@@ -447,7 +467,7 @@ pz.run(Counter)
 	<LinkCard title="Integrations" href="/pyzed/integrations/overview/" description="FastAPI, SQLAlchemy, SQLModel, Django, httpx and Pydantic." />
 	<LinkCard title="Pyzed for AI agents" href="/pyzed/ai/" description="The agent in the designer, the MCP server, llms.txt and pyzed.agents." />
 	<LinkCard title="Why Pyzed" href="/pyzed/why/" description="How Pyzed compares with tkinter, Kivy, PyQt and Flet, with benchmarks." />
-	<LinkCard title="Tutorial: to-do list" href="/pyzed/tutorials/todo-app/" description="State, forms, lists and shortcuts, step by step." />
+	<LinkCard title="Tutorial: to-do list" href="/pyzed/tutorials/basic/todo-app/" description="State, forms, lists and shortcuts, step by step." />
 </CardGrid>
 
 <Cta

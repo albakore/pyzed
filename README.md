@@ -102,7 +102,7 @@ pyzed icons folder        # busca nombres de iconos
 
 ¿Ya usas `uv init`? Ejecuta `pyzed init` dentro del proyecto. `pyzed new mi-app --script` crea la app de un solo
 archivo de siempre. Más en [Proyectos con uv](https://albakore.github.io/pyzed/es/guides/projects/) y
-[Compilar y distribuir](https://albakore.github.io/pyzed/es/guides/packaging/).
+[Compilar y distribuir](https://albakore.github.io/pyzed/es/packaging/build/).
 
 ### Hot reload
 

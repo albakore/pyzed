@@ -10,7 +10,7 @@ It is published to GitHub Pages on every push to `main` and on every release.
 
 ```
 docs/
-├── astro.config.mjs              # sidebar, theme, languages
+├── astro.config.mjs              # sections (topics), redirects, theme, languages
 ├── screenshots/                  # large screenshots (examples/screenshots.py)
 ├── scripts/
 │   ├── api_docs_en.py            # English API descriptions
@@ -52,6 +52,34 @@ root; each translation lives in a folder named after its locale:
   in Spanish ones.
 - Relative paths to images and examples have one more `../` in the Spanish files, since they are one
   folder deeper.
+
+## Sections and navigation
+
+The top-level sections (Learn, Library, Designer, Shading, Theming, Distribute, Showcase, Integrations, AI and
+Reference) are the `topics` list in `astro.config.mjs`, using the
+[starlight-sidebar-topics](https://starlight-sidebar-topics.netlify.app) plugin. Each one is a link in the header
+navbar (`src/components/Header.astro`) and has its own sidebar; on phones they appear at the top of the menu. A page
+belongs to the section whose sidebar lists it, usually through the folder it lives in:
+
+| Section | Folders |
+| --- | --- |
+| Learn | `getting-started/`, `tutorials/{basic,intermediate,advanced}/`, `guides/`, `why/`, `examples`, `faq` |
+| Library | `library/`, `blocks/` (and the older `components/`) |
+| Designer | `editor/`, `download` |
+| Shading, Theming, Distribute | `shading/`, `theming/`, `packaging/` |
+| Showcase | `showcase/`, `games/` |
+| Integrations, AI | `integrations/`, `ai/` |
+| Reference | `reference/`, `changelog`, `contributing/` |
+
+- The overview of a section gets a hero when its frontmatter has `section: { eyebrow, icon, lead }`
+  (`src/components/PageTitle.astro`).
+- Link to pages with `<NavCards>` (`src/components/NavCards.astro`); a card without `href` shows as "coming soon".
+- Show screenshots and short recordings with `<Media>` (`src/components/Media.astro`): an image from `src/assets`
+  (optionally with a `light` version) or an mp4/webm loop with a `poster`, plus a caption.
+- Commands go in `<Tabs syncKey="pkg">` with a `uv` and a `pip` tab, with titled code blocks for Windows and for
+  macOS/Linux when they differ.
+- **Moving a page:** `git mv` it in both languages, add the old path to `MOVED` in `astro.config.mjs` so the old
+  URL redirects, and update the links to it (`git grep` the old path, including `docs/scripts` and `python/`).
 
 ## Diagrams
 

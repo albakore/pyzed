@@ -2322,7 +2322,7 @@ Converts text with ANSI colors into lines of `(text, color_name)` segments.
 class ColorPicker
 ```
 
-A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `"#rrggbb[aa]"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/guides/styles/#color-picker).
+A component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` gets a `"#rrggbb[aa]"` string, a `pz.Gradient` or a `pz.Paint`, all valid as a `background`. Pass the picked value back as `value`. See [Styles](/pyzed/theming/styles/#color-picker).
 
 | Parameter | Description |
 | --- | --- |

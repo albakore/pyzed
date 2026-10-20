@@ -2,7 +2,7 @@
 
     python examples/mini_editor.py [folder]
 
-Walkthrough: https://albakore.github.io/pyzed/tutorials/zed-like-editor/
+Walkthrough: https://albakore.github.io/pyzed/tutorials/advanced/code-editor/
 For a fuller version see examples/zed_editor.py.
 """
 

@@ -14,7 +14,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-`pz.shader` runs a function you write in WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, for every pixel of the widget, every frame, on the GPU: animated backgrounds, plasma, fire or a radar sweep cost Python nothing. Each entry of `uniforms` becomes a WGSL function of the same name, and `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. See the [Shaders guide](/pyzed/guides/shaders/) and the [showcase](/pyzed/showcase/).
+`pz.shader` runs a function you write in WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, for every pixel of the widget, every frame, on the GPU: animated backgrounds, plasma, fire or a radar sweep cost Python nothing. Each entry of `uniforms` becomes a WGSL function of the same name, and `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. See the [Shaders guide](/pyzed/shading/shaders/) and the [showcase](/pyzed/showcase/).
 
 `pz.shader` · Category: [Content](/pyzed/library/#content) · [Full reference →](/pyzed/reference/widgets/#shader)
 
@@ -69,6 +69,7 @@ shader(
     code,
     *,
     uniforms=None,
+    textures=None,
     width=None,
     height=None,
     animate=True,
@@ -77,12 +78,13 @@ shader(
 )
 ```
 
-A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{"speed": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.
+A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{"speed": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/shading/shaders/) guide.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-| `code` | *required* | WGSL source that defines `shade` (and any helper functions). |
-| `uniforms` | `None` | Up to 8 named values: a number, 2 to 4 numbers or a color. |
+| `code` | *required* | WGSL source that defines `shade` (and any helper functions), or a `.pzshad` path, `Graph` or `Shader`. |
+| `uniforms` | `None` | Up to 32 named values: a number, 2 to 4 numbers or a color. With a `.pzshad`, the shader's mutable variables by name. |
+| `textures` | `None` | Up to 8 images, `{name: path}`: each becomes `name(uv)`, the image's color at `uv`. |
 | `width` | `None` | Width (`"fill"` by default). |
 | `height` | `None` | Height (`"fill"` by default). |
 | `animate` | `True` | Redraw every frame so `time` moves (`True`). |

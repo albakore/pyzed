@@ -13,12 +13,12 @@ python examples/<nombre>.py
 | Ejemplo | Qué muestra | Tutorial |
 | --- | --- | --- |
 | [`counter.py`](https://github.com/albakore/pyzed/blob/main/examples/counter.py) | Lo mínimo: estado, mensajes y callables. | [Inicio rápido](/pyzed/es/getting-started/quickstart/) |
-| [`todo.py`](https://github.com/albakore/pyzed/blob/main/examples/todo.py) | Formularios, listas, filtros, foco y atajos. | [Lista de tareas](/pyzed/es/tutorials/todo-app/) |
-| [`downloads.py`](https://github.com/albakore/pyzed/blob/main/examples/downloads.py) | `Command.perform`, `pz.post` desde hilos, progreso y notificaciones. | [Tareas en segundo plano](/pyzed/es/tutorials/background-tasks/) |
-| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas. | [Mini editor](/pyzed/es/tutorials/zed-like-editor/) |
+| [`todo.py`](https://github.com/albakore/pyzed/blob/main/examples/todo.py) | Formularios, listas, filtros, foco y atajos. | [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) |
+| [`downloads.py`](https://github.com/albakore/pyzed/blob/main/examples/downloads.py) | `Command.perform`, `pz.post` desde hilos, progreso y notificaciones. | [Tareas en segundo plano](/pyzed/es/tutorials/intermediate/background-tasks/) |
+| [`mini_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/mini_editor.py) | Un editor tipo Zed en ~150 líneas. | [Mini editor](/pyzed/es/tutorials/advanced/code-editor/) |
 | [`gallery.py`](https://github.com/albakore/pyzed/blob/main/examples/gallery.py) | Todos los componentes, interactivos, con selector de tema. | [Componentes](/pyzed/es/components/overview/) |
 | [`zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) | Editor completo: buscador de archivos, paleta, docks, terminal, temas y marcadores de git. | |
-| [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Cinco pasos: ventana, estado, layout y temas, async, app de notas. | [Tutorial en 5 pasos](/pyzed/es/tutorials/step-by-step/) |
+| [`tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/) | Cinco pasos: ventana, estado, layout y temas, async, app de notas. | [Tutorial en 5 pasos](/pyzed/es/tutorials/basic/step-by-step/) |
 | [`todos.py`](https://github.com/albakore/pyzed/blob/main/examples/todos.py) | Las *todos* de Iced: añadir, editar, completar, filtrar y guardar. |  |
 | [`game_of_life.py`](https://github.com/albakore/pyzed/blob/main/examples/game_of_life.py) | `pz.canvas` con miles de celdas y `pz.every` como motor. | [Canvas](/pyzed/es/guides/canvas/) |
 | [`games/snake.py`](https://github.com/albakore/pyzed/blob/main/examples/games/snake.py) | Snake con temporizador fijo, cola de teclas y tarjeta de cristal de game over. | [Snake](/pyzed/es/games/snake/) |
@@ -29,7 +29,7 @@ python examples/<nombre>.py
 | [`download_progress.py`](https://github.com/albakore/pyzed/blob/main/examples/download_progress.py) | Descargas concurrentes con generadores `async` y progreso. | [Async](/pyzed/es/guides/async/) |
 | [`websocket_stream.py`](https://github.com/albakore/pyzed/blob/main/examples/websocket_stream.py) | Datos en vivo con `pz.listen` y un generador `async`. | [Async](/pyzed/es/guides/async/) |
 | [`multi_window.py`](https://github.com/albakore/pyzed/blob/main/examples/multi_window.py) | Varias `pz.Window` con estado compartido y temas distintos. | [Varias ventanas](/pyzed/es/guides/windows/) |
-| [`styling.py`](https://github.com/albakore/pyzed/blob/main/examples/styling.py) | Selector de temas, modo del sistema, `Theme.generate` y acentos. | [Temas](/pyzed/es/guides/theming/) |
+| [`styling.py`](https://github.com/albakore/pyzed/blob/main/examples/styling.py) | Selector de temas, modo del sistema, `Theme.generate` y acentos. | [Temas](/pyzed/es/theming/themes/) |
 | [`image_viewer.py`](https://github.com/albakore/pyzed/blob/main/examples/image_viewer.py) | `pz.image` y el visor con zoom `pz.image_viewer`. | [Contenido](/pyzed/es/components/content/#imágenes) |
 | [`markdown_viewer.py`](https://github.com/albakore/pyzed/blob/main/examples/markdown_viewer.py) | Editor de Markdown con vista previa en vivo. | [Contenido](/pyzed/es/components/content/) |
 | [`qr_code.py`](https://github.com/albakore/pyzed/blob/main/examples/qr_code.py) | Genera un código QR mientras escribes. | [Contenido](/pyzed/es/components/content/) |

@@ -1,0 +1,146 @@
+---
+// Starlight's header plus a second row with the top-level sections of the docs (the topics of
+// starlight-sidebar-topics, configured in astro.config.mjs). On phones the sections live in the
+// menu instead; pages without a menu (the home page) keep a scrollable row of them.
+import Default from '@astrojs/starlight/components/Header.astro';
+import { Icon } from '@astrojs/starlight/components';
+
+type IconName = Parameters<typeof Icon>[0]['name'];
+const topics = Astro.locals.starlightSidebarTopics?.topics ?? [];
+const es = Astro.currentLocale === 'es';
+---
+
+<div class="pz-header">
+	<div class="pz-header-top">
+		<Default><slot /></Default>
+	</div>
+	{
+		topics.length > 0 && (
+			<nav class="pz-topics print:hidden" aria-label={es ? 'Secciones' : 'Sections'}>
+				<ul>
+					{topics.map((topic) => (
+						<li>
+							<a href={topic.link} aria-current={topic.isCurrent ? 'true' : undefined}>
+								{topic.icon && <Icon name={topic.icon as IconName} size="1rem" />}
+								<span>{topic.label}</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+		)
+	}
+</div>
+
+<style>
+	.pz-header {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+	.pz-header-top {
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+	.pz-topics {
+		display: none;
+		margin-inline: calc(-1 * var(--sl-nav-pad-x));
+		margin-block-end: calc(-1 * var(--sl-nav-pad-y));
+		height: var(--pz-tabs-height);
+		overflow-x: auto;
+		overflow-y: hidden;
+		scrollbar-width: none;
+		mask-image: linear-gradient(90deg, transparent, #000 var(--sl-nav-pad-x), #000 calc(100% - 2rem), transparent);
+	}
+	.pz-topics::-webkit-scrollbar {
+		display: none;
+	}
+	ul {
+		display: flex;
+		align-items: stretch;
+		gap: 0.15rem;
+		height: 100%;
+		margin: 0;
+		padding: 0 var(--sl-nav-pad-x);
+		list-style: none;
+		width: max-content;
+	}
+	li {
+		display: flex;
+	}
+	a {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0 0.75rem;
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+		white-space: nowrap;
+		border-radius: 0.5rem 0.5rem 0 0;
+		transition:
+			color 0.15s ease,
+			background-color 0.15s ease;
+	}
+	a :global(svg) {
+		color: var(--sl-color-gray-3);
+		transition: color 0.15s ease;
+	}
+	a:hover {
+		color: var(--sl-color-white);
+		background: color-mix(in srgb, var(--sl-color-gray-5) 22%, transparent);
+	}
+	a:hover :global(svg) {
+		color: var(--pz-accent-text);
+	}
+	a::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0.6rem;
+		bottom: 0;
+		height: 2px;
+		border-radius: 2px 2px 0 0;
+		background: var(--pz-gradient);
+		opacity: 0;
+		transform: scaleX(0.4);
+		transition:
+			opacity 0.2s ease,
+			transform 0.2s ease;
+	}
+	a[aria-current='true'] {
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+	a[aria-current='true'] :global(svg) {
+		color: var(--pz-accent-text);
+	}
+	a[aria-current='true']::after {
+		opacity: 1;
+		transform: none;
+	}
+
+	/* Two rows: the regular header on top, the sections below. */
+	@media (min-width: 50rem) {
+		.pz-header-top {
+			flex: none;
+			height: calc(var(--pz-top-height) - 2 * var(--sl-nav-pad-y));
+			margin-block-end: var(--sl-nav-pad-y);
+		}
+		.pz-topics {
+			display: block;
+		}
+	}
+	/* Phones: pages without a menu (the home page) show the sections as a scrollable row. */
+	@media (max-width: 49.99rem) {
+		:global(:root:not([data-has-sidebar])) .pz-header-top {
+			flex: none;
+			height: calc(var(--pz-top-height) - 2 * var(--sl-nav-pad-y));
+			margin-block-end: var(--sl-nav-pad-y);
+		}
+		:global(:root:not([data-has-sidebar])) .pz-topics {
+			display: block;
+		}
+	}
+</style>

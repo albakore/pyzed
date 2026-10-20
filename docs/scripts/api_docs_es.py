@@ -260,7 +260,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/guides/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
+                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/theming/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -855,7 +855,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
         "description": "Referencia de la API de Theme en Pyzed: los temas incluidos, los tokens de color de Zed, cómo derivar temas propios y utilidades de color.",
         "order": 5,
         "intro": """
-            Ver la guía de [temas](/pyzed/es/guides/theming/) para la lista de tokens y cómo crear los tuyos.
+            Ver la guía de [temas](/pyzed/es/theming/themes/) para la lista de tokens y cómo crear los tuyos.
         """,
         "sections": [
             ("Theme", {
@@ -1007,7 +1007,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
-| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
+| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 
@@ -1312,7 +1312,7 @@ _section("widgets", "Imágenes y contenido", {
         "params": {"data": "El texto o URL a codificar.", "cell_size": "Tamaño de cada módulo en píxeles."},
     },
     "pyzed.shader": {
-        "desc": "Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel, o con un grafo de shader hecho de nodos (una ruta `.pzshad` o un `Graph` o `Shader` de [`pyzed.shading`](/pyzed/es/reference/shading/)). Cada entrada de `uniforms` se convierte en una función con su nombre (`{\"speed\": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).",
+        "desc": "Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel, o con un grafo de shader hecho de nodos (una ruta `.pzshad` o un `Graph` o `Shader` de [`pyzed.shading`](/pyzed/es/reference/shading/)). Cada entrada de `uniforms` se convierte en una función con su nombre (`{\"speed\": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/shading/shaders/).",
         "params": {
             "code": "Código WGSL que define `shade` (y las funciones auxiliares que quieras), o una ruta `.pzshad`, un `Graph` o un `Shader`.",
             "uniforms": "Hasta 32 valores con nombre: un número, de 2 a 4 números o un color. Con un `.pzshad`, las variables mutables del shader por nombre.",
@@ -1765,7 +1765,7 @@ _section("ui", "Consola y ayuda", {
 # -- Estilos ------------------------------------------------------------------
 _section("widgets", "Estilos", {
     "pyzed.Style": {
-        "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/guides/styles/).",
+        "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/theming/styles/).",
         "params": {"styles": "Estilos, dicts o nombres de estilo de partida.",
                    "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Los colores pueden ser tokens del tema."},
         "example": """
@@ -1789,7 +1789,7 @@ _section("widgets", "Estilos", {
 
 _section("ui", "Selector de color", {
     "pyzed.ui.ColorPicker": {
-        "desc": "Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `\"#rrggbb[aa]\"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/guides/styles/#selector-de-color).",
+        "desc": "Un componente para elegir un color con alfa, un gradiente lineal (paradas que se añaden, arrastran y quitan, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un texto `\"#rrggbb[aa]\"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como `background`. Devuelve el valor elegido en `value`. Ver [Estilos](/pyzed/es/theming/styles/#selector-de-color).",
         "params": {"value": "Un color, token del tema, `pz.Gradient` o `pz.Paint`.", "alpha": "Muestra la barra y el campo de alfa.",
                    "gradients": "Muestra el cambio Sólido/Gradiente.", "masks": "Muestra el editor de máscara.",
                    "swatches": "Colores rápidos (por defecto: el acento y los colores de estado del tema).", "on_change": "Recibe `event.value`."},
@@ -2641,9 +2641,9 @@ PAGES.append({
     "order": 11.5,
     "intro": """
         `pyzed.shading` es el sistema de shaders por nodos que hay detrás de la
-        [vista de shaders](/pyzed/es/editor/shader-designer/) del diseñador: grafos `.pzshad` de nodos que se
+        [vista de shaders](/pyzed/es/shading/shader-designer/) del diseñador: grafos `.pzshad` de nodos que se
         compilan al WGSL de [`pz.shader`](/pyzed/es/reference/widgets/). Mira
-        [Grafos de shaders](/pyzed/es/guides/shader-graphs/) para un recorrido.
+        [Grafos de shaders](/pyzed/es/shading/shader-graphs/) para un recorrido.
 
         ```python
         from pyzed import shading

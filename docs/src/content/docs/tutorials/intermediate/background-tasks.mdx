@@ -1,0 +1,95 @@
+---
+title: Background tasks
+description: "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface."
+sidebar:
+  order: 3
+---
+
+import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import source from '../../../../../../examples/downloads.py?raw';
+
+A UI must never block waiting on the network or the disk. Pyzed offers two tools:
+
+- **`Command.perform(fn, then)`** runs a blocking function on another thread and hands you the
+  result.
+- **`pz.post(message)`** sends messages to the app from any thread (progress, events).
+
+<Aside type="tip">
+If you prefer `asyncio`, `update` and callbacks can also be `async def` functions or `async`
+generators, and `pz.listen` turns a stream into a subscription. See the
+[Async and subscriptions](/pyzed/guides/async/) guide.
+</Aside>
+
+![Downloads with progress and notifications](../../../../assets/tutorials/downloads.png)
+
+<Steps>
+
+1. **One result: `Command.perform`.** For "do this and tell me when it's done":
+
+   ```python
+   def check_updates(self):
+       self.checking = True
+       return Command.perform(self.fetch_latest_version, self.got_version)
+
+   @staticmethod
+   def fetch_latest_version():
+       time.sleep(1.5)          # e.g. an HTTP request
+       return "0.2.0"
+
+   def got_version(self, version):     # runs on the UI thread
+       self.checking, self.latest = False, version
+   ```
+
+   While `self.checking` is `True`, the button is drawn disabled (`on_press=None`).
+
+2. **Many results: `pz.post`.** A thread of your own reports progress with messages that reach
+   `update`:
+
+   ```python
+   def start(self, name):
+       self.progress[name] = 0.0
+
+       def worker():
+           done = 0.0
+           while done < 1.0:
+               time.sleep(0.05)
+               done = min(1.0, done + 0.05)
+               pz.post(("progress", name, done))
+           pz.post(("finished", name))
+
+       threading.Thread(target=worker, daemon=True).start()
+
+   def update(self, message):
+       kind, name, *rest = message
+       if kind == "progress":
+           self.progress[name] = rest[0]
+       elif kind == "finished":
+           self.notify(f"{name} downloaded", kind="success")
+   ```
+
+3. **Self-dismissing notifications.** A `threading.Timer` posts the dismiss message:
+
+   ```python
+   def notify(self, title, message=None, kind="info"):
+       toast_id = f"{time.monotonic()}"
+       self.toasts.append((toast_id, title, message, kind))
+       threading.Timer(4, pz.post, args=(("dismiss", toast_id),)).start()
+
+   # in view():
+   return ui.toasts(body, [ui.toast(t, m, kind=k, on_dismiss=("dismiss", i)) for i, t, m, k in self.toasts])
+   ```
+
+</Steps>
+
+<Aside>
+State is only modified on the UI thread (in `update` and in callbacks). Worker threads don't
+touch `self`: they send messages with `pz.post`.
+</Aside>
+
+## Full code
+
+<Code code={source} lang="py" title="examples/downloads.py" />
+
+```bash
+python examples/downloads.py
+```

@@ -1,0 +1,69 @@
+---
+title: Temas
+description: "Personaliza el aspecto de una app Pyzed: temas incluidos y propios, tokens de color, estilos tipo CSS para cualquier widget, iconos y fuentes, en código y en Pyzed Design."
+section:
+  eyebrow: Temas
+  icon: moon
+  lead: Haz que la app sea tuya. Elige un tema o crea uno, dale estilo a cualquier widget como en CSS y elige sus iconos y fuentes, en código o en el diseñador.
+sidebar:
+  label: Introducción
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import themesShot from '../../../../assets/tutorials/styling.png';
+
+Pyzed separa **qué** muestra tu interfaz de **cómo se ve**. Todos los componentes leen sus colores del **tema**
+actual, un conjunto de colores con nombre llamados tokens (`background`, `text`, `border`, `accent`...). Cambia el
+tema y toda la app lo sigue; cambia un widget con `style()` y solo cambia ese widget.
+
+<Media src={themesShot} alt="La misma app con varios de los temas incluidos, claros y oscuros" caption="La misma interfaz con varios de los temas incluidos." eager />
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Notas(pz.App):
+    theme = "Gruvbox Dark"  # cualquier nombre de pz.themes.names()
+
+    def view(self):
+        tarjeta = pz.Style(background="elevated", border=(1, "border"), radius=10, padding=16)
+        return pz.column([
+            ui.heading("Notas"),
+            pz.container(ui.label("Con estilo como en CSS, con los colores del tema.")).style(tarjeta),
+        ])
+```
+
+## En esta sección
+
+<NavCards
+	items={[
+		{ title: 'Temas', text: 'Los temas incluidos, seguir el modo claro u oscuro del sistema, los tokens de color y crear los tuyos.', href: '/pyzed/es/theming/themes/', icon: 'moon', tag: 'Empieza aquí' },
+		{ title: 'Estilos', text: 'Fondos, bordes, radio, sombras, gradientes y estados para cualquier widget, y un estilo global.', href: '/pyzed/es/theming/styles/', icon: 'pencil' },
+		{ title: 'Iconos y fuentes', text: 'Unos 2000 iconos incluidos, iconos por tipo de archivo y cómo cargar tus propias fuentes.', href: '/pyzed/es/theming/icons-fonts/', icon: 'star' },
+		{ title: 'Estilos en el diseñador', text: 'La sección Estilo, el selector de color con gradientes y máscaras, y los temas de formulario en Pyzed Design.', href: '/pyzed/es/editor/styles-and-themes/', icon: 'laptop', tag: 'Diseñador' },
+		{ title: 'API de temas', text: '<code>Theme</code>, todos los tokens y las funciones para derivar, importar y registrar temas.', href: '/pyzed/es/reference/theme/', icon: 'list-format' },
+	]}
+/>
+
+<Aside type="tip" title="Usa tokens, no colores hex">
+Escribe `"accent"` o `"border"` en lugar de `"#3a7bc8"` siempre que puedas. Los colores de los tokens cambian con
+el tema, así tu app se sigue viendo bien en modo claro y oscuro.
+</Aside>
+
+## Próximamente
+
+<NavCards
+	items={[
+		{ title: 'Temas para formularios y componentes', text: 'Dale su propio aspecto a un formulario entero o a un componente reutilizable.', icon: 'puzzle' },
+		{ title: 'Galería de temas', text: 'Todos los temas incluidos lado a lado, con temas propios listos para copiar.', icon: 'laptop' },
+	]}
+/>
+
+<Aside type="note" title="Estado de esta sección">
+Estas páginas estaban antes en Guías. Se están añadiendo más ejemplos, con capturas de cada tema en claro y
+oscuro.
+</Aside>

@@ -193,4 +193,4 @@ print(shop.check().output, shop.typecheck().output)
 shop.git_init()
 ```
 
-To package the app for each platform, see [Build and distribute](/pyzed/guides/packaging/).
+To package the app for each platform, see [Build and distribute](/pyzed/packaging/build/).

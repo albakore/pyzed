@@ -7,7 +7,7 @@ sidebar:
 
 <!-- Archivo generado por docs/scripts/gen_api.py. Edita docs/scripts/api_docs_es.py. -->
 
-Ver la guía de [temas](/pyzed/es/guides/theming/) para la lista de tokens y cómo crear los tuyos.
+Ver la guía de [temas](/pyzed/es/theming/themes/) para la lista de tokens y cómo crear los tuyos.
 
 ## Theme
 

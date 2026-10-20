@@ -101,5 +101,5 @@ class MiApp(pz.App):
 ## Siguiente
 
 - [Crear un proyecto con `pyzed new`](/pyzed/es/getting-started/new-project/)
-- [Tutorial: lista de tareas](/pyzed/es/tutorials/todo-app/)
+- [Tutorial: lista de tareas](/pyzed/es/tutorials/basic/todo-app/)
 - [Guía de la arquitectura](/pyzed/es/guides/architecture/)

@@ -1,10 +1,18 @@
 ---
 title: "Showcase"
 description: "Demos of what Pyzed can draw: game HUDs, menus and inventories, frosted-glass dashboards, bloom and real GPU shaders, all in Python."
+section:
+  eyebrow: "Showcase"
+  icon: "laptop"
+  lead: "What Pyzed can draw: game interfaces, glass dashboards, bloom and GPU shaders. Each demo is one Python file you can run and study."
 sidebar:
   order: 0
   label: "Overview"
 ---
+
+:::note[More demos on the way]
+Forms, utilities and shader demos are being added, each with a tutorial that explains how it is made. The games have their own pages in this section.
+:::
 
 Pyzed draws with the GPU, so a Python desktop app can look like a modern game or operating system: real backdrop blur (`glass`), light that spills from bright parts (`bloom`), rotation, transparency and your own WGSL shaders (`pz.shader`). Each demo below is one file in [`examples/showcase`](https://github.com/albakore/pyzed/tree/main/examples/showcase); run it, then read how it is made.
 
@@ -38,4 +46,4 @@ Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripp
 
 [![Shader gallery](../../../assets/showcase/shaders.png)](/pyzed/showcase/shaders/)
 
-Learn the pieces in [Animation and effects](/pyzed/guides/animation/) and [Shaders](/pyzed/guides/shaders/).
+Learn the pieces in [Animation and effects](/pyzed/guides/animation/) and [Shaders](/pyzed/shading/shaders/).

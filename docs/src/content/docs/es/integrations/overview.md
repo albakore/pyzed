@@ -1,10 +1,17 @@
 ---
 title: Resumen de integraciones
 description: Usa Pyzed como frontend de escritorio para FastAPI, Django, SQLAlchemy, SQLModel, httpx, Pydantic y aiosqlite, con demos que siguen el tutorial oficial de cada librería.
+section:
+  eyebrow: "Integraciones"
+  icon: "link"
 sidebar:
   order: 1
   label: Resumen
 ---
+
+:::note[Demos que puedes ejecutar]
+Cada integración tiene una demo completa en examples/integrations que puedes ejecutar con uv. Con el tiempo se añadirán más bibliotecas.
+:::
 
 Pyzed es solo la interfaz: el resto de tu app es Python normal. Por eso las librerías que ya usas
 para backends web, bases de datos y HTTP funcionan sin cambios en una app de escritorio. Esta

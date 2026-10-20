@@ -1,0 +1,69 @@
+---
+title: Theming
+description: "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, icons and fonts, in code and in Pyzed Design."
+section:
+  eyebrow: Theming
+  icon: moon
+  lead: Make the app yours. Pick a theme or create one, style any widget like CSS, and choose its icons and fonts, in code or in the designer.
+sidebar:
+  label: Overview
+  order: 0
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import themesShot from '../../../assets/tutorials/styling.png';
+
+Pyzed separates **what** your interface shows from **how it looks**. Every component reads its colors from the
+current **theme**, a set of named colors called tokens (`background`, `text`, `border`, `accent`...). Change the
+theme and the whole app follows; change one widget with `style()` and only that widget changes.
+
+<Media src={themesShot} alt="The same app in several bundled themes, light and dark" caption="The same interface in several of the bundled themes." eager />
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Notes(pz.App):
+    theme = "Gruvbox Dark"  # any name from pz.themes.names()
+
+    def view(self):
+        card = pz.Style(background="elevated", border=(1, "border"), radius=10, padding=16)
+        return pz.column([
+            ui.heading("Notes"),
+            pz.container(ui.label("Styled like CSS, colored by the theme.")).style(card),
+        ])
+```
+
+## In this section
+
+<NavCards
+	items={[
+		{ title: 'Themes', text: 'The built-in themes, following the system light or dark mode, the color tokens, and creating your own.', href: '/pyzed/theming/themes/', icon: 'moon', tag: 'Start here' },
+		{ title: 'Styles', text: 'Backgrounds, borders, radius, shadows, gradients and states for any widget, and a global style.', href: '/pyzed/theming/styles/', icon: 'pencil' },
+		{ title: 'Icons and fonts', text: 'About 2000 bundled icons, file-type icons, and loading your own fonts.', href: '/pyzed/theming/icons-fonts/', icon: 'star' },
+		{ title: 'Styles in the designer', text: 'The Style section, the color picker with gradients and masks, and form themes in Pyzed Design.', href: '/pyzed/editor/styles-and-themes/', icon: 'laptop', tag: 'Designer' },
+		{ title: 'Theme API', text: '<code>Theme</code>, every token and the helpers to derive, import and register themes.', href: '/pyzed/reference/theme/', icon: 'list-format' },
+	]}
+/>
+
+<Aside type="tip" title="Use tokens, not hex colors">
+Write `"accent"` or `"border"` instead of `"#3a7bc8"` where you can. Token colors change with the theme, so your
+app keeps looking right in light and dark mode.
+</Aside>
+
+## Coming next
+
+<NavCards
+	items={[
+		{ title: 'Theming forms and components', text: 'Give a whole form, or a reusable component, its own look.', icon: 'puzzle' },
+		{ title: 'Theme gallery', text: 'Every built-in theme side by side, with ready-to-copy custom themes.', icon: 'laptop' },
+	]}
+/>
+
+<Aside type="note" title="Status of this section">
+These pages used to live in Guides. More examples, with captures of every theme in light and dark, are being
+added to this section.
+</Aside>

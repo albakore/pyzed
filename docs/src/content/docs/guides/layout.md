@@ -97,7 +97,7 @@ pz.text("a very long line…", wrap=False)
 ```
 
 Bundled fonts: IBM Plex Sans (`"sans"`, the default), IBM Plex Mono (`"mono"`) and Lucide
-(`"icons"`). See [icons and fonts](/pyzed/guides/icons-fonts/).
+(`"icons"`). See [icons and fonts](/pyzed/theming/icons-fonts/).
 
 ## Overlays and scrolling
 

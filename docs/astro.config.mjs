@@ -2,17 +2,149 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
+import starlightSidebarTopics from 'starlight-sidebar-topics';
 
 // Published on GitHub Pages: https://albakore.github.io/pyzed/
 // English lives at the root; every other language is a folder in src/content/docs (es/ ...).
 /** A sidebar group listing a docs folder, with its Spanish label. */
-function group(label, es, directory) {
-	return { label, translations: { es }, items: [{ autogenerate: { directory } }] };
+function group(label, es, directory, extra = {}) {
+	return { label, translations: { es }, items: [{ autogenerate: { directory } }], ...extra };
 }
+
+/**
+ * The top-level sections: each one is a link in the header navbar (src/components/Header.astro)
+ * and has its own sidebar. A page belongs to the section whose sidebar lists it.
+ */
+const topics = [
+	{
+		id: 'learn',
+		label: { en: 'Learn', es: 'Aprender' },
+		link: '/getting-started/introduction/',
+		icon: 'open-book',
+		items: [
+			{
+				label: 'Start here',
+				translations: { es: 'Empezar' },
+				items: [
+					{ slug: 'getting-started/introduction' },
+					{ slug: 'getting-started/installation' },
+					{ slug: 'getting-started/quickstart' },
+					{ slug: 'getting-started/new-project' },
+				],
+			},
+			{
+				label: 'Tutorials',
+				translations: { es: 'Tutoriales' },
+				items: [
+					{ slug: 'tutorials' },
+					group('Basic', 'Básicos', 'tutorials/basic'),
+					group('Intermediate', 'Intermedios', 'tutorials/intermediate'),
+					group('Advanced', 'Avanzados', 'tutorials/advanced'),
+				],
+			},
+			group('Guides', 'Guías', 'guides'),
+			group('Why Pyzed', 'Por qué Pyzed', 'why', { collapsed: true }),
+			{ slug: 'examples' },
+			{ slug: 'faq' },
+		],
+	},
+	{
+		id: 'library',
+		label: { en: 'Library', es: 'Biblioteca' },
+		link: '/library/',
+		icon: 'puzzle',
+		items: [group('Components', 'Componentes', 'library'), group('Blocks', 'Bloques', 'blocks')],
+	},
+	{
+		id: 'designer',
+		label: { en: 'Designer', es: 'Diseñador' },
+		link: '/editor/',
+		icon: 'pencil',
+		items: [
+			{ slug: 'download', badge: { text: 'app', variant: 'success' } },
+			group('Pyzed Design', 'Pyzed Design', 'editor'),
+		],
+	},
+	{
+		id: 'shading',
+		label: { en: 'Shading', es: 'Shading' },
+		link: '/shading/',
+		icon: 'star',
+		items: [{ autogenerate: { directory: 'shading' } }],
+	},
+	{
+		id: 'theming',
+		label: { en: 'Theming', es: 'Temas' },
+		link: '/theming/',
+		icon: 'moon',
+		items: [{ autogenerate: { directory: 'theming' } }],
+	},
+	{
+		id: 'distribute',
+		label: { en: 'Distribute', es: 'Distribuir' },
+		link: '/packaging/',
+		icon: 'rocket',
+		items: [{ autogenerate: { directory: 'packaging' } }],
+	},
+	{
+		id: 'showcase',
+		label: { en: 'Showcase', es: 'Showcase' },
+		link: '/showcase/',
+		icon: 'laptop',
+		items: [group('Showcase', 'Showcase', 'showcase'), group('Games', 'Videojuegos', 'games')],
+	},
+	{
+		id: 'integrations',
+		label: { en: 'Integrations', es: 'Integraciones' },
+		link: '/integrations/overview/',
+		icon: 'link',
+		items: [{ autogenerate: { directory: 'integrations' } }],
+	},
+	{
+		id: 'ai',
+		label: { en: 'AI', es: 'IA' },
+		link: '/ai/',
+		icon: 'comment-alt',
+		items: [{ autogenerate: { directory: 'ai' } }],
+	},
+	{
+		id: 'reference',
+		label: { en: 'Reference', es: 'Referencia' },
+		link: '/reference/',
+		icon: 'list-format',
+		items: [
+			group('API reference', 'Referencia de la API', 'reference'),
+			{ slug: 'changelog', badge: { text: 'releases', variant: 'tip' } },
+			group('Contributing', 'Contribuir', 'contributing', { collapsed: true }),
+		],
+	},
+];
+
+// Pages that moved to their own section: old URLs keep working (see contributing/docs.md).
+const MOVED = {
+	'guides/shaders': 'shading/shaders',
+	'guides/shader-graphs': 'shading/shader-graphs',
+	'editor/shader-designer': 'shading/shader-designer',
+	'guides/theming': 'theming/themes',
+	'guides/styles': 'theming/styles',
+	'guides/icons-fonts': 'theming/icons-fonts',
+	'guides/packaging': 'packaging/build',
+	'tutorials/step-by-step': 'tutorials/basic/step-by-step',
+	'tutorials/todo-app': 'tutorials/basic/todo-app',
+	'tutorials/background-tasks': 'tutorials/intermediate/background-tasks',
+	'tutorials/zed-like-editor': 'tutorials/advanced/code-editor',
+};
+const redirects = Object.fromEntries(
+	Object.entries(MOVED).flatMap(([from, to]) => [
+		[`/${from}`, `/pyzed/${to}/`],
+		[`/es/${from}`, `/pyzed/es/${to}/`],
+	]),
+);
 
 export default defineConfig({
 	site: 'https://albakore.github.io',
 	base: '/pyzed',
+	redirects,
 	// Tutorials import the code in ../examples with `?raw`.
 	vite: { server: { fs: { allow: ['..'] } } },
 	integrations: [
@@ -21,7 +153,7 @@ export default defineConfig({
 		starlight({
 			title: 'Pyzed',
 			description:
-				'Pyzed is an open-source Python framework for native desktop GUIs rendered by Rust (Iced), with Zed-style components and a drag-and-drop visual designer.',
+				'Pyzed is an open-source Python frontend framework for native desktop apps rendered by Rust (Iced), with 90+ components, a drag-and-drop visual designer, themes and GPU shaders.',
 			logo: { src: './src/assets/logo.svg', replacesTitle: false },
 			favicon: '/favicon.svg',
 			defaultLocale: 'root',
@@ -52,40 +184,31 @@ export default defineConfig({
 					tag: 'link',
 					attrs: {
 						rel: 'stylesheet',
-						href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap',
+						href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap',
 					},
 				},
 			],
-			components: { SiteTitle: './src/components/SiteTitle.astro', Footer: './src/components/Footer.astro' },
-			expressiveCode: { themes: ['one-dark-pro', 'one-light'] },
-			sidebar: [
-				{
-					label: 'Start here',
-					translations: { es: 'Empezar' },
-					items: [
-						{ slug: 'getting-started/introduction' },
-						{ slug: 'getting-started/installation' },
-						{ slug: 'getting-started/quickstart' },
-						{ slug: 'getting-started/new-project' },
-					],
-				},
-				{ slug: 'download', badge: { text: 'app', variant: 'success' } },
-				group('Why Pyzed', 'Por qué Pyzed', 'why'),
-				group('Tutorials', 'Tutoriales', 'tutorials'),
-				group('Showcase', 'Demos', 'showcase'),
-				group('Integrations', 'Integraciones', 'integrations'),
-				group('Games', 'Videojuegos', 'games'),
-				group('Pyzed Design', 'Pyzed Design', 'editor'),
-				group('Guides', 'Guías', 'guides'),
-				group('Component library', 'Biblioteca de componentes', 'library'),
-				group('Blocks', 'Bloques', 'blocks'),
-				group('AI agents', 'Agentes de IA', 'ai'),
-				group('Contributing', 'Contribuir', 'contributing'),
-				group('API reference', 'Referencia de la API', 'reference'),
-				{ slug: 'examples' },
-				{ slug: 'faq' },
-				{ slug: 'changelog', badge: { text: 'releases', variant: 'tip' } },
+			components: {
+				Header: './src/components/Header.astro',
+				PageTitle: './src/components/PageTitle.astro',
+				SiteTitle: './src/components/SiteTitle.astro',
+				Footer: './src/components/Footer.astro',
+			},
+			plugins: [
+				starlightSidebarTopics(topics, {
+					// The older category pages of pyzed.ui (not in any sidebar) belong to the library.
+					topics: { library: ['/components/**', '/es/components/**'] },
+				}),
 			],
+			expressiveCode: {
+				themes: ['one-dark-pro', 'one-light'],
+				styleOverrides: {
+					borderRadius: '0.7rem',
+					borderColor: 'var(--pz-frame-border)',
+					codeFontFamily: 'var(--__sl-font-mono)',
+					codePaddingBlock: '1rem',
+				},
+			},
 		}),
 	],
 });

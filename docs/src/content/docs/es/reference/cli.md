@@ -50,7 +50,7 @@ salvo `--script`. Si no hay `pyproject.toml`, ejecuta antes `uv init`. No modifi
 
 ## `pyzed build`
 
-Empaqueta el proyecto para la plataforma actual con PyInstaller. Consulta [Compilar y distribuir](/pyzed/es/guides/packaging/).
+Empaqueta el proyecto para la plataforma actual con PyInstaller. Consulta [Compilar y distribuir](/pyzed/es/packaging/build/).
 
 | Opción | Efecto |
 | --- | --- |

@@ -34,7 +34,7 @@ editor's** theme (Editor settings → Theme): you can design a light form in a d
 
 ## The Style section
 
-Every control has a **Style** section in Properties, like CSS for that one control (see [Styles](/pyzed/guides/styles/)):
+Every control has a **Style** section in Properties, like CSS for that one control (see [Styles](/pyzed/theming/styles/)):
 
 | Field | Takes |
 | --- | --- |

@@ -1,0 +1,92 @@
+---
+title: Tutoriales
+description: "Aprende Pyzed creando apps de escritorio reales en Python paso a paso, desde una primera ventana hasta un editor de código completo, ordenadas en nivel básico, intermedio y avanzado."
+section:
+  eyebrow: Aprender
+  icon: open-book
+  lead: Aprende creando apps reales, paso a paso. Empieza por lo básico y sigue con tareas en segundo plano, editores y juegos.
+sidebar:
+  label: Introducción
+  order: 0
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+
+Cada tutorial termina en un programa que puedes ejecutar, y su código completo está en la carpeta
+[`examples`](https://github.com/albakore/pyzed/tree/main/examples) del repositorio. Para los básicos no necesitas
+saber mucho Python: cada paso explica qué hace el código y por qué.
+
+<Aside type="note" title="Esta sección está creciendo">
+Los tutoriales se están reorganizando por nivel. Vienen tutoriales nuevos del diseñador, los temas, los shaders y
+el empaquetado, y cada uno dirá cuánto tarda y qué vas a aprender.
+</Aside>
+
+## Básicos
+
+Tus primeros pasos: una ventana, algo de estado, una lista y un formulario.
+
+<NavCards
+	items={[
+		{ title: 'Tutorial en 5 pasos', text: 'De una ventana vacía a una app de notas con Markdown, trabajo asíncrono y guardado.', href: '/pyzed/es/tutorials/basic/step-by-step/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Lista de tareas', text: 'Tu primera app completa: estado, un formulario, una lista y atajos de teclado.', href: '/pyzed/es/tutorials/basic/todo-app/', icon: 'approve-check' },
+		{ title: 'Tu primer formulario en Pyzed Design', text: 'Dibuja una ventana arrastrando y soltando, conecta un botón a Python y ejecútala con F5.', icon: 'pencil' },
+	]}
+/>
+
+## Intermedios
+
+Trabajo que tarda, sin congelar la ventana.
+
+<NavCards
+	items={[
+		{ title: 'Tareas en segundo plano', text: 'Descargas con progreso, trabajo bloqueante en un hilo y notificaciones.', href: '/pyzed/es/tutorials/intermediate/background-tasks/', icon: 'random' },
+		{ title: 'Dale a tu app su propio tema', text: 'Colores, estilos y un selector de temas, en código y en el diseñador.', icon: 'moon' },
+		{ title: 'Un fondo con shader', text: 'Conecta nodos en la vista de shaders y usa el resultado detrás de un formulario.', icon: 'star' },
+	]}
+/>
+
+## Avanzados
+
+Aplicaciones enteras con muchas partes trabajando juntas.
+
+<NavCards
+	items={[
+		{ title: 'Un mini editor de código', text: 'Un workspace con árbol de archivos, pestañas, resaltado de sintaxis y paleta de comandos.', href: '/pyzed/es/tutorials/advanced/code-editor/', icon: 'seti:python' },
+		{ title: 'Neon Invaders', text: 'Un juego completo: sprites, oleadas, power-ups, brillo y un HUD de cristal.', href: '/pyzed/es/games/neon-invaders/', icon: 'laptop', tag: 'Juego' },
+		{ title: 'Publícala en todas las plataformas', text: 'Compila, firma y publica tu app para Windows, macOS y Linux desde CI.', icon: 'rocket' },
+	]}
+/>
+
+## Ejecutar los ejemplos
+
+Clona el repositorio (o descárgalo como zip) y ejecuta cualquier ejemplo con la herramienta que uses. `uv` crea el
+entorno por ti; con `pip`, primero crea y activa un entorno virtual.
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS y Linux"
+		uv run --with pyzed-ui python examples/todo.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS y Linux"
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install pyzed-ui
+		python examples/todo.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py -m venv .venv
+		.venv\Scripts\activate
+		python -m pip install pyzed-ui
+		python examples\todo.py
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="tip">
+¿Nuevo en Python? Lee primero [Instalación](/pyzed/es/getting-started/installation/) y el
+[Inicio rápido](/pyzed/es/getting-started/quickstart/) para ver una primera ventana en cinco minutos.
+</Aside>

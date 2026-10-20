@@ -97,7 +97,7 @@ pz.text("una línea muy larga…", wrap=False)
 ```
 
 Fuentes incluidas: IBM Plex Sans (`"sans"`, por defecto), IBM Plex Mono (`"mono"`) y Lucide
-(`"icons"`). Ver [iconos y fuentes](/pyzed/es/guides/icons-fonts/).
+(`"icons"`). Ver [iconos y fuentes](/pyzed/es/theming/icons-fonts/).
 
 ## Superposiciones y scroll
 
