@@ -1,0 +1,105 @@
+---
+title: Knob (perilla)
+description: Una perilla giratoria para apps de audio en Python — arrastra, usa la rueda o haz doble clic para reiniciar, cinco estilos de FL Studio a Eurorack, rangos logarítmicos y selectores por pasos.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Seis perillas girando: arco, FL Studio, vintage, rack, mínima y una bipolar](/pyzed/media/audio/ui/knob.webp)
+
+<Aside type="note" title="En pocas palabras">
+Una perilla es el control redondo de todo sintetizador y mezclador. Arrástrala hacia arriba para
+girarla a la derecha y hacia abajo para girarla a la izquierda; mantén <kbd>Shift</kbd> para
+ajustes finos; haz doble clic para devolverla a su sitio.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Filter(pz.App):
+    cutoff = 1200.0
+
+    def view(self):
+        return ui.audio.Knob(
+            value=self.cutoff, min=20, max=20000, curve="log", unit="Hz", caption="Cutoff",
+            on_change=lambda e: setattr(self, "cutoff", e.value),
+        )
+
+
+pz.run(Filter)
+```
+
+## Cómo funciona
+
+- **Arrastra** hacia arriba o abajo: `travel` píxeles (200 por defecto) recorren todo el rango.
+  Con <kbd>Shift</kbd> pulsado, el mismo arrastre la mueve diez veces menos.
+- **Gira la rueda** del ratón encima: un 2 % del rango por muesca, o un `step`.
+- **Doble clic** para volver a `default` (o a `min` si no hay).
+- `change` se dispara en cada movimiento con el nuevo valor en `event.value`.
+
+La perilla conserva el valor que pone el usuario aunque tu app no lo guarde. Cuando tu app pasa
+un `value` distinto (se cargó un preset, se movió un controlador MIDI), gana ese.
+
+## Estilos
+
+`variant` elige uno de cinco dibujos; todos son formas vectoriales dibujadas en un canvas, así
+que se ven nítidas con cualquier `diameter`.
+
+| `variant` | Se parece a |
+| --- | --- |
+| `"arc"` | Un anillo que se llena con `color` alrededor de un dial pequeño. El de por defecto, sigue el tema. |
+| `"fl"` | FL Studio: una perilla oscura sombreada con un anillo luminoso. |
+| `"vintage"` | Una perilla crema con marcas, como el hardware antiguo. |
+| `"rack"` | Una perilla Eurorack pequeña con un indicador de color (la usa el rack). |
+| `"minimal"` | Solo el anillo, con el valor escrito en el centro. |
+
+`bipolar=True` dibuja el anillo desde el centro de arriba en lugar del extremo izquierdo: a la
+derecha para valores positivos y a la izquierda para negativos. Úsalo para el paneo, la
+desafinación o la cantidad de envolvente de un filtro.
+
+## Rangos, unidades y opciones
+
+- `curve="log"` gira la perilla por proporciones en vez de por pasos: el centro de 20 Hz–20 kHz
+  queda en unos 630 Hz, que es como oímos el tono. Úsalo para frecuencias y tiempos.
+- `unit` da formato al valor: `"Hz"` (pasa a kHz), `"ms"` (pasa a segundos), `"dB"`, `"%"`
+  (0..1 mostrado como porcentaje) o cualquier texto. `decimals` fija los decimales.
+- `step` redondea el valor (`step=1` para números enteros).
+- `options=["Sine", "Triangle", "Saw", "Square"]` la convierte en un **selector por pasos**: el
+  valor es el índice de la opción y la etiqueta muestra su nombre.
+
+```python
+ui.audio.Knob(value=self.wave, options=["Sine", "Tri", "Saw", "Square"], caption="Wave",
+              variant="fl", on_change=lambda e: engine.set(osc, "wave", e.value))
+```
+
+## Propiedades
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `value` | `0.5` | El valor mostrado. |
+| `min`, `max` | `0`, `1` | El rango. |
+| `default` | `None` | Adónde la lleva un doble clic (`min` si es `None`). |
+| `step` | `None` | Redondea el valor a múltiplos de `step`. |
+| `curve` | `"lin"` | `"log"` para frecuencias y tiempos. |
+| `caption` | `""` | Texto bajo la perilla. |
+| `unit`, `decimals` | `""`, `None` | Cómo se escribe el valor. |
+| `options` | `None` | Nombres de opciones: la convierte en selector por pasos. |
+| `diameter` | `48` | Tamaño en píxeles. |
+| `variant` | `"arc"` | `"arc"`, `"fl"`, `"vintage"`, `"rack"` o `"minimal"`. |
+| `color` | `"accent"` | Un token del tema o un color hex. |
+| `bipolar` | `False` | Dibuja el anillo desde el centro. |
+| `show_value` | `True` | Escribe el valor bajo la etiqueta. |
+| `travel` | `200` | Píxeles de arrastre para todo el rango. |
+| `disabled` | `False` | La atenúa e ignora el puntero. |
+
+Evento: `on_change` (`event.value` es el nuevo valor). En Pyzed Design la perilla está en el grupo
+**Audio** de la caja de herramientas.
+
+<Aside type="tip">
+Conectar una perilla al motor de audio es una línea: `on_change=lambda e: engine.set(node, "cutoff", e.value)`.
+`engine.set` solo pasa un número al hilo de audio, así que llamarlo en cada movimiento no es problema.
+</Aside>

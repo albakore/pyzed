@@ -244,7 +244,7 @@ def waveform_scene(s: Scene):
     return run(build, 6, s.fps, song=song)
 
 
-@scene("scope", (720, 260))
+@scene("scope", (720, 260), fps=12, quality=50)
 def scope_scene(s: Scene):
     def build(v: View):
         n = 1024
@@ -260,7 +260,7 @@ def scope_scene(s: Scene):
     return run(build, 5, s.fps)
 
 
-@scene("spectrum", (760, 420))
+@scene("spectrum", (760, 420), fps=12, quality=52)
 def spectrum_scene(s: Scene):
     variants = [("bars", "fl"), ("blocks", "fl"), ("line", "neon"), ("filled", "ice"), ("mirror", "fire"),
                 ("radial", "neon")]
@@ -290,7 +290,7 @@ def spectrogram_scene(s: Scene):
     return run(build, 7, s.fps, song=Song())
 
 
-@scene("palettes", (720, 220))
+@scene("palettes", (720, 220), fps=12, quality=55)
 def palette_scene(s: Scene):
     names = list(au.PALETTES)
 
@@ -354,6 +354,152 @@ def cables_scene(s: Scene):
         return pz.canvas(shapes, width=710, height=310)
 
     return run(build, 6, s.fps)
+
+
+# -- demos -------------------------------------------------------------------------------------------------
+def _component(app: Any, cls: type) -> Any:
+    """The instance of component ``cls`` the app rendered last (to drive it like a pointer would)."""
+    return next(c for c in app.__dict__.get("_pyzed_components", {}).values() if isinstance(c, cls))
+
+
+def _demo(module: str, name: str):
+    from pyzed import audio
+
+    engine = audio.Engine("offline")
+    return getattr(__import__(module), name)(engine), engine
+
+
+@scene("synth", (1120, 560))
+def synth_scene(s: Scene):
+    app, engine = _demo("synth", "Synth")
+    melody = [(57, 0.0, 0.45), (60, 0.5, 0.45), (64, 1.0, 0.45), (67, 1.5, 0.9), (65, 2.5, 0.45), (64, 3.0, 0.45),
+              (60, 3.5, 0.9), (55, 4.5, 0.45), (57, 5.0, 1.2)]
+    app.load("Lead")
+    fps = s.fps
+    for i in range(int(6.5 * fps)):
+        t = i / fps
+        CLOCK[0] = t
+        for note, start, length in melody:
+            if start <= t < start + 1 / fps:
+                app.note_on(note, 100)
+            if start + length <= t < start + length + 1 / fps:
+                app.note_off(note)
+        app.put("cutoff", 600 + 2600 * (0.5 - 0.5 * math.cos(t * 1.1)))
+        engine.render(1 / fps)
+        key = min((n for n in app.held), default=None)
+        pointer = None
+        if key is not None:  # the pointer over the key being played (white keys are 22 px wide)
+            whites = [n for n in range(36, 97) if n % 12 not in (1, 3, 6, 8, 10)]
+            if key in whites:
+                pointer = (18 + whites.index(key) * 22 + 11, 470)
+        yield Frame(app, pointer, pressed=pointer is not None)
+
+
+@scene("visualizer", (1180, 600), fps=12, quality=50)
+def visualizer_scene(s: Scene):
+    app, engine = _demo("visualizer", "Visualizer")
+    looks = [("blocks", "fl"), ("bars", "neon"), ("filled", "ice"), ("mirror", "fire"), ("line", "viridis")]
+    pz.screenshot(app, Path(tempfile.mkdtemp()) / "warm.png", size=s.size, wait=0.0)  # creates the components
+    sgram = _component(app, au.Spectrogram)
+    for _ in range(sgram.history):  # fill the spectrogram's history before the first frame
+        engine.render(1 / s.fps)
+        app.tick(1 / s.fps)
+        sgram.magnitudes = app.tap().spectrum(512)
+        sgram.shapes()
+    for i in range(int(7.5 * s.fps)):
+        t = i / s.fps
+        CLOCK[0] = t
+        app.variant, app.palette = looks[int(t / 1.5) % len(looks)]
+        app.tick(1 / s.fps)
+        engine.render(1 / s.fps)
+        yield Frame(app)
+
+
+@scene("midi-controller", (1280, 480))
+def controller_scene(s: Scene):
+    app, engine = _demo("midi_controller", "Controller")
+    app.play(True)
+    for i in range(int(6 * s.fps)):
+        t = i / s.fps
+        CLOCK[0] = t
+        for k in range(8):
+            app.levels[k] = 0.55 + 0.3 * math.sin(t * 1.3 + k * 0.7)
+        app.pans[2] = math.sin(t)
+        app.apply_mix()
+        app.tick(1 / s.fps)
+        engine.render(1 / s.fps)
+        yield Frame(app)
+
+
+@scene("drum-machine", (980, 470))
+def drum_scene(s: Scene):
+    app, engine = _demo("drum_machine", "DrumMachine")
+    painted = False
+    for i in range(int(6 * s.fps)):
+        t = i / s.fps
+        CLOCK[0] = t
+        pointer = None
+        if 3.0 <= t < 4.2:  # paint four tom steps
+            col = 8 + int((t - 3.0) / 0.3)
+            pointer = (18 + 36 + 72 + col * 30 + 15, 110 + 5 * 30 + 15)
+            if col < 12:
+                pattern = [list(r) for r in app.pattern]
+                pattern[5][col] = True
+                app.write_pattern(pattern)
+                painted = True
+        elif painted and t >= 4.2:
+            pointer = None
+        engine.render(1 / s.fps)
+        app.tick(1 / s.fps)
+        yield Frame(app, pointer, pressed=pointer is not None)
+
+
+@scene("rack", (1400, 420), fps=12, quality=55)
+def rack_scene(s: Scene):
+    from pyzed.ui import rack as rk
+
+    app, engine = _demo("modular", "Modular")
+    engine.disconnect("delay1", "out", "scope1", "in")
+    engine.connect("vca1", "out", "scope1", "in")
+    left = 190  # the module browser's width: the rack starts there
+    plugged = False
+    rack_comp = None
+    for i in range(int(8 * s.fps)):
+        t = i / s.fps
+        CLOCK[0] = t
+        engine.render(1 / s.fps)
+        pointer = None
+        pressed = False
+        if i > 0 and rack_comp is None:
+            rack_comp = _component(app, rk.Rack)
+        if rack_comp is not None and 1.5 <= t < 3.5:
+            src = rack_comp.jack_at("delay1", "out", True)
+            dst = rack_comp.jack_at("scope1", "in", False)
+            k = min(1.0, (t - 1.5) / 1.6)
+            k = k * k * (3 - 2 * k)
+            x, y = src[0] + (dst[0] - src[0]) * k, src[1] + (dst[1] - src[1]) * k - 60 * math.sin(k * math.pi)
+            if rack_comp.wire is None and not plugged:
+                rack_comp._wire_start("delay1", "out", True, SimpleEvent(11, 11))
+                engine.disconnect("vca1", "out", "scope1", "in")
+            rack_comp.wire["pointer"] = (x, y)
+            pointer, pressed = (left + x, y), True
+        elif rack_comp is not None and t >= 3.5 and not plugged:
+            rack_comp._wire_end()
+            plugged = True
+        if rack_comp is not None and 4.5 <= t < 7.5:  # turn the filter's cutoff
+            engine.set("filter1", "cutoff", 300 + 1500 * (0.5 - 0.5 * math.cos((t - 4.5) * 2)))
+            panel = rk.panel_layout(next(m for m in __import__("pyzed").audio.modules() if m.kind == "filter"))
+            ox, oy = rack_comp.origin("filter1")
+            kx, ky = panel.knobs["cutoff"]
+            pointer, pressed = (left + ox + kx + 15, oy + ky + 15), True
+        yield Frame(app, pointer, pressed)
+
+
+class SimpleEvent:
+    """A pointer event at ``(x, y)`` of a widget, for driving components without a window."""
+
+    def __init__(self, x: float, y: float):
+        self.x, self.y, self.dx, self.dy, self.shift = x, y, 0.0, 0.0, False
 
 
 # -- rendering -------------------------------------------------------------------------------------------

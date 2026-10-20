@@ -1,0 +1,35 @@
+---
+title: Webcam viewer
+description: A webcam viewer in Python — the live picture, a snapshot button that saves PNG files and the measured frame rate, with OpenCV, ffmpeg or a test pattern.
+sidebar:
+  order: 6
+---
+
+![The live picture of a camera with a frame rate badge](/pyzed/media/audio/ui/webcam.webp)
+
+A camera app in 50 lines: [`examples/audio/webcam.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/webcam.py).
+
+```bash
+python examples/audio/webcam.py         # the default camera
+python examples/audio/webcam.py test    # moving color bars, without a camera
+```
+
+**Snapshot** saves the current picture as a PNG next to the script, **Pause** freezes it.
+
+```python
+from pyzed import camera, ui
+
+cam = camera.Camera(0, width=1280, height=720, mirror=True)
+cam.start()
+
+def view(self):
+    return pz.column([
+        ui.camera.Webcam(camera=cam, width=720, height=405, radius=10),
+        ui.button("Snapshot", lambda: cam.snapshot("photo.png")),
+    ])
+```
+
+The camera is read on its own thread; each new picture asks the window to redraw, so the app
+needs no timer. It uses OpenCV when it is installed (`pip install opencv-python`), else the
+`ffmpeg` program, else the test pattern. See [Webcam](/pyzed/audio/components/webcam/) for every
+option.

@@ -1,0 +1,44 @@
+---
+title: Modular synthesizer
+description: A modular synthesizer in Python like VCV Rack — modules on rails, cables you drag between jacks, a module browser, and patches saved to JSON.
+sidebar:
+  order: 5
+---
+
+![A modular rack: a cable dragged from the delay to the scope, then the filter's cutoff knob turned](/pyzed/media/audio/ui/rack.webp)
+
+VCV Rack in about 90 lines: [`examples/audio/modular.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/modular.py).
+
+```bash
+python examples/audio/modular.py            # a starter patch
+python examples/audio/modular.py patch.json # a saved one
+```
+
+It opens with an acid bass line: a sequencer plays an oscillator through a filter, an envelope,
+an amplifier and a delay, with a scope and the output. Then:
+
+- Add modules from the browser on the left (search or pick a category).
+- Drag from one jack to another to plug a cable; outputs are on the dark plates.
+- Right-click a jack to unplug it; drag a plugged input to move its cable.
+- Drag a module by its title to move it; the × removes it.
+- <kbd>Ctrl</kbd>+<kbd>S</kbd> saves the patch, <kbd>Ctrl</kbd>+<kbd>O</kbd> opens it again.
+
+## How it is built
+
+The whole window is one [`Rack`](/pyzed/audio/rack/rack/) component on top of the engine:
+
+```python
+engine = audio.Engine()
+starter_patch(engine)                       # engine.add(...) and engine.connect(...)
+
+class Modular(pz.App):
+    layout = {}
+
+    def view(self):
+        return ui.rack.Rack(engine=self.engine, layout=self.layout, rows=2)
+```
+
+The rack reads the modules and cables from the engine, draws a panel for each module from its
+description in the catalog, and writes back every change you make. `ui.rack.save()` stores the
+patch and the position of each module in one JSON file. See [Cables](/pyzed/audio/rack/cables/)
+for how the cables are drawn and animated.

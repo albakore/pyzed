@@ -1,0 +1,62 @@
+---
+title: Fader
+description: Un fader de mezclador para Python — tapa de consola, estilo FL Studio o tirador plano, vertical o como crossfader, con un medidor de nivel opcional junto al recorrido.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Tres faders verticales con medidores de nivel y un crossfader horizontal moviéndose](/pyzed/media/audio/ui/fader.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un fader es el deslizador de una mesa de mezclas: uno por canal, normalmente para el volumen.
+Arrastra la tapa, haz clic en cualquier punto del recorrido para saltar ahí o usa la rueda encima.
+</Aside>
+
+```python
+ui.audio.Fader(value=self.volume, caption="Master", level=engine.level()[1],
+               on_change=lambda e: engine.set(out, "volume", e.value))
+```
+
+## Cómo funciona
+
+- **Arrastra la tapa** para moverla; <kbd>Shift</kbd> hace el movimiento diez veces más fino.
+- **Haz clic en el recorrido** (no en la tapa) para saltar a ese punto.
+- **Gira la rueda** para moverla un poco y **haz doble clic** para devolverla a `default`.
+- `level` (0..1) dibuja un pequeño medidor junto al recorrido: pasa el pico del canal en cada
+  fotograma y el fader hace también de medidor, como en una consola real.
+
+## Estilos
+
+| `variant` | Se parece a |
+| --- | --- |
+| `"console"` | Una tapa metálica con ranuras, como una mesa de mezclas analógica. |
+| `"fl"` | La tapa oscura de FL Studio con una línea de color y el recorrido lleno hasta ella en `color`. |
+| `"flat"` | Un tirador redondo sobre un recorrido lleno, a juego con el resto del tema. |
+
+`vertical=False` lo coloca en horizontal (un crossfader). `ticks` fija cuántas marcas se dibujan a
+lo largo del recorrido (`0` para ninguna) y `length` su tamaño en píxeles.
+
+## Propiedades
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `value`, `min`, `max` | `0.75`, `0`, `1` | El valor y su rango. |
+| `default`, `step`, `curve` | `None`, `None`, `"lin"` | Como en la [perilla](/pyzed/es/audio/components/knob/). |
+| `caption`, `unit`, `decimals` | | Texto debajo y cómo se escribe el valor. |
+| `length` | `160` | Longitud del recorrido en píxeles. |
+| `vertical` | `True` | `False` para un fader horizontal. |
+| `variant` | `"console"` | `"console"`, `"fl"` o `"flat"`. |
+| `ticks` | `11` | Marcas a lo largo del recorrido. |
+| `level` | `None` | Un nivel 0..1 dibujado como medidor junto al recorrido. |
+| `color` | `"accent"` | El relleno y la línea de la tapa. |
+| `show_value`, `disabled` | `True`, `False` | |
+
+Evento: `on_change` con el nuevo valor.
+
+<Aside type="tip">
+Un canal de mezclador es una columna: una [perilla](/pyzed/es/audio/components/knob/) para el paneo,
+dos [botones LED](/pyzed/es/audio/components/pads-and-buttons/) para mute y solo y un fader con su `level`.
+La [demo del controlador MIDI](/pyzed/es/audio/demos/midi-controller/) pone ocho uno al lado del otro.
+</Aside>

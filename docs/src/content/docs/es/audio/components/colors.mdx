@@ -1,0 +1,66 @@
+---
+title: Colores y comportamiento
+description: Personaliza los componentes de audio de Pyzed — paletas de colores, tokens del tema, estilos, tamaños y cómo se mueven los medidores — y crea tus propios visuales con las mismas utilidades.
+sidebar:
+  order: 11
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Un espectro pasando por todas las paletas incluidas](/pyzed/media/audio/ui/palettes.webp)
+
+<Aside type="note" title="En pocas palabras">
+Cada componente de audio puede cambiar sus colores y su aspecto sin tocar su código: elige una
+paleta por nombre, pasa tus propios colores o deja que siga el tema de la app.
+</Aside>
+
+## Colores
+
+Cualquier `color=` acepta un **token del tema** (`"accent"`, `"success"`, `"warning"`, `"error"`...) o
+un color hex (`"#ff9f3d"`). Los tokens siguen al tema: cambia a un tema claro y las perillas lo siguen.
+
+Los medidores y analizadores aceptan `colors=`: un nombre de paleta o una lista de colores, de
+suave a fuerte (o de graves a agudos con `color_by="frequency"`).
+
+| Paleta | Colores |
+| --- | --- |
+| `"fl"` | Verde → amarillo → naranja → rojo, como los medidores de FL Studio. |
+| `"vu"` | Casi todo verde, amarillo cerca de arriba y rojo en lo más alto. |
+| `"neon"` | Cian → violeta → rosa. |
+| `"fire"` | Morado oscuro → rojo → naranja → amarillo → blanco. |
+| `"ice"` | Azul marino → azul → cian claro. |
+| `"magma"`, `"viridis"` | Los mapas de color científicos, ideales para espectrogramas. |
+| `"mono"` | Gris a blanco. |
+| `"scope"` | Los colores de las trazas del osciloscopio. |
+
+Añade las tuyas a `ui.audio.PALETTES` y úsalas por nombre en cualquier parte:
+
+```python
+ui.audio.PALETTES["sunset"] = ["#2d1b69", "#f72585", "#ffbe0b"]
+ui.audio.Spectrum(magnitudes=mags, colors="sunset")
+```
+
+## Comportamiento
+
+| Qué | Dónde |
+| --- | --- |
+| Aspecto | `variant=` en cada componente ([perilla](/pyzed/es/audio/components/knob/), [fader](/pyzed/es/audio/components/fader/), [medidor](/pyzed/es/audio/components/vu-meter/), [espectro](/pyzed/es/audio/components/spectrum/)...). |
+| Cuánto gira un control al arrastrar | `travel=` en las perillas, `length=` en los faders; <kbd>Shift</kbd> siempre es diez veces más fino. |
+| Cómo se traduce un valor al control | `curve="log"`, `step=`, `options=`, `bipolar=True`. |
+| Cómo se mueven los medidores | `hold=` (retención de pico), `falloff=` y `peaks=` (analizadores), la inercia de `variant="analog"`. |
+| Cómo lee un osciloscopio | `trigger=`, `window=`, `persistence=`, `xy=`. |
+
+Todos son `pz.Component`, así que `style=`, `class_=`, las hojas de estilo y `animate=` funcionan
+como en cualquier otro componente (ver [Componentes](/pyzed/es/guides/components/)).
+
+## Crear los tuyos
+
+Las utilidades son públicas: `ui.audio.bands()` (de bins de FFT a bandas logarítmicas),
+`ui.audio.format_value()` (`1.2 kHz`, `-6.0 dB`), `ui.audio.note_name()` y `ui.audio.PALETTES`. Cada
+componente tiene además un método `shapes()` que devuelve su dibujo como formas de `pyzed.draw`,
+así puedes poner una perilla o un medidor dentro de tu propio `pz.canvas`.
+
+<Aside type="tip">
+Los visuales de audio se mueven en cada fotograma. Devuelve `pz.frames(lambda dt: None)` desde
+`subscriptions()` mientras algo suena, y nada cuando se detiene, así la app descansa cuando está inactiva.
+</Aside>

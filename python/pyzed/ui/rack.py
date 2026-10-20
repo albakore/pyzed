@@ -65,6 +65,10 @@ _KNOB = 30
 _KNOB_CELL = (48, 58)
 _JACK = 22
 _JACK_CELL = (36, 40)
+#: Short names for the jack labels that do not fit under a jack.
+_SHORT = {"low-pass": "LPF", "band-pass": "BPF", "high-pass": "HPF", "triangle": "TRI", "unipolar": "UNI",
+          "trigger": "TRIG", "velocity": "VEL", "mod wheel": "MOD", "retrigger": "RETRIG", "resonance": "RES",
+          "inverted": "INV", "sidechain": "SIDE"}
 _RAIL = 12
 _STEP_KNOB = 20
 _STEP_CELL = (27, 34)
@@ -612,7 +616,8 @@ class Rack(Component):
             cursor="crosshair",
         )
         text_color = "#f2f2f2" if output else ("#2b2d31" if light else "#c8ccd2")
-        caption = _core.text(label[:8].upper(), size=7, color=text_color, align_x="center", width=_JACK_CELL[0],
+        label = _SHORT.get(label.lower(), label)[:7]
+        caption = _core.text(label.upper(), size=7, color=text_color, align_x="center", width=_JACK_CELL[0],
                              font="mono")
         return [_core.pin(jack, x=x - _JACK / 2, y=y - _JACK / 2),
                 _core.pin(caption, x=x - _JACK_CELL[0] / 2, y=y + _JACK / 2 + 1)]
@@ -624,7 +629,10 @@ class Rack(Component):
         kind = panel.display_kind
         widget: Any = None
         if kind == "scope" and hasattr(node, "scope"):
-            widget = _audio.Scope(traces=[node.scope(512)], width=w, height=h, window=256, glow=True,
+            trace = node.scope(2048)
+            peak = max((abs(v) for v in trace), default=0.0)
+            gain = min(8.0, 0.8 / peak) if peak > 1e-4 else 1.0  # fills the screen like an auto-ranging scope
+            widget = _audio.Scope(traces=[trace], width=w, height=h, window=1200, glow=True, gain=gain,
                                   key=f"scope-{_node_id(node)}")
         elif kind == "spectrum" and hasattr(node, "spectrum"):
             widget = _audio.Spectrum(magnitudes=node.spectrum(256), width=w, height=h, bands=24,

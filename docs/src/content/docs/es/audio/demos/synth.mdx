@@ -1,0 +1,56 @@
+---
+title: Sintetizador
+description: Un sintetizador tocable con efectos en Python — dos osciladores, un filtro resonante, una envolvente, distorsión, chorus, delay y reverb, con perillas al estilo de FL Studio y un piano.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Un panel de sintetizador: perillas en cuatro secciones, un osciloscopio, un espectro, un fader de volumen y un piano que se está tocando](/pyzed/media/audio/ui/synth.webp)
+
+Un sintetizador completo en unas 200 líneas: [`examples/audio/synth.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/synth.py).
+
+```bash
+python examples/audio/synth.py
+```
+
+Tócalo con el ratón en el piano o con las teclas del ordenador: <kbd>A</kbd> <kbd>W</kbd>
+<kbd>S</kbd> <kbd>E</kbd> <kbd>D</kbd>… son las teclas blancas y negras de una octava, y <kbd>Z</kbd>
+y <kbd>X</kbd> bajan y suben la octava. Los tres botones de arriba cargan presets (Bass, Lead, Pad).
+
+<Aside type="note" title="En pocas palabras">
+El sonido lo genera el motor; este archivo es solo el panel. Cada perilla fija un valor de un
+módulo y las pantallas leen lo que sale.
+</Aside>
+
+## Cómo está hecho
+
+El patch es una cadena de módulos del motor:
+
+```
+MIDI in → 2 osciladores → mezclador → filtro → amplificador → distorsión → chorus → delay → reverb → altavoces
+                                       ↑           ↑
+                                       └ envolvente┘
+```
+
+`midi_in` convierte `engine.note_on()` en un tono y una puerta; la envolvente abre el filtro y el
+amplificador en cada nota. El panel guarda un diccionario de valores y una función, `put`, que
+envía cada uno al módulo que controla:
+
+```python
+def put(self, key, value):
+    self.values[key] = value
+    if key in ("cutoff", "resonance"):
+        self.engine.set(self.vcf, key, value)
+    elif key in ("attack", "decay", "sustain", "release"):
+        self.engine.set(self.env, key, value)
+    ...
+```
+
+La vista está hecha de [perillas](/pyzed/es/audio/components/knob/) agrupadas en secciones, un
+[osciloscopio](/pyzed/es/audio/components/scope/) y un [espectro](/pyzed/es/audio/components/spectrum/)
+que leen `engine.scope()` y `engine.spectrum()`, un [vúmetro](/pyzed/es/audio/components/vu-meter/),
+un [fader](/pyzed/es/audio/components/fader/) para el volumen y un [piano](/pyzed/es/audio/components/piano/)
+cuyos eventos `note_on`/`note_off` van al motor. `pz.frames()` redibuja la ventana en cada
+fotograma para que las pantallas se muevan.

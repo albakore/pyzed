@@ -1,0 +1,35 @@
+---
+title: Visor de webcam
+description: Un visor de webcam en Python — la imagen en vivo, un botón de captura que guarda archivos PNG y los fotogramas por segundo medidos, con OpenCV, ffmpeg o un patrón de prueba.
+sidebar:
+  order: 6
+---
+
+![La imagen en vivo de una cámara con una insignia de fotogramas por segundo](/pyzed/media/audio/ui/webcam.webp)
+
+Una app de cámara en 50 líneas: [`examples/audio/webcam.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/webcam.py).
+
+```bash
+python examples/audio/webcam.py         # la cámara por defecto
+python examples/audio/webcam.py test    # barras de colores en movimiento, sin cámara
+```
+
+**Snapshot** guarda la imagen actual como PNG junto al script y **Pause** la congela.
+
+```python
+from pyzed import camera, ui
+
+cam = camera.Camera(0, width=1280, height=720, mirror=True)
+cam.start()
+
+def view(self):
+    return pz.column([
+        ui.camera.Webcam(camera=cam, width=720, height=405, radius=10),
+        ui.button("Snapshot", lambda: cam.snapshot("photo.png")),
+    ])
+```
+
+La cámara se lee en su propio hilo; cada imagen nueva pide a la ventana que se redibuje, así que la
+app no necesita temporizador. Usa OpenCV si está instalado (`pip install opencv-python`), si no
+el programa `ffmpeg` y si no el patrón de prueba. Mira [Webcam](/pyzed/es/audio/components/webcam/)
+para todas las opciones.

@@ -1,0 +1,82 @@
+---
+title: Cables animados
+description: Cómo funcionan los cables de Pyzed — curvas de Bézier que cuelgan por la gravedad, un muelle que los asienta al conectarlos, puntos de señal que fluyen y cómo dibujarlos tú mismo.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Cables conectándose uno a uno: cada clavija viaja a su conector y el cable cae, se pasa un poco y se asienta mientras los puntos fluyen por él](/pyzed/media/audio/ui/cables.webp)
+
+<Aside type="note" title="En pocas palabras">
+Los cables del rack se comportan como los de verdad: cuelgan, rebotan un poco al conectarlos y
+unos puntitos corren por ellos en la dirección en que viaja la señal.
+</Aside>
+
+## La forma: una curva que cuelga
+
+Un cable entre dos conectores es una **curva de Bézier cúbica**: empieza en un conector, termina
+en el otro y dos puntos de control tiran de ella hacia abajo. Los puntos de control quedan un poco
+hacia dentro de los extremos y más abajo según la **comba**, que crece con la distancia entre los
+conectores:
+
+```
+comba = (18 + 0.3 × distancia) × (1.15 − tension)
+```
+
+así un cable corto queda casi recto y uno largo cuelga, como lo haría por la gravedad. `tension`
+(0..1) los tensa todos a la vez.
+
+```python
+from pyzed.ui import rack
+
+c0, c1 = rack.cable_path((40, 60), (300, 80), tension=0.45)
+shape = draw.path([("M", 40, 60), ("C", *c0, *c1, 300, 80)], stroke="#f5c542", width=5)
+```
+
+## La caída: un muelle amortiguado
+
+Al conectar un cable, su comba no aparece de golpe. Sigue un **muelle amortiguado**:
+
+```
+caída(t) = 1 − e^(−5.5 t) · cos(13 t)
+```
+
+En `t = 0` el cable está recto; cae, se pasa un poco de su comba de reposo (el coseno hace que se
+pase) y se asienta en aproximadamente medio segundo. El rack guarda cuándo se conectó cada cable y
+multiplica su comba por `caída(ahora − conectado)` en cada fotograma. No se simula nada paso a
+paso, así que el movimiento es el mismo con cualquier tasa de fotogramas.
+
+## El aspecto
+
+Cada cable se dibuja en cinco capas, de abajo arriba:
+
+1. Una **sombra** suave, desplazada abajo a la derecha, para que el cable flote sobre los paneles.
+2. Un **contorno** más oscuro.
+3. El **cuerpo** del color del cable (`cable_opacity` deja ver los paneles a través).
+4. Un **brillo** blanco fino por el borde superior, que hace que se vea redondo.
+5. Dos **clavijas**: un aro, un centro más claro y un reflejo.
+
+Los cables nuevos toman el siguiente color de `ui.rack.CABLE_COLORS` (amarillo, rojo, verde, azul,
+morado...), como en VCV Rack. Un cable conserva su color cuando lo levantas y lo mueves.
+
+## El flujo de la señal
+
+Con `flow=True` unos puntos de luz viajan de la salida a la entrada, separados unos 38 px. Su
+posición en la curva es el tiempo multiplicado por una velocidad, dando la vuelta al llegar al
+final, así se mueven con suavidad a cualquier tasa de fotogramas y cada cable muestra hacia dónde
+va su señal.
+
+## Mientras arrastras
+
+Un cable que se arrastra sigue al puntero con una curva más tensa y ligera y se **engancha** al
+conector compatible más cercano a menos de 18 px (las salidas solo llegan a entradas y al revés),
+así ves dónde caerá antes de soltarlo. Una entrada admite un solo cable: soltar sobre una entrada
+conectada reemplaza su cable.
+
+<Aside type="tip">
+El rack necesita redibujarse en cada fotograma para la caída y el flujo: `pz.frames(lambda dt: None)`
+en `subscriptions()`. Pon `flow=False` y no devuelvas ninguna suscripción cuando nada se mueva para
+que la app descanse.
+</Aside>

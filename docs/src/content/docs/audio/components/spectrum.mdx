@@ -25,11 +25,17 @@ class Visualizer(pz.App):
 
 ## From FFT bins to bands
 
-`magnitudes` are decibels (−120 to 0) for evenly spaced frequencies from 0 Hz to half the
-sample rate — exactly what `node.spectrum()` and `engine.spectrum()` return. The analyzer groups
-them into `bands` bands spaced **logarithmically** (each band is a little wider than the one
-before), the way the ear hears: an octave takes the same width at 100 Hz as at 5 kHz. Each band
-shows its loudest bin. `log=False` keeps the bins evenly spaced instead.
+`magnitudes` are decibels (−120 to 0), one per frequency bin — exactly what `node.spectrum()`
+and `engine.spectrum()` return. The analyzer groups them into `bands` bands spaced
+**logarithmically** (each band a little wider than the one before), the way the ear hears: an
+octave takes the same width at 100 Hz as at 5 kHz. Each band shows its loudest bin.
+
+`spacing` says how your bins are spaced:
+
+- `"log"` (the default): already log-spaced from 20 Hz to half the sample rate, like the engine's
+  spectrum. They are only regrouped into `bands`.
+- `"linear"`: evenly spaced from 0 Hz, like the output of a plain FFT (`numpy.fft.rfft`). The
+  analyzer works out which bins belong to each band from `sample_rate`.
 
 `min_db` and `max_db` are the bottom and top of the display.
 
@@ -58,10 +64,11 @@ colors. `color_by="level"` paints each bar from quiet (bottom) to loud (top);
 
 | Property | Default | What it does |
 | --- | --- | --- |
-| `magnitudes` | `()` | dB per FFT bin. |
+| `magnitudes` | `()` | dB per frequency bin. |
 | `width`, `height` | `360`, `140` | Size in pixels. |
 | `variant` | `"bars"` | See the table above. |
-| `bands`, `log` | `48`, `True` | Number of bands and their spacing. |
+| `bands` | `48` | Number of bands. |
+| `spacing` | `"log"` | How `magnitudes` are spaced: `"log"` (the engine) or `"linear"` (a plain FFT). |
 | `min_db`, `max_db` | `-90`, `0` | Range shown. |
 | `colors`, `color_by` | `"fl"`, `"level"` | Palette and what it follows. |
 | `falloff`, `peaks` | `48`, `True` | Fall speed (dB/s) and peak caps. |

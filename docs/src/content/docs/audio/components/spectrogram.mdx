@@ -27,10 +27,10 @@ shape, so even 160 columns × 64 bands stay cheap to draw.
 
 | Property | Default | What it does |
 | --- | --- | --- |
-| `magnitudes` | `()` | dB per FFT bin (like `node.spectrum()`). |
+| `magnitudes` | `()` | dB per frequency bin (like `node.spectrum()`). |
 | `width`, `height` | `360`, `140` | Size in pixels. |
 | `history` | `120` | Columns kept. |
 | `bands` | `48` | Rows (log-spaced bands). |
 | `min_db`, `max_db` | `-90`, `0` | Range of the colors. |
 | `colors`, `levels` | `"magma"`, `24` | Palette and how many color steps. |
-| `sample_rate` | `48000` | For the band edges. |
+| `sample_rate`, `spacing` | `48000`, `"log"` | Like [`Spectrum`](/pyzed/audio/components/spectrum/): how the bins are spaced. |

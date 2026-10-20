@@ -1,0 +1,58 @@
+---
+title: Forma de onda
+description: Dibuja formas de onda de audio en Python — vista de barras de app de música con parte reproducida y por reproducir, envolvente, línea luminosa, cabezal, selecciones y salto de posición.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Tres formas de onda: barras redondeadas con cabezal, una envolvente en espejo con una selección y una línea luminosa en vivo](/pyzed/media/audio/ui/waveform.webp)
+
+<Aside type="note" title="En pocas palabras">
+Una forma de onda es el dibujo de un sonido a lo largo del tiempo: alta donde suena fuerte y plana
+donde suena bajo. Los reproductores de música la usan para mostrar dónde estás en una canción y
+dejarte hacer clic para saltar.
+</Aside>
+
+```python
+left, right = engine.render(5.0)          # cinco segundos renderizados sin tarjeta de sonido
+ui.audio.Waveform(samples=left, variant="bars", playhead=self.position,
+                  on_seek=lambda e: self.seek(e.value))
+```
+
+## Muestras
+
+`samples` son números de −1 a 1: un archivo entero o el último búfer de una señal en vivo
+(`node.scope(1024)`). Una lista larga se reduce a un par mínimo/máximo por columna de píxeles, así
+que un minuto de audio se dibuja tan rápido como un búfer corto. `gain` la amplía cuando el sonido
+es suave.
+
+## Estilos
+
+| `variant` | Se parece a |
+| --- | --- |
+| `"mirror"` | La envolvente, simétrica alrededor de la línea central (por defecto). |
+| `"filled"` | La forma real, rellena entre sus puntos más bajos y más altos. |
+| `"line"` | Una línea por cada muestra; `glow=True` añade un halo suave. Ideal para búferes cortos. |
+| `"bars"` | Barras redondeadas como una app de música: la parte reproducida en `color` y el resto atenuado. |
+| `"dots"` | Un punto por muestra. |
+
+## Cabezal, selección y salto
+
+- `playhead` (0..1) dibuja la posición de reproducción (con `"bars"` separa lo reproducido de lo pendiente).
+- `selection=(0.2, 0.4)` resalta un rango: un bucle, una región para cortar.
+- Con `on_seek`, hacer clic o arrastrar sobre ella informa la posición (0..1) en `event.value`.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `samples` | `()` | Valores de −1 a 1. |
+| `width`, `height` | `360`, `96` | Tamaño en píxeles. |
+| `variant` | `"mirror"` | Ver la tabla de arriba. |
+| `color`, `background` | `"accent"`, `"#0f1012"` | Colores. |
+| `gain`, `thickness`, `glow` | `1`, `1.5`, `False` | Escala, grosor de línea y halo. |
+| `grid` | `True` | Líneas verticales tenues y una línea central. |
+| `playhead`, `selection` | `None` | Posición (0..1) y rango `(inicio, fin)`. |
+| `bar` | `3` | Ancho de una barra con `variant="bars"`. |
+
+Evento: `on_seek` (0..1).
