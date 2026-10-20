@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -213,7 +214,7 @@ class ProjectController:
 
     def clone_target(self) -> Optional[Path]:
         """The folder ``clone`` creates: the repository's name under ``clone_folder``."""
-        name = self.clone_url.strip().rstrip("/").rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+        name = re.split(r"[/\\]", self.clone_url.strip().rstrip("/\\"))[-1].rsplit(":", 1)[-1]
         name = name[:-4] if name.endswith(".git") else name
         return Path(self.clone_folder.strip() or ".").expanduser() / name if name else None
 
