@@ -2,7 +2,7 @@
 title: "Disclosure"
 description: "One collapsible section with an arrow. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 25
+  order: 26
   label: "Disclosure"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A section with a little arrow that shows or hides extra details.
+:::
 
 A header with an arrow that shows or hides `content`. You own the open state: change it in `on_toggle`.
 
@@ -51,6 +57,40 @@ class Form(pz.App):
         return ui.disclosure("Advanced options", self.advanced_options(), open=self.advanced,
                              on_toggle=lambda: setattr(self, "advanced", not self.advanced))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### State
+
+<VariantGrid>
+<Variant name="disclosure-v1-1" caption={"open=False"} alt={"Disclosure: open=False"} code="Code" mono>
+
+```python
+pz.container(ui.disclosure("Advanced options", ui.muted("…"), open=False, on_toggle=on_toggle), width=300)
+```
+
+</Variant>
+<Variant name="disclosure-v1-2" caption={"open=True"} alt={"Disclosure: open=True"} code="Code" mono>
+
+```python
+pz.container(ui.disclosure("Advanced options", ui.muted("Shown while open."), open=True,
+                           on_toggle=on_toggle), width=300)
+```
+
+</Variant>
+<Variant name="disclosure-v1-3" caption={"end="} alt={"Disclosure: end="} code="Code" mono>
+
+```python
+pz.container(ui.disclosure("Environment", ui.muted("…"), open=False, on_toggle=on_toggle,
+                           end=ui.badge("3")), width=300)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

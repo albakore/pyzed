@@ -2,7 +2,7 @@
 title: "Responsive"
 description: "Builds its content from the space actually available. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 62
+  order: 64
   label: "Responsive"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Changes the layout depending on how much room there is, like a phone versus a monitor.
+:::
 
 Calls `function(width, height)` with the space it really gets and shows what it returns, so the layout can adapt: hide a sidebar when the window is narrow, change the number of columns…
 
@@ -50,6 +56,37 @@ pz.container(pz.responsive(lambda w, h: pz.center(pz.column([
     pz.column([box("1"), box("2")], spacing=8),
 ], spacing=10, align="center"))), width=480, height=150)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Available width
+
+The same code, given two widths: the layout changes by itself.
+
+<VariantGrid>
+<Variant name="responsive-v1-1" caption={"width=200"} alt={"Responsive: width=200"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.responsive(lambda w, h: pz.row([box("1"), box("2"), box("3")], spacing=8)
+             if w > 300 else pz.column([box("1"), box("2")], spacing=8)), width=200, height=110)
+```
+
+</Variant>
+<Variant name="responsive-v1-2" caption={"width=400"} alt={"Responsive: width=400"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.responsive(lambda w, h: pz.row([box("1"), box("2"), box("3")], spacing=8)
+             if w > 300 else pz.column([box("1"), box("2")], spacing=8)), width=400, height=60)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Segmentado"
 description: "Un grupo de botones de texto excluyentes. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 83
+  order: 85
   label: "Segmentado"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una fila de botones unidos en la que hay exactamente uno elegido, como Día / Semana / Mes en un calendario.
+:::
 
 Una fila de botones unidos en la que uno está seleccionado. `on_select` recibe la opción elegida.
 
@@ -49,6 +55,57 @@ class Calendar(pz.App):
     def view(self):
         return ui.segmented(["Day", "Week", "Month"], self.mode, lambda m: setattr(self, "mode", m))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="segmented-v1-1" caption={"Dos opciones"} alt={"Segmentado: Dos opciones"} code="Código">
+
+```python
+ui.segmented(["Code", "Preview"], "Code", on_select)
+```
+
+</Variant>
+<Variant name="segmented-v1-2" caption={"Tres opciones"} alt={"Segmentado: Tres opciones"} code="Código">
+
+```python
+ui.segmented(["Day", "Week", "Month"], "Week", on_select)
+```
+
+</Variant>
+<Variant name="segmented-v1-3" caption={"Cinco opciones"} alt={"Segmentado: Cinco opciones"} code="Código">
+
+```python
+ui.segmented(["XS", "S", "M", "L", "XL"], "M", on_select)
+```
+
+</Variant>
+</VariantGrid>
+
+### Selección
+
+<VariantGrid>
+<Variant name="segmented-v2-1" caption={"Primera"} alt={"Segmentado: Primera"} code="Código">
+
+```python
+ui.segmented(["Editor", "Terminal", "Both"], "Editor", on_select)
+```
+
+</Variant>
+<Variant name="segmented-v2-2" caption={"Última"} alt={"Segmentado: Última"} code="Código">
+
+```python
+ui.segmented(["Editor", "Terminal", "Both"], "Both", on_select)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

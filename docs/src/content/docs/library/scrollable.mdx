@@ -2,7 +2,7 @@
 title: "Scrollable"
 description: "Scrolls content that doesn't fit. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 65
+  order: 67
   label: "Scrollable"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Lets you scroll content that doesn't fit, with a scroll bar.
+:::
 
 Makes its content scrollable vertically, horizontally or `"both"`. Give it an `id` to scroll from code (`pz.Command.scroll_to`), `anchor_bottom=True` to stick to the end (chats, logs), and style the rail and scroller with the theme or your own colors.
 
@@ -46,6 +52,34 @@ pz.container(pz.scrollable(
     height=220,
 ), width=300)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Direction
+
+<VariantGrid>
+<Variant name="scrollable-v1-1" caption={"Vertical"} alt={"Scrollable: Vertical"} code="Code">
+
+```python
+pz.container(pz.scrollable(pz.column([ui.list_item(f"Item {i}", icon="file", inset=True)
+                                       for i in range(1, 30)]), height=130), width=240)
+```
+
+</Variant>
+<Variant name="scrollable-v1-2" caption={"direction=\"horizontal\""} alt={"Scrollable: direction=\"horizontal\""} code="Code" mono>
+
+```python
+pz.container(pz.scrollable(pz.container(pz.row([ui.chip(f"tag {i}") for i in range(1, 25)], spacing=6),
+                                        padding=(0, 0, 14, 0)),
+                           direction="horizontal"), width=300)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

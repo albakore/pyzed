@@ -2,7 +2,7 @@
 title: "Settings group"
 description: "A titled block of field rows, for settings screens. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 69
+  order: 71
   label: "Settings group"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A titled block of settings, like a section of a preferences window.
+:::
 
 A titled block of `ui.field` rows separated by lines, with an optional description, like a settings screen.
 
@@ -48,6 +54,36 @@ pz.container(ui.settings_group("Editor", [
     ui.field("Theme", ui.select(["One Dark", "One Light"], "One Dark", on_select, width=150)),
 ], description="Editor preferences."), width=460)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="settings-group-v1-1" caption={"Without description"} alt={"Settings group: Without description"} code="Code">
+
+```python
+pz.container(ui.settings_group("Files", [
+    ui.field("Autosave", ui.switch(True, on_toggle)),
+    ui.field("Trim whitespace", ui.checkbox(False, on_toggle)),
+]), width=380)
+```
+
+</Variant>
+<Variant name="settings-group-v1-2" caption={"description="} alt={"Settings group: description="} code="Code" mono>
+
+```python
+pz.container(ui.settings_group("Git", [
+    ui.field("Inline blame", ui.switch(False, on_toggle)),
+], description="Shown in the editor gutter."), width=380)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

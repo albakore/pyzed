@@ -2,7 +2,7 @@
 title: "Selector de color"
 description: "Elige un color, un degradado o un relleno con máscara; las muestras los enseñan. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 85
+  order: 87
   label: "Selector de color"
   badge:
     text: "Nuevo"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una paleta para elegir un color, su transparencia o una mezcla de colores.
+:::
 
 `ui.ColorPicker` es un componente que elige un color con alfa, un degradado lineal (paradas que añades, arrastras y quitas, más un ángulo) o un relleno con máscara de opacidad. `on_change` recibe un evento cuyo `value` es una cadena `"#rrggbb[aa]"`, un `pz.Gradient` o un `pz.Paint`, todos válidos como fondo. `ui.color_swatch` muestra cualquiera de ellos sobre un damero.
 
@@ -38,6 +44,10 @@ pz.row([
 </TabItem>
 </Tabs>
 
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
+
 ## Cuándo usarlo
 
 - Para editores de temas, apps de dibujo y propiedades de estilo.
@@ -59,6 +69,75 @@ class Styles(pz.App):
             pz.container(width=120, height=120, bg=self.fill, radius=8),
         ], spacing=16)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="color-picker-v1-1" caption={"Todo"} alt={"Selector de color: Todo"} code="Código">
+
+```python
+ui.ColorPicker(value="#3b82f6cc", on_change=on_change)
+```
+
+</Variant>
+<Variant name="color-picker-v1-2" caption={"alpha=False, gradients=False, masks=False"} alt={"Selector de color: alpha=False, gradients=False, masks=False"} code="Código" mono>
+
+```python
+ui.ColorPicker(value="#a1c181", alpha=False, gradients=False, masks=False,
+               on_change=on_change)
+```
+
+</Variant>
+<Variant name="color-picker-v1-3" caption={"swatches=[...]"} alt={"Selector de color: swatches=[...]"} code="Código" mono>
+
+```python
+ui.ColorPicker(value="#e5c07b", gradients=False, masks=False,
+               swatches=["#e06c75", "#e5c07b", "#98c379", "#61afef", "#c678dd"], on_change=on_change)
+```
+
+</Variant>
+</VariantGrid>
+
+### Muestras
+
+Una muestra dibuja cualquier color, degradado o relleno sobre un damero, para que se vea la transparencia.
+
+<VariantGrid>
+<Variant name="color-picker-v2-1" caption={"Color"} alt={"Selector de color: Color"} code="Código">
+
+```python
+ui.color_swatch("#3b82f6", size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-2" caption={"Con alfa"} alt={"Selector de color: Con alfa"} code="Código">
+
+```python
+ui.color_swatch("#a1c181aa", size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-3" caption={"pz.Gradient"} alt={"Selector de color: pz.Gradient"} code="Código" mono>
+
+```python
+ui.color_swatch(pz.Gradient(["#f97316", "#7c3aed"], angle=90), size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-4" caption={"ui.checkerboard"} alt={"Selector de color: ui.checkerboard"} code="Código" mono>
+
+```python
+ui.checkerboard(96, 48, size=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

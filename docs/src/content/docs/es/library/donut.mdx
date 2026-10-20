@@ -2,7 +2,7 @@
 title: "Dona"
 description: "Un gráfico de dona con una etiqueta en el centro. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 41
+  order: 43
   label: "Dona"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un anillo dividido en porciones de colores que muestra las partes de un todo.
+:::
 
 Un gráfico de dona con `values` y una `label` en el centro. `colors` reemplaza la paleta del tema.
 
@@ -46,6 +52,52 @@ pz.row([
     ui.donut([45, 35, 20], colors=["#e5c07b", "#c678dd", "#56b6c2"], size=120, thickness=20, label="3"),
 ], spacing=32, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="donut-v1-1" caption={"Por defecto"} alt={"Dona: Por defecto"} code="Código">
+
+```python
+ui.donut([60, 25, 15], label="60%")
+```
+
+</Variant>
+<Variant name="donut-v1-2" caption={"colors="} alt={"Dona: colors="} code="Código" mono>
+
+```python
+ui.donut([45, 35, 20], colors=["#e5c07b", "#c678dd", "#56b6c2"], label="3")
+```
+
+</Variant>
+<Variant name="donut-v1-3" caption={"thickness=6"} alt={"Dona: thickness=6"} code="Código" mono>
+
+```python
+ui.donut([70, 30], thickness=6, label="70%")
+```
+
+</Variant>
+<Variant name="donut-v1-4" caption={"size=140, thickness=24"} alt={"Dona: size=140, thickness=24"} code="Código" mono>
+
+```python
+ui.donut([40, 30, 20, 10], size=140, thickness=24)
+```
+
+</Variant>
+<Variant name="donut-v1-5" caption={"size=110, label=\"82%\""} alt={"Dona: size=110, label=\"82%\""} code="Código" mono>
+
+```python
+ui.donut([82, 18], size=110, label="82%")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

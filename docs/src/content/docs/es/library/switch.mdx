@@ -2,7 +2,7 @@
 title: "Interruptor"
 description: "Un interruptor para ajustes que se aplican al momento. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 62
+  order: 64
   label: "Interruptor"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un interruptor de encendido y apagado, como el de la luz, para ajustes que cambian al momento.
+:::
 
 Un interruptor de encendido y apagado con el color de acento del tema. `on_toggle` recibe el nuevo `bool`.
 
@@ -50,6 +56,59 @@ class Settings(pz.App):
         return ui.switch(self.autosave, lambda on: setattr(self, "autosave", on), label="Autosave")
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Estado
+
+<VariantGrid>
+<Variant name="switch-v1-1" caption={"Activado"} alt={"Interruptor: Activado"} code="Código">
+
+```python
+ui.switch(True, on_toggle, label="Autosave")
+```
+
+</Variant>
+<Variant name="switch-v1-2" caption={"Desactivado"} alt={"Interruptor: Desactivado"} code="Código">
+
+```python
+ui.switch(False, on_toggle, label="Autosave")
+```
+
+</Variant>
+<Variant name="switch-v1-3" caption={"Solo lectura (sin on_toggle)"} alt={"Interruptor: Solo lectura (sin on_toggle)"} code="Código">
+
+```python
+ui.switch(True, label="Sync (managed)")
+```
+
+</Variant>
+<Variant name="switch-v1-4" caption={"Sin etiqueta"} alt={"Interruptor: Sin etiqueta"} code="Código">
+
+```python
+ui.switch(True, on_toggle)
+```
+
+</Variant>
+</VariantGrid>
+
+### Widget base
+
+El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
+
+<VariantGrid>
+<Variant name="switch-v2-1" caption={"pz.toggler"} alt={"Interruptor: pz.toggler"} code="Código" mono>
+
+```python
+pz.toggler(True, "pz.toggler", on_toggle=on_toggle, accent="#a1c181", size=22)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.switch`
@@ -68,6 +127,41 @@ Un interruptor encendido/apagado.
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#switch)
+
+### `pz.toggler`
+
+```python
+toggler(
+    checked,
+    label=None,
+    *,
+    on_toggle=None,
+    size=None,
+    text_size=None,
+    accent=None,
+    bg=None,
+    border_color=None,
+    knob_color=None,
+    color=None,
+)
+```
+
+Un interruptor encendido/apagado.
+
+| Parámetro | Por defecto | Descripción |
+| --- | --- | --- |
+| `checked` | *obligatorio* | Estado actual. |
+| `label` | `None` | Texto de la etiqueta. |
+| `on_toggle` | `None` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
+| `size` | `None` | Alto del interruptor. |
+| `text_size` | `None` | Tamaño del texto. |
+| `accent` | `None` | Color de acento (parte activa). |
+| `bg` | `None` | Color de fondo (`"#rrggbb[aa]"`, `(r, g, b[, a])` o `"transparent"`). |
+| `border_color` | `None` | Color del borde. |
+| `knob_color` | `None` | Color del tirador. |
+| `color` | `None` | Color del texto o del icono. |
+
+[Referencia completa →](/pyzed/es/reference/widgets/#toggler)
 
 ## Relacionados
 

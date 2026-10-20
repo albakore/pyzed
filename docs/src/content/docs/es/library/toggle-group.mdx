@@ -2,7 +2,7 @@
 title: "Grupo de alternancia"
 description: "Un control segmentado solo con iconos. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 56
+  order: 58
   label: "Grupo de alternancia"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una fila de botones con iconos en la que solo uno puede estar activo, como elegir alinear a la izquierda, al centro o a la derecha.
+:::
 
 Una fila de botones de icono en la que hay exactamente uno seleccionado, como la alineación del texto en un editor. `options` son pares `(valor, icono)` y `on_select` recibe el valor elegido.
 
@@ -53,6 +59,69 @@ class Toolbar(pz.App):
             self.align, lambda value: setattr(self, "align", value),
         )
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="toggle-group-v1-1" caption={"Dos opciones"} alt={"Grupo de alternancia: Dos opciones"} code="Código">
+
+```python
+ui.toggle_group([("list", "list"), ("grid", "layout-grid")], "list", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v1-2" caption={"Tres opciones"} alt={"Grupo de alternancia: Tres opciones"} code="Código">
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "center", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v1-3" caption={"Cuatro opciones"} alt={"Grupo de alternancia: Cuatro opciones"} code="Código">
+
+```python
+ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline"), ("s", "strikethrough")],
+                "b", on_select)
+```
+
+</Variant>
+</VariantGrid>
+
+### Selección
+
+<VariantGrid>
+<Variant name="toggle-group-v2-1" caption={"selected=\"left\""} alt={"Grupo de alternancia: selected=\"left\""} code="Código" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "left", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v2-2" caption={"selected=\"right\""} alt={"Grupo de alternancia: selected=\"right\""} code="Código" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "right", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v2-3" caption={"selected=None"} alt={"Grupo de alternancia: selected=None"} code="Código" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                None, on_select)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

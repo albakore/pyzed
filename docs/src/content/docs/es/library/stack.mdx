@@ -2,7 +2,7 @@
 title: "Pila"
 description: "Superpone los hijos; `pin` coloca uno en x, y. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 75
+  order: 77
   label: "Pila"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Pone las cosas unas encima de otras, como hojas de papel.
+:::
 
 Superpone sus hijos, el último encima de todos: la base de capas, modales y notificaciones. `pz.pin(child, x=, y=)` coloca un hijo en una posición dentro de la pila.
 
@@ -54,6 +60,43 @@ pz.stack([
     pz.pin(pz.container(ui.label("on top", color="#ffffff"), padding=10, bg=t.accent, radius=6), x=150, y=110),
 ], width=320, height=180)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="stack-v1-1" caption={"Capas"} alt={"Pila: Capas"} code="Código">
+
+```python
+t = pz.theme.current()
+pz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),
+          pz.container(ui.label("on top"), center=True, width=180, height=100)])
+```
+
+</Variant>
+<Variant name="stack-v1-2" caption={"pz.pin(x=, y=)"} alt={"Pila: pz.pin(x=, y=)"} code="Código" mono>
+
+```python
+t = pz.theme.current()
+pz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),
+          pz.pin(ui.count_badge(3), x=150, y=8)], width=180, height=100)
+```
+
+</Variant>
+<Variant name="stack-v1-3" caption={"Insignia sobre un icono"} alt={"Pila: Insignia sobre un icono"} code="Código">
+
+```python
+pz.stack([pz.container(ui.icon_button("bell", on_press, size="lg"), padding=6),
+          pz.pin(ui.indicator("error", size=8), x=24, y=6)], width=40, height=40)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Several sections stacked up, each one opens or closes when you click its title.
+:::
 
 Stacked collapsible sections separated by dividers. Sections are `(key, title, content)` tuples or `ui.AccordionSection` objects (with `icon` and a header `end` widget). You own the open state: `open` is a set of keys, a `{key: bool}` dict or `True`, and `on_toggle` receives the key.
 
@@ -55,6 +61,63 @@ class Settings(pz.App):
             open=self.open, on_toggle=lambda key: self.open.symmetric_difference_update({key}),
         )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Open sections
+
+<VariantGrid>
+<Variant name="accordion-v1-1" caption={"All closed"} alt={"Accordion: All closed"} code="Code">
+
+```python
+pz.container(ui.accordion([("a", "Editor", ui.muted("…")), ("b", "Files", ui.muted("…")),
+                           ("c", "Git", ui.muted("…"))], open=set(), on_toggle=on_toggle), width=320)
+```
+
+</Variant>
+<Variant name="accordion-v1-2" caption={"open={\"a\"}"} alt={"Accordion: open={\"a\"}"} code="Code" mono>
+
+```python
+pz.container(ui.accordion([("a", "Editor", ui.muted("Font, wrapping, minimap.")),
+                           ("b", "Files", ui.muted("…"))], open={"a"}, on_toggle=on_toggle), width=320)
+```
+
+</Variant>
+<Variant name="accordion-v1-3" caption={"open=True"} alt={"Accordion: open=True"} code="Code" mono>
+
+```python
+pz.container(ui.accordion([("a", "Editor", ui.muted("Font, wrapping.")),
+                           ("b", "Files", ui.muted("Autosave."))], open=True, on_toggle=on_toggle), width=320)
+```
+
+</Variant>
+</VariantGrid>
+
+### Content
+
+<VariantGrid>
+<Variant name="accordion-v2-1" caption={"icons="} alt={"Accordion: icons="} code="Code" mono>
+
+```python
+pz.container(ui.accordion([("e", "Editor", ui.muted("…")), ("g", "Git", ui.muted("…"))], open=set(),
+                          icons={"e": "file-code", "g": "git-branch"}, on_toggle=on_toggle), width=320)
+```
+
+</Variant>
+<Variant name="accordion-v2-2" caption={"AccordionSection(end=)"} alt={"Accordion: AccordionSection(end=)"} code="Code" mono>
+
+```python
+pz.container(ui.accordion([ui.AccordionSection("p", "Problems", ui.muted("…"), icon="circle-x",
+                                              end=ui.count_badge(3, tint="error"))],
+                          open=set(), on_toggle=on_toggle), width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Picker"
 description: "A searchable list on a floating surface, with fuzzy matching. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 54
+  order: 56
   label: "Picker"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A floating search box with a list of results that narrows as you type.
+:::
 
 A search box over a list of results on a floating surface: the basis of the command palette and the file finder. `ui.fuzzy_filter(query, items, key=)` ranks items (best match first) and returns `[(item, positions), ...]`; pass those pairs to `picker` to highlight the matches. `ui.fuzzy_match` scores one string and `ui.highlighted` draws one with its matches.
 
@@ -53,6 +59,56 @@ class Finder(pz.App):
         return ui.picker(self.query, lambda q: setattr(self, "query", q), items,
                          selected=self.selected, placeholder="Search files…")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Results
+
+<VariantGrid>
+<Variant name="picker-v1-1" caption={"With matches"} alt={"Picker: With matches"} code="Code">
+
+```python
+files = ["src/app.rs", "src/render.rs", "app.py"]
+items = ui.fuzzy_filter("app", [ui.PaletteItem(f, on_open, icon="file-code") for f in files],
+                        key=lambda item: item.label)
+ui.picker("app", on_query, items, width=380)
+```
+
+</Variant>
+<Variant name="picker-v1-2" caption={"empty_text="} alt={"Picker: empty_text="} code="Code" mono>
+
+```python
+ui.picker("zzz", on_query, [], empty_text="No files match", width=380)
+```
+
+</Variant>
+<Variant name="picker-v1-3" caption={"PaletteItem(detail=)"} alt={"Picker: PaletteItem(detail=)"} code="Code" mono>
+
+```python
+ui.picker("", on_query, [(ui.PaletteItem("main", on_open, icon="git-branch", detail="2 hours ago"), []),
+                        (ui.PaletteItem("docs", on_open, icon="git-branch", detail="yesterday"), [])], width=380)
+```
+
+</Variant>
+</VariantGrid>
+
+### Highlight
+
+<VariantGrid>
+<Variant name="picker-v2-1" caption={"ui.highlighted"} alt={"Picker: ui.highlighted"} code="Code" mono>
+
+```python
+t = pz.theme.current()
+score, positions = ui.fuzzy_match("tgsw", "editor: toggle soft wrap")
+ui.highlighted("editor: toggle soft wrap", positions, color=t.text, match_color=t.accent, size=15)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 

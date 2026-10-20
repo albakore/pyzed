@@ -2,7 +2,7 @@
 title: "Columna"
 description: "Apila los hijos en vertical. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 30
+  order: 31
   label: "Columna"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Pone las cosas una debajo de la otra, de arriba abajo.
+:::
 
 Apila sus hijos en vertical, con `spacing`, `padding`, `align` en el eje cruzado y un `max_width` opcional. Como `row`, las listas anidadas se aplanan y se ignoran `None`/`False`.
 
@@ -50,6 +56,71 @@ pz.row([
     pz.column([box("top"), pz.vspace(), box("bottom")], spacing=8, height=170),
 ], spacing=32)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Alineación cruzada
+
+<VariantGrid>
+<Variant name="column-v1-1" caption={"align=\"start\""} alt={"Columna: align=\"start\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="start")
+```
+
+</Variant>
+<Variant name="column-v1-2" caption={"align=\"center\""} alt={"Columna: align=\"center\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="center")
+```
+
+</Variant>
+<Variant name="column-v1-3" caption={"align=\"end\""} alt={"Columna: align=\"end\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="end")
+```
+
+</Variant>
+</VariantGrid>
+
+### Opciones
+
+<VariantGrid>
+<Variant name="column-v2-1" caption={"spacing=16"} alt={"Columna: spacing=16"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("1"), box("2")], spacing=16)
+```
+
+</Variant>
+<Variant name="column-v2-2" caption={"pz.vspace()"} alt={"Columna: pz.vspace()"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("top"), pz.vspace(), box("bottom")], height=170)
+```
+
+</Variant>
+<Variant name="column-v2-3" caption={"padding=16"} alt={"Columna: padding=16"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.column([box("1"), box("2")], spacing=8, padding=16),
+             border_color=pz.theme.current().border, border_width=1, radius=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

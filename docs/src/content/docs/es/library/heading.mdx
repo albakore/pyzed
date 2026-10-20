@@ -2,7 +2,7 @@
 title: "Encabezado"
 description: "Títulos en seminegrita en tres niveles. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 45
+  order: 47
   label: "Encabezado"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un título: texto más grande y en negrita que nombra una página o una sección.
+:::
 
 Un título en seminegrita. `level=1` (por defecto), `2` o `3` eligen el tamaño, así los títulos son coherentes en todas las pantallas.
 
@@ -51,6 +57,64 @@ pz.column([
     ui.muted("Body text below the headings."),
 ], spacing=6)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Nivel
+
+<VariantGrid>
+<Variant name="heading-v1-1" caption={"level=1"} alt={"Encabezado: level=1"} code="Código" mono>
+
+```python
+ui.heading("Project settings")
+```
+
+</Variant>
+<Variant name="heading-v1-2" caption={"level=2"} alt={"Encabezado: level=2"} code="Código" mono>
+
+```python
+ui.heading("Project settings", level=2)
+```
+
+</Variant>
+<Variant name="heading-v1-3" caption={"level=3"} alt={"Encabezado: level=3"} code="Código" mono>
+
+```python
+ui.heading("Project settings", level=3)
+```
+
+</Variant>
+<Variant name="heading-v1-4" caption={"level=4"} alt={"Encabezado: level=4"} code="Código" mono>
+
+```python
+ui.heading("Project settings", level=4)
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="heading-v2-1" caption={"color=\"accent\""} alt={"Encabezado: color=\"accent\""} code="Código" mono>
+
+```python
+ui.heading("Welcome back", level=2, color="accent")
+```
+
+</Variant>
+<Variant name="heading-v2-2" caption={"Con una línea discreta"} alt={"Encabezado: Con una línea discreta"} code="Código">
+
+```python
+pz.column([ui.heading("Billing", level=2), ui.muted("Invoices and payment methods.")], spacing=4)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

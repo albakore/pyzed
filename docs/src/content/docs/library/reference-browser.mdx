@@ -2,7 +2,7 @@
 title: "Reference browser"
 description: "Built-in, searchable docs like Godot's: a class list next to the open page. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 60
+  order: 62
   label: "Reference browser"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A help window with the documentation inside the app, searchable and offline.
+:::
 
 The built-in reference: a searchable class list (the library, your components and any section you `reference.register`) next to the page that is open, with back and forward, internal links and an Open online button. Keep a `pyzed.reference.Browser` in your state; the browser changes it. Links that leave the reference go to `on_open_url`. See [Built-in reference](/pyzed/editor/reference/).
 
@@ -46,6 +52,35 @@ from pyzed import reference
 help = reference.Browser("pyzed.ui.button")
 ui.reference_browser(help, on_open_url=open_in_browser, sidebar_width=230)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Pages
+
+<VariantGrid>
+<Variant name="reference-browser-v1-1" caption={"A component"} alt={"Reference browser: A component"} code="Code">
+
+```python
+from pyzed import reference
+
+ui.reference_browser(reference.Browser("pyzed.ui.badge"), sidebar_width=200)
+```
+
+</Variant>
+<Variant name="reference-browser-v1-2" caption={"A layout widget"} alt={"Reference browser: A layout widget"} code="Code">
+
+```python
+from pyzed import reference
+
+ui.reference_browser(reference.Browser("pyzed.row"), sidebar_width=200)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

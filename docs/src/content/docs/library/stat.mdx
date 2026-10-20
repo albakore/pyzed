@@ -2,7 +2,7 @@
 title: "Stat"
 description: "A dashboard number with change and sparkline. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 79
+  order: 81
   label: "Stat"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A big number with its name and whether it went up or down, like on a dashboard.
+:::
 
 A dashboard tile: a title, a large value, an optional change (`delta`, shown as `+4.2%` in green or red) and an optional `trend` drawn as a sparkline.
 
@@ -48,6 +54,45 @@ pz.row([
     ui.stat("Build time", "1m 12s", width=200),
 ], spacing=12)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="stat-v1-1" caption={"Value only"} alt={"Stat: Value only"} code="Code">
+
+```python
+ui.stat("Build time", "1m 12s", width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-2" caption={"delta=12.5"} alt={"Stat: delta=12.5"} code="Code" mono>
+
+```python
+ui.stat("Users", "1,284", delta=12.5, width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-3" caption={"delta=-8.0"} alt={"Stat: delta=-8.0"} code="Code" mono>
+
+```python
+ui.stat("Errors", "37", delta=-8.0, width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-4" caption={"trend=[...]"} alt={"Stat: trend=[...]"} code="Code" mono>
+
+```python
+ui.stat("Revenue", "$9.4k", delta=4.2, trend=[3, 5, 4, 6, 8, 7, 9], width=190)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

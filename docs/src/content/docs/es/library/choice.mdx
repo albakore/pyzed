@@ -2,7 +2,7 @@
 title: "Elección"
 description: "Un mensaje con tus propios botones. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 44
+  order: 46
   label: "Elección"
   badge:
     text: "Nuevo"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una pregunta con varias respuestas posibles, cada una un botón.
+:::
 
 Un mensaje con tus propios botones: `options` son pares `(etiqueta, on_press)` y el último es el principal.
 
@@ -35,6 +41,10 @@ ui.dialog_layer(main_view(), ui.choice(
 </TabItem>
 </Tabs>
 
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
+
 ## Cuándo usarlo
 
 - Cuando una pregunta tiene más de dos respuestas (Conservar ambos / Reemplazar / Omitir).
@@ -50,6 +60,33 @@ ui.dialog_layer(main_view(), ui.choice(
     on_cancel, title="File exists", width=420,
 ))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="choice-v1-1" caption={"Dos respuestas"} alt={"Elección: Dos respuestas"} code="Código">
+
+```python
+ui.choice("Open the project in…", [("This window", on_here), ("New window", on_new)],
+          on_cancel, width=360)
+```
+
+</Variant>
+<Variant name="choice-v1-2" caption={"Tres respuestas"} alt={"Elección: Tres respuestas"} code="Código">
+
+```python
+ui.choice("notes.py already exists.", [("Keep both", on_keep), ("Skip", on_skip),
+          ("Replace", on_replace)], on_cancel, title="File exists", width=400)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Barra de pestañas"
 description: "Pestañas de editor con iconos, puntos de cambios y botón de cerrar. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 11
+  order: 12
   label: "Barra de pestañas"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Las pestañas de arriba de un editor, una por documento abierto.
+:::
 
 Una fila de pestañas de editor con controles opcionales al principio y al final. `ui.Tab.for_file(path)` crea una pestaña con el nombre del archivo, su icono y la ruta como id. `dirty=True` muestra un punto que se convierte en el botón de cerrar al pasar el ratón, `preview=True` pone el nombre en cursiva y `status` lo tiñe con un color de git. `on_select(id)` y `on_close(id)` reciben el id de la pestaña.
 
@@ -60,6 +66,78 @@ class Editor(pz.App):
         return ui.tab_bar([ui.Tab.for_file(p) for p in self.open], self.active,
                           on_select=lambda p: setattr(self, "active", p), on_close=self.close)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Pestañas
+
+<VariantGrid>
+<Variant name="tab-bar-v1-1" caption={"Activa e inactiva"} alt={"Barra de pestañas: Activa e inactiva"} code="Código">
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("app.rs")], "main.rs",
+                        on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-2" caption={"dirty=True"} alt={"Barra de pestañas: dirty=True"} code="Código" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("notes.md", dirty=True)], "main.rs",
+                        on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-3" caption={"preview=True"} alt={"Barra de pestañas: preview=True"} code="Código" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("README.md", preview=True)], "README.md", on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-4" caption={"status=\"modified\""} alt={"Barra de pestañas: status=\"modified\""} code="Código" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("app.py", status="modified"),
+                         ui.Tab.for_file("new.py", status="created")], "app.py", on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-5" caption={"Tab(icon=)"} alt={"Barra de pestañas: Tab(icon=)"} code="Código" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab("home", "Home", icon="house"), ui.Tab("logs", "Logs", icon="scroll-text")],
+                        "home", on_select=on_select), width=400)
+```
+
+</Variant>
+</VariantGrid>
+
+### Controles
+
+<VariantGrid>
+<Variant name="tab-bar-v2-1" caption={"start=, end="} alt={"Barra de pestañas: start=, end="} code="Código" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs")], "main.rs", on_close=on_close,
+                        start=[ui.icon_button("arrow-left", on_back, size="sm")],
+                        end=[ui.icon_button("plus", on_new, size="sm")]), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v2-2" caption={"ui.tab(dimmed=True)"} alt={"Barra de pestañas: ui.tab(dimmed=True)"} code="Código" mono>
+
+```python
+pz.row([ui.tab(ui.Tab.for_file("main.rs"), active=True),
+        ui.tab(ui.Tab.for_file("app.rs"), active=False, dimmed=True)])
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

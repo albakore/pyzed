@@ -2,7 +2,7 @@
 title: "Contador"
 description: "Un contador redondo que muestra 99+ por encima del máximo. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 33
+  order: 34
   label: "Contador"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un numerito redondo, como el número de mensajes sin leer en el icono de una app.
+:::
 
 Un contador redondo para notificaciones o problemas. Por encima de `max` muestra `99+`.
 
@@ -51,6 +57,85 @@ pz.row([
     pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="center"),
 ], spacing=16, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Cuenta
+
+Por encima de `max` muestra `max+`.
+
+<VariantGrid>
+<Variant name="count-badge-v1-1" caption={"3"} alt={"Contador: 3"} code="Código" mono>
+
+```python
+ui.count_badge(3)
+```
+
+</Variant>
+<Variant name="count-badge-v1-2" caption={"42"} alt={"Contador: 42"} code="Código" mono>
+
+```python
+ui.count_badge(42)
+```
+
+</Variant>
+<Variant name="count-badge-v1-3" caption={"120"} alt={"Contador: 120"} code="Código" mono>
+
+```python
+ui.count_badge(120)
+```
+
+</Variant>
+<Variant name="count-badge-v1-4" caption={"max=9"} alt={"Contador: max=9"} code="Código" mono>
+
+```python
+ui.count_badge(12, max=9)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tinte
+
+<VariantGrid>
+<Variant name="count-badge-v2-1" caption={"tint=\"success\""} alt={"Contador: tint=\"success\""} code="Código" mono>
+
+```python
+ui.count_badge(5, tint="success")
+```
+
+</Variant>
+<Variant name="count-badge-v2-2" caption={"tint=\"warning\""} alt={"Contador: tint=\"warning\""} code="Código" mono>
+
+```python
+ui.count_badge(5, tint="warning")
+```
+
+</Variant>
+<Variant name="count-badge-v2-3" caption={"tint=\"error\""} alt={"Contador: tint=\"error\""} code="Código" mono>
+
+```python
+ui.count_badge(5, tint="error")
+```
+
+</Variant>
+</VariantGrid>
+
+### Junto a un icono
+
+<VariantGrid>
+<Variant name="count-badge-v3-1" caption={"Notificaciones"} alt={"Contador: Notificaciones"} code="Código">
+
+```python
+pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="center")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Botón dividido"
 description: "Una acción principal más una flecha que abre más opciones. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 15
+  order: 16
   label: "Botón dividido"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un botón con dos partes: la grande hace lo habitual y la flechita muestra otras formas de hacerlo.
+:::
 
 Un botón con un chevron separado a la derecha. `on_press` ejecuta la acción principal y `on_menu` suele abrir un `ui.menu` dentro de un `ui.popover` con las alternativas.
 
@@ -52,6 +58,90 @@ class Runner(pz.App):
                         ui.MenuItem("Debug", self.debug, icon="bug")]) if self.menu_open else None
         return ui.popover(button, menu, y=32, on_dismiss=lambda: setattr(self, "menu_open", False))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Variante
+
+<VariantGrid>
+<Variant name="split-button-v1-1" caption={"variant=\"filled\""} alt={"Botón dividido: variant=\"filled\""} code="Código" mono>
+
+```python
+ui.split_button("Run", on_run, on_menu, icon="play")
+```
+
+</Variant>
+<Variant name="split-button-v1-2" caption={"variant=\"ghost\""} alt={"Botón dividido: variant=\"ghost\""} code="Código" mono>
+
+```python
+ui.split_button("Run", on_run, on_menu, icon="play", variant="ghost")
+```
+
+</Variant>
+<Variant name="split-button-v1-3" caption={"variant=\"outline\""} alt={"Botón dividido: variant=\"outline\""} code="Código" mono>
+
+```python
+ui.split_button("Run", on_run, on_menu, icon="play", variant="outline")
+```
+
+</Variant>
+<Variant name="split-button-v1-4" caption={"variant=\"solid\""} alt={"Botón dividido: variant=\"solid\""} code="Código" mono>
+
+```python
+ui.split_button("Deploy", on_deploy, on_menu, icon="rocket", variant="solid")
+```
+
+</Variant>
+</VariantGrid>
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="split-button-v2-1" caption={"size=\"sm\""} alt={"Botón dividido: size=\"sm\""} code="Código" mono>
+
+```python
+ui.split_button("Build", on_build, on_menu, size="sm")
+```
+
+</Variant>
+<Variant name="split-button-v2-2" caption={"size=\"md\""} alt={"Botón dividido: size=\"md\""} code="Código" mono>
+
+```python
+ui.split_button("Build", on_build, on_menu, size="md")
+```
+
+</Variant>
+<Variant name="split-button-v2-3" caption={"size=\"lg\""} alt={"Botón dividido: size=\"lg\""} code="Código" mono>
+
+```python
+ui.split_button("Build", on_build, on_menu, size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+<VariantGrid>
+<Variant name="split-button-v3-1" caption={"Solo texto"} alt={"Botón dividido: Solo texto"} code="Código">
+
+```python
+ui.split_button("Merge", on_merge, on_menu)
+```
+
+</Variant>
+<Variant name="split-button-v3-2" caption={"icon=\"git-merge\""} alt={"Botón dividido: icon=\"git-merge\""} code="Código" mono>
+
+```python
+ui.split_button("Merge", on_merge, on_menu, icon="git-merge")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Button"
 description: "The themed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 9
+  order: 10
   label: "Button"
 ---
 
@@ -11,8 +11,14 @@ sidebar:
 import Media from '../../../components/Media.astro';
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
 
-Displays a themed button. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `radius`…) overrides the theme's.
+:::tip[In plain words]
+A button is something you click to make the app do something: save, send, open, delete.
+:::
+
+Displays a themed button. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) overrides the theme's.
 
 `ui.button` · Category: [Actions](/pyzed/library/#actions) · [Full reference →](/pyzed/reference/ui/#button)
 
@@ -55,82 +61,269 @@ class Editor(pz.App):
         return ui.button("Save", self.save, icon="save", keys="ctrl-s")
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Variant
+
+`filled` is the default; use `solid` for the one main action of a screen.
+
+<VariantGrid>
+<Variant name="button-v1-1" caption={"variant=\"filled\""} alt={"Button: variant=\"filled\""} code="Code" mono>
+
+```python
+ui.button("Filled", on_press)
+```
+
+</Variant>
+<Variant name="button-v1-2" caption={"variant=\"ghost\""} alt={"Button: variant=\"ghost\""} code="Code" mono>
+
+```python
+ui.button("Ghost", on_press, variant="ghost")
+```
+
+</Variant>
+<Variant name="button-v1-3" caption={"variant=\"subtle\""} alt={"Button: variant=\"subtle\""} code="Code" mono>
+
+```python
+ui.button("Subtle", on_press, variant="subtle")
+```
+
+</Variant>
+<Variant name="button-v1-4" caption={"variant=\"outline\""} alt={"Button: variant=\"outline\""} code="Code" mono>
+
+```python
+ui.button("Outline", on_press, variant="outline")
+```
+
+</Variant>
+<Variant name="button-v1-5" caption={"variant=\"solid\""} alt={"Button: variant=\"solid\""} code="Code" mono>
+
+```python
+ui.button("Solid", on_press, variant="solid")
+```
+
+</Variant>
+<Variant name="button-v1-6" caption={"variant=\"tinted\""} alt={"Button: variant=\"tinted\""} code="Code" mono>
+
+```python
+ui.button("Tinted", on_press, variant="tinted")
+```
+
+</Variant>
+</VariantGrid>
+
+### Semantic colors
+
+A color name as `variant` gives a tinted button; `tint=` colors a `solid` one.
+
+<VariantGrid>
+<Variant name="button-v2-1" caption={"variant=\"accent\""} alt={"Button: variant=\"accent\""} code="Code" mono>
+
+```python
+ui.button("Upgrade", on_press, variant="accent", icon="sparkles")
+```
+
+</Variant>
+<Variant name="button-v2-2" caption={"variant=\"success\""} alt={"Button: variant=\"success\""} code="Code" mono>
+
+```python
+ui.button("Done", on_press, variant="success", icon="check")
+```
+
+</Variant>
+<Variant name="button-v2-3" caption={"variant=\"warning\""} alt={"Button: variant=\"warning\""} code="Code" mono>
+
+```python
+ui.button("Careful", on_press, variant="warning", icon="triangle-alert")
+```
+
+</Variant>
+<Variant name="button-v2-4" caption={"variant=\"error\""} alt={"Button: variant=\"error\""} code="Code" mono>
+
+```python
+ui.button("Delete", on_press, variant="error", icon="trash-2")
+```
+
+</Variant>
+<Variant name="button-v2-5" caption={"variant=\"info\""} alt={"Button: variant=\"info\""} code="Code" mono>
+
+```python
+ui.button("Details", on_press, variant="info", icon="info")
+```
+
+</Variant>
+<Variant name="button-v2-6" caption={"variant=\"solid\", tint=\"error\""} alt={"Button: variant=\"solid\", tint=\"error\""} code="Code" mono>
+
+```python
+ui.button("Delete forever", on_press, variant="solid", tint="error")
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="button-v3-1" caption={"size=\"xs\""} alt={"Button: size=\"xs\""} code="Code" mono>
+
+```python
+ui.button("Extra small", on_press, size="xs")
+```
+
+</Variant>
+<Variant name="button-v3-2" caption={"size=\"sm\""} alt={"Button: size=\"sm\""} code="Code" mono>
+
+```python
+ui.button("Small", on_press, size="sm")
+```
+
+</Variant>
+<Variant name="button-v3-3" caption={"size=\"md\""} alt={"Button: size=\"md\""} code="Code" mono>
+
+```python
+ui.button("Medium", on_press, size="md")
+```
+
+</Variant>
+<Variant name="button-v3-4" caption={"size=\"lg\""} alt={"Button: size=\"lg\""} code="Code" mono>
+
+```python
+ui.button("Large", on_press, size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
+### Content
+
+<VariantGrid>
+<Variant name="button-v4-1" caption={"icon=\"save\""} alt={"Button: icon=\"save\""} code="Code" mono>
+
+```python
+ui.button("Save", on_press, icon="save")
+```
+
+</Variant>
+<Variant name="button-v4-2" caption={"icon_position=\"end\""} alt={"Button: icon_position=\"end\""} code="Code" mono>
+
+```python
+ui.button("Next", on_press, icon="arrow-right", icon_position="end")
+```
+
+</Variant>
+<Variant name="button-v4-3" caption={"keys=\"ctrl-s\""} alt={"Button: keys=\"ctrl-s\""} code="Code" mono>
+
+```python
+ui.button("Save", on_press, icon="save", keys="ctrl-s")
+```
+
+</Variant>
+<Variant name="button-v4-4" caption={"icon_color=\"success\""} alt={"Button: icon_color=\"success\""} code="Code" mono>
+
+```python
+ui.button("Online", on_press, icon="circle", icon_color="success")
+```
+
+</Variant>
+<Variant name="button-v4-5" caption={"Icon only"} alt={"Button: Icon only"} code="Code">
+
+```python
+ui.button(icon="plus", on_press=on_press)
+```
+
+</Variant>
+</VariantGrid>
+
+### State
+
+A button without `on_press` is drawn disabled, so unfinished actions look unfinished.
+
+<VariantGrid>
+<Variant name="button-v5-1" caption={"selected=True"} alt={"Button: selected=True"} code="Code" mono>
+
+```python
+ui.button("Selected", on_press, selected=True)
+```
+
+</Variant>
+<Variant name="button-v5-2" caption={"disabled=True"} alt={"Button: disabled=True"} code="Code" mono>
+
+```python
+ui.button("Disabled", on_press, disabled=True)
+```
+
+</Variant>
+<Variant name="button-v5-3" caption={"No on_press"} alt={"Button: No on_press"} code="Code">
+
+```python
+ui.button("Not wired yet")
+```
+
+</Variant>
+<Variant name="button-v5-4" caption={"full_width=True"} alt={"Button: full_width=True"} code="Code" mono>
+
+```python
+pz.container(ui.button("Sign in", on_press, variant="solid", full_width=True), width=280)
+```
+
+</Variant>
+</VariantGrid>
+
+### Style overrides
+
+The color and shadow arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) replace the theme's values for that button only.
+
+<VariantGrid>
+<Variant name="button-v6-1" caption={"shadow="} alt={"Button: shadow="} code="Code" mono>
+
+```python
+ui.button("Lifted", on_press, variant="solid", shadow=("#00000066", (0, 4), 12))
+```
+
+</Variant>
+<Variant name="button-v6-2" caption={"bg=, color="} alt={"Button: bg=, color="} code="Code" mono>
+
+```python
+ui.button("Custom", on_press, bg="#c678dd", hover_bg="#d08ae6", color="#ffffff")
+```
+
+</Variant>
+<Variant name="button-v6-3" caption={"border_color="} alt={"Button: border_color="} code="Code" mono>
+
+```python
+ui.button("Gold border", on_press, variant="outline", border_color="#e5c07b")
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="button-v7-1" caption={"pz.button"} alt={"Button: pz.button"} code="Code" mono>
+
+```python
+pz.button("pz.button", on_press, padding=(6, 14), bg="#3a7bc8", color="#ffffff", radius=6)
+```
+
+</Variant>
+<Variant name="button-v7-2" caption={"Any content"} alt={"Button: Any content"} code="Code">
+
+```python
+pz.button(pz.row([pz.icon("heart", size=14), pz.text("Like")], spacing=6, align="center"), on_press,
+          padding=(6, 12), bg="#c678dd22", color="#c678dd", border_color="#c678dd", border_width=1, radius=999)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Examples
-
-### Variants
-
-`"filled"` (default), `"ghost"`, `"subtle"`, `"outline"`, `"solid"`, `"tinted"`, or a semantic color directly: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"`.
-
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="button-1" alt="Button: Variants" />
-</TabItem>
-<TabItem label="Code">
-
-```python
-pz.column([
-    pz.row([
-        ui.button("Filled", on_press),
-        ui.button("Ghost", on_press, variant="ghost"),
-        ui.button("Subtle", on_press, variant="subtle"),
-        ui.button("Outline", on_press, variant="outline"),
-        ui.button("Solid", on_press, variant="solid"),
-        ui.button("Tinted", on_press, variant="tinted"),
-    ], spacing=8),
-    pz.row([
-        ui.button("Delete", on_press, variant="error", icon="trash-2"),
-        ui.button("Careful", on_press, variant="warning", icon="triangle-alert"),
-        ui.button("Done", on_press, variant="success", icon="check"),
-    ], spacing=8),
-], spacing=12)
-```
-
-</TabItem>
-</Tabs>
-
-### Sizes
-
-`size` is `"xs"`, `"sm"`, `"md"` (default) or `"lg"`.
-
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="button-2" alt="Button: Sizes" />
-</TabItem>
-<TabItem label="Code">
-
-```python
-pz.row([
-    ui.button("Extra small", on_press, size="xs"),
-    ui.button("Small", on_press, size="sm"),
-    ui.button("Medium", on_press, size="md"),
-    ui.button("Large", on_press, size="lg"),
-], spacing=8, align="center")
-```
-
-</TabItem>
-</Tabs>
-
-### Icons, shortcuts and states
-
-`icon_position="end"` moves the icon after the text. Without `on_press` (or with `disabled=True`) the button is drawn disabled; `selected=True` keeps it highlighted.
-
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="button-3" alt="Button: Icons, shortcuts and states" />
-</TabItem>
-<TabItem label="Code">
-
-```python
-pz.row([
-    ui.button("Next", on_press, icon="arrow-right", icon_position="end"),
-    ui.button("Run", on_press, icon="play", keys="ctrl-enter"),
-    ui.button("Selected", on_press, selected=True),
-    ui.button("Disabled", on_press, disabled=True),
-], spacing=8)
-```
-
-</TabItem>
-</Tabs>
 
 ### Full width
 
@@ -138,7 +331,7 @@ pz.row([
 
 <Tabs syncKey="library-view">
 <TabItem label="Preview">
-<Preview name="button-4" alt="Button: Full width" />
+<Preview name="button-1" alt="Button: Full width" />
 </TabItem>
 <TabItem label="Code">
 
@@ -154,7 +347,9 @@ pz.column([
 
 ## Tips
 
+:::tip
 To pass a value to the callback, bind it with a default argument: `ui.button(name, lambda n=name: self.open(n))`.
+:::
 
 ## API
 
@@ -200,6 +395,55 @@ A themed button with variants, sizes, an icon and a shortcut.
 | `**style` | — | Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…). |
 
 [Full reference →](/pyzed/reference/ui/#button)
+
+### `pz.button`
+
+```python
+button(
+    content,
+    on_press=None,
+    *,
+    padding=None,
+    width=None,
+    height=None,
+    bg=None,
+    color=None,
+    border_color=None,
+    border_width=0.0,
+    radius=None,
+    shadow=None,
+    hover_bg=None,
+    hover_color=None,
+    hover_border_color=None,
+    pressed_bg=None,
+    disabled_color=None,
+    clip=False,
+)
+```
+
+A button with no predefined style. For the themed button use `ui.button`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `content` | *required* | Button content. |
+| `on_press` | `None` | Message or callable sent on press. `None` disables the control. |
+| `padding` | `None` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
+| `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | `None` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `color` | `None` | Text or icon color. |
+| `border_color` | `None` | Border color. |
+| `border_width` | `0.0` | Border width in pixels. |
+| `radius` | `None` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
+| `shadow` | `None` | Shadow: `(color, (dx, dy), blur)`. |
+| `hover_bg` | `None` | Background on hover. |
+| `hover_color` | `None` | Text color on hover. |
+| `hover_border_color` | `None` | Border color on hover. |
+| `pressed_bg` | `None` | Background while pressed. |
+| `disabled_color` | `None` | Text color when disabled. |
+| `clip` | `False` | Clips content that overflows the bounds. |
+
+[Full reference →](/pyzed/reference/widgets/#button)
 
 ## Related
 

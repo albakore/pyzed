@@ -2,7 +2,7 @@
 title: "Espacio"
 description: "Huecos fijos y separadores flexibles. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 46
+  order: 48
   label: "Espacio"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Espacio vacío: un hueco fijo, o un muelle que separa las cosas.
+:::
 
 `pz.space(width, height)` es una caja vacía de un tamaño dado. `pz.hspace()` y `pz.vspace()` son huecos flexibles que ocupan el espacio libre y empujan a sus hermanos a los extremos de una fila o columna.
 
@@ -48,6 +54,41 @@ pz.column([
     pz.row([box("a"), pz.space(width=60), box("60 px later", w=140)]),
 ], spacing=16)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="spacing-v1-1" caption={"pz.hspace()"} alt={"Espacio: pz.hspace()"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("left"), pz.hspace(), box("right")], width=320)
+```
+
+</Variant>
+<Variant name="spacing-v1-2" caption={"pz.space(width=60)"} alt={"Espacio: pz.space(width=60)"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("a"), pz.space(width=60), box("b")])
+```
+
+</Variant>
+<Variant name="spacing-v1-3" caption={"pz.vspace()"} alt={"Espacio: pz.vspace()"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.column([box("top"), pz.vspace(), box("bottom")], height=150)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

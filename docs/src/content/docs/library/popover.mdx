@@ -2,7 +2,7 @@
 title: "Popover"
 description: "Floating content at a point: context menus, color pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 55
+  order: 57
   label: "Popover"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A small floating box that appears next to where you clicked, like a right-click menu.
+:::
 
 Shows `content` (a menu, a card…) over `base` at `(x, y)`. Clicking anywhere else calls `on_dismiss`; with `content=None` only `base` is shown. For a right-click menu, store the pointer position with `pz.mouse_area(on_move=...)` and open it from `on_right_press`.
 
@@ -59,6 +65,34 @@ class Canvas(pz.App):
         return ui.popover(base, menu if self.menu_at else None, x=x, y=y,
                           on_dismiss=lambda: setattr(self, "menu_at", None))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="popover-v1-1" caption={"A menu"} alt={"Popover: A menu"} code="Code">
+
+```python
+ui.popover(main_view(), ui.menu([ui.MenuItem("Copy", on_copy, icon="copy"),
+                                    ui.MenuItem("Paste", on_paste, icon="clipboard")], width=180),
+           x=60, y=40, on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="popover-v1-2" caption={"A card"} alt={"Popover: A card"} code="Code">
+
+```python
+ui.popover(main_view(), ui.card(ui.muted("Any widget fits here."), title="Popover", width=220),
+           x=120, y=40, on_dismiss=on_close)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

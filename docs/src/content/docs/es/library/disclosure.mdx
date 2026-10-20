@@ -2,7 +2,7 @@
 title: "Desplegable"
 description: "Una sección plegable con flecha. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 38
+  order: 39
   label: "Desplegable"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una sección con una flechita que muestra u oculta detalles extra.
+:::
 
 Una cabecera con una flecha que muestra u oculta `content`. El estado abierto es tuyo: cámbialo en `on_toggle`.
 
@@ -51,6 +57,40 @@ class Form(pz.App):
         return ui.disclosure("Advanced options", self.advanced_options(), open=self.advanced,
                              on_toggle=lambda: setattr(self, "advanced", not self.advanced))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Estado
+
+<VariantGrid>
+<Variant name="disclosure-v1-1" caption={"open=False"} alt={"Desplegable: open=False"} code="Código" mono>
+
+```python
+pz.container(ui.disclosure("Advanced options", ui.muted("…"), open=False, on_toggle=on_toggle), width=300)
+```
+
+</Variant>
+<Variant name="disclosure-v1-2" caption={"open=True"} alt={"Desplegable: open=True"} code="Código" mono>
+
+```python
+pz.container(ui.disclosure("Advanced options", ui.muted("Shown while open."), open=True,
+                           on_toggle=on_toggle), width=300)
+```
+
+</Variant>
+<Variant name="disclosure-v1-3" caption={"end="} alt={"Desplegable: end="} code="Código" mono>
+
+```python
+pz.container(ui.disclosure("Environment", ui.muted("…"), open=False, on_toggle=on_toggle,
+                           end=ui.badge("3")), width=300)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

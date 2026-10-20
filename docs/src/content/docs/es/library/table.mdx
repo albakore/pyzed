@@ -2,7 +2,7 @@
 title: "Tabla"
 description: "Una tabla de datos con cabecera fija, ordenación y selección. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 89
+  order: 91
   label: "Tabla"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Filas y columnas de datos, como una hoja de cálculo que ordenas pulsando una columna.
+:::
 
 Una tabla de datos con cabecera fija, ordenación opcional y selección de filas. Las columnas son objetos `ui.Column` cuyo `key` es una clave de dict, un atributo o una función de la fila; `render` convierte un valor en cualquier widget. La tabla ordena las filas ella misma por la columna cuyo **título** es `sort_by`: solo guardas ese título y la dirección.
 
@@ -65,6 +71,83 @@ class Files(pz.App):
             on_row_press=lambda row: setattr(self, "selected", row), selected=self.selected,
         )
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="table-v1-1" caption={"Simple"} alt={"Tabla: Simple"} code="Código">
+
+```python
+pz.container(ui.table([ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")],
+                      [{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}]), width=320)
+```
+
+</Variant>
+<Variant name="table-v1-2" caption={"striped=True"} alt={"Tabla: striped=True"} code="Código" mono>
+
+```python
+pz.container(ui.table([ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")],
+                      [{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}], striped=True), width=320)
+```
+
+</Variant>
+<Variant name="table-v1-3" caption={"selected="} alt={"Tabla: selected="} code="Código" mono>
+
+```python
+rows = [{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}]
+pz.container(ui.table([ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")], rows, selected=rows[1]), width=320)
+```
+
+</Variant>
+<Variant name="table-v1-4" caption={"sort_by=, descending=True"} alt={"Tabla: sort_by=, descending=True"} code="Código" mono>
+
+```python
+pz.container(ui.table([ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")],
+                      [{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}], sort_by="Lines", descending=True,
+                      on_sort=on_sort), width=320)
+```
+
+</Variant>
+<Variant name="table-v1-5" caption={"row_height=24"} alt={"Tabla: row_height=24"} code="Código" mono>
+
+```python
+pz.container(ui.table([ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")],
+                      [{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}], row_height=24), width=320)
+```
+
+</Variant>
+</VariantGrid>
+
+### Celdas
+
+<VariantGrid>
+<Variant name="table-v2-1" caption={"render="} alt={"Tabla: render="} code="Código" mono>
+
+```python
+rows = [{"job": "build", "state": "passed"}, {"job": "lint", "state": "failed"}]
+tint = {"passed": "success", "failed": "error"}
+pz.container(ui.table([ui.Column("Job", "job"),
+                       ui.Column("State", "state", width=110, render=lambda s: ui.badge(s, tint=tint[s]))],
+                      rows), width=320)
+```
+
+</Variant>
+<Variant name="table-v2-2" caption={"key=lambda"} alt={"Tabla: key=lambda"} code="Código" mono>
+
+```python
+people = [("Ana", 31), ("Luis", 27)]
+pz.container(ui.table([ui.Column("Name", lambda p: p[0]),
+                       ui.Column("Age", lambda p: p[1], width=70, align="end")], people), width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

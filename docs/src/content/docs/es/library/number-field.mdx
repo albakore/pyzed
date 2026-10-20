@@ -2,7 +2,7 @@
 title: "Campo numérico"
 description: "Un número con botones −/+, límites, paso y sufijo. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 23
+  order: 24
   label: "Campo numérico"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja con un número y botones − / + para hacerlo más pequeño o más grande.
+:::
 
 Un campo numérico con botones − y +. También se puede escribir el valor: `on_change` recibe el número ya ajustado a `min`/`max` y el texto que no es un número se ignora.
 
@@ -51,6 +57,66 @@ class Settings(pz.App):
         return ui.number_field(self.font_size, lambda v: setattr(self, "font_size", v),
                                min=8, max=32, suffix="px")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="number-field-v1-1" caption={"Simple"} alt={"Campo numérico: Simple"} code="Código">
+
+```python
+ui.number_field(4, on_change, min=1, max=8)
+```
+
+</Variant>
+<Variant name="number-field-v1-2" caption={"suffix=\"px\""} alt={"Campo numérico: suffix=\"px\""} code="Código" mono>
+
+```python
+ui.number_field(14, on_change, min=8, max=32, suffix="px")
+```
+
+</Variant>
+<Variant name="number-field-v1-3" caption={"step=0.1"} alt={"Campo numérico: step=0.1"} code="Código" mono>
+
+```python
+ui.number_field(0.5, on_change, step=0.1, suffix="s", width=140)
+```
+
+</Variant>
+<Variant name="number-field-v1-4" caption={"align=\"start\""} alt={"Campo numérico: align=\"start\""} code="Código" mono>
+
+```python
+ui.number_field(8080, on_change, min=1, max=65535, align="start", width=140)
+```
+
+</Variant>
+</VariantGrid>
+
+### Límites
+
+En un límite su botón se atenúa y el valor no puede ir más allá.
+
+<VariantGrid>
+<Variant name="number-field-v2-1" caption={"En el mínimo"} alt={"Campo numérico: En el mínimo"} code="Código">
+
+```python
+ui.number_field(1, on_change, min=1, max=8)
+```
+
+</Variant>
+<Variant name="number-field-v2-2" caption={"En el máximo"} alt={"Campo numérico: En el máximo"} code="Código">
+
+```python
+ui.number_field(8, on_change, min=1, max=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

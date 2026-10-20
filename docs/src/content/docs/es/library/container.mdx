@@ -2,7 +2,7 @@
 title: "Contenedor"
 description: "Tamaño, relleno, alineación, fondo, borde y sombra para un hijo. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 34
+  order: 35
   label: "Contenedor"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja alrededor de una cosa, para darle un tamaño, un margen, un fondo o un borde.
+:::
 
 Envuelve un hijo para darle tamaño, relleno y alineación, y para dibujar un fondo (color o degradado), un borde, esquinas redondeadas y una sombra. `pz.center(child)` es un contenedor que centra su hijo en todo el espacio disponible.
 
@@ -54,6 +60,81 @@ pz.row([
                  shadow=("#00000066", (0, 6), 18)),
 ], spacing=16, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Caja
+
+<VariantGrid>
+<Variant name="container-v1-1" caption={"padding=, bg="} alt={"Contenedor: padding=, bg="} code="Código" mono>
+
+```python
+pz.container(ui.label("padding + bg"), padding=16, bg=pz.theme.current().element, radius=8)
+```
+
+</Variant>
+<Variant name="container-v1-2" caption={"border_color=, border_width="} alt={"Contenedor: border_color=, border_width="} code="Código" mono>
+
+```python
+pz.container(ui.label("border"), padding=16, border_color=pz.theme.current().accent,
+             border_width=2, radius=8)
+```
+
+</Variant>
+<Variant name="container-v1-3" caption={"radius=999"} alt={"Contenedor: radius=999"} code="Código" mono>
+
+```python
+pz.container(ui.label("pill"), padding=(6, 16), bg=pz.theme.current().element, radius=999)
+```
+
+</Variant>
+</VariantGrid>
+
+### Pintura
+
+<VariantGrid>
+<Variant name="container-v2-1" caption={"gradient="} alt={"Contenedor: gradient="} code="Código" mono>
+
+```python
+pz.container(ui.label("gradient", color="#ffffff"), padding=16, radius=10,
+             gradient=(135, ["#7c3aed", "#3b82f6"]))
+```
+
+</Variant>
+<Variant name="container-v2-2" caption={"shadow="} alt={"Contenedor: shadow="} code="Código" mono>
+
+```python
+pz.container(ui.label("shadow"), padding=16, radius=10, bg=pz.theme.current().elevated,
+             shadow=("#00000066", (0, 6), 18))
+```
+
+</Variant>
+</VariantGrid>
+
+### Alineación
+
+<VariantGrid>
+<Variant name="container-v3-1" caption={"center=True"} alt={"Contenedor: center=True"} code="Código" mono>
+
+```python
+pz.container(ui.label("centered"), center=True, width=220, height=90,
+             border_color=pz.theme.current().border, border_width=1, radius=8)
+```
+
+</Variant>
+<Variant name="container-v3-2" caption={"align_x=\"end\", align_y=\"end\""} alt={"Contenedor: align_x=\"end\", align_y=\"end\""} code="Código" mono>
+
+```python
+pz.container(ui.label("bottom right"), align_x="end", align_y="end", padding=8,
+             width=220, height=90, border_color=pz.theme.current().border, border_width=1, radius=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

@@ -2,7 +2,7 @@
 title: "Number field"
 description: "A number with −/+ buttons, limits, step and suffix. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 51
+  order: 53
   label: "Number field"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A box with a number and − / + buttons to make it smaller or bigger.
+:::
 
 A numeric field with − and + buttons. You can also type a value: `on_change` receives the number already clamped to `min`/`max`, and text that is not a number is ignored.
 
@@ -51,6 +57,66 @@ class Settings(pz.App):
         return ui.number_field(self.font_size, lambda v: setattr(self, "font_size", v),
                                min=8, max=32, suffix="px")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="number-field-v1-1" caption={"Plain"} alt={"Number field: Plain"} code="Code">
+
+```python
+ui.number_field(4, on_change, min=1, max=8)
+```
+
+</Variant>
+<Variant name="number-field-v1-2" caption={"suffix=\"px\""} alt={"Number field: suffix=\"px\""} code="Code" mono>
+
+```python
+ui.number_field(14, on_change, min=8, max=32, suffix="px")
+```
+
+</Variant>
+<Variant name="number-field-v1-3" caption={"step=0.1"} alt={"Number field: step=0.1"} code="Code" mono>
+
+```python
+ui.number_field(0.5, on_change, step=0.1, suffix="s", width=140)
+```
+
+</Variant>
+<Variant name="number-field-v1-4" caption={"align=\"start\""} alt={"Number field: align=\"start\""} code="Code" mono>
+
+```python
+ui.number_field(8080, on_change, min=1, max=65535, align="start", width=140)
+```
+
+</Variant>
+</VariantGrid>
+
+### Limits
+
+At a limit its button is dimmed and the value can't go further.
+
+<VariantGrid>
+<Variant name="number-field-v2-1" caption={"At the minimum"} alt={"Number field: At the minimum"} code="Code">
+
+```python
+ui.number_field(1, on_change, min=1, max=8)
+```
+
+</Variant>
+<Variant name="number-field-v2-2" caption={"At the maximum"} alt={"Number field: At the maximum"} code="Code">
+
+```python
+ui.number_field(8, on_change, min=1, max=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

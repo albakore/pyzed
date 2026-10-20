@@ -2,7 +2,7 @@
 title: "Donut"
 description: "A donut chart with a label in the middle. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 27
+  order: 28
   label: "Donut"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A ring cut into colored slices that shows the parts of a whole.
+:::
 
 A donut chart of `values`, with a `label` in the center. `colors` overrides the theme's palette.
 
@@ -46,6 +52,52 @@ pz.row([
     ui.donut([45, 35, 20], colors=["#e5c07b", "#c678dd", "#56b6c2"], size=120, thickness=20, label="3"),
 ], spacing=32, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="donut-v1-1" caption={"Default"} alt={"Donut: Default"} code="Code">
+
+```python
+ui.donut([60, 25, 15], label="60%")
+```
+
+</Variant>
+<Variant name="donut-v1-2" caption={"colors="} alt={"Donut: colors="} code="Code" mono>
+
+```python
+ui.donut([45, 35, 20], colors=["#e5c07b", "#c678dd", "#56b6c2"], label="3")
+```
+
+</Variant>
+<Variant name="donut-v1-3" caption={"thickness=6"} alt={"Donut: thickness=6"} code="Code" mono>
+
+```python
+ui.donut([70, 30], thickness=6, label="70%")
+```
+
+</Variant>
+<Variant name="donut-v1-4" caption={"size=140, thickness=24"} alt={"Donut: size=140, thickness=24"} code="Code" mono>
+
+```python
+ui.donut([40, 30, 20, 10], size=140, thickness=24)
+```
+
+</Variant>
+<Variant name="donut-v1-5" caption={"size=110, label=\"82%\""} alt={"Donut: size=110, label=\"82%\""} code="Code" mono>
+
+```python
+ui.donut([82, 18], size=110, label="82%")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

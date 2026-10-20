@@ -2,7 +2,7 @@
 title: "Icon button"
 description: "A square button with just an icon and an optional tooltip. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 37
+  order: 38
   label: "Icon button"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A small button with just a picture (a magnifying glass, a gear) instead of words.
+:::
 
 A compact square button that shows a [Lucide](https://lucide.dev) icon. It is ghost by default, so it fits in toolbars, panel headers and tab bars. `tooltip=` adds a tooltip on hover.
 
@@ -53,36 +59,151 @@ pz.row([
 ], spacing=6)
 ```
 
-## Examples
+## Variants
 
-### Sizes and variants
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
 
-It takes the same `size` values as `ui.button`; `variant` is `"ghost"` by default.
+### Size
 
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="icon-button-1" alt="Icon button: Sizes and variants" />
-</TabItem>
-<TabItem label="Code">
+<VariantGrid>
+<Variant name="icon-button-v1-1" caption={"size=\"xs\""} alt={"Icon button: size=\"xs\""} code="Code" mono>
 
 ```python
-pz.row([
-    ui.icon_button("star", on_press, size="xs"),
-    ui.icon_button("star", on_press, size="sm"),
-    ui.icon_button("star", on_press, size="md"),
-    ui.icon_button("star", on_press, size="lg"),
-    ui.icon_button("trash-2", on_press, variant="outline", color="error"),
-    ui.icon_button("check", on_press, variant="solid"),
-    ui.icon_button("lock", on_press, disabled=True),
-], spacing=8, align="center")
+ui.icon_button("star", on_press, size="xs")
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="icon-button-v1-2" caption={"size=\"sm\""} alt={"Icon button: size=\"sm\""} code="Code" mono>
+
+```python
+ui.icon_button("star", on_press, size="sm")
+```
+
+</Variant>
+<Variant name="icon-button-v1-3" caption={"size=\"md\""} alt={"Icon button: size=\"md\""} code="Code" mono>
+
+```python
+ui.icon_button("star", on_press, size="md")
+```
+
+</Variant>
+<Variant name="icon-button-v1-4" caption={"size=\"lg\""} alt={"Icon button: size=\"lg\""} code="Code" mono>
+
+```python
+ui.icon_button("star", on_press, size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
+### Variant
+
+<VariantGrid>
+<Variant name="icon-button-v2-1" caption={"variant=\"ghost\""} alt={"Icon button: variant=\"ghost\""} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_press)
+```
+
+</Variant>
+<Variant name="icon-button-v2-2" caption={"variant=\"filled\""} alt={"Icon button: variant=\"filled\""} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_press, variant="filled")
+```
+
+</Variant>
+<Variant name="icon-button-v2-3" caption={"variant=\"outline\""} alt={"Icon button: variant=\"outline\""} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_press, variant="outline")
+```
+
+</Variant>
+<Variant name="icon-button-v2-4" caption={"variant=\"solid\""} alt={"Icon button: variant=\"solid\""} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_press, variant="solid")
+```
+
+</Variant>
+<Variant name="icon-button-v2-5" caption={"variant=\"tinted\""} alt={"Icon button: variant=\"tinted\""} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_press, variant="tinted")
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="icon-button-v3-1" caption={"color=\"accent\""} alt={"Icon button: color=\"accent\""} code="Code" mono>
+
+```python
+ui.icon_button("sparkles", on_press, color="accent")
+```
+
+</Variant>
+<Variant name="icon-button-v3-2" caption={"color=\"success\""} alt={"Icon button: color=\"success\""} code="Code" mono>
+
+```python
+ui.icon_button("circle-check", on_press, color="success")
+```
+
+</Variant>
+<Variant name="icon-button-v3-3" caption={"color=\"warning\""} alt={"Icon button: color=\"warning\""} code="Code" mono>
+
+```python
+ui.icon_button("triangle-alert", on_press, color="warning")
+```
+
+</Variant>
+<Variant name="icon-button-v3-4" caption={"color=\"error\""} alt={"Icon button: color=\"error\""} code="Code" mono>
+
+```python
+ui.icon_button("trash-2", on_press, color="error", variant="outline")
+```
+
+</Variant>
+</VariantGrid>
+
+### State
+
+Drawn as the pointer shows it: tooltips only open on hover.
+
+<VariantGrid>
+<Variant name="icon-button-v4-1" caption={"selected=True"} alt={"Icon button: selected=True"} code="Code" mono>
+
+```python
+ui.icon_button("panel-left", on_press, selected=True)
+```
+
+</Variant>
+<Variant name="icon-button-v4-2" caption={"disabled=True"} alt={"Icon button: disabled=True"} code="Code" mono>
+
+```python
+ui.icon_button("lock", on_press, disabled=True)
+```
+
+</Variant>
+<Variant name="icon-button-v4-3" caption={"tooltip=\"Search\""} alt={"Icon button: tooltip=\"Search\""} code="Code" mono>
+
+```python
+ui.icon_button("search", on_press, tooltip="Search")
+```
+
+</Variant>
+</VariantGrid>
 
 ## Tips
 
+:::tip
 Run `pyzed icons` to search the icon names.
+:::
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Casilla"
 description: "Una casilla de verificación con etiqueta opcional. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 26
+  order: 27
   label: "Casilla"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un cuadrado que marcas para decir que sí a una opción.
+:::
 
 Una casilla con los colores del tema. `on_toggle` recibe el nuevo `bool`; `label` añade un texto pulsable al lado.
 
@@ -52,6 +58,73 @@ class Settings(pz.App):
                            label="I accept the terms")
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Estado
+
+<VariantGrid>
+<Variant name="checkbox-v1-1" caption={"checked=True"} alt={"Casilla: checked=True"} code="Código" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Format on save")
+```
+
+</Variant>
+<Variant name="checkbox-v1-2" caption={"checked=False"} alt={"Casilla: checked=False"} code="Código" mono>
+
+```python
+ui.checkbox(False, on_toggle, label="Format on save")
+```
+
+</Variant>
+<Variant name="checkbox-v1-3" caption={"Solo lectura (sin on_toggle)"} alt={"Casilla: Solo lectura (sin on_toggle)"} code="Código">
+
+```python
+ui.checkbox(True, label="Managed by your admin")
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+<VariantGrid>
+<Variant name="checkbox-v2-1" caption={"Sin etiqueta"} alt={"Casilla: Sin etiqueta"} code="Código">
+
+```python
+ui.checkbox(True, on_toggle)
+```
+
+</Variant>
+<Variant name="checkbox-v2-2" caption={"Una lista de opciones"} alt={"Casilla: Una lista de opciones"} code="Código">
+
+```python
+pz.column([ui.checkbox(True, on_toggle, label="Python"),
+           ui.checkbox(False, on_toggle, label="Rust"),
+           ui.checkbox(True, on_toggle, label="TypeScript")], spacing=8)
+```
+
+</Variant>
+</VariantGrid>
+
+### Widget base
+
+El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
+
+<VariantGrid>
+<Variant name="checkbox-v3-1" caption={"pz.checkbox"} alt={"Casilla: pz.checkbox"} code="Código" mono>
+
+```python
+pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.checkbox`
@@ -70,6 +143,41 @@ Una casilla de verificación.
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#checkbox)
+
+### `pz.checkbox`
+
+```python
+checkbox(
+    checked,
+    label=None,
+    *,
+    on_toggle=None,
+    size=None,
+    text_size=None,
+    accent=None,
+    bg=None,
+    border_color=None,
+    check_color=None,
+    color=None,
+)
+```
+
+Una casilla de verificación.
+
+| Parámetro | Por defecto | Descripción |
+| --- | --- | --- |
+| `checked` | *obligatorio* | Estado actual. |
+| `label` | `None` | Texto de la etiqueta. |
+| `on_toggle` | `None` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
+| `size` | `None` | Tamaño de la casilla. |
+| `text_size` | `None` | Tamaño del texto. |
+| `accent` | `None` | Color de acento (parte activa). |
+| `bg` | `None` | Color de fondo (`"#rrggbb[aa]"`, `(r, g, b[, a])` o `"transparent"`). |
+| `border_color` | `None` | Color del borde. |
+| `check_color` | `None` | Color de la marca. |
+| `color` | `None` | Color del texto o del icono. |
+
+[Referencia completa →](/pyzed/es/reference/widgets/#checkbox)
 
 ## Relacionados
 

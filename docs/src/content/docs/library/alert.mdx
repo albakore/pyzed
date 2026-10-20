@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A message box with a single OK button.
+:::
 
 A message with a single OK button. `kind` (`"info"`, `"success"`, `"warning"`, `"error"`) adds an icon.
 
@@ -32,6 +38,10 @@ ui.dialog_layer(main_view(), ui.alert("The export finished: 128 files were writt
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - To report something the user must acknowledge (an export finished, a file could not be opened).
@@ -44,6 +54,64 @@ from pyzed import ui
 ui.dialog_layer(main_view(), ui.alert("The export finished: 128 files were written.", on_close,
                                       title="Export", kind="success", width=360))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Kind
+
+<VariantGrid>
+<Variant name="alert-v1-1" caption={"kind=None"} alt={"Alert: kind=None"} code="Code" mono>
+
+```python
+ui.alert("The file was moved to the trash.", on_close, width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-2" caption={"kind=\"info\""} alt={"Alert: kind=\"info\""} code="Code" mono>
+
+```python
+ui.alert("A new version is available.", on_close, kind="info", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-3" caption={"kind=\"success\""} alt={"Alert: kind=\"success\""} code="Code" mono>
+
+```python
+ui.alert("128 files were exported.", on_close, kind="success", title="Export", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-4" caption={"kind=\"warning\""} alt={"Alert: kind=\"warning\""} code="Code" mono>
+
+```python
+ui.alert("The disk is almost full.", on_close, kind="warning", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-5" caption={"kind=\"error\""} alt={"Alert: kind=\"error\""} code="Code" mono>
+
+```python
+ui.alert("notes.py could not be opened.", on_close, kind="error", title="Error", width=320)
+```
+
+</Variant>
+</VariantGrid>
+
+### Options
+
+<VariantGrid>
+<Variant name="alert-v2-1" caption={"ok_label=\"Got it\""} alt={"Alert: ok_label=\"Got it\""} code="Code" mono>
+
+```python
+ui.alert("Shortcuts changed in this version.", on_close, ok_label="Got it", width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

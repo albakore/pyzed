@@ -2,7 +2,7 @@
 title: "Container"
 description: "Size, padding, alignment, background, border and shadow for one child. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 21
+  order: 22
   label: "Container"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A box around one thing, to give it a size, a margin, a background or a border.
+:::
 
 Wraps one child to give it a size, padding and alignment, and to draw a background (color or gradient), a border, rounded corners and a shadow. `pz.center(child)` is a container that centers its child in all the available space.
 
@@ -54,6 +60,81 @@ pz.row([
                  shadow=("#00000066", (0, 6), 18)),
 ], spacing=16, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Box
+
+<VariantGrid>
+<Variant name="container-v1-1" caption={"padding=, bg="} alt={"Container: padding=, bg="} code="Code" mono>
+
+```python
+pz.container(ui.label("padding + bg"), padding=16, bg=pz.theme.current().element, radius=8)
+```
+
+</Variant>
+<Variant name="container-v1-2" caption={"border_color=, border_width="} alt={"Container: border_color=, border_width="} code="Code" mono>
+
+```python
+pz.container(ui.label("border"), padding=16, border_color=pz.theme.current().accent,
+             border_width=2, radius=8)
+```
+
+</Variant>
+<Variant name="container-v1-3" caption={"radius=999"} alt={"Container: radius=999"} code="Code" mono>
+
+```python
+pz.container(ui.label("pill"), padding=(6, 16), bg=pz.theme.current().element, radius=999)
+```
+
+</Variant>
+</VariantGrid>
+
+### Paint
+
+<VariantGrid>
+<Variant name="container-v2-1" caption={"gradient="} alt={"Container: gradient="} code="Code" mono>
+
+```python
+pz.container(ui.label("gradient", color="#ffffff"), padding=16, radius=10,
+             gradient=(135, ["#7c3aed", "#3b82f6"]))
+```
+
+</Variant>
+<Variant name="container-v2-2" caption={"shadow="} alt={"Container: shadow="} code="Code" mono>
+
+```python
+pz.container(ui.label("shadow"), padding=16, radius=10, bg=pz.theme.current().elevated,
+             shadow=("#00000066", (0, 6), 18))
+```
+
+</Variant>
+</VariantGrid>
+
+### Alignment
+
+<VariantGrid>
+<Variant name="container-v3-1" caption={"center=True"} alt={"Container: center=True"} code="Code" mono>
+
+```python
+pz.container(ui.label("centered"), center=True, width=220, height=90,
+             border_color=pz.theme.current().border, border_width=1, radius=8)
+```
+
+</Variant>
+<Variant name="container-v3-2" caption={"align_x=\"end\", align_y=\"end\""} alt={"Container: align_x=\"end\", align_y=\"end\""} code="Code" mono>
+
+```python
+pz.container(ui.label("bottom right"), align_x="end", align_y="end", padding=8,
+             width=220, height=90, border_color=pz.theme.current().border, border_width=1, radius=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 

@@ -2,7 +2,7 @@
 title: "Effects"
 description: "Glow, bloom, glass and opacity as style properties. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 29
+  order: 30
   label: "Effects"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Glows, frosted glass and transparency you can add to any box.
+:::
 
 Visual effects are [style](/pyzed/theming/styles/) properties: `glow` (a soft halo), `bloom` (a wide, bright spill of light), `glass` (a translucent, frosted panel), `opacity`, and `translate` and `scale`, which move or scale the drawing without changing the layout. Animations can change `glow` too.
 
@@ -40,6 +46,10 @@ pz.container(pz.row([
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - To highlight the primary action or a live state (recording, connected).
@@ -62,6 +72,65 @@ pz.container(pz.row([
 ], spacing=24), padding=32).style(
     background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=14)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Effects
+
+<VariantGrid>
+<Variant name="effects-v1-1" caption={"glass=True"} alt={"Effects: glass=True"} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Glass"), width=130, height=60, padding=12).style(glass=True, radius=12),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-2" caption={"glow="} alt={"Effects: glow="} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Glow"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, glow=("#22d3ee", 18)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-3" caption={"bloom="} alt={"Effects: bloom="} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Bloom"), width=130, height=60, padding=12).style(background="#1a0b16", radius=12, bloom=("#f472b6", 0.8)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-4" caption={"opacity=0.5"} alt={"Effects: opacity=0.5"} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Opacity"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, opacity=0.5),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-5" caption={"scale=1.15"} alt={"Effects: scale=1.15"} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Scale"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, scale=1.15),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-6" caption={"translate="} alt={"Effects: translate="} code="Code" mono>
+
+```python
+pz.container(pz.container(ui.label("Translate"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, translate=(16, 8)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

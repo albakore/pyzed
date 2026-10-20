@@ -2,7 +2,7 @@
 title: "Lienzo"
 description: "Dibujo 2D con formas, trazos, texto y eventos de ratón. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 64
+  order: 66
   label: "Lienzo"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una hoja en blanco para dibujar formas, líneas y texto, para gráficos y juegos.
+:::
 
 Una superficie de dibujo 2D. `shapes` es una lista hecha con [`pyzed.draw`](/pyzed/es/reference/draw/) (rectángulos, círculos, arcos, trazos, texto, imágenes…). Los callbacks del ratón reciben coordenadas relativas al lienzo; con un `id` la geometría se guarda entre fotogramas. Los gráficos de esta biblioteca están dibujados con él.
 
@@ -54,6 +60,60 @@ pz.canvas([
     draw.text(225, 150, "pz.canvas + pyzed.draw", color="#a9afbc", size=16, align_x="center"),
 ], width=450, height=170)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Formas
+
+<VariantGrid>
+<Variant name="canvas-v1-1" caption={"draw.rect"} alt={"Lienzo: draw.rect"} code="Código" mono>
+
+```python
+pz.canvas([draw.rect(10, 10, 140, 70, fill="#74ade8", radius=10)], width=160, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-2" caption={"draw.circle"} alt={"Lienzo: draw.circle"} code="Código" mono>
+
+```python
+pz.canvas([draw.circle(50, 45, 36, fill="#a1c181")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-3" caption={"draw.arc"} alt={"Lienzo: draw.arc"} code="Código" mono>
+
+```python
+pz.canvas([draw.arc(50, 45, 34, 0, 270, stroke="#e5c07b", width=8, cap="round")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-4" caption={"draw.polygon"} alt={"Lienzo: draw.polygon"} code="Código" mono>
+
+```python
+pz.canvas([draw.polygon([(10, 80), (50, 10), (90, 80)], fill="#d07277")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-5" caption={"draw.line(dash=)"} alt={"Lienzo: draw.line(dash=)"} code="Código" mono>
+
+```python
+pz.canvas([draw.line(10, 45, 190, 45, stroke="#c678dd", width=3, dash=[8, 5])], width=200, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-6" caption={"draw.text"} alt={"Lienzo: draw.text"} code="Código" mono>
+
+```python
+pz.canvas([draw.text(100, 45, "pyzed.draw", color="#74ade8", size=20, align_x="center",
+                     align_y="center")], width=200, height=90)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

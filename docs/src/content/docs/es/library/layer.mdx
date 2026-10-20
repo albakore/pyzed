@@ -2,7 +2,7 @@
 title: "Capa"
 description: "Dibuja una capa encima de tu vista; al pulsar fuera se cierra. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 24
+  order: 25
   label: "Capa"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Pone algo encima de la pantalla, como un buscador, y lo cierra si pulsas fuera.
+:::
 
 Apila `overlay` encima de `base`. Al pulsar fuera de la capa se envía `on_dismiss`, y `backdrop` oscurece la vista de detrás. Con `overlay=None` devuelve `base` sin cambios, así que puede envolver siempre tu vista. `align_x`, `align_y` y `offset` colocan la capa (por defecto centrada arriba, como una paleta de comandos).
 
@@ -54,6 +60,62 @@ class App(pz.App):
         return ui.layer(self.main_view(), overlay,
                         on_dismiss=lambda: setattr(self, "finder_open", False))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Posición
+
+<VariantGrid>
+<Variant name="layer-v1-1" caption={"Arriba (por defecto)"} alt={"Capa: Arriba (por defecto)"} code="Código">
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v1-2" caption={"align_y=\"center\""} alt={"Capa: align_y=\"center\""} code="Código" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_y="center",
+         on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v1-3" caption={"align_x=\"end\", align_y=\"end\""} alt={"Capa: align_x=\"end\", align_y=\"end\""} code="Código" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_x="end", align_y="end",
+         offset=16, on_dismiss=on_close)
+```
+
+</Variant>
+</VariantGrid>
+
+### Fondo
+
+Con `overlay=None` la capa devuelve tu vista sin cambios.
+
+<VariantGrid>
+<Variant name="layer-v2-1" caption={"backdrop=\"#00000088\""} alt={"Capa: backdrop=\"#00000088\""} code="Código" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), backdrop="#00000088",
+         align_y="center", on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v2-2" caption={"overlay=None"} alt={"Capa: overlay=None"} code="Código" mono>
+
+```python
+ui.layer(main_view(), None)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

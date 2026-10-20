@@ -2,7 +2,7 @@
 title: "Resumen de cambios"
 description: "`+12 −3` con bloques al estilo de GitHub. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 82
+  order: 84
   label: "Resumen de cambios"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Cuántas líneas se añadieron (verde) y se quitaron (rojo) en un cambio.
+:::
 
 Líneas añadidas y quitadas, con una fila de bloques verdes y rojos, como en el panel de git de un editor de código.
 
@@ -48,6 +54,45 @@ pz.column([
     pz.row([ui.label("README.md", mono=True), pz.hspace(), ui.diff_stat(12, 0)], align="center"),
 ], spacing=10, width=320)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="diff-stat-v1-1" caption={"Casi todo añadido"} alt={"Resumen de cambios: Casi todo añadido"} code="Código">
+
+```python
+ui.diff_stat(42, 3)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-2" caption={"Casi todo quitado"} alt={"Resumen de cambios: Casi todo quitado"} code="Código">
+
+```python
+ui.diff_stat(2, 57)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-3" caption={"Solo añadido"} alt={"Resumen de cambios: Solo añadido"} code="Código">
+
+```python
+ui.diff_stat(12, 0)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-4" caption={"blocks=10"} alt={"Resumen de cambios: blocks=10"} code="Código" mono>
+
+```python
+ui.diff_stat(120, 40, blocks=10)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

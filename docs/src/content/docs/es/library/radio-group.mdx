@@ -2,7 +2,7 @@
 title: "Grupo de radios"
 description: "Opciones excluyentes como botones de radio. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 57
+  order: 59
   label: "Grupo de radios"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Unas cuantas opciones redondas en las que elegir una desmarca las demás.
+:::
 
 Un conjunto de botones de radio con una opción elegida. `options` son cadenas o pares `(valor, etiqueta)`; `on_select` recibe el valor. `horizontal=True` los coloca en fila.
 
@@ -51,6 +57,72 @@ class Settings(pz.App):
                               lambda value: setattr(self, "indent", value))
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Dirección
+
+<VariantGrid>
+<Variant name="radio-group-v1-1" caption={"Vertical"} alt={"Grupo de radios: Vertical"} code="Código">
+
+```python
+ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select)
+```
+
+</Variant>
+<Variant name="radio-group-v1-2" caption={"horizontal=True"} alt={"Grupo de radios: horizontal=True"} code="Código" mono>
+
+```python
+ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True)
+```
+
+</Variant>
+<Variant name="radio-group-v1-3" caption={"spacing=16"} alt={"Grupo de radios: spacing=16"} code="Código" mono>
+
+```python
+ui.radio_group(["Small", "Medium", "Large"], "Medium", on_select, horizontal=True, spacing=16)
+```
+
+</Variant>
+</VariantGrid>
+
+### Opciones
+
+<VariantGrid>
+<Variant name="radio-group-v2-1" caption={"Pares (valor, etiqueta)"} alt={"Grupo de radios: Pares (valor, etiqueta)"} code="Código">
+
+```python
+ui.radio_group([("lf", "Unix (LF)"), ("crlf", "Windows (CRLF)")], "crlf", on_select)
+```
+
+</Variant>
+<Variant name="radio-group-v2-2" caption={"Nada elegido"} alt={"Grupo de radios: Nada elegido"} code="Código">
+
+```python
+ui.radio_group(["Yes", "No"], None, on_select, horizontal=True)
+```
+
+</Variant>
+</VariantGrid>
+
+### Widget base
+
+El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
+
+<VariantGrid>
+<Variant name="radio-group-v3-1" caption={"pz.radio"} alt={"Grupo de radios: pz.radio"} code="Código" mono>
+
+```python
+pz.row([pz.radio("Cats", True, on_select, accent="#e5c07b"),
+        pz.radio("Dogs", False, on_select, accent="#e5c07b")], spacing=16)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.radio_group`
@@ -79,6 +151,41 @@ Opciones mutuamente excluyentes como botones de radio.
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#radio_group)
+
+### `pz.radio`
+
+```python
+radio(
+    label,
+    selected,
+    on_select=None,
+    *,
+    size=None,
+    text_size=None,
+    spacing=None,
+    accent=None,
+    bg=None,
+    border_color=None,
+    color=None,
+)
+```
+
+Un botón de radio. Agrupa varios tú mismo (o usa `ui.radio_group`); `on_select` se envía al pulsarlo.
+
+| Parámetro | Por defecto | Descripción |
+| --- | --- | --- |
+| `label` | *obligatorio* | Texto de la etiqueta. |
+| `selected` | *obligatorio* | Si está marcado. |
+| `on_select` | `None` | Mensaje o callable al pulsarlo. |
+| `size` | `None` | Tamaño. |
+| `text_size` | `None` | Tamaño del texto. |
+| `spacing` | `None` | Separación entre el círculo y el texto. |
+| `accent` | `None` | Color de acento (parte activa). |
+| `bg` | `None` | Color de fondo (`"#rrggbb[aa]"`, `(r, g, b[, a])` o `"transparent"`). |
+| `border_color` | `None` | Color del borde. |
+| `color` | `None` | Color del texto o del icono. |
+
+[Referencia completa →](/pyzed/es/reference/widgets/#radio)
 
 ## Relacionados
 

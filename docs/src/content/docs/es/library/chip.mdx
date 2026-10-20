@@ -2,7 +2,7 @@
 title: "Chip"
 description: "Una etiqueta compacta: pulsable como filtro y con ✕ para quitarla. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 27
+  order: 28
   label: "Chip"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una etiqueta pequeña y redondeada. Púlsala para activar o quitar un filtro, o pulsa su ✕ para quitarla.
+:::
 
 Una etiqueta pequeña y redondeada. Con `on_press` funciona como un filtro que se activa (`selected=True` la resalta) y con `on_remove` muestra un botón para quitarla, como en una lista de etiquetas.
 
@@ -52,6 +58,71 @@ class Tags(pz.App):
         return pz.row([ui.chip(t, on_remove=lambda t=t: self.tags.remove(t)) for t in self.tags],
                       spacing=6, wrap=True)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Tipo
+
+<VariantGrid>
+<Variant name="chip-v1-1" caption={"Estático"} alt={"Chip: Estático"} code="Código">
+
+```python
+ui.chip("python")
+```
+
+</Variant>
+<Variant name="chip-v1-2" caption={"on_press="} alt={"Chip: on_press="} code="Código" mono>
+
+```python
+ui.chip("rust", on_press=on_filter)
+```
+
+</Variant>
+<Variant name="chip-v1-3" caption={"selected=True"} alt={"Chip: selected=True"} code="Código" mono>
+
+```python
+ui.chip("python", on_press=on_filter, selected=True)
+```
+
+</Variant>
+<Variant name="chip-v1-4" caption={"on_remove="} alt={"Chip: on_remove="} code="Código" mono>
+
+```python
+ui.chip("iced", on_remove=on_remove)
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+<VariantGrid>
+<Variant name="chip-v2-1" caption={"icon=\"tag\""} alt={"Chip: icon=\"tag\""} code="Código" mono>
+
+```python
+ui.chip("design", icon="tag")
+```
+
+</Variant>
+<Variant name="chip-v2-2" caption={"Icono y quitar"} alt={"Chip: Icono y quitar"} code="Código">
+
+```python
+ui.chip("ada@example.com", icon="user", on_remove=on_remove)
+```
+
+</Variant>
+<Variant name="chip-v2-3" caption={"Elegido con icono"} alt={"Chip: Elegido con icono"} code="Código">
+
+```python
+ui.chip("favorites", icon="star", selected=True, on_press=on_filter)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

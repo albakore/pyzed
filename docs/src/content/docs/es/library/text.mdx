@@ -2,7 +2,7 @@
 title: "Texto"
 description: "Un texto con tamaño, color, fuente y peso. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 92
+  order: 94
   label: "Texto"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Texto con el tamaño, el color y la fuente que elijas.
+:::
 
 El widget base de texto: `size`, `color`, `font`, `weight`, `italic`, `line_height`, alineación y ajuste de línea. En una interfaz con tema mejor usa [Etiqueta](/pyzed/es/library/label/), que toma el color del tema.
 
@@ -47,6 +53,99 @@ pz.column([
     pz.text("IBM Plex Mono, italic", font="IBM Plex Mono", italic=True, color="#e5c07b"),
 ], spacing=6, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="text-v1-1" caption={"size=12"} alt={"Texto: size=12"} code="Código" mono>
+
+```python
+pz.text("Size 12", size=12)
+```
+
+</Variant>
+<Variant name="text-v1-2" caption={"size=18"} alt={"Texto: size=18"} code="Código" mono>
+
+```python
+pz.text("Size 18", size=18)
+```
+
+</Variant>
+<Variant name="text-v1-3" caption={"size=32"} alt={"Texto: size=32"} code="Código" mono>
+
+```python
+pz.text("Size 32", size=32)
+```
+
+</Variant>
+</VariantGrid>
+
+### Fuente y peso
+
+<VariantGrid>
+<Variant name="text-v2-1" caption={"weight=\"bold\""} alt={"Texto: weight=\"bold\""} code="Código" mono>
+
+```python
+pz.text("Bold", size=18, weight="bold")
+```
+
+</Variant>
+<Variant name="text-v2-2" caption={"weight=\"light\""} alt={"Texto: weight=\"light\""} code="Código" mono>
+
+```python
+pz.text("Light", size=18, weight="light")
+```
+
+</Variant>
+<Variant name="text-v2-3" caption={"italic=True"} alt={"Texto: italic=True"} code="Código" mono>
+
+```python
+pz.text("Italic", size=18, italic=True)
+```
+
+</Variant>
+<Variant name="text-v2-4" caption={"font=\"mono\""} alt={"Texto: font=\"mono\""} code="Código" mono>
+
+```python
+pz.text("Monospace 0123", size=16, font="mono")
+```
+
+</Variant>
+</VariantGrid>
+
+### Color y ajuste
+
+<VariantGrid>
+<Variant name="text-v3-1" caption={"color=\"#e5c07b\""} alt={"Texto: color=\"#e5c07b\""} code="Código" mono>
+
+```python
+pz.text("Golden text", size=18, color="#e5c07b")
+```
+
+</Variant>
+<Variant name="text-v3-2" caption={"width=, align_x=\"center\""} alt={"Texto: width=, align_x=\"center\""} code="Código" mono>
+
+```python
+pz.container(pz.text("A long sentence that wraps over several lines, centered.", align_x="center"),
+             width=220)
+```
+
+</Variant>
+<Variant name="text-v3-3" caption={"line_height=1.8"} alt={"Texto: line_height=1.8"} code="Código" mono>
+
+```python
+pz.container(pz.text("Taller lines are easier to read in long paragraphs.", line_height=1.8),
+             width=220)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

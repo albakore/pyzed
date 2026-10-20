@@ -2,7 +2,7 @@
 title: "Fila"
 description: "Coloca los hijos en horizontal. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 51
+  order: 53
   label: "Fila"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Pone las cosas una al lado de la otra, de izquierda a derecha.
+:::
 
 Coloca sus hijos en horizontal, con `spacing` entre ellos y `align` en el eje cruzado. `wrap=True` pasa a la línea siguiente los hijos que no caben. Las listas se aplanan y se ignoran `None`/`False`, así que `cond and widget` funciona.
 
@@ -51,6 +57,91 @@ pz.column([
     pz.row([box("tall", h=70), box("center"), box("end")], spacing=8, align="center"),
 ], spacing=14)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Espaciado
+
+<VariantGrid>
+<Variant name="row-v1-1" caption={"spacing=0"} alt={"Fila: spacing=0"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")])
+```
+
+</Variant>
+<Variant name="row-v1-2" caption={"spacing=8"} alt={"Fila: spacing=8"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")], spacing=8)
+```
+
+</Variant>
+<Variant name="row-v1-3" caption={"spacing=24"} alt={"Fila: spacing=24"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")], spacing=24)
+```
+
+</Variant>
+</VariantGrid>
+
+### Alineación cruzada
+
+<VariantGrid>
+<Variant name="row-v2-1" caption={"align=\"start\""} alt={"Fila: align=\"start\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="start")
+```
+
+</Variant>
+<Variant name="row-v2-2" caption={"align=\"center\""} alt={"Fila: align=\"center\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="center")
+```
+
+</Variant>
+<Variant name="row-v2-3" caption={"align=\"end\""} alt={"Fila: align=\"end\""} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="end")
+```
+
+</Variant>
+</VariantGrid>
+
+### Opciones
+
+<VariantGrid>
+<Variant name="row-v3-1" caption={"pz.hspace()"} alt={"Fila: pz.hspace()"} code="Código" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("Start"), pz.hspace(), box("End")], width=320)
+```
+
+</Variant>
+<Variant name="row-v3-2" caption={"wrap=True"} alt={"Fila: wrap=True"} code="Código" mono>
+
+```python
+pz.container(pz.row([ui.chip(t) for t in ["python", "rust", "iced", "desktop", "gui", "async", "themes"]],
+                    spacing=6, wrap=True, line_spacing=6), width=260)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

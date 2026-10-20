@@ -35,6 +35,20 @@ How to add a component to the library
                  ``docs/public/media/manifest.json`` (made by ``docs/scripts/record.py``) shown
                  under the preview.
 
+   Two more keys are filled from the dicts at the end of this file, keyed by slug, so the
+   catalog of variants reads as one list:
+
+   ``plain``     ``PLAIN[slug]``: ``T(en, es)``, one or two sentences without jargon, shown first in an
+                 "In plain words" box for readers who don't program.
+   ``variants``  ``VARIANTS[slug]``: groups made with ``V(title, items, text=None)``. Each item is
+                 ``(caption, code)`` or ``(caption, code, options)``: one shot per item, cropped to the
+                 component, with its code under it. ``caption`` is usually the parameter that makes
+                 the difference (``'variant="ghost"'``, shown as code) or a ``T(en, es)``. Options:
+                 ``size`` (canvas, default (480, 160); grow it when the script warns about the edge),
+                 ``fill`` (draw edge to edge on a canvas of ``size``, for overlays and layouts),
+                 ``draw`` (a snippet drawn *instead of* ``code``, for states that only a real pointer
+                 shows, such as an open tooltip) and ``start`` (as in ``preview``).
+
 3. Render and generate, then build the site::
 
        python docs/scripts/library_shots.py <slug>     # docs/src/assets/library/<slug>*.png
@@ -52,6 +66,15 @@ from __future__ import annotations
 def T(en, es):
     """A text in English (the site's main language) and Spanish."""
     return {"en": en, "es": es}
+
+
+def V(title, items, text=None):
+    """A group of variants: a ``T`` title, ``(caption, code[, options])`` items and an optional ``T`` text."""
+    out = []
+    for item in items:
+        caption, code, *rest = item
+        out.append({"caption": caption, "code": code, **(rest[0] if rest else {})})
+    return {"title": title, "text": text, "items": out}
 
 
 #: Gallery groups, in order: key -> (English title, Spanish title, English intro, Spanish intro).
@@ -125,10 +148,10 @@ add(
     desc=T(
         "Displays a themed button. It reads its colors from the current theme, can carry an "
         "icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of "
-        "`pz.button` (`bg`, `hover_bg`, `radius`…) overrides the theme's.",
+        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) overrides the theme's.",
         "Muestra un botón con el estilo del tema. Toma los colores del tema actual, puede llevar un icono "
         "y un atajo de teclado, y tiene varias variantes y tamaños. Cualquier parámetro de estilo de "
-        "`pz.button` (`bg`, `hover_bg`, `radius`…) reemplaza al del tema.",
+        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) reemplaza al del tema.",
     ),
     when=T(
         ["For the main actions of a form, dialog or toolbar.",
@@ -149,46 +172,6 @@ add(
     def view(self):
         return ui.button("Save", self.save, icon="save", keys="ctrl-s")""",
     examples=[
-        {"title": T("Variants", "Variantes"),
-         "text": T("`\"filled\"` (default), `\"ghost\"`, `\"subtle\"`, `\"outline\"`, `\"solid\"`, `\"tinted\"`, or a "
-                   "semantic color directly: `\"accent\"`, `\"error\"`, `\"warning\"`, `\"success\"`, `\"info\"`.",
-                   "`\"filled\"` (por defecto), `\"ghost\"`, `\"subtle\"`, `\"outline\"`, `\"solid\"`, `\"tinted\"`, o "
-                   "directamente un color semántico: `\"accent\"`, `\"error\"`, `\"warning\"`, `\"success\"`, `\"info\"`."),
-         "code": """pz.column([
-    pz.row([
-        ui.button("Filled", on_press),
-        ui.button("Ghost", on_press, variant="ghost"),
-        ui.button("Subtle", on_press, variant="subtle"),
-        ui.button("Outline", on_press, variant="outline"),
-        ui.button("Solid", on_press, variant="solid"),
-        ui.button("Tinted", on_press, variant="tinted"),
-    ], spacing=8),
-    pz.row([
-        ui.button("Delete", on_press, variant="error", icon="trash-2"),
-        ui.button("Careful", on_press, variant="warning", icon="triangle-alert"),
-        ui.button("Done", on_press, variant="success", icon="check"),
-    ], spacing=8),
-], spacing=12)"""},
-        {"title": T("Sizes", "Tamaños"),
-         "text": T("`size` is `\"xs\"`, `\"sm\"`, `\"md\"` (default) or `\"lg\"`.",
-                   "`size` es `\"xs\"`, `\"sm\"`, `\"md\"` (por defecto) o `\"lg\"`."),
-         "code": """pz.row([
-    ui.button("Extra small", on_press, size="xs"),
-    ui.button("Small", on_press, size="sm"),
-    ui.button("Medium", on_press, size="md"),
-    ui.button("Large", on_press, size="lg"),
-], spacing=8, align="center")"""},
-        {"title": T("Icons, shortcuts and states", "Iconos, atajos y estados"),
-         "text": T("`icon_position=\"end\"` moves the icon after the text. Without `on_press` (or with "
-                   "`disabled=True`) the button is drawn disabled; `selected=True` keeps it highlighted.",
-                   "`icon_position=\"end\"` pone el icono después del texto. Sin `on_press` (o con "
-                   "`disabled=True`) el botón se dibuja deshabilitado; `selected=True` lo deja resaltado."),
-         "code": """pz.row([
-    ui.button("Next", on_press, icon="arrow-right", icon_position="end"),
-    ui.button("Run", on_press, icon="play", keys="ctrl-enter"),
-    ui.button("Selected", on_press, selected=True),
-    ui.button("Disabled", on_press, disabled=True),
-], spacing=8)"""},
         {"title": T("Full width", "Ancho completo"),
          "text": T("`full_width=True` stretches the button to its container.",
                    "`full_width=True` estira el botón hasta el ancho de su contenedor."),
@@ -235,20 +218,6 @@ add(
     ui.icon_button("bell", on_notifications, selected=True),
     ui.icon_button("plus", on_new, variant="filled"),
 ], spacing=6)"""},
-    examples=[
-        {"title": T("Sizes and variants", "Tamaños y variantes"),
-         "text": T("It takes the same `size` values as `ui.button`; `variant` is `\"ghost\"` by default.",
-                   "Acepta los mismos `size` que `ui.button`; `variant` es `\"ghost\"` por defecto."),
-         "code": """pz.row([
-    ui.icon_button("star", on_press, size="xs"),
-    ui.icon_button("star", on_press, size="sm"),
-    ui.icon_button("star", on_press, size="md"),
-    ui.icon_button("star", on_press, size="lg"),
-    ui.icon_button("trash-2", on_press, variant="outline", color="error"),
-    ui.icon_button("check", on_press, variant="solid"),
-    ui.icon_button("lock", on_press, disabled=True),
-], spacing=8, align="center")"""},
-    ],
     notes=T("Run `pyzed icons` to search the icon names.", "Ejecuta `pyzed icons` para buscar los nombres de iconos."),
     related=["button", "tooltip", "toolbar"],
 )
@@ -391,28 +360,6 @@ add(
     ui.label("Accent and semibold", color="accent", weight="semibold"),
     ui.label("def mono(): ...", mono=True, size="sm"),
 ], spacing=8)"""},
-    examples=[
-        {"title": T("Sizes", "Tamaños"),
-         "text": T("Named sizes follow the theme's UI font size.",
-                   "Los tamaños con nombre siguen el tamaño de fuente del tema."),
-         "code": """pz.column([
-    ui.label("Extra small", size="xs"),
-    ui.label("Small", size="sm"),
-    ui.label("Medium (default)", size="md"),
-    ui.label("Large", size="lg"),
-    ui.label("Extra large", size="xl"),
-], spacing=4)""", "size": (720, 220)},
-        {"title": T("Colors", "Colores"),
-         "text": T("Semantic tokens adapt to every theme.", "Los tokens semánticos se adaptan a todos los temas."),
-         "code": """pz.row([
-    ui.label("accent", color="accent"),
-    ui.label("success", color="success"),
-    ui.label("warning", color="warning"),
-    ui.label("error", color="error"),
-    ui.label("italic", italic=True),
-    ui.label("#c678dd", color="#c678dd"),
-], spacing=16)""", "size": (720, 120)},
-    ],
     related=["heading", "kbd", "badge"],
 )
 
@@ -468,17 +415,6 @@ add(
     ui.badge("warning", tint="warning"),
     ui.badge("error", tint="error", icon="circle-x"),
 ], spacing=8)"""},
-    examples=[
-        {"title": T("Variants", "Variantes"),
-         "text": T("`soft` tints the background, `solid` fills it and `outline` only draws the border.",
-                   "`soft` tiñe el fondo, `solid` lo rellena y `outline` solo dibuja el borde."),
-         "code": """pz.row([
-    ui.badge("soft"),
-    ui.badge("solid", variant="solid"),
-    ui.badge("outline", variant="outline"),
-    ui.badge("new", variant="solid", tint="success", icon="sparkles"),
-], spacing=8)""", "size": (720, 120)},
-    ],
     related=["count-badge", "indicator", "chip"],
 )
 
@@ -704,19 +640,6 @@ add(
 
     def on_start(self):
         return pz.Command.focus("name")""",
-    examples=[
-        {"title": T("Sizes and styles", "Tamaños y estilos"),
-         "text": T("`size` changes the height and text; `borderless=True` blends it into a toolbar or "
-                   "a palette, and `mono=True` uses the monospace font.",
-                   "`size` cambia la altura y el texto; `borderless=True` lo integra en una barra o una "
-                   "paleta y `mono=True` usa la fuente monoespaciada."),
-         "code": """pz.column([
-    ui.input("small", on_input, size="sm"),
-    ui.input("large", on_input, size="lg"),
-    ui.input("borderless", on_input, borderless=True),
-    ui.input("SELECT * FROM users", on_input, mono=True),
-], spacing=10, width=360)""", "size": (720, 260)},
-    ],
     related=["search-input", "field", "number-field"],
 )
 
@@ -1200,15 +1123,6 @@ add(
                actions=[ui.button("What's new", on_open, size="sm")], on_dismiss=on_dismiss),
     ui.callout("Could not save", "The file is read-only.", tint="error"),
 ], spacing=10, width=520)"""},
-    examples=[
-        {"title": T("Tints", "Colores"),
-         "text": T("Each tint picks a matching icon.", "Cada color elige un icono acorde."),
-         "code": """pz.column([
-    ui.callout("Synced", tint="success"),
-    ui.callout("Unsaved changes", "Save before closing.", tint="warning"),
-    ui.callout("Tip", "Press Ctrl+Shift+P to open the palette.", tint="accent", icon="lightbulb"),
-], spacing=8, width=520)""", "size": (720, 250)},
-    ],
     related=["toast", "alert", "empty-state"],
 )
 
@@ -3276,3 +3190,1535 @@ add(
     background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=14)""", "size": (820, 220)},
     related=["animation", "card"],
 )
+
+# --------------------------------------------------------------------------- base interaction pages
+# ``pz.*`` widgets that have no themed counterpart get their own page; the others are documented on
+# the page of the ``ui`` component built on them (``pz.button`` on Button, ``pz.toggler`` on Switch...).
+
+add(
+    slug="mouse-area",
+    name=T("Mouse area", "Área de ratón"),
+    category="actions",
+    api=["pyzed.mouse_area", "pyzed.hover", "pyzed.opaque"],
+    blurb=T("Makes any widget react to clicks, hover, drags and the wheel.",
+            "Hace que cualquier widget reaccione a clics, hover, arrastres y la rueda."),
+    desc=T(
+        "`pz.mouse_area` wraps any widget and reports what the mouse does over it: presses (left, right, "
+        "middle, double click), entering and leaving, moving (`on_move(x, y)`) and the wheel "
+        "(`on_scroll(dx, dy)`); `cursor` changes the pointer. `pz.hover(base, top)` shows `top` over `base` "
+        "only while the pointer is over it, and `pz.opaque` stops clicks from reaching what is under a "
+        "widget in a `stack`.",
+        "`pz.mouse_area` envuelve cualquier widget y avisa de lo que hace el ratón encima: pulsaciones "
+        "(izquierda, derecha, central, doble clic), entrar y salir, moverse (`on_move(x, y)`) y la rueda "
+        "(`on_scroll(dx, dy)`); `cursor` cambia el puntero. `pz.hover(base, top)` muestra `top` encima de "
+        "`base` solo mientras el puntero está encima, y `pz.opaque` impide que los clics lleguen a lo que hay "
+        "debajo de un widget en un `stack`.",
+    ),
+    when=T(
+        ["To make a card, an image or a custom drawing clickable without turning it into a button.",
+         "For right-click menus (`on_right_press`), drag gestures (`on_move`) and zoom with the wheel.",
+         "`pz.hover` for actions that appear on hover, like the close button of a tab."],
+        ["Para que una tarjeta, una imagen o un dibujo propio se puedan pulsar sin convertirlos en botón.",
+         "Para menús de clic derecho (`on_right_press`), gestos de arrastre (`on_move`) y zoom con la rueda.",
+         "`pz.hover` para acciones que aparecen al pasar el ratón, como el botón de cerrar de una pestaña."],
+    ),
+    preview={"code": """pz.mouse_area(
+    ui.card(pz.row([pz.icon("folder", size=20), ui.label("Open project…")], spacing=10, align="center"),
+            width=280),
+    on_press=on_open, on_right_press=on_menu, cursor="pointer",
+)"""},
+    usage="""class Board(pz.App):
+    def __init__(self):
+        self.pointer = (0, 0)
+        self.zoom = 1.0
+
+    def view(self):
+        return pz.mouse_area(
+            self.drawing(),
+            on_move=lambda x, y: setattr(self, "pointer", (x, y)),
+            on_scroll=lambda dx, dy: setattr(self, "zoom", max(0.1, self.zoom + dy * 0.1)),
+            on_double_click=self.reset, cursor="crosshair",
+        )""",
+    notes=T(
+        "Hover and pointer states only exist with a real mouse, so the previews draw them as they look; "
+        "see the animated clips in [Showcase](/pyzed/showcase/) for the real thing.",
+        "Los estados de hover y del puntero solo existen con un ratón real, así que las vistas previas los "
+        "dibujan tal como se ven; mira los clips animados del [Showcase](/pyzed/es/showcase/) para verlos en marcha.",
+    ),
+    related=["button", "popover", "stack"],
+)
+
+add(
+    slug="anchor-layout",
+    name=T("Anchor layout", "Disposición anclada"),
+    category="layout",
+    api=["pyzed.anchor_layout", "pyzed.anchor", "pyzed.anchors.place"],
+    blurb=T("Free positions like a form designer, with anchors that follow resizes.",
+            "Posiciones libres como en un diseñador de formularios, con anclas que siguen al redimensionar."),
+    desc=T(
+        "Places children at exact positions, the way a visual form designer does, and says how each one "
+        "follows a resize: `pz.anchor(child, x=, y=, width=, height=, anchor=)` keeps the distance to the "
+        "edges it is anchored to, stretches between opposite edges and stays centered otherwise. Presets "
+        "such as `\"top_right\"`, `\"bottom_wide\"`, `\"center\"` or `\"full\"` cover the usual cases. "
+        "`pyzed.anchors.place` is the math behind it, for your own layouts.",
+        "Coloca los hijos en posiciones exactas, como un diseñador visual de formularios, y dice cómo sigue "
+        "cada uno un cambio de tamaño: `pz.anchor(child, x=, y=, width=, height=, anchor=)` mantiene la "
+        "distancia a los bordes a los que está anclado, se estira entre bordes opuestos y si no se queda "
+        "centrado. Presets como `\"top_right\"`, `\"bottom_wide\"`, `\"center\"` o `\"full\"` cubren los "
+        "casos habituales. `pyzed.anchors.place` es la cuenta que hay detrás, para tus propias disposiciones.",
+    ),
+    when=T(
+        ["For forms drawn in Pyzed Design (it is what the Form view generates) or ported from Visual Basic, "
+         "Qt Designer or WinForms.",
+         "For game HUDs and overlays where things stick to corners.",
+         "For forms that grow and shrink with the window, prefer `row`, `column` and `grid`."],
+        ["Para formularios dibujados en Pyzed Design (es lo que genera la vista de Formulario) o traídos de "
+         "Visual Basic, Qt Designer o WinForms.",
+         "Para HUDs de juegos y capas en las que las cosas se pegan a las esquinas.",
+         "Para formularios que crecen y encogen con la ventana, mejor `row`, `column` y `grid`."],
+    ),
+    preview={"code": """t = pz.theme.current()
+pz.container(pz.anchor_layout([
+    pz.anchor(ui.heading("Report", level=3), x=16, y=12, width=200, height=28, anchor="top_left"),
+    pz.anchor(ui.icon_button("x", on_close), x=356, y=12, width=28, height=28, anchor="top_right"),
+    pz.anchor(ui.input("", on_input, placeholder="Search…"), x=16, y=56, width=368, height=30,
+              anchor="top_wide"),
+    pz.anchor(ui.button("Close", on_close, variant="solid"), x=284, y=172, width=100, height=30,
+              anchor="bottom_right"),
+], design=(400, 216)), width=400, height=216, bg=t.panel, border_color=t.border, border_width=1, radius=8)"""},
+    usage="""class Report(pz.App):
+    def view(self):
+        return pz.anchor_layout([
+            pz.anchor(ui.heading("Report"), x=16, y=12, width=368, height=28, anchor="top_wide"),
+            pz.anchor(self.table(), x=16, y=48, width=368, height=196, anchor="full"),
+            pz.anchor(ui.button("Close", self.close), x=284, y=252, width=100, height=32,
+                      anchor="bottom_right"),
+        ], design=(400, 300))""",
+    notes=T(
+        "`design` is the size the positions were measured in; when the layout gets more or less room, each "
+        "child moves or stretches from there. Try it live: drag the window corner of a form in Pyzed Design.",
+        "`design` es el tamaño en el que se midieron las posiciones; cuando la disposición tiene más o menos "
+        "espacio, cada hijo se mueve o se estira desde ahí. Pruébalo en vivo: arrastra la esquina de un "
+        "formulario en Pyzed Design.",
+    ),
+    related=["stack", "grid", "container"],
+    badge="new",
+)
+
+# Base widgets documented on the page of the component built on them.
+_BASE_APIS = {
+    "button": ["pyzed.button"],
+    "input": ["pyzed.text_input"],
+    "checkbox": ["pyzed.checkbox"],
+    "switch": ["pyzed.toggler"],
+    "slider": ["pyzed.slider", "pyzed.vertical_slider"],
+    "progress": ["pyzed.progress_bar"],
+    "select": ["pyzed.pick_list"],
+    "radio-group": ["pyzed.radio"],
+}
+
+# ------------------------------------------------------------------------------------- plain words
+# One or two sentences per component for readers who don't program: what it is, as you'd see it.
+
+PLAIN = {
+    "button": T("A button is something you click to make the app do something: save, send, open, delete.",
+                "Un botón es algo que pulsas para que la app haga algo: guardar, enviar, abrir, borrar."),
+    "icon-button": T("A small button with just a picture (a magnifying glass, a gear) instead of words.",
+                     "Un botón pequeño con solo un dibujo (una lupa, un engranaje) en lugar de palabras."),
+    "split-button": T("A button with two parts: the big part does the usual thing, the little arrow shows other ways to do it.",
+                      "Un botón con dos partes: la grande hace lo habitual y la flechita muestra otras formas de hacerlo."),
+    "toggle-group": T("A row of icon buttons where only one can be on, like choosing left, center or right alignment.",
+                      "Una fila de botones con iconos en la que solo uno puede estar activo, como elegir alinear a la izquierda, al centro o a la derecha."),
+    "chip": T("A small rounded tag. Click it to turn a filter on or off, or press its ✕ to remove it.",
+              "Una etiqueta pequeña y redondeada. Púlsala para activar o quitar un filtro, o pulsa su ✕ para quitarla."),
+    "mouse-area": T("An invisible layer that lets anything (a picture, a card, a drawing) notice clicks and the mouse.",
+                    "Una capa invisible que permite que cualquier cosa (una imagen, una tarjeta, un dibujo) note los clics y el ratón."),
+    "label": T("Plain text on the screen, in the colors of the current theme.",
+               "Texto normal en la pantalla, con los colores del tema actual."),
+    "heading": T("A title: bigger, bolder text that names a page or a section.",
+                 "Un título: texto más grande y en negrita que nombra una página o una sección."),
+    "badge": T("A tiny colored pill with a word or two, like “beta” or “3 errors”.",
+               "Una pastilla de color diminuta con una o dos palabras, como “beta” o “3 errores”."),
+    "indicator": T("A small colored dot that tells a state at a glance: green is fine, red is a problem.",
+                   "Un puntito de color que indica un estado de un vistazo: verde es que va bien, rojo que hay un problema."),
+    "kbd": T("Draws keyboard keys, so people learn the shortcut: Ctrl + S.",
+             "Dibuja teclas del teclado para que la gente aprenda el atajo: Ctrl + S."),
+    "avatar": T("A circle with someone's initials, in their own color.",
+                "Un círculo con las iniciales de alguien, en su propio color."),
+    "tooltip": T("A little box with a hint that appears when you rest the mouse on something.",
+                 "Una cajita con una pista que aparece cuando dejas el ratón encima de algo."),
+    "divider": T("A thin line that separates groups of things.", "Una línea fina que separa grupos de cosas."),
+    "card": T("A box with a border that keeps related things together, like a card on a table.",
+              "Una caja con borde que mantiene juntas las cosas relacionadas, como una ficha sobre una mesa."),
+    "input": T("A box where people type one line of text: a name, an email, a password.",
+               "Una caja donde la gente escribe una línea de texto: un nombre, un correo, una contraseña."),
+    "search-input": T("A text box with a magnifying glass, for typing what you are looking for.",
+                      "Una caja de texto con una lupa, para escribir lo que buscas."),
+    "checkbox": T("A square you tick to say yes to an option.", "Un cuadrado que marcas para decir que sí a una opción."),
+    "switch": T("An on/off switch, like a light switch, for settings that change right away.",
+                "Un interruptor de encendido y apagado, como el de la luz, para ajustes que cambian al momento."),
+    "slider": T("A bar with a knob you drag to pick an amount, like a volume control.",
+                "Una barra con un botón que arrastras para elegir una cantidad, como el control del volumen."),
+    "number-field": T("A box with a number and − / + buttons to make it smaller or bigger.",
+                      "Una caja con un número y botones − / + para hacerlo más pequeño o más grande."),
+    "select": T("A box that opens a list so you can pick one option from it.",
+                "Una caja que abre una lista para que elijas una opción."),
+    "radio-group": T("A few round options where picking one unpicks the others.",
+                     "Unas cuantas opciones redondas en las que elegir una desmarca las demás."),
+    "segmented": T("A row of joined buttons where exactly one is chosen, like Day / Week / Month in a calendar.",
+                   "Una fila de botones unidos en la que hay exactamente uno elegido, como Día / Semana / Mes en un calendario."),
+    "field": T("A row of a form: the name of a setting on the left and its control on the right.",
+               "Una fila de un formulario: el nombre de un ajuste a la izquierda y su control a la derecha."),
+    "color-picker": T("A palette to choose a color, its transparency, or a blend of colors.",
+                      "Una paleta para elegir un color, su transparencia o una mezcla de colores."),
+    "icon-picker": T("A searchable grid of little pictures to choose an icon from.",
+                     "Una cuadrícula de dibujitos con buscador para elegir un icono."),
+    "progress": T("A bar that fills up to show how much of a task is done.",
+                  "Una barra que se llena para mostrar cuánto falta de una tarea."),
+    "spinner": T("A spinning circle that says “wait, I'm working on it”.",
+                 "Un círculo que gira y dice “espera, estoy en ello”."),
+    "callout": T("A colored box inside the page with a message: a tip, a warning or an error.",
+                 "Una caja de color dentro de la página con un mensaje: un consejo, un aviso o un error."),
+    "toast": T("A small notification that pops up in a corner and goes away by itself.",
+               "Una notificación pequeña que aparece en una esquina y se va sola."),
+    "empty-state": T("What a screen shows when there is nothing in it yet, with a hint of what to do next.",
+                     "Lo que muestra una pantalla cuando aún no tiene nada, con una pista de qué hacer después."),
+    "count-badge": T("A little round number, like the count of unread messages on an app icon.",
+                     "Un numerito redondo, como el número de mensajes sin leer en el icono de una app."),
+    "keybinding-hint": T("A quiet line that teaches a shortcut: “Open file  Ctrl P”.",
+                         "Una línea discreta que enseña un atajo: “Abrir archivo  Ctrl P”."),
+    "table": T("Rows and columns of data, like a spreadsheet you can sort by clicking a column.",
+               "Filas y columnas de datos, como una hoja de cálculo que ordenas pulsando una columna."),
+    "virtual-list": T("A list that stays fast even with millions of rows, because it only draws what you see.",
+                      "Una lista que sigue siendo rápida con millones de filas, porque solo dibuja lo que ves."),
+    "stat": T("A big number with its name and whether it went up or down, like on a dashboard.",
+              "Un número grande con su nombre y si subió o bajó, como en un panel de control."),
+    "sparkline": T("A tiny line chart that shows if something is going up or down.",
+                   "Un gráfico de líneas diminuto que muestra si algo sube o baja."),
+    "bar-chart": T("A chart of bars to compare a few amounts.", "Un gráfico de barras para comparar unas pocas cantidades."),
+    "donut": T("A ring cut into colored slices that shows the parts of a whole.",
+               "Un anillo dividido en porciones de colores que muestra las partes de un todo."),
+    "diff-stat": T("How many lines were added (green) and removed (red) in a change.",
+                   "Cuántas líneas se añadieron (verde) y se quitaron (rojo) en un cambio."),
+    "facepile": T("A row of overlapping avatars that shows who is here.",
+                  "Una fila de avatares superpuestos que muestra quién está."),
+    "settings-group": T("A titled block of settings, like a section of a preferences window.",
+                        "Un bloque de ajustes con título, como una sección de una ventana de preferencias."),
+    "list-item": T("One row of a list: an icon, a name and maybe something on the right.",
+                   "Una fila de una lista: un icono, un nombre y quizá algo a la derecha."),
+    "list-header": T("A small title above a group of rows.", "Un título pequeño encima de un grupo de filas."),
+    "tree": T("A list of folders you can open and close, like the files of a project.",
+              "Una lista de carpetas que puedes abrir y cerrar, como los archivos de un proyecto."),
+    "menu": T("The list of options that appears when you right-click or press a “more” button.",
+              "La lista de opciones que aparece al hacer clic derecho o pulsar un botón de “más”."),
+    "accordion": T("Several sections stacked up, each one opens or closes when you click its title.",
+                   "Varias secciones apiladas; cada una se abre o se cierra al pulsar su título."),
+    "disclosure": T("A section with a little arrow that shows or hides extra details.",
+                    "Una sección con una flechita que muestra u oculta detalles extra."),
+    "tab-bar": T("The tabs at the top of an editor, one per open document.",
+                 "Las pestañas de arriba de un editor, una por documento abierto."),
+    "breadcrumbs": T("Shows where you are, step by step: Folder › Subfolder › File.",
+                     "Muestra dónde estás, paso a paso: Carpeta › Subcarpeta › Archivo."),
+    "toolbar": T("A thin bar with the actions of what you are looking at.",
+                 "Una barra fina con las acciones de lo que estás viendo."),
+    "layer": T("Puts something on top of the screen, like a search box, and closes it if you click outside.",
+               "Pone algo encima de la pantalla, como un buscador, y lo cierra si pulsas fuera."),
+    "modal": T("A window inside the window that asks for your attention before you go on.",
+               "Una ventana dentro de la ventana que pide tu atención antes de seguir."),
+    "popover": T("A small floating box that appears next to where you clicked, like a right-click menu.",
+                 "Una cajita flotante que aparece junto a donde pulsaste, como un menú de clic derecho."),
+    "command-palette": T("A search box for every action of the app: type what you want to do and press Enter.",
+                         "Un buscador de todas las acciones de la app: escribe lo que quieres hacer y pulsa Enter."),
+    "picker": T("A floating search box with a list of results that narrows as you type.",
+                "Un buscador flotante con una lista de resultados que se reduce mientras escribes."),
+    "dialog-layer": T("Darkens the app and shows a dialog in the middle, so the question can't be missed.",
+                      "Oscurece la app y muestra un diálogo en el centro, para que la pregunta no pase desapercibida."),
+    "alert": T("A message box with a single OK button.", "Una caja de mensaje con un solo botón de Aceptar."),
+    "confirm": T("Asks “are you sure?” before doing something that can't be undone.",
+                 "Pregunta “¿seguro?” antes de hacer algo que no se puede deshacer."),
+    "prompt": T("A small box that asks you to type something, like a new name for a file.",
+                "Una cajita que te pide escribir algo, como un nombre nuevo para un archivo."),
+    "choice": T("A question with several possible answers, each one a button.",
+                "Una pregunta con varias respuestas posibles, cada una un botón."),
+    "unsaved-changes": T("The “Save your changes before closing?” question.",
+                         "La pregunta “¿Guardar los cambios antes de cerrar?”."),
+    "workspace": T("The whole layout of an editor-like window: bar on top, side panels, the main area and a bar at the bottom.",
+                   "Toda la disposición de una ventana tipo editor: barra arriba, paneles laterales, la zona principal y una barra abajo."),
+    "title-bar": T("The bar at the very top of the window, with the project name and quick buttons.",
+                   "La barra de lo más alto de la ventana, con el nombre del proyecto y botones rápidos."),
+    "window-frame": T("Draws the window's own top bar, with its menus and minimize / maximize / close buttons.",
+                      "Dibuja la barra superior de la propia ventana, con sus menús y los botones de minimizar, maximizar y cerrar."),
+    "status-bar": T("The thin bar at the bottom of the window with small facts: errors, line number, language.",
+                    "La barra fina de abajo de la ventana con datos pequeños: errores, número de línea, lenguaje."),
+    "panel": T("A side area of the window, like the file list on the left, that you can make wider or narrower.",
+               "Una zona lateral de la ventana, como la lista de archivos de la izquierda, que puedes ensanchar o estrechar."),
+    "panel-header": T("The title row of a side panel, with its buttons.", "La fila de título de un panel lateral, con sus botones."),
+    "split": T("Two areas side by side (or one above the other) with a line you drag to resize them.",
+               "Dos zonas lado a lado (o una encima de otra) con una línea que arrastras para cambiar su tamaño."),
+    "editor": T("A box for writing code, with colors, line numbers and everything a programmer expects.",
+                "Una caja para escribir código, con colores, números de línea y todo lo que espera un programador."),
+    "terminal": T("Shows the text a program prints, with its colors, like a terminal window.",
+                  "Muestra el texto que imprime un programa, con sus colores, como una ventana de terminal."),
+    "console": T("A list of messages from the app (info, warnings, errors) that you can filter and copy.",
+                 "Una lista de mensajes de la app (información, avisos, errores) que puedes filtrar y copiar."),
+    "markdown": T("Shows formatted text (titles, lists, links) written in the simple Markdown format.",
+                  "Muestra texto con formato (títulos, listas, enlaces) escrito en el formato sencillo Markdown."),
+    "shortcuts": T("A searchable list of all the keyboard shortcuts of an app.",
+                   "Una lista con buscador de todos los atajos de teclado de una app."),
+    "about": T("The “About this app” box: name, version and links.", "La caja “Acerca de esta app”: nombre, versión y enlaces."),
+    "reference-browser": T("A help window with the documentation inside the app, searchable and offline.",
+                           "Una ventana de ayuda con la documentación dentro de la app, con buscador y sin conexión."),
+    "row": T("Puts things side by side, from left to right.", "Pone las cosas una al lado de la otra, de izquierda a derecha."),
+    "column": T("Puts things one under the other, from top to bottom.", "Pone las cosas una debajo de la otra, de arriba abajo."),
+    "container": T("A box around one thing, to give it a size, a margin, a background or a border.",
+                   "Una caja alrededor de una cosa, para darle un tamaño, un margen, un fondo o un borde."),
+    "stack": T("Puts things on top of each other, like sheets of paper.", "Pone las cosas unas encima de otras, como hojas de papel."),
+    "grid": T("Arranges things in rows and columns, like tiles on a wall.", "Ordena las cosas en filas y columnas, como azulejos en una pared."),
+    "flex": T("Spreads things along a line: packed together, evenly spaced, or with one that grows.",
+              "Reparte las cosas a lo largo de una línea: juntas, con el mismo espacio o con una que crece."),
+    "scrollable": T("Lets you scroll content that doesn't fit, with a scroll bar.",
+                    "Te deja desplazar el contenido que no cabe, con una barra de desplazamiento."),
+    "resizable": T("A panel with an edge you can drag to make it bigger or smaller.",
+                   "Un panel con un borde que puedes arrastrar para hacerlo más grande o más pequeño."),
+    "spacing": T("Empty space: a fixed gap, or a spring that pushes things apart.",
+                 "Espacio vacío: un hueco fijo, o un muelle que separa las cosas."),
+    "responsive": T("Changes the layout depending on how much room there is, like a phone versus a monitor.",
+                    "Cambia la disposición según el espacio que haya, como un móvil frente a un monitor."),
+    "anchor-layout": T("Places things exactly where you put them, and says which corner each one sticks to when the window grows.",
+                       "Coloca las cosas justo donde las pones y dice a qué esquina se pega cada una cuando la ventana crece."),
+    "text": T("Text with any size, color and font you choose.", "Texto con el tamaño, el color y la fuente que elijas."),
+    "icon": T("Small pictures (a folder, a bell, a gear) from a library of more than 1,500.",
+              "Dibujos pequeños (una carpeta, una campana, un engranaje) de una biblioteca de más de 1.500."),
+    "image": T("Shows a picture from a file: a photo, a logo, a screenshot.",
+               "Muestra una imagen de un archivo: una foto, un logo, una captura."),
+    "rich-text": T("A sentence where some words are bold, colored or links.",
+                   "Una frase en la que algunas palabras van en negrita, de color o son enlaces."),
+    "qr-code": T("A square barcode a phone camera can read, for sharing a link.",
+                 "Un código de barras cuadrado que lee la cámara de un móvil, para compartir un enlace."),
+    "canvas": T("A blank sheet to draw shapes, lines and text on, for charts and games.",
+                "Una hoja en blanco para dibujar formas, líneas y texto, para gráficos y juegos."),
+    "animation": T("Makes things move: fade in, slide, bounce or glow, without extra work.",
+                   "Hace que las cosas se muevan: aparecer, deslizarse, rebotar o brillar, sin trabajo extra."),
+    "shader": T("A surface painted by the graphics card, for moving backgrounds and visual effects.",
+                "Una superficie pintada por la tarjeta gráfica, para fondos en movimiento y efectos visuales."),
+    "effects": T("Glows, frosted glass and transparency you can add to any box.",
+                 "Brillos, cristal esmerilado y transparencia que puedes añadir a cualquier caja."),
+}
+
+# ----------------------------------------------------------------------------------------- variants
+# One shot per item, cropped to the component. Captions that look like code (``variant="ghost"``) are
+# shown as code: they are the one argument that makes the difference.
+
+_VARIANT = T("Variant", "Variante")
+_SIZE = T("Size", "Tamaño")
+_STATE = T("State", "Estado")
+_COLOR = T("Color", "Color")
+_TINT = T("Tint", "Tinte")
+_KIND = T("Kind", "Tipo")
+_CONTENT = T("Content", "Contenido")
+_OPTIONS = T("Options", "Opciones")
+_BASE = T("Base widget", "Widget base")
+_BASE_TEXT = T("The `pz.*` widget underneath: no theme, every color and size is yours.",
+               "El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.")
+_HOVER = T("Drawn as the pointer shows it: tooltips only open on hover.",
+           "Dibujado tal como lo muestra el puntero: los tooltips solo se abren al pasar el ratón.")
+
+_MD = '"import pyzed as pz\\n\\n\\ndef main():\\n    pz.run(App)\\n"'
+_PY = '''"class Counter(pz.App):\\n    count = 0\\n\\n    def view(self):\\n        return ui.button('Add', self.add)"'''
+
+VARIANTS = {
+    # ------------------------------------------------------------------------------------ actions
+    "button": [
+        V(_VARIANT, [
+            ('variant="filled"', 'ui.button("Filled", on_press)'),
+            ('variant="ghost"', 'ui.button("Ghost", on_press, variant="ghost")'),
+            ('variant="subtle"', 'ui.button("Subtle", on_press, variant="subtle")'),
+            ('variant="outline"', 'ui.button("Outline", on_press, variant="outline")'),
+            ('variant="solid"', 'ui.button("Solid", on_press, variant="solid")'),
+            ('variant="tinted"', 'ui.button("Tinted", on_press, variant="tinted")'),
+        ], T("`filled` is the default; use `solid` for the one main action of a screen.",
+             "`filled` es la de por defecto; usa `solid` para la única acción principal de una pantalla.")),
+        V(T("Semantic colors", "Colores semánticos"), [
+            ('variant="accent"', 'ui.button("Upgrade", on_press, variant="accent", icon="sparkles")'),
+            ('variant="success"', 'ui.button("Done", on_press, variant="success", icon="check")'),
+            ('variant="warning"', 'ui.button("Careful", on_press, variant="warning", icon="triangle-alert")'),
+            ('variant="error"', 'ui.button("Delete", on_press, variant="error", icon="trash-2")'),
+            ('variant="info"', 'ui.button("Details", on_press, variant="info", icon="info")'),
+            ('variant="solid", tint="error"', 'ui.button("Delete forever", on_press, variant="solid", tint="error")'),
+        ], T("A color name as `variant` gives a tinted button; `tint=` colors a `solid` one.",
+             "Un nombre de color como `variant` da un botón teñido; `tint=` colorea uno `solid`.")),
+        V(_SIZE, [
+            ('size="xs"', 'ui.button("Extra small", on_press, size="xs")'),
+            ('size="sm"', 'ui.button("Small", on_press, size="sm")'),
+            ('size="md"', 'ui.button("Medium", on_press, size="md")'),
+            ('size="lg"', 'ui.button("Large", on_press, size="lg")'),
+        ]),
+        V(_CONTENT, [
+            ('icon="save"', 'ui.button("Save", on_press, icon="save")'),
+            ('icon_position="end"', 'ui.button("Next", on_press, icon="arrow-right", icon_position="end")'),
+            ('keys="ctrl-s"', 'ui.button("Save", on_press, icon="save", keys="ctrl-s")'),
+            ('icon_color="success"', 'ui.button("Online", on_press, icon="circle", icon_color="success")'),
+            (T("Icon only", "Solo icono"), 'ui.button(icon="plus", on_press=on_press)'),
+        ]),
+        V(_STATE, [
+            ('selected=True', 'ui.button("Selected", on_press, selected=True)'),
+            ('disabled=True', 'ui.button("Disabled", on_press, disabled=True)'),
+            (T("No on_press", "Sin on_press"), 'ui.button("Not wired yet")'),
+            ('full_width=True', 'pz.container(ui.button("Sign in", on_press, variant="solid", full_width=True), width=280)'),
+        ], T("A button without `on_press` is drawn disabled, so unfinished actions look unfinished.",
+             "Un botón sin `on_press` se dibuja deshabilitado, así las acciones sin terminar lo parecen.")),
+        V(T("Style overrides", "Estilo propio"), [
+            ('shadow=', 'ui.button("Lifted", on_press, variant="solid", shadow=("#00000066", (0, 4), 12))'),
+            ('bg=, color=', 'ui.button("Custom", on_press, bg="#c678dd", hover_bg="#d08ae6", color="#ffffff")'),
+            ('border_color=', 'ui.button("Gold border", on_press, variant="outline", border_color="#e5c07b")'),
+        ], T("The color and shadow arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) replace the theme's values for that button only.",
+             "Los argumentos de color y sombra de `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) reemplazan los valores del tema solo en ese botón.")),
+        V(_BASE, [
+            ('pz.button', 'pz.button("pz.button", on_press, padding=(6, 14), bg="#3a7bc8", color="#ffffff", radius=6)'),
+            (T("Any content", "Cualquier contenido"),
+             'pz.button(pz.row([pz.icon("heart", size=14), pz.text("Like")], spacing=6, align="center"), on_press,\n'
+             '          padding=(6, 12), bg="#c678dd22", color="#c678dd", border_color="#c678dd", border_width=1, radius=999)'),
+        ], _BASE_TEXT),
+    ],
+    "icon-button": [
+        V(_SIZE, [
+            ('size="xs"', 'ui.icon_button("star", on_press, size="xs")'),
+            ('size="sm"', 'ui.icon_button("star", on_press, size="sm")'),
+            ('size="md"', 'ui.icon_button("star", on_press, size="md")'),
+            ('size="lg"', 'ui.icon_button("star", on_press, size="lg")'),
+        ]),
+        V(_VARIANT, [
+            ('variant="ghost"', 'ui.icon_button("settings", on_press)'),
+            ('variant="filled"', 'ui.icon_button("settings", on_press, variant="filled")'),
+            ('variant="outline"', 'ui.icon_button("settings", on_press, variant="outline")'),
+            ('variant="solid"', 'ui.icon_button("settings", on_press, variant="solid")'),
+            ('variant="tinted"', 'ui.icon_button("settings", on_press, variant="tinted")'),
+        ]),
+        V(_COLOR, [
+            ('color="accent"', 'ui.icon_button("sparkles", on_press, color="accent")'),
+            ('color="success"', 'ui.icon_button("circle-check", on_press, color="success")'),
+            ('color="warning"', 'ui.icon_button("triangle-alert", on_press, color="warning")'),
+            ('color="error"', 'ui.icon_button("trash-2", on_press, color="error", variant="outline")'),
+        ]),
+        V(_STATE, [
+            ('selected=True', 'ui.icon_button("panel-left", on_press, selected=True)'),
+            ('disabled=True', 'ui.icon_button("lock", on_press, disabled=True)'),
+            ('tooltip="Search"', 'ui.icon_button("search", on_press, tooltip="Search")',
+             {"draw": 'shown_tooltip(ui.icon_button("search", on_press), "Search")'}),
+        ], _HOVER),
+    ],
+    "split-button": [
+        V(_VARIANT, [
+            ('variant="filled"', 'ui.split_button("Run", on_run, on_menu, icon="play")'),
+            ('variant="ghost"', 'ui.split_button("Run", on_run, on_menu, icon="play", variant="ghost")'),
+            ('variant="outline"', 'ui.split_button("Run", on_run, on_menu, icon="play", variant="outline")'),
+            ('variant="solid"', 'ui.split_button("Deploy", on_deploy, on_menu, icon="rocket", variant="solid")'),
+        ]),
+        V(_SIZE, [
+            ('size="sm"', 'ui.split_button("Build", on_build, on_menu, size="sm")'),
+            ('size="md"', 'ui.split_button("Build", on_build, on_menu, size="md")'),
+            ('size="lg"', 'ui.split_button("Build", on_build, on_menu, size="lg")'),
+        ]),
+        V(_CONTENT, [
+            (T("Text only", "Solo texto"), 'ui.split_button("Merge", on_merge, on_menu)'),
+            ('icon="git-merge"', 'ui.split_button("Merge", on_merge, on_menu, icon="git-merge")'),
+        ]),
+    ],
+    "toggle-group": [
+        V(_OPTIONS, [
+            (T("Two options", "Dos opciones"), 'ui.toggle_group([("list", "list"), ("grid", "layout-grid")], "list", on_select)'),
+            (T("Three options", "Tres opciones"),
+             'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n'
+             '                "center", on_select)'),
+            (T("Four options", "Cuatro opciones"),
+             'ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline"), ("s", "strikethrough")],\n'
+             '                "b", on_select)'),
+        ]),
+        V(T("Selection", "Selección"), [
+            ('selected="left"', 'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n                "left", on_select)'),
+            ('selected="right"', 'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n                "right", on_select)'),
+            ('selected=None', 'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n                None, on_select)'),
+        ]),
+    ],
+    "chip": [
+        V(_KIND, [
+            (T("Static", "Estático"), 'ui.chip("python")'),
+            ('on_press=', 'ui.chip("rust", on_press=on_filter)'),
+            ('selected=True', 'ui.chip("python", on_press=on_filter, selected=True)'),
+            ('on_remove=', 'ui.chip("iced", on_remove=on_remove)'),
+        ]),
+        V(_CONTENT, [
+            ('icon="tag"', 'ui.chip("design", icon="tag")'),
+            (T("Icon and remove", "Icono y quitar"), 'ui.chip("ada@example.com", icon="user", on_remove=on_remove)'),
+            (T("Selected with icon", "Elegido con icono"), 'ui.chip("favorites", icon="star", selected=True, on_press=on_filter)'),
+        ]),
+    ],
+    "mouse-area": [
+        V(T("Cursor", "Cursor"), [
+            ('cursor="pointer"', 'pz.mouse_area(ui.card(ui.label("Click me"), width=180), on_press=on_open, cursor="pointer")'),
+            ('cursor="grab"', 'pz.mouse_area(ui.card(ui.label("Drag me"), width=180), on_move=on_drag, cursor="grab")'),
+            ('cursor="crosshair"', 'pz.mouse_area(pz.canvas([draw.circle(60, 40, 24, fill="#74ade8")], width=120, height=80),\n              on_press=on_pick, cursor="crosshair")'),
+        ], T("The pointer shape is only visible with a real mouse; the shot shows the wrapped widget.",
+             "La forma del puntero solo se ve con un ratón real; la captura muestra el widget envuelto.")),
+        V(T("Hover content", "Contenido en hover"), [
+            (T("At rest", "En reposo"), 'pz.hover(ui.list_item("notes.py", on_open, icon="file-text"),\n         pz.container(ui.icon_button("x", on_close, size="xs"), align_x="end", width="fill"))',
+             {"draw": 'pz.container(ui.list_item("notes.py", on_open, icon="file-text"), width=240)'}),
+            (T("With the pointer over it", "Con el puntero encima"), 'pz.hover(ui.list_item("notes.py", on_open, icon="file-text"),\n         pz.container(ui.icon_button("x", on_close, size="xs"), align_x="end", width="fill"))',
+             {"draw": 'pz.container(pz.stack([ui.list_item("notes.py", on_open, icon="file-text", selected=True),\n    pz.container(ui.icon_button("x", on_close, size="xs"), align_x="end", align_y="center", width="fill", height=26)]), width=240)'}),
+        ], T("`pz.hover` only draws its `top` while the pointer is over it: here, the close button of a row.",
+             "`pz.hover` solo dibuja su `top` mientras el puntero está encima: aquí, el botón de cerrar de una fila.")),
+    ],
+    # ------------------------------------------------------------------------------------ display
+    "label": [
+        V(_SIZE, [
+            ('size="xs"', 'ui.label("Extra small", size="xs")'),
+            ('size="sm"', 'ui.label("Small", size="sm")'),
+            ('size="md"', 'ui.label("Medium", size="md")'),
+            ('size="lg"', 'ui.label("Large", size="lg")'),
+            ('size="xl"', 'ui.label("Extra large", size="xl")'),
+            ('size="2xl"', 'ui.label("Huge", size="2xl")'),
+        ], T("Named sizes follow the theme's font size; a number is a size in pixels.",
+             "Los tamaños con nombre siguen el tamaño de fuente del tema; un número es un tamaño en píxeles.")),
+        V(_COLOR, [
+            ('color="text"', 'ui.label("Text")'),
+            ('ui.muted', 'ui.muted("Muted text")'),
+            ('color="accent"', 'ui.label("Accent", color="accent")'),
+            ('color="success"', 'ui.label("Success", color="success")'),
+            ('color="warning"', 'ui.label("Warning", color="warning")'),
+            ('color="error"', 'ui.label("Error", color="error")'),
+            ('color="#c678dd"', 'ui.label("Any hex color", color="#c678dd")'),
+        ]),
+        V(T("Weight and style", "Peso y estilo"), [
+            ('weight="normal"', 'ui.label("Normal", weight="normal", size="lg")'),
+            ('weight="medium"', 'ui.label("Medium", weight="medium", size="lg")'),
+            ('weight="semibold"', 'ui.label("Semibold", weight="semibold", size="lg")'),
+            ('weight="bold"', 'ui.label("Bold", weight="bold", size="lg")'),
+            ('italic=True', 'ui.label("Italic", italic=True, size="lg")'),
+            ('mono=True', 'ui.label("def mono(): ...", mono=True)'),
+        ]),
+    ],
+    "heading": [
+        V(T("Level", "Nivel"), [
+            ('level=1', 'ui.heading("Project settings")'),
+            ('level=2', 'ui.heading("Project settings", level=2)'),
+            ('level=3', 'ui.heading("Project settings", level=3)'),
+            ('level=4', 'ui.heading("Project settings", level=4)'),
+        ]),
+        V(_COLOR, [
+            ('color="accent"', 'ui.heading("Welcome back", level=2, color="accent")'),
+            (T("With a muted line", "Con una línea discreta"), 'pz.column([ui.heading("Billing", level=2), ui.muted("Invoices and payment methods.")], spacing=4)'),
+        ]),
+    ],
+    "badge": [
+        V(_TINT, [
+            ('tint="accent"', 'ui.badge("accent")'),
+            ('tint="success"', 'ui.badge("passed", tint="success")'),
+            ('tint="warning"', 'ui.badge("pending", tint="warning")'),
+            ('tint="error"', 'ui.badge("failed", tint="error")'),
+            ('tint="info"', 'ui.badge("info", tint="info")'),
+            ('tint="#c678dd"', 'ui.badge("custom", tint="#c678dd")'),
+        ]),
+        V(_VARIANT, [
+            ('variant="soft"', 'ui.badge("soft")'),
+            ('variant="solid"', 'ui.badge("solid", variant="solid")'),
+            ('variant="outline"', 'ui.badge("outline", variant="outline")'),
+        ]),
+        V(T("With an icon", "Con icono"), [
+            ('icon="sparkles"', 'ui.badge("new", icon="sparkles")'),
+            ('icon="circle-x"', 'ui.badge("3 errors", tint="error", icon="circle-x")'),
+            ('variant="solid", icon=', 'ui.badge("verified", tint="success", variant="solid", icon="check")'),
+        ]),
+    ],
+    "indicator": [
+        V(_COLOR, [
+            ('"accent"', 'ui.indicator()'),
+            ('"success"', 'ui.indicator("success")'),
+            ('"warning"', 'ui.indicator("warning")'),
+            ('"error"', 'ui.indicator("error")'),
+            ('"text_muted"', 'ui.indicator("text_muted")'),
+            ('"#c678dd"', 'ui.indicator("#c678dd")'),
+        ]),
+        V(_SIZE, [
+            ('size=6', 'ui.indicator("success", size=6)'),
+            ('size=10', 'ui.indicator("success", size=10)'),
+            ('size=14', 'ui.indicator("success", size=14)'),
+        ]),
+        V(T("Next to text", "Junto a un texto"), [
+            (T("Online", "Conectado"), 'pz.row([ui.indicator("success"), ui.label("Ana is online")], spacing=8, align="center")'),
+            (T("Unsaved", "Sin guardar"), 'pz.row([ui.label("notes.py"), ui.indicator(size=8)], spacing=6, align="center")'),
+        ]),
+    ],
+    "kbd": [
+        V(T("Keys", "Teclas"), [
+            (T("One key", "Una tecla"), 'ui.kbd("enter")'),
+            (T("Combination", "Combinación"), 'ui.kbd("ctrl-shift-p")'),
+            (T("Chord", "Acorde"), 'ui.kbd("ctrl-k ctrl-s")'),
+            (T("Special keys", "Teclas especiales"), 'pz.row([ui.kbd("escape"), ui.kbd("tab"), ui.kbd("backspace"), ui.kbd("up")], spacing=6)'),
+        ], T("Write shortcuts as `\"ctrl-s\"`; on macOS `ctrl` becomes ⌃ and `cmd` ⌘ automatically.",
+             "Escribe los atajos como `\"ctrl-s\"`; en macOS `ctrl` pasa a ⌃ y `cmd` a ⌘ solo.")),
+        V(_SIZE, [
+            ('size="xs"', 'ui.kbd("ctrl-p", size="xs")'),
+            ('size="sm"', 'ui.kbd("ctrl-p", size="sm")'),
+        ]),
+    ],
+    "avatar": [
+        V(T("Collaborator color", "Color de colaborador"), [
+            ('index=0', 'ui.avatar("AL", index=0)'),
+            ('index=1', 'ui.avatar("KV", index=1)'),
+            ('index=2', 'ui.avatar("MZ", index=2)'),
+            ('index=3', 'ui.avatar("JD", index=3)'),
+            ('index=4', 'ui.avatar("SR", index=4)'),
+            ('index=5', 'ui.avatar("PB", index=5)'),
+        ]),
+        V(_SIZE, [
+            ('size=18', 'ui.avatar("KV", size=18)'),
+            ('size=22', 'ui.avatar("KV", size=22)'),
+            ('size=32', 'ui.avatar("KV", size=32)'),
+            ('size=48', 'ui.avatar("KV", size=48)'),
+        ]),
+        V(_COLOR, [
+            ('color="#c678dd"', 'ui.avatar("PZ", color="#c678dd", size=32)'),
+            ('color="#e5c07b"', 'ui.avatar("UI", color="#e5c07b", size=32)'),
+        ]),
+    ],
+    "tooltip": [
+        V(T("Position", "Posición"), [
+            ('position="bottom"', 'ui.tooltip(ui.icon_button("save", on_save), "Save")',
+             {"draw": 'shown_tooltip(ui.icon_button("save", on_save), "Save")'}),
+            ('position="top"', 'ui.tooltip(ui.icon_button("save", on_save), "Save", position="top")',
+             {"draw": 'shown_tooltip(ui.icon_button("save", on_save), "Save", position="top")'}),
+            ('position="right"', 'ui.tooltip(ui.icon_button("save", on_save), "Save", position="right")',
+             {"draw": 'shown_tooltip(ui.icon_button("save", on_save), "Save", position="right")'}),
+            ('position="left"', 'ui.tooltip(ui.icon_button("save", on_save), "Save", position="left")',
+             {"draw": 'shown_tooltip(ui.icon_button("save", on_save), "Save", position="left")'}),
+        ], _HOVER),
+        V(_CONTENT, [
+            ('keys="ctrl-s"', 'ui.tooltip(ui.button("Save", on_save), "Save the file", keys="ctrl-s")',
+             {"draw": 'shown_tooltip(ui.button("Save", on_save), "Save the file", keys="ctrl-s")'}),
+            ('icon_button(tooltip=)', 'ui.icon_button("settings", on_settings, tooltip="Settings")',
+             {"draw": 'shown_tooltip(ui.icon_button("settings", on_settings), "Settings")'}),
+        ], _HOVER),
+    ],
+    "divider": [
+        V(T("Direction", "Dirección"), [
+            (T("Horizontal", "Horizontal"), 'pz.column([ui.label("Account"), ui.divider(), ui.label("Sign out")], spacing=8, width=220)'),
+            ('vertical=True', 'pz.row([ui.label("Edit"), ui.divider(vertical=True), ui.label("View")], spacing=10, height=18)'),
+        ]),
+        V(_COLOR, [
+            ('color="accent"', 'pz.container(ui.divider(color="accent"), width=220)'),
+            ('pz.rule(thickness=3)', 'pz.container(pz.rule(color="#e5c07b", thickness=3), width=220)'),
+        ]),
+    ],
+    "card": [
+        V(_CONTENT, [
+            (T("Content only", "Solo contenido"), 'ui.card(ui.muted("A bordered surface."), width=260)'),
+            ('title=', 'ui.card(ui.muted("Three files changed."), title="Changes", width=260)'),
+            ('title=, actions=', 'ui.card(ui.muted("Three files changed."), title="Changes",\n        actions=[ui.icon_button("ellipsis", on_menu, size="sm")], width=260)'),
+        ]),
+        V(T("Padding", "Relleno"), [
+            ('padding=8', 'ui.card(ui.label("Compact"), padding=8)'),
+            ('padding=16', 'ui.card(ui.label("Default"))'),
+            ('padding=28', 'ui.card(ui.label("Roomy"), padding=28)'),
+        ]),
+    ],
+    # -------------------------------------------------------------------------------------- forms
+    "input": [
+        V(_CONTENT, [
+            ('placeholder=', 'ui.input("", on_input, placeholder="Project name", width=260)'),
+            (T("With a value", "Con valor"), 'ui.input("Pyzed", on_input, width=260)'),
+            ('icon="mail"', 'ui.input("ada@example.com", on_input, icon="mail", width=260)'),
+            ('secure=True', 'ui.input("hunter2", on_input, secure=True, icon="lock", width=260)'),
+        ]),
+        V(_SIZE, [
+            ('size="sm"', 'ui.input("Small", on_input, size="sm", width=260)'),
+            ('size="md"', 'ui.input("Medium", on_input, size="md", width=260)'),
+            ('size="lg"', 'ui.input("Large", on_input, size="lg", width=260)'),
+        ]),
+        V(T("Style", "Estilo"), [
+            ('borderless=True', 'ui.input("Borderless", on_input, borderless=True, width=260)'),
+            ('mono=True', 'ui.input("SELECT * FROM users", on_input, mono=True, width=260)'),
+            (T("Read-only (no on_input)", "Solo lectura (sin on_input)"), 'ui.input("Can\'t edit me", width=260)'),
+        ]),
+        V(T("Validation", "Validación"), [
+            (T("With an error", "Con un error"), 'ui.field("Email", ui.input("ada@", on_input, width=220), error="Enter a valid email")'),
+        ], T("Show errors with [Field](/pyzed/library/field/)'s `error=`, next to the input.",
+             "Muestra los errores con `error=` de [Campo de formulario](/pyzed/es/library/field/), junto al campo.")),
+        V(_BASE, [
+            ('pz.text_input', 'pz.text_input("", placeholder="pz.text_input", on_input=on_input, width=260, padding=8,\n              radius=8, border_color="#c678dd", focus_border_color="#e5c07b")'),
+        ], _BASE_TEXT),
+    ],
+    "search-input": [
+        V(_CONTENT, [
+            (T("Empty", "Vacío"), 'ui.search_input("", on_query, width=260)'),
+            (T("With a query", "Con búsqueda"), 'ui.search_input("button", on_query, width=260)'),
+            ('placeholder=', 'ui.search_input("", on_query, placeholder="Search components…", width=260)'),
+        ]),
+        V(_SIZE, [
+            ('size="sm"', 'ui.search_input("", on_query, size="sm", width=260)'),
+            ('size="lg"', 'ui.search_input("", on_query, size="lg", width=260)'),
+            ('borderless=True', 'ui.search_input("", on_query, borderless=True, width=260)'),
+        ]),
+    ],
+    "checkbox": [
+        V(_STATE, [
+            ('checked=True', 'ui.checkbox(True, on_toggle, label="Format on save")'),
+            ('checked=False', 'ui.checkbox(False, on_toggle, label="Format on save")'),
+            (T("Read-only (no on_toggle)", "Solo lectura (sin on_toggle)"), 'ui.checkbox(True, label="Managed by your admin")'),
+        ]),
+        V(_CONTENT, [
+            (T("No label", "Sin etiqueta"), 'ui.checkbox(True, on_toggle)'),
+            (T("A list of options", "Una lista de opciones"), 'pz.column([ui.checkbox(True, on_toggle, label="Python"),\n           ui.checkbox(False, on_toggle, label="Rust"),\n           ui.checkbox(True, on_toggle, label="TypeScript")], spacing=8)'),
+        ]),
+        V(_BASE, [
+            ('pz.checkbox', 'pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)'),
+        ], _BASE_TEXT),
+    ],
+    "switch": [
+        V(_STATE, [
+            (T("On", "Activado"), 'ui.switch(True, on_toggle, label="Autosave")'),
+            (T("Off", "Desactivado"), 'ui.switch(False, on_toggle, label="Autosave")'),
+            (T("Read-only (no on_toggle)", "Solo lectura (sin on_toggle)"), 'ui.switch(True, label="Sync (managed)")'),
+            (T("No label", "Sin etiqueta"), 'ui.switch(True, on_toggle)'),
+        ]),
+        V(_BASE, [
+            ('pz.toggler', 'pz.toggler(True, "pz.toggler", on_toggle=on_toggle, accent="#a1c181", size=22)'),
+        ], _BASE_TEXT),
+    ],
+    "slider": [
+        V(T("Value", "Valor"), [
+            ('0.0', 'ui.slider(0.0, on_change, width=240)'),
+            ('0.35', 'ui.slider(0.35, on_change, width=240)'),
+            ('1.0', 'ui.slider(1.0, on_change, width=240)'),
+        ]),
+        V(T("Range and step", "Rango y paso"), [
+            ('min=0, max=100, step=1', 'ui.slider(70, on_change, min=0, max=100, step=1, width=240)'),
+            ('step=10', 'pz.column([ui.slider(40, on_change, min=0, max=100, step=10, width=240),\n           ui.muted("40 %")], spacing=6, align="center")'),
+        ]),
+        V(_BASE, [
+            ('pz.slider', 'pz.slider(0, 100, 60, on_change=on_change, width=240, accent="#e5c07b", knob_color="#ffffff")'),
+            ('pz.vertical_slider', 'pz.vertical_slider(0, 100, 60, on_change=on_change, height=120, accent="#56b6c2")'),
+        ], _BASE_TEXT),
+    ],
+    "number-field": [
+        V(_OPTIONS, [
+            (T("Plain", "Simple"), 'ui.number_field(4, on_change, min=1, max=8)'),
+            ('suffix="px"', 'ui.number_field(14, on_change, min=8, max=32, suffix="px")'),
+            ('step=0.1', 'ui.number_field(0.5, on_change, step=0.1, suffix="s", width=140)'),
+            ('align="start"', 'ui.number_field(8080, on_change, min=1, max=65535, align="start", width=140)'),
+        ]),
+        V(T("Limits", "Límites"), [
+            (T("At the minimum", "En el mínimo"), 'ui.number_field(1, on_change, min=1, max=8)'),
+            (T("At the maximum", "En el máximo"), 'ui.number_field(8, on_change, min=1, max=8)'),
+        ], T("At a limit its button is dimmed and the value can't go further.",
+             "En un límite su botón se atenúa y el valor no puede ir más allá.")),
+    ],
+    "select": [
+        V(_STATE, [
+            (T("With a value", "Con valor"), 'ui.select(["Python", "Rust", "TypeScript"], "Rust", on_select, width=200)'),
+            ('placeholder=', 'ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", width=200)'),
+            (T("Read-only (no on_select)", "Solo lectura (sin on_select)"), 'ui.select(["One Dark"], "One Dark", width=200)'),
+        ]),
+        V(_SIZE, [
+            ('size="sm"', 'ui.select(["Python", "Rust"], "Python", on_select, size="sm", width=200)'),
+            ('size="md"', 'ui.select(["Python", "Rust"], "Python", on_select, size="md", width=200)'),
+            ('size="lg"', 'ui.select(["Python", "Rust"], "Python", on_select, size="lg", width=200)'),
+        ]),
+        V(_BASE, [
+            ('pz.pick_list', 'pz.pick_list(["Small", "Medium", "Large"], "Medium", on_select, width=200,\n             bg="#2b2140", color="#e9d5ff", border_color="#c678dd", radius=8)'),
+        ], _BASE_TEXT),
+    ],
+    "radio-group": [
+        V(T("Direction", "Dirección"), [
+            (T("Vertical", "Vertical"), 'ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select)'),
+            ('horizontal=True', 'ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True)'),
+            ('spacing=16', 'ui.radio_group(["Small", "Medium", "Large"], "Medium", on_select, horizontal=True, spacing=16)'),
+        ]),
+        V(_OPTIONS, [
+            (T("(value, label) pairs", "Pares (valor, etiqueta)"), 'ui.radio_group([("lf", "Unix (LF)"), ("crlf", "Windows (CRLF)")], "crlf", on_select)'),
+            (T("Nothing selected", "Nada elegido"), 'ui.radio_group(["Yes", "No"], None, on_select, horizontal=True)'),
+        ]),
+        V(_BASE, [
+            ('pz.radio', 'pz.row([pz.radio("Cats", True, on_select, accent="#e5c07b"),\n        pz.radio("Dogs", False, on_select, accent="#e5c07b")], spacing=16)'),
+        ], _BASE_TEXT),
+    ],
+    "segmented": [
+        V(_OPTIONS, [
+            (T("Two options", "Dos opciones"), 'ui.segmented(["Code", "Preview"], "Code", on_select)'),
+            (T("Three options", "Tres opciones"), 'ui.segmented(["Day", "Week", "Month"], "Week", on_select)'),
+            (T("Five options", "Cinco opciones"), 'ui.segmented(["XS", "S", "M", "L", "XL"], "M", on_select)'),
+        ]),
+        V(T("Selection", "Selección"), [
+            (T("First", "Primera"), 'ui.segmented(["Editor", "Terminal", "Both"], "Editor", on_select)'),
+            (T("Last", "Última"), 'ui.segmented(["Editor", "Terminal", "Both"], "Both", on_select)'),
+        ]),
+    ],
+    "field": [
+        V(T("Control", "Control"), [
+            (T("Switch", "Interruptor"), 'pz.container(ui.field("Autosave", ui.switch(True, on_toggle)), width=380)'),
+            (T("Number field", "Campo numérico"), 'pz.container(ui.field("Font size", ui.number_field(14, on_change, suffix="px")), width=380)'),
+            (T("Select", "Select"), 'pz.container(ui.field("Theme", ui.select(["One Dark", "One Light"], "One Dark", on_select, width=150)), width=380)'),
+            (T("Input", "Campo de texto"), 'pz.container(ui.field("Name", ui.input("Pyzed", on_input, width=180)), width=380)'),
+        ]),
+        V(T("Help and errors", "Ayuda y errores"), [
+            ('description=', 'pz.container(ui.field("Autosave", ui.switch(True, on_toggle), description="Saves when you switch tabs"), width=380)'),
+            ('error=', 'pz.container(ui.field("Port", ui.number_field(80, on_change), error="Ports below 1024 need admin rights"), width=380)'),
+        ]),
+    ],
+    "color-picker": [
+        V(_OPTIONS, [
+            (T("Everything", "Todo"), 'ui.ColorPicker(value="#3b82f6cc", on_change=on_change)', {"size": (420, 480)}),
+            ('alpha=False, gradients=False, masks=False', 'ui.ColorPicker(value="#a1c181", alpha=False, gradients=False, masks=False,\n               on_change=on_change)', {"size": (420, 480)}),
+            ('swatches=[...]', 'ui.ColorPicker(value="#e5c07b", gradients=False, masks=False,\n               swatches=["#e06c75", "#e5c07b", "#98c379", "#61afef", "#c678dd"], on_change=on_change)', {"size": (420, 520)}),
+        ]),
+        V(T("Swatches", "Muestras"), [
+            (T("Color", "Color"), 'ui.color_swatch("#3b82f6", size=32)'),
+            (T("With alpha", "Con alfa"), 'ui.color_swatch("#a1c181aa", size=32)'),
+            ('pz.Gradient', 'ui.color_swatch(pz.Gradient(["#f97316", "#7c3aed"], angle=90), size=32)'),
+            ('ui.checkerboard', 'ui.checkerboard(96, 48, size=8)'),
+        ], T("A swatch draws any color, gradient or paint over a checkerboard, so transparency shows.",
+             "Una muestra dibuja cualquier color, degradado o relleno sobre un damero, para que se vea la transparencia.")),
+    ],
+    "icon-picker": [
+        V(T("Picker", "Selector"), [
+            ('columns=8', 'ui.IconPicker(value="rocket", columns=8, height=180, on_change=on_change)', {"size": (480, 300)}),
+            ('clearable=True', 'ui.IconPicker(value="heart", columns=8, height=180, clearable=True, on_change=on_change)', {"size": (480, 300)}),
+        ]),
+        V(T("Building blocks", "Piezas"), [
+            ('ui.icon_grid', 'ui.icon_grid(pz.icons.search("arrow")[:24], on_pick, selected="arrow-right", columns=8, height=110)', {"size": (480, 200)}),
+            ('ui.icon_picker_dialog', 'ui.icon_picker_dialog("rocket", on_pick, on_close=on_close, columns=8)', {"size": (520, 520)}),
+        ]),
+    ],
+    # ----------------------------------------------------------------------------------- feedback
+    "progress": [
+        V(T("Value", "Valor"), [
+            ('0.1', 'ui.progress(0.1, width=240)'),
+            ('0.5', 'ui.progress(0.5, width=240)'),
+            ('1.0', 'ui.progress(1.0, width=240)'),
+            ('37, max=40', 'ui.progress(37, max=40, width=240)'),
+        ]),
+        V(_TINT, [
+            ('tint="success"', 'ui.progress(0.7, tint="success", width=240)'),
+            ('tint="warning"', 'ui.progress(0.7, tint="warning", width=240)'),
+            ('tint="error"', 'ui.progress(0.7, tint="error", width=240)'),
+        ]),
+        V(T("Thickness", "Grosor"), [
+            ('height=2', 'ui.progress(0.6, height=2, width=240)'),
+            ('height=4', 'ui.progress(0.6, height=4, width=240)'),
+            ('height=10', 'ui.progress(0.6, height=10, width=240)'),
+        ]),
+        V(_BASE, [
+            ('pz.progress_bar', 'pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd33", radius=6)'),
+        ], _BASE_TEXT),
+    ],
+    "spinner": [
+        V(_SIZE, [
+            ('size=12', 'ui.spinner(size=12)'),
+            ('size=16', 'ui.spinner()'),
+            ('size=24', 'ui.spinner(size=24)'),
+            ('size=36', 'ui.spinner(size=36)'),
+        ]),
+        V(_TINT, [
+            ('tint="success"', 'ui.spinner(size=24, tint="success")'),
+            ('tint="warning"', 'ui.spinner(size=24, tint="warning")'),
+            ('tint="text_muted"', 'ui.spinner(size=24, tint="text_muted")'),
+        ]),
+        V(T("With text", "Con texto"), [
+            (T("Inline", "En línea"), 'pz.row([ui.spinner(size=14), ui.muted("Indexing project…")], spacing=8, align="center")'),
+            (T("In a button", "En un botón"), 'ui.button(pz.row([ui.spinner(size=12, tint="text"), pz.text("Saving")], spacing=6, align="center"))'),
+        ]),
+    ],
+    "callout": [
+        V(_TINT, [
+            ('tint="info"', 'pz.container(ui.callout("Heads up", "Pyzed 0.5 is out."), width=380)'),
+            ('tint="success"', 'pz.container(ui.callout("Synced", "All changes are saved.", tint="success"), width=380)'),
+            ('tint="warning"', 'pz.container(ui.callout("Unsaved changes", "Save before closing.", tint="warning"), width=380)'),
+            ('tint="error"', 'pz.container(ui.callout("Could not save", "The file is read-only.", tint="error"), width=380)'),
+            ('tint="accent"', 'pz.container(ui.callout("Tip", "Ctrl+Shift+P opens the palette.", tint="accent", icon="lightbulb"), width=380)'),
+        ], T("Each tint picks a matching icon; `icon=` chooses another.",
+             "Cada tinte elige un icono acorde; `icon=` elige otro.")),
+        V(_CONTENT, [
+            (T("Title only", "Solo título"), 'pz.container(ui.callout("Read-only file"), width=380)'),
+            ('actions=', 'pz.container(ui.callout("A new version is out", "Restart to update.",\n                        actions=[ui.button("Restart", on_restart, size="sm")]), width=380)'),
+            ('on_dismiss=', 'pz.container(ui.callout("Welcome!", "Open a folder to start.", on_dismiss=on_dismiss), width=380)'),
+        ]),
+    ],
+    "toast": [
+        V(_KIND, [
+            ('kind="info"', 'ui.toast("Update available", "Pyzed 0.5 is on PyPI.")'),
+            ('kind="success"', 'ui.toast("Saved", "main.py was saved.", kind="success")'),
+            ('kind="warning"', 'ui.toast("Low disk space", "2 GB left.", kind="warning")'),
+            ('kind="error"', 'ui.toast("Could not connect", "Check your network.", kind="error")'),
+        ]),
+        V(_CONTENT, [
+            (T("Title only", "Solo título"), 'ui.toast("Copied to clipboard", kind="success")'),
+            ('actions=, on_dismiss=', 'ui.toast("Update available", "Restart to install it.",\n         actions=[ui.button("Restart", on_restart, size="sm")], on_dismiss=on_dismiss)'),
+            ('icon="music"', 'ui.toast("Now playing", "Lo-fi beats", icon="music", width=280)'),
+        ]),
+    ],
+    "empty-state": [
+        V(_CONTENT, [
+            (T("Title only", "Solo título"), 'ui.empty_state("No notifications")', {"size": (420, 200)}),
+            (T("With a description", "Con descripción"), 'ui.empty_state("No results", "Try a different search.", icon="search")', {"size": (420, 220)}),
+            ('actions=', 'ui.empty_state("No projects yet", "Create one to get started.", icon="folder-plus",\n               actions=[ui.button("New project", on_new, variant="solid", size="sm")])', {"size": (420, 260)}),
+        ]),
+    ],
+    "count-badge": [
+        V(T("Count", "Cuenta"), [
+            ('3', 'ui.count_badge(3)'),
+            ('42', 'ui.count_badge(42)'),
+            ('120', 'ui.count_badge(120)'),
+            ('max=9', 'ui.count_badge(12, max=9)'),
+        ], T("Above `max` it shows `max+`.", "Por encima de `max` muestra `max+`.")),
+        V(_TINT, [
+            ('tint="success"', 'ui.count_badge(5, tint="success")'),
+            ('tint="warning"', 'ui.count_badge(5, tint="warning")'),
+            ('tint="error"', 'ui.count_badge(5, tint="error")'),
+        ]),
+        V(T("Next to an icon", "Junto a un icono"), [
+            (T("Notifications", "Notificaciones"), 'pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="center")'),
+        ]),
+    ],
+    "keybinding-hint": [
+        V(T("Examples", "Ejemplos"), [
+            (T("One key", "Una tecla"), 'ui.keybinding_hint("Search", "/")'),
+            (T("Combination", "Combinación"), 'ui.keybinding_hint("Command palette", "ctrl-shift-p")'),
+            (T("Chord", "Acorde"), 'ui.keybinding_hint("Keyboard shortcuts", "ctrl-k ctrl-s")'),
+        ]),
+    ],
+}
+
+_ROWS = '[{"name": "app.py", "lines": 512}, {"name": "theme.py", "lines": 730}, {"name": "ui.py", "lines": 1290}]'
+_COLS = '[ui.Column("File", "name"), ui.Column("Lines", "lines", width=80, align="end")]'
+_PATHS = '["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"]'
+_FRAME = {"size": (440, 220), "fill": True}
+
+VARIANTS.update({
+    # --------------------------------------------------------------------------------------- data
+    "table": [
+        V(_OPTIONS, [
+            (T("Plain", "Simple"), 'pz.container(ui.table(' + _COLS + ',\n                      ' + _ROWS + '), width=320)', {"size": (480, 200)}),
+            ('striped=True', 'pz.container(ui.table(' + _COLS + ',\n                      ' + _ROWS + ', striped=True), width=320)', {"size": (480, 200)}),
+            ('selected=', 'rows = ' + _ROWS + '\npz.container(ui.table(' + _COLS + ', rows, selected=rows[1]), width=320)', {"size": (480, 200)}),
+            ('sort_by=, descending=True', 'pz.container(ui.table(' + _COLS + ',\n                      ' + _ROWS + ', sort_by="Lines", descending=True,\n                      on_sort=on_sort), width=320)', {"size": (480, 200)}),
+            ('row_height=24', 'pz.container(ui.table(' + _COLS + ',\n                      ' + _ROWS + ', row_height=24), width=320)', {"size": (480, 200)}),
+        ]),
+        V(T("Cells", "Celdas"), [
+            ('render=', 'rows = [{"job": "build", "state": "passed"}, {"job": "lint", "state": "failed"}]\n'
+                        'tint = {"passed": "success", "failed": "error"}\n'
+                        'pz.container(ui.table([ui.Column("Job", "job"),\n'
+                        '                       ui.Column("State", "state", width=110, render=lambda s: ui.badge(s, tint=tint[s]))],\n'
+                        '                      rows), width=320)', {"size": (480, 180)}),
+            ('key=lambda', 'people = [("Ana", 31), ("Luis", 27)]\n'
+                           'pz.container(ui.table([ui.Column("Name", lambda p: p[0]),\n'
+                           '                       ui.Column("Age", lambda p: p[1], width=70, align="end")], people), width=320)',
+             {"size": (480, 160)}),
+        ]),
+    ],
+    "virtual-list": [
+        V(_OPTIONS, [
+            (T("A million rows", "Un millón de filas"), 'pz.container(ui.virtual_list([f"row {i:,}" for i in range(1_000_000)],\n                             lambda r: ui.list_item(r, icon="file"), height=150), width=260)', {"size": (480, 220)}),
+            ('item_height=20', 'pz.container(ui.virtual_list([f"[{i:06}] request handled" for i in range(100_000)],\n                             lambda line: pz.text(line, font="mono", size=12), item_height=20, height=150),\n             width=260)', {"size": (480, 220)}),
+            ('spacing=6', 'pz.container(ui.virtual_list(list(range(10_000)), lambda i: ui.card(ui.label(f"Card {i}"), padding=8),\n                             item_height=40, spacing=6, height=150), width=260)', {"size": (480, 220)}),
+        ]),
+    ],
+    "stat": [
+        V(_CONTENT, [
+            (T("Value only", "Solo valor"), 'ui.stat("Build time", "1m 12s", width=190)'),
+            ('delta=12.5', 'ui.stat("Users", "1,284", delta=12.5, width=190)'),
+            ('delta=-8.0', 'ui.stat("Errors", "37", delta=-8.0, width=190)'),
+            ('trend=[...]', 'ui.stat("Revenue", "$9.4k", delta=4.2, trend=[3, 5, 4, 6, 8, 7, 9], width=190)'),
+        ]),
+    ],
+    "sparkline": [
+        V(_OPTIONS, [
+            (T("Filled", "Relleno"), 'ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40)'),
+            ('fill=False', 'ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40, fill=False)'),
+            ('tint="error"', 'ui.sparkline([8, 6, 7, 4, 5, 3, 2, 1], width=200, height=40, tint="error")'),
+            ('tint="success"', 'ui.sparkline([2, 3, 3, 5, 6, 8, 9, 12], width=200, height=40, tint="success")'),
+        ]),
+        V(_SIZE, [
+            ('width=80, height=20', 'ui.sparkline([3, 5, 2, 6, 4, 7], width=80, height=20)'),
+            ('width=280, height=64', 'ui.sparkline([3, 5, 2, 6, 4, 7, 5, 9, 6, 8], width=280, height=64)'),
+        ]),
+    ],
+    "bar-chart": [
+        V(_OPTIONS, [
+            ('labels=', 'ui.bar_chart([12, 19, 8, 15, 22], labels=["M", "T", "W", "T", "F"], width=240, height=120)', {"size": (480, 200)}),
+            (T("No labels", "Sin etiquetas"), 'ui.bar_chart([4, 8, 6, 9, 3, 7, 5, 10], width=240, height=100)', {"size": (480, 180)}),
+            ('tint="success"', 'ui.bar_chart([5, 9, 7, 12], labels=["Q1", "Q2", "Q3", "Q4"], width=240, height=120, tint="success")', {"size": (480, 200)}),
+            ('tint="warning"', 'ui.bar_chart([30, 12, 18], labels=["cpu", "io", "net"], width=240, height=120, tint="warning")', {"size": (480, 200)}),
+        ]),
+    ],
+    "donut": [
+        V(_OPTIONS, [
+            (T("Default", "Por defecto"), 'ui.donut([60, 25, 15], label="60%")'),
+            ('colors=', 'ui.donut([45, 35, 20], colors=["#e5c07b", "#c678dd", "#56b6c2"], label="3")'),
+            ('thickness=6', 'ui.donut([70, 30], thickness=6, label="70%")'),
+            ('size=140, thickness=24', 'ui.donut([40, 30, 20, 10], size=140, thickness=24)', {"size": (480, 220)}),
+            ('size=110, label="82%"', 'ui.donut([82, 18], size=110, label="82%")', {"size": (480, 200)}),
+        ]),
+    ],
+    "diff-stat": [
+        V(_OPTIONS, [
+            (T("Mostly added", "Casi todo añadido"), 'ui.diff_stat(42, 3)'),
+            (T("Mostly removed", "Casi todo quitado"), 'ui.diff_stat(2, 57)'),
+            (T("Only added", "Solo añadido"), 'ui.diff_stat(12, 0)'),
+            ('blocks=10', 'ui.diff_stat(120, 40, blocks=10)'),
+        ]),
+    ],
+    "facepile": [
+        V(_OPTIONS, [
+            (T("Two people", "Dos personas"), 'ui.facepile(["Ana", "Luis"])'),
+            (T("Five people", "Cinco personas"), 'ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam"])'),
+            ('max_shown=3', 'ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam", "Jo", "Lee"], max_shown=3)'),
+            ('size=32, overlap=10', 'ui.facepile(["Ana", "Luis", "Kev", "Marta"], size=32, overlap=10)'),
+        ]),
+    ],
+    "settings-group": [
+        V(_OPTIONS, [
+            (T("Without description", "Sin descripción"), 'pz.container(ui.settings_group("Files", [\n    ui.field("Autosave", ui.switch(True, on_toggle)),\n    ui.field("Trim whitespace", ui.checkbox(False, on_toggle)),\n]), width=380)', {"size": (480, 200)}),
+            ('description=', 'pz.container(ui.settings_group("Git", [\n    ui.field("Inline blame", ui.switch(False, on_toggle)),\n], description="Shown in the editor gutter."), width=380)', {"size": (480, 180)}),
+        ]),
+    ],
+    # -------------------------------------------------------------------------------------- lists
+    "list-item": [
+        V(_CONTENT, [
+            (T("Text", "Texto"), 'pz.container(ui.list_item("README.md", on_open), width=240)'),
+            ('icon=', 'pz.container(ui.list_item("README.md", on_open, icon="file-text"), width=240)'),
+            ('icon_color=', 'pz.container(ui.list_item("main.py", on_open, icon="file-code", icon_color="#3572a5"), width=240)'),
+            ('end=', 'pz.container(ui.list_item("app.py", on_open, icon="file-code", end=ui.badge("M", tint="warning")), width=240)'),
+            ('start=', 'pz.container(ui.list_item("Buy milk", on_open, start=ui.checkbox(True, on_toggle)), width=240)'),
+            ('color="error"', 'pz.container(ui.list_item("Delete project", on_open, icon="trash-2", color="error"), width=240)'),
+        ]),
+        V(_STATE, [
+            ('selected=True', 'pz.container(ui.list_item("main.py", on_open, icon="file-code", selected=True), width=240)'),
+            ('focused=True', 'pz.container(ui.list_item("main.py", on_open, icon="file-code", focused=True), width=240)'),
+            ('disabled=True', 'pz.container(ui.list_item("old.txt", on_open, icon="file", disabled=True), width=240)'),
+            ('inset=True', 'pz.container(ui.list_item("main.py", on_open, icon="file-code", selected=True, inset=True), width=240)'),
+            ('indent=24', 'pz.container(ui.list_item("button.rs", on_open, icon="file-code", indent=24), width=240)'),
+        ]),
+    ],
+    "list-header": [
+        V(_OPTIONS, [
+            (T("Title", "Título"), 'pz.container(ui.list_header("RECENT"), width=240)'),
+            ('end=', 'pz.container(ui.list_header("PINNED", end=ui.icon_button("plus", on_new, size="xs")), width=240)'),
+            (T("Counter at the end", "Contador al final"), 'pz.container(ui.list_header("CHANGES", end=ui.count_badge(4)), width=240)'),
+        ]),
+    ],
+    "tree": [
+        V(T("Expanded", "Desplegado"), [
+            (T("Collapsed", "Plegado"), 'nodes = ui.TreeNode.from_paths(' + _PATHS + ')\npz.container(ui.tree(nodes, expanded=set()), width=240)', {"size": (480, 200)}),
+            ('expanded={"src"}', 'nodes = ui.TreeNode.from_paths(' + _PATHS + ')\npz.container(ui.tree(nodes, expanded={"src"}), width=240)', {"size": (480, 220)}),
+            ('expanded={"src", "src/ui"}', 'nodes = ui.TreeNode.from_paths(' + _PATHS + ')\npz.container(ui.tree(nodes, expanded={"src", "src/ui"}, selected="src/ui/button.rs"), width=240)', {"size": (480, 260)}),
+        ]),
+        V(T("Git status", "Estado de git"), [
+            ('status=', 'nodes = ui.TreeNode.from_paths(["src/app.rs", "src/new.rs", "src/old.rs", "build.log"],\n    status={"src/app.rs": "modified", "src/new.rs": "created", "src/old.rs": "deleted", "build.log": "ignored"})\npz.container(ui.tree(nodes, expanded={"src"}), width=240)', {"size": (480, 220)}),
+            ('"conflict"', 'nodes = ui.TreeNode.from_paths(["merge.py", "ok.py"], status={"merge.py": "conflict"})\npz.container(ui.tree(nodes, expanded=set()), width=240)'),
+        ]),
+        V(T("Density", "Densidad"), [
+            ('item_height=20, indent=10', 'nodes = ui.TreeNode.from_paths(' + _PATHS + ')\npz.container(ui.tree(nodes, expanded={"src", "src/ui"}, item_height=20, indent=10), width=240)', {"size": (480, 240)}),
+            ('item_height=30, indent=20', 'nodes = ui.TreeNode.from_paths(' + _PATHS + ')\npz.container(ui.tree(nodes, expanded={"src"}, item_height=30, indent=20), width=240)', {"size": (480, 260)}),
+        ]),
+    ],
+    "menu": [
+        V(T("Items", "Entradas"), [
+            (T("Plain", "Simple"), 'ui.menu([ui.MenuItem("Open", on_open), ui.MenuItem("Rename", on_rename),\n         ui.MenuItem("Duplicate", on_duplicate)], width=200)', {"size": (480, 180)}),
+            ('icon=, keys=', 'ui.menu([ui.MenuItem("Copy", on_copy, icon="copy", keys="ctrl-c"),\n         ui.MenuItem("Paste", on_paste, icon="clipboard", keys="ctrl-v")], width=220)', {"size": (480, 160)}),
+            ('checked=', 'ui.menu([ui.MenuItem("Soft wrap", on_wrap, checked=True),\n         ui.MenuItem("Minimap", on_minimap, checked=False)], width=200)', {"size": (480, 160)}),
+            ('danger=True', 'ui.menu([ui.MenuItem("Rename", on_rename), ui.SEPARATOR,\n         ui.MenuItem("Delete", on_delete, icon="trash-2", danger=True)], width=200)', {"size": (480, 180)}),
+            ('disabled=True', 'ui.menu([ui.MenuItem("Undo", on_undo, keys="ctrl-z"),\n         ui.MenuItem("Redo", on_redo, keys="ctrl-shift-z", disabled=True)], width=220)', {"size": (480, 160)}),
+        ]),
+        V(T("Groups", "Grupos"), [
+            (T("Headers and separators", "Cabeceras y separadores"), 'ui.menu(["FILE", ui.MenuItem("New", on_new, keys="ctrl-n"), ui.SEPARATOR,\n         "EDIT", ui.MenuItem("Find", on_find, keys="ctrl-f")], width=220)', {"size": (480, 220)}),
+        ]),
+    ],
+    "accordion": [
+        V(T("Open sections", "Secciones abiertas"), [
+            (T("All closed", "Todas cerradas"), 'pz.container(ui.accordion([("a", "Editor", ui.muted("…")), ("b", "Files", ui.muted("…")),\n                           ("c", "Git", ui.muted("…"))], open=set(), on_toggle=on_toggle), width=320)', {"size": (480, 200)}),
+            ('open={"a"}', 'pz.container(ui.accordion([("a", "Editor", ui.muted("Font, wrapping, minimap.")),\n                           ("b", "Files", ui.muted("…"))], open={"a"}, on_toggle=on_toggle), width=320)', {"size": (480, 200)}),
+            ('open=True', 'pz.container(ui.accordion([("a", "Editor", ui.muted("Font, wrapping.")),\n                           ("b", "Files", ui.muted("Autosave."))], open=True, on_toggle=on_toggle), width=320)', {"size": (480, 220)}),
+        ]),
+        V(_CONTENT, [
+            ('icons=', 'pz.container(ui.accordion([("e", "Editor", ui.muted("…")), ("g", "Git", ui.muted("…"))], open=set(),\n                          icons={"e": "file-code", "g": "git-branch"}, on_toggle=on_toggle), width=320)', {"size": (480, 180)}),
+            ('AccordionSection(end=)', 'pz.container(ui.accordion([ui.AccordionSection("p", "Problems", ui.muted("…"), icon="circle-x",\n                                              end=ui.count_badge(3, tint="error"))],\n                          open=set(), on_toggle=on_toggle), width=320)', {"size": (480, 160)}),
+        ]),
+    ],
+    "disclosure": [
+        V(_STATE, [
+            ('open=False', 'pz.container(ui.disclosure("Advanced options", ui.muted("…"), open=False, on_toggle=on_toggle), width=300)'),
+            ('open=True', 'pz.container(ui.disclosure("Advanced options", ui.muted("Shown while open."), open=True,\n                           on_toggle=on_toggle), width=300)'),
+            ('end=', 'pz.container(ui.disclosure("Environment", ui.muted("…"), open=False, on_toggle=on_toggle,\n                           end=ui.badge("3")), width=300)'),
+        ]),
+    ],
+    # --------------------------------------------------------------------------------- navigation
+    "tab-bar": [
+        V(T("Tabs", "Pestañas"), [
+            (T("Active and inactive", "Activa e inactiva"), 'pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("app.rs")], "main.rs",\n                        on_close=on_close), width=400)', {"size": (480, 120)}),
+            ('dirty=True', 'pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("notes.md", dirty=True)], "main.rs",\n                        on_close=on_close), width=400)', {"size": (480, 120)}),
+            ('preview=True', 'pz.container(ui.tab_bar([ui.Tab.for_file("README.md", preview=True)], "README.md", on_close=on_close), width=400)', {"size": (480, 120)}),
+            ('status="modified"', 'pz.container(ui.tab_bar([ui.Tab.for_file("app.py", status="modified"),\n                         ui.Tab.for_file("new.py", status="created")], "app.py", on_close=on_close), width=400)', {"size": (480, 120)}),
+            ('Tab(icon=)', 'pz.container(ui.tab_bar([ui.Tab("home", "Home", icon="house"), ui.Tab("logs", "Logs", icon="scroll-text")],\n                        "home", on_select=on_select), width=400)', {"size": (480, 120)}),
+        ]),
+        V(T("Controls", "Controles"), [
+            ('start=, end=', 'pz.container(ui.tab_bar([ui.Tab.for_file("main.rs")], "main.rs", on_close=on_close,\n                        start=[ui.icon_button("arrow-left", on_back, size="sm")],\n                        end=[ui.icon_button("plus", on_new, size="sm")]), width=400)', {"size": (480, 120)}),
+            ('ui.tab(dimmed=True)', 'pz.row([ui.tab(ui.Tab.for_file("main.rs"), active=True),\n        ui.tab(ui.Tab.for_file("app.rs"), active=False, dimmed=True)])', {"size": (480, 120)}),
+        ]),
+    ],
+    "breadcrumbs": [
+        V(_OPTIONS, [
+            (T("Text", "Texto"), 'ui.breadcrumbs(["src", "ui", "button.rs"])'),
+            (T("With icons", "Con iconos"), 'ui.breadcrumbs([("folder", "src"), ("file-code", "main.rs"), "fn main"])'),
+            ('separator="/"', 'ui.breadcrumbs(["Settings", "Editor", "Font"], separator="/")'),
+            ('on_press=', 'ui.breadcrumbs(["Home", "Projects", "pyzed"], on_press=on_press)'),
+        ]),
+    ],
+    "toolbar": [
+        V(_CONTENT, [
+            (T("Start only", "Solo al principio"), 'pz.container(ui.toolbar([ui.breadcrumbs(["src", "main.rs"])]), width=400)', {"size": (480, 120)}),
+            (T("End only", "Solo al final"), 'pz.container(ui.toolbar([], [ui.icon_button("search", on_search, size="sm"),\n                            ui.icon_button("sparkles", on_assist, size="sm")]), width=400)', {"size": (480, 120)}),
+            ('height=40', 'pz.container(ui.toolbar([ui.label("Preview")], [ui.button("Publish", on_publish, size="sm", variant="solid")],\n                        height=40), width=400)', {"size": (480, 120)}),
+        ]),
+    ],
+    # ----------------------------------------------------------------------------------- overlays
+    "layer": [
+        V(T("Placement", "Posición"), [
+            (T("Top (default)", "Arriba (por defecto)"), 'ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), on_dismiss=on_close)', _FRAME),
+            ('align_y="center"', 'ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_y="center",\n         on_dismiss=on_close)', _FRAME),
+            ('align_x="end", align_y="end"', 'ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_x="end", align_y="end",\n         offset=16, on_dismiss=on_close)', _FRAME),
+        ]),
+        V(T("Backdrop", "Fondo"), [
+            ('backdrop="#00000088"', 'ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), backdrop="#00000088",\n         align_y="center", on_dismiss=on_close)', _FRAME),
+            ('overlay=None', 'ui.layer(main_view(), None)', _FRAME),
+        ], T("With `overlay=None` the layer returns your view unchanged.",
+             "Con `overlay=None` la capa devuelve tu vista sin cambios.")),
+    ],
+    "modal": [
+        V(_CONTENT, [
+            (T("Content only", "Solo contenido"), 'ui.modal(ui.muted("Your trial ends in 3 days."), width=320)', {"size": (480, 200)}),
+            ('title=, on_close=', 'ui.modal(ui.muted("Your trial ends in 3 days."), title="Trial", on_close=on_close, width=320)', {"size": (480, 200)}),
+            ('footer=', 'ui.modal(ui.muted("Discard the draft?"), title="Draft", on_close=on_close, width=320,\n         footer=[ui.button("Cancel", on_close), ui.button("Discard", on_discard, variant="error")])', {"size": (480, 240)}),
+        ]),
+    ],
+    "popover": [
+        V(_CONTENT, [
+            (T("A menu", "Un menú"), 'ui.popover(main_view(), ui.menu([ui.MenuItem("Copy", on_copy, icon="copy"),\n                                    ui.MenuItem("Paste", on_paste, icon="clipboard")], width=180),\n           x=60, y=40, on_dismiss=on_close)', {"size": (440, 220), "fill": True}),
+            (T("A card", "Una tarjeta"), 'ui.popover(main_view(), ui.card(ui.muted("Any widget fits here."), title="Popover", width=220),\n           x=120, y=40, on_dismiss=on_close)', {"size": (440, 220), "fill": True}),
+        ]),
+    ],
+    "command-palette": [
+        V(T("Query", "Búsqueda"), [
+            (T("Empty", "Vacía"), 'ui.command_palette("", on_query, [\n    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),\n    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),\n    ui.PaletteItem("theme selector: toggle", on_theme),\n], width=420)', {"size": (480, 240)}),
+            ('query="op"', 'ui.command_palette("op", on_query, [\n    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),\n    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),\n    ui.PaletteItem("workspace: open recent", on_recent, keys="ctrl-r"),\n], width=420)', {"size": (480, 240)}),
+            ('selected=1', 'ui.command_palette("", on_query, [\n    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),\n    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),\n    ui.PaletteItem("file: save", on_save, keys="ctrl-s"),\n], selected=1, width=420)', {"size": (480, 240)}),
+        ]),
+    ],
+    "picker": [
+        V(T("Results", "Resultados"), [
+            (T("With matches", "Con coincidencias"), 'files = ["src/app.rs", "src/render.rs", "app.py"]\nitems = ui.fuzzy_filter("app", [ui.PaletteItem(f, on_open, icon="file-code") for f in files],\n                        key=lambda item: item.label)\nui.picker("app", on_query, items, width=380)', {"size": (480, 220)}),
+            ('empty_text=', 'ui.picker("zzz", on_query, [], empty_text="No files match", width=380)', {"size": (480, 160)}),
+            ('PaletteItem(detail=)', 'ui.picker("", on_query, [(ui.PaletteItem("main", on_open, icon="git-branch", detail="2 hours ago"), []),\n                        (ui.PaletteItem("docs", on_open, icon="git-branch", detail="yesterday"), [])], width=380)', {"size": (480, 200)}),
+        ]),
+        V(T("Highlight", "Resaltado"), [
+            ('ui.highlighted', 't = pz.theme.current()\nscore, positions = ui.fuzzy_match("tgsw", "editor: toggle soft wrap")\nui.highlighted("editor: toggle soft wrap", positions, color=t.text, match_color=t.accent, size=15)'),
+        ]),
+    ],
+    # ------------------------------------------------------------------------------------ dialogs
+    "dialog-layer": [
+        V(T("Dialog", "Diálogo"), [
+            ('ui.alert', 'ui.dialog_layer(main_view(), ui.alert("Export finished.", on_close, kind="success", width=280))', {"size": (480, 260), "fill": True}),
+            ('ui.modal', 'ui.dialog_layer(main_view(), ui.modal(ui.muted("Any content."), title="Modal", on_close=on_close,\n                                       width=280), on_dismiss=on_close)', {"size": (480, 260), "fill": True}),
+            ('dialog=None', 'ui.dialog_layer(main_view(), None)', {"size": (480, 260), "fill": True}),
+        ]),
+    ],
+    "alert": [
+        V(_KIND, [
+            ('kind=None', 'ui.alert("The file was moved to the trash.", on_close, width=320)', {"size": (480, 200)}),
+            ('kind="info"', 'ui.alert("A new version is available.", on_close, kind="info", width=320)', {"size": (480, 200)}),
+            ('kind="success"', 'ui.alert("128 files were exported.", on_close, kind="success", title="Export", width=320)', {"size": (480, 200)}),
+            ('kind="warning"', 'ui.alert("The disk is almost full.", on_close, kind="warning", width=320)', {"size": (480, 200)}),
+            ('kind="error"', 'ui.alert("notes.py could not be opened.", on_close, kind="error", title="Error", width=320)', {"size": (480, 200)}),
+        ]),
+        V(_OPTIONS, [
+            ('ok_label="Got it"', 'ui.alert("Shortcuts changed in this version.", on_close, ok_label="Got it", width=320)', {"size": (480, 200)}),
+        ]),
+    ],
+    "confirm": [
+        V(_KIND, [
+            (T("Normal", "Normal"), 'ui.confirm("Close all tabs?", on_confirm, on_cancel, title="Close tabs", width=320)', {"size": (480, 200)}),
+            ('danger=True', 'ui.confirm("Delete notes.py?", on_delete, on_cancel, title="Delete file", danger=True,\n           confirm_label="Delete", width=320)', {"size": (480, 200)}),
+            ('kind="warning"', 'ui.confirm("Overwrite the existing file?", on_confirm, on_cancel, kind="warning", width=320)', {"size": (480, 200)}),
+            ('confirm_label=, cancel_label=', 'ui.confirm("Push 3 commits to main?", on_push, on_cancel, confirm_label="Push",\n           cancel_label="Not now", width=320)', {"size": (480, 200)}),
+        ]),
+    ],
+    "prompt": [
+        V(_CONTENT, [
+            (T("Title only", "Solo título"), 'ui.prompt("New branch", "", on_input, on_submit, on_cancel, placeholder="feature/…", width=340)', {"size": (480, 220)}),
+            ('message=', 'ui.prompt("Rename", "notes.py", on_input, on_submit, on_cancel, message="New name for the file:",\n          width=340)', {"size": (480, 240)}),
+            ('submit_label=', 'ui.prompt("Save view", "My view", on_input, on_submit, on_cancel, submit_label="Save", width=340)', {"size": (480, 220)}),
+        ]),
+    ],
+    "choice": [
+        V(_OPTIONS, [
+            (T("Two answers", "Dos respuestas"), 'ui.choice("Open the project in…", [("This window", on_here), ("New window", on_new)],\n          on_cancel, width=360)', {"size": (480, 200)}),
+            (T("Three answers", "Tres respuestas"), 'ui.choice("notes.py already exists.", [("Keep both", on_keep), ("Skip", on_skip),\n          ("Replace", on_replace)], on_cancel, title="File exists", width=400)', {"size": (480, 200)}),
+        ]),
+    ],
+    "unsaved-changes": [
+        V(_OPTIONS, [
+            (T("A file", "Un archivo"), 'ui.unsaved_changes("notes.py", on_save, on_discard, on_cancel)', {"size": (520, 220)}),
+            ('width=360', 'ui.unsaved_changes("report.pzform", on_save, on_discard, on_cancel, width=360)', {"size": (480, 240)}),
+        ]),
+    ],
+    # ---------------------------------------------------------------------------------- workspace
+    "workspace": [
+        V(T("Docks", "Docks"), [
+            (T("Center and status bar", "Centro y barra de estado"), 'ui.workspace(main_view(), status_bar=ui.status_bar([], [ui.status_item("Python")]))', {"size": (480, 240), "fill": True}),
+            ('left=', 'ui.workspace(main_view(), left=pz.column([ui.panel_header("Project"),\n             ui.list_item("main.py", icon="file-code", selected=True, inset=True)]), left_width=150)', {"size": (480, 240), "fill": True}),
+            ('bottom=', 'ui.workspace(main_view(), bottom=pz.column([ui.panel_header("Terminal", icon="terminal"),\n             ui.terminal("$ python main.py")]), bottom_height=90)', {"size": (480, 240), "fill": True}),
+            ('right=', 'ui.workspace(main_view(), right=pz.column([ui.panel_header("Outline"), ui.list_item("class Notes", icon="box")]),\n             right_width=150)', {"size": (480, 240), "fill": True}),
+            ('title_bar=', 'ui.workspace(main_view(), title_bar=ui.title_bar([ui.title_button("pyzed", chevron=True)],\n                                                  [ui.avatar("KV")]))', {"size": (480, 240), "fill": True}),
+        ]),
+    ],
+    "title-bar": [
+        V(T("Title buttons", "Botones de título"), [
+            (T("Plain", "Simple"), 'ui.title_button("pyzed", on_projects)'),
+            ('chevron=True', 'ui.title_button("pyzed", on_projects, chevron=True)'),
+            ('muted=True, icon=', 'ui.title_button("main", on_branches, icon="git-branch", muted=True)'),
+        ]),
+        V(T("Bar", "Barra"), [
+            ('start=', 'pz.container(ui.title_bar([ui.title_button("pyzed", chevron=True)]), width=420)'),
+            ('center=', 'pz.container(ui.title_bar([], [], center=ui.muted("notes.py — Notes")), width=420)'),
+            ('end=', 'pz.container(ui.title_bar([], [ui.icon_button("bell", on_bell, size="sm"), ui.avatar("KV")]), width=420)'),
+        ]),
+    ],
+    "window-frame": [
+        V(T("Platform style", "Estilo de plataforma"), [
+            ('style="windows"', 'pz.container(ui.window_title_bar("notes.py", style="windows"), width=420)'),
+            ('style="macos"', 'pz.container(ui.window_title_bar("notes.py", style="macos"), width=420)'),
+            ('style="gnome"', 'pz.container(ui.window_title_bar("notes.py", style="gnome"), width=420)'),
+            ('style="kde"', 'pz.container(ui.window_title_bar("notes.py", style="kde"), width=420)'),
+            ('style="ubuntu"', 'pz.container(ui.window_title_bar("notes.py", style="ubuntu"), width=420)'),
+        ]),
+        V(_STATE, [
+            ('focused=False', 'pz.container(ui.window_title_bar("notes.py", style="windows", focused=False), width=420)'),
+            ('maximized=True', 'ui.window_controls("windows", maximized=True)'),
+            ('ui.window_controls("macos")', 'ui.window_controls("macos")'),
+        ]),
+    ],
+    "status-bar": [
+        V(T("Items", "Elementos"), [
+            (T("Text", "Texto"), 'ui.status_item("Ln 12, Col 8")'),
+            ('icon=', 'ui.status_item("Python", icon="file-code")'),
+            ('icon_color="warning"', 'ui.status_item("2", icon="triangle-alert", icon_color="warning")'),
+            ('selected=True', 'ui.status_item(icon="panel-left", on_press=on_toggle, selected=True)'),
+            ('color="accent"', 'ui.status_item("main", icon="git-branch", color="accent")'),
+        ]),
+        V(T("Bar", "Barra"), [
+            ('start=, end=', 'pz.container(ui.status_bar([ui.status_item("0", icon="circle-x")],\n                           [ui.status_item("UTF-8"), ui.status_item("Python")]), width=420)'),
+        ]),
+    ],
+    "panel": [
+        V(T("Side", "Lado"), [
+            ('side="left"', 'pz.row([ui.panel(ui.list_item("Inbox", icon="inbox", inset=True), header=ui.panel_header("Mail"),\n                 width=160, side="left"), pz.container(width="fill")], height="fill")', {"size": (440, 200), "fill": True}),
+            ('side="right"', 'pz.row([pz.container(width="fill"), ui.panel(ui.muted("Properties"), header=ui.panel_header("Inspector"),\n                                          width=160, side="right")], height="fill")', {"size": (440, 200), "fill": True}),
+            ('side="bottom"', 'pz.column([pz.container(height="fill"), ui.panel(ui.terminal("$ ls"), header=ui.panel_header("Terminal"),\n                                             height=100, side="bottom")], width="fill")', {"size": (440, 200), "fill": True}),
+        ]),
+    ],
+    "panel-header": [
+        V(_CONTENT, [
+            (T("Title", "Título"), 'pz.container(ui.panel_header("Project"), width=280)'),
+            ('icon=', 'pz.container(ui.panel_header("Terminal", icon="terminal"), width=280)'),
+            ('actions=', 'pz.container(ui.panel_header("Project", [ui.icon_button("plus", on_new, size="xs"),\n                                     ui.icon_button("ellipsis", on_menu, size="xs")]), width=280)'),
+            ('height=40', 'pz.container(ui.panel_header("Outline", height=40), width=280)'),
+        ]),
+    ],
+    "split": [
+        V(T("Direction", "Dirección"), [
+            (T("Side by side", "Lado a lado"), 't = pz.theme.current()\nui.split(pz.container(ui.label("A"), padding=10, width="fill", height="fill", bg=t.panel),\n         pz.container(ui.label("B"), padding=10, width="fill", height="fill"), on_resize=on_resize)', {"size": (440, 180), "fill": True}),
+            ('vertical=True', 't = pz.theme.current()\nui.split(pz.container(ui.label("Top"), padding=10, width="fill", height="fill", bg=t.panel),\n         pz.container(ui.label("Bottom"), padding=10, width="fill", height="fill"), vertical=True)', {"size": (440, 180), "fill": True}),
+            ('ratio=0.25', 't = pz.theme.current()\nui.split(pz.container(ui.label("25%"), padding=10, width="fill", height="fill", bg=t.panel),\n         pz.container(ui.label("75%"), padding=10, width="fill", height="fill"), ratio=0.25)', {"size": (440, 180), "fill": True}),
+        ]),
+    ],
+    # --------------------------------------------------------------------------------------- code
+    "editor": [
+        V(T("Language", "Lenguaje"), [
+            ('path="counter.py"', 'pz.container(ui.editor("v-py", ' + _PY + ', path="counter.py"), width=470, height=110)', {"size": (540, 180)}),
+            ('language="rust"', 'pz.container(ui.editor("v-rs", "fn main() {\\n    println!(\\"hi\\");\\n}\\n", language="rust"),\n             width=420, height=90)', {"size": (480, 160)}),
+            ('language="json"', 'pz.container(ui.editor("v-json", \'{\\n  "name": "notes",\\n  "version": 2\\n}\\n\', language="json"),\n             width=420, height=110)', {"size": (480, 170)}),
+        ]),
+        V(_OPTIONS, [
+            ('gutter=False', 'pz.container(ui.editor("v-g", ' + _PY + ', path="a.py", gutter=False), width=470, height=110)', {"size": (540, 180)}),
+            ('markers=', 'pz.container(ui.editor("v-m", ' + _PY + ', path="a.py", markers={2: "created", 5: "modified"}),\n             width=470, height=110)', {"size": (540, 180)}),
+            ('minimap=True', 'pz.container(ui.editor("v-mm", ' + _PY + ', path="a.py", minimap=True), width=470, height=124)', {"size": (540, 180)}),
+            ('show_whitespace=True', 'pz.container(ui.editor("v-ws", ' + _PY + ', path="a.py", show_whitespace=True), width=470, height=110)', {"size": (540, 180)}),
+            ('placeholder=', 'pz.container(ui.editor("v-ph", "", placeholder="Write something…"), width=420, height=60)', {"size": (480, 130)}),
+            ('font_size=16', 'pz.container(ui.editor("v-fs", "print(\\"big\\")\\n", path="a.py", font_size=16), width=420, height=60)', {"size": (480, 130)}),
+        ]),
+    ],
+    "terminal": [
+        V(_CONTENT, [
+            (T("Plain text", "Texto plano"), 'pz.container(ui.terminal("$ ls\\nmain.py  notes.md  pyproject.toml\\n$ "), width=380, height=80)', {"size": (480, 150)}),
+            (T("ANSI colors", "Colores ANSI"), 'pz.container(ui.terminal("\\x1b[32m✓\\x1b[0m 24 passed  \\x1b[33m!\\x1b[0m 1 warning  \\x1b[31m✗\\x1b[0m 0 failed"),\n             width=380, height=50)', {"size": (480, 120)}),
+            ('font_size=16', 'pz.container(ui.terminal("$ python main.py\\nHello", font_size=16), width=380, height=70)', {"size": (480, 140)}),
+            (T("(text, color) segments", "Segmentos (texto, color)"), 'pz.container(ui.terminal([[("ok ", "#a1c181"), ("build", None)], [("err ", "#d07277"), ("lint", None)]]),\n             width=380, height=60)', {"size": (480, 130)}),
+        ]),
+    ],
+    "console": [
+        V(_OPTIONS, [
+            (T("All levels", "Todos los niveles"), 'log = ui.Log()\nfor level in ui.LOG_LEVELS:\n    log.write(level, f"{level} message")\npz.container(ui.console(log.entries, on_clear=on_clear), width=520, height=220)', {"size": (600, 280)}),
+            ('hidden={"info", "event"}', 'log = ui.Log()\nfor level in ui.LOG_LEVELS:\n    log.write(level, f"{level} message")\npz.container(ui.console(log.entries, hidden={"info", "event"}, on_toggle_level=on_toggle),\n             width=520, height=200)', {"size": (600, 260)}),
+            ('query="error"', 'log = ui.Log()\nlog.write("info", "started")\nlog.write("error", "ValueError: bad input")\npz.container(ui.console(log.entries, query="error", on_query=on_query), width=520, height=140)', {"size": (600, 200)}),
+        ]),
+    ],
+    "markdown": [
+        V(T("Elements", "Elementos"), [
+            (T("Headings and emphasis", "Títulos y énfasis"), 'ui.markdown("## Title\\nSome **bold** and *italic* text.", width=320)'),
+            (T("Lists", "Listas"), 'ui.markdown("- Fast\\n- Native\\n- Pythonic\\n\\n1. Install\\n2. Run", width=320)', {"size": (480, 220)}),
+            (T("Code", "Código"), 'ui.markdown("Run `pyzed new`:\\n\\n```python\\nimport pyzed as pz\\n```", width=320)', {"size": (480, 200)}),
+            (T("Quote and link", "Cita y enlace"), 'ui.markdown("> Desktop UIs in Python.\\n\\nSee [the docs](https://albakore.github.io/pyzed/).", width=320, on_link=on_link)'),
+            (T("Table", "Tabla"), 'ui.markdown("| Key | Action |\\n| --- | --- |\\n| ctrl-s | Save |\\n| ctrl-p | Open |", width=320)', {"size": (480, 200)}),
+        ]),
+    ],
+    "shortcuts": [
+        V(_OPTIONS, [
+            (T("Grouped", "Agrupados"), 'pz.container(ui.shortcuts([("File", [("Save", "ctrl-s"), ("Open", "ctrl-o")])], on_query=on_query, height=130),\n             width=360)', {"size": (480, 220)}),
+            ('query="pal"', 'pz.container(ui.shortcuts([("View", [("Command palette", "ctrl-shift-p"), ("Zoom in", "ctrl-=")])],\n                          query="pal", on_query=on_query, height=110), width=360)', {"size": (480, 200)}),
+        ]),
+    ],
+    "about": [
+        V(_CONTENT, [
+            (T("Name and version", "Nombre y versión"), 'ui.about("Notes", "1.2.0")', {"size": (480, 220)}),
+            ('details=', 'ui.about("Notes", "1.2.0", "A small notes app.", icon="notebook-pen",\n         details=[("Python", "3.12"), ("Pyzed", "0.4")])', {"size": (480, 300)}),
+            ('links=', 'ui.about("Notes", "1.2.0", icon="notebook-pen", links=[("Website", on_web), ("GitHub", on_gh)])', {"size": (480, 260)}),
+        ]),
+    ],
+    "reference-browser": [
+        V(T("Pages", "Páginas"), [
+            (T("A component", "Un componente"), 'from pyzed import reference\n\nui.reference_browser(reference.Browser("pyzed.ui.badge"), sidebar_width=200)', {"size": (720, 380), "fill": True}),
+            (T("A layout widget", "Un widget de disposición"), 'from pyzed import reference\n\nui.reference_browser(reference.Browser("pyzed.row"), sidebar_width=200)', {"size": (720, 380), "fill": True}),
+        ]),
+    ],
+})
+
+_B = _BOX  # every layout snippet starts with ``box = ...``, a small labeled tile
+
+VARIANTS.update({
+    # ------------------------------------------------------------------------------------- layout
+    "row": [
+        V(T("Spacing", "Espaciado"), [
+            ('spacing=0', _B + 'pz.row([box("A"), box("B"), box("C")])'),
+            ('spacing=8', _B + 'pz.row([box("A"), box("B"), box("C")], spacing=8)'),
+            ('spacing=24', _B + 'pz.row([box("A"), box("B"), box("C")], spacing=24)'),
+        ]),
+        V(T("Cross-axis alignment", "Alineación cruzada"), [
+            ('align="start"', _B + 'pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="start")'),
+            ('align="center"', _B + 'pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="center")'),
+            ('align="end"', _B + 'pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="end")'),
+        ]),
+        V(_OPTIONS, [
+            ('pz.hspace()', _B + 'pz.row([box("Start"), pz.hspace(), box("End")], width=320)'),
+            ('wrap=True', 'pz.container(pz.row([ui.chip(t) for t in ["python", "rust", "iced", "desktop", "gui", "async", "themes"]],\n                    spacing=6, wrap=True, line_spacing=6), width=260)'),
+        ]),
+    ],
+    "column": [
+        V(T("Cross-axis alignment", "Alineación cruzada"), [
+            ('align="start"', _B + 'pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="start")', {"size": (480, 220)}),
+            ('align="center"', _B + 'pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="center")', {"size": (480, 220)}),
+            ('align="end"', _B + 'pz.column([box("wide", w=160), box("B"), box("C")], spacing=8, align="end")', {"size": (480, 220)}),
+        ]),
+        V(_OPTIONS, [
+            ('spacing=16', _B + 'pz.column([box("1"), box("2")], spacing=16)', {"size": (480, 200)}),
+            ('pz.vspace()', _B + 'pz.column([box("top"), pz.vspace(), box("bottom")], height=170)', {"size": (480, 240)}),
+            ('padding=16', _B + 'pz.container(pz.column([box("1"), box("2")], spacing=8, padding=16),\n             border_color=pz.theme.current().border, border_width=1, radius=8)', {"size": (480, 220)}),
+        ]),
+    ],
+    "container": [
+        V(T("Box", "Caja"), [
+            ('padding=, bg=', 'pz.container(ui.label("padding + bg"), padding=16, bg=pz.theme.current().element, radius=8)'),
+            ('border_color=, border_width=', 'pz.container(ui.label("border"), padding=16, border_color=pz.theme.current().accent,\n             border_width=2, radius=8)'),
+            ('radius=999', 'pz.container(ui.label("pill"), padding=(6, 16), bg=pz.theme.current().element, radius=999)'),
+        ]),
+        V(T("Paint", "Pintura"), [
+            ('gradient=', 'pz.container(ui.label("gradient", color="#ffffff"), padding=16, radius=10,\n             gradient=(135, ["#7c3aed", "#3b82f6"]))'),
+            ('shadow=', 'pz.container(ui.label("shadow"), padding=16, radius=10, bg=pz.theme.current().elevated,\n             shadow=("#00000066", (0, 6), 18))'),
+        ]),
+        V(T("Alignment", "Alineación"), [
+            ('center=True', 'pz.container(ui.label("centered"), center=True, width=220, height=90,\n             border_color=pz.theme.current().border, border_width=1, radius=8)'),
+            ('align_x="end", align_y="end"', 'pz.container(ui.label("bottom right"), align_x="end", align_y="end", padding=8,\n             width=220, height=90, border_color=pz.theme.current().border, border_width=1, radius=8)'),
+        ]),
+    ],
+    "stack": [
+        V(_OPTIONS, [
+            (T("Layers", "Capas"), 't = pz.theme.current()\npz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),\n          pz.container(ui.label("on top"), center=True, width=180, height=100)])'),
+            ('pz.pin(x=, y=)', 't = pz.theme.current()\npz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),\n          pz.pin(ui.count_badge(3), x=150, y=8)], width=180, height=100)'),
+            (T("Badge over an icon", "Insignia sobre un icono"), 'pz.stack([pz.container(ui.icon_button("bell", on_press, size="lg"), padding=6),\n          pz.pin(ui.indicator("error", size=8), x=24, y=6)], width=40, height=40)'),
+        ]),
+    ],
+    "grid": [
+        V(T("Columns", "Columnas"), [
+            ('columns=2', _B + 'pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 5)], columns=2, spacing=8, height=44), width=220)', {"size": (480, 200)}),
+            ('columns=3', _B + 'pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 7)], columns=3, spacing=8, height=44), width=300)', {"size": (480, 200)}),
+            ('columns=4', _B + 'pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 9)], columns=4, spacing=8, height=44), width=380)', {"size": (480, 200)}),
+        ]),
+        V(T("Tracks", "Pistas"), [
+            ('columns=[100, "1fr"]', _B + 'pz.container(pz.grid([box("100 px", w="fill"), box("1fr", w="fill")], columns=[100, "1fr"], spacing=8),\n             width=340, height=44)'),
+            ('column_span=2', _B + 'pz.container(pz.grid([pz.cell(box("header", w="fill"), column=0, row=0, column_span=2),\n                      pz.cell(box("a", w="fill"), column=0, row=1),\n                      pz.cell(box("b", w="fill"), column=1, row=1)], columns=["1fr", "1fr"], spacing=8),\n             width=300, height=96)', {"size": (480, 200)}),
+        ]),
+    ],
+    "flex": [
+        V(T("Justify", "Justificar"), [
+            ('justify="start"', _B + 'pz.flex([box("A"), box("B")], justify="start", gap=8, width=360)'),
+            ('justify="center"', _B + 'pz.flex([box("A"), box("B")], justify="center", gap=8, width=360)'),
+            ('justify="end"', _B + 'pz.flex([box("A"), box("B")], justify="end", gap=8, width=360)'),
+            ('justify="between"', _B + 'pz.flex([box("A"), box("B"), box("C")], justify="between", width=360)'),
+            ('justify="around"', _B + 'pz.flex([box("A"), box("B"), box("C")], justify="around", width=360)'),
+            ('justify="evenly"', _B + 'pz.flex([box("A"), box("B"), box("C")], justify="evenly", width=360)'),
+        ]),
+        V(T("Grow", "Crecer"), [
+            ('flex_item(grow=1)', _B + 'pz.flex([box("fixed"), pz.flex_item(box("grows", w="fill"), grow=1), box("fixed")], gap=8, width=360)'),
+            ('wrap=True', _B + 'pz.flex([box(str(i)) for i in range(1, 7)], gap=8, wrap=True, width=300)', {"size": (480, 200)}),
+        ]),
+    ],
+    "scrollable": [
+        V(T("Direction", "Dirección"), [
+            (T("Vertical", "Vertical"), 'pz.container(pz.scrollable(pz.column([ui.list_item(f"Item {i}", icon="file", inset=True)\n                                       for i in range(1, 30)]), height=130), width=240)', {"size": (480, 200)}),
+            ('direction="horizontal"', 'pz.container(pz.scrollable(pz.container(pz.row([ui.chip(f"tag {i}") for i in range(1, 25)], spacing=6),\n                                        padding=(0, 0, 14, 0)),\n                           direction="horizontal"), width=300)'),
+        ]),
+    ],
+    "resizable": [
+        V(T("Edge", "Borde"), [
+            ('edge="right"', 't = pz.theme.current()\npz.row([pz.resizable(pz.container(ui.label("Sidebar"), padding=10, width="fill", height="fill", bg=t.panel),\n                     edge="right", size=150, color=t.border), pz.container(width="fill")], height="fill")', _FRAME),
+            ('edge="left"', 't = pz.theme.current()\npz.row([pz.container(width="fill"), pz.resizable(pz.container(ui.label("Inspector"), padding=10, width="fill",\n        height="fill", bg=t.panel), edge="left", size=150, color=t.border)], height="fill")', _FRAME),
+            ('edge="top"', 't = pz.theme.current()\npz.column([pz.container(height="fill"), pz.resizable(pz.container(ui.label("Console"), padding=10, width="fill",\n           height="fill", bg=t.panel), edge="top", size=80, color=t.border)], width="fill")', _FRAME),
+        ]),
+    ],
+    "spacing": [
+        V(_OPTIONS, [
+            ('pz.hspace()', _B + 'pz.row([box("left"), pz.hspace(), box("right")], width=320)'),
+            ('pz.space(width=60)', _B + 'pz.row([box("a"), pz.space(width=60), box("b")])'),
+            ('pz.vspace()', _B + 'pz.column([box("top"), pz.vspace(), box("bottom")], height=150)', {"size": (480, 220)}),
+        ]),
+    ],
+    "responsive": [
+        V(T("Available width", "Ancho disponible"), [
+            ('width=200', _B + 'pz.container(pz.responsive(lambda w, h: pz.row([box("1"), box("2"), box("3")], spacing=8)\n             if w > 300 else pz.column([box("1"), box("2")], spacing=8)), width=200, height=110)', {"size": (480, 180)}),
+            ('width=400', _B + 'pz.container(pz.responsive(lambda w, h: pz.row([box("1"), box("2"), box("3")], spacing=8)\n             if w > 300 else pz.column([box("1"), box("2")], spacing=8)), width=400, height=60)'),
+        ], T("The same code, given two widths: the layout changes by itself.",
+             "El mismo código con dos anchos: la disposición cambia sola.")),
+    ],
+    "anchor-layout": [
+        V(T("Presets", "Presets"), [
+            (preset, 't = pz.theme.current()\npz.container(pz.anchor_layout([pz.anchor(ui.badge("' + preset + '"), x=10, y=10, width=90, height=24,\n                                         anchor="' + preset + '")], design=(110, 44)),\n             width=260, height=110, border_color=t.border, border_width=1, radius=8)')
+            for preset in ("top_left", "top_right", "bottom_left", "bottom_right", "center")
+        ], T("Each layout was designed at 110 × 44 and drawn at 260 × 110: the badge keeps its distance to the "
+             "edges it is anchored to.",
+             "Cada disposición se diseñó a 110 × 44 y se dibuja a 260 × 110: la insignia mantiene su distancia a "
+             "los bordes a los que está anclada.")),
+        V(T("Stretching", "Estirar"), [
+            (preset, 't = pz.theme.current()\npz.container(pz.anchor_layout([pz.anchor(pz.container(width="fill", height="fill", bg=t.accent, radius=4),\n                                         x=10, y=10, width=90, height=24, anchor="' + preset + '")], design=(110, 44)),\n             width=260, height=110, border_color=t.border, border_width=1, radius=8)')
+            for preset in ("top_wide", "bottom_wide", "left_tall", "center_wide", "full")
+        ]),
+    ],
+    # ------------------------------------------------------------------------------------ content
+    "text": [
+        V(_SIZE, [
+            ('size=12', 'pz.text("Size 12", size=12)'),
+            ('size=18', 'pz.text("Size 18", size=18)'),
+            ('size=32', 'pz.text("Size 32", size=32)'),
+        ]),
+        V(T("Font and weight", "Fuente y peso"), [
+            ('weight="bold"', 'pz.text("Bold", size=18, weight="bold")'),
+            ('weight="light"', 'pz.text("Light", size=18, weight="light")'),
+            ('italic=True', 'pz.text("Italic", size=18, italic=True)'),
+            ('font="mono"', 'pz.text("Monospace 0123", size=16, font="mono")'),
+        ]),
+        V(T("Color and wrapping", "Color y ajuste"), [
+            ('color="#e5c07b"', 'pz.text("Golden text", size=18, color="#e5c07b")'),
+            ('width=, align_x="center"', 'pz.container(pz.text("A long sentence that wraps over several lines, centered.", align_x="center"),\n             width=220)'),
+            ('line_height=1.8', 'pz.container(pz.text("Taller lines are easier to read in long paragraphs.", line_height=1.8),\n             width=220)'),
+        ]),
+    ],
+    "icon": [
+        V(_SIZE, [
+            ('size=12', 'pz.icon("sparkles", size=12)'),
+            ('size=16', 'pz.icon("sparkles", size=16)'),
+            ('size=24', 'pz.icon("sparkles", size=24)'),
+            ('size=40', 'pz.icon("sparkles", size=40)'),
+        ]),
+        V(_COLOR, [
+            ('color="#a1c181"', 'pz.icon("git-branch", size=24, color="#a1c181")'),
+            ('color="#d07277"', 'pz.icon("bug", size=24, color="#d07277")'),
+            ('color="#74ade8"', 'pz.icon("folder-open", size=24, color="#74ade8")'),
+        ]),
+        V(T("SVG", "SVG"), [
+            ('pz.svg("logo.svg")', 'pz.svg("logo.svg", width=48, height=48)'),
+        ]),
+    ],
+    "image": [
+        V(T("Fit", "Ajuste"), [
+            ('content_fit="cover"', 'pz.image("photo.png", width=200, height=110, content_fit="cover")', {"size": (480, 200)}),
+            ('content_fit="contain"', 'pz.image("photo.png", width=200, height=110, content_fit="contain")', {"size": (480, 200)}),
+            ('content_fit="fill"', 'pz.image("photo.png", width=200, height=110, content_fit="fill")', {"size": (480, 200)}),
+        ]),
+        V(T("Look", "Aspecto"), [
+            ('radius=16', 'pz.image("photo.png", width=200, height=110, content_fit="cover", radius=16)', {"size": (480, 200)}),
+            ('opacity=0.4', 'pz.image("photo.png", width=200, height=110, content_fit="cover", opacity=0.4)', {"size": (480, 200)}),
+        ]),
+    ],
+    "rich-text": [
+        V(T("Span styles", "Estilos de span"), [
+            ('weight="bold"', 'pz.rich_text([pz.span("Some "), pz.span("bold", weight="bold"), pz.span(" text")], size=16)'),
+            ('italic=True', 'pz.rich_text([pz.span("Some "), pz.span("italic", italic=True), pz.span(" text")], size=16)'),
+            ('color=', 'pz.rich_text([pz.span("Some "), pz.span("colored", color="#e5c07b"), pz.span(" text")], size=16)'),
+            ('underline=True', 'pz.rich_text([pz.span("Some "), pz.span("underlined", underline=True), pz.span(" text")], size=16)'),
+            ('strikethrough=True', 'pz.rich_text([pz.span("Some "), pz.span("struck", strikethrough=True), pz.span(" text")], size=16)'),
+            ('bg=, radius=', 'pz.rich_text([pz.span("Run "), pz.span(" pyzed new ", font="mono", bg="#3b414d", color="#e6e6e6", radius=4)], size=16)'),
+            ('link=', 'pz.rich_text([pz.span("Read "), pz.span("the docs", color="#74ade8", underline=True, link="https://iced.rs")], size=16)'),
+            ('size=', 'pz.rich_text([pz.span("small ", size=12), pz.span("big", size=24, weight="bold")])'),
+        ]),
+    ],
+    "qr-code": [
+        V(_OPTIONS, [
+            ('cell_size=3', 'pz.qr_code("https://albakore.github.io/pyzed/", cell_size=3)', {"size": (480, 220)}),
+            ('cell_size=5', 'pz.qr_code("pyzed", cell_size=5)', {"size": (480, 220)}),
+            ('color=, bg=', 'pz.qr_code("pyzed", cell_size=5, color="#74ade8", bg="#1e2228")', {"size": (480, 220)}),
+        ]),
+    ],
+    "canvas": [
+        V(T("Shapes", "Formas"), [
+            ('draw.rect', 'pz.canvas([draw.rect(10, 10, 140, 70, fill="#74ade8", radius=10)], width=160, height=90)'),
+            ('draw.circle', 'pz.canvas([draw.circle(50, 45, 36, fill="#a1c181")], width=100, height=90)'),
+            ('draw.arc', 'pz.canvas([draw.arc(50, 45, 34, 0, 270, stroke="#e5c07b", width=8, cap="round")], width=100, height=90)'),
+            ('draw.polygon', 'pz.canvas([draw.polygon([(10, 80), (50, 10), (90, 80)], fill="#d07277")], width=100, height=90)'),
+            ('draw.line(dash=)', 'pz.canvas([draw.line(10, 45, 190, 45, stroke="#c678dd", width=3, dash=[8, 5])], width=200, height=90)'),
+            ('draw.text', 'pz.canvas([draw.text(100, 45, "pyzed.draw", color="#74ade8", size=20, align_x="center",\n                     align_y="center")], width=200, height=90)'),
+        ]),
+    ],
+    "shader": [
+        V(T("Uniforms", "Uniforms"), [
+            (f'tint="{tint}"', 'pz.shader("""\nfn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {\n    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);\n    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);\n}\n""", uniforms={"tint": "' + tint + '"}, width=260, height=110, time=0.5,\n    fallback=pz.Gradient(["#14172f", "' + tint + '"], angle=0))', {"size": (480, 200)})
+            for tint in ("#c678dd", "#56b6c2", "#e5c07b")
+        ], T("Each capture is one frame at `time=0.5`; run the example to see it move. Without a GPU the widget draws its `fallback`.",
+             "Cada captura es un fotograma con `time=0.5`; ejecuta el ejemplo para verlo moverse. Sin GPU el widget dibuja su `fallback`.")),
+    ],
+    "effects": [
+        V(T("Effects", "Efectos"), [
+            (prop, 'pz.container(pz.container(ui.label("' + label + '"), width=130, height=60, padding=12).style(' + style + '),\n             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)',
+             {"size": (480, 200)})
+            for prop, label, style in (
+                ("glass=True", "Glass", "glass=True, radius=12"),
+                ("glow=", "Glow", 'background="#0b1220", radius=12, glow=("#22d3ee", 18)'),
+                ("bloom=", "Bloom", 'background="#1a0b16", radius=12, bloom=("#f472b6", 0.8)'),
+                ("opacity=0.5", "Opacity", 'background="#0b1220", radius=12, opacity=0.5'),
+                ("scale=1.15", "Scale", 'background="#0b1220", radius=12, scale=1.15'),
+                ("translate=", "Translate", 'background="#0b1220", radius=12, translate=(16, 8)'),
+            )
+        ]),
+    ],
+})
+
+# The animation presets only show while they play; see the clips on the Showcase pages.
+for _entry in COMPONENTS:
+    _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]
+    _entry["plain"] = PLAIN.get(_entry["slug"])
+    _entry["variants"] = VARIANTS.get(_entry["slug"], [])

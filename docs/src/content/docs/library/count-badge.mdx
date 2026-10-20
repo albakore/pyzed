@@ -2,7 +2,7 @@
 title: "Count badge"
 description: "A round counter that shows 99+ above its max. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 22
+  order: 23
   label: "Count badge"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A little round number, like the count of unread messages on an app icon.
+:::
 
 A round counter for notifications or problems. Above `max` it shows `99+`.
 
@@ -51,6 +57,85 @@ pz.row([
     pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="center"),
 ], spacing=16, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Count
+
+Above `max` it shows `max+`.
+
+<VariantGrid>
+<Variant name="count-badge-v1-1" caption={"3"} alt={"Count badge: 3"} code="Code" mono>
+
+```python
+ui.count_badge(3)
+```
+
+</Variant>
+<Variant name="count-badge-v1-2" caption={"42"} alt={"Count badge: 42"} code="Code" mono>
+
+```python
+ui.count_badge(42)
+```
+
+</Variant>
+<Variant name="count-badge-v1-3" caption={"120"} alt={"Count badge: 120"} code="Code" mono>
+
+```python
+ui.count_badge(120)
+```
+
+</Variant>
+<Variant name="count-badge-v1-4" caption={"max=9"} alt={"Count badge: max=9"} code="Code" mono>
+
+```python
+ui.count_badge(12, max=9)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tint
+
+<VariantGrid>
+<Variant name="count-badge-v2-1" caption={"tint=\"success\""} alt={"Count badge: tint=\"success\""} code="Code" mono>
+
+```python
+ui.count_badge(5, tint="success")
+```
+
+</Variant>
+<Variant name="count-badge-v2-2" caption={"tint=\"warning\""} alt={"Count badge: tint=\"warning\""} code="Code" mono>
+
+```python
+ui.count_badge(5, tint="warning")
+```
+
+</Variant>
+<Variant name="count-badge-v2-3" caption={"tint=\"error\""} alt={"Count badge: tint=\"error\""} code="Code" mono>
+
+```python
+ui.count_badge(5, tint="error")
+```
+
+</Variant>
+</VariantGrid>
+
+### Next to an icon
+
+<VariantGrid>
+<Variant name="count-badge-v3-1" caption={"Notifications"} alt={"Count badge: Notifications"} code="Code">
+
+```python
+pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="center")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

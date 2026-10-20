@@ -2,7 +2,7 @@
 title: "Panel"
 description: "Un panel lateral acoplable y redimensionable. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 74
+  order: 76
   label: "Panel"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una zona lateral de la ventana, como la lista de archivos de la izquierda, que puedes ensanchar o estrechar.
+:::
 
 Un panel acoplable con una cabecera opcional. `side` decide qué borde lleva la línea; con un `width` numérico (`height` para el de abajo) ese borde se puede arrastrar para cambiar el tamaño, y `on_resize` informa del nuevo tamaño.
 
@@ -56,6 +62,41 @@ pz.row([
     pz.container(ui.muted("Content"), center=True, width="fill", height="fill"),
 ], height="fill")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Lado
+
+<VariantGrid>
+<Variant name="panel-v1-1" caption={"side=\"left\""} alt={"Panel: side=\"left\""} code="Código" mono>
+
+```python
+pz.row([ui.panel(ui.list_item("Inbox", icon="inbox", inset=True), header=ui.panel_header("Mail"),
+                 width=160, side="left"), pz.container(width="fill")], height="fill")
+```
+
+</Variant>
+<Variant name="panel-v1-2" caption={"side=\"right\""} alt={"Panel: side=\"right\""} code="Código" mono>
+
+```python
+pz.row([pz.container(width="fill"), ui.panel(ui.muted("Properties"), header=ui.panel_header("Inspector"),
+                                          width=160, side="right")], height="fill")
+```
+
+</Variant>
+<Variant name="panel-v1-3" caption={"side=\"bottom\""} alt={"Panel: side=\"bottom\""} code="Código" mono>
+
+```python
+pz.column([pz.container(height="fill"), ui.panel(ui.terminal("$ ls"), header=ui.panel_header("Terminal"),
+                                             height=100, side="bottom")], width="fill")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Editor"
 description: "Un editor de código completo: resaltado, plegado, minimapa, marcas de git. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 42
+  order: 44
   label: "Editor"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja para escribir código, con colores, números de línea y todo lo que espera un programador.
+:::
 
 Un editor de código con resaltado de sintaxis en los colores del tema (más de 100 lenguajes), números de línea, marcas de git, cierre automático de pares, plegado, minimapa y zoom de fuente. Es **no controlado**: el texto, el cursor y el historial viven en Rust, ligados al `id`, y `text` solo es el valor inicial. `on_change` recibe el texto completo y `on_cursor` la `(línea, columna)`. `pz.code_editor` es el widget base sin tema.
 
@@ -66,6 +72,88 @@ class Editor(pz.App):
         return ui.editor(self.path, self.text, path=self.path,
                          on_change=lambda text: setattr(self, "text", text))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Lenguaje
+
+<VariantGrid>
+<Variant name="editor-v1-1" caption={"path=\"counter.py\""} alt={"Editor: path=\"counter.py\""} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-py", "class Counter(pz.App):\n    count = 0\n\n    def view(self):\n        return ui.button('Add', self.add)", path="counter.py"), width=470, height=110)
+```
+
+</Variant>
+<Variant name="editor-v1-2" caption={"language=\"rust\""} alt={"Editor: language=\"rust\""} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-rs", "fn main() {\n    println!(\"hi\");\n}\n", language="rust"),
+             width=420, height=90)
+```
+
+</Variant>
+<Variant name="editor-v1-3" caption={"language=\"json\""} alt={"Editor: language=\"json\""} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-json", '{\n  "name": "notes",\n  "version": 2\n}\n', language="json"),
+             width=420, height=110)
+```
+
+</Variant>
+</VariantGrid>
+
+### Opciones
+
+<VariantGrid>
+<Variant name="editor-v2-1" caption={"gutter=False"} alt={"Editor: gutter=False"} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-g", "class Counter(pz.App):\n    count = 0\n\n    def view(self):\n        return ui.button('Add', self.add)", path="a.py", gutter=False), width=470, height=110)
+```
+
+</Variant>
+<Variant name="editor-v2-2" caption={"markers="} alt={"Editor: markers="} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-m", "class Counter(pz.App):\n    count = 0\n\n    def view(self):\n        return ui.button('Add', self.add)", path="a.py", markers={2: "created", 5: "modified"}),
+             width=470, height=110)
+```
+
+</Variant>
+<Variant name="editor-v2-3" caption={"minimap=True"} alt={"Editor: minimap=True"} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-mm", "class Counter(pz.App):\n    count = 0\n\n    def view(self):\n        return ui.button('Add', self.add)", path="a.py", minimap=True), width=470, height=124)
+```
+
+</Variant>
+<Variant name="editor-v2-4" caption={"show_whitespace=True"} alt={"Editor: show_whitespace=True"} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-ws", "class Counter(pz.App):\n    count = 0\n\n    def view(self):\n        return ui.button('Add', self.add)", path="a.py", show_whitespace=True), width=470, height=110)
+```
+
+</Variant>
+<Variant name="editor-v2-5" caption={"placeholder="} alt={"Editor: placeholder="} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-ph", "", placeholder="Write something…"), width=420, height=60)
+```
+
+</Variant>
+<Variant name="editor-v2-6" caption={"font_size=16"} alt={"Editor: font_size=16"} code="Código" mono>
+
+```python
+pz.container(ui.editor("v-fs", "print(\"big\")\n", path="a.py", font_size=16), width=420, height=60)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

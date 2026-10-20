@@ -2,7 +2,7 @@
 title: "Tab bar"
 description: "Editor tabs with icons, dirty dots and close buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 82
+  order: 84
   label: "Tab bar"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+The tabs at the top of an editor, one per open document.
+:::
 
 A row of editor tabs with optional controls at the start and end. `ui.Tab.for_file(path)` creates a tab with the file's name, icon and path as id. `dirty=True` shows a dot that turns into the close button on hover, `preview=True` draws the name in italics, and `status` tints it with a git color. `on_select(id)` and `on_close(id)` receive the tab id.
 
@@ -60,6 +66,78 @@ class Editor(pz.App):
         return ui.tab_bar([ui.Tab.for_file(p) for p in self.open], self.active,
                           on_select=lambda p: setattr(self, "active", p), on_close=self.close)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Tabs
+
+<VariantGrid>
+<Variant name="tab-bar-v1-1" caption={"Active and inactive"} alt={"Tab bar: Active and inactive"} code="Code">
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("app.rs")], "main.rs",
+                        on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-2" caption={"dirty=True"} alt={"Tab bar: dirty=True"} code="Code" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs"), ui.Tab.for_file("notes.md", dirty=True)], "main.rs",
+                        on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-3" caption={"preview=True"} alt={"Tab bar: preview=True"} code="Code" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("README.md", preview=True)], "README.md", on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-4" caption={"status=\"modified\""} alt={"Tab bar: status=\"modified\""} code="Code" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("app.py", status="modified"),
+                         ui.Tab.for_file("new.py", status="created")], "app.py", on_close=on_close), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v1-5" caption={"Tab(icon=)"} alt={"Tab bar: Tab(icon=)"} code="Code" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab("home", "Home", icon="house"), ui.Tab("logs", "Logs", icon="scroll-text")],
+                        "home", on_select=on_select), width=400)
+```
+
+</Variant>
+</VariantGrid>
+
+### Controls
+
+<VariantGrid>
+<Variant name="tab-bar-v2-1" caption={"start=, end="} alt={"Tab bar: start=, end="} code="Code" mono>
+
+```python
+pz.container(ui.tab_bar([ui.Tab.for_file("main.rs")], "main.rs", on_close=on_close,
+                        start=[ui.icon_button("arrow-left", on_back, size="sm")],
+                        end=[ui.icon_button("plus", on_new, size="sm")]), width=400)
+```
+
+</Variant>
+<Variant name="tab-bar-v2-2" caption={"ui.tab(dimmed=True)"} alt={"Tab bar: ui.tab(dimmed=True)"} code="Code" mono>
+
+```python
+pz.row([ui.tab(ui.Tab.for_file("main.rs"), active=True),
+        ui.tab(ui.Tab.for_file("app.rs"), active=False, dimmed=True)])
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

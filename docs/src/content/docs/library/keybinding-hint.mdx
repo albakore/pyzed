@@ -2,7 +2,7 @@
 title: "Keybinding hint"
 description: "A muted “Open file Ctrl P” hint. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 43
+  order: 44
   label: "Keybinding hint"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A quiet line that teaches a shortcut: “Open file  Ctrl P”.
+:::
 
 A muted hint that pairs an action with its shortcut, for footers and empty states.
 
@@ -48,6 +54,38 @@ pz.column([
     ui.keybinding_hint("Toggle terminal", "ctrl-j"),
 ], spacing=10, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Examples
+
+<VariantGrid>
+<Variant name="keybinding-hint-v1-1" caption={"One key"} alt={"Keybinding hint: One key"} code="Code">
+
+```python
+ui.keybinding_hint("Search", "/")
+```
+
+</Variant>
+<Variant name="keybinding-hint-v1-2" caption={"Combination"} alt={"Keybinding hint: Combination"} code="Code">
+
+```python
+ui.keybinding_hint("Command palette", "ctrl-shift-p")
+```
+
+</Variant>
+<Variant name="keybinding-hint-v1-3" caption={"Chord"} alt={"Keybinding hint: Chord"} code="Code">
+
+```python
+ui.keybinding_hint("Keyboard shortcuts", "ctrl-k ctrl-s")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

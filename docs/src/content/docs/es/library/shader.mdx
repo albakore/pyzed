@@ -2,7 +2,7 @@
 title: "Shader"
 description: "Un widget pintado en la GPU por tu propio código WGSL. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 87
+  order: 89
   label: "Shader"
   badge:
     text: "Nuevo"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una superficie pintada por la tarjeta gráfica, para fondos en movimiento y efectos visuales.
+:::
 
 `pz.shader` ejecuta una función que escribes en WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, para cada píxel del widget, en cada fotograma, en la GPU: fondos animados, plasma, fuego o el barrido de un radar no le cuestan nada a Python. Cada entrada de `uniforms` se convierte en una función WGSL con el mismo nombre, y `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Ver la [guía de shaders](/pyzed/es/shading/shaders/) y las [demos](/pyzed/es/showcase/).
 
@@ -37,6 +43,10 @@ fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> 
 </TabItem>
 </Tabs>
 
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
+
 ## Cuándo usarlo
 
 - Para fondos animados detrás de paneles de cristal, menús y HUDs.
@@ -56,9 +66,63 @@ fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> 
     fallback=pz.Gradient(["#14172f", "#c678dd"], angle=0))
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Uniforms
+
+Cada captura es un fotograma con `time=0.5`; ejecuta el ejemplo para verlo moverse. Sin GPU el widget dibuja su `fallback`.
+
+<VariantGrid>
+<Variant name="shader-v1-1" caption={"tint=\"#c678dd\""} alt={"Shader: tint=\"#c678dd\""} code="Código" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#c678dd"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#c678dd"], angle=0))
+```
+
+</Variant>
+<Variant name="shader-v1-2" caption={"tint=\"#56b6c2\""} alt={"Shader: tint=\"#56b6c2\""} code="Código" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#56b6c2"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#56b6c2"], angle=0))
+```
+
+</Variant>
+<Variant name="shader-v1-3" caption={"tint=\"#e5c07b\""} alt={"Shader: tint=\"#e5c07b\""} code="Código" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#e5c07b"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#e5c07b"], angle=0))
+```
+
+</Variant>
+</VariantGrid>
+
 ## Consejos
 
+:::tip
 Los shaders necesitan el renderizador de GPU. Pasa siempre un `fallback` que se vea bien por sí solo: es lo que dibujan el renderizador por software y los equipos sin GPU.
+:::
 
 ## API
 

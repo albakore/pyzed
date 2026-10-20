@@ -2,7 +2,7 @@
 title: "Toggle group"
 description: "An icon-only segmented control. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 88
+  order: 90
   label: "Toggle group"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A row of icon buttons where only one can be on, like choosing left, center or right alignment.
+:::
 
 A row of icon buttons where exactly one is selected, like text alignment in an editor. `options` are `(value, icon)` pairs and `on_select` receives the chosen value.
 
@@ -53,6 +59,69 @@ class Toolbar(pz.App):
             self.align, lambda value: setattr(self, "align", value),
         )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="toggle-group-v1-1" caption={"Two options"} alt={"Toggle group: Two options"} code="Code">
+
+```python
+ui.toggle_group([("list", "list"), ("grid", "layout-grid")], "list", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v1-2" caption={"Three options"} alt={"Toggle group: Three options"} code="Code">
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "center", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v1-3" caption={"Four options"} alt={"Toggle group: Four options"} code="Code">
+
+```python
+ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline"), ("s", "strikethrough")],
+                "b", on_select)
+```
+
+</Variant>
+</VariantGrid>
+
+### Selection
+
+<VariantGrid>
+<Variant name="toggle-group-v2-1" caption={"selected=\"left\""} alt={"Toggle group: selected=\"left\""} code="Code" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "left", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v2-2" caption={"selected=\"right\""} alt={"Toggle group: selected=\"right\""} code="Code" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "right", on_select)
+```
+
+</Variant>
+<Variant name="toggle-group-v2-3" caption={"selected=None"} alt={"Toggle group: selected=None"} code="Code" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                None, on_select)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

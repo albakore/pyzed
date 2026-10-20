@@ -2,7 +2,7 @@
 title: "Canvas"
 description: "2D drawing with shapes, paths, text and mouse events. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 11
+  order: 12
   label: "Canvas"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A blank sheet to draw shapes, lines and text on, for charts and games.
+:::
 
 A 2D drawing surface. `shapes` is a list made with [`pyzed.draw`](/pyzed/reference/draw/) (rectangles, circles, arcs, paths, text, images…). Mouse callbacks receive coordinates relative to the canvas; with an `id` the geometry is cached between frames. The charts of this library are drawn with it.
 
@@ -54,6 +60,60 @@ pz.canvas([
     draw.text(225, 150, "pz.canvas + pyzed.draw", color="#a9afbc", size=16, align_x="center"),
 ], width=450, height=170)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Shapes
+
+<VariantGrid>
+<Variant name="canvas-v1-1" caption={"draw.rect"} alt={"Canvas: draw.rect"} code="Code" mono>
+
+```python
+pz.canvas([draw.rect(10, 10, 140, 70, fill="#74ade8", radius=10)], width=160, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-2" caption={"draw.circle"} alt={"Canvas: draw.circle"} code="Code" mono>
+
+```python
+pz.canvas([draw.circle(50, 45, 36, fill="#a1c181")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-3" caption={"draw.arc"} alt={"Canvas: draw.arc"} code="Code" mono>
+
+```python
+pz.canvas([draw.arc(50, 45, 34, 0, 270, stroke="#e5c07b", width=8, cap="round")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-4" caption={"draw.polygon"} alt={"Canvas: draw.polygon"} code="Code" mono>
+
+```python
+pz.canvas([draw.polygon([(10, 80), (50, 10), (90, 80)], fill="#d07277")], width=100, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-5" caption={"draw.line(dash=)"} alt={"Canvas: draw.line(dash=)"} code="Code" mono>
+
+```python
+pz.canvas([draw.line(10, 45, 190, 45, stroke="#c678dd", width=3, dash=[8, 5])], width=200, height=90)
+```
+
+</Variant>
+<Variant name="canvas-v1-6" caption={"draw.text"} alt={"Canvas: draw.text"} code="Code" mono>
+
+```python
+pz.canvas([draw.text(100, 45, "pyzed.draw", color="#74ade8", size=20, align_x="center",
+                     align_y="center")], width=200, height=90)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

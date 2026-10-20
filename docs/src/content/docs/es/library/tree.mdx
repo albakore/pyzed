@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una lista de carpetas que puedes abrir y cerrar, como los archivos de un proyecto.
+:::
 
 Un panel de proyecto: carpetas plegables, un icono por tipo de archivo y colores de estado de git. `TreeNode.from_paths(paths, status=...)` crea los nodos, pone las carpetas primero y propaga el estado de git a las carpetas con cambios. El id de cada nodo es su ruta; el conjunto `expanded` y el id `selected` son tuyos.
 
@@ -57,6 +63,84 @@ class Explorer(pz.App):
         return ui.tree(self.nodes, expanded=self.expanded, selected=self.selected,
                        on_toggle=self.toggle, on_select=lambda path: setattr(self, "selected", path))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Desplegado
+
+<VariantGrid>
+<Variant name="tree-v1-1" caption={"Plegado"} alt={"Árbol: Plegado"} code="Código">
+
+```python
+nodes = ui.TreeNode.from_paths(["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"])
+pz.container(ui.tree(nodes, expanded=set()), width=240)
+```
+
+</Variant>
+<Variant name="tree-v1-2" caption={"expanded={\"src\"}"} alt={"Árbol: expanded={\"src\"}"} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"])
+pz.container(ui.tree(nodes, expanded={"src"}), width=240)
+```
+
+</Variant>
+<Variant name="tree-v1-3" caption={"expanded={\"src\", \"src/ui\"}"} alt={"Árbol: expanded={\"src\", \"src/ui\"}"} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"])
+pz.container(ui.tree(nodes, expanded={"src", "src/ui"}, selected="src/ui/button.rs"), width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Estado de git
+
+<VariantGrid>
+<Variant name="tree-v2-1" caption={"status="} alt={"Árbol: status="} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["src/app.rs", "src/new.rs", "src/old.rs", "build.log"],
+    status={"src/app.rs": "modified", "src/new.rs": "created", "src/old.rs": "deleted", "build.log": "ignored"})
+pz.container(ui.tree(nodes, expanded={"src"}), width=240)
+```
+
+</Variant>
+<Variant name="tree-v2-2" caption={"\"conflict\""} alt={"Árbol: \"conflict\""} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["merge.py", "ok.py"], status={"merge.py": "conflict"})
+pz.container(ui.tree(nodes, expanded=set()), width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Densidad
+
+<VariantGrid>
+<Variant name="tree-v3-1" caption={"item_height=20, indent=10"} alt={"Árbol: item_height=20, indent=10"} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"])
+pz.container(ui.tree(nodes, expanded={"src", "src/ui"}, item_height=20, indent=10), width=240)
+```
+
+</Variant>
+<Variant name="tree-v3-2" caption={"item_height=30, indent=20"} alt={"Árbol: item_height=30, indent=20"} code="Código" mono>
+
+```python
+nodes = ui.TreeNode.from_paths(["src/main.rs", "src/app.rs", "src/ui/mod.rs", "src/ui/button.rs", "Cargo.toml"])
+pz.container(ui.tree(nodes, expanded={"src"}, item_height=30, indent=20), width=240)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

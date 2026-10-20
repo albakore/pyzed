@@ -2,7 +2,7 @@
 title: "Consola"
 description: "Un registro estilo dev tools con niveles, filtro, copiar y limpiar. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 32
+  order: 33
   label: "Consola"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una lista de mensajes de la app (información, avisos, errores) que puedes filtrar y copiar.
+:::
 
 `ui.Log` reúne entradas (seguro entre hilos, con un tope de `limit`, líneas repetidas agrupadas) y puede capturar `print` y las trazas de error. `ui.console` las muestra como la consola de las dev tools de un navegador: un filtro, un interruptor por nivel con su cuenta, copiar y limpiar. Los niveles son `info`, `event`, `stdout`, `stderr`, `warning` y `error` (`ui.LOG_LEVELS`).
 
@@ -57,6 +63,48 @@ class Debug(pz.App):
                           hidden=self.hidden, on_toggle_level=lambda lvl: self.hidden.symmetric_difference_update({lvl}),
                           on_clear=self.log.clear, on_copy=lambda: pz.Command.copy(self.log.text()))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="console-v1-1" caption={"Todos los niveles"} alt={"Consola: Todos los niveles"} code="Código">
+
+```python
+log = ui.Log()
+for level in ui.LOG_LEVELS:
+    log.write(level, f"{level} message")
+pz.container(ui.console(log.entries, on_clear=on_clear), width=520, height=220)
+```
+
+</Variant>
+<Variant name="console-v1-2" caption={"hidden={\"info\", \"event\"}"} alt={"Consola: hidden={\"info\", \"event\"}"} code="Código" mono>
+
+```python
+log = ui.Log()
+for level in ui.LOG_LEVELS:
+    log.write(level, f"{level} message")
+pz.container(ui.console(log.entries, hidden={"info", "event"}, on_toggle_level=on_toggle),
+             width=520, height=200)
+```
+
+</Variant>
+<Variant name="console-v1-3" caption={"query=\"error\""} alt={"Consola: query=\"error\""} code="Código" mono>
+
+```python
+log = ui.Log()
+log.write("info", "started")
+log.write("error", "ValueError: bad input")
+pz.container(ui.console(log.entries, query="error", on_query=on_query), width=520, height=140)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

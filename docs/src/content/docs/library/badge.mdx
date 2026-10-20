@@ -2,7 +2,7 @@
 title: "Badge"
 description: "A small pill for statuses, versions and counters. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 6
+  order: 7
   label: "Badge"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A tiny colored pill with a word or two, like “beta” or “3 errors”.
+:::
 
 A small pill with text and an optional icon. `tint` picks a semantic color and `variant` is `"soft"` (default), `"solid"` or `"outline"`.
 
@@ -52,29 +58,110 @@ pz.row([
 ], spacing=8)
 ```
 
-## Examples
+## Variants
 
-### Variants
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
 
-`soft` tints the background, `solid` fills it and `outline` only draws the border.
+### Tint
 
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="badge-1" alt="Badge: Variants" />
-</TabItem>
-<TabItem label="Code">
+<VariantGrid>
+<Variant name="badge-v1-1" caption={"tint=\"accent\""} alt={"Badge: tint=\"accent\""} code="Code" mono>
 
 ```python
-pz.row([
-    ui.badge("soft"),
-    ui.badge("solid", variant="solid"),
-    ui.badge("outline", variant="outline"),
-    ui.badge("new", variant="solid", tint="success", icon="sparkles"),
-], spacing=8)
+ui.badge("accent")
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="badge-v1-2" caption={"tint=\"success\""} alt={"Badge: tint=\"success\""} code="Code" mono>
+
+```python
+ui.badge("passed", tint="success")
+```
+
+</Variant>
+<Variant name="badge-v1-3" caption={"tint=\"warning\""} alt={"Badge: tint=\"warning\""} code="Code" mono>
+
+```python
+ui.badge("pending", tint="warning")
+```
+
+</Variant>
+<Variant name="badge-v1-4" caption={"tint=\"error\""} alt={"Badge: tint=\"error\""} code="Code" mono>
+
+```python
+ui.badge("failed", tint="error")
+```
+
+</Variant>
+<Variant name="badge-v1-5" caption={"tint=\"info\""} alt={"Badge: tint=\"info\""} code="Code" mono>
+
+```python
+ui.badge("info", tint="info")
+```
+
+</Variant>
+<Variant name="badge-v1-6" caption={"tint=\"#c678dd\""} alt={"Badge: tint=\"#c678dd\""} code="Code" mono>
+
+```python
+ui.badge("custom", tint="#c678dd")
+```
+
+</Variant>
+</VariantGrid>
+
+### Variant
+
+<VariantGrid>
+<Variant name="badge-v2-1" caption={"variant=\"soft\""} alt={"Badge: variant=\"soft\""} code="Code" mono>
+
+```python
+ui.badge("soft")
+```
+
+</Variant>
+<Variant name="badge-v2-2" caption={"variant=\"solid\""} alt={"Badge: variant=\"solid\""} code="Code" mono>
+
+```python
+ui.badge("solid", variant="solid")
+```
+
+</Variant>
+<Variant name="badge-v2-3" caption={"variant=\"outline\""} alt={"Badge: variant=\"outline\""} code="Code" mono>
+
+```python
+ui.badge("outline", variant="outline")
+```
+
+</Variant>
+</VariantGrid>
+
+### With an icon
+
+<VariantGrid>
+<Variant name="badge-v3-1" caption={"icon=\"sparkles\""} alt={"Badge: icon=\"sparkles\""} code="Code" mono>
+
+```python
+ui.badge("new", icon="sparkles")
+```
+
+</Variant>
+<Variant name="badge-v3-2" caption={"icon=\"circle-x\""} alt={"Badge: icon=\"circle-x\""} code="Code" mono>
+
+```python
+ui.badge("3 errors", tint="error", icon="circle-x")
+```
+
+</Variant>
+<Variant name="badge-v3-3" caption={"variant=\"solid\", icon="} alt={"Badge: variant=\"solid\", icon="} code="Code" mono>
+
+```python
+ui.badge("verified", tint="success", variant="solid", icon="check")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

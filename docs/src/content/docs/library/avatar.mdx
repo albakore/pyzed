@@ -2,7 +2,7 @@
 title: "Avatar"
 description: "A round avatar with initials in a collaborator color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 5
+  order: 6
   label: "Avatar"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A circle with someone's initials, in their own color.
+:::
 
 A circle with initials. `index` picks one of the theme's collaborator (player) colors, so the same person keeps the same color; `color` sets it directly.
 
@@ -51,6 +57,111 @@ pz.row([
     ui.avatar("JD", index=3, size=36),
 ], spacing=8, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Collaborator color
+
+<VariantGrid>
+<Variant name="avatar-v1-1" caption={"index=0"} alt={"Avatar: index=0"} code="Code" mono>
+
+```python
+ui.avatar("AL", index=0)
+```
+
+</Variant>
+<Variant name="avatar-v1-2" caption={"index=1"} alt={"Avatar: index=1"} code="Code" mono>
+
+```python
+ui.avatar("KV", index=1)
+```
+
+</Variant>
+<Variant name="avatar-v1-3" caption={"index=2"} alt={"Avatar: index=2"} code="Code" mono>
+
+```python
+ui.avatar("MZ", index=2)
+```
+
+</Variant>
+<Variant name="avatar-v1-4" caption={"index=3"} alt={"Avatar: index=3"} code="Code" mono>
+
+```python
+ui.avatar("JD", index=3)
+```
+
+</Variant>
+<Variant name="avatar-v1-5" caption={"index=4"} alt={"Avatar: index=4"} code="Code" mono>
+
+```python
+ui.avatar("SR", index=4)
+```
+
+</Variant>
+<Variant name="avatar-v1-6" caption={"index=5"} alt={"Avatar: index=5"} code="Code" mono>
+
+```python
+ui.avatar("PB", index=5)
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="avatar-v2-1" caption={"size=18"} alt={"Avatar: size=18"} code="Code" mono>
+
+```python
+ui.avatar("KV", size=18)
+```
+
+</Variant>
+<Variant name="avatar-v2-2" caption={"size=22"} alt={"Avatar: size=22"} code="Code" mono>
+
+```python
+ui.avatar("KV", size=22)
+```
+
+</Variant>
+<Variant name="avatar-v2-3" caption={"size=32"} alt={"Avatar: size=32"} code="Code" mono>
+
+```python
+ui.avatar("KV", size=32)
+```
+
+</Variant>
+<Variant name="avatar-v2-4" caption={"size=48"} alt={"Avatar: size=48"} code="Code" mono>
+
+```python
+ui.avatar("KV", size=48)
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="avatar-v3-1" caption={"color=\"#c678dd\""} alt={"Avatar: color=\"#c678dd\""} code="Code" mono>
+
+```python
+ui.avatar("PZ", color="#c678dd", size=32)
+```
+
+</Variant>
+<Variant name="avatar-v3-2" caption={"color=\"#e5c07b\""} alt={"Avatar: color=\"#e5c07b\""} code="Code" mono>
+
+```python
+ui.avatar("UI", color="#e5c07b", size=32)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

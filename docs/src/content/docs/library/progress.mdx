@@ -2,7 +2,7 @@
 title: "Progress"
 description: "A thin progress bar in a semantic color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 56
+  order: 58
   label: "Progress"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A bar that fills up to show how much of a task is done.
+:::
 
 A thin bar that fills from `0` to `max` (1.0 by default). `tint` changes its color and `height` its thickness.
 
@@ -54,6 +60,111 @@ class Download(pz.App):
         return ui.progress(self.done, max=self.total)
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Value
+
+<VariantGrid>
+<Variant name="progress-v1-1" caption={"0.1"} alt={"Progress: 0.1"} code="Code" mono>
+
+```python
+ui.progress(0.1, width=240)
+```
+
+</Variant>
+<Variant name="progress-v1-2" caption={"0.5"} alt={"Progress: 0.5"} code="Code" mono>
+
+```python
+ui.progress(0.5, width=240)
+```
+
+</Variant>
+<Variant name="progress-v1-3" caption={"1.0"} alt={"Progress: 1.0"} code="Code" mono>
+
+```python
+ui.progress(1.0, width=240)
+```
+
+</Variant>
+<Variant name="progress-v1-4" caption={"37, max=40"} alt={"Progress: 37, max=40"} code="Code" mono>
+
+```python
+ui.progress(37, max=40, width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tint
+
+<VariantGrid>
+<Variant name="progress-v2-1" caption={"tint=\"success\""} alt={"Progress: tint=\"success\""} code="Code" mono>
+
+```python
+ui.progress(0.7, tint="success", width=240)
+```
+
+</Variant>
+<Variant name="progress-v2-2" caption={"tint=\"warning\""} alt={"Progress: tint=\"warning\""} code="Code" mono>
+
+```python
+ui.progress(0.7, tint="warning", width=240)
+```
+
+</Variant>
+<Variant name="progress-v2-3" caption={"tint=\"error\""} alt={"Progress: tint=\"error\""} code="Code" mono>
+
+```python
+ui.progress(0.7, tint="error", width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Thickness
+
+<VariantGrid>
+<Variant name="progress-v3-1" caption={"height=2"} alt={"Progress: height=2"} code="Code" mono>
+
+```python
+ui.progress(0.6, height=2, width=240)
+```
+
+</Variant>
+<Variant name="progress-v3-2" caption={"height=4"} alt={"Progress: height=4"} code="Code" mono>
+
+```python
+ui.progress(0.6, height=4, width=240)
+```
+
+</Variant>
+<Variant name="progress-v3-3" caption={"height=10"} alt={"Progress: height=10"} code="Code" mono>
+
+```python
+ui.progress(0.6, height=10, width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="progress-v4-1" caption={"pz.progress_bar"} alt={"Progress: pz.progress_bar"} code="Code" mono>
+
+```python
+pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd33", radius=6)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.progress`
@@ -74,6 +185,37 @@ A thin progress bar.
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#progress)
+
+### `pz.progress_bar`
+
+```python
+progress_bar(
+    value,
+    *,
+    min=0.0,
+    max=1.0,
+    width=None,
+    height=None,
+    accent=None,
+    bg=None,
+    radius=2.0,
+)
+```
+
+A progress bar.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `value` | *required* | Current value. |
+| `min` | `0.0` | Minimum. |
+| `max` | `1.0` | Maximum. |
+| `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | `None` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `accent` | `None` | Accent color (active part). |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `radius` | `2.0` | Corner radius. |
+
+[Full reference →](/pyzed/reference/widgets/#progress_bar)
 
 ## Related
 

@@ -2,7 +2,7 @@
 title: "Imagen"
 description: "Imágenes con ajuste, opacidad y radio; un visor con zoom. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 59
+  order: 61
   label: "Imagen"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Muestra una imagen de un archivo: una foto, un logo, una captura.
+:::
 
 `pz.image(source)` muestra un PNG, JPEG, GIF, WebP, BMP… desde una ruta, `bytes` o píxeles RGBA con `size=(w, h)`. Opciones: `content_fit` (`"contain"`, `"cover"`, `"fill"`, `"none"`, `"scale_down"`), `filter` (`"linear"` o `"nearest"`), `opacity`, `radius`, `rotation` y `scale`. `pz.image_viewer` añade desplazamiento (arrastrar) y zoom (rueda).
 
@@ -45,6 +51,57 @@ pz.row([
     pz.image("photo.png", width=140, height=180, content_fit="contain", opacity=0.5),
 ], spacing=16, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Ajuste
+
+<VariantGrid>
+<Variant name="image-v1-1" caption={"content_fit=\"cover\""} alt={"Imagen: content_fit=\"cover\""} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="cover")
+```
+
+</Variant>
+<Variant name="image-v1-2" caption={"content_fit=\"contain\""} alt={"Imagen: content_fit=\"contain\""} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="contain")
+```
+
+</Variant>
+<Variant name="image-v1-3" caption={"content_fit=\"fill\""} alt={"Imagen: content_fit=\"fill\""} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="fill")
+```
+
+</Variant>
+</VariantGrid>
+
+### Aspecto
+
+<VariantGrid>
+<Variant name="image-v2-1" caption={"radius=16"} alt={"Imagen: radius=16"} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="cover", radius=16)
+```
+
+</Variant>
+<Variant name="image-v2-2" caption={"opacity=0.4"} alt={"Imagen: opacity=0.4"} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="cover", opacity=0.4)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

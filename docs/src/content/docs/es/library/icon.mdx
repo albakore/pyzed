@@ -2,7 +2,7 @@
 title: "Icono"
 description: "Iconos de Lucide por nombre e imágenes SVG. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 58
+  order: 60
   label: "Icono"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Dibujos pequeños (una carpeta, una campana, un engranaje) de una biblioteca de más de 1.500.
+:::
 
 `pz.icon(name)` dibuja uno de los más de 1.500 iconos de [Lucide](https://lucide.dev); `color` toma por defecto el color del texto. `pz.svg(source)` dibuja cualquier SVG desde una ruta o bytes, teñido con `color` si quieres.
 
@@ -53,6 +59,83 @@ pz.row([
     pz.svg("logo.svg", width=40, height=40),
 ], spacing=20, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="icon-v1-1" caption={"size=12"} alt={"Icono: size=12"} code="Código" mono>
+
+```python
+pz.icon("sparkles", size=12)
+```
+
+</Variant>
+<Variant name="icon-v1-2" caption={"size=16"} alt={"Icono: size=16"} code="Código" mono>
+
+```python
+pz.icon("sparkles", size=16)
+```
+
+</Variant>
+<Variant name="icon-v1-3" caption={"size=24"} alt={"Icono: size=24"} code="Código" mono>
+
+```python
+pz.icon("sparkles", size=24)
+```
+
+</Variant>
+<Variant name="icon-v1-4" caption={"size=40"} alt={"Icono: size=40"} code="Código" mono>
+
+```python
+pz.icon("sparkles", size=40)
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="icon-v2-1" caption={"color=\"#a1c181\""} alt={"Icono: color=\"#a1c181\""} code="Código" mono>
+
+```python
+pz.icon("git-branch", size=24, color="#a1c181")
+```
+
+</Variant>
+<Variant name="icon-v2-2" caption={"color=\"#d07277\""} alt={"Icono: color=\"#d07277\""} code="Código" mono>
+
+```python
+pz.icon("bug", size=24, color="#d07277")
+```
+
+</Variant>
+<Variant name="icon-v2-3" caption={"color=\"#74ade8\""} alt={"Icono: color=\"#74ade8\""} code="Código" mono>
+
+```python
+pz.icon("folder-open", size=24, color="#74ade8")
+```
+
+</Variant>
+</VariantGrid>
+
+### SVG
+
+<VariantGrid>
+<Variant name="icon-v3-1" caption={"pz.svg(\"logo.svg\")"} alt={"Icono: pz.svg(\"logo.svg\")"} code="Código" mono>
+
+```python
+pz.svg("logo.svg", width=48, height=48)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

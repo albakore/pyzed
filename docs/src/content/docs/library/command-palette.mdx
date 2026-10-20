@@ -2,7 +2,7 @@
 title: "Command palette"
 description: "A command palette with fuzzy search and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 18
+  order: 19
   label: "Command palette"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A search box for every action of the app: type what you want to do and press Enter.
+:::
 
 A command palette: it fuzzy-filters `commands` (`ui.PaletteItem(label, on_press, keys=)`) by `query`, highlights the matched letters and shows each shortcut. You own the query and the `selected` index; Enter calls `on_submit`.
 
@@ -72,6 +78,50 @@ class App(pz.App):
         return ui.layer(self.main_view(), palette if self.open else None,
                         on_dismiss=lambda: setattr(self, "open", False))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Query
+
+<VariantGrid>
+<Variant name="command-palette-v1-1" caption={"Empty"} alt={"Command palette: Empty"} code="Code">
+
+```python
+ui.command_palette("", on_query, [
+    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),
+    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),
+    ui.PaletteItem("theme selector: toggle", on_theme),
+], width=420)
+```
+
+</Variant>
+<Variant name="command-palette-v1-2" caption={"query=\"op\""} alt={"Command palette: query=\"op\""} code="Code" mono>
+
+```python
+ui.command_palette("op", on_query, [
+    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),
+    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),
+    ui.PaletteItem("workspace: open recent", on_recent, keys="ctrl-r"),
+], width=420)
+```
+
+</Variant>
+<Variant name="command-palette-v1-3" caption={"selected=1"} alt={"Command palette: selected=1"} code="Code" mono>
+
+```python
+ui.command_palette("", on_query, [
+    ui.PaletteItem("file: new", on_new, keys="ctrl-n"),
+    ui.PaletteItem("file: open", on_open, keys="ctrl-o"),
+    ui.PaletteItem("file: save", on_save, keys="ctrl-s"),
+], selected=1, width=420)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

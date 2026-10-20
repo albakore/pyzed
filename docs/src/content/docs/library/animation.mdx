@@ -2,7 +2,7 @@
 title: "Animation"
 description: "Presets, keyframes and transitions for any widget. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 4
+  order: 5
   label: "Animation"
   badge:
     text: "New"
@@ -13,6 +13,10 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+
+:::tip[In plain words]
+Makes things move: fade in, slide, bounce or glow, without extra work.
+:::
 
 Every widget has `animate()` and `transition()`. `animate` plays one of 47 presets or a `pz.Animation` when the widget appears, on hover, press, focus, click or while `active`; `transition` animates property changes like CSS. `pz.stagger` cascades a list in and `pz.presence` animates content in and out when it changes. Everything runs natively, without calling Python per frame. See the [Animation guide](/pyzed/guides/animation/).
 
@@ -33,6 +37,10 @@ pz.column(pz.stagger([
 
 </TabItem>
 </Tabs>
+
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
 
 ## When to use
 
@@ -60,7 +68,9 @@ class Inbox(pz.App):
 
 ## Tips
 
+:::tip
 Screenshots and `pz.set_reduced_motion(True)` show every animation at rest, so tests are stable. Respect users who turn motion off.
+:::
 
 ## API
 

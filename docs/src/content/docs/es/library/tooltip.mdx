@@ -2,7 +2,7 @@
 title: "Tooltip"
 description: "Una pista que aparece al pasar el ratón, con su atajo opcional. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 94
+  order: 96
   label: "Tooltip"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una cajita con una pista que aparece cuando dejas el ratón encima de algo.
+:::
 
 Envuelve cualquier widget y muestra una caja pequeña con el estilo del tema mientras el ratón está encima. `keys=` añade el atajo y `position` es `"top"`, `"bottom"` (por defecto), `"left"` o `"right"`. `pz.tooltip` es la versión base sin estilo.
 
@@ -48,9 +54,73 @@ pz.row([
 ], spacing=8)
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Posición
+
+Dibujado tal como lo muestra el puntero: los tooltips solo se abren al pasar el ratón.
+
+<VariantGrid>
+<Variant name="tooltip-v1-1" caption={"position=\"bottom\""} alt={"Tooltip: position=\"bottom\""} code="Código" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save")
+```
+
+</Variant>
+<Variant name="tooltip-v1-2" caption={"position=\"top\""} alt={"Tooltip: position=\"top\""} code="Código" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="top")
+```
+
+</Variant>
+<Variant name="tooltip-v1-3" caption={"position=\"right\""} alt={"Tooltip: position=\"right\""} code="Código" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="right")
+```
+
+</Variant>
+<Variant name="tooltip-v1-4" caption={"position=\"left\""} alt={"Tooltip: position=\"left\""} code="Código" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="left")
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+Dibujado tal como lo muestra el puntero: los tooltips solo se abren al pasar el ratón.
+
+<VariantGrid>
+<Variant name="tooltip-v2-1" caption={"keys=\"ctrl-s\""} alt={"Tooltip: keys=\"ctrl-s\""} code="Código" mono>
+
+```python
+ui.tooltip(ui.button("Save", on_save), "Save the file", keys="ctrl-s")
+```
+
+</Variant>
+<Variant name="tooltip-v2-2" caption={"icon_button(tooltip=)"} alt={"Tooltip: icon_button(tooltip=)"} code="Código" mono>
+
+```python
+ui.icon_button("settings", on_settings, tooltip="Settings")
+```
+
+</Variant>
+</VariantGrid>
+
 ## Consejos
 
+:::tip
 Los tooltips solo aparecen al pasar el ratón, así que la vista previa muestra los botones. `ui.icon_button(..., tooltip="Texto")` es un atajo para envolverlo en `ui.tooltip`.
+:::
 
 ## API
 

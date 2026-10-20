@@ -2,7 +2,7 @@
 title: "Rich text"
 description: "One block of text mixing colors, weights and links. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 63
+  order: 65
   label: "Rich text"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A sentence where some words are bold, colored or links.
+:::
 
 Combines `pz.span(text, color=, size=, font=, weight=, italic=, bg=, underline=, strikethrough=, link=)` fragments into a single block of text that wraps as a whole. Clicking a span with `link` sends that value.
 
@@ -55,6 +61,73 @@ pz.rich_text([
     pz.span("links", color="#74ade8", underline=True, link="https://iced.rs"),
 ], size=18, width=460)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Span styles
+
+<VariantGrid>
+<Variant name="rich-text-v1-1" caption={"weight=\"bold\""} alt={"Rich text: weight=\"bold\""} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Some "), pz.span("bold", weight="bold"), pz.span(" text")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-2" caption={"italic=True"} alt={"Rich text: italic=True"} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Some "), pz.span("italic", italic=True), pz.span(" text")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-3" caption={"color="} alt={"Rich text: color="} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Some "), pz.span("colored", color="#e5c07b"), pz.span(" text")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-4" caption={"underline=True"} alt={"Rich text: underline=True"} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Some "), pz.span("underlined", underline=True), pz.span(" text")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-5" caption={"strikethrough=True"} alt={"Rich text: strikethrough=True"} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Some "), pz.span("struck", strikethrough=True), pz.span(" text")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-6" caption={"bg=, radius="} alt={"Rich text: bg=, radius="} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Run "), pz.span(" pyzed new ", font="mono", bg="#3b414d", color="#e6e6e6", radius=4)], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-7" caption={"link="} alt={"Rich text: link="} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("Read "), pz.span("the docs", color="#74ade8", underline=True, link="https://iced.rs")], size=16)
+```
+
+</Variant>
+<Variant name="rich-text-v1-8" caption={"size="} alt={"Rich text: size="} code="Code" mono>
+
+```python
+pz.rich_text([pz.span("small ", size=12), pz.span("big", size=24, weight="bold")])
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

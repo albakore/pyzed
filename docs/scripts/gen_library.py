@@ -4,13 +4,15 @@
     python docs/scripts/gen_library.py           # writes the pages in every language
     python docs/scripts/gen_library.py --check   # fails if something is missing or out of date
 
-Every component gets a page with its description, a Preview/Code tab pair, "When to use", usage,
-examples, tips, an API section and related components; ``index.mdx`` is a gallery of all of them,
-grouped by category. The API tables reuse gen_api.py: signatures come from ``inspect`` and the
+Every component gets a page with an "In plain words" box, its description, a Preview/Code tab
+pair, "When to use", usage, a "Variants" grid (one cropped capture per variant, size and state, with
+its code under it), examples, tips, an API section and related components; ``index.mdx`` is a
+gallery of all of them, grouped by category, with the number of variants of each. The API tables reuse gen_api.py: signatures come from ``inspect`` and the
 parameter descriptions from ``api_docs_<lang>.py``, so they always match the API reference.
 
 ``--check`` fails when a public name of ``pyzed.ui`` is not on any library page, an entry points to
-an unknown name, category, related slug or image, or a generated page differs from what is on disk.
+an unknown name, category, related slug or image, a PNG in the assets folder is used by no entry, or
+a generated page differs from what is on disk.
 See library_data.py for the data format and how to add a component.
 """
 
@@ -54,6 +56,15 @@ LANGS = {
         "tips": "Tips", "api": "API", "related": "Related", "param": "Parameter", "default": "Default",
         "desc": "Description", "required": "required", "reference": "Full reference",
         "import": "Import", "category": "Category", "new": "New",
+        "plain": "In plain words", "variants": "Variants", "components_n": "components",
+        "variants_n": "variants", "variant_1": "variant", "categories_n": "categories",
+        "new_title": "New", "new_text": "This component was added recently. Tell us how it works for you in the "
+                                        "[issue tracker](https://github.com/albakore/pyzed/issues).",
+        "shots_title": "About these captures",
+        "shots_text": "Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to "
+                      "match this site's theme, and cropped to the component so it shows at its real size. "
+                      "Open **Code** under a capture to see the snippet that draws it; free names such as "
+                      "`on_save` stand for your own callbacks.",
         "intro": """
 Every component of `pyzed.ui`, plus the layout and content widgets of `pyzed`, with a live
 preview, the code that draws it, examples and its API. Components are **functions that return
@@ -78,10 +89,17 @@ To see them all running, open the gallery: `python examples/gallery.py`.
 Looking for whole screens built from them (login, dashboard, settings, chat, kanban...)? See
 [Blocks](/pyzed/blocks/).
 
-:::tip[Light and dark]
-Every preview is captured in both themes and follows the site's: switch the theme at the top of the page to see
-the other one. Pages of interactive components, such as [Button](/pyzed/library/button/) and
+:::note[What is on each page]
+A short explanation in plain words, a preview with its code, every variant, size and state captured
+in light and dark with the snippet that draws it, examples, tips and the API table. Pages of
+interactive components, such as [Button](/pyzed/library/button/) and
 [Input](/pyzed/library/input/), also show a short recording of them in use.
+:::
+
+:::tip[Inspiration]
+The look of these components takes inspiration from the UI of the [Zed](https://zed.dev) editor;
+the idea of building desktop tools from ready-made pieces comes from Godot, Unreal Engine, Visual
+Basic and Qt Designer. pyzed is an independent project.
 :::
 """,
     },
@@ -99,6 +117,15 @@ the other one. Pages of interactive components, such as [Button](/pyzed/library/
         "examples": "Ejemplos", "tips": "Consejos", "api": "API", "related": "Relacionados",
         "param": "Parámetro", "default": "Por defecto", "desc": "Descripción", "required": "obligatorio",
         "reference": "Referencia completa", "import": "Importar", "category": "Categoría", "new": "Nuevo",
+        "plain": "En pocas palabras", "variants": "Variantes", "components_n": "componentes",
+        "variants_n": "variantes", "variant_1": "variante", "categories_n": "categorías",
+        "new_title": "Nuevo", "new_text": "Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el "
+                                          "[gestor de incidencias](https://github.com/albakore/pyzed/issues).",
+        "shots_title": "Sobre estas capturas",
+        "shots_text": "Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light "
+                      "según el tema de este sitio, y recortada al componente para que se vea a su tamaño "
+                      "real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los "
+                      "nombres libres como `on_save` son tus propios callbacks.",
         "intro": """
 Todos los componentes de `pyzed.ui`, más los widgets de disposición y contenido de `pyzed`, con
 una vista previa, el código que la dibuja, ejemplos y su API. Los componentes son **funciones que
@@ -124,10 +151,17 @@ Para verlos todos funcionando, abre la galería: `python examples/gallery.py`.
 ¿Buscas pantallas completas hechas con ellos (login, dashboard, ajustes, chat, kanban...)? Mira los
 [Bloques](/pyzed/es/blocks/).
 
-:::tip[Claro y oscuro]
-Cada vista previa está capturada en los dos temas y sigue al del sitio: cambia el tema arriba de la página para
-ver el otro. Las páginas de componentes interactivos, como [Botón](/pyzed/es/library/button/) y
+:::note[Qué hay en cada página]
+Una explicación en pocas palabras, una vista previa con su código, cada variante, tamaño y estado
+capturados en claro y oscuro con el fragmento que los dibuja, ejemplos, consejos y la tabla de la API.
+Las páginas de componentes interactivos, como [Botón](/pyzed/es/library/button/) y
 [Campo de texto](/pyzed/es/library/input/), también muestran una grabación corta de su uso.
+:::
+
+:::tip[Inspiración]
+El aspecto de estos componentes se inspira en la interfaz del editor [Zed](https://zed.dev); la
+idea de construir herramientas de escritorio con piezas listas para usar viene de Godot, Unreal
+Engine, Visual Basic y Qt Designer. pyzed es un proyecto independiente.
 :::
 """,
     },
@@ -328,6 +362,45 @@ def tabs(name: str, alt: str, code: str, labels: dict) -> str:
     ])
 
 
+_MONO = re.compile(r'[=()"\[\]_.]')
+
+
+def variant_stems(entry: dict):
+    """``(file stem, item)`` for every variant of an entry, as library_shots.py names the images."""
+    for g, group in enumerate(entry.get("variants", ()), start=1):
+        for i, item in enumerate(group["items"], start=1):
+            yield f"{entry['slug']}-v{g}-{i}", item
+
+
+def variant_count(entry: dict) -> int:
+    return sum(len(group["items"]) for group in entry.get("variants", ()))
+
+
+def render_variants(entry: dict, name: str, labels: dict, lang: str) -> list:
+    """The "Variants" section: a heading per group and a grid of captioned captures with their code."""
+    groups = entry.get("variants", ())
+    if not groups:
+        return []
+    out = [f"## {labels['variants']}", "",
+           f":::note[{labels['shots_title']}]", labels["shots_text"], ":::", ""]
+    stems = dict(variant_stems(entry))
+    by_item = {id(item): stem for stem, item in stems.items()}
+    for group in groups:
+        out += [f"### {mdx(text(group['title'], lang))}", ""]
+        if group.get("text"):
+            out += [prose(group["text"], lang), ""]
+        out.append("<VariantGrid>")
+        for item in group["items"]:
+            caption = text(item["caption"], lang)
+            mono = isinstance(item["caption"], str) or bool(_MONO.search(caption) and " " not in caption)
+            attrs = (f"name={json.dumps(by_item[id(item)])} caption={{{json.dumps(caption, ensure_ascii=False)}}} "
+                     f"alt={{{json.dumps(f'{name}: {caption}', ensure_ascii=False)}}} "
+                     f"code={json.dumps(labels['code'], ensure_ascii=False)}" + (" mono" if mono else ""))
+            out += [f"<Variant {attrs}>", "", "```python", code_block(item["code"]), "```", "", "</Variant>"]
+        out += ["</VariantGrid>", ""]
+    return out
+
+
 def imports_for(code: str) -> str:
     lines = []
     if re.search(r"\bpz\.", code):
@@ -383,7 +456,10 @@ def render_page(entry: dict, order: int, lang: str, api: Api, by_slug: dict) -> 
         "",
         "import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';",
         f"import Preview from '{labels['components']}/library/Preview.astro';",
+        *([f"import VariantGrid from '{labels['components']}/library/VariantGrid.astro';",
+           f"import Variant from '{labels['components']}/library/Variant.astro';"] if entry.get("variants") else []),
         "",
+        *([f":::tip[{labels['plain']}]", prose(entry["plain"], lang), ":::", ""] if entry.get("plain") else []),
         prose(entry["desc"], lang),
         "",
         f"`{short_name(main)}` · {labels['category']}: [{category}]({prefix}/library/#{slugify(category)}) · "
@@ -397,11 +473,14 @@ def render_page(entry: dict, order: int, lang: str, api: Api, by_slug: dict) -> 
         alt = json.dumps(text(clip["alt"], lang), ensure_ascii=False)
         caption = json.dumps(text(clip["caption"], lang), ensure_ascii=False)
         body += ["", f"<Media clip=\"{clip['name']}\" alt={{{alt}}} caption={{{caption}}} />", ""]
+    if badge:
+        body += [f":::note[{labels['new_title']}]", localize_links(labels["new_text"], lang), ":::", ""]
     when = text(entry.get("when"), lang)
     if when:
         body += [f"## {labels['when']}", ""] + [f"- {mdx(localize_links(w, lang))}" for w in when] + [""]
     usage = code_block(entry.get("usage") or entry["preview"]["code"])
     body += [f"## {labels['usage']}", "", "```python", imports_for(usage), "", usage, "```", ""]
+    body += render_variants(entry, name, labels, lang)
     examples = entry.get("examples", ())
     if examples:
         body += [f"## {labels['examples']}", ""]
@@ -415,7 +494,7 @@ def render_page(entry: dict, order: int, lang: str, api: Api, by_slug: dict) -> 
             else:
                 body += ["```python", code_block(ex["code"]), "```", ""]
     if entry.get("notes"):
-        body += [f"## {labels['tips']}", "", prose(entry["notes"], lang), ""]
+        body += [f"## {labels['tips']}", "", ":::tip", prose(entry["notes"], lang), ":::", ""]
     body += [f"## {labels['api']}", ""]
     for api_name in entry["api"]:
         body.append(render_api(api_name, api, labels))
@@ -438,22 +517,39 @@ def render_index(lang: str) -> str:
         f"{{/* {GENERATED} */}}",
         "",
         f"import Gallery from '{labels['components']}/library/Gallery.astro';",
+        f"import LibraryStats from '{labels['components']}/library/LibraryStats.astro';",
+        "",
+    ]
+    groups = [(key, text(title, lang), [e for e in entries if e["category"] == key])
+              for key, title in library_data.CATEGORIES.items()]
+    groups = [g for g in groups if g[2]]
+    stats = [{"value": len(entries), "label": labels["components_n"]},
+             {"value": sum(variant_count(e) for e in entries), "label": labels["variants_n"]},
+             {"value": len(groups), "label": labels["categories_n"]}]
+    chips = [{"label": title, "href": f"#{slugify(title)}", "count": len(items)} for _, title, items in groups]
+    body += [
+        f"<LibraryStats stats={{{json.dumps(stats, ensure_ascii=False)}}} "
+        f"categories={{{json.dumps(chips, ensure_ascii=False)}}} navLabel={json.dumps(labels['title'], ensure_ascii=False)} />",
         "",
         localize_links(inspect.cleandoc(labels["intro"]), lang),
         "",
     ]
-    for key, title in library_data.CATEGORIES.items():
-        items = [e for e in entries if e["category"] == key]
-        if not items:
-            continue
-        cards = [{"slug": e["slug"], "name": name_of(e, lang), "blurb": text(e["blurb"], lang),
-                  **({"badge": labels["new"]} if e.get("badge") == "new" else {})} for e in items]
+    for key, title, items in groups:
+        cards = []
+        for e in items:
+            n = variant_count(e)
+            cards.append({"slug": e["slug"], "name": name_of(e, lang), "blurb": text(e["blurb"], lang).replace("`", ""),
+                          **({"badge": labels["new"]} if e.get("badge") == "new" else {}),
+                          **({"count": f"{n} {labels['variant_1'] if n == 1 else labels['variants_n']}"} if n else {})})
+        summary = (f"{len(items)} {labels['components_n']} · "
+                   f"{sum(variant_count(e) for e in items)} {labels['variants_n']}")
         body += [
-            f"## {text(title, lang)}",
+            f"## {title}",
             "",
             prose(library_data.CATEGORY_INTROS[key], lang),
             "",
-            f"<Gallery base=\"{labels['prefix']}/library/\" items={{{json.dumps(cards, ensure_ascii=False)}}} />",
+            f"<Gallery base=\"{labels['prefix']}/library/\" summary={json.dumps(summary, ensure_ascii=False)} "
+            f"items={{{json.dumps(cards, ensure_ascii=False)}}} />",
             "",
         ]
     return "\n".join(body).rstrip() + "\n"
@@ -483,6 +579,7 @@ def problems() -> list:
         if f"pyzed.ui.{export}" not in covered:
             out.append(f"pyzed.ui.{export} is not on any library page (add it to an entry's api)")
     apis = {lang: Api(lang) for lang in LANGS}
+    used: set = set()
     required = ("slug", "name", "category", "api", "blurb", "desc", "preview")
     manifest = json.loads((HERE.parent / "public" / "media" / "manifest.json").read_text(encoding="utf-8"))
     clips = {c["name"] for c in manifest["clips"]}
@@ -504,6 +601,8 @@ def problems() -> list:
                 elif not api.where[name][1]:
                     out.append(f"[{lang}] {where}: no heading for {name} in the API reference (run gen_api.py)")
         stems = [where] + [f"{where}-{i}" for i, ex in enumerate(e.get("examples", ()), start=1) if ex.get("shot", True)]
+        stems += [stem for stem, _ in variant_stems(e)]
+        used |= {f"{stem}.{theme}.png" for stem in stems + [f"{where}.thumb"] for theme in ("dark", "light")}
         for stem in stems:
             for theme in ("dark", "light"):
                 if not (ASSETS / f"{stem}.{theme}.png").exists():
@@ -511,11 +610,19 @@ def problems() -> list:
         clip = e.get("clip")
         if clip and clip.get("name") not in clips:
             out.append(f"{where}: unknown clip {clip.get('name')!r} (not in docs/public/media/manifest.json)")
+        if not e.get("plain"):
+            out.append(f"{where}: missing plain (add it to PLAIN)")
+        for g, group in enumerate(e.get("variants", ()), start=1):
+            for value in [group["title"], group.get("text")] + [i["caption"] for i in group["items"]]:
+                if value is not None and not isinstance(value, str) and not (isinstance(value, dict) and set(value) == {"en", "es"}):
+                    out.append(f"{where}: variant group {g} needs T(en, es) or a plain string")
         for lang in LANGS:
-            for key in ("blurb", "desc", "when"):
+            for key in ("blurb", "desc", "when", "plain"):
                 value = e.get(key)
                 if value is not None and not (isinstance(value, dict) and set(value) == {"en", "es"}):
                     out.append(f"{where}: {key} needs T(en, es)")
+    for orphan in sorted(p.name for p in ASSETS.glob("*.png") if p.name not in used):
+        out.append(f"unused image {orphan} (run library_shots.py --prune)")
     return out
 
 
@@ -533,7 +640,8 @@ def main() -> int:
                     issues.append(f"[{lang}] {path.relative_to(DOCS)} is out of date (run gen_library.py)")
         for issue in issues:
             print(issue)
-        print(f"{len(library_data.COMPONENTS)} components, {len(issues)} problems")
+        variants = sum(variant_count(e) for e in library_data.COMPONENTS)
+        print(f"{len(library_data.COMPONENTS)} components, {variants} variants, {len(issues)} problems")
         return 1 if issues else 0
 
     for lang, labels in LANGS.items():

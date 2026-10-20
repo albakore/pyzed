@@ -2,7 +2,7 @@
 title: "Switch"
 description: "An on/off switch for settings that apply at once. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 81
+  order: 83
   label: "Switch"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+An on/off switch, like a light switch, for settings that change right away.
+:::
 
 An on/off toggle in the theme's accent color. `on_toggle` receives the new `bool`.
 
@@ -50,6 +56,59 @@ class Settings(pz.App):
         return ui.switch(self.autosave, lambda on: setattr(self, "autosave", on), label="Autosave")
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### State
+
+<VariantGrid>
+<Variant name="switch-v1-1" caption={"On"} alt={"Switch: On"} code="Code">
+
+```python
+ui.switch(True, on_toggle, label="Autosave")
+```
+
+</Variant>
+<Variant name="switch-v1-2" caption={"Off"} alt={"Switch: Off"} code="Code">
+
+```python
+ui.switch(False, on_toggle, label="Autosave")
+```
+
+</Variant>
+<Variant name="switch-v1-3" caption={"Read-only (no on_toggle)"} alt={"Switch: Read-only (no on_toggle)"} code="Code">
+
+```python
+ui.switch(True, label="Sync (managed)")
+```
+
+</Variant>
+<Variant name="switch-v1-4" caption={"No label"} alt={"Switch: No label"} code="Code">
+
+```python
+ui.switch(True, on_toggle)
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="switch-v2-1" caption={"pz.toggler"} alt={"Switch: pz.toggler"} code="Code" mono>
+
+```python
+pz.toggler(True, "pz.toggler", on_toggle=on_toggle, accent="#a1c181", size=22)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.switch`
@@ -68,6 +127,41 @@ An on/off switch.
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#switch)
+
+### `pz.toggler`
+
+```python
+toggler(
+    checked,
+    label=None,
+    *,
+    on_toggle=None,
+    size=None,
+    text_size=None,
+    accent=None,
+    bg=None,
+    border_color=None,
+    knob_color=None,
+    color=None,
+)
+```
+
+An on/off switch.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `checked` | *required* | Current state. |
+| `label` | `None` | Label text. |
+| `on_toggle` | `None` | Callable that receives the new `bool` (or a message to send). |
+| `size` | `None` | Switch height. |
+| `text_size` | `None` | Text size. |
+| `accent` | `None` | Accent color (active part). |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `border_color` | `None` | Border color. |
+| `knob_color` | `None` | Knob color. |
+| `color` | `None` | Text or icon color. |
+
+[Full reference →](/pyzed/reference/widgets/#toggler)
 
 ## Related
 

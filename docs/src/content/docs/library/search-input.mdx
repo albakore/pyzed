@@ -2,7 +2,7 @@
 title: "Search input"
 description: "An input with a magnifying glass, for filtering. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 66
+  order: 68
   label: "Search input"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A text box with a magnifying glass, for typing what you are looking for.
+:::
 
 An `input` with a magnifying glass icon and `"Search…"` as placeholder. It accepts every other parameter of [`ui.input`](/pyzed/library/input/).
 
@@ -54,6 +60,64 @@ class Finder(pz.App):
             *[ui.list_item(name, icon="file") for name, _ in matches],
         ], spacing=6)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="search-input-v1-1" caption={"Empty"} alt={"Search input: Empty"} code="Code">
+
+```python
+ui.search_input("", on_query, width=260)
+```
+
+</Variant>
+<Variant name="search-input-v1-2" caption={"With a query"} alt={"Search input: With a query"} code="Code">
+
+```python
+ui.search_input("button", on_query, width=260)
+```
+
+</Variant>
+<Variant name="search-input-v1-3" caption={"placeholder="} alt={"Search input: placeholder="} code="Code" mono>
+
+```python
+ui.search_input("", on_query, placeholder="Search components…", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="search-input-v2-1" caption={"size=\"sm\""} alt={"Search input: size=\"sm\""} code="Code" mono>
+
+```python
+ui.search_input("", on_query, size="sm", width=260)
+```
+
+</Variant>
+<Variant name="search-input-v2-2" caption={"size=\"lg\""} alt={"Search input: size=\"lg\""} code="Code" mono>
+
+```python
+ui.search_input("", on_query, size="lg", width=260)
+```
+
+</Variant>
+<Variant name="search-input-v2-3" caption={"borderless=True"} alt={"Search input: borderless=True"} code="Code" mono>
+
+```python
+ui.search_input("", on_query, borderless=True, width=260)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

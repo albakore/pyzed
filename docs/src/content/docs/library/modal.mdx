@@ -2,7 +2,7 @@
 title: "Modal"
 description: "A dialog surface with title, content and footer buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 50
+  order: 51
   label: "Modal"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A window inside the window that asks for your attention before you go on.
+:::
 
 A dialog surface with a title, a close button, your content and a footer of buttons. Use it as the overlay of `ui.layer` or `ui.dialog_layer`. The ready-made [dialogs](/pyzed/library/confirm/) are built on it.
 
@@ -53,6 +59,39 @@ ui.modal(
     width=440,
 )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="modal-v1-1" caption={"Content only"} alt={"Modal: Content only"} code="Code">
+
+```python
+ui.modal(ui.muted("Your trial ends in 3 days."), width=320)
+```
+
+</Variant>
+<Variant name="modal-v1-2" caption={"title=, on_close="} alt={"Modal: title=, on_close="} code="Code" mono>
+
+```python
+ui.modal(ui.muted("Your trial ends in 3 days."), title="Trial", on_close=on_close, width=320)
+```
+
+</Variant>
+<Variant name="modal-v1-3" caption={"footer="} alt={"Modal: footer="} code="Code" mono>
+
+```python
+ui.modal(ui.muted("Discard the draft?"), title="Draft", on_close=on_close, width=320,
+         footer=[ui.button("Cancel", on_close), ui.button("Discard", on_discard, variant="error")])
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 

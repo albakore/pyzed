@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja de mensaje con un solo botón de Aceptar.
+:::
 
 Un mensaje con un solo botón de Aceptar. `kind` (`"info"`, `"success"`, `"warning"`, `"error"`) añade un icono.
 
@@ -32,6 +38,10 @@ ui.dialog_layer(main_view(), ui.alert("The export finished: 128 files were writt
 </TabItem>
 </Tabs>
 
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
+
 ## Cuándo usarlo
 
 - Para avisar de algo que hay que confirmar (una exportación terminó, un archivo no se pudo abrir).
@@ -44,6 +54,64 @@ from pyzed import ui
 ui.dialog_layer(main_view(), ui.alert("The export finished: 128 files were written.", on_close,
                                       title="Export", kind="success", width=360))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Tipo
+
+<VariantGrid>
+<Variant name="alert-v1-1" caption={"kind=None"} alt={"Alerta: kind=None"} code="Código" mono>
+
+```python
+ui.alert("The file was moved to the trash.", on_close, width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-2" caption={"kind=\"info\""} alt={"Alerta: kind=\"info\""} code="Código" mono>
+
+```python
+ui.alert("A new version is available.", on_close, kind="info", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-3" caption={"kind=\"success\""} alt={"Alerta: kind=\"success\""} code="Código" mono>
+
+```python
+ui.alert("128 files were exported.", on_close, kind="success", title="Export", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-4" caption={"kind=\"warning\""} alt={"Alerta: kind=\"warning\""} code="Código" mono>
+
+```python
+ui.alert("The disk is almost full.", on_close, kind="warning", width=320)
+```
+
+</Variant>
+<Variant name="alert-v1-5" caption={"kind=\"error\""} alt={"Alerta: kind=\"error\""} code="Código" mono>
+
+```python
+ui.alert("notes.py could not be opened.", on_close, kind="error", title="Error", width=320)
+```
+
+</Variant>
+</VariantGrid>
+
+### Opciones
+
+<VariantGrid>
+<Variant name="alert-v2-1" caption={"ok_label=\"Got it\""} alt={"Alerta: ok_label=\"Got it\""} code="Código" mono>
+
+```python
+ui.alert("Shortcuts changed in this version.", on_close, ok_label="Got it", width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

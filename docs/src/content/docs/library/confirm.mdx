@@ -2,7 +2,7 @@
 title: "Confirm"
 description: "A yes/no question, red for destructive actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 19
+  order: 20
   label: "Confirm"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Asks “are you sure?” before doing something that can't be undone.
+:::
 
 Asks a yes/no question. `danger=True` paints the confirm button red; `confirm_label` and `cancel_label` rename the buttons.
 
@@ -34,6 +40,10 @@ ui.dialog_layer(main_view(), ui.confirm(
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - Before destructive or irreversible actions: delete, overwrite, discard.
@@ -48,6 +58,47 @@ ui.dialog_layer(main_view(), ui.confirm(
     title="Delete file", danger=True, confirm_label="Delete", width=360,
 ))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Kind
+
+<VariantGrid>
+<Variant name="confirm-v1-1" caption={"Normal"} alt={"Confirm: Normal"} code="Code">
+
+```python
+ui.confirm("Close all tabs?", on_confirm, on_cancel, title="Close tabs", width=320)
+```
+
+</Variant>
+<Variant name="confirm-v1-2" caption={"danger=True"} alt={"Confirm: danger=True"} code="Code" mono>
+
+```python
+ui.confirm("Delete notes.py?", on_delete, on_cancel, title="Delete file", danger=True,
+           confirm_label="Delete", width=320)
+```
+
+</Variant>
+<Variant name="confirm-v1-3" caption={"kind=\"warning\""} alt={"Confirm: kind=\"warning\""} code="Code" mono>
+
+```python
+ui.confirm("Overwrite the existing file?", on_confirm, on_cancel, kind="warning", width=320)
+```
+
+</Variant>
+<Variant name="confirm-v1-4" caption={"confirm_label=, cancel_label="} alt={"Confirm: confirm_label=, cancel_label="} code="Code" mono>
+
+```python
+ui.confirm("Push 3 commits to main?", on_push, on_cancel, confirm_label="Push",
+           cancel_label="Not now", width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 
