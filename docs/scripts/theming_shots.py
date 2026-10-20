@@ -34,7 +34,7 @@ SHOTS = {
 class BundledThemes(pz.App):
     """Every bundled theme, each drawing the same small card."""
 
-    size = (1180, 480)
+    size = (1180, 800)
 
     def tile(self, name):
         from pyzed import ui
@@ -57,7 +57,9 @@ class BundledThemes(pz.App):
 
     def view(self):
         names = pz.themes.names()
-        rows = [pz.row([self.tile(n) for n in names[i:i + 4]], spacing=14) for i in range(0, len(names), 4)]
+        names += [None] * (-len(names) % 4)  # an even grid: blank cells finish the last row
+        rows = [pz.row([self.tile(n) if n else pz.container(width="fill") for n in names[i:i + 4]], spacing=14)
+                for i in range(0, len(names), 4)]
         return pz.container(pz.column(rows, spacing=14), padding=20, width="fill", height="fill").style(
             background="#16181d")
 
