@@ -391,6 +391,18 @@ starlight-tabs [role='tab'][aria-selected='true'] {
 	display: none !important;
 }
 
+/* Two recordings side by side on the home page (one column on narrow screens). */
+.pz-clip-pair {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+	gap: 1.5rem;
+	max-width: 72rem;
+	margin: 2rem auto 3rem;
+}
+.pz-clip-pair .pz-media {
+	margin: 0;
+}
+
 /* A soft glow at the top of every page, like the home page. */
 .main-frame {
 	background:

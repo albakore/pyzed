@@ -3,7 +3,13 @@
 //
 // Images come from src/assets so Astro serves them as responsive AVIF/WebP. Pass `light` to show a
 // different capture in the light theme. A recording is a short muted loop (mp4, plus webm when there
-// is one) that starts by itself, like a GIF but much lighter; with "reduce motion" it waits for a click.
+// is one) that plays by itself while it is on screen, like a GIF but much lighter; nothing of it but the poster
+// loads until it scrolls into view, and with "reduce motion" it waits for a click.
+//
+// The clips made by docs/scripts/record.py live in public/media; name one with `clip` and its MP4, WebM,
+// poster and size come from public/media/manifest.json:
+//
+//   <Media clip="snake" alt="The snake steering toward the food" caption="The game loop at work." />
 //
 //   import Media from '../../../components/Media.astro';
 //   import dark from '../../../assets/editor/canvas-dark.png';
@@ -15,12 +21,15 @@
 //   <Media video={clip} poster={poster} alt="Dragging a button onto the form" />
 import type { ImageMetadata } from 'astro';
 import { Picture, getImage } from 'astro:assets';
+import manifest from '../../public/media/manifest.json';
 
 interface Props {
 	/** The image (the dark-theme one when `light` is given). */
 	src?: ImageMetadata;
 	/** The same capture in the light theme. */
 	light?: ImageMetadata;
+	/** A clip of public/media/manifest.json, by name: sets `video`, `webm` and the poster. */
+	clip?: string;
 	/** A recording: the URL of an .mp4 (import it with `?url`, or a path under public/). */
 	video?: string;
 	/** The same recording as .webm, offered first when given. */
@@ -29,8 +38,9 @@ interface Props {
 	poster?: ImageMetadata;
 	alt: string;
 	caption?: string;
-	/** `wide` breaks out a little from the text column on large screens; `narrow` is for small dialogs. */
-	size?: 'normal' | 'wide' | 'narrow';
+	/** `wide` breaks out a little from the text column on large screens; `narrow` is for small dialogs;
+	 * `small` is for a single node or a small widget. */
+	size?: 'normal' | 'wide' | 'narrow' | 'small';
 	/** No frame or shadow, for captures that already have their own window shape. */
 	plain?: boolean;
 	/** Load right away instead of when it scrolls into view (for the first image of a page). */
@@ -41,8 +51,7 @@ interface Props {
 const {
 	src,
 	light,
-	video,
-	webm,
+	clip,
 	poster,
 	alt,
 	caption,
@@ -52,7 +61,21 @@ const {
 	sizes = '(min-width: 72rem) 48rem, 100vw',
 } = Astro.props;
 
-if (!src && !video) throw new Error('<Media> needs `src` or `video`.');
+let { video, webm } = Astro.props;
+let posterUrl: string | undefined;
+let videoWidth = poster?.width;
+let videoHeight = poster?.height;
+if (clip) {
+	const entry = manifest.clips.find((c) => c.name === clip);
+	if (!entry) throw new Error(`<Media>: no clip named "${clip}" in public/media/manifest.json.`);
+	const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+	video = `${base}/${entry.mp4}`;
+	webm = entry.webm ? `${base}/${entry.webm}` : undefined;
+	posterUrl = `${base}/${entry.poster}`;
+	videoWidth = entry.width;
+	videoHeight = entry.height;
+}
+if (!src && !video) throw new Error('<Media> needs `src`, `video` or `clip`.');
 
 const widthsFor = (img: ImageMetadata) => {
 	const widths = [480, 768, 1080, 1440, 2160].filter((w) => w < img.width);
@@ -68,7 +91,9 @@ const pictureAttrs = (img: ImageMetadata) => ({
 	loading: eager ? ('eager' as const) : ('lazy' as const),
 	decoding: 'async' as const,
 });
-const posterUrl = poster ? (await getImage({ src: poster, format: 'webp', width: Math.min(poster.width, 1440) })).src : undefined;
+if (poster && !posterUrl) {
+	posterUrl = (await getImage({ src: poster, format: 'webp', width: Math.min(poster.width, 1440) })).src;
+}
 ---
 
 <figure class:list={['pz-media', `size-${size}`, { plain }]}>
@@ -76,15 +101,15 @@ const posterUrl = poster ? (await getImage({ src: poster, format: 'webp', width:
 		{
 			video ? (
 				<video
-					autoplay
+					data-pz-autoplay
 					muted
 					loop
 					playsinline
-					preload="metadata"
+					preload="none"
 					poster={posterUrl}
 					aria-label={alt}
-					width={poster?.width}
-					height={poster?.height}
+					width={videoWidth}
+					height={videoHeight}
 				>
 					{webm && <source src={webm} type="video/webm" />}
 					<source src={video} type="video/mp4" />
@@ -101,13 +126,23 @@ const posterUrl = poster ? (await getImage({ src: poster, format: 'webp', width:
 </figure>
 
 <script>
-	// Respect "reduce motion": recordings stay paused, with controls, until the reader plays them.
-	if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		for (const video of document.querySelectorAll<HTMLVideoElement>('.pz-media video[autoplay]')) {
-			video.removeAttribute('autoplay');
-			video.pause();
-			video.controls = true;
-		}
+	// Recordings load and play only while they are on screen, and pause when they leave it. With "reduce
+	// motion" they stay paused, with controls, until the reader plays them.
+	const videos = document.querySelectorAll<HTMLVideoElement>('.pz-media video[data-pz-autoplay]');
+	if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+		for (const video of videos) video.controls = true;
+	} else {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const { target, isIntersecting } of entries) {
+					const video = target as HTMLVideoElement;
+					if (isIntersecting) video.play().catch(() => (video.controls = true));
+					else video.pause();
+				}
+			},
+			{ rootMargin: '200px 0px', threshold: 0.15 },
+		);
+		for (const video of videos) observer.observe(video);
 	}
 </script>
 
@@ -142,6 +177,10 @@ const posterUrl = poster ? (await getImage({ src: poster, format: 'webp', width:
 	}
 	.size-narrow {
 		max-width: 32rem;
+		margin-inline: auto;
+	}
+	.size-small {
+		max-width: 17rem;
 		margin-inline: auto;
 	}
 	@media (min-width: 72rem) {
