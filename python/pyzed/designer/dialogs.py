@@ -7,9 +7,10 @@ behavior stays in ``Designer``. The generic parts (``ui.shortcuts``, ``ui.about`
 
 from __future__ import annotations
 
+import functools
 import platform
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
 
 from .. import _core, ui
 from ..icons import icon as _icon
@@ -29,6 +30,51 @@ PICKER_ID = "designer-picker"
 #: Interface languages offered in the settings ("" follows the system).
 LANGUAGES = (("", "System default"), ("en", "English"), ("es", "Español"))
 #: Names shown in their own language, except the first one.
+
+
+#: Interface sizes offered in the settings, as a scale (1.0 is 100%).
+UI_SCALES = (0.75, 0.8, 0.85, 0.9, 1.0, 1.1, 1.2, 1.25, 1.3, 1.4, 1.5)
+
+
+@functools.lru_cache(maxsize=1)
+def font_families() -> Tuple[str, ...]:
+    """The font families the interface and the code can use (bundled, loaded and the system's)."""
+    return tuple(f for f in _core.font_families() if f not in ("lucide", "Iced-Icons"))
+
+
+def font_select(value: str, default: str, on_change: Callable[[str], Any], t: Theme) -> Any:
+    """A drop-down of the font families; the first entry is the default font, saved as ``""``."""
+    first = tr("Default ({font})", font=default)
+    names = [first, *(f for f in font_families() if f != default)]
+    return ui.select(names, value or first, lambda name: on_change("" if name == first else name), width=200,
+                     theme=t)
+
+
+def fonts_group(d: "Designer", t: Theme) -> Any:
+    """Fonts and sizes: the interface font and scale, and the code font, size and line height (shared with the
+    editor settings). They apply at once and are saved."""
+    from . import settings as _settings
+
+    s = d.assist.settings
+    scales = {f"{round(v * 100)}%": v for v in UI_SCALES}
+    current = f"{round(d.scale * 100)}%"
+    if current not in scales:
+        scales[current] = d.scale
+    heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
+    return ui.settings_group(tr("Fonts and size"), [
+        ui.field(tr("Interface font"), font_select(d.prefs.ui_font, "IBM Plex Sans", d.set_ui_font, t),
+                 description=tr("Menus, panels, dialogs and the properties"), theme=t),
+        ui.field(tr("Interface size"), ui.select(list(scales), current, lambda name: d.set_ui_scale(scales[name]),
+                                                 width=200, theme=t),
+                 description=tr("Zooms every window, like View → Zoom in and Zoom out"), theme=t),
+        ui.field(tr("Code font"), font_select(s.font_family, "IBM Plex Mono", d.assist.setter("font_family"), t),
+                 description=tr("The code editor, the console and other code"), theme=t),
+        ui.field(tr("Code font size"), ui.number_field(s.font_size, d.assist.setter("font_size"), min=8, max=32,
+                                                       step=1, width=110, theme=t), theme=t),
+        ui.field(tr("Code line height"), ui.segmented(list(heights), tr(s.line_height.capitalize()),
+                                                      lambda name: d.assist.set("line_height", heights[name]),
+                                                      theme=t), theme=t),
+    ], theme=t)
 
 
 def _footer_done(d: "Designer", t: Theme) -> List[Any]:
@@ -106,7 +152,8 @@ def settings(d: "Designer", t: Theme) -> Any:
                                             variant="ghost", size="sm", theme=t),
                  description=tr("Model providers, keys and sign-in, permissions"), theme=t),
     ], theme=t)
-    body = _core.scrollable(_core.column([general, canvas, running, errors, panels, telemetry_group(d, t)], spacing=14,
+    body = _core.scrollable(_core.column([general, fonts_group(d, t), canvas, running, errors, panels,
+                                          telemetry_group(d, t)], spacing=14,
                                          padding=(0, 6, 0, 0)),
                             height=560, scrollbar_width=4)
     return ui.modal(body, title=tr("Settings"), on_close=d.close_dialog, width=560, footer=_footer_done(d, t), theme=t)

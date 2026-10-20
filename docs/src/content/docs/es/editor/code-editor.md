@@ -232,6 +232,7 @@ derecha se ve la que eliges.
 | Sección | Ajuste | Qué hace |
 | --- | --- | --- |
 | Apariencia | **Tema** | *Igual que el diseñador*, o cualquier tema solo para el editor. |
+| | **Fuente** | *Por defecto* (IBM Plex Mono) o cualquier fuente instalada; también en Ajustes → Fuentes y tamaño. |
 | | **Tamaño de letra** | De 8 a 32 (también <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> y <kbd>Ctrl</kbd>+rueda). |
 | | **Interlineado** | Compacto, Normal o Amplio. |
 | | **Números de línea**, **Resaltar la línea actual** | El margen y la franja de la línea actual. |

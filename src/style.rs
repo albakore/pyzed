@@ -1,7 +1,7 @@
 //! Conversions from loose Python values (strings, numbers, tuples) into iced types.
 
 use std::collections::HashMap;
-use std::sync::{LazyLock, Mutex};
+use std::sync::{LazyLock, Mutex, RwLock};
 
 use iced::alignment::{Horizontal, Vertical};
 use iced::border::Radius;
@@ -16,6 +16,33 @@ pub type Any<'py> = Option<Bound<'py, PyAny>>;
 pub const SANS: &str = "IBM Plex Sans";
 pub const MONO: &str = "IBM Plex Mono";
 pub const ICONS: &str = "lucide";
+
+/// The families `"sans"` and `"mono"` stand for: the bundled IBM Plex ones unless `set_fonts` changed them.
+static UI_FONT: RwLock<Option<&'static str>> = RwLock::new(None);
+static CODE_FONT: RwLock<Option<&'static str>> = RwLock::new(None);
+
+/// The interface font family (`"sans"`).
+pub fn sans() -> &'static str {
+    UI_FONT.read().unwrap().unwrap_or(SANS)
+}
+
+/// The code font family (`"mono"`).
+pub fn mono() -> &'static str {
+    CODE_FONT.read().unwrap().unwrap_or(MONO)
+}
+
+/// Changes the families `"sans"` and `"mono"` stand for; `None` or `""` goes back to IBM Plex.
+pub fn set_fonts(ui: Option<&str>, code: Option<&str>) {
+    let pick = |name: Option<&str>| name.filter(|n| !n.is_empty()).map(intern);
+    *UI_FONT.write().unwrap() = pick(ui);
+    *CODE_FONT.write().unwrap() = pick(code);
+}
+
+/// Whether the interface font was changed (text without a font then names it, as the window's default font
+/// is fixed when the app starts).
+fn custom_ui_font() -> bool {
+    UI_FONT.read().unwrap().is_some()
+}
 
 /// Interns font family names so they can live in `Font` (which needs `&'static str`).
 fn intern(name: &str) -> &'static str {
@@ -180,7 +207,7 @@ pub fn align_y(value: Option<&str>) -> PyResult<Option<Vertical>> {
 
 pub fn font(family: Option<&str>, weight: &Any<'_>, italic: bool) -> PyResult<Option<Font>> {
     if family.is_none() && weight.as_ref().is_none_or(|w| w.is_none()) && !italic {
-        return Ok(None);
+        return Ok(custom_ui_font().then(|| Font::with_name(sans())));
     }
     Ok(Some(Font {
         family: self::family(family.unwrap_or("sans")),
@@ -197,8 +224,8 @@ pub fn font(family: Option<&str>, weight: &Any<'_>, italic: bool) -> PyResult<Op
 /// `"sans"`, `"mono"`, `"icons"`, `"serif"` or a loaded family name.
 pub fn family(name: &str) -> Family {
     match name {
-        "sans" => Family::Name(SANS),
-        "mono" | "monospace" => Family::Name(MONO),
+        "sans" => Family::Name(sans()),
+        "mono" | "monospace" => Family::Name(mono()),
         "icons" => Family::Name(ICONS),
         "serif" => Family::Serif,
         other => Family::Name(intern(other)),

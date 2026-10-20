@@ -16,7 +16,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyString, PyTuple};
 
 use crate::app::Message;
-use crate::style::{self, Any, ICONS, MONO, SANS};
+use crate::style::{self, Any, ICONS};
 use crate::widget::{Kind, PyMsg, Widget, child, new};
 
 fn hash_bytes(bytes: &[u8]) -> u64 {
@@ -725,7 +725,7 @@ fn parse_shape(value: &Bound<'_, PyAny>) -> PyResult<Shape> {
                 let family: Option<String> = get(d, "font")?.map(|v| v.extract()).transpose()?;
                 let weight = get(d, "weight")?;
                 style::font(Some(family.as_deref().unwrap_or("sans")), &weight, false)?
-                    .unwrap_or(Font::with_name(SANS))
+                    .unwrap_or(Font::with_name(style::sans()))
             },
             align_x: match get(d, "align_x")?
                 .map(|v| v.extract::<String>())
@@ -1318,9 +1318,9 @@ pub fn render_markdown<'a>(props: &MarkdownProps, items: &'a [md::Item]) -> Elem
     let code_color = props.code_color;
     let code_bg = props.code_bg;
     let mut style = md::Style::from_palette(iced::theme::Palette::DARK);
-    style.font = Font::with_name(SANS);
-    style.inline_code_font = Font::with_name(MONO);
-    style.code_block_font = Font::with_name(MONO);
+    style.font = Font::with_name(style::sans());
+    style.inline_code_font = Font::with_name(style::mono());
+    style.code_block_font = Font::with_name(style::mono());
     if let Some(c) = link_color {
         style.link_color = c;
     }

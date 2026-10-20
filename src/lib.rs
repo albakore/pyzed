@@ -51,6 +51,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
     m.add_function(wrap_pyfunction!(fonts::load_font, m)?)?;
+    m.add_function(wrap_pyfunction!(fonts::set_fonts, m)?)?;
+    m.add_function(wrap_pyfunction!(fonts::font_families, m)?)?;
     m.add_function(wrap_pyfunction!(animation::presence, m)?)?;
     m.add_function(wrap_pyfunction!(animation::set_reduced_motion, m)?)?;
     m.add_function(wrap_pyfunction!(animation::reduced_motion, m)?)?;
