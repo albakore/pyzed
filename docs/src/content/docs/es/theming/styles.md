@@ -35,6 +35,7 @@ un botón). Los demás widgets reciben una caja alrededor que lleva el estilo.
 | `width`, `height` | Píxeles, `"fill"`, `"shrink"` o `"fill:N"`; `max_width`, `max_height`, `min_width` y `min_height` en píxeles. |
 | `align_x`, `align_y` | Dónde se coloca el contenido dentro de la caja. |
 | `clip` | Recorta el contenido a la caja. |
+| `position`, `top`, `right`, `bottom`, `left`, `z_index` | `position="absolute"` coloca un hijo de una [`pz.box`](/pyzed/es/guides/layout/#cajas) por sus desplazamientos, fuera del flujo. |
 | `opacity`, `translate`, `scale`, `rotate` | Desvanecen, desplazan, escalan o giran cómo se dibuja el widget, sin cambiar el layout. |
 | `blur`, `backdrop_blur` | Desenfocan el widget o lo que tiene detrás. |
 | `glow`, `bloom`, `glass` | Efectos visuales: un halo, luz que desborda de las partes brillantes y un panel esmerilado. Ver [Animación y efectos](/pyzed/es/guides/animation/#efectos). |

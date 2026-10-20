@@ -1192,6 +1192,23 @@ dict(_w)["Layout"].update({
         },
         "example": 'pz.cell(ui.button("Save"), column=2, row=3, align_x="end")',
     },
+    "pyzed.box": {
+        "desc": "A container for anything, like an HTML `div`: it lays out its children (`display` `\"block\"`, `\"flex\"`, `\"grid\"` or `\"stack\"`) and takes every style property, stylesheet classes and an id. Children styled with `position=\"absolute\"` are placed by `top`/`right`/`bottom`/`left` above the rest. See [Boxes](/pyzed/guides/layout/#boxes).",
+        "params": {
+            "children": "The widgets, one by one or in lists. `None` and `False` are skipped.",
+            "display": "`\"block\"` (one under another, as wide as the box), `\"flex\"`, `\"grid\"` or `\"stack\"`.",
+            "direction": "With `display=\"flex\"`: `\"row\"` or `\"column\"`.",
+            "gap": "Space between children.", "wrap": "With `\"flex\"` rows: wraps onto new lines.",
+            "justify": "With `\"flex\"`: `\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` or `\"evenly\"`.",
+            "align": "`\"start\"`, `\"center\"`, `\"end\"` or `\"stretch\"` (the default for `\"block\"`).",
+            "columns": "With `\"grid\"`: a count of equal columns or tracks (`\"200 1fr auto\"`).",
+            "rows": "With `\"grid\"`: row tracks.",
+            "overflow": "`\"visible\"`, `\"hidden\"`, `\"scroll\"`, `\"scroll_x\"` or `\"scroll_y\"`.",
+            "class_": "Stylesheet classes (`\"card selected\"` or a list).", "id": "The id for `#id` rules.",
+            "style": "A `pz.Style`, dict or style name.", "props": "Style properties, on top of the rest.",
+        },
+        "example": 'pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)',
+    },
     "pyzed.flex": {
         "desc": "Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.",
         "params": {

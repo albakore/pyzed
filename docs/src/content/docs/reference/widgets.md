@@ -332,6 +332,50 @@ Places a child in a track grid: its column and row (from 0) and how many it span
 pz.cell(ui.button("Save"), column=2, row=3, align_x="end")
 ```
 
+### `box`
+
+```python
+box(
+    *children,
+    display='block',
+    direction='row',
+    gap=0,
+    wrap=False,
+    justify='start',
+    align=None,
+    columns=None,
+    rows=None,
+    overflow='visible',
+    class_=None,
+    id=None,
+    style=None,
+    **props,
+)
+```
+
+A container for anything, like an HTML `div`: it lays out its children (`display` `"block"`, `"flex"`, `"grid"` or `"stack"`) and takes every style property, stylesheet classes and an id. Children styled with `position="absolute"` are placed by `top`/`right`/`bottom`/`left` above the rest. See [Boxes](/pyzed/guides/layout/#boxes).
+
+| Parameter | Description |
+| --- | --- |
+| `children` | The widgets, one by one or in lists. `None` and `False` are skipped. |
+| `display` | `"block"` (one under another, as wide as the box), `"flex"`, `"grid"` or `"stack"`. |
+| `direction` | With `display="flex"`: `"row"` or `"column"`. |
+| `gap` | Space between children. |
+| `wrap` | With `"flex"` rows: wraps onto new lines. |
+| `justify` | With `"flex"`: `"start"`, `"center"`, `"end"`, `"between"`, `"around"` or `"evenly"`. |
+| `align` | `"start"`, `"center"`, `"end"` or `"stretch"` (the default for `"block"`). |
+| `columns` | With `"grid"`: a count of equal columns or tracks (`"200 1fr auto"`). |
+| `rows` | With `"grid"`: row tracks. |
+| `overflow` | `"visible"`, `"hidden"`, `"scroll"`, `"scroll_x"` or `"scroll_y"`. |
+| `class_` | Stylesheet classes (`"card selected"` or a list). |
+| `id` | The id for `#id` rules. |
+| `style` | A `pz.Style`, dict or style name. |
+| `props` | Style properties, on top of the rest. |
+
+```python
+pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)
+```
+
 ### `flex`
 
 ```python

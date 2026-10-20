@@ -567,10 +567,14 @@ impl Widget {
         })
     }
 
-    /// The style properties set with ``style()`` (an empty dict if none).
+    /// The style properties set with ``style()`` (an empty dict if none), also through
+    /// ``on()`` and ``animate()`` called afterwards.
     fn style_props<'py>(slf: &Bound<'py, Self>) -> PyResult<Bound<'py, PyDict>> {
         match &slf.get().kind {
             Kind::Styled(props) => Ok(props.source.bind(slf.py()).copy()?),
+            Kind::Events { child, .. } | Kind::Animated { child, .. } => {
+                Widget::style_props(child.bind(slf.py()))
+            }
             _ => Ok(PyDict::new(slf.py())),
         }
     }

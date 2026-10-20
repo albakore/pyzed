@@ -82,7 +82,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
 from .component import Component, state
-from .layout import anchor, anchor_layout, flex, flex_item
+from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
 from .style import Gradient, Mask, Paint, Style, clear_stylesheet, define_style, set_style, stylesheet
@@ -250,6 +250,7 @@ __all__ = [
     "game",
     "anchor",
     "anchor_layout",
+    "box",
     "flex",
     "forms",
     "flex_item",

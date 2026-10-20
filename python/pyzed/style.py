@@ -25,6 +25,8 @@ Properties:
   panel that blurs what is behind it). Glow, bloom and glass also set the shadow,
   background and border, so properties given with them win.
 
+- Placement inside a ``pz.box``: ``position="absolute"`` with ``top``, ``right``,
+  ``bottom``, ``left`` and ``z_index`` (see ``pz.box``).
 - Size limits: ``min_width``/``min_height`` (pixels) next to ``max_width``/``max_height``.
 - States, like CSS ``:hover``, ``:active`` and ``:focus``: ``hover``, ``pressed`` and
   ``focus`` take the properties to show in that state (``background``, ``color``,
@@ -74,7 +76,12 @@ PROPERTIES = (
     "border_color", "border_width", "radius", "shadow", "padding", "margin",
     "width", "height", "max_width", "max_height", "min_width", "min_height", "align_x", "align_y", "clip",
     "opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom", "glass",
+    "position", "top", "right", "bottom", "left", "z_index",
 )
+#: Where a child of ``pz.box`` sits: ``position="absolute"`` takes it out of the flow and
+#: places it by ``top``/``right``/``bottom``/``left`` (pixels), above the others by ``z_index``.
+POSITION_PROPERTIES = ("position", "top", "right", "bottom", "left", "z_index")
+POSITIONS = ("static", "relative", "absolute")
 #: The effect properties (``glow``, ``bloom`` and ``glass`` also add box properties).
 EFFECT_PROPERTIES = ("opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom",
                      "glass")
@@ -338,6 +345,8 @@ def _normalize(props: Mapping[str, Any]) -> Dict[str, Any]:
             width, color = value
             out["border_width"], out["border_color"] = width, color
             continue
+        if key == "position" and value is not None and value not in POSITIONS:
+            raise ValueError(f"position must be one of {', '.join(POSITIONS)}, not {value!r}")
         if key not in PROPERTIES:
             raise TypeError(f"unknown style property {key!r}; available: {', '.join(PROPERTIES)}, "
                             f"the states {', '.join(STATES)} and transition")

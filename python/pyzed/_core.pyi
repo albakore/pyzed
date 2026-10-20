@@ -245,7 +245,9 @@ class Widget:
         """
         ...
     def style_props(self) -> Any:
-        """The style properties set with ``style()`` (an empty dict if none)."""
+        """The style properties set with ``style()`` (an empty dict if none), also through
+        ``on()`` and ``animate()`` called afterwards.
+        """
         ...
     def transition(self, **props: Any) -> Any:
         """Animates property changes, like CSS transitions, and returns the wrapped widget.

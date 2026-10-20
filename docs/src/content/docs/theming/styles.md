@@ -35,6 +35,7 @@ button). Other widgets get a box around them that carries the style.
 | `width`, `height` | Pixels, `"fill"`, `"shrink"` or `"fill:N"`; `max_width`, `max_height`, `min_width` and `min_height` in pixels. |
 | `align_x`, `align_y` | Where the content sits inside the box. |
 | `clip` | Clips the content to the box. |
+| `position`, `top`, `right`, `bottom`, `left`, `z_index` | `position="absolute"` places a child of a [`pz.box`](/pyzed/guides/layout/#boxes) by its offsets, out of the flow. |
 | `opacity`, `translate`, `scale`, `rotate` | Fades, moves, scales or turns how the widget is drawn, without changing the layout. |
 | `blur`, `backdrop_blur` | Blurs the widget, or what is behind it. |
 | `glow`, `bloom`, `glass` | Visual effects: a halo, light that spills from bright parts and a frosted panel. See [Animation and effects](/pyzed/guides/animation/#effects). |

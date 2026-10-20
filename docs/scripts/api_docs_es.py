@@ -1192,6 +1192,23 @@ dict(_w)["Layout"].update({
         },
         "example": 'pz.cell(ui.button("Guardar"), column=2, row=3, align_x="end")',
     },
+    "pyzed.box": {
+        "desc": "Un contenedor para cualquier cosa, como un `div` de HTML: coloca sus hijos (`display` `\"block\"`, `\"flex\"`, `\"grid\"` o `\"stack\"`) y acepta todas las propiedades de estilo, clases de la hoja de estilo y un id. Los hijos con `position=\"absolute\"` se colocan con `top`/`right`/`bottom`/`left` por encima del resto. Ver [Cajas](/pyzed/es/guides/layout/#cajas).",
+        "params": {
+            "children": "Los widgets, uno a uno o en listas. `None` y `False` se ignoran.",
+            "display": "`\"block\"` (uno debajo de otro, tan anchos como la caja), `\"flex\"`, `\"grid\"` o `\"stack\"`.",
+            "direction": "Con `display=\"flex\"`: `\"row\"` o `\"column\"`.",
+            "gap": "Espacio entre hijos.", "wrap": "En filas `\"flex\"`: pasa a nuevas líneas.",
+            "justify": "Con `\"flex\"`: `\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` o `\"evenly\"`.",
+            "align": "`\"start\"`, `\"center\"`, `\"end\"` o `\"stretch\"` (por defecto en `\"block\"`).",
+            "columns": "Con `\"grid\"`: un número de columnas iguales o pistas (`\"200 1fr auto\"`).",
+            "rows": "Con `\"grid\"`: pistas de filas.",
+            "overflow": "`\"visible\"`, `\"hidden\"`, `\"scroll\"`, `\"scroll_x\"` o `\"scroll_y\"`.",
+            "class_": "Clases de la hoja de estilo (`\"card selected\"` o una lista).", "id": "El id para las reglas `#id`.",
+            "style": "Un `pz.Style`, dict o nombre de estilo.", "props": "Propiedades de estilo, encima del resto.",
+        },
+        "example": 'pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)',
+    },
     "pyzed.flex": {
         "desc": "Coloca los hijos a lo largo de un eje, como flexbox de CSS, con `justify` en el eje principal y `align` en el transversal. Usa `pz.flex_item` para que un hijo crezca o tenga un tamaño fijo.",
         "params": {

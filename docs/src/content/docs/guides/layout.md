@@ -148,6 +148,36 @@ pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], 
 `pz.flex_item` sets how much of the free space a child takes (`grow`), or a fixed size
 (`basis`). `wrap=True` wraps a row onto new lines.
 
+## Boxes
+
+`pz.box` is a container for anything, like an HTML `div`. It lays out its
+children and takes every [style property](/pyzed/theming/styles/), classes and an id, so a
+whole screen can be built from boxes:
+
+```python
+pz.box(
+    pz.text("Plans").style(size=20, weight="bold"),
+    pz.box([plan_card(p) for p in plans], display="grid", columns=3, gap=12),
+    pz.box(ui.button("Cancel", cancel), ui.button("Continue", go), display="flex", justify="end", gap=8),
+    ui.badge("New").style(position="absolute", top=8, right=8),
+    class_="page", padding=24, gap=16, overflow="scroll",
+)
+```
+
+- `display`:
+  - `"block"` (the default) puts the children one under another, as wide as the box.
+  - `"flex"` lays them along `direction` with `justify`, `align`, `gap` and `wrap`, like `pz.flex`.
+  - `"grid"` uses `columns` and `rows`: a count of equal columns or tracks such as `"200 1fr auto"`.
+  - `"stack"` puts them on top of each other.
+- `align` takes `"start"`, `"center"`, `"end"` or `"stretch"`.
+- `overflow` takes `"visible"`, `"hidden"` (clips the content) or `"scroll"`
+  (also `"scroll_x"` or `"scroll_y"`).
+- A child styled with `position="absolute"` leaves the flow. It is placed by
+  `top`/`right`/`bottom`/`left` inside the box, above the rest, with a higher `z_index` on top.
+- `class_` and `id` apply the [stylesheet](/pyzed/theming/styles/#stylesheets) rules (a rule
+  for `"box"` styles every box). `style=` and the keyword properties go on top, like an
+  inline `style` attribute.
+
 ## Anchored layouts
 
 `pz.anchor_layout` places children freely, like a form made in Pyzed Design, and each child follows its
