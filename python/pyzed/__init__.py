@@ -81,11 +81,12 @@ from ._core import (  # noqa: E402 - after the allocator options above
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
-from .component import Component, state
-from .layout import anchor, anchor_layout, flex, flex_item
+from .component import Component, provide, state, use_context
+from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
-from .style import Gradient, Mask, Paint, Style, define_style, set_style
+from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
+                    stylesheet, viewport)
 from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
 from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
@@ -235,7 +236,9 @@ __all__ = [
     "clear_memos",
     "code_editor",
     "column",
+    "clear_stylesheet",
     "container",
+    "current_breakpoint",
     "define_animation",
     "define_style",
     "designer",
@@ -249,6 +252,7 @@ __all__ = [
     "game",
     "anchor",
     "anchor_layout",
+    "box",
     "flex",
     "forms",
     "flex_item",
@@ -266,6 +270,7 @@ __all__ = [
     "listen",
     "load_font",
     "markdown",
+    "media",
     "memo",
     "memo_stats",
     "mouse_area",
@@ -295,12 +300,15 @@ __all__ = [
     "spawn",
     "set_reduced_motion",
     "system_reduced_motion",
+    "provide",
     "set_style",
     "split",
     "stack",
     "stagger",
     "style",
+    "stylesheet",
     "state",
+    "use_context",
     "svg",
     "t",
     "text",
@@ -312,6 +320,7 @@ __all__ = [
     "validation_errors",
     "ui",
     "vertical_slider",
+    "viewport",
     "virtual_column",
     "vspace",
 ]

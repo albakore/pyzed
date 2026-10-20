@@ -635,9 +635,9 @@ Clase base de los componentes propios, como en React: los atributos de clase ano
 
 | Parámetro | Descripción |
 | --- | --- |
-| `args` | Props, en el orden en que se declaran. |
+| `args` | Props, en el orden en que se declaran (o los hijos, si la clase tiene una prop `children`). |
 | `key` | Clave que identifica la suscripción (por defecto, el mensaje o la función). |
-| `kwargs` | Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes) y `key=` para conservar el estado cuando los elementos se mueven. |
+| `kwargs` | Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes), `key=` para conservar el estado cuando los elementos se mueven, y `style=`, `class_=`, `id=` y `animate=`. |
 
 ```python
 class Rating(pz.Component):
@@ -676,6 +676,22 @@ Component.render()
 ```
 
 Devuelve los widgets de este componente (se llama en cada render).
+
+#### `Component.provide`
+
+```python
+Component.provide()
+```
+
+Valores que comparte con todos los componentes que dibuja (se leen con `pz.use_context`).
+
+#### `Component.context`
+
+```python
+Component.context(name, default=None)
+```
+
+El valor compartido más cercano llamado `name` (ver `pz.provide`).
 
 #### `Component.on_mount`
 
@@ -781,6 +797,36 @@ Límites de un prop numérico, con `typing.Annotated`: el diseñador muestra un 
 ```python
 level: Annotated[int, pz.Range(0, 10)] = 3
 ```
+
+### `provide`
+
+```python
+provide(**values)
+```
+
+Un gestor de contexto que comparte valores con todos los componentes que se dibujan dentro, como el contexto de React. Se leen con `pz.use_context(nombre)` o `self.context(nombre)`. El método `provide()` de un componente hace lo mismo con lo que dibuja. Ver [Hijos, contexto y estilos](/pyzed/es/guides/components/#hijos-contexto-y-estilos).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `values` | Los valores, por nombre. |
+
+```python
+with pz.provide(user=self.user):
+    page = Dashboard()
+```
+
+### `use_context`
+
+```python
+use_context(name, default=None)
+```
+
+El valor más cercano compartido como `name` con `pz.provide` o el `provide()` de un componente.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | El nombre del valor. |
+| `default` | Lo que devuelve si nadie lo comparte. |
 
 ### `state`
 

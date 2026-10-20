@@ -17,7 +17,7 @@ Ver la guía de [layout](/pyzed/es/guides/layout/) para los tamaños, el relleno
 
 Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).
 
-Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/theming/styles/).
+Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. `widget.classes(*nombres, id=None)` aplica las reglas de `pz.stylesheet` que coinciden, como `class` e `id` en HTML. Ver [Estilos](/pyzed/es/theming/styles/).
 
 `widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).
 
@@ -330,6 +330,50 @@ Coloca un hijo en una rejilla con pistas: su columna y fila (desde 0) y cuántas
 
 ```python
 pz.cell(ui.button("Guardar"), column=2, row=3, align_x="end")
+```
+
+### `box`
+
+```python
+box(
+    *children,
+    display='block',
+    direction='row',
+    gap=0,
+    wrap=False,
+    justify='start',
+    align=None,
+    columns=None,
+    rows=None,
+    overflow='visible',
+    class_=None,
+    id=None,
+    style=None,
+    **props,
+)
+```
+
+Un contenedor para cualquier cosa, como un `div` de HTML: coloca sus hijos (`display` `"block"`, `"flex"`, `"grid"` o `"stack"`) y acepta todas las propiedades de estilo, clases de la hoja de estilo y un id. Los hijos con `position="absolute"` se colocan con `top`/`right`/`bottom`/`left` por encima del resto. Ver [Cajas](/pyzed/es/guides/layout/#cajas).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `children` | Los widgets, uno a uno o en listas. `None` y `False` se ignoran. |
+| `display` | `"block"` (uno debajo de otro, tan anchos como la caja), `"flex"`, `"grid"` o `"stack"`. |
+| `direction` | Con `display="flex"`: `"row"` o `"column"`. |
+| `gap` | Espacio entre hijos. |
+| `wrap` | En filas `"flex"`: pasa a nuevas líneas. |
+| `justify` | Con `"flex"`: `"start"`, `"center"`, `"end"`, `"between"`, `"around"` o `"evenly"`. |
+| `align` | `"start"`, `"center"`, `"end"` o `"stretch"` (por defecto en `"block"`). |
+| `columns` | Con `"grid"`: un número de columnas iguales o pistas (`"200 1fr auto"`). |
+| `rows` | Con `"grid"`: pistas de filas. |
+| `overflow` | `"visible"`, `"hidden"`, `"scroll"`, `"scroll_x"` o `"scroll_y"`. |
+| `class_` | Clases de la hoja de estilo (`"card selected"` o una lista). |
+| `id` | El id para las reglas `#id`. |
+| `style` | Un `pz.Style`, dict o nombre de estilo. |
+| `props` | Propiedades de estilo, encima del resto. |
+
+```python
+pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)
 ```
 
 ### `flex`
@@ -1613,7 +1657,7 @@ Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `
 | Parámetro | Descripción |
 | --- | --- |
 | `styles` | Estilos, dicts o nombres de estilo de partida. |
-| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Los colores pueden ser tokens del tema. |
+| `props` | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{"duration", "easing", "delay"}`. `media`: `{consulta: estilo}` que se aplica cuando la ventana la cumple. Los colores pueden ser tokens del tema. |
 
 ```python
 tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
@@ -1684,6 +1728,68 @@ Pone nombre a un estilo para usarlo así: `widget.style("card")`. Lo devuelve.
 | `name` | Nombre del estilo. |
 | `styles` | Estilos a combinar. |
 | `props` | Propiedades encima. |
+
+### `stylesheet`
+
+```python
+stylesheet(rules=None, **classes)
+```
+
+Añade reglas como en CSS, `{selector: estilo}`, que los widgets reciben con `widget.classes(...)` y los componentes con `class_=`/`id=`. Selectores: `.clase`, `.a.b`, `#id`, el nombre de la clase de un componente (`"Rating"`), un `:hover`, `:pressed`/`:active` o `:focus` opcional y listas con comas. Ganan los selectores más específicos (ids, luego clases, luego nombres) y después las reglas posteriores. Un selector repetido reemplaza su regla. Devuelve todas las reglas. Ver [Hojas de estilo](/pyzed/es/theming/styles/#hojas-de-estilo).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `rules` | Un dict `{selector: estilo}`. |
+| `classes` | Clases por palabra clave: `card={...}` es `".card"`. |
+
+```python
+pz.stylesheet({
+    ".card": {"background": "panel", "padding": 16, "radius": 8},
+    ".card:hover": {"border_color": "accent"},
+})
+pz.column([...]).classes("card")
+```
+
+### `clear_stylesheet`
+
+```python
+clear_stylesheet()
+```
+
+Quita todas las reglas añadidas con `pz.stylesheet`.
+
+### `media`
+
+```python
+media(query=None, **conditions)
+```
+
+Si la ventana que se dibuja cumple una media query, como `@media` en CSS. Ver [Estilos responsive](/pyzed/es/theming/styles/#estilos-responsive).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `query` | `"max_width: 600"`, `"(min_width: 768px) and (orientation: landscape)"` o un breakpoint (`"md"`). |
+| `conditions` | Lo mismo por palabra clave: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`. |
+
+```python
+sidebar = None if pz.media("max_width: 600") else self.sidebar()
+```
+
+### `viewport`
+
+```python
+viewport()
+```
+
+El tamaño de la ventana que se dibuja, `(ancho, alto)` en píxeles lógicos, como `window.innerWidth` e `innerHeight`.
+
+### `current_breakpoint`
+
+```python
+current_breakpoint()
+```
+
+El breakpoint más ancho que alcanza la ventana: `"xs"` (menos de 640 px), `"sm"`, `"md"`, `"lg"`, `"xl"` o `"xxl"`.
 
 ### `set_style`
 

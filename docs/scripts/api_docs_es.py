@@ -260,7 +260,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. Ver [Estilos](/pyzed/es/theming/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
+                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. `widget.classes(*nombres, id=None)` aplica las reglas de `pz.stylesheet` que coinciden, como `class` e `id` en HTML. Ver [Estilos](/pyzed/es/theming/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -1192,6 +1192,23 @@ dict(_w)["Layout"].update({
         },
         "example": 'pz.cell(ui.button("Guardar"), column=2, row=3, align_x="end")',
     },
+    "pyzed.box": {
+        "desc": "Un contenedor para cualquier cosa, como un `div` de HTML: coloca sus hijos (`display` `\"block\"`, `\"flex\"`, `\"grid\"` o `\"stack\"`) y acepta todas las propiedades de estilo, clases de la hoja de estilo y un id. Los hijos con `position=\"absolute\"` se colocan con `top`/`right`/`bottom`/`left` por encima del resto. Ver [Cajas](/pyzed/es/guides/layout/#cajas).",
+        "params": {
+            "children": "Los widgets, uno a uno o en listas. `None` y `False` se ignoran.",
+            "display": "`\"block\"` (uno debajo de otro, tan anchos como la caja), `\"flex\"`, `\"grid\"` o `\"stack\"`.",
+            "direction": "Con `display=\"flex\"`: `\"row\"` o `\"column\"`.",
+            "gap": "Espacio entre hijos.", "wrap": "En filas `\"flex\"`: pasa a nuevas líneas.",
+            "justify": "Con `\"flex\"`: `\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` o `\"evenly\"`.",
+            "align": "`\"start\"`, `\"center\"`, `\"end\"` o `\"stretch\"` (por defecto en `\"block\"`).",
+            "columns": "Con `\"grid\"`: un número de columnas iguales o pistas (`\"200 1fr auto\"`).",
+            "rows": "Con `\"grid\"`: pistas de filas.",
+            "overflow": "`\"visible\"`, `\"hidden\"`, `\"scroll\"`, `\"scroll_x\"` o `\"scroll_y\"`.",
+            "class_": "Clases de la hoja de estilo (`\"card selected\"` o una lista).", "id": "El id para las reglas `#id`.",
+            "style": "Un `pz.Style`, dict o nombre de estilo.", "props": "Propiedades de estilo, encima del resto.",
+        },
+        "example": 'pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)',
+    },
     "pyzed.flex": {
         "desc": "Coloca los hijos a lo largo de un eje, como flexbox de CSS, con `justify` en el eje principal y `align` en el transversal. Usa `pz.flex_item` para que un hijo crezca o tenga un tamaño fijo.",
         "params": {
@@ -1652,6 +1669,16 @@ _section("app", "Eventos y componentes", {
         "params": {"min": "Valor mínimo.", "max": "Valor máximo.", "step": "Paso de los botones + y -."},
         "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
     },
+    "pyzed.provide": {
+        "desc": "Un gestor de contexto que comparte valores con todos los componentes que se dibujan dentro, como el contexto de React. Se leen con `pz.use_context(nombre)` o `self.context(nombre)`. El método `provide()` de un componente hace lo mismo con lo que dibuja. Ver [Hijos, contexto y estilos](/pyzed/es/guides/components/#hijos-contexto-y-estilos).",
+        "params": {"values": "Los valores, por nombre."},
+        "example": """
+            with pz.provide(user=self.user):
+                page = Dashboard()
+        """,
+    },
+    "pyzed.use_context": {"desc": "El valor más cercano compartido como `name` con `pz.provide` o el `provide()` de un componente.",
+                          "params": {"name": "El nombre del valor.", "default": "Lo que devuelve si nadie lo comparte."}},
     "pyzed.state": {
         "desc": 'Declara una variable de estado privada en la clase de un componente: el padre no puede pasarla y cada instancia empieza con su propia copia del valor (listas y diccionarios son seguros). El diseñador la muestra junto a las props. Ver [Componentes propios](/pyzed/es/guides/components/).',
         "params": {'default': 'Valor inicial, copiado para cada instancia.', 'doc': 'Descripción que muestra el diseñador.'},
@@ -1675,8 +1702,8 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de la posición de las ventanas.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
-    "args": "Props, en el orden en que se declaran.",
-    "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes) y `key=` para conservar el estado cuando los elementos se mueven.",
+    "args": "Props, en el orden en que se declaran (o los hijos, si la clase tiene una prop `children`).",
+    "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes), `key=` para conservar el estado cuando los elementos se mueven, y `style=`, `class_=`, `id=` y `animate=`.",
 }
 
 # -- Diálogos y traducciones --------------------------------------------------
@@ -1829,7 +1856,7 @@ _section("widgets", "Estilos", {
     "pyzed.Style": {
         "desc": "Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `style=` de un componente o `App.style`. Combina estilos con `|` (gana el de la derecha). Ver [Estilos](/pyzed/es/theming/styles/).",
         "params": {"styles": "Estilos, dicts o nombres de estilo de partida.",
-                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Los colores pueden ser tokens del tema."},
+                   "props": "Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `\"50%\"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{\"tint\", \"strength\"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{\"duration\", \"easing\", \"delay\"}`. `media`: `{consulta: estilo}` que se aplica cuando la ventana la cumple. Los colores pueden ser tokens del tema."},
         "example": """
             tarjeta = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(tarjeta | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1837,6 +1864,22 @@ _section("widgets", "Estilos", {
     },
     "pyzed.define_style": {"desc": "Pone nombre a un estilo para usarlo así: `widget.style(\"card\")`. Lo devuelve.",
                            "params": {"name": "Nombre del estilo.", "styles": "Estilos a combinar.", "props": "Propiedades encima."}},
+    "pyzed.stylesheet": {"desc": "Añade reglas como en CSS, `{selector: estilo}`, que los widgets reciben con `widget.classes(...)` y los componentes con `class_=`/`id=`. Selectores: `.clase`, `.a.b`, `#id`, el nombre de la clase de un componente (`\"Rating\"`), un `:hover`, `:pressed`/`:active` o `:focus` opcional y listas con comas. Ganan los selectores más específicos (ids, luego clases, luego nombres) y después las reglas posteriores. Un selector repetido reemplaza su regla. Devuelve todas las reglas. Ver [Hojas de estilo](/pyzed/es/theming/styles/#hojas-de-estilo).",
+                         "params": {"rules": "Un dict `{selector: estilo}`.", "classes": "Clases por palabra clave: `card={...}` es `\".card\"`."},
+                         "example": """
+                             pz.stylesheet({
+                                 ".card": {"background": "panel", "padding": 16, "radius": 8},
+                                 ".card:hover": {"border_color": "accent"},
+                             })
+                             pz.column([...]).classes("card")
+                         """},
+    "pyzed.clear_stylesheet": {"desc": "Quita todas las reglas añadidas con `pz.stylesheet`."},
+    "pyzed.media": {"desc": "Si la ventana que se dibuja cumple una media query, como `@media` en CSS. Ver [Estilos responsive](/pyzed/es/theming/styles/#estilos-responsive).",
+                    "params": {"query": "`\"max_width: 600\"`, `\"(min_width: 768px) and (orientation: landscape)\"` o un breakpoint (`\"md\"`).",
+                               "conditions": "Lo mismo por palabra clave: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`."},
+                    "example": 'sidebar = None if pz.media("max_width: 600") else self.sidebar()'},
+    "pyzed.viewport": {"desc": "El tamaño de la ventana que se dibuja, `(ancho, alto)` en píxeles lógicos, como `window.innerWidth` e `innerHeight`."},
+    "pyzed.current_breakpoint": {"desc": "El breakpoint más ancho que alcanza la ventana: `\"xs\"` (menos de 640 px), `\"sm\"`, `\"md\"`, `\"lg\"`, `\"xl\"` o `\"xxl\"`."},
     "pyzed.set_style": {"desc": "Fija el estilo global de todas las ventanas, por debajo del `style` de cada una. Sin argumentos lo quita.",
                         "params": {"styles": "Estilos a combinar.", "props": "Propiedades encima."}},
     "pyzed.Gradient": {"desc": "Un gradiente lineal para fondos. Los ángulos siguen CSS: 0 arriba, 90 derecha, 180 (por defecto) abajo. Hasta 8 paradas.",
@@ -2484,6 +2527,8 @@ MEMBERS = {
     "pyzed.Component.on_mount": "Se llama tras el primer render; puede devolver un `Command` o un mensaje.",
     "pyzed.Component.on_unmount": "Se llama cuando el componente deja de renderizarse.",
     "pyzed.Component.emit": "Lanza el evento personalizado `name`: llama al handler que el padre pasó como `on_<name>`.",
+    "pyzed.Component.provide": "Valores que comparte con todos los componentes que dibuja (se leen con `pz.use_context`).",
+    "pyzed.Component.context": "El valor compartido más cercano llamado `name` (ver `pz.provide`).",
     "pyzed.Component.handles": "Si el padre pasó un handler para el evento personalizado `name`.",
     "pyzed.Component.describe": "El primer párrafo del docstring (se muestra en el diseñador).",
     "pyzed.Component.designer_spec": "Este componente como entrada de la caja de herramientas del diseñador (`pyzed.designer.Component`).",

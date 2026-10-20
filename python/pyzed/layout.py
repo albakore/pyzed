@@ -216,3 +216,137 @@ def anchor_layout(children: Iterable[AnchorItem], *, design: Optional[tuple] = N
         return _core.stack(placed, width="fill", height="fill")
 
     return _core.container(_core.responsive(build), width=width, height=height)
+
+
+DISPLAYS = ("block", "flex", "grid", "stack")
+OVERFLOWS = ("visible", "hidden", "scroll", "scroll_x", "scroll_y")
+BOX_ALIGN = ALIGN + ("stretch",)
+
+
+def _position(child: Any) -> Optional[dict]:
+    """The ``position="absolute"`` placement a child's style asks for (``None``: in the flow)."""
+    if not isinstance(child, _core.Widget):
+        return None
+    props = child.style_props()
+    if props.get("position") != "absolute":
+        return None
+    return {k: props.get(k) for k in ("top", "right", "bottom", "left", "z_index")}
+
+
+def _placed(child: Any, place: dict) -> _core.Widget:
+    """An absolute child placed in the box by its offsets (a layer as big as the box)."""
+    top, right, bottom, left = (place[k] for k in ("top", "right", "bottom", "left"))
+    align_x = "end" if right is not None and left is None else "start"
+    align_y = "end" if bottom is not None and top is None else "start"
+    padding = tuple(float(v or 0) for v in (top, right, bottom, left))
+    return _core.container(child, width="fill", height="fill", align_x=align_x, align_y=align_y, padding=padding)
+
+
+def _stretched(child: Any, axis: str) -> Any:
+    if isinstance(child, FlexItem):
+        return child
+    if isinstance(child, _core.Widget) and repr(child).endswith(".style()") and axis not in child.style_props():
+        return child.style(**{axis: "fill"})  # its own box stretches, background and all
+    return _core.container(child, **{axis: "fill"})
+
+
+def box(
+    *children: Any,
+    display: str = "block",
+    direction: str = "row",
+    gap: float = 0,
+    wrap: bool = False,
+    justify: str = "start",
+    align: Optional[str] = None,
+    columns: Any = None,
+    rows: Any = None,
+    overflow: str = "visible",
+    class_: Any = None,
+    id: Optional[str] = None,
+    style: Any = None,
+    **props: Any,
+) -> _core.Widget:
+    """A container for anything, like an HTML ``div``: it lays its children out and takes
+    every style property.
+
+    - ``display``: ``"block"`` (the default: children one under another, as wide as the
+      box), ``"flex"`` (along ``direction`` with ``justify``, ``align``, ``gap`` and
+      ``wrap``, see ``pz.flex``), ``"grid"`` (``columns`` and ``rows`` as in ``pz.grid``:
+      a count or tracks such as ``"200 1fr auto"``) or ``"stack"`` (children on top of
+      each other).
+    - ``gap``: space between children. ``align``: ``"start"``, ``"center"``, ``"end"`` or
+      ``"stretch"`` across the main axis (``"stretch"`` by default for ``"block"``).
+    - ``overflow``: ``"visible"``, ``"hidden"`` (clips the content), ``"scroll"`` (scrolls
+      along the box's axis), ``"scroll_x"`` or ``"scroll_y"``.
+    - A child styled with ``position="absolute"`` leaves the flow and is placed by its
+      ``top``/``right``/``bottom``/``left`` offsets inside the box, above the rest (higher
+      ``z_index`` on top), like CSS: ``ui.badge("3").style(position="absolute", top=4, right=4)``.
+    - ``class_`` and ``id`` apply the stylesheet's rules (see ``pz.stylesheet``; rules for
+      ``"box"`` apply to every box), then ``style`` and the keyword properties go on top::
+
+          pz.box(
+              pz.text("Title").style(size=18, weight="bold"),
+              pz.box(ui.button("Cancel", cancel), ui.button("Save", save), display="flex", gap=8,
+                     justify="end"),
+              class_="card", padding=16, gap=12,
+          )
+
+    Children may be given one by one or as lists; ``None`` and ``False`` are skipped.
+    """
+    if display not in DISPLAYS:
+        raise ValueError(f"display must be one of {', '.join(DISPLAYS)}")
+    if overflow not in OVERFLOWS:
+        raise ValueError(f"overflow must be one of {', '.join(OVERFLOWS)}")
+    if align is not None and align not in BOX_ALIGN:
+        raise ValueError(f"align must be one of {', '.join(BOX_ALIGN)}")
+    items: List[Any] = []
+    for child in children:
+        if isinstance(child, (list, tuple)):
+            items.extend(_items(child))
+        elif child is not None and child is not False:
+            items.append(child)
+    flow: List[Any] = []
+    layers: List[tuple] = []
+    for child in items:
+        place = _position(child)
+        if place is None:
+            flow.append(child)
+        else:
+            layers.append((float(place["z_index"] or 0), len(layers), _placed(child, place)))
+
+    is_row = display == "flex" and direction == "row"
+    if display == "block":
+        align = align or "stretch"
+        content = _core.column([_stretched(c, "width") if align == "stretch" else c for c in flow],
+                               spacing=gap, align="start" if align == "stretch" else align)
+    elif display == "flex":
+        cross = "height" if is_row else "width"
+        if align == "stretch":
+            flow = [_stretched(c, cross) for c in flow]
+        content = flex(flow, direction=direction, justify=justify, align=align if align in ALIGN else "start",
+                       gap=gap, wrap=wrap)
+    elif display == "grid":
+        if columns is None or isinstance(columns, int):  # n equal columns, as wide as the box
+            columns = " ".join(["1fr"] * max(1, columns or 1))
+        content = _core.grid([_stretched(c, "width") for c in flow], columns=columns, rows=rows, spacing=gap)
+    else:
+        content = _core.stack(flow)
+    if layers:
+        content = _core.stack([content, *[w for _z, _i, w in sorted(layers, key=lambda l: (l[0], l[1]))]])
+    if overflow.startswith("scroll"):
+        if overflow == "scroll":
+            scroll = "horizontal" if is_row else "vertical"
+        else:
+            scroll = "horizontal" if overflow == "scroll_x" else "vertical"
+        content = _core.scrollable(content, direction=scroll, width="fill", height="fill")
+    elif overflow == "hidden":
+        props.setdefault("clip", True)
+
+    from . import style as _style
+
+    widget = _core.container(content)
+    widget = _style._apply_classes(widget, () if class_ is None else (class_,), id, "box")
+    if style is not None or props:
+        widget = widget.style(*(() if style is None else (style,)), **props)
+    return widget
+

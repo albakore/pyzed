@@ -152,6 +152,7 @@ class Window:
         _hot_reload.note_window(self)
         _hot_reload.check()
         _theme.use(self.resolved_theme())
+        _style._viewport = tuple(self.window_size or _style._screen or self.size)
         from .ui import frame as _frame
 
         with _component.render_pass(self), _frame.drawing(self) as drawing:

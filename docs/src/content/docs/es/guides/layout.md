@@ -149,6 +149,37 @@ pz.flex([pz.flex_item(a), pz.flex_item(b, grow=2), pz.flex_item(c, basis=120)], 
 `pz.flex_item` indica cuánto espacio libre toma un hijo (`grow`) o un tamaño fijo (`basis`).
 `wrap=True` hace que una fila salte a nuevas líneas.
 
+## Cajas
+
+`pz.box` es un contenedor para cualquier cosa, como un `div` de HTML.
+Coloca sus hijos y acepta todas las [propiedades de estilo](/pyzed/es/theming/styles/),
+clases y un id, así que una pantalla entera se puede montar con cajas:
+
+```python
+pz.box(
+    pz.text("Planes").style(size=20, weight="bold"),
+    pz.box([plan_card(p) for p in plans], display="grid", columns=3, gap=12),
+    pz.box(ui.button("Cancelar", cancel), ui.button("Continuar", go), display="flex", justify="end", gap=8),
+    ui.badge("Nuevo").style(position="absolute", top=8, right=8),
+    class_="page", padding=24, gap=16, overflow="scroll",
+)
+```
+
+- `display`:
+  - `"block"` (por defecto) pone los hijos uno debajo de otro, tan anchos como la caja.
+  - `"flex"` los coloca a lo largo de `direction` con `justify`, `align`, `gap` y `wrap`, como `pz.flex`.
+  - `"grid"` usa `columns` y `rows`: un número de columnas iguales o pistas como `"200 1fr auto"`.
+  - `"stack"` los pone uno encima de otro.
+- `align` acepta `"start"`, `"center"`, `"end"` o `"stretch"`.
+- `overflow` acepta `"visible"`, `"hidden"` (recorta el contenido) o `"scroll"`
+  (también `"scroll_x"` o `"scroll_y"`).
+- Un hijo con `position="absolute"` sale del flujo. Se coloca con
+  `top`/`right`/`bottom`/`left` dentro de la caja, por encima del resto, y el de mayor
+  `z_index` queda arriba.
+- `class_` e `id` aplican las reglas de la [hoja de estilo](/pyzed/es/theming/styles/#hojas-de-estilo)
+  (una regla para `"box"` da estilo a todas las cajas). `style=` y las propiedades por palabra
+  clave van encima, como un atributo `style` en línea.
+
 ## Disposiciones ancladas
 
 `pz.anchor_layout` coloca hijos libremente, como un formulario hecho en Pyzed Design, y cada hijo sigue a su

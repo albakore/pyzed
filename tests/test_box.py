@@ -1,0 +1,67 @@
+"""pz.box: a div-like container with block, flex, grid and stack layouts, positions and overflow."""
+
+import pytest
+
+import pyzed as pz
+from test_layout import _png_column
+
+
+@pytest.fixture(autouse=True)
+def clean_styles():
+    yield
+    pz.clear_stylesheet()
+
+
+def _at(path, x, y):
+    return _png_column(path, x)[y]
+
+
+def test_box_checks_its_options_and_takes_styles():
+    with pytest.raises(ValueError, match="display"):
+        pz.box(display="inline")
+    with pytest.raises(ValueError, match="overflow"):
+        pz.box(overflow="auto")
+    with pytest.raises(ValueError, match="align"):
+        pz.box(align="baseline")
+    with pytest.raises(ValueError, match="position"):
+        pz.text("x").style(position="fixed")
+    pz.stylesheet({".card": {"padding": 16, "radius": 8}, "box": {"color": "#ff0000"}})
+    w = pz.box("a", [pz.text("b"), None], False, class_="card", style={"radius": 2}, gap=4, padding=6)
+    assert w.style_props() == {"color": "#ff0000", "padding": 6, "radius": 2}
+    assert pz.box(overflow="hidden").style_props()["clip"] is True
+
+
+def test_style_props_reads_through_events_and_animations():
+    w = pz.text("x").style(position="absolute", top=4).on(click=lambda: None).animate("fade_in")
+    assert w.style_props() == {"position": "absolute", "top": 4}
+
+
+def test_box_layouts_render(tmp_path):
+    red, green = "#ff0000", "#00ff00"
+
+    class Demo(pz.App):
+        def view(self):
+            return pz.box(
+                # block: children as wide as the box
+                pz.box(pz.text("").style(background=red, height=10), width=100),
+                # grid: two equal columns
+                pz.box(pz.container(None, height=10).style(background=red),
+                       pz.container(None, height=10).style(background=green),
+                       display="grid", columns=2, width=100),
+                # an absolute child in the bottom right corner, out of the flow
+                pz.box(pz.container(None, width=100, height=30),
+                       pz.container(None, width=10, height=10).style(background=red, position="absolute",
+                                                                      right=0, bottom=0),
+                       width=100),
+                # flex: justify end
+                pz.box(pz.container(None, width=10, height=10).style(background=green), display="flex",
+                       justify="end", width=100),
+            ).style(background="#000000", width="fill", height="fill")
+
+    out = tmp_path / "box.png"
+    pz.screenshot(Demo, out, size=(120, 80), scale=1)
+    assert _at(out, 1, 5)[0] > 200 and _at(out, 98, 5)[0] > 200 and _at(out, 105, 5)[0] < 20  # block
+    assert _at(out, 10, 15)[0] > 200 and _at(out, 60, 15)[1] > 200 and _at(out, 60, 15)[0] < 20  # grid
+    # the absolute child: bottom right of the 30 px tall box (20 to 50), out of the flow
+    assert _at(out, 85, 45)[0] < 20 and _at(out, 95, 45)[0] > 200 and _at(out, 95, 25)[0] < 20
+    assert _at(out, 50, 55)[1] < 20 and _at(out, 95, 55)[1] > 200  # flex, justify end

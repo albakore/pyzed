@@ -878,7 +878,10 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
                 _ => crate::styled::wrap(build(py, &props.child, inner), props),
             };
             // The margin goes outside the effects, so a rotated or blurred box keeps its spacing.
-            crate::styled::margin(crate::styled::effects_of(element, props), props)
+            crate::styled::margin(
+                crate::styled::effects_of(crate::styled::min_size(element, props), props),
+                props,
+            )
         }
         Kind::Events {
             child,

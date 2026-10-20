@@ -11,6 +11,7 @@ mod fonts;
 mod frame;
 mod highlighter;
 mod layout;
+mod min_size;
 mod render;
 mod shader;
 mod sticky;

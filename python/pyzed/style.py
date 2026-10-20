@@ -25,15 +25,63 @@ Properties:
   panel that blurs what is behind it). Glow, bloom and glass also set the shadow,
   background and border, so properties given with them win.
 
+- Placement inside a ``pz.box``: ``position="absolute"`` with ``top``, ``right``,
+  ``bottom``, ``left`` and ``z_index`` (see ``pz.box``).
+- Size limits: ``min_width``/``min_height`` (pixels) next to ``max_width``/``max_height``.
+- States, like CSS ``:hover``, ``:active`` and ``:focus``: ``hover``, ``pressed`` and
+  ``focus`` take the properties to show in that state (``background``, ``color``,
+  ``border_color``, ``border_width``, ``radius``, ``opacity``, ``translate``, ``scale``,
+  ``rotate`` and ``blur``). ``transition`` animates the change, like CSS: milliseconds
+  (``150``, ``"0.2s"``), ``True`` (150 ms) or ``{"duration": ..., "easing": ..., "delay": ...}``.
+  With a transition, changes of ``opacity``, ``translate``, ``scale``, ``rotate`` and ``blur``
+  between renders animate too::
+
+      ui.button("Save", save).style(background="accent", radius=6,
+                                    hover={"background": "#4f8cff", "translate": (0, -1)},
+                                    pressed={"scale": 0.97}, transition=120)
+
 Colors may be theme tokens (``"accent"``, ``"text_muted"``, ``"panel"``...), so styles follow
 theme switches. ``pz.Style`` keeps a style to reuse and combine (``base | accent``), and
 ``pz.define_style("card", ...)`` names one: ``widget.style("card")``. The app's global style
 is ``App.style`` (or ``pz.set_style`` for every window); it applies to the whole view.
+
+Stylesheets work like CSS: ``pz.stylesheet({...})`` adds rules by selector and
+``widget.classes("card", id="main")`` (or a component's ``class_=`` and ``id=``) applies the
+matching ones::
+
+    pz.stylesheet({
+        ".card": {"background": "panel", "padding": 16, "radius": 8},
+        ".card:hover": {"border_color": "accent"},
+        ".card.selected, #featured": {"border": (2, "accent")},
+        "Rating": {"padding": 4},               # every Rating component
+    })
+    pz.column([...]).classes("card", "selected" if chosen else "")
+
+A selector is an optional component name, ``.class`` names, an ``#id`` and an optional
+state (``:hover``, ``:pressed``/``:active``, ``:focus``); commas list several. More
+specific selectors win (ids, then classes, then names), then later rules; a ``style()``
+call after ``classes()`` goes on top. Named styles (``define_style``) also work as classes.
+
+Responsive styles follow the window's size, like CSS media queries::
+
+    pz.stylesheet({
+        ".sidebar": {"width": 260},
+        "@media (max_width: 700)": {".sidebar": {"width": 64}},
+        "@md": {".grid": {"padding": 24}},          # a breakpoint: 768 px wide and up
+    })
+    panel.style(padding=24, media={"max_width: 600": {"padding": 8}})
+
+Queries: ``min_width``, ``max_width``, ``min_height`` and ``max_height`` (pixels, ``px``
+optional), ``orientation`` (``portrait``/``landscape``) and ``theme`` (``dark``/``light``),
+joined with ``and``, or a breakpoint name of ``BREAKPOINTS`` (``sm``, ``md``, ``lg``,
+``xl``, ``xxl``: that width and up). ``pz.viewport()``, ``pz.media(...)`` and
+``pz.current_breakpoint()`` answer the same questions in a view.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+import re
+from typing import Any, Dict, FrozenSet, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 
 from . import theme as _theme
 
@@ -41,15 +89,32 @@ from . import theme as _theme
 PROPERTIES = (
     "background", "color", "font", "weight", "italic", "size", "line_height",
     "border_color", "border_width", "radius", "shadow", "padding", "margin",
-    "width", "height", "max_width", "max_height", "align_x", "align_y", "clip",
+    "width", "height", "max_width", "max_height", "min_width", "min_height", "align_x", "align_y", "clip",
     "opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom", "glass",
+    "position", "top", "right", "bottom", "left", "z_index",
 )
+#: Where a child of ``pz.box`` sits: ``position="absolute"`` takes it out of the flow and
+#: places it by ``top``/``right``/``bottom``/``left`` (pixels), above the others by ``z_index``.
+POSITION_PROPERTIES = ("position", "top", "right", "bottom", "left", "z_index")
+POSITIONS = ("static", "relative", "absolute")
 #: The effect properties (``glow``, ``bloom`` and ``glass`` also add box properties).
 EFFECT_PROPERTIES = ("opacity", "translate", "scale", "rotate", "blur", "backdrop_blur", "glow", "bloom",
                      "glass")
 TEXT_PROPERTIES = ("color", "font", "weight", "italic", "size", "line_height")
 ALIASES = {"bg": "background", "text_color": "color", "font_size": "size", "font_weight": "weight",
            "font_family": "font"}
+#: The interaction states a style can set, like CSS ``:hover``, ``:active`` and ``:focus``.
+STATES = ("hover", "pressed", "focus")
+STATE_ALIASES = {"press": "pressed", "active": "pressed"}
+#: The properties a state can change (they animate, so the box keeps its layout).
+STATE_PROPERTIES = ("background", "color", "border_color", "border_width", "radius", "opacity", "translate",
+                    "scale", "rotate", "blur")
+#: The effects a ``transition`` animates when they change between renders.
+TRANSITION_PROPERTIES = ("opacity", "translate", "scale", "rotate", "blur")
+_STATE_TRIGGERS = {"hover": "hover", "pressed": "press", "focus": "focus"}
+#: Breakpoints for ``@md``-style rules and ``media={"md": ...}``: each applies from that window
+#: width (logical pixels) up, like Tailwind's.
+BREAKPOINTS = {"sm": 640, "md": 768, "lg": 1024, "xl": 1280, "xxl": 1536}
 
 _named: Dict[str, "Style"] = {}
 _global: Optional["Style"] = None
@@ -241,6 +306,8 @@ def _scale_alpha(rgba: Tuple[float, float, float, float], opacity: float) -> Tup
 
 
 def _value_to_json(value: Any) -> Any:
+    if isinstance(value, dict):  # a state's properties
+        return {k: _value_to_json(v) for k, v in value.items()}
     if isinstance(value, (Gradient, Paint)):
         return value.to_dict()
     if isinstance(value, tuple):
@@ -249,9 +316,14 @@ def _value_to_json(value: Any) -> Any:
 
 
 def _value_from_json(key: str, value: Any) -> Any:
+    if key == "media" and isinstance(value, dict):
+        return {q: {k: _value_from_json(ALIASES.get(k, STATE_ALIASES.get(k, k)), v) for k, v in props.items()}
+                for q, props in value.items()}
+    if key in STATES and isinstance(value, dict):
+        return {k: _value_from_json(ALIASES.get(k, k), v) for k, v in value.items()}
     if key == "background" and isinstance(value, dict):
         return paint_from_dict(value)
-    if key in ("padding", "margin", "radius", "border") and isinstance(value, list):
+    if key in ("padding", "margin", "radius", "border", "translate") and isinstance(value, list):
         return tuple(value)
     if key == "shadow" and isinstance(value, list):
         color, offset, blur = value
@@ -279,7 +351,24 @@ def paint_from_dict(data: Mapping[str, Any]) -> Union[Gradient, Paint]:
 def _normalize(props: Mapping[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
     for key, value in props.items():
-        key = ALIASES.get(key, key)
+        key = ALIASES.get(key, STATE_ALIASES.get(key, key))
+        if key in STATES:
+            out[key] = None if value is None else _state(key, value)
+            continue
+        if key == "transition":
+            _timing(value)  # validates it
+            out[key] = value
+            continue
+        if key == "media":
+            if value is None:
+                out[key] = None
+                continue
+            if not isinstance(value, Mapping):
+                raise TypeError("media takes {query: style}, such as {\"max_width: 600\": {\"padding\": 8}}")
+            for query in value:
+                _parse_query(str(query))  # validates it
+            out[key] = {str(q): _props_of(v) for q, v in value.items()}
+            continue
         if key == "border":
             if value is None:
                 out["border_width"] = out["border_color"] = None
@@ -287,10 +376,56 @@ def _normalize(props: Mapping[str, Any]) -> Dict[str, Any]:
             width, color = value
             out["border_width"], out["border_color"] = width, color
             continue
+        if key == "position" and value is not None and value not in POSITIONS:
+            raise ValueError(f"position must be one of {', '.join(POSITIONS)}, not {value!r}")
         if key not in PROPERTIES:
-            raise TypeError(f"unknown style property {key!r}; available: {', '.join(PROPERTIES)}")
+            raise TypeError(f"unknown style property {key!r}; available: {', '.join(PROPERTIES)}, "
+                            f"the states {', '.join(STATES)} and transition")
         out[key] = value
     return out
+
+
+def _state(name: str, value: Any) -> Dict[str, Any]:
+    """The properties of a state (``hover={...}``), checked."""
+    props = _props_of(value)
+    for key in props:
+        if key not in STATE_PROPERTIES:
+            raise TypeError(f"{name} can't set {key!r}; a state sets {', '.join(STATE_PROPERTIES)}")
+    background = props.get("background")
+    if isinstance(background, (Gradient, Paint)):
+        raise TypeError(f"{name}: a state's background must be a color, not a gradient or paint")
+    radius = props.get("radius")
+    if radius is not None and not isinstance(radius, (int, float)):
+        raise TypeError(f"{name}: a state's radius must be a number")
+    return props
+
+
+def _merge(target: Dict[str, Any], props: Mapping[str, Any]) -> Dict[str, Any]:
+    """``props`` on top of ``target``; states merge property by property, like CSS rules."""
+    for key, value in props.items():
+        if (key in STATES or key == "media") and isinstance(value, dict) and isinstance(target.get(key), dict):
+            target[key] = {**target[key], **value}
+        else:
+            target[key] = value
+    return target
+
+
+def _timing(value: Any) -> Optional[Tuple[float, Any, float]]:
+    """``(duration, easing, delay)`` from a ``transition`` value (``None``: no transition)."""
+    if value is None or value is False:
+        return None
+    from . import animation as _animation
+
+    if value is True:
+        return 150.0, _animation._easing("ease_out"), 0.0
+    if isinstance(value, Mapping):
+        unknown = set(value) - {"duration", "easing", "delay"}
+        if unknown:
+            raise TypeError(f"unknown transition option {sorted(unknown)[0]!r}; use duration, easing and delay")
+        return (_animation._ms(value.get("duration", 150), "duration"),
+                _animation._easing(value.get("easing", "ease_out")),
+                _animation._ms(value.get("delay", 0), "delay"))
+    return _animation._ms(value, "transition"), _animation._easing("ease_out"), 0.0
 
 
 class Style:
@@ -306,8 +441,8 @@ class Style:
     def __init__(self, *styles: Any, **props: Any):
         merged: Dict[str, Any] = {}
         for style in styles:
-            merged.update(_props_of(style))
-        merged.update(_normalize(props))
+            _merge(merged, _props_of(style))
+        _merge(merged, _normalize(props))
         self.props = merged
 
     def __or__(self, other: Any) -> "Style":
@@ -352,7 +487,7 @@ class Style:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Style":
         """Builds a style from data made by ``to_dict`` (aliases accepted)."""
-        return cls(**{k: _value_from_json(ALIASES.get(k, k), v) for k, v in data.items()})
+        return cls(**{k: _value_from_json(ALIASES.get(k, STATE_ALIASES.get(k, k)), v) for k, v in data.items()})
 
 
 def _props_of(style: Any) -> Dict[str, Any]:
@@ -370,7 +505,7 @@ def _props_of(style: Any) -> Dict[str, Any]:
     if isinstance(style, (list, tuple)):
         merged: Dict[str, Any] = {}
         for item in style:
-            merged.update(_props_of(item))
+            _merge(merged, _props_of(item))
         return merged
     raise TypeError(f"a style is a pz.Style, a dict or a style name, not {type(style).__name__}")
 
@@ -533,11 +668,27 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
     """
     merged: Dict[str, Any] = dict(previous or {})
     for style in styles:
-        merged.update(_props_of(style))
-    merged.update(_normalize(props or {}))
+        _merge(merged, _props_of(style))
+    _merge(merged, _normalize(props or {}))
     merged = {k: v for k, v in merged.items() if v is not None}
-    drawn = {**_effects(merged), **{k: v for k, v in merged.items() if k not in ("glow", "bloom", "glass")}}
+    source = merged  # kept with its media queries, so a later style() call checks them again
+    if "media" in merged:
+        merged = {k: v for k, v in merged.items() if k != "media"}
+        for query, extra in source["media"].items():
+            if _matches(_parse_query(query)):
+                _merge(merged, {k: v for k, v in extra.items() if v is not None})
+    skip = ("glow", "bloom", "glass", "transition", *STATES)
+    drawn = {**_effects(merged), **{k: v for k, v in merged.items() if k not in skip}}
+    timing = _timing(merged.get("transition"))
     out: Dict[str, Any] = {}
+    if timing is not None:
+        # The effects become transitions (set, not multiplied), so changes between renders
+        # animate; the states below are relative to them.
+        moving = {k: drawn.pop(k) for k in TRANSITION_PROPERTIES if k in drawn}
+        out["transitions"] = _transitions(moving, timing)
+    states = _states(merged, timing)
+    if states:
+        out["states"] = states
     for key, value in drawn.items():
         if key == "background":
             if isinstance(value, Gradient):
@@ -564,4 +715,303 @@ def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
             out[key] = (to_hex(value[0]), float(value[1]))
         else:
             out[key] = value
-    return merged, out
+    return source, out
+
+
+def _anim_values(props: Mapping[str, Any]) -> Dict[str, Any]:
+    """Style properties as the animation properties they map to."""
+    out: Dict[str, Any] = {}
+    for key, value in props.items():
+        if key == "translate":
+            x, y = (value, 0) if isinstance(value, (int, float, str)) else value
+            out["x"], out["y"] = x, y
+        else:
+            out[key] = value
+    return out
+
+
+def _transitions(props: Mapping[str, Any], timing: Tuple[float, Any, float]) -> List[Dict[str, Any]]:
+    from . import animation as _animation
+
+    duration, easing, delay = timing
+    values = {"opacity": 1.0, "x": 0.0, "y": 0.0, "scale": 1.0, "rotate": 0.0, "blur": 0.0}
+    values.update(_anim_values(props))
+    return _animation._compile_transition({**values, "duration": duration, "easing": easing, "delay": delay})
+
+
+def _relative(key: str, value: Any, base: Any) -> Any:
+    """A state's effect value relative to the widget's own one (animations stack on it)."""
+    if base is None:
+        return value
+    if key in ("opacity", "scale"):
+        base = float(base)
+        return float(value) / base if base else float(value)
+    if isinstance(value, str) or isinstance(base, str):
+        if isinstance(value, str) and isinstance(base, str) and value.strip().endswith("%") \
+                and base.strip().endswith("%"):
+            return f"{float(value.strip()[:-1]) - float(base.strip()[:-1])}%"
+        if isinstance(value, str) or isinstance(base, str):
+            if key == "rotate":
+                return degrees(value) - degrees(base)
+            return value  # pixels and percentages: can't subtract, the state's value wins
+    return float(value) - float(base)
+
+
+def _states(merged: Mapping[str, Any], timing: Optional[Tuple[float, Any, float]]) -> List[Dict[str, Any]]:
+    """The animations that show the ``hover``, ``pressed`` and ``focus`` styles."""
+    from . import animation as _animation
+
+    duration, easing, delay = timing or (0.0, _animation._easing("linear"), 0.0)
+    own = _anim_values({k: merged[k] for k in TRANSITION_PROPERTIES if k in merged})
+    out: List[Dict[str, Any]] = []
+    for state in STATES:
+        props = merged.get(state)
+        if not props:
+            continue
+        values = {k: v for k, v in _anim_values(props).items() if v is not None}
+        for key in ("opacity", "scale", "x", "y", "rotate", "blur"):
+            if key in values:
+                values[key] = _relative(key, values[key], own.get(key))
+        if not values:
+            continue
+        for key in ("background", "color", "border_color"):
+            if key in values:
+                values[key] = to_hex(values[key])
+        out.extend(_animation._compile((), {"on": _STATE_TRIGGERS[state], "duration": duration,
+                                            "easing": easing, "delay": delay, **values}))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Stylesheets
+# ---------------------------------------------------------------------------
+
+_SELECTOR = re.compile(r"^(?P<name>[A-Za-z_][\w-]*)?(?P<parts>(?:[.#][A-Za-z_][\w-]*)*)(?::(?P<state>[a-z_]+))?$")
+
+
+class Rule(NamedTuple):
+    """One rule of ``pz.stylesheet``: a single selector and its properties."""
+
+    selector: str
+    name: Optional[str]
+    classes: FrozenSet[str]
+    id: Optional[str]
+    state: Optional[str]
+    props: Dict[str, Any]
+    #: The ``@media`` conditions the rule needs (``None``: always).
+    media: Optional[Tuple[Tuple[str, Any], ...]] = None
+
+    @property
+    def specificity(self) -> Tuple[int, int, int]:
+        """Like CSS: ``(ids, classes, names)``."""
+        return (1 if self.id else 0, len(self.classes), 1 if self.name else 0)
+
+    def matches(self, name: Optional[str], classes: FrozenSet[str], id: Optional[str]) -> bool:
+        return ((self.name is None or self.name == name) and self.classes <= classes
+                and (self.id is None or self.id == id) and (self.media is None or _matches(self.media)))
+
+
+_rules: Dict[str, List[Rule]] = {}
+
+
+def _parse_selector(text: str) -> Tuple[Optional[str], FrozenSet[str], Optional[str], Optional[str]]:
+    match = _SELECTOR.match(text.strip())
+    if not match or not (match["name"] or match["parts"]):
+        raise ValueError(f"invalid selector {text!r}: use a component name, .class, #id and an optional "
+                         f":hover, :pressed or :focus (descendant selectors are not supported)")
+    classes, ids = set(), []
+    for part in re.findall(r"[.#][A-Za-z_][\w-]*", match["parts"] or ""):
+        (classes.add(part[1:]) if part[0] == "." else ids.append(part[1:]))
+    if len(ids) > 1:
+        raise ValueError(f"invalid selector {text!r}: one #id at most")
+    state = match["state"]
+    if state is not None:
+        state = STATE_ALIASES.get(state, state)
+        if state not in STATES:
+            raise ValueError(f"unknown state :{match['state']} in {text!r}; use :hover, :pressed or :focus")
+    return match["name"], frozenset(classes), ids[0] if ids else None, state
+
+
+def stylesheet(rules: Optional[Mapping[str, Any]] = None, **classes: Any) -> Dict[str, Style]:
+    """Adds CSS-like rules: ``{selector: style}``. Returns every rule, by selector.
+
+    Selectors: ``".card"``, ``".card.selected"``, ``"#main"``, ``"Rating"`` (a component),
+    ``".card:hover"`` (also ``:pressed``/``:active`` and ``:focus``) and comma lists
+    (``".a, .b"``). Keywords add classes: ``stylesheet(card={...})`` is ``".card"``. A rule
+    given again replaces the old one, so reloading the code keeps one copy.
+    """
+    items = list((rules or {}).items()) + [("." + k, v) for k, v in classes.items()]
+    for selector, style in items:
+        selector = str(selector)
+        if selector.startswith("@"):
+            if not isinstance(style, Mapping):
+                raise TypeError(f"{selector} takes {{selector: style}} rules")
+            query = selector[1:].strip()
+            query = query[len("media"):].strip() if query.startswith("media") else query
+            conditions = _parse_query(query)
+            parsed = [Rule(one.strip(), *_parse_selector(one), _rule_props(one, inner), conditions)
+                      for inner_selector, inner in style.items() for one in str(inner_selector).split(",")]
+        else:
+            parsed = [Rule(one.strip(), *_parse_selector(one), _rule_props(one, style)) for one in selector.split(",")]
+        _rules.pop(selector, None)
+        _rules[selector] = parsed
+    return {selector: Style(*[r.props for r in rules if r.media is None]) for selector, rules in _rules.items()}
+
+
+def _rule_props(selector: str, style: Any) -> Dict[str, Any]:
+    props = _props_of(style)
+    state = _parse_selector(selector)[3]
+    return {state: _state(state, props)} if state else props
+
+
+def clear_stylesheet() -> None:
+    """Removes every rule added with ``pz.stylesheet``."""
+    _rules.clear()
+
+
+def stylesheet_rules() -> List[Rule]:
+    """Every rule of the stylesheet, in order (one per selector of a comma list)."""
+    return [rule for rules in _rules.values() for rule in rules]
+
+
+def _class_names(names: Iterable[Any]) -> FrozenSet[str]:
+    out = set()
+    for name in names:
+        if name is None or name is False:
+            continue
+        if isinstance(name, (list, tuple, set, frozenset)):
+            out |= _class_names(name)
+        else:
+            out.update(str(name).split())
+    return frozenset(out)
+
+
+def matching(name: Optional[str] = None, classes: Iterable[Any] = (), id: Optional[str] = None, *,
+             specific: bool = False) -> Style:
+    """The style the stylesheet gives a component ``name`` with these classes and ``id``.
+
+    ``specific=True`` leaves out the rules that only name the component.
+    """
+    names = _class_names([classes] if isinstance(classes, str) else classes)
+    found = [(r.specificity, i, r.props) for i, r in enumerate(stylesheet_rules())
+             if r.matches(name, names, id) and not (specific and not r.classes and not r.id)]
+    # Named styles work as classes, under the rules (same specificity, earlier).
+    found += [((0, 1, 0), -1, dict(_named[n].props)) for n in sorted(names) if n in _named]
+    merged: Dict[str, Any] = {}
+    for _spec, _order, props in sorted(found, key=lambda f: (f[0], f[1])):
+        _merge(merged, props)
+    return Style(merged)
+
+
+def _apply_component_rules(widget: Any, name: str, classes: Any, id: Optional[str]) -> Any:
+    """A component's root styled by the stylesheet: rules for its name are defaults under what
+    ``render()`` set, rules for the ``class_``/``id`` it was given go on top."""
+    if not _rules and not _named:
+        return widget
+    base = matching(name)
+    if base:
+        # Under what render() set, when that is the root's own style (a style around on() or
+        # animate() is another box, so the rules go around it).
+        own = widget.style_props() if repr(widget).endswith(".style()") else None
+        widget = widget.style(base, own) if own else widget.style(base)
+    if classes is not None or id is not None:
+        top = matching(name, () if classes is None else (classes,), id, specific=True)
+        if top:
+            widget = widget.style(top)
+    return widget
+
+
+def _apply_classes(widget: Any, names: Iterable[Any], id: Optional[str] = None, name: Optional[str] = None) -> Any:
+    """What ``Widget.classes`` does: the widget styled by the matching rules."""
+    if not _rules and not _named:
+        return widget
+    style = matching(name, names, id)
+    return widget.style(style) if style else widget
+
+
+# ---------------------------------------------------------------------------
+# Responsive: the window's size, media queries and breakpoints
+# ---------------------------------------------------------------------------
+
+#: The size of the window whose view is being built (set by the runtime before ``view()``).
+_viewport: Optional[Tuple[float, float]] = None
+#: The size a screenshot renders at (set while ``pz.screenshot`` runs).
+_screen: Optional[Tuple[float, float]] = None
+_QUERY_KEYS = ("min_width", "max_width", "min_height", "max_height", "orientation", "theme")
+
+
+def viewport() -> Tuple[float, float]:
+    """The size of the window being drawn, in logical pixels (like ``window.innerWidth``/``innerHeight``).
+
+    Inside ``view()`` it is that window's size; elsewhere the last one drawn (``(0, 0)`` before any).
+    """
+    return _viewport or (0.0, 0.0)
+
+
+def _px(value: Any) -> float:
+    text = str(value).strip().lower()
+    return float(text[:-2] if text.endswith("px") else text)
+
+
+def _parse_query(text: str) -> Tuple[Tuple[str, Any], ...]:
+    """``"(max_width: 600px) and (orientation: portrait)"`` or ``"md"`` as ``((key, value), ...)``."""
+    text = text.strip()
+    if text in BREAKPOINTS:
+        return (("min_width", float(BREAKPOINTS[text])),)
+    out = []
+    for part in re.split(r"\s+and\s+", text):
+        part = part.strip().strip("()").strip()
+        key, sep, value = part.partition(":")
+        key, value = key.strip().replace("-", "_"), value.strip()
+        if not sep or key not in _QUERY_KEYS:
+            raise ValueError(f"invalid media query {text!r}: use {', '.join(_QUERY_KEYS)} (\"max_width: 600\"), "
+                             f"joined with 'and', or a breakpoint ({', '.join(BREAKPOINTS)})")
+        if key == "orientation" and value not in ("portrait", "landscape"):
+            raise ValueError(f"orientation is portrait or landscape, not {value!r}")
+        if key == "theme" and value not in ("dark", "light"):
+            raise ValueError(f"theme is dark or light, not {value!r}")
+        out.append((key, value if key in ("orientation", "theme") else _px(value)))
+    return tuple(out)
+
+
+def _matches(conditions: Iterable[Tuple[str, Any]]) -> bool:
+    width, height = viewport()
+    for key, value in conditions:
+        if key == "min_width" and not width >= value:
+            return False
+        if key == "max_width" and not width <= value:
+            return False
+        if key == "min_height" and not height >= value:
+            return False
+        if key == "max_height" and not height <= value:
+            return False
+        if key == "orientation" and (value == "portrait") != (height > width):
+            return False
+        if key == "theme":
+            try:
+                dark = _theme.current().is_dark
+            except AttributeError:  # pragma: no cover - every theme says whether it is dark
+                dark = True
+            if (value == "dark") != bool(dark):
+                return False
+    return True
+
+
+def media(query: Optional[str] = None, **conditions: Any) -> bool:
+    """Whether the window being drawn matches a media query, like CSS ``@media``.
+
+    ``pz.media("max_width: 600")``, ``pz.media(min_width=768, orientation="landscape")`` or a
+    breakpoint name: ``pz.media("md")`` (768 px wide and up).
+    """
+    parsed = list(_parse_query(query)) if query else []
+    for key, value in conditions.items():
+        parsed.extend(_parse_query(f"{key}: {value}"))
+    return _matches(parsed)
+
+
+def current_breakpoint() -> str:
+    """The widest breakpoint the window reaches: ``"xs"`` (under 640 px), ``"sm"``, ``"md"``,
+    ``"lg"``, ``"xl"`` or ``"xxl"``."""
+    width = viewport()[0]
+    reached = [name for name, at in BREAKPOINTS.items() if width >= at]
+    return reached[-1] if reached else "xs"

@@ -260,7 +260,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -1192,6 +1192,23 @@ dict(_w)["Layout"].update({
         },
         "example": 'pz.cell(ui.button("Save"), column=2, row=3, align_x="end")',
     },
+    "pyzed.box": {
+        "desc": "A container for anything, like an HTML `div`: it lays out its children (`display` `\"block\"`, `\"flex\"`, `\"grid\"` or `\"stack\"`) and takes every style property, stylesheet classes and an id. Children styled with `position=\"absolute\"` are placed by `top`/`right`/`bottom`/`left` above the rest. See [Boxes](/pyzed/guides/layout/#boxes).",
+        "params": {
+            "children": "The widgets, one by one or in lists. `None` and `False` are skipped.",
+            "display": "`\"block\"` (one under another, as wide as the box), `\"flex\"`, `\"grid\"` or `\"stack\"`.",
+            "direction": "With `display=\"flex\"`: `\"row\"` or `\"column\"`.",
+            "gap": "Space between children.", "wrap": "With `\"flex\"` rows: wraps onto new lines.",
+            "justify": "With `\"flex\"`: `\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` or `\"evenly\"`.",
+            "align": "`\"start\"`, `\"center\"`, `\"end\"` or `\"stretch\"` (the default for `\"block\"`).",
+            "columns": "With `\"grid\"`: a count of equal columns or tracks (`\"200 1fr auto\"`).",
+            "rows": "With `\"grid\"`: row tracks.",
+            "overflow": "`\"visible\"`, `\"hidden\"`, `\"scroll\"`, `\"scroll_x\"` or `\"scroll_y\"`.",
+            "class_": "Stylesheet classes (`\"card selected\"` or a list).", "id": "The id for `#id` rules.",
+            "style": "A `pz.Style`, dict or style name.", "props": "Style properties, on top of the rest.",
+        },
+        "example": 'pz.box(title, pz.box(cancel, save, display="flex", justify="end", gap=8), class_="card", gap=12)',
+    },
     "pyzed.flex": {
         "desc": "Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.",
         "params": {
@@ -1652,6 +1669,16 @@ _section("app", "Events and components", {
         "params": {"min": "Lowest value.", "max": "Highest value.", "step": "Step of the + and - buttons."},
         "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
     },
+    "pyzed.provide": {
+        "desc": "A context manager that shares values with every component rendered inside, like React's context. Read them with `pz.use_context(name)` or `self.context(name)`. A component's `provide()` method does the same for what it renders. See [Children, context and styles](/pyzed/guides/components/#children-context-and-styles).",
+        "params": {"values": "The values, by name."},
+        "example": """
+            with pz.provide(user=self.user):
+                page = Dashboard()
+        """,
+    },
+    "pyzed.use_context": {"desc": "The closest value shared as `name` with `pz.provide` or a component's `provide()`.",
+                          "params": {"name": "The value's name.", "default": "Returned when nothing shares it."}},
     "pyzed.state": {
         "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
         "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},
@@ -1675,8 +1702,8 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "screen": "`(screen_x, screen_y)`, or `None` when the platform does not report window positions.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
-    "args": "Props, in declaration order.",
-    "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move.",
+    "args": "Props, in declaration order (or the children, when the class has a `children` prop).",
+    "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events), `key=` to keep state when items move, and `style=`, `class_=`, `id=` and `animate=`.",
 }
 
 # -- Dialogs and translations -------------------------------------------------
@@ -1829,7 +1856,7 @@ _section("widgets", "Styles", {
     "pyzed.Style": {
         "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/theming/styles/).",
         "params": {"styles": "Styles, dicts or style names to start from.",
-                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."},
+                   "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). States: `hover`, `pressed` (or `active`) and `focus`, each with the properties to show then. `transition`: milliseconds, `True` or `{\"duration\", \"easing\", \"delay\"}`. `media`: `{query: style}` applied when the window matches. Colors may be theme tokens."},
         "example": """
             card = pz.Style(background="panel", border=(1, "border"), radius=8, padding=12)
             pz.column([...]).style(card | pz.Style(shadow=("#0006", (0, 4), 12)))
@@ -1837,6 +1864,22 @@ _section("widgets", "Styles", {
     },
     "pyzed.define_style": {"desc": "Names a style so widgets can use it by name: `widget.style(\"card\")`. Returns it.",
                            "params": {"name": "The style's name.", "styles": "Styles to merge.", "props": "Properties on top."}},
+    "pyzed.stylesheet": {"desc": "Adds CSS-like rules, `{selector: style}`, that widgets get with `widget.classes(...)` and components with `class_=`/`id=`. Selectors: `.class`, `.a.b`, `#id`, a component's class name (`\"Rating\"`), an optional `:hover`, `:pressed`/`:active` or `:focus`, and comma lists. More specific selectors win (ids, then classes, then names), then later rules. A selector given again replaces its rule. Returns every rule. See [Stylesheets](/pyzed/theming/styles/#stylesheets).",
+                         "params": {"rules": "A `{selector: style}` dict.", "classes": "Classes by keyword: `card={...}` is `\".card\"`."},
+                         "example": """
+                             pz.stylesheet({
+                                 ".card": {"background": "panel", "padding": 16, "radius": 8},
+                                 ".card:hover": {"border_color": "accent"},
+                             })
+                             pz.column([...]).classes("card")
+                         """},
+    "pyzed.clear_stylesheet": {"desc": "Removes every rule added with `pz.stylesheet`."},
+    "pyzed.media": {"desc": "Whether the window being drawn matches a media query, like CSS `@media`. See [Responsive styles](/pyzed/theming/styles/#responsive-styles).",
+                    "params": {"query": "`\"max_width: 600\"`, `\"(min_width: 768px) and (orientation: landscape)\"` or a breakpoint (`\"md\"`).",
+                               "conditions": "The same by keyword: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`."},
+                    "example": 'sidebar = None if pz.media("max_width: 600") else self.sidebar()'},
+    "pyzed.viewport": {"desc": "The size of the window being drawn, `(width, height)` in logical pixels, like `window.innerWidth` and `innerHeight`."},
+    "pyzed.current_breakpoint": {"desc": "The widest breakpoint the window reaches: `\"xs\"` (under 640 px), `\"sm\"`, `\"md\"`, `\"lg\"`, `\"xl\"` or `\"xxl\"`."},
     "pyzed.set_style": {"desc": "Sets the global style for every window, under each window's `style`. Without arguments it clears it.",
                         "params": {"styles": "Styles to merge.", "props": "Properties on top."}},
     "pyzed.Gradient": {"desc": "A linear gradient for backgrounds. Angles follow CSS: 0 up, 90 right, 180 (the default) down. Up to 8 stops.",

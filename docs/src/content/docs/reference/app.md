@@ -635,9 +635,9 @@ Base class for custom components, like React components: annotated class attribu
 
 | Parameter | Description |
 | --- | --- |
-| `args` | Props, in declaration order. |
+| `args` | Props, in declaration order (or the children, when the class has a `children` prop). |
 | `key` | Key that identifies the subscription (defaults to the message or the function). |
-| `kwargs` | Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move. |
+| `kwargs` | Props by name, `on_<event>=` handlers (custom, lifecycle or common events), `key=` to keep state when items move, and `style=`, `class_=`, `id=` and `animate=`. |
 
 ```python
 class Rating(pz.Component):
@@ -676,6 +676,22 @@ Component.render()
 ```
 
 Returns the widgets of this component (called on every render).
+
+#### `Component.provide`
+
+```python
+Component.provide()
+```
+
+Values to share with every component this one renders (read with `pz.use_context`).
+
+#### `Component.context`
+
+```python
+Component.context(name, default=None)
+```
+
+The closest shared value called `name` (see `pz.provide`).
 
 #### `Component.on_mount`
 
@@ -781,6 +797,36 @@ Limits of a number prop, used with `typing.Annotated`: the designer shows a numb
 ```python
 level: Annotated[int, pz.Range(0, 10)] = 3
 ```
+
+### `provide`
+
+```python
+provide(**values)
+```
+
+A context manager that shares values with every component rendered inside, like React's context. Read them with `pz.use_context(name)` or `self.context(name)`. A component's `provide()` method does the same for what it renders. See [Children, context and styles](/pyzed/guides/components/#children-context-and-styles).
+
+| Parameter | Description |
+| --- | --- |
+| `values` | The values, by name. |
+
+```python
+with pz.provide(user=self.user):
+    page = Dashboard()
+```
+
+### `use_context`
+
+```python
+use_context(name, default=None)
+```
+
+The closest value shared as `name` with `pz.provide` or a component's `provide()`.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | The value's name. |
+| `default` | Returned when nothing shares it. |
 
 ### `state`
 
