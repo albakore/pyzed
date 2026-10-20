@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
 import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/games/snake.py?raw';
 
@@ -15,7 +16,7 @@ fotograma: basta un temporizador que salte unas cuantas veces por segundo. Apren
 guardar el estado del juego en la app, avanzarlo con `pz.every`, girar con `on_key`, dibujar
 el tablero en un canvas y poner un menú encima con `pz.stack`.
 
-![Snake](../../../../assets/games/snake.png)
+<Media clip="snake" alt="La serpiente avanzando por la cuadrícula, girando hacia la comida y creciendo al comerla" caption="El juego en marcha: un temporizador mueve la serpiente unas veces por segundo." eager />
 
 | Objetivo | Tiempo | Nivel | Necesitas |
 | --- | --- | --- | --- |

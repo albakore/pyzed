@@ -5,10 +5,12 @@ sidebar:
   order: 7
 ---
 
+import Media from '../../../components/Media.astro';
+
 `pz.canvas` is a 2D drawing surface. Shapes are created with `pyzed.draw` and are plain
 dictionaries, so building them every frame is cheap.
 
-![Game of Life drawn on a canvas](../../../assets/tutorials/game-of-life.png)
+<Media clip="game-of-life" alt="Conway's Game of Life on a canvas: blue cells are born and die, generation after generation" caption="<code>examples/game_of_life.py</code>: thousands of cells drawn on one canvas, stepped by <code>pz.every</code>." />
 
 ```python
 import pyzed as pz

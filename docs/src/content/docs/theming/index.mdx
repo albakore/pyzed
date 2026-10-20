@@ -10,16 +10,18 @@ sidebar:
   order: 0
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 import Media from '../../../components/Media.astro';
-import themesShot from '../../../assets/tutorials/styling.png';
+import ayu from '../../../assets/editor/form-view-ayu.png';
+import gruvbox from '../../../assets/editor/form-view-gruvbox.png';
+import oneLight from '../../../assets/editor/form-view-light.png';
 
 Pyzed separates **what** your interface shows from **how it looks**. Every component reads its colors from the
 current **theme**, a set of named colors called tokens (`background`, `text`, `border`, `accent`...). Change the
 theme and the whole app follows; change one widget with `style()` and only that widget changes.
 
-<Media src={themesShot} alt="The same app in several bundled themes, light and dark" caption="The same interface in several of the bundled themes." eager />
+<Media clip="themes" alt="The component gallery switching between One Dark, One Light, Ayu Mirage, Gruvbox Dark, Ayu Light and Gruvbox Light" caption="One app, six bundled themes: every component follows the theme, with no change to its code." eager />
 
 ```python
 import pyzed as pz
@@ -52,6 +54,26 @@ flowchart LR
   `tint="error"`) choose which of those colors they use.
 - **`style()`** changes one widget, like CSS; named styles reuse a look; `App.style` sets the font and colors of the
   whole window.
+
+## Pyzed Design follows it too
+
+The visual designer is a Pyzed app, so it has themes as well: pick one in **Settings → Appearance → Theme** and the
+whole editor changes at once. Each form keeps its own theme, set in its **Look** properties (see
+[Styling forms](/pyzed/theming/forms/)), so the editor and the app you design can look different.
+
+<Media clip="designer-themes" alt="Pyzed Design changing its look as different themes are picked in Settings" caption="Pyzed Design switching themes from Settings." />
+
+<Tabs>
+	<TabItem label="Ayu">
+		<Media src={ayu} alt="Pyzed Design in the Ayu theme with the sign-in form open" />
+	</TabItem>
+	<TabItem label="Gruvbox">
+		<Media src={gruvbox} alt="Pyzed Design in the Gruvbox theme with the sign-in form open" />
+	</TabItem>
+	<TabItem label="One Light">
+		<Media src={oneLight} alt="Pyzed Design in the One Light theme with the sign-in form open" />
+	</TabItem>
+</Tabs>
 
 ## In this section
 

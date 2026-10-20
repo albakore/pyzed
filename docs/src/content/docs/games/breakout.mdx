@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
 import Run from '../showcase/_run.mdx';
 import source from '../../../../../examples/games/breakout.py?raw';
 
@@ -15,7 +16,7 @@ runs once per displayed frame with the time since the previous one. You will lea
 frame loop, continuous input with `pz.pressed()`, collisions with `pyzed.game`, and the
 small touches that make a game feel good: particles, combos and screen shake.
 
-![Breakout](../../../assets/games/breakout.png)
+<Media clip="breakout" alt="The ball bouncing off the paddle and breaking rows of colored bricks" caption="The game running at 60 frames per second: the ball, the paddle and bricks that break into particles." eager />
 
 | Goal | Time | Level | You need |
 | --- | --- | --- | --- |
