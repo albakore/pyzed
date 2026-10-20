@@ -144,7 +144,8 @@ pub struct Graph {
     /// What is left of the last block for the device's next callback.
     pending: [Block; 2],
     pending_at: usize,
-    pub frames: u64,
+    /// Frames played so far, readable while the graph plays.
+    pub frames: Arc<AtomicU64>,
 }
 
 impl Graph {
@@ -170,7 +171,7 @@ impl Graph {
             master_shared: Arc::new(Shared::new(2, 0)),
             pending: [[0.0; BLOCK]; 2],
             pending_at: BLOCK,
-            frames: 0,
+            frames: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -320,7 +321,7 @@ impl Graph {
         for (ch, probe) in self.master_shared.probes.iter().enumerate() {
             probe.store(self.master[ch][BLOCK - 1].to_bits(), Ordering::Relaxed);
         }
-        self.frames += BLOCK as u64;
+        self.frames.fetch_add(BLOCK as u64, Ordering::Relaxed);
     }
 
     fn read_input(&mut self) {

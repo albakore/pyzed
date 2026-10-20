@@ -365,3 +365,30 @@ def test_module_catalog_page_is_up_to_date():
     script = ROOT / "docs" / "scripts" / "gen_audio_modules.py"
     result = subprocess.run([sys.executable, str(script), "--check"], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_a_removed_node_never_reaches_the_module_that_reuses_its_slot():
+    e = engine()
+    old = e.add("oscillator")
+    old.remove()
+    new = e.add("filter")
+    with pytest.raises(ValueError, match="not in this engine"):
+        old["freq"] = 100
+    with pytest.raises(RuntimeError, match="was removed"):
+        old.scope()
+    with pytest.raises(ValueError, match="not in this engine"):
+        e.connect(old, "out", new, "in")
+    assert new["cutoff"] == 1200
+
+
+def test_reading_while_playing_never_holds_up_the_audio_thread():
+    e = audio.Engine("null", sample_rate=SR, buffer_size=64)
+    osc = e.add("oscillator")
+    e.chain(osc, e.add("audio_out"))
+    with e:
+        for _ in range(3000):
+            e.info
+            e.scope(256)
+            e.level()
+            osc.level()
+        assert e.info["underruns"] == 0

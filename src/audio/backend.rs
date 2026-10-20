@@ -219,8 +219,11 @@ pub fn open_null(
             let mut next = Instant::now();
             loop {
                 let started = Instant::now();
-                if let Ok(mut g) = graph.try_lock() {
-                    g.render(&mut scratch, 2);
+                match graph.try_lock() {
+                    Ok(mut g) => g.render(&mut scratch, 2),
+                    Err(_) => {
+                        meters.underruns.fetch_add(1, Ordering::Relaxed);
+                    }
                 }
                 let load = started.elapsed().as_secs_f32() / period.as_secs_f32();
                 meters.load.store(load.to_bits(), Ordering::Relaxed);

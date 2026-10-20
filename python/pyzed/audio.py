@@ -317,12 +317,19 @@ class Node:
         return module(self.kind)
 
     @property
+    def _live(self) -> int:
+        """The slot of this module in the engine; a removed node must not reach whatever reuses it."""
+        if self._engine._by_slot.get(self._slot) is not self:
+            raise RuntimeError(f"{self.id!r} was removed from its engine")
+        return self._slot
+
+    @property
     def params(self) -> dict[str, float]:
         """Every knob and its value."""
-        return dict(self._engine._native.params(self._slot))
+        return dict(self._engine._native.params(self._live))
 
     def __getitem__(self, param: str) -> float:
-        return self._engine._native.get(self._slot, param)
+        return self._engine._native.get(self._live, param)
 
     def __setitem__(self, param: str, value: float | str) -> None:
         self._engine.set(self, param, value)
@@ -340,42 +347,42 @@ class Node:
 
     def trigger(self) -> None:
         """Strikes a drum, starts a sampler or runs an envelope once, as a gate would."""
-        self._engine._native.trigger(self._slot)
+        self._engine._native.trigger(self._live)
 
     def load(self, source: str | os.PathLike | Sequence[float] | Sequence[Sequence[float]],
              sample_rate: float | None = None) -> None:
         """Gives a sampler its sound: a WAV file, a list of samples or one list per channel."""
         if isinstance(source, (str, os.PathLike)):
-            self._engine._native.load_wav(self._slot, os.fspath(source))
+            self._engine._native.load_wav(self._live, os.fspath(source))
             self._sample = os.fspath(source)
             return
         data = list(source)
         channels = [list(map(float, c)) for c in data] if data and isinstance(data[0], Iterable) else [
             [float(x) for x in data]]
-        self._engine._native.load_sample(self._slot, channels, float(sample_rate or self._engine.sample_rate))
+        self._engine._native.load_sample(self._live, channels, float(sample_rate or self._engine.sample_rate))
         self._sample = None
 
     def scope(self, n: int = 1024) -> list[float]:
         """The last ``n`` samples of the module's signal, oldest first (for a waveform view)."""
-        return self._engine._native.scope(self._slot, n)
+        return self._engine._native.scope(self._live, n)
 
     def spectrum(self, bins: int = 256, size: int = 2048, log: bool = True) -> list[float]:
         """The spectrum of the module's signal: ``bins`` bands in decibels (-120..0), spread
         over octaves from 20 Hz (``log=False``: evenly over hertz) to half the sample rate."""
-        return self._engine._native.spectrum(self._slot, bins, size, log)
+        return self._engine._native.spectrum(self._live, bins, size, log)
 
     def level(self) -> tuple[float, float]:
         """``(rms, peak)`` of the module's signal: what a VU meter shows."""
-        return self._engine._native.level(self._slot)
+        return self._engine._native.level(self._live)
 
     def probe(self, port: str) -> float:
         """The latest value of an output (a cable can glow with its signal)."""
-        return self._engine._native.probe(self._slot, port)
+        return self._engine._native.probe(self._live, port)
 
     @property
     def state(self) -> dict[str, float]:
         """What the module reports while it plays, such as the step of a sequencer."""
-        return dict(self._engine._native.state(self._slot))
+        return dict(self._engine._native.state(self._live))
 
     def remove(self) -> None:
         self._engine.remove(self)
@@ -494,7 +501,7 @@ class Engine:
     def node(self, id: Node | str) -> Node:
         if isinstance(id, Node):
             if self._nodes.get(id.id) is not id:
-                raise ValueError(f"{id!r} is not in this engine")
+                raise ValueError(f"{id!r} is not in this engine (was it removed?)")
             return id
         try:
             return self._nodes[id]

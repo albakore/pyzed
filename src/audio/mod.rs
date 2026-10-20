@@ -13,7 +13,7 @@ mod midi;
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
@@ -47,6 +47,9 @@ struct Cable {
 
 struct Inner {
     graph: Arc<Mutex<Graph>>,
+    /// Shared with the graph, so reading them never locks it while it plays.
+    master: Arc<Shared>,
+    frames: Arc<AtomicU64>,
     commands: Producer<Cmd>,
     trash: Consumer<Trash>,
     nodes: Vec<Option<NodeCtl>>,
@@ -199,7 +202,7 @@ impl Inner {
     fn shared(&self, slot: Option<usize>) -> PyResult<Arc<Shared>> {
         match slot {
             Some(slot) => Ok(self.node(slot)?.shared.clone()),
-            None => Ok(self.graph().master_shared.clone()),
+            None => Ok(self.master.clone()),
         }
     }
 }
@@ -289,9 +292,12 @@ impl AudioEngine {
         let (midi_out_tx, midi_out_rx) = RingBuffer::new(1024);
         let mut graph = Graph::new(sample_rate, commands_rx, trash_tx, midi_rx);
         graph.midi_out = Some(midi_out_tx);
+        let (master, frames) = (graph.master_shared.clone(), graph.frames.clone());
         Ok(AudioEngine {
             inner: Mutex::new(Inner {
                 graph: Arc::new(Mutex::new(graph)),
+                master,
+                frames,
                 commands,
                 trash,
                 nodes: Vec::new(),
@@ -701,7 +707,10 @@ impl AudioEngine {
         dict.set_item("load", f32::from_bits(m.load.load(Ordering::Relaxed)))?;
         dict.set_item("underruns", m.underruns.load(Ordering::Relaxed))?;
         dict.set_item("error", m.error.lock().ok().and_then(|e| e.clone()))?;
-        dict.set_item("time", inner.graph().frames as f64 / inner.sr as f64)?;
+        dict.set_item(
+            "time",
+            inner.frames.load(Ordering::Relaxed) as f64 / inner.sr as f64,
+        )?;
         dict.set_item("modules", inner.nodes.iter().flatten().count())?;
         dict.set_item(
             "midi_inputs",
