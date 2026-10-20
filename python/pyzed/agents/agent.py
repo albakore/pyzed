@@ -192,12 +192,13 @@ def tool(func: Optional[Callable[..., Any]] = None, *, name: Optional[str] = Non
 class Event:
     """Something that happened while the agent ran.
 
-    ``kind`` is ``"text"`` / ``"thinking"`` (``text`` holds the new piece), ``"tool_call"`` (``tool``,
-    ``args``, ``call_id``), ``"tool_result"`` (adds ``result`` and ``error``), ``"turn"`` (a model answer
-    finished; ``usage``), ``"plan"`` (an external agent's plan: ``args["steps"]``), ``"file"`` (an external agent wrote the
-    file ``text``, or edits there: ``args["written"]``, ``args["line"]``), ``"auth"`` (an external agent wants a
-    sign-in first: ``args["methods"]`` and the ``args["prompt"]`` to send again), ``"error"`` (``text``) or
-    ``"done"``.
+    ``kind`` is ``"text"`` / ``"thinking"`` (``text`` holds the new piece), ``"tool_input"`` (the model started
+    writing a call to ``tool``; it runs once written), ``"tool_call"`` (``tool``, ``args``, ``call_id``),
+    ``"tool_result"`` (adds ``result`` and ``error``), ``"turn"`` (a model answer finished; ``usage``), ``"plan"``
+    (an external agent's plan: ``args["steps"]``), ``"file"`` (an external agent wrote the file ``text``, or edits
+    there: ``args["written"]``, ``args["line"]``), ``"options"`` (an external agent's ``options`` changed),
+    ``"auth"`` (an external agent wants a sign-in first: ``args["methods"]`` and the ``args["prompt"]`` to send
+    again), ``"error"`` (``text``) or ``"done"``.
     """
 
     kind: str
@@ -322,7 +323,8 @@ class Agent:
             for _ in range(self.max_turns):
                 turn = self._stream(self.model, self._system(), self.messages, [t.spec for t in self.active_tools()],
                                     settings=self.settings, cancel=self._cancel,
-                                    on_event=lambda kind, text: emit(Event(kind, text)))
+                                    on_event=lambda kind, text: emit(Event("tool_input", tool=text) if kind == "tool"
+                                                                     else Event(kind, text)))
                 for key, value in turn.usage.items():
                     self.usage[key] = self.usage.get(key, 0) + value
                 blocks = turn.content

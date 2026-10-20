@@ -9,6 +9,7 @@ its code back as they were before the agent started. Tools that write files on d
 from __future__ import annotations
 
 import ast
+import json
 import os
 import subprocess
 import sys
@@ -40,10 +41,16 @@ event.value carries the new value.
 - A component (.pzcomp) is a reusable piece designed the same way, with a Python class beside it.
 
 How to work:
-- Start with get_document to see what is open. Look types and props up instead of guessing.
-- Build with add_control / update_control / remove_controls / set_form; give controls meaningful \
-names (email, send_button). Lay forms out neatly on the grid: consistent margins (16 px), aligned \
-labels and inputs, primary action at the bottom right.
+- You already know the editor: the toolbox with every type's props and events, the themes, the pz.ui \
+components and Pyzed's best practices are below, and each message ends with a <context> holding the open \
+document (its controls and code) and the project. Act on that right away: don't call get_document, \
+list_components, describe_component or get_guide for what is already there. Look something up only when \
+it is missing (an example to copy, a docs page, a signature of pz.ui you are unsure of).
+- Be fast: put independent calls in the same turn, and lay a whole form or group out with one \
+add_controls call instead of one add_control per control.
+- Build with add_controls / add_control / update_control / remove_controls / set_form; give controls \
+meaningful names (email, send_button). Lay forms out neatly on the grid: consistent margins (16 px), \
+aligned labels and inputs, primary action at the bottom right.
 - Write logic with wire_event and set_handler (or set_code for the whole module), then check the \
 module with validate_code. Keep handlers short and readable.
 - To make a new form or component use new_document; it opens in a new tab.
@@ -64,8 +71,8 @@ its window. Read the errors and the picture, fix what is wrong and run it again 
 and looks right. Finish with a short summary of what you built and how to run it.
 - Apps written in code (pz.App) are fine too: write them with write_file, check them with validate_code \
 and look at them with screenshot.
-- Learn from Pyzed instead of guessing: get_guide, list_components, describe_component, read_docs, \
-list_examples and read_example are Pyzed's own documentation and examples (the Pyzed MCP server).
+- For what is not below, Pyzed's own documentation and examples are at hand: get_guide, \
+describe_component, read_docs, list_examples and read_example (the Pyzed MCP server).
 """
 
 #: What the designer is, for the agent (how to use it, so it can explain and drive it).
@@ -78,8 +85,60 @@ this Agent panel. Tabs hold several documents; File > New project creates a uv p
 
 
 def system_prompt(d: "Designer") -> str:
-    """The agent's instructions: how the designer works, how to build apps, and the editor itself."""
-    return f"{SYSTEM}\n{EDITOR_KNOWLEDGE}\n"
+    """The agent's instructions: how the designer works, how to build apps, the editor itself, and what it
+    would otherwise look up on every task (the toolbox, themes, components and best practices)."""
+    return f"{SYSTEM}\n{EDITOR_KNOWLEDGE}\n\n{knowledge()}\n"
+
+
+#: ``knowledge()`` by the number of toolbox types (user components registered later change it).
+_KNOWLEDGE: Dict[int, str] = {}
+
+
+def toolbox_catalog() -> str:
+    """Every toolbox type in one line: its category, default size, props (``name=a|b`` for choices,
+    ``name:kind=default`` otherwise) and events."""
+    lines = []
+    for spec in _components.all_components():
+        props = []
+        for prop in spec.props:
+            if prop.kind == "choice" and prop.choices:
+                props.append(f"{prop.name}={'|'.join(map(str, prop.choices))}")
+                continue
+            default = prop.default
+            shown = f"={default!r}" if default not in (None, "", [], (), {}) and len(repr(default)) <= 24 else ""
+            props.append(f"{prop.name}:{prop.type or prop.kind}{shown}")
+        events = ",".join(spec.events)
+        width, height = spec.size
+        lines.append(f"- {spec.type} ({spec.category}, {width:g}x{height:g}): {', '.join(props) or 'no props'}"
+                     + (f"; events {events}" if events else ""))
+    return "\n".join(lines)
+
+
+def knowledge() -> str:
+    """What the agent knows without looking it up: the designer's toolbox, the theme names and tokens, the
+    ``pz.ui`` components and Pyzed's best practices (built once)."""
+    count = len(_components.all_components())
+    if count in _KNOWLEDGE:
+        return _KNOWLEDGE[count]
+    parts = ["# What you already know (no need to look it up)",
+             "## The toolbox: designer types, props and events (every control also has the events "
+             f"{', '.join(_components.COMMON_EVENTS)}; the form has {', '.join(_components.FORM_EVENTS)})",
+             toolbox_catalog()]
+    try:
+        from ..mcp import knowledge as _knowledge
+
+        themes = _knowledge.list_themes()
+        parts += ["## Themes and color tokens", json.dumps(themes, ensure_ascii=False)]
+        groups: Dict[str, List[str]] = {}
+        for item in _knowledge.list_components("ui"):
+            groups.setdefault(item.get("category") or "Other", []).append(item["name"])
+        parts += ["## pz.ui components, by category (describe_component gives a signature)",
+                  "\n".join(f"- {cat}: {', '.join(names)}" for cat, names in sorted(groups.items()))]
+        parts.append(_knowledge.guide("best-practices"))
+    except Exception:  # noqa: BLE001 - the agent can still look these up with its tools
+        pass
+    _KNOWLEDGE[count] = text = "\n\n".join(parts)
+    return text
 
 
 EXTERNAL = """\
@@ -168,6 +227,14 @@ def designer_tools(d: "Designer") -> List[Tool]:
         props: the type's props, e.g. {"text": "Send", "variant": "solid"}.
         style: CSS-like style, e.g. {"background": "#1e1e2e", "radius": 6}.
         """
+        info = _place(type, name, parent, x, y, width, height, props, style)
+        _doc(d).commit()
+        d._selection_changed()
+        return info
+
+    def _place(type: str, name: str = "", parent: str = "", x: float = 16, y: float = 16,  # noqa: A002
+               width: float = 0, height: float = 0, props: Optional[Dict[str, Any]] = None,
+               style: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         doc = _doc(d)
         if type not in _types():
             raise ValueError(f"unknown type {type!r}; use one of: {', '.join(_types())}")
@@ -183,9 +250,51 @@ def designer_tools(d: "Designer") -> List[Tool]:
             control.style.update(style)
         if name and name != control.name:
             doc.rename(control.name, name)
-        doc.commit()
-        d._selection_changed()
         return _control_info(doc.form[doc.selection[0]] if doc.selection else control)
+
+    @tool(ui=True, title="Adding controls")
+    def add_controls(controls: List[Dict[str, Any]]) -> Any:
+        """Places several controls at once (a whole form or group in one call, in order, so a container can be
+        the parent of the controls after it) and returns them. One undo step; when one of them is wrong,
+        none is added.
+
+        controls: each like add_control's arguments: {"type": "input", "name": "email", "parent": "form_column",
+        "x": 16, "y": 48, "width": 240, "props": {"placeholder": "Email"}, "style": {...}}.
+        """
+        if not controls:
+            raise ValueError("controls is empty")
+        allowed = {"type", "name", "parent", "x", "y", "width", "height", "props", "style"}
+        doc = _doc(d)
+        mark = doc.history.steps
+        placed: List[Dict[str, Any]] = []
+        try:
+            for i, item in enumerate(controls):
+                if not isinstance(item, dict) or not item.get("type"):
+                    raise ValueError(f"controls[{i}] needs a type")
+                unknown = sorted(set(item) - allowed)
+                if unknown:
+                    raise ValueError(f"controls[{i}] has unknown keys {unknown}; use {sorted(allowed)}")
+                try:
+                    placed.append(_place(**item))
+                except (ValueError, KeyError, TypeError) as err:
+                    raise ValueError(f"controls[{i}] ({item.get('name') or item['type']}): {err}; nothing was "
+                                     "added") from None
+            doc.commit()
+        finally:
+            if doc.history.steps > mark:
+                doc.history.merge(mark)
+                if len(placed) < len(controls):  # a wrong one: the batch goes away, so a retry starts clean
+                    doc.undo()
+            d._selection_changed()
+        doc.select([p["name"] for p in placed])
+        d._selection_changed()
+        return {"added": placed}
+
+    add_controls.schema["properties"]["controls"]["items"] = {
+        "type": "object", "required": ["type"],
+        "properties": {"type": {"type": "string"}, "name": {"type": "string"}, "parent": {"type": "string"},
+                       "x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number"},
+                       "height": {"type": "number"}, "props": {"type": "object"}, "style": {"type": "object"}}}
 
     @tool(ui=True, title="Changing a control")
     def update_control(name: str, props: Optional[Dict[str, Any]] = None, style: Optional[Dict[str, Any]] = None,
@@ -415,7 +524,7 @@ pending, in_progress or done.
     update_plan.schema["properties"]["steps"]["items"] = {
         "type": "object", "required": ["step", "status"],
         "properties": {"step": {"type": "string"}, "status": {"type": "string", "enum": list(PLAN_STATUSES)}}}
-    tools = [get_document, add_control, update_control, remove_controls, set_form, select_controls, wire_event,
+    tools = [get_document, add_control, add_controls, update_control, remove_controls, set_form, select_controls, wire_event,
              set_handler, set_code, new_document, save_document, screenshot_form, get_project, create_project,
              add_dependency, check_project, open_document, run_app, update_plan]
     root = d.agent.project_root()
@@ -620,5 +729,29 @@ def context_note(d: "Designer") -> str:
         handler, _ = d.editing
         parts.append("The code editor shows the whole module." if handler == "*"
                      else f"The code editor shows the handler {handler}().")
-    return " ".join(parts)
+    return " ".join(parts) + _document_note(doc)
+
+
+#: How much of the open document goes with each message (more is read with get_document).
+NOTE_LIMIT = 12_000
+
+
+def _document_note(doc: Any) -> str:
+    """The open document as the agent would read it with get_document, when it is small enough: its form
+    settings, controls and handlers module, so the agent starts working without looking first."""
+    f = doc.form
+    controls = json.dumps([_control_info(c) for c in f.controls], ensure_ascii=False, separators=(",", ":"),
+                          default=str)
+    head = (f"\nThe {('component' if getattr(doc, 'is_scene', False) else 'form')}: name {f.name!r}, title "
+            f"{f.title!r}, {f.width:g}x{f.height:g}, theme {f.theme!r}, grid {f.grid}.")
+    if len(controls) > NOTE_LIMIT:
+        names = ", ".join(f"{c.name} ({c.type})" for c in f.controls[:200])
+        return f"{head}\nIts controls (get_document has their props): {names}."
+    code = doc.code or ""
+    note = f"{head}\nIts controls: {controls}"
+    if code.strip() and len(code) + len(controls) <= NOTE_LIMIT:
+        note += f"\nIts handlers module:\n```python\n{code}\n```"
+    elif code.strip():
+        note += f"\nIts handlers module has {code.count(chr(10)) + 1} lines (get_document reads it)."
+    return note
 

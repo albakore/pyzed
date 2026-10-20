@@ -234,6 +234,17 @@ class AgentSettings:
     confirm_writes: bool = True
     #: Fast mode on Claude models that take it (``FAST_MODELS``).
     fast: bool = False
+    #: Let Claude think before answering (adaptive thinking, as deep as ``effort``); off answers sooner.
+    thinking: bool = True
+    #: Tools "Always allow" was picked for: they no longer ask (Settings → Permissions lists them).
+    allowed_tools: List[str] = field(default_factory=list)
+    #: What was last picked for each external agent's own options (its mode, model, effort...), by agent
+    #: name, then option id; new sessions start with them.
+    agent_options: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    #: Add Pyzed's MCP server to the AI agents found on this computer (Claude Code, Cursor...), once each.
+    install_pyzed_mcp: bool = True
+    #: The agents Pyzed already added its MCP server to (or the user removed it from): not touched again.
+    pyzed_mcp_done: List[str] = field(default_factory=list)
     #: Show the model's reasoning summaries in the thread.
     show_thinking: bool = True
     #: Keep conversations on this computer (``ThreadStore``) so they show up in the history.
@@ -347,6 +358,10 @@ class AgentSettings:
                                                    if isinstance(fed.get(f.name), str)})
         out.mcp_servers = _configs(data.get("mcp_servers"), MCPServerConfig)
         out.acp_agents = _configs(data.get("acp_agents"), ACPAgentConfig)
+        out.allowed_tools = [str(n) for n in out.allowed_tools if isinstance(n, str)]
+        out.pyzed_mcp_done = [str(n) for n in out.pyzed_mcp_done if isinstance(n, str)]
+        out.agent_options = {str(a): {str(k): str(v) for k, v in o.items()} for a, o in out.agent_options.items()
+                             if isinstance(o, dict)}
         if out.effort not in EFFORTS:
             out.effort = "high"
         if out.profile not in ("write", "ask", "minimal"):

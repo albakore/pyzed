@@ -7,7 +7,8 @@ that wrote them, so Claude gets its own blocks back unchanged and OpenAI-compati
 same conversation converted to their format.
 
 ``stream_turn`` sends one request and calls ``on_event(kind, text)`` with ``"text"`` and ``"thinking"``
-deltas as they arrive; it returns the finished ``Turn``.
+deltas as they arrive, and ``"tool"`` (the tool's name) when the model starts writing a tool call; it returns
+the finished ``Turn``.
 """
 
 from __future__ import annotations
@@ -193,7 +194,8 @@ def _stream_anthropic(provider_id: str, model: str, system: str, messages: Seque
         params["tools"] = [{"name": t.name, "description": t.description, "input_schema": t.schema,
                             "eager_input_streaming": True} for t in tools]
     if _adaptive(model):
-        params["thinking"] = {"type": "adaptive", "display": "summarized"}
+        if settings.thinking:
+            params["thinking"] = {"type": "adaptive", "display": "summarized"}
         params["output_config"] = {"effort": settings.effort}
     betas: List[str] = []
     own = settings.providers.get(provider_id)
@@ -215,7 +217,9 @@ def _stream_anthropic(provider_id: str, model: str, system: str, messages: Seque
                 if cancel.is_set():
                     cancelled = True
                     break
-                if event.type == "content_block_delta":
+                if event.type == "content_block_start" and event.content_block.type == "tool_use":
+                    on_event("tool", event.content_block.name)  # its input streams next, maybe for a while
+                elif event.type == "content_block_delta":
                     delta = event.delta
                     if delta.type == "text_delta":
                         on_event("text", delta.text)
@@ -354,6 +358,8 @@ def parse_sse(lines, on_event: OnEvent, cancel: threading.Event) -> Turn:
                 slot = calls.setdefault(int(call.get("index", len(calls))), {"id": "", "name": "", "arguments": ""})
                 slot["id"] = call.get("id") or slot["id"]
                 fn = call.get("function") or {}
+                if fn.get("name") and not slot["name"]:
+                    on_event("tool", fn["name"])
                 slot["name"] += fn.get("name") or ""
                 slot["arguments"] += fn.get("arguments") or ""
             finish = choice.get("finish_reason") or finish

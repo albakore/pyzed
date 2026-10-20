@@ -1656,6 +1656,22 @@ History.push(form, group=None)
 
 Records the form's current state; returns `False` if nothing changed.
 
+#### `History.steps`
+
+```python
+History.steps  # property
+```
+
+How many undo steps there are (a mark for `merge`).
+
+#### `History.merge`
+
+```python
+History.merge(mark)
+```
+
+Makes every step recorded since `mark` (`steps` before a batch of edits) a single undo step.
+
 #### `History.reset`
 
 ```python
