@@ -1,18 +1,18 @@
 ---
-title: A Zed-like mini editor
+title: A mini code editor
 description: "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette."
 sidebar:
-  order: 2
+  order: 4
 ---
 
 import { Code, Steps } from '@astrojs/starlight/components';
-import source from '../../../../../examples/mini_editor.py?raw';
+import source from '../../../../../../examples/mini_editor.py?raw';
 
 Let's build a Zed-style editor in about 150 lines: it opens a real folder, shows the file tree,
 opens tabs, edits with syntax highlighting, saves with <kbd>Ctrl</kbd>+<kbd>S</kbd> and has a
 command palette.
 
-![The mini editor](../../../assets/tutorials/mini-editor.png)
+![The mini editor](../../../../assets/tutorials/mini-editor.png)
 
 <Steps>
 
@@ -94,7 +94,7 @@ command palette.
    return ui.layer(layout, palette, on_dismiss=lambda: setattr(self, "palette_open", False))
    ```
 
-   ![The command palette](../../../assets/tutorials/mini-editor-palette.png)
+   ![The command palette](../../../../assets/tutorials/mini-editor-palette.png)
 
 </Steps>
 

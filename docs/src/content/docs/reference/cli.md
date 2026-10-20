@@ -49,7 +49,7 @@ Adds Pyzed to the uv project at `path` (default: the current folder), with the s
 
 ## `pyzed build`
 
-Packages the project for the current platform with PyInstaller. See [Build and distribute](/pyzed/guides/packaging/).
+Packages the project for the current platform with PyInstaller. See [Build and distribute](/pyzed/packaging/build/).
 
 | Option | Effect |
 | --- | --- |

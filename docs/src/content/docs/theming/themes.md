@@ -2,7 +2,7 @@
 title: Themes
 description: "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime."
 sidebar:
-  order: 3
+  order: 1
 ---
 
 Every `pyzed.ui` component reads its colors from the **current theme**. Changing `self.theme`

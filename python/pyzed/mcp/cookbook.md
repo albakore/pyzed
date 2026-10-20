@@ -230,7 +230,7 @@ class Waves(pz.App):
 pz.run(Waves)
 ```
 
-Docs: `guides/shaders`, `library/shader`.
+Docs: `shading/shaders`, `library/shader`.
 
 ## Games: a frame loop and held keys
 

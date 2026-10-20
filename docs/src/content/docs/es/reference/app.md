@@ -27,7 +27,7 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `size` | `(1280, 800)` | Tamaño inicial de la ventana. |
 | `font_size` | `14` | Tamaño de texto por defecto. |
 | `theme` | `themes.ONE_DARK` | Un `Theme`, el nombre de un tema registrado o `themes.auto(claro, oscuro)`. Cámbialo en cualquier momento. |
-| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/guides/styles/#el-estilo-global). |
+| `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
 

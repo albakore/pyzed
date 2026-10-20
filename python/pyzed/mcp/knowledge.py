@@ -28,17 +28,18 @@ GUIDES = {"overview": "guide.md", "best-practices": "best_practices.md", "cookbo
 
 #: More topics for ``guide``: each one is a page of the documentation.
 TOPICS = {
-    "architecture": "guides/architecture", "layout": "guides/layout", "styles": "guides/styles",
-    "theming": "guides/theming", "components": "guides/components", "events": "guides/events",
+    "architecture": "guides/architecture", "layout": "guides/layout", "styles": "theming/styles",
+    "theming": "theming/themes", "components": "guides/components", "events": "guides/events",
     "async": "guides/async", "commands": "guides/commands", "keyboard": "guides/keyboard",
-    "windows": "guides/windows", "animation": "guides/animation", "shaders": "guides/shaders",
+    "windows": "guides/windows", "animation": "guides/animation", "shaders": "shading/shaders",
     "canvas": "guides/canvas", "performance": "guides/performance", "games": "games/index",
     "integrations": "integrations/overview", "architectures": "integrations/architectures",
-    "projects": "guides/projects", "packaging": "guides/packaging", "testing": "guides/testing",
+    "projects": "guides/projects", "packaging": "packaging/build", "testing": "guides/testing",
     "i18n": "guides/i18n", "accessibility": "guides/accessibility", "agents": "guides/agents",
     "designer": "editor/index", "component-designer": "editor/component-designer",
     "data-binding": "editor/data-binding", "editor-shortcuts": "editor/keyboard-shortcuts",
     "blocks": "blocks/index", "stability": "guides/stability",
+    "shading": "shading/index", "shader-graphs": "shading/shader-graphs", "tutorials": "tutorials/index",
 }
 
 #: The section of each top-level widget in ``list_components``.

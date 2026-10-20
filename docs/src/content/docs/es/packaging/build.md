@@ -2,7 +2,7 @@
 title: Compilar y distribuir
 description: "Empaqueta una app de Pyzed como ejecutable independiente para Windows, macOS y Linux, al estilo de PyInstaller, con código y datos fuera de la UI."
 sidebar:
-  order: 15
+  order: 1
 ---
 
 `pyzed build` convierte un [proyecto de Pyzed](/pyzed/es/guides/projects/) en una app que funciona en equipos sin

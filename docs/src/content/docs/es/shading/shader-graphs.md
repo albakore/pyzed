@@ -2,12 +2,12 @@
 title: Grafos de shaders
 description: "Shaders hechos de nodos (.pzshad): dibújalos con pz.shader, cambia sus variables desde Python y crea o edita grafos en código con pyzed.shading."
 sidebar:
-  order: 3.7
+  order: 1
 ---
 
-Un **grafo de shader** es un [shader](/pyzed/es/guides/shaders/) hecho de nodos en lugar de WGSL: entradas como UV
+Un **grafo de shader** es un [shader](/pyzed/es/shading/shaders/) hecho de nodos en lugar de WGSL: entradas como UV
 y Time, matemáticas, ruido, formas y colores, conectados a un nodo Output. Lo creas en la
-[vista de shaders](/pyzed/es/editor/shader-designer/) del diseñador y lo guardas como archivo `.pzshad`;
+[vista de shaders](/pyzed/es/shading/shader-designer/) del diseñador y lo guardas como archivo `.pzshad`;
 `pyzed.shading` lo compila al WGSL que `pz.shader` ejecuta en la GPU, así que es exactamente igual de rápido que un
 shader escrito a mano.
 

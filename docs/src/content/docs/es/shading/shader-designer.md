@@ -2,7 +2,7 @@
 title: Diseñador de shaders
 description: "Crea shaders de GPU en Pyzed Design conectando nodos, como los visual shaders de Godot: vista previa en vivo en cada nodo, una barra de nodos de shading y variables que tu código cambia."
 sidebar:
-  order: 9.5
+  order: 2
 ---
 
 El diseñador tiene un tercer tipo de documento: los **shaders**. En vez de escribir WGSL, conectas nodos en un
@@ -135,7 +135,7 @@ El panel de propiedades muestra lo seleccionado:
 Un `.pzshad` es un archivo como una imagen: úsalo donde quieras.
 
 - **En código**: `pz.shader("shaders/fuego.pzshad", uniforms={"speed": 2})`, o cárgalo con
-  `pyzed.shading.load` y cambia sus variables. Mira [Grafos de shaders](/pyzed/es/guides/shader-graphs/).
+  `pyzed.shading.load` y cambia sus variables. Mira [Grafos de shaders](/pyzed/es/shading/shader-graphs/).
 - **En formularios**: el control **Shader** de la caja de herramientas (en Display) dibuja un `.pzshad`. Su
   propiedad **Shader file** es la ruta, y **variables** (`{"speed": 2}`) cambia sus variables, desde el panel de
   propiedades o desde un manejador.

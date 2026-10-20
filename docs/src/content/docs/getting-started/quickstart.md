@@ -101,5 +101,5 @@ class MyApp(pz.App):
 ## Next
 
 - [Create a project with `pyzed new`](/pyzed/getting-started/new-project/)
-- [Tutorial: to-do list](/pyzed/tutorials/todo-app/)
+- [Tutorial: to-do list](/pyzed/tutorials/basic/todo-app/)
 - [Architecture guide](/pyzed/guides/architecture/)

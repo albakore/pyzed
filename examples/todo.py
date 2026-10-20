@@ -2,7 +2,7 @@
 
     python examples/todo.py
 
-Walkthrough: https://albakore.github.io/pyzed/tutorials/todo-app/
+Walkthrough: https://albakore.github.io/pyzed/tutorials/basic/todo-app/
 """
 
 from dataclasses import dataclass

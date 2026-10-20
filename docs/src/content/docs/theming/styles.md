@@ -2,7 +2,7 @@
 title: Styles
 description: "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app."
 sidebar:
-  order: 3
+  order: 2
 ---
 
 Every widget has a `style()` method that styles it like CSS: background, borders, radius,
@@ -107,6 +107,6 @@ Its text properties fill in what texts don't set themselves, and its `color`, `s
 `background`, `border_color` and `radius` also become the theme's `text`, `ui_font_size`,
 `background`, `border` and `radius` tokens, so `pyzed.ui` components follow them. Change
 `self.style` at any time to restyle the app. For other theme colors, derive a theme:
-`self.theme = themes.get("One Dark").with_accent("#ff6b6b")` (see [Themes](/pyzed/guides/theming/)).
+`self.theme = themes.get("One Dark").with_accent("#ff6b6b")` (see [Themes](/pyzed/theming/themes/)).
 
 See [`examples/styles.py`](https://github.com/albakore/pyzed/blob/main/examples/styles.py).

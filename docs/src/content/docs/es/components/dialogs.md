@@ -111,7 +111,7 @@ ui.color_swatch(self.relleno, size=24, on_press=self.abrir_selector)
 `ui.ColorPicker` es un componente: elige un color con transparencia, un degradado lineal o un
 relleno con máscara de opacidad, y `on_change` recibe un texto `"#rrggbb[aa]"`, un `pz.Gradient`
 o un `pz.Paint`, todos válidos como `background`. `ui.color_swatch` muestra cualquiera de ellos
-sobre un tablero de cuadros. Ver [Estilos](/pyzed/es/guides/styles/#selector-de-color).
+sobre un tablero de cuadros. Ver [Estilos](/pyzed/es/theming/styles/#selector-de-color).
 
 Referencia completa: [Diálogos](/pyzed/es/reference/ui/#diálogos), [Consola y ayuda](/pyzed/es/reference/ui/#consola-y-ayuda)
 y [Selector de color](/pyzed/es/reference/ui/#selector-de-color).

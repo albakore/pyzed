@@ -195,4 +195,4 @@ print(tienda.check().output, tienda.typecheck().output)
 tienda.git_init()
 ```
 
-Para empaquetar la app en cada plataforma, consulta [Compilar y distribuir](/pyzed/es/guides/packaging/).
+Para empaquetar la app en cada plataforma, consulta [Compilar y distribuir](/pyzed/es/packaging/build/).

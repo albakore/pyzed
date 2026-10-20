@@ -8,9 +8,9 @@ sidebar:
 <!-- Archivo generado por docs/scripts/gen_api.py. Edita docs/scripts/api_docs_es.py. -->
 
 `pyzed.shading` es el sistema de shaders por nodos que hay detrás de la
-[vista de shaders](/pyzed/es/editor/shader-designer/) del diseñador: grafos `.pzshad` de nodos que se
+[vista de shaders](/pyzed/es/shading/shader-designer/) del diseñador: grafos `.pzshad` de nodos que se
 compilan al WGSL de [`pz.shader`](/pyzed/es/reference/widgets/). Mira
-[Grafos de shaders](/pyzed/es/guides/shader-graphs/) para un recorrido.
+[Grafos de shaders](/pyzed/es/shading/shader-graphs/) para un recorrido.
 
 ```python
 from pyzed import shading

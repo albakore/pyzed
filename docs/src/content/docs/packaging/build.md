@@ -2,7 +2,7 @@
 title: Build and distribute
 description: "Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder."
 sidebar:
-  order: 15
+  order: 1
 ---
 
 `pyzed build` turns a [Pyzed project](/pyzed/guides/projects/) into an app that runs on machines without Python:

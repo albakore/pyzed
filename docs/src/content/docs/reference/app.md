@@ -27,7 +27,7 @@ messages, `update(message)`. State lives in instance attributes.
 | `size` | `(1280, 800)` | Initial window size. |
 | `font_size` | `14` | Default text size. |
 | `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |
-| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/guides/styles/#the-global-style). |
+| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
 

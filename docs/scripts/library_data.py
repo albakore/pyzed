@@ -3195,12 +3195,12 @@ add(
         "every pixel of the widget, every frame, on the GPU: animated backgrounds, plasma, fire or a radar "
         "sweep cost Python nothing. Each entry of `uniforms` becomes a WGSL function of the same name, and "
         "`mouse()` gives the pointer. Without a GPU the widget shows `fallback`. See the "
-        "[Shaders guide](/pyzed/guides/shaders/) and the [showcase](/pyzed/showcase/).",
+        "[Shaders guide](/pyzed/shading/shaders/) and the [showcase](/pyzed/showcase/).",
         "`pz.shader` ejecuta una función que escribes en WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, "
         "para cada píxel del widget, en cada fotograma, en la GPU: fondos animados, plasma, fuego o el barrido "
         "de un radar no le cuestan nada a Python. Cada entrada de `uniforms` se convierte en una función WGSL "
         "con el mismo nombre, y `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. "
-        "Ver la [guía de shaders](/pyzed/es/guides/shaders/) y las [demos](/pyzed/es/showcase/).",
+        "Ver la [guía de shaders](/pyzed/es/shading/shaders/) y las [demos](/pyzed/es/showcase/).",
     ),
     when=T(
         ["For animated backgrounds behind glass panels, menus and HUDs.",
@@ -3233,11 +3233,11 @@ add(
     blurb=T("Glow, bloom, glass and opacity as style properties.",
             "Glow, bloom, glass y opacidad como propiedades de estilo."),
     desc=T(
-        "Visual effects are [style](/pyzed/guides/styles/) properties: `glow` (a soft halo), `bloom` (a wide, "
+        "Visual effects are [style](/pyzed/theming/styles/) properties: `glow` (a soft halo), `bloom` (a wide, "
         "bright spill of light), `glass` (a translucent, frosted panel), `opacity`, and `translate` and "
         "`scale`, which move or scale the drawing without changing the layout. Animations can change "
         "`glow` too.",
-        "Los efectos visuales son propiedades de [estilo](/pyzed/es/guides/styles/): `glow` (un halo suave), "
+        "Los efectos visuales son propiedades de [estilo](/pyzed/es/theming/styles/): `glow` (un halo suave), "
         "`bloom` (un resplandor amplio y brillante), `glass` (un panel translúcido y esmerilado), `opacity`, "
         "y `translate` y `scale`, que desplazan o escalan el dibujo sin cambiar el layout. Las animaciones "
         "también pueden cambiar `glow`.",

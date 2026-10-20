@@ -139,7 +139,7 @@ The window stays open until its exit animation ends. See [Windows](/pyzed/guides
 
 ## Effects
 
-Effects are [style](/pyzed/guides/styles/) properties, so they work with `style()`, `pz.Style`
+Effects are [style](/pyzed/theming/styles/) properties, so they work with `style()`, `pz.Style`
 and named styles:
 
 | Property | What it does |

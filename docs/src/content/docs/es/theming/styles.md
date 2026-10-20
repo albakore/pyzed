@@ -2,7 +2,7 @@
 title: Estilos
 description: "Da estilo a cualquier widget de Pyzed como en CSS: colores, bordes, radios, sombras y estados, estilos reutilizables y el estilo global de la app."
 sidebar:
-  order: 3
+  order: 2
 ---
 
 Todo widget tiene un método `style()` que le da estilo como en CSS: fondo, bordes, radio,
@@ -108,6 +108,6 @@ Sus propiedades de texto completan lo que los textos no fijan, y su `color`, `si
 `background`, `border` y `radius` del tema, así que los componentes de `pyzed.ui` los siguen.
 Cambia `self.style` cuando quieras para cambiar el estilo de la app. Para otros colores del
 tema, deriva un tema: `self.theme = themes.get("One Dark").with_accent("#ff6b6b")` (ver
-[Temas](/pyzed/es/guides/theming/)).
+[Temas](/pyzed/es/theming/themes/)).
 
 Ver [`examples/styles.py`](https://github.com/albakore/pyzed/blob/main/examples/styles.py).

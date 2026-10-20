@@ -2,7 +2,7 @@
 title: Shader designer
 description: "Build GPU shaders in Pyzed Design by wiring nodes, like Godot's visual shaders: live previews on every node, a sidebar of shading nodes and variables your code changes."
 sidebar:
-  order: 9.5
+  order: 2
 ---
 
 The designer has a third kind of document: **shaders**. Instead of writing WGSL, you wire nodes on a graph, as
@@ -132,7 +132,7 @@ The Properties panel shows what is selected:
 A `.pzshad` is a file like a picture: use it anywhere.
 
 - **In code**: `pz.shader("shaders/fire.pzshad", uniforms={"speed": 2})`, or load it with
-  `pyzed.shading.load` and set its variables. See [Shader graphs](/pyzed/guides/shader-graphs/).
+  `pyzed.shading.load` and set its variables. See [Shader graphs](/pyzed/shading/shader-graphs/).
 - **In forms**: the toolbox's **Shader** control (in Display) draws a `.pzshad`. Its **Shader file** property is
   the path, and **variables** (`{"speed": 2}`) sets its variables, from the Properties panel or from a handler.
 - **In other shaders**: the **Shader function** node runs another `.pzshad` as a function. Its mutable variables

@@ -2,7 +2,7 @@
 title: Shaders
 description: Pinta widgets en la GPU con tus propios shaders WGSL (fondos, efectos y visuales de videojuego) con uniforms desde Python y la posición del ratón.
 sidebar:
-  order: 3.6
+  order: 3
 ---
 
 `pz.shader` es un widget que pinta la GPU con una función que escribes en
@@ -12,8 +12,8 @@ cuestan nada a Python.
 
 :::tip[¿Prefieres nodos?]
 Puedes crear shaders sin escribir WGSL: conecta nodos en la
-[vista de shaders](/pyzed/es/editor/shader-designer/) del diseñador y dibuja el archivo `.pzshad` con
-`pz.shader("fuego.pzshad")`. Mira [Grafos de shaders](/pyzed/es/guides/shader-graphs/).
+[vista de shaders](/pyzed/es/shading/shader-designer/) del diseñador y dibuja el archivo `.pzshad` con
+`pz.shader("fuego.pzshad")`. Mira [Grafos de shaders](/pyzed/es/shading/shader-graphs/).
 :::
 
 ![Seis shaders: plasma, ondas, túnel, CRT, Voronoi y fuego](../../../../assets/showcase/shaders.png)

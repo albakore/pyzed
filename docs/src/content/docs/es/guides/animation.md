@@ -141,7 +141,7 @@ La ventana sigue abierta hasta que termina su animación de salida. Ver [Ventana
 
 ## Efectos
 
-Los efectos son propiedades de [estilo](/pyzed/es/guides/styles/), así que funcionan con
+Los efectos son propiedades de [estilo](/pyzed/es/theming/styles/), así que funcionan con
 `style()`, `pz.Style` y los estilos con nombre:
 
 | Propiedad | Qué hace |

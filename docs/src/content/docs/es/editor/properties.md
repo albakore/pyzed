@@ -89,7 +89,7 @@ separadas por comas.
 
 ### Estilo
 
-Cada control tiene una sección **Estilo**, el mismo conjunto de propiedades que [`pz.Style`](/pyzed/es/guides/styles/):
+Cada control tiene una sección **Estilo**, el mismo conjunto de propiedades que [`pz.Style`](/pyzed/es/theming/styles/):
 fondo (color, degradado o máscara), color del texto, fuente, peso, cursiva, tamaño de letra, interlineado, borde,
 radio de esquina, sombra, relleno, margen, tamaño máximo, alineación del contenido y recorte. Los campos vacíos
 mantienen el aspecto propio del componente y **Restablecer el estilo** los borra todos. Ver

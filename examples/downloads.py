@@ -3,7 +3,7 @@
     python examples/downloads.py
 
 The "downloads" are simulated with sleep so the example works offline.
-Walkthrough: https://albakore.github.io/pyzed/tutorials/background-tasks/
+Walkthrough: https://albakore.github.io/pyzed/tutorials/intermediate/background-tasks/
 """
 
 import random

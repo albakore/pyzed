@@ -69,7 +69,7 @@ una puntuación con estrellas, un editor de etiquetas y una nota que se puede ar
 - **Eventos de ciclo de vida**: `on_mount` y `on_unmount` avisan al padre cuando el componente
   aparece y desaparece.
 - **`style=`** da estilo al componente como a cualquier widget (`Rating(value=3, style="card")`),
-  salvo que declare su propia prop `style`. Ver [Estilos](/pyzed/es/guides/styles/).
+  salvo que declare su propia prop `style`. Ver [Estilos](/pyzed/es/theming/styles/).
 
 ## Estado y claves
 

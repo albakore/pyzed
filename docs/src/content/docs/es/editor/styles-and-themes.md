@@ -36,7 +36,7 @@ El tema del formulario es independiente del tema del **editor** (Ajustes → Apa
 ## La sección Estilo
 
 Cada control tiene una sección **Estilo** en Propiedades, como CSS para ese control (ver
-[Estilos](/pyzed/es/guides/styles/)):
+[Estilos](/pyzed/es/theming/styles/)):
 
 | Campo | Acepta |
 | --- | --- |

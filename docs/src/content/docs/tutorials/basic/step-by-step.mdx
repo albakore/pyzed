@@ -6,11 +6,11 @@ sidebar:
 ---
 
 import { Code } from '@astrojs/starlight/components';
-import step1 from '../../../../../examples/tutorial/step1_hello.py?raw';
-import step2 from '../../../../../examples/tutorial/step2_state.py?raw';
-import step3 from '../../../../../examples/tutorial/step3_layout.py?raw';
-import step4 from '../../../../../examples/tutorial/step4_async.py?raw';
-import step5 from '../../../../../examples/tutorial/step5_notes.py?raw';
+import step1 from '../../../../../../examples/tutorial/step1_hello.py?raw';
+import step2 from '../../../../../../examples/tutorial/step2_state.py?raw';
+import step3 from '../../../../../../examples/tutorial/step3_layout.py?raw';
+import step4 from '../../../../../../examples/tutorial/step4_async.py?raw';
+import step5 from '../../../../../../examples/tutorial/step5_notes.py?raw';
 
 Five short files in [`examples/tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial).
 Each one runs on its own and adds one idea to the previous one:
@@ -26,7 +26,7 @@ widgets (`pz.text`, `pz.column`, `pz.row`, `pz.container`…). Pyzed calls it ag
 change, so you never modify widgets: you describe what the current state looks like. Class
 attributes such as `title` and `size` configure the window.
 
-![Step 1](../../../assets/tutorials/step1.png)
+![Step 1](../../../../assets/tutorials/step1.png)
 
 <Code code={step1} lang="python" title="examples/tutorial/step1_hello.py" />
 
@@ -40,7 +40,7 @@ State is plain attributes on your object. Widgets are told what to do in two way
 Callbacks that carry data receive the new value: `on_input=lambda text: ...`,
 `on_toggle=lambda checked: ...`, `on_change=lambda value: ...`.
 
-![Step 2](../../../assets/tutorials/step2.png)
+![Step 2](../../../../assets/tutorials/step2.png)
 
 <Code code={step2} lang="python" title="examples/tutorial/step2_state.py" />
 
@@ -49,9 +49,9 @@ Callbacks that carry data receive the new value: `on_input=lambda text: ...`,
 `pyzed.ui` ships Zed-style components (`button`, `input`, `select`, `number_field`,
 `settings_group`, `callout`…) that take their colors from the active theme. `theme` can be a
 `Theme`, the name of a bundled theme (`pz.themes.names()`) or `pz.themes.auto(...)` to follow
-the system. `self.resolved_theme()` returns the `Theme` in use. More in [Theming](/pyzed/guides/theming/).
+the system. `self.resolved_theme()` returns the `Theme` in use. More in [Theming](/pyzed/theming/themes/).
 
-![Step 3](../../../assets/tutorials/step3.png)
+![Step 3](../../../../assets/tutorials/step3.png)
 
 <Code code={step3} lang="python" title="examples/tutorial/step3_layout.py" />
 
@@ -63,7 +63,7 @@ on Pyzed's asyncio loop; the result reaches your callback on the UI thread. Whil
 coroutines or generators from `update` and callbacks: see the
 [Async and subscriptions](/pyzed/guides/async/) guide.
 
-![Step 4](../../../assets/tutorials/step4.png)
+![Step 4](../../../../assets/tutorials/step4.png)
 
 <Code code={step4} lang="python" title="examples/tutorial/step4_async.py" />
 
@@ -74,12 +74,12 @@ shortcut (`on_key` receives combos such as `"ctrl-n"`) and a second window (`pz.
 with `return About().open()` that shares the app's state. More in
 [Multiple windows](/pyzed/guides/windows/).
 
-![Step 5](../../../assets/tutorials/step5.png)
+![Step 5](../../../../assets/tutorials/step5.png)
 
 <Code code={step5} lang="python" title="examples/tutorial/step5_notes.py" />
 
 ## Next steps
 
-- [To-do list](/pyzed/tutorials/todo-app/) and [Zed-like mini editor](/pyzed/tutorials/zed-like-editor/), in more detail.
+- [To-do list](/pyzed/tutorials/basic/todo-app/) and [Zed-like mini editor](/pyzed/tutorials/advanced/code-editor/), in more detail.
 - [Examples](/pyzed/examples/): recreations of the Iced demos (game of life, clock, stopwatch,
   multi-window, images, QR codes, styling, pane grid…).

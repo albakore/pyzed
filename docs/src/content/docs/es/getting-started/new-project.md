@@ -27,7 +27,7 @@ mi-app/
 La carpeta de UI separa la interfaz del resto del código, y sus handlers pueden importar el backend, cualquier
 módulo del proyecto y todas las dependencias. ¿Ya tienes un proyecto creado con `uv init`? Ejecuta `pyzed init`
 dentro. Consulta [Proyectos con uv](/pyzed/es/guides/projects/) para la estructura, los comandos de
-dependencias y la pestaña Project del diseñador, y [Compilar y distribuir](/pyzed/es/guides/packaging/) para
+dependencias y la pestaña Project del diseñador, y [Compilar y distribuir](/pyzed/es/packaging/build/) para
 empaquetar la app en cada plataforma.
 
 ## Una app de un solo archivo

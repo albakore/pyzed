@@ -2,7 +2,7 @@
 title: Temas
 description: "Temas de Pyzed: One, Ayu y Gruvbox en claro y oscuro, los tokens de color de Zed y cómo crear, importar y cambiar temas mientras la app corre."
 sidebar:
-  order: 3
+  order: 1
 ---
 
 Cada componente de `pyzed.ui` lee sus colores del **tema actual**. Cambiar `self.theme`

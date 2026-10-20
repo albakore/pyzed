@@ -80,7 +80,7 @@ más un archivo de Python. [Descárgalo](/pyzed/es/download/) para Windows, macO
 
 Sí. Cualquier widget se puede animar con presets, keyframes y transiciones, y los controles pueden tener
 rotación, desenfoque, glow, bloom, glass y opacidad, con temas claros, oscuros y propios. Mira
-[Animación y efectos](/pyzed/es/guides/animation/) y [Temas](/pyzed/es/guides/theming/).
+[Animación y efectos](/pyzed/es/guides/animation/) y [Temas](/pyzed/es/theming/themes/).
 
 ## ¿Pyzed funciona con agentes de IA para programar?
 
@@ -101,7 +101,7 @@ transmite su respuesta a la interfaz y guarda las claves de API en el llavero de
 
 `pyzed build` empaqueta un proyecto como app independiente (una carpeta o un solo archivo) para Windows, macOS o
 Linux que funciona en equipos sin Python. Usa PyInstaller por debajo; compila cada plataforma en esa plataforma o
-en una matriz de CI. Mira [Empaquetado](/pyzed/es/guides/packaging/).
+en una matriz de CI. Mira [Empaquetado](/pyzed/es/packaging/build/).
 
 ## ¿Puedo probar una app de Pyzed sin ventana?
 

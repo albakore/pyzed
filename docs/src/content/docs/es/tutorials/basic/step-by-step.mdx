@@ -6,11 +6,11 @@ sidebar:
 ---
 
 import { Code } from '@astrojs/starlight/components';
-import step1 from '../../../../../../examples/tutorial/step1_hello.py?raw';
-import step2 from '../../../../../../examples/tutorial/step2_state.py?raw';
-import step3 from '../../../../../../examples/tutorial/step3_layout.py?raw';
-import step4 from '../../../../../../examples/tutorial/step4_async.py?raw';
-import step5 from '../../../../../../examples/tutorial/step5_notes.py?raw';
+import step1 from '../../../../../../../examples/tutorial/step1_hello.py?raw';
+import step2 from '../../../../../../../examples/tutorial/step2_state.py?raw';
+import step3 from '../../../../../../../examples/tutorial/step3_layout.py?raw';
+import step4 from '../../../../../../../examples/tutorial/step4_async.py?raw';
+import step5 from '../../../../../../../examples/tutorial/step5_notes.py?raw';
 
 Cinco archivos cortos en [`examples/tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial).
 Cada uno se ejecuta solo y añade una idea al anterior:
@@ -26,7 +26,7 @@ widgets (`pz.text`, `pz.column`, `pz.row`, `pz.container`…). Pyzed la vuelve a
 cada cambio, así que nunca modificas widgets: describes cómo se ve el estado actual. Atributos
 de clase como `title` y `size` configuran la ventana.
 
-![Paso 1](../../../../assets/tutorials/step1.png)
+![Paso 1](../../../../../assets/tutorials/step1.png)
 
 <Code code={step1} lang="python" title="examples/tutorial/step1_hello.py" />
 
@@ -40,7 +40,7 @@ El estado son atributos normales de tu objeto. Los widgets reciben qué hacer de
 Los callbacks que traen datos reciben el valor nuevo: `on_input=lambda text: ...`,
 `on_toggle=lambda checked: ...`, `on_change=lambda value: ...`.
 
-![Paso 2](../../../../assets/tutorials/step2.png)
+![Paso 2](../../../../../assets/tutorials/step2.png)
 
 <Code code={step2} lang="python" title="examples/tutorial/step2_state.py" />
 
@@ -49,9 +49,9 @@ Los callbacks que traen datos reciben el valor nuevo: `on_input=lambda text: ...
 `pyzed.ui` trae componentes al estilo de Zed (`button`, `input`, `select`, `number_field`,
 `settings_group`, `callout`…) que toman sus colores del tema activo. `theme` puede ser un
 `Theme`, el nombre de un tema incluido (`pz.themes.names()`) o `pz.themes.auto(...)` para seguir
-al sistema. `self.resolved_theme()` devuelve el `Theme` en uso. Más en [Temas](/pyzed/es/guides/theming/).
+al sistema. `self.resolved_theme()` devuelve el `Theme` en uso. Más en [Temas](/pyzed/es/theming/themes/).
 
-![Paso 3](../../../../assets/tutorials/step3.png)
+![Paso 3](../../../../../assets/tutorials/step3.png)
 
 <Code code={step3} lang="python" title="examples/tutorial/step3_layout.py" />
 
@@ -63,7 +63,7 @@ Mientras carga, una suscripción `pz.every` redibuja la ventana para animar el s
 puedes devolver corrutinas o generadores desde `update` y los callbacks: lo explica la guía
 [Async y suscripciones](/pyzed/es/guides/async/).
 
-![Paso 4](../../../../assets/tutorials/step4.png)
+![Paso 4](../../../../../assets/tutorials/step4.png)
 
 <Code code={step4} lang="python" title="examples/tutorial/step4_async.py" />
 
@@ -74,12 +74,12 @@ redimensionable, un atajo (`on_key` recibe combinaciones como `"ctrl-n"`) y una 
 (`pz.Window`) que se abre con `return About().open()` y comparte el estado de la app. Más en
 [Varias ventanas](/pyzed/es/guides/windows/).
 
-![Paso 5](../../../../assets/tutorials/step5.png)
+![Paso 5](../../../../../assets/tutorials/step5.png)
 
 <Code code={step5} lang="python" title="examples/tutorial/step5_notes.py" />
 
 ## Siguientes pasos
 
-- [Lista de tareas](/pyzed/es/tutorials/todo-app/) y [mini editor tipo Zed](/pyzed/es/tutorials/zed-like-editor/), más detallados.
+- [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) y [mini editor tipo Zed](/pyzed/es/tutorials/advanced/code-editor/), más detallados.
 - [Ejemplos](/pyzed/es/examples/): recreaciones de las demos de Iced (game of life, reloj, cronómetro,
   multi-ventana, imágenes, QR, estilos, paneles…).

@@ -2,12 +2,12 @@
 title: Shader graphs
 description: "Shaders made of nodes (.pzshad): draw them with pz.shader, change their variables from Python, and build or edit graphs in code with pyzed.shading."
 sidebar:
-  order: 3.7
+  order: 1
 ---
 
-A **shader graph** is a [shader](/pyzed/guides/shaders/) made of nodes instead of WGSL: inputs such as UV and
+A **shader graph** is a [shader](/pyzed/shading/shaders/) made of nodes instead of WGSL: inputs such as UV and
 Time, math, noise, shapes and colors, wired into an Output node. You build it in the designer's
-[Shader view](/pyzed/editor/shader-designer/) and save it as a `.pzshad` file; `pyzed.shading` compiles it to the
+[Shader view](/pyzed/shading/shader-designer/) and save it as a `.pzshad` file; `pyzed.shading` compiles it to the
 WGSL that `pz.shader` runs on the GPU, so it is exactly as fast as a hand-written shader.
 
 ```python

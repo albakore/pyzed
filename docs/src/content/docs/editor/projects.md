@@ -191,7 +191,7 @@ uv run pyzed build --onefile  # a single file
 uv run pyzed build --workflow # a GitHub Actions workflow for Linux, Windows and macOS
 ```
 
-See [Build and distribute](/pyzed/guides/packaging/).
+See [Build and distribute](/pyzed/packaging/build/).
 
 ## The standalone app
 

@@ -2,7 +2,7 @@
 title: Iconos y fuentes
 description: "Usa unos 2000 iconos de Lucide e iconos por tipo de archivo en GUIs de escritorio en Python con Pyzed, y carga tus propias fuentes como IBM Plex."
 sidebar:
-  order: 9
+  order: 3
 ---
 
 ## Iconos
