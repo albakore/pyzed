@@ -19,7 +19,7 @@ An immutable node of the UI tree, implemented in Rust. Returned by every widget 
 
 Every widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).
 
-`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).
+`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/animation/).
 
 ## Layout
 
@@ -1585,7 +1585,6 @@ code_editor(
     selection_highlight=True,
     keymap=None,
     scrollbar=True,
-    readonly=False,
 )
 ```
 
@@ -1642,7 +1641,6 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `selection_highlight` | Highlights the other occurrences of the selected text. |
 | `keymap` | Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides). |
 | `scrollbar` | `False` hides the scrollbars. |
-| `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 
 ## Styles
 
@@ -2143,7 +2141,7 @@ The animation a window plays when it opens (or closes), from its `transition` an
 
 ### `PRESETS`
 
-Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets).
+Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/animation/presets/).
 
 ### `CATEGORIES`
 

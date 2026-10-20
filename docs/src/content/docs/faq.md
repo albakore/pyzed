@@ -76,7 +76,7 @@ Windows, macOS or Linux.
 
 Yes. Any widget can be animated with presets, keyframes and transitions, and controls can have rotation, blur,
 glow, bloom, glass and opacity effects, with light, dark and custom themes. See
-[Animation and effects](/pyzed/guides/animation/) and [Themes](/pyzed/theming/themes/).
+[Animation and effects](/pyzed/animation/) and [Themes](/pyzed/theming/themes/).
 
 ## Does Pyzed work with AI coding agents?
 

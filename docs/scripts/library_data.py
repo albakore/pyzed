@@ -3079,13 +3079,13 @@ add(
         "`pz.Animation` when the widget appears, on hover, press, focus, click or while `active`; "
         "`transition` animates property changes like CSS. `pz.stagger` cascades a list in and "
         "`pz.presence` animates content in and out when it changes. Everything runs natively, without "
-        "calling Python per frame. See the [Animation guide](/pyzed/guides/animation/).",
+        "calling Python per frame. See the [Animation guide](/pyzed/animation/).",
         "Todo widget tiene `animate()` y `transition()`. `animate` reproduce uno de los 47 presets o una "
         "`pz.Animation` cuando el widget aparece, en hover, al pulsar, con foco, al hacer clic o mientras "
         "`active`; `transition` anima los cambios de propiedades como CSS. `pz.stagger` hace entrar una "
         "lista en cascada y `pz.presence` anima la entrada y salida del contenido cuando cambia. Todo se "
         "reproduce de forma nativa, sin llamar a Python en cada fotograma. Ver la "
-        "[guía de animación](/pyzed/es/guides/animation/).",
+        "[guía de animación](/pyzed/es/animation/).",
     ),
     when=T(
         ["To show that something appeared, changed or needs attention: a toast, a new row, an error shake.",

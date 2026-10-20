@@ -260,7 +260,7 @@ If `view()` raises an exception, the window shows the traceback instead of closi
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/).",
+                    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -2109,7 +2109,7 @@ _section("widgets", "Animation", {
     **_doc("pyzed.Animation", "pyzed.define_animation", "pyzed.presence", "pyzed.stagger",
            "pyzed.set_reduced_motion", "pyzed.animation.reduced_motion", "pyzed.system_reduced_motion", "pyzed.animation.animation",
            "pyzed.animation.presets", "pyzed.animation.ease", "pyzed.animation.window_animations"),
-    "pyzed.animation.PRESETS": {"desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets).", "no_signature": True},
+    "pyzed.animation.PRESETS": {"desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/animation/presets/).", "no_signature": True},
     "pyzed.animation.CATEGORIES": {"desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`.", "no_signature": True},
     "pyzed.animation.EASINGS": {"desc": "Easing names (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` also takes `(x1, y1, x2, y2)` cubic Béziers and `\"steps(n)\"`.", "no_signature": True},
     "pyzed.animation.TRIGGERS": {"desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click` and `active`.", "no_signature": True},

@@ -134,7 +134,7 @@ Card(pz.text("Three new messages"), ui.button("Open", self.open), title="Inbox",
 - `stylesheet` adds rules to [`pz.stylesheet`](/pyzed/theming/styles/#stylesheets) when the class
   is defined. `&` stands for the component: `"&"`, `"&:hover"`, `"&.wide"`.
 - Every component takes `style=`, `class_=`, `id=` and `animate=` (presets for
-  [`widget.animate`](/pyzed/guides/animation/)), unless it declares props with those names.
+  [`widget.animate`](/pyzed/animation/)), unless it declares props with those names.
 - Context shares values with every component rendered inside, without passing props down
   each level:
 

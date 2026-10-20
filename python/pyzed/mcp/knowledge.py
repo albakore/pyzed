@@ -31,7 +31,7 @@ TOPICS = {
     "architecture": "guides/architecture", "layout": "guides/layout", "styles": "theming/styles",
     "theming": "theming/themes", "components": "guides/components", "events": "guides/events",
     "async": "guides/async", "commands": "guides/commands", "keyboard": "guides/keyboard",
-    "windows": "guides/windows", "animation": "guides/animation", "timeline": "guides/timeline",
+    "windows": "guides/windows", "animation": "animation/index", "timeline": "animation/timeline",
     "shaders": "shading/shaders",
     "canvas": "guides/canvas", "performance": "guides/performance", "games": "games/index",
     "integrations": "integrations/overview", "architectures": "integrations/architectures",

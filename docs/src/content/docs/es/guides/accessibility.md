@@ -66,7 +66,7 @@ pz.set_reduced_motion(None)   # volver a seguir al sistema (por defecto)
 
 La variable de entorno `PYZED_REDUCED_MOTION` (`1` o `0`) se impone a ambos. Las capturas
 muestran siempre el estado de reposo. Ver
-[Animación](/pyzed/es/guides/animation/#movimiento-reducido-y-tests).
+[Animación](/pyzed/es/animation/motion-and-tests/).
 
 ## Lectores de pantalla
 

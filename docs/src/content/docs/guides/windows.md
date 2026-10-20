@@ -89,7 +89,7 @@ Class or instance attributes:
 | `transparent`, `maximized`, `fullscreen` | Initial state. |
 | `scale` | Interface scale. |
 | `theme` | A `Theme`, a name or `themes.auto(...)`. `None` uses the app's theme. |
-| `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/guides/animation/#window-transitions). |
+| `transition`, `exit_transition` | How it animates when it opens and closes: `"fade"`, `"zoom"`, `"pop"`, `"slide_up"`... a preset or a `pz.Animation`. See [Animation](/pyzed/animation/transitions/#window-transitions). |
 
 `window_size` holds the current size and `window_position` where the window is on the screen (both updated by the runtime; the position is `None` on Wayland). `window_maximized` and `window_focused` say whether it is maximized and has the keyboard focus.
 

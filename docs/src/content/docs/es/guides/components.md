@@ -134,7 +134,7 @@ Card(pz.text("Tres mensajes nuevos"), ui.button("Abrir", self.open), title="Band
 - `stylesheet` añade reglas a [`pz.stylesheet`](/pyzed/es/theming/styles/#hojas-de-estilo) al
   definir la clase. `&` representa al componente: `"&"`, `"&:hover"`, `"&.wide"`.
 - Todo componente acepta `style=`, `class_=`, `id=` y `animate=` (presets de
-  [`widget.animate`](/pyzed/es/guides/animation/)), salvo que declare props con esos nombres.
+  [`widget.animate`](/pyzed/es/animation/)), salvo que declare props con esos nombres.
 - El contexto comparte valores con todos los componentes que se dibujan dentro, sin pasar
   props nivel a nivel:
 
