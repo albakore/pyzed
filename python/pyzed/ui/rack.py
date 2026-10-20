@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .. import _core, draw
@@ -65,6 +66,9 @@ _KNOB_CELL = (48, 58)
 _JACK = 22
 _JACK_CELL = (36, 40)
 _RAIL = 12
+_STEP_KNOB = 20
+_STEP_CELL = (27, 34)
+_SWITCH_CELL = (27, 18)
 
 _CATEGORY_COLORS = {
     "source": "#ff9f3d", "sources": "#ff9f3d", "oscillator": "#ff9f3d", "oscillators": "#ff9f3d",
@@ -75,7 +79,7 @@ _CATEGORY_COLORS = {
     "sequencer": "#3dd68c", "sequencers": "#3dd68c", "clock": "#3dd68c",
     "visual": "#2fd3d3", "visualizer": "#2fd3d3", "analysis": "#2fd3d3",
     "io": "#b26cf0", "i/o": "#b26cf0", "input": "#b26cf0", "output": "#b26cf0", "midi": "#b26cf0",
-    "sampler": "#ff8a3d", "drums": "#ff8a3d",
+    "sampler": "#ff8a3d", "drums": "#ff8a3d", "sequencing": "#3dd68c", "mixing": "#9aa5b1",
 }
 
 
@@ -131,7 +135,10 @@ class Panel:
 
     ``width`` is in pixels (a whole number of ``HP``); ``knobs`` maps a parameter's name to the
     top-left of its knob, ``inputs``/``outputs`` map a port's name to its jack's center, and
-    ``display`` is the box ``(x, y, w, h)`` left for a screen (or ``None``).
+    ``display`` is the box ``(x, y, w, h)`` left for a screen (or ``None``). Numbered
+    parameters that come in eights or more (a sequencer's ``pitch_1`` ... ``pitch_16``) go in a
+    grid of small knobs (``step_knobs``) or switches (``switches``, for on/off ones), one
+    column per step.
     """
 
     def __init__(self, info: Any) -> None:
@@ -141,32 +148,70 @@ class Panel:
         outputs = list(_get(info, "outputs", None) or [])
         kind = str(_get(info, "kind", ""))
         self.display_kind = _display_kind(kind)
+        groups: Dict[str, List[Any]] = {}
+        for p in params:
+            match = re.fullmatch(r"(.+?)_(\d+)", str(_get(p, "name")))
+            if match:
+                groups.setdefault(match.group(1), []).append(p)
+        stepped = {prefix: items for prefix, items in groups.items() if len(items) >= 8}
+        in_steps = {str(_get(p, "name")) for items in stepped.values() for p in items}
+        plain = [p for p in params if str(_get(p, "name")) not in in_steps]
+        steps = max((len(items) for items in stepped.values()), default=0)
+        step_cols = min(steps, 8)
+        step_rows_each = math.ceil(steps / 8) if steps else 0
+
         ports = len(inputs) + len(outputs)
         jack_cols = 2 if ports <= 6 else 3 if ports <= 12 else 4
         in_rows = math.ceil(len(inputs) / jack_cols)
         out_rows = math.ceil(len(outputs) / jack_cols)
         jacks_h = (in_rows + out_rows) * _JACK_CELL[1] + (10 if out_rows else 0)
-        display_h = {"scope": 110, "spectrum": 90, "steps": 44, "meter": 0}.get(self.display_kind, 0)
-        knob_h = MODULE_HEIGHT - _TITLE - _RAIL - jacks_h - display_h - 8
-        knob_rows = max(1, knob_h // _KNOB_CELL[1])
-        knob_cols = max(1, math.ceil(len(params) / knob_rows)) if params else 0
+        display_h = {"scope": 110, "spectrum": 90, "meter": 0}.get(self.display_kind, 0)
+        if self.display_kind == "steps":
+            display_h = 22 if steps else 44
+        grid_h = 0.0
+        for prefix, items in stepped.items():
+            grid_h += step_rows_each * (_STEP_CELL[1] if not _is_switch(items[0]) else _SWITCH_CELL[1]) + 14
+        knob_h = MODULE_HEIGHT - _TITLE - _RAIL - jacks_h - display_h - grid_h - 8
+        knob_rows = max(1, int(knob_h // _KNOB_CELL[1]))
+        knob_cols = max(1, math.ceil(len(plain) / knob_rows)) if plain else 0
         if self.display_kind == "meter":
             knob_cols += 1  # room for the meter
-        inner = max(knob_cols * _KNOB_CELL[0], jack_cols * _JACK_CELL[0], 64 if not display_h else 150)
+        inner = max(knob_cols * _KNOB_CELL[0], jack_cols * _JACK_CELL[0], step_cols * _STEP_CELL[0],
+                    64 if not display_h else 150)
         self.hp = max(4, math.ceil((inner + 12) / HP))
         self.width = self.hp * HP
         left = (self.width - inner) / 2
         y = _TITLE + 4
         self.display: Optional[Tuple[float, float, float, float]] = None
+        self.steps = steps
+        self.step_columns: List[float] = []
         if display_h:
             self.display = (8.0, float(y), self.width - 16.0, display_h - 8.0)
             y += display_h
+        self.step_knobs: Dict[str, Tuple[float, float]] = {}
+        self.switches: Dict[str, Tuple[float, float]] = {}
+        self.step_labels: List[Tuple[str, float]] = []
+        if steps:
+            gx = (self.width - step_cols * _STEP_CELL[0]) / 2
+            self.step_columns = [gx + c * _STEP_CELL[0] + _STEP_CELL[0] / 2 for c in range(step_cols)]
+            for prefix, items in stepped.items():
+                switch = _is_switch(items[0])
+                cell = _SWITCH_CELL if switch else _STEP_CELL
+                self.step_labels.append((prefix, y))
+                y += 12
+                ordered = sorted(items, key=lambda p: int(str(_get(p, "name")).rsplit("_", 1)[1]))
+                for i, p in enumerate(ordered):
+                    c, r = i % 8, i // 8
+                    cx = self.step_columns[c]
+                    spot = (cx, y + r * cell[1] + cell[1] / 2)
+                    (self.switches if switch else self.step_knobs)[str(_get(p, "name"))] = spot
+                y += step_rows_each * cell[1] + 2
         self.knobs: Dict[str, Tuple[float, float]] = {}
-        if params:
+        if plain:
             cols = knob_cols - (1 if self.display_kind == "meter" else 0)
-            rows_used = math.ceil(len(params) / max(cols, 1))
+            rows_used = math.ceil(len(plain) / max(cols, 1))
             area_w = cols * _KNOB_CELL[0]
-            for i, p in enumerate(params):
+            for i, p in enumerate(plain):
                 c, r = i // rows_used, i % rows_used
                 x = left + (inner - area_w) / 2 + c * _KNOB_CELL[0] + (_KNOB_CELL[0] - _KNOB) / 2
                 self.knobs[str(_get(p, "name"))] = (x, y + r * _KNOB_CELL[1])
@@ -189,6 +234,14 @@ class Panel:
             top = bottom + in_rows * _JACK_CELL[1] + 10
             self.output_plate = (jx - 3, top - 4, jack_cols * _JACK_CELL[0] + 6, out_rows * _JACK_CELL[1] + 2)
             place_jacks(outputs, top, self.outputs)
+
+
+def _is_switch(param: Any) -> bool:
+    """Whether a parameter is an on/off switch (0..1 in two steps, or named like a gate)."""
+    lo, hi = float(_get(param, "min", 0.0)), float(_get(param, "max", 1.0))
+    steps = _get(param, "steps", None)
+    name = str(_get(param, "name", ""))
+    return (lo, hi) == (0.0, 1.0) and (steps == 2 or name.startswith(("gate_", "on_", "mute_")))
 
 
 _PANELS: Dict[int, Panel] = {}
@@ -547,7 +600,7 @@ class Rack(Component):
 
     def _jack(self, node_id: str, port: Any, output: bool, x: float, y: float, light: bool) -> List[Any]:
         name = str(_get(port, "name"))
-        label = str(_get(port, "label", None) or name)
+        label = str(_get(port, "label", None) or name).split(" (")[0]
         hot = self.hover_jack == (node_id, name, output)
         jack = _core.canvas(_jack_shapes(hot, light), width=_JACK, height=_JACK).on(
             drag_start=lambda e: self._wire_start(node_id, name, output, e),
@@ -584,6 +637,13 @@ class Rack(Component):
             gates = [bool(params.get(f"gate_{i + 1}", 1)) for i in range(steps)]
             size = min(12.0, (w - 4) / 8 - 3)
             shapes = [draw.rect(0, 0, w, h, fill="#0d0e10", radius=4)]
+            if panel.step_columns:  # one LED over each column of step knobs, lit on the current step
+                for i, cx in enumerate(panel.step_columns):
+                    lit = current >= 0 and current % len(panel.step_columns) == i
+                    if lit:
+                        shapes.append(draw.circle(cx - x, h / 2, 7, fill=_alpha("#f5d547", 0.3)))
+                    shapes.append(draw.circle(cx - x, h / 2, 3.5, fill="#f5d547" if lit else "#3b4048"))
+                return [_core.pin(_core.canvas(shapes, width=w, height=h), x=x, y=y)]
             for i in range(steps):
                 cx = 6 + (i % 8) * ((w - 12) / 8) + size / 2
                 cy = 10 + (i // 8) * 18 + size / 2
@@ -645,6 +705,26 @@ class Rack(Component):
                 key=f"{nid}:{name}",
             )
             layers.append(_core.pin(knob, x=kx - (_KNOB_CELL[0] - _KNOB) / 2 - 4, y=ky))
+        for prefix, y in panel.step_labels:
+            layers.append(_core.pin(_core.text(prefix.replace("_", " ").upper(), size=7, color=_alpha(ink, 0.6),
+                                               font="mono"), x=8, y=y))
+        for name, (cx, cy) in panel.step_knobs.items():
+            p = params[name]
+            knob = _audio.Knob(
+                value=float(values.get(name, _get(p, "default", 0.0)) or 0.0), min=float(_get(p, "min", 0.0)),
+                max=float(_get(p, "max", 1.0)), default=_get(p, "default", None),
+                curve=str(_get(p, "curve", "lin") or "lin"), diameter=_STEP_KNOB, variant="rack", color=accent,
+                show_value=False, on_change=lambda e, name=name: self._set(nid, name, e.value), key=f"{nid}:{name}",
+            )
+            layers.append(_core.pin(knob, x=cx - _STEP_KNOB / 2, y=cy - _STEP_KNOB / 2))
+        for name, (cx, cy) in panel.switches.items():
+            on = float(values.get(name, _get(params[name], "default", 0.0)) or 0.0) >= 0.5
+            led = _core.canvas([
+                draw.rect(0, 0, 16, 11, fill="#15161a", radius=2),
+                draw.rect(2, 2, 12, 7, fill=accent if on else _mix(accent, "#000000", 0.75), radius=1.5),
+            ], width=16, height=11).on(click=lambda name=name, on=on: self._set(nid, name, 0.0 if on else 1.0),
+                                       cursor="pointer")
+            layers.append(_core.pin(led, x=cx - 8, y=cy - 5.5))
         for output, ports, spots in ((False, _get(info, "inputs", None) or [], panel.inputs),
                                      (True, _get(info, "outputs", None) or [], panel.outputs)):
             for port in ports:

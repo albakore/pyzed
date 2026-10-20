@@ -1,0 +1,66 @@
+---
+title: Colors and behavior
+description: Customize Pyzed's audio components — color palettes, theme tokens, variants, sizes and how meters move — and build visuals of your own on the same helpers.
+sidebar:
+  order: 11
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![One spectrum switching between every built-in palette](/pyzed/media/audio/ui/palettes.webp)
+
+<Aside type="note" title="In plain words">
+Every audio component can change its colors and its look without touching its code: pick a
+palette by name, pass your own colors, or let it follow the app's theme.
+</Aside>
+
+## Colors
+
+Any `color=` takes a **theme token** (`"accent"`, `"success"`, `"warning"`, `"error"`...) or a hex
+color (`"#ff9f3d"`). Tokens follow the theme: switch to a light theme and the knobs follow.
+
+Meters and analyzers take `colors=`: a palette name or a list of colors, from quiet to loud
+(or from bass to treble with `color_by="frequency"`).
+
+| Palette | Colors |
+| --- | --- |
+| `"fl"` | Green → yellow → orange → red, like FL Studio's meters. |
+| `"vu"` | Mostly green, yellow near the top, red at the very top. |
+| `"neon"` | Cyan → violet → pink. |
+| `"fire"` | Dark purple → red → orange → yellow → white. |
+| `"ice"` | Navy → blue → light cyan. |
+| `"magma"`, `"viridis"` | The scientific color maps, best for spectrograms. |
+| `"mono"` | Gray to white. |
+| `"scope"` | The oscilloscope's trace colors. |
+
+Add your own to `ui.audio.PALETTES` and use it by name everywhere:
+
+```python
+ui.audio.PALETTES["sunset"] = ["#2d1b69", "#f72585", "#ffbe0b"]
+ui.audio.Spectrum(magnitudes=mags, colors="sunset")
+```
+
+## Behavior
+
+| What | Where |
+| --- | --- |
+| Look | `variant=` on every component ([knob](/pyzed/audio/components/knob/), [fader](/pyzed/audio/components/fader/), [meter](/pyzed/audio/components/vu-meter/), [spectrum](/pyzed/audio/components/spectrum/)...). |
+| How far a drag turns a control | `travel=` on knobs, `length=` on faders; <kbd>Shift</kbd> is always ten times finer. |
+| How a value maps to the control | `curve="log"`, `step=`, `options=`, `bipolar=True`. |
+| How meters move | `hold=` (peak hold), `falloff=` and `peaks=` (analyzers), `variant="analog"` ballistics. |
+| How a scope reads | `trigger=`, `window=`, `persistence=`, `xy=`. |
+
+All of them are `pz.Component`s, so `style=`, `class_=`, stylesheets and `animate=` work as on
+any other component (see [Components](/pyzed/guides/components/)).
+
+## Building your own
+
+The helpers are public: `ui.audio.bands()` (FFT bins to log bands), `ui.audio.format_value()`
+(`1.2 kHz`, `-6.0 dB`), `ui.audio.note_name()` and `ui.audio.PALETTES`. Every component also has
+a `shapes()` method returning its drawing as `pyzed.draw` shapes, so you can put a knob or a meter
+inside your own `pz.canvas`.
+
+<Aside type="tip">
+Audio displays move every frame. Return `pz.frames(lambda dt: None)` from `subscriptions()`
+while something plays, and nothing at all when it stops, so the app sleeps when idle.
+</Aside>

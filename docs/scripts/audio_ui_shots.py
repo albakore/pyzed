@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import math
 import os
-import random
 import sys
 import tempfile
 import time
@@ -67,48 +66,32 @@ def scene(name: str, size: Tuple[int, int], *, fps: int = 15, quality: int = 62)
     return register
 
 
-# -- synthesized "music" -------------------------------------------------------------------------------
-def song_spectrum(t: float, bins: int = 512, sample_rate: float = 48000) -> List[float]:
-    """A plausible spectrum of a song at time ``t``: a kick on every beat, a bass line, chords, hats."""
-    beat = (t * 2.0) % 1.0  # 120 BPM
-    kick = math.exp(-beat * 9)
-    hat = math.exp(-((t * 4.0) % 1.0) * 14) if int(t * 4) % 2 else 0.0
-    chord = [220, 277, 330, 440] if int(t / 2) % 2 == 0 else [196, 247, 294, 392]
-    bass = chord[0] / 2
-    nyquist = sample_rate / 2
-    out = []
-    rnd = random.Random(int(t * 30))
-    for i in range(bins):
-        f = max((i + 0.5) / bins * nyquist, 1.0)
-        db = -52 - 12 * math.log10(f / 100 + 1) + rnd.uniform(-5, 5)  # pinkish noise floor
-        db = max(db, -40 + 34 * kick - 30 * abs(math.log2(f / 55))) if f < 160 else db
-        for k, base in enumerate([bass, *chord]):
-            for h in range(1, 14):
-                df = abs(f - base * h)
-                if df < 40 + 12 * h:
-                    db = max(db, -10 - h * 3.2 - k * 2 - df / (4 + h) + 4 * math.sin(t * 3 + k + h))
-        if f > 6000:
-            db = max(db, -38 + 22 * hat - 10 * math.log10(f / 6000) + rnd.uniform(-4, 4))
-        out.append(max(-120.0, min(0.0, db)))
-    return out
+# -- music from the engine --------------------------------------------------------------------------
+class Song:
+    """The visualizer demo's groove (examples/audio/visualizer.py) rendered offline, step by step."""
 
+    def __init__(self):
+        from pyzed import audio
+        from visualizer import change_chord, demo_song
 
-def song_wave(t: float, n: int = 1024, sample_rate: float = 48000) -> List[float]:
-    """A short buffer of the same song (chords plus a decaying kick)."""
-    chord = [220, 277, 330, 440] if int(t / 2) % 2 == 0 else [196, 247, 294, 392]
-    beat = (t * 2.0) % 1.0
-    out = []
-    for i in range(n):
-        s = t + i / sample_rate
-        v = sum(math.sin(2 * math.pi * f * s) for f in chord) * 0.13
-        v += math.sin(2 * math.pi * 55 * s) * 0.6 * math.exp(-(beat + i / sample_rate) * 8)
-        out.append(v)
-    return out
+        self.engine = audio.Engine("offline")
+        self.tap = demo_song(self.engine)
+        self._chord = change_chord
+        self.time = 0.0
 
+    def step(self, dt: float) -> None:
+        self.time += dt
+        self._chord(self.engine, self.time)
+        self.engine.render(dt)
 
-def level(t: float, phase: float = 0.0) -> float:
-    beat = (t * 2.0 + phase) % 1.0
-    return min(1.0, 0.35 + 0.55 * math.exp(-beat * 5) + 0.08 * math.sin(t * 7 + phase * 3))
+    def spectrum(self) -> List[float]:
+        return self.tap.spectrum(512)
+
+    def wave(self, n: int = 1024) -> List[float]:
+        return self.tap.scope(n)
+
+    def level(self) -> Tuple[float, float]:
+        return self.tap.level()
 
 
 def card(content: Any, title: str = "", pad: int = 16) -> Any:
@@ -130,11 +113,17 @@ class View(pz.App):
         return pz.container(self.build(self), width="fill", height="fill", padding=20, bg=th.background, center=True)
 
 
-def run(make_view: Callable[[View], Any], seconds: float, fps: int, step: Optional[Callable[[View], None]] = None):
+def run(make_view: Callable[[View], Any], seconds: float, fps: int, step: Optional[Callable[[View], None]] = None,
+        song: Optional[Song] = None, warmup: float = 0.0):
     app = View(make_view)
+    app.song = song
+    if song is not None and warmup:
+        song.step(warmup)
     for i in range(int(seconds * fps)):
         app.t = i / fps
         CLOCK[0] = app.t
+        if song is not None:
+            song.step(1 / fps)
         if step:
             step(app)
         yield Frame(app)
@@ -163,16 +152,16 @@ def knob_scene(s: Scene):
 def fader_scene(s: Scene):
     def build(v: View):
         faders = [
-            au.Fader(value=0.55 + 0.35 * math.sin(v.t * 1.2), caption="Console", level=level(v.t)),
+            au.Fader(value=0.55 + 0.35 * math.sin(v.t * 1.2), caption="Console", level=min(1, v.song.level()[1])),
             au.Fader(value=0.5 + 0.4 * math.sin(v.t * 1.5 + 1), caption="FL", variant="fl", color="#ff9f3d",
-                     level=level(v.t, 0.3)),
+                     level=min(1, v.song.level()[0] * 2.5)),
             au.Fader(value=0.5 + 0.4 * math.sin(v.t * 1.1 + 2), caption="Flat", variant="flat", color="#3dd68c"),
             pz.column([au.Fader(value=0.5 + 0.45 * math.sin(v.t * 0.9), vertical=False, length=220,
                                 caption="Crossfader", variant="fl", color="#b26cf0")], spacing=0),
         ]
         return card(pz.row(faders, spacing=28, align="center"))
 
-    return run(build, 6, s.fps)
+    return run(build, 6, s.fps, song=Song(), warmup=0.5)
 
 
 @scene("pads", (720, 270))
@@ -225,7 +214,8 @@ def piano_scene(s: Scene):
 @scene("vu-meter", (720, 260))
 def vu_scene(s: Scene):
     def build(v: View):
-        l, r = level(v.t), level(v.t, 0.15) * 0.92
+        rms, peak = v.song.level()
+        l, r = min(1.0, rms * 2.2), min(1.0, peak)
         return card(pz.row([
             au.VuMeter(level=[l, r], length=180),
             au.VuMeter(level=[l * 0.8, r * 0.8], variant="bar", length=180, thickness=14),
@@ -233,27 +223,25 @@ def vu_scene(s: Scene):
             au.VuMeter(level=l, variant="analog", length=260),
         ], spacing=30, align="center"))
 
-    return run(build, 5, s.fps)
+    return run(build, 5, s.fps, song=Song(), warmup=0.5)
 
 
 @scene("waveform", (720, 330))
 def waveform_scene(s: Scene):
-    random.seed(2)
-    clip = []
-    for i in range(6000):
-        env = abs(math.sin(i / 900)) ** 1.5 * (0.6 + 0.4 * math.sin(i / 160))
-        clip.append(env * math.sin(i / 3.1) * (0.8 + random.uniform(-0.2, 0.2)))
+    song = Song()
+    left, _right = song.engine.render(6.0)  # six seconds of the groove, drawn whole
+    clip = left[::8]
 
     def build(v: View):
         head = (v.t / 6) % 1.0
         return card(pz.column([
             au.Waveform(samples=clip, variant="bars", playhead=head, width=640, height=70, color="#ff9f3d"),
             au.Waveform(samples=clip, variant="mirror", playhead=head, width=640, height=70, selection=(0.62, 0.8)),
-            au.Waveform(samples=song_wave(v.t, 900), variant="line", glow=True, width=640, height=70,
+            au.Waveform(samples=v.song.wave(1200), variant="line", glow=True, width=640, height=70,
                         color="#3dd68c"),
         ], spacing=12))
 
-    return run(build, 6, s.fps)
+    return run(build, 6, s.fps, song=song)
 
 
 @scene("scope", (720, 260))
@@ -278,7 +266,7 @@ def spectrum_scene(s: Scene):
                 ("radial", "neon")]
 
     def build(v: View):
-        mags = song_spectrum(v.t)
+        mags = v.song.spectrum()
         cells = [card(au.Spectrum(magnitudes=mags, variant=variant, colors=colors, width=210, height=110,
                                   bands=40 if variant != "radial" else 64,
                                   color_by="frequency" if variant in ("mirror", "radial") else "level",
@@ -286,20 +274,20 @@ def spectrum_scene(s: Scene):
                  for variant, colors in variants]
         return pz.column([pz.row(cells[:3], spacing=12), pz.row(cells[3:], spacing=12)], spacing=12)
 
-    return run(build, 6, s.fps)
+    return run(build, 6, s.fps, song=Song(), warmup=0.5)
 
 
 @scene("spectrogram", (720, 250))
 def spectrogram_scene(s: Scene):
     def build(v: View):
-        mags = song_spectrum(v.t)
+        mags = v.song.spectrum()
         return card(pz.row([
             au.Spectrogram(magnitudes=mags, width=420, height=180, history=140, bands=64, colors="magma"),
             au.Spectrogram(magnitudes=mags, width=200, height=180, history=70, bands=40, colors="viridis",
                            key="small"),
         ], spacing=12))
 
-    return run(build, 7, s.fps)
+    return run(build, 7, s.fps, song=Song())
 
 
 @scene("palettes", (720, 220))
@@ -308,13 +296,13 @@ def palette_scene(s: Scene):
 
     def build(v: View):
         name = names[int(v.t / 1.2) % len(names)]
-        mags = song_spectrum(v.t)
+        mags = v.song.spectrum()
         return card(pz.column([
             pz.text(f'colors="{name}"', font="mono", size=13),
             au.Spectrum(magnitudes=mags, variant="blocks", colors=name, width=640, height=130, bands=56),
         ], spacing=8))
 
-    return run(build, len(names) * 1.2, s.fps)
+    return run(build, len(names) * 1.2, s.fps, song=Song(), warmup=0.5)
 
 
 @scene("webcam", (560, 330))

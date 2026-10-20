@@ -1,0 +1,36 @@
+---
+title: Spectrogram
+description: A scrolling spectrogram (waterfall) for Python — frequency over time in color, with magma, viridis or any palette, drawn fast enough for live audio.
+sidebar:
+  order: 10
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Two spectrograms scrolling left as a song plays: kicks as columns at the bottom, chords as bright lines](/pyzed/media/audio/ui/spectrogram.webp)
+
+<Aside type="note" title="In plain words">
+A spectrogram is a spectrum analyzer with memory: time runs from left to right, pitch from bottom
+to top, and the color says how loud each pitch was. You can see a song's rhythm and chords in it.
+</Aside>
+
+```python
+ui.audio.Spectrogram(magnitudes=engine.spectrum(512), history=160, colors="magma")
+```
+
+Every render that receives a **new** `magnitudes` list adds a column on the right; redrawing for
+any other reason (a hover, another widget) does not, so the speed follows your updates. It keeps
+the last `history` columns.
+
+Loudness is quantized into `levels` colors and every cell of one color is drawn in a single
+shape, so even 160 columns × 64 bands stay cheap to draw.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `magnitudes` | `()` | dB per FFT bin (like `node.spectrum()`). |
+| `width`, `height` | `360`, `140` | Size in pixels. |
+| `history` | `120` | Columns kept. |
+| `bands` | `48` | Rows (log-spaced bands). |
+| `min_db`, `max_db` | `-90`, `0` | Range of the colors. |
+| `colors`, `levels` | `"magma"`, `24` | Palette and how many color steps. |
+| `sample_rate` | `48000` | For the band edges. |

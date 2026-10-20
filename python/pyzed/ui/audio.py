@@ -379,7 +379,7 @@ class Knob(_Valued):
             mouse_leave=lambda: setattr(self, "hovered", False),
             cursor="resize-vertical" if not self.disabled else "not-allowed",
         )
-        width = max(d, 56)
+        width = max(d, 56) if self.caption or self.show_value else d
         children = [dial, *self._caption(width)]
         if self.show_value and self.variant != "minimal":
             color = th.text if (self.active or self.hovered) else th.text_muted
@@ -575,7 +575,8 @@ class LedButton(Component):
         self.down = False
 
     def is_on(self) -> bool:
-        """Whether it is lit (held, toggled by the user, or ``on`` from the parent)."""
+        """Whether it is lit: held (``momentary``), ``on`` from the parent when it handles ``toggle``,
+        or as the user last switched it otherwise."""
         if self.on != self._prop:
             self._prop, self._local = self.on, None
         if self.momentary:
@@ -586,8 +587,10 @@ class LedButton(Component):
         self.down = True
         if self.momentary:
             return self.emit("press", True)
-        self._local = not self.is_on()
-        return _results(self.emit("press", True), self.emit("toggle", self._local))
+        new = not self.is_on()
+        if not self.handles("toggle"):  # nobody stores it: remember it here
+            self._local = new
+        return _results(self.emit("press", True), self.emit("toggle", new))
 
     def _release(self) -> Any:
         if not self.down:
@@ -1234,22 +1237,29 @@ def _band_ranges(bins: int, bands: int, sample_rate: float, low: float) -> List[
     return _BANDS_CACHE[key]
 
 
-def bands(magnitudes: Sequence[float], count: int, *, sample_rate: float = 48000, low: float = 30.0,
-          log: bool = True, floor: float = -120.0) -> List[float]:
-    """Groups FFT ``magnitudes`` (dB, bins from 0 Hz to Nyquist) into ``count`` bands, log-spaced
-    like the ear hears them; each band takes its loudest bin."""
+def bands(magnitudes: Sequence[float], count: int, *, spacing: str = "log", sample_rate: float = 48000,
+          low: float = 20.0, log: bool = True, floor: float = -120.0) -> List[float]:
+    """Groups spectrum ``magnitudes`` (dB) into ``count`` bands; each band takes its loudest value.
+
+    ``spacing`` says how the input is spread: ``"log"`` (over octaves from ``low`` Hz to Nyquist,
+    what ``node.spectrum()`` returns) is regrouped evenly; ``"linear"`` (raw FFT bins from 0 Hz, as
+    numpy gives them) is grouped into log-spaced bands like the ear hears them, or evenly with
+    ``log=False``.
+    """
     mags = _numbers(magnitudes)
     n = len(mags)
     if n == 0:
         return [floor] * count
-    if not log:
-        return [max(mags[i * n // count:max((i + 1) * n // count, i * n // count + 1)]) for i in range(count)]
+    if spacing == "log" or not log:
+        return [max(mags[min(i * n // count, n - 1):max((i + 1) * n // count, min(i * n // count, n - 1) + 1)])
+                for i in range(count)]
     return [max(mags[a:b]) if b > a else floor for a, b in _band_ranges(n, count, sample_rate, low)]
 
 
 class Spectrum(Component):
-    """A spectrum analyzer: how loud each frequency is. ``magnitudes`` are dB values per FFT bin
-    (0 Hz to Nyquist, like ``node.spectrum()``), grouped into ``bands`` log-spaced bands.
+    """A spectrum analyzer: how loud each frequency is. ``magnitudes`` are dB values spread over
+    octaves from 20 Hz, as ``node.spectrum()`` returns them (``spacing="linear"`` for raw FFT bins
+    from 0 Hz), grouped into ``bands`` bands.
 
     ``variant``: ``"bars"``, ``"blocks"`` (LED segments), ``"line"``, ``"filled"``, ``"mirror"``
     or ``"radial"`` (bars around a circle). ``colors`` is a palette name (``"fl"``, ``"neon"``,
@@ -1270,7 +1280,7 @@ class Spectrum(Component):
     falloff: float = 48.0
     peaks: bool = True
     sample_rate: float = 48000
-    log: bool = True
+    spacing: Literal["log", "linear"] = "log"
     labels: bool = False
     gap: float = 2
     icon = "audio-lines"
@@ -1284,7 +1294,7 @@ class Spectrum(Component):
 
     def values(self) -> List[float]:
         """The bands' levels (0..1) after falloff, updated once per render."""
-        raw = bands(self.magnitudes, self.bands, sample_rate=self.sample_rate, log=self.log, floor=self.min_db)
+        raw = bands(self.magnitudes, self.bands, spacing=self.spacing, sample_rate=self.sample_rate, floor=self.min_db)
         span = (self.max_db - self.min_db) or 1.0
         target = [_clamp((v - self.min_db) / span) for v in raw]
         now = _now()
@@ -1313,7 +1323,7 @@ class Spectrum(Component):
             for f, name in ((100, "100"), (1000, "1k"), (10000, "10k")):
                 if f >= nyquist:
                     continue
-                x = w * math.log(f / 30) / math.log(nyquist / 30) if self.log else w * f / nyquist
+                x = w * math.log(f / 20) / math.log(nyquist / 20)
                 out.append(draw.line(x, 0, x, h, stroke=_alpha(th.border, 0.6), width=1, dash=[2, 3]))
                 out.append(draw.text(x + 3, 3, name, color=th.text_muted, size=9))
         if n == 0:
@@ -1397,6 +1407,7 @@ class Spectrogram(Component):
     colors: Any = "magma"
     levels: int = 24
     sample_rate: float = 48000
+    spacing: Literal["log", "linear"] = "log"
     icon = "waves"
     category = "Audio"
     size = (360, 140)
@@ -1407,7 +1418,7 @@ class Spectrogram(Component):
 
     def push(self, magnitudes: Sequence[float]) -> None:
         """Adds a column for ``magnitudes`` (done by ``render`` when the list changes)."""
-        raw = bands(magnitudes, self.bands, sample_rate=self.sample_rate, floor=self.min_db)
+        raw = bands(magnitudes, self.bands, spacing=self.spacing, sample_rate=self.sample_rate, floor=self.min_db)
         span = (self.max_db - self.min_db) or 1.0
         q = self.levels - 1
         self.columns.append([int(round(_clamp((v - self.min_db) / span) * q)) for v in raw])

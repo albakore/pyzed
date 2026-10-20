@@ -1,0 +1,125 @@
+---
+title: The modular rack
+description: Build a VCV Rack-style modular synthesizer in Python with Pyzed — modules on rails, knobs and jacks laid out from each module's description, a module browser, and patches saved to JSON.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![A rack of modules — sequencer, oscillator, filter, envelope, delay, scope and output — patched with cables that sway and carry signal dots](/pyzed/media/audio/ui/rack.webp)
+
+<Aside type="note" title="In plain words">
+A modular synthesizer is a set of boxes (modules) that each do one thing — make a tone, filter
+it, shape its volume, echo it — joined by cables. `ui.rack.Rack` puts the audio engine's modules
+on screen like hardware on rails: turn their knobs and drag cables between their sockets.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import audio, ui
+
+
+class Modular(pz.App):
+    def __init__(self):
+        self.engine = audio.Engine()
+        self.layout = {}          # where each module sits; saved with the patch
+        seq = self.engine.add("sequencer", bpm=118)
+        osc = self.engine.add("oscillator", wave="saw")
+        vcf = self.engine.add("filter", cutoff=900, resonance=0.6)
+        out = self.engine.add("audio_out")
+        self.engine.connect(seq, "pitch", osc, "pitch")
+        self.engine.chain(osc, vcf, out)
+        self.engine.start()
+
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]   # cables sway, scopes and LEDs move
+
+    def view(self):
+        return ui.rack.Rack(engine=self.engine, layout=self.layout, rows=2)
+
+
+pz.run(Modular)
+```
+
+## Two layers: logic and graphics
+
+The rack is only the **graphical layer**. The sound comes from the [audio engine](/pyzed/audio/engine/getting-started/)
+(`pyzed.audio`), which works without any window: a script can build the same patch, play it
+or render it to a WAV file. The rack reads three things from the engine and changes them through
+it:
+
+| The rack reads | From | And changes it with |
+| --- | --- | --- |
+| The modules | `engine.nodes` | `engine.add(kind)`, `engine.remove(id)` |
+| What each module has | `audio.modules()`: ports and parameters | |
+| The knobs | `node.params` | `engine.set(id, param, value)` |
+| The cables | `engine.cables` | `engine.connect(...)`, `engine.disconnect(...)` |
+| Screens, LEDs, meters | `node.scope()`, `node.spectrum()`, `node.state`, `node.level()` | |
+
+So anything your code does to the engine shows up in the rack on the next frame, and anything
+the user does in the rack is a normal engine call.
+
+## Panels are laid out for you
+
+You never draw a module. Each panel is built from the module's description:
+
+- **Knobs** for its parameters, in columns from the top (a parameter with `options`, like an
+  oscillator's wave, becomes a stepped selector).
+- **Jacks** for its inputs at the bottom, and for its outputs below them on a **darker plate**,
+  the convention every Eurorack maker follows so outputs are easy to spot.
+- A **screen** for the modules that have one: a live oscilloscope on `scope`, step LEDs on the
+  `sequencer` (the current step lights up), level meters on `audio_out`, `mixer`, `vca` and
+  `compressor`.
+- A colored strip on top by category (sources orange, filters blue, effects pink...), the title,
+  four screws and a × to remove it.
+
+Widths are whole rack units (HP, 15 px) and every module is 380 px tall, like 3U Eurorack.
+
+## Using it
+
+<Steps>
+
+1. **Add modules** from the browser on the left (type to search); a module goes at the end of
+   the first row with room.
+2. **Patch a cable**: drag from a jack and drop it on another. An output goes to an input; the
+   cable snaps to the closest jack within reach as you drag.
+3. **Move a cable**: drag a patched input — you pick the cable up by its plug, as in VCV Rack.
+   Drop it on another input, or anywhere else to unplug it.
+4. **Unplug**: right-click a jack.
+5. **Move a module**: drag its title. It snaps to the HP grid and to a row, and moves along
+   if it lands on another module.
+6. **Turn knobs**: drag up and down (<kbd>Shift</kbd> for fine), double-click to reset.
+
+</Steps>
+
+## Saving patches
+
+```python
+ui.rack.save(self.engine, self.layout, "bass.json")     # engine.to_dict() + the layout
+self.layout = ui.rack.load(self.engine, "bass.json")    # loads both back
+```
+
+The file is the engine's own patch format with the rack layout under `"ui"`, so a patch made in
+the rack plays the same from a script without the rack.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `engine` | `None` | The `audio.Engine` to show and edit. |
+| `layout` | `{}` | Your dict of positions: `{node id: {"row": r, "x": hp}}`. |
+| `catalog` | `None` | Module descriptions (`audio.modules()` by default). |
+| `rows` | `2` | Rows of rails. |
+| `browser` | `True` | The module browser on the left. |
+| `tension` | `0.45` | How tight cables hang (0 loose, 1 straight). |
+| `cable_opacity` | `0.9` | See the modules through the cables. |
+| `flow` | `True` | Signal dots moving along the cables. |
+| `light` | `False` | Light panels, like VCV Rack's classic look. |
+
+Event: `on_change` with what changed: `"add"`, `"remove"`, `"move"`, `"connect"`, `"disconnect"` or
+`"set"` (to mark a document as unsaved, for instance).
+
+<Aside type="tip">
+`ui.rack.panel_layout(audio.module("filter"))` tells you where every knob and jack of a module
+goes (`knobs`, `inputs`, `outputs`, `width`), if you want to draw your own panels with the same
+geometry.
+</Aside>

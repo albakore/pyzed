@@ -1,0 +1,56 @@
+---
+title: VU meter
+description: Level meters for Python audio apps — LED segments, a smooth gradient bar or an analog needle VU with ballistics, in decibels, with peak hold and any colors.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![LED, gradient and four-channel meters bouncing with the beat next to an analog needle VU meter](/pyzed/media/audio/ui/vu-meter.webp)
+
+<Aside type="note" title="In plain words">
+A meter shows how loud a sound is right now. Green is fine, yellow is loud, red is about to
+distort. The little line that stays at the top for a moment is the latest peak.
+</Aside>
+
+```python
+rms, peak = engine.level()              # the master output, 0..1
+ui.audio.VuMeter(level=[rms, peak])     # one bar per value
+```
+
+## Levels and scale
+
+`level` is one number or a list (one bar per channel), as linear amplitude from 0 to 1, which is
+what `node.level()` and `engine.level()` return. With `scale="db"` (the default) the meter shows
+it in decibels from `floor` (−60 dB) to 0 dB, as mixers do: quiet sounds still move it.
+`scale="linear"` shows the raw number (good for control signals).
+
+Each channel holds its peak for `hold` seconds, then lets it fall.
+
+## Looks
+
+| `variant` | Looks like |
+| --- | --- |
+| `"led"` | Segments that light up (`segments` of them), dim when off. |
+| `"bar"` | A smooth bar with the colors as a gradient. |
+| `"analog"` | A needle VU meter (−20 to +3 VU) that moves with the ~300 ms ballistics of a real one. |
+
+`colors` is a palette name (`"vu"`, `"fl"`, `"neon"`, `"fire"`... see [Colors](/pyzed/audio/components/colors/))
+or a list of colors from quiet to loud. `vertical=False` lays it out horizontally.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `level` | `0` | A level or a list of levels (0..1). |
+| `variant` | `"led"` | `"led"`, `"bar"` or `"analog"`. |
+| `vertical` | `True` | Direction of the bars. |
+| `length`, `thickness` | `160`, `10` | Size of each bar in pixels. |
+| `segments` | `24` | LEDs per bar. |
+| `scale`, `floor` | `"db"`, `-60` | How a level maps to the meter. |
+| `hold` | `1.2` | Seconds a peak is held. |
+| `colors` | `"vu"` | A palette name or a list of colors. |
+
+<Aside type="tip">
+Meters need to be redrawn every frame. Add `pz.frames(lambda dt: None)` to your app's
+`subscriptions()` while the engine plays and read the levels in `view()`.
+</Aside>

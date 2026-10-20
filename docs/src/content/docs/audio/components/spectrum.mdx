@@ -1,0 +1,74 @@
+---
+title: Spectrum analyzer
+description: A real-time spectrum analyzer for Python — bars, LED blocks, lines, mirrored or radial, log-spaced bands, falloff, peak caps and color palettes.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Six spectrum analyzers dancing to the same song: bars, blocks, line, filled, mirror and radial](/pyzed/media/audio/ui/spectrum.webp)
+
+<Aside type="note" title="In plain words">
+A spectrum analyzer splits a sound into its pitches: bass on the left, treble on the right, and
+the taller the bar, the louder that pitch. It is the classic music visualizer.
+</Aside>
+
+```python
+class Visualizer(pz.App):
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]   # redraw every frame
+
+    def view(self):
+        return ui.audio.Spectrum(magnitudes=engine.spectrum(512), variant="blocks", colors="fl")
+```
+
+## From FFT bins to bands
+
+`magnitudes` are decibels (−120 to 0) for evenly spaced frequencies from 0 Hz to half the
+sample rate — exactly what `node.spectrum()` and `engine.spectrum()` return. The analyzer groups
+them into `bands` bands spaced **logarithmically** (each band is a little wider than the one
+before), the way the ear hears: an octave takes the same width at 100 Hz as at 5 kHz. Each band
+shows its loudest bin. `log=False` keeps the bins evenly spaced instead.
+
+`min_db` and `max_db` are the bottom and top of the display.
+
+## Motion
+
+Bars jump up at once and fall at `falloff` decibels per second (0 makes them follow the input
+exactly), so the display looks smooth even when the input flickers. With `peaks=True` a small
+cap stays on top of each bar and drops more slowly. The speed is measured in real time, so it
+is the same at 30 or 144 frames per second.
+
+## Looks and colors
+
+| `variant` | Looks like |
+| --- | --- |
+| `"bars"` | Solid bars. |
+| `"blocks"` | LED segments, like a hi-fi. |
+| `"line"` | A glowing line through the band tops. |
+| `"filled"` | The same line with the area below filled. |
+| `"mirror"` | Bars centered vertically, for a symmetric look. |
+| `"radial"` | Bars around a circle, like a music visualizer. |
+
+`colors` is a palette (`"fl"`, `"neon"`, `"fire"`, `"ice"`, `"magma"`, `"viridis"`...) or a list of
+colors. `color_by="level"` paints each bar from quiet (bottom) to loud (top);
+`color_by="frequency"` gives each band its own color from bass to treble. `labels=True` marks
+100 Hz, 1 kHz and 10 kHz.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `magnitudes` | `()` | dB per FFT bin. |
+| `width`, `height` | `360`, `140` | Size in pixels. |
+| `variant` | `"bars"` | See the table above. |
+| `bands`, `log` | `48`, `True` | Number of bands and their spacing. |
+| `min_db`, `max_db` | `-90`, `0` | Range shown. |
+| `colors`, `color_by` | `"fl"`, `"level"` | Palette and what it follows. |
+| `falloff`, `peaks` | `48`, `True` | Fall speed (dB/s) and peak caps. |
+| `sample_rate` | `48000` | For the labels and the band edges. |
+| `labels`, `gap`, `background` | `False`, `2`, `"#0f1012"` | |
+
+<Aside type="tip">
+`ui.audio.bands(magnitudes, 16)` gives you the same log-spaced bands as numbers, to drive
+anything else with the music: the size of a logo, the color of the window, a particle system.
+</Aside>

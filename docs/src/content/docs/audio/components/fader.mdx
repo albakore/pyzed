@@ -1,0 +1,62 @@
+---
+title: Fader
+description: A mixer fader for Python — a console cap, FL Studio's style or a flat handle, vertical or as a crossfader, with an optional level meter beside the track.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Three vertical faders with level meters and a horizontal crossfader moving](/pyzed/media/audio/ui/fader.webp)
+
+<Aside type="note" title="In plain words">
+A fader is the slider of a mixing desk: one per channel, usually for the volume. Drag the cap,
+click anywhere on the track to jump there, or scroll over it.
+</Aside>
+
+```python
+ui.audio.Fader(value=self.volume, caption="Master", level=engine.level()[1],
+               on_change=lambda e: engine.set(out, "volume", e.value))
+```
+
+## How it works
+
+- **Drag the cap** to move it; <kbd>Shift</kbd> makes the movement ten times finer.
+- **Click on the track** (not on the cap) to jump to that point.
+- **Scroll** to nudge it, **double-click** to reset it to `default`.
+- `level` (0..1) draws a small meter beside the track: pass the channel's peak every frame and
+  the fader doubles as a meter, like on a real console.
+
+## Looks
+
+| `variant` | Looks like |
+| --- | --- |
+| `"console"` | A grooved metal cap, like an analog mixing desk. |
+| `"fl"` | FL Studio's dark cap with a colored line, the track filled up to it in `color`. |
+| `"flat"` | A round handle on a filled track, matching the rest of the theme. |
+
+`vertical=False` lays it out horizontally (a crossfader). `ticks` sets how many marks are drawn
+along the track (`0` for none) and `length` its size in pixels.
+
+## Properties
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `value`, `min`, `max` | `0.75`, `0`, `1` | The value and its range. |
+| `default`, `step`, `curve` | `None`, `None`, `"lin"` | As on the [knob](/pyzed/audio/components/knob/). |
+| `caption`, `unit`, `decimals` | | Text under it and how the value is written. |
+| `length` | `160` | Length of the track in pixels. |
+| `vertical` | `True` | `False` for a horizontal fader. |
+| `variant` | `"console"` | `"console"`, `"fl"` or `"flat"`. |
+| `ticks` | `11` | Marks along the track. |
+| `level` | `None` | A 0..1 level drawn as a meter next to the track. |
+| `color` | `"accent"` | The fill and the line on the cap. |
+| `show_value`, `disabled` | `True`, `False` | |
+
+Event: `on_change` with the new value.
+
+<Aside type="tip">
+A mixer channel is a column: a [knob](/pyzed/audio/components/knob/) for pan, two
+[LED buttons](/pyzed/audio/components/pads-and-buttons/) for mute and solo and a fader with its `level`.
+The [MIDI controller demo](/pyzed/audio/demos/) puts eight of them side by side.
+</Aside>

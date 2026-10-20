@@ -38,14 +38,16 @@ def test_format_and_note_names():
     assert au.KEYBOARD["a"] == 0 and au.KEYBOARD["k"] == 12
 
 
-def test_bands_are_log_spaced_and_take_the_loudest_bin():
+def test_bands_regroup_log_spectra_and_fft_bins():
+    assert au.bands([-60.0, -10.0, -50.0, -40.0], 2) == [-10.0, -40.0]  # already log-spaced (the engine's)
+    assert len(au.bands([-60.0, -10.0], 5)) == 5
     mags = [-100.0] * 512
-    mags[5] = -10.0  # a low tone
-    out = au.bands(mags, 32, sample_rate=48000)
+    mags[5] = -10.0  # a low tone in raw FFT bins
+    out = au.bands(mags, 32, spacing="linear", sample_rate=48000)
     assert len(out) == 32 and max(out) == -10.0
     assert out.index(-10.0) < 12  # low frequencies get many bands
     assert au.bands([], 8) == [-120.0] * 8
-    assert au.bands(["-3", "x", "-6"], 1, log=False) == [-3.0]  # text from the designer
+    assert au.bands(["-3", "x", "-6"], 1) == [-3.0]  # text from the designer
 
 
 # -- controls ---------------------------------------------------------------------------------------
@@ -104,10 +106,15 @@ def test_pad_velocity_and_led_button_toggle():
     toggles, on_toggle = collect()
     b = au.LedButton.create(text="MUTE", on_toggle=on_toggle)
     b._press()
-    assert toggles == [True] and b.is_on()
+    assert toggles == [True] and not b.is_on()  # controlled: lit when the parent passes on=True
+    b.on = True
+    assert b.is_on()
     b._release()
     b._press()
-    assert toggles == [True, False] and not b.is_on()
+    assert toggles == [True, False]
+    free = au.LedButton.create(text="SOLO")  # uncontrolled: it remembers by itself
+    free._press()
+    assert free.is_on()
     m = au.LedButton.create(momentary=True)
     m._press()
     assert m.is_on()
@@ -340,3 +347,25 @@ def test_rack_renders_and_saves(tmp_path):
     e2 = FakeEngine()
     assert rack.load(e2, tmp_path / "patch.json") == layout
     assert e2.cables == e.cables
+
+
+# -- demos ------------------------------------------------------------------------------------------
+@pytest.mark.parametrize("module, name", [("synth", "Synth"), ("visualizer", "Visualizer"),
+                                          ("midi_controller", "Controller"), ("drum_machine", "DrumMachine"),
+                                          ("modular", "Modular")])
+def test_audio_demos_play_offline(tmp_path, module, name):
+    audio = pytest.importorskip("pyzed.audio")
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "examples" / "audio"))
+    cls = getattr(__import__(module), name)
+    engine = audio.Engine("offline")
+    app = cls(engine)
+    assert app.subscriptions()  # they redraw every frame
+    if hasattr(app, "note_on"):
+        app.note_on(57)  # the synths only sound while a key is held
+    for _ in range(5):
+        engine.render(0.05)
+        if hasattr(app, "tick"):
+            app.tick(0.05)
+    pz.screenshot(app, tmp_path / f"{module}.png", size=cls.size, scale=1)
+    assert (tmp_path / f"{module}.png").stat().st_size > 1000
+    assert max(map(abs, engine.render(0.5)[0])) > 0.001  # it makes sound

@@ -1,0 +1,48 @@
+---
+title: Oscilloscope
+description: An oscilloscope for Python — several traces over a grid, a trigger that holds periodic waves still, XY Lissajous mode, phosphor persistence and glow.
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A two-trace oscilloscope with fading persistence next to an XY scope drawing a rotating Lissajous figure](/pyzed/media/audio/ui/scope.webp)
+
+<Aside type="note" title="In plain words">
+An oscilloscope draws a signal the way a lab instrument does: a few milliseconds of it on a
+green grid. It is how you see the shape of a wave — sine, saw, square — while you patch.
+</Aside>
+
+```python
+ui.audio.Scope(traces=[osc.scope(1024), lfo.scope(1024)], width=320, height=180)
+```
+
+## Traces and trigger
+
+`traces` is a list of signals (or a single list of numbers), each drawn in the next color of
+`colors`. With `trigger=True` each trace starts at the first point where the wave rises through
+zero, so a steady tone stands still instead of drifting. `window` is how many samples are shown.
+
+## XY mode
+
+`xy=True` draws the first trace against the second: the first moves the dot left and right, the
+second up and down. Two sines make **Lissajous figures**; a stereo pair (left, right) shows how
+wide the stereo image is — a vertical line is mono, a cloud is wide.
+
+## Phosphor
+
+`persistence=3` leaves fading copies of the last three frames, like the glow of an old CRT
+screen; `glow=True` adds a soft halo around the newest trace.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `traces` | `()` | Signals to draw (−1..1). |
+| `width`, `height` | `320`, `180` | Size in pixels. |
+| `colors` | `"scope"` | A palette name or a list (one color per trace). |
+| `background` | `"#0b120e"` | The screen. |
+| `columns`, `rows` | `8`, `6` | Divisions of the grid. |
+| `gain` | `1` | Vertical zoom. |
+| `trigger`, `window` | `True`, `512` | Holds periodic waves still; samples shown. |
+| `xy` | `False` | Lissajous mode. |
+| `persistence`, `glow` | `0`, `True` | Fading copies and halo. |

@@ -1,0 +1,56 @@
+---
+title: Waveform
+description: Draw audio waveforms in Python — a music-app bar view with a played/unplayed split, an envelope, a glowing line, a playhead, selections and seeking.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Three waveforms: rounded bars with a playhead, a mirrored envelope with a selection and a live glowing line](/pyzed/media/audio/ui/waveform.webp)
+
+<Aside type="note" title="In plain words">
+A waveform is the picture of a sound over time: tall where it is loud, flat where it is quiet.
+Music players use it to show where you are in a song and let you click to jump.
+</Aside>
+
+```python
+left, right = engine.render(5.0)          # five seconds rendered offline
+ui.audio.Waveform(samples=left, variant="bars", playhead=self.position,
+                  on_seek=lambda e: self.seek(e.value))
+```
+
+## Samples
+
+`samples` are numbers from −1 to 1: a whole file or the last buffer of a live signal
+(`node.scope(1024)`). A long list is reduced to one minimum/maximum pair per pixel column, so a
+minute of audio draws as fast as a short buffer. `gain` scales it up when the sound is quiet.
+
+## Looks
+
+| `variant` | Looks like |
+| --- | --- |
+| `"mirror"` | The envelope, symmetric around the center line (the default). |
+| `"filled"` | The real shape, filled between its lowest and highest points. |
+| `"line"` | A line through every sample; `glow=True` adds a soft halo. Best for short buffers. |
+| `"bars"` | Rounded bars like a music app: the played part in `color`, the rest dimmed. |
+| `"dots"` | One dot per sample. |
+
+## Playhead, selection and seeking
+
+- `playhead` (0..1) draws the playing position (with `"bars"`, it splits played and unplayed).
+- `selection=(0.2, 0.4)` highlights a range: a loop, a region to cut.
+- With `on_seek`, clicking or dragging on it reports the position (0..1) in `event.value`.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `samples` | `()` | Values from −1 to 1. |
+| `width`, `height` | `360`, `96` | Size in pixels. |
+| `variant` | `"mirror"` | See the table above. |
+| `color`, `background` | `"accent"`, `"#0f1012"` | Colors. |
+| `gain`, `thickness`, `glow` | `1`, `1.5`, `False` | Scale, line width and halo. |
+| `grid` | `True` | Faint vertical lines and a center line. |
+| `playhead`, `selection` | `None` | Position (0..1) and range `(start, end)`. |
+| `bar` | `3` | Width of a bar with `variant="bars"`. |
+
+Event: `on_seek` (0..1).
