@@ -16,6 +16,38 @@ stable version.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-20
+
+1.3.0 was tagged but never published: its Windows wheel build failed a test that is fixed in this version. Everything listed under 1.3.0 ships for the first time in 1.4.0.
+
+### Highlights
+
+- **Detachable panels and work layouts**: drag any panel out of Pyzed Design, stack panels together and save layouts for each kind of work.
+- **A Zed-like Agent panel**: new-thread menu, thread history, settings inside the panel, the ACP agent registry, skills, keep or reject each edit, external agent sign-in, follow-agent, a context meter and notifications.
+- **Timeline animations**: `pz.Clip`, `pz.Track`, `pz.Call` and `AnimationPlayer`, saved as `.pzanim` and edited in the new Animation panel of `.pzform` files.
+- **Pyzed themes**: Midnight, Graphite, Forest, Rosé, Dawn and Glacier, plus property editors for each kind of value.
+- **Zed-like keymap**: `keymap.json` with contexts and a keymap editor.
+
+### Features
+
+- ✨ Zed-like keymap with contexts in `keymap.json` and a keymap editor. PR [#108](https://github.com/albakore/pyzed/pull/108) by [@albakore](https://github.com/albakore).
+- ✨ Forms kept in the project, mark or change the startup file and clone repositories. PR [#113](https://github.com/albakore/pyzed/pull/113) by [@albakore](https://github.com/albakore).
+- ✨ Detachable and stackable panels and work layouts. PR [#105](https://github.com/albakore/pyzed/pull/105), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ Toolbar groups; New component moves to the toolbox and the New dialog. PR [#106](https://github.com/albakore/pyzed/pull/106), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ Run/Stop and a search field in the middle of the title bar. PR [#107](https://github.com/albakore/pyzed/pull/107), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ Zed-like Agent panel with history, settings, ACP registry, skills and keep/reject edits, and the reusable `ToolCall`, `Plan`, `EditsBar`, `ThreadHistory`, `AuthPrompt`, `ServiceRow`, `Catalog` and `context_meter` components. PR [#109](https://github.com/albakore/pyzed/pull/109), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ Timeline animations with `pz.Clip`, `pz.Track`, `pz.Call`, `AnimationPlayer` and `.pzanim`. PR [#110](https://github.com/albakore/pyzed/pull/110), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ States, sizes and events for the `ui` components; `pick_list` gains `on_open` and `on_close`. PR [#111](https://github.com/albakore/pyzed/pull/111), PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- ✨ WSL projects from Windows. PR [#115](https://github.com/albakore/pyzed/pull/115), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+- ✨ External agent sign-in like Zed, follow-agent, context meter and notifications. PR [#116](https://github.com/albakore/pyzed/pull/116), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+- ✨ Pyzed theme family and property editors for each kind of value. PR [#117](https://github.com/albakore/pyzed/pull/117), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+- ✨ Animation panel in `.pzform`. PR [#118](https://github.com/albakore/pyzed/pull/118), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Agent sign-in on Windows sends the POST body correctly. PR [#114](https://github.com/albakore/pyzed/pull/114) by [@albakore](https://github.com/albakore).
+- 🐛 Clone target folder on Windows paths and the agent registry cache on Windows. PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+
 ## [1.3.0] - 2026-10-20
 
 ### Highlights
