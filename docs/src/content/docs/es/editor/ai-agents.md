@@ -41,8 +41,8 @@ El inicio de sesión ocurre dentro de Pyzed Design; no hace falta ningún otro p
   Mientras espera, una tarjeta **Iniciando sesión** ofrece **Pegar la clave** (leer el portapapeles ahora),
   **Abrir la página de claves** y **Cancelar**. El portapapeles solo se lee mientras se ve esa tarjeta (cinco
   minutos como mucho), y solo se usa un texto que parezca una clave de ese proveedor. La página local solo acepta
-  una clave enviada desde ella misma: otros sitios y otros nombres de host no pueden usarla. Para Claude sin
-  ninguna clave, mira la [federación de identidades](#claude-sin-clave-de-api).
+  una clave enviada desde ella misma: otros sitios y otros nombres de host no pueden usarla. Para usar tu plan
+  Claude Pro o Max en lugar de una clave, mira [Tu suscripción de Claude](#tu-suscripción-de-claude).
 - **OpenRouter**: OAuth real con PKCE. Apruebas a Pyzed en la página de OpenRouter y la clave que emite vuelve a
   Pyzed directamente; no hay nada que copiar.
 - **GitHub Copilot**: **Iniciar sesión con GitHub** usa el flujo de dispositivo de GitHub. Pyzed abre
@@ -267,9 +267,29 @@ de modelos en **Agentes externos**.
 El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera (su propia cuenta o
 clave; pon las claves en **Secretos**). Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
 proyecto y nunca los que pueden tener secretos, y pregunta antes de actuar según el modo de permisos (**Solo
-lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas). Con **Compartir el servidor MCP
-de Pyzed** activado, el agente también recibe los componentes, la documentación, los generadores y las
-comprobaciones de Pyzed (necesita el paquete `mcp`).
+lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas).
+
+Con **Dejar que los agentes externos controlen el editor** activado (por defecto), el agente recibe por MCP las
+herramientas del agente integrado: lee y cambia el formulario abierto y su código, crea formularios y componentes,
+ejecuta la app con `run_app`, lleva un plan y conoce los componentes y la documentación de Pyzed. Sus cambios se ven
+en vivo en el editor, y **Conservar** y **Rechazar** funcionan como con el agente integrado. Pyzed sirve estas
+herramientas en `127.0.0.1`, en una dirección de un solo uso y con un token que solo recibe ese agente (los agentes
+que solo arrancan servidores locales reciben un pequeño programa puente). Sus propias herramientas de archivos y de
+terminal siguen siendo suyas. El plan que sigue el agente se ve en la tarjeta **Plan**.
+
+### Tu suscripción de Claude
+
+**Usar mi suscripción de Claude** (lo primero en un panel vacío, y en el selector de modelos en **Agentes
+externos**) usa tu plan Claude Pro o Max a través de Claude Code, el agente de Anthropic, ya que Anthropic solo
+deja que sus propias apps inicien sesión con una suscripción:
+
+1. Necesita [Node.js](https://nodejs.org/en/download) 18 o posterior; si no está, Pyzed abre la página de descarga.
+2. Añade Claude Code como agente externo, lo elige y le deja controlar el editor.
+3. Si Claude Code todavía no inició sesión, se abre en una terminal: elige iniciar sesión con tu cuenta de Claude y
+   termina en el navegador. Pyzed detecta el inicio de sesión, vuelve al frente y queda listo.
+
+Claude Code guarda su propio inicio de sesión; Pyzed nunca lo ve. El uso cuenta para tu plan. Si una respuesta
+falla porque Claude Code cerró la sesión, **Iniciar sesión en Claude** vuelve a abrir la terminal.
 
 ### Dónde se guardan las claves
 

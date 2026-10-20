@@ -178,6 +178,23 @@ rechaza y `"ask"` llama a `confirm`. `acp.installed(config)` dice si su programa
 los guardan en `AgentSettings.acp_agents` (y los servidores MCP en `mcp_servers`;
 `acp.mcp_entries(settings.mcp_servers)` también se los pasa al agente).
 
+Tus propias herramientas también pueden ir al agente externo: `mcp_host.ToolServer` sirve las herramientas de un
+`Agent` por MCP en `127.0.0.1` (una dirección de un solo uso y un token), y así es como Pyzed Design deja que
+Claude Code controle el editor:
+
+```python
+from pyzed.agents import mcp_host
+
+server = mcp_host.ToolServer(agents.Agent(tools=[mi_herramienta]), name="mi_app", instructions="Cómo usarlas")
+agent = acp.ACPAgent(config, cwd="mi_app", mcp_servers=[server.acp_entry(), server.bridge_entry()])
+...
+server.close()
+```
+
+Con las dos, el agente recibe la entrada HTTP si la admite y el puente por stdio si no.
+`acp.claude_signed_in()` dice si Claude Code tiene la sesión iniciada en este equipo, y `acp.claude_login_command()`
+es el comando que lo abre para iniciar sesión con una suscripción de Claude.
+
 ## Streaming en la UI
 
 `run` bloquea, así que en una app llámalo desde un hilo y pasa los eventos a la UI. Las vistas de Pyzed corren en

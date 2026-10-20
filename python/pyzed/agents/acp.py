@@ -17,7 +17,9 @@ generators, checks) and the MCP servers of the settings are handed to the agent,
 from __future__ import annotations
 
 import fnmatch
+import os
 import shutil
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -47,6 +49,31 @@ def preset(name: str) -> _providers.ACPAgentConfig:
     """The settings entry of a ready-made agent (``"claude-code"``, ``"gemini"`` or ``"codex"``)."""
     title, command, args = PRESETS[name]
     return _providers.ACPAgentConfig(name, command, list(args), title=title)
+
+
+def claude_signed_in() -> bool:
+    """Whether Claude Code is signed in on this computer (with a Claude subscription, or a key it is given), so
+    the ``claude-code`` agent can answer. Claude Code keeps its sign-in in ``~/.claude`` (or the macOS keychain)."""
+    if os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY"):
+        return True
+    folder = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    if (folder / ".credentials.json").is_file():
+        return True
+    if sys.platform == "darwin":
+        try:
+            found = subprocess.run(["security", "find-generic-password", "-s", "Claude Code-credentials"],
+                                   capture_output=True, timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            return False
+        return found.returncode == 0
+    return False
+
+
+def claude_login_command() -> List[str]:
+    """The command that opens Claude Code in a terminal, where it asks to sign in with a Claude account (Pro or
+    Max) the first time; ``npx`` downloads it when it is not installed."""
+    claude = shutil.which("claude")
+    return [claude] if claude else ["npx", "-y", "@anthropic-ai/claude-code"]
 
 
 def installed(config: _providers.ACPAgentConfig) -> bool:
@@ -195,8 +222,13 @@ class ACPAgent:
         return str(session)
 
     def _servers(self) -> List[Dict[str, Any]]:
+        """The MCP servers the agent can start. A server given twice by name (over HTTP and as a local bridge)
+        goes over HTTP when the agent supports it, else through the bridge."""
         http = bool((self.capabilities.get("mcpCapabilities") or {}).get("http"))
-        return [s for s in self.mcp_servers if s.get("type") != "http" or http]
+        if not http:
+            return [s for s in self.mcp_servers if s.get("type") != "http"]
+        remote = {s.get("name") for s in self.mcp_servers if s.get("type") == "http"}
+        return [s for s in self.mcp_servers if s.get("type") == "http" or s.get("name") not in remote]
 
     def close(self) -> None:
         """Stops the program."""
@@ -307,11 +339,15 @@ class ACPAgent:
             if update.get("status") in ("completed", "failed"):
                 self._finish_call(call_id, update)
         elif kind == "plan":
-            entries = update.get("entries") or []
-            plan = "\n".join(f"- [{'x' if e.get('status') == 'completed' else ' '}] {e.get('content', '')}"
-                             for e in entries if isinstance(e, dict))
-            if plan:
-                self._emit(Event("thinking", f"Plan:\n{plan}\n"))
+            # the same shape as the built-in agent's update_plan, so the panel shows it as its Plan card
+            statuses = {"completed": "done", "in_progress": "in_progress"}
+            steps = [{"step": str(e.get("content") or ""), "status": statuses.get(str(e.get("status")), "pending")}
+                     for e in update.get("entries") or [] if isinstance(e, dict) and e.get("content")]
+            if not steps:
+                return
+            with self._lock:
+                self._blocks = [b for b in self._blocks if b.get("type") != "plan"] + [{"type": "plan", "steps": steps}]
+            self._emit(Event("plan", args={"steps": steps}))
 
     def _finish_call(self, call_id: str, update: Dict[str, Any]) -> None:
         error = update.get("status") == "failed"

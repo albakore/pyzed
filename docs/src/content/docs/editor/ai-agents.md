@@ -40,8 +40,8 @@ Signing in happens inside Pyzed Design; no other program is needed.
   so you can close the tab and keep working. While it waits, a **Signing in** card offers **Paste key** (read the
   clipboard now), **Open the key page** and **Cancel**. The clipboard is read only while that card is showing (at
   most five minutes), and only a text that looks like that provider's key is used. The local page only accepts a
-  key sent from itself: other sites and other host names can't reach it. For Claude with no key at all, see
-  [identity federation](#claude-without-an-api-key).
+  key sent from itself: other sites and other host names can't reach it. To use your Claude Pro or Max plan
+  instead of a key, see [Your Claude subscription](#your-claude-subscription).
 - **OpenRouter**: real OAuth with PKCE. You approve Pyzed on OpenRouter's page and the key it issues comes back to
   Pyzed directly; nothing to copy.
 - **GitHub Copilot**: **Sign in with GitHub** uses GitHub's device flow. Pyzed opens
@@ -261,8 +261,28 @@ through `@zed-industries/codex-acp`) or **Other…** for any command. Once added
 The agent runs as its own program in the project folder and signs in its own way (its own account or key; put
 keys in **Secrets**). Pyzed answers its requests: it reads and writes files only inside the project and never
 the ones that may hold secrets, and asks before acting according to the permission mode (**Read only** allows
-only reads, **Chat only** refuses every tool). With **Share Pyzed's MCP server** on, the agent also gets Pyzed's
-components, docs, generators and checks (needs the `mcp` package).
+only reads, **Chat only** refuses every tool).
+
+With **Let external agents control the editor** on (the default), the agent gets the built-in agent's tools over
+MCP: it reads and changes the open form and its code, creates forms and components, runs the app with `run_app`,
+keeps a plan and knows Pyzed's components and docs. Its changes show up live in the editor, and **Keep** and
+**Reject** work as with the built-in agent. Pyzed serves these tools on `127.0.0.1` at a one-time address with a
+token only that agent receives (agents that only start local servers get a small bridge program). Its own file
+and shell tools stay its own. The plan the agent follows shows in the **Plan** card.
+
+### Your Claude subscription
+
+**Use my Claude subscription** (first in an empty panel, and in the model picker under **External agents**) uses
+your Claude Pro or Max plan through Claude Code, Anthropic's own agent, since Anthropic only lets its own apps
+sign in with a subscription:
+
+1. It needs [Node.js](https://nodejs.org/en/download) 18 or later; without it, Pyzed opens the download page.
+2. It adds Claude Code as an external agent, picks it and lets it control the editor.
+3. If Claude Code is not signed in yet, it opens in a terminal: choose to sign in with your Claude account and
+   finish in the browser. Pyzed notices the sign-in, comes back to the front and is ready.
+
+Claude Code keeps its own sign-in; Pyzed never sees it. Usage counts toward your plan. When an answer fails
+because Claude Code is signed out, **Sign in to Claude** opens the terminal again.
 
 ### Where keys are stored
 

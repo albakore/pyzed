@@ -81,6 +81,20 @@ def system_prompt(d: "Designer") -> str:
     return f"{SYSTEM}\n{EDITOR_KNOWLEDGE}\n"
 
 
+EXTERNAL = """\
+These tools are Pyzed Design itself, the editor the user has open: through them you control it like its \
+built-in agent. Work on forms (.pzform) and components (.pzcomp) only with these tools, never by editing \
+those files by hand: the user sees every change live in the editor and can undo it. Use your own tools for \
+other files and commands. Everything below about the agent applies to you; the tool names are the same.
+
+"""
+
+
+def external_prompt(d: "Designer") -> str:
+    """The instructions handed to an external agent (Claude Code...) with the editor's MCP server."""
+    return EXTERNAL + system_prompt(d)
+
+
 def _doc(d: "Designer") -> Any:
     return d.doc
 
@@ -461,11 +475,18 @@ def plan_of(messages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         if message.get("role") != "assistant" or not isinstance(content, list):
             continue
         for block in reversed(content):
-            if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("name") == "update_plan":
-                try:
-                    return _plan_steps((block.get("input") or {}).get("steps"))
-                except ValueError:
-                    return []
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") == "tool_use" and block.get("name") == "update_plan":
+                steps = (block.get("input") or {}).get("steps")
+            elif block.get("type") == "plan":  # an external agent's plan (see acp.ACPAgent)
+                steps = block.get("steps")
+            else:
+                continue
+            try:
+                return _plan_steps(steps)
+            except ValueError:
+                return []
     return []
 
 

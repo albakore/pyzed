@@ -174,6 +174,22 @@ requests follow `settings.mode`: `"bypass"` allows them, `"read"` allows reads o
 keep them in `AgentSettings.acp_agents` (and MCP servers in `mcp_servers`; `acp.mcp_entries(settings.mcp_servers)`
 hands those to the agent too).
 
+Your own tools can go to the external agent too: `mcp_host.ToolServer` serves an `Agent`'s tools over MCP on
+`127.0.0.1` (a one-time address and a bearer token), which is how Pyzed Design lets Claude Code control the editor:
+
+```python
+from pyzed.agents import mcp_host
+
+server = mcp_host.ToolServer(agents.Agent(tools=[my_tool]), name="my_app", instructions="How to use them")
+agent = acp.ACPAgent(config, cwd="my_app", mcp_servers=[server.acp_entry(), server.bridge_entry()])
+...
+server.close()
+```
+
+Given both, the agent gets the HTTP entry when it supports it and the stdio bridge otherwise.
+`acp.claude_signed_in()` tells whether Claude Code is signed in on this computer, and `acp.claude_login_command()`
+is the command that opens it to sign in with a Claude subscription.
+
 ## Streaming into the UI
 
 `run` blocks, so in an app call it from a worker thread and hand the events to the UI. Pyzed's views run on the UI

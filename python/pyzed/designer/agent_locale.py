@@ -112,6 +112,30 @@ ES = {
         "Sigue la página que se abrió en el navegador: crea una clave y pégala ahí, o simplemente cópiala. Pyzed la "
         "comprueba, la guarda en el llavero del sistema y vuelve al frente.",
     "Open the key page": "Abrir la página de claves", "Plan": "Plan",
+    "Let external agents control the editor": "Dejar que los agentes externos controlen el editor",
+    "Gives them the built-in agent's tools over MCP: the open form and its code, the project, running the app, and "
+    "Pyzed's components and docs":
+        "Les da por MCP las herramientas del agente integrado: el formulario abierto y su código, el proyecto, "
+        "ejecutar la app, y los componentes y la documentación de Pyzed",
+    "Use my Claude subscription": "Usar mi suscripción de Claude",
+    "Use my Claude subscription…": "Usar mi suscripción de Claude…",
+    "Claude Pro or Max through Claude Code, Anthropic's own agent; it controls the editor":
+        "Claude Pro o Max a través de Claude Code, el agente de Anthropic; controla el editor",
+    "Claude Code needs Node.js 18 or later": "Claude Code necesita Node.js 18 o posterior",
+    "Install it, then try again.": "Instálalo y vuelve a intentarlo.",
+    "Claude Code is ready": "Claude Code está listo",
+    "It uses your Claude subscription": "Usa tu suscripción de Claude",
+    "No terminal was found": "No se encontró ninguna terminal",
+    "Run {command} in a terminal to sign in": "Ejecuta {command} en una terminal para iniciar sesión",
+    "Signed in to Claude": "Sesión iniciada en Claude",
+    "Claude Code uses your Claude subscription": "Claude Code usa tu suscripción de Claude",
+    "Sign in to Claude": "Iniciar sesión en Claude",
+    "Sign in to Claude in the terminal": "Inicia sesión en Claude en la terminal",
+    "Claude Code opened in a terminal. Choose to sign in with your Claude account (Pro or Max) and finish in the "
+    "browser: Pyzed notices it and comes back.":
+        "Claude Code se abrió en una terminal. Elige iniciar sesión con tu cuenta de Claude (Pro o Max) y termina en "
+        "el navegador: Pyzed lo detecta y vuelve al frente.",
+    "Open the terminal again": "Abrir la terminal otra vez",
     "Running the app": "Ejecutando la app", "Updating the plan": "Actualizando el plan",
     "Signing in to {provider}": "Iniciando sesión en {provider}",
     "Message the agent (@ context, / commands)": "Escribe al agente (@ contexto, / comandos)",
