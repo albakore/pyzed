@@ -12,11 +12,14 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
 
 A **shader** is a tiny program that decides the color of every pixel of a widget, many times per second, on the
 graphics card. It is how Pyzed draws animated backgrounds, glowing effects, radar screens and game visuals without
 slowing your app down. If you have used Godot's visual shaders or Unreal Engine's material editor, Pyzed's shader
 graphs will feel familiar.
+
+<Media clip="shaders" alt="Six animated shaders running side by side: plasma, a tunnel, fire, Voronoi cells, a synthwave sun and a nebula" caption="Six node-made shaders running at once, from <code>examples/showcase/shaders</code>." size="wide" />
 
 ```mermaid
 flowchart LR
@@ -66,6 +69,8 @@ settings and an example each.
 All three end up as the same WGSL code on the GPU, so they are equally fast, and a `.pzshad` made with the mouse
 can be changed from Python (and the other way round).
 
+<Media clip="shader-graph" alt="Voronoi and Palette nodes dragged onto the graph of the Shader view and wired to the Output" caption="The first way: drag nodes onto the graph and wire them; every node shows what it makes." />
+
 <Aside type="caution" title="Shaders need a GPU">
 On a machine without a usable graphics card, a shader widget draws its `fallback` color or gradient instead. Give
 every shader a sensible fallback so your interface still reads well there.
@@ -83,6 +88,6 @@ every shader a sensible fallback so your interface still reads well there.
 
 <Aside type="note" title="Status of this section">
 Shader graphs are new in Pyzed. Every page here describes what works today, and the node catalog is generated from
-the code, so it always matches your version. Captures of each node and short animated previews of the recipes are
-being added.
+the code, so it always matches your version, with a capture of every node. Most recipes show their graph in the
+Shader view; the rest can be built in a minute from their steps.
 </Aside>

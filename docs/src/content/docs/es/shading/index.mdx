@@ -12,11 +12,14 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
 
 Un **shader** es un programa pequeño que decide el color de cada píxel de un widget, muchas veces por segundo, en
 la tarjeta gráfica. Así dibuja Pyzed fondos animados, efectos de brillo, radares y gráficos de juegos sin ralentizar
 tu app. Si usaste los shaders visuales de Godot o el editor de materiales de Unreal Engine, los grafos de shaders
 de Pyzed te van a resultar familiares.
+
+<Media clip="shaders" alt="Seis shaders animados funcionando a la vez: plasma, un túnel, fuego, celdas de Voronoi, un sol synthwave y una nebulosa" caption="Seis shaders hechos con nodos funcionando a la vez, de <code>examples/showcase/shaders</code>." size="wide" />
 
 ```mermaid
 flowchart LR
@@ -66,6 +69,8 @@ puertos, ajustes y un ejemplo para cada uno.
 Las tres acaban siendo el mismo código WGSL en la GPU, así que son igual de rápidas, y un `.pzshad` hecho con el
 ratón se puede cambiar desde Python (y al revés).
 
+<Media clip="shader-graph" alt="Nodos Voronoi y Palette arrastrados al grafo de la vista Shader y conectados a la Salida" caption="La primera forma: arrastra nodos al grafo y conéctalos; cada nodo muestra lo que produce." />
+
 <Aside type="caution" title="Los shaders necesitan GPU">
 En un equipo sin una tarjeta gráfica utilizable, un widget de shader dibuja su color o gradiente `fallback`. Dale
 a cada shader un fallback razonable para que la interfaz se siga viendo bien.
@@ -83,6 +88,6 @@ a cada shader un fallback razonable para que la interfaz se siga viendo bien.
 
 <Aside type="note" title="Estado de esta sección">
 Los grafos de shaders son nuevos en Pyzed. Cada página describe lo que funciona hoy, y el catálogo de nodos se
-genera a partir del código, así que siempre coincide con tu versión. Se están añadiendo capturas de cada nodo y
-vistas previas animadas de las recetas.
+genera a partir del código, así que siempre coincide con tu versión, con una captura de cada nodo. La mayoría de las
+recetas muestran su grafo en la vista Shader; el resto se arma en un minuto siguiendo sus pasos.
 </Aside>
