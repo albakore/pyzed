@@ -1,0 +1,206 @@
+---
+title: Your first shader
+description: "A gentle start with GPU shaders in Pyzed: build a glowing, pulsing circle in the Shader view of Pyzed Design without writing code, then use it in an app."
+sidebar:
+  label: Getting started
+  order: 1
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import shaderNew from '../../../../screenshots/designer-shader-new.png';
+import shaderView from '../../../../screenshots/designer-shader.png';
+import shaderPreview from '../../../../screenshots/designer-shader-preview.png';
+
+In this page you build a **glowing circle that pulses**, in about ten minutes, by connecting boxes with the mouse.
+You don't need to know math or WGSL. At the end you will have a `.pzshad` file you can drop into any Pyzed app,
+and you will know the handful of ideas every shader is built on.
+
+{/* media: shading/getting-started-result (the finished pulsing circle, short loop) */}
+
+## Three ideas, in plain words
+
+1. **A shader is a recipe that runs for every pixel.** The graphics card asks "what color is *this* pixel?" for
+   every pixel of the widget, sixty times per second, all at the same time. Your graph is the answer.
+2. **Each pixel knows where it is.** The **UV** node says where: `x` goes from 0 (left) to 1 (right) and `y` from
+   0 (top) to 1 (bottom). Shapes, gradients and patterns are just math on that position.
+3. **Colors are numbers from 0 to 1.** Red is `(1, 0, 0)`, white `(1, 1, 1)`, a mid gray `(0.5, 0.5, 0.5)`.
+   Multiplying a color by a number from 0 to 1 darkens it; that is how masks work.
+
+<Aside type="tip" title="Familiar territory">
+If you have used Godot's visual shaders, Unreal Engine's material editor or Blender's shader nodes, the Shader
+view works the same way: nodes on a canvas, wires from outputs to inputs, a live preview on every node.
+</Aside>
+
+## Build it in the Shader view
+
+<Steps>
+
+1. **Open Pyzed Design.** Start the app you [downloaded](/pyzed/download/), or launch it from Python:
+
+	<Tabs syncKey="pkg">
+		<TabItem label="uv">
+			```bash
+			uv run pyzed design          # inside a uv project with pyzed-ui
+			uvx --from "pyzed-ui[designer]" pyzed design   # without a project
+			```
+		</TabItem>
+		<TabItem label="pip">
+			```bash
+			pip install "pyzed-ui[designer]"
+			pyzed design
+			```
+		</TabItem>
+		<TabItem label="python">
+			```bash title="macOS / Linux"
+			python3 -m pyzed design
+			```
+			```powershell title="Windows (PowerShell)"
+			py -m pyzed design
+			```
+		</TabItem>
+	</Tabs>
+
+2. **Create a shader.** Press **New** (<kbd>Ctrl</kbd>+<kbd>N</kbd>), pick the **Shader** card, name it `pulse`
+   and choose the **Blank** template. **Create shader** saves `pulse.pzshad` and opens it.
+
+	<Media src={shaderNew} alt="The New dialog on the Shader card, with its templates" caption="The New dialog: <b>Shader</b>, a name, a folder and a template." size="narrow" />
+
+3. **Look around.** The Blank template is three nodes: **UV** → **Gradient** → **Output**. Each node shows a small
+   preview of what it makes, and the **Output** preview in the corner is the finished shader. The left dock now
+   holds the **Shading** sidebar (every node, by category) and the **Outline** (variables and nodes).
+
+	<Media src={shaderView} alt="The Shader view with the Shading sidebar, a graph of nodes and the Output preview" caption="The Shader view: sidebar on the left, the graph in the middle, Properties on the right." size="wide" />
+
+4. **Draw a circle.** Double-click an empty spot of the canvas (or press <kbd>Shift</kbd>+<kbd>A</kbd>) and type
+   `circle`; press <kbd>Enter</kbd> to add the **Circle** node. Do the same for **Fill**. Drag from the Circle's
+   `distance` output to the Fill's `distance` input: the Fill preview shows a white disc on black.
+
+	{/* media: shading/getting-started-circle (Circle wired into Fill) */}
+
+	<Aside type="note" title="Why two nodes?">
+	A shape node gives a *distance* (how far each pixel is from the edge), not a picture. **Fill** turns that
+	distance into a clean mask: 1 inside, 0 outside, with smooth edges. **Stroke** would draw only the outline and
+	**Glow** a soft light.
+	</Aside>
+
+5. **Color it.** Add an **RGBA** node. Wire Fill's `mask` into RGBA's `rgb` (one number fills red, green and
+   blue: white) and RGBA's `color` into the Output's `color`. The old Gradient is no longer used: select it and
+   press <kbd>Delete</kbd>.
+
+6. **Make it pulse.** Add a **Time** node and a **Multiply add** node. Wire Time's `sin` (a value that swings
+   between −1 and 1) into Multiply add's `a`, and type `0.05` in `b` and `0.3` in `c`: the result swings between
+   0.25 and 0.35. Wire it into the Circle's `radius`. Every preview starts to breathe.
+
+	{/* media: shading/getting-started-pulse (radius driven by Time, short loop) */}
+
+7. **Add a glow.** Add a **Glow** node, wire the Circle's `distance` into it, and an **Add** node that sums Fill's
+   `mask` and Glow's `value`. Wire the sum into RGBA's `rgb` instead of the mask.
+
+8. **Give it a color you can change.** In the Outline, press the arrow of **Add** and pick **color variable**;
+   name it `tint` and pick a pink. Drag `tint` from the Outline onto the graph: it becomes a **Parameter** node.
+   Add a **Multiply** node: `tint`'s `rgb` times the sum, into RGBA's `rgb`.
+
+9. **Try it.** Open the **Preview** tab: the shader large, with a slider or a color swatch for every variable.
+   The **WGSL** tab shows the code the graph compiles to. Press <kbd>F5</kbd> to open it in a window of its own
+   that follows your edits. Save with <kbd>Ctrl</kbd>+<kbd>S</kbd>.
+
+	<Media src={shaderPreview} alt="The Preview tab with a slider per variable" caption="The Preview tab: every mutable variable gets a control." />
+
+</Steps>
+
+<Aside type="caution" title="When a wire is refused">
+Wires are typed: a color can't go into an input that wants a true/false value, for example. When the Shader view
+refuses a wire it says why in a notification. The badge in the toolbar says **Compiles**, or how many problems
+there are; hover it to read them, and the node with the problem turns red.
+</Aside>
+
+## Use it in an app
+
+A `.pzshad` file is used like an image: give its path to `pz.shader`. `uniforms` sets its mutable variables by
+name, so your code can change the color while the app runs, at no cost.
+
+```python title="app.py"
+from pathlib import Path
+
+import pyzed as pz
+
+HERE = Path(__file__).parent
+
+
+class Pulse(pz.App):
+    title = "My first shader"
+    size = (420, 320)
+
+    def view(self):
+        return pz.shader(HERE / "pulse.pzshad", uniforms={"tint": "#22d3ee"}, width="fill", height="fill",
+                         fallback="#1e1b4b")
+
+
+if __name__ == "__main__":
+    pz.run(Pulse)
+```
+
+Run the app, or look at the shader alone (press <kbd>V</kbd> in that window for a slider per variable):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run app.py
+		uv run pyzed run pulse.pzshad
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		python app.py
+		pyzed run pulse.pzshad
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 app.py
+		python3 -m pyzed run pulse.pzshad
+		```
+		```powershell title="Windows (PowerShell)"
+		py app.py
+		py -m pyzed run pulse.pzshad
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="note" title="No GPU?">
+On a computer without a usable graphics card (some virtual machines and remote desktops), a shader widget draws its
+`fallback` color or gradient instead. Always give one, so your interface still reads well there.
+</Aside>
+
+## The same shader in Python
+
+Everything the Shader view does is also a Python API. This builds the same graph and saves it; open the file in
+Pyzed Design to keep editing it with the mouse.
+
+```python title="make_pulse.py"
+from pyzed import shading
+
+g = shading.Graph("pulse")
+tint = g.uniform("tint", "color", "#f472b6")          # a variable and a Parameter node
+
+radius = g.time()["sin"] * 0.05 + 0.3                  # Math nodes, added for you
+circle = g.circle(radius=radius)
+light = g.fill(circle) + g.glow(circle, radius=0.1)
+g.output(g.rgba(tint["rgb"] * light, 1.0))
+
+g.arrange()                                            # tidy columns, like the toolbar's Arrange
+g.save("pulse.pzshad")
+```
+
+## Where to go next
+
+<NavCards
+	items={[
+		{ title: 'The Shader view', text: 'Every tab, gesture, panel and shortcut of the node editor.', href: '/pyzed/shading/shader-designer/', icon: 'pencil' },
+		{ title: 'Node catalog', text: 'All the nodes with their ports, settings and an example each.', href: '/pyzed/shading/nodes/', icon: 'puzzle' },
+		{ title: 'Recipes', text: 'Gradients, glow, plasma, clouds, fire, a CRT screen, a spinner...', href: '/pyzed/shading/recipes/', icon: 'star' },
+		{ title: 'Shader graphs in Python', text: 'Load, change and build <code>.pzshad</code> files from code.', href: '/pyzed/shading/shader-graphs/', icon: 'seti:python' },
+	]}
+/>

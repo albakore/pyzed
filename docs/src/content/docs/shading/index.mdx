@@ -27,15 +27,44 @@ flowchart LR
     wgsl --> widget["pz.shader widget"] --> gpu["GPU"]
 ```
 
-## Three ways to make one
+## Start here
 
 <NavCards
 	items={[
-		{ title: 'Shader graphs', text: 'Shaders made of nodes, saved as <code>.pzshad</code>. Draw them with <code>pz.shader</code> and change their variables from Python.', href: '/pyzed/shading/shader-graphs/', icon: 'puzzle', tag: 'Start here' },
-		{ title: 'The Shader view', text: 'Wire nodes in Pyzed Design with live previews on every node, like Godot\'s visual shaders.', href: '/pyzed/shading/shader-designer/', icon: 'pencil', tag: 'Designer' },
-		{ title: 'WGSL shaders', text: 'Write the <code>shade</code> function yourself for full control: uniforms, the mouse, time.', href: '/pyzed/shading/shaders/', icon: 'seti:shell', tag: 'Code' },
+		{ title: 'Your first shader', text: 'Build a glowing, pulsing circle with the mouse in ten minutes, then use it in an app. No math needed.', href: '/pyzed/shading/getting-started/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'The Shader view', text: 'The node editor of Pyzed Design: tabs, gestures, the sidebar, variables and properties.', href: '/pyzed/shading/shader-designer/', icon: 'pencil', tag: 'Designer' },
+		{ title: 'Recipes', text: 'Gradients, a neon glow, plasma, clouds, cells, a CRT screen, a spotlight, a spinner, fire and stripes.', href: '/pyzed/shading/recipes/', icon: 'star', tag: '10 recipes' },
 	]}
 />
+
+## Every node
+
+The [node catalog](/pyzed/shading/nodes/) describes all the nodes of a graph, by category, with their ports,
+settings and an example each.
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Inputs and constants', text: 'UV, pixel, size, time, mouse, variables and fixed values.', href: '/pyzed/shading/nodes/inputs/', icon: 'puzzle' },
+		{ title: 'Math', text: 'Arithmetic, sin and friends, mix, clamp, smoothstep, remap.', href: '/pyzed/shading/nodes/math/', icon: 'puzzle' },
+		{ title: 'Vectors and UV', text: 'Compose, distance, polar; tile, scroll, rotate, twirl, pixelate.', href: '/pyzed/shading/nodes/vectors-uv/', icon: 'puzzle' },
+		{ title: 'Noise and patterns', text: 'Perlin, fractal, Voronoi; checker, stripes, grid, gradients, waves.', href: '/pyzed/shading/nodes/noise-patterns/', icon: 'puzzle' },
+		{ title: 'Shapes', text: 'Circle, box, ring, polygon, star; union and subtract; fill, stroke, glow.', href: '/pyzed/shading/nodes/shapes/', icon: 'puzzle' },
+		{ title: 'Color and effects', text: 'Gradient, palette, hue, blend modes, layers, vignette, scanlines, textures.', href: '/pyzed/shading/nodes/color-effects/', icon: 'puzzle' },
+		{ title: 'Logic and utility', text: 'Compare, select, named values, your own WGSL, shader functions, Output.', href: '/pyzed/shading/nodes/logic-utility/', icon: 'puzzle' },
+	]}
+/>
+
+## Three ways to make one
+
+| Way | For | Page |
+| --- | --- | --- |
+| **Nodes in the Shader view** | Everyone: wire boxes with the mouse and see the result on every node. | [The Shader view](/pyzed/shading/shader-designer/) |
+| **`pyzed.shading` in Python** | Generating or editing graphs from code, tests, tools. | [Shader graphs](/pyzed/shading/shader-graphs/) |
+| **WGSL by hand** | Full control, porting shaders from elsewhere. | [WGSL shaders](/pyzed/shading/shaders/) |
+
+All three end up as the same WGSL code on the GPU, so they are equally fast, and a `.pzshad` made with the mouse
+can be changed from Python (and the other way round).
 
 <Aside type="caution" title="Shaders need a GPU">
 On a machine without a usable graphics card, a shader widget draws its `fallback` color or gradient instead. Give
@@ -52,16 +81,8 @@ every shader a sensible fallback so your interface still reads well there.
 	]}
 />
 
-## Coming next
-
-<NavCards
-	items={[
-		{ title: 'Node catalog', text: 'Every node with a capture, its inputs and outputs, and what it is good for.', icon: 'list-format' },
-		{ title: 'Shader recipes', text: 'Step-by-step effects: fire, water, scanlines, a glowing border, a loading spinner.', icon: 'star' },
-	]}
-/>
-
 <Aside type="note" title="Status of this section">
-Shader graphs are new in Pyzed. The pages above describe what works today; the node catalog and the recipes, with
-animated previews, will be added in the next updates of this section.
+Shader graphs are new in Pyzed. Every page here describes what works today, and the node catalog is generated from
+the code, so it always matches your version. Captures of each node and short animated previews of the recipes are
+being added.
 </Aside>

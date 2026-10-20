@@ -5,7 +5,7 @@ sidebar:
   order: 10.5
 ---
 
-El panel **Agente** (dock derecho, junto a Propiedades y Eventos) es un agente de IA al estilo del de Zed.
+El panel **Agente** (dock derecho, junto a Propiedades y Eventos) es un agente de IA.
 Describe lo que quieres y lee el formulario abierto, añade y ordena controles, conecta eventos, escribe los
 manejadores, crea formularios y componentes nuevos y revisa su propio código. Cada cambio que hace es un paso
 normal de deshacer, y puedes rechazar toda la ejecución de una vez.
@@ -243,7 +243,7 @@ variables `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID` y `ANTHROP
 ### Servidores MCP
 
 **Servidores MCP** suma las herramientas de cualquier servidor del
-[Model Context Protocol](https://modelcontextprotocol.io) a las del agente, como los servidores de contexto de Zed.
+[Model Context Protocol](https://modelcontextprotocol.io) a las del agente.
 **Añadir un servidor MCP** pide:
 
 - un **Nombre**;
@@ -259,7 +259,7 @@ aparecen como `mcp_<servidor>_<herramienta>`. Las que el servidor no marca como 
 ### Agentes externos
 
 **Agentes externos** ejecuta Claude Code, Gemini CLI, Codex o cualquier agente que hable el
-[Agent Client Protocol](https://agentclientprotocol.com) dentro del panel, como en Zed. **Añadir un agente
+[Agent Client Protocol](https://agentclientprotocol.com) dentro del panel. **Añadir un agente
 externo…** ofrece los conocidos (Claude Code con `@zed-industries/claude-code-acp`, `gemini --experimental-acp`,
 Codex con `@zed-industries/codex-acp`) u **Otro…** para cualquier comando. Una vez añadido, elígelo en el selector
 de modelos en **Agentes externos**.
@@ -315,7 +315,7 @@ sitio salvo las peticiones al proveedor que elijas.
 | **Modo rápido** | Respuestas más rápidas a mayor precio (Claude Opus 5.5 y Opus 5). También en el cuadro de mensaje. |
 | **Preguntar antes de escribir archivos** | Crear formularios y componentes y guardar archivos esperan tu permiso. Activado por defecto; equivale a los modos **Preguntar antes de escribir** / **Omitir permisos**. |
 | **Mostrar el razonamiento** | Muestra los resúmenes del razonamiento del modelo en la conversación. |
-| **Reglas** | Instrucciones añadidas a cada conversación, como las reglas de Zed: "Responde en español", "Nombra los botones con el sufijo `_button`"… |
+| **Reglas** | Instrucciones añadidas a cada conversación: "Responde en español", "Nombra los botones con el sufijo `_button`"… |
 
 ## Cómo obtener buenos resultados
 

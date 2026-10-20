@@ -86,8 +86,7 @@ en el lienzo para recuperar sus atajos.
 
 ## Árbol del proyecto
 
-Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/projects/#archivos), como en el panel de
-proyecto de Zed:
+Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/projects/#archivos):
 
 | Teclas | Acción |
 | --- | --- |

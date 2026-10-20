@@ -5,7 +5,7 @@ sidebar:
   order: 10.5
 ---
 
-The **Agent** panel (right dock, next to Properties and Events) is an AI agent in the style of Zed's. Describe
+The **Agent** panel (right dock, next to Properties and Events) is an AI agent. Describe
 what you want and it reads the open form, adds and arranges controls, wires events, writes the handlers, creates
 new forms and components, and checks its own code. Every change it makes is an ordinary undo step, and you can
 reject the whole run at once.
@@ -238,7 +238,7 @@ A saved API key wins over federation; remove it to use federation. The `ANTHROPI
 ### MCP servers
 
 **MCP servers** adds the tools of any [Model Context Protocol](https://modelcontextprotocol.io) server to the
-agent's, like Zed's context servers. **Add an MCP server** asks for:
+agent's. **Add an MCP server** asks for:
 
 - a **Name**;
 - the **Command**, as you would type it in a terminal (`npx -y @modelcontextprotocol/server-github`,
@@ -253,7 +253,7 @@ file writes; in **Read only** they are left out.
 ### External agents
 
 **External agents** run Claude Code, Gemini CLI, Codex or any agent that speaks the
-[Agent Client Protocol](https://agentclientprotocol.com) inside the panel, as in Zed. **Add an external agent…**
+[Agent Client Protocol](https://agentclientprotocol.com) inside the panel. **Add an external agent…**
 offers the known ones (Claude Code through `@zed-industries/claude-code-acp`, `gemini --experimental-acp`, Codex
 through `@zed-industries/codex-acp`) or **Other…** for any command. Once added, pick it in the model picker under
 **External agents**.
@@ -307,7 +307,7 @@ requests to the provider you picked.
 | **Fast mode** | Faster answers at a higher price (Claude Opus 5.5 and Opus 5). Also in the message box. |
 | **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |
-| **Rules** | Instructions added to every thread, like Zed's rules: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
+| **Rules** | Instructions added to every thread: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
 
 ## Getting good results
 

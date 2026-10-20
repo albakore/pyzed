@@ -7,7 +7,7 @@ sidebar:
 
 A Pyzed app is a normal [uv](https://docs.astral.sh/uv/) project: the interface lives in `ui/`, the backend in
 `src/` and uv manages the dependencies. The **Project** panel (left dock, next to **Design**) shows the project's
-files, like the project panel of Zed or the explorer of VS Code, and the **Dependencies** panel next to it manages
+files, like the explorer of a code editor, and the **Dependencies** panel next to it manages
 packages, tools and checks, all without leaving the editor. The background, the layout of a project and the matching `pyzed` commands are in
 [Projects with uv](/pyzed/guides/projects/).
 
@@ -69,7 +69,7 @@ opens in a tab.
 ### Header
 
 The project's name, version and folder. On the right, the current **git branch**, or **Create repository** when
-the folder is not a repository yet (it runs `git init` and writes a `.gitignore`, like Zed), and a folder button
+the folder is not a repository yet (it runs `git init` and writes a `.gitignore`), and a folder button
 that opens another project.
 
 While a command runs, a bar with a spinner says what is going on (`Adding httpx`, `Syncing the environment`...).
@@ -77,7 +77,7 @@ Commands run on a worker thread, so you can keep designing while uv downloads pa
 
 ### Files
 
-Under the header, the project's files and folders as a tree, like Zed's project panel. Folders open and close with
+Under the header, the project's files and folders as a tree. Folders open and close with
 a click (the `ui/` and `src/` folders start open); files are colored by their git status (modified, new, deleted,
 conflict) and folders take the color of what changed inside them. Virtual environments, caches and build output
 (`.venv`, `__pycache__`, `build`, `dist`...) are left out; hidden files such as `.gitignore` stay.
@@ -99,13 +99,13 @@ highlighting for the file's language, search and replace (<kbd>Ctrl</kbd>+<kbd>F
 A dot on a tab means unsaved changes: **Save** or <kbd>Ctrl</kbd>+<kbd>S</kbd> (while the file has the keyboard)
 writes it, and closing it asks first. Renaming or deleting a file in the tree updates its tab.
 
-The toolbar above the tree has a **search field** for files and folders (it matches letters in order, like Zed's
-file finder, and file names count more than folders: `crt` finds `ui/cart.pzform`), **New file**, **New
+The toolbar above the tree has a **search field** for files and folders (it matches letters in order, like
+**Go to file**, and file names count more than folders: `crt` finds `ui/cart.pzform`), **New file**, **New
 folder** (in the selected folder), **Collapse all** and **Refresh**. The tree reloads by itself when you save and
 after uv commands.
 
 **Right-click** a file or folder (or the empty space below the tree, for the project folder) for its menu, the
-same as Zed's project panel:
+the usual file operations of a code editor:
 
 ![The right-click menu of a file in the Project tab](../../../../screenshots/designer-project-menu.png)
 

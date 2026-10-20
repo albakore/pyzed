@@ -1,0 +1,333 @@
+---
+title: Recetas de shaders
+description: "Grafos de shader listos para usar en Pyzed: degradados, un brillo neón, plasma, nubes, celdas, una pantalla CRT retro, un foco que sigue al ratón, un spinner de carga, fuego y rayas en movimiento, cada uno con sus nodos y su código Python."
+sidebar:
+  label: Recetas
+  order: 3
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+
+Cada receta es un pequeño shader que puedes crear en la [vista Shader](/pyzed/es/shading/shader-designer/)
+siguiendo su cadena de nodos, o generar en Python ejecutando su código. Las seis primeras también son **plantillas**
+del diálogo Nuevo (**Nuevo → Shader**), así que puedes abrirlas ya hechas y desmontarlas.
+
+<Aside type="tip" title="Cómo leer las cadenas">
+`UV.y → Degradado → Salida` significa: conecta la salida `y` de un nodo **UV** a un **Degradado**, y el Degradado a
+la **Salida**. Los números entre paréntesis son valores para escribir en el nodo. Cada nodo se describe en el
+[catálogo de nodos](/pyzed/es/shading/nodes/).
+</Aside>
+
+Cada bloque de código es un script completo: guárdalo como `recipe.py`, ejecútalo y escribirá un `.pzshad` a su lado.
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run recipe.py
+		uv run pyzed run sky.pzshad        # mira el resultado
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		python recipe.py
+		pyzed run sky.pzshad
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 recipe.py && python3 -m pyzed run sky.pzshad
+		```
+		```powershell title="Windows (PowerShell)"
+		py recipe.py; py -m pyzed run sky.pzshad
+		```
+	</TabItem>
+</Tabs>
+
+## Fondo degradado
+
+*Plantilla: **En blanco*** · Nivel: primeros pasos
+
+Una rampa de color suave de arriba abajo: el shader útil más simple, y un fondo más bonito que un color plano.
+
+{/* media: shading/recipes/gradient */}
+
+**Cadena:** `UV.y → Degradado → Salida`. Haz clic en el nodo Degradado y edita sus paradas en Propiedades: arrastra
+una parada para moverla, haz clic en la barra para añadir otra.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("sky")
+sky = g.gradient(g.uv()["y"], stops=[[0.0, "#0b1026"], [0.6, "#3b2a6b"], [1.0, "#f08a5d"]])
+g.output(sky)
+g.save("sky.pzshad")
+```
+
+Prueba `UV.x` para una rampa horizontal, o un nodo **Degradado lineal** antes del Degradado para cualquier ángulo.
+
+## Anillo de neón
+
+*Plantilla: **Anillo luminoso*** · Nivel: primeros pasos
+
+Un anillo que respira, con una luz suave alrededor, en un color que tu código puede cambiar: pantallas de carga,
+indicadores de estado, power-ups de juegos.
+
+{/* media: shading/recipes/glow-ring */}
+
+**Cadena:** `Tiempo × pulse → Sin × 0.02 + 0.28 → Anillo.radius`, `Anillo → Resplandor (radius 0.12) × color.rgb →
+RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("glow_ring")
+color = g.uniform("color", "color", "#22d3ee")
+pulse = g.uniform("pulse", "float", 2.0, min=0, max=6)
+
+wobble = g.sin(g.time()["time"] * pulse) * 0.02
+ring = g.ring(radius=0.28 + wobble, thickness=0.01)
+light = g.glow(ring, radius=0.12, intensity=1.2)
+g.output(g.rgba(color["rgb"] * light, 1.0))
+g.save("glow_ring.pzshad")
+```
+
+Cambia el **Anillo** por una **Estrella** o un **Rectángulo** y tendrás un letrero de neón.
+
+## Plasma
+
+*Plantilla: **Plasma*** · Nivel: matemáticas básicas
+
+Tres ondas seno (a lo ancho, a lo alto y alrededor del centro) sumadas y coloreadas con una **Paleta**: el efecto
+clásico de la demoscene.
+
+{/* media: shading/recipes/plasma */}
+
+**Cadena:** `sin(UV.x × frequency + time)` + `sin(UV.y × frequency + time × 1.3)` + `sin(longitud(UV centrado) ×
+frequency × 1.5 − time)`, luego `× 0.166 + 0.5 → Paleta → RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("plasma")
+speed = g.uniform("speed", "float", 1.0, min=0, max=4)
+freq = g.uniform("frequency", "float", 10.0, min=1, max=30)
+
+t = g.time()["time"] * speed
+uv = g.uv()
+a = g.sin(uv["x"] * freq + t)
+b = g.sin(uv["y"] * freq + t * 1.3)
+c = g.sin(g.length(g.centered_uv()["centered"]) * freq * 1.5 - t)
+v = (a + b + c) * 0.166 + 0.5                       # tres ondas de −1..1, llevadas a 0..1
+g.output(g.rgba(g.palette(v), 1.0))
+g.save("plasma.pzshad")
+```
+
+## Nubes a la deriva
+
+*Plantilla: **Nubes*** · Nivel: ruido
+
+Ruido fractal que se desplaza con el viento, recortado en nubes por un **Paso suave** sobre un degradado de cielo.
+`cover` decide cuán nublado está.
+
+{/* media: shading/recipes/clouds */}
+
+**Cadena:** `Desplazar (speed: wind) → Ruido fractal → Paso suave` (bordes a partir de `cover`), luego
+`Mezclar (cielo, blanco, nubes) → RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("clouds")
+wind = g.uniform("wind", "vec2", [0.04, 0.01])
+cover = g.uniform("cover", "float", 0.5, min=0, max=1)
+
+n = g.fbm(g.scroll(speed=wind)["uv"], scale=3.0, octaves=6)
+edge = 1.0 - cover
+clouds = g.smoothstep(edge - 0.2, edge + 0.25, n)
+sky = g.gradient(g.uv()["y"], stops=[[0.0, "#2b6cb0"], [1.0, "#90cdf4"]])
+g.output(g.rgba(g.mix(sky["rgb"], [1.0, 1.0, 1.0], clouds), 1.0))
+g.save("clouds.pzshad")
+```
+
+<Aside type="tip">
+Cambia el blanco por un naranja y las paradas del cielo por un morado oscuro y tendrás un atardecer; desplázalo más
+rápido y baja `cover` para una tormenta.
+</Aside>
+
+## Celdas vivas
+
+*Plantilla: **Celdas*** · Nivel: ruido
+
+Celdas de Voronoi que se mueven, cada una con su color, separadas por bordes brillantes: fondos orgánicos, vistas de
+microscopio, vitrales.
+
+{/* media: shading/recipes/cells */}
+
+**Cadena:** `Voronoi (scale) → cell → Paleta × 0.6 → RGBA`; `Voronoi → edge → Paso suave (0, 0.06)`; luego
+`Mezclar (color del borde, celdas, borde) → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("cells")
+scale = g.uniform("scale", "float", 6.0, min=1, max=20)
+edge_color = g.uniform("edge", "color", "#f472b6")
+
+v = g.voronoi(scale=scale)                          # su fase sigue al tiempo: las celdas se mueven
+inside = g.rgba(g.palette(v["cell"]) * 0.6, 1.0)
+border = g.smoothstep(0.0, 0.06, v["edge"])
+g.output(g.mix(edge_color["color"], inside, border))
+g.save("cells.pzshad")
+```
+
+## Pantalla CRT retro
+
+*Plantilla: **Pantalla retro*** · Nivel: efectos
+
+Un degradado synthwave visto a través de un televisor antiguo: líneas de barrido que se desplazan, esquinas oscuras
+y grano de película. Los nodos de efecto devuelven números cercanos a 1, así que multiplicas tu color por ellos.
+
+{/* media: shading/recipes/retro-screen */}
+
+**Cadena:** `UV.y → Degradado → rgb × Líneas de barrido × Viñeta × Grano de película → RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("retro_screen")
+lines = g.uniform("scanlines", "float", 0.3, min=0, max=1)
+
+base = g.gradient(g.uv()["y"], stops=[[0.0, "#ff6ec7"], [0.55, "#7873f5"], [1.0, "#1b1035"]])
+color = base["rgb"] * g.scanlines(strength=lines, speed=20.0) * g.vignette(strength=0.9) * g.grain(strength=0.08)
+g.output(g.rgba(color, 1.0))
+g.save("retro_screen.pzshad")
+```
+
+Añade un nodo **Barril** delante del UV del degradado (y multiplica por su `inside`) para curvar el cristal, como en
+el `crt.pzshad` del [showcase](/pyzed/es/showcase/shaders/).
+
+## Foco que sigue al ratón
+
+Nivel: primeros pasos
+
+Una habitación oscura iluminada donde está el puntero. Cuando el puntero sale del shader, la luz descansa en el
+centro.
+
+{/* media: shading/recipes/spotlight */}
+
+**Cadena:** `Ratón.position → Degradado radial.center`, `Mezclar (oscuro, cálido, luz) → RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("spotlight")
+light = g.radial_gradient(center=g.mouse()["position"], radius=0.35)
+room = g.mix([0.03, 0.03, 0.06], [1.0, 0.85, 0.6], light)
+g.output(g.rgba(room, 1.0))
+g.save("spotlight.pzshad")
+```
+
+## Spinner de carga
+
+Nivel: matemáticas básicas
+
+Un anillo con una cabeza brillante y una estela que se desvanece y gira sin fin. El fondo transparente le permite
+estar sobre cualquier tarjeta.
+
+{/* media: shading/recipes/spinner */}
+
+**Cadena:** `Polar.angle01 − Tiempo × 0.8 → Fract` (la estela), `Anillo → Relleno` (la forma), y el `alpha` de la
+Salida a partir de `Relleno × estela`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("spinner")
+tail = g.fract(g.polar()["angle01"] - g.time()["time"] * 0.8)
+ring = g.fill(g.ring(radius=0.3, thickness=0.06))
+g.output(g.rgba(g.compose(0.4, 0.6, 1.0) * tail, ring * tail))   # alfa: solo se ve el anillo
+g.save("spinner.pzshad")
+```
+
+## Fuego
+
+Nivel: ruido
+
+Ruido fractal que sube, se desvanece hacia arriba y se colorea con una rampa negro → rojo → naranja → amarillo.
+
+{/* media: shading/recipes/fire */}
+
+**Cadena:** `Desplazar (speed: 0, speed × 0.6) → Ruido fractal × UV.y × 1.6 → Degradado → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("fire")
+speed = g.uniform("speed", "float", 1.0, min=0, max=4)
+
+rising = g.scroll(speed=g.compose(0.0, speed * 0.6, type="vec2"))
+heat = g.fbm(rising["uv"], scale=4.0, octaves=5) * g.uv()["y"] * 1.6
+g.output(g.gradient(heat, stops=[[0.0, "#000000"], [0.35, "#7f1d1d"], [0.6, "#f97316"],
+                                 [0.85, "#fde047"], [1.0, "#ffffff"]]))
+g.save("fire.pzshad")
+```
+
+<Aside type="note">
+La `y` de UV crece hacia abajo, así que `× UV.y` hace que la parte de abajo sea la más caliente. Desplazar suma
+`speed × time` a las coordenadas, de modo que el ruido se mueve en sentido *contrario*: una velocidad `y` positiva
+hace subir las llamas. Cambia el signo para que bajen.
+</Aside>
+
+## Rayas en movimiento
+
+Nivel: primeros pasos
+
+Rayas diagonales que se deslizan de lado, como un poste de barbería o una barra de "en curso".
+
+{/* media: shading/recipes/stripes */}
+
+**Cadena:** `Desplazar (0.2, 0) → Franjas (count 10, angle 0.785) → Mezclar (blanco, rojo) → RGBA → Salida`.
+
+```python
+from pyzed import shading
+
+g = shading.Graph("barber")
+s = g.stripes(g.scroll(speed=[0.2, 0.0])["uv"], count=10.0, angle=0.785, width=0.5)
+g.output(g.rgba(g.mix([0.95, 0.95, 0.95], [0.85, 0.15, 0.2], s), 1.0))
+g.save("barber.pzshad")
+```
+
+## Pon una receta a trabajar
+
+```python
+import pyzed as pz
+
+class Splash(pz.App):
+    title = "Cargando"
+
+    def view(self):
+        return pz.stack([
+            pz.shader("clouds.pzshad", uniforms={"cover": 0.6}, width="fill", height="fill", fallback="#2b6cb0"),
+            pz.center(pz.shader("spinner.pzshad", width=96, height=96, fallback="#1e293b")),
+        ])
+
+
+pz.run(Splash)
+```
+
+<Aside type="caution" title="Rendimiento">
+Los shaders son rápidos, pero cada píxel ejecuta el grafo entero. El ruido fractal con muchas octavas en un widget a
+pantalla completa es lo más costoso de esta página; baja las octavas o el tamaño del widget si un portátil antiguo
+sufre.
+</Aside>
+
+## Más para explorar
+
+<NavCards
+	items={[
+		{ title: 'Galería de shaders', text: 'Nebulosa, synthwave, brasas, radar, un túnel y más, con sus archivos.', href: '/pyzed/es/showcase/shaders/', icon: 'laptop' },
+		{ title: 'Catálogo de nodos', text: 'Cada nodo, sus puertos y un ejemplo.', href: '/pyzed/es/shading/nodes/', icon: 'puzzle' },
+		{ title: 'Grafos de shaders en Python', text: 'Variables, constantes, el formato del archivo y editar grafos en código.', href: '/pyzed/es/shading/shader-graphs/', icon: 'seti:python' },
+	]}
+/>

@@ -236,7 +236,7 @@
   },
   {
    "slug": "editor/component-designer",
-   "title": "Component designer",
+   "title": "The Component view",
    "description": "Draw reusable components in Pyzed Design with properties, state, methods and custom events, and nest them like Godot scenes.",
    "path": "docs/src/content/docs/editor/component-designer.md"
   },
@@ -271,10 +271,22 @@
    "path": "docs/src/content/docs/editor/files-and-scripting.md"
   },
   {
+   "slug": "editor/form-view",
+   "title": "The Form view",
+   "description": "Design a window of your app in Pyzed Design's Form view: place controls, set their properties, wire an event to Python and run it, with every part of the view explained.",
+   "path": "docs/src/content/docs/editor/form-view.mdx"
+  },
+  {
    "slug": "editor/index",
    "title": "Pyzed Design",
-   "description": "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, wire events to Python, run them and ship them.",
-   "path": "docs/src/content/docs/editor/index.md"
+   "description": "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, design shaders, wire events to Python, run them and ship them.",
+   "path": "docs/src/content/docs/editor/index.mdx"
+  },
+  {
+   "slug": "editor/interface",
+   "title": "The interface",
+   "description": "A tour of every part of the Pyzed Design window: the title bar and its menus, document tabs and windows, the four docks and their panels, the toolbar, the canvas, the status bar and notifications.",
+   "path": "docs/src/content/docs/editor/interface.mdx"
   },
   {
    "slug": "editor/keyboard-shortcuts",
@@ -319,6 +331,12 @@
    "path": "docs/src/content/docs/editor/settings.md"
   },
   {
+   "slug": "editor/shader-view",
+   "title": "The Shader view",
+   "description": "How the Shader view of Pyzed Design fits in the editor: the Shading sidebar, the Graph, Preview and WGSL tabs, its toolbar and status bar, and where to learn each node.",
+   "path": "docs/src/content/docs/editor/shader-view.mdx"
+  },
+  {
    "slug": "editor/styles-and-themes",
    "title": "Styles and themes",
    "description": "Style controls in Pyzed Design: the Style section, a color picker with gradients and masks, the form's global style and built-in themes.",
@@ -335,6 +353,12 @@
    "title": "Toolbox and canvas",
    "description": "Place, select, move, resize and arrange controls in Pyzed Design: snapping, smart guides, alignment, z-order and the outline of your form.",
    "path": "docs/src/content/docs/editor/toolbox-and-canvas.md"
+  },
+  {
+   "slug": "editor/views",
+   "title": "Views and documents",
+   "description": "The four kinds of document in Pyzed Design and the view each one opens in: the Form view for windows, the Component view for reusable pieces, the Shader view for GPU effects and the code editor for Python.",
+   "path": "docs/src/content/docs/editor/views.mdx"
   },
   {
    "slug": "examples",
@@ -1243,14 +1267,74 @@
    "path": "docs/src/content/docs/reference/widgets.md"
   },
   {
+   "slug": "shading/getting-started",
+   "title": "Your first shader",
+   "description": "A gentle start with GPU shaders in Pyzed: build a glowing, pulsing circle in the Shader view of Pyzed Design without writing code, then use it in an app.",
+   "path": "docs/src/content/docs/shading/getting-started.mdx"
+  },
+  {
    "slug": "shading/index",
    "title": "Shading",
    "description": "GPU shaders in Pyzed: build them by wiring nodes in Pyzed Design, load .pzshad shader graphs from Python, or write WGSL by hand, and paint any widget with them.",
    "path": "docs/src/content/docs/shading/index.mdx"
   },
   {
+   "slug": "shading/nodes/color-effects",
+   "title": "Color, effects and textures",
+   "description": "Gradients, palettes, hue, saturation, blend modes and layers, screen effects (vignette, scanlines, grain) and images.",
+   "path": "docs/src/content/docs/shading/nodes/color-effects.mdx"
+  },
+  {
+   "slug": "shading/nodes/index",
+   "title": "Node catalog",
+   "description": "Every node of Pyzed's shader graphs, by category: what it does, its inputs, outputs and settings, and a small example you can paste.",
+   "path": "docs/src/content/docs/shading/nodes/index.mdx"
+  },
+  {
+   "slug": "shading/nodes/inputs",
+   "title": "Inputs, parameters and constants",
+   "description": "The nodes every shader starts from: where the pixel is, the time, the mouse, your own variables and fixed values.",
+   "path": "docs/src/content/docs/shading/nodes/inputs.mdx"
+  },
+  {
+   "slug": "shading/nodes/logic-utility",
+   "title": "Logic, variables and utility",
+   "description": "Comparisons and if/else, named values, reroutes, your own WGSL, other shaders as functions, comments and the Output node.",
+   "path": "docs/src/content/docs/shading/nodes/logic-utility.mdx"
+  },
+  {
+   "slug": "shading/nodes/math",
+   "title": "Math",
+   "description": "Arithmetic, one-value functions (sin, fract, abs...), mix, clamp, smoothstep and remap: the glue of every shader graph.",
+   "path": "docs/src/content/docs/shading/nodes/math.mdx"
+  },
+  {
+   "slug": "shading/nodes/noise-patterns",
+   "title": "Noise and patterns",
+   "description": "Organic randomness (Perlin, simplex, fractal, Voronoi) and regular patterns (checker, stripes, grid, dots, gradients, waves).",
+   "path": "docs/src/content/docs/shading/nodes/noise-patterns.mdx"
+  },
+  {
+   "slug": "shading/nodes/shapes",
+   "title": "Shapes",
+   "description": "Circles, boxes, rings, lines, polygons and stars as signed distances, combined and drawn with fill, stroke and glow.",
+   "path": "docs/src/content/docs/shading/nodes/shapes.mdx"
+  },
+  {
+   "slug": "shading/nodes/vectors-uv",
+   "title": "Vectors and UV",
+   "description": "Build and split vectors, measure distances and angles, and move, tile, rotate, twist or bend the coordinates.",
+   "path": "docs/src/content/docs/shading/nodes/vectors-uv.mdx"
+  },
+  {
+   "slug": "shading/recipes",
+   "title": "Shader recipes",
+   "description": "Ready-to-use shader graphs for Pyzed: gradients, a neon glow, plasma, clouds, cells, a retro CRT screen, a mouse spotlight, a loading spinner, fire and moving stripes, each with its nodes and its Python code.",
+   "path": "docs/src/content/docs/shading/recipes.mdx"
+  },
+  {
    "slug": "shading/shader-designer",
-   "title": "Shader designer",
+   "title": "The Shader view",
    "description": "Build GPU shaders in Pyzed Design by wiring nodes, like Godot's visual shaders: live previews on every node, a sidebar of shading nodes and variables your code changes.",
    "path": "docs/src/content/docs/shading/shader-designer.md"
   },

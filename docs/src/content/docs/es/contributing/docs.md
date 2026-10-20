@@ -18,6 +18,8 @@ docs/
 │   ├── gen_api.py                # genera reference/*.md en ambos idiomas
 │   ├── library_data.py           # la biblioteca de componentes: una entrada por componente
 │   ├── gen_library.py            # genera library/*.mdx en ambos idiomas
+│   ├── shading_nodes_data.py     # textos y ejemplos del catálogo de nodos (en/es)
+│   ├── gen_shading_nodes.py      # genera shading/nodes/*.mdx en ambos idiomas
 │   ├── library_shots.py          # genera src/assets/library/*.png
 │   ├── component_shots.py        # genera src/assets/components/*.png
 │   ├── example_shots.py          # genera capturas de ejemplos y tutoriales
@@ -105,6 +107,8 @@ Necesitan Pyzed instalado (`uv sync`, o `maturin develop --release`). Para un co
 python docs/scripts/gen_api.py              # referencia de la API, ambos idiomas
 python docs/scripts/gen_api.py --lang es    # solo español (o --lang en)
 python docs/scripts/gen_api.py --check      # informa de nombres públicos sin documentar
+python docs/scripts/gen_shading_nodes.py    # catálogo de nodos de shader, ambos idiomas
+python docs/scripts/gen_shading_nodes.py --check  # falla si las páginas no están al día o un ejemplo falla
 python docs/scripts/component_shots.py      # ilustraciones de componentes
 python docs/scripts/example_shots.py        # capturas de ejemplos y tutoriales
 python examples/screenshots.py              # capturas grandes

@@ -95,7 +95,7 @@ touching the rest of the file, so your imports, helpers and comments stay as you
 file in any other editor too; the form only needs the handler functions to exist.
 
 A designed component is also two files, `rating.pzcomp` (layout) and `rating.py` (the class); see
-[Component designer](/pyzed/editor/component-designer/).
+[Component view](/pyzed/editor/component-designer/).
 
 ## Adding your own components
 

@@ -1,9 +1,14 @@
 ---
-title: Diseñador de shaders
+title: La vista Shader
 description: "Crea shaders de GPU en Pyzed Design conectando nodos, como los visual shaders de Godot: vista previa en vivo en cada nodo, una barra de nodos de shading y variables que tu código cambia."
 sidebar:
   order: 2
 ---
+
+:::tip[¿Nuevo en los shaders?]
+Empieza por [Tu primer shader](/pyzed/es/shading/getting-started/): un recorrido de diez minutos por esta vista que
+crea un círculo brillante paso a paso. Esta página es la referencia completa de la vista.
+:::
 
 El diseñador tiene un tercer tipo de documento: los **shaders**. En vez de escribir WGSL, conectas nodos en un
 grafo, como en los visual shaders de Godot o el editor de shaders de Blender. Cada nodo muestra una vista previa
@@ -94,6 +99,8 @@ diseñador.
 | **Variables** | Set value, Get value (valores con nombre dentro del grafo) |
 | **Utility** | Reroute, Expression (tu propio WGSL), Shader function (otro `.pzshad`), Comment |
 | **Output** | Output: el color de cada píxel (y su alfa) |
+
+Cada nodo, con sus puertos, ajustes y un ejemplo, se describe en el [catálogo de nodos](/pyzed/es/shading/nodes/).
 
 Los puertos tienen tipo, como en Godot: `float`, `int`, `bool`, `vec2`, `vec3`, `vec4` y `texture`. La mayoría de
 los nodos matemáticos son genéricos: toman el tipo más amplio que les conectes (un `float` por un `vec3` es un

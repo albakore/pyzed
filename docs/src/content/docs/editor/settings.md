@@ -19,7 +19,7 @@ editor's own preferences. Changes apply at once and are saved right away; **Done
 | **Toolbar** | Shows or hides the toolbar. |
 | **Status bar** | Shows or hides the status bar. |
 | **Welcome window** | Opens the [welcome window](/pyzed/editor/examples/) at startup (on by default). |
-| **Custom window frame** | On by default: Pyzed Design draws its own title bar and window buttons, like Zed. Turn it off to use the system's frame (applies the next time it opens). |
+| **Custom window frame** | On by default: Pyzed Design draws its own title bar and window buttons, in the style of your system. Turn it off to use the system's frame (applies the next time it opens). |
 | **Form preview frame** | The window frame the canvas shows around the form: this system's, macOS, Windows 11, GNOME, Ubuntu or KDE Plasma. |
 
 ## Form canvas

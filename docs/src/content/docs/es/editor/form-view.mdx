@@ -1,0 +1,175 @@
+---
+title: La vista de formulario
+description: "Diseña una ventana de tu app en la vista de formulario de Pyzed Design: coloca controles, ajusta sus propiedades, conecta un evento a Python y ejecútala, con cada parte de la vista explicada."
+sidebar:
+  label: La vista de formulario
+  order: 1.6
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import newForm from '../../../../../screenshots/designer-new.png';
+import placing from '../../../../../screenshots/editor-placing.png';
+import events from '../../../../../screenshots/editor-events.png';
+import run from '../../../../../screenshots/designer-run.png';
+
+Un **formulario** es una ventana de tu app. La **vista de formulario** es donde la dibujas: eliges controles de una
+caja, los sueltas en la ventana, cambias su aspecto en una lista de propiedades y escribes unas líneas de Python para
+lo que pasa cuando el usuario hace clic o escribe. Si usaste Visual Basic, el diseñador de WinForms o Qt Designer, ya
+conoces la idea; si no, el recorrido de abajo lleva diez minutos.
+
+## Qué ves
+
+| Zona | En la vista de formulario |
+| --- | --- |
+| **Herramientas** (izquierda, arriba) | Todos los controles que puedes colocar, agrupados (Comunes, Presentación, Contenedores, Disposición, Navegación...), con un buscador. |
+| **Estructura** (izquierda, abajo) | Los controles del formulario en árbol: selecciónalos, renómbralos, anídalos, ocúltalos y bloquéalos. |
+| **Barra de herramientas** (centro, arriba) | Guardar, deshacer, alinear, distribuir, mismo tamaño, centrar, orden, cuadrícula, ajuste y guías. |
+| **Lienzo** (centro) | El formulario dentro de un marco de ventana, tal como se ejecutará. |
+| **Propiedades** (derecha) | El control seleccionado, o el formulario si no hay nada seleccionado. |
+| **Eventos** (derecha) | A qué puede reaccionar el control seleccionado y la función Python conectada a cada evento. |
+| **Código** (abajo) | El Python del formulario, que se abre al conectar un evento. |
+
+Cada zona se describe en detalle en su propia página: [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/),
+[Propiedades](/pyzed/es/editor/properties/), [Eventos](/pyzed/es/editor/events/) y
+[Editor de código](/pyzed/es/editor/code-editor/).
+
+## Tu primer formulario: un saludador
+
+Vas a crear una ventana con un cuadro de texto, un botón y una etiqueta. Al escribir un nombre y pulsar el botón,
+muestra "¡Hola, *nombre*!".
+
+{/* media: editor/form-view-greeter (el saludador terminado en marcha, bucle corto) */}
+
+<Steps>
+
+1. **Crea el formulario.** Pulsa <kbd>Ctrl</kbd>+<kbd>N</kbd>. En el diálogo **Nuevo** deja **Formulario**, escribe
+   `hello` como **Nombre** y `Saludador` como **Título**, elige la plantilla **En blanco** y pulsa **Crear**. Aparecen
+   dos archivos: `hello.pzform` (el diseño) y `hello.py` (el código).
+
+	<Media src={newForm} alt="El diálogo Nuevo con nombre, título, carpeta y plantillas" caption="El diálogo Nuevo: nombre, título, carpeta y una plantilla de partida." size="narrow" />
+
+2. **Coloca un cuadro de texto.** En las herramientas, arrastra **Cuadro de texto** al formulario. Queda seleccionado
+   y el panel Propiedades lo muestra. Cambia su **Nombre** a `your_name` y su **Texto de ayuda** a `Tu nombre`.
+
+3. **Coloca un botón.** Haz clic en **Botón** en las herramientas y arrastra un rectángulo en el formulario bajo el
+   cuadro de texto: el botón toma ese tamaño. Llámalo `greet` y pon su **Texto** en `Saludar`.
+
+	<Media src={placing} alt="Colocando un botón al arrastrar un rectángulo con la herramienta elegida" caption="Con un control elegido, arrastra un rectángulo para darle tamaño." />
+
+4. **Coloca una etiqueta.** Añade una **Etiqueta de texto** bajo el botón, llámala `message` y borra su texto.
+
+5. **Alinéalos.** Selecciona los tres controles (arrastra un rectángulo de selección alrededor) y pulsa **Alinear a la
+   izquierda** en la barra de herramientas. Las guías inteligentes muestran líneas rosas cuando los bordes coinciden
+   mientras arrastras.
+
+6. **Conecta el clic.** Haz doble clic en el botón. El panel Eventos conecta su evento **click** a una función nueva,
+   `greet_click`, y la abre en el editor de código. Escribe una línea:
+
+	```python title="hello.py"
+	def greet_click(form, event):
+	    """Se ejecuta al pulsar greet."""
+	    form.message.text = f"¡Hola, {form.your_name.text}!"
+	```
+
+	`form` es la ventana en marcha: cada control es un atributo con su nombre (`form.message`) y sus propiedades son
+	atributos del control (`form.message.text`). Al cambiarlos se actualiza la ventana.
+
+	<Media src={events} alt="El panel Eventos con un evento conectado a un manejador" caption="El panel Eventos: doble clic en un evento para conectarlo e ir a su código." size="narrow" />
+
+7. **Ejecútalo.** Pulsa <kbd>F5</kbd> (guarda antes). Tu formulario se abre como una ventana real; escribe un nombre y
+   pulsa el botón. La [consola](/pyzed/es/editor/console-and-running/) de abajo muestra lo que imprime el formulario y
+   cualquier error. Déjala abierta, cambia el color de la etiqueta en Propiedades y guarda: la ventana en marcha se
+   actualiza.
+
+	<Media src={run} alt="El formulario ejecutándose en su propia ventana junto al diseñador" caption="F5 ejecuta el formulario con su código; al guardar se actualiza en vivo." />
+
+</Steps>
+
+<Aside type="tip" title="Los nombres importan">
+El **Nombre** de un control es cómo lo alcanza tu código (`form.your_name`), y los manejadores se llaman como él
+(`greet_click`). Pon nombres cortos y claros en cuanto coloques los controles; renombrar uno después también renombra
+los manejadores que siguen esa convención (`greet_click`), pero el código de otros sitios que use el nombre antiguo
+hay que actualizarlo a mano.
+</Aside>
+
+## Ejecuta el formulario fuera del diseñador
+
+El formulario y su código son archivos normales de tu proyecto. Ejecútalos desde una terminal:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run pyzed run hello.pzform
+		uv run pyzed run hello.pzform --reload   # se actualiza al guardar
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pyzed run hello.pzform
+		pyzed run hello.pzform --reload
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 -m pyzed run hello.pzform
+		```
+		```powershell title="Windows (PowerShell)"
+		py -m pyzed run hello.pzform
+		```
+	</TabItem>
+</Tabs>
+
+O desde tu propio código Python:
+
+```python title="main.py"
+from pyzed import designer
+
+designer.run("hello.pzform")
+```
+
+## Qué más hace la vista de formulario
+
+| Tarea | Cómo | Más |
+| --- | --- | --- |
+| Ordenar controles en filas, columnas y cuadrículas que se adaptan a la ventana | Selecciónalos, clic derecho → **Agrupar en una fila / columna / cuadrícula**, o usa un contenedor de las herramientas | [Disposiciones](/pyzed/es/editor/layouts/) |
+| Mantener un control pegado a un borde cuando la ventana crece | **Posición → Anclajes** en Propiedades | [Propiedades](/pyzed/es/editor/properties/#posición) |
+| Cambiar colores, fuentes, bordes y sombras | **Estilo** en Propiedades; la ventana entera en el **Estilo** del formulario | [Estilos y temas](/pyzed/es/editor/styles-and-themes/) |
+| Animar al pasar el ratón o al hacer clic, añadir brillo, desenfoque o cristal | **Efectos** y **Movimiento** en Propiedades | [Animaciones y efectos](/pyzed/es/editor/animations-and-effects/) |
+| Rellenar campos con datos y validarlos | Sección **Datos**: enlaces y reglas | [Enlace de datos](/pyzed/es/editor/data-binding/) |
+| Ver el formulario con otro tema, idioma o marco de sistema | **Ver → Vista previa con tema / idioma / marco de ventana** | [Interfaz](/pyzed/es/editor/interface/#lienzo) |
+| Reutilizar un grupo de controles en muchos formularios | Conviértelo en un componente | [Vista de componente](/pyzed/es/editor/component-designer/) |
+| Pintar un fondo con un efecto de GPU | El control **Shader** de Presentación, con un `.pzshad` | [Shading](/pyzed/es/shading/) |
+
+## El archivo `.pzform`
+
+Un formulario es JSON: su tamaño y aspecto (`form`), y cada control con su tipo, posición y propiedades. Sus
+manejadores viven a su lado en un módulo Python con el mismo nombre. Ambos son tuyos para versionar, revisar y editar a
+mano.
+
+```json title="hello.pzform (resumido)"
+{
+  "format": "pyzed.form/1",
+  "form": {"name": "hello", "title": "Saludador", "width": 360, "height": 220, "theme": "One Dark"},
+  "controls": [
+    {"name": "your_name", "type": "input", "x": 24, "y": 24, "width": 312, "height": 32,
+     "props": {"placeholder": "Tu nombre"}, "events": {}},
+    {"name": "greet", "type": "button", "x": 24, "y": 72, "width": 120, "height": 32,
+     "props": {"text": "Saludar"}, "events": {"click": "greet_click"}}
+  ]
+}
+```
+
+<Aside type="note" title="Estado de esta página">
+Esta página es nueva. Se están añadiendo grabaciones cortas de cada paso; las demás páginas de esta sección ya
+describen a fondo cada control de la vista.
+</Aside>
+
+<NavCards
+	items={[
+		{ title: 'Herramientas y lienzo', text: 'Colocar, seleccionar, ajustar, guías y la estructura.', href: '/pyzed/es/editor/toolbox-and-canvas/', icon: 'pencil' },
+		{ title: 'Propiedades', text: 'Cada sección de la grilla de propiedades.', href: '/pyzed/es/editor/properties/', icon: 'setting' },
+		{ title: 'Eventos y manejadores', text: 'Cada evento y cómo escribir su código.', href: '/pyzed/es/editor/events/', icon: 'rocket' },
+	]}
+/>

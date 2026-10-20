@@ -1,5 +1,5 @@
 ---
-title: Component designer
+title: The Component view
 description: "Draw reusable components in Pyzed Design with properties, state, methods and custom events, and nest them like Godot scenes."
 sidebar:
   order: 9

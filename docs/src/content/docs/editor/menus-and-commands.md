@@ -11,8 +11,10 @@ list always agree. This page lists them all.
 ## The title bar
 
 From left to right: the **☰** menu, the project's name (click it to show the Project panel), the file name (click
-it to open another file), a dot when there are unsaved changes and a **Component** badge in component mode. At the
-right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu and the **Settings** gear.
+it to open another file), a dot when there are unsaved changes and a **Component** or **Shader** badge in those
+views. At the right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu and the **Settings**
+gear, followed by the window buttons when Pyzed Design draws its own frame (see
+[The interface](/pyzed/editor/interface/#the-window-frame)).
 
 ## ☰ File menu
 
@@ -57,6 +59,8 @@ keyboard and in the command palette.
 | Command palette… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Runs any command by name. |
 | Left dock / Right dock / Bottom dock | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Shows or hides each dock (checked when shown). |
 | Console | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Shows the console and keeps it open. |
+| Agent panel | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Shows or hides the [AI agent](/pyzed/editor/ai-agents/) (checked when shown). |
+| Generate a form with AI… / Generate a component with AI… | | Opens the agent with the start of a request ("Create a new form for…") for you to finish. |
 | Move tab to new window / Move tab to main window | | Gives the document in front a window of its own, or brings it back among the main window's tabs. See [Document tabs](/pyzed/editor/files-and-scripting/#document-tabs). |
 | Toolbar, Status bar | | Shows or hides them. |
 | Grid | <kbd>G</kbd> | Shows or hides the dot grid. |
@@ -83,6 +87,7 @@ The toggles are remembered between sessions.
 | What's new | | A tab with the release notes of this version (or of the update waiting to install). |
 | Check for updates | | Looks for a newer release on GitHub now; see [Updates](/pyzed/download/#updates). |
 | Check for updates automatically | | Toggles the daily check (on by default). |
+| Get preview releases | | Also offers pre-releases (`X.Y.Z-rc.N`): the preview channel. See [Updates](/pyzed/download/#updates). |
 | About Pyzed Design | | The versions of Pyzed, Python and Iced, the platform, and links. |
 
 ![The About dialog](../../../../screenshots/editor-about.png)
@@ -121,7 +126,7 @@ a container (its **+** in the outline, or **Add inside…**), it adds inside tha
 
 ## Panels and docks
 
-Six panels live in four docks around the canvas:
+Eight panels live in four docks around the canvas:
 
 | Panel | Default dock | Shows |
 | --- | --- | --- |
@@ -130,6 +135,7 @@ Six panels live in four docks around the canvas:
 | **Dependencies** | Left | Dependencies, ruff and ty (only with a project open). |
 | **Properties** | Right | The property grid. |
 | **Events** | Right | The events of the selection. |
+| **Agent** | Right | The [AI agent](/pyzed/editor/ai-agents/). |
 | **Code** | Bottom | The code editor (only while a handler or the file is open). |
 | **Console** | Bottom | The console (once it has something to show). |
 
@@ -162,6 +168,7 @@ flowchart LR
     subgraph Right
         Properties
         Events
+        Agent
     end
 ```
 

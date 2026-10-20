@@ -84,6 +84,6 @@ sidebar:
 - **Commit both files**: the `.pzform` is readable JSON that diffs well, and the `.py` is plain Python. Reviewers
   can read both.
 - **Edit the code anywhere**: the editor only rewrites the handler functions it manages, so you can keep the code
-  file open in Zed or VS Code as well; run with `pyzed run app.pzform --reload` to see every save.
+  file open in another editor as well; run with `pyzed run app.pzform --reload` to see every save.
 - **Templates are a head start**: the *Dialog* template already wires OK and Cancel; *Settings* shows a grid of
   labels and fields. Register your own with `designer.register_template`.

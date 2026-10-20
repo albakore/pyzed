@@ -20,7 +20,7 @@ diálogo.
 | **Barra de herramientas** | Muestra u oculta la barra de herramientas. |
 | **Barra de estado** | Muestra u oculta la barra de estado. |
 | **Ventana de bienvenida** | Abre la [ventana de bienvenida](/pyzed/es/editor/examples/) al iniciar (activada por defecto). |
-| **Marco de ventana propio** | Activado por defecto: Pyzed Design dibuja su propia barra de título y botones de ventana, como Zed. Desactívalo para usar el marco del sistema (se aplica la próxima vez que se abre). |
+| **Marco de ventana propio** | Activado por defecto: Pyzed Design dibuja su propia barra de título y botones de ventana, con el estilo de tu sistema. Desactívalo para usar el marco del sistema (se aplica la próxima vez que se abre). |
 | **Marco de la vista previa** | El marco de ventana que el lienzo muestra alrededor del formulario: el de este sistema, macOS, Windows 11, GNOME, Ubuntu o KDE Plasma. |
 
 ## Lienzo del formulario
