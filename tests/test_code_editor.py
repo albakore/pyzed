@@ -7,7 +7,7 @@ import pytest
 
 from pyzed import designer
 from pyzed.designer import intellisense as intel
-from pyzed.designer import code_panel, lsp, settings
+from pyzed.designer import code_panel, keymap, lsp, settings
 from pyzed.designer.app import Designer
 from pyzed.designer.intellisense import CodeIntel, CompletionItem
 from pyzed.designer.model import Form
@@ -252,11 +252,9 @@ def test_designer_settings_dialog_and_status(tmp_path):
     d.assist.set("folding", False)
     assert d.view() is not None
 
-    for key in code_panel.SETTINGS_SECTIONS + tuple(f"keys:{page}" for page, _, _ in code_panel.KEY_GROUPS):
+    for key in code_panel.SETTINGS_SECTIONS:
         d.assist.show_settings_section(key)
         assert d.dialog_view(t) is not None
-    d.assist.edit_keys("delete_line")
-    assert d.dialog_view(t) is not None
 
 
 def test_new_editor_settings_are_sanitized():
@@ -290,24 +288,31 @@ def test_designer_key_bindings(tmp_path):
     d = Designer(tmp_path / "x.pzform", language_servers=False)
     d.edit_whole_file()
     a = d.assist
-    a.set_keys("delete_line", "ctrl-shift-")
-    assert a.key_error("delete_line") and "delete_line" not in a.settings.keymap
-    a.set_keys("delete_line", "Ctrl+Shift+D")
-    assert a.settings.keymap == {"delete_line": "ctrl-shift-d"} and settings.load().keymap == a.settings.keymap
-    assert a.editor_keymap()["ctrl-shift-d"] == "delete_line" and a.editor_keymap()["ctrl-shift-k"] is None
-    a.set_keys("delete_line", "ctrl-shift-k")  # back to the default: no override left
-    assert a.settings.keymap == {}
+    km = keymap.get()
+    [delete_line] = km.bindings_for("editor::delete_line")
+    assert km.change(delete_line, "Ctrl+Shift+")  # not keys
+    assert km.change(delete_line, "Ctrl+Shift+D") is None
+    assert a.editor_keymap() == {"ctrl-shift-k": None, "ctrl-shift-d": "delete_line"}
     # Alt+Z toggles wrapping, and the code panel's keys can move too.
     assert not a.settings.wrap
     d.on_key("alt-z")
     assert a.settings.wrap
-    a.set_keys("go_to_line", "ctrl-alt-g")
+    [go_to_line] = km.bindings_for("code_panel::go_to_line")
+    km.change(go_to_line, "ctrl-alt-g")
     d.on_key("ctrl-g")
     assert a.goto is None
     d.on_key("ctrl-alt-g")
     assert a.goto == ""
-    a.reset_keys()
-    assert a.settings.keymap == {} and a.key_bindings("go_to_line") == "ctrl-g"
+    km.reset_all()
+    assert km.keys_for("code_panel::go_to_line") == "ctrl-g" and a.editor_keymap() == {}
+
+
+def test_old_editor_keys_move_to_the_keymap(tmp_path):
+    settings.save(settings.EditorSettings(keymap={"delete_line": "ctrl-shift-d", "go_to_line": ""}))
+    d = Designer(tmp_path / "x.pzform", language_servers=False)
+    km = keymap.get()
+    assert km.path.exists() and settings.load().keymap == {} and d.assist.settings.keymap == {}
+    assert km.keys_for("editor::delete_line") == "ctrl-shift-d" and km.keys_for("code_panel::go_to_line") is None
 
 
 # -- real language servers ------------------------------------------------------------

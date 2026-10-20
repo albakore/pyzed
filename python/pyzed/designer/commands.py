@@ -8,7 +8,7 @@ everywhere at once.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from . import telemetry as _telemetry
 from .locale import tr
@@ -64,6 +64,8 @@ ACTIONS: Tuple[Action, ...] = (
     Action("save", "Save", "File", lambda d: d.save(), "save", "ctrl-s", global_keys=True),
     Action("save_as", "Save as…", "File", lambda d: d.show_save_as(), "save-all", "ctrl-shift-s", global_keys=True),
     Action("settings", "Settings…", "File", lambda d: d.open_settings(), "settings", "ctrl-,", global_keys=True),
+    Action("open_keymap", "Keymap editor…", "File", lambda d: d.open_keymap(), "keyboard", "ctrl-k ctrl-s",
+           global_keys=True),
     # Edit
     Action("undo", "Undo", "Edit", lambda d: d.undo(), "undo-2", "ctrl-z", lambda d: d.doc.history.can_undo),
     Action("redo", "Redo", "Edit", lambda d: d.redo(), "redo-2", "ctrl-shift-z", lambda d: d.doc.history.can_redo),
@@ -151,32 +153,6 @@ ACTIONS: Tuple[Action, ...] = (
 DOCS_URL = "https://albakore.github.io/pyzed/editor/"
 ISSUES_URL = "https://github.com/albakore/pyzed/issues"
 
-#: Shortcuts that are not commands of their own, for the reference list.
-EXTRA_SHORTCUTS: Tuple[Tuple[str, Sequence[Tuple[str, str]]], ...] = (
-    ("Canvas", (("Move by one pixel", "left"), ("Move by one grid step", "shift-left"),
-                ("Open the main event", "enter"), ("Cancel the current gesture", "escape"))),
-    ("Project tree", (("New file", "ctrl-n"), ("New folder", "alt-n"), ("Rename", "f2"), ("Cut", "ctrl-x"),
-                      ("Copy", "ctrl-c"), ("Paste", "ctrl-v"), ("Duplicate", "ctrl-d"), ("Undo", "ctrl-z"),
-                      ("Redo", "ctrl-shift-z"), ("Move to the trash", "delete"), ("Delete", "ctrl-delete"),
-                      ("Reveal in File Manager", "ctrl-alt-r"), ("Open in Default App", "ctrl-shift-enter"),
-                      ("Copy Path", "alt-shift-c"), ("Copy Relative Path", "ctrl-alt-shift-c"))),
-    ("Code", (("Show completions", "ctrl-space"), ("Accept completion", "enter"), ("Close completions", "escape"),
-              ("Find", "ctrl-f"), ("Find and replace", "ctrl-h"), ("Next and previous match", "f3"),
-              ("Go to line", "ctrl-g"), ("Toggle soft wrap", "alt-z"), ("Undo", "ctrl-z"), ("Redo", "ctrl-shift-z"),
-              ("Bigger, smaller and default font", "ctrl-="))),
-    ("Multiple cursors", (("Add a cursor", "alt-click"), ("Add a cursor above", "alt-shift-up"),
-                          ("Add a cursor below", "alt-shift-down"), ("Select the next match", "ctrl-d"),
-                          ("Select every match", "ctrl-shift-l"), ("A cursor on each selected line", "alt-shift-i"),
-                          ("Undo the last cursor change", "ctrl-u"), ("Back to one cursor", "escape"))),
-    ("Lines", (("Move line up", "alt-up"), ("Move line down", "alt-down"),
-               ("Duplicate line down", "ctrl-alt-shift-down"), ("Delete line", "ctrl-shift-k"),
-               ("Select line", "ctrl-l"), ("Join lines", "ctrl-shift-j"), ("New line below", "ctrl-enter"),
-               ("New line above", "ctrl-shift-enter"), ("Indent", "ctrl-]"), ("Outdent", "ctrl-["),
-               ("Toggle comment", "ctrl-/"), ("Go to matching bracket", "ctrl-m"))),
-    ("Folding", (("Fold", "ctrl-shift-["), ("Unfold", "ctrl-shift-]"), ("Fold everything", "ctrl-k ctrl-0"),
-                 ("Unfold everything", "ctrl-k ctrl-j"), ("Toggle fold", "ctrl-k ctrl-l"))),
-)
-
 BY_ID: Dict[str, Action] = {a.id: a for a in ACTIONS}
 
 
@@ -208,8 +184,8 @@ def groups() -> List[Tuple[str, List[Action]]]:
 
 
 def shortcut_groups() -> List[Tuple[str, List[Tuple[str, str]]]]:
-    """Returns the keyboard shortcut reference as ``(title, [(label, keys), ...])`` groups, translated, with
-    the extra non-command shortcuts and without empty groups."""
-    out = [(tr(g), [(a.label.rstrip("…"), a.keys) for a in items if a.keys]) for g, items in groups()]
-    out += [(tr(title), [(tr(label), keys) for label, keys in items]) for title, items in EXTRA_SHORTCUTS]
-    return [(g, items) for g, items in out if items]
+    """Returns the keyboard shortcut reference as ``(title, [(label, keys), ...])`` groups, translated, with the
+    keys in force in the user's keymap (see ``keymap.shortcut_groups``)."""
+    from . import keymap
+
+    return keymap.shortcut_groups()

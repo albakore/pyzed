@@ -295,6 +295,12 @@
    "path": "docs/src/content/docs/editor/keyboard-shortcuts.md"
   },
   {
+   "slug": "editor/keymap",
+   "title": "Keymap",
+   "description": "Change any keyboard shortcut of Pyzed Design, like Zed's keymap: a keymap editor with search and conflicts, and a keymap.json file with contexts.",
+   "path": "docs/src/content/docs/editor/keymap.md"
+  },
+  {
    "slug": "editor/layouts",
    "title": "Layouts and containers",
    "description": "Panels, group boxes and cards, flex rows and columns, grids, spacers and anchors: arrange controls of Python desktop forms in Pyzed Design.",

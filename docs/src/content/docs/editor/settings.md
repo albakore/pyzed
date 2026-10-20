@@ -46,6 +46,7 @@ editor's own preferences. Changes apply at once and are saved right away; **Done
 | --- | --- |
 | **Layout → Reset** | Puts every panel back in its default dock and size. |
 | **Code editor → Editor settings…** | The [code editor's settings](/pyzed/editor/code-editor/#editor-settings): font, tabs, cursor, completion, language servers. |
+| **Key bindings → Keymap editor…** | The [keymap editor](/pyzed/editor/keymap/): change the keys of any action. |
 | **AI agents → AI agents settings…** | The [agent's settings](/pyzed/editor/ai-agents/#settings): model providers, keys and browser sign-in, default model, effort and permissions. |
 
 ## Telemetry

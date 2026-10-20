@@ -495,7 +495,9 @@ def editor_keymap() -> Dict[str, Any]:
     return {"actions": {action: list(keys) for action, keys in DEFAULT_KEYS.items()},
             "change": 'ui.editor(keymap={"ctrl-shift-d": "duplicate_line", "ctrl-d": None}) or '
                       "keymap_for({action: 'keys, separated by commas'}) from pyzed.ui.editor",
-            "docs": f"{SITE}editor/keyboard-shortcuts/"}
+            "designer": "Pyzed Design's keys (every command, the canvas, the project tree, the code panel and this editor) "
+                        "are in keymap.json in the Pyzed config folder, in Zed's format; File → Keymap editor changes them",
+            "docs": f"{SITE}editor/keyboard-shortcuts/", "keymap_docs": f"{SITE}editor/keymap/"}
 
 
 def _fetch(path: str) -> str:

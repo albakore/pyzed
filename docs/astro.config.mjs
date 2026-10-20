@@ -111,6 +111,7 @@ const topics = [
 				items: [
 					{ slug: 'editor/menus-and-commands' },
 					{ slug: 'editor/keyboard-shortcuts' },
+					{ slug: 'editor/keymap' },
 					{ slug: 'editor/settings' },
 					{ slug: 'editor/reference' },
 					{ slug: 'editor/tips-and-tricks' },

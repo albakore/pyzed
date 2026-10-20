@@ -258,20 +258,9 @@ derecha se ve la que eliges.
 
 ### Atajos de teclado
 
-En **Atajos de teclado**, el índice agrupa todas las acciones del editor y del panel de código: Panel de código,
-Edición, Varios cursores, Líneas, Movimiento y Plegado. Cada fila muestra la acción, su nombre
-(`delete_line`) y sus teclas. El lápiz las cambia: escribe las teclas como `ctrl-shift-d`,
-`alt-up`, `f2` o un acorde como `ctrl-k ctrl-c`), varias separadas por comas, o deja el campo vacío para ninguna.
-Las teclas nuevas sustituyen a las de por defecto; la flecha junto a una acción cambiada recupera las suyas, y
-**Restablecer todo** lo hace con todas.
+**Atajos de teclado** en el índice abre el [editor de keymap](/pyzed/es/editor/keymap/), donde puedes cambiar las teclas
+de cada acción del editor, del panel de código y del resto del diseñador. Los cambios se guardan en `keymap.json`, en
+el formato de Zed.
 
-![Cambiar las teclas del editor de código](../../../../assets/editor/editor-settings-keys.png)
-
-Los cambios se guardan en `"keymap"` dentro de `designer.json`, como acción → teclas:
-
-```json
-{"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
-```
-
-En tus propias apps, `ui.editor(keymap=...)` usa teclas → acción (el mismo formato que los keymaps de Zed, `None` para quitar una tecla por
-defecto), y `pyzed.ui.editor.keymap_for` convierte en ella cambios por acción como los de arriba.
+En tus propias apps, `ui.editor(keymap=...)` usa teclas → acción (el mismo formato que los keymaps de Zed, `None` para
+quitar una tecla por defecto), y `pyzed.ui.editor.keymap_for` convierte en ella cambios por acción.
