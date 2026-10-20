@@ -135,6 +135,8 @@ ACTIONS: Tuple[Action, ...] = (
     Action("check_updates", "Check for updates", "Help", lambda d: d.updates.check(), "refresh-cw"),
     Action("auto_updates", "Check for updates automatically", "Help", lambda d: d.updates.toggle_auto(),
            "calendar-clock", checked=lambda d: d.prefs.check_updates),
+    Action("preview_updates", "Get preview releases", "Help", lambda d: d.updates.toggle_preview(), "flask-conical",
+           checked=lambda d: d.updates.channel == "preview"),
     Action("about", "About Pyzed Design", "Help", lambda d: d.open_dialog_named("about"), "info"),
 )
 

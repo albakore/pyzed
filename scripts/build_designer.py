@@ -6,8 +6,16 @@ project keeps its own environment in ``.venv``; forms run there through ``uv run
 
     python -m pip install pyzed-ui pyinstaller uv
     python scripts/build_designer.py            # -> dist/Pyzed Design[.app|.exe] and a .zip
+    python scripts/build_designer.py --installer   # ...plus the setup .exe (Windows) or the .dmg (macOS)
 
-Run it on each OS (the release workflow does it on Linux, Windows and macOS).
+Run it on each OS (the release workflow does it on Linux, Windows and macOS). The zip is what
+the app's updater downloads; the installers are what people download first, like Zed's:
+
+- Windows: ``pyzed-design-windows-x86_64-setup.exe``, made with Inno Setup 6 from
+  ``installer/windows/pyzed-design.iss``. It installs for the current user, without admin
+  rights, in ``%LOCALAPPDATA%\\Programs\\Pyzed Design``, where the app can update itself.
+- macOS: ``pyzed-design-macos-<arch>.dmg`` with the app and a shortcut to Applications.
+- Linux: no package to build; ``docs/public/install.sh`` installs the zip into ``~/.local``.
 
 Signing is optional and driven by environment variables, so builds without certificates still work:
 
@@ -84,7 +92,8 @@ def sign(bundle: Path) -> None:
 
 
 def notarize(bundle: Path, archive: str) -> bool:
-    """Sends the zipped app to Apple's notary service and staples the ticket; ``False`` when not set up."""
+    """Sends ``archive`` (the zipped app or the dmg) to Apple's notary service and staples the ticket to
+    ``bundle`` (the app or the dmg); ``False`` when not set up."""
     names = ("APPLE_ID", "APPLE_TEAM_ID", "APPLE_APP_PASSWORD")
     if sys.platform != "darwin" or not os.environ.get("PYZED_CODESIGN_IDENTITY") \
             or not all(os.environ.get(n) for n in names):
@@ -110,10 +119,66 @@ def oauth_apps(work: Path) -> "Path | None":
     return path
 
 
+def iscc() -> str:
+    """Inno Setup's compiler (``choco install innosetup`` installs it)."""
+    found = shutil.which("iscc")
+    if found:
+        return found
+    for name in ("ProgramFiles(x86)", "ProgramFiles", "LOCALAPPDATA"):
+        base = os.environ.get(name)
+        for folder in (("Inno Setup 6",), ("Programs", "Inno Setup 6")):
+            candidate = Path(base or ".").joinpath(*folder, "ISCC.exe")
+            if base and candidate.exists():
+                return str(candidate)
+    sys.exit("error: ISCC.exe not found (install Inno Setup 6: choco install innosetup)")
+
+
+def installer_name(archive: str) -> str:
+    """``pyzed-design-windows-x86_64.zip`` -> ``pyzed-design-windows-x86_64-setup.exe`` (``.dmg`` on macOS)."""
+    stem = Path(archive).name[:-4]
+    return f"{stem}-setup.exe" if sys.platform == "win32" else f"{stem}.dmg"
+
+
+def windows_installer(bundle: Path, out: Path, name: str, version: str) -> Path:
+    """Compiles the per-user setup program from the PyInstaller folder."""
+    script = ROOT / "installer" / "windows" / "pyzed-design.iss"
+    command = [iscc(), "/Q", f"/DAppVersion={version}", f"/DSourceDir={bundle}", f"/DOutputDir={out}",
+               f"/DOutputName={name[:-4]}"]
+    icon = ROOT / "assets" / "icon.ico"
+    if icon.exists():
+        command.append(f"/DSetupIcon={icon}")
+    subprocess.run([*command, str(script)], check=True)
+    setup = out / name
+    sign(setup)
+    return setup
+
+
+def macos_dmg(bundle: Path, out: Path, name: str) -> Path:
+    """A compressed disk image with the app and a shortcut to Applications, to drag it in."""
+    staging = ROOT / "build" / "designer" / "dmg"
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    # ditto keeps the bundle's symlinks, signature and stapled ticket
+    subprocess.run(["ditto", str(bundle), str(staging / bundle.name)], check=True)
+    (staging / "Applications").symlink_to("/Applications")
+    dmg = out / name
+    dmg.unlink(missing_ok=True)
+    subprocess.run(["hdiutil", "create", "-volname", NAME, "-srcfolder", str(staging), "-fs", "HFS+",
+                    "-format", "UDZO", "-ov", str(dmg)], check=True)
+    shutil.rmtree(staging, ignore_errors=True)
+    if os.environ.get("PYZED_CODESIGN_IDENTITY"):
+        subprocess.run(["codesign", "--force", "--timestamp", "--sign", os.environ["PYZED_CODESIGN_IDENTITY"],
+                        str(dmg)], check=True)
+        notarize(dmg, str(dmg))
+    return dmg
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", default=str(ROOT / "dist"), help="output folder")
     parser.add_argument("--no-zip", action="store_true", help="do not zip the result")
+    parser.add_argument("--installer", action="store_true",
+                        help="also make the setup program (Windows) or the disk image (macOS)")
     args = parser.parse_args()
     out = Path(args.out).resolve()
     work = ROOT / "build" / "designer"
@@ -159,6 +224,13 @@ def main() -> int:
         else:
             archive = shutil.make_archive(archive[:-4], "zip", bundle.parent, bundle.name)
         print(f"Wrote {archive}")
+        if args.installer and sys.platform in ("win32", "darwin"):
+            from pyzed import __version__
+
+            name = installer_name(archive)
+            made = windows_installer(bundle, out, name, __version__) if sys.platform == "win32" \
+                else macos_dmg(bundle, out, name)
+            print(f"Wrote {made}")
     return 0
 
 

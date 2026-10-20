@@ -1,5 +1,7 @@
 """Updates of Pyzed Design, like Zed's: a quiet daily check, a download in the background,
 "Restart to update", and a What's new tab with the release notes after an update.
+The stable channel follows the latest release; the preview channel also takes pre-releases
+(``vX.Y.Z-rc.N``), like Zed Preview.
 
 ``UpdateController`` keeps the state and runs the slow parts off the UI thread (see
 ``pyzed.updater`` for the checking, downloading and swapping itself); ``status_items``
@@ -10,6 +12,7 @@ from Python (``pip``/``uv``), the tab shows the command that upgrades the packag
 from __future__ import annotations
 
 import asyncio
+import sys
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
@@ -26,6 +29,34 @@ REPO = "albakore/pyzed"
 APP = "pyzed-design"
 #: The id of the What's new tab in the designer's tab bar.
 TAB_ID = "whats-new"
+#: Update channels: "stable" takes final releases only, "preview" pre-releases too.
+CHANNELS = ("stable", "preview")
+#: The uninstall entry the Windows installer writes (``installer/windows/pyzed-design.iss``, its AppId).
+WINDOWS_UNINSTALL_KEY = ("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\"
+                         "{8F4C2E6B-3A1D-4F7E-9B2C-5D6E7F8A9B0C}_is1")
+#: The installer's files in the app folder, carried over when an update replaces it.
+INSTALLER_FILES = ("unins*",)
+
+
+def sync_windows_registration(version: str) -> bool:
+    """Shows ``version`` in Windows' Settings → Apps after a self-update; ``True`` when it changed it.
+
+    Only for copies installed with the setup program (the portable zip has no entry).
+    """
+    if sys.platform != "win32" or not updater.is_frozen():
+        return False
+    import winreg  # type: ignore[import-not-found]
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, WINDOWS_UNINSTALL_KEY, 0,
+                            winreg.KEY_READ | winreg.KEY_SET_VALUE) as key:
+            if winreg.QueryValueEx(key, "DisplayVersion")[0] == version:
+                return False
+            winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, version)
+            winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "Pyzed Design")
+            return True
+    except OSError:
+        return False
 
 
 class UpdateController:
@@ -90,13 +121,20 @@ class UpdateController:
             commands.append(self.show_notes(self.current))
         if seen != self.current:
             updater.save_state(last_seen=self.current)
+            sync_windows_registration(self.current)
         if self.d.prefs.check_updates and updater.due():
             commands.append(self.check(quiet=True))
         return [c for c in commands if c is not None]
 
     # -- actions ----------------------------------------------------------------------------
+    @property
+    def channel(self) -> str:
+        """The update channel in the preferences: ``"stable"`` or ``"preview"``."""
+        channel = getattr(self.d.prefs, "update_channel", "stable")
+        return channel if channel in CHANNELS else "stable"
+
     def check(self, quiet: bool = False) -> Any:
-        """Asks GitHub for the latest release; ``quiet`` only speaks up when there is one."""
+        """Asks GitHub for the latest release of the channel; ``quiet`` only speaks up when there is one."""
         if self.busy:
             return None
         self.status, self.error = "checking", None
@@ -121,7 +159,8 @@ class UpdateController:
             else:
                 self.status = "idle"
 
-        return self._run(lambda: updater.latest(REPO), done, failed)
+        preview = self.channel == "preview"
+        return self._run(lambda: updater.latest(REPO, prerelease=preview), done, failed)
 
     def install(self) -> Any:
         """Downloads the new version for this platform and unpacks it next to the download."""
@@ -159,7 +198,7 @@ class UpdateController:
         if self.bundle is None:
             return None
         try:
-            updater.replace_on_exit(self.bundle)
+            updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES)
         except (updater.UpdateError, OSError) as err:
             self.d.notify(tr("The update failed"), str(err), kind="error", seconds=6)
             return None
@@ -177,6 +216,12 @@ class UpdateController:
     def toggle_auto(self) -> None:
         """Turns the daily automatic check on or off."""
         self.d.set_pref("check_updates", not self.d.prefs.check_updates)
+
+    def toggle_preview(self) -> Any:
+        """Switches between the stable and the preview channel, and checks the new one."""
+        self.d.set_pref("update_channel", "stable" if self.channel == "preview" else "preview")
+        updater.save_state(skipped=None)
+        return self.check(quiet=True)
 
     # -- What's new tab -------------------------------------------------------------------------
     def show_notes(self, version: Optional[str] = None) -> Any:

@@ -268,7 +268,7 @@ _POSIX_SCRIPT = """#!/bin/sh
 while kill -0 {pid} 2>/dev/null; do sleep 0.2; done
 rm -rf {old}
 mv {target} {old} && mv {new} {target} || {{ mv {old} {target} 2>/dev/null; exit 1; }}
-rm -rf {old}
+{keep}rm -rf {old}
 {launch}
 rm -f "$0"
 """
@@ -281,7 +281,7 @@ tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >N
 if exist {old} rmdir /S /Q {old}
 move {target} {old} >NUL || exit /b 1
 move {new} {target} >NUL || (move {old} {target} >NUL & exit /b 1)
-rmdir /S /Q {old}
+{keep}rmdir /S /Q {old}
 {launch}
 del "%~f0"
 """
@@ -302,7 +302,7 @@ def _fresh_environment() -> Dict[str, str]:
 
 
 def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]] = None, *,
-                    relaunch: bool = True, args: Tuple[str, ...] = ()) -> Path:
+                    relaunch: bool = True, args: Tuple[str, ...] = (), keep: Tuple[str, ...] = ()) -> Path:
     """Swaps ``target`` (this app by default) for ``bundle`` once this process exits, then restarts it.
 
     A small shell (or ``.cmd`` on Windows) script waits for the current process to end,
@@ -310,6 +310,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
     old app is put back. What the script prints goes to a ``.log`` next to it. Returns the
     script's path. Quit the app right after calling it, and make sure the process really
     ends (``os._exit``): the swap waits for it, so a busy background thread delays the restart.
+
+    ``keep`` lists file patterns (``"unins*"``) copied from the old app into the new one,
+    for files an installer put there that the update does not carry, such as its uninstaller.
     """
     bundle = Path(bundle).resolve()
     target = Path(target).resolve() if target else install_dir()
@@ -321,7 +324,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
     if os.name == "nt":
         q = lambda p: f'"{p}"'  # noqa: E731
         launch = f'start "" {q(target / exe_name)} {" ".join(q(a) for a in args)}' if relaunch else ""
-        text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch)
+        kept = "".join(f'for %%f in ({q(old / p)}) do copy /Y "%%~f" {q(target)} >NUL\n' for p in keep)
+        text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch,
+                                      keep=kept)
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
         flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
@@ -335,8 +340,10 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         launch = f"open {shlex.quote(str(target))}" + (" --args " + " ".join(map(shlex.quote, args)) if args else "")
     else:
         launch = " ".join(shlex.quote(a) for a in (str(target / exe_name), *args)) + " >/dev/null 2>&1 &"
+    kept = "".join(f'for f in {shlex.quote(str(old))}/{p}; do [ -e "$f" ] && cp -Rp "$f" {shlex.quote(str(target))}/; '
+                   'done\n' for p in keep)
     text = _POSIX_SCRIPT.format(pid=os.getpid(), old=shlex.quote(str(old)), target=shlex.quote(str(target)),
-                                new=shlex.quote(str(bundle)), launch=launch if relaunch else "")
+                                new=shlex.quote(str(bundle)), launch=launch if relaunch else "", keep=kept)
     script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.sh"
     script.write_text(text, encoding="utf-8")
     script.chmod(0o755)

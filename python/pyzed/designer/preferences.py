@@ -43,6 +43,8 @@ class DesignerSettings:
     log_events: bool = True
     #: Look for a new version of the designer once a day (the compiled app updates itself).
     check_updates: bool = True
+    #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).
+    update_channel: str = "stable"
     recent: List[str] = field(default_factory=list)
     #: Panel id -> dock ("left", "right", "bottom", "top").
     docks: Dict[str, str] = field(default_factory=dict)

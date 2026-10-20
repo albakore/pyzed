@@ -49,8 +49,11 @@ The **Release** workflow (`.github/workflows/release.yml`) then:
 
 ## Optional secrets
 
-The workflow also builds the standalone Pyzed Design app (`scripts/build_designer.py`)
-on Linux, Windows and macOS. Every secret below is optional: without them the
+The workflow also builds the standalone Pyzed Design app (`scripts/build_designer.py --installer`)
+on Linux, Windows and macOS: a portable zip per platform (what the app's updater downloads), the
+per-user Windows setup program (Inno Setup, `installer/windows/pyzed-design.iss`) and the macOS
+`.dmg`. The release also carries `install.sh` (the Linux installer, served by the docs site from
+`docs/public/install.sh`) and a `SHA256SUMS` it checks downloads with. Every secret below is optional: without them the
 release still runs, the app is just unsigned or signs in without a bundled OAuth
 app. Add them under *Settings → Secrets and variables → Actions*.
 

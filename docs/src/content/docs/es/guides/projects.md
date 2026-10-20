@@ -165,8 +165,9 @@ release y se descomprime en segundo plano; luego **Reiniciar para actualizar** c
 notas de la versión nueva, y **Ayuda → Novedades** las muestra cuando quieras. **Omitir esta versión** oculta
 una actualización hasta que salga otra más nueva.
 
-La app solo se reemplaza a sí misma si puede escribir en su propia carpeta; si no, descarga el zip nuevo otra
-vez. Cuando el diseñador se ejecuta desde Python (`pip` o `uv`), la pestaña muestra el comando que actualiza el
+**Ayuda → Recibir versiones preliminares** cambia al canal preliminar, que también recibe las pre-releases
+(`X.Y.Z-rc.N`). Los instaladores ([Descargar](/pyzed/es/download/#cómo-se-instala)) dejan la app en una carpeta
+tuya, así que puede reemplazarse a sí misma; si no, descarga otra vez el instalador o el zip nuevo. Cuando el diseñador se ejecuta desde Python (`pip` o `uv`), la pestaña muestra el comando que actualiza el
 paquete.
 
 Tus propias apps compiladas pueden usar el mismo actualizador, `pyzed.updater`:

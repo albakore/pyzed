@@ -2,12 +2,24 @@
 // Platform picker for the Pyzed Design downloads. Detects the visitor's OS and selects it.
 import { Icon } from '@astrojs/starlight/components';
 import release from '../generated/release.json';
-import { DESIGNER_ASSETS, RELEASES_URL, downloadUrl, type Platform } from './downloads';
+import {
+	DESIGNER_ASSETS,
+	DESIGNER_INSTALLERS,
+	INSTALL_SH,
+	RELEASES_URL,
+	downloadUrl,
+	hasInstallers,
+	type Platform,
+} from './downloads';
 
 const es = Astro.currentLocale === 'es';
 const stable = release.latestStable;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const changelog = `${base}${es ? '/es' : ''}/changelog/`;
+// Releases after 1.2.0 come with a setup program, a disk image and install.sh; older ones only with zips.
+const installers = hasInstallers(stable?.version);
+const files = installers ? DESIGNER_INSTALLERS : DESIGNER_ASSETS;
+const curl = `<code>curl -fsSL ${INSTALL_SH} | sh</code>`;
 
 const t = es
 	? {
@@ -35,6 +47,8 @@ interface Info {
 	name: string;
 	arch: string;
 	requires: string;
+	/** Steps with the installer (``installers``), and with the portable zip. */
+	install: string[];
 	steps: string[];
 	note: string;
 }
@@ -45,6 +59,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'Windows',
 				arch: 'x86_64',
 				requires: 'Windows 10 u 11, 64 bits',
+				install: [
+					'Descarga el instalador y ábrelo. Se instala para tu usuario, sin permisos de administrador.',
+					'Abre <strong>Pyzed Design</strong> desde el menú Inicio (o el acceso del escritorio, si lo marcaste).',
+					'Se actualiza solo. Para quitarlo: <strong>Configuración → Aplicaciones</strong>.',
+				],
 				steps: [
 					'Descarga el zip y descomprímelo (clic derecho → <strong>Extraer todo</strong>).',
 					'Abre la carpeta <code>Pyzed Design</code> y ejecuta <code>Pyzed Design.exe</code>.',
@@ -56,6 +75,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'macOS',
 				arch: 'Apple Silicon (arm64)',
 				requires: 'Mac con chip M1 o posterior',
+				install: [
+					'Descarga el <code>.dmg</code> y ábrelo.',
+					'Arrastra <strong>Pyzed Design</strong> a la carpeta <strong>Aplicaciones</strong>.',
+					'La primera vez, haz clic derecho (o Control-clic) en la app → <strong>Abrir</strong> y confirma.',
+				],
 				steps: [
 					'Descarga el zip; Safari lo descomprime solo (si no, haz doble clic).',
 					'Arrastra <code>Pyzed Design.app</code> a la carpeta <strong>Aplicaciones</strong>.',
@@ -67,6 +91,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'Linux',
 				arch: 'x86_64',
 				requires: 'Distribución reciente de 64 bits',
+				install: [
+					`Instálalo desde una terminal: ${curl}`,
+					'Ábrelo desde el menú de aplicaciones o con <code>pyzed-design</code>. Se actualiza solo.',
+					'¿Prefieres la versión portable? Descarga el zip con el botón y descomprímelo donde quieras.',
+				],
 				steps: [
 					'Descarga el zip y descomprímelo: <code>unzip pyzed-design-linux-x86_64.zip</code>.',
 					'Dale permiso de ejecución: <code>chmod +x "Pyzed Design/Pyzed Design"</code>.',
@@ -80,6 +109,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'Windows',
 				arch: 'x86_64',
 				requires: 'Windows 10 or 11, 64-bit',
+				install: [
+					'Download the installer and open it. It installs for your user, without administrator rights.',
+					'Open <strong>Pyzed Design</strong> from the Start menu (or the desktop shortcut, if you chose one).',
+					'It updates itself. To remove it: <strong>Settings → Apps</strong>.',
+				],
 				steps: [
 					'Download the zip and extract it (right-click → <strong>Extract All</strong>).',
 					'Open the <code>Pyzed Design</code> folder and run <code>Pyzed Design.exe</code>.',
@@ -91,6 +125,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'macOS',
 				arch: 'Apple Silicon (arm64)',
 				requires: 'A Mac with an M1 chip or newer',
+				install: [
+					'Download the <code>.dmg</code> and open it.',
+					'Drag <strong>Pyzed Design</strong> into your <strong>Applications</strong> folder.',
+					'The first time, right-click (or Control-click) the app → <strong>Open</strong> and confirm.',
+				],
 				steps: [
 					'Download the zip; Safari unzips it for you (otherwise double-click it).',
 					'Drag <code>Pyzed Design.app</code> into your <strong>Applications</strong> folder.',
@@ -102,6 +141,11 @@ const platforms: Record<Platform, Info> = es
 				name: 'Linux',
 				arch: 'x86_64',
 				requires: 'A recent 64-bit distribution',
+				install: [
+					`Install it from a terminal: ${curl}`,
+					'Open it from your apps menu or with <code>pyzed-design</code>. It updates itself.',
+					'Prefer the portable build? Download the zip with the button and unpack it anywhere.',
+				],
 				steps: [
 					'Download the zip and extract it: <code>unzip pyzed-design-linux-x86_64.zip</code>.',
 					'Make it executable: <code>chmod +x "Pyzed Design/Pyzed Design"</code>.',
@@ -179,17 +223,17 @@ const initial: Platform = 'windows';
 								{t.for} {p.name}
 							</h3>
 							<p class="muted">
-								{p.requires} · {t.file}: <code>{DESIGNER_ASSETS[id]}</code>
+								{p.requires} · {t.file}: <code>{files[id]}</code>
 							</p>
 						</div>
-						<a class="pz-button" href={downloadUrl(id)} data-asset={DESIGNER_ASSETS[id]}>
+						<a class="pz-button" href={downloadUrl(id, installers)} data-asset={files[id]}>
 							<Icon name="download" size="1.25rem" />
 							{t.download} {p.name}
 						</a>
 					</div>
 					<h4>{t.install}</h4>
 					<ol class="pz-steps">
-						{p.steps.map((step) => (
+						{(installers ? p.install : p.steps).map((step) => (
 							<li set:html={step} />
 						))}
 					</ol>

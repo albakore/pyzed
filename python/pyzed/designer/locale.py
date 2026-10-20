@@ -261,6 +261,7 @@ _ES = {
     # Updates
     "Check for updates": "Buscar actualizaciones", "What's new": "Novedades",
     "Check for updates automatically": "Buscar actualizaciones automáticamente",
+    "Get preview releases": "Recibir versiones preliminares",
     "Pyzed Design {version} is available": "Pyzed Design {version} está disponible",
     "Open What's new to see the changes and update.": "Abre Novedades para ver los cambios y actualizar.",
     "Pyzed Design is up to date": "Pyzed Design está actualizado",

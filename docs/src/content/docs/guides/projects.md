@@ -163,7 +163,9 @@ the new one and starts it again. After an update, the What's new tab opens on it
 version, and **Help → What's new** shows them at any time. **Skip this version** hides an update until a newer
 one comes out.
 
-The app replaces itself only when it can write to its own folder; otherwise download the new zip again. When the
+**Help → Get preview releases** switches to the preview channel, which also takes pre-releases (`X.Y.Z-rc.N`).
+The installers ([Download](/pyzed/download/#how-it-installs)) put the app in a folder of your own, so it can
+replace itself; otherwise download the new installer or zip again. When the
 designer runs from Python (`pip` or `uv`), the tab shows the command that upgrades the package instead.
 
 The same updater is available to your own compiled apps in `pyzed.updater`:

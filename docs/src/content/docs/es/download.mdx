@@ -16,9 +16,27 @@ Elige tu plataforma; seleccionamos la que estás usando.
 
 ![Pyzed Design con un formulario de inicio de sesión abierto](../../../../screenshots/designer.png)
 
+## Cómo se instala
+
+Como Zed, Pyzed Design se instala con la herramienta habitual de cada sistema y luego se mantiene al día solo:
+
+| Sistema | Instalador | Dónde queda |
+| --- | --- | --- |
+| Windows | `pyzed-design-windows-x86_64-setup.exe` | `%LOCALAPPDATA%\Programs\Pyzed Design`, solo para tu usuario (sin permisos de administrador), con entrada en el menú Inicio, acceso directo opcional en el escritorio y los archivos `.pzform` asociados. Se desinstala desde **Configuración → Aplicaciones**. |
+| macOS | `pyzed-design-macos-arm64.dmg` (Intel: `-x86_64.dmg`) | Arrastra la app a **Aplicaciones**. |
+| Linux | `curl -fsSL https://albakore.github.io/pyzed/install.sh \| sh` | `~/.local/share/pyzed-design`, con el comando `pyzed-design` en `~/.local/bin` y una entrada en el menú de aplicaciones. |
+
+El script de Linux comprueba la descarga con el `SHA256SUMS` de la release y no necesita root. Ejecútalo otra vez
+para reinstalar, o con `--uninstall` para quitar la app (`curl -fsSL https://albakore.github.io/pyzed/install.sh | sh -s -- --uninstall`).
+`PYZED_VERSION=1.3.0` instala una versión concreta.
+
+Cada release trae también un **zip** portable por plataforma (`pyzed-design-<so>-<arq>.zip`): descomprímelo donde
+quieras y ejecútalo. Ese zip es el que descarga el actualizador de la app. Las versiones hasta la 1.2.0 solo tienen
+los zips.
+
 ## Qué incluye
 
-Cada descarga es un único zip con todo lo que necesita Pyzed Design, así que no hay que instalar nada más:
+Cada instalador y cada zip llevan todo lo que necesita Pyzed Design, así que no hay que instalar nada más:
 
 - **Python** y **pyzed-ui**, de la misma versión que la release que descargas.
 - El binario de **uv**, que se usa para crear proyectos (`uv init`), añadir dependencias (`uv add`) y ejecutar
@@ -30,7 +48,8 @@ Los servidores de lenguaje del editor de código (**ty** y **ruff**) se instalan
 
 ## Actualizaciones
 
-Como Zed, Pyzed Design se actualiza solo. Una vez al día busca en GitHub una versión nueva (desactívalo en
+Como Zed, Pyzed Design se actualiza solo, así que nunca tienes que volver a descargarlo a mano. Una vez al día
+busca en GitHub una versión nueva (desactívalo en
 **Ayuda → Buscar actualizaciones automáticamente**, o búscala ahora con **Ayuda → Buscar actualizaciones**). Si
 la hay, la barra de estado muestra **Actualizar a X.Y.Z**: abre una pestaña **Novedades** con las notas de la
 versión y un botón **Descargar e instalar**. La descarga se verifica con el SHA-256 de la release y se
@@ -38,8 +57,13 @@ descomprime en segundo plano, y **Reiniciar para actualizar** cambia la app por 
 **Ayuda → Novedades** muestra las notas cuando quieras. Tus proyectos y tu configuración viven fuera de la app,
 así que se conservan.
 
-Si la app no puede escribir en su propia carpeta, descarga el zip nuevo desde esta página y sustituye la carpeta
-antigua (o `Pyzed Design.app`). Las [novedades](/pyzed/es/changelog/) cuentan qué ha cambiado y
+Hay dos canales, como Zed y Zed Preview: **estable** (por defecto) recibe las versiones finales y **preliminar**
+también las pre-releases (`X.Y.Z-rc.N`) para probar lo que viene. Cámbialo con
+**Ayuda → Recibir versiones preliminares**.
+
+Los instaladores dejan la app en una carpeta tuya (en Windows, Configuración → Aplicaciones muestra la versión
+nueva tras actualizar). Si la app no puede escribir en su propia carpeta, descarga el instalador o el zip nuevo
+desde esta página. Las [novedades](/pyzed/es/changelog/) cuentan qué ha cambiado y
 [todas las versiones](https://github.com/albakore/pyzed/releases) están en GitHub. Más en
 [Proyectos → Actualizaciones](/pyzed/es/guides/projects/#actualizaciones).
 
@@ -78,6 +102,7 @@ Las descargas las genera `scripts/build_designer.py` con PyInstaller, en cada si
 ```bash
 python -m pip install pyzed-ui pyinstaller uv
 python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
+python scripts/build_designer.py --installer   # además el setup .exe (requiere Inno Setup 6) o el .dmg
 ```
 
 <Aside type="tip" title="Siguientes pasos">
