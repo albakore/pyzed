@@ -11,6 +11,10 @@
 //
 //   <Media clip="snake" alt="The snake steering toward the food" caption="The game loop at work." />
 //
+// A clip recorded as an animated WebP only (record.py's `anim=True`, for short illustrations) is shown as an
+// image: it loads lazily, is served as is from public/ (Astro's image pipeline would keep only its first frame)
+// and, with "reduce motion", the still poster is shown instead.
+//
 //   import Media from '../../../components/Media.astro';
 //   import dark from '../../../assets/editor/canvas-dark.png';
 //   import light from '../../../assets/editor/canvas-light.png';
@@ -65,17 +69,23 @@ let { video, webm } = Astro.props;
 let posterUrl: string | undefined;
 let videoWidth = poster?.width;
 let videoHeight = poster?.height;
+let animated: string | undefined;
 if (clip) {
-	const entry = manifest.clips.find((c) => c.name === clip);
+	const entry: { mp4?: string; webm?: string; webp?: string; poster: string; width: number; height: number } | undefined =
+		manifest.clips.find((c) => c.name === clip);
 	if (!entry) throw new Error(`<Media>: no clip named "${clip}" in public/media/manifest.json.`);
 	const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-	video = `${base}/${entry.mp4}`;
-	webm = entry.webm ? `${base}/${entry.webm}` : undefined;
+	if (entry.mp4) {
+		video = `${base}/${entry.mp4}`;
+		webm = entry.webm ? `${base}/${entry.webm}` : undefined;
+	} else if (entry.webp) {
+		animated = `${base}/${entry.webp}`;
+	}
 	posterUrl = `${base}/${entry.poster}`;
 	videoWidth = entry.width;
 	videoHeight = entry.height;
 }
-if (!src && !video) throw new Error('<Media> needs `src`, `video` or `clip`.');
+if (!src && !video && !animated) throw new Error('<Media> needs `src`, `video` or `clip`.');
 
 const widthsFor = (img: ImageMetadata) => {
 	const widths = [480, 768, 1080, 1440, 2160].filter((w) => w < img.width);
@@ -99,7 +109,19 @@ if (poster && !posterUrl) {
 <figure class:list={['pz-media', `size-${size}`, { plain }]}>
 	<div class="frame">
 		{
-			video ? (
+			animated ? (
+				<picture>
+					<source srcset={posterUrl} media="(prefers-reduced-motion: reduce)" />
+					<img
+						src={animated}
+						alt={alt}
+						width={videoWidth}
+						height={videoHeight}
+						loading={eager ? 'eager' : 'lazy'}
+						decoding="async"
+					/>
+				</picture>
+			) : video ? (
 				<video
 					data-pz-autoplay
 					muted
