@@ -12,9 +12,9 @@ import { Aside, Code, Steps } from '@astrojs/starlight/components';
 import Media from '../../../../../components/Media.astro';
 import Run from '../../../showcase/_run.mdx';
 import finished from '../../../../../assets/tutorials/designer-welcome.png';
-import newShader from '../../../../../../screenshots/designer-shader-new.png';
-import shaderView from '../../../../../../screenshots/designer-shader.png';
-import shaderPreview from '../../../../../../screenshots/designer-shader-preview.png';
+import newShader from '../../../../../assets/shading/new-shader.png';
+import shaderView from '../../../../../assets/shading/shader-view.png';
+import shaderPreview from '../../../../../assets/shading/preview-tab.png';
 import handlers from '../../../../../../../examples/tutorial/designer/welcome.py?raw';
 
 Un **shader** es un programa diminuto que la tarjeta gráfica ejecuta para cada píxel, en cada fotograma: así dibujan
@@ -123,7 +123,7 @@ pz.stack([
 
 <Run file="examples/tutorial/designer/welcome.pzform" form lang="es" />
 
-{/* media: tutorials/shader-effect-nodes (una grabación corta: cambiar el radio del brillo actualiza cada vista previa; conectar Hue shift) */}
+<Media clip="shader-graph" alt="Nodos arrastrados a la vista Shader y conectados a la Salida, con cada vista previa actualizándose" caption="Cada nodo muestra su vista previa, así que ves cada cambio en cuanto lo conectas." />
 
 ## Siguiente
 

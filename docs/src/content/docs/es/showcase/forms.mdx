@@ -27,6 +27,8 @@ import reviewsCode from '../../../../../../examples/designer/components/reviews.
 import dialogsCode from '../../../../../../examples/dialogs.py?raw';
 import pydanticMain from '../../../../../../examples/integrations/pydantic_signup/main.py?raw';
 import pydanticModels from '../../../../../../examples/integrations/pydantic_signup/models.py?raw';
+import shot_dialogs from '../../../../assets/tutorials/dialogs.png';
+import shot_pydantic_signup from '../../../../assets/integrations/pydantic.png';
 
 Los formularios son el punto de partida de la mayoría de las apps de escritorio: campos, botones, reglas y mensajes.
 Pyzed te da dos formas de hacerlos, y puedes mezclar las dos en una misma app:
@@ -153,7 +155,7 @@ Cada botón abre uno de los diálogos listos de `pyzed.ui` (un aviso, una confir
 "cambios sin guardar"). Elige un idioma en la barra de herramientas y cada texto, incluidos los botones de los
 diálogos, cambia mientras la app corre.
 
-{/* media: showcase/dialogs (el diálogo de confirmación, en inglés y en español) */}
+<Media src={shot_dialogs} alt="El diálogo de confirmación: Are you sure? Delete 3 files? con Cancel y Delete" />
 
 <Run file="examples/dialogs.py" lang="es" />
 
@@ -172,7 +174,7 @@ que usaría una API web. La ventana guarda lo que escribe el usuario como texto 
 `SignUp.model_validate`; Pydantic convierte los valores (una fecha, un correo, un sí/no), revisa cada regla, y
 `pz.validation_errors` convierte sus errores en un mensaje por campo. Las cuentas se guardan en `accounts.json`.
 
-{/* media: showcase/pydantic_signup */}
+<Media src={shot_pydantic_signup} alt="El formulario de registro con un mensaje bajo cada campo no válido, y la cuenta guardada como JSON" />
 
 Es un pequeño proyecto con sus propias dependencias, así que ejecútalo desde su carpeta:
 

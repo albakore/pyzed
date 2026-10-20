@@ -6,6 +6,8 @@ sidebar:
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import shot_form_look from '../../../../../screenshots/designer-light.png';
 
 Los formularios hechos en [Pyzed Design](/pyzed/es/editor/) usan los mismos temas y estilos que el código. Los fijas
 en el panel **Propiedades** en lugar de escribir Python, y se guardan en el archivo `.pzform`.
@@ -31,7 +33,7 @@ Haz clic en un hueco del lienzo para seleccionar el formulario y abre **Propieda
 | **Radio de esquina** | El radio que usan todos los controles; `0` para esquinas rectas. | `"radius": 0` |
 | **Tamaño de letra** | El tamaño base de todo el texto. | `"font_size": 15` |
 
-{/* media: theming/form-look */}
+<Media src={shot_form_look} alt="Un formulario en Pyzed Design con el tema Gruvbox Light y un acento propio" />
 
 El tema del formulario es independiente del tema del propio editor (Ajustes → Apariencia): puedes diseñar un
 formulario claro en un editor oscuro.

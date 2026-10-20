@@ -44,6 +44,10 @@ import components from '../../../../../../examples/components.py?raw';
 import gallery from '../../../../../../examples/gallery.py?raw';
 import counter from '../../../../../../examples/counter.py?raw';
 import editor from '../../../../../../examples/zed_editor.py?raw';
+import shot_color_picker from '../../../../assets/tutorials/color-picker.png';
+import shot_download_progress from '../../../../assets/tutorials/downloads.png';
+import shot_multi_window from '../../../../assets/tutorials/multi-window.png';
+import shot_components from '../../../../assets/tutorials/components.png';
 
 Programas de todos los días, cada uno un único archivo de Python en
 [`examples/`](https://github.com/albakore/pyzed/tree/main/examples) que funciona tal cual. Son cortos a propósito:
@@ -173,7 +177,7 @@ Un temporizador de concentración con periodos de trabajo y descanso: la app que
 `ui.ColorPicker` en sus tres modos: un color con transparencia, un degradado lineal y un relleno con máscara de
 opacidad. Devuelve un texto `"#rrggbbaa"`, un `pz.Gradient` o un `pz.Paint`, y los tres sirven como `background`.
 
-{/* media: showcase/color_picker */}
+<Media src={shot_color_picker} alt="El selector de color en modo degradado: dos paradas, un ángulo, las barras de tono y alfa, y el degradado que produce" />
 
 <Run file="examples/color_picker.py" lang="es" />
 
@@ -188,7 +192,7 @@ El Juego de la vida de Conway: haz clic o arrastra para pintar celdas, <kbd>Espa
 <kbd>N</kbd> para avanzar una generación. Miles de celdas se dibujan como una sola figura en un `pz.canvas`, y
 `pz.every` mueve la simulación.
 
-{/* media: showcase/game_of_life (una grabación corta de un cañón de planeadores) */}
+<Media clip="game-of-life" alt="El juego de la vida de Conway: las celdas azules nacen y mueren, generación tras generación" caption="La simulación en marcha: un canvas, miles de celdas." />
 
 <Run file="examples/game_of_life.py" lang="es" />
 
@@ -203,7 +207,7 @@ Varias descargas a la vez, cada una con su barra de progreso, y una ventana que 
 un generador `async def`: cada valor que hace `yield` va a `update` mientras sigue corriendo en el loop de eventos
 de Pyzed. Cambia la transferencia simulada por streaming con `httpx` para descargar archivos reales.
 
-{/* media: showcase/download_progress */}
+<Media src={shot_download_progress} alt="Cuatro descargas, dos en curso con sus barras y una terminada, con un aviso" />
 
 <Run file="examples/download_progress.py" lang="es" />
 
@@ -272,7 +276,7 @@ Abre tantas ventanas como quieras: cada `pz.Window` tiene su propia vista, títu
 comparten el estado de la app, así que el contador de clics es el mismo en todas. Cerrar la ventana principal cierra
 la app.
 
-{/* media: showcase/multi_window */}
+<Media src={shot_multi_window} alt="La ventana principal y dos ventanas más, una en Ayu Mirage y otra en Gruvbox Light, que comparten el contador de clics" />
 
 <Run file="examples/multi_window.py" lang="es" />
 
@@ -316,7 +320,7 @@ Tres piezas reutilizables escritas en código: una valoración con estrellas y u
 `pz.Component` con propiedades, su propio estado y sus propios eventos), y una nota que puedes arrastrar, a la que
 puedes hacer doble clic y escribirle, que registra los eventos comunes de todos los widgets.
 
-{/* media: showcase/components */}
+<Media src={shot_components} alt="Una valoración con estrellas, un editor de etiquetas, una nota fijada y el registro de eventos" />
 
 <Run file="examples/components.py" lang="es" />
 

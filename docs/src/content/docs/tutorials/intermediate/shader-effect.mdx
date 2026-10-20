@@ -12,9 +12,9 @@ import { Aside, Code, Steps } from '@astrojs/starlight/components';
 import Media from '../../../../components/Media.astro';
 import Run from '../../showcase/_run.mdx';
 import finished from '../../../../assets/tutorials/designer-welcome.png';
-import newShader from '../../../../../screenshots/designer-shader-new.png';
-import shaderView from '../../../../../screenshots/designer-shader.png';
-import shaderPreview from '../../../../../screenshots/designer-shader-preview.png';
+import newShader from '../../../../assets/shading/new-shader.png';
+import shaderView from '../../../../assets/shading/shader-view.png';
+import shaderPreview from '../../../../assets/shading/preview-tab.png';
 import handlers from '../../../../../../examples/tutorial/designer/welcome.py?raw';
 
 A **shader** is a tiny program the graphics card runs for every pixel, every frame: that is how games draw glowing
@@ -119,7 +119,7 @@ pz.stack([
 
 <Run file="examples/tutorial/designer/welcome.pzform" form />
 
-{/* media: tutorials/shader-effect-nodes (a short recording: changing the glow radius updates every preview; wiring Hue shift) */}
+<Media clip="shader-graph" alt="Nodes dragged onto the Shader view and wired to the Output, with every preview updating" caption="Every node shows its preview, so you see each change the moment you wire it." />
 
 ## Next
 

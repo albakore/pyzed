@@ -27,6 +27,8 @@ import reviewsCode from '../../../../../examples/designer/components/reviews.py?
 import dialogsCode from '../../../../../examples/dialogs.py?raw';
 import pydanticMain from '../../../../../examples/integrations/pydantic_signup/main.py?raw';
 import pydanticModels from '../../../../../examples/integrations/pydantic_signup/models.py?raw';
+import shot_dialogs from '../../../assets/tutorials/dialogs.png';
+import shot_pydantic_signup from '../../../assets/integrations/pydantic.png';
 
 Forms are where most desktop apps start: fields, buttons, rules and messages. Pyzed gives you two ways to make
 them, and you can mix both in one app:
@@ -149,7 +151,7 @@ The code: [Settings block](/pyzed/blocks/settings/).
 Each button opens one of the ready-made dialogs of `pyzed.ui` (an alert, a confirmation, a prompt, a choice and "unsaved changes"). Pick a language in the
 toolbar and every text, including the dialogs' buttons, changes while the app runs.
 
-{/* media: showcase/dialogs (the confirm dialog, in English and in Spanish) */}
+<Media src={shot_dialogs} alt="The confirmation dialog: Are you sure? Delete 3 files? with Cancel and Delete" />
 
 <Run file="examples/dialogs.py" />
 
@@ -168,7 +170,7 @@ would use. The window keeps what the user types as plain text and hands it to `S
 converts the values (a date, an email, a yes/no), checks every rule, and `pz.validation_errors` turns its errors
 into a message per field. Accounts are saved to `accounts.json`.
 
-{/* media: showcase/pydantic_signup */}
+<Media src={shot_pydantic_signup} alt="The sign-up form with a message under each invalid field, and the saved account as JSON" />
 
 It is a small project with its own dependencies, so run it from its folder:
 
