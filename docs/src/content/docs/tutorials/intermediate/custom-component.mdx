@@ -1,0 +1,132 @@
+---
+title: A custom component
+description: "Draw a reusable star rating in the Component view of Pyzed Design: a public property, bindings, event handlers, a custom event, and using it in a form and in code."
+sidebar:
+  order: 4
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import newComponent from '../../../../../screenshots/designer-component-new.png';
+import bindings from '../../../../../screenshots/designer-component-bindings.png';
+import preview from '../../../../../screenshots/designer-component-preview.png';
+import nested from '../../../../../screenshots/designer-component.png';
+import rating from '../../../../../../examples/designer/components/rating.py?raw';
+import reviews from '../../../../../../examples/designer/components/reviews.py?raw';
+
+When the same group of controls shows up again and again (a star rating, a user card, a search bar), turn it into a
+**component**: draw it once, give it properties and events, and place it anywhere like a built-in control. This
+is the idea of Godot's scenes and Unreal's widget blueprints, and it is how large apps stay tidy.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A five-star `Rating` you can drop on any form | 35 minutes | Intermediate · Python | [Data binding](/pyzed/tutorials/intermediate/data-binding/) |
+
+## What you'll learn
+
+- Create a component in the **Component view** (a `.pzcomp` and its class in a `.py`).
+- Add a **public property** (`value`) and a **private state** (`clicks`).
+- **Bind** the controls' properties to the component's (`"solid" if value >= 3 else "ghost"`).
+- Write **methods** and raise a **custom event** with `self.emit("change", ...)`.
+- Try it in the **preview window**, place it on a form and use it from Python code.
+
+## Steps
+
+<Steps>
+
+1. **Create the component.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Component**, name it `rating` and press **Create
+   component**. The designer creates `rating.pzcomp` (the drawing) and `rating.py` (the class `Rating`) and opens
+   them in the **Component view**: an accent frame instead of window buttons, and a **Component** badge.
+
+   <Media src={newComponent} alt="The New dialog with the Component card selected" caption="New → Component: a reusable piece, not a window." />
+
+2. **Draw it.** With nothing selected, set the component's **Width** to 232 and **Height** to 28 (Layout section).
+   Place five **Buttons** in a row named `star1` … `star5`, each with icon `star`, no text and variant `ghost`, and
+   a **Label** named `caption` at the end.
+
+3. **Add the properties.** In the **Properties** section of the Component panel press **Public** and create
+   `value`, type `int`, default `3`; then `readonly`, type `bool`. Press **Private** for `clicks`, an `int` that
+   only the component sees. The class in `rating.py` gets them as annotated attributes:
+
+   ```python
+   value: Annotated[int, pz.Range(0, 5)] = 3
+   readonly: bool = False
+   clicks: int = pz.state(0, doc="Times the user picked a rating")
+   ```
+
+4. **Bind the stars.** Select `star3`, open **Bindings**, pick **variant** and choose **Expression…**:
+
+   ```python
+   "solid" if value >= 3 else "ghost"
+   ```
+
+   Do the same for the other stars (with their own number), and bind `caption.text` to `f"{value} / 5"`. Change
+   `value` in the panel: the stars light up on the canvas.
+
+   <Media src={bindings} alt="The Bindings section linking a control property to the component's property" caption="Bindings keep the controls in step with the component's properties." />
+
+5. **Add the custom event.** In **Custom events** press **Event**, name it `change` and describe it: *A star was
+   picked (event.value is the rating)*.
+
+6. **Write the logic.** Add a method `pick` (type the name and press **+ Method**), then double-click each star to
+   write its click handler. In a component, handlers are methods and controls are `self.<name>`:
+
+   ```python
+   def star1_click(self, event):
+       return self.pick(1)
+
+   def pick(self, stars):
+       """Lights stars stars and tells the parent."""
+       if self.readonly:
+           return None
+       self.value = stars
+       self.clicks += 1
+       return self.emit("change", stars)
+   ```
+
+7. **Try it alone.** Press <kbd>F5</kbd>: the component opens in a **preview window** that lists every custom
+   event it raises. Click the stars and watch `change` arrive.
+
+   <Media src={preview} alt="The preview window of a component, with its event log" caption="F5 on a component: a preview with an event log." />
+
+8. **Use it in a form.** Save, open (or create) a form: `Rating` is now in the **toolbox**, in its category. Drop
+   one, add a **Label** named `status`, select the rating and, in **Events**, double-click `change`:
+
+   ```python
+   def rating1_change(form, event):
+       form.status.text = f"You gave it {event.value} stars"   # event.value is what emit() sent
+   ```
+
+   Double-click a placed component to open it in its own tab; edits show up in every form that uses it.
+
+</Steps>
+
+<Media src={nested} alt="A ProfileCard component that contains a Rating component" caption="Components nest: this ProfileCard contains a Rating, like scenes inside scenes in Godot." />
+
+<Aside type="tip" title="The same class works in code">
+A designed component **is** a `pz.Component`. Import it and use it in any app:
+`Rating(value=self.stars, on_change=lambda e: setattr(self, "stars", e.value))`. You can also write components
+entirely by hand: see [Components](/pyzed/guides/components/).
+</Aside>
+
+## Full code
+
+The finished components (including a `ProfileCard` that contains a `Rating`, and a `TeamCard` that inherits from
+it) are in [`examples/designer/components`](https://github.com/albakore/pyzed/tree/main/examples/designer/components).
+
+<Code code={rating} lang="python" title="examples/designer/components/rating.py" />
+
+<Code code={reviews} lang="python" title="examples/designer/components/reviews.py (a form that uses two cards)" />
+
+Run the component's preview, or the form that uses it:
+
+<Run file="examples/designer/components/rating.pzcomp" form />
+
+<Run file="examples/designer/components/reviews.pzform" form />
+
+## Next
+
+- [Component designer](/pyzed/editor/component-designer/): every section of the Component panel, property types,
+  nesting, responsive components and inheritance.
+- [Background tasks](/pyzed/tutorials/intermediate/background-tasks/).

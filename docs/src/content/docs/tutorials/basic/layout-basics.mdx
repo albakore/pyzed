@@ -1,0 +1,132 @@
+---
+title: Layout basics
+description: "Arrange a Pyzed window with rows, columns, fill, spacing, padding and grids, in Python code and with the flex containers and anchors of Pyzed Design."
+sidebar:
+  order: 2
+---
+
+import { Aside, Code, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/layout-basics.png';
+import designerLayout from '../../../../../screenshots/designer-layout.png';
+import source from '../../../../../../examples/tutorial/layout_basics.py?raw';
+
+Every screen, from a login box to a full IDE, is built from four ideas: **stack** things vertically, put them
+**side by side**, decide **who takes the free space**, and leave **room** between them. Learn them once and you can
+read any Pyzed layout.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A profile page that resizes nicely | 20 minutes | Basic · Python | Pyzed installed ([Installation](/pyzed/getting-started/installation/)) |
+
+## What you'll learn
+
+- `pz.column` and `pz.row`: vertical and horizontal stacks.
+- `spacing` (the gap between children) and `padding` (the room inside the edge).
+- `width="fill"` / `height="fill"` and `pz.hspace()`: taking the free space.
+- `align`: lining children up across the stack.
+- `pz.grid`: equal cells.
+- The same ideas in the designer: **Flex row**, **Flex column**, **Grid**, **Spacer** and **anchors**.
+
+<Media src={finished} alt="A profile page: avatar and name, a Follow button at the right, three stat cards and an About box" caption="The finished layout. Resize the window: the About box grows, the button stays at the right." eager />
+
+## The four ideas
+
+```text
+pz.column([...], spacing=16)        pz.row([...], spacing=12, align="center")
+┌──────────────┐                    ┌───────────────────────────────────────┐
+│ header       │                    │ (AL)  Ada Lovelace     ⟷fill⟷  [Follow]│
+│ ── 16 px ──  │                    └───────────────────────────────────────┘
+│ stats        │                             pz.hspace() pushes the button right
+│ ── 16 px ──  │
+│ about (fill) │  ← height="fill" takes what is left
+└──────────────┘
+```
+
+| Size value | Means |
+| --- | --- |
+| a number (`width=200`) | Exactly that many pixels. |
+| `"shrink"` (the default for most widgets) | As small as the content. |
+| `"fill"` | All the free space; several `fill` children share it equally. |
+| `"fill:2"` | Twice the share of a plain `fill` sibling. |
+
+## Steps
+
+<Steps>
+
+1. **The page is a column.** `view()` returns one widget; here a `pz.container` with `padding=24` around a column of
+   three parts, `spacing=16` apart:
+
+   ```python
+   def view(self):
+       t = self.resolved_theme()
+       return pz.container(
+           pz.column([self.header(), self.stats(), self.about()], spacing=16, height="fill"),
+           padding=24, width="fill", height="fill", bg=t.background,
+       )
+   ```
+
+2. **The header is a row.** An avatar, a column with the name and a muted line, then `pz.hspace()`, an empty piece
+   with `width="fill"`, then the button. `align="center"` centers them vertically:
+
+   ```python
+   pz.row([
+       ui.avatar("AL", size=48),
+       pz.column([ui.heading("Ada Lovelace", level=2), ui.muted("Analyst · London")], spacing=2),
+       pz.hspace(),
+       ui.button("Follow", self.toggle_follow, variant="solid", icon="user-plus"),
+   ], spacing=12, align="center")
+   ```
+
+3. **Three equal cards: a grid.** `columns=3` makes three cells of the same width; `height` is the height of each
+   row:
+
+   ```python
+   pz.grid([ui.stat("Projects", "12", width="fill"), ...], columns=3, spacing=12, height=84)
+   ```
+
+4. **The last part fills.** `height="fill"` on the About box makes it take every pixel the other parts leave, so
+   it grows with the window.
+
+5. **Run it and resize the window.** The header keeps the button at the right edge, the cards stay equal and the
+   About box stretches.
+
+</Steps>
+
+<Aside type="tip" title="See changes as you save">
+Run any script with `pyzed dev examples/tutorial/layout_basics.py` (or `uv run pyzed dev ...`): the window updates
+every time you save the file and keeps its state. Perfect for playing with `spacing` and `padding`.
+</Aside>
+
+## The same thing in Pyzed Design
+
+The designer has the same building blocks in the **Layout** category of the toolbox:
+
+| In code | In the designer |
+| --- | --- |
+| `pz.row([...], spacing=8)` | **Flex row**, with **Gap** 8 |
+| `pz.column([...])` | **Flex column** |
+| `pz.hspace()` | **Spacer** (a child with grow 1) |
+| `width="fill"` on a child | The child's **Grow** field (Position section) set to 1 |
+| `pz.grid([...], columns=3)` | **Grid** with **Columns** 3 |
+| `padding=24` | The container's **Padding** |
+
+<Media src={designerLayout} alt="A sidebar form made of a flex column and its children" caption="A flex column in Pyzed Design: children are placed one after another, in the order of the outline." />
+
+Controls placed freely on the form (not in a flex container) use **anchors** instead: anchored left and right, a
+control stretches; anchored only right, it follows the right edge. Select controls and use
+**Group in a row / column / grid** (right-click menu) to turn a free arrangement into a flex one. Details in
+[Layouts and containers](/pyzed/editor/layouts/).
+
+## Full code
+
+<Code code={source} lang="python" title="examples/tutorial/layout_basics.py" />
+
+<Run file="examples/tutorial/layout_basics.py" />
+
+## Next
+
+- [Change the theme](/pyzed/tutorials/basic/themes/) of this window.
+- [Layout guide](/pyzed/guides/layout/): track grids (`"200 1fr auto"`), `pz.flex`, scrolling and anchored layouts.
+- [Row](/pyzed/library/row/), [Column](/pyzed/library/column/) and [Grid](/pyzed/library/grid/) in the component library.

@@ -1,0 +1,118 @@
+---
+title: Change the theme
+description: "Give a Pyzed app another look: pick a bundled theme, change the accent color, follow the system's light or dark mode, or generate your own theme from three colors, in code and in Pyzed Design."
+sidebar:
+  order: 3
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import sunset from '../../../../assets/tutorials/themes-sunset.png';
+import light from '../../../../assets/tutorials/themes-light.png';
+import designerLight from '../../../../../screenshots/designer-light.png';
+import source from '../../../../../../examples/tutorial/theme_switcher.py?raw';
+
+A **theme** is the set of colors (and a few sizes, like the corner radius) every component reads when it draws
+itself. Change the theme and the whole window changes at once: buttons, inputs, badges, the code editor... You
+never color components one by one.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A window with a theme picker | 15 minutes | Basic · Python, or no code in the designer | [Layout basics](/pyzed/tutorials/basic/layout-basics/) |
+
+## What you'll learn
+
+- Pick a theme in code (`theme = "One Light"`) and in the designer (**Properties → Look → Theme**).
+- Change only the **accent** color.
+- Follow the operating system's **light or dark** mode.
+- Make **your own theme** from three colors and give it a name.
+- Use **theme colors** (`"accent"`, `"text_muted"`) instead of fixed `#hex` values.
+
+<Media src={sunset} light={light} alt="The theme switcher with a custom Sunset theme" caption="The same window with a custom “Sunset” theme (and, in the light version of this page, One Light with a purple accent)." eager />
+
+## Steps
+
+<Steps>
+
+1. **Pick a bundled theme.** `theme` is a class attribute of your app. Any name from `pz.themes.names()` works:
+   the One, Ayu and Gruvbox families, light and dark.
+
+   ```python
+   class ThemeSwitcher(pz.App):
+       theme = "One Dark"
+   ```
+
+2. **Change it while the app runs.** Assign `self.theme`; the next redraw uses it. A drop-down of every theme is
+   one line:
+
+   ```python
+   ui.select(pz.themes.names(), self.base, lambda name: setattr(self, "theme", name))
+   ```
+
+3. **Change only the accent.** The accent is the color of primary buttons, focus rings, selection and links:
+
+   ```python
+   self.theme = pz.themes.get("One Dark").with_accent("#e5c07b")
+   ```
+
+4. **Follow the system.** `pz.themes.auto(light, dark)` switches by itself when the user changes their operating
+   system between light and dark mode:
+
+   ```python
+   self.theme = pz.themes.auto("One Light", "One Dark")
+   ```
+
+5. **Make your own.** `pz.Theme.generate` derives every surface, border, hover state and muted text from three
+   colors; `pz.themes.register` adds it to the list under its name:
+
+   ```python
+   SUNSET = pz.themes.register(
+       pz.Theme.generate("Sunset", background="#2b1d2f", text="#f5e6e8", accent="#ff8a65")
+   )
+   ```
+
+6. **Read the theme in your view.** `self.resolved_theme()` returns the `Theme` in use, handy for a background or
+   to say "dark" or "light":
+
+   ```python
+   t = self.resolved_theme()
+   pz.container(..., bg=t.background)
+   ui.muted(f"Using {t.name} ({'dark' if t.is_dark else 'light'})")
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Use theme colors, not #hex">
+Wherever a component takes a color, prefer a **token** such as `"accent"`, `"text_muted"`, `"success"` or
+`"error"` over a fixed `"#3b82f6"`. Tokens follow the theme, so your app stays readable in light and dark themes.
+</Aside>
+
+## In Pyzed Design
+
+Select an empty spot of the canvas so the Properties panel shows the **form**, then open the **Look** section:
+
+- **Theme**: every registered theme.
+- **Accent**: seven preset colors, or a custom `#rrggbb`.
+- **Background**, **Corner radius** and **Font size** for the whole form.
+
+<Media src={designerLight} alt="A form with the Gruvbox Light theme and a custom accent in Pyzed Design" caption="The form's theme is independent of the editor's own theme: design a light form in a dark editor." />
+
+**View → Preview theme…** shows the canvas in another theme without changing the form, so you can check both looks.
+Each control can also override its own colors in its **Style** section.
+
+## Full code
+
+<Code code={source} lang="python" title="examples/tutorial/theme_switcher.py" />
+
+<Run file="examples/tutorial/theme_switcher.py" />
+
+<Aside type="note" title="Going further">
+This is the quick tour. The [Theming](/pyzed/theming/) section explains every token, how to style single widgets
+with `.style(...)`, gradients, fonts and icons, and how to save a theme to a file.
+</Aside>
+
+## Next
+
+- [5-step tutorial](/pyzed/tutorials/basic/step-by-step/): state, layout, async and a notes app in pure Python.
+- [Themes](/pyzed/theming/themes/) and [Styles](/pyzed/theming/styles/) in the Theming section.

@@ -1,0 +1,109 @@
+---
+title: A multi-view app
+description: "Build a Pyzed app with several pages: a sidebar that switches views, tabs inside a page, breadcrumbs and keyboard shortcuts, all driven by one attribute of state."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import inbox from '../../../../assets/tutorials/navigation.png';
+import settings from '../../../../assets/tutorials/navigation-settings.png';
+import source from '../../../../../../examples/tutorial/navigation.py?raw';
+
+Real apps have more than one screen: a home page, an inbox, settings. In Pyzed, "which screen is showing" is just
+**a piece of state**, like any other. Change it and `view()` draws the other screen. There is no router to learn.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| An app with a sidebar, three pages and tabs | 25 minutes | Intermediate · Python | [Layout basics](/pyzed/tutorials/basic/layout-basics/) |
+
+## What you'll learn
+
+- Keep the current page in `self.page` and pick the view from it.
+- Build a **sidebar** of `ui.list_item` rows with a selected state and a badge.
+- Use `ui.segmented` as **tabs** inside a page.
+- Show **breadcrumbs** and jump between pages with **shortcuts** (`on_key`).
+
+<Media src={inbox} alt="The app with a sidebar: Home, Inbox (selected, with a badge) and Settings, and the inbox messages" caption="The Inbox page: the sidebar highlights where you are and counts unread messages." eager />
+
+## Steps
+
+<Steps>
+
+1. **One attribute decides the page.**
+
+   ```python
+   PAGES = {"Home": "house", "Inbox": "inbox", "Settings": "settings"}   # name → icon
+
+   def __init__(self):
+       self.page = "Home"
+
+   def go(self, page):
+       self.page = page
+   ```
+
+2. **The sidebar.** One `ui.list_item` per page. `selected=` highlights the current one, `end=` puts a counter at
+   the right. The `name=name` in the lambda captures each page's own name:
+
+   ```python
+   items = [
+       ui.list_item(name, lambda name=name: self.go(name), icon=icon,
+                    selected=name == self.page, height=34)
+       for name, icon in PAGES.items()
+   ]
+   ```
+
+3. **Pick the page in `view()`.** Each page is a method that returns widgets; a dict maps names to methods:
+
+   ```python
+   page = {"Home": self.home, "Inbox": self.inbox, "Settings": self.settings}[self.page]()
+   return pz.row([self.sidebar(), pz.column([breadcrumbs, page], padding=24, width="fill")])
+   ```
+
+4. **Tabs inside a page.** A second attribute, `self.tab`, and a `ui.segmented` control to change it. The body
+   below depends on it:
+
+   ```python
+   tabs = ui.segmented(["General", "Notifications", "About"], self.tab,
+                       lambda tab: setattr(self, "tab", tab))
+   ```
+
+   <Media src={settings} alt="The Settings page with the Notifications tab selected" caption="Settings: a segmented control works as tabs." />
+
+5. **Shortcuts.** `on_key` receives every key combination as text. <kbd>Ctrl</kbd>+<kbd>1</kbd>,
+   <kbd>Ctrl</kbd>+<kbd>2</kbd> and <kbd>Ctrl</kbd>+<kbd>3</kbd> open the pages:
+
+   ```python
+   def on_key(self, combo):
+       shortcuts = {f"ctrl-{i}": page for i, page in enumerate(PAGES, start=1)}
+       if combo in shortcuts:
+           self.go(shortcuts[combo])
+   ```
+
+</Steps>
+
+<Aside type="tip" title="State survives page changes">
+Because pages are drawn from your state, nothing is lost when you leave one: the inbox remembers which messages
+you read, Settings remembers its tab. To reset a page, reset its attributes in `go()`.
+</Aside>
+
+<Aside type="note" title="In Pyzed Design">
+In the designer, a **Tab bar** control raises `change` with the selected tab; show and hide panels in its handler
+(`form.general.visible = event.value == "General"`), or open another form in its own window with
+`form.open("settings")`. See [Events and handlers](/pyzed/editor/events/).
+</Aside>
+
+## Full code
+
+<Code code={source} lang="python" title="examples/tutorial/navigation.py" />
+
+<Run file="examples/tutorial/navigation.py" />
+
+## Next
+
+- [Lists and tables with data](/pyzed/tutorials/intermediate/lists-tables/).
+- [Multiple windows](/pyzed/guides/windows/): several real windows that share state.
+- The [Dashboard](/pyzed/showcase/dashboards/#dashboard) and [Settings](/pyzed/showcase/forms/#settings-page)
+  showcases use the same sidebar.

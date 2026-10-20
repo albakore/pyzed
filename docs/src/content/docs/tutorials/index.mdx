@@ -1,92 +1,100 @@
 ---
 title: Tutorials
-description: "Learn Pyzed by building real Python desktop apps step by step, from a first window to a complete code editor, sorted into basic, intermediate and advanced levels."
+description: "Learn Pyzed by building real Python desktop apps step by step, with the visual designer and in code: basic, intermediate and advanced tutorials, each with runnable code."
 section:
   eyebrow: Learn
   icon: open-book
-  lead: Learn by building real apps, one step at a time. Start with the basics, then move on to background work, editors and games.
+  lead: Learn by building real apps, one step at a time. Start by drawing a window without code, then add Python, data, shaders, games, a backend, and ship it.
 sidebar:
   label: Overview
   order: 0
 ---
 
-import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
+import Run from '../showcase/_run.mdx';
 
 Every tutorial ends with a program you can run, and its full source is in the
-[`examples`](https://github.com/albakore/pyzed/tree/main/examples) folder of the repository. You don't need to know
-much Python for the basic ones: each step explains what the code does and why.
+[`examples`](https://github.com/albakore/pyzed/tree/main/examples) folder of the repository. Each one says what
+you will build, how long it takes, what you need to know first and what you will learn.
 
-<Aside type="note" title="This section is growing">
-The tutorials are being reorganized by level. New ones for the designer, theming, shaders and packaging are on
-the way, and each one will say how long it takes and what you will learn.
+```mermaid
+flowchart LR
+    B["Basic<br/>draw a window · a form · layout · themes · Python basics"] --> I["Intermediate<br/>data binding · pages · tables · dialogs · components · threads · shaders"]
+    I --> A["Advanced<br/>editor · games · shader graphs · backends · packaging · AI agent"]
+```
+
+<Aside type="tip" title="Never programmed before?">
+Start with **Your first window in Pyzed Design**: you draw it with the mouse and run it with <kbd>F5</kbd>, no code
+needed. Each tutorial after that adds a little Python, and explains every line.
 </Aside>
 
 ## Basic
 
-Your first steps: a window, some state, a list and a form.
+From an empty canvas to your first apps, with the designer and in code.
 
 <NavCards
 	items={[
-		{ title: '5-step tutorial', text: 'From an empty window to a notes app with Markdown, async work and saving.', href: '/pyzed/tutorials/basic/step-by-step/', icon: 'rocket', tag: 'Start here' },
-		{ title: 'To-do list', text: 'Your first complete app: state, a form, a list and keyboard shortcuts.', href: '/pyzed/tutorials/basic/todo-app/', icon: 'approve-check' },
-		{ title: 'Your first form in Pyzed Design', text: 'Draw a window by drag and drop, wire a button to Python and run it with F5.', icon: 'pencil' },
+		{ title: 'Your first window in Pyzed Design', text: 'Drag controls, set their properties, anchor them and run with F5. No code.', href: '/pyzed/tutorials/basic/first-window/', icon: 'pencil', tag: 'Start here' },
+		{ title: 'A form that does something', text: 'A contact form: inputs, a Send button wired to Python, a live counter and the console.', href: '/pyzed/tutorials/basic/first-form/', icon: 'document' },
+		{ title: 'Layout basics', text: 'Rows, columns, fill, spacing and grids, in code and with the designer\'s flex containers.', href: '/pyzed/tutorials/basic/layout-basics/', icon: 'list-format' },
+		{ title: 'Change the theme', text: 'Bundled themes, accent colors, light/dark from the system and your own theme.', href: '/pyzed/tutorials/basic/themes/', icon: 'moon' },
+		{ title: '5-step tutorial', text: 'From an empty window to a notes app with Markdown, async work and a second window, in pure Python.', href: '/pyzed/tutorials/basic/step-by-step/', icon: 'rocket' },
+		{ title: 'To-do list', text: 'Your first complete app in code: state, a form, a list, filters and shortcuts.', href: '/pyzed/tutorials/basic/todo-app/', icon: 'approve-check' },
 	]}
 />
 
 ## Intermediate
 
-Work that takes time, without freezing the window.
+Real data, several screens and your own reusable pieces.
 
 <NavCards
 	items={[
+		{ title: 'Data binding and validation', text: 'Bind controls to form.data and add rules in the designer; validate in one line.', href: '/pyzed/tutorials/intermediate/data-binding/', icon: 'approve-check-circle', tag: 'Designer' },
+		{ title: 'A multi-view app', text: 'A sidebar that switches pages, tabs, breadcrumbs and shortcuts.', href: '/pyzed/tutorials/intermediate/navigation/', icon: 'bars' },
+		{ title: 'Lists and tables with data', text: 'Search, sort, select a row and show its details.', href: '/pyzed/tutorials/intermediate/lists-tables/', icon: 'list-format' },
+		{ title: 'Dialogs, notifications and validation', text: 'Field errors, a confirmation dialog and toasts that go away on their own.', href: '/pyzed/tutorials/intermediate/dialogs-feedback/', icon: 'comment-alt' },
+		{ title: 'A custom component', text: 'Draw a reusable star rating with properties, bindings and a custom event.', href: '/pyzed/tutorials/intermediate/custom-component/', icon: 'puzzle', tag: 'Designer' },
 		{ title: 'Background tasks', text: 'Downloads with progress, blocking work in a thread and notifications.', href: '/pyzed/tutorials/intermediate/background-tasks/', icon: 'random' },
-		{ title: 'Give your app its own theme', text: 'Colors, styles and a theme switcher, in code and in the designer.', icon: 'moon' },
-		{ title: 'A shader background', text: 'Wire nodes in the Shader view and use the result behind a form.', icon: 'star' },
+		{ title: 'A shader effect from the Shader view', text: 'A glowing GPU background made of nodes, behind a form whose buttons change it.', href: '/pyzed/tutorials/intermediate/shader-effect/', icon: 'star', tag: 'GPU' },
 	]}
 />
 
 ## Advanced
 
-Whole applications with many parts working together.
+Whole applications, games and shipping them.
 
 <NavCards
 	items={[
 		{ title: 'A mini code editor', text: 'A workspace with a file tree, tabs, syntax highlighting and a command palette.', href: '/pyzed/tutorials/advanced/code-editor/', icon: 'seti:python' },
-		{ title: 'Neon Invaders', text: 'A complete game: sprites, waves, power-ups, glow and a glass HUD.', href: '/pyzed/games/neon-invaders/', icon: 'laptop', tag: 'Game' },
-		{ title: 'Ship it to every platform', text: 'Build, sign and publish your app for Windows, macOS and Linux from CI.', icon: 'rocket' },
+		{ title: 'A game loop', text: 'Dodge: a frame loop, held keys, collisions, glow, particles and screen shake.', href: '/pyzed/tutorials/advanced/game-loop/', icon: 'laptop', tag: 'Game' },
+		{ title: 'A custom shader graph', text: 'An aurora built node by node in Python, with sliders for its variables.', href: '/pyzed/tutorials/advanced/shader-graph/', icon: 'star', tag: 'GPU' },
+		{ title: 'Connecting a backend', text: 'A repository class over SQLite, queries in threads, a spinner and friendly errors.', href: '/pyzed/tutorials/advanced/backend/', icon: 'database' },
+		{ title: 'Package your app', text: 'A double-clickable app for Windows, macOS and Linux, and builds for all three from CI.', href: '/pyzed/tutorials/advanced/packaging/', icon: 'rocket' },
+		{ title: 'Build an app with the AI agent', text: 'Describe an app, follow the agent\'s plan, review its changes and keep improving it.', href: '/pyzed/tutorials/advanced/ai-agent/', icon: 'comment-alt', tag: 'AI' },
 	]}
 />
 
 ## Running the examples
 
-Clone the repository (or download it as a zip), then run any example with the tool you use. `uv` creates the
-environment for you; with `pip`, create and activate a virtual environment first.
+Clone the repository (or download it as a zip) and run any example from its folder with the tool you use. `uv`
+creates the environment for you; with `pip`, create and activate a virtual environment first. Every tutorial has
+a block like this one with its own file:
 
-<Tabs syncKey="pkg">
-	<TabItem label="uv">
-		```bash title="Windows, macOS and Linux"
-		uv run --with pyzed-ui python examples/todo.py
-		```
-	</TabItem>
-	<TabItem label="pip">
-		```bash title="macOS and Linux"
-		python3 -m venv .venv
-		source .venv/bin/activate
-		python -m pip install pyzed-ui
-		python examples/todo.py
-		```
+<Run file="examples/todo.py" />
 
-		```powershell title="Windows (PowerShell)"
-		py -m venv .venv
-		.venv\Scripts\activate
-		python -m pip install pyzed-ui
-		python examples\todo.py
-		```
-	</TabItem>
-</Tabs>
+Forms made with the designer (`.pzform`) run with `pyzed run` instead of `python`:
+
+<Run file="examples/tutorial/designer/hello.pzform" form />
+
+<Aside type="note" title="About this section">
+Tutorials are tested: every example app in `examples/tutorial` is imported, drawn off-screen and exercised by the
+test suite, so the code on these pages runs with the current version of Pyzed. Short recordings of each tutorial
+are being added.
+</Aside>
 
 <Aside type="tip">
 New to Python? Read [Installation](/pyzed/getting-started/installation/) first, and the
-[Quickstart](/pyzed/getting-started/quickstart/) to see a first window in five minutes.
+[Quickstart](/pyzed/getting-started/quickstart/) to see a first window in five minutes. Looking for finished apps
+to study? See the [Showcase](/pyzed/showcase/).
 </Aside>

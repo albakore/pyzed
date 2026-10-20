@@ -1,0 +1,152 @@
+---
+title: Package your app
+description: "From project to download: create a Pyzed project with uv, build a standalone executable with pyzed build on Windows, macOS and Linux, add an icon and data files, and build every platform in CI."
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Your app works on your machine. Now you want to send it to someone who does not have Python, does not know what
+`pip` is, and should be able to **double-click** it. This tutorial takes an app from a project folder to a file
+you can share, and then to an automatic build for all three systems.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A double-clickable app for Windows, macOS and Linux | 30 minutes (plus build time) | Advanced · command line | [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, a GitHub account for the last part |
+
+## What you'll learn
+
+- Create (or convert to) a **Pyzed project**: the layout `pyzed build` expects.
+- Build a **standalone executable** for the system you are on.
+- Add an **icon**, **data files** and a **name**, and read bundled files from your code.
+- Build **all platforms** at once with GitHub Actions, and why signing matters.
+
+## Steps
+
+<Steps>
+
+1. **Start from a project.** `pyzed build` packages a [uv](https://docs.astral.sh/uv/) project whose main form or
+   script is set in `pyproject.toml`. Create one (or open **New project** in Pyzed Design's welcome window):
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash title="Windows, macOS and Linux"
+   		uvx --from pyzed-ui pyzed new my-app
+   		cd my-app
+   		uv run pyzed run          # try it
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash title="macOS and Linux"
+   		python -m pip install pyzed-ui
+   		pyzed new my-app          # uses uv under the hood: install it first
+   		cd my-app
+   		uv run pyzed run
+   		```
+
+   		```powershell title="Windows (PowerShell)"
+   		python -m pip install pyzed-ui
+   		pyzed new my-app
+   		cd my-app
+   		uv run pyzed run
+   		```
+   	</TabItem>
+   	<TabItem label="python">
+   		```bash title="With Pyzed already installed"
+   		python -m pyzed new my-app
+   		```
+   	</TabItem>
+   </Tabs>
+
+   Already have a uv project? Run `pyzed init` inside it. The UI lives in `ui/` (forms and their handlers), the
+   backend in `src/my_app/`.
+
+2. **Build for this computer.** From the project folder:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash title="Windows, macOS and Linux"
+   		uv run pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash title="macOS and Linux"
+   		source .venv/bin/activate
+   		pyzed build
+   		```
+
+   		```powershell title="Windows (PowerShell)"
+   		.venv\Scripts\Activate.ps1
+   		pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="python">
+   		```bash title="Inside the project's environment"
+   		python -m pyzed build
+   		```
+   	</TabItem>
+   </Tabs>
+
+   The first build takes a minute or two. The result goes to `dist/`:
+
+   | Built on | You get | Share it as |
+   | --- | --- | --- |
+   | Windows | `dist\my-app\my-app.exe` | A zip of the folder, or an installer (Inno Setup, WiX) |
+   | macOS | `dist/my-app.app` | A zip or a `.dmg`, signed and notarized |
+   | Linux | `dist/my-app/my-app` | A tarball, AppImage, `.deb` or Flatpak |
+
+3. **Try it like a user would.** Copy the folder somewhere else (or to another machine without Python) and open
+   the executable. If it closes at once, build with `--console` to see the error.
+
+4. **Name, icon and data files.** Add a `[tool.pyzed.build]` table to `pyproject.toml`:
+
+   ```toml title="pyproject.toml"
+   [tool.pyzed.build]
+   name = "Notes"                       # the executable's name
+   icon = "assets/icon.ico"             # .ico on Windows, .icns on macOS
+   include = ["assets", "data/help.md"] # files your app reads at run time
+   ```
+
+   Inside the bundle, find those files from the bundle's root:
+
+   ```python
+   import sys
+   from pathlib import Path
+
+   ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
+   help_text = (ROOT / "data" / "help.md").read_text()
+   ```
+
+5. **One file or a folder?** `pyzed build --onefile` makes a single file, handy to send, but slower to start (it
+   unpacks itself every time) and more often flagged by antivirus software. A folder plus an installer is the
+   safer choice for a real release.
+
+6. **Every platform from CI.** A build only runs on the system it was made on, so you need Windows, macOS and
+   Linux machines. GitHub has them:
+
+   ```bash
+   uv run pyzed build --workflow     # writes .github/workflows/build.yml
+   git add .github && git commit -m "Build on every platform" && git push
+   git tag v1.0.0 && git push --tags # a v* tag starts the build
+   ```
+
+   Each run keeps the three `dist/` folders as downloadable artifacts.
+
+</Steps>
+
+<Aside type="caution" title="Signing">
+Unsigned apps run, but Windows SmartScreen and macOS Gatekeeper warn users (macOS may refuse to open it). For a
+public release sign the Windows `.exe` with a code signing certificate, and sign and notarize the macOS `.app`
+with an Apple Developer ID. The commands are in [Build and distribute](/pyzed/packaging/build/).
+</Aside>
+
+<Aside type="note" title="Desktop today, more targets later">
+Pyzed builds desktop apps for Windows, macOS and Linux today. Mobile and web targets are on the roadmap; the
+[Distribute](/pyzed/packaging/) section will say when they are ready.
+</Aside>
+
+## Next
+
+- [Build and distribute](/pyzed/packaging/build/): what gets bundled, every option, troubleshooting.
+- [Build an app with the AI agent](/pyzed/tutorials/advanced/ai-agent/).

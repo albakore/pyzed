@@ -2,14 +2,26 @@
 title: To-do list
 description: "Build your first complete Python desktop app with Pyzed: a to-do list with state, forms, lists, filters and keyboard shortcuts."
 sidebar:
-  order: 1
+  order: 5
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../examples/todo.py?raw';
+import Run from '../../showcase/_run.mdx';
 
-In this tutorial we build a to-do list. You will learn how to keep state, read a text field,
-draw lists, filter and add keyboard shortcuts.
+In this tutorial we build a to-do list: the classic first app, and a good one, because it has everything a real
+app has: data, a form to add to it, a list to show it and ways to change it.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A to-do list with filters and shortcuts | 30 minutes | Basic · Python | [5-step tutorial](/pyzed/tutorials/basic/step-by-step/) (steps 1 and 2) |
+
+## What you'll learn
+
+- Keep the app's data in plain Python objects (a dataclass).
+- Read a text field as the user types, and submit it with <kbd>Enter</kbd>.
+- Draw a list of rows with a checkbox and a delete button each.
+- Filter what is shown, and add keyboard shortcuts.
 
 ![The finished app](../../../../assets/tutorials/todo.png)
 
@@ -104,6 +116,10 @@ because it reads its colors from the active theme.
 
 <Code code={source} lang="py" title="examples/todo.py" />
 
-```bash
-python examples/todo.py
-```
+<Run file="examples/todo.py" />
+
+## Next
+
+- [Data binding and validation](/pyzed/tutorials/intermediate/data-binding/) in the designer.
+- [Lists and tables](/pyzed/tutorials/intermediate/lists-tables/): search, sort and select rows.
+- The [Todos showcase](/pyzed/showcase/apps/#todos), which saves the list to disk.

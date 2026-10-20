@@ -1,0 +1,128 @@
+---
+title: A shader effect from the Shader view
+description: "Make an animated GPU background in the Shader view of Pyzed Design from a template, tweak its nodes and variables, and put it behind a form whose buttons change it."
+sidebar:
+  order: 6
+  badge:
+    text: GPU
+    variant: note
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/designer-welcome.png';
+import newShader from '../../../../../screenshots/designer-shader-new.png';
+import shaderView from '../../../../../screenshots/designer-shader.png';
+import shaderPreview from '../../../../../screenshots/designer-shader-preview.png';
+import handlers from '../../../../../../examples/tutorial/designer/welcome.py?raw';
+
+A **shader** is a tiny program the graphics card runs for every pixel, every frame: that is how games draw glowing
+rings, clouds and fire without slowing down. In Pyzed you do not have to write that program. You wire **nodes**
+in the Shader view (like Godot's visual shaders or Unreal's material editor), and the designer turns them into
+GPU code for you.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A pulsing neon ring behind a welcome card | 25 minutes | Intermediate · little code | [Your first window](/pyzed/tutorials/basic/first-window/) |
+
+## What you'll learn
+
+- Create a shader from a **template** and find your way around the **Graph**, **Preview** and **WGSL** tabs.
+- Change a node's input, wire a new node, and read the live **preview on every node**.
+- Use **variables**: values your Python code changes while the shader runs.
+- Draw the shader on a form with the **Shader** control, and change its variables from a button.
+
+<Media src={finished} alt="A welcome card over a glowing cyan ring" caption="The finished form: the glow is a shader made of nodes, the card and buttons are normal controls." eager />
+
+## Steps
+
+<Steps>
+
+1. **Create the shader.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Shader**, name it `glow`, pick the **Glow ring**
+   template and press **Create shader**.
+
+   <Media src={newShader} alt="The New shader dialog with its templates" caption="Templates: Blank, Plasma, Clouds, Glow ring, Cells and Retro screen." />
+
+2. **Look around.** The **Graph** tab shows the nodes, left to right: **Time** and the variables feed some math,
+   a **Ring** shape gives the distance to a ring, **Glow** turns it into light and **Output** is the final color.
+   Each node draws a small preview of what it makes, so you can follow the picture as it is built.
+
+   <Media src={shaderView} alt="The Shader view: sidebar of nodes, the graph with previews and the output" caption="The Shader view: nodes on the left sidebar, the graph in the middle, the result in the Output window." />
+
+3. **Change a value.** Inputs that are not wired show their value right on the node. On the **Glow** node change
+   **radius** from 0.12 to 0.3: the glow grows, and the preview of every node after it updates at once. (The
+   ring's own radius is wired: it comes from the pulse math, which is what makes it breathe.)
+
+4. **Wire a new node.** Near the end, a **Multiply** node mixes the `color` variable with the glow and feeds the
+   **RGBA** node. From the **Shading** sidebar drag a **Hue shift** node (category *Color*) next to them. Wire the
+   Multiply's result into its **rgb** input and its **rgb** output into RGBA's **rgb**, then wire **Time** into
+   **shift**: the ring now cycles through every color. Press <kbd>Ctrl</kbd>+<kbd>Z</kbd> to go back.
+
+5. **Meet the variables.** The **Outline** lists the shader's variables: `color` (the neon color) and `pulse`
+   (pulses per second). They are **mutable**: your app can change them every frame for free. The **Preview** tab
+   has a slider for each.
+
+   <Media src={shaderPreview} alt="The Preview tab with a slider per variable" caption="Preview: the finished shader, large, with a slider per variable." />
+
+6. **Save** (<kbd>Ctrl</kbd>+<kbd>S</kbd>). The shader is the file `glow.pzshad`. Press <kbd>F5</kbd> to see it
+   fill a window of its own.
+
+7. **Put it behind a form.** Create a form `welcome` (560 × 380). From **Display** in the toolbox drag a
+   **Shader** control, make it cover the whole form and anchor it on **all four sides**; name it `backdrop` and set
+   its **Shader file** to `glow.pzshad`. Then add a **Card** in the middle (no anchors, so it stays centered) with
+   a heading, a label named `hint` and two buttons, `faster` and `color`. Give the card a translucent background
+   in its **Style** section (`#0f172acc`) so the glow shows through.
+
+8. **Drive it from Python.** The control's `variables` property is a dict of the shader's variables. Double-click
+   **faster** and **color**:
+
+   ```python
+   def faster_click(form, event):
+       variables = dict(form.backdrop.variables)
+       variables["pulse"] = variables.get("pulse", 2.0) + 1.5
+       form.backdrop.variables = variables
+
+   def color_click(form, event):
+       variables = dict(form.backdrop.variables)
+       variables["color"] = "#a78bfa"
+       form.backdrop.variables = variables
+   ```
+
+9. **Run** the form (<kbd>F5</kbd>) and press the buttons.
+
+</Steps>
+
+<Aside type="caution" title="Relative paths">
+A relative **Shader file** (`glow.pzshad`) is read from the folder you run the app from. In a project that is
+the project folder; for a form you may run from anywhere, set the path in the form's `load` handler from
+`__file__`, as the example below does.
+</Aside>
+
+<Aside type="note" title="No GPU?">
+On machines without a graphics card (some virtual machines and CI servers), a shader shows its **fallback** color
+instead, set in the shader's properties. Everything else in the window works as usual.
+</Aside>
+
+## Full code
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/welcome.py" />
+
+The same shader in pure Python, without the designer, is one widget:
+
+```python
+pz.stack([
+    pz.shader("glow.pzshad", uniforms={"pulse": 4, "color": "#a78bfa"}, width="fill", height="fill"),
+    card,
+])
+```
+
+<Run file="examples/tutorial/designer/welcome.pzform" form />
+
+{/* media: tutorials/shader-effect-nodes (a short recording: changing the glow radius updates every preview; wiring Hue shift) */}
+
+## Next
+
+- [A custom shader graph](/pyzed/tutorials/advanced/shader-graph/): build a graph in Python, node by node.
+- The [Shading](/pyzed/shading/) section: every node, the Shader view and WGSL shaders.
+- The [shader showcase](/pyzed/showcase/shaders/): eleven `.pzshad` files to open and study.

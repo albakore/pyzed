@@ -72,7 +72,7 @@
         "icon": "user"
       },
       "events": {
-        "submit": "greet_click"
+        "submit": "your_name_submit"
       },
       "anchor": [
         "left",
