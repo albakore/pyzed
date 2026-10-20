@@ -1,0 +1,190 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "retro_screen",
+ "description": "An old CRT look: scanlines, a dark vignette and film grain over a synthwave gradient.",
+ "preview": {
+  "width": 320,
+  "height": 200,
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "scanlines",
+   "type": "float",
+   "value": 0.3,
+   "min": 0,
+   "max": 1,
+   "description": "How dark the scanlines are"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "scanlines"
+   }
+  },
+  {
+   "id": "2",
+   "type": "uv",
+   "x": 0.0,
+   "y": 212.0
+  },
+  {
+   "id": "3",
+   "type": "gradient",
+   "x": 250.0,
+   "y": 260.0,
+   "params": {
+    "stops": [
+     [
+      0.0,
+      "#ff6ec7"
+     ],
+     [
+      0.55,
+      "#7873f5"
+     ],
+     [
+      1.0,
+      "#1b1035"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "4",
+   "type": "scanlines",
+   "x": 250.0,
+   "y": 0.0,
+   "inputs": {
+    "speed": 20.0
+   }
+  },
+  {
+   "id": "5",
+   "type": "vignette",
+   "x": 0.0,
+   "y": 448.0,
+   "inputs": {
+    "strength": 0.9
+   }
+  },
+  {
+   "id": "6",
+   "type": "grain",
+   "x": 0.0,
+   "y": 660.0,
+   "inputs": {
+    "strength": 0.08
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 500.0,
+   "y": 130.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 750.0,
+   "y": 289.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 1000.0,
+   "y": 474.5,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "10",
+   "type": "rgba",
+   "x": 1250.0,
+   "y": 474.5,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "11",
+   "type": "output",
+   "x": 1500.0,
+   "y": 474.5
+  }
+ ],
+ "links": [
+  {
+   "from": "2",
+   "out": "y",
+   "to": "3",
+   "in": "t"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "4",
+   "in": "strength"
+  },
+  {
+   "from": "3",
+   "out": "rgb",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "value",
+   "to": "7",
+   "in": "b"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "5",
+   "out": "value",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "value",
+   "to": "9",
+   "in": "b"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "10",
+   "in": "rgb"
+  },
+  {
+   "from": "10",
+   "out": "color",
+   "to": "11",
+   "in": "color"
+  }
+ ]
+}

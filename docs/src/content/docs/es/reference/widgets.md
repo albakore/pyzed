@@ -983,6 +983,7 @@ shader(
     code,
     *,
     uniforms=None,
+    textures=None,
     width=None,
     height=None,
     animate=True,
@@ -991,12 +992,13 @@ shader(
 )
 ```
 
-Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel. Cada entrada de `uniforms` se convierte en una función con su nombre (`{"speed": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).
+Un widget que pinta la GPU con tu función WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, que devuelve el color de cada píxel, o con un grafo de shader hecho de nodos (una ruta `.pzshad` o un `Graph` o `Shader` de [`pyzed.shading`](/pyzed/es/reference/shading/)). Cada entrada de `uniforms` se convierte en una función con su nombre (`{"speed": 2}` -> `speed()`); `mouse()` da la posición del puntero. Sin GPU el widget muestra `fallback`. Lanza `ValueError` con el mensaje del compilador si el código no es válido. Ver la guía de [shaders](/pyzed/es/guides/shaders/).
 
 | Parámetro | Descripción |
 | --- | --- |
-| `code` | Código WGSL que define `shade` (y las funciones auxiliares que quieras). |
-| `uniforms` | Hasta 8 valores con nombre: un número, de 2 a 4 números o un color. |
+| `code` | Código WGSL que define `shade` (y las funciones auxiliares que quieras), o una ruta `.pzshad`, un `Graph` o un `Shader`. |
+| `uniforms` | Hasta 32 valores con nombre: un número, de 2 a 4 números o un color. Con un `.pzshad`, las variables mutables del shader por nombre. |
+| `textures` | Hasta 8 imágenes, `{nombre: ruta}`: cada una se convierte en `nombre(uv)`, el color de la imagen en `uv`. |
 | `width` | Ancho (`"fill"` por defecto). |
 | `height` | Alto (`"fill"` por defecto). |
 | `animate` | Redibuja en cada frame para que avance `time` (`True`). |
@@ -1159,6 +1161,7 @@ mouse_area(
     on_move=None,
     on_scroll=None,
     on_middle_press=None,
+    on_middle_release=None,
     cursor=None,
 )
 ```
@@ -1177,6 +1180,7 @@ Detecta eventos del ratón sobre su contenido.
 | `on_move` | Se llama con `(x, y)` al mover el ratón. |
 | `on_scroll` | Callable que recibe `(dx, dy)` en líneas al usar la rueda. |
 | `on_middle_press` | Clic con el botón central. |
+| `on_middle_release` | Se suelta el botón central (para desplazar la vista, por ejemplo). |
 | `cursor` | `"pointer"`, `"text"`, `"grab"`, `"grabbing"`, `"crosshair"`, `"not-allowed"`, `"resize-horizontal"`, `"resize-vertical"`, `"move"` o `"default"`. |
 
 ### `hover`

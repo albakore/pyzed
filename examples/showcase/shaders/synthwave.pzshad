@@ -1,0 +1,1638 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "synthwave",
+ "description": "A synthwave sunset: dusk sky, stars, a striped sun and a grid rushing forward.",
+ "preview": {
+  "width": 640,
+  "height": 400,
+  "fallback": "#4a0d5e",
+  "animate": true
+ },
+ "variables": [],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "uv",
+   "x": 0.0,
+   "y": 0.0
+  },
+  {
+   "id": "2",
+   "type": "pixel",
+   "x": 0.0,
+   "y": 236.0
+  },
+  {
+   "id": "3",
+   "type": "mouse",
+   "x": 0.0,
+   "y": 472.0
+  },
+  {
+   "id": "4",
+   "type": "size",
+   "x": 0.0,
+   "y": 684.0
+  },
+  {
+   "id": "5",
+   "type": "time",
+   "x": 0.0,
+   "y": 944.0
+  },
+  {
+   "id": "6",
+   "type": "swizzle",
+   "x": 250.0,
+   "y": 472.0,
+   "params": {
+    "mask": "y"
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 500.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 750.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 0.04
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 1000.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 0.62
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "10",
+   "type": "set_var",
+   "x": 1250.0,
+   "y": 684.0,
+   "params": {
+    "name": "horizon"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 1500.0,
+   "y": 342.0,
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "12",
+   "type": "math",
+   "x": 1750.0,
+   "y": 342.0,
+   "inputs": {
+    "b": 2.2
+   },
+   "params": {
+    "op": "power"
+   }
+  },
+  {
+   "id": "13",
+   "type": "mix",
+   "x": 2000.0,
+   "y": 342.0,
+   "inputs": {
+    "a": [
+     0.03,
+     0.01,
+     0.1
+    ],
+    "b": [
+     0.55,
+     0.08,
+     0.45
+    ]
+   }
+  },
+  {
+   "id": "14",
+   "type": "math",
+   "x": 250.0,
+   "y": 236.0,
+   "inputs": {
+    "b": 2.0
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "15",
+   "type": "func",
+   "x": 500.0,
+   "y": 236.0,
+   "params": {
+    "op": "floor"
+   }
+  },
+  {
+   "id": "16",
+   "type": "white_noise",
+   "x": 750.0,
+   "y": 236.0
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 1000.0,
+   "y": 236.0,
+   "inputs": {
+    "a": 0.996
+   },
+   "params": {
+    "op": "step"
+   }
+  },
+  {
+   "id": "18",
+   "type": "math",
+   "x": 1750.0,
+   "y": 578.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 2000.0,
+   "y": 578.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "20",
+   "type": "math",
+   "x": 2250.0,
+   "y": 460.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "21",
+   "type": "swizzle",
+   "x": 250.0,
+   "y": 684.0,
+   "params": {
+    "mask": "x"
+   }
+  },
+  {
+   "id": "22",
+   "type": "math",
+   "x": 500.0,
+   "y": 1156.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "23",
+   "type": "math",
+   "x": 750.0,
+   "y": 1156.0,
+   "inputs": {
+    "b": 0.05
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "24",
+   "type": "math",
+   "x": 1000.0,
+   "y": 1156.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "25",
+   "type": "math",
+   "x": 1500.0,
+   "y": 1286.0,
+   "inputs": {
+    "b": 0.12
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "26",
+   "type": "compose",
+   "x": 1750.0,
+   "y": 1404.0,
+   "params": {
+    "type": "vec2"
+   }
+  },
+  {
+   "id": "27",
+   "type": "math",
+   "x": 2000.0,
+   "y": 814.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "28",
+   "type": "compose",
+   "x": 250.0,
+   "y": 896.0,
+   "inputs": {
+    "y": 1.0
+   },
+   "params": {
+    "type": "vec2"
+   }
+  },
+  {
+   "id": "29",
+   "type": "math",
+   "x": 2250.0,
+   "y": 855.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "30",
+   "type": "length",
+   "x": 2500.0,
+   "y": 855.0
+  },
+  {
+   "id": "31",
+   "type": "math",
+   "x": 250.0,
+   "y": 1132.0,
+   "inputs": {
+    "b": 0.02
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "32",
+   "type": "math",
+   "x": 500.0,
+   "y": 920.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "33",
+   "type": "math",
+   "x": 750.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 120.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "34",
+   "type": "func",
+   "x": 1000.0,
+   "y": 920.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "35",
+   "type": "math",
+   "x": 1500.0,
+   "y": 578.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "36",
+   "type": "math",
+   "x": 1750.0,
+   "y": 814.0,
+   "inputs": {
+    "b": 0.25
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "37",
+   "type": "math",
+   "x": 2000.0,
+   "y": 1050.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "38",
+   "type": "math",
+   "x": 2250.0,
+   "y": 1327.0,
+   "inputs": {
+    "b": 1.6
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "39",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1515.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "40",
+   "type": "math",
+   "x": 2750.0,
+   "y": 1799.0,
+   "inputs": {
+    "b": 0.6
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "41",
+   "type": "math",
+   "x": 3000.0,
+   "y": 1799.0,
+   "inputs": {
+    "a": 0.0
+   },
+   "params": {
+    "op": "step"
+   }
+  },
+  {
+   "id": "42",
+   "type": "smoothstep",
+   "x": 2750.0,
+   "y": 855.0,
+   "inputs": {
+    "edge0": 0.205,
+    "edge1": 0.2
+   }
+  },
+  {
+   "id": "43",
+   "type": "math",
+   "x": 3250.0,
+   "y": 1371.5,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "44",
+   "type": "swizzle",
+   "x": 2000.0,
+   "y": 1994.0,
+   "params": {
+    "mask": "y"
+   }
+  },
+  {
+   "id": "45",
+   "type": "math",
+   "x": 2250.0,
+   "y": 1091.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "46",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1279.0,
+   "inputs": {
+    "b": 0.2
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "47",
+   "type": "math",
+   "x": 2750.0,
+   "y": 1563.0,
+   "inputs": {
+    "b": 0.4
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "48",
+   "type": "clamp",
+   "x": 3000.0,
+   "y": 1563.0,
+   "inputs": {
+    "min": 0.0,
+    "max": 1.0
+   }
+  },
+  {
+   "id": "49",
+   "type": "mix",
+   "x": 3250.0,
+   "y": 1843.5,
+   "inputs": {
+    "a": [
+     1.0,
+     0.85,
+     0.25
+    ],
+    "b": [
+     1.0,
+     0.2,
+     0.55
+    ]
+   }
+  },
+  {
+   "id": "50",
+   "type": "mix",
+   "x": 3500.0,
+   "y": 1225.0
+  },
+  {
+   "id": "51",
+   "type": "vec3",
+   "x": 0.0,
+   "y": 1180.0,
+   "params": {
+    "value": [
+     0.35,
+     0.105,
+     0.21
+    ]
+   }
+  },
+  {
+   "id": "52",
+   "type": "math",
+   "x": 2750.0,
+   "y": 1091.0,
+   "inputs": {
+    "b": -6.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "53",
+   "type": "func",
+   "x": 3000.0,
+   "y": 1091.0,
+   "params": {
+    "op": "exp"
+   }
+  },
+  {
+   "id": "54",
+   "type": "math",
+   "x": 3250.0,
+   "y": 1135.5,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "55",
+   "type": "math",
+   "x": 3750.0,
+   "y": 1180.2,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "56",
+   "type": "math",
+   "x": 1500.0,
+   "y": 814.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "57",
+   "type": "math",
+   "x": 1500.0,
+   "y": 1522.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "58",
+   "type": "math",
+   "x": 1750.0,
+   "y": 1168.0,
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "59",
+   "type": "math",
+   "x": 2000.0,
+   "y": 1286.0,
+   "inputs": {
+    "b": 0.001
+   },
+   "params": {
+    "op": "max"
+   }
+  },
+  {
+   "id": "60",
+   "type": "math",
+   "x": 2250.0,
+   "y": 1563.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "61",
+   "type": "math",
+   "x": 250.0,
+   "y": 0.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "62",
+   "type": "math",
+   "x": 500.0,
+   "y": 448.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "63",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1043.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "64",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1751.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "65",
+   "type": "math",
+   "x": 250.0,
+   "y": 1368.0,
+   "inputs": {
+    "b": 0.6
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "66",
+   "type": "math",
+   "x": 2750.0,
+   "y": 2035.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "67",
+   "type": "func",
+   "x": 3000.0,
+   "y": 2035.0,
+   "params": {
+    "op": "fract"
+   }
+  },
+  {
+   "id": "68",
+   "type": "math",
+   "x": 2750.0,
+   "y": 1327.0,
+   "inputs": {
+    "b": 1.5
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "69",
+   "type": "func",
+   "x": 3000.0,
+   "y": 1327.0,
+   "params": {
+    "op": "fract"
+   }
+  },
+  {
+   "id": "70",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1987.0,
+   "inputs": {
+    "b": 0.035
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "71",
+   "type": "math",
+   "x": 3250.0,
+   "y": 2079.5,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "72",
+   "type": "math",
+   "x": 3500.0,
+   "y": 2057.2,
+   "params": {
+    "op": "min"
+   }
+  },
+  {
+   "id": "73",
+   "type": "smoothstep",
+   "x": 3750.0,
+   "y": 2081.1,
+   "inputs": {
+    "edge1": 0.0
+   }
+  },
+  {
+   "id": "74",
+   "type": "math",
+   "x": 2500.0,
+   "y": 2223.0,
+   "inputs": {
+    "b": 0.02
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "75",
+   "type": "math",
+   "x": 3250.0,
+   "y": 1607.5,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "76",
+   "type": "math",
+   "x": 3500.0,
+   "y": 1467.2,
+   "params": {
+    "op": "min"
+   }
+  },
+  {
+   "id": "77",
+   "type": "smoothstep",
+   "x": 3750.0,
+   "y": 1845.1,
+   "inputs": {
+    "edge1": 0.0
+   }
+  },
+  {
+   "id": "78",
+   "type": "math",
+   "x": 4000.0,
+   "y": 1963.1,
+   "params": {
+    "op": "max"
+   }
+  },
+  {
+   "id": "79",
+   "type": "math",
+   "x": 2000.0,
+   "y": 1522.0,
+   "inputs": {
+    "b": 3.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "80",
+   "type": "clamp",
+   "x": 2250.0,
+   "y": 1799.0,
+   "inputs": {
+    "min": 0.0,
+    "max": 1.0
+   }
+  },
+  {
+   "id": "81",
+   "type": "math",
+   "x": 4250.0,
+   "y": 1881.1,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "82",
+   "type": "mix",
+   "x": 4500.0,
+   "y": 1881.1,
+   "inputs": {
+    "a": [
+     0.02,
+     0.0,
+     0.06
+    ],
+    "b": [
+     0.95,
+     0.2,
+     0.85
+    ]
+   }
+  },
+  {
+   "id": "83",
+   "type": "vec3",
+   "x": 0.0,
+   "y": 1392.0,
+   "params": {
+    "value": [
+     0.36,
+     0.06,
+     0.3
+    ]
+   }
+  },
+  {
+   "id": "84",
+   "type": "math",
+   "x": 2000.0,
+   "y": 1758.0,
+   "inputs": {
+    "b": -12.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "85",
+   "type": "func",
+   "x": 2250.0,
+   "y": 2035.0,
+   "params": {
+    "op": "exp"
+   }
+  },
+  {
+   "id": "86",
+   "type": "math",
+   "x": 2500.0,
+   "y": 2459.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "87",
+   "type": "math",
+   "x": 4750.0,
+   "y": 2170.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "88",
+   "type": "compare",
+   "x": 1500.0,
+   "y": 1050.0,
+   "params": {
+    "op": "<"
+   }
+  },
+  {
+   "id": "89",
+   "type": "select",
+   "x": 5000.0,
+   "y": 1466.8
+  },
+  {
+   "id": "90",
+   "type": "rgba",
+   "x": 5250.0,
+   "y": 1466.8,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "91",
+   "type": "output",
+   "x": 5500.0,
+   "y": 1466.8
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "position",
+   "to": "6",
+   "in": "vector"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "10",
+   "in": "value"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "11",
+   "in": "b"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "12",
+   "in": "a"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "13",
+   "in": "t"
+  },
+  {
+   "from": "2",
+   "out": "px",
+   "to": "14",
+   "in": "a"
+  },
+  {
+   "from": "14",
+   "out": "result",
+   "to": "15",
+   "in": "x"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "p"
+  },
+  {
+   "from": "16",
+   "out": "value",
+   "to": "17",
+   "in": "b"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "18",
+   "in": "b"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "19",
+   "in": "b"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "20",
+   "in": "a"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "20",
+   "in": "b"
+  },
+  {
+   "from": "3",
+   "out": "position",
+   "to": "21",
+   "in": "vector"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "a"
+  },
+  {
+   "from": "22",
+   "out": "result",
+   "to": "23",
+   "in": "a"
+  },
+  {
+   "from": "23",
+   "out": "result",
+   "to": "24",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "25",
+   "in": "a"
+  },
+  {
+   "from": "24",
+   "out": "result",
+   "to": "26",
+   "in": "x"
+  },
+  {
+   "from": "25",
+   "out": "result",
+   "to": "26",
+   "in": "y"
+  },
+  {
+   "from": "1",
+   "out": "uv",
+   "to": "27",
+   "in": "a"
+  },
+  {
+   "from": "26",
+   "out": "vector",
+   "to": "27",
+   "in": "b"
+  },
+  {
+   "from": "4",
+   "out": "aspect",
+   "to": "28",
+   "in": "x"
+  },
+  {
+   "from": "27",
+   "out": "result",
+   "to": "29",
+   "in": "a"
+  },
+  {
+   "from": "28",
+   "out": "vector",
+   "to": "29",
+   "in": "b"
+  },
+  {
+   "from": "29",
+   "out": "result",
+   "to": "30",
+   "in": "vector"
+  },
+  {
+   "from": "5",
+   "out": "time",
+   "to": "31",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "32",
+   "in": "a"
+  },
+  {
+   "from": "31",
+   "out": "result",
+   "to": "32",
+   "in": "b"
+  },
+  {
+   "from": "32",
+   "out": "result",
+   "to": "33",
+   "in": "a"
+  },
+  {
+   "from": "33",
+   "out": "result",
+   "to": "34",
+   "in": "x"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "35",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "35",
+   "in": "b"
+  },
+  {
+   "from": "35",
+   "out": "result",
+   "to": "36",
+   "in": "a"
+  },
+  {
+   "from": "36",
+   "out": "result",
+   "to": "37",
+   "in": "b"
+  },
+  {
+   "from": "37",
+   "out": "result",
+   "to": "38",
+   "in": "a"
+  },
+  {
+   "from": "34",
+   "out": "result",
+   "to": "39",
+   "in": "a"
+  },
+  {
+   "from": "38",
+   "out": "result",
+   "to": "39",
+   "in": "b"
+  },
+  {
+   "from": "39",
+   "out": "result",
+   "to": "40",
+   "in": "a"
+  },
+  {
+   "from": "40",
+   "out": "result",
+   "to": "41",
+   "in": "b"
+  },
+  {
+   "from": "30",
+   "out": "length",
+   "to": "42",
+   "in": "x"
+  },
+  {
+   "from": "42",
+   "out": "result",
+   "to": "43",
+   "in": "a"
+  },
+  {
+   "from": "41",
+   "out": "result",
+   "to": "43",
+   "in": "b"
+  },
+  {
+   "from": "26",
+   "out": "vector",
+   "to": "44",
+   "in": "vector"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "45",
+   "in": "a"
+  },
+  {
+   "from": "44",
+   "out": "result",
+   "to": "45",
+   "in": "b"
+  },
+  {
+   "from": "45",
+   "out": "result",
+   "to": "46",
+   "in": "a"
+  },
+  {
+   "from": "46",
+   "out": "result",
+   "to": "47",
+   "in": "a"
+  },
+  {
+   "from": "47",
+   "out": "result",
+   "to": "48",
+   "in": "x"
+  },
+  {
+   "from": "48",
+   "out": "result",
+   "to": "49",
+   "in": "t"
+  },
+  {
+   "from": "20",
+   "out": "result",
+   "to": "50",
+   "in": "a"
+  },
+  {
+   "from": "49",
+   "out": "result",
+   "to": "50",
+   "in": "b"
+  },
+  {
+   "from": "43",
+   "out": "result",
+   "to": "50",
+   "in": "t"
+  },
+  {
+   "from": "30",
+   "out": "length",
+   "to": "52",
+   "in": "a"
+  },
+  {
+   "from": "52",
+   "out": "result",
+   "to": "53",
+   "in": "x"
+  },
+  {
+   "from": "51",
+   "out": "value",
+   "to": "54",
+   "in": "a"
+  },
+  {
+   "from": "53",
+   "out": "result",
+   "to": "54",
+   "in": "b"
+  },
+  {
+   "from": "50",
+   "out": "result",
+   "to": "55",
+   "in": "a"
+  },
+  {
+   "from": "54",
+   "out": "result",
+   "to": "55",
+   "in": "b"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "56",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "56",
+   "in": "b"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "57",
+   "in": "b"
+  },
+  {
+   "from": "56",
+   "out": "result",
+   "to": "58",
+   "in": "a"
+  },
+  {
+   "from": "57",
+   "out": "result",
+   "to": "58",
+   "in": "b"
+  },
+  {
+   "from": "58",
+   "out": "result",
+   "to": "59",
+   "in": "a"
+  },
+  {
+   "from": "59",
+   "out": "result",
+   "to": "60",
+   "in": "b"
+  },
+  {
+   "from": "1",
+   "out": "x",
+   "to": "61",
+   "in": "a"
+  },
+  {
+   "from": "61",
+   "out": "result",
+   "to": "62",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "aspect",
+   "to": "62",
+   "in": "b"
+  },
+  {
+   "from": "62",
+   "out": "result",
+   "to": "63",
+   "in": "a"
+  },
+  {
+   "from": "60",
+   "out": "result",
+   "to": "63",
+   "in": "b"
+  },
+  {
+   "from": "60",
+   "out": "result",
+   "to": "64",
+   "in": "a"
+  },
+  {
+   "from": "5",
+   "out": "time",
+   "to": "65",
+   "in": "a"
+  },
+  {
+   "from": "64",
+   "out": "result",
+   "to": "66",
+   "in": "a"
+  },
+  {
+   "from": "65",
+   "out": "result",
+   "to": "66",
+   "in": "b"
+  },
+  {
+   "from": "66",
+   "out": "result",
+   "to": "67",
+   "in": "x"
+  },
+  {
+   "from": "63",
+   "out": "result",
+   "to": "68",
+   "in": "a"
+  },
+  {
+   "from": "68",
+   "out": "result",
+   "to": "69",
+   "in": "x"
+  },
+  {
+   "from": "60",
+   "out": "result",
+   "to": "70",
+   "in": "a"
+  },
+  {
+   "from": "67",
+   "out": "result",
+   "to": "71",
+   "in": "b"
+  },
+  {
+   "from": "67",
+   "out": "result",
+   "to": "72",
+   "in": "a"
+  },
+  {
+   "from": "71",
+   "out": "result",
+   "to": "72",
+   "in": "b"
+  },
+  {
+   "from": "70",
+   "out": "result",
+   "to": "73",
+   "in": "edge0"
+  },
+  {
+   "from": "72",
+   "out": "result",
+   "to": "73",
+   "in": "x"
+  },
+  {
+   "from": "60",
+   "out": "result",
+   "to": "74",
+   "in": "a"
+  },
+  {
+   "from": "69",
+   "out": "result",
+   "to": "75",
+   "in": "b"
+  },
+  {
+   "from": "69",
+   "out": "result",
+   "to": "76",
+   "in": "a"
+  },
+  {
+   "from": "75",
+   "out": "result",
+   "to": "76",
+   "in": "b"
+  },
+  {
+   "from": "74",
+   "out": "result",
+   "to": "77",
+   "in": "edge0"
+  },
+  {
+   "from": "76",
+   "out": "result",
+   "to": "77",
+   "in": "x"
+  },
+  {
+   "from": "73",
+   "out": "result",
+   "to": "78",
+   "in": "a"
+  },
+  {
+   "from": "77",
+   "out": "result",
+   "to": "78",
+   "in": "b"
+  },
+  {
+   "from": "58",
+   "out": "result",
+   "to": "79",
+   "in": "a"
+  },
+  {
+   "from": "79",
+   "out": "result",
+   "to": "80",
+   "in": "x"
+  },
+  {
+   "from": "78",
+   "out": "result",
+   "to": "81",
+   "in": "a"
+  },
+  {
+   "from": "80",
+   "out": "result",
+   "to": "81",
+   "in": "b"
+  },
+  {
+   "from": "81",
+   "out": "result",
+   "to": "82",
+   "in": "t"
+  },
+  {
+   "from": "58",
+   "out": "result",
+   "to": "84",
+   "in": "a"
+  },
+  {
+   "from": "84",
+   "out": "result",
+   "to": "85",
+   "in": "x"
+  },
+  {
+   "from": "83",
+   "out": "value",
+   "to": "86",
+   "in": "a"
+  },
+  {
+   "from": "85",
+   "out": "result",
+   "to": "86",
+   "in": "b"
+  },
+  {
+   "from": "82",
+   "out": "result",
+   "to": "87",
+   "in": "a"
+  },
+  {
+   "from": "86",
+   "out": "result",
+   "to": "87",
+   "in": "b"
+  },
+  {
+   "from": "1",
+   "out": "y",
+   "to": "88",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "88",
+   "in": "b"
+  },
+  {
+   "from": "88",
+   "out": "result",
+   "to": "89",
+   "in": "condition"
+  },
+  {
+   "from": "55",
+   "out": "result",
+   "to": "89",
+   "in": "a"
+  },
+  {
+   "from": "87",
+   "out": "result",
+   "to": "89",
+   "in": "b"
+  },
+  {
+   "from": "89",
+   "out": "result",
+   "to": "90",
+   "in": "rgb"
+  },
+  {
+   "from": "90",
+   "out": "color",
+   "to": "91",
+   "in": "color"
+  }
+ ]
+}

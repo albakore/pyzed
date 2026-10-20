@@ -231,7 +231,8 @@ def test_server_registers_everything(tmp_path):
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
                 "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
-                "screenshot", "read_docs", "list_examples"} | project_tools <= tools
+                "screenshot", "read_docs", "list_examples", "list_shader_nodes", "check_shader",
+                "new_shader"} | project_tools <= tools
         resources = {str(r.uri) for r in await server.list_resources()}
         assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components"} <= resources
         assert {p.name for p in await server.list_prompts()} == {"create_component", "create_app", "create_form",

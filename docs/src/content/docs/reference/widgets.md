@@ -983,6 +983,7 @@ shader(
     code,
     *,
     uniforms=None,
+    textures=None,
     width=None,
     height=None,
     animate=True,
@@ -991,12 +992,13 @@ shader(
 )
 ```
 
-A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{"speed": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.
+A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{"speed": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.
 
 | Parameter | Description |
 | --- | --- |
-| `code` | WGSL source that defines `shade` (and any helper functions). |
-| `uniforms` | Up to 8 named values: a number, 2 to 4 numbers or a color. |
+| `code` | WGSL source that defines `shade` (and any helper functions), or a `.pzshad` path, `Graph` or `Shader`. |
+| `uniforms` | Up to 32 named values: a number, 2 to 4 numbers or a color. With a `.pzshad`, the shader's mutable variables by name. |
+| `textures` | Up to 8 images, `{name: path}`: each becomes `name(uv)`, the image's color at `uv`. |
 | `width` | Width (`"fill"` by default). |
 | `height` | Height (`"fill"` by default). |
 | `animate` | Redraw every frame so `time` moves (`True`). |
@@ -1159,6 +1161,7 @@ mouse_area(
     on_move=None,
     on_scroll=None,
     on_middle_press=None,
+    on_middle_release=None,
     cursor=None,
 )
 ```
@@ -1177,6 +1180,7 @@ Detects mouse events over its content.
 | `on_move` | Called with `(x, y)` when the mouse moves. |
 | `on_scroll` | Callable that receives `(dx, dy)` in lines when the wheel is used. |
 | `on_middle_press` | Middle-button click. |
+| `on_middle_release` | Middle button released (pan gestures, for example). |
 | `cursor` | `"pointer"`, `"text"`, `"grab"`, `"grabbing"`, `"crosshair"`, `"not-allowed"`, `"resize-horizontal"`, `"resize-vertical"`, `"move"` or `"default"`. |
 
 ### `hover`

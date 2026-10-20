@@ -1,0 +1,706 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "nebula",
+ "description": "Domain-warped noise clouds and twinkling stars: a space backdrop.",
+ "preview": {
+  "width": 640,
+  "height": 400,
+  "fallback": "#2a0c46",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "drift",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 5,
+   "description": "How fast the clouds drift"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "drift"
+   }
+  },
+  {
+   "id": "2",
+   "type": "pixel",
+   "x": 0.0,
+   "y": 212.0
+  },
+  {
+   "id": "3",
+   "type": "time",
+   "x": 0.0,
+   "y": 448.0
+  },
+  {
+   "id": "4",
+   "type": "math",
+   "x": 250.0,
+   "y": 684.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "5",
+   "type": "math",
+   "x": 250.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 220.0
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 500.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 0.02
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "7",
+   "type": "compose",
+   "x": 750.0,
+   "y": 684.0,
+   "inputs": {
+    "y": 0.0
+   },
+   "params": {
+    "type": "vec2"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 1000.0,
+   "y": 448.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 1250.0,
+   "y": 448.0,
+   "inputs": {
+    "b": 1.7
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 500.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 0.03
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 1500.0,
+   "y": 684.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "12",
+   "type": "fbm",
+   "x": 1750.0,
+   "y": 684.0,
+   "inputs": {
+    "scale": 1.0,
+    "octaves": 5
+   },
+   "params": {
+    "kind": "value"
+   }
+  },
+  {
+   "id": "13",
+   "type": "math",
+   "x": 2000.0,
+   "y": 566.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "14",
+   "type": "fbm",
+   "x": 2250.0,
+   "y": 566.0,
+   "inputs": {
+    "scale": 1.0,
+    "octaves": 5
+   },
+   "params": {
+    "kind": "value"
+   }
+  },
+  {
+   "id": "15",
+   "type": "smoothstep",
+   "x": 2500.0,
+   "y": 566.0,
+   "inputs": {
+    "edge0": 0.35,
+    "edge1": 0.8
+   }
+  },
+  {
+   "id": "16",
+   "type": "mix",
+   "x": 2750.0,
+   "y": 566.0,
+   "inputs": {
+    "a": [
+     0.02,
+     0.02,
+     0.06
+    ],
+    "b": [
+     0.2,
+     0.06,
+     0.32
+    ]
+   }
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 1250.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 2.3
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "18",
+   "type": "math",
+   "x": 500.0,
+   "y": 1156.0,
+   "inputs": {
+    "b": 0.02
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 1500.0,
+   "y": 920.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "20",
+   "type": "fbm",
+   "x": 1750.0,
+   "y": 992.0,
+   "inputs": {
+    "scale": 1.0,
+    "octaves": 5
+   },
+   "params": {
+    "kind": "value"
+   }
+  },
+  {
+   "id": "21",
+   "type": "smoothstep",
+   "x": 2000.0,
+   "y": 992.0,
+   "inputs": {
+    "edge0": 0.55,
+    "edge1": 0.95
+   }
+  },
+  {
+   "id": "22",
+   "type": "vec3",
+   "x": 0.0,
+   "y": 684.0,
+   "params": {
+    "value": [
+     0.05,
+     0.25,
+     0.35
+    ]
+   }
+  },
+  {
+   "id": "23",
+   "type": "math",
+   "x": 2250.0,
+   "y": 874.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "24",
+   "type": "math",
+   "x": 3000.0,
+   "y": 720.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "25",
+   "type": "math",
+   "x": 250.0,
+   "y": 448.0,
+   "inputs": {
+    "b": 3.0
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "26",
+   "type": "func",
+   "x": 500.0,
+   "y": 448.0,
+   "params": {
+    "op": "floor"
+   }
+  },
+  {
+   "id": "27",
+   "type": "white_noise",
+   "x": 750.0,
+   "y": 448.0
+  },
+  {
+   "id": "28",
+   "type": "time",
+   "x": 0.0,
+   "y": 896.0
+  },
+  {
+   "id": "29",
+   "type": "math",
+   "x": 250.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 3.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "30",
+   "type": "swizzle",
+   "x": 1000.0,
+   "y": 684.0,
+   "params": {
+    "mask": "x"
+   }
+  },
+  {
+   "id": "31",
+   "type": "math",
+   "x": 1250.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 40.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "32",
+   "type": "math",
+   "x": 1500.0,
+   "y": 1156.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "33",
+   "type": "func",
+   "x": 1750.0,
+   "y": 1300.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "34",
+   "type": "math",
+   "x": 2000.0,
+   "y": 1300.0,
+   "inputs": {
+    "b": 0.4
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "35",
+   "type": "math",
+   "x": 2250.0,
+   "y": 1300.0,
+   "inputs": {
+    "b": 0.6
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "36",
+   "type": "math",
+   "x": 1000.0,
+   "y": 896.0,
+   "inputs": {
+    "a": 0.997
+   },
+   "params": {
+    "op": "step"
+   }
+  },
+  {
+   "id": "37",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1098.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "38",
+   "type": "math",
+   "x": 3250.0,
+   "y": 909.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "39",
+   "type": "rgba",
+   "x": 3500.0,
+   "y": 909.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "40",
+   "type": "output",
+   "x": 3750.0,
+   "y": 909.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "time",
+   "to": "4",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "4",
+   "in": "b"
+  },
+  {
+   "from": "2",
+   "out": "px",
+   "to": "5",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "x"
+  },
+  {
+   "from": "5",
+   "out": "result",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "vector",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "11",
+   "in": "b"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "12",
+   "in": "p"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "13",
+   "in": "a"
+  },
+  {
+   "from": "12",
+   "out": "value",
+   "to": "13",
+   "in": "b"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "p"
+  },
+  {
+   "from": "14",
+   "out": "value",
+   "to": "15",
+   "in": "x"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "t"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "17",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "18",
+   "in": "a"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "19",
+   "in": "b"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "20",
+   "in": "p"
+  },
+  {
+   "from": "20",
+   "out": "value",
+   "to": "21",
+   "in": "x"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "23",
+   "in": "a"
+  },
+  {
+   "from": "22",
+   "out": "value",
+   "to": "23",
+   "in": "b"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "24",
+   "in": "a"
+  },
+  {
+   "from": "23",
+   "out": "result",
+   "to": "24",
+   "in": "b"
+  },
+  {
+   "from": "2",
+   "out": "px",
+   "to": "25",
+   "in": "a"
+  },
+  {
+   "from": "25",
+   "out": "result",
+   "to": "26",
+   "in": "x"
+  },
+  {
+   "from": "26",
+   "out": "result",
+   "to": "27",
+   "in": "p"
+  },
+  {
+   "from": "28",
+   "out": "time",
+   "to": "29",
+   "in": "a"
+  },
+  {
+   "from": "27",
+   "out": "random2",
+   "to": "30",
+   "in": "vector"
+  },
+  {
+   "from": "30",
+   "out": "result",
+   "to": "31",
+   "in": "a"
+  },
+  {
+   "from": "29",
+   "out": "result",
+   "to": "32",
+   "in": "a"
+  },
+  {
+   "from": "31",
+   "out": "result",
+   "to": "32",
+   "in": "b"
+  },
+  {
+   "from": "32",
+   "out": "result",
+   "to": "33",
+   "in": "x"
+  },
+  {
+   "from": "33",
+   "out": "result",
+   "to": "34",
+   "in": "a"
+  },
+  {
+   "from": "34",
+   "out": "result",
+   "to": "35",
+   "in": "a"
+  },
+  {
+   "from": "27",
+   "out": "value",
+   "to": "36",
+   "in": "b"
+  },
+  {
+   "from": "36",
+   "out": "result",
+   "to": "37",
+   "in": "a"
+  },
+  {
+   "from": "35",
+   "out": "result",
+   "to": "37",
+   "in": "b"
+  },
+  {
+   "from": "24",
+   "out": "result",
+   "to": "38",
+   "in": "a"
+  },
+  {
+   "from": "37",
+   "out": "result",
+   "to": "38",
+   "in": "b"
+  },
+  {
+   "from": "38",
+   "out": "result",
+   "to": "39",
+   "in": "rgb"
+  },
+  {
+   "from": "39",
+   "out": "color",
+   "to": "40",
+   "in": "color"
+  }
+ ]
+}

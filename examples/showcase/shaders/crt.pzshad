@@ -1,0 +1,475 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "crt",
+ "description": "Color bars on a curved CRT, with scanlines and a rolling band.",
+ "preview": {
+  "width": 340,
+  "height": 210,
+  "fallback": "#ef4444",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "speed",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 3,
+   "description": "How fast the bright band rolls"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "speed"
+   }
+  },
+  {
+   "id": "2",
+   "type": "barrel",
+   "x": 0.0,
+   "y": 212.0,
+   "inputs": {
+    "amount": 0.25
+   }
+  },
+  {
+   "id": "3",
+   "type": "swizzle",
+   "x": 250.0,
+   "y": 212.0,
+   "params": {
+    "mask": "x"
+   }
+  },
+  {
+   "id": "4",
+   "type": "math",
+   "x": 500.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 8.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "5",
+   "type": "func",
+   "x": 750.0,
+   "y": 212.0,
+   "params": {
+    "op": "floor"
+   }
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 1000.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 0.127
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "7",
+   "type": "palette",
+   "x": 1250.0,
+   "y": 212.0,
+   "inputs": {
+    "d": [
+     0.0,
+     0.318,
+     0.637
+    ]
+   }
+  },
+  {
+   "id": "8",
+   "type": "swizzle",
+   "x": 250.0,
+   "y": 424.0,
+   "params": {
+    "mask": "y"
+   }
+  },
+  {
+   "id": "9",
+   "type": "time",
+   "x": 0.0,
+   "y": 424.0
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 250.0,
+   "y": 636.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 500.0,
+   "y": 636.0,
+   "inputs": {
+    "b": 0.15
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "12",
+   "type": "math",
+   "x": 750.0,
+   "y": 530.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "13",
+   "type": "func",
+   "x": 1000.0,
+   "y": 530.0,
+   "params": {
+    "op": "fract"
+   }
+  },
+  {
+   "id": "14",
+   "type": "smoothstep",
+   "x": 1250.0,
+   "y": 530.0,
+   "inputs": {
+    "edge0": 0.0,
+    "edge1": 0.08
+   }
+  },
+  {
+   "id": "15",
+   "type": "math",
+   "x": 1500.0,
+   "y": 530.0,
+   "inputs": {
+    "b": 0.25
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "16",
+   "type": "math",
+   "x": 1750.0,
+   "y": 530.0,
+   "inputs": {
+    "b": 0.75
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 2000.0,
+   "y": 371.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "18",
+   "type": "scanlines",
+   "x": 0.0,
+   "y": 660.0,
+   "inputs": {
+    "spacing": 2.0,
+    "strength": 0.2
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 2250.0,
+   "y": 515.5,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "20",
+   "type": "uv",
+   "x": 0.0,
+   "y": 920.0
+  },
+  {
+   "id": "21",
+   "type": "math",
+   "x": 250.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "22",
+   "type": "dot",
+   "x": 500.0,
+   "y": 920.0
+  },
+  {
+   "id": "23",
+   "type": "math",
+   "x": 750.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 1.6
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "24",
+   "type": "math",
+   "x": 1000.0,
+   "y": 920.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "25",
+   "type": "math",
+   "x": 2500.0,
+   "y": 717.8,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "26",
+   "type": "math",
+   "x": 2750.0,
+   "y": 464.9,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "27",
+   "type": "rgba",
+   "x": 3000.0,
+   "y": 464.9,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "28",
+   "type": "output",
+   "x": 3250.0,
+   "y": 464.9
+  }
+ ],
+ "links": [
+  {
+   "from": "2",
+   "out": "uv",
+   "to": "3",
+   "in": "vector"
+  },
+  {
+   "from": "3",
+   "out": "result",
+   "to": "4",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "5",
+   "in": "x"
+  },
+  {
+   "from": "5",
+   "out": "result",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "t"
+  },
+  {
+   "from": "2",
+   "out": "uv",
+   "to": "8",
+   "in": "vector"
+  },
+  {
+   "from": "9",
+   "out": "time",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "10",
+   "in": "b"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "12",
+   "in": "a"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "12",
+   "in": "b"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "13",
+   "in": "x"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "x"
+  },
+  {
+   "from": "14",
+   "out": "result",
+   "to": "15",
+   "in": "a"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "rgb",
+   "to": "17",
+   "in": "a"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "17",
+   "in": "b"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "value",
+   "to": "19",
+   "in": "b"
+  },
+  {
+   "from": "20",
+   "out": "uv",
+   "to": "21",
+   "in": "a"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "a"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "b"
+  },
+  {
+   "from": "22",
+   "out": "result",
+   "to": "23",
+   "in": "a"
+  },
+  {
+   "from": "23",
+   "out": "result",
+   "to": "24",
+   "in": "b"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "25",
+   "in": "a"
+  },
+  {
+   "from": "24",
+   "out": "result",
+   "to": "25",
+   "in": "b"
+  },
+  {
+   "from": "25",
+   "out": "result",
+   "to": "26",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "inside",
+   "to": "26",
+   "in": "b"
+  },
+  {
+   "from": "26",
+   "out": "result",
+   "to": "27",
+   "in": "rgb"
+  },
+  {
+   "from": "27",
+   "out": "color",
+   "to": "28",
+   "in": "color"
+  }
+ ]
+}

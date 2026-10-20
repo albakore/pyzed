@@ -4,35 +4,18 @@
 
 - Rarity is light: rare items ``glow``, epic and legendary ones ``bloom`` (and legendary
   ones pulse with ``animate("glow_pulse")``).
-- The details panel is ``glass`` over a ``pz.shader`` ember backdrop; stat bars and the
-  selected slot animate with ``transition``.
+- The details panel is ``glass`` over an ember backdrop, a shader graph made of nodes in
+  Pyzed Design (``shaders/embers.pzshad``); stat bars and the selected slot animate with
+  ``transition``.
 - Click an item to inspect it.
 """
 
+from pathlib import Path
+
 import pyzed as pz
 
-EMBERS = """
-fn hash(p: vec2<f32>) -> f32 {
-    return fract(sin(dot(p, vec2<f32>(41.3, 289.1))) * 15731.743);
-}
+SHADER = Path(__file__).parent / "shaders" / "embers.pzshad"
 
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    var color = mix(vec3<f32>(0.06, 0.03, 0.03), vec3<f32>(0.16, 0.05, 0.02), uv.y);
-    color = color + vec3<f32>(0.35, 0.10, 0.02) * exp(-length((uv - vec2<f32>(0.3, 1.1)) * vec2<f32>(1.2, 2.0)) * 2.5);
-    // Sparks drifting up in columns.
-    for (var i = 0; i < 3; i = i + 1) {
-        let scale = 40.0 + f32(i) * 23.0;
-        let p = vec2<f32>(px.x, px.y + time * (30.0 + f32(i) * 18.0)) / scale;
-        let cell = floor(p);
-        let r = hash(cell + f32(i) * 7.0);
-        let center = vec2<f32>(0.2 + 0.6 * hash(cell * 1.7), 0.2 + 0.6 * r);
-        let d = length(fract(p) - center);
-        let spark = smoothstep(0.08, 0.0, d) * step(0.82, r);
-        color = color + vec3<f32>(1.0, 0.55, 0.15) * spark * (1.0 - uv.y * 0.6);
-    }
-    return vec4<f32>(color, 1.0);
-}
-"""
 
 RARITY = {
     "common": ("#9ca3af", None),
@@ -142,7 +125,7 @@ class Inventory(pz.App):
     def view(self):
         body = pz.row([self.grid(), self.details()], spacing=24, align="start")
         return pz.stack([
-            pz.shader(EMBERS, fallback=pz.Gradient(["#0f0707", "#2a0e05"], angle=180)),
+            pz.shader(SHADER, width="fill", height="fill", fallback=pz.Gradient(["#0f0707", "#2a0e05"], angle=180)),
             pz.container(body, width="fill", height="fill", align_x="center", align_y="center"),
         ])
 

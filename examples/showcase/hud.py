@@ -2,68 +2,21 @@
 
     python examples/showcase/hud.py
 
-- The space background and the minimap's radar sweep are ``pz.shader`` widgets: WGSL
-  functions the GPU runs for every pixel, every frame.
+- The space background and the minimap's radar sweep are shader graphs made of nodes in
+  Pyzed Design (``shaders/nebula.pzshad`` and ``shaders/radar.pzshad``): ``pz.shader`` runs
+  them on the GPU for every pixel, every frame.
 - Panels are ``glass=True`` (a tinted panel with a real backdrop blur), the ready ability
   and the level-up banner use ``bloom``, low health pulses with ``animate("glow_pulse")``.
 - Press 1 to 6 (or click a slot) to cast an ability; it goes on cooldown.
 """
 
+from pathlib import Path
+
 import pyzed as pz
 
-NEBULA = """
-fn hash(p: vec2<f32>) -> f32 {
-    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453);
-}
+SHADERS = Path(__file__).parent / "shaders"
 
-fn noise(p: vec2<f32>) -> f32 {
-    let i = floor(p);
-    let f = fract(p);
-    let u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2<f32>(1.0, 0.0)), u.x),
-               mix(hash(i + vec2<f32>(0.0, 1.0)), hash(i + vec2<f32>(1.0, 1.0)), u.x), u.y);
-}
 
-fn fbm(p: vec2<f32>) -> f32 {
-    var v = 0.0;
-    var a = 0.5;
-    var q = p;
-    for (var i = 0; i < 5; i = i + 1) {
-        v = v + a * noise(q);
-        q = q * 2.03 + vec2<f32>(1.7, 9.2);
-        a = a * 0.5;
-    }
-    return v;
-}
-
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    let p = px / 220.0 + vec2<f32>(time * 0.02, 0.0);
-    let n = fbm(p + fbm(p * 1.7 + time * 0.03));
-    var color = mix(vec3<f32>(0.02, 0.02, 0.06), vec3<f32>(0.20, 0.06, 0.32), smoothstep(0.35, 0.8, n));
-    color = color + vec3<f32>(0.05, 0.25, 0.35) * smoothstep(0.55, 0.95, fbm(p * 2.3 - time * 0.02));
-    let cell = floor(px / 3.0);
-    let star = step(0.997, hash(cell)) * (0.6 + 0.4 * sin(time * 3.0 + hash(cell * 1.3) * 40.0));
-    return vec4<f32>(color + vec3<f32>(star), 1.0);
-}
-"""
-
-RADAR = """
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    let d = uv - vec2<f32>(0.5);
-    let r = length(d) * 2.0;
-    if (r > 1.0) {
-        return vec4<f32>(0.0);
-    }
-    let angle = atan2(d.y, d.x);
-    let sweep = fract((angle / 6.2831853) - time * 0.35);
-    let trail = pow(1.0 - sweep, 6.0) * 0.55;
-    let rings = smoothstep(0.03, 0.0, abs(fract(r * 3.0) - 0.5) - 0.47) * 0.25;
-    let cross = (smoothstep(0.006, 0.0, abs(d.x)) + smoothstep(0.006, 0.0, abs(d.y))) * 0.2;
-    let green = accent().rgb;
-    let a = trail + rings + cross;
-    return vec4<f32>(green * a + vec3<f32>(0.0, 0.02, 0.03), 0.35 + a);
-}
-"""
 
 ABILITIES = (
     ("sword", "Slash", 2.0),
@@ -142,7 +95,7 @@ class Hud(pz.App):
             glass={"tint": "#0f172a", "strength": 0.35, "blur": 18}, radius=16, padding=14)
 
     def minimap(self):
-        radar = pz.shader(RADAR, uniforms={"accent": "#34d399"}, width=176, height=176)
+        radar = pz.shader(SHADERS / "radar.pzshad", uniforms={"accent": "#34d399"}, width=176, height=176)
         blips = pz.stack([
             pz.container(pz.container(None, width=8, height=8).style(background="#f87171", radius=4,
                                                                      bloom=("#f87171", 1.0)),
@@ -234,7 +187,7 @@ class Hud(pz.App):
             return pz.container(widget, width="fill", height="fill", align_x=x, align_y=y, padding=pad)
 
         return pz.stack([
-            pz.shader(NEBULA, fallback=pz.Gradient(["#05040f", "#2a0c46", "#0b3a4a"], angle=135)),
+            pz.shader(SHADERS / "nebula.pzshad", width="fill", height="fill", fallback=pz.Gradient(["#05040f", "#2a0c46", "#0b3a4a"], angle=135)),
             at(self.player(), "start", "start", 20),
             at(self.objective(), "center", "start", 24),
             at(self.minimap(), "end", "start", 20),

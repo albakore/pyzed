@@ -708,6 +708,10 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
         from .scene_panel import run_file
 
         return run_file(path)
+    if Path(path).suffix == ".pzshad":  # a shader graph filling a window
+        from ..shading.runtime import run_file as run_shader
+
+        return run_shader(path)
     _run_app(open_form(path), reload=reload)
     if os.environ.get("PYZED_DESIGNER_RUN"):
         # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still

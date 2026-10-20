@@ -774,6 +774,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             on_move,
             on_scroll,
             on_middle_press,
+            on_middle_release,
             cursor,
         } => {
             let mut m = mouse_area(build(py, child, ctx));
@@ -791,6 +792,9 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
             }
             if let Some(msg) = on_middle_press.clone() {
                 m = m.on_middle_press(Message::Py(msg));
+            }
+            if let Some(msg) = on_middle_release.clone() {
+                m = m.on_middle_release(Message::Py(msg));
             }
             if let Some(msg) = on_press.clone() {
                 m = m.on_press(Message::Py(msg));

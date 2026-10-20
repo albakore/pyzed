@@ -152,6 +152,7 @@ KINDS = (
     ("form", "Form", "app-window", "A window of your app, with its own handlers."),
     ("component", "Component", "component",
      "A reusable piece, not a window: you place it in forms and in other components."),
+    ("shader", "Shader", "blend", "Nodes wired into a GPU shader, for backgrounds, effects and games."),
 )
 
 
@@ -173,9 +174,11 @@ def new_form(d: "Designer", t: Theme) -> Any:
     component = s.get("kind") == "component"
     kinds = _core.grid([_choice_card(tr(label), tr(text), s.get("kind", "form") == key,
                                      lambda k=key: d.set_new("kind", k), t, icon=icon)
-                        for key, label, icon, text in KINDS], columns="1fr 1fr", spacing=8)
+                        for key, label, icon, text in KINDS], columns="1fr 1fr 1fr", spacing=8)
     if component:
         return _new_component(d, t, kinds)
+    if s.get("kind") == "shader":
+        return _new_shader(d, t, kinds)
     cards = [_choice_card(tr(template.label), tr(template.description), template.name == s["template"],
                           lambda name=template.name: d.set_new("template", name), t)
              for template in _new.templates()]
@@ -236,6 +239,36 @@ def _new_component(d: "Designer", t: Theme, kinds: Any) -> Any:
         ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
         ui.button(tr("Create component"), d.create_new_component, variant="solid", icon="component",
                   disabled=exists, theme=t),
+    ])
+
+
+def _new_shader(d: "Designer", t: Theme, kinds: Any) -> Any:
+    from . import shader_doc
+
+    s = d.new_state
+    folder = Path(s["folder"] or ".")
+    name = s["name"] or "shader1"
+    path = folder / f"{name}{shader_doc.SUFFIX}"
+    exists = path.exists()
+    template = s.get("template") or "blank"
+    cards = [_choice_card(tr(title), tr(text), key == template, lambda k=key: d.set_new("template", k), t)
+             for key, title, text in shader_doc.templates()]
+    body = _core.column([
+        kinds,
+        ui.field(tr("Name"), ui.input(name, lambda v: d.set_new("name", v), mono=True, width=240,
+                                  on_submit=d.create_new_shader, id="new-form-name", theme=t),
+                 description=tr("The file name, and how code loads it"), theme=t),
+        ui.field(tr("Folder"), ui.input(s["folder"], lambda v: d.set_new("folder", v), mono=True, width=240, theme=t),
+                 description=tr("Creates {path}", path=path), theme=t),
+        ui.label(tr("Template"), size="sm", weight="medium", theme=t),
+        _core.grid(cards, columns="1fr 1fr", spacing=8),
+        ui.callout(tr("{name} already exists", name=path.name), tr("Pick another name or folder."), tint="warning", theme=t)
+        if exists else None,
+    ], spacing=10)
+    return ui.modal(body, title=tr("New shader"), on_close=d.close_dialog, width=560, theme=t, footer=[
+        _core.space(width="fill"),
+        ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+        ui.button(tr("Create shader"), d.create_new_shader, variant="solid", icon="blend", disabled=exists, theme=t),
     ])
 
 

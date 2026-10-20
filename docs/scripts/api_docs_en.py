@@ -957,6 +957,7 @@ COMMON.update({
     "on_scroll": "Called on scroll.",
     "on_move": "Called with `(x, y)` when the mouse moves.",
     "on_middle_press": "Middle-button click.",
+    "on_middle_release": "Middle button released (pan gestures, for example).",
     "on_release": "Called on release.",
     "vertical": "Vertical orientation.",
     "content_fit": '`"contain"`, `"cover"`, `"fill"`, `"none"` or `"scale-down"`.',
@@ -1311,10 +1312,11 @@ _section("widgets", "Images and content", {
         "params": {"data": "The text or URL to encode.", "cell_size": "Size of each module in pixels."},
     },
     "pyzed.shader": {
-        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color. Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
+        "desc": "A widget painted on the GPU by your WGSL `fn shade(uv, px, size, time) -> vec4<f32>`, which returns each pixel's color, or by a shader graph made of nodes (a `.pzshad` path or a [`pyzed.shading`](/pyzed/reference/shading/) `Graph` or `Shader`). Each entry of `uniforms` becomes a function of the same name (`{\"speed\": 2}` -> `speed()`); `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. Raises `ValueError` with the compiler's message for invalid code. See the [shaders](/pyzed/guides/shaders/) guide.",
         "params": {
-            "code": "WGSL source that defines `shade` (and any helper functions).",
-            "uniforms": "Up to 8 named values: a number, 2 to 4 numbers or a color.",
+            "code": "WGSL source that defines `shade` (and any helper functions), or a `.pzshad` path, `Graph` or `Shader`.",
+            "uniforms": "Up to 32 named values: a number, 2 to 4 numbers or a color. With a `.pzshad`, the shader's mutable variables by name.",
+            "textures": "Up to 8 images, `{name: path}`: each becomes `name(uv)`, the image's color at `uv`.",
             "width": "Width (`\"fill\"` by default).",
             "height": "Height (`\"fill\"` by default).",
             "animate": "Redraw every frame so `time` moves (`True`).",
@@ -2041,6 +2043,54 @@ PAGES.append({
         ("Effects", {
             "pyzed.game.Particles": {**_G, "desc": "Sparks, smoke, explosions: short-lived dots that move, fall and fade out. Call `burst(x, y, …)` when something happens, `update(dt)` every frame and draw `shapes()`; `gravity`, `drag` and `limit` tune them."},
             "pyzed.game.Shake": {**_G, "desc": "Screen shake: `kick(8)` on a hit, `update(dt)` every frame, and start the canvas shapes with `*shake.shapes()` (a translate) so everything moves together."},
+        }),
+    ],
+})
+
+# -- Shader graphs ---------------------------------------------------------------------------
+_S = {"docstring": True, "members": False}
+_SM = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "shading",
+    "title": "Shader graphs (pyzed.shading)",
+    "description": "API reference for pyzed.shading: load .pzshad shader graphs, change their variables, and build node graphs in code that compile to the WGSL of pz.shader.",
+    "order": 11.5,
+    "intro": """
+        `pyzed.shading` is the node-based shader system behind the designer's
+        [Shader view](/pyzed/editor/shader-designer/): `.pzshad` graphs of nodes that compile to the WGSL of
+        [`pz.shader`](/pyzed/reference/widgets/). See [Shader graphs](/pyzed/guides/shader-graphs/) for a tour.
+
+        ```python
+        from pyzed import shading
+
+        fire = shading.load("shaders/fire.pzshad")
+        fire["speed"] = 2.0                       # a mutable variable: no recompiling
+        pz.shader(fire, width=320, height=200)    # or pz.shader("shaders/fire.pzshad")
+        ```
+    """,
+    "sections": [
+        ("Using shaders", {
+            "pyzed.shading.load": {**_S, "desc": "The `Shader` of a `.pzshad` file, cached by path (`fresh=True` reads it again). It reloads by itself when the file changes."},
+            "pyzed.shading.Shader": {**_SM, "desc": "A shader graph ready to draw, with its own values for the variables: `shader[\"speed\"] = 2`, `shader.set(...)`, `shader.variables`, `shader.wgsl` and `shader.widget(...)`. `pz.shader` takes one directly."},
+            "pyzed.shading.widget": {**_S, "desc": "A `pz.shader` widget for a `.pzshad` path, a `Graph` or a `Shader`."},
+        }),
+        ("Building graphs", {
+            "pyzed.shading.Graph": {**_SM, "desc": "A shader graph: variables, nodes and the links between them. Call a node type on it to add one (`g.noise(scale=4)`, `g.sin(x)`), pick outputs with `node[\"name\"]` and combine them with arithmetic. `save`, `compile`, `arrange`, `connect` and the variable methods edit it."},
+            "pyzed.shading.new": {**_S, "desc": "A new graph with UV feeding a gradient into the Output node: the designer's Blank template."},
+            "pyzed.shading.load_graph": {**_S, "desc": "The `Graph` of a `.pzshad` file, to edit it."},
+            "pyzed.shading.Variable": {**_S, "desc": "A variable of a shader: `name`, `type` (float, int, bool, vec2, vec3, vec4, color, texture), `value`, `mutable` (a uniform) or constant, `min`, `max`, `step` and `description`."},
+            "pyzed.shading.Node": {**_S, "desc": "A node of a graph: its `type`, position, `inputs` (fixed values of unconnected inputs), `params` (settings), `title` and whether its `preview` shows."},
+            "pyzed.shading.NodeRef": {**_S, "desc": "What `Graph.add` returns: `ref[\"port\"]` is an output to wire elsewhere; arithmetic uses its first output."},
+            "pyzed.shading.GraphError": {**_S, "desc": "Raised for wires that can't connect (types, cycles), unknown node types and bad variable names."},
+        }),
+        ("Compiling", {
+            "pyzed.shading.compile": {**_S, "desc": "Compiles a graph (or one node's output, for its preview) to WGSL: the `Compiled` code, uniforms, textures and problems by node."},
+            "pyzed.shading.Compiled": {**_S, "desc": "The result of `compile`: `code`, `uniforms`, `textures`, `names` (the uniform of each variable), `errors` by node id, `uses_time`, and `check()`, which runs the GPU compiler and puts its messages on the node that wrote the line."},
+        }),
+        ("The node catalog", {
+            "pyzed.shading.register": {**_S, "desc": "Adds a node type of your own to the catalog (and the designer's Shading sidebar)."},
+            "pyzed.shading.NodeType": {**_S, "desc": "A node type: id, title, category, inputs, outputs, settings and how it writes its WGSL."},
+            "pyzed.shading.Preset": {**_S, "desc": "An entry of the Shading sidebar: a node type with some settings (`func:sin` is the Function node set to sin)."},
         }),
     ],
 })

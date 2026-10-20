@@ -24,8 +24,8 @@ def test_invalid_code_raises_with_the_compiler_message():
 def test_uniforms_become_functions():
     pz.shader(RED, uniforms={"color": "#ff0000"})
     pz.shader(RED.replace("color()", "vec4<f32>(spot(), 0.0, 1.0)"), uniforms={"spot": (0.5, 0.5)})
-    with pytest.raises(ValueError, match="at most 8"):
-        pz.shader(RED, uniforms={"color": "#ff0000", **{f"u{i}": 1.0 for i in range(8)}})
+    with pytest.raises(ValueError, match="at most 32"):
+        pz.shader(RED, uniforms={"color": "#ff0000", **{f"u{i}": 1.0 for i in range(32)}})
     with pytest.raises(ValueError, match="not a valid uniform name"):
         pz.shader(RED, uniforms={"bad name": 1.0, "color": "#fff"})
     with pytest.raises(TypeError):
