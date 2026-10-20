@@ -212,6 +212,14 @@ def _version(path: Optional[str]) -> Optional[str]:
 
 def tools(project: Optional["Project"] = None) -> Dict[str, Tool]:
     """``uv``, ``ruff``, ``ty`` and ``git`` with their paths and versions (``path=None`` if missing)."""
+    if project is not None and project.environment.remote:  # the Linux tools of a WSL project
+        remote: Dict[str, Tool] = {}
+        for name in ("uv", "git", *DEV_TOOLS):
+            path = project.tool_path(name) if name in DEV_TOOLS else None
+            result = project._exec([path or name, "--version"], timeout=30)
+            match = re.search(r"\d+\.\d+(?:\.\d+)?\S*", result.output) if result.ok else None
+            remote[name] = Tool(name, (path or name) if result.ok else None, match.group(0) if match else None)
+        return remote
     found = {"uv": find_uv(), "git": shutil.which("git")}
     for name in DEV_TOOLS:
         found[name] = project.tool_path(name) if project else shutil.which(name)
@@ -247,12 +255,40 @@ class Environment:
     def is_wsl(self) -> bool:
         return self.kind == "wsl"
 
+    @property
+    def remote(self) -> bool:
+        """Whether the project's commands must cross into WSL: a WSL project opened from Windows, like Zed's
+        remote WSL projects. Its uv, git, ruff and ty are the Linux ones, run through ``wsl.exe``."""
+        return self.is_wsl and sys.platform == "win32"
+
+    def command(self, args: Sequence[str], cwd: PathLike, env: Optional[Dict[str, str]] = None) -> List[str]:
+        """``args`` as they run in this environment from here: for a ``remote`` one, through
+        ``wsl.exe -d <distro> --cd <folder>`` in a login shell (so ``~/.local/bin``, where uv installs, is on
+        the ``PATH``), with paths of the distribution turned into Linux paths and ``env`` passed along."""
+        if not self.remote:
+            return [str(a) for a in args]
+        extra = [f"{k}={v}" for k, v in (env or {}).items()]
+        return ["wsl.exe", "-d", self.name, "--cd", linux_path(cwd), "--", "sh", "-lc", 'exec "$@"', "sh",
+                *(["env", *extra] if extra else []), *(linux_path(a) for a in args)]
+
     def describe(self) -> str:
         """One sentence for people and agents about what working here means."""
+        if self.remote:
+            return (f"WSL ({self.name}), opened from Windows: the project's files and its uv, git, ruff and ty "
+                    "are in Linux and run through wsl.exe, with Linux paths; its windows open through WSLg.")
         if self.is_wsl:
             return (f"WSL ({self.name}): Linux running on Windows. Commands run in Linux with Linux paths; "
                     "windows open through WSLg and web pages in Windows' browser.")
         return f"This computer ({self.name})."
+
+
+def linux_path(path: PathLike) -> str:
+    """``\\\\wsl$\\Ubuntu\\home\\me`` as the distribution sees it (``/home/me``); anything else as it is."""
+    text = str(path)
+    found = _WSL_UNC.match(text)
+    if not found:
+        return text
+    return "/" + "/".join(part for part in re.split(r"[\\/]+", text[found.end():]) if part)
 
 
 def environment(path: Optional[PathLike] = None) -> Environment:
@@ -490,19 +526,27 @@ class Project:
         """The project's virtual environment (``UV_PROJECT_ENVIRONMENT`` or ``.venv``)."""
         return Path(os.environ.get("UV_PROJECT_ENVIRONMENT") or self.root / ".venv")
 
+    @property
+    def _windows_venv(self) -> bool:
+        """Whether ``.venv`` has Windows' layout (``Scripts\\*.exe``); a WSL project's is a Linux one."""
+        return os.name == "nt" and not self.environment.is_wsl
+
     def python_executable(self) -> Optional[Path]:
         """The project's interpreter (``.venv``), or ``None`` before the first ``uv sync``."""
-        exe = self.venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+        exe = self.venv / ("Scripts/python.exe" if self._windows_venv else "bin/python")
         return exe if exe.exists() else None
 
     def tool_path(self, name: str) -> Optional[str]:
         """``ruff``/``ty`` installed in the project's ``.venv``, else on ``PATH``."""
-        exe = self.venv / ("Scripts" if os.name == "nt" else "bin") / (name + (".exe" if os.name == "nt" else ""))
-        return str(exe) if exe.is_file() else shutil.which(name)
+        windows = self._windows_venv
+        exe = self.venv / ("Scripts" if windows else "bin") / (name + (".exe" if windows else ""))
+        if exe.is_file():
+            return str(exe)
+        return None if self.environment.remote else shutil.which(name)
 
     def site_packages(self) -> Optional[Path]:
         """``.venv``'s site-packages folder, if it exists."""
-        if os.name == "nt":
+        if self._windows_venv:
             folder = self.venv / "Lib" / "site-packages"
             return folder if folder.is_dir() else None
         found = sorted(self.venv.glob("lib/python*/site-packages"))
@@ -550,7 +594,7 @@ class Project:
             if entry not in sys.path:
                 sys.path.insert(0, entry)
                 added.append(entry)
-        packages = self.site_packages()
+        packages = None if self.environment.remote else self.site_packages()  # Linux packages: not for Windows
         same_python = self.venv_python_version() == f"{sys.version_info[0]}.{sys.version_info[1]}"
         if packages is not None and same_python and str(packages) not in sys.path and not getattr(sys, "frozen", False):
             before = list(sys.path)
@@ -591,16 +635,42 @@ class Project:
         """Where the project lives and its commands run (this computer or WSL)."""
         return environment(self.root)
 
+    def _exec(self, args: Sequence[str], *, timeout: Optional[float] = None) -> Result:
+        """Runs ``args`` in the project folder, inside WSL for a WSL project opened from Windows."""
+        env = self.environment
+        if env.remote:
+            return execute(env.command(args, self.root, {"UV_NO_PROGRESS": "1", "NO_COLOR": "1"}), timeout=timeout)
+        return execute(args, self.root, timeout=timeout)
+
+    def _uv_command(self) -> str:
+        """The ``uv`` that runs this project's commands (the Linux one, by name, for a remote WSL project)."""
+        return "uv" if self.environment.remote else _uv()
+
+    def has_uv(self) -> bool:
+        """Whether ``uv`` is installed where the project's commands run."""
+        if self.environment.remote:
+            return self._exec(["uv", "--version"], timeout=30).ok
+        return find_uv() is not None
+
+    def install_uv(self) -> Result:
+        """Installs ``uv`` where the project's commands run (inside WSL for a remote WSL project)."""
+        if self.environment.remote:
+            return self._exec(["sh", "-c", UV_INSTALL["posix"]], timeout=300)
+        return install_uv()
+
     def needs_prepare(self) -> bool:
-        """Whether opening the project has work to do first: install ``uv``, or create ``.venv``."""
-        return find_uv() is None or not self.venv.is_dir()
+        """Whether opening the project has work to do first: install ``uv``, or create ``.venv``. Cheap enough for
+        the UI thread: a WSL project from Windows with a ``.venv`` already has its uv."""
+        if not self.venv.is_dir():
+            return True
+        return not self.environment.remote and find_uv() is None
 
     def prepare(self) -> Result:
         """Gets the project ready to work on, like Zed loading a project's environment: installs ``uv`` when it
         is missing, then creates ``.venv`` with the project's packages and tools (``uv sync``)."""
         steps: List[Result] = []
-        if find_uv() is None:
-            steps.append(install_uv())
+        if not self.has_uv():
+            steps.append(self.install_uv())
             if not steps[-1].ok:
                 return steps[-1]
         if not self.venv.is_dir():
@@ -622,7 +692,7 @@ class Project:
     def uv(self, *args: str, timeout: Optional[float] = None) -> Result:
         """Runs ``uv <args>`` in the project folder."""
         try:
-            return execute([_uv(), *args], self.root, timeout=timeout)
+            return self._exec([self._uv_command(), *args], timeout=timeout)
         except FileNotFoundError as err:
             return Result(["uv", *args], 127, str(err))
 
@@ -678,7 +748,7 @@ class Project:
     def _run_tool(self, name: str, *args: str) -> Result:
         path = self.tool_path(name)
         if path is not None:
-            return execute([path, *args], self.root)
+            return self._exec([path, *args])
         return self.uv("tool", "run", name, *args)  # not installed: uv fetches it once and caches it
 
     def check(self, *paths: str, fix: bool = False) -> Result:
@@ -702,10 +772,10 @@ class Project:
 
     def git(self, *args: str) -> Result:
         """Runs ``git`` with ``args`` in the project folder (exit code 127 if git is not installed)."""
-        git = shutil.which("git")
+        git = "git" if self.environment.remote else shutil.which("git")
         if git is None:
             return Result(["git", *args], 127, "git is not installed")
-        return execute([git, *args], self.root)
+        return self._exec([git, *args])
 
     def git_init(self, *, commit: bool = False, message: str = "Initial commit") -> Result:
         """Creates a git repository (like Zed's "Create repository"), with a ``.gitignore``.
@@ -756,7 +826,7 @@ class Project:
         args = ["run", "pyzed", "run", str(form)]
         if reload:
             args.append("--reload")
-        return [_uv(), *args]
+        return [self._uv_command(), *args]
 
     def spawn(self, form: Optional[PathLike] = None, *, reload: bool = False,
               capture: bool = False, env: Optional[Dict[str, str]] = None) -> "subprocess.Popen[bytes]":
@@ -773,7 +843,7 @@ class Project:
         script = Path(script) if script else self.script
         if script is None:
             raise FileNotFoundError("The project has no script in [tool.pyzed]")
-        return self._popen([_uv(), "run", str(script)], capture, env)
+        return self._popen([self._uv_command(), "run", str(script)], capture, env)
 
     def _popen(self, args: List[str], capture: bool, env: Optional[Dict[str, str]]) -> "subprocess.Popen[bytes]":
         pipes = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT} if capture else {}
@@ -782,6 +852,12 @@ class Project:
             env["PYTHONUNBUFFERED"] = "1"  # lines reach the designer's console as they are printed
         # No console window on Windows (the output goes to the designer), and a process group of its own
         # elsewhere, so ``terminate`` stops uv and the Python it starts together.
+        where = self.environment
+        if where.remote:  # the variables cross into WSL on the command line; wsl.exe itself needs none
+            extra = {k: v for k, v in env.items() if k in ("PYTHONUNBUFFERED", "UV_NO_PROGRESS", "NO_COLOR")
+                     or k.startswith("PYZED") or os.environ.get(k) != v}
+            return subprocess.Popen(where.command(args, self.root, extra), env=_clean_env(), creationflags=NO_WINDOW,
+                                    **pipes)
         return subprocess.Popen(args, cwd=str(self.root), env=env, creationflags=NO_WINDOW,
                                 start_new_session=sys.platform != "win32", **pipes)
 
