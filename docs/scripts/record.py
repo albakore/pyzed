@@ -351,7 +351,7 @@ DESIGNER_SIZE = (1280, 800)
 
 @clip("designer-place-controls", "Placing controls from the toolbox",
       "Pyzed Design: a button, a text box and a check box dragged from the toolbox onto an empty form.",
-      fps=24, poster=0.8, tags=["designer"])
+      fps=24, poster=0.98, tags=["designer"])
 def designer_place_clip(c: Clip):
     work = Path(tempfile.mkdtemp(prefix="pyzed-record-"))
     app = _designer(work / "form1.pzform")

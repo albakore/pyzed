@@ -132,14 +132,6 @@ def menus():
         save(app, EDITOR / f"menu-{name}.png")
 
 
-@shot
-def palette():
-    app = make()
-    app.open_palette()
-    app.set_picker_query("shader")
-    save(app, EDITOR / "palette-shader.png")
-
-
 # -- the main views --------------------------------------------------------------------------------
 @shot
 def form_view():
