@@ -1,10 +1,8 @@
 ---
 // A grid of component cards (thumbnail, name, one line), like shadcn's component list.
 // docs/scripts/gen_library.py writes the props into library/index.mdx.
-import { Image } from 'astro:assets';
-import type { ImageMetadata } from 'astro';
-
-const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/library/*.png', { eager: true });
+// Each card shows the component's animated thumbnail (public/library/<slug>.thumb.<theme>.webp).
+import Clip from './Clip.astro';
 
 interface Item {
 	slug: string;
@@ -23,21 +21,16 @@ interface Props {
 }
 
 const { items, base, summary } = Astro.props;
-const pick = (slug: string, theme: string) =>
-	(images[`../../assets/library/${slug}.thumb.${theme}.png`] ?? images[`../../assets/library/${slug}.${theme}.png`])?.default;
 ---
 
 {summary && <p class="lib-summary not-content">{summary}</p>}
 <div class="lib-gallery not-content">
 	{
 		items.map((item) => {
-			const dark = pick(item.slug, 'dark');
-			const light = pick(item.slug, 'light') ?? dark;
 			return (
 				<a class="lib-card" href={`${base}${item.slug}/`}>
 					<div class="thumb">
-						{dark && <Image class="on-dark" src={dark} alt="" width={480} loading="lazy" />}
-						{light && <Image class="on-light" src={light} alt="" width={480} loading="lazy" />}
+						<Clip name={`${item.slug}.thumb`} alt="" />
 					</div>
 					<div class="meta">
 						<span class="name">
@@ -92,7 +85,12 @@ const pick = (slug: string, theme: string) =>
 		border-bottom: 1px solid var(--sl-color-gray-5);
 		background: var(--sl-color-gray-6);
 	}
-	.thumb img {
+	.thumb :global(picture) {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+	.thumb :global(img) {
 		display: block;
 		width: 100%;
 		height: 100%;
@@ -132,14 +130,5 @@ const pick = (slug: string, theme: string) =>
 		font-size: 0.7rem;
 		font-weight: 600;
 		color: var(--pz-accent-text, var(--sl-color-accent-high));
-	}
-	.on-light {
-		display: none !important;
-	}
-	:global([data-theme='light']) .lib-gallery .on-light {
-		display: block !important;
-	}
-	:global([data-theme='light']) .lib-gallery .on-dark {
-		display: none !important;
 	}
 </style>
