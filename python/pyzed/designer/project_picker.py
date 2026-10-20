@@ -73,7 +73,7 @@ class ProjectPicker:
         q = self.query.strip()
         if not q:
             return rows
-        matched = ui.fuzzy_filter(q, rows, key=lambda e: f"{e.label} {e.root}")
+        matched = ui.fuzzy_filter(q, rows, key=lambda e: e.label)
         return [entry for entry, _ in matched]
 
     def choose(self, entry: Entry) -> Any:
