@@ -35,6 +35,9 @@ What to do for each kind of request:
 - "Make a designer form": list_components(kind="designer"), new_form, validate_form.
 - "A shader / visual effect": get_guide("shaders"); node graphs (.pzshad, drawn with pz.shader("x.pzshad"))
   start from new_shader, use list_shader_nodes and check_shader; style effects (glow, glass...) are in the cookbook.
+- "Animate it": one widget uses .animate() / .transition() (cookbook); several widgets or app state on one
+  timeline (intros, cutscenes, HUD reactions) use pz.Clip + pz.AnimationPlayer (get_guide("timeline")), saved as
+  .pzanim libraries with new_animation / check_animation.
 - "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
 
 Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
@@ -231,6 +234,34 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         from . import shaders
 
         return shaders.template(template)
+
+    # -- timeline animations (pz.Clip, pz.AnimationPlayer, .pzanim) ------------------------------------------
+    @tool()
+    def animation_properties() -> str:
+        """What a timeline track can animate: the widget properties ("card:opacity", natively at full frame
+        rate), app attributes (":score") for anything else, the loops and the easings."""
+        from . import animations
+
+        return _json(animations.properties())
+
+    @tool()
+    def new_animation(clips: List[Dict[str, Any]], name: str = "") -> str:
+        """The JSON of a .pzanim library (Godot-like timeline clips) to save next to the app and play with
+        pz.AnimationPlayer("ui.pzanim"). clips: [{"name": "intro", "length": 1.2, "loop": "none",
+        "tracks": [{"path": "card:opacity", "keys": {"0": 0, "0.4": 1}},
+                   {"path": "card:y", "keys": [[0, 24, "ease_out_cubic"], [0.4, 0]]}],
+        "calls": [{"time": 1.2, "method": "chime"}]}]. Widgets join a target with .animate(player["card"])."""
+        from . import animations
+
+        return animations.new(clips, name)
+
+    @tool()
+    def check_animation(library: str) -> str:
+        """Checks the JSON of a .pzanim library: each clip's length, targets, app attributes and calls, or
+        the first problem (an unknown property, easing or loop)."""
+        from . import animations
+
+        return _json(animations.check(library))
 
     # -- checks ----------------------------------------------------------------------------------------
     @tool()

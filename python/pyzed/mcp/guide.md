@@ -145,6 +145,8 @@ Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guide
 
 - **Animation and effects**: `.animate("fade_in_up")`, `.transition(opacity=...)`, `pz.stagger`,
   `pz.presence`; style effects `glow`, `bloom`, `blur`, `backdrop_blur` and `glass`.
+- **Timeline animations**: `pz.Clip` + `pz.Track` played by `pz.AnimationPlayer` (like Godot),
+  for several widgets or app attributes at once; clips are saved as `.pzanim` libraries.
 - **Shaders**: `pz.shader(wgsl, uniforms={...})` paints a widget on the GPU.
 - **Games**: `pz.frames(callback)` for a frame loop, held keys with `pz.is_pressed` and
   `pyzed.game` (`vector`, `axis`, `glow`, `Particles`) on a `pz.canvas`.
@@ -170,7 +172,8 @@ environment (`project_info` shows the entry file, the `.venv` and whether it is 
 `create_project`, `start_live_preview` (a real window with hot reload, so the user watches the app
 while you write it), `write_files` (it checks what it writes), `add_dependency`, `check_project`,
 `run_tests` and `screenshot_project`. A project always has one entry: its `script` or its main
-form; forms (`.pzform`), components (`.pzcomp`) and shaders (`.pzshad`) are files of the project.
+form; forms (`.pzform`), components (`.pzcomp`), shaders (`.pzshad`) and animations (`.pzanim`) are
+files of the project.
 Keep the state and logic in plain classes in the package (`src/<package>`), views or forms in
 `ui/`, tests in `tests/`, and loop write, check, test and look until all are clean. The
 `build_project` prompt lists these steps.

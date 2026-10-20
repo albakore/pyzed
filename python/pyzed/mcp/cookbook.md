@@ -325,3 +325,91 @@ pz.run(Anchored)
 ```
 
 Docs: `guides/layout`, `editor/layouts`.
+
+## Timeline animations
+
+Several widgets (or app attributes) moving together, like an intro or a HUD reaction, go on one
+timeline: a `pz.Clip` with a `pz.Track` per property, played by a `pz.AnimationPlayer`. A track
+path `"card:opacity"` animates every widget that plays the `card` target; `":score"` animates an
+app attribute, so anything can be animated. Save clips as a `.pzanim` library (`new_animation`)
+and load it with `pz.AnimationPlayer("ui.pzanim")`.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+INTRO = pz.Clip("intro", length=1.4, tracks=[
+    pz.Track("card:opacity", {0: 0, 0.35: 1}),
+    pz.Track("card:y", [(0, 30, "ease_out_back"), (0.5, 0)]),
+    pz.Track("title:scale", [(0.3, 0.7, "ease_out_back"), (0.7, 1)]),
+    pz.Track(":score", [(0.6, 0, "ease_out_cubic"), (1.4, 12_480)]),
+])
+
+
+class Results(pz.App):
+    title = "Results"
+    size = (420, 260)
+
+    def __init__(self):
+        self.score = 0
+        self.player = pz.AnimationPlayer(INTRO, autoplay="intro")
+
+    def view(self):
+        return pz.center(pz.column([
+            ui.heading("LEVEL COMPLETE", level=2).animate(self.player["title"]),
+            ui.label(f"{self.score:,.0f} points", color="text_muted"),
+            ui.button("Replay", lambda: self.player.play("intro", restart=True), icon="rotate-ccw"),
+        ], spacing=12, align="center", padding=24).style(glass=True, radius=12).animate(self.player["card"]))
+
+
+pz.run(Results)
+```
+
+Docs: `guides/timeline`, `editor/animations-and-effects`.
+
+## States of components
+
+Components carry their own states: buttons take `loading`, `disabled`, `selected`, `tooltip`
+and `size`; icon buttons an `indicator` dot and `keys`; inputs `invalid`, `readonly`,
+`max_length` and `on_clear`. Show a state instead of building it by hand.
+
+```python
+import asyncio
+
+import pyzed as pz
+from pyzed import ui
+
+
+class Save(pz.App):
+    title = "Save"
+    size = (420, 220)
+
+    def __init__(self):
+        self.name = ""
+        self.saving = False
+
+    async def save(self):
+        self.saving = True
+        await asyncio.sleep(1)
+        return "saved"
+
+    def update(self, message):
+        if message == "saved":
+            self.saving = False
+
+    def view(self):
+        return pz.column([
+            pz.row([ui.heading("Profile", level=3), pz.space(width="fill"),
+                    ui.icon_button("bell", lambda: None, tooltip="Notifications", indicator="accent")],
+                   align="center"),
+            ui.input(self.name, lambda v: setattr(self, "name", v), placeholder="Name", invalid=not self.name,
+                     max_length=40, on_clear=lambda: setattr(self, "name", "")),
+            ui.button("Save", self.save, variant="solid", loading=self.saving, disabled=not self.name,
+                      tooltip="Save the profile", keys="ctrl-s"),
+        ], spacing=12, padding=20)
+
+
+pz.run(Save)
+```
+
+Docs: `components/basics`, `components/forms`, `components/controls`.
