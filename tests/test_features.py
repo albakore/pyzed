@@ -413,6 +413,73 @@ def test_images_from_files_render_on_first_frame(tmp_path):
     assert read_png(out)[50][50][:3] == (0, 200, 0)
 
 
+def test_rotated_images_render(tmp_path):
+    # Rotated images used iced's widget, which uploaded big images in the background (the
+    # off-screen shot came out blank) and turned each 2048 px atlas piece on its own.
+    big = bytes((255, 0, 0, 255)) * (2400 * 1200)
+    small = bytes((255, 0, 0, 255)) * (40 * 20)
+
+    class Demo(pz.App):
+        size = (300, 150)
+
+        def view(self):
+            return pz.container(pz.row([
+                pz.image(big, size=(2400, 1200), width=120, height=60, rotation=8),
+                pz.image(small, size=(40, 20), width=120, height=60, rotation=8, radius=8),
+            ], spacing=40), center=True, width="fill", height="fill", bg="#0000ff")
+
+    out = tmp_path / "rotated.png"
+    Demo().screenshot(out, scale=1)
+    px = read_png(out)
+    def red(p):
+        return p[0] > 200 and p[2] < 60
+
+    left = sum(red(p) for row in px for p in row[:150])
+    right = sum(red(p) for row in px for p in row[150:])
+    assert left > 0.9 * 120 * 60 and right > 0.85 * 120 * 60
+    assert red(px[75][70]) and red(px[75][230])  # the centers
+    # Turned clockwise: the top-right corner of the left image drops below its box's top edge.
+    assert not red(px[47][128]) and red(px[47][16])
+
+
+def test_svg_color_tints_the_shapes_only(tmp_path):
+    shapes = ('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">'
+              '<circle cx="10" cy="10" r="8" fill="#e33"/><rect x="22" y="22" width="16" height="16" fill="#3a3"/>'
+              '</svg>')
+
+    class Demo(pz.App):
+        size = (200, 100)
+
+        def view(self):
+            return pz.container(pz.row([
+                pz.svg(shapes, width=80, height=80, color="#8000ff"),
+                pz.svg(shapes, width=80, height=80, color="#8000ff80"),
+            ], spacing=20), center=True, width="fill", height="fill", bg="#ffffff")
+
+    out = tmp_path / "tint.png"
+    Demo().screenshot(out, scale=1)
+    px = read_png(out)
+    # The first svg spans x 10..90, y 10..90 (2 px per viewBox unit).
+    assert px[30][30][:3] == (128, 0, 255)            # the circle, tinted
+    assert px[70][70][:3] == (128, 0, 255)            # the square, tinted
+    assert px[70][30][:3] == (255, 255, 255)          # transparent parts stay transparent
+    assert px[30][70][:3] == (255, 255, 255)
+    r, g, b = px[30][130][:3]                         # a half-transparent tint blends in
+    assert abs(r - 191) <= 3 and abs(g - 127) <= 3 and b == 255
+
+
+def test_ui_button_style_overrides_its_defaults(monkeypatch):
+    # `radius=` and friends used to clash with the values ui.button passes itself.
+    assert isinstance(ui.button("Save", radius=12, padding=(4, 20), height=40), pz.Widget)
+    from ui_tree import install
+
+    install(monkeypatch)
+    button = ui.button("Save", radius=12, padding=(4, 20), border_width=3, theme=pz.themes.ONE_DARK)
+    assert button.kind == "button"
+    assert (button.props["radius"], button.props["padding"], button.props["border_width"]) == (12, (4, 20), 3)
+    assert ui.button("Save", theme=pz.themes.ONE_DARK).props["radius"] == pz.themes.ONE_DARK.radius_sm
+
+
 def test_editor_folding_minimap_and_cursor_options(tmp_path):
     code = "def a():\n    x = 1\n    return x\n\n\nclass B:\n    def c(self):\n        pass\n"
 

@@ -86,6 +86,8 @@ pz.image("photo.png", width=200, height=110, content_fit="fill")
 
 ### Aspecto
 
+`rotation` va en grados, en sentido horario; las esquinas de una imagen girada pueden salir de su caja.
+
 <VariantGrid>
 <Variant name="image-v2-1" caption={"radius=16"} alt={"Imagen: radius=16"} code="Código" mono>
 
@@ -98,6 +100,13 @@ pz.image("photo.png", width=200, height=110, content_fit="cover", radius=16)
 
 ```python
 pz.image("photo.png", width=200, height=110, content_fit="cover", opacity=0.4)
+```
+
+</Variant>
+<Variant name="image-v2-3" caption={"rotation=8"} alt={"Imagen: rotation=8"} code="Código" mono>
+
+```python
+pz.image("photo.png", width=200, height=110, content_fit="cover", radius=10, rotation=8)
 ```
 
 </Variant>
