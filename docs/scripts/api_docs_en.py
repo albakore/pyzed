@@ -2136,3 +2136,20 @@ _params("pyzed.ui.Tab", pinned="Shows only the icon, has no close button and goe
 _params("pyzed.ui.tab_bar", on_context="Called with the id of a tab that is right-clicked.", on_new="Sent on a double click of the empty space after the tabs.")
 _params("pyzed.ui.breadcrumbs", max_items="Keeps the first part and the last ones and shows `…` for the rest.", on_more="Makes the `…` clickable.")
 _params("pyzed.ui.toolbar", center="Kept in the middle of the bar whatever the widths of both sides.")
+
+# States and events of tables, cards, stats, progress bars, settings groups, modals, toasts and empty states.
+_params("pyzed.ui.table", selected="The row to highlight, or a list or set of rows (multiple selection).",
+        on_row_double_press="Called with the row on a double click (open, edit…).", on_row_context="Called with the row on a right click (a context menu).",
+        empty="Text or widget shown in place of the rows when there are none.")
+_params("pyzed.ui.card", footer="Widgets at the bottom right (buttons).", on_press="Makes the whole card clickable.",
+        selected="Outlines it in the accent color.", elevated="Adds a shadow.")
+_params("pyzed.ui.stat", icon="Icon before the title.", inverse="Colors a drop green and a rise red (errors, latency…).", on_press="Makes the card clickable.")
+_params("pyzed.ui.progress", value="Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows).",
+        label="Text above the bar.", show_value="Adds the percentage at its right.")
+_params("pyzed.ui.settings_group", end="Widget at the right of the title (a Reset button…).")
+_params("pyzed.ui.modal", width='Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820).', description="Muted line under the title.",
+        icon="Icon before the title.", max_height="Scrolls content taller than this, keeping the header and footer in view.",
+        on_close="The close button; also sent by Escape while the dialog has focus.")
+_params("pyzed.ui.toast", progress="0 to 1: a thin bar at the bottom (time left, a download).", on_press="Makes the card clickable.")
+_params("pyzed.ui.empty_state", size='`"sm"`, `"md"` or `"lg"`.', height='`"fill"` (default), pixels or `"shrink"`.')
+_params("pyzed.ui.count_badge", show_zero="With `False`, a count of 0 draws nothing.")

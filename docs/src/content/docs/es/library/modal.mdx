@@ -93,6 +93,21 @@ ui.modal(ui.muted("Discard the draft?"), title="Draft", on_close=on_close, width
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`max_height=` desplaza el contenido largo, y Escape envía `on_close` mientras el diálogo tiene el foco.
+
+<VariantGrid>
+<Variant name="modal-v2-1" caption={"description=, icon=, width=\"sm\""} alt={"Modal: description=, icon=, width=\"sm\""} code="Código" mono>
+
+```python
+ui.modal(ui.input("notes.md", on_input), title="Rename", description="Choose a new name",
+         icon="pencil", on_close=on_close, width="sm", footer=[ui.button("Rename", on_press, variant="solid")])
+```
+
+</Variant>
+</VariantGrid>
+
 ## Ejemplos
 
 ### Encima de la app
@@ -123,7 +138,18 @@ ui.dialog_layer(main_view(), ui.modal(
 ### `ui.modal`
 
 ```python
-modal(content, *, title=None, on_close=None, width=480, footer=(), theme=None)
+modal(
+    content,
+    *,
+    title=None,
+    on_close=None,
+    width=480,
+    footer=(),
+    description=None,
+    icon=None,
+    max_height=None,
+    theme=None,
+)
 ```
 
 Un diálogo. Úsalo como `overlay` de `ui.layer`.
@@ -132,9 +158,12 @@ Un diálogo. Úsalo como `overlay` de `ui.layer`.
 | --- | --- | --- |
 | `content` | *obligatorio* | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
 | `title` | `None` | Título. |
-| `on_close` | `None` | Mensaje o callable que se envía al pulsar la X. |
-| `width` | `480` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `on_close` | `None` | El botón de cerrar; también lo envía Escape mientras el diálogo tiene el foco. |
+| `width` | `480` | Píxeles o `"sm"` (360), `"md"` (480), `"lg"` (640) o `"xl"` (820). |
 | `footer` | `()` | Botones del pie, alineados a la derecha. |
+| `description` | `None` | Línea atenuada bajo el título. |
+| `icon` | `None` | Icono antes del título. |
+| `max_height` | `None` | Desplaza el contenido más alto que esto, sin ocultar la cabecera ni el pie. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#modal)

@@ -137,12 +137,26 @@ pz.row([ui.icon_button("bell", on_press), ui.count_badge(7)], spacing=2, align="
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+Con `show_zero=False` no dibuja nada en 0 pero mantiene su lugar en el diseño.
+
+<VariantGrid>
+<Variant name="count-badge-v4-1" caption={"show_zero=False"} alt={"Contador: show_zero=False"} code="Código" mono>
+
+```python
+pz.row([ui.icon_button("bell", on_press), ui.count_badge(0, show_zero=False)], align="center")
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.count_badge`
 
 ```python
-count_badge(count, *, tint='accent', max=99, theme=None)
+count_badge(count, *, tint='accent', max=99, show_zero=True, theme=None)
 ```
 
 Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de `max`.
@@ -152,6 +166,7 @@ Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de 
 | `count` | *obligatorio* | El número. |
 | `tint` | `"accent"` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `max` | `99` | Máximo antes de mostrar `N+`. |
+| `show_zero` | `True` | Con `False`, un 0 no dibuja nada. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#count_badge)

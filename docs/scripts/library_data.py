@@ -4849,6 +4849,51 @@ for _slug, _group in _MORE.items():
     _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
     _groups.insert(_at, _group)
 
+_ROWS = '[{"name": "app.py", "size": 4}, {"name": "ui.py", "size": 12}, {"name": "README.md", "size": 2}]'
+_MORE = {
+    "table": V(_STATES, [
+        (T("Multiple selection", "Selección múltiple"), f'rows = {_ROWS}\nui.table(["name", "size"], rows, selected=[rows[0], rows[2]], on_row_press=on_press,\n         on_row_double_press=on_open, on_row_context=on_context, height=130)', {"size": (480, 200)}),
+        ('empty=', 'ui.table(["name", "size"], [], empty="No files yet", height=100)', {"size": (480, 160)}),
+    ], T("`on_row_double_press(row)` opens a row and `on_row_context(row)` shows a context menu.",
+         "`on_row_double_press(fila)` abre una fila y `on_row_context(fila)` muestra un menú contextual.")),
+    "card": V(_STATES, [
+        ('selected=True', 'ui.card(ui.muted("Python app with a window"), title="Desktop app", on_press=on_press,\n        selected=True, width=260)'),
+        ('footer=, elevated=True', 'ui.card(ui.muted("3 files changed"), title="Commit", footer=[ui.button("Push", on_press)],\n        elevated=True, width=260)', {"size": (480, 200)}),
+    ]),
+    "stat": V(_STATES, [
+        ('icon=, inverse=True', 'ui.stat("Errors", "12", delta=-8.0, inverse=True, icon="bug", width=180)'),
+        ('on_press=', 'ui.stat("Users", "1,204", delta=4.2, icon="users", on_press=on_press, width=180)'),
+    ], T("With `inverse=True` a drop is good news (green), for errors or latency.",
+         "Con `inverse=True` una bajada es una buena noticia (verde), para errores o latencia.")),
+    "progress": V(_STATES, [
+        ('label=, show_value=True', 'pz.container(ui.progress(0.42, label="Downloading", show_value=True), width=300)'),
+        (T("Indeterminate (value=None)", "Indeterminada (value=None)"), 'pz.container(ui.progress(None, label="Indexing"), width=300)'),
+    ]),
+    "settings-group": V(_STATES, [
+        ('end=', 'pz.container(ui.settings_group("Editor", [ui.field("Wrap lines", ui.switch(True, on_toggle))],\n                               end=ui.button("Reset", on_press, size="sm", variant="ghost")), width=420)', {"size": (480, 180)}),
+    ]),
+    "modal": V(_STATES, [
+        ('description=, icon=, width="sm"', 'ui.modal(ui.input("notes.md", on_input), title="Rename", description="Choose a new name",\n         icon="pencil", on_close=on_close, width="sm", footer=[ui.button("Rename", on_press, variant="solid")])', {"size": (480, 240)}),
+    ], T("`max_height=` scrolls long content, and Escape sends `on_close` while the dialog has focus.",
+         "`max_height=` desplaza el contenido largo, y Escape envía `on_close` mientras el diálogo tiene el foco.")),
+    "toast": V(_STATES, [
+        ('progress=0.6', 'ui.toast("Uploading", "notes.md", kind="info", progress=0.6, on_dismiss=on_close)'),
+        ('on_press=', 'ui.toast("Build failed", "Click to see the log", kind="error", on_press=on_press)'),
+    ]),
+    "empty-state": V(_STATES, [
+        ('size="sm", height="shrink"', 'ui.empty_state("No results", "Try another search", icon="search", size="sm", height="shrink")'),
+        ('size="lg"', 'ui.empty_state("No projects", "Create one to start", icon="folder", size="lg", height=220)', {"size": (480, 260)}),
+    ]),
+    "count-badge": V(_STATES, [
+        ('show_zero=False', 'pz.row([ui.icon_button("bell", on_press), ui.count_badge(0, show_zero=False)], align="center")'),
+    ], T("With `show_zero=False` it draws nothing at 0 but keeps its place in the layout.",
+         "Con `show_zero=False` no dibuja nada en 0 pero mantiene su lugar en el diseño.")),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:
     _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]

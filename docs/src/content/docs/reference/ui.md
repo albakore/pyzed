@@ -290,7 +290,19 @@ A divider line in the theme color.
 ### `card`
 
 ```python
-card(content, *, title=None, actions=(), padding=16, width=None, theme=None)
+card(
+    content,
+    *,
+    title=None,
+    actions=(),
+    padding=16,
+    width=None,
+    footer=(),
+    on_press=None,
+    selected=False,
+    elevated=False,
+    theme=None,
+)
 ```
 
 A bordered surface to group content, with an optional title and actions.
@@ -302,6 +314,10 @@ A bordered surface to group content, with an optional title and actions.
 | `actions` | Extra widgets (usually buttons) shown as actions. |
 | `padding` | Inner padding. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `footer` | Widgets at the bottom right (buttons). |
+| `on_press` | Makes the whole card clickable. |
+| `selected` | Outlines it in the accent color. |
+| `elevated` | Adds a shadow. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ## Forms
@@ -444,18 +460,30 @@ A slider.
 ### `progress`
 
 ```python
-progress(value, *, max=1.0, tint='accent', height=4, width='fill', theme=None)
+progress(
+    value,
+    *,
+    max=1.0,
+    tint='accent',
+    height=4,
+    width='fill',
+    label=None,
+    show_value=False,
+    theme=None,
+)
 ```
 
 A thin progress bar.
 
 | Parameter | Description |
 | --- | --- |
-| `value` | Current value. |
+| `value` | Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows). |
 | `max` | Maximum value. |
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `height` | Thickness. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `label` | Text above the bar. |
+| `show_value` | Adds the percentage at its right. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `segmented`
@@ -1177,7 +1205,16 @@ An inline notice (a callout or banner).
 ### `empty_state`
 
 ```python
-empty_state(title, description=None, *, icon='inbox', actions=(), theme=None)
+empty_state(
+    title,
+    description=None,
+    *,
+    icon='inbox',
+    actions=(),
+    size='md',
+    height='fill',
+    theme=None,
+)
 ```
 
 A centered placeholder for empty lists, searches with no results, etc.
@@ -1188,12 +1225,14 @@ A centered placeholder for empty lists, searches with no results, etc.
 | `description` | Secondary text. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `actions` | Extra widgets (usually buttons) shown as actions. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `height` | `"fill"` (default), pixels or `"shrink"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `settings_group`
 
 ```python
-settings_group(title, rows, *, description=None, theme=None)
+settings_group(title, rows, *, description=None, end=None, theme=None)
 ```
 
 A titled block of `ui.field` rows separated by lines, like a settings screen.
@@ -1203,6 +1242,7 @@ A titled block of `ui.field` rows separated by lines, like a settings screen.
 | `title` | Group title. |
 | `rows` | The rows (usually `ui.field`). |
 | `description` | Secondary text. |
+| `end` | Widget at the right of the title (a Reset button…). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `Column`
@@ -1248,6 +1288,9 @@ table(
     striped=False,
     row_height=30,
     height=None,
+    on_row_double_press=None,
+    on_row_context=None,
+    empty=None,
     theme=None,
 )
 ```
@@ -1262,16 +1305,30 @@ A data table with a fixed header, optional sorting and row selection. Sorting ha
 | `descending` | Descending order. |
 | `on_sort` | Callable that receives the clicked title. |
 | `on_row_press` | Callable that receives the clicked row. |
-| `selected` | The highlighted row. |
+| `selected` | The row to highlight, or a list or set of rows (multiple selection). |
 | `striped` | Shaded alternating rows. |
 | `row_height` | Height of each row. |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_row_double_press` | Called with the row on a double click (open, edit…). |
+| `on_row_context` | Called with the row on a right click (a context menu). |
+| `empty` | Text or widget shown in place of the rows when there are none. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `stat`
 
 ```python
-stat(title, value, *, delta=None, trend=None, width=None, theme=None)
+stat(
+    title,
+    value,
+    *,
+    delta=None,
+    trend=None,
+    width=None,
+    icon=None,
+    inverse=False,
+    on_press=None,
+    theme=None,
+)
 ```
 
 A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
@@ -1283,6 +1340,9 @@ A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
 | `delta` | Change in %; green if positive, red otherwise. |
 | `trend` | Values for the sparkline. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `icon` | Icon before the title. |
+| `inverse` | Colors a drop green and a rise red (errors, latency…). |
+| `on_press` | Makes the card clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `sparkline`
@@ -1354,7 +1414,7 @@ A spinning arc for loading states. Its angle comes from the clock, so keep a `pz
 ### `count_badge`
 
 ```python
-count_badge(count, *, tint='accent', max=99, theme=None)
+count_badge(count, *, tint='accent', max=99, show_zero=True, theme=None)
 ```
 
 A round counter (notifications, problems…). Shows `99+` above `max`.
@@ -1364,6 +1424,7 @@ A round counter (notifications, problems…). Shows `99+` above `max`.
 | `count` | The number. |
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `max` | Maximum before showing `N+`. |
+| `show_zero` | With `False`, a count of 0 draws nothing. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `facepile`
@@ -2169,7 +2230,18 @@ Stacks `overlay` on top of `base`. Clicking outside sends `on_dismiss`. With `ov
 ### `modal`
 
 ```python
-modal(content, *, title=None, on_close=None, width=480, footer=(), theme=None)
+modal(
+    content,
+    *,
+    title=None,
+    on_close=None,
+    width=480,
+    footer=(),
+    description=None,
+    icon=None,
+    max_height=None,
+    theme=None,
+)
 ```
 
 A dialog. Use it as the `overlay` of `ui.layer`.
@@ -2178,9 +2250,12 @@ A dialog. Use it as the `overlay` of `ui.layer`.
 | --- | --- |
 | `content` | Content: a `Widget`, a string or a number (converted to text). |
 | `title` | Title. |
-| `on_close` | Message or callable sent when the X is pressed. |
-| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_close` | The close button; also sent by Escape while the dialog has focus. |
+| `width` | Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820). |
 | `footer` | Footer buttons, aligned to the right. |
+| `description` | Muted line under the title. |
+| `icon` | Icon before the title. |
+| `max_height` | Scrolls content taller than this, keeping the header and footer in view. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `PaletteItem`
@@ -2322,6 +2397,8 @@ toast(
     on_dismiss=None,
     actions=(),
     width=340,
+    progress=None,
+    on_press=None,
     theme=None,
 )
 ```
@@ -2337,6 +2414,8 @@ A notification.
 | `on_dismiss` | Message or callable sent on close. |
 | `actions` | Extra widgets (usually buttons) shown as actions. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `progress` | 0 to 1: a thin bar at the bottom (time left, a download). |
+| `on_press` | Makes the card clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `toasts`

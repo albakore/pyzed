@@ -85,12 +85,25 @@ pz.container(ui.settings_group("Git", [
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="settings-group-v2-1" caption={"end="} alt={"Settings group: end="} code="Code" mono>
+
+```python
+pz.container(ui.settings_group("Editor", [ui.field("Wrap lines", ui.switch(True, on_toggle))],
+                               end=ui.button("Reset", on_press, size="sm", variant="ghost")), width=420)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.settings_group`
 
 ```python
-settings_group(title, rows, *, description=None, theme=None)
+settings_group(title, rows, *, description=None, end=None, theme=None)
 ```
 
 A titled block of `ui.field` rows separated by lines, like a settings screen.
@@ -100,6 +113,7 @@ A titled block of `ui.field` rows separated by lines, like a settings screen.
 | `title` | *required* | Group title. |
 | `rows` | *required* | The rows (usually `ui.field`). |
 | `description` | `None` | Secondary text. |
+| `end` | `None` | Widget at the right of the title (a Reset button…). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#settings_group)

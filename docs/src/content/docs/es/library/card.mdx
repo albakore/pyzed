@@ -125,12 +125,45 @@ ui.card(ui.label("Roomy"), padding=28)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="card-v3-1" caption={"selected=True"} alt={"Tarjeta: selected=True"} code="Código" mono>
+
+```python
+ui.card(ui.muted("Python app with a window"), title="Desktop app", on_press=on_press,
+        selected=True, width=260)
+```
+
+</Variant>
+<Variant name="card-v3-2" caption={"footer=, elevated=True"} alt={"Tarjeta: footer=, elevated=True"} code="Código" mono>
+
+```python
+ui.card(ui.muted("3 files changed"), title="Commit", footer=[ui.button("Push", on_press)],
+        elevated=True, width=260)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.card`
 
 ```python
-card(content, *, title=None, actions=(), padding=16, width=None, theme=None)
+card(
+    content,
+    *,
+    title=None,
+    actions=(),
+    padding=16,
+    width=None,
+    footer=(),
+    on_press=None,
+    selected=False,
+    elevated=False,
+    theme=None,
+)
 ```
 
 Una superficie con borde para agrupar contenido, con título y acciones opcionales.
@@ -142,6 +175,10 @@ Una superficie con borde para agrupar contenido, con título y acciones opcional
 | `actions` | `()` | Widgets extra (normalmente botones) que se muestran como acciones. |
 | `padding` | `16` | Relleno interior. |
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `footer` | `()` | Widgets abajo a la derecha (botones). |
+| `on_press` | `None` | Hace pulsable toda la tarjeta. |
+| `selected` | `False` | La resalta con el color de acento. |
+| `elevated` | `False` | Añade una sombra. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#card)

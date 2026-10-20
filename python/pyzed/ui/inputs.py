@@ -215,12 +215,41 @@ def _number(value: float, step: float) -> str:
     return f"{value:.{decimals}f}"
 
 
-def progress(value: float, *, max: float = 1.0, tint: str = "accent", height: float = 4,  # noqa: A002
-             width: Any = "fill", theme: Optional[Theme] = None) -> _core.Widget:
-    """A thin rounded progress bar filled to ``value`` out of ``max``, in the ``tint`` color."""
+def progress(value: Optional[float], *, max: float = 1.0, tint: str = "accent", height: float = 4,  # noqa: A002
+             width: Any = "fill", label: Optional[str] = None, show_value: bool = False,  # noqa: F811
+             theme: Optional[Theme] = None) -> _core.Widget:
+    """A thin rounded progress bar filled to ``value`` out of ``max``, in the ``tint`` color.
+
+    ``value=None`` is indeterminate: a segment sweeps along the bar (keep a
+    ``pz.every(1/30, ...)`` subscription while it shows). ``label`` goes above the bar and
+    ``show_value`` adds the percentage at its right.
+    """
     t = _theme(theme)
-    return _core.progress_bar(value, min=0.0, max=max, width=width, height=height,
-                              accent=t.color(tint), bg=alpha(t.text, 0.1), radius=height / 2)
+    if value is None:
+        import time
+
+        phase = (time.monotonic() * 0.8) % 1.4 - 0.4  # the segment enters and leaves the bar
+        before = round(_clamp01(phase) * 100)
+        segment = round(_clamp01(phase + 0.4) * 100) - before
+        parts = [_core.space(width=f"fill:{before}") if before else None,
+                 _core.container(None, width=f"fill:{segment}", height="fill", bg=t.color(tint), radius=height / 2)
+                 if segment else None,
+                 _core.space(width=f"fill:{100 - before - segment}") if before + segment < 100 else None]
+        bar = _core.container(_core.row(parts, height="fill", width="fill"), width=width, height=height,
+                              bg=alpha(t.text, 0.1), radius=height / 2, clip=True)
+    else:
+        bar = _core.progress_bar(value, min=0.0, max=max, width=width, height=height,
+                                 accent=t.color(tint), bg=alpha(t.text, 0.1), radius=height / 2)
+    if show_value and value is not None:
+        percent = _core.text(f"{value / max:.0%}" if max else "", size=12, color=t.text_muted, wrap=False)
+        bar = _core.row([bar, percent], spacing=8, align="center", width=width)
+    if label:
+        bar = _core.column([_core.text(label, size=12.5, color=t.text_muted), bar], spacing=4, width=width)
+    return bar
+
+
+def _clamp01(value: float) -> float:
+    return min(max(value, 0.0), 1.0)
 
 
 def _options(options: Sequence[Any]) -> List[Tuple[Any, str, Optional[str]]]:

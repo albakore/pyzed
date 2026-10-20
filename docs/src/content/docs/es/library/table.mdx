@@ -149,6 +149,29 @@ pz.container(ui.table([ui.Column("Name", lambda p: p[0]),
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`on_row_double_press(fila)` abre una fila y `on_row_context(fila)` muestra un menú contextual.
+
+<VariantGrid>
+<Variant name="table-v3-1" caption={"Selección múltiple"} alt={"Tabla: Selección múltiple"} code="Código">
+
+```python
+rows = [{"name": "app.py", "size": 4}, {"name": "ui.py", "size": 12}, {"name": "README.md", "size": 2}]
+ui.table(["name", "size"], rows, selected=[rows[0], rows[2]], on_row_press=on_press,
+         on_row_double_press=on_open, on_row_context=on_context, height=130)
+```
+
+</Variant>
+<Variant name="table-v3-2" caption={"empty="} alt={"Tabla: empty="} code="Código" mono>
+
+```python
+ui.table(["name", "size"], [], empty="No files yet", height=100)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Ejemplos
 
 ### Celdas personalizadas
@@ -192,6 +215,9 @@ table(
     striped=False,
     row_height=30,
     height=None,
+    on_row_double_press=None,
+    on_row_context=None,
+    empty=None,
     theme=None,
 )
 ```
@@ -206,10 +232,13 @@ Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El
 | `descending` | `False` | Orden descendente. |
 | `on_sort` | `None` | Callable que recibe el título pulsado. |
 | `on_row_press` | `None` | Callable que recibe la fila pulsada. |
-| `selected` | `None` | La fila resaltada. |
+| `selected` | `None` | La fila a resaltar, o una lista o conjunto de filas (selección múltiple). |
 | `striped` | `False` | Filas alternas sombreadas. |
 | `row_height` | `30` | Alto de cada fila. |
 | `height` | `None` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `on_row_double_press` | `None` | Recibe la fila con un doble clic (abrir, editar…). |
+| `on_row_context` | `None` | Recibe la fila con un clic derecho (un menú contextual). |
+| `empty` | `None` | Texto o widget que se muestra en lugar de las filas cuando no hay ninguna. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#table)

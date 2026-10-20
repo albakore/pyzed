@@ -149,6 +149,29 @@ pz.container(ui.table([ui.Column("Name", lambda p: p[0]),
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`on_row_double_press(row)` opens a row and `on_row_context(row)` shows a context menu.
+
+<VariantGrid>
+<Variant name="table-v3-1" caption={"Multiple selection"} alt={"Table: Multiple selection"} code="Code">
+
+```python
+rows = [{"name": "app.py", "size": 4}, {"name": "ui.py", "size": 12}, {"name": "README.md", "size": 2}]
+ui.table(["name", "size"], rows, selected=[rows[0], rows[2]], on_row_press=on_press,
+         on_row_double_press=on_open, on_row_context=on_context, height=130)
+```
+
+</Variant>
+<Variant name="table-v3-2" caption={"empty="} alt={"Table: empty="} code="Code" mono>
+
+```python
+ui.table(["name", "size"], [], empty="No files yet", height=100)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Examples
 
 ### Custom cells
@@ -192,6 +215,9 @@ table(
     striped=False,
     row_height=30,
     height=None,
+    on_row_double_press=None,
+    on_row_context=None,
+    empty=None,
     theme=None,
 )
 ```
@@ -206,10 +232,13 @@ A data table with a fixed header, optional sorting and row selection. Sorting ha
 | `descending` | `False` | Descending order. |
 | `on_sort` | `None` | Callable that receives the clicked title. |
 | `on_row_press` | `None` | Callable that receives the clicked row. |
-| `selected` | `None` | The highlighted row. |
+| `selected` | `None` | The row to highlight, or a list or set of rows (multiple selection). |
 | `striped` | `False` | Shaded alternating rows. |
 | `row_height` | `30` | Height of each row. |
 | `height` | `None` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_row_double_press` | `None` | Called with the row on a double click (open, edit…). |
+| `on_row_context` | `None` | Called with the row on a right click (a context menu). |
+| `empty` | `None` | Text or widget shown in place of the rows when there are none. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#table)

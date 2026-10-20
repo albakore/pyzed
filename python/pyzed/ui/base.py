@@ -433,10 +433,20 @@ def card(
     actions: Iterable[Any] = (),
     padding: float = 16,
     width: Any = None,
+    footer: Iterable[Any] = (),
+    on_press: Any = None,
+    selected: bool = False,
+    elevated: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A bordered surface for grouping content."""
+    """A bordered surface for grouping content.
+
+    ``footer`` widgets go at the bottom right (buttons); ``on_press`` makes the whole card
+    clickable (a choice, a project to open) and ``selected`` outlines it in the accent color;
+    ``elevated`` adds a shadow.
+    """
     t = _theme(theme)
+    footer = list(footer)
     header = None
     if title or actions:
         header = _core.row(
@@ -444,12 +454,15 @@ def card(
             spacing=4,
             align="center",
         )
-    return _core.container(
-        _core.column([header, content], spacing=12),
+    bottom = _core.row([_core.space(width="fill"), *footer], spacing=8, align="center") if footer else None
+    box = _core.container(
+        _core.column([header, content, bottom], spacing=12),
         padding=padding,
         width=width,
         bg=t.surface,
-        border_color=t.border_variant,
+        border_color=t.accent if selected else t.border_variant,
         border_width=1.0,
         radius=t.radius + 2,
+        shadow=(t.shadow, (0, 4), 16) if elevated else None,
     )
+    return box if on_press is None else box.on(click=on_press, cursor="pointer")

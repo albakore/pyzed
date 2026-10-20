@@ -82,12 +82,40 @@ ui.empty_state("No projects yet", "Create one to get started.", icon="folder-plu
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="empty-state-v2-1" caption={"size=\"sm\", height=\"shrink\""} alt={"Estado vacío: size=\"sm\", height=\"shrink\""} code="Código" mono>
+
+```python
+ui.empty_state("No results", "Try another search", icon="search", size="sm", height="shrink")
+```
+
+</Variant>
+<Variant name="empty-state-v2-2" caption={"size=\"lg\""} alt={"Estado vacío: size=\"lg\""} code="Código" mono>
+
+```python
+ui.empty_state("No projects", "Create one to start", icon="folder", size="lg", height=220)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.empty_state`
 
 ```python
-empty_state(title, description=None, *, icon='inbox', actions=(), theme=None)
+empty_state(
+    title,
+    description=None,
+    *,
+    icon='inbox',
+    actions=(),
+    size='md',
+    height='fill',
+    theme=None,
+)
 ```
 
 Un marcador centrado para listas vacías, búsquedas sin resultados, etc.
@@ -98,6 +126,8 @@ Un marcador centrado para listas vacías, búsquedas sin resultados, etc.
 | `description` | `None` | Texto secundario. |
 | `icon` | `"inbox"` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `actions` | `()` | Widgets extra (normalmente botones) que se muestran como acciones. |
+| `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `height` | `"fill"` | `"fill"` (por defecto), píxeles o `"shrink"`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#empty_state)

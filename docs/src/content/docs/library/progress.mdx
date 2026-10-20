@@ -151,12 +151,31 @@ ui.progress(0.6, height=10, width=240)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="progress-v4-1" caption={"label=, show_value=True"} alt={"Progress: label=, show_value=True"} code="Code" mono>
+
+```python
+pz.container(ui.progress(0.42, label="Downloading", show_value=True), width=300)
+```
+
+</Variant>
+<Variant name="progress-v4-2" caption={"Indeterminate (value=None)"} alt={"Progress: Indeterminate (value=None)"} code="Code">
+
+```python
+pz.container(ui.progress(None, label="Indexing"), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="progress-v4-1" caption={"pz.progress_bar"} alt={"Progress: pz.progress_bar"} code="Code" mono>
+<Variant name="progress-v5-1" caption={"pz.progress_bar"} alt={"Progress: pz.progress_bar"} code="Code" mono>
 
 ```python
 pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd33", radius=6)
@@ -170,18 +189,30 @@ pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd
 ### `ui.progress`
 
 ```python
-progress(value, *, max=1.0, tint='accent', height=4, width='fill', theme=None)
+progress(
+    value,
+    *,
+    max=1.0,
+    tint='accent',
+    height=4,
+    width='fill',
+    label=None,
+    show_value=False,
+    theme=None,
+)
 ```
 
 A thin progress bar.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-| `value` | *required* | Current value. |
+| `value` | *required* | Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows). |
 | `max` | `1.0` | Maximum value. |
 | `tint` | `"accent"` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `height` | `4` | Thickness. |
 | `width` | `"fill"` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `label` | `None` | Text above the bar. |
+| `show_value` | `False` | Adds the percentage at its right. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#progress)

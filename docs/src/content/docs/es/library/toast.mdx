@@ -136,6 +136,25 @@ ui.toast("Now playing", "Lo-fi beats", icon="music", width=280)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="toast-v3-1" caption={"progress=0.6"} alt={"Notificación: progress=0.6"} code="Código" mono>
+
+```python
+ui.toast("Uploading", "notes.md", kind="info", progress=0.6, on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="toast-v3-2" caption={"on_press="} alt={"Notificación: on_press="} code="Código" mono>
+
+```python
+ui.toast("Build failed", "Click to see the log", kind="error", on_press=on_press)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.toast`
@@ -150,6 +169,8 @@ toast(
     on_dismiss=None,
     actions=(),
     width=340,
+    progress=None,
+    on_press=None,
     theme=None,
 )
 ```
@@ -165,6 +186,8 @@ Una notificación.
 | `on_dismiss` | `None` | Mensaje o callable que se envía al cerrar. |
 | `actions` | `()` | Widgets extra (normalmente botones) que se muestran como acciones. |
 | `width` | `340` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `progress` | `None` | De 0 a 1: una barra fina abajo (tiempo restante, una descarga). |
+| `on_press` | `None` | Hace pulsable la tarjeta. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#toast)

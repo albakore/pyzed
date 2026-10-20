@@ -2721,3 +2721,20 @@ _params("pyzed.ui.Tab", pinned="Muestra solo el icono, no tiene botón de cerrar
 _params("pyzed.ui.tab_bar", on_context="Recibe el id de la pestaña en la que se hace clic derecho.", on_new="Se envía con un doble clic en el espacio vacío tras las pestañas.")
 _params("pyzed.ui.breadcrumbs", max_items="Conserva la primera parte y las últimas y muestra `…` en lugar del resto.", on_more="Hace pulsable el `…`.")
 _params("pyzed.ui.toolbar", center="Se mantiene en el centro de la barra sean cuales sean los anchos de los lados.")
+
+# Estados y eventos de tablas, tarjetas, estadísticas, barras de progreso, grupos de ajustes, modales, avisos y estados vacíos.
+_params("pyzed.ui.table", selected="La fila a resaltar, o una lista o conjunto de filas (selección múltiple).",
+        on_row_double_press="Recibe la fila con un doble clic (abrir, editar…).", on_row_context="Recibe la fila con un clic derecho (un menú contextual).",
+        empty="Texto o widget que se muestra en lugar de las filas cuando no hay ninguna.")
+_params("pyzed.ui.card", footer="Widgets abajo a la derecha (botones).", on_press="Hace pulsable toda la tarjeta.",
+        selected="La resalta con el color de acento.", elevated="Añade una sombra.")
+_params("pyzed.ui.stat", icon="Icono antes del título.", inverse="Pinta de verde una bajada y de rojo una subida (errores, latencia…).", on_press="Hace pulsable la tarjeta.")
+_params("pyzed.ui.progress", value="Progreso, o `None` para una barra indeterminada (mantén una suscripción `pz.every(1/30, ...)` mientras se ve).",
+        label="Texto sobre la barra.", show_value="Añade el porcentaje a su derecha.")
+_params("pyzed.ui.settings_group", end="Widget a la derecha del título (un botón Restablecer…).")
+_params("pyzed.ui.modal", width='Píxeles o `"sm"` (360), `"md"` (480), `"lg"` (640) o `"xl"` (820).', description="Línea atenuada bajo el título.",
+        icon="Icono antes del título.", max_height="Desplaza el contenido más alto que esto, sin ocultar la cabecera ni el pie.",
+        on_close="El botón de cerrar; también lo envía Escape mientras el diálogo tiene el foco.")
+_params("pyzed.ui.toast", progress="De 0 a 1: una barra fina abajo (tiempo restante, una descarga).", on_press="Hace pulsable la tarjeta.")
+_params("pyzed.ui.empty_state", size='`"sm"`, `"md"` o `"lg"`.', height='`"fill"` (por defecto), píxeles o `"shrink"`.')
+_params("pyzed.ui.count_badge", show_zero="Con `False`, un 0 no dibuja nada.")
