@@ -442,6 +442,32 @@ def test_rotated_images_render(tmp_path):
     assert not red(px[47][128]) and red(px[47][16])
 
 
+def test_svg_color_tints_the_shapes_only(tmp_path):
+    shapes = ('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">'
+              '<circle cx="10" cy="10" r="8" fill="#e33"/><rect x="22" y="22" width="16" height="16" fill="#3a3"/>'
+              '</svg>')
+
+    class Demo(pz.App):
+        size = (200, 100)
+
+        def view(self):
+            return pz.container(pz.row([
+                pz.svg(shapes, width=80, height=80, color="#8000ff"),
+                pz.svg(shapes, width=80, height=80, color="#8000ff80"),
+            ], spacing=20), center=True, width="fill", height="fill", bg="#ffffff")
+
+    out = tmp_path / "tint.png"
+    Demo().screenshot(out, scale=1)
+    px = read_png(out)
+    # The first svg spans x 10..90, y 10..90 (2 px per viewBox unit).
+    assert px[30][30][:3] == (128, 0, 255)            # the circle, tinted
+    assert px[70][70][:3] == (128, 0, 255)            # the square, tinted
+    assert px[70][30][:3] == (255, 255, 255)          # transparent parts stay transparent
+    assert px[30][70][:3] == (255, 255, 255)
+    r, g, b = px[30][130][:3]                         # a half-transparent tint blends in
+    assert abs(r - 191) <= 3 and abs(g - 127) <= 3 and b == 255
+
+
 def test_ui_button_style_overrides_its_defaults(monkeypatch):
     # `radius=` and friends used to clash with the values ui.button passes itself.
     assert isinstance(ui.button("Save", radius=12, padding=(4, 20), height=40), pz.Widget)
