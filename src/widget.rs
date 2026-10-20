@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use iced::alignment::{Horizontal, Vertical};
 use iced::{Color, Font, Length, Padding};
+use pyo3::IntoPyObjectExt;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString, PyTuple};
@@ -497,6 +498,53 @@ impl Widget {
         props: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Py<Widget>> {
         crate::styled::apply(slf, styles, defaults, props)
+    }
+
+    /// The width or height (``axis``) the widget was given, as ``style()`` takes it
+    /// (``"fill"``, ``"fill:2"``, ``"shrink"`` or pixels), or ``None`` if it sets none.
+    /// ``pz.box`` reads it to leave sized children as they are.
+    fn _length(slf: &Bound<'_, Self>, axis: &str) -> PyResult<Option<Py<PyAny>>> {
+        let py = slf.py();
+        let width = match axis {
+            "width" => true,
+            "height" => false,
+            _ => return Err(PyValueError::new_err("axis must be 'width' or 'height'")),
+        };
+        let pick = |w: Option<Length>, h: Option<Length>| if width { w } else { h };
+        let length = match &slf.get().kind {
+            Kind::Column { layout, .. }
+            | Kind::Row { layout, .. }
+            | Kind::Container { layout, .. }
+            | Kind::Button { layout, .. }
+            | Kind::TextInput { layout, .. }
+            | Kind::Scrollable { layout, .. }
+            | Kind::Stack { layout, .. } => pick(layout.width, layout.height),
+            Kind::Space {
+                width: w,
+                height: h,
+            }
+            | Kind::Pin {
+                width: w,
+                height: h,
+                ..
+            } => pick(Some(*w), Some(*h)),
+            Kind::Styled(props) => match pick(props.width, props.height) {
+                Some(l) => Some(l),
+                None => return Widget::_length(props.child.bind(py), axis),
+            },
+            Kind::Events { child, .. } | Kind::Animated { child, .. } => {
+                return Widget::_length(child.bind(py), axis);
+            }
+            _ => None,
+        };
+        length
+            .map(|l| match l {
+                Length::Fill => "fill".into_py_any(py),
+                Length::Shrink => "shrink".into_py_any(py),
+                Length::FillPortion(n) => format!("fill:{n}").into_py_any(py),
+                Length::Fixed(v) => v.into_py_any(py),
+            })
+            .transpose()
     }
 
     /// Gives the widget stylesheet classes (and an ``id``) and returns it styled by the
