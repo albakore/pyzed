@@ -1,12 +1,12 @@
 ---
 title: Keyboard and shortcuts
-description: "Keyboard shortcuts in Pyzed apps: Zed-style key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI."
+description: "Keyboard shortcuts in Pyzed apps: key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI."
 sidebar:
   order: 8
 ---
 
 Define `on_key(self, combo)` in your app to receive **every** key press, like a global keymap.
-`combo` is a Zed-style string:
+`combo` is a string such as `ctrl-shift-p` (the same format Zed keymaps use):
 
 | Key | `combo` |
 | --- | --- |

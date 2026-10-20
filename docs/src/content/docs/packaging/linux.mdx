@@ -1,0 +1,122 @@
+---
+title: Building on Linux
+description: "Package a Pyzed app for Linux: build with pyzed build, pick the distribution to build on for glibc compatibility, ship a tarball or zip with a .desktop entry, and what about AppImage, .deb and Flatpak."
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+On Linux, `pyzed build` makes a folder, `dist/Shop/`, with an executable called `Shop` and everything it needs. No
+signing is required.
+
+## Build it
+
+<Steps>
+
+1. Install [uv](https://docs.astral.sh/uv/) if you do not have it:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. In the project folder, build:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash
+   		uv run pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash
+   		source .venv/bin/activate
+   		pyzed build          # or: python -m pyzed build
+   		```
+   	</TabItem>
+   </Tabs>
+
+3. Try it:
+
+   ```bash
+   ./dist/Shop/Shop
+   ```
+
+</Steps>
+
+## Which distribution to build on
+
+The app links against the C library (glibc) of the system it was built on, and runs on that version **or newer**.
+Build on the **oldest** distribution you want to support. For example, an app built on Ubuntu 22.04 runs on Ubuntu
+22.04, 24.04 and later, and on other distributions with glibc 2.35 or newer, but not on Ubuntu 20.04.
+
+<Aside type="tip" title="Building in a container">
+To build for older systems from a newer one, build inside a container of the older distribution (for example
+`docker run -it -v "$PWD":/app -w /app ubuntu:22.04`), install uv there and run `uv run pyzed build`.
+</Aside>
+
+Pyzed's own wheels need glibc 2.28 or newer (`manylinux_2_28`), so that is the oldest base that can work. Alpine and
+other musl-based systems need a build made on them.
+
+## What the target needs
+
+The app brings Python and Pyzed with it, but uses the system's graphics and windowing libraries: a desktop session
+with X11 or Wayland, `libxkbcommon`, and a Vulkan or OpenGL driver (Mesa on most systems). Every desktop distribution
+has them; minimal server images may not.
+
+## Share it
+
+### As an archive
+
+The simplest way: an archive of the folder. People unpack it anywhere and run `./Shop/Shop`.
+
+```bash
+tar -czf Shop-linux-x86_64.tar.gz -C dist Shop
+# or a zip, which the self-updater uses:
+(cd dist && zip -qr ../Shop-linux-x86_64.zip Shop)
+```
+
+Name the zip `<app>-linux-<arch>.zip` if you plan to [update the app by itself](/pyzed/packaging/updates/).
+
+### Add it to the application menu
+
+A `.desktop` file makes the app appear in the desktop's application menu, with its icon. Install it per user, no root
+needed:
+
+```ini title="~/.local/share/applications/com.acme.shop.desktop"
+[Desktop Entry]
+Type=Application
+Name=Shop
+Exec=/home/you/.local/share/shop/Shop
+Icon=/home/you/.local/share/shop/icon.png
+Categories=Office;
+Terminal=false
+```
+
+Pyzed Design's Linux installer does exactly this: it downloads the release zip, checks it against the release's
+`SHA256SUMS`, unpacks it into `~/.local/share/pyzed-design`, links a command into `~/.local/bin` and adds the menu
+entry. Its script, [`docs/public/install.sh`](https://github.com/albakore/pyzed/blob/main/docs/public/install.sh), is
+a good template for your own `curl ... | sh` installer.
+
+### AppImage, .deb, .rpm, Flatpak, Snap
+
+<Aside type="caution" title="Not built by pyzed build yet">
+`pyzed build` makes the app folder only. Packaging it as an AppImage, a `.deb`/`.rpm` or a Flatpak/Snap is done with
+those formats' own tools, starting from `dist/Shop/`:
+
+- **AppImage**: put the folder in an `AppDir` with an `AppRun` that starts `Shop`, a `.desktop` file and an icon, then
+  run `appimagetool`.
+- **.deb / .rpm**: tools such as [fpm](https://fpm.readthedocs.io) turn a folder into either:
+  `fpm -s dir -t deb -n shop -v 1.0.0 dist/Shop/=/opt/shop/`.
+- **Flatpak / Snap**: write a manifest that copies the folder and declares the graphics and display permissions.
+
+These recipes are not tested by Pyzed.
+</Aside>
+
+## Things to know
+
+- **Architecture:** the app is built for the machine it is built on: `x86_64`, or `aarch64` on ARM (GitHub offers ARM
+  runners too, see [CI](/pyzed/packaging/ci/)).
+- **No GPU:** on virtual machines without a GPU, start the app with the CPU renderer if the window stays blank; see
+  [Troubleshooting](/pyzed/packaging/troubleshooting/).
+- **Executable bit:** zip files made on Windows lose the executable bit. Build and archive Linux apps on Linux.

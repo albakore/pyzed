@@ -78,8 +78,14 @@ belongs to the section whose sidebar lists it, usually through the folder it liv
 - Link to pages with `<NavCards>` (`src/components/NavCards.astro`); a card without `href` shows as "coming soon".
 - Show screenshots and short recordings with `<Media>` (`src/components/Media.astro`): an image from `src/assets`
   (optionally with a `light` version) or an mp4/webm loop with a `poster`, plus a caption.
-- Commands go in `<Tabs syncKey="pkg">` with a `uv` and a `pip` tab, with titled code blocks for Windows and for
-  macOS/Linux when they differ.
+- Write terminal commands with `` <Commands uv={`...`} pip={`...`} python={`...`} /> ``
+  (`src/components/Commands.astro`, in an `.mdx` page). It draws the `uv`, `pip` and `python` tabs (synced across
+  the site) and splits each into macOS/Linux and Windows PowerShell blocks when they differ. Write `{py}`,
+  `{venv}`, `{activate}`, `{vpy}` and `{env NAME=value}` where the systems differ; the component fills in
+  `python3`/`py`, `source .venv/bin/activate`/`.venv\Scripts\Activate.ps1` and so on. Commands that only exist
+  on one system go in `<Tabs syncKey="os">` instead.
+- Theme swatches come from `src/components/theme-tokens.json` (written by `docs/scripts/gen_theme_tokens.py`), and
+  the theming screenshots from `docs/scripts/theming_shots.py`.
 - **Moving a page:** `git mv` it in both languages, add the old path to `MOVED` in `astro.config.mjs` so the old
   URL redirects, and update the links to it (`git grep` the old path, including `docs/scripts` and `python/`).
 

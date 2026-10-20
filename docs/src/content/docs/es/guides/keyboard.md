@@ -1,12 +1,12 @@
 ---
 title: Teclado y atajos
-description: "Atajos de teclado en apps de Pyzed: combinaciones estilo Zed con on_key y cómo mostrar los atajos en menús, botones y el resto de la interfaz."
+description: "Atajos de teclado en apps de Pyzed: combinaciones con on_key y cómo mostrar los atajos en menús, botones y el resto de la interfaz."
 sidebar:
   order: 8
 ---
 
 Define `on_key(self, combo)` en tu app para recibir **todas** las teclas pulsadas, como un
-keymap global. `combo` es un texto al estilo de Zed:
+keymap global. `combo` es un texto como `ctrl-shift-p` (el mismo formato que usan los keymaps de Zed):
 
 | Tecla | `combo` |
 | --- | --- |

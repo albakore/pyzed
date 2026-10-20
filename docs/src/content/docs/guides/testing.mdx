@@ -1,0 +1,63 @@
+---
+title: Tests and screenshots
+description: "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration."
+sidebar:
+  order: 10
+---
+
+import Commands from '../../../components/Commands.astro';
+
+`app.screenshot(path)` renders the app's current state **off-screen** and saves a PNG.
+It needs no window, display or GPU (it uses the software renderer), so it works in CI.
+
+```python
+app = MyApp()
+app.items = ["one", "two"]          # set up the state you want to show
+app.screenshot("docs/list.png", size=(480, 320), scale=2)
+```
+
+- `size`: logical size; defaults to `App.size`.
+- `scale`: PNG pixel density (2 = retina).
+- `wait`: seconds to wait before capturing, in case `on_start` started some work.
+
+Every image in this documentation is generated this way:
+
+<Commands
+	uv={`
+		uv run python examples/screenshots.py              # large screenshots (docs/screenshots)
+		uv run python docs/scripts/component_shots.py      # component illustrations
+	`}
+	pip={`
+		python examples/screenshots.py              # large screenshots (docs/screenshots)
+		python docs/scripts/component_shots.py      # component illustrations
+	`}
+	python={`
+		{py} examples/screenshots.py              # large screenshots (docs/screenshots)
+		{py} docs/scripts/component_shots.py      # component illustrations
+	`}
+/>
+
+## Testing the logic
+
+Since the state lives in your object, `update` and callbacks are tested like plain Python:
+
+```python
+def test_counter():
+    app = Counter()
+    app.update("increment")
+    app.update("increment")
+    assert app.count == 2
+```
+
+## Testing that the view renders
+
+`view()` must return a `Widget` without raising. A screenshot makes a good smoke test:
+
+```python
+def test_view_renders(tmp_path):
+    app = MyApp()
+    app.screenshot(tmp_path / "ui.png", size=(800, 600))
+    assert (tmp_path / "ui.png").stat().st_size > 0
+```
+
+If `view()` raises, the screenshot shows the traceback instead of the UI, just like the window.

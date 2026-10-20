@@ -28,7 +28,7 @@ def dialogo(self):
 ```
 
 `align_x`, `align_y` y `offset` controlan dónde aparece el overlay (por defecto, centrado arriba
-como la paleta de Zed).
+como una paleta de comandos).
 
 ## Modal
 

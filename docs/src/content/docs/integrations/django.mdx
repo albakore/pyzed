@@ -10,6 +10,7 @@ import desktop from '../../../../../examples/integrations/django_polls/desktop.p
 import client from '../../../../../examples/integrations/django_polls/client.py?raw';
 import window from '../../../../../examples/integrations/django_polls/polls_window.py?raw';
 import views from '../../../../../examples/integrations/django_polls/polls/views.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 The demo is the project from [Django's tutorial](https://docs.djangoproject.com/en/stable/intro/tutorial01/),
 `mysite` with its `polls` app, built step by step as the tutorial does: models, migrations, the
@@ -27,10 +28,24 @@ correspond to two [architectures](/pyzed/integrations/architectures/):
 
 1. **Create the project and the app** (already done in the demo folder):
 
-   ```bash
-   uv run django-admin startproject mysite .
-   uv run manage.py startapp polls
-   ```
+   <Commands
+   	uv={`
+   		uv run django-admin startproject mysite .
+   		uv run manage.py startapp polls
+   	`}
+   	pip={`
+   		{venv}
+   		{activate}
+   		pip install pyzed-ui django httpx
+   		django-admin startproject mysite .
+   		python manage.py startapp polls
+   	`}
+   	python={`
+   		{py} -m pip install pyzed-ui django httpx
+   		{py} -m django startproject mysite .
+   		{py} manage.py startapp polls
+   	`}
+   />
 
    and add `"polls.apps.PollsConfig"` to `INSTALLED_APPS` in `mysite/settings.py`.
 
@@ -49,10 +64,20 @@ correspond to two [architectures](/pyzed/integrations/architectures/):
 
 3. **Create the tables and an admin user:**
 
-   ```bash
-   uv run manage.py migrate
-   uv run manage.py createsuperuser
-   ```
+   <Commands
+   	uv={`
+   		uv run manage.py migrate
+   		uv run manage.py createsuperuser
+   	`}
+   	pip={`
+   		python manage.py migrate
+   		python manage.py createsuperuser
+   	`}
+   	python={`
+   		{py} manage.py migrate
+   		{py} manage.py createsuperuser
+   	`}
+   />
 
 4. **Register the admin** (part 7), with the choices inline, so you can add polls at
    [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
@@ -64,9 +89,11 @@ correspond to two [architectures](/pyzed/integrations/architectures/):
 
 6. **Run the site:**
 
-   ```bash
-   uv run manage.py runserver
-   ```
+   <Commands
+   	uv={`uv run manage.py runserver`}
+   	pip={`python manage.py runserver`}
+   	python={`{py} manage.py runserver`}
+   />
 
    The polls are at [http://127.0.0.1:8000/polls/](http://127.0.0.1:8000/polls/).
 
@@ -77,10 +104,20 @@ correspond to two [architectures](/pyzed/integrations/architectures/):
 `desktop.py` sets up Django the way `manage.py` does and then imports the models. No web server
 is needed; the window reads and writes `db.sqlite3` through the ORM.
 
-```bash
-uv run manage.py migrate     # once
-uv run desktop.py
-```
+<Commands
+	uv={`
+		uv run manage.py migrate     # once
+		uv run desktop.py
+	`}
+	pip={`
+		python manage.py migrate     # once
+		python desktop.py
+	`}
+	python={`
+		{py} manage.py migrate     # once
+		{py} desktop.py
+	`}
+/>
 
 ```mermaid
 flowchart LR
@@ -152,10 +189,20 @@ flowchart LR
 `client.py` doesn't import Django at all. It talks to the site's JSON views with httpx, so the
 site can run on this computer or on a server:
 
-```bash
-uv run manage.py runserver   # terminal 1
-uv run client.py             # terminal 2 (or: uv run client.py https://polls.example.com)
-```
+<Commands
+	uv={`
+		uv run manage.py runserver   # terminal 1
+		uv run client.py             # terminal 2 (or: uv run client.py https://polls.example.com)
+	`}
+	pip={`
+		python manage.py runserver   # terminal 1
+		python client.py             # terminal 2 (or: python client.py https://polls.example.com)
+	`}
+	python={`
+		{py} manage.py runserver   # terminal 1
+		{py} client.py             # terminal 2 (or: {py} client.py https://polls.example.com)
+	`}
+/>
 
 ```mermaid
 flowchart LR

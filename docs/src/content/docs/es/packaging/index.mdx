@@ -1,6 +1,6 @@
 ---
 title: Distribuye tu app
-description: "Empaqueta una app Pyzed para Windows, macOS y Linux: un ejecutable independiente con Python dentro, creado con pyzed build, más firma y compilación en CI."
+description: "Empaqueta una app Pyzed para Windows, macOS y Linux: un ejecutable independiente con Python dentro, creado con pyzed build, más iconos, firma, instaladores, compilaciones en CI y autoactualización."
 section:
   eyebrow: Distribuir
   icon: rocket
@@ -14,8 +14,8 @@ import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 
 Cuando tu app funciona en tu equipo, `pyzed build` la empaqueta: Python, Pyzed, tus dependencias, tu código y tus
-formularios van a una carpeta (o un solo archivo) que funciona por sí sola. Ejecútalo desde la raíz de tu
-[proyecto](/pyzed/es/getting-started/new-project/):
+formularios van a una carpeta (o un archivo) que funciona por sí sola. Quien la use no necesita Python, pip ni nada
+más. Ejecútalo desde la raíz de tu [proyecto](/pyzed/es/getting-started/new-project/):
 
 <Tabs syncKey="pkg">
 	<TabItem label="uv">
@@ -30,49 +30,69 @@ formularios van a una carpeta (o un solo archivo) que funciona por sí sola. Eje
 		```
 
 		```powershell title="Windows (PowerShell)"
-		.venv\Scripts\activate
-		pyzed build          # o: python -m pyzed build
+		.venv\Scripts\Activate.ps1
+		pyzed build          # o: py -m pyzed build
 		```
 	</TabItem>
 </Tabs>
 
 | Compilas en | Obtienes | La gente la ejecuta |
 | --- | --- | --- |
-| Windows | `dist\Shop\Shop.exe` | Con doble clic, o desde un zip o un instalador |
+| Windows | `dist\Shop\Shop.exe` | Con doble clic, desde un zip o un instalador |
 | macOS | `dist/Shop.app` | Abriéndola (fírmala y notarízala para compartirla) |
-| Linux | `dist/Shop/Shop` | Con `./Shop`, o como AppImage, .deb o Flatpak |
+| Linux | `dist/Shop/Shop` | Con `./Shop`, o desde el menú de aplicaciones |
+
+## De tu proyecto a tus usuarios
+
+```mermaid
+flowchart LR
+    P["Tu proyecto<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller)"]
+    B --> W["Windows<br/>Shop.exe"]
+    B --> M["macOS<br/>Shop.app"]
+    B --> L["Linux<br/>Shop/Shop"]
+    W --> S["Firmar · comprimir · instalador"]
+    M --> S
+    L --> S
+    S --> R["GitHub Release"]
+    R -. "pyzed.updater" .-> U["Apps instaladas<br/>se actualizan solas"]
+```
 
 <Aside type="caution" title="Una compilación por plataforma">
-Una compilación solo funciona en el sistema donde se hizo: compila la app de Windows en Windows, la de macOS en
-macOS y la de Linux en Linux. Un flujo de CI puede hacer las tres por ti.
-</Aside>
-
-<Aside type="note">
-`pyzed build` ejecuta [PyInstaller](https://pyinstaller.org) dentro del entorno de tu proyecto mediante
-[uv](https://docs.astral.sh/uv/), así que uv tiene que estar instalado aunque uses pip para todo lo demás.
+Una compilación solo funciona en el sistema donde se hizo: compila la app de Windows en Windows, la de macOS en macOS y
+la de Linux en Linux. Un [flujo de CI](/pyzed/es/packaging/ci/) puede hacer las tres por ti.
 </Aside>
 
 ## En esta sección
 
 <NavCards
 	items={[
-		{ title: 'Compilar y distribuir', text: 'Qué se incluye, opciones, compilar para todas las plataformas en CI, firma y solución de problemas.', href: '/pyzed/es/packaging/build/', icon: 'rocket', tag: 'Empieza aquí' },
-		{ title: 'Proyectos con uv', text: 'La estructura de proyecto que espera <code>pyzed build</code> y cómo gestionar sus dependencias.', href: '/pyzed/es/guides/projects/', icon: 'document' },
+		{ title: 'Cómo funciona la compilación', text: 'Qué se incluye, cada opción de <code>pyproject.toml</code>, archivos de datos y otros empaquetadores.', href: '/pyzed/es/packaging/build/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Windows', text: 'El .exe, carpeta o archivo único, un zip o un instalador de Inno Setup, y firma para SmartScreen.', href: '/pyzed/es/packaging/windows/', icon: 'seti:windows' },
+		{ title: 'macOS', text: 'El paquete .app, identificador de paquete, firma, notarización y un .dmg.', href: '/pyzed/es/packaging/macos/', icon: 'apple' },
+		{ title: 'Linux', text: 'En qué distribución compilar, archivos comprimidos, entradas de menú, y AppImage o .deb.', href: '/pyzed/es/packaging/linux/', icon: 'linux' },
+		{ title: 'Iconos y metadatos', text: 'Nombre, versión, iconos para cada sistema y el identificador de paquete de macOS.', href: '/pyzed/es/packaging/icons-metadata/', icon: 'star' },
+		{ title: 'CI con GitHub Actions', text: 'Compila los tres sistemas en cada etiqueta, publica una versión y firma con secretos.', href: '/pyzed/es/packaging/ci/', icon: 'github' },
+		{ title: 'Apps que se actualizan solas', text: 'Busca en GitHub Releases, descarga con suma de verificación y cambia la app al reiniciar.', href: '/pyzed/es/packaging/updates/', icon: 'random' },
+		{ title: 'Solución de problemas', text: 'Módulos que faltan, ventanas en blanco, apps bloqueadas, errores de glibc y mensajes de actualización.', href: '/pyzed/es/packaging/troubleshooting/', icon: 'warning' },
 		{ title: 'Referencia de la CLI', text: 'Todas las opciones de <code>pyzed build</code> y de los demás comandos.', href: '/pyzed/es/reference/cli/', icon: 'list-format' },
 	]}
 />
 
-## Próximamente
+## Qué está soportado hoy
 
-<NavCards
-	items={[
-		{ title: 'Windows', text: 'Iconos, instaladores, firma de código y SmartScreen.', icon: 'laptop' },
-		{ title: 'macOS', text: 'Paquetes .app, firma, notarización e imágenes DMG.', icon: 'apple' },
-		{ title: 'Linux', text: 'AppImage, .deb, Flatpak y en qué distribución compilar.', icon: 'linux' },
-	]}
-/>
+| | Windows | macOS | Linux |
+| --- | --- | --- | --- |
+| Carpeta de la app (`pyzed build`) | ✅ `.exe` | ✅ `.app` | ✅ ejecutable |
+| Archivo único (`--onefile`) | ✅ | ✅ | ✅ |
+| Icono (`icon =`) | ✅ `.ico` | ✅ `.icns` | Con un archivo `.desktop` |
+| Flujo de CI (`--workflow`) | ✅ | ✅ | ✅ |
+| Autoactualización (`pyzed.updater`) | ✅ | ✅ | ✅ |
+| Firma | Con `signtool` | Con `codesign` + notarización | No hace falta |
+| Instalador | El tuyo (Inno Setup, WiX) | Tu propio `.dmg` (`hdiutil`) | El tuyo (archivo, script, AppImage...) |
+| Compilación cruzada | ❌ | ❌ | ❌ |
 
 <Aside type="note" title="Estado de esta sección">
-El empaquetado para escritorio ya se puede usar. Las guías paso a paso por plataforma se están escribiendo; los
-destinos móvil y web están planeados para el futuro y todavía no están disponibles.
+El empaquetado para escritorio está listo para usarse hoy. Los instaladores, la firma y los canales de actualización
+se documentan con las herramientas que usa el propio Pyzed Design, pero `pyzed build` todavía no las ejecuta por ti.
+Las plataformas móvil y web están planificadas para el futuro y aún no están disponibles.
 </Aside>

@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import BenchChart from '../../../../components/why/BenchChart.astro';
+import Commands from '../../../../components/Commands.astro';
 
 Los números de velocidad importan menos que lo que se siente con un toolkit a las once de la noche cuando
 intentas terminar algo. Esta página recorre un proyecto Pyzed desde el primer comando hasta la app
@@ -15,9 +16,11 @@ encontramos», ocurrió al preparar los [benchmarks](/pyzed/es/why/benchmarks/).
 
 ## 1. Instalar
 
-```bash
-pip install pyzed-ui          # o: uv add pyzed-ui
-```
+<Commands
+	uv={`uv add pyzed-ui`}
+	pip={`pip install pyzed-ui`}
+	python={`{py} -m pip install pyzed-ui`}
+/>
 
 Un solo wheel con el núcleo en Rust ya compilado, para Windows, macOS y Linux, y sin dependencias en tiempo
 de ejecución. Compara con lo que nos encontramos en un contenedor Ubuntu 24.04 limpio:
@@ -34,9 +37,23 @@ de ejecución. Compara con lo que nos encontramos en un contenedor Ubuntu 24.04 
 
 ## 2. Primera ventana
 
-```bash
-pyzed new hola --script && cd hola && python main.py
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new hola --script
+		cd hola
+		uv run --with pyzed-ui main.py
+	`}
+	pip={`
+		pyzed new hola --script
+		cd hola
+		python main.py
+	`}
+	python={`
+		{py} -m pyzed new hola --script
+		cd hola
+		{py} main.py
+	`}
+/>
 
 o un [proyecto uv](/pyzed/es/guides/projects/) completo con linter, tipos y git con `pyzed new hola`. La app
 es una clase con un `view()`:
@@ -77,9 +94,11 @@ mantiene sincronizados; en Pyzed, `view()` es el único lugar que convierte dato
 
 ## 3. Recarga en caliente
 
-```bash
-pyzed dev main.py
-```
+<Commands
+	uv={`uv run pyzed dev main.py`}
+	pip={`pyzed dev main.py`}
+	python={`{py} -m pyzed dev main.py`}
+/>
 
 Edita `view()`, un módulo auxiliar o un estilo y guarda: la ventana se actualiza en el sitio, **con tus datos
 todavía ahí** (el objeto de la app se conserva y recibe la clase nueva). Si el código nuevo falla, el error
@@ -145,9 +164,11 @@ capturador de pantalla para lo mismo.
 
 ## 8. Empaquetado
 
-```bash
-uv run pyzed build             # dist/MiApp (una carpeta) o --onefile
-```
+<Commands
+	uv={`uv run pyzed build             # dist/MiApp (una carpeta) o --onefile`}
+	pip={`pyzed build             # dist/MiApp (una carpeta) o --onefile`}
+	python={`{py} -m pyzed build             # dist/MiApp (una carpeta) o --onefile`}
+/>
 
 `pyzed build` envuelve PyInstaller y añade lo que los formularios cargan en tiempo de ejecución. En otros:
 Qt tiene `pyside6-deploy` (Nuitka), `flet build` de Flet necesita el SDK de Flutter, Toga usa Briefcase (muy

@@ -7,6 +7,7 @@ sidebar:
 
 import { Code } from '@astrojs/starlight/components';
 import journal from '../../../../../../examples/integrations/aiosqlite_journal/main.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 Cada librería cae en uno de los casos del [resumen](/pyzed/es/integrations/overview/#dónde-se-ejecuta-tu-código):
 async, bloqueante, un servidor o un stream. Estas recetas cubren las que más se preguntan.
@@ -31,10 +32,24 @@ class Journal(pz.App):
             return ("loaded", await cursor.fetchall())
 ```
 
-```bash
-cd examples/integrations/aiosqlite_journal
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/aiosqlite_journal
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/aiosqlite_journal
+		{venv}
+		{activate}
+		pip install pyzed-ui aiosqlite
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/aiosqlite_journal
+		{py} -m pip install pyzed-ui aiosqlite
+		{py} main.py
+	`}
+/>
 
 <details>
 <summary>Código completo: <code>examples/integrations/aiosqlite_journal/main.py</code></summary>

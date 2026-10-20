@@ -1,0 +1,94 @@
+---
+title: Troubleshooting builds
+description: "Fix common problems when packaging a Pyzed app: missing modules or files, blank windows, blocked apps on macOS and Windows, glibc errors on Linux, large builds and update errors."
+sidebar:
+  order: 8
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## First, see the error
+
+A packaged app has no terminal, so errors are invisible. Build it with a console and start it from a terminal to read
+the traceback:
+
+<Tabs>
+	<TabItem label="Windows">
+		```powershell
+		uv run pyzed build --console
+		.\dist\Shop\Shop.exe
+		```
+	</TabItem>
+	<TabItem label="macOS">
+		```bash
+		uv run pyzed build --console
+		./dist/Shop.app/Contents/MacOS/Shop     # the executable inside the bundle
+		```
+	</TabItem>
+	<TabItem label="Linux">
+		```bash
+		uv run pyzed build --console
+		./dist/Shop/Shop
+		```
+	</TabItem>
+</Tabs>
+
+`pyzed build --dry-run` prints the PyInstaller command it would run, which helps to see what is included.
+
+## While building
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `uv: command not found`, or `uv` is not recognized | `pyzed build` runs PyInstaller through uv. Install it: `pip install uv`, or see [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
+| `ui/main.pzform does not exist; set [tool.pyzed] main in pyproject.toml` | The main form moved or was renamed. Set `main = "ui/<form>.pzform"` under `[tool.pyzed]`. |
+| `uv sync --locked` fails in CI | `uv.lock` is out of date: run `uv lock` (or `pyzed sync`) and commit it. |
+| The build is very slow the first time | uv downloads PyInstaller and PyInstaller analyzes every dependency; later builds reuse uv's cache. |
+
+## When the app starts
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `ModuleNotFoundError` | A module imported by name or with `importlib`: add it to `hidden-imports`, or its package to `collect`. |
+| A data file of a dependency is missing (`FileNotFoundError` inside a package) | Add the package to `collect` (ships its data files and binaries too). |
+| Your own files are missing | Add them to `include` and resolve them from `sys._MEIPASS` ([How building works](/pyzed/packaging/build/#finding-your-data-files)). |
+| The window is blank or the app closes at once on a virtual machine or remote desktop | No usable GPU. Start it with the CPU renderer: `ICED_BACKEND=tiny-skia ./Shop` (PowerShell: `$env:ICED_BACKEND="tiny-skia"; .\Shop.exe`). |
+| A `--onefile` app is slow to start | It unpacks itself to a temporary folder on every start. Use the folder build. |
+| Settings or files the app saved disappear after an update | They were written inside the app folder, which an update replaces. Save user data in the user's folders. |
+
+## On each system
+
+| Symptom | Cause and fix |
+| --- | --- |
+| **macOS:** "Shop is damaged and can't be opened" or "cannot be opened because the developer cannot be verified" | The app is not signed and notarized. [Sign and notarize it](/pyzed/packaging/macos/#sign-and-notarize). For your own testing only: `xattr -dr com.apple.quarantine Shop.app`. |
+| **macOS:** the app opens and closes immediately | Run the executable inside the bundle from a terminal (above) to see the error. |
+| **Windows:** "Windows protected your PC" | SmartScreen warns about unsigned apps. [Sign the .exe](/pyzed/packaging/windows/#sign-it); people can still use **More info → Run anyway**. |
+| **Windows:** the antivirus deletes or blocks the app | A false positive, more common with `--onefile`. Use the folder build, sign it and report it to the vendor. |
+| **Linux:** `version 'GLIBC_2.xx' not found` | The app was built on a newer distribution than the one running it. [Build on an older one](/pyzed/packaging/linux/#which-distribution-to-build-on). |
+| **Linux:** errors about `libxkbcommon`, X11 or Wayland | The machine has no desktop libraries (a minimal server image). Install the desktop session or `libxkbcommon`. |
+| **Linux:** `Permission denied` when starting it | The executable bit was lost (for example, zipped on Windows): `chmod +x Shop/Shop`. |
+
+## Size
+
+| Symptom | Fix |
+| --- | --- |
+| The app is large | Keep build-only tools in the dev group (`pyzed add --dev ...`), exclude modules you do not use with `args = ["--exclude-module", "tkinter"]`, and avoid `collect` on big packages when `hidden-imports` is enough. |
+| The zip is larger than expected | Do not include `build/`, `.venv/` or test data in `include`. |
+
+## Self-updates
+
+| Message | Meaning |
+| --- | --- |
+| `could not reach GitHub` | No network, or a proxy blocks GitHub. Try again later. |
+| `GitHub refused the request (rate limit)` | More than 60 requests in an hour from this IP address. Check less often. |
+| `no release found` | The repository has no published release (drafts do not count), or the name is wrong. |
+| `the release does not publish a SHA-256 for this file` | The download cannot be checked, so it is not installed. Upload the file to the release again. |
+| `the download is corrupt` | The file does not match its SHA-256. Try again. |
+| `the update does not contain exactly one app` | The zip must hold one folder (or one `.app`) at its top level. |
+| `only a packaged app can replace itself` | The app runs from Python: update with `pip` or `uv` instead. |
+
+See [Self-updating apps](/pyzed/packaging/updates/) for how releases must be laid out.
+
+<Aside type="tip" title="Still stuck?">
+Search the [issues](https://github.com/albakore/pyzed/issues) or open one with your system, the build command, the
+output of `pyzed build --dry-run` and the traceback from the console build.
+</Aside>

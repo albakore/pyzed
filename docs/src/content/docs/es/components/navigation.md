@@ -1,6 +1,6 @@
 ---
 title: Navegación
-description: "Pestañas de editor, breadcrumbs y barra de herramientas: componentes de navegación estilo Zed para crear GUIs tipo IDE en Python con Pyzed."
+description: "Pestañas de editor, breadcrumbs y barra de herramientas: componentes de navegación para crear GUIs tipo IDE en Python con Pyzed."
 sidebar:
   order: 4
 ---
@@ -39,7 +39,7 @@ pz.column([
 
 - `Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)`.
 - `Tab.for_file(ruta)` usa el nombre del archivo como etiqueta, la ruta como id y el icono de su tipo.
-- `dirty=True` muestra un punto; al pasar el ratón se convierte en el botón de cerrar, como en Zed.
+- `dirty=True` muestra un punto; al pasar el ratón se convierte en el botón de cerrar.
 - `preview=True` dibuja el nombre en cursiva (pestaña de vista previa).
 - `status` tiñe el nombre con el color de git.
 - `on_select(id)` y `on_close(id)` reciben el id de la pestaña.
@@ -70,7 +70,7 @@ Las partes pueden ser textos o tuplas `(icono, texto)`. `on_press` recibe el ín
 
 ## Barra de herramientas
 
-`ui.toolbar(start, end)` es la barra que Zed muestra bajo las pestañas: normalmente breadcrumbs a
+`ui.toolbar(start, end)` es la barra bajo las pestañas de un editor de código: normalmente breadcrumbs a
 la izquierda y acciones del buffer a la derecha.
 
 Referencia completa: [Navegación](/pyzed/es/reference/ui/#navegación).

@@ -7,13 +7,14 @@ sidebar:
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Commands from '../../../../components/Commands.astro';
 
 Python es el primer lenguaje de toda una generación de desarrolladores, pero sus interfaces de escritorio
 todavía parecen de 2005: widgets grises, diseños escritos a mano, reiniciar la app para ver un cambio y un
 empaquetado que es un proyecto en sí mismo. **Pyzed** es nuestra respuesta para quienes crecieron con VS Code,
 Figma, el modo oscuro y los asistentes de IA, y esperan que sus herramientas se vean y se sientan así.
 
-![Un espacio de trabajo al estilo de Zed hecho con Pyzed, con el tema One Dark](../../../../../screenshots/zed-one-dark.png)
+![Un espacio de trabajo estilo editor hecho con Pyzed, con el tema One Dark](../../../../../screenshots/zed-one-dark.png)
 
 ## Lo que tienes desde el primer día
 
@@ -48,13 +49,32 @@ Figma, el modo oscuro y los asistentes de IA, y esperan que sus herramientas se 
 
 ## Todo el flujo, en unos pocos comandos
 
-```bash
-pyzed new tienda        # un proyecto uv con ruff, ty y git listos
-cd tienda
-uv run pyzed design     # dibuja la interfaz en Pyzed Design
-uv run pyzed run        # ejecútala
-uv run pyzed build      # una app autónoma para Windows, macOS o Linux
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new tienda
+		cd tienda
+		uv run pyzed design     # dibuja la interfaz en Pyzed Design
+		uv run pyzed run        # ejecútala
+		uv run pyzed build      # una app autónoma para Windows, macOS o Linux
+	`}
+	pip={`
+		pip install pyzed-ui uv
+		pyzed new tienda
+		cd tienda
+		{activate}  # el .venv propio del proyecto
+		pyzed design     # dibuja la interfaz en Pyzed Design
+		pyzed run        # ejecútala
+		pyzed build      # una app autónoma para Windows, macOS o Linux
+	`}
+	python={`
+		{py} -m pip install pyzed-ui uv
+		{py} -m pyzed new tienda
+		cd tienda
+		{vpy} -m pyzed design     # dibuja la interfaz en Pyzed Design
+		{vpy} -m pyzed run        # ejecútala
+		{vpy} -m pyzed build      # una app autónoma para Windows, macOS o Linux
+	`}
+/>
 
 Los proyectos son proyectos [uv](https://docs.astral.sh/uv/) normales, así que las dependencias, los lock
 files, el linter ([ruff](https://docs.astral.sh/ruff/)) y la comprobación de tipos

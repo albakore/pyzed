@@ -13,7 +13,7 @@ TEMPLATES = [
     ("layout-dashboard", "Dashboard", "KPIs, charts and tables for internal tools."),
     ("bot", "AI assistant", "A streaming chat app wired to any LLM."),
     ("gamepad-2", "Game", "A canvas, a game loop and keyboard input."),
-    ("code", "Developer tool", "A Zed-like editor with docks and a terminal."),
+    ("code", "Developer tool", "A code editor with docks and a terminal."),
 ]
 ROLES = ["Developer", "Designer", "Data scientist", "Student", "Founder"]
 

@@ -1065,7 +1065,7 @@ button(
 )
 ```
 
-Un botón sin estilo predefinido. Para el botón de Zed usa `ui.button`.
+Un botón sin estilo predefinido. Para el botón con tema usa `ui.button`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1118,7 +1118,7 @@ text_input(
 )
 ```
 
-Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_input`. Para el estilo de Zed usa `ui.input`.
+Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_input`. Para el campo con tema usa `ui.input`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1226,7 +1226,7 @@ tooltip(
 )
 ```
 
-Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo de Zed.
+Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo del tema.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1423,7 +1423,7 @@ pick_list(
 )
 ```
 
-Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el estilo de Zed usa `ui.select`.
+Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1543,7 +1543,7 @@ code_editor(
 Un editor de código con resaltado de sintaxis, números de línea y marcadores de git, basado en
 `text_editor` de Iced. Es **no controlado**: `text` solo es el valor inicial para ese `id`; el
 texto, el cursor y el historial viven en Rust. Usa `Command.set_editor_text` para reemplazarlo.
-Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
+Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 
 | Parámetro | Descripción |
 | --- | --- |

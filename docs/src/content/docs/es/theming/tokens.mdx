@@ -1,0 +1,199 @@
+---
+title: Tokens del tema
+description: "Cada token de color y tamaño de un tema de Pyzed, qué pinta en la interfaz y su valor en One Dark y One Light."
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import TokenTable from '../../../../components/TokenTable.astro';
+
+Un tema es una lista de **tokens**: nombres como `accent` o `text_muted` con un color (o un tamaño) cada uno. Los
+componentes nunca fijan colores a mano; le piden un token al tema. Por eso un solo cambio en el tema lo reestiliza
+todo.
+
+Los tokens se usan de dos formas:
+
+```python
+pz.text("Total").style(color="text_muted")                 # por nombre, en cualquier sitio donde va un color
+pz.container(cuerpo, bg=self.resolved_theme().surface)       # como atributo del tema
+```
+
+Los colores son `#rrggbb` o `#rrggbbaa` (los dos últimos dígitos son la opacidad). Los nombres de tokens funcionan en
+`style()`, en los parámetros `color=`/`tint=` de los componentes, en
+[`pz.Paint`](/pyzed/es/theming/styles/#gradientes-opacidad-y-máscaras) y en los campos de color del diseñador.
+
+<Aside type="tip" title="Piensa en capas">
+De atrás hacia adelante: la **ventana** (`background`), las **superficies** sobre ella (`surface`, `panel`,
+`elevated`), los **elementos** sobre ellas (`element`, `ghost_*`) y el **texto y los iconos** encima. Haz cada capa un
+poco más clara (temas oscuros) o más oscura (temas claros) que la de atrás.
+</Aside>
+
+## Superficies
+
+Las áreas grandes de la ventana, de atrás hacia adelante.
+
+<TokenTable
+	rows={[
+		['background', 'La ventana detrás de todo, y el marco de la app, como las barras de título y de estado de los temas generados.'],
+		['surface', 'Tarjetas (<code>ui.card</code>), estadísticas y otras áreas elevadas.'],
+		['elevated', 'Lo que flota: menús, popovers, desplegables, tooltips, diálogos, toasts y la paleta de comandos.'],
+		['editor', 'Donde se escribe: campos de texto, el editor de código, el fondo de la terminal en temas generados.'],
+		['panel', 'Paneles laterales y docks de un workspace, el panel de ayuda.'],
+		['title_bar', 'La barra de título propia (<code>ui.title_bar</code>, <code>ui.window_frame</code>).'],
+		['status_bar', 'La barra de estado al pie de un workspace.'],
+		['tab_bar', 'La franja detrás de las pestañas.'],
+		['tab_active', 'La pestaña seleccionada.'],
+		['tab_inactive', 'Las demás pestañas.'],
+		['terminal', 'El fondo del widget de terminal.'],
+	]}
+/>
+
+## Bordes
+
+<TokenTable
+	rows={[
+		['border', 'Bordes principales: campos, botones outline, separadores, marcos.'],
+		['border_variant', 'Bordes más suaves: tarjetas, botones rellenos, separadores de listas.'],
+		['border_focused', 'El anillo del campo o la lista con el foco.'],
+		['border_selected', 'El borde de los elementos seleccionados (un acento translúcido).'],
+	]}
+/>
+
+## Elementos y elementos ghost
+
+Los **elementos** son controles rellenos (el `ui.button` por defecto, chips, controles segmentados). Los elementos
+**ghost** no tienen fondo hasta que pasas el puntero: filas de listas, botones ghost y de icono, ítems de menú, filas
+de árboles.
+
+<TokenTable
+	rows={[
+		['element', 'Controles rellenos en reposo.'],
+		['element_hover', 'Controles rellenos bajo el puntero.'],
+		['element_active', 'Controles rellenos mientras se pulsan.'],
+		['element_selected', 'Un control relleno seleccionado (una opción segmentada, un icono elegido).'],
+		['ghost_hover', 'Una fila o botón ghost bajo el puntero.'],
+		['ghost_active', 'Una fila o botón ghost mientras se pulsa.'],
+		['ghost_selected', 'La fila seleccionada de una lista, árbol, menú o pestaña.'],
+	]}
+/>
+
+## Texto, iconos y acento
+
+<TokenTable
+	rows={[
+		['text', 'Texto y etiquetas.'],
+		['text_muted', 'Texto secundario: descripciones, leyendas, pestañas inactivas.'],
+		['text_placeholder', 'El texto de ejemplo de los campos vacíos.'],
+		['text_disabled', 'Controles deshabilitados.'],
+		['text_accent', 'Enlaces y texto resaltado.'],
+		['icon', 'Iconos junto al texto.'],
+		['icon_muted', 'Iconos secundarios: botones de icono ghost, iconos de listas.'],
+		['accent', 'El color de marca: botones principales (<code>solid</code>), interruptores, sliders, barras de progreso, casillas.'],
+		['on_accent', 'Texto e iconos dibujados sobre el acento (dentro de un botón solid o una insignia solid).'],
+	]}
+/>
+
+<Aside type="caution" title="Mantén legible on_accent">
+Si cambias `accent` a mano, cambia también `on_accent`, o usa `theme.with_accent(color)`, que elige un `on_accent`
+legible (y actualiza anillos de foco, selección y enlaces) por ti.
+</Aside>
+
+## Estado
+
+Los usa `tint=` (`ui.badge`, `ui.callout`, `ui.button`, `ui.progress`...), los toasts, los mensajes de validación y
+los gráficos.
+
+<TokenTable
+	rows={[
+		['error', 'Errores, botones destructivos, campos inválidos.'],
+		['warning', 'Advertencias.'],
+		['success', 'Mensajes de éxito, cambios positivos en <code>ui.stat</code>.'],
+		['info', 'Avisos informativos (el acento, por defecto).'],
+		['hint', 'Pistas, el aviso más discreto.'],
+	]}
+/>
+
+## Control de versiones
+
+Para árboles de archivos, pestañas y diffs (`ui.tree`, `ui.diff_stat`, el margen del editor de código).
+
+<TokenTable
+	rows={[
+		['created', 'Archivos y líneas añadidos.'],
+		['modified', 'Archivos y líneas modificados.'],
+		['deleted', 'Archivos y líneas eliminados.'],
+		['conflict', 'Archivos con conflictos.'],
+		['ignored', 'Archivos ignorados.'],
+	]}
+/>
+
+## Editor de código
+
+Para [`pz.code_editor`](/pyzed/es/library/editor/), `ui.terminal` y los bloques de código.
+
+<TokenTable
+	rows={[
+		['editor_text', 'Código sin resaltar.'],
+		['line_number', 'Números de línea.'],
+		['line_number_active', 'El número de la línea con el cursor.'],
+		['active_line', 'El fondo de la línea con el cursor.'],
+		['selection', 'Texto seleccionado (también en los campos).'],
+		['scrollbar', 'Barras de desplazamiento.'],
+		['scrollbar_hover', 'Una barra de desplazamiento bajo el puntero.'],
+		['search_match', 'Resultados de búsqueda en el editor.'],
+		['shadow', 'Sombras de menús, popovers y diálogos.'],
+	]}
+/>
+
+## Sintaxis, terminal y personas
+
+Estos tres son colecciones en lugar de colores sueltos.
+
+- **`syntax`**: un diccionario de un nombre de resaltado a un color, o a `(color, "italic")` / `(color, "bold")`. Los
+  nombres principales son `primary`, `comment`, `comment.doc`, `keyword`, `function`, `type`, `string`,
+  `string.escape`, `number`, `boolean`, `constant`, `property`, `attribute`, `operator`, `variable`,
+  `variable.special`, `punctuation`, `punctuation.bracket`, `tag`, `title` y `link_uri`. Un nombre con punto que
+  falta usa su primera parte (`string.escape` → `string`).
+- **`ansi`**: los colores de la terminal: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`,
+  `bright_black` y `dim`.
+- **`players`**: una tupla de colores para avatares y colaboradores; `ui.avatar(index=n)` y `ui.facepile` toman el
+  n-ésimo.
+
+<TokenTable
+	rows={[
+		['syntax.keyword', '<code>def</code>, <code>if</code>, <code>return</code>...'],
+		['syntax.function', 'Nombres de funciones.'],
+		['syntax.string', 'Cadenas.'],
+		['syntax.comment', 'Comentarios.'],
+		['syntax.type', 'Clases y tipos.'],
+		['syntax.number', 'Números.'],
+		['ansi.red', 'Texto rojo en la terminal (y así con cada color ANSI).'],
+		['players.0', 'El primer color de avatar (el acento, por defecto).'],
+	]}
+/>
+
+## Tamaños y metadatos
+
+| Token | Por defecto | Qué fija |
+| --- | --- | --- |
+| `radius` | `6.0` | Radio de las esquinas de tarjetas, diálogos y superficies grandes (las tarjetas usan `radius + 2`). |
+| `radius_sm` | `4.0` | Radio de botones, campos, chips y filas de listas. |
+| `ui_font_size` | `14.0` | El tamaño base del texto de la interfaz; lo fijan el **Tamaño de fuente** de un formulario y el `size` del estilo global. |
+| `buffer_font_size` | `14.0` | Tamaño del texto en el editor de código. |
+| `name` | | El nombre que usan `pz.themes.get` y `theme = "..."`. |
+| `appearance` | | `"dark"` o `"light"`; `theme.is_dark` lo lee. |
+
+## Desde Python
+
+```python
+t = pz.themes.get("One Dark")
+t.accent                 # '#74ade8'
+t.color("text_muted")    # lo mismo que t.text_muted; los colores hex pasan sin cambios
+t.tokens()               # todos los tokens como diccionario
+t.to_dict()              # apto para JSON, el formato que escribe Theme.save
+```
+
+Los nombres siguen el formato de temas del editor Zed, así que los temas hechos para él se pueden importar (mira
+[Crear temas](/pyzed/es/theming/custom-themes/#importar-un-tema-de-zed)). La [API de temas](/pyzed/es/reference/theme/)
+lista cada método.

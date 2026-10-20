@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-Un buscador sobre una lista de resultados en una superficie flotante: la base de la paleta de comandos y del buscador de archivos. `ui.fuzzy_filter(query, items, key=)` ordena los elementos como Zed y devuelve `[(item, positions), ...]`; pasa esos pares a `picker` para resaltar las coincidencias. `ui.fuzzy_match` puntúa una cadena y `ui.highlighted` dibuja una con sus coincidencias.
+Un buscador sobre una lista de resultados en una superficie flotante: la base de la paleta de comandos y del buscador de archivos. `ui.fuzzy_filter(query, items, key=)` ordena los elementos (el mejor primero) y devuelve `[(item, positions), ...]`; pasa esos pares a `picker` para resaltar las coincidencias. `ui.fuzzy_match` puntúa una cadena y `ui.highlighted` dibuja una con sus coincidencias.
 
 `ui.picker` · Categoría: [Capas flotantes](/pyzed/es/library/#capas-flotantes) · [Referencia completa →](/pyzed/es/reference/ui/#picker)
 
@@ -167,7 +167,7 @@ Texto con los caracteres de `positions` resaltados (coincidencias de la búsqued
 ## Relacionados
 
 <CardGrid>
-<LinkCard title="Paleta de comandos" description="La paleta de comandos de Zed con búsqueda difusa y atajos." href="/pyzed/es/library/command-palette/" />
+<LinkCard title="Paleta de comandos" description="Una paleta de comandos con búsqueda difusa y atajos." href="/pyzed/es/library/command-palette/" />
 <LinkCard title="Campo de búsqueda" description="Un campo con lupa, para filtrar." href="/pyzed/es/library/search-input/" />
 <LinkCard title="Capa" description="Dibuja una capa encima de tu vista; al pulsar fuera se cierra." href="/pyzed/es/library/layer/" />
 </CardGrid>

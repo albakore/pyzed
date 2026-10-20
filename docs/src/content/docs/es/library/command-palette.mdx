@@ -1,6 +1,6 @@
 ---
 title: "Paleta de comandos"
-description: "La paleta de comandos de Zed con búsqueda difusa y atajos. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
+description: "Una paleta de comandos con búsqueda difusa y atajos. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
   order: 73
   label: "Paleta de comandos"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-La paleta de comandos de Zed: filtra `commands` (`ui.PaletteItem(label, on_press, keys=)`) por `query` con búsqueda difusa, resalta las letras encontradas y muestra cada atajo. La consulta y el índice `selected` son tuyos; Enter llama a `on_submit`.
+Una paleta de comandos: filtra `commands` (`ui.PaletteItem(label, on_press, keys=)`) por `query` con búsqueda difusa, resalta las letras encontradas y muestra cada atajo. La consulta y el índice `selected` son tuyos; Enter llama a `on_submit`.
 
 `ui.command_palette` · Categoría: [Capas flotantes](/pyzed/es/library/#capas-flotantes) · [Referencia completa →](/pyzed/es/reference/ui/#command_palette)
 
@@ -92,7 +92,7 @@ command_palette(
 )
 ```
 
-La paleta de comandos de Zed: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.
+Una paleta de comandos: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -121,7 +121,7 @@ Una entrada de `command_palette` o `picker`.
 | --- | --- | --- |
 | `label` | *obligatorio* | Texto de la etiqueta. |
 | `on_press` | `None` | Mensaje o callable que se envía al pulsar. `None` deshabilita el control. |
-| `keys` | `None` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | `None` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `icon` | `None` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `detail` | `None` | Texto secundario (por ejemplo, la ruta de un archivo). |
 

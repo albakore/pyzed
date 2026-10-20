@@ -40,7 +40,7 @@ def test_pages_use_the_live_signature_and_the_shipped_descriptions():
     page = reference.page("pyzed.ui.button")
     assert page.title == "ui.button" and page.url.endswith("/reference/ui/#button")
     assert "button(\n    content=None" in page.body and "| `on_press` |" in page.body
-    assert "The Zed button." in page.body
+    assert "A themed button with variants" in page.body
     theme = reference.page("pyzed.Theme")
     assert "Methods and properties" in theme.body and "ref:pyzed.Theme.derive" in theme.body
     # site links become internal ones when the target has a page here

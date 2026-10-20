@@ -1,6 +1,6 @@
 ---
 title: "Componentes (pyzed.ui)"
-description: "Referencia de la API de pyzed.ui: cada componente estilo Zed con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python."
+description: "Referencia de la API de pyzed.ui: cada componente listo para usar con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python."
 sidebar:
   order: 4
 ---
@@ -97,7 +97,7 @@ button(
 )
 ```
 
-El botón de Zed.
+Un botón con tema, con variantes, tamaños, un icono y un atajo.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -112,7 +112,7 @@ El botón de Zed.
 | `selected` | Lo marca como seleccionado. |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `full_width` | Ocupa todo el ancho. |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `style` | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
 
@@ -133,7 +133,7 @@ icon_button(
 )
 ```
 
-Un botón cuadrado con solo un icono (el `IconButton` de Zed).
+Un botón cuadrado con solo un icono.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -225,13 +225,13 @@ Un avatar redondo con iniciales.
 tooltip(content, text, *, keys=None, position='bottom', theme=None)
 ```
 
-Envuelve `content` con un tooltip al estilo de Zed, opcionalmente con su atajo.
+Envuelve `content` con un tooltip con el estilo del tema, opcionalmente con su atajo.
 
 | Parámetro | Descripción |
 | --- | --- |
 | `content` | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
 | `text` | Texto del tooltip. |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `position` | `"top"`, `"bottom"`, `"left"`, `"right"` o `"cursor"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
@@ -391,7 +391,7 @@ Una barra de progreso fina.
 segmented(options, selected, on_select=None, *, theme=None)
 ```
 
-Un grupo de botones mutuamente excluyentes (el `ToggleButtonGroup` de Zed).
+Un grupo de botones mutuamente excluyentes.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -406,7 +406,7 @@ Un grupo de botones mutuamente excluyentes (el `ToggleButtonGroup` de Zed).
 field(title, control, *, description=None, error=None, theme=None)
 ```
 
-Una fila de formulario: título y descripción a la izquierda, control a la derecha (como los ajustes de Zed).
+Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -577,7 +577,7 @@ select(
 )
 ```
 
-Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.
+Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -631,7 +631,7 @@ number_field(
 )
 ```
 
-Un campo numérico con botones −/+ (el `NumericStepper` de Zed). `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.
+Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -660,7 +660,7 @@ split_button(
 )
 ```
 
-Un botón con una flecha aparte para más opciones (el `SplitButton` de Zed). `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.
+Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -752,7 +752,7 @@ accordion(
 )
 ```
 
-Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.
+Secciones plegables apiladas y separadas por divisores, como los paneles de una pantalla de ajustes. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1014,7 +1014,7 @@ callout(
 )
 ```
 
-Un aviso en línea (el `Callout`/`Banner` de Zed).
+Un aviso en línea (un callout o banner).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1048,7 +1048,7 @@ Un marcador centrado para listas vacías, búsquedas sin resultados, etc.
 settings_group(title, rows, *, description=None, theme=None)
 ```
 
-Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de ajustes de Zed).
+Un bloque con título de filas `ui.field` separadas por líneas, como una pantalla de ajustes.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1224,7 +1224,7 @@ Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de 
 facepile(people, *, size=22, overlap=6, max_shown=5, theme=None)
 ```
 
-Avatares superpuestos de colaboradores, como en la barra de título de Zed. Los que pasan de `max_shown` se agrupan en `+N`.
+Avatares superpuestos de colaboradores, como en la barra de título de un editor colaborativo. Los que pasan de `max_shown` se agrupan en `+N`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1260,7 +1260,7 @@ Una pista atenuada como «Abrir archivo Ctrl P» para pies y estados vacíos.
 | Parámetro | Descripción |
 | --- | --- |
 | `text` | Texto. |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `markdown`
@@ -1333,7 +1333,7 @@ list_item(
 )
 ```
 
-Una fila de lista (el `ListItem` de Zed): icono, texto y un hueco al final.
+Una fila de lista: icono, texto y un hueco al final.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1428,7 +1428,7 @@ tree(
 )
 ```
 
-Un árbol de archivos plegable (el panel de proyecto de Zed).
+Un árbol de archivos plegable, como el panel de proyecto de un editor de código.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1455,7 +1455,7 @@ Una entrada de `ui.menu`.
 | `label` | Texto de la etiqueta. |
 | `on_press` | Mensaje o callable que se envía al pulsar. `None` deshabilita el control. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `danger` | En rojo (acciones destructivas). |
 | `checked` | Muestra una marca (`True`/`False`) o nada (`None`). |
@@ -1653,7 +1653,7 @@ workspace(
 )
 ```
 
-El layout de una ventana de Zed: barra de título, docks izquierdo, derecho e inferior, centro y barra de estado. Pasa `None` para ocultar un dock.
+El layout de una ventana estilo editor: barra de título, docks izquierdo, derecho e inferior, centro y barra de estado. Pasa `None` para ocultar un dock.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1753,7 +1753,7 @@ Un icono y/o texto en la barra de estado (diagnósticos, posición del cursor, l
 | `icon_color` | Color del icono: un token del tema o un color hex. |
 | `selected` | Lo marca como seleccionado. |
 | `tooltip` | Texto del tooltip. |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `panel`
@@ -1827,14 +1827,14 @@ window_frame(
 )
 ```
 
-El marco entero de una ventana abierta con `frame="custom"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed y bordes que cambian el tamaño de la ventana.
+El marco entero de una ventana abierta con `frame="custom"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda y bordes que cambian el tamaño de la ventana.
 
 | Parámetro | Descripción |
 | --- | --- |
 | `content` | El contenido de la ventana, bajo la barra de título. |
 | `title` | Título de la barra. Por defecto el `title` de la ventana. |
 | `menus` | Menús a la izquierda de la barra: una lista de `ui.Menu`. |
-| `menu_button` | Muestra los menús tras un botón ☰, como Zed (`False` muestra siempre sus nombres). |
+| `menu_button` | Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres). |
 | `start` | Elementos después de los menús (proyecto, rama…). |
 | `center` | Tu propio widget en el centro en lugar del título. |
 | `end` | Elementos antes de los botones de ventana. |
@@ -2016,7 +2016,7 @@ Una entrada de `command_palette` o `picker`.
 | --- | --- |
 | `label` | Texto de la etiqueta. |
 | `on_press` | Mensaje o callable que se envía al pulsar. `None` deshabilita el control. |
-| `keys` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `detail` | Texto secundario (por ejemplo, la ruta de un archivo). |
 
@@ -2037,7 +2037,7 @@ command_palette(
 )
 ```
 
-La paleta de comandos de Zed: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.
+Una paleta de comandos: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -2235,7 +2235,7 @@ editor(
 )
 ```
 
-El editor de código de Zed: resaltado con los colores del tema, números de línea y marcadores de git.
+Un editor de código: resaltado con los colores del tema, números de línea y marcadores de git.
 
 | Parámetro | Descripción |
 | --- | --- |

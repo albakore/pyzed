@@ -1,6 +1,6 @@
 ---
 title: Navigation
-description: "Editor tabs, breadcrumbs and the toolbar: Zed-style navigation components for building IDE-like Python desktop GUIs with Pyzed."
+description: "Editor tabs, breadcrumbs and the toolbar: navigation components for building IDE-like Python desktop GUIs with Pyzed."
 sidebar:
   order: 4
 ---
@@ -39,7 +39,7 @@ pz.column([
 
 - `Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)`.
 - `Tab.for_file(path)` uses the file name as label, the path as id and the icon for its type.
-- `dirty=True` shows a dot; on hover it turns into the close button, as in Zed.
+- `dirty=True` shows a dot; on hover it turns into the close button.
 - `preview=True` draws the name in italics (preview tab).
 - `status` tints the name with the git color.
 - `on_select(id)` and `on_close(id)` receive the tab id.
@@ -70,7 +70,7 @@ Parts can be strings or `(icon, text)` tuples. `on_press` receives the index.
 
 ## Toolbar
 
-`ui.toolbar(start, end)` is the bar Zed shows below the tabs: usually breadcrumbs on the left and
+`ui.toolbar(start, end)` is the bar below the tabs of a code editor: usually breadcrumbs on the left and
 buffer actions on the right.
 
 Full reference: [Navigation](/pyzed/reference/ui/#navigation).

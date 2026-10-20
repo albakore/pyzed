@@ -1,6 +1,6 @@
 ---
 title: "Themes"
-description: "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs."
+description: "API reference for pyzed Theme: the built-in themes, color tokens, deriving custom themes and color utilities for Python GUIs."
 sidebar:
   order: 5
 ---
@@ -13,7 +13,7 @@ See the [theming](/pyzed/theming/themes/) guide for the list of tokens and how t
 
 ### `Theme`
 
-A theme: an immutable dataclass with Zed's color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark.
+A theme: an immutable dataclass with color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark.
 
 **Methods and properties**
 
@@ -67,7 +67,7 @@ All tokens as a dict.
 syntax_scopes(self)
 ```
 
-Maps Zed's syntax tokens to TextMate scopes for the highlighter.
+Maps the theme's syntax tokens to TextMate scopes for the highlighter.
 
 ### `palette`
 
@@ -188,7 +188,7 @@ Reads a theme written with `save` (for Zed themes use `from_zed`).
 
 ### `themes`
 
-Namespace with the built-in themes (Zed's One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…
+Namespace with the built-in themes (the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…
 
 ### `all`
 

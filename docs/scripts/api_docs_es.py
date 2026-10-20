@@ -33,7 +33,7 @@ COMMON = {
     "id": "Identificador estable para enfocarlo o desplazarlo con un `Command`.",
     "icon": "Nombre de un icono de Lucide (`pyzed icons` los lista).",
     "icon_color": "Color del icono: un token del tema o un color hex.",
-    "keys": 'Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`.',
+    "keys": 'Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`.',
     "selected": "Lo marca como seleccionado.",
     "disabled": "Lo deshabilita (ignora los clics).",
     "size": "Tamaño.",
@@ -342,11 +342,11 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
             }),
             ("Interacción", {
                 "pyzed.button": {
-                    "desc": "Un botón sin estilo predefinido. Para el botón de Zed usa `ui.button`.",
+                    "desc": "Un botón sin estilo predefinido. Para el botón con tema usa `ui.button`.",
                     "params": {"content": "Contenido del botón."},
                 },
                 "pyzed.text_input": {
-                    "desc": "Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_input`. Para el estilo de Zed usa `ui.input`.",
+                    "desc": "Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_input`. Para el campo con tema usa `ui.input`.",
                     "params": {
                         "value": "Texto actual.",
                         "size": "Tamaño de la fuente.",
@@ -380,7 +380,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
                     "desc": "Hace que un widget bloquee el ratón para lo que está debajo en un `stack`.",
                 },
                 "pyzed.tooltip": {
-                    "desc": "Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo de Zed.",
+                    "desc": "Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo del tema.",
                     "params": {
                         "tip": "Contenido del tooltip.",
                         "position": '`"top"`, `"bottom"`, `"left"`, `"right"` o `"cursor"`.',
@@ -406,7 +406,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
 Un editor de código con resaltado de sintaxis, números de línea y marcadores de git, basado en
 `text_editor` de Iced. Es **no controlado**: `text` solo es el valor inicial para ese `id`; el
 texto, el cursor y el historial viven en Rust. Usa `Command.set_editor_text` para reemplazarlo.
-Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
+Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 """,
                     "params": {
                         "id": "Identifica el buffer. Reutilízalo para conservar el estado entre renders.",
@@ -455,7 +455,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
     {
         "slug": "ui",
         "title": "Componentes (pyzed.ui)",
-        "description": "Referencia de la API de pyzed.ui: cada componente estilo Zed con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python.",
+        "description": "Referencia de la API de pyzed.ui: cada componente listo para usar con sus parámetros, valores por defecto y eventos, para apps de escritorio en Python.",
         "order": 4,
         "intro": """
             Firmas y parámetros de todos los componentes. Para verlos con imágenes y ejemplos,
@@ -484,7 +484,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"level": "1 (26 px), 2 (20 px), 3 (16 px) o 4 (13.5 px).", "kwargs": "Los de `label`."},
                 },
                 "pyzed.ui.button": {
-                    "desc": "El botón de Zed.",
+                    "desc": "Un botón con tema, con variantes, tamaños, un icono y un atajo.",
                     "params": {
                         "content": "Texto o widget.",
                         "icon_position": '`"start"` o `"end"`.',
@@ -496,7 +496,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     },
                 },
                 "pyzed.ui.icon_button": {
-                    "desc": "Un botón cuadrado con solo un icono (el `IconButton` de Zed).",
+                    "desc": "Un botón cuadrado con solo un icono.",
                     "params": {
                         "name": "Nombre del icono.",
                         "size": _SIZES,
@@ -531,7 +531,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     },
                 },
                 "pyzed.ui.tooltip": {
-                    "desc": "Envuelve `content` con un tooltip al estilo de Zed, opcionalmente con su atajo.",
+                    "desc": "Envuelve `content` con un tooltip con el estilo del tema, opcionalmente con su atajo.",
                     "params": {"text": "Texto del tooltip.", "position": '`"top"`, `"bottom"`, `"left"`, `"right"` o `"cursor"`.'},
                 },
                 "pyzed.ui.divider": {
@@ -568,18 +568,18 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"max": "Valor máximo.", "height": "Grosor."},
                 },
                 "pyzed.ui.segmented": {
-                    "desc": "Un grupo de botones mutuamente excluyentes (el `ToggleButtonGroup` de Zed).",
+                    "desc": "Un grupo de botones mutuamente excluyentes.",
                     "params": {"options": "Lista de opciones (textos).", "selected": "La opción activa."},
                 },
                 "pyzed.ui.field": {
-                    "desc": "Una fila de formulario: título y descripción a la izquierda, control a la derecha (como los ajustes de Zed).",
+                    "desc": "Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).",
                     "params": {"control": "El control (switch, input…).", "description": "Texto de ayuda.",
                                "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`)."},
                 },
             }),
             ("Listas, árbol y menús", {
                 "pyzed.ui.list_item": {
-                    "desc": "Una fila de lista (el `ListItem` de Zed): icono, texto y un hueco al final.",
+                    "desc": "Una fila de lista: icono, texto y un hueco al final.",
                     "params": {
                         "content": "Texto o widget.",
                         "focused": "Dibuja un borde de foco.",
@@ -599,7 +599,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     },
                 },
                 "pyzed.ui.tree": {
-                    "desc": "Un árbol de archivos plegable (el panel de proyecto de Zed).",
+                    "desc": "Un árbol de archivos plegable, como el panel de proyecto de un editor de código.",
                     "params": {
                         "nodes": "Lista de `TreeNode`.",
                         "expanded": "Conjunto de ids de carpetas abiertas.",
@@ -652,7 +652,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
             }),
             ("Workspace", {
                 "pyzed.ui.workspace": {
-                    "desc": "El layout de una ventana de Zed: barra de título, docks izquierdo, derecho e inferior, centro y barra de estado. Pasa `None` para ocultar un dock.",
+                    "desc": "El layout de una ventana estilo editor: barra de título, docks izquierdo, derecho e inferior, centro y barra de estado. Pasa `None` para ocultar un dock.",
                     "params": {
                         "center": "Contenido central (normalmente pestañas + editor).",
                         "title_bar": "Barra de título (`ui.title_bar`).",
@@ -691,12 +691,12 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
             }),
             ("Marco de ventana", {
                 "pyzed.ui.window_frame": {
-                    "desc": "El marco entero de una ventana abierta con `frame=\"custom\"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed y bordes que cambian el tamaño de la ventana.",
+                    "desc": "El marco entero de una ventana abierta con `frame=\"custom\"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda y bordes que cambian el tamaño de la ventana.",
                     "params": {
                         "content": "El contenido de la ventana, bajo la barra de título.",
                         "title": "Título de la barra. Por defecto el `title` de la ventana.",
                         "menus": "Menús a la izquierda de la barra: una lista de `ui.Menu`.",
-                        "menu_button": "Muestra los menús tras un botón ☰, como Zed (`False` muestra siempre sus nombres).",
+                        "menu_button": "Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres).",
                         "start": "Elementos después de los menús (proyecto, rama…).",
                         "center": "Tu propio widget en el centro en lugar del título.",
                         "end": "Elementos antes de los botones de ventana.",
@@ -758,7 +758,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"detail": "Texto secundario (por ejemplo, la ruta de un archivo)."},
                 },
                 "pyzed.ui.command_palette": {
-                    "desc": "La paleta de comandos de Zed: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.",
+                    "desc": "Una paleta de comandos: filtra `commands` por `query` con búsqueda difusa y muestra sus atajos.",
                     "params": {
                         "query": "Texto buscado.",
                         "on_query": "Callable que recibe el texto nuevo.",
@@ -802,7 +802,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
             }),
             ("Código", {
                 "pyzed.ui.editor": {
-                    "desc": "El editor de código de Zed: resaltado con los colores del tema, números de línea y marcadores de git.",
+                    "desc": "Un editor de código: resaltado con los colores del tema, números de línea y marcadores de git.",
                     "params": {
                         "id": "Identifica el buffer (usa la ruta del archivo).",
                         "text": "Texto inicial.",
@@ -852,7 +852,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
     {
         "slug": "theme",
         "title": "Temas",
-        "description": "Referencia de la API de Theme en Pyzed: los temas incluidos, los tokens de color de Zed, cómo derivar temas propios y utilidades de color.",
+        "description": "Referencia de la API de Theme en Pyzed: los temas incluidos, los tokens de color, cómo derivar temas propios y utilidades de color.",
         "order": 5,
         "intro": """
             Ver la guía de [temas](/pyzed/es/theming/themes/) para la lista de tokens y cómo crear los tuyos.
@@ -860,7 +860,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
         "sections": [
             ("Theme", {
                 "pyzed.Theme": {
-                    "desc": "Un tema: un dataclass inmutable con los tokens de color de Zed (superficies, bordes, elementos, texto, estado, editor, sintaxis, colores de colaboradores y ANSI) y métricas (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). La propiedad `is_dark` indica si es oscuro.",
+                    "desc": "Un tema: un dataclass inmutable con los tokens de color (superficies, bordes, elementos, texto, estado, editor, sintaxis, colores de colaboradores y ANSI) y métricas (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). La propiedad `is_dark` indica si es oscuro.",
                     "no_signature": True,
                 },
                 "pyzed.Theme.derive": {
@@ -873,7 +873,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {"name": "Token o color."},
                 },
                 "pyzed.Theme.tokens": {"desc": "Todos los tokens como diccionario."},
-                "pyzed.Theme.syntax_scopes": {"desc": "Traduce los tokens de sintaxis de Zed a scopes de TextMate para el resaltador."},
+                "pyzed.Theme.syntax_scopes": {"desc": "Traduce los tokens de sintaxis del tema a scopes de TextMate para el resaltador."},
                 "pyzed.Theme.palette": {"desc": "La paleta base que se pasa a Iced para sus estilos internos. De uso interno."},
             }),
             ("Temas incluidos", {
@@ -930,7 +930,7 @@ Para el estilo de Zed usa [`ui.editor`](/pyzed/es/components/code/).
                                          "params": {"key": 'Una clave de `CATEGORIES` (`"arrows"`, `"files"`, `"people"`...).', "among": "Mirar solo estos nombres."}},
                 "pyzed.icons.CATEGORIES": {"desc": "Grupos para explorar iconos (flechas, texto, archivos, diseño, multimedia, comunicación, personas, dispositivos, desarrollo, formas, clima, comercio, mapas, estado), cada uno con las palabras de nombres y etiquetas que meten un icono en él.", "no_signature": True},
                 "pyzed.icons.for_file": {
-                    "desc": 'Devuelve `(icono, color_o_None)` para un nombre de archivo, como en el panel de proyecto de Zed.',
+                    "desc": 'Devuelve `(icono, color_o_None)` para un nombre de archivo, como en el panel de proyecto de un editor de código.',
                     "params": {"name": "Nombre del archivo."},
                 },
                 "pyzed.icons.language_for": {
@@ -1340,7 +1340,7 @@ _section("widgets", "Imágenes y contenido", {
 dict(_w)["Controles"].update({
     "pyzed.vertical_slider": {"desc": "Un deslizador vertical (`slider(..., vertical=True)`).", "params": {"min": "Mínimo.", "max": "Máximo.", "kwargs": "Los de `slider`."}},
     "pyzed.pick_list": {
-        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el estilo de Zed usa `ui.select`.",
+        "desc": "Un desplegable para elegir una de `options`. `on_select(opción)` recibe la elegida. Para el desplegable con tema usa `ui.select`.",
         "params": {
             "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
             "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
@@ -1361,7 +1361,7 @@ dict(_w)["Controles"]["pyzed.slider"]["params"]["on_release"] = "Se envía al so
 # -- UI -----------------------------------------------------------------------------
 _section("ui", "Controles", {
     "pyzed.ui.select": {
-        "desc": "Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.",
+        "desc": "Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.",
         "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.'},
     },
     "pyzed.ui.radio_group": {
@@ -1369,11 +1369,11 @@ _section("ui", "Controles", {
         "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna."},
     },
     "pyzed.ui.number_field": {
-        "desc": "Un campo numérico con botones −/+ (el `NumericStepper` de Zed). `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
+        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
         "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.'},
     },
     "pyzed.ui.split_button": {
-        "desc": "Un botón con una flecha aparte para más opciones (el `SplitButton` de Zed). `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
+        "desc": "Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
         "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES},
     },
     "pyzed.ui.toggle_group": {
@@ -1392,7 +1392,7 @@ _section("ui", "Controles", {
         "desc": "Una sección de `ui.accordion`: `key`, `title`, `content` y, opcionales, `icon` y un widget `end` en la cabecera.",
     },
     "pyzed.ui.accordion": {
-        "desc": "Secciones plegables apiladas y separadas por divisores, como los paneles de los ajustes de Zed. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.",
+        "desc": "Secciones plegables apiladas y separadas por divisores, como los paneles de una pantalla de ajustes. Cada cabecera ocupa todo el ancho, así que el contenido queda alineado con el resto del panel. El estado abierto es tuyo: cámbialo en `on_toggle`.",
         "params": {"sections": "Elementos `ui.AccordionSection(key, title, content, icon=None, end=None)` (o tuplas `(key, title, content)`).", "open": "El conjunto de ids abiertos, un dict `{id: bool}` o `True` para todos.", "on_toggle": "Se llama con la clave de la cabecera pulsada.", "icons": "`{id: icono}`: un icono de Lucide para cada cabecera.", "spacing": "Espacio alrededor de los divisores entre secciones.", "padding": "Relleno alrededor del contenido de una sección abierta."},
         "example": """
             ui.accordion([
@@ -1404,7 +1404,7 @@ _section("ui", "Controles", {
 }, before="Listas, árbol y menús")
 _section("ui", "Datos y feedback", {
     "pyzed.ui.callout": {
-        "desc": "Un aviso en línea (el `Callout`/`Banner` de Zed).",
+        "desc": "Un aviso en línea (un callout o banner).",
         "params": {"title": "Título (texto o widget).", "tint": '`"info"`, `"success"`, `"warning"`, `"error"` o `"hint"`: elige el color y el icono.', "on_dismiss": "Añade un botón de cerrar."},
     },
     "pyzed.ui.empty_state": {
@@ -1412,7 +1412,7 @@ _section("ui", "Datos y feedback", {
         "params": {"title": "Título."},
     },
     "pyzed.ui.settings_group": {
-        "desc": "Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de ajustes de Zed).",
+        "desc": "Un bloque con título de filas `ui.field` separadas por líneas, como una pantalla de ajustes.",
         "params": {"title": "Título del grupo.", "rows": "Las filas (normalmente `ui.field`)."},
     },
     "pyzed.ui.Column": {
@@ -1452,7 +1452,7 @@ _section("ui", "Datos y feedback", {
         "params": {"count": "El número.", "max": "Máximo antes de mostrar `N+`."},
     },
     "pyzed.ui.facepile": {
-        "desc": "Avatares superpuestos de colaboradores, como en la barra de título de Zed. Los que pasan de `max_shown` se agrupan en `+N`.",
+        "desc": "Avatares superpuestos de colaboradores, como en la barra de título de un editor colaborativo. Los que pasan de `max_shown` se agrupan en `+N`.",
         "params": {"people": "Iniciales o nombres.", "overlap": "Solapamiento en píxeles.", "max_shown": "Cuántos mostrar."},
     },
     "pyzed.ui.diff_stat": {
@@ -1504,7 +1504,7 @@ dict(_t["sections"])["Temas incluidos"].update({
     "pyzed.AutoTheme": {"desc": "Lo que devuelve `themes.auto`: un par `(light, dark)`. `pick(dark)` devuelve el que toca.", "no_signature": True},
 })
 _t["sections"][1][1]["pyzed.themes"]["desc"] = (
-    "Espacio de nombres con los temas incluidos (las familias One, Ayu y Gruvbox de Zed) y el registro de "
+    "Espacio de nombres con los temas incluidos (las familias One, Ayu y Gruvbox) y el registro de "
     "temas. Los incluidos también están como atributos: `themes.ONE_DARK`, `themes.ONE_LIGHT`, "
     "`themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
 )
@@ -1591,7 +1591,7 @@ _section("app", "Eventos y componentes", {
         "desc": "Lo que pasó, se le pasa a los handlers: `type`, `x`, `y` (relativos al widget), `dx`, `dy` (scroll o movimiento del arrastre), `width`, `height`, `button`, `key`, `shift`, `ctrl`, `alt`, `logo`, `window_x`, `window_y`, `screen_x`, `screen_y` (el puntero en la ventana y en la pantalla), y `value`/`source` en eventos propios.",
     },
     "pyzed.Dock": {
-        "desc": "Un espacio de trabajo como el de Zed: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).",
+        "desc": "Un espacio de trabajo estilo editor: un `center` con `pz.DockPanel` acoplados a la izquierda, derecha, abajo o arriba. El usuario cambia el tamaño de un lado arrastrando su borde interior y mueve un panel arrastrando su pestaña a una zona de destino (o desde el menú del clic derecho de la pestaña). `on_layout` recibe la disposición como un dict para guardarla; pásala de vuelta en `layout=`. Ver [Layout](/pyzed/es/guides/layout/#paneles-acoplables-y-redimensionables).",
         "params": {
             "args": "Props por posición: `center`, `panels`, `layout`.", "kwargs": "Props y handlers por nombre, además de `key=`.",
             "center": "El área principal.", "panels": "Una lista de `pz.DockPanel`.",

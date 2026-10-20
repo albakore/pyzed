@@ -86,8 +86,8 @@ CATEGORY_INTROS = {
                   "Lo que se dibuja encima de la interfaz: capas, modales, paletas y notificaciones."),
     "dialogs": T("Ready-made dialogs with translated buttons.",
                  "Diálogos listos para usar con los botones traducidos."),
-    "workspace": T("The frame of a Zed window: docks, title bar, status bar and panels.",
-                   "El marco de una ventana de Zed: docks, barra de título, barra de estado y paneles."),
+    "workspace": T("The frame of an editor-style window: docks, title bar, status bar and panels.",
+                   "El marco de una ventana estilo editor: docks, barra de título, barra de estado y paneles."),
     "code": T("The code editor, a terminal view, a log console and help boxes.",
               "El editor de código, una vista de terminal, una consola de registro y cajas de ayuda."),
     "layout": T("The base layout widgets of `pyzed` (`pz.*`) every component is built with.",
@@ -110,13 +110,13 @@ add(
     name=T("Button", "Botón"),
     category="actions",
     api=["pyzed.ui.button"],
-    blurb=T("The Zed button: variants, sizes, icons and shortcuts.",
-            "El botón de Zed: variantes, tamaños, iconos y atajos."),
+    blurb=T("The themed button: variants, sizes, icons and shortcuts.",
+            "El botón con tema: variantes, tamaños, iconos y atajos."),
     desc=T(
-        "Displays a button in the Zed style. It reads its colors from the current theme, can carry an "
+        "Displays a themed button. It reads its colors from the current theme, can carry an "
         "icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of "
         "`pz.button` (`bg`, `hover_bg`, `radius`…) overrides the theme's.",
-        "Muestra un botón con el estilo de Zed. Toma los colores del tema actual, puede llevar un icono "
+        "Muestra un botón con el estilo del tema. Toma los colores del tema actual, puede llevar un icono "
         "y un atajo de teclado, y tiene varias variantes y tamaños. Cualquier parámetro de estilo de "
         "`pz.button` (`bg`, `hover_bg`, `radius`…) reemplaza al del tema.",
     ),
@@ -204,11 +204,11 @@ add(
     blurb=T("A square button with just an icon and an optional tooltip.",
             "Un botón cuadrado con solo un icono y un tooltip opcional."),
     desc=T(
-        "A compact square button that shows a [Lucide](https://lucide.dev) icon, like Zed's `IconButton`. "
+        "A compact square button that shows a [Lucide](https://lucide.dev) icon. "
         "It is ghost by default, so it fits in toolbars, panel headers and tab bars. `tooltip=` adds a "
-        "Zed-style tooltip on hover.",
-        "Un botón cuadrado y compacto que muestra un icono de [Lucide](https://lucide.dev), como el "
-        "`IconButton` de Zed. Es transparente por defecto, así que encaja en barras de herramientas, "
+        "tooltip on hover.",
+        "Un botón cuadrado y compacto que muestra un icono de [Lucide](https://lucide.dev). "
+        "Es transparente por defecto, así que encaja en barras de herramientas, "
         "cabeceras de panel y barras de pestañas. `tooltip=` añade un tooltip al pasar el ratón.",
     ),
     when=T(
@@ -251,9 +251,9 @@ add(
     blurb=T("A main action plus an arrow that opens more options.",
             "Una acción principal más una flecha que abre más opciones."),
     desc=T(
-        "A button with a separate chevron on the right (Zed's `SplitButton`). `on_press` runs the main "
+        "A button with a separate chevron on the right. `on_press` runs the main "
         "action and `on_menu` usually opens a `ui.menu` inside a `ui.popover` with the alternatives.",
-        "Un botón con un chevron separado a la derecha (el `SplitButton` de Zed). `on_press` ejecuta la "
+        "Un botón con un chevron separado a la derecha. `on_press` ejecuta la "
         "acción principal y `on_menu` suele abrir un `ui.menu` dentro de un `ui.popover` con las "
         "alternativas.",
     ),
@@ -504,10 +504,10 @@ add(
     blurb=T("Keyboard shortcuts drawn as keys, with symbols on macOS.",
             "Atajos de teclado dibujados como teclas, con símbolos en macOS."),
     desc=T(
-        "Draws a shortcut written Zed-style (`\"ctrl-shift-p\"`, chords like `\"cmd-k cmd-s\"`) as key caps. "
+        "Draws a shortcut written as a string (`\"ctrl-shift-p\"`, chords like `\"cmd-k cmd-s\"`) as key caps. "
         "On macOS it uses symbols (⌘⇧P) and words elsewhere; `pyzed.ui.base.KEY_STYLE` forces "
         "`\"symbols\"` or `\"words\"`. `ui.format_keys` returns the labels if you draw them yourself.",
-        "Dibuja un atajo escrito al estilo de Zed (`\"ctrl-shift-p\"`, acordes como `\"cmd-k cmd-s\"`) como "
+        "Dibuja un atajo escrito como texto (`\"ctrl-shift-p\"`, acordes como `\"cmd-k cmd-s\"`) como "
         "teclas. En macOS usa símbolos (⌘⇧P) y palabras en el resto; `pyzed.ui.base.KEY_STYLE` fuerza "
         "`\"symbols\"` o `\"words\"`. `ui.format_keys` devuelve las etiquetas si quieres dibujarlas tú.",
     ),
@@ -561,10 +561,10 @@ add(
     blurb=T("A hint shown on hover, optionally with its shortcut.",
             "Una pista que aparece al pasar el ratón, con su atajo opcional."),
     desc=T(
-        "Wraps any widget and shows a small Zed-style box next to it while the mouse is over it. "
+        "Wraps any widget and shows a small themed box next to it while the mouse is over it. "
         "`keys=` adds the shortcut and `position` is `\"top\"`, `\"bottom\"` (default), `\"left\"` or "
         "`\"right\"`. `pz.tooltip` is the unstyled base version.",
-        "Envuelve cualquier widget y muestra una caja pequeña al estilo de Zed mientras el ratón está "
+        "Envuelve cualquier widget y muestra una caja pequeña con el estilo del tema mientras el ratón está "
         "encima. `keys=` añade el atajo y `position` es `\"top\"`, `\"bottom\"` (por defecto), `\"left\"` o "
         "`\"right\"`. `pz.tooltip` es la versión base sin estilo.",
     ),
@@ -658,10 +658,10 @@ add(
     blurb=T("A controlled text field with icon, placeholder and password mode.",
             "Un campo de texto controlado con icono, placeholder y modo contraseña."),
     desc=T(
-        "A single-line text field in the Zed style. It is **controlled**: it shows `value` and reports "
+        "A themed single-line text field. It is **controlled**: it shows `value` and reports "
         "every keystroke to `on_input`, so you store the text in your state and pass it back in `view()`. "
         "`on_submit` runs on Enter.",
-        "Un campo de texto de una línea con el estilo de Zed. Es **controlado**: muestra `value` y "
+        "Un campo de texto de una línea con el estilo del tema. Es **controlado**: muestra `value` y "
         "avisa de cada tecla a `on_input`, así que guardas el texto en tu estado y lo devuelves en "
         "`view()`. `on_submit` se ejecuta al pulsar Enter.",
     ),
@@ -718,9 +718,9 @@ add(
     ),
     when=T(
         ["At the top of a list, tree or table to filter it as you type.",
-         "Pair it with `ui.fuzzy_filter` to rank results like Zed."],
+         "Pair it with `ui.fuzzy_filter` to rank the best matches first."],
         ["Encima de una lista, árbol o tabla para filtrarla mientras escribes.",
-         "Combínalo con `ui.fuzzy_filter` para ordenar los resultados como Zed."],
+         "Combínalo con `ui.fuzzy_filter` para ordenar primero los mejores resultados."],
     ),
     preview={"code": """pz.column([
     ui.search_input("", on_query),
@@ -842,10 +842,10 @@ add(
     api=["pyzed.ui.number_field"],
     blurb=T("A number with −/+ buttons, limits, step and suffix.", "Un número con botones −/+, límites, paso y sufijo."),
     desc=T(
-        "A numeric field with − and + buttons (Zed's `NumericStepper`). You can also type a value: "
+        "A numeric field with − and + buttons. You can also type a value: "
         "`on_change` receives the number already clamped to `min`/`max`, and text that is not a number "
         "is ignored.",
-        "Un campo numérico con botones − y + (el `NumericStepper` de Zed). También se puede escribir "
+        "Un campo numérico con botones − y +. También se puede escribir "
         "el valor: `on_change` recibe el número ya ajustado a `min`/`max` y el texto que no es un número "
         "se ignora.",
     ),
@@ -877,9 +877,9 @@ add(
     api=["pyzed.ui.select"],
     blurb=T("A dropdown to choose one option.", "Un desplegable para elegir una opción."),
     desc=T(
-        "A dropdown in the theme style (Zed's `DropdownMenu`). Options are shown with `str()`, so "
+        "A dropdown in the theme style. Options are shown with `str()`, so "
         "strings, enums or dataclasses all work, and `on_select` receives the chosen object.",
-        "Un desplegable con el estilo del tema (el `DropdownMenu` de Zed). Las opciones se muestran con "
+        "Un desplegable con el estilo del tema. Las opciones se muestran con "
         "`str()`, así que valen cadenas, enums o dataclasses, y `on_select` recibe el objeto elegido.",
     ),
     when=T(
@@ -945,9 +945,9 @@ add(
     api=["pyzed.ui.segmented"],
     blurb=T("A group of mutually exclusive text buttons.", "Un grupo de botones de texto excluyentes."),
     desc=T(
-        "A row of joined buttons where one is selected (Zed's `ToggleButtonGroup`). `on_select` "
+        "A row of joined buttons where one is selected. `on_select` "
         "receives the chosen option.",
-        "Una fila de botones unidos en la que uno está seleccionado (el `ToggleButtonGroup` de Zed). "
+        "Una fila de botones unidos en la que uno está seleccionado. "
         "`on_select` recibe la opción elegida.",
     ),
     when=T(
@@ -977,9 +977,9 @@ add(
     blurb=T("A settings row: title and description left, control right.",
             "Una fila de ajustes: título y descripción a la izquierda, control a la derecha."),
     desc=T(
-        "A form row like Zed's settings: the title (and an optional description) on the left and any "
+        "A form row like the ones of a settings screen: the title (and an optional description) on the left and any "
         "control on the right. Stack several in a column or a [Settings group](/pyzed/library/settings-group/).",
-        "Una fila de formulario como los ajustes de Zed: el título (y una descripción opcional) a la "
+        "Una fila de formulario como las de una pantalla de ajustes: el título (y una descripción opcional) a la "
         "izquierda y cualquier control a la derecha. Apila varias en una columna o en un "
         "[Grupo de ajustes](/pyzed/es/library/settings-group/).",
     ),
@@ -1166,10 +1166,10 @@ add(
     api=["pyzed.ui.callout"],
     blurb=T("An inline notice with a title, text and actions.", "Un aviso en línea con título, texto y acciones."),
     desc=T(
-        "An inline notice (Zed's `Callout`/`Banner`): an icon, a title, an optional description, action "
+        "An inline notice (a callout or banner): an icon, a title, an optional description, action "
         "buttons and a close button with `on_dismiss`. `tint` is `\"info\"` (default), `\"success\"`, "
         "`\"warning\"`, `\"error\"` or any theme token.",
-        "Un aviso en línea (el `Callout`/`Banner` de Zed): un icono, un título, una descripción opcional, "
+        "Un aviso en línea (un callout o banner): un icono, un título, una descripción opcional, "
         "botones de acción y un botón de cerrar con `on_dismiss`. `tint` es `\"info\"` (por defecto), "
         "`\"success\"`, `\"warning\"`, `\"error\"` o cualquier token del tema.",
     ),
@@ -1514,8 +1514,8 @@ add(
     category="data",
     api=["pyzed.ui.diff_stat"],
     blurb=T("`+12 −3` with GitHub-style blocks.", "`+12 −3` con bloques al estilo de GitHub."),
-    desc=T("Lines added and removed, with a row of green and red blocks, as in Zed's git panel.",
-           "Líneas añadidas y quitadas, con una fila de bloques verdes y rojos, como en el panel de git de Zed."),
+    desc=T("Lines added and removed, with a row of green and red blocks, as in the git panel of a code editor.",
+           "Líneas añadidas y quitadas, con una fila de bloques verdes y rojos, como en el panel de git de un editor de código."),
     when=T(["Next to a file, commit or pull request in a list of changes."],
            ["Junto a un archivo, commit o pull request en una lista de cambios."]),
     preview={"code": """pz.column([
@@ -1532,8 +1532,8 @@ add(
     category="data",
     api=["pyzed.ui.facepile"],
     blurb=T("Overlapping collaborator avatars with +N.", "Avatares de colaboradores superpuestos con +N."),
-    desc=T("Overlapping avatars of collaborators, as in Zed's title bar. People beyond `max_shown` are grouped into `+N`.",
-           "Avatares superpuestos de colaboradores, como en la barra de título de Zed. Los que pasan de `max_shown` se agrupan en `+N`."),
+    desc=T("Overlapping avatars of collaborators, as in the title bar of a collaborative editor. People beyond `max_shown` are grouped into `+N`.",
+           "Avatares superpuestos de colaboradores, como en la barra de título de un editor colaborativo. Los que pasan de `max_shown` se agrupan en `+N`."),
     when=T(["To show who is in a project, a call or a document without listing names."],
            ["Para mostrar quién está en un proyecto, una llamada o un documento sin listar los nombres."]),
     preview={"code": """pz.column([
@@ -1548,9 +1548,9 @@ add(
     name=T("Settings group", "Grupo de ajustes"),
     category="data",
     api=["pyzed.ui.settings_group"],
-    blurb=T("A titled block of field rows, like Zed's settings.", "Un bloque con título de filas de ajustes, como en Zed."),
-    desc=T("A titled block of `ui.field` rows separated by lines, with an optional description (Zed's settings UI).",
-           "Un bloque con título de filas `ui.field` separadas por líneas, con una descripción opcional (la interfaz de ajustes de Zed)."),
+    blurb=T("A titled block of field rows, for settings screens.", "Un bloque con título de filas de ajustes, para pantallas de ajustes."),
+    desc=T("A titled block of `ui.field` rows separated by lines, with an optional description, like a settings screen.",
+           "Un bloque con título de filas `ui.field` separadas por líneas, con una descripción opcional, como una pantalla de ajustes."),
     when=T(["To organize a preferences screen into sections (Editor, Files, Git…)."],
            ["Para organizar una pantalla de preferencias en secciones (Editor, Archivos, Git…)."]),
     preview={"code": """pz.container(ui.settings_group("Editor", [
@@ -1570,18 +1570,18 @@ add(
     api=["pyzed.ui.list_item"],
     blurb=T("A list row with icon, text and an end slot.", "Una fila de lista con icono, texto y un hueco al final."),
     desc=T(
-        "A list row (Zed's `ListItem`): an icon, the text and `start`/`end` slots for any widget. It "
+        "A list row: an icon, the text and `start`/`end` slots for any widget. It "
         "supports `selected`, `focused` (focus border), `disabled`, nesting with `indent`, and "
         "`on_right_press` for a context menu.",
-        "Una fila de lista (el `ListItem` de Zed): un icono, el texto y huecos `start`/`end` para "
+        "Una fila de lista: un icono, el texto y huecos `start`/`end` para "
         "cualquier widget. Admite `selected`, `focused` (borde de foco), `disabled`, anidar con `indent` "
         "y `on_right_press` para un menú contextual.",
     ),
     when=T(
         ["For any vertical list: recent files, search results, settings categories, people.",
-         "Use `inset=True` inside panels so the highlight has a margin, like Zed."],
+         "Use `inset=True` inside panels so the highlight has a margin."],
         ["Para cualquier lista vertical: archivos recientes, resultados, categorías de ajustes, personas.",
-         "Usa `inset=True` dentro de paneles para que el resaltado tenga margen, como en Zed."],
+         "Usa `inset=True` dentro de paneles para que el resaltado tenga margen."],
     ),
     preview={"code": """pz.column([
     ui.list_item("main.py", on_open, icon="file-code", icon_color="#3572a5", selected=True, inset=True),
@@ -1630,11 +1630,11 @@ add(
     api=["pyzed.ui.tree", "pyzed.ui.TreeNode"],
     blurb=T("A collapsible file tree with icons and git colors.", "Un árbol de archivos plegable con iconos y colores de git."),
     desc=T(
-        "Zed's project panel: collapsible folders, an icon per file type and git status colors. "
+        "A project panel: collapsible folders, an icon per file type and git status colors. "
         "`TreeNode.from_paths(paths, status=...)` builds the nodes, puts folders first and propagates "
         "the git status to the folders that contain changes. Each node's id is its path; you own the "
         "`expanded` set and the `selected` id.",
-        "El panel de proyecto de Zed: carpetas plegables, un icono por tipo de archivo y colores de "
+        "Un panel de proyecto: carpetas plegables, un icono por tipo de archivo y colores de "
         "estado de git. `TreeNode.from_paths(paths, status=...)` crea los nodos, pone las carpetas "
         "primero y propaga el estado de git a las carpetas con cambios. El id de cada nodo es su ruta; "
         "el conjunto `expanded` y el id `selected` son tuyos.",
@@ -1724,8 +1724,8 @@ add(
     name=T("Accordion", "Acordeón"),
     category="lists",
     api=["pyzed.ui.accordion", "pyzed.ui.AccordionSection"],
-    blurb=T("Stacked collapsible sections, like Zed's settings panels.",
-            "Secciones plegables apiladas, como los paneles de ajustes de Zed."),
+    blurb=T("Stacked collapsible sections, like the panels of a settings screen.",
+            "Secciones plegables apiladas, como los paneles de una pantalla de ajustes."),
     desc=T(
         "Stacked collapsible sections separated by dividers. Sections are `(key, title, content)` tuples "
         "or `ui.AccordionSection` objects (with `icon` and a header `end` widget). You own the open state: "
@@ -1856,8 +1856,8 @@ add(
     category="navigation",
     api=["pyzed.ui.toolbar"],
     blurb=T("The bar under the tabs: breadcrumbs and buffer actions.", "La barra bajo las pestañas: migas de pan y acciones."),
-    desc=T("The bar Zed shows below the tabs: widgets at the `start` (usually breadcrumbs) and at the `end` (buffer actions).",
-           "La barra que Zed muestra bajo las pestañas: widgets al principio (`start`, normalmente migas de pan) y al final (`end`, acciones del buffer)."),
+    desc=T("The bar below the tabs of a code editor: widgets at the `start` (usually breadcrumbs) and at the `end` (buffer actions).",
+           "La barra bajo las pestañas de un editor de código: widgets al principio (`start`, normalmente migas de pan) y al final (`end`, acciones del buffer)."),
     when=T(["Between the tab bar and the editor, or at the top of any content view."],
            ["Entre la barra de pestañas y el editor, o arriba de cualquier vista de contenido."]),
     preview={"code": """ui.toolbar(
@@ -1880,11 +1880,11 @@ add(
         "Stacks `overlay` on top of `base`. Clicking outside the overlay sends `on_dismiss`, and "
         "`backdrop` dims the view behind it. With `overlay=None` it returns `base` unchanged, so it can "
         "always wrap your view. `align_x`, `align_y` and `offset` place the overlay (by default centered "
-        "at the top, like Zed's palette).",
+        "at the top, like a command palette).",
         "Apila `overlay` encima de `base`. Al pulsar fuera de la capa se envía `on_dismiss`, y "
         "`backdrop` oscurece la vista de detrás. Con `overlay=None` devuelve `base` sin cambios, así que "
         "puede envolver siempre tu vista. `align_x`, `align_y` y `offset` colocan la capa (por defecto "
-        "centrada arriba, como la paleta de Zed).",
+        "centrada arriba, como una paleta de comandos).",
     ),
     when=T(
         ["To show palettes, pickers, modals and menus above everything else.",
@@ -1995,12 +1995,12 @@ add(
     name=T("Command palette", "Paleta de comandos"),
     category="overlays",
     api=["pyzed.ui.command_palette", "pyzed.ui.PaletteItem"],
-    blurb=T("Zed's command palette with fuzzy search and shortcuts.", "La paleta de comandos de Zed con búsqueda difusa y atajos."),
+    blurb=T("A command palette with fuzzy search and shortcuts.", "Una paleta de comandos con búsqueda difusa y atajos."),
     desc=T(
-        "Zed's command palette: it fuzzy-filters `commands` (`ui.PaletteItem(label, on_press, keys=)`) "
+        "A command palette: it fuzzy-filters `commands` (`ui.PaletteItem(label, on_press, keys=)`) "
         "by `query`, highlights the matched letters and shows each shortcut. You own the query and the "
         "`selected` index; Enter calls `on_submit`.",
-        "La paleta de comandos de Zed: filtra `commands` (`ui.PaletteItem(label, on_press, keys=)`) "
+        "Una paleta de comandos: filtra `commands` (`ui.PaletteItem(label, on_press, keys=)`) "
         "por `query` con búsqueda difusa, resalta las letras encontradas y muestra cada atajo. La "
         "consulta y el índice `selected` son tuyos; Enter llama a `on_submit`.",
     ),
@@ -2051,12 +2051,12 @@ add(
     blurb=T("A searchable list on a floating surface, with fuzzy matching.", "Una lista con búsqueda en una superficie flotante, con coincidencia difusa."),
     desc=T(
         "A search box over a list of results on a floating surface: the basis of the command palette "
-        "and the file finder. `ui.fuzzy_filter(query, items, key=)` ranks items like Zed and returns "
+        "and the file finder. `ui.fuzzy_filter(query, items, key=)` ranks items (best match first) and returns "
         "`[(item, positions), ...]`; pass those pairs to `picker` to highlight the matches. "
         "`ui.fuzzy_match` scores one string and `ui.highlighted` draws one with its matches.",
         "Un buscador sobre una lista de resultados en una superficie flotante: la base de la paleta de "
         "comandos y del buscador de archivos. `ui.fuzzy_filter(query, items, key=)` ordena los elementos "
-        "como Zed y devuelve `[(item, positions), ...]`; pasa esos pares a `picker` para resaltar las "
+        "(el mejor primero) y devuelve `[(item, positions), ...]`; pasa esos pares a `picker` para resaltar las "
         "coincidencias. `ui.fuzzy_match` puntúa una cadena y `ui.highlighted` dibuja una con sus coincidencias.",
     ),
     when=T(["For your own finders: files, symbols, branches, projects, emoji."],
@@ -2234,13 +2234,13 @@ add(
     name=T("Workspace", "Espacio de trabajo"),
     category="workspace",
     api=["pyzed.ui.workspace"],
-    blurb=T("The layout of a Zed window: title bar, docks, center, status bar.",
-            "La disposición de una ventana de Zed: barra de título, docks, centro y barra de estado."),
+    blurb=T("The layout of an editor-style window: title bar, docks, center, status bar.",
+            "La disposición de una ventana estilo editor: barra de título, docks, centro y barra de estado."),
     desc=T(
-        "Builds the frame of a Zed window: the title bar on top, docks on the left, right and bottom, "
+        "Builds the frame of an editor-style window: the title bar on top, docks on the left, right and bottom, "
         "the center and the status bar. Pass `None` to hide a dock (that is how Ctrl+B works); "
         "`left_width`, `right_width` and `bottom_height` set their size and `on_resize` reports drags.",
-        "Construye el marco de una ventana de Zed: la barra de título arriba, docks a la izquierda, a la "
+        "Construye el marco de una ventana estilo editor: la barra de título arriba, docks a la izquierda, a la "
         "derecha y abajo, el centro y la barra de estado. Pasa `None` para ocultar un dock (así funciona "
         "Ctrl+B); `left_width`, `right_width` y `bottom_height` fijan su tamaño y `on_resize` avisa al arrastrar.",
     ),
@@ -2317,20 +2317,20 @@ add(
     desc=T(
         "Draws the whole frame of a window opened without system decorations (`frame = \"custom\"`): a "
         "title bar that moves the window (double click maximizes), the minimize, maximize and close "
-        "buttons in the style of a platform, menus on the left like Zed (`ui.Menu`) and borders that "
+        "buttons in the style of a platform, menus on the left (`ui.Menu`) and borders that "
         "resize the window. `ui.window_title_bar` is the bar alone, `ui.window_controls` the three buttons "
         "and `ui.system_platform()` says which style this system uses.",
         "Dibuja el marco completo de una ventana abierta sin decoraciones del sistema (`frame = \"custom\"`): "
         "una barra de título que mueve la ventana (doble clic la maximiza), los botones de minimizar, "
-        "maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed (`ui.Menu`) "
+        "maximizar y cerrar con el estilo de una plataforma, menús a la izquierda (`ui.Menu`) "
         "y bordes que cambian el tamaño de la ventana. `ui.window_title_bar` es la barra sola, "
         "`ui.window_controls` los tres botones y `ui.system_platform()` dice qué estilo usa este sistema.",
     ),
-    when=T(["For apps that want a Zed-like window: menus and pickers in the title bar instead of the system's frame. "
+    when=T(["For apps that want a modern editor-like window: menus and pickers in the title bar instead of the system's frame. "
             "See [Window frames](/pyzed/guides/windows/#window-frames-your-own-title-bar).",
             "With no callbacks, `ui.window_title_bar` and `ui.window_controls` only show: use them to preview "
             "a window in the frame of each platform."],
-           ["Para apps que quieren una ventana como la de Zed: menús y selectores en la barra de título en lugar "
+           ["Para apps que quieren una ventana como la de un editor moderno: menús y selectores en la barra de título en lugar "
             "del marco del sistema. Mira [Marcos de ventana](/pyzed/guides/windows/#marcos-de-ventana-tu-propia-barra-de-título).",
             "Sin callbacks, `ui.window_title_bar` y `ui.window_controls` solo se muestran: úsalos para previsualizar "
             "una ventana con el marco de cada plataforma."]),
@@ -2476,8 +2476,8 @@ add(
     name=T("Editor", "Editor"),
     category="code",
     api=["pyzed.ui.editor", "pyzed.ui.language_token", "pyzed.code_editor"],
-    blurb=T("Zed's code editor: highlighting, folding, minimap, git markers.",
-            "El editor de código de Zed: resaltado, plegado, minimapa, marcas de git."),
+    blurb=T("A full code editor: highlighting, folding, minimap, git markers.",
+            "Un editor de código completo: resaltado, plegado, minimapa, marcas de git."),
     desc=T(
         "A code editor with syntax highlighting in the theme colors (100+ languages), line numbers, git "
         "markers, auto-closing pairs, folding, a minimap and font zoom. It is **uncontrolled**: the text, "

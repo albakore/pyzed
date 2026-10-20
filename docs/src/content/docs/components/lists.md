@@ -1,6 +1,6 @@
 ---
 title: Lists, tree and menus
-description: "List rows, a project file tree and context menus: Zed-style list and navigation components for native Python desktop apps built with Pyzed."
+description: "List rows, a project file tree and context menus: list and navigation components for native Python desktop apps built with Pyzed."
 sidebar:
   order: 3
 ---
@@ -35,7 +35,7 @@ To pass the item to the callback, use a default argument in the lambda:
 
 ## File tree
 
-Zed's project panel: collapsible folders, per-file-type icons and git colors.
+A project panel like the one in code editors: collapsible folders, per-file-type icons and git colors.
 
 ![File tree](../../../assets/components/tree.png)
 

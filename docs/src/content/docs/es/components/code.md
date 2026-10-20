@@ -1,6 +1,6 @@
 ---
 title: Código
-description: "Un editor de código con resaltado de sintaxis y marcadores de git, y una vista de terminal: componentes estilo Zed para apps de escritorio en Python."
+description: "Un editor de código con resaltado de sintaxis y marcadores de git, y una vista de terminal: componentes listos para apps de escritorio en Python."
 sidebar:
   order: 7
 ---
@@ -48,11 +48,11 @@ def cambiado(self, texto):
 
 - **Líneas largas.** Con `wrap=False` (por defecto) el editor se desplaza en horizontal y los
   números de línea quedan fijos a la izquierda. Con `wrap=True` las líneas se ajustan y el número
-  aparece en la primera fila de cada línea, como en Zed.
+  aparece en la primera fila de cada línea.
 - **Línea activa.** La línea del cursor se resalta y el scroll sigue al cursor (también con
   <kbd>RePág</kbd>/<kbd>AvPág</kbd>).
 
-### Editar como en Zed
+### Editar como en un editor de código moderno
 
 ![Bloques plegados, code lens y el minimapa](../../../../assets/components/editor-features.png)
 

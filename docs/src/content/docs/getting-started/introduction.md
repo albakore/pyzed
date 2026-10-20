@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: "What Pyzed is: a Python desktop GUI framework rendered natively by Rust (Iced), with Zed-style components. How it works and when to use it."
+description: "What Pyzed is: a Python desktop GUI framework rendered natively by Rust (Iced), with ready-made modern components. How it works and when to use it."
 ---
 
 **Pyzed** is a library for building desktop interfaces in Python with the performance of
@@ -8,7 +8,16 @@ description: "What Pyzed is: a Python desktop GUI framework rendered natively by
 inspired by the [Zed](https://zed.dev) editor: tabs, file tree, command palette, code editor,
 terminal, menus, notifications and a workspace with dockable panels.
 
-![A Zed recreation built with Pyzed (One Light theme)](../../../../screenshots/zed-one-light.png)
+![A code editor built with Pyzed (One Light theme)](../../../../screenshots/zed-one-light.png)
+
+:::note[Where Pyzed is today]
+Pyzed 1.x is stable for desktop apps on Windows, macOS and Linux: its public API follows semantic versioning.
+`pyzed.agents`, `pyzed.mcp` and animations are still provisional, and mobile and web are planned but not available
+yet. See [Stability and known limitations](/pyzed/guides/stability/).
+:::
+
+The interface style takes after the Zed editor, and Pyzed Design, the visual designer, takes after the form and
+scene editors of Godot, Unreal Engine, Visual Basic and Qt Designer.
 
 ## How it works
 

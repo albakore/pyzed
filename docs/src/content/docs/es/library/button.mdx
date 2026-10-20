@@ -1,6 +1,6 @@
 ---
 title: "Botón"
-description: "El botón de Zed: variantes, tamaños, iconos y atajos. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
+description: "El botón con tema: variantes, tamaños, iconos y atajos. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
   order: 13
   label: "Botón"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-Muestra un botón con el estilo de Zed. Toma los colores del tema actual, puede llevar un icono y un atajo de teclado, y tiene varias variantes y tamaños. Cualquier parámetro de estilo de `pz.button` (`bg`, `hover_bg`, `radius`…) reemplaza al del tema.
+Muestra un botón con el estilo del tema. Toma los colores del tema actual, puede llevar un icono y un atajo de teclado, y tiene varias variantes y tamaños. Cualquier parámetro de estilo de `pz.button` (`bg`, `hover_bg`, `radius`…) reemplaza al del tema.
 
 `ui.button` · Categoría: [Acciones](/pyzed/es/library/#acciones) · [Referencia completa →](/pyzed/es/reference/ui/#button)
 
@@ -176,7 +176,7 @@ button(
 )
 ```
 
-El botón de Zed.
+Un botón con tema, con variantes, tamaños, un icono y un atajo.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -191,7 +191,7 @@ El botón de Zed.
 | `selected` | `False` | Lo marca como seleccionado. |
 | `disabled` | `False` | Lo deshabilita (ignora los clics). |
 | `full_width` | `False` | Ocupa todo el ancho. |
-| `keys` | `None` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | `None` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `**style` | — | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
 

@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-Wraps any widget and shows a small Zed-style box next to it while the mouse is over it. `keys=` adds the shortcut and `position` is `"top"`, `"bottom"` (default), `"left"` or `"right"`. `pz.tooltip` is the unstyled base version.
+Wraps any widget and shows a small themed box next to it while the mouse is over it. `keys=` adds the shortcut and `position` is `"top"`, `"bottom"` (default), `"left"` or `"right"`. `pz.tooltip` is the unstyled base version.
 
 `ui.tooltip` · Category: [Display](/pyzed/library/#display) · [Full reference →](/pyzed/reference/ui/#tooltip)
 
@@ -60,13 +60,13 @@ Tooltips only appear on hover, so the preview shows the buttons. `ui.icon_button
 tooltip(content, text, *, keys=None, position='bottom', theme=None)
 ```
 
-Wraps `content` with a Zed-style tooltip, optionally with its shortcut.
+Wraps `content` with a themed tooltip, optionally with its shortcut.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
 | `content` | *required* | Content: a `Widget`, a string or a number (converted to text). |
 | `text` | *required* | Tooltip text. |
-| `keys` | `None` | Shortcut shown at the end, Zed style: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | `None` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `position` | `"bottom"` | `"top"`, `"bottom"`, `"left"`, `"right"` or `"cursor"`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
@@ -90,7 +90,7 @@ tooltip(
 )
 ```
 
-Shows `tip` next to `content` on hover. `ui.tooltip` adds the Zed style.
+Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.
 
 | Parameter | Default | Description |
 | --- | --- | --- |

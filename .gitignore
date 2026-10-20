@@ -10,3 +10,6 @@ dist/
 build/
 uv.lock
 tests/visual/output/
+
+# written by examples/theming/mixed.py
+examples/theming/my-theme.json

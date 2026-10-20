@@ -5,8 +5,9 @@ tableOfContents:
   maxHeadingLevel: 2
 ---
 
-import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 import Download from '../../../components/Download.astro';
+import Commands from '../../../components/Commands.astro';
 
 **Pyzed Design** es el diseñador visual de Pyzed como app independiente: dibuja ventanas y componentes, escribe su
 código con autocompletado y diagnósticos, gestiona las dependencias de tu proyecto y ejecútalo todo con **F5**.
@@ -72,24 +73,22 @@ desde esta página. Las [novedades](/pyzed/es/changelog/) cuentan qué ha cambia
 Si ya usas Python (3.10 o posterior), o tu plataforma no tiene descarga precompilada (por ejemplo un Mac con chip
 Intel o Linux en ARM), instala la librería y abre el diseñador desde ella:
 
-<Tabs>
-<TabItem label="pip">
-
-```bash
-pip install "pyzed-ui[designer]"
-python -m pyzed.designer
-```
-
-</TabItem>
-<TabItem label="uv">
-
-```bash
-uv tool install "pyzed-ui[designer]"
-pyzed design
-```
-
-</TabItem>
-</Tabs>
+<Commands
+	uv={`
+		uv tool install "pyzed-ui[designer]"
+		pyzed design
+	`}
+	pip={`
+		{venv}
+		{activate}
+		pip install "pyzed-ui[designer]"
+		pyzed design
+	`}
+	python={`
+		{py} -m pip install "pyzed-ui[designer]"
+		{py} -m pyzed design
+	`}
+/>
 
 El extra `designer` añade los servidores de lenguaje ty y ruff; un simple `pip install pyzed-ui` también sirve.
 Dentro de un proyecto, `uv run pyzed design` abre el diseñador con el entorno de ese proyecto. Consulta la
@@ -99,11 +98,25 @@ Dentro de un proyecto, `uv run pyzed design` abre el diseñador con el entorno d
 
 Las descargas las genera `scripts/build_designer.py` con PyInstaller, en cada sistema operativo:
 
-```bash
-python -m pip install pyzed-ui pyinstaller uv
-python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
-python scripts/build_designer.py --installer   # además el setup .exe (requiere Inno Setup 6) o el .dmg
-```
+<Commands
+	uv={`
+		uv sync
+		uv run --with pyinstaller --with uv python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
+		uv run --with pyinstaller --with uv python scripts/build_designer.py --installer   # además el setup .exe (requiere Inno Setup 6) o el .dmg
+	`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui pyinstaller uv
+		python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
+		python scripts/build_designer.py --installer   # además el setup .exe (requiere Inno Setup 6) o el .dmg
+	`}
+	python={`
+		{py} -m pip install pyzed-ui pyinstaller uv
+		{py} scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<os>-<arch>.zip
+		{py} scripts/build_designer.py --installer   # además el setup .exe (requiere Inno Setup 6) o el .dmg
+	`}
+/>
 
 <Aside type="tip" title="Siguientes pasos">
 	¿Es tu primera vez con el diseñador? Lee la [guía del diseñador visual](/pyzed/es/guides/designer/) y luego crea

@@ -1,0 +1,223 @@
+---
+title: Claves de API y credenciales
+description: "Cómo encuentran Pyzed Design y pyzed.agents las credenciales de los proveedores de modelos: el llavero del sistema, variables de entorno, inicio de sesión con el navegador, credenciales de Google Cloud y federación de identidades, y cómo mantener las claves seguras."
+sidebar:
+  order: 2.5
+---
+
+import Commands from '../../../../components/Commands.astro';
+
+El agente de [Pyzed Design](/pyzed/es/editor/ai-agents/) y la biblioteca
+[`pyzed.agents`](/pyzed/es/guides/agents/) necesitan una credencial del proveedor de modelos que elijas: una clave
+de API, un token de inicio de sesión o, para Claude, la federación de identidad de cargas de trabajo. Esta página
+explica dónde las busca Pyzed, cómo dársela sin escribirla en un archivo y cómo mantenerla segura. Los modelos
+locales (Ollama, LM Studio) no necesitan nada.
+
+## Dónde busca Pyzed
+
+En cada petición Pyzed usa la primera credencial que encuentra, en este orden:
+
+1. **El llavero del sistema.** Una clave que pegaste o un token de inicio de sesión, guardados con el servicio
+   `pyzed` en el almacén de credenciales del sistema operativo: Llavero en macOS, Administrador de credenciales en
+   Windows, Secret Service (GNOME Keyring, KWallet) en Linux. Los tokens de inicio de sesión (OpenRouter, GitHub,
+   Google) también se guardan ahí y se renuevan cuando están por caducar.
+2. **La federación de identidad de cargas de trabajo** (solo Anthropic), cuando está activada en los ajustes y no
+   hay ninguna clave guardada. Consulta [Claude sin clave de API](#claude-sin-clave-de-api).
+3. **La variable de entorno del proveedor**, como `ANTHROPIC_API_KEY` u `OPENAI_API_KEY` (tabla más abajo). Se lee,
+   nunca se copia a ningún sitio.
+4. **Lo que el equipo ya tiene.** Google Vertex AI usa las credenciales de Google Cloud de
+   `gcloud auth application-default login`. Anthropic también usa un perfil de la CLI de Anthropic
+   (`ant auth login`) y las variables `ANTHROPIC_FEDERATION_RULE_ID` / `ANTHROPIC_ORGANIZATION_ID`.
+
+Una clave guardada siempre gana: si defines una variable de entorno y parece que se ignora, abre el proveedor en los
+ajustes y pulsa **Quitar la clave**. Cada proveedor tiene en los ajustes un distintivo que dice de dónde sale su
+credencial, y **Probar la conexión** comprueba que funciona:
+
+| Distintivo | Significado |
+| --- | --- |
+| **Clave guardada en el llavero del sistema** | Una clave que pegaste, guardada en el llavero. |
+| **Clave solo para esta sesión** | No se encontró un llavero: la clave vive en memoria hasta que cierres el diseñador. |
+| **Sesión iniciada** | Un token de inicio de sesión (OAuth o el flujo de dispositivo de GitHub) en el llavero. |
+| **Clave del entorno** | La variable de entorno del proveedor. |
+| **Federación de identidad de cargas de trabajo** | Claude mediante federación, sin clave. |
+| **Sesión con el perfil de la CLI de Anthropic** | Un perfil de `ant auth login` en este equipo. |
+| **Credenciales de Google Cloud de este equipo** | Vertex AI con las credenciales predeterminadas de `gcloud`. |
+| **No necesita clave** | Ollama, LM Studio o un servidor compatible con OpenAI sin clave. |
+
+## Variables de entorno por proveedor
+
+| Proveedor | Prefijo del modelo | Variable de entorno | Otras formas |
+| --- | --- | --- | --- |
+| Anthropic | `anthropic:` | `ANTHROPIC_API_KEY` | Iniciar sesión con el navegador, federación, `ant auth login` |
+| OpenAI | `openai:` | `OPENAI_API_KEY` | Iniciar sesión con el navegador |
+| Google Gemini (AI Studio) | `google:` | `GEMINI_API_KEY` | Iniciar sesión con el navegador |
+| Google Vertex AI | `vertex:` | ninguna | Iniciar sesión con Google, `gcloud auth application-default login` o un archivo de cuenta de servicio en `GOOGLE_APPLICATION_CREDENTIALS`; el proyecto sale de los ajustes o de `GOOGLE_CLOUD_PROJECT` |
+| GitHub Copilot (GitHub Models) | `github:` | `GITHUB_TOKEN` | Iniciar sesión con GitHub (flujo de dispositivo), un token detallado con el permiso **Models** |
+| OpenRouter | `openrouter:` | `OPENROUTER_API_KEY` | Iniciar sesión con el navegador (OAuth con PKCE) |
+| xAI | `xai:` | `XAI_API_KEY` | Iniciar sesión con el navegador |
+| Mistral | `mistral:` | `MISTRAL_API_KEY` | Iniciar sesión con el navegador |
+| DeepSeek | `deepseek:` | `DEEPSEEK_API_KEY` | Iniciar sesión con el navegador |
+| Groq | `groq:` | `GROQ_API_KEY` | Iniciar sesión con el navegador |
+| Ollama, LM Studio | `ollama:`, `lmstudio:` | ninguna | Nada: corren en tu equipo |
+| Compatible con OpenAI | `custom:` | `PYZED_AGENT_API_KEY` | Una clave en los ajustes, solo si el servidor la necesita |
+
+Otras variables que lee Pyzed: `ANTHROPIC_FEDERATION_RULE_ID`, `ANTHROPIC_ORGANIZATION_ID`,
+`ANTHROPIC_IDENTITY_TOKEN_FILE` y `ANTHROPIC_IDENTITY_TOKEN` (federación), `PYZED_GITHUB_CLIENT_ID`,
+`PYZED_GOOGLE_CLIENT_ID` y `PYZED_GOOGLE_CLIENT_SECRET` (tus propias apps OAuth para iniciar sesión),
+`GOOGLE_APPLICATION_CREDENTIALS` (un archivo de cuenta de servicio de Google Cloud para Vertex AI) y
+`PYZED_KEYRING=0` (no usar el llavero).
+
+## La forma recomendada: el llavero
+
+No escribas las claves en archivos ni en la terminal: deja que Pyzed Design las guarde en el llavero.
+
+1. Abre **Ajustes → Agentes de IA → Ajustes de los agentes de IA…** (también el engranaje del panel del agente, o
+   `/settings`).
+2. En **Proveedores**, pulsa el proveedor para abrirlo.
+3. Pulsa **Iniciar sesión con el navegador** (Pyzed abre la página de claves del proveedor y recoge la clave cuando
+   pulsas su botón **Copiar**; consulta [Iniciar sesión](/pyzed/es/editor/ai-agents/#iniciar-sesión)), o pega la
+   clave en **Clave de API** y pulsa **Guardar**.
+4. Un aviso dice **Clave guardada en el llavero del sistema**, y el distintivo del proveedor lo mismo.
+
+La clave nunca va a `agents.json`, a las conversaciones ni a tu proyecto, y después el campo solo muestra una vista
+enmascarada (`sk-ant…a1b2`). **Quitar la clave** la borra del llavero.
+
+Desde código, el mismo almacén está a una llamada:
+
+```python
+from pyzed import agents
+
+agents.set_key("anthropic", "sk-ant-…")   # True: en el llavero; False: solo para esta sesión
+agents.get_key("anthropic")               # la clave guardada o la variable de entorno
+agents.delete_key("anthropic")
+```
+
+Ejecútalo una vez desde una consola de Python, no desde un archivo que guardes, para que la clave nunca se escriba en
+disco.
+
+### "Clave solo para esta sesión"
+
+Si los ajustes muestran **No se encontró un llavero del sistema** y el distintivo dice **Clave solo para esta
+sesión**, Pyzed no pudo usar un llavero, así que una clave que pegues dura hasta que cierres el diseñador. Nunca se
+guarda en texto plano como alternativa. Para arreglarlo:
+
+- **Si usas Pyzed desde pip o uv:** instala el extra que trae `keyring`:
+
+  <Commands
+  	uv={`uv add "pyzed-ui[agents]"`}
+  	pip={`pip install "pyzed-ui[agents]"`}
+  	python={`{py} -m pip install "pyzed-ui[agents]"`}
+  />
+
+- **Linux:** `keyring` necesita un Secret Service en marcha, que los escritorios GNOME y KDE arrancan por ti. En un
+  gestor de ventanas mínimo o una máquina sin escritorio, instala y desbloquea `gnome-keyring` (o KWallet), o usa
+  una variable de entorno.
+- **El Pyzed Design compilado** ([descarga](/pyzed/es/download/)) ya incluye `keyring`; si aun así lo dice, el
+  llavero está bloqueado o no existe.
+
+Pyzed ignora a propósito los backends "fail" y de texto plano de keyring, para que una clave nunca se guarde sin
+cifrar.
+
+## Usar variables de entorno
+
+Una variable de entorno es práctica en un runner de CI, en un contenedor o si ya guardas las claves en un gestor de
+contraseñas que las exporta. Pyzed solo la lee.
+
+Desde una terminal, defínela y abre el diseñador desde esa misma terminal:
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-…"   # macOS y Linux (bash, zsh)
+pyzed design
+```
+
+```powershell
+$env:ANTHROPIC_API_KEY = "sk-ant-…"   # Windows PowerShell, solo esta ventana
+pyzed design
+```
+
+Las apps que abres desde el Finder, el menú Inicio o un lanzador del escritorio no leen el `~/.zshrc` ni el
+`~/.bashrc` de tu shell, así que el Pyzed Design compilado no ve una variable definida ahí. Defínela donde las apps
+gráficas toman su entorno y luego cierra y vuelve a abrir Pyzed Design:
+
+- **macOS:** `launchctl setenv ANTHROPIC_API_KEY "sk-ant-…"`. Dura hasta que reinicies el Mac; para conservarla,
+  ejecútalo desde un elemento de inicio o un LaunchAgent.
+- **Windows:** **Inicio → Editar las variables de entorno de esta cuenta → Nueva…** (variables de usuario), o
+  `setx ANTHROPIC_API_KEY "sk-ant-…"` en una terminal. Los programas que abras después la ven.
+- **Linux (escritorios con systemd):** añade `ANTHROPIC_API_KEY=sk-ant-…` a un archivo como
+  `~/.config/environment.d/pyzed.conf` y cierra la sesión y vuelve a entrar.
+
+Ten en cuenta que una variable de entorno es texto plano: todos los programas que se abren desde ese entorno la
+heredan, también las apps que ejecutas con <kbd>F5</kbd>. Una clave del llavero solo se entrega a Pyzed. En tu
+propio equipo prefiere el llavero, y las variables de entorno donde no haya llavero.
+
+Pyzed Design no carga archivos `.env`. En tu propia app puedes cargar uno con una biblioteca como `python-dotenv`;
+déjalo fuera de git (añádelo a `.gitignore`).
+
+## Claude sin clave de API
+
+La federación de identidad de cargas de trabajo cambia un token de corta duración de tu proveedor de identidad
+(GitHub Actions, Google Cloud, Azure, Okta, Kubernetes…) por un token de Claude de corta duración, así que no se
+guarda ninguna clave de Anthropic. Configúrala en la Claude Console y luego rellena **Anthropic → Federación de
+identidad de cargas de trabajo** en los ajustes, o define `ANTHROPIC_FEDERATION_RULE_ID`,
+`ANTHROPIC_ORGANIZATION_ID` y `ANTHROPIC_IDENTITY_TOKEN_FILE`. El token de identidad puede salir de un archivo, de
+un comando que imprime uno nuevo (`gcloud auth print-identity-token`) o de una variable. Los campos se explican en
+[Claude sin clave de API](/pyzed/es/editor/ai-agents/#claude-sin-clave-de-api), y la versión en código en
+[Agentes de IA en tu app](/pyzed/es/guides/agents/#claude-sin-clave-de-api).
+
+La federación solo se usa si no hay una clave guardada: quita la clave de Anthropic guardada para pasar a ella.
+
+## Tokens de inicio de sesión
+
+- **OpenRouter** inicia sesión con OAuth y PKCE; la clave que emite para Pyzed va al llavero.
+- **GitHub Copilot** inicia sesión con el flujo de dispositivo de GitHub (escribes un código corto en
+  `github.com/login/device`). Necesita el client ID de una GitHub App en los ajustes del proveedor o
+  `PYZED_GITHUB_CLIENT_ID`; sin él, pega un token de acceso personal detallado con el permiso **Models**.
+- **Google Vertex AI** inicia sesión con Google (OAuth con PKCE) o usa las credenciales de `gcloud`. Iniciar sesión
+  con tu propio cliente OAuth necesita su secreto, que también va al llavero.
+
+Los tokens se guardan en el llavero como la entrada del proveedor, se renuevan poco antes de caducar y
+**Cerrar sesión** los borra.
+
+## Servidores MCP y agentes externos
+
+Los [servidores MCP](/pyzed/es/editor/ai-agents/#servidores-mcp) y los
+[agentes externos](/pyzed/es/editor/ai-agents/#agentes-externos) suelen necesitar su propio token (`GITHUB_TOKEN`
+para el servidor MCP de GitHub, una clave para un agente externo). Ponlos en el campo **Secretos** como pares
+`NOMBRE=valor` separados por `;`. Se guardan en el llavero, nunca en `agents.json`, y se pasan al servidor como
+variables de entorno (o como cabeceras HTTP para un servidor remoto) cuando arranca. En código:
+
+```python
+from pyzed.agents import mcp_client
+
+mcp_client.set_secrets("github", {"GITHUB_TOKEN": "github_pat_…"})   # en el llavero
+```
+
+## Lo que el agente no puede leer
+
+Las herramientas de archivos del agente se niegan a listar, leer, buscar o escribir archivos que suelen contener
+credenciales, para que una inyección de prompt escondida en una página web o en un archivo no consiga que se las
+envíe al modelo:
+
+`.env`, `.env.*`, `*.pem`, `*.key`, `*.p12`, `*.pfx`, `id_rsa*`, `id_ecdsa*`, `id_ed25519*`, `.netrc`, `.pypirc`,
+`.npmrc` y `.git-credentials`.
+
+Tampoco se ofrecen en el menú de <kbd>@</kbd>, y los agentes externos siguen la misma regla cuando piden archivos a
+Pyzed. La lista es `pyzed.agents.tools.SECRET_FILES`; pasa la tuya a `file_tools(carpeta, hidden=...)` en tu app.
+Las claves tampoco se escriben nunca en las conversaciones ni en los ajustes, y el campo solo muestra una vista
+enmascarada.
+
+## Buenas prácticas
+
+- **Usa una clave dedicada** para Pyzed, con un **límite de gasto** o presupuesto en la consola del proveedor, para
+  que una filtración o un bucle descontrolado tengan techo.
+- **Nunca pongas una clave en el código**, en un `.pzform`, en `agents.json` ni en ningún lugar del repositorio. Si
+  llega a un commit, borrar el commit no basta: revócala.
+- **Rota una clave que creas filtrada**: revócala en la consola del proveedor, crea una nueva y pégala otra vez
+  (**Quitar la clave** y luego **Guardar**).
+- **Prefiere credenciales de corta duración** cuando puedas: tokens de inicio de sesión, credenciales de Google
+  Cloud o la federación de Claude en lugar de una clave de API de larga duración, sobre todo en equipos compartidos
+  y en CI.
+- **¿Distribuyes una app que usa `pyzed.agents`?** No incluyas tu clave en ella: todo lo que va dentro de una app se
+  puede extraer. Deja que cada usuario inicie sesión o pegue su propia clave (va a su llavero), o pon un servidor
+  tuyo entre la app y el proveedor.
+- **Usa modelos locales** (Ollama, LM Studio) cuando los datos no deban salir del equipo.

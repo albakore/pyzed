@@ -1065,7 +1065,7 @@ button(
 )
 ```
 
-A button with no predefined style. For the Zed button use `ui.button`.
+A button with no predefined style. For the themed button use `ui.button`.
 
 | Parameter | Description |
 | --- | --- |
@@ -1118,7 +1118,7 @@ text_input(
 )
 ```
 
-A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the Zed style use `ui.input`.
+A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the themed field use `ui.input`.
 
 | Parameter | Description |
 | --- | --- |
@@ -1226,7 +1226,7 @@ tooltip(
 )
 ```
 
-Shows `tip` next to `content` on hover. `ui.tooltip` adds the Zed style.
+Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.
 
 | Parameter | Description |
 | --- | --- |
@@ -1423,7 +1423,7 @@ pick_list(
 )
 ```
 
-A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the Zed style use `ui.select`.
+A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.
 
 | Parameter | Description |
 | --- | --- |
@@ -1543,7 +1543,7 @@ code_editor(
 A code editor with syntax highlighting, line numbers and git markers, based on Iced's
 `text_editor`. It is **uncontrolled**: `text` is only the initial value for that `id`; the
 text, cursor and history live in Rust. Use `Command.set_editor_text` to replace it.
-For the Zed style use [`ui.editor`](/pyzed/components/code/).
+For the themed editor use [`ui.editor`](/pyzed/components/code/).
 
 | Parameter | Description |
 | --- | --- |

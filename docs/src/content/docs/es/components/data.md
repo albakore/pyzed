@@ -24,7 +24,7 @@ pz.row([
     ui.count_badge(7),
     ui.count_badge(120, tint="error"),            # muestra "99+"
     ui.facepile(["Ana", "Luis", "Kev", "Marta"]), # avatares solapados
-    ui.diff_stat(42, 9),                          # +42 −9 y bloques como en Zed
+    ui.diff_stat(42, 9),                          # +42 −9 y bloques de color
     ui.keybinding_hint("Abrir paleta", "ctrl-shift-p"),
 ], spacing=14, align="center")
 ```

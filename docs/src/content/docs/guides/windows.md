@@ -124,7 +124,7 @@ the message.
 
 ### Window frames: your own title bar
 
-`frame = "custom"` replaces the system's frame with one drawn by Pyzed, like Zed's: a title bar that moves
+`frame = "custom"` replaces the system's frame with one drawn by Pyzed: a title bar that moves
 the window (double click maximizes it), the minimize, maximize and close buttons in the style of this system,
 menus on the left and borders that resize the window. `frame_menus()` returns the menus.
 
@@ -146,7 +146,7 @@ class Notes(pz.App):
         return self.editor()
 ```
 
-The menus sit behind a ☰ button, like Zed: a click opens the first one and shows every menu's name, and
+The menus sit behind a ☰ button: a click opens the first one and shows every menu's name, and
 moving the pointer to another name opens that one. To put more in the bar (a project picker, a Run button),
 call `ui.window_frame` in `view()` yourself; then the window is not framed twice:
 

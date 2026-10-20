@@ -8,6 +8,7 @@ sidebar:
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../examples/games/snake.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 Snake moves on a grid, one cell at a time, so it doesn't need a frame loop: a timer that
 fires a few times a second is enough. You will learn how to keep the game state in the
@@ -153,6 +154,8 @@ and the arrows.
 
 <Code code={source} lang="py" title="examples/games/snake.py" />
 
-```bash
-python examples/games/snake.py
-```
+<Commands
+	uv={`uv run python examples/games/snake.py`}
+	pip={`python examples/games/snake.py`}
+	python={`{py} examples/games/snake.py`}
+/>

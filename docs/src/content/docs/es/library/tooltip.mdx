@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-Envuelve cualquier widget y muestra una caja pequeña al estilo de Zed mientras el ratón está encima. `keys=` añade el atajo y `position` es `"top"`, `"bottom"` (por defecto), `"left"` o `"right"`. `pz.tooltip` es la versión base sin estilo.
+Envuelve cualquier widget y muestra una caja pequeña con el estilo del tema mientras el ratón está encima. `keys=` añade el atajo y `position` es `"top"`, `"bottom"` (por defecto), `"left"` o `"right"`. `pz.tooltip` es la versión base sin estilo.
 
 `ui.tooltip` · Categoría: [Visualización](/pyzed/es/library/#visualización) · [Referencia completa →](/pyzed/es/reference/ui/#tooltip)
 
@@ -60,13 +60,13 @@ Los tooltips solo aparecen al pasar el ratón, así que la vista previa muestra 
 tooltip(content, text, *, keys=None, position='bottom', theme=None)
 ```
 
-Envuelve `content` con un tooltip al estilo de Zed, opcionalmente con su atajo.
+Envuelve `content` con un tooltip con el estilo del tema, opcionalmente con su atajo.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
 | `content` | *obligatorio* | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
 | `text` | *obligatorio* | Texto del tooltip. |
-| `keys` | `None` | Atajo que se muestra al final, al estilo de Zed: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `keys` | `None` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
 | `position` | `"bottom"` | `"top"`, `"bottom"`, `"left"`, `"right"` o `"cursor"`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
@@ -90,7 +90,7 @@ tooltip(
 )
 ```
 
-Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo de Zed.
+Muestra `tip` junto a `content` al pasar el ratón. `ui.tooltip` añade el estilo del tema.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |

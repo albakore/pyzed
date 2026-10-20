@@ -10,6 +10,7 @@ import desktop from '../../../../../../examples/integrations/django_polls/deskto
 import client from '../../../../../../examples/integrations/django_polls/client.py?raw';
 import window from '../../../../../../examples/integrations/django_polls/polls_window.py?raw';
 import views from '../../../../../../examples/integrations/django_polls/polls/views.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 La demo es el proyecto del [tutorial de Django](https://docs.djangoproject.com/en/stable/intro/tutorial01/),
 `mysite` con su app `polls`, construido paso a paso como lo hace el tutorial: modelos,
@@ -27,10 +28,24 @@ encuestas de dos formas, que corresponden a dos [arquitecturas](/pyzed/es/integr
 
 1. **Crea el proyecto y la app** (ya está hecho en la carpeta de la demo):
 
-   ```bash
-   uv run django-admin startproject mysite .
-   uv run manage.py startapp polls
-   ```
+   <Commands
+   	uv={`
+   		uv run django-admin startproject mysite .
+   		uv run manage.py startapp polls
+   	`}
+   	pip={`
+   		{venv}
+   		{activate}
+   		pip install pyzed-ui django httpx
+   		django-admin startproject mysite .
+   		python manage.py startapp polls
+   	`}
+   	python={`
+   		{py} -m pip install pyzed-ui django httpx
+   		{py} -m django startproject mysite .
+   		{py} manage.py startapp polls
+   	`}
+   />
 
    y añade `"polls.apps.PollsConfig"` a `INSTALLED_APPS` en `mysite/settings.py`.
 
@@ -49,10 +64,20 @@ encuestas de dos formas, que corresponden a dos [arquitecturas](/pyzed/es/integr
 
 3. **Crea las tablas y un usuario administrador:**
 
-   ```bash
-   uv run manage.py migrate
-   uv run manage.py createsuperuser
-   ```
+   <Commands
+   	uv={`
+   		uv run manage.py migrate
+   		uv run manage.py createsuperuser
+   	`}
+   	pip={`
+   		python manage.py migrate
+   		python manage.py createsuperuser
+   	`}
+   	python={`
+   		{py} manage.py migrate
+   		{py} manage.py createsuperuser
+   	`}
+   />
 
 4. **Registra el admin** (parte 7), con las opciones en línea, para poder añadir encuestas en
    [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
@@ -64,9 +89,11 @@ encuestas de dos formas, que corresponden a dos [arquitecturas](/pyzed/es/integr
 
 6. **Ejecuta el sitio:**
 
-   ```bash
-   uv run manage.py runserver
-   ```
+   <Commands
+   	uv={`uv run manage.py runserver`}
+   	pip={`python manage.py runserver`}
+   	python={`{py} manage.py runserver`}
+   />
 
    Las encuestas están en [http://127.0.0.1:8000/polls/](http://127.0.0.1:8000/polls/).
 
@@ -77,10 +104,20 @@ encuestas de dos formas, que corresponden a dos [arquitecturas](/pyzed/es/integr
 `desktop.py` configura Django igual que `manage.py` y luego importa los modelos. No hace falta
 ningún servidor web; la ventana lee y escribe `db.sqlite3` a través del ORM.
 
-```bash
-uv run manage.py migrate     # una vez
-uv run desktop.py
-```
+<Commands
+	uv={`
+		uv run manage.py migrate     # una vez
+		uv run desktop.py
+	`}
+	pip={`
+		python manage.py migrate     # una vez
+		python desktop.py
+	`}
+	python={`
+		{py} manage.py migrate     # una vez
+		{py} desktop.py
+	`}
+/>
 
 ```mermaid
 flowchart LR
@@ -153,10 +190,20 @@ recargar.
 `client.py` no importa Django en absoluto. Habla con las vistas JSON del sitio con httpx, así que
 el sitio puede correr en este ordenador o en un servidor:
 
-```bash
-uv run manage.py runserver   # terminal 1
-uv run client.py             # terminal 2 (o: uv run client.py https://polls.example.com)
-```
+<Commands
+	uv={`
+		uv run manage.py runserver   # terminal 1
+		uv run client.py             # terminal 2 (o: uv run client.py https://polls.example.com)
+	`}
+	pip={`
+		python manage.py runserver   # terminal 1
+		python client.py             # terminal 2 (o: python client.py https://polls.example.com)
+	`}
+	python={`
+		{py} manage.py runserver   # terminal 1
+		{py} client.py             # terminal 2 (o: {py} client.py https://polls.example.com)
+	`}
+/>
 
 ```mermaid
 flowchart LR

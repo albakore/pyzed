@@ -1,6 +1,6 @@
 ---
 title: Básicos
-description: "Componentes básicos de Pyzed para GUIs de escritorio en Python: botones, textos, badges, atajos de teclado, avatares, tooltips y tarjetas estilo Zed."
+description: "Componentes básicos de Pyzed para GUIs de escritorio en Python: botones, textos, badges, atajos de teclado, avatares, tooltips y tarjetas que siguen el tema."
 sidebar:
   order: 1
 ---

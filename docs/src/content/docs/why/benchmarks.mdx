@@ -9,6 +9,7 @@ sidebar:
 import BenchChart from '../../../components/why/BenchChart.astro';
 import BenchTable from '../../../components/why/BenchTable.astro';
 import { bench, versionsLine } from '../../../components/why/bench';
+import Commands from '../../../components/Commands.astro';
 
 export const m = bench.machine;
 
@@ -148,12 +149,24 @@ The complete results, with every sample, are in
 
 ## Reproduce it
 
-```bash
-git clone https://github.com/albakore/pyzed && cd pyzed
-uv venv --python 3.13 .bench && source .bench/bin/activate
-uv pip install pyzed-ui pyside6 kivy dearpygui "flet[desktop]" toga customtkinter psutil mss numpy
-python benchmarks/run.py
-```
+<Commands
+	uv={`
+		git clone https://github.com/albakore/pyzed
+		cd pyzed
+		uv venv --python 3.13 .venv
+		{activate}
+		uv pip install pyzed-ui pyside6 kivy dearpygui "flet[desktop]" toga customtkinter psutil mss numpy
+		python benchmarks/run.py
+	`}
+	pip={`
+		git clone https://github.com/albakore/pyzed
+		cd pyzed
+		{venv}
+		{activate}
+		pip install pyzed-ui pyside6 kivy dearpygui "flet[desktop]" toga customtkinter psutil mss numpy
+		python benchmarks/run.py
+	`}
+/>
 
 Without a display it starts Xvfb by itself; on a desktop, keep the benchmark windows uncovered while it
 runs. See [`benchmarks/README.md`](https://github.com/albakore/pyzed/blob/main/benchmarks/README.md) for the

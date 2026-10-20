@@ -1,6 +1,6 @@
 ---
 title: Más controles
-description: "Desplegables, radios, campos numéricos, botones divididos, chips y secciones plegables: controles estilo Zed para apps de escritorio en Python."
+description: "Desplegables, radios, campos numéricos, botones divididos, chips y secciones plegables: controles con tema para apps de escritorio en Python."
 sidebar:
   order: 8
 ---
@@ -43,7 +43,7 @@ class Ajustes(pz.App):
 
 | Componente | Para qué |
 | --- | --- |
-| `ui.select(options, selected, on_select)` | Desplegable con el estilo de Zed (`DropdownMenu`). Llama a `on_select` con la opción elegida. |
+| `ui.select(options, selected, on_select)` | Desplegable con el estilo del tema. Llama a `on_select` con la opción elegida. |
 | `ui.radio_group(options, selected, on_select)` | Opciones excluyentes. `options` son textos o pares `(valor, etiqueta)`. `horizontal=True` las pone en fila. |
 | `ui.number_field(value, on_change)` | Número con botones `−`/`+`, límites `min`/`max`, `step` y `suffix`. |
 | `ui.split_button(content, on_press, on_menu)` | Acción principal y un chevron para más opciones (normalmente abre un [`ui.popover`](/pyzed/es/components/content/#popover)). |

@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: "Overview of pyzed.ui, the Zed-inspired component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more."
+description: "Overview of pyzed.ui, the ready-made component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more."
 sidebar:
   order: 0
 ---
@@ -32,7 +32,7 @@ ui.button("Save", self.save, icon="save", variant="solid", keys="ctrl-s")
 - **Messages or callables.** `on_press`, `on_select`, `on_toggle`… accept a message for `update`
   or a callable. Those that produce a value (text, `bool`, id) call the callable with that value.
 - **Icons.** The `icon=` parameter accepts any [Lucide](https://lucide.dev) name.
-- **Shortcuts.** `keys="ctrl-shift-p"` displays the shortcut Zed-style (symbols on macOS).
+- **Shortcuts.** `keys="ctrl-shift-p"` displays the shortcut (with symbols on macOS).
 
 ## Groups
 

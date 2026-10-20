@@ -1,6 +1,6 @@
 ---
 title: Workspace
-description: "Crea una ventana estilo Zed en Python: barra de título, docks redimensionables, paneles y barra de estado con los componentes de workspace de Pyzed."
+description: "Crea una ventana estilo editor en Python: barra de título, docks redimensionables, paneles y barra de estado con los componentes de workspace de Pyzed."
 sidebar:
   order: 5
 ---
@@ -10,7 +10,7 @@ Cada componente tiene ahora su propia página, con vista previa, ejemplos y su A
 [biblioteca de componentes](/pyzed/es/library/). Esta página se mantiene como resumen.
 :::
 
-`ui.workspace` monta la estructura de una ventana de Zed: barra de título arriba, docks a la
+`ui.workspace` monta la estructura de una ventana estilo editor: barra de título arriba, docks a la
 izquierda, derecha y abajo, el área central y la barra de estado.
 
 ![Workspace](../../../../assets/components/workspace.png)

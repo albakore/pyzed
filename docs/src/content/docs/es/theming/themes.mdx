@@ -1,0 +1,184 @@
+---
+title: Elegir un tema
+description: "Elige uno de los temas claros y oscuros incluidos en Pyzed, sigue el modo claro u oscuro del sistema, cambia de tema mientras la app corre y lee los colores del tema desde Python."
+sidebar:
+  label: Elegir un tema
+  order: 1
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import themesShot from '../../../../assets/tutorials/styling.png';
+import bundledShot from '../../../../assets/theming/bundled-themes-dark.png';
+
+Un **tema** es un conjunto de colores y tamaños con nombre. Todos los componentes de `pyzed.ui` leen sus colores del
+**tema actual**, así que al cambiarlo se reestiliza toda la interfaz de una vez, sin tocar tus vistas.
+
+<Media src={themesShot} alt="El playground de temas con los temas incluidos" caption="<code>examples/styling.py</code>: la misma pantalla con cualquier tema incluido, según el sistema o generada a partir de tres colores." />
+
+## Fija el tema de tu app
+
+Dale a tu app un `theme` con el nombre de un tema:
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class MiApp(pz.App):
+    theme = "Ayu Dark"
+
+    def view(self):
+        return pz.column([ui.heading("Hola"), ui.button("Guardar", self.guardar, variant="solid")], padding=24)
+
+    def guardar(self):
+        print("guardado")
+
+
+pz.run(MiApp)
+```
+
+`theme` acepta:
+
+| Valor | Ejemplo | Significado |
+| --- | --- | --- |
+| Un nombre de tema | `"Gruvbox Light"` | Cualquier nombre de `pz.themes.names()`; no distingue mayúsculas. |
+| Un objeto `Theme` | `pz.themes.ONE_LIGHT`, o uno tuyo | Usa exactamente ese tema. |
+| `pz.themes.auto(claro, oscuro)` | `pz.themes.auto("One Light", "One Dark")` | Sigue el modo claro u oscuro del sistema operativo. |
+| `"auto"` | `"auto"` | Atajo de `auto("One Light", "One Dark")`. |
+
+## Los temas incluidos
+
+Pyzed trae tres familias de temas, cada una con variantes claras y oscuras:
+
+| Familia | Oscuros | Claros |
+| --- | --- | --- |
+| **One** (la predeterminada) | `One Dark` | `One Light` |
+| **Ayu** | `Ayu Dark`, `Ayu Mirage` | `Ayu Light` |
+| **Gruvbox** | `Gruvbox Dark`, `Gruvbox Dark Hard`, `Gruvbox Dark Soft` | `Gruvbox Light`, `Gruvbox Light Hard`, `Gruvbox Light Soft` |
+
+Son los temas del editor [Zed](https://zed.dev) (licencia MIT), cuya interfaz inspiró buena parte del aspecto de
+Pyzed. Lístalos desde Python:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run python -c "import pyzed as pz; print(pz.themes.names())"
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS y Linux"
+		python3 -c "import pyzed as pz; print(pz.themes.names())"
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py -c "import pyzed as pz; print(pz.themes.names())"
+		```
+	</TabItem>
+</Tabs>
+
+<Media src={bundledShot} alt="Una cuadrícula de tarjetas, una por tema incluido, cada una con botones, un campo de texto, insignias y un interruptor" caption="Cada tema incluido dibujando los mismos controles." size="wide" />
+
+<Aside type="tip" title="Pruébalos todos">
+Ejecuta `examples/styling.py` y elige un tema de la lista: toda la ventana se reestiliza al elegir. Mira
+[Ejecutar los ejemplos](/pyzed/es/examples/) para el comando en tu sistema.
+</Aside>
+
+## Oscuro, claro o según el sistema
+
+La mayoría de la gente espera que una app siga el modo claro u oscuro de su computadora. `pz.themes.auto` lo hace:
+recibe un tema claro y uno oscuro (nombres u objetos `Theme`) y elige uno cuando el sistema cambia.
+
+```python
+class MiApp(pz.App):
+    theme = pz.themes.auto("Gruvbox Light", "Gruvbox Dark")
+```
+
+`self.system_dark` dice en qué modo está el sistema (`True` en modo oscuro), y Pyzed lo actualiza, junto con el tema,
+cuando el usuario lo cambia.
+
+Para que el usuario elija, guarda su elección en una variable y fija `self.theme` a partir de ella:
+
+```python
+class MiApp(pz.App):
+    def __init__(self):
+        self.modo = "Sistema"
+        self.theme = pz.themes.auto()
+
+    def fijar_modo(self, modo):
+        self.modo = modo
+        self.theme = {"Claro": "One Light", "Oscuro": "One Dark"}.get(modo, pz.themes.auto())
+
+    def view(self):
+        return ui.segmented(["Sistema", "Claro", "Oscuro"], self.modo, self.fijar_modo)
+```
+
+## Cambiar de tema mientras la app corre
+
+`self.theme` es solo un atributo: asígnalo y el siguiente fotograma usa el tema nuevo. Un selector de temas es una
+línea:
+
+```python
+ui.select(pz.themes.names(), self.resolved_theme().name, lambda nombre: setattr(self, "theme", nombre))
+```
+
+Un botón claro/oscuro:
+
+```python
+def alternar_tema(self):
+    self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
+```
+
+{/* media: theming/switch-runtime */}
+
+## Leer los colores del tema
+
+`self.theme` puede ser un nombre o un `auto(...)`, así que usa **`self.resolved_theme()`** para obtener el `Theme`
+concreto que se usa ahora. Sus [tokens](/pyzed/es/theming/tokens/) son atributos con cadenas `#rrggbb`:
+
+```python
+def view(self):
+    t = self.resolved_theme()
+    return pz.container(contenido, bg=t.surface, border_color=t.border, border_width=1, radius=t.radius)
+```
+
+Dentro de `view()` (y de los componentes) `pz.theme.current()` devuelve el mismo tema. Casi siempre no necesitas
+ninguno de los dos: escribe el **nombre del token** en lugar de un color y Pyzed lo busca por ti:
+
+```python
+pz.text("Guardado").style(color="success")
+pz.container(contenido).style(background="surface", border=(1, "border"))
+```
+
+<Aside type="caution" title="Los colores hex no siguen el tema">
+`"#1e1e1e"` sigue siendo oscuro cuando el usuario pasa a un tema claro. Prefiere nombres de tokens (`"surface"`,
+`"text_muted"`, `"accent"`...) y deja los colores hex para lo que de verdad no debe cambiar, como el logo de una
+marca.
+</Aside>
+
+## Un tema para una ventana o un bloque
+
+Cada [ventana](/pyzed/es/guides/windows/) puede tener su propio tema (`Window.theme`); una ventana sin tema usa el de
+la app.
+
+Un `Theme` también es un gestor de contexto: los componentes que se construyen dentro de un bloque `with` lo usan.
+Esto dibuja una vista previa clara dentro de una app oscura:
+
+```python
+with pz.themes.get("One Light"):
+    vista_previa = ui.card(ui.label("Así se ve en modo claro"))
+```
+
+Y todos los componentes de `pyzed.ui` aceptan `theme=` para dibujar solo ese componente con otro tema:
+
+```python
+ui.button("Botón claro", al_pulsar, theme=pz.themes.ONE_LIGHT)
+```
+
+Mira [`examples/theming/mixed.py`](https://github.com/albakore/pyzed/blob/main/examples/theming/mixed.py) para una
+barra lateral clara en una ventana oscura, con un selector que recuerda el tema elegido.
+
+## Siguiente
+
+- [Tokens del tema](/pyzed/es/theming/tokens/): qué pinta cada color de un tema.
+- [Crear temas](/pyzed/es/theming/custom-themes/): tus propios colores, en código o en un archivo JSON.

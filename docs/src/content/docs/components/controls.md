@@ -1,6 +1,6 @@
 ---
 title: More controls
-description: "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: Zed-style input controls for Python desktop apps."
+description: "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: themed input controls for Python desktop apps."
 sidebar:
   order: 8
 ---
@@ -43,7 +43,7 @@ class Settings(pz.App):
 
 | Component | Purpose |
 | --- | --- |
-| `ui.select(options, selected, on_select)` | Zed-style dropdown (`DropdownMenu`). Calls `on_select` with the chosen option. |
+| `ui.select(options, selected, on_select)` | Themed dropdown. Calls `on_select` with the chosen option. |
 | `ui.radio_group(options, selected, on_select)` | Mutually exclusive options. `options` are strings or `(value, label)` pairs. `horizontal=True` lays them out in a row. |
 | `ui.number_field(value, on_change)` | Number with `−`/`+` buttons, `min`/`max` limits, `step` and `suffix`. |
 | `ui.split_button(content, on_press, on_menu)` | Main action plus a chevron for more options (usually opens a [`ui.popover`](/pyzed/components/content/#popover)). |

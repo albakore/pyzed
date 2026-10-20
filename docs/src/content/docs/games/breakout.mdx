@@ -8,6 +8,7 @@ sidebar:
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../examples/games/breakout.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 Breakout needs smooth movement, so instead of a timer it uses `pz.frames`: a callback that
 runs once per displayed frame with the time since the previous one. You will learn the
@@ -140,6 +141,8 @@ hundred times and check the score, lives or bricks left. No window is needed.
 
 <Code code={source} lang="py" title="examples/games/breakout.py" />
 
-```bash
-python examples/games/breakout.py
-```
+<Commands
+	uv={`uv run python examples/games/breakout.py`}
+	pip={`python examples/games/breakout.py`}
+	python={`{py} examples/games/breakout.py`}
+/>

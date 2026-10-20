@@ -1,0 +1,139 @@
+---
+title: Recetario de temas
+description: "Temas completos y ejecutables de Pyzed para copiar: un tema de marca en claro y oscuro, alto contraste, terminal retro, vidrio oscuro, pastel y dos temas en una ventana."
+sidebar:
+  order: 8
+  badge:
+    text: Ejemplos
+    variant: tip
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import brandSrc from '../../../../../../examples/theming/brand.py?raw';
+import contrastSrc from '../../../../../../examples/theming/high_contrast.py?raw';
+import retroSrc from '../../../../../../examples/theming/retro_terminal.py?raw';
+import glassySrc from '../../../../../../examples/theming/glassy_dark.py?raw';
+import pastelSrc from '../../../../../../examples/theming/pastel.py?raw';
+import mixedSrc from '../../../../../../examples/theming/mixed.py?raw';
+import previewSrc from '../../../../../../examples/theming/preview.py?raw';
+import brandDark from '../../../../assets/theming/brand-dark.png';
+import brandLight from '../../../../assets/theming/brand-light.png';
+import contrastShot from '../../../../assets/theming/high-contrast-dark.png';
+import retroShot from '../../../../assets/theming/retro-terminal-dark.png';
+import glassyShot from '../../../../assets/theming/glassy-dark-dark.png';
+import pastelShot from '../../../../assets/theming/pastel-light.png';
+import mixedShot from '../../../../assets/theming/mixed-dark.png';
+
+Seis temas completos, listos para copiar en tu app. Cada uno es un archivo de
+[`examples/theming/`](https://github.com/albakore/pyzed/tree/main/examples/theming) y dibuja la misma pantalla
+(`preview.py`: botones en cada variante, un pequeño formulario, insignias, un aviso y dos estadísticas), así puedes
+comparar cómo la cambia cada tema.
+
+<Aside type="note" title="Código en inglés">
+Los ejemplos del repositorio están escritos en inglés, como el resto del código de Pyzed; los comentarios explican
+cada parte.
+</Aside>
+
+## Ejecutarlos
+
+Desde un clon del repositorio (mira [Ejecutar los ejemplos](/pyzed/es/examples/)):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run python examples/theming/brand.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS y Linux"
+		python3 examples/theming/brand.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py examples\theming\brand.py
+		```
+	</TabItem>
+</Tabs>
+
+Cambia `brand.py` por `high_contrast.py`, `retro_terminal.py`, `glassy_dark.py`, `pastel.py` o `mixed.py`.
+
+<Aside type="tip" title="Copiar uno a tu proyecto">
+Copia la parte del tema (todo lo que está encima de `class ...App`) a un módulo de tu proyecto, como `mitema.py`, e
+impórtalo antes de que arranque la app. El import de `preview` es solo para estos ejemplos.
+</Aside>
+
+## Tema de marca, claro y oscuro
+
+La paleta de una empresa en dos versiones que siguen el modo claro u oscuro del sistema. `Theme.generate` construye
+cada versión a partir de tres colores; `derive` fija el verde propio de la marca para el éxito.
+
+<Media src={brandDark} light={brandLight} alt="La pantalla de prueba con el tema de marca Acme" caption="Acme Dark y, con el sitio en modo claro, Acme Light." />
+
+<Code code={brandSrc} lang="py" title="examples/theming/brand.py" />
+
+**Qué cambiar:** los tres colores de cada `generate`, y `radius` para esquinas más redondas o más rectas.
+
+## Alto contraste
+
+Negro y blanco puros con foco amarillo, para quien necesita un contraste fuerte (y una buena prueba de cómo se ve tu
+app con bordes grandes y claros). `Theme.from_dict` lista cada token que cambia; el resto viene de One Dark. El script
+muestra la relación de contraste de los colores principales al arrancar.
+
+<Media src={contrastShot} alt="La pantalla de prueba en negro, blanco y amarillo" caption="Alto contraste: bordes blancos, acento amarillo, esquinas rectas." />
+
+<Code code={contrastSrc} lang="py" title="examples/theming/high_contrast.py" />
+
+<Aside type="note" title="Accesibilidad">
+Un tema es una parte de la accesibilidad. Mira [Accesibilidad](/pyzed/es/guides/accessibility/) para la navegación con
+teclado, los lectores de pantalla y el movimiento reducido.
+</Aside>
+
+## Terminal retro
+
+Fósforo verde sobre negro. Un único verde se vuelve el texto, el acento y el color de éxito; el estilo global hace que
+todo el texto sea monoespaciado.
+
+<Media src={retroShot} alt="La pantalla de prueba en verde sobre negro con fuente monoespaciada" caption="Terminal retro: todo sale de un único verde." />
+
+<Code code={retroSrc} lang="py" title="examples/theming/retro_terminal.py" />
+
+## Vidrio oscuro
+
+Un degradado detrás de la ventana y un panel de vidrio esmerilado encima. El tema es One Dark con acento cian; el
+aspecto viene del estilo global (`background=` un degradado) y del efecto `glass`.
+
+<Media src={glassyShot} alt="Un panel esmerilado sobre un degradado azul y morado" caption="Vidrio oscuro: una ventana con degradado y un panel de vidrio." />
+
+<Code code={glassySrc} lang="py" title="examples/theming/glassy_dark.py" />
+
+<Aside type="caution" title="Efectos y GPU">
+`glass`, `backdrop_blur` y `glow` están pensados para el renderizador por GPU. En equipos sin GPU (algunas máquinas
+virtuales y escritorios remotos) o con el renderizador por CPU (`ICED_BACKEND=tiny-skia`), pueden verse más simples
+que en esta captura. Asegúrate de que el texto se siga leyendo bien sin ellos.
+</Aside>
+
+## Pastel divertido
+
+Un fondo crema, colores de caramelo y esquinas muy redondas. `derive` fija colores pastel para los avatares
+(`players`), y un estilo con nombre (`pz.define_style("bubble", ...)`) dibuja la tarjeta alrededor de la pantalla.
+
+<Media src={pastelShot} alt="La pantalla de prueba en colores pastel" caption="Pastel: un tema claro con acento rosa y esquinas redondas." />
+
+<Code code={pastelSrc} lang="py" title="examples/theming/pastel.py" />
+
+## Dos temas en una ventana
+
+Una barra lateral clara en una app oscura, con un selector de temas que guarda el tema elegido en un archivo JSON y lo
+carga al siguiente arranque (`Theme.save` y `Theme.load`).
+
+<Media src={mixedShot} alt="Una barra lateral de ajustes clara junto a un área principal oscura" caption="<code>with tema:</code> dibuja la barra lateral con One Light." />
+
+<Code code={mixedSrc} lang="py" title="examples/theming/mixed.py" />
+
+## La vista de prueba compartida
+
+<Code code={previewSrc} lang="py" title="examples/theming/preview.py" />
+
+Cada color que usa es un token o un tinte; por eso un mismo archivo se ve bien en seis temas muy distintos. Escribe tus
+propias vistas de la misma forma.

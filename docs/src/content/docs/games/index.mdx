@@ -10,6 +10,7 @@ sidebar:
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Commands from '../../../components/Commands.astro';
 
 Pyzed is a UI library, but everything a 2D game needs is already in it: a GPU-drawn
 `pz.canvas`, a loop that runs once per displayed frame, the keys held down right now, and
@@ -25,11 +26,27 @@ below grow in difficulty and are complete, playable programs in
 	<LinkCard title="3. Neon Invaders" href="/pyzed/games/neon-invaders/" description="Pixel-art sprites, waves, power-ups, neon glow and a glass HUD with bloom." />
 </CardGrid>
 
-```bash
-python examples/games/snake.py
-python examples/games/breakout.py
-python examples/games/neon_invaders.py
-```
+<Commands
+	uv={`
+		uv run python examples/games/snake.py
+		uv run python examples/games/breakout.py
+		uv run python examples/games/neon_invaders.py
+	`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui
+		python examples/games/snake.py
+		python examples/games/breakout.py
+		python examples/games/neon_invaders.py
+	`}
+	python={`
+		{py} -m pip install pyzed-ui
+		{py} examples/games/snake.py
+		{py} examples/games/breakout.py
+		{py} examples/games/neon_invaders.py
+	`}
+/>
 
 ## The building blocks
 

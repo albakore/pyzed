@@ -11,6 +11,7 @@ import hModels from '../../../../../examples/integrations/sqlmodel_heroes/models
 import hDb from '../../../../../examples/integrations/sqlmodel_heroes/db.py?raw';
 import main from '../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
 import models from '../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 SQLModel runs in the same process as the window (architecture 1 in
 [Architectures](/pyzed/integrations/architectures/)); when the same models must be shared over
@@ -24,10 +25,24 @@ HTTP, put them behind FastAPI as in the [FastAPI demo](/pyzed/integrations/fasta
 
 ![Heroes grouped by team, filtered by age, with an edit panel](../../../assets/integrations/sqlmodel-heroes.png)
 
-```bash
-cd examples/integrations/sqlmodel_heroes
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlmodel_heroes
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlmodel_heroes
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlmodel
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlmodel_heroes
+		{py} -m pip install pyzed-ui sqlmodel
+		{py} main.py
+	`}
+/>
 
 <Steps>
 
@@ -127,10 +142,24 @@ an inventory with stock levels, a donut chart and a dialog whose fields show Pyd
 
 ![An inventory table with stock badges and an edit dialog showing validation errors](../../../assets/integrations/sqlmodel.png)
 
-```bash
-cd examples/integrations/sqlmodel_inventory
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlmodel_inventory
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlmodel_inventory
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlmodel
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlmodel_inventory
+		{py} -m pip install pyzed-ui sqlmodel
+		{py} main.py
+	`}
+/>
 
 <Steps>
 

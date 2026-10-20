@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-A search box over a list of results on a floating surface: the basis of the command palette and the file finder. `ui.fuzzy_filter(query, items, key=)` ranks items like Zed and returns `[(item, positions), ...]`; pass those pairs to `picker` to highlight the matches. `ui.fuzzy_match` scores one string and `ui.highlighted` draws one with its matches.
+A search box over a list of results on a floating surface: the basis of the command palette and the file finder. `ui.fuzzy_filter(query, items, key=)` ranks items (best match first) and returns `[(item, positions), ...]`; pass those pairs to `picker` to highlight the matches. `ui.fuzzy_match` scores one string and `ui.highlighted` draws one with its matches.
 
 `ui.picker` · Category: [Overlays](/pyzed/library/#overlays) · [Full reference →](/pyzed/reference/ui/#picker)
 
@@ -167,7 +167,7 @@ Text with the characters at `positions` highlighted (fuzzy search matches).
 ## Related
 
 <CardGrid>
-<LinkCard title="Command palette" description="Zed's command palette with fuzzy search and shortcuts." href="/pyzed/library/command-palette/" />
+<LinkCard title="Command palette" description="A command palette with fuzzy search and shortcuts." href="/pyzed/library/command-palette/" />
 <LinkCard title="Search input" description="An input with a magnifying glass, for filtering." href="/pyzed/library/search-input/" />
 <LinkCard title="Layer" description="Draws an overlay over your view; clicking outside dismisses it." href="/pyzed/library/layer/" />
 </CardGrid>

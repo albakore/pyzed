@@ -68,7 +68,7 @@ ui.progress(self.descargado, max=self.total, tint="success", height=6)
 
 ## Grupo segmentado
 
-El `ToggleButtonGroup` de Zed. `on_select` recibe la opción elegida:
+Botones mutuamente excluyentes, con uno seleccionado. `on_select` recibe la opción elegida:
 
 ```python
 ui.segmented(["Día", "Semana", "Mes"], self.vista, lambda v: setattr(self, "vista", v))
@@ -77,6 +77,6 @@ ui.segmented(["Día", "Semana", "Mes"], self.vista, lambda v: setattr(self, "vis
 ## Filas de ajustes
 
 `ui.field(título, control, description=...)` alinea un título a la izquierda y el control a la
-derecha, como el panel de ajustes de Zed.
+derecha, como una pantalla de ajustes.
 
 Referencia completa: [Formularios](/pyzed/es/reference/ui/#formularios).

@@ -1,6 +1,6 @@
 ---
 title: Theming
-description: "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, icons and fonts, in code and in Pyzed Design."
+description: "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, component variants, form themes, icons and fonts, in code and in Pyzed Design."
 section:
   eyebrow: Theming
   icon: moon
@@ -37,15 +37,35 @@ class Notes(pz.App):
         ])
 ```
 
+## How it fits together
+
+```mermaid
+flowchart LR
+    T["Theme<br/>named colors (tokens)"] --> C["Components<br/>variants · tints · sizes"]
+    C --> S["style()<br/>one widget, like CSS"]
+    G["Global style<br/>App.style"] --> S
+```
+
+- **Theme**: the palette of the whole app. Pick a bundled one, follow the system's light or dark mode, or create your
+  own from three colors.
+- **Components** take their colors from the theme. Their **variants** and **tints** (`variant="outline"`,
+  `tint="error"`) choose which of those colors they use.
+- **`style()`** changes one widget, like CSS; named styles reuse a look; `App.style` sets the font and colors of the
+  whole window.
+
 ## In this section
 
 <NavCards
 	items={[
-		{ title: 'Themes', text: 'The built-in themes, following the system light or dark mode, the color tokens, and creating your own.', href: '/pyzed/theming/themes/', icon: 'moon', tag: 'Start here' },
-		{ title: 'Styles', text: 'Backgrounds, borders, radius, shadows, gradients and states for any widget, and a global style.', href: '/pyzed/theming/styles/', icon: 'pencil' },
+		{ title: 'Choosing a theme', text: 'The bundled themes, dark, light or following the system, and switching themes while the app runs.', href: '/pyzed/theming/themes/', icon: 'moon', tag: 'Start here' },
+		{ title: 'Theme tokens', text: 'Every color of a theme and what it paints, with the values of One Dark and One Light.', href: '/pyzed/theming/tokens/', icon: 'list-format' },
+		{ title: 'Creating themes', text: 'Change the accent, derive, generate from three colors, write a JSON theme file, import Zed themes.', href: '/pyzed/theming/custom-themes/', icon: 'pencil' },
+		{ title: 'Styles', text: 'Backgrounds, borders, radius, shadows, gradients and effects for any widget, and the global style.', href: '/pyzed/theming/styles/', icon: 'seti:css' },
+		{ title: 'Styling components', text: 'Variants, tints and sizes, <code>style()</code> on components, named styles and theme-aware components.', href: '/pyzed/theming/components/', icon: 'puzzle' },
+		{ title: 'Styling forms', text: 'Theme, accent, radius and fonts of a form in Pyzed Design, and what the <code>.pzform</code> file stores.', href: '/pyzed/theming/forms/', icon: 'laptop', tag: 'Designer' },
 		{ title: 'Icons and fonts', text: 'About 2000 bundled icons, file-type icons, and loading your own fonts.', href: '/pyzed/theming/icons-fonts/', icon: 'star' },
-		{ title: 'Styles in the designer', text: 'The Style section, the color picker with gradients and masks, and form themes in Pyzed Design.', href: '/pyzed/editor/styles-and-themes/', icon: 'laptop', tag: 'Designer' },
-		{ title: 'Theme API', text: '<code>Theme</code>, every token and the helpers to derive, import and register themes.', href: '/pyzed/reference/theme/', icon: 'list-format' },
+		{ title: 'Theme cookbook', text: 'Six complete themes to copy: brand, high contrast, retro terminal, glassy, pastel and mixed.', href: '/pyzed/theming/cookbook/', icon: 'rocket', tag: 'Examples' },
+		{ title: 'Theme API', text: '<code>Theme</code>, <code>themes</code> and the color helpers, method by method.', href: '/pyzed/reference/theme/', icon: 'document' },
 	]}
 />
 
@@ -54,16 +74,7 @@ Write `"accent"` or `"border"` instead of `"#3a7bc8"` where you can. Token color
 app keeps looking right in light and dark mode.
 </Aside>
 
-## Coming next
-
-<NavCards
-	items={[
-		{ title: 'Theming forms and components', text: 'Give a whole form, or a reusable component, its own look.', icon: 'puzzle' },
-		{ title: 'Theme gallery', text: 'Every built-in theme side by side, with ready-to-copy custom themes.', icon: 'laptop' },
-	]}
-/>
-
 <Aside type="note" title="Status of this section">
-These pages used to live in Guides. More examples, with captures of every theme in light and dark, are being
-added to this section.
+Everything on these pages works today, in code and in Pyzed Design. Captures of every bundled theme in light and dark
+are being added. Theming for mobile and web will come with those targets, which are planned but not available yet.
 </Aside>

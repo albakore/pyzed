@@ -68,7 +68,7 @@ ui.progress(self.downloaded, max=self.total, tint="success", height=6)
 
 ## Segmented group
 
-Zed's `ToggleButtonGroup`. `on_select` receives the chosen option:
+Mutually exclusive buttons, one selected at a time. `on_select` receives the chosen option:
 
 ```python
 ui.segmented(["Day", "Week", "Month"], self.view_mode, lambda v: setattr(self, "view_mode", v))
@@ -77,6 +77,6 @@ ui.segmented(["Day", "Week", "Month"], self.view_mode, lambda v: setattr(self, "
 ## Settings rows
 
 `ui.field(title, control, description=...)` aligns a title on the left and the control on the
-right, like Zed's settings panel.
+right, like a settings screen.
 
 Full reference: [Forms](/pyzed/reference/ui/#forms).

@@ -177,7 +177,7 @@ user can drag. `min_size`/`max_size` limit it and `on_resize(size)` reports the 
 when the drag ends. `ui.panel` and `ui.workspace` use it, so their side panels can be
 resized out of the box, and `pz.split` keeps the ratio the user drags to.
 
-`pz.Dock` is a Zed-style dock: a center area with panels on its sides. Drag a tab onto a
+`pz.Dock` is an editor-style dock: a center area with panels on its sides. Drag a tab onto a
 drop zone (or right-click it) to move a panel to another side, and drag a panel's inner
 edge to resize it.
 

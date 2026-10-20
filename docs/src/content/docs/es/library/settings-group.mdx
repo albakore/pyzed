@@ -1,6 +1,6 @@
 ---
 title: "Grupo de ajustes"
-description: "Un bloque con título de filas de ajustes, como en Zed. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
+description: "Un bloque con título de filas de ajustes, para pantallas de ajustes. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
   order: 55
   label: "Grupo de ajustes"
@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-Un bloque con título de filas `ui.field` separadas por líneas, con una descripción opcional (la interfaz de ajustes de Zed).
+Un bloque con título de filas `ui.field` separadas por líneas, con una descripción opcional, como una pantalla de ajustes.
 
 `ui.settings_group` · Categoría: [Datos](/pyzed/es/library/#datos) · [Referencia completa →](/pyzed/es/reference/ui/#settings_group)
 
@@ -57,7 +57,7 @@ pz.container(ui.settings_group("Editor", [
 settings_group(title, rows, *, description=None, theme=None)
 ```
 
-Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de ajustes de Zed).
+Un bloque con título de filas `ui.field` separadas por líneas, como una pantalla de ajustes.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -72,6 +72,6 @@ Un bloque con título de filas `ui.field` separadas por líneas (la interfaz de 
 
 <CardGrid>
 <LinkCard title="Campo de formulario" description="Una fila de ajustes: título y descripción a la izquierda, control a la derecha." href="/pyzed/es/library/field/" />
-<LinkCard title="Acordeón" description="Secciones plegables apiladas, como los paneles de ajustes de Zed." href="/pyzed/es/library/accordion/" />
+<LinkCard title="Acordeón" description="Secciones plegables apiladas, como los paneles de una pantalla de ajustes." href="/pyzed/es/library/accordion/" />
 <LinkCard title="Tarjeta" description="Una superficie con borde, título y acciones opcionales." href="/pyzed/es/library/card/" />
 </CardGrid>

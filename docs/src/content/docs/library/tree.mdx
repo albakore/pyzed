@@ -11,7 +11,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
 
-Zed's project panel: collapsible folders, an icon per file type and git status colors. `TreeNode.from_paths(paths, status=...)` builds the nodes, puts folders first and propagates the git status to the folders that contain changes. Each node's id is its path; you own the `expanded` set and the `selected` id.
+A project panel: collapsible folders, an icon per file type and git status colors. `TreeNode.from_paths(paths, status=...)` builds the nodes, puts folders first and propagates the git status to the folders that contain changes. Each node's id is its path; you own the `expanded` set and the `selected` id.
 
 `ui.tree` · Category: [Lists and menus](/pyzed/library/#lists-and-menus) · [Full reference →](/pyzed/reference/ui/#tree)
 
@@ -113,7 +113,7 @@ tree(
 )
 ```
 
-A collapsible file tree (Zed's project panel).
+A collapsible file tree, like a code editor's project panel.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -153,5 +153,5 @@ A file or folder for `ui.tree`. Folders have `children` (a list). `status` is `"
 <CardGrid>
 <LinkCard title="List item" description="A list row with icon, text and an end slot." href="/pyzed/library/list-item/" />
 <LinkCard title="Panel" description="A dockable, resizable side panel." href="/pyzed/library/panel/" />
-<LinkCard title="Workspace" description="The layout of a Zed window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
+<LinkCard title="Workspace" description="The layout of an editor-style window: title bar, docks, center, status bar." href="/pyzed/library/workspace/" />
 </CardGrid>

@@ -11,6 +11,7 @@ import window from '../../../../../../examples/integrations/fastapi_heroes/heroe
 import client from '../../../../../../examples/integrations/fastapi_heroes/client.py?raw';
 import embedded from '../../../../../../examples/integrations/fastapi_heroes/embedded.py?raw';
 import inProcess from '../../../../../../examples/integrations/fastapi_heroes/in_process.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 La API de esta demo es el tutorial [SQL (Relational) Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
 de FastAPI, copiado sin cambios: héroes guardados con SQLModel, con modelos separados para crear,
@@ -35,10 +36,22 @@ fastapi_heroes/
 1. **Instala FastAPI con sus extras estándar**, que traen la CLI `fastapi` y Uvicorn. El
    `pyproject.toml` de la demo ya los incluye:
 
-   ```bash
-   cd examples/integrations/fastapi_heroes
-   uv add "fastapi[standard]" sqlmodel httpx   # en tu propio proyecto
-   ```
+   <Commands
+   	uv={`
+   		cd examples/integrations/fastapi_heroes
+   		uv add "fastapi[standard]" sqlmodel httpx   # en tu propio proyecto
+   	`}
+   	pip={`
+   		cd examples/integrations/fastapi_heroes
+   		{venv}
+   		{activate}
+   		pip install pyzed-ui "fastapi[standard]" sqlmodel httpx
+   	`}
+   	python={`
+   		cd examples/integrations/fastapi_heroes
+   		{py} -m pip install pyzed-ui "fastapi[standard]" sqlmodel httpx
+   	`}
+   />
 
 2. **Escribe los modelos.** `HeroBase` tiene los campos comunes, `Hero` es la tabla, `HeroPublic`
    es lo que devuelve la API (nunca el `secret_name`), y `HeroCreate` y `HeroUpdate` describen
@@ -100,9 +113,11 @@ fastapi_heroes/
 5. **Ejecútala con la CLI de FastAPI** y abre la documentación interactiva en
    [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs):
 
-   ```bash
-   uv run fastapi dev main.py
-   ```
+   <Commands
+   	uv={`uv run fastapi dev main.py`}
+   	pip={`fastapi dev main.py`}
+   	python={`{py} -m fastapi dev main.py`}
+   />
 
    `fastapi dev` recarga con cada cambio; `fastapi run main.py` es el comando de producción.
 
@@ -168,10 +183,20 @@ arquitecturas de abajo.
 La API y la ventana son dos programas. Así se usa una API desplegada, y así trabajas en las dos
 a la vez con recarga:
 
-```bash
-uv run fastapi dev main.py     # terminal 1
-uv run client.py               # terminal 2 (o: uv run client.py https://api.example.com)
-```
+<Commands
+	uv={`
+		uv run fastapi dev main.py     # terminal 1
+		uv run client.py               # terminal 2 (o: uv run client.py https://api.example.com)
+	`}
+	pip={`
+		fastapi dev main.py     # terminal 1
+		python client.py               # terminal 2 (o: python client.py https://api.example.com)
+	`}
+	python={`
+		{py} -m fastapi dev main.py     # terminal 1
+		{py} client.py               # terminal 2 (o: {py} client.py https://api.example.com)
+	`}
+/>
 
 <Code code={client} lang="py" title="client.py" />
 
@@ -181,9 +206,11 @@ Un solo comando arranca la API en un hilo en segundo plano con Uvicorn, el servi
 `fastapi run`, y abre la ventana. Mientras la ventana está abierta,
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) también funciona en un navegador.
 
-```bash
-uv run embedded.py
-```
+<Commands
+	uv={`uv run embedded.py`}
+	pip={`python embedded.py`}
+	python={`{py} embedded.py`}
+/>
 
 <Code code={embedded} lang="py" title="embedded.py" />
 
@@ -192,9 +219,11 @@ uv run embedded.py
 Sin servidor y sin puerto: `httpx.ASGITransport` entrega cada petición a la app de FastAPI como
 una llamada a función. El programa funciona sin conexión, y el código de la API no cambia.
 
-```bash
-uv run in_process.py
-```
+<Commands
+	uv={`uv run in_process.py`}
+	pip={`python in_process.py`}
+	python={`{py} in_process.py`}
+/>
 
 <Code code={inProcess} lang="py" title="in_process.py" />
 

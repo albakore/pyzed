@@ -93,7 +93,7 @@ flowchart LR
         A["app.rs<br/>messages, Command, run, screenshot"]
     end
     subgraph PY["python/pyzed/"]
-        UI["ui/<br/>Zed-style components"] --> CORE["pyzed._core"]
+        UI["ui/<br/>ready-made components"] --> CORE["pyzed._core"]
         D["designer/<br/>Pyzed Design"] --> UI
         APP["app.py, theme.py,<br/>component.py…"] --> CORE
     end

@@ -11,6 +11,7 @@ import hModels from '../../../../../../examples/integrations/sqlmodel_heroes/mod
 import hDb from '../../../../../../examples/integrations/sqlmodel_heroes/db.py?raw';
 import main from '../../../../../../examples/integrations/sqlmodel_inventory/main.py?raw';
 import models from '../../../../../../examples/integrations/sqlmodel_inventory/models.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 SQLModel corre en el mismo proceso que la ventana (la arquitectura 1 de
 [Arquitecturas](/pyzed/es/integrations/architectures/)); cuando los mismos modelos se tienen que
@@ -26,10 +27,24 @@ Hay dos demos:
 
 ![Héroes agrupados por equipo, filtrados por edad, con un panel de edición](../../../../assets/integrations/sqlmodel-heroes.png)
 
-```bash
-cd examples/integrations/sqlmodel_heroes
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlmodel_heroes
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlmodel_heroes
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlmodel
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlmodel_heroes
+		{py} -m pip install pyzed-ui sqlmodel
+		{py} main.py
+	`}
+/>
 
 <Steps>
 
@@ -131,10 +146,24 @@ muestran los errores de Pydantic.
 
 ![Una tabla de inventario con badges de stock y un diálogo de edición con errores de validación](../../../../assets/integrations/sqlmodel.png)
 
-```bash
-cd examples/integrations/sqlmodel_inventory
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlmodel_inventory
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlmodel_inventory
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlmodel
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlmodel_inventory
+		{py} -m pip install pyzed-ui sqlmodel
+		{py} main.py
+	`}
+/>
 
 <Steps>
 

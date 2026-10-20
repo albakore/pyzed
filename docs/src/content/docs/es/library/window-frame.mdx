@@ -14,7 +14,7 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
-Dibuja el marco completo de una ventana abierta sin decoraciones del sistema (`frame = "custom"`): una barra de título que mueve la ventana (doble clic la maximiza), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed (`ui.Menu`) y bordes que cambian el tamaño de la ventana. `ui.window_title_bar` es la barra sola, `ui.window_controls` los tres botones y `ui.system_platform()` dice qué estilo usa este sistema.
+Dibuja el marco completo de una ventana abierta sin decoraciones del sistema (`frame = "custom"`): una barra de título que mueve la ventana (doble clic la maximiza), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda (`ui.Menu`) y bordes que cambian el tamaño de la ventana. `ui.window_title_bar` es la barra sola, `ui.window_controls` los tres botones y `ui.system_platform()` dice qué estilo usa este sistema.
 
 `ui.window_frame` · Categoría: [Espacio de trabajo](/pyzed/es/library/#espacio-de-trabajo) · [Referencia completa →](/pyzed/es/reference/ui/#window_frame)
 
@@ -40,7 +40,7 @@ ui.window_frame(
 
 ## Cuándo usarlo
 
-- Para apps que quieren una ventana como la de Zed: menús y selectores en la barra de título en lugar del marco del sistema. Mira [Marcos de ventana](/pyzed/es/guides/windows/#marcos-de-ventana-tu-propia-barra-de-título).
+- Para apps que quieren una ventana como la de un editor moderno: menús y selectores en la barra de título en lugar del marco del sistema. Mira [Marcos de ventana](/pyzed/es/guides/windows/#marcos-de-ventana-tu-propia-barra-de-título).
 - Sin callbacks, `ui.window_title_bar` y `ui.window_controls` solo se muestran: úsalos para previsualizar una ventana con el marco de cada plataforma.
 
 ## Uso
@@ -91,14 +91,14 @@ window_frame(
 )
 ```
 
-El marco entero de una ventana abierta con `frame="custom"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda como en Zed y bordes que cambian el tamaño de la ventana.
+El marco entero de una ventana abierta con `frame="custom"`: una barra de título que mueve la ventana (doble clic maximiza, clic derecho abre el menú del sistema en Windows), los botones de minimizar, maximizar y cerrar con el estilo de una plataforma, menús a la izquierda y bordes que cambian el tamaño de la ventana.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
 | `content` | *obligatorio* | El contenido de la ventana, bajo la barra de título. |
 | `title` | `None` | Título de la barra. Por defecto el `title` de la ventana. |
 | `menus` | `None` | Menús a la izquierda de la barra: una lista de `ui.Menu`. |
-| `menu_button` | `True` | Muestra los menús tras un botón ☰, como Zed (`False` muestra siempre sus nombres). |
+| `menu_button` | `True` | Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres). |
 | `start` | `()` | Elementos después de los menús (proyecto, rama…). |
 | `center` | `None` | Tu propio widget en el centro en lugar del título. |
 | `end` | `()` | Elementos antes de los botones de ventana. |
@@ -222,6 +222,6 @@ El estilo de los botones de ventana de este sistema: `"macos"`, `"windows"`, `"k
 
 <CardGrid>
 <LinkCard title="Barra de título" description="La barra superior con los selectores de proyecto y rama." href="/pyzed/es/library/title-bar/" />
-<LinkCard title="Espacio de trabajo" description="La disposición de una ventana de Zed: barra de título, docks, centro y barra de estado." href="/pyzed/es/library/workspace/" />
+<LinkCard title="Espacio de trabajo" description="La disposición de una ventana estilo editor: barra de título, docks, centro y barra de estado." href="/pyzed/es/library/workspace/" />
 <LinkCard title="Menú" description="Un menú contextual con iconos, atajos y marcas." href="/pyzed/es/library/menu/" />
 </CardGrid>

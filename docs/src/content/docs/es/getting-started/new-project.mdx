@@ -1,0 +1,112 @@
+---
+title: Crear un proyecto
+description: "Genera una app de escritorio de Pyzed como proyecto estándar de uv con un comando: la UI en su propia carpeta y ruff, ty y git listos para usar."
+---
+
+import Commands from '../../../../components/Commands.astro';
+
+Pyzed instala el comando `pyzed`. Crea un proyecto completo con [uv](https://docs.astral.sh/uv/), una herramienta que
+instala paquetes de Python y mantiene cada proyecto en su propio entorno (las pestañas pip y python instalan uv por ti):
+
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new mi-app     # uvx ejecuta pyzed sin instalarlo
+		cd mi-app
+		uv run pyzed design     # abre el form principal en el diseñador visual
+		uv run pyzed run        # ejecuta la app
+	`}
+	pip={`
+		pip install pyzed-ui uv     # con tu .venv activado
+		pyzed new mi-app
+		cd mi-app
+		{activate}           # el .venv propio del proyecto
+		pyzed design         # abre el form principal en el diseñador visual
+		pyzed run            # ejecuta la app
+	`}
+	python={`
+		{py} -m pip install pyzed-ui uv
+		{py} -m pyzed new mi-app
+		cd mi-app
+		{vpy} -m pyzed design     # abre el form principal en el diseñador visual
+		{vpy} -m pyzed run        # ejecuta la app
+	`}
+/>
+
+Esto genera un proyecto de uv estándar:
+
+```
+mi-app/
+├── pyproject.toml     # dependencias (pyzed-ui; ruff y ty para desarrollo) + [tool.pyzed]
+├── uv.lock
+├── .venv/
+├── .git/
+├── src/mi_app/        # backend
+└── ui/                # forms (.pzform) y sus handlers de eventos (.py)
+```
+
+La carpeta de UI separa la interfaz del resto del código, y sus handlers pueden importar el backend, cualquier
+módulo del proyecto y todas las dependencias. ¿Ya tienes un proyecto creado con `uv init`? Ejecuta `pyzed init`
+dentro. Consulta [Proyectos con uv](/pyzed/es/guides/projects/) para la estructura, los comandos de
+dependencias y la pestaña Project del diseñador, y [Compilar y distribuir](/pyzed/es/packaging/build/) para
+empaquetar la app en cada plataforma.
+
+## Una app de un solo archivo
+
+Para empezar desde código en lugar del diseñador, `--script` crea un único `main.py` sin uv:
+
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new mi-app --script
+		cd mi-app
+		uv run --with pyzed-ui main.py
+	`}
+	pip={`
+		pyzed new mi-app --script     # con tu .venv activado
+		cd mi-app
+		python main.py
+	`}
+	python={`
+		{py} -m pyzed new mi-app --script
+		cd mi-app
+		{py} main.py
+	`}
+/>
+
+La plantilla ya incluye:
+
+- Un `ui.workspace` con barra de título, panel izquierdo y barra de estado.
+- Navegación entre páginas con `ui.list_item`.
+- Una paleta de comandos que se abre con <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>
+  y se cierra con <kbd>Esc</kbd>.
+- Un botón para alternar entre tema claro y oscuro.
+
+## Buscar iconos
+
+Pyzed incluye los ~2000 iconos de [Lucide](https://lucide.dev). Para buscar nombres:
+
+<Commands
+	uv={`
+		uv run pyzed icons folder
+		# folder, folder-open, folder-git, folder-plus, ...
+	`}
+	pip={`
+		pyzed icons folder
+		# folder, folder-open, folder-git, folder-plus, ...
+	`}
+	python={`
+		{py} -m pyzed icons folder
+		# folder, folder-open, folder-git, folder-plus, ...
+	`}
+/>
+
+Úsalos con `pz.icon("folder")` o con el parámetro `icon=` de los componentes.
+
+## Ejecutar como módulo
+
+`python -m pyzed` es equivalente al comando `pyzed`:
+
+<Commands
+	uv={`uv run python -m pyzed new otra-app`}
+	pip={`python -m pyzed new otra-app`}
+	python={`{py} -m pyzed new otra-app`}
+/>
