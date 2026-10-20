@@ -118,8 +118,38 @@ def title_bar():
         out = EDITOR / f"title-bar-{style}.png"
         save(app, out)
         crop(out, (0, 0, SIZE[0], ui_frame.HEIGHTS[style] + 4))
+    window_frames()
     app = make(frame=None)
     save(app, EDITOR / "system-frame.png")
+
+
+def window_frames(width=1100, gap=12):
+    """The title bar of every desktop stacked in one picture (macOS, Windows, GNOME, Ubuntu, KDE), on a
+    narrower window so the bars stay readable."""
+    from PIL import Image
+
+    from pyzed.ui import frame as ui_frame
+
+    bars = []
+    work = Path(tempfile.mkdtemp(prefix="pyzed-frames-"))
+    for style in ("macos", "windows", "gnome", "ubuntu", "kde"):
+        app = make(frame=style)
+        tmp = work / f"{style}.png"
+        app.toasts.clear()
+        app.screenshot(tmp, size=(width, 700), scale=SCALE)
+        with Image.open(tmp) as im:
+            bars.append(im.convert("RGB").crop((0, 0, im.width, ui_frame.HEIGHTS[style] * SCALE)))
+    pad = gap * SCALE
+    bg = pz.themes.get("One Dark").editor
+    sheet = Image.new("RGB", (bars[0].width + 2 * pad, sum(b.height + pad for b in bars) + pad),
+                      tuple(int(bg.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)))
+    y = pad
+    for bar in bars:
+        sheet.paste(bar, (pad, y))
+        y += bar.height + pad
+    out = EDITOR / "window-frames.png"
+    sheet.save(out, optimize=True)
+    print("wrote", out.relative_to(ROOT))
 
 
 @shot
