@@ -109,6 +109,49 @@ flowchart LR
     View -.->|not rendered again| Unmount["on_unmount()"]
 ```
 
+## Children, context and styles
+
+Components nest like HTML elements and React components:
+
+```python
+class Card(pz.Component):
+    title: str = ""
+    children: list = ()            # the positional arguments, like JSX children
+    stylesheet = {                 # CSS-like rules for this component (& is the component)
+        "&": {"background": "panel", "padding": 16, "radius": 8, "border": (1, "border")},
+        "&:hover": {"border_color": "accent"},
+    }
+
+    def render(self):
+        return pz.box(pz.text(self.title).style(weight="bold"), *self.children, gap=8)
+
+Card(pz.text("Three new messages"), ui.button("Open", self.open), title="Inbox",
+     class_="wide", animate="fade_in_up")
+```
+
+- A prop called `children` takes the positional arguments. Lists are flattened, and `None`
+  and `False` are skipped.
+- `stylesheet` adds rules to [`pz.stylesheet`](/pyzed/theming/styles/#stylesheets) when the class
+  is defined. `&` stands for the component: `"&"`, `"&:hover"`, `"&.wide"`.
+- Every component takes `style=`, `class_=`, `id=` and `animate=` (presets for
+  [`widget.animate`](/pyzed/guides/animation/)), unless it declares props with those names.
+- Context shares values with every component rendered inside, without passing props down
+  each level:
+
+```python
+with pz.provide(user=self.user):
+    page = Dashboard()                      # any component inside reads it
+
+class Avatar(pz.Component):
+    def render(self):
+        return ui.avatar(pz.use_context("user").name)   # or self.context("user")
+```
+
+A component can also share values with what it renders by returning them from a
+`provide()` method. Children passed in as arguments are rendered before the component, so
+they see the context around it, not its own. See
+[`examples/web_layout.py`](https://github.com/albakore/pyzed/blob/main/examples/web_layout.py) for a page built this way.
+
 ## Lifecycle
 
 | Hook | When |

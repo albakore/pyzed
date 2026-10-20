@@ -1669,6 +1669,16 @@ _section("app", "Eventos y componentes", {
         "params": {"min": "Valor mínimo.", "max": "Valor máximo.", "step": "Paso de los botones + y -."},
         "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
     },
+    "pyzed.provide": {
+        "desc": "Un gestor de contexto que comparte valores con todos los componentes que se dibujan dentro, como el contexto de React. Se leen con `pz.use_context(nombre)` o `self.context(nombre)`. El método `provide()` de un componente hace lo mismo con lo que dibuja. Ver [Hijos, contexto y estilos](/pyzed/es/guides/components/#hijos-contexto-y-estilos).",
+        "params": {"values": "Los valores, por nombre."},
+        "example": """
+            with pz.provide(user=self.user):
+                page = Dashboard()
+        """,
+    },
+    "pyzed.use_context": {"desc": "El valor más cercano compartido como `name` con `pz.provide` o el `provide()` de un componente.",
+                          "params": {"name": "El nombre del valor.", "default": "Lo que devuelve si nadie lo comparte."}},
     "pyzed.state": {
         "desc": 'Declara una variable de estado privada en la clase de un componente: el padre no puede pasarla y cada instancia empieza con su propia copia del valor (listas y diccionarios son seguros). El diseñador la muestra junto a las props. Ver [Componentes propios](/pyzed/es/guides/components/).',
         "params": {'default': 'Valor inicial, copiado para cada instancia.', 'doc': 'Descripción que muestra el diseñador.'},
@@ -1692,8 +1702,8 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "screen": "`(screen_x, screen_y)`, o `None` cuando la plataforma no informa de la posición de las ventanas.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
-    "args": "Props, en el orden en que se declaran.",
-    "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes) y `key=` para conservar el estado cuando los elementos se mueven.",
+    "args": "Props, en el orden en que se declaran (o los hijos, si la clase tiene una prop `children`).",
+    "kwargs": "Props por nombre, handlers `on_<evento>=` (propios, de ciclo de vida o comunes), `key=` para conservar el estado cuando los elementos se mueven, y `style=`, `class_=`, `id=` y `animate=`.",
 }
 
 # -- Diálogos y traducciones --------------------------------------------------
@@ -2517,6 +2527,8 @@ MEMBERS = {
     "pyzed.Component.on_mount": "Se llama tras el primer render; puede devolver un `Command` o un mensaje.",
     "pyzed.Component.on_unmount": "Se llama cuando el componente deja de renderizarse.",
     "pyzed.Component.emit": "Lanza el evento personalizado `name`: llama al handler que el padre pasó como `on_<name>`.",
+    "pyzed.Component.provide": "Valores que comparte con todos los componentes que dibuja (se leen con `pz.use_context`).",
+    "pyzed.Component.context": "El valor compartido más cercano llamado `name` (ver `pz.provide`).",
     "pyzed.Component.handles": "Si el padre pasó un handler para el evento personalizado `name`.",
     "pyzed.Component.describe": "El primer párrafo del docstring (se muestra en el diseñador).",
     "pyzed.Component.designer_spec": "Este componente como entrada de la caja de herramientas del diseñador (`pyzed.designer.Component`).",

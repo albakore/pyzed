@@ -109,6 +109,49 @@ flowchart LR
     View -.->|no se vuelve a renderizar| Unmount["on_unmount()"]
 ```
 
+## Hijos, contexto y estilos
+
+Los componentes se anidan como los elementos de HTML y los componentes de React:
+
+```python
+class Card(pz.Component):
+    title: str = ""
+    children: list = ()            # los argumentos posicionales, como los children de JSX
+    stylesheet = {                 # reglas tipo CSS de este componente (& es el componente)
+        "&": {"background": "panel", "padding": 16, "radius": 8, "border": (1, "border")},
+        "&:hover": {"border_color": "accent"},
+    }
+
+    def render(self):
+        return pz.box(pz.text(self.title).style(weight="bold"), *self.children, gap=8)
+
+Card(pz.text("Tres mensajes nuevos"), ui.button("Abrir", self.open), title="Bandeja",
+     class_="wide", animate="fade_in_up")
+```
+
+- Una prop llamada `children` recibe los argumentos posicionales. Las listas se aplanan y
+  `None` y `False` se ignoran.
+- `stylesheet` añade reglas a [`pz.stylesheet`](/pyzed/es/theming/styles/#hojas-de-estilo) al
+  definir la clase. `&` representa al componente: `"&"`, `"&:hover"`, `"&.wide"`.
+- Todo componente acepta `style=`, `class_=`, `id=` y `animate=` (presets de
+  [`widget.animate`](/pyzed/es/guides/animation/)), salvo que declare props con esos nombres.
+- El contexto comparte valores con todos los componentes que se dibujan dentro, sin pasar
+  props nivel a nivel:
+
+```python
+with pz.provide(user=self.user):
+    page = Dashboard()                      # cualquier componente de dentro lo lee
+
+class Avatar(pz.Component):
+    def render(self):
+        return ui.avatar(pz.use_context("user").name)   # o self.context("user")
+```
+
+Un componente también puede compartir valores con lo que dibuja devolviéndolos desde un
+método `provide()`. Los hijos que recibe como argumentos se dibujan antes que el
+componente, así que ven el contexto de alrededor, no el suyo. En
+[`examples/web_layout.py`](https://github.com/albakore/pyzed/blob/main/examples/web_layout.py) hay una página hecha así.
+
 ## Ciclo de vida
 
 | Hook | Cuándo |

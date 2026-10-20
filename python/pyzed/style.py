@@ -886,16 +886,39 @@ def _class_names(names: Iterable[Any]) -> FrozenSet[str]:
     return frozenset(out)
 
 
-def matching(name: Optional[str] = None, classes: Iterable[Any] = (), id: Optional[str] = None) -> Style:
-    """The style the stylesheet gives a component ``name`` with these classes and ``id``."""
+def matching(name: Optional[str] = None, classes: Iterable[Any] = (), id: Optional[str] = None, *,
+             specific: bool = False) -> Style:
+    """The style the stylesheet gives a component ``name`` with these classes and ``id``.
+
+    ``specific=True`` leaves out the rules that only name the component.
+    """
     names = _class_names([classes] if isinstance(classes, str) else classes)
-    found = [(r.specificity, i, r.props) for i, r in enumerate(stylesheet_rules()) if r.matches(name, names, id)]
+    found = [(r.specificity, i, r.props) for i, r in enumerate(stylesheet_rules())
+             if r.matches(name, names, id) and not (specific and not r.classes and not r.id)]
     # Named styles work as classes, under the rules (same specificity, earlier).
     found += [((0, 1, 0), -1, dict(_named[n].props)) for n in sorted(names) if n in _named]
     merged: Dict[str, Any] = {}
     for _spec, _order, props in sorted(found, key=lambda f: (f[0], f[1])):
         _merge(merged, props)
     return Style(merged)
+
+
+def _apply_component_rules(widget: Any, name: str, classes: Any, id: Optional[str]) -> Any:
+    """A component's root styled by the stylesheet: rules for its name are defaults under what
+    ``render()`` set, rules for the ``class_``/``id`` it was given go on top."""
+    if not _rules and not _named:
+        return widget
+    base = matching(name)
+    if base:
+        # Under what render() set, when that is the root's own style (a style around on() or
+        # animate() is another box, so the rules go around it).
+        own = widget.style_props() if repr(widget).endswith(".style()") else None
+        widget = widget.style(base, own) if own else widget.style(base)
+    if classes is not None or id is not None:
+        top = matching(name, () if classes is None else (classes,), id, specific=True)
+        if top:
+            widget = widget.style(top)
+    return widget
 
 
 def _apply_classes(widget: Any, names: Iterable[Any], id: Optional[str] = None, name: Optional[str] = None) -> Any:

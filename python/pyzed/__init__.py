@@ -81,7 +81,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
-from .component import Component, state
+from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
 from .hints import Color, Icon, Multiline, Range
@@ -300,6 +300,7 @@ __all__ = [
     "spawn",
     "set_reduced_motion",
     "system_reduced_motion",
+    "provide",
     "set_style",
     "split",
     "stack",
@@ -307,6 +308,7 @@ __all__ = [
     "style",
     "stylesheet",
     "state",
+    "use_context",
     "svg",
     "t",
     "text",

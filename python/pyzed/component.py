@@ -33,10 +33,26 @@ widgets, and ``events`` declares the custom events it can ``emit``::
     Rating(value=self.stars, on_change=lambda e: setattr(self, "stars", e.value))
 
 Every component also accepts the common events (``on_click``, ``on_drag``...; see
-``pyzed.events``), the lifecycle events ``on_mount`` / ``on_unmount``, ``style=`` (a ``pz.Style``, dict or style name, see
-``pyzed.style``) and ``class_=``/``id=`` for the stylesheet's rules (``pz.stylesheet``; rules
-for the component's class name, such as ``"Rating"``, apply to every instance), unless it
-declares props with those names.
+``pyzed.events``), the lifecycle events ``on_mount`` / ``on_unmount``, ``style=`` (a
+``pz.Style``, dict or style name, see ``pyzed.style``), ``class_=``/``id=`` for the
+stylesheet's rules (``pz.stylesheet``; rules for the component's class name, such as
+``"Rating"``, apply to every instance as defaults under what ``render()`` sets) and ``animate=`` (presets for ``widget.animate``),
+unless it declares props with those names.
+
+Like a web page, components nest: a prop called ``children`` takes the positional
+arguments (``Card(pz.text("Hi"), ui.button("OK", ok), title="Welcome")``), a class's
+``stylesheet`` adds its CSS-like rules (``&`` stands for the component), and values shared
+with ``pz.provide(...)`` or a component's ``provide()`` method reach every component
+rendered inside through ``pz.use_context(name)``, like React's context::
+
+    class Card(pz.Component):
+        title: str = ""
+        children: list = ()
+        stylesheet = {"&": {"background": "panel", "padding": 16, "radius": 8},
+                      "&:hover": {"border_color": "accent"}}
+
+        def render(self):
+            return pz.box(pz.text(self.title).style(weight="bold"), *self.children, gap=8)
 
 State can also be declared on the class with ``pz.state(default)``: it is private (the
 parent cannot pass it), each instance starts with its own copy of the default, and
@@ -72,13 +88,13 @@ from . import events as _events
 from . import hints as _hints
 from . import style as _style
 
-__all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "registered", "render_pass",
-           "state"]
+__all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "provide", "registered",
+           "render_pass", "state", "use_context"]
 
 _MISSING: Any = object()
 
 #: Class attributes that configure a component and are never props.
-_RESERVED = {"events", "label", "icon", "category", "size", "designer", "type_name", "description"}
+_RESERVED = {"events", "label", "icon", "category", "size", "designer", "type_name", "description", "stylesheet"}
 
 #: Events every component emits on its own.
 LIFECYCLE_EVENTS = {
@@ -207,6 +223,44 @@ def _own_annotations(klass: type) -> Dict[str, Any]:
         return dict(own) if isinstance(own, dict) else {}
     return dict(annotationlib.get_annotations(klass, format=annotationlib.Format.FORWARDREF))
 
+_context: List[Dict[str, Any]] = []
+
+
+@contextmanager
+def provide(**values: Any) -> Iterator[None]:
+    """Shares values with every component rendered inside, like React's context::
+
+        with pz.provide(user=self.user, compact=True):
+            body = Dashboard()          # any component below reads pz.use_context("user")
+
+    A component can also share values with what it renders by returning them from its
+    ``provide()`` method. Inner values hide outer ones with the same name.
+    """
+    _context.append(values)
+    try:
+        yield
+    finally:
+        _context.pop()
+
+
+def use_context(name: str, default: Any = None) -> Any:
+    """The closest value shared with ``pz.provide`` (or a component's ``provide()``) as ``name``."""
+    for values in reversed(_context):
+        if name in values:
+            return values[name]
+    return default
+
+
+def _children(args: Sequence[Any]) -> List[Any]:
+    out: List[Any] = []
+    for arg in args:
+        if isinstance(arg, (list, tuple)):
+            out.extend(_children(arg))
+        elif arg is not None and arg is not False:
+            out.append(arg)
+    return out
+
+
 class Component:
     """Base class for components; see the module documentation for a full example.
 
@@ -218,6 +272,11 @@ class Component:
         ``size``       default size when placed on a form, ``(width, height)``.
         ``designer``   ``False`` keeps the component out of the toolbox.
         ``type_name``  id used in saved forms (defaults to the class name in snake case).
+        ``stylesheet`` rules added to ``pz.stylesheet`` when the class is defined; ``&`` in a
+                       selector stands for the component (``"&"``, ``"&:hover"``, ``"&.big"``).
+
+    A prop called ``children`` takes the positional arguments, like JSX children:
+    ``Card(pz.text("Hi"), ui.button("OK", ok), title="Welcome")``.
     """
 
     events: ClassVar[Any] = ()
@@ -268,6 +327,11 @@ class Component:
             cls.type_name = _snake(cls.__name__)
         if not vars(cls).get("label"):
             cls.label = re.sub(r"(?<!^)(?=[A-Z])", " ", cls.__name__)
+        sheet = vars(cls).get("stylesheet")
+        if sheet:
+            from . import style as _style
+
+            _style.stylesheet({str(k).replace("&", cls.__name__): v for k, v in sheet.items()})
         if cls.designer and not cls.__name__.startswith("_"):
             _REGISTRY[cls.type_name] = cls
             designer = sys.modules.get("pyzed.designer.components")
@@ -282,6 +346,7 @@ class Component:
         style = kwargs.pop("style", None) if "style" not in cls.__props__ else None
         classes = kwargs.pop("class_", None) if "class_" not in cls.__props__ else None
         element_id = kwargs.pop("id", None) if "id" not in cls.__props__ else None
+        animation = kwargs.pop("animate", None) if "animate" not in cls.__props__ else None
         props, custom, common = cls._split(args, kwargs)
         current = _passes[-1] if _passes else None
         slot = current.key_for(cls, key) if current is not None else None
@@ -302,11 +367,11 @@ class Component:
             current.store[slot] = instance
             parent, current.path = current.path, slot
             try:
-                widget = instance.render()
+                widget = instance._render()
             finally:
                 current.path = parent
         else:
-            widget = instance.render()
+            widget = instance._render()
         if not isinstance(widget, _core.Widget):
             widget = _core.container(widget)
         if not instance._pyzed_mounted and current is not None:
@@ -314,15 +379,24 @@ class Component:
             _defer(instance._mount)
         if common:
             widget = widget.on(**common)
-        widget = _style._apply_classes(widget, () if classes is None else (classes,), element_id, cls.__name__)
+        widget = _style._apply_component_rules(widget, cls.__name__, classes, element_id)
         if style is not None:
             widget = widget.style(style)
+        if animation is not None:
+            widget = widget.animate(*(animation if isinstance(animation, (list, tuple)) else (animation,)))
         return widget
+
+    def _render(self) -> Any:
+        shared = self.provide()
+        if not shared:
+            return self.render()
+        with provide(**shared):
+            return self.render()
 
     @classmethod
     def create(cls, *args: Any, **kwargs: Any) -> "Component":
         """A standalone instance (not rendered, no lifecycle), handy in tests: ``c.render()``."""
-        for common in ("style", "class_", "id"):
+        for common in ("style", "class_", "id", "animate"):
             if common not in cls.__props__:
                 kwargs.pop(common, None)
         props, custom, _common = cls._split(args, kwargs)
@@ -346,6 +420,11 @@ class Component:
     @classmethod
     def _split(cls, args: Sequence[Any], kwargs: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
         names = list(cls.__props__)
+        if "children" in cls.__props__ and args:  # positional arguments are the children, like JSX
+            if "children" in kwargs:
+                raise TypeError(f"{cls.__name__} got children both as arguments and as children=")
+            kwargs = {**kwargs, "children": _children(args)}
+            args = ()
         if len(args) > len(names):
             raise TypeError(f"{cls.__name__} takes at most {len(names)} positional props ({', '.join(names)})")
         props: Dict[str, Any] = dict(zip(names, args))
@@ -377,6 +456,14 @@ class Component:
     def render(self) -> Any:  # pragma: no cover - meant to be overridden
         """Returns the widgets of this component (called on every render)."""
         raise NotImplementedError(f"{type(self).__name__}.render() must return a widget")
+
+    def provide(self) -> Optional[Mapping[str, Any]]:
+        """Values to share with every component this one renders (read with ``pz.use_context``)."""
+        return None
+
+    def context(self, name: str, default: Any = None) -> Any:
+        """The closest shared value called ``name`` (see ``pz.provide``)."""
+        return use_context(name, default)
 
     def on_mount(self) -> Any:
         """Called after the first render; may return a ``Command`` or a message."""

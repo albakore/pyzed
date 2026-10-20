@@ -93,12 +93,16 @@ def test_stylesheet_selectors_and_specificity():
 
 def test_components_take_classes_and_ids():
     class Badge(pz.Component):
+        designer = False  # keeps the test class out of the designer's toolbox
+
         text: str = ""
 
         def render(self):
             return pz.text(self.text)
 
     class Tagged(pz.Component):
+        designer = False  # keeps the test class out of the designer's toolbox
+
         id: str = ""  # a prop named ``id`` stays a prop
 
         def render(self):

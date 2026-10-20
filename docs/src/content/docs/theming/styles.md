@@ -93,6 +93,8 @@ Rating(value=3, class_="card", id="featured")       # components take class_= an
 - Defining a selector again replaces its rule, so reloading your code doesn't pile rules up.
   `pz.clear_stylesheet()` removes them all.
 - Styles named with `pz.define_style` also work as classes.
+- Rules for a component's name are defaults: what its `render()` sets wins over them, and
+  rules for the `class_` or `id` it is given win over both.
 
 ## Responsive styles
 

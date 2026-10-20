@@ -1669,6 +1669,16 @@ _section("app", "Events and components", {
         "params": {"min": "Lowest value.", "max": "Highest value.", "step": "Step of the + and - buttons."},
         "example": 'level: Annotated[int, pz.Range(0, 10)] = 3',
     },
+    "pyzed.provide": {
+        "desc": "A context manager that shares values with every component rendered inside, like React's context. Read them with `pz.use_context(name)` or `self.context(name)`. A component's `provide()` method does the same for what it renders. See [Children, context and styles](/pyzed/guides/components/#children-context-and-styles).",
+        "params": {"values": "The values, by name."},
+        "example": """
+            with pz.provide(user=self.user):
+                page = Dashboard()
+        """,
+    },
+    "pyzed.use_context": {"desc": "The closest value shared as `name` with `pz.provide` or a component's `provide()`.",
+                          "params": {"name": "The value's name.", "default": "Returned when nothing shares it."}},
     "pyzed.state": {
         "desc": 'Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).',
         "params": {'default': 'Initial value, copied for each instance.', 'doc': 'Description shown in the designer.'},
@@ -1692,8 +1702,8 @@ _page("app")["sections"][-1][1]["pyzed.Event"]["params"] = {
     "screen": "`(screen_x, screen_y)`, or `None` when the platform does not report window positions.",
 }
 _page("app")["sections"][-1][1]["pyzed.Component"]["params"] = {
-    "args": "Props, in declaration order.",
-    "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move.",
+    "args": "Props, in declaration order (or the children, when the class has a `children` prop).",
+    "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events), `key=` to keep state when items move, and `style=`, `class_=`, `id=` and `animate=`.",
 }
 
 # -- Dialogs and translations -------------------------------------------------

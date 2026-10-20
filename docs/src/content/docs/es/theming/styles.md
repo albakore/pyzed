@@ -94,6 +94,8 @@ Rating(value=3, class_="card", id="featured")       # los componentes aceptan cl
 - Definir otra vez un selector reemplaza su regla, así que recargar el código no acumula
   reglas. `pz.clear_stylesheet()` las quita todas.
 - Los estilos con nombre de `pz.define_style` también sirven como clases.
+- Las reglas para el nombre de un componente son valores por defecto: lo que fija su
+  `render()` les gana, y las reglas de la `class_` o el `id` que recibe ganan a ambos.
 
 ## Estilos responsive
 
