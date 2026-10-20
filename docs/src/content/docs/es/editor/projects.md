@@ -47,8 +47,19 @@ abrir el **selector de proyectos**:
 - Escribe para filtrar las dos listas, muévete con las flechas y pulsa <kbd>Enter</kbd> para abrir el resaltado.
 - **Abrir carpeta local…** y **Nuevo proyecto…**, abajo, abren esos diálogos.
 
-Los formularios siempre pertenecen al proyecto activo: viven en su carpeta `ui/`, y su formulario principal (o su
-`script`) es donde arranca la aplicación al pulsar Ejecutar.
+Los formularios siempre pertenecen al proyecto activo: un formulario nuevo se guarda por defecto en su carpeta `ui/`.
+
+### El archivo de inicio
+
+Cada proyecto tiene un archivo desde el que arranca la aplicación: su formulario principal (`main` en
+`[tool.pyzed]`) o, si lo tiene, su `script`. El panel Proyecto lo marca con un ▶. Haz clic derecho en otro
+formulario o archivo `.py` y elige **Usar como archivo de inicio** para cambiarlo; `pyproject.toml` se actualiza
+solo.
+
+### Clonar un repositorio
+
+**Clonar repositorio…** (en el panel Proyecto vacío, el selector de proyectos y la ventana de bienvenida) pide una
+URL de git y una carpeta, lo clona con git y lo abre, preparando su entorno como cualquier proyecto que abras.
 
 :::tip[Ramas]
 Haz clic en la rama, junto al nombre del proyecto, para cambiar a otra rama local (`git switch`).
