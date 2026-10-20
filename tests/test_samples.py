@@ -3,6 +3,7 @@ running a project's script."""
 
 import io
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -11,11 +12,16 @@ from pyzed.designer import commands, preferences, samples, welcome
 from pyzed.designer.app import Designer
 
 
+EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+
+
 @pytest.fixture(autouse=True)
 def config(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
     monkeypatch.setenv("APPDATA", str(tmp_path / "config"))
     monkeypatch.chdir(tmp_path)
+    # the examples of this checkout (CI installs pyzed as a wheel, away from the repository)
+    monkeypatch.setenv("PYZED_EXAMPLES", str(EXAMPLES))
 
 
 def test_every_sample_and_thumbnail_is_in_the_repository():
@@ -67,7 +73,7 @@ def test_examples_root_order(tmp_path, monkeypatch):
 
 
 def test_stage_copies_samples_and_thumbnails(tmp_path):
-    copied = samples.stage(tmp_path / "staged")
+    copied = samples.stage(tmp_path / "staged", EXAMPLES)
     assert (tmp_path / "staged" / "counter.py").is_file()
     assert (tmp_path / "staged" / "thumbnails" / "counter.png").is_file()
     assert (tmp_path / "staged" / "integrations" / "sqlmodel_heroes" / "main.py").is_file()
