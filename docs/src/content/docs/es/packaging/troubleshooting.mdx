@@ -1,0 +1,94 @@
+---
+title: Solución de problemas al compilar
+description: "Resuelve problemas comunes al empaquetar una app Pyzed: módulos o archivos que faltan, ventanas en blanco, apps bloqueadas en macOS y Windows, errores de glibc en Linux, compilaciones grandes y errores de actualización."
+sidebar:
+  order: 8
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Primero, mira el error
+
+Una app empaquetada no tiene terminal, así que los errores no se ven. Compílala con consola y arráncala desde una
+terminal para leer el traceback:
+
+<Tabs>
+	<TabItem label="Windows">
+		```powershell
+		uv run pyzed build --console
+		.\dist\Shop\Shop.exe
+		```
+	</TabItem>
+	<TabItem label="macOS">
+		```bash
+		uv run pyzed build --console
+		./dist/Shop.app/Contents/MacOS/Shop     # el ejecutable dentro del paquete
+		```
+	</TabItem>
+	<TabItem label="Linux">
+		```bash
+		uv run pyzed build --console
+		./dist/Shop/Shop
+		```
+	</TabItem>
+</Tabs>
+
+`pyzed build --dry-run` muestra el comando de PyInstaller que ejecutaría, útil para ver qué se incluye.
+
+## Al compilar
+
+| Síntoma | Causa y solución |
+| --- | --- |
+| `uv: command not found`, o `uv` no se reconoce | `pyzed build` ejecuta PyInstaller con uv. Instálalo: `pip install uv`, o mira [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
+| `ui/main.pzform does not exist; set [tool.pyzed] main in pyproject.toml` | El formulario principal se movió o cambió de nombre. Fija `main = "ui/<formulario>.pzform"` en `[tool.pyzed]`. |
+| `uv sync --locked` falla en CI | `uv.lock` está desactualizado: ejecuta `uv lock` (o `pyzed sync`) y haz commit. |
+| La primera compilación es muy lenta | uv descarga PyInstaller y PyInstaller analiza cada dependencia; las siguientes reutilizan la caché de uv. |
+
+## Al arrancar la app
+
+| Síntoma | Causa y solución |
+| --- | --- |
+| `ModuleNotFoundError` | Un módulo importado por nombre o con `importlib`: añádelo a `hidden-imports`, o su paquete a `collect`. |
+| Falta un archivo de datos de una dependencia (`FileNotFoundError` dentro de un paquete) | Añade el paquete a `collect` (incluye también sus datos y binarios). |
+| Faltan tus propios archivos | Añádelos a `include` y búscalos desde `sys._MEIPASS` ([Cómo funciona la compilación](/pyzed/es/packaging/build/#encontrar-tus-archivos-de-datos)). |
+| La ventana queda en blanco o la app se cierra enseguida en una máquina virtual o escritorio remoto | No hay GPU utilizable. Arráncala con el renderizador por CPU: `ICED_BACKEND=tiny-skia ./Shop` (PowerShell: `$env:ICED_BACKEND="tiny-skia"; .\Shop.exe`). |
+| Una app `--onefile` tarda en arrancar | Se descomprime en una carpeta temporal en cada arranque. Usa la compilación en carpeta. |
+| Los ajustes o archivos que guardó la app desaparecen tras actualizar | Se escribieron dentro de la carpeta de la app, que una actualización reemplaza. Guarda los datos del usuario en sus carpetas. |
+
+## En cada sistema
+
+| Síntoma | Causa y solución |
+| --- | --- |
+| **macOS:** "Shop está dañada y no se puede abrir" o "no se puede abrir porque no se puede verificar el desarrollador" | La app no está firmada ni notarizada. [Fírmala y notarízala](/pyzed/es/packaging/macos/#firmar-y-notarizar). Solo para tus pruebas: `xattr -dr com.apple.quarantine Shop.app`. |
+| **macOS:** la app se abre y se cierra enseguida | Ejecuta el ejecutable de dentro del paquete desde una terminal (arriba) para ver el error. |
+| **Windows:** "Windows protegió tu PC" | SmartScreen avisa de las apps sin firmar. [Firma el .exe](/pyzed/es/packaging/windows/#firmarla); la gente puede usar **Más información → Ejecutar de todas formas**. |
+| **Windows:** el antivirus borra o bloquea la app | Un falso positivo, más común con `--onefile`. Usa la compilación en carpeta, fírmala e informa al fabricante. |
+| **Linux:** `version 'GLIBC_2.xx' not found` | La app se compiló en una distribución más nueva que la que la ejecuta. [Compila en una más antigua](/pyzed/es/packaging/linux/#en-qué-distribución-compilar). |
+| **Linux:** errores sobre `libxkbcommon`, X11 o Wayland | El equipo no tiene bibliotecas de escritorio (una imagen mínima de servidor). Instala la sesión de escritorio o `libxkbcommon`. |
+| **Linux:** `Permission denied` al arrancarla | Se perdió el bit de ejecución (por ejemplo, comprimida en Windows): `chmod +x Shop/Shop`. |
+
+## Tamaño
+
+| Síntoma | Solución |
+| --- | --- |
+| La app es grande | Deja las herramientas de desarrollo en el grupo dev (`pyzed add --dev ...`), excluye módulos que no usas con `args = ["--exclude-module", "tkinter"]` y evita `collect` en paquetes grandes cuando basta con `hidden-imports`. |
+| El zip es más grande de lo esperado | No incluyas `build/`, `.venv/` ni datos de prueba en `include`. |
+
+## Autoactualización
+
+| Mensaje | Significado |
+| --- | --- |
+| `could not reach GitHub` | Sin red, o un proxy bloquea GitHub. Prueba más tarde. |
+| `GitHub refused the request (rate limit)` | Más de 60 peticiones en una hora desde esta IP. Busca con menos frecuencia. |
+| `no release found` | El repositorio no tiene versiones publicadas (los borradores no cuentan), o el nombre está mal. |
+| `the release does not publish a SHA-256 for this file` | La descarga no se puede verificar, así que no se instala. Vuelve a subir el archivo a la versión. |
+| `the download is corrupt` | El archivo no coincide con su SHA-256. Prueba de nuevo. |
+| `the update does not contain exactly one app` | El zip debe tener una sola carpeta (o una `.app`) en su raíz. |
+| `only a packaged app can replace itself` | La app corre desde Python: actualiza con `pip` o `uv`. |
+
+Mira [Apps que se actualizan solas](/pyzed/es/packaging/updates/) para saber cómo organizar las versiones.
+
+<Aside type="tip" title="¿Sigues atascado?">
+Busca en los [issues](https://github.com/albakore/pyzed/issues) o abre uno con tu sistema, el comando de compilación,
+la salida de `pyzed build --dry-run` y el traceback de la compilación con consola.
+</Aside>

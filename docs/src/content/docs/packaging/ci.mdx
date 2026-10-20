@@ -1,0 +1,200 @@
+---
+title: Build in CI with GitHub Actions
+description: "Build a Pyzed app for Windows, macOS and Linux on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets."
+sidebar:
+  order: 6
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Since each system builds its own app, the easiest way to ship all three is to let GitHub build them on its own
+Windows, macOS and Linux machines ("runners") every time you publish a version.
+
+## Write the workflow
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run pyzed build --workflow
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS and Linux"
+		pyzed build --workflow          # or: python -m pyzed build --workflow
+		```
+
+		```powershell title="Windows (PowerShell)"
+		pyzed build --workflow          # or: py -m pyzed build --workflow
+		```
+	</TabItem>
+</Tabs>
+
+It writes `.github/workflows/build.yml`:
+
+```yaml title=".github/workflows/build.yml"
+name: Build
+
+# Builds the app on each platform with `pyzed build` and keeps the result as an
+# artifact (Actions -> this run -> Artifacts). PyInstaller cannot cross-compile, so
+# every platform builds on its own runner.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run pyzed build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shop-${{ runner.os }}
+          path: dist/
+```
+
+## Run it
+
+<Steps>
+
+1. Commit the workflow and your `uv.lock` (the build uses `uv sync --locked`, so the lock file must be up to date).
+
+2. Push a version tag:
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+   Or start it by hand: **Actions → Build → Run workflow**.
+
+3. When it finishes, download the three builds from the run's page, under **Artifacts**.
+
+</Steps>
+
+<Aside type="note" title="Which machines">
+`ubuntu-latest` builds for Linux x86-64, `windows-latest` for Windows x64 and `macos-latest` for Apple silicon
+(arm64). Add `macos-15-intel` for Intel Macs and `ubuntu-24.04-arm` for Linux on ARM to the `os` list if you need
+them. For Linux, remember that the app runs on the runner's glibc or newer ([Linux](/pyzed/packaging/linux/)).
+</Aside>
+
+## Publish a GitHub Release
+
+Artifacts expire after a while and need a GitHub login to download. To give people a permanent download page, zip each
+build with a predictable name and attach it to a GitHub Release. Replace the last step with:
+
+```yaml title=".github/workflows/build.yml (steps)"
+      - run: uv run pyzed build
+      - name: Zip the app
+        shell: bash
+        run: |
+          # the exact name the self-updater looks for on this machine: shop-<system>-<arch>.zip
+          name=$(uv run python -c "from pyzed import updater; print(updater.asset_name('shop'))")
+          cd dist
+          if [ "$RUNNER_OS" = macOS ]; then
+            ditto -c -k --keepParent Shop.app "../$name"   # keeps the bundle's symlinks and signature
+          elif [ "$RUNNER_OS" = Windows ]; then
+            7z a -tzip "../$name" Shop >/dev/null
+          else
+            zip -qr "../$name" Shop
+          fi
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # the first job to get here creates the release; the others only upload
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --verify-tag || true
+          gh release upload "$GITHUB_REF_NAME" shop-*.zip --clobber
+```
+
+and give the job permission to create releases:
+
+```yaml
+jobs:
+  build:
+    permissions:
+      contents: write
+```
+
+The names follow `<app>-<system>-<arch>.zip` (`shop-windows-x86_64.zip`, `shop-macos-arm64.zip`,
+`shop-linux-x86_64.zip`), the names the [self-updater](/pyzed/packaging/updates/) looks for.
+
+<Aside type="tip" title="Why ask Python for the name">
+`pyzed.updater.asset_name("shop")` returns the exact name the app looks for on the machine that runs it, so the zips
+and the updater always agree.
+</Aside>
+
+## Signing in CI
+
+Keep certificates in **GitHub secrets** (Settings → Secrets and variables → Actions), never in the repository. Then
+decode them in a step before signing. This is what Pyzed's own release workflow does for Pyzed Design:
+
+<Tabs>
+	<TabItem label="Windows">
+		Store the `.pfx` file as base64 in `WINDOWS_CERTIFICATE` and its password in `WINDOWS_CERTIFICATE_PASSWORD`:
+
+		```yaml
+		      - name: Sign
+		        if: runner.os == 'Windows'
+		        shell: bash
+		        env:
+		          CERT: ${{ secrets.WINDOWS_CERTIFICATE }}
+		          PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+		        run: |
+		          echo "$CERT" | base64 --decode > "$RUNNER_TEMP/cert.pfx"
+		          signtool=$(ls "/c/Program Files (x86)/Windows Kits/10/bin/"*/x64/signtool.exe | tail -1)
+		          "$signtool" sign /f "$RUNNER_TEMP/cert.pfx" /p "$PASSWORD" /fd sha256 \
+		            /tr http://timestamp.digicert.com /td sha256 dist/Shop/Shop.exe
+		```
+	</TabItem>
+	<TabItem label="macOS">
+		Store the Developer ID certificate (`.p12`) as base64 in `MACOS_CERTIFICATE` with its password, and your Apple ID
+		details for notarization:
+
+		```yaml
+		      - name: Sign and notarize
+		        if: runner.os == 'macOS'
+		        env:
+		          CERT: ${{ secrets.MACOS_CERTIFICATE }}
+		          CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+		          IDENTITY: ${{ secrets.MACOS_CODESIGN_IDENTITY }}
+		          APPLE_ID: ${{ secrets.APPLE_ID }}
+		          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+		          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+		        run: |
+		          keychain="$RUNNER_TEMP/signing.keychain-db"
+		          echo "$CERT" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+		          security create-keychain -p "" "$keychain"
+		          security unlock-keychain -p "" "$keychain"
+		          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+		          security set-key-partition-list -S apple-tool:,apple: -k "" "$keychain" >/dev/null
+		          security list-keychains -d user -s "$keychain"
+		          codesign --force --deep --options runtime --timestamp --sign "$IDENTITY" dist/Shop.app
+		          ditto -c -k --keepParent dist/Shop.app notarize.zip
+		          xcrun notarytool submit notarize.zip --wait \
+		            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD"
+		          xcrun stapler staple dist/Shop.app
+		```
+	</TabItem>
+</Tabs>
+
+Put the signing step **after** `uv run pyzed build` and **before** zipping. See
+[Windows](/pyzed/packaging/windows/#sign-it) and [macOS](/pyzed/packaging/macos/#sign-and-notarize) for what each
+command does.
+
+<Aside type="note" title="How Pyzed Design is released">
+The workflow that builds Pyzed Design itself,
+[`.github/workflows/release.yml`](https://github.com/albakore/pyzed/blob/main/.github/workflows/release.yml), is a
+complete real-world example: five platforms, optional signing and notarization, an Inno Setup installer on Windows, a
+`.dmg` on macOS, `SHA256SUMS`, build provenance attestations and a GitHub Release with notes.
+</Aside>

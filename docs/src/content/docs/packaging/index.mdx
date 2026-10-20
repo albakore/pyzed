@@ -1,6 +1,6 @@
 ---
 title: Distribute your app
-description: "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus signing and CI builds."
+description: "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus icons, signing, installers, CI builds and self-updates."
 section:
   eyebrow: Distribute
   icon: rocket
@@ -14,8 +14,8 @@ import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 
 When your app works on your machine, `pyzed build` packages it: Python, Pyzed, your dependencies, your code and
-your forms go into one folder (or one file) that runs on its own. Run it from the root of your
-[project](/pyzed/getting-started/new-project/):
+your forms go into one folder (or one file) that runs on its own. The people who use it do not need Python, pip or
+anything else. Run it from the root of your [project](/pyzed/getting-started/new-project/):
 
 <Tabs syncKey="pkg">
 	<TabItem label="uv">
@@ -30,49 +30,69 @@ your forms go into one folder (or one file) that runs on its own. Run it from th
 		```
 
 		```powershell title="Windows (PowerShell)"
-		.venv\Scripts\activate
-		pyzed build          # or: python -m pyzed build
+		.venv\Scripts\Activate.ps1
+		pyzed build          # or: py -m pyzed build
 		```
 	</TabItem>
 </Tabs>
 
 | You build on | You get | People run it by |
 | --- | --- | --- |
-| Windows | `dist\Shop\Shop.exe` | Double-clicking it, or from a zip or an installer |
+| Windows | `dist\Shop\Shop.exe` | Double-clicking it, from a zip or an installer |
 | macOS | `dist/Shop.app` | Opening it (sign and notarize it to share it) |
-| Linux | `dist/Shop/Shop` | `./Shop`, or as an AppImage, .deb or Flatpak |
+| Linux | `dist/Shop/Shop` | `./Shop`, or from the application menu |
+
+## From your project to your users
+
+```mermaid
+flowchart LR
+    P["Your project<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller)"]
+    B --> W["Windows<br/>Shop.exe"]
+    B --> M["macOS<br/>Shop.app"]
+    B --> L["Linux<br/>Shop/Shop"]
+    W --> S["Sign · zip · installer"]
+    M --> S
+    L --> S
+    S --> R["GitHub Release"]
+    R -. "pyzed.updater" .-> U["Installed apps<br/>update themselves"]
+```
 
 <Aside type="caution" title="One build per platform">
 A build only runs on the system it was made on: build the Windows app on Windows, the macOS app on macOS and the
-Linux app on Linux. A CI workflow can do all three for you.
-</Aside>
-
-<Aside type="note">
-`pyzed build` runs [PyInstaller](https://pyinstaller.org) inside your project's environment through
-[uv](https://docs.astral.sh/uv/), so uv must be installed even if you use pip for everything else.
+Linux app on Linux. A [CI workflow](/pyzed/packaging/ci/) can do all three for you.
 </Aside>
 
 ## In this section
 
 <NavCards
 	items={[
-		{ title: 'Build and distribute', text: 'What gets bundled, options, building every platform in CI, signing and troubleshooting.', href: '/pyzed/packaging/build/', icon: 'rocket', tag: 'Start here' },
-		{ title: 'Projects with uv', text: 'The project layout that <code>pyzed build</code> expects, and managing its dependencies.', href: '/pyzed/guides/projects/', icon: 'document' },
+		{ title: 'How building works', text: 'What gets bundled, every option in <code>pyproject.toml</code>, data files and other packagers.', href: '/pyzed/packaging/build/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'Windows', text: 'The .exe, folder or single file, a zip or an Inno Setup installer, and signing for SmartScreen.', href: '/pyzed/packaging/windows/', icon: 'seti:windows' },
+		{ title: 'macOS', text: 'The .app bundle, bundle identifier, signing, notarization and a .dmg.', href: '/pyzed/packaging/macos/', icon: 'apple' },
+		{ title: 'Linux', text: 'Which distribution to build on, archives, menu entries, and AppImage or .deb.', href: '/pyzed/packaging/linux/', icon: 'linux' },
+		{ title: 'Icons and metadata', text: 'Name, version, icons for each system and the macOS bundle identifier.', href: '/pyzed/packaging/icons-metadata/', icon: 'star' },
+		{ title: 'CI with GitHub Actions', text: 'Build all three systems on every tag, publish a release and sign with secrets.', href: '/pyzed/packaging/ci/', icon: 'github' },
+		{ title: 'Self-updating apps', text: 'Check GitHub Releases, download with a checksum and swap the app on restart.', href: '/pyzed/packaging/updates/', icon: 'random' },
+		{ title: 'Troubleshooting', text: 'Missing modules, blank windows, blocked apps, glibc errors and update messages.', href: '/pyzed/packaging/troubleshooting/', icon: 'warning' },
 		{ title: 'CLI reference', text: 'Every option of <code>pyzed build</code> and the other commands.', href: '/pyzed/reference/cli/', icon: 'list-format' },
 	]}
 />
 
-## Coming next
+## What is supported today
 
-<NavCards
-	items={[
-		{ title: 'Windows', text: 'Icons, installers, code signing and SmartScreen.', icon: 'laptop' },
-		{ title: 'macOS', text: 'App bundles, signing, notarization and DMG images.', icon: 'apple' },
-		{ title: 'Linux', text: 'AppImage, .deb, Flatpak and which distribution to build on.', icon: 'linux' },
-	]}
-/>
+| | Windows | macOS | Linux |
+| --- | --- | --- | --- |
+| App folder (`pyzed build`) | ✅ `.exe` | ✅ `.app` | ✅ executable |
+| Single file (`--onefile`) | ✅ | ✅ | ✅ |
+| Icon (`icon =`) | ✅ `.ico` | ✅ `.icns` | Through a `.desktop` file |
+| CI workflow (`--workflow`) | ✅ | ✅ | ✅ |
+| Self-update (`pyzed.updater`) | ✅ | ✅ | ✅ |
+| Signing | With `signtool` | With `codesign` + notarization | Not needed |
+| Installer | Your own (Inno Setup, WiX) | Your own `.dmg` (`hdiutil`) | Your own (archive, script, AppImage...) |
+| Cross-compiling | ❌ | ❌ | ❌ |
 
 <Aside type="note" title="Status of this section">
-Packaging for desktop is ready to use today. Step-by-step guides per platform are being written; mobile and web
-targets are planned for the future and are not available yet.
+Packaging for desktop is ready to use today. Installers, signing and update channels are documented with the tools
+that Pyzed Design itself uses, but `pyzed build` does not run them for you yet. Mobile and web targets are planned for
+the future and are not available yet.
 </Aside>

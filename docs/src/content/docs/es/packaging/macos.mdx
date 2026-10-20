@@ -1,0 +1,139 @@
+---
+title: Compilar en macOS
+description: "Empaqueta una app Pyzed para macOS: crea un paquete .app con pyzed build, fija su icono e identificador de paquete, fírmala con tu Developer ID, notarízala y distribúyela en un .dmg."
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+En macOS, `pyzed build` crea un **paquete de app**, `dist/Shop.app`: una carpeta que Finder muestra como una sola app,
+con Python, Pyzed y tu código dentro.
+
+## Crear la .app
+
+<Steps>
+
+1. Instala [uv](https://docs.astral.sh/uv/) si no lo tienes:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. En la carpeta del proyecto, compila:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash
+   		uv run pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash
+   		source .venv/bin/activate
+   		pyzed build          # o: python -m pyzed build
+   		```
+   	</TabItem>
+   </Tabs>
+
+3. Pruébala:
+
+   ```bash
+   open dist/Shop.app
+   ```
+
+</Steps>
+
+<Aside type="note" title="Apple silicon e Intel">
+La app se compila para la arquitectura del Python que ejecuta la compilación: `arm64` en Apple silicon, `x86_64` en
+Macs Intel. Compila en cada tipo de Mac (GitHub ofrece ambos, mira [CI](/pyzed/es/packaging/ci/)) para soportar los
+dos. `pyzed build` no prepara compilaciones universales (las dos en una).
+</Aside>
+
+## Icono e identificador de paquete
+
+macOS usa un icono `.icns`. Cada app de Mac tiene además un **identificador de paquete**, un dominio invertido como
+`com.acme.shop` que macOS usa para guardar sus ajustes y permisos. Fija ambos en `pyproject.toml`; el identificador
+llega a PyInstaller con `args`:
+
+```toml title="pyproject.toml"
+[tool.pyzed.build]
+icon = "assets/icon.icns"
+args = ["--osx-bundle-identifier", "com.acme.shop"]
+```
+
+Mira [Iconos y metadatos](/pyzed/es/packaging/icons-metadata/) para crear un `.icns` a partir de un PNG.
+
+## Firmar y notarizar
+
+**Gatekeeper** revisa las apps descargadas de internet. Una app sin firmar ni notarizar queda bloqueada ("No se puede
+abrir Shop porque Apple no puede comprobar si contiene software malicioso"). La gente puede abrirla igual con clic
+derecho → **Abrir**, o en **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**, pero para una versión
+real, fírmala y notarízala.
+
+Necesitas una membresía del [Apple Developer Program](https://developer.apple.com/programs/), un certificado
+**Developer ID Application** en tu llavero y una
+[contraseña específica de app](https://support.apple.com/es-es/102654) para tu Apple ID.
+
+<Steps>
+
+1. Firma el paquete con el runtime reforzado y una marca de tiempo:
+
+   ```bash
+   codesign --force --deep --options runtime --timestamp \
+     --sign "Developer ID Application: Tu Nombre (TEAMID)" dist/Shop.app
+   ```
+
+2. Comprímelo con `ditto` (conserva los enlaces simbólicos y la firma del paquete) y envíalo al servicio de
+   notarización de Apple:
+
+   ```bash
+   ditto -c -k --keepParent dist/Shop.app Shop.zip
+   xcrun notarytool submit Shop.zip --wait \
+     --apple-id tu@ejemplo.com --team-id TEAMID --password "$APPLE_APP_PASSWORD"
+   ```
+
+3. Grapa el ticket a la app, para que abra incluso sin conexión:
+
+   ```bash
+   xcrun stapler staple dist/Shop.app
+   ```
+
+</Steps>
+
+Comprueba el resultado con `spctl --assess --verbose dist/Shop.app` ("accepted, source=Notarized Developer ID").
+
+<Aside type="caution" title="Firma después de cada cambio">
+Cambiar cualquier cosa dentro de la `.app` después de firmarla (incluso añadir un archivo) rompe la firma. Firma al
+final, y luego comprime o crea la imagen de disco.
+</Aside>
+
+## Una imagen de disco (.dmg)
+
+Los usuarios de Mac esperan un `.dmg` con la app y un acceso directo a Aplicaciones para arrastrarla.
+
+<Aside type="caution" title="pyzed build todavía no lo crea">
+`pyzed build` crea la `.app`, no la imagen de disco. Créala con `hdiutil`, que viene con macOS, como se muestra abajo.
+</Aside>
+
+```bash
+mkdir -p build/dmg
+ditto dist/Shop.app build/dmg/Shop.app
+ln -s /Applications build/dmg/Applications
+hdiutil create -volname Shop -srcfolder build/dmg -fs HFS+ -format UDZO -ov Shop-macos-arm64.dmg
+codesign --force --timestamp --sign "Developer ID Application: Tu Nombre (TEAMID)" Shop-macos-arm64.dmg
+```
+
+Notariza y grapa el `.dmg` igual que el zip de arriba. Así se crea el `.dmg` de Pyzed Design (mira `macos_dmg` en
+[`scripts/build_designer.py`](https://github.com/albakore/pyzed/blob/main/scripts/build_designer.py)).
+
+## A tener en cuenta
+
+- **Dónde vive:** la gente arrastra la app a `/Applications`, donde pueden escribir los usuarios administradores, así
+  que la app puede [actualizarse sola](/pyzed/es/packaging/updates/) ahí.
+- **Cuarentena:** una app descargada lleva una marca de cuarentena hasta que el primer arranque pasa Gatekeeper. Para
+  tus propias pruebas puedes quitarla con `xattr -dr com.apple.quarantine dist/Shop.app`; no se lo pidas a tus
+  usuarios.
+- **Permisos:** si la app necesita la cámara, el micrófono u otros recursos protegidos, macOS pregunta al usuario.
+  Añade las descripciones de uso al `Info.plist` del paquete con las opciones del archivo spec de PyInstaller;
+  `pyzed build` no las fija por ti.

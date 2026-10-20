@@ -1,0 +1,160 @@
+---
+title: Building on Windows
+description: "Package a Pyzed app for Windows: build an .exe with pyzed build, add an icon, ship a zip or an installer made with Inno Setup, and sign it with signtool to avoid SmartScreen warnings."
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+On Windows, `pyzed build` makes a folder with `Shop.exe` and everything it needs. You can share that folder as a
+zip, or wrap it in an installer.
+
+## Build the .exe
+
+<Steps>
+
+1. Install [uv](https://docs.astral.sh/uv/) if you do not have it (PowerShell):
+
+   ```powershell
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+2. In the project folder, build:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```powershell
+   		uv run pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```powershell
+   		.venv\Scripts\Activate.ps1
+   		pyzed build          # or: py -m pyzed build
+   		```
+   	</TabItem>
+   </Tabs>
+
+3. Try it: double-click `dist\Shop\Shop.exe`, or from PowerShell:
+
+   ```powershell
+   .\dist\Shop\Shop.exe
+   ```
+
+</Steps>
+
+The result has no console window (`windowed = true`). While you are testing, build with `--console` to see errors
+and `print` output in a terminal next to the app.
+
+## Folder or single file
+
+| | Folder (default) | `--onefile` |
+| --- | --- | --- |
+| Result | `dist\Shop\Shop.exe` plus an `_internal` folder | `dist\Shop.exe` |
+| Starts | Fast | Slower: it unpacks itself to a temporary folder each time |
+| Antivirus | Rarely flagged | Flagged more often (false positives) |
+| Self-update | Supported ([Updates](/pyzed/packaging/updates/)) | Not supported |
+
+Prefer the folder build, and give people a zip or an installer.
+
+## The icon
+
+Windows uses an `.ico` file. Put it in the project and point to it:
+
+```toml title="pyproject.toml"
+[tool.pyzed.build]
+icon = "assets/icon.ico"
+```
+
+See [Icons and metadata](/pyzed/packaging/icons-metadata/) to make an `.ico` from a PNG and to set the version shown
+in the file's properties.
+
+## Share it
+
+### As a zip
+
+The simplest way: zip the app folder and share the zip. People unzip it anywhere and run `Shop.exe`.
+
+```powershell
+Compress-Archive -Path dist\Shop -DestinationPath Shop-windows-x86_64.zip
+```
+
+Name it `<app>-windows-<arch>.zip` if you plan to [update the app by itself](/pyzed/packaging/updates/).
+
+### As an installer
+
+An installer adds the app to the Start menu, can create a desktop shortcut and registers an uninstaller.
+
+<Aside type="caution" title="Not built by pyzed build yet">
+`pyzed build` makes the app folder, not a setup program. Create the installer with a separate tool such as
+[Inno Setup](https://jrsoftware.org/isinfo.php) (free) or [WiX](https://wixtoolset.org/), from the folder in
+`dist\`.
+</Aside>
+
+Pyzed Design itself is installed this way: its Inno Setup script is
+[`installer/windows/pyzed-design.iss`](https://github.com/albakore/pyzed/blob/main/installer/windows/pyzed-design.iss)
+and is a good template. It installs **for the current user only, without administrator rights**, in
+`%LOCALAPPDATA%\Programs\<App>`, which keeps the folder writable so the app can update itself. A minimal script:
+
+```ini title="installer/shop.iss"
+#define AppName "Shop"
+#define AppExe "Shop.exe"
+
+[Setup]
+; Generate your own AppId once (Tools -> Generate GUID in Inno Setup) and never change it.
+AppId={{00000000-0000-0000-0000-000000000000}
+AppName={#AppName}
+AppVersion=1.0.0
+DefaultDirName={autopf}\{#AppName}
+PrivilegesRequired=lowest
+OutputBaseFilename=Shop-setup
+Compression=lzma2/max
+SolidCompression=yes
+WizardStyle=modern
+
+[Files]
+Source: "..\dist\Shop\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; Flags: unchecked
+```
+
+Compile it (Inno Setup 6 installs `ISCC.exe`; `choco install innosetup` also works):
+
+```powershell
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\shop.iss
+```
+
+With `PrivilegesRequired=lowest`, `{autopf}` is the user's own programs folder.
+
+## Sign it
+
+Windows SmartScreen warns about executables that are not signed ("Windows protected your PC"). Unsigned apps still
+run (**More info → Run anyway**), but signing with a code signing certificate removes the warning over time.
+
+```powershell
+signtool sign /f certificate.pfx /p $env:CERT_PASSWORD /fd sha256 `
+  /tr http://timestamp.digicert.com /td sha256 dist\Shop\Shop.exe
+```
+
+`signtool.exe` comes with the Windows SDK. Sign the `.exe` before zipping or building the installer, then sign the
+setup `.exe` too. The [CI page](/pyzed/packaging/ci/#signing-in-ci) shows how to keep the certificate in a GitHub
+secret.
+
+<Aside type="tip" title="SmartScreen reputation">
+Even signed apps can show the warning at first: SmartScreen builds reputation per certificate as people download and
+run your app. Extended Validation (EV) certificates start with more reputation.
+</Aside>
+
+## Things to know
+
+- **Architecture:** the app is built for the architecture of the Python that runs the build (usually x86-64). An
+  x86-64 build also runs on Windows on ARM through emulation.
+- **Paths:** Windows paths in `pyproject.toml` use forward slashes (`assets/icon.ico`); that works on every system.
+- **Antivirus:** if an antivirus quarantines the app, prefer the folder build, sign it, and report the false positive
+  to the vendor.

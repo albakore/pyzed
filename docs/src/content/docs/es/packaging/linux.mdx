@@ -1,0 +1,126 @@
+---
+title: Compilar en Linux
+description: "Empaqueta una app Pyzed para Linux: compila con pyzed build, elige en qué distribución compilar por la compatibilidad de glibc, distribúyela en un tarball o zip con una entrada .desktop, y qué pasa con AppImage, .deb y Flatpak."
+sidebar:
+  order: 4
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+En Linux, `pyzed build` crea una carpeta, `dist/Shop/`, con un ejecutable llamado `Shop` y todo lo que necesita. No
+hace falta firmarla.
+
+## Compilar
+
+<Steps>
+
+1. Instala [uv](https://docs.astral.sh/uv/) si no lo tienes:
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. En la carpeta del proyecto, compila:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash
+   		uv run pyzed build
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash
+   		source .venv/bin/activate
+   		pyzed build          # o: python -m pyzed build
+   		```
+   	</TabItem>
+   </Tabs>
+
+3. Pruébala:
+
+   ```bash
+   ./dist/Shop/Shop
+   ```
+
+</Steps>
+
+## En qué distribución compilar
+
+La app enlaza con la biblioteca de C (glibc) del sistema donde se compiló, y funciona en esa versión **o en una más
+nueva**. Compila en la distribución **más antigua** que quieras soportar. Por ejemplo, una app compilada en Ubuntu
+22.04 funciona en Ubuntu 22.04, 24.04 y posteriores, y en otras distribuciones con glibc 2.35 o más nueva, pero no en
+Ubuntu 20.04.
+
+<Aside type="tip" title="Compilar en un contenedor">
+Para compilar para sistemas antiguos desde uno nuevo, compila dentro de un contenedor de la distribución antigua (por
+ejemplo `docker run -it -v "$PWD":/app -w /app ubuntu:22.04`), instala uv allí y ejecuta `uv run pyzed build`.
+</Aside>
+
+Los wheels de Pyzed necesitan glibc 2.28 o más nueva (`manylinux_2_28`), así que esa es la base más antigua posible.
+Alpine y otros sistemas basados en musl necesitan una compilación hecha en ellos.
+
+## Qué necesita el equipo de destino
+
+La app lleva Python y Pyzed consigo, pero usa las bibliotecas gráficas y de ventanas del sistema: una sesión de
+escritorio con X11 o Wayland, `libxkbcommon` y un driver de Vulkan u OpenGL (Mesa en la mayoría de sistemas). Todas
+las distribuciones de escritorio los tienen; las imágenes mínimas de servidor puede que no.
+
+## Compartirla
+
+### En un archivo comprimido
+
+La forma más sencilla: un archivo comprimido de la carpeta. La gente lo descomprime donde quiera y ejecuta
+`./Shop/Shop`.
+
+```bash
+tar -czf Shop-linux-x86_64.tar.gz -C dist Shop
+# o un zip, que es lo que usa la autoactualización:
+(cd dist && zip -qr ../Shop-linux-x86_64.zip Shop)
+```
+
+Llama al zip `<app>-linux-<arq>.zip` si piensas [actualizar la app sola](/pyzed/es/packaging/updates/).
+
+### Añadirla al menú de aplicaciones
+
+Un archivo `.desktop` hace que la app aparezca en el menú de aplicaciones del escritorio, con su icono. Instálalo por
+usuario, sin root:
+
+```ini title="~/.local/share/applications/com.acme.shop.desktop"
+[Desktop Entry]
+Type=Application
+Name=Shop
+Exec=/home/tu/.local/share/shop/Shop
+Icon=/home/tu/.local/share/shop/icon.png
+Categories=Office;
+Terminal=false
+```
+
+El instalador de Pyzed Design para Linux hace exactamente esto: descarga el zip de la versión, lo comprueba con el
+`SHA256SUMS` de la versión, lo descomprime en `~/.local/share/pyzed-design`, enlaza un comando en `~/.local/bin` y
+añade la entrada al menú. Su script,
+[`docs/public/install.sh`](https://github.com/albakore/pyzed/blob/main/docs/public/install.sh), es una buena
+plantilla para tu propio instalador `curl ... | sh`.
+
+### AppImage, .deb, .rpm, Flatpak, Snap
+
+<Aside type="caution" title="pyzed build todavía no los crea">
+`pyzed build` solo crea la carpeta de la app. Empaquetarla como AppImage, `.deb`/`.rpm` o Flatpak/Snap se hace con las
+herramientas propias de esos formatos, a partir de `dist/Shop/`:
+
+- **AppImage**: pon la carpeta en un `AppDir` con un `AppRun` que arranque `Shop`, un archivo `.desktop` y un icono, y
+  ejecuta `appimagetool`.
+- **.deb / .rpm**: herramientas como [fpm](https://fpm.readthedocs.io) convierten una carpeta en cualquiera de los dos:
+  `fpm -s dir -t deb -n shop -v 1.0.0 dist/Shop/=/opt/shop/`.
+- **Flatpak / Snap**: escribe un manifiesto que copie la carpeta y declare los permisos de gráficos y pantalla.
+
+Pyzed no prueba estas recetas.
+</Aside>
+
+## A tener en cuenta
+
+- **Arquitectura:** la app se compila para la máquina donde se compila: `x86_64`, o `aarch64` en ARM (GitHub también
+  ofrece máquinas ARM, mira [CI](/pyzed/es/packaging/ci/)).
+- **Sin GPU:** en máquinas virtuales sin GPU, arranca la app con el renderizador por CPU si la ventana queda en blanco;
+  mira [Solución de problemas](/pyzed/es/packaging/troubleshooting/).
+- **Bit de ejecución:** los zip creados en Windows pierden el bit de ejecución. Compila y comprime las apps de Linux en
+  Linux.
