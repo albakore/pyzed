@@ -29,6 +29,7 @@ from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
 from . import commands as _commands
+from . import keymap as _keymap
 from . import files as _files
 from . import layout as _layout
 from . import new as _new
@@ -38,6 +39,8 @@ from .locale import tr
 from .code_panel import CodeAssist
 from .components import Prop
 from .document import Document
+from . import keymap_editor
+from .keymap_editor import KeymapEditor
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
@@ -163,6 +166,8 @@ class Designer(App):
         self.outline_target: Optional[Tuple[str, str]] = None
         self.hovered_row: Optional[str] = None  # toolbox or outline row under the pointer
         self.focus = "canvas"
+        #: The first keys of a chord (such as ctrl-k) waiting for the second.
+        self.key_prefix: Optional[str] = None
         # preferences and view options
         self.prefs = preferences.load()
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
@@ -202,6 +207,7 @@ class Designer(App):
         self.buffers = _files.Buffers(self)
         # the AI agent (Agent panel, inline assist)
         self.agent = agent_panel.AgentController(self)
+        self.keymap_editor = KeymapEditor(self)
         # dialogs, messages and the running preview
         self.dialog: Optional[str] = None
         self.dialog_path = ""
@@ -2030,26 +2036,56 @@ class Designer(App):
         return None
 
     # -- keyboard -------------------------------------------------------------
+    #: Commands whose keys also work while a dialog is open.
+    DIALOG_KEYS = ("workspace::palette", "workspace::settings", "workspace::shortcuts", "workspace::open_keymap")
+
+    def key_contexts(self) -> Tuple[str, ...]:
+        """The keymap contexts that have the keyboard, deepest first (see ``keymap.CONTEXTS``)."""
+        if self.dialog or self.app_menu:
+            return ("Workspace",)
+        if self.focus == "files":
+            return ("ProjectPanel", "Workspace")
+        if self.focus == "code" and (self.editing is not None or self.buffers.current):
+            return ("Editor", "CodePanel", "Workspace")
+        if self.focus == "canvas" and not shader_editor.is_shader(self):
+            return ("Canvas", "Workspace")
+        return ("Workspace",)
+
     def on_key(self, combo: str) -> Any:
         """Handles a key ``combo`` the focused widget did not use.
 
-        Global shortcuts come first, then the code editor's, the picker's arrows, Escape (closes what is
-        open or cancels a drag) and, when the canvas has the keyboard, editing and nudging shortcuts.
+        The keymap decides what keys do, from the deepest context with the keyboard (the project tree, the
+        code panel, the canvas) to the whole workspace; the keymap editor takes the keys while it records them.
+        Then come the agent's and the shader graph's own keys, the pickers' arrows and Escape (closes what is
+        open or cancels a drag).
         """
-        if self.focus == "files" and not self.dialog and not self.app_menu:
-            handled, result = self.projects.files.on_key(combo)  # the tree's own keys, like Zed's
+        if self.dialog == "keymap" and self.keymap_editor.recording is not None:
+            return self.keymap_editor.record(combo)
+        km = _keymap.get()
+        km.refresh()
+        keys = _keymap.normalize(combo) or combo
+        contexts = self.key_contexts()
+        if self.key_prefix is not None:  # the second key of a chord; if none matches, both keys act alone
+            prefix, self.key_prefix = self.key_prefix, None
+            action = km.resolve(f"{prefix} {keys}", contexts)
+            if action is not None:
+                return self.run_key_action(action)
+            first = km.resolve(prefix, contexts)
+            results = [self.run_key_action(first) if first is not None else None, self.on_key(combo)]
+            return [r for r in results if r is not None] or None
+        if km.is_prefix(keys, [c for c in contexts if c != "Editor"]):
+            self.key_prefix = keys
+            return None
+        code = self.focus == "code" and (self.editing is not None or self.buffers.current) and not self.dialog
+        if code:  # the completion list, find bar and go to line take their keys first
+            handled, result = self.assist.on_key(combo)
             if handled:
                 return result
-        action = _commands.by_keys(combo, global_only=True)
-        if action is not None and (not self.dialog or action.id in ("palette", "settings", "shortcuts")):
-            self.app_menu = None
-            return _commands.run(action.id, self)
+        action = km.resolve(keys, contexts)
+        if action is not None and (not self.dialog or action in self.DIALOG_KEYS):
+            return self.run_key_action(action)
         if self.focus == "agent" and not self.dialog:
             handled, result = self.agent.on_key(combo)
-            if handled:
-                return result
-        if self.focus == "code" and (self.editing is not None or self.buffers.current) and not self.dialog:
-            handled, result = self.assist.on_key(combo)
             if handled:
                 return result
         if self.dialog in ("palette", "add_control", "preview_theme", "preview_language", "preview_frame") \
@@ -2061,6 +2097,9 @@ class Designer(App):
             handled, result = self.shading.on_key(combo)
             if handled:
                 return result
+            action = km.resolve(keys, ("Canvas",))
+            if action is not None:
+                return self.run_key_action(action)
         if combo == "escape":
             if self.dialog:
                 return self.close_dialog()
@@ -2073,38 +2112,51 @@ class Designer(App):
             if self.drag:
                 return self.cancel_drag()
             self.tool = None
-            return None
-        if self.dialog:
-            return None
-        if self.focus == "code":
-            return None
-        if self.focus != "canvas":
-            return None
+        return None
+
+    def run_key_action(self, action: str) -> Any:
+        """Runs keymap action ``action`` (``"workspace::save"``, ``"canvas::nudge_left"``...)."""
+        namespace, _, name = action.partition("::")
+        if namespace == "workspace":
+            self.app_menu = None
+            return _commands.run(name, self) if name in _commands.BY_ID else None
+        if namespace == "canvas":
+            return self.canvas_action(name)
+        if namespace == "project_panel":
+            return self.projects.files.run_action(name)[1]
+        if namespace == "code_panel":
+            return self.assist.run_action(name)
+        if namespace == "editor" and (self.editing is not None or self.buffers.current):
+            return _core.Command.editor_action(self.editor_id, name)
+        return None
+
+    def canvas_action(self, name: str) -> Any:
+        """The canvas's own keymap actions: nudging the selection and opening the main event."""
         step = self.doc.form.grid if self.snap else 1
-        canvas: Dict[str, Callable[[], Any]] = {
-            "ctrl-z": self.undo,
-            "ctrl-shift-z": self.redo,
-            "ctrl-y": self.redo,
-            "delete": self.delete,
-            "backspace": self.delete,
-            "ctrl-c": self.copy,
-            "ctrl-x": self.cut,
-            "ctrl-v": self.paste,
-            "ctrl-d": self.duplicate,
-            "ctrl-a": lambda: (self.doc.select_all(), self._selection_changed()),
-            "left": lambda: self.doc.nudge(-1, 0),
-            "right": lambda: self.doc.nudge(1, 0),
-            "up": lambda: self.doc.nudge(0, -1),
-            "down": lambda: self.doc.nudge(0, 1),
-            "shift-left": lambda: self.doc.nudge(-step, 0),
-            "shift-right": lambda: self.doc.nudge(step, 0),
-            "shift-up": lambda: self.doc.nudge(0, -step),
-            "shift-down": lambda: self.doc.nudge(0, step),
-            "enter": lambda: self.open_default_event(self.doc.primary.name) if self.doc.primary else None,
-            "g": self.toggle("show_grid"),
-        }
-        action = canvas.get(combo)
-        return action() if action else None
+        moves = {"left": (-1, 0), "right": (1, 0), "up": (0, -1), "down": (0, 1)}
+        if name.startswith("nudge_"):
+            where = name.removeprefix("nudge_")
+            scale = step if where.startswith("grid_") else 1
+            dx, dy = moves[where.removeprefix("grid_")]
+            return self.doc.nudge(dx * scale, dy * scale)
+        if name == "open_main_event" and self.doc.primary:
+            return self.open_default_event(self.doc.primary.name)
+        return None
+
+    def open_keymap(self) -> Any:
+        """Opens the keymap editor."""
+        self.app_menu = None
+        return self.keymap_editor.open()
+
+    def keymap_changed(self) -> None:
+        """The keymap editor saved ``keymap.json``: an open, unchanged copy of it in the code panel follows."""
+        path = _keymap.get().path
+        index = self.buffers.index_of(path) if path.exists() else None
+        if index is not None and not self.buffers.items[index].dirty:
+            buffer = self.buffers.items[index]
+            buffer.text = buffer.saved = path.read_text(encoding="utf-8")
+            if self.buffers.active == index:
+                self.code_revision += 1
 
     def cancel_drag(self) -> None:
         """Escape during a drag puts everything back where it was."""
@@ -2221,6 +2273,7 @@ class Designer(App):
     def title_menu(self, name: str, t) -> Any:
         """The File, View or Help menu, built from the command table."""
         groups = {"file": ("File", "Run"), "view": ("View",), "help": ("Help",)}[name]
+        km = _keymap.get()
         items: List[Any] = []
         for group, actions in _commands.groups():
             if group not in groups:
@@ -2231,7 +2284,7 @@ class Designer(App):
                 if not a.menu:
                     continue
                 items.append(ui.MenuItem(a.label, (lambda a=a: self.run_action(a.id)) if a.enabled(self) else None,
-                                         icon=None if a.checked else a.icon, keys=a.keys,
+                                         icon=None if a.checked else a.icon, keys=km.keys_for(f"workspace::{a.id}"),
                                          checked=a.checked(self) if a.checked else None,
                                          disabled=not a.enabled(self)))
             if group == "File" and self.prefs.recent:
@@ -2450,6 +2503,8 @@ class Designer(App):
             return code_panel.settings_dialog(self, t)
         if self.dialog == "agent_settings":
             return agent_panel.settings_dialog(self, t)
+        if self.dialog == "keymap":
+            return keymap_editor.dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
                  "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette,
                  "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language,

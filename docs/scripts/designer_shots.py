@@ -183,7 +183,7 @@ def settings():
     app.close_dialog()
 
     app.open_editor_settings()
-    from pyzed.designer.code_panel import KEY_GROUPS, SETTINGS_SECTIONS
+    from pyzed.designer.code_panel import SETTINGS_SECTIONS
 
     for section in SETTINGS_SECTIONS:
         if section == "servers":
@@ -203,17 +203,43 @@ def settings():
     save(live, EDITOR / "editor-settings-servers.png")
     live.close_dialog()
     live.assist.shutdown()
-    page = KEY_GROUPS[0][0]
-    app.assist.show_settings_section(f"keys:{page}")
-    save(app, EDITOR / "editor-settings-keys.png")
-    app.assist.show_settings_section("appearance")
     app.close_dialog()
+    keymap_editor(app)
 
     for provider in (None, "anthropic", "openrouter"):
         app.agent.provider_open = provider
         app.dialog = "agent_settings"
         save(app, EDITOR / f"agent-settings{'-' + provider if provider else ''}.png")
     app.dialog = None
+
+
+def keymap_editor(app):
+    """The keymap editor: a changed key, a conflict, and new keys being recorded."""
+    from pyzed.designer import keymap
+
+    km = keymap.get()
+    [save_as] = km.bindings_for("workspace::save_as")
+    km.change(save_as, "ctrl-alt-s")
+    km.add("workspace::grid", "ctrl-d", "Canvas")  # Duplicate already has it: a conflict
+    km.save()
+    ke = app.keymap_editor
+    app.open_keymap()
+    ke.set_query("save")
+    save(app, EDITOR / "keymap-editor.png")
+    ke.set_query("")
+    ke.set_filter("conflicts")
+    save(app, EDITOR / "keymap-editor-conflicts.png")
+    ke.set_filter("all")
+    ke.set_query("go to")
+    [goto] = km.bindings_for("code_panel::go_to_line")
+    ke.start("code_panel::go_to_line", goto)
+    ke.record("ctrl-k")
+    ke.record("ctrl-g")
+    save(app, EDITOR / "keymap-editor-recording.png")
+    ke.cancel()
+    km.reset_all()
+    km.save()
+    app.close_dialog()
 
 
 def _crop_to_modal(path, width=560):

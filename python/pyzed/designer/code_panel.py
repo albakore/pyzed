@@ -17,8 +17,8 @@ from .. import _core, ui
 from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
-from ..ui.editor import DEFAULT_KEYS, keymap_for, parse_keys
 from . import intellisense as _intel
+from . import keymap as _keymap
 from . import settings as _settings
 from . import telemetry as _telemetry
 from .intellisense import CodeIntel, CompletionItem, Diagnostic
@@ -43,20 +43,11 @@ LIST_WIDTH = 320.0
 SCROLLBAR = 4.0
 DOC_WIDTH = 340.0
 CAPTURED = ("up", "down", "enter", "tab", "escape", "pageup", "pagedown")
-#: Keys of the code panel (not of the editor itself), by Zed's action names; they can be changed too.
-PANEL_KEYS: Dict[str, Tuple[str, ...]] = {
-    "show_completions": ("ctrl-space",),
-    "find": ("ctrl-f",),
-    "replace": ("ctrl-h",),
-    "go_to_line": ("ctrl-g",),
-    "toggle_soft_wrap": ("alt-z",),
-}
 #: The sections of the editor settings, in the order of the index.
 SETTINGS_SECTIONS = ("appearance", "cursor", "editing", "scrolling", "diagnostics", "servers")
 FIND_ID = "designer-code-find"
 REPLACE_ID = "designer-code-replace"
 GOTO_ID = "designer-code-goto"
-KEYS_ID = "designer-editor-keys"
 #: Most matches the search highlights.
 MAX_MATCHES = 5000
 
@@ -110,6 +101,10 @@ class CodeAssist:
     def __init__(self, designer: "Designer", *, servers: bool = True) -> None:
         self.d = designer
         self.settings = _settings.load()
+        if self.settings.keymap:  # the old per-action keys move to keymap.json
+            _keymap.get().migrate(self.settings.keymap)
+            self.settings = replace(self.settings, keymap={})
+            _settings.save(self.settings)
         self.intel = CodeIntel(self.settings, dispatch=self._post, on_update=self._noop)
         self.servers = servers
         self.cursor: Tuple[int, int] = (1, 1)
@@ -121,10 +116,6 @@ class CodeAssist:
         self.goto: Optional[str] = None
         #: The section shown in the editor settings.
         self.settings_section = "appearance"
-        #: Text typed in the key binding fields, kept while it is not a valid binding.
-        self.key_drafts: Dict[str, str] = {}
-        #: The action whose keys are being changed in the settings.
-        self.key_editing: Optional[str] = None
         self._typed = False
         self._text = ""
 
@@ -343,33 +334,21 @@ class CodeAssist:
         """Closes the completion list."""
         self.completion = None
 
-    def panel_keys(self) -> Dict[str, str]:
-        """The code panel's keys (``"ctrl-f"`` -> ``"find"``), with the user's changes."""
-        keys: Dict[str, str] = {}
-        for action, defaults in PANEL_KEYS.items():
-            override = self.settings.keymap.get(action)
-            bindings = defaults if override is None else [k.strip() for k in override.split(",") if k.strip()]
-            for key in bindings:
-                normalized = parse_keys(key)
-                if normalized:
-                    keys[normalized] = action
-        return keys
-
-    def on_key(self, combo: str) -> Any:
-        """Keys pressed while the editor has focus; returns ``(handled, result)``."""
-        action = self.panel_keys().get(parse_keys(combo.replace("- ", "-space")) or "")
-        if action == "show_completions":
-            if not self.plain:
-                self.open_completion()
-            return True, None
+    def run_action(self, name: str) -> Any:
+        """Runs the code panel's keymap action ``name`` (``code_panel::`` in the keymap)."""
+        if name == "show_completions":
+            return None if self.plain else self.open_completion()
         panel = {
             "find": lambda: self.open_search(),
             "replace": lambda: self.open_search(replacing=True),
             "go_to_line": self.open_goto,
             "toggle_soft_wrap": lambda: self.set("wrap", not self.settings.wrap),
         }
-        if action in panel:
-            return True, panel[action]()
+        return panel[name]() if name in panel else None
+
+    def on_key(self, combo: str) -> Any:
+        """The keys of the find bar, go to line and the completion list while they are open (before the
+        keymap's); returns ``(handled, result)``."""
         if self.search is not None and combo in ("f3", "shift-f3", "shift-enter", "alt-enter", "escape"):
             if combo == "escape":
                 return True, self.close_search()
@@ -397,10 +376,9 @@ class CodeAssist:
     @property
     def captured_keys(self) -> Tuple[str, ...]:
         """Keys the editor must hand to the designer instead of handling them: the list navigation keys while
-        a completion list is shown, else none."""
-        # Panel keys without Ctrl would be typed into the text (Alt+Z), so the editor leaves them too.
-        panel = tuple(k for k in self.panel_keys() if not k.startswith("ctrl-"))
-        return (CAPTURED if self.completion is not None and self.completion.shown else ()) + panel
+        a completion list is shown, and the keymap's keys without Ctrl for the designer's actions (Alt+Z)."""
+        keys = _keymap.get().captured(("Editor", "CodePanel", "Workspace"))
+        return (CAPTURED if self.completion is not None and self.completion.shown else ()) + keys
 
     # -- diagnostics and lenses -----------------------------------------------------
     def diagnostics(self) -> List[Diagnostic]:
@@ -443,58 +421,13 @@ class CodeAssist:
         if key == "code_lens" and value:
             self.intel.refresh_lenses(self.d.doc.form)
 
-    def key_bindings(self, action: str) -> str:
-        """The keys of ``action`` as shown in the settings: the user's, or the default ones."""
-        if action in self.settings.keymap:
-            return self.settings.keymap[action]
-        return ", ".join(DEFAULT_KEYS.get(action) or PANEL_KEYS.get(action, ()))
-
-    def key_error(self, action: str) -> Optional[str]:
-        """Why the keys typed for ``action`` are not valid, or ``None``."""
-        draft = self.key_drafts.get(action)
-        if draft is None:
-            return None
-        bad = [k.strip() for k in draft.split(",") if k.strip() and parse_keys(k) is None]
-        return tr("Unknown keys: {keys}").format(keys=", ".join(bad)) if bad else None
-
-    def set_keys(self, action: str, text: str) -> None:
-        """Changes the keys of ``action`` (several separated by commas, empty for none) once they are valid."""
-        self.key_drafts[action] = text
-        if self.key_error(action) is not None:
-            return
-        del self.key_drafts[action]
-        keys = ", ".join(parse_keys(k) or "" for k in text.split(",") if k.strip())
-        keymap = dict(self.settings.keymap)
-        if keys == ", ".join(DEFAULT_KEYS.get(action) or PANEL_KEYS.get(action, ())):
-            keymap.pop(action, None)
-        else:
-            keymap[action] = keys
-        self.set("keymap", keymap)
-
-    def reset_keys(self, action: Optional[str] = None) -> None:
-        """Puts back the default keys of ``action``, or of every action."""
-        keymap = {} if action is None else {k: v for k, v in self.settings.keymap.items() if k != action}
-        if action is None:
-            self.key_drafts.clear()
-        else:
-            self.key_drafts.pop(action, None)
-        self.set("keymap", keymap)
-
     def editor_keymap(self) -> Dict[str, Optional[str]]:
-        """The ``ui.editor(keymap=...)`` for the user's changes to the editor's own keys."""
-        return keymap_for({k: v for k, v in self.settings.keymap.items() if k in DEFAULT_KEYS})
+        """The ``ui.editor(keymap=...)`` for the user's ``Editor`` bindings in ``keymap.json``."""
+        return _keymap.get().editor_keymap()
 
     def show_settings_section(self, section: str) -> None:
         """Shows ``section`` of the editor settings."""
         self.settings_section = section
-
-    def edit_keys(self, action: Optional[str]) -> Any:
-        """Starts changing the keys of ``action`` in the settings (``None`` stops); returns the command that
-        focuses the field."""
-        if self.key_editing is not None and self.key_error(self.key_editing) is not None:
-            self.key_drafts.pop(self.key_editing, None)
-        self.key_editing = action
-        return _core.Command.focus(KEYS_ID) if action is not None else None
 
     def setter(self, key: str) -> Any:
         """Returns a callback that sets editor setting ``key`` to the value it receives (for settings
@@ -1154,33 +1087,6 @@ def server_status_items(a: CodeAssist, t: Theme, on_press: Any = None) -> List[A
     return items
 
 
-#: The pages of the key bindings, each a group of actions: (page, title, ((action, label), ...)).
-KEY_GROUPS: Tuple[Tuple[str, str, Tuple[Tuple[str, str], ...]], ...] = (
-    ("code_panel", "Code panel", (("show_completions", "Show completions"), ("find", "Find"), ("replace", "Find and replace"),
-                    ("go_to_line", "Go to line"), ("toggle_soft_wrap", "Toggle soft wrap"))),
-    ("editing", "Editing", (("undo", "Undo"), ("redo", "Redo"), ("copy", "Copy"), ("cut", "Cut"),
-                 ("delete_to_previous_word_start", "Delete the previous word"),
-                 ("delete_to_next_word_end", "Delete the next word"), ("toggle_comments", "Toggle comment"),
-                 ("convert_to_upper_case", "Upper case"), ("convert_to_lower_case", "Lower case"),
-                 ("sort_lines_case_sensitive", "Sort lines"))),
-    ("cursors", "Multiple cursors", (("select_next", "Select the next match"), ("select_previous", "Select the previous match"),
-                          ("select_all_matches", "Select every match"), ("add_selection_above", "Add a cursor above"),
-                          ("add_selection_below", "Add a cursor below"),
-                          ("split_selection_into_lines", "A cursor on each selected line"),
-                          ("undo_selection", "Undo the last cursor change"), ("cancel", "Back to one cursor"))),
-    ("lines", "Lines", (("select_line", "Select line"), ("move_line_up", "Move line up"), ("move_line_down", "Move line down"),
-               ("duplicate_line_up", "Duplicate line up"), ("duplicate_line_down", "Duplicate line down"),
-               ("delete_line", "Delete line"), ("join_lines", "Join lines"), ("newline_below", "New line below"),
-               ("newline_above", "New line above"), ("indent", "Indent"), ("outdent", "Outdent"))),
-    ("moving", "Moving", (("move_to_enclosing_bracket", "Go to matching bracket"),
-                ("move_to_beginning_of_line", "Go to the start of the line"),
-                ("select_to_beginning_of_line", "Select to the start of the line"),
-                ("line_up", "Scroll up one line"), ("line_down", "Scroll down one line"))),
-    ("folding", "Folding", (("fold", "Fold"), ("unfold_lines", "Unfold"), ("toggle_fold", "Toggle fold"),
-                 ("fold_all", "Fold everything"), ("unfold_all", "Unfold everything"))),
-)
-
-
 def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any]]:
     """The editor settings by section: ``{key: (title, icon, build)}``, in the order of the index."""
     s = a.settings
@@ -1284,78 +1190,26 @@ def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any
     }
 
 
-def _key_row(a: CodeAssist, action: str, label: str, t: Theme) -> Any:
-    """One action of the key bindings: its name, its keys and the buttons to change or reset them."""
-    changed = action in a.settings.keymap
-    reset = ui.icon_button("rotate-ccw", lambda: a.reset_keys(action), size="sm", tooltip=tr("Default keys"),
-                           theme=t) if changed else None
-    if a.key_editing == action:
-        error = a.key_error(action)
-        keys = _core.row([
-            ui.input(a.key_drafts.get(action, a.key_bindings(action)), lambda text: a.set_keys(action, text),
-                     placeholder=tr("No key"), size="sm", mono=True, width=220, on_submit=lambda: a.edit_keys(None),
-                     id=KEYS_ID, theme=t),
-            reset,
-            ui.icon_button("check", lambda: a.edit_keys(None), size="sm", tooltip=tr("Done"), theme=t),
-        ], spacing=6, align="center")
-        name = ui.label(error, size="sm", color="error", theme=t) if error else None
-    else:
-        current = a.key_bindings(action)
-        caps = [ui.kbd(k, theme=t) for k in current.split(",") if k.strip()]
-        keys = _core.row([
-            *(caps or [ui.label(tr("No key"), size="sm", color="text_muted", theme=t)]),
-            reset,
-            ui.icon_button("pencil", lambda: a.edit_keys(action), size="sm", tooltip=tr("Change"), theme=t),
-        ], spacing=6, align="center")
-        name = None
-    title = _core.row([ui.label(tr(label), weight="medium" if changed else None, theme=t),
-                       ui.label(action, size="sm", color="text_muted", mono=True, theme=t)], spacing=8,
-                      align="center")
-    return _core.row([_core.column([title, name], spacing=2, width="fill"), keys], spacing=8, align="center",
-                     height=34)
-
-
-def _keys_page(a: CodeAssist, page: str, t: Theme) -> List[Any]:
-    """A page of the key bindings: a hint and Reset all above the group's actions."""
-    _, title, actions = next(g for g in KEY_GROUPS if g[0] == page)
-    hint = tr("Zed's syntax: ctrl-shift-k, alt-up, f2 or ctrl-k ctrl-c; commas for several, empty for none")
-    return [
-        _core.row([
-            ui.label(hint, size="sm", color="text_muted", theme=t, width="fill"),
-            ui.button(tr("Reset all"), lambda: a.reset_keys(), icon="rotate-ccw", variant="ghost", size="sm",
-                      disabled=not a.settings.keymap, theme=t),
-        ], spacing=8, align="center"),
-        _core.scrollable(_core.column([
-            ui.settings_group(tr(title), [_key_row(a, action, label, t) for action, label in actions], theme=t),
-        ], padding=(0, 10, 0, 0)), height="fill", scrollbar_width=4, width="fill"),
-    ]
-
-
 def settings_dialog(d: "Designer", t: Theme) -> Any:
     """Builds the editor settings dialog, like Zed's: an index of sections on the left and the chosen one
-    (appearance, cursor, editing, scrolling, diagnostics, language servers or key bindings) on the right."""
+    (appearance, cursor, editing, scrolling, diagnostics or language servers) on the right; Key bindings opens
+    the keymap editor."""
     a = d.assist
     sections = _settings_sections(a, t)
-    pages = [g[0] for g in KEY_GROUPS]
-    current = a.settings_section
-    if current not in sections and current.removeprefix("keys:") not in pages:
-        current = SETTINGS_SECTIONS[0]
+    current = a.settings_section if a.settings_section in sections else SETTINGS_SECTIONS[0]
 
-    def item(key: str, title: str, icon: Optional[str] = None, indent: float = 0) -> Any:
+    def item(key: str, title: str, icon: Optional[str] = None) -> Any:
         return ui.list_item(title, lambda: a.show_settings_section(key), icon=icon, selected=key == current,
-                            inset=True, height=28, indent=indent, theme=t)
+                            inset=True, height=28, theme=t)
 
     index = _core.column([
         *(item(key, title, icon) for key, (title, icon, _) in sections.items()),
-        _core.container(ui.label(tr("Key bindings"), size="sm", color="text_muted", theme=t), padding=(10, 8, 2, 8)),
-        *(item(f"keys:{page}", tr(title), indent=4) for page, title, _ in KEY_GROUPS),
+        ui.list_item(tr("Key bindings"), d.open_keymap, icon="keyboard", inset=True, height=28,
+                     end=_icon("arrow-up-right", size=12, color=t.icon_muted), theme=t),
     ], spacing=2, width=210)
-    if current.startswith("keys:"):
-        content = _core.column(_keys_page(a, current.removeprefix("keys:"), t), spacing=12, width="fill", height=520)
-    else:
-        _, _, build = sections[current]
-        content = _core.scrollable(_core.column(build(), spacing=14, padding=(0, 10, 0, 0)), height=520,
-                                   scrollbar_width=4, width="fill")
+    _, _, build = sections[current]
+    content = _core.scrollable(_core.column(build(), spacing=14, padding=(0, 10, 0, 0)), height=520,
+                               scrollbar_width=4, width="fill")
     body = _core.row([index, _core.rule(vertical=True, thickness=1, color=t.border_variant), content], spacing=14,
                      height=520)
     return ui.modal(body, title=tr("Editor settings"), on_close=d.close_dialog, width=820, footer=[

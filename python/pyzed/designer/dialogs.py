@@ -16,6 +16,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, themes
 from . import commands as _commands
 from . import components as _components
+from . import keymap as _keymap
 from . import new as _new
 from . import telemetry as _telemetry
 from .locale import tr
@@ -90,6 +91,9 @@ def settings(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Code editor"), ui.button(tr("Editor settings…"), d.open_editor_settings, icon="code", variant="ghost",
                                           size="sm", theme=t),
                  description=tr("Font, tabs, completion, language servers"), theme=t),
+        ui.field(tr("Key bindings"), ui.button(tr("Keymap editor…"), d.open_keymap, icon="keyboard", variant="ghost",
+                                               size="sm", theme=t),
+                 description=tr("Every action's keys, like Zed's keymap; also File → Keymap editor"), theme=t),
         ui.field(tr("AI agents"), ui.button(tr("AI agents settings…"), d.agent.open_settings, icon="sparkles",
                                             variant="ghost", size="sm", theme=t),
                  description=tr("Model providers, keys and sign-in, permissions"), theme=t),
@@ -296,11 +300,13 @@ def add_control(d: "Designer", t: Theme) -> Any:
 def palette(d: "Designer", t: Theme) -> Any:
     """The command palette: a fuzzy-searchable list of the enabled commands with their keys."""
     items = []
+    km = _keymap.get()
     for action in _commands.ACTIONS:
         if not action.enabled(d):
             continue
         label = f"{tr(action.group)}: {action.label.rstrip('…')}"
-        items.append(ui.PaletteItem(label, lambda a=action: d.run_action(a.id), keys=action.keys, icon=action.icon))
+        items.append(ui.PaletteItem(label, lambda a=action: d.run_action(a.id), keys=km.keys_for(f"workspace::{action.id}"),
+                                    icon=action.icon))
     matches = ui.fuzzy_filter(d.picker_query, items, key=lambda i: i.label)
     index = min(d.picker_index, max(len(matches) - 1, 0))
     chosen = matches[index][0].on_press if matches else None

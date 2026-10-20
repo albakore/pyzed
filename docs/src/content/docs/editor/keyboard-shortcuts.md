@@ -8,6 +8,11 @@ sidebar:
 Press <kbd>F1</kbd> in the editor for a searchable version of this list. On macOS, <kbd>Cmd</kbd> works wherever a
 global shortcut says <kbd>Ctrl</kbd>.
 
+:::tip
+These are the default keys. Change any of them in the [keymap editor](/pyzed/editor/keymap/)
+(<kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd>); <kbd>F1</kbd> always shows the keys in force.
+:::
+
 ## Global
 
 These work anywhere, even while you type in the code editor.
@@ -21,6 +26,7 @@ These work anywhere, even while you type in the code editor.
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Save |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Save as |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Settings |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> | [Keymap editor](/pyzed/editor/keymap/) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Command palette |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> | Add control |
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Show or hide the left dock |
@@ -35,7 +41,7 @@ These work anywhere, even while you type in the code editor.
 | <kbd>F1</kbd> | Keyboard shortcuts |
 | <kbd>Shift</kbd>+<kbd>F1</kbd> | [Reference](/pyzed/editor/reference/) of the selected control or of the name under the cursor |
 
-While a dialog is open, only the palette, Settings and Keyboard shortcuts keys act; the others wait until it is
+While a dialog is open, only the palette, Settings, Keyboard shortcuts and Keymap editor keys act; the others wait until it is
 closed.
 
 ## Canvas
@@ -136,5 +142,4 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Fold / unfold everything |
 
 The full list is in [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys). Every one
-of these keys can be changed in **Editor settings → Key bindings**
-([how](/pyzed/editor/code-editor/#key-bindings)).
+of these keys can be changed in the [keymap editor](/pyzed/editor/keymap/).

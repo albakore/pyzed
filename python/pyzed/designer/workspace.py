@@ -640,43 +640,42 @@ class Workspace:
         index = rows.index(current) + step if current in rows else (0 if step > 0 else len(rows) - 1)
         self.selected = rows[max(0, min(index, len(rows) - 1))].rstrip("/")
 
-    def on_key(self, combo: str) -> Tuple[bool, Any]:
-        """Keys pressed while the tree has the keyboard, like Zed's project panel; returns
-        ``(handled, result)``."""
+    def run_action(self, name: str) -> Tuple[bool, Any]:
+        """Runs the project tree's keymap action ``name`` (``project_panel::`` in the keymap, like Zed's) on
+        the selected entry; returns ``(handled, result)``."""
         if self.root is None:
             return False, None
         rel = self.selected_rel()
         folder = self._folder_for(rel)
         on_entry: Dict[str, Callable[[], Any]] = {
-            "enter": lambda: self.toggle(rel.rstrip("/")) if rel.endswith("/") else self.open(rel),
-            "ctrl-shift-enter": lambda: self.open_default(rel),
-            "ctrl-x": lambda: self.cut(rel),
-            "ctrl-c": lambda: self.copy(rel),
-            "ctrl-d": lambda: self.duplicate(rel),
-            "f2": lambda: self.start_naming("rename", rel.rstrip("/")),
-            "delete": lambda: self.trash(rel),
-            "ctrl-delete": lambda: self.ask_delete(rel),
-            "right": lambda: self.expanded.add(rel.rstrip("/")) if rel.endswith("/") else None,
-            "left": lambda: self._collapse(rel),
+            "open": lambda: self.toggle(rel.rstrip("/")) if rel.endswith("/") else self.open(rel),
+            "open_with_system": lambda: self.open_default(rel),
+            "cut": lambda: self.cut(rel),
+            "copy": lambda: self.copy(rel),
+            "duplicate": lambda: self.duplicate(rel),
+            "rename": lambda: self.start_naming("rename", rel.rstrip("/")),
+            "trash": lambda: self.trash(rel),
+            "delete": lambda: self.ask_delete(rel),
+            "expand_selected_entry": lambda: self.expanded.add(rel.rstrip("/")) if rel.endswith("/") else None,
+            "collapse_selected_entry": lambda: self._collapse(rel),
         }
         always: Dict[str, Callable[[], Any]] = {
-            "ctrl-n": lambda: self.start_naming("file", folder),
-            "alt-n": lambda: self.start_naming("folder", folder),
-            "ctrl-alt-r": lambda: reveal(self.path_of(rel) if rel else self.root),
-            "ctrl-v": lambda: self.paste(rel),
-            "ctrl-z": self.undo,
-            "ctrl-shift-z": self.redo,
-            "ctrl-y": self.redo,
-            "alt-shift-c": lambda: _core.Command.copy(str(self.path_of(rel) if rel else self.root)),
-            "ctrl-alt-shift-c": lambda: _core.Command.copy(rel.rstrip("/") or "."),
-            "up": lambda: self.move_selection(-1),
-            "down": lambda: self.move_selection(1),
-            "escape": lambda: setattr(self, "clipboard", None),
+            "new_file": lambda: self.start_naming("file", folder),
+            "new_directory": lambda: self.start_naming("folder", folder),
+            "reveal_in_file_manager": lambda: reveal(self.path_of(rel) if rel else self.root),
+            "paste": lambda: self.paste(rel),
+            "undo": self.undo,
+            "redo": self.redo,
+            "copy_path": lambda: _core.Command.copy(str(self.path_of(rel) if rel else self.root)),
+            "copy_relative_path": lambda: _core.Command.copy(rel.rstrip("/") or "."),
+            "select_previous": lambda: self.move_selection(-1),
+            "select_next": lambda: self.move_selection(1),
+            "cancel": lambda: setattr(self, "clipboard", None),
         }
-        if combo in always:
-            return True, always[combo]()
-        if rel and combo in on_entry:
-            return True, on_entry[combo]()
+        if name in always:
+            return True, always[name]()
+        if rel and name in on_entry:
+            return True, on_entry[name]()
         return False, None
 
     def _collapse(self, rel: str) -> None:

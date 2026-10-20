@@ -249,19 +249,9 @@ the right side shows the one you pick.
 
 ### Key bindings
 
-Under **Key bindings**, the index groups every action of the editor and the code panel: Code panel, Editing,
-Multiple cursors, Lines, Moving and Folding. Each row shows the action, its name (`delete_line`) and its
-keys. The pencil changes them: type the keys as `ctrl-shift-d`, `alt-up`, `f2`, or a chord such as
-`ctrl-k ctrl-c`), several separated by commas, or leave the field empty for no key. The new keys replace the
-default ones; the arrow next to a changed action puts its defaults back, and **Reset all** does it for every action.
+**Key bindings** in the index opens the [keymap editor](/pyzed/editor/keymap/), where you can change the keys of every
+action of the editor, the code panel and the rest of the designer. The changes are saved in `keymap.json`, in Zed's
+format.
 
-![Changing the keys of the code editor](../../../assets/editor/editor-settings-keys.png)
-
-The changes are saved under `"keymap"` in `designer.json`, as action → keys:
-
-```json
-{"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
-```
-
-In your own apps, `ui.editor(keymap=...)` takes keys → action (the same format as Zed's keymaps, `None` to take a default key away), and
-`pyzed.ui.editor.keymap_for` turns per-action changes like the ones above into it.
+In your own apps, `ui.editor(keymap=...)` takes keys → action (the same format as Zed's keymaps, `None` to take a
+default key away), and `pyzed.ui.editor.keymap_for` turns per-action changes into it.

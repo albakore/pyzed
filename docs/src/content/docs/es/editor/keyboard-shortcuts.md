@@ -8,6 +8,11 @@ sidebar:
 Pulsa <kbd>F1</kbd> en el editor para ver esta lista con buscador. En macOS, <kbd>Cmd</kbd> funciona donde un atajo
 global dice <kbd>Ctrl</kbd>.
 
+:::tip
+Estas son las teclas de fábrica. Cambia cualquiera en el [editor de keymap](/pyzed/es/editor/keymap/)
+(<kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd>); <kbd>F1</kbd> siempre muestra las teclas vigentes.
+:::
+
 ## Globales
 
 Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
@@ -21,6 +26,7 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Guardar |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Guardar como |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Ajustes |
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>S</kbd> | [Editor de keymap](/pyzed/es/editor/keymap/) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Paleta de comandos |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> | Añadir control |
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Mostrar u ocultar el dock izquierdo |
@@ -35,7 +41,7 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>F1</kbd> | Atajos de teclado |
 | <kbd>Shift</kbd>+<kbd>F1</kbd> | [Referencia](/pyzed/es/editor/reference/) del control seleccionado o del nombre bajo el cursor |
 
-Con un diálogo abierto solo actúan las teclas de la paleta, Ajustes y Atajos de teclado; las demás esperan a que se
+Con un diálogo abierto solo actúan las teclas de la paleta, Ajustes, Atajos de teclado y Editor de keymap; las demás esperan a que se
 cierre.
 
 ## Lienzo
@@ -137,5 +143,4 @@ Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/p
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Plegar / desplegar todo |
 
 La lista completa está en [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed).
-Todas estas teclas se pueden cambiar en **Ajustes del editor → Atajos de teclado**
-([cómo](/pyzed/es/editor/code-editor/#atajos-de-teclado)).
+Todas estas teclas se pueden cambiar en el [editor de keymap](/pyzed/es/editor/keymap/).
