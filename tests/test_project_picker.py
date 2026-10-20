@@ -221,6 +221,8 @@ def test_clone_repository(tmp_path):
     assert p.clone_target() == tmp_path / "work" / "remote-app"
     p.clone_url = "git@github.com:user/app.git"
     assert p.clone_target() == tmp_path / "work" / "app"
+    p.clone_url = "C:\\Users\\me\\repos\\remote-app\\"
+    assert p.clone_target() == tmp_path / "work" / "remote-app"
     p.clone_url = str(source)
     task = p.clone()
     assert d.dialog is None and p.busy == "Cloning remote-app"
