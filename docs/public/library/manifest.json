@@ -9632,16 +9632,16 @@
   "width": 480
  },
  "select-v1-1.dark": {
-  "bytes": 3482,
-  "frames": 4,
-  "height": 228,
+  "bytes": 3150,
+  "frames": 3,
+  "height": 300,
   "ms": 2333,
   "width": 480
  },
  "select-v1-1.light": {
-  "bytes": 3514,
-  "frames": 4,
-  "height": 228,
+  "bytes": 3222,
+  "frames": 3,
+  "height": 300,
   "ms": 2333,
   "width": 480
  },
@@ -9702,16 +9702,16 @@
   "width": 480
  },
  "select-v2-3.dark": {
-  "bytes": 2284,
+  "bytes": 2342,
   "frames": 3,
-  "height": 232,
+  "height": 270,
   "ms": 2333,
   "width": 480
  },
  "select-v2-3.light": {
-  "bytes": 2372,
+  "bytes": 2382,
   "frames": 3,
-  "height": 232,
+  "height": 270,
   "ms": 2333,
   "width": 480
  },
@@ -9744,16 +9744,16 @@
   "width": 480
  },
  "select-v4-1.dark": {
-  "bytes": 3042,
-  "frames": 2,
-  "height": 228,
+  "bytes": 6890,
+  "frames": 4,
+  "height": 304,
   "ms": 2333,
   "width": 480
  },
  "select-v4-1.light": {
-  "bytes": 3210,
-  "frames": 2,
-  "height": 228,
+  "bytes": 7392,
+  "frames": 4,
+  "height": 304,
   "ms": 2333,
   "width": 480
  },
