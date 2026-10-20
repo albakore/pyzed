@@ -1029,7 +1029,9 @@ def activate_for(path: Optional[PathLike] = None) -> Optional[Project]:
 
 
 def config_dir() -> Path:
-    """Where Pyzed keeps per-user settings."""
+    """Where Pyzed keeps per-user settings (``$PYZED_CONFIG_DIR`` overrides it, like the designer's)."""
+    if os.environ.get("PYZED_CONFIG_DIR"):
+        return Path(os.environ["PYZED_CONFIG_DIR"])
     if os.name == "nt":
         base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
     elif sys.platform == "darwin":
