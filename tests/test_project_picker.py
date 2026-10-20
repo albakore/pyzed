@@ -1,6 +1,7 @@
 """Projects in the title bar, like Zed: the environment, the project picker (this window and recent ones),
 the branch and worktree, getting a project's environment ready, and what the agent is told."""
 
+import asyncio
 import shutil
 import subprocess
 
@@ -162,3 +163,66 @@ def test_agent_knows_the_environment_and_the_other_projects(tmp_path):
     note = agent_tools.context_note(d)
     assert "Project: blog" in note and "Environment: This computer" in note and "shop" in note
     assert agent_tools.project_info(d)["environment"].startswith("This computer")
+
+
+def test_startup_file(tmp_path):
+    root = _make(tmp_path, "shop")
+    (root / "ui" / "main.pzform").write_text("{}")
+    (root / "run.py").write_text("print('hi')\n")
+    app = project.Project.open(root)
+    assert app.startup == root / "ui" / "main.pzform"
+    app.set_startup("run.py")
+    assert app.startup == root / "run.py" and 'script = "run.py"' in (root / "pyproject.toml").read_text()
+    app.set_startup(root / "ui" / "other.pzform")
+    text = (root / "pyproject.toml").read_text()
+    assert app.startup == root / "ui" / "other.pzform" and "script" not in text and 'ui = "ui"' in text
+    with pytest.raises(ValueError):
+        app.set_startup("notes.txt")
+
+
+def test_startup_file_in_the_tree(tmp_path):
+    root = _make(tmp_path, "shop")
+    (root / "run.py").write_text("print('hi')\n")
+    d = Designer(language_servers=False)
+    _close(d.projects.open(str(root)))
+    w = d.projects.files
+    assert w.startup() == "ui/main.pzform"
+    labels = [getattr(i, "label", None) for i in w.menu_items("run.py")]
+    assert "Set as Startup File" in labels
+    w.set_startup("run.py")
+    assert w.startup() == "run.py" and d.projects.project.script == root / "run.py"
+    assert "Set as Startup File" not in [getattr(i, "label", None) for i in w.menu_items("run.py")]
+    assert d.view() is not None
+
+
+def test_new_forms_are_saved_in_the_project(tmp_path):
+    root = _make(tmp_path, "shop")
+    d = Designer(language_servers=False)
+    _close(d.projects.open(str(root)))
+    d.show_save_as()
+    assert d.dialog_path == "ui/form1.pzform"
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+def test_clone_repository(tmp_path):
+    source = _make(tmp_path, "remote-app")
+    (source / ".venv").rmdir()
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=main"]
+    subprocess.run([*git, "init", "-q"], cwd=source, check=True)
+    subprocess.run([*git, "add", "-A"], cwd=source, check=True)
+    subprocess.run([*git, "commit", "-q", "-m", "start"], cwd=source, check=True)
+    d = Designer(language_servers=False)
+    p = d.projects
+    p.show("clone")()
+    assert d.dialog == "project:clone" and d.view() is not None
+    p.clone_url, p.clone_folder = str(source) + "/", str(tmp_path / "work")
+    assert p.clone_target() == tmp_path / "work" / "remote-app"
+    p.clone_url = "git@github.com:user/app.git"
+    assert p.clone_target() == tmp_path / "work" / "app"
+    p.clone_url = str(source)
+    task = p.clone()
+    assert d.dialog is None and p.busy == "Cloning remote-app"
+    finish = asyncio.run(task)  # the clone, then opening it on the UI side
+    _close(finish())
+    cloned = (tmp_path / "work" / "remote-app").resolve()
+    assert (cloned / "pyproject.toml").is_file() and p.project.root == cloned

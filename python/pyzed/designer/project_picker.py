@@ -149,6 +149,7 @@ def view(d: "Designer", t: Theme) -> Any:
     footer = _core.column([
         _footer_item("Open local folder…", pk.action(p.show("open")), "folder-open", t),
         _footer_item("New project…", pk.action(p.show("new")), "folder-plus", t),
+        _footer_item("Clone repository…", pk.action(p.show("clone")), "git-branch", t),
     ], width="fill")
     return _core.container(_core.column([
         search,

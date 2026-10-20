@@ -178,6 +178,7 @@ def _start(d: "Designer", t: Theme) -> Any:
         _heading("Start", t),
         ui.list_item(tr("New project…"), p.show("new"), icon="folder-plus", height=28, theme=t),
         ui.list_item(tr("Open project…"), p.show("open"), icon="folder-open", height=28, theme=t),
+        ui.list_item(tr("Clone repository…"), p.show("clone"), icon="git-branch", height=28, theme=t),
         ui.list_item(tr("New form…"), lambda: d.run_action("new"), icon="file-plus", height=28, theme=t),
         ui.list_item(tr("Documentation"), d.open_docs, icon="globe", height=28, theme=t),
     ]
