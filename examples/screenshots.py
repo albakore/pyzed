@@ -5,6 +5,7 @@
 
 import os
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -12,6 +13,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 OUT = ROOT / "docs" / "screenshots"
 sys.path.insert(0, str(HERE))
+# A throwaway settings folder: your own preferences, recent files and update state (a What's new tab
+# after an update) never leak into the images.
+os.environ["PYZED_CONFIG_DIR"] = tempfile.mkdtemp(prefix="pyzed-shots-")
 
 import pyzed as pz  # noqa: E402
 from counter import Counter  # noqa: E402
