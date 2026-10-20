@@ -61,7 +61,9 @@ instalado, `"command": "pyzed", "args": ["mcp"]` también sirve.
 | Generar | `new_app`, `new_component`, `new_form` | Partir de esqueletos correctos: una app, un `pz.Component`, un formulario del diseñador. |
 | Comprobar | `validate_code`, `validate_form` | Detectar nombres que no existen, argumentos mal escritos, efectos en `view()` y formularios rotos antes de ejecutar. |
 | Ver | `screenshot` | Renderizar la app o un componente sin pantalla y recibir un PNG. |
-| Construir | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Crear un proyecto, escribirlo, añadir librerías, revisarlo, probarlo y mirarlo, en la carpeta donde corre el servidor. |
+| Planificar | `plan_app` | Encontrar los bloques, ejemplos, componentes y guías que necesita una app, y los pasos para construirla. |
+| Construir | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Crear un proyecto, escribirlo, añadir librerías, revisarlo, probarlo y mirarlo, en la carpeta donde corre el servidor y en el entorno del propio proyecto. |
+| Ver en vivo | `start_live_preview`, `live_preview_status`, `stop_live_preview` | Abrir la app en una ventana con hot reload, para verla cambiar mientras el agente escribe cada archivo. |
 
 Los prompts `create_app`, `create_component`, `create_form` y `build_project` (una app completa, de principio a fin) empiezan una tarea con los pasos correctos, y los
 clientes que admiten recursos pueden adjuntar `pyzed://best-practices` o `pyzed://docs/{slug}`.

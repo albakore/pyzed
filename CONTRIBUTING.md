@@ -63,7 +63,7 @@ Before pushing, run the same checks as CI:
 ```sh
 cargo fmt --check
 cargo clippy -- -D warnings
-uv run pytest tests                  # or: pytest tests
+uv run pytest -n auto tests          # or: pytest tests (-n auto runs them in parallel)
 ```
 
 ### Project layout
@@ -107,7 +107,11 @@ change a page in both languages when you can; a missing translation falls back t
    commit on `main` and the line in the release notes.
 
 CI must be green before merging: lint, tests on Linux, macOS and Windows, the
-changelog preview and the PR title check. Docs-only changes skip the build.
+changelog preview and the PR title check. A pull request tests one job per OS
+(Python 3.14 on Linux, 3.12 on Windows, 3.10 on macOS); `main` also tests Linux
+on every supported Python and on ARM. Lint and the MSRV build only run when Rust
+changes, the docs site only builds when what it shows changes, and docs-only
+changes skip the tests.
 
 ## Commit messages and PR titles
 

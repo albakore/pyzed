@@ -10,7 +10,8 @@ list always agree. This page lists them all.
 
 ## The title bar
 
-From left to right: the **☰** menu, the project's name (click it to show the Project panel), the file name (click
+From left to right: the **☰** menu, the environment under WSL, the project's name (click it for the project picker:
+the projects of this window and the recent ones), the git branch (click it to switch), the file name (click
 it to open another file), a dot when there are unsaved changes and a **Component** or **Shader** badge in those
 views. At the right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu and the **Settings**
 gear, followed by the window buttons when Pyzed Design draws its own frame (see
@@ -26,6 +27,7 @@ gear, followed by the window buttons when Pyzed Design draws its own frame (see
 | New component… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | The New dialog, on Component. |
 | Open… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lists the forms and components under the working folder. |
 | Go to file… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Finds a project file by name and opens it; see [Go to file](/pyzed/editor/projects/#go-to-file). |
+| Open recent project… | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | The project picker of the title bar; see [Several projects in one window](/pyzed/editor/projects/#several-projects-in-one-window). |
 | Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Saves the document and its code. |
 | Save as… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Saves under a new path. |
 | Settings… | <kbd>Ctrl</kbd>+<kbd>,</kbd> | The [settings](/pyzed/editor/settings/). |

@@ -61,7 +61,9 @@ run `pip install "pyzed-ui[mcp]"` (Python 3.10 or newer) and use `pyzed mcp` as 
 | Generate | `new_app`, `new_component`, `new_form` | Start from correct skeletons: an app, a `pz.Component`, a visual-designer form. |
 | Check | `validate_code`, `validate_form` | Catch unknown names, wrong keyword arguments, side effects in `view()` and broken forms before running. |
 | See | `screenshot` | Render the app or a component off-screen and get a PNG back. |
-| Build | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Create a project, write it, add libraries, check, test and look at it, in the folder the server runs in. |
+| Plan | `plan_app` | Find the blocks, examples, components and guides an app needs, and the steps to build it. |
+| Build | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Create a project, write it, add libraries, check, test and look at it, in the folder the server runs in and the project's own environment. |
+| Watch | `start_live_preview`, `live_preview_status`, `stop_live_preview` | Open the app in a window with hot reload, so you see it change as the agent writes each file. |
 
 The prompts `create_app`, `create_component`, `create_form` and `build_project` (a whole app, end to end) start a task with the right steps, and resources
 such as `pyzed://best-practices` and `pyzed://docs/{slug}` can be attached by clients that support them.

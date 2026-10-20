@@ -127,11 +127,22 @@ pz.icon("folder-open", size=24, color="#74ade8")
 
 ### SVG
 
+`color` pinta cada píxel visible del SVG de un color y deja los transparentes, como el tinte de un icono. Un SVG con fondo relleno, como `logo.svg`, queda como una placa lisa.
+
 <VariantGrid>
 <Variant name="icon-v3-1" caption={"pz.svg(\"logo.svg\")"} alt={"Icono: pz.svg(\"logo.svg\")"} code="Código" mono>
 
 ```python
 pz.svg("logo.svg", width=48, height=48)
+```
+
+</Variant>
+<Variant name="icon-v3-2" caption={"color=\"#e5c07b\""} alt={"Icono: color=\"#e5c07b\""} code="Código" mono>
+
+```python
+shapes = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+          '<circle cx="7" cy="7" r="5"/><rect x="12" y="12" width="10" height="10" rx="2"/></svg>')
+pz.svg(shapes, width=48, height=48, color="#e5c07b")
 ```
 
 </Variant>

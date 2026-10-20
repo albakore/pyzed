@@ -9,6 +9,9 @@ a bloom or a blurred backdrop (`src/effect.rs` in each crate). Pyzed's animation
 `iced_tiny_skia` also clips box shadows to the region being redrawn (in `engine.rs`), so a
 dialog's shadow no longer darkens it when only part of the window changes.
 
+Both renderers also keep the alpha of an SVG's tint `color` (in `vector.rs`): iced dropped it, so
+a translucent tint drew opaque and a tinted SVG didn't fade with its parent.
+
 `iced_wgpu` also starts the native GPU APIs (Vulkan, Metal, DirectX 12) before OpenGL: the GL
 backend is only started when none of them has an adapter, since starting it at every launch
 costs time and memory (`src/window/compositor.rs`).

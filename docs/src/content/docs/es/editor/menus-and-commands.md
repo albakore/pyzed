@@ -10,7 +10,8 @@ lista de atajos siempre coinciden. Esta página los recoge todos.
 
 ## La barra de título
 
-De izquierda a derecha: el menú **☰**, el nombre del proyecto (clic para mostrar el panel Proyecto), el nombre del
+De izquierda a derecha: el menú **☰**, el entorno en WSL, el nombre del proyecto (clic para abrir el selector de
+proyectos: los de esta ventana y los recientes), la rama de git (clic para cambiarla), el nombre del
 archivo (clic para abrir otro), un punto cuando hay cambios sin guardar y una insignia **Componente** o **Shader** en
 esas vistas. A la derecha: **Ejecutar** (<kbd>F5</kbd>), **Detener**, el menú **Ver**, el menú **Ayuda** y el
 engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
@@ -25,6 +26,7 @@ engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Des
 | Nuevo formulario… | <kbd>Ctrl</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Formulario. |
 | Nuevo componente… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Componente. |
 | Abrir… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lista los formularios y componentes bajo la carpeta de trabajo. |
+| Abrir proyecto reciente… | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | El selector de proyectos de la barra de título; ver [Varios proyectos en una ventana](/pyzed/es/editor/projects/#varios-proyectos-en-una-ventana). |
 | Ir a un archivo… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Busca un archivo del proyecto por su nombre y lo abre; ver [Ir a un archivo](/pyzed/es/editor/projects/#ir-a-un-archivo). |
 | Guardar | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Guarda el documento y su código. |
 | Guardar como… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Guarda en una ruta nueva. |

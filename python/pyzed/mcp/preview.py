@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 
 def _find_app(namespace: dict, captured: Optional[Any]) -> Any:
@@ -79,24 +79,36 @@ def render(source: str, *, size: Optional[Tuple[int, int]] = None, scale: float 
         return _render(script, Path(tmp), size=size, scale=scale, timeout=timeout)
 
 
-def render_file(path, *, size: Optional[Tuple[int, int]] = None, scale: float = 1.0, timeout: float = 60.0) -> bytes:
-    """Like ``render`` for a script on disk, run from its own folder so its imports and files resolve."""
+def render_file(path, *, size: Optional[Tuple[int, int]] = None, scale: float = 1.0, timeout: float = 60.0,
+                python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None) -> bytes:
+    """Like ``render`` for a script on disk, run from its own folder so its imports and files resolve.
+
+    ``python`` is the command that starts the interpreter (by default this one, with this same pyzed), such as
+    ``["uv", "run", "--project", root, "python"]`` to use a project's own environment, and ``env`` its variables."""
     path = Path(path).resolve()
-    return _render(path, path.parent, size=size, scale=scale, timeout=timeout)
+    return _render(path, path.parent, size=size, scale=scale, timeout=timeout, python=python, env=env)
 
 
-def _render(script: Path, cwd: Path, *, size, scale: float, timeout: float) -> bytes:
+def this_python() -> Tuple[List[str], Dict[str, str]]:
+    """The command and environment that run this interpreter with this same pyzed importable."""
+    import pyzed
+
+    # The child must import this same pyzed, even when it was found through a relative path.
+    here = str(Path(pyzed.__file__).resolve().parents[1])
+    path = os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", "")) if p)
+    return [sys.executable], {**os.environ, "PYTHONPATH": path}
+
+
+def _render(script: Path, cwd: Path, *, size, scale: float, timeout: float,
+            python: Optional[Sequence[str]] = None, env: Optional[Dict[str, str]] = None) -> bytes:
+    if python is None:
+        python, env = this_python()
+    env = {**(env if env is not None else os.environ), "PYZED_RELOAD": "0"}
     with tempfile.TemporaryDirectory(prefix="pyzed-mcp-") as tmp:
         out = Path(tmp) / "shot.png"
-        cmd = [sys.executable, "-m", "pyzed.mcp.preview", str(script), str(out)]
+        cmd = [*python, "-m", "pyzed.mcp.preview", str(script), str(out)]
         if size:
             cmd += [str(int(size[0])), str(int(size[1])), str(scale)]
-        # The child must import this same pyzed, even when it was found through a relative path.
-        import pyzed
-
-        here = str(Path(pyzed.__file__).resolve().parents[1])
-        path = os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", "")) if p)
-        env = {**os.environ, "PYZED_RELOAD": "0", "PYTHONPATH": path}
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=tmp, env=env,
                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))

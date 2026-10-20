@@ -88,9 +88,9 @@ jobs:
         if: matrix.test
         shell: bash
         run: |
-          python -m pip install pytest
+          python -m pip install pytest pytest-xdist
           python -m pip install --no-index --find-links dist pyzed-ui
-          python -m pytest -q tests
+          python -m pytest -q -n auto tests
       - uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.name }}

@@ -1388,6 +1388,22 @@
   "Events and code": "Eventos y código",
   "Save layout as…": "Guardar la distribución como…",
   "Delete this layout": "Eliminar esta distribución",
-  "Where every panel is, the dock sizes and the panel windows.": "Dónde está cada panel, el tamaño de los laterales y las ventanas de paneles."
+  "Where every panel is, the dock sizes and the panel windows.": "Dónde está cada panel, el tamaño de los laterales y las ventanas de paneles.",
+  "Preparing the environment": "Preparando el entorno",
+  "Switching to {branch}": "Cambiando a {branch}",
+  "{name} is ready": "{name} está listo",
+  "Branches": "Ramas",
+  "Search projects…": "Buscar proyectos…",
+  "This window": "Esta ventana",
+  "Recent projects": "Proyectos recientes",
+  "Close in this window": "Cerrar en esta ventana",
+  "No projects match": "Ningún proyecto coincide",
+  "No recent projects": "No hay proyectos recientes",
+  "Open local folder…": "Abrir carpeta local…",
+  "No branches yet": "Todavía no hay ramas",
+  "No project": "Sin proyecto",
+  "detached": "desacoplado",
+  "Git worktree": "Worktree de git",
+  "Open recent project…": "Abrir proyecto reciente…"
  }
 }

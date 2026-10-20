@@ -148,10 +148,10 @@ add(
     desc=T(
         "Displays a themed button. It reads its colors from the current theme, can carry an "
         "icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of "
-        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) overrides the theme's.",
+        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`, `radius`…) overrides the theme's.",
         "Muestra un botón con el estilo del tema. Toma los colores del tema actual, puede llevar un icono "
         "y un atajo de teclado, y tiene varias variantes y tamaños. Cualquier parámetro de estilo de "
-        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) reemplaza al del tema.",
+        "`pz.button` (`bg`, `hover_bg`, `color`, `shadow`, `radius`…) reemplaza al del tema.",
     ),
     when=T(
         ["For the main actions of a form, dialog or toolbar.",
@@ -3571,8 +3571,9 @@ VARIANTS = {
             ('shadow=', 'ui.button("Lifted", on_press, variant="solid", shadow=("#00000066", (0, 4), 12))'),
             ('bg=, color=', 'ui.button("Custom", on_press, bg="#c678dd", hover_bg="#d08ae6", color="#ffffff")'),
             ('border_color=', 'ui.button("Gold border", on_press, variant="outline", border_color="#e5c07b")'),
-        ], T("The color and shadow arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) replace the theme's values for that button only.",
-             "Los argumentos de color y sombra de `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) reemplazan los valores del tema solo en ese botón.")),
+            ('radius=999', 'ui.button("Pill", on_press, variant="solid", radius=999)'),
+        ], T("The style arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`, `radius`, `padding`) replace the theme's values for that button only.",
+             "Los argumentos de estilo de `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`, `radius`, `padding`) reemplazan los valores del tema solo en ese botón.")),
         V(_BASE, [
             ('pz.button', 'pz.button("pz.button", on_press, padding=(6, 14), bg="#3a7bc8", color="#ffffff", radius=6)'),
             (T("Any content", "Cualquier contenido"),
@@ -4652,7 +4653,14 @@ VARIANTS.update({
         ]),
         V(T("SVG", "SVG"), [
             ('pz.svg("logo.svg")', 'pz.svg("logo.svg", width=48, height=48)'),
-        ]),
+            ('color="#e5c07b"',
+             'shapes = (\'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">\'\n'
+             '          \'<circle cx="7" cy="7" r="5"/><rect x="12" y="12" width="10" height="10" rx="2"/></svg>\')\n'
+             'pz.svg(shapes, width=48, height=48, color="#e5c07b")'),
+        ], T("`color` paints every visible pixel of the SVG in one color and keeps the transparent ones, like an "
+             "icon tint. An SVG with a filled background, such as `logo.svg`, becomes a plain tile.",
+             "`color` pinta cada píxel visible del SVG de un color y deja los transparentes, como el tinte de un "
+             "icono. Un SVG con fondo relleno, como `logo.svg`, queda como una placa lisa.")),
     ],
     "image": [
         V(T("Fit", "Ajuste"), [
@@ -4663,7 +4671,9 @@ VARIANTS.update({
         V(T("Look", "Aspecto"), [
             ('radius=16', 'pz.image("photo.png", width=200, height=110, content_fit="cover", radius=16)', {"size": (480, 200)}),
             ('opacity=0.4', 'pz.image("photo.png", width=200, height=110, content_fit="cover", opacity=0.4)', {"size": (480, 200)}),
-        ]),
+            ('rotation=8', 'pz.image("photo.png", width=200, height=110, content_fit="cover", radius=10, rotation=8)', {"size": (480, 200)}),
+        ], T("`rotation` is in degrees, clockwise; the corners of a rotated image may reach outside its box.",
+             "`rotation` va en grados, en sentido horario; las esquinas de una imagen girada pueden salir de su caja.")),
     ],
     "rich-text": [
         V(T("Span styles", "Estilos de span"), [
