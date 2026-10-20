@@ -6,6 +6,7 @@ and 2.x (``MCPServer``).
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 from pathlib import Path
@@ -15,8 +16,10 @@ from . import knowledge, projects, scaffold, validate
 
 try:  # mcp 2.x
     from mcp.server.mcpserver import Image, MCPServer as _Server
+    from mcp.server.mcpserver.exceptions import ToolError
 except ImportError:  # mcp 1.x
     from mcp.server.fastmcp import FastMCP as _Server, Image  # type: ignore
+    from mcp.server.fastmcp.exceptions import ToolError  # type: ignore
 
 INSTRUCTIONS = """\
 Pyzed builds native desktop GUIs in Python, rendered by Iced (Rust), with components that look like
@@ -48,11 +51,32 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
     except TypeError:  # mcp 1.x takes no version
         server = _Server("pyzed", instructions=INSTRUCTIONS)
 
+    def tool(**options):
+        # mcp 2.x hides the text of unexpected exceptions from the client; the agent needs it to fix its call.
+        try:
+            register = server.tool(**options)
+        except TypeError:  # mcp before 1.10 has no structured_output
+            register = server.tool()
+
+        def decorate(func):
+            @functools.wraps(func)
+            def run(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except ToolError:
+                    raise
+                except Exception as err:  # noqa: BLE001 - reported to the agent as the tool's error
+                    raise ToolError(f"{type(err).__name__}: {err}") from err
+
+            return register(run)
+
+        return decorate
+
     # Tools that read or write files or run code: left out when allow_code is false.
-    gated = server.tool if allow_code else (lambda: (lambda func: func))
+    gated = tool if allow_code else (lambda **_: (lambda func: func))
 
     # -- knowledge -------------------------------------------------------------------------------------
-    @server.tool()
+    @tool()
     def get_guide(topic: str = "overview", lang: str = "en") -> str:
         """How Pyzed works. topic: "overview" (architecture, API layers, components, designer, CLI),
         "best-practices" (rules for views, state, components, styling, layout and testing), "cookbook"
@@ -60,12 +84,12 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         "shaders", "animation", "performance", "integrations", "editor-shortcuts"...). lang: "en" or "es"."""
         return knowledge.guide(topic, lang)
 
-    @server.tool()
+    @tool()
     def list_guides() -> str:
         """Every topic get_guide takes, with what it covers."""
         return _json(knowledge.guides())
 
-    @server.tool()
+    @tool()
     def list_components(kind: str = "all", query: str = "", category: str = "") -> str:
         """Lists Pyzed widgets and components with a one-line summary.
 
@@ -74,51 +98,51 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         query filters by name or summary; category keeps one section (e.g. "Layout", "Navigation")."""
         return _json(knowledge.list_components(kind, query, category))
 
-    @server.tool()
+    @tool()
     def describe_component(name: str) -> str:
         """The signature, documentation and parameters of a widget or component, or the props and events
         of a designer toolbox type. name: "pz.column", "ui.button", "designer:button" or a bare name."""
         return _json(knowledge.describe_component(name))
 
-    @server.tool()
+    @tool()
     def search_reference(query: str, lang: str = "en", limit: int = 20) -> str:
         """Searches Pyzed's whole reference (widgets, components, classes, functions, modules such as
         pyzed.game or pyzed.updater, designer controls) and returns the ids read_reference takes."""
         return _json(knowledge.search_reference(query, lang, limit))
 
-    @server.tool()
+    @tool()
     def read_reference(name: str, lang: str = "en") -> str:
         """The reference page of anything in Pyzed, in Markdown: signature, description, parameters and
         members. name: "pz.shader", "pyzed.game.vector", "ui.virtual_list", "App", "pyzed.updater"..."""
         return _json(knowledge.read_reference(name, lang))
 
-    @server.tool()
+    @tool()
     def editor_keymap() -> str:
         """The default key bindings of Pyzed's code editor (ui.editor, also used by Pyzed Design), by
         action, and how to change them."""
         return _json(knowledge.editor_keymap())
 
-    @server.tool()
+    @tool()
     def search_icons(query: str = "", limit: int = 50) -> str:
         """Finds bundled Lucide icon names (for icon=... and pz.icon); every word of query must match."""
         return _json(knowledge.search_icons(query, limit))
 
-    @server.tool()
+    @tool()
     def list_themes() -> str:
         """The built-in themes and the color tokens styles and components accept ("accent", "panel"...)."""
         return _json(knowledge.list_themes())
 
-    @server.tool()
+    @tool()
     def list_docs() -> str:
         """Every page of the official documentation, with the slug read_docs takes."""
         return _json(knowledge.list_docs())
 
-    @server.tool()
+    @tool()
     def read_docs(slug: str, lang: str = "en") -> str:
         """The Markdown of a documentation page, e.g. "guides/layout" or "reference/ui". lang: "en" or "es"."""
         return knowledge.read_docs(slug, lang)
 
-    @server.tool()
+    @tool()
     def list_examples(kind: str = "", query: str = "") -> str:
         """The example apps of the repository. kind keeps one group: "app" (a Zed-like editor, a to-do list,
         dialogs, canvas...), "blocks" (whole screens to copy: dashboard, settings, chat, kanban...), "games",
@@ -126,21 +150,21 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         projects), "tutorial" or "designer". query filters by name or summary."""
         return _json(knowledge.list_examples(kind, query))
 
-    @server.tool()
+    @tool()
     def read_example(name: str) -> str:
         """The full source code of an example (name from list_examples, e.g. "todo" or "blocks/dashboard";
         files of an integration project are listed one by one)."""
         return knowledge.read_example(name)
 
     # -- generators ------------------------------------------------------------------------------------
-    @server.tool()
+    @tool()
     def new_app(title: str = "My App", layout: str = "simple", theme: str = "One Dark",
                 width: int = 900, height: int = 600) -> str:
         """The code of a runnable pz.App script. layout: "simple" (a counter to build on) or "workspace"
         (a Zed-like window with sidebar, tabs, status bar and command palette)."""
         return scaffold.app(title, size=(width, height), theme=theme, layout=layout)
 
-    @server.tool()
+    @tool()
     def new_component(name: str, description: str = "", props: Optional[List[Dict[str, Any]]] = None,
                       state: Optional[List[Dict[str, Any]]] = None, events: Optional[Dict[str, str]] = None,
                       icon: str = "box", category: str = "Custom") -> str:
@@ -151,7 +175,7 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(scaffold.component(name, description=description, props=props or (), state=state or (),
                                         events=events, icon=icon, category=category))
 
-    @server.tool()
+    @tool()
     def new_form(name: str, title: str = "", controls: Optional[List[Dict[str, Any]]] = None,
                  width: float = 480, height: float = 320, theme: str = "One Dark",
                  form_events: Optional[List[str]] = None) -> str:
@@ -166,19 +190,19 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
                                    controls=controls or (), form_events=form_events or ()))
 
     # -- checks ----------------------------------------------------------------------------------------
-    @server.tool()
+    @tool()
     def validate_code(code: str) -> str:
         """Checks Pyzed code without running it: unknown pz/ui names, wrong keyword arguments, apps without
         view(), components without render(), side effects in view(), lambdas in loops, plus ruff if installed."""
         return _json(validate.check_code(code))
 
-    @server.tool()
+    @tool()
     def validate_form(form: str, handlers: str = "") -> str:
         """Validates the JSON of a .pzform (component types, props, events, names, parents) and, when the
         handlers module is given, that it defines every handler the form calls."""
         return _json(validate.check_form(form, handlers))
 
-    @gated()
+    @gated(structured_output=False)  # images, not JSON
     def screenshot(code: str, width: int = 800, height: int = 600, scale: float = 1.0) -> Any:
         """Runs Pyzed code off-screen (no window, no GPU) and returns a PNG of its UI.
 
@@ -234,7 +258,7 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         """`uv run pytest -q` in the project at path (args are passed to pytest, e.g. ["-k", "login"])."""
         return _json(projects.run_tests(base, path, args or ()))
 
-    @gated()
+    @gated(structured_output=False)
     def screenshot_project(target: str = "", width: int = 0, height: int = 0) -> Any:
         """Renders a form (.pzform) or a script (.py) of the folder off-screen and returns a PNG; by default
         the project's main form. width/height default to the form's size (800x600 for scripts)."""

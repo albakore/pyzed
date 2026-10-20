@@ -241,6 +241,8 @@ def test_server_registers_everything(tmp_path):
         assert json.loads(written[0].text)["ok"]
         shot = _content(await server.call_tool("screenshot_project", {"target": "app.py"}))
         assert shot[0].text.startswith("Screenshot of app.py") and shot[1].type == "image"
+        with pytest.raises(Exception, match="may hold secrets"):  # the agent sees why a call failed
+            await server.call_tool("read_file", {"path": ".env"})
 
     asyncio.run(check())
 
