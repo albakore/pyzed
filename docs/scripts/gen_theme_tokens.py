@@ -19,7 +19,14 @@ OUT = ROOT / "docs" / "src" / "components" / "theme-tokens.json"
 
 
 def _theme_module():
-    spec = importlib.util.spec_from_file_location("_pyzed_theme", ROOT / "python" / "pyzed" / "theme.py")
+    # A stand-in package, so theme.py's relative imports (theme_palettes) resolve
+    # without importing pyzed itself and its compiled core.
+    package = type(sys)("_pyzed_theme_pkg")
+    package.__path__ = [str(ROOT / "python" / "pyzed")]
+    sys.modules[package.__name__] = package
+    spec = importlib.util.spec_from_file_location(
+        "_pyzed_theme_pkg.theme", ROOT / "python" / "pyzed" / "theme.py"
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
