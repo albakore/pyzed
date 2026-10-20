@@ -215,30 +215,40 @@ pub fn open_null(
             let meters = thread_meters;
             flush_denormals();
             let mut scratch = vec![0.0f32; buffer as usize * 2];
-            let period = Duration::from_secs_f64(buffer as f64 / sr as f64);
-            let mut next = Instant::now();
+            let period = buffer as f64 / sr as f64;
+            // Keep time by the frames rendered, not by the wake-ups: a coarse system timer
+            // (Windows, a busy CI machine) wakes late, so each wake renders every block due.
+            let max_lag = (sr as u64 / 10).max(buffer as u64);
+            let start = Instant::now();
+            let mut rendered: u64 = 0;
             loop {
-                let started = Instant::now();
-                match graph.try_lock() {
-                    Ok(mut g) => g.render(&mut scratch, 2),
-                    Err(_) => {
-                        meters.underruns.fetch_add(1, Ordering::Relaxed);
-                    }
+                let due = (start.elapsed().as_secs_f64() * sr as f64) as u64;
+                if due > rendered + max_lag {
+                    // Fell far behind (the machine stalled): skip ahead instead of bursting.
+                    rendered = due - due % buffer as u64;
                 }
-                let load = started.elapsed().as_secs_f32() / period.as_secs_f32();
-                meters.load.store(load.to_bits(), Ordering::Relaxed);
-                next += period;
-                let now = Instant::now();
-                if next > now {
-                    if stopped.recv_timeout(next - now).is_ok() {
-                        break;
+                while rendered + buffer as u64 <= due {
+                    let started = Instant::now();
+                    match graph.try_lock() {
+                        Ok(mut g) => g.render(&mut scratch, 2),
+                        Err(_) => {
+                            meters.underruns.fetch_add(1, Ordering::Relaxed);
+                        }
                     }
-                } else {
-                    // Fell behind (a busy machine): catch up instead of bursting.
-                    next = now;
-                    if stopped.try_recv().is_ok() {
-                        break;
-                    }
+                    let load = started.elapsed().as_secs_f64() / period;
+                    meters
+                        .load
+                        .store((load as f32).to_bits(), Ordering::Relaxed);
+                    rendered += buffer as u64;
+                }
+                let next =
+                    start + Duration::from_secs_f64((rendered + buffer as u64) as f64 / sr as f64);
+                let wait = next.saturating_duration_since(Instant::now());
+                if !matches!(
+                    stopped.recv_timeout(wait),
+                    Err(mpsc::RecvTimeoutError::Timeout)
+                ) {
+                    break; // asked to stop, or the engine is gone
                 }
             }
         })
