@@ -182,6 +182,7 @@ def test_commands_open_no_console_window(tmp_path, monkeypatch):
     monkeypatch.setattr(project.subprocess, "Popen", popen)
     monkeypatch.setattr(project.subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False)
     monkeypatch.setattr(project, "NO_WINDOW", 0x08000000)
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")  # CI runners may not have uv
     project.execute(["uv", "--version"])
     _write_project(tmp_path / "demo").spawn(capture=True)
     assert [kw["creationflags"] for kw in seen] == [0x08000000, 0x08000000]
