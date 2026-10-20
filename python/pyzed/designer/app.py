@@ -25,6 +25,7 @@ from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from . import binding as _binding
+from . import spacing
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
@@ -2299,13 +2300,18 @@ class Designer(App):
         preferences.save(self.prefs)
 
     def toolbar(self, t) -> Any:
-        """Returns the toolbar: file, undo, alignment, sizing, order, grid and code tools.
+        """Returns the form editor's toolbar, in groups that read left to right like Zed's:
 
-        It scrolls sideways when the window is too narrow.
+        * create and history: "New…" (a form, a component or a shader, picked in the dialog), undo and redo;
+        * the selection: align, distribute and size, then order and delete. These only show while something
+          is selected (a hint takes their place otherwise), so the bar is not a wall of disabled buttons;
+        * at the end, how the canvas behaves (grid, snap, guides, anchors) and the code file.
+
+        Opening and saving live in the File menu and their shortcuts. The bar scrolls sideways when the
+        window is too narrow.
         """
         doc = self.doc
-        has = bool(doc.selection)
-        many = len(doc.selection) > 1
+        count = len(doc.selection)
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
                  keys: Optional[str] = None) -> Any:
@@ -2313,53 +2319,60 @@ class Designer(App):
             label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
             return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
 
-        sep = _core.container(ui.divider(vertical=True, theme=t), height=18, padding=(0, 4))
-        start = [
-            tool("file-plus", self.new, "New form", keys="ctrl-n"),
-            tool("folder-open", self.open_dialog, "Open", keys="ctrl-o"),
-            tool("save", self.save, "Save", keys="ctrl-s"),
-            ui.tooltip(ui.button(tr("New component"), self.new_component, icon="component", variant="tinted",
-                                 tint="accent", size="sm", theme=t),
-                       tr("A reusable piece for forms and other components, not a window"), theme=t),
-            sep,
-            tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
-            tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z"),
-            sep,
-            tool("align-start-vertical", lambda: self.align("left"), "Align left", enabled=has),
-            tool("align-center-vertical", lambda: self.align("center"), "Align centers", enabled=has),
-            tool("align-end-vertical", lambda: self.align("right"), "Align right", enabled=has),
-            tool("align-start-horizontal", lambda: self.align("top"), "Align top", enabled=has),
-            tool("align-center-horizontal", lambda: self.align("middle"), "Align middles", enabled=has),
-            tool("align-end-horizontal", lambda: self.align("bottom"), "Align bottom", enabled=has),
-            sep,
-            tool("align-horizontal-distribute-center", lambda: self.distribute("horizontal"),
-                 "Distribute horizontally", enabled=len(doc.selection) > 2),
-            tool("align-vertical-distribute-center", lambda: self.distribute("vertical"), "Distribute vertically",
-                 enabled=len(doc.selection) > 2),
-            tool("stretch-horizontal", lambda: self.same_size("width"), "Same width", enabled=many),
-            tool("stretch-vertical", lambda: self.same_size("height"), "Same height", enabled=many),
-            tool("move-horizontal", lambda: self.center("horizontal"), "Center in form horizontally", enabled=has),
-            tool("move-vertical", lambda: self.center("vertical"), "Center in form vertically", enabled=has),
-            sep,
-            tool("bring-to-front", lambda: self.reorder("front"), "Bring to front", enabled=has),
-            tool("send-to-back", lambda: self.reorder("back"), "Send to back", enabled=has),
-            tool("trash-2", self.delete, "Delete", enabled=has, keys="delete"),
+        def group(*items: Any) -> Any:
+            return _core.row([i for i in items if i is not None], spacing=2, align="center")
+
+        sep = _core.container(ui.divider(vertical=True, theme=t), height=16, padding=(0, 6))
+        groups = [
+            group(tool("file-plus", self.new, "New form, component or shader…", keys="ctrl-n"),
+                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
+                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z")),
         ]
+        if count:
+            groups += [
+                group(tool("align-start-vertical", lambda: self.align("left"), "Align left"),
+                      tool("align-center-vertical", lambda: self.align("center"), "Align centers"),
+                      tool("align-end-vertical", lambda: self.align("right"), "Align right"),
+                      tool("align-start-horizontal", lambda: self.align("top"), "Align top"),
+                      tool("align-center-horizontal", lambda: self.align("middle"), "Align middles"),
+                      tool("align-end-horizontal", lambda: self.align("bottom"), "Align bottom")),
+                group(tool("move-horizontal", lambda: self.center("horizontal"), "Center in form horizontally"),
+                      tool("move-vertical", lambda: self.center("vertical"), "Center in form vertically"),
+                      tool("align-horizontal-distribute-center", lambda: self.distribute("horizontal"),
+                           "Distribute horizontally") if count > 2 else None,
+                      tool("align-vertical-distribute-center", lambda: self.distribute("vertical"),
+                           "Distribute vertically") if count > 2 else None,
+                      tool("stretch-horizontal", lambda: self.same_size("width"), "Same width") if count > 1 else None,
+                      tool("stretch-vertical", lambda: self.same_size("height"), "Same height") if count > 1 else None),
+                group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front"),
+                      tool("send-to-back", lambda: self.reorder("back"), "Send to back"),
+                      tool("trash-2", self.delete, "Delete", keys="delete")),
+            ]
+        else:
+            groups.append(ui.label(tr("Select controls to align, size and order them"), size="xs",
+                                   color="text_muted", wrap=False, theme=t))
+        start: List[Any] = []
+        for g in groups:
+            start += [sep, g] if start else [g]
         end = [
-            tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
-            tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
-            tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
-            tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
-                 selected=doc.follow_anchors),
-            tool("scaling", doc.snap_to_grid, "Fit selection to grid"),
+            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
+                  tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
+                  tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
+                  tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
+                       selected=doc.follow_anchors),
+                  tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
             tool("code", self.edit_whole_file, "Edit code file", keys="f7"),
         ]
-        # One row that scrolls sideways when the window is too narrow for every tool.
-        tools = _core.row([*start, sep, *end], spacing=4, align="center")
-        return _core.container(
-            _core.scrollable(tools, direction="horizontal", scrollbar_width=2, width="fill"),
-            padding=(0, 8), height=36, width="fill", align_y="center", bg=t.editor)
+        # The editing tools scroll sideways when the window is too narrow; the canvas toggles stay at the end.
+        tools = _core.row([
+            _core.scrollable(_core.row(start, spacing=0, align="center"), direction="horizontal", scrollbar_width=2,
+                             width="fill"),
+            sep,
+            *end,
+        ], spacing=0, align="center", width="fill")
+        return _core.container(tools, padding=(0, spacing.GUTTER - 4), height=36, width="fill", align_y="center",
+                               bg=t.editor)
 
     def status_bar(self, t) -> Any:
         """Returns the status bar: pointer position, selection, tool hint, control count, grid and snap.
