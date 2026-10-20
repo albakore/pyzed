@@ -634,13 +634,13 @@ def _inline_input(d: "Designer", node: shading.Node, port: N.Input, type_: str, 
     doc = doc_of(d)
     value = node.inputs.get(port.name, port.default)
     if isinstance(value, str) and value in N.CONTEXT:
-        return _core.text(str_(N.CONTEXT_LABELS[value]), size=11, color=t.text_muted, italic=True, wrap=False)
+        return _core.text(str_(N.CONTEXT_LABELS[value]), size=_text_size(doc), color=t.text_muted, italic=True, wrap=False)
     if port.type == "texture":
-        return _core.text(tr("white"), size=11, color=t.text_muted, italic=True, wrap=False)
+        return _core.text(tr("white"), size=_text_size(doc), color=t.text_muted, italic=True, wrap=False)
     if value is None:
         return None
     if doc.zoom < 0.85:
-        return _core.text(_value_text(value, type_), size=11, color=t.text_muted, wrap=False)
+        return _core.text(_value_text(value, type_), size=_text_size(doc), color=t.text_muted, wrap=False)
 
     def change(v: Any, name: str = port.name, node_id: str = node.id) -> None:
         doc.set_input(node_id, name, v)
@@ -657,9 +657,14 @@ def _inline_input(d: "Designer", node: shading.Node, port: N.Input, type_: str, 
         hexed = value if isinstance(value, str) else to_hex(value)
         d.picker_targets[_picker_key(key)] = (hexed, lambda v: change(v or hexed))
         return _core.row([ui.color_swatch(hexed, size=14, on_press=lambda: d.toggle_color_picker(None, _picker_key(key))),
-                          _core.text(hexed, size=11, color=t.text_muted, font="mono", wrap=False)],
+                          _core.text(hexed, size=_text_size(doc), color=t.text_muted, font="mono", wrap=False)],
                          spacing=4, align="center")
-    return _core.text(_value_text(value, type_), size=11, color=t.text_muted, font="mono", wrap=False)
+    return _core.text(_value_text(value, type_), size=_text_size(doc), color=t.text_muted, font="mono", wrap=False)
+
+
+def _text_size(doc: Any) -> float:
+    """The size of the small texts inside a node, shrinking with the zoom so they stay inside it."""
+    return min(11.0, max(5.0, 12.0 * doc.zoom))
 
 
 def _picker_key(key: str) -> str:
@@ -697,13 +702,13 @@ def _body_row(d: "Designer", node: shading.Node, width: float, t: Theme) -> Any:
     if p.kind == "variable":
         names = [v.name for v in g.variables]
         if small or not names:
-            return _core.text(str(value or tr("pick a variable")), size=11, color=t.text_muted, wrap=False)
+            return _core.text(str(value or tr("pick a variable")), size=_text_size(doc), color=t.text_muted, wrap=False)
         return ui.select(names, str(value) if value in names else None, change, width="fill", size="sm",
                          placeholder=tr("Variable…"), theme=t)
     if p.kind == "local":
         names = g.locals()
         if small or not names:
-            return _core.text(str(value), size=11, color=t.text_muted, wrap=False)
+            return _core.text(str(value), size=_text_size(doc), color=t.text_muted, wrap=False)
         return ui.select(names, str(value) if value in names else None, change, width="fill", size="sm", theme=t)
     if p.kind in ("float", "int") and not small:
         return ui.number_field(float(value or 0), lambda v: change(int(v) if p.kind == "int" else v),
@@ -714,18 +719,20 @@ def _body_row(d: "Designer", node: shading.Node, width: float, t: Theme) -> Any:
         key = _picker_key(f"shader-param:{node.id}:{p.name}")
         d.picker_targets[key] = (value, lambda v: change(v or value))
         return _core.row([ui.color_swatch(value, size=14, on_press=lambda: d.toggle_color_picker(None, key)),
-                          _core.text(str(value), size=11, color=t.text_muted, font="mono", wrap=False)],
+                          _core.text(str(value), size=_text_size(doc), color=t.text_muted, font="mono", wrap=False)],
                          spacing=4, align="center")
     if p.kind == "code":
         first = str(value).strip().splitlines()[0] if str(value).strip() else ""
-        return _core.text(first, size=11, color=t.text_accent, font="mono", wrap=False)
+        return _core.text(first, size=_text_size(doc), color=t.text_accent, font="mono", wrap=False)
     if p.kind == "text" and node.type in ("set_var", "swizzle") and not small:
         return ui.input(str(value), change, size="sm", mono=True, theme=t)
     if p.kind == "file":
-        return _core.text(str(value or tr("pick a .pzshad")).replace("\\", "/").rsplit("/", 1)[-1], size=11,
+        return _core.text(str(value or tr("pick a .pzshad")).replace("\\", "/").rsplit("/", 1)[-1], size=_text_size(doc),
                           color=t.text_muted, wrap=False)
-    return _core.text(describe(value, p.kind) if p.kind in SIZE else str(value), size=11, color=t.text_muted,
-                      font="mono", wrap=False)
+    shown = _option_label(node.type, str(value)) if p.kind == "enum" else (
+        describe(value, p.kind) if p.kind in SIZE else str(value))
+    return _core.text(shown, size=_text_size(doc), color=t.text_muted, font=None if p.kind == "enum" else "mono",
+                      wrap=False)
 
 
 def _option_label(type_: str, option: str) -> str:

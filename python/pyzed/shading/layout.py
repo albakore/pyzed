@@ -74,7 +74,7 @@ def port_position(graph: "Graph", node: "Node", port: str, output: bool) -> Tupl
 
 
 def arrange(graph: "Graph", spacing: Tuple[float, float] = (250.0, 30.0)) -> None:
-    """Places nodes in columns by their distance from the graph's inputs, lined up with what they read."""
+    """Places nodes in columns, each right before the first node that reads it, with its wires level."""
     depth: Dict[str, int] = {}
 
     def visit(nid: str, trail: Tuple[str, ...] = ()) -> int:
@@ -89,28 +89,48 @@ def arrange(graph: "Graph", spacing: Tuple[float, float] = (250.0, 30.0)) -> Non
 
     for nid in graph.nodes:
         visit(nid)
-    # nodes that only feed the next column sit right before it
+    readers: Dict[str, List[str]] = {nid: [] for nid in graph.nodes}
+    for nid in graph.nodes:
+        for dep in graph.dependencies(nid):
+            if dep in readers and dep != nid:
+                readers[dep].append(nid)
+    # a value read only further right moves up to the column before its first reader
+    for nid in sorted(depth, key=lambda n: depth[n], reverse=True):
+        later = [depth[r] for r in readers[nid] if depth[r] > depth[nid]]
+        if later:
+            depth[nid] = min(later) - 1
     columns: Dict[int, List[str]] = {}
     for nid, d in depth.items():
         if graph.nodes[nid].type == "comment":
             continue
         columns.setdefault(d, []).append(nid)
     dx, dy = spacing
-    placed_y: Dict[str, float] = {}
-    for col in sorted(columns):
-        ids = columns[col]
+    placed: Dict[str, float] = {}
 
-        def anchor(nid: str) -> float:
-            ys = [placed_y[s] for s in graph.dependencies(nid) if s in placed_y]
-            return sum(ys) / len(ys) if ys else graph.nodes[nid].y
+    def anchor(nid: str) -> float:
+        # level with the inputs it feeds, from right to left
+        node = graph.nodes[nid]
+        ys = []
+        for link in graph.links_from(nid):
+            if link.dst in placed:
+                reader = graph.nodes[link.dst]
+                into = port_position(graph, reader, link.inp, False)[1] - reader.y + placed[link.dst]
+                ys.append(into - (port_position(graph, node, link.out, True)[1] - node.y))
+        ys += [placed[r] for r in readers[nid] if r in placed and not graph.links_from(nid)]
+        return sum(ys) / len(ys) if ys else node.y
 
-        ids.sort(key=anchor)
-        y = 0.0
-        for nid in ids:
+    for col in sorted(columns, reverse=True):
+        ids = sorted(columns[col], key=anchor)
+        wants = [anchor(nid) for nid in ids]
+        y = min(wants, default=0.0)
+        for nid, want in zip(ids, wants):
             node = graph.nodes[nid]
-            want = anchor(nid) if col else y
             y = max(y, want)
             node.x = col * dx
             node.y = y
-            placed_y[nid] = y
+            placed[nid] = y
             y += size(graph, node)[1] + dy
+    if placed:
+        top = min(placed.values())
+        for nid in placed:
+            graph.nodes[nid].y = round(graph.nodes[nid].y - top, 1)
