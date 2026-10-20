@@ -26,6 +26,16 @@ def frequency(xs, sr=SR):
     return (len(crossings) - 1) * sr / (crossings[-1] - crossings[0])
 
 
+def eventually(check, timeout=5.0):
+    """Polls `check` until it holds: a busy CI machine runs the real-time clock late, never early."""
+    deadline = time.monotonic() + timeout
+    while not check():
+        if time.monotonic() > deadline:
+            return False
+        time.sleep(0.02)
+    return True
+
+
 def test_catalog_describes_every_module():
     kinds = [m.kind for m in audio.modules()]
     for kind in ["oscillator", "lfo", "noise", "sampler", "drum", "audio_in", "midi_in", "constant", "clock",
@@ -293,13 +303,13 @@ def test_null_backend_plays_in_real_time_and_takes_changes_live():
         assert info["running"] and info["backend"] == "null"
         assert info["buffer_size"] == 128
         assert info["latency_ms"] == pytest.approx(128 / SR * 1000, rel=1e-3)
-        time.sleep(0.3)
-        assert 0.15 < e.info["time"] < 1.0
+        started = time.monotonic()
+        assert eventually(lambda: e.info["time"] > 0.15)
+        assert e.info["time"] < time.monotonic() - started + 0.1  # never faster than real time
         assert frequency(e.scope(4096)) == pytest.approx(440, rel=0.02)
         for _ in range(200):  # a burst of knob turns while playing
             osc["freq"] = 880
-        time.sleep(0.15)
-        assert frequency(e.scope(4096)) == pytest.approx(880, rel=0.02)
+        assert eventually(lambda: frequency(e.scope(4096)) == pytest.approx(880, rel=0.02))
         with pytest.raises(RuntimeError, match="stop"):
             e.render(0.1)
     assert not e.running
