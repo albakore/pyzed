@@ -46,14 +46,14 @@ class ProjectController:
         self.change_target: Optional[Dependency] = None
         self.change_text = ""
         self.new_name = "my-app"
-        self.new_folder = str(Path.cwd())
+        self.new_folder = str(_workspace.start_folder())
         self.new_git = True
         self.new_package = True
         self.open_text = ""
         #: The project's file tree.
         self.files = _workspace.Workspace(designer)
         #: The folder browser of the Open project and New project dialogs.
-        self.browser = _workspace.FolderBrowser(Path.cwd())
+        self.browser = _workspace.FolderBrowser(_workspace.start_folder())
 
     # -- opening ------------------------------------------------------------------------
     def attach(self, project: Optional[Project]) -> Any:
@@ -293,9 +293,9 @@ class ProjectController:
         def open_dialog() -> None:
             if dialog == "open":
                 recent = _project.recent_projects(1)
-                self.browser.go(recent[0].parent if recent else Path.cwd())
+                self.browser.go(recent[0].parent if recent else _workspace.start_folder())
             elif dialog == "browse_new":
-                self.browser.go(self.new_folder or Path.cwd())
+                self.browser.go(self.new_folder or _workspace.start_folder())
             self.d.dialog = f"project:{dialog}"
 
         return open_dialog

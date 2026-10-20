@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 from ..agents import Image, Tool, file_tools, pyzed_tools, tool
 from . import components as _components
 from . import layout as _layout
+from . import workspace as _workspace
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -339,7 +340,8 @@ def designer_tools(d: "Designer") -> List[Tool]:
         if _project.find_uv() is None:
             raise RuntimeError("uv is needed to create projects: https://docs.astral.sh/uv/")
         base = Path(folder).expanduser() if folder else d.agent.on_ui(lambda: d.agent.project_root().parent
-                                                                         if d.projects.project else Path.cwd())
+                                                                         if d.projects.project else
+                                                                         _workspace.start_folder())
         target = (base / name).resolve()
         if target.exists() and any(target.iterdir()) and not (target / "pyproject.toml").exists():
             raise FileExistsError(f"{target} is not empty")
