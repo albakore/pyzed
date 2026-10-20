@@ -146,6 +146,29 @@ def window_frame_setup(app):
     app.log = "New note"
 
 
+def downloads_setup(app):
+    """One file done, one half-way, and the "downloaded" toast."""
+    app.progress = {"iced-0.14.tar.gz": 1.0, "zed-themes.json": 0.42}
+    app.toasts = [("done", "iced-0.14.tar.gz descargado", None, "success")]
+
+
+def mini_editor_setup(app):
+    app.expanded = {"examples"}
+    app.open_file("examples/counter.py")
+    app.open_file("examples/todo.py")
+    app.cursor = (12, 5)
+    app.root = app.root.with_name("pyzed")  # the checkout's folder name (a worktree, a clone) is not shown
+
+
+def mini_editor_palette_setup(app):
+    mini_editor_setup(app)
+    app.palette_open, app.query = True, "tog"
+
+
+def pomodoro_setup(app):
+    app.running, app.left, app.done = True, 17 * 60 + 42, 2
+
+
 def invaders_title_setup(app):
     for _ in range(30):
         app.tick(1 / 60)
@@ -163,6 +186,12 @@ SHOTS = {
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
     "tutorials/effects": (app("effects", "Effects"), (900, 460)),
+    "tutorials/todo": (app("todo", "Todo"), None),
+    "tutorials/downloads": (app("downloads", "Downloads", downloads_setup), None),
+    "tutorials/mini-editor": (app("mini_editor", "MiniEditor", mini_editor_setup, str(ROOT)), (1100, 700)),
+    "tutorials/mini-editor-palette": (app("mini_editor", "MiniEditor", mini_editor_palette_setup, str(ROOT)),
+                                      (1100, 700)),
+    "ai/pomodoro": (app("pomodoro", "Pomodoro", pomodoro_setup), None),
     "tutorials/window-frames": (app("window_frame", "Notes", window_frame_setup), (760, 520)),
     "showcase/hud": (app("hud", "Hud"), (1280, 720)),
     "showcase/main-menu": (app("main_menu", "MainMenu"), (1280, 720)),
