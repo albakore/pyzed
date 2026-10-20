@@ -236,7 +236,7 @@ def fetch(*, url: str = REGISTRY_URL, cache: Optional[Path] = None, max_age: flo
     cache = cache or cache_path()
     if not refresh:
         try:
-            fresh = time.time() - cache.stat().st_mtime < max_age
+            fresh = max_age > 0 and time.time() - cache.stat().st_mtime < max_age
         except OSError:
             fresh = False
         cached = _read_cache(cache) if fresh else None
