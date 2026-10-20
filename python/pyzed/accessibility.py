@@ -27,7 +27,8 @@ def _run(args: List[str]) -> Optional[str]:
     import subprocess  # only when the setting is read
 
     try:
-        out = subprocess.run(args, capture_output=True, text=True, timeout=1.5, check=False)
+        out = subprocess.run(args, capture_output=True, text=True, timeout=1.5, check=False,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return None
     return out.stdout.strip() if out.returncode == 0 else None

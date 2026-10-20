@@ -41,6 +41,8 @@ from .document import Document
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from . import welcome as _welcome
+from .welcome import Welcome
 from .windows import Pane, PaneController
 from ..i18n import t as _t
 from .runtime import FormWindow
@@ -210,6 +212,8 @@ class Designer(App):
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.updates = UpdateController(self)
+        # the welcome window and its gallery of example projects (Help → Welcome)
+        self.welcome = Welcome(self)
         # the built-in reference (Help → Reference): its own tab next to the documents
         self.help = _reference.Browser()
         self.help_open = False
@@ -1911,6 +1915,9 @@ class Designer(App):
             return None
         if scene_panel.is_scene(self):
             return scene_panel.run(self)
+        project = self.projects.project
+        if project is not None and project.script is not None and self.doc.path is None and not self.doc.dirty:
+            return self.run_script()
         if self.prefs.save_on_run and self.doc.path is not None:
             self.save()
         if self.prefs.console_on_run:
@@ -1922,6 +1929,7 @@ class Designer(App):
             self.console.start(name, "uv run")
             env = {k: v for k, v in (("PYZED_PREVIEW_THEME", self.preview_theme),
                                      ("PYZED_PREVIEW_LANGUAGE", self.preview_language)) if v}
+            env["PYZED_DESIGNER_RUN"] = "1"
             self.projects.run_form(Path(self.doc.path), capture=True, env=env)
             self.console.pipe(self.projects.process)
             return None
@@ -1944,6 +1952,24 @@ class Designer(App):
         self.preview.runtime.log = self.console.event
         commands.append(self.preview.open())
         return commands
+
+    def run_script(self) -> Any:
+        """Runs the project's ``script`` with ``uv run`` (F5 when no form is open), its output in the console;
+        the project's files with unsaved changes are saved first."""
+        project = self.projects.project
+        if project is None or project.script is None:
+            return None
+        for index, buffer in enumerate(self.buffers.items):
+            if buffer.dirty and Path(buffer.path).resolve().is_relative_to(project.root.resolve()):
+                self.buffers.save(index)
+        if self.prefs.console_on_run:
+            self.layout.show("console")
+        self.console.start(project.script.name, "uv run")
+        if self.projects.run_script(capture=True):
+            self.console.pipe(self.projects.process)
+        else:
+            self.console.stop(quiet=True)
+        return None
 
     def _compile_handlers(self) -> Dict[str, Any]:
         import types
@@ -2316,6 +2342,8 @@ class Designer(App):
 
     def dialog_view(self, t) -> Any:
         """Returns the widget of the open dialog, or ``None`` when no dialog is open."""
+        if self.dialog and self.dialog.split(":", 1)[0] == "welcome":
+            return _welcome.dialog(self, t)
         if self.dialog and self.dialog.startswith("project:"):
             return project_panel.dialog(self, t)
         if self.dialog == "file:unsaved" and self.buffers.closing is not None:
@@ -2368,6 +2396,8 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     """Opens the designer (on ``path`` if given; it is created on first save if missing)."""
     started = time.perf_counter()
     designer = Designer(path, theme=theme)
+    if path is None and designer.prefs.show_welcome:
+        designer.welcome.open()
     telemetry = _telemetry.get()
     if telemetry.active:
         designer.view = telemetry.wrap("render", designer.view)  # type: ignore[method-assign]

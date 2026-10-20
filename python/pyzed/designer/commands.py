@@ -122,6 +122,8 @@ ACTIONS: Tuple[Action, ...] = (
     Action("reset_layout", "Reset panel layout", "View", lambda d: d.reset_layout(), "layout-dashboard"),
     # Run
     Action("run", "Run", "Run", lambda d: d.run_form(), "play", "f5", global_keys=True),
+    Action("run_script", "Run project script", "Run", lambda d: d.run_script(), "square-terminal",
+           enabled=lambda d: d.projects.project is not None and d.projects.project.script is not None),
     Action("stop", "Stop", "Run", lambda d: d.stop_form(), "square", "shift-f5", global_keys=True),
     Action("code_file", "Edit code file", "Run", lambda d: d.edit_whole_file(), "code", "f7", global_keys=True),
     # Help
@@ -129,6 +131,10 @@ ACTIONS: Tuple[Action, ...] = (
            global_keys=True),
     Action("reference", "Reference", "Help", lambda d: d.reference_here(), "book-marked", "shift-f1",
            global_keys=True),
+    Action("welcome", "Welcome", "Help", lambda d: d.welcome.open(), "house"),
+    Action("examples", "Example projects…", "Help", lambda d: d.welcome.open_gallery(), "layout-grid"),
+    Action("show_welcome", "Show the welcome window at startup", "Help", lambda d: d.welcome.toggle_startup(),
+           "panel-top", checked=lambda d: d.prefs.show_welcome, menu=False),
     Action("docs", "Documentation", "Help", lambda d: d.open_docs(), "globe"),
     Action("issue", "Report a problem", "Help", lambda d: d.open_url(ISSUES_URL), "bug"),
     Action("whats_new", "What's new", "Help", lambda d: d.updates.show_notes(), "sparkles"),

@@ -30,6 +30,7 @@ right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu a
 | *Recent* | | The last five files opened. |
 | Run | <kbd>F5</kbd> | [Runs](/pyzed/editor/console-and-running/) the form or previews the component. |
 | Stop | <kbd>Shift</kbd>+<kbd>F5</kbd> | Closes the running form. |
+| Run project script | | Starts the project's `[tool.pyzed] script` with `uv run` (see [Welcome and examples](/pyzed/editor/examples/#running-it)). |
 | Edit code file | <kbd>F7</kbd> | Opens the whole code file in the code editor. |
 
 ## Edit commands
@@ -75,6 +76,8 @@ The toggles are remembered between sessions.
 | --- | --- | --- |
 | Keyboard shortcuts | <kbd>F1</kbd> | A searchable list of every shortcut. |
 | Reference | <kbd>Shift</kbd>+<kbd>F1</kbd> | The [built-in reference](/pyzed/editor/reference/), on the page of the selected control or of the name under the cursor. |
+| Welcome | | The [welcome window](/pyzed/editor/examples/): start or open a project, recent projects and the example gallery. |
+| Example projects… | | The welcome window with every example. |
 | Documentation | | Opens this documentation in the browser. |
 | Report a problem | | Opens the issue tracker. |
 | What's new | | A tab with the release notes of this version (or of the update waiting to install). |

@@ -56,6 +56,16 @@ def main(argv=None) -> int:
     sys.path.insert(0, str(Path(script).resolve().parent))
     namespace = runpy.run_path(script, run_name="__main__")
     app = _find_app(namespace, captured[-1] if captured else None)
+    if isinstance(app, type):
+        app = app()
+    # The window shows a view() error instead of the UI; report it so the caller sees it as text.
+    try:
+        app.__pyzed_view__()
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+        return 3
     pz.screenshot(app, out, size=size, scale=scale)
     return 0
 
@@ -65,8 +75,19 @@ def render(source: str, *, size: Optional[Tuple[int, int]] = None, scale: float 
     """Runs ``source`` in a child process and returns the PNG of its app. Raises ``RuntimeError`` on errors."""
     with tempfile.TemporaryDirectory(prefix="pyzed-mcp-") as tmp:
         script = Path(tmp) / "app.py"
-        out = Path(tmp) / "shot.png"
         script.write_text(source, encoding="utf-8")
+        return _render(script, Path(tmp), size=size, scale=scale, timeout=timeout)
+
+
+def render_file(path, *, size: Optional[Tuple[int, int]] = None, scale: float = 1.0, timeout: float = 60.0) -> bytes:
+    """Like ``render`` for a script on disk, run from its own folder so its imports and files resolve."""
+    path = Path(path).resolve()
+    return _render(path, path.parent, size=size, scale=scale, timeout=timeout)
+
+
+def _render(script: Path, cwd: Path, *, size, scale: float, timeout: float) -> bytes:
+    with tempfile.TemporaryDirectory(prefix="pyzed-mcp-") as tmp:
+        out = Path(tmp) / "shot.png"
         cmd = [sys.executable, "-m", "pyzed.mcp.preview", str(script), str(out)]
         if size:
             cmd += [str(int(size[0])), str(int(size[1])), str(scale)]
@@ -77,7 +98,8 @@ def render(source: str, *, size: Optional[Tuple[int, int]] = None, scale: float 
         path = os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", "")) if p)
         env = {**os.environ, "PYZED_RELOAD": "0", "PYTHONPATH": path}
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=tmp, env=env)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=tmp, env=env,
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except subprocess.TimeoutExpired:
             raise RuntimeError(f"the code did not finish within {timeout:g} seconds") from None
         if result.returncode != 0 or not out.is_file():

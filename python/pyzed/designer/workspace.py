@@ -66,7 +66,7 @@ def git_status(root: Path) -> Dict[str, str]:
         return {}
     try:
         out = subprocess.run([git, "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=root,
-                             capture_output=True, timeout=5)
+                             capture_output=True, timeout=5, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return {}
     if out.returncode != 0:

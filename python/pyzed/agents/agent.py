@@ -194,7 +194,8 @@ class Event:
 
     ``kind`` is ``"text"`` / ``"thinking"`` (``text`` holds the new piece), ``"tool_call"`` (``tool``,
     ``args``, ``call_id``), ``"tool_result"`` (adds ``result`` and ``error``), ``"turn"`` (a model answer
-    finished; ``usage``), ``"error"`` (``text``) or ``"done"``.
+    finished; ``usage``), ``"plan"`` (an external agent's plan: ``args["steps"]``), ``"error"`` (``text``) or
+    ``"done"``.
     """
 
     kind: str
@@ -292,6 +293,11 @@ class Agent:
             return {"type": "tool_result", "tool_use_id": call_id, "is_error": False,
                     "content": [{"type": "text", "text": result}, *images]}
         return {"type": "tool_result", "tool_use_id": call_id, "content": result, "is_error": error}
+
+    def call_tool(self, name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Runs one tool like a model's call would (profile, checks, confirmation, executor) and returns its
+        ``tool_result`` block; used to serve the tools to other agents (``mcp_host``)."""
+        return self._call({"name": name, "input": args, "id": ""}, lambda event: None)
 
     # -- running ----------------------------------------------------------------------------------
     def stop(self) -> None:

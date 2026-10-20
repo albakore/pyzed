@@ -54,3 +54,19 @@ def test_translations_are_json():
         assert locale.tr("Save as…") == "Guardar como…" and locale.tr("Not translated") == "Not translated"
     finally:
         i18n.set_language("en")
+
+
+def test_every_designer_text_has_a_spanish_translation():
+    """Each literal ``tr("...")`` in the designer's modules is in ``locales/es.json``."""
+    import ast
+    from pathlib import Path
+
+    missing = {}
+    for path in sorted(Path(locale.__file__).parent.glob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", getattr(node.func, "attr", None)) == "tr" \
+                    and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str) \
+                    and node.args[0].value not in locale._ES:
+                missing.setdefault(path.name, []).append(node.args[0].value)
+    assert missing == {}

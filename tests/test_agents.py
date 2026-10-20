@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import threading
+import time
 import urllib.error
 import urllib.request
 
@@ -578,9 +579,11 @@ def test_permission_modes_map_to_the_settings():
         assert providers.AgentSettings.from_dict(s.to_dict()).mode == mode
 
 
-def _until(check, d, limit=2000):
+def _until(check, d, limit=2000, commands=None):
     for _ in range(limit):
-        d.agent.poll()
+        command = d.agent.poll()
+        if commands is not None and command is not None:
+            commands.append(repr(command))
         if check():
             return
         threading.Event().wait(0.005)
@@ -593,7 +596,13 @@ def test_signing_in_by_copying_a_key(tmp_path, monkeypatch, keychain):
     from pyzed.designer.app import Designer
 
     opened = []
-    monkeypatch.setattr(login, "key_page", lambda pid, **kw: opened.append(pid))
+
+    def fake_portal(pid, check, cancelled=lambda: False, **kw):  # the page waits until the clipboard wins
+        opened.append(pid)
+        while not cancelled():
+            time.sleep(0.01)
+
+    monkeypatch.setattr(login, "key_portal", fake_portal)
     checked = []
 
     def fake_models(pid, settings=None, key=None):
@@ -609,8 +618,10 @@ def test_signing_in_by_copying_a_key(tmp_path, monkeypatch, keychain):
     assert not c.ready
     d.view()  # the empty panel offers every main provider
     c.connect("anthropic")
+    _until(lambda: opened, d)
     assert opened == ["anthropic"] and c.capture is not None and c.active and d.dialog == "agent_settings"
     d.view()
+    c.capture.next_check = 0
     assert c.poll() is not None  # reads the clipboard about once a second
     c.on_clipboard("hello")  # not a key: ignored
     assert not checked
@@ -619,10 +630,87 @@ def test_signing_in_by_copying_a_key(tmp_path, monkeypatch, keychain):
     assert c.capture is not None and not providers.is_ready("anthropic")  # refused: still waiting
     key = "sk-ant-api03-" + "y" * 40
     c.on_clipboard(key)
-    _until(lambda: c.capture is None, d)
+    commands = []
+    _until(lambda: c.capture is None, d, commands=commands)
     assert providers.api_key("anthropic") == key and c.ready and len(checked) == 2
     assert key in keychain.data.values() and key not in (tmp_path / "agents.json").read_text()
     assert c.settings.models_of("anthropic")[:2] == ["claude-opus-5-5", "claude-sonnet-5-5"]
+    assert "window operation" in commands[-1] and not c.raise_window  # the designer comes back to the front
+
+
+def test_signing_in_on_the_local_page_brings_the_designer_back(tmp_path, monkeypatch, keychain):
+    from pyzed.designer import agent_panel
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    key = "sk-ant-api03-" + "z" * 40
+
+    def fake_portal(pid, check, **kw):
+        assert check("sk-ant-api03-" + "x" * 40 + "bad") == "401"
+        assert check(key) is None
+        return key
+
+    def fake_models(pid, settings=None, key=None):
+        if key.endswith("bad"):
+            raise agents.AgentError("401")
+        return ["claude-opus-5-5"]
+
+    monkeypatch.setattr(login, "key_portal", fake_portal)
+    monkeypatch.setattr(agent_panel._agents, "list_models", fake_models)
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.sign_in("anthropic")
+    commands = []
+    _until(lambda: c.capture is None, d, commands=commands)
+    assert providers.api_key("anthropic") == key and c.settings.models_of("anthropic")[0] == "claude-opus-5-5"
+    assert commands == ["Command.<window operation>(...)"] and not c.active  # back to the front, once
+
+
+def _portal_request(url, method="GET", data=None, headers=None):
+    req = urllib.request.Request(url, data=data, method=method, headers=headers or {})
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # straight to 127.0.0.1
+    try:
+        with opener.open(req, timeout=5) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as err:
+        return err.code, ""
+
+
+def test_the_local_sign_in_page_takes_a_key_only_from_itself():
+    import urllib.parse
+
+    key = "sk-ant-api03-" + "k" * 40
+    seen, visits = {}, []
+
+    def browser(url):
+        def visit():
+            parts = urllib.parse.urlsplit(url)
+            origin = f"{parts.scheme}://{parts.netloc}"
+            post = lambda k, **h: _portal_request(url, "POST", urllib.parse.urlencode({"key": k}).encode(), h)
+            seen["get"] = _portal_request(url)
+            seen["other path"] = _portal_request(origin + "/connect/guess")
+            seen["no origin"] = post(key)
+            seen["other site"] = post(key, Origin="https://evil.example")
+            seen["rebinding"] = post(key, Origin=origin, Host="evil.example")
+            seen["not a key"] = post("hello", Origin=origin)
+            seen["refused"] = post(key + "bad", Origin=origin)
+            seen["ok"] = post(key, Origin=origin)
+
+        visits.append(threading.Thread(target=visit, daemon=True))
+        visits[0].start()
+
+    check = lambda k: "401 invalid key" if k.endswith("bad") else None
+    assert login.key_portal("anthropic", check, open_url=browser, timeout=20) == key
+    visits[0].join(5)
+    status, page = seen["get"]
+    assert status == 200 and "console.anthropic.com" in page and 'type="password"' in page
+    assert seen["other path"][0] == seen["no origin"][0] == seen["other site"][0] == seen["rebinding"][0] == 404
+    assert "does not look like" in seen["not a key"][1] and "401 invalid key" in seen["refused"][1]
+    assert seen["ok"][0] == 200 and "is connected" in seen["ok"][1] and key not in seen["ok"][1]
+    with pytest.raises(login.LoginError):
+        login.key_portal("anthropic", check, open_url=lambda url: None, timeout=0.2)
+    assert login.key_portal("anthropic", check, open_url=lambda url: None, cancelled=lambda: True) is None
 
 
 def test_composer_mentions_commands_menus_and_expand(tmp_path):

@@ -260,10 +260,24 @@ class ProjectController:
             return
         self.d.notify(f"Running {form.name}", "With uv run; saving updates the window", seconds=3)
 
+    def run_script(self, *, capture: bool = False, env: Optional[Dict[str, str]] = None) -> bool:
+        """Starts the project's ``script`` with ``uv run`` (``capture``: pipe its output); ``False`` if it
+        could not start."""
+        assert self.project is not None and self.project.script is not None
+        self.stop()
+        try:
+            self.process = self.project.spawn_script(capture=capture, env=env)
+        except (OSError, FileNotFoundError) as err:
+            self.d.notify(tr("Could not start {name}", name=self.project.script.name), str(err), kind="error",
+                          seconds=5)
+            return False
+        self.d.notify(tr("Running {name}", name=self.project.script.name), tr("With uv run"), seconds=3)
+        return True
+
     def stop(self) -> None:
         """Terminates the form process started with ``run_form``, if it is still running."""
-        if self.process is not None and self.process.poll() is None:
-            self.process.terminate()
+        if self.process is not None:
+            _project.terminate(self.process)
         self.process = None
 
     # -- input setters ---------------------------------------------------------------------

@@ -85,7 +85,7 @@ def _identity_token(fed: "_providers.FederationSettings") -> Callable[[], str]:
 
         def from_command() -> str:
             result = subprocess.run(_providers.split_command(fed.token_command), capture_output=True,
-                                    text=True, timeout=60)
+                                    text=True, timeout=60, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             token = result.stdout.strip()
             if result.returncode != 0 or not token:
                 raise AgentError(f"The identity token command failed: {(result.stderr or '').strip()[:200]}")

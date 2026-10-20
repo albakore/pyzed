@@ -53,19 +53,37 @@ def _summary(path: Path) -> str:
     if path.suffix == ".py":
         doc = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
         return doc.split("\n\n", 1)[0].replace("\n", " ").strip()
+    if path.name == "pyproject.toml":
+        return "The project's dependencies (pyproject.toml)."
+    if path.suffix == ".md":
+        return "What the examples in this folder show and how to run them."
     return "A form made with the visual designer (.pzform layout)."
+
+
+#: Folders of examples, as the ``kind`` of each one (top-level scripts are ``"app"``).
+KINDS = ("tutorial", "blocks", "games", "showcase", "designer", "integrations")
+#: Folders inside an integration example that are not worth an entry.
+SKIP_PARTS = {"migrations", "__pycache__", ".venv"}
 
 
 def examples() -> list:
     found = [p for p in sorted(EXAMPLES.glob("*.py")) if p.stem not in SKIP_EXAMPLES]
-    found += sorted(EXAMPLES.glob("tutorial/*.py")) + sorted(EXAMPLES.glob("blocks/*.py"))
-    found += sorted(EXAMPLES.glob("designer/*.py"))
-    found += sorted(EXAMPLES.glob("designer/*.pzform"))
+    for kind in ("tutorial", "blocks", "games", "showcase"):
+        found += sorted(EXAMPLES.glob(f"{kind}/*.py"))
+    found += sorted(EXAMPLES.glob("designer/*.py")) + sorted(EXAMPLES.glob("designer/*.pzform"))
+    integrations = EXAMPLES / "integrations"
+    found += [integrations / "README.md"] if (integrations / "README.md").is_file() else []
+    for path in sorted(integrations.rglob("*")):
+        rel = path.relative_to(integrations)
+        if (path.suffix == ".py" or path.name == "pyproject.toml") and len(rel.parts) > 1 \
+                and not SKIP_PARTS & set(rel.parts):
+            found.append(path)
     out = []
     for path in found:
         rel = path.relative_to(EXAMPLES)
         name = rel.with_suffix("").as_posix() if path.suffix == ".py" else rel.as_posix()
-        out.append({"name": name, "summary": _summary(path), "path": path.relative_to(ROOT).as_posix()})
+        kind = rel.parts[0] if len(rel.parts) > 1 and rel.parts[0] in KINDS else "app"
+        out.append({"name": name, "kind": kind, "summary": _summary(path), "path": path.relative_to(ROOT).as_posix()})
     return out
 
 

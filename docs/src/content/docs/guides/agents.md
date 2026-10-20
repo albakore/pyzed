@@ -174,6 +174,22 @@ requests follow `settings.mode`: `"bypass"` allows them, `"read"` allows reads o
 keep them in `AgentSettings.acp_agents` (and MCP servers in `mcp_servers`; `acp.mcp_entries(settings.mcp_servers)`
 hands those to the agent too).
 
+Your own tools can go to the external agent too: `mcp_host.ToolServer` serves an `Agent`'s tools over MCP on
+`127.0.0.1` (a one-time address and a bearer token), which is how Pyzed Design lets Claude Code control the editor:
+
+```python
+from pyzed.agents import mcp_host
+
+server = mcp_host.ToolServer(agents.Agent(tools=[my_tool]), name="my_app", instructions="How to use them")
+agent = acp.ACPAgent(config, cwd="my_app", mcp_servers=[server.acp_entry(), server.bridge_entry()])
+...
+server.close()
+```
+
+Given both, the agent gets the HTTP entry when it supports it and the stdio bridge otherwise.
+`acp.claude_signed_in()` tells whether Claude Code is signed in on this computer, and `acp.claude_login_command()`
+is the command that opens it to sign in with a Claude subscription.
+
 ## Streaming into the UI
 
 `run` blocks, so in an app call it from a worker thread and hand the events to the UI. Pyzed's views run on the UI
@@ -235,6 +251,15 @@ agents.set_key("openrouter", key)
 
 agents.login.key_page("anthropic")    # the others: opens the provider's API keys page...
 agents.providers.looks_like_key("anthropic", copied_text)  # ...and tells whether a copied text is its key
+
+def check(key):                       # why the provider refuses the key, or None
+    try:
+        agents.list_models("anthropic", key=key)
+    except agents.AgentError as err:
+        return str(err)
+
+# ...or a sign-in page served on 127.0.0.1: it links to the keys page and returns the key pasted there
+key = agents.login.key_portal("anthropic", check)
 ```
 
 GitHub and Google sign in without a key too, with OAuth apps you register (their IDs go in the provider's

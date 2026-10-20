@@ -139,6 +139,37 @@ types (`button`, `input`, `label`...) are listed by `list_components(kind="desig
   ty, `pyzed build` packages the app with PyInstaller.
 - `pyzed icons <filter>` lists the bundled Lucide icons (`search_icons` does the same).
 
+## Beyond the basics
+
+Each of these has a recipe in `get_guide("cookbook")` and a topic in `list_guides`:
+
+- **Animation and effects**: `.animate("fade_in_up")`, `.transition(opacity=...)`, `pz.stagger`,
+  `pz.presence`; style effects `glow`, `bloom`, `blur`, `backdrop_blur` and `glass`.
+- **Shaders**: `pz.shader(wgsl, uniforms={...})` paints a widget on the GPU.
+- **Games**: `pz.frames(callback)` for a frame loop, held keys with `pz.is_pressed` and
+  `pyzed.game` (`vector`, `axis`, `glow`, `Particles`) on a `pz.canvas`.
+- **Large data**: `ui.virtual_list` / `pz.virtual_column` build only the visible rows; `@pz.memo`
+  reuses a subtree while its arguments are the same.
+- **Windows**: `frame = "custom"` (or `"macos"`, `"windows"`...) draws Pyzed's own title bar, with
+  `frame_menus()` returning `ui.Menu` / `ui.MenuItem`; `pz.window_edges` adds resize borders.
+- **Anchored layouts**: `pz.anchor_layout` with `pz.anchor(widget, x=, y=, width=, height=, anchor=)`,
+  like the designer.
+- **Forms and backends**: `ui.field(..., error=)` and `pz.validation_errors(error)` for Pydantic,
+  SQLModel or Django errors; `list_examples(kind="integrations")` has FastAPI, SQLAlchemy, SQLModel
+  and Django projects.
+- **The code editor**: `ui.editor` with Zed-like key bindings (`editor_keymap`).
+
+`search_reference` and `read_reference` cover every module, class and function, including
+`pyzed.updater`, `pyzed.forms`, `pyzed.accessibility` and `pyzed.game`.
+
+## Building a whole app
+
+With the project tools the server works in a folder: `project_info`, `create_project`,
+`write_files` (it checks what it writes), `add_dependency`, `check_project`, `run_tests` and
+`screenshot_project`. Keep the state and logic in plain classes in the package (`src/<package>`),
+views or forms in `ui/`, tests in `tests/`, and loop write, check, test and screenshot until all
+are clean. The `build_project` prompt lists these steps.
+
 ## Where to read more
 
 The `read_docs` tool returns any page of the official documentation

@@ -31,13 +31,18 @@ pip install "pyzed-ui[agents]"     # o: uv add "pyzed-ui[agents]"
 
 El inicio de sesión ocurre dentro de Pyzed Design; no hace falta ningún otro programa.
 
-- **Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: estos proveedores no permiten que otras apps inicien
-  sesión con OAuth, así que Pyzed abre la página de claves de API del proveedor en tu navegador. Crea una clave
-  allí y pulsa su botón **Copiar**. Pyzed detecta la clave copiada, la comprueba con el proveedor, la guarda en el
-  llavero del sistema y carga los modelos del proveedor. Mientras espera, una tarjeta **Iniciando sesión** ofrece
-  **Pegar la clave** (leer el portapapeles ahora), **Abrir la página otra vez** y **Cancelar**. El portapapeles solo
-  se lee mientras se ve esa tarjeta (cinco minutos como mucho), y solo se usa un texto que parezca una clave de ese
-  proveedor.
+- **Anthropic (Claude), OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: estos proveedores no permiten que otras
+  apps inicien sesión con OAuth (el inicio de sesión con suscripción de Anthropic es solo para sus propias apps),
+  así que Pyzed inicia sesión con una página propia. El navegador abre una página **Connect … to Pyzed Design**
+  que Pyzed sirve en este equipo (`127.0.0.1`, una dirección de un solo uso) y que enlaza a la página de claves de
+  API del proveedor. Crea una clave allí y pégala en la página de Pyzed, o simplemente pulsa el botón **Copiar** de
+  la clave: Pyzed también detecta la clave copiada. Pyzed la comprueba con el proveedor, la guarda en el llavero del
+  sistema, carga los modelos del proveedor y vuelve al frente, así que puedes cerrar la pestaña y seguir trabajando.
+  Mientras espera, una tarjeta **Iniciando sesión** ofrece **Pegar la clave** (leer el portapapeles ahora),
+  **Abrir la página de claves** y **Cancelar**. El portapapeles solo se lee mientras se ve esa tarjeta (cinco
+  minutos como mucho), y solo se usa un texto que parezca una clave de ese proveedor. La página local solo acepta
+  una clave enviada desde ella misma: otros sitios y otros nombres de host no pueden usarla. Para usar tu plan
+  Claude Pro o Max en lugar de una clave, mira [Tu suscripción de Claude](#tu-suscripción-de-claude).
 - **OpenRouter**: OAuth real con PKCE. Apruebas a Pyzed en la página de OpenRouter y la clave que emite vuelve a
   Pyzed directamente; no hay nada que copiar.
 - **GitHub Copilot**: **Iniciar sesión con GitHub** usa el flujo de dispositivo de GitHub. Pyzed abre
@@ -124,6 +129,8 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | `validate_code`, `validate_form` | Revisan código y formularios antes de devolverlos. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Trabajan con archivos del proyecto, nunca fuera de su carpeta. |
 | `screenshot_form` | Dibuja el formulario abierto en una imagen y la mira, para revisar la distribución tal como la ves. |
+| `run_app` | Ejecuta la app (el formulario principal del proyecto u otro) en el entorno del propio proyecto sin mostrar ninguna ventana, y devuelve lo que imprimió (errores y trazas incluidos) y una imagen de su ventana. |
+| `update_plan` | Muestra el plan del agente como una lista sobre el cuadro de mensaje y lo mantiene al día. |
 | `get_project`, `create_project`, `add_dependency`, `check_project`, `open_document` | Leen el proyecto abierto (formularios, componentes, dependencias, punto de entrada), crean uno nuevo y lo abren, añaden un paquete con uv, ejecutan las comprobaciones del proyecto y abren cualquiera de sus archivos en una pestaña. |
 | `list_examples`, `read_example`, `new_form` | Los ejemplos de Pyzed para aprender de ellos, y un formulario inicial escrito a partir de una descripción. |
 | `mcp_<servidor>_<herramienta>` | Las herramientas de los [servidores MCP](#servidores-mcp) que añadiste. |
@@ -152,12 +159,19 @@ empiezan una aplicación entera, no solo un formulario. El agente conoce el edit
 componentes, estilos, enlace de datos, el [servidor MCP](/pyzed/es/guides/mcp/) y esta documentación) y, en cada
 mensaje, lo que está abierto: el proyecto y sus archivos, el formulario, la selección y las demás pestañas. Luego:
 
-1. Crea un [proyecto](/pyzed/es/editor/projects/) con `create_project` (o usa el abierto) y añade los paquetes que
+1. Hace un plan con `update_plan`: una tarjeta **Plan** sobre el cuadro de mensaje muestra cada paso, lo marca al
+   terminarlo y se pliega cuando todo está hecho (pulsa su cabecera para plegarla tú).
+2. Crea un [proyecto](/pyzed/es/editor/projects/) con `create_project` (o usa el abierto) y añade los paquetes que
    necesita con `add_dependency`.
-2. Escribe los formularios y componentes, coloca sus controles, conecta los eventos y escribe el código, leyendo
-   los ejemplos y la documentación de Pyzed cuando los necesita.
-3. Mira cada formulario con `screenshot_form` y arregla lo que no se ve bien.
-4. Ejecuta `check_project` y `validate_code` hasta que pasan, y te dice cómo ejecutarla (<kbd>F5</kbd>).
+3. Escribe los formularios y componentes, coloca sus controles, conecta los eventos y escribe el código, leyendo
+   los ejemplos y la documentación de Pyzed cuando los necesita, y los guarda.
+4. Mira cada formulario con `screenshot_form`, y ejecuta `check_project` y `validate_code` hasta que pasan.
+5. Ejecuta la app con `run_app`, lee sus errores y la imagen de su ventana, arregla lo que falla y la vuelve a
+   ejecutar hasta que arranca sin errores. Luego te dice qué construyó y cómo ejecutarla (<kbd>F5</kbd>).
+
+Trabaja solo de principio a fin, con hasta 150 respuestas del modelo por mensaje. Para que no se interrumpa, elige
+**Omitir permisos** en el menú de modo; con **Preguntar antes de escribir** pregunta antes de escribir archivos y
+antes de ejecutar la app.
 
 ## Generar formularios y componentes
 
@@ -253,9 +267,29 @@ de modelos en **Agentes externos**.
 El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera (su propia cuenta o
 clave; pon las claves en **Secretos**). Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
 proyecto y nunca los que pueden tener secretos, y pregunta antes de actuar según el modo de permisos (**Solo
-lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas). Con **Compartir el servidor MCP
-de Pyzed** activado, el agente también recibe los componentes, la documentación, los generadores y las
-comprobaciones de Pyzed (necesita el paquete `mcp`).
+lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas).
+
+Con **Dejar que los agentes externos controlen el editor** activado (por defecto), el agente recibe por MCP las
+herramientas del agente integrado: lee y cambia el formulario abierto y su código, crea formularios y componentes,
+ejecuta la app con `run_app`, lleva un plan y conoce los componentes y la documentación de Pyzed. Sus cambios se ven
+en vivo en el editor, y **Conservar** y **Rechazar** funcionan como con el agente integrado. Pyzed sirve estas
+herramientas en `127.0.0.1`, en una dirección de un solo uso y con un token que solo recibe ese agente (los agentes
+que solo arrancan servidores locales reciben un pequeño programa puente). Sus propias herramientas de archivos y de
+terminal siguen siendo suyas. El plan que sigue el agente se ve en la tarjeta **Plan**.
+
+### Tu suscripción de Claude
+
+**Usar mi suscripción de Claude** (lo primero en un panel vacío, y en el selector de modelos en **Agentes
+externos**) usa tu plan Claude Pro o Max a través de Claude Code, el agente de Anthropic, ya que Anthropic solo
+deja que sus propias apps inicien sesión con una suscripción:
+
+1. Necesita [Node.js](https://nodejs.org/en/download) 18 o posterior; si no está, Pyzed abre la página de descarga.
+2. Añade Claude Code como agente externo, lo elige y le deja controlar el editor.
+3. Si Claude Code todavía no inició sesión, se abre en una terminal: elige iniciar sesión con tu cuenta de Claude y
+   termina en el navegador. Pyzed detecta el inicio de sesión, vuelve al frente y queda listo.
+
+Claude Code guarda su propio inicio de sesión; Pyzed nunca lo ve. El uso cuenta para tu plan. Si una respuesta
+falla porque Claude Code cerró la sesión, **Iniciar sesión en Claude** vuelve a abrir la terminal.
 
 ### Dónde se guardan las claves
 

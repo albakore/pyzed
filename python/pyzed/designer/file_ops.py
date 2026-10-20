@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -92,6 +93,35 @@ def terminal_command(folder: Path) -> List[str]:
     raise OSError("No terminal app was found")
 
 
+#: How each Linux terminal is told to run a command (the arguments that go before it).
+RUN_FLAGS = {"x-terminal-emulator": ["-e"], "gnome-terminal": ["--"], "konsole": ["-e"], "xfce4-terminal": ["-x"],
+             "kitty": [], "alacritty": ["-e"], "wezterm": ["start", "--"], "foot": [], "xterm": ["-e"]}
+
+
+def run_in_terminal_command(args: List[str], folder: Path) -> List[str]:
+    """The command that opens the system's terminal running ``args`` in ``folder`` (``OSError`` when none is
+    found), for programs that talk to the user, such as a sign-in."""
+    if sys.platform == "darwin":
+        line = f"cd {shlex.quote(str(folder))} && {shlex.join(args)}"
+        script = 'tell application "Terminal" to do script "{}"'.format(line.replace("\\", "\\\\").replace('"', '\\"'))
+        return ["osascript", "-e", script, "-e", 'tell application "Terminal" to activate']
+    if sys.platform == "win32":
+        wt = shutil.which("wt")
+        return [wt, "-d", str(folder), "cmd", "/k", *args] if wt else ["cmd", "/c", "start", "", "cmd", "/k", *args]
+    names = [os.environ["TERMINAL"]] if os.environ.get("TERMINAL") else []
+    for name in [*names, *RUN_FLAGS]:
+        found = shutil.which(name)
+        if found:
+            return [found, *RUN_FLAGS.get(Path(name).name, ["-e"]), *args]
+    raise OSError("No terminal app was found")
+
+
+def run_in_terminal(args: List[str], folder: Path) -> None:
+    """Opens the system's terminal running ``args`` in ``folder``."""
+    subprocess.Popen(run_in_terminal_command(args, folder), cwd=folder, stdout=subprocess.DEVNULL,  # noqa: S603
+                     stderr=subprocess.DEVNULL, start_new_session=sys.platform != "win32")
+
+
 def open_terminal(folder: Path) -> None:
     """Opens the system's terminal in ``folder``."""
     subprocess.Popen(terminal_command(folder), cwd=folder, stdout=subprocess.DEVNULL,  # noqa: S603
@@ -137,7 +167,8 @@ def _git(root: Path, *args: str) -> Optional[str]:
     if git is None:
         return None
     try:
-        out = subprocess.run([git, *args], cwd=root, capture_output=True, text=True, timeout=5)  # noqa: S603
+        out = subprocess.run([git, *args], cwd=root, capture_output=True, text=True, timeout=5,  # noqa: S603
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return None
     return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
