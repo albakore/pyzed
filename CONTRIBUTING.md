@@ -57,6 +57,8 @@ pytest tests
 
 Use `--release`: debug builds of Iced are too slow to use the real window.
 After changing Rust code, run `maturin develop --release` again.
+On Linux the audio engine needs ALSA's headers to build: `sudo apt install libasound2-dev`
+(Fedora: `sudo dnf install alsa-lib-devel`).
 
 Before pushing, run the same checks as CI:
 

@@ -2230,6 +2230,53 @@ PAGES.append({
     ],
 })
 
+# -- Services --------------------------------------------------------------------------------
+_V = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "services",
+    "title": "Services (pyzed.services)",
+    "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps.",
+    "order": 10.5,
+    "intro": """
+        Services raise events but draw nothing: they are the non-visual components of Pyzed Design
+        ([the tray under the form](/pyzed/editor/non-visual-components/)) and work the same in a
+        `pz.App` or a script. Handlers go in `on_<event>=`; events raised by a background thread reach
+        them on the app's thread. See the [Services guide](/pyzed/guides/services/).
+
+        ```python
+        watcher = pz.FileWatcher("inbox", pattern="*.csv", on_created=self.import_file)
+        watcher.start()
+        ```
+    """,
+    "sections": [
+        ("Time and keys", {
+            "pyzed.Timer": {**_V, "desc": "Raises `tick` (with the count) every `interval` milliseconds while it is running; `repeat=False` ticks once. Return `subscriptions()` from your app's `subscriptions`."},
+            "pyzed.Shortcut": {**_V, "desc": 'Raises `activate` when one of its `keys` is pressed (`"ctrl-s"`, `"Ctrl+S"`, several separated by commas; `mod-` is Cmd on macOS and Ctrl elsewhere). Call `handle(combo)` from `on_key`.'},
+        }),
+        ("Files and programs", {
+            "pyzed.FileWatcher": {**_V, "desc": "Watches a folder or a file and raises `created`, `modified` and `deleted` (a path) and `change` (the changed paths), checking every `interval` milliseconds. `start()`, `stop()`, `running`."},
+            "pyzed.Process": {**_V, "desc": "Runs a program and raises `output` and `error_output` for every line it prints, `finished` with its exit code, `started` and `failed`. `start()`, `write()`, `kill()`, `wait()`."},
+            "pyzed.Worker": {**_V, "desc": "Runs `work(value)` in a background thread with `run(value)`; `report()` raises `progress`, the result arrives in `done` and an exception in `failed`. `cancel()` sets `cancelled`."},
+        }),
+        ("Network", {
+            "pyzed.HttpRequest": {**_V, "desc": "Calls a web address in the background: `send()` raises `response` with an `HttpResponse` (error statuses included) or `failed` when there was no answer. `json=` sends JSON."},
+            "pyzed.HttpResponse": {**_V, "desc": "A web server's answer: `status`, `ok`, `headers`, `content` (bytes), `text` and `json()`."},
+        }),
+        ("System", {
+            "pyzed.Clipboard": {**_V, "desc": "The system clipboard: `copy(text)` and `paste()` return commands; with `watch=True` it raises `change` when something new is copied."},
+            "pyzed.Settings": {**_V, "desc": "Values kept between runs: a dict saved as JSON in the user's settings folder at every change, with `defaults`; raises `change` with `(key, value)`."},
+            "pyzed.FileDialog": {**_V, "desc": 'The system\'s file dialog: `show()` returns the command that opens it in `mode` `"open"`, `"open_many"`, `"save"` or `"folder"`; raises `chosen` or `cancelled`.'},
+            "pyzed.Notification": {**_V, "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."},
+        }),
+    ],
+})
+_page("command")["sections"][0][1]["pyzed.Command.save_file"] = {
+    "desc": "Opens the system's \"Save as\" dialog and calls `then(paths)` with the chosen path in a list (an empty list when it is cancelled).",
+    "params": {"then": "Callable that receives the list with the path.", "title": "The dialog's title.",
+               "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.",
+               "directory": "The folder it opens in.", "file_name": "The name it suggests."},
+}
+
 # -- Shader graphs ---------------------------------------------------------------------------
 _S = {"docstring": True, "members": False}
 _SM = {"docstring": True, "members": False}

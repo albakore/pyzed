@@ -341,7 +341,7 @@ def test_install_npx_warms_the_npm_cache(config, monkeypatch):
     from pyzed import project
 
     calls = []
-    monkeypatch.setattr(registry.shutil, "which", lambda name: "/usr/bin/npm" if name == "npm" else None)
+    monkeypatch.setattr(registry.shutil, "which", lambda name, path=None: "/usr/bin/npm" if name == "npm" else None)
     monkeypatch.setattr(project, "execute", lambda args, cwd=None, *, timeout=None: (
         calls.append((list(args), timeout)) or project.Result(list(args), 1, "offline")))
     messages = []
@@ -349,7 +349,7 @@ def test_install_npx_warms_the_npm_cache(config, monkeypatch):
     assert calls == [(["/usr/bin/npm", "cache", "add", "@agentclientprotocol/codex-acp@2.2.2"], registry.NPM_TIMEOUT)]
     assert c.command == "npx" and c.version == "2.2.2"
     assert any("npx will try" in m for m in messages)  # a failed download is not fatal
-    monkeypatch.setattr(registry.shutil, "which", lambda name: None)
+    monkeypatch.setattr(registry.shutil, "which", lambda name, path=None: None)
     calls.clear()
     registry.install(registry.RegistryAgent.from_dict(CODEX))
     assert calls == []

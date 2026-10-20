@@ -330,7 +330,7 @@ def test_acp_presets_and_a_missing_program(tmp_path):
     assert not acp.installed(missing)
     events = []
     acp.ACPAgent(missing, cwd=tmp_path, mcp_servers=[]).run("hi", on_event=events.append)
-    assert events[-2].kind == "error" and "Could not start" in events[-2].text
+    assert events[-2].kind == "error" and "was not found on this computer" in events[-2].text
 
 
 # -- GitHub and Google sign-in ------------------------------------------------------------------------------
@@ -836,14 +836,14 @@ def test_using_a_claude_subscription_through_claude_code(tmp_path, monkeypatch):
     d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
     d.view()  # the empty panel offers the subscription first
 
-    monkeypatch.setattr(agent_panel.shutil, "which", lambda name: None)
+    monkeypatch.setattr(agent_panel._platform, "which", lambda name: None)
     c.use_claude_subscription()  # no Node.js: says so and opens its download page
     assert opened == [agent_panel.NODE_URL] and c.settings.acp_agent("claude-code") is None
 
-    monkeypatch.setattr(agent_panel.shutil, "which", lambda name: "/usr/bin/npx" if name == "npx" else None)
+    monkeypatch.setattr(agent_panel._platform, "which", lambda name: "/usr/bin/npx" if name == "npx" else None)
     c.use_claude_subscription()
     assert c.settings.acp_agent("claude-code") is not None and c.thread.model == "acp:claude-code"
-    assert terminals == [["npx", "-y", "@anthropic-ai/claude-code"]] and c.claude_login is not None and c.active
+    assert terminals == [["/usr/bin/npx", "-y", "@anthropic-ai/claude-code"]] and c.claude_login is not None and c.active
     d.view()
     c.poll()
     assert c.claude_login is not None  # still waiting

@@ -2938,6 +2938,53 @@ PAGES.append({
     ],
 })
 
+# -- Servicios -------------------------------------------------------------------------------
+_V = {"docstring": True, "members": False}
+PAGES.append({
+    "slug": "services",
+    "title": "Servicios (pyzed.services)",
+    "description": "Referencia de la API de pyzed.services: temporizadores, atajos, vigilantes de archivos, procesos, tareas en segundo plano, peticiones web, portapapeles, ajustes, diálogos de archivos y notificaciones.",
+    "order": 10.5,
+    "intro": """
+        Los servicios lanzan eventos pero no dibujan nada: son los componentes no visuales de Pyzed
+        Design ([la bandeja bajo el formulario](/pyzed/es/editor/non-visual-components/)) y funcionan
+        igual en un `pz.App` o en un script. Los handlers van en `on_<evento>=`; los eventos que lanza un
+        hilo en segundo plano les llegan en el hilo de la app. Mira la [guía de servicios](/pyzed/es/guides/services/).
+
+        ```python
+        watcher = pz.FileWatcher("inbox", pattern="*.csv", on_created=self.import_file)
+        watcher.start()
+        ```
+    """,
+    "sections": [
+        ("Tiempo y teclas", {
+            "pyzed.Timer": {**_V, "desc": "Lanza `tick` (con la cuenta) cada `interval` milisegundos mientras está en marcha; con `repeat=False` hace un solo tick. Devuelve `subscriptions()` desde el `subscriptions` de tu app."},
+            "pyzed.Shortcut": {**_V, "desc": 'Lanza `activate` al pulsar una de sus `keys` (`"ctrl-s"`, `"Ctrl+S"`, varias separadas por comas; `mod-` es Cmd en macOS y Ctrl en el resto). Llama a `handle(combo)` desde `on_key`.'},
+        }),
+        ("Archivos y programas", {
+            "pyzed.FileWatcher": {**_V, "desc": "Vigila una carpeta o un archivo y lanza `created`, `modified` y `deleted` (una ruta) y `change` (las rutas cambiadas), revisando cada `interval` milisegundos. `start()`, `stop()`, `running`."},
+            "pyzed.Process": {**_V, "desc": "Ejecuta un programa y lanza `output` y `error_output` por cada línea que imprime, `finished` con su código de salida, `started` y `failed`. `start()`, `write()`, `kill()`, `wait()`."},
+            "pyzed.Worker": {**_V, "desc": "Ejecuta `work(value)` en un hilo aparte con `run(value)`; `report()` lanza `progress`, el resultado llega en `done` y una excepción en `failed`. `cancel()` activa `cancelled`."},
+        }),
+        ("Red", {
+            "pyzed.HttpRequest": {**_V, "desc": "Llama a una dirección web en segundo plano: `send()` lanza `response` con un `HttpResponse` (también con estados de error) o `failed` si no hubo respuesta. `json=` envía JSON."},
+            "pyzed.HttpResponse": {**_V, "desc": "La respuesta de un servidor web: `status`, `ok`, `headers`, `content` (bytes), `text` y `json()`."},
+        }),
+        ("Sistema", {
+            "pyzed.Clipboard": {**_V, "desc": "El portapapeles del sistema: `copy(text)` y `paste()` devuelven comandos; con `watch=True` lanza `change` cuando se copia algo nuevo."},
+            "pyzed.Settings": {**_V, "desc": "Valores que se guardan entre ejecuciones: un diccionario guardado como JSON en la carpeta de ajustes del usuario en cada cambio, con `defaults`; lanza `change` con `(clave, valor)`."},
+            "pyzed.FileDialog": {**_V, "desc": 'El diálogo de archivos del sistema: `show()` devuelve el comando que lo abre en el modo `"open"`, `"open_many"`, `"save"` o `"folder"`; lanza `chosen` o `cancelled`.'},
+            "pyzed.Notification": {**_V, "desc": "Una notificación de escritorio: `show(text)` la muestra y devuelve si pudo; lanza `shown` o `failed`."},
+        }),
+    ],
+})
+_page("command")["sections"][0][1]["pyzed.Command.save_file"] = {
+    "desc": "Abre el diálogo «Guardar como» del sistema y llama a `then(rutas)` con la ruta elegida en una lista (una lista vacía si se cancela).",
+    "params": {"then": "Callable que recibe la lista con la ruta.", "title": "El título del diálogo.",
+               "filters": "Una lista de pares `(nombre, extensiones)`, como `[(\"Imágenes\", [\"png\", \"jpg\"])]`.",
+               "directory": "La carpeta en la que se abre.", "file_name": "El nombre que sugiere."},
+}
+
 # -- Grafos de shaders -----------------------------------------------------------------------
 _S = {"docstring": True, "members": False}
 _SM = {"docstring": True, "members": False}

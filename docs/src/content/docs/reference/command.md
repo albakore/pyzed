@@ -308,6 +308,22 @@ Opens the system's file dialog and calls `then(paths)` with the chosen paths (an
 | `multiple` | `False` picks a single file. |
 | `folder` | `True` picks folders instead of files. |
 
+### `save_file`
+
+```python
+save_file(then, *, title=None, filters=None, directory=None, file_name=Ellipsis)
+```
+
+Opens the system's "Save as" dialog and calls `then(paths)` with the chosen path in a list (an empty list when it is cancelled).
+
+| Parameter | Description |
+| --- | --- |
+| `then` | Callable that receives the list with the path. |
+| `title` | The dialog's title. |
+| `filters` | A list of `(name, extensions)` pairs, like `[("Images", ["png", "jpg"])]`. |
+| `directory` | The folder it opens in. |
+| `file_name` | The name it suggests. |
+
 ## Windows and clipboard
 
 ### `open_window`

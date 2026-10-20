@@ -12,14 +12,13 @@ from __future__ import annotations
 import fnmatch
 import queue
 import re
-import shutil
 import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from .. import _core, ui
+from .. import _core, _platform, ui
 from .. import agents as _agents
 from ..agents import acp as _acp
 from ..agents import mcp_client as _mcp
@@ -247,6 +246,7 @@ class AgentController:
         self.inline: Optional[InlineAssist] = None
         # settings dialog
         self.provider_open: Optional[str] = None
+        self.advanced_open = False  # the Advanced part of the settings
         self.key_buffer: Dict[str, str] = {}
         self.url_buffer: Dict[str, str] = {}
         self.busy_provider: Optional[str] = None
@@ -965,6 +965,9 @@ class AgentController:
         self.view = "thread"
         self.server_draft = None
 
+    def toggle_advanced(self) -> None:
+        self.advanced_open = not self.advanced_open
+
     def toggle_block(self, key: str) -> None:
         self.open_blocks ^= {key}
 
@@ -1066,13 +1069,25 @@ class AgentController:
         self.d.notify(tr("Changes rejected"), kind="info")
 
     def retry(self) -> Any:
-        """Sends the last user message again."""
-        for m in reversed(self.thread.messages):
+        """Sends the last user message again (in place of it when it got no answer, so it is not repeated)."""
+        messages = self.thread.messages
+        for i in range(len(messages) - 1, -1, -1):
+            m = messages[i]
             if m.get("role") == "user":
                 texts = [b.get("text", "") for b in m.get("content", []) if b.get("type") == "text"]
                 if texts and not texts[0].startswith("<context>"):
+                    if i == len(messages) - 1 and not self.running and self.ready:
+                        del messages[i]
                     return self.send(texts[0])
         return None
+
+    def use_pyzed_agent(self) -> Any:
+        """Switches the thread to Pyzed's own agent (when an external one cannot start) and sends the
+        unanswered message again."""
+        model = next((m for m in self.models() if not m.startswith("acp:")), _providers.DEFAULT_MODEL)
+        self.set_model(model)
+        self.error = ""
+        return self.retry()
 
     def compose(self, text: str) -> Any:
         """Shows the panel with ``text`` in the input, ready to finish and send."""
@@ -1087,6 +1102,7 @@ class AgentController:
         if provider in _providers.PROVIDERS:
             self.provider_open = provider
         if section == "agents":
+            self.advanced_open = True
             self.toggle_registry(True)
         self.d.dialog = None  # e.g. the designer's Settings, where the button that opens these is
         self.d.layout.show("agent")
@@ -1805,7 +1821,7 @@ class AgentController:
     def use_claude_subscription(self) -> None:
         """Uses the user's Claude subscription (Pro or Max) through Claude Code, Anthropic's own agent: adds it
         as an external agent, picks it, and opens Claude Code in a terminal to sign in when it is not yet."""
-        if shutil.which("npx") is None:
+        if _platform.which("npx") is None:
             self.d.notify(tr("Claude Code needs Node.js 18 or later"), tr("Install it, then try again."),
                           kind="warning", seconds=8)
             _agents.login.open_browser(NODE_URL)
@@ -1848,6 +1864,11 @@ class AgentController:
                           seconds=6)
         elif now > self.claude_login:
             self.claude_login = None
+
+    @property
+    def needs_node(self) -> bool:
+        """Whether the last answer failed because the external agent needs Node.js, which is not installed."""
+        return "needs Node.js" in self.error
 
     @property
     def needs_claude_login(self) -> bool:
@@ -2934,6 +2955,12 @@ def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> An
             ui.button(tr("Retry"), c.retry, icon="refresh-cw", variant="ghost", size="sm", theme=t),
             ui.button(tr("Settings"), lambda: c.open_settings(), variant="ghost", size="sm", theme=t),
         ]
+        if c.needs_node:
+            actions = [
+                ui.button(tr("Install Node.js"), lambda: _agents.login.open_browser(NODE_URL), icon="download",
+                          variant="tinted", size="sm", theme=t),
+                ui.button(tr("Use Pyzed Agent"), c.use_pyzed_agent, variant="ghost", size="sm", theme=t),
+                *actions]
         if c.needs_claude_login:
             actions.insert(0, ui.button(tr("Sign in to Claude"), c.open_claude_login, icon="log-in",
                                         variant="tinted", size="sm", theme=t))
@@ -3366,7 +3393,7 @@ def settings_view(d: "Designer", t: Theme) -> Any:
         *[ui.ServiceRow(name=client.name, detail=str(client.path), icon_name="plug",
                         status={"installed": "running", "missing": "off", "unreadable": "error"}[state],
                         status_text=tr({"installed": "Pyzed's MCP is added", "missing": "Not added",
-                                        "unreadable": "Its settings file is not plain JSON; add it by hand"}[state]),
+                                        "unreadable": "Its settings file could not be read; add it by hand"}[state]),
                         busy=c.mcp_clients_busy == client.id,
                         primary="" if state == "unreadable" else tr("Remove") if state == "installed" else tr("Add"),
                         theme=t, key=f"mcp-client:{client.id}",
@@ -3385,19 +3412,25 @@ def settings_view(d: "Designer", t: Theme) -> Any:
                         on_primary=lambda _e, name=name: c.forget_tool(name)) for name in s.allowed_tools],
     ], t)
     efforts = list(_providers.EFFORTS)
-    general = ui.settings_group(tr("Agent"), [
+    provider_id, model_name = _providers.split_model(s.model)
+    claude = provider_id != "acp" and "claude" in model_name.lower()
+    general = ui.settings_group(tr("Agent"), [row for row in [
         ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=200, size="sm", theme=t),
-                 theme=t),
+                 description=tr("An external agent's own options (mode, model, effort) are in the message box")
+                 if provider_id == "acp" else None, theme=t),
+        # Claude's own options, only when Pyzed Agent answers with Claude
         ui.field(tr("Effort"), ui.select(efforts, s.effort, lambda v: c.set_setting("effort", v), width=120, size="sm",
                                          theme=t),
-                 description=tr("How much the model thinks before answering (Claude)"), theme=t),
-        ui.field(tr("Fast mode"), ui.switch(s.fast, lambda v: c.set_setting("fast", v), theme=t),
-                 description=tr("Fast mode: faster answers at a higher price (Claude Opus)"), theme=t),
+                 description=tr("How much the model thinks before answering (Claude)"), theme=t) if claude else None,
         ui.field(tr("Thinking"), ui.switch(s.thinking, lambda v: c.set_setting("thinking", v), theme=t),
-                 description=tr("Let Claude think before answering; off answers sooner"), theme=t),
+                 description=tr("Let Claude think before answering; off answers sooner"), theme=t) if claude else None,
+        ui.field(tr("Fast mode"), ui.switch(s.fast, lambda v: c.set_setting("fast", v), theme=t),
+                 description=tr("Fast mode: faster answers at a higher price (Claude Opus)"), theme=t) if claude else None,
         ui.field(tr("Ask before writing files"), ui.switch(s.confirm_writes, lambda v: c.set_setting("confirm_writes", v),
                                                            theme=t),
                  description=tr("Creating forms and saving files waits for your OK"), theme=t),
+    ] if row is not None], theme=t)
+    more = ui.settings_group(tr("More options"), [
         ui.field(tr("Show thinking"), ui.switch(s.show_thinking, lambda v: c.set_setting("show_thinking", v), theme=t),
                  theme=t),
         ui.field(tr("Follow the agent"), ui.switch(s.follow_agent, lambda v: c.set_setting("follow_agent", v),
@@ -3411,8 +3444,11 @@ def settings_view(d: "Designer", t: Theme) -> Any:
                  description=tr("Save threads on this computer, readable only by you"), theme=t),
     ], theme=t)
     rule = _core.rule(thickness=1, color=t.border_variant)
-    return _core.scrollable(_core.column([storage, providers, rule, agents, rule, mcp, rule, skills, rule, rules,
-                                          rule, clients, rule, permissions, rule, general], spacing=14,
-                                          padding=(10, 12, 16, 12),
-                                         width="fill"),
+    # the everyday settings first; agents, servers, skills and the rest fold away under "Advanced"
+    advanced_open = c.advanced_open or c.registry_open or adding
+    advanced = ui.disclosure(tr("Advanced"), _core.column(
+        [agents, rule, mcp, rule, skills, rule, rules, rule, clients, rule, more], spacing=14, width="fill"),
+        open=advanced_open, on_toggle=c.toggle_advanced, theme=t)
+    return _core.scrollable(_core.column([general, storage, providers, rule, permissions, rule, advanced], spacing=14,
+                                         padding=(10, 12, 16, 12), width="fill"),
                             height="fill", scrollbar_width=4, id=SETTINGS_SCROLL)

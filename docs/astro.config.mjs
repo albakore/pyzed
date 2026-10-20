@@ -93,6 +93,7 @@ const topics = [
 					{ slug: 'editor/styles-and-themes' },
 					{ slug: 'editor/animations-and-effects' },
 					{ slug: 'editor/events' },
+					{ slug: 'editor/non-visual-components' },
 					{ slug: 'editor/data-binding' },
 				],
 			},
@@ -157,6 +158,13 @@ const topics = [
 		link: '/showcase/',
 		icon: 'laptop',
 		items: [group('Showcase', 'Showcase', 'showcase'), group('Games', 'Videojuegos', 'games')],
+	},
+	{
+		id: 'audio',
+		label: { en: 'Audio', es: 'Audio' },
+		link: '/audio/engine/getting-started/',
+		icon: 'star',
+		items: [group('Engine', 'Motor', 'audio/engine')],
 	},
 	{
 		id: 'integrations',

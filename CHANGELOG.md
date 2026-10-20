@@ -19,6 +19,17 @@ stable version.
 ### Features
 
 - ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
+- ✨ An audio engine, `pyzed.audio`: build synthesizers, effects, drum machines and sequencers from 23 modules joined by cables, like VCV Rack (oscillators, filters, envelopes, LFOs, delay, reverb, distortion, chorus, compressor, sampler, drums, clock, sequencer, mixer, MIDI in and out). The sound is computed in Rust on a real-time thread and played with low latency on WASAPI, CoreAudio, PulseAudio/PipeWire or ALSA, or rendered offline to a WAV file; scopes, spectra and meters can be read at any time for visualizers. New **Audio** section in the docs.
+
+### Fixes
+
+- 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu: Node.js (`npx`), `claude` and `uv` are found in the user's shell `PATH` and where nvm, volta, fnm and `~/.local/bin` put them. When Node.js is missing, the agent says so, with **Install Node.js** and **Use Pyzed Agent**.
+- 🐛 **Retry** sends the unanswered message again instead of adding it once more to the thread.
+- 🐛 Pyzed's MCP server is added to Zed (and VS Code) even when their settings file has comments, which are kept.
+
+### Refactors
+
+- ♻ The agent settings show the everyday ones first (model, providers, permissions; Claude's effort, thinking and fast mode only when Pyzed Agent uses Claude) and fold the rest under **Advanced**.
 
 ## [1.5.0] - 2026-10-20
 
