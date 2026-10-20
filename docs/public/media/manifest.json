@@ -1,0 +1,243 @@
+{
+  "about": "Short muted looping clips for the docs, made by docs/scripts/record.py. Paths are relative to the site's base URL (public/). Embed with <video autoplay muted loop playsinline poster=...> and a WebM source before the MP4.",
+  "clips": [
+    {
+      "name": "snake",
+      "title": "Snake",
+      "description": "The Snake game from examples/games: a fixed-rate loop steering toward the food.",
+      "tags": [
+        "games"
+      ],
+      "width": 1120,
+      "height": 984,
+      "fps": 24,
+      "duration": 9.0,
+      "recorded": "off-screen",
+      "mp4": "media/snake.mp4",
+      "mp4_bytes": 60866,
+      "webm": "media/snake.webm",
+      "webm_bytes": 57937,
+      "poster": "media/snake.poster.webp",
+      "poster_bytes": 13882
+    },
+    {
+      "name": "breakout",
+      "title": "Breakout",
+      "description": "Breakout from examples/games: a ball, a paddle that follows it and bricks that break.",
+      "tags": [
+        "games"
+      ],
+      "width": 1280,
+      "height": 1090,
+      "fps": 30,
+      "duration": 8.0,
+      "recorded": "off-screen",
+      "mp4": "media/breakout.mp4",
+      "mp4_bytes": 196989,
+      "webm": "media/breakout.webm",
+      "webm_bytes": 232609,
+      "poster": "media/breakout.poster.webp",
+      "poster_bytes": 21878
+    },
+    {
+      "name": "neon-invaders",
+      "title": "Neon Invaders",
+      "description": "Neon Invaders from examples/games: waves, shots, explosions and power-ups.",
+      "tags": [
+        "games"
+      ],
+      "width": 1280,
+      "height": 956,
+      "fps": 30,
+      "duration": 9.0,
+      "recorded": "off-screen",
+      "mp4": "media/neon-invaders.mp4",
+      "mp4_bytes": 333462,
+      "webm": "media/neon-invaders.webm",
+      "webm_bytes": 342830,
+      "poster": "media/neon-invaders.poster.webp",
+      "poster_bytes": 32142
+    },
+    {
+      "name": "game-of-life",
+      "title": "Game of Life",
+      "description": "Conway's Game of Life drawn on a canvas, one generation every few frames.",
+      "tags": [
+        "apps"
+      ],
+      "width": 1280,
+      "height": 1026,
+      "fps": 20,
+      "duration": 7.0,
+      "recorded": "off-screen",
+      "mp4": "media/game-of-life.mp4",
+      "mp4_bytes": 260809,
+      "webm": "media/game-of-life.webm",
+      "webm_bytes": 372481,
+      "poster": "media/game-of-life.poster.webp",
+      "poster_bytes": 32162
+    },
+    {
+      "name": "shaders",
+      "title": "Shader graphs",
+      "description": "Six node-based shaders from examples/showcase/shaders running at once.",
+      "tags": [
+        "shading",
+        "showcase"
+      ],
+      "width": 1280,
+      "height": 666,
+      "fps": 24,
+      "duration": 8.0,
+      "recorded": "off-screen",
+      "mp4": "media/shaders.mp4",
+      "mp4_bytes": 329969,
+      "webm": "media/shaders.webm",
+      "webm_bytes": 392414,
+      "poster": "media/shaders.poster.webp",
+      "poster_bytes": 41088
+    },
+    {
+      "name": "themes",
+      "title": "One app, six themes",
+      "description": "The component gallery (examples/gallery.py) switching between built-in themes.",
+      "tags": [
+        "library",
+        "theming"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 12,
+      "duration": 7.5,
+      "recorded": "off-screen",
+      "mp4": "media/themes.mp4",
+      "mp4_bytes": 245279,
+      "webm": "media/themes.webm",
+      "webm_bytes": 216145,
+      "poster": "media/themes.poster.webp",
+      "poster_bytes": 43206,
+      "webp": "media/themes.webp",
+      "webp_bytes": 197442
+    },
+    {
+      "name": "designer-themes",
+      "title": "Pyzed Design in other themes",
+      "description": "Pyzed Design's own look following the theme picked in Settings.",
+      "tags": [
+        "designer",
+        "theming"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 12,
+      "duration": 7.5,
+      "recorded": "off-screen",
+      "mp4": "media/designer-themes.mp4",
+      "mp4_bytes": 178201,
+      "webm": "media/designer-themes.webm",
+      "webm_bytes": 183735,
+      "poster": "media/designer-themes.poster.webp",
+      "poster_bytes": 44708,
+      "webp": "media/designer-themes.webp",
+      "webp_bytes": 173930
+    },
+    {
+      "name": "form-validation",
+      "title": "A form validating as you type",
+      "description": "The login form made in Pyzed Design: a wrong email is flagged, fixed, then Sign in runs its progress.",
+      "tags": [
+        "designer",
+        "forms"
+      ],
+      "width": 880,
+      "height": 800,
+      "fps": 24,
+      "duration": 10.25,
+      "recorded": "off-screen",
+      "mp4": "media/form-validation.mp4",
+      "mp4_bytes": 47140,
+      "webm": "media/form-validation.webm",
+      "webm_bytes": 63586,
+      "poster": "media/form-validation.poster.webp",
+      "poster_bytes": 15212
+    },
+    {
+      "name": "designer-place-controls",
+      "title": "Placing controls from the toolbox",
+      "description": "Pyzed Design: a button, a text box and a check box dragged from the toolbox onto an empty form.",
+      "tags": [
+        "designer"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 24,
+      "duration": 7.92,
+      "recorded": "off-screen",
+      "mp4": "media/designer-place-controls.mp4",
+      "mp4_bytes": 120352,
+      "webm": "media/designer-place-controls.webm",
+      "webm_bytes": 190253,
+      "poster": "media/designer-place-controls.poster.webp",
+      "poster_bytes": 52478
+    },
+    {
+      "name": "shader-graph",
+      "title": "Building a shader graph",
+      "description": "Pyzed Design's Shader view: Voronoi and Palette nodes dragged in and wired to the Output, with live previews.",
+      "tags": [
+        "designer",
+        "shading"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 24,
+      "duration": 9.58,
+      "recorded": "off-screen",
+      "mp4": "media/shader-graph.mp4",
+      "mp4_bytes": 259328,
+      "webm": "media/shader-graph.webm",
+      "webm_bytes": 335717,
+      "poster": "media/shader-graph.poster.webp",
+      "poster_bytes": 54400
+    },
+    {
+      "name": "shader-preview",
+      "title": "A shader's Preview tab",
+      "description": "The Preview tab of the Shader view: the glow ring pulsing as time runs.",
+      "tags": [
+        "designer",
+        "shading"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 24,
+      "duration": 6.0,
+      "recorded": "off-screen",
+      "mp4": "media/shader-preview.mp4",
+      "mp4_bytes": 50723,
+      "webm": "media/shader-preview.webm",
+      "webm_bytes": 90015,
+      "poster": "media/shader-preview.poster.webp",
+      "poster_bytes": 34984
+    },
+    {
+      "name": "hover",
+      "title": "Hover, press and toggle",
+      "description": "Pyzed controls reacting to a real pointer: hover and press states, a tooltip, a switch, a check box, a slider.",
+      "tags": [
+        "library"
+      ],
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "duration": 11.43,
+      "recorded": "live (Xvfb)",
+      "mp4": "media/hover.mp4",
+      "mp4_bytes": 57303,
+      "webm": "media/hover.webm",
+      "webm_bytes": 81513,
+      "poster": "media/hover.poster.webp",
+      "poster_bytes": 12420
+    }
+  ]
+}
