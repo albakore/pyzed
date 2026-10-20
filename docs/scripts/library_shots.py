@@ -103,8 +103,9 @@ def run_snippet(code: str):
     *body, last = tree.body
     if not isinstance(last, ast.Expr):
         raise ValueError("a library snippet must end with an expression (the widget)")
-    exec(compile(ast.Module(body=body, type_ignores=[]), "<snippet>", "exec"), ns)
-    return eval(compile(ast.Expression(last.value), "<snippet>", "eval"), ns)
+    # Named like a reader's file, so the error cards and dialogs drawn from a snippet say "app.py:3".
+    exec(compile(ast.Module(body=body, type_ignores=[]), "app.py", "exec"), ns)
+    return eval(compile(ast.Expression(last.value), "app.py", "eval"), ns)
 
 
 class Shot(pz.App):
