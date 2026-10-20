@@ -34,6 +34,11 @@ COMMON_EVENTS = ("mouse_enter", "mouse_leave", "right_click")
 #: Events of the form itself.
 FORM_EVENTS = ("load", "close", "key", "resize")
 
+#: The toolbox category of the non-visual components (timers, watchers...), drawn in the tray under the form.
+NON_VISUAL = "Components"
+#: The size a non-visual component is given (it has no place on the form; the tray sizes its chip itself).
+TRAY_SIZE = (120, 24)
+
 EVENT_DOCS = {
     "click": "Runs when {name} is clicked.",
     "double_click": "Runs when {name} is double-clicked.",
@@ -48,7 +53,42 @@ EVENT_DOCS = {
     "close": "Runs when {name} is closing; return False to keep it open.",
     "key": "Runs on every key press (``event.value`` is a combo such as ``\"ctrl-s\"``).",
     "resize": "Runs when {name} is resized (``event.value`` is ``(width, height)``).",
+    # non-visual components; ``(type, event)`` keys describe an event that means something else on one of them
+    ("timer", "tick"): "Runs every ``interval`` milliseconds while {name} is running (``event.value`` counts the "
+                       "ticks).",
+    "activate": "Runs when the keys of {name} are pressed anywhere in the window (``event.value`` is the combo).",
+    ("file_watcher", "change"): "Runs after {name} finds changes (``event.value`` lists the changed paths).",
+    "created": "Runs when {name} sees a new file (``event.value`` is its path).",
+    "modified": "Runs when {name} sees a file change (``event.value`` is its path).",
+    "deleted": "Runs when {name} sees a file disappear (``event.value`` is its path).",
+    "output": "Runs for every line the program of {name} prints (``event.value`` is the line).",
+    "error_output": "Runs for every line the program of {name} prints to its error output (``event.value``).",
+    "finished": "Runs when the program of {name} ends (``event.value`` is its exit code, 0 when it went well).",
+    "started": "Runs when the program of {name} starts (``event.value`` is its process id).",
+    "failed": "Runs when {name} fails (``event.value`` says why).",
+    ("process", "failed"): "Runs when the program of {name} cannot start (``event.value`` is the message).",
+    "work": "Runs in a background thread when ``form.{name}.run(value)`` is called (``event.value``); return the "
+            "result. Change controls in progress and done, not here.",
+    "progress": "Runs when the work calls ``event.sender.report(value)`` (``event.value``).",
+    "done": "Runs when the work of {name} ends (``event.value`` is what it returned).",
+    ("worker", "failed"): "Runs when the work of {name} raises an exception (``event.value``).",
+    "response": "Runs when the server answers {name} (``event.value`` is the response: ``.status``, ``.ok``, "
+                "``.text``, ``.json()``).",
+    ("http_request", "failed"): "Runs when {name} got no answer (``event.value`` is the reason).",
+    ("clipboard", "change"): "Runs when new text is copied, in this app or another one (``event.value`` is the "
+                             "text).",
+    "paste": "Runs after ``form.{name}.paste()`` reads the clipboard (``event.value`` is the text).",
+    ("settings", "change"): "Runs when a setting of {name} changes (``event.value`` is ``(key, value)``).",
+    "chosen": "Runs when something is chosen in {name} (``event.value`` is the path, or a list of paths).",
+    "cancelled": "Runs when {name} is closed without choosing.",
+    "shown": "Runs after {name} is shown (``event.value`` is the text).",
+    ("notification", "failed"): "Runs when this system cannot show {name}.",
 }
+
+
+def event_text(type_: Optional[str], event: str, default: str = "") -> str:
+    """The English description of ``event`` on a control of ``type_`` (``None``: the form), with ``{name}``."""
+    return EVENT_DOCS.get((type_, event)) or EVENT_DOCS.get(event) or default
 
 
 @dataclass(frozen=True)
@@ -452,13 +492,18 @@ def _spinner(c: Control, ctx: RenderContext) -> Any:
                            width="fill", height="fill", center=True)
 
 
-def _timer(c: Control, ctx: RenderContext) -> Any:
+def _non_visual(c: Control, ctx: RenderContext) -> Any:
+    """How a non-visual component looks in the designer's component tray: its icon and name."""
     t = ctx.theme
+    spec = _REGISTRY.get(c.type)
     return _core.container(
-        _core.row([_icon("timer", size=14, color=t.icon_muted),
+        _core.row([_icon(spec.icon if spec is not None else "box", size=14, color=t.icon_muted),
                    ui.label(c.name, size="sm", color="text_muted", theme=t)], spacing=6, align="center"),
         width="fill", height="fill", center=True, bg=t.element, radius=t.radius_sm,
         border_color=t.border_variant, border_width=1)
+
+
+_timer = _non_visual
 
 
 def _outline(ctx: RenderContext, widget: Any, background: Any = None) -> Any:
@@ -772,10 +817,54 @@ for _component in (
               (Prop("data", "rows", "Name, Role\nAda, Engineer\nGrace, Admiral", group="Data", label="Rows"),
                Prop("selected", "number", None, group="Data"), Prop("striped", "bool", True)),
               ("change",), "Rows and columns from comma-separated text; change gives the row index."),
-    Component("timer", "Timer", "timer", "Components", _timer, (88, 24),
+    # -- non-visual components: they sit in the tray under the form and draw nothing at run time
+    Component("timer", "Timer", "timer", NON_VISUAL, _non_visual, TRAY_SIZE,
               (Prop("interval", "number", 1000, label="Interval (ms)", min=10, group="Behavior"),
-               Prop("running", "bool", True, group="Behavior")),
+               Prop("running", "bool", True, group="Behavior"), Prop("repeat", "bool", True, group="Behavior")),
               ("tick",), "Runs its tick event periodically. Invisible at run time.", visual=False),
+    Component("shortcut", "Shortcut", "command", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("keys", "text", "ctrl-s", group="Behavior"),),
+              ("activate",), "A keyboard shortcut for the whole window, such as ctrl-s.", visual=False),
+    Component("file_watcher", "File watcher", "folder-search", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("path", "text", ".", label="Path", group="Behavior"), Prop("pattern", "text", "*", group="Behavior"),
+               Prop("recursive", "bool", False, label="Subfolders", group="Behavior"),
+               Prop("interval", "number", 500, label="Interval (ms)", min=50, group="Behavior"),
+               Prop("running", "bool", True, group="Behavior")),
+              ("change", "created", "modified", "deleted"),
+              "Raises events when files are created, modified or deleted in a folder.", visual=False),
+    Component("process", "Process", "square-terminal", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("command", "text", "", group="Behavior"), Prop("directory", "text", "", label="Folder", group="Behavior"),
+               Prop("shell", "bool", False, label="Run in shell", group="Behavior"),
+               Prop("autostart", "bool", False, label="Start on load", group="Behavior")),
+              ("output", "error_output", "finished", "started", "failed"),
+              "Runs a program or command and streams what it prints, line by line.", visual=False),
+    Component("worker", "Background worker", "cpu", NON_VISUAL, _non_visual, TRAY_SIZE, (),
+              ("work", "progress", "done", "failed"),
+              "Runs slow work in a background thread so the window stays responsive.", visual=False),
+    Component("http_request", "Web request", "globe", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("url", "text", "https://", label="Address", group="Behavior"),
+               Prop("method", "choice", "GET", choices=("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"), group="Behavior"),
+               Prop("headers", "multiline", "", group="Behavior"), Prop("body", "multiline", "", group="Behavior"),
+               Prop("timeout", "number", 30, label="Timeout (s)", min=1, group="Behavior"),
+               Prop("send_on_load", "bool", False, label="Send on load", group="Behavior")),
+              ("response", "failed"), "Calls a web address or API in the background.", visual=False),
+    Component("clipboard", "Clipboard", "clipboard", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("watch", "bool", False, label="Watch changes", group="Behavior"),
+               Prop("interval", "number", 500, label="Interval (ms)", min=100, group="Behavior")),
+              ("change", "paste"), "Copies and pastes text, and notices what is copied.", visual=False),
+    Component("settings", "Settings", "settings-2", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("file", "text", "", label="File", group="Behavior"),
+               Prop("remember", "list", "", label="Remember", group="Behavior")),
+              ("change",), "Keeps values between runs, and the values of the controls you list.", visual=False),
+    Component("file_dialog", "File dialog", "folder-open", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("mode", "choice", "open", choices=("open", "open_many", "save", "folder"), group="Behavior"),
+               Prop("title", "text", "", group="Behavior"), Prop("filters", "multiline", "", group="Behavior"),
+               Prop("directory", "text", "", label="Start folder", group="Behavior"),
+               Prop("file_name", "text", "", label="Suggested name", group="Behavior")),
+              ("chosen", "cancelled"), "The system's open, save and folder dialogs.", visual=False),
+    Component("notification", "Notification", "bell", NON_VISUAL, _non_visual, TRAY_SIZE,
+              (Prop("title", "text", "", group="Behavior"), Prop("text", "text", "", group="Behavior")),
+              ("shown", "failed"), "A desktop notification.", visual=False),
 ):
     register(_component)
 

@@ -162,8 +162,8 @@ class Document:
         spec = _components.get(type_)
         grid = self.form.grid
         container = self.form.get(parent) if parent else None
-        if container is not None and _layout.kind(container) is None:
-            container = None
+        if container is not None and (_layout.kind(container) is None or not spec.visual):
+            container = None  # non-visual components belong to the form itself
         w, h = width or spec.size[0], height or spec.size[1]
         bounds = (container.width, container.height) if container is not None else self.size
         if container is not None and _layout.kind(container) != "free":
@@ -189,6 +189,9 @@ class Document:
         anything): it must be a container other than the control itself and not inside it."""
         if container is None:
             return True
+        control = self.form.get(name)
+        if control is not None and not _components.get(control.type).visual:
+            return False  # a timer, a watcher... belongs to the form, not to a container
         target = self.form.get(container)
         return (target is not None and _layout.kind(target) is not None and container != name
                 and not self.form.is_inside(container, name))
@@ -234,7 +237,8 @@ class Document:
         """Puts controls (the selection by default) inside a new container of ``type_`` around them."""
         form = self.form
         picked = [form[n] for n in (names if names is not None else self.selection) if form.get(n) is not None]
-        picked = [c for c in picked if not any(a in picked for a in form.ancestors(c.name))]
+        picked = [c for c in picked if not any(a in picked for a in form.ancestors(c.name))
+                  and _components.get(c.type).visual]
         if not picked:
             return None
         parent = picked[0].parent
@@ -652,7 +656,8 @@ class Document:
             handler = _code.handler_name("form" if name is None else owner, event)
             events[event] = handler
             self.commit()
-        doc = _components.EVENT_DOCS.get(event, "Event handler.").format(name=owner)
+        type_ = self.form[name].type if name is not None else None
+        doc = _components.event_text(type_, event, "Event handler.").format(name=owner)
         self.code, created = _code.ensure_function(self.code, handler, doc)
         if created:
             self.dirty = True

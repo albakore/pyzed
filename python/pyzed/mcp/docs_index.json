@@ -313,6 +313,12 @@
    "path": "docs/src/content/docs/editor/menus-and-commands.md"
   },
   {
+   "slug": "editor/non-visual-components",
+   "title": "Non-visual components",
+   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications in Pyzed Design: components with properties and events that draw nothing.",
+   "path": "docs/src/content/docs/editor/non-visual-components.md"
+  },
+  {
    "slug": "editor/projects",
    "title": "Projects",
    "description": "Create and open uv projects in Pyzed Design, browse and search files, manage dependencies, run ruff and ty, and create the git repository.",
@@ -533,6 +539,12 @@
    "title": "Projects with uv",
    "description": "Create and manage Pyzed desktop apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready from the first command.",
    "path": "docs/src/content/docs/guides/projects.mdx"
+  },
+  {
+   "slug": "guides/services",
+   "title": "Services",
+   "description": "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps with Pyzed, with events delivered on the UI thread.",
+   "path": "docs/src/content/docs/guides/services.md"
   },
   {
    "slug": "guides/stability",
@@ -1375,6 +1387,12 @@
    "path": "docs/src/content/docs/reference/index.mdx"
   },
   {
+   "slug": "reference/services",
+   "title": "Services (pyzed.services)",
+   "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps.",
+   "path": "docs/src/content/docs/reference/services.md"
+  },
+  {
    "slug": "reference/shading",
    "title": "Shader graphs (pyzed.shading)",
    "description": "API reference for pyzed.shading: load .pzshad shader graphs, change their variables, and build node graphs in code that compile to the WGSL of pz.shader.",
@@ -2145,10 +2163,22 @@
    "path": "examples/designer/login.py"
   },
   {
+   "name": "designer/tasks",
+   "kind": "designer",
+   "summary": "Event handlers for the task runner: the non-visual components at work.",
+   "path": "examples/designer/tasks.py"
+  },
+  {
    "name": "designer/login.pzform",
    "kind": "designer",
    "summary": "A form made with the visual designer (.pzform layout).",
    "path": "examples/designer/login.pzform"
+  },
+  {
+   "name": "designer/tasks.pzform",
+   "kind": "designer",
+   "summary": "A form made with the visual designer (.pzform layout).",
+   "path": "examples/designer/tasks.pzform"
   },
   {
    "name": "integrations/README.md",
@@ -2952,6 +2982,16 @@
      "directory": "The folder it opens in.",
      "multiple": "`False` picks a single file.",
      "folder": "`True` picks folders instead of files."
+    }
+   },
+   "pyzed.Command.save_file": {
+    "desc": "Opens the system's \"Save as\" dialog and calls `then(paths)` with the chosen path in a list (an empty list when it is cancelled).",
+    "params": {
+     "then": "Callable that receives the list with the path.",
+     "title": "The dialog's title.",
+     "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.",
+     "directory": "The folder it opens in.",
+     "file_name": "The name it suggests."
     }
    },
    "pyzed.Command.open_window": {
@@ -5407,6 +5447,39 @@
    },
    "pyzed.game.Shake": {
     "desc": "Screen shake: `kick(8)` on a hit, `update(dt)` every frame, and start the canvas shapes with `*shake.shapes()` (a translate) so everything moves together."
+   },
+   "pyzed.Timer": {
+    "desc": "Raises `tick` (with the count) every `interval` milliseconds while it is running; `repeat=False` ticks once. Return `subscriptions()` from your app's `subscriptions`."
+   },
+   "pyzed.Shortcut": {
+    "desc": "Raises `activate` when one of its `keys` is pressed (`\"ctrl-s\"`, `\"Ctrl+S\"`, several separated by commas; `mod-` is Cmd on macOS and Ctrl elsewhere). Call `handle(combo)` from `on_key`."
+   },
+   "pyzed.FileWatcher": {
+    "desc": "Watches a folder or a file and raises `created`, `modified` and `deleted` (a path) and `change` (the changed paths), checking every `interval` milliseconds. `start()`, `stop()`, `running`."
+   },
+   "pyzed.Process": {
+    "desc": "Runs a program and raises `output` and `error_output` for every line it prints, `finished` with its exit code, `started` and `failed`. `start()`, `write()`, `kill()`, `wait()`."
+   },
+   "pyzed.Worker": {
+    "desc": "Runs `work(value)` in a background thread with `run(value)`; `report()` raises `progress`, the result arrives in `done` and an exception in `failed`. `cancel()` sets `cancelled`."
+   },
+   "pyzed.HttpRequest": {
+    "desc": "Calls a web address in the background: `send()` raises `response` with an `HttpResponse` (error statuses included) or `failed` when there was no answer. `json=` sends JSON."
+   },
+   "pyzed.HttpResponse": {
+    "desc": "A web server's answer: `status`, `ok`, `headers`, `content` (bytes), `text` and `json()`."
+   },
+   "pyzed.Clipboard": {
+    "desc": "The system clipboard: `copy(text)` and `paste()` return commands; with `watch=True` it raises `change` when something new is copied."
+   },
+   "pyzed.Settings": {
+    "desc": "Values kept between runs: a dict saved as JSON in the user's settings folder at every change, with `defaults`; raises `change` with `(key, value)`."
+   },
+   "pyzed.FileDialog": {
+    "desc": "The system's file dialog: `show()` returns the command that opens it in `mode` `\"open\"`, `\"open_many\"`, `\"save\"` or `\"folder\"`; raises `chosen` or `cancelled`."
+   },
+   "pyzed.Notification": {
+    "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."
    },
    "pyzed.shading.load": {
     "desc": "The `Shader` of a `.pzshad` file, cached by path (`fresh=True` reads it again). It reloads by itself when the file changes."

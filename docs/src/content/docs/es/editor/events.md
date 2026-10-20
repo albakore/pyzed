@@ -59,7 +59,7 @@ Cada control visible tiene tres eventos comunes además de los suyos:
 | Deslizador, Número | `change` (el número nuevo) |
 | Lista | `change` (el elemento elegido) |
 | Tabla | `change` (el índice de la fila elegida) |
-| Temporizador (invisible al ejecutar) | `tick`, cada `interval` milisegundos mientras `running` |
+| Temporizador, Atajo, Vigilante de archivos, Proceso, Tarea en segundo plano, Petición web, Portapapeles, Ajustes, Diálogo de archivos, Notificación | Los suyos (`tick`, `activate`, `change`, `output`, `done`, `response`...): mira [Componentes no visuales](/pyzed/es/editor/non-visual-components/). No tienen eventos de ratón. |
 | Título, Barra de progreso, Insignia, Imagen, Icono, Markdown, Indicador de carga, Aviso, Avatar, Atajo, Métrica, Gráfico, contenedores, Espaciador, Separador | Solo los comunes |
 
 El propio formulario:

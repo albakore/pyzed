@@ -135,6 +135,14 @@ class Command:
         """Resizes the window to `width` x `height` logical pixels."""
         ...
     @staticmethod
+    def save_file(then: Any, *, title: Any = ..., filters: Any = ..., directory: Any = ..., file_name: Any = ...) -> Any:
+        """Opens the system's "Save as" dialog and calls `then(paths)` with the chosen path in a
+        list (an empty list when it is cancelled).
+
+        `file_name` is the name it suggests; `filters` and `directory` work as in `pick_files`.
+        """
+        ...
+    @staticmethod
     def scroll_to(id: Any, x: Any = ..., y: Any = ...) -> Any:
         """Scrolls the `scrollable` with the given `id` to an absolute offset in pixels."""
         ...

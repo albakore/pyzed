@@ -13,7 +13,8 @@ editar.
 ## La caja de herramientas
 
 Todos los componentes que puedes colocar, por categoría: **Comunes**, **Presentación**, **Contenedores**,
-**Disposición**, **Navegación**, **Componentes** (el temporizador) y una categoría por cada grupo de
+**Disposición**, **Navegación**, **Componentes** (los [no visuales](/pyzed/es/editor/non-visual-components/): temporizadores, vigilantes de
+archivos, procesos... que van a la bandeja bajo el formulario) y una categoría por cada grupo de
 [componentes diseñados](/pyzed/es/editor/component-designer/) de tu proyecto. Pasa el ratón por una fila para ver
 la descripción del componente.
 
@@ -177,7 +178,8 @@ componente): clic para seleccionarlo, **+** le añade un control.
 - **Clic derecho** en una fila abre el menú contextual.
 
 :::tip
-La estructura es la forma más fácil de elegir un control tapado por otros, o uno sin tamaño como el temporizador, y
+La estructura es la forma más fácil de elegir un control tapado por otros, o un
+[componente no visual](/pyzed/es/editor/non-visual-components/) como un temporizador, y
 de mover controles entre contenedores con precisión.
 :::
 
