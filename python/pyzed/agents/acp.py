@@ -109,6 +109,45 @@ class ACPError(RuntimeError):
     """The agent could not start or answered with an error."""
 
 
+class AuthRequired(ACPError):
+    """The agent wants a sign-in before it opens a session; ``methods`` are its ways to sign in (ACP
+    ``authMethods``: dicts with ``id``, ``name``, ``description`` and, for some, ``type``)."""
+
+    def __init__(self, label: str, methods: List[Dict[str, Any]]) -> None:
+        super().__init__(f"{label} needs you to sign in")
+        self.methods = methods
+
+
+def auth_kind(method: Dict[str, Any]) -> str:
+    """How a way to sign in works, as in Zed: ``"agent"`` (the agent signs in by itself, usually opening the
+    browser and waiting for its page to come back), ``"terminal"`` (the agent's program runs in a terminal
+    with extra arguments, for example Claude Code's login) or ``"env_var"`` (a key in a variable)."""
+    kind = str(method.get("type") or "")
+    if kind in ("terminal", "env_var"):
+        return kind
+    if isinstance((method.get("_meta") or {}).get("terminal-auth"), dict):
+        return "terminal"
+    return "agent"
+
+
+def terminal_login(config: _providers.ACPAgentConfig, method: Dict[str, Any]) -> "tuple[List[str], Dict[str, str]]":
+    """The command (and extra environment) a ``"terminal"`` way to sign in runs in a terminal: the agent's own
+    program with the method's arguments, or the command the method names in ``_meta["terminal-auth"]``."""
+    meta = (method.get("_meta") or {}).get("terminal-auth")
+    if isinstance(meta, dict) and meta.get("command"):
+        command, args, env = str(meta["command"]), list(meta.get("args") or []), meta.get("env") or {}
+    else:
+        command, args, env = config.command, [*config.args, *(method.get("args") or [])], method.get("env") or {}
+    if isinstance(env, list):  # [{"name": ..., "value": ...}], like an MCP server's
+        env = {str(e.get("name")): str(e.get("value", "")) for e in env if isinstance(e, dict)}
+    return [command, *map(str, args)], {str(k): str(v) for k, v in dict(env).items()}
+
+
+def _auth_error(err: Exception) -> bool:
+    text = str(err).lower()
+    return "auth" in text or "-32000" in text or "/login" in text or "sign in" in text
+
+
 def _blocks(content: Union[str, List[Dict[str, Any]]], images: bool) -> List[Dict[str, Any]]:
     """A message in Pyzed's shape as ACP content blocks."""
     if isinstance(content, str):
@@ -180,13 +219,30 @@ class ACPAgent:
 
     # -- the connection ---------------------------------------------------------------------------
     def start(self) -> None:
-        """Starts the program and opens a session (done by the first ``run``)."""
+        """Starts the program and opens a session (done by the first ``run``). Raises ``AuthRequired`` when
+        the agent wants a sign-in first."""
         if self._rpc is not None and self._rpc.alive and self.session:
             return
+        self._connect()
+        try:
+            self.session = self._new_session()
+        except AuthRequired:
+            raise
+        except (ACPError, mcp_client.MCPError) as err:
+            self.close()
+            raise ACPError(f"{self.config.label}: {err}") from err
+
+    def _connect(self) -> None:
+        """Starts the program and introduces Pyzed (``initialize``), once."""
+        if self._rpc is not None and self._rpc.alive:
+            return
+        from .. import _platform
+
         hidden = mcp_client.get_secrets(f"acp.{self.config.name}", self._store)
         try:
+            # under WSL its sign-in page opens in Windows' browser, like Pyzed's own
             self._rpc = mcp_client.JsonRpcProcess(self.config.command, self.config.args,
-                                                  env={**self.config.env, **hidden},
+                                                  env={**_platform.browser_env(), **self.config.env, **hidden},
                                                   cwd=str(self.root), on_request=self._on_request,
                                                   on_notify=self._on_notify)
         except mcp_client.MCPError as err:
@@ -200,7 +256,6 @@ class ACPAgent:
                 "clientInfo": {"name": "Pyzed", "version": _version()}}, timeout=120) or {}
             self.capabilities = info.get("agentCapabilities") or {}
             self.auth_methods = [m for m in info.get("authMethods") or [] if isinstance(m, dict)]
-            self.session = self._new_session()
         except mcp_client.MCPError as err:
             self.close()
             raise ACPError(f"{self.config.label}: {err}") from err
@@ -211,16 +266,36 @@ class ACPAgent:
         try:
             result = self._rpc.request("session/new", params, timeout=120) or {}
         except mcp_client.MCPError as err:
-            if not self.auth_methods or "auth" not in str(err).lower():
+            if not self.auth_methods or not _auth_error(err):
                 raise
-            # the agent wants a sign-in first (it opens the browser itself, e.g. Gemini CLI)
-            self._emit(Event("text", f"Signing in to {self.config.label}…\n\n"))
-            self._rpc.request("authenticate", {"methodId": self.auth_methods[0].get("id")}, timeout=600)
-            result = self._rpc.request("session/new", params, timeout=120) or {}
+            raise AuthRequired(self.config.label, self.auth_methods) from err
         session = result.get("sessionId")
         if not session:
             raise ACPError(f"{self.config.label} did not open a session")
         return str(session)
+
+    def authenticate(self, method_id: str, *, timeout: float = 600) -> None:
+        """Signs in with one of the agent's ``auth_methods`` (an ``"agent"`` one: the agent opens the browser
+        itself and answers once the sign-in is done), then opens the session. Raises ``ACPError``."""
+        try:
+            self._connect()
+            assert self._rpc is not None
+            self._rpc.request("authenticate", {"methodId": method_id}, timeout=timeout)
+            self.session = self._new_session()
+        except AuthRequired:
+            raise ACPError(f"{self.config.label}: the sign-in did not finish") from None
+        except mcp_client.MCPError as err:
+            raise ACPError(f"{self.config.label}: {err}") from err
+
+    def signed_in(self) -> bool:
+        """Tries to open the session again (after a sign-in done elsewhere, such as in a terminal); whether it
+        worked. Never raises."""
+        try:
+            self.close()
+            self.start()
+            return True
+        except ACPError:
+            return False
 
     def _servers(self) -> List[Dict[str, Any]]:
         """The MCP servers the agent can start. A server given twice by name (over HTTP and as a local bridge)
@@ -269,6 +344,12 @@ class ACPAgent:
                 self._emit(Event("error", "The agent declined to continue with this request."))
             elif stop in ("max_tokens", "max_turn_requests"):
                 self._emit(Event("error", "The agent stopped at its limit."))
+        except AuthRequired as err:  # the message waits for the sign-in; the panel sends it again
+            self._flush()
+            if self.messages and self.messages[-1].get("content") is content:
+                self.messages.pop()
+            self._emit(Event("auth", str(err), args={"methods": err.methods, "prompt": content}))
+            last = str(err)
         except (ACPError, mcp_client.MCPError) as err:
             self._flush()
             self._emit(Event("error", str(err)))
@@ -329,6 +410,7 @@ class ACPAgent:
                 self._blocks.append(block)
                 self._calls[call_id] = block
             self._emit(Event("tool_call", tool=title, args=args, call_id=call_id))
+            self._follow(update)
             if update.get("status") in ("completed", "failed"):
                 self._finish_call(call_id, update)
         elif kind == "tool_call_update":
@@ -337,6 +419,10 @@ class ACPAgent:
                 block = self._calls.get(call_id)
                 if block is not None and update.get("title"):
                     block["name"] = str(update["title"])
+                if block is not None and update.get("kind"):
+                    block["kind"] = update["kind"]
+                kind_ = (block or {}).get("kind")
+            self._follow({**update, "kind": update.get("kind") or kind_})
             if update.get("status") in ("completed", "failed"):
                 self._finish_call(call_id, update)
         elif kind == "plan":
@@ -349,6 +435,15 @@ class ACPAgent:
             with self._lock:
                 self._blocks = [b for b in self._blocks if b.get("type") != "plan"] + [{"type": "plan", "steps": steps}]
             self._emit(Event("plan", args={"steps": steps}))
+
+    def _follow(self, update: Dict[str, Any]) -> None:
+        """Tells where the agent edits (an ACP tool call's ``locations``) with a ``"file"`` event."""
+        if update.get("kind") not in ("edit", "delete", "move"):
+            return
+        for loc in update.get("locations") or []:
+            if isinstance(loc, dict) and loc.get("path"):
+                self._emit(Event("file", str(loc["path"]), args={"line": loc.get("line"), "written": False}))
+                return
 
     def _finish_call(self, call_id: str, update: Dict[str, Any]) -> None:
         error = update.get("status") == "failed"
@@ -379,6 +474,7 @@ class ACPAgent:
             path = self._path(str(params.get("path") or ""))
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(str(params.get("content") or "").encode("utf-8"))
+            self._emit(Event("file", str(path), args={"written": True}))
             return None
         raise LookupError(method)
 

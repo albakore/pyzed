@@ -3,7 +3,9 @@ the branch and worktree, getting a project's environment ready, and what the age
 
 import asyncio
 import shutil
+import pathlib
 import subprocess
+import sys
 
 import pytest
 
@@ -219,6 +221,8 @@ def test_clone_repository(tmp_path):
     assert p.clone_target() == tmp_path / "work" / "remote-app"
     p.clone_url = "git@github.com:user/app.git"
     assert p.clone_target() == tmp_path / "work" / "app"
+    p.clone_url = "C:\\Users\\me\\repos\\remote-app\\"
+    assert p.clone_target() == tmp_path / "work" / "remote-app"
     p.clone_url = str(source)
     task = p.clone()
     assert d.dialog is None and p.busy == "Cloning remote-app"
@@ -226,3 +230,31 @@ def test_clone_repository(tmp_path):
     _close(finish())
     cloned = (tmp_path / "work" / "remote-app").resolve()
     assert (cloned / "pyproject.toml").is_file() and p.project.root == cloned
+
+
+def test_wsl_project_opened_from_windows(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "win32")
+    root = r"\\wsl.localhost\Ubuntu\home\me\shop"
+    env = project.environment(root)
+    assert env.remote and "wsl.exe" in env.describe()
+    assert project.linux_path(root + r"\ui\main.pzform") == "/home/me/shop/ui/main.pzform"
+    command = env.command(["uv", "run", root + r"\main.py"], root, {"PYZED_DESIGNER_RUN": "1"})
+    assert command == ["wsl.exe", "-d", "Ubuntu", "--cd", "/home/me/shop", "--", "sh", "-lc", 'exec "$@"', "sh",
+                       "env", "PYZED_DESIGNER_RUN=1", "uv", "run", "/home/me/shop/main.py"]
+    app = project.Project(pathlib.Path(root), {})
+    ran = []
+    monkeypatch.setattr(project, "execute", lambda args, cwd=None, timeout=None: ran.append((list(args), cwd))
+                        or project.Result(list(args), 0, "uv 0.9.0"))
+    monkeypatch.setattr(project, "find_uv", lambda: None)  # Windows' own uv does not matter
+    assert app.uv("sync").ok and app.git("status").ok
+    (uv_args, cwd), (git_args, _) = ran
+    assert cwd is None and uv_args[:5] == ["wsl.exe", "-d", "Ubuntu", "--cd", "/home/me/shop"]
+    assert uv_args[-2:] == ["uv", "sync"] and git_args[-2:] == ["git", "status"]
+    assert app.run_args()[0] == "uv" and app.has_uv()
+    assert project.tools(app)["uv"].version == "0.9.0"
+
+
+def test_local_projects_run_commands_directly(tmp_path, monkeypatch):
+    app = project.Project.open(_make(tmp_path, "shop"))
+    assert not app.environment.remote
+    assert project.Environment("local", "Linux").command(["uv", "sync"], tmp_path) == ["uv", "sync"]

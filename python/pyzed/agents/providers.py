@@ -113,6 +113,26 @@ FAST_MODELS = ("claude-opus-5-5", "claude-opus-5")
 MODES = ("read", "ask", "bypass", "chat")
 
 
+#: Context windows (tokens) by model name prefix, longest match first; the panel's context meter uses them.
+CONTEXT_WINDOWS: Dict[str, int] = {
+    "claude-haiku-4": 200_000, "claude-3": 200_000, "claude-sonnet-4-5": 200_000, "claude-opus-4-5": 200_000,
+    "claude-opus-4-1": 200_000, "claude-sonnet-4-2": 200_000, "claude-opus-4-2": 200_000, "claude-": 1_000_000,
+    "gpt-4.1": 1_047_576, "gpt-4o": 128_000, "gpt-5": 400_000, "o3": 200_000, "o4": 200_000,
+    "gemini-": 1_048_576, "google/gemini": 1_048_576, "openai/gpt-4.1": 1_047_576, "grok-4": 256_000,
+    "deepseek-": 128_000, "mistral-large": 128_000,
+}
+
+
+def context_window(model: str) -> int:
+    """The context window of ``model`` (``"provider:name"``), in tokens; 0 when it is not known."""
+    _, name = split_model(model)
+    name = name.lower()
+    for prefix in sorted(CONTEXT_WINDOWS, key=len, reverse=True):
+        if name.startswith(prefix):
+            return CONTEXT_WINDOWS[prefix]
+    return 0
+
+
 def split_model(model: str) -> Tuple[str, str]:
     """``"ollama:qwen3:8b"`` -> ``("ollama", "qwen3:8b")``; a bare name is taken as an Anthropic model."""
     provider, sep, name = model.partition(":")
@@ -231,6 +251,11 @@ class AgentSettings:
     share_pyzed_mcp: bool = True
     #: Agent skills (``agents.skills``) the built-in agent must not use, by name.
     disabled_skills: List[str] = field(default_factory=list)
+    #: Open the files the agent writes (and where an external agent edits) as it works, like Zed's "Follow".
+    follow_agent: bool = True
+    #: A desktop notification when the agent finishes or waits for an answer while the window is in the
+    #: background, like Zed's.
+    notify_when_done: bool = True
 
     def provider(self, provider_id: str) -> ProviderSettings:
         """The settings of ``provider_id`` (created empty when missing)."""

@@ -835,7 +835,7 @@ def _load_bundled(file: str) -> List[Theme]:
 
 
 class themes:  # noqa: N801 - namespace
-    """Built-in themes (Zed's One, Ayu and Gruvbox families) and the theme registry."""
+    """Built-in themes (Zed's One, Ayu and Gruvbox families, and Pyzed's own) and the theme registry."""
 
     ONE_DARK = ONE_DARK
     ONE_LIGHT = ONE_LIGHT
@@ -888,6 +888,11 @@ for _theme in _load_bundled("ayu.json") + _load_bundled("gruvbox.json"):
     themes.register(_theme)
     setattr(themes, _theme.name.upper().replace(" ", "_"), _theme)
 GRUVBOX_DARK = themes.GRUVBOX_DARK = _registry.get("Gruvbox Dark", GRUVBOX_DARK)
+from .theme_palettes import PYZED_THEMES as _PYZED_THEMES  # noqa: E402 - needs the helpers above
+
+for _theme in _PYZED_THEMES:  # Pyzed's own: Midnight, Graphite, Forest, Rosé, Dawn and Glacier
+    themes.register(_theme)
+    setattr(themes, _theme.name.upper().replace(" ", "_").replace("É", "E"), _theme)
 del _theme
 
 

@@ -229,6 +229,9 @@ class Designer(App):
         self.icon_pick: Optional[Callable[[str], Any]] = None
         self.preview_language: Optional[str] = None
         self.console = ConsoleController(self)
+        from .timeline import TimelineEditor
+
+        self.timeline = TimelineEditor(self)
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.updates = UpdateController(self)
@@ -285,6 +288,7 @@ class Designer(App):
             subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
         if self.console.running is not None:  # notices when the running form's window is closed
             subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
+        subs.extend(self.timeline.subscriptions())  # the Animation panel's preview
         return subs
 
     # -- selection ------------------------------------------------------------

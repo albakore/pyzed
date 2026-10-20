@@ -79,6 +79,20 @@ For a dark theme, start with a background between `#101010` and `#2a2a2a` and a 
 one, a background close to white and a text between `#1a1a1a` and `#3a3a3a`. Then check the contrast (below).
 </Aside>
 
+When you have a whole palette (the chrome around the editor and six hues for status and syntax),
+`theme_palettes.from_palette` uses every color the way Zed's theme families do. Pyzed's own themes (Midnight,
+Graphite, Forest, Rosé, Dawn, Glacier) are made with it:
+
+```python
+from pyzed import theme_palettes
+
+dusk = theme_palettes.from_palette(
+    "Dusk", "dark",
+    editor="#1b1d24", chrome="#23262f", text="#d8dbe2", accent="#7aa2f7",
+    red="#f7768e", orange="#ff9e64", yellow="#e0af68", green="#9ece6a", cyan="#7dcfff", purple="#bb9af7",
+)
+```
+
 ## 4. Every token, from a dictionary or a file
 
 `Theme.from_dict` takes any tokens you list and fills in the rest from **One Dark** (or **One Light** when

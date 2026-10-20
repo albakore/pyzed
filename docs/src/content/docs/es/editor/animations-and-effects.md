@@ -66,3 +66,25 @@ Las animaciones se guardan como datos simples en el control:
 `Document.set_animations(name, animations)` las cambia desde un script y `Control.animations` las lee. Para
 animar un control desde sus handlers, usa la biblioteca: `pz.Animation`, `define_animation` y la
 [lista de presets](/pyzed/es/guides/animation/#presets).
+
+## Animaciones con línea de tiempo
+
+Para animaciones que mueven varios controles a la vez (una entrada, una transición entre estados), abre
+el panel **Animation** desde **View → Animation** (`Ctrl+Shift+M`). Edita **clips**: líneas de tiempo
+guardadas en el `.pzform` que se reproducen igual que con [`pz.AnimationPlayer`](/pyzed/es/guides/timeline/)
+en código.
+
+![El panel Animation: un clip intro con pistas para la tarjeta, el título y el texto de una etiqueta, y una llamada a intro_done](../../../../../screenshots/editor-animation.png)
+
+| Acción | Resultado |
+| --- | --- |
+| **Añadir pista para …** | Añade una pista para una propiedad del control seleccionado (opacidad, posición, escala, colores, tamaño…) o cualquiera de sus propiedades, como el texto de una etiqueta. |
+| **Doble clic** en una pista | Añade una key en ese tiempo con el valor actual del control. |
+| **Arrastrar** una key | La mueve en el tiempo. Selecciona una key para editar su valor y su curva debajo de las pistas. |
+| **Clic** o **arrastrar** en la regla | Mueve el cabezal; el lienzo muestra el formulario en ese tiempo. |
+| Pista **Llamadas** (clic derecho en una llamada para quitarla) | Llama a un método del archivo de código del formulario en un tiempo. |
+| **Duración**, **bucle**, **autoplay** | Indican cuánto dura el clip, si se repite y si se reproduce al abrir el formulario. |
+
+Los controles dentro de un contenedor animado siguen su opacidad, posición y desenfoque. Todos los
+cambios se pueden deshacer. En un formulario en ejecución, `self.animations` es el reproductor:
+`self.animations.play("intro")`.

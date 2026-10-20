@@ -43,7 +43,7 @@ a property decides its editor:
 | Multiline | A small code editor with wrapping. | A text area's `text`, a markdown's `text`. |
 | Number | A number box with `−`/`+` and limits. | A slider's `min`, `max`, `step`. |
 | Switch | An on/off switch. | `checked`, `secure`, `wrap`. |
-| Choice | A drop-down. | A button's `variant`, a label's `size`. |
+| Choice | Up to four short choices side by side as a segmented control; longer lists as a drop-down. | A button's `variant`, a label's `size`. |
 | Color | A swatch and a field for a theme token (`accent`, `text_muted`) or `#hex`. | A label's `color`. |
 | Icon | A preview, a field for a [Lucide](https://lucide.dev) icon name and a **…** button: click the preview or **…** to pick from the icon dialog (see below). | A button's `icon`. |
 | List | One field per item (see below). | A drop-down's `options`, a list box's `items`, a tab bar's `tabs`. |
@@ -88,6 +88,11 @@ Every control has a **Style** section, the same set of properties as [`pz.Style`
 background (color, gradient or mask), text color, font, weight, italic, font size, line height, border, corner
 radius, shadow, padding, margin, maximum size, content alignment and clipping. Empty fields keep the component's
 own look and **Reset style** clears them all. See [Styles and themes](/pyzed/editor/styles-and-themes/).
+
+Each field has an editor made for its value: **Font**, **Italic**, **Clip** and the two alignments are segmented
+controls (the alignments show icons; hover them for their name), and **Padding**, **Margin** and **Corner radius**
+are one number for every side. Press the **link** button at its end to give each side (or corner) its own number;
+press it again to use one value everywhere.
 
 Below it, **Effects** (opacity, glow, bloom, glass) and **Animation** (what plays when the control appears, on
 hover, press, focus or click) are covered in [Animations and effects](/pyzed/editor/animations-and-effects/).

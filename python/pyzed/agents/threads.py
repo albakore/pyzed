@@ -26,6 +26,8 @@ class Thread:
     messages: List[Dict[str, Any]] = field(default_factory=list)
     created: float = field(default_factory=time.time)
     updated: float = field(default_factory=time.time)
+    #: Tokens in the model's context at the last answer (what the panel's context meter shows).
+    context: int = 0
 
     @property
     def display_title(self) -> str:
@@ -48,7 +50,8 @@ class Thread:
         messages = data.get("messages")
         return cls(id=str(data.get("id") or uuid.uuid4().hex[:12]), title=str(data.get("title") or ""),
                    model=str(data.get("model") or ""), messages=messages if isinstance(messages, list) else [],
-                   created=float(data.get("created") or time.time()), updated=float(data.get("updated") or time.time()))
+                   created=float(data.get("created") or time.time()), updated=float(data.get("updated") or time.time()),
+                   context=int(data.get("context") or 0))
 
 
 class ThreadStore:

@@ -100,6 +100,12 @@ def _agent(d: "Designer", t: Theme) -> Any:
     return agent_panel.view(d, t)
 
 
+def _animation(d: "Designer", t: Theme) -> Any:
+    from . import timeline_panel
+
+    return timeline_panel.view(d, t)
+
+
 def _console(d: "Designer", t: Theme) -> Any:
     from . import console
 
@@ -115,6 +121,8 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("agent", "Agent", "sparkles", "right", _agent),
     Panel("code", "Code", "code", "bottom", _code, lambda d: d.editing is not None or bool(d.buffers.items)),
     Panel("console", "Console", "terminal", "bottom", _console, lambda d: d.console.visible),
+    Panel("animation", "Animation", "clapperboard", "bottom", _animation,
+          lambda d: d.timeline.open or bool(d.doc.form.animations)),
 )}
 
 
