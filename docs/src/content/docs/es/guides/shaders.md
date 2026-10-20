@@ -10,6 +10,12 @@ sidebar:
 cada píxel en cada frame, así que fondos animados, plasma, fuego o el barrido de un radar no le
 cuestan nada a Python.
 
+:::tip[¿Prefieres nodos?]
+Puedes crear shaders sin escribir WGSL: conecta nodos en la
+[vista de shaders](/pyzed/es/editor/shader-designer/) del diseñador y dibuja el archivo `.pzshad` con
+`pz.shader("fuego.pzshad")`. Mira [Grafos de shaders](/pyzed/es/guides/shader-graphs/).
+:::
+
 ![Seis shaders: plasma, ondas, túnel, CRT, Voronoi y fuego](../../../../assets/showcase/shaders.png)
 
 ```python
@@ -40,7 +46,7 @@ mismo espacio de color que los colores CSS. `mouse()` devuelve la posición del 
 
 ## Uniforms
 
-`uniforms` pasa hasta 8 valores desde Python. Cada uno se convierte en una función con su nombre:
+`uniforms` pasa hasta 32 valores desde Python. Cada uno se convierte en una función con su nombre:
 
 | Valor | WGSL |
 | --- | --- |
@@ -56,7 +62,10 @@ cambian los valores, así que un slider puede moverlo a la frecuencia de la pant
 - `width`, `height`: el tamaño (`"fill"` por defecto).
 - `animate=False` dibuja una imagen quieta que solo cambia cuando cambia la vista.
 - `time=1.5` congela `time` en ese valor.
-- `fallback` es un color o degradado que se dibuja donde no hay GPU.
+- `fallback` es un color o degradado que se dibuja donde no hay GPU (y detrás del shader donde es
+  transparente).
+- `textures={"foto": "assets/foto.png"}` pasa hasta 8 imágenes: cada una se convierte en una función,
+  `foto(uv)`, que devuelve el color de la imagen en `uv` (se repite fuera de 0..1).
 
 ## Errores
 

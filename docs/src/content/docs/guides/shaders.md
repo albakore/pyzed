@@ -9,6 +9,12 @@ sidebar:
 [WGSL](https://www.w3.org/TR/WGSL/), the shading language of WebGPU. The GPU runs it for every
 pixel, every frame, so animated backgrounds, plasma, fire or a radar sweep cost Python nothing.
 
+:::tip[Prefer nodes?]
+You can build shaders without writing WGSL: wire nodes in the designer's
+[Shader view](/pyzed/editor/shader-designer/) and draw the `.pzshad` file with
+`pz.shader("fire.pzshad")`. See [Shader graphs](/pyzed/guides/shader-graphs/).
+:::
+
 ![Six shaders: plasma, ripple, tunnel, CRT, Voronoi and fire](../../../assets/showcase/shaders.png)
 
 ```python
@@ -39,7 +45,7 @@ the pointer is outside the widget); a shader that calls it redraws when the mous
 
 ## Uniforms
 
-`uniforms` passes up to 8 values from Python. Each becomes a function with its name:
+`uniforms` passes up to 32 values from Python. Each becomes a function with its name:
 
 | Value | WGSL |
 | --- | --- |
@@ -55,7 +61,10 @@ values change, so a slider can drive it at full frame rate.
 - `width`, `height`: the size (`"fill"` by default).
 - `animate=False` draws a still picture that only changes when the view does.
 - `time=1.5` freezes `time` at that value.
-- `fallback` is a color or gradient drawn where there is no GPU.
+- `fallback` is a color or gradient drawn where there is no GPU (and behind the shader where it is
+  transparent).
+- `textures={"photo": "assets/photo.png"}` passes up to 8 images: each becomes a function,
+  `photo(uv)`, that returns the image's color at `uv` (it repeats outside 0..1).
 
 ## Errors
 

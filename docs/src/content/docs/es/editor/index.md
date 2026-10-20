@@ -24,6 +24,7 @@ rápido.
 | `pyzed design` | Dentro de un proyecto: su formulario principal (`[tool.pyzed] main`). Fuera: un formulario vacío sin título. |
 | `pyzed design login.pzform` | Ese formulario, o uno nuevo con ese nombre que se crea al guardar por primera vez. |
 | `pyzed design ui/rating.pzcomp` | Un [componente diseñado](/pyzed/es/editor/component-designer/) (se crea al guardar si no existe). |
+| `pyzed design fx/fuego.pzshad` | Un [shader hecho de nodos](/pyzed/es/editor/shader-designer/) (se crea al guardar si no existe). |
 | `python -m pyzed.designer [archivo]` | Lo mismo, sin el comando `pyzed` en el `PATH`. |
 | La app **Pyzed Design** | La versión independiente: el editor con su propio Python y `uv`, sin instalar nada más (ver [Proyectos](/pyzed/es/editor/projects/#la-app-independiente)). |
 
@@ -121,6 +122,8 @@ flowchart LR
 - [Ejecutar y la consola](/pyzed/es/editor/console-and-running/): F5, la consola, `uv run` y recarga en caliente.
 - [Diseñador de componentes](/pyzed/es/editor/component-designer/): componentes reutilizables con props, estado,
   métodos y eventos.
+- [Diseñador de shaders](/pyzed/es/editor/shader-designer/): shaders de GPU hechos conectando nodos, con una vista
+  previa en vivo en cada nodo.
 - [Archivos, plantillas y scripting](/pyzed/es/editor/files-and-scripting/): pestañas, archivos `.pzform`,
   plantillas y la API de Python.
 - [Menús y comandos](/pyzed/es/editor/menus-and-commands/): cada entrada de menú, la paleta de comandos y los docks.

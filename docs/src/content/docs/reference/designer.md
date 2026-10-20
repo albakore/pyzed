@@ -103,7 +103,8 @@ Writes `form` to `path` (`.pzform` is added when there is no suffix).
 open_document(path)
 ```
 
-Opens a `.pzform` as a `Document` or a `.pzcomp` as a `SceneDocument`.
+Opens a `.pzform` as a `Document`, a `.pzcomp` as a `SceneDocument` or a `.pzshad` as a
+`ShaderDocument`.
 
 ### `design`
 

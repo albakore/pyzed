@@ -23,6 +23,7 @@ make you faster.
 | `pyzed design` | Inside a project: its main form (`[tool.pyzed] main`). Elsewhere: an empty, untitled form. |
 | `pyzed design login.pzform` | That form, or a new one with that name that is created on the first save. |
 | `pyzed design ui/rating.pzcomp` | A [designed component](/pyzed/editor/component-designer/) (created on the first save if missing). |
+| `pyzed design fx/fire.pzshad` | A [shader made of nodes](/pyzed/editor/shader-designer/) (created on the first save if missing). |
 | `python -m pyzed.designer [file]` | The same, without the `pyzed` command on `PATH`. |
 | **Pyzed Design** app | The standalone build: the editor with its own Python and `uv`, nothing else to install (see [Projects](/pyzed/editor/projects/#the-standalone-app)). |
 
@@ -118,6 +119,8 @@ flowchart LR
 - [Running and the console](/pyzed/editor/console-and-running/): F5, the console, `uv run` and hot reload.
 - [Component designer](/pyzed/editor/component-designer/): reusable components with props, state, methods and
   events.
+- [Shader designer](/pyzed/editor/shader-designer/): GPU shaders made by wiring nodes, with a live preview on
+  every node.
 - [Files, templates and scripting](/pyzed/editor/files-and-scripting/): tabs, `.pzform` files, templates and the
   Python API.
 - [Menus and commands](/pyzed/editor/menus-and-commands/): every menu entry, the command palette and the docks.
