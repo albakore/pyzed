@@ -1,0 +1,371 @@
+---
+title: Apps and utilities
+description: "Small, complete Python desktop apps made with Pyzed: a to-do list, Markdown and image viewers, a clock, a stopwatch, a QR generator, live data, an AI chat, panes, several windows and a code editor workspace."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from './_run.mdx';
+
+import todosShot from '../../../assets/examples/todos.png';
+import markdownShot from '../../../assets/examples/markdown_viewer.png';
+import imageShot from '../../../assets/examples/image_viewer.png';
+import clockShot from '../../../assets/examples/clock.png';
+import stopwatchShot from '../../../assets/examples/stopwatch.png';
+import qrShot from '../../../assets/examples/qr_code.png';
+import pomodoroShot from '../../../assets/ai/pomodoro.png';
+import tickerShot from '../../../assets/showcase/apps/websocket_stream.png';
+import chatShot from '../../../assets/ai/ai-chat.png';
+import panesShot from '../../../assets/showcase/apps/panes.png';
+import menuShot from '../../../assets/showcase/apps/context_menu.png';
+import galleryShot from '../../../assets/showcase/apps/gallery.png';
+import counterShot from '../../../../screenshots/counter.png';
+import editorDark from '../../../../screenshots/zed-one-dark.png';
+import editorLight from '../../../../screenshots/zed-one-light.png';
+
+import todos from '../../../../../examples/todos.py?raw';
+import markdown from '../../../../../examples/markdown_viewer.py?raw';
+import image from '../../../../../examples/image_viewer.py?raw';
+import clock from '../../../../../examples/clock.py?raw';
+import stopwatch from '../../../../../examples/stopwatch.py?raw';
+import qr from '../../../../../examples/qr_code.py?raw';
+import pomodoro from '../../../../../examples/pomodoro.py?raw';
+import colorPicker from '../../../../../examples/color_picker.py?raw';
+import life from '../../../../../examples/game_of_life.py?raw';
+import downloads from '../../../../../examples/download_progress.py?raw';
+import ticker from '../../../../../examples/websocket_stream.py?raw';
+import chat from '../../../../../examples/ai_chat.py?raw';
+import windows from '../../../../../examples/multi_window.py?raw';
+import panes from '../../../../../examples/panes.py?raw';
+import menu from '../../../../../examples/context_menu.py?raw';
+import components from '../../../../../examples/components.py?raw';
+import gallery from '../../../../../examples/gallery.py?raw';
+import counter from '../../../../../examples/counter.py?raw';
+import editor from '../../../../../examples/zed_editor.py?raw';
+
+Everyday programs, each a single Python file in
+[`examples/`](https://github.com/albakore/pyzed/tree/main/examples) that runs as it is. They are short on purpose:
+read one from top to bottom and you will have seen state, a view, events and a subscription working together.
+Several are Pyzed versions of the classic [Iced](https://iced.rs) demos, the Rust GUI library Pyzed draws with.
+
+<Aside type="tip" title="How to read these apps">
+Every app is a class with **state** (attributes set in `__init__`), a **`view()`** that builds the screen from the
+state, and **methods** that change the state when something happens. Pyzed redraws after each change. New to that
+idea? Start with the [To-do list tutorial](/pyzed/tutorials/basic/todo-app/).
+</Aside>
+
+## Todos
+
+Add, edit, complete, filter and delete tasks; they are saved as JSON in your user folder, so they are still there
+the next time you open the app.
+
+<Media src={todosShot} alt="The Todos app with a few tasks, one of them done" />
+
+- A dataclass per task and a list in the state; the filter is a `ui.segmented` control.
+- Double-click a task to edit it in place; tasks are written to disk on every change.
+- A simpler version is built step by step in the [To-do list tutorial](/pyzed/tutorials/basic/todo-app/).
+
+<Run file="examples/todos.py" />
+
+<details>
+<summary>Full code: <code>examples/todos.py</code></summary>
+<Code code={todos} lang="py" title="examples/todos.py" />
+</details>
+
+## Markdown viewer
+
+A live Markdown editor: write on the left, see the formatted result on the right, and drag the divider between
+them.
+
+<Media src={markdownShot} alt="Markdown source on the left and its preview on the right" />
+
+- `ui.editor` with `on_change` keeps the text in the state; `ui.markdown` renders it.
+- `ui.split` makes the two panes resizable; links in the preview open in your browser.
+
+<Run file="examples/markdown_viewer.py" />
+
+<details>
+<summary>Full code: <code>examples/markdown_viewer.py</code></summary>
+<Code code={markdown} lang="py" title="examples/markdown_viewer.py" />
+</details>
+
+## Image viewer
+
+Shows a picture with `pz.image` and in a zoomable `pz.image_viewer`: scroll to zoom, drag to pan. Pass a path to
+open your own image; without one it draws a picture from raw pixels made in pure Python.
+
+<Media src={imageShot} alt="An image shown at normal size and in a zoomable viewer" />
+
+<Run file="examples/image_viewer.py" />
+
+<details>
+<summary>Full code: <code>examples/image_viewer.py</code></summary>
+<Code code={image} lang="py" title="examples/image_viewer.py" />
+</details>
+
+## Clock
+
+An analog clock drawn on a `pz.canvas`. A subscription, `pz.every(1, ...)`, redraws it every second, and the hands
+are paths rotated around the center.
+
+<Media src={clockShot} alt="An analog clock" size="narrow" />
+
+<Run file="examples/clock.py" />
+
+<details>
+<summary>Full code: <code>examples/clock.py</code></summary>
+<Code code={clock} lang="py" title="examples/clock.py" />
+</details>
+
+## Stopwatch
+
+A stopwatch with laps. <kbd>Space</kbd> starts and stops it, <kbd>L</kbd> records a lap and <kbd>R</kbd> resets it.
+
+<Media src={stopwatchShot} alt="A stopwatch with a list of laps" size="narrow" />
+
+- The timer subscription only exists **while the watch runs**: `subscriptions()` returns an empty list otherwise,
+  so an idle app uses no CPU.
+
+<Run file="examples/stopwatch.py" />
+
+<details>
+<summary>Full code: <code>examples/stopwatch.py</code></summary>
+<Code code={stopwatch} lang="py" title="examples/stopwatch.py" />
+</details>
+
+## QR code
+
+Type a text or a link and get its QR code, in the theme's colors or in black and white. The whole app is about 30
+lines: `pz.qr_code(data, cell_size=7)` does the work.
+
+<Media src={qrShot} alt="A QR code generated from a link" size="narrow" />
+
+<Run file="examples/qr_code.py" />
+
+<details>
+<summary>Full code: <code>examples/qr_code.py</code></summary>
+<Code code={qr} lang="py" title="examples/qr_code.py" />
+</details>
+
+## Pomodoro
+
+A focus timer with work and break periods: the app that the [Prompting](/pyzed/ai/prompting/) guide builds with an
+AI assistant, one request at a time.
+
+<Media src={pomodoroShot} alt="A Pomodoro timer counting down" size="narrow" />
+
+<Run file="examples/pomodoro.py" />
+
+<details>
+<summary>Full code: <code>examples/pomodoro.py</code></summary>
+<Code code={pomodoro} lang="py" title="examples/pomodoro.py" />
+</details>
+
+## Color picker
+
+`ui.ColorPicker` in its three modes: a color with transparency, a linear gradient, and a fill with an opacity mask.
+It reports a `"#rrggbbaa"` string, a `pz.Gradient` or a `pz.Paint`, and all three work as a `background`.
+
+{/* media: showcase/color_picker */}
+
+<Run file="examples/color_picker.py" />
+
+<details>
+<summary>Full code: <code>examples/color_picker.py</code></summary>
+<Code code={colorPicker} lang="py" title="examples/color_picker.py" />
+</details>
+
+## Game of Life
+
+Conway's Game of Life: click or drag to paint cells, <kbd>Space</kbd> to play or pause, <kbd>N</kbd> to advance one
+generation. Thousands of cells are drawn as a single shape on a `pz.canvas`, and `pz.every` drives the simulation.
+
+{/* media: showcase/game_of_life (a short recording of a glider gun) */}
+
+<Run file="examples/game_of_life.py" />
+
+<details>
+<summary>Full code: <code>examples/game_of_life.py</code></summary>
+<Code code={life} lang="py" title="examples/game_of_life.py" />
+</details>
+
+## Downloads with progress
+
+Several downloads at once, each with its own progress bar, and a window that never freezes. Each download is an
+`async def` generator: every value it `yield`s goes to `update` while it keeps running on Pyzed's event loop. Swap
+the simulated transfer for streaming with `httpx` to download real files.
+
+{/* media: showcase/download_progress */}
+
+<Run file="examples/download_progress.py" />
+
+<details>
+<summary>Full code: <code>examples/download_progress.py</code></summary>
+<Code code={downloads} lang="py" title="examples/download_progress.py" />
+</details>
+
+The same idea with threads (for blocking code) is explained in the
+[Background tasks](/pyzed/tutorials/intermediate/background-tasks/) tutorial.
+
+## Live data
+
+A price ticker fed by `pz.listen`: a subscription backed by an async generator. It runs while `subscriptions()`
+returns it and sends every value it yields to `update`.
+
+<Media src={tickerShot} alt="Four symbols with their price, change and a small chart" />
+
+```python
+async def feed():                       # a real app would read a websocket here
+    prices = {s: random.uniform(50, 150) for s in SYMBOLS}
+    while True:
+        await asyncio.sleep(0.25)
+        symbol = random.choice(SYMBOLS)
+        prices[symbol] *= 1 + random.gauss(0, 0.01)
+        yield symbol, prices[symbol]    # each value goes to update()
+
+class Ticker(pz.App):
+    def subscriptions(self):
+        return [pz.listen(feed)] if self.connected else []   # the switch pauses the feed
+
+    def update(self, message):
+        symbol, price = message
+        self.history[symbol] = (self.history[symbol] + [price])[-60:]
+```
+
+<Run file="examples/websocket_stream.py" />
+
+<details>
+<summary>Full code: <code>examples/websocket_stream.py</code></summary>
+<Code code={ticker} lang="py" title="examples/websocket_stream.py" />
+</details>
+
+## AI chat
+
+A chat whose answers appear word by word. It talks to any OpenAI-compatible server (Ollama, LM Studio, OpenAI...)
+through `httpx`, and has a built-in demo mode with canned answers, so it runs offline.
+
+<Media src={chatShot} alt="A chat window with a streamed answer" />
+
+<Run file="examples/ai_chat.py" with="httpx" />
+
+To use a real model, set three environment variables before running it, for example with
+[Ollama](https://ollama.com) on your machine: `CHAT_BASE_URL=http://localhost:11434/v1` and `CHAT_MODEL=llama3.2`
+(plus `CHAT_API_KEY` for a hosted service). The [AI section](/pyzed/ai/) explains the rest.
+
+<details>
+<summary>Full code: <code>examples/ai_chat.py</code></summary>
+<Code code={chat} lang="py" title="examples/ai_chat.py" />
+</details>
+
+## Several windows
+
+Open as many windows as you like: each `pz.Window` has its own view, title, size and theme, but all of them share
+the app's state, so the click counter is the same in every window. Closing the main window quits the app.
+
+{/* media: showcase/multi_window */}
+
+<Run file="examples/multi_window.py" />
+
+<details>
+<summary>Full code: <code>examples/multi_window.py</code></summary>
+<Code code={windows} lang="py" title="examples/multi_window.py" />
+</details>
+
+## Panes
+
+Resizable panes like an editor's: split any pane to the right or down, drag the dividers, close panes. The layout
+is a small tree of lists kept in the state and drawn with nested `ui.split`.
+
+<Media src={panesShot} alt="Three panes: one on the left, two stacked on the right" />
+
+<Run file="examples/panes.py" />
+
+<details>
+<summary>Full code: <code>examples/panes.py</code></summary>
+<Code code={panes} lang="py" title="examples/panes.py" />
+</details>
+
+## Context menu
+
+A right-click menu built from `ui.popover` and `ui.menu`. `mouse_area(on_move=...)` remembers where the pointer
+is, so the menu opens right there; clicking elsewhere or pressing <kbd>Esc</kbd> closes it.
+
+<Media src={menuShot} alt="A context menu open over a panel" />
+
+<Run file="examples/context_menu.py" />
+
+<details>
+<summary>Full code: <code>examples/context_menu.py</code></summary>
+<Code code={menu} lang="py" title="examples/context_menu.py" />
+</details>
+
+## Custom components
+
+Three reusable pieces written in code: a star rating and a tag editor (`pz.Component` classes with properties,
+their own state and their own events), and a note you can drag, double-click and type on, which logs the common
+events every widget has.
+
+{/* media: showcase/components */}
+
+<Run file="examples/components.py" />
+
+<details>
+<summary>Full code: <code>examples/components.py</code></summary>
+<Code code={components} lang="py" title="examples/components.py" />
+</details>
+
+To draw components with the mouse instead, follow [A custom component](/pyzed/tutorials/intermediate/custom-component/).
+
+## Component gallery
+
+A tour of the ready-made components in `pyzed.ui`: buttons, inputs, tabs, a code editor, menus, trees, notifications,
+forms, feedback and data, with a theme picker to see them all in any theme.
+
+<Media src={galleryShot} alt="The component gallery: buttons, inputs, tabs, menus, trees and notifications" size="wide" />
+
+<Run file="examples/gallery.py" />
+
+<details>
+<summary>Full code: <code>examples/gallery.py</code></summary>
+<Code code={gallery} lang="py" title="examples/gallery.py" />
+</details>
+
+## Counter
+
+The smallest Pyzed app: one number, two buttons. It is the best file to start from when you make something new.
+
+<Media src={counterShot} alt="A counter with plus and minus buttons" size="narrow" />
+
+<Run file="examples/counter.py" />
+
+<details>
+<summary>Full code: <code>examples/counter.py</code></summary>
+<Code code={counter} lang="py" title="examples/counter.py" />
+</details>
+
+## Workspace editor
+
+A full code editor workspace in about 450 lines: a project panel with the files of a folder, tabs, a
+syntax-highlighted editor (edit, undo, save with <kbd>Ctrl</kbd>+<kbd>S</kbd>), git status colors, an outline
+panel, theme switching, a command palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) and a file finder
+(<kbd>Ctrl</kbd>+<kbd>P</kbd>). Its look recreates the [Zed](https://zed.dev) editor, whose interface inspired
+Pyzed's default theme. The terminal panel shows sample output; it does not run a shell.
+
+<Media src={editorDark} light={editorLight} alt="A code editor with a project panel, tabs and an outline" size="wide" />
+
+<Run file="examples/zed_editor.py" />
+
+Pass a folder to open it: `python examples/zed_editor.py path/to/project`. A smaller version is built step by step
+in the [mini code editor](/pyzed/tutorials/advanced/code-editor/) tutorial.
+
+<details>
+<summary>Full code: <code>examples/zed_editor.py</code></summary>
+<Code code={editor} lang="py" title="examples/zed_editor.py" />
+</details>
+
+<Aside type="note" title="About this page">
+Every app here is drawn off-screen by the test suite, so they run with the current version of Pyzed. Short
+recordings are being added for the apps that move (Game of Life, downloads, several windows).
+</Aside>

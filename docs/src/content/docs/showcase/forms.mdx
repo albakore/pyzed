@@ -1,0 +1,219 @@
+---
+title: Forms
+description: "Python desktop forms made with Pyzed: sign-in, sign-up with validation, a contact form, onboarding and settings screens, dialogs, Pydantic validation and forms drawn in the Pyzed Design visual designer."
+sidebar:
+  order: 2
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from './_run.mdx';
+
+import loginRun from '../../../../screenshots/designer-run.png';
+import reviewsRun from '../../../../screenshots/designer-component-run.png';
+import signupShot from '../../../assets/tutorials/designer-signup.png';
+import contactShot from '../../../assets/tutorials/designer-contact.png';
+import loginDark from '../../../assets/blocks/login-dark.png';
+import loginLight from '../../../assets/blocks/login-light.png';
+import onboardingDark from '../../../assets/blocks/onboarding-dark.png';
+import onboardingLight from '../../../assets/blocks/onboarding-light.png';
+import settingsDark from '../../../assets/blocks/settings-dark.png';
+import settingsLight from '../../../assets/blocks/settings-light.png';
+
+import loginCode from '../../../../../examples/designer/login.py?raw';
+import signupCode from '../../../../../examples/tutorial/designer/signup.py?raw';
+import contactCode from '../../../../../examples/tutorial/designer/contact.py?raw';
+import reviewsCode from '../../../../../examples/designer/components/reviews.py?raw';
+import dialogsCode from '../../../../../examples/dialogs.py?raw';
+import pydanticMain from '../../../../../examples/integrations/pydantic_signup/main.py?raw';
+import pydanticModels from '../../../../../examples/integrations/pydantic_signup/models.py?raw';
+
+Forms are where most desktop apps start: fields, buttons, rules and messages. Pyzed gives you two ways to make
+them, and you can mix both in one app:
+
+- **Draw them** in [Pyzed Design](/pyzed/editor/), the visual designer: drag controls onto a window, set their
+  properties, and write only the Python that runs when something happens (a `.pzform` file plus a `.py` file with
+  the handlers). If you have used Visual Basic, Qt Designer or the editors of Godot and Unreal Engine, it will feel
+  familiar.
+- **Write them** in Python with the [components library](/pyzed/library/): `ui.field`, `ui.input`, `ui.select`,
+  `ui.switch`... in a `view()` method.
+
+<Aside type="tip" title="Open a form in the designer">
+Every `.pzform` on this page opens in Pyzed Design: `pyzed design path/to/form.pzform`. Press <kbd>F5</kbd> there
+to run it, and look at the **Events** panel to see which handler each control calls.
+</Aside>
+
+## Sign-in form
+
+Drawn in the designer: an email and a password, a "remember me" check box, and a button that shows a progress bar
+while it "signs in". The Python file is just four small functions, one per event.
+
+<Media src={loginRun} alt="A sign-in form running: email, password, remember me and a Sign in button" size="narrow" />
+
+- Controls are attributes of `form`: `form.email.text`, `form.status.color = "error"`, `form.progress.show()`.
+- A **Timer** control (`ticker`) calls `ticker_tick` every few milliseconds while it runs; that is how the
+  progress bar fills up without blocking the window.
+
+<Run file="examples/designer/login.pzform" form />
+
+<details>
+<summary>Event handlers: <code>examples/designer/login.py</code></summary>
+<Code code={loginCode} lang="py" title="examples/designer/login.py" />
+</details>
+
+## Sign-up with validation
+
+Every field is **bound** to `form.data` and has **rules** set in the Properties panel (required, an email, at least
+8 characters, the same as another field). One line, `form.validate()`, checks them all and shows the messages
+next to the fields; the greeting and the summary update by themselves as you type.
+
+<Media src={signupShot} alt="A sign-up form with error messages next to two fields" size="narrow" />
+
+<Run file="examples/tutorial/designer/signup.pzform" form />
+
+<details>
+<summary>Event handlers: <code>examples/tutorial/designer/signup.py</code></summary>
+<Code code={signupCode} lang="py" title="examples/tutorial/designer/signup.py" />
+</details>
+
+Built step by step in [Data binding and validation](/pyzed/tutorials/intermediate/data-binding/).
+
+## Contact form
+
+Name, email, a topic drop-down and a message with a live character counter. The **Send** button checks the fields
+and writes the message to the console.
+
+<Media src={contactShot} alt="A contact form with a topic drop-down and a character counter" size="narrow" />
+
+<Run file="examples/tutorial/designer/contact.pzform" form />
+
+<details>
+<summary>Event handlers: <code>examples/tutorial/designer/contact.py</code></summary>
+<Code code={contactCode} lang="py" title="examples/tutorial/designer/contact.py" />
+</details>
+
+Built step by step in [A form that does something](/pyzed/tutorials/basic/first-form/).
+
+## Reviews with custom components
+
+Two profile cards, each with a five-star **Rating** component, side by side in a flex row that grows and shrinks
+with the window. `Rating`, `ProfileCard` and `TeamCard` are components drawn in the designer's component mode
+(`.pzcomp` files): they have their own properties, events and code, and `TeamCard` inherits everything from
+`ProfileCard`.
+
+<Media src={reviewsRun} alt="Two profile cards with star ratings" />
+
+<Run file="examples/designer/components/reviews.pzform" form />
+
+<details>
+<summary>Event handlers: <code>examples/designer/components/reviews.py</code></summary>
+<Code code={reviewsCode} lang="py" title="examples/designer/components/reviews.py" />
+</details>
+
+Built step by step in [A custom component](/pyzed/tutorials/intermediate/custom-component/).
+
+## Login screen
+
+A full sign-in screen written in code: a brand panel, single sign-on buttons, a passkey option and an email form.
+It is one of the [Blocks](/pyzed/blocks/), screens you can copy into your app and adapt.
+
+<Media src={loginDark} light={loginLight} alt="A split login screen with a brand panel and a sign-in form" size="wide" />
+
+<Run file="examples/blocks/login.py" />
+
+The code and what to change in it: [Login block](/pyzed/blocks/login/).
+
+## Onboarding wizard
+
+A multi-step setup: a stepper at the top, choice cards, per-step validation and a summary before finishing.
+
+<Media src={onboardingDark} light={onboardingLight} alt="A setup wizard with a stepper and choice cards" size="wide" />
+
+<Run file="examples/blocks/onboarding.py" />
+
+The code: [Onboarding block](/pyzed/blocks/onboarding/).
+
+## Settings page
+
+Sections on the left, grouped rows on the right: profile fields, a language select, light, dark or system theme,
+accent swatches, a font size slider, notification switches, and a danger zone that asks before deleting.
+
+<Media src={settingsDark} light={settingsLight} alt="A settings page with sections, switches and theme options" size="wide" />
+
+<Run file="examples/blocks/settings.py" />
+
+The code: [Settings block](/pyzed/blocks/settings/).
+
+## Dialogs and languages
+
+Each button opens one of the ready-made dialogs of `pyzed.ui` (an alert, a confirmation, a prompt, a choice and "unsaved changes"). Pick a language in the
+toolbar and every text, including the dialogs' buttons, changes while the app runs.
+
+{/* media: showcase/dialogs (the confirm dialog, in English and in Spanish) */}
+
+<Run file="examples/dialogs.py" />
+
+<details>
+<summary>Full code: <code>examples/dialogs.py</code></summary>
+<Code code={dialogsCode} lang="py" title="examples/dialogs.py" />
+</details>
+
+For field errors, confirmations and toasts in your own forms, see
+[Dialogs, notifications and validation](/pyzed/tutorials/intermediate/dialogs-feedback/).
+
+## Sign-up validated by Pydantic
+
+The rules of this form live in a [Pydantic](https://docs.pydantic.dev) model, the same kind of model a web API
+would use. The window keeps what the user types as plain text and hands it to `SignUp.model_validate`; Pydantic
+converts the values (a date, an email, a yes/no), checks every rule, and `pz.validation_errors` turns its errors
+into a message per field. Accounts are saved to `accounts.json`.
+
+{/* media: showcase/pydantic_signup */}
+
+It is a small project with its own dependencies, so run it from its folder:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS and Linux"
+		cd examples/integrations/pydantic_signup
+		uv run main.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS / Linux"
+		cd examples/integrations/pydantic_signup
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install pyzed-ui "pydantic[email]>=2.6"
+		python main.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		cd examples\integrations\pydantic_signup
+		py -m venv .venv
+		.venv\Scripts\Activate.ps1
+		python -m pip install pyzed-ui "pydantic[email]>=2.6"
+		python main.py
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="With pyzed-ui and pydantic[email] already installed"
+		cd examples/integrations/pydantic_signup
+		python main.py
+		```
+	</TabItem>
+</Tabs>
+
+<details>
+<summary>Full code: <code>main.py</code> and <code>models.py</code></summary>
+<Code code={pydanticModels} lang="py" title="examples/integrations/pydantic_signup/models.py" />
+<Code code={pydanticMain} lang="py" title="examples/integrations/pydantic_signup/main.py" />
+</details>
+
+The walkthrough is in [Pydantic](/pyzed/integrations/pydantic/).
+
+<Aside type="note" title="About this page">
+The designer forms and the apps on this page are loaded and drawn by the test suite with the current version
+of Pyzed. Recordings of them being
+filled in are on the way.
+</Aside>
