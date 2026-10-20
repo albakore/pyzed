@@ -101,6 +101,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | `validate_code` | Checks code without running it: names that don't exist in `pz` or `pz.ui`, keyword arguments a function doesn't take, apps without `view()`, components without `render()`, side effects in `view()`, lambdas in loops that don't capture the loop variable, and ruff's pyflakes checks when ruff is installed. |
 | `validate_form` | Checks a `.pzform` (types, props, events, names, containers) and that its handlers module defines every handler. |
 | `screenshot` | Renders the code off-screen (no window, no GPU) and returns a PNG, so the agent can see what it built. |
+| `animation_properties`, `new_animation`, `check_animation` | [Timeline animations](/pyzed/guides/timeline/): what a track can animate, a new `.pzanim` library from clips and tracks, and checking one. |
 | `list_shader_nodes`, `new_shader`, `check_shader` | The nodes of [shader graphs](/pyzed/shading/shader-graphs/), a new `.pzshad` from a template, and compiling one to WGSL with its errors by node. |
 
 ### Project tools

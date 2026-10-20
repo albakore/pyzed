@@ -113,7 +113,7 @@ def info(root: Path, path: str = ".") -> Dict[str, Any]:
         "main_form": _rel(root, project.main_form) if project.main_form.exists() else None,
         "script": _rel(root, project.script) if project.script is not None and project.script.exists() else None,
         "forms": [_rel(root, p) for p in project.forms()],
-        "components": designed(".pzcomp"), "shaders": designed(".pzshad"),
+        "components": designed(".pzcomp"), "shaders": designed(".pzshad"), "animations": designed(".pzanim"),
         "package": _rel(root, project.src_dir) if project.src_dir else None,
         "dependencies": deps, "environment": environment(project), "files": files,
         "run": "start_live_preview shows the entry with hot reload while you edit; screenshot_project for a "
@@ -249,6 +249,12 @@ def _check_file(path: Path) -> Optional[Dict[str, Any]]:
         if result["compiler"]:
             issues.append({"severity": "error", "message": f"WGSL: {result['compiler']}"})
         return {"ok": not issues, "issues": issues}
+    if path.suffix == ".pzanim":
+        from . import animations
+
+        result = animations.check(path.read_text(encoding="utf-8"))
+        return {"ok": result["ok"], "issues": [] if result["ok"] else [{"severity": "error",
+                                                                        "message": result["error"]}]}
     return None
 
 

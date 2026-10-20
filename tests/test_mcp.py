@@ -232,7 +232,8 @@ def test_server_registers_everything(tmp_path):
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
                 "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
-                "screenshot", "read_docs", "list_examples", "plan_app", "list_shader_nodes", "check_shader",
+                "screenshot", "read_docs", "list_examples", "plan_app", "animation_properties", "new_animation",
+                "check_animation", "list_shader_nodes", "check_shader",
                 "new_shader"} | project_tools <= tools
         resources = {str(r.uri) for r in await server.list_resources()}
         assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components"} <= resources
@@ -327,6 +328,28 @@ def test_plan_app_points_at_blocks_and_topics():
     found = knowledge.plan("a kanban board that saves tasks to a SQLModel database")
     assert found["examples"][0]["name"] == "blocks/kanban"
     assert "integrations" in found["topics"] and found["steps"]
+
+
+def test_animation_libraries_are_written_and_checked(tmp_path):
+    from pyzed.mcp import animations
+
+    source = animations.new([{"name": "intro", "loop": "none", "tracks": [
+        {"path": "card:opacity", "keys": {"0": 0, "0.4": 1}},
+        {"path": "card:y", "keys": [[0, 24, "ease_out_cubic"], [0.4, 0]]},
+        {"path": ":score", "keys": {"0": 0, "1": 100}}], "calls": [{"time": 1, "method": "chime"}]}], name="ui")
+    found = animations.check(source)
+    assert found["ok"] and found["clips"][0]["targets"] == ["card"] and found["clips"][0]["attributes"] == ["score"]
+    assert found["clips"][0]["calls"] == ["chime"] and found["clips"][0]["length"] == 1
+    import pyzed as pz
+
+    assert pz.AnimationLibrary.from_dict(json.loads(source)).names == ["intro"]
+    bad = json.dumps({"clips": [{"name": "x", "tracks": [{"path": "card:wobble", "keys": {"0": 1}}]}]})
+    assert not animations.check(bad)["ok"] and not animations.check("[")["ok"]
+    assert "opacity" in animations.properties()["widget_properties"]
+    result = projects.write_files(tmp_path, {"ui.pzanim": source, "broken.pzanim": bad})
+    assert list(result["checks"]) == ["broken.pzanim"]
+    assert any(c["name"] == "pz.AnimationPlayer" for c in knowledge.list_components("widget", category="Animation"))
+    assert "timeline" in knowledge.plan("an animated intro for my game")["topics"]
 
 
 COOKBOOK = re.findall(r"```python\n(.*?)```", knowledge.guide("cookbook"), re.S)

@@ -31,7 +31,8 @@ TOPICS = {
     "architecture": "guides/architecture", "layout": "guides/layout", "styles": "theming/styles",
     "theming": "theming/themes", "components": "guides/components", "events": "guides/events",
     "async": "guides/async", "commands": "guides/commands", "keyboard": "guides/keyboard",
-    "windows": "guides/windows", "animation": "guides/animation", "shaders": "shading/shaders",
+    "windows": "guides/windows", "animation": "guides/animation", "timeline": "guides/timeline",
+    "shaders": "shading/shaders",
     "canvas": "guides/canvas", "performance": "guides/performance", "games": "games/index",
     "integrations": "integrations/overview", "architectures": "integrations/architectures",
     "projects": "guides/projects", "packaging": "packaging/build", "testing": "guides/testing",
@@ -53,7 +54,8 @@ WIDGET_CATEGORIES = {
     "Media": ("image", "image_viewer", "svg", "qr_code", "canvas", "shader", "icon"),
     "Code": ("code_editor",),
     "Anchors": ("anchor_layout", "anchor"),
-    "Animation": ("stagger", "presence"),
+    "Animation": ("stagger", "presence", "define_animation", "Clip", "Track", "Call", "AnimationPlayer",
+                  "AnimationLibrary", "load_animations"),
     "Performance": ("virtual_column", "memo"),
     "Window": ("window_edges",),
     "Game loop": ("frames", "pressed", "is_pressed"),
@@ -64,7 +66,7 @@ UI_CATEGORIES = {
     "base": "Basics", "controls": "Controls", "inputs": "Inputs", "display": "Data display", "lists": "Lists",
     "navigation": "Navigation", "overlays": "Overlays", "dialogs": "Dialogs", "workspace": "Workspace",
     "editor": "Code", "color": "Color", "console": "Console", "help": "Help", "frame": "Window",
-    "icon_picker": "Icons",
+    "icon_picker": "Icons", "agent": "Agent",
 }
 
 
@@ -404,7 +406,8 @@ _STOP = set("a an and app application the to of for with in on that this my me m
 #: Words in a request that point at a topic of ``guide``.
 _HINTS = {
     "game": "games", "games": "games", "juego": "games", "sprite": "games", "shader": "shaders",
-    "glow": "animation", "animation": "animation", "animate": "animation", "animacion": "animation",
+    "glow": "animation", "animation": "animation timeline", "animate": "animation", "animacion": "animation timeline",
+    "timeline": "timeline", "cutscene": "timeline", "intro": "timeline", "keyframe": "timeline",
     "effect": "animation", "graph": "shader-graphs", "node": "shader-graphs", "fastapi": "integrations",
     "django": "integrations", "sqlalchemy": "integrations", "sqlmodel": "integrations", "database": "integrations",
     "api": "integrations", "backend": "integrations", "form": "designer", "designer": "designer",
@@ -440,7 +443,7 @@ def plan(description: str, limit: int = 6) -> Dict[str, Any]:
     components = best(list_components("ui") + list_components("widget"),
                       lambda c: f"{c['name']} {c.get('summary', '')} {c.get('category', '')}", limit * 2)
     docs = best(list_docs(), lambda d: f"{d['slug']} {d['title']} {d['description']}")
-    topics = sorted({_HINTS[w] for w in words if w in _HINTS})
+    topics = sorted({topic for w in words if w in _HINTS for topic in _HINTS[w].split()})
     return {
         "topics": ["best-practices", "cookbook", *topics],
         "examples": [{"name": e["name"], "kind": e.get("kind", "app"), "summary": e["summary"]} for e in examples],
