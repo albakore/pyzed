@@ -23,6 +23,7 @@ stable version.
 - ✨ Pyzed Design adds Pyzed's MCP server to the AI agents of the computer (Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI, Codex, VS Code, Zed) and asks to restart them.
 - ⚡ Pyzed Agent designs faster: it starts out knowing the toolbox, themes, `pz.ui` components and best practices, gets the open document with each message, and lays out a whole form with one `add_controls` call.
 - ✨ The agent's steps go to the **Logs** panel (type *Agent*): each message, tool call and its result, files, permissions asked and answered, option changes, errors and Pyzed's MCP server added to other agents.
+- ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
 
 ## [1.4.0] - 2026-10-20
 

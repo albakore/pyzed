@@ -18,8 +18,9 @@ DOCKS = ("left", "right", "bottom", "top")
 
 
 def is_place(value: Any) -> bool:
-    """Whether ``value`` is a dock or a panel window ("window:1", "window:2"...)."""
-    return isinstance(value, str) and (value in DOCKS or (value.startswith("window:") and value[7:].isdigit()))
+    """Whether ``value`` is a dock, the main window's center ("main") or a window of its own ("window:1"...)."""
+    return isinstance(value, str) and (value in DOCKS or value == "main"
+                                       or (value.startswith("window:") and value[7:].isdigit()))
 
 
 @dataclass
@@ -57,7 +58,7 @@ class DesignerSettings:
     #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).
     update_channel: str = "stable"
     recent: List[str] = field(default_factory=list)
-    #: Panel id -> dock ("left", "right", "bottom", "top") or panel window ("window:1"...).
+    #: Panel id -> dock ("left", "right", "bottom", "top"), the center ("main") or a window ("window:1"...).
     docks: Dict[str, str] = field(default_factory=dict)
     #: The order of the panel tabs (panel ids).
     order: List[str] = field(default_factory=list)

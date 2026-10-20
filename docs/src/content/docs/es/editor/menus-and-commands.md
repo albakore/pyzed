@@ -76,7 +76,7 @@ en el teclado y en la paleta de comandos.
 | Guardar la distribución como… | | Guarda con un nombre dónde está cada panel, el tamaño de los docks y las ventanas de paneles. |
 | Eliminar esta distribución | | Borra la distribución guardada que está en uso. |
 | *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`, o `Ventana` si flota): clic para traerlo al frente. |
-| *Distribuciones* | | Las distribuciones de trabajo (Por defecto, Programar, Concentración, Eventos y código, y las tuyas); la que está en uso aparece marcada. |
+| *Distribuciones* | | Las distribuciones de trabajo (Por defecto, Programar, Concentración, Eventos y código, Código con los formularios, y las tuyas); la que está en uso aparece marcada. |
 
 Los interruptores se recuerdan entre sesiones.
 
@@ -155,15 +155,16 @@ Ocho paneles viven en cuatro docks alrededor del lienzo:
 | **Código** | Inferior | El editor de código (solo mientras hay un manejador o el archivo abierto). |
 | **Consola** | Inferior | La consola (cuando tiene algo que mostrar). |
 
-Cada dock muestra un panel a la vez, con una pestaña por panel. Al final de la barra de pestañas:
+Cada dock muestra una pestaña a la vez. Al final de la barra de pestañas:
 
-- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, a una
-  **Ventana nueva**, u **Ocultar el panel**;
+- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, al
+  **Centro** (junto a las pestañas de formularios), a una **Ventana nueva**, u **Ocultar el panel**;
 - la **×** oculta el dock (vuelve a mostrarlo con su atajo o con el menú Ver).
 
-Arrastra una pestaña para reordenarla, sobre otro dock para moverla o fuera de la ventana para que flote en una ventana
-propia; suelta más pestañas sobre una ventana de paneles para apilarlas. En una ventana de paneles, el botón del dock
-ofrece **Devolver todo a los paneles laterales** y la **×** hace lo mismo.
+Cualquier pestaña va a cualquier sitio: arrastra la pestaña de un panel o de un formulario para reordenarla, sobre otra
+fila o sobre un dock o el centro para moverla allí, o fuera de la ventana para que flote en una ventana propia; suelta
+más pestañas sobre una ventana para apilarlas. El sitio de destino se ilumina mientras arrastras. En una ventana
+propia, el botón del dock ofrece **Devolver todo a los paneles laterales** y la **×** hace lo mismo.
 
 ![Moviendo el panel Propiedades a otro dock](../../../../../screenshots/editor-dock-menu.png)
 
