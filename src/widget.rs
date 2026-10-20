@@ -259,6 +259,7 @@ pub enum Kind {
         on_move: Option<PyMsg>,
         on_scroll: Option<PyMsg>,
         on_middle_press: Option<PyMsg>,
+        on_middle_release: Option<PyMsg>,
         cursor: Option<iced::mouse::Interaction>,
     },
     Stack {
@@ -1122,7 +1123,7 @@ pub fn rule(
 #[pyfunction]
 #[pyo3(signature = (content, *, on_press=None, on_release=None, on_right_press=None,
     on_double_click=None, on_enter=None, on_exit=None, on_move=None, on_scroll=None,
-    on_middle_press=None, cursor=None))]
+    on_middle_press=None, on_middle_release=None, cursor=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn mouse_area(
     py: Python<'_>,
@@ -1136,6 +1137,7 @@ pub fn mouse_area(
     on_move: Any<'_>,
     on_scroll: Any<'_>,
     on_middle_press: Any<'_>,
+    on_middle_release: Any<'_>,
     cursor: Option<&str>,
 ) -> PyResult<Py<Widget>> {
     let cursor = extra::parse_cursor(cursor)?;
@@ -1152,6 +1154,7 @@ pub fn mouse_area(
             on_move: PyMsg::maybe(&on_move),
             on_scroll: PyMsg::maybe(&on_scroll),
             on_middle_press: PyMsg::maybe(&on_middle_press),
+            on_middle_release: PyMsg::maybe(&on_middle_release),
             cursor,
         },
     )

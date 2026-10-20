@@ -871,8 +871,13 @@ def reload_dependents(path: Union[str, Path]) -> None:
 
 
 def open_document(path: Union[str, Path]) -> Document:
-    """Opens a ``.pzform`` as a ``Document`` or a ``.pzcomp`` as a ``SceneDocument``."""
+    """Opens a ``.pzform`` as a ``Document``, a ``.pzcomp`` as a ``SceneDocument`` or a ``.pzshad`` as a
+    ``ShaderDocument``."""
     path = Path(path)
+    if path.suffix == ".pzshad":
+        from .shader_doc import ShaderDocument
+
+        return ShaderDocument.open(path)
     return SceneDocument.open(path) if path.suffix == SUFFIX else Document.open(path)
 
 

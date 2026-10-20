@@ -47,8 +47,10 @@ class Panel:
 
 
 def _design(d: "Designer", t: Theme) -> Any:
-    from . import panels
+    from . import panels, shader_editor
 
+    if shader_editor.is_shader(d):  # the Shading sidebar and the shader's variables
+        return shader_editor.design_panel(d, t)
     top = _core.column([ui.panel_header(tr("Toolbox"), icon="component", theme=t), panels.toolbox(d, t)],
                        width="fill", height="fill")
     bottom = _core.column([ui.panel_header(tr("Outline"), icon="layers", theme=t), panels.outline(d, t)],
@@ -69,14 +71,18 @@ def _dependencies(d: "Designer", t: Theme) -> Any:
 
 
 def _properties(d: "Designer", t: Theme) -> Any:
-    from . import panels
+    from . import panels, shader_editor
 
+    if shader_editor.is_shader(d):
+        return shader_editor.properties(d, t)
     return panels.properties(d, t)
 
 
 def _events(d: "Designer", t: Theme) -> Any:
-    from . import panels
+    from . import panels, shader_editor
 
+    if shader_editor.is_shader(d):
+        return shader_editor.events(d, t)
     return panels.events(d, t)
 
 

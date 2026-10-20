@@ -2,30 +2,19 @@
 
     python examples/showcase/glass_dashboard.py
 
-- The background is a ``pz.shader`` of soft color blobs that drift with ``time``.
+- The background is a shader graph of soft color blobs that drift with time
+  (``shaders/blobs.pzshad``, made of nodes in Pyzed Design).
 - Every card is ``glass``: a tinted panel that blurs what moves behind it (``backdrop_blur``).
 - Switches, sliders and the play button update the cards; values move with ``transition``.
 """
 
+from pathlib import Path
+
 import pyzed as pz
+
+SHADER = Path(__file__).parent / "shaders" / "blobs.pzshad"
 from pyzed import ui
 
-BLOBS = """
-fn blob(uv: vec2<f32>, center: vec2<f32>, radius: f32) -> f32 {
-    return exp(-pow(length(uv - center) / radius, 2.0));
-}
-
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    let p = uv * vec2<f32>(size.x / size.y, 1.0);
-    let t = time * 0.25;
-    var color = vec3<f32>(0.04, 0.05, 0.12);
-    color = color + vec3<f32>(0.95, 0.25, 0.55) * blob(p, vec2<f32>(0.4 + 0.25 * sin(t), 0.3 + 0.15 * cos(t * 1.3)), 0.45);
-    color = color + vec3<f32>(0.20, 0.45, 1.00) * blob(p, vec2<f32>(1.3 + 0.3 * cos(t * 0.8), 0.7 + 0.2 * sin(t)), 0.55);
-    color = color + vec3<f32>(0.10, 0.85, 0.70) * blob(p, vec2<f32>(0.9 + 0.2 * sin(t * 1.7), 1.0 + 0.1 * cos(t)), 0.35);
-    color = color + vec3<f32>(1.00, 0.65, 0.20) * blob(p, vec2<f32>(1.6 + 0.1 * sin(t * 2.0), 0.15), 0.25);
-    return vec4<f32>(color, 1.0);
-}
-"""
 GLASS = {"tint": "#ffffff", "strength": 0.10, "blur": 28}
 WHITE = "#ffffff"
 MUTED = "#ffffffaa"
@@ -166,7 +155,8 @@ class Dashboard(pz.App):
         ], spacing=20, align="start")
         content = pz.column([self.header(), pz.row(pz.stagger([grid], "fade_in_up", step=60))], spacing=24)
         return pz.stack([
-            pz.shader(BLOBS, fallback=pz.Gradient(["#0b1026", "#5b1a4a", "#0f4c5c"], angle=135)),
+            pz.shader(SHADER, width="fill", height="fill",
+                      fallback=pz.Gradient(["#0b1026", "#5b1a4a", "#0f4c5c"], angle=135)),
             pz.container(content, width="fill", height="fill", align_x="center", align_y="center"),
         ])
 

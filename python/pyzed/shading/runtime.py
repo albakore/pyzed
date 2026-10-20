@@ -165,3 +165,51 @@ def resolve(source: Any) -> Optional[Shader]:
                                     and "\n" not in source):
         return load(source)
     return None
+
+
+def run_file(path: Union[str, Path]) -> None:
+    """``pyzed run fire.pzshad``: the shader filling a window (see ``app``)."""
+    from ..app import run as run_app
+
+    run_app(app(path))
+
+
+def app(path: Union[str, Path]) -> Any:
+    """An app that shows the shader at ``path`` filling its window, with a slider for each mutable number
+    (``V`` shows or hides them). Saving the file in Pyzed Design updates the window."""
+    from .. import _core
+    from ..app import App
+
+    shader = load(path, fresh=True)
+    preview = shader.graph.preview
+
+    class ShaderApp(App):
+        title = f"{shader.name} — Pyzed"
+        size = (int(preview.get("width") or 640), int(preview.get("height") or 400))
+        show_variables = False
+
+        def subscriptions(self) -> Any:
+            return [_core.every(0.5, shader.reload, key="pzshad-reload")]
+
+        def on_key(self, combo: str) -> None:
+            if combo == "v":
+                self.show_variables = not self.show_variables
+
+        def view(self) -> Any:
+            art = shader.widget(width="fill", height="fill")
+            mutable = [v for v in shader.graph.variables if v.mutable and v.type in ("float", "int")]
+            if not self.show_variables or not mutable:
+                return art
+            rows = []
+            for v in mutable:
+                low = v.min if v.min is not None else 0.0
+                high = v.max if v.max is not None else max(1.0, float(v.value or 0) * 2)
+                rows.append(_core.row([
+                    _core.text(v.name, size=12, color="#ffffff", font="mono", width=90),
+                    _core.slider(float(low), float(high), float(shader[v.name]),
+                                 on_change=lambda value, name=v.name: shader.set(name, value), width=180),
+                ], spacing=8, align="center"))
+            panel = _core.container(_core.column(rows, spacing=6), padding=10, bg="#000000aa", radius=8)
+            return _core.stack([art, _core.container(panel, padding=12)], width="fill", height="fill")
+
+    return ShaderApp()

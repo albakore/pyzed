@@ -1,0 +1,417 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "fire",
+ "description": "Fractal noise flames rising from the bottom.",
+ "preview": {
+  "width": 340,
+  "height": 210,
+  "fallback": "#b91c1c",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "speed",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 3,
+   "description": "How fast the flames rise"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "speed"
+   }
+  },
+  {
+   "id": "2",
+   "type": "uv",
+   "x": 0.0,
+   "y": 212.0
+  },
+  {
+   "id": "3",
+   "type": "time",
+   "x": 0.0,
+   "y": 448.0
+  },
+  {
+   "id": "4",
+   "type": "math",
+   "x": 250.0,
+   "y": 920.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "5",
+   "type": "math",
+   "x": 250.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 4.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 250.0,
+   "y": 448.0,
+   "inputs": {
+    "b": 3.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 500.0,
+   "y": 920.0,
+   "inputs": {
+    "b": 1.5
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 750.0,
+   "y": 684.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "9",
+   "type": "compose",
+   "x": 1000.0,
+   "y": 448.0,
+   "params": {
+    "type": "vec2"
+   }
+  },
+  {
+   "id": "10",
+   "type": "fbm",
+   "x": 1250.0,
+   "y": 448.0,
+   "inputs": {
+    "scale": 1.0,
+    "octaves": 4
+   },
+   "params": {
+    "kind": "value"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 1500.0,
+   "y": 448.0,
+   "inputs": {
+    "b": 1.6
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "12",
+   "type": "math",
+   "x": 250.0,
+   "y": 684.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "13",
+   "type": "math",
+   "x": 500.0,
+   "y": 684.0,
+   "inputs": {
+    "b": 1.1
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "14",
+   "type": "math",
+   "x": 1750.0,
+   "y": 566.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "15",
+   "type": "math",
+   "x": 2000.0,
+   "y": 566.0,
+   "inputs": {
+    "b": 0.2
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "16",
+   "type": "clamp",
+   "x": 2250.0,
+   "y": 566.0,
+   "inputs": {
+    "min": 0.0,
+    "max": 1.0
+   }
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 2500.0,
+   "y": 566.0,
+   "inputs": {
+    "b": 1.4
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "18",
+   "type": "math",
+   "x": 2500.0,
+   "y": 802.0,
+   "inputs": {
+    "b": 2.0
+   },
+   "params": {
+    "op": "power"
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 2500.0,
+   "y": 1038.0,
+   "inputs": {
+    "b": 5.0
+   },
+   "params": {
+    "op": "power"
+   }
+  },
+  {
+   "id": "20",
+   "type": "math",
+   "x": 2750.0,
+   "y": 1038.0,
+   "inputs": {
+    "b": 0.8
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "21",
+   "type": "compose",
+   "x": 3000.0,
+   "y": 802.0,
+   "params": {
+    "type": "vec3"
+   }
+  },
+  {
+   "id": "22",
+   "type": "rgba",
+   "x": 3250.0,
+   "y": 802.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "23",
+   "type": "output",
+   "x": 3500.0,
+   "y": 802.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "time",
+   "to": "4",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "4",
+   "in": "b"
+  },
+  {
+   "from": "2",
+   "out": "x",
+   "to": "5",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "y",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "5",
+   "out": "result",
+   "to": "9",
+   "in": "x"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "y"
+  },
+  {
+   "from": "9",
+   "out": "vector",
+   "to": "10",
+   "in": "p"
+  },
+  {
+   "from": "10",
+   "out": "value",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "y",
+   "to": "12",
+   "in": "b"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "13",
+   "in": "a"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "14",
+   "in": "a"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "b"
+  },
+  {
+   "from": "14",
+   "out": "result",
+   "to": "15",
+   "in": "a"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "x"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "17",
+   "in": "a"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "18",
+   "in": "a"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "20",
+   "in": "a"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "21",
+   "in": "x"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "21",
+   "in": "y"
+  },
+  {
+   "from": "20",
+   "out": "result",
+   "to": "21",
+   "in": "z"
+  },
+  {
+   "from": "21",
+   "out": "vector",
+   "to": "22",
+   "in": "rgb"
+  },
+  {
+   "from": "22",
+   "out": "color",
+   "to": "23",
+   "in": "color"
+  }
+ ]
+}

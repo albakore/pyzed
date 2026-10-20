@@ -183,7 +183,8 @@ def design(path=None) -> int:
 
 
 def run_form(path=None, reload: bool = False) -> int:
-    """``pyzed run``: runs a ``.pzform`` file, by default the current project's main form.
+    """``pyzed run``: runs a ``.pzform`` file (or a ``.pzcomp`` component or ``.pzshad`` shader), by default
+    the current project's main form.
 
     ``reload`` updates the window when the form or its code is saved. Returns 1 when there is no form to run.
     """
@@ -247,8 +248,10 @@ def main(argv=None) -> int:
     p_dev.add_argument("--watch", action="append", default=[], metavar="PATH", help="also watch this folder or file")
     p_dev.add_argument("args", nargs=argparse.REMAINDER, help="arguments passed to the script")
     p_design = sub.add_parser("design", help="open the visual form designer")
-    p_design.add_argument("form", nargs="?", help="a .pzform file (created on first save if missing) or a project")
-    p_run = sub.add_parser("run", help="run a form made with the designer (default: the project's main form)")
+    p_design.add_argument("form", nargs="?", help="a .pzform, .pzcomp or .pzshad file (created on first save if "
+                                                   "missing) or a project")
+    p_run = sub.add_parser("run", help="run a form, component or shader made with the designer (default: the "
+                                         "project's main form)")
     p_run.add_argument("form", nargs="?")
     p_run.add_argument("--reload", action="store_true", help="update the window when the form or its code is saved")
     p_icons = sub.add_parser("icons", help="list the bundled Lucide icon names")

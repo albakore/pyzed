@@ -1,0 +1,250 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "voronoi",
+ "description": "Voronoi cells that wander, with glowing borders.",
+ "preview": {
+  "width": 340,
+  "height": 210,
+  "fallback": "#111827",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "speed",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 3,
+   "description": "How fast the cells wander"
+  },
+  {
+   "name": "tint",
+   "type": "color",
+   "value": "#a78bfa",
+   "description": "The color of the borders"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "speed"
+   }
+  },
+  {
+   "id": "2",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 212.0,
+   "params": {
+    "name": "tint"
+   }
+  },
+  {
+   "id": "3",
+   "type": "pixel",
+   "x": 0.0,
+   "y": 472.0
+  },
+  {
+   "id": "4",
+   "type": "time",
+   "x": 0.0,
+   "y": 708.0
+  },
+  {
+   "id": "5",
+   "type": "math",
+   "x": 250.0,
+   "y": 448.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "6",
+   "type": "voronoi",
+   "x": 500.0,
+   "y": 460.0,
+   "inputs": {
+    "scale": 0.023809523809523808,
+    "jitter": 0.8
+   }
+  },
+  {
+   "id": "7",
+   "type": "smoothstep",
+   "x": 750.0,
+   "y": 572.0,
+   "inputs": {
+    "edge0": 0.0,
+    "edge1": 0.08
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 750.0,
+   "y": 336.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 1000.0,
+   "y": 336.0,
+   "inputs": {
+    "b": 0.6
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 1250.0,
+   "y": 336.0,
+   "inputs": {
+    "b": [
+     0.05,
+     0.05,
+     0.12
+    ]
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 250.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 1.4
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "12",
+   "type": "mix",
+   "x": 1500.0,
+   "y": 373.3
+  },
+  {
+   "id": "13",
+   "type": "rgba",
+   "x": 1750.0,
+   "y": 373.3,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "14",
+   "type": "output",
+   "x": 2000.0,
+   "y": 373.3
+  }
+ ],
+ "links": [
+  {
+   "from": "4",
+   "out": "time",
+   "to": "5",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "5",
+   "in": "b"
+  },
+  {
+   "from": "3",
+   "out": "px",
+   "to": "6",
+   "in": "p"
+  },
+  {
+   "from": "5",
+   "out": "result",
+   "to": "6",
+   "in": "phase"
+  },
+  {
+   "from": "6",
+   "out": "edge",
+   "to": "7",
+   "in": "x"
+  },
+  {
+   "from": "2",
+   "out": "rgb",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "distance",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "rgb",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "12",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "12",
+   "in": "b"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "12",
+   "in": "t"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "13",
+   "in": "rgb"
+  },
+  {
+   "from": "13",
+   "out": "color",
+   "to": "14",
+   "in": "color"
+  }
+ ]
+}

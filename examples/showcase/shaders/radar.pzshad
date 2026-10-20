@@ -1,0 +1,713 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "radar",
+ "description": "A round radar screen: a sweep with a fading trail, rings and a cross.",
+ "preview": {
+  "width": 176,
+  "height": 176,
+  "fallback": "#1e1b4b",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "accent",
+   "type": "color",
+   "value": "#34d399",
+   "description": "The color of the sweep and the rings"
+  },
+  {
+   "name": "sweep",
+   "type": "float",
+   "value": 0.35,
+   "min": 0,
+   "max": 2,
+   "description": "Turns per second"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "accent"
+   }
+  },
+  {
+   "id": "2",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 260.0,
+   "params": {
+    "name": "sweep"
+   }
+  },
+  {
+   "id": "3",
+   "type": "uv",
+   "x": 0.0,
+   "y": 472.0
+  },
+  {
+   "id": "4",
+   "type": "math",
+   "x": 250.0,
+   "y": 472.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "5",
+   "type": "length",
+   "x": 500.0,
+   "y": 472.0
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 750.0,
+   "y": 472.0,
+   "inputs": {
+    "b": 2.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 1000.0,
+   "y": 472.0,
+   "inputs": {
+    "b": 1.0
+   },
+   "params": {
+    "op": "step"
+   }
+  },
+  {
+   "id": "8",
+   "type": "swizzle",
+   "x": 500.0,
+   "y": 660.0,
+   "params": {
+    "mask": "y"
+   }
+  },
+  {
+   "id": "9",
+   "type": "swizzle",
+   "x": 500.0,
+   "y": 872.0,
+   "params": {
+    "mask": "x"
+   }
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 750.0,
+   "y": 766.0,
+   "params": {
+    "op": "atan2"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 1000.0,
+   "y": 944.0,
+   "inputs": {
+    "b": 6.2831853
+   },
+   "params": {
+    "op": "divide"
+   }
+  },
+  {
+   "id": "12",
+   "type": "time",
+   "x": 0.0,
+   "y": 708.0
+  },
+  {
+   "id": "13",
+   "type": "math",
+   "x": 250.0,
+   "y": 708.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "14",
+   "type": "math",
+   "x": 1250.0,
+   "y": 920.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "15",
+   "type": "func",
+   "x": 1500.0,
+   "y": 944.0,
+   "params": {
+    "op": "fract"
+   }
+  },
+  {
+   "id": "16",
+   "type": "math",
+   "x": 1750.0,
+   "y": 944.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 2000.0,
+   "y": 944.0,
+   "inputs": {
+    "b": 6.0
+   },
+   "params": {
+    "op": "power"
+   }
+  },
+  {
+   "id": "18",
+   "type": "math",
+   "x": 2250.0,
+   "y": 944.0,
+   "inputs": {
+    "b": 0.55
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 1000.0,
+   "y": 708.0,
+   "inputs": {
+    "b": 3.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "20",
+   "type": "func",
+   "x": 1250.0,
+   "y": 708.0,
+   "params": {
+    "op": "fract"
+   }
+  },
+  {
+   "id": "21",
+   "type": "math",
+   "x": 1500.0,
+   "y": 708.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "22",
+   "type": "func",
+   "x": 1750.0,
+   "y": 708.0,
+   "params": {
+    "op": "abs"
+   }
+  },
+  {
+   "id": "23",
+   "type": "math",
+   "x": 2000.0,
+   "y": 708.0,
+   "inputs": {
+    "b": 0.47
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "24",
+   "type": "smoothstep",
+   "x": 2250.0,
+   "y": 708.0,
+   "inputs": {
+    "edge0": 0.03,
+    "edge1": 0.0
+   }
+  },
+  {
+   "id": "25",
+   "type": "math",
+   "x": 2500.0,
+   "y": 708.0,
+   "inputs": {
+    "b": 0.25
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "26",
+   "type": "swizzle",
+   "x": 500.0,
+   "y": 1084.0,
+   "params": {
+    "mask": "x"
+   }
+  },
+  {
+   "id": "27",
+   "type": "func",
+   "x": 750.0,
+   "y": 1084.0,
+   "params": {
+    "op": "abs"
+   }
+  },
+  {
+   "id": "28",
+   "type": "smoothstep",
+   "x": 1000.0,
+   "y": 1180.0,
+   "inputs": {
+    "edge0": 0.006,
+    "edge1": 0.0
+   }
+  },
+  {
+   "id": "29",
+   "type": "swizzle",
+   "x": 500.0,
+   "y": 1296.0,
+   "params": {
+    "mask": "y"
+   }
+  },
+  {
+   "id": "30",
+   "type": "func",
+   "x": 750.0,
+   "y": 1296.0,
+   "params": {
+    "op": "abs"
+   }
+  },
+  {
+   "id": "31",
+   "type": "smoothstep",
+   "x": 1000.0,
+   "y": 1416.0,
+   "inputs": {
+    "edge0": 0.006,
+    "edge1": 0.0
+   }
+  },
+  {
+   "id": "32",
+   "type": "math",
+   "x": 1250.0,
+   "y": 1298.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "33",
+   "type": "math",
+   "x": 1500.0,
+   "y": 1298.0,
+   "inputs": {
+    "b": 0.2
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "34",
+   "type": "math",
+   "x": 2750.0,
+   "y": 826.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "35",
+   "type": "math",
+   "x": 3000.0,
+   "y": 1062.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "36",
+   "type": "math",
+   "x": 3250.0,
+   "y": 531.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "37",
+   "type": "math",
+   "x": 3500.0,
+   "y": 531.0,
+   "inputs": {
+    "b": [
+     0.0,
+     0.02,
+     0.03
+    ]
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "38",
+   "type": "rgba",
+   "x": 3750.0,
+   "y": 531.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "39",
+   "type": "math",
+   "x": 3250.0,
+   "y": 1062.0,
+   "inputs": {
+    "b": 0.35
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "40",
+   "type": "math",
+   "x": 3500.0,
+   "y": 767.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "41",
+   "type": "output",
+   "x": 4000.0,
+   "y": 649.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "uv",
+   "to": "4",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "5",
+   "in": "vector"
+  },
+  {
+   "from": "5",
+   "out": "length",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "8",
+   "in": "vector"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "9",
+   "in": "vector"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "10",
+   "in": "b"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "12",
+   "out": "time",
+   "to": "13",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "13",
+   "in": "b"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "14",
+   "in": "a"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "b"
+  },
+  {
+   "from": "14",
+   "out": "result",
+   "to": "15",
+   "in": "x"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "b"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "17",
+   "in": "a"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "18",
+   "in": "a"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "20",
+   "in": "x"
+  },
+  {
+   "from": "20",
+   "out": "result",
+   "to": "21",
+   "in": "a"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "x"
+  },
+  {
+   "from": "22",
+   "out": "result",
+   "to": "23",
+   "in": "a"
+  },
+  {
+   "from": "23",
+   "out": "result",
+   "to": "24",
+   "in": "x"
+  },
+  {
+   "from": "24",
+   "out": "result",
+   "to": "25",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "26",
+   "in": "vector"
+  },
+  {
+   "from": "26",
+   "out": "result",
+   "to": "27",
+   "in": "x"
+  },
+  {
+   "from": "27",
+   "out": "result",
+   "to": "28",
+   "in": "x"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "29",
+   "in": "vector"
+  },
+  {
+   "from": "29",
+   "out": "result",
+   "to": "30",
+   "in": "x"
+  },
+  {
+   "from": "30",
+   "out": "result",
+   "to": "31",
+   "in": "x"
+  },
+  {
+   "from": "28",
+   "out": "result",
+   "to": "32",
+   "in": "a"
+  },
+  {
+   "from": "31",
+   "out": "result",
+   "to": "32",
+   "in": "b"
+  },
+  {
+   "from": "32",
+   "out": "result",
+   "to": "33",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "34",
+   "in": "a"
+  },
+  {
+   "from": "25",
+   "out": "result",
+   "to": "34",
+   "in": "b"
+  },
+  {
+   "from": "34",
+   "out": "result",
+   "to": "35",
+   "in": "a"
+  },
+  {
+   "from": "33",
+   "out": "result",
+   "to": "35",
+   "in": "b"
+  },
+  {
+   "from": "1",
+   "out": "rgb",
+   "to": "36",
+   "in": "a"
+  },
+  {
+   "from": "35",
+   "out": "result",
+   "to": "36",
+   "in": "b"
+  },
+  {
+   "from": "36",
+   "out": "result",
+   "to": "37",
+   "in": "a"
+  },
+  {
+   "from": "37",
+   "out": "result",
+   "to": "38",
+   "in": "rgb"
+  },
+  {
+   "from": "35",
+   "out": "result",
+   "to": "39",
+   "in": "a"
+  },
+  {
+   "from": "39",
+   "out": "result",
+   "to": "40",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "40",
+   "in": "b"
+  },
+  {
+   "from": "38",
+   "out": "color",
+   "to": "41",
+   "in": "color"
+  },
+  {
+   "from": "40",
+   "out": "result",
+   "to": "41",
+   "in": "alpha"
+  }
+ ]
+}

@@ -221,7 +221,7 @@ class Socket:
         return self._math("power", self, other)
 
     def __neg__(self) -> "Socket":
-        return self.graph.add("func", op="negate", x=self)["result"]
+        return self.graph.add("func", self, op="negate")["result"]
 
     def __getattr__(self, name: str) -> "Socket":
         if _SWIZZLE.match(name):
@@ -366,7 +366,15 @@ class Graph:
     def add(self, type_: str, *args: Value, x: Optional[float] = None, y: Optional[float] = None,
             title: str = "", **values: Value) -> NodeRef:
         """Adds a node of ``type_`` (or a sidebar entry such as ``"sin"``); positional ``args`` go to its
-        inputs in order and keyword ``values`` to inputs or settings by name. Returns the new node."""
+        inputs in order and keyword ``values`` to inputs or settings by name. Returns the new node.
+
+        ``x`` and ``y`` place the node; a wire or a vector given as ``x``/``y`` goes to the input of that
+        name instead (Compose, Smoothstep and Clamp have one); pass plain numbers to such inputs in ``args``.
+        """
+        if x is not None and not isinstance(x, (int, float)):
+            values["x"], x = x, None
+        if y is not None and not isinstance(y, (int, float)):
+            values["y"], y = y, None
         type_, preset_params = _resolve_type(type_)
         nt = _nodes.get(type_)
         node = Node(self.new_id(), type_)
@@ -653,7 +661,7 @@ class Graph:
         self.touch()
         return var
 
-    def set_variable(self, name: str, **changes: Any) -> Variable:
+    def set_variable(self, name: str, /, **changes: Any) -> Variable:
         """Changes a variable: its ``value``, ``type``, ``mutable``, ``min``, ``max``, ``step``, ``description``
         or ``name`` (renaming updates the nodes that read it)."""
         var = self.variable(name)
@@ -860,10 +868,13 @@ class Graph:
 
 
 def _resolve_type(name: str) -> Tuple[str, Dict[str, Any]]:
-    """A node type id, or a sidebar entry's name (``"sin"``, ``"multiply"``, ``"value_noise"``), as
-    ``(type, settings)``."""
+    """A node type id, a sidebar entry's key (``"func:sin"``) or name (``"sin"``, ``"multiply"``,
+    ``"value_noise"``), as ``(type, settings)``."""
     if name in _nodes.TYPES:
         return name, {}
+    for p in _nodes.PRESETS:
+        if p.key == name:
+            return p.type, dict(p.params)
     key = name.lower().replace(" ", "_")
     if key in _nodes.BINARY:
         return "math", {"op": key}

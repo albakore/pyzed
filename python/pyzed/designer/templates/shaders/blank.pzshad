@@ -1,0 +1,62 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "blank",
+ "description": "A gradient across the UV: the starting point for any shader.",
+ "preview": {
+  "width": 320,
+  "height": 200,
+  "fallback": "#1e1b4b",
+  "animate": true
+ },
+ "variables": [],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "uv",
+   "x": 0.0,
+   "y": 0.0
+  },
+  {
+   "id": "2",
+   "type": "gradient",
+   "x": 250.0,
+   "y": 0.0,
+   "params": {
+    "stops": [
+     [
+      0.0,
+      "#1e1b4b"
+     ],
+     [
+      0.5,
+      "#db2777"
+     ],
+     [
+      1.0,
+      "#fde047"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "3",
+   "type": "output",
+   "x": 500.0,
+   "y": 0.0
+  }
+ ],
+ "links": [
+  {
+   "from": "1",
+   "out": "x",
+   "to": "2",
+   "in": "t"
+  },
+  {
+   "from": "2",
+   "out": "color",
+   "to": "3",
+   "in": "color"
+  }
+ ]
+}

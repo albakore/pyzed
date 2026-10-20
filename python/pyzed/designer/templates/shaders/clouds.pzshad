@@ -1,0 +1,273 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "clouds",
+ "description": "Fractal noise clouds drifting over a sky gradient.",
+ "preview": {
+  "width": 320,
+  "height": 200,
+  "fallback": "#1e1b4b",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "wind",
+   "type": "vec2",
+   "value": [
+    0.04,
+    0.01
+   ],
+   "description": "Where the clouds drift, per second"
+  },
+  {
+   "name": "cover",
+   "type": "float",
+   "value": 0.5,
+   "min": 0,
+   "max": 1,
+   "description": "How much of the sky is cloud"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "wind"
+   }
+  },
+  {
+   "id": "2",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 212.0,
+   "params": {
+    "name": "cover"
+   }
+  },
+  {
+   "id": "3",
+   "type": "uv",
+   "x": 0.0,
+   "y": 424.0
+  },
+  {
+   "id": "4",
+   "type": "scroll",
+   "x": 250.0,
+   "y": 212.0
+  },
+  {
+   "id": "5",
+   "type": "fbm",
+   "x": 500.0,
+   "y": 212.0,
+   "inputs": {
+    "scale": 3.0,
+    "octaves": 6
+   },
+   "params": {
+    "kind": "value"
+   }
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 250.0,
+   "y": 448.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 500.0,
+   "y": 520.0,
+   "inputs": {
+    "b": 0.2
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 250.0,
+   "y": 684.0,
+   "inputs": {
+    "a": 1.0
+   },
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 500.0,
+   "y": 756.0,
+   "inputs": {
+    "b": 0.25
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "10",
+   "type": "smoothstep",
+   "x": 750.0,
+   "y": 496.0
+  },
+  {
+   "id": "11",
+   "type": "uv",
+   "x": 0.0,
+   "y": 660.0
+  },
+  {
+   "id": "12",
+   "type": "gradient",
+   "x": 250.0,
+   "y": 920.0,
+   "params": {
+    "stops": [
+     [
+      0.0,
+      "#2b6cb0"
+     ],
+     [
+      1.0,
+      "#90cdf4"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "13",
+   "type": "mix",
+   "x": 1000.0,
+   "y": 708.0,
+   "inputs": {
+    "b": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  },
+  {
+   "id": "14",
+   "type": "rgba",
+   "x": 1250.0,
+   "y": 708.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "15",
+   "type": "output",
+   "x": 1500.0,
+   "y": 708.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "uv",
+   "to": "4",
+   "in": "uv"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "4",
+   "in": "speed"
+  },
+  {
+   "from": "4",
+   "out": "uv",
+   "to": "5",
+   "in": "p"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "6",
+   "in": "b"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "10",
+   "in": "edge0"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "10",
+   "in": "edge1"
+  },
+  {
+   "from": "5",
+   "out": "value",
+   "to": "10",
+   "in": "x"
+  },
+  {
+   "from": "11",
+   "out": "y",
+   "to": "12",
+   "in": "t"
+  },
+  {
+   "from": "12",
+   "out": "rgb",
+   "to": "13",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "13",
+   "in": "t"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "rgb"
+  },
+  {
+   "from": "14",
+   "out": "color",
+   "to": "15",
+   "in": "color"
+  }
+ ]
+}

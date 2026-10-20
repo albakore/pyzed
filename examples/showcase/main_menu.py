@@ -2,55 +2,19 @@
 
     python examples/showcase/main_menu.py
 
-- The sun, the grid and the stars are one ``pz.shader``: it scrolls with ``time`` and
-  follows the pointer through ``mouse()``.
+- The sun, the grid and the stars are one shader graph, ``shaders/synthwave.pzshad``, made
+  of nodes in Pyzed Design: it scrolls with Time and follows the pointer with Mouse.
 - The title uses ``bloom``; the menu is a ``glass`` panel whose buttons lift and glow on
   hover (``animate("lift", on="hover")``) and play ``shrink`` on press.
 - The arrow keys (or W and S) move the selection.
 """
 
+from pathlib import Path
+
 import pyzed as pz
 
-SYNTHWAVE = """
-fn hash(p: vec2<f32>) -> f32 {
-    return fract(sin(dot(p, vec2<f32>(12.9898, 78.233))) * 43758.5453);
-}
+SHADER = Path(__file__).parent / "shaders" / "synthwave.pzshad"
 
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    var m = mouse();
-    if (m.x < 0.0) {
-        m = vec2<f32>(0.5, 0.5);
-    }
-    let horizon = 0.62 + (m.y - 0.5) * 0.04;
-    let aspect = size.x / size.y;
-    var color = vec3<f32>(0.0);
-    if (uv.y < horizon) {
-        // Sky: a dusk gradient, stars and a striped sun.
-        let t = uv.y / horizon;
-        color = mix(vec3<f32>(0.03, 0.01, 0.10), vec3<f32>(0.55, 0.08, 0.45), pow(t, 2.2));
-        let star = step(0.996, hash(floor(px / 2.0))) * (1.0 - t);
-        color = color + vec3<f32>(star);
-        let center = vec2<f32>(0.5 + (m.x - 0.5) * 0.05, horizon - 0.12);
-        let d = length((uv - center) * vec2<f32>(aspect, 1.0));
-        let stripes = step(0.0, sin((uv.y - time * 0.02) * 120.0) + (1.0 - (horizon - uv.y) / 0.25) * 1.6 - 0.6);
-        let sun = smoothstep(0.205, 0.2, d) * stripes;
-        let sun_color = mix(vec3<f32>(1.0, 0.85, 0.25), vec3<f32>(1.0, 0.2, 0.55), clamp((uv.y - center.y + 0.2) / 0.4, 0.0, 1.0));
-        color = mix(color, sun_color, sun);
-        color = color + vec3<f32>(1.0, 0.3, 0.6) * 0.35 * exp(-d * 6.0);
-    } else {
-        // Ground: a perspective grid moving towards the viewer.
-        let depth = (uv.y - horizon) / (1.0 - horizon);
-        let z = 1.0 / max(depth, 0.001);
-        let x = (uv.x - 0.5) * aspect * z;
-        let gz = fract(z * 0.5 + time * 0.6);
-        let gx = fract(x * 1.5);
-        let line = max(smoothstep(0.035 * z, 0.0, min(gz, 1.0 - gz)), smoothstep(0.02 * z, 0.0, min(gx, 1.0 - gx)));
-        color = mix(vec3<f32>(0.02, 0.0, 0.06), vec3<f32>(0.95, 0.2, 0.85), line * clamp(depth * 3.0, 0.0, 1.0));
-        color = color + vec3<f32>(0.6, 0.1, 0.5) * exp(-depth * 12.0) * 0.6;
-    }
-    return vec4<f32>(color, 1.0);
-}
-"""
 
 ITEMS = (
     ("play", "Continue", "Chapter 4 · The Neon Pier"),
@@ -121,7 +85,8 @@ class MainMenu(pz.App):
             footer,
         ], spacing=28, width="fill", height="fill", padding=(48, 56))
         return pz.stack([
-            pz.shader(SYNTHWAVE, fallback=pz.Gradient(["#08021a", "#4a0d5e", "#d9468f"], angle=180)),
+            pz.shader(SHADER, width="fill", height="fill",
+                      fallback=pz.Gradient(["#08021a", "#4a0d5e", "#d9468f"], angle=180)),
             content,
         ])
 

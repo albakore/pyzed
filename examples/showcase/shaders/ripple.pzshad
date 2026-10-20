@@ -1,0 +1,403 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "ripple",
+ "description": "Rings of waves around the pointer (the middle when it is away).",
+ "preview": {
+  "width": 340,
+  "height": 210,
+  "fallback": "#0c4a6e",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "speed",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 3,
+   "description": "How fast the waves travel"
+  },
+  {
+   "name": "tint",
+   "type": "color",
+   "value": "#7dd3fc",
+   "description": "The color of the waves"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "speed"
+   }
+  },
+  {
+   "id": "2",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 212.0,
+   "params": {
+    "name": "tint"
+   }
+  },
+  {
+   "id": "3",
+   "type": "uv",
+   "x": 0.0,
+   "y": 472.0
+  },
+  {
+   "id": "4",
+   "type": "mouse",
+   "x": 0.0,
+   "y": 708.0
+  },
+  {
+   "id": "5",
+   "type": "size",
+   "x": 0.0,
+   "y": 920.0
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 250.0,
+   "y": 708.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "7",
+   "type": "compose",
+   "x": 250.0,
+   "y": 1180.0,
+   "inputs": {
+    "y": 1.0
+   },
+   "params": {
+    "type": "vec2"
+   }
+  },
+  {
+   "id": "8",
+   "type": "math",
+   "x": 500.0,
+   "y": 944.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "9",
+   "type": "length",
+   "x": 750.0,
+   "y": 944.0
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 1000.0,
+   "y": 944.0,
+   "inputs": {
+    "b": 40.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "11",
+   "type": "time",
+   "x": 0.0,
+   "y": 1180.0
+  },
+  {
+   "id": "12",
+   "type": "math",
+   "x": 250.0,
+   "y": 944.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "13",
+   "type": "math",
+   "x": 500.0,
+   "y": 1180.0,
+   "inputs": {
+    "b": 6.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "14",
+   "type": "math",
+   "x": 1250.0,
+   "y": 1062.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "15",
+   "type": "func",
+   "x": 1500.0,
+   "y": 1062.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "16",
+   "type": "math",
+   "x": 1000.0,
+   "y": 1180.0,
+   "inputs": {
+    "b": -4.0
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "17",
+   "type": "func",
+   "x": 1250.0,
+   "y": 1298.0,
+   "params": {
+    "op": "exp"
+   }
+  },
+  {
+   "id": "18",
+   "type": "math",
+   "x": 1750.0,
+   "y": 1180.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "19",
+   "type": "mix",
+   "x": 250.0,
+   "y": 472.0,
+   "inputs": {
+    "a": [
+     0.02,
+     0.1,
+     0.25
+    ],
+    "b": [
+     0.0,
+     0.55,
+     0.75
+    ]
+   }
+  },
+  {
+   "id": "20",
+   "type": "math",
+   "x": 2000.0,
+   "y": 696.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "21",
+   "type": "math",
+   "x": 2250.0,
+   "y": 696.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "22",
+   "type": "math",
+   "x": 2500.0,
+   "y": 584.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "23",
+   "type": "rgba",
+   "x": 2750.0,
+   "y": 584.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "24",
+   "type": "output",
+   "x": 3000.0,
+   "y": 584.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "uv",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "position",
+   "to": "6",
+   "in": "b"
+  },
+  {
+   "from": "5",
+   "out": "aspect",
+   "to": "7",
+   "in": "x"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "8",
+   "in": "a"
+  },
+  {
+   "from": "7",
+   "out": "vector",
+   "to": "8",
+   "in": "b"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "9",
+   "in": "vector"
+  },
+  {
+   "from": "9",
+   "out": "length",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "11",
+   "out": "time",
+   "to": "12",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "12",
+   "in": "b"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "13",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "14",
+   "in": "a"
+  },
+  {
+   "from": "13",
+   "out": "result",
+   "to": "14",
+   "in": "b"
+  },
+  {
+   "from": "14",
+   "out": "result",
+   "to": "15",
+   "in": "x"
+  },
+  {
+   "from": "9",
+   "out": "length",
+   "to": "16",
+   "in": "a"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "17",
+   "in": "x"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "18",
+   "in": "a"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "18",
+   "in": "b"
+  },
+  {
+   "from": "3",
+   "out": "y",
+   "to": "19",
+   "in": "t"
+  },
+  {
+   "from": "2",
+   "out": "rgb",
+   "to": "20",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "20",
+   "in": "b"
+  },
+  {
+   "from": "20",
+   "out": "result",
+   "to": "21",
+   "in": "a"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "22",
+   "in": "a"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "b"
+  },
+  {
+   "from": "22",
+   "out": "result",
+   "to": "23",
+   "in": "rgb"
+  },
+  {
+   "from": "23",
+   "out": "color",
+   "to": "24",
+   "in": "color"
+  }
+ ]
+}

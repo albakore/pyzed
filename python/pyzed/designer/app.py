@@ -49,6 +49,8 @@ from .runtime import FormWindow
 from . import scene as _scene
 from . import scene_code as _scene_code
 from . import scene_panel
+from . import shader_doc as _shader_doc
+from . import shader_editor
 from . import telemetry as _telemetry
 from ..project import Project
 from .. import reference as _reference
@@ -59,12 +61,13 @@ TITLE_HEIGHT = 34.0
 SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "dist", "build"}
 
 #: Files the designer opens: forms and components designed visually.
-DOCUMENT_SUFFIXES = (SUFFIX, _scene.SUFFIX)
+DOCUMENT_SUFFIXES = (SUFFIX, _scene.SUFFIX, _shader_doc.SUFFIX)
 
 #: What "New" can create: (label, icon, suffix, factory returning a new document).
 NEW_DOCUMENT_KINDS: List[Tuple[str, str, str, Callable[[], Document]]] = [
     ("Form", "app-window", SUFFIX, Document),
     ("Component", "component", _scene.SUFFIX, _scene.new_component),
+    ("Shader", shader_editor.ICON, _shader_doc.SUFFIX, _shader_doc.new_shader),
 ]
 
 
@@ -131,6 +134,8 @@ class Designer(App):
             self.doc = _scene.open_document(path)
         elif path is not None and Path(path).suffix == _scene.SUFFIX:
             self.doc = _scene.new_component(Path(path).stem, path)
+        elif path is not None and Path(path).suffix == _shader_doc.SUFFIX:
+            self.doc = _shader_doc.new_shader(Path(path).stem, path)
         else:
             self.doc = Document(path=Path(path).with_suffix(SUFFIX) if path else None)
         if theme is not None:
@@ -138,6 +143,8 @@ class Designer(App):
         # tools and gestures
         self.tool: Optional[str] = None
         self.drag: Optional[Drag] = None
+        #: The Shader view's gestures, search and menus (when a .pzshad is open).
+        self.shading = shader_editor.ShaderEditor(self)
         self.pointer: Tuple[float, float] = (0.0, 0.0)
         self.view_pointer: Tuple[float, float] = (0.0, 0.0)
         self.guides: List[Rect] = []
@@ -362,6 +369,7 @@ class Designer(App):
     def window_moved(self, x: float, y: float) -> None:
         """Pointer anywhere in the window, in window coordinates (menus and drags out of panels)."""
         self.window_pointer = (x, y)
+        self.shading.window_moved(x, y)
         carry = self.carry
         if carry is not None and not carry.moved:
             ox, oy = carry.origin
@@ -440,6 +448,9 @@ class Designer(App):
 
     def window_release(self) -> None:
         """The mouse button went up anywhere: ends a drag out of the toolbox or the outline."""
+        if shader_editor.is_shader(self):
+            self.shading.window_release()
+            return
         carry, self.carry = self.carry, None
         target, self.outline_target = self.outline_target, None
         if carry is None:
@@ -874,7 +885,10 @@ class Designer(App):
         count = self.doc.copy()
         if not count:
             return None
-        self.notify(tr("Copied {count} controls", count=count) if count > 1 else tr("Copied 1 control"))
+        if shader_editor.is_shader(self):
+            self.notify(tr("Copied {count} nodes", count=count) if count > 1 else tr("Copied 1 node"))
+        else:
+            self.notify(tr("Copied {count} controls", count=count) if count > 1 else tr("Copied 1 control"))
         return _core.Command.copy(self.doc.clipboard_text())
 
     def paste(self) -> Any:
@@ -1613,16 +1627,18 @@ class Designer(App):
         tabs = []
         for i, doc in enumerate(pane.docs):
             scene = getattr(doc, "is_scene", False)
-            kind = tr("Component") if scene else tr("Form")
+            shader = getattr(doc, "is_shader", False)
+            kind = tr("Shader") if shader else tr("Component") if scene else tr("Form")
             tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
-                               icon="component" if scene else "app-window",
-                               icon_color="accent" if scene else None, dirty=doc.dirty))
+                               icon=shader_editor.ICON if shader else "component" if scene else "app-window",
+                               icon_color="accent" if scene or shader else None, dirty=doc.dirty))
         notes = self.updates.tab() if main else None
         if notes is not None:
             tabs.append(notes)
         if self.help_open and main:
             tabs.append(ui.Tab(id=HELP_TAB, label=_t("pyzed.reference.title"), icon="book-open", icon_color="accent"))
-        view = tr("Component view") if getattr(pane.doc, "is_scene", False) else tr("Form view")
+        view = tr("Shader view") if getattr(pane.doc, "is_shader", False) else \
+            tr("Component view") if getattr(pane.doc, "is_scene", False) else tr("Form view")
         active = str(pane.active)
         if main:
             active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else active
@@ -1715,12 +1731,15 @@ class Designer(App):
         Changing the kind or the folder picks a free default name (``form1``, ``component2``, ...).
         """
         self.new_state[key] = value
+        if key == "kind":
+            self.new_state["template"] = "blank"
         if key in ("kind", "folder"):  # a free default name for that kind in that folder
             s = self.new_state
-            base, suffix = ("component", _scene.SUFFIX) if s["kind"] == "component" else ("form", SUFFIX)
+            base, suffix = {"component": ("component", _scene.SUFFIX),
+                            "shader": ("shader", _shader_doc.SUFFIX)}.get(s["kind"], ("form", SUFFIX))
             folder = Path(s["folder"] or ".")
             taken = {p.stem for p in folder.glob(f"*{suffix}")} if folder.is_dir() else set()
-            if not s.get("name") or re.fullmatch(r"(form|component)\d+", s["name"]):
+            if not s.get("name") or re.fullmatch(r"(form|component|shader)\d+", s["name"]):
                 n = 1
                 while f"{base}{n}" in taken:
                     n += 1
@@ -1747,6 +1766,27 @@ class Designer(App):
                 doc.save()
             except (OSError, ValueError, SyntaxError) as err:
                 self.notify("Could not create the component", str(err), kind="error", seconds=5)
+                return
+            self.dialog = None
+            self.open_path(path)
+
+        self.dialog = None
+        self._guard(create)
+
+    def create_new_shader(self) -> None:
+        """Creates the shader described in the "New" dialog (from its template), saves it and opens it."""
+        s = self.new_state
+        path = Path(s.get("folder") or ".") / f"{s.get('name') or 'shader1'}{_shader_doc.SUFFIX}"
+        if path.exists():
+            self.notify(tr("{name} already exists", name=path.name), kind="warning")
+            return
+
+        def create() -> None:
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                _shader_doc.new_shader(path.stem, path, s.get("template") or "blank").save()
+            except (OSError, ValueError) as err:
+                self.notify(tr("Could not create the shader"), str(err), kind="error", seconds=5)
                 return
             self.dialog = None
             self.open_path(path)
@@ -1915,6 +1955,8 @@ class Designer(App):
             return None
         if scene_panel.is_scene(self):
             return scene_panel.run(self)
+        if shader_editor.is_shader(self):
+            return self.shading.run()
         project = self.projects.project
         if project is not None and project.script is not None and self.doc.path is None and not self.doc.dirty:
             return self.run_script()
@@ -2014,6 +2056,11 @@ class Designer(App):
                 and combo in ("up", "down"):
             self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
             return None
+        if shader_editor.is_shader(self) and self.focus == "canvas" and not self.dialog and not self.app_menu \
+                and not self.layout.menu and self.color_picker is None:
+            handled, result = self.shading.on_key(combo)
+            if handled:
+                return result
         if combo == "escape":
             if self.dialog:
                 return self.close_dialog()
@@ -2128,9 +2175,12 @@ class Designer(App):
         if main and self.updates.notes_active:
             return _core.column([tabs, self.updates.notes_view(t)], width="fill", height="fill")
         with self.panes.showing(pane):
-            canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
-            content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
-                                   width="fill", height="fill")
+            if shader_editor.is_shader(self):
+                content = shader_editor.view(self, t)
+            else:
+                canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
+                content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
+                                       width="fill", height="fill")
         return _core.column([tabs, self.panes.asleep(pane, content)], width="fill", height="fill")
 
     def window_overlays(self, body: Any, pane: Pane, t) -> Any:
@@ -2212,6 +2262,8 @@ class Designer(App):
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,
             ui.badge("Component", tint="accent", icon="component", theme=t) if scene_panel.is_scene(self) else None,
+            ui.badge(tr("Shader"), tint="accent", icon=shader_editor.ICON, theme=t)
+            if shader_editor.is_shader(self) else None,
         ]
         end = [
             ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
@@ -2302,6 +2354,8 @@ class Designer(App):
         While editing code it also shows the cursor position and the language servers.
         """
         doc = self.doc
+        if shader_editor.is_shader(self):
+            return ui.status_bar(shader_editor.status_items(self, t), list(self.updates.status_items(t)), theme=t)
         x, y = self.pointer
         primary = doc.primary
         if len(doc.selection) > 1:

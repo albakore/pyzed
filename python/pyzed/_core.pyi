@@ -320,7 +320,7 @@ def markdown(source: Any, *, size: Any = ..., color: Any = ..., link_color: Any 
     `on_link(url)` is called when a link is clicked.
     """
     ...
-def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_double_click: Any = ..., on_enter: Any = ..., on_exit: Any = ..., on_move: Any = ..., on_scroll: Any = ..., on_middle_press: Any = ..., cursor: Any = ...) -> Any: ...
+def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_double_click: Any = ..., on_enter: Any = ..., on_exit: Any = ..., on_move: Any = ..., on_scroll: Any = ..., on_middle_press: Any = ..., on_middle_release: Any = ..., cursor: Any = ...) -> Any: ...
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
@@ -385,15 +385,22 @@ def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: 
 def set_reduced_motion(on: Any) -> Any:
     """Turns reduced motion on or off: animations show their final state without moving."""
     ...
-def shader(code: Any, *, uniforms: Any = ..., width: Any = ..., height: Any = ..., animate: Any = ..., time: Any = ..., fallback: Any = ...) -> Any:
+def shader(code: Any, *, uniforms: Any = ..., textures: Any = ..., width: Any = ..., height: Any = ..., animate: Any = ..., time: Any = ..., fallback: Any = ...) -> Any:
     """A widget painted on the GPU by your WGSL function
     `fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32>`, which
     returns the color (RGBA, 0 to 1) of every pixel. `uv` goes from 0 to 1 across the widget,
     `px` and `size` are in pixels, `time` counts seconds and `mouse()` gives the pointer as a
-    `uv`. Each entry of `uniforms` (a number, 2 to 4 numbers or a color; up to 8) becomes a
-    function of the same name: `{"speed": 2}` -> `speed()`. Without a GPU (and in screenshots
-    taken without one) the widget shows `fallback`, a color or gradient. Raises `ValueError`
-    with the compiler's message when the code is not valid WGSL.
+    `uv`. Each entry of `uniforms` (a number, 2 to 4 numbers or a color; up to 32) becomes a
+    function of the same name: `{"speed": 2}` -> `speed()`. Each entry of `textures` (an image
+    path or encoded bytes; up to 8) becomes a function that samples it: `{"albedo": "rock.png"}`
+    -> `albedo(uv)` returns its color at `uv` (the image repeats outside 0..1). Without a GPU
+    (and in screenshots taken without one) the widget shows `fallback`, a color or gradient.
+    Raises `ValueError` with the compiler's message when the code is not valid WGSL.
+    """
+    ...
+def shader_module(code: Any, *, uniforms: Any = ..., textures: Any = ...) -> Any:
+    """The whole WGSL module `pz.shader` builds around `code` (with the uniforms' and textures'
+    functions), without checking it: to map a compiler error's line back to your code.
     """
     ...
 def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any: ...

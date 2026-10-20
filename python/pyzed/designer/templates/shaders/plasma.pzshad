@@ -1,0 +1,426 @@
+{
+ "format": "pyzed.shader/1",
+ "name": "plasma",
+ "description": "Sine waves summed into a moving plasma, colored by a cosine palette.",
+ "preview": {
+  "width": 320,
+  "height": 200,
+  "fallback": "#1e1b4b",
+  "animate": true
+ },
+ "variables": [
+  {
+   "name": "speed",
+   "type": "float",
+   "value": 1.0,
+   "min": 0,
+   "max": 4,
+   "description": "How fast it moves"
+  },
+  {
+   "name": "frequency",
+   "type": "float",
+   "value": 10.0,
+   "min": 1,
+   "max": 30,
+   "description": "How many waves fit"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "1",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 0.0,
+   "params": {
+    "name": "speed"
+   }
+  },
+  {
+   "id": "2",
+   "type": "parameter",
+   "x": 0.0,
+   "y": 212.0,
+   "params": {
+    "name": "frequency"
+   }
+  },
+  {
+   "id": "3",
+   "type": "time",
+   "x": 0.0,
+   "y": 424.0
+  },
+  {
+   "id": "4",
+   "type": "math",
+   "x": 250.0,
+   "y": 212.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "5",
+   "type": "uv",
+   "x": 0.0,
+   "y": 660.0
+  },
+  {
+   "id": "6",
+   "type": "math",
+   "x": 250.0,
+   "y": 448.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "7",
+   "type": "math",
+   "x": 500.0,
+   "y": 448.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "8",
+   "type": "func",
+   "x": 750.0,
+   "y": 448.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "9",
+   "type": "math",
+   "x": 250.0,
+   "y": 684.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "10",
+   "type": "math",
+   "x": 500.0,
+   "y": 212.0,
+   "inputs": {
+    "b": 1.3
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "11",
+   "type": "math",
+   "x": 750.0,
+   "y": 660.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "12",
+   "type": "func",
+   "x": 1000.0,
+   "y": 790.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "13",
+   "type": "centered_uv",
+   "x": 0.0,
+   "y": 896.0
+  },
+  {
+   "id": "14",
+   "type": "length",
+   "x": 250.0,
+   "y": 920.0
+  },
+  {
+   "id": "15",
+   "type": "math",
+   "x": 500.0,
+   "y": 684.0,
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "16",
+   "type": "math",
+   "x": 750.0,
+   "y": 896.0,
+   "inputs": {
+    "b": 1.5
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "17",
+   "type": "math",
+   "x": 1000.0,
+   "y": 554.0,
+   "params": {
+    "op": "subtract"
+   }
+  },
+  {
+   "id": "18",
+   "type": "func",
+   "x": 1250.0,
+   "y": 554.0,
+   "params": {
+    "op": "sin"
+   }
+  },
+  {
+   "id": "19",
+   "type": "math",
+   "x": 1250.0,
+   "y": 766.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "20",
+   "type": "math",
+   "x": 1500.0,
+   "y": 660.0,
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "21",
+   "type": "math",
+   "x": 1750.0,
+   "y": 660.0,
+   "inputs": {
+    "b": 0.166
+   },
+   "params": {
+    "op": "multiply"
+   }
+  },
+  {
+   "id": "22",
+   "type": "math",
+   "x": 2000.0,
+   "y": 660.0,
+   "inputs": {
+    "b": 0.5
+   },
+   "params": {
+    "op": "add"
+   }
+  },
+  {
+   "id": "23",
+   "type": "palette",
+   "x": 2250.0,
+   "y": 660.0
+  },
+  {
+   "id": "24",
+   "type": "rgba",
+   "x": 2500.0,
+   "y": 660.0,
+   "inputs": {
+    "alpha": 1.0
+   }
+  },
+  {
+   "id": "25",
+   "type": "output",
+   "x": 2750.0,
+   "y": 660.0
+  }
+ ],
+ "links": [
+  {
+   "from": "3",
+   "out": "time",
+   "to": "4",
+   "in": "a"
+  },
+  {
+   "from": "1",
+   "out": "value",
+   "to": "4",
+   "in": "b"
+  },
+  {
+   "from": "5",
+   "out": "x",
+   "to": "6",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "6",
+   "in": "b"
+  },
+  {
+   "from": "6",
+   "out": "result",
+   "to": "7",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "7",
+   "in": "b"
+  },
+  {
+   "from": "7",
+   "out": "result",
+   "to": "8",
+   "in": "x"
+  },
+  {
+   "from": "5",
+   "out": "y",
+   "to": "9",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "9",
+   "in": "b"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "10",
+   "in": "a"
+  },
+  {
+   "from": "9",
+   "out": "result",
+   "to": "11",
+   "in": "a"
+  },
+  {
+   "from": "10",
+   "out": "result",
+   "to": "11",
+   "in": "b"
+  },
+  {
+   "from": "11",
+   "out": "result",
+   "to": "12",
+   "in": "x"
+  },
+  {
+   "from": "13",
+   "out": "centered",
+   "to": "14",
+   "in": "vector"
+  },
+  {
+   "from": "14",
+   "out": "length",
+   "to": "15",
+   "in": "a"
+  },
+  {
+   "from": "2",
+   "out": "value",
+   "to": "15",
+   "in": "b"
+  },
+  {
+   "from": "15",
+   "out": "result",
+   "to": "16",
+   "in": "a"
+  },
+  {
+   "from": "16",
+   "out": "result",
+   "to": "17",
+   "in": "a"
+  },
+  {
+   "from": "4",
+   "out": "result",
+   "to": "17",
+   "in": "b"
+  },
+  {
+   "from": "17",
+   "out": "result",
+   "to": "18",
+   "in": "x"
+  },
+  {
+   "from": "8",
+   "out": "result",
+   "to": "19",
+   "in": "a"
+  },
+  {
+   "from": "12",
+   "out": "result",
+   "to": "19",
+   "in": "b"
+  },
+  {
+   "from": "19",
+   "out": "result",
+   "to": "20",
+   "in": "a"
+  },
+  {
+   "from": "18",
+   "out": "result",
+   "to": "20",
+   "in": "b"
+  },
+  {
+   "from": "20",
+   "out": "result",
+   "to": "21",
+   "in": "a"
+  },
+  {
+   "from": "21",
+   "out": "result",
+   "to": "22",
+   "in": "a"
+  },
+  {
+   "from": "22",
+   "out": "result",
+   "to": "23",
+   "in": "t"
+  },
+  {
+   "from": "23",
+   "out": "rgb",
+   "to": "24",
+   "in": "rgb"
+  },
+  {
+   "from": "24",
+   "out": "color",
+   "to": "25",
+   "in": "color"
+  }
+ ]
+}
