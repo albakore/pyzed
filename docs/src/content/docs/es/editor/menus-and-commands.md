@@ -13,8 +13,8 @@ lista de atajos siempre coinciden. Esta página los recoge todos.
 De izquierda a derecha: el menú **☰**, el entorno en WSL, el nombre del proyecto (clic para abrir el selector de
 proyectos: los de esta ventana y los recientes), la rama de git (clic para cambiarla), el nombre del
 archivo (clic para abrir otro), un punto cuando hay cambios sin guardar y una insignia **Componente** o **Shader** en
-esas vistas. A la derecha: **Ejecutar** (<kbd>F5</kbd>), **Detener**, el menú **Ver**, el menú **Ayuda** y el
-engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
+esas vistas. En el centro: **Ejecutar** (<kbd>F5</kbd>), **Detener** y el buscador, que abre la
+[paleta de comandos](#paleta-de-comandos). A la derecha: el menú **Ver**, el menú **Ayuda** y el engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
 [La interfaz](/pyzed/es/editor/interface/#el-marco-de-la-ventana)).
 
 ## Menú ☰ Archivo
@@ -71,8 +71,11 @@ en el teclado y en la paleta de comandos.
 | Mostrar controles ocultos | | Dibuja atenuados en el lienzo los controles ocultos, o los omite. |
 | Vista previa del marco de ventana… | | Muestra el formulario en el lienzo con el marco de ventana de otra plataforma: macOS, Windows 11, GNOME, Ubuntu o KDE Plasma (marcada mientras no es el de este sistema). |
 | Vista previa con tema…, Vista previa con idioma… | | Muestra el lienzo (y la próxima ejecución) con otro tema o idioma sin cambiar el formulario (marcada mientras está activa). Consulta [Vista previa con otro tema o idioma](/pyzed/es/editor/data-binding/#vista-previa-con-otro-tema-o-idioma). |
-| Restablecer los paneles | | Devuelve cada panel a su dock y tamaño iniciales. |
-| *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`): clic para traerlo al frente. |
+| Restablecer los paneles | | Devuelve cada panel a su dock y tamaño iniciales y cierra las ventanas de paneles. |
+| Guardar la distribución como… | | Guarda con un nombre dónde está cada panel, el tamaño de los docks y las ventanas de paneles. |
+| Eliminar esta distribución | | Borra la distribución guardada que está en uso. |
+| *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`, o `Ventana` si flota): clic para traerlo al frente. |
+| *Distribuciones* | | Las distribuciones de trabajo (Por defecto, Programar, Concentración, Eventos y código, y las tuyas); la que está en uso aparece marcada. |
 
 Los interruptores se recuerdan entre sesiones.
 
@@ -98,19 +101,26 @@ Los interruptores se recuerdan entre sesiones.
 
 ## La barra de herramientas
 
-Bajo las pestañas de documentos, de izquierda a derecha: **Nuevo formulario**, **Abrir**, **Guardar**, **Nuevo
-componente**; **Deshacer**, **Rehacer**; **Alinear a la izquierda, los centros, a la derecha, arriba, al medio,
-abajo**; **Distribuir horizontalmente, verticalmente**, **Mismo ancho, alto**, **Centrar horizontal y verticalmente
-en el formulario**; **Traer al frente**, **Enviar al fondo**, **Eliminar**. Al final: **Mostrar la cuadrícula**,
-**Ajustar a la cuadrícula**, **Guías inteligentes**, **Redimensionar el contenido con sus anclajes**, **Ajustar la selección a la cuadrícula** y **Editar el
-código**. Cada botón tiene un tooltip con su atajo, los que no se aplican a la selección están deshabilitados y la
-barra se desplaza de lado cuando la ventana es estrecha. Ocúltala con **Ver → Barra de herramientas**. Ver
+Bajo las pestañas de documentos, en grupos de izquierda a derecha:
+
+1. **Nuevo…** (un formulario, un componente o un shader, a elegir en el diálogo Nuevo), **Deshacer** y **Rehacer**.
+2. Con algo seleccionado: **Alinear a la izquierda, los centros, a la derecha, arriba, al medio, abajo**; **Centrar
+   horizontal y verticalmente en el formulario**, luego **Distribuir** (tres o más controles) y **Mismo ancho, alto**
+   (dos o más); **Traer al frente**, **Enviar al fondo** y **Eliminar**. Sin selección, un aviso ocupa su lugar.
+3. Al final, cómo se comporta el lienzo: **Mostrar la cuadrícula**, **Ajustar a la cuadrícula**, **Guías
+   inteligentes**, **Redimensionar el contenido con sus anclajes**, **Ajustar la selección a la cuadrícula** y
+   **Editar el código**.
+
+**Abrir** y **Guardar** están en el menú ☰ y en <kbd>Ctrl</kbd>+<kbd>O</kbd> y <kbd>Ctrl</kbd>+<kbd>S</kbd>. Cada botón
+tiene un tooltip con su atajo, y las herramientas de edición se desplazan de lado cuando la ventana es estrecha. Ocúltala con **Ver → Barra de herramientas**. Ver
 [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#alinear-distribuir-e-igualar-tamaños).
 
 ## Paleta de comandos
 
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> abre un buscador sobre todos los comandos que se pueden ejecutar en
-ese momento, como `Grupo: Comando` con su atajo. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
+El buscador del centro de la barra de título, o <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, abre un buscador sobre
+todos los comandos que se pueden ejecutar en ese momento, como `Grupo: Comando` con su atajo, y sobre los lugares del
+editor: `Panel: Propiedades` muestra un panel, `Ajustes del editor: Cursor` abre esa
+página de los [ajustes del editor](/pyzed/es/editor/code-editor/#ajustes-del-editor) (las teclas están en `Archivo: Editor de keymap`), y `Recientes: login.pzform` abre un archivo reciente. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
 *Ver: Cuadrícula*), <kbd>↑</kbd>/<kbd>↓</kbd> para moverte, <kbd>Enter</kbd> para ejecutar, <kbd>Esc</kbd> para
 cerrar. También llega a los comandos que no tienen menú, como los de Editar.
 
@@ -146,14 +156,19 @@ Ocho paneles viven en cuatro docks alrededor del lienzo:
 
 Cada dock muestra un panel a la vez, con una pestaña por panel. Al final de la barra de pestañas:
 
-- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, u
-  **Ocultar el panel**;
+- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, a una
+  **Ventana nueva**, u **Ocultar el panel**;
 - la **×** oculta el dock (vuelve a mostrarlo con su atajo o con el menú Ver).
+
+Arrastra una pestaña para reordenarla, sobre otro dock para moverla o fuera de la ventana para que flote en una ventana
+propia; suelta más pestañas sobre una ventana de paneles para apilarlas. En una ventana de paneles, el botón del dock
+ofrece **Devolver todo a los paneles laterales** y la **×** hace lo mismo.
 
 ![Moviendo el panel Propiedades a otro dock](../../../../../screenshots/editor-dock-menu.png)
 
 Arrastra el borde de un dock que da al lienzo para cambiar su tamaño (cada dock tiene un tamaño mínimo). Dónde está
-cada panel, qué docks están ocultos y sus tamaños se guardan con tus ajustes; **Ver → Restablecer los paneles** (o
+cada panel, qué docks están ocultos, sus tamaños y las ventanas de paneles se guardan con tus ajustes, y **Ver →
+Guardar la distribución como…** los conserva como una distribución de trabajo a la que volver; **Ver → Restablecer los paneles** (o
 **Ajustes → Paneles → Restablecer**) vuelve a la disposición inicial.
 
 ```mermaid

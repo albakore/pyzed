@@ -545,23 +545,29 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
             }),
             ("Forms", {
                 "pyzed.ui.input": {
-                    "desc": "A text field.",
+                    "desc": "A text field. Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.",
                     "params": {
                         "value": "Current text.",
                         "size": '`"sm"`, `"md"` or `"lg"`.',
                         "secure": "Hides the text.",
                         "borderless": "No border or background (as in the command palette).",
+                        "disabled": "Greys it out and ignores typing.",
+                        "readonly": "Selectable and copyable, but it can't be changed.",
+                        "invalid": "Paints the border in the error color.",
+                        "max_length": "Ignores edits longer than this.",
+                        "on_clear": "Shows an ✕ while there is text; sent when it is clicked.",
+                        "align": 'Text alignment: `"start"`, `"center"` or `"end"`.',
                     },
                 },
                 "pyzed.ui.search_input": {
                     "desc": "An `input` with a magnifying glass icon.",
                     "params": {"value": "Current text.", "kwargs": "Same as `input`."},
                 },
-                "pyzed.ui.switch": {"desc": "An on/off switch."},
-                "pyzed.ui.checkbox": {"desc": "A checkbox."},
+                "pyzed.ui.switch": {"desc": "An on/off switch.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
+                "pyzed.ui.checkbox": {"desc": "A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
                 "pyzed.ui.slider": {
                     "desc": "A slider.",
-                    "params": {"min": "Minimum.", "max": "Maximum.", "step": "Step."},
+                    "params": {"min": "Minimum.", "max": "Maximum.", "step": "Step.", "on_release": "Sent when the drag ends (save or apply there).", "vertical": "Stands it up.", "disabled": "Greys it out.", "show_value": 'Shows the number next to it: `True`, or a format such as `"{:.0%}"`.'},
                 },
                 "pyzed.ui.progress": {
                     "desc": "A thin progress bar.",
@@ -569,12 +575,13 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                 },
                 "pyzed.ui.segmented": {
                     "desc": "A group of mutually exclusive buttons.",
-                    "params": {"options": "List of options (strings).", "selected": "The active option."},
+                    "params": {"options": "Strings, `(value, label)` or `(value, label, icon)`.", "selected": "The active value.", "size": '`"sm"`, `"md"` or `"lg"`.', "width": '`"fill"` stretches the buttons evenly.', "disabled": "`True`, or the values to disable."},
                 },
                 "pyzed.ui.field": {
                     "desc": "A form row: title and description on the left, control on the right (like a settings screen).",
                     "params": {"control": "The control (switch, input…).", "description": "Help text.",
-                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."},
+                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`).",
+                               "required": "Adds a red `*` after the title.", "vertical": "Puts the control under the title."},
                 },
             }),
             ("Lists, tree and menus", {
@@ -698,7 +705,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "menus": "Menus on the left of the bar: a list of `ui.Menu`.",
                         "menu_button": "Shows the menus behind a ☰ button (`False` always shows their names).",
                         "start": "Items after the menus (project, branch…).",
-                        "center": "Your own widget in the middle instead of the title.",
+                        "center": "Your own widget in the middle instead of the title (a search field, Run and Stop…); the bar still drags on both sides of it.",
                         "end": "Items before the window buttons.",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"`. By default the window\'s `frame`, or this system\'s.',
                         "window": "The window the buttons act on. By default the one whose `view()` is running.",
@@ -713,7 +720,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                     "params": {
                         "title": "Title (centered, or on the left on Windows).",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"` (`None`: this system\'s).',
-                        "start": "Items at the start.", "center": "Widget in the middle instead of the title.",
+                        "start": "Items at the start.", "center": "Widget in the middle instead of the title; the bar still drags on both sides of it.",
                         "end": "Items at the end.",
                         "on_drag": "Called when the empty part of the bar is dragged (return `Command.drag_window()`).",
                         "on_minimize": "Minimize button.", "on_maximize": "Maximize button and double click on the bar.",
@@ -1345,6 +1352,7 @@ dict(_w)["Controls"].update({
             "selected": "Current option.", "handle": "Arrow icon character.", "handle_size": "Arrow size.",
             "menu_height": "Maximum menu height.", "font": "Font family.",
             "placeholder_color": "Placeholder color.", "handle_color": "Arrow color.",
+            "on_open": "Sent when the menu opens.", "on_close": "Sent when the menu closes.",
             "menu_bg": "Menu background.", "menu_color": "Menu text.", "menu_border_color": "Menu border.",
             "selected_bg": "Background of the highlighted option.", "selected_color": "Text of the highlighted option.",
         },
@@ -1362,27 +1370,27 @@ dict(_w)["Controls"]["pyzed.slider"]["params"]["on_release"] = "Sent when the kn
 _section("ui", "Controls", {
     "pyzed.ui.select": {
         "desc": "A dropdown with the theme style. Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
-        "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.'},
+        "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_open": "Sent when the menu opens.", "on_close": "Sent when the menu closes."},
     },
     "pyzed.ui.radio_group": {
         "desc": "Mutually exclusive options as radio buttons.",
-        "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column."},
+        "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column.", "disabled": "`True`, or the values to disable.", "descriptions": "Maps values to a muted line under their label."},
     },
     "pyzed.ui.number_field": {
-        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
-        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.'},
+        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.', "prefix": "Text before the number (`\"$\"`…).", "decimals": "Decimals shown (by default, as many as `step`).", "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_submit": "Sent on Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "A button with a separate arrow for more options. `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
-        "params": {"content": "Button text.", "variant": "As in `ui.button`.", "size": _SIZES},
+        "params": {"content": "Button text.", "variant": "As in `ui.button`.", "size": _SIZES, "tint": "As in `ui.button`.", "disabled": "Disables both halves.", "tooltip": "Tooltip of the main half."},
     },
     "pyzed.ui.toggle_group": {
         "desc": "An icon-only segmented control.",
-        "params": {"options": "`(value, icon_name)` pairs.", "selected": "Current value."},
+        "params": {"options": "`(value, icon_name)` or `(value, icon_name, tooltip)`.", "selected": "Current value (a collection with `multiple`).", "multiple": "Each button toggles its value on or off.", "disabled": "`True`, or the values to disable."},
     },
     "pyzed.ui.chip": {
         "desc": "A compact tag, optionally clickable (filters) and with a button to remove it.",
-        "params": {"content": "Text.", "on_remove": "Shows a ✕ that sends this when clicked."},
+        "params": {"content": "Text.", "on_remove": "Shows a ✕ that sends this when clicked.", "tint": "Color when selected (a theme token).", "disabled": "Greys it out and ignores presses."},
     },
     "pyzed.ui.disclosure": {
         "desc": "A collapsible section: a header with an arrow that shows or hides `content`. You own the open state: change it in `on_toggle`.",
@@ -1803,6 +1811,72 @@ _section("ui", "Color picker", {
                               "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
 })
 
+_section("ui", "Agent", {
+    "pyzed.ui.ToolCall": {
+        "desc": "A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `\"waiting\"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).",
+        "params": {"title": "What it does (\"Edit file\").", "detail": "What it works on, in a monospace font.",
+                   "kind": "ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon).",
+                   "status": "`pending`, `running`, `waiting`, `done`, `failed` or `rejected`.",
+                   "input": "The arguments (a dict or text).", "output": "The answer (text or a dict).",
+                   "images": "PNG bytes shown under the output.", "allow_always": "Shows Always allow.",
+                   "theme": "Theme.", "on_allow": "Allow was pressed.", "on_allow_always": "Always allow was pressed.",
+                   "on_deny": "Deny was pressed."},
+        "example": """
+            ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
+                        on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+        """,
+    },
+    "pyzed.ui.Plan": {
+        "desc": "A component for an agent's plan: a checklist with `done/total` in its header, which folds it.",
+        "params": {"steps": "`{\"step\": text, \"status\": \"pending\" | \"in_progress\" | \"done\"}` dicts.",
+                   "running": "Spins the step in progress.", "theme": "Theme."},
+        "example": 'ui.Plan(steps=[{"step": "Add the form", "status": "done"}, {"step": "Wire it", "status": "in_progress"}])',
+    },
+    "pyzed.ui.EditsBar": {
+        "desc": "A component listing the files an agent changed, like Zed's edits bar: `3 files changed` with Reject all and Keep all, unfolding to one row per file with its diff stat, Reject and Keep.",
+        "params": {"files": "Dicts or objects with `path` and optional `added` and `removed` line counts.", "theme": "Theme.",
+                   "on_keep": "Keep all.", "on_reject": "Reject all.", "on_keep_file": "Keep on a file (`event.value` is its path).",
+                   "on_reject_file": "Reject on a file.", "on_open": "A file was clicked."},
+        "example": 'ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())',
+    },
+    "pyzed.ui.ThreadHistory": {
+        "desc": "A component for past conversations: a search box and the threads grouped by day (Today, Yesterday, This week, This month, Older), each with a delete button.",
+        "params": {"threads": "Dicts or objects with `id`, `title`, `updated` (a timestamp) and an optional `detail`.",
+                   "selected": "The id of the open thread.", "theme": "Theme.", "on_open": "A thread was picked (`event.value` is its id).",
+                   "on_delete": "Delete was pressed on a thread."},
+        "example": "ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))",
+    },
+    "pyzed.ui.AuthPrompt": {
+        "desc": "A component that asks to sign in, like Zed when an agent needs it: one button per way to sign in, then, while one runs, what is happening (the browser or a terminal is open), a code to type when there is one, Open the page again and Cancel.",
+        "params": {"title": "The heading.", "detail": "A line under it.", "methods": "Dicts with `id`, `name`, optional `description` and `icon`; the first is the main one.",
+                   "waiting": "The id of the method in progress (`\"\"` when none).", "waiting_text": "What to show while waiting.",
+                   "code": "A code to type (device sign-in).", "url": "The page that was opened.", "error": "An error to show.",
+                   "icon_name": "The icon.", "theme": "Theme.", "on_pick": "A method was picked (`event.value` is its id).",
+                   "on_cancel": "Cancel.", "on_open_url": "Open the page again.", "on_copy": "The code was copied."},
+        "example": 'ui.AuthPrompt(title="Sign in to Gemini", methods=[{"id": "google", "name": "Log in with Google"}], on_pick=self.sign_in)',
+    },
+    "pyzed.ui.ServiceRow": {
+        "desc": "A component for one thing an agent uses (an MCP server, an external agent, a skill), like the rows of Zed's agent settings: a status dot, the name and command, an on/off switch, a main button and a `⋯` menu.",
+        "params": {"name": "Name.", "detail": "The command or URL, in a monospace font.", "summary": "A line about it.",
+                   "icon_name": "The icon.", "status": "`running`, `starting`, `error`, `off`, `installed`, `missing` or `update` (the dot's color).",
+                   "status_text": "The dot's tooltip; shown under the name for errors and updates.", "version": "A version or a source.",
+                   "enabled": "The switch (`None` hides it).", "busy": "Shows a spinner.", "primary": "Text of the main button (Update, Install…).",
+                   "actions": "`ui.MenuItem` entries of the `⋯` menu.", "theme": "Theme.", "on_toggle": "The switch was flipped.",
+                   "on_primary": "The main button was pressed."},
+        "example": 'ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)',
+    },
+    "pyzed.ui.Catalog": {
+        "desc": "A component for things to install with a search box (agents from a registry, servers, skills…): each row shows Install, Installed or Update to a newer version.",
+        "params": {"items": "Dicts or objects with `id`, `name` and optional `version`, `description`, `installed` and `update`.",
+                   "busy": "The id being installed (a spinner).", "height": "Height of the list.", "theme": "Theme.",
+                   "on_install": "Install or Update was pressed (`event.value` is the id)."},
+        "example": "ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))",
+    },
+    "pyzed.ui.context_meter": {"desc": "How full a model's context window is, like Zed's token counter: a small ring and `48k / 200k`, yellow past 80% and red past 95%.",
+                               "params": {"used": "Tokens in use.", "limit": "The model's window.", "theme": "Theme."}},
+    "pyzed.ui.format_tokens": {"desc": "A short token count: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
+})
+
 _section("ui", "Icon picker", {
     "pyzed.ui.IconPicker": {
         "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",
@@ -1938,6 +2012,11 @@ _section("widgets", "Animation", {
     "pyzed.animation.PROPERTIES": {"desc": "The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`.", "no_signature": True},
     "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.", "no_signature": True},
 })
+
+_section("widgets", "Timeline animations", _doc(
+    "pyzed.Clip", "pyzed.Track", "pyzed.Key", "pyzed.Call", "pyzed.AnimationPlayer", "pyzed.AnimationLibrary",
+    "pyzed.load_animations",
+))
 
 
 # -- Large data: virtualization and memoization -----------------------------
@@ -2094,3 +2173,54 @@ PAGES.append({
         }),
     ],
 })
+
+
+def _entry(name):
+    """The entry documenting ``name``, wherever it sits in ``PAGES``."""
+    for page in PAGES:
+        for _title, items in page["sections"]:
+            if name in items:
+                return items[name]
+    raise KeyError(name)
+
+
+def _params(name, **params):
+    _entry(name).setdefault("params", {}).update(params)
+
+
+# States and events of buttons, avatars, lists, trees, menus, tabs and breadcrumbs.
+_params("pyzed.ui.button", loading="Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins).",
+        tooltip="Text shown on hover.")
+_params("pyzed.ui.icon_button", keys="Key binding shown in the tooltip.", tint='Colors it (`"error"`, `"accent"`…).',
+        loading="Swaps the icon for a spinner and ignores presses.", indicator="Adds a small dot in this color at the top right (unread, changes…).")
+_params("pyzed.ui.badge", size='`"sm"`, `"md"` or `"lg"`.', on_press="Makes it clickable.")
+_params("pyzed.ui.avatar", image="A picture (path or bytes) instead of the initials.",
+        status='Presence dot: `"online"`, `"away"`, `"busy"`, `"offline"` or a color.', tooltip="Text shown on hover (the person's name).")
+_params("pyzed.ui.divider", label='Muted text in the middle of a horizontal line (`"or"`, a date…).', spacing="Space on both sides of the line.")
+_params("pyzed.ui.list_item", description="A muted second line (the row grows to 40 px unless `height` is set).",
+        on_double_press="Sent on a double click (open, rename…).", tooltip="Text shown on hover.")
+_params("pyzed.ui.tree", selected="One id or a collection of ids (multiple selection).", on_open="Called with the id of a file that is double-clicked.",
+        on_context="Called with the id of a row that is right-clicked (show a `ui.menu` there).", focused="Outlines the row the keyboard is on.")
+_params("pyzed.ui.MenuItem", description="A muted second line.", submenu="Ends the row with a chevron; open the next menu beside it in `on_press`.")
+_params("pyzed.ui.menu", max_height="Scrolls a menu taller than this.")
+_params("pyzed.ui.Tab", pinned="Shows only the icon, has no close button and goes first in `tab_bar`.", tooltip="Text shown on hover (the full path…).")
+_params("pyzed.ui.tab_bar", on_context="Called with the id of a tab that is right-clicked.", on_new="Sent on a double click of the empty space after the tabs.")
+_params("pyzed.ui.breadcrumbs", max_items="Keeps the first part and the last ones and shows `…` for the rest.", on_more="Makes the `…` clickable.")
+_params("pyzed.ui.toolbar", center="Kept in the middle of the bar whatever the widths of both sides.")
+
+# States and events of tables, cards, stats, progress bars, settings groups, modals, toasts and empty states.
+_params("pyzed.ui.table", selected="The row to highlight, or a list or set of rows (multiple selection).",
+        on_row_double_press="Called with the row on a double click (open, edit…).", on_row_context="Called with the row on a right click (a context menu).",
+        empty="Text or widget shown in place of the rows when there are none.")
+_params("pyzed.ui.card", footer="Widgets at the bottom right (buttons).", on_press="Makes the whole card clickable.",
+        selected="Outlines it in the accent color.", elevated="Adds a shadow.")
+_params("pyzed.ui.stat", icon="Icon before the title.", inverse="Colors a drop green and a rise red (errors, latency…).", on_press="Makes the card clickable.")
+_params("pyzed.ui.progress", value="Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows).",
+        label="Text above the bar.", show_value="Adds the percentage at its right.")
+_params("pyzed.ui.settings_group", end="Widget at the right of the title (a Reset button…).")
+_params("pyzed.ui.modal", width='Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820).', description="Muted line under the title.",
+        icon="Icon before the title.", max_height="Scrolls content taller than this, keeping the header and footer in view.",
+        on_close="The close button; also sent by Escape while the dialog has focus.")
+_params("pyzed.ui.toast", progress="0 to 1: a thin bar at the bottom (time left, a download).", on_press="Makes the card clickable.")
+_params("pyzed.ui.empty_state", size='`"sm"`, `"md"` or `"lg"`.', height='`"fill"` (default), pixels or `"shrink"`.')
+_params("pyzed.ui.count_badge", show_zero="With `False`, a count of 0 draws nothing.")

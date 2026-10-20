@@ -1400,6 +1400,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -1430,6 +1432,8 @@ Un desplegable para elegir una de `options`. `on_select(opción)` recibe la eleg
 | `options` | Lista de opciones. |
 | `selected` | Opción actual. |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `on_open` | Se envía al abrir el menú. |
+| `on_close` | Se envía al cerrar el menú. |
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `padding` | Relleno interior: `8`, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |
@@ -1841,6 +1845,554 @@ paint_from_dict(data)
 ```
 
 Reconstruye un `Gradient` o un `Paint` guardado con `to_dict()`.
+
+## Animaciones con línea de tiempo
+
+### `Clip`
+
+```python
+@dataclass
+class Clip(name, length=None, tracks=(), calls=(), loop='none', description='')
+```
+
+Una línea de tiempo con nombre de `length` segundos, con pistas (`tracks`) y llamadas (`calls`).
+
+`loop` es `"none"` (se reproduce una vez y se queda en el último fotograma), `"loop"` o
+`"pingpong"`. Por defecto `length` es el tiempo de la última key o llamada. Ver la guía
+[Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
+
+**Métodos y propiedades**
+
+#### `Clip.targets`
+
+```python
+Clip.targets  # property
+```
+
+Los objetivos de widget que animan sus pistas, en orden.
+
+#### `Clip.attributes`
+
+```python
+Clip.attributes  # property
+```
+
+Los atributos de la app que animan sus pistas (`":score"` -> `"score"`).
+
+#### `Clip.track`
+
+```python
+Clip.track(path)
+```
+
+La pista con `path` (`None` si no hay ninguna).
+
+#### `Clip.values`
+
+```python
+Clip.values(time, target=None)
+```
+
+`{ruta: valor}` de las pistas activas en `time` (solo las de `target`, como `{propiedad: valor}`).
+
+#### `Clip.with_track`
+
+```python
+Clip.with_track(track)
+```
+
+Una copia con `track` añadida, o reemplazando la pista con la misma ruta.
+
+#### `Clip.without_track`
+
+```python
+Clip.without_track(path)
+```
+
+Una copia sin la pista `path`.
+
+#### `Clip.with_key`
+
+```python
+Clip.with_key(path, time, value, easing=None)
+```
+
+Una copia con una key en `time` sobre `path` (reemplaza la que haya en ese tiempo; añade la pista).
+
+#### `Clip.without_key`
+
+```python
+Clip.without_key(path, time)
+```
+
+Una copia sin la key en `time` de `path`.
+
+#### `Clip.retarget`
+
+```python
+Clip.retarget(mapping, name=None)
+```
+
+Una copia cuyas pistas animan otros widgets: `clip.retarget({"card": "panel"})`.
+
+#### `Clip.animation`
+
+```python
+Clip.animation(target, *, on='mount', **options)
+```
+
+Las pistas de `target` como una `pz.Animation` (para reproducirla sin reproductor, o con `define_animation`).
+
+#### `Clip.to_dict`
+
+```python
+Clip.to_dict()
+```
+
+Datos listos para JSON (`Clip.from_dict` los vuelve a leer).
+
+#### `Clip.from_dict`
+
+```python
+@classmethod
+Clip.from_dict(data)
+```
+
+Reconstruye un clip guardado con `to_dict`.
+
+### `Track`
+
+```python
+@dataclass
+class Track(path, keys=(), easing='linear', interpolation='linear', enabled=True)
+```
+
+Una propiedad que cambia con el tiempo: `Track("card:opacity", {0: 0, 0.5: 1})`.
+
+La ruta es `"objetivo:propiedad"` para una propiedad de widget o `":atributo"` para un
+atributo de la app. `keys` es `{tiempo: valor}`, una lista de tuplas `(tiempo, valor)` o
+`(tiempo, valor, easing)`, u objetos `Key`. `easing` es la curva por defecto entre keys
+(`"linear"`, como en Godot) e `interpolation="discrete"` mantiene cada valor hasta la
+siguiente key. Con `enabled=False` la pista queda en el clip sin reproducirse.
+
+**Métodos y propiedades**
+
+#### `Track.target`
+
+```python
+Track.target  # property
+```
+
+El objetivo de widget (`""` para un atributo de la app).
+
+#### `Track.property`
+
+```python
+Track.property  # property
+```
+
+La propiedad o la ruta del atributo que cambia.
+
+#### `Track.value_at`
+
+```python
+Track.value_at(time)
+```
+
+El valor de la pista a los `time` segundos (`None` si no tiene keys).
+
+#### `Track.with_keys`
+
+```python
+Track.with_keys(keys)
+```
+
+Una copia con otras keys.
+
+#### `Track.to_dict`
+
+```python
+Track.to_dict()
+```
+
+Datos listos para JSON (`Track.from_dict` los vuelve a leer).
+
+#### `Track.from_dict`
+
+```python
+@classmethod
+Track.from_dict(data)
+```
+
+Reconstruye una pista guardada con `to_dict`.
+
+### `Key`
+
+```python
+@dataclass
+class Key(time, value, easing=None)
+```
+
+Un valor en un tiempo de una pista; `easing` es la curva hasta la siguiente key (la de la pista si es `None`).
+
+**Métodos y propiedades**
+
+#### `Key.to_dict`
+
+```python
+Key.to_dict()
+```
+
+Datos listos para JSON (`Key.from_dict` los vuelve a leer).
+
+#### `Key.from_dict`
+
+```python
+@classmethod
+Key.from_dict(data)
+```
+
+Reconstruye una key guardada con `to_dict`.
+
+### `Call`
+
+```python
+@dataclass
+class Call(time, method, args=())
+```
+
+Un método que se llama a los `time` segundos: `Call(1.2, "play_sound", "ding")`.
+
+`method` es el nombre de un método de la app (el `owner` del reproductor) o una función; `args`
+se le pasan. Lo que devuelve (un `Command`, un mensaje...) se trata como lo que devuelve un callback.
+
+**Métodos y propiedades**
+
+#### `Call.to_dict`
+
+```python
+Call.to_dict()
+```
+
+Datos listos para JSON (solo se pueden guardar llamadas a métodos por nombre).
+
+#### `Call.from_dict`
+
+```python
+@classmethod
+Call.from_dict(data)
+```
+
+Reconstruye una llamada guardada con `to_dict`.
+
+### `AnimationPlayer`
+
+```python
+class AnimationPlayer
+```
+
+Reproduce `Clip`s sobre widgets y el estado de la app, con reproducir, pausar, buscar, velocidad y cola.
+
+`sources` son clips, objetos `AnimationLibrary` y rutas `.pzanim`. Dale a cada widget su
+objetivo con `widget.animate(player["card"])`. Las pistas de atributos (`":score"`) y las
+`Call` usan el `owner` del reproductor: la app (o ventana) que lo guarda en un atributo, que
+se encuentra sola, o el que le pases.
+
+- `autoplay`: el clip que se reproduce al crear el reproductor.
+- `speed`: la velocidad de todos los clips (`play` la multiplica).
+- `on_started(name)`/`on_finished(name)`: se llaman cuando un clip empieza y cuando termina
+  (nunca en clips en bucle); pueden no recibir argumentos.
+- `fps`: cada cuánto se actualizan los atributos mientras suena un clip con pistas de atributos.
+
+**Métodos y propiedades**
+
+#### `AnimationPlayer.add`
+
+```python
+AnimationPlayer.add(source, *, prefix=None)
+```
+
+Añade un clip, una biblioteca (sus clips como `"nombre/clip"` si tiene nombre) o una ruta `.pzanim`.
+
+#### `AnimationPlayer.remove`
+
+```python
+AnimationPlayer.remove(name)
+```
+
+Quita el clip `name` (y lo detiene si es el actual).
+
+#### `AnimationPlayer.names`
+
+```python
+AnimationPlayer.names  # property
+```
+
+Los nombres de los clips que puede reproducir.
+
+#### `AnimationPlayer.has`
+
+```python
+AnimationPlayer.has(name)
+```
+
+Si tiene un clip llamado `name`.
+
+#### `AnimationPlayer.clip`
+
+```python
+AnimationPlayer.clip(name=None)
+```
+
+El clip llamado `name` (por defecto el actual).
+
+#### `AnimationPlayer.target`
+
+```python
+AnimationPlayer.target(target)
+```
+
+El objetivo de widget `target` para `widget.animate(player[target])`.
+
+#### `AnimationPlayer.current`
+
+```python
+AnimationPlayer.current  # property
+```
+
+El clip que se reproduce o está en pausa (`None` si está detenido).
+
+#### `AnimationPlayer.playing`
+
+```python
+AnimationPlayer.playing  # property
+```
+
+Si el tiempo avanza.
+
+#### `AnimationPlayer.paused`
+
+```python
+AnimationPlayer.paused  # property
+```
+
+Si un clip está en pausa (los detenidos y los terminados no).
+
+#### `AnimationPlayer.finished`
+
+```python
+AnimationPlayer.finished  # property
+```
+
+Si el clip actual llegó al final.
+
+#### `AnimationPlayer.length`
+
+```python
+AnimationPlayer.length  # property
+```
+
+La duración del clip actual en segundos (0 si no hay ninguno).
+
+#### `AnimationPlayer.position`
+
+```python
+AnimationPlayer.position  # property
+```
+
+Segundos transcurridos del clip actual.
+
+#### `AnimationPlayer.queued`
+
+```python
+AnimationPlayer.queued  # property
+```
+
+Los clips que se reproducen después del actual, en orden.
+
+#### `AnimationPlayer.value`
+
+```python
+AnimationPlayer.value(path)
+```
+
+El valor que el clip actual da a `path` (`"card:opacity"`, `":score"`) ahora mismo.
+
+#### `AnimationPlayer.play`
+
+```python
+AnimationPlayer.play(name=None, *, speed=1.0, backwards=False, from_end=False, restart=False)
+```
+
+Reproduce `name` (por defecto el clip actual o en pausa) desde donde está. Un clip que ya se reproduce sigue salvo con `restart`; uno terminado vuelve a empezar. `backwards` lo reproduce al revés (`from_end` empieza en el final).
+
+#### `AnimationPlayer.play_backwards`
+
+```python
+AnimationPlayer.play_backwards(name=None, *, speed=1.0)
+```
+
+Reproduce `name` al revés desde el final (o el clip actual desde donde está).
+
+#### `AnimationPlayer.pause`
+
+```python
+AnimationPlayer.pause()
+```
+
+Detiene el tiempo donde está (`play()` o `resume()` siguen).
+
+#### `AnimationPlayer.resume`
+
+```python
+AnimationPlayer.resume()
+```
+
+Sigue desde donde se pausó el clip.
+
+#### `AnimationPlayer.toggle`
+
+```python
+AnimationPlayer.toggle()
+```
+
+Pausa si se está reproduciendo y reproduce si no.
+
+#### `AnimationPlayer.stop`
+
+```python
+AnimationPlayer.stop(*, reset=False)
+```
+
+Vuelve al principio del clip (mostrando su primer fotograma); con `reset` los widgets recuperan sus propios valores y se olvida el clip. Vacía la cola.
+
+#### `AnimationPlayer.seek`
+
+```python
+AnimationPlayer.seek(seconds)
+```
+
+Salta a `seconds` dentro del clip actual (las llamadas del camino no se ejecutan).
+
+#### `AnimationPlayer.advance`
+
+```python
+AnimationPlayer.advance(seconds)
+```
+
+Avanza el clip actual `seconds` (se ejecutan las llamadas y se actualiza el estado), como `advance` de Godot.
+
+#### `AnimationPlayer.queue`
+
+```python
+AnimationPlayer.queue(name)
+```
+
+Reproduce `name` cuando termine el clip actual (o ahora si no suena nada).
+
+#### `AnimationPlayer.clear_queue`
+
+```python
+AnimationPlayer.clear_queue()
+```
+
+Olvida los clips en cola.
+
+#### `AnimationPlayer.subscriptions`
+
+```python
+AnimationPlayer.subscriptions()
+```
+
+Lo que mantiene en marcha las llamadas, las pistas de atributos y la cola del reproductor (se añade solo cuando el reproductor es un atributo de la app o de una ventana).
+
+### `AnimationLibrary`
+
+```python
+class AnimationLibrary
+```
+
+Clips con nombre que se guardan juntos en un archivo `.pzanim` y se reutilizan.
+
+`AnimationLibrary([intro, idle], name="ui")`; `lib["intro"]`, `lib.add(clip)`,
+`lib.remove("idle")`, `lib.save("ui.pzanim")` y `AnimationLibrary.load(ruta)`. Un
+reproductor que recibe una biblioteca con `name` llama a sus clips `"ui/intro"`, como Godot.
+
+**Métodos y propiedades**
+
+#### `AnimationLibrary.add`
+
+```python
+AnimationLibrary.add(clip)
+```
+
+Añade `clip` (reemplazando el que tenga su nombre) y lo devuelve.
+
+#### `AnimationLibrary.remove`
+
+```python
+AnimationLibrary.remove(name)
+```
+
+Quita el clip `name` (no pasa nada si no existe).
+
+#### `AnimationLibrary.rename`
+
+```python
+AnimationLibrary.rename(old, new)
+```
+
+Renombra el clip `old` a `new` y lo devuelve.
+
+#### `AnimationLibrary.names`
+
+```python
+AnimationLibrary.names  # property
+```
+
+Los nombres de sus clips, en orden.
+
+#### `AnimationLibrary.to_dict`
+
+```python
+AnimationLibrary.to_dict()
+```
+
+Los datos del `.pzanim` (`AnimationLibrary.from_dict` los vuelve a leer).
+
+#### `AnimationLibrary.from_dict`
+
+```python
+@classmethod
+AnimationLibrary.from_dict(data)
+```
+
+Reconstruye una biblioteca a partir de datos `.pzanim`.
+
+#### `AnimationLibrary.save`
+
+```python
+AnimationLibrary.save(path)
+```
+
+Escribe la biblioteca como JSON (un archivo `.pzanim`) y devuelve la ruta.
+
+#### `AnimationLibrary.load`
+
+```python
+@classmethod
+AnimationLibrary.load(path)
+```
+
+Lee un archivo `.pzanim` (lanza `ValueError` si no lo es).
+
+### `load_animations`
+
+```python
+load_animations(path)
+```
+
+La biblioteca guardada en un archivo `.pzanim`.
 
 ## Animación
 

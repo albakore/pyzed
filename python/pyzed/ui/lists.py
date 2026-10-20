@@ -28,12 +28,24 @@ def list_item(
     inset: bool = False,
     disabled: bool = False,
     on_right_press: Any = None,
+    on_double_press: Any = None,
+    description: Optional[str] = None,
+    tooltip: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """One row of a list (like Zed's ``ListItem``): optional icon, label and trailing slot."""
+    """One row of a list (like Zed's ``ListItem``): optional icon, label and trailing slot.
+
+    ``description`` adds a muted second line (the row grows to fit it unless ``height`` is
+    set); ``on_double_press`` runs on a double click (open, rename...) and
+    ``on_right_press`` on a right click (a context menu); ``tooltip`` shows on hover.
+    """
     t = _theme(theme)
     text_color = t.color(color) if color else (t.text_disabled if disabled else t.text)
     body = content if isinstance(content, _core.Widget) else _core.text(content, size=13.5, color=text_color, wrap=False)
+    if description:
+        body = _core.column([body, _core.text(description, size=12, color=t.text_muted, wrap=False)], spacing=1)
+        if height == 26:
+            height = 40
     parts = [
         _core.space(width=indent) if indent else None,
         start,
@@ -57,6 +69,12 @@ def list_item(
     )
     if on_right_press is not None:
         widget = _core.mouse_area(widget, on_right_press=on_right_press)
+    if on_double_press is not None and not disabled:
+        widget = widget.on(double_click=on_double_press)
+    if tooltip:
+        from .base import tooltip_text
+
+        widget = tooltip_text(widget, tooltip, theme=t)
     return widget
 
 
@@ -167,9 +185,12 @@ def tree(
     nodes: Sequence[TreeNode],
     *,
     expanded: Set[str],
-    selected: Optional[str] = None,
+    selected: Any = None,
     on_toggle: Optional[Callable[[str], Any]] = None,
     on_select: Optional[Callable[[str], Any]] = None,
+    on_open: Optional[Callable[[str], Any]] = None,
+    on_context: Optional[Callable[[str], Any]] = None,
+    focused: Optional[str] = None,
     indent: float = 14,
     item_height: float = 24,
     theme: Optional[Theme] = None,
@@ -177,9 +198,13 @@ def tree(
     """A collapsible file tree (Zed's project panel).
 
     ``on_toggle(id)`` is called for folders and ``on_select(id)`` for files; both may return a message.
+    ``on_open(id)`` runs when a file is double-clicked and ``on_context(id)`` on a right
+    click of any row (show a ``ui.menu`` there). ``selected`` is one id or a collection of
+    them (multiple selection); ``focused`` outlines the row the keyboard is on.
     """
     t = _theme(theme)
     rows: List[Any] = []
+    chosen = {selected} if isinstance(selected, str) or selected is None else set(selected)
 
     def status_color(status: Optional[str]) -> Optional[str]:
         return {
@@ -214,7 +239,10 @@ def tree(
                     icon_color=icon_color,
                     indent=depth * indent,
                     height=item_height,
-                    selected=node_id == selected,
+                    selected=node_id in chosen,
+                    focused=node_id == focused,
+                    on_double_press=(lambda i=node_id: on_open(i)) if on_open and not node.is_folder else None,
+                    on_right_press=(lambda i=node_id: on_context(i)) if on_context else None,
                     theme=t,
                 )
             )
@@ -239,6 +267,8 @@ class MenuItem:
     disabled: bool = False
     danger: bool = False
     checked: Optional[bool] = None
+    description: Optional[str] = None
+    submenu: bool = False
 
 
 SEPARATOR = "separator"
@@ -248,9 +278,15 @@ def menu(
     items: Sequence[Union[MenuItem, str]],
     *,
     width: float = 240,
+    max_height: Optional[float] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A floating context menu. Use ``ui.SEPARATOR`` between groups; a plain string is a header."""
+    """A floating context menu. Use ``ui.SEPARATOR`` between groups; a plain string is a header.
+
+    A ``MenuItem`` with ``description`` shows a muted second line, and one with
+    ``submenu=True`` ends with a chevron (open the next menu beside it in ``on_press``).
+    ``max_height`` scrolls a long menu.
+    """
     t = _theme(theme)
     rows: List[Any] = []
     for item in items:
@@ -268,16 +304,23 @@ def menu(
                     item.on_press,
                     icon=item.icon,
                     start=start,
-                    end=kbd(item.keys, theme=t, size="xs") if item.keys else None,
+                    end=(_icon("chevron-right", size=12, color=t.icon_muted) if item.submenu else
+                         kbd(item.keys, theme=t, size="xs") if item.keys else None),
+                    description=item.description,
                     color="error" if item.danger else None,
                     disabled=item.disabled,
                     inset=True,
-                    height=26,
+                    height=40 if item.description else 26,
                     theme=t,
                 )
             )
+    body = _core.column(rows, width="fill")
+    if max_height is not None:
+        body = _core.container(_core.scrollable(body, height="shrink", scroller=t.scrollbar,
+                                                scroller_hover=t.scrollbar_hover, scrollbar_width=4),
+                               max_height=max_height)
     return _core.container(
-        _core.column(rows, width="fill"),
+        body,
         width=width,
         padding=4,
         bg=t.elevated,

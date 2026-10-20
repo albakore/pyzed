@@ -742,6 +742,12 @@ pub struct Anim {
     tracks: Vec<Track>,
     on_start: Option<PyMsg>,
     on_end: Option<PyMsg>,
+    /// Seconds into the animation where a time-based run starts (an animation player's seek).
+    seek: f32,
+    /// How fast a time-based run plays (1 is normal speed).
+    speed: f32,
+    /// Holds a time-based run at `seek` (a paused animation player).
+    paused: bool,
     /// Hash of everything but `key`, `active` and callbacks: a new spec restarts the run.
     signature: u64,
 }
@@ -862,6 +868,15 @@ impl Anim {
             tracks,
             on_start: get("on_start")?.map(|v| PyMsg::new(&v)),
             on_end: get("on_end")?.map(|v| PyMsg::new(&v)),
+            seek: (number("seek", 0.0)? / 1000.0).max(0.0),
+            speed: match number("speed", 1.0)? {
+                s if s.is_finite() && s > 0.0 => s,
+                _ => 1.0,
+            },
+            paused: get("paused")?
+                .map(|v| v.is_truthy())
+                .transpose()?
+                .unwrap_or(false),
             signature: 0,
         };
         anim.signature = anim.compute_signature(0);
@@ -877,6 +892,7 @@ impl Anim {
         self.iterations.to_bits().hash(&mut h);
         (self.direction as u8, self.fill as u8).hash(&mut h);
         self.easing.hash_into(&mut h);
+        (self.seek.to_bits(), self.speed.to_bits(), self.paused).hash(&mut h);
         for track in &self.tracks {
             track.prop.hash(&mut h);
             for f in &track.frames {
@@ -901,6 +917,15 @@ impl Anim {
     /// Seconds from the start until the animation ends (infinite when it repeats forever).
     pub fn total(&self) -> f32 {
         self.delay + self.duration * self.iterations
+    }
+
+    /// Animation time of a time-based run `elapsed` seconds after it started.
+    fn clock(&self, elapsed: f32) -> f32 {
+        if self.paused {
+            self.seek
+        } else {
+            self.seek + elapsed * self.speed
+        }
     }
 
     fn state_based(&self) -> bool {
@@ -1578,6 +1603,9 @@ impl<'a, Renderer> Animated<'a, Renderer> {
 
     /// The keyframe position and weight an animation shows (`None`: not applied).
     fn position(&self, anim: &Anim, run: &Run, state: &State) -> Option<(f32, f32)> {
+        if anim.paused && !anim.state_based() {
+            return anim.at_time(anim.seek).0.map(|p| (p, 1.0));
+        }
         if settled() {
             return match anim.trigger {
                 Trigger::Mount if anim.iterations.is_finite() => {
@@ -1609,12 +1637,13 @@ impl<'a, Renderer> Animated<'a, Renderer> {
         match (run.start, state.now) {
             (Some(start), Some(now)) => {
                 let elapsed = now.saturating_duration_since(start).as_secs_f32();
-                anim.at_time(elapsed).0.map(|p| (p, 1.0))
+                anim.at_time(anim.clock(elapsed)).0.map(|p| (p, 1.0))
             }
             // Not started yet: a mount animation shows its first frame (no flash of the
             // final state); a click animation waits for a click.
             _ if anim.trigger == Trigger::Mount && run.pending => {
-                anim.at_time(-1.0).0.map(|p| (p, 1.0))
+                let at = if anim.seek > 0.0 { anim.seek } else { -1.0 };
+                anim.at_time(at).0.map(|p| (p, 1.0))
             }
             _ => None,
         }
@@ -1797,7 +1826,10 @@ impl<'a, Renderer> Animated<'a, Renderer> {
             let Some(start) = run.start else {
                 continue;
             };
-            let elapsed = now.saturating_duration_since(start).as_secs_f32();
+            if anim.paused {
+                continue;
+            }
+            let elapsed = anim.clock(now.saturating_duration_since(start).as_secs_f32());
             if !run.started && elapsed >= anim.delay {
                 run.started = true;
                 if let Some(msg) = &anim.on_start {

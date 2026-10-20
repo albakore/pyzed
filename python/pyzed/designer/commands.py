@@ -124,6 +124,9 @@ ACTIONS: Tuple[Action, ...] = (
     Action("preview_frame", "Preview window frame…", "View", lambda d: d.open_preview_picker("frame"),
            "app-window", checked=lambda d: bool(d.preview_frame)),
     Action("reset_layout", "Reset panel layout", "View", lambda d: d.reset_layout(), "layout-dashboard"),
+    Action("save_layout", "Save layout as…", "View", lambda d: d.ask_layout_name(), "save"),
+    Action("delete_layout", "Delete this layout", "View", lambda d: d.delete_layout(), "trash-2",
+           enabled=lambda d: d.prefs.layout_name in d.prefs.layouts),
     # Run
     Action("run", "Run", "Run", lambda d: d.run_form(), "play", "f5", global_keys=True),
     Action("run_script", "Run project script", "Run", lambda d: d.run_script(), "square-terminal",

@@ -13,8 +13,8 @@ list always agree. This page lists them all.
 From left to right: the **☰** menu, the environment under WSL, the project's name (click it for the project picker:
 the projects of this window and the recent ones), the git branch (click it to switch), the file name (click
 it to open another file), a dot when there are unsaved changes and a **Component** or **Shader** badge in those
-views. At the right: **Run** (<kbd>F5</kbd>), **Stop**, the **View** menu, the **Help** menu and the **Settings**
-gear, followed by the window buttons when Pyzed Design draws its own frame (see
+views. In the middle: **Run** (<kbd>F5</kbd>), **Stop** and the search field, which opens the
+[command palette](#command-palette). At the right: the **View** menu, the **Help** menu and the **Settings** gear, followed by the window buttons when Pyzed Design draws its own frame (see
 [The interface](/pyzed/editor/interface/#the-window-frame)).
 
 ## ☰ File menu
@@ -71,8 +71,11 @@ keyboard and in the command palette.
 | Show hidden controls | | Draws hidden controls dimmed on the canvas, or leaves them out. |
 | Preview window frame… | | Shows the form on the canvas in the window frame of another platform: macOS, Windows 11, GNOME, Ubuntu or KDE Plasma (checked while it is not this system's). |
 | Preview theme…, Preview language… | | Shows the canvas (and the next run) in another theme or language without changing the form (checked while on). See [Preview in another theme or language](/pyzed/editor/data-binding/#preview-in-another-theme-or-language). |
-| Reset panel layout | | Puts every panel back in its default dock and size. |
-| *Panels* | | One entry per panel, with the dock it is in (`Properties · Right`): click to bring it to the front. |
+| Reset panel layout | | Puts every panel back in its default dock and size, and closes the panel windows. |
+| Save layout as… | | Saves where every panel is, the dock sizes and the panel windows under a name. |
+| Delete this layout | | Removes the saved layout in use. |
+| *Panels* | | One entry per panel, with the dock it is in (`Properties · Right`, or `Window` when it floats): click to bring it to the front. |
+| *Layouts* | | The work layouts (Default, Coding, Focus, Events and code, and yours); the one in use is checked. |
 
 The toggles are remembered between sessions.
 
@@ -98,18 +101,25 @@ The toggles are remembered between sessions.
 
 ## The toolbar
 
-Under the document tabs, left to right: **New form**, **Open**, **Save**, **New component**; **Undo**, **Redo**;
-**Align left, centers, right, top, middles, bottom**; **Distribute horizontally, vertically**, **Same width,
-height**, **Center in form horizontally, vertically**; **Bring to front**, **Send to back**, **Delete**. At the
-end: **Show grid**, **Snap to grid**, **Smart guides**, **Resize contents with their anchors**, **Fit selection to grid** and **Edit code file**.
-Every button has a tooltip with its shortcut, buttons that do not apply to the selection are disabled, and the
-toolbar scrolls sideways when the window is narrow. Hide it with **View → Toolbar**. See
+Under the document tabs, in groups from left to right:
+
+1. **New…** (a form, a component or a shader, picked in the New dialog), **Undo** and **Redo**.
+2. While something is selected: **Align left, centers, right, top, middles, bottom**; **Center in form
+   horizontally, vertically**, then **Distribute** (three or more controls) and **Same width, height** (two or
+   more); **Bring to front**, **Send to back** and **Delete**. With nothing selected a hint takes their place.
+3. At the end, how the canvas behaves: **Show grid**, **Snap to grid**, **Smart guides**, **Resize contents with
+   their anchors**, **Fit selection to grid**, and **Edit code file**.
+
+**Open** and **Save** are in the ☰ menu and on <kbd>Ctrl</kbd>+<kbd>O</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>. Every
+button has a tooltip with its shortcut, and the editing tools scroll sideways when the window is narrow. Hide it with **View → Toolbar**. See
 [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#align-distribute-and-size).
 
 ## Command palette
 
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> opens a search box over every command that can run right now, as
-`Group: Command` with its shortcut. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
+The search field in the middle of the title bar, or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, opens a search box
+over every command that can run right now, as `Group: Command` with its shortcut, and over the places of the editor:
+`Panel: Properties` shows a panel, `Editor settings: Cursor` opens that page of the
+[editor settings](/pyzed/editor/code-editor/#editor-settings) (the keys are in `File: Keymap editor`), and `Recent: login.pzform` opens a recent file. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
 <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to run, <kbd>Esc</kbd> to close. It also reaches commands that
 have no menu, such as the Edit ones.
 
@@ -145,13 +155,19 @@ Eight panels live in four docks around the canvas:
 
 Each dock shows one panel at a time, with a tab per panel. At the end of the tab bar:
 
-- the **dock button** opens a menu to **Move *panel* to** the left, right, bottom or top dock, or **Hide dock**;
+- the **dock button** opens a menu to **Move *panel* to** the left, right, bottom or top dock, a **New window**, or
+  **Hide dock**;
 - the **×** hides the dock (bring it back with its shortcut or the View menu).
+
+Drag a tab to reorder it, onto another dock to move it, or out of the window to float it in a window of its own;
+drop more tabs on a panel window to stack them. In a panel window the dock button offers **Dock everything here back**
+and the **×** does the same.
 
 ![Moving the Properties panel to another dock](../../../../screenshots/editor-dock-menu.png)
 
 Drag the edge of a dock that faces the canvas to resize it (each dock has a minimum size). Where every panel is,
-which docks are hidden and their sizes are saved with your settings; **View → Reset panel layout** (or
+which docks are hidden, their sizes and the panel windows are saved with your settings, and **View → Save layout
+as…** keeps them as a work layout to switch to later; **View → Reset panel layout** (or
 **Settings → Panels → Reset**) restores the default.
 
 ```mermaid

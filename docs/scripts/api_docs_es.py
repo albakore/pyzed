@@ -545,23 +545,29 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
             }),
             ("Formularios", {
                 "pyzed.ui.input": {
-                    "desc": "Un campo de texto.",
+                    "desc": "Un campo de texto. El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.",
                     "params": {
                         "value": "Texto actual.",
                         "size": '`"sm"`, `"md"` o `"lg"`.',
                         "secure": "Oculta el texto.",
                         "borderless": "Sin borde ni fondo (como en la paleta de comandos).",
+                        "disabled": "Lo atenúa e ignora lo que se escribe.",
+                        "readonly": "Se puede seleccionar y copiar, pero no cambiar.",
+                        "invalid": "Pinta el borde con el color de error.",
+                        "max_length": "Ignora los cambios más largos que esto.",
+                        "on_clear": "Muestra una ✕ mientras hay texto; se envía al pulsarla.",
+                        "align": 'Alineación del texto: `"start"`, `"center"` o `"end"`.',
                     },
                 },
                 "pyzed.ui.search_input": {
                     "desc": "Un `input` con icono de lupa.",
                     "params": {"value": "Texto actual.", "kwargs": "Los de `input`."},
                 },
-                "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado."},
-                "pyzed.ui.checkbox": {"desc": "Una casilla de verificación."},
+                "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa e ignora los clics."}},
+                "pyzed.ui.checkbox": {"desc": "Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "La atenúa e ignora los clics."}},
                 "pyzed.ui.slider": {
                     "desc": "Un deslizador.",
-                    "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso."},
+                    "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso.", "on_release": "Se envía al terminar de arrastrar (guarda o aplica ahí).", "vertical": "Lo pone de pie.", "disabled": "Lo atenúa.", "show_value": 'Muestra el número al lado: `True`, o un formato como `"{:.0%}"`.'},
                 },
                 "pyzed.ui.progress": {
                     "desc": "Una barra de progreso fina.",
@@ -569,12 +575,13 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                 },
                 "pyzed.ui.segmented": {
                     "desc": "Un grupo de botones mutuamente excluyentes.",
-                    "params": {"options": "Lista de opciones (textos).", "selected": "La opción activa."},
+                    "params": {"options": "Textos, `(valor, etiqueta)` o `(valor, etiqueta, icono)`.", "selected": "El valor activo.", "size": '`"sm"`, `"md"` o `"lg"`.', "width": '`"fill"` reparte el ancho entre los botones.', "disabled": "`True`, o los valores a desactivar."},
                 },
                 "pyzed.ui.field": {
                     "desc": "Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).",
                     "params": {"control": "El control (switch, input…).", "description": "Texto de ayuda.",
-                               "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`)."},
+                               "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`).",
+                               "required": "Añade un `*` rojo tras el título.", "vertical": "Pone el control bajo el título."},
                 },
             }),
             ("Listas, árbol y menús", {
@@ -698,7 +705,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "menus": "Menús a la izquierda de la barra: una lista de `ui.Menu`.",
                         "menu_button": "Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres).",
                         "start": "Elementos después de los menús (proyecto, rama…).",
-                        "center": "Tu propio widget en el centro en lugar del título.",
+                        "center": "Tu propio widget en el centro en lugar del título (un buscador, Run y Stop…); la barra sigue arrastrándose a ambos lados.",
                         "end": "Elementos antes de los botones de ventana.",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"`. Por defecto el `frame` de la ventana, o el del sistema.',
                         "window": "La ventana sobre la que actúan los botones. Por defecto aquella cuyo `view()` se está ejecutando.",
@@ -713,7 +720,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                     "params": {
                         "title": "Título (centrado, o a la izquierda en Windows).",
                         "style": '`"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema).',
-                        "start": "Elementos al principio.", "center": "Widget en el centro en lugar del título.",
+                        "start": "Elementos al principio.", "center": "Widget en el centro en lugar del título; la barra sigue arrastrándose a ambos lados.",
                         "end": "Elementos al final.",
                         "on_drag": "Se llama al arrastrar la parte vacía de la barra (devuelve `Command.drag_window()`).",
                         "on_minimize": "Botón de minimizar.", "on_maximize": "Botón de maximizar y doble clic en la barra.",
@@ -1345,6 +1352,7 @@ dict(_w)["Controles"].update({
             "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
             "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
             "placeholder_color": "Color del placeholder.", "handle_color": "Color de la flecha.",
+            "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú.",
             "menu_bg": "Fondo del menú.", "menu_color": "Texto del menú.", "menu_border_color": "Borde del menú.",
             "selected_bg": "Fondo de la opción resaltada.", "selected_color": "Texto de la opción resaltada.",
         },
@@ -1362,27 +1370,27 @@ dict(_w)["Controles"]["pyzed.slider"]["params"]["on_release"] = "Se envía al so
 _section("ui", "Controles", {
     "pyzed.ui.select": {
         "desc": "Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.",
-        "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.'},
+        "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú."},
     },
     "pyzed.ui.radio_group": {
         "desc": "Opciones mutuamente excluyentes como botones de radio.",
-        "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna."},
+        "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna.", "disabled": "`True`, o los valores a desactivar.", "descriptions": "Asocia valores a una línea atenuada bajo su etiqueta."},
     },
     "pyzed.ui.number_field": {
-        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
-        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.'},
+        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
+        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
-        "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES},
+        "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES, "tint": "Como en `ui.button`.", "disabled": "Desactiva las dos mitades.", "tooltip": "Tooltip de la mitad principal."},
     },
     "pyzed.ui.toggle_group": {
         "desc": "Un control segmentado solo con iconos.",
-        "params": {"options": "Pares `(valor, nombre_de_icono)`.", "selected": "Valor actual."},
+        "params": {"options": "`(valor, nombre_de_icono)` o `(valor, nombre_de_icono, tooltip)`.", "selected": "Valor actual (una colección con `multiple`).", "multiple": "Cada botón activa o desactiva su valor.", "disabled": "`True`, o los valores a desactivar."},
     },
     "pyzed.ui.chip": {
         "desc": "Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.",
-        "params": {"content": "Texto.", "on_remove": "Muestra una ✕ que envía esto al pulsarla."},
+        "params": {"content": "Texto.", "on_remove": "Muestra una ✕ que envía esto al pulsarla.", "tint": "Color cuando está seleccionada (un token del tema).", "disabled": "La atenúa e ignora las pulsaciones."},
     },
     "pyzed.ui.disclosure": {
         "desc": "Una sección plegable: cabecera con flecha que muestra u oculta `content`. El estado abierto es tuyo: cámbialo en `on_toggle`.",
@@ -1803,6 +1811,72 @@ _section("ui", "Selector de color", {
                               "params": {"width": "Ancho.", "height": "Alto.", "size": "Tamaño de celda."}},
 })
 
+_section("ui", "Agente", {
+    "pyzed.ui.ToolCall": {
+        "desc": "Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `\"waiting\"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).",
+        "params": {"title": "Lo que hace (\"Editar archivo\").", "detail": "Sobre qué trabaja, en letra monoespaciada.",
+                   "kind": "El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono).",
+                   "status": "`pending`, `running`, `waiting`, `done`, `failed` o `rejected`.",
+                   "input": "Los argumentos (un dict o texto).", "output": "La respuesta (texto o un dict).",
+                   "images": "Bytes PNG que se muestran bajo la salida.", "allow_always": "Muestra Permitir siempre.",
+                   "theme": "Tema.", "on_allow": "Se pulsó Permitir.", "on_allow_always": "Se pulsó Permitir siempre.",
+                   "on_deny": "Se pulsó Rechazar."},
+        "example": """
+            ui.ToolCall(title="Editar archivo", detail="ui/main.py", kind="edit", status=self.status,
+                        on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+        """,
+    },
+    "pyzed.ui.Plan": {
+        "desc": "Un componente para el plan de un agente: una lista de pasos con `hechos/total` en la cabecera, que la pliega.",
+        "params": {"steps": "Dicts `{\"step\": texto, \"status\": \"pending\" | \"in_progress\" | \"done\"}`.",
+                   "running": "Hace girar el paso en curso.", "theme": "Tema."},
+        "example": 'ui.Plan(steps=[{"step": "Añadir el formulario", "status": "done"}, {"step": "Conectarlo", "status": "in_progress"}])',
+    },
+    "pyzed.ui.EditsBar": {
+        "desc": "Un componente con los archivos que cambió un agente, como la barra de cambios de Zed: `3 archivos cambiados` con Rechazar todo y Conservar todo, que se despliega en una fila por archivo con sus líneas, Rechazar y Conservar.",
+        "params": {"files": "Dicts u objetos con `path` y, opcionalmente, `added` y `removed` (líneas).", "theme": "Tema.",
+                   "on_keep": "Conservar todo.", "on_reject": "Rechazar todo.", "on_keep_file": "Conservar en un archivo (`event.value` es su ruta).",
+                   "on_reject_file": "Rechazar en un archivo.", "on_open": "Se hizo clic en un archivo."},
+        "example": 'ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())',
+    },
+    "pyzed.ui.ThreadHistory": {
+        "desc": "Un componente para conversaciones anteriores: un buscador y los hilos agrupados por día (Hoy, Ayer, Esta semana, Este mes, Antes), cada uno con un botón para eliminarlo.",
+        "params": {"threads": "Dicts u objetos con `id`, `title`, `updated` (una marca de tiempo) y un `detail` opcional.",
+                   "selected": "El id del hilo abierto.", "theme": "Tema.", "on_open": "Se eligió un hilo (`event.value` es su id).",
+                   "on_delete": "Se pulsó eliminar en un hilo."},
+        "example": "ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))",
+    },
+    "pyzed.ui.AuthPrompt": {
+        "desc": "Un componente que pide iniciar sesión, como Zed cuando un agente lo necesita: un botón por cada forma de entrar y, mientras una está en curso, qué pasa (el navegador o una terminal está abierto), un código para escribir si lo hay, Abrir la página otra vez y Cancelar.",
+        "params": {"title": "El título.", "detail": "Una línea debajo.", "methods": "Dicts con `id`, `name` y, opcionalmente, `description` e `icon`; el primero es el principal.",
+                   "waiting": "El id del método en curso (`\"\"` si no hay).", "waiting_text": "Lo que se muestra mientras espera.",
+                   "code": "Un código para escribir (inicio de sesión por dispositivo).", "url": "La página que se abrió.", "error": "Un error a mostrar.",
+                   "icon_name": "El icono.", "theme": "Tema.", "on_pick": "Se eligió un método (`event.value` es su id).",
+                   "on_cancel": "Cancelar.", "on_open_url": "Abrir la página otra vez.", "on_copy": "Se copió el código."},
+        "example": 'ui.AuthPrompt(title="Entrar en Gemini", methods=[{"id": "google", "name": "Entrar con Google"}], on_pick=self.sign_in)',
+    },
+    "pyzed.ui.ServiceRow": {
+        "desc": "Un componente para algo que usa un agente (un servidor MCP, un agente externo, una skill), como las filas de los ajustes de agentes de Zed: un punto de estado, el nombre y el comando, un interruptor, un botón principal y un menú `⋯`.",
+        "params": {"name": "Nombre.", "detail": "El comando o la URL, en letra monoespaciada.", "summary": "Una línea sobre él.",
+                   "icon_name": "El icono.", "status": "`running`, `starting`, `error`, `off`, `installed`, `missing` o `update` (el color del punto).",
+                   "status_text": "El tooltip del punto; se muestra bajo el nombre en errores y actualizaciones.", "version": "Una versión o un origen.",
+                   "enabled": "El interruptor (`None` lo oculta).", "busy": "Muestra un indicador de carga.", "primary": "Texto del botón principal (Actualizar, Instalar…).",
+                   "actions": "Entradas `ui.MenuItem` del menú `⋯`.", "theme": "Tema.", "on_toggle": "Se cambió el interruptor.",
+                   "on_primary": "Se pulsó el botón principal."},
+        "example": 'ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)',
+    },
+    "pyzed.ui.Catalog": {
+        "desc": "Un componente para cosas que instalar con un buscador (agentes de un registro, servidores, skills…): cada fila muestra Instalar, Instalado o Actualizar a una versión nueva.",
+        "params": {"items": "Dicts u objetos con `id`, `name` y, opcionalmente, `version`, `description`, `installed` y `update`.",
+                   "busy": "El id que se está instalando (un indicador de carga).", "height": "Alto de la lista.", "theme": "Tema.",
+                   "on_install": "Se pulsó Instalar o Actualizar (`event.value` es el id)."},
+        "example": "ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))",
+    },
+    "pyzed.ui.context_meter": {"desc": "Cuánto se llenó la ventana de contexto de un modelo, como el contador de tokens de Zed: un anillo pequeño y `48k / 200k`, amarillo pasado el 80 % y rojo pasado el 95 %.",
+                               "params": {"used": "Tokens en uso.", "limit": "La ventana del modelo.", "theme": "Tema."}},
+    "pyzed.ui.format_tokens": {"desc": "Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
+})
+
 _section("ui", "Selector de iconos", {
     "pyzed.ui.IconPicker": {
         "desc": "Un componente para elegir un icono de Lucide: un buscador (nombres y etiquetas), un desplegable de categorías y una cuadrícula que solo construye las filas visibles. Enter elige la primera coincidencia. `on_change` recibe el nombre del icono (`\"\"` si se quita); devuélvelo en `value`. Ver la página [Selector de iconos](/pyzed/es/library/icon-picker/).",
@@ -2175,6 +2249,54 @@ PAGES.append({
     ],
 })
 
+_section("widgets", "Animaciones con línea de tiempo", {
+    "pyzed.Clip": _d("""
+        Una línea de tiempo con nombre de `length` segundos, con pistas (`tracks`) y llamadas (`calls`).
+
+        `loop` es `"none"` (se reproduce una vez y se queda en el último fotograma), `"loop"` o
+        `"pingpong"`. Por defecto `length` es el tiempo de la última key o llamada. Ver la guía
+        [Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
+    """),
+    "pyzed.Track": _d("""
+        Una propiedad que cambia con el tiempo: `Track("card:opacity", {0: 0, 0.5: 1})`.
+
+        La ruta es `"objetivo:propiedad"` para una propiedad de widget o `":atributo"` para un
+        atributo de la app. `keys` es `{tiempo: valor}`, una lista de tuplas `(tiempo, valor)` o
+        `(tiempo, valor, easing)`, u objetos `Key`. `easing` es la curva por defecto entre keys
+        (`"linear"`, como en Godot) e `interpolation="discrete"` mantiene cada valor hasta la
+        siguiente key. Con `enabled=False` la pista queda en el clip sin reproducirse.
+    """),
+    "pyzed.Key": _d("Un valor en un tiempo de una pista; `easing` es la curva hasta la siguiente key (la de la pista si es `None`)."),
+    "pyzed.Call": _d("""
+        Un método que se llama a los `time` segundos: `Call(1.2, "play_sound", "ding")`.
+
+        `method` es el nombre de un método de la app (el `owner` del reproductor) o una función; `args`
+        se le pasan. Lo que devuelve (un `Command`, un mensaje...) se trata como lo que devuelve un callback.
+    """),
+    "pyzed.AnimationPlayer": _d("""
+        Reproduce `Clip`s sobre widgets y el estado de la app, con reproducir, pausar, buscar, velocidad y cola.
+
+        `sources` son clips, objetos `AnimationLibrary` y rutas `.pzanim`. Dale a cada widget su
+        objetivo con `widget.animate(player["card"])`. Las pistas de atributos (`":score"`) y las
+        `Call` usan el `owner` del reproductor: la app (o ventana) que lo guarda en un atributo, que
+        se encuentra sola, o el que le pases.
+
+        - `autoplay`: el clip que se reproduce al crear el reproductor.
+        - `speed`: la velocidad de todos los clips (`play` la multiplica).
+        - `on_started(name)`/`on_finished(name)`: se llaman cuando un clip empieza y cuando termina
+          (nunca en clips en bucle); pueden no recibir argumentos.
+        - `fps`: cada cuánto se actualizan los atributos mientras suena un clip con pistas de atributos.
+    """),
+    "pyzed.AnimationLibrary": _d("""
+        Clips con nombre que se guardan juntos en un archivo `.pzanim` y se reutilizan.
+
+        `AnimationLibrary([intro, idle], name="ui")`; `lib["intro"]`, `lib.add(clip)`,
+        `lib.remove("idle")`, `lib.save("ui.pzanim")` y `AnimationLibrary.load(ruta)`. Un
+        reproductor que recibe una biblioteca con `name` llama a sus clips `"ui/intro"`, como Godot.
+    """),
+    "pyzed.load_animations": _d("La biblioteca guardada en un archivo `.pzanim`."),
+})
+
 # -- Métodos y propiedades ------------------------------------------------------
 # El texto de cada miembro de clase en "Métodos y propiedades" (en inglés sale del docstring).
 _section("widgets", "Animación", {
@@ -2342,6 +2464,14 @@ MEMBERS = {
     "pyzed.ui.Tab.for_file": "Una pestaña para el archivo `path`: su nombre como etiqueta y el icono y color de archivo correspondientes.",
     # ColorPicker
     # IconPicker
+    "pyzed.ui.ToolCall.toggle": "Despliega o pliega la entrada y la salida de la herramienta.",
+    "pyzed.ui.Plan.toggle": "Despliega o pliega la lista de pasos.",
+    "pyzed.ui.EditsBar.toggle": "Despliega o pliega la lista de archivos cambiados.",
+    "pyzed.ui.ThreadHistory.set_query": "Filtra el historial por `text`.",
+    "pyzed.ui.ThreadHistory.visible": "Las conversaciones cuyo título tiene todas las palabras de la búsqueda.",
+    "pyzed.ui.ServiceRow.toggle_menu": "Abre o cierra el menú de acciones de la fila.",
+    "pyzed.ui.Catalog.set_query": "Filtra el catálogo por `text`.",
+    "pyzed.ui.Catalog.visible": "Los elementos cuyo id, nombre o descripción tienen todas las palabras de la búsqueda.",
     "pyzed.ui.IconPicker.set_query": "Filtra la cuadrícula por `text` (nombres y etiquetas).",
     "pyzed.ui.IconPicker.set_group": "Muestra solo los iconos de la categoría `key` (`\"\"` para todos).",
     "pyzed.ui.IconPicker.matches": "Los iconos que se muestran: los de la categoría elegida que coinciden con la búsqueda, los mejores primero.",
@@ -2455,6 +2585,61 @@ MEMBERS = {
     "pyzed.Animation.compile": "Los datos simples que reproduce la parte nativa (los usa `animate()`).",
     "pyzed.Animation.to_dict": "Datos listos para JSON (`Animation.from_dict` los vuelve a leer).",
     "pyzed.Animation.from_dict": "Reconstruye una animación guardada con `to_dict`.",
+    "pyzed.Key.to_dict": "Datos listos para JSON (`Key.from_dict` los vuelve a leer).",
+    "pyzed.Key.from_dict": "Reconstruye una key guardada con `to_dict`.",
+    "pyzed.Track.target": "El objetivo de widget (`\"\"` para un atributo de la app).",
+    "pyzed.Track.property": "La propiedad o la ruta del atributo que cambia.",
+    "pyzed.Track.value_at": "El valor de la pista a los `time` segundos (`None` si no tiene keys).",
+    "pyzed.Track.with_keys": "Una copia con otras keys.",
+    "pyzed.Track.to_dict": "Datos listos para JSON (`Track.from_dict` los vuelve a leer).",
+    "pyzed.Track.from_dict": "Reconstruye una pista guardada con `to_dict`.",
+    "pyzed.Call.to_dict": "Datos listos para JSON (solo se pueden guardar llamadas a métodos por nombre).",
+    "pyzed.Call.from_dict": "Reconstruye una llamada guardada con `to_dict`.",
+    "pyzed.Clip.targets": "Los objetivos de widget que animan sus pistas, en orden.",
+    "pyzed.Clip.attributes": "Los atributos de la app que animan sus pistas (`\":score\"` -> `\"score\"`).",
+    "pyzed.Clip.track": "La pista con `path` (`None` si no hay ninguna).",
+    "pyzed.Clip.values": "`{ruta: valor}` de las pistas activas en `time` (solo las de `target`, como `{propiedad: valor}`).",
+    "pyzed.Clip.with_track": "Una copia con `track` añadida, o reemplazando la pista con la misma ruta.",
+    "pyzed.Clip.without_track": "Una copia sin la pista `path`.",
+    "pyzed.Clip.with_key": "Una copia con una key en `time` sobre `path` (reemplaza la que haya en ese tiempo; añade la pista).",
+    "pyzed.Clip.without_key": "Una copia sin la key en `time` de `path`.",
+    "pyzed.Clip.retarget": "Una copia cuyas pistas animan otros widgets: `clip.retarget({\"card\": \"panel\"})`.",
+    "pyzed.Clip.animation": "Las pistas de `target` como una `pz.Animation` (para reproducirla sin reproductor, o con `define_animation`).",
+    "pyzed.Clip.to_dict": "Datos listos para JSON (`Clip.from_dict` los vuelve a leer).",
+    "pyzed.Clip.from_dict": "Reconstruye un clip guardado con `to_dict`.",
+    "pyzed.AnimationLibrary.add": "Añade `clip` (reemplazando el que tenga su nombre) y lo devuelve.",
+    "pyzed.AnimationLibrary.remove": "Quita el clip `name` (no pasa nada si no existe).",
+    "pyzed.AnimationLibrary.rename": "Renombra el clip `old` a `new` y lo devuelve.",
+    "pyzed.AnimationLibrary.names": "Los nombres de sus clips, en orden.",
+    "pyzed.AnimationLibrary.to_dict": "Los datos del `.pzanim` (`AnimationLibrary.from_dict` los vuelve a leer).",
+    "pyzed.AnimationLibrary.from_dict": "Reconstruye una biblioteca a partir de datos `.pzanim`.",
+    "pyzed.AnimationLibrary.save": "Escribe la biblioteca como JSON (un archivo `.pzanim`) y devuelve la ruta.",
+    "pyzed.AnimationLibrary.load": "Lee un archivo `.pzanim` (lanza `ValueError` si no lo es).",
+    "pyzed.AnimationPlayer.add": "Añade un clip, una biblioteca (sus clips como `\"nombre/clip\"` si tiene nombre) o una ruta `.pzanim`.",
+    "pyzed.AnimationPlayer.remove": "Quita el clip `name` (y lo detiene si es el actual).",
+    "pyzed.AnimationPlayer.names": "Los nombres de los clips que puede reproducir.",
+    "pyzed.AnimationPlayer.has": "Si tiene un clip llamado `name`.",
+    "pyzed.AnimationPlayer.clip": "El clip llamado `name` (por defecto el actual).",
+    "pyzed.AnimationPlayer.target": "El objetivo de widget `target` para `widget.animate(player[target])`.",
+    "pyzed.AnimationPlayer.current": "El clip que se reproduce o está en pausa (`None` si está detenido).",
+    "pyzed.AnimationPlayer.playing": "Si el tiempo avanza.",
+    "pyzed.AnimationPlayer.paused": "Si un clip está en pausa (los detenidos y los terminados no).",
+    "pyzed.AnimationPlayer.finished": "Si el clip actual llegó al final.",
+    "pyzed.AnimationPlayer.length": "La duración del clip actual en segundos (0 si no hay ninguno).",
+    "pyzed.AnimationPlayer.position": "Segundos transcurridos del clip actual.",
+    "pyzed.AnimationPlayer.queued": "Los clips que se reproducen después del actual, en orden.",
+    "pyzed.AnimationPlayer.value": "El valor que el clip actual da a `path` (`\"card:opacity\"`, `\":score\"`) ahora mismo.",
+    "pyzed.AnimationPlayer.play": "Reproduce `name` (por defecto el clip actual o en pausa) desde donde está. Un clip que ya se reproduce sigue salvo con `restart`; uno terminado vuelve a empezar. `backwards` lo reproduce al revés (`from_end` empieza en el final).",
+    "pyzed.AnimationPlayer.play_backwards": "Reproduce `name` al revés desde el final (o el clip actual desde donde está).",
+    "pyzed.AnimationPlayer.pause": "Detiene el tiempo donde está (`play()` o `resume()` siguen).",
+    "pyzed.AnimationPlayer.resume": "Sigue desde donde se pausó el clip.",
+    "pyzed.AnimationPlayer.toggle": "Pausa si se está reproduciendo y reproduce si no.",
+    "pyzed.AnimationPlayer.stop": "Vuelve al principio del clip (mostrando su primer fotograma); con `reset` los widgets recuperan sus propios valores y se olvida el clip. Vacía la cola.",
+    "pyzed.AnimationPlayer.seek": "Salta a `seconds` dentro del clip actual (las llamadas del camino no se ejecutan).",
+    "pyzed.AnimationPlayer.advance": "Avanza el clip actual `seconds` (se ejecutan las llamadas y se actualiza el estado), como `advance` de Godot.",
+    "pyzed.AnimationPlayer.queue": "Reproduce `name` cuando termine el clip actual (o ahora si no suena nada).",
+    "pyzed.AnimationPlayer.clear_queue": "Olvida los clips en cola.",
+    "pyzed.AnimationPlayer.subscriptions": "Lo que mantiene en marcha las llamadas, las pistas de atributos y la cola del reproductor (se añade solo cuando el reproductor es un atributo de la app o de una ventana).",
     "pyzed.designer.Document.set_animations": "Fija la lista de animaciones del control `name` (dicts con `preset` y, opcionalmente, `on`, `duration`, `delay`, `easing` y `repeat`); las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_style": "Fija una propiedad de estilo de un control, o del estilo global del formulario si `name` es `None`; `None` la quita.",
     "pyzed.designer.Document.clear_style": "Quita todas las propiedades de estilo de un control (o del estilo global del formulario).",
@@ -2679,3 +2864,54 @@ PAGES.append({
         }),
     ],
 })
+
+
+def _entry(name):
+    """La entrada que documenta ``name``, esté donde esté en ``PAGES``."""
+    for page in PAGES:
+        for _title, items in page["sections"]:
+            if name in items:
+                return items[name]
+    raise KeyError(name)
+
+
+def _params(name, **params):
+    _entry(name).setdefault("params", {}).update(params)
+
+
+# Estados y eventos de botones, avatares, listas, árboles, menús, pestañas y migas de pan.
+_params("pyzed.ui.button", loading="Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira).",
+        tooltip="Texto que aparece al pasar el ratón.")
+_params("pyzed.ui.icon_button", keys="Atajo que se muestra en el tooltip.", tint='Lo colorea (`"error"`, `"accent"`…).',
+        loading="Cambia el icono por un spinner e ignora las pulsaciones.", indicator="Añade un punto de este color arriba a la derecha (sin leer, cambios…).")
+_params("pyzed.ui.badge", size='`"sm"`, `"md"` o `"lg"`.', on_press="La hace pulsable.")
+_params("pyzed.ui.avatar", image="Una imagen (ruta o bytes) en lugar de las iniciales.",
+        status='Punto de presencia: `"online"`, `"away"`, `"busy"`, `"offline"` o un color.', tooltip="Texto al pasar el ratón (el nombre de la persona).")
+_params("pyzed.ui.divider", label='Texto atenuado en el centro de una línea horizontal (`"o"`, una fecha…).', spacing="Espacio a ambos lados de la línea.")
+_params("pyzed.ui.list_item", description="Una segunda línea atenuada (la fila crece a 40 px salvo que fijes `height`).",
+        on_double_press="Se envía con un doble clic (abrir, renombrar…).", tooltip="Texto al pasar el ratón.")
+_params("pyzed.ui.tree", selected="Un id o una colección de ids (selección múltiple).", on_open="Recibe el id del archivo al que se hace doble clic.",
+        on_context="Recibe el id de la fila en la que se hace clic derecho (muestra un `ui.menu` ahí).", focused="Resalta el borde de la fila en la que está el teclado.")
+_params("pyzed.ui.MenuItem", description="Una segunda línea atenuada.", submenu="Termina la fila con una flecha; abre el siguiente menú al lado en `on_press`.")
+_params("pyzed.ui.menu", max_height="Desplaza un menú más alto que esto.")
+_params("pyzed.ui.Tab", pinned="Muestra solo el icono, no tiene botón de cerrar y va primera en `tab_bar`.", tooltip="Texto al pasar el ratón (la ruta completa…).")
+_params("pyzed.ui.tab_bar", on_context="Recibe el id de la pestaña en la que se hace clic derecho.", on_new="Se envía con un doble clic en el espacio vacío tras las pestañas.")
+_params("pyzed.ui.breadcrumbs", max_items="Conserva la primera parte y las últimas y muestra `…` en lugar del resto.", on_more="Hace pulsable el `…`.")
+_params("pyzed.ui.toolbar", center="Se mantiene en el centro de la barra sean cuales sean los anchos de los lados.")
+
+# Estados y eventos de tablas, tarjetas, estadísticas, barras de progreso, grupos de ajustes, modales, avisos y estados vacíos.
+_params("pyzed.ui.table", selected="La fila a resaltar, o una lista o conjunto de filas (selección múltiple).",
+        on_row_double_press="Recibe la fila con un doble clic (abrir, editar…).", on_row_context="Recibe la fila con un clic derecho (un menú contextual).",
+        empty="Texto o widget que se muestra en lugar de las filas cuando no hay ninguna.")
+_params("pyzed.ui.card", footer="Widgets abajo a la derecha (botones).", on_press="Hace pulsable toda la tarjeta.",
+        selected="La resalta con el color de acento.", elevated="Añade una sombra.")
+_params("pyzed.ui.stat", icon="Icono antes del título.", inverse="Pinta de verde una bajada y de rojo una subida (errores, latencia…).", on_press="Hace pulsable la tarjeta.")
+_params("pyzed.ui.progress", value="Progreso, o `None` para una barra indeterminada (mantén una suscripción `pz.every(1/30, ...)` mientras se ve).",
+        label="Texto sobre la barra.", show_value="Añade el porcentaje a su derecha.")
+_params("pyzed.ui.settings_group", end="Widget a la derecha del título (un botón Restablecer…).")
+_params("pyzed.ui.modal", width='Píxeles o `"sm"` (360), `"md"` (480), `"lg"` (640) o `"xl"` (820).', description="Línea atenuada bajo el título.",
+        icon="Icono antes del título.", max_height="Desplaza el contenido más alto que esto, sin ocultar la cabecera ni el pie.",
+        on_close="El botón de cerrar; también lo envía Escape mientras el diálogo tiene el foco.")
+_params("pyzed.ui.toast", progress="De 0 a 1: una barra fina abajo (tiempo restante, una descarga).", on_press="Hace pulsable la tarjeta.")
+_params("pyzed.ui.empty_state", size='`"sm"`, `"md"` o `"lg"`.', height='`"fill"` (por defecto), píxeles o `"shrink"`.')
+_params("pyzed.ui.count_badge", show_zero="Con `False`, un 0 no dibuja nada.")

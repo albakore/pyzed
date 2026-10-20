@@ -129,6 +129,8 @@ def button(
     disabled: bool = False,
     full_width: bool = False,
     keys: Optional[str] = None,
+    loading: bool = False,
+    tooltip: Optional[str] = None,
     theme: Optional[Theme] = None,
     **style,
 ) -> _core.Widget:
@@ -137,14 +139,23 @@ def button(
     variant: "filled" | "ghost" | "subtle" | "outline" | "solid" | "tinted" | "accent" | "error" | ...
     size:    "xs" | "sm" | "md" | "lg"
     keys:    optional key binding shown at the end, e.g. ``"ctrl-s"``.
+    loading: shows a spinner in place of the icon and ignores presses (keep a
+             ``pz.every(1/30, ...)`` subscription while it spins).
+    tooltip: text shown on hover (with ``keys`` in it too).
     """
     t = _theme(theme)
     height, pad_x, font_size, icon_size = BUTTON_SIZES[size]
     colors = _button_colors(t, variant, tint, selected)
     colors.update(style)
+    if loading:
+        disabled = True
 
     parts = []
     glyph = _icon(icon, size=icon_size, color=t.color(icon_color) if icon_color else None) if icon else None
+    if loading:
+        from .display import spinner
+
+        glyph, icon_position = spinner(size=icon_size, tint=icon_color or "text_muted", theme=t), "start"
     if glyph is not None and icon_position == "start":
         parts.append(glyph)
     if content is not None:
@@ -176,7 +187,8 @@ def button(
         "disabled_color": t.text_disabled,
     }
     kwargs.update(colors)
-    return _core.button(inner, None if disabled else on_press, **kwargs)
+    widget = _core.button(inner, None if disabled else on_press, **kwargs)
+    return tooltip_text(widget, tooltip, theme=t) if tooltip else widget
 
 
 def icon_button(
@@ -189,20 +201,42 @@ def icon_button(
     selected: bool = False,
     disabled: bool = False,
     tooltip: Optional[str] = None,
+    keys: Optional[str] = None,
+    tint: Optional[str] = None,
+    loading: bool = False,
+    indicator: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A square, icon-only button (like Zed's ``IconButton``)."""
+    """A square, icon-only button (like Zed's ``IconButton``).
+
+    ``keys`` shows a key binding in the tooltip; ``tint`` colors it (``"error"``,
+    ``"accent"``...); ``loading`` swaps the icon for a spinner and ignores presses;
+    ``indicator`` adds a small dot in that color at the top right (unread, changes...).
+    """
     t = _theme(theme)
     height, _, _, icon_size = BUTTON_SIZES[size]
-    colors = _button_colors(t, variant, None, selected)
+    colors = _button_colors(t, variant, tint, selected)
     colors.pop("border_color", None)
     if color:
         colors["color"] = t.color(color)
-    elif variant == "ghost" and not selected:
+    elif variant == "ghost" and not selected and not tint:
         colors["color"] = t.icon_muted
         colors["hover_color"] = t.icon
+    if loading:
+        from .display import spinner
+
+        glyph = spinner(size=icon_size, tint="text_muted", theme=t)
+        disabled = True
+    else:
+        glyph = _icon(name, size=icon_size)
+    content = _core.container(glyph, center=True)
+    if indicator:
+        dot = _core.container(None, width=6, height=6, bg=t.color(indicator), radius=3, border_color=t.background,
+                              border_width=1.0)
+        content = _core.stack([content, _core.container(dot, width="fill", height="fill", align_x="end",
+                                                        align_y="start", padding=3)])
     widget = _core.button(
-        _core.container(_icon(name, size=icon_size), center=True),
+        content,
         None if disabled else on_press,
         padding=0,
         width=height,
@@ -211,7 +245,7 @@ def icon_button(
         disabled_color=t.text_disabled,
         **colors,
     )
-    return tooltip_text(widget, tooltip, theme=t) if tooltip else widget
+    return tooltip_text(widget, tooltip, keys=keys, theme=t) if tooltip else widget
 
 
 def badge(
@@ -220,10 +254,16 @@ def badge(
     tint: str = "accent",
     variant: str = "soft",
     icon: Optional[str] = None,
+    size: str = "md",
+    on_press: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A small pill. variant: "soft" | "solid" | "outline"."""
+    """A small pill. variant: "soft" | "solid" | "outline"; size: "sm" | "md" | "lg".
+
+    ``on_press`` makes it clickable (a filter, a link to the issues it counts...).
+    """
     t = _theme(theme)
+    font_size, pad, icon_size = {"sm": (10.5, (0, 5), 10), "md": (11.5, (1, 7), 11), "lg": (12.5, (2, 9), 12)}[size]
     base = t.color(tint)
     if variant == "solid":
         bg, fg, border = base, t.on_accent, None
@@ -231,16 +271,18 @@ def badge(
         bg, fg, border = "transparent", base, alpha(base, 0.6)
     else:
         bg, fg, border = alpha(base, 0.16), base, None
-    parts = [_icon(icon, size=11) if icon else None, _core.text(content, size=11.5, weight="medium", wrap=False)]
-    return _core.container(
+    parts = [_icon(icon, size=icon_size) if icon else None,
+             _core.text(content, size=font_size, weight="medium", wrap=False)]
+    pill = _core.container(
         _core.row(parts, spacing=4, align="center"),
-        padding=(1, 7),
+        padding=pad,
         bg=bg,
         color=fg,
         border_color=border,
         border_width=1.0 if border else 0.0,
         radius=999,
     )
+    return pill if on_press is None else pill.on(click=on_press, cursor="pointer")
 
 
 def indicator(color: str = "accent", *, size: float = 6, theme: Optional[Theme] = None) -> _core.Widget:
@@ -295,10 +337,24 @@ def kbd(keys: str, *, size: str = "sm", theme: Optional[Theme] = None) -> _core.
     return _core.row(chords, spacing=6, align="center")
 
 
-def divider(*, vertical: bool = False, color: Optional[str] = None, theme: Optional[Theme] = None) -> _core.Widget:
-    """A 1px horizontal (or ``vertical``) line, in the theme's border color unless ``color`` is given."""
+def divider(*, vertical: bool = False, color: Optional[str] = None, label: Optional[str] = None,
+            spacing: float = 0, theme: Optional[Theme] = None) -> _core.Widget:
+    """A 1px horizontal (or ``vertical``) line, in the theme's border color unless ``color`` is given.
+
+    ``label`` writes a muted text in the middle of a horizontal line ("or", a date...);
+    ``spacing`` adds that much space on both sides of the line.
+    """
     t = _theme(theme)
-    return _core.rule(vertical=vertical, thickness=1, color=t.color(color) if color else t.border_variant)
+    line_color = t.color(color) if color else t.border_variant
+    line = _core.rule(vertical=vertical, thickness=1, color=line_color)
+    if label and not vertical:
+        line = _core.row([_core.rule(thickness=1, color=line_color),
+                          _core.text(label, size=12, color=t.text_muted, wrap=False),
+                          _core.rule(thickness=1, color=line_color)], spacing=8, align="center", width="fill")
+    if spacing:
+        line = _core.container(line, padding=(0, spacing) if vertical else (spacing, 0),
+                               width=None if vertical else "fill", height="fill" if vertical else None)
+    return line
 
 
 def avatar(
@@ -307,21 +363,41 @@ def avatar(
     color: Optional[str] = None,
     size: float = 22,
     index: int = 0,
+    image: Any = None,
+    status: Optional[str] = None,
+    tooltip: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A round avatar with initials. ``index`` picks a collaborator color from the theme."""
+    """A round avatar with initials. ``index`` picks a collaborator color from the theme.
+
+    ``image`` (a path or bytes) shows a picture instead of the initials; ``status`` adds a
+    presence dot: ``"online"``, ``"away"``, ``"busy"``, ``"offline"`` or a color;
+    ``tooltip`` names the person on hover.
+    """
     t = _theme(theme)
     bg = t.color(color) if color else (t.players[index % len(t.players)] if t.players else t.accent)
-    return _core.container(
-        _core.text(initials[:2].upper(), size=size * 0.45, weight="semibold", color=t.on_accent, wrap=False),
+    face = (_core.image(image, width=size, height=size, content_fit="cover", radius=size / 2) if image is not None else
+            _core.text(initials[:2].upper(), size=size * 0.45, weight="semibold", color=t.on_accent, wrap=False))
+    widget = _core.container(
+        face,
         width=size,
         height=size,
         center=True,
         bg=bg,
         radius=size / 2,
+        clip=image is not None,
         border_color=t.border,
         border_width=1.0,
     )
+    if status:
+        dot_size = max(6.0, size * 0.32)
+        dot_color = {"online": t.success, "away": t.warning, "busy": t.error, "offline": t.text_disabled}.get(
+            status, None) or t.color(status)
+        dot = _core.container(None, width=dot_size, height=dot_size, bg=dot_color, radius=dot_size / 2,
+                              border_color=t.background, border_width=1.5)
+        widget = _core.stack([widget, _core.container(dot, width="fill", height="fill", align_x="end", align_y="end")],
+                             width=size, height=size)
+    return tooltip_text(widget, tooltip, theme=t) if tooltip else widget
 
 
 def tooltip_text(
@@ -359,10 +435,20 @@ def card(
     actions: Iterable[Any] = (),
     padding: float = 16,
     width: Any = None,
+    footer: Iterable[Any] = (),
+    on_press: Any = None,
+    selected: bool = False,
+    elevated: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A bordered surface for grouping content."""
+    """A bordered surface for grouping content.
+
+    ``footer`` widgets go at the bottom right (buttons); ``on_press`` makes the whole card
+    clickable (a choice, a project to open) and ``selected`` outlines it in the accent color;
+    ``elevated`` adds a shadow.
+    """
     t = _theme(theme)
+    footer = list(footer)
     header = None
     if title or actions:
         header = _core.row(
@@ -370,12 +456,15 @@ def card(
             spacing=4,
             align="center",
         )
-    return _core.container(
-        _core.column([header, content], spacing=12),
+    bottom = _core.row([_core.space(width="fill"), *footer], spacing=8, align="center") if footer else None
+    box = _core.container(
+        _core.column([header, content, bottom], spacing=12),
         padding=padding,
         width=width,
         bg=t.surface,
-        border_color=t.border_variant,
+        border_color=t.accent if selected else t.border_variant,
         border_width=1.0,
         radius=t.radius + 2,
+        shadow=(t.shadow, (0, 4), 16) if elevated else None,
     )
+    return box if on_press is None else box.on(click=on_press, cursor="pointer")

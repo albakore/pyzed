@@ -29,7 +29,7 @@ de propiedades en Visual Basic y Qt Designer, y las ideas de nodos y escenas en 
 
 ```mermaid
 flowchart TB
-    T["① Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ Detener · Ver · Ayuda · ⚙"]
+    T["① Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ Detener · 🔍 Buscar · Ver · Ayuda · ⚙"]
     subgraph W[" "]
         direction LR
         L["② Dock izquierdo<br/>Diseño · Proyecto · Dependencias"]
@@ -48,7 +48,7 @@ flowchart TB
 
 ## ① La barra de título
 
-La franja de arriba del todo. De izquierda a derecha:
+La franja de arriba del todo. De izquierda a derecha (Ejecutar, Detener y el buscador quedan en el centro):
 
 | Elemento | Qué hace |
 | --- | --- |
@@ -61,6 +61,7 @@ La franja de arriba del todo. De izquierda a derecha:
 | Insignia **Componente** / **Shader** | Indica en qué [vista](/pyzed/es/editor/views/) estás cuando no es un formulario. |
 | **▶ Ejecutar** (<kbd>F5</kbd>) | Ejecuta el formulario, previsualiza el componente o abre el shader en su propia ventana. |
 | **■ Detener** (<kbd>Mayús</kbd>+<kbd>F5</kbd>) | Cierra lo que abrió Ejecutar. Desactivado si no hay nada en marcha. |
+| **🔍 Buscar** (<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>) | Abre la [paleta de comandos](/pyzed/es/editor/menus-and-commands/#paleta-de-comandos): comandos, paneles, ajustes del editor, atajos y archivos recientes. |
 | **Ver** (icono de paneles) | Docks, paneles, cuadrícula y guías, vistas previas con otros temas, idiomas y marcos de ventana. |
 | **Ayuda** (icono ?) | Atajos, la referencia integrada, la ventana de bienvenida, actualizaciones y Acerca de. |
 | **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Ajustes](/pyzed/es/editor/settings/). |
@@ -68,7 +69,7 @@ La franja de arriba del todo. De izquierda a derecha:
 <Media src={fileMenu} alt="El menú ☰ abierto con los comandos de archivo, Ejecutar y archivos recientes" caption="El menú ☰: comandos de archivo, archivos recientes y Ejecutar." />
 
 Cada entrada de los menús aparece con sus teclas en [Menús y comandos](/pyzed/es/editor/menus-and-commands/). Todo lo
-que puedes pulsar en un menú está también en la **paleta de comandos** (<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>):
+que puedes pulsar en un menú está también en la **paleta de comandos** (el buscador, o <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>):
 escribe unas letras de su nombre y pulsa <kbd>Enter</kbd>.
 
 ### El marco de la ventana
@@ -91,7 +92,9 @@ en la [referencia de la API](/pyzed/es/reference/ui/).
 ## ② ④ ⑤ Docks y paneles
 
 Los paneles viven en **docks** alrededor del centro: izquierdo, derecho, inferior y uno superior que está vacío hasta
-que mueves un panel allí. Cada dock muestra un panel a la vez, con una pestaña por panel.
+que mueves un panel allí. Cada dock muestra un panel a la vez, con una pestaña por panel. Cualquier panel puede además
+salir de los docks y flotar en una **ventana propia**, solo o apilado con otros paneles, igual que las pestañas de
+documentos.
 
 | Panel | Dock | Para qué sirve | Manual |
 | --- | --- | --- | --- |
@@ -107,20 +110,30 @@ que mueves un panel allí. Cada dock muestra un panel a la vez, con una pestaña
 Qué puedes hacer con ellos:
 
 - **Cambiar** de panel con las pestañas de arriba de cada dock.
-- **Mover** un panel: el botón del dock al final de la fila de pestañas abre **Mover *panel* a** izquierdo, derecho,
-  inferior o superior.
+- **Arrastrar** la pestaña de un panel: a lo largo de su fila para reordenarla, sobre las pestañas de otro dock o
+  sobre el área de cualquier dock para moverlo allí (el dock de destino se ilumina), o fuera de la ventana para
+  abrirlo en una **ventana propia**. Suelta más pestañas sobre esa ventana para apilarlas y arrástralas de vuelta sobre
+  la ventana principal para acoplarlas otra vez.
+- **Mover** un panel desde el menú: el botón del dock al final de la fila de pestañas abre **Mover *panel* a**
+  izquierdo, derecho, inferior o superior, o **Ventana nueva**. En una ventana de paneles, el mismo botón ofrece
+  **Devolver todo a los paneles laterales**, y cerrar la ventana hace lo mismo.
 - **Cambiar el tamaño** de un dock arrastrando su borde que da al lienzo.
 - **Ocultar** un dock con su **×**, o alternarlo: <kbd>Ctrl</kbd>+<kbd>B</kbd> (izquierdo),
   <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> (derecho), <kbd>Ctrl</kbd>+<kbd>J</kbd> (inferior).
-- **Restablecer** todo con **Ver → Restablecer los paneles**. Dónde está cada panel y el tamaño de cada dock se guardan
-  con tus ajustes.
+- **Guardar la distribución** con **Ver → Guardar la distribución como…** y cambiar entre distribuciones desde
+  **Ver → Distribuciones**. Pyzed trae **Por defecto**, **Programar** (el código junto a las propiedades),
+  **Concentración** (solo el lienzo y el dock derecho) y **Eventos y código**; **Eliminar esta distribución** borra
+  una tuya.
+- **Restablecer** todo con **Ver → Restablecer los paneles**. Dónde está cada panel, el orden de las pestañas, el tamaño
+  de cada dock y las ventanas de paneles (con su tamaño y posición) se guardan con tus ajustes y se reabren la próxima
+  vez.
 
 <Media src={dockMenu} alt="El menú del dock con Mover Propiedades al dock izquierdo, inferior o superior" caption="Mueve cualquier panel a otro dock desde el botón del dock." size="narrow" />
 
 <Aside type="tip" title="Una disposición para escribir código">
-En un portátil, oculta el dock izquierdo (<kbd>Ctrl</kbd>+<kbd>B</kbd>) mientras escribes código y añade controles con
-<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>A</kbd> en lugar de las herramientas. En una pantalla ancha, mueve **Eventos** al
-dock izquierdo para verlo junto a Propiedades.
+En un portátil, elige **Ver → Distribuciones → Programar**, u oculta el dock izquierdo (<kbd>Ctrl</kbd>+<kbd>B</kbd>) y
+añade controles con <kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>A</kbd>. Con dos pantallas, arrastra **Código** y **Consola**
+a la segunda y guarda el resultado como una distribución propia.
 </Aside>
 
 ## ③ El centro: pestañas, barra de herramientas y lienzo

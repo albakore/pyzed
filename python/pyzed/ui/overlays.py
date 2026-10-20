@@ -36,24 +36,43 @@ def modal(
     *,
     title: Optional[str] = None,
     on_close: Any = None,
-    width: float = 480,
+    width: Any = 480,
     footer: Iterable[Any] = (),
+    description: Optional[str] = None,
+    icon: Optional[str] = None,
+    max_height: Optional[float] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A dialog surface (use it as the ``overlay`` of ``ui.layer``)."""
+    """A dialog surface (use it as the ``overlay`` of ``ui.layer``).
+
+    ``width`` is pixels or ``"sm"`` (360), ``"md"`` (480), ``"lg"`` (640) or ``"xl"`` (820).
+    ``description`` is a muted line under the title and ``icon`` goes before it;
+    ``max_height`` scrolls content taller than that, keeping the header and footer in view.
+    The Escape key closes it while it has focus (it is sent ``on_close``).
+    """
     t = _theme(theme)
+    width = {"sm": 360, "md": 480, "lg": 640, "xl": 820}.get(width, width)
     header = None
     if title or on_close is not None:
+        heading = _core.text(title or "", size=15, weight="semibold", color=t.text, wrap=False)
+        if description:
+            heading = _core.column([heading, _core.text(description, size=12.5, color=t.text_muted)], spacing=2)
         header = _core.row(
             [
-                _core.text(title or "", size=15, weight="semibold", color=t.text, wrap=False),
+                _icon(icon, size=16, color=t.icon) if icon else None,
+                heading,
                 _core.space(width="fill"),
                 icon_button("x", on_close, size="sm", theme=t) if on_close is not None else None,
             ],
             align="center",
+            spacing=8,
         )
     footer = list(footer)
-    return _core.container(
+    if max_height is not None:
+        content = _core.container(_core.scrollable(_core.container(content, padding=(0, 12, 0, 0)), height="shrink", scroller=t.scrollbar,
+                                                   scroller_hover=t.scrollbar_hover, scrollbar_width=6),
+                                  max_height=max_height)
+    surface = _core.container(
         _core.column(
             [header, content, _core.row([_core.space(width="fill"), *footer], spacing=8) if footer else None],
             spacing=14,
@@ -66,6 +85,14 @@ def modal(
         radius=t.radius + 4,
         shadow=(t.shadow, (0, 8), 28),
     )
+    if on_close is None:
+        return surface
+    def escape(event: Any) -> Any:
+        if event.key != "escape":
+            return None
+        return on_close() if callable(on_close) else on_close
+
+    return surface.on(key_down=escape)
 
 
 # ---------------------------------------------------------------------------
@@ -254,13 +281,23 @@ def toast(
     on_dismiss: Any = None,
     actions: Iterable[Any] = (),
     width: float = 340,
+    progress: Optional[float] = None,
+    on_press: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A notification card. kind: "info" | "success" | "warning" | "error"."""
+    """A notification card. kind: "info" | "success" | "warning" | "error".
+
+    ``progress`` (0 to 1) draws a thin bar at the bottom: the time left before it closes,
+    or a download. ``on_press`` makes the card clickable (open what it is about).
+    """
     t = _theme(theme)
     color = t.color(kind)
     actions = list(actions)
-    return _core.container(
+    bar = None
+    if progress is not None:
+        bar = _core.progress_bar(max(0.0, min(progress, 1.0)), min=0.0, max=1.0, width="fill", height=2,
+                                 accent=color, bg=alpha(t.text, 0.08), radius=1)
+    card = _core.container(
         _core.row(
             [
                 _core.container(_icon(icon or _KIND_ICONS.get(kind, "bell"), size=16, color=color), padding=(1, 0, 0, 0)),
@@ -269,6 +306,7 @@ def toast(
                         _core.text(title, size=13.5, weight="medium", color=t.text),
                         _core.text(message, size=12.5, color=t.text_muted) if message else None,
                         _core.row(actions, spacing=6) if actions else None,
+                        bar,
                     ],
                     spacing=6,
                     width="fill",
@@ -285,6 +323,7 @@ def toast(
         radius=t.radius + 2,
         shadow=(t.shadow, (0, 4), 18),
     )
+    return card if on_press is None else card.on(click=on_press, cursor="pointer")
 
 
 def toasts(base: Any, items: Sequence[Any], *, spacing: float = 8) -> _core.Widget:

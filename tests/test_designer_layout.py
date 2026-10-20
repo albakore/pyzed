@@ -523,3 +523,19 @@ def test_empty_containers_and_plain_controls_have_no_grip(tmp_path):
     app.doc.select("title1")
     app.tool = "button"
     assert surface.grips(app) == []
+
+
+def test_the_toolbar_shows_selection_tools_only_with_a_selection():
+    from pyzed import Widget
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    assert isinstance(app.toolbar(app.theme_obj), Widget)  # a hint instead of the align tools
+    app.doc.add("button", 10, 10)
+    app.doc.select("button1")
+    assert isinstance(app.toolbar(app.theme_obj), Widget)
+    app.new()  # "New…" opens the dialog with the form, component and shader cards
+    assert app.dialog == "new" and app.new_state["kind"] == "form"
+    app.close_dialog()
+    app.new_component()  # the toolbox's "New component…" row
+    assert app.new_state["kind"] == "component"

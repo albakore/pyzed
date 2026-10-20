@@ -171,12 +171,61 @@ ui.field("Email", ui.input("ada@", on_input, width=220), error="Enter a valid em
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.
+
+<VariantGrid>
+<Variant name="input-v5-1" caption={"disabled=True"} alt={"Campo de texto: disabled=True"} code="Código" mono>
+
+```python
+ui.input("Locked", on_input, disabled=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-2" caption={"readonly=True"} alt={"Campo de texto: readonly=True"} code="Código" mono>
+
+```python
+ui.input("Copy me, not edit me", on_input, readonly=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-3" caption={"invalid=True"} alt={"Campo de texto: invalid=True"} code="Código" mono>
+
+```python
+ui.input("ada@", on_input, invalid=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-4" caption={"on_clear="} alt={"Campo de texto: on_clear="} code="Código" mono>
+
+```python
+ui.input("pyzed", on_input, on_clear=on_clear, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-5" caption={"max_length=8"} alt={"Campo de texto: max_length=8"} code="Código" mono>
+
+```python
+ui.input("12345678", on_input, max_length=8, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-6" caption={"align=\"center\""} alt={"Campo de texto: align=\"center\""} code="Código" mono>
+
+```python
+ui.input("centered", on_input, align="center", width=220)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="input-v5-1" caption={"pz.text_input"} alt={"Campo de texto: pz.text_input"} code="Código" mono>
+<Variant name="input-v6-1" caption={"pz.text_input"} alt={"Campo de texto: pz.text_input"} code="Código" mono>
 
 ```python
 pz.text_input("", placeholder="pz.text_input", on_input=on_input, width=260, padding=8,
@@ -198,17 +247,23 @@ input(
     placeholder='',
     icon=None,
     on_submit=None,
+    on_clear=None,
     id=None,
     size='md',
     secure=False,
     width='fill',
     borderless=False,
     mono=False,
+    disabled=False,
+    readonly=False,
+    invalid=False,
+    max_length=None,
+    align='start',
     theme=None,
 )
 ```
 
-Un campo de texto.
+Un campo de texto. El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -217,12 +272,18 @@ Un campo de texto.
 | `placeholder` | `""` | Texto de ayuda cuando está vacío. |
 | `icon` | `None` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `on_submit` | `None` | Mensaje o callable que se envía al pulsar Enter. |
+| `on_clear` | `None` | Muestra una ✕ mientras hay texto; se envía al pulsarla. |
 | `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
 | `secure` | `False` | Oculta el texto. |
 | `width` | `"fill"` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `borderless` | `False` | Sin borde ni fondo (como en la paleta de comandos). |
 | `mono` | `False` | Usa la fuente monoespaciada (IBM Plex Mono). |
+| `disabled` | `False` | Lo atenúa e ignora lo que se escribe. |
+| `readonly` | `False` | Se puede seleccionar y copiar, pero no cambiar. |
+| `invalid` | `False` | Pinta el borde con el color de error. |
+| `max_length` | `None` | Ignora los cambios más largos que esto. |
+| `align` | `"start"` | Alineación del texto: `"start"`, `"center"` o `"end"`. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#input)

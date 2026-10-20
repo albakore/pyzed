@@ -94,12 +94,44 @@ ui.stat("Revenue", "$9.4k", delta=4.2, trend=[3, 5, 4, 6, 8, 7, 9], width=190)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+With `inverse=True` a drop is good news (green), for errors or latency.
+
+<VariantGrid>
+<Variant name="stat-v2-1" caption={"icon=, inverse=True"} alt={"Stat: icon=, inverse=True"} code="Code" mono>
+
+```python
+ui.stat("Errors", "12", delta=-8.0, inverse=True, icon="bug", width=180)
+```
+
+</Variant>
+<Variant name="stat-v2-2" caption={"on_press="} alt={"Stat: on_press="} code="Code" mono>
+
+```python
+ui.stat("Users", "1,204", delta=4.2, icon="users", on_press=on_press, width=180)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.stat`
 
 ```python
-stat(title, value, *, delta=None, trend=None, width=None, theme=None)
+stat(
+    title,
+    value,
+    *,
+    delta=None,
+    trend=None,
+    width=None,
+    icon=None,
+    inverse=False,
+    on_press=None,
+    theme=None,
+)
 ```
 
 A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
@@ -111,6 +143,9 @@ A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
 | `delta` | `None` | Change in %; green if positive, red otherwise. |
 | `trend` | `None` | Values for the sparkline. |
 | `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `icon` | `None` | Icon before the title. |
+| `inverse` | `False` | Colors a drop green and a rise red (errors, latency…). |
+| `on_press` | `None` | Makes the card clickable. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#stat)

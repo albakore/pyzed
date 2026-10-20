@@ -142,6 +142,22 @@ pz.container(ui.tree(nodes, expanded={"src"}, item_height=30, indent=20), width=
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`on_open(id)` runs on a double click of a file and `on_context(id)` on a right click.
+
+<VariantGrid>
+<Variant name="tree-v4-1" caption={"Multiple selection and focus"} alt={"Tree: Multiple selection and focus"} code="Code">
+
+```python
+pz.container(ui.tree(ui.TreeNode.from_paths(["src/app.py", "src/ui.py", "README.md"]), expanded={"src"},
+                     selected={"src/app.py", "README.md"}, focused="src/ui.py", on_open=on_open,
+                     on_context=on_context), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Examples
 
 ### A real folder
@@ -191,6 +207,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -203,9 +222,12 @@ A collapsible file tree, like a code editor's project panel.
 | --- | --- | --- |
 | `nodes` | *required* | List of `TreeNode`. |
 | `expanded` | *required* | Set of open folder ids. |
-| `selected` | `None` | Id of the selected node. |
+| `selected` | `None` | One id or a collection of ids (multiple selection). |
 | `on_toggle` | `None` | Called with the id of the clicked folder. |
 | `on_select` | `None` | Called with the id of the clicked file. |
+| `on_open` | `None` | Called with the id of a file that is double-clicked. |
+| `on_context` | `None` | Called with the id of a row that is right-clicked (show a `ui.menu` there). |
+| `focused` | `None` | Outlines the row the keyboard is on. |
 | `indent` | `14` | Left indentation, in pixels. |
 | `item_height` | `24` | Height of each row. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |

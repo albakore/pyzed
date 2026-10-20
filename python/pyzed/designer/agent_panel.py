@@ -200,7 +200,7 @@ class AgentController:
         self.input = ""
         self.running = False
         self.error = ""
-        self.view = "thread"  # or "history"
+        self.view = "thread"  # "history" or "settings" (the agent settings, inside the panel like Zed's)
         self.live_text = ""
         self.live_thinking = ""
         #: tool call id -> "running" | "done" | "error" | "waiting"
@@ -237,9 +237,19 @@ class AgentController:
         # MCP servers and external agents
         self.mcp = _mcp.Servers(self.settings.mcp_servers)
         self.mcp_status: Dict[str, str] = {}  # server -> "N tools" or why it failed
+        self.mcp_ok: set = set()  # servers that started and listed their tools
         self.server_draft: Optional[Dict[str, Any]] = None  # the MCP server or agent being added or edited
         self._acp: Dict[str, Any] = {}  # thread id -> ACPAgent
         self.google_projects: List[str] = []
+        # the settings view: agents from the ACP registry, and the agent skills
+        self.registry: List[Any] = []
+        self.registry_open = False
+        self.registry_busy = ""
+        self.registry_error = ""
+        self._skills: Optional[List[Any]] = None
+        self.skill_url = ""
+        self.skill_busy = ""
+        self._jobs = 0  # background jobs whose answer is still to come
         import atexit
 
         atexit.register(self.shutdown)
@@ -271,7 +281,7 @@ class AgentController:
         """Whether something is in flight (the poll subscription runs while it is)."""
         return self.running or bool(self.inline and self.inline.running) or self.busy_provider is not None \
             or self.capture is not None or self.raise_window or self.claude_login is not None \
-            or not self._queue.empty()
+            or self._jobs > 0 or not self._queue.empty()
 
     @property
     def expanded(self) -> bool:
@@ -413,21 +423,28 @@ class AgentController:
             elif kind == "mcp":
                 _, server, why = item
                 self.mcp_status[server] = why
+                self.mcp_ok.discard(server)
                 self.d.notify(tr("The MCP server {name} did not start", name=server), why, kind="warning",
                               seconds=6)
             elif kind == "mcp_ready":
                 for server in list(self.mcp.clients):
                     self.mcp_status[server] = tr("{count} tools", count=len(self.mcp._tools.get(server, [])))
+                    self.mcp_ok.add(server)
             elif kind == "mcp_test":
-                _, server, message = item
+                _, server, message, ok = item
                 self.busy_provider = None
                 self.mcp_status[server] = message
+                (self.mcp_ok.add if ok else self.mcp_ok.discard)(server)
             elif kind == "device":
                 _, pid, user_code, uri = item
                 if self.device is not None and self.device.provider == pid:
                     self.device.user_code, self.device.uri = user_code, uri
             elif kind == "device_done":
                 self.device = None
+            elif kind == "job":
+                _, then, value, error = item
+                self._jobs -= 1
+                then(value, error)
             elif kind == "projects":
                 _, pid, names = item
                 own = self.settings.provider(pid)
@@ -568,8 +585,13 @@ class AgentController:
         if provider_id == "acp":
             agent: Any = self._external_agent(name)
         else:
-            agent = _agents.Agent(model, tools=agent_tools.designer_tools(self.d),
-                                  system=agent_tools.system_prompt(self.d), settings=self.settings,
+            from ..agents import skills as _skills
+
+            found = _skills.enabled(self.skills(), self.settings)
+            system = agent_tools.system_prompt(self.d)
+            agent = _agents.Agent(model, tools=[*agent_tools.designer_tools(self.d), *_skills.tools(found)],
+                                  system=f"{system}\n\n{_skills.prompt(found)}" if found else system,
+                                  settings=self.settings,
                                   confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
                                   max_turns=MAX_TURNS, stream=self._stream)
 
@@ -655,13 +677,23 @@ class AgentController:
         """Fills the input with ``text`` and sends it."""
         return self.send(tr(text))
 
-    def new_thread(self) -> Any:
-        """Starts an empty thread (the current one stays in the history)."""
+    def new_thread(self, agent: Optional[str] = None) -> Any:
+        """Starts an empty thread (the current one stays in the history), with ``agent`` when given: ``""``
+        for the built-in agent with the default model, ``"acp:<name>"`` for an external agent."""
         if self.running:
             return None
+        self.menu = None
         if self.thread.messages:
             self._keep()
-        self.thread = _agents.Thread(model=self.settings.model)
+        model = self.settings.model
+        if agent:
+            model = agent
+        elif agent == "" and model.startswith("acp:"):
+            model = next((m for m in self.models() if not m.startswith("acp:")), _providers.DEFAULT_MODEL)
+        self.thread = _agents.Thread(model=model)
+        if agent is not None and model != self.settings.model:
+            self.settings.model = model
+            self.save_settings()
         self.close_external_agents()
         self.view = "thread"
         self.error = ""
@@ -684,7 +716,14 @@ class AgentController:
             self.thread = _agents.Thread(model=self.settings.model)
 
     def toggle_history(self) -> None:
+        self.menu = None
         self.view = "thread" if self.view == "history" else "history"
+
+    def back(self) -> None:
+        """Back to the thread from the history or the settings."""
+        self.menu = None
+        self.view = "thread"
+        self.server_draft = None
 
     def toggle_block(self, key: str) -> None:
         self.open_blocks ^= {key}
@@ -735,12 +774,17 @@ class AgentController:
         self.view = "thread"
         return self._box(text)
 
-    def open_settings(self, provider: Optional[str] = None) -> Any:
-        """Opens Settings → AI agents (with ``provider`` unfolded)."""
+    def open_settings(self, provider: Optional[str] = None, section: Optional[str] = None) -> Any:
+        """Shows the agent settings in the panel, like Zed's (with ``provider`` unfolded; ``section="agents"``
+        opens the ACP registry)."""
         self.menu = None
         if provider in _providers.PROVIDERS:
             self.provider_open = provider
-        self.d.dialog = "agent_settings"
+        if section == "agents":
+            self.toggle_registry(True)
+        self.d.dialog = None  # e.g. the designer's Settings, where the button that opens these is
+        self.d.layout.show("agent")
+        self.view = "settings"
         return None
 
     # -- composer: menus, @ mentions and / commands ---------------------------------------------------
@@ -1358,9 +1402,9 @@ class AgentController:
         def work() -> None:
             try:
                 specs = servers.tool_specs(name)
-                put(("mcp_test", name, tr("{count} tools", count=len(specs))))
+                put(("mcp_test", name, tr("{count} tools", count=len(specs)), True))
             except Exception as err:  # noqa: BLE001
-                put(("mcp_test", name, str(err)))
+                put(("mcp_test", name, str(err), False))
 
         threading.Thread(target=work, daemon=True, name="pyzed-agent-mcp").start()
 
@@ -1464,7 +1508,6 @@ class AgentController:
             self.settings.acp_agents.append(_acp.preset("claude-code"))
         self.settings.share_pyzed_mcp = True
         self.set_model("acp:claude-code")
-        self.d.dialog = None if self.d.dialog == "agent_settings" else self.d.dialog
         if _acp.claude_signed_in():
             self.d.notify(tr("Claude Code is ready"), tr("It uses your Claude subscription"), kind="success",
                           seconds=5)
@@ -1512,6 +1555,264 @@ class AgentController:
         if url:
             _agents.login.open_browser(url)
 
+    # -- the panel's menus and options --------------------------------------------------------------
+    def toggle_option(self, key: str) -> None:
+        """Flips a yes/no setting from the panel's ⋯ menu."""
+        setattr(self.settings, key, not getattr(self.settings, key))
+        self.save_settings()
+
+    def thread_markdown(self) -> str:
+        """The thread as Markdown (what "Copy thread as Markdown" copies)."""
+        out = [f"# {self.thread.display_title}", ""]
+        for m in self.thread.messages:
+            for b in m.get("content", []):
+                kind = b.get("type")
+                if kind == "text" and not b.get("text", "").startswith("<context>"):
+                    out += [f"## {'User' if m.get('role') == 'user' else 'Agent'}", "", b["text"].strip(), ""]
+                elif kind == "tool_use":
+                    preview = _args_preview(b.get("input") or {})
+                    out += [f"- `{b.get('name', '')}`" + (f" {preview}" if preview else ""), ""]
+        return "\n".join(out).rstrip() + "\n"
+
+    def copy_markdown(self) -> Any:
+        self.menu = None
+        self.d.notify(tr("Thread copied as Markdown"), kind="success", seconds=3)
+        return _core.Command.copy(self.thread_markdown())
+
+    # -- the agent's changes, file by file -------------------------------------------------------------
+    def file_changes(self) -> List[Dict[str, Any]]:
+        """The documents the agent changed in its last run, with the lines added and removed in their code."""
+        import difflib
+
+        out = []
+        for doc, _form, code in self.snapshot:
+            added = removed = 0
+            for line in difflib.unified_diff(code.splitlines(), doc.code.splitlines(), lineterm="", n=0):
+                if line.startswith("+") and not line.startswith("+++"):
+                    added += 1
+                elif line.startswith("-") and not line.startswith("---"):
+                    removed += 1
+            out.append({"path": doc.display_name, "added": added, "removed": removed})
+        return out
+
+    def _entry(self, name: str) -> Optional[Tuple[Any, Any, str]]:
+        return next((e for e in self.snapshot if e[0].display_name == name), None)
+
+    def keep_file(self, name: str) -> None:
+        """Keeps the agent's changes to one document."""
+        self.snapshot = [e for e in self.snapshot if e[0].display_name != name]
+        self.changed = bool(self.snapshot)
+
+    def reject_file(self, name: str) -> None:
+        """Puts one document back as it was before the agent's run."""
+        entry = self._entry(name)
+        if entry is None:
+            return
+        rest = [e for e in self.snapshot if e is not entry]
+        self.snapshot = [entry]
+        self.reject()
+        self.snapshot = rest
+        self.changed = bool(rest)
+
+    def open_file(self, name: str) -> None:
+        """Brings the tab of a document the agent changed to the front."""
+        entry = self._entry(name)
+        if entry is not None and entry[0] in self.d.docs:
+            self.d.active_doc = self.d.docs.index(entry[0])
+
+    # -- background jobs --------------------------------------------------------------------------------
+    def _job(self, work: Callable[[], Any], then: Callable[[Any, Optional[BaseException]], Any]) -> None:
+        """Runs ``work`` off the UI thread; ``then(value, error)`` runs on it when done."""
+        self._jobs += 1
+        put = self._queue.put
+
+        def run() -> None:
+            try:
+                put(("job", then, work(), None))
+            except Exception as err:  # noqa: BLE001 - handed to ``then``
+                put(("job", then, None, err))
+
+        threading.Thread(target=run, daemon=True, name="pyzed-agent-job").start()
+
+    # -- external agents from the ACP registry ---------------------------------------------------------
+    def toggle_registry(self, show: Optional[bool] = None) -> None:
+        """Shows (or hides) the agents of the ACP registry, loading it the first time."""
+        self.registry_open = (not self.registry_open) if show is None else show
+        if self.registry_open and not self.registry and self.registry_busy != "*":
+            self.load_registry()
+
+    def load_registry(self, refresh: bool = False) -> None:
+        from ..agents import registry
+
+        self.registry_busy = "*"
+        self.registry_error = ""
+
+        def then(agents: Any, error: Optional[BaseException]) -> None:
+            self.registry_busy = ""
+            if error is not None:
+                self.registry_error = str(error)
+            else:
+                self.registry = list(agents)
+
+        self._job(lambda: registry.fetch(refresh=refresh), then)
+
+    def registry_items(self) -> List[Dict[str, Any]]:
+        """The registry's agents for ``ui.Catalog``: installed ones and their updates marked."""
+        from ..agents import registry
+
+        installed = {a.registry_id: a for a in self.settings.acp_agents if a.registry_id}
+        items = []
+        for agent in self.registry:
+            mine = installed.get(agent.id)
+            newer = registry.update_available(mine, [agent]) if mine is not None else None
+            items.append({"id": agent.id, "name": agent.name, "version": agent.version,
+                          "description": agent.description, "installed": mine is not None,
+                          "update": newer.version if newer is not None else ""})
+        return items
+
+    def agent_update(self, config: _providers.ACPAgentConfig) -> str:
+        """The newer version of an installed registry agent ("" when there is none or the registry is not loaded)."""
+        from ..agents import registry
+
+        if not config.registry_id or not self.registry:
+            return ""
+        newer = registry.update_available(config, self.registry)
+        return newer.version if newer is not None else ""
+
+    def install_agent(self, agent_id: str) -> None:
+        """Installs (or updates) an agent of the ACP registry and adds it to the new-thread menu."""
+        from ..agents import registry
+
+        agent = registry.find(self.registry, agent_id)
+        if agent is None or self.registry_busy:
+            return
+        self.registry_busy = agent_id
+
+        def then(config: Any, error: Optional[BaseException]) -> None:
+            self.registry_busy = ""
+            if error is not None:
+                self.d.notify(tr("{name} was not installed", name=agent.name), str(error), kind="error", seconds=8)
+                return
+            old = next((a for a in self.settings.acp_agents if a.registry_id == agent.id), None)
+            if old is not None:
+                config.name, config.enabled = old.name, old.enabled
+            elif self.settings.acp_agent(config.name) is not None:
+                config.name = agent.id
+            self.settings.acp_agents[:] = [a for a in self.settings.acp_agents
+                                           if a.name != config.name and a.registry_id != agent.id] + [config]
+            self.save_settings()
+            self.close_external_agents()
+            self.d.notify(tr("{name} {version} is ready", name=agent.name, version=agent.version),
+                          tr("Start a thread with it from the + menu"), kind="success", seconds=5)
+
+        self._job(lambda: registry.install(agent), then)
+
+    def update_agent(self, name: str) -> None:
+        config = self.settings.acp_agent(name)
+        if config is not None and config.registry_id:
+            self.install_agent(config.registry_id)
+
+    def uninstall_agent(self, name: str) -> None:
+        """Removes an external agent (and the files it was installed with from the registry)."""
+        from ..agents import registry
+
+        config = self.settings.acp_agent(name)
+        if config is None:
+            return
+        if config.registry_id:
+            try:
+                registry.uninstall(config)
+            except OSError as err:
+                self.d.notify(tr("Some files were not removed"), str(err), kind="warning", seconds=6)
+        self.remove_server("acp", name)
+
+    # -- agent skills ------------------------------------------------------------------------------------
+    def skills(self) -> List[Any]:
+        """The skills found for the open project (looked up once; ``refresh_skills`` looks again)."""
+        if self._skills is None:
+            from ..agents import skills
+
+            try:
+                self._skills = skills.discover(self.project_root())
+            except OSError:
+                self._skills = []
+        return self._skills
+
+    def refresh_skills(self) -> None:
+        self._skills = None
+
+    def toggle_skill(self, name: str, on: bool) -> None:
+        off = [n for n in self.settings.disabled_skills if n != name]
+        self.settings.disabled_skills = off if on else [*off, name]
+        self.save_settings()
+
+    def set_skill_url(self, text: str) -> None:
+        self.skill_url = text
+
+    def _skill_job(self, label: str, work: Callable[[], Any], done: str) -> None:
+        self.skill_busy = label
+
+        def then(_value: Any, error: Optional[BaseException]) -> None:
+            self.skill_busy = ""
+            self.refresh_skills()
+            if error is not None:
+                self.d.notify(tr("The skill could not be installed"), str(error), kind="error", seconds=8)
+            else:
+                self.d.notify(done, kind="success", seconds=4)
+
+        self._job(work, then)
+
+    def install_skill_url(self) -> None:
+        """Installs the skills of a Git repository (its https URL)."""
+        from ..agents import skills
+
+        url = self.skill_url.strip()
+        if not url or self.skill_busy:
+            return
+        self.skill_url = ""
+        self._skill_job("*", lambda: skills.install_git(url), tr("Skills installed"))
+
+    def pick_skill_folder(self) -> Any:
+        return _core.Command.pick_files(self.install_skill_folder, title=tr("Choose a skill folder"), folder=True,
+                                         multiple=False)
+
+    def install_skill_folder(self, paths: Any) -> None:
+        from ..agents import skills
+
+        chosen = paths[0] if isinstance(paths, (list, tuple)) and paths else paths
+        if not chosen or self.skill_busy:
+            return
+        self._skill_job("*", lambda: skills.install_folder(Path(chosen)), tr("Skill installed"))
+
+    def _skill(self, name: str) -> Optional[Any]:
+        return next((s for s in self.skills() if s.name == name), None)
+
+    def update_skill(self, name: str) -> None:
+        from ..agents import skills
+
+        found = self._skill(name)
+        if found is not None and not self.skill_busy:
+            self._skill_job(name, lambda: skills.update(found), tr("{name} is up to date", name=name))
+
+    def remove_skill(self, name: str) -> None:
+        from ..agents import skills
+
+        found = self._skill(name)
+        if found is None:
+            return
+        try:
+            skills.remove(found)
+        except (OSError, skills.SkillError) as err:
+            self.d.notify(tr("The skill was not removed"), str(err), kind="error", seconds=6)
+        self.refresh_skills()
+
+    def open_skill_folder(self, name: str) -> None:
+        found = self._skill(name)
+        if found is not None:
+            from .workspace import reveal
+
+            reveal(found.path)
+
     def set_setting(self, key: str, value: Any) -> None:
         setattr(self.settings, key, value)
         self.save_settings()
@@ -1531,43 +1832,44 @@ def _args_preview(args: Dict[str, Any]) -> str:
     return ""
 
 
+#: How a tool's name starts -> the kind of action it is (its icon on the card).
+_KIND_PREFIXES = (("update_plan", "think"), (("get_", "list_", "read_", "describe", "inspect"), "read"),
+                  (("search", "find", "grep"), "search"), (("run_", "execute", "shell", "terminal"), "execute"),
+                  (("fetch", "web"), "fetch"), (("delete", "remove"), "delete"))
+
+
+def _kind_of(name: str, tool_: Optional[_agents.Tool]) -> str:
+    """The ACP kind of a built-in tool call (``"read"``, ``"edit"``, ``"execute"``...)."""
+    for prefixes, kind in _KIND_PREFIXES:
+        if name.startswith(prefixes):
+            return kind
+    if tool_ is not None and (tool_.writes or tool_.ui):
+        return "edit"
+    return "other"
+
+
 def _tool_card(c: AgentController, block: Dict[str, Any], result: Optional[Dict[str, Any]],
                tools: Dict[str, _agents.Tool], t: Theme) -> Any:
+    """One tool call of the thread as ``ui.ToolCall``: it asks right on the card while it waits for an OK."""
     call_id = block.get("id", "")
     status = c.tool_status.get(call_id) or ("error" if result and result.get("is_error") else
                                             "done" if result else "running" if c.running else "error")
     if c.pending is not None and c.running and status == "running" and c.pending.tool.name == block.get("name"):
         status = "waiting"
-    icon = {"running": None, "waiting": "hand", "done": "check", "error": "circle-x"}[status]
-    color = {"waiting": t.warning, "done": t.text_muted, "error": t.error}.get(status, t.text_muted)
-    lead = ui.spinner(size=12, theme=t) if status == "running" else _icon(icon or "check", size=12, color=color)
-    title = _tool_title(block.get("name", ""), tools)
-    preview = _args_preview(block.get("input") or {})
-    head = _core.row([lead, ui.label(title, size="sm", color="text_muted", theme=t),
-                      ui.label(preview, size="sm", mono=True, color="text_placeholder", theme=t) if preview else None],
-                     spacing=6, align="center")
-    key = f"tool:{call_id}"
-    body = None
-    if key in c.open_blocks:
-        import json
-
-        text = json.dumps(block.get("input") or {}, indent=1, ensure_ascii=False)
-        pictures: List[Any] = []
-        if result is not None:
-            content = result.get("content")
-            if isinstance(content, list):
-                pictures = [_core.image(data, height=160, content_fit="contain", radius=4)
-                            for data in (_image_bytes(b) for b in content if b.get("type") == "image") if data]
-                content = "".join(b.get("text", "") for b in content if b.get("type") == "text")
-            text += "\n\n→ " + (content if isinstance(content, str) else json.dumps(content, ensure_ascii=False))
-        body = _core.container(_core.column([
-            ui.label(text[:4000], size="xs", mono=True, color="text_muted", theme=t), *pictures], spacing=6),
-            padding=(6, 8), width="fill", bg=t.editor, radius=t.radius)
-    return _core.column([
-        _core.button(head, lambda: c.toggle_block(key), padding=(3, 6), width="fill", bg=None, hover_bg=t.element_hover,
-                     radius=t.radius),
-        body,
-    ], spacing=2, width="fill")
+    output: Any = None
+    images: List[bytes] = []
+    if result is not None:
+        content = result.get("content")
+        if isinstance(content, list):
+            images = [data for data in (_image_bytes(b) for b in content if b.get("type") == "image") if data]
+            content = "".join(b.get("text", "") for b in content if b.get("type") == "text")
+        output = content
+    kind = block.get("kind") or _kind_of(block.get("name", ""), tools.get(block.get("name", "")))
+    return ui.ToolCall(title=_tool_title(block.get("name", ""), tools), detail=_args_preview(block.get("input") or {}),
+                       kind=kind, status={"error": "failed"}.get(status, status), input=block.get("input") or None,
+                       output=output, images=images, theme=t, key=f"tool:{call_id}",
+                       on_allow=lambda _e: c.answer(True), on_allow_always=lambda _e: c.answer(True, True),
+                       on_deny=lambda _e: c.answer(False))
 
 
 def _thinking_card(c: AgentController, key: str, text: str, t: Theme, live: bool = False) -> Any:
@@ -1717,68 +2019,35 @@ def _confirmation(c: AgentController, t: Theme) -> Any:
 
 
 def _plan_card(c: AgentController, t: Theme) -> Optional[Any]:
-    """The agent's plan (its last ``update_plan``) as a checklist above the message box, while it is running
-    or has steps left. Clicking the header folds it."""
+    """The agent's plan (its last ``update_plan``) above the message box, while it runs or has steps left."""
     steps = c.live_plan if c.running and c.live_plan else agent_tools.plan_of(c.thread.messages)
     done = sum(1 for s in steps if s["status"] == "done")
     if not steps or (done == len(steps) and not c.running):
         return None
-    folded = "plan" in c.open_blocks
-    head = _core.row([
-        _icon("list-checks", size=13, color=t.text_accent),
-        ui.label(tr("Plan"), size="sm", weight="medium", theme=t),
-        ui.label(f"{done}/{len(steps)}", size="xs", color="text_muted", theme=t),
-        _core.space(width="fill"),
-        _icon("chevron-right" if folded else "chevron-down", size=12, color=t.text_placeholder),
-    ], spacing=6, align="center")
-    rows: List[Any] = [_core.button(head, lambda: c.toggle_block("plan"), padding=(2, 4), bg=None,
-                                    hover_bg=t.element_hover, radius=t.radius, width="fill")]
-    if not folded:
-        for step in steps:
-            status = step["status"]
-            if status == "in_progress":
-                lead = ui.spinner(size=12, theme=t) if c.running else _icon("circle-dot", size=12, color=t.accent)
-            else:
-                lead = _icon("circle-check" if status == "done" else "circle", size=12,
-                             color=t.success if status == "done" else t.text_placeholder)
-            rows.append(_core.row([lead, ui.label(step["step"], size="sm", theme=t,
-                                                  color="text_muted" if status == "done" else "text")],
-                                  spacing=8, align="center", padding=(0, 4)))
-    return _core.container(_core.column(rows, spacing=4, width="fill"), padding=(6, 8), width="fill",
-                           bg=t.surface,
-                           border_color=t.border_variant, border_width=1, radius=t.radius + 2)
+    return ui.Plan(steps=steps, running=c.running, theme=t, key="agent-plan")
 
 
 def _review_bar(c: AgentController, t: Theme) -> Any:
-    names = ", ".join(doc.display_name for doc, _, _ in c.snapshot)
-    return _core.container(_core.row([
-        ui.tooltip(ui.label(tr("Agent changes"), size="sm", weight="medium", theme=t),
-                   tr("The agent changed {files}", files=names) + ". " + tr("Each change is also an undo step."),
-                   theme=t),
-        _core.space(width="fill"),
-        ui.button(tr("Reject"), c.reject, variant="ghost", size="sm", theme=t),
-        ui.button(tr("Keep"), c.keep, variant="tinted", size="sm", theme=t),
-    ], spacing=6, align="center"), padding=(4, 8), width="fill", bg=alpha(t.accent, 0.08), border_color=t.border_variant,
-        border_width=1, radius=t.radius)
+    """The documents the agent changed, to keep or reject (all, or one by one) like Zed's edits bar."""
+    return ui.EditsBar(files=c.file_changes(), theme=t, key="agent-edits", on_keep=lambda _e: c.keep(),
+                       on_reject=lambda _e: c.reject(), on_keep_file=lambda e: c.keep_file(e.value),
+                       on_reject_file=lambda e: c.reject_file(e.value), on_open=lambda e: c.open_file(e.value))
 
 
 def _history(c: AgentController, t: Theme) -> Any:
-    threads = c.store.list()
-    if not threads:
-        return ui.empty_state(tr("No threads yet"), tr("Your conversations with the agent show up here."),
-                              icon="history", theme=t)
-    rows = []
-    for th in threads:
-        rows.append(_core.row([
-            _core.container(ui.list_item(th.display_title, lambda i=th.id: c.open_thread(i), icon="message-square",
-                                         selected=th.id == c.thread.id, height=30,
-                                         end=ui.label(th.model.partition(":")[2], size="xs", color="text_placeholder",
-                                                      theme=t), theme=t),
-                            width="fill"),
-            ui.icon_button("trash-2", lambda i=th.id: c.delete_thread(i), size="sm", tooltip=tr("Delete"), theme=t),
-        ], spacing=2, align="center"))
-    return _core.scrollable(_core.column(rows, spacing=1, width="fill", padding=(4, 6)), height="fill",
-                            scrollbar_width=4)
+    threads = [{"id": th.id, "title": th.display_title, "updated": th.updated, "detail": _thread_agent(c, th.model)}
+               for th in c.store.list()]
+    return ui.ThreadHistory(threads=threads, selected=c.thread.id, theme=t, key="agent-history",
+                            on_open=lambda e: c.open_thread(e.value), on_delete=lambda e: c.delete_thread(e.value))
+
+
+def _thread_agent(c: AgentController, model: str) -> str:
+    """Who answers a thread: the external agent's name, or the model's."""
+    provider, name = _providers.split_model(model or c.settings.model)
+    if provider == "acp":
+        agent = c.settings.acp_agent(name)
+        return agent.label if agent else name
+    return model_label(model) if model else ""
 
 
 def _chip(label: str, on_press: Any, t: Theme, *, icon: Optional[str] = None, selected: bool = False,
@@ -2037,22 +2306,81 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         border_width=1, radius=t.radius + 2)
 
 
-def view(d: "Designer", t: Theme) -> Any:
-    """The Agent panel: header, the thread (or the history), and the message box."""
-    c = d.agent
-    title = tr("History") if c.view == "history" else (c.thread.display_title if c.thread.messages else tr("New thread"))
-    title = title if len(title) <= 26 else title[:25].rstrip() + "…"
-    header = ui.panel_header(title, icon="sparkles", actions=[
-        ui.icon_button("plus", c.new_thread, size="sm", tooltip=tr("New thread"), theme=t),
+def _new_menu(c: AgentController, t: Theme) -> Any:
+    """The + menu: a new thread with the built-in agent or an external one, like Zed's."""
+    items: List[Any] = [tr("New thread"),
+                        ui.MenuItem(tr("Pyzed Agent"), lambda: c.new_thread(""), icon="sparkles")]
+    for agent in c.settings.acp_agents:
+        if agent.enabled:
+            items.append(ui.MenuItem(agent.label, lambda name=agent.name: c.new_thread(f"acp:{name}"),
+                                     icon="terminal"))
+    items += [ui.SEPARATOR, ui.MenuItem(tr("Add more agents…"), lambda: c.open_settings(section="agents"),
+                                        icon="plus")]
+    return ui.menu(items, width=230, theme=t)
+
+
+def _options_menu(c: AgentController, t: Theme) -> Any:
+    """The ⋯ menu of the panel: settings and the panel's options."""
+    s = c.settings
+    return ui.menu([
+        ui.MenuItem(tr("Agent settings"), lambda: c.open_settings(), icon="settings-2"),
+        ui.MenuItem(tr("Rules…"), lambda: c.open_settings(), icon="scroll-text"),
+        ui.SEPARATOR,
+        ui.MenuItem(tr("Show thinking"), lambda: c.toggle_option("show_thinking"), checked=s.show_thinking),
+        ui.SEPARATOR,
+        ui.MenuItem(tr("Copy thread as Markdown"), c.copy_markdown, icon="copy", disabled=not c.thread.messages),
+        ui.MenuItem(tr("Back to the dock") if c.expanded else tr("Expand the panel"), c.toggle_expand,
+                    icon="minimize-2" if c.expanded else "maximize-2"),
+    ], width=240, theme=t)
+
+
+def _header(c: AgentController, t: Theme) -> Any:
+    """The panel's toolbar, like Zed's: back (from the history or the settings), the title, then the +
+    menu, the history and the ⋯ menu."""
+    if c.view == "history":
+        title = tr("History")
+    elif c.view == "settings":
+        title = tr("Agent settings")
+    else:
+        title = c.thread.display_title if c.thread.messages else tr("New thread")
+    title = title if len(title) <= 28 else title[:27].rstrip() + "…"
+    lead = ui.icon_button("arrow-left", c.back, size="sm", tooltip=tr("Back to the thread"), theme=t) \
+        if c.view != "thread" else _icon("terminal" if (c.thread.model or "").startswith("acp:") else "sparkles",
+                                         size=14, color=t.text_accent)
+    return _core.container(_core.row([
+        lead,
+        _core.container(ui.label(title, size="sm", weight="medium", wrap=False, theme=t), width="fill"),
+        ui.icon_button("plus", lambda: c.toggle_menu("new"), size="sm", selected=c.menu == "new",
+                       tooltip=tr("New thread"), theme=t),
         ui.icon_button("history", c.toggle_history, size="sm", selected=c.view == "history",
                        tooltip=tr("History"), theme=t),
-        ui.icon_button("minimize-2" if c.expanded else "maximize-2", c.toggle_expand, size="sm",
-                       tooltip=tr("Back to the dock") if c.expanded else tr("Expand the panel"), theme=t),
-        ui.icon_button("settings-2", lambda: c.open_settings(), size="sm", tooltip=tr("AI agents settings"),
-                       theme=t),
-    ], theme=t)
+        ui.icon_button("ellipsis", lambda: c.toggle_menu("options"), size="sm", selected=c.menu == "options",
+                       tooltip=tr("Options"), theme=t),
+    ], spacing=4, align="center"), padding=(4, 6, 4, 10), height=36, width="fill", bg=t.panel,
+        border_color=t.border_variant, border_width=0)
+
+
+
+def view(d: "Designer", t: Theme) -> Any:
+    """The Agent panel: the toolbar, then the thread, the history or the agent settings."""
+    c = d.agent
+    header = _header(c, t)
     if c.view == "history":
-        return _core.column([header, _history(c, t)], width="fill", height="fill")
+        body = _core.column([header, _history(c, t)], width="fill", height="fill")
+    elif c.view == "settings":
+        body = _core.column([header, settings_view(d, t)], width="fill", height="fill")
+    else:
+        body = _thread_view(c, d, t, header)
+    menus = {"new": _new_menu, "options": _options_menu}
+    if c.menu in menus:
+        body = ui.popover(body, menus[c.menu](c, t), x=8, y=34, align_x="end", on_dismiss=c.close_menu)
+    if c.expanded:  # a readable column in the middle of the window, like Zed's zoomed panel
+        body = _core.container(_core.container(body, max_width=860, width="fill", height="fill"), width="fill",
+                               height="fill", align_x="center")
+    return body
+
+
+def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> Any:
     rows = _messages(c, t) if c.thread.messages else [_empty(c, t)]
     if c.error and not c.running:
         actions = [
@@ -2067,27 +2395,34 @@ def view(d: "Designer", t: Theme) -> Any:
     thread = _core.scrollable(_core.column(rows, spacing=10, width="fill", padding=(10, 12)), height="fill",
                               id=SCROLL_ID, anchor_bottom=True, scrollbar_width=4)
     bottom: List[Any] = []
-    if c.capture is not None and d.dialog != "agent_settings":
+    if c.capture is not None:
         bottom.append(_capture_callout(c, t))
     if c.claude_login is not None:
         bottom.append(_claude_login_callout(c, t))
-    if c.device is not None and d.dialog != "agent_settings":
+    if c.device is not None:
         bottom.append(_device_callout(c, t))
     bottom.append(_plan_card(c, t))
-    if c.pending is not None:
+    if c.pending is not None and not _pending_on_card(c):
         bottom.append(_confirmation(c, t))
     if c.snapshot and c.changed and not c.running:
         bottom.append(_review_bar(c, t))
     menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu, "add": _add_menu}
     bottom.append(menus[c.menu](c, t) if c.menu in menus else _popup(c, t))
     bottom.append(_composer(c, t))
-    body = _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
+    return _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
                         width="fill", height="fill")
-    if c.expanded:  # a readable column in the middle of the window, like Zed's zoomed panel
-        body = _core.container(_core.container(body, max_width=860, width="fill", height="fill"), width="fill",
-                               height="fill", align_x="center")
-    return body
 
+
+def _pending_on_card(c: AgentController) -> bool:
+    """Whether the pending question shows on its tool card (the card of a call that is still running)."""
+    p = c.pending
+    if p is None or not c.running:
+        return False
+    for m in c.thread.messages[-1:]:
+        if m.get("role") == "assistant":
+            return any(b.get("type") == "tool_use" and b.get("name") == p.tool.name
+                       and c.tool_status.get(b.get("id", "")) == "running" for b in m.get("content", []))
+    return False
 
 
 def inline_bar(d: "Designer", t: Theme) -> Optional[Any]:
@@ -2292,63 +2627,122 @@ def _draft_form(c: AgentController, t: Theme) -> Any:
                            border_color=t.border_variant, border_width=1, radius=t.radius)
 
 
-def _server_row(c: AgentController, kind: str, config: Any, t: Theme) -> Any:
-    status = c.mcp_status.get(config.name, "") if kind == "mcp" else (
-        "" if _acp.installed(config) else tr("{command} is not installed", command=config.command))
-    detail = config.url if getattr(config, "url", "") else " ".join([config.command, *config.args])
-    busy = c.busy_provider == f"mcp:{config.name}"
-    return _core.row([
-        _icon("plug" if kind == "mcp" else "terminal", size=14, color=t.text_accent if config.enabled else t.text_muted),
-        _core.column([ui.label(getattr(config, "label", config.name), size="sm", weight="medium", theme=t),
-                      ui.label(detail[:70], size="xs", mono=True, color="text_muted", theme=t),
-                      ui.label(status, size="xs", color="text_muted", theme=t) if status else None], width="fill"),
-        ui.spinner(size=12, theme=t) if busy else None,
-        ui.icon_button("plug-zap", lambda: c.test_server(config.name), size="sm", tooltip=tr("Test"), theme=t)
-        if kind == "mcp" else None,
-        ui.switch(config.enabled, lambda _v: c.toggle_server(kind, config.name), theme=t),
-        ui.icon_button("pencil", lambda: c.edit_server(kind, config.name), size="sm", tooltip=tr("Edit"), theme=t),
-        ui.icon_button("trash-2", lambda: c.remove_server(kind, config.name), size="sm", tooltip=tr("Remove"),
-                       theme=t),
-    ], spacing=6, align="center")
+
+def _section(title: str, description: str, rows: Sequence[Any], t: Theme, *, actions: Sequence[Any] = ()) -> Any:
+    """A part of the agent settings, like Zed's: a title with its buttons, a line about it, then its rows."""
+    return _core.column([
+        ui.label(title, size="sm", weight="semibold", theme=t),
+        ui.label(description, size="xs", color="text_muted", theme=t) if description else None,
+        _core.row(list(actions), spacing=4, wrap=True) if actions else None,
+        _core.column([r for r in rows if r is not None], spacing=2, width="fill"),
+    ], spacing=6, width="fill")
 
 
-def _servers_group(c: AgentController, t: Theme) -> Any:
-    s = c.settings
+def _mcp_rows(c: AgentController, t: Theme) -> List[Any]:
+    rows: List[Any] = []
+    for config in c.settings.mcp_servers:
+        why = c.mcp_status.get(config.name, "")
+        busy = c.busy_provider == f"mcp:{config.name}"
+        if not config.enabled:
+            status = "off"
+        elif busy:
+            status = "starting"
+        elif not why:
+            status = ""
+        else:
+            status = "running" if config.name in c.mcp_ok else "error"
+        detail = config.url or " ".join([config.command, *config.args])
+        rows.append(ui.ServiceRow(
+            name=config.name, detail=detail, icon_name="globe" if config.url else "plug", status=status,
+            status_text=why, enabled=config.enabled, busy=busy, theme=t, key=f"mcp:{config.name}",
+            on_toggle=lambda _e, n=config.name: c.toggle_server("mcp", n),
+            actions=[ui.MenuItem(tr("Restart"), lambda n=config.name: c.test_server(n), icon="rotate-cw"),
+                     ui.MenuItem(tr("Edit"), lambda n=config.name: c.edit_server("mcp", n), icon="pencil"),
+                     ui.MenuItem(tr("Remove"), lambda n=config.name: c.remove_server("mcp", n), icon="trash-2",
+                                 danger=True)]))
     draft = c.server_draft
-    rows: List[Any] = [_server_row(c, "mcp", m, t) for m in s.mcp_servers]
     if draft is not None and draft["kind"] == "mcp":
         rows.append(_draft_form(c, t))
-    else:
-        rows.append(_core.row([ui.button(tr("Add an MCP server"), lambda: c.new_server("mcp"), icon="plus",
-                                         variant="ghost", size="sm", theme=t)]))
-    mcp = ui.settings_group(tr("MCP servers"), [
-        ui.label(tr("Their tools are added to the agent's. Tools that are not read-only ask first, like file writes."),
-                 size="xs", color="text_muted", theme=t), *rows], theme=t)
-    agents: List[Any] = [_server_row(c, "acp", a, t) for a in s.acp_agents]
+    return rows
+
+
+def _agent_rows(c: AgentController, t: Theme) -> List[Any]:
+    rows: List[Any] = []
+    for config in c.settings.acp_agents:
+        update = c.agent_update(config)
+        busy = bool(config.registry_id) and c.registry_busy == config.registry_id
+        if update:
+            status, text = "update", tr("Version {version} is available", version=update)
+        elif config.registry_id or _acp.installed(config):
+            status, text = "installed", ""
+        else:
+            status, text = "missing", tr("{command} is not installed", command=config.command)
+        actions = [ui.MenuItem(tr("Edit"), lambda n=config.name: c.edit_server("acp", n), icon="pencil"),
+                   ui.MenuItem(tr("Uninstall") if config.registry_id else tr("Remove"),
+                               lambda n=config.name: c.uninstall_agent(n), icon="trash-2", danger=True)]
+        rows.append(ui.ServiceRow(
+            name=config.label, version=config.version, detail=" ".join([config.command, *config.args]),
+            icon_name="terminal", status=status, status_text=text, enabled=config.enabled, busy=busy,
+            primary=tr("Update") if update else "", theme=t, key=f"acp:{config.name}",
+            on_toggle=lambda _e, n=config.name: c.toggle_server("acp", n),
+            on_primary=lambda _e, n=config.name: c.update_agent(n), actions=actions))
+    draft = c.server_draft
     if draft is not None and draft["kind"] == "acp":
-        agents.append(_draft_form(c, t))
-    else:
-        missing = [name for name in _acp.PRESETS if s.acp_agent(name) is None]
-        agents.append(_core.row([
-            *[ui.button(_acp.PRESETS[name][0], lambda name=name: c.new_server("acp", name), icon="plus",
-                        variant="ghost", size="sm", theme=t) for name in missing],
-            ui.button(tr("Other…"), lambda: c.new_server("acp"), icon="plus", variant="ghost", size="sm", theme=t),
-        ], spacing=4, wrap=True))
-    external = ui.settings_group(tr("External agents"), [
-        ui.label(tr("Agents that run as their own program and speak the Agent Client Protocol, like in Zed. They work "
-                    "in the project folder, ask before acting according to the permission mode and get Pyzed's MCP "
-                    "server."), size="xs", color="text_muted", theme=t),
-        *agents,
-        ui.field(tr("Let external agents control the editor"), ui.switch(s.share_pyzed_mcp, lambda v: c.set_setting(
-            "share_pyzed_mcp", v), theme=t), description=tr(
-            "Gives them the built-in agent's tools over MCP: the open form and its code, the project, running the "
-            "app, and Pyzed's components and docs"), theme=t),
-    ], theme=t)
-    return _core.column([mcp, external], spacing=14, width="fill")
+        rows.append(_draft_form(c, t))
+    if c.registry_open:
+        if c.registry_error:
+            rows.append(ui.callout(tr("The ACP registry could not be loaded"), c.registry_error, tint="warning",
+                                   icon="wifi-off", actions=[ui.button(tr("Try again"), lambda: c.load_registry(True),
+                                                                       variant="ghost", size="sm", theme=t)],
+                                   theme=t))
+        elif c.registry_busy == "*" and not c.registry:
+            rows.append(_core.row([ui.spinner(size=12, theme=t), ui.label(tr("Loading the ACP registry…"), size="sm",
+                                                                         color="text_muted", theme=t)], spacing=6))
+        else:
+            items = c.registry_items()
+            rows.append(_core.container(ui.Catalog(items=items, busy=c.registry_busy, height=min(48 * len(items) + 8, 300),
+                                                   theme=t,
+                                                   key="acp-registry", on_install=lambda e: c.install_agent(e.value)),
+                                        padding=(6, 8), bg=t.editor, border_color=t.border_variant, border_width=1,
+                                        radius=t.radius, width="fill"))
+    rows.append(ui.field(tr("Let external agents control the editor"), ui.switch(
+        c.settings.share_pyzed_mcp, lambda v: c.set_setting("share_pyzed_mcp", v), theme=t), description=tr(
+        "Gives them the built-in agent's tools over MCP: the open form and its code, the project, running the "
+        "app, and Pyzed's components and docs"), theme=t))
+    return rows
 
 
-def settings_dialog(d: "Designer", t: Theme) -> Any:
-    """Settings → AI agents: providers and their keys or sign-in, the default model and the permissions."""
+def _skill_rows(c: AgentController, t: Theme) -> List[Any]:
+    off = set(c.settings.disabled_skills)
+    sources = {"project": tr("Project"), "claude": "~/.claude", "user": "~/.agents", "pyzed": "Pyzed"}
+    rows: List[Any] = []
+    for skill in c.skills():
+        actions = [ui.MenuItem(tr("Show in folder"), lambda n=skill.name: c.open_skill_folder(n), icon="folder-open")]
+        if skill.origin():
+            actions.insert(0, ui.MenuItem(tr("Update"), lambda n=skill.name: c.update_skill(n), icon="refresh-cw"))
+        if skill.source == "pyzed":
+            actions.append(ui.MenuItem(tr("Remove"), lambda n=skill.name: c.remove_skill(n), icon="trash-2",
+                                       danger=True))
+        rows.append(ui.ServiceRow(
+            name=skill.name, version=sources.get(skill.source, skill.source), summary=skill.description[:160],
+            icon_name="book-open", enabled=skill.name not in off, busy=c.skill_busy == skill.name, theme=t,
+            key=f"skill:{skill.name}", actions=actions,
+            on_toggle=lambda e, n=skill.name: c.toggle_skill(n, bool(e.value))))
+    rows.append(_core.row([
+        _core.container(_text(c.skill_url, c.set_skill_url, tr("https://github.com/… (a repository of skills)"), t,
+                              width=10_000), width="fill"),
+        ui.spinner(size=12, theme=t) if c.skill_busy == "*" else None,
+        ui.button(tr("Install"), c.install_skill_url, variant="ghost", size="sm",
+                  disabled=not c.skill_url.strip() or bool(c.skill_busy), theme=t),
+        ui.button(tr("From a folder…"), c.pick_skill_folder, icon="folder", variant="ghost", size="sm",
+                  disabled=bool(c.skill_busy), theme=t),
+    ], spacing=4, align="center"))
+    return rows
+
+
+def settings_view(d: "Designer", t: Theme) -> Any:
+    """The agent settings inside the panel, like Zed's: model providers, external agents (with the ACP
+    registry), MCP servers, skills, rules and the agent's options."""
     c = d.agent
     s = c.settings
     store = _agents.secrets.store()
@@ -2358,11 +2752,30 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
         tr("No system keychain found"), tr("Keys you paste are kept only until you close the designer. Install the "
                                            "keyring package or set the key in an environment variable."),
         tint="warning", icon="lock-open", theme=t)
-    providers = ui.settings_group(tr("Providers"), [_provider_row(c, pid, t) for pid in _providers.PROVIDERS
-                                                    if pid != "acp"], theme=t)
+    providers = _section(tr("LLM providers"), tr("Sign in with the browser or paste a key."),
+                         [_provider_row(c, pid, t) for pid in _providers.PROVIDERS if pid != "acp"], t)
+    adding = c.server_draft is not None
+    agents = _section(tr("External agents"), tr(
+        "Agents that run as their own program and speak the Agent Client Protocol, like in Zed: install them from "
+        "the ACP registry and start a thread with them from the + menu."), _agent_rows(c, t), t, actions=[
+        ui.button(tr("Install from registry"), lambda: c.toggle_registry(), icon="package-search", variant="ghost",
+                  size="sm", selected=c.registry_open, theme=t),
+        ui.button(tr("Add custom agent"), lambda: c.new_server("acp"), icon="plus", variant="ghost", size="sm",
+                  disabled=adding, theme=t)])
+    mcp = _section(tr("MCP servers"), tr(
+        "Their tools are added to the agent's. Tools that are not read-only ask first, like file writes."),
+        _mcp_rows(c, t), t, actions=[ui.button(tr("Add server"), lambda: c.new_server("mcp"), icon="plus",
+                                               variant="ghost", size="sm", disabled=adding, theme=t)])
+    skills = _section(tr("Skills"), tr(
+        "Folders with a SKILL.md: instructions and files the agent reads when a task needs them. Claude Code "
+        "reads its own."), _skill_rows(c, t), t, actions=[
+        ui.icon_button("refresh-cw", c.refresh_skills, size="sm", tooltip=tr("Look for skills again"), theme=t)])
+    rules = _section(tr("Rules"), tr("Instructions added to every thread, like Zed's rules."), [
+        ui.input(s.rules, lambda v: c.set_setting("rules", v), placeholder=tr(
+            "e.g. Answer in Spanish. Use snake_case names."), size="sm", theme=t)], t)
     efforts = list(_providers.EFFORTS)
-    agent = ui.settings_group(tr("Agent"), [
-        ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=240, size="sm", theme=t),
+    general = ui.settings_group(tr("Agent"), [
+        ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=200, size="sm", theme=t),
                  theme=t),
         ui.field(tr("Effort"), ui.select(efforts, s.effort, lambda v: c.set_setting("effort", v), width=120, size="sm",
                                          theme=t),
@@ -2377,12 +2790,8 @@ def settings_dialog(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Keep conversations"), ui.switch(s.keep_history, lambda v: c.set_setting("keep_history", v),
                                                      theme=t),
                  description=tr("Save threads on this computer, readable only by you"), theme=t),
-        ui.field(tr("Rules"), ui.input(s.rules, lambda v: c.set_setting("rules", v),
-                                       placeholder=tr("e.g. Answer in Spanish. Use snake_case names."), size="sm",
-                                       width=280, theme=t),
-                 description=tr("Instructions added to every thread"), theme=t),
     ], theme=t)
-    body = _core.scrollable(_core.column([storage, providers, _servers_group(c, t), agent], spacing=14,
-                                         padding=(0, 6, 0, 0)), height=560, scrollbar_width=4, id=SETTINGS_SCROLL)
-    return ui.modal(body, title=tr("AI agents"), on_close=d.close_dialog, width=620, theme=t,
-                    footer=[_core.space(width="fill"), ui.button(tr("Done"), d.close_dialog, variant="solid", theme=t)])
+    rule = _core.rule(thickness=1, color=t.border_variant)
+    return _core.scrollable(_core.column([storage, providers, rule, agents, rule, mcp, rule, skills, rule, rules,
+                                          rule, general], spacing=14, padding=(10, 12, 16, 12), width="fill"),
+                            height="fill", scrollbar_width=4, id=SETTINGS_SCROLL)

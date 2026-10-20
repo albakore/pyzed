@@ -114,12 +114,41 @@ pz.container(ui.field("Port", ui.number_field(80, on_change), error="Ports below
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="field-v3-1" caption={"required=True"} alt={"Field: required=True"} code="Code" mono>
+
+```python
+pz.container(ui.field("Name", ui.input("", on_input, width=180), required=True), width=380)
+```
+
+</Variant>
+<Variant name="field-v3-2" caption={"vertical=True"} alt={"Field: vertical=True"} code="Code" mono>
+
+```python
+pz.container(ui.field("Email", ui.input("ada@", on_input, invalid=True), vertical=True, required=True,
+                      error="Enter a valid email"), width=320)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.field`
 
 ```python
-field(title, control, *, description=None, error=None, theme=None)
+field(
+    title,
+    control,
+    *,
+    description=None,
+    error=None,
+    required=False,
+    vertical=False,
+    theme=None,
+)
 ```
 
 A form row: title and description on the left, control on the right (like a settings screen).
@@ -130,6 +159,8 @@ A form row: title and description on the left, control on the right (like a sett
 | `control` | *required* | The control (switch, input…). |
 | `description` | `None` | Help text. |
 | `error` | `None` | A validation message shown under the title in the error color (see `pz.validation_errors`). |
+| `required` | `False` | Adds a red `*` after the title. |
+| `vertical` | `False` | Puts the control under the title. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#field)

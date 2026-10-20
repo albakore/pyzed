@@ -92,6 +92,8 @@ button(
     disabled=False,
     full_width=False,
     keys=None,
+    loading=False,
+    tooltip=None,
     theme=None,
     **style,
 )
@@ -113,6 +115,8 @@ A themed button with variants, sizes, an icon and a shortcut.
 | `disabled` | Disables it (ignores clicks). |
 | `full_width` | Fills the full width. |
 | `keys` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `loading` | Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins). |
+| `tooltip` | Text shown on hover. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 | `style` | Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…). |
 
@@ -129,6 +133,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -145,12 +153,25 @@ A square button with just an icon.
 | `selected` | Marks it as selected. |
 | `disabled` | Disables it (ignores clicks). |
 | `tooltip` | Tooltip text. |
+| `keys` | Key binding shown in the tooltip. |
+| `tint` | Colors it (`"error"`, `"accent"`…). |
+| `loading` | Swaps the icon for a spinner and ignores presses. |
+| `indicator` | Adds a small dot in this color at the top right (unread, changes…). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 A small pill for statuses and counters.
@@ -161,6 +182,8 @@ A small pill for statuses and counters.
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `variant` | `"soft"`, `"solid"` or `"outline"`. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `on_press` | Makes it clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `indicator`
@@ -206,7 +229,17 @@ Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl
 ### `avatar`
 
 ```python
-avatar(initials, *, color=None, size=22, index=0, theme=None)
+avatar(
+    initials,
+    *,
+    color=None,
+    size=22,
+    index=0,
+    image=None,
+    status=None,
+    tooltip=None,
+    theme=None,
+)
 ```
 
 A round avatar with initials.
@@ -217,6 +250,9 @@ A round avatar with initials.
 | `color` | Background color. |
 | `size` | Diameter. |
 | `index` | Picks a collaborator color from the theme (`theme.players`). |
+| `image` | A picture (path or bytes) instead of the initials. |
+| `status` | Presence dot: `"online"`, `"away"`, `"busy"`, `"offline"` or a color. |
+| `tooltip` | Text shown on hover (the person's name). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `tooltip`
@@ -238,7 +274,7 @@ Wraps `content` with a themed tooltip, optionally with its shortcut.
 ### `divider`
 
 ```python
-divider(*, vertical=False, color=None, theme=None)
+divider(*, vertical=False, color=None, label=None, spacing=0, theme=None)
 ```
 
 A divider line in the theme color.
@@ -247,12 +283,26 @@ A divider line in the theme color.
 | --- | --- |
 | `vertical` | Vertical instead of horizontal. |
 | `color` | Text or icon color. |
+| `label` | Muted text in the middle of a horizontal line (`"or"`, a date…). |
+| `spacing` | Space on both sides of the line. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `card`
 
 ```python
-card(content, *, title=None, actions=(), padding=16, width=None, theme=None)
+card(
+    content,
+    *,
+    title=None,
+    actions=(),
+    padding=16,
+    width=None,
+    footer=(),
+    on_press=None,
+    selected=False,
+    elevated=False,
+    theme=None,
+)
 ```
 
 A bordered surface to group content, with an optional title and actions.
@@ -264,6 +314,10 @@ A bordered surface to group content, with an optional title and actions.
 | `actions` | Extra widgets (usually buttons) shown as actions. |
 | `padding` | Inner padding. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `footer` | Widgets at the bottom right (buttons). |
+| `on_press` | Makes the whole card clickable. |
+| `selected` | Outlines it in the accent color. |
+| `elevated` | Adds a shadow. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ## Forms
@@ -278,17 +332,23 @@ input(
     placeholder='',
     icon=None,
     on_submit=None,
+    on_clear=None,
     id=None,
     size='md',
     secure=False,
     width='fill',
     borderless=False,
     mono=False,
+    disabled=False,
+    readonly=False,
+    invalid=False,
+    max_length=None,
+    align='start',
     theme=None,
 )
 ```
 
-A text field.
+A text field. Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.
 
 | Parameter | Description |
 | --- | --- |
@@ -297,12 +357,18 @@ A text field.
 | `placeholder` | Hint text shown when empty. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `on_submit` | Message or callable sent when Enter is pressed. |
+| `on_clear` | Shows an ✕ while there is text; sent when it is clicked. |
 | `id` | Stable identifier used to focus or scroll it with a `Command`. |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
 | `secure` | Hides the text. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `borderless` | No border or background (as in the command palette). |
 | `mono` | Uses the monospace font (IBM Plex Mono). |
+| `disabled` | Greys it out and ignores typing. |
+| `readonly` | Selectable and copyable, but it can't be changed. |
+| `invalid` | Paints the border in the error color. |
+| `max_length` | Ignores edits longer than this. |
+| `align` | Text alignment: `"start"`, `"center"` or `"end"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `search_input`
@@ -323,7 +389,7 @@ An `input` with a magnifying glass icon.
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, theme=None)
+switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
 An on/off switch.
@@ -333,27 +399,45 @@ An on/off switch.
 | `checked` | Current state. |
 | `on_toggle` | Callable that receives the new `bool` (or a message to send). |
 | `label` | Label text. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | Greys it out and ignores clicks. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, theme=None)
+checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
-A checkbox.
+A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.
 
 | Parameter | Description |
 | --- | --- |
 | `checked` | Current state. |
 | `on_toggle` | Callable that receives the new `bool` (or a message to send). |
 | `label` | Label text. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | Greys it out and ignores clicks. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `slider`
 
 ```python
-slider(value, on_change=None, *, min=0.0, max=1.0, step=0.01, width='fill', theme=None)
+slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    on_release=None,
+    vertical=False,
+    width=None,
+    height=None,
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
 ```
 
 A slider.
@@ -365,45 +449,83 @@ A slider.
 | `min` | Minimum. |
 | `max` | Maximum. |
 | `step` | Step. |
+| `on_release` | Sent when the drag ends (save or apply there). |
+| `vertical` | Stands it up. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `disabled` | Greys it out. |
+| `show_value` | Shows the number next to it: `True`, or a format such as `"{:.0%}"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `progress`
 
 ```python
-progress(value, *, max=1.0, tint='accent', height=4, width='fill', theme=None)
+progress(
+    value,
+    *,
+    max=1.0,
+    tint='accent',
+    height=4,
+    width='fill',
+    label=None,
+    show_value=False,
+    theme=None,
+)
 ```
 
 A thin progress bar.
 
 | Parameter | Description |
 | --- | --- |
-| `value` | Current value. |
+| `value` | Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows). |
 | `max` | Maximum value. |
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `height` | Thickness. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `label` | Text above the bar. |
+| `show_value` | Adds the percentage at its right. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `segmented`
 
 ```python
-segmented(options, selected, on_select=None, *, theme=None)
+segmented(
+    options,
+    selected,
+    on_select=None,
+    *,
+    size='md',
+    width=None,
+    disabled=False,
+    theme=None,
+)
 ```
 
 A group of mutually exclusive buttons.
 
 | Parameter | Description |
 | --- | --- |
-| `options` | List of options (strings). |
-| `selected` | The active option. |
+| `options` | Strings, `(value, label)` or `(value, label, icon)`. |
+| `selected` | The active value. |
 | `on_select` | Callable that receives the chosen item. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `width` | `"fill"` stretches the buttons evenly. |
+| `disabled` | `True`, or the values to disable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `field`
 
 ```python
-field(title, control, *, description=None, error=None, theme=None)
+field(
+    title,
+    control,
+    *,
+    description=None,
+    error=None,
+    required=False,
+    vertical=False,
+    theme=None,
+)
 ```
 
 A form row: title and description on the left, control on the right (like a settings screen).
@@ -414,6 +536,8 @@ A form row: title and description on the left, control on the right (like a sett
 | `control` | The control (switch, input…). |
 | `description` | Help text. |
 | `error` | A validation message shown under the title in the error color (see `pz.validation_errors`). |
+| `required` | Adds a red `*` after the title. |
+| `vertical` | Puts the control under the title. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ## Dialogs
@@ -573,6 +697,10 @@ select(
     placeholder='Select…',
     width=None,
     size='md',
+    disabled=False,
+    invalid=False,
+    on_open=None,
+    on_close=None,
     theme=None,
 )
 ```
@@ -587,6 +715,10 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `placeholder` | Hint text shown when empty. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `size` | `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `on_open` | Sent when the menu opens. |
+| `on_close` | Sent when the menu closes. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -599,6 +731,8 @@ radio_group(
     *,
     horizontal=False,
     spacing=8,
+    disabled=False,
+    descriptions=None,
     theme=None,
 )
 ```
@@ -612,6 +746,8 @@ Mutually exclusive options as radio buttons.
 | `on_select` | Callable that receives the chosen value. |
 | `horizontal` | In a row instead of a column. |
 | `spacing` | Space between children, in pixels. |
+| `disabled` | `True`, or the values to disable. |
+| `descriptions` | Maps values to a muted line under their label. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `number_field`
@@ -626,12 +762,18 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    prefix=None,
     align='center',
+    decimals=None,
+    disabled=False,
+    invalid=False,
+    id=None,
+    on_submit=None,
     theme=None,
 )
 ```
 
-A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.
+A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
 
 | Parameter | Description |
 | --- | --- |
@@ -642,7 +784,13 @@ A numeric field with −/+ buttons. `on_change(value)` receives the number alrea
 | `step` | Button step. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `suffix` | Unit shown at the end (`"px"`, `"%"`…). |
+| `prefix` | Text before the number (`"$"`…). |
 | `align` | Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`. |
+| `decimals` | Decimals shown (by default, as many as `step`). |
+| `disabled` | Greys it out. |
+| `invalid` | Paints the border in the error color. |
+| `id` | Stable identifier used to focus or scroll it with a `Command`. |
+| `on_submit` | Sent on Enter. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -655,7 +803,10 @@ split_button(
     *,
     icon=None,
     variant='filled',
+    tint=None,
     size='md',
+    disabled=False,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -669,28 +820,51 @@ A button with a separate arrow for more options. `on_press` runs the main action
 | `on_menu` | Message or callable for the menu button. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `variant` | As in `ui.button`. |
+| `tint` | As in `ui.button`. |
 | `size` | `"xs"`, `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | Disables both halves. |
+| `tooltip` | Tooltip of the main half. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `toggle_group`
 
 ```python
-toggle_group(options, selected, on_select, *, theme=None)
+toggle_group(
+    options,
+    selected,
+    on_select=None,
+    *,
+    disabled=False,
+    multiple=False,
+    theme=None,
+)
 ```
 
 An icon-only segmented control.
 
 | Parameter | Description |
 | --- | --- |
-| `options` | `(value, icon_name)` pairs. |
-| `selected` | Current value. |
+| `options` | `(value, icon_name)` or `(value, icon_name, tooltip)`. |
+| `selected` | Current value (a collection with `multiple`). |
 | `on_select` | Callable that receives the chosen item. |
+| `disabled` | `True`, or the values to disable. |
+| `multiple` | Each button toggles its value on or off. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `chip`
 
 ```python
-chip(content, *, on_press=None, on_remove=None, selected=False, icon=None, theme=None)
+chip(
+    content,
+    *,
+    on_press=None,
+    on_remove=None,
+    selected=False,
+    icon=None,
+    tint='accent',
+    disabled=False,
+    theme=None,
+)
 ```
 
 A compact tag, optionally clickable (filters) and with a button to remove it.
@@ -702,6 +876,8 @@ A compact tag, optionally clickable (filters) and with a button to remove it.
 | `on_remove` | Shows a ✕ that sends this when clicked. |
 | `selected` | Marks it as selected. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `tint` | Color when selected (a theme token). |
+| `disabled` | Greys it out and ignores presses. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `disclosure`
@@ -1029,7 +1205,16 @@ An inline notice (a callout or banner).
 ### `empty_state`
 
 ```python
-empty_state(title, description=None, *, icon='inbox', actions=(), theme=None)
+empty_state(
+    title,
+    description=None,
+    *,
+    icon='inbox',
+    actions=(),
+    size='md',
+    height='fill',
+    theme=None,
+)
 ```
 
 A centered placeholder for empty lists, searches with no results, etc.
@@ -1040,12 +1225,14 @@ A centered placeholder for empty lists, searches with no results, etc.
 | `description` | Secondary text. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `actions` | Extra widgets (usually buttons) shown as actions. |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `height` | `"fill"` (default), pixels or `"shrink"`. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `settings_group`
 
 ```python
-settings_group(title, rows, *, description=None, theme=None)
+settings_group(title, rows, *, description=None, end=None, theme=None)
 ```
 
 A titled block of `ui.field` rows separated by lines, like a settings screen.
@@ -1055,6 +1242,7 @@ A titled block of `ui.field` rows separated by lines, like a settings screen.
 | `title` | Group title. |
 | `rows` | The rows (usually `ui.field`). |
 | `description` | Secondary text. |
+| `end` | Widget at the right of the title (a Reset button…). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `Column`
@@ -1100,6 +1288,9 @@ table(
     striped=False,
     row_height=30,
     height=None,
+    on_row_double_press=None,
+    on_row_context=None,
+    empty=None,
     theme=None,
 )
 ```
@@ -1114,16 +1305,30 @@ A data table with a fixed header, optional sorting and row selection. Sorting ha
 | `descending` | Descending order. |
 | `on_sort` | Callable that receives the clicked title. |
 | `on_row_press` | Callable that receives the clicked row. |
-| `selected` | The highlighted row. |
+| `selected` | The row to highlight, or a list or set of rows (multiple selection). |
 | `striped` | Shaded alternating rows. |
 | `row_height` | Height of each row. |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_row_double_press` | Called with the row on a double click (open, edit…). |
+| `on_row_context` | Called with the row on a right click (a context menu). |
+| `empty` | Text or widget shown in place of the rows when there are none. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `stat`
 
 ```python
-stat(title, value, *, delta=None, trend=None, width=None, theme=None)
+stat(
+    title,
+    value,
+    *,
+    delta=None,
+    trend=None,
+    width=None,
+    icon=None,
+    inverse=False,
+    on_press=None,
+    theme=None,
+)
 ```
 
 A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
@@ -1135,6 +1340,9 @@ A dashboard number: title, large value, optional change (`+4.2%`) and sparkline.
 | `delta` | Change in %; green if positive, red otherwise. |
 | `trend` | Values for the sparkline. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `icon` | Icon before the title. |
+| `inverse` | Colors a drop green and a rise red (errors, latency…). |
+| `on_press` | Makes the card clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `sparkline`
@@ -1206,7 +1414,7 @@ A spinning arc for loading states. Its angle comes from the clock, so keep a `pz
 ### `count_badge`
 
 ```python
-count_badge(count, *, tint='accent', max=99, theme=None)
+count_badge(count, *, tint='accent', max=99, show_zero=True, theme=None)
 ```
 
 A round counter (notifications, problems…). Shows `99+` above `max`.
@@ -1216,6 +1424,7 @@ A round counter (notifications, problems…). Shows `99+` above `max`.
 | `count` | The number. |
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `max` | Maximum before showing `N+`. |
+| `show_zero` | With `False`, a count of 0 draws nothing. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `facepile`
@@ -1329,6 +1538,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -1351,6 +1563,9 @@ A list row: icon, text and a slot at the end.
 | `inset` | With margin and rounded corners (menus, palettes). |
 | `disabled` | Disables it (ignores clicks). |
 | `on_right_press` | Right click. |
+| `on_double_press` | Sent on a double click (open, rename…). |
+| `description` | A muted second line (the row grows to 40 px unless `height` is set). |
+| `tooltip` | Text shown on hover. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `list_header`
@@ -1422,6 +1637,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -1434,9 +1652,12 @@ A collapsible file tree, like a code editor's project panel.
 | --- | --- |
 | `nodes` | List of `TreeNode`. |
 | `expanded` | Set of open folder ids. |
-| `selected` | Id of the selected node. |
+| `selected` | One id or a collection of ids (multiple selection). |
 | `on_toggle` | Called with the id of the clicked folder. |
 | `on_select` | Called with the id of the clicked file. |
+| `on_open` | Called with the id of a file that is double-clicked. |
+| `on_context` | Called with the id of a row that is right-clicked (show a `ui.menu` there). |
+| `focused` | Outlines the row the keyboard is on. |
 | `indent` | Left indentation, in pixels. |
 | `item_height` | Height of each row. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
@@ -1445,7 +1666,7 @@ A collapsible file tree, like a code editor's project panel.
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 An entry of `ui.menu`.
@@ -1459,11 +1680,13 @@ An entry of `ui.menu`.
 | `disabled` | Disables it (ignores clicks). |
 | `danger` | In red (destructive actions). |
 | `checked` | Shows a check mark (`True`/`False`) or nothing (`None`). |
+| `description` | A muted second line. |
+| `submenu` | Ends the row with a chevron; open the next menu beside it in `on_press`. |
 
 ### `menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a header.
@@ -1472,6 +1695,7 @@ A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a 
 | --- | --- |
 | `items` | List of `MenuItem`, `ui.SEPARATOR` or strings. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `max_height` | Scrolls a menu taller than this. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `SEPARATOR`
@@ -1519,7 +1743,7 @@ A scrolling list that only builds the rows in view, for thousands or millions of
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
@@ -1533,6 +1757,8 @@ A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
 | `dirty` | Unsaved changes (shows a dot). |
 | `preview` | Preview tab (in italics). |
 | `status` | Git status (tints the name). |
+| `pinned` | Shows only the icon, has no close button and goes first in `tab_bar`. |
+| `tooltip` | Text shown on hover (the full path…). |
 
 **Methods and properties**
 
@@ -1580,6 +1806,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -1600,12 +1828,22 @@ A row of tabs with optional controls at the start and end (navigation, split, +)
 | `on_drag_over` | While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar. |
 | `dragging` | Id of the tab being dragged (dims it and turns on `on_drag_over`). |
 | `drop_index` | Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one). |
+| `on_context` | Called with the id of a tab that is right-clicked. |
+| `on_new` | Sent on a double click of the empty space after the tabs. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`
 
 ```python
-breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
+breadcrumbs(
+    parts,
+    *,
+    separator='›',
+    on_press=None,
+    max_items=None,
+    on_more=None,
+    theme=None,
+)
 ```
 
 `src › main.rs › fn main`. Parts can be strings or `(icon, text)` tuples.
@@ -1615,12 +1853,14 @@ breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
 | `parts` | The parts. |
 | `separator` | Separator. |
 | `on_press` | Called with the index of the clicked part. |
+| `max_items` | Keeps the first part and the last ones and shows `…` for the rest. |
+| `on_more` | Makes the `…` clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `toolbar`
 
 ```python
-toolbar(start=(), end=(), *, height=32, theme=None)
+toolbar(start=(), end=(), *, center=None, height=32, theme=None)
 ```
 
 The bar below the tabs: breadcrumbs on the left and buffer actions on the right.
@@ -1629,6 +1869,7 @@ The bar below the tabs: breadcrumbs on the left and buffer actions on the right.
 | --- | --- |
 | `start` | Widgets at the start (left). |
 | `end` | Widgets at the end (right). |
+| `center` | Kept in the middle of the bar whatever the widths of both sides. |
 | `height` | Height. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
@@ -1836,7 +2077,7 @@ The whole frame of a window opened with `frame="custom"`: a title bar that moves
 | `menus` | Menus on the left of the bar: a list of `ui.Menu`. |
 | `menu_button` | Shows the menus behind a ☰ button (`False` always shows their names). |
 | `start` | Items after the menus (project, branch…). |
-| `center` | Your own widget in the middle instead of the title. |
+| `center` | Your own widget in the middle instead of the title (a search field, Run and Stop…); the bar still drags on both sides of it. |
 | `end` | Items before the window buttons. |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"`. By default the window's `frame`, or this system's. |
 | `window` | The window the buttons act on. By default the one whose `view()` is running. |
@@ -1887,7 +2128,7 @@ A window's title bar alone: window buttons in the style of `style` (on the left 
 | `title` | Title (centered, or on the left on Windows). |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` or `"kde"` (`None`: this system's). |
 | `start` | Items at the start. |
-| `center` | Widget in the middle instead of the title. |
+| `center` | Widget in the middle instead of the title; the bar still drags on both sides of it. |
 | `end` | Items at the end. |
 | `on_drag` | Called when the empty part of the bar is dragged (return `Command.drag_window()`). |
 | `on_minimize` | Minimize button. |
@@ -1989,7 +2230,18 @@ Stacks `overlay` on top of `base`. Clicking outside sends `on_dismiss`. With `ov
 ### `modal`
 
 ```python
-modal(content, *, title=None, on_close=None, width=480, footer=(), theme=None)
+modal(
+    content,
+    *,
+    title=None,
+    on_close=None,
+    width=480,
+    footer=(),
+    description=None,
+    icon=None,
+    max_height=None,
+    theme=None,
+)
 ```
 
 A dialog. Use it as the `overlay` of `ui.layer`.
@@ -1998,9 +2250,12 @@ A dialog. Use it as the `overlay` of `ui.layer`.
 | --- | --- |
 | `content` | Content: a `Widget`, a string or a number (converted to text). |
 | `title` | Title. |
-| `on_close` | Message or callable sent when the X is pressed. |
-| `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_close` | The close button; also sent by Escape while the dialog has focus. |
+| `width` | Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820). |
 | `footer` | Footer buttons, aligned to the right. |
+| `description` | Muted line under the title. |
+| `icon` | Icon before the title. |
+| `max_height` | Scrolls content taller than this, keeping the header and footer in view. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `PaletteItem`
@@ -2142,6 +2397,8 @@ toast(
     on_dismiss=None,
     actions=(),
     width=340,
+    progress=None,
+    on_press=None,
     theme=None,
 )
 ```
@@ -2157,6 +2414,8 @@ A notification.
 | `on_dismiss` | Message or callable sent on close. |
 | `actions` | Extra widgets (usually buttons) shown as actions. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `progress` | 0 to 1: a thin bar at the bottom (time left, a download). |
+| `on_press` | Makes the card clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `toasts`
@@ -2598,6 +2857,276 @@ A light/dark checkerboard to draw under translucent colors.
 | `width` | Width. |
 | `height` | Height. |
 | `size` | Cell size. |
+
+## Agent
+
+### `ToolCall`
+
+```python
+class ToolCall
+```
+
+A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `"waiting"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).
+
+| Parameter | Description |
+| --- | --- |
+| `title` | What it does ("Edit file"). |
+| `detail` | What it works on, in a monospace font. |
+| `kind` | ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon). |
+| `status` | `pending`, `running`, `waiting`, `done`, `failed` or `rejected`. |
+| `input` | The arguments (a dict or text). |
+| `output` | The answer (text or a dict). |
+| `images` | PNG bytes shown under the output. |
+| `allow_always` | Shows Always allow. |
+| `theme` | Theme. |
+| `on_allow` | Allow was pressed. |
+| `on_allow_always` | Always allow was pressed. |
+| `on_deny` | Deny was pressed. |
+
+```python
+ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
+            on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+```
+
+**Methods and properties**
+
+#### `ToolCall.toggle`
+
+```python
+ToolCall.toggle()
+```
+
+Unfolds or folds the input and output.
+
+### `Plan`
+
+```python
+class Plan
+```
+
+A component for an agent's plan: a checklist with `done/total` in its header, which folds it.
+
+| Parameter | Description |
+| --- | --- |
+| `steps` | `{"step": text, "status": "pending" | "in_progress" | "done"}` dicts. |
+| `running` | Spins the step in progress. |
+| `theme` | Theme. |
+
+```python
+ui.Plan(steps=[{"step": "Add the form", "status": "done"}, {"step": "Wire it", "status": "in_progress"}])
+```
+
+**Methods and properties**
+
+#### `Plan.toggle`
+
+```python
+Plan.toggle()
+```
+
+Folds or unfolds the steps.
+
+### `EditsBar`
+
+```python
+class EditsBar
+```
+
+A component listing the files an agent changed, like Zed's edits bar: `3 files changed` with Reject all and Keep all, unfolding to one row per file with its diff stat, Reject and Keep.
+
+| Parameter | Description |
+| --- | --- |
+| `files` | Dicts or objects with `path` and optional `added` and `removed` line counts. |
+| `theme` | Theme. |
+| `on_keep` | Keep all. |
+| `on_reject` | Reject all. |
+| `on_keep_file` | Keep on a file (`event.value` is its path). |
+| `on_reject_file` | Reject on a file. |
+| `on_open` | A file was clicked. |
+
+```python
+ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())
+```
+
+**Methods and properties**
+
+#### `EditsBar.toggle`
+
+```python
+EditsBar.toggle()
+```
+
+Shows or hides the row of each file.
+
+### `ThreadHistory`
+
+```python
+class ThreadHistory
+```
+
+A component for past conversations: a search box and the threads grouped by day (Today, Yesterday, This week, This month, Older), each with a delete button.
+
+| Parameter | Description |
+| --- | --- |
+| `threads` | Dicts or objects with `id`, `title`, `updated` (a timestamp) and an optional `detail`. |
+| `selected` | The id of the open thread. |
+| `theme` | Theme. |
+| `on_open` | A thread was picked (`event.value` is its id). |
+| `on_delete` | Delete was pressed on a thread. |
+
+```python
+ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))
+```
+
+**Methods and properties**
+
+#### `ThreadHistory.set_query`
+
+```python
+ThreadHistory.set_query(text)
+```
+
+Filters the threads by `text`.
+
+#### `ThreadHistory.visible`
+
+```python
+ThreadHistory.visible()
+```
+
+The threads whose title or detail has every word of the search.
+
+### `AuthPrompt`
+
+```python
+class AuthPrompt
+```
+
+A component that asks to sign in, like Zed when an agent needs it: one button per way to sign in, then, while one runs, what is happening (the browser or a terminal is open), a code to type when there is one, Open the page again and Cancel.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | The heading. |
+| `detail` | A line under it. |
+| `methods` | Dicts with `id`, `name`, optional `description` and `icon`; the first is the main one. |
+| `waiting` | The id of the method in progress (`""` when none). |
+| `waiting_text` | What to show while waiting. |
+| `code` | A code to type (device sign-in). |
+| `url` | The page that was opened. |
+| `error` | An error to show. |
+| `icon_name` | The icon. |
+| `theme` | Theme. |
+| `on_pick` | A method was picked (`event.value` is its id). |
+| `on_cancel` | Cancel. |
+| `on_open_url` | Open the page again. |
+| `on_copy` | The code was copied. |
+
+```python
+ui.AuthPrompt(title="Sign in to Gemini", methods=[{"id": "google", "name": "Log in with Google"}], on_pick=self.sign_in)
+```
+
+### `ServiceRow`
+
+```python
+class ServiceRow
+```
+
+A component for one thing an agent uses (an MCP server, an external agent, a skill), like the rows of Zed's agent settings: a status dot, the name and command, an on/off switch, a main button and a `⋯` menu.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Name. |
+| `detail` | The command or URL, in a monospace font. |
+| `summary` | A line about it. |
+| `icon_name` | The icon. |
+| `status` | `running`, `starting`, `error`, `off`, `installed`, `missing` or `update` (the dot's color). |
+| `status_text` | The dot's tooltip; shown under the name for errors and updates. |
+| `version` | A version or a source. |
+| `enabled` | The switch (`None` hides it). |
+| `busy` | Shows a spinner. |
+| `primary` | Text of the main button (Update, Install…). |
+| `actions` | `ui.MenuItem` entries of the `⋯` menu. |
+| `theme` | Theme. |
+| `on_toggle` | The switch was flipped. |
+| `on_primary` | The main button was pressed. |
+
+```python
+ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)
+```
+
+**Methods and properties**
+
+#### `ServiceRow.toggle_menu`
+
+```python
+ServiceRow.toggle_menu()
+```
+
+Opens or closes the `⋯` menu.
+
+### `Catalog`
+
+```python
+class Catalog
+```
+
+A component for things to install with a search box (agents from a registry, servers, skills…): each row shows Install, Installed or Update to a newer version.
+
+| Parameter | Description |
+| --- | --- |
+| `items` | Dicts or objects with `id`, `name` and optional `version`, `description`, `installed` and `update`. |
+| `busy` | The id being installed (a spinner). |
+| `height` | Height of the list. |
+| `theme` | Theme. |
+| `on_install` | Install or Update was pressed (`event.value` is the id). |
+
+```python
+ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))
+```
+
+**Methods and properties**
+
+#### `Catalog.set_query`
+
+```python
+Catalog.set_query(text)
+```
+
+Filters the items by `text`.
+
+#### `Catalog.visible`
+
+```python
+Catalog.visible()
+```
+
+The items whose id, name or description has every word of the search.
+
+### `context_meter`
+
+```python
+context_meter(used, limit, *, theme=None)
+```
+
+How full a model's context window is, like Zed's token counter: a small ring and `48k / 200k`, yellow past 80% and red past 95%.
+
+| Parameter | Description |
+| --- | --- |
+| `used` | Tokens in use. |
+| `limit` | The model's window. |
+| `theme` | Theme. |
+
+### `format_tokens`
+
+```python
+format_tokens(count)
+```
+
+A short token count: `950`, `4.5k`, `48k`, `1.25M`.
+
+| Parameter | Description |
+| --- | --- |
+| `count` | Tokens. |
 
 ## Icon picker
 

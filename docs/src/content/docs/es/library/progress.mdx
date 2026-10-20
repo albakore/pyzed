@@ -151,12 +151,31 @@ ui.progress(0.6, height=10, width=240)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="progress-v4-1" caption={"label=, show_value=True"} alt={"Progreso: label=, show_value=True"} code="Código" mono>
+
+```python
+pz.container(ui.progress(0.42, label="Downloading", show_value=True), width=300)
+```
+
+</Variant>
+<Variant name="progress-v4-2" caption={"Indeterminada (value=None)"} alt={"Progreso: Indeterminada (value=None)"} code="Código">
+
+```python
+pz.container(ui.progress(None, label="Indexing"), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="progress-v4-1" caption={"pz.progress_bar"} alt={"Progreso: pz.progress_bar"} code="Código" mono>
+<Variant name="progress-v5-1" caption={"pz.progress_bar"} alt={"Progreso: pz.progress_bar"} code="Código" mono>
 
 ```python
 pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd33", radius=6)
@@ -170,18 +189,30 @@ pz.progress_bar(64, max=100, width=240, height=12, accent="#c678dd", bg="#c678dd
 ### `ui.progress`
 
 ```python
-progress(value, *, max=1.0, tint='accent', height=4, width='fill', theme=None)
+progress(
+    value,
+    *,
+    max=1.0,
+    tint='accent',
+    height=4,
+    width='fill',
+    label=None,
+    show_value=False,
+    theme=None,
+)
 ```
 
 Una barra de progreso fina.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
-| `value` | *obligatorio* | Valor actual. |
+| `value` | *obligatorio* | Progreso, o `None` para una barra indeterminada (mantén una suscripción `pz.every(1/30, ...)` mientras se ve). |
 | `max` | `1.0` | Valor máximo. |
 | `tint` | `"accent"` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `height` | `4` | Grosor. |
 | `width` | `"fill"` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `label` | `None` | Texto sobre la barra. |
+| `show_value` | `False` | Añade el porcentaje a su derecha. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#progress)

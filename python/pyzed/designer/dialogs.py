@@ -298,7 +298,8 @@ def add_control(d: "Designer", t: Theme) -> Any:
 
 
 def palette(d: "Designer", t: Theme) -> Any:
-    """The command palette: a fuzzy-searchable list of the enabled commands with their keys."""
+    """The command palette (the search field in the title bar): a fuzzy-searchable list of the enabled
+    commands with their keys, then places to go: panels, settings sections and recent files."""
     items = []
     km = _keymap.get()
     for action in _commands.ACTIONS:
@@ -307,11 +308,42 @@ def palette(d: "Designer", t: Theme) -> Any:
         label = f"{tr(action.group)}: {action.label.rstrip('…')}"
         items.append(ui.PaletteItem(label, lambda a=action: d.run_action(a.id), keys=km.keys_for(f"workspace::{action.id}"),
                                     icon=action.icon))
+    items += places(d, t)
     matches = ui.fuzzy_filter(d.picker_query, items, key=lambda i: i.label)
     index = min(d.picker_index, max(len(matches) - 1, 0))
     chosen = matches[index][0].on_press if matches else None
     return ui.picker(d.picker_query, d.set_picker_query, matches, selected=index,
-                     placeholder=tr("Run a command…"), input_id=PICKER_ID, on_submit=chosen, theme=t)
+                     placeholder=tr("Search commands, panels, settings and files…"), input_id=PICKER_ID, on_submit=chosen, theme=t)
+
+
+def places(d: "Designer", t: Theme) -> List[Any]:
+    """The places of the editor the palette goes to: the panels, the sections of the editor settings and the
+    recent files (the general settings and the keymap editor are already commands)."""
+    from . import code_panel, docks
+
+    def go(open_place: Any) -> Any:
+        def press() -> Any:
+            d.dialog = None
+            return open_place()
+        return press
+
+    items = []
+    for pid, panel in docks.PANELS.items():
+        if panel.available(d):
+            items.append(ui.PaletteItem(f"{tr('Panel')}: {panel.title}", go(lambda pid=pid: d.show_panel(pid)),
+                                        icon=panel.icon))
+
+    def editor_section(key: str) -> Any:
+        d.open_editor_settings()
+        d.assist.show_settings_section(key)
+
+    for key, (title, icon, _build) in code_panel._settings_sections(d.assist, t).items():
+        items.append(ui.PaletteItem(f"{tr('Editor settings')}: {title}", go(lambda k=key: editor_section(k)),
+                                    icon=icon))
+    for path in d.prefs.recent:
+        items.append(ui.PaletteItem(f"{tr('Recent')}: {Path(path).name}", go(lambda p=path: d._open_recent(p)),
+                                    icon="history", detail=str(Path(path).parent)))
+    return items
 
 
 _PREVIEW_ICONS = {"theme": "palette", "language": "languages", "frame": "app-window"}

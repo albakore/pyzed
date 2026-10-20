@@ -111,12 +111,45 @@ pz.column([ui.checkbox(True, on_toggle, label="Python"),
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="checkbox-v3-1" caption={"Mixed (checked=None)"} alt={"Checkbox: Mixed (checked=None)"} code="Code">
+
+```python
+ui.checkbox(None, on_toggle, label="Some files")
+```
+
+</Variant>
+<Variant name="checkbox-v3-2" caption={"disabled=True"} alt={"Checkbox: disabled=True"} code="Code" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Locked", disabled=True)
+```
+
+</Variant>
+<Variant name="checkbox-v3-3" caption={"size=\"sm\""} alt={"Checkbox: size=\"sm\""} code="Code" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Small", size="sm")
+```
+
+</Variant>
+<Variant name="checkbox-v3-4" caption={"size=\"lg\""} alt={"Checkbox: size=\"lg\""} code="Code" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Large", size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="checkbox-v3-1" caption={"pz.checkbox"} alt={"Checkbox: pz.checkbox"} code="Code" mono>
+<Variant name="checkbox-v4-1" caption={"pz.checkbox"} alt={"Checkbox: pz.checkbox"} code="Code" mono>
 
 ```python
 pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)
@@ -130,16 +163,18 @@ pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)
 ### `ui.checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, theme=None)
+checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
-A checkbox.
+A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
 | `checked` | *required* | Current state. |
 | `on_toggle` | `None` | Callable that receives the new `bool` (or a message to send). |
 | `label` | `None` | Label text. |
+| `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | `False` | Greys it out and ignores clicks. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#checkbox)

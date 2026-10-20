@@ -92,6 +92,8 @@ button(
     disabled=False,
     full_width=False,
     keys=None,
+    loading=False,
+    tooltip=None,
     theme=None,
     **style,
 )
@@ -113,6 +115,8 @@ Un botón con tema, con variantes, tamaños, un icono y un atajo.
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `full_width` | Ocupa todo el ancho. |
 | `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `loading` | Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira). |
+| `tooltip` | Texto que aparece al pasar el ratón. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `style` | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
 
@@ -129,6 +133,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -145,12 +153,25 @@ Un botón cuadrado con solo un icono.
 | `selected` | Lo marca como seleccionado. |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `tooltip` | Texto del tooltip. |
+| `keys` | Atajo que se muestra en el tooltip. |
+| `tint` | Lo colorea (`"error"`, `"accent"`…). |
+| `loading` | Cambia el icono por un spinner e ignora las pulsaciones. |
+| `indicator` | Añade un punto de este color arriba a la derecha (sin leer, cambios…). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 Una píldora pequeña para estados y contadores.
@@ -161,6 +182,8 @@ Una píldora pequeña para estados y contadores.
 | `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `variant` | `"soft"`, `"solid"` o `"outline"`. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `on_press` | La hace pulsable. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `indicator`
@@ -206,7 +229,17 @@ Separa un atajo en etiquetas por acorde: `format_keys("ctrl-shift-p") == [["Ctrl
 ### `avatar`
 
 ```python
-avatar(initials, *, color=None, size=22, index=0, theme=None)
+avatar(
+    initials,
+    *,
+    color=None,
+    size=22,
+    index=0,
+    image=None,
+    status=None,
+    tooltip=None,
+    theme=None,
+)
 ```
 
 Un avatar redondo con iniciales.
@@ -217,6 +250,9 @@ Un avatar redondo con iniciales.
 | `color` | Color de fondo. |
 | `size` | Diámetro. |
 | `index` | Elige un color de colaborador del tema (`theme.players`). |
+| `image` | Una imagen (ruta o bytes) en lugar de las iniciales. |
+| `status` | Punto de presencia: `"online"`, `"away"`, `"busy"`, `"offline"` o un color. |
+| `tooltip` | Texto al pasar el ratón (el nombre de la persona). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `tooltip`
@@ -238,7 +274,7 @@ Envuelve `content` con un tooltip con el estilo del tema, opcionalmente con su a
 ### `divider`
 
 ```python
-divider(*, vertical=False, color=None, theme=None)
+divider(*, vertical=False, color=None, label=None, spacing=0, theme=None)
 ```
 
 Una línea divisoria con el color del tema.
@@ -247,12 +283,26 @@ Una línea divisoria con el color del tema.
 | --- | --- |
 | `vertical` | Vertical en lugar de horizontal. |
 | `color` | Color del texto o del icono. |
+| `label` | Texto atenuado en el centro de una línea horizontal (`"o"`, una fecha…). |
+| `spacing` | Espacio a ambos lados de la línea. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `card`
 
 ```python
-card(content, *, title=None, actions=(), padding=16, width=None, theme=None)
+card(
+    content,
+    *,
+    title=None,
+    actions=(),
+    padding=16,
+    width=None,
+    footer=(),
+    on_press=None,
+    selected=False,
+    elevated=False,
+    theme=None,
+)
 ```
 
 Una superficie con borde para agrupar contenido, con título y acciones opcionales.
@@ -264,6 +314,10 @@ Una superficie con borde para agrupar contenido, con título y acciones opcional
 | `actions` | Widgets extra (normalmente botones) que se muestran como acciones. |
 | `padding` | Relleno interior. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `footer` | Widgets abajo a la derecha (botones). |
+| `on_press` | Hace pulsable toda la tarjeta. |
+| `selected` | La resalta con el color de acento. |
+| `elevated` | Añade una sombra. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Formularios
@@ -278,17 +332,23 @@ input(
     placeholder='',
     icon=None,
     on_submit=None,
+    on_clear=None,
     id=None,
     size='md',
     secure=False,
     width='fill',
     borderless=False,
     mono=False,
+    disabled=False,
+    readonly=False,
+    invalid=False,
+    max_length=None,
+    align='start',
     theme=None,
 )
 ```
 
-Un campo de texto.
+Un campo de texto. El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -297,12 +357,18 @@ Un campo de texto.
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `on_submit` | Mensaje o callable que se envía al pulsar Enter. |
+| `on_clear` | Muestra una ✕ mientras hay texto; se envía al pulsarla. |
 | `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
 | `secure` | Oculta el texto. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `borderless` | Sin borde ni fondo (como en la paleta de comandos). |
 | `mono` | Usa la fuente monoespaciada (IBM Plex Mono). |
+| `disabled` | Lo atenúa e ignora lo que se escribe. |
+| `readonly` | Se puede seleccionar y copiar, pero no cambiar. |
+| `invalid` | Pinta el borde con el color de error. |
+| `max_length` | Ignora los cambios más largos que esto. |
+| `align` | Alineación del texto: `"start"`, `"center"` o `"end"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `search_input`
@@ -323,7 +389,7 @@ Un `input` con icono de lupa.
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, theme=None)
+switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
 Un interruptor encendido/apagado.
@@ -333,27 +399,45 @@ Un interruptor encendido/apagado.
 | `checked` | Estado actual. |
 | `on_toggle` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | Texto de la etiqueta. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Lo atenúa e ignora los clics. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, theme=None)
+checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
-Una casilla de verificación.
+Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.
 
 | Parámetro | Descripción |
 | --- | --- |
 | `checked` | Estado actual. |
 | `on_toggle` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | Texto de la etiqueta. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | La atenúa e ignora los clics. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `slider`
 
 ```python
-slider(value, on_change=None, *, min=0.0, max=1.0, step=0.01, width='fill', theme=None)
+slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    on_release=None,
+    vertical=False,
+    width=None,
+    height=None,
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
 ```
 
 Un deslizador.
@@ -365,45 +449,83 @@ Un deslizador.
 | `min` | Mínimo. |
 | `max` | Máximo. |
 | `step` | Paso. |
+| `on_release` | Se envía al terminar de arrastrar (guarda o aplica ahí). |
+| `vertical` | Lo pone de pie. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `disabled` | Lo atenúa. |
+| `show_value` | Muestra el número al lado: `True`, o un formato como `"{:.0%}"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `progress`
 
 ```python
-progress(value, *, max=1.0, tint='accent', height=4, width='fill', theme=None)
+progress(
+    value,
+    *,
+    max=1.0,
+    tint='accent',
+    height=4,
+    width='fill',
+    label=None,
+    show_value=False,
+    theme=None,
+)
 ```
 
 Una barra de progreso fina.
 
 | Parámetro | Descripción |
 | --- | --- |
-| `value` | Valor actual. |
+| `value` | Progreso, o `None` para una barra indeterminada (mantén una suscripción `pz.every(1/30, ...)` mientras se ve). |
 | `max` | Valor máximo. |
 | `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `height` | Grosor. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `label` | Texto sobre la barra. |
+| `show_value` | Añade el porcentaje a su derecha. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `segmented`
 
 ```python
-segmented(options, selected, on_select=None, *, theme=None)
+segmented(
+    options,
+    selected,
+    on_select=None,
+    *,
+    size='md',
+    width=None,
+    disabled=False,
+    theme=None,
+)
 ```
 
 Un grupo de botones mutuamente excluyentes.
 
 | Parámetro | Descripción |
 | --- | --- |
-| `options` | Lista de opciones (textos). |
-| `selected` | La opción activa. |
+| `options` | Textos, `(valor, etiqueta)` o `(valor, etiqueta, icono)`. |
+| `selected` | El valor activo. |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `width` | `"fill"` reparte el ancho entre los botones. |
+| `disabled` | `True`, o los valores a desactivar. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `field`
 
 ```python
-field(title, control, *, description=None, error=None, theme=None)
+field(
+    title,
+    control,
+    *,
+    description=None,
+    error=None,
+    required=False,
+    vertical=False,
+    theme=None,
+)
 ```
 
 Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).
@@ -414,6 +536,8 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `control` | El control (switch, input…). |
 | `description` | Texto de ayuda. |
 | `error` | Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`). |
+| `required` | Añade un `*` rojo tras el título. |
+| `vertical` | Pone el control bajo el título. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Diálogos
@@ -573,6 +697,10 @@ select(
     placeholder='Select…',
     width=None,
     size='md',
+    disabled=False,
+    invalid=False,
+    on_open=None,
+    on_close=None,
     theme=None,
 )
 ```
@@ -587,6 +715,10 @@ Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, as�
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `on_open` | Se envía al abrir el menú. |
+| `on_close` | Se envía al cerrar el menú. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -599,6 +731,8 @@ radio_group(
     *,
     horizontal=False,
     spacing=8,
+    disabled=False,
+    descriptions=None,
     theme=None,
 )
 ```
@@ -612,6 +746,8 @@ Opciones mutuamente excluyentes como botones de radio.
 | `on_select` | Callable que recibe el valor elegido. |
 | `horizontal` | En fila en lugar de columna. |
 | `spacing` | Separación entre hijos, en píxeles. |
+| `disabled` | `True`, o los valores a desactivar. |
+| `descriptions` | Asocia valores a una línea atenuada bajo su etiqueta. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `number_field`
@@ -626,12 +762,18 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    prefix=None,
     align='center',
+    decimals=None,
+    disabled=False,
+    invalid=False,
+    id=None,
+    on_submit=None,
     theme=None,
 )
 ```
 
-Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.
+Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -642,7 +784,13 @@ Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya li
 | `step` | Paso de los botones. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `suffix` | Unidad que se muestra al final (`"px"`, `"%"`…). |
+| `prefix` | Texto antes del número (`"$"`…). |
 | `align` | Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`. |
+| `decimals` | Decimales que muestra (por defecto, los de `step`). |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `on_submit` | Se envía con Enter. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -655,7 +803,10 @@ split_button(
     *,
     icon=None,
     variant='filled',
+    tint=None,
     size='md',
+    disabled=False,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -669,28 +820,51 @@ Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acció
 | `on_menu` | Mensaje o callable del botón del menú. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `variant` | Como en `ui.button`. |
+| `tint` | Como en `ui.button`. |
 | `size` | `"xs"`, `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Desactiva las dos mitades. |
+| `tooltip` | Tooltip de la mitad principal. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `toggle_group`
 
 ```python
-toggle_group(options, selected, on_select, *, theme=None)
+toggle_group(
+    options,
+    selected,
+    on_select=None,
+    *,
+    disabled=False,
+    multiple=False,
+    theme=None,
+)
 ```
 
 Un control segmentado solo con iconos.
 
 | Parámetro | Descripción |
 | --- | --- |
-| `options` | Pares `(valor, nombre_de_icono)`. |
-| `selected` | Valor actual. |
+| `options` | `(valor, nombre_de_icono)` o `(valor, nombre_de_icono, tooltip)`. |
+| `selected` | Valor actual (una colección con `multiple`). |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `disabled` | `True`, o los valores a desactivar. |
+| `multiple` | Cada botón activa o desactiva su valor. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `chip`
 
 ```python
-chip(content, *, on_press=None, on_remove=None, selected=False, icon=None, theme=None)
+chip(
+    content,
+    *,
+    on_press=None,
+    on_remove=None,
+    selected=False,
+    icon=None,
+    tint='accent',
+    disabled=False,
+    theme=None,
+)
 ```
 
 Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.
@@ -702,6 +876,8 @@ Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitar
 | `on_remove` | Muestra una ✕ que envía esto al pulsarla. |
 | `selected` | Lo marca como seleccionado. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `tint` | Color cuando está seleccionada (un token del tema). |
+| `disabled` | La atenúa e ignora las pulsaciones. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `disclosure`
@@ -1029,7 +1205,16 @@ Un aviso en línea (un callout o banner).
 ### `empty_state`
 
 ```python
-empty_state(title, description=None, *, icon='inbox', actions=(), theme=None)
+empty_state(
+    title,
+    description=None,
+    *,
+    icon='inbox',
+    actions=(),
+    size='md',
+    height='fill',
+    theme=None,
+)
 ```
 
 Un marcador centrado para listas vacías, búsquedas sin resultados, etc.
@@ -1040,12 +1225,14 @@ Un marcador centrado para listas vacías, búsquedas sin resultados, etc.
 | `description` | Texto secundario. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `actions` | Widgets extra (normalmente botones) que se muestran como acciones. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `height` | `"fill"` (por defecto), píxeles o `"shrink"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `settings_group`
 
 ```python
-settings_group(title, rows, *, description=None, theme=None)
+settings_group(title, rows, *, description=None, end=None, theme=None)
 ```
 
 Un bloque con título de filas `ui.field` separadas por líneas, como una pantalla de ajustes.
@@ -1055,6 +1242,7 @@ Un bloque con título de filas `ui.field` separadas por líneas, como una pantal
 | `title` | Título del grupo. |
 | `rows` | Las filas (normalmente `ui.field`). |
 | `description` | Texto secundario. |
+| `end` | Widget a la derecha del título (un botón Restablecer…). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `Column`
@@ -1100,6 +1288,9 @@ table(
     striped=False,
     row_height=30,
     height=None,
+    on_row_double_press=None,
+    on_row_context=None,
+    empty=None,
     theme=None,
 )
 ```
@@ -1114,16 +1305,30 @@ Una tabla de datos con encabezado fijo, orden opcional y selección de filas. El
 | `descending` | Orden descendente. |
 | `on_sort` | Callable que recibe el título pulsado. |
 | `on_row_press` | Callable que recibe la fila pulsada. |
-| `selected` | La fila resaltada. |
+| `selected` | La fila a resaltar, o una lista o conjunto de filas (selección múltiple). |
 | `striped` | Filas alternas sombreadas. |
 | `row_height` | Alto de cada fila. |
 | `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `on_row_double_press` | Recibe la fila con un doble clic (abrir, editar…). |
+| `on_row_context` | Recibe la fila con un clic derecho (un menú contextual). |
+| `empty` | Texto o widget que se muestra en lugar de las filas cuando no hay ninguna. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `stat`
 
 ```python
-stat(title, value, *, delta=None, trend=None, width=None, theme=None)
+stat(
+    title,
+    value,
+    *,
+    delta=None,
+    trend=None,
+    width=None,
+    icon=None,
+    inverse=False,
+    on_press=None,
+    theme=None,
+)
 ```
 
 Un número de panel: título, valor grande, variación opcional (`+4.2%`) y sparkline.
@@ -1135,6 +1340,9 @@ Un número de panel: título, valor grande, variación opcional (`+4.2%`) y spar
 | `delta` | Variación en %; verde si es positiva, roja si no. |
 | `trend` | Valores para la sparkline. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `icon` | Icono antes del título. |
+| `inverse` | Pinta de verde una bajada y de rojo una subida (errores, latencia…). |
+| `on_press` | Hace pulsable la tarjeta. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `sparkline`
@@ -1206,7 +1414,7 @@ Un arco que gira para estados de carga. Su ángulo sale del reloj, así que mant
 ### `count_badge`
 
 ```python
-count_badge(count, *, tint='accent', max=99, theme=None)
+count_badge(count, *, tint='accent', max=99, show_zero=True, theme=None)
 ```
 
 Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de `max`.
@@ -1216,6 +1424,7 @@ Un contador redondo (notificaciones, problemas…). Muestra `99+` por encima de 
 | `count` | El número. |
 | `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `max` | Máximo antes de mostrar `N+`. |
+| `show_zero` | Con `False`, un 0 no dibuja nada. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `facepile`
@@ -1329,6 +1538,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -1351,6 +1563,9 @@ Una fila de lista: icono, texto y un hueco al final.
 | `inset` | Con margen y esquinas redondeadas (menús, paletas). |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `on_right_press` | Clic derecho. |
+| `on_double_press` | Se envía con un doble clic (abrir, renombrar…). |
+| `description` | Una segunda línea atenuada (la fila crece a 40 px salvo que fijes `height`). |
+| `tooltip` | Texto al pasar el ratón. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `list_header`
@@ -1422,6 +1637,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -1434,9 +1652,12 @@ Un árbol de archivos plegable, como el panel de proyecto de un editor de códig
 | --- | --- |
 | `nodes` | Lista de `TreeNode`. |
 | `expanded` | Conjunto de ids de carpetas abiertas. |
-| `selected` | Id del nodo seleccionado. |
+| `selected` | Un id o una colección de ids (selección múltiple). |
 | `on_toggle` | Se llama con el id de la carpeta pulsada. |
 | `on_select` | Se llama con el id del archivo pulsado. |
+| `on_open` | Recibe el id del archivo al que se hace doble clic. |
+| `on_context` | Recibe el id de la fila en la que se hace clic derecho (muestra un `ui.menu` ahí). |
+| `focused` | Resalta el borde de la fila en la que está el teclado. |
 | `indent` | Sangría a la izquierda, en píxeles. |
 | `item_height` | Alto de cada fila. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
@@ -1445,7 +1666,7 @@ Un árbol de archivos plegable, como el panel de proyecto de un editor de códig
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 Una entrada de `ui.menu`.
@@ -1459,11 +1680,13 @@ Una entrada de `ui.menu`.
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `danger` | En rojo (acciones destructivas). |
 | `checked` | Muestra una marca (`True`/`False`) o nada (`None`). |
+| `description` | Una segunda línea atenuada. |
+| `submenu` | Termina la fila con una flecha; abre el siguiente menú al lado en `on_press`. |
 
 ### `menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto es un encabezado.
@@ -1472,6 +1695,7 @@ Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto e
 | --- | --- |
 | `items` | Lista de `MenuItem`, `ui.SEPARATOR` o textos. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `max_height` | Desplaza un menú más alto que esto. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `SEPARATOR`
@@ -1519,7 +1743,7 @@ Una lista con scroll que solo construye las filas visibles, para miles o millone
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono del archivo.
@@ -1533,6 +1757,8 @@ Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono de
 | `dirty` | Cambios sin guardar (muestra un punto). |
 | `preview` | Pestaña de vista previa (en cursiva). |
 | `status` | Estado de git (tiñe el nombre). |
+| `pinned` | Muestra solo el icono, no tiene botón de cerrar y va primera en `tab_bar`. |
+| `tooltip` | Texto al pasar el ratón (la ruta completa…). |
 
 **Métodos y propiedades**
 
@@ -1580,6 +1806,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -1600,12 +1828,22 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 | `on_drag_over` | Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra. |
 | `dragging` | Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`). |
 | `drop_index` | Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última). |
+| `on_context` | Recibe el id de la pestaña en la que se hace clic derecho. |
+| `on_new` | Se envía con un doble clic en el espacio vacío tras las pestañas. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`
 
 ```python
-breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
+breadcrumbs(
+    parts,
+    *,
+    separator='›',
+    on_press=None,
+    max_items=None,
+    on_more=None,
+    theme=None,
+)
 ```
 
 `src › main.rs › fn main`. Las partes pueden ser textos o tuplas `(icono, texto)`.
@@ -1615,12 +1853,14 @@ breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
 | `parts` | Las partes. |
 | `separator` | Separador. |
 | `on_press` | Se llama con el índice de la parte pulsada. |
+| `max_items` | Conserva la primera parte y las últimas y muestra `…` en lugar del resto. |
+| `on_more` | Hace pulsable el `…`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `toolbar`
 
 ```python
-toolbar(start=(), end=(), *, height=32, theme=None)
+toolbar(start=(), end=(), *, center=None, height=32, theme=None)
 ```
 
 La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a la derecha.
@@ -1629,6 +1869,7 @@ La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a 
 | --- | --- |
 | `start` | Widgets al inicio (izquierda). |
 | `end` | Widgets al final (derecha). |
+| `center` | Se mantiene en el centro de la barra sean cuales sean los anchos de los lados. |
 | `height` | Alto. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
@@ -1836,7 +2077,7 @@ El marco entero de una ventana abierta con `frame="custom"`: una barra de títul
 | `menus` | Menús a la izquierda de la barra: una lista de `ui.Menu`. |
 | `menu_button` | Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres). |
 | `start` | Elementos después de los menús (proyecto, rama…). |
-| `center` | Tu propio widget en el centro en lugar del título. |
+| `center` | Tu propio widget en el centro en lugar del título (un buscador, Run y Stop…); la barra sigue arrastrándose a ambos lados. |
 | `end` | Elementos antes de los botones de ventana. |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"`. Por defecto el `frame` de la ventana, o el del sistema. |
 | `window` | La ventana sobre la que actúan los botones. Por defecto aquella cuyo `view()` se está ejecutando. |
@@ -1887,7 +2128,7 @@ La barra de título de una ventana, sola: botones de ventana con el estilo de `s
 | `title` | Título (centrado, o a la izquierda en Windows). |
 | `style` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema). |
 | `start` | Elementos al principio. |
-| `center` | Widget en el centro en lugar del título. |
+| `center` | Widget en el centro en lugar del título; la barra sigue arrastrándose a ambos lados. |
 | `end` | Elementos al final. |
 | `on_drag` | Se llama al arrastrar la parte vacía de la barra (devuelve `Command.drag_window()`). |
 | `on_minimize` | Botón de minimizar. |
@@ -1989,7 +2230,18 @@ Apila `overlay` sobre `base`. Hacer clic fuera envía `on_dismiss`. Con `overlay
 ### `modal`
 
 ```python
-modal(content, *, title=None, on_close=None, width=480, footer=(), theme=None)
+modal(
+    content,
+    *,
+    title=None,
+    on_close=None,
+    width=480,
+    footer=(),
+    description=None,
+    icon=None,
+    max_height=None,
+    theme=None,
+)
 ```
 
 Un diálogo. Úsalo como `overlay` de `ui.layer`.
@@ -1998,9 +2250,12 @@ Un diálogo. Úsalo como `overlay` de `ui.layer`.
 | --- | --- |
 | `content` | Contenido: un `Widget`, un texto o un número (se convierte en texto). |
 | `title` | Título. |
-| `on_close` | Mensaje o callable que se envía al pulsar la X. |
-| `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `on_close` | El botón de cerrar; también lo envía Escape mientras el diálogo tiene el foco. |
+| `width` | Píxeles o `"sm"` (360), `"md"` (480), `"lg"` (640) o `"xl"` (820). |
 | `footer` | Botones del pie, alineados a la derecha. |
+| `description` | Línea atenuada bajo el título. |
+| `icon` | Icono antes del título. |
+| `max_height` | Desplaza el contenido más alto que esto, sin ocultar la cabecera ni el pie. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `PaletteItem`
@@ -2142,6 +2397,8 @@ toast(
     on_dismiss=None,
     actions=(),
     width=340,
+    progress=None,
+    on_press=None,
     theme=None,
 )
 ```
@@ -2157,6 +2414,8 @@ Una notificación.
 | `on_dismiss` | Mensaje o callable que se envía al cerrar. |
 | `actions` | Widgets extra (normalmente botones) que se muestran como acciones. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `progress` | De 0 a 1: una barra fina abajo (tiempo restante, una descarga). |
+| `on_press` | Hace pulsable la tarjeta. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `toasts`
@@ -2598,6 +2857,276 @@ Un damero claro/oscuro para dibujar bajo colores translúcidos.
 | `width` | Ancho. |
 | `height` | Alto. |
 | `size` | Tamaño de celda. |
+
+## Agente
+
+### `ToolCall`
+
+```python
+class ToolCall
+```
+
+Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | Lo que hace ("Editar archivo"). |
+| `detail` | Sobre qué trabaja, en letra monoespaciada. |
+| `kind` | El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono). |
+| `status` | `pending`, `running`, `waiting`, `done`, `failed` o `rejected`. |
+| `input` | Los argumentos (un dict o texto). |
+| `output` | La respuesta (texto o un dict). |
+| `images` | Bytes PNG que se muestran bajo la salida. |
+| `allow_always` | Muestra Permitir siempre. |
+| `theme` | Tema. |
+| `on_allow` | Se pulsó Permitir. |
+| `on_allow_always` | Se pulsó Permitir siempre. |
+| `on_deny` | Se pulsó Rechazar. |
+
+```python
+ui.ToolCall(title="Editar archivo", detail="ui/main.py", kind="edit", status=self.status,
+            on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+```
+
+**Métodos y propiedades**
+
+#### `ToolCall.toggle`
+
+```python
+ToolCall.toggle()
+```
+
+Despliega o pliega la entrada y la salida de la herramienta.
+
+### `Plan`
+
+```python
+class Plan
+```
+
+Un componente para el plan de un agente: una lista de pasos con `hechos/total` en la cabecera, que la pliega.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `steps` | Dicts `{"step": texto, "status": "pending" | "in_progress" | "done"}`. |
+| `running` | Hace girar el paso en curso. |
+| `theme` | Tema. |
+
+```python
+ui.Plan(steps=[{"step": "Añadir el formulario", "status": "done"}, {"step": "Conectarlo", "status": "in_progress"}])
+```
+
+**Métodos y propiedades**
+
+#### `Plan.toggle`
+
+```python
+Plan.toggle()
+```
+
+Despliega o pliega la lista de pasos.
+
+### `EditsBar`
+
+```python
+class EditsBar
+```
+
+Un componente con los archivos que cambió un agente, como la barra de cambios de Zed: `3 archivos cambiados` con Rechazar todo y Conservar todo, que se despliega en una fila por archivo con sus líneas, Rechazar y Conservar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `files` | Dicts u objetos con `path` y, opcionalmente, `added` y `removed` (líneas). |
+| `theme` | Tema. |
+| `on_keep` | Conservar todo. |
+| `on_reject` | Rechazar todo. |
+| `on_keep_file` | Conservar en un archivo (`event.value` es su ruta). |
+| `on_reject_file` | Rechazar en un archivo. |
+| `on_open` | Se hizo clic en un archivo. |
+
+```python
+ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())
+```
+
+**Métodos y propiedades**
+
+#### `EditsBar.toggle`
+
+```python
+EditsBar.toggle()
+```
+
+Despliega o pliega la lista de archivos cambiados.
+
+### `ThreadHistory`
+
+```python
+class ThreadHistory
+```
+
+Un componente para conversaciones anteriores: un buscador y los hilos agrupados por día (Hoy, Ayer, Esta semana, Este mes, Antes), cada uno con un botón para eliminarlo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `threads` | Dicts u objetos con `id`, `title`, `updated` (una marca de tiempo) y un `detail` opcional. |
+| `selected` | El id del hilo abierto. |
+| `theme` | Tema. |
+| `on_open` | Se eligió un hilo (`event.value` es su id). |
+| `on_delete` | Se pulsó eliminar en un hilo. |
+
+```python
+ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))
+```
+
+**Métodos y propiedades**
+
+#### `ThreadHistory.set_query`
+
+```python
+ThreadHistory.set_query(text)
+```
+
+Filtra el historial por `text`.
+
+#### `ThreadHistory.visible`
+
+```python
+ThreadHistory.visible()
+```
+
+Las conversaciones cuyo título tiene todas las palabras de la búsqueda.
+
+### `AuthPrompt`
+
+```python
+class AuthPrompt
+```
+
+Un componente que pide iniciar sesión, como Zed cuando un agente lo necesita: un botón por cada forma de entrar y, mientras una está en curso, qué pasa (el navegador o una terminal está abierto), un código para escribir si lo hay, Abrir la página otra vez y Cancelar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | El título. |
+| `detail` | Una línea debajo. |
+| `methods` | Dicts con `id`, `name` y, opcionalmente, `description` e `icon`; el primero es el principal. |
+| `waiting` | El id del método en curso (`""` si no hay). |
+| `waiting_text` | Lo que se muestra mientras espera. |
+| `code` | Un código para escribir (inicio de sesión por dispositivo). |
+| `url` | La página que se abrió. |
+| `error` | Un error a mostrar. |
+| `icon_name` | El icono. |
+| `theme` | Tema. |
+| `on_pick` | Se eligió un método (`event.value` es su id). |
+| `on_cancel` | Cancelar. |
+| `on_open_url` | Abrir la página otra vez. |
+| `on_copy` | Se copió el código. |
+
+```python
+ui.AuthPrompt(title="Entrar en Gemini", methods=[{"id": "google", "name": "Entrar con Google"}], on_pick=self.sign_in)
+```
+
+### `ServiceRow`
+
+```python
+class ServiceRow
+```
+
+Un componente para algo que usa un agente (un servidor MCP, un agente externo, una skill), como las filas de los ajustes de agentes de Zed: un punto de estado, el nombre y el comando, un interruptor, un botón principal y un menú `⋯`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre. |
+| `detail` | El comando o la URL, en letra monoespaciada. |
+| `summary` | Una línea sobre él. |
+| `icon_name` | El icono. |
+| `status` | `running`, `starting`, `error`, `off`, `installed`, `missing` o `update` (el color del punto). |
+| `status_text` | El tooltip del punto; se muestra bajo el nombre en errores y actualizaciones. |
+| `version` | Una versión o un origen. |
+| `enabled` | El interruptor (`None` lo oculta). |
+| `busy` | Muestra un indicador de carga. |
+| `primary` | Texto del botón principal (Actualizar, Instalar…). |
+| `actions` | Entradas `ui.MenuItem` del menú `⋯`. |
+| `theme` | Tema. |
+| `on_toggle` | Se cambió el interruptor. |
+| `on_primary` | Se pulsó el botón principal. |
+
+```python
+ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)
+```
+
+**Métodos y propiedades**
+
+#### `ServiceRow.toggle_menu`
+
+```python
+ServiceRow.toggle_menu()
+```
+
+Abre o cierra el menú de acciones de la fila.
+
+### `Catalog`
+
+```python
+class Catalog
+```
+
+Un componente para cosas que instalar con un buscador (agentes de un registro, servidores, skills…): cada fila muestra Instalar, Instalado o Actualizar a una versión nueva.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `items` | Dicts u objetos con `id`, `name` y, opcionalmente, `version`, `description`, `installed` y `update`. |
+| `busy` | El id que se está instalando (un indicador de carga). |
+| `height` | Alto de la lista. |
+| `theme` | Tema. |
+| `on_install` | Se pulsó Instalar o Actualizar (`event.value` es el id). |
+
+```python
+ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))
+```
+
+**Métodos y propiedades**
+
+#### `Catalog.set_query`
+
+```python
+Catalog.set_query(text)
+```
+
+Filtra el catálogo por `text`.
+
+#### `Catalog.visible`
+
+```python
+Catalog.visible()
+```
+
+Los elementos cuyo id, nombre o descripción tienen todas las palabras de la búsqueda.
+
+### `context_meter`
+
+```python
+context_meter(used, limit, *, theme=None)
+```
+
+Cuánto se llenó la ventana de contexto de un modelo, como el contador de tokens de Zed: un anillo pequeño y `48k / 200k`, amarillo pasado el 80 % y rojo pasado el 95 %.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `used` | Tokens en uso. |
+| `limit` | La ventana del modelo. |
+| `theme` | Tema. |
+
+### `format_tokens`
+
+```python
+format_tokens(count)
+```
+
+Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `count` | Tokens. |
 
 ## Selector de iconos
 

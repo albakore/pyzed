@@ -21,6 +21,8 @@ class Tab:
     dirty: bool = False
     preview: bool = False  # italic, like Zed's preview tabs
     status: Optional[str] = None  # git status tint: "modified" | "created" | "deleted"
+    pinned: bool = False  # icon only, no close button, like Zed's pinned tabs
+    tooltip: Optional[str] = None  # shown on hover (the full path, for example)
 
     @classmethod
     def for_file(cls, path: str, **kwargs) -> "Tab":
@@ -45,13 +47,16 @@ def tab(
     """A Zed-style editor tab for ``item``; the active one joins the content below it.
 
     The label is colored by the git ``status``; a dirty tab shows a dot that turns into the close button
-    on hover (``on_close``). ``on_select`` is called when the tab is pressed. ``dimmed`` mutes the label
-    (the tab being dragged).
+    on hover (``on_close``, also sent on a middle click). ``on_select`` is called when the tab is
+    pressed. ``dimmed`` mutes the label (the tab being dragged). A ``pinned`` tab shows only its
+    icon and can't be closed from it.
     """
     t = _theme(theme)
     status_color = {"modified": t.modified, "created": t.created, "deleted": t.deleted}.get(item.status or "")
     text_color = status_color or (t.text if active and not dimmed else t.text_muted)
 
+    if item.pinned:
+        on_close = None
     close = icon_button("x", on_close, size="xs", theme=t) if on_close is not None else _core.space(width=18)
     if item.dirty:
         idle = _core.container(indicator("text_muted" if not active else "text", size=7, theme=t), width=18, height=18, center=True)
@@ -61,9 +66,12 @@ def tab(
 
     content = _core.row(
         [
-            _icon(item.icon, size=14, color=t.color(item.icon_color) if item.icon_color else t.icon_muted) if item.icon else None,
+            _icon(item.icon or ("pin" if item.pinned else None), size=14,
+                  color=t.color(item.icon_color) if item.icon_color else t.icon_muted)
+            if item.icon or item.pinned else None,
+            None if item.pinned and item.icon else
             _core.text(item.label, size=13.5, color=text_color, italic=item.preview, wrap=False),
-            end,
+            None if item.pinned else end,
         ],
         spacing=6,
         align="center",
@@ -71,13 +79,19 @@ def tab(
     body = _core.button(
         _core.container(content, height="fill", align_y="center"),
         on_select,
-        padding=(0, 6, 0, 12),
+        padding=(0, 10) if item.pinned else (0, 6, 0, 12),
         height="fill",
         bg=t.tab_active if active else t.tab_inactive,
         hover_bg=t.tab_active if active else t.ghost_hover,
         pressed_bg=t.tab_active,
         color=text_color,
     )
+    if on_close is not None:
+        body = body.on(middle_click=on_close)
+    if item.tooltip:
+        from .base import tooltip_text
+
+        body = tooltip_text(body, item.tooltip, theme=t)
     return _core.row(
         [
             _core.column(
@@ -106,9 +120,15 @@ def tab_bar(
     on_drag_over: Optional[Callable[[Optional[int]], Any]] = None,
     dragging: Optional[str] = None,
     drop_index: Optional[int] = None,
+    on_context: Optional[Callable[[str], Any]] = None,
+    on_new: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A row of editor tabs with optional leading/trailing controls (navigation, split, +).
+
+    ``on_context(tab_id)`` runs on a right click of a tab (Close others, Pin...) and
+    ``on_new`` on a double click of the empty space after the tabs, as in Zed. Pinned tabs
+    (``Tab.pinned``) go first.
 
     Tabs can be dragged: ``on_drag(tab_id)`` is called when a drag starts and
     ``on_drop(tab_id, event)`` when it is released, with the pointer in ``event.window_x``/
@@ -129,7 +149,7 @@ def tab_bar(
             ], width="shrink", height=height)
         )
         items.append(_core.rule(vertical=True, thickness=1, color=t.border))
-    tabs = list(tabs)
+    tabs = sorted(tabs, key=lambda item: not item.pinned)
     # The insertion marks are always there (zero wide when unused) so a drag never changes the
     # tree's shape: that would reset the dragged tab's state and lose the drop.
     marks = on_drag_over is not None
@@ -152,6 +172,8 @@ def tab_bar(
             handlers["drag_end"] = lambda e, i=item.id: on_drop(i, e)
         if tracking:  # the left half of a tab inserts before it, the right half after it
             handlers["mouse_move"] = lambda e, k=index: on_drag_over(k if e.x < e.width / 2 else k + 1)
+        if on_context is not None:
+            handlers["right_click"] = lambda i=item.id: on_context(i)
         items.append(widget.on(cursor="grabbing" if item.id == dragging else None, **handlers) if handlers else widget)
     if marks:
         items.append(_drop_mark(drop_index is not None and drop_index >= len(tabs), height, t))
@@ -166,6 +188,8 @@ def tab_bar(
     )
     if marks:  # past the last tab: append
         filler = filler.on(mouse_move=(lambda: on_drag_over(len(tabs))) if tracking else None)
+    if on_new is not None:
+        filler = filler.on(double_click=on_new)
     items.append(filler)
     bar = _core.container(
         _core.row(items, height=height, clip=True),
@@ -188,14 +212,30 @@ def breadcrumbs(
     *,
     separator: str = "›",
     on_press: Optional[Callable[[int], Any]] = None,
+    max_items: Optional[int] = None,
+    on_more: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """``src › main.rs › fn main`` — parts may be strings or ``(icon, text)`` tuples."""
+    """``src › main.rs › fn main`` — parts may be strings or ``(icon, text)`` tuples.
+
+    With ``max_items``, a long path keeps its first part and the last ones and shows ``…``
+    for the rest (``on_more`` makes the ``…`` clickable, to list the hidden parts).
+    ``on_press(index)`` always gets the index in the full ``parts``.
+    """
     t = _theme(theme)
     items: List[Any] = []
-    for i, part in enumerate(parts):
-        if i:
+    indexes = list(range(len(parts)))
+    if max_items is not None and len(parts) > max(max_items, 2):
+        indexes = [0, -1] + indexes[len(parts) - (max_items - 1):]
+    for position, i in enumerate(indexes):
+        if position:
             items.append(_core.text(separator, size=13, color=t.text_placeholder, wrap=False))
+        if i == -1:
+            more = _core.text("…", size=13, color=t.text_muted, wrap=False)
+            items.append(_core.button(more, on_more, padding=(2, 4), bg="transparent", hover_bg=t.ghost_hover,
+                                      radius=t.radius_sm) if on_more is not None else more)
+            continue
+        part = parts[i]
         icon_name, text = part if isinstance(part, tuple) else (None, part)
         is_last = i == len(parts) - 1
         content = _core.row(
@@ -215,13 +255,21 @@ def toolbar(
     start: Iterable[Any] = (),
     end: Iterable[Any] = (),
     *,
+    center: Any = None,
     height: float = 32,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """The bar under the tabs (breadcrumbs on the left, buffer actions on the right)."""
+    """The bar under the tabs (breadcrumbs on the left, buffer actions on the right).
+
+    ``center`` is kept in the middle of the bar whatever the widths of both sides.
+    """
     t = _theme(theme)
+    row = _core.row([*start, _core.space(width="fill"), *end], spacing=4, align="center")
+    if center is not None:
+        row = _core.stack([row, _core.container(center, width="fill", height="fill", align_x="center",
+                                                align_y="center")], width="fill")
     return _core.container(
-        _core.row([*start, _core.space(width="fill"), *end], spacing=4, align="center"),
+        row,
         padding=(0, 8, 0, 12),
         height=height,
         width="fill",

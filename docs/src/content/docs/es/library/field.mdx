@@ -114,12 +114,41 @@ pz.container(ui.field("Port", ui.number_field(80, on_change), error="Ports below
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="field-v3-1" caption={"required=True"} alt={"Campo de formulario: required=True"} code="Código" mono>
+
+```python
+pz.container(ui.field("Name", ui.input("", on_input, width=180), required=True), width=380)
+```
+
+</Variant>
+<Variant name="field-v3-2" caption={"vertical=True"} alt={"Campo de formulario: vertical=True"} code="Código" mono>
+
+```python
+pz.container(ui.field("Email", ui.input("ada@", on_input, invalid=True), vertical=True, required=True,
+                      error="Enter a valid email"), width=320)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.field`
 
 ```python
-field(title, control, *, description=None, error=None, theme=None)
+field(
+    title,
+    control,
+    *,
+    description=None,
+    error=None,
+    required=False,
+    vertical=False,
+    theme=None,
+)
 ```
 
 Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).
@@ -130,6 +159,8 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `control` | *obligatorio* | El control (switch, input…). |
 | `description` | `None` | Texto de ayuda. |
 | `error` | `None` | Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`). |
+| `required` | `False` | Añade un `*` rojo tras el título. |
+| `vertical` | `False` | Pone el control bajo el título. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#field)

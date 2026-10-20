@@ -86,12 +86,25 @@ pz.container(ui.toolbar([ui.label("Preview")], [ui.button("Publish", on_publish,
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="toolbar-v2-1" caption={"center="} alt={"Barra de herramientas: center="} code="Código" mono>
+
+```python
+pz.container(ui.toolbar([ui.breadcrumbs(["src", "app.py"])], [ui.icon_button("play", on_press)],
+                        center=ui.muted("Running…", size="sm")), width=440)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.toolbar`
 
 ```python
-toolbar(start=(), end=(), *, height=32, theme=None)
+toolbar(start=(), end=(), *, center=None, height=32, theme=None)
 ```
 
 La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a la derecha.
@@ -100,6 +113,7 @@ La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a 
 | --- | --- | --- |
 | `start` | `()` | Widgets al inicio (izquierda). |
 | `end` | `()` | Widgets al final (derecha). |
+| `center` | `None` | Se mantiene en el centro de la barra sean cuales sean los anchos de los lados. |
 | `height` | `32` | Alto. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 

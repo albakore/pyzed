@@ -156,6 +156,27 @@ pz.container(ui.list_item("button.rs", on_open, icon="file-code", indent=24), wi
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`on_right_press` abre un menú contextual y `tooltip=` aparece al pasar el ratón.
+
+<VariantGrid>
+<Variant name="list-item-v3-1" caption={"description="} alt={"Fila de lista: description="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_press, icon="file", description="src/app"), width=300)
+```
+
+</Variant>
+<Variant name="list-item-v3-2" caption={"on_double_press="} alt={"Fila de lista: on_double_press="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("Rename me", on_press, icon="pencil", on_double_press=on_rename), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.list_item`
@@ -177,6 +198,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -199,6 +223,9 @@ Una fila de lista: icono, texto y un hueco al final.
 | `inset` | `False` | Con margen y esquinas redondeadas (menús, paletas). |
 | `disabled` | `False` | Lo deshabilita (ignora los clics). |
 | `on_right_press` | `None` | Clic derecho. |
+| `on_double_press` | `None` | Se envía con un doble clic (abrir, renombrar…). |
+| `description` | `None` | Una segunda línea atenuada (la fila crece a 40 px salvo que fijes `height`). |
+| `tooltip` | `None` | Texto al pasar el ratón. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#list_item)

@@ -199,6 +199,39 @@ ui.icon_button("search", on_press, tooltip="Search")
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="icon-button-v5-1" caption={"indicator=\"accent\""} alt={"Botón de icono: indicator=\"accent\""} code="Código" mono>
+
+```python
+ui.icon_button("bell", on_press, indicator="accent")
+```
+
+</Variant>
+<Variant name="icon-button-v5-2" caption={"tint=\"error\""} alt={"Botón de icono: tint=\"error\""} code="Código" mono>
+
+```python
+ui.icon_button("trash-2", on_press, tint="error")
+```
+
+</Variant>
+<Variant name="icon-button-v5-3" caption={"loading=True"} alt={"Botón de icono: loading=True"} code="Código" mono>
+
+```python
+ui.icon_button("refresh-cw", on_press, loading=True)
+```
+
+</Variant>
+<Variant name="icon-button-v5-4" caption={"keys="} alt={"Botón de icono: keys="} code="Código" mono>
+
+```python
+ui.icon_button("search", on_press, tooltip="Search", keys="ctrl-f")
+```
+
+</Variant>
+</VariantGrid>
+
 ## Consejos
 
 :::tip
@@ -220,6 +253,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -236,6 +273,10 @@ Un botón cuadrado con solo un icono.
 | `selected` | `False` | Lo marca como seleccionado. |
 | `disabled` | `False` | Lo deshabilita (ignora los clics). |
 | `tooltip` | `None` | Texto del tooltip. |
+| `keys` | `None` | Atajo que se muestra en el tooltip. |
+| `tint` | `None` | Lo colorea (`"error"`, `"accent"`…). |
+| `loading` | `False` | Cambia el icono por un spinner e ignora las pulsaciones. |
+| `indicator` | `None` | Añade un punto de este color arriba a la derecha (sin leer, cambios…). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#icon_button)

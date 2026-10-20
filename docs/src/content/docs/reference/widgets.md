@@ -1400,6 +1400,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -1430,6 +1432,8 @@ A dropdown to choose one of `options`. `on_select(option)` receives the chosen o
 | `options` | List of options. |
 | `selected` | Current option. |
 | `on_select` | Callable that receives the chosen item. |
+| `on_open` | Sent when the menu opens. |
+| `on_close` | Sent when the menu closes. |
 | `placeholder` | Hint text shown when empty. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `padding` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
@@ -2052,6 +2056,553 @@ The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, 
 ### `WINDOW_TRANSITIONS`
 
 Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.
+
+## Timeline animations
+
+### `Clip`
+
+```python
+@dataclass
+class Clip(name, length=None, tracks=(), calls=(), loop='none', description='')
+```
+
+A named timeline of `length` seconds with `tracks` and `calls` (see the module docs).
+
+`loop` is `"none"` (plays once and holds the last frame), `"loop"` or
+`"pingpong"`. `length` defaults to the time of the last key or call.
+
+**Methods and properties**
+
+#### `Clip.targets`
+
+```python
+Clip.targets  # property
+```
+
+The widget targets its tracks animate, in order.
+
+#### `Clip.attributes`
+
+```python
+Clip.attributes  # property
+```
+
+The app attributes its tracks animate (`":score"` -> `"score"`).
+
+#### `Clip.track`
+
+```python
+Clip.track(path)
+```
+
+The track with `path` (`None` when there is none).
+
+#### `Clip.values`
+
+```python
+Clip.values(time, target=None)
+```
+
+`{path: value}` of the enabled tracks at `time` (only `target`'s, as `{property: value}`).
+
+#### `Clip.with_track`
+
+```python
+Clip.with_track(track)
+```
+
+A copy with `track` added, or replacing the track with the same path.
+
+#### `Clip.without_track`
+
+```python
+Clip.without_track(path)
+```
+
+A copy without the track `path`.
+
+#### `Clip.with_key`
+
+```python
+Clip.with_key(path, time, value, easing=None)
+```
+
+A copy with a key at `time` on `path` (replacing one at the same time; adds the track).
+
+#### `Clip.without_key`
+
+```python
+Clip.without_key(path, time)
+```
+
+A copy without the key at `time` on `path`.
+
+#### `Clip.retarget`
+
+```python
+Clip.retarget(mapping, name=None)
+```
+
+A copy whose tracks animate other widgets: `clip.retarget({"card": "panel"})`.
+
+#### `Clip.animation`
+
+```python
+Clip.animation(target, *, on='mount', **options)
+```
+
+`target`'s tracks as a `pz.Animation` (to play without a player, or `define_animation`).
+
+#### `Clip.to_dict`
+
+```python
+Clip.to_dict()
+```
+
+JSON-ready data (`Clip.from_dict` reads it back).
+
+#### `Clip.from_dict`
+
+```python
+@classmethod
+Clip.from_dict(data)
+```
+
+Rebuilds a clip saved with `to_dict`.
+
+### `Track`
+
+```python
+@dataclass
+class Track(path, keys=(), easing='linear', interpolation='linear', enabled=True)
+```
+
+One property changing over time: `Track("card:opacity", {0: 0, 0.5: 1})`.
+
+`keys` is `{time: value}`, a list of `(time, value)` or `(time, value, easing)`
+tuples, or `Key` objects. `easing` is the default curve between keys (`"linear"`,
+like Godot) and `interpolation="discrete"` holds each value until the next key.
+`enabled=False` keeps a track in the clip without playing it.
+
+**Methods and properties**
+
+#### `Track.target`
+
+```python
+Track.target  # property
+```
+
+The widget target (`""` for an app attribute).
+
+#### `Track.property`
+
+```python
+Track.property  # property
+```
+
+The property or attribute path it changes.
+
+#### `Track.value_at`
+
+```python
+Track.value_at(time)
+```
+
+The track's value at `time` seconds (`None` when it has no keys).
+
+#### `Track.with_keys`
+
+```python
+Track.with_keys(keys)
+```
+
+A copy with other keys.
+
+#### `Track.to_dict`
+
+```python
+Track.to_dict()
+```
+
+JSON-ready data (`Track.from_dict` reads it back).
+
+#### `Track.from_dict`
+
+```python
+@classmethod
+Track.from_dict(data)
+```
+
+Rebuilds a track saved with `to_dict`.
+
+### `Key`
+
+```python
+@dataclass
+class Key(time, value, easing=None)
+```
+
+A value at a time on a track; `easing` is the curve to the next key (the track's when `None`).
+
+**Methods and properties**
+
+#### `Key.to_dict`
+
+```python
+Key.to_dict()
+```
+
+JSON-ready data (`Key.from_dict` reads it back).
+
+#### `Key.from_dict`
+
+```python
+@classmethod
+Key.from_dict(data)
+```
+
+Rebuilds a key saved with `to_dict`.
+
+### `Call`
+
+```python
+@dataclass
+class Call(time, method, args=())
+```
+
+A method called at `time` seconds: `Call(1.2, "play_sound", "ding")`.
+
+`method` is the name of a method of the app (the player's `owner`) or a callable;
+`args` are passed to it. What it returns (a `Command`, a message...) is handled
+like a callback's.
+
+**Methods and properties**
+
+#### `Call.to_dict`
+
+```python
+Call.to_dict()
+```
+
+JSON-ready data (only calls to methods by name can be saved).
+
+#### `Call.from_dict`
+
+```python
+@classmethod
+Call.from_dict(data)
+```
+
+Rebuilds a call saved with `to_dict`.
+
+### `AnimationPlayer`
+
+```python
+class AnimationPlayer
+```
+
+Plays `Clip`s on widgets and app state, with play, pause, seek, speed and a queue.
+
+`sources` are clips, `AnimationLibrary` objects and `.pzanim` paths. Give widgets
+their target with `widget.animate(player["card"])`; tracks of app attributes
+(`":score"`) and `Call`s run on the player's `owner`, which is the app (or window)
+that holds the player in an attribute, found automatically, or the one you pass.
+
+- `autoplay`: the clip that plays when the player is created.
+- `speed`: the playback speed of every clip (`play` multiplies it).
+- `on_started(name)`/`on_finished(name)`: called when a clip starts and when it
+  ends (never for looping clips); they may take no argument.
+- `fps`: how often app attributes update while a clip with attribute tracks plays.
+
+**Methods and properties**
+
+#### `AnimationPlayer.add`
+
+```python
+AnimationPlayer.add(source, *, prefix=None)
+```
+
+Adds a clip, a library (its clips as `"name/clip"` when it has a name) or a `.pzanim` path.
+
+#### `AnimationPlayer.remove`
+
+```python
+AnimationPlayer.remove(name)
+```
+
+Removes the clip `name` (stopping it when it is the current one).
+
+#### `AnimationPlayer.names`
+
+```python
+AnimationPlayer.names  # property
+```
+
+The names of the clips it can play.
+
+#### `AnimationPlayer.has`
+
+```python
+AnimationPlayer.has(name)
+```
+
+Whether it has a clip called `name`.
+
+#### `AnimationPlayer.clip`
+
+```python
+AnimationPlayer.clip(name=None)
+```
+
+The clip named `name` (the current one by default).
+
+#### `AnimationPlayer.target`
+
+```python
+AnimationPlayer.target(target)
+```
+
+The widget target `target` for `widget.animate(player[target])`.
+
+#### `AnimationPlayer.current`
+
+```python
+AnimationPlayer.current  # property
+```
+
+The clip playing or paused (`None` when stopped).
+
+#### `AnimationPlayer.playing`
+
+```python
+AnimationPlayer.playing  # property
+```
+
+Whether time is moving.
+
+#### `AnimationPlayer.paused`
+
+```python
+AnimationPlayer.paused  # property
+```
+
+Whether a clip is paused (stopped clips and finished ones aren't).
+
+#### `AnimationPlayer.finished`
+
+```python
+AnimationPlayer.finished  # property
+```
+
+Whether the current clip reached its end.
+
+#### `AnimationPlayer.length`
+
+```python
+AnimationPlayer.length  # property
+```
+
+The length of the current clip in seconds (0 when none).
+
+#### `AnimationPlayer.position`
+
+```python
+AnimationPlayer.position  # property
+```
+
+Seconds into the current clip.
+
+#### `AnimationPlayer.queued`
+
+```python
+AnimationPlayer.queued  # property
+```
+
+The clips that play after the current one, in order.
+
+#### `AnimationPlayer.value`
+
+```python
+AnimationPlayer.value(path)
+```
+
+The value the current clip gives `path` (`"card:opacity"`, `":score"`) right now.
+
+#### `AnimationPlayer.play`
+
+```python
+AnimationPlayer.play(name=None, *, speed=1.0, backwards=False, from_end=False, restart=False)
+```
+
+Plays `name` (the current or paused clip by default) from where it is.
+
+#### `AnimationPlayer.play_backwards`
+
+```python
+AnimationPlayer.play_backwards(name=None, *, speed=1.0)
+```
+
+Plays `name` in reverse from its end (or the current clip from where it is).
+
+#### `AnimationPlayer.pause`
+
+```python
+AnimationPlayer.pause()
+```
+
+Stops time where it is (`play()` or `resume()` goes on).
+
+#### `AnimationPlayer.resume`
+
+```python
+AnimationPlayer.resume()
+```
+
+Goes on from where the clip was paused.
+
+#### `AnimationPlayer.toggle`
+
+```python
+AnimationPlayer.toggle()
+```
+
+Pauses when playing, plays otherwise.
+
+#### `AnimationPlayer.stop`
+
+```python
+AnimationPlayer.stop(*, reset=False)
+```
+
+Stops at the start of the clip (showing its first frame); `reset` lets widgets go back to their own values and forgets the clip. Clears the queue.
+
+#### `AnimationPlayer.seek`
+
+```python
+AnimationPlayer.seek(seconds)
+```
+
+Jumps to `seconds` into the current clip (calls on the way don't run).
+
+#### `AnimationPlayer.advance`
+
+```python
+AnimationPlayer.advance(seconds)
+```
+
+Moves the current clip `seconds` forward (calls run, state updates), like Godot's `advance`.
+
+#### `AnimationPlayer.queue`
+
+```python
+AnimationPlayer.queue(name)
+```
+
+Plays `name` after the current clip ends (or now when nothing plays).
+
+#### `AnimationPlayer.clear_queue`
+
+```python
+AnimationPlayer.clear_queue()
+```
+
+Forgets the queued clips.
+
+#### `AnimationPlayer.subscriptions`
+
+```python
+AnimationPlayer.subscriptions()
+```
+
+What keeps the player's calls, attribute tracks and queue going (added for you when the player is an attribute of the app or a window).
+
+### `AnimationLibrary`
+
+```python
+class AnimationLibrary
+```
+
+Named clips that are saved together in a `.pzanim` file and reused.
+
+`AnimationLibrary([intro, idle], name="ui")`; `lib["intro"]`, `lib.add(clip)`,
+`lib.remove("idle")`, `lib.save("ui.pzanim")` and `AnimationLibrary.load(path)`.
+A player given a library with a `name` calls its clips `"ui/intro"`, like Godot.
+
+**Methods and properties**
+
+#### `AnimationLibrary.add`
+
+```python
+AnimationLibrary.add(clip)
+```
+
+Adds `clip` (replacing one with its name) and returns it.
+
+#### `AnimationLibrary.remove`
+
+```python
+AnimationLibrary.remove(name)
+```
+
+Removes the clip `name` (nothing happens when there is none).
+
+#### `AnimationLibrary.rename`
+
+```python
+AnimationLibrary.rename(old, new)
+```
+
+Renames the clip `old` to `new` and returns it.
+
+#### `AnimationLibrary.names`
+
+```python
+AnimationLibrary.names  # property
+```
+
+The names of its clips, in order.
+
+#### `AnimationLibrary.to_dict`
+
+```python
+AnimationLibrary.to_dict()
+```
+
+The `.pzanim` data (`AnimationLibrary.from_dict` reads it back).
+
+#### `AnimationLibrary.from_dict`
+
+```python
+@classmethod
+AnimationLibrary.from_dict(data)
+```
+
+Rebuilds a library from `.pzanim` data.
+
+#### `AnimationLibrary.save`
+
+```python
+AnimationLibrary.save(path)
+```
+
+Writes the library as JSON (a `.pzanim` file) and returns the path.
+
+#### `AnimationLibrary.load`
+
+```python
+@classmethod
+AnimationLibrary.load(path)
+```
+
+Reads a `.pzanim` file (raises `ValueError` when it isn't one).
+
+### `load_animations`
+
+```python
+load_animations(path)
+```
+
+The library saved in a `.pzanim` file.
 
 ## Large data
 

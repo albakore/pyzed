@@ -163,12 +163,47 @@ ui.badge("verified", tint="success", variant="solid", icon="check")
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="badge-v4-1" caption={"size=\"sm\""} alt={"Insignia: size=\"sm\""} code="Código" mono>
+
+```python
+ui.badge("beta", size="sm")
+```
+
+</Variant>
+<Variant name="badge-v4-2" caption={"size=\"lg\""} alt={"Insignia: size=\"lg\""} code="Código" mono>
+
+```python
+ui.badge("Pro", size="lg", icon="star")
+```
+
+</Variant>
+<Variant name="badge-v4-3" caption={"on_press="} alt={"Insignia: on_press="} code="Código" mono>
+
+```python
+ui.badge("3 issues", tint="warning", on_press=on_press)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 Una píldora pequeña para estados y contadores.
@@ -179,6 +214,8 @@ Una píldora pequeña para estados y contadores.
 | `tint` | `"accent"` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `variant` | `"soft"` | `"soft"`, `"solid"` o `"outline"`. |
 | `icon` | `None` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `on_press` | `None` | La hace pulsable. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#badge)

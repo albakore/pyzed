@@ -1415,6 +1415,8 @@ pub struct PickListProps {
     options: Vec<String>,
     selected: Option<String>,
     on_select: Option<PyMsg>,
+    on_open: Option<PyMsg>,
+    on_close: Option<PyMsg>,
     placeholder: Option<String>,
     width: Option<Length>,
     padding: Option<Padding>,
@@ -1443,7 +1445,7 @@ struct PickStyle {
 
 /// A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
 #[pyfunction]
-#[pyo3(signature = (options, selected=None, on_select=None, *, placeholder=None, width=None,
+#[pyo3(signature = (options, selected=None, on_select=None, *, on_open=None, on_close=None, placeholder=None, width=None,
     padding=None, text_size=None, font=None, handle=None, handle_size=12.0, menu_height=None,
     bg=None, color=None, placeholder_color=None, handle_color=None, border_color=None,
     hover_border_color=None, radius=None, menu_bg=None, menu_color=None, menu_border_color=None,
@@ -1454,6 +1456,8 @@ pub fn pick_list(
     options: &Bound<'_, PyAny>,
     selected: Option<String>,
     on_select: Any<'_>,
+    on_open: Any<'_>,
+    on_close: Any<'_>,
     placeholder: Option<String>,
     width: Any<'_>,
     padding: Any<'_>,
@@ -1485,6 +1489,8 @@ pub fn pick_list(
             options,
             selected,
             on_select: PyMsg::maybe(&on_select),
+            on_open: PyMsg::maybe(&on_open),
+            on_close: PyMsg::maybe(&on_close),
             placeholder,
             width: style::opt_length(&width)?,
             padding: style::opt_padding(&padding)?,
@@ -1524,6 +1530,12 @@ pub fn render_pick_list<'a>(props: &PickListProps) -> Element<'a, Message> {
     );
     if let Some(ph) = &props.placeholder {
         p = p.placeholder(ph.clone());
+    }
+    if let Some(cb) = &props.on_open {
+        p = p.on_open(Message::Py(cb.clone()));
+    }
+    if let Some(cb) = &props.on_close {
+        p = p.on_close(Message::Py(cb.clone()));
     }
     if let Some(w) = props.width {
         p = p.width(w);

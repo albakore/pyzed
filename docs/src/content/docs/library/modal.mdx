@@ -93,6 +93,21 @@ ui.modal(ui.muted("Discard the draft?"), title="Draft", on_close=on_close, width
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`max_height=` scrolls long content, and Escape sends `on_close` while the dialog has focus.
+
+<VariantGrid>
+<Variant name="modal-v2-1" caption={"description=, icon=, width=\"sm\""} alt={"Modal: description=, icon=, width=\"sm\""} code="Code" mono>
+
+```python
+ui.modal(ui.input("notes.md", on_input), title="Rename", description="Choose a new name",
+         icon="pencil", on_close=on_close, width="sm", footer=[ui.button("Rename", on_press, variant="solid")])
+```
+
+</Variant>
+</VariantGrid>
+
 ## Examples
 
 ### Over the app
@@ -123,7 +138,18 @@ ui.dialog_layer(main_view(), ui.modal(
 ### `ui.modal`
 
 ```python
-modal(content, *, title=None, on_close=None, width=480, footer=(), theme=None)
+modal(
+    content,
+    *,
+    title=None,
+    on_close=None,
+    width=480,
+    footer=(),
+    description=None,
+    icon=None,
+    max_height=None,
+    theme=None,
+)
 ```
 
 A dialog. Use it as the `overlay` of `ui.layer`.
@@ -132,9 +158,12 @@ A dialog. Use it as the `overlay` of `ui.layer`.
 | --- | --- | --- |
 | `content` | *required* | Content: a `Widget`, a string or a number (converted to text). |
 | `title` | `None` | Title. |
-| `on_close` | `None` | Message or callable sent when the X is pressed. |
-| `width` | `480` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_close` | `None` | The close button; also sent by Escape while the dialog has focus. |
+| `width` | `480` | Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820). |
 | `footer` | `()` | Footer buttons, aligned to the right. |
+| `description` | `None` | Muted line under the title. |
+| `icon` | `None` | Icon before the title. |
+| `max_height` | `None` | Scrolls content taller than this, keeping the header and footer in view. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#modal)

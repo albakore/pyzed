@@ -25,6 +25,7 @@ from ..ui import frame as ui_frame
 from ..icons import icon as _icon
 from ..theme import themes
 from . import binding as _binding
+from . import spacing
 from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
@@ -48,6 +49,7 @@ from . import project_picker as _project_picker
 from . import welcome as _welcome
 from .welcome import Welcome
 from .windows import Pane, PaneController
+from .dock_windows import DockWindows
 from ..i18n import t as _t
 from .runtime import FormWindow
 from . import scene as _scene
@@ -183,7 +185,10 @@ class Designer(App):
         if theme is None and self.prefs.theme and self.prefs.theme in themes.names():
             self.theme = themes.get(self.prefs.theme)
         self.layout = docks.DockLayout(self.prefs.docks, self.prefs.sizes,
-                                       {k: not v for k, v in self.prefs.panels.items()})
+                                       {k: not v for k, v in self.prefs.panels.items()}, self.prefs.order,
+                                       self.prefs.windows, self.prefs.active)
+        # panels in windows of their own, panel tab drags and work layouts
+        self.dock_windows = DockWindows(self)
         self.app_menu: Optional[str] = None  # the title bar menu that is open: "file", "view" or "help"
         self.new_state: Dict[str, str] = {}
         self.left_ratio = 0.62
@@ -213,6 +218,7 @@ class Designer(App):
         self.dialog: Optional[str] = None
         self.dialog_path = ""
         self.pending: Optional[Callable[[], Any]] = None
+        self.layout_name_buffer = ""  # the name typed in the "Save layout" dialog
         self.toasts: List[Toast] = []
         self.preview: Optional[FormWindow] = None
         #: A theme and a language to look at the form in (canvas and Run), without changing the form.
@@ -243,7 +249,8 @@ class Designer(App):
 
     def on_start(self) -> Any:
         """Loads the project's tools and checks for updates when the app starts; returns the commands."""
-        return [c for c in (self.projects.load_tools(), *self.updates.on_start()) if c is not None]
+        return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
+                if c is not None]
 
     # -- window title ---------------------------------------------------------
     def window_title(self) -> str:
@@ -1072,7 +1079,7 @@ class Designer(App):
         if card is None:
             return None
         px, py = self.picker_at
-        width, height = self.window_size or self.size
+        width, height = self.panes.window_size()
         x = px - panels.PICKER_WIDTH - 16  # the Style rows are in a side panel: open towards the form
         if x < 4:
             x = min(px + 16, max(width - panels.PICKER_WIDTH - 4, 4))
@@ -1135,13 +1142,14 @@ class Designer(App):
         """Sets how much of the left column the upper panel takes (``ratio`` from 0 to 1)."""
         self.left_ratio = ratio
 
-    def show_panel(self, panel: str) -> None:
-        """Shows the panel ``panel`` in its dock and saves the layout (the console stays pinned open)."""
+    def show_panel(self, panel: str) -> Any:
+        """Shows the panel ``panel`` in its dock or window and saves the layout (the console stays pinned open)."""
         if panel == "console":
             self.console.pinned = True
-        self.layout.show(panel)
+        shown = self.dock_windows.reveal(panel)
         self.layout.menu = None
         self._save_layout()
+        return shown
 
     def toggle_agent(self) -> Any:
         """Shows the Agent panel and focuses its message box, or hides its dock when it is showing."""
@@ -1151,10 +1159,9 @@ class Designer(App):
         self.show_panel("agent")
         return _core.Command.focus(agent_panel.INPUT_ID)
 
-    def move_panel(self, panel: str, dock: str) -> None:
-        """Moves the panel ``panel`` to the dock ``dock`` and saves the layout."""
-        self.layout.move(panel, dock)
-        self._save_layout()
+    def move_panel(self, panel: str, dock: str) -> Any:
+        """Moves the panel ``panel`` to the dock ``dock`` (or a panel window) and saves the layout."""
+        return self.dock_windows.move_to(panel, dock)
 
     def toggle_dock(self, dock: str) -> None:
         """Shows or hides the dock ``dock`` and saves the layout."""
@@ -1179,14 +1186,44 @@ class Designer(App):
         """Closes the dock's panel menu."""
         self.layout.menu = None
 
-    def reset_layout(self) -> None:
-        """Puts every panel back in its default dock and size, and saves that layout."""
-        self.layout = docks.DockLayout()
-        self._save_layout()
+    def reset_layout(self) -> Any:
+        """Puts every panel back in its default dock and size (closing the panel windows) and saves that."""
+        return self.dock_windows.use("Default")
+
+    def use_layout(self, name: str) -> Any:
+        """Switches to the work layout ``name`` from the View menu."""
+        self.app_menu = None
+        return self.dock_windows.use(name)
+
+    def ask_layout_name(self) -> Any:
+        """**Save layout as…**: asks for a name for the current arrangement of panels."""
+        self.app_menu = None
+        self.layout_name_buffer = self.prefs.layout_name if self.prefs.layout_name not in docks.PRESETS else ""
+        self.dialog = "save_layout"
+        return _core.Command.focus("layout-name")
+
+    def set_layout_name(self, text: str) -> None:
+        """Keeps the name typed in the "Save layout" dialog."""
+        self.layout_name_buffer = text
+
+    def save_layout_as(self) -> None:
+        """Saves the panels as the work layout named in the dialog."""
+        if self.dock_windows.save_as(self.layout_name_buffer):
+            self.dialog = None
+            self.notify(tr("Layout saved"), self.layout_name_buffer.strip(), kind="success")
+
+    def delete_layout(self) -> None:
+        """Deletes the saved work layout in use."""
+        self.dock_windows.delete(self.prefs.layout_name)
 
     def _save_layout(self) -> None:
-        self.prefs.docks = dict(self.layout.docks)
-        self.prefs.sizes = dict(self.layout.sizes)
+        self.dock_windows.remember()
+        snapshot = self.layout.snapshot()
+        self.prefs.docks = snapshot["docks"]
+        self.prefs.sizes = snapshot["sizes"]
+        self.prefs.order = snapshot["order"]
+        self.prefs.active = snapshot["active"]
+        self.prefs.windows = snapshot["windows"]
         self.prefs.panels = {dock: not closed for dock, closed in self.layout.closed.items()}
         preferences.save(self.prefs)
 
@@ -2207,7 +2244,7 @@ class Designer(App):
         if frame is not None:  # Pyzed's own window frame, with the title bar's items in it
             start, end = self.title_items(t)
             body = ui.window_frame(_core.column(inside, width="fill", height="fill"), start=start, end=end,
-                                   height=TITLE_HEIGHT, resize_edges=False, theme=t)
+                                   center=self.title_center(t), height=TITLE_HEIGHT, resize_edges=False, theme=t)
         else:
             body = _core.column([self.title_bar(t), *inside], width="fill", height="fill")
         body = _core.container(body, width="fill", height="fill", bg=t.background)
@@ -2221,18 +2258,8 @@ class Designer(App):
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
                 right = (ui_frame.end_x(frame) if frame else 8) + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
-        if self.projects.files.menu is not None:
-            menu, mx, my = self.projects.files.menu_at(t)
-            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)
-        if self.color_picker is not None:
-            placed = self.color_picker_at(t)
-            if placed is not None:
-                card, cx, cy = placed
-                body = ui.popover(body, card, x=cx, y=cy, on_dismiss=self.close_color_picker)
-        ghost = self.carry_ghost(t)
-        if ghost is not None:
-            gx, gy = self.window_pointer
-            body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
+        # the dock a dragged panel tab would go to (always a layer, so a drag never changes the view's shape)
+        body = _core.stack([body, self.dock_windows.drop_hint(t)], width="fill", height="fill")
         body = self.window_overlays(body, main, t)
         if frame is not None:  # the borders resize the window, above the menus and dialogs
             body = _core.window_edges(body, enabled=not self.window_maximized and frame != "overlay")
@@ -2261,6 +2288,18 @@ class Designer(App):
         """Adds what opens over a window to ``body``, the view of the window of ``pane``: the context menu,
         toasts and dialogs show in the window used last; the window reports the pointer for menus and drags."""
         here = pane is self.panes.here
+        if here and self.projects.files.menu is not None:
+            menu, mx, my = self.projects.files.menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)
+        if here and self.color_picker is not None:
+            placed = self.color_picker_at(t)
+            if placed is not None:
+                card, cx, cy = placed
+                body = ui.popover(body, card, x=cx, y=cy, on_dismiss=self.close_color_picker)
+        ghost = self.carry_ghost(t) if here else None
+        if ghost is not None:
+            gx, gy = self.window_pointer
+            body = _core.stack([body, _core.pin(ghost, x=gx + 14, y=gy + 10)], width="fill", height="fill")
         if here and self.menu is not None:
             menu, mx, my = self.context_menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
@@ -2321,10 +2360,14 @@ class Designer(App):
             if group == "View":
                 items += [ui.SEPARATOR, tr("Panels")]
                 for pid, panel in docks.PANELS.items():
-                    items.append(ui.MenuItem(f"{panel.title}  ·  {tr(self.layout.docks[pid].capitalize())}",
+                    items.append(ui.MenuItem(f"{panel.title}  ·  {self.layout.place_label(pid)}",
                                              lambda pid=pid: self.run_panel(pid), icon=panel.icon,
                                              disabled=pid == "code" and self.editing is None
                                                       and not self.buffers.items))
+                items += [ui.SEPARATOR, tr("Layouts")]
+                for name in self.dock_windows.names():
+                    items.append(ui.MenuItem(tr(name), lambda name=name: self.use_layout(name),
+                                             checked=self.prefs.layout_name == name))
         return ui.menu(items, width=260, theme=t)
 
     def run_panel(self, panel: str) -> None:
@@ -2337,12 +2380,36 @@ class Designer(App):
         self._guard(lambda: self.open_path(path))
 
     def title_bar(self, t) -> Any:
-        """Returns the title bar: menu, project and file buttons, Run and Stop, View, Help and Settings."""
+        """Returns the title bar: menu, project and file buttons, Run, Stop and search, View, Help and Settings."""
         start, end = self.title_items(t)
-        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+        return ui.title_bar(start, end, center=self.title_center(t), height=TITLE_HEIGHT, theme=t)
+
+    def title_center(self, t) -> Any:
+        """The middle of the title bar: Run and Stop, and the search field that opens the command palette
+        (commands, panels, settings and recent files)."""
+        search = _core.button(
+            _core.container(_core.row([
+                _icon("search", size=14, color=t.icon_muted),
+                _core.text(tr("Search commands, settings…"), size=13, color=t.text_muted, wrap=False),
+                _core.space(width="fill"),
+                ui.kbd("ctrl-shift-p", size="xs", theme=t),
+            ], spacing=8, align="center"), height="fill", align_y="center", clip=True),
+            self.open_palette, padding=(0, 6, 0, 10), width=320, height=24, bg=t.element,
+            border_color=t.border_variant, border_width=1.0, hover_bg=t.element_hover,
+            hover_border_color=t.border, radius=t.radius_sm,
+        )
+        return _core.row([
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
+                      theme=t),
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
+                           disabled=self.console.running is None, theme=t),
+            _core.space(width=6),
+            search,
+        ], spacing=4, align="center")
 
     def title_items(self, t) -> Tuple[List[Any], List[Any]]:
-        """The items at the start (menu, project, file) and end (Run, Stop, View, Help, Settings) of the title bar."""
+        """The items at the start (menu, project, file) and end (View, Help, Settings) of the title bar;
+        ``title_center`` has the middle."""
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
@@ -2357,11 +2424,6 @@ class Designer(App):
             if shader_editor.is_shader(self) else None,
         ]
         end = [
-            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
-                      theme=t),
-            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
-                           disabled=self.console.running is None, theme=t),
-            _core.space(width=8),
             ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
@@ -2377,13 +2439,18 @@ class Designer(App):
         preferences.save(self.prefs)
 
     def toolbar(self, t) -> Any:
-        """Returns the toolbar: file, undo, alignment, sizing, order, grid and code tools.
+        """Returns the form editor's toolbar, in groups that read left to right like Zed's:
 
-        It scrolls sideways when the window is too narrow.
+        * create and history: "New…" (a form, a component or a shader, picked in the dialog), undo and redo;
+        * the selection: align, distribute and size, then order and delete. These only show while something
+          is selected (a hint takes their place otherwise), so the bar is not a wall of disabled buttons;
+        * at the end, how the canvas behaves (grid, snap, guides, anchors) and the code file.
+
+        Opening and saving live in the File menu and their shortcuts. The bar scrolls sideways when the
+        window is too narrow.
         """
         doc = self.doc
-        has = bool(doc.selection)
-        many = len(doc.selection) > 1
+        count = len(doc.selection)
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
                  keys: Optional[str] = None) -> Any:
@@ -2391,53 +2458,60 @@ class Designer(App):
             label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
             return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
 
-        sep = _core.container(ui.divider(vertical=True, theme=t), height=18, padding=(0, 4))
-        start = [
-            tool("file-plus", self.new, "New form", keys="ctrl-n"),
-            tool("folder-open", self.open_dialog, "Open", keys="ctrl-o"),
-            tool("save", self.save, "Save", keys="ctrl-s"),
-            ui.tooltip(ui.button(tr("New component"), self.new_component, icon="component", variant="tinted",
-                                 tint="accent", size="sm", theme=t),
-                       tr("A reusable piece for forms and other components, not a window"), theme=t),
-            sep,
-            tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
-            tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z"),
-            sep,
-            tool("align-start-vertical", lambda: self.align("left"), "Align left", enabled=has),
-            tool("align-center-vertical", lambda: self.align("center"), "Align centers", enabled=has),
-            tool("align-end-vertical", lambda: self.align("right"), "Align right", enabled=has),
-            tool("align-start-horizontal", lambda: self.align("top"), "Align top", enabled=has),
-            tool("align-center-horizontal", lambda: self.align("middle"), "Align middles", enabled=has),
-            tool("align-end-horizontal", lambda: self.align("bottom"), "Align bottom", enabled=has),
-            sep,
-            tool("align-horizontal-distribute-center", lambda: self.distribute("horizontal"),
-                 "Distribute horizontally", enabled=len(doc.selection) > 2),
-            tool("align-vertical-distribute-center", lambda: self.distribute("vertical"), "Distribute vertically",
-                 enabled=len(doc.selection) > 2),
-            tool("stretch-horizontal", lambda: self.same_size("width"), "Same width", enabled=many),
-            tool("stretch-vertical", lambda: self.same_size("height"), "Same height", enabled=many),
-            tool("move-horizontal", lambda: self.center("horizontal"), "Center in form horizontally", enabled=has),
-            tool("move-vertical", lambda: self.center("vertical"), "Center in form vertically", enabled=has),
-            sep,
-            tool("bring-to-front", lambda: self.reorder("front"), "Bring to front", enabled=has),
-            tool("send-to-back", lambda: self.reorder("back"), "Send to back", enabled=has),
-            tool("trash-2", self.delete, "Delete", enabled=has, keys="delete"),
+        def group(*items: Any) -> Any:
+            return _core.row([i for i in items if i is not None], spacing=2, align="center")
+
+        sep = _core.container(ui.divider(vertical=True, theme=t), height=16, padding=(0, 6))
+        groups = [
+            group(tool("file-plus", self.new, "New form, component or shader…", keys="ctrl-n"),
+                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
+                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z")),
         ]
+        if count:
+            groups += [
+                group(tool("align-start-vertical", lambda: self.align("left"), "Align left"),
+                      tool("align-center-vertical", lambda: self.align("center"), "Align centers"),
+                      tool("align-end-vertical", lambda: self.align("right"), "Align right"),
+                      tool("align-start-horizontal", lambda: self.align("top"), "Align top"),
+                      tool("align-center-horizontal", lambda: self.align("middle"), "Align middles"),
+                      tool("align-end-horizontal", lambda: self.align("bottom"), "Align bottom")),
+                group(tool("move-horizontal", lambda: self.center("horizontal"), "Center in form horizontally"),
+                      tool("move-vertical", lambda: self.center("vertical"), "Center in form vertically"),
+                      tool("align-horizontal-distribute-center", lambda: self.distribute("horizontal"),
+                           "Distribute horizontally") if count > 2 else None,
+                      tool("align-vertical-distribute-center", lambda: self.distribute("vertical"),
+                           "Distribute vertically") if count > 2 else None,
+                      tool("stretch-horizontal", lambda: self.same_size("width"), "Same width") if count > 1 else None,
+                      tool("stretch-vertical", lambda: self.same_size("height"), "Same height") if count > 1 else None),
+                group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front"),
+                      tool("send-to-back", lambda: self.reorder("back"), "Send to back"),
+                      tool("trash-2", self.delete, "Delete", keys="delete")),
+            ]
+        else:
+            groups.append(ui.label(tr("Select controls to align, size and order them"), size="xs",
+                                   color="text_muted", wrap=False, theme=t))
+        start: List[Any] = []
+        for g in groups:
+            start += [sep, g] if start else [g]
         end = [
-            tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
-            tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
-            tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
-            tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
-                 selected=doc.follow_anchors),
-            tool("scaling", doc.snap_to_grid, "Fit selection to grid"),
+            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
+                  tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
+                  tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
+                  tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
+                       selected=doc.follow_anchors),
+                  tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
             tool("code", self.edit_whole_file, "Edit code file", keys="f7"),
         ]
-        # One row that scrolls sideways when the window is too narrow for every tool.
-        tools = _core.row([*start, sep, *end], spacing=4, align="center")
-        return _core.container(
-            _core.scrollable(tools, direction="horizontal", scrollbar_width=2, width="fill"),
-            padding=(0, 8), height=36, width="fill", align_y="center", bg=t.editor)
+        # The editing tools scroll sideways when the window is too narrow; the canvas toggles stay at the end.
+        tools = _core.row([
+            _core.scrollable(_core.row(start, spacing=0, align="center"), direction="horizontal", scrollbar_width=2,
+                             width="fill"),
+            sep,
+            *end,
+        ], spacing=0, align="center", width="fill")
+        return _core.container(tools, padding=(0, spacing.GUTTER - 4), height=36, width="fill", align_y="center",
+                               bg=t.editor)
 
     def status_bar(self, t) -> Any:
         """Returns the status bar: pointer position, selection, tool hint, control count, grid and snap.
@@ -2495,6 +2569,10 @@ class Designer(App):
             b = self.buffers
             return ui.unsaved_changes(b.items[b.closing].name, b.confirm_save, b.confirm_discard, b.cancel_close,
                                       theme=t)
+        if self.dialog == "save_layout":
+            return ui.prompt(tr("Save layout"), self.layout_name_buffer, self.set_layout_name, self.save_layout_as,
+                             self.close_dialog, message=tr("Where every panel is, the dock sizes and the panel windows."),
+                             placeholder=tr("Layout name"), submit_label=tr("Save"), id="layout-name", theme=t)
         if self.dialog == "confirm":
             return ui.unsaved_changes(self.doc.display_name, self.confirm_save, self.confirm_discard,
                                       self.close_dialog, theme=t)
@@ -2526,8 +2604,6 @@ class Designer(App):
                                          theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
-        if self.dialog == "agent_settings":
-            return agent_panel.settings_dialog(self, t)
         if self.dialog == "keymap":
             return keymap_editor.dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,

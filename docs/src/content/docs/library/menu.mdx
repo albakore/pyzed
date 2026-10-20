@@ -129,12 +129,32 @@ ui.menu(["FILE", ui.MenuItem("New", on_new, keys="ctrl-n"), ui.SEPARATOR,
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="menu-v3-1" caption={"Descriptions and a submenu"} alt={"Menu: Descriptions and a submenu"} code="Code">
+
+```python
+ui.menu([ui.MenuItem("Share", on_press, icon="share", submenu=True),
+         ui.MenuItem("Rename", on_press, description="F2 also works")])
+```
+
+</Variant>
+<Variant name="menu-v3-2" caption={"max_height=140"} alt={"Menu: max_height=140"} code="Code" mono>
+
+```python
+ui.menu([ui.MenuItem(f"Recent {i}", on_press) for i in range(10)], max_height=140)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a header.
@@ -143,6 +163,7 @@ A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a 
 | --- | --- | --- |
 | `items` | *required* | List of `MenuItem`, `ui.SEPARATOR` or strings. |
 | `width` | `240` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `max_height` | `None` | Scrolls a menu taller than this. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#menu)
@@ -151,7 +172,7 @@ A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a 
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 An entry of `ui.menu`.
@@ -165,6 +186,8 @@ An entry of `ui.menu`.
 | `disabled` | `False` | Disables it (ignores clicks). |
 | `danger` | `False` | In red (destructive actions). |
 | `checked` | `None` | Shows a check mark (`True`/`False`) or nothing (`None`). |
+| `description` | `None` | A muted second line. |
+| `submenu` | `False` | Ends the row with a chevron; open the next menu beside it in `on_press`. |
 
 [Full reference →](/pyzed/reference/ui/#menuitem)
 

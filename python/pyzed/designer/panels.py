@@ -352,6 +352,11 @@ def toolbox(d: "Designer", t: Theme) -> Any:
                 press_row(d, f"tool:{spec.type}", tr(spec.label), lambda type_=spec.type: d.press_tool(type_), t,
                           icon=spec.icon, selected=d.tool == spec.type),
                 tr(spec.description) if spec.description else tr(spec.label), position="right", theme=t))
+    if not query:  # a reusable component of your own joins the toolbox once it is created
+        rows.append(ui.tooltip(press_row(d, "tool:+component", tr("New component…"), d.new_component, t,
+                                         icon="plus", color="text_muted"),
+                               tr("A reusable piece for forms and other components, not a window"), position="right",
+                               theme=t))
     return _core.column([
         _core.container(ui.search_input(d.toolbox_query, d.set_toolbox_query, placeholder=tr("Search components…"),
                                         size="sm", theme=t), padding=(spacing.BLOCK, spacing.GUTTER)),

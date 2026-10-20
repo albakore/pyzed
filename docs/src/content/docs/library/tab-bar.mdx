@@ -139,6 +139,21 @@ pz.row([ui.tab(ui.Tab.for_file("main.rs"), active=True),
 </Variant>
 </VariantGrid>
 
+### States and events
+
+A middle click closes a tab, `on_context(id)` runs on a right click and `on_new` on a double click of the empty space.
+
+<VariantGrid>
+<Variant name="tab-bar-v3-1" caption={"pinned=True"} alt={"Tab bar: pinned=True"} code="Code" mono>
+
+```python
+ui.tab_bar([ui.Tab("app", "app.py", icon="file", pinned=True), ui.Tab("ui", "ui.py", icon="file")],
+           "ui", on_close=on_close, on_context=on_context, on_new=on_new)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.tab_bar`
@@ -158,6 +173,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -178,6 +195,8 @@ A row of tabs with optional controls at the start and end (navigation, split, +)
 | `on_drag_over` | `None` | While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar. |
 | `dragging` | `None` | Id of the tab being dragged (dims it and turns on `on_drag_over`). |
 | `drop_index` | `None` | Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one). |
+| `on_context` | `None` | Called with the id of a tab that is right-clicked. |
+| `on_new` | `None` | Sent on a double click of the empty space after the tabs. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#tab_bar)
@@ -186,7 +205,7 @@ A row of tabs with optional controls at the start and end (navigation, split, +)
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
@@ -200,6 +219,8 @@ A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
 | `dirty` | `False` | Unsaved changes (shows a dot). |
 | `preview` | `False` | Preview tab (in italics). |
 | `status` | `None` | Git status (tints the name). |
+| `pinned` | `False` | Shows only the icon, has no close button and goes first in `tab_bar`. |
+| `tooltip` | `None` | Text shown on hover (the full path…). |
 
 [Full reference →](/pyzed/reference/ui/#tab)
 
