@@ -19,6 +19,7 @@ stable version.
 ### Features
 
 - ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
+- ✨ An audio engine, `pyzed.audio`: build synthesizers, effects, drum machines and sequencers from 23 modules joined by cables, like VCV Rack (oscillators, filters, envelopes, LFOs, delay, reverb, distortion, chorus, compressor, sampler, drums, clock, sequencer, mixer, MIDI in and out). The sound is computed in Rust on a real-time thread and played with low latency on WASAPI, CoreAudio, PulseAudio/PipeWire or ALSA, or rendered offline to a WAV file; scopes, spectra and meters can be read at any time for visualizers. New **Audio** section in the docs.
 
 ### Fixes
 

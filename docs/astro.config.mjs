@@ -160,6 +160,13 @@ const topics = [
 		items: [group('Showcase', 'Showcase', 'showcase'), group('Games', 'Videojuegos', 'games')],
 	},
 	{
+		id: 'audio',
+		label: { en: 'Audio', es: 'Audio' },
+		link: '/audio/engine/getting-started/',
+		icon: 'star',
+		items: [group('Engine', 'Motor', 'audio/engine')],
+	},
+	{
 		id: 'integrations',
 		label: { en: 'Integrations', es: 'Integraciones' },
 		link: '/integrations/overview/',

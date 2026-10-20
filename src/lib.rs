@@ -2,6 +2,7 @@
 
 mod animation;
 mod app;
+mod audio;
 mod editor;
 mod editor_widgets;
 mod events;
@@ -41,6 +42,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     shader::register(m)?;
     layout::register(m)?;
     frame::register(m)?;
+    audio::register(m)?;
     m.add_class::<app::Command>()?;
     m.add_class::<app::PySubscription>()?;
     m.add_function(wrap_pyfunction!(app::every, m)?)?;
