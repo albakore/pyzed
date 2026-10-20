@@ -72,6 +72,68 @@ When Run opens the console is decided by **Settings → Running → Open the con
 logged by **Log events in the console**. The console stays in its dock until you hide it, once it has something to
 show or you opened it from the View menu.
 
+### Selecting and copying lines
+
+Click a line to select it, <kbd>Shift</kbd>+click to select a range and <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd> on
+macOS) to add or remove one; <kbd>Ctrl</kbd>+<kbd>A</kbd> selects every line shown, <kbd>Ctrl</kbd>+<kbd>C</kbd>
+copies the selection and <kbd>Escape</kbd> clears it. A selected error shows its whole traceback under it.
+
+A **right click** on a line opens its menu:
+
+| Item | What it does |
+| --- | --- |
+| **Copy line** / **Copy N lines** | The selected lines, with their time and level. |
+| **Copy text only** | Just the text of the lines (and their traceback). |
+| **Copy all** / **Select all** | Every line the filters show. |
+| **Go to file.py:12** | Opens the file of a traceback line in the Code panel, on that line (also with a double click). |
+| **Show the error…** | The error in the [error dialog](#when-the-editor-itself-fails), with the traceback selectable. |
+| **Hide error lines** | Turns off that level's toggle. |
+| **Show in Logs** / **Clear** | Opens the Logs panel, or empties the console. |
+
+## The Logs panel
+
+**View → Logs** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd>) opens the **Logs** panel, the editor's own log:
+everything Pyzed Design does and every error it meets, while the console is about your running form. Like any
+panel, it can go to another dock or a window of its own.
+
+Each line has its time, a level and a **type**:
+
+| Type | What it logs |
+| --- | --- |
+| Designer | The editor starting and closing, settings changed, and its unexpected errors with their traceback. |
+| Commands | Every command run from a menu, the command palette or a shortcut. |
+| Documents | Forms and components opened and saved. |
+| Project | The project and its `uv` commands. |
+| Run | Runs starting and stopping, the events and the errors of the running form. |
+| Code, Agent, Layout, Updates | The code editor, the AI agents, panels moved or shown, and updates. |
+| System | Python warnings. |
+
+The toolbar filters by text, by **type** (the *All types* dropdown) and by **level** (debug, info, event, warning,
+error: debug lines are hidden until you turn their toggle on). Lines are selected, copied and opened from their menu
+exactly as in the console, and the menu adds **Only Designer** (or the line's type). The folder button opens the
+folder with the log files.
+
+The same lines (events and up) are written to `logs/pyzed-design.log` in the Pyzed config folder (the file is
+renewed past 1 MB, keeping the last three): attach it to a bug report. **Settings → Logs and errors → Write a log
+file** turns it off.
+
+When errors or warnings have been logged, the status bar shows their count at the left; click it to open the panel.
+
+## When the editor itself fails
+
+A bug in Pyzed Design never closes it:
+
+- An action that fails (a click, a key, a menu command, a background task) opens an **error dialog** with the
+  error, where it happened and the traceback, which you can select and copy. Its buttons **Copy error** (everything,
+  ready to paste in an issue), **Go to file.py:12** (opens the line it comes from, when it is a file you can open),
+  **Show in Logs** and **Close**. More errors while it is open are counted in it.
+- A panel that fails to draw shows an **error card** in its place, with **Copy error** and **Details**, and the
+  rest of the window keeps working; the canvas, the dialogs and the whole window are protected the same way.
+
+Every one of them is in the Logs panel with its traceback. **Settings → Logs and errors → Show a dialog on errors**
+turns the dialog off (the errors are still logged). For your own apps, the same pieces are in the library:
+[`ui.error_boundary`, `ui.error_dialog` and `ui.ErrorInfo`](/pyzed/reference/ui/#console-errors-and-help).
+
 ## Errors in the running window
 
 A handler that raises does not close the window: an **Event handler error** callout appears at its bottom with the

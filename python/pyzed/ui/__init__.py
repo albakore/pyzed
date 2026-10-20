@@ -23,7 +23,8 @@ from .base import (
 from .agent import AuthPrompt, Catalog, EditsBar, Plan, ServiceRow, ThreadHistory, ToolCall, context_meter, format_tokens
 from .color import ColorPicker, checkerboard, color_swatch
 from .icon_picker import IconPicker, icon_grid, icon_picker_dialog
-from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
+from .console import LEVELS as LOG_LEVELS, Log, LogEntry, LogSelection, console
+from .errors import ErrorInfo, error_boundary, error_card, error_dialog
 from .help import about, reference_browser, shortcuts
 from .controls import (
     AccordionSection,
@@ -83,8 +84,13 @@ __all__ = [
     "LOG_LEVELS",
     "Log",
     "LogEntry",
+    "LogSelection",
     "about",
     "console",
+    "ErrorInfo",
+    "error_boundary",
+    "error_card",
+    "error_dialog",
     "reference_browser",
     "shortcuts",
     "AccordionSection",

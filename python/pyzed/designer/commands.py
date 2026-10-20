@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
+from . import logs as _logs
 from . import telemetry as _telemetry
 from .locale import tr
 
@@ -92,6 +93,7 @@ ACTIONS: Tuple[Action, ...] = (
     Action("animation_panel", "Animation", "View", lambda d: d.timeline.show(), "clapperboard", "ctrl-shift-m"),
     Action("console", "Console", "View", lambda d: d.show_panel("console"), "terminal", "ctrl-shift-y",
            global_keys=True),
+    Action("logs", "Logs", "View", lambda d: d.show_panel("logs"), "scroll-text", "ctrl-shift-u", global_keys=True),
     Action("tab_to_window", "Move tab to new window", "View", lambda d: d.panes.detach_active(),
            "square-arrow-out-up-right", None,
            lambda d: d.panes.active is d.panes.main or len(d.panes.active.docs) > 1),
@@ -164,7 +166,9 @@ def run(action_id: str, d: "Designer") -> Any:
     """Runs the command ``action_id`` on designer ``d`` if it is enabled; returns its result or ``None``."""
     action = BY_ID[action_id]
     if not action.enabled(d):
+        _logs.log("command").debug("%s is not available now", action.text)
         return None
+    _logs.event("command", "%s", action.text.rstrip("…"))
     with _telemetry.get().timed(f"command.{action_id}"):
         return action.run(d)
 

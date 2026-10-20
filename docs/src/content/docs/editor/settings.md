@@ -40,6 +40,13 @@ editor's own preferences. Changes apply at once and are saved right away; **Done
 | **Open the console on Run** | Brings the console to the front when a form starts. |
 | **Log events in the console** | Writes every event the running form handles, with its value and handler. |
 
+## Logs and errors
+
+| Setting | What it does |
+| --- | --- |
+| **Show a dialog on errors** | Opens the [error dialog](/pyzed/editor/console-and-running/#when-the-editor-itself-fails) when something fails. Off, errors only go to the Logs panel. |
+| **Write a log file** | Also writes the [logs](/pyzed/editor/console-and-running/#the-logs-panel) to `logs/pyzed-design.log` in the Pyzed config folder (applies on restart). |
+
 ## Panels
 
 | Setting | What it does |

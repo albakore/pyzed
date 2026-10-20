@@ -212,6 +212,13 @@ add("en", {
                                  "status": "Status"}},
         "color": {"solid": "Solid", "gradient": "Gradient", "angle": "Angle", "mask": "Mask", "opacity": "Opacity",
                   "remove_stop": "Remove stop"},
+        "console": {"filter": "Filter output…", "all_sources": "All types", "copy_all": "Copy all", "clear": "Clear",
+                    "empty": "No output yet.", "no_match": "Nothing matches the filter."},
+        "errors": {"title": "Something went wrong", "failed_to_draw": "This part could not be drawn",
+                   "copy": "Copy error", "details": "Details", "go_to": "Go to source", "show_logs": "Show in Logs",
+                   "at": "at {location}", "in_where": "In {where}",
+                   "more": {"one": "{count} more error since; see the logs.",
+                            "other": "{count} more errors since; see the logs."}},
     }
 })
 add("es", {
@@ -250,5 +257,12 @@ add("es", {
                                  "status": "Estado"}},
         "color": {"solid": "Sólido", "gradient": "Degradado", "angle": "Ángulo", "mask": "Máscara",
                   "opacity": "Opacidad", "remove_stop": "Quitar parada"},
+        "console": {"filter": "Filtrar la salida…", "all_sources": "Todos los tipos", "copy_all": "Copiar todo",
+                    "clear": "Limpiar", "empty": "Todavía no hay salida.", "no_match": "Nada coincide con el filtro."},
+        "errors": {"title": "Algo salió mal", "failed_to_draw": "Esta parte no se pudo dibujar",
+                   "copy": "Copiar el error", "details": "Detalles", "go_to": "Ir al origen",
+                   "show_logs": "Ver en Logs", "at": "en {location}", "in_where": "En {where}",
+                   "more": {"one": "{count} error más desde entonces; míralo en los logs.",
+                            "other": "{count} errores más desde entonces; míralos en los logs."}},
     }
 })

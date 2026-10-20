@@ -84,6 +84,14 @@ def settings(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Log events in the console"), switch("log_events"),
                  description=tr("Every event the running form handles, with its value"), theme=t),
     ], theme=t)
+    errors = ui.settings_group(tr("Logs and errors"), [
+        ui.field(tr("Show a dialog on errors"), switch("error_dialogs"),
+                 description=tr("With buttons to copy the error and go to its line; errors are always in View → Logs"),
+                 theme=t),
+        ui.field(tr("Write a log file"), switch("log_file"),
+                 description=tr("pyzed-design.log in the Pyzed config folder, for bug reports (applies on restart)"),
+                 theme=t),
+    ], theme=t)
     panels = ui.settings_group(tr("Panels"), [
         ui.field(tr("Layout"), ui.button(tr("Reset"), d.reset_layout, icon="layout-dashboard", variant="ghost", size="sm",
                                      theme=t),
@@ -98,7 +106,7 @@ def settings(d: "Designer", t: Theme) -> Any:
                                             variant="ghost", size="sm", theme=t),
                  description=tr("Model providers, keys and sign-in, permissions"), theme=t),
     ], theme=t)
-    body = _core.scrollable(_core.column([general, canvas, running, panels, telemetry_group(d, t)], spacing=14,
+    body = _core.scrollable(_core.column([general, canvas, running, errors, panels, telemetry_group(d, t)], spacing=14,
                                          padding=(0, 6, 0, 0)),
                             height=560, scrollbar_width=4)
     return ui.modal(body, title=tr("Settings"), on_close=d.close_dialog, width=560, footer=_footer_done(d, t), theme=t)

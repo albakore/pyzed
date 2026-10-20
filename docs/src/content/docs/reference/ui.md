@@ -947,7 +947,7 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
-## Console and help
+## Console, errors and help
 
 ### `Log`
 
@@ -955,7 +955,7 @@ ui.accordion([
 class Log
 ```
 
-The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.
+The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying (`text(ids)` only those lines). `write` also takes the line's `source`, `detail` (a traceback) and `origin` (`(path, line)`) and returns the entry; `find(id)` looks one up.
 
 | Parameter | Description |
 | --- | --- |
@@ -974,10 +974,18 @@ ui.console(log.entries, on_clear=log.clear)
 #### `Log.write`
 
 ```python
-Log.write(level, text)
+Log.write(level, text, *, source='', detail='', origin=None)
 ```
 
-Adds a line at `level` and calls `on_write`.
+Adds a line at `level` (from `source`, with `detail` and `origin`), calls `on_write` and returns the entry.
+
+#### `Log.find`
+
+```python
+Log.find(entry_id)
+```
+
+The entry numbered `entry_id`, or `None` when it is gone.
 
 #### `Log.clear`
 
@@ -998,10 +1006,10 @@ Returns how many lines there are per level, counting folded repeats.
 #### `Log.text`
 
 ```python
-Log.text()
+Log.text(ids=None)
 ```
 
-Everything as plain text (for copying).
+Everything (or the entries numbered `ids`) as plain text, for copying.
 
 #### `Log.capturing`
 
@@ -1039,10 +1047,10 @@ Reads a subprocess pipe (bytes or text) line by line into the log, in a backgrou
 
 ```python
 @dataclass
-class LogEntry(level, text, time=time.time(), count=1)
+class LogEntry(level, text, time=time.time(), count=1, source='', detail='', origin=None, id=0)
 ```
 
-One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).
+One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row), `source`, `detail`, `origin`, its number `id`, `clock` (`HH:MM:SS`) and `line()` (the entry as plain text).
 
 | Parameter | Description |
 | --- | --- |
@@ -1050,6 +1058,10 @@ One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a r
 | `text` | The line. |
 | `time` | When it was written (`time.time()`). |
 | `count` | Identical lines in a row. |
+| `source` | What it comes from (`"project"`, `"agent"`...); `ui.console` can show and filter it. |
+| `detail` | More text shown under the line while it is selected (a traceback). |
+| `origin` | `(path, line)` of the code it is about. |
+| `id` | Its number in the log (what a `ui.LogSelection` keeps). |
 
 **Methods and properties**
 
@@ -1061,13 +1073,71 @@ LogEntry.clock  # property
 
 The entry's local time as `HH:MM:SS`.
 
+#### `LogEntry.line`
+
+```python
+LogEntry.line(*, details=True)
+```
+
+The entry as one line of plain text (its time, level and source, then `detail` below it).
+
+### `LogSelection`
+
+```python
+class LogSelection
+```
+
+The selected lines of a `ui.console`, like in a file list: a click selects one line, Shift+click a range from the last one clicked and Ctrl+click (Cmd on macOS) adds or removes one. Keep one in your app and pass it to `ui.console(selection=...)`; `select(ids)` selects exactly those (Ctrl+A), `clear()` none, `keep(entries)` forgets lines that are gone, and `ids` are the selected entries' `id`s for `log.text(ids)`.
+
+```python
+self.selection = ui.LogSelection()
+...
+ui.console(self.log.entries, selection=self.selection, on_context=self.open_menu)
+# Ctrl+C in on_key:
+return pz.Command.copy(self.log.text(self.selection.ids))
+```
+
+**Methods and properties**
+
+#### `LogSelection.click`
+
+```python
+LogSelection.click(entry_id, shown, *, shift=False, ctrl=False)
+```
+
+Selects after a click on line `entry_id`; `shown` are the ids of the lines on screen, in order.
+
+#### `LogSelection.select`
+
+```python
+LogSelection.select(ids)
+```
+
+Selects exactly `ids` (all the lines shown, for Ctrl+A).
+
+#### `LogSelection.clear`
+
+```python
+LogSelection.clear()
+```
+
+Selects nothing.
+
+#### `LogSelection.keep`
+
+```python
+LogSelection.keep(entries)
+```
+
+Forgets selected lines that are no longer in `entries` (cleared or dropped).
+
 ### `LOG_LEVELS`
 
 ```python
 LOG_LEVELS(...)
 ```
 
-The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error.
+The levels `ui.console` colors, in the order of its filter buttons: debug, info, event, stdout, stderr, warning, error.
 
 ### `console`
 
@@ -1082,6 +1152,15 @@ console(
     on_clear=None,
     on_copy=None,
     actions=(),
+    selection=None,
+    on_context=None,
+    on_open=None,
+    sources=(),
+    source=None,
+    on_source=None,
+    show_source=False,
+    placeholder=None,
+    empty=None,
     font_size=12.5,
     id=None,
     theme=None,
@@ -1100,9 +1179,171 @@ A log view like a browser's dev tools console: a filter box, one toggle per leve
 | `on_clear` | Adds a Clear button. |
 | `on_copy` | Adds a Copy button. |
 | `actions` | Extra widgets at the end of the toolbar. |
+| `selection` | A `ui.LogSelection`: the lines can be selected with the mouse, and a selected line with `detail` shows it below. |
+| `on_context` | Called with the line right-clicked (`None` under the lines): open a menu there (copy, go to source, clear...). |
+| `on_open` | Called with the line double-clicked. |
+| `sources` | `(value, label)` pairs: adds a dropdown that shows the lines of one `source`. |
+| `source` | The source shown (`None` for all). |
+| `on_source` | Receives the source picked in the dropdown (`None` for all). |
+| `show_source` | Tags each line with its source. |
+| `placeholder` | Text of the empty filter box. |
+| `empty` | What shows while there are no lines. |
 | `font_size` | Size of the entries. |
 | `id` | Scrollable id. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
+
+### `ErrorInfo`
+
+```python
+@dataclass
+class ErrorInfo(kind, message, traceback='', origin=None, where='', time=0.0)
+```
+
+An error as `ui.error_card` and `ui.error_dialog` show it: `kind` (the exception's type), `message`, the whole `traceback`, the `origin` `(path, line)` it comes from (the last frame outside the standard library, installed packages and Pyzed), `where` it happened and `time`. `ErrorInfo.from_exception(err, where=...)` makes one (`prefer=` picks which frames may be the origin); `ErrorInfo.current()` describes the exception being handled. `summary` is `Type: message`, `location` is `file.py:12` and `report()` is everything as text for a bug report.
+
+| Parameter | Description |
+| --- | --- |
+| `kind` | The exception's type name. |
+| `message` | Its message. |
+| `traceback` | The whole traceback, as Python prints it. |
+| `origin` | `(path, line)` of the code it comes from, or `None`. |
+| `where` | What was running. |
+| `time` | When it happened (`time.time()`). |
+
+```python
+try:
+    save(data)
+except Exception as err:
+    self.error = ui.ErrorInfo.from_exception(err, where="Save")
+```
+
+**Methods and properties**
+
+#### `ErrorInfo.from_exception`
+
+```python
+@classmethod
+ErrorInfo.from_exception(err, *, where='', prefer=None)
+```
+
+Describes `err`. `prefer(path)` picks the frames that may be its origin (the last of them wins); by default, those outside the standard library, installed packages and Pyzed itself.
+
+#### `ErrorInfo.current`
+
+```python
+@classmethod
+ErrorInfo.current(*, where='')
+```
+
+The exception being handled (inside an `except` block), or `None`.
+
+#### `ErrorInfo.summary`
+
+```python
+ErrorInfo.summary  # property
+```
+
+`Type: message` (just the type when the message is empty).
+
+#### `ErrorInfo.location`
+
+```python
+ErrorInfo.location  # property
+```
+
+`file.py:12` for the origin, or `""`.
+
+#### `ErrorInfo.report`
+
+```python
+ErrorInfo.report()
+```
+
+Everything as plain text, to copy into a bug report.
+
+### `error_boundary`
+
+```python
+error_boundary(
+    build,
+    *,
+    on_error=None,
+    title=None,
+    where='',
+    on_details=None,
+    fallback=None,
+    theme=None,
+)
+```
+
+Draws `build()`, or an error card when it raises, so one part of the view that fails never takes the whole window down (like React's error boundaries). `on_error(info)` is told about the error each time the part is drawn and fails, so report it once (compare `info.traceback`).
+
+| Parameter | Description |
+| --- | --- |
+| `build` | A function that returns the part's widget. |
+| `on_error` | Receives the `ui.ErrorInfo`. |
+| `title` | Heading of the card (and the error's `where`). |
+| `where` | What the part is, for the report. |
+| `on_details` | Adds a Details button; receives the `ui.ErrorInfo` (open a `ui.error_dialog`). |
+| `fallback` | Your own widget for the error: `fallback(info)`. |
+| `theme` | Theme override. |
+
+```python
+sidebar = ui.error_boundary(lambda: self.sidebar(), on_error=self.report, title="Sidebar",
+                            on_details=self.show_error)
+```
+
+### `error_card`
+
+```python
+error_card(info, *, title=None, on_details=None, actions=(), theme=None)
+```
+
+The card `ui.error_boundary` draws in place of what failed: the error, where it comes from and a Copy error button (and Details with `on_details`).
+
+| Parameter | Description |
+| --- | --- |
+| `info` | A `ui.ErrorInfo`. |
+| `title` | Heading. |
+| `on_details` | Adds a Details button. |
+| `actions` | More buttons after them. |
+| `theme` | Theme override. |
+
+### `error_dialog`
+
+```python
+error_dialog(
+    info,
+    on_close,
+    *,
+    title=None,
+    on_go_to=None,
+    go_to_label=None,
+    on_logs=None,
+    more=0,
+    width=680,
+    theme=None,
+)
+```
+
+A dialog with an error: its message, where it happened, the file and line it comes from and the traceback in a read-only editor (select and copy any part), with buttons to copy everything, go to the origin, see it among the logs and close. Show it with `ui.dialog_layer` or `ui.layer`.
+
+| Parameter | Description |
+| --- | --- |
+| `info` | A `ui.ErrorInfo`. |
+| `on_close` | Close button and Escape. |
+| `title` | Heading ("Something went wrong"). |
+| `on_go_to` | Adds the go-to button (open the file at the line). |
+| `go_to_label` | Its text ("Go to source"). |
+| `on_logs` | Adds a Show in Logs button. |
+| `more` | How many other errors came after it (a line says so). |
+| `width` | Width in pixels or a modal size. |
+| `theme` | Theme override. |
+
+```python
+dialog = ui.error_dialog(self.error, self.close_error, on_go_to=self.open_origin) if self.error else None
+return ui.dialog_layer(self.main_view(), dialog, on_dismiss=self.close_error)
+```
 
 ### `shortcuts`
 
@@ -1146,32 +1387,6 @@ An About box: icon, name, version, a description, a few details and link buttons
 | `details` | `(label, value)` rows. |
 | `links` | `(label, on_press)` buttons. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
-
-### `reference_browser`
-
-```python
-reference_browser(
-    browser,
-    *,
-    on_open_url=None,
-    sidebar_width=270,
-    width='fill',
-    height='fill',
-    theme=None,
-)
-```
-
-The built-in reference, like Godot's: a searchable class list next to the page that is open.
-
-`browser` is a `pyzed.reference.Browser` (keep it in your app's state); clicking entries,
-links and the back/forward buttons changes it. `on_open_url(url)` gets the links that leave
-the reference (the website, GitHub...):
-
-```python
-self.help = reference.Browser("pyzed.ui.button")
-...
-ui.reference_browser(self.help, on_open_url=open_in_browser)
-```
 
 ## Data and feedback
 
@@ -2490,6 +2705,7 @@ editor(
     font=None,
     keymap=None,
     scrollbar=True,
+    readonly=False,
     theme=None,
 )
 ```
@@ -2532,6 +2748,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `font` | Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat's message box. |
 | `keymap` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `False` hides the scrollbars. |
+| `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `language_token`
@@ -3247,3 +3464,31 @@ The bare grid of icons, virtualized: only the rows in view are built, so thousan
 | `height` | Height of the grid. |
 | `id` | Id of the scrollable, for `Command.scroll_to`. |
 | `theme` | Theme. |
+
+## Console and help
+
+### `reference_browser`
+
+```python
+reference_browser(
+    browser,
+    *,
+    on_open_url=None,
+    sidebar_width=270,
+    width='fill',
+    height='fill',
+    theme=None,
+)
+```
+
+The built-in reference, like Godot's: a searchable class list next to the page that is open.
+
+`browser` is a `pyzed.reference.Browser` (keep it in your app's state); clicking entries,
+links and the back/forward buttons changes it. `on_open_url(url)` gets the links that leave
+the reference (the website, GitHub...):
+
+```python
+self.help = reference.Browser("pyzed.ui.button")
+...
+ui.reference_browser(self.help, on_open_url=open_in_browser)
+```

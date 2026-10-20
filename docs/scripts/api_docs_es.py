@@ -446,6 +446,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "selection_highlight": "Resalta las demás apariciones del texto seleccionado.",
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción).',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
+                        "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
                     },
                 },
             }),
@@ -839,6 +840,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "selection_highlight": "Resalta las demás apariciones del texto seleccionado (Ctrl+D añade la siguiente como cursor).",
                         "keymap": 'Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`.',
                         "scrollbar": '`False` oculta las barras de desplazamiento.',
+                        "readonly": '`True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback).',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -1739,9 +1741,9 @@ _section("app", "Idiomas", {
     "pyzed.i18n.has": {"desc": "Si `key` tiene texto en el idioma o sus respaldos.", "params": {"key": "Clave con puntos.", "language": "Idioma a consultar (por defecto, el actual)."}},
 })
 
-_section("ui", "Consola y ayuda", {
+_section("ui", "Consola, errores y ayuda", {
     "pyzed.ui.Log": {
-        "desc": "Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.",
+        "desc": "Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo (`text(ids)` solo esas líneas). `write` también acepta el `source` de la línea, su `detail` (un traceback) y su `origin` (`(ruta, línea)`) y devuelve la entrada; `find(id)` busca una.",
         "params": {"limit": "Máximo de entradas guardadas.", "on_write": "Se llama tras cada escritura (desde cualquier hilo)."},
         "example": """
             log = ui.Log()
@@ -1750,14 +1752,66 @@ _section("ui", "Consola y ayuda", {
             ui.console(log.entries, on_clear=log.clear)
         """,
     },
-    "pyzed.ui.LogEntry": {"desc": "Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).", "params": {"level": "Nivel.", "text": "La línea.", "time": "Cuándo se escribió (`time.time()`).", "count": "Líneas idénticas seguidas."}},
-    "pyzed.ui.LOG_LEVELS": {"desc": "Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error."},
+    "pyzed.ui.LogEntry": {"desc": "Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas), `source`, `detail`, `origin`, su número `id`, `clock` (`HH:MM:SS`) y `line()` (la entrada como texto).", "params": {"level": "Nivel.", "text": "La línea.", "time": "Cuándo se escribió (`time.time()`).", "count": "Líneas idénticas seguidas.", "source": "De dónde viene (`\"project\"`, `\"agent\"`...); `ui.console` puede mostrarlo y filtrarlo.", "detail": "Más texto que se ve bajo la línea mientras está seleccionada (un traceback).", "origin": "`(ruta, línea)` del código al que se refiere.", "id": "Su número en el log (lo que guarda un `ui.LogSelection`)."}},
+    "pyzed.ui.LogSelection": {
+        "desc": "Las líneas seleccionadas de un `ui.console`, como en una lista de archivos: un clic selecciona una línea, Shift+clic un rango desde la última pulsada y Ctrl+clic (Cmd en macOS) añade o quita una. Guarda una en tu app y pásala a `ui.console(selection=...)`; `select(ids)` selecciona justo esas (Ctrl+A), `clear()` ninguna, `keep(entries)` olvida las líneas que ya no están e `ids` son los `id` de las seleccionadas para `log.text(ids)`.",
+        "example": """
+            self.selection = ui.LogSelection()
+            ...
+            ui.console(self.log.entries, selection=self.selection, on_context=self.abrir_menu)
+            # Ctrl+C en on_key:
+            return pz.Command.copy(self.log.text(self.selection.ids))
+        """,
+    },
+    "pyzed.ui.LOG_LEVELS": {"desc": "Los niveles que colorea `ui.console`, en el orden de sus filtros: debug, info, event, stdout, stderr, warning, error."},
     "pyzed.ui.console": {
         "desc": "Una vista de registro como la consola de las herramientas de desarrollo del navegador: filtro, un botón por nivel con su cuenta, copiar y limpiar, y las entradas en monoespaciada, siempre desplazada a la más nueva.",
         "params": {"entries": "Elementos `ui.LogEntry` (`log.entries`).", "query": "Texto del filtro.", "on_query": "Recibe cada edición del filtro.",
                    "hidden": "Niveles ocultos.", "on_toggle_level": "Se llama con el nivel del botón pulsado.",
                    "on_clear": "Añade el botón Limpiar.", "on_copy": "Añade el botón Copiar.", "actions": "Widgets extra al final de la barra.",
-                   "font_size": "Tamaño de las entradas.", "id": "Id del scrollable."},
+                   "font_size": "Tamaño de las entradas.", "id": "Id del scrollable.",
+                   "selection": "Un `ui.LogSelection`: las líneas se pueden seleccionar con el ratón y una línea seleccionada con `detail` lo muestra debajo.",
+                   "on_context": "Se llama con la línea del clic derecho (`None` bajo las líneas): abre un menú ahí (copiar, ir al origen, limpiar...).",
+                   "on_open": "Se llama con la línea del doble clic.", "sources": "Pares `(valor, etiqueta)`: añade un desplegable que muestra las líneas de un `source`.",
+                   "source": "El origen que se muestra (`None` para todos).", "on_source": "Recibe el origen elegido en el desplegable (`None` para todos).",
+                   "show_source": "Etiqueta cada línea con su origen.", "placeholder": "Texto del filtro vacío.", "empty": "Lo que se ve mientras no hay líneas."},
+    },
+    "pyzed.ui.ErrorInfo": {
+        "desc": "Un error tal como lo muestran `ui.error_card` y `ui.error_dialog`: `kind` (el tipo de la excepción), `message`, el `traceback` completo, el `origin` `(ruta, línea)` del que viene (el último frame fuera de la librería estándar, los paquetes instalados y Pyzed), `where` pasó y `time`. `ErrorInfo.from_exception(err, where=...)` crea uno (`prefer=` elige qué frames pueden ser el origen); `ErrorInfo.current()` describe la excepción que se está manejando. `summary` es `Tipo: mensaje`, `location` es `archivo.py:12` y `report()` es todo como texto para un informe de error.",
+        "params": {"kind": "El nombre del tipo de la excepción.", "message": "Su mensaje.", "traceback": "El traceback completo, como lo imprime Python.",
+                   "origin": "`(ruta, línea)` del código del que viene, o `None`.", "where": "Qué se estaba ejecutando.", "time": "Cuándo pasó (`time.time()`)."},
+        "example": """
+            try:
+                guardar(datos)
+            except Exception as err:
+                self.error = ui.ErrorInfo.from_exception(err, where="Guardar")
+        """,
+    },
+    "pyzed.ui.error_boundary": {
+        "desc": "Dibuja `build()`, o una tarjeta de error si falla, para que una parte de la vista que falla nunca tumbe la ventana entera (como los error boundaries de React). `on_error(info)` se entera del error cada vez que la parte se dibuja y falla, así que regístralo una sola vez (compara `info.traceback`).",
+        "params": {"build": "Una función que devuelve el widget de la parte.", "on_error": "Recibe el `ui.ErrorInfo`.",
+                   "title": "Título de la tarjeta (y el `where` del error).", "where": "Qué es la parte, para el informe.",
+                   "on_details": "Añade el botón Detalles; recibe el `ui.ErrorInfo` (abre un `ui.error_dialog`).",
+                   "fallback": "Tu propio widget para el error: `fallback(info)`.", "theme": "Tema a usar."},
+        "example": """
+            lateral = ui.error_boundary(lambda: self.lateral(), on_error=self.registrar, title="Lateral",
+                                        on_details=self.ver_error)
+        """,
+    },
+    "pyzed.ui.error_card": {
+        "desc": "La tarjeta que dibuja `ui.error_boundary` en lugar de lo que falló: el error, de dónde viene y el botón Copiar el error (y Detalles con `on_details`).",
+        "params": {"info": "Un `ui.ErrorInfo`.", "title": "Título.", "on_details": "Añade el botón Detalles.", "actions": "Más botones tras ellos.", "theme": "Tema a usar."},
+    },
+    "pyzed.ui.error_dialog": {
+        "desc": "Un diálogo con un error: su mensaje, dónde pasó, el archivo y la línea de los que viene y el traceback en un editor de solo lectura (selecciona y copia cualquier parte), con botones para copiarlo todo, ir al origen, verlo en los logs y cerrar. Muéstralo con `ui.dialog_layer` o `ui.layer`.",
+        "params": {"info": "Un `ui.ErrorInfo`.", "on_close": "Botón Cerrar y Escape.", "title": "Título (\"Algo salió mal\").",
+                   "on_go_to": "Añade el botón de ir al origen (abre el archivo en la línea).", "go_to_label": "Su texto (\"Ir al origen\").",
+                   "on_logs": "Añade el botón Ver en Logs.", "more": "Cuántos errores más llegaron después (una línea lo dice).",
+                   "width": "Ancho en píxeles o un tamaño de modal.", "theme": "Tema a usar."},
+        "example": """
+            dialogo = ui.error_dialog(self.error, self.cerrar_error, on_go_to=self.abrir_origen) if self.error else None
+            return ui.dialog_layer(self.vista_principal(), dialogo, on_dismiss=self.cerrar_error)
+        """,
     },
     "pyzed.ui.shortcuts": {
         "desc": "Una lista de atajos de teclado agrupada y con búsqueda (para un diálogo de atajos).",
@@ -2000,7 +2054,7 @@ _section("app", "Referencia integrada", {
     "pyzed.reference.display_name": _d('`"pyzed.text"` -> `"pz.text"`, `"pyzed.ui.button"` -> `"ui.button"`.'),
     "pyzed.reference.summary": _d("La primera frase de un texto Markdown, sin formato (para listas y resultados de búsqueda)."),
 })
-_section("ui", "Consola y ayuda", {
+_section("ui", "Consola, errores y ayuda", {
     "pyzed.ui.reference_browser": _d("""
         La referencia integrada, como la de Godot: una lista de clases con búsqueda junto a la página abierta.
 
@@ -2448,10 +2502,21 @@ MEMBERS = {
     "pyzed.Paint.resolve": "`(color, gradient)`: lo que dibuja un contenedor (uno de los dos es `None`).",
     "pyzed.Paint.to_dict": "Devuelve la pintura como datos listos para JSON: `fill`, `opacity` y `mask` cuando la hay.",
     # pyzed.ui
-    "pyzed.ui.Log.write": "Añade una línea con nivel `level` y llama a `on_write`.",
+    "pyzed.ui.Log.write": "Añade una línea con nivel `level` (de `source`, con `detail` y `origin`), llama a `on_write` y devuelve la entrada.",
+    "pyzed.ui.Log.find": "La entrada con número `entry_id`, o `None` si ya no está.",
+    "pyzed.ui.LogEntry.line": "La entrada como una línea de texto (hora, nivel y origen, y `detail` debajo).",
+    "pyzed.ui.LogSelection.click": "Selecciona tras un clic en la línea `entry_id`; `shown` son los ids de las líneas en pantalla, en orden.",
+    "pyzed.ui.LogSelection.select": "Selecciona exactamente `ids` (todas las líneas visibles, para Ctrl+A).",
+    "pyzed.ui.LogSelection.clear": "No selecciona nada.",
+    "pyzed.ui.LogSelection.keep": "Olvida las líneas seleccionadas que ya no están en `entries` (limpiadas o descartadas).",
+    "pyzed.ui.ErrorInfo.from_exception": "Describe `err`. `prefer(ruta)` elige los frames que pueden ser su origen (gana el último); por defecto, los que están fuera de la librería estándar, los paquetes instalados y Pyzed.",
+    "pyzed.ui.ErrorInfo.current": "La excepción que se está manejando (dentro de un `except`), o `None`.",
+    "pyzed.ui.ErrorInfo.summary": "`Tipo: mensaje` (solo el tipo si el mensaje está vacío).",
+    "pyzed.ui.ErrorInfo.location": "`archivo.py:12` del origen, o `\"\"`.",
+    "pyzed.ui.ErrorInfo.report": "Todo como texto plano, para pegarlo en un informe de error.",
     "pyzed.ui.Log.clear": "Quita todas las entradas.",
     "pyzed.ui.Log.counts": "Devuelve cuántas líneas hay por nivel, contando las repeticiones plegadas.",
-    "pyzed.ui.Log.text": "Todo como texto plano (para copiar).",
+    "pyzed.ui.Log.text": "Todo (o las entradas con número en `ids`) como texto plano, para copiar.",
     "pyzed.ui.Log.capturing": "Si `sys.stdout`/`sys.stderr` se están copiando al log.",
     "pyzed.ui.Log.capture": "Copia `sys.stdout`/`sys.stderr` al log (siguen llegando a la terminal).",
     "pyzed.ui.Log.release": "Deja de capturar y restaura los streams originales.",

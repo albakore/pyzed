@@ -61,6 +61,7 @@ en el teclado y en la paleta de comandos.
 | Paleta de comandos… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Ejecuta cualquier comando por su nombre. |
 | Panel izquierdo / Panel derecho / Panel inferior | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Muestra u oculta cada dock (marcado cuando se ve). |
 | Consola | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Muestra la consola y la mantiene abierta. |
+| Logs | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd> | Muestra el panel Logs: los eventos y errores del editor. |
 | Panel del agente | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Muestra u oculta el [agente de IA](/pyzed/es/editor/ai-agents/) (marcado cuando se ve). |
 | Generar un formulario con IA… / Generar un componente con IA… | | Abre el agente con el comienzo de una petición ("Crea un formulario nuevo para…") para que la completes. |
 | Mover la pestaña a una ventana nueva / Mover la pestaña a la ventana principal | | Abre el documento que está delante en una ventana propia, o lo devuelve a las pestañas de la ventana principal. Ver [Pestañas de documentos](/pyzed/es/editor/files-and-scripting/#pestañas-de-documentos). |

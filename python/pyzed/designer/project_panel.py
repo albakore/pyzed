@@ -20,6 +20,7 @@ from .. import _core, ui
 from .. import project as _project
 from ..project import Dependency, Project, Result, Tool
 from ..theme import Theme, alpha
+from . import logs as _logs
 from . import workspace as _workspace
 from .locale import tr
 
@@ -79,6 +80,10 @@ class ProjectController:
         before = self.project.root if self.project is not None else None
         self.project = project
         if (project.root if project is not None else None) != before:
+            if project is not None:
+                _logs.event("project", "Opened the project %s", project.root)
+            else:
+                _logs.event("project", "Closed the project")
             for callback in list(self._listeners):
                 callback(project)
         self.files.attach(project.root if project is not None else None)
@@ -250,6 +255,7 @@ class ProjectController:
         """Runs ``work`` off the UI thread; ``done(result)`` then runs on it."""
         if not quiet:
             self.busy = label
+        _logs.event("project", "%s…", label)
 
         async def run() -> Callable[[], Any]:
             result = await asyncio.get_running_loop().run_in_executor(None, work)
@@ -259,6 +265,10 @@ class ProjectController:
                     self.busy = None
                 if isinstance(result, Result):
                     self.last = result
+                    if result.ok:
+                        _logs.event("project", "%s: done", label)
+                    else:
+                        _logs.log("project").error("%s failed", label, extra={"detail": result.output})
                     if not result.ok:
                         self.d.notify(f"{label} failed", result.output.splitlines()[-1] if result.output else None,
                                       kind="error", seconds=5)

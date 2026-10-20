@@ -1,18 +1,22 @@
 """The debug console of the designer: what a form prints, the events it raises and its errors while it runs.
 
 Run (F5) starts a session: ``print`` output and tracebacks of the form's handlers, and
-each event they handle, go to the Console panel (and still reach the terminal). A form
+each event they handle, go to the Console panel (and still reach the terminal). Its lines can be
+selected (click, Shift+click, Ctrl+click, Ctrl+A) and copied (Ctrl+C), and a right click opens a menu
+to copy them, go to the file and line of a traceback or clear the console; see ``logs``. A form
 run with ``uv run`` (a project whose dependencies the designer lacks) has its output
 piped in from the process.
 """
 
 from __future__ import annotations
 
+import logging
 import threading
 from typing import TYPE_CHECKING, Any, Optional, Set
 
 from .. import _core, ui
 from ..theme import Theme
+from . import logs
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -26,6 +30,7 @@ class ConsoleController:
         self.log = ui.Log(on_write=self._wake)
         self.query = ""
         self.hidden: Set[str] = set()
+        self.selection = ui.LogSelection()
         self.running: Optional[str] = None  # name of the form whose output is captured
         self.pinned = False  # opened from the View menu: shown even with nothing in it
 
@@ -49,6 +54,7 @@ class ConsoleController:
         self.stop(quiet=True)
         self.running = name
         self.log.write("info", f"▶ {name} started{f' ({how})' if how else ''}")
+        logs.event("run", "Started %s%s", name, f" ({how})" if how else "")
         self.log.capture()
 
     def stop(self, *, quiet: bool = False) -> None:
@@ -58,18 +64,28 @@ class ConsoleController:
         self.log.release()
         if not quiet:
             self.log.write("info", f"■ {self.running} stopped")
+        logs.event("run", "Stopped %s", self.running)
         self.running = None
 
     def event(self, level: str, text: str) -> None:
         """Where the running form reports events and handler errors (``FormRuntime.log``)."""
         if level == "event" and not self.d.prefs.log_events:
             return
-        self.log.write(level, text)
+        origin = logs.origin_in(text) if level == "error" else None
+        self.log.write(level, text, origin=origin)
+        if level == "error":  # the Logs panel keeps the errors of the running form too
+            head, _, rest = text.partition("\n")
+            logs.log("run").error(head, extra={"origin": origin, "detail": rest})
+        else:
+            logs.log("run").log(logs.EVENT if level == "event" else logging.INFO, text)
 
     def pipe(self, process: Any) -> None:
         """Reads a ``uv run`` process's output into the log."""
         if getattr(process, "stdout", None) is not None:
-            self.log.pipe(process.stdout, "auto", on_end=lambda: self.log.write("info", "■ process ended"))
+            def ended() -> None:
+                self.log.write("info", "■ process ended")
+                logs.event("run", "The process ended (exit code %s)", process.poll())
+            self.log.pipe(process.stdout, "auto", on_end=ended)
 
     # -- toolbar --------------------------------------------------------------------
     def set_query(self, text: str) -> None:
@@ -83,6 +99,7 @@ class ConsoleController:
     def clear(self) -> None:
         """Empties the console's log."""
         self.log.clear()
+        self.selection.clear()
 
     def copy(self) -> Any:
         """Returns the command that copies the whole log, as text, to the clipboard."""
@@ -110,6 +127,9 @@ def view(d: "Designer", t: Theme) -> Any:
         ui.icon_button("square", d.stop_form, size="sm", tooltip="Stop (Shift+F5)", disabled=not running, theme=t),
         ui.icon_button("play", d.run_form, size="sm", tooltip="Run (F5)", theme=t),
     ]
+    c.selection.keep(c.log.entries)
     return ui.console(c.log.entries, query=c.query, on_query=c.set_query, hidden=c.hidden,
                       on_toggle_level=c.toggle_level, on_clear=c.clear, on_copy=c.copy, actions=actions,
+                      selection=c.selection, on_context=lambda e: d.logs.open_menu("console", e),
+                      on_open=lambda e: d.logs.go_to(e.origin) if e.origin else None,
                       id="designer-console", theme=t)

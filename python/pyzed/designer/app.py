@@ -11,6 +11,7 @@ new window with all its logic.
 from __future__ import annotations
 
 import ast
+import logging
 import os
 import re
 import sys
@@ -35,6 +36,7 @@ from . import files as _files
 from . import layout as _layout
 from . import new as _new
 from .console import ConsoleController
+from . import logs as _logs
 from . import locale as _locale
 from .locale import tr
 from .code_panel import CodeAssist
@@ -173,6 +175,8 @@ class Designer(App):
         self.key_prefix: Optional[str] = None
         # preferences and view options
         self.prefs = preferences.load()
+        # the Logs panel, the error dialog and the error boundaries (first: everything after may log)
+        self.logs = _logs.LogCenter(self)
         # Pyzed's own title bar and window buttons, or the system's frame (applies when the window opens)
         self.frame = "custom" if self.prefs.window_frame else None
         self.preview_frame: Optional[str] = self.prefs.preview_frame or None
@@ -262,13 +266,20 @@ class Designer(App):
         return f"{'● ' if self.doc.dirty else ''}{self.doc.display_name} — Pyzed Design"
 
     # -- messages -------------------------------------------------------------
-    def notify(self, title: str, message: Optional[str] = None, kind: str = "info", seconds: float = 3.0) -> None:
-        """Shows a toast for ``seconds`` (``kind`` is "info", "success", "warning" or "error").
+    def notify(self, title: str, message: Optional[str] = None, kind: str = "info", seconds: float = 3.0, *,
+               log: bool = True) -> None:
+        """Shows a toast for ``seconds`` (``kind`` is "info", "success", "warning" or "error") and, with ``log``,
+        writes it in the Logs panel.
 
         Only the four most recent toasts are kept.
         """
         self.toasts.append(Toast(title, message, kind, time.monotonic() + seconds))
         del self.toasts[:-4]
+        if not log:
+            return
+        # every message shown is also in the Logs panel (errors and warnings with their level)
+        level = {"error": logging.ERROR, "warning": logging.WARNING}.get(kind, logging.INFO)
+        _logs.log("designer").log(level, "%s%s", title, f": {message}" if message else "")
 
     def _expire_toasts(self) -> None:
         now = time.monotonic()
@@ -1151,6 +1162,9 @@ class Designer(App):
         """Shows the panel ``panel`` in its dock or window and saves the layout (the console stays pinned open)."""
         if panel == "console":
             self.console.pinned = True
+        if panel == "logs":
+            self.logs.pinned = True
+        _logs.log("layout").debug("Showed the %s panel", panel)
         shown = self.dock_windows.reveal(panel)
         self.layout.menu = None
         self._save_layout()
@@ -1166,6 +1180,7 @@ class Designer(App):
 
     def move_panel(self, panel: str, dock: str) -> Any:
         """Moves the panel ``panel`` to the dock ``dock`` (or a panel window) and saves the layout."""
+        _logs.event("layout", "Moved the %s panel to %s", panel, dock)
         return self.dock_windows.move_to(panel, dock)
 
     def toggle_dock(self, dock: str) -> None:
@@ -1241,6 +1256,7 @@ class Designer(App):
         setattr(self.prefs, key, value)
         if key in ("show_grid", "snap", "smart_guides", "show_hidden"):
             setattr(self, key, value)
+        _logs.event("designer", "Setting %s = %r", key, value)
         preferences.save(self.prefs)
 
     def toggle_pref(self, key: str) -> None:
@@ -1352,7 +1368,7 @@ class Designer(App):
         when the pointer comes back to its panel)."""
         if panel == "project" and self.focus == "files":
             return
-        self.focus = "panel"
+        self.focus = panel if panel in ("console", "logs") else "panel"  # their lines take Ctrl+C and Ctrl+A
 
     def focus_code(self) -> None:
         """Gives the keyboard to the code editor."""
@@ -1913,6 +1929,7 @@ class Designer(App):
         try:
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
+            _logs.log("document").warning("Could not open %s: %s", path, err)
             self.notify("Could not open the form", str(err), kind="error", seconds=5)
             return
         _binding.load_texts(path)  # the form's own translations, for @key texts and Preview language
@@ -1921,6 +1938,7 @@ class Designer(App):
         self._selection_changed()
         self.prefs.remember(path)
         preferences.save(self.prefs)
+        _logs.event("document", "Opened %s", path)
         self.notify(f"Opened {path.name}")
 
     def save(self) -> None:
@@ -1940,6 +1958,7 @@ class Designer(App):
             self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
             return
         path = self.doc.save()
+        _logs.event("document", "Saved %s", path)
         self.notify(f"Saved {path.name}", kind="success", seconds=2)
         self.projects.files.refresh()  # a new file, or new git colors, in the Project tab
         if self.preview is not None and self.preview.is_open:
@@ -1975,6 +1994,8 @@ class Designer(App):
 
     def close_dialog(self) -> None:
         """Closes the dialog and drops the action waiting on it."""
+        if self.dialog == "error":
+            self.logs.close_error()
         self.dialog = None
         self.pending = None
 
@@ -2135,6 +2156,10 @@ class Designer(App):
         if km.is_prefix(keys, [c for c in contexts if c != "Editor"]):
             self.key_prefix = keys
             return None
+        if self.focus in ("console", "logs") and not self.dialog and not self.app_menu:
+            handled, result = self.logs.on_key(self.focus, combo)
+            if handled:
+                return result
         code = self.focus == "code" and (self.editing is not None or self.buffers.current) and not self.dialog
         if code:  # the completion list, find bar and go to line take their keys first
             handled, result = self.assist.on_key(combo)
@@ -2171,6 +2196,8 @@ class Designer(App):
                 return None
             if self.menu:
                 return self.close_menu()
+            if self.logs.menu:
+                return self.logs.close_menu()
             if self.drag:
                 return self.cancel_drag()
             self.tool = None
@@ -2237,6 +2264,36 @@ class Designer(App):
 
     # -- view -------------------------------------------------------------------
     def view(self):
+        """The whole window, or, if building it fails, a plain view with the error (never a crash)."""
+        t = self.theme_obj
+        try:
+            return self._view()
+        except Exception as err:  # noqa: BLE001 - the last boundary: the window must stay usable
+            info = ui.ErrorInfo.from_exception(err, where=tr("the window"))
+            self.logs.report(info, show=False)
+            self.dialog = None  # a dialog may be what fails
+            self.menu = self.app_menu = self.logs.menu = None
+            return self.fallback_view(info, t)
+
+    def fallback_view(self, info: Any, t) -> Any:
+        """What the window shows when it cannot be drawn: the error and ways out of it."""
+        card = ui.error_card(info, title=tr("Pyzed Design could not draw the window"), theme=t, actions=[
+            ui.button(tr("Reset layout"), self.reset_layout, icon="layout-dashboard", size="sm", variant="ghost",
+                      theme=t),
+            ui.button(tr("Show the error…"), lambda: self.logs.show_error(info), icon="scan-text", size="sm",
+                      variant="ghost", theme=t),
+        ])
+        body = _core.container(_core.container(card, max_width=720), width="fill", height="fill", center=True,
+                               bg=t.background)
+        try:
+            body = ui.layer(body, self.safe_dialog_view(t), on_dismiss=self.close_dialog)
+            if self.__pyzed_frame__() is not None:  # keep a title bar to move and close the window
+                body = ui.window_frame(body, height=TITLE_HEIGHT, resize_edges=False, theme=t)
+        except Exception:  # noqa: BLE001
+            pass
+        return body
+
+    def _view(self):
         """Builds the whole window: title bar, docks around the tabs, toolbar and surface, the status bar,
         and the menus, popovers, toasts and dialog over them.
         """
@@ -2271,6 +2328,10 @@ class Designer(App):
         return body
 
     def center_view(self, pane: Pane, t) -> Any:
+        """``_center_view`` through an error boundary: a canvas that fails to draw shows the error instead."""
+        return self.logs.boundary(lambda: self._center_view(pane, t), tr("The canvas"), t)
+
+    def _center_view(self, pane: Pane, t) -> Any:
         """What sits under the tabs of ``pane``: its document's toolbar and canvas (or, in the main window,
         the Reference or What's new tab)."""
         main = pane is self.panes.main
@@ -2308,6 +2369,9 @@ class Designer(App):
         if here and self.menu is not None:
             menu, mx, my = self.context_menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.close_menu)
+        if here and self.logs.menu is not None:  # the line menu of the Console and Logs panels
+            menu, mx, my = self.logs.menu_at(t)
+            body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.logs.close_menu)
         # a press anywhere marks this window as the one in use (the top layer sees it first, keeps nothing)
         body = _core.stack([body, _core.space(width="fill", height="fill").on(mouse_down=lambda: self.panes.used(pane))],
                            width="fill", height="fill")
@@ -2327,8 +2391,16 @@ class Designer(App):
             import traceback
 
             traceback.print_exc()
-            self.dialog = None
-            self.notify(tr("Could not show the dialog"), f"{type(err).__name__}: {err}", kind="error", seconds=6)
+            failed, self.dialog = self.dialog, None
+            info = ui.ErrorInfo.from_exception(err, where=tr("the {name} dialog", name=failed))
+            self.logs.report(info, show=False)
+            if failed != "error":  # the error dialog itself failing must not loop
+                self.logs.show_error(info)
+                try:
+                    return self.dialog_view(t)
+                except Exception:  # noqa: BLE001
+                    self.dialog = None
+            self.notify(tr("Could not show the dialog"), info.summary, kind="error", seconds=6, log=False)
             return None
 
     @property
@@ -2518,14 +2590,30 @@ class Designer(App):
         return _core.container(tools, padding=(0, spacing.GUTTER - 4), height=36, width="fill", align_y="center",
                                bg=t.editor)
 
+    def logs_status_item(self, t) -> Any:
+        """The errors and warnings logged so far, in the status bar (a click opens the Logs panel); ``None``
+        while there are none."""
+        errors, warnings = _logs.summary(self.logs.log.entries)
+        if not errors and not warnings:
+            return None
+        tip = tr("Errors and warnings: open the Logs panel")
+        return _core.row([
+            ui.status_item(str(errors), self.logs.show_panel, icon="circle-x", icon_color="error", tooltip=tip, theme=t)
+            if errors else None,
+            ui.status_item(str(warnings), self.logs.show_panel, icon="triangle-alert", icon_color="warning",
+                           tooltip=tip, theme=t) if warnings else None,
+        ], spacing=2, align="center")
+
     def status_bar(self, t) -> Any:
         """Returns the status bar: pointer position, selection, tool hint, control count, grid and snap.
 
         While editing code it also shows the cursor position and the language servers.
         """
         doc = self.doc
+        problems = self.logs_status_item(t)
         if shader_editor.is_shader(self):
-            return ui.status_bar(shader_editor.status_items(self, t), list(self.updates.status_items(t)), theme=t)
+            return ui.status_bar([*shader_editor.status_items(self, t), problems], list(self.updates.status_items(t)),
+                                 theme=t)
         x, y = self.pointer
         primary = doc.primary
         if len(doc.selection) > 1:
@@ -2541,6 +2629,7 @@ class Designer(App):
             ui.status_item(info, icon="square-dashed"),
             ui.status_item(tr("Placing {tool}: click or drag on the form", tool=tool), icon="plus",
                            color="accent") if tool else None,
+            problems,
         ]
         end = [
             ui.status_item(self.preview_theme, lambda: self.open_preview_picker("theme"), icon="palette",
@@ -2566,6 +2655,8 @@ class Designer(App):
 
     def dialog_view(self, t) -> Any:
         """Returns the widget of the open dialog, or ``None`` when no dialog is open."""
+        if self.dialog == "error":
+            return _logs.error_dialog(self, t)
         if self.dialog and self.dialog.split(":", 1)[0] == "welcome":
             return _welcome.dialog(self, t)
         if self.dialog and self.dialog.startswith("project:"):
@@ -2630,9 +2721,12 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     if telemetry.active:
         designer.view = telemetry.wrap("render", designer.view)  # type: ignore[method-assign]
     telemetry.session_started(started)
+    designer.logs.install(file=designer.prefs.log_file)  # catches the errors of callbacks and threads
     try:
         designer.run()
     finally:
+        _logs.event("designer", "Pyzed Design closed")
+        designer.logs.uninstall()
         telemetry.session_ended()
     if designer.updates.restart_pending:
         # The update swaps the app once this process is gone: a background task still running (a uv

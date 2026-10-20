@@ -168,6 +168,8 @@ pub struct EditorProps {
     pub keymap: Vec<crate::editor::keymap::KeyBinding>,
     /// Show the scrollbars.
     pub scrollbar: bool,
+    /// The text can be selected and copied but not changed.
+    pub readonly: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1383,6 +1385,8 @@ pub fn progress_bar(
 ///
 /// Editors are *uncontrolled*: `text` is only the initial value for a given `id`.
 /// Use `Command.set_editor_text` to replace the contents later.
+///
+/// With `readonly=True` the text can be selected and copied but not changed.
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,
@@ -1392,7 +1396,7 @@ pub fn progress_bar(
     tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
     cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
-    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true))]
+    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1442,6 +1446,7 @@ pub fn code_editor(
     selection_highlight: bool,
     keymap: Option<Bound<'_, PyDict>>,
     scrollbar: bool,
+    readonly: bool,
 ) -> PyResult<Py<Widget>> {
     let shape = crate::editor_widgets::CaretShape::parse(cursor_shape).ok_or_else(|| {
         pyo3::exceptions::PyValueError::new_err(format!(
@@ -1550,6 +1555,7 @@ pub fn code_editor(
             selection_highlight,
             keymap: bindings,
             scrollbar,
+            readonly,
             on_change: PyMsg::maybe(&on_change),
             on_cursor: PyMsg::maybe(&on_cursor),
         })),

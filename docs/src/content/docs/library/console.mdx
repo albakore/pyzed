@@ -17,7 +17,7 @@ import Variant from '../../../components/library/Variant.astro';
 A list of messages from the app (info, warnings, errors) that you can filter and copy.
 :::
 
-`ui.Log` collects entries (thread-safe, capped at `limit`, repeated lines folded) and can capture `print` and tracebacks. `ui.console` shows them like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear. Levels are `info`, `event`, `stdout`, `stderr`, `warning` and `error` (`ui.LOG_LEVELS`).
+`ui.Log` collects entries (thread-safe, capped at `limit`, repeated lines folded) and can capture `print` and tracebacks. `ui.console` shows them like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear. Levels are `debug`, `info`, `event`, `stdout`, `stderr`, `warning` and `error` (`ui.LOG_LEVELS`). With a `ui.LogSelection` the lines can be selected (click, Shift+click, Ctrl+click) and a selected line shows its `detail` (a traceback); `on_context` opens your menu on right click, and `sources` adds a dropdown to show the lines of one source.
 
 `ui.console` · Category: [Code and tools](/pyzed/library/#code-and-tools) · [Full reference →](/pyzed/reference/ui/#console)
 
@@ -121,6 +121,15 @@ console(
     on_clear=None,
     on_copy=None,
     actions=(),
+    selection=None,
+    on_context=None,
+    on_open=None,
+    sources=(),
+    source=None,
+    on_source=None,
+    show_source=False,
+    placeholder=None,
+    empty=None,
     font_size=12.5,
     id=None,
     theme=None,
@@ -139,6 +148,15 @@ A log view like a browser's dev tools console: a filter box, one toggle per leve
 | `on_clear` | `None` | Adds a Clear button. |
 | `on_copy` | `None` | Adds a Copy button. |
 | `actions` | `()` | Extra widgets at the end of the toolbar. |
+| `selection` | `None` | A `ui.LogSelection`: the lines can be selected with the mouse, and a selected line with `detail` shows it below. |
+| `on_context` | `None` | Called with the line right-clicked (`None` under the lines): open a menu there (copy, go to source, clear...). |
+| `on_open` | `None` | Called with the line double-clicked. |
+| `sources` | `()` | `(value, label)` pairs: adds a dropdown that shows the lines of one `source`. |
+| `source` | `None` | The source shown (`None` for all). |
+| `on_source` | `None` | Receives the source picked in the dropdown (`None` for all). |
+| `show_source` | `False` | Tags each line with its source. |
+| `placeholder` | `None` | Text of the empty filter box. |
+| `empty` | `None` | What shows while there are no lines. |
 | `font_size` | `12.5` | Size of the entries. |
 | `id` | `None` | Scrollable id. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
@@ -151,7 +169,7 @@ A log view like a browser's dev tools console: a filter box, one toggle per leve
 class Log
 ```
 
-The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.
+The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying (`text(ids)` only those lines). `write` also takes the line's `source`, `detail` (a traceback) and `origin` (`(path, line)`) and returns the entry; `find(id)` looks one up.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -164,10 +182,10 @@ The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lin
 
 ```python
 @dataclass
-class LogEntry(level, text, time=time.time(), count=1)
+class LogEntry(level, text, time=time.time(), count=1, source='', detail='', origin=None, id=0)
 ```
 
-One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).
+One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row), `source`, `detail`, `origin`, its number `id`, `clock` (`HH:MM:SS`) and `line()` (the entry as plain text).
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -175,12 +193,26 @@ One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a r
 | `text` | *required* | The line. |
 | `time` | `time()` | When it was written (`time.time()`). |
 | `count` | `1` | Identical lines in a row. |
+| `source` | `""` | What it comes from (`"project"`, `"agent"`...); `ui.console` can show and filter it. |
+| `detail` | `""` | More text shown under the line while it is selected (a traceback). |
+| `origin` | `None` | `(path, line)` of the code it is about. |
+| `id` | `0` | Its number in the log (what a `ui.LogSelection` keeps). |
 
 [Full reference →](/pyzed/reference/ui/#logentry)
 
+### `ui.LogSelection`
+
+```python
+class LogSelection
+```
+
+The selected lines of a `ui.console`, like in a file list: a click selects one line, Shift+click a range from the last one clicked and Ctrl+click (Cmd on macOS) adds or removes one. Keep one in your app and pass it to `ui.console(selection=...)`; `select(ids)` selects exactly those (Ctrl+A), `clear()` none, `keep(entries)` forgets lines that are gone, and `ids` are the selected entries' `id`s for `log.text(ids)`.
+
+[Full reference →](/pyzed/reference/ui/#logselection)
+
 ### `ui.LOG_LEVELS`
 
-The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error.
+The levels `ui.console` colors, in the order of its filter buttons: debug, info, event, stdout, stderr, warning, error.
 
 [Full reference →](/pyzed/reference/ui/#log_levels)
 

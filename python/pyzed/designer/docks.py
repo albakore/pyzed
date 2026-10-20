@@ -1,6 +1,6 @@
 """The designer's dockable, resizable panels.
 
-Panels (toolbox and outline, project, properties, events, agent, code, console) live in four
+Panels (toolbox and outline, project, properties, events, agent, code, console, logs) live in four
 docks around the form: left, right, bottom and top, or in windows of their own. Each place shows
 one panel at a time with a tab per panel. Dragging a tab reorders it, drops it on another dock,
 or takes it out of the window (``dock_windows``); the dock menu does the same, as in Zed, and the
@@ -112,6 +112,12 @@ def _console(d: "Designer", t: Theme) -> Any:
     return console.view(d, t)
 
 
+def _logs(d: "Designer", t: Theme) -> Any:
+    from . import logs
+
+    return logs.view(d, t)
+
+
 PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("design", "Design", "component", "left", _design),
     Panel("project", "Project", "folder-tree", "left", _project),
@@ -121,6 +127,7 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
     Panel("agent", "Agent", "sparkles", "right", _agent),
     Panel("code", "Code", "code", "bottom", _code, lambda d: d.editing is not None or bool(d.buffers.items)),
     Panel("console", "Console", "terminal", "bottom", _console, lambda d: d.console.visible),
+    Panel("logs", "Logs", "scroll-text", "bottom", _logs, lambda d: d.logs.pinned),
     Panel("animation", "Animation", "clapperboard", "bottom", _animation,
           lambda d: d.timeline.open or bool(d.doc.form.animations)),
 )}
@@ -364,7 +371,9 @@ def dock_view(d: "Designer", place: str, t: Theme) -> Optional[Any]:
            ui.icon_button("x", (lambda: d.dock_windows.dock_back(place)) if window else lambda: d.toggle_dock(place),
                           size="sm", tooltip=tr("Dock everything here back") if window else tr("Hide dock"), theme=t)]
     bar = d.dock_windows.tab_bar(place, tabs, panel.id, end, t)
-    body = _core.column([bar, panel.view(d, t)], width="fill", height="fill")
+    # a panel that fails to draw shows the error in its place; the rest of the window keeps working
+    content = d.logs.boundary(lambda: panel.view(d, t), tr("The {panel} panel", panel=panel.title), t)
+    body = _core.column([bar, content], width="fill", height="fill")
     if layout.menu == place:
         body = ui.popover(body, _dock_menu(d, place, panel, t), x=6, y=TAB_HEIGHT, align_x="end",
                           on_dismiss=d.close_dock_menu)

@@ -2516,17 +2516,23 @@ add(
     slug="console",
     name=T("Console", "Consola"),
     category="code",
-    api=["pyzed.ui.console", "pyzed.ui.Log", "pyzed.ui.LogEntry", "pyzed.ui.LOG_LEVELS"],
+    api=["pyzed.ui.console", "pyzed.ui.Log", "pyzed.ui.LogEntry", "pyzed.ui.LogSelection", "pyzed.ui.LOG_LEVELS"],
     blurb=T("A dev-tools style log with levels, filter, copy and clear.", "Un registro estilo dev tools con niveles, filtro, copiar y limpiar."),
     desc=T(
         "`ui.Log` collects entries (thread-safe, capped at `limit`, repeated lines folded) and can "
         "capture `print` and tracebacks. `ui.console` shows them like a browser's dev tools console: a "
-        "filter box, one toggle per level with its count, copy and clear. Levels are `info`, `event`, "
-        "`stdout`, `stderr`, `warning` and `error` (`ui.LOG_LEVELS`).",
+        "filter box, one toggle per level with its count, copy and clear. Levels are `debug`, `info`, "
+        "`event`, `stdout`, `stderr`, `warning` and `error` (`ui.LOG_LEVELS`). With a `ui.LogSelection` "
+        "the lines can be selected (click, Shift+click, Ctrl+click) and a selected line shows its "
+        "`detail` (a traceback); `on_context` opens your menu on right click, and `sources` adds a "
+        "dropdown to show the lines of one source.",
         "`ui.Log` reúne entradas (seguro entre hilos, con un tope de `limit`, líneas repetidas agrupadas) "
         "y puede capturar `print` y las trazas de error. `ui.console` las muestra como la consola de las "
         "dev tools de un navegador: un filtro, un interruptor por nivel con su cuenta, copiar y limpiar. "
-        "Los niveles son `info`, `event`, `stdout`, `stderr`, `warning` y `error` (`ui.LOG_LEVELS`).",
+        "Los niveles son `debug`, `info`, `event`, `stdout`, `stderr`, `warning` y `error` "
+        "(`ui.LOG_LEVELS`). Con un `ui.LogSelection` las líneas se pueden seleccionar (clic, Shift+clic, "
+        "Ctrl+clic) y una línea seleccionada muestra su `detail` (un traceback); `on_context` abre tu menú "
+        "con el clic derecho y `sources` añade un desplegable para ver las líneas de un origen.",
     ),
     when=T(["For a debug panel in your app, or to show what a background job is doing."],
            ["Para un panel de depuración en tu app, o para mostrar lo que hace una tarea en segundo plano."]),
