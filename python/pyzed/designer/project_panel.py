@@ -37,6 +37,13 @@ class ProjectController:
         self.latest: Dict[str, str] = {}
         self.tools: Dict[str, Tool] = {}
         self.branch: Optional[str] = None
+        #: The linked git worktree the project is in (``None`` in the repository's main folder).
+        self.worktree: Optional[str] = None
+        #: The local branches, read when the branch menu of the title bar opens.
+        self.branches: List[str] = []
+        #: The projects opened in this window, in the order they were opened (the title bar's picker lists
+        #: them under "This window"); ``project`` is the active one.
+        self.window: List[Path] = []
         self.busy: Optional[str] = None
         self.last: Optional[Result] = None
         self.process: Optional[subprocess.Popen] = None
@@ -62,6 +69,8 @@ class ProjectController:
         self.files.attach(project.root if project is not None else None)
         if project is None:
             return None
+        if project.root not in self.window:
+            self.window.append(project.root)
         project.activate()
         _project.remember(project)
         try:
@@ -85,7 +94,13 @@ class ProjectController:
         self.project.reload()
         self.deps = self.project.dependencies()
         self.branch = self.project.git_branch()
+        self.worktree = self.project.git_worktree()
         self.files.refresh()
+
+    @property
+    def environment(self) -> _project.Environment:
+        """Where the active project (or, without one, the designer) lives and its commands run."""
+        return self.project.environment if self.project is not None else _project.environment()
 
     def _got_tools(self, found: Dict[str, Tool]) -> None:
         self.tools = found
@@ -107,7 +122,52 @@ class ProjectController:
         self.d.notify(f"Opened {project.name}", str(project.root))
         if project.main_form.exists():
             self.d._guard(lambda: self.d.open_path(project.main_form))
-        return self.load_tools()
+        return [c for c in (self.prepare(), self.load_tools()) if c is not None]
+
+    def prepare(self) -> Any:
+        """Loads the active project's environment in the background when it is not ready, like Zed does when a
+        project opens: installs uv if it is missing and creates ``.venv`` (``uv sync``) with its tools."""
+        project = self.project
+        if project is None or not project.needs_prepare():
+            return None
+        where = project.environment
+
+        def done(result: Result) -> Any:
+            if result.ok:
+                self.d.notify(tr("{name} is ready", name=project.name), where.describe(), kind="success", seconds=3)
+            return self.load_tools()
+
+        return self._task(tr("Preparing the environment"), project.prepare, done)
+
+    def switch(self, root: Path) -> Any:
+        """Makes the project at ``root`` the active one of this window (it opens if it is not open yet)."""
+        self.d.app_menu = None
+        if self.project is not None and self.project.root == root:
+            return None
+        return self.open(str(root))
+
+    def close_project(self, root: Path) -> Any:
+        """Takes the project at ``root`` out of this window; when it is the active one, the previous one opened
+        takes its place (or no project)."""
+        if root in self.window:
+            self.window.remove(root)
+        if self.project is None or self.project.root != root:
+            return None
+        if not self.window:
+            return self.attach(None)
+        return self.open(str(self.window[-1]))
+
+    def open_branches(self) -> None:
+        """Opens the branch menu of the title bar with the project's local branches."""
+        self.branches = self.project.git_branches() if self.project is not None else []
+        self.d.app_menu = None if self.d.app_menu == "branches" else "branches"
+
+    def switch_branch(self, name: str) -> Any:
+        """Checks out branch ``name`` (``git switch``) in the background; returns the task."""
+        self.d.app_menu = None
+        if name == self.branch:
+            return None
+        return self._uv(tr("Switching to {branch}", branch=name), lambda p: p.switch_branch(name))
 
     def create(self) -> Any:
         """Creates a project named ``new_name`` in ``new_folder`` with ``uv init`` in the background, then
