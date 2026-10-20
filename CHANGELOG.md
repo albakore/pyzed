@@ -16,6 +16,13 @@ stable version.
 
 ## [Unreleased]
 
+### Features
+
+- ✨ The Agent panel shows every step as it happens: an external agent's tool calls with their files, diffs and command output while they run, the call the model is still writing, and what the agent is doing and for how long.
+- ✨ Each agent's own options in the message box, like Zed: Claude Code's modes and models (and any ACP session option), remembered per agent; a **Thinking** toggle for Claude; **Always allow** is remembered and listed under **Settings → Permissions**.
+- ✨ Pyzed Design adds Pyzed's MCP server to the AI agents of the computer (Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI, Codex, VS Code, Zed) and asks to restart them.
+- ⚡ Pyzed Agent designs faster: it starts out knowing the toolbox, themes, `pz.ui` components and best practices, gets the open document with each message, and lays out a whole form with one `add_controls` call.
+
 ## [1.4.0] - 2026-10-20
 
 1.3.0 was tagged but never published: its Windows wheel build failed a test that is fixed in this version. Everything listed under 1.3.0 ships for the first time in 1.4.0.

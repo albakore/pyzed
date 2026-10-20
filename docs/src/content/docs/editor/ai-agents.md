@@ -66,14 +66,16 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 | Part | What it does |
 | --- | --- |
 | **Header** | The thread's title, **Follow the agent** (the crosshair: see [Watching the agent work](#watching-the-agent-work)), **+** (a new thread with Pyzed Agent or with any [external agent](#external-agents), plus **Add more agents…**), **History** and **⋯**: **Agent settings**, **Rules…**, **Show thinking**, **Copy thread as Markdown** and **Expand the panel** (it fills the window; pick it again to put it back in its dock). |
-| **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per tool it used: a spinner while it runs, a check when it worked, a red cross when it failed. Click a line to see the tool's input and result. |
+| **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per step, as it happens: what the agent does (**Adding controls**, **Read file**…) and what it works on (the control, the file, the command). A spinner while it runs, a check when it worked, a red cross when it failed. While the model is still writing a long call, the line shows **preparing…**; an edit shows its diff and a command its last lines while they run. Click a line to see the tool's input, its result and the whole diff. With nothing on screen yet, the panel says what the agent is doing (thinking, running a tool, waiting for your answer) and for how long. |
 | **Agent changes** | After a run that changed something: the files it touched, with the lines added and removed. **Keep** or **Reject** each one, or all of them at once; **Reject** puts the form or code file back as it was before the run. Click a file to open it. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
 | **Message box** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. While the agent works the send button becomes **Stop**. |
 | **+** | **Files, the form, its code, controls** (an @ mention), **Attach images…**, **Paste image** and **Screenshot of the form**. See [Images](#images). |
-| **Permission mode** | What the agent may do without asking (see below). |
+| **Permission mode** | What the agent may do without asking (see below). With an [external agent](#external-agents) that has modes of its own (Claude Code's **Default**, **Accept edits**, **Plan mode**…), its modes show here instead. |
 | **Model** | Every provider with its models, and the [external agents](#external-agents). A provider that is not set up shows **Connect…**, which signs in right there. Next to it, a small ring shows how full the model's context window is (`48k / 1M`); it turns yellow past 80% and red past 95%. |
 | **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
+| **Thinking** | Lets Claude think before answering (as deep as the effort says). Off, it answers sooner. Claude models only. |
 | **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
+| **Agent options** | With an external agent, the options it offers, as in Zed: its models (Claude Code's **Opus**, **Sonnet**, **Haiku**), its effort or reasoning level and anything else it lists. Pyzed remembers what you pick for the next threads with that agent. |
 
 | Permission mode | What the agent may do |
 | --- | --- |
@@ -84,8 +86,11 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 
 ![Every provider in the model picker](../../../../screenshots/designer-agent-models.png)
 
-Each message carries a short note of where you are (the open document, the selected controls, the handler in the
-code editor), so "align these" or "validate this field" refer to what you are looking at.
+Each message carries a short note of where you are (the project and its environment, the open document with its
+controls and code, the selected controls, the handler in the code editor), so "align these" or "validate this
+field" refer to what you are looking at. Pyzed Agent also starts out knowing the toolbox (every type with its
+props and events), the themes, the `pz.ui` components and Pyzed's best practices, so it builds right away instead
+of looking them up first.
 
 ### Adding context with @
 
@@ -118,7 +123,7 @@ Type <kbd>/</kbd> at the start of the message:
 | Tool | Does |
 | --- | --- |
 | `get_document` | Reads the open form or component: settings, every control with its rect, props, events and style, the selection and the code. |
-| `add_control`, `update_control`, `remove_controls` | Place, change, move into a container, rename and delete controls. Types and props are checked against the toolbox. |
+| `add_controls`, `add_control`, `update_control`, `remove_controls` | Place a whole layout in one step, or one control; change, move into a container, rename and delete controls. Types and props are checked against the toolbox. |
 | `set_form`, `select_controls` | Change the form's title, size, theme or style; select controls so you see them. |
 | `wire_event`, `set_handler`, `set_code` | Connect events and write one handler or the whole module (it must parse). |
 | `new_document`, `save_document` | Create a new form or component next to the open one and open it in a tab; save. |
@@ -133,8 +138,9 @@ Type <kbd>/</kbd> at the start of the message:
 | `mcp_<server>_<tool>` | The tools of the [MCP servers](#mcp-servers) you added. |
 
 Tools that **create or write files** ask first in the **Ask before writing** mode: a card shows **Allow**,
-**Always allow** (for the rest of the session) and **Deny**. **Bypass permissions** skips it. Changes to the open
-document never ask, since they can be undone.
+**Always allow** and **Deny**. **Always allow** is remembered: **Settings → Permissions** lists those tools, and
+**Ask again** undoes it. **Bypass permissions** skips the question. Changes to the open document never ask, since
+they can be undone.
 
 ## Images
 
@@ -288,6 +294,20 @@ keeps a plan and knows Pyzed's components and docs. Its changes show up live in 
 token only that agent receives (agents that only start local servers get a small bridge program). Its own file
 and shell tools stay its own. The plan the agent follows shows in the **Plan** card.
 
+### Pyzed's MCP in your agents
+
+When Pyzed Design starts, it looks for the AI agents installed on this computer (Claude Code, Claude Desktop,
+Cursor, Windsurf, Gemini CLI, Codex, VS Code and Zed) and adds [Pyzed's MCP server](/pyzed/guides/mcp/) to the
+ones that do not have it yet, so they know Pyzed's components, docs and checks wherever you use them. A message
+then asks you to restart them: an agent reads its MCP servers when it starts. **Restart agents** restarts the
+external agents running in Pyzed; close and open the others.
+
+**Settings → Pyzed's MCP in your agents** lists each agent with **Add** or **Remove**. Pyzed adds the server once
+to each agent: if you take it out, Pyzed leaves it out. Only the `pyzed` entry of each agent's settings changes, a
+copy of the file is kept next to it (`.pyzed-backup`), and settings files with comments are left alone (add it by
+hand there). Turn **Add it to new agents on start** off to stop it. The agents start the server with
+[uv](https://docs.astral.sh/uv/) (`uvx --from "pyzed-ui[mcp]" pyzed mcp`; Pyzed Design brings its own `uv`).
+
 ### Watching the agent work
 
 With **Follow the agent** on (the crosshair in the header, on by default), the files the agent writes open as it
@@ -346,6 +366,7 @@ requests to the provider you picked.
 | --- | --- |
 | **Default model** | The model new threads start with. |
 | **Effort** | How much the model thinks before answering (`low` … `max`). Claude only; `high` by default. |
+| **Thinking** | Lets Claude think before answering. Off, it answers sooner. Also in the message box. |
 | **Fast mode** | Faster answers at a higher price (Claude Opus 5.5 and Opus 5). Also in the message box. |
 | **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |

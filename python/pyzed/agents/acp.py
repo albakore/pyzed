@@ -174,7 +174,11 @@ def _text_of(content: Any) -> str:
         if content.get("type") == "content":
             return _text_of(content.get("content"))
         if content.get("type") == "diff":
-            return f"Edited {content.get('path', '')}"
+            old, new = str(content.get("oldText") or "").splitlines(), str(content.get("newText") or "").splitlines()
+            return f"Edited {content.get('path', '')} (+{max(len(new) - len(old), 0)} lines)" if old else \
+                f"Wrote {content.get('path', '')} ({len(new)} lines)"
+        if content.get("type") == "terminal":
+            return ""
         if content.get("type") in ("resource", "resource_link"):
             res = content.get("resource") or content
             return str(res.get("text") or res.get("uri") or "")
@@ -182,6 +186,65 @@ def _text_of(content: Any) -> str:
     if isinstance(content, list):
         return "\n".join(t for t in (_text_of(c) for c in content) if t)
     return ""
+
+
+def _describe(block: Dict[str, Any], update: Dict[str, Any]) -> None:
+    """Keeps what a tool call update tells about the call on its block: the files it works on
+    (``locations``), the edits it made (``diffs``: path, old and new text) and its terminal output."""
+    paths = [str(loc["path"]) for loc in update.get("locations") or [] if isinstance(loc, dict) and loc.get("path")]
+    if paths:
+        block["locations"] = paths[:20]
+    diffs = [{"path": str(c.get("path") or ""), "old": str(c.get("oldText") or "")[:20_000],
+              "new": str(c.get("newText") or "")[:20_000]}
+             for c in update.get("content") or [] if isinstance(c, dict) and c.get("type") == "diff"]
+    if diffs:
+        block["diffs"] = diffs[:10]
+    text = _text_of([c for c in update.get("content") or [] if isinstance(c, dict) and c.get("type") != "diff"])
+    if text:
+        block["progress"] = text[-4000:]
+
+
+def session_options(result: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The options an agent offers for its session, from ``session/new`` (or a ``configOptions`` update), in
+    one shape: ``{"id", "name", "category", "current", "via", "choices": [{"value", "name", "description"}]}``.
+    ``category`` is ACP's (``"mode"``, ``"model"``, ``"thought_level"``...); ``via`` says how it is changed:
+    ``"config"`` (session config options), ``"mode"`` (session modes) or ``"model"`` (session models)."""
+    out: List[Dict[str, Any]] = []
+    config = result.get("configOptions")
+    if isinstance(config, list) and config:
+        for item in config:
+            if not isinstance(item, dict) or item.get("type", "select") != "select" or not item.get("id"):
+                continue
+            choices: List[Dict[str, str]] = []
+            for entry in item.get("options") or []:
+                if not isinstance(entry, dict):
+                    continue
+                group = entry.get("options") if isinstance(entry.get("options"), list) else [entry]  # grouped
+                choices += [{"value": str(c.get("value")), "name": str(c.get("name") or c.get("value")),
+                             "description": str(c.get("description") or "")}
+                            for c in group if isinstance(c, dict) and c.get("value") is not None]
+            if choices:
+                out.append({"id": str(item["id"]), "name": str(item.get("name") or item["id"]),
+                            "category": str(item.get("category") or ""), "via": "config",
+                            "current": str(item.get("currentValue") or choices[0]["value"]), "choices": choices})
+        return out
+    modes = result.get("modes")
+    if isinstance(modes, dict) and modes.get("availableModes"):
+        choices = [{"value": str(m.get("id")), "name": str(m.get("name") or m.get("id")),
+                    "description": str(m.get("description") or "")}
+                   for m in modes["availableModes"] if isinstance(m, dict) and m.get("id")]
+        if choices:
+            out.append({"id": "mode", "name": "Mode", "category": "mode", "via": "mode", "choices": choices,
+                        "current": str(modes.get("currentModeId") or choices[0]["value"])})
+    models = result.get("models")
+    if isinstance(models, dict) and models.get("availableModels"):
+        choices = [{"value": str(m.get("modelId")), "name": str(m.get("name") or m.get("modelId")),
+                    "description": str(m.get("description") or "")}
+                   for m in models["availableModels"] if isinstance(m, dict) and m.get("modelId")]
+        if choices:
+            out.append({"id": "model", "name": "Model", "category": "model", "via": "model", "choices": choices,
+                        "current": str(models.get("currentModelId") or choices[0]["value"])})
+    return out
 
 
 class ACPAgent:
@@ -216,21 +279,39 @@ class ACPAgent:
         self._blocks: List[Dict[str, Any]] = []
         self._results: List[Dict[str, Any]] = []
         self._calls: Dict[str, Dict[str, Any]] = {}
+        #: The agent's own options for the session (its modes, models, effort...), as ``Option`` lists; empty
+        #: until the session opens (``start``).
+        self.options: List[Dict[str, Any]] = []
+        #: Values to pick for ``options`` when a session opens, by option id (what the user picked last time).
+        self.preferred: Dict[str, str] = dict(self.settings.agent_options.get(config.name) or {})
+        self._start_lock = threading.Lock()
 
     # -- the connection ---------------------------------------------------------------------------
     def start(self) -> None:
         """Starts the program and opens a session (done by the first ``run``). Raises ``AuthRequired`` when
         the agent wants a sign-in first."""
-        if self._rpc is not None and self._rpc.alive and self.session:
-            return
-        self._connect()
-        try:
-            self.session = self._new_session()
-        except AuthRequired:
-            raise
-        except (ACPError, mcp_client.MCPError) as err:
-            self.close()
-            raise ACPError(f"{self.config.label}: {err}") from err
+        with self._start_lock:  # the panel may open the session ahead of the first message
+            if self._rpc is not None and self._rpc.alive and self.session:
+                return
+            self._connect()
+            try:
+                self.session = self._new_session()
+            except AuthRequired:
+                raise
+            except (ACPError, mcp_client.MCPError) as err:
+                self.close()
+                raise ACPError(f"{self.config.label}: {err}") from err
+            self._apply_preferred()
+
+    def _apply_preferred(self) -> None:
+        """Picks the values of ``preferred`` the new session offers and does not have yet (never raises)."""
+        for option in list(self.options):
+            value = self.preferred.get(option["id"])
+            if value and value != option["current"] and any(c["value"] == value for c in option["choices"]):
+                try:
+                    self.set_option(option["id"], value)
+                except ACPError:
+                    continue
 
     def _connect(self) -> None:
         """Starts the program and introduces Pyzed (``initialize``), once."""
@@ -272,7 +353,32 @@ class ACPAgent:
         session = result.get("sessionId")
         if not session:
             raise ACPError(f"{self.config.label} did not open a session")
+        self.options = session_options(result)
+        if self.options:
+            self._emit(Event("options"))
         return str(session)
+
+    # -- the agent's options -----------------------------------------------------------------------
+    def set_option(self, option_id: str, value: str) -> None:
+        """Picks ``value`` for one of ``options`` (a mode, a model, the effort...), like Zed's selectors.
+        Raises ``ACPError`` when the agent refuses it."""
+        option = next((o for o in self.options if o["id"] == option_id), None)
+        if option is None or self._rpc is None or not self.session:
+            raise ACPError(f"{self.config.label} has no option {option_id!r}")
+        try:
+            if option["via"] == "config":
+                result = self._rpc.request("session/set_config_option", {
+                    "sessionId": self.session, "configId": option_id, "value": value}, timeout=60) or {}
+                if isinstance(result.get("configOptions"), list):
+                    self.options = session_options({"configOptions": result["configOptions"]})
+                    return
+            elif option["via"] == "mode":
+                self._rpc.request("session/set_mode", {"sessionId": self.session, "modeId": value}, timeout=60)
+            else:
+                self._rpc.request("session/set_model", {"sessionId": self.session, "modelId": value}, timeout=60)
+        except mcp_client.MCPError as err:
+            raise ACPError(f"{self.config.label}: {err}") from err
+        option["current"] = value
 
     def authenticate(self, method_id: str, *, timeout: float = 600) -> None:
         """Signs in with one of the agent's ``auth_methods`` (an ``"agent"`` one: the agent opens the browser
@@ -282,6 +388,7 @@ class ACPAgent:
             assert self._rpc is not None
             self._rpc.request("authenticate", {"methodId": method_id}, timeout=timeout)
             self.session = self._new_session()
+            self._apply_preferred()
         except AuthRequired:
             raise ACPError(f"{self.config.label}: the sign-in did not finish") from None
         except mcp_client.MCPError as err:
@@ -363,6 +470,12 @@ class ACPAgent:
             self._emit(Event("done"))
         return last
 
+    def live(self) -> "tuple[List[Dict[str, Any]], List[Dict[str, Any]]]":
+        """What the agent wrote and did since the last flush, still running: copies of its blocks (text and
+        tool calls, as in ``messages``) and of the results so far. The panel shows them as they happen."""
+        with self._lock:
+            return [dict(b) for b in self._blocks], [dict(r) for r in self._results]
+
     def _flush(self) -> str:
         """Adds what the agent wrote and did since the last flush to ``messages``; returns its text."""
         with self._lock:
@@ -381,7 +494,15 @@ class ACPAgent:
             return
         update = params.get("update") or {}
         kind = update.get("sessionUpdate")
-        if kind in ("agent_message_chunk", "agent_thought_chunk"):
+        if kind == "current_mode_update":
+            for option in self.options:
+                if option["via"] == "mode":
+                    option["current"] = str(update.get("currentModeId") or option["current"])
+            self._emit(Event("options"))
+        elif kind == "config_option_update" and isinstance(update.get("configOptions"), list):
+            self.options = session_options({"configOptions": update["configOptions"]})
+            self._emit(Event("options"))
+        elif kind in ("agent_message_chunk", "agent_thought_chunk"):
             text = _text_of(update.get("content"))
             if not text:
                 return
@@ -406,6 +527,7 @@ class ACPAgent:
             title = str(update.get("title") or update.get("kind") or "Tool")
             args = update.get("rawInput") if isinstance(update.get("rawInput"), dict) else {}
             block = {"type": "tool_use", "id": call_id, "name": title, "input": args, "kind": update.get("kind")}
+            _describe(block, update)
             with self._lock:
                 self._blocks.append(block)
                 self._calls[call_id] = block
@@ -421,6 +543,10 @@ class ACPAgent:
                     block["name"] = str(update["title"])
                 if block is not None and update.get("kind"):
                     block["kind"] = update["kind"]
+                if block is not None:  # the input, where it works and what it wrote often come later
+                    if isinstance(update.get("rawInput"), dict) and update["rawInput"]:
+                        block["input"] = update["rawInput"]
+                    _describe(block, update)
                 kind_ = (block or {}).get("kind")
             self._follow({**update, "kind": update.get("kind") or kind_})
             if update.get("status") in ("completed", "failed"):

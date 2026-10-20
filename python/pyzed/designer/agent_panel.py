@@ -222,6 +222,9 @@ class AgentController:
         self.view = "thread"  # "history" or "settings" (the agent settings, inside the panel like Zed's)
         self.live_text = ""
         self.live_thinking = ""
+        #: the tool the model is writing a call to (its input streams before it runs), and when the run started
+        self.live_tool = ""
+        self.started = 0.0
         #: tool call id -> "running" | "done" | "error" | "waiting"
         self.tool_status: Dict[str, str] = {}
         self.open_blocks: set = set()  # thinking / tool cards the user expanded
@@ -271,6 +274,10 @@ class AgentController:
         self.skill_url = ""
         self.skill_busy = ""
         self._jobs = 0  # background jobs whose answer is still to come
+        #: the agents of this computer Pyzed's MCP server was just added to (they need a restart to use it)
+        self.mcp_added: List[str] = []
+        self.mcp_clients_busy = ""
+        self._clients: Optional[Tuple[float, List[Tuple[Any, str]]]] = None
         import atexit
 
         atexit.register(self.shutdown)
@@ -279,6 +286,75 @@ class AgentController:
         self._agent: Optional[_agents.Agent] = None
         self._stream = stream
         self._tools: Optional[Dict[str, _agents.Tool]] = None
+
+    def on_start(self) -> None:
+        """When the designer starts: adds Pyzed's MCP server to the AI agents found on this computer that do not
+        have it yet (once each), then asks to restart them."""
+        if not self.settings.install_pyzed_mcp:
+            return
+        from ..agents import mcp_install
+
+        skip = list(self.settings.pyzed_mcp_done)
+        self._job(lambda: mcp_install.install_missing(skip), self._mcp_installed)
+
+    def _mcp_installed(self, value: Any, error: Optional[BaseException]) -> None:
+        if error is not None or not value:
+            return
+        added, _failed = value
+        if not added:
+            return
+        self.settings.pyzed_mcp_done += [c.id for c in added if c.id not in self.settings.pyzed_mcp_done]
+        self.save_settings()
+        self.mcp_added = [c.name for c in added]
+        self.d.notify(tr("Pyzed's MCP server was added to {names}", names=", ".join(self.mcp_added)),
+                      tr("Restart them so they can use it"), kind="success", seconds=8)
+
+    def mcp_clients(self) -> List[Tuple[Any, str]]:
+        """The AI agents of this computer, with whether Pyzed's MCP server is in their settings (looked up again
+        every few seconds, not on every frame)."""
+        from ..agents import mcp_install
+
+        now = time.monotonic()
+        if self._clients is None or now - self._clients[0] > 5.0:
+            self._clients = (now, [(client, mcp_install.status(client)) for client in mcp_install.detected()])
+        return self._clients[1]
+
+    def toggle_mcp_client(self, client_id: str) -> None:
+        """Adds Pyzed's MCP server to an agent of this computer, or takes it out (and leaves it out)."""
+        from ..agents import mcp_install
+
+        client = next((c for c in mcp_install.detected() if c.id == client_id), None)
+        if client is None:
+            return
+        adding = mcp_install.status(client) != "installed"
+        self.mcp_clients_busy = client_id
+        if client_id not in self.settings.pyzed_mcp_done:  # decided by hand: not touched on start again
+            self.settings.pyzed_mcp_done.append(client_id)
+            self.save_settings()
+
+        def then(_value: Any, error: Optional[BaseException]) -> None:
+            self.mcp_clients_busy = ""
+            self._clients = None
+            if error is not None:
+                self.d.notify(tr("Could not change {name}", name=client.name), str(error), kind="error", seconds=6)
+            elif adding:
+                self.mcp_added = [client.name]
+                self.d.notify(tr("Pyzed's MCP server was added to {names}", names=client.name),
+                              tr("Restart them so they can use it"), kind="success", seconds=6)
+
+        self._job(lambda: (mcp_install.install if adding else mcp_install.remove)(client), then)
+
+    def restart_agents(self) -> None:
+        """Restarts the external agents running in Pyzed (they start again with the current MCP servers), and
+        hides the prompt to restart the agents Pyzed's MCP server was added to."""
+        self.mcp_added = []
+        if self.running:
+            return
+        self.close_external_agents()
+        self.prepare_agent()
+
+    def dismiss_mcp_added(self) -> None:
+        self.mcp_added = []
 
     def shutdown(self) -> None:
         """Stops the MCP servers and external agents this designer started."""
@@ -362,7 +438,7 @@ class AgentController:
         return box.value
 
     def _confirm(self, tool: _agents.Tool, args: Dict[str, Any]) -> bool:
-        if tool.name in self.always_allow:
+        if tool.name in self.always_allow or tool.name in self.settings.allowed_tools:
             return True
         box = _Box()
         self._queue.put(("confirm", tool, args, box))
@@ -487,14 +563,18 @@ class AgentController:
             self.live_text += event.text
         elif event.kind == "thinking":
             self.live_thinking += event.text
+        elif event.kind == "tool_input":
+            self.live_tool = event.tool
         elif event.kind == "turn":
             self.live_text = ""
             self.live_thinking = ""
+            self.live_tool = ""
             used = sum(event.usage.get(k, 0) for k in ("input", "cache_read", "cache_write", "output"))
             if used:
                 self.thread.context = used
         elif event.kind == "tool_call":
             self.tool_status[event.call_id] = "running"
+            self.live_tool = ""
         elif event.kind == "tool_result":
             self.tool_status[event.call_id] = "error" if event.error else "done"
             if event.tool == "write_file" and not event.error and event.args.get("path"):
@@ -519,7 +599,7 @@ class AgentController:
             else:
                 self._notify_desktop(tr("The agent finished"), self.thread.display_title)
             self.running = False
-            self.live_text = self.live_thinking = ""
+            self.live_text = self.live_thinking = self.live_tool = ""
             self.live_plan = []
             self._agent = None
             self._keep()
@@ -681,6 +761,8 @@ class AgentController:
         self.changed = False
         self.tool_status = {}
         self.agent_auth = None
+        self.live_tool = ""
+        self.started = time.monotonic()
         model = self.thread.model or self.settings.model
         self.thread.model = model
         self.thread.project = self.thread.project or self.project_key()
@@ -779,8 +861,11 @@ class AgentController:
         pending, self.pending = self.pending, None
         if pending is None:
             return
-        if allow and always:
+        if allow and always:  # remembered, like Zed's "Always allow" (Settings → Permissions lists them)
             self.always_allow.add(pending.tool.name)
+            if pending.tool.name not in self.settings.allowed_tools:
+                self.settings.allowed_tools.append(pending.tool.name)
+                self.save_settings()
         pending.box.value = allow
         pending.box.done.set()
 
@@ -810,6 +895,7 @@ class AgentController:
         self.error = ""
         self.snapshot = []
         self.changed = False
+        self.prepare_agent()
         return _core.Command.focus(INPUT_ID)
 
     def open_thread(self, thread_id: str) -> None:
@@ -845,6 +931,65 @@ class AgentController:
         self.settings.model = label
         self.menu = None
         self.save_settings()
+        self.prepare_agent()
+
+    # -- an external agent's own options ----------------------------------------------------------------
+    def current_external(self) -> Any:
+        """The ACP agent of the current thread when it has started (``None`` otherwise)."""
+        provider_id, _ = _providers.split_model(self.thread.model or self.settings.model)
+        return self._acp.get(self.thread.id) if provider_id == "acp" else None
+
+    def agent_options(self) -> List[Dict[str, Any]]:
+        """The current external agent's own options (its modes, models, effort...), as Zed shows them."""
+        agent = self.current_external()
+        return list(agent.options) if agent is not None else []
+
+    def prepare_agent(self) -> None:
+        """Opens the external agent's session ahead of the first message, so its options (modes, models...)
+        show in the composer and a sign-in it needs is asked for right away."""
+        provider_id, name = _providers.split_model(self.thread.model or self.settings.model)
+        if provider_id != "acp" or self.running or self.settings.acp_agent(name) is None:
+            return
+        try:
+            agent = self._external_agent(name)
+        except Exception:  # noqa: BLE001 - the first message starts it and shows why it failed
+            return
+        if agent.session:
+            return
+
+        def then(_value: Any, error: Optional[BaseException]) -> None:
+            if isinstance(error, _acp.AuthRequired) and self.agent_auth is None and not self.running:
+                self.agent_auth = AgentAuth(name, agent.config.label, list(error.methods))
+
+        self._job(agent.start, then)
+
+    def set_agent_option(self, option_id: str, value: str) -> None:
+        """Picks ``value`` for one of the external agent's options, and remembers it for its next sessions."""
+        self.menu = None
+        agent = self.current_external()
+        if agent is None:
+            return
+        agent.preferred[option_id] = value
+        self.settings.agent_options.setdefault(agent.config.name, {})[option_id] = value
+        self.save_settings()
+
+        def then(_value: Any, error: Optional[BaseException]) -> None:
+            if error is not None:
+                self.d.notify(tr("{name} did not change the option", name=agent.config.label), str(error),
+                              kind="error", seconds=6)
+
+        self._job(lambda: agent.set_option(option_id, value), then)
+
+    def toggle_thinking(self) -> None:
+        self.settings.thinking = not self.settings.thinking
+        self.save_settings()
+
+    def forget_tool(self, name: str) -> None:
+        """Makes a tool ask again before it runs ("Always allow" undone)."""
+        self.always_allow.discard(name)
+        if name in self.settings.allowed_tools:
+            self.settings.allowed_tools.remove(name)
+            self.save_settings()
 
     def set_profile(self, label: str) -> None:
         self.settings.profile = {tr("Write"): "write", tr("Ask"): "ask", tr("Minimal"): "minimal"}.get(label, "write")
@@ -2080,16 +2225,49 @@ class AgentController:
 
 # -- views -------------------------------------------------------------------------------------------
 
+#: An MCP tool as external agents name it: ``mcp__<server>__<tool>``.
+_MCP_NAME = re.compile(r"^mcp__[\w.-]+?__(\w+)$")
+
+
 def _tool_title(tool_name: str, tools: Dict[str, _agents.Tool]) -> str:
-    tool_ = tools.get(tool_name)
-    return tr(tool_.title) if tool_ is not None and tool_.title else tool_name
+    """What a tool call does, in words: the tool's title (also for Pyzed's tools an external agent calls)."""
+    found = _MCP_NAME.match(tool_name)
+    tool_ = tools.get(found.group(1) if found else tool_name)
+    if tool_ is not None and tool_.title:
+        return tr(tool_.title)
+    return found.group(1).replace("_", " ").capitalize() if found else tool_name
+
+
+#: The arguments that best say what a call works on, in order.
+_PREVIEW_KEYS = ("name", "path", "file_path", "notebook_path", "type", "handler", "event", "control", "command",
+                 "query", "pattern", "url", "slug", "topic", "kind", "description", "title")
 
 
 def _args_preview(args: Dict[str, Any]) -> str:
-    for key in ("name", "path", "type", "handler", "event", "query", "slug", "kind", "pattern"):
-        if isinstance(args.get(key), str) and args[key]:
-            return args[key]
+    for key in _PREVIEW_KEYS:
+        value = args.get(key)
+        if isinstance(value, str) and value.strip():
+            first = value.strip().splitlines()[0]
+            return first if len(first) <= 80 else first[:79] + "…"
+    names = args.get("names") or args.get("controls")
+    if isinstance(names, list) and names:
+        items = [n if isinstance(n, str) else str((n or {}).get("name") or (n or {}).get("type") or "")
+                 for n in names[:6]]
+        return ", ".join(i for i in items if i) + (f" +{len(names) - 6}" if len(names) > 6 else "")
     return ""
+
+
+def _call_detail(c: "AgentController", block: Dict[str, Any]) -> str:
+    """What a call works on: the files an external agent named (relative to the project), else its arguments."""
+    locations = block.get("locations") or []
+    if locations:
+        root = c.project_root()
+        try:
+            first = str(Path(locations[0]).resolve().relative_to(root.resolve()))
+        except (ValueError, OSError):
+            first = str(locations[0])
+        return first + (f" +{len(locations) - 1}" if len(locations) > 1 else "")
+    return _args_preview(block.get("input") or {})
 
 
 #: How a tool's name starts -> the kind of action it is (its icon on the card).
@@ -2125,9 +2303,11 @@ def _tool_card(c: AgentController, block: Dict[str, Any], result: Optional[Dict[
             content = "".join(b.get("text", "") for b in content if b.get("type") == "text")
         output = content
     kind = block.get("kind") or _kind_of(block.get("name", ""), tools.get(block.get("name", "")))
-    return ui.ToolCall(title=_tool_title(block.get("name", ""), tools), detail=_args_preview(block.get("input") or {}),
+    return ui.ToolCall(title=_tool_title(block.get("name", ""), tools), detail=_call_detail(c, block),
                        kind=kind, status={"error": "failed"}.get(status, status), input=block.get("input") or None,
-                       output=output, images=images, theme=t, key=f"tool:{call_id}",
+                       output=output, images=images, diffs=block.get("diffs") or [],
+                       progress=str(block.get("progress") or "") if result is None else "", theme=t,
+                       key=f"tool:{call_id}",
                        on_allow=lambda _e: c.answer(True), on_allow_always=lambda _e: c.answer(True, True),
                        on_deny=lambda _e: c.answer(False))
 
@@ -2174,9 +2354,14 @@ def _user_bubble(text: str, t: Theme, images: Sequence[Dict[str, Any]] = ()) -> 
 
 
 def _messages(c: AgentController, t: Theme) -> List[Any]:
-    """The thread drawn from its messages, then what is streaming now."""
+    """The thread drawn from its messages, then what is streaming now: an external agent's text and tool calls
+    as they happen, the call the model is writing, or what it is doing."""
     tools = c.tool_index()
     messages = list(c.thread.messages)
+    live = c._agent.live() if c.running and hasattr(c._agent, "live") else None
+    if live is not None and (live[0] or live[1]):
+        messages.append({"role": "assistant", "content": live[0]})
+        messages.append({"role": "user", "content": live[1]})
     results: Dict[str, Dict[str, Any]] = {}
     for m in messages:
         if m.get("role") == "user":
@@ -2204,13 +2389,27 @@ def _messages(c: AgentController, t: Theme) -> List[Any]:
     if c.running:
         if c.live_thinking and c.settings.show_thinking:
             rows.append(_thinking_card(c, "think:live", c.live_thinking, t, live=True))
-        if c.live_text:
+        if c.live_text and live is None:  # an external agent's text is already in its live blocks
             rows.append(ui.markdown(c.live_text, size=13, theme=t))
-        if not c.live_text:
-            rows.append(_core.row([ui.spinner(size=12, theme=t),
-                                   ui.label(tr("Working…"), size="sm", color="text_muted", theme=t)],
-                                  spacing=6, align="center"))
+        if c.live_tool:
+            rows.append(ui.ToolCall(title=_tool_title(c.live_tool, tools), detail=tr("preparing…"), status="running",
+                                    kind=_kind_of(c.live_tool, tools.get(c.live_tool)), theme=t, key="tool:live"))
+        elif not c.live_text or live is not None:
+            rows.append(_working(c, t))
     return rows
+
+
+def _working(c: AgentController, t: Theme) -> Any:
+    """What the agent is doing while nothing streams: waiting for an answer, a tool running, or thinking."""
+    waiting = c.pending is not None
+    running = [i for i, status in c.tool_status.items() if status == "running"]
+    text = tr("Waiting for your answer") if waiting else tr("Running a tool…") if running else \
+        tr("Thinking…") if c.live_thinking else tr("Working…")
+    seconds = int(time.monotonic() - c.started) if c.started else 0
+    return _core.row([ui.spinner(size=12, theme=t), ui.label(text, size="sm", color="text_muted", theme=t),
+                      ui.label(f"{seconds // 60}:{seconds % 60:02d}" if seconds >= 60 else f"{seconds}s", size="xs",
+                               color="text_placeholder", theme=t) if seconds >= 3 else None],
+                     spacing=6, align="center")
 
 
 SUBSCRIPTION_TEXT = "Claude Pro or Max through Claude Code, Anthropic's own agent; it controls the editor"
@@ -2399,6 +2598,30 @@ def _mode_menu(c: AgentController, t: Theme) -> Any:
     return _menu_card(_core.column(rows, spacing=0, width="fill"), t)
 
 
+#: An external agent's option category -> its chip's icon in the composer.
+OPTION_ICONS = {"mode": "shield-check", "model": "", "thought_level": "brain"}
+
+
+def _option_menu(c: AgentController, t: Theme, option_id: str) -> Any:
+    """The choices of one of the external agent's options (its modes, models...), like Zed's selectors."""
+    option = next((o for o in c.agent_options() if o["id"] == option_id), None)
+    if option is None:
+        return None
+    rows = [_menu_header(option["name"], t)]
+    rows += [_menu_row(None, choice["name"], choice["description"],
+                       lambda v=choice["value"]: c.set_agent_option(option_id, v), t,
+                       checked=choice["value"] == option["current"]) for choice in option["choices"]]
+    return _menu_card(_core.column(rows, spacing=0, width="fill"), t, height=320 if len(rows) > 8 else None)
+
+
+def _option_chip(c: AgentController, option: Dict[str, Any], t: Theme) -> Any:
+    choice = next((ch for ch in option["choices"] if ch["value"] == option["current"]), None)
+    key = f"option:{option['id']}"
+    return _chip(choice["name"] if choice else option["current"], lambda: c.toggle_menu(key), t,
+                 icon=OPTION_ICONS.get(option["category"], "sliders-horizontal") or None, selected=c.menu == key,
+                 tooltip=(choice or {}).get("description") or option["name"])
+
+
 def _effort_menu(c: AgentController, t: Theme) -> Any:
     rows = [_menu_header(tr("How much the model thinks before answering (Claude)"), t)]
     rows += [_menu_row(None, tr(EFFORT_TEXT[e]), "", lambda e=e: c.set_effort(e), t, checked=c.settings.effort == e)
@@ -2476,9 +2699,14 @@ def _composer(c: AgentController, t: Theme) -> Any:
     external = provider_id == "acp"
     mode_label, mode_icon, mode_text = MODE_TEXT[s.mode]
     agent = s.acp_agent(name) if external else None
+    # an external agent's own options, like Zed shows Claude Code's: its mode on the left, the rest by the agent
+    options = c.agent_options() if external else []
+    own_mode = next((o for o in options if o["category"] == "mode"), None)
+    others = [o for o in options if o is not own_mode]
     controls = _core.row([
         ui.icon_button("plus", c.toggle_add_menu, size="sm", selected=c.menu == "add",
                        tooltip=tr("Add context or images"), theme=t),
+        _option_chip(c, own_mode, t) if own_mode else
         _chip(tr(mode_label), lambda: c.toggle_menu("mode"), t, icon=mode_icon, selected=c.menu == "mode",
               tooltip=tr(mode_text)),
         _core.space(width="fill"),
@@ -2486,13 +2714,17 @@ def _composer(c: AgentController, t: Theme) -> Any:
         if c.thread.context and c.context_window and not external else None,
         _chip(agent.label if agent else model_label(model), lambda: c.toggle_menu("model"), t,
               icon="terminal" if external else None, selected=c.menu == "model", tooltip=tr("Model")),
+        *[_option_chip(c, o, t) for o in others],
         None if external else _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t,
                                     selected=c.menu == "effort", tooltip=tr("Effort"), disabled=not claude),
+        None if external or not claude else _chip(tr("Thinking"), c.toggle_thinking, t, icon="brain",
+                                                  selected=s.thinking, menu=False,
+                                                  tooltip=tr("Let Claude think before answering; off answers sooner")),
         None if external else _chip(tr("Fast"), c.toggle_fast, t, icon="zap",
                                     selected=s.fast and name in _providers.FAST_MODELS, menu=False,
                                     disabled=name not in _providers.FAST_MODELS,
                                     tooltip=tr("Fast mode: faster answers at a higher price (Claude Opus)")),
-    ], spacing=2, align="center")
+    ], spacing=2, align="center", wrap=True)
     return _core.container(_core.column([_mentions_row(c, t), field_, controls], spacing=6), padding=(6, 6, 4, 4),
                            width="fill", bg=t.editor, border_color=t.border, border_width=1, radius=t.radius + 2)
 
@@ -2666,6 +2898,13 @@ def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> An
         bottom.append(_claude_login_callout(c, t))
     if c.agent_auth is not None:
         bottom.append(_auth_card(c, t))
+    if c.mcp_added:
+        bottom.append(ui.callout(tr("Restart your agents to use Pyzed's MCP"), tr(
+            "Pyzed's MCP server was added to {names}. Close and open them again (agents running in Pyzed restart "
+            "with the button).", names=", ".join(c.mcp_added)), tint="info", icon="plug", actions=[
+            ui.button(tr("Restart agents"), c.restart_agents, icon="refresh-cw", variant="tinted", size="sm",
+                      theme=t),
+            ui.button(tr("Later"), c.dismiss_mcp_added, variant="ghost", size="sm", theme=t)], theme=t))
     if c.device is not None:
         bottom.append(_device_callout(c, t))
     bottom.append(_plan_card(c, t))
@@ -2674,7 +2913,12 @@ def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> An
     if c.snapshot and c.changed and not c.running:
         bottom.append(_review_bar(c, t))
     menus = {"mode": _mode_menu, "model": _model_menu, "effort": _effort_menu, "add": _add_menu}
-    bottom.append(menus[c.menu](c, t) if c.menu in menus else _popup(c, t))
+    if c.menu in menus:
+        bottom.append(menus[c.menu](c, t))
+    elif c.menu and c.menu.startswith("option:"):
+        bottom.append(_option_menu(c, t, c.menu[len("option:"):]))
+    else:
+        bottom.append(_popup(c, t))
     bottom.append(_composer(c, t))
     return _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
                         width="fill", height="fill")
@@ -3064,6 +3308,32 @@ def settings_view(d: "Designer", t: Theme) -> Any:
                       else tr("A file at the project's root with rules for every agent"),
                       primary=tr("Open") if found else tr("Create AGENTS.md"), theme=t, key="project-rules",
                       on_primary=lambda _e: c.open_rules())], t)
+    clients = _section(tr("Pyzed's MCP in your agents"), tr(
+        "The AI agents of this computer (Claude Code, Cursor, Gemini CLI, Codex...) get Pyzed's MCP server, so they "
+        "know its components, docs and checks. Restart an agent after adding it."), [
+        ui.field(tr("Add it to new agents on start"), ui.switch(s.install_pyzed_mcp, lambda v: c.set_setting(
+            "install_pyzed_mcp", v), theme=t), theme=t),
+        *[ui.ServiceRow(name=client.name, detail=str(client.path), icon_name="plug",
+                        status={"installed": "running", "missing": "off", "unreadable": "error"}[state],
+                        status_text=tr({"installed": "Pyzed's MCP is added", "missing": "Not added",
+                                        "unreadable": "Its settings file is not plain JSON; add it by hand"}[state]),
+                        busy=c.mcp_clients_busy == client.id,
+                        primary="" if state == "unreadable" else tr("Remove") if state == "installed" else tr("Add"),
+                        theme=t, key=f"mcp-client:{client.id}",
+                        on_primary=lambda _e, cid=client.id: c.toggle_mcp_client(cid))
+          for client, state in c.mcp_clients()],
+    ], t)
+    tools = c.tool_index()
+    permissions = _section(tr("Permissions"), tr(
+        "What the agent may do without asking. Pick the mode in the message box; tools you always allowed are "
+        "listed here."), [
+        _core.column([_menu_row(icon, tr(label), tr(text), lambda m=mode: c.set_mode(m), t,
+                                checked=s.mode == mode) for mode, (label, icon, text) in MODE_TEXT.items()],
+                     spacing=0, width="fill"),
+        *[ui.ServiceRow(name=_tool_title(name, tools), detail=name, icon_name="shield-check",
+                        summary=tr("Runs without asking"), primary=tr("Ask again"), theme=t, key=f"allowed:{name}",
+                        on_primary=lambda _e, name=name: c.forget_tool(name)) for name in s.allowed_tools],
+    ], t)
     efforts = list(_providers.EFFORTS)
     general = ui.settings_group(tr("Agent"), [
         ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=200, size="sm", theme=t),
@@ -3073,6 +3343,8 @@ def settings_view(d: "Designer", t: Theme) -> Any:
                  description=tr("How much the model thinks before answering (Claude)"), theme=t),
         ui.field(tr("Fast mode"), ui.switch(s.fast, lambda v: c.set_setting("fast", v), theme=t),
                  description=tr("Fast mode: faster answers at a higher price (Claude Opus)"), theme=t),
+        ui.field(tr("Thinking"), ui.switch(s.thinking, lambda v: c.set_setting("thinking", v), theme=t),
+                 description=tr("Let Claude think before answering; off answers sooner"), theme=t),
         ui.field(tr("Ask before writing files"), ui.switch(s.confirm_writes, lambda v: c.set_setting("confirm_writes", v),
                                                            theme=t),
                  description=tr("Creating forms and saving files waits for your OK"), theme=t),
@@ -3090,5 +3362,7 @@ def settings_view(d: "Designer", t: Theme) -> Any:
     ], theme=t)
     rule = _core.rule(thickness=1, color=t.border_variant)
     return _core.scrollable(_core.column([storage, providers, rule, agents, rule, mcp, rule, skills, rule, rules,
-                                          rule, general], spacing=14, padding=(10, 12, 16, 12), width="fill"),
+                                          rule, clients, rule, permissions, rule, general], spacing=14,
+                                          padding=(10, 12, 16, 12),
+                                         width="fill"),
                             height="fill", scrollbar_width=4, id=SETTINGS_SCROLL)

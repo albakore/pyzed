@@ -2877,6 +2877,8 @@ Un componente para una acción de un agente de IA, como las tarjetas del panel A
 | `input` | Los argumentos (un dict o texto). |
 | `output` | La respuesta (texto o un dict). |
 | `images` | Bytes PNG que se muestran bajo la salida. |
+| `diffs` | Los cambios que hizo: dicts `{"path", "old", "new"}`, que se muestran como diffs de colores (mira `ui.diff_view`). |
+| `progress` | Lo que imprimió hasta ahora (la salida de un comando); sus últimas líneas se ven bajo la cabecera mientras corre. |
 | `allow_always` | Muestra Permitir siempre. |
 | `theme` | Tema. |
 | `on_allow` | Se pulsó Permitir. |
@@ -3127,6 +3129,24 @@ Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.
 | Parámetro | Descripción |
 | --- | --- |
 | `count` | Tokens. |
+
+### `diff_view`
+
+```python
+diff_view(diff, *, theme=None, max_lines=120)
+```
+
+Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las líneas cambiadas (en verde las añadidas, en rojo las quitadas) con unas pocas líneas alrededor.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `diff` | Un dict con `path`, `old` y `new` (los textos antes y después). |
+| `theme` | Tema. |
+| `max_lines` | Líneas que se muestran antes de `… N líneas más`. |
+
+```python
+ui.diff_view({"path": "main.py", "old": "x = 1\n", "new": "x = 2\n"})
+```
 
 ## Selector de iconos
 

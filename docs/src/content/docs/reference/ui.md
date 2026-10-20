@@ -2877,6 +2877,8 @@ A component for one action of an AI agent, like the cards in Zed's Agent panel: 
 | `input` | The arguments (a dict or text). |
 | `output` | The answer (text or a dict). |
 | `images` | PNG bytes shown under the output. |
+| `diffs` | The edits it made: `{"path", "old", "new"}` dicts, shown as colored diffs (see `ui.diff_view`). |
+| `progress` | What it printed so far (a command's output); its last lines show under the header while it runs. |
 | `allow_always` | Shows Always allow. |
 | `theme` | Theme. |
 | `on_allow` | Allow was pressed. |
@@ -3127,6 +3129,24 @@ A short token count: `950`, `4.5k`, `48k`, `1.25M`.
 | Parameter | Description |
 | --- | --- |
 | `count` | Tokens. |
+
+### `diff_view`
+
+```python
+diff_view(diff, *, theme=None, max_lines=120)
+```
+
+An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red removed) with a few lines around them.
+
+| Parameter | Description |
+| --- | --- |
+| `diff` | A dict with `path`, `old` and `new` (the texts before and after). |
+| `theme` | Theme. |
+| `max_lines` | Lines shown before `… N more lines`. |
+
+```python
+ui.diff_view({"path": "main.py", "old": "x = 1\n", "new": "x = 2\n"})
+```
 
 ## Icon picker
 
