@@ -84,6 +84,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 
 | Tool | What it does |
 | --- | --- |
+| `plan_app` | Where to start for an app or screen: the closest blocks and examples, the components and guide topics it needs, the docs to read and the steps. Agents call it first. |
 | `get_guide` | How Pyzed works (`"overview"`), its rules (`"best-practices"`), runnable recipes (`"cookbook"`: app structure, background work, forms, virtual lists, animation, shaders, games, custom window frames, anchored layouts) or any topic of `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), in English or Spanish. |
 | `list_guides` | Every topic `get_guide` takes. |
 | `list_components` | Every widget (`pz.*`), ready-made component (`pz.ui.*`), designer toolbox type and `pz.Component` class, with a one-line summary. Filter by `kind`, `query` or `category`. |
@@ -100,6 +101,7 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | `validate_code` | Checks code without running it: names that don't exist in `pz` or `pz.ui`, keyword arguments a function doesn't take, apps without `view()`, components without `render()`, side effects in `view()`, lambdas in loops that don't capture the loop variable, and ruff's pyflakes checks when ruff is installed. |
 | `validate_form` | Checks a `.pzform` (types, props, events, names, containers) and that its handlers module defines every handler. |
 | `screenshot` | Renders the code off-screen (no window, no GPU) and returns a PNG, so the agent can see what it built. |
+| `list_shader_nodes`, `new_shader`, `check_shader` | The nodes of [shader graphs](/pyzed/shading/shader-graphs/), a new `.pzshad` from a template, and compiling one to WGSL with its errors by node. |
 
 ### Project tools
 
@@ -107,14 +109,15 @@ With these the agent builds a whole app in a folder, from the project to a clean
 
 | Tool | What it does |
 | --- | --- |
-| `project_info` | The project: name, version, main form, forms, components, package, dependencies and files. |
+| `project_info` | The project: name, version, entry (its `script`, else the main form), forms, components, shaders, package, dependencies, files and environment (the `.venv` it runs in, the system, WSL). |
 | `list_files`, `read_file` | List and read the files of the folder. |
-| `write_files` | Creates or replaces several files at once and checks every Python file and form it wrote. |
+| `write_files` | Creates or replaces several files at once and checks every Python file, form and shader graph it wrote. |
 | `create_project` | A new uv project, like `pyzed new` (pyzed-ui, ruff, ty, `ui/main.pzform`, `src/<package>`, git). |
 | `add_dependency` | `uv add` in the project. |
 | `check_project` | Pyzed's checks of every file, plus ruff and ty. |
 | `run_tests` | `uv run pytest` in the project. |
-| `screenshot_project` | A screenshot of a form or script of the folder, by default the main form. |
+| `screenshot_project` | A screenshot of a script, form, component or shader graph, in the project's own environment; by default the entry. |
+| `start_live_preview`, `live_preview_status`, `stop_live_preview` | Open the app in a real window with hot reload while the agent builds it: every file it writes updates the window on save, so you watch the app take shape. The status returns what the app printed, tracebacks included. |
 
 ### Resources and prompts
 

@@ -84,6 +84,7 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 
 | Herramienta | Qué hace |
 | --- | --- |
+| `plan_app` | Por dónde empezar una app o pantalla: los bloques y ejemplos más parecidos, los componentes y temas de guía que necesita, la documentación que leer y los pasos. Los agentes la llaman primero. |
 | `get_guide` | Cómo funciona Pyzed (`"overview"`), sus reglas (`"best-practices"`), recetas ejecutables (`"cookbook"`: estructura de una app, trabajo en segundo plano, formularios, listas virtuales, animación, shaders, juegos, marcos de ventana propios, layouts con anclas) o cualquier tema de `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), en inglés o en español. |
 | `list_guides` | Todos los temas que acepta `get_guide`. |
 | `list_components` | Cada widget (`pz.*`), componente listo (`pz.ui.*`), tipo de la caja de herramientas del diseñador y clase `pz.Component`, con un resumen de una línea. Filtra por `kind`, `query` o `category`. |
@@ -100,6 +101,7 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | `validate_code` | Revisa el código sin ejecutarlo: nombres que no existen en `pz` o `pz.ui`, argumentos que una función no acepta, apps sin `view()`, componentes sin `render()`, efectos secundarios en `view()`, lambdas en bucles que no capturan la variable y las comprobaciones de pyflakes de ruff si está instalado. |
 | `validate_form` | Revisa un `.pzform` (tipos, propiedades, eventos, nombres, contenedores) y que su módulo de handlers defina cada handler. |
 | `screenshot` | Dibuja el código fuera de pantalla (sin ventana ni GPU) y devuelve un PNG, para que el agente vea lo que construyó. |
+| `list_shader_nodes`, `new_shader`, `check_shader` | Los nodos de los [grafos de shaders](/pyzed/es/shading/shader-graphs/), un `.pzshad` nuevo desde una plantilla y su compilación a WGSL con los errores por nodo. |
 
 ### Herramientas de proyecto
 
@@ -107,14 +109,15 @@ Con ellas el agente construye una app completa en una carpeta, desde el proyecto
 
 | Herramienta | Qué hace |
 | --- | --- |
-| `project_info` | El proyecto: nombre, versión, formulario principal, formularios, componentes, paquete, dependencias y archivos. |
+| `project_info` | El proyecto: nombre, versión, entrada (su `script` o, si no, el formulario principal), formularios, componentes, shaders, paquete, dependencias, archivos y entorno (el `.venv` donde corre, el sistema, WSL). |
 | `list_files`, `read_file` | Listan y leen los archivos de la carpeta. |
-| `write_files` | Crea o reemplaza varios archivos a la vez y revisa cada archivo Python y formulario que escribió. |
+| `write_files` | Crea o reemplaza varios archivos a la vez y revisa cada archivo Python, formulario y grafo de shader que escribió. |
 | `create_project` | Un proyecto uv nuevo, como `pyzed new` (pyzed-ui, ruff, ty, `ui/main.pzform`, `src/<paquete>`, git). |
 | `add_dependency` | `uv add` en el proyecto. |
 | `check_project` | Las comprobaciones de Pyzed en cada archivo, más ruff y ty. |
 | `run_tests` | `uv run pytest` en el proyecto. |
-| `screenshot_project` | Una captura de un formulario o script de la carpeta, por defecto el formulario principal. |
+| `screenshot_project` | Una captura de un script, formulario, componente o grafo de shader, en el entorno del propio proyecto; por defecto la entrada. |
+| `start_live_preview`, `live_preview_status`, `stop_live_preview` | Abren la app en una ventana real con hot reload mientras el agente la construye: cada archivo que escribe actualiza la ventana al guardarse, así ves cómo toma forma. El estado devuelve lo que la app imprimió, trazas de error incluidas. |
 
 ### Recursos y prompts
 
