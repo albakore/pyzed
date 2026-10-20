@@ -828,7 +828,7 @@ def test_using_a_claude_subscription_through_claude_code(tmp_path, monkeypatch):
     monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
     assert not acp.claude_signed_in()
     opened, terminals = [], []
-    monkeypatch.setattr(agent_panel.webbrowser, "open", opened.append)
+    monkeypatch.setattr(login, "open_browser", opened.append)
     monkeypatch.setattr(file_ops, "run_in_terminal", lambda args, folder: terminals.append(args))
     d = Designer()
     d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))

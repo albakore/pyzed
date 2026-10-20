@@ -102,6 +102,14 @@ def ant_logout(*, run: Callable[..., "subprocess.CompletedProcess"] = subprocess
 
 # -- OAuth with PKCE (OpenRouter) ----------------------------------------------------------------
 
+def open_browser(url: str) -> bool:
+    """Opens ``url`` in the default browser; under WSL, Windows' (its callbacks to 127.0.0.1 still reach Pyzed)."""
+    from .._platform import use_windows_browser
+
+    use_windows_browser()
+    return webbrowser.open(url)
+
+
 def pkce_pair() -> "tuple[str, str]":
     """A random code verifier and its S256 challenge."""
     verifier = base64.urlsafe_b64encode(_random.token_bytes(48)).rstrip(b"=").decode()
@@ -201,7 +209,7 @@ def _post_form(url: str, payload: dict) -> dict:
         raise LoginError(f"Could not reach the provider: {err}") from err
 
 
-def openrouter_login(*, open_url: Callable[[str], None] = webbrowser.open,
+def openrouter_login(*, open_url: Callable[[str], None] = open_browser,
                      post: Callable[[str, dict], dict] = _post_json, timeout: float = TIMEOUT) -> str:
     """Signs in to OpenRouter in the browser and returns the API key it issues for Pyzed."""
     verifier, challenge = pkce_pair()
@@ -294,7 +302,7 @@ def google_client(settings: Any) -> "tuple[str, str]":
     return client_id, secret
 
 
-def google_login(client_id: str, client_secret: str, *, open_url: Callable[[str], None] = webbrowser.open,
+def google_login(client_id: str, client_secret: str, *, open_url: Callable[[str], None] = open_browser,
                  post: Callable[[str, dict], dict] = _post_form, timeout: float = TIMEOUT,
                  scopes=GOOGLE_SCOPES) -> Dict[str, Any]:
     """Signs in with a Google account in the browser and returns its token (with a refresh token)."""
@@ -406,7 +414,7 @@ def google_projects(token: str) -> List[str]:
     return sorted(str(p.get("projectId")) for p in data.get("projects") or [] if p.get("projectId"))
 
 
-def key_page(provider_id: str, *, open_url: Callable[[str], None] = webbrowser.open) -> str:
+def key_page(provider_id: str, *, open_url: Callable[[str], None] = open_browser) -> str:
     """Opens the provider's page for creating a key (the first step of ``login="browser"``)."""
     from .providers import PROVIDERS
 
@@ -502,7 +510,7 @@ class _Portal(http.server.BaseHTTPRequestHandler):
 
 
 def key_portal(provider_id: str, check: Callable[[str], Optional[str]], *,
-               open_url: Callable[[str], None] = webbrowser.open, timeout: float = TIMEOUT,
+               open_url: Callable[[str], None] = open_browser, timeout: float = TIMEOUT,
                cancelled: Callable[[], bool] = lambda: False) -> Optional[str]:
     """Signs in to a provider without OAuth (``login="browser"``) through a page Pyzed serves on
     ``127.0.0.1``: it links to the provider's keys page and takes the key the user pastes. ``check(key)``

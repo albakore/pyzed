@@ -109,11 +109,33 @@ def run_in_terminal_command(args: List[str], folder: Path) -> List[str]:
         wt = shutil.which("wt")
         return [wt, "-d", str(folder), "cmd", "/k", *args] if wt else ["cmd", "/c", "start", "", "cmd", "/k", *args]
     names = [os.environ["TERMINAL"]] if os.environ.get("TERMINAL") else []
+    if not names:
+        wsl = _windows_terminal_command(args, folder)
+        if wsl:
+            return wsl
     for name in [*names, *RUN_FLAGS]:
         found = shutil.which(name)
         if found:
             return [found, *RUN_FLAGS.get(Path(name).name, ["-e"]), *args]
     raise OSError("No terminal app was found")
+
+
+def _windows_terminal_command(args: List[str], folder: Path) -> Optional[List[str]]:
+    """Under WSL, a Windows terminal running ``args`` back in this Linux (``None`` elsewhere). Its shell runs
+    as an interactive login shell, so programs installed through the shell's profile (nvm...) are found."""
+    from .._platform import is_wsl, windows_command
+
+    if not is_wsl():
+        return None
+    distro = os.environ.get("WSL_DISTRO_NAME")
+    shell = os.environ.get("SHELL") or "/bin/bash"
+    inside = ["wsl.exe", *(["-d", distro] if distro else []), "--cd", str(folder), "--", shell, "-lic",
+              shlex.join(args)]
+    wt = windows_command("wt.exe")
+    if wt:
+        return [wt, *inside]
+    cmd = windows_command("cmd.exe")
+    return [cmd, "/c", "start", "", *inside] if cmd else None
 
 
 def run_in_terminal(args: List[str], folder: Path) -> None:
