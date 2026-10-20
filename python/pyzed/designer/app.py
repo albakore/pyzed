@@ -44,6 +44,7 @@ from .keymap_editor import KeymapEditor
 from .model import SUFFIX
 from .project_panel import ProjectController
 from .updates import TAB_ID as _NOTES_TAB, UpdateController
+from . import project_picker as _project_picker
 from . import welcome as _welcome
 from .welcome import Welcome
 from .windows import Pane, PaneController
@@ -227,6 +228,8 @@ class Designer(App):
         self.updates = UpdateController(self)
         # the welcome window and its gallery of example projects (Help → Welcome)
         self.welcome = Welcome(self)
+        #: The title bar's project picker (the projects of this window and the recent ones).
+        self.picker_projects = _project_picker.ProjectPicker(self)
         # the built-in reference (Help → Reference): its own tab next to the documents
         self.help = _reference.Browser()
         self.help_open = False
@@ -1300,7 +1303,7 @@ class Designer(App):
     def show_save_as(self) -> None:
         """Opens the "Save as" dialog, filled with the current path or a name made from the form's."""
         self.dialog = "save_as"
-        self.dialog_path = str(self.doc.path or f"{self.doc.form.name.lower()}{SUFFIX}")
+        self.dialog_path = str(self.doc.path or self._new_document_path(SUFFIX))
 
     def focus_panel(self, panel: Optional[str] = None) -> None:
         """Gives the keyboard to a side panel, so canvas shortcuts stop acting (the Project tree keeps it
@@ -1889,7 +1892,7 @@ class Designer(App):
             return
         if self.doc.path is None:
             self.dialog = "save_as"
-            self.dialog_path = f"{self.doc.form.name.lower()}{getattr(self.doc, 'suffix', SUFFIX)}"
+            self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
             return
         if not self._flush_code():
             self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
@@ -1900,6 +1903,20 @@ class Designer(App):
         if self.preview is not None and self.preview.is_open:
             # the running form picks up the saved layout and code, keeping what was typed in it
             self.preview.runtime.reload(path)
+
+    def _new_document_path(self, suffix: str) -> str:
+        """Where an unsaved document goes by default: the project's UI folder (forms belong to the project), named
+        after the form."""
+        name = f"{self.doc.form.name.lower()}{suffix}"
+        project = self.projects.project
+        if project is None:
+            return name
+        folder = project.ui_dir
+        try:
+            folder = folder.resolve().relative_to(Path.cwd().resolve())
+        except ValueError:
+            pass
+        return (folder / name).as_posix()
 
     def save_as(self, path: str) -> None:
         """Saves the active document at ``path`` (the document's suffix is added when it has none)."""
@@ -2088,6 +2105,9 @@ class Designer(App):
             handled, result = self.agent.on_key(combo)
             if handled:
                 return result
+        if self.app_menu == "projects" and not self.dialog and combo in ("up", "down"):
+            self.picker_projects.move(1 if combo == "down" else -1)
+            return None
         if self.dialog in ("palette", "add_control", "preview_theme", "preview_language", "preview_frame") \
                 and combo in ("up", "down"):
             self.picker_index = max(self.picker_index + (1 if combo == "down" else -1), 0)
@@ -2193,8 +2213,10 @@ class Designer(App):
         body = _core.container(body, width="fill", height="fill", bg=t.background)
         if self.app_menu is not None:
             menu = self.title_menu(self.app_menu, t)
-            if self.app_menu == "file":
+            if self.app_menu in ("file", "projects", "branches"):
                 x = ui_frame.start_x(frame) if frame else 8
+                if self.app_menu != "file":
+                    x += _project_picker.anchor(self, self.app_menu)
                 body = ui.popover(body, menu, x=x, y=TITLE_HEIGHT, on_dismiss=self.close_app_menu)
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
                 right = (ui_frame.end_x(frame) if frame else 8) + 30 * (1 if self.app_menu == "help" else 2)
@@ -2271,7 +2293,11 @@ class Designer(App):
         return self.resolved_theme()
 
     def title_menu(self, name: str, t) -> Any:
-        """The File, View or Help menu, built from the command table."""
+        """The File, View or Help menu, built from the command table (or the project picker or branch menu)."""
+        if name == "projects":
+            return _project_picker.view(self, t)
+        if name == "branches":
+            return _project_picker.branch_menu(self, t)
         groups = {"file": ("File", "Run"), "view": ("View",), "help": ("Help",)}[name]
         km = _keymap.get()
         items: List[Any] = []
@@ -2322,8 +2348,7 @@ class Designer(App):
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
                            tooltip=None if self.app_menu else tr("Menu"), theme=t),
             _core.container(_icon("layout-template", size=14, color=t.accent), padding=(0, 4, 0, 6)),
-            ui.title_button(self.projects.project.name, lambda: self.show_panel("project"), icon="package")
-            if self.projects.project else ui.title_button("Pyzed Design", lambda: self.show_panel("project")),
+            *_project_picker.title_items(self, t),
             ui.label("/", color="text_muted", size="sm", theme=t),
             ui.title_button(doc.display_name, self.open_dialog, icon="file", chevron=True),
             ui.indicator("modified", theme=t) if doc.dirty else None,

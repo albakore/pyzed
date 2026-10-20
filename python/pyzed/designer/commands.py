@@ -59,6 +59,8 @@ ACTIONS: Tuple[Action, ...] = (
     Action("open", "Open…", "File", lambda d: d.open_dialog(), "folder-open", "ctrl-o", global_keys=True),
     Action("find_file", "Go to file…", "File", lambda d: d.projects.files.open_finder(), "file-search", "ctrl-p",
            global_keys=True),
+    Action("open_recent", "Open recent project…", "File", lambda d: d.picker_projects.open(), "history",
+           "ctrl-alt-o", global_keys=True),
     Action("save", "Save", "File", lambda d: d.save(), "save", "ctrl-s", global_keys=True),
     Action("save_as", "Save as…", "File", lambda d: d.show_save_as(), "save-all", "ctrl-shift-s", global_keys=True),
     Action("settings", "Settings…", "File", lambda d: d.open_settings(), "settings", "ctrl-,", global_keys=True),

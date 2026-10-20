@@ -130,7 +130,10 @@ pub struct Decoded {
 
 /// Cropped / rounded copies of images, keyed by image, crop rectangle and corner radius.
 pub type MaskCache =
-    std::cell::RefCell<std::collections::HashMap<(u64, [u32; 4], [u32; 2]), img::Handle>>;
+    std::cell::RefCell<std::collections::HashMap<(u64, [u32; 4], [u32; 3]), img::Handle>>;
+
+/// The longest side a rotated image is drawn with (wgpu's image atlas size).
+const ROTATED_MAX_SIDE: u32 = 2048;
 
 pub(crate) fn image_source(
     source: &Bound<'_, PyAny>,
@@ -274,9 +277,8 @@ pub fn render_image<'a>(
     }
     let width = props.width.unwrap_or(Length::Shrink);
     let height = props.height.unwrap_or(Length::Shrink);
-    if decoded.size.is_none() || props.rotation != 0.0 {
-        // Rotated: iced's widget, inside a clipping container. The software renderer
-        // still lets the rotated corners spill out of the box.
+    if decoded.size.is_none() {
+        // Unreadable: iced's widget (it shows nothing for a broken image).
         let mut i = widget::image(decoded.handle)
             .filter_method(filter)
             .opacity(props.opacity)
@@ -300,6 +302,7 @@ pub fn render_image<'a>(
         filter,
         opacity: props.opacity,
         radius: props.radius,
+        rotation: props.rotation.to_radians(),
         scale: props.scale,
         masks,
     })
@@ -308,6 +311,11 @@ pub fn render_image<'a>(
 /// A bitmap that crops itself to its box and rounds its own corners, so `cover`,
 /// `none` and `radius` look the same with wgpu and with the software renderer
 /// (tiny-skia ignores both the clip bounds and the border radius of images).
+///
+/// It also draws rotated images: iced's own image widget doesn't upload big images
+/// right away (see `draw`), so a rotated photo came out blank in off-screen screenshots.
+/// The rotation turns the visible (cropped, rounded) picture around its center and,
+/// as with a CSS transform, its corners may reach outside the box.
 struct Picture<'a> {
     decoded: Decoded,
     width: Length,
@@ -316,6 +324,8 @@ struct Picture<'a> {
     filter: img::FilterMethod,
     opacity: f32,
     radius: f32,
+    /// In radians.
+    rotation: f32,
     scale: f32,
     masks: &'a MaskCache,
 }
@@ -339,8 +349,9 @@ impl Picture<'_> {
         Rectangle::new(position, size)
     }
 
-    /// The visible part of the image with rounded corners, as a cached RGBA handle.
-    fn masked(&self, drawing: Rectangle, visible: Rectangle) -> Option<img::Handle> {
+    /// The visible part of the image with rounded corners, as a cached RGBA handle,
+    /// scaled down (if needed) so neither side is longer than `max_side` pixels.
+    fn masked(&self, drawing: Rectangle, visible: Rectangle, max_side: u32) -> Option<img::Handle> {
         let (iw, ih) = self.decoded.size?;
         let sx = iw as f32 / drawing.width;
         let sy = ih as f32 / drawing.height;
@@ -349,12 +360,12 @@ impl Picture<'_> {
         let cw = ((visible.width * sx).round() as u32).clamp(1, iw - x0);
         let ch = ((visible.height * sy).round() as u32).clamp(1, ih - y0);
         // The radius is in logical pixels of the box; in image pixels it scales per axis.
-        let rx = (self.radius * sx).min(cw as f32 / 2.0);
-        let ry = (self.radius * sy).min(ch as f32 / 2.0);
+        let mut rx = (self.radius * sx).min(cw as f32 / 2.0);
+        let mut ry = (self.radius * sy).min(ch as f32 / 2.0);
         let key = (
             self.decoded.key,
             [x0, y0, cw, ch],
-            [(rx * 16.0) as u32, (ry * 16.0) as u32],
+            [(rx * 16.0) as u32, (ry * 16.0) as u32, max_side],
         );
         if let Some(handle) = self.masks.borrow().get(&key) {
             return Some(handle.clone());
@@ -365,10 +376,21 @@ impl Picture<'_> {
             let start = ((y * iw + x0) * 4) as usize;
             out.extend_from_slice(&src[start..start + (cw * 4) as usize]);
         }
-        if rx >= 0.5 && ry >= 0.5 {
-            round_corners(&mut out, cw, ch, rx, ry);
+        let (mut w, mut h) = (cw, ch);
+        if cw.max(ch) > max_side {
+            let f = max_side as f32 / cw.max(ch) as f32;
+            w = ((cw as f32 * f).round() as u32).clamp(1, max_side);
+            h = ((ch as f32 * f).round() as u32).clamp(1, max_side);
+            let full = ::image::RgbaImage::from_raw(cw, ch, out)?;
+            out = ::image::imageops::resize(&full, w, h, ::image::imageops::FilterType::Triangle)
+                .into_raw();
+            rx *= w as f32 / cw as f32;
+            ry *= h as f32 / ch as f32;
         }
-        let handle = img::Handle::from_rgba(cw, ch, out);
+        if rx >= 0.5 && ry >= 0.5 {
+            round_corners(&mut out, w, h, rx, ry);
+        }
+        let handle = img::Handle::from_rgba(w, h, out);
         self.masks.borrow_mut().insert(key, handle.clone());
         Some(handle)
     }
@@ -455,17 +477,25 @@ impl<Theme> iced::advanced::Widget<Message, Theme, iced::Renderer> for Picture<'
         let image = |handle: img::Handle| iced::advanced::image::Image {
             handle,
             filter_method: self.filter,
-            rotation: Radians(0.0),
+            rotation: Radians(self.rotation),
             border_radius: Default::default(),
             opacity: self.opacity * crate::animation::opacity(),
             snap: true,
         };
         let overflows =
             visible.width < drawing.width - 0.5 || visible.height < drawing.height - 0.5;
-        let (handle, target) = if self.radius <= 0.0 && !overflows {
+        // wgpu splits images bigger than its atlas (2048 px) into pieces and turns each
+        // piece around its own center, so a rotated image is first scaled down to fit.
+        let max_side = if self.rotation == 0.0 {
+            u32::MAX
+        } else {
+            ROTATED_MAX_SIDE
+        };
+        let (iw, ih) = self.decoded.size.unwrap_or((1, 1));
+        let (handle, target) = if self.radius <= 0.0 && !overflows && iw.max(ih) <= max_side {
             (self.decoded.handle.clone(), drawing)
         } else {
-            match self.masked(drawing, visible) {
+            match self.masked(drawing, visible, max_side) {
                 Some(handle) => (handle, visible),
                 None => return,
             }
@@ -477,11 +507,20 @@ impl<Theme> iced::advanced::Widget<Message, Theme, iced::Renderer> for Picture<'
         {
             let _ = renderer.load_image(&handle);
         }
-        renderer.draw_image(
-            image(handle),
-            target,
-            target.intersection(&bounds).unwrap_or(target),
-        );
+        let clip = if self.rotation == 0.0 {
+            target.intersection(&bounds).unwrap_or(target)
+        } else {
+            // The rotated picture's own bounding box, so wgpu keeps its corners too.
+            let size = target.size().rotate(Radians(self.rotation));
+            Rectangle::new(
+                Point::new(
+                    target.center_x() - size.width / 2.0,
+                    target.center_y() - size.height / 2.0,
+                ),
+                size,
+            )
+        };
+        renderer.draw_image(image(handle), target, clip);
     }
 }
 

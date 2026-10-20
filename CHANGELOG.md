@@ -16,6 +16,47 @@ stable version.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-20
+
+### Highlights
+
+- **Shader graphs**: build shaders from nodes in the new Shader view of Pyzed Design, like Godot's visual shaders, saved as `.pzshad` and compiled to WGSL (`pyzed.shading`).
+- **Pyzed Design as an app**: native installers for Windows (per user, no admin), macOS (`.dmg`) and Linux (`install.sh`), a preview update channel and a welcome window with 24 example projects.
+- **Agents that build whole apps**: sign in to Claude in the browser or with a Claude subscription, `run_app` and a plan checklist in the Agent panel, and MCP tools that plan an app (`plan_app`), show it live while it is built and work in the project's environment (`.venv`, WSL).
+- **Projects in the title bar**: the project, branch and environment, with a project picker for open and recent projects.
+- **New docs site**: sections with a header navbar, every Designer view documented, a shader node catalog, basic, intermediate and advanced tutorials, every variant of each component and retaken screenshots and clips.
+
+### Features
+
+- ✨ Update the MCP server with everything new up to 1.2.0 and add project tools to build whole apps. PR [#86](https://github.com/albakore/pyzed/pull/86) by [@albakore](https://github.com/albakore).
+- ✨ Sign in to Claude in the browser, use a Claude subscription, and let agents build apps and control the editor. PR [#87](https://github.com/albakore/pyzed/pull/87) by [@albakore](https://github.com/albakore).
+- ✨ Add a welcome window with example projects to Pyzed Design, and run commands without console windows on Windows. PR [#88](https://github.com/albakore/pyzed/pull/88) by [@albakore](https://github.com/albakore).
+- 📦 Make Pyzed Design an installable app: native installers, a preview channel, and templates and translations as data. PR [#89](https://github.com/albakore/pyzed/pull/89) by [@albakore](https://github.com/albakore).
+- ✨ Add node-based shader graphs (`.pzshad`) and a Shader view to Pyzed Design, like Godot's visual shaders. PR [#90](https://github.com/albakore/pyzed/pull/90) by [@albakore](https://github.com/albakore).
+- ✨ Open pages and sign-ins in the Windows browser when Pyzed Design runs under WSL. PR [#92](https://github.com/albakore/pyzed/pull/92) by [@albakore](https://github.com/albakore).
+- ✨ Guide agents with `plan_app`, show the app live while they build it, and run project tools in the project's environment. PR [#102](https://github.com/albakore/pyzed/pull/102) by [@albakore](https://github.com/albakore).
+- ✨ Show the project, branch and environment in the title bar with a project picker. PR [#103](https://github.com/albakore/pyzed/pull/103) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Fix the white Retro screen shader template and tidy shader graph layouts. PR [#91](https://github.com/albakore/pyzed/pull/91) by [@albakore](https://github.com/albakore).
+- 🐛 Keep the folder browser working next to folders without permission, and close a dialog that fails to draw. PR [#93](https://github.com/albakore/pyzed/pull/93) by [@albakore](https://github.com/albakore).
+- 🐛 Fix `ui.button` style overrides such as `radius`, rotated images and the alpha of SVG tints. PR [#101](https://github.com/albakore/pyzed/pull/101) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 💄 Restyle the docs and split them into sections with a header navbar. PR [#94](https://github.com/albakore/pyzed/pull/94) by [@albakore](https://github.com/albakore).
+- 📝 Document every Designer view and add a shader node catalog with recipes. PR [#95](https://github.com/albakore/pyzed/pull/95) by [@albakore](https://github.com/albakore).
+- 📝 Expand Theming and Distribute, and show uv/pip/python commands per platform. PR [#96](https://github.com/albakore/pyzed/pull/96) by [@albakore](https://github.com/albakore).
+- 📝 Add basic, intermediate and advanced tutorials and turn the Showcase into a gallery. PR [#97](https://github.com/albakore/pyzed/pull/97) by [@albakore](https://github.com/albakore).
+- 📸 Retake every docs screenshot, add node captures and short clips, and place them in the pages. PR [#98](https://github.com/albakore/pyzed/pull/98) by [@albakore](https://github.com/albakore).
+- 📝 Show every variant of each library component, with plain-words intros and a gallery index. PR [#99](https://github.com/albakore/pyzed/pull/99) by [@albakore](https://github.com/albakore).
+- 📝 Update the README with Pyzed Design, shaders, games, AI, integrations and new screenshots. PR [#100](https://github.com/albakore/pyzed/pull/100) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 👷 Speed up CI: cache the docs images, run jobs only for the files they check, a smaller PR matrix and parallel tests. PR [#104](https://github.com/albakore/pyzed/pull/104) by [@albakore](https://github.com/albakore).
+
 ## [1.2.0] - 2026-10-20
 
 ### Highlights

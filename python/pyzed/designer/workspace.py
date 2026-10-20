@@ -313,6 +313,8 @@ class Workspace:
             ui.SEPARATOR,
             ui.MenuItem(tr("Reveal in File Manager"), act(lambda: reveal(path)), icon="folder-search",
                         keys="ctrl-alt-r"),
+            ui.MenuItem(tr("Set as Startup File"), act(lambda: self.set_startup(rel)), icon="play")
+            if self.can_start(rel) and rel != self.startup() else None,
             None if is_dir else ui.MenuItem(tr("Open in Default App"), act(lambda: self.open_default(rel)),
                                             icon="external-link", keys="ctrl-shift-enter"),
             None if is_dir or path.suffix in DESIGN_SUFFIXES else ui.MenuItem(
@@ -349,6 +351,33 @@ class Workspace:
                             danger=True),
             ]
         return [i for i in items if i is not None]
+
+    def startup(self) -> Optional[str]:
+        """The project's startup file (where the app starts, see ``Project.startup``), relative to the tree."""
+        project = self.d.projects.project
+        if project is None or self.root is None:
+            return None
+        try:
+            return project.startup.resolve().relative_to(self.root.resolve()).as_posix()
+        except ValueError:
+            return None
+
+    @staticmethod
+    def can_start(rel: str) -> bool:
+        """Whether ``rel`` can be the startup file: a form or a Python script."""
+        return rel.endswith((".pzform", ".py"))
+
+    def set_startup(self, rel: str) -> None:
+        """Makes ``rel`` the file the app starts from (Run with no form open, ``pyzed run``, ``pyzed build``)."""
+        project = self.d.projects.project
+        if project is None:
+            return
+        try:
+            project.set_startup(rel)
+        except (OSError, ValueError) as err:
+            self.d.notify(tr("Could not change the startup file"), str(err), kind="error", seconds=5)
+            return
+        self.d.notify(tr("{name} is the startup file", name=rel.rsplit("/", 1)[-1]), kind="success", seconds=3)
 
     def _folder_for(self, rel: Optional[str]) -> str:
         """The folder new and pasted entries go to for ``rel``: itself if it is a folder, else its folder."""
@@ -740,6 +769,9 @@ def tree_view(w: Workspace, t: Theme) -> Any:
                                         padding=(8, 12)))
         return _core.column(rows, width="fill")
 
+    startup = w.startup()
+    start_mark = ui.tooltip(_icon("play", size=12, color=t.text_accent), tr("Startup file"), theme=t)
+
     def walk(nodes: List[ui.TreeNode], depth: int) -> None:
         for node in nodes:
             node_id = node.id or node.name
@@ -752,7 +784,7 @@ def tree_view(w: Workspace, t: Theme) -> Any:
             rows.append(ui.list_item(
                 _core.text(node.name, size=13, color=colors.get(node.status or "", t.text), wrap=False),
                 press, start=chevron, icon=icon, icon_color=color, indent=depth * 14, height=24,
-                selected=node_id == w.selected, on_right_press=lambda r=rel: w.open_menu(r), theme=t))
+                end=start_mark if rel == startup else None, selected=node_id == w.selected, on_right_press=lambda r=rel: w.open_menu(r), theme=t))
             if node.is_folder and is_open:
                 walk(node.children or [], depth + 1)
 

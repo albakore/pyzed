@@ -18,7 +18,7 @@ import Variant from '../../../components/library/Variant.astro';
 A button is something you click to make the app do something: save, send, open, delete.
 :::
 
-Displays a themed button. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `color`, `shadow`…) overrides the theme's.
+Displays a themed button. It reads its colors from the current theme, can carry an icon and a keyboard shortcut, and comes in several variants and sizes. Any style parameter of `pz.button` (`bg`, `hover_bg`, `color`, `shadow`, `radius`…) overrides the theme's.
 
 `ui.button` · Category: [Actions](/pyzed/library/#actions) · [Full reference →](/pyzed/reference/ui/#button)
 
@@ -275,7 +275,7 @@ pz.container(ui.button("Sign in", on_press, variant="solid", full_width=True), w
 
 ### Style overrides
 
-The color and shadow arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`) replace the theme's values for that button only.
+The style arguments of `pz.button` (`bg`, `hover_bg`, `pressed_bg`, `color`, `border_color`, `shadow`, `radius`, `padding`) replace the theme's values for that button only.
 
 <VariantGrid>
 <Variant name="button-v6-1" caption={"shadow="} alt={"Button: shadow="} code="Code" mono>
@@ -296,6 +296,13 @@ ui.button("Custom", on_press, bg="#c678dd", hover_bg="#d08ae6", color="#ffffff")
 
 ```python
 ui.button("Gold border", on_press, variant="outline", border_color="#e5c07b")
+```
+
+</Variant>
+<Variant name="button-v6-4" caption={"radius=999"} alt={"Button: radius=999"} code="Code" mono>
+
+```python
+ui.button("Pill", on_press, variant="solid", radius=999)
 ```
 
 </Variant>

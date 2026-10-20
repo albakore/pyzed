@@ -118,8 +118,17 @@ def _bundled(name: str) -> Optional[str]:
     return None
 
 
+def _installed_uv() -> Optional[str]:
+    """``uv`` where its installer puts it (``~/.local/bin``), which may not be on this process's ``PATH`` yet."""
+    exe = "uv" + (".exe" if os.name == "nt" else "")
+    for folder in (Path.home() / ".local" / "bin", Path.home() / ".cargo" / "bin"):
+        if (folder / exe).is_file():
+            return str(folder / exe)
+    return None
+
+
 def find_uv() -> Optional[str]:
-    """The ``uv`` executable: on ``PATH``, from the ``uv`` Python package or bundled."""
+    """The ``uv`` executable: on ``PATH``, from the ``uv`` Python package, bundled or installed by its installer."""
     found = shutil.which("uv")
     if found:
         return found
@@ -129,7 +138,22 @@ def find_uv() -> Optional[str]:
         return find_uv_bin()
     except Exception:  # noqa: BLE001 - not installed, or installed without its binary
         pass
-    return _bundled("uv")
+    return _bundled("uv") or _installed_uv()
+
+
+#: uv's official installers (they put ``uv`` in ``~/.local/bin``).
+UV_INSTALL = {
+    "posix": "curl -LsSf https://astral.sh/uv/install.sh | sh || wget -qO- https://astral.sh/uv/install.sh | sh",
+    "nt": "irm https://astral.sh/uv/install.ps1 | iex",
+}
+
+
+def install_uv() -> Result:
+    """Installs ``uv`` with its official installer (needs network); a ``Result`` like every command here."""
+    if os.name == "nt":
+        return execute(["powershell", "-NoProfile", "-ExecutionPolicy", "ByPass", "-Command", UV_INSTALL["nt"]],
+                       timeout=300)
+    return execute(["sh", "-c", UV_INSTALL["posix"]], timeout=300)
 
 
 def _clean_env() -> Dict[str, str]:
@@ -199,6 +223,49 @@ def _uv() -> str:
     if uv is None:
         raise FileNotFoundError("uv is not installed: https://docs.astral.sh/uv/getting-started/installation/")
     return uv
+
+
+# -- environments ----------------------------------------------------------------------
+
+#: ``\\wsl$\Ubuntu\home\me`` or ``//wsl.localhost/Ubuntu/home/me``: a folder of a WSL distribution seen from Windows.
+_WSL_UNC = re.compile(r"^(?:\\\\|//)wsl(?:\$|\.localhost)[\\/]+([^\\/]+)", re.IGNORECASE)
+_SYSTEMS = {"win32": "Windows", "darwin": "macOS"}
+
+
+@dataclass(frozen=True)
+class Environment:
+    """Where a project lives and its commands run, like the remote indicator of Zed's title bar.
+
+    ``kind`` is ``"local"`` (this computer) or ``"wsl"`` (a Linux distribution of the Windows Subsystem
+    for Linux, named ``name``, such as ``"Ubuntu"``).
+    """
+
+    kind: str
+    name: str
+
+    @property
+    def is_wsl(self) -> bool:
+        return self.kind == "wsl"
+
+    def describe(self) -> str:
+        """One sentence for people and agents about what working here means."""
+        if self.is_wsl:
+            return (f"WSL ({self.name}): Linux running on Windows. Commands run in Linux with Linux paths; "
+                    "windows open through WSLg and web pages in Windows' browser.")
+        return f"This computer ({self.name})."
+
+
+def environment(path: Optional[PathLike] = None) -> Environment:
+    """The environment of the folder ``path`` (default: where this process runs)."""
+    if path is not None:
+        found = _WSL_UNC.match(str(path))
+        if found:
+            return Environment("wsl", found.group(1))
+    from ._platform import is_wsl
+
+    if is_wsl():
+        return Environment("wsl", os.environ.get("WSL_DISTRO_NAME") or "WSL")
+    return Environment("local", _SYSTEMS.get(sys.platform, "Linux"))
 
 
 # -- pyproject.toml -------------------------------------------------------------------
@@ -385,6 +452,23 @@ class Project:
         return self.root / str(script) if script else None
 
     @property
+    def startup(self) -> Path:
+        """The file the app starts from: the ``script`` when the project has one, else the main form."""
+        return self.script if self.script is not None else self.main_form
+
+    def set_startup(self, path: PathLike) -> None:
+        """Makes ``path`` (a ``.pzform`` or ``.py`` file of the project) the file the app starts from: a form becomes
+        ``main`` in ``[tool.pyzed]`` (and the ``script`` is dropped), a script becomes ``script``."""
+        path = Path(path)
+        rel = (path if not path.is_absolute() else path.resolve().relative_to(self.root.resolve())).as_posix()
+        if path.suffix == ".py":
+            _set_pyzed_keys(self, script=rel)
+        elif path.suffix == ".pzform":
+            _set_pyzed_keys(self, main=rel, script=None)
+        else:
+            raise ValueError(f"{path.name} is not a form (.pzform) or a script (.py)")
+
+    @property
     def src_dir(self) -> Optional[Path]:
         """The ``src/`` folder, or ``None`` for a flat layout."""
         src = self.root / "src"
@@ -500,6 +584,30 @@ class Project:
                 name = requirement_name(spec)
                 deps.append(Dependency(name, spec, group, locked.get(normalize(name))))
         return deps
+
+    # -- preparing -------------------------------------------------------------------------------
+    @property
+    def environment(self) -> Environment:
+        """Where the project lives and its commands run (this computer or WSL)."""
+        return environment(self.root)
+
+    def needs_prepare(self) -> bool:
+        """Whether opening the project has work to do first: install ``uv``, or create ``.venv``."""
+        return find_uv() is None or not self.venv.is_dir()
+
+    def prepare(self) -> Result:
+        """Gets the project ready to work on, like Zed loading a project's environment: installs ``uv`` when it
+        is missing, then creates ``.venv`` with the project's packages and tools (``uv sync``)."""
+        steps: List[Result] = []
+        if find_uv() is None:
+            steps.append(install_uv())
+            if not steps[-1].ok:
+                return steps[-1]
+        if not self.venv.is_dir():
+            steps.append(self.sync())
+        if not steps:
+            return Result(["uv", "sync"], 0, "Ready")
+        return Result(steps[-1].args, steps[-1].code, "\n".join(r.output for r in steps if r.output))
 
     def outdated(self) -> List[Dependency]:
         """Direct dependencies with a newer release (asks the package index; needs network)."""
@@ -619,6 +727,28 @@ class Project:
         result = self.git("branch", "--show-current") if self.is_git else None
         return result.output or None if result and result.ok else None
 
+    def git_worktree(self) -> Optional[str]:
+        """The name of the linked git worktree the project is in (``git worktree add``), or ``None`` in the
+        repository's main folder or outside git."""
+        if not self.is_git:
+            return None
+        result = self.git("rev-parse", "--git-dir", "--git-common-dir")
+        lines = result.output.splitlines() if result.ok else []
+        if len(lines) != 2:
+            return None
+        git_dir, common = ((self.root / line).resolve() for line in lines)
+        return git_dir.name if git_dir != common else None
+
+    def git_branches(self) -> List[str]:
+        """The local branches, sorted by name (empty outside a repository)."""
+        result = self.git("branch", "--format=%(refname:short)") if self.is_git else None
+        return sorted(line.strip() for line in result.output.splitlines() if line.strip()) \
+            if result and result.ok else []
+
+    def switch_branch(self, name: str) -> Result:
+        """``git switch name``."""
+        return self.git("switch", name)
+
     # -- running ---------------------------------------------------------------------------------
     def run_args(self, form: Optional[PathLike] = None, *, reload: bool = False) -> List[str]:
         """The command that runs ``form`` (default: the main form) with the project's environment."""
@@ -704,6 +834,29 @@ def _write_main_form(project: Project, title: str) -> None:
         form.add(control)
     form["greet"].events["click"] = "greet_click"
     save(form, project.main_form)
+
+
+def _set_pyzed_keys(project: Project, **values: Optional[str]) -> None:
+    """Sets (or, with ``None``, removes) keys of the ``[tool.pyzed]`` table in ``pyproject.toml``, keeping the
+    rest of the file as it is."""
+    file = project.root / PYPROJECT
+    text = file.read_text(encoding="utf-8")
+    table = re.search(r"^\[tool\.pyzed\][ \t]*\n((?:(?!\[).*\n?)*)", text, re.M)
+    if table is None:
+        text = text.rstrip() + "\n\n[tool.pyzed]\n"
+        table = re.search(r"^\[tool\.pyzed\][ \t]*\n((?:(?!\[).*\n?)*)", text, re.M)
+        assert table is not None
+    body = table.group(1)
+    for key, value in values.items():
+        line = re.compile(rf"^{key}[ \t]*=.*\n?", re.M)
+        new = f"{key} = {json.dumps(value)}\n" if value is not None else ""
+        if line.search(body):
+            body = line.sub(lambda _: new, body, count=1)
+        elif new:
+            body = body.rstrip("\n") + ("\n" if body.strip() else "") + new + ("\n" if body.endswith("\n\n") else "")
+    text = text[:table.start(1)] + body + text[table.end(1):]
+    file.write_text(text, encoding="utf-8")
+    project.reload()
 
 
 def _ensure_config(project: Project, ui: str) -> None:

@@ -395,6 +395,71 @@ def list_examples(kind: str = "", query: str = "") -> List[Dict[str, str]]:
                                                                 or q in e["summary"].lower())]
 
 
+# -- planning --------------------------------------------------------------------------------------------
+
+_STOP = set("a an and app application the to of for with in on that this my me make build create want need "
+            "show shows using use like it is be as by or from some new un una el la los las de del con para que "
+            "y en mi crea crear quiero haz hacer app aplicacion".split())
+
+#: Words in a request that point at a topic of ``guide``.
+_HINTS = {
+    "game": "games", "games": "games", "juego": "games", "sprite": "games", "shader": "shaders",
+    "glow": "animation", "animation": "animation", "animate": "animation", "animacion": "animation",
+    "effect": "animation", "graph": "shader-graphs", "node": "shader-graphs", "fastapi": "integrations",
+    "django": "integrations", "sqlalchemy": "integrations", "sqlmodel": "integrations", "database": "integrations",
+    "api": "integrations", "backend": "integrations", "form": "designer", "designer": "designer",
+    "formulario": "designer", "list": "performance", "table": "performance", "million": "performance",
+    "log": "performance", "theme": "theming", "dark": "theming", "tema": "theming", "window": "windows",
+    "menu": "windows", "titlebar": "windows", "translate": "i18n", "language": "i18n", "idioma": "i18n",
+    "test": "testing", "package": "packaging", "installer": "packaging", "ai": "agents", "chat": "agents",
+    "async": "async", "download": "async", "http": "async", "keyboard": "keyboard", "shortcut": "keyboard",
+}
+
+
+def _words(text: str) -> List[str]:
+    import re
+
+    return [w for w in re.findall(r"[a-z0-9áéíóúñ]+", text.lower()) if len(w) > 2 and w not in _STOP]
+
+
+def _score(words: List[str], text: str) -> int:
+    hay = text.lower()
+    return sum(1 for w in words if w in hay)
+
+
+def plan(description: str, limit: int = 6) -> Dict[str, Any]:
+    """What to read and reuse before building ``description``: the closest blocks and examples, components,
+    guide topics and documentation pages, and the steps to follow."""
+    words = _words(description)
+
+    def best(items, text, n=limit):
+        scored = sorted(((_score(words, text(i)), i) for i in items), key=lambda pair: -pair[0])
+        return [i for score, i in scored if score][:n]
+
+    examples = best(index()["examples"], lambda e: f"{e['name']} {e['summary']} {e.get('kind', '')}")
+    components = best(list_components("ui") + list_components("widget"),
+                      lambda c: f"{c['name']} {c.get('summary', '')} {c.get('category', '')}", limit * 2)
+    docs = best(list_docs(), lambda d: f"{d['slug']} {d['title']} {d['description']}")
+    topics = sorted({_HINTS[w] for w in words if w in _HINTS})
+    return {
+        "topics": ["best-practices", "cookbook", *topics],
+        "examples": [{"name": e["name"], "kind": e.get("kind", "app"), "summary": e["summary"]} for e in examples],
+        "components": [{"name": c["name"], "summary": c.get("summary", "")} for c in components],
+        "docs": [{"slug": d["slug"], "title": d["title"]} for d in docs],
+        "steps": [
+            "Read get_guide('best-practices') and get_guide('cookbook'), then the topics above.",
+            "Read the closest example with read_example: start from a block for a whole screen.",
+            "project_info: see the project, its entry file and environment; create_project when there is none.",
+            "Plan the screens, the state (plain classes in the package, easy to test) and the slow work "
+            "(background tasks). Look every component up with describe_component before using it.",
+            "start_live_preview on the entry so the user watches the app as you build it.",
+            "write_files in small steps (state, then views or forms, then tests), fixing what each write reports "
+            "and reading live_preview_status for runtime errors.",
+            "check_project and run_tests until both are clean; screenshot_project each screen to check the look.",
+        ],
+    }
+
+
 # -- the built-in reference ---------------------------------------------------------------------------
 
 

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
@@ -37,6 +38,15 @@ class ProjectController:
         self.latest: Dict[str, str] = {}
         self.tools: Dict[str, Tool] = {}
         self.branch: Optional[str] = None
+        #: The linked git worktree the project is in (``None`` in the repository's main folder).
+        self.worktree: Optional[str] = None
+        #: The local branches, read when the branch menu of the title bar opens.
+        self.branches: List[str] = []
+        #: The projects opened in this window, in the order they were opened (the title bar's picker lists
+        #: them under "This window"); ``project`` is the active one.
+        self.window: List[Path] = []
+        #: Called with the new active project (or ``None``) whenever it changes; see ``on_change``.
+        self._listeners: List[Callable[[Optional[Project]], Any]] = []
         self.busy: Optional[str] = None
         self.last: Optional[Result] = None
         self.process: Optional[subprocess.Popen] = None
@@ -50,18 +60,31 @@ class ProjectController:
         self.new_git = True
         self.new_package = True
         self.open_text = ""
+        self.clone_url = ""
+        self.clone_folder = str(_workspace.start_folder())
         #: The project's file tree.
         self.files = _workspace.Workspace(designer)
         #: The folder browser of the Open project and New project dialogs.
         self.browser = _workspace.FolderBrowser(_workspace.start_folder())
 
     # -- opening ------------------------------------------------------------------------
+    def on_change(self, callback: Callable[[Optional[Project]], Any]) -> None:
+        """Calls ``callback(project)`` each time another project becomes the active one (or none is), so the
+        agents and other panels can follow it."""
+        self._listeners.append(callback)
+
     def attach(self, project: Optional[Project]) -> Any:
         """Makes ``project`` the open one (activated, remembered, its folder the working one)."""
+        before = self.project.root if self.project is not None else None
         self.project = project
+        if (project.root if project is not None else None) != before:
+            for callback in list(self._listeners):
+                callback(project)
         self.files.attach(project.root if project is not None else None)
         if project is None:
             return None
+        if project.root not in self.window:
+            self.window.append(project.root)
         project.activate()
         _project.remember(project)
         try:
@@ -85,7 +108,13 @@ class ProjectController:
         self.project.reload()
         self.deps = self.project.dependencies()
         self.branch = self.project.git_branch()
+        self.worktree = self.project.git_worktree()
         self.files.refresh()
+
+    @property
+    def environment(self) -> _project.Environment:
+        """Where the active project (or, without one, the designer) lives and its commands run."""
+        return self.project.environment if self.project is not None else _project.environment()
 
     def _got_tools(self, found: Dict[str, Tool]) -> None:
         self.tools = found
@@ -107,7 +136,52 @@ class ProjectController:
         self.d.notify(f"Opened {project.name}", str(project.root))
         if project.main_form.exists():
             self.d._guard(lambda: self.d.open_path(project.main_form))
-        return self.load_tools()
+        return [c for c in (self.prepare(), self.load_tools()) if c is not None]
+
+    def prepare(self) -> Any:
+        """Loads the active project's environment in the background when it is not ready, like Zed does when a
+        project opens: installs uv if it is missing and creates ``.venv`` (``uv sync``) with its tools."""
+        project = self.project
+        if project is None or not project.needs_prepare():
+            return None
+        where = project.environment
+
+        def done(result: Result) -> Any:
+            if result.ok:
+                self.d.notify(tr("{name} is ready", name=project.name), where.describe(), kind="success", seconds=3)
+            return self.load_tools()
+
+        return self._task(tr("Preparing the environment"), project.prepare, done)
+
+    def switch(self, root: Path) -> Any:
+        """Makes the project at ``root`` the active one of this window (it opens if it is not open yet)."""
+        self.d.app_menu = None
+        if self.project is not None and self.project.root == root:
+            return None
+        return self.open(str(root))
+
+    def close_project(self, root: Path) -> Any:
+        """Takes the project at ``root`` out of this window; when it is the active one, the previous one opened
+        takes its place (or no project)."""
+        if root in self.window:
+            self.window.remove(root)
+        if self.project is None or self.project.root != root:
+            return None
+        if not self.window:
+            return self.attach(None)
+        return self.open(str(self.window[-1]))
+
+    def open_branches(self) -> None:
+        """Opens the branch menu of the title bar with the project's local branches."""
+        self.branches = self.project.git_branches() if self.project is not None else []
+        self.d.app_menu = None if self.d.app_menu == "branches" else "branches"
+
+    def switch_branch(self, name: str) -> Any:
+        """Checks out branch ``name`` (``git switch``) in the background; returns the task."""
+        self.d.app_menu = None
+        if name == self.branch:
+            return None
+        return self._uv(tr("Switching to {branch}", branch=name), lambda p: p.switch_branch(name))
 
     def create(self) -> Any:
         """Creates a project named ``new_name`` in ``new_folder`` with ``uv init`` in the background, then
@@ -136,6 +210,37 @@ class ProjectController:
             return self.open(str(result.root))
 
         return self._task(f"Creating {name} with uv", work, done)
+
+    def clone_target(self) -> Optional[Path]:
+        """The folder ``clone`` creates: the repository's name under ``clone_folder``."""
+        name = self.clone_url.strip().rstrip("/").rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+        name = name[:-4] if name.endswith(".git") else name
+        return Path(self.clone_folder.strip() or ".").expanduser() / name if name else None
+
+    def clone(self) -> Any:
+        """Clones the repository at ``clone_url`` into ``clone_folder`` with git in the background, then opens it
+        (and gets its environment ready); returns the task."""
+        url, target = self.clone_url.strip(), self.clone_target()
+        if not url or target is None:
+            return None
+        if target.exists() and any(target.iterdir()):
+            self.d.notify(tr("The folder is not empty"), str(target), kind="error", seconds=5)
+            return None
+        self.d.dialog = None
+
+        def done(result: Result) -> Any:
+            if not result.ok:
+                self.d.notify(tr("Could not clone the repository"), result.output.splitlines()[-1]
+                              if result.output else None, kind="error", seconds=6)
+                return None
+            if not _workspace.is_project(target):
+                self.d.notify(tr("The repository has no pyproject.toml"), str(target), kind="warning", seconds=6)
+                return None
+            return self.open(str(target))
+
+        git = shutil.which("git") or "git"
+        return self._task(tr("Cloning {name}", name=target.name),
+                          lambda: _project.execute([git, "clone", url, str(target)], timeout=600), done)
 
     # -- background commands -------------------------------------------------------------
     def _task(self, label: str, work: Callable[[], Any], done: Optional[Callable[[Any], Any]] = None,
@@ -296,6 +401,8 @@ class ProjectController:
                 self.browser.go(recent[0].parent if recent else _workspace.start_folder())
             elif dialog == "browse_new":
                 self.browser.go(self.new_folder or _workspace.start_folder())
+            elif dialog == "browse_clone":
+                self.browser.go(self.clone_folder or _workspace.start_folder())
             self.d.dialog = f"project:{dialog}"
 
         return open_dialog
@@ -304,6 +411,11 @@ class ProjectController:
         """Takes the browser's folder as the New project location and goes back to that dialog."""
         self.new_folder = str(self.browser.path)
         self.d.dialog = "project:new"
+
+    def choose_clone_location(self) -> None:
+        """Takes the browser's folder as where the repository is cloned and goes back to the Clone dialog."""
+        self.clone_folder = str(self.browser.path)
+        self.d.dialog = "project:clone"
 
 
 # -- views -----------------------------------------------------------------------------------
@@ -323,9 +435,11 @@ def _empty(p: ProjectController, t: Theme) -> Any:
     parts: List[Any] = [
         ui.empty_state("No project open", "Projects use uv for dependencies, ruff and ty for checks and git.",
                        icon="package", theme=t, actions=[
-                           ui.button("New project", p.show("new"), icon="folder-plus", variant="solid", size="sm",
-                                     theme=t),
-                           ui.button("Open…", p.show("open"), icon="folder-open", size="sm", theme=t)]),
+                           ui.button(tr("Open project"), p.show("open"), icon="folder-open", variant="solid",
+                                     size="sm", theme=t),
+                           ui.button(tr("New project"), p.show("new"), icon="folder-plus", size="sm", theme=t)]),
+        _core.container(ui.button(tr("Clone repository"), p.show("clone"), icon="git-branch", variant="ghost",
+                                  size="sm", theme=t), width="fill", align_x="center"),
     ]
     if recent:
         parts += [_section("Recent", t), *recent]
@@ -481,6 +595,26 @@ def dialog(d: "Designer", t: Theme) -> Any:
             _core.space(width="fill"),
             ui.button(tr("Back"), p.show("new"), variant="ghost", theme=t),
             ui.button(tr("Choose this folder"), p.choose_location, icon="check", variant="solid", theme=t)])
+    if which == "clone":
+        target = p.clone_target()
+        return ui.modal(_core.column([
+            ui.field(tr("Repository URL"), ui.input(p.clone_url, p.setter("clone_url"), on_submit=p.clone, mono=True,
+                                                     placeholder="https://github.com/user/app.git", width=360,
+                                                     theme=t), theme=t),
+            ui.field(tr("Location"), _core.row([
+                ui.input(p.clone_folder, p.setter("clone_folder"), mono=True, width=260, theme=t),
+                ui.button(tr("Browse…"), p.show("browse_clone"), icon="folder-search", size="sm", theme=t),
+            ], spacing=6, align="center"), description=tr("Creates {target}", target=target) if target else None,
+                theme=t),
+        ], spacing=12), title=tr("Clone repository"), on_close=d.close_dialog, width=560, theme=t, footer=[
+            ui.button(tr("Cancel"), d.close_dialog, variant="ghost", theme=t),
+            ui.button(tr("Clone"), p.clone, icon="git-branch", variant="solid", disabled=target is None, theme=t)])
+    if which == "browse_clone":
+        return ui.modal(_workspace.browser_view(p.browser, t), title=tr("Choose where to clone the repository"),
+                        on_close=p.show("clone"), width=760, theme=t, footer=[
+            _core.space(width="fill"),
+            ui.button(tr("Back"), p.show("clone"), variant="ghost", theme=t),
+            ui.button(tr("Choose this folder"), p.choose_clone_location, icon="check", variant="solid", theme=t)])
     if which == "name" and p.files.naming is not None:
         return _workspace.name_dialog(p.files, t)
     if which == "delete" and p.files.deleting is not None:

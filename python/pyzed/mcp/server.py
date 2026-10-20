@@ -23,18 +23,26 @@ except ImportError:  # mcp 1.x
 
 INSTRUCTIONS = """\
 Pyzed builds native desktop GUIs in Python, rendered by Iced (Rust), with components that look like
-the Zed editor (`import pyzed as pz`, `from pyzed import ui`).
-Start with get_guide("overview"), get_guide("best-practices") and get_guide("cookbook") (runnable
-recipes: app structure, background work, forms, virtual lists, animation and effects, shaders, games,
-custom window frames, anchored layouts); list_guides shows every other topic. Look names up with
-list_components / describe_component / search_reference / read_reference / search_icons / list_themes
-instead of guessing. Learn from list_examples (blocks are whole screens to copy; also games, showcase and
-backend integrations) and read_example. Generate skeletons with new_app / new_component / new_form, check
-code with validate_code (validate_form for .pzform files) and look at it with screenshot.
-GPU shaders can be node graphs (.pzshad files drawn with pz.shader("x.pzshad")): start one with new_shader,
-look nodes up with list_shader_nodes and compile it with check_shader.
-To build a whole app in a folder: project_info, create_project, write_files (checks what it writes),
-add_dependency, check_project, run_tests and screenshot_project, then fix and repeat until it is clean."""
+the Zed editor (`import pyzed as pz`, `from pyzed import ui`). Never guess an API: look it up here.
+
+What to do for each kind of request:
+- "Build an app / a screen": plan_app(description) first (it names the blocks, examples, components and
+  guides to read), then follow its steps: project_info (or create_project), start_live_preview so the user
+  watches the app while you build it, write_files in small steps, check_project, run_tests and
+  screenshot_project until all are clean. The build_project prompt has the whole loop.
+- "Make a component": list_components to reuse what exists, new_component, then validate_code and
+  screenshot with a preview() function.
+- "Make a designer form": list_components(kind="designer"), new_form, validate_form.
+- "A shader / visual effect": get_guide("shaders"); node graphs (.pzshad, drawn with pz.shader("x.pzshad"))
+  start from new_shader, use list_shader_nodes and check_shader; style effects (glow, glass...) are in the cookbook.
+- "How does X work": get_guide(topic) (list_guides), search_reference / read_reference, read_docs.
+
+Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
+describe_component, search_icons, list_themes, list_examples / read_example (blocks are whole screens).
+Checks: validate_code, validate_form, check_project; pictures: screenshot, screenshot_project.
+Project tools work in the folder the server runs in and in the project's own environment (its .venv through
+uv run; project_info shows it, WSL included). Code goes in the project's files: the entry is its script
+(`script` in [tool.pyzed]) or its main form; forms, components and shaders are files of the project."""
 
 
 def _json(data: Any) -> str:
@@ -85,6 +93,12 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         (runnable recipes for the features most apps need) or any topic of list_guides ("games",
         "shaders", "animation", "performance", "integrations", "editor-shortcuts"...). lang: "en" or "es"."""
         return knowledge.guide(topic, lang)
+
+    @tool()
+    def plan_app(description: str) -> str:
+        """Where to start for an app or screen: the closest blocks and examples, the components and guide
+        topics it needs, the documentation pages to read and the steps to build it. Call it first."""
+        return _json(knowledge.plan(description))
 
     @tool()
     def list_guides() -> str:
@@ -289,10 +303,35 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
 
     @gated(structured_output=False)
     def screenshot_project(target: str = "", width: int = 0, height: int = 0) -> Any:
-        """Renders a form (.pzform) or a script (.py) of the folder off-screen and returns a PNG; by default
-        the project's main form. width/height default to the form's size (800x600 for scripts)."""
+        """Renders a script (.py), form (.pzform), component (.pzcomp) or shader graph (.pzshad) of the folder
+        off-screen, in the project's environment, and returns a PNG; by default the project's entry (its script,
+        else its main form). width/height default to the form's size."""
         caption, png = projects.screenshot(base, target, size=(width, height) if width and height else None)
         return [caption, Image(data=png, format="png")]
+
+    @gated()
+    def start_live_preview(target: str = "") -> str:
+        """Opens the app in a real window with hot reload, in the project's environment, so the user watches it
+        while you build: every file you write updates it on save. target: a script, form, component or shader
+        of the folder (default: the project's entry). Returns whether it runs and what it printed."""
+        from . import live
+
+        return _json(live.start(base, target))
+
+    @gated()
+    def live_preview_status(target: str = "") -> str:
+        """The open live previews: whether each still runs and what it printed (read it after your changes:
+        tracebacks from view() and handlers show up here)."""
+        from . import live
+
+        return _json(live.status(target))
+
+    @gated()
+    def stop_live_preview(target: str = "") -> str:
+        """Closes the live preview of target, or every one."""
+        from . import live
+
+        return _json(live.stop(target))
 
     # -- resources -------------------------------------------------------------------------------------
     @server.resource("pyzed://guide", mime_type="text/markdown")
@@ -369,17 +408,18 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
 
     @server.prompt()
     def build_project(description: str) -> str:
-        """Build a complete Pyzed app in this folder, from the project to a clean check."""
+        """Build a complete Pyzed app in this folder, watched live, from the project to a clean check."""
         return (f"Build a complete Pyzed desktop app in this folder: {description}\n\n"
-                "1. Read get_guide('overview'), get_guide('best-practices') and get_guide('cookbook'); open the "
-                "topics the app needs (list_guides) and the closest examples (list_examples, blocks first).\n"
-                "2. project_info; when there is no project yet, create_project.\n"
+                "1. plan_app with the description; read the guides and the closest examples it names (blocks "
+                "first) and get_guide('best-practices').\n"
+                "2. project_info: the project, its entry and environment. Without a project, create_project.\n"
                 "3. Plan the screens, the state (plain classes in the package, easy to test) and the background "
                 "work. Look up every widget with describe_component or read_reference.\n"
-                "4. write_files in small steps: state and logic, then views or designer forms, then tests. Fix "
-                "what each write reports.\n"
-                "5. add_dependency for libraries, check_project and run_tests until both are clean, and "
-                "screenshot_project each screen to see it. Repeat until it works and looks right.")
+                "4. start_live_preview on the entry, so the user sees the app take shape.\n"
+                "5. write_files in small steps: state and logic, then views or designer forms, then tests. Fix "
+                "what each write reports and what live_preview_status shows.\n"
+                "6. add_dependency for libraries, check_project and run_tests until both are clean, and "
+                "screenshot_project each screen to check it looks right. Then tell the user how to run it.")
 
     return server
 

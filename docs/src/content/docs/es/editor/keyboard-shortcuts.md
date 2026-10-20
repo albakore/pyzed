@@ -23,6 +23,7 @@ Funcionan en cualquier sitio, incluso mientras escribes en el editor de código.
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | Nuevo componente |
 | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Abrir |
 | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Ir a un archivo |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | Abrir proyecto reciente (el selector de proyectos) |
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Guardar |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Guardar como |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> | Ajustes |
