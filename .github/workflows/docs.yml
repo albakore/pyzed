@@ -1,25 +1,11 @@
 name: Docs
 
 on:
+  # The `changes` job decides what runs: GitHub's paths filters only look at the first 300 changed
+  # files, so big pull requests skipped the site and API checks.
   push:
     branches: [main]
-    paths:
-      - "docs/**"
-      - "CHANGELOG.md"
-      - "examples/**"
-      - "benchmarks/**"
-      - "python/**"
-      - "src/**"
-      - ".github/workflows/docs.yml"
   pull_request:
-    paths:
-      - "docs/**"
-      - "CHANGELOG.md"
-      - "examples/**"
-      - "benchmarks/**"
-      - "python/**"
-      - "src/**"
-      - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 permissions:
@@ -31,32 +17,25 @@ concurrency:
 
 jobs:
   changes:
+    # On main, rebuild and deploy when the site or the code its reference comes from changed (`main`).
     # On a pull request, build the site only when something it shows changed, and check the API
     # reference only when the code it is generated from changed.
     name: Changed files
     runs-on: ubuntu-latest
     outputs:
-      site: ${{ github.event_name != 'pull_request' || steps.filter.outputs.site == 'true' }}
-      api: ${{ github.event_name != 'pull_request' || steps.filter.outputs.api == 'true' }}
+      site: ${{ github.event_name == 'pull_request' && steps.filter.outputs.site || steps.filter.outputs.main }}
+      api: ${{ github.event_name == 'pull_request' && steps.filter.outputs.api || steps.filter.outputs.main }}
     steps:
       - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          filters: |
-            site:
-              - "docs/**"
-              - "CHANGELOG.md"
-              - "examples/**"
-              - "benchmarks/**"
-              - ".github/workflows/docs.yml"
-            api:
-              - "python/**"
-              - "src/**"
-              - "docs/scripts/**"
-              - "docs/src/content/docs/reference/**"
-              - "docs/src/content/docs/es/reference/**"
-              - ".github/workflows/docs.yml"
+      - id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: >-
+          python3 scripts/ci_changes.py "$BASE" HEAD
+          'site=docs/**,CHANGELOG.md,examples/**,benchmarks/**,.github/workflows/docs.yml'
+          'api=python/**,src/**,docs/scripts/**,docs/src/content/docs/reference/**,docs/src/content/docs/es/reference/**,.github/workflows/docs.yml'
+          'main=docs/**,CHANGELOG.md,examples/**,benchmarks/**,python/**,src/**,.github/workflows/docs.yml'
+          | tee -a "$GITHUB_OUTPUT"
 
   build:
     name: Build site
