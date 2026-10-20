@@ -44,6 +44,8 @@ class ProjectController:
         #: The projects opened in this window, in the order they were opened (the title bar's picker lists
         #: them under "This window"); ``project`` is the active one.
         self.window: List[Path] = []
+        #: Called with the new active project (or ``None``) whenever it changes; see ``on_change``.
+        self._listeners: List[Callable[[Optional[Project]], Any]] = []
         self.busy: Optional[str] = None
         self.last: Optional[Result] = None
         self.process: Optional[subprocess.Popen] = None
@@ -63,9 +65,18 @@ class ProjectController:
         self.browser = _workspace.FolderBrowser(_workspace.start_folder())
 
     # -- opening ------------------------------------------------------------------------
+    def on_change(self, callback: Callable[[Optional[Project]], Any]) -> None:
+        """Calls ``callback(project)`` each time another project becomes the active one (or none is), so the
+        agents and other panels can follow it."""
+        self._listeners.append(callback)
+
     def attach(self, project: Optional[Project]) -> Any:
         """Makes ``project`` the open one (activated, remembered, its folder the working one)."""
+        before = self.project.root if self.project is not None else None
         self.project = project
+        if (project.root if project is not None else None) != before:
+            for callback in list(self._listeners):
+                callback(project)
         self.files.attach(project.root if project is not None else None)
         if project is None:
             return None

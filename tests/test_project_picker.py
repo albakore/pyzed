@@ -96,6 +96,8 @@ def test_title_bar_and_picker(tmp_path):
     first, second = _make(tmp_path, "shop"), _make(tmp_path, "blog")
     d = Designer(language_servers=False)
     t = d.theme_obj
+    changes = []
+    d.projects.on_change(lambda p: changes.append(p.name if p else None))
     assert d.projects.window == [] and project_picker.title_items(d, t)  # "No project"
     _close(d.projects.open(str(first)))
     _close(d.projects.open(str(second)))
@@ -115,6 +117,7 @@ def test_title_bar_and_picker(tmp_path):
     assert d.projects.window == [second] and d.projects.project.root == second
     _close(d.projects.close_project(second))
     assert d.projects.project is None
+    assert changes == ["shop", "blog", "shop", "blog", None]
     d.picker_projects.open()
     assert {r.root for r in d.picker_projects.entries()} == {first, second}  # both are recent now
     d.on_key("down")
