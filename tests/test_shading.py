@@ -165,6 +165,26 @@ def test_arrange_places_nodes_in_columns():
     assert xs["uv"] < xs["palette"] < xs["output"]
 
 
+def test_arrange_puts_a_value_right_before_the_node_that_reads_it():
+    g = shading.Graph("late")
+    color = g.uv()["x"] * 2.0 * 3.0 * 4.0
+    grain = g.grain()
+    g.output(g.rgba(color * grain["value"], 1.0)["color"])
+    g.arrange()
+    reader = next(n for n in g.nodes.values() if any(l.src == grain.id for l in g.links if l.dst == n.id))
+    assert reader.x - g.nodes[grain.id].x == 250.0
+
+
+def test_the_effects_in_the_templates_darken_the_color_instead_of_washing_it_out():
+    # Vignette, Scanlines and Film grain are about 1 where they leave the color alone: they multiply it
+    for path in sorted((ROOT / "python/pyzed/designer/templates/shaders").glob("*.pzshad")):
+        g = shading.load_graph(path)
+        for link in g.links:
+            if g.nodes[link.src].type in ("vignette", "scanlines", "grain"):
+                reader = g.nodes[link.dst]
+                assert reader.type != "math" or reader.params.get("op") == "multiply", path.name
+
+
 def test_the_catalog_is_translated():
     from pyzed import i18n
     from pyzed.shading.locale import tr
