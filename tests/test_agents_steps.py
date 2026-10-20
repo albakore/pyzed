@@ -192,6 +192,29 @@ def test_the_built_in_agent_knows_the_editor_and_builds_in_one_call(tmp_path, mo
     assert len(agent_tools.knowledge()) < 40_000
 
 
+def test_the_agent_steps_go_to_the_logs_panel(tmp_path, monkeypatch):
+    calls = []
+
+    def stream(model, system, messages, tools, *, settings, on_event, cancel, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            return llm.Turn([{"type": "tool_use", "id": "t1", "name": "select", "input": {"name": "nope"}}],
+                            "tool_use", usage={"input": 10, "output": 5})
+        return llm.Turn([{"type": "text", "text": "Done."}], "end_turn")
+
+    d, c = _designer(tmp_path, monkeypatch, stream)
+    c.thread.model = c.settings.model = "anthropic:claude-opus-5-5"
+    _run(c, "select the button")
+    c.toggle_thinking()
+    entries = [(e.level, e.source, e.text) for e in d.logs.log.entries if e.source == "agent"]
+    texts = [text for _, _, text in entries]
+    assert ("event", "agent", "Asked anthropic:claude-opus-5-5: select the button") in entries
+    assert ("event", "agent", "Tool select (name='nope')") in entries
+    assert any(level == "warning" and text.startswith("Tool select failed") for level, _, text in entries)
+    assert any(text.startswith("Finished in ") for text in texts) and "Thinking off" in texts
+    d.logs.uninstall()
+
+
 def test_always_allow_is_remembered_and_agent_options_show_in_the_composer(tmp_path, monkeypatch):
     from pyzed.designer import agent_panel
 

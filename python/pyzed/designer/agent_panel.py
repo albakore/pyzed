@@ -27,6 +27,7 @@ from ..agents import providers as _providers
 from ..icons import icon as _icon
 from ..theme import Theme, alpha
 from . import agent_tools
+from . import logs as _logs
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -52,6 +53,16 @@ Answer with the complete new code in one ```python fenced block and nothing else
 Keep the function names and signatures unless asked otherwise; handlers are def <control>_<event>(form, event)."""
 
 _FENCE = re.compile(r"```(?:python|py)?\s*\n(.*?)```", re.S)
+
+
+def _brief(value: Any, limit: int = 160) -> str:
+    """``value`` on one short line, for the Logs panel."""
+    text = " ".join(str(value).split())
+    return text if len(text) <= limit else text[:limit - 1] + "…"
+
+
+def _log_args(args: Dict[str, Any]) -> str:
+    return _brief(", ".join(f"{k}={v!r}" for k, v in args.items()))
 
 
 @dataclass
@@ -300,9 +311,12 @@ class AgentController:
     def _mcp_installed(self, value: Any, error: Optional[BaseException]) -> None:
         if error is not None or not value:
             return
-        added, _failed = value
+        added, failed = value
+        for client_id, why in failed.items():
+            _logs.log("agent").warning("Could not add Pyzed's MCP server to %s: %s", client_id, why)
         if not added:
             return
+        _logs.event("agent", "Added Pyzed's MCP server to %s", ", ".join(c.name for c in added))
         self.settings.pyzed_mcp_done += [c.id for c in added if c.id not in self.settings.pyzed_mcp_done]
         self.save_settings()
         self.mcp_added = [c.name for c in added]
@@ -336,8 +350,12 @@ class AgentController:
             self.mcp_clients_busy = ""
             self._clients = None
             if error is not None:
+                _logs.log("agent").warning("Could not change Pyzed's MCP server in %s: %s", client.name, error)
                 self.d.notify(tr("Could not change {name}", name=client.name), str(error), kind="error", seconds=6)
-            elif adding:
+                return
+            _logs.event("agent", "%s Pyzed's MCP server %s %s", "Added" if adding else "Took out",
+                        "to" if adding else "of", client.name)
+            if adding:
                 self.mcp_added = [client.name]
                 self.d.notify(tr("Pyzed's MCP server was added to {names}", names=client.name),
                               tr("Restart them so they can use it"), kind="success", seconds=6)
@@ -350,6 +368,7 @@ class AgentController:
         self.mcp_added = []
         if self.running:
             return
+        _logs.event("agent", "Restarted the external agents")
         self.close_external_agents()
         self.prepare_agent()
 
@@ -498,6 +517,7 @@ class AgentController:
             elif kind == "confirm":
                 _, tool_, args, box = item
                 self.pending = Confirmation(tool_, args, box)
+                _logs.event("agent", "Waiting for your OK to run %s", getattr(tool_, "title", "") or tool_.name)
                 self._notify_desktop(tr("The agent needs your OK"), getattr(tool_, "title", "") or tool_.name)
             elif kind == "inline":
                 self._on_inline(*item[1:])
@@ -524,9 +544,12 @@ class AgentController:
                 _, server, why = item
                 self.mcp_status[server] = why
                 self.mcp_ok.discard(server)
+                _logs.log("agent").warning("The MCP server %s did not start: %s", server, why)
                 self.d.notify(tr("The MCP server {name} did not start", name=server), why, kind="warning",
                               seconds=6)
             elif kind == "mcp_ready":
+                if self.mcp.clients:
+                    _logs.log("agent").debug("MCP servers ready: %s", ", ".join(self.mcp.clients))
                 for server in list(self.mcp.clients):
                     self.mcp_status[server] = tr("{count} tools", count=len(self.mcp._tools.get(server, [])))
                     self.mcp_ok.add(server)
@@ -566,6 +589,8 @@ class AgentController:
         elif event.kind == "tool_input":
             self.live_tool = event.tool
         elif event.kind == "turn":
+            if event.usage:
+                _logs.log("agent").debug("Model answer finished (%s)", _log_args(event.usage))
             self.live_text = ""
             self.live_thinking = ""
             self.live_tool = ""
@@ -573,24 +598,36 @@ class AgentController:
             if used:
                 self.thread.context = used
         elif event.kind == "tool_call":
+            _logs.event("agent", "Tool %s%s", event.tool, f" ({_log_args(event.args)})" if event.args else "")
             self.tool_status[event.call_id] = "running"
             self.live_tool = ""
         elif event.kind == "tool_result":
+            if event.error:
+                _logs.log("agent").warning("Tool %s failed: %s", event.tool, _brief(event.result),
+                                           extra={"detail": event.result})
+            else:
+                _logs.log("agent").debug("Tool %s finished: %s", event.tool, _brief(event.result))
             self.tool_status[event.call_id] = "error" if event.error else "done"
             if event.tool == "write_file" and not event.error and event.args.get("path"):
                 self._on_file(str(event.args["path"]), True)
         elif event.kind == "file":
+            _logs.event("agent", "%s %s", "Wrote" if event.args.get("written") else "Looked at", event.text)
             self._on_file(event.text, bool(event.args.get("written")))
         elif event.kind == "plan":
             self.live_plan = list(event.args.get("steps") or [])
+            steps = (str(s.get("content", s)) if isinstance(s, dict) else str(s) for s in self.live_plan)
+            _logs.log("agent").debug("Plan: %s", _brief("; ".join(steps)))
         elif event.kind == "auth":
             config = getattr(self._agent, "config", None)
             name = getattr(config, "name", "")
+            _logs.log("agent").warning("%s needs you to sign in", getattr(config, "label", name))
             self.agent_auth = AgentAuth(name, getattr(config, "label", name), list(event.args.get("methods") or []),
                                         event.args.get("prompt"))
         elif event.kind == "error":
+            _logs.log("agent").error("The agent stopped: %s", event.text)
             self.error = event.text
         elif event.kind == "done":
+            _logs.event("agent", "Finished in %.1f s", time.monotonic() - self.started)
             if self.error:
                 self._notify_desktop(tr("The agent stopped"), self.error)
             elif self.agent_auth is not None:
@@ -770,6 +807,8 @@ class AgentController:
         emit = lambda e: put(("event", e))  # noqa: E731
         jobs = [b for b in content if b.get("type") == "screenshot"]
         provider_id, name = _providers.split_model(model)
+        asked = next((b.get("text", "") for b in content if b.get("type") == "text"), "")
+        _logs.event("agent", "Asked %s: %s", model, _brief(asked))
         servers = self.mcp
         servers.cwd = str(self.project_root())
         if provider_id == "acp":
@@ -852,6 +891,7 @@ class AgentController:
     def stop(self) -> None:
         """Stops the agent (a pending confirmation is answered "no")."""
         if self._agent is not None:
+            _logs.event("agent", "Stopped by you")
             self._agent.stop()
         if self.pending is not None:
             self.answer(False)
@@ -861,6 +901,8 @@ class AgentController:
         pending, self.pending = self.pending, None
         if pending is None:
             return
+        _logs.event("agent", "%s %s%s", "Allowed" if allow else "Declined",
+                    getattr(pending.tool, "title", "") or pending.tool.name, " (always)" if allow and always else "")
         if allow and always:  # remembered, like Zed's "Always allow" (Settings → Permissions lists them)
             self.always_allow.add(pending.tool.name)
             if pending.tool.name not in self.settings.allowed_tools:
@@ -887,6 +929,7 @@ class AgentController:
         elif agent == "" and model.startswith("acp:"):
             model = next((m for m in self.models() if not m.startswith("acp:")), _providers.DEFAULT_MODEL)
         self.thread = self._fresh_thread(model)
+        _logs.event("agent", "New thread with %s", model)
         if agent is not None and model != self.settings.model:
             self.settings.model = model
             self.save_settings()
@@ -930,6 +973,7 @@ class AgentController:
         self.thread.model = label
         self.settings.model = label
         self.menu = None
+        _logs.event("agent", "Model: %s", label)
         self.save_settings()
         self.prepare_agent()
 
@@ -958,6 +1002,8 @@ class AgentController:
             return
 
         def then(_value: Any, error: Optional[BaseException]) -> None:
+            if error is not None and not isinstance(error, _acp.AuthRequired):
+                _logs.log("agent").warning("%s did not start: %s", agent.config.label, error)
             if isinstance(error, _acp.AuthRequired) and self.agent_auth is None and not self.running:
                 self.agent_auth = AgentAuth(name, agent.config.label, list(error.methods))
 
@@ -970,11 +1016,13 @@ class AgentController:
         if agent is None:
             return
         agent.preferred[option_id] = value
+        _logs.event("agent", "%s option %s = %s", agent.config.label, option_id, value)
         self.settings.agent_options.setdefault(agent.config.name, {})[option_id] = value
         self.save_settings()
 
         def then(_value: Any, error: Optional[BaseException]) -> None:
             if error is not None:
+                _logs.log("agent").warning("%s did not change %s: %s", agent.config.label, option_id, error)
                 self.d.notify(tr("{name} did not change the option", name=agent.config.label), str(error),
                               kind="error", seconds=6)
 
@@ -982,10 +1030,12 @@ class AgentController:
 
     def toggle_thinking(self) -> None:
         self.settings.thinking = not self.settings.thinking
+        _logs.event("agent", "Thinking %s", "on" if self.settings.thinking else "off")
         self.save_settings()
 
     def forget_tool(self, name: str) -> None:
         """Makes a tool ask again before it runs ("Always allow" undone)."""
+        _logs.event("agent", "%s asks again before it runs", name)
         self.always_allow.discard(name)
         if name in self.settings.allowed_tools:
             self.settings.allowed_tools.remove(name)
