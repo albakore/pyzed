@@ -334,3 +334,34 @@ def test_offline_engine_never_plays():
     with pytest.raises(RuntimeError, match="offline"):
         e.start()
     assert e.info["backend"] == "offline" and not e.running
+
+
+ROOT = __import__("pathlib").Path(__file__).resolve().parent.parent
+
+
+@pytest.mark.parametrize("name", ["engine_synth", "engine_drum_machine", "engine_microphone"])
+def test_audio_examples_build_and_render(name):
+    import importlib.util
+
+    path = ROOT / "examples" / "audio" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    example = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(example)
+    e = engine()
+    example.patch(e)
+    if name == "engine_synth":
+        example.play_melody(e, step=0.1, render=e.render)
+    left, right = e.render(1.0)
+    assert all(math.isfinite(x) for x in left + right)
+    if name != "engine_microphone":  # no microphone offline: silence is right
+        assert rms(left) > 0.005
+    assert max(map(abs, left + right)) < 1.0
+
+
+def test_module_catalog_page_is_up_to_date():
+    import subprocess
+    import sys
+
+    script = ROOT / "docs" / "scripts" / "gen_audio_modules.py"
+    result = subprocess.run([sys.executable, str(script), "--check"], capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr

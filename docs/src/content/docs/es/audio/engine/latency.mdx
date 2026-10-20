@@ -1,0 +1,120 @@
+---
+title: Dispositivos y latencia
+description: Cómo elige pyzed.audio la tarjeta de sonido, la API de audio, el buffer y la frecuencia de muestreo en Windows, macOS y Linux, cómo medir la latencia y cómo bajarla.
+sidebar:
+  order: 3
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+La **latencia** es el tiempo entre que algo ocurre (una tecla, un knob que gira, tu voz en el
+micrófono) y lo oyes. El motor calcula 64 muestras cada vez, pero la tarjeta de sonido pide un
+**buffer** entero de golpe: ese buffer, más lo que añade el sistema, es la latencia. Buffers más
+pequeños dan menos retraso pero menos tiempo para calcular cada uno; si es demasiado pequeño, el sonido
+cruje.
+
+<figure>
+	<img src="/pyzed/media/audio/latency.webp" width="720" height="300" loading="lazy" alt="Bloques de 64 muestras llenando las cuatro casillas de un buffer de 256 que luego va a los altavoces" />
+	<figcaption>Un buffer de 256 muestras son 5,3 ms a 48 kHz: cuatro bloques del motor.</figcaption>
+</figure>
+
+## Lo que elige el motor
+
+Sin ajustes, `audio.Engine()` usa la mejor API de audio del sistema, su dispositivo por defecto a su
+propia frecuencia de muestreo y el buffer más pequeño que suena sin cortes en una máquina normal:
+
+| Sistema | API de audio (host) | Buffer | Latencia a 48 kHz |
+| --- | --- | --- | --- |
+| Windows | WASAPI (ASIO si se compila con él) | 256 muestras (WASAPI en modo compartido puede elegir el suyo) | ~5–10 ms |
+| macOS | CoreAudio | 128 muestras | ~3 ms |
+| Linux | PulseAudio, que también llega a PipeWire; ALSA si no hay servidor de sonido | 256 muestras | ~5 ms |
+
+`audio.recommended_settings()` devuelve estas elecciones para la máquina actual.
+
+## Elegir tú
+
+```python
+from pyzed import audio
+
+audio.hosts()            # ['PulseAudio', 'ALSA']: las APIs disponibles aquí
+audio.default_host()     # 'PulseAudio'
+for d in audio.devices():          # los dispositivos del host por defecto (o devices("ALSA"))
+    print(d.name, d.outputs, d.inputs, d.sample_rate, d.buffer_range)
+
+engine = audio.Engine(
+    host="ALSA",                   # una API de audio.hosts()
+    device="USB Audio",            # el nombre o el id de un dispositivo (None: el de por defecto)
+    sample_rate=48000,             # None: la frecuencia propia del dispositivo
+    buffer_size=128,               # muestras; None: el tamaño recomendado
+    input=True,                    # abre también la entrada por defecto (para el módulo audio_in)
+    input_device=None,             # o nombra otra
+)
+engine.start()
+print(engine.info)
+```
+
+`engine.start(**ajustes)` también recibe estos ajustes, así puedes parar y volver a empezar con un
+buffer más pequeño u otro dispositivo; el patch se queda como está.
+
+## Medir
+
+`engine.info` dice qué se abrió y cómo funciona:
+
+| Clave | Significado |
+| --- | --- |
+| `backend` | `"device"`, `"null"` (sin tarjeta: un reloj que lleva el tiempo) o `"offline"` |
+| `host`, `device`, `input_device` | la API y los dispositivos en uso |
+| `sample_rate`, `buffer_size`, `channels` | el formato del stream (`buffer_size` es `None` cuando eligió el sistema) |
+| `latency_ms` | desde que se calcula un buffer hasta que sale por los altavoces, según el sistema |
+| `load` | la parte del tiempo de cada buffer que se gasta en calcularlo: por encima de 1.0 el sonido se corta |
+| `underruns` | buffers que salieron en silencio |
+| `error` | el último problema (un dispositivo desconectado, o por qué no hay sonido) |
+
+Un `load` que se queda por debajo de 0.5 deja margen para un buffer más pequeño.
+
+## Cada sistema
+
+<Tabs syncKey="os">
+	<TabItem label="Windows">
+		- **WASAPI** es la opción por defecto. En modo compartido Windows mezcla todos los programas y
+		  decide el buffer (normalmente 10 ms); el motor pide 256 muestras y acepta lo que dé Windows.
+		- **ASIO** da la latencia más baja con interfaces de audio que traen driver ASIO. Necesita el SDK
+		  de ASIO de Steinberg al compilar, así que no está en las wheels de PyPI: compila Pyzed con
+		  `maturin develop --release --features asio` (con `CPAL_ASIO_DIR` apuntando al SDK) y luego usa
+		  `audio.Engine(host="ASIO")`.
+		- Para puertos MIDI virtuales, instala [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).
+	</TabItem>
+	<TabItem label="macOS">
+		- **CoreAudio** ejecuta el hilo de audio con prioridad de tiempo real por sí mismo y lleva bien
+		  los buffers pequeños: 128 muestras por defecto, 64 funciona en la mayoría de los Mac.
+		- Un dispositivo agregado (Configuración de Audio MIDI) une una entrada y una salida que son
+		  dispositivos distintos.
+		- `engine.open_midi_input(virtual="Pyzed")` crea un puerto MIDI donde pueden tocar otras apps.
+	</TabItem>
+	<TabItem label="Linux">
+		- **PulseAudio** es la opción por defecto cuando hay un servidor de sonido. En los escritorios
+		  actuales ese servidor es **PipeWire**, que entiende el protocolo de PulseAudio; el motor le pide
+		  una latencia de 256 muestras.
+		- **ALSA** (`host="ALSA"`) habla directamente con la tarjeta cuando no hay servidor, o con
+		  PipeWire a través de su plugin de ALSA. Los nombres tipo `device="hw:0,0"` se saltan cualquier
+		  mezcla para la latencia más baja, pero dejan la tarjeta solo para Pyzed.
+		- **JACK** está disponible si compilas Pyzed con `--features jack`.
+		- El hilo de audio pide prioridad de tiempo real. Si tu usuario no la tiene permitida, el motor
+		  funciona igual; añádete al grupo `audio` (con un límite `rtprio`, como lo configuran casi todas
+		  las distribuciones) para buffers pequeños más estables.
+	</TabItem>
+</Tabs>
+
+## Sin tarjeta de sonido
+
+| Backend | Para qué |
+| --- | --- |
+| `audio.Engine("auto")` | Por defecto: la tarjeta de sonido, o el reloj `null` si no hay ninguna (`info["error"]` dice por qué) |
+| `audio.Engine("device")` | La tarjeta de sonido o un error |
+| `audio.Engine("null")` | Tiempo real sin sonido: servidores, CI, una interfaz que solo muestra las señales |
+| `audio.Engine("offline")` | Sin reloj: `engine.render(segundos)` calcula lo más rápido posible, para tests y archivos |
+
+<Aside type="tip" title="Auriculares para el micrófono">
+Con un módulo `audio_in` sonando por los altavoces, el micrófono los oye y el sonido se realimenta.
+Usa auriculares o deja baja la `gain` de la entrada.
+</Aside>

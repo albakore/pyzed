@@ -30,7 +30,7 @@ import sys
 import threading
 import wave
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from . import _core
@@ -53,6 +53,7 @@ __all__ = [
     "note_number",
     "recommended_settings",
     "volts",
+    "write_wav",
 ]
 
 # ---------------------------------------------------------------------------------------------
@@ -469,18 +470,7 @@ class Engine:
     def render_wav(self, path: str | os.PathLike, seconds: float) -> str:
         """Renders ``seconds`` of the patch into a 16-bit stereo WAV file; returns its path."""
         left, right = self.render(seconds)
-        pcm = array.array("h", bytes(len(left) * 4))
-        for i, (l, r) in enumerate(zip(left, right)):
-            pcm[2 * i] = int(max(-1.0, min(1.0, l)) * 32767)
-            pcm[2 * i + 1] = int(max(-1.0, min(1.0, r)) * 32767)
-        if sys.byteorder == "big":
-            pcm.byteswap()
-        with wave.open(os.fspath(path), "wb") as f:
-            f.setnchannels(2)
-            f.setsampwidth(2)
-            f.setframerate(self.sample_rate)
-            f.writeframes(pcm.tobytes())
-        return os.fspath(path)
+        return write_wav(path, left, right, self.sample_rate)
 
     # The patch
 
@@ -679,6 +669,24 @@ class Engine:
         return cls(backend, **settings).load(data)
 
 
+def write_wav(path: str | os.PathLike, left: Sequence[float], right: Sequence[float] | None = None,
+              sample_rate: int = 48000) -> str:
+    """Writes samples (-1..1) to a 16-bit WAV file, stereo when ``right`` is given; returns its path."""
+    channels = [left] if right is None else [left, right]
+    pcm = array.array("h", bytes(len(left) * 2 * len(channels)))
+    for c, samples in enumerate(channels):
+        for i, x in enumerate(samples):
+            pcm[i * len(channels) + c] = int(max(-1.0, min(1.0, x)) * 32767)
+    if sys.byteorder == "big":
+        pcm.byteswap()
+    with wave.open(os.fspath(path), "wb") as f:
+        f.setnchannels(len(channels))
+        f.setsampwidth(2)
+        f.setframerate(int(sample_rate))
+        f.writeframes(pcm.tobytes())
+    return os.fspath(path)
+
+
 def _value(info: ModuleInfo, name: str, value: float | str) -> float:
     """A knob's value from a number, a bool or the name of an option."""
     if isinstance(value, str):
@@ -689,5 +697,3 @@ def _value(info: ModuleInfo, name: str, value: float | str) -> float:
         return float(param.options.index(value))
     return float(value)
 
-
-_ = field  # dataclasses.field is re-exported for subclasses of the catalog types
