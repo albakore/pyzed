@@ -2687,3 +2687,37 @@ PAGES.append({
         }),
     ],
 })
+
+
+def _entry(name):
+    """La entrada que documenta ``name``, esté donde esté en ``PAGES``."""
+    for page in PAGES:
+        for _title, items in page["sections"]:
+            if name in items:
+                return items[name]
+    raise KeyError(name)
+
+
+def _params(name, **params):
+    _entry(name).setdefault("params", {}).update(params)
+
+
+# Estados y eventos de botones, avatares, listas, árboles, menús, pestañas y migas de pan.
+_params("pyzed.ui.button", loading="Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira).",
+        tooltip="Texto que aparece al pasar el ratón.")
+_params("pyzed.ui.icon_button", keys="Atajo que se muestra en el tooltip.", tint='Lo colorea (`"error"`, `"accent"`…).',
+        loading="Cambia el icono por un spinner e ignora las pulsaciones.", indicator="Añade un punto de este color arriba a la derecha (sin leer, cambios…).")
+_params("pyzed.ui.badge", size='`"sm"`, `"md"` o `"lg"`.', on_press="La hace pulsable.")
+_params("pyzed.ui.avatar", image="Una imagen (ruta o bytes) en lugar de las iniciales.",
+        status='Punto de presencia: `"online"`, `"away"`, `"busy"`, `"offline"` o un color.', tooltip="Texto al pasar el ratón (el nombre de la persona).")
+_params("pyzed.ui.divider", label='Texto atenuado en el centro de una línea horizontal (`"o"`, una fecha…).', spacing="Espacio a ambos lados de la línea.")
+_params("pyzed.ui.list_item", description="Una segunda línea atenuada (la fila crece a 40 px salvo que fijes `height`).",
+        on_double_press="Se envía con un doble clic (abrir, renombrar…).", tooltip="Texto al pasar el ratón.")
+_params("pyzed.ui.tree", selected="Un id o una colección de ids (selección múltiple).", on_open="Recibe el id del archivo al que se hace doble clic.",
+        on_context="Recibe el id de la fila en la que se hace clic derecho (muestra un `ui.menu` ahí).", focused="Resalta el borde de la fila en la que está el teclado.")
+_params("pyzed.ui.MenuItem", description="Una segunda línea atenuada.", submenu="Termina la fila con una flecha; abre el siguiente menú al lado en `on_press`.")
+_params("pyzed.ui.menu", max_height="Desplaza un menú más alto que esto.")
+_params("pyzed.ui.Tab", pinned="Muestra solo el icono, no tiene botón de cerrar y va primera en `tab_bar`.", tooltip="Texto al pasar el ratón (la ruta completa…).")
+_params("pyzed.ui.tab_bar", on_context="Recibe el id de la pestaña en la que se hace clic derecho.", on_new="Se envía con un doble clic en el espacio vacío tras las pestañas.")
+_params("pyzed.ui.breadcrumbs", max_items="Conserva la primera parte y las últimas y muestra `…` en lugar del resto.", on_more="Hace pulsable el `…`.")
+_params("pyzed.ui.toolbar", center="Se mantiene en el centro de la barra sean cuales sean los anchos de los lados.")

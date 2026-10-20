@@ -4791,6 +4791,64 @@ for _slug, _group in _MORE.items():
     _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
     _groups.insert(_at, _group)
 
+_MORE = {
+    "button": V(_STATES, [
+        ('loading=True', 'ui.button("Saving", on_press, icon="save", loading=True)'),
+        ('tooltip=', 'ui.button("Save", on_press, tooltip="Writes the file")',
+         {"draw": 'shown_tooltip(ui.button("Save", on_press, keys="ctrl-s"), "Writes the file")'}),
+    ]),
+    "icon-button": V(_STATES, [
+        ('indicator="accent"', 'ui.icon_button("bell", on_press, indicator="accent")'),
+        ('tint="error"', 'ui.icon_button("trash-2", on_press, tint="error")'),
+        ('loading=True', 'ui.icon_button("refresh-cw", on_press, loading=True)'),
+        ('keys=', 'ui.icon_button("search", on_press, tooltip="Search", keys="ctrl-f")'),
+    ]),
+    "badge": V(_STATES, [
+        ('size="sm"', 'ui.badge("beta", size="sm")'),
+        ('size="lg"', 'ui.badge("Pro", size="lg", icon="star")'),
+        ('on_press=', 'ui.badge("3 issues", tint="warning", on_press=on_press)'),
+    ]),
+    "avatar": V(_STATES, [
+        ('status="online"', 'ui.avatar("KK", status="online", size=32)'),
+        ('status="away"', 'ui.avatar("AL", status="away", index=2, size=32)'),
+        ('status="busy"', 'ui.avatar("MZ", status="busy", index=4, size=32)'),
+    ], T("`image=` shows a picture instead of the initials and `tooltip=` names the person on hover.",
+         "`image=` muestra una foto en lugar de las iniciales y `tooltip=` nombra a la persona al pasar el ratón.")),
+    "divider": V(_STATES, [
+        ('label="or"', 'pz.container(ui.divider(label="or"), width=300)'),
+        ('spacing=12', 'pz.column([ui.label("Above"), ui.divider(spacing=12), ui.label("Below")], width=300)'),
+    ]),
+    "list-item": V(_STATES, [
+        ('description=', 'pz.container(ui.list_item("main.py", on_press, icon="file", description="src/app"), width=300)'),
+        ('on_double_press=', 'pz.container(ui.list_item("Rename me", on_press, icon="pencil", on_double_press=on_rename), width=300)'),
+    ], T("`on_right_press` opens a context menu and `tooltip=` shows on hover.",
+         "`on_right_press` abre un menú contextual y `tooltip=` aparece al pasar el ratón.")),
+    "tree": V(_STATES, [
+        (T("Multiple selection and focus", "Selección múltiple y foco"),
+         'pz.container(ui.tree(ui.TreeNode.from_paths(["src/app.py", "src/ui.py", "README.md"]), expanded={"src"},\n                     selected={"src/app.py", "README.md"}, focused="src/ui.py", on_open=on_open,\n                     on_context=on_context), width=300)', {"size": (480, 200)}),
+    ], T("`on_open(id)` runs on a double click of a file and `on_context(id)` on a right click.",
+         "`on_open(id)` se ejecuta con un doble clic en un archivo y `on_context(id)` con un clic derecho.")),
+    "menu": V(_STATES, [
+        (T("Descriptions and a submenu", "Descripciones y un submenú"),
+         'ui.menu([ui.MenuItem("Share", on_press, icon="share", submenu=True),\n         ui.MenuItem("Rename", on_press, description="F2 also works")])', {"size": (480, 180)}),
+        ('max_height=140', 'ui.menu([ui.MenuItem(f"Recent {i}", on_press) for i in range(10)], max_height=140)', {"size": (480, 200)}),
+    ]),
+    "tab-bar": V(_STATES, [
+        ('pinned=True', 'ui.tab_bar([ui.Tab("app", "app.py", icon="file", pinned=True), ui.Tab("ui", "ui.py", icon="file")],\n           "ui", on_close=on_close, on_context=on_context, on_new=on_new)', {"size": (480, 120)}),
+    ], T("A middle click closes a tab, `on_context(id)` runs on a right click and `on_new` on a double click of the empty space.",
+         "Un clic central cierra una pestaña, `on_context(id)` se ejecuta con un clic derecho y `on_new` con un doble clic en el espacio vacío.")),
+    "breadcrumbs": V(_STATES, [
+        ('max_items=3', 'ui.breadcrumbs(["pyzed", "python", "pyzed", "ui", "lists.py"], max_items=3, on_press=on_press, on_more=on_more)'),
+    ]),
+    "toolbar": V(_STATES, [
+        ('center=', 'pz.container(ui.toolbar([ui.breadcrumbs(["src", "app.py"])], [ui.icon_button("play", on_press)],\n                        center=ui.muted("Running…", size="sm")), width=440)'),
+    ]),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:
     _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]

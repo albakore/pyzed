@@ -129,12 +129,32 @@ ui.menu(["FILE", ui.MenuItem("New", on_new, keys="ctrl-n"), ui.SEPARATOR,
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="menu-v3-1" caption={"Descripciones y un submenú"} alt={"Menú: Descripciones y un submenú"} code="Código">
+
+```python
+ui.menu([ui.MenuItem("Share", on_press, icon="share", submenu=True),
+         ui.MenuItem("Rename", on_press, description="F2 also works")])
+```
+
+</Variant>
+<Variant name="menu-v3-2" caption={"max_height=140"} alt={"Menú: max_height=140"} code="Código" mono>
+
+```python
+ui.menu([ui.MenuItem(f"Recent {i}", on_press) for i in range(10)], max_height=140)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto es un encabezado.
@@ -143,6 +163,7 @@ Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto e
 | --- | --- | --- |
 | `items` | *obligatorio* | Lista de `MenuItem`, `ui.SEPARATOR` o textos. |
 | `width` | `240` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `max_height` | `None` | Desplaza un menú más alto que esto. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#menu)
@@ -151,7 +172,7 @@ Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto e
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 Una entrada de `ui.menu`.
@@ -165,6 +186,8 @@ Una entrada de `ui.menu`.
 | `disabled` | `False` | Lo deshabilita (ignora los clics). |
 | `danger` | `False` | En rojo (acciones destructivas). |
 | `checked` | `None` | Muestra una marca (`True`/`False`) o nada (`None`). |
+| `description` | `None` | Una segunda línea atenuada. |
+| `submenu` | `False` | Termina la fila con una flecha; abre el siguiente menú al lado en `on_press`. |
 
 [Referencia completa →](/pyzed/es/reference/ui/#menuitem)
 

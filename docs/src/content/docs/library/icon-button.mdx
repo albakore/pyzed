@@ -199,6 +199,39 @@ ui.icon_button("search", on_press, tooltip="Search")
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="icon-button-v5-1" caption={"indicator=\"accent\""} alt={"Icon button: indicator=\"accent\""} code="Code" mono>
+
+```python
+ui.icon_button("bell", on_press, indicator="accent")
+```
+
+</Variant>
+<Variant name="icon-button-v5-2" caption={"tint=\"error\""} alt={"Icon button: tint=\"error\""} code="Code" mono>
+
+```python
+ui.icon_button("trash-2", on_press, tint="error")
+```
+
+</Variant>
+<Variant name="icon-button-v5-3" caption={"loading=True"} alt={"Icon button: loading=True"} code="Code" mono>
+
+```python
+ui.icon_button("refresh-cw", on_press, loading=True)
+```
+
+</Variant>
+<Variant name="icon-button-v5-4" caption={"keys="} alt={"Icon button: keys="} code="Code" mono>
+
+```python
+ui.icon_button("search", on_press, tooltip="Search", keys="ctrl-f")
+```
+
+</Variant>
+</VariantGrid>
+
 ## Tips
 
 :::tip
@@ -220,6 +253,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -236,6 +273,10 @@ A square button with just an icon.
 | `selected` | `False` | Marks it as selected. |
 | `disabled` | `False` | Disables it (ignores clicks). |
 | `tooltip` | `None` | Tooltip text. |
+| `keys` | `None` | Key binding shown in the tooltip. |
+| `tint` | `None` | Colors it (`"error"`, `"accent"`…). |
+| `loading` | `False` | Swaps the icon for a spinner and ignores presses. |
+| `indicator` | `None` | Adds a small dot in this color at the top right (unread, changes…). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#icon_button)

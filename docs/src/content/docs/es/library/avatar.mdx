@@ -163,12 +163,50 @@ ui.avatar("UI", color="#e5c07b", size=32)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`image=` muestra una foto en lugar de las iniciales y `tooltip=` nombra a la persona al pasar el ratón.
+
+<VariantGrid>
+<Variant name="avatar-v4-1" caption={"status=\"online\""} alt={"Avatar: status=\"online\""} code="Código" mono>
+
+```python
+ui.avatar("KK", status="online", size=32)
+```
+
+</Variant>
+<Variant name="avatar-v4-2" caption={"status=\"away\""} alt={"Avatar: status=\"away\""} code="Código" mono>
+
+```python
+ui.avatar("AL", status="away", index=2, size=32)
+```
+
+</Variant>
+<Variant name="avatar-v4-3" caption={"status=\"busy\""} alt={"Avatar: status=\"busy\""} code="Código" mono>
+
+```python
+ui.avatar("MZ", status="busy", index=4, size=32)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.avatar`
 
 ```python
-avatar(initials, *, color=None, size=22, index=0, theme=None)
+avatar(
+    initials,
+    *,
+    color=None,
+    size=22,
+    index=0,
+    image=None,
+    status=None,
+    tooltip=None,
+    theme=None,
+)
 ```
 
 Un avatar redondo con iniciales.
@@ -179,6 +217,9 @@ Un avatar redondo con iniciales.
 | `color` | `None` | Color de fondo. |
 | `size` | `22` | Diámetro. |
 | `index` | `0` | Elige un color de colaborador del tema (`theme.players`). |
+| `image` | `None` | Una imagen (ruta o bytes) en lugar de las iniciales. |
+| `status` | `None` | Punto de presencia: `"online"`, `"away"`, `"busy"`, `"offline"` o un color. |
+| `tooltip` | `None` | Texto al pasar el ratón (el nombre de la persona). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#avatar)

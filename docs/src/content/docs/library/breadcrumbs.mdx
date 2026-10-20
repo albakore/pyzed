@@ -94,12 +94,32 @@ ui.breadcrumbs(["Home", "Projects", "pyzed"], on_press=on_press)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="breadcrumbs-v2-1" caption={"max_items=3"} alt={"Breadcrumbs: max_items=3"} code="Code" mono>
+
+```python
+ui.breadcrumbs(["pyzed", "python", "pyzed", "ui", "lists.py"], max_items=3, on_press=on_press, on_more=on_more)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.breadcrumbs`
 
 ```python
-breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
+breadcrumbs(
+    parts,
+    *,
+    separator='›',
+    on_press=None,
+    max_items=None,
+    on_more=None,
+    theme=None,
+)
 ```
 
 `src › main.rs › fn main`. Parts can be strings or `(icon, text)` tuples.
@@ -109,6 +129,8 @@ breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
 | `parts` | *required* | The parts. |
 | `separator` | `"›"` | Separator. |
 | `on_press` | `None` | Called with the index of the clicked part. |
+| `max_items` | `None` | Keeps the first part and the last ones and shows `…` for the rest. |
+| `on_more` | `None` | Makes the `…` clickable. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#breadcrumbs)

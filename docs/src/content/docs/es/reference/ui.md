@@ -92,6 +92,8 @@ button(
     disabled=False,
     full_width=False,
     keys=None,
+    loading=False,
+    tooltip=None,
     theme=None,
     **style,
 )
@@ -113,6 +115,8 @@ Un botón con tema, con variantes, tamaños, un icono y un atajo.
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `full_width` | Ocupa todo el ancho. |
 | `keys` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `loading` | Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira). |
+| `tooltip` | Texto que aparece al pasar el ratón. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `style` | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
 
@@ -129,6 +133,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -145,12 +153,25 @@ Un botón cuadrado con solo un icono.
 | `selected` | Lo marca como seleccionado. |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `tooltip` | Texto del tooltip. |
+| `keys` | Atajo que se muestra en el tooltip. |
+| `tint` | Lo colorea (`"error"`, `"accent"`…). |
+| `loading` | Cambia el icono por un spinner e ignora las pulsaciones. |
+| `indicator` | Añade un punto de este color arriba a la derecha (sin leer, cambios…). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 Una píldora pequeña para estados y contadores.
@@ -161,6 +182,8 @@ Una píldora pequeña para estados y contadores.
 | `tint` | Color semántico: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` o un token. |
 | `variant` | `"soft"`, `"solid"` o `"outline"`. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `on_press` | La hace pulsable. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `indicator`
@@ -206,7 +229,17 @@ Separa un atajo en etiquetas por acorde: `format_keys("ctrl-shift-p") == [["Ctrl
 ### `avatar`
 
 ```python
-avatar(initials, *, color=None, size=22, index=0, theme=None)
+avatar(
+    initials,
+    *,
+    color=None,
+    size=22,
+    index=0,
+    image=None,
+    status=None,
+    tooltip=None,
+    theme=None,
+)
 ```
 
 Un avatar redondo con iniciales.
@@ -217,6 +250,9 @@ Un avatar redondo con iniciales.
 | `color` | Color de fondo. |
 | `size` | Diámetro. |
 | `index` | Elige un color de colaborador del tema (`theme.players`). |
+| `image` | Una imagen (ruta o bytes) en lugar de las iniciales. |
+| `status` | Punto de presencia: `"online"`, `"away"`, `"busy"`, `"offline"` o un color. |
+| `tooltip` | Texto al pasar el ratón (el nombre de la persona). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `tooltip`
@@ -238,7 +274,7 @@ Envuelve `content` con un tooltip con el estilo del tema, opcionalmente con su a
 ### `divider`
 
 ```python
-divider(*, vertical=False, color=None, theme=None)
+divider(*, vertical=False, color=None, label=None, spacing=0, theme=None)
 ```
 
 Una línea divisoria con el color del tema.
@@ -247,6 +283,8 @@ Una línea divisoria con el color del tema.
 | --- | --- |
 | `vertical` | Vertical en lugar de horizontal. |
 | `color` | Color del texto o del icono. |
+| `label` | Texto atenuado en el centro de una línea horizontal (`"o"`, una fecha…). |
+| `spacing` | Espacio a ambos lados de la línea. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `card`
@@ -1439,6 +1477,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -1461,6 +1502,9 @@ Una fila de lista: icono, texto y un hueco al final.
 | `inset` | Con margen y esquinas redondeadas (menús, paletas). |
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `on_right_press` | Clic derecho. |
+| `on_double_press` | Se envía con un doble clic (abrir, renombrar…). |
+| `description` | Una segunda línea atenuada (la fila crece a 40 px salvo que fijes `height`). |
+| `tooltip` | Texto al pasar el ratón. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `list_header`
@@ -1532,6 +1576,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -1544,9 +1591,12 @@ Un árbol de archivos plegable, como el panel de proyecto de un editor de códig
 | --- | --- |
 | `nodes` | Lista de `TreeNode`. |
 | `expanded` | Conjunto de ids de carpetas abiertas. |
-| `selected` | Id del nodo seleccionado. |
+| `selected` | Un id o una colección de ids (selección múltiple). |
 | `on_toggle` | Se llama con el id de la carpeta pulsada. |
 | `on_select` | Se llama con el id del archivo pulsado. |
+| `on_open` | Recibe el id del archivo al que se hace doble clic. |
+| `on_context` | Recibe el id de la fila en la que se hace clic derecho (muestra un `ui.menu` ahí). |
+| `focused` | Resalta el borde de la fila en la que está el teclado. |
 | `indent` | Sangría a la izquierda, en píxeles. |
 | `item_height` | Alto de cada fila. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
@@ -1555,7 +1605,7 @@ Un árbol de archivos plegable, como el panel de proyecto de un editor de códig
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 Una entrada de `ui.menu`.
@@ -1569,11 +1619,13 @@ Una entrada de `ui.menu`.
 | `disabled` | Lo deshabilita (ignora los clics). |
 | `danger` | En rojo (acciones destructivas). |
 | `checked` | Muestra una marca (`True`/`False`) o nada (`None`). |
+| `description` | Una segunda línea atenuada. |
+| `submenu` | Termina la fila con una flecha; abre el siguiente menú al lado en `on_press`. |
 
 ### `menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto es un encabezado.
@@ -1582,6 +1634,7 @@ Un menú contextual flotante. Usa `ui.SEPARATOR` entre grupos; un texto suelto e
 | --- | --- |
 | `items` | Lista de `MenuItem`, `ui.SEPARATOR` o textos. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `max_height` | Desplaza un menú más alto que esto. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `SEPARATOR`
@@ -1629,7 +1682,7 @@ Una lista con scroll que solo construye las filas visibles, para miles o millone
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono del archivo.
@@ -1643,6 +1696,8 @@ Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono de
 | `dirty` | Cambios sin guardar (muestra un punto). |
 | `preview` | Pestaña de vista previa (en cursiva). |
 | `status` | Estado de git (tiñe el nombre). |
+| `pinned` | Muestra solo el icono, no tiene botón de cerrar y va primera en `tab_bar`. |
+| `tooltip` | Texto al pasar el ratón (la ruta completa…). |
 
 **Métodos y propiedades**
 
@@ -1690,6 +1745,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -1710,12 +1767,22 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 | `on_drag_over` | Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra. |
 | `dragging` | Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`). |
 | `drop_index` | Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última). |
+| `on_context` | Recibe el id de la pestaña en la que se hace clic derecho. |
+| `on_new` | Se envía con un doble clic en el espacio vacío tras las pestañas. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`
 
 ```python
-breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
+breadcrumbs(
+    parts,
+    *,
+    separator='›',
+    on_press=None,
+    max_items=None,
+    on_more=None,
+    theme=None,
+)
 ```
 
 `src › main.rs › fn main`. Las partes pueden ser textos o tuplas `(icono, texto)`.
@@ -1725,12 +1792,14 @@ breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
 | `parts` | Las partes. |
 | `separator` | Separador. |
 | `on_press` | Se llama con el índice de la parte pulsada. |
+| `max_items` | Conserva la primera parte y las últimas y muestra `…` en lugar del resto. |
+| `on_more` | Hace pulsable el `…`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `toolbar`
 
 ```python
-toolbar(start=(), end=(), *, height=32, theme=None)
+toolbar(start=(), end=(), *, center=None, height=32, theme=None)
 ```
 
 La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a la derecha.
@@ -1739,6 +1808,7 @@ La barra bajo las pestañas: breadcrumbs a la izquierda y acciones del buffer a 
 | --- | --- |
 | `start` | Widgets al inicio (izquierda). |
 | `end` | Widgets al final (derecha). |
+| `center` | Se mantiene en el centro de la barra sean cuales sean los anchos de los lados. |
 | `height` | Alto. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 

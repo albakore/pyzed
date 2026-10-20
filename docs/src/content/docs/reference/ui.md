@@ -92,6 +92,8 @@ button(
     disabled=False,
     full_width=False,
     keys=None,
+    loading=False,
+    tooltip=None,
     theme=None,
     **style,
 )
@@ -113,6 +115,8 @@ A themed button with variants, sizes, an icon and a shortcut.
 | `disabled` | Disables it (ignores clicks). |
 | `full_width` | Fills the full width. |
 | `keys` | Shortcut shown at the end, written as a string: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `loading` | Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins). |
+| `tooltip` | Text shown on hover. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 | `style` | Any `pyzed.button` style parameter (`bg`, `hover_bg`, `color`…). |
 
@@ -129,6 +133,10 @@ icon_button(
     selected=False,
     disabled=False,
     tooltip=None,
+    keys=None,
+    tint=None,
+    loading=False,
+    indicator=None,
     theme=None,
 )
 ```
@@ -145,12 +153,25 @@ A square button with just an icon.
 | `selected` | Marks it as selected. |
 | `disabled` | Disables it (ignores clicks). |
 | `tooltip` | Tooltip text. |
+| `keys` | Key binding shown in the tooltip. |
+| `tint` | Colors it (`"error"`, `"accent"`…). |
+| `loading` | Swaps the icon for a spinner and ignores presses. |
+| `indicator` | Adds a small dot in this color at the top right (unread, changes…). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 A small pill for statuses and counters.
@@ -161,6 +182,8 @@ A small pill for statuses and counters.
 | `tint` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `variant` | `"soft"`, `"solid"` or `"outline"`. |
 | `icon` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `size` | `"sm"`, `"md"` or `"lg"`. |
+| `on_press` | Makes it clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `indicator`
@@ -206,7 +229,17 @@ Splits a shortcut into labels per chord: `format_keys("ctrl-shift-p") == [["Ctrl
 ### `avatar`
 
 ```python
-avatar(initials, *, color=None, size=22, index=0, theme=None)
+avatar(
+    initials,
+    *,
+    color=None,
+    size=22,
+    index=0,
+    image=None,
+    status=None,
+    tooltip=None,
+    theme=None,
+)
 ```
 
 A round avatar with initials.
@@ -217,6 +250,9 @@ A round avatar with initials.
 | `color` | Background color. |
 | `size` | Diameter. |
 | `index` | Picks a collaborator color from the theme (`theme.players`). |
+| `image` | A picture (path or bytes) instead of the initials. |
+| `status` | Presence dot: `"online"`, `"away"`, `"busy"`, `"offline"` or a color. |
+| `tooltip` | Text shown on hover (the person's name). |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `tooltip`
@@ -238,7 +274,7 @@ Wraps `content` with a themed tooltip, optionally with its shortcut.
 ### `divider`
 
 ```python
-divider(*, vertical=False, color=None, theme=None)
+divider(*, vertical=False, color=None, label=None, spacing=0, theme=None)
 ```
 
 A divider line in the theme color.
@@ -247,6 +283,8 @@ A divider line in the theme color.
 | --- | --- |
 | `vertical` | Vertical instead of horizontal. |
 | `color` | Text or icon color. |
+| `label` | Muted text in the middle of a horizontal line (`"or"`, a date…). |
+| `spacing` | Space on both sides of the line. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `card`
@@ -1439,6 +1477,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -1461,6 +1502,9 @@ A list row: icon, text and a slot at the end.
 | `inset` | With margin and rounded corners (menus, palettes). |
 | `disabled` | Disables it (ignores clicks). |
 | `on_right_press` | Right click. |
+| `on_double_press` | Sent on a double click (open, rename…). |
+| `description` | A muted second line (the row grows to 40 px unless `height` is set). |
+| `tooltip` | Text shown on hover. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `list_header`
@@ -1532,6 +1576,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -1544,9 +1591,12 @@ A collapsible file tree, like a code editor's project panel.
 | --- | --- |
 | `nodes` | List of `TreeNode`. |
 | `expanded` | Set of open folder ids. |
-| `selected` | Id of the selected node. |
+| `selected` | One id or a collection of ids (multiple selection). |
 | `on_toggle` | Called with the id of the clicked folder. |
 | `on_select` | Called with the id of the clicked file. |
+| `on_open` | Called with the id of a file that is double-clicked. |
+| `on_context` | Called with the id of a row that is right-clicked (show a `ui.menu` there). |
+| `focused` | Outlines the row the keyboard is on. |
 | `indent` | Left indentation, in pixels. |
 | `item_height` | Height of each row. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
@@ -1555,7 +1605,7 @@ A collapsible file tree, like a code editor's project panel.
 
 ```python
 @dataclass
-class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None)
+class MenuItem(label, on_press=None, icon=None, keys=None, disabled=False, danger=False, checked=None, description=None, submenu=False)
 ```
 
 An entry of `ui.menu`.
@@ -1569,11 +1619,13 @@ An entry of `ui.menu`.
 | `disabled` | Disables it (ignores clicks). |
 | `danger` | In red (destructive actions). |
 | `checked` | Shows a check mark (`True`/`False`) or nothing (`None`). |
+| `description` | A muted second line. |
+| `submenu` | Ends the row with a chevron; open the next menu beside it in `on_press`. |
 
 ### `menu`
 
 ```python
-menu(items, *, width=240, theme=None)
+menu(items, *, width=240, max_height=None, theme=None)
 ```
 
 A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a header.
@@ -1582,6 +1634,7 @@ A floating context menu. Use `ui.SEPARATOR` between groups; a plain string is a 
 | --- | --- |
 | `items` | List of `MenuItem`, `ui.SEPARATOR` or strings. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `max_height` | Scrolls a menu taller than this. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `SEPARATOR`
@@ -1629,7 +1682,7 @@ A scrolling list that only builds the rows in view, for thousands or millions of
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
@@ -1643,6 +1696,8 @@ A tab. `Tab.for_file(path, **kwargs)` creates it with the file's name and icon.
 | `dirty` | Unsaved changes (shows a dot). |
 | `preview` | Preview tab (in italics). |
 | `status` | Git status (tints the name). |
+| `pinned` | Shows only the icon, has no close button and goes first in `tab_bar`. |
+| `tooltip` | Text shown on hover (the full path…). |
 
 **Methods and properties**
 
@@ -1690,6 +1745,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -1710,12 +1767,22 @@ A row of tabs with optional controls at the start and end (navigation, split, +)
 | `on_drag_over` | While `dragging` is set: called with the insertion index under the pointer, or `None` when it leaves the bar. |
 | `dragging` | Id of the tab being dragged (dims it and turns on `on_drag_over`). |
 | `drop_index` | Draws the insertion mark before the tab at this index (`len(tabs)`: after the last one). |
+| `on_context` | Called with the id of a tab that is right-clicked. |
+| `on_new` | Sent on a double click of the empty space after the tabs. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `breadcrumbs`
 
 ```python
-breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
+breadcrumbs(
+    parts,
+    *,
+    separator='›',
+    on_press=None,
+    max_items=None,
+    on_more=None,
+    theme=None,
+)
 ```
 
 `src › main.rs › fn main`. Parts can be strings or `(icon, text)` tuples.
@@ -1725,12 +1792,14 @@ breadcrumbs(parts, *, separator='›', on_press=None, theme=None)
 | `parts` | The parts. |
 | `separator` | Separator. |
 | `on_press` | Called with the index of the clicked part. |
+| `max_items` | Keeps the first part and the last ones and shows `…` for the rest. |
+| `on_more` | Makes the `…` clickable. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 ### `toolbar`
 
 ```python
-toolbar(start=(), end=(), *, height=32, theme=None)
+toolbar(start=(), end=(), *, center=None, height=32, theme=None)
 ```
 
 The bar below the tabs: breadcrumbs on the left and buffer actions on the right.
@@ -1739,6 +1808,7 @@ The bar below the tabs: breadcrumbs on the left and buffer actions on the right.
 | --- | --- |
 | `start` | Widgets at the start (left). |
 | `end` | Widgets at the end (right). |
+| `center` | Kept in the middle of the bar whatever the widths of both sides. |
 | `height` | Height. |
 | `theme` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 

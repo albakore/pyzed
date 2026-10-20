@@ -106,12 +106,31 @@ pz.container(pz.rule(color="#e5c07b", thickness=3), width=220)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="divider-v3-1" caption={"label=\"or\""} alt={"Divisor: label=\"or\""} code="Código" mono>
+
+```python
+pz.container(ui.divider(label="or"), width=300)
+```
+
+</Variant>
+<Variant name="divider-v3-2" caption={"spacing=12"} alt={"Divisor: spacing=12"} code="Código" mono>
+
+```python
+pz.column([ui.label("Above"), ui.divider(spacing=12), ui.label("Below")], width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.divider`
 
 ```python
-divider(*, vertical=False, color=None, theme=None)
+divider(*, vertical=False, color=None, label=None, spacing=0, theme=None)
 ```
 
 Una línea divisoria con el color del tema.
@@ -120,6 +139,8 @@ Una línea divisoria con el color del tema.
 | --- | --- | --- |
 | `vertical` | `False` | Vertical en lugar de horizontal. |
 | `color` | `None` | Color del texto o del icono. |
+| `label` | `None` | Texto atenuado en el centro de una línea horizontal (`"o"`, una fecha…). |
+| `spacing` | `0` | Espacio a ambos lados de la línea. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#divider)

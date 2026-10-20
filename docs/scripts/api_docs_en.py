@@ -2102,3 +2102,37 @@ PAGES.append({
         }),
     ],
 })
+
+
+def _entry(name):
+    """The entry documenting ``name``, wherever it sits in ``PAGES``."""
+    for page in PAGES:
+        for _title, items in page["sections"]:
+            if name in items:
+                return items[name]
+    raise KeyError(name)
+
+
+def _params(name, **params):
+    _entry(name).setdefault("params", {}).update(params)
+
+
+# States and events of buttons, avatars, lists, trees, menus, tabs and breadcrumbs.
+_params("pyzed.ui.button", loading="Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins).",
+        tooltip="Text shown on hover.")
+_params("pyzed.ui.icon_button", keys="Key binding shown in the tooltip.", tint='Colors it (`"error"`, `"accent"`…).',
+        loading="Swaps the icon for a spinner and ignores presses.", indicator="Adds a small dot in this color at the top right (unread, changes…).")
+_params("pyzed.ui.badge", size='`"sm"`, `"md"` or `"lg"`.', on_press="Makes it clickable.")
+_params("pyzed.ui.avatar", image="A picture (path or bytes) instead of the initials.",
+        status='Presence dot: `"online"`, `"away"`, `"busy"`, `"offline"` or a color.', tooltip="Text shown on hover (the person's name).")
+_params("pyzed.ui.divider", label='Muted text in the middle of a horizontal line (`"or"`, a date…).', spacing="Space on both sides of the line.")
+_params("pyzed.ui.list_item", description="A muted second line (the row grows to 40 px unless `height` is set).",
+        on_double_press="Sent on a double click (open, rename…).", tooltip="Text shown on hover.")
+_params("pyzed.ui.tree", selected="One id or a collection of ids (multiple selection).", on_open="Called with the id of a file that is double-clicked.",
+        on_context="Called with the id of a row that is right-clicked (show a `ui.menu` there).", focused="Outlines the row the keyboard is on.")
+_params("pyzed.ui.MenuItem", description="A muted second line.", submenu="Ends the row with a chevron; open the next menu beside it in `on_press`.")
+_params("pyzed.ui.menu", max_height="Scrolls a menu taller than this.")
+_params("pyzed.ui.Tab", pinned="Shows only the icon, has no close button and goes first in `tab_bar`.", tooltip="Text shown on hover (the full path…).")
+_params("pyzed.ui.tab_bar", on_context="Called with the id of a tab that is right-clicked.", on_new="Sent on a double click of the empty space after the tabs.")
+_params("pyzed.ui.breadcrumbs", max_items="Keeps the first part and the last ones and shows `…` for the rest.", on_more="Makes the `…` clickable.")
+_params("pyzed.ui.toolbar", center="Kept in the middle of the bar whatever the widths of both sides.")
