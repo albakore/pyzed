@@ -201,7 +201,10 @@ Nothing is applied to the form until you click **Apply**, as with your own edits
 
 The settings open inside the panel, as in Zed: **⋯ → Agent settings**, **Settings → AI agents → AI agents
 settings…** or **AI agents settings…** in the command palette. The arrow in the header goes back to the thread.
-They hold the model providers, the external agents, the MCP servers, the skills, the rules and the agent's options.
+First come the everyday ones: the default model (with Claude's **Effort**, **Thinking** and **Fast mode** when
+Pyzed Agent answers with Claude; an external agent's own options are in the message box), the model providers
+and the permissions. **Advanced** unfolds the external agents, the MCP servers, the skills, the rules, Pyzed's MCP
+in your agents and more options.
 
 ![Providers, keys and the agent's options](../../../assets/editor/agent-settings.png)
 
@@ -304,8 +307,8 @@ external agents running in Pyzed; close and open the others.
 
 **Settings → Pyzed's MCP in your agents** lists each agent with **Add** or **Remove**. Pyzed adds the server once
 to each agent: if you take it out, Pyzed leaves it out. Only the `pyzed` entry of each agent's settings changes, a
-copy of the file is kept next to it (`.pyzed-backup`), and settings files with comments are left alone (add it by
-hand there). Turn **Add it to new agents on start** off to stop it. The agents start the server with
+copy of the file is kept next to it (`.pyzed-backup`), and comments in settings files (Zed's and VS Code's have
+them) are kept. Turn **Add it to new agents on start** off to stop it. The agents start the server with
 [uv](https://docs.astral.sh/uv/) (`uvx --from "pyzed-ui[mcp]" pyzed mcp`; Pyzed Design brings its own `uv`).
 
 ### Watching the agent work
@@ -326,6 +329,9 @@ your Claude Pro or Max plan through Claude Code, Anthropic's own agent, since An
 sign in with a subscription:
 
 1. It needs [Node.js](https://nodejs.org/en/download) 18 or later; without it, Pyzed opens the download page.
+   Pyzed finds Node also when it was installed with nvm, volta, fnm or in `~/.local/bin`, even if Pyzed Design was
+   opened from the desktop's menu. If an answer fails because Node.js is missing, **Install Node.js** opens the
+   download page and **Use Pyzed Agent** sends the message to Pyzed's own agent instead.
 2. It adds Claude Code as an external agent, picks it and lets it control the editor.
 3. If Claude Code is not signed in yet, it opens in a terminal: choose to sign in with your Claude account and
    finish in the browser. Pyzed notices the sign-in, comes back to the front and is ready.

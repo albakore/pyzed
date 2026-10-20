@@ -15,7 +15,6 @@ from __future__ import annotations
 import itertools
 import json
 import os
-import shutil
 import subprocess
 import sys
 import threading
@@ -69,7 +68,9 @@ class Environment:
         for folder in self.bin_dirs:
             if (folder / exe).exists():
                 return str(folder / exe)
-        return shutil.which(name)
+        from .. import _platform
+
+        return _platform.which(name)
 
     def settings(self) -> Dict[str, Any]:
         """ty's inline configuration: the interpreter and the extra import roots."""

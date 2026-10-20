@@ -18,13 +18,13 @@ from __future__ import annotations
 
 import fnmatch
 import os
-import shutil
 import subprocess
 import sys
 import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
+from .. import _platform
 from . import mcp_client
 from . import providers as _providers
 from . import secrets as _secrets
@@ -72,13 +72,13 @@ def claude_signed_in() -> bool:
 def claude_login_command() -> List[str]:
     """The command that opens Claude Code in a terminal, where it asks to sign in with a Claude account (Pro or
     Max) the first time; ``npx`` downloads it when it is not installed."""
-    claude = shutil.which("claude")
-    return [claude] if claude else ["npx", "-y", "@anthropic-ai/claude-code"]
+    claude = _platform.which("claude")
+    return [claude] if claude else [_platform.which("npx") or "npx", "-y", "@anthropic-ai/claude-code"]
 
 
 def installed(config: _providers.ACPAgentConfig) -> bool:
     """Whether the agent's program can be found."""
-    return shutil.which(config.command) is not None or Path(config.command).is_file()
+    return _platform.which(config.command) is not None or Path(config.command).is_file()
 
 
 def pyzed_mcp_server() -> Optional[Dict[str, Any]]:
@@ -103,6 +103,16 @@ def mcp_entries(configs: Sequence[_providers.MCPServerConfig],
         else:
             out.append({"name": c.name, "command": c.command, "args": list(c.args), "env": values})
     return out
+
+
+def _not_started(config: _providers.ACPAgentConfig, err: Exception) -> str:
+    """Why an agent's program did not start, with what to do about it."""
+    if not installed(config):
+        if os.path.basename(config.command).split(".")[0] in ("npx", "node", "npm"):
+            return (f"{config.label} needs Node.js 18 or later, and it was not found on this computer. Install it "
+                    "(nodejs.org) and try again, or pick Pyzed Agent.")
+        return f"{config.label} needs {config.command}, and it was not found on this computer. Install it and try again."
+    return f"Could not start {config.label}: {err}"
 
 
 class ACPError(RuntimeError):
@@ -317,8 +327,6 @@ class ACPAgent:
         """Starts the program and introduces Pyzed (``initialize``), once."""
         if self._rpc is not None and self._rpc.alive:
             return
-        from .. import _platform
-
         hidden = mcp_client.get_secrets(f"acp.{self.config.name}", self._store)
         try:
             # under WSL its sign-in page opens in Windows' browser, like Pyzed's own
@@ -327,7 +335,7 @@ class ACPAgent:
                                                   cwd=str(self.root), on_request=self._on_request,
                                                   on_notify=self._on_notify)
         except mcp_client.MCPError as err:
-            raise ACPError(f"Could not start {self.config.label}: is {self.config.command} installed? ({err})") from err
+            raise ACPError(_not_started(self.config, err)) from err
         try:
             from .mcp_client import _version
 

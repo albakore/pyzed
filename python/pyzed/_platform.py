@@ -13,6 +13,11 @@ Under WSL there is usually no Linux browser, so web pages (sign-ins, the docs) o
 browser (``use_windows_browser``). Pages that call back to the app (``http://127.0.0.1:...``) still reach
 it, through WSL's localhost forwarding.
 
+Apps opened from the desktop's menu (not from a terminal) do not get the ``PATH`` the user's shell sets up
+in ``~/.bashrc``, ``~/.zshrc``... so programs installed with nvm, volta, fnm or in ``~/.local/bin`` (Node's
+``npx``, ``claude``, ``uv``...) are not found. ``user_path`` asks the user's shell for its ``PATH`` once and
+adds the folders where those tools usually are; ``which`` and ``use_user_path`` use it.
+
 Environment variables (all optional):
 
 * ``PYZED_GPU_LOGS=1`` keeps the driver warnings (useful to debug rendering problems).
@@ -25,14 +30,18 @@ Environment variables (all optional):
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import shutil
 import subprocess
 import sys
+import threading
 import webbrowser
+from pathlib import Path
 from typing import Dict, List, Optional
 
-__all__ = ["browser_env", "desktop_notification_command", "is_wsl", "notify", "prepare", "use_windows_browser", "windows_command"]
+__all__ = ["browser_env", "desktop_notification_command", "is_wsl", "notify", "prepare", "use_user_path",
+           "use_windows_browser", "user_path", "which", "windows_command"]
 
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -192,3 +201,78 @@ def prepare() -> List[str]:
         del os.environ["WAYLAND_DISPLAY"]
         changed.append("WAYLAND_DISPLAY")
     return changed
+
+
+# -- the user's PATH ----------------------------------------------------------------------------------------
+
+_PATH_LOCK = threading.Lock()
+_user_path: Optional[str] = None
+_MARK = "__PYZED_PATH__"
+
+
+def _shell_path() -> List[str]:
+    """The ``PATH`` the user's login shell sets up (``[]`` on Windows, or when it cannot be read)."""
+    if os.name == "nt":
+        return []
+    shell = os.environ.get("SHELL") or ("/bin/zsh" if sys.platform == "darwin" else "/bin/bash")
+    if not os.path.isfile(shell):
+        return []
+    show = "string join : $PATH" if os.path.basename(shell) == "fish" else 'printf %s "$PATH"'
+    try:
+        done = subprocess.run([shell, "-ilc", f"printf {_MARK}; {show}; printf {_MARK}"], capture_output=True,
+                              stdin=subprocess.DEVNULL, timeout=8, start_new_session=True)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    found = re.search(f"{_MARK}(.*?){_MARK}", done.stdout.decode("utf-8", "replace"), re.S)
+    return [part for part in found.group(1).strip().split(os.pathsep) if part] if found else []
+
+
+def _version_key(path: Path) -> List[int]:
+    return [int(n) for n in re.findall(r"\d+", path.name)[:3]]
+
+
+def tool_dirs(home: Optional[Path] = None) -> List[str]:
+    """Folders where Node.js, Claude Code, uv and other command-line tools are usually installed."""
+    home = Path(home) if home is not None else Path.home()
+    found: List[Path] = []
+    if os.name == "nt":
+        env = os.environ
+        found += [Path(env.get("APPDATA") or home / "AppData" / "Roaming") / "npm",
+                  Path(env.get("ProgramFiles") or "C:/Program Files") / "nodejs",
+                  Path(env.get("LOCALAPPDATA") or home / "AppData" / "Local") / "Programs" / "nodejs"]
+        if env.get("NVM_SYMLINK"):
+            found.append(Path(env["NVM_SYMLINK"]))
+        found += [home / ".local" / "bin", home / ".volta" / "bin", home / ".bun" / "bin", home / ".cargo" / "bin"]
+    else:
+        nvm = Path(os.environ.get("NVM_DIR") or home / ".nvm") / "versions" / "node"
+        if nvm.is_dir():  # the newest Node first
+            found += [v / "bin" for v in sorted(nvm.iterdir(), key=_version_key, reverse=True)]
+        for fnm in (home / ".local" / "share" / "fnm", home / ".fnm"):
+            found.append(fnm / "aliases" / "default" / "bin")
+        found += [home / ".volta" / "bin", home / ".asdf" / "shims", home / ".local" / "share" / "mise" / "shims",
+                  home / "n" / "bin", home / ".npm-global" / "bin", home / ".bun" / "bin", home / ".local" / "bin",
+                  home / ".cargo" / "bin", Path("/opt/homebrew/bin"), Path("/usr/local/bin"), Path("/snap/bin")]
+    return [str(p) for p in found if p.is_dir()]
+
+
+def user_path() -> str:
+    """This process's ``PATH`` plus the user's shell ``PATH`` and the usual tool folders (worked out once)."""
+    global _user_path
+    with _PATH_LOCK:
+        if _user_path is None:
+            parts: List[str] = []
+            for part in [*os.environ.get("PATH", "").split(os.pathsep), *_shell_path(), *tool_dirs()]:
+                if part and part not in parts:
+                    parts.append(part)
+            _user_path = os.pathsep.join(parts)
+        return _user_path
+
+
+def use_user_path() -> None:
+    """Makes ``user_path`` this process's ``PATH``, so every program the app starts finds the user's tools."""
+    os.environ["PATH"] = user_path()
+
+
+def which(name: str) -> Optional[str]:
+    """``shutil.which``, also looking in the user's shell ``PATH`` and the usual tool folders."""
+    return shutil.which(name) or shutil.which(name, path=user_path())

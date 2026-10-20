@@ -20,6 +20,16 @@ stable version.
 
 - ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
 
+### Fixes
+
+- 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu: Node.js (`npx`), `claude` and `uv` are found in the user's shell `PATH` and where nvm, volta, fnm and `~/.local/bin` put them. When Node.js is missing, the agent says so, with **Install Node.js** and **Use Pyzed Agent**.
+- 🐛 **Retry** sends the unanswered message again instead of adding it once more to the thread.
+- 🐛 Pyzed's MCP server is added to Zed (and VS Code) even when their settings file has comments, which are kept.
+
+### Refactors
+
+- ♻ The agent settings show the everyday ones first (model, providers, permissions; Claude's effort, thinking and fast mode only when Pyzed Agent uses Claude) and fold the rest under **Advanced**.
+
 ## [1.5.0] - 2026-10-20
 
 ### Highlights

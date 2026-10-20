@@ -15,12 +15,13 @@ import logging
 import os
 import re
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from .. import _core, ui
+from .. import _core, _platform, ui
 from ..app import App
 from ..ui import frame as ui_frame
 from ..icons import icon as _icon
@@ -2802,6 +2803,8 @@ class Designer(App):
 def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> None:
     """Opens the designer (on ``path`` if given; it is created on first save if missing)."""
     started = time.perf_counter()
+    # opened from the desktop's menu, the app lacks the PATH of the user's shell (Node from nvm, ~/.local/bin...)
+    threading.Thread(target=_platform.use_user_path, daemon=True, name="pyzed-user-path").start()
     designer = Designer(path, theme=theme)
     if path is None and designer.prefs.show_welcome:
         designer.welcome.open()
