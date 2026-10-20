@@ -181,6 +181,25 @@
       "poster_bytes": 49566
     },
     {
+      "name": "designer-tabs-anywhere",
+      "title": "Tabs anywhere",
+      "description": "Pyzed Design: the Events panel dragged next to the forms, a form dragged into the left dock and both dragged back, with the target lit up and a copy of the tab under the pointer.",
+      "tags": [
+        "designer"
+      ],
+      "width": 1280,
+      "height": 800,
+      "fps": 24,
+      "duration": 11.67,
+      "recorded": "off-screen",
+      "mp4": "media/designer-tabs-anywhere.mp4",
+      "mp4_bytes": 222523,
+      "webm": "media/designer-tabs-anywhere.webm",
+      "webm_bytes": 268957,
+      "poster": "media/designer-tabs-anywhere.poster.webp",
+      "poster_bytes": 35674
+    },
+    {
       "name": "shader-graph",
       "title": "Building a shader graph",
       "description": "Pyzed Design's Shader view: Voronoi and Palette nodes dragged in and wired to the Output, with live previews.",
