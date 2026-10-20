@@ -1656,6 +1656,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let indent_size = props.tab_size;
     let pairs = props.auto_close;
     let folding = props.folding;
+    let readonly = props.readonly;
     let key_props = props.clone();
     let capture = props.capture_keys.clone();
     // Captured keys with modifiers (`"alt-z"`) are left to the app only with exactly those modifiers.
@@ -1693,14 +1694,23 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             Wrapping::None
         })
         .height(Length::Shrink)
-        .on_action(move |action| Message::Editor {
-            id: id.clone(),
-            action,
-            on_change: on_change.clone(),
-            on_cursor: on_cursor.clone(),
+        .on_action(move |action| {
+            if readonly && action.is_edit() {
+                return Message::Noop;
+            }
+            Message::Editor {
+                id: id.clone(),
+                action,
+                on_change: on_change.clone(),
+                on_cursor: on_cursor.clone(),
+            }
         })
         .key_binding(move |press| {
             let props = &key_props;
+            if readonly {
+                // Selecting and copying only: the edits these keys make are dropped by `on_action`.
+                return Binding::from_key_press(press);
+            }
             let page = |down: bool, select: bool| {
                 Some(Binding::Custom(Message::EditorPage {
                     id: page_id.clone(),

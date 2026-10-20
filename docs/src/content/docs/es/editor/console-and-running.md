@@ -74,6 +74,71 @@ Si la consola se abre al ejecutar lo decide **Ajustes → Ejecución → Abrir l
 los eventos, **Registrar los eventos en la consola**. Una vez que tiene algo que mostrar, o la abriste desde el menú
 Ver, la consola se queda en su dock hasta que la ocultes.
 
+### Seleccionar y copiar líneas
+
+Haz clic en una línea para seleccionarla, <kbd>Shift</kbd>+clic para seleccionar un rango y <kbd>Ctrl</kbd>+clic
+(<kbd>Cmd</kbd> en macOS) para añadir o quitar una; <kbd>Ctrl</kbd>+<kbd>A</kbd> selecciona todas las líneas
+visibles, <kbd>Ctrl</kbd>+<kbd>C</kbd> copia la selección y <kbd>Escape</kbd> la quita. Un error seleccionado muestra
+su traceback completo debajo.
+
+Un **clic derecho** en una línea abre su menú:
+
+| Opción | Qué hace |
+| --- | --- |
+| **Copiar línea** / **Copiar N líneas** | Las líneas seleccionadas, con su hora y nivel. |
+| **Copiar solo el texto** | Solo el texto de las líneas (y su traceback). |
+| **Copiar todo** / **Seleccionar todo** | Todas las líneas que dejan ver los filtros. |
+| **Ir a archivo.py:12** | Abre el archivo de una línea de traceback en el panel Código, en esa línea (también con doble clic). |
+| **Ver el error…** | El error en el [diálogo de error](#cuando-falla-el-propio-editor), con el traceback seleccionable. |
+| **Ocultar las líneas error** | Apaga el interruptor de ese nivel. |
+| **Ver en Logs** / **Limpiar** | Abre el panel Logs, o vacía la consola. |
+
+## El panel Logs
+
+**Ver → Logs** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd>) abre el panel **Logs**, el registro del propio editor:
+todo lo que hace Pyzed Design y cada error que encuentra, mientras que la consola es para tu formulario en ejecución.
+Como cualquier panel, puede ir a otro dock o a una ventana propia.
+
+Cada línea lleva su hora, un nivel y un **tipo**:
+
+| Tipo | Qué registra |
+| --- | --- |
+| Diseñador | El editor al arrancar y al cerrarse, los ajustes cambiados y sus errores inesperados con su traceback. |
+| Comandos | Cada comando ejecutado desde un menú, la paleta de comandos o un atajo. |
+| Documentos | Formularios y componentes abiertos y guardados. |
+| Proyecto | El proyecto y sus comandos de `uv`. |
+| Ejecutar | Las ejecuciones al empezar y al parar, y los eventos y errores del formulario en ejecución. |
+| Código, Agente, Disposición, Actualizaciones | El editor de código, los agentes de IA, los paneles movidos o mostrados y las actualizaciones. |
+| Sistema | Los avisos de Python. |
+
+La barra filtra por texto, por **tipo** (el desplegable *Todos los tipos*) y por **nivel** (debug, info, event,
+warning, error: las líneas debug están ocultas hasta que enciendes su interruptor). Las líneas se seleccionan, se
+copian y se abren desde su menú igual que en la consola, y el menú añade **Solo Diseñador** (o el tipo de la línea).
+El botón de la carpeta abre la carpeta de los archivos de log.
+
+Las mismas líneas (de event para arriba) se escriben en `logs/pyzed-design.log`, en la carpeta de configuración de
+Pyzed (el archivo se renueva al pasar de 1 MB y se guardan los tres últimos): adjúntalo a un informe de error.
+**Ajustes → Logs y errores → Escribir un archivo de log** lo desactiva.
+
+Cuando se han registrado errores o avisos, la barra de estado muestra su número a la izquierda; haz clic para abrir
+el panel.
+
+## Cuando falla el propio editor
+
+Un fallo de Pyzed Design nunca lo cierra:
+
+- Una acción que falla (un clic, una tecla, un comando de menú, una tarea en segundo plano) abre un **diálogo de
+  error** con el error, dónde pasó y el traceback, que puedes seleccionar y copiar. Sus botones: **Copiar el error**
+  (todo, listo para pegar en un issue), **Ir a archivo.py:12** (abre la línea de la que viene, cuando es un archivo
+  que se puede abrir), **Ver en Logs** y **Cerrar**. Si llegan más errores mientras está abierto, los cuenta.
+- Un panel que no se puede dibujar muestra una **tarjeta de error** en su lugar, con **Copiar el error** y
+  **Detalles**, y el resto de la ventana sigue funcionando; el lienzo, los diálogos y la ventana entera están
+  protegidos igual.
+
+Todos quedan en el panel Logs con su traceback. **Ajustes → Logs y errores → Mostrar un diálogo con los errores**
+desactiva el diálogo (los errores se siguen registrando). Para tus propias apps, las mismas piezas están en la
+librería: [`ui.error_boundary`, `ui.error_dialog` y `ui.ErrorInfo`](/pyzed/es/reference/ui/#consola-errores-y-ayuda).
+
 ## Errores en la ventana en ejecución
 
 Un manejador que lanza una excepción no cierra la ventana: aparece abajo un aviso **Event handler error** con la

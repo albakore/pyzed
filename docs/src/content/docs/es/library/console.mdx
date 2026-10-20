@@ -17,7 +17,7 @@ import Variant from '../../../../components/library/Variant.astro';
 Una lista de mensajes de la app (información, avisos, errores) que puedes filtrar y copiar.
 :::
 
-`ui.Log` reúne entradas (seguro entre hilos, con un tope de `limit`, líneas repetidas agrupadas) y puede capturar `print` y las trazas de error. `ui.console` las muestra como la consola de las dev tools de un navegador: un filtro, un interruptor por nivel con su cuenta, copiar y limpiar. Los niveles son `info`, `event`, `stdout`, `stderr`, `warning` y `error` (`ui.LOG_LEVELS`).
+`ui.Log` reúne entradas (seguro entre hilos, con un tope de `limit`, líneas repetidas agrupadas) y puede capturar `print` y las trazas de error. `ui.console` las muestra como la consola de las dev tools de un navegador: un filtro, un interruptor por nivel con su cuenta, copiar y limpiar. Los niveles son `debug`, `info`, `event`, `stdout`, `stderr`, `warning` y `error` (`ui.LOG_LEVELS`). Con un `ui.LogSelection` las líneas se pueden seleccionar (clic, Shift+clic, Ctrl+clic) y una línea seleccionada muestra su `detail` (un traceback); `on_context` abre tu menú con el clic derecho y `sources` añade un desplegable para ver las líneas de un origen.
 
 `ui.console` · Categoría: [Código y herramientas](/pyzed/es/library/#código-y-herramientas) · [Referencia completa →](/pyzed/es/reference/ui/#console)
 
@@ -121,6 +121,15 @@ console(
     on_clear=None,
     on_copy=None,
     actions=(),
+    selection=None,
+    on_context=None,
+    on_open=None,
+    sources=(),
+    source=None,
+    on_source=None,
+    show_source=False,
+    placeholder=None,
+    empty=None,
     font_size=12.5,
     id=None,
     theme=None,
@@ -139,6 +148,15 @@ Una vista de registro como la consola de las herramientas de desarrollo del nave
 | `on_clear` | `None` | Añade el botón Limpiar. |
 | `on_copy` | `None` | Añade el botón Copiar. |
 | `actions` | `()` | Widgets extra al final de la barra. |
+| `selection` | `None` | Un `ui.LogSelection`: las líneas se pueden seleccionar con el ratón y una línea seleccionada con `detail` lo muestra debajo. |
+| `on_context` | `None` | Se llama con la línea del clic derecho (`None` bajo las líneas): abre un menú ahí (copiar, ir al origen, limpiar...). |
+| `on_open` | `None` | Se llama con la línea del doble clic. |
+| `sources` | `()` | Pares `(valor, etiqueta)`: añade un desplegable que muestra las líneas de un `source`. |
+| `source` | `None` | El origen que se muestra (`None` para todos). |
+| `on_source` | `None` | Recibe el origen elegido en el desplegable (`None` para todos). |
+| `show_source` | `False` | Etiqueta cada línea con su origen. |
+| `placeholder` | `None` | Texto del filtro vacío. |
+| `empty` | `None` | Lo que se ve mientras no hay líneas. |
 | `font_size` | `12.5` | Tamaño de las entradas. |
 | `id` | `None` | Id del scrollable. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
@@ -151,7 +169,7 @@ Una vista de registro como la consola de las herramientas de desarrollo del nave
 class Log
 ```
 
-Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.
+Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo (`text(ids)` solo esas líneas). `write` también acepta el `source` de la línea, su `detail` (un traceback) y su `origin` (`(ruta, línea)`) y devuelve la entrada; `find(id)` busca una.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -164,10 +182,10 @@ Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con la
 
 ```python
 @dataclass
-class LogEntry(level, text, time=time.time(), count=1)
+class LogEntry(level, text, time=time.time(), count=1, source='', detail='', origin=None, id=0)
 ```
 
-Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
+Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas), `source`, `detail`, `origin`, su número `id`, `clock` (`HH:MM:SS`) y `line()` (la entrada como texto).
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -175,12 +193,26 @@ Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas 
 | `text` | *obligatorio* | La línea. |
 | `time` | `time()` | Cuándo se escribió (`time.time()`). |
 | `count` | `1` | Líneas idénticas seguidas. |
+| `source` | `""` | De dónde viene (`"project"`, `"agent"`...); `ui.console` puede mostrarlo y filtrarlo. |
+| `detail` | `""` | Más texto que se ve bajo la línea mientras está seleccionada (un traceback). |
+| `origin` | `None` | `(ruta, línea)` del código al que se refiere. |
+| `id` | `0` | Su número en el log (lo que guarda un `ui.LogSelection`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#logentry)
 
+### `ui.LogSelection`
+
+```python
+class LogSelection
+```
+
+Las líneas seleccionadas de un `ui.console`, como en una lista de archivos: un clic selecciona una línea, Shift+clic un rango desde la última pulsada y Ctrl+clic (Cmd en macOS) añade o quita una. Guarda una en tu app y pásala a `ui.console(selection=...)`; `select(ids)` selecciona justo esas (Ctrl+A), `clear()` ninguna, `keep(entries)` olvida las líneas que ya no están e `ids` son los `id` de las seleccionadas para `log.text(ids)`.
+
+[Referencia completa →](/pyzed/es/reference/ui/#logselection)
+
 ### `ui.LOG_LEVELS`
 
-Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error.
+Los niveles que colorea `ui.console`, en el orden de sus filtros: debug, info, event, stdout, stderr, warning, error.
 
 [Referencia completa →](/pyzed/es/reference/ui/#log_levels)
 

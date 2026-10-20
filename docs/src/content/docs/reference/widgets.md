@@ -1541,6 +1541,7 @@ code_editor(
     selection_highlight=True,
     keymap=None,
     scrollbar=True,
+    readonly=False,
 )
 ```
 
@@ -1597,6 +1598,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `selection_highlight` | Highlights the other occurrences of the selected text. |
 | `keymap` | Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides). |
 | `scrollbar` | `False` hides the scrollbars. |
+| `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 
 ## Styles
 

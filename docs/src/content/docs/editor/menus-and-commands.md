@@ -61,6 +61,7 @@ keyboard and in the command palette.
 | Command palette… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Runs any command by name. |
 | Left dock / Right dock / Bottom dock | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Shows or hides each dock (checked when shown). |
 | Console | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Shows the console and keeps it open. |
+| Logs | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd> | Shows the Logs panel: the editor's events and errors. |
 | Agent panel | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Shows or hides the [AI agent](/pyzed/editor/ai-agents/) (checked when shown). |
 | Generate a form with AI… / Generate a component with AI… | | Opens the agent with the start of a request ("Create a new form for…") for you to finish. |
 | Move tab to new window / Move tab to main window | | Gives the document in front a window of its own, or brings it back among the main window's tabs. See [Document tabs](/pyzed/editor/files-and-scripting/#document-tabs). |

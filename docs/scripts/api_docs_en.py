@@ -446,6 +446,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "selection_highlight": "Highlights the other occurrences of the selected text.",
                         "keymap": 'Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).',
                         "scrollbar": '`False` hides the scrollbars.',
+                        "readonly": '`True` lets the text be selected and copied but not changed (a log, a traceback).',
                     },
                 },
             }),
@@ -839,6 +840,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
                         "keymap": 'Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.',
                         "scrollbar": '`False` hides the scrollbars.',
+                        "readonly": '`True` lets the text be selected and copied but not changed (a log, a traceback).',
                     },
                 },
                 "pyzed.ui.language_token": {
@@ -1739,9 +1741,9 @@ _section("app", "Languages", {
     "pyzed.i18n.has": {"desc": "Whether `key` has a text in the language or its fallbacks.", "params": {"key": "Dotted key.", "language": "Language to check (default: the current one)."}},
 })
 
-_section("ui", "Console and help", {
+_section("ui", "Console, errors and help", {
     "pyzed.ui.Log": {
-        "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.",
+        "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying (`text(ids)` only those lines). `write` also takes the line's `source`, `detail` (a traceback) and `origin` (`(path, line)`) and returns the entry; `find(id)` looks one up.",
         "params": {"limit": "Most entries kept.", "on_write": "Called after every write (from any thread)."},
         "example": """
             log = ui.Log()
@@ -1750,14 +1752,66 @@ _section("ui", "Console and help", {
             ui.console(log.entries, on_clear=log.clear)
         """,
     },
-    "pyzed.ui.LogEntry": {"desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).", "params": {"level": "Level name.", "text": "The line.", "time": "When it was written (`time.time()`).", "count": "Identical lines in a row."}},
-    "pyzed.ui.LOG_LEVELS": {"desc": "The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error."},
+    "pyzed.ui.LogEntry": {"desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row), `source`, `detail`, `origin`, its number `id`, `clock` (`HH:MM:SS`) and `line()` (the entry as plain text).", "params": {"level": "Level name.", "text": "The line.", "time": "When it was written (`time.time()`).", "count": "Identical lines in a row.", "source": "What it comes from (`\"project\"`, `\"agent\"`...); `ui.console` can show and filter it.", "detail": "More text shown under the line while it is selected (a traceback).", "origin": "`(path, line)` of the code it is about.", "id": "Its number in the log (what a `ui.LogSelection` keeps)."}},
+    "pyzed.ui.LogSelection": {
+        "desc": "The selected lines of a `ui.console`, like in a file list: a click selects one line, Shift+click a range from the last one clicked and Ctrl+click (Cmd on macOS) adds or removes one. Keep one in your app and pass it to `ui.console(selection=...)`; `select(ids)` selects exactly those (Ctrl+A), `clear()` none, `keep(entries)` forgets lines that are gone, and `ids` are the selected entries' `id`s for `log.text(ids)`.",
+        "example": """
+            self.selection = ui.LogSelection()
+            ...
+            ui.console(self.log.entries, selection=self.selection, on_context=self.open_menu)
+            # Ctrl+C in on_key:
+            return pz.Command.copy(self.log.text(self.selection.ids))
+        """,
+    },
+    "pyzed.ui.LOG_LEVELS": {"desc": "The levels `ui.console` colors, in the order of its filter buttons: debug, info, event, stdout, stderr, warning, error."},
     "pyzed.ui.console": {
         "desc": "A log view like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear, and the entries in a monospace list that keeps scrolling to the newest one.",
         "params": {"entries": "`ui.LogEntry` items (`log.entries`).", "query": "Filter text.", "on_query": "Receives each edit of the filter.",
                    "hidden": "Levels not shown.", "on_toggle_level": "Called with the level of the clicked toggle.",
                    "on_clear": "Adds a Clear button.", "on_copy": "Adds a Copy button.", "actions": "Extra widgets at the end of the toolbar.",
-                   "font_size": "Size of the entries.", "id": "Scrollable id."},
+                   "font_size": "Size of the entries.", "id": "Scrollable id.",
+                   "selection": "A `ui.LogSelection`: the lines can be selected with the mouse, and a selected line with `detail` shows it below.",
+                   "on_context": "Called with the line right-clicked (`None` under the lines): open a menu there (copy, go to source, clear...).",
+                   "on_open": "Called with the line double-clicked.", "sources": "`(value, label)` pairs: adds a dropdown that shows the lines of one `source`.",
+                   "source": "The source shown (`None` for all).", "on_source": "Receives the source picked in the dropdown (`None` for all).",
+                   "show_source": "Tags each line with its source.", "placeholder": "Text of the empty filter box.", "empty": "What shows while there are no lines."},
+    },
+    "pyzed.ui.ErrorInfo": {
+        "desc": "An error as `ui.error_card` and `ui.error_dialog` show it: `kind` (the exception's type), `message`, the whole `traceback`, the `origin` `(path, line)` it comes from (the last frame outside the standard library, installed packages and Pyzed), `where` it happened and `time`. `ErrorInfo.from_exception(err, where=...)` makes one (`prefer=` picks which frames may be the origin); `ErrorInfo.current()` describes the exception being handled. `summary` is `Type: message`, `location` is `file.py:12` and `report()` is everything as text for a bug report.",
+        "params": {"kind": "The exception's type name.", "message": "Its message.", "traceback": "The whole traceback, as Python prints it.",
+                   "origin": "`(path, line)` of the code it comes from, or `None`.", "where": "What was running.", "time": "When it happened (`time.time()`)."},
+        "example": """
+            try:
+                save(data)
+            except Exception as err:
+                self.error = ui.ErrorInfo.from_exception(err, where="Save")
+        """,
+    },
+    "pyzed.ui.error_boundary": {
+        "desc": "Draws `build()`, or an error card when it raises, so one part of the view that fails never takes the whole window down (like React's error boundaries). `on_error(info)` is told about the error each time the part is drawn and fails, so report it once (compare `info.traceback`).",
+        "params": {"build": "A function that returns the part's widget.", "on_error": "Receives the `ui.ErrorInfo`.",
+                   "title": "Heading of the card (and the error's `where`).", "where": "What the part is, for the report.",
+                   "on_details": "Adds a Details button; receives the `ui.ErrorInfo` (open a `ui.error_dialog`).",
+                   "fallback": "Your own widget for the error: `fallback(info)`.", "theme": "Theme override."},
+        "example": """
+            sidebar = ui.error_boundary(lambda: self.sidebar(), on_error=self.report, title="Sidebar",
+                                        on_details=self.show_error)
+        """,
+    },
+    "pyzed.ui.error_card": {
+        "desc": "The card `ui.error_boundary` draws in place of what failed: the error, where it comes from and a Copy error button (and Details with `on_details`).",
+        "params": {"info": "A `ui.ErrorInfo`.", "title": "Heading.", "on_details": "Adds a Details button.", "actions": "More buttons after them.", "theme": "Theme override."},
+    },
+    "pyzed.ui.error_dialog": {
+        "desc": "A dialog with an error: its message, where it happened, the file and line it comes from and the traceback in a read-only editor (select and copy any part), with buttons to copy everything, go to the origin, see it among the logs and close. Show it with `ui.dialog_layer` or `ui.layer`.",
+        "params": {"info": "A `ui.ErrorInfo`.", "on_close": "Close button and Escape.", "title": "Heading (\"Something went wrong\").",
+                   "on_go_to": "Adds the go-to button (open the file at the line).", "go_to_label": "Its text (\"Go to source\").",
+                   "on_logs": "Adds a Show in Logs button.", "more": "How many other errors came after it (a line says so).",
+                   "width": "Width in pixels or a modal size.", "theme": "Theme override."},
+        "example": """
+            dialog = ui.error_dialog(self.error, self.close_error, on_go_to=self.open_origin) if self.error else None
+            return ui.dialog_layer(self.main_view(), dialog, on_dismiss=self.close_error)
+        """,
     },
     "pyzed.ui.shortcuts": {
         "desc": "A searchable list of key bindings, grouped (for a Keyboard shortcuts dialog).",

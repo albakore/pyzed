@@ -113,5 +113,5 @@ opacity mask, and `on_change` receives a `"#rrggbb[aa]"` string, a `pz.Gradient`
 all valid as a `background`. `ui.color_swatch` shows any of them over a checkerboard. See
 [Styles](/pyzed/theming/styles/#color-picker).
 
-Full reference: [Dialogs](/pyzed/reference/ui/#dialogs), [Console and help](/pyzed/reference/ui/#console-and-help)
+Full reference: [Dialogs](/pyzed/reference/ui/#dialogs), [Console, errors and help](/pyzed/reference/ui/#console-errors-and-help)
 and [Color picker](/pyzed/reference/ui/#color-picker).

@@ -249,6 +249,7 @@ editor(
     font=None,
     keymap=None,
     scrollbar=True,
+    readonly=False,
     theme=None,
 )
 ```
@@ -291,6 +292,7 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `font` | `None` | Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat. |
 | `keymap` | `None` | Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `True` | `False` oculta las barras de desplazamiento. |
+| `readonly` | `False` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#editor)
@@ -360,6 +362,7 @@ code_editor(
     selection_highlight=True,
     keymap=None,
     scrollbar=True,
+    readonly=False,
 )
 ```
 
@@ -416,6 +419,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `selection_highlight` | `True` | Resalta las demás apariciones del texto seleccionado. |
 | `keymap` | `None` | Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción). |
 | `scrollbar` | `True` | `False` oculta las barras de desplazamiento. |
+| `readonly` | `False` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
 
 [Referencia completa →](/pyzed/es/reference/widgets/#code_editor)
 

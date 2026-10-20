@@ -249,6 +249,7 @@ editor(
     font=None,
     keymap=None,
     scrollbar=True,
+    readonly=False,
     theme=None,
 )
 ```
@@ -291,6 +292,7 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `font` | `None` | Typeface: `"mono"` by default; `"sans"` makes a multi-line text box, like a chat's message box. |
 | `keymap` | `None` | Zed-style `{binding: action}` dict (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `True` | `False` hides the scrollbars. |
+| `readonly` | `False` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#editor)
@@ -360,6 +362,7 @@ code_editor(
     selection_highlight=True,
     keymap=None,
     scrollbar=True,
+    readonly=False,
 )
 ```
 
@@ -416,6 +419,7 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `selection_highlight` | `True` | Highlights the other occurrences of the selected text. |
 | `keymap` | `None` | Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides). |
 | `scrollbar` | `True` | `False` hides the scrollbars. |
+| `readonly` | `False` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
 
 [Full reference →](/pyzed/reference/widgets/#code_editor)
 

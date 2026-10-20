@@ -155,6 +155,7 @@ def editor(
     font: Optional[str] = None,
     keymap: Optional[Mapping[str, Optional[str]]] = None,
     scrollbar: bool = True,
+    readonly: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -216,6 +217,8 @@ def editor(
     ``keymap`` changes the keys, like Zed's keymap: it maps a binding (``"ctrl-shift-d"``, ``"alt-up"``,
     ``"ctrl-k ctrl-u"``) to an action name (see ``DEFAULT_KEYS``), or to ``None`` to take a default key
     away; ``keymap_for`` builds one from per-action overrides. ``scrollbar=False`` hides the scrollbars.
+``readonly=True`` lets the text be selected and copied (mouse, Shift+arrows, Ctrl+A, Ctrl+C) but not changed:
+a log, a traceback or generated code to look at.
 
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
@@ -267,6 +270,7 @@ def editor(
         selection_highlight=selection_highlight,
         keymap=dict(keymap) if keymap else None,
         scrollbar=scrollbar,
+        readonly=readonly,
     )
 
 

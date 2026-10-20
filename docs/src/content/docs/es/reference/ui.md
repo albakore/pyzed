@@ -947,7 +947,7 @@ ui.accordion([
 ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))
 ```
 
-## Consola y ayuda
+## Consola, errores y ayuda
 
 ### `Log`
 
@@ -955,7 +955,7 @@ ui.accordion([
 class Log
 ```
 
-Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo.
+Las entradas de un `ui.console`: seguro entre hilos, limitado a `limit` y con las líneas repetidas agrupadas. `write(level, text)` añade una línea; `capture()` (o `with log:`) copia la salida de `print` y los tracebacks; `pipe(stream)` lee la salida de un subproceso en segundo plano; `text()` devuelve todo para copiarlo (`text(ids)` solo esas líneas). `write` también acepta el `source` de la línea, su `detail` (un traceback) y su `origin` (`(ruta, línea)`) y devuelve la entrada; `find(id)` busca una.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -974,10 +974,18 @@ ui.console(log.entries, on_clear=log.clear)
 #### `Log.write`
 
 ```python
-Log.write(level, text)
+Log.write(level, text, *, source='', detail='', origin=None)
 ```
 
-Añade una línea con nivel `level` y llama a `on_write`.
+Añade una línea con nivel `level` (de `source`, con `detail` y `origin`), llama a `on_write` y devuelve la entrada.
+
+#### `Log.find`
+
+```python
+Log.find(entry_id)
+```
+
+La entrada con número `entry_id`, o `None` si ya no está.
 
 #### `Log.clear`
 
@@ -998,10 +1006,10 @@ Devuelve cuántas líneas hay por nivel, contando las repeticiones plegadas.
 #### `Log.text`
 
 ```python
-Log.text()
+Log.text(ids=None)
 ```
 
-Todo como texto plano (para copiar).
+Todo (o las entradas con número en `ids`) como texto plano, para copiar.
 
 #### `Log.capturing`
 
@@ -1039,10 +1047,10 @@ Lee una tubería de un subproceso (bytes o texto) línea a línea hacia el log, 
 
 ```python
 @dataclass
-class LogEntry(level, text, time=time.time(), count=1)
+class LogEntry(level, text, time=time.time(), count=1, source='', detail='', origin=None, id=0)
 ```
 
-Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas) y `clock` (`HH:MM:SS`).
+Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas seguidas), `source`, `detail`, `origin`, su número `id`, `clock` (`HH:MM:SS`) y `line()` (la entrada como texto).
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -1050,6 +1058,10 @@ Una línea de un `ui.Log`: `level`, `text`, `time`, `count` (líneas idénticas 
 | `text` | La línea. |
 | `time` | Cuándo se escribió (`time.time()`). |
 | `count` | Líneas idénticas seguidas. |
+| `source` | De dónde viene (`"project"`, `"agent"`...); `ui.console` puede mostrarlo y filtrarlo. |
+| `detail` | Más texto que se ve bajo la línea mientras está seleccionada (un traceback). |
+| `origin` | `(ruta, línea)` del código al que se refiere. |
+| `id` | Su número en el log (lo que guarda un `ui.LogSelection`). |
 
 **Métodos y propiedades**
 
@@ -1061,13 +1073,71 @@ LogEntry.clock  # property
 
 La hora local de la entrada como `HH:MM:SS`.
 
+#### `LogEntry.line`
+
+```python
+LogEntry.line(*, details=True)
+```
+
+La entrada como una línea de texto (hora, nivel y origen, y `detail` debajo).
+
+### `LogSelection`
+
+```python
+class LogSelection
+```
+
+Las líneas seleccionadas de un `ui.console`, como en una lista de archivos: un clic selecciona una línea, Shift+clic un rango desde la última pulsada y Ctrl+clic (Cmd en macOS) añade o quita una. Guarda una en tu app y pásala a `ui.console(selection=...)`; `select(ids)` selecciona justo esas (Ctrl+A), `clear()` ninguna, `keep(entries)` olvida las líneas que ya no están e `ids` son los `id` de las seleccionadas para `log.text(ids)`.
+
+```python
+self.selection = ui.LogSelection()
+...
+ui.console(self.log.entries, selection=self.selection, on_context=self.abrir_menu)
+# Ctrl+C en on_key:
+return pz.Command.copy(self.log.text(self.selection.ids))
+```
+
+**Métodos y propiedades**
+
+#### `LogSelection.click`
+
+```python
+LogSelection.click(entry_id, shown, *, shift=False, ctrl=False)
+```
+
+Selecciona tras un clic en la línea `entry_id`; `shown` son los ids de las líneas en pantalla, en orden.
+
+#### `LogSelection.select`
+
+```python
+LogSelection.select(ids)
+```
+
+Selecciona exactamente `ids` (todas las líneas visibles, para Ctrl+A).
+
+#### `LogSelection.clear`
+
+```python
+LogSelection.clear()
+```
+
+No selecciona nada.
+
+#### `LogSelection.keep`
+
+```python
+LogSelection.keep(entries)
+```
+
+Olvida las líneas seleccionadas que ya no están en `entries` (limpiadas o descartadas).
+
 ### `LOG_LEVELS`
 
 ```python
 LOG_LEVELS(...)
 ```
 
-Los niveles que colorea `ui.console`, en el orden de sus filtros: info, event, stdout, stderr, warning, error.
+Los niveles que colorea `ui.console`, en el orden de sus filtros: debug, info, event, stdout, stderr, warning, error.
 
 ### `console`
 
@@ -1082,6 +1152,15 @@ console(
     on_clear=None,
     on_copy=None,
     actions=(),
+    selection=None,
+    on_context=None,
+    on_open=None,
+    sources=(),
+    source=None,
+    on_source=None,
+    show_source=False,
+    placeholder=None,
+    empty=None,
     font_size=12.5,
     id=None,
     theme=None,
@@ -1100,9 +1179,171 @@ Una vista de registro como la consola de las herramientas de desarrollo del nave
 | `on_clear` | Añade el botón Limpiar. |
 | `on_copy` | Añade el botón Copiar. |
 | `actions` | Widgets extra al final de la barra. |
+| `selection` | Un `ui.LogSelection`: las líneas se pueden seleccionar con el ratón y una línea seleccionada con `detail` lo muestra debajo. |
+| `on_context` | Se llama con la línea del clic derecho (`None` bajo las líneas): abre un menú ahí (copiar, ir al origen, limpiar...). |
+| `on_open` | Se llama con la línea del doble clic. |
+| `sources` | Pares `(valor, etiqueta)`: añade un desplegable que muestra las líneas de un `source`. |
+| `source` | El origen que se muestra (`None` para todos). |
+| `on_source` | Recibe el origen elegido en el desplegable (`None` para todos). |
+| `show_source` | Etiqueta cada línea con su origen. |
+| `placeholder` | Texto del filtro vacío. |
+| `empty` | Lo que se ve mientras no hay líneas. |
 | `font_size` | Tamaño de las entradas. |
 | `id` | Id del scrollable. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
+
+### `ErrorInfo`
+
+```python
+@dataclass
+class ErrorInfo(kind, message, traceback='', origin=None, where='', time=0.0)
+```
+
+Un error tal como lo muestran `ui.error_card` y `ui.error_dialog`: `kind` (el tipo de la excepción), `message`, el `traceback` completo, el `origin` `(ruta, línea)` del que viene (el último frame fuera de la librería estándar, los paquetes instalados y Pyzed), `where` pasó y `time`. `ErrorInfo.from_exception(err, where=...)` crea uno (`prefer=` elige qué frames pueden ser el origen); `ErrorInfo.current()` describe la excepción que se está manejando. `summary` es `Tipo: mensaje`, `location` es `archivo.py:12` y `report()` es todo como texto para un informe de error.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `kind` | El nombre del tipo de la excepción. |
+| `message` | Su mensaje. |
+| `traceback` | El traceback completo, como lo imprime Python. |
+| `origin` | `(ruta, línea)` del código del que viene, o `None`. |
+| `where` | Qué se estaba ejecutando. |
+| `time` | Cuándo pasó (`time.time()`). |
+
+```python
+try:
+    guardar(datos)
+except Exception as err:
+    self.error = ui.ErrorInfo.from_exception(err, where="Guardar")
+```
+
+**Métodos y propiedades**
+
+#### `ErrorInfo.from_exception`
+
+```python
+@classmethod
+ErrorInfo.from_exception(err, *, where='', prefer=None)
+```
+
+Describe `err`. `prefer(ruta)` elige los frames que pueden ser su origen (gana el último); por defecto, los que están fuera de la librería estándar, los paquetes instalados y Pyzed.
+
+#### `ErrorInfo.current`
+
+```python
+@classmethod
+ErrorInfo.current(*, where='')
+```
+
+La excepción que se está manejando (dentro de un `except`), o `None`.
+
+#### `ErrorInfo.summary`
+
+```python
+ErrorInfo.summary  # property
+```
+
+`Tipo: mensaje` (solo el tipo si el mensaje está vacío).
+
+#### `ErrorInfo.location`
+
+```python
+ErrorInfo.location  # property
+```
+
+`archivo.py:12` del origen, o `""`.
+
+#### `ErrorInfo.report`
+
+```python
+ErrorInfo.report()
+```
+
+Todo como texto plano, para pegarlo en un informe de error.
+
+### `error_boundary`
+
+```python
+error_boundary(
+    build,
+    *,
+    on_error=None,
+    title=None,
+    where='',
+    on_details=None,
+    fallback=None,
+    theme=None,
+)
+```
+
+Dibuja `build()`, o una tarjeta de error si falla, para que una parte de la vista que falla nunca tumbe la ventana entera (como los error boundaries de React). `on_error(info)` se entera del error cada vez que la parte se dibuja y falla, así que regístralo una sola vez (compara `info.traceback`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `build` | Una función que devuelve el widget de la parte. |
+| `on_error` | Recibe el `ui.ErrorInfo`. |
+| `title` | Título de la tarjeta (y el `where` del error). |
+| `where` | Qué es la parte, para el informe. |
+| `on_details` | Añade el botón Detalles; recibe el `ui.ErrorInfo` (abre un `ui.error_dialog`). |
+| `fallback` | Tu propio widget para el error: `fallback(info)`. |
+| `theme` | Tema a usar. |
+
+```python
+lateral = ui.error_boundary(lambda: self.lateral(), on_error=self.registrar, title="Lateral",
+                            on_details=self.ver_error)
+```
+
+### `error_card`
+
+```python
+error_card(info, *, title=None, on_details=None, actions=(), theme=None)
+```
+
+La tarjeta que dibuja `ui.error_boundary` en lugar de lo que falló: el error, de dónde viene y el botón Copiar el error (y Detalles con `on_details`).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `info` | Un `ui.ErrorInfo`. |
+| `title` | Título. |
+| `on_details` | Añade el botón Detalles. |
+| `actions` | Más botones tras ellos. |
+| `theme` | Tema a usar. |
+
+### `error_dialog`
+
+```python
+error_dialog(
+    info,
+    on_close,
+    *,
+    title=None,
+    on_go_to=None,
+    go_to_label=None,
+    on_logs=None,
+    more=0,
+    width=680,
+    theme=None,
+)
+```
+
+Un diálogo con un error: su mensaje, dónde pasó, el archivo y la línea de los que viene y el traceback en un editor de solo lectura (selecciona y copia cualquier parte), con botones para copiarlo todo, ir al origen, verlo en los logs y cerrar. Muéstralo con `ui.dialog_layer` o `ui.layer`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `info` | Un `ui.ErrorInfo`. |
+| `on_close` | Botón Cerrar y Escape. |
+| `title` | Título ("Algo salió mal"). |
+| `on_go_to` | Añade el botón de ir al origen (abre el archivo en la línea). |
+| `go_to_label` | Su texto ("Ir al origen"). |
+| `on_logs` | Añade el botón Ver en Logs. |
+| `more` | Cuántos errores más llegaron después (una línea lo dice). |
+| `width` | Ancho en píxeles o un tamaño de modal. |
+| `theme` | Tema a usar. |
+
+```python
+dialogo = ui.error_dialog(self.error, self.cerrar_error, on_go_to=self.abrir_origen) if self.error else None
+return ui.dialog_layer(self.vista_principal(), dialogo, on_dismiss=self.cerrar_error)
+```
 
 ### `shortcuts`
 
@@ -2490,6 +2731,7 @@ editor(
     font=None,
     keymap=None,
     scrollbar=True,
+    readonly=False,
     theme=None,
 )
 ```
@@ -2532,6 +2774,7 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `font` | Tipografía: `"mono"` por defecto; `"sans"` hace un cuadro de texto de varias líneas, como el cuadro de mensaje de un chat. |
 | `keymap` | Diccionario `{atajo: acción}` al estilo de Zed (`{"ctrl-shift-d": "duplicate_line_down"}`); `None` como acción quita una tecla por defecto. Créalo a partir de cambios por acción con `pyzed.ui.editor.keymap_for`. |
 | `scrollbar` | `False` oculta las barras de desplazamiento. |
+| `readonly` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `language_token`

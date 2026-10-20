@@ -41,6 +41,13 @@ diálogo.
 | **Abrir la consola al ejecutar** | Trae la consola al frente cuando arranca un formulario. |
 | **Registrar los eventos en la consola** | Escribe cada evento que atiende el formulario en ejecución, con su valor y su manejador. |
 
+## Logs y errores
+
+| Ajuste | Qué hace |
+| --- | --- |
+| **Mostrar un diálogo con los errores** | Abre el [diálogo de error](/pyzed/es/editor/console-and-running/#cuando-falla-el-propio-editor) cuando algo falla. Apagado, los errores solo van al panel Logs. |
+| **Escribir un archivo de log** | Escribe además los [logs](/pyzed/es/editor/console-and-running/#el-panel-logs) en `logs/pyzed-design.log`, en la carpeta de configuración de Pyzed (se aplica al reiniciar). |
+
 ## Paneles
 
 | Ajuste | Qué hace |
