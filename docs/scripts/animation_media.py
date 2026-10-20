@@ -1018,7 +1018,7 @@ def frames(c: Clip, folder: Path) -> Iterator[Any]:
 
 def encode(c: Clip, images: list[Any]) -> Path:
     """Writes the animated WebP, merging repeated frames and lowering the quality until it fits."""
-    from PIL import ImageChops
+    from PIL import Image, ImageChops
 
     still: list[Any] = []
     durations: list[int] = []
@@ -1032,13 +1032,20 @@ def encode(c: Clip, images: list[Any]) -> Path:
     durations = [round(d) for d in durations]
     OUT.mkdir(parents=True, exist_ok=True)
     out = OUT / f"{c.name}.webp"
-    for quality in (80, 72, 64, 56, 48, 40):
-        buffer = io.BytesIO()
-        still[0].save(buffer, "WEBP", save_all=True, append_images=still[1:], duration=durations, loop=0,
-                      quality=quality, method=6, minimize_size=True)
-        if buffer.tell() <= BUDGET or quality == 40:
-            out.write_bytes(buffer.getvalue())
+    # Opaque RGB frames and no sub-frame packing: lossy frames that blend over the previous one
+    # leave blocky trails. Past quality 56 the frames shrink instead of getting blurrier.
+    still = [im.convert("RGB") for im in still]
+    while True:
+        for quality in (80, 72, 64, 56):
+            buffer = io.BytesIO()
+            still[0].save(buffer, "WEBP", save_all=True, append_images=still[1:], duration=durations, loop=0,
+                          quality=quality, method=6, allow_mixed=False)
+            if buffer.tell() <= BUDGET:
+                break
+        if buffer.tell() <= BUDGET or still[0].width < 900:
             break
+        still = [im.resize((round(im.width * 0.85), round(im.height * 0.85)), Image.LANCZOS) for im in still]
+    out.write_bytes(buffer.getvalue())
     return out
 
 
