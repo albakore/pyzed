@@ -178,6 +178,23 @@ rechaza y `"ask"` llama a `confirm`. `acp.installed(config)` dice si su programa
 los guardan en `AgentSettings.acp_agents` (y los servidores MCP en `mcp_servers`;
 `acp.mcp_entries(settings.mcp_servers)` también se los pasa al agente).
 
+Tus propias herramientas también pueden ir al agente externo: `mcp_host.ToolServer` sirve las herramientas de un
+`Agent` por MCP en `127.0.0.1` (una dirección de un solo uso y un token), y así es como Pyzed Design deja que
+Claude Code controle el editor:
+
+```python
+from pyzed.agents import mcp_host
+
+server = mcp_host.ToolServer(agents.Agent(tools=[mi_herramienta]), name="mi_app", instructions="Cómo usarlas")
+agent = acp.ACPAgent(config, cwd="mi_app", mcp_servers=[server.acp_entry(), server.bridge_entry()])
+...
+server.close()
+```
+
+Con las dos, el agente recibe la entrada HTTP si la admite y el puente por stdio si no.
+`acp.claude_signed_in()` dice si Claude Code tiene la sesión iniciada en este equipo, y `acp.claude_login_command()`
+es el comando que lo abre para iniciar sesión con una suscripción de Claude.
+
 ## Streaming en la UI
 
 `run` bloquea, así que en una app llámalo desde un hilo y pasa los eventos a la UI. Las vistas de Pyzed corren en
@@ -239,6 +256,15 @@ agents.set_key("openrouter", key)
 
 agents.login.key_page("anthropic")    # los demás: abre la página de claves de API del proveedor...
 agents.providers.looks_like_key("anthropic", texto_copiado)  # ...y dice si un texto copiado es su clave
+
+def check(key):                       # por qué el proveedor rechaza la clave, o None
+    try:
+        agents.list_models("anthropic", key=key)
+    except agents.AgentError as err:
+        return str(err)
+
+# ...o una página de inicio de sesión servida en 127.0.0.1: enlaza a la página de claves y devuelve la clave pegada
+key = agents.login.key_portal("anthropic", check)
 ```
 
 GitHub y Google también inician sesión sin clave, con apps OAuth que registras tú (sus ID van en los ajustes del

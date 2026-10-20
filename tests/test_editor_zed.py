@@ -237,3 +237,20 @@ def test_completion_list_scrolls(tmp_path):
     a.move_selection(1)
     code_panel.completion_popup(a, t, visible_rows=5)
     assert a.completion.top == 13
+
+
+@pytest.mark.parametrize("active_line", [True, False])
+def test_the_editor_shows_its_text_without_the_active_line_band(tmp_path, active_line):
+    # The agent's message box turns the band off; the editor used to collapse to nothing then, so nothing typed
+    # showed up and the box could not be clicked.
+    def shot(text):
+        class Box(pz.App):
+            def view(self):
+                return pz.column([ui.editor("box", text, active_line=active_line, gutter=False, height=40)],
+                                 padding=10)
+
+        path = tmp_path / f"{bool(text)}.png"
+        pz.screenshot(Box(), path, size=(240, 60), scale=1)
+        return path.read_bytes()
+
+    assert shot("") != shot("hola mundo")
