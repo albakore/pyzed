@@ -541,6 +541,12 @@
    "path": "docs/src/content/docs/guides/testing.mdx"
   },
   {
+   "slug": "guides/timeline",
+   "title": "Timeline animations",
+   "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer, and save them as reusable .pzanim files.",
+   "path": "docs/src/content/docs/guides/timeline.md"
+  },
+  {
    "slug": "guides/windows",
    "title": "Multiple windows",
    "description": "Multiple windows in Pyzed: open, close, move, resize and control native desktop windows from Python with pz.Window, each with its own theme.",
@@ -1837,6 +1843,12 @@
    "kind": "app",
    "summary": "Theming playground, after Iced's ``styling`` demo.",
    "path": "examples/styling.py"
+  },
+  {
+   "name": "timeline",
+   "kind": "app",
+   "summary": "Timeline animations with ``pz.AnimationPlayer``, like Godot's AnimationPlayer.",
+   "path": "examples/timeline.py"
   },
   {
    "name": "todo",
@@ -3537,6 +3549,13 @@
    "pyzed.animation.WINDOW_TRANSITIONS": {
     "desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets."
    },
+   "pyzed.Clip": {},
+   "pyzed.Track": {},
+   "pyzed.Key": {},
+   "pyzed.Call": {},
+   "pyzed.AnimationPlayer": {},
+   "pyzed.AnimationLibrary": {},
+   "pyzed.load_animations": {},
    "pyzed.virtual_column": {
     "desc": "A column of `count` rows of the same height that only builds the rows in view: `item(index)` is called when row `index` scrolls into view, and rows that leave it are dropped. A column of a million rows costs the same as one of fifty. Put it in a `scrollable` (it virtualizes against the visible area of the closest one, or the window).",
     "params": {

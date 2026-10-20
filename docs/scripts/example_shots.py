@@ -100,6 +100,13 @@ def life_setup(app):
         app.tick()
 
 
+def timeline_setup(app):
+    app.player.owner = app
+    app.player.pause()
+    app.player.seek(app.player.length)
+    app.message = "New record! Press Next to continue"
+
+
 def snake_setup(app):
     path = [(6, 4), (6, 5), (6, 6), (6, 7), (6, 8), (6, 9), (6, 10), (7, 10), (8, 10), (9, 10), (10, 10),
             (11, 10), (12, 10), (12, 9), (12, 8)]
@@ -186,6 +193,7 @@ SHOTS = {
     "tutorials/color-picker": (app("color_picker", "ColorPickerDemo"), (640, 560)),
     "tutorials/animations": (app("animations", "Animations"), (980, 500)),
     "tutorials/effects": (app("effects", "Effects"), (900, 460)),
+    "tutorials/timeline": (app("timeline", "Timeline", timeline_setup), (760, 560)),
     "tutorials/todo": (app("todo", "Todo"), None),
     "tutorials/downloads": (app("downloads", "Downloads", downloads_setup), None),
     "tutorials/mini-editor": (app("mini_editor", "MiniEditor", mini_editor_setup, str(ROOT)), (1100, 700)),

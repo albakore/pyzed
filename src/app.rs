@@ -1976,14 +1976,36 @@ fn python_subscriptions(
     obj: &Bound<'_, PyAny>,
     window: Option<window::Id>,
 ) -> Vec<Recipe> {
-    if !obj.hasattr("subscriptions").unwrap_or(false) {
-        return Vec::new();
-    }
-    let value = match obj.call_method0("subscriptions") {
-        Ok(v) => v,
+    let value = if obj.hasattr("subscriptions").unwrap_or(false) {
+        match obj.call_method0("subscriptions") {
+            Ok(v) => v,
+            Err(err) => {
+                err.print(py);
+                return Vec::new();
+            }
+        }
+    } else {
+        pyo3::types::PyList::empty(py).into_any()
+    };
+    // Animation players kept in the object's attributes add theirs.
+    let value = match py
+        .import("pyzed.animation_player")
+        .and_then(|m| m.getattr("_player_subscriptions"))
+        .and_then(|f| f.call1((obj,)))
+    {
+        Ok(players) if players.len().is_ok_and(|n| n > 0) => {
+            pyo3::types::PyList::new(py, [value, players]).map_or_else(
+                |err| {
+                    err.print(py);
+                    py.None().into_bound(py)
+                },
+                |l| l.into_any(),
+            )
+        }
+        Ok(_) => value,
         Err(err) => {
             err.print(py);
-            return Vec::new();
+            value
         }
     };
     let items = match crate::widget::flatten(&value) {

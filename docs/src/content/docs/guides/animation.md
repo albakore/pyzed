@@ -20,6 +20,8 @@ panel.transition(opacity=1 if self.open else 0, x=0 if self.open else -24)   # l
 ```
 
 Run [`examples/animations.py`](https://github.com/albakore/pyzed/blob/main/examples/animations.py) to try them all.
+To move several widgets and your app's state together on one timeline, with play, pause and
+seek, see [Timeline animations](/pyzed/guides/timeline/).
 
 ## animate()
 
