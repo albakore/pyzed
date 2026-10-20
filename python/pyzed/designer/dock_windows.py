@@ -53,6 +53,15 @@ class DockWindow(Window):
         self.key = Pane(window=self)
         self.title = self.window_title
 
+    @property
+    def scale(self) -> float:  # type: ignore[override]
+        """Panel windows follow the designer's interface scale."""
+        return self.designer.scale
+
+    @scale.setter
+    def scale(self, _value: float) -> None:
+        pass
+
     def window_title(self) -> str:
         """The panel in front, then "Pyzed Design"."""
         shown = self.designer.layout.shown(self.place, self.designer)

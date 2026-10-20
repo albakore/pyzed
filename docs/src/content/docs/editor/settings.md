@@ -22,6 +22,23 @@ editor's own preferences. Changes apply at once and are saved right away; **Done
 | **Custom window frame** | On by default: Pyzed Design draws its own title bar and window buttons, in the style of your system. Turn it off to use the system's frame (applies the next time it opens). |
 | **Form preview frame** | The window frame the canvas shows around the form: this system's, macOS, Windows 11, GNOME, Ubuntu or KDE Plasma. |
 
+## Fonts and size
+
+| Setting | What it does |
+| --- | --- |
+| **Interface font** | The font of the menus, panels, dialogs and properties. *Default* is IBM Plex Sans; the list has the bundled fonts, the system's and any loaded with `pz.load_font`. |
+| **Interface size** | Makes the whole editor bigger or smaller, from 75% to 150%, panel windows included. **View → Zoom in the interface**, **Zoom out the interface** and **Reset the interface zoom** do the same in 5% steps; give them keys in the [keymap editor](/pyzed/editor/keymap/). |
+| **Code font** | The font of the code editor and other code. *Default* is IBM Plex Mono. |
+| **Code font size** | 8 to 32 points, the same setting as in the [code editor's settings](/pyzed/editor/code-editor/#editor-settings). |
+| **Code line height** | Compact, Standard or Comfortable. |
+
+Every change shows at once, without restarting, and is saved for the next time.
+
+:::tip
+A monospaced font keeps code columns aligned: pick one for **Code font** (its name usually says *Mono* or
+*Code*). For the interface, any font with regular, medium and semibold weights looks best.
+:::
+
 ## Form canvas
 
 | Setting | What it does |
@@ -101,9 +118,9 @@ values are ignored and the defaults used, so a hand-edited file can not break th
 
 ```json
 {
-  "designer": { "theme": "One Light", "language": "es", "grid": 8, "snap": true, "console_on_run": true,
+  "designer": { "theme": "One Light", "language": "es", "ui_font": "Inter", "ui_scale": 1.1, "grid": 8, "snap": true, "console_on_run": true,
                 "docks": { "events": "left" }, "sizes": { "right": 360 }, "recent": ["/home/ada/shop/ui/main.pzform"] },
-  "editor": { "font_size": 15, "tab_size": 4, "minimap": false, "cursor_shape": "block", "format_on_apply": true }
+  "editor": { "font_family": "JetBrains Mono", "font_size": 15, "tab_size": 4, "minimap": false, "cursor_shape": "block", "format_on_apply": true }
 }
 ```
 

@@ -223,6 +223,7 @@ the right side shows the one you pick.
 | Section | Setting | What it does |
 | --- | --- | --- |
 | Appearance | **Theme** | *Same as the designer*, or any theme for the editor alone. |
+| | **Font** | *Default* (IBM Plex Mono) or any installed font; also in Settings → Fonts and size. |
 | | **Font size** | 8 to 32 (also <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> and <kbd>Ctrl</kbd>+wheel). |
 | | **Line height** | Compact, Standard or Comfortable. |
 | | **Line numbers**, **Highlight current line** | The gutter and the current-line band. |
