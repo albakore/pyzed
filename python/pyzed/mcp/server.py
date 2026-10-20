@@ -30,6 +30,9 @@ What to do for each kind of request:
   guides to read), then follow its steps: project_info (or create_project), start_live_preview so the user
   watches the app while you build it, write_files in small steps, check_project, run_tests and
   screenshot_project until all are clean. The build_project prompt has the whole loop.
+  Write the UI like a web page: pz.box containers (flex, grid, gap, overflow, absolute children), a
+  pz.stylesheet of classes with :hover, transition and @media rules, and components with children,
+  a stylesheet and pz.provide / use_context (cookbook "Web-style pages").
 - "Make a component": list_components to reuse what exists, new_component, then validate_code and
   screenshot with a preview() function.
 - "Make a designer form": list_components(kind="designer"), new_form, validate_form.
@@ -448,7 +451,9 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
                 "work. Look up every widget with describe_component or read_reference.\n"
                 "4. start_live_preview on the entry, so the user sees the app take shape.\n"
                 "5. write_files in small steps: state and logic, then views or designer forms, then tests. Fix "
-                "what each write reports and what live_preview_status shows.\n"
+                "what each write reports and what live_preview_status shows. Write the UI like a web page: "
+                "pz.box containers, a pz.stylesheet of classes (:hover, transition, @media) and components "
+                "with children (cookbook 'Web-style pages').\n"
                 "6. add_dependency for libraries, check_project and run_tests until both are clean, and "
                 "screenshot_project each screen to check it looks right. Then tell the user how to run it.")
 

@@ -52,6 +52,8 @@ hold for people too.
   custom events are declared in `events = {"name": "doc"}` and raised with `self.emit(name, value)`.
   Document each prop and event: the designer and these tools show the docs.
 - Give components created in loops a stable `key=` so their state follows the item.
+- Containers take their content as `children` (positional arguments), like HTML. Share values many
+  levels deep with `pz.provide(...)` / `pz.use_context(...)` instead of passing props down each level.
 - A component's docstring, `label`, `icon` and `category` are how it appears in the designer's
   toolbox. Set `designer = False` to keep internal components out of it.
 
@@ -59,11 +61,17 @@ hold for people too.
 
 - Use theme tokens (`"accent"`, `"panel"`, `"elevated"`, `"border"`, `"text_muted"`...) instead
   of hard-coded hex colors, so light and dark themes both work.
-- Reuse looks with `pz.Style(...)` / `pz.define_style(...)` instead of repeating keyword styles.
+- Reuse looks with `pz.stylesheet` classes (or `pz.Style(...)` / `pz.define_style(...)`) instead of
+  repeating keyword styles. Call `pz.stylesheet` at module level, not in `view()`.
+- Hover, pressed and focus looks go in the style (`hover=`, `":hover"` rules) with a `transition`,
+  not in state the app keeps by hand.
 - Use `pz.icon(name)` / `icon=` with Lucide names from `search_icons`.
 
 ## Layout
 
+- Build screens like a web page: `pz.box` containers (`display="flex"`/`"grid"`, `gap`), a
+  `pz.stylesheet` of classes for the look, and `@media` rules or `pz.media()` for narrow windows.
+  Give boxes classes instead of repeating keyword styles on each one.
 - A `"fill"` child makes its parent fill too; give columns that should hug their content an
   explicit `width="shrink"`.
 - Don't put a `pz.responsive` inside a vertical `pz.scrollable`; give scrollable content a fixed
