@@ -145,7 +145,7 @@ Un conjunto reutilizable de propiedades de estilo para `widget.style(...)`, el `
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
 | `*styles` | — | Estilos, dicts o nombres de estilo de partida. |
-| `**props` | — | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Los colores pueden ser tokens del tema. |
+| `**props` | — | Propiedades: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(ancho, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Efectos: `opacity`, `translate` (`(x, y)`, píxeles o `"50%"`), `scale`, `glow` (un color, un tamaño o `(color, tamaño)`), `bloom` (un color o `(color, intensidad)`) y `glass` (`True`, un tinte o `{"tint", "strength"}`). Estados: `hover`, `pressed` (o `active`) y `focus`, cada uno con las propiedades que se muestran entonces. `transition`: milisegundos, `True` o `{"duration", "easing", "delay"}`. `media`: `{consulta: estilo}` que se aplica cuando la ventana la cumple. Los colores pueden ser tokens del tema. |
 
 [Referencia completa →](/pyzed/es/reference/widgets/#style)
 
