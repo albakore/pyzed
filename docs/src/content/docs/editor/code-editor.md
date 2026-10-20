@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-The **Code** panel (bottom dock) is a Python editor in the style of Zed, backed by two language servers from
+The **Code** panel (bottom dock) is a Python editor backed by two language servers from
 Astral: **ty** (types, completion, references) and **ruff** (linting and formatting). It shows up when you open a
 handler or a project file and goes away when you close it.
 
@@ -58,7 +58,7 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> or <kbd>Ctrl</kbd>+wheel change the font size;
   <kbd>Ctrl</kbd>+<kbd>0</kbd> resets it. The size is saved.
 - **Scrolling**: the mouse wheel scrolls the code (<kbd>Shift</kbd>+wheel sideways) and the scrollbars sit right of
-  the minimap. The view also follows the cursor, like Zed.
+  the minimap. The view also follows the cursor.
 - **Long lines** scroll sideways by default; <kbd>Alt</kbd>+<kbd>Z</kbd> (or *Wrap long lines* in the settings) wraps
   them at the editor's width instead.
 
@@ -98,7 +98,7 @@ shortcuts (<kbd>Delete</kbd>, arrows, <kbd>Ctrl</kbd>+<kbd>D</kbd>) do not, so t
 - <kbd>Ctrl</kbd>+<kbd>H</kbd> also shows the replace field: **Replace** changes the current match, **Replace all**
   every match in one undo step. With a regular expression, `\1` in the replacement inserts a group.
 - <kbd>Ctrl</kbd>+<kbd>G</kbd> goes to a line (`42`) or a line and column (`42:8`).
-- The editor has Zed's multiple cursors and editing keys: <kbd>Alt</kbd>+click,
+- The editor has multiple cursors and the usual editing keys of modern code editors: <kbd>Alt</kbd>+click,
   <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> to move lines,
   <kbd>Ctrl</kbd>+<kbd>/</kbd> to comment, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
@@ -215,7 +215,7 @@ sequenceDiagram
 
 The **gear** in the code panel header, the server dots in the status bar, or **Settings → Code editor → Editor
 settings…** open them. They are saved per user, in the same `designer.json` as the
-[editor's settings](/pyzed/editor/settings/). Like Zed's settings, an index on the left lists the sections and
+[editor's settings](/pyzed/editor/settings/). An index on the left lists the sections and
 the right side shows the one you pick.
 
 ![Editor settings with the index of sections](../../../../screenshots/designer-editor-settings.png)
@@ -227,7 +227,7 @@ the right side shows the one you pick.
 | | **Line height** | Compact, Standard or Comfortable. |
 | | **Line numbers**, **Highlight current line** | The gutter and the current-line band. |
 | | **Show whitespace** | Spaces as `·`, tabs as `→`. |
-| Cursor | **Shape** | Bar, Block, Underline or Hollow, like Zed. |
+| Cursor | **Shape** | Bar, Block, Underline or Hollow. |
 | | **Blink** | Whether the cursor blinks. |
 | | **Width** | 1 to 4 pixels, for the bar cursor. |
 | Editing | **Tab size** | 1 to 8 spaces per level. |
@@ -248,8 +248,8 @@ the right side shows the one you pick.
 ### Key bindings
 
 Under **Key bindings**, the index groups every action of the editor and the code panel: Code panel, Editing,
-Multiple cursors, Lines, Moving and Folding. Each row shows the action, its name in Zed (`delete_line`) and its
-keys. The pencil changes them: type the keys in Zed's syntax (`ctrl-shift-d`, `alt-up`, `f2`, or a chord such as
+Multiple cursors, Lines, Moving and Folding. Each row shows the action, its name (`delete_line`) and its
+keys. The pencil changes them: type the keys as `ctrl-shift-d`, `alt-up`, `f2`, or a chord such as
 `ctrl-k ctrl-c`), several separated by commas, or leave the field empty for no key. The new keys replace the
 default ones; the arrow next to a changed action puts its defaults back, and **Reset all** does it for every action.
 
@@ -261,5 +261,5 @@ The changes are saved under `"keymap"` in `designer.json`, as action → keys:
 {"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
 ```
 
-In your own apps, `ui.editor(keymap=...)` takes Zed's form (keys → action, `None` to take a default key away), and
+In your own apps, `ui.editor(keymap=...)` takes keys → action (the same format as Zed's keymaps, `None` to take a default key away), and
 `pyzed.ui.editor.keymap_for` turns per-action changes like the ones above into it.

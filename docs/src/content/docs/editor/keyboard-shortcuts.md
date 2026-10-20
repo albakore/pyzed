@@ -85,7 +85,7 @@ the code editor keeps it while you type; click the canvas again to get the canva
 
 ## Project tree
 
-After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree, like Zed's project panel:
+After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 
 | Keys | Action |
 | --- | --- |

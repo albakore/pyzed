@@ -92,7 +92,7 @@ sidebar:
 - **Guarda los dos archivos en git**: el `.pzform` es JSON legible que da buenos diffs, y el `.py` es Python normal.
   Quien revise puede leer los dos.
 - **Edita el código donde quieras**: el editor solo reescribe las funciones manejadoras que gestiona, así que puedes
-  tener el archivo de código abierto también en Zed o VS Code; ejecuta con `pyzed run app.pzform --reload` para ver
+  tener el archivo de código abierto también en otro editor; ejecuta con `pyzed run app.pzform --reload` para ver
   cada guardado.
 - **Las plantillas te adelantan trabajo**: la plantilla *Diálogo* ya conecta Aceptar y Cancelar; *Ajustes* muestra
   una grilla de etiquetas y campos. Registra las tuyas con `designer.register_template`.

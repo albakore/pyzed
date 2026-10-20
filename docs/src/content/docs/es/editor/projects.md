@@ -7,7 +7,7 @@ sidebar:
 
 Una app de Pyzed es un proyecto de [uv](https://docs.astral.sh/uv/) normal: la interfaz vive en `ui/`, el backend
 en `src/` y uv gestiona las dependencias. El panel **Proyecto** (dock izquierdo, junto a **Diseño**) muestra los
-archivos del proyecto, como el panel de proyecto de Zed o el explorador de VS Code, y el panel **Dependencias** de
+archivos del proyecto, como el explorador de un editor de código, y el panel **Dependencias** de
 al lado gestiona paquetes, herramientas y comprobaciones, todo sin salir del editor. El contexto, la estructura de un proyecto y los comandos `pyzed` equivalentes están en
 [Proyectos con uv](/pyzed/es/guides/projects/).
 
@@ -69,7 +69,7 @@ principal, se abre en una pestaña.
 ### Cabecera
 
 El nombre, la versión y la carpeta del proyecto. A la derecha, la **rama de git** actual, o **Create repository**
-cuando la carpeta todavía no es un repositorio (ejecuta `git init` y escribe un `.gitignore`, como Zed), y un
+cuando la carpeta todavía no es un repositorio (ejecuta `git init` y escribe un `.gitignore`), y un
 botón de carpeta que abre otro proyecto.
 
 Mientras se ejecuta un comando, una barra con un indicador dice qué está pasando (`Adding httpx`,
@@ -78,7 +78,7 @@ descarga paquetes.
 
 ### Archivos
 
-Debajo de la cabecera, los archivos y carpetas del proyecto en árbol, como el panel de proyecto de Zed. Las
+Debajo de la cabecera, los archivos y carpetas del proyecto en árbol. Las
 carpetas se abren y cierran con un clic (`ui/` y `src/` empiezan abiertas); los archivos se colorean según su
 estado en git (modificado, nuevo, borrado, conflicto) y las carpetas toman el color de lo que cambió dentro. Los
 entornos virtuales, las cachés y la salida de compilación (`.venv`, `__pycache__`, `build`, `dist`...) no se
@@ -103,12 +103,12 @@ guardar: **Save** o <kbd>Ctrl</kbd>+<kbd>S</kbd> (con el foco en el archivo) lo 
 antes. Si renombras o borras un archivo en el árbol, su pestaña se actualiza.
 
 La barra sobre el árbol tiene un **buscador** de archivos y carpetas (busca las letras en orden, como el buscador
-de archivos de Zed, y el nombre del archivo cuenta más que las carpetas: `crt` encuentra `ui/cart.pzform`),
+de archivos de los editores de código, y el nombre del archivo cuenta más que las carpetas: `crt` encuentra `ui/cart.pzform`),
 **New file**, **New folder** (en la carpeta seleccionada), **Collapse all** y **Refresh**. El árbol se recarga solo
 al guardar y después de los comandos de uv.
 
 **Clic derecho** sobre un archivo o carpeta (o sobre el espacio vacío bajo el árbol, para la carpeta del
-proyecto) abre su menú, el mismo del panel de proyecto de Zed:
+proyecto) abre su menú, con las operaciones de archivo habituales de un editor de código:
 
 ![El menú de clic derecho de un archivo en la pestaña Proyecto](../../../../../screenshots/designer-project-menu.png)
 

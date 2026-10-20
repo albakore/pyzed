@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-El panel **Código** (dock inferior) es un editor de Python al estilo de Zed, respaldado por dos servidores de
+El panel **Código** (dock inferior) es un editor de Python respaldado por dos servidores de
 lenguaje de Astral: **ty** (tipos, autocompletado, referencias) y **ruff** (lint y formato). Aparece cuando abres un
 manejador o un archivo del proyecto y se va cuando lo cierras.
 
@@ -60,7 +60,7 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 - **Zoom**: <kbd>Ctrl</kbd>+<kbd>=</kbd>, <kbd>Ctrl</kbd>+<kbd>-</kbd> o <kbd>Ctrl</kbd>+rueda cambian el tamaño de
   letra; <kbd>Ctrl</kbd>+<kbd>0</kbd> lo restablece. El tamaño se guarda.
 - **Desplazamiento**: la rueda del ratón desplaza el código (<kbd>Mayús</kbd>+rueda, de lado) y las barras de
-  desplazamiento quedan a la derecha del minimapa. La vista también sigue al cursor, como Zed.
+  desplazamiento quedan a la derecha del minimapa. La vista también sigue al cursor.
 - **Líneas largas**: por defecto se desplazan de lado; <kbd>Alt</kbd>+<kbd>Z</kbd> (o *Ajustar líneas largas* en los
   ajustes) las ajusta al ancho del editor.
 
@@ -102,7 +102,7 @@ mueve un control.
   **Reemplazar todo** todas, en un solo paso de deshacer. Con una expresión regular, `\1` en el reemplazo inserta un
   grupo.
 - <kbd>Ctrl</kbd>+<kbd>G</kbd> va a una línea (`42`) o a una línea y columna (`42:8`).
-- El editor tiene los cursores múltiples y los atajos de edición de Zed: <kbd>Alt</kbd>+clic,
+- El editor tiene cursores múltiples y los atajos de edición habituales de los editores modernos: <kbd>Alt</kbd>+clic,
   <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> para mover líneas,
   <kbd>Ctrl</kbd>+<kbd>/</kbd> para comentar, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
@@ -224,7 +224,7 @@ sequenceDiagram
 
 Los abren el **engranaje** de la cabecera del panel de código, los puntos de los servidores en la barra de estado o
 **Ajustes → Editor de código → Ajustes del editor…**. Se guardan por usuario, en el mismo `designer.json` que los
-[ajustes del editor](/pyzed/es/editor/settings/). Como en Zed, un índice a la izquierda lista las secciones y a la
+[ajustes del editor](/pyzed/es/editor/settings/). Un índice a la izquierda lista las secciones y a la
 derecha se ve la que eliges.
 
 ![Ajustes del editor con el índice de secciones](../../../../../screenshots/designer-editor-settings.png)
@@ -236,7 +236,7 @@ derecha se ve la que eliges.
 | | **Interlineado** | Compacto, Normal o Amplio. |
 | | **Números de línea**, **Resaltar la línea actual** | El margen y la franja de la línea actual. |
 | | **Mostrar espacios** | Espacios como `·`, tabulaciones como `→`. |
-| Cursor | **Forma** | Barra, bloque, subrayado o hueco, como Zed. |
+| Cursor | **Forma** | Barra, bloque, subrayado o hueco. |
 | | **Parpadeo** | Si el cursor parpadea. |
 | | **Ancho** | De 1 a 4 píxeles, para el cursor de barra. |
 | Edición | **Tamaño de tabulación** | De 1 a 8 espacios por nivel. |
@@ -257,8 +257,8 @@ derecha se ve la que eliges.
 ### Atajos de teclado
 
 En **Atajos de teclado**, el índice agrupa todas las acciones del editor y del panel de código: Panel de código,
-Edición, Varios cursores, Líneas, Movimiento y Plegado. Cada fila muestra la acción, su nombre en Zed
-(`delete_line`) y sus teclas. El lápiz las cambia: escribe las teclas con la sintaxis de Zed (`ctrl-shift-d`,
+Edición, Varios cursores, Líneas, Movimiento y Plegado. Cada fila muestra la acción, su nombre
+(`delete_line`) y sus teclas. El lápiz las cambia: escribe las teclas como `ctrl-shift-d`,
 `alt-up`, `f2` o un acorde como `ctrl-k ctrl-c`), varias separadas por comas, o deja el campo vacío para ninguna.
 Las teclas nuevas sustituyen a las de por defecto; la flecha junto a una acción cambiada recupera las suyas, y
 **Restablecer todo** lo hace con todas.
@@ -271,5 +271,5 @@ Los cambios se guardan en `"keymap"` dentro de `designer.json`, como acción →
 {"editor": {"keymap": {"delete_line": "ctrl-shift-d", "toggle_soft_wrap": "alt-w"}}}
 ```
 
-En tus propias apps, `ui.editor(keymap=...)` usa la forma de Zed (teclas → acción, `None` para quitar una tecla por
+En tus propias apps, `ui.editor(keymap=...)` usa teclas → acción (el mismo formato que los keymaps de Zed, `None` para quitar una tecla por
 defecto), y `pyzed.ui.editor.keymap_for` convierte en ella cambios por acción como los de arriba.
