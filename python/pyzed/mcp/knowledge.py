@@ -45,8 +45,10 @@ TOPICS = {
 
 #: The section of each top-level widget in ``list_components``.
 WIDGET_CATEGORIES = {
-    "Layout": ("column", "row", "container", "center", "stack", "grid", "cell", "flex", "flex_item", "space",
+    "Layout": ("box", "column", "row", "container", "center", "stack", "grid", "cell", "flex", "flex_item", "space",
                "hspace", "vspace", "scrollable", "split", "resizable", "responsive", "pin", "opaque", "rule"),
+    "Styles": ("stylesheet", "clear_stylesheet", "define_style", "media", "viewport", "current_breakpoint"),
+    "Context": ("provide", "use_context"),
     "Text": ("text", "rich_text", "span", "markdown"),
     "Controls": ("button", "checkbox", "text_input", "toggler", "slider", "vertical_slider", "radio",
                  "pick_list", "progress_bar"),
@@ -415,6 +417,10 @@ _HINTS = {
     "log": "performance", "theme": "theming", "dark": "theming", "tema": "theming", "window": "windows",
     "menu": "windows", "titlebar": "windows", "translate": "i18n", "language": "i18n", "idioma": "i18n",
     "test": "testing", "package": "packaging", "installer": "packaging", "ai": "agents", "chat": "agents",
+    "web": "layout styles components", "css": "styles", "html": "layout", "div": "layout", "flex": "layout",
+    "grid": "layout", "layout": "layout", "responsive": "layout styles", "mobile": "styles",
+    "breakpoint": "styles", "stylesheet": "styles", "hover": "styles", "style": "styles", "estilo": "styles",
+    "landing": "layout styles", "page": "layout", "pagina": "layout", "card": "components", "context": "components",
     "async": "async", "download": "async", "http": "async", "keyboard": "keyboard", "shortcut": "keyboard",
 }
 
@@ -455,6 +461,11 @@ def plan(description: str, limit: int = 6) -> Dict[str, Any]:
             "project_info: see the project, its entry file and environment; create_project when there is none.",
             "Plan the screens, the state (plain classes in the package, easy to test) and the slow work "
             "(background tasks). Look every component up with describe_component before using it.",
+            "Write it like a web page: every part is a pz.box (display block, flex, grid or stack, gap, "
+            "overflow, position='absolute' children), the look goes in a pz.stylesheet of classes with :hover "
+            "and transition, '@media' rules or pz.media() adapt it to the window, and reusable parts are "
+            "pz.Component classes with children, a stylesheet and pz.provide/use_context for shared values "
+            "(cookbook: 'Web-style pages').",
             "start_live_preview on the entry so the user watches the app as you build it.",
             "write_files in small steps (state, then views or forms, then tests), fixing what each write reports "
             "and reading live_preview_status for runtime errors.",
