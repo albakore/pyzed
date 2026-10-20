@@ -31,12 +31,17 @@ pip install "pyzed-ui[agents]"     # or: uv add "pyzed-ui[agents]"
 
 Signing in happens inside Pyzed Design; no other program is needed.
 
-- **Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: these providers don't let other apps sign in
-  with OAuth, so Pyzed opens the provider's API keys page in your browser. Create a key there and click its
-  **Copy** button. Pyzed notices the copied key, checks it with the provider, saves it in the system keychain and
-  loads the provider's models. While it waits, a **Signing in** card offers **Paste key** (read the clipboard
-  now), **Open the page again** and **Cancel**. The clipboard is read only while that card is showing (at most
-  five minutes), and only a text that looks like that provider's key is used.
+- **Anthropic (Claude), OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: these providers don't let other apps
+  sign in with OAuth (Anthropic's subscription sign-in is only for its own apps), so Pyzed signs in through a
+  page of its own. Your browser opens a **Connect … to Pyzed Design** page served by Pyzed on this computer
+  (`127.0.0.1`, a one-time address); it links to the provider's API keys page. Create a key there and paste it
+  on Pyzed's page, or just click the key's **Copy** button: Pyzed notices the copied key too. Pyzed checks the key
+  with the provider, saves it in the system keychain, loads the provider's models and comes back to the front,
+  so you can close the tab and keep working. While it waits, a **Signing in** card offers **Paste key** (read the
+  clipboard now), **Open the key page** and **Cancel**. The clipboard is read only while that card is showing (at
+  most five minutes), and only a text that looks like that provider's key is used. The local page only accepts a
+  key sent from itself: other sites and other host names can't reach it. For Claude with no key at all, see
+  [identity federation](#claude-without-an-api-key).
 - **OpenRouter**: real OAuth with PKCE. You approve Pyzed on OpenRouter's page and the key it issues comes back to
   Pyzed directly; nothing to copy.
 - **GitHub Copilot**: **Sign in with GitHub** uses GitHub's device flow. Pyzed opens
@@ -121,6 +126,8 @@ Type <kbd>/</kbd> at the start of the message:
 | `validate_code`, `validate_form` | Check code and forms before handing them back. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Work with files of the project, never outside its folder. |
 | `screenshot_form` | Renders the open form to a picture and looks at it, to check the layout as you see it. |
+| `run_app` | Runs the app (the project's main form, or another form) in the project's own environment without showing a window, and returns what it printed (errors and tracebacks included) and a picture of its window. |
+| `update_plan` | Shows the agent's plan as a checklist above the message box and keeps it current. |
 | `get_project`, `create_project`, `add_dependency`, `check_project`, `open_document` | Read the open project (forms, components, dependencies, entry point), create a new one and open it, add a package with uv, run the project's checks and open any of its files in a tab. |
 | `list_examples`, `read_example`, `new_form` | Pyzed's examples to learn from, and a starting form written for a description. |
 | `mcp_<server>_<tool>` | The tools of the [MCP servers](#mcp-servers) you added. |
@@ -149,12 +156,19 @@ whole application, not only a form. The agent knows the editor (projects, forms,
 binding, the [MCP server](/pyzed/guides/mcp/) and these docs) and, in each message, what is open: the project
 and its files, the form, the selection and the other tabs. It then:
 
-1. Creates a [project](/pyzed/editor/projects/) with `create_project` (or uses the open one) and adds the
+1. Makes a plan with `update_plan`: a **Plan** card above the message box shows each step, ticks it off as it
+   goes and folds away when everything is done (click its header to fold it yourself).
+2. Creates a [project](/pyzed/editor/projects/) with `create_project` (or uses the open one) and adds the
    packages it needs with `add_dependency`.
-2. Writes the forms and components, places their controls, wires the events and writes the code, reading
-   Pyzed's examples and docs when it needs them.
-3. Looks at each form with `screenshot_form` and fixes what doesn't look right.
-4. Runs `check_project` and `validate_code` until they pass, and tells you how to run it (<kbd>F5</kbd>).
+3. Writes the forms and components, places their controls, wires the events and writes the code, reading
+   Pyzed's examples and docs when it needs them, and saves them.
+4. Looks at each form with `screenshot_form`, and runs `check_project` and `validate_code` until they pass.
+5. Runs the app with `run_app`, reads its errors and the picture of its window, fixes what is wrong and runs it
+   again until it starts cleanly. Then it tells you what it built and how to run it (<kbd>F5</kbd>).
+
+It works on its own from start to end, for up to 150 model answers per message. For no interruptions, pick
+**Bypass permissions** in the mode menu; with **Ask before writing** it asks before writing files and before
+running the app.
 
 ## Generating forms and components
 

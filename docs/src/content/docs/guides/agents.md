@@ -235,6 +235,15 @@ agents.set_key("openrouter", key)
 
 agents.login.key_page("anthropic")    # the others: opens the provider's API keys page...
 agents.providers.looks_like_key("anthropic", copied_text)  # ...and tells whether a copied text is its key
+
+def check(key):                       # why the provider refuses the key, or None
+    try:
+        agents.list_models("anthropic", key=key)
+    except agents.AgentError as err:
+        return str(err)
+
+# ...or a sign-in page served on 127.0.0.1: it links to the keys page and returns the key pasted there
+key = agents.login.key_portal("anthropic", check)
 ```
 
 GitHub and Google sign in without a key too, with OAuth apps you register (their IDs go in the provider's

@@ -131,6 +131,8 @@ IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 #: How long the clipboard is watched for a copied key.
 CAPTURE_SECONDS = 300.0
+#: Model answers per message: enough to build, run and fix a whole app on its own.
+MAX_TURNS = 150
 
 #: Slash commands: (name, icon, description, prompt to send or None for an action).
 SLASH_COMMANDS = (
@@ -213,6 +215,8 @@ class AgentController:
         self.url_buffer: Dict[str, str] = {}
         self.busy_provider: Optional[str] = None
         self.capture: Optional[KeyCapture] = None
+        # the designer comes back to the front once a sign-in in the browser is done
+        self.raise_window = False
         # composer
         self.menu: Optional[str] = None  # "mode" | "model" | "effort" while its menu is open
         self.mentions: List[Mention] = []
@@ -253,7 +257,7 @@ class AgentController:
     def active(self) -> bool:
         """Whether something is in flight (the poll subscription runs while it is)."""
         return self.running or bool(self.inline and self.inline.running) or self.busy_provider is not None \
-            or self.capture is not None or not self._queue.empty()
+            or self.capture is not None or self.raise_window or not self._queue.empty()
 
     @property
     def expanded(self) -> bool:
@@ -325,6 +329,9 @@ class AgentController:
         """Applies what the worker sent: streamed text, tool calls to run, confirmations, the end. While
         signing in by copying a key, it also reads the clipboard about once a second."""
         self._drain()
+        if self.raise_window:
+            self.raise_window = False
+            return _core.Command.focus_window()
         capture = self.capture
         if capture is None or capture.checking:
             return None
@@ -545,7 +552,7 @@ class AgentController:
             agent = _agents.Agent(model, tools=agent_tools.designer_tools(self.d),
                                   system=agent_tools.system_prompt(self.d), settings=self.settings,
                                   confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
-                                  stream=self._stream)
+                                  max_turns=MAX_TURNS, stream=self._stream)
 
         def target() -> Any:
             # done here, off the UI thread: the @screenshot pictures and starting the MCP servers
@@ -1098,7 +1105,8 @@ class AgentController:
 
     def sign_in(self, pid: str) -> None:
         """Signs in to ``pid`` with the browser, with no other program needed. OpenRouter uses OAuth; the
-        others open their key page and the key is picked up as soon as it is copied."""
+        others open a page Pyzed serves on this computer, which links to the provider's key page and takes
+        the key (a copied key is picked up too). The designer comes back to the front once it is in."""
         provider = _providers.PROVIDERS[pid]
         self.provider_open = pid
         if provider.login == "device" and self.settings.client_id(pid):
@@ -1115,11 +1123,38 @@ class AgentController:
 
             self._background(pid, work, tr("Signed in to {provider}", provider=provider.name))
             return
-        try:
-            _agents.login.key_page(pid)
-        except Exception as err:  # noqa: BLE001 - no browser
-            self.d.notify(str(err), kind="error", seconds=6)
-        self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+        capture = self.capture = KeyCapture(pid, deadline=time.monotonic() + CAPTURE_SECONDS)
+        self._portal(pid, capture)
+
+    def _portal(self, pid: str, capture: KeyCapture) -> None:
+        """Serves the sign-in page (``login.key_portal``) until a key arrives there, the clipboard brings one
+        or the sign-in is cancelled; falls back to opening the provider's key page."""
+        settings, put = self.settings, self._queue.put
+        found: Dict[str, List[str]] = {}
+
+        def check(key: str) -> Optional[str]:
+            try:
+                found[key] = _agents.list_models(pid, settings, key=key)
+            except Exception as err:  # noqa: BLE001 - shown on the page
+                return str(err) or type(err).__name__
+            return None
+
+        def run() -> None:
+            try:
+                key = _agents.login.key_portal(pid, check, timeout=CAPTURE_SECONDS,
+                                               cancelled=lambda: self.capture is not capture)
+            except _agents.login.LoginError:  # the wait ran out (the capture expires too)
+                return
+            except Exception:  # noqa: BLE001 - no local page; open the key page, the clipboard still works
+                try:
+                    _agents.login.key_page(pid)
+                except Exception as err:  # noqa: BLE001
+                    put(("provider", str(err), False))
+                return
+            if key:
+                put(("key", pid, key, found.get(key, []), ""))
+
+        threading.Thread(target=run, daemon=True, name="pyzed-agent-portal").start()
 
     def _device_sign_in(self, pid: str) -> None:
         """GitHub's device flow: a code to type on github.com, while Pyzed waits for the token."""
@@ -1348,6 +1383,7 @@ class AgentController:
                              error=error), kind="error", seconds=7)
             return
         self.capture = None
+        self.raise_window = True
         secure = _agents.set_key(pid, key)
         if models:
             self.settings.provider(pid).models = models
@@ -1574,6 +1610,39 @@ def _confirmation(c: AgentController, t: Theme) -> Any:
                                     theme=t),
                           ui.button(tr("Deny"), lambda: c.answer(False), variant="ghost", size="sm", theme=t),
                       ], theme=t)
+
+
+def _plan_card(c: AgentController, t: Theme) -> Optional[Any]:
+    """The agent's plan (its last ``update_plan``) as a checklist above the message box, while it is running
+    or has steps left. Clicking the header folds it."""
+    steps = agent_tools.plan_of(c.thread.messages)
+    done = sum(1 for s in steps if s["status"] == "done")
+    if not steps or (done == len(steps) and not c.running):
+        return None
+    folded = "plan" in c.open_blocks
+    head = _core.row([
+        _icon("list-checks", size=13, color=t.text_accent),
+        ui.label(tr("Plan"), size="sm", weight="medium", theme=t),
+        ui.label(f"{done}/{len(steps)}", size="xs", color="text_muted", theme=t),
+        _core.space(width="fill"),
+        _icon("chevron-right" if folded else "chevron-down", size=12, color=t.text_placeholder),
+    ], spacing=6, align="center")
+    rows: List[Any] = [_core.button(head, lambda: c.toggle_block("plan"), padding=(2, 4), bg=None,
+                                    hover_bg=t.element_hover, radius=t.radius, width="fill")]
+    if not folded:
+        for step in steps:
+            status = step["status"]
+            if status == "in_progress":
+                lead = ui.spinner(size=12, theme=t) if c.running else _icon("circle-dot", size=12, color=t.accent)
+            else:
+                lead = _icon("circle-check" if status == "done" else "circle", size=12,
+                             color=t.success if status == "done" else t.text_placeholder)
+            rows.append(_core.row([lead, ui.label(step["step"], size="sm", theme=t,
+                                                  color="text_muted" if status == "done" else "text")],
+                                  spacing=8, align="center", padding=(0, 4)))
+    return _core.container(_core.column(rows, spacing=4, width="fill"), padding=(6, 8), width="fill",
+                           bg=t.surface,
+                           border_color=t.border_variant, border_width=1, radius=t.radius + 2)
 
 
 def _review_bar(c: AgentController, t: Theme) -> Any:
@@ -1827,8 +1896,8 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         return None
     name = _providers.PROVIDERS[cap.provider].name
     detail = tr("Checking the key…") if cap.checking else tr(
-        "Create a key on the page that opened and copy it: Pyzed picks it up, checks it and saves it in the system "
-        "keychain.")
+        "Follow the page that opened in the browser: create a key and paste it there, or just copy it. Pyzed checks "
+        "it, saves it in the system keychain and comes back to the front.")
     lead = ui.spinner(size=14, theme=t) if cap.checking else _icon("key-round", size=14, color=t.text_accent)
     return _core.container(_core.column([
         _core.row([lead, ui.label(tr("Signing in to {provider}", provider=name), size="sm", weight="medium",
@@ -1837,7 +1906,7 @@ def _capture_callout(c: AgentController, t: Theme) -> Optional[Any]:
         _core.row([
             ui.button(tr("Paste key"), lambda: c.paste_key(cap.provider), icon="clipboard-paste", variant="tinted",
                       size="sm", theme=t),
-            ui.button(tr("Open the page again"), lambda: c.open_key_page(cap.provider), variant="ghost", size="sm",
+            ui.button(tr("Open the key page"), lambda: c.open_key_page(cap.provider), variant="ghost", size="sm",
                       theme=t),
             ui.button(tr("Cancel"), c.cancel_capture, variant="ghost", size="sm", theme=t),
         ], spacing=4, align="center", wrap=True),
@@ -1874,6 +1943,7 @@ def view(d: "Designer", t: Theme) -> Any:
         bottom.append(_capture_callout(c, t))
     if c.device is not None and d.dialog != "agent_settings":
         bottom.append(_device_callout(c, t))
+    bottom.append(_plan_card(c, t))
     if c.pending is not None:
         bottom.append(_confirmation(c, t))
     if c.snapshot and c.changed and not c.running:

@@ -1890,8 +1890,11 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
     let total_height = 2.0 * PAD_Y + starts[starts.len() - 1] as f32 * lh;
     let mut layers: Vec<Element<'a, Message>> = Vec::new();
 
-    // The active line is highlighted with a band drawn underneath the text.
-    if let Some(color) = props.active_line {
+    // The active line is highlighted with a band drawn underneath the text. The band is there (and
+    // transparent) without `active_line` too: a stack takes the size of its first child, so it gives
+    // the editor its size; without it the stack would shrink to nothing and the text would not show.
+    {
+        let band_color = props.active_line;
         let top = PAD_Y + starts[cursor_line] as f32 * lh;
         let rows = starts[cursor_line + 1] - starts[cursor_line];
         let band = column![
@@ -1900,11 +1903,10 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 .width(Length::Fixed(editor_width))
                 .height(Length::Fixed(rows as f32 * lh))
                 .style(move |_| container::Style {
-                    background: Some(Background::Color(color)),
+                    background: band_color.map(Background::Color),
                     ..Default::default()
                 }),
         ]
-        // A stack takes the size of its first child, so the band spans the whole text.
         .height(Length::Fixed(total_height));
         layers.push(band.into());
     }

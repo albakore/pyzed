@@ -9,8 +9,12 @@ its code back as they were before the agent started. Tools that write files on d
 from __future__ import annotations
 
 import ast
+import os
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from ..agents import Image, Tool, file_tools, pyzed_tools, tool
 from . import components as _components
@@ -49,9 +53,14 @@ Building a whole application:
 - A Pyzed app is a uv project (create_project): pyproject.toml with [tool.pyzed] (ui = "ui", main = the \
 main form), the forms in ui/ (<name>.pzform + <name>.py handlers), and the logic in src/<package>/ when \
 it is a package (handlers import it), or main.py for a simple app. `uv run pyzed run` starts the main form.
-- Plan the screens first, then build each form with new_document and the control tools, wire the events \
-and write the handlers, put reusable logic and data access in the package, add dependencies with \
-add_dependency, and check everything with check_project and validate_code.
+- Work on your own from start to end: the user expects a running app, not questions. Make a plan with \
+update_plan first (the screens, the backend, the checks) and keep it current as each step starts and ends.
+- Build each form with new_document and the control tools, wire the events and write the handlers, put \
+reusable logic and data access in the package, add dependencies with add_dependency, save with \
+save_document, and check everything with check_project and validate_code.
+- Then run it: run_app starts the app in its own environment and returns its output and a picture of \
+its window. Read the errors and the picture, fix what is wrong and run it again until it starts cleanly \
+and looks right. Finish with a short summary of what you built and how to run it.
 - Apps written in code (pz.App) are fine too: write them with write_file, check them with validate_code \
 and look at them with screenshot.
 - Learn from Pyzed instead of guessing: get_guide, list_components, describe_component, read_docs, \
@@ -361,9 +370,38 @@ def designer_tools(d: "Designer") -> List[Tool]:
         d.open_path(target)
         return {"open": d.doc.display_name}
 
+    @tool(writes=True, title="Running the app")
+    def run_app(form: str = "") -> Any:
+        """Runs the app the way the user would, in the project's own environment, without showing a window: \
+returns what it printed (errors and tracebacks included) and a picture of its window. It runs the files \
+on disk, so save_document first. Run it after building or changing an app, fix what it shows, run again.
+
+        form: a .pzform path relative to the project folder (default: the project's main form, else the open form).
+        """
+        target, project, note = d.agent.on_ui(lambda: _run_target(d, form))
+        result = run_form_check(target, project)
+        if note and isinstance(result, list):
+            result[0] += f" {note}"
+        return result
+
+    @tool(title="Updating the plan")
+    def update_plan(steps: List[Dict[str, str]]) -> Any:
+        """Shows the plan of a multi-step job (an app, several forms) as a checklist in the Agent panel. \
+Call it at the start with every step, and again whenever a step starts or ends.
+
+        steps: every step in order, each {"step": "Build the login form", "status": "pending"}; status is \
+pending, in_progress or done.
+        """
+        clean = _plan_steps(steps)
+        left = [s["step"] for s in clean if s["status"] != "done"]
+        return {"steps": len(clean), "left": left}
+
+    update_plan.schema["properties"]["steps"]["items"] = {
+        "type": "object", "required": ["step", "status"],
+        "properties": {"step": {"type": "string"}, "status": {"type": "string", "enum": list(PLAN_STATUSES)}}}
     tools = [get_document, add_control, update_control, remove_controls, set_form, select_controls, wire_event,
              set_handler, set_code, new_document, save_document, screenshot_form, get_project, create_project,
-             add_dependency, check_project, open_document]
+             add_dependency, check_project, open_document, run_app, update_plan]
     root = d.agent.project_root()
     return tools + pyzed_tools() + file_tools(root)
 
@@ -396,6 +434,99 @@ def project_info(d: "Designer") -> Dict[str, Any]:
         "dependencies": [str(dep.name) + (" (dev)" if dep.dev else "") for dep in project.dependencies()],
         "files": files,
     }
+
+
+PLAN_STATUSES = ("pending", "in_progress", "done")
+
+
+def _plan_steps(steps: Any) -> List[Dict[str, str]]:
+    """The steps of an ``update_plan`` call, checked: each a ``step`` text and a known ``status``."""
+    if not isinstance(steps, list) or not steps:
+        raise ValueError("steps must be a non-empty list of {step, status}")
+    clean = []
+    for item in steps:
+        if not isinstance(item, dict) or not str(item.get("step") or "").strip():
+            raise ValueError("each step needs a 'step' text")
+        status = str(item.get("status") or "pending")
+        if status not in PLAN_STATUSES:
+            raise ValueError(f"unknown status {status!r}: use pending, in_progress or done")
+        clean.append({"step": str(item["step"]).strip(), "status": status})
+    return clean
+
+
+def plan_of(messages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """The thread's current plan: the steps of its last ``update_plan`` call (empty without one)."""
+    for message in reversed(messages):
+        content = message.get("content")
+        if message.get("role") != "assistant" or not isinstance(content, list):
+            continue
+        for block in reversed(content):
+            if isinstance(block, dict) and block.get("type") == "tool_use" and block.get("name") == "update_plan":
+                try:
+                    return _plan_steps((block.get("input") or {}).get("steps"))
+                except ValueError:
+                    return []
+    return []
+
+
+def _run_target(d: "Designer", form: str) -> Tuple[Path, Any, str]:
+    """The form ``run_app`` runs, its project and a note on unsaved changes (on the UI thread)."""
+    project = getattr(d.projects, "project", None)
+    root = d.agent.project_root().resolve()
+    if form:
+        target = (root / form).resolve()
+        if target != root and root not in target.parents:
+            raise PermissionError(f"{form} is outside the project folder")
+        if not target.is_file():
+            raise FileNotFoundError(form)
+    elif project is not None and project.main_form.is_file():
+        target = project.main_form.resolve()
+    elif d.doc.path is not None and not getattr(d.doc, "is_scene", False):
+        target = d.doc.path.resolve()
+    else:
+        raise ValueError("there is no saved form to run: save the open form (save_document) or create a project")
+    unsaved = [x.display_name for x in d.panes.all_docs() if getattr(x, "dirty", False)]
+    note = f"Not saved (not included): {', '.join(unsaved)}; save_document saves the open one." if unsaved else ""
+    return target, project, note
+
+
+def run_form_check(path: Path, project: Any = None, *, timeout: float = 240.0) -> Any:
+    """Runs the form at ``path`` off-screen in its own process, like ``uv run pyzed run`` would (in the
+    project's environment when the designer lacks its dependencies), and returns its output and picture."""
+    import pyzed
+
+    from .. import project as _project
+    from .model import Form
+
+    form = Form.from_json(path.read_text(encoding="utf-8"))
+    size = (int(form.width) or 480, int(form.height) or 320)
+    with tempfile.TemporaryDirectory(prefix="pyzed-run-") as tmp:
+        script, out = Path(tmp) / "run_app.py", Path(tmp) / "window.png"
+        script.write_text("import pyzed as pz\nfrom pyzed.designer.runtime import open_form\n"
+                          f"pz.run(open_form({str(path)!r}))\n", encoding="utf-8")
+        args = ["-m", "pyzed.mcp.preview", str(script), str(out), str(size[0]), str(size[1])]
+        uv = _project.find_uv() if project is not None and not project.can_run_in_process else None
+        if uv is not None:
+            cmd, cwd, env = [uv, "run", "--project", str(project.root), "python", *args], project.root, \
+                _project._clean_env()
+        else:  # the designer has what the form needs: run it with this same pyzed
+            here = str(Path(pyzed.__file__).resolve().parents[1])
+            env = {**os.environ, "PYTHONPATH": os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", ""))
+                                                              if p)}
+            cmd, cwd = [sys.executable, *args], path.parent
+        env.update(PYZED_RELOAD="0", PYTHONUNBUFFERED="1")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=str(cwd), env=env)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "output": f"{path.name} did not start within {timeout:g} seconds"}
+        except OSError as err:
+            return {"ok": False, "output": f"could not start {path.name}: {err}"}
+        output = "\n".join(x for x in (result.stdout.strip(), result.stderr.strip()) if x)[-6000:]
+        if result.returncode != 0 or not out.is_file():
+            return {"ok": False, "output": output or f"{path.name} did not start"}
+        text = f"{path.name} started ({size[0]}x{size[1]})." + (f" Its output:\n{output}" if output else
+                                                               " It printed nothing.")
+        return [text, Image(out.read_bytes(), "image/png")]
 
 
 def screenshot_job(d: "Designer") -> Callable[[], bytes]:

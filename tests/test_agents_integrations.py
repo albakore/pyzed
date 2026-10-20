@@ -618,3 +618,56 @@ def test_release_builds_bundle_the_oauth_apps(tmp_path, monkeypatch):
                           "print(p.GITHUB_CLIENT_ID, p.AgentSettings().client_id('github'), repr(p.GOOGLE_CLIENT_ID))"],
                          capture_output=True, text=True, env=env, check=True).stdout.split()
     assert out == ["Iv23-test", "Iv23-test", "''"]
+
+
+def test_the_agent_plans_builds_and_runs_an_app_on_its_own(tmp_path):
+    from pyzed.designer import agent_panel, agent_tools
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    plan = [{"step": "Build the form", "status": "done"}, {"step": "Run the app", "status": "in_progress"}]
+    stream = scripted(
+        [{"type": "tool_use", "id": "1", "name": "update_plan", "input": {"steps": plan}},
+         {"type": "tool_use", "id": "2", "name": "add_control",
+          "input": {"type": "button", "name": "send_button", "props": {"text": "Send"}}},
+         {"type": "tool_use", "id": "3", "name": "set_code",
+          "input": {"code": 'print("hello from the app")\n'}},
+         {"type": "tool_use", "id": "4", "name": "save_document", "input": {}},
+         {"type": "tool_use", "id": "5", "name": "run_app", "input": {}}],
+        [{"type": "tool_use", "id": "6", "name": "update_plan",
+          "input": {"steps": [dict(s, status="done") for s in plan]}}],
+        [{"type": "text", "text": "The app runs."}])
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"), stream=stream)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    c.settings.mode = "bypass"
+    c.send("Build me an app")
+    _until(lambda: agent_tools.plan_of(c.thread.messages) == plan, d)
+    assert agent_panel._plan_card(c, d.theme) is not None  # shown while the agent works
+    _until(lambda: not c.running, d, limit=20000)
+    assert agent_tools.plan_of(c.thread.messages)[1]["status"] == "done"
+    assert agent_panel._plan_card(c, d.theme) is None  # all done: folded away
+    results = stream.calls[1]["messages"][2]["content"]
+    run = results[4]
+    assert not run.get("is_error"), run
+    texts = [b["text"] for b in run["content"] if b["type"] == "text"]
+    assert "main.pzform started" in texts[0] and "hello from the app" in texts[0]
+    assert any(b["type"] == "image" for b in run["content"])
+    prompt = agent_tools.system_prompt(d)
+    assert "run_app" in prompt and "update_plan" in prompt
+
+
+def test_run_app_reports_errors_and_plans_are_checked(tmp_path):
+    from pyzed.designer import agent_tools
+    from pyzed.designer.model import Form
+
+    form = tmp_path / "broken.pzform"
+    form.write_text(Form(name="broken").to_json())
+    form.with_suffix(".py").write_text("raise RuntimeError('the backend is down')\n")
+    result = agent_tools.run_form_check(form)
+    assert isinstance(result, dict) and not result["ok"] and "the backend is down" in result["output"]
+    with pytest.raises(ValueError):
+        agent_tools._plan_steps([{"step": "x", "status": "maybe"}])
+    with pytest.raises(ValueError):
+        agent_tools._plan_steps([])
+    assert agent_tools.plan_of([]) == []

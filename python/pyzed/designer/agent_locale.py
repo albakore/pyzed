@@ -107,9 +107,12 @@ ES = {
         "Cualquier servidor compatible con la API Chat Completions de OpenAI",
     # Sign-in without other programs, all providers, and the composer (like Zed's)
     "Commands": "Comandos", "Add context": "Añadir contexto", "Checking the key…": "Comprobando la clave…",
-    "Create a key on the page that opened and copy it: Pyzed picks it up, checks it and saves it in the system "
-    "keychain.": "Crea una clave en la página que se abrió y cópiala: Pyzed la detecta, la comprueba y la guarda "
-                 "en el llavero del sistema.",
+    "Follow the page that opened in the browser: create a key and paste it there, or just copy it. Pyzed checks "
+    "it, saves it in the system keychain and comes back to the front.":
+        "Sigue la página que se abrió en el navegador: crea una clave y pégala ahí, o simplemente cópiala. Pyzed la "
+        "comprueba, la guarda en el llavero del sistema y vuelve al frente.",
+    "Open the key page": "Abrir la página de claves", "Plan": "Plan",
+    "Running the app": "Ejecutando la app", "Updating the plan": "Actualizando el plan",
     "Signing in to {provider}": "Iniciando sesión en {provider}",
     "Message the agent (@ context, / commands)": "Escribe al agente (@ contexto, / comandos)",
     "No key was copied; sign in again when you are ready":

@@ -31,13 +31,18 @@ pip install "pyzed-ui[agents]"     # o: uv add "pyzed-ui[agents]"
 
 El inicio de sesión ocurre dentro de Pyzed Design; no hace falta ningún otro programa.
 
-- **Anthropic, OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: estos proveedores no permiten que otras apps inicien
-  sesión con OAuth, así que Pyzed abre la página de claves de API del proveedor en tu navegador. Crea una clave
-  allí y pulsa su botón **Copiar**. Pyzed detecta la clave copiada, la comprueba con el proveedor, la guarda en el
-  llavero del sistema y carga los modelos del proveedor. Mientras espera, una tarjeta **Iniciando sesión** ofrece
-  **Pegar la clave** (leer el portapapeles ahora), **Abrir la página otra vez** y **Cancelar**. El portapapeles solo
-  se lee mientras se ve esa tarjeta (cinco minutos como mucho), y solo se usa un texto que parezca una clave de ese
-  proveedor.
+- **Anthropic (Claude), OpenAI, Gemini, xAI, Mistral, DeepSeek, Groq**: estos proveedores no permiten que otras
+  apps inicien sesión con OAuth (el inicio de sesión con suscripción de Anthropic es solo para sus propias apps),
+  así que Pyzed inicia sesión con una página propia. El navegador abre una página **Connect … to Pyzed Design**
+  que Pyzed sirve en este equipo (`127.0.0.1`, una dirección de un solo uso) y que enlaza a la página de claves de
+  API del proveedor. Crea una clave allí y pégala en la página de Pyzed, o simplemente pulsa el botón **Copiar** de
+  la clave: Pyzed también detecta la clave copiada. Pyzed la comprueba con el proveedor, la guarda en el llavero del
+  sistema, carga los modelos del proveedor y vuelve al frente, así que puedes cerrar la pestaña y seguir trabajando.
+  Mientras espera, una tarjeta **Iniciando sesión** ofrece **Pegar la clave** (leer el portapapeles ahora),
+  **Abrir la página de claves** y **Cancelar**. El portapapeles solo se lee mientras se ve esa tarjeta (cinco
+  minutos como mucho), y solo se usa un texto que parezca una clave de ese proveedor. La página local solo acepta
+  una clave enviada desde ella misma: otros sitios y otros nombres de host no pueden usarla. Para Claude sin
+  ninguna clave, mira la [federación de identidades](#claude-sin-clave-de-api).
 - **OpenRouter**: OAuth real con PKCE. Apruebas a Pyzed en la página de OpenRouter y la clave que emite vuelve a
   Pyzed directamente; no hay nada que copiar.
 - **GitHub Copilot**: **Iniciar sesión con GitHub** usa el flujo de dispositivo de GitHub. Pyzed abre
@@ -124,6 +129,8 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | `validate_code`, `validate_form` | Revisan código y formularios antes de devolverlos. |
 | `list_files`, `read_file`, `search_text`, `write_file` | Trabajan con archivos del proyecto, nunca fuera de su carpeta. |
 | `screenshot_form` | Dibuja el formulario abierto en una imagen y la mira, para revisar la distribución tal como la ves. |
+| `run_app` | Ejecuta la app (el formulario principal del proyecto u otro) en el entorno del propio proyecto sin mostrar ninguna ventana, y devuelve lo que imprimió (errores y trazas incluidos) y una imagen de su ventana. |
+| `update_plan` | Muestra el plan del agente como una lista sobre el cuadro de mensaje y lo mantiene al día. |
 | `get_project`, `create_project`, `add_dependency`, `check_project`, `open_document` | Leen el proyecto abierto (formularios, componentes, dependencias, punto de entrada), crean uno nuevo y lo abren, añaden un paquete con uv, ejecutan las comprobaciones del proyecto y abren cualquiera de sus archivos en una pestaña. |
 | `list_examples`, `read_example`, `new_form` | Los ejemplos de Pyzed para aprender de ellos, y un formulario inicial escrito a partir de una descripción. |
 | `mcp_<servidor>_<herramienta>` | Las herramientas de los [servidores MCP](#servidores-mcp) que añadiste. |
@@ -152,12 +159,19 @@ empiezan una aplicación entera, no solo un formulario. El agente conoce el edit
 componentes, estilos, enlace de datos, el [servidor MCP](/pyzed/es/guides/mcp/) y esta documentación) y, en cada
 mensaje, lo que está abierto: el proyecto y sus archivos, el formulario, la selección y las demás pestañas. Luego:
 
-1. Crea un [proyecto](/pyzed/es/editor/projects/) con `create_project` (o usa el abierto) y añade los paquetes que
+1. Hace un plan con `update_plan`: una tarjeta **Plan** sobre el cuadro de mensaje muestra cada paso, lo marca al
+   terminarlo y se pliega cuando todo está hecho (pulsa su cabecera para plegarla tú).
+2. Crea un [proyecto](/pyzed/es/editor/projects/) con `create_project` (o usa el abierto) y añade los paquetes que
    necesita con `add_dependency`.
-2. Escribe los formularios y componentes, coloca sus controles, conecta los eventos y escribe el código, leyendo
-   los ejemplos y la documentación de Pyzed cuando los necesita.
-3. Mira cada formulario con `screenshot_form` y arregla lo que no se ve bien.
-4. Ejecuta `check_project` y `validate_code` hasta que pasan, y te dice cómo ejecutarla (<kbd>F5</kbd>).
+3. Escribe los formularios y componentes, coloca sus controles, conecta los eventos y escribe el código, leyendo
+   los ejemplos y la documentación de Pyzed cuando los necesita, y los guarda.
+4. Mira cada formulario con `screenshot_form`, y ejecuta `check_project` y `validate_code` hasta que pasan.
+5. Ejecuta la app con `run_app`, lee sus errores y la imagen de su ventana, arregla lo que falla y la vuelve a
+   ejecutar hasta que arranca sin errores. Luego te dice qué construyó y cómo ejecutarla (<kbd>F5</kbd>).
+
+Trabaja solo de principio a fin, con hasta 150 respuestas del modelo por mensaje. Para que no se interrumpa, elige
+**Omitir permisos** en el menú de modo; con **Preguntar antes de escribir** pregunta antes de escribir archivos y
+antes de ejecutar la app.
 
 ## Generar formularios y componentes
 

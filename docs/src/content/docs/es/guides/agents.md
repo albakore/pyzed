@@ -239,6 +239,15 @@ agents.set_key("openrouter", key)
 
 agents.login.key_page("anthropic")    # los demás: abre la página de claves de API del proveedor...
 agents.providers.looks_like_key("anthropic", texto_copiado)  # ...y dice si un texto copiado es su clave
+
+def check(key):                       # por qué el proveedor rechaza la clave, o None
+    try:
+        agents.list_models("anthropic", key=key)
+    except agents.AgentError as err:
+        return str(err)
+
+# ...o una página de inicio de sesión servida en 127.0.0.1: enlaza a la página de claves y devuelve la clave pegada
+key = agents.login.key_portal("anthropic", check)
 ```
 
 GitHub y Google también inician sesión sin clave, con apps OAuth que registras tú (sus ID van en los ajustes del
