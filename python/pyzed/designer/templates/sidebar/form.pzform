@@ -1,0 +1,184 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Form1",
+    "title": "{title}",
+    "width": 760.0,
+    "height": 480.0,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "sidebar",
+      "type": "column",
+      "x": 0,
+      "y": 0,
+      "width": 200,
+      "height": 480.0,
+      "props": {
+        "direction": "column",
+        "gap": 4,
+        "padding": 12,
+        "justify": "start",
+        "align": "stretch",
+        "background": "surface"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "nav1",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 176,
+      "height": 30,
+      "props": {
+        "text": "Home",
+        "variant": "ghost",
+        "icon": "house"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "sidebar"
+    },
+    {
+      "name": "nav2",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 176,
+      "height": 30,
+      "props": {
+        "text": "Projects",
+        "variant": "ghost",
+        "icon": "folder"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "sidebar"
+    },
+    {
+      "name": "nav3",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 176,
+      "height": 30,
+      "props": {
+        "text": "Settings",
+        "variant": "ghost",
+        "icon": "settings"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "sidebar"
+    },
+    {
+      "name": "content",
+      "type": "column",
+      "x": 200,
+      "y": 0,
+      "width": 560.0,
+      "height": 480.0,
+      "props": {
+        "direction": "column",
+        "gap": 12,
+        "padding": 24,
+        "justify": "start",
+        "align": "stretch",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "title1",
+      "type": "heading",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 36,
+      "props": {
+        "text": "Home",
+        "level": "1",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "content"
+    },
+    {
+      "name": "body",
+      "type": "label",
+      "x": 0,
+      "y": 0,
+      "width": 300,
+      "height": 60,
+      "props": {
+        "text": "Pick a section on the left.",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "content"
+    }
+  ]
+}

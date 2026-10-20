@@ -16,9 +16,26 @@ platform; we select the one you are using.
 
 ![Pyzed Design with a sign-in form open](../../../screenshots/designer.png)
 
+## How it installs
+
+Like Zed, Pyzed Design installs with the usual tool of each system and then keeps itself up to date:
+
+| System | Installer | Where it goes |
+| --- | --- | --- |
+| Windows | `pyzed-design-windows-x86_64-setup.exe` | `%LOCALAPPDATA%\Programs\Pyzed Design`, for your user only (no administrator rights), with a Start menu entry, an optional desktop shortcut and `.pzform` files opening in it. Remove it from **Settings → Apps**. |
+| macOS | `pyzed-design-macos-arm64.dmg` (Intel: `-x86_64.dmg`) | Drag the app into **Applications**. |
+| Linux | `curl -fsSL https://albakore.github.io/pyzed/install.sh \| sh` | `~/.local/share/pyzed-design`, with the `pyzed-design` command in `~/.local/bin` and an entry in your apps menu. |
+
+The Linux script checks the download against the release's `SHA256SUMS` and needs no root. Run it again to
+reinstall, or with `--uninstall` to remove the app (`curl -fsSL https://albakore.github.io/pyzed/install.sh | sh -s -- --uninstall`).
+`PYZED_VERSION=1.3.0` installs a given version.
+
+Each release also has a portable **zip** per platform (`pyzed-design-<os>-<arch>.zip`): unpack it anywhere and run
+it. That zip is what the app's updater downloads. Releases up to 1.2.0 only have the zips.
+
 ## What's included
 
-Each download is a single zip with everything Pyzed Design needs, so nothing else has to be installed:
+Every installer and zip has everything Pyzed Design needs, so nothing else has to be installed:
 
 - **Python** and **pyzed-ui**, the same version as the release you download.
 - The **uv** binary, used to create projects (`uv init`), add dependencies (`uv add`) and run your forms in each
@@ -30,15 +47,19 @@ The code editor's language servers (**ty** and **ruff**) are installed per proje
 
 ## Updates
 
-Like Zed, Pyzed Design updates itself. Once a day it checks GitHub for a newer release (turn it off in
-**Help → Check for updates automatically**, or check now with **Help → Check for updates**). When there is one,
-the status bar shows **Update to X.Y.Z**: it opens a **What's new** tab with the release notes and a
-**Download and install** button. The download is verified against the release's SHA-256 and unpacked in the
-background, and **Restart to update** swaps the app for the new version. **Help → What's new** shows the notes at
-any time. Your projects and settings live outside the app, so they are kept.
+Like Zed, Pyzed Design updates itself, so you never download it again by hand. Once a day it checks GitHub for a
+newer release (turn it off in **Help → Check for updates automatically**, or check now with
+**Help → Check for updates**). When there is one, the status bar shows **Update to X.Y.Z**: it opens a
+**What's new** tab with the release notes and a **Download and install** button. The download is verified against
+the release's SHA-256 and unpacked in the background, and **Restart to update** swaps the app for the new version.
+**Help → What's new** shows the notes at any time. Your projects and settings live outside the app, so they are
+kept.
 
-If the app cannot write to its own folder, download the new zip from this page and replace the old folder (or
-`Pyzed Design.app`). The [changelog](/pyzed/changelog/) lists what changed, and
+There are two channels, like Zed and Zed Preview: **stable** (the default) takes final releases, and **preview**
+also takes pre-releases (`X.Y.Z-rc.N`) to try what is coming. Switch with **Help → Get preview releases**.
+
+The installers put the app in a folder of your own (on Windows, Settings → Apps shows the new version after an
+update). If the app cannot write to its own folder, download the new installer or zip from this page instead. The [changelog](/pyzed/changelog/) lists what changed, and
 [all releases](https://github.com/albakore/pyzed/releases) are on GitHub. More in
 [Projects → Updates](/pyzed/guides/projects/#updates).
 
@@ -77,6 +98,7 @@ The downloads are made by `scripts/build_designer.py` with PyInstaller, on each 
 ```bash
 python -m pip install pyzed-ui pyinstaller uv
 python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
+python scripts/build_designer.py --installer   # also the setup .exe (needs Inno Setup 6) or the .dmg
 ```
 
 <Aside type="tip" title="Next steps">

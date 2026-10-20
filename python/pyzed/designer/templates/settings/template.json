@@ -1,0 +1,6 @@
+{
+  "label": "Settings",
+  "icon": "settings",
+  "description": "Labelled options in a grid.",
+  "order": 4
+}

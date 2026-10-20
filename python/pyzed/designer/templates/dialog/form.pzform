@@ -1,0 +1,141 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "Form1",
+    "title": "{title}",
+    "width": 420.0,
+    "height": 220.0,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "heading",
+      "type": "heading",
+      "x": 24,
+      "y": 20,
+      "width": 372.0,
+      "height": 32,
+      "props": {
+        "text": "{title}",
+        "level": "2",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "message",
+      "type": "label",
+      "x": 24,
+      "y": 64,
+      "width": 372.0,
+      "height": 80.0,
+      "props": {
+        "text": "Write your message here.",
+        "size": "md",
+        "color": "text",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "buttons",
+      "type": "row",
+      "x": 24,
+      "y": 160.0,
+      "width": 372.0,
+      "height": 36,
+      "props": {
+        "direction": "row",
+        "gap": 8,
+        "padding": 0,
+        "justify": "end",
+        "align": "stretch",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "cancel",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 32,
+      "props": {
+        "text": "Cancel",
+        "variant": "ghost",
+        "icon": ""
+      },
+      "events": {
+        "click": "cancel_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "buttons"
+    },
+    {
+      "name": "ok",
+      "type": "button",
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 32,
+      "props": {
+        "text": "OK",
+        "variant": "solid",
+        "icon": ""
+      },
+      "events": {
+        "click": "ok_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "buttons"
+    }
+  ]
+}

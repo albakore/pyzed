@@ -130,7 +130,30 @@ def test_designer_whats_new_tab_and_status(tmp_path, monkeypatch):
     app.updates.show_notes()  # the newest release, no download needed
     assert app.updates.notes.version == "0.5.0" and app.view() is not None
     app.updates.bundle = tmp_path
-    monkeypatch.setattr(updater, "replace_on_exit", lambda bundle: tmp_path / "swap.sh")
+    swaps = []
+    monkeypatch.setattr(updater, "replace_on_exit", lambda bundle, **kw: swaps.append(kw) or tmp_path / "swap.sh")
     assert app.updates.restart() is not None and app.updates.restart_pending  # design() then ends the process
+    assert swaps == [{"keep": ("unins*",)}]  # the Windows installer's uninstaller stays in the new folder
     app.updates.skip()
     assert updater.load_state()["skipped"] == "0.5.0" and app.updates.notes is None
+
+
+def test_designer_update_channels(monkeypatch):
+    from pyzed.designer.app import Designer
+
+    asked = []
+    monkeypatch.setattr(updater, "latest", lambda repo, prerelease=False, **kw: asked.append(prerelease))
+    app = Designer(language_servers=False)
+    assert app.updates.channel == "stable" and app.prefs.update_channel == "stable"
+    app.updates.check(quiet=True).close()
+    updater.save_state(skipped="0.5.0")
+    app.updates.status = "idle"
+    command = app.updates.toggle_preview()  # switching channel checks again, forgetting skipped versions
+    assert app.updates.channel == "preview" and updater.load_state()["skipped"] is None
+    app.updates._run = lambda work, done, failed=None: work()  # run the check right here
+    app.updates.status = "idle"
+    app.updates.check(quiet=True)
+    assert asked[-1] is True
+    command.close()
+    app.prefs.update_channel = "nightly"  # unknown values fall back to stable
+    assert app.updates.channel == "stable"

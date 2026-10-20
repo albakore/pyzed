@@ -1111,7 +1111,7 @@ Devuelve los componentes registrados agrupados por `category` (secciones de la c
 
 ```python
 @dataclass
-class Template(name, label, icon, description, build, size=(640, 420), handlers=())
+class Template(name, label, icon, description, build=None, size=(640, 420), handlers=(), form=None)
 ```
 
 Un punto de partida para formularios nuevos.

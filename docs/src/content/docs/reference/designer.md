@@ -1117,10 +1117,10 @@ Returns the registered components grouped by `category` (toolbox sections), in r
 
 ```python
 @dataclass
-class Template(name, label, icon, description, build, size=(640, 420), handlers=())
+class Template(name, label, icon, description, build=None, size=(640, 420), handlers=(), form=None)
 ```
 
-A starting point for new forms.
+A starting point for new forms: a `build` function that fills an empty `Form`, or a saved form.
 
 ### `register_template`
 

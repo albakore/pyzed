@@ -161,6 +161,10 @@ jobs:
             echo "$WINDOWS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.pfx"
             echo "PYZED_SIGN_PFX=$RUNNER_TEMP/cert.pfx" >> "$GITHUB_ENV"
           fi
+      - name: Install Inno Setup
+        if: runner.os == 'Windows'
+        shell: bash
+        run: command -v iscc || [ -e "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" ] || choco install innosetup --no-progress -y
       - name: Build the standalone designer
         shell: bash
         env:
@@ -176,11 +180,17 @@ jobs:
         run: |
           python -m pip install pyinstaller uv anthropic keyring
           python -m pip install --no-index --find-links wheels pyzed-ui
-          python scripts/build_designer.py --out designer
+          python scripts/build_designer.py --out designer --installer
+      # The zip is what the app's updater downloads; the setup .exe and the .dmg are the installers.
+      # (Upload the zip even if an installer failed.)
       - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
         with:
           name: designer-${{ matrix.name }}
-          path: designer/*.zip
+          path: |
+            designer/*.zip
+            designer/*.exe
+            designer/*.dmg
 
   pypi:
     name: Publish on PyPI
@@ -264,6 +274,13 @@ jobs:
           pattern: designer-*
           merge-multiple: true
           path: dist
+      # The Linux installer (also served by the docs site), the icon it adds to the menu and the
+      # checksums it verifies the download with.
+      - name: Installer script and checksums
+        run: |
+          cp docs/public/install.sh dist/install.sh
+          cp docs/public/icon-512.png dist/pyzed-design.png
+          (cd dist && sha256sum -- * > SHA256SUMS)
       # Signed build provenance for every file of the release: `gh attestation verify <file> -R albakore/pyzed`.
       # (PyPI gets its own attestations from Trusted Publishing.)
       - uses: actions/attest-build-provenance@v2
@@ -278,7 +295,13 @@ jobs:
           python -m pip install git-cliff
           python scripts/changelog.py --notes "$TAG" > notes.md
           printf '\n\n```\npip install pyzed-ui==%s\n```\n' "${TAG#v}" >> notes.md
-          printf '\n**Pyzed Design** (the designer as a standalone app, uv included): download the `pyzed-design-*.zip` for your platform below.\n' >> notes.md
+          {
+            printf '\n**Pyzed Design** (the designer as a standalone app, uv included, that updates itself):\n\n'
+            printf -- '- Windows: `pyzed-design-windows-x86_64-setup.exe` (installs for your user, no admin needed)\n'
+            printf -- '- macOS: `pyzed-design-macos-arm64.dmg` or `pyzed-design-macos-x86_64.dmg`\n'
+            printf -- '- Linux: `curl -fsSL https://albakore.github.io/pyzed/install.sh | sh`\n\n'
+            printf 'The `pyzed-design-*.zip` files are the portable builds the app updates from. `SHA256SUMS` lists every checksum.\n'
+          } >> notes.md
           flags=(--title "$TAG" --notes-file notes.md --verify-tag)
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease --latest=false); else flags+=(--latest); fi
           if gh release view "$TAG" >/dev/null 2>&1; then

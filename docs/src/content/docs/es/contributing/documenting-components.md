@@ -257,7 +257,7 @@ rutas. Para cada página que añadas o cambies:
 - Las anclas salen del texto del título, así que un enlace a una sección de una página en español usa el título
   en español (`/pyzed/es/guides/components/#en-el-diseñador`).
 - El contenido generado tiene los dos idiomas en sus datos: `api_docs_es.py`, los textos en español de
-  `library_data.py` y los textos del propio editor en `python/pyzed/designer/locale.py`.
+  `library_data.py` y los textos del propio editor en `python/pyzed/designer/locales/es.json`.
 
 Si no puedes escribir la versión en español, dilo en el PR: una página que falta se muestra en inglés con un
 aviso, y alguien del equipo u otra persona puede traducirla en un PR 🌐.

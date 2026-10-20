@@ -236,8 +236,8 @@ categories, and the components inside them, in registration order.
 
 ### Translations and hot reload
 
-- The designer's own texts are translated in `python/pyzed/designer/locale.py`. Add the Spanish label and
-  any new category or property title to `_ES` (the English text is the key):
+- The designer's own texts are translated in `python/pyzed/designer/locales/es.json`. Add the Spanish label
+  and any new category or property title under `"designer"` (the English text is the key):
   `"Rating": "Valoración"`. Property titles are shared, so `Value`, `Max`, `Size` and `Tint` are already
   there.
 - If users change a property by interacting (like Rating's `value`), add it to `_VALUE_PROPS` in
@@ -447,7 +447,7 @@ The selected Rating on the canvas, with its **Data** and **Appearance** properti
 - [ ] `Component` entry in `designer/components.py`, with a stable `type`, a Lucide icon and a one-sentence
       description
 - [ ] Callbacks through `ctx.on(c, event, prop)`; values coerced with `_num`/`_lines`
-- [ ] Spanish texts in `designer/locale.py`; interactive props in `_VALUE_PROPS`
+- [ ] Spanish texts in `designer/locales/es.json`; interactive props in `_VALUE_PROPS`
 - [ ] Tests in `tests/`, and `pytest tests` passes
 - [ ] Documentation: see [Documenting a component](/pyzed/contributing/documenting-components/)
 - [ ] PR titled `✨ Add a Rating component`

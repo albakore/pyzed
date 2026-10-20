@@ -238,8 +238,8 @@ muestra las categorías, y los componentes dentro de ellas, en el orden de regis
 
 ### Traducciones y recarga en caliente
 
-- Los textos del propio diseñador se traducen en `python/pyzed/designer/locale.py`. Añade la etiqueta en
-  español y cualquier categoría o título de propiedad nuevo a `_ES` (la clave es el texto en inglés):
+- Los textos del propio diseñador se traducen en `python/pyzed/designer/locales/es.json`. Añade la etiqueta
+  en español y cualquier categoría o título de propiedad nuevo bajo `"designer"` (la clave es el texto en inglés):
   `"Rating": "Valoración"`. Los títulos de propiedad se comparten, así que `Value`, `Max`, `Size` y `Tint` ya
   están.
 - Si el usuario cambia una propiedad al interactuar (como el `value` de Rating), añádela a `_VALUE_PROPS` en
@@ -451,7 +451,7 @@ El Rating seleccionado en el lienzo, con sus propiedades **Data** y **Appearance
 - [ ] Entrada `Component` en `designer/components.py`, con un `type` estable, un icono de Lucide y una
       descripción de una frase
 - [ ] Callbacks con `ctx.on(c, evento, prop)`; valores convertidos con `_num`/`_lines`
-- [ ] Textos en español en `designer/locale.py`; propiedades interactivas en `_VALUE_PROPS`
+- [ ] Textos en español en `designer/locales/es.json`; propiedades interactivas en `_VALUE_PROPS`
 - [ ] Tests en `tests/`, y `pytest tests` pasa
 - [ ] Documentación: mira [Documentar un componente](/pyzed/es/contributing/documenting-components/)
 - [ ] PR con el título `✨ Add a Rating component`
