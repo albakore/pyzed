@@ -255,9 +255,17 @@ fn value(value: &Bound<'_, PyAny>) -> PyResult<(Slot, [f32; 4])> {
 }
 
 /// The uniforms and textures of a shader, checked: `(slots, values, texture names, textures)`.
-type Inputs = (Vec<(String, Slot)>, [[f32; 4]; SLOTS], Vec<String>, Vec<Arc<Texture>>);
+type Inputs = (
+    Vec<(String, Slot)>,
+    [[f32; 4]; SLOTS],
+    Vec<String>,
+    Vec<Arc<Texture>>,
+);
 
-fn inputs(uniforms: Option<&Bound<'_, PyDict>>, textures: Option<&Bound<'_, PyDict>>) -> PyResult<Inputs> {
+fn inputs(
+    uniforms: Option<&Bound<'_, PyDict>>,
+    textures: Option<&Bound<'_, PyDict>>,
+) -> PyResult<Inputs> {
     let mut slots = Vec::new();
     let mut values = [[0.0; 4]; SLOTS];
     let mut names: HashSet<String> = HashSet::new();

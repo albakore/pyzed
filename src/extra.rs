@@ -132,7 +132,10 @@ pub struct Decoded {
 pub type MaskCache =
     std::cell::RefCell<std::collections::HashMap<(u64, [u32; 4], [u32; 2]), img::Handle>>;
 
-pub(crate) fn image_source(source: &Bound<'_, PyAny>, size: Option<(u32, u32)>) -> PyResult<ImageSource> {
+pub(crate) fn image_source(
+    source: &Bound<'_, PyAny>,
+    size: Option<(u32, u32)>,
+) -> PyResult<ImageSource> {
     if let Ok(bytes) = source.cast::<PyBytes>() {
         let data = bytes.as_bytes().to_vec();
         return Ok(match size {
