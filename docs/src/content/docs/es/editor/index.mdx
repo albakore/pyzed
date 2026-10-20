@@ -1,6 +1,6 @@
 ---
 title: Pyzed Design
-description: "El manual de Pyzed Design, el diseñador visual de GUIs para Python: dibuja ventanas y componentes, conecta eventos a Python, ejecútalos y distribúyelos."
+description: "El manual de Pyzed Design, el diseñador visual de GUIs para Python: dibuja ventanas y componentes, diseña shaders, conecta eventos a Python, ejecútalos y distribúyelos."
 section:
   eyebrow: "Diseñador"
   icon: "pencil"
@@ -10,79 +10,62 @@ sidebar:
   label: Introducción
 ---
 
-:::note[Sobre este manual]
-Este manual se está ampliando: cada panel y cada vista (Formulario, Componente y Shader) tendrá su propia página con capturas nuevas y animaciones cortas.
-:::
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import designer from '../../../../../screenshots/designer.png';
+import designerLight from '../../../../../screenshots/designer-light.png';
 
-**Pyzed Design** es el editor visual de Pyzed, al estilo de Visual Basic, el diseñador de WinForms de Visual Studio
-y Qt Designer, y hecho con el propio Pyzed. Dibujas una ventana con el ratón, ajustas sus propiedades en una
-grilla, haces doble clic en un control para escribir el código Python de su evento y pulsas <kbd>F5</kbd> para
-ejecutarla con toda su lógica. El mismo editor crea **componentes** reutilizables con propiedades tipadas, métodos y
-eventos propios.
+**Pyzed Design** es el editor visual de Pyzed, hecho con el propio Pyzed. Dibujas una ventana con el ratón, ajustas
+sus propiedades en una grilla, haces doble clic en un control para escribir el código Python de su evento y pulsas
+<kbd>F5</kbd> para ejecutarla con toda su lógica. El mismo editor crea **componentes** reutilizables, **shaders** de
+GPU hechos de nodos, y edita el Python de todo tu proyecto.
 
-Este manual recorre cada zona del editor: qué muestra, qué puedes hacer en ella y los trucos que te hacen ir más
-rápido.
+Se apoya en herramientas que mucha gente ya conoce: el diseñador de formularios de **Visual Basic** y **Qt Designer**
+(dibujar, ajustar propiedades, conectar eventos), las escenas y los visual shaders de **Godot**, el panel de detalles
+y el editor de materiales de **Unreal Engine**, y una interfaz limpia y cómoda con el teclado inspirada en el editor
+de código **Zed**. El objetivo es un framework de frontend para apps de escritorio que puedas usar sin escribir
+código, y ampliar con código cuando quieras.
 
-![Pyzed Design con el ejemplo de inicio de sesión abierto](../../../../../screenshots/designer.png)
+<Media src={designer} light={designerLight} alt="Pyzed Design con el ejemplo de inicio de sesión abierto" caption="Un formulario de inicio de sesión abierto en la vista de formulario." size="wide" eager />
 
 ## Abrirlo
 
-| Cómo | Qué abre |
+Descarga la [app independiente](/pyzed/es/download/) (trae su propio Python y uv), o arráncalo desde un entorno de
+Python:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv add "pyzed-ui[designer]"      # en tu proyecto: Pyzed más los servidores de lenguaje ty y ruff
+		uv run pyzed design
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pip install "pyzed-ui[designer]"
+		pyzed design
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 -m pip install "pyzed-ui[designer]"
+		python3 -m pyzed design
+		```
+		```powershell title="Windows (PowerShell)"
+		py -m pip install "pyzed-ui[designer]"
+		py -m pyzed design
+		```
+	</TabItem>
+</Tabs>
+
+| Comando | Qué abre |
 | --- | --- |
-| `pyzed design` | Dentro de un proyecto: su formulario principal (`[tool.pyzed] main`). Fuera: un formulario vacío sin título. |
+| `pyzed design` | Dentro de un proyecto: su formulario principal (`[tool.pyzed] main`). Fuera: la ventana de bienvenida o un formulario vacío. |
 | `pyzed design login.pzform` | Ese formulario, o uno nuevo con ese nombre que se crea al guardar por primera vez. |
-| `pyzed design ui/rating.pzcomp` | Un [componente diseñado](/pyzed/es/editor/component-designer/) (se crea al guardar si no existe). |
-| `pyzed design fx/fuego.pzshad` | Un [shader hecho de nodos](/pyzed/es/shading/shader-designer/) (se crea al guardar si no existe). |
+| `pyzed design ui/rating.pzcomp` | Un [componente](/pyzed/es/editor/component-designer/) (se crea al guardar si no existe). |
+| `pyzed design fx/fuego.pzshad` | Un [shader hecho de nodos](/pyzed/es/editor/shader-view/) (se crea al guardar si no existe). |
 | `python -m pyzed.designer [archivo]` | Lo mismo, sin el comando `pyzed` en el `PATH`. |
-| La app **Pyzed Design** | La versión independiente: el editor con su propio Python y `uv`, sin instalar nada más (ver [Proyectos](/pyzed/es/editor/projects/#la-app-independiente)). |
-
-```bash
-pip install "pyzed-ui[designer]"   # Pyzed más los servidores de lenguaje ty y ruff
-pyzed design login.pzform
-```
-
-## Un recorrido por la ventana
-
-![Todas las zonas a la vez: herramientas y estructura a la izquierda, propiedades a la derecha y el editor de código abajo](../../../../../screenshots/designer-code.png)
-
-```mermaid
-flowchart TB
-    T["Barra de título: menú ☰ · proyecto / archivo · Ejecutar ▶ · Detener · Ver · Ayuda · ⚙ Ajustes"]
-    subgraph W[" "]
-        direction LR
-        L["Panel izquierdo<br/>Diseño (Herramientas + Estructura)<br/>Proyecto<br/>Dependencias"]
-        subgraph C["Centro"]
-            direction TB
-            D["Pestañas: Formulario · login.pzform | Componente · rating.pzcomp"]
-            TB["Barra de herramientas: nuevo, abrir, guardar · deshacer · alinear · distribuir · tamaño · orden · cuadrícula"]
-            F["Lienzo: el formulario, su cuadrícula de puntos, la selección y las asas"]
-        end
-        R["Panel derecho<br/>Propiedades<br/>Eventos"]
-    end
-    B["Panel inferior: Código · Consola"]
-    S["Barra de estado: puntero · selección · controles · cuadrícula · snap · Ln/Col · servidores de lenguaje"]
-    T --> W --> B --> S
-```
-
-| Zona | Para qué sirve | Página del manual |
-| --- | --- | --- |
-| **Barra de título** | El menú ☰ (Archivo y Ejecutar), el proyecto y el archivo (clic en el archivo para abrir otro), **Ejecutar** y **Detener**, los menús **Ver** y **Ayuda** y el engranaje de **Ajustes**. | [Menús y comandos](/pyzed/es/editor/menus-and-commands/) |
-| **Herramientas** | Todos los componentes que puedes colocar, por categoría, con buscador. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/) |
-| **Estructura** | Los controles del documento en árbol: seleccionarlos, reordenarlos, anidarlos, ocultarlos y bloquearlos. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#la-estructura) |
-| **Proyecto** | Los archivos y carpetas del proyecto en árbol, con buscador y estado de git. | [Proyectos](/pyzed/es/editor/projects/) |
-| **Dependencias** | Las dependencias del proyecto, ruff y ty (aparece con un proyecto abierto). | [Proyectos](/pyzed/es/editor/projects/#el-panel-dependencias) |
-| **Pestañas** | Una por cada formulario o componente abierto. | [Archivos y documentos](/pyzed/es/editor/files-and-scripting/) |
-| **Barra de herramientas** | Acciones de archivo, deshacer, alinear, distribuir, igualar tamaños, orden y cuadrícula. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#alinear-distribuir-e-igualar-tamaños) |
-| **Lienzo** | El formulario tal como se ejecutará, con cuadrícula de puntos, selección, asas y guías inteligentes. | [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/) |
-| **Propiedades** | Las propiedades, el estilo, la posición y el comportamiento del control seleccionado (o del formulario). | [Propiedades](/pyzed/es/editor/properties/) |
-| **Eventos** | Los eventos del control seleccionado y el manejador conectado a cada uno. | [Eventos y manejadores](/pyzed/es/editor/events/) |
-| **Agente** | Un agente de IA que crea formularios y componentes, escribe su código y edita el formulario abierto. | [Agentes de IA](/pyzed/es/editor/ai-agents/) |
-| **Código** | Un editor de Python con autocompletado, diagnósticos, code lens, plegado y minimapa. | [Editor de código](/pyzed/es/editor/code-editor/) |
-| **Consola** | Lo que imprime el formulario en ejecución, los eventos que atiende y sus errores. | [Ejecutar y la consola](/pyzed/es/editor/console-and-running/) |
-| **Barra de estado** | La posición del puntero, el tamaño y lugar de la selección, el número de controles, la cuadrícula y el snap, y mientras programas el cursor y los servidores de lenguaje. | [Ajustes](/pyzed/es/editor/settings/) |
-
-Cada panel vive en un **dock** (izquierdo, derecho, inferior o superior) y se puede mover a otro, redimensionar u
-ocultar. Ver [Paneles y docks](/pyzed/es/editor/menus-and-commands/#paneles-y-docks).
 
 ## El flujo de trabajo en una imagen
 
@@ -96,12 +79,12 @@ flowchart LR
     CE -- Ctrl+S --> P[(login.py)]
     F --> RUN["F5 · pyzed run"]
     P --> RUN
-    RUN --> W[Ventana nativa dibujada por Iced]
+    RUN --> W[Ventana nativa]
     RUN -. prints, eventos, errores .-> CO[Consola]
 ```
 
-1. **Coloca** componentes desde la caja de herramientas: arrástralos al formulario, o haz clic en uno y luego clic
-   (o arrastra un rectángulo) en el formulario.
+1. **Coloca** controles desde las herramientas: arrástralos al formulario, o haz clic en uno y luego clic (o arrastra
+   un rectángulo) en el formulario.
 2. **Ordénalos** con el ratón, el teclado, las guías inteligentes, las herramientas de alineación o un
    [contenedor de disposición](/pyzed/es/editor/layouts/).
 3. **Configúralos** en [Propiedades](/pyzed/es/editor/properties/): texto, datos, estilo, anclajes.
@@ -109,33 +92,62 @@ flowchart LR
    [editor de código](/pyzed/es/editor/code-editor/).
 5. **Ejecuta** con <kbd>F5</kbd>. La [consola](/pyzed/es/editor/console-and-running/) muestra prints, eventos y
    errores; guardar actualiza la ventana en ejecución.
-6. **Reutiliza**: convierte las piezas repetidas en [componentes](/pyzed/es/editor/component-designer/) y
-   distribuye la app con `pyzed build`.
+6. **Reutiliza y distribuye**: convierte las piezas repetidas en [componentes](/pyzed/es/editor/component-designer/)
+   y empaqueta la app con `pyzed build` (ver [Distribuir](/pyzed/es/packaging/)).
 
-## En este manual
+## Empieza aquí
 
-- [Bienvenida y ejemplos](/pyzed/es/editor/examples/): la ventana de bienvenida y la galería de proyectos de ejemplo.
-- [Proyectos](/pyzed/es/editor/projects/): proyectos de uv, el árbol de archivos, dependencias, ruff, ty y git.
-- [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/): colocar, seleccionar, mover, redimensionar,
-  snap, guías, alineación y la estructura.
-- [Propiedades](/pyzed/es/editor/properties/): cada sección de la grilla de propiedades y los editores de listas y
-  tablas.
-- [Disposición y contenedores](/pyzed/es/editor/layouts/): paneles, filas y columnas flex, grillas y anclajes.
-- [Estilos y temas](/pyzed/es/editor/styles-and-themes/): la sección Estilo, el selector de color, degradados y
-  temas.
-- [Eventos y manejadores](/pyzed/es/editor/events/): todos los eventos y cómo escribir su código.
-- [Enlace de datos y validación](/pyzed/es/editor/data-binding/): `form.data`, reglas de validación, traducciones con
-  `@clave` y vista previa con otro tema o idioma.
-- [Editor de código](/pyzed/es/editor/code-editor/): autocompletado, diagnósticos, code lens, plegado y sus ajustes.
-- [Ejecutar y la consola](/pyzed/es/editor/console-and-running/): F5, la consola, `uv run` y recarga en caliente.
-- [Diseñador de componentes](/pyzed/es/editor/component-designer/): componentes reutilizables con props, estado,
-  métodos y eventos.
-- [Diseñador de shaders](/pyzed/es/shading/shader-designer/): shaders de GPU hechos conectando nodos, con una vista
-  previa en vivo en cada nodo.
-- [Archivos, plantillas y scripting](/pyzed/es/editor/files-and-scripting/): pestañas, archivos `.pzform`,
-  plantillas y la API de Python.
-- [Menús y comandos](/pyzed/es/editor/menus-and-commands/): cada entrada de menú, la paleta de comandos y los docks.
-- [Referencia integrada](/pyzed/es/editor/reference/): la documentación con buscador de cada control y función, con <kbd>Shift</kbd>+<kbd>F1</kbd>.
-- [Atajos de teclado](/pyzed/es/editor/keyboard-shortcuts/): la lista completa.
-- [Ajustes](/pyzed/es/editor/settings/): las preferencias del editor y del editor de código.
-- [Trucos y consejos](/pyzed/es/editor/tips-and-tricks/).
+<NavCards
+	items={[
+		{ title: 'La interfaz', text: 'Barra de título, menús, docks, paneles, pestañas y barra de estado: cómo se llama y qué hace cada zona.', href: '/pyzed/es/editor/interface/', icon: 'laptop', tag: 'Recorrido' },
+		{ title: 'Bienvenida y ejemplos', text: 'La ventana de bienvenida y dos docenas de proyectos de ejemplo para empezar.', href: '/pyzed/es/editor/examples/', icon: 'open-book' },
+		{ title: 'Proyectos', text: 'Proyectos de uv, el árbol de archivos, dependencias, ruff, ty y git.', href: '/pyzed/es/editor/projects/', icon: 'seti:folder' },
+	]}
+/>
+
+## Las vistas
+
+<NavCards
+	items={[
+		{ title: 'Vistas y documentos', text: 'Formularios, componentes, shaders y código: en qué vista se abre cada uno.', href: '/pyzed/es/editor/views/', icon: 'document' },
+		{ title: 'La vista de formulario', text: 'Dibuja una ventana, conecta su primer evento y ejecútala, paso a paso.', href: '/pyzed/es/editor/form-view/', icon: 'pencil', tag: 'Básico' },
+		{ title: 'La vista de componente', text: 'Piezas reutilizables con propiedades, estado, métodos y eventos.', href: '/pyzed/es/editor/component-designer/', icon: 'puzzle' },
+		{ title: 'La vista Shader', text: 'Efectos de GPU hechos conectando nodos, con vistas previas en vivo.', href: '/pyzed/es/editor/shader-view/', icon: 'star' },
+		{ title: 'Editor de código', text: 'Autocompletado, diagnósticos, code lens, cursores múltiples y atajos.', href: '/pyzed/es/editor/code-editor/', icon: 'seti:python' },
+	]}
+/>
+
+## Diseñar formularios
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Herramientas y lienzo', text: 'Colocar, seleccionar, mover, ajustar, alinear y la estructura.', href: '/pyzed/es/editor/toolbox-and-canvas/', icon: 'pencil' },
+		{ title: 'Propiedades', text: 'Cada sección de la grilla de propiedades.', href: '/pyzed/es/editor/properties/', icon: 'setting' },
+		{ title: 'Disposición', text: 'Paneles, filas, columnas, grillas y anclajes.', href: '/pyzed/es/editor/layouts/', icon: 'list-format' },
+		{ title: 'Estilos y temas', text: 'Colores, fuentes, degradados y el estilo del formulario.', href: '/pyzed/es/editor/styles-and-themes/', icon: 'moon' },
+		{ title: 'Animaciones y efectos', text: 'Brillo, desenfoque, cristal y movimiento al pasar el ratón o hacer clic.', href: '/pyzed/es/editor/animations-and-effects/', icon: 'star' },
+		{ title: 'Eventos', text: 'Cada evento y cómo escribir su manejador.', href: '/pyzed/es/editor/events/', icon: 'rocket' },
+		{ title: 'Enlace de datos', text: 'Enlaza campos a datos, valida y traduce.', href: '/pyzed/es/editor/data-binding/', icon: 'random' },
+	]}
+/>
+
+## Ejecutar, archivos, IA y referencia
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Ejecutar y la consola', text: 'F5, la salida, los errores y la recarga en caliente.', href: '/pyzed/es/editor/console-and-running/', icon: 'right-arrow' },
+		{ title: 'Archivos y scripting', text: 'Pestañas, plantillas, el formato .pzform y la API de Python.', href: '/pyzed/es/editor/files-and-scripting/', icon: 'document' },
+		{ title: 'Agentes de IA', text: 'Un agente que crea formularios y escribe su código.', href: '/pyzed/es/editor/ai-agents/', icon: 'comment-alt' },
+		{ title: 'Menús y comandos', text: 'Cada entrada de menú y la paleta de comandos.', href: '/pyzed/es/editor/menus-and-commands/', icon: 'list-format' },
+		{ title: 'Atajos de teclado', text: 'La lista completa.', href: '/pyzed/es/editor/keyboard-shortcuts/', icon: 'pencil' },
+		{ title: 'Ajustes', text: 'Temas, lienzo, ejecución, paneles y telemetría.', href: '/pyzed/es/editor/settings/', icon: 'setting' },
+	]}
+/>
+
+<Aside type="note" title="Estado de este manual">
+Cada panel y cada vista tiene su página, escrita para la versión actual. Se están añadiendo capturas nuevas y
+grabaciones cortas de cada zona; hasta que una página las tenga, usa las capturas de la versión anterior, que pueden
+diferir en detalles pequeños como la barra de título.
+</Aside>

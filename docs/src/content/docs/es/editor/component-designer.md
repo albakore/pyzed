@@ -1,5 +1,5 @@
 ---
-title: Diseñador de componentes
+title: La vista de componente
 description: "Dibuja componentes reutilizables en Pyzed Design con propiedades, estado, métodos y eventos propios, y anídalos como escenas de Godot."
 sidebar:
   order: 9

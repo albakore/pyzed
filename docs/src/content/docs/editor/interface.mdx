@@ -1,0 +1,190 @@
+---
+title: The interface
+description: "A tour of every part of the Pyzed Design window: the title bar and its menus, document tabs and windows, the four docks and their panels, the toolbar, the canvas, the status bar and notifications."
+sidebar:
+  label: The interface
+  order: 0.5
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import designer from '../../../../screenshots/designer.png';
+import designerLight from '../../../../screenshots/designer-light.png';
+import fileMenu from '../../../../screenshots/editor-file-menu.png';
+import dockMenu from '../../../../screenshots/editor-dock-menu.png';
+
+Pyzed Design is one window split in a few areas, and every area has a single job. Once you know their names, the
+rest of this manual reads easily. The layout borrows from editors many people already know: the panels and the title
+bar are inspired by the [Zed](https://zed.dev) code editor, the form canvas and the property grid by Visual Basic and
+Qt Designer, and the node and scene ideas by Godot and Unreal Engine.
+
+<Media src={designer} light={designerLight} alt="Pyzed Design with a sign-in form open: toolbox and outline on the left, the form in the middle, properties on the right" caption="A form open in Pyzed Design. Every area is described below." size="wide" eager />
+
+{/* media: editor/interface-annotated (the window with each area numbered) */}
+
+```mermaid
+flowchart TB
+    T["① Title bar: ☰ menu · project / file · Run ▶ Stop · View · Help · ⚙"]
+    subgraph W[" "]
+        direction LR
+        L["② Left dock<br/>Design · Project · Dependencies"]
+        subgraph C["③ Center"]
+            direction TB
+            D["Document tabs"]
+            TB["Toolbar"]
+            F["Canvas (or the graph of a shader)"]
+        end
+        R["④ Right dock<br/>Properties · Events · Agent"]
+    end
+    B["⑤ Bottom dock: Code · Console"]
+    S["⑥ Status bar"]
+    T --> W --> B --> S
+```
+
+## ① The title bar
+
+The strip at the very top. From left to right:
+
+| Item | What it does |
+| --- | --- |
+| **☰** | The main menu: New, Open, Go to file, Save, Settings, recent files, and the Run commands. |
+| **Project name** | The open project (or *Pyzed Design* when there is none). Click it to show the **Project** panel. |
+| **/ file name ⌄** | The document in front. Click it to open another form, component or shader. |
+| **●** | Shown when the document has unsaved changes. |
+| **Component** / **Shader** badge | Says which [view](/pyzed/editor/views/) you are in when it is not a form. |
+| **▶ Run** (<kbd>F5</kbd>) | Runs the form, previews the component, or opens the shader in its own window. |
+| **■ Stop** (<kbd>Shift</kbd>+<kbd>F5</kbd>) | Closes what Run opened. Disabled when nothing is running. |
+| **View** (panels icon) | Docks, panels, grid and guides, previews of other themes, languages and window frames. |
+| **Help** (? icon) | Shortcuts, the built-in reference, the welcome window, updates and About. |
+| **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Settings](/pyzed/editor/settings/). |
+
+<Media src={fileMenu} alt="The ☰ menu open with File and Run commands and recent files" caption="The ☰ menu: file commands, recent files and Run." size="narrow" />
+
+Every menu entry is listed with its keys in [Menus and commands](/pyzed/editor/menus-and-commands/). Anything you
+can click in a menu is also in the **command palette** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>): type a few
+letters of its name and press <kbd>Enter</kbd>.
+
+### The window frame
+
+By default Pyzed Design draws its **own window frame**: the title bar above also holds the minimize, maximize and
+close buttons, in the style of your system, and the borders of the window resize it. Drag the title bar to move the
+window; double-click it to maximize. This gives a compact, uniform window on every platform.
+
+{/* media: editor/window-frames (the same title bar with macOS, Windows 11, GNOME and KDE buttons) */}
+
+<Aside type="tip" title="Prefer your system's frame?">
+Turn off **Settings → Appearance → Custom window frame** to use the frame of your operating system (it applies the
+next time Pyzed Design opens). Your own apps can use the same frames: see `ui.window_frame` and `Window.frame` in
+the [API reference](/pyzed/reference/ui/).
+</Aside>
+
+## ② ④ ⑤ Docks and panels
+
+Panels live in **docks** around the center: left, right, bottom and a top dock that is empty until you move a
+panel there. Each dock shows one panel at a time, with a tab per panel.
+
+| Panel | Dock | What it is for | Manual |
+| --- | --- | --- | --- |
+| **Design** | Left | The **Toolbox** (everything you can place) above the **Outline** (the tree of what is placed). In a shader it becomes the **Shading** sidebar and the shader's variables. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
+| **Project** | Left | The files of the project as a tree, with search, git status and a right-click menu. | [Projects](/pyzed/editor/projects/#files) |
+| **Dependencies** | Left | Packages, ruff and ty of the project (only with a project open). | [Projects](/pyzed/editor/projects/#the-dependencies-panel) |
+| **Properties** | Right | Everything about the selection: text, size, colors, data, behavior. | [Properties](/pyzed/editor/properties/) |
+| **Events** | Right | The events of the selection and the Python handler wired to each. | [Events](/pyzed/editor/events/) |
+| **Agent** | Right | An AI agent that builds forms and components and writes their code. | [AI agents](/pyzed/editor/ai-agents/) |
+| **Code** | Bottom | The Python editor, while a handler or a file is open. | [Code editor](/pyzed/editor/code-editor/) |
+| **Console** | Bottom | What a running form prints, the events it handles, and its errors. | [Running and the console](/pyzed/editor/console-and-running/) |
+
+What you can do with them:
+
+- **Switch** panels with the tabs at the top of a dock.
+- **Move** a panel: the dock button at the end of the tab bar opens **Move *panel* to** left, right, bottom or top.
+- **Resize** a dock by dragging its edge that faces the canvas.
+- **Hide** a dock with its **×**, or toggle it: <kbd>Ctrl</kbd>+<kbd>B</kbd> (left), <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd>
+  (right), <kbd>Ctrl</kbd>+<kbd>J</kbd> (bottom).
+- **Reset** everything with **View → Reset panel layout**. Where each panel is and the size of each dock are saved
+  with your settings.
+
+<Media src={dockMenu} alt="The dock menu with Move Properties to the left, bottom or top dock" caption="Move any panel to another dock from the dock button." size="narrow" />
+
+<Aside type="tip" title="A layout for writing code">
+On a laptop, hide the left dock (<kbd>Ctrl</kbd>+<kbd>B</kbd>) while you write code and add controls with
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> instead of the toolbox. On a wide screen, move **Events** to the left dock
+to see it next to Properties.
+</Aside>
+
+## ③ The center: tabs, toolbar and canvas
+
+### Document tabs and windows
+
+Every open file is a tab: `Form · login.pzform`, `Component · rating.pzcomp`, a shader, a Python file, the reference
+or the release notes. The end of the tab row says which view is in front (**Form view**, **Component view**...).
+
+- **Click** a tab to switch; each document keeps its own selection and undo history.
+- **Drag** a tab along the row to reorder it.
+- **Drag a tab out** of the window to give it a window of its own, with its own tabs, toolbar and canvas. Drag it
+  onto another Pyzed Design window to stack it there. **View → Move tab to new window** and **Move tab to main
+  window** do the same with the keyboard (handy on Wayland, where apps can't know where their windows are).
+- The panels stay in the main window and follow the window you used last. Closing a document window brings its tabs
+  back to the main window.
+
+{/* media: editor/tab-drag-out (a tab dragged out into its own window, short loop) */}
+
+### Toolbar
+
+Under the tabs of a form or component: **New form**, **Open**, **Save**, **New component**; **Undo** and **Redo**;
+the **align**, **distribute**, **same size** and **center** tools; **Bring to front**, **Send to back** and
+**Delete**; and at the end **Grid**, **Snap**, **Smart guides**, **Resize contents with their anchors**, **Fit
+selection to grid** and **Edit code file** (<kbd>F7</kbd>). Tools that don't apply to the selection are grayed out,
+and every tooltip shows its shortcut. A shader has its own toolbar; see [the Shader view](/pyzed/shading/shader-designer/).
+
+### Canvas
+
+The form exactly as it will look when it runs, inside a window frame, over a dot grid. Click to select, drag to
+move, pull the handles to resize. Everything about it is in [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/).
+
+<Aside type="note" title="See your form on other systems">
+**View → Preview window frame…** draws the form inside the frame of macOS, Windows 11, GNOME, Ubuntu or KDE Plasma,
+so you can check how it will look there without leaving your computer. It changes nothing in the form.
+</Aside>
+
+## ⑥ The status bar
+
+The bar at the bottom tells you where you are and toggles a few things with a click:
+
+| Item | Meaning |
+| --- | --- |
+| `120, 48` | Where the pointer is on the form, in pixels. |
+| `sign_in 344×32 at 48, 304` | The selected control, its size and position (or the form's, or how many are selected). |
+| **Placing Button…** | Shown while you place a control from the toolbox. |
+| Theme / language | Shown while you preview another theme or language; click to change it. |
+| **macOS**, **Windows 11**... | The window frame the canvas shows; click to pick another. |
+| **12 controls** | How many controls the document has. |
+| **Grid 8px** · **Snap** | Click to toggle the grid and snapping. |
+| `Ln 12, Col 8` · **ty** · **ruff** | While coding: the cursor and the state of the language servers. |
+| **Update to X.Y.Z** | A new version is ready; see [Updates](/pyzed/download/#updates). |
+
+Hide it with **View → Status bar**.
+
+{/* media: editor/status-bar (the status bar while a control is selected) */}
+
+## Notifications
+
+Short messages appear in a corner for a few seconds: saved, copied, a wire that can't connect, a command that
+failed... Click the **×** to dismiss one; at most four show at once.
+
+## Opening pages and signing in
+
+Links in the editor (Help → Documentation, the reference, sign-in pages of the AI agents) open in your default
+browser. When Pyzed Design runs inside **WSL** on Windows, they open in the Windows browser, with no console window
+flashing, unless you set the `BROWSER` variable to choose another.
+
+## Next
+
+<NavCards
+	items={[
+		{ title: 'Views', text: 'Form, Component, Shader and code: what each kind of document looks like.', href: '/pyzed/editor/views/', icon: 'document' },
+		{ title: 'The Form view', text: 'Draw a window step by step and wire its first event.', href: '/pyzed/editor/form-view/', icon: 'pencil' },
+		{ title: 'Menus and commands', text: 'Every menu entry, the command palette and the toolbar.', href: '/pyzed/editor/menus-and-commands/', icon: 'list-format' },
+	]}
+/>

@@ -100,7 +100,7 @@ También puedes editar el archivo de código en cualquier otro editor; el formul
 funciones manejadoras.
 
 Un componente diseñado también son dos archivos, `rating.pzcomp` (disposición) y `rating.py` (la clase); ver
-[Diseñador de componentes](/pyzed/es/editor/component-designer/).
+[Vista de componente](/pyzed/es/editor/component-designer/).
 
 ## Añadir tus propios componentes
 

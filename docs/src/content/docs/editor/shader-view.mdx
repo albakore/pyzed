@@ -1,0 +1,69 @@
+---
+title: The Shader view
+description: "How the Shader view of Pyzed Design fits in the editor: the Shading sidebar, the Graph, Preview and WGSL tabs, its toolbar and status bar, and where to learn each node."
+sidebar:
+  label: The Shader view
+  order: 9.5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import shaderShot from '../../../../screenshots/designer-shader.png';
+
+The third kind of document of Pyzed Design is a **shader**: a GPU effect built by wiring nodes, saved as a `.pzshad`
+file. It opens in the **Shader view**, a node editor in the spirit of Godot's visual shaders and Unreal Engine's
+material editor. This page shows how the view fits in the editor; the [Shading section](/pyzed/shading/) teaches
+shaders themselves and lists every node.
+
+<Media src={shaderShot} alt="The Shader view with the Shading sidebar, the graph and the Output preview" caption="The Shader view: Shading sidebar and Outline on the left, the graph in the center, Properties on the right." size="wide" />
+
+## How the editor changes in a shader
+
+| Area | In the Shader view |
+| --- | --- |
+| **Title bar** | A **Shader** badge after the file name. **Run** opens the shader in a window that follows your edits. |
+| **Left dock: Design** | The **Shading** sidebar (every node by category, with a search box) and the **Outline**: the shader's **variables**, its **named values** and its **nodes**. |
+| **Center** | Three tabs: **Graph**, **Preview** and **WGSL**, with the shader's own toolbar. |
+| **Right dock: Properties** | The selected node (its settings, inputs and outputs), the selected variable, or the shader itself when nothing is selected. |
+| **Events** | Says that shaders have no events, and how to use this one: `pz.shader("fire.pzshad")` or a Shader control on a form. Its variables are what your code changes. |
+| **Status bar** | The pointer's position on the graph, how many nodes and wires there are (or how many are selected), and the zoom (click it for 100%). |
+
+## The toolbar
+
+| Button | Keys | Does |
+| --- | --- | --- |
+| **New shader**, **Open**, **Save** | <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd> | File commands. |
+| **Undo**, **Redo** | <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Every change to the graph. |
+| **Graph**, **Preview**, **WGSL** | | The three tabs of the view. |
+| **Add a node** | <kbd>Shift</kbd>+<kbd>A</kbd> | Opens the node search where the pointer is. |
+| **Delete** | <kbd>Delete</kbd> | Removes the selected nodes. |
+| **Arrange nodes in columns** | <kbd>Ctrl</kbd>+<kbd>L</kbd> | Tidies the graph from inputs (left) to Output (right). |
+| **Fit everything** | <kbd>F</kbd> | Zooms to show the whole graph. |
+| **Stop time** / **Start time** | | Freezes every preview at one moment, to study a frame, and starts it again. |
+| **Small preview** | | Shows or hides the Output preview in the corner of the graph. |
+| **Compiles** / *N problems* | | Hover to read the problems; the node at fault turns red. |
+| **Run** | <kbd>F5</kbd> | The shader in a window of its own. |
+
+## Three quick gestures
+
+- **Add a node:** double-click the canvas and type its name, or drag it from the Shading sidebar.
+- **Wire:** drag from an output (right side of a node) to an input (left side). Drop a wire on empty space to add a
+  node already connected to it.
+- **Change a value:** an input with no wire shows its value on the node; type a number or pick a color there.
+
+Every gesture and shortcut is in the full [Shader view reference](/pyzed/shading/shader-designer/).
+
+<Aside type="tip" title="Shaders in forms">
+The toolbox's **Shader** control (in **Display**) draws a `.pzshad` on a form or a component; set its **Shader
+file** and its **variables** in Properties. A running form reloads the shader when you save it here.
+</Aside>
+
+<NavCards
+	items={[
+		{ title: 'Your first shader', text: 'A glowing, pulsing circle in ten minutes.', href: '/pyzed/shading/getting-started/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'Shader view reference', text: 'Tabs, gestures, the sidebar, variables and properties.', href: '/pyzed/shading/shader-designer/', icon: 'pencil' },
+		{ title: 'Node catalog', text: 'Every node with its ports and an example.', href: '/pyzed/shading/nodes/', icon: 'puzzle' },
+		{ title: 'Recipes', text: 'Ten effects to build and reuse.', href: '/pyzed/shading/recipes/', icon: 'star' },
+	]}
+/>

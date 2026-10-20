@@ -61,8 +61,61 @@ const topics = [
 		link: '/editor/',
 		icon: 'pencil',
 		items: [
-			{ slug: 'download', badge: { text: 'app', variant: 'success' } },
-			group('Pyzed Design', 'Pyzed Design', 'editor'),
+			{
+				label: 'Start',
+				translations: { es: 'Empezar' },
+				items: [
+					{ slug: 'editor' },
+					{ slug: 'download', badge: { text: 'app', variant: 'success' } },
+					{ slug: 'editor/interface' },
+					{ slug: 'editor/examples' },
+					{ slug: 'editor/projects' },
+				],
+			},
+			{
+				label: 'Views',
+				translations: { es: 'Vistas' },
+				items: [
+					{ slug: 'editor/views' },
+					{ slug: 'editor/form-view' },
+					{ slug: 'editor/component-designer' },
+					{ slug: 'editor/shader-view' },
+					{ slug: 'editor/code-editor' },
+				],
+			},
+			{
+				label: 'Designing forms',
+				translations: { es: 'Diseñar formularios' },
+				items: [
+					{ slug: 'editor/toolbox-and-canvas' },
+					{ slug: 'editor/properties' },
+					{ slug: 'editor/layouts' },
+					{ slug: 'editor/styles-and-themes' },
+					{ slug: 'editor/animations-and-effects' },
+					{ slug: 'editor/events' },
+					{ slug: 'editor/data-binding' },
+				],
+			},
+			{
+				label: 'Run, files and AI',
+				translations: { es: 'Ejecutar, archivos e IA' },
+				items: [
+					{ slug: 'editor/console-and-running' },
+					{ slug: 'editor/files-and-scripting' },
+					{ slug: 'editor/ai-agents' },
+				],
+			},
+			{
+				label: 'Reference',
+				translations: { es: 'Referencia' },
+				items: [
+					{ slug: 'editor/menus-and-commands' },
+					{ slug: 'editor/keyboard-shortcuts' },
+					{ slug: 'editor/settings' },
+					{ slug: 'editor/reference' },
+					{ slug: 'editor/tips-and-tricks' },
+				],
+			},
 		],
 	},
 	{
@@ -70,7 +123,18 @@ const topics = [
 		label: { en: 'Shading', es: 'Shading' },
 		link: '/shading/',
 		icon: 'star',
-		items: [{ autogenerate: { directory: 'shading' } }],
+		items: [
+			{ slug: 'shading' },
+			{ slug: 'shading/getting-started' },
+			{ slug: 'shading/shader-designer' },
+			{ slug: 'shading/recipes' },
+			group('Node catalog', 'Catálogo de nodos', 'shading/nodes'),
+			{
+				label: 'In code',
+				translations: { es: 'En código' },
+				items: [{ slug: 'shading/shader-graphs' }, { slug: 'shading/shaders' }],
+			},
+		],
 	},
 	{
 		id: 'theming',

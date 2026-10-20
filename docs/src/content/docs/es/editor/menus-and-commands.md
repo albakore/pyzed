@@ -11,9 +11,10 @@ lista de atajos siempre coinciden. Esta página los recoge todos.
 ## La barra de título
 
 De izquierda a derecha: el menú **☰**, el nombre del proyecto (clic para mostrar el panel Proyecto), el nombre del
-archivo (clic para abrir otro), un punto cuando hay cambios sin guardar y una insignia **Componente** en el modo
-componente. A la derecha: **Ejecutar** (<kbd>F5</kbd>), **Detener**, el menú **Ver**, el menú **Ayuda** y el
-engranaje de **Ajustes**.
+archivo (clic para abrir otro), un punto cuando hay cambios sin guardar y una insignia **Componente** o **Shader** en
+esas vistas. A la derecha: **Ejecutar** (<kbd>F5</kbd>), **Detener**, el menú **Ver**, el menú **Ayuda** y el
+engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
+[La interfaz](/pyzed/es/editor/interface/#el-marco-de-la-ventana)).
 
 ## Menú ☰ Archivo
 
@@ -58,6 +59,8 @@ en el teclado y en la paleta de comandos.
 | Paleta de comandos… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> | Ejecuta cualquier comando por su nombre. |
 | Panel izquierdo / Panel derecho / Panel inferior | <kbd>Ctrl</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> / <kbd>Ctrl</kbd>+<kbd>J</kbd> | Muestra u oculta cada dock (marcado cuando se ve). |
 | Consola | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> | Muestra la consola y la mantiene abierta. |
+| Panel del agente | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Muestra u oculta el [agente de IA](/pyzed/es/editor/ai-agents/) (marcado cuando se ve). |
+| Generar un formulario con IA… / Generar un componente con IA… | | Abre el agente con el comienzo de una petición ("Crea un formulario nuevo para…") para que la completes. |
 | Mover la pestaña a una ventana nueva / Mover la pestaña a la ventana principal | | Abre el documento que está delante en una ventana propia, o lo devuelve a las pestañas de la ventana principal. Ver [Pestañas de documentos](/pyzed/es/editor/files-and-scripting/#pestañas-de-documentos). |
 | Barra de herramientas, Barra de estado | | Las muestra u oculta. |
 | Cuadrícula | <kbd>G</kbd> | Muestra u oculta la cuadrícula de puntos. |
@@ -84,6 +87,7 @@ Los interruptores se recuerdan entre sesiones.
 | Novedades | | Una pestaña con las notas de esta versión (o de la actualización pendiente de instalar). |
 | Buscar actualizaciones | | Busca ahora una versión nueva en GitHub; consulta [Actualizaciones](/pyzed/es/download/#actualizaciones). |
 | Buscar actualizaciones automáticamente | | Activa o desactiva la búsqueda diaria (activada por defecto). |
+| Recibir versiones preliminares | | Ofrece también las pre-versiones (`X.Y.Z-rc.N`): el canal preview. Ver [Actualizaciones](/pyzed/es/download/#actualizaciones). |
 | Acerca de Pyzed Design | | Las versiones de Pyzed, Python e Iced, la plataforma y enlaces. |
 
 ![El diálogo Acerca de](../../../../../screenshots/editor-about.png)
@@ -123,7 +127,7 @@ buscador. Ver la [tabla completa](/pyzed/es/editor/keyboard-shortcuts/).
 
 ## Paneles y docks
 
-Seis paneles viven en cuatro docks alrededor del lienzo:
+Ocho paneles viven en cuatro docks alrededor del lienzo:
 
 | Panel | Dock por defecto | Muestra |
 | --- | --- | --- |
@@ -132,6 +136,7 @@ Seis paneles viven en cuatro docks alrededor del lienzo:
 | **Dependencias** | Izquierdo | Dependencias, ruff y ty (solo con un proyecto abierto). |
 | **Propiedades** | Derecho | La grilla de propiedades. |
 | **Eventos** | Derecho | Los eventos de la selección. |
+| **Agente** | Derecho | El [agente de IA](/pyzed/es/editor/ai-agents/). |
 | **Código** | Inferior | El editor de código (solo mientras hay un manejador o el archivo abierto). |
 | **Consola** | Inferior | La consola (cuando tiene algo que mostrar). |
 
@@ -165,6 +170,7 @@ flowchart LR
     subgraph Derecho
         Propiedades
         Eventos
+        Agente
     end
 ```
 

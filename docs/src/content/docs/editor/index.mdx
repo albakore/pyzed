@@ -1,6 +1,6 @@
 ---
 title: Pyzed Design
-description: "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, wire events to Python, run them and ship them."
+description: "The manual of Pyzed Design, the visual GUI designer for Python: draw windows and components, design shaders, wire events to Python, run them and ship them."
 section:
   eyebrow: "Designer"
   icon: "pencil"
@@ -10,78 +10,62 @@ sidebar:
   label: Overview
 ---
 
-:::note[About this manual]
-This manual is being expanded: every panel and every view (Form, Component and Shader) will get its own page with new captures and short animations.
-:::
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import designer from '../../../../screenshots/designer.png';
+import designerLight from '../../../../screenshots/designer-light.png';
 
-**Pyzed Design** is the visual editor of Pyzed, in the spirit of Visual Basic, the WinForms designer of Visual
-Studio and Qt Designer, and built with Pyzed itself. You draw a window with the mouse, set its properties in a
-grid, double-click a control to write the Python code of its event, and press <kbd>F5</kbd> to run it with all its
-logic. The same editor builds reusable **components** with typed properties, methods and custom events.
+**Pyzed Design** is the visual editor of Pyzed, built with Pyzed itself. You draw a window with the mouse, set its
+properties in a grid, double-click a control to write the Python code of its event, and press <kbd>F5</kbd> to run it
+with all its logic. The same editor builds reusable **components**, GPU **shaders** made of nodes, and edits the
+Python of your whole project.
 
-This manual walks through every area of the editor: what it shows, what you can do there, and the tricks that
-make you faster.
+It stands on the shoulders of tools many people already know: the form designer of **Visual Basic** and **Qt
+Designer** (draw, set properties, wire events), the scenes and visual shaders of **Godot** and the details panel and
+material editor of **Unreal Engine**, and a clean, keyboard-friendly interface inspired by the **Zed** code editor.
+The goal is a frontend framework for desktop apps that you can use without writing code, and extend with code when
+you want.
 
-![Pyzed Design with the login example open](../../../../screenshots/designer.png)
+<Media src={designer} light={designerLight} alt="Pyzed Design with the login example open" caption="A sign-in form open in the Form view." size="wide" eager />
 
-## Opening it
+## Open it
 
-| How | What it opens |
+Download the [standalone app](/pyzed/download/) (it brings its own Python and uv), or start it from a Python
+environment:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv add "pyzed-ui[designer]"      # in your project: Pyzed plus the ty and ruff language servers
+		uv run pyzed design
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pip install "pyzed-ui[designer]"
+		pyzed design
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 -m pip install "pyzed-ui[designer]"
+		python3 -m pyzed design
+		```
+		```powershell title="Windows (PowerShell)"
+		py -m pip install "pyzed-ui[designer]"
+		py -m pyzed design
+		```
+	</TabItem>
+</Tabs>
+
+| Command | What it opens |
 | --- | --- |
-| `pyzed design` | Inside a project: its main form (`[tool.pyzed] main`). Elsewhere: an empty, untitled form. |
+| `pyzed design` | Inside a project: its main form (`[tool.pyzed] main`). Elsewhere: the welcome window, or an empty form. |
 | `pyzed design login.pzform` | That form, or a new one with that name that is created on the first save. |
-| `pyzed design ui/rating.pzcomp` | A [designed component](/pyzed/editor/component-designer/) (created on the first save if missing). |
-| `pyzed design fx/fire.pzshad` | A [shader made of nodes](/pyzed/shading/shader-designer/) (created on the first save if missing). |
+| `pyzed design ui/rating.pzcomp` | A [component](/pyzed/editor/component-designer/) (created on the first save if missing). |
+| `pyzed design fx/fire.pzshad` | A [shader made of nodes](/pyzed/editor/shader-view/) (created on the first save if missing). |
 | `python -m pyzed.designer [file]` | The same, without the `pyzed` command on `PATH`. |
-| **Pyzed Design** app | The standalone build: the editor with its own Python and `uv`, nothing else to install (see [Projects](/pyzed/editor/projects/#the-standalone-app)). |
-
-```bash
-pip install "pyzed-ui[designer]"   # Pyzed plus the ty and ruff language servers
-pyzed design login.pzform
-```
-
-## A tour of the window
-
-![Every area at once: toolbox and outline on the left, properties on the right, the code editor at the bottom](../../../../screenshots/designer-code.png)
-
-```mermaid
-flowchart TB
-    T["Title bar: ☰ menu · project / file · Run ▶ · Stop · View · Help · ⚙ Settings"]
-    subgraph W[" "]
-        direction LR
-        L["Left dock<br/>Design (Toolbox + Outline)<br/>Project<br/>Dependencies"]
-        subgraph C["Center"]
-            direction TB
-            D["Document tabs: Form · login.pzform | Component · rating.pzcomp"]
-            TB["Toolbar: new, open, save · undo · align · distribute · size · order · grid"]
-            F["Canvas: the form, its dot grid, selection and handles"]
-        end
-        R["Right dock<br/>Properties<br/>Events"]
-    end
-    B["Bottom dock: Code editor · Console"]
-    S["Status bar: pointer · selection · controls · grid · snap · Ln/Col · language servers"]
-    T --> W --> B --> S
-```
-
-| Area | What it is for | Manual page |
-| --- | --- | --- |
-| **Title bar** | The ☰ menu (File and Run), the project and file names (click the file to open another), **Run** and **Stop**, the **View** and **Help** menus and the **Settings** gear. | [Menus and commands](/pyzed/editor/menus-and-commands/) |
-| **Toolbox** | Every component you can place, by category, with a search box. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
-| **Outline** | The controls of the document as a tree: select, reorder, nest, hide and lock them. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#the-outline) |
-| **Project** | The project's files and folders as a tree, with search and git status. | [Projects](/pyzed/editor/projects/) |
-| **Dependencies** | The project's dependencies, ruff and ty (shown once a project is open). | [Projects](/pyzed/editor/projects/#the-dependencies-panel) |
-| **Document tabs** | One tab per open form or component. | [Files and documents](/pyzed/editor/files-and-scripting/) |
-| **Toolbar** | File actions, undo, alignment, distribution, sizing, z-order and the grid tools. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#align-distribute-and-size) |
-| **Canvas** | The form exactly as it will run, with a dot grid, selection, handles and smart guides. | [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/) |
-| **Properties** | The selected control's (or the form's) properties, style, position and behavior. | [Properties](/pyzed/editor/properties/) |
-| **Events** | The events of the selected control and the handler wired to each one. | [Events and handlers](/pyzed/editor/events/) |
-| **Agent** | An AI agent that builds forms and components, writes their code and edits the open form. | [AI agents](/pyzed/editor/ai-agents/) |
-| **Code** | A Python editor with completion, diagnostics, code lens, folding and a minimap. | [Code editor](/pyzed/editor/code-editor/) |
-| **Console** | What the running form prints, the events it handles and its errors. | [Running and the console](/pyzed/editor/console-and-running/) |
-| **Status bar** | Pointer position, the selection's size and place, the control count, grid and snap toggles, and while coding the cursor and the language servers. | [Settings](/pyzed/editor/settings/) |
-
-Every panel lives in a **dock** (left, right, bottom or top) and can be moved to another one, resized or hidden.
-See [Panels and docks](/pyzed/editor/menus-and-commands/#panels-and-docks).
 
 ## The workflow in one picture
 
@@ -95,12 +79,12 @@ flowchart LR
     CE -- Ctrl+S --> P[(login.py)]
     F --> RUN["F5 · pyzed run"]
     P --> RUN
-    RUN --> W[Native window rendered by Iced]
+    RUN --> W[Native window]
     RUN -. prints, events, errors .-> CO[Console]
 ```
 
-1. **Place** components from the toolbox: drag them onto the form, or click one and then click (or drag a
-   rectangle) on the form.
+1. **Place** controls from the toolbox: drag them onto the form, or click one and then click (or drag a rectangle)
+   on the form.
 2. **Arrange** them with the mouse, the keyboard, the smart guides, the alignment tools or a
    [layout container](/pyzed/editor/layouts/).
 3. **Configure** them in [Properties](/pyzed/editor/properties/): text, data, style, anchors.
@@ -108,31 +92,62 @@ flowchart LR
    [code editor](/pyzed/editor/code-editor/).
 5. **Run** with <kbd>F5</kbd>. The [console](/pyzed/editor/console-and-running/) shows prints, events and errors;
    saving updates the running window.
-6. **Reuse**: turn repeated pieces into [components](/pyzed/editor/component-designer/), and ship the app with
-   `pyzed build`.
+6. **Reuse and ship**: turn repeated pieces into [components](/pyzed/editor/component-designer/), and package the app
+   with `pyzed build` (see [Distribute](/pyzed/packaging/)).
 
-## In this manual
+## Start here
 
-- [Welcome and examples](/pyzed/editor/examples/): the welcome window and the gallery of example projects.
-- [Projects](/pyzed/editor/projects/): uv projects, the file tree, dependencies, ruff, ty and git.
-- [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/): placing, selecting, moving, resizing, snapping, guides,
-  alignment and the outline.
-- [Properties](/pyzed/editor/properties/): every section of the property grid, the list and table editors.
-- [Layouts and containers](/pyzed/editor/layouts/): panels, flex rows and columns, grids and anchors.
-- [Styles and themes](/pyzed/editor/styles-and-themes/): the Style section, the color picker, gradients and themes.
-- [Events and handlers](/pyzed/editor/events/): every event and how to write its code.
-- [Data binding and validation](/pyzed/editor/data-binding/): `form.data`, validation rules, `@key` translations and
-  previewing another theme or language.
-- [Code editor](/pyzed/editor/code-editor/): completion, diagnostics, code lens, folding and its settings.
-- [Running and the console](/pyzed/editor/console-and-running/): F5, the console, `uv run` and hot reload.
-- [Component designer](/pyzed/editor/component-designer/): reusable components with props, state, methods and
-  events.
-- [Shader designer](/pyzed/shading/shader-designer/): GPU shaders made by wiring nodes, with a live preview on
-  every node.
-- [Files, templates and scripting](/pyzed/editor/files-and-scripting/): tabs, `.pzform` files, templates and the
-  Python API.
-- [Menus and commands](/pyzed/editor/menus-and-commands/): every menu entry, the command palette and the docks.
-- [Built-in reference](/pyzed/editor/reference/): the searchable docs of every control and function, with <kbd>Shift</kbd>+<kbd>F1</kbd>.
-- [Keyboard shortcuts](/pyzed/editor/keyboard-shortcuts/): the complete list.
-- [Settings](/pyzed/editor/settings/): the editor's and the code editor's preferences.
-- [Tips and tricks](/pyzed/editor/tips-and-tricks/).
+<NavCards
+	items={[
+		{ title: 'The interface', text: 'Title bar, menus, docks, panels, tabs, status bar: what every area is called and does.', href: '/pyzed/editor/interface/', icon: 'laptop', tag: 'Tour' },
+		{ title: 'Welcome and examples', text: 'The welcome window and two dozen example projects to start from.', href: '/pyzed/editor/examples/', icon: 'open-book' },
+		{ title: 'Projects', text: 'uv projects, the file tree, dependencies, ruff, ty and git.', href: '/pyzed/editor/projects/', icon: 'seti:folder' },
+	]}
+/>
+
+## The views
+
+<NavCards
+	items={[
+		{ title: 'Views and documents', text: 'Forms, components, shaders and code: which view each one opens in.', href: '/pyzed/editor/views/', icon: 'document' },
+		{ title: 'The Form view', text: 'Draw a window, wire its first event and run it, step by step.', href: '/pyzed/editor/form-view/', icon: 'pencil', tag: 'Basic' },
+		{ title: 'The Component view', text: 'Reusable pieces with properties, state, methods and events.', href: '/pyzed/editor/component-designer/', icon: 'puzzle' },
+		{ title: 'The Shader view', text: 'GPU effects made by wiring nodes, with live previews.', href: '/pyzed/editor/shader-view/', icon: 'star' },
+		{ title: 'Code editor', text: 'Completion, diagnostics, code lens, multiple cursors and key bindings.', href: '/pyzed/editor/code-editor/', icon: 'seti:python' },
+	]}
+/>
+
+## Designing forms
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Toolbox and canvas', text: 'Place, select, move, snap, align, the outline.', href: '/pyzed/editor/toolbox-and-canvas/', icon: 'pencil' },
+		{ title: 'Properties', text: 'Every section of the property grid.', href: '/pyzed/editor/properties/', icon: 'setting' },
+		{ title: 'Layouts', text: 'Panels, rows, columns, grids and anchors.', href: '/pyzed/editor/layouts/', icon: 'list-format' },
+		{ title: 'Styles and themes', text: 'Colors, fonts, gradients and the form style.', href: '/pyzed/editor/styles-and-themes/', icon: 'moon' },
+		{ title: 'Animations and effects', text: 'Glow, blur, glass and motion on hover or click.', href: '/pyzed/editor/animations-and-effects/', icon: 'star' },
+		{ title: 'Events', text: 'Every event and how to write its handler.', href: '/pyzed/editor/events/', icon: 'rocket' },
+		{ title: 'Data binding', text: 'Bind fields to data, validate, translate.', href: '/pyzed/editor/data-binding/', icon: 'random' },
+	]}
+/>
+
+## Run, files, AI and reference
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Running and the console', text: 'F5, output, errors and hot reload.', href: '/pyzed/editor/console-and-running/', icon: 'right-arrow' },
+		{ title: 'Files and scripting', text: 'Tabs, templates, the .pzform format, the Python API.', href: '/pyzed/editor/files-and-scripting/', icon: 'document' },
+		{ title: 'AI agents', text: 'An agent that builds forms and writes their code.', href: '/pyzed/editor/ai-agents/', icon: 'comment-alt' },
+		{ title: 'Menus and commands', text: 'Every menu entry and the command palette.', href: '/pyzed/editor/menus-and-commands/', icon: 'list-format' },
+		{ title: 'Keyboard shortcuts', text: 'The complete list.', href: '/pyzed/editor/keyboard-shortcuts/', icon: 'pencil' },
+		{ title: 'Settings', text: 'Themes, canvas, running, panels, telemetry.', href: '/pyzed/editor/settings/', icon: 'setting' },
+	]}
+/>
+
+<Aside type="note" title="Status of this manual">
+Every panel and view has its page, written against the current version. New captures and short recordings of each
+area are being added; until a page has them, it uses the captures of the previous release, which may differ in small
+details such as the title bar.
+</Aside>

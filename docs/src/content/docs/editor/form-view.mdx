@@ -1,0 +1,170 @@
+---
+title: The Form view
+description: "Design a window of your app in Pyzed Design's Form view: place controls, set their properties, wire an event to Python and run it, with every part of the view explained."
+sidebar:
+  label: The Form view
+  order: 1.6
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import newForm from '../../../../screenshots/designer-new.png';
+import placing from '../../../../screenshots/editor-placing.png';
+import events from '../../../../screenshots/editor-events.png';
+import run from '../../../../screenshots/designer-run.png';
+
+A **form** is one window of your app. The **Form view** is where you draw it: you pick controls from a box, drop
+them on the window, change their look in a list of properties, and write a few lines of Python for what happens when
+the user clicks or types. If you have used Visual Basic, the WinForms designer or Qt Designer, you already know the
+idea; if you haven't, the walkthrough below takes ten minutes.
+
+## What you see
+
+| Area | In the Form view |
+| --- | --- |
+| **Toolbox** (left, top) | Every control you can place, grouped (Common, Display, Containers, Layout, Navigation...), with a search box. |
+| **Outline** (left, bottom) | The controls of the form as a tree: select, rename, nest, hide and lock them. |
+| **Toolbar** (center, top) | Save, undo, align, distribute, same size, center, order, grid, snap and guides. |
+| **Canvas** (center) | The form inside a window frame, as it will run. |
+| **Properties** (right) | The selected control, or the form when nothing is selected. |
+| **Events** (right) | What the selected control can react to, and the Python function wired to each event. |
+| **Code** (bottom) | The Python of the form, opened when you wire an event. |
+
+Every area is described in detail in its own page: [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/),
+[Properties](/pyzed/editor/properties/), [Events](/pyzed/editor/events/) and [Code editor](/pyzed/editor/code-editor/).
+
+## Your first form: a greeter
+
+You will build a window with a text box, a button and a label. Typing a name and clicking the button shows
+"Hello, *name*!".
+
+{/* media: editor/form-view-greeter (the finished greeter running, short loop) */}
+
+<Steps>
+
+1. **Create the form.** Press <kbd>Ctrl</kbd>+<kbd>N</kbd>. In the **New** dialog keep **Form**, type `hello` as the
+   **Name** and `Greeter` as the **Title**, pick the **Blank** template and press **Create**. Two files appear:
+   `hello.pzform` (the layout) and `hello.py` (the code).
+
+	<Media src={newForm} alt="The New dialog with a name, title, folder and templates" caption="The New dialog: name, title, folder and a template to start from." size="narrow" />
+
+2. **Place a text box.** In the toolbox, drag **Text box** onto the form. It is selected and the Properties panel
+   shows it. Change its **Name** to `your_name` and its **Placeholder** to `Your name`.
+
+3. **Place a button.** Click **Button** in the toolbox, then drag a rectangle on the form under the text box: the
+   button takes that size. Name it `greet` and set its **Text** to `Say hello`.
+
+	<Media src={placing} alt="Placing a button by dragging a rectangle with the tool picked" caption="With a control picked, drag a rectangle to give it a size." />
+
+4. **Place a label.** Add a **Label** under the button, name it `message` and clear its text.
+
+5. **Line them up.** Select the three controls (drag a rubber band around them) and press **Align left** in the
+   toolbar. Smart guides show pink lines when edges line up while you drag.
+
+6. **Wire the click.** Double-click the button. The Events panel wires its **click** event to a new function,
+   `greet_click`, and opens it in the code editor. Write one line:
+
+	```python title="hello.py"
+	def greet_click(form, event):
+	    """Runs when greet is clicked."""
+	    form.message.text = f"Hello, {form.your_name.text}!"
+	```
+
+	`form` is the running window: each control is an attribute with its name (`form.message`), and its properties are
+	attributes of the control (`form.message.text`). Changing them updates the window.
+
+	<Media src={events} alt="The Events panel with an event wired to a handler" caption="The Events panel: double-click an event to wire it and jump to its code." size="narrow" />
+
+7. **Run it.** Press <kbd>F5</kbd> (it saves first). Your form opens as a real window; type a name and click the
+   button. The [console](/pyzed/editor/console-and-running/) at the bottom shows what the form prints and any error.
+   Keep it open, change the label's color in Properties and save: the running window updates.
+
+	<Media src={run} alt="The form running in its own window next to the designer" caption="F5 runs the form with its code; saving updates it live." />
+
+</Steps>
+
+<Aside type="tip" title="Names matter">
+A control's **Name** is how your code reaches it (`form.your_name`), and handlers are named after it
+(`greet_click`). Give controls short, meaningful names as soon as you place them; renaming one later also renames the
+handlers that follow that naming (`greet_click`), but code elsewhere that uses the old name must be updated by hand.
+</Aside>
+
+## Run the form outside the designer
+
+The form and its code are ordinary files of your project. Run them from a terminal:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run pyzed run hello.pzform
+		uv run pyzed run hello.pzform --reload   # updates on every save
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		pyzed run hello.pzform
+		pyzed run hello.pzform --reload
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 -m pyzed run hello.pzform
+		```
+		```powershell title="Windows (PowerShell)"
+		py -m pyzed run hello.pzform
+		```
+	</TabItem>
+</Tabs>
+
+Or from your own Python code:
+
+```python title="main.py"
+from pyzed import designer
+
+designer.run("hello.pzform")
+```
+
+## What else the Form view does
+
+| Task | How | More |
+| --- | --- | --- |
+| Arrange controls in rows, columns and grids that adapt to the window | Select them, right-click → **Group in a row / column / grid**, or use a container from the toolbox | [Layouts](/pyzed/editor/layouts/) |
+| Keep a control glued to an edge when the window grows | **Position → Anchors** in Properties | [Properties](/pyzed/editor/properties/#position) |
+| Change colors, fonts, borders and shadows | **Style** in Properties; the whole window in the form's **Style** | [Styles and themes](/pyzed/editor/styles-and-themes/) |
+| Animate on hover or click, add glow, blur or glass | **Effects** and **Motion** in Properties | [Animations and effects](/pyzed/editor/animations-and-effects/) |
+| Fill fields from data and validate them | **Data** section: binding and rules | [Data binding](/pyzed/editor/data-binding/) |
+| See the form in another theme, language or OS frame | **View → Preview theme / language / window frame** | [Interface](/pyzed/editor/interface/#canvas) |
+| Reuse a group of controls in many forms | Turn it into a component | [Component view](/pyzed/editor/component-designer/) |
+| Paint a background with a GPU effect | The **Shader** control in Display, with a `.pzshad` | [Shading](/pyzed/shading/) |
+
+## The `.pzform` file
+
+A form is JSON: its size and look, and every control with its type, position and properties. Its handlers live next to
+it in a Python module with the same name. Both are yours to version, review and edit by hand.
+
+```json title="hello.pzform (abridged)"
+{
+  "format": "pyzed.form/1",
+  "form": {"name": "hello", "title": "Greeter", "width": 360, "height": 220, "theme": "One Dark"},
+  "controls": [
+    {"name": "your_name", "type": "input", "x": 24, "y": 24, "width": 312, "height": 32,
+     "props": {"placeholder": "Your name"}, "events": {}},
+    {"name": "greet", "type": "button", "x": 24, "y": 72, "width": 120, "height": 32,
+     "props": {"text": "Say hello"}, "events": {"click": "greet_click"}}
+  ]
+}
+```
+
+<Aside type="note" title="Status of this page">
+This page is new. Short recordings of each step are being added; the other pages of this section already describe
+every control of the view in depth.
+</Aside>
+
+<NavCards
+	items={[
+		{ title: 'Toolbox and canvas', text: 'Placing, selecting, snapping, guides and the outline.', href: '/pyzed/editor/toolbox-and-canvas/', icon: 'pencil' },
+		{ title: 'Properties', text: 'Every section of the property grid.', href: '/pyzed/editor/properties/', icon: 'setting' },
+		{ title: 'Events and handlers', text: 'Every event and how to write its code.', href: '/pyzed/editor/events/', icon: 'rocket' },
+	]}
+/>

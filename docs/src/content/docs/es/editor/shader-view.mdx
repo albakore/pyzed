@@ -1,0 +1,70 @@
+---
+title: La vista Shader
+description: "Cómo encaja la vista Shader de Pyzed Design en el editor: la barra Shading, las pestañas Grafo, Vista previa y WGSL, su barra de herramientas y su barra de estado, y dónde aprender cada nodo."
+sidebar:
+  label: La vista Shader
+  order: 9.5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import shaderShot from '../../../../../screenshots/designer-shader.png';
+
+El tercer tipo de documento de Pyzed Design es un **shader**: un efecto de GPU hecho conectando nodos y guardado como
+archivo `.pzshad`. Se abre en la **vista Shader**, un editor de nodos con el espíritu de los visual shaders de Godot y
+del editor de materiales de Unreal Engine. Esta página muestra cómo encaja la vista en el editor; la
+[sección Shading](/pyzed/es/shading/) enseña los shaders en sí y lista cada nodo.
+
+<Media src={shaderShot} alt="La vista Shader con la barra Shading, el grafo y la vista previa de la Salida" caption="La vista Shader: la barra Shading y la Estructura a la izquierda, el grafo en el centro y Propiedades a la derecha." size="wide" />
+
+## Cómo cambia el editor con un shader
+
+| Zona | En la vista Shader |
+| --- | --- |
+| **Barra de título** | Una insignia **Shader** tras el nombre del archivo. **Ejecutar** abre el shader en una ventana que sigue tus cambios. |
+| **Dock izquierdo: Diseño** | La barra **Shading** (cada nodo por categoría, con buscador) y la **Estructura**: las **variables** del shader, sus **valores con nombre** y sus **nodos**. |
+| **Centro** | Tres pestañas: **Grafo**, **Vista previa** y **WGSL**, con la barra de herramientas propia del shader. |
+| **Dock derecho: Propiedades** | El nodo seleccionado (sus ajustes, entradas y salidas), la variable seleccionada, o el propio shader si no hay nada seleccionado. |
+| **Eventos** | Indica que los shaders no tienen eventos y cómo usar este: `pz.shader("fire.pzshad")` o un control Shader en un formulario. Sus variables son lo que cambia tu código. |
+| **Barra de estado** | La posición del puntero en el grafo, cuántos nodos y cables hay (o cuántos están seleccionados) y el zoom (clic para 100 %). |
+
+## La barra de herramientas
+
+| Botón | Teclas | Hace |
+| --- | --- | --- |
+| **Nuevo shader**, **Abrir**, **Guardar** | <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd> | Comandos de archivo. |
+| **Deshacer**, **Rehacer** | <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Cualquier cambio en el grafo. |
+| **Grafo**, **Vista previa**, **WGSL** | | Las tres pestañas de la vista. |
+| **Añadir un nodo** | <kbd>Shift</kbd>+<kbd>A</kbd> | Abre el buscador de nodos donde está el puntero. |
+| **Eliminar** | <kbd>Supr</kbd> | Quita los nodos seleccionados. |
+| **Ordenar nodos en columnas** | <kbd>Ctrl</kbd>+<kbd>L</kbd> | Ordena el grafo de las entradas (izquierda) a la Salida (derecha). |
+| **Encajar todo** | <kbd>F</kbd> | Ajusta el zoom para ver el grafo entero. |
+| **Detener el tiempo** / **Reanudar el tiempo** | | Congela todas las vistas previas en un instante, para estudiar un fotograma, y lo reanuda. |
+| **Vista previa pequeña** | | Muestra u oculta la vista previa de la Salida en la esquina del grafo. |
+| **Compila** / *N problemas* | | Pasa el ratón para leer los problemas; el nodo culpable se pone rojo. |
+| **Ejecutar** | <kbd>F5</kbd> | El shader en su propia ventana. |
+
+## Tres gestos rápidos
+
+- **Añadir un nodo:** doble clic en el lienzo y escribe su nombre, o arrástralo desde la barra Shading.
+- **Conectar:** arrastra desde una salida (lado derecho de un nodo) hasta una entrada (lado izquierdo). Suelta un cable
+  en un espacio vacío para añadir un nodo ya conectado a él.
+- **Cambiar un valor:** una entrada sin cable muestra su valor en el nodo; escribe un número o elige un color ahí.
+
+Todos los gestos y atajos están en la [referencia de la vista Shader](/pyzed/es/shading/shader-designer/).
+
+<Aside type="tip" title="Shaders en formularios">
+El control **Shader** de las herramientas (en **Presentación**) dibuja un `.pzshad` en un formulario o un componente;
+ajusta su **archivo de shader** y sus **variables** en Propiedades. Un formulario en ejecución recarga el shader cuando
+lo guardas aquí.
+</Aside>
+
+<NavCards
+	items={[
+		{ title: 'Tu primer shader', text: 'Un círculo brillante que late, en diez minutos.', href: '/pyzed/es/shading/getting-started/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Referencia de la vista Shader', text: 'Pestañas, gestos, la barra lateral, variables y propiedades.', href: '/pyzed/es/shading/shader-designer/', icon: 'pencil' },
+		{ title: 'Catálogo de nodos', text: 'Cada nodo con sus puertos y un ejemplo.', href: '/pyzed/es/shading/nodes/', icon: 'puzzle' },
+		{ title: 'Recetas', text: 'Diez efectos para construir y reutilizar.', href: '/pyzed/es/shading/recipes/', icon: 'star' },
+	]}
+/>
