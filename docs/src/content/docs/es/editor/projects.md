@@ -72,6 +72,11 @@ por ejemplo), y los proyectos recientes que viven en una distribución de WSL mu
 ty y git se ejecutan entonces en Linux, las ventanas de tus formularios se abren a través de WSLg y las páginas web
 en el navegador de Windows.
 
+Pyzed Design **en Windows** también puede abrir un proyecto que vive en WSL, como los proyectos WSL de Zed: abre su
+carpeta a través de `\\wsl.localhost\<distribución>\...` (o `\\wsl$\...`). La barra de título muestra la
+distribución, y uv, git, ruff, ty y Ejecutar pasan por `wsl.exe` a Linux, con rutas de Linux. Si la distribución
+no tiene uv, al abrir el proyecto se instala allí, y el primer `uv sync` crea un `.venv` de Linux.
+
 El agente de IA recibe lo mismo con cada mensaje: el proyecto activo, su entorno y su rama, y los demás proyectos
 abiertos en la ventana, para trabajar sobre el correcto.
 

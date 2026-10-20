@@ -69,6 +69,11 @@ The editor knows where each project lives. Under WSL the title bar starts with t
 (*Ubuntu*, for example), and the recent projects that live in a WSL distribution show its name next to them. uv,
 ruff, ty and git then run in Linux, the windows of your forms open through WSLg and web pages in Windows' browser.
 
+Pyzed Design running **on Windows** can also open a project that lives in WSL, like Zed's WSL projects: open its
+folder through `\\wsl.localhost\<distribution>\...` (or `\\wsl$\...`). The title bar shows the distribution,
+and uv, git, ruff, ty and Run go through `wsl.exe` into Linux, with Linux paths. If the distribution has no uv,
+opening the project installs it there, and the first `uv sync` creates a Linux `.venv`.
+
 The AI agent is told the same with every message: the active project, its environment and branch, and the other
 projects open in the window, so it works on the right one.
 
