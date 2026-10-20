@@ -120,7 +120,7 @@ Opens the visual designer, optionally on a `.pzform` file (created on first save
 
 ```python
 @dataclass
-class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None)
+class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='')
 ```
 
 A window designed visually: its settings, its controls (in z-order) and its events.
@@ -730,6 +730,30 @@ Document.set_animations(name, animations, *, group=None)
 ```
 
 Replaces the animations of control `name` (see `designer.motion`). Edits with the same `group` in a row undo together (typing a duration).
+
+#### `Document.set_clip`
+
+```python
+Document.set_clip(clip, *, old=None, group=None)
+```
+
+Stores the `pz.Clip` `clip` in the form (in place of the clip `old` when it is renamed).
+
+#### `Document.remove_clip`
+
+```python
+Document.remove_clip(name)
+```
+
+Removes the clip `name` (and stops it playing when the form opens).
+
+#### `Document.set_autoplay`
+
+```python
+Document.set_autoplay(name)
+```
+
+Plays the clip `name` when the form opens (`""`: none).
 
 #### `Document.clear_style`
 
@@ -1440,7 +1464,7 @@ Adds a reusable method (not an event handler) to the class; returns its name.
 
 ```python
 @dataclass
-class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, label='', icon='component', category='Custom', description='', extends='', bindings={})
+class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', label='', icon='component', category='Custom', description='', extends='', bindings={})
 ```
 
 The layout of a designed component: a `Form` whose `name` is the class name.

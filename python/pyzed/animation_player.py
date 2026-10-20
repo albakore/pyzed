@@ -554,14 +554,15 @@ def load_animations(path: PathLike) -> AnimationLibrary:
 class _Target:
     """What ``player["card"]`` gives ``animate()``: the clip's tracks for one widget target."""
 
-    __slots__ = ("player", "name")
+    __slots__ = ("player", "name", "only")
 
-    def __init__(self, player: "AnimationPlayer", name: str):
+    def __init__(self, player: "AnimationPlayer", name: str, only: Optional[Tuple[str, ...]] = None):
         self.player = player
         self.name = name
+        self.only = only
 
     def _pyzed_compiled(self) -> List[Dict[str, Any]]:
-        return self.player._compiled(self.name)
+        return self.player._compiled(self.name, self.only)
 
     def __repr__(self) -> str:
         return f"<animation target {self.name!r}>"
@@ -602,7 +603,7 @@ class AnimationPlayer:
         self._queue: List[str] = []
         self._generation = 0
         self._wakes = 0
-        self._cache: Dict[str, List[Dict[str, Any]]] = {}
+        self._cache: Dict[Any, List[Dict[str, Any]]] = {}
         for source in sources:
             self.add(source)
         if autoplay:
@@ -656,7 +657,10 @@ class AnimationPlayer:
         """The widget target ``target`` for ``widget.animate(player[target])``."""
         return _Target(self, target)
 
-    target = __getitem__
+    def target(self, target: str, *, only: Optional[Sequence[str]] = None) -> _Target:
+        """Like ``player[target]``; ``only`` keeps some properties (``("opacity", "x", "y")``), for
+        example to move what sits inside an animated container along with it."""
+        return _Target(self, target, None if only is None else tuple(only))
 
     # -- state --------------------------------------------------------------------------
 
@@ -934,15 +938,15 @@ class AnimationPlayer:
         self._generation += 1
         self._cache.clear()
 
-    def _compiled(self, target: str) -> List[Dict[str, Any]]:
-        """The native animation ``target``'s widgets play right now."""
-        cached = self._cache.get(target)
+    def _compiled(self, target: str, only: Optional[Tuple[str, ...]] = None) -> List[Dict[str, Any]]:
+        """The native animation ``target``'s widgets play right now (``only`` some properties)."""
+        cached = self._cache.get((target, only))
         if cached is not None:
             return cached
         out: List[Dict[str, Any]] = []
         if self._current:
             clip = self.clip()
-            tracks = clip._native_tracks(target)
+            tracks = [t for t in clip._native_tracks(target) if only is None or t[0] in only]
             if tracks:
                 direction = {("none", False): "normal", ("loop", False): "normal", ("pingpong", False): "alternate",
                              ("none", True): "reverse", ("loop", True): "reverse",
@@ -965,7 +969,7 @@ class AnimationPlayer:
                     "speed": speed if speed > 0 else 1.0,
                     "paused": self._anchor is None or speed <= 0,
                 })
-        self._cache[target] = out
+        self._cache[(target, only)] = out
         return out
 
     # -- runtime ------------------------------------------------------------------------

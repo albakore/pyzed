@@ -66,3 +66,23 @@ Animations are saved as plain data on the control:
 `Document.set_animations(name, animations)` changes them from a script and `Control.animations` reads
 them. To animate a control from its handlers, use the library: `pz.Animation`, `define_animation` and
 the [preset list](/pyzed/guides/animation/#presets).
+
+## Timeline animations
+
+For animations that move several controls together (an intro, a transition between states), open the
+**Animation** panel from **View → Animation** (`Ctrl+Shift+M`). It edits **clips**: timelines saved in the
+`.pzform` that play the same way as [`pz.AnimationPlayer`](/pyzed/guides/timeline/) does in code.
+
+![The Animation panel: an intro clip with tracks for the card, the title and a label's text, and a call to intro_done](../../../../screenshots/editor-animation.png)
+
+| Action | Result |
+| --- | --- |
+| **Add track for …** | Adds a track for a property of the selected control (opacity, position, scale, colors, size…) or any of its properties, such as a label's text. |
+| **Double-click** a lane | Adds a key at that time with the control's current value. |
+| **Drag** a key | Moves it in time. Select a key to edit its value and easing below the tracks. |
+| **Click** or **drag** the ruler | Moves the playhead; the canvas shows the form at that time. |
+| **Calls** lane (right-click a call to remove it) | Calls a method of the form's code file at a time. |
+| **Length**, **loop**, **autoplay** | Set how long the clip lasts, whether it repeats, and whether it plays when the form opens. |
+
+Controls inside an animated container follow its opacity, position and blur. Every change can be undone.
+In a running form, `self.animations` is the player: `self.animations.play("intro")`.

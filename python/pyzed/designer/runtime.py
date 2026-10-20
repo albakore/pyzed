@@ -33,6 +33,7 @@ from . import code as _code
 from . import components as _components
 from . import layout as _layout
 from . import styling
+from . import timeline
 from .model import SUFFIX, Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
@@ -217,6 +218,11 @@ class FormProxy:
         return self._runtime.window
 
     @property
+    def animations(self) -> Any:
+        """The form's ``pz.AnimationPlayer``: ``form.animations.play("intro")``."""
+        return self._runtime.player
+
+    @property
     def data(self) -> Any:
         """The form's data: what the form that opened it passed as ``data=`` (a dict, a list or any object).
 
@@ -325,6 +331,8 @@ class FormRuntime:
         self.proxy = FormProxy(self)
         self.error: Optional[str] = None
         self.loaded = False
+        #: Plays the form's timeline animations (``form.animations`` in handlers).
+        self.player = timeline.player_for(self.form, timeline.FormOwner(self))
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -457,7 +465,7 @@ class FormRuntime:
             if props.get("running") and c.enabled:
                 interval = max(float(props.get("interval") or 1000), 10) / 1000
                 subs.append(_core.every(interval, self.ctx.on(c, "tick"), key=f"{self.form.name}:{c.name}"))
-        return subs
+        return subs + self.player.subscriptions()
 
     def _wrap_mouse(self, control: Control, widget: Any) -> Any:
         wired = {e: control.events.get(e) for e in _components.COMMON_EVENTS}
@@ -495,6 +503,9 @@ class FormRuntime:
             x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
             widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
+            played = timeline.targets(self.player, form, control.name)
+            if played:
+                widget = widget.animate(*played)
             remember_instance(self, control, self.ctx)
             message = self.errors.get(control.name)
             if message:
@@ -542,6 +553,7 @@ class FormRuntime:
         self.theme = theme_for(form, self.preview_theme)
         self.ctx = LiveContext(self)
         self.window.theme = self.theme
+        self.player = timeline.reload_player(self.player, form)
         self.error = None
         return True
 

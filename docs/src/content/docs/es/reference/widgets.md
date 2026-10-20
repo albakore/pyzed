@@ -2149,10 +2149,10 @@ El clip llamado `name` (por defecto el actual).
 #### `AnimationPlayer.target`
 
 ```python
-AnimationPlayer.target(target)
+AnimationPlayer.target(target, *, only=None)
 ```
 
-El objetivo de widget `target` para `widget.animate(player[target])`.
+Igual que `player[target]`; `only` deja solo algunas propiedades (`("opacity", "x", "y")`), por ejemplo para mover con él lo que está dentro de un contenedor animado.
 
 #### `AnimationPlayer.current`
 

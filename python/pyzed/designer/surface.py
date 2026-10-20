@@ -154,6 +154,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
 
     # 2. the controls, as they will look, containers before what they hold
     rects = d.rects
+    # the Animation panel's playhead: control properties its tracks change, and the player of the rest
+    animated = d.timeline.canvas_overrides()
     shown = []
     drawn: List[Any] = []
     hidden: set = set()
@@ -164,7 +166,12 @@ def form_surface(d: "Designer", t: Theme) -> Any:
                 continue
         x, y, cw, ch = rects[c.name]
         placed = Control(**{**c.__dict__, "width": cw, "height": ch})
+        if c.name in animated:
+            placed.props = {**placed.props, **animated[c.name]}
         widget = _components.render(placed, ctx)
+        played = d.timeline.targets(c.name)
+        if played:
+            widget = widget.animate(*played)
         if c.name in hidden:
             widget = _core.container(widget, width=cw, height=ch, bg=alpha(ft.background, 0.5))
         drawn.append(_core.pin(widget, x=x, y=y))
