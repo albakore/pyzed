@@ -17,6 +17,11 @@ from .settings import _read, settings_path
 DOCKS = ("left", "right", "bottom", "top")
 
 
+def is_place(value: Any) -> bool:
+    """Whether ``value`` is a dock or a panel window ("window:1", "window:2"...)."""
+    return isinstance(value, str) and (value in DOCKS or (value.startswith("window:") and value[7:].isdigit()))
+
+
 @dataclass
 class DesignerSettings:
     #: Theme of the designer window ("" keeps the default).
@@ -48,8 +53,18 @@ class DesignerSettings:
     #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).
     update_channel: str = "stable"
     recent: List[str] = field(default_factory=list)
-    #: Panel id -> dock ("left", "right", "bottom", "top").
+    #: Panel id -> dock ("left", "right", "bottom", "top") or panel window ("window:1"...).
     docks: Dict[str, str] = field(default_factory=dict)
+    #: The order of the panel tabs (panel ids).
+    order: List[str] = field(default_factory=list)
+    #: Dock or panel window -> the panel shown in front.
+    active: Dict[str, str] = field(default_factory=dict)
+    #: Panel window -> {"size": [w, h], "position": [x, y]}.
+    windows: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    #: Saved work layouts: name -> a dock layout snapshot (see ``docks.DockLayout.snapshot``).
+    layouts: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    #: The work layout picked last ("" when none).
+    layout_name: str = ""
     #: Panel id -> shown or hidden.
     panels: Dict[str, bool] = field(default_factory=dict)
     #: Dock -> size in pixels (width of side docks, height of top and bottom ones).
@@ -78,7 +93,8 @@ class DesignerSettings:
             except (TypeError, ValueError):
                 continue
         out.grid = min(max(out.grid, 2), 64)
-        out.docks = {k: v for k, v in out.docks.items() if v in DOCKS}
+        out.docks = {k: v for k, v in out.docks.items() if is_place(v)}
+        out.layouts = {str(k): v for k, v in out.layouts.items() if isinstance(v, dict)}
         out.sizes = {k: float(v) for k, v in out.sizes.items() if k in DOCKS and isinstance(v, (int, float))}
         out.recent = [str(p) for p in out.recent][:10]
         return out

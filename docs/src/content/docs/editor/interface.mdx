@@ -88,7 +88,8 @@ the [API reference](/pyzed/reference/ui/).
 ## ② ④ ⑤ Docks and panels
 
 Panels live in **docks** around the center: left, right, bottom and a top dock that is empty until you move a
-panel there. Each dock shows one panel at a time, with a tab per panel.
+panel there. Each dock shows one panel at a time, with a tab per panel. Any panel can also leave the docks and float
+in a **window of its own**, alone or stacked with other panels, just like document tabs.
 
 | Panel | Dock | What it is for | Manual |
 | --- | --- | --- | --- |
@@ -104,19 +105,27 @@ panel there. Each dock shows one panel at a time, with a tab per panel.
 What you can do with them:
 
 - **Switch** panels with the tabs at the top of a dock.
-- **Move** a panel: the dock button at the end of the tab bar opens **Move *panel* to** left, right, bottom or top.
+- **Drag** a panel's tab: along its row to reorder it, onto another dock's tabs or over any dock's area to move it
+  there (the dock you are over lights up), or out of the window to open it in a **window of its own**. Drop more tabs
+  on that window to stack them there, and drag them back over the main window to dock them again.
+- **Move** a panel from the menu instead: the dock button at the end of the tab bar opens **Move *panel* to** left,
+  right, bottom or top, or **New window**. In a panel window, the same button offers **Dock everything here back**,
+  and closing the window does the same.
 - **Resize** a dock by dragging its edge that faces the canvas.
 - **Hide** a dock with its **×**, or toggle it: <kbd>Ctrl</kbd>+<kbd>B</kbd> (left), <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd>
   (right), <kbd>Ctrl</kbd>+<kbd>J</kbd> (bottom).
-- **Reset** everything with **View → Reset panel layout**. Where each panel is and the size of each dock are saved
-  with your settings.
+- **Save the layout** with **View → Save layout as…** and switch between layouts from **View → Layouts**. Pyzed
+  comes with **Default**, **Coding** (code next to the properties), **Focus** (only the canvas and the right dock)
+  and **Events and code**; **Delete this layout** removes one of yours.
+- **Reset** everything with **View → Reset panel layout**. Where each panel is, the tab order, the size of each dock
+  and the panel windows (with their size and position) are saved with your settings and reopen next time.
 
 <Media src={dockMenu} alt="The dock menu with Move Properties to the left, bottom or top dock" caption="Move any panel to another dock from the dock button." size="narrow" />
 
 <Aside type="tip" title="A layout for writing code">
-On a laptop, hide the left dock (<kbd>Ctrl</kbd>+<kbd>B</kbd>) while you write code and add controls with
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> instead of the toolbox. On a wide screen, move **Events** to the left dock
-to see it next to Properties.
+On a laptop, pick **View → Layouts → Coding**, or hide the left dock (<kbd>Ctrl</kbd>+<kbd>B</kbd>) and add
+controls with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>. With two screens, drag **Code** and **Console** to the
+second one and save the result as a layout of your own.
 </Aside>
 
 ## ③ The center: tabs, toolbar and canvas
