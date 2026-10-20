@@ -18,7 +18,7 @@ class, so drawing it and writing it by hand are the same thing, and you can swit
 
 ## Creating one
 
-Press **New component** in the toolbar (Ctrl+Shift+N), or **New** (Ctrl+N) and pick the **Component** card. Give it
+Press **New component…** at the end of the toolbox or in the ☰ menu (Ctrl+Shift+N), or **New…** (Ctrl+N, the first toolbar button) and pick the **Component** card. Give it
 a name and a folder; **Inherits from** can start it from another component (see [Inheritance](#inheritance)).
 **Create component** saves both files and opens it. You can also open a `.pzcomp` file:
 

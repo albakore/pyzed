@@ -101,12 +101,17 @@ The toggles are remembered between sessions.
 
 ## The toolbar
 
-Under the document tabs, left to right: **New form**, **Open**, **Save**, **New component**; **Undo**, **Redo**;
-**Align left, centers, right, top, middles, bottom**; **Distribute horizontally, vertically**, **Same width,
-height**, **Center in form horizontally, vertically**; **Bring to front**, **Send to back**, **Delete**. At the
-end: **Show grid**, **Snap to grid**, **Smart guides**, **Resize contents with their anchors**, **Fit selection to grid** and **Edit code file**.
-Every button has a tooltip with its shortcut, buttons that do not apply to the selection are disabled, and the
-toolbar scrolls sideways when the window is narrow. Hide it with **View → Toolbar**. See
+Under the document tabs, in groups from left to right:
+
+1. **New…** (a form, a component or a shader, picked in the New dialog), **Undo** and **Redo**.
+2. While something is selected: **Align left, centers, right, top, middles, bottom**; **Center in form
+   horizontally, vertically**, then **Distribute** (three or more controls) and **Same width, height** (two or
+   more); **Bring to front**, **Send to back** and **Delete**. With nothing selected a hint takes their place.
+3. At the end, how the canvas behaves: **Show grid**, **Snap to grid**, **Smart guides**, **Resize contents with
+   their anchors**, **Fit selection to grid**, and **Edit code file**.
+
+**Open** and **Save** are in the ☰ menu and on <kbd>Ctrl</kbd>+<kbd>O</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>. Every
+button has a tooltip with its shortcut, and the editing tools scroll sideways when the window is narrow. Hide it with **View → Toolbar**. See
 [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/#align-distribute-and-size).
 
 ## Command palette

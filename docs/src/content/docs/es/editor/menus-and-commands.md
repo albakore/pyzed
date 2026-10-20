@@ -101,13 +101,18 @@ Los interruptores se recuerdan entre sesiones.
 
 ## La barra de herramientas
 
-Bajo las pestañas de documentos, de izquierda a derecha: **Nuevo formulario**, **Abrir**, **Guardar**, **Nuevo
-componente**; **Deshacer**, **Rehacer**; **Alinear a la izquierda, los centros, a la derecha, arriba, al medio,
-abajo**; **Distribuir horizontalmente, verticalmente**, **Mismo ancho, alto**, **Centrar horizontal y verticalmente
-en el formulario**; **Traer al frente**, **Enviar al fondo**, **Eliminar**. Al final: **Mostrar la cuadrícula**,
-**Ajustar a la cuadrícula**, **Guías inteligentes**, **Redimensionar el contenido con sus anclajes**, **Ajustar la selección a la cuadrícula** y **Editar el
-código**. Cada botón tiene un tooltip con su atajo, los que no se aplican a la selección están deshabilitados y la
-barra se desplaza de lado cuando la ventana es estrecha. Ocúltala con **Ver → Barra de herramientas**. Ver
+Bajo las pestañas de documentos, en grupos de izquierda a derecha:
+
+1. **Nuevo…** (un formulario, un componente o un shader, a elegir en el diálogo Nuevo), **Deshacer** y **Rehacer**.
+2. Con algo seleccionado: **Alinear a la izquierda, los centros, a la derecha, arriba, al medio, abajo**; **Centrar
+   horizontal y verticalmente en el formulario**, luego **Distribuir** (tres o más controles) y **Mismo ancho, alto**
+   (dos o más); **Traer al frente**, **Enviar al fondo** y **Eliminar**. Sin selección, un aviso ocupa su lugar.
+3. Al final, cómo se comporta el lienzo: **Mostrar la cuadrícula**, **Ajustar a la cuadrícula**, **Guías
+   inteligentes**, **Redimensionar el contenido con sus anclajes**, **Ajustar la selección a la cuadrícula** y
+   **Editar el código**.
+
+**Abrir** y **Guardar** están en el menú ☰ y en <kbd>Ctrl</kbd>+<kbd>O</kbd> y <kbd>Ctrl</kbd>+<kbd>S</kbd>. Cada botón
+tiene un tooltip con su atajo, y las herramientas de edición se desplazan de lado cuando la ventana es estrecha. Ocúltala con **Ver → Barra de herramientas**. Ver
 [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/#alinear-distribuir-e-igualar-tamaños).
 
 ## Paleta de comandos

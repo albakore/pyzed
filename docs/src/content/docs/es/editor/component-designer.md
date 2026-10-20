@@ -18,7 +18,7 @@ normal, así que dibujarlo y escribirlo a mano son lo mismo, y puedes pasar de u
 
 ## Crear uno
 
-Pulsa **New component** en la barra de herramientas (Ctrl+Shift+N), o **New** (Ctrl+N) y elige la tarjeta
+Pulsa **Nuevo componente…** al final de la caja de herramientas o en el menú ☰ (Ctrl+Shift+N), o **Nuevo…** (Ctrl+N, el primer botón de la barra) y elige la tarjeta
 **Component**. Ponle un nombre y una carpeta; **Inherits from** puede partir de otro componente (mira
 [Herencia](#herencia)). **Create component** guarda los dos archivos y lo abre. También puedes abrir un `.pzcomp`:
 

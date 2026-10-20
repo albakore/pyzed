@@ -1454,6 +1454,8 @@
   "Source": "Origen",
   "User": "Usuario",
   "Overrides {names}": "Reemplaza a {names}",
-  "Shadowed by {names}": "Tapada por {names}"
+  "Shadowed by {names}": "Tapada por {names}",
+  "New form, component or shader…": "Nuevo formulario, componente o shader…",
+  "Select controls to align, size and order them": "Selecciona controles para alinearlos, dimensionarlos y ordenarlos"
  }
 }

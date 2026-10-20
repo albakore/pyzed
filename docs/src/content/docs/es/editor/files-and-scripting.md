@@ -34,7 +34,7 @@ El título de la ventana muestra el documento activo, tras un `●` cuando tiene
 
 ## Nuevo formulario
 
-**Nuevo formulario** (<kbd>Ctrl</kbd>+<kbd>N</kbd>, el primer botón de la barra de herramientas o el menú ☰) abre
+**Nuevo formulario** (<kbd>Ctrl</kbd>+<kbd>N</kbd>, el botón **Nuevo…** de la barra de herramientas o el menú ☰) abre
 el diálogo Nuevo. Arriba, **Formulario** o **Componente** elige qué crear (**Nuevo componente**,
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>, lo abre en Componente).
 

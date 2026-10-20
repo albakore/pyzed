@@ -30,7 +30,7 @@ The window title shows the active document, after a `●` when it has unsaved ch
 
 ## New form
 
-**New form** (<kbd>Ctrl</kbd>+<kbd>N</kbd>, the first toolbar button or the ☰ menu) opens the New dialog. At the
+**New form** (<kbd>Ctrl</kbd>+<kbd>N</kbd>, the **New…** toolbar button or the ☰ menu) opens the New dialog. At the
 top, **Form** or **Component** picks what to create (**New component**, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>,
 opens it on Component).
 
