@@ -67,13 +67,13 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 
 | Parte | Qué hace |
 | --- | --- |
-| **Cabecera** | El título de la conversación, **+** (una conversación nueva con Pyzed Agent o con cualquier [agente externo](#agentes-externos), y **Añadir más agentes…**), **Historial** y **⋯**: **Ajustes del agente**, **Reglas…**, **Mostrar el razonamiento**, **Copiar el hilo como Markdown** y **Expandir el panel** (ocupa toda la ventana; elígelo otra vez para devolverlo a su dock). |
+| **Cabecera** | El título de la conversación, **Seguir al agente** (la mira: ver [Ver trabajar al agente](#ver-trabajar-al-agente)), **+** (una conversación nueva con Pyzed Agent o con cualquier [agente externo](#agentes-externos), y **Añadir más agentes…**), **Historial** y **⋯**: **Ajustes del agente**, **Reglas…**, **Mostrar el razonamiento**, **Copiar el hilo como Markdown** y **Expandir el panel** (ocupa toda la ventana; elígelo otra vez para devolverlo a su dock). |
 | **Conversación** | Tus mensajes, las respuestas del agente (Markdown), su razonamiento (**Razonamiento**, plegado) y una línea por cada herramienta que usa: un indicador mientras corre, una marca cuando funcionó y una cruz roja cuando falló. Pulsa una línea para ver la entrada y el resultado. |
 | **Cambios del agente** | Tras una ejecución que cambió algo: los archivos que tocó, con las líneas añadidas y quitadas. **Conserva** o **Rechaza** cada uno, o todos a la vez; **Rechazar** deja el formulario o el archivo de código como estaba antes. Pulsa un archivo para abrirlo. Deshacer (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) sigue retrocediendo un cambio cada vez. |
 | **Cuadro de mensaje** | Crece con el texto. <kbd>Intro</kbd> envía y <kbd>Mayús</kbd>+<kbd>Intro</kbd> empieza otra línea. Escribe <kbd>@</kbd> para [añadir contexto](#añadir-contexto-con-) y <kbd>/</kbd> para [comandos](#comandos-con-); en su lista <kbd>↑</kbd> <kbd>↓</kbd> te mueven, <kbd>Intro</kbd> elige y <kbd>Esc</kbd> la cierra. Mientras el agente trabaja, el botón de enviar pasa a ser **Detener**. |
 | **+** | **Archivos, el formulario, su código, controles** (una mención con @), **Adjuntar imágenes…**, **Pegar imagen** y **Captura del formulario**. Ver [Imágenes](#imágenes). |
 | **Modo de permisos** | Qué puede hacer el agente sin preguntar (ver abajo). |
-| **Modelo** | Todos los proveedores con sus modelos, y los [agentes externos](#agentes-externos). Un proveedor sin configurar muestra **Conectar…**, que inicia sesión ahí mismo. |
+| **Modelo** | Todos los proveedores con sus modelos, y los [agentes externos](#agentes-externos). Un proveedor sin configurar muestra **Conectar…**, que inicia sesión ahí mismo. Al lado, un pequeño anillo muestra cuánto ocupa la ventana de contexto del modelo (`48k / 1M`); se vuelve amarillo pasado el 80 % y rojo pasado el 95 %. |
 | **Esfuerzo** | Cuánto piensa el modelo antes de responder: **Bajo**, **Medio**, **Alto**, **Muy alto**, **Máximo**. Solo modelos Claude. |
 | **Rápido** | Modo rápido: respuestas más rápidas a mayor precio, en Claude Opus 5.5 y Opus 5 a través de la API de Claude. |
 
@@ -274,8 +274,21 @@ aparecen como `mcp_<servidor>_<herramienta>`. Las que el servidor no marca como 
 Empieza una conversación con un agente desde el menú **+**, o elígelo en el selector de modelos en **Agentes
 externos**. El interruptor de cada fila lo oculta sin quitarlo.
 
-El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera (su propia cuenta o
-clave; pon las claves en **Secretos**). Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
+El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera. Cuando necesita
+iniciar sesión, la conversación muestra **Inicia sesión en …** con un botón por cada forma que ofrece el agente,
+como en Zed:
+
+- **En el navegador** (un globo): el agente abre su página de inicio de sesión y el panel espera; cuando lo
+  apruebas, Pyzed vuelve al frente y envía tu mensaje.
+- **En una terminal**: el inicio de sesión del agente (por ejemplo `claude /login`, o `gemini` con su opción de
+  inicio de sesión) se abre en una terminal; el panel comprueba cada pocos segundos y sigue solo cuando ya has
+  iniciado sesión.
+- **Con una clave**: el agente lee una clave de una variable; Pyzed abre la página para conseguirla y los
+  **Secretos** del agente, donde se guarda en el llavero.
+
+En WSL, el navegador y la terminal son los de Windows.
+
+Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
 proyecto y nunca los que pueden tener secretos, y pregunta antes de actuar según el modo de permisos (**Solo
 lectura** solo permite leer, **Solo conversación** rechaza todas las herramientas).
 
@@ -286,6 +299,18 @@ en vivo en el editor, y **Conservar** y **Rechazar** funcionan como con el agent
 herramientas en `127.0.0.1`, en una dirección de un solo uso y con un token que solo recibe ese agente (los agentes
 que solo arrancan servidores locales reciben un pequeño programa puente). Sus propias herramientas de archivos y de
 terminal siguen siendo suyas. El plan que sigue el agente se ve en la tarjeta **Plan**.
+
+### Ver trabajar al agente
+
+Con **Seguir al agente** activado (la mira de la cabecera, activada por defecto), los archivos que escribe el
+agente se abren mientras trabaja: los formularios y componentes en su pestaña, el código y otros archivos de texto
+en el editor de código y, con un agente externo, el archivo que está editando. Un archivo que ya está abierto
+muestra el texto nuevo al instante, salvo que tenga cambios tuyos sin guardar. El cuadro de mensaje conserva el
+teclado, así que puedes seguir escribiendo.
+
+Cuando el agente termina, se detiene por un error, pide tu confirmación o espera un inicio de sesión mientras Pyzed
+Design está en segundo plano, te avisa una notificación del escritorio. Desactívala con **Avisar cuando el agente
+termine** en los ajustes.
 
 ### Tu suscripción de Claude
 
@@ -339,6 +364,8 @@ sitio salvo las peticiones al proveedor que elijas.
 | **Modo rápido** | Respuestas más rápidas a mayor precio (Claude Opus 5.5 y Opus 5). También en el cuadro de mensaje. |
 | **Preguntar antes de escribir archivos** | Crear formularios y componentes y guardar archivos esperan tu permiso. Activado por defecto; equivale a los modos **Preguntar antes de escribir** / **Omitir permisos**. |
 | **Mostrar el razonamiento** | Muestra los resúmenes del razonamiento del modelo en la conversación. |
+| **Seguir al agente** | Abre los archivos que escribe el agente mientras trabaja. |
+| **Avisar cuando el agente termine** | Una notificación del escritorio mientras la ventana está en segundo plano. |
 | **Reglas** | Instrucciones añadidas a cada conversación: "Responde en español", "Nombra los botones con el sufijo `_button`"… |
 
 ## Cómo obtener buenos resultados

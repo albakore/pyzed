@@ -126,6 +126,22 @@ class DeviceLogin:
     cancelled: bool = False
 
 
+@dataclass
+class AgentAuth:
+    """An external agent that wants a sign-in before it answers (Zed's "Authentication required"): its ways
+    to sign in, and the message to send again once signed in."""
+
+    agent: str  # the agent's name in the settings
+    label: str
+    methods: List[Dict[str, Any]]
+    prompt: Any = None
+    waiting: str = ""  # the method being signed in with
+    error: str = ""
+    until: float = 0.0  # while a sign-in in a terminal is watched
+    next_check: float = 0.0
+    checking: bool = False
+
+
 #: Image files that can be attached (the file dialog's filter and the @ popup).
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
@@ -133,6 +149,9 @@ IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 CAPTURE_SECONDS = 300.0
 #: How long the panel waits for the Claude Code sign-in in the terminal.
 CLAUDE_LOGIN_SECONDS = 900.0
+#: How long (and how often) the panel checks an external agent's sign-in in a terminal.
+AGENT_LOGIN_SECONDS = 900.0
+AGENT_LOGIN_EVERY = 3.0
 NODE_URL = "https://nodejs.org/en/download"
 #: Model answers per message: enough to build, run and fix a whole app on its own.
 MAX_TURNS = 150
@@ -223,6 +242,8 @@ class AgentController:
         # signing in to Claude Code with a Claude subscription: when to stop checking, and the next check
         self.claude_login: Optional[float] = None
         self._claude_check = 0.0
+        # an external agent that wants a sign-in first, with its ways to sign in
+        self.agent_auth: Optional[AgentAuth] = None
         # the plan an external agent is following (the built-in agent's is read from its update_plan calls)
         self.live_plan: List[Dict[str, str]] = []
         # the designer's tools served over MCP to external agents (started with the first one)
@@ -281,7 +302,7 @@ class AgentController:
         """Whether something is in flight (the poll subscription runs while it is)."""
         return self.running or bool(self.inline and self.inline.running) or self.busy_provider is not None \
             or self.capture is not None or self.raise_window or self.claude_login is not None \
-            or self._jobs > 0 or not self._queue.empty()
+            or self._jobs > 0 or not self._queue.empty() or bool(self.agent_auth and self.agent_auth.until)
 
     @property
     def expanded(self) -> bool:
@@ -358,6 +379,8 @@ class AgentController:
             return _core.Command.focus_window()
         if self.claude_login is not None:
             self._check_claude_login()
+        if self.agent_auth is not None and self.agent_auth.until:
+            self._check_agent_login()
         capture = self.capture
         if capture is None or capture.checking:
             return None
@@ -399,6 +422,7 @@ class AgentController:
             elif kind == "confirm":
                 _, tool_, args, box = item
                 self.pending = Confirmation(tool_, args, box)
+                self._notify_desktop(tr("The agent needs your OK"), getattr(tool_, "title", "") or tool_.name)
             elif kind == "inline":
                 self._on_inline(*item[1:])
             elif kind == "provider":
@@ -466,15 +490,34 @@ class AgentController:
         elif event.kind == "turn":
             self.live_text = ""
             self.live_thinking = ""
+            used = sum(event.usage.get(k, 0) for k in ("input", "cache_read", "cache_write", "output"))
+            if used:
+                self.thread.context = used
         elif event.kind == "tool_call":
             self.tool_status[event.call_id] = "running"
         elif event.kind == "tool_result":
             self.tool_status[event.call_id] = "error" if event.error else "done"
+            if event.tool == "write_file" and not event.error and event.args.get("path"):
+                self._on_file(str(event.args["path"]), True)
+        elif event.kind == "file":
+            self._on_file(event.text, bool(event.args.get("written")))
         elif event.kind == "plan":
             self.live_plan = list(event.args.get("steps") or [])
+        elif event.kind == "auth":
+            config = getattr(self._agent, "config", None)
+            name = getattr(config, "name", "")
+            self.agent_auth = AgentAuth(name, getattr(config, "label", name), list(event.args.get("methods") or []),
+                                        event.args.get("prompt"))
         elif event.kind == "error":
             self.error = event.text
         elif event.kind == "done":
+            if self.error:
+                self._notify_desktop(tr("The agent stopped"), self.error)
+            elif self.agent_auth is not None:
+                self._notify_desktop(tr("Sign in to {name}", name=self.agent_auth.label),
+                                     tr("The agent is waiting for you to sign in"))
+            else:
+                self._notify_desktop(tr("The agent finished"), self.thread.display_title)
             self.running = False
             self.live_text = self.live_thinking = ""
             self.live_plan = []
@@ -565,17 +608,22 @@ class AgentController:
         self.menu = None
         self.input = ""
         self.popup_closed = None
+        note = agent_tools.context_note(self.d)
+        content = [{"type": "text", "text": prompt or tr("Look at the attached images.")}, *extra, *images,
+                   {"type": "text", "text": f"<context>{note}</context>"}]
+        return self._launch(content)
+
+    def _launch(self, content: List[Dict[str, Any]]) -> Any:
+        """Runs the agent of the current thread on ``content`` (a user message's blocks) in a worker thread."""
         self.error = ""
         self.view = "thread"
         self.running = True
         self.snapshot = []
         self.changed = False
         self.tool_status = {}
+        self.agent_auth = None
         model = self.thread.model or self.settings.model
         self.thread.model = model
-        note = agent_tools.context_note(self.d)
-        content = [{"type": "text", "text": prompt or tr("Look at the attached images.")}, *extra, *images,
-                   {"type": "text", "text": f"<context>{note}</context>"}]
         put = self._queue.put
         emit = lambda e: put(("event", e))  # noqa: E731
         jobs = [b for b in content if b.get("type") == "screenshot"]
@@ -1550,6 +1598,155 @@ class AgentController:
         error = self.error.lower()
         return provider == "acp" and name == "claude-code" and ("auth" in error or "/login" in error)
 
+    def _notify_desktop(self, title: str, body: str) -> None:
+        """A desktop notification while the designer's window is in the background (like Zed's)."""
+        if not self.settings.notify_when_done or getattr(self.d, "window_focused", True):
+            return
+        from .. import _platform
+
+        _platform.notify(title, body[:200])
+
+    @property
+    def context_window(self) -> int:
+        """The context window of the thread's model (0 when unknown, or for an external agent)."""
+        return _providers.context_window(self.thread.model or self.settings.model)
+
+    # -- following the agent, like Zed's "Follow" -------------------------------------------------------
+    def toggle_follow(self) -> None:
+        """Turns following the agent on or off: the files it writes (and where an external agent edits) open
+        as it works, so what it builds shows up live."""
+        self.settings.follow_agent = not self.settings.follow_agent
+        self.save_settings()
+
+    def _on_file(self, raw: str, written: bool) -> None:
+        """The agent wrote ``raw`` (or edits there): shows the new text where the file is open, and with
+        Follow on, opens it (forms and components in their tab, other text files in the code editor)."""
+        root = self.project_root().resolve()
+        path = Path(raw) if Path(raw).is_absolute() else root / raw
+        try:
+            path = path.resolve()
+            path.relative_to(root)
+        except (OSError, ValueError):
+            return
+        if written:
+            self._reload(path)
+        if not self.settings.follow_agent or not path.is_file():
+            return
+        from .workspace import DESIGN_SUFFIXES
+
+        focus = self.d.focus  # the input keeps the keyboard
+        if path.suffix in DESIGN_SUFFIXES:
+            self.d.open_path(path)
+        else:
+            self.d.buffers.open(path)
+        self.d.focus = focus
+
+    def _reload(self, path: Path) -> None:
+        """Rereads ``path`` where it is open without unsaved changes (written by the agent)."""
+        from . import files as _files
+        from . import scene as _scene
+
+        index = self.d.buffers.index_of(path)
+        if index is not None:
+            buffer = self.d.buffers.items[index]
+            text = _files.read_text(path)
+            if text is not None and not buffer.dirty and text != buffer.text:
+                buffer.text = buffer.saved = text
+                buffer.revision += 1
+        found = self.d.panes.find_path(path)
+        if found is not None:
+            pane, i = found
+            if not pane.docs[i].dirty:
+                try:
+                    pane.docs[i] = _scene.open_document(path)
+                except (OSError, ValueError):
+                    return
+                self.d.code_revision += 1
+
+    # -- signing in to an external agent, like Zed ------------------------------------------------------
+    def pick_auth(self, method_id: str) -> None:
+        """Signs in to the external agent that asked for it, with one of its ways to sign in: the agent opens
+        the browser itself (and the panel waits for it), the agent's login runs in a terminal (and the panel
+        checks every few seconds), or a key goes in the agent's secrets."""
+        auth = self.agent_auth
+        agent = self._acp.get(self.thread.id)
+        method = next((m for m in (auth.methods if auth else []) if str(m.get("id")) == method_id), None)
+        if auth is None or agent is None or method is None:
+            return
+        auth.error = ""
+        kind = _acp.auth_kind(method)
+        if kind == "env_var":
+            var = str(method.get("varName") or method.get("var_name") or method.get("name") or "")
+            if method.get("link"):
+                _agents.login.open_browser(str(method["link"]))
+            auth.error = tr("Add {name} to the agent's secrets in the settings, then send the message again.",
+                            name=var)
+            self.open_settings(section="agents")
+            return
+        auth.waiting = method_id
+        if kind == "terminal":
+            from .file_ops import run_in_terminal
+
+            command, env = _acp.terminal_login(agent.config, method)
+            if agent.config.name == "claude-code" and not (method.get("_meta") or {}).get("terminal-auth"):
+                command, env = _acp.claude_login_command(), {}
+            try:
+                run_in_terminal(command, self.project_root(), **({"env": env} if env else {}))
+            except OSError as err:
+                auth.waiting = ""
+                auth.error = tr("Run {command} in a terminal to sign in", command=" ".join(command)) + f" ({err})"
+                return
+            auth.until = time.monotonic() + AGENT_LOGIN_SECONDS
+            auth.next_check = time.monotonic() + AGENT_LOGIN_EVERY
+            return
+        self._job(lambda: agent.authenticate(method_id), self._signed_in_to_agent)
+
+    def _check_agent_login(self) -> None:
+        """While the agent's login runs in a terminal: tries to open its session every few seconds."""
+        auth, now = self.agent_auth, time.monotonic()
+        if auth is None or auth.checking or now < auth.next_check:
+            return
+        if now > auth.until:
+            auth.until, auth.waiting = 0.0, ""
+            return
+        agent = self._acp.get(self.thread.id)
+        if agent is None:
+            self.agent_auth = None
+            return
+        auth.next_check = now + AGENT_LOGIN_EVERY
+        if agent.config.name == "claude-code" and not _acp.claude_signed_in():  # cheap: no need to start it
+            return
+        auth.checking = True
+
+        def then(ok: Any, error: Optional[BaseException]) -> None:
+            auth.checking = False
+            if ok and self.agent_auth is auth:
+                self._signed_in_to_agent(None, None)
+
+        self._job(agent.signed_in, then)
+
+    def _signed_in_to_agent(self, _value: Any, error: Optional[BaseException]) -> None:
+        auth = self.agent_auth
+        if auth is None or not auth.waiting:  # cancelled meanwhile
+            return
+        if error is not None:
+            auth.waiting, auth.until = "", 0.0
+            auth.error = str(error)
+            return
+        self.agent_auth = None
+        self.raise_window = True
+        self.d.notify(tr("Signed in to {name}", name=auth.label), kind="success", seconds=4)
+        if auth.prompt and not self.running:
+            self._launch(auth.prompt)
+
+    def cancel_auth(self) -> None:
+        """Stops waiting for an external agent's sign-in (its program stops; the next message starts it again)."""
+        auth, self.agent_auth = self.agent_auth, None
+        if auth is not None and auth.waiting:
+            agent = self._acp.get(self.thread.id)
+            if agent is not None:
+                agent.close()
+
     def open_key_page(self, pid: str) -> None:
         url = _providers.PROVIDERS[pid].key_url
         if url:
@@ -2222,6 +2419,8 @@ def _composer(c: AgentController, t: Theme) -> Any:
         _chip(tr(mode_label), lambda: c.toggle_menu("mode"), t, icon=mode_icon, selected=c.menu == "mode",
               tooltip=tr(mode_text)),
         _core.space(width="fill"),
+        ui.context_meter(c.thread.context, c.context_window, theme=t)
+        if c.thread.context and c.context_window and not external else None,
         _chip(agent.label if agent else model_label(model), lambda: c.toggle_menu("model"), t,
               icon="terminal" if external else None, selected=c.menu == "model", tooltip=tr("Model")),
         None if external else _chip(tr(EFFORT_TEXT[s.effort]), lambda: c.toggle_menu("effort"), t,
@@ -2350,6 +2549,9 @@ def _header(c: AgentController, t: Theme) -> Any:
     return _core.container(_core.row([
         lead,
         _core.container(ui.label(title, size="sm", weight="medium", wrap=False, theme=t), width="fill"),
+        ui.icon_button("crosshair", c.toggle_follow, size="sm", selected=c.settings.follow_agent,
+                       tooltip=tr("Follow the agent: open what it writes as it works"), theme=t)
+        if c.view == "thread" else None,
         ui.icon_button("plus", lambda: c.toggle_menu("new"), size="sm", selected=c.menu == "new",
                        tooltip=tr("New thread"), theme=t),
         ui.icon_button("history", c.toggle_history, size="sm", selected=c.view == "history",
@@ -2399,6 +2601,8 @@ def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> An
         bottom.append(_capture_callout(c, t))
     if c.claude_login is not None:
         bottom.append(_claude_login_callout(c, t))
+    if c.agent_auth is not None:
+        bottom.append(_auth_card(c, t))
     if c.device is not None:
         bottom.append(_device_callout(c, t))
     bottom.append(_plan_card(c, t))
@@ -2411,6 +2615,24 @@ def _thread_view(c: AgentController, d: "Designer", t: Theme, header: Any) -> An
     bottom.append(_composer(c, t))
     return _core.column([header, thread, _core.column(bottom, spacing=6, padding=(6, 8, 8, 8), width="fill")],
                         width="fill", height="fill")
+
+
+def _auth_card(c: AgentController, t: Theme) -> Any:
+    """Zed's "Authentication required": one button per way the external agent can sign in."""
+    auth = c.agent_auth
+    assert auth is not None
+    icons = {"agent": "globe", "terminal": "terminal", "env_var": "key-round"}
+    methods = [{"id": str(m.get("id", "")), "name": str(m.get("name") or m.get("id") or ""),
+                "description": str(m.get("description") or ""), "icon": icons[_acp.auth_kind(m)]}
+               for m in auth.methods]
+    method = next((m for m in auth.methods if str(m.get("id")) == auth.waiting), None)
+    terminal = method is not None and _acp.auth_kind(method) == "terminal"
+    return ui.AuthPrompt(title=tr("Sign in to {name}", name=auth.label),
+                         detail=tr("{name} needs you to sign in before it answers. Your message is sent once you are "
+                                   "signed in.", name=auth.label), methods=methods, waiting=auth.waiting,
+                         waiting_text=tr("Finish signing in in the terminal") if terminal
+                         else tr("Finish signing in in the browser"), error=auth.error, theme=t, key="agent-auth",
+                         on_pick=lambda e: c.pick_auth(e.value), on_cancel=lambda _e: c.cancel_auth())
 
 
 def _pending_on_card(c: AgentController) -> bool:
@@ -2787,6 +3009,12 @@ def settings_view(d: "Designer", t: Theme) -> Any:
                  description=tr("Creating forms and saving files waits for your OK"), theme=t),
         ui.field(tr("Show thinking"), ui.switch(s.show_thinking, lambda v: c.set_setting("show_thinking", v), theme=t),
                  theme=t),
+        ui.field(tr("Follow the agent"), ui.switch(s.follow_agent, lambda v: c.set_setting("follow_agent", v),
+                                                   theme=t),
+                 description=tr("Open the files it writes as it works"), theme=t),
+        ui.field(tr("Notify when the agent finishes"), ui.switch(s.notify_when_done, lambda v: c.set_setting(
+            "notify_when_done", v), theme=t),
+                 description=tr("A desktop notification while the window is in the background"), theme=t),
         ui.field(tr("Keep conversations"), ui.switch(s.keep_history, lambda v: c.set_setting("keep_history", v),
                                                      theme=t),
                  description=tr("Save threads on this computer, readable only by you"), theme=t),

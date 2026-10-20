@@ -303,6 +303,8 @@ def test_external_agent_through_acp(tmp_path):
         assert (tmp_path / "out.txt").read_text() == "hello" and asked == ["Write out.txt"]
         kinds = [e.kind for e in events]
         assert kinds[0] == "thinking" and "tool_call" in kinds and "tool_result" in kinds and kinds[-1] == "done"
+        written = [e for e in events if e.kind == "file"]  # the panel follows it and shows it live
+        assert written and written[0].args["written"] and written[0].text == str(tmp_path / "out.txt")
         texts = [b["text"] for m in agent.messages if m["role"] == "assistant" for b in m["content"]
                  if b["type"] == "text"]
         assert texts[0] == "Reading. " and texts[-1] == "Done: yes (no secrets)"
@@ -982,3 +984,194 @@ def test_keeping_and_rejecting_changes_file_by_file(tmp_path, monkeypatch):
     c.changed = True
     c.keep_file(doc.display_name)
     assert doc.code.endswith("kept = 1\n") and not c.snapshot
+
+
+AUTH_AGENT = textwrap.dedent('''
+    import json, sys
+    from pathlib import Path
+
+    flag = Path(sys.argv[1])  # signed in (the terminal login writes it)
+
+    def send(msg):
+        sys.stdout.write(json.dumps(msg) + "\\n")
+        sys.stdout.flush()
+
+    for line in sys.stdin:
+        msg = json.loads(line)
+        method, ident, params = msg.get("method"), msg.get("id"), msg.get("params") or {}
+        if method == "initialize":
+            send({"jsonrpc": "2.0", "id": ident, "result": {"protocolVersion": 1, "agentCapabilities": {},
+                  "authMethods": [
+                      {"id": "oauth", "name": "Log in with Google", "description": "Opens the browser"},
+                      {"id": "login", "name": "Log in in a terminal", "type": "terminal", "args": ["--login"],
+                       "env": {"FAKE_LOGIN": "1"}},
+                      {"id": "key", "name": "Use an API key", "type": "env_var", "varName": "FAKE_API_KEY"}]}})
+        elif method == "authenticate":
+            if params["methodId"] == "oauth":
+                flag.write_text("yes")
+            send({"jsonrpc": "2.0", "id": ident, "result": {}})
+        elif method == "session/new":
+            if flag.exists():
+                send({"jsonrpc": "2.0", "id": ident, "result": {"sessionId": "s1"}})
+            else:
+                send({"jsonrpc": "2.0", "id": ident, "error": {"code": -32000, "message": "Authentication required"}})
+        elif method == "session/prompt":
+            send({"jsonrpc": "2.0", "method": "session/update", "params": {"sessionId": "s1", "update": {
+                "sessionUpdate": "agent_message_chunk", "content": {"type": "text", "text": "hi there"}}}})
+            send({"jsonrpc": "2.0", "id": ident, "result": {"stopReason": "end_turn"}})
+''')
+
+
+def test_external_agent_sign_in_methods_like_zed(tmp_path):
+    script, flag = tmp_path / "agent.py", tmp_path / "signed"
+    script.write_text(AUTH_AGENT)
+    config = providers.ACPAgentConfig("fake", sys.executable, [str(script), str(flag)], title="Fake")
+    agent = acp.ACPAgent(config, cwd=tmp_path, mcp_servers=[])
+    events = []
+    try:
+        agent.run("hello", on_event=events.append)
+        auth = next(e for e in events if e.kind == "auth")
+        assert [m["id"] for m in auth.args["methods"]] == ["oauth", "login", "key"]
+        assert auth.args["prompt"][0]["text"] == "hello" and agent.messages == []  # it waits for the sign-in
+        assert [acp.auth_kind(m) for m in auth.args["methods"]] == ["agent", "terminal", "env_var"]
+        command, env = acp.terminal_login(config, auth.args["methods"][1])
+        assert command == [sys.executable, str(script), str(flag), "--login"] and env == {"FAKE_LOGIN": "1"}
+        meta = {"id": "x", "_meta": {"terminal-auth": {"command": "claude", "args": ["/login"]}}}
+        assert acp.auth_kind(meta) == "terminal" and acp.terminal_login(config, meta) == (["claude", "/login"], {})
+        assert not agent.signed_in()
+        agent.authenticate("oauth")
+        assert agent.session == "s1"
+        assert agent.run("hello") == "hi there"
+    finally:
+        agent.close()
+
+
+@pytest.mark.parametrize("method", ["login", "oauth"])
+def test_the_panel_signs_in_to_an_external_agent_and_sends_again(tmp_path, monkeypatch, method):
+    from pyzed.designer import agent_panel, file_ops
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    script, flag = tmp_path / "agent.py", tmp_path / "signed"
+    script.write_text(AUTH_AGENT)
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.settings.acp_agents.append(providers.ACPAgentConfig("fake", sys.executable, [str(script), str(flag)],
+                                                          title="Fake"))
+    c.thread.model = c.settings.model = "acp:fake"
+    opened = []
+    monkeypatch.setattr(file_ops, "run_in_terminal", lambda args, folder, env=None: opened.append((args, env)) or flag.write_text("y"))
+    monkeypatch.setattr(agent_panel, "AGENT_LOGIN_EVERY", 0.0)
+
+    def settle(until):
+        for _ in range(4000):
+            c.poll()
+            if until():
+                return
+            time.sleep(0.005)
+        raise AssertionError("timed out")
+
+    try:
+        c.send("hello")
+        settle(lambda: not c.running)
+        assert c.agent_auth is not None and not c.error and c.thread.messages == []
+        assert agent_panel._auth_card(c, d.theme) is not None
+        c.pick_auth("key")  # a key: it goes in the agent's secrets
+        assert "FAKE_API_KEY" in c.agent_auth.error and c.view == "settings"
+        c.view = "thread"
+        c.pick_auth(method)  # the agent opens the browser, or its login runs in a terminal and the panel checks
+        if method == "login":
+            assert opened == [([sys.executable, str(script), str(flag), "--login"], {"FAKE_LOGIN": "1"})]
+        assert c.active and c.agent_auth.waiting == method
+        settle(lambda: c.agent_auth is None and not c.running and c.thread.messages)
+        settle(lambda: not c.running)
+        texts = [b["text"] for m in c.thread.messages for b in m["content"] if b["type"] == "text"]
+        assert texts[0] == "hello" and texts[-1] == "hi there"
+        assert not c.error
+    finally:
+        c.shutdown()
+
+
+def test_following_the_agent_opens_and_refreshes_what_it_writes(tmp_path, monkeypatch):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.chdir(tmp_path)
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    monkeypatch.setattr(c, "project_root", lambda: tmp_path)
+    monkeypatch.setattr(c, "save_settings", lambda: None)
+    app = tmp_path / "app.py"
+    app.write_text("print(1)\n")
+    assert d.buffers.open(app)
+    d.focus = "agent"
+    app.write_text("print(2)\n")  # an external agent wrote it: the open file shows the new text
+    c._on_event(agents.Event("file", str(app), args={"written": True}))
+    buffer = d.buffers.items[d.buffers.index_of(app)]
+    assert buffer.text == "print(2)\n" and buffer.revision == 1 and not buffer.dirty
+    views = tmp_path / "views.py"
+    views.write_text("x = 1\n")
+    c._on_event(agents.Event("tool_result", tool="write_file", args={"path": "views.py"}))  # the built-in agent
+    assert d.buffers.index_of(views) is not None and d.focus == "agent"  # opened, the input keeps the keyboard
+    c.toggle_follow()
+    assert not c.settings.follow_agent
+    other = tmp_path / "other.py"
+    other.write_text("y = 2\n")
+    c._on_event(agents.Event("file", str(other), args={"written": True}))
+    assert d.buffers.index_of(other) is None
+    c.toggle_follow()
+    c._on_event(agents.Event("file", str(tmp_path.parent / "outside.py"), args={"written": True}))
+    assert len(d.buffers.items) == 2  # never outside the project
+
+
+def test_context_meter_and_desktop_notifications(tmp_path, monkeypatch):
+    from pyzed import _platform
+    from pyzed.designer import agent_panel
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    assert providers.context_window("anthropic:claude-opus-5-5") == 1_000_000
+    assert providers.context_window("anthropic:claude-haiku-4-5") == 200_000
+    assert providers.context_window("openai:gpt-4.1-mini") == 1_047_576
+    assert providers.context_window("ollama:qwen3:8b") == 0
+    thread = agents.Thread(context=48_000)
+    assert agents.Thread.from_dict(thread.to_dict()).context == 48_000
+
+    monkeypatch.setattr(_platform.sys, "platform", "darwin")
+    assert _platform.desktop_notification_command('Say "hi"', "done")[-1] == \
+        'display notification "done" with title "Say \\"hi\\""'
+    monkeypatch.setattr(_platform.sys, "platform", "win32")
+    command = _platform.desktop_notification_command("t", "b")
+    assert command[0] == "powershell" and "$env:PYZED_TITLE" in command[-1]  # the texts go in variables
+
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    shown = []
+    monkeypatch.setattr(_platform, "notify", lambda title, body: shown.append((title, body)) or True)
+    c._on_event(agents.Event("turn", usage={"input": 40_000, "cache_read": 7_000, "output": 1_000}))
+    assert c.thread.context == 48_000 and c.context_window == providers.context_window(c.settings.model)
+    assert agent_panel._composer(c, d.theme) is not None  # the meter shows next to the model
+    c.running = True
+    c._on_event(agents.Event("done"))
+    assert shown == []  # the window has the focus: nothing to tell
+    d.window_focused = False
+    c.running = True
+    c._on_event(agents.Event("done"))
+    assert shown and shown[0][0] == "The agent finished"
+    c.settings.notify_when_done = False
+    c._on_event(agents.Event("done"))
+    assert len(shown) == 1
+
+
+def test_external_agents_open_windows_browser_under_wsl(monkeypatch):
+    from pyzed import _platform
+
+    monkeypatch.delenv("BROWSER", raising=False)
+    monkeypatch.setattr(_platform, "is_wsl", lambda release=None: False)
+    assert _platform.browser_env() == {}
+    monkeypatch.setattr(_platform, "is_wsl", lambda release=None: True)
+    monkeypatch.setattr(_platform.shutil, "which", lambda name: None)
+    monkeypatch.setattr(_platform, "windows_command", lambda name: "/mnt/c/Windows/System32/rundll32.exe")
+    assert _platform.browser_env() == {"BROWSER": "/mnt/c/Windows/System32/rundll32.exe url.dll,FileProtocolHandler %s"}
+    monkeypatch.setenv("BROWSER", "firefox")
+    assert _platform.browser_env() == {}

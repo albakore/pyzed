@@ -13,7 +13,7 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 from urllib.parse import quote
 
 
@@ -138,10 +138,13 @@ def _windows_terminal_command(args: List[str], folder: Path) -> Optional[List[st
     return [cmd, "/c", "start", "", *inside] if cmd else None
 
 
-def run_in_terminal(args: List[str], folder: Path) -> None:
-    """Opens the system's terminal running ``args`` in ``folder``."""
+def run_in_terminal(args: List[str], folder: Path, env: Optional[Dict[str, str]] = None) -> None:
+    """Opens the system's terminal running ``args`` in ``folder`` (with the extra environment ``env``)."""
+    if env and sys.platform != "win32":  # the terminal may be started by a server that has its own environment
+        args = ["env", *(f"{k}={v}" for k, v in env.items()), *args]
     subprocess.Popen(run_in_terminal_command(args, folder), cwd=folder, stdout=subprocess.DEVNULL,  # noqa: S603
-                     stderr=subprocess.DEVNULL, start_new_session=sys.platform != "win32")
+                     stderr=subprocess.DEVNULL, start_new_session=sys.platform != "win32",
+                     env={**os.environ, **env} if env else None)
 
 
 def open_terminal(folder: Path) -> None:

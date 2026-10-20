@@ -234,7 +234,8 @@ def _stream_anthropic(provider_id: str, model: str, system: str, messages: Seque
     usage = data.get("usage") or {}
     return Turn(list(data.get("content") or []), str(data.get("stop_reason") or "end_turn"),
                 {"input": int(usage.get("input_tokens") or 0), "output": int(usage.get("output_tokens") or 0),
-                 "cache_read": int(usage.get("cache_read_input_tokens") or 0)},
+                 "cache_read": int(usage.get("cache_read_input_tokens") or 0),
+                 "cache_write": int(usage.get("cache_creation_input_tokens") or 0)},
                 model=str(data.get("model") or model))
 
 

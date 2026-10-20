@@ -65,13 +65,13 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 
 | Part | What it does |
 | --- | --- |
-| **Header** | The thread's title, **+** (a new thread with Pyzed Agent or with any [external agent](#external-agents), plus **Add more agents…**), **History** and **⋯**: **Agent settings**, **Rules…**, **Show thinking**, **Copy thread as Markdown** and **Expand the panel** (it fills the window; pick it again to put it back in its dock). |
+| **Header** | The thread's title, **Follow the agent** (the crosshair: see [Watching the agent work](#watching-the-agent-work)), **+** (a new thread with Pyzed Agent or with any [external agent](#external-agents), plus **Add more agents…**), **History** and **⋯**: **Agent settings**, **Rules…**, **Show thinking**, **Copy thread as Markdown** and **Expand the panel** (it fills the window; pick it again to put it back in its dock). |
 | **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per tool it used: a spinner while it runs, a check when it worked, a red cross when it failed. Click a line to see the tool's input and result. |
 | **Agent changes** | After a run that changed something: the files it touched, with the lines added and removed. **Keep** or **Reject** each one, or all of them at once; **Reject** puts the form or code file back as it was before the run. Click a file to open it. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
 | **Message box** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. While the agent works the send button becomes **Stop**. |
 | **+** | **Files, the form, its code, controls** (an @ mention), **Attach images…**, **Paste image** and **Screenshot of the form**. See [Images](#images). |
 | **Permission mode** | What the agent may do without asking (see below). |
-| **Model** | Every provider with its models, and the [external agents](#external-agents). A provider that is not set up shows **Connect…**, which signs in right there. |
+| **Model** | Every provider with its models, and the [external agents](#external-agents). A provider that is not set up shows **Connect…**, which signs in right there. Next to it, a small ring shows how full the model's context window is (`48k / 1M`); it turns yellow past 80% and red past 95%. |
 | **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
 | **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
 
@@ -267,8 +267,17 @@ file writes; in **Read only** they are left out.
 Start a thread with an agent from the **+** menu, or pick it in the model picker under **External agents**. The
 switch on each row hides it without removing it.
 
-The agent runs as its own program in the project folder and signs in its own way (its own account or key; put
-keys in **Secrets**). Pyzed answers its requests: it reads and writes files only inside the project and never
+The agent runs as its own program in the project folder and signs in its own way. When it needs a sign-in, the
+thread shows **Sign in to …** with one button per way the agent offers, as in Zed:
+
+- **In the browser** (a globe): the agent opens its sign-in page and the panel waits; once you approve, Pyzed
+  comes back to the front and sends your message.
+- **In a terminal**: the agent's login (for example `claude /login` or `gemini` with its login option) opens in a
+  terminal; the panel checks every few seconds and goes on by itself when you are signed in.
+- **With a key**: the agent reads a key from a variable; Pyzed opens the page to get one and the agent's
+  **Secrets**, where it is kept in the keychain.
+
+Under WSL the browser and the terminal are the ones of Windows. Pyzed answers its requests: it reads and writes files only inside the project and never
 the ones that may hold secrets, and asks before acting according to the permission mode (**Read only** allows
 only reads, **Chat only** refuses every tool).
 
@@ -278,6 +287,17 @@ keeps a plan and knows Pyzed's components and docs. Its changes show up live in 
 **Reject** work as with the built-in agent. Pyzed serves these tools on `127.0.0.1` at a one-time address with a
 token only that agent receives (agents that only start local servers get a small bridge program). Its own file
 and shell tools stay its own. The plan the agent follows shows in the **Plan** card.
+
+### Watching the agent work
+
+With **Follow the agent** on (the crosshair in the header, on by default), the files the agent writes open as it
+works: forms and components in their tab, code and other text files in the code editor, and for an external
+agent, the file it is editing. A file that is already open shows the new text right away, unless it has
+changes of yours that are not saved. The message box keeps the keyboard, so you can keep typing.
+
+When the agent finishes, stops with an error, asks for your OK or waits for a sign-in while Pyzed Design is in
+the background, a desktop notification tells you. Turn it off with **Notify when the agent finishes** in the
+settings.
 
 ### Your Claude subscription
 
@@ -329,6 +349,8 @@ requests to the provider you picked.
 | **Fast mode** | Faster answers at a higher price (Claude Opus 5.5 and Opus 5). Also in the message box. |
 | **Ask before writing files** | Creating forms and components and saving files wait for your OK. On by default; the same as the **Ask before writing** / **Bypass permissions** modes. |
 | **Show thinking** | Shows the model's reasoning summaries in the thread. |
+| **Follow the agent** | Opens the files the agent writes as it works. |
+| **Notify when the agent finishes** | A desktop notification while the window is in the background. |
 | **Rules** | Instructions added to every thread: "Answer in Spanish", "Name buttons with a `_button` suffix"… |
 
 ## Getting good results
