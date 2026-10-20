@@ -2175,6 +2175,54 @@ PAGES.append({
     ],
 })
 
+_section("widgets", "Animaciones con línea de tiempo", {
+    "pyzed.Clip": _d("""
+        Una línea de tiempo con nombre de `length` segundos, con pistas (`tracks`) y llamadas (`calls`).
+
+        `loop` es `"none"` (se reproduce una vez y se queda en el último fotograma), `"loop"` o
+        `"pingpong"`. Por defecto `length` es el tiempo de la última key o llamada. Ver la guía
+        [Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
+    """),
+    "pyzed.Track": _d("""
+        Una propiedad que cambia con el tiempo: `Track("card:opacity", {0: 0, 0.5: 1})`.
+
+        La ruta es `"objetivo:propiedad"` para una propiedad de widget o `":atributo"` para un
+        atributo de la app. `keys` es `{tiempo: valor}`, una lista de tuplas `(tiempo, valor)` o
+        `(tiempo, valor, easing)`, u objetos `Key`. `easing` es la curva por defecto entre keys
+        (`"linear"`, como en Godot) e `interpolation="discrete"` mantiene cada valor hasta la
+        siguiente key. Con `enabled=False` la pista queda en el clip sin reproducirse.
+    """),
+    "pyzed.Key": _d("Un valor en un tiempo de una pista; `easing` es la curva hasta la siguiente key (la de la pista si es `None`)."),
+    "pyzed.Call": _d("""
+        Un método que se llama a los `time` segundos: `Call(1.2, "play_sound", "ding")`.
+
+        `method` es el nombre de un método de la app (el `owner` del reproductor) o una función; `args`
+        se le pasan. Lo que devuelve (un `Command`, un mensaje...) se trata como lo que devuelve un callback.
+    """),
+    "pyzed.AnimationPlayer": _d("""
+        Reproduce `Clip`s sobre widgets y el estado de la app, con reproducir, pausar, buscar, velocidad y cola.
+
+        `sources` son clips, objetos `AnimationLibrary` y rutas `.pzanim`. Dale a cada widget su
+        objetivo con `widget.animate(player["card"])`. Las pistas de atributos (`":score"`) y las
+        `Call` usan el `owner` del reproductor: la app (o ventana) que lo guarda en un atributo, que
+        se encuentra sola, o el que le pases.
+
+        - `autoplay`: el clip que se reproduce al crear el reproductor.
+        - `speed`: la velocidad de todos los clips (`play` la multiplica).
+        - `on_started(name)`/`on_finished(name)`: se llaman cuando un clip empieza y cuando termina
+          (nunca en clips en bucle); pueden no recibir argumentos.
+        - `fps`: cada cuánto se actualizan los atributos mientras suena un clip con pistas de atributos.
+    """),
+    "pyzed.AnimationLibrary": _d("""
+        Clips con nombre que se guardan juntos en un archivo `.pzanim` y se reutilizan.
+
+        `AnimationLibrary([intro, idle], name="ui")`; `lib["intro"]`, `lib.add(clip)`,
+        `lib.remove("idle")`, `lib.save("ui.pzanim")` y `AnimationLibrary.load(ruta)`. Un
+        reproductor que recibe una biblioteca con `name` llama a sus clips `"ui/intro"`, como Godot.
+    """),
+    "pyzed.load_animations": _d("La biblioteca guardada en un archivo `.pzanim`."),
+})
+
 # -- Métodos y propiedades ------------------------------------------------------
 # El texto de cada miembro de clase en "Métodos y propiedades" (en inglés sale del docstring).
 _section("widgets", "Animación", {
@@ -2455,6 +2503,61 @@ MEMBERS = {
     "pyzed.Animation.compile": "Los datos simples que reproduce la parte nativa (los usa `animate()`).",
     "pyzed.Animation.to_dict": "Datos listos para JSON (`Animation.from_dict` los vuelve a leer).",
     "pyzed.Animation.from_dict": "Reconstruye una animación guardada con `to_dict`.",
+    "pyzed.Key.to_dict": "Datos listos para JSON (`Key.from_dict` los vuelve a leer).",
+    "pyzed.Key.from_dict": "Reconstruye una key guardada con `to_dict`.",
+    "pyzed.Track.target": "El objetivo de widget (`\"\"` para un atributo de la app).",
+    "pyzed.Track.property": "La propiedad o la ruta del atributo que cambia.",
+    "pyzed.Track.value_at": "El valor de la pista a los `time` segundos (`None` si no tiene keys).",
+    "pyzed.Track.with_keys": "Una copia con otras keys.",
+    "pyzed.Track.to_dict": "Datos listos para JSON (`Track.from_dict` los vuelve a leer).",
+    "pyzed.Track.from_dict": "Reconstruye una pista guardada con `to_dict`.",
+    "pyzed.Call.to_dict": "Datos listos para JSON (solo se pueden guardar llamadas a métodos por nombre).",
+    "pyzed.Call.from_dict": "Reconstruye una llamada guardada con `to_dict`.",
+    "pyzed.Clip.targets": "Los objetivos de widget que animan sus pistas, en orden.",
+    "pyzed.Clip.attributes": "Los atributos de la app que animan sus pistas (`\":score\"` -> `\"score\"`).",
+    "pyzed.Clip.track": "La pista con `path` (`None` si no hay ninguna).",
+    "pyzed.Clip.values": "`{ruta: valor}` de las pistas activas en `time` (solo las de `target`, como `{propiedad: valor}`).",
+    "pyzed.Clip.with_track": "Una copia con `track` añadida, o reemplazando la pista con la misma ruta.",
+    "pyzed.Clip.without_track": "Una copia sin la pista `path`.",
+    "pyzed.Clip.with_key": "Una copia con una key en `time` sobre `path` (reemplaza la que haya en ese tiempo; añade la pista).",
+    "pyzed.Clip.without_key": "Una copia sin la key en `time` de `path`.",
+    "pyzed.Clip.retarget": "Una copia cuyas pistas animan otros widgets: `clip.retarget({\"card\": \"panel\"})`.",
+    "pyzed.Clip.animation": "Las pistas de `target` como una `pz.Animation` (para reproducirla sin reproductor, o con `define_animation`).",
+    "pyzed.Clip.to_dict": "Datos listos para JSON (`Clip.from_dict` los vuelve a leer).",
+    "pyzed.Clip.from_dict": "Reconstruye un clip guardado con `to_dict`.",
+    "pyzed.AnimationLibrary.add": "Añade `clip` (reemplazando el que tenga su nombre) y lo devuelve.",
+    "pyzed.AnimationLibrary.remove": "Quita el clip `name` (no pasa nada si no existe).",
+    "pyzed.AnimationLibrary.rename": "Renombra el clip `old` a `new` y lo devuelve.",
+    "pyzed.AnimationLibrary.names": "Los nombres de sus clips, en orden.",
+    "pyzed.AnimationLibrary.to_dict": "Los datos del `.pzanim` (`AnimationLibrary.from_dict` los vuelve a leer).",
+    "pyzed.AnimationLibrary.from_dict": "Reconstruye una biblioteca a partir de datos `.pzanim`.",
+    "pyzed.AnimationLibrary.save": "Escribe la biblioteca como JSON (un archivo `.pzanim`) y devuelve la ruta.",
+    "pyzed.AnimationLibrary.load": "Lee un archivo `.pzanim` (lanza `ValueError` si no lo es).",
+    "pyzed.AnimationPlayer.add": "Añade un clip, una biblioteca (sus clips como `\"nombre/clip\"` si tiene nombre) o una ruta `.pzanim`.",
+    "pyzed.AnimationPlayer.remove": "Quita el clip `name` (y lo detiene si es el actual).",
+    "pyzed.AnimationPlayer.names": "Los nombres de los clips que puede reproducir.",
+    "pyzed.AnimationPlayer.has": "Si tiene un clip llamado `name`.",
+    "pyzed.AnimationPlayer.clip": "El clip llamado `name` (por defecto el actual).",
+    "pyzed.AnimationPlayer.target": "El objetivo de widget `target` para `widget.animate(player[target])`.",
+    "pyzed.AnimationPlayer.current": "El clip que se reproduce o está en pausa (`None` si está detenido).",
+    "pyzed.AnimationPlayer.playing": "Si el tiempo avanza.",
+    "pyzed.AnimationPlayer.paused": "Si un clip está en pausa (los detenidos y los terminados no).",
+    "pyzed.AnimationPlayer.finished": "Si el clip actual llegó al final.",
+    "pyzed.AnimationPlayer.length": "La duración del clip actual en segundos (0 si no hay ninguno).",
+    "pyzed.AnimationPlayer.position": "Segundos transcurridos del clip actual.",
+    "pyzed.AnimationPlayer.queued": "Los clips que se reproducen después del actual, en orden.",
+    "pyzed.AnimationPlayer.value": "El valor que el clip actual da a `path` (`\"card:opacity\"`, `\":score\"`) ahora mismo.",
+    "pyzed.AnimationPlayer.play": "Reproduce `name` (por defecto el clip actual o en pausa) desde donde está. Un clip que ya se reproduce sigue salvo con `restart`; uno terminado vuelve a empezar. `backwards` lo reproduce al revés (`from_end` empieza en el final).",
+    "pyzed.AnimationPlayer.play_backwards": "Reproduce `name` al revés desde el final (o el clip actual desde donde está).",
+    "pyzed.AnimationPlayer.pause": "Detiene el tiempo donde está (`play()` o `resume()` siguen).",
+    "pyzed.AnimationPlayer.resume": "Sigue desde donde se pausó el clip.",
+    "pyzed.AnimationPlayer.toggle": "Pausa si se está reproduciendo y reproduce si no.",
+    "pyzed.AnimationPlayer.stop": "Vuelve al principio del clip (mostrando su primer fotograma); con `reset` los widgets recuperan sus propios valores y se olvida el clip. Vacía la cola.",
+    "pyzed.AnimationPlayer.seek": "Salta a `seconds` dentro del clip actual (las llamadas del camino no se ejecutan).",
+    "pyzed.AnimationPlayer.advance": "Avanza el clip actual `seconds` (se ejecutan las llamadas y se actualiza el estado), como `advance` de Godot.",
+    "pyzed.AnimationPlayer.queue": "Reproduce `name` cuando termine el clip actual (o ahora si no suena nada).",
+    "pyzed.AnimationPlayer.clear_queue": "Olvida los clips en cola.",
+    "pyzed.AnimationPlayer.subscriptions": "Lo que mantiene en marcha las llamadas, las pistas de atributos y la cola del reproductor (se añade solo cuando el reproductor es un atributo de la app o de una ventana).",
     "pyzed.designer.Document.set_animations": "Fija la lista de animaciones del control `name` (dicts con `preset` y, opcionalmente, `on`, `duration`, `delay`, `easing` y `repeat`); las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_style": "Fija una propiedad de estilo de un control, o del estilo global del formulario si `name` es `None`; `None` la quita.",
     "pyzed.designer.Document.clear_style": "Quita todas las propiedades de estilo de un control (o del estilo global del formulario).",

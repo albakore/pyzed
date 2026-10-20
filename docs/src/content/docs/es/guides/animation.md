@@ -21,6 +21,8 @@ panel.transition(opacity=1 if self.abierto else 0, x=0 if self.abierto else -24)
 ```
 
 Ejecuta [`examples/animations.py`](https://github.com/albakore/pyzed/blob/main/examples/animations.py) para probarlas todas.
+Para mover varios widgets y el estado de tu app a la vez en una línea de tiempo, con reproducir,
+pausar y buscar, mira [Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
 
 ## animate()
 

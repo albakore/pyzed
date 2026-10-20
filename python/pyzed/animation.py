@@ -532,14 +532,17 @@ def _compile(animations: Sequence[Any], options: Optional[Mapping[str, Any]]) ->
     on = _choice(options.get("on"), TRIGGERS, "trigger")
     if on is not None:
         options["on"] = on
-    items = [_as_animation(a) for a in _flatten(animations)]
+    flat = _flatten(animations)
+    # `player["card"]` from an AnimationPlayer: already compiled.
+    played = [d for a in flat if hasattr(a, "_pyzed_compiled") for d in a._pyzed_compiled()]
+    items = [_as_animation(a) for a in flat if not hasattr(a, "_pyzed_compiled")]
     if props:
         if items:
             raise TypeError("animate() takes presets or property values, not both: "
                             "use pz.Animation(...) for a custom animation")
         trigger = on or ("active" if options.get("active") is not None else "mount")
         items = [_from_props(props, trigger)]
-    return [a.compile(**options) for a in items]
+    return [a.compile(**options) for a in items] + played
 
 
 def _compile_transition(props: Optional[Mapping[str, Any]]) -> List[Dict[str, Any]]:

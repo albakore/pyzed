@@ -87,13 +87,14 @@ from .i18n import t
 from .hints import Color, Icon, Multiline, Range
 from .style import Gradient, Mask, Paint, Style, define_style, set_style
 from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
+from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
 from .events import Event, on
 from .forms import validation_errors
 from .memoize import clear_memos, memo, memo_stats
 from .icons import icon
 from .theme import AutoTheme, Theme, themes
-from . import accessibility, animation, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
+from . import accessibility, animation, animation_player, component, forms, i18n, layout, style, draw, events, hot_reload, theme, icons, ui
 
 # Loaded on first use, so ``import pyzed`` stays fast (an app that never opens the designer
 # or reads the reference doesn't pay for them). ``pz.Dock`` and ``from pyzed import Dock``
@@ -195,6 +196,13 @@ def vertical_slider(min, max, value, **kwargs):  # noqa: A002 - mirrors slider()
 
 __all__ = [
     "Animation",
+    "AnimationLibrary",
+    "AnimationPlayer",
+    "Call",
+    "Clip",
+    "Key",
+    "Track",
+    "load_animations",
     "App",
     "Color",
     "Gradient",
@@ -217,6 +225,7 @@ __all__ = [
     "Window",
     "accessibility",
     "animation",
+    "animation_player",
     "asyncio_loop",
     "button",
     "canvas",

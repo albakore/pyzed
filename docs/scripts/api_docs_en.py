@@ -1939,6 +1939,11 @@ _section("widgets", "Animation", {
     "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Names for `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) mapped to their `(opening, closing)` presets.", "no_signature": True},
 })
 
+_section("widgets", "Timeline animations", _doc(
+    "pyzed.Clip", "pyzed.Track", "pyzed.Key", "pyzed.Call", "pyzed.AnimationPlayer", "pyzed.AnimationLibrary",
+    "pyzed.load_animations",
+))
+
 
 # -- Large data: virtualization and memoization -----------------------------
 _section("widgets", "Large data", {
