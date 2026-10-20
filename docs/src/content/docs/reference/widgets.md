@@ -1400,6 +1400,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -1430,6 +1432,8 @@ A dropdown to choose one of `options`. `on_select(option)` receives the chosen o
 | `options` | List of options. |
 | `selected` | Current option. |
 | `on_select` | Callable that receives the chosen item. |
+| `on_open` | Sent when the menu opens. |
+| `on_close` | Sent when the menu closes. |
 | `placeholder` | Hint text shown when empty. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `padding` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |

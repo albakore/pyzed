@@ -115,12 +115,33 @@ ui.select(["Python", "Rust"], "Python", on_select, size="lg", width=200)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`on_open` y `on_close` se ejecutan al abrir y cerrar el menú.
+
+<VariantGrid>
+<Variant name="select-v3-1" caption={"disabled=True"} alt={"Select: disabled=True"} code="Código" mono>
+
+```python
+ui.select(["One Dark"], "One Dark", on_select, disabled=True, width=200)
+```
+
+</Variant>
+<Variant name="select-v3-2" caption={"invalid=True"} alt={"Select: invalid=True"} code="Código" mono>
+
+```python
+ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", invalid=True, width=200)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="select-v3-1" caption={"pz.pick_list"} alt={"Select: pz.pick_list"} code="Código" mono>
+<Variant name="select-v4-1" caption={"pz.pick_list"} alt={"Select: pz.pick_list"} code="Código" mono>
 
 ```python
 pz.pick_list(["Small", "Medium", "Large"], "Medium", on_select, width=200,
@@ -149,6 +170,10 @@ select(
     placeholder='Select…',
     width=None,
     size='md',
+    disabled=False,
+    invalid=False,
+    on_open=None,
+    on_close=None,
     theme=None,
 )
 ```
@@ -163,6 +188,10 @@ Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, as�
 | `placeholder` | `"Select…"` | Texto de ayuda cuando está vacío. |
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | `False` | Lo atenúa. |
+| `invalid` | `False` | Pinta el borde con el color de error. |
+| `on_open` | `None` | Se envía al abrir el menú. |
+| `on_close` | `None` | Se envía al cerrar el menú. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#select)
@@ -175,6 +204,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -205,6 +236,8 @@ Un desplegable para elegir una de `options`. `on_select(opción)` recibe la eleg
 | `options` | *obligatorio* | Lista de opciones. |
 | `selected` | `None` | Opción actual. |
 | `on_select` | `None` | Callable que recibe el elemento elegido. |
+| `on_open` | `None` | Se envía al abrir el menú. |
+| `on_close` | `None` | Se envía al cerrar el menú. |
 | `placeholder` | `None` | Texto de ayuda cuando está vacío. |
 | `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `padding` | `None` | Relleno interior: `8`, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |

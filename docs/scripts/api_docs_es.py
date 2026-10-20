@@ -545,23 +545,29 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
             }),
             ("Formularios", {
                 "pyzed.ui.input": {
-                    "desc": "Un campo de texto.",
+                    "desc": "Un campo de texto. El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.",
                     "params": {
                         "value": "Texto actual.",
                         "size": '`"sm"`, `"md"` o `"lg"`.',
                         "secure": "Oculta el texto.",
                         "borderless": "Sin borde ni fondo (como en la paleta de comandos).",
+                        "disabled": "Lo atenúa e ignora lo que se escribe.",
+                        "readonly": "Se puede seleccionar y copiar, pero no cambiar.",
+                        "invalid": "Pinta el borde con el color de error.",
+                        "max_length": "Ignora los cambios más largos que esto.",
+                        "on_clear": "Muestra una ✕ mientras hay texto; se envía al pulsarla.",
+                        "align": 'Alineación del texto: `"start"`, `"center"` o `"end"`.',
                     },
                 },
                 "pyzed.ui.search_input": {
                     "desc": "Un `input` con icono de lupa.",
                     "params": {"value": "Texto actual.", "kwargs": "Los de `input`."},
                 },
-                "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado."},
-                "pyzed.ui.checkbox": {"desc": "Una casilla de verificación."},
+                "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa e ignora los clics."}},
+                "pyzed.ui.checkbox": {"desc": "Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "La atenúa e ignora los clics."}},
                 "pyzed.ui.slider": {
                     "desc": "Un deslizador.",
-                    "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso."},
+                    "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso.", "on_release": "Se envía al terminar de arrastrar (guarda o aplica ahí).", "vertical": "Lo pone de pie.", "disabled": "Lo atenúa.", "show_value": 'Muestra el número al lado: `True`, o un formato como `"{:.0%}"`.'},
                 },
                 "pyzed.ui.progress": {
                     "desc": "Una barra de progreso fina.",
@@ -569,12 +575,13 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                 },
                 "pyzed.ui.segmented": {
                     "desc": "Un grupo de botones mutuamente excluyentes.",
-                    "params": {"options": "Lista de opciones (textos).", "selected": "La opción activa."},
+                    "params": {"options": "Textos, `(valor, etiqueta)` o `(valor, etiqueta, icono)`.", "selected": "El valor activo.", "size": '`"sm"`, `"md"` o `"lg"`.', "width": '`"fill"` reparte el ancho entre los botones.', "disabled": "`True`, o los valores a desactivar."},
                 },
                 "pyzed.ui.field": {
                     "desc": "Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).",
                     "params": {"control": "El control (switch, input…).", "description": "Texto de ayuda.",
-                               "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`)."},
+                               "error": "Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`).",
+                               "required": "Añade un `*` rojo tras el título.", "vertical": "Pone el control bajo el título."},
                 },
             }),
             ("Listas, árbol y menús", {
@@ -1345,6 +1352,7 @@ dict(_w)["Controles"].update({
             "selected": "Opción actual.", "handle": "Carácter del icono de la flecha.", "handle_size": "Tamaño de la flecha.",
             "menu_height": "Alto máximo del menú.", "font": "Familia de la fuente.",
             "placeholder_color": "Color del placeholder.", "handle_color": "Color de la flecha.",
+            "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú.",
             "menu_bg": "Fondo del menú.", "menu_color": "Texto del menú.", "menu_border_color": "Borde del menú.",
             "selected_bg": "Fondo de la opción resaltada.", "selected_color": "Texto de la opción resaltada.",
         },
@@ -1362,27 +1370,27 @@ dict(_w)["Controles"]["pyzed.slider"]["params"]["on_release"] = "Se envía al so
 _section("ui", "Controles", {
     "pyzed.ui.select": {
         "desc": "Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, así que sirven textos, enums, dataclasses o modelos de base de datos; `on_select` recibe el objeto elegido, no su texto.",
-        "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.'},
+        "params": {"selected": "Opción actual.", "size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_open": "Se envía al abrir el menú.", "on_close": "Se envía al cerrar el menú."},
     },
     "pyzed.ui.radio_group": {
         "desc": "Opciones mutuamente excluyentes como botones de radio.",
-        "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna."},
+        "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna.", "disabled": "`True`, o los valores a desactivar.", "descriptions": "Asocia valores a una línea atenuada bajo su etiqueta."},
     },
     "pyzed.ui.number_field": {
-        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.",
-        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.'},
+        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
+        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
-        "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES},
+        "params": {"content": "Texto del botón.", "variant": "Como en `ui.button`.", "size": _SIZES, "tint": "Como en `ui.button`.", "disabled": "Desactiva las dos mitades.", "tooltip": "Tooltip de la mitad principal."},
     },
     "pyzed.ui.toggle_group": {
         "desc": "Un control segmentado solo con iconos.",
-        "params": {"options": "Pares `(valor, nombre_de_icono)`.", "selected": "Valor actual."},
+        "params": {"options": "`(valor, nombre_de_icono)` o `(valor, nombre_de_icono, tooltip)`.", "selected": "Valor actual (una colección con `multiple`).", "multiple": "Cada botón activa o desactiva su valor.", "disabled": "`True`, o los valores a desactivar."},
     },
     "pyzed.ui.chip": {
         "desc": "Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.",
-        "params": {"content": "Texto.", "on_remove": "Muestra una ✕ que envía esto al pulsarla."},
+        "params": {"content": "Texto.", "on_remove": "Muestra una ✕ que envía esto al pulsarla.", "tint": "Color cuando está seleccionada (un token del tema).", "disabled": "La atenúa e ignora las pulsaciones."},
     },
     "pyzed.ui.disclosure": {
         "desc": "Una sección plegable: cabecera con flecha que muestra u oculta `content`. El estado abierto es tuyo: cámbialo en `on_toggle`.",

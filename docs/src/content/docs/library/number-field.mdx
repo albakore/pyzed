@@ -118,6 +118,34 @@ ui.number_field(8, on_change, min=1, max=8)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
+
+<VariantGrid>
+<Variant name="number-field-v3-1" caption={"prefix=\"$\", decimals=2"} alt={"Number field: prefix=\"$\", decimals=2"} code="Code" mono>
+
+```python
+ui.number_field(9.5, on_change, step=0.5, prefix="$", decimals=2, width=150)
+```
+
+</Variant>
+<Variant name="number-field-v3-2" caption={"invalid=True"} alt={"Number field: invalid=True"} code="Code" mono>
+
+```python
+ui.number_field(70000, on_change, invalid=True, width=150)
+```
+
+</Variant>
+<Variant name="number-field-v3-3" caption={"disabled=True"} alt={"Number field: disabled=True"} code="Code" mono>
+
+```python
+ui.number_field(4, on_change, min=1, max=8, disabled=True)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.number_field`
@@ -132,12 +160,18 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    prefix=None,
     align='center',
+    decimals=None,
+    disabled=False,
+    invalid=False,
+    id=None,
+    on_submit=None,
     theme=None,
 )
 ```
 
-A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.
+A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -148,7 +182,13 @@ A numeric field with −/+ buttons. `on_change(value)` receives the number alrea
 | `step` | `1` | Button step. |
 | `width` | `120` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `suffix` | `None` | Unit shown at the end (`"px"`, `"%"`…). |
+| `prefix` | `None` | Text before the number (`"$"`…). |
 | `align` | `"center"` | Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`. |
+| `decimals` | `None` | Decimals shown (by default, as many as `step`). |
+| `disabled` | `False` | Greys it out. |
+| `invalid` | `False` | Paints the border in the error color. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
+| `on_submit` | `None` | Sent on Enter. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#number_field)

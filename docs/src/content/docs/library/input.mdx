@@ -171,12 +171,61 @@ ui.field("Email", ui.input("ada@", on_input, width=220), error="Enter a valid em
 </Variant>
 </VariantGrid>
 
+### States and events
+
+Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.
+
+<VariantGrid>
+<Variant name="input-v5-1" caption={"disabled=True"} alt={"Input: disabled=True"} code="Code" mono>
+
+```python
+ui.input("Locked", on_input, disabled=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-2" caption={"readonly=True"} alt={"Input: readonly=True"} code="Code" mono>
+
+```python
+ui.input("Copy me, not edit me", on_input, readonly=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-3" caption={"invalid=True"} alt={"Input: invalid=True"} code="Code" mono>
+
+```python
+ui.input("ada@", on_input, invalid=True, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-4" caption={"on_clear="} alt={"Input: on_clear="} code="Code" mono>
+
+```python
+ui.input("pyzed", on_input, on_clear=on_clear, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-5" caption={"max_length=8"} alt={"Input: max_length=8"} code="Code" mono>
+
+```python
+ui.input("12345678", on_input, max_length=8, width=220)
+```
+
+</Variant>
+<Variant name="input-v5-6" caption={"align=\"center\""} alt={"Input: align=\"center\""} code="Code" mono>
+
+```python
+ui.input("centered", on_input, align="center", width=220)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="input-v5-1" caption={"pz.text_input"} alt={"Input: pz.text_input"} code="Code" mono>
+<Variant name="input-v6-1" caption={"pz.text_input"} alt={"Input: pz.text_input"} code="Code" mono>
 
 ```python
 pz.text_input("", placeholder="pz.text_input", on_input=on_input, width=260, padding=8,
@@ -198,17 +247,23 @@ input(
     placeholder='',
     icon=None,
     on_submit=None,
+    on_clear=None,
     id=None,
     size='md',
     secure=False,
     width='fill',
     borderless=False,
     mono=False,
+    disabled=False,
+    readonly=False,
+    invalid=False,
+    max_length=None,
+    align='start',
     theme=None,
 )
 ```
 
-A text field.
+A text field. Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -217,12 +272,18 @@ A text field.
 | `placeholder` | `""` | Hint text shown when empty. |
 | `icon` | `None` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `on_submit` | `None` | Message or callable sent when Enter is pressed. |
+| `on_clear` | `None` | Shows an ✕ while there is text; sent when it is clicked. |
 | `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
 | `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
 | `secure` | `False` | Hides the text. |
 | `width` | `"fill"` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `borderless` | `False` | No border or background (as in the command palette). |
 | `mono` | `False` | Uses the monospace font (IBM Plex Mono). |
+| `disabled` | `False` | Greys it out and ignores typing. |
+| `readonly` | `False` | Selectable and copyable, but it can't be changed. |
+| `invalid` | `False` | Paints the border in the error color. |
+| `max_length` | `None` | Ignores edits longer than this. |
+| `align` | `"start"` | Text alignment: `"start"`, `"center"` or `"end"`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#input)

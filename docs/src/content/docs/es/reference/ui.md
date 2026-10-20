@@ -278,17 +278,23 @@ input(
     placeholder='',
     icon=None,
     on_submit=None,
+    on_clear=None,
     id=None,
     size='md',
     secure=False,
     width='fill',
     borderless=False,
     mono=False,
+    disabled=False,
+    readonly=False,
+    invalid=False,
+    max_length=None,
+    align='start',
     theme=None,
 )
 ```
 
-Un campo de texto.
+Un campo de texto. El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -297,12 +303,18 @@ Un campo de texto.
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `on_submit` | Mensaje o callable que se envía al pulsar Enter. |
+| `on_clear` | Muestra una ✕ mientras hay texto; se envía al pulsarla. |
 | `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
 | `secure` | Oculta el texto. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `borderless` | Sin borde ni fondo (como en la paleta de comandos). |
 | `mono` | Usa la fuente monoespaciada (IBM Plex Mono). |
+| `disabled` | Lo atenúa e ignora lo que se escribe. |
+| `readonly` | Se puede seleccionar y copiar, pero no cambiar. |
+| `invalid` | Pinta el borde con el color de error. |
+| `max_length` | Ignora los cambios más largos que esto. |
+| `align` | Alineación del texto: `"start"`, `"center"` o `"end"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `search_input`
@@ -323,7 +335,7 @@ Un `input` con icono de lupa.
 ### `switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, theme=None)
+switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
 Un interruptor encendido/apagado.
@@ -333,27 +345,45 @@ Un interruptor encendido/apagado.
 | `checked` | Estado actual. |
 | `on_toggle` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | Texto de la etiqueta. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Lo atenúa e ignora los clics. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, theme=None)
+checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
-Una casilla de verificación.
+Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.
 
 | Parámetro | Descripción |
 | --- | --- |
 | `checked` | Estado actual. |
 | `on_toggle` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | Texto de la etiqueta. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | La atenúa e ignora los clics. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `slider`
 
 ```python
-slider(value, on_change=None, *, min=0.0, max=1.0, step=0.01, width='fill', theme=None)
+slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    on_release=None,
+    vertical=False,
+    width=None,
+    height=None,
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
 ```
 
 Un deslizador.
@@ -365,7 +395,12 @@ Un deslizador.
 | `min` | Mínimo. |
 | `max` | Máximo. |
 | `step` | Paso. |
+| `on_release` | Se envía al terminar de arrastrar (guarda o aplica ahí). |
+| `vertical` | Lo pone de pie. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `height` | Alto: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `disabled` | Lo atenúa. |
+| `show_value` | Muestra el número al lado: `True`, o un formato como `"{:.0%}"`. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `progress`
@@ -388,22 +423,43 @@ Una barra de progreso fina.
 ### `segmented`
 
 ```python
-segmented(options, selected, on_select=None, *, theme=None)
+segmented(
+    options,
+    selected,
+    on_select=None,
+    *,
+    size='md',
+    width=None,
+    disabled=False,
+    theme=None,
+)
 ```
 
 Un grupo de botones mutuamente excluyentes.
 
 | Parámetro | Descripción |
 | --- | --- |
-| `options` | Lista de opciones (textos). |
-| `selected` | La opción activa. |
+| `options` | Textos, `(valor, etiqueta)` o `(valor, etiqueta, icono)`. |
+| `selected` | El valor activo. |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `size` | `"sm"`, `"md"` o `"lg"`. |
+| `width` | `"fill"` reparte el ancho entre los botones. |
+| `disabled` | `True`, o los valores a desactivar. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `field`
 
 ```python
-field(title, control, *, description=None, error=None, theme=None)
+field(
+    title,
+    control,
+    *,
+    description=None,
+    error=None,
+    required=False,
+    vertical=False,
+    theme=None,
+)
 ```
 
 Una fila de formulario: título y descripción a la izquierda, control a la derecha (como una pantalla de ajustes).
@@ -414,6 +470,8 @@ Una fila de formulario: título y descripción a la izquierda, control a la dere
 | `control` | El control (switch, input…). |
 | `description` | Texto de ayuda. |
 | `error` | Un mensaje de validación que se muestra bajo el título con el color de error (ver `pz.validation_errors`). |
+| `required` | Añade un `*` rojo tras el título. |
+| `vertical` | Pone el control bajo el título. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ## Diálogos
@@ -573,6 +631,10 @@ select(
     placeholder='Select…',
     width=None,
     size='md',
+    disabled=False,
+    invalid=False,
+    on_open=None,
+    on_close=None,
     theme=None,
 )
 ```
@@ -587,6 +649,10 @@ Un desplegable con el estilo del tema. Las opciones se muestran con `str()`, as�
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `size` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `on_open` | Se envía al abrir el menú. |
+| `on_close` | Se envía al cerrar el menú. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `radio_group`
@@ -599,6 +665,8 @@ radio_group(
     *,
     horizontal=False,
     spacing=8,
+    disabled=False,
+    descriptions=None,
     theme=None,
 )
 ```
@@ -612,6 +680,8 @@ Opciones mutuamente excluyentes como botones de radio.
 | `on_select` | Callable que recibe el valor elegido. |
 | `horizontal` | En fila en lugar de columna. |
 | `spacing` | Separación entre hijos, en píxeles. |
+| `disabled` | `True`, o los valores a desactivar. |
+| `descriptions` | Asocia valores a una línea atenuada bajo su etiqueta. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `number_field`
@@ -626,12 +696,18 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    prefix=None,
     align='center',
+    decimals=None,
+    disabled=False,
+    invalid=False,
+    id=None,
+    on_submit=None,
     theme=None,
 )
 ```
 
-Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.
+Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
 
 | Parámetro | Descripción |
 | --- | --- |
@@ -642,7 +718,13 @@ Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya li
 | `step` | Paso de los botones. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `suffix` | Unidad que se muestra al final (`"px"`, `"%"`…). |
+| `prefix` | Texto antes del número (`"$"`…). |
 | `align` | Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`. |
+| `decimals` | Decimales que muestra (por defecto, los de `step`). |
+| `disabled` | Lo atenúa. |
+| `invalid` | Pinta el borde con el color de error. |
+| `id` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `on_submit` | Se envía con Enter. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `split_button`
@@ -655,7 +737,10 @@ split_button(
     *,
     icon=None,
     variant='filled',
+    tint=None,
     size='md',
+    disabled=False,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -669,28 +754,51 @@ Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acció
 | `on_menu` | Mensaje o callable del botón del menú. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `variant` | Como en `ui.button`. |
+| `tint` | Como en `ui.button`. |
 | `size` | `"xs"`, `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | Desactiva las dos mitades. |
+| `tooltip` | Tooltip de la mitad principal. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `toggle_group`
 
 ```python
-toggle_group(options, selected, on_select, *, theme=None)
+toggle_group(
+    options,
+    selected,
+    on_select=None,
+    *,
+    disabled=False,
+    multiple=False,
+    theme=None,
+)
 ```
 
 Un control segmentado solo con iconos.
 
 | Parámetro | Descripción |
 | --- | --- |
-| `options` | Pares `(valor, nombre_de_icono)`. |
-| `selected` | Valor actual. |
+| `options` | `(valor, nombre_de_icono)` o `(valor, nombre_de_icono, tooltip)`. |
+| `selected` | Valor actual (una colección con `multiple`). |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `disabled` | `True`, o los valores a desactivar. |
+| `multiple` | Cada botón activa o desactiva su valor. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `chip`
 
 ```python
-chip(content, *, on_press=None, on_remove=None, selected=False, icon=None, theme=None)
+chip(
+    content,
+    *,
+    on_press=None,
+    on_remove=None,
+    selected=False,
+    icon=None,
+    tint='accent',
+    disabled=False,
+    theme=None,
+)
 ```
 
 Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.
@@ -702,6 +810,8 @@ Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitar
 | `on_remove` | Muestra una ✕ que envía esto al pulsarla. |
 | `selected` | Lo marca como seleccionado. |
 | `icon` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `tint` | Color cuando está seleccionada (un token del tema). |
+| `disabled` | La atenúa e ignora las pulsaciones. |
 | `theme` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 ### `disclosure`

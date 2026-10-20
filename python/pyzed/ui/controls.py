@@ -21,12 +21,18 @@ def select(
     placeholder: str = "Select…",
     width: Any = None,
     size: str = "md",
+    disabled: bool = False,
+    invalid: bool = False,
+    on_open: Any = None,
+    on_close: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A themed dropdown (Zed's ``DropdownMenu``) built on ``pz.pick_list``.
 
     ``on_select`` is called with the chosen option. Options are shown with ``str()``,
     so any value with a readable ``__str__`` works (strings, enums, dataclasses...).
+    ``disabled`` greys it out, ``invalid`` paints the border red, and ``on_open`` /
+    ``on_close`` run when the menu opens and closes.
     """
     t = _theme(theme)
     height, pad = {"sm": (22, 6), "md": (28, 8), "lg": (32, 10)}[size]
@@ -42,10 +48,14 @@ def select(
         def on_select(text: str) -> Any:
             return user_select(by_label.get(text, text))
 
+    if disabled:
+        on_select = None
     return _core.pick_list(
         labels,
         None if selected is None else str(selected),
         on_select,
+        on_open=None if disabled else on_open,
+        on_close=None if disabled else on_close,
         placeholder=placeholder,
         width=width,
         padding=((height - 18) / 2, pad),
@@ -53,11 +63,11 @@ def select(
         handle=_glyph("chevron-down"),
         handle_size=12,
         bg=t.element,
-        color=t.text,
+        color=t.text_disabled if disabled else t.text,
         placeholder_color=t.text_placeholder,
-        handle_color=t.icon_muted,
-        border_color=t.border_variant,
-        hover_border_color=t.border,
+        handle_color=t.text_disabled if disabled else t.icon_muted,
+        border_color=t.error if invalid else t.border_variant,
+        hover_border_color=t.error if invalid else (t.border_variant if disabled else t.border),
         radius=t.radius_sm,
         menu_bg=t.elevated,
         menu_color=t.text,
@@ -74,31 +84,38 @@ def radio_group(
     *,
     horizontal: bool = False,
     spacing: float = 8,
+    disabled: Any = False,
+    descriptions: Optional[Mapping[Any, str]] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """Mutually exclusive choices shown as radio buttons.
 
     ``options`` are strings or ``(value, label)`` pairs; ``on_select(value)`` is called
-    when one is picked.
+    when one is picked. ``disabled`` is ``True`` for all of them or a collection of the
+    values to disable; ``descriptions`` maps values to a muted line under their label.
     """
     t = _theme(theme)
     items = []
     for option in options:
         value, text = option if isinstance(option, tuple) else (option, str(option))
-        items.append(
-            _core.radio(
-                text,
-                value == selected,
-                (lambda v=value: on_select(v)) if on_select else None,
-                size=15,
-                text_size=13.5,
-                spacing=8,
-                accent=t.accent,
-                bg=t.element,
-                border_color=t.border,
-                color=t.text,
-            )
+        off = disabled is True or (not isinstance(disabled, bool) and value in disabled)
+        item = _core.radio(
+            text,
+            value == selected,
+            (lambda v=value: on_select(v)) if on_select and not off else None,
+            size=15,
+            text_size=13.5,
+            spacing=8,
+            accent=alpha(t.accent, 0.4) if off else t.accent,
+            bg=t.element,
+            border_color=t.border_variant if off else t.border,
+            color=t.text_disabled if off else t.text,
         )
+        note = (descriptions or {}).get(value)
+        if note:
+            item = _core.column([item, _core.container(label(note, size="sm", color="text_muted", theme=t),
+                                                       padding=(0, 0, 0, 23))], spacing=2)
+        items.append(item)
     layout = _core.row if horizontal else _core.column
     return layout(items, spacing=spacing * (2 if horizontal else 1))
 
@@ -119,16 +136,26 @@ def number_field(
     step: float = 1,
     width: float = 120,
     suffix: Optional[str] = None,
+    prefix: Optional[str] = None,
     align: str = "center",
+    decimals: Optional[int] = None,
+    disabled: bool = False,
+    invalid: bool = False,
+    id: Optional[str] = None,  # noqa: A002
+    on_submit: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A numeric input with −/+ buttons (Zed's ``NumericStepper``).
 
     ``on_change(value)`` receives the new number, clamped to ``min``/``max``. Typing is
     accepted as long as it parses; anything else is ignored. The number is centered
-    between the buttons; ``align="start"`` or ``"end"`` moves it.
+    between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the ↑/↓
+    keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
+    ``decimals`` fixes how many decimals it shows (by default, as many as ``step``).
     """
     t = _theme(theme)
+    if disabled:
+        on_change = None
 
     def clamp(v: float) -> float:
         if min is not None:
@@ -147,11 +174,11 @@ def number_field(
     def nudge(delta: float):
         return (lambda: on_change(clamp(round(value + delta, 10)))) if on_change else None
 
-    def side(icon: str, delta: float, disabled: bool):
+    def side(icon: str, delta: float, off: bool):
         return _core.button(
-            _core.container(_icon(icon, size=12, color=t.text_disabled if disabled else t.icon),
+            _core.container(_icon(icon, size=12, color=t.text_disabled if off else t.icon),
                             height="fill", align_y="center"),
-            None if disabled else nudge(delta),
+            None if off else nudge(delta),
             padding=(0, 6),
             height="fill",
             bg="transparent",
@@ -160,25 +187,44 @@ def number_field(
             radius=t.radius_sm - 1,
         )
 
-    text = _format(value, step)
-    return _core.container(
+    def key(event: Any):
+        if on_change is None:
+            return None
+        steps = 10 if "shift" in (event.key or "") else 1
+        name = (event.key or "").rsplit("-", 1)[-1]
+        if name == "up":
+            return on_change(clamp(round(value + step * steps, 10)))
+        if name == "down":
+            return on_change(clamp(round(value - step * steps, 10)))
+        if name == "home" and min is not None:
+            return on_change(min)
+        if name == "end" and max is not None:
+            return on_change(max)
+        return None
+
+    text = f"{value:.{decimals}f}" if decimals is not None else _format(value, step)
+    muted = "text_disabled" if disabled else "text_muted"
+    box = _core.container(
         _core.row(
             [
-                side("minus", -step, min is not None and value <= min),
+                side("minus", -step, disabled or (min is not None and value <= min)),
+                label(prefix, size="sm", color=muted, theme=t) if prefix else None,
                 _core.text_input(
                     text,
-                    on_input=typed,
+                    on_input=typed if on_change else None,
+                    on_submit=None if disabled else on_submit,
+                    id=id,
                     width="fill",
                     size=13,
                     padding=(0, 2),
                     bg="transparent",
                     border_width=0.0,
-                    color=t.text,
+                    color=t.text_disabled if disabled else t.text,
                     selection_color=t.selection,
                     align_x=align,
                 ),
-                label(suffix, size="sm", color="text_muted", theme=t) if suffix else None,
-                side("plus", step, max is not None and value >= max),
+                label(suffix, size="sm", color=muted, theme=t) if suffix else None,
+                side("plus", step, disabled or (max is not None and value >= max)),
             ],
             align="center",
             spacing=2,
@@ -188,10 +234,11 @@ def number_field(
         height=28,
         padding=2,
         bg=t.element,
-        border_color=t.border_variant,
+        border_color=t.error if invalid else t.border_variant,
         border_width=1.0,
         radius=t.radius_sm,
     )
+    return box if disabled else box.on(key_down=key)
 
 
 def split_button(
@@ -201,18 +248,25 @@ def split_button(
     *,
     icon: Optional[str] = None,
     variant: str = "filled",
+    tint: Optional[str] = None,
     size: str = "md",
+    disabled: bool = False,
+    tooltip: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A button with a separate chevron for more options (Zed's ``SplitButton``).
 
     ``on_press`` runs the main action; ``on_menu`` usually opens a ``ui.menu`` popover.
     """
+    from .base import tooltip_text
+
     t = _theme(theme)
+    main = button(content, on_press, icon=icon, variant=variant, tint=tint, size=size, disabled=disabled, theme=t)
     return _core.row(
         [
-            button(content, on_press, icon=icon, variant=variant, size=size, theme=t),
-            button(None, on_menu, icon="chevron-down", variant=variant, size=size, theme=t),
+            tooltip_text(main, tooltip, theme=t) if tooltip else main,
+            button(None, on_menu, icon="chevron-down", variant=variant, tint=tint, size=size, disabled=disabled,
+                   theme=t),
         ],
         spacing=1,
     )
@@ -225,11 +279,20 @@ def chip(
     on_remove: Any = None,
     selected: bool = False,
     icon: Optional[str] = None,
+    tint: str = "accent",
+    disabled: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A compact tag, optionally clickable (filters) and removable (an ``x`` at the end)."""
+    """A compact tag, optionally clickable (filters) and removable (an ``x`` at the end).
+
+    ``tint`` colors it when selected; ``disabled`` greys it out and ignores presses.
+    """
     t = _theme(theme)
-    color = t.text if selected else t.text_muted
+    removable = on_remove is not None
+    if disabled:
+        on_press = on_remove = None
+    accent = t.color(tint)
+    color = t.text_disabled if disabled else (t.text if selected else t.text_muted)
     parts = [
         _icon(icon, size=12, color=color) if icon else None,
         _core.text(content, size=12, color=color, wrap=False),
@@ -241,12 +304,12 @@ def chip(
             hover_bg=t.ghost_hover,
             radius=999,
         )
-        if on_remove is not None
+        if removable
         else None,
     ]
     body = _core.row(parts, spacing=4, align="center")
-    bg = alpha(t.accent, 0.18) if selected else t.element
-    border = alpha(t.accent, 0.5) if selected else t.border_variant
+    bg = alpha(accent, 0.18) if selected else t.element
+    border = alpha(accent, 0.5) if selected else t.border_variant
     if on_press is None:
         return _core.container(body, padding=(2, 8), bg=bg, border_color=border, border_width=1.0, radius=999)
     return _core.button(
@@ -254,7 +317,7 @@ def chip(
         on_press,
         padding=(2, 8),
         bg=bg,
-        hover_bg=alpha(t.accent, 0.24) if selected else t.element_hover,
+        hover_bg=alpha(accent, 0.24) if selected else t.element_hover,
         border_color=border,
         border_width=1.0,
         radius=999,
@@ -367,27 +430,37 @@ def accordion(
 
 
 def toggle_group(
-    options: Sequence[Tuple[Any, str]],
+    options: Sequence[Tuple[Any, ...]],
     selected: Any,
-    on_select: Callable[[Any], Any],
+    on_select: Optional[Callable[[Any], Any]] = None,
     *,
+    disabled: Any = False,
+    multiple: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """Icon-only segmented control: ``options`` are ``(value, icon_name)`` pairs."""
+    """Icon-only segmented control: ``options`` are ``(value, icon_name)`` or
+    ``(value, icon_name, tooltip)``.
+
+    With ``multiple=True``, ``selected`` is a collection and each button toggles its value
+    on or off (``on_select`` gets the value). ``disabled`` is ``True`` for all of them or a
+    collection of the values to disable.
+    """
+    from .base import tooltip_text
+
     t = _theme(theme)
     buttons = []
-    for value, icon_name in options:
-        active = value == selected
-        buttons.append(
-            _core.button(
-                _icon(icon_name, size=14, color=t.text if active else t.icon_muted),
-                lambda v=value: on_select(v),
-                padding=(4, 6),
-                bg=t.element_selected if active else "transparent",
-                hover_bg=t.element_selected if active else t.ghost_hover,
-                radius=t.radius_sm - 1,
-            )
+    for value, icon_name, *rest in options:
+        active = value in selected if multiple else value == selected
+        off = disabled is True or (not isinstance(disabled, bool) and value in disabled)
+        item = _core.button(
+            _icon(icon_name, size=14, color=t.text_disabled if off else (t.text if active else t.icon_muted)),
+            None if off or on_select is None else (lambda v=value: on_select(v)),
+            padding=(4, 6),
+            bg=t.element_selected if active else "transparent",
+            hover_bg=t.element_selected if active else t.ghost_hover,
+            radius=t.radius_sm - 1,
         )
+        buttons.append(tooltip_text(item, rest[0], theme=t) if rest and rest[0] else item)
     return _core.container(
         _core.row(buttons, spacing=2),
         padding=2,

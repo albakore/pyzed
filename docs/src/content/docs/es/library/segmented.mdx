@@ -107,21 +107,66 @@ ui.segmented(["Editor", "Terminal", "Both"], "Both", on_select)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="segmented-v3-1" caption={"Con iconos"} alt={"Segmentado: Con iconos"} code="Código">
+
+```python
+ui.segmented([("list", "List", "list"), ("grid", "Grid", "layout-grid")], "grid", on_select)
+```
+
+</Variant>
+<Variant name="segmented-v3-2" caption={"width=\"fill\""} alt={"Segmentado: width=\"fill\""} code="Código" mono>
+
+```python
+ui.segmented(["Day", "Week", "Month"], "Week", on_select, width=320)
+```
+
+</Variant>
+<Variant name="segmented-v3-3" caption={"disabled={\"Month\"}"} alt={"Segmentado: disabled={\"Month\"}"} code="Código" mono>
+
+```python
+ui.segmented(["Day", "Week", "Month"], "Day", on_select, disabled={"Month"})
+```
+
+</Variant>
+<Variant name="segmented-v3-4" caption={"size=\"sm\""} alt={"Segmentado: size=\"sm\""} code="Código" mono>
+
+```python
+ui.segmented(["Code", "Preview"], "Code", on_select, size="sm")
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.segmented`
 
 ```python
-segmented(options, selected, on_select=None, *, theme=None)
+segmented(
+    options,
+    selected,
+    on_select=None,
+    *,
+    size='md',
+    width=None,
+    disabled=False,
+    theme=None,
+)
 ```
 
 Un grupo de botones mutuamente excluyentes.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
-| `options` | *obligatorio* | Lista de opciones (textos). |
-| `selected` | *obligatorio* | La opción activa. |
+| `options` | *obligatorio* | Textos, `(valor, etiqueta)` o `(valor, etiqueta, icono)`. |
+| `selected` | *obligatorio* | El valor activo. |
 | `on_select` | `None` | Callable que recibe el elemento elegido. |
+| `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `width` | `None` | `"fill"` reparte el ancho entre los botones. |
+| `disabled` | `False` | `True`, o los valores a desactivar. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#segmented)

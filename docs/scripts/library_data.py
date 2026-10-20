@@ -4717,6 +4717,80 @@ VARIANTS.update({
     ],
 })
 
+# States, sizes and events added to the form controls.
+_STATES = T("States and events", "Estados y eventos")
+_MORE = {
+    "input": V(_STATES, [
+        ('disabled=True', 'ui.input("Locked", on_input, disabled=True, width=220)'),
+        ('readonly=True', 'ui.input("Copy me, not edit me", on_input, readonly=True, width=220)'),
+        ('invalid=True', 'ui.input("ada@", on_input, invalid=True, width=220)'),
+        ('on_clear=', 'ui.input("pyzed", on_input, on_clear=on_clear, width=220)'),
+        ('max_length=8', 'ui.input("12345678", on_input, max_length=8, width=220)'),
+        ('align="center"', 'ui.input("centered", on_input, align="center", width=220)'),
+    ], T("Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.",
+         "El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.")),
+    "checkbox": V(_STATES, [
+        (T("Mixed (checked=None)", "Mixto (checked=None)"), 'ui.checkbox(None, on_toggle, label="Some files")'),
+        ('disabled=True', 'ui.checkbox(True, on_toggle, label="Locked", disabled=True)'),
+        ('size="sm"', 'ui.checkbox(True, on_toggle, label="Small", size="sm")'),
+        ('size="lg"', 'ui.checkbox(True, on_toggle, label="Large", size="lg")'),
+    ]),
+    "switch": V(_STATES, [
+        ('disabled=True', 'ui.switch(True, on_toggle, label="Locked", disabled=True)'),
+        ('size="sm"', 'ui.switch(True, on_toggle, label="Small", size="sm")'),
+        ('size="lg"', 'ui.switch(True, on_toggle, label="Large", size="lg")'),
+    ]),
+    "slider": V(_STATES, [
+        ('show_value=True', 'ui.slider(70, on_change, min=0, max=100, step=1, show_value=True, width=240)'),
+        ('show_value="{:.0%}"', 'ui.slider(0.35, on_change, show_value="{:.0%}", width=240)'),
+        ('vertical=True', 'ui.slider(6, on_change, min=0, max=10, step=1, vertical=True, height=110, show_value=True)', {"size": (480, 180)}),
+        ('disabled=True', 'ui.slider(0.6, on_change, disabled=True, width=240)'),
+    ], T("`on_release` runs when the drag ends: save or apply there instead of on every move.",
+         "`on_release` se ejecuta al terminar de arrastrar: guarda o aplica ahí en lugar de en cada movimiento.")),
+    "number-field": V(_STATES, [
+        ('prefix="$", decimals=2', 'ui.number_field(9.5, on_change, step=0.5, prefix="$", decimals=2, width=150)'),
+        ('invalid=True', 'ui.number_field(70000, on_change, invalid=True, width=150)'),
+        ('disabled=True', 'ui.number_field(4, on_change, min=1, max=8, disabled=True)'),
+    ], T("Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+         "Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.")),
+    "select": V(_STATES, [
+        ('disabled=True', 'ui.select(["One Dark"], "One Dark", on_select, disabled=True, width=200)'),
+        ('invalid=True', 'ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", invalid=True, width=200)'),
+    ], T("`on_open` and `on_close` run when the menu opens and closes.",
+         "`on_open` y `on_close` se ejecutan al abrir y cerrar el menú.")),
+    "radio-group": V(_STATES, [
+        ('disabled={"CR"}', 'ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True, disabled={"CR"})'),
+        ('descriptions=', 'ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select,\n               descriptions={"Spaces": "Indent with 4 spaces", "Tabs": "One tab per level"})'),
+    ]),
+    "segmented": V(_STATES, [
+        (T("With icons", "Con iconos"), 'ui.segmented([("list", "List", "list"), ("grid", "Grid", "layout-grid")], "grid", on_select)'),
+        ('width="fill"', 'ui.segmented(["Day", "Week", "Month"], "Week", on_select, width=320)'),
+        ('disabled={"Month"}', 'ui.segmented(["Day", "Week", "Month"], "Day", on_select, disabled={"Month"})'),
+        ('size="sm"', 'ui.segmented(["Code", "Preview"], "Code", on_select, size="sm")'),
+    ]),
+    "toggle-group": V(_STATES, [
+        ('multiple=True', 'ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline")], {"b", "u"}, on_select, multiple=True)'),
+        ('disabled={"right"}', 'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n                "left", on_select, disabled={"right"})'),
+    ], T("A third item in an option adds a tooltip: `(value, icon, tooltip)`.",
+         "Un tercer elemento en una opción añade un tooltip: `(valor, icono, tooltip)`.")),
+    "chip": V(_STATES, [
+        ('tint="error"', 'ui.chip("Failing", on_press=on_press, selected=True, tint="error")'),
+        ('disabled=True', 'ui.chip("Archived", on_press=on_press, on_remove=on_remove, disabled=True)'),
+    ]),
+    "split-button": V(_STATES, [
+        ('tint="success"', 'ui.split_button("Deploy", on_press, on_menu, tint="success")'),
+        ('disabled=True', 'ui.split_button("Run", on_press, on_menu, disabled=True)'),
+    ]),
+    "field": V(_STATES, [
+        ('required=True', 'pz.container(ui.field("Name", ui.input("", on_input, width=180), required=True), width=380)'),
+        ('vertical=True', 'pz.container(ui.field("Email", ui.input("ada@", on_input, invalid=True), vertical=True, required=True,\n                      error="Enter a valid email"), width=320)', {"size": (480, 180)}),
+    ]),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:
     _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]

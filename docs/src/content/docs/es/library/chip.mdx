@@ -124,12 +124,41 @@ ui.chip("favorites", icon="star", selected=True, on_press=on_filter)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="chip-v3-1" caption={"tint=\"error\""} alt={"Chip: tint=\"error\""} code="Código" mono>
+
+```python
+ui.chip("Failing", on_press=on_press, selected=True, tint="error")
+```
+
+</Variant>
+<Variant name="chip-v3-2" caption={"disabled=True"} alt={"Chip: disabled=True"} code="Código" mono>
+
+```python
+ui.chip("Archived", on_press=on_press, on_remove=on_remove, disabled=True)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.chip`
 
 ```python
-chip(content, *, on_press=None, on_remove=None, selected=False, icon=None, theme=None)
+chip(
+    content,
+    *,
+    on_press=None,
+    on_remove=None,
+    selected=False,
+    icon=None,
+    tint='accent',
+    disabled=False,
+    theme=None,
+)
 ```
 
 Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitarla.
@@ -141,6 +170,8 @@ Una etiqueta compacta, opcionalmente pulsable (filtros) y con botón para quitar
 | `on_remove` | `None` | Muestra una ✕ que envía esto al pulsarla. |
 | `selected` | `False` | Lo marca como seleccionado. |
 | `icon` | `None` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
+| `tint` | `"accent"` | Color cuando está seleccionada (un token del tema). |
+| `disabled` | `False` | La atenúa e ignora las pulsaciones. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#chip)
