@@ -142,6 +142,22 @@ pz.container(ui.tree(nodes, expanded={"src"}, item_height=30, indent=20), width=
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+`on_open(id)` se ejecuta con un doble clic en un archivo y `on_context(id)` con un clic derecho.
+
+<VariantGrid>
+<Variant name="tree-v4-1" caption={"Selección múltiple y foco"} alt={"Árbol: Selección múltiple y foco"} code="Código">
+
+```python
+pz.container(ui.tree(ui.TreeNode.from_paths(["src/app.py", "src/ui.py", "README.md"]), expanded={"src"},
+                     selected={"src/app.py", "README.md"}, focused="src/ui.py", on_open=on_open,
+                     on_context=on_context), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Ejemplos
 
 ### Una carpeta real
@@ -191,6 +207,9 @@ tree(
     selected=None,
     on_toggle=None,
     on_select=None,
+    on_open=None,
+    on_context=None,
+    focused=None,
     indent=14,
     item_height=24,
     theme=None,
@@ -203,9 +222,12 @@ Un árbol de archivos plegable, como el panel de proyecto de un editor de códig
 | --- | --- | --- |
 | `nodes` | *obligatorio* | Lista de `TreeNode`. |
 | `expanded` | *obligatorio* | Conjunto de ids de carpetas abiertas. |
-| `selected` | `None` | Id del nodo seleccionado. |
+| `selected` | `None` | Un id o una colección de ids (selección múltiple). |
 | `on_toggle` | `None` | Se llama con el id de la carpeta pulsada. |
 | `on_select` | `None` | Se llama con el id del archivo pulsado. |
+| `on_open` | `None` | Recibe el id del archivo al que se hace doble clic. |
+| `on_context` | `None` | Recibe el id de la fila en la que se hace clic derecho (muestra un `ui.menu` ahí). |
+| `focused` | `None` | Resalta el borde de la fila en la que está el teclado. |
 | `indent` | `14` | Sangría a la izquierda, en píxeles. |
 | `item_height` | `24` | Alto de cada fila. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |

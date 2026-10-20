@@ -95,12 +95,38 @@ ui.switch(True, on_toggle)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="switch-v2-1" caption={"disabled=True"} alt={"Interruptor: disabled=True"} code="Código" mono>
+
+```python
+ui.switch(True, on_toggle, label="Locked", disabled=True)
+```
+
+</Variant>
+<Variant name="switch-v2-2" caption={"size=\"sm\""} alt={"Interruptor: size=\"sm\""} code="Código" mono>
+
+```python
+ui.switch(True, on_toggle, label="Small", size="sm")
+```
+
+</Variant>
+<Variant name="switch-v2-3" caption={"size=\"lg\""} alt={"Interruptor: size=\"lg\""} code="Código" mono>
+
+```python
+ui.switch(True, on_toggle, label="Large", size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="switch-v2-1" caption={"pz.toggler"} alt={"Interruptor: pz.toggler"} code="Código" mono>
+<Variant name="switch-v3-1" caption={"pz.toggler"} alt={"Interruptor: pz.toggler"} code="Código" mono>
 
 ```python
 pz.toggler(True, "pz.toggler", on_toggle=on_toggle, accent="#a1c181", size=22)
@@ -114,7 +140,7 @@ pz.toggler(True, "pz.toggler", on_toggle=on_toggle, accent="#a1c181", size=22)
 ### `ui.switch`
 
 ```python
-switch(checked, on_toggle=None, *, label=None, theme=None)
+switch(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
 Un interruptor encendido/apagado.
@@ -124,6 +150,8 @@ Un interruptor encendido/apagado.
 | `checked` | *obligatorio* | Estado actual. |
 | `on_toggle` | `None` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | `None` | Texto de la etiqueta. |
+| `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | `False` | Lo atenúa e ignora los clics. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#switch)

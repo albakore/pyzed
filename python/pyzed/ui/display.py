@@ -61,9 +61,15 @@ def callout(
     )
 
 
-def count_badge(count: int, *, tint: str = "accent", max: int = 99, theme: Optional[Theme] = None) -> _core.Widget:  # noqa: A002
-    """A small round counter (unread notifications, problems...). Shows ``99+`` past ``max``."""
+def count_badge(count: int, *, tint: str = "accent", max: int = 99, show_zero: bool = True,  # noqa: A002
+                theme: Optional[Theme] = None) -> _core.Widget:
+    """A small round counter (unread notifications, problems...). Shows ``99+`` past ``max``.
+
+    With ``show_zero=False`` a count of 0 draws nothing, so it can stay in the layout.
+    """
     t = _theme(theme)
+    if count <= 0 and not show_zero:
+        return _core.space(width=0, height=0)
     text = f"{max}+" if count > max else str(count)
     return _core.container(
         _core.text(text, size=10.5, weight="semibold", color=t.on_accent, wrap=False),
@@ -139,25 +145,33 @@ def empty_state(
     *,
     icon: str = "inbox",
     actions: Iterable[Any] = (),
+    size: str = "md",
+    height: Any = "fill",
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A centered placeholder for empty lists, search results with no hits, etc."""
+    """A centered placeholder for empty lists, search results with no hits, etc.
+
+    ``size="sm"`` makes it compact (inside a panel or a table); ``height`` is ``"fill"`` by
+    default, a number or ``"shrink"`` to take only what it needs.
+    """
     t = _theme(theme)
     actions = list(actions)
+    icon_size, title_size, text_size = {"sm": (20, "md", "sm"), "md": (32, "lg", "md"), "lg": (44, "xl", "md")}[size]
     return _core.container(
         _core.column(
             [
-                _icon(icon, size=32, color=t.icon_muted),
-                label(title, size="lg", weight="medium", theme=t),
-                label(description, color="text_muted", align_x="center", theme=t) if description else None,
+                _icon(icon, size=icon_size, color=t.icon_muted),
+                label(title, size=title_size, weight="medium", theme=t),
+                label(description, size=text_size, color="text_muted", align_x="center", theme=t) if description else None,
                 _core.row(actions, spacing=8) if actions else None,
             ],
-            spacing=8,
+            spacing=6 if size == "sm" else 8,
             align="center",
             max_width=360,
         ),
         width="fill",
-        height="fill",
+        height=height,
+        padding=12 if height == "shrink" else 0,
         center=True,
     )
 
@@ -167,9 +181,13 @@ def settings_group(
     rows: Iterable[Any],
     *,
     description: Optional[str] = None,
+    end: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A titled block of ``ui.field`` rows separated by thin lines (Zed's settings UI)."""
+    """A titled block of ``ui.field`` rows separated by thin lines (Zed's settings UI).
+
+    ``end`` goes at the right of the title (a Reset button, a link...).
+    """
     t = _theme(theme)
     body: List[Any] = []
     for i, row in enumerate(rows):
@@ -178,7 +196,8 @@ def settings_group(
         body.append(_core.container(row, padding=(10, 14)))
     return _core.column(
         [
-            label(title, weight="semibold", theme=t),
+            _core.row([label(title, weight="semibold", theme=t), _core.space(width="fill"), end], align="center")
+            if end is not None else label(title, weight="semibold", theme=t),
             label(description, size="sm", color="text_muted", theme=t) if description else None,
             _core.container(_core.column(body), width="fill", bg=t.surface, border_color=t.border_variant,
                             border_width=1.0, radius=t.radius + 2),
@@ -236,6 +255,9 @@ def table(
     striped: bool = False,
     row_height: float = 30,
     height: Any = None,
+    on_row_double_press: Any = None,
+    on_row_context: Any = None,
+    empty: Any = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A data table with a sticky header, optional sorting and row selection.
@@ -243,7 +265,10 @@ def table(
     ``columns`` are ``ui.Column`` objects or plain keys. ``rows`` are dicts or objects.
     Sorting is done here when ``sort_by`` names a column title: clicking a header calls
     ``on_sort(title)`` and you flip ``sort_by``/``descending`` in your state.
-    ``on_row_press(row)`` makes rows clickable; the row equal to ``selected`` is highlighted.
+    ``on_row_press(row)`` makes rows clickable; the row equal to ``selected`` (or every row in
+    it, when it is a list or set) is highlighted. ``on_row_double_press(row)`` runs on a double
+    click (open, edit) and ``on_row_context(row)`` on a right click (a context menu). ``empty``
+    (a text or a widget) is shown in place of the rows when there are none.
 
     Rows are virtualized: only the ones in view are built, so a table with hundreds of
     thousands of rows scrolls as smoothly as a short one. ``rows`` should be a list (or any
@@ -281,20 +306,32 @@ def table(
 
     if not isinstance(rows, Sequence):
         rows = list(rows)
+    many = isinstance(selected, (list, set, frozenset, tuple))
 
     def body_row(i: int) -> _core.Widget:
         row = rows[i]
         cells = [cell(col.render(col.value(row)) if col.render else col.value(row), col, t.text) for col in cols]
         content = _core.row(cells, align="center", height="fill")
-        is_selected = selected is not None and row == selected
+        is_selected = selected is not None and (row in selected if many else row == selected)
         bg = t.ghost_selected if is_selected else (alpha(t.text, 0.03) if striped and i % 2 else "transparent")
         if on_row_press is not None:
-            return _core.button(content, lambda r=row: on_row_press(r), width="fill", height=row_height,
-                                padding=0, bg=bg, hover_bg=t.ghost_selected if is_selected else t.ghost_hover,
-                                radius=0)
-        return _core.container(content, width="fill", height=row_height, bg=bg)
+            widget = _core.button(content, lambda r=row: on_row_press(r), width="fill", height=row_height,
+                                  padding=0, bg=bg, hover_bg=t.ghost_selected if is_selected else t.ghost_hover,
+                                  radius=0)
+        else:
+            widget = _core.container(content, width="fill", height=row_height, bg=bg)
+        handlers = {}
+        if on_row_double_press is not None:
+            handlers["double_click"] = lambda r=row: on_row_double_press(r)
+        if on_row_context is not None:
+            handlers["right_click"] = lambda r=row: on_row_context(r)
+        return widget.on(**handlers) if handlers else widget
 
-    body = _core.virtual_column(len(rows), body_row, item_height=row_height)
+    if not rows and empty is not None:
+        placeholder = empty if isinstance(empty, _core.Widget) else label(empty, color="text_muted", theme=t)
+        body = _core.container(placeholder, width="fill", padding=16, align_x="center")
+    else:
+        body = _core.virtual_column(len(rows), body_row, item_height=row_height)
     return _core.container(
         _core.column(
             [
@@ -452,17 +489,26 @@ def spinner(*, size: float = 16, tint: str = "accent", speed: float = 1.0, theme
 
 
 def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Optional[Sequence[float]] = None,
-         width: Any = None, theme: Optional[Theme] = None) -> _core.Widget:
-    """A dashboard number: title, big value, optional change (``+4.2%``) and sparkline."""
+         width: Any = None, icon: Optional[str] = None, inverse: bool = False, on_press: Any = None,
+         theme: Optional[Theme] = None) -> _core.Widget:
+    """A dashboard number: title, big value, optional change (``+4.2%``) and sparkline.
+
+    ``icon`` goes before the title; ``inverse=True`` colors a drop green and a rise red (for
+    errors, latency...); ``on_press`` makes the card clickable (drill down).
+    """
     t = _theme(theme)
     change = None
     if delta is not None:
-        color = t.success if delta >= 0 else t.error
+        good = delta <= 0 if inverse else delta >= 0
+        color = t.success if good else t.error
         change = _core.text(f"{delta:+.1f}%", size=12, color=color, wrap=False)
-    return _core.container(
+    heading = label(title, size="sm", color="text_muted", theme=t)
+    if icon:
+        heading = _core.row([_icon(icon, size=13, color=t.icon_muted), heading], spacing=6, align="center")
+    card = _core.container(
         _core.column(
             [
-                label(title, size="sm", color="text_muted", theme=t),
+                heading,
                 _core.row([_core.text(value, size=24, weight="semibold", color=t.text, wrap=False), change],
                           spacing=8, align="end"),
                 sparkline(trend, width=160, height=28, theme=t) if trend else None,
@@ -476,7 +522,7 @@ def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Option
         border_width=1.0,
         radius=t.radius + 2,
     )
-
+    return card if on_press is None else card.on(click=on_press, cursor="pointer")
 
 
 def markdown(source: str, *, size: Optional[float] = None, on_link: Any = None, width: Any = None,

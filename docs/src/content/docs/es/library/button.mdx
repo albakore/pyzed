@@ -308,19 +308,38 @@ ui.button("Pill", on_press, variant="solid", radius=999)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="button-v7-1" caption={"loading=True"} alt={"Botón: loading=True"} code="Código" mono>
+
+```python
+ui.button("Saving", on_press, icon="save", loading=True)
+```
+
+</Variant>
+<Variant name="button-v7-2" caption={"tooltip="} alt={"Botón: tooltip="} code="Código" mono>
+
+```python
+ui.button("Save", on_press, tooltip="Writes the file")
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="button-v7-1" caption={"pz.button"} alt={"Botón: pz.button"} code="Código" mono>
+<Variant name="button-v8-1" caption={"pz.button"} alt={"Botón: pz.button"} code="Código" mono>
 
 ```python
 pz.button("pz.button", on_press, padding=(6, 14), bg="#3a7bc8", color="#ffffff", radius=6)
 ```
 
 </Variant>
-<Variant name="button-v7-2" caption={"Cualquier contenido"} alt={"Botón: Cualquier contenido"} code="Código">
+<Variant name="button-v8-2" caption={"Cualquier contenido"} alt={"Botón: Cualquier contenido"} code="Código">
 
 ```python
 pz.button(pz.row([pz.icon("heart", size=14), pz.text("Like")], spacing=6, align="center"), on_press,
@@ -377,6 +396,8 @@ button(
     disabled=False,
     full_width=False,
     keys=None,
+    loading=False,
+    tooltip=None,
     theme=None,
     **style,
 )
@@ -398,6 +419,8 @@ Un botón con tema, con variantes, tamaños, un icono y un atajo.
 | `disabled` | `False` | Lo deshabilita (ignora los clics). |
 | `full_width` | `False` | Ocupa todo el ancho. |
 | `keys` | `None` | Atajo que se muestra al final, escrito como texto: `"ctrl-s"`, `"cmd-k cmd-s"`. |
+| `loading` | `False` | Muestra un spinner en lugar del icono e ignora las pulsaciones (mantén una suscripción `pz.every(1/30, ...)` mientras gira). |
+| `tooltip` | `None` | Texto que aparece al pasar el ratón. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 | `**style` | — | Cualquier parámetro de estilo de `pyzed.button` (`bg`, `hover_bg`, `color`…). |
 

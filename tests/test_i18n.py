@@ -68,7 +68,7 @@ def test_dialogs_follow_the_language():
         ui.choice("Pick one", [("A", lambda: None), ("B", lambda: None)], lambda: None),
         ui.unsaved_changes("a.py", lambda: None, lambda: None, lambda: None),
     ):
-        assert repr(dialog) == "<Widget container>"
+        assert repr(dialog) == "<Widget container>.on(key_down)"  # Escape closes it
         assert repr(ui.dialog_layer("base", dialog, on_dismiss=lambda: None)) == "<Widget stack>"
 
 

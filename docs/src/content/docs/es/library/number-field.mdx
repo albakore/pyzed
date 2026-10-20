@@ -118,6 +118,34 @@ ui.number_field(8, on_change, min=1, max=8)
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
+
+<VariantGrid>
+<Variant name="number-field-v3-1" caption={"prefix=\"$\", decimals=2"} alt={"Campo numérico: prefix=\"$\", decimals=2"} code="Código" mono>
+
+```python
+ui.number_field(9.5, on_change, step=0.5, prefix="$", decimals=2, width=150)
+```
+
+</Variant>
+<Variant name="number-field-v3-2" caption={"invalid=True"} alt={"Campo numérico: invalid=True"} code="Código" mono>
+
+```python
+ui.number_field(70000, on_change, invalid=True, width=150)
+```
+
+</Variant>
+<Variant name="number-field-v3-3" caption={"disabled=True"} alt={"Campo numérico: disabled=True"} code="Código" mono>
+
+```python
+ui.number_field(4, on_change, min=1, max=8, disabled=True)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.number_field`
@@ -132,12 +160,18 @@ number_field(
     step=1,
     width=120,
     suffix=None,
+    prefix=None,
     align='center',
+    decimals=None,
+    disabled=False,
+    invalid=False,
+    id=None,
+    on_submit=None,
     theme=None,
 )
 ```
 
-Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora.
+Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
@@ -148,7 +182,13 @@ Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya li
 | `step` | `1` | Paso de los botones. |
 | `width` | `120` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `suffix` | `None` | Unidad que se muestra al final (`"px"`, `"%"`…). |
+| `prefix` | `None` | Texto antes del número (`"$"`…). |
 | `align` | `"center"` | Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`. |
+| `decimals` | `None` | Decimales que muestra (por defecto, los de `step`). |
+| `disabled` | `False` | Lo atenúa. |
+| `invalid` | `False` | Pinta el borde con el color de error. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `on_submit` | `None` | Se envía con Enter. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#number_field)

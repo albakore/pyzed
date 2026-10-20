@@ -115,12 +115,33 @@ ui.select(["Python", "Rust"], "Python", on_select, size="lg", width=200)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`on_open` and `on_close` run when the menu opens and closes.
+
+<VariantGrid>
+<Variant name="select-v3-1" caption={"disabled=True"} alt={"Select: disabled=True"} code="Code" mono>
+
+```python
+ui.select(["One Dark"], "One Dark", on_select, disabled=True, width=200)
+```
+
+</Variant>
+<Variant name="select-v3-2" caption={"invalid=True"} alt={"Select: invalid=True"} code="Code" mono>
+
+```python
+ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", invalid=True, width=200)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="select-v3-1" caption={"pz.pick_list"} alt={"Select: pz.pick_list"} code="Code" mono>
+<Variant name="select-v4-1" caption={"pz.pick_list"} alt={"Select: pz.pick_list"} code="Code" mono>
 
 ```python
 pz.pick_list(["Small", "Medium", "Large"], "Medium", on_select, width=200,
@@ -149,6 +170,10 @@ select(
     placeholder='Select…',
     width=None,
     size='md',
+    disabled=False,
+    invalid=False,
+    on_open=None,
+    on_close=None,
     theme=None,
 )
 ```
@@ -163,6 +188,10 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `placeholder` | `"Select…"` | Hint text shown when empty. |
 | `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
+| `disabled` | `False` | Greys it out. |
+| `invalid` | `False` | Paints the border in the error color. |
+| `on_open` | `None` | Sent when the menu opens. |
+| `on_close` | `None` | Sent when the menu closes. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#select)
@@ -175,6 +204,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -205,6 +236,8 @@ A dropdown to choose one of `options`. `on_select(option)` receives the chosen o
 | `options` | *required* | List of options. |
 | `selected` | `None` | Current option. |
 | `on_select` | `None` | Callable that receives the chosen item. |
+| `on_open` | `None` | Sent when the menu opens. |
+| `on_close` | `None` | Sent when the menu closes. |
 | `placeholder` | `None` | Hint text shown when empty. |
 | `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `padding` | `None` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |

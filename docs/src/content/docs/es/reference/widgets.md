@@ -1400,6 +1400,8 @@ pick_list(
     selected=None,
     on_select=None,
     *,
+    on_open=None,
+    on_close=None,
     placeholder=None,
     width=None,
     padding=None,
@@ -1430,6 +1432,8 @@ Un desplegable para elegir una de `options`. `on_select(opción)` recibe la eleg
 | `options` | Lista de opciones. |
 | `selected` | Opción actual. |
 | `on_select` | Callable que recibe el elemento elegido. |
+| `on_open` | Se envía al abrir el menú. |
+| `on_close` | Se envía al cerrar el menú. |
 | `placeholder` | Texto de ayuda cuando está vacío. |
 | `width` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
 | `padding` | Relleno interior: `8`, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |

@@ -111,12 +111,45 @@ pz.column([ui.checkbox(True, on_toggle, label="Python"),
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="checkbox-v3-1" caption={"Mixto (checked=None)"} alt={"Casilla: Mixto (checked=None)"} code="Código">
+
+```python
+ui.checkbox(None, on_toggle, label="Some files")
+```
+
+</Variant>
+<Variant name="checkbox-v3-2" caption={"disabled=True"} alt={"Casilla: disabled=True"} code="Código" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Locked", disabled=True)
+```
+
+</Variant>
+<Variant name="checkbox-v3-3" caption={"size=\"sm\""} alt={"Casilla: size=\"sm\""} code="Código" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Small", size="sm")
+```
+
+</Variant>
+<Variant name="checkbox-v3-4" caption={"size=\"lg\""} alt={"Casilla: size=\"lg\""} code="Código" mono>
+
+```python
+ui.checkbox(True, on_toggle, label="Large", size="lg")
+```
+
+</Variant>
+</VariantGrid>
+
 ### Widget base
 
 El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
 
 <VariantGrid>
-<Variant name="checkbox-v3-1" caption={"pz.checkbox"} alt={"Casilla: pz.checkbox"} code="Código" mono>
+<Variant name="checkbox-v4-1" caption={"pz.checkbox"} alt={"Casilla: pz.checkbox"} code="Código" mono>
 
 ```python
 pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)
@@ -130,16 +163,18 @@ pz.checkbox(True, "pz.checkbox", on_toggle=on_toggle, accent="#c678dd", size=18)
 ### `ui.checkbox`
 
 ```python
-checkbox(checked, on_toggle=None, *, label=None, theme=None)
+checkbox(checked, on_toggle=None, *, label=None, size='md', disabled=False, theme=None)
 ```
 
-Una casilla de verificación.
+Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.
 
 | Parámetro | Por defecto | Descripción |
 | --- | --- | --- |
 | `checked` | *obligatorio* | Estado actual. |
 | `on_toggle` | `None` | Callable que recibe el nuevo `bool` (o mensaje que se envía). |
 | `label` | `None` | Texto de la etiqueta. |
+| `size` | `"md"` | `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | `False` | La atenúa e ignora los clics. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#checkbox)

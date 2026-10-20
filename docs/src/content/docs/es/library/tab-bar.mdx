@@ -139,6 +139,21 @@ pz.row([ui.tab(ui.Tab.for_file("main.rs"), active=True),
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+Un clic central cierra una pestaña, `on_context(id)` se ejecuta con un clic derecho y `on_new` con un doble clic en el espacio vacío.
+
+<VariantGrid>
+<Variant name="tab-bar-v3-1" caption={"pinned=True"} alt={"Barra de pestañas: pinned=True"} code="Código" mono>
+
+```python
+ui.tab_bar([ui.Tab("app", "app.py", icon="file", pinned=True), ui.Tab("ui", "ui.py", icon="file")],
+           "ui", on_close=on_close, on_context=on_context, on_new=on_new)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.tab_bar`
@@ -158,6 +173,8 @@ tab_bar(
     on_drag_over=None,
     dragging=None,
     drop_index=None,
+    on_context=None,
+    on_new=None,
     theme=None,
 )
 ```
@@ -178,6 +195,8 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 | `on_drag_over` | `None` | Mientras `dragging` tiene valor: se llama con el índice de inserción bajo el puntero, o `None` cuando sale de la barra. |
 | `dragging` | `None` | Id de la pestaña que se arrastra (la apaga y activa `on_drag_over`). |
 | `drop_index` | `None` | Dibuja la marca de inserción antes de la pestaña de este índice (`len(tabs)`: después de la última). |
+| `on_context` | `None` | Recibe el id de la pestaña en la que se hace clic derecho. |
+| `on_new` | `None` | Se envía con un doble clic en el espacio vacío tras las pestañas. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#tab_bar)
@@ -186,7 +205,7 @@ Una fila de pestañas con controles opcionales al principio y al final (navegaci
 
 ```python
 @dataclass
-class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None)
+class Tab(id, label, icon=None, icon_color=None, dirty=False, preview=False, status=None, pinned=False, tooltip=None)
 ```
 
 Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono del archivo.
@@ -200,6 +219,8 @@ Una pestaña. `Tab.for_file(path, **kwargs)` la crea con el nombre y el icono de
 | `dirty` | `False` | Cambios sin guardar (muestra un punto). |
 | `preview` | `False` | Pestaña de vista previa (en cursiva). |
 | `status` | `None` | Estado de git (tiñe el nombre). |
+| `pinned` | `False` | Muestra solo el icono, no tiene botón de cerrar y va primera en `tab_bar`. |
+| `tooltip` | `None` | Texto al pasar el ratón (la ruta completa…). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#tab)
 

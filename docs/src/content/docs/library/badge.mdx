@@ -163,12 +163,47 @@ ui.badge("verified", tint="success", variant="solid", icon="check")
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="badge-v4-1" caption={"size=\"sm\""} alt={"Badge: size=\"sm\""} code="Code" mono>
+
+```python
+ui.badge("beta", size="sm")
+```
+
+</Variant>
+<Variant name="badge-v4-2" caption={"size=\"lg\""} alt={"Badge: size=\"lg\""} code="Code" mono>
+
+```python
+ui.badge("Pro", size="lg", icon="star")
+```
+
+</Variant>
+<Variant name="badge-v4-3" caption={"on_press="} alt={"Badge: on_press="} code="Code" mono>
+
+```python
+ui.badge("3 issues", tint="warning", on_press=on_press)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.badge`
 
 ```python
-badge(content, *, tint='accent', variant='soft', icon=None, theme=None)
+badge(
+    content,
+    *,
+    tint='accent',
+    variant='soft',
+    icon=None,
+    size='md',
+    on_press=None,
+    theme=None,
+)
 ```
 
 A small pill for statuses and counters.
@@ -179,6 +214,8 @@ A small pill for statuses and counters.
 | `tint` | `"accent"` | Semantic color: `"accent"`, `"error"`, `"warning"`, `"success"`, `"info"` or a token. |
 | `variant` | `"soft"` | `"soft"`, `"solid"` or `"outline"`. |
 | `icon` | `None` | Name of a Lucide icon (`pyzed icons` lists them). |
+| `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
+| `on_press` | `None` | Makes it clickable. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#badge)

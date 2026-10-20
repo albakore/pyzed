@@ -1,5 +1,7 @@
 """Layers, modals, the command palette, pickers, fuzzy matching and toasts in ``pyzed.ui.overlays``."""
 
+from types import SimpleNamespace
+
 import pytest
 
 import pyzed as pz
@@ -86,6 +88,8 @@ def test_layer_without_dismiss_or_backdrop(tree):
 
 def test_modal_header_and_footer(tree):
     dialog = ov.modal("body", title="Rename", on_close="close", footer=["cancel", "ok"], width=400, theme=DARK)
+    assert dialog.kind == "events" and dialog.props["key_down"](SimpleNamespace(key="escape")) == "close"
+    dialog = dialog.args[0]
     assert dialog.props["width"] == 400 and dialog.props["bg"] == DARK.elevated
     assert dialog.props["radius"] == DARK.radius + 4
     header, body, footer = dialog.args[0].args[0]

@@ -4727,6 +4727,183 @@ VARIANTS.update({
     ],
 })
 
+# States, sizes and events added to the form controls.
+_STATES = T("States and events", "Estados y eventos")
+_MORE = {
+    "input": V(_STATES, [
+        ('disabled=True', 'ui.input("Locked", on_input, disabled=True, width=220)'),
+        ('readonly=True', 'ui.input("Copy me, not edit me", on_input, readonly=True, width=220)'),
+        ('invalid=True', 'ui.input("ada@", on_input, invalid=True, width=220)'),
+        ('on_clear=', 'ui.input("pyzed", on_input, on_clear=on_clear, width=220)'),
+        ('max_length=8', 'ui.input("12345678", on_input, max_length=8, width=220)'),
+        ('align="center"', 'ui.input("centered", on_input, align="center", width=220)'),
+    ], T("Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.",
+         "El foco, la pérdida de foco y las teclas vienen de los eventos comunes: `.on(focus=..., blur=..., key_down=...)`.")),
+    "checkbox": V(_STATES, [
+        (T("Mixed (checked=None)", "Mixto (checked=None)"), 'ui.checkbox(None, on_toggle, label="Some files")'),
+        ('disabled=True', 'ui.checkbox(True, on_toggle, label="Locked", disabled=True)'),
+        ('size="sm"', 'ui.checkbox(True, on_toggle, label="Small", size="sm")'),
+        ('size="lg"', 'ui.checkbox(True, on_toggle, label="Large", size="lg")'),
+    ]),
+    "switch": V(_STATES, [
+        ('disabled=True', 'ui.switch(True, on_toggle, label="Locked", disabled=True)'),
+        ('size="sm"', 'ui.switch(True, on_toggle, label="Small", size="sm")'),
+        ('size="lg"', 'ui.switch(True, on_toggle, label="Large", size="lg")'),
+    ]),
+    "slider": V(_STATES, [
+        ('show_value=True', 'ui.slider(70, on_change, min=0, max=100, step=1, show_value=True, width=240)'),
+        ('show_value="{:.0%}"', 'ui.slider(0.35, on_change, show_value="{:.0%}", width=240)'),
+        ('vertical=True', 'ui.slider(6, on_change, min=0, max=10, step=1, vertical=True, height=110, show_value=True)', {"size": (480, 180)}),
+        ('disabled=True', 'ui.slider(0.6, on_change, disabled=True, width=240)'),
+    ], T("`on_release` runs when the drag ends: save or apply there instead of on every move.",
+         "`on_release` se ejecuta al terminar de arrastrar: guarda o aplica ahí en lugar de en cada movimiento.")),
+    "number-field": V(_STATES, [
+        ('prefix="$", decimals=2', 'ui.number_field(9.5, on_change, step=0.5, prefix="$", decimals=2, width=150)'),
+        ('invalid=True', 'ui.number_field(70000, on_change, invalid=True, width=150)'),
+        ('disabled=True', 'ui.number_field(4, on_change, min=1, max=8, disabled=True)'),
+    ], T("Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+         "Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.")),
+    "select": V(_STATES, [
+        ('disabled=True', 'ui.select(["One Dark"], "One Dark", on_select, disabled=True, width=200)'),
+        ('invalid=True', 'ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", invalid=True, width=200)'),
+    ], T("`on_open` and `on_close` run when the menu opens and closes.",
+         "`on_open` y `on_close` se ejecutan al abrir y cerrar el menú.")),
+    "radio-group": V(_STATES, [
+        ('disabled={"CR"}', 'ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True, disabled={"CR"})'),
+        ('descriptions=', 'ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select,\n               descriptions={"Spaces": "Indent with 4 spaces", "Tabs": "One tab per level"})'),
+    ]),
+    "segmented": V(_STATES, [
+        (T("With icons", "Con iconos"), 'ui.segmented([("list", "List", "list"), ("grid", "Grid", "layout-grid")], "grid", on_select)'),
+        ('width="fill"', 'ui.segmented(["Day", "Week", "Month"], "Week", on_select, width=320)'),
+        ('disabled={"Month"}', 'ui.segmented(["Day", "Week", "Month"], "Day", on_select, disabled={"Month"})'),
+        ('size="sm"', 'ui.segmented(["Code", "Preview"], "Code", on_select, size="sm")'),
+    ]),
+    "toggle-group": V(_STATES, [
+        ('multiple=True', 'ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline")], {"b", "u"}, on_select, multiple=True)'),
+        ('disabled={"right"}', 'ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],\n                "left", on_select, disabled={"right"})'),
+    ], T("A third item in an option adds a tooltip: `(value, icon, tooltip)`.",
+         "Un tercer elemento en una opción añade un tooltip: `(valor, icono, tooltip)`.")),
+    "chip": V(_STATES, [
+        ('tint="error"', 'ui.chip("Failing", on_press=on_press, selected=True, tint="error")'),
+        ('disabled=True', 'ui.chip("Archived", on_press=on_press, on_remove=on_remove, disabled=True)'),
+    ]),
+    "split-button": V(_STATES, [
+        ('tint="success"', 'ui.split_button("Deploy", on_press, on_menu, tint="success")'),
+        ('disabled=True', 'ui.split_button("Run", on_press, on_menu, disabled=True)'),
+    ]),
+    "field": V(_STATES, [
+        ('required=True', 'pz.container(ui.field("Name", ui.input("", on_input, width=180), required=True), width=380)'),
+        ('vertical=True', 'pz.container(ui.field("Email", ui.input("ada@", on_input, invalid=True), vertical=True, required=True,\n                      error="Enter a valid email"), width=320)', {"size": (480, 180)}),
+    ]),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
+_MORE = {
+    "button": V(_STATES, [
+        ('loading=True', 'ui.button("Saving", on_press, icon="save", loading=True)'),
+        ('tooltip=', 'ui.button("Save", on_press, tooltip="Writes the file")',
+         {"draw": 'shown_tooltip(ui.button("Save", on_press, keys="ctrl-s"), "Writes the file")'}),
+    ]),
+    "icon-button": V(_STATES, [
+        ('indicator="accent"', 'ui.icon_button("bell", on_press, indicator="accent")'),
+        ('tint="error"', 'ui.icon_button("trash-2", on_press, tint="error")'),
+        ('loading=True', 'ui.icon_button("refresh-cw", on_press, loading=True)'),
+        ('keys=', 'ui.icon_button("search", on_press, tooltip="Search", keys="ctrl-f")'),
+    ]),
+    "badge": V(_STATES, [
+        ('size="sm"', 'ui.badge("beta", size="sm")'),
+        ('size="lg"', 'ui.badge("Pro", size="lg", icon="star")'),
+        ('on_press=', 'ui.badge("3 issues", tint="warning", on_press=on_press)'),
+    ]),
+    "avatar": V(_STATES, [
+        ('status="online"', 'ui.avatar("KK", status="online", size=32)'),
+        ('status="away"', 'ui.avatar("AL", status="away", index=2, size=32)'),
+        ('status="busy"', 'ui.avatar("MZ", status="busy", index=4, size=32)'),
+    ], T("`image=` shows a picture instead of the initials and `tooltip=` names the person on hover.",
+         "`image=` muestra una foto en lugar de las iniciales y `tooltip=` nombra a la persona al pasar el ratón.")),
+    "divider": V(_STATES, [
+        ('label="or"', 'pz.container(ui.divider(label="or"), width=300)'),
+        ('spacing=12', 'pz.column([ui.label("Above"), ui.divider(spacing=12), ui.label("Below")], width=300)'),
+    ]),
+    "list-item": V(_STATES, [
+        ('description=', 'pz.container(ui.list_item("main.py", on_press, icon="file", description="src/app"), width=300)'),
+        ('on_double_press=', 'pz.container(ui.list_item("Rename me", on_press, icon="pencil", on_double_press=on_rename), width=300)'),
+    ], T("`on_right_press` opens a context menu and `tooltip=` shows on hover.",
+         "`on_right_press` abre un menú contextual y `tooltip=` aparece al pasar el ratón.")),
+    "tree": V(_STATES, [
+        (T("Multiple selection and focus", "Selección múltiple y foco"),
+         'pz.container(ui.tree(ui.TreeNode.from_paths(["src/app.py", "src/ui.py", "README.md"]), expanded={"src"},\n                     selected={"src/app.py", "README.md"}, focused="src/ui.py", on_open=on_open,\n                     on_context=on_context), width=300)', {"size": (480, 200)}),
+    ], T("`on_open(id)` runs on a double click of a file and `on_context(id)` on a right click.",
+         "`on_open(id)` se ejecuta con un doble clic en un archivo y `on_context(id)` con un clic derecho.")),
+    "menu": V(_STATES, [
+        (T("Descriptions and a submenu", "Descripciones y un submenú"),
+         'ui.menu([ui.MenuItem("Share", on_press, icon="share", submenu=True),\n         ui.MenuItem("Rename", on_press, description="F2 also works")])', {"size": (480, 180)}),
+        ('max_height=140', 'ui.menu([ui.MenuItem(f"Recent {i}", on_press) for i in range(10)], max_height=140)', {"size": (480, 200)}),
+    ]),
+    "tab-bar": V(_STATES, [
+        ('pinned=True', 'ui.tab_bar([ui.Tab("app", "app.py", icon="file", pinned=True), ui.Tab("ui", "ui.py", icon="file")],\n           "ui", on_close=on_close, on_context=on_context, on_new=on_new)', {"size": (480, 120)}),
+    ], T("A middle click closes a tab, `on_context(id)` runs on a right click and `on_new` on a double click of the empty space.",
+         "Un clic central cierra una pestaña, `on_context(id)` se ejecuta con un clic derecho y `on_new` con un doble clic en el espacio vacío.")),
+    "breadcrumbs": V(_STATES, [
+        ('max_items=3', 'ui.breadcrumbs(["pyzed", "python", "pyzed", "ui", "lists.py"], max_items=3, on_press=on_press, on_more=on_more)'),
+    ]),
+    "toolbar": V(_STATES, [
+        ('center=', 'pz.container(ui.toolbar([ui.breadcrumbs(["src", "app.py"])], [ui.icon_button("play", on_press)],\n                        center=ui.muted("Running…", size="sm")), width=440)'),
+    ]),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
+_ROWS = '[{"name": "app.py", "size": 4}, {"name": "ui.py", "size": 12}, {"name": "README.md", "size": 2}]'
+_MORE = {
+    "table": V(_STATES, [
+        (T("Multiple selection", "Selección múltiple"), f'rows = {_ROWS}\nui.table(["name", "size"], rows, selected=[rows[0], rows[2]], on_row_press=on_press,\n         on_row_double_press=on_open, on_row_context=on_context, height=130)', {"size": (480, 200)}),
+        ('empty=', 'ui.table(["name", "size"], [], empty="No files yet", height=100)', {"size": (480, 160)}),
+    ], T("`on_row_double_press(row)` opens a row and `on_row_context(row)` shows a context menu.",
+         "`on_row_double_press(fila)` abre una fila y `on_row_context(fila)` muestra un menú contextual.")),
+    "card": V(_STATES, [
+        ('selected=True', 'ui.card(ui.muted("Python app with a window"), title="Desktop app", on_press=on_press,\n        selected=True, width=260)'),
+        ('footer=, elevated=True', 'ui.card(ui.muted("3 files changed"), title="Commit", footer=[ui.button("Push", on_press)],\n        elevated=True, width=260)', {"size": (480, 200)}),
+    ]),
+    "stat": V(_STATES, [
+        ('icon=, inverse=True', 'ui.stat("Errors", "12", delta=-8.0, inverse=True, icon="bug", width=180)'),
+        ('on_press=', 'ui.stat("Users", "1,204", delta=4.2, icon="users", on_press=on_press, width=180)'),
+    ], T("With `inverse=True` a drop is good news (green), for errors or latency.",
+         "Con `inverse=True` una bajada es una buena noticia (verde), para errores o latencia.")),
+    "progress": V(_STATES, [
+        ('label=, show_value=True', 'pz.container(ui.progress(0.42, label="Downloading", show_value=True), width=300)'),
+        (T("Indeterminate (value=None)", "Indeterminada (value=None)"), 'pz.container(ui.progress(None, label="Indexing"), width=300)'),
+    ]),
+    "settings-group": V(_STATES, [
+        ('end=', 'pz.container(ui.settings_group("Editor", [ui.field("Wrap lines", ui.switch(True, on_toggle))],\n                               end=ui.button("Reset", on_press, size="sm", variant="ghost")), width=420)', {"size": (480, 180)}),
+    ]),
+    "modal": V(_STATES, [
+        ('description=, icon=, width="sm"', 'ui.modal(ui.input("notes.md", on_input), title="Rename", description="Choose a new name",\n         icon="pencil", on_close=on_close, width="sm", footer=[ui.button("Rename", on_press, variant="solid")])', {"size": (480, 240)}),
+    ], T("`max_height=` scrolls long content, and Escape sends `on_close` while the dialog has focus.",
+         "`max_height=` desplaza el contenido largo, y Escape envía `on_close` mientras el diálogo tiene el foco.")),
+    "toast": V(_STATES, [
+        ('progress=0.6', 'ui.toast("Uploading", "notes.md", kind="info", progress=0.6, on_dismiss=on_close)'),
+        ('on_press=', 'ui.toast("Build failed", "Click to see the log", kind="error", on_press=on_press)'),
+    ]),
+    "empty-state": V(_STATES, [
+        ('size="sm", height="shrink"', 'ui.empty_state("No results", "Try another search", icon="search", size="sm", height="shrink")'),
+        ('size="lg"', 'ui.empty_state("No projects", "Create one to start", icon="folder", size="lg", height=220)', {"size": (480, 260)}),
+    ]),
+    "count-badge": V(_STATES, [
+        ('show_zero=False', 'pz.row([ui.icon_button("bell", on_press), ui.count_badge(0, show_zero=False)], align="center")'),
+    ], T("With `show_zero=False` it draws nothing at 0 but keeps its place in the layout.",
+         "Con `show_zero=False` no dibuja nada en 0 pero mantiene su lugar en el diseño.")),
+}
+for _slug, _group in _MORE.items():
+    _groups = VARIANTS.setdefault(_slug, [])
+    _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
+    _groups.insert(_at, _group)
+
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:
     _entry["api"] = _entry["api"] + [n for n in _BASE_APIS.get(_entry["slug"], ()) if n not in _entry["api"]]

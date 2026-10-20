@@ -143,6 +143,25 @@ ui.split_button("Merge", on_merge, on_menu, icon="git-merge")
 </Variant>
 </VariantGrid>
 
+### Estados y eventos
+
+<VariantGrid>
+<Variant name="split-button-v4-1" caption={"tint=\"success\""} alt={"Botón dividido: tint=\"success\""} code="Código" mono>
+
+```python
+ui.split_button("Deploy", on_press, on_menu, tint="success")
+```
+
+</Variant>
+<Variant name="split-button-v4-2" caption={"disabled=True"} alt={"Botón dividido: disabled=True"} code="Código" mono>
+
+```python
+ui.split_button("Run", on_press, on_menu, disabled=True)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.split_button`
@@ -155,7 +174,10 @@ split_button(
     *,
     icon=None,
     variant='filled',
+    tint=None,
     size='md',
+    disabled=False,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -169,7 +191,10 @@ Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acció
 | `on_menu` | `None` | Mensaje o callable del botón del menú. |
 | `icon` | `None` | Nombre de un icono de Lucide (`pyzed icons` los lista). |
 | `variant` | `"filled"` | Como en `ui.button`. |
+| `tint` | `None` | Como en `ui.button`. |
 | `size` | `"md"` | `"xs"`, `"sm"`, `"md"` o `"lg"`. |
+| `disabled` | `False` | Desactiva las dos mitades. |
+| `tooltip` | `None` | Tooltip de la mitad principal. |
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#split_button)

@@ -107,21 +107,66 @@ ui.segmented(["Editor", "Terminal", "Both"], "Both", on_select)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="segmented-v3-1" caption={"With icons"} alt={"Segmented: With icons"} code="Code">
+
+```python
+ui.segmented([("list", "List", "list"), ("grid", "Grid", "layout-grid")], "grid", on_select)
+```
+
+</Variant>
+<Variant name="segmented-v3-2" caption={"width=\"fill\""} alt={"Segmented: width=\"fill\""} code="Code" mono>
+
+```python
+ui.segmented(["Day", "Week", "Month"], "Week", on_select, width=320)
+```
+
+</Variant>
+<Variant name="segmented-v3-3" caption={"disabled={\"Month\"}"} alt={"Segmented: disabled={\"Month\"}"} code="Code" mono>
+
+```python
+ui.segmented(["Day", "Week", "Month"], "Day", on_select, disabled={"Month"})
+```
+
+</Variant>
+<Variant name="segmented-v3-4" caption={"size=\"sm\""} alt={"Segmented: size=\"sm\""} code="Code" mono>
+
+```python
+ui.segmented(["Code", "Preview"], "Code", on_select, size="sm")
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.segmented`
 
 ```python
-segmented(options, selected, on_select=None, *, theme=None)
+segmented(
+    options,
+    selected,
+    on_select=None,
+    *,
+    size='md',
+    width=None,
+    disabled=False,
+    theme=None,
+)
 ```
 
 A group of mutually exclusive buttons.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-| `options` | *required* | List of options (strings). |
-| `selected` | *required* | The active option. |
+| `options` | *required* | Strings, `(value, label)` or `(value, label, icon)`. |
+| `selected` | *required* | The active value. |
 | `on_select` | `None` | Callable that receives the chosen item. |
+| `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
+| `width` | `None` | `"fill"` stretches the buttons evenly. |
+| `disabled` | `False` | `True`, or the values to disable. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#segmented)

@@ -108,12 +108,32 @@ ui.radio_group(["Yes", "No"], None, on_select, horizontal=True)
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="radio-group-v3-1" caption={"disabled={\"CR\"}"} alt={"Radio group: disabled={\"CR\"}"} code="Code" mono>
+
+```python
+ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True, disabled={"CR"})
+```
+
+</Variant>
+<Variant name="radio-group-v3-2" caption={"descriptions="} alt={"Radio group: descriptions="} code="Code" mono>
+
+```python
+ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select,
+               descriptions={"Spaces": "Indent with 4 spaces", "Tabs": "One tab per level"})
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="radio-group-v3-1" caption={"pz.radio"} alt={"Radio group: pz.radio"} code="Code" mono>
+<Variant name="radio-group-v4-1" caption={"pz.radio"} alt={"Radio group: pz.radio"} code="Code" mono>
 
 ```python
 pz.row([pz.radio("Cats", True, on_select, accent="#e5c07b"),
@@ -135,6 +155,8 @@ radio_group(
     *,
     horizontal=False,
     spacing=8,
+    disabled=False,
+    descriptions=None,
     theme=None,
 )
 ```
@@ -148,6 +170,8 @@ Mutually exclusive options as radio buttons.
 | `on_select` | `None` | Callable that receives the chosen value. |
 | `horizontal` | `False` | In a row instead of a column. |
 | `spacing` | `8` | Space between children, in pixels. |
+| `disabled` | `False` | `True`, or the values to disable. |
+| `descriptions` | `None` | Maps values to a muted line under their label. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#radio_group)

@@ -82,12 +82,40 @@ ui.empty_state("No projects yet", "Create one to get started.", icon="folder-plu
 </Variant>
 </VariantGrid>
 
+### States and events
+
+<VariantGrid>
+<Variant name="empty-state-v2-1" caption={"size=\"sm\", height=\"shrink\""} alt={"Empty state: size=\"sm\", height=\"shrink\""} code="Code" mono>
+
+```python
+ui.empty_state("No results", "Try another search", icon="search", size="sm", height="shrink")
+```
+
+</Variant>
+<Variant name="empty-state-v2-2" caption={"size=\"lg\""} alt={"Empty state: size=\"lg\""} code="Code" mono>
+
+```python
+ui.empty_state("No projects", "Create one to start", icon="folder", size="lg", height=220)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.empty_state`
 
 ```python
-empty_state(title, description=None, *, icon='inbox', actions=(), theme=None)
+empty_state(
+    title,
+    description=None,
+    *,
+    icon='inbox',
+    actions=(),
+    size='md',
+    height='fill',
+    theme=None,
+)
 ```
 
 A centered placeholder for empty lists, searches with no results, etc.
@@ -98,6 +126,8 @@ A centered placeholder for empty lists, searches with no results, etc.
 | `description` | `None` | Secondary text. |
 | `icon` | `"inbox"` | Name of a Lucide icon (`pyzed icons` lists them). |
 | `actions` | `()` | Extra widgets (usually buttons) shown as actions. |
+| `size` | `"md"` | `"sm"`, `"md"` or `"lg"`. |
+| `height` | `"fill"` | `"fill"` (default), pixels or `"shrink"`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#empty_state)

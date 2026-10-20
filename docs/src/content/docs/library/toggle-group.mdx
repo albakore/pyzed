@@ -123,21 +123,53 @@ ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "
 </Variant>
 </VariantGrid>
 
+### States and events
+
+A third item in an option adds a tooltip: `(value, icon, tooltip)`.
+
+<VariantGrid>
+<Variant name="toggle-group-v3-1" caption={"multiple=True"} alt={"Toggle group: multiple=True"} code="Code" mono>
+
+```python
+ui.toggle_group([("b", "bold"), ("i", "italic"), ("u", "underline")], {"b", "u"}, on_select, multiple=True)
+```
+
+</Variant>
+<Variant name="toggle-group-v3-2" caption={"disabled={\"right\"}"} alt={"Toggle group: disabled={\"right\"}"} code="Code" mono>
+
+```python
+ui.toggle_group([("left", "align-left"), ("center", "align-center"), ("right", "align-right")],
+                "left", on_select, disabled={"right"})
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.toggle_group`
 
 ```python
-toggle_group(options, selected, on_select, *, theme=None)
+toggle_group(
+    options,
+    selected,
+    on_select=None,
+    *,
+    disabled=False,
+    multiple=False,
+    theme=None,
+)
 ```
 
 An icon-only segmented control.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
-| `options` | *required* | `(value, icon_name)` pairs. |
-| `selected` | *required* | Current value. |
-| `on_select` | *required* | Callable that receives the chosen item. |
+| `options` | *required* | `(value, icon_name)` or `(value, icon_name, tooltip)`. |
+| `selected` | *required* | Current value (a collection with `multiple`). |
+| `on_select` | `None` | Callable that receives the chosen item. |
+| `disabled` | `False` | `True`, or the values to disable. |
+| `multiple` | `False` | Each button toggles its value on or off. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#toggle_group)

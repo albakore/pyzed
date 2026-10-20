@@ -324,7 +324,7 @@ def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_r
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
-def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ...) -> Any:
+def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ...) -> Any:
     """A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice."""
     ...
 def pin(content: Any, *, x: Any = ..., y: Any = ..., width: Any = ..., height: Any = ...) -> Any:

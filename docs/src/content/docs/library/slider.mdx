@@ -111,19 +111,54 @@ pz.column([ui.slider(40, on_change, min=0, max=100, step=10, width=240),
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`on_release` runs when the drag ends: save or apply there instead of on every move.
+
+<VariantGrid>
+<Variant name="slider-v3-1" caption={"show_value=True"} alt={"Slider: show_value=True"} code="Code" mono>
+
+```python
+ui.slider(70, on_change, min=0, max=100, step=1, show_value=True, width=240)
+```
+
+</Variant>
+<Variant name="slider-v3-2" caption={"show_value=\"{:.0%}\""} alt={"Slider: show_value=\"{:.0%}\""} code="Code" mono>
+
+```python
+ui.slider(0.35, on_change, show_value="{:.0%}", width=240)
+```
+
+</Variant>
+<Variant name="slider-v3-3" caption={"vertical=True"} alt={"Slider: vertical=True"} code="Code" mono>
+
+```python
+ui.slider(6, on_change, min=0, max=10, step=1, vertical=True, height=110, show_value=True)
+```
+
+</Variant>
+<Variant name="slider-v3-4" caption={"disabled=True"} alt={"Slider: disabled=True"} code="Code" mono>
+
+```python
+ui.slider(0.6, on_change, disabled=True, width=240)
+```
+
+</Variant>
+</VariantGrid>
+
 ### Base widget
 
 The `pz.*` widget underneath: no theme, every color and size is yours.
 
 <VariantGrid>
-<Variant name="slider-v3-1" caption={"pz.slider"} alt={"Slider: pz.slider"} code="Code" mono>
+<Variant name="slider-v4-1" caption={"pz.slider"} alt={"Slider: pz.slider"} code="Code" mono>
 
 ```python
 pz.slider(0, 100, 60, on_change=on_change, width=240, accent="#e5c07b", knob_color="#ffffff")
 ```
 
 </Variant>
-<Variant name="slider-v3-2" caption={"pz.vertical_slider"} alt={"Slider: pz.vertical_slider"} code="Code" mono>
+<Variant name="slider-v4-2" caption={"pz.vertical_slider"} alt={"Slider: pz.vertical_slider"} code="Code" mono>
 
 ```python
 pz.vertical_slider(0, 100, 60, on_change=on_change, height=120, accent="#56b6c2")
@@ -137,7 +172,21 @@ pz.vertical_slider(0, 100, 60, on_change=on_change, height=120, accent="#56b6c2"
 ### `ui.slider`
 
 ```python
-slider(value, on_change=None, *, min=0.0, max=1.0, step=0.01, width='fill', theme=None)
+slider(
+    value,
+    on_change=None,
+    *,
+    min=0.0,
+    max=1.0,
+    step=0.01,
+    on_release=None,
+    vertical=False,
+    width=None,
+    height=None,
+    disabled=False,
+    show_value=False,
+    theme=None,
+)
 ```
 
 A slider.
@@ -149,7 +198,12 @@ A slider.
 | `min` | `0.0` | Minimum. |
 | `max` | `1.0` | Maximum. |
 | `step` | `0.01` | Step. |
-| `width` | `"fill"` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `on_release` | `None` | Sent when the drag ends (save or apply there). |
+| `vertical` | `False` | Stands it up. |
+| `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `height` | `None` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `disabled` | `False` | Greys it out. |
+| `show_value` | `False` | Shows the number next to it: `True`, or a format such as `"{:.0%}"`. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#slider)

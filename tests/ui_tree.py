@@ -22,6 +22,10 @@ class Node:
     def __repr__(self) -> str:
         return f"<Node {self.kind}>"
 
+    def on(self, cursor: Any = None, **handlers: Any) -> "Node":
+        """``widget.on(...)``: an ``events`` node around this one, holding the handlers."""
+        return Node("events", (self,), {"cursor": cursor, **handlers})
+
     def children(self) -> Iterator["Node"]:
         for value in (*self.args, *self.props.values()):
             yield from _nodes(value)

@@ -545,23 +545,29 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
             }),
             ("Forms", {
                 "pyzed.ui.input": {
-                    "desc": "A text field.",
+                    "desc": "A text field. Focus, blur and keys come from the common events: `.on(focus=..., blur=..., key_down=...)`.",
                     "params": {
                         "value": "Current text.",
                         "size": '`"sm"`, `"md"` or `"lg"`.',
                         "secure": "Hides the text.",
                         "borderless": "No border or background (as in the command palette).",
+                        "disabled": "Greys it out and ignores typing.",
+                        "readonly": "Selectable and copyable, but it can't be changed.",
+                        "invalid": "Paints the border in the error color.",
+                        "max_length": "Ignores edits longer than this.",
+                        "on_clear": "Shows an ✕ while there is text; sent when it is clicked.",
+                        "align": 'Text alignment: `"start"`, `"center"` or `"end"`.',
                     },
                 },
                 "pyzed.ui.search_input": {
                     "desc": "An `input` with a magnifying glass icon.",
                     "params": {"value": "Current text.", "kwargs": "Same as `input`."},
                 },
-                "pyzed.ui.switch": {"desc": "An on/off switch."},
-                "pyzed.ui.checkbox": {"desc": "A checkbox."},
+                "pyzed.ui.switch": {"desc": "An on/off switch.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
+                "pyzed.ui.checkbox": {"desc": "A checkbox. `checked=None` shows the mixed state (part of a group checked); clicking it checks it.", "params": {"size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out and ignores clicks."}},
                 "pyzed.ui.slider": {
                     "desc": "A slider.",
-                    "params": {"min": "Minimum.", "max": "Maximum.", "step": "Step."},
+                    "params": {"min": "Minimum.", "max": "Maximum.", "step": "Step.", "on_release": "Sent when the drag ends (save or apply there).", "vertical": "Stands it up.", "disabled": "Greys it out.", "show_value": 'Shows the number next to it: `True`, or a format such as `"{:.0%}"`.'},
                 },
                 "pyzed.ui.progress": {
                     "desc": "A thin progress bar.",
@@ -569,12 +575,13 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                 },
                 "pyzed.ui.segmented": {
                     "desc": "A group of mutually exclusive buttons.",
-                    "params": {"options": "List of options (strings).", "selected": "The active option."},
+                    "params": {"options": "Strings, `(value, label)` or `(value, label, icon)`.", "selected": "The active value.", "size": '`"sm"`, `"md"` or `"lg"`.', "width": '`"fill"` stretches the buttons evenly.', "disabled": "`True`, or the values to disable."},
                 },
                 "pyzed.ui.field": {
                     "desc": "A form row: title and description on the left, control on the right (like a settings screen).",
                     "params": {"control": "The control (switch, input…).", "description": "Help text.",
-                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`)."},
+                               "error": "A validation message shown under the title in the error color (see `pz.validation_errors`).",
+                               "required": "Adds a red `*` after the title.", "vertical": "Puts the control under the title."},
                 },
             }),
             ("Lists, tree and menus", {
@@ -1345,6 +1352,7 @@ dict(_w)["Controls"].update({
             "selected": "Current option.", "handle": "Arrow icon character.", "handle_size": "Arrow size.",
             "menu_height": "Maximum menu height.", "font": "Font family.",
             "placeholder_color": "Placeholder color.", "handle_color": "Arrow color.",
+            "on_open": "Sent when the menu opens.", "on_close": "Sent when the menu closes.",
             "menu_bg": "Menu background.", "menu_color": "Menu text.", "menu_border_color": "Menu border.",
             "selected_bg": "Background of the highlighted option.", "selected_color": "Text of the highlighted option.",
         },
@@ -1362,27 +1370,27 @@ dict(_w)["Controls"]["pyzed.slider"]["params"]["on_release"] = "Sent when the kn
 _section("ui", "Controls", {
     "pyzed.ui.select": {
         "desc": "A dropdown with the theme style. Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
-        "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.'},
+        "params": {"selected": "Current option.", "size": '`"sm"`, `"md"` or `"lg"`.', "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_open": "Sent when the menu opens.", "on_close": "Sent when the menu closes."},
     },
     "pyzed.ui.radio_group": {
         "desc": "Mutually exclusive options as radio buttons.",
-        "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column."},
+        "params": {"options": "Strings or `(value, label)` pairs.", "selected": "Current value.", "on_select": "Callable that receives the chosen value.", "horizontal": "In a row instead of a column.", "disabled": "`True`, or the values to disable.", "descriptions": "Maps values to a muted line under their label."},
     },
     "pyzed.ui.number_field": {
-        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
-        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.'},
+        "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored. Once clicked, ↑/↓ step it (Shift: ten steps) and Home/End jump to `min`/`max`.",
+        "params": {"min": "Minimum.", "max": "Maximum.", "step": "Button step.", "suffix": "Unit shown at the end (`\"px\"`, `\"%\"`…).", "align": 'Where the number sits between the buttons: `"center"` (default), `"start"` or `"end"`.', "prefix": "Text before the number (`\"$\"`…).", "decimals": "Decimals shown (by default, as many as `step`).", "disabled": "Greys it out.", "invalid": "Paints the border in the error color.", "on_submit": "Sent on Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "A button with a separate arrow for more options. `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
-        "params": {"content": "Button text.", "variant": "As in `ui.button`.", "size": _SIZES},
+        "params": {"content": "Button text.", "variant": "As in `ui.button`.", "size": _SIZES, "tint": "As in `ui.button`.", "disabled": "Disables both halves.", "tooltip": "Tooltip of the main half."},
     },
     "pyzed.ui.toggle_group": {
         "desc": "An icon-only segmented control.",
-        "params": {"options": "`(value, icon_name)` pairs.", "selected": "Current value."},
+        "params": {"options": "`(value, icon_name)` or `(value, icon_name, tooltip)`.", "selected": "Current value (a collection with `multiple`).", "multiple": "Each button toggles its value on or off.", "disabled": "`True`, or the values to disable."},
     },
     "pyzed.ui.chip": {
         "desc": "A compact tag, optionally clickable (filters) and with a button to remove it.",
-        "params": {"content": "Text.", "on_remove": "Shows a ✕ that sends this when clicked."},
+        "params": {"content": "Text.", "on_remove": "Shows a ✕ that sends this when clicked.", "tint": "Color when selected (a theme token).", "disabled": "Greys it out and ignores presses."},
     },
     "pyzed.ui.disclosure": {
         "desc": "A collapsible section: a header with an arrow that shows or hides `content`. You own the open state: change it in `on_toggle`.",
@@ -2165,3 +2173,54 @@ PAGES.append({
         }),
     ],
 })
+
+
+def _entry(name):
+    """The entry documenting ``name``, wherever it sits in ``PAGES``."""
+    for page in PAGES:
+        for _title, items in page["sections"]:
+            if name in items:
+                return items[name]
+    raise KeyError(name)
+
+
+def _params(name, **params):
+    _entry(name).setdefault("params", {}).update(params)
+
+
+# States and events of buttons, avatars, lists, trees, menus, tabs and breadcrumbs.
+_params("pyzed.ui.button", loading="Shows a spinner in place of the icon and ignores presses (keep a `pz.every(1/30, ...)` subscription while it spins).",
+        tooltip="Text shown on hover.")
+_params("pyzed.ui.icon_button", keys="Key binding shown in the tooltip.", tint='Colors it (`"error"`, `"accent"`…).',
+        loading="Swaps the icon for a spinner and ignores presses.", indicator="Adds a small dot in this color at the top right (unread, changes…).")
+_params("pyzed.ui.badge", size='`"sm"`, `"md"` or `"lg"`.', on_press="Makes it clickable.")
+_params("pyzed.ui.avatar", image="A picture (path or bytes) instead of the initials.",
+        status='Presence dot: `"online"`, `"away"`, `"busy"`, `"offline"` or a color.', tooltip="Text shown on hover (the person's name).")
+_params("pyzed.ui.divider", label='Muted text in the middle of a horizontal line (`"or"`, a date…).', spacing="Space on both sides of the line.")
+_params("pyzed.ui.list_item", description="A muted second line (the row grows to 40 px unless `height` is set).",
+        on_double_press="Sent on a double click (open, rename…).", tooltip="Text shown on hover.")
+_params("pyzed.ui.tree", selected="One id or a collection of ids (multiple selection).", on_open="Called with the id of a file that is double-clicked.",
+        on_context="Called with the id of a row that is right-clicked (show a `ui.menu` there).", focused="Outlines the row the keyboard is on.")
+_params("pyzed.ui.MenuItem", description="A muted second line.", submenu="Ends the row with a chevron; open the next menu beside it in `on_press`.")
+_params("pyzed.ui.menu", max_height="Scrolls a menu taller than this.")
+_params("pyzed.ui.Tab", pinned="Shows only the icon, has no close button and goes first in `tab_bar`.", tooltip="Text shown on hover (the full path…).")
+_params("pyzed.ui.tab_bar", on_context="Called with the id of a tab that is right-clicked.", on_new="Sent on a double click of the empty space after the tabs.")
+_params("pyzed.ui.breadcrumbs", max_items="Keeps the first part and the last ones and shows `…` for the rest.", on_more="Makes the `…` clickable.")
+_params("pyzed.ui.toolbar", center="Kept in the middle of the bar whatever the widths of both sides.")
+
+# States and events of tables, cards, stats, progress bars, settings groups, modals, toasts and empty states.
+_params("pyzed.ui.table", selected="The row to highlight, or a list or set of rows (multiple selection).",
+        on_row_double_press="Called with the row on a double click (open, edit…).", on_row_context="Called with the row on a right click (a context menu).",
+        empty="Text or widget shown in place of the rows when there are none.")
+_params("pyzed.ui.card", footer="Widgets at the bottom right (buttons).", on_press="Makes the whole card clickable.",
+        selected="Outlines it in the accent color.", elevated="Adds a shadow.")
+_params("pyzed.ui.stat", icon="Icon before the title.", inverse="Colors a drop green and a rise red (errors, latency…).", on_press="Makes the card clickable.")
+_params("pyzed.ui.progress", value="Progress, or `None` for an indeterminate bar (keep a `pz.every(1/30, ...)` subscription while it shows).",
+        label="Text above the bar.", show_value="Adds the percentage at its right.")
+_params("pyzed.ui.settings_group", end="Widget at the right of the title (a Reset button…).")
+_params("pyzed.ui.modal", width='Pixels or `"sm"` (360), `"md"` (480), `"lg"` (640) or `"xl"` (820).', description="Muted line under the title.",
+        icon="Icon before the title.", max_height="Scrolls content taller than this, keeping the header and footer in view.",
+        on_close="The close button; also sent by Escape while the dialog has focus.")
+_params("pyzed.ui.toast", progress="0 to 1: a thin bar at the bottom (time left, a download).", on_press="Makes the card clickable.")
+_params("pyzed.ui.empty_state", size='`"sm"`, `"md"` or `"lg"`.', height='`"fill"` (default), pixels or `"shrink"`.')
+_params("pyzed.ui.count_badge", show_zero="With `False`, a count of 0 draws nothing.")

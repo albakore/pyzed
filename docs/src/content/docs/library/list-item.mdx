@@ -156,6 +156,27 @@ pz.container(ui.list_item("button.rs", on_open, icon="file-code", indent=24), wi
 </Variant>
 </VariantGrid>
 
+### States and events
+
+`on_right_press` opens a context menu and `tooltip=` shows on hover.
+
+<VariantGrid>
+<Variant name="list-item-v3-1" caption={"description="} alt={"List item: description="} code="Code" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_press, icon="file", description="src/app"), width=300)
+```
+
+</Variant>
+<Variant name="list-item-v3-2" caption={"on_double_press="} alt={"List item: on_double_press="} code="Code" mono>
+
+```python
+pz.container(ui.list_item("Rename me", on_press, icon="pencil", on_double_press=on_rename), width=300)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.list_item`
@@ -177,6 +198,9 @@ list_item(
     inset=False,
     disabled=False,
     on_right_press=None,
+    on_double_press=None,
+    description=None,
+    tooltip=None,
     theme=None,
 )
 ```
@@ -199,6 +223,9 @@ A list row: icon, text and a slot at the end.
 | `inset` | `False` | With margin and rounded corners (menus, palettes). |
 | `disabled` | `False` | Disables it (ignores clicks). |
 | `on_right_press` | `None` | Right click. |
+| `on_double_press` | `None` | Sent on a double click (open, rename…). |
+| `description` | `None` | A muted second line (the row grows to 40 px unless `height` is set). |
+| `tooltip` | `None` | Text shown on hover. |
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#list_item)
