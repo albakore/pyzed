@@ -625,6 +625,12 @@
    "path": "docs/src/content/docs/library/alert.mdx"
   },
   {
+   "slug": "library/anchor-layout",
+   "title": "Anchor layout",
+   "description": "Free positions like a form designer, with anchors that follow resizes. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/anchor-layout.mdx"
+  },
+  {
    "slug": "library/animation",
    "title": "Animation",
    "description": "Presets, keyframes and transitions for any widget. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -911,6 +917,12 @@
    "title": "Modal",
    "description": "A dialog surface with title, content and footer buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/modal.mdx"
+  },
+  {
+   "slug": "library/mouse-area",
+   "title": "Mouse area",
+   "description": "Makes any widget react to clicks, hover, drags and the wheel. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/mouse-area.mdx"
   },
   {
    "slug": "library/number-field",
