@@ -134,11 +134,13 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Go to line |
 | <kbd>Alt</kbd>+<kbd>Z</kbd> | Wrap long lines on or off |
 | <kbd>Alt</kbd>+click | Add a cursor |
-| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Select the next match as another cursor |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Select every match |
 | <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Move the line up / down |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Duplicate / delete the line |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplicate the line up / down, on every cursor (also <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd>) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | Duplicate the selection of every cursor (the line without one) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Delete the line |
 | <kbd>Ctrl</kbd>+<kbd>/</kbd> | Toggle comment |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo / redo |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Fold / unfold everything |

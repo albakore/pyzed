@@ -1604,6 +1604,7 @@
   "handler name": "nombre del handler",
   "Once": "Una vez",
   "Loop": "Bucle",
-  "Ping-pong": "Ida y vuelta"
+  "Ping-pong": "Ida y vuelta",
+  "Duplicate selection": "Duplicar selección"
  }
 }

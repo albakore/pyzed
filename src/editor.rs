@@ -1137,14 +1137,11 @@ fn zed_action(press: &text_editor::KeyPress, state: &EditorState) -> Option<Edit
     let (ctrl, alt, shift) = (m.command(), m.alt(), m.shift());
     match press.key.as_ref() {
         keyboard::Key::Named(named) => Some(match (named, ctrl, alt, shift) {
-            (Named::ArrowUp, true, true, true) => A::DuplicateLineUp,
-            (Named::ArrowDown, true, true, true) => A::DuplicateLineDown,
-            (Named::ArrowUp, false, true, true) | (Named::ArrowUp, true, true, false) => {
-                A::AddCursorAbove
-            }
-            (Named::ArrowDown, false, true, true) | (Named::ArrowDown, true, true, false) => {
-                A::AddCursorBelow
-            }
+            // Duplicate lines: Alt+Shift (VS Code) or Ctrl+Alt+Shift (Zed); Ctrl+Alt adds a cursor.
+            (Named::ArrowUp, _, true, true) => A::DuplicateLineUp,
+            (Named::ArrowDown, _, true, true) => A::DuplicateLineDown,
+            (Named::ArrowUp, true, true, false) => A::AddCursorAbove,
+            (Named::ArrowDown, true, true, false) => A::AddCursorBelow,
             (Named::ArrowUp, false, true, false) => A::MoveLineUp,
             (Named::ArrowDown, false, true, false) => A::MoveLineDown,
             (Named::ArrowUp, true, false, true) => A::SelectPrevious,
@@ -1177,6 +1174,7 @@ fn zed_action(press: &text_editor::KeyPress, state: &EditorState) -> Option<Edit
                 ("z", false, false) => A::Undo,
                 ("y", false, false) | ("z", false, true) => A::Redo,
                 ("d", false, false) => A::SelectNext,
+                ("d", false, true) => A::DuplicateSelection,
                 ("l", false, true) => A::SelectAllMatches,
                 ("l", false, false) => A::SelectLine,
                 ("u", false, false) => A::UndoSelection,

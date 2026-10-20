@@ -1869,6 +1869,12 @@
    "path": "examples/todos.py"
   },
   {
+   "name": "web_layout",
+   "kind": "app",
+   "summary": "Web-style layout: boxes, a stylesheet with states, media queries and nested components.",
+   "path": "examples/web_layout.py"
+  },
+  {
    "name": "websocket_stream",
    "kind": "app",
    "summary": "Live data with ``pz.listen``: a subscription backed by an async generator.",
@@ -2592,8 +2598,8 @@
     "desc": "Base class for custom components, like React components: annotated class attributes are props, other attributes are state kept between renders, `render()` returns widgets and `events` declares custom events raised with `self.emit(name, value)`. Calling the class returns a widget. Components appear in the designer's toolbox. See [Custom components](/pyzed/guides/components/).",
     "example": "\n            class Rating(pz.Component):\n                value: int = 0\n                events = {\"change\": \"A star was picked.\"}\n\n                def render(self):\n                    return pz.row([pz.text(\"★\").on(click=lambda i=i: self.emit(\"change\", i)) for i in range(1, 6)])\n\n            Rating(value=3, on_change=lambda e: print(e.value))\n        ",
     "params": {
-     "args": "Props, in declaration order.",
-     "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events) and `key=` to keep state when items move."
+     "args": "Props, in declaration order (or the children, when the class has a `children` prop).",
+     "kwargs": "Props by name, `on_<event>=` handlers (custom, lifecycle or common events), `key=` to keep state when items move, and `style=`, `class_=`, `id=` and `animate=`."
     }
    },
    "pyzed.Color": {
@@ -2616,6 +2622,20 @@
      "step": "Step of the + and - buttons."
     },
     "example": "level: Annotated[int, pz.Range(0, 10)] = 3"
+   },
+   "pyzed.provide": {
+    "desc": "A context manager that shares values with every component rendered inside, like React's context. Read them with `pz.use_context(name)` or `self.context(name)`. A component's `provide()` method does the same for what it renders. See [Children, context and styles](/pyzed/guides/components/#children-context-and-styles).",
+    "params": {
+     "values": "The values, by name."
+    },
+    "example": "\n            with pz.provide(user=self.user):\n                page = Dashboard()\n        "
+   },
+   "pyzed.use_context": {
+    "desc": "The closest value shared as `name` with `pz.provide` or a component's `provide()`.",
+    "params": {
+     "name": "The value's name.",
+     "default": "Returned when nothing shares it."
+    }
    },
    "pyzed.state": {
     "desc": "Declares a private state variable on a component class: the parent cannot pass it, and every instance starts with its own copy of the default (lists and dicts are safe). The designer lists it next to the props. See [Custom components](/pyzed/guides/components/).",
@@ -2948,7 +2968,7 @@
     }
    },
    "pyzed.Widget": {
-    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
+    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
    },
    "pyzed.column": {
     "desc": "Stacks its children vertically.",
@@ -3034,6 +3054,26 @@
      "align_y": "Vertical alignment in the cell."
     },
     "example": "pz.cell(ui.button(\"Save\"), column=2, row=3, align_x=\"end\")"
+   },
+   "pyzed.box": {
+    "desc": "A container for anything, like an HTML `div`: it lays out its children (`display` `\"block\"`, `\"flex\"`, `\"grid\"` or `\"stack\"`) and takes every style property, stylesheet classes and an id. Children styled with `position=\"absolute\"` are placed by `top`/`right`/`bottom`/`left` above the rest. See [Boxes](/pyzed/guides/layout/#boxes).",
+    "params": {
+     "children": "The widgets, one by one or in lists. `None` and `False` are skipped.",
+     "display": "`\"block\"` (one under another, as wide as the box), `\"flex\"`, `\"grid\"` or `\"stack\"`.",
+     "direction": "With `display=\"flex\"`: `\"row\"` or `\"column\"`.",
+     "gap": "Space between children.",
+     "wrap": "With `\"flex\"` rows: wraps onto new lines.",
+     "justify": "With `\"flex\"`: `\"start\"`, `\"center\"`, `\"end\"`, `\"between\"`, `\"around\"` or `\"evenly\"`.",
+     "align": "`\"start\"`, `\"center\"`, `\"end\"` or `\"stretch\"` (the default for `\"block\"`).",
+     "columns": "With `\"grid\"`: a count of equal columns or tracks (`\"200 1fr auto\"`).",
+     "rows": "With `\"grid\"`: row tracks.",
+     "overflow": "`\"visible\"`, `\"hidden\"`, `\"scroll\"`, `\"scroll_x\"` or `\"scroll_y\"`.",
+     "class_": "Stylesheet classes (`\"card selected\"` or a list).",
+     "id": "The id for `#id` rules.",
+     "style": "A `pz.Style`, dict or style name.",
+     "props": "Style properties, on top of the rest."
+    },
+    "example": "pz.box(title, pz.box(cancel, save, display=\"flex\", justify=\"end\", gap=8), class_=\"card\", gap=12)"
    },
    "pyzed.flex": {
     "desc": "Lays children out along one axis, like CSS flexbox, with `justify` on the main axis and `align` on the cross axis. Use `pz.flex_item` to make a child grow or give it a fixed size.",
@@ -3472,14 +3512,15 @@
      "match_brackets": "Outlines the bracket that matches the one next to the cursor.",
      "selection_highlight": "Highlights the other occurrences of the selected text.",
      "keymap": "Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).",
-     "scrollbar": "`False` hides the scrollbars."
+     "scrollbar": "`False` hides the scrollbars.",
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
     }
    },
    "pyzed.Style": {
     "desc": "A reusable set of style properties for `widget.style(...)`, a component's `style=` or `App.style`. Combine styles with `|` (the right one wins). See [Styles](/pyzed/theming/styles/).",
     "params": {
      "styles": "Styles, dicts or style names to start from.",
-     "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). Colors may be theme tokens."
+     "props": "Properties: `background`, `color`, `font`, `weight`, `italic`, `size`, `line_height`, `border_color`, `border_width`, `border` (`(width, color)`), `radius`, `shadow`, `padding`, `margin`, `width`, `height`, `max_width`, `max_height`, `min_width`, `min_height`, `align_x`, `align_y`, `clip`. Effects: `opacity`, `translate` (`(x, y)`, pixels or `\"50%\"`), `scale`, `glow` (a color, a size or `(color, size)`), `bloom` (a color or `(color, intensity)`) and `glass` (`True`, a tint or `{\"tint\", \"strength\"}`). States: `hover`, `pressed` (or `active`) and `focus`, each with the properties to show then. `transition`: milliseconds, `True` or `{\"duration\", \"easing\", \"delay\"}`. `media`: `{query: style}` applied when the window matches. Colors may be theme tokens."
     },
     "example": "\n            card = pz.Style(background=\"panel\", border=(1, \"border\"), radius=8, padding=12)\n            pz.column([...]).style(card | pz.Style(shadow=(\"#0006\", (0, 4), 12)))\n        "
    },
@@ -3490,6 +3531,31 @@
      "styles": "Styles to merge.",
      "props": "Properties on top."
     }
+   },
+   "pyzed.stylesheet": {
+    "desc": "Adds CSS-like rules, `{selector: style}`, that widgets get with `widget.classes(...)` and components with `class_=`/`id=`. Selectors: `.class`, `.a.b`, `#id`, a component's class name (`\"Rating\"`), an optional `:hover`, `:pressed`/`:active` or `:focus`, and comma lists. More specific selectors win (ids, then classes, then names), then later rules. A selector given again replaces its rule. Returns every rule. See [Stylesheets](/pyzed/theming/styles/#stylesheets).",
+    "params": {
+     "rules": "A `{selector: style}` dict.",
+     "classes": "Classes by keyword: `card={...}` is `\".card\"`."
+    },
+    "example": "\n                             pz.stylesheet({\n                                 \".card\": {\"background\": \"panel\", \"padding\": 16, \"radius\": 8},\n                                 \".card:hover\": {\"border_color\": \"accent\"},\n                             })\n                             pz.column([...]).classes(\"card\")\n                         "
+   },
+   "pyzed.clear_stylesheet": {
+    "desc": "Removes every rule added with `pz.stylesheet`."
+   },
+   "pyzed.media": {
+    "desc": "Whether the window being drawn matches a media query, like CSS `@media`. See [Responsive styles](/pyzed/theming/styles/#responsive-styles).",
+    "params": {
+     "query": "`\"max_width: 600\"`, `\"(min_width: 768px) and (orientation: landscape)\"` or a breakpoint (`\"md\"`).",
+     "conditions": "The same by keyword: `min_width`, `max_width`, `min_height`, `max_height`, `orientation`, `theme`."
+    },
+    "example": "sidebar = None if pz.media(\"max_width: 600\") else self.sidebar()"
+   },
+   "pyzed.viewport": {
+    "desc": "The size of the window being drawn, `(width, height)` in logical pixels, like `window.innerWidth` and `innerHeight`."
+   },
+   "pyzed.current_breakpoint": {
+    "desc": "The widest breakpoint the window reaches: `\"xs\"` (under 640 px), `\"sm\"`, `\"md\"`, `\"lg\"`, `\"xl\"` or `\"xxl\"`."
    },
    "pyzed.set_style": {
     "desc": "Sets the global style for every window, under each window's `style`. Without arguments it clears it.",
@@ -3934,7 +4000,7 @@
     "example": "\n            ui.accordion([\n                ui.AccordionSection(\"layout\", \"Layout\", layout_rows, icon=\"ruler\"),\n                ui.AccordionSection(\"events\", \"Events\", event_rows, icon=\"zap\"),\n            ], open=self.open_sections, on_toggle=lambda key: self.open_sections.symmetric_difference_update({key}))\n        "
    },
    "pyzed.ui.Log": {
-    "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying.",
+    "desc": "The entries of a `ui.console`: thread-safe, capped at `limit`, with repeated lines folded into one. `write(level, text)` adds a line; `capture()` (or `with log:`) copies `print` output and tracebacks into it; `pipe(stream)` reads a subprocess's output in a background thread; `text()` returns everything for copying (`text(ids)` only those lines). `write` also takes the line's `source`, `detail` (a traceback) and `origin` (`(path, line)`) and returns the entry; `find(id)` looks one up.",
     "params": {
      "limit": "Most entries kept.",
      "on_write": "Called after every write (from any thread)."
@@ -3942,16 +4008,24 @@
     "example": "\n            log = ui.Log()\n            with log:\n                print(\"hello\")          # still reaches the terminal\n            ui.console(log.entries, on_clear=log.clear)\n        "
    },
    "pyzed.ui.LogEntry": {
-    "desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row) and `clock` (`HH:MM:SS`).",
+    "desc": "One line of a `ui.Log`: `level`, `text`, `time`, `count` (identical lines in a row), `source`, `detail`, `origin`, its number `id`, `clock` (`HH:MM:SS`) and `line()` (the entry as plain text).",
     "params": {
      "level": "Level name.",
      "text": "The line.",
      "time": "When it was written (`time.time()`).",
-     "count": "Identical lines in a row."
+     "count": "Identical lines in a row.",
+     "source": "What it comes from (`\"project\"`, `\"agent\"`...); `ui.console` can show and filter it.",
+     "detail": "More text shown under the line while it is selected (a traceback).",
+     "origin": "`(path, line)` of the code it is about.",
+     "id": "Its number in the log (what a `ui.LogSelection` keeps)."
     }
    },
+   "pyzed.ui.LogSelection": {
+    "desc": "The selected lines of a `ui.console`, like in a file list: a click selects one line, Shift+click a range from the last one clicked and Ctrl+click (Cmd on macOS) adds or removes one. Keep one in your app and pass it to `ui.console(selection=...)`; `select(ids)` selects exactly those (Ctrl+A), `clear()` none, `keep(entries)` forgets lines that are gone, and `ids` are the selected entries' `id`s for `log.text(ids)`.",
+    "example": "\n            self.selection = ui.LogSelection()\n            ...\n            ui.console(self.log.entries, selection=self.selection, on_context=self.open_menu)\n            # Ctrl+C in on_key:\n            return pz.Command.copy(self.log.text(self.selection.ids))\n        "
+   },
    "pyzed.ui.LOG_LEVELS": {
-    "desc": "The levels `ui.console` colors, in the order of its filter buttons: info, event, stdout, stderr, warning, error."
+    "desc": "The levels `ui.console` colors, in the order of its filter buttons: debug, info, event, stdout, stderr, warning, error."
    },
    "pyzed.ui.console": {
     "desc": "A log view like a browser's dev tools console: a filter box, one toggle per level with its count, copy and clear, and the entries in a monospace list that keeps scrolling to the newest one.",
@@ -3965,8 +4039,67 @@
      "on_copy": "Adds a Copy button.",
      "actions": "Extra widgets at the end of the toolbar.",
      "font_size": "Size of the entries.",
-     "id": "Scrollable id."
+     "id": "Scrollable id.",
+     "selection": "A `ui.LogSelection`: the lines can be selected with the mouse, and a selected line with `detail` shows it below.",
+     "on_context": "Called with the line right-clicked (`None` under the lines): open a menu there (copy, go to source, clear...).",
+     "on_open": "Called with the line double-clicked.",
+     "sources": "`(value, label)` pairs: adds a dropdown that shows the lines of one `source`.",
+     "source": "The source shown (`None` for all).",
+     "on_source": "Receives the source picked in the dropdown (`None` for all).",
+     "show_source": "Tags each line with its source.",
+     "placeholder": "Text of the empty filter box.",
+     "empty": "What shows while there are no lines."
     }
+   },
+   "pyzed.ui.ErrorInfo": {
+    "desc": "An error as `ui.error_card` and `ui.error_dialog` show it: `kind` (the exception's type), `message`, the whole `traceback`, the `origin` `(path, line)` it comes from (the last frame outside the standard library, installed packages and Pyzed), `where` it happened and `time`. `ErrorInfo.from_exception(err, where=...)` makes one (`prefer=` picks which frames may be the origin); `ErrorInfo.current()` describes the exception being handled. `summary` is `Type: message`, `location` is `file.py:12` and `report()` is everything as text for a bug report.",
+    "params": {
+     "kind": "The exception's type name.",
+     "message": "Its message.",
+     "traceback": "The whole traceback, as Python prints it.",
+     "origin": "`(path, line)` of the code it comes from, or `None`.",
+     "where": "What was running.",
+     "time": "When it happened (`time.time()`)."
+    },
+    "example": "\n            try:\n                save(data)\n            except Exception as err:\n                self.error = ui.ErrorInfo.from_exception(err, where=\"Save\")\n        "
+   },
+   "pyzed.ui.error_boundary": {
+    "desc": "Draws `build()`, or an error card when it raises, so one part of the view that fails never takes the whole window down (like React's error boundaries). `on_error(info)` is told about the error each time the part is drawn and fails, so report it once (compare `info.traceback`).",
+    "params": {
+     "build": "A function that returns the part's widget.",
+     "on_error": "Receives the `ui.ErrorInfo`.",
+     "title": "Heading of the card (and the error's `where`).",
+     "where": "What the part is, for the report.",
+     "on_details": "Adds a Details button; receives the `ui.ErrorInfo` (open a `ui.error_dialog`).",
+     "fallback": "Your own widget for the error: `fallback(info)`.",
+     "theme": "Theme override."
+    },
+    "example": "\n            sidebar = ui.error_boundary(lambda: self.sidebar(), on_error=self.report, title=\"Sidebar\",\n                                        on_details=self.show_error)\n        "
+   },
+   "pyzed.ui.error_card": {
+    "desc": "The card `ui.error_boundary` draws in place of what failed: the error, where it comes from and a Copy error button (and Details with `on_details`).",
+    "params": {
+     "info": "A `ui.ErrorInfo`.",
+     "title": "Heading.",
+     "on_details": "Adds a Details button.",
+     "actions": "More buttons after them.",
+     "theme": "Theme override."
+    }
+   },
+   "pyzed.ui.error_dialog": {
+    "desc": "A dialog with an error: its message, where it happened, the file and line it comes from and the traceback in a read-only editor (select and copy any part), with buttons to copy everything, go to the origin, see it among the logs and close. Show it with `ui.dialog_layer` or `ui.layer`.",
+    "params": {
+     "info": "A `ui.ErrorInfo`.",
+     "on_close": "Close button and Escape.",
+     "title": "Heading (\"Something went wrong\").",
+     "on_go_to": "Adds the go-to button (open the file at the line).",
+     "go_to_label": "Its text (\"Go to source\").",
+     "on_logs": "Adds a Show in Logs button.",
+     "more": "How many other errors came after it (a line says so).",
+     "width": "Width in pixels or a modal size.",
+     "theme": "Theme override."
+    },
+    "example": "\n            dialog = ui.error_dialog(self.error, self.close_error, on_go_to=self.open_origin) if self.error else None\n            return ui.dialog_layer(self.main_view(), dialog, on_dismiss=self.close_error)\n        "
    },
    "pyzed.ui.shortcuts": {
     "desc": "A searchable list of key bindings, grouped (for a Keyboard shortcuts dialog).",
@@ -3988,7 +4121,6 @@
      "links": "`(label, on_press)` buttons."
     }
    },
-   "pyzed.ui.reference_browser": {},
    "pyzed.ui.callout": {
     "desc": "An inline notice (a callout or banner).",
     "params": {
@@ -4492,7 +4624,8 @@
      "match_brackets": "Outlines the bracket that matches the one next to the cursor (Ctrl+M jumps to it).",
      "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
      "keymap": "Zed-style `{binding: action}` dict (`{\"ctrl-shift-d\": \"duplicate_line_down\"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.",
-     "scrollbar": "`False` hides the scrollbars."
+     "scrollbar": "`False` hides the scrollbars.",
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
     }
    },
    "pyzed.ui.language_token": {
@@ -4549,6 +4682,8 @@
      "input": "The arguments (a dict or text).",
      "output": "The answer (text or a dict).",
      "images": "PNG bytes shown under the output.",
+     "diffs": "The edits it made: `{\"path\", \"old\", \"new\"}` dicts, shown as colored diffs (see `ui.diff_view`).",
+     "progress": "What it printed so far (a command's output); its last lines show under the header while it runs.",
      "allow_always": "Shows Always allow.",
      "theme": "Theme.",
      "on_allow": "Allow was pressed.",
@@ -4655,6 +4790,15 @@
      "count": "Tokens."
     }
    },
+   "pyzed.ui.diff_view": {
+    "desc": "An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red removed) with a few lines around them.",
+    "params": {
+     "diff": "A dict with `path`, `old` and `new` (the texts before and after).",
+     "theme": "Theme.",
+     "max_lines": "Lines shown before `… N more lines`."
+    },
+    "example": "ui.diff_view({\"path\": \"main.py\", \"old\": \"x = 1\\n\", \"new\": \"x = 2\\n\"})"
+   },
    "pyzed.ui.IconPicker": {
     "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",
     "params": {
@@ -4694,6 +4838,7 @@
      "theme": "Theme."
     }
    },
+   "pyzed.ui.reference_browser": {},
    "pyzed.Theme": {
     "desc": "A theme: an immutable dataclass with color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark."
    },
