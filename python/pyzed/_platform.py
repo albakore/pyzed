@@ -25,13 +25,14 @@ Environment variables (all optional):
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import webbrowser
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-__all__ = ["is_wsl", "prepare", "use_windows_browser", "windows_command"]
+__all__ = ["browser_env", "desktop_notification_command", "is_wsl", "notify", "prepare", "use_windows_browser", "windows_command"]
 
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -88,6 +89,17 @@ def windows_open_commands(url: str) -> List[List[str]]:
     return commands
 
 
+def browser_env() -> Dict[str, str]:
+    """Under WSL, a ``BROWSER`` variable for programs Pyzed starts (external agents that sign in through the
+    browser), so they open Windows' default browser too; empty elsewhere or when ``BROWSER`` is set."""
+    if not is_wsl() or os.environ.get("BROWSER"):
+        return {}
+    if shutil.which("wslview"):
+        return {"BROWSER": "wslview"}
+    rundll = windows_command("rundll32.exe")
+    return {"BROWSER": f"{shlex.quote(rundll)} url.dll,FileProtocolHandler %s"} if rundll else {}
+
+
 class WindowsBrowser(webbrowser.BaseBrowser):
     """Opens pages in Windows' default browser from WSL."""
 
@@ -106,6 +118,46 @@ class WindowsBrowser(webbrowser.BaseBrowser):
 
 
 _windows_browser: Optional[WindowsBrowser] = None
+
+# A balloon from the notification area, with nothing to install (Windows, and Windows from WSL).
+_WINDOWS_TOAST = (
+    "Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; "
+    "$n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $true; "
+    "$n.ShowBalloonTip(8000, $env:PYZED_TITLE, $env:PYZED_BODY, 'Info'); Start-Sleep -Seconds 9; $n.Dispose()")
+
+
+def desktop_notification_command(title: str, body: str) -> Optional[List[str]]:
+    """The command that shows a desktop notification (``None`` when there is no way to): ``osascript`` on
+    macOS, ``notify-send`` on Linux, PowerShell on Windows and under WSL. Under PowerShell the texts go in
+    the ``PYZED_TITLE`` and ``PYZED_BODY`` variables, never in the script."""
+    if sys.platform == "darwin":
+        quote = lambda s: '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'  # noqa: E731
+        return ["osascript", "-e", f"display notification {quote(body)} with title {quote(title)}"]
+    if sys.platform == "win32":
+        return ["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", _WINDOWS_TOAST]
+    found = shutil.which("notify-send")
+    if found:
+        return [found, "--app-name=Pyzed", title, body]
+    shell = windows_command("powershell.exe") if is_wsl() else None
+    if shell:
+        return [shell, "-NoProfile", "-WindowStyle", "Hidden", "-Command", _WINDOWS_TOAST]
+    return None
+
+
+def notify(title: str, body: str) -> bool:
+    """Shows a desktop notification, without waiting for it; whether one could be shown."""
+    command = desktop_notification_command(title, body)
+    if command is None:
+        return False
+    env = {**os.environ, "PYZED_TITLE": title, "PYZED_BODY": body}
+    if "WSLENV" in os.environ or is_wsl():  # hand the two variables over to the Windows side
+        env["WSLENV"] = ":".join(filter(None, [os.environ.get("WSLENV", ""), "PYZED_TITLE", "PYZED_BODY"]))
+    try:
+        subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,  # noqa: S603
+                         stderr=subprocess.DEVNULL, env=env, start_new_session=sys.platform != "win32")
+    except OSError:
+        return False
+    return True
 
 
 def use_windows_browser() -> bool:

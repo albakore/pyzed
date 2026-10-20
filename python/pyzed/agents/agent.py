@@ -194,7 +194,9 @@ class Event:
 
     ``kind`` is ``"text"`` / ``"thinking"`` (``text`` holds the new piece), ``"tool_call"`` (``tool``,
     ``args``, ``call_id``), ``"tool_result"`` (adds ``result`` and ``error``), ``"turn"`` (a model answer
-    finished; ``usage``), ``"plan"`` (an external agent's plan: ``args["steps"]``), ``"error"`` (``text``) or
+    finished; ``usage``), ``"plan"`` (an external agent's plan: ``args["steps"]``), ``"file"`` (an external agent wrote the
+    file ``text``, or edits there: ``args["written"]``, ``args["line"]``), ``"auth"`` (an external agent wants a
+    sign-in first: ``args["methods"]`` and the ``args["prompt"]`` to send again), ``"error"`` (``text``) or
     ``"done"``.
     """
 
