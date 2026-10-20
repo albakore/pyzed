@@ -162,7 +162,9 @@ impl Caches {
         }
         // Video frames (a webcam, a player) are new images every frame: bound the bytes too.
         let images = self.images.get_mut();
-        if images.len() > 512 || images.values().map(extra::Decoded::bytes).sum::<usize>() > IMAGE_BUDGET {
+        if images.len() > 512
+            || images.values().map(extra::Decoded::bytes).sum::<usize>() > IMAGE_BUDGET
+        {
             images.clear();
         }
         if self.image_masks.get_mut().len() > 64 {

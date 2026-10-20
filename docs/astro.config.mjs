@@ -162,9 +162,15 @@ const topics = [
 	{
 		id: 'audio',
 		label: { en: 'Audio', es: 'Audio' },
-		link: '/audio/engine/getting-started/',
-		icon: 'star',
-		items: [group('Engine', 'Motor', 'audio/engine')],
+		link: '/audio/',
+		icon: 'seti:audio',
+		items: [
+			{ slug: 'audio' },
+			group('Engine', 'Motor', 'audio/engine'),
+			group('Components', 'Componentes', 'audio/components'),
+			group('Rack and cables', 'Rack y cables', 'audio/rack'),
+			group('Demos', 'Demos', 'audio/demos'),
+		],
 	},
 	{
 		id: 'integrations',
