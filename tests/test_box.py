@@ -65,3 +65,38 @@ def test_box_layouts_render(tmp_path):
     # the absolute child: bottom right of the 30 px tall box (20 to 50), out of the flow
     assert _at(out, 85, 45)[0] < 20 and _at(out, 95, 45)[0] > 200 and _at(out, 95, 25)[0] < 20
     assert _at(out, 50, 55)[1] < 20 and _at(out, 95, 55)[1] > 200  # flex, justify end
+
+
+def test_widgets_report_the_size_they_were_given():
+    assert pz.container(None, width=20)._length("width") == 20
+    assert pz.container(None, width=20)._length("height") is None
+    assert pz.text("x").style(width="shrink").on(click=lambda: None)._length("width") == "shrink"
+    assert pz.container(None, height="fill:2").style(padding=1)._length("height") == "fill:2"
+    assert pz.text("x")._length("width") is None
+    with pytest.raises(ValueError, match="axis"):
+        pz.text("x")._length("depth")
+
+
+def test_box_keeps_sizes_and_centers(tmp_path):
+    red, green = "#ff0000", "#00ff00"
+    square = lambda: pz.container(None, width=20, height=20).style(background=red)
+
+    class Demo(pz.App):
+        def view(self):
+            return pz.box(
+                # a shrinking box keeps its content (it used to collapse to nothing)
+                pz.box(pz.container(None, width=30, height=10), width="shrink", background=green),
+                # a fixed width child stays fixed in a block box, centered by align_x
+                pz.box(pz.text("").style(height=10), square(), align_x="center", width=200),
+                # flex column centered on both axes
+                pz.box(square(), display="flex", direction="column", justify="center", align="center",
+                       width=200, height=60),
+            ).style(background="#000000", width="fill", height="fill")
+
+    out = tmp_path / "sizes.png"
+    pz.screenshot(Demo, out, size=(200, 120), scale=1)
+    assert _at(out, 15, 5)[1] > 200 and _at(out, 35, 5)[1] < 20  # the shrinking box: 30 px wide
+    assert _at(out, 5, 25)[0] < 20 and _at(out, 100, 25)[0] > 200 and _at(out, 115, 25)[0] < 20  # 90 to 110
+    # the flex box spans 40 to 100: its square sits in the middle, 60 to 80
+    assert _at(out, 100, 55)[0] < 20 and _at(out, 100, 70)[0] > 200 and _at(out, 100, 85)[0] < 20
+    assert _at(out, 85, 70)[0] < 20 and _at(out, 115, 70)[0] < 20
