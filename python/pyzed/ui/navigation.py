@@ -8,7 +8,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Union
 from .. import _core
 from ..icons import for_file
 from ..icons import icon as _icon
-from ..theme import Theme
+from ..theme import Theme, mix
 from .base import _theme, icon_button, indicator
 
 
@@ -193,7 +193,8 @@ def tab_bar(
     items.append(filler)
     bar = _core.container(
         _core.row(items, height=height, clip=True),
-        bg=t.tab_bar,
+        # the row a dragged tab would land in is tinted with the accent color
+        bg=mix(t.tab_bar, t.accent, 0.12) if drop_index is not None else t.tab_bar,
         width="fill",
         height=height,
     )
@@ -204,7 +205,8 @@ def tab_bar(
 
 def _drop_mark(shown: bool, height: float, t: Theme) -> _core.Widget:
     """The accent bar between two tabs where a dragged tab would land (zero wide when not ``shown``)."""
-    return _core.container(width=2 if shown else 0, height=height, bg=t.accent if shown else None)
+    return _core.container(width=3 if shown else 0, height=height, bg=t.accent if shown else None,
+                           radius=1.5 if shown else 0)
 
 
 def breadcrumbs(

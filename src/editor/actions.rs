@@ -39,6 +39,7 @@ pub enum EditorAction {
     MoveLineDown,
     DuplicateLineUp,
     DuplicateLineDown,
+    DuplicateSelection,
     DeleteLine,
     NewlineBelow,
     NewlineAbove,
@@ -62,7 +63,7 @@ pub enum EditorAction {
 }
 
 impl EditorAction {
-    pub const ALL: [EditorAction; 34] = [
+    pub const ALL: [EditorAction; 35] = [
         Self::Undo,
         Self::Redo,
         Self::AddCursorAbove,
@@ -77,6 +78,7 @@ impl EditorAction {
         Self::MoveLineDown,
         Self::DuplicateLineUp,
         Self::DuplicateLineDown,
+        Self::DuplicateSelection,
         Self::DeleteLine,
         Self::NewlineBelow,
         Self::NewlineAbove,
@@ -115,6 +117,7 @@ impl EditorAction {
             Self::MoveLineDown => "move_line_down",
             Self::DuplicateLineUp => "duplicate_line_up",
             Self::DuplicateLineDown => "duplicate_line_down",
+            Self::DuplicateSelection => "duplicate_selection",
             Self::DeleteLine => "delete_line",
             Self::NewlineBelow => "newline_below",
             Self::NewlineAbove => "newline_above",
@@ -825,6 +828,89 @@ impl EditorState {
         )
     }
 
+    /// Zed's and VS Code's "duplicate selection": every cursor's selected text is copied right
+    /// after it (and the copy selected, so pressing again copies it again); a cursor without a
+    /// selection duplicates its line below, keeping its column.
+    fn duplicate_selection(&mut self) -> bool {
+        self.unfold_lines();
+        let cursors = self.cursors();
+        let lines = self.visible_lines();
+        let text = lines.join("\n");
+        // One insertion per cursor (cursors on the same line without a selection share theirs):
+        // (offset, text), and where each cursor goes as (insertion, offset into the inserted
+        // text of its position, of its selection).
+        let mut inserts: Vec<(usize, String)> = Vec::new();
+        let mut targets: Vec<(usize, usize, Option<usize>)> = Vec::with_capacity(cursors.len());
+        for c in &cursors {
+            let (s, e) = range(c);
+            let (a, b) = (offset_of(&lines, s), offset_of(&lines, e));
+            let insert = if has_selection(c) {
+                (b, text[a..b].to_owned())
+            } else {
+                let line = &lines[c.position.line];
+                let end = offset_of(&lines, pos(c.position.line, line.len()));
+                (end, format!("\n{line}"))
+            };
+            let index = match inserts.iter().position(|i| *i == insert) {
+                Some(index) => index,
+                None => {
+                    inserts.push(insert);
+                    inserts.len() - 1
+                }
+            };
+            let len = inserts[index].1.len();
+            targets.push(if has_selection(c) {
+                let forward = order(c.position) >= order(c.selection.unwrap_or(c.position));
+                if forward {
+                    (index, len, Some(0))
+                } else {
+                    (index, 0, Some(len))
+                }
+            } else {
+                (
+                    index,
+                    1 + floor(&lines[c.position.line], c.position.column),
+                    None,
+                )
+            });
+        }
+        let mut order_of: Vec<usize> = (0..inserts.len()).collect();
+        order_of.sort_by_key(|&i| (inserts[i].0, i));
+        // Where each insertion lands in the new text.
+        let mut landed = vec![0; inserts.len()];
+        let mut out =
+            String::with_capacity(text.len() + inserts.iter().map(|i| i.1.len()).sum::<usize>());
+        let mut from = 0;
+        for &i in &order_of {
+            let (at, ref piece) = inserts[i];
+            out.push_str(&text[from..at]);
+            landed[i] = out.len();
+            out.push_str(piece);
+            from = at;
+        }
+        out.push_str(&text[from..]);
+        let new_lines: Vec<String> = out.split('\n').map(str::to_owned).collect();
+        let map: Vec<usize> = (0..lines.len())
+            .map(|line| {
+                let start = offset_of(&lines, pos(line, 0));
+                line + inserts
+                    .iter()
+                    .filter(|(at, _)| *at <= start)
+                    .map(|(_, t)| t.matches('\n').count())
+                    .sum::<usize>()
+            })
+            .collect();
+        let moved = targets
+            .iter()
+            .map(|&(i, p, sel)| Cursor {
+                position: position_at(&new_lines, landed[i] + p),
+                selection: sel.map(|s| position_at(&new_lines, landed[i] + s)),
+            })
+            .collect();
+        self.replace_lines(new_lines, &map, moved);
+        true
+    }
+
     fn delete_lines(&mut self) -> bool {
         self.unfold_lines();
         let ranges = line_ranges(&self.cursors());
@@ -1476,6 +1562,7 @@ impl EditorState {
                 | A::MoveLineDown
                 | A::DuplicateLineUp
                 | A::DuplicateLineDown
+                | A::DuplicateSelection
                 | A::DeleteLine
                 | A::NewlineBelow
                 | A::NewlineAbove
@@ -1511,6 +1598,7 @@ impl EditorState {
             A::MoveLineDown => self.move_lines(false),
             A::DuplicateLineUp => self.duplicate_lines(true),
             A::DuplicateLineDown => self.duplicate_lines(false),
+            A::DuplicateSelection => self.duplicate_selection(),
             A::DeleteLine => self.delete_lines(),
             A::NewlineBelow => self.newline_below(ctx),
             A::NewlineAbove => self.newline_above(),
@@ -1656,6 +1744,51 @@ mod tests {
         assert_eq!(s.text(), "x");
         run(&mut s, EditorAction::Redo);
         assert_eq!(s.text(), "xabc");
+    }
+
+    #[test]
+    fn duplicate_selection_on_every_cursor() {
+        // Without a selection: each cursor's line, once per line, the cursor on the copy.
+        let mut s = editor("one\ntwo");
+        at(&mut s, 0, 1);
+        run(&mut s, EditorAction::AddCursorBelow);
+        run(&mut s, EditorAction::DuplicateSelection);
+        assert_eq!(s.text(), "one\none\ntwo\ntwo");
+        let mut at_ = s.cursors().iter().map(|c| c.position).collect::<Vec<_>>();
+        at_.sort_by_key(|p| order(*p));
+        assert_eq!(at_, vec![pos(1, 1), pos(3, 1)]);
+        // With selections: each selected text right after it, the copy selected.
+        let mut s = editor("foo bar foo");
+        at(&mut s, 0, 0);
+        run(&mut s, EditorAction::SelectNext);
+        run(&mut s, EditorAction::SelectNext);
+        run(&mut s, EditorAction::DuplicateSelection);
+        assert_eq!(s.text(), "foofoo bar foofoo");
+        let mut ranges = s.cursors().iter().map(range).collect::<Vec<_>>();
+        ranges.sort_by_key(|(a, _)| order(*a));
+        assert_eq!(
+            ranges,
+            vec![(pos(0, 3), pos(0, 6)), (pos(0, 14), pos(0, 17))]
+        );
+        run(&mut s, EditorAction::Undo);
+        assert_eq!(s.text(), "foo bar foo");
+    }
+
+    #[test]
+    fn duplicate_lines_on_every_cursor() {
+        let mut s = editor("a\nb\nc");
+        at(&mut s, 0, 0);
+        run(&mut s, EditorAction::AddCursorBelow);
+        run(&mut s, EditorAction::AddCursorBelow);
+        run(&mut s, EditorAction::DuplicateLineDown);
+        assert_eq!(s.text(), "a\nb\nc\na\nb\nc");
+        let mut s = editor("a\nb\nc");
+        at(&mut s, 0, 0);
+        run(&mut s, EditorAction::DuplicateLineDown);
+        at(&mut s, 3, 0);
+        run(&mut s, EditorAction::DuplicateLineUp);
+        assert_eq!(s.text(), "a\na\nb\nc\nc");
+        assert_eq!(s.content.cursor().position, pos(3, 0));
     }
 
     #[test]

@@ -661,6 +661,12 @@
    "path": "docs/src/content/docs/library/animation.mdx"
   },
   {
+   "slug": "library/auth-prompt",
+   "title": "Sign-in prompt",
+   "description": "Asks to sign in, then shows the browser step, a code and Cancel. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/auth-prompt.mdx"
+  },
+  {
    "slug": "library/avatar",
    "title": "Avatar",
    "description": "A round avatar with initials in a collaborator color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -707,6 +713,12 @@
    "title": "Card",
    "description": "A bordered surface with an optional title and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/card.mdx"
+  },
+  {
+   "slug": "library/catalog",
+   "title": "Catalog",
+   "description": "Things to install, with a search box and Install or Update. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/catalog.mdx"
   },
   {
    "slug": "library/checkbox",
@@ -763,6 +775,12 @@
    "path": "docs/src/content/docs/library/container.mdx"
   },
   {
+   "slug": "library/context-meter",
+   "title": "Context meter",
+   "description": "How full a model's context window is: a ring and `48k / 200k`. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/context-meter.mdx"
+  },
+  {
    "slug": "library/count-badge",
    "title": "Count badge",
    "description": "A round counter that shows 99+ above its max. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -779,6 +797,12 @@
    "title": "Diff stat",
    "description": "`+12 −3` with GitHub-style blocks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/diff-stat.mdx"
+  },
+  {
+   "slug": "library/diff-view",
+   "title": "Diff view",
+   "description": "An edit as colored lines: added in green, removed in red. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/diff-view.mdx"
   },
   {
    "slug": "library/disclosure",
@@ -805,6 +829,12 @@
    "path": "docs/src/content/docs/library/editor.mdx"
   },
   {
+   "slug": "library/edits-bar",
+   "title": "Edits bar",
+   "description": "The files an agent changed, with Keep all and Reject all. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/edits-bar.mdx"
+  },
+  {
    "slug": "library/effects",
    "title": "Effects",
    "description": "Glow, bloom, glass and opacity as style properties. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -815,6 +845,18 @@
    "title": "Empty state",
    "description": "A centered placeholder for empty lists and searches. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/empty-state.mdx"
+  },
+  {
+   "slug": "library/error-boundary",
+   "title": "Error boundary",
+   "description": "Draws a part of the view, or an error card in its place when it fails. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/error-boundary.mdx"
+  },
+  {
+   "slug": "library/error-dialog",
+   "title": "Error dialog",
+   "description": "What went wrong, where, and the traceback, with Copy and Go to source. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/error-dialog.mdx"
   },
   {
    "slug": "library/facepile",
@@ -973,6 +1015,12 @@
    "path": "docs/src/content/docs/library/picker.mdx"
   },
   {
+   "slug": "library/plan",
+   "title": "Plan",
+   "description": "An agent's plan as a checklist that folds. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/plan.mdx"
+  },
+  {
    "slug": "library/popover",
    "title": "Popover",
    "description": "Floating content at a point: context menus, color pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1055,6 +1103,12 @@
    "title": "Select",
    "description": "A dropdown to choose one option. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/select.mdx"
+  },
+  {
+   "slug": "library/service-row",
+   "title": "Service row",
+   "description": "A settings row for an MCP server, agent or skill: status, switch and menu. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/service-row.mdx"
   },
   {
    "slug": "library/settings-group",
@@ -1159,6 +1213,12 @@
    "path": "docs/src/content/docs/library/text.mdx"
   },
   {
+   "slug": "library/thread-history",
+   "title": "Thread history",
+   "description": "Past conversations, searchable and grouped by day. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/thread-history.mdx"
+  },
+  {
    "slug": "library/title-bar",
    "title": "Title bar",
    "description": "The top bar with project and branch pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1175,6 +1235,12 @@
    "title": "Toggle group",
    "description": "An icon-only segmented control. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/toggle-group.mdx"
+  },
+  {
+   "slug": "library/tool-call",
+   "title": "Tool call",
+   "description": "One step of an AI agent: what it did, its result, and Allow or Deny. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/tool-call.mdx"
   },
   {
    "slug": "library/toolbar",

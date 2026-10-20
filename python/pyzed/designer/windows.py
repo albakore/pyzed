@@ -1,32 +1,41 @@
-"""Document tabs in more than one window.
+"""Document tabs in every tab area of the designer, and in more than one window.
 
-Every window of the designer shows a *pane*: its own row of document tabs above the toolbar
-and the canvas. The main window's pane sits between the docks. A tab dragged out of its window
-(or **Move tab to new window**) opens in a window of its own; dragging a tab onto another
-window stacks it among that window's tabs, and dragging it along a tab row reorders it.
+Every tab area holds a *pane*: the main window's center, each dock (left, right, bottom, top) and
+each window of its own. A pane keeps its document tabs (forms, components, shaders); the panels
+placed in the same area (Code, Console, Properties...) show as tabs in the same row, so a form, the
+code editor and the console can share one place. A tab dragged out of its window (or **Move tab
+to new window**) opens in a window of its own; dragging a tab onto another place stacks it there,
+and dragging it along a tab row reorders it (see ``dock_windows``).
 
-The panels (Properties, Outline, Code...) stay in the main window and follow the pane used
-last, like the tool windows of an IDE. A pane that is not the active one shows its document
-but its canvas only wakes up on the first click, so a click never edits a form you were not
-looking at. Closing a document window moves its tabs back to the main window.
+The panels follow the pane with a document that was used last, like the tool windows of an IDE.
+A pane that is not the active one shows its document but its canvas only wakes up on the first
+click, so a click never edits a form you were not looking at. Closing a window moves its
+documents back to the main window and its panels back to their docks.
 """
 
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from .. import _core, ui
 from ..app import Window
 from ..ui import frame as ui_frame
 from .document import Document
 from .locale import tr
+from .preferences import DOCKS
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
 
 #: Size of a new document window when the main window's size is not known yet.
 WINDOW_SIZE = (1100.0, 760.0)
+#: Size of a new window that only holds panels.
+PANEL_WINDOW_SIZE = (440.0, 600.0)
+#: The place of the main window's center; the other windows are "window:1", "window:2"...
+MAIN = "main"
+WINDOW = "window:"
+
 #: Where the pointer ends up inside a new window: over its first tab.
 GRAB_OFFSET = (90.0, 14.0)
 #: What a pane that is not the active one should not show: the gestures of the active pane.
@@ -34,29 +43,39 @@ TRANSIENT = {"drag": None, "guides": [], "drop_name": None, "menu": None}
 
 
 class Pane:
-    """The documents shown as tabs in one window, and which one is in front."""
+    """The documents shown as tabs in one tab area (the main window's center, a dock or a window of its
+    own), which one is in front, and whether a panel of the same area is in front of them."""
 
-    __slots__ = ("docs", "active", "window")
+    __slots__ = ("docs", "active", "window", "place", "front")
 
     def __init__(self, docs: Optional[List[Document]] = None, active: int = 0,
-                 window: Optional["DocWindow"] = None) -> None:
+                 window: Optional["DocWindow"] = None, place: str = MAIN) -> None:
         self.docs: List[Document] = docs if docs is not None else []
         self.active = active
         self.window = window
+        #: "main", a dock ("left"...) or a window of its own ("window:1"...)
+        self.place = place
+        #: the panel in front of the documents (its tab was picked last), or ``None`` for the document
+        self.front: Optional[str] = None
 
     @property
     def doc(self) -> Document:
         """The document in front."""
         return self.docs[self.active]
 
+    @property
+    def docked(self) -> bool:
+        """Whether the pane is one of the main window's docks."""
+        return self.place in DOCKS
+
     def __repr__(self) -> str:
-        return f"<Pane {[d.display_name for d in self.docs]} active={self.active}>"
+        return f"<Pane {self.place} {[d.display_name for d in self.docs]} active={self.active}>"
 
 
 class DocWindow(Window):
-    """A window with its own document tabs, toolbar and canvas."""
+    """A window of its own: its document and panel tabs, and the toolbar and canvas or the panel in front."""
 
-    min_size = (480.0, 360.0)
+    min_size = (280.0, 220.0)
 
     def __init__(self, designer: "Designer", pane: Pane, *, size: Optional[Tuple[float, float]] = None,
                  position: Optional[Tuple[float, float]] = None) -> None:
@@ -70,29 +89,33 @@ class DocWindow(Window):
             self.position = position
         self.title = self.window_title
 
+    @property
+    def scale(self) -> float:  # type: ignore[override]
+        """Windows of their own follow the designer's interface scale."""
+        return self.designer.scale
+
+    @scale.setter
+    def scale(self, _value: float) -> None:
+        pass
+
     def window_title(self) -> str:
-        """The document in front, after a ``●`` when it has unsaved changes."""
-        doc = self.pane.doc if self.pane.docs else None
-        if doc is None:
+        """The document in front, after a ``●`` when it has unsaved changes, or the panel in front."""
+        from .docks import front
+
+        shown = front(self.designer, self.pane.place)
+        if shown is None:
             return "Pyzed Design"
+        if shown[0] == "panel":
+            return f"{shown[1].title} — Pyzed Design"
+        doc = self.pane.doc
         return f"{'● ' if doc.dirty else ''}{doc.display_name} — Pyzed Design"
 
     def view(self) -> Any:
         return self.designer.panes.window_view(self.pane)
 
     def on_close(self) -> None:
-        """Closing the window keeps its documents: they go back to the main window."""
+        """Closing the window keeps its tabs: documents go back to the main window, panels to their docks."""
         self.designer.panes.closed(self.pane)
-
-
-class TabDrag:
-    """A document tab being dragged: from which pane, which tab, and where it would land in its row."""
-
-    __slots__ = ("pane", "index", "over")
-
-    def __init__(self, pane: Pane, index: int) -> None:
-        self.pane, self.index = pane, index
-        self.over: Optional[int] = None
 
 
 class PaneController:
@@ -101,21 +124,54 @@ class PaneController:
     def __init__(self, designer: "Designer") -> None:
         self.d = designer
         self.main = Pane()
+        #: One pane per window: the main window's, then those of the windows of their own.
         self.panes: List[Pane] = [self.main]
-        #: The pane the panels, the menus and the keyboard work on.
+        #: The pane of each dock of the main window.
+        self.docked: Dict[str, Pane] = {dock: Pane(place=dock) for dock in DOCKS}
+        #: The pane the panels, the menus and the keyboard work on (always one with documents).
         self.active = self.main
-        #: The pane whose window was used last: menus, dialogs and toasts open there.
+        #: The pane used last: menus, dialogs and toasts open in its window.
         self.here = self.main
-        self.drag: Optional[TabDrag] = None
 
     # -- lookups ----------------------------------------------------------------
+    def every(self) -> List[Pane]:
+        """Every pane: the windows' and the docks'."""
+        return [*self.panes, *self.docked.values()]
+
     def all_docs(self) -> List[Document]:
-        """Every open document, in every window."""
-        return [doc for pane in self.panes for doc in pane.docs]
+        """Every open document, in every window and dock."""
+        return [doc for pane in self.every() for doc in pane.docs]
+
+    def at(self, place: str) -> Optional[Pane]:
+        """The pane of ``place`` ("main", a dock or "window:N"), if there is one."""
+        if place in self.docked:
+            return self.docked[place]
+        return next((pane for pane in self.panes if pane.place == place), None)
+
+    def windows(self) -> List[Pane]:
+        """The panes of the windows of their own."""
+        return [pane for pane in self.panes if pane is not self.main]
+
+    def host(self, pane: Pane) -> Any:
+        """The window that shows ``pane``: its own, or the designer's main window."""
+        return pane.window if pane.window is not None else self.d
+
+    def is_here(self, pane: Pane) -> bool:
+        """Whether ``pane`` is in the window used last (where menus and dialogs open)."""
+        return self.host(pane) is self.host(self.here)
+
+    def new_place(self) -> str:
+        """A free "window:N" place for a new window."""
+        layout = self.d.layout
+        used = {p.place for p in self.panes} | set(layout.docks.values()) | set(layout.windows)
+        n = 1
+        while f"{WINDOW}{n}" in used:
+            n += 1
+        return f"{WINDOW}{n}"
 
     def find(self, doc: Document) -> Optional[Tuple[Pane, int]]:
         """The pane and tab index of ``doc``."""
-        for pane in self.panes:
+        for pane in self.every():
             for i, other in enumerate(pane.docs):
                 if other is doc:
                     return pane, i
@@ -124,7 +180,7 @@ class PaneController:
     def find_path(self, path: Any) -> Optional[Tuple[Pane, int]]:
         """The pane and tab index of the document saved at ``path``."""
         target = path.resolve()
-        for pane in self.panes:
+        for pane in self.every():
             for i, other in enumerate(pane.docs):
                 if other.path is not None and other.path.resolve() == target:
                     return pane, i
@@ -132,14 +188,16 @@ class PaneController:
 
     def window_size(self, pane: Optional[Pane] = None) -> Tuple[float, float]:
         """The size of the window that shows ``pane`` (the one used last by default)."""
-        pane = pane or self.here
-        host: Any = pane.window if pane.window is not None else self.d
+        host = self.host(pane or self.here)
         return host.window_size or host.size
 
     # -- switching --------------------------------------------------------------
     def activate(self, pane: Pane) -> bool:
-        """Makes ``pane`` the one the panels follow; ``False`` when the code editor cannot be left yet."""
+        """Makes ``pane`` the one the panels follow; ``False`` when the code editor cannot be left yet (or
+        ``pane`` has no document)."""
         self.here = pane
+        if not pane.docs:
+            return False
         if pane is self.active:
             return True
         if not self.d._leave_doc():
@@ -152,9 +210,10 @@ class PaneController:
         return True
 
     def select(self, pane: Pane, tab_id: str) -> Any:
-        """A tab of ``pane`` was pressed."""
+        """A document tab of ``pane`` was pressed: it comes in front of the panels there."""
         if not self.activate(pane):
             return None
+        pane.front = None
         return self.d._select_tab(tab_id)
 
     def close(self, pane: Pane, tab_id: str) -> Any:
@@ -188,18 +247,22 @@ class PaneController:
 
     # -- moving tabs ------------------------------------------------------------
     def emptied(self, pane: Pane) -> Any:
-        """``pane`` lost its last tab: the main window gets an empty form, another window closes."""
+        """``pane`` lost its last document: the main window gets an empty form, a dock just shows its
+        panels, and a window closes unless it still holds panels."""
         if pane.docs:
             return None
         if pane is self.main:
             pane.docs.append(Document())
             pane.active = 0
             return None
-        self.panes.remove(pane)
         if self.active is pane:
             self.active = self.main
+            self.d.code_revision += 1
         if self.here is pane:
             self.here = self.main
+        if pane.docked or self.d.layout.all_in(pane.place):
+            return None
+        self.panes.remove(pane)
         window, pane.window = pane.window, None
         return window.close() if window is not None and window.is_open else None
 
@@ -213,6 +276,9 @@ class PaneController:
         at = len(target.docs) if at is None else max(0, min(at, len(target.docs)))
         target.docs.insert(at, doc)
         target.active = at
+        target.front = None
+        if target.docked:
+            self.d.layout.closed[target.place] = False
         self.active = self.here = target
         self.d.help_active = False
         self.d.code_revision += 1
@@ -230,32 +296,40 @@ class PaneController:
         pane.docs.insert(max(0, min(at, len(pane.docs))), doc)
         pane.active = pane.docs.index(front)
 
+    def new_window(self, size: Optional[Tuple[float, float]] = None,
+                   screen: Optional[Tuple[float, float]] = None,
+                   position: Optional[Tuple[float, float]] = None, place: Optional[str] = None) -> Pane:
+        """A new pane in a window of its own (not open yet), under the pointer at ``screen`` when given."""
+        pane = Pane(place=place or self.new_place())
+        if screen is not None:
+            dx, dy = self.grab_offset()
+            position = (screen[0] - dx, screen[1] - dy)
+        DocWindow(self.d, pane, size=size, position=position)
+        self.panes.append(pane)
+        return pane
+
     def detach(self, source: Pane, index: int, screen: Optional[Tuple[float, float]] = None) -> Any:
         """Opens the tab ``index`` of ``source`` in a new window (under the pointer at ``screen``)."""
         if not 0 <= index < len(source.docs):
             return None
-        if source is not self.main and len(source.docs) == 1:  # already alone: just move its window
-            if screen is None or source.window is None:
+        alone = len(source.docs) == 1 and not self.d.layout.all_in(source.place)
+        if source.window is not None and alone:  # already alone in its window: just move the window
+            if screen is None:
                 return None
             dx, dy = self.grab_offset()
             return _core.Command.move_window(screen[0] - dx, screen[1] - dy, source.window)
-        pane = Pane()
-        dx, dy = self.grab_offset()
-        position = (screen[0] - dx, screen[1] - dy) if screen is not None else None
         width, height = self.window_size(self.main)
-        window = DocWindow(self.d, pane, size=(min(width, WINDOW_SIZE[0]), min(height, WINDOW_SIZE[1])),
-                           position=position)
-        self.panes.append(pane)
+        pane = self.new_window((min(width, WINDOW_SIZE[0]), min(height, WINDOW_SIZE[1])), screen)
         closing = self.move(source, index, pane)
         if not pane.docs:  # the code editor could not be left
             self.panes.remove(pane)
             pane.window = None
             return None
-        return [c for c in (window.open(), closing) if c is not None]
+        return [c for c in (pane.window.open(), closing) if c is not None]
 
     def grab_offset(self) -> Tuple[float, float]:
-        """Where the pointer ends up inside a new document window: over its first tab, under the title bar
-        when the designer draws its own frame."""
+        """Where the pointer ends up inside a new window: over its first tab, under the title bar when the
+        designer draws its own frame."""
         style = ui_frame.resolve(self.d.frame)
         return GRAB_OFFSET[0], GRAB_OFFSET[1] + (ui_frame.HEIGHTS[style] if style else 0.0)
 
@@ -271,7 +345,8 @@ class PaneController:
                             _core.Command.focus_window(self.d)) if c is not None]
 
     def closed(self, pane: Pane) -> None:
-        """The window of ``pane`` is closing: its tabs join the main window's (nothing is lost)."""
+        """The window of ``pane`` is closing: its documents join the main window's tabs and its panels go back
+        to their docks (nothing is lost)."""
         if pane not in self.panes or pane is self.main:
             return
         front = pane.doc if pane.docs else None
@@ -284,72 +359,16 @@ class PaneController:
             self.active = self.main
             if front is not None:
                 self.main.active = self.main.docs.index(front)
+                self.main.front = None
             self.d.code_revision += 1
             self.d._selection_changed()
         if self.here is pane:
             self.here = self.main
-
-    # -- dragging tabs ----------------------------------------------------------
-    def start_drag(self, pane: Pane, tab_id: str) -> None:
-        """A tab started moving (only documents move; Reference and What's new stay put)."""
-        if tab_id.isdigit():
-            self.drag = TabDrag(pane, int(tab_id))
-            self.here = pane
-
-    def drag_over(self, index: Optional[int]) -> None:
-        """The dragged tab is over its own row at the insertion point ``index`` (``None``: off the row)."""
-        if self.drag is not None:
-            self.drag.over = index
-
-    def window_at(self, screen: Tuple[float, float], exclude: Pane) -> Optional[Pane]:
-        """The pane whose window is under the screen point ``screen``, if the platform says where windows are."""
-        x, y = screen
-        for pane in self.panes:
-            if pane is exclude:
-                continue
-            host: Any = pane.window if pane.window is not None else self.d
-            position, size = host.window_position, host.window_size
-            if position is None or size is None:
-                continue
-            if position[0] <= x < position[0] + size[0] and position[1] <= y < position[1] + size[1]:
-                return pane
-        return None
-
-    def drop(self, pane: Pane, tab_id: str, event: Any) -> Any:
-        """The dragged tab was released: reorders it, stacks it on another window or opens a new one."""
-        drag, self.drag = self.drag, None
-        if drag is None or drag.pane is not pane or not tab_id.isdigit():
-            return None
-        index = int(tab_id)
-        if drag.over is not None:
-            return self.reorder(pane, index, drag.over)
-        width, height = self.window_size(pane)
-        x, y = getattr(event, "window_x", 0.0), getattr(event, "window_y", 0.0)
-        if 0 <= x < width and 0 <= y < height:
-            return None  # released inside its own window, off the tab row: nothing moves
-        screen = getattr(event, "screen", None)
-        target = self.window_at(screen, pane) if screen is not None else None
-        if target is not None:
-            host = target.window if target.window is not None else self.d
-            return [c for c in (self.move(pane, index, target), _core.Command.focus_window(host)) if c is not None]
-        return self.detach(pane, index, screen)
+        if self.d.layout.all_in(pane.place):
+            self.d.layout.send_home(pane.place)
+            self.d._save_layout()
 
     # -- view -------------------------------------------------------------------
-    def tab_bar(self, pane: Pane, tabs: List[Any], active: Optional[str], end: List[Any], t: Any) -> Any:
-        """The row of tabs of ``pane``: its documents can be dragged within it and out of the window."""
-        drag = self.drag if self.drag is not None and self.drag.pane is pane else None
-        return ui.tab_bar(
-            tabs, active,
-            on_select=lambda tab_id: self.select(pane, tab_id),
-            on_close=lambda tab_id: self.close(pane, tab_id),
-            on_drag=lambda tab_id: self.start_drag(pane, tab_id),
-            on_drop=lambda tab_id, event: self.drop(pane, tab_id, event),
-            on_drag_over=self.drag_over,
-            dragging=str(drag.index) if drag is not None else None,
-            drop_index=drag.over if drag is not None else None,
-            end=end, height=30, theme=t,
-        )
-
     def asleep(self, pane: Pane, content: Any) -> Any:
         """``content`` of a pane that is not the active one: the first press only makes it active."""
         if pane is self.active:
@@ -359,12 +378,15 @@ class PaneController:
         return _core.stack([content, wake], width="fill", height="fill")
 
     def window_view(self, pane: Pane) -> Any:
-        """The whole view of a document window: tabs, toolbar and canvas, with menus and dialogs used there."""
+        """The whole view of a window of its own: its tabs and what is in front (a document's toolbar and
+        canvas, or a panel), with the menus and dialogs used there."""
         d = self.d
         t = d.theme_obj
-        if not pane.docs:
-            return _core.container(width="fill", height="fill", bg=t.background)
         if pane is self.active:
             d.sync_code()
-        body = _core.container(d.center_view(pane, t), width="fill", height="fill", bg=t.background)
+        body = d.center_view(pane, t)
+        if body is None:
+            body = ui.empty_state(tr("Nothing to show yet"), "", icon="panels-top-left", theme=t)
+        body = _core.container(body, width="fill", height="fill", bg=t.background)
+        body = _core.stack([body, d.dock_windows.drag_layer(pane, t)], width="fill", height="fill")
         return d.window_overlays(body, pane, t)

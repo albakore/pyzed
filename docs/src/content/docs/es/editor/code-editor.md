@@ -103,7 +103,8 @@ mueve un control.
   grupo.
 - <kbd>Ctrl</kbd>+<kbd>G</kbd> va a una línea (`42`) o a una línea y columna (`42:8`).
 - El editor tiene cursores múltiples y los atajos de edición habituales de los editores modernos: <kbd>Alt</kbd>+clic,
-  <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
+  <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>Ctrl</kbd>+<kbd>D</kbd>,
+  <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> para duplicar líneas en cada cursor,
   <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> para mover líneas,
   <kbd>Ctrl</kbd>+<kbd>/</kbd> para comentar, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>
   y más. La lista completa está en
@@ -232,6 +233,7 @@ derecha se ve la que eliges.
 | Sección | Ajuste | Qué hace |
 | --- | --- | --- |
 | Apariencia | **Tema** | *Igual que el diseñador*, o cualquier tema solo para el editor. |
+| | **Fuente** | *Por defecto* (IBM Plex Mono) o cualquier fuente instalada; también en Ajustes → Fuentes y tamaño. |
 | | **Tamaño de letra** | De 8 a 32 (también <kbd>Ctrl</kbd>+<kbd>=</kbd>/<kbd>-</kbd>/<kbd>0</kbd> y <kbd>Ctrl</kbd>+rueda). |
 | | **Interlineado** | Compacto, Normal o Amplio. |
 | | **Números de línea**, **Resaltar la línea actual** | El margen y la franja de la línea actual. |

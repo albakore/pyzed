@@ -91,6 +91,15 @@ def component(name: str, *, description: str = "", props: Sequence[Mapping[str, 
         lines.append("    events = {")
         lines += [f'        "{e}": {doc!r},' for e, doc in events.items()]
         lines.append("    }")
+    lines += ["", "    # Its look, like CSS: & is the component; the parent adds class_=, id= and style=.",
+              "    stylesheet = {",
+              '        "&": {"background": "panel", "border": (1, "border"), "radius": 8, "padding": 12,',
+              '              "transition": 120},',
+              '        "&:hover": {"border_color": "accent"},',
+              "    }"]
+    nests = not any(str(p.get("name", "")) == "children" for p in props)
+    if nests:
+        lines += ["", "    children: list = ()  # what the parent nests inside, like HTML children"]
     if props:
         lines += ["", "    # Props: the parent passes them on every render."]
         for prop in props:
@@ -114,12 +123,14 @@ def component(name: str, *, description: str = "", props: Sequence[Mapping[str, 
     names = [str(p["name"]) for p in props][:4]
     shown = [f'            ui.label(f"{n}: {{self.{n}}}"),' for n in names]
     first_event = next(iter(events), None)
-    lines += ["", "    def render(self):", "        return pz.column(["]
+    lines += ["", "    def render(self):", "        return pz.box("]
     lines += shown or [f'            ui.label("{cls}"),']
+    if nests:
+        lines.append("            *self.children,")
     if first_event:
         text = first_event.replace("_", " ").capitalize()
         lines.append(f'            ui.button("{text}", self.{methods[first_event]}),')
-    lines += ["        ], spacing=8)", ""]
+    lines += ["            gap=8,", "        )", ""]
     args = ", ".join(f"{p['name']}=..." for p in props[:3])
     handlers = ", ".join(f"on_{e}=lambda event: ..." for e in list(events)[:2])
     usage = f"{cls}({', '.join(a for a in (args, handlers) if a)})"
@@ -143,6 +154,13 @@ def app(title: str = "My App", *, size: Sequence[int] = (900, 600), theme: str =
 import pyzed as pz
 from pyzed import ui
 
+# The look of the app, like a CSS file: classes, :hover and media queries.
+pz.stylesheet({{
+    ".page": {{"width": "fill", "height": "fill", "padding": 32}},
+    ".card": {{"background": "panel", "border": (1, "border"), "radius": 12, "padding": 24, "width": 360}},
+    "@media (max_width: 480)": {{".page": {{"padding": 12}}}},
+}})
+
 
 class App(pz.App):
     title = {title!r}
@@ -160,13 +178,18 @@ class App(pz.App):
             self.count = 0
 
     def view(self):
-        return pz.center(pz.column([
-            ui.heading(f"Clicks: {{self.count}}"),
-            pz.row([
-                ui.button("Click me", self.increment, icon="plus", variant="solid"),
-                ui.button("Reset", "reset", variant="ghost"),
-            ], spacing=8),
-        ], spacing=16, align="center"))
+        return pz.box(
+            pz.box(
+                ui.heading(f"Clicks: {{self.count}}"),
+                pz.box(
+                    ui.button("Click me", self.increment, icon="plus", variant="solid"),
+                    ui.button("Reset", "reset", variant="ghost"),
+                    display="flex", gap=8,
+                ),
+                class_="card", gap=16,
+            ),
+            class_="page", display="flex", justify="center", align="center",
+        )
 
 
 if __name__ == "__main__":

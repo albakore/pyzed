@@ -21,7 +21,7 @@ use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyString, PyTuple, PyTyp
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
-use crate::style::{MONO, SANS};
+use crate::style::sans;
 use crate::widget::PyMsg;
 
 pub struct State {
@@ -1495,11 +1495,14 @@ fn error_view<'a>(title: &'static str, message: String) -> Element<'a, Message> 
     let red = Color::from_rgb8(0xd0, 0x72, 0x77);
     container(
         column![
-            text(title).size(18).color(red).font(Font::with_name(SANS)),
+            text(title)
+                .size(18)
+                .color(red)
+                .font(Font::with_name(crate::style::sans())),
             scrollable(
                 text(message)
                     .size(13)
-                    .font(Font::with_name(MONO))
+                    .font(Font::with_name(crate::style::mono()))
                     .color(Color::from_rgb8(0xdc, 0xe0, 0xe5))
             )
             .height(Length::Fill),
@@ -2181,7 +2184,7 @@ fn daemon(
         .subscription(subscription)
         .scale_factor(scale_factor)
         .settings(iced::Settings {
-            default_font: Font::with_name(SANS),
+            default_font: Font::with_name(sans()),
             default_text_size: font_size.into(),
             antialiasing: true,
             ..Default::default()

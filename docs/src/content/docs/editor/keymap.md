@@ -98,7 +98,7 @@ a default key away. Comments (`//`) and trailing commas are allowed.
   {
     "context": "Editor",
     "bindings": {
-      "ctrl-shift-d": "editor::DuplicateLineDown",
+      "ctrl-alt-d": "editor::DuplicateLineDown",
       "ctrl-d": null
     }
   },
@@ -126,5 +126,5 @@ to `keymap.json` the first time it starts.
 
 ## In your own apps
 
-The code editor component takes the same kind of keymap: `ui.editor(keymap={"ctrl-shift-d": "duplicate_line_down",
+The code editor component takes the same kind of keymap: `ui.editor(keymap={"ctrl-alt-d": "duplicate_line_down",
 "ctrl-d": None})`. See [the code editor component](/pyzed/components/code/#multiple-cursors-and-zeds-keys).

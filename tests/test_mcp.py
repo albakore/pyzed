@@ -113,7 +113,8 @@ def test_new_component_is_valid_and_works():
     namespace: dict = {}
     exec(compile(out["code"], "star_rating.py", "exec"), namespace)
     cls = namespace["StarRating"]
-    assert set(cls.__props__) == {"value", "caption"} and "hover" in cls.__state__ and "change" in cls.__events__
+    assert set(cls.__props__) == {"value", "caption", "children"}
+    assert "hover" in cls.__state__ and "change" in cls.__events__
     for bad in ("class", "label", "render"):
         with pytest.raises(ValueError):
             scaffold.component("x", props=[{"name": bad}])
@@ -328,6 +329,9 @@ def test_plan_app_points_at_blocks_and_topics():
     found = knowledge.plan("a kanban board that saves tasks to a SQLModel database")
     assert found["examples"][0]["name"] == "blocks/kanban"
     assert "integrations" in found["topics"] and found["steps"]
+    web = knowledge.plan("a responsive landing page with css-like cards")
+    assert {"layout", "styles"} <= set(web["topics"]) and any("pz.box" in step for step in web["steps"])
+    assert "pz.box" in {c["name"] for c in knowledge.list_components("widget", category="Layout")}
 
 
 def test_animation_libraries_are_written_and_checked(tmp_path):

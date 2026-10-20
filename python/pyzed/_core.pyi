@@ -299,6 +299,11 @@ def event_names() -> Any:
 def every(seconds: Any, message: Any, *, key: Any = ...) -> Any:
     """Sends `message` to `update` every `seconds` (like Iced's `time::every`)."""
     ...
+def font_families() -> Any:
+    """The font families that can be used by name: the bundled ones, those loaded with `load_font` and the
+    system's, sorted and without repeats.
+    """
+    ...
 def frames(callback: Any, *, key: Any = ..., max_fps: Any = ...) -> Any:
     """Calls `callback(dt)` once per displayed frame (usually 60 times a second, in sync
     with the screen), with `dt` the seconds since the previous one. Made for games and
@@ -406,6 +411,11 @@ def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: 
     """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
     ...
 def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any: ...
+def set_fonts(ui: Any = ..., code: Any = ...) -> Any:
+    """Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`
+    goes back to IBM Plex Sans and Mono. Takes effect on the next frame.
+    """
+    ...
 def set_reduced_motion(on: Any) -> Any:
     """Turns reduced motion on or off: animations show their final state without moving."""
     ...

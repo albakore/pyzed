@@ -76,7 +76,7 @@ keyboard and in the command palette.
 | Save layout as… | | Saves where every panel is, the dock sizes and the panel windows under a name. |
 | Delete this layout | | Removes the saved layout in use. |
 | *Panels* | | One entry per panel, with the dock it is in (`Properties · Right`, or `Window` when it floats): click to bring it to the front. |
-| *Layouts* | | The work layouts (Default, Coding, Focus, Events and code, and yours); the one in use is checked. |
+| *Layouts* | | The work layouts (Default, Coding, Focus, Events and code, Code with the forms, and yours); the one in use is checked. |
 
 The toggles are remembered between sessions.
 
@@ -154,15 +154,16 @@ Eight panels live in four docks around the canvas:
 | **Code** | Bottom | The code editor (only while a handler or the file is open). |
 | **Console** | Bottom | The console (once it has something to show). |
 
-Each dock shows one panel at a time, with a tab per panel. At the end of the tab bar:
+Each dock shows one tab at a time. At the end of the tab bar:
 
-- the **dock button** opens a menu to **Move *panel* to** the left, right, bottom or top dock, a **New window**, or
-  **Hide dock**;
+- the **dock button** opens a menu to **Move *panel* to** the left, right, bottom or top dock, the **Center** (next to
+  the form tabs), a **New window**, or **Hide dock**;
 - the **×** hides the dock (bring it back with its shortcut or the View menu).
 
-Drag a tab to reorder it, onto another dock to move it, or out of the window to float it in a window of its own;
-drop more tabs on a panel window to stack them. In a panel window the dock button offers **Dock everything here back**
-and the **×** does the same.
+Any tab goes anywhere: drag a panel's or a form's tab to reorder it, onto another row or over a dock or the center to
+move it there, or out of the window to float it in a window of its own; drop more tabs on a window to stack them. The
+place a tab would land in lights up while you drag. In a window of its own the dock button offers **Dock everything
+here back** and the **×** does the same.
 
 ![Moving the Properties panel to another dock](../../../../screenshots/editor-dock-menu.png)
 
