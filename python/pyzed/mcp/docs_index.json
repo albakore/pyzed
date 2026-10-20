@@ -1393,6 +1393,30 @@
    "path": "docs/src/content/docs/shading/shaders.md"
   },
   {
+   "slug": "showcase/_run",
+   "title": "showcase/_run",
+   "description": "",
+   "path": "docs/src/content/docs/showcase/_run.mdx"
+  },
+  {
+   "slug": "showcase/apps",
+   "title": "Apps and utilities",
+   "description": "Small, complete Python desktop apps made with Pyzed: a to-do list, Markdown and image viewers, a clock, a stopwatch, a QR generator, live data, an AI chat, panes, several windows and a code editor workspace.",
+   "path": "docs/src/content/docs/showcase/apps.mdx"
+  },
+  {
+   "slug": "showcase/dashboards",
+   "title": "Dashboards and data apps",
+   "description": "Data-heavy Python desktop apps made with Pyzed: an admin dashboard with KPIs and charts, a data table with filters and paging, a kanban board, a team chat, a music player, an IDE layout and a contacts app over SQLite.",
+   "path": "docs/src/content/docs/showcase/dashboards.mdx"
+  },
+  {
+   "slug": "showcase/forms",
+   "title": "Forms",
+   "description": "Python desktop forms made with Pyzed: sign-in, sign-up with validation, a contact form, onboarding and settings screens, dialogs, Pydantic validation and forms drawn in the Pyzed Design visual designer.",
+   "path": "docs/src/content/docs/showcase/forms.mdx"
+  },
+  {
    "slug": "showcase/glass-dashboard",
    "title": "Glass control center",
    "description": "A professional frosted-glass dashboard in Python: music player, smart lights, climate and schedule cards with real backdrop blur over moving color.",
@@ -1407,8 +1431,8 @@
   {
    "slug": "showcase/index",
    "title": "Showcase",
-   "description": "Demos of what Pyzed can draw: game HUDs, menus and inventories, frosted-glass dashboards, bloom and real GPU shaders, all in Python.",
-   "path": "docs/src/content/docs/showcase/index.md"
+   "description": "A gallery of Python desktop apps made with Pyzed: utilities, forms, games, GPU shaders and effects, and dashboards, each with an explanation, the full code and a command to run it.",
+   "path": "docs/src/content/docs/showcase/index.mdx"
   },
   {
    "slug": "showcase/inventory",
@@ -1424,8 +1448,8 @@
   },
   {
    "slug": "showcase/shaders",
-   "title": "Shader gallery",
-   "description": "Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripple, a tunnel, a CRT screen, Voronoi cells and fire.",
+   "title": "Shaders and effects",
+   "description": "GPU effects in Python desktop apps: eleven shader graphs made of nodes in Pyzed Design (plasma, fire, nebula, synthwave, radar...), and the glass, bloom, glow, blur and animation effects every widget has.",
    "path": "docs/src/content/docs/showcase/shaders.mdx"
   },
   {
@@ -1483,16 +1507,70 @@
    "path": "docs/src/content/docs/theming/tokens.mdx"
   },
   {
+   "slug": "tutorials/advanced/ai-agent",
+   "title": "Build an app with the AI agent",
+   "description": "Use the AI agent of Pyzed Design to build a whole desktop app from a description: connect a model, write a good request, follow its plan, review its changes and keep improving the result.",
+   "path": "docs/src/content/docs/tutorials/advanced/ai-agent.mdx"
+  },
+  {
+   "slug": "tutorials/advanced/backend",
+   "title": "Connecting a backend",
+   "description": "Connect a Pyzed desktop app to a database: a repository class with SQLite, queries in a background thread with Command.perform, a loading spinner and errors shown instead of crashes.",
+   "path": "docs/src/content/docs/tutorials/advanced/backend.mdx"
+  },
+  {
    "slug": "tutorials/advanced/code-editor",
    "title": "A mini code editor",
-   "description": "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette.",
+   "description": "Tutorial: build a code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette.",
    "path": "docs/src/content/docs/tutorials/advanced/code-editor.mdx"
+  },
+  {
+   "slug": "tutorials/advanced/game-loop",
+   "title": "A game loop",
+   "description": "Write a small real-time game with Pyzed: a frame loop with pz.frames, held keys, collisions, glow, particles and screen shake, and a HUD made of ordinary widgets.",
+   "path": "docs/src/content/docs/tutorials/advanced/game-loop.mdx"
+  },
+  {
+   "slug": "tutorials/advanced/packaging",
+   "title": "Package your app",
+   "description": "From project to download: create a Pyzed project with uv, build a standalone executable with pyzed build on Windows, macOS and Linux, add an icon and data files, and build every platform in CI.",
+   "path": "docs/src/content/docs/tutorials/advanced/packaging.mdx"
+  },
+  {
+   "slug": "tutorials/advanced/shader-graph",
+   "title": "A custom shader graph",
+   "description": "Build a GPU shader graph node by node in Python with pyzed.shading: fractal noise, smoothstep bands, a gradient sky, mutable variables driven by sliders, and a .pzshad you can open in Pyzed Design.",
+   "path": "docs/src/content/docs/tutorials/advanced/shader-graph.mdx"
+  },
+  {
+   "slug": "tutorials/basic/first-form",
+   "title": "A form that does something",
+   "description": "Build a contact form in Pyzed Design: text boxes, a drop-down and a text area, a Send button wired to Python, a live character counter and messages in the console.",
+   "path": "docs/src/content/docs/tutorials/basic/first-form.mdx"
+  },
+  {
+   "slug": "tutorials/basic/first-window",
+   "title": "Your first window in Pyzed Design",
+   "description": "Draw your first desktop window with Pyzed Design, the visual designer: drag controls, set their properties and run the form with F5, without writing code.",
+   "path": "docs/src/content/docs/tutorials/basic/first-window.mdx"
+  },
+  {
+   "slug": "tutorials/basic/layout-basics",
+   "title": "Layout basics",
+   "description": "Arrange a Pyzed window with rows, columns, fill, spacing, padding and grids, in Python code and with the flex containers and anchors of Pyzed Design.",
+   "path": "docs/src/content/docs/tutorials/basic/layout-basics.mdx"
   },
   {
    "slug": "tutorials/basic/step-by-step",
    "title": "5-step tutorial",
    "description": "Learn Pyzed in five steps: go from an empty window to a notes app with Markdown, async work and a second window, in pure Python.",
    "path": "docs/src/content/docs/tutorials/basic/step-by-step.mdx"
+  },
+  {
+   "slug": "tutorials/basic/themes",
+   "title": "Change the theme",
+   "description": "Give a Pyzed app another look: pick a bundled theme, change the accent color, follow the system's light or dark mode, or generate your own theme from three colors, in code and in Pyzed Design.",
+   "path": "docs/src/content/docs/tutorials/basic/themes.mdx"
   },
   {
    "slug": "tutorials/basic/todo-app",
@@ -1503,7 +1581,7 @@
   {
    "slug": "tutorials/index",
    "title": "Tutorials",
-   "description": "Learn Pyzed by building real Python desktop apps step by step, from a first window to a complete code editor, sorted into basic, intermediate and advanced levels.",
+   "description": "Learn Pyzed by building real Python desktop apps step by step, with the visual designer and in code: basic, intermediate and advanced tutorials, each with runnable code.",
    "path": "docs/src/content/docs/tutorials/index.mdx"
   },
   {
@@ -1511,6 +1589,42 @@
    "title": "Background tasks",
    "description": "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface.",
    "path": "docs/src/content/docs/tutorials/intermediate/background-tasks.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/custom-component",
+   "title": "A custom component",
+   "description": "Draw a reusable star rating in the Component view of Pyzed Design: a public property, bindings, event handlers, a custom event, and using it in a form and in code.",
+   "path": "docs/src/content/docs/tutorials/intermediate/custom-component.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/data-binding",
+   "title": "Data binding and validation",
+   "description": "Bind the controls of a Pyzed Design form to form.data, add validation rules without code, show a live expression in a label, and validate the whole form in one line.",
+   "path": "docs/src/content/docs/tutorials/intermediate/data-binding.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/dialogs-feedback",
+   "title": "Dialogs, notifications and validation",
+   "description": "Talk to the user in a Pyzed app: field errors computed from state, a confirmation dialog over the page and toast notifications that disappear on their own.",
+   "path": "docs/src/content/docs/tutorials/intermediate/dialogs-feedback.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/lists-tables",
+   "title": "Lists and tables with data",
+   "description": "Show Python data in a Pyzed app: a searchable list, a sortable table with clickable rows and custom cells, and a details panel for the selected row.",
+   "path": "docs/src/content/docs/tutorials/intermediate/lists-tables.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/navigation",
+   "title": "A multi-view app",
+   "description": "Build a Pyzed app with several pages: a sidebar that switches views, tabs inside a page, breadcrumbs and keyboard shortcuts, all driven by one attribute of state.",
+   "path": "docs/src/content/docs/tutorials/intermediate/navigation.mdx"
+  },
+  {
+   "slug": "tutorials/intermediate/shader-effect",
+   "title": "A shader effect from the Shader view",
+   "description": "Make an animated GPU background in the Shader view of Pyzed Design from a template, tweak its nodes and variables, and put it behind a form whose buttons change it.",
+   "path": "docs/src/content/docs/tutorials/intermediate/shader-effect.mdx"
   },
   {
    "slug": "why/benchmarks",
@@ -1743,6 +1857,48 @@
    "path": "examples/zed_editor.py"
   },
   {
+   "name": "tutorial/aurora_graph",
+   "kind": "tutorial",
+   "summary": "A custom shader graph built in Python: an aurora with sliders for its variables.",
+   "path": "examples/tutorial/aurora_graph.py"
+  },
+  {
+   "name": "tutorial/contacts_backend",
+   "kind": "tutorial",
+   "summary": "Connecting a backend: a contacts app whose data lives in SQLite, behind a small repository class.",
+   "path": "examples/tutorial/contacts_backend.py"
+  },
+  {
+   "name": "tutorial/dodge",
+   "kind": "tutorial",
+   "summary": "Dodge: a tiny real-time game built with the game loop of ``pyzed.game``.",
+   "path": "examples/tutorial/dodge.py"
+  },
+  {
+   "name": "tutorial/feedback",
+   "kind": "tutorial",
+   "summary": "Talking to the user: validation messages, a confirmation dialog and toast notifications.",
+   "path": "examples/tutorial/feedback.py"
+  },
+  {
+   "name": "tutorial/layout_basics",
+   "kind": "tutorial",
+   "summary": "Layout basics: rows, columns, fill, spacing, padding, alignment and grids.",
+   "path": "examples/tutorial/layout_basics.py"
+  },
+  {
+   "name": "tutorial/lists_tables",
+   "kind": "tutorial",
+   "summary": "Lists and tables with data: search, sort, select a row and show its details.",
+   "path": "examples/tutorial/lists_tables.py"
+  },
+  {
+   "name": "tutorial/navigation",
+   "kind": "tutorial",
+   "summary": "A multi-view app: a sidebar that switches pages, and tabs inside a page.",
+   "path": "examples/tutorial/navigation.py"
+  },
+  {
    "name": "tutorial/step1_hello",
    "kind": "tutorial",
    "summary": "Tutorial, step 1: a window with some text.",
@@ -1771,6 +1927,12 @@
    "kind": "tutorial",
    "summary": "Tutorial, step 5: a small notes app that puts it all together.",
    "path": "examples/tutorial/step5_notes.py"
+  },
+  {
+   "name": "tutorial/theme_switcher",
+   "kind": "tutorial",
+   "summary": "Changing the theme: a bundled theme, an accent color, follow the system, or your own.",
+   "path": "examples/tutorial/theme_switcher.py"
   },
   {
    "name": "blocks/chat",
