@@ -1,6 +1,6 @@
 """Records the short muted clips the docs embed (docs/public/media/): MP4 (H.264) + WebM (VP9) + a WebP
 poster, and an animated WebP when it is smaller than the MP4. ``manifest.json`` there lists every clip.
-Clips registered with ``anim=True`` (short illustrations: the game tutorials and their concepts) are made
+Clips registered with ``anim=True`` (short illustrations: the game tutorials, their concepts and Pyzed Design) are made
 as an animated WebP and its poster only, sized to stay under ``ANIM_TARGET``.
 
     python docs/scripts/record.py                 # every clip
