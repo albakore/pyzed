@@ -51,6 +51,9 @@ DEFAULT_UI = "ui"
 DEFAULT_MAIN = "main"
 PACKAGE = "pyzed-ui"
 DEV_TOOLS = ("ruff", "ty")
+#: uv only installs ``pyzed-ui`` from the wheels the release pipeline builds: it never compiles the Rust
+#: core on the user's machine, and says so when a platform has no wheel instead of building for minutes.
+PREBUILT = f'no-build-package = ["{PACKAGE}"]\n'
 GITIGNORE = """\
 # Python
 __pycache__/
@@ -935,12 +938,27 @@ def _set_pyzed_keys(project: Project, **values: Optional[str]) -> None:
     project.reload()
 
 
+def prebuilt(text: str) -> str:
+    """``pyproject.toml`` text whose ``[tool.uv]`` installs ``pyzed-ui`` from wheels only (``no-build-package``).
+
+    Left as is when it already sets ``no-build-package`` or takes ``pyzed-ui`` from a local source
+    (a checkout of Pyzed, which has to be built)."""
+    if re.search(r"^no-build-package\s*=", text, re.M) or re.search(r"^pyzed-ui\s*=\s*\{", text, re.M):
+        return text
+    table = re.search(r"^\[tool\.uv\][ \t]*\n", text, re.M)
+    if table:
+        return text[:table.end()] + PREBUILT + text[table.end():]
+    return text.rstrip() + "\n\n[tool.uv]\n" + PREBUILT
+
+
 def _ensure_config(project: Project, ui: str) -> None:
     file = project.root / PYPROJECT
-    text = file.read_text(encoding="utf-8")
+    text = original = file.read_text(encoding="utf-8")
     if not re.search(r"^\[tool\.pyzed\]", text, re.M):
-        block = f'\n[tool.pyzed]\nui = "{ui}"\nmain = "{ui}/{DEFAULT_MAIN}.pzform"\n'
-        file.write_text(text.rstrip() + "\n" + block, encoding="utf-8")
+        text = text.rstrip() + "\n" + f'\n[tool.pyzed]\nui = "{ui}"\nmain = "{ui}/{DEFAULT_MAIN}.pzform"\n'
+    text = prebuilt(text)
+    if text != original:
+        file.write_text(text, encoding="utf-8")
     project.reload()
 
 
@@ -951,7 +969,7 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
 
     - No ``pyproject.toml`` yet: runs ``uv init`` (``--package`` puts the backend in
       ``src/<name>`` so the UI can import it from anywhere).
-    - Adds ``[tool.pyzed]``, the ``ui/`` folder with a starter form, ``pyzed-ui`` as a
+    - Adds ``[tool.pyzed]``, ``[tool.uv] no-build-package`` (see ``PREBUILT``), the ``ui/`` folder with a starter form, ``pyzed-ui`` as a
       dependency and ``ruff``/``ty`` as dev dependencies (``sync=False`` only edits
       ``pyproject.toml``, without resolving or installing anything).
     - ``git=True`` creates a git repository unless the folder is already inside one.

@@ -89,12 +89,12 @@ def server_command() -> Optional[List[str]]:
     of them can."""
     uvx = shutil.which("uvx")
     if uvx:
-        return [uvx, "--from", PACKAGE, "pyzed", "mcp"]
+        return [uvx, "--no-build-package", "pyzed-ui", "--from", PACKAGE, "pyzed", "mcp"]
     from ..project import find_uv
 
     uv = find_uv()
     if uv:
-        return [uv, "tool", "run", "--from", PACKAGE, "pyzed", "mcp"]
+        return [uv, "tool", "run", "--no-build-package", "pyzed-ui", "--from", PACKAGE, "pyzed", "mcp"]
     if not getattr(sys, "frozen", False):
         try:
             import mcp  # noqa: F401

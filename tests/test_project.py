@@ -150,11 +150,23 @@ def test_init_creates_a_uv_project(tmp_path):
     assert "from my_app import greeting" in created.main_form.with_suffix(".py").read_text()
     names = {d.name: d.group for d in created.dependencies()}
     assert names["pyzed-ui"] == "main" and names["ruff"] == "dev" and names["ty"] == "dev"
+    assert created.data["tool"]["uv"]["no-build-package"] == ["pyzed-ui"]  # wheels only, never compiled
     form = designer.load(created.main_form)
     assert form["greet"].events["click"] == "greet_click"
     # running it again on the same folder changes nothing
     again = project.init(created.root, sync=False, git=False)
     assert again.dependencies() == created.dependencies()
+
+
+def test_prebuilt_installs_pyzed_from_wheels_only():
+    plain = '[project]\nname = "demo"\n'
+    assert project.prebuilt(plain).endswith('\n\n[tool.uv]\nno-build-package = ["pyzed-ui"]\n')
+    with_table = '[project]\nname = "demo"\n\n[tool.uv]\npackage = true\n'
+    assert '[tool.uv]\nno-build-package = ["pyzed-ui"]\npackage = true\n' in project.prebuilt(with_table)
+    once = project.prebuilt(plain)
+    assert project.prebuilt(once) == once
+    checkout = plain + '\n[tool.uv.sources]\npyzed-ui = { path = "../.." }\n'  # a Pyzed checkout is built
+    assert project.prebuilt(checkout) == checkout
 
 
 def _write_project(root):

@@ -80,7 +80,7 @@ main() {
     case "$(uname -m)" in
         x86_64 | amd64) arch=x86_64 ;;
         aarch64 | arm64) arch=aarch64 ;;
-        *) die "no build for $(uname -m); install it with pip: pip install 'pyzed-ui[designer]'" ;;
+        *) die "no build for $(uname -m); install it with pip: pip install --only-binary pyzed-ui 'pyzed-ui[designer]'" ;;
     esac
     asset="pyzed-design-linux-$arch.zip"
     if [ -n "${PYZED_DOWNLOAD_URL:-}" ]; then

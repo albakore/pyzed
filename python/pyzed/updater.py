@@ -109,6 +109,11 @@ class Release:
                    url=str(data.get("html_url") or ""), published=str(data.get("published_at") or "")[:10],
                    prerelease=bool(data.get("prerelease")), assets=assets)
 
+    @property
+    def has_wheels(self) -> bool:
+        """Whether the Python wheels are attached: the pipeline attaches them once they are on PyPI."""
+        return any(a.name.endswith(".whl") for a in self.assets)
+
     def asset_for(self, name: str) -> Optional[Asset]:
         """The asset called ``name``, or ``None`` if this release has no build for it."""
         return next((a for a in self.assets if a.name == name), None)

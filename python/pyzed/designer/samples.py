@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from .. import __version__
+from ..project import prebuilt
 
 #: Categories in the order the gallery shows them.
 CATEGORIES = ("Apps", "Games", "Showcase", "Blocks", "Designer", "Integrations")
@@ -204,7 +205,7 @@ def _pyproject(name: str, sample: Sample, script: str, dependencies: Sequence[st
     description = sample.description.replace('"', "'")
     text = (f'[project]\nname = "{name}"\nversion = "0.1.0"\ndescription = "{description}"\n'
             f'requires-python = ">=3.10"\ndependencies = [{deps}]\n')
-    return text + extra + f'\n[tool.pyzed]\nui = "ui"\nscript = "{script}"\n'
+    return prebuilt(text + extra) + f'\n[tool.pyzed]\nui = "ui"\nscript = "{script}"\n'
 
 
 def _strip_sources(text: str) -> str:
@@ -249,7 +250,7 @@ def create(sample: Sample, folder: Path, name: Optional[str] = None, root: Optio
         text = re.sub(r'(?m)^name = ".*"$', f'name = "{name}"', text, count=1)
         if "[tool.pyzed]" not in text:
             text += f'\n[tool.pyzed]\nui = "ui"\nscript = "{sample.script}"\n'
-        pyproject.write_text(text, encoding="utf-8")
+        pyproject.write_text(prebuilt(text), encoding="utf-8")
         for readme in ("README.md",):
             if not (folder / readme).exists():
                 (folder / readme).write_text(f"# {sample.title}\n\n{sample.description}\n", encoding="utf-8")
