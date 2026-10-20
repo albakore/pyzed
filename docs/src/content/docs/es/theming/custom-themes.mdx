@@ -1,0 +1,216 @@
+---
+title: Crear temas
+description: "Crea tu propio tema de Pyzed: cambia el acento, deriva un tema, genera uno a partir de tres colores, escríbelo en JSON, importa temas de Zed y regístralo por nombre."
+sidebar:
+  order: 3
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Hay cuatro formas de hacer un tema, de la más rápida a la más detallada. Todas devuelven un `Theme`, que puedes usar
+directamente (`theme = mi_tema`) o [registrar](#darle-un-nombre) para usarlo por nombre.
+
+| Quieres... | Usa | Esfuerzo |
+| --- | --- | --- |
+| Cambiar solo el color de marca | `tema.with_accent("#e11d48")` | Una línea |
+| Cambiar algunos tokens de un tema existente | `tema.derive(radius=12, success="#16a34a")` | Unas líneas |
+| Un tema nuevo a partir de tus colores | `pz.Theme.generate(nombre, background=, text=, accent=)` | Tres colores |
+| Control total, o un tema en un archivo | `pz.Theme.from_dict({...})`, `Theme.load("tema.json")` | Cualquier token |
+
+Los temas son **inmutables**: cada método devuelve un tema nuevo y deja el original intacto, así que
+`pz.themes.ONE_DARK` siempre es el One Dark de verdad.
+
+## 1. Cambiar el acento
+
+El acento es el color de los botones principales, interruptores, sliders, anillos de foco, enlaces y selecciones.
+`with_accent` los cambia todos a la vez y elige un `on_accent` legible (el texto sobre el acento):
+
+```python
+class MiApp(pz.App):
+    theme = pz.themes.ONE_DARK.with_accent("#e11d48")   # One Dark, en rojo
+```
+
+## 2. Derivar: cambiar algunos tokens
+
+`derive` copia un tema con los [tokens](/pyzed/es/theming/tokens/) que pases. Los diccionarios `syntax` y `ansi` se
+combinan con los del original, así que solo listas lo que cambia:
+
+```python
+oceano = pz.themes.ONE_DARK.derive(
+    name="Océano",
+    background="#0b1622",
+    surface="#102131",
+    radius=10,
+    radius_sm=8,
+    syntax={"keyword": "#ff79c6", "comment": ("#5c6f80", "italic")},
+).with_accent("#4fb3ff")
+```
+
+<Aside type="note">
+`derive` cambia exactamente los tokens que nombras. Si cambias `background`, los colores de hover y los bordes
+pensados para el fondo anterior se quedan como estaban: para un conjunto nuevo de superficies, `generate` (abajo)
+suele ser más fácil.
+</Aside>
+
+## 3. Generar un tema a partir de tres colores
+
+`Theme.generate` construye todos los tokens a partir de un **fondo**, un color de **texto** y un **acento**:
+superficies, bordes, estados hover, texto atenuado y los colores del editor se mezclan entre el fondo y el texto.
+
+```python
+propio = pz.Theme.generate(
+    "Bosque",
+    background="#14201a",   # donde va el contenido (el token editor); la ventana se mezcla un poco más clara
+    text="#e3efe6",         # el color del texto principal
+    accent="#4ade80",       # botones, foco, enlaces
+)
+```
+
+Argumentos opcionales:
+
+| Argumento | Por defecto | Significado |
+| --- | --- | --- |
+| `appearance` | se deduce | `"dark"` o `"light"`; se deduce de lo claro que es `background`. |
+| `error`, `warning`, `success` | de One Dark / One Light | Colores de estado (también colorean los tokens de control de versiones). |
+| `syntax` | los de One | Colores de código que cambian (se combinan). |
+| `radius` | `6.0` | Radio de las esquinas; `radius_sm` pasa a ser `radius - 2`. |
+
+{/* media: theming/generate */}
+
+<Aside type="tip" title="Buenos colores para empezar">
+Para un tema oscuro, empieza con un fondo entre `#101010` y `#2a2a2a` y un texto casi blanco. Para uno claro, un fondo
+casi blanco y un texto entre `#1a1a1a` y `#3a3a3a`. Luego comprueba el contraste (abajo).
+</Aside>
+
+## 4. Cualquier token, desde un diccionario o un archivo
+
+`Theme.from_dict` toma los tokens que listes y completa el resto con **One Dark** (o **One Light** con
+`"appearance": "light"`). Los nombres desconocidos lanzan un `ValueError`, así que las erratas no pasan inadvertidas:
+
+```python
+papel = pz.Theme.from_dict({
+    "name": "Papel",
+    "appearance": "light",
+    "background": "#f5f1e8",
+    "surface": "#fbf8f1",
+    "editor": "#fffdf8",
+    "text": "#2b2620",
+    "text_muted": "#6b6257",
+    "border": "#d9d0c1",
+    "accent": "#b45309",
+    "on_accent": "#ffffff",
+})
+```
+
+### Guardar y cargar un archivo de tema
+
+`save` escribe un tema en JSON y `Theme.load` lo vuelve a leer. El archivo tiene las mismas claves que `from_dict`,
+así que también puedes escribirlo a mano (solo hacen falta los tokens que cambias):
+
+```json title="temas/papel.json"
+{
+  "name": "Papel",
+  "appearance": "light",
+  "background": "#f5f1e8",
+  "text": "#2b2620",
+  "accent": "#b45309",
+  "on_accent": "#ffffff",
+  "radius": 2
+}
+```
+
+```python
+papel = pz.Theme.load("temas/papel.json")
+papel.save("temas/papel-completo.json")   # todos los tokens, listos para editar
+```
+
+<Aside type="tip" title="Incluye los archivos de tema en tu app">
+Guarda los archivos de tema dentro de tu proyecto y lista la carpeta en `include` de `[tool.pyzed.build]` para que
+[`pyzed build`](/pyzed/es/packaging/build/#opciones) la meta en la app empaquetada.
+</Aside>
+
+## Importar un tema de Zed
+
+Como los nombres de los tokens siguen el formato de temas del editor Zed, cualquier tema de la
+[galería de temas de Zed](https://zed.dev/extensions?filter=themes) funciona en Pyzed. Descarga su `.json` y:
+
+```python
+mocha = pz.Theme.from_zed("catppuccin.json", name="Catppuccin Mocha")   # un tema del archivo
+pz.themes.load_zed("catppuccin.json")                                   # todos, registrados
+```
+
+## Darle un nombre
+
+`pz.themes.register` añade un tema a la lista de temas, así que se puede usar por nombre, aparece en
+`pz.themes.names()` (y en cualquier selector de temas hecho con ella) y funciona con `pz.themes.auto`:
+
+<Steps>
+
+1. Crea los temas, normalmente en su propio módulo:
+
+   ```python title="mitema.py"
+   import pyzed as pz
+
+   CLARO = pz.themes.register(pz.Theme.generate("Acme Light", background="#ffffff", text="#1f1b2e", accent="#6d28d9"))
+   OSCURO = pz.themes.register(pz.Theme.generate("Acme Dark", background="#16131f", text="#ece9f5", accent="#a78bfa"))
+   ```
+
+2. Importa ese módulo antes de que arranque la app y usa los nombres:
+
+   ```python title="main.py"
+   import pyzed as pz
+   import mitema  # noqa: F401 - registra los temas Acme
+
+
+   class MiApp(pz.App):
+       theme = pz.themes.auto("Acme Light", "Acme Dark")
+   ```
+
+3. Ejecútala:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash
+   		uv run python main.py
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash title="macOS y Linux"
+   		python3 main.py
+   		```
+
+   		```powershell title="Windows (PowerShell)"
+   		py main.py
+   		```
+   	</TabItem>
+   </Tabs>
+
+</Steps>
+
+Registrar un tema con el nombre de uno existente lo reemplaza.
+
+## Comprobar el contraste
+
+`pyzed.theme` tiene pequeñas funciones de color, útiles al construir temas en código:
+
+| Función | Devuelve |
+| --- | --- |
+| `contrast(a, b)` | La relación de contraste WCAG de dos colores, de 1 a 21. El texto debería tener al menos **4.5** (AA), idealmente **7** (AAA). |
+| `readable_on(fondo)` | Un color de texto claro u oscuro, el que mejor se lea sobre `fondo`. |
+| `luminance(color)` | Lo claro que es un color, de 0 a 1. |
+| `mix(a, b, cantidad)` | Un color entre `a` y `b` (`cantidad` 0 es `a`, 1 es `b`). |
+| `lighten(color, cantidad)`, `darken(color, cantidad)` | El color mezclado con blanco o con negro. |
+| `alpha(color, valor)` | El color con una opacidad (`alpha("#ff0000", 0.5)` es `#ff000080`). |
+
+```python
+from pyzed.theme import contrast
+
+t = pz.Theme.generate("Bosque", background="#14201a", text="#e3efe6", accent="#4ade80")
+print(round(contrast(t.text, t.background), 1))        # 11.2 -> excelente
+print(round(contrast(t.text_muted, t.background), 1))  # 6.0 -> sigue por encima de 4.5
+```
+
+## Ejemplos completos
+
+El [Recetario de temas](/pyzed/es/theming/cookbook/) tiene temas completos para copiar: un tema de marca en claro y
+oscuro, alto contraste, terminal retro, vidrio oscuro y pastel.

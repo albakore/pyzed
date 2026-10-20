@@ -1,0 +1,134 @@
+---
+title: Theme cookbook
+description: "Complete, runnable Pyzed themes to copy: a brand theme in light and dark, high contrast, retro terminal, glassy dark, playful pastel and two themes in one window."
+sidebar:
+  order: 8
+  badge:
+    text: Examples
+    variant: tip
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import brandSrc from '../../../../../examples/theming/brand.py?raw';
+import contrastSrc from '../../../../../examples/theming/high_contrast.py?raw';
+import retroSrc from '../../../../../examples/theming/retro_terminal.py?raw';
+import glassySrc from '../../../../../examples/theming/glassy_dark.py?raw';
+import pastelSrc from '../../../../../examples/theming/pastel.py?raw';
+import mixedSrc from '../../../../../examples/theming/mixed.py?raw';
+import previewSrc from '../../../../../examples/theming/preview.py?raw';
+import brandDark from '../../../assets/theming/brand-dark.png';
+import brandLight from '../../../assets/theming/brand-light.png';
+import contrastShot from '../../../assets/theming/high-contrast-dark.png';
+import retroShot from '../../../assets/theming/retro-terminal-dark.png';
+import glassyShot from '../../../assets/theming/glassy-dark-dark.png';
+import pastelShot from '../../../assets/theming/pastel-light.png';
+import mixedShot from '../../../assets/theming/mixed-dark.png';
+
+Six complete themes, ready to copy into your app. Each one is a file in
+[`examples/theming/`](https://github.com/albakore/pyzed/tree/main/examples/theming) and draws the same screen
+(`preview.py`: buttons in every variant, a small form, badges, a callout and two stats), so you can compare how each
+theme changes it.
+
+## Run them
+
+From a clone of the repository (see [Running the examples](/pyzed/examples/)):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run python examples/theming/brand.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS and Linux"
+		python3 examples/theming/brand.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py examples\theming\brand.py
+		```
+	</TabItem>
+</Tabs>
+
+Replace `brand.py` with `high_contrast.py`, `retro_terminal.py`, `glassy_dark.py`, `pastel.py` or `mixed.py`.
+
+<Aside type="tip" title="Copying one into your project">
+Copy the theme part (everything above `class ...App`) into a module of your project, such as `mytheme.py`, and import
+it before the app starts. The `preview` import is only for these examples.
+</Aside>
+
+## Brand theme, light and dark
+
+A company palette in two versions that follow the system's light or dark mode. `Theme.generate` builds each version
+from three colors; `derive` sets the brand's own green for success.
+
+<Media src={brandDark} light={brandLight} alt="The preview screen with the Acme brand theme" caption="Acme Dark and, with the site in light mode, Acme Light." />
+
+<Code code={brandSrc} lang="py" title="examples/theming/brand.py" />
+
+**What to change:** the three colors of each `generate`, and `radius` for rounder or squarer corners.
+
+## High contrast
+
+Pure black and white with yellow focus, for people who need strong contrast (and a good test of how your app looks
+with large, clear borders). `Theme.from_dict` lists every token that changes; the rest come from One Dark. The
+script prints the contrast ratio of the main colors when it starts.
+
+<Media src={contrastShot} alt="The preview screen in black, white and yellow" caption="High contrast: white borders, yellow accent, square corners." />
+
+<Code code={contrastSrc} lang="py" title="examples/theming/high_contrast.py" />
+
+<Aside type="note" title="Accessibility">
+A theme is one part of accessibility. See [Accessibility](/pyzed/guides/accessibility/) for keyboard navigation,
+screen readers and reduced motion.
+</Aside>
+
+## Retro terminal
+
+Green phosphor on black. One green becomes the text, the accent and the success color; the global style makes every
+text monospaced.
+
+<Media src={retroShot} alt="The preview screen in green on black with a monospaced font" caption="Retro terminal: everything derives from one green." />
+
+<Code code={retroSrc} lang="py" title="examples/theming/retro_terminal.py" />
+
+## Glassy dark
+
+A gradient behind the window and a frosted glass panel on top. The theme is One Dark with a cyan accent; the look
+comes from the global style (`background=` a gradient) and the `glass` effect.
+
+<Media src={glassyShot} alt="A frosted panel over a blue and purple gradient" caption="Glassy dark: a gradient window and a glass panel." />
+
+<Code code={glassySrc} lang="py" title="examples/theming/glassy_dark.py" />
+
+<Aside type="caution" title="Effects and the GPU">
+`glass`, `backdrop_blur` and `glow` are made for the GPU renderer. On machines without a GPU (some virtual machines
+and remote desktops) or with the CPU renderer (`ICED_BACKEND=tiny-skia`), they can look simpler than in this
+capture. Make sure the text stays readable without them.
+</Aside>
+
+## Playful pastel
+
+A cream background, candy colors and very round corners. `derive` sets pastel avatar colors (`players`), and a
+named style (`pz.define_style("bubble", ...)`) draws the card around the screen.
+
+<Media src={pastelShot} alt="The preview screen in pastel colors" caption="Pastel: a light theme with pink accent and round corners." />
+
+<Code code={pastelSrc} lang="py" title="examples/theming/pastel.py" />
+
+## Two themes in one window
+
+A light sidebar in a dark app, with a theme picker that saves the chosen theme to a JSON file and loads it on the
+next start (`Theme.save` and `Theme.load`).
+
+<Media src={mixedShot} alt="A light settings sidebar next to a dark main area" caption="<code>with theme:</code> draws the sidebar with One Light." />
+
+<Code code={mixedSrc} lang="py" title="examples/theming/mixed.py" />
+
+## The shared preview
+
+<Code code={previewSrc} lang="py" title="examples/theming/preview.py" />
+
+Every color in it is a token or a tint, which is why one file looks right in six very different themes. Write your
+own views the same way.

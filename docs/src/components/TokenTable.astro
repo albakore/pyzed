@@ -1,0 +1,99 @@
+---
+// A table of theme tokens with their One Dark and One Light colors as swatches.
+// The colors come from theme-tokens.json (python docs/scripts/gen_theme_tokens.py).
+//
+//   <TokenTable rows={[['accent', 'Primary buttons, links, focus.'], ['text', 'Body text.']]} />
+import tokens from './theme-tokens.json';
+
+interface Props {
+	/** [token, description (HTML allowed)] pairs. */
+	rows: [string, string][];
+}
+const { rows } = Astro.props;
+const es = Astro.currentLocale === 'es';
+const colors = tokens as Record<string, [string, string]>;
+---
+
+<div class="pz-token-table">
+	<table>
+		<thead>
+			<tr>
+				<th>Token</th>
+				<th>{es ? 'Qué colorea' : 'What it colors'}</th>
+				<th class="sw">One Dark</th>
+				<th class="sw">One Light</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				rows.map(([token, text]) => {
+					const pair = colors[token];
+					return (
+						<tr>
+							<td>
+								<code>{token}</code>
+							</td>
+							<td set:html={text} />
+							{pair ? (
+								pair.map((c) => (
+									<td class="sw">
+										<span class="chip" style={`--c: ${c}`} title={c} />
+										<code class="hex">{c}</code>
+									</td>
+								))
+							) : (
+								<>
+									<td class="sw">–</td>
+									<td class="sw">–</td>
+								</>
+							)}
+						</tr>
+					);
+				})
+			}
+		</tbody>
+	</table>
+</div>
+
+<style>
+	.pz-token-table {
+		overflow-x: auto;
+		margin-block: 1.25rem;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--sl-text-sm);
+	}
+	th,
+	td {
+		padding: 0.45rem 0.6rem;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		text-align: start;
+		vertical-align: middle;
+	}
+	th {
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+	.sw {
+		white-space: nowrap;
+	}
+	.chip {
+		display: inline-block;
+		width: 1.1rem;
+		height: 1.1rem;
+		margin-inline-end: 0.4rem;
+		vertical-align: middle;
+		border-radius: 0.3rem;
+		border: 1px solid var(--sl-color-gray-4);
+		/* a checkerboard behind translucent colors */
+		background:
+			linear-gradient(var(--c), var(--c)),
+			repeating-conic-gradient(#bbb 0 25%, #fff 0 50%) 0 0 / 0.5rem 0.5rem;
+	}
+	.hex {
+		font-size: 0.8em;
+		color: var(--sl-color-gray-3);
+	}
+</style>

@@ -1,0 +1,181 @@
+---
+title: Choosing a theme
+description: "Pick one of Pyzed's bundled light and dark themes, follow the system's light or dark mode, switch themes at runtime and read theme colors from Python."
+sidebar:
+  label: Choosing a theme
+  order: 1
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import themesShot from '../../../assets/tutorials/styling.png';
+import bundledShot from '../../../assets/theming/bundled-themes-dark.png';
+
+A **theme** is a named set of colors and sizes. Every `pyzed.ui` component reads its colors from the **current
+theme**, so changing it restyles the whole interface at once, without touching your views.
+
+<Media src={themesShot} alt="The theming playground with the bundled themes" caption="<code>examples/styling.py</code>: the same screen in any bundled theme, following the system, or generated from three colors." />
+
+## Set the theme of your app
+
+Give your app a `theme` with the name of a theme:
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class MyApp(pz.App):
+    theme = "Ayu Dark"
+
+    def view(self):
+        return pz.column([ui.heading("Hello"), ui.button("Save", self.save, variant="solid")], padding=24)
+
+    def save(self):
+        print("saved")
+
+
+pz.run(MyApp)
+```
+
+`theme` accepts:
+
+| Value | Example | Meaning |
+| --- | --- | --- |
+| A theme name | `"Gruvbox Light"` | Any name from `pz.themes.names()`; the lookup ignores case. |
+| A `Theme` object | `pz.themes.ONE_LIGHT`, or one you made | Uses exactly that theme. |
+| `pz.themes.auto(light, dark)` | `pz.themes.auto("One Light", "One Dark")` | Follows the operating system's light or dark mode. |
+| `"auto"` | `"auto"` | Shortcut for `auto("One Light", "One Dark")`. |
+
+## The bundled themes
+
+Pyzed ships three families of themes, each with light and dark variants:
+
+| Family | Dark | Light |
+| --- | --- | --- |
+| **One** (the default) | `One Dark` | `One Light` |
+| **Ayu** | `Ayu Dark`, `Ayu Mirage` | `Ayu Light` |
+| **Gruvbox** | `Gruvbox Dark`, `Gruvbox Dark Hard`, `Gruvbox Dark Soft` | `Gruvbox Light`, `Gruvbox Light Hard`, `Gruvbox Light Soft` |
+
+They are the themes of the [Zed](https://zed.dev) editor (MIT license), whose interface inspired much of Pyzed's
+look. List them from Python:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run python -c "import pyzed as pz; print(pz.themes.names())"
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS and Linux"
+		python3 -c "import pyzed as pz; print(pz.themes.names())"
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py -c "import pyzed as pz; print(pz.themes.names())"
+		```
+	</TabItem>
+</Tabs>
+
+<Media src={bundledShot} alt="A grid of cards, one per bundled theme, each with buttons, a text field, badges and a switch" caption="Every bundled theme drawing the same controls." size="wide" />
+
+<Aside type="tip" title="Try them all">
+Run `examples/styling.py` and pick a theme from the list: the whole window restyles as you choose. See
+[Running the examples](/pyzed/examples/) for the command on your system.
+</Aside>
+
+## Dark, light or follow the system
+
+Most people expect an app to follow the light or dark mode of their computer. `pz.themes.auto` does it: it takes a
+light theme and a dark theme (names or `Theme` objects) and picks one when the system changes.
+
+```python
+class MyApp(pz.App):
+    theme = pz.themes.auto("Gruvbox Light", "Gruvbox Dark")
+```
+
+`self.system_dark` tells you which mode the system is in (`True` in dark mode), and Pyzed updates it, and the theme,
+when the user changes it.
+
+To let the user choose, keep their choice in a variable and set `self.theme` from it:
+
+```python
+class MyApp(pz.App):
+    def __init__(self):
+        self.mode = "System"
+        self.theme = pz.themes.auto()
+
+    def set_mode(self, mode):
+        self.mode = mode
+        self.theme = {"Light": "One Light", "Dark": "One Dark"}.get(mode, pz.themes.auto())
+
+    def view(self):
+        return ui.segmented(["System", "Light", "Dark"], self.mode, self.set_mode)
+```
+
+## Switch themes at runtime
+
+`self.theme` is just an attribute: assign it and the next frame uses the new theme. A theme picker is one line:
+
+```python
+ui.select(pz.themes.names(), self.resolved_theme().name, lambda name: setattr(self, "theme", name))
+```
+
+A light/dark toggle:
+
+```python
+def toggle_theme(self):
+    self.theme = "One Light" if self.resolved_theme().is_dark else "One Dark"
+```
+
+{/* media: theming/switch-runtime */}
+
+## Read the theme's colors
+
+`self.theme` can be a name or an `auto(...)`, so use **`self.resolved_theme()`** to get the concrete `Theme` in use
+right now. Its [tokens](/pyzed/theming/tokens/) are plain attributes holding `#rrggbb` strings:
+
+```python
+def view(self):
+    t = self.resolved_theme()
+    return pz.container(content, bg=t.surface, border_color=t.border, border_width=1, radius=t.radius)
+```
+
+Inside `view()` (and inside components) `pz.theme.current()` returns the same theme. Most of the time you do not
+need either: write the **token name** instead of a color, and Pyzed looks it up for you:
+
+```python
+pz.text("Saved").style(color="success")
+pz.container(content).style(background="surface", border=(1, "border"))
+```
+
+<Aside type="caution" title="Hex colors do not follow the theme">
+`"#1e1e1e"` stays dark when the user switches to a light theme. Prefer token names (`"surface"`, `"text_muted"`,
+`"accent"`...) and keep hex colors for things that really must not change, like a brand logo.
+</Aside>
+
+## A theme for one window or one block
+
+Each [window](/pyzed/guides/windows/) can have its own theme (`Window.theme`); a window without one uses the app's.
+
+A `Theme` is also a context manager: components built inside a `with` block use it. This draws a light preview
+inside a dark app:
+
+```python
+with pz.themes.get("One Light"):
+    preview = ui.card(ui.label("This is how it looks in light mode"))
+```
+
+And every `pyzed.ui` component accepts `theme=` to draw just that component with another theme:
+
+```python
+ui.button("Light button", on_press, theme=pz.themes.ONE_LIGHT)
+```
+
+See [`examples/theming/mixed.py`](https://github.com/albakore/pyzed/blob/main/examples/theming/mixed.py) for a light
+sidebar in a dark window, with a picker that remembers the chosen theme.
+
+## Next
+
+- [Theme tokens](/pyzed/theming/tokens/): what every color of a theme paints.
+- [Creating themes](/pyzed/theming/custom-themes/): your own colors, in code or in a JSON file.

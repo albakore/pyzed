@@ -2,7 +2,7 @@
 title: Styles
 description: "Style any Pyzed widget like CSS: colors, borders, radius, shadows and states, reusable styles and the global style of your Python desktop app."
 sidebar:
-  order: 2
+  order: 4
 ---
 
 Every widget has a `style()` method that styles it like CSS: background, borders, radius,

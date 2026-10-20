@@ -1,0 +1,196 @@
+---
+title: Theme tokens
+description: "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in One Dark and One Light."
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import TokenTable from '../../../components/TokenTable.astro';
+
+A theme is a list of **tokens**: names such as `accent` or `text_muted` with a color (or a size) each. Components
+never hard-code colors; they ask the theme for a token. That is why one change to the theme restyles everything.
+
+You use tokens in two ways:
+
+```python
+pz.text("Total").style(color="text_muted")                 # by name, anywhere a color goes
+pz.container(body, bg=self.resolved_theme().surface)          # as an attribute of the theme
+```
+
+Colors are `#rrggbb` or `#rrggbbaa` (the last two digits are the opacity). Token names work in `style()`, in a
+component's `color=`/`tint=` parameters, in [`pz.Paint`](/pyzed/theming/styles/#gradients-opacity-and-masks) and in
+the designer's color fields.
+
+<Aside type="tip" title="Think in layers">
+From back to front: the **window** (`background`), **surfaces** on it (`surface`, `panel`, `elevated`), **elements**
+on those (`element`, `ghost_*`), and **text and icons** on top. Pick each layer a little lighter (dark themes) or
+darker (light themes) than the one behind it.
+</Aside>
+
+## Surfaces
+
+The large areas of the window, from the back to the front.
+
+<TokenTable
+	rows={[
+		['background', 'The window behind everything, and app chrome such as the title and status bars of generated themes.'],
+		['surface', 'Cards (<code>ui.card</code>), stats and other raised areas.'],
+		['elevated', 'Floating things: menus, popovers, dropdowns, tooltips, dialogs, toasts and the command palette.'],
+		['editor', 'Where people type: text fields, the code editor, the terminal background in generated themes.'],
+		['panel', 'Side panels and docks of a workspace, the help panel.'],
+		['title_bar', 'The custom title bar (<code>ui.title_bar</code>, <code>ui.window_frame</code>).'],
+		['status_bar', 'The status bar at the bottom of a workspace.'],
+		['tab_bar', 'The strip behind the tabs of a tab bar.'],
+		['tab_active', 'The selected tab.'],
+		['tab_inactive', 'The other tabs.'],
+		['terminal', 'The terminal widget background.'],
+	]}
+/>
+
+## Borders
+
+<TokenTable
+	rows={[
+		['border', 'Main borders: inputs, outline buttons, dividers, frames.'],
+		['border_variant', 'Softer borders: cards, filled buttons, list separators.'],
+		['border_focused', 'The ring around the focused input or list.'],
+		['border_selected', 'The border of selected items (a translucent accent).'],
+	]}
+/>
+
+## Elements and ghost elements
+
+**Elements** are filled controls (the default `ui.button`, chips, segmented controls). **Ghost** elements have no
+background until you point at them: list rows, ghost and icon buttons, menu items, tree rows.
+
+<TokenTable
+	rows={[
+		['element', 'Filled controls at rest.'],
+		['element_hover', 'Filled controls under the pointer.'],
+		['element_active', 'Filled controls while pressed.'],
+		['element_selected', 'A selected filled control (a segmented option, a chosen icon).'],
+		['ghost_hover', 'A row or ghost button under the pointer.'],
+		['ghost_active', 'A row or ghost button while pressed.'],
+		['ghost_selected', 'The selected row of a list, tree, menu or tab.'],
+	]}
+/>
+
+## Text, icons and accent
+
+<TokenTable
+	rows={[
+		['text', 'Body text and labels.'],
+		['text_muted', 'Secondary text: descriptions, captions, inactive tabs.'],
+		['text_placeholder', 'Placeholder text in empty inputs.'],
+		['text_disabled', 'Disabled controls.'],
+		['text_accent', 'Links and highlighted text.'],
+		['icon', 'Icons next to text.'],
+		['icon_muted', 'Secondary icons: ghost icon buttons, list icons.'],
+		['accent', 'The brand color: primary (<code>solid</code>) buttons, switches, sliders, progress bars, checkboxes.'],
+		['on_accent', 'Text and icons drawn on top of the accent (inside a solid button or a solid badge).'],
+	]}
+/>
+
+<Aside type="caution" title="Keep on_accent readable">
+If you change `accent` by hand, also change `on_accent`, or use `theme.with_accent(color)`, which picks a readable
+`on_accent` (and updates focus rings, selection and links) for you.
+</Aside>
+
+## Status
+
+Used by `tint=` (`ui.badge`, `ui.callout`, `ui.button`, `ui.progress`...), by toasts, validation messages and charts.
+
+<TokenTable
+	rows={[
+		['error', 'Errors, destructive buttons, invalid fields.'],
+		['warning', 'Warnings.'],
+		['success', 'Success messages, positive changes in <code>ui.stat</code>.'],
+		['info', 'Information callouts (the accent by default).'],
+		['hint', 'Hints, the quietest callout.'],
+	]}
+/>
+
+## Version control
+
+For file trees, tabs and diffs (`ui.tree`, `ui.diff_stat`, the code editor's gutter).
+
+<TokenTable
+	rows={[
+		['created', 'Added files and lines.'],
+		['modified', 'Changed files and lines.'],
+		['deleted', 'Removed files and lines.'],
+		['conflict', 'Files with conflicts.'],
+		['ignored', 'Ignored files.'],
+	]}
+/>
+
+## Code editor
+
+For [`pz.code_editor`](/pyzed/library/editor/), `ui.terminal` and code blocks.
+
+<TokenTable
+	rows={[
+		['editor_text', 'Code text without highlighting.'],
+		['line_number', 'Line numbers.'],
+		['line_number_active', 'The number of the line with the cursor.'],
+		['active_line', 'The background of the line with the cursor.'],
+		['selection', 'Selected text (also in inputs).'],
+		['scrollbar', 'Scrollbars.'],
+		['scrollbar_hover', 'A scrollbar under the pointer.'],
+		['search_match', 'Search results in the editor.'],
+		['shadow', 'Shadows of menus, popovers and dialogs.'],
+	]}
+/>
+
+## Syntax, terminal and people
+
+These three are collections instead of single colors.
+
+- **`syntax`**: a dictionary from a highlighting name to a color, or to `(color, "italic")` / `(color, "bold")`.
+  The main names are `primary`, `comment`, `comment.doc`, `keyword`, `function`, `type`, `string`,
+  `string.escape`, `number`, `boolean`, `constant`, `property`, `attribute`, `operator`, `variable`,
+  `variable.special`, `punctuation`, `punctuation.bracket`, `tag`, `title` and `link_uri`. A missing dotted name
+  falls back to its first part (`string.escape` → `string`).
+- **`ansi`**: the terminal's colors: `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`,
+  `bright_black` and `dim`.
+- **`players`**: a tuple of colors for avatars and collaborators; `ui.avatar(index=n)` and `ui.facepile` take
+  the n-th one.
+
+<TokenTable
+	rows={[
+		['syntax.keyword', '<code>def</code>, <code>if</code>, <code>return</code>...'],
+		['syntax.function', 'Function names.'],
+		['syntax.string', 'Strings.'],
+		['syntax.comment', 'Comments.'],
+		['syntax.type', 'Classes and types.'],
+		['syntax.number', 'Numbers.'],
+		['ansi.red', 'Red text in the terminal (and so on for each ANSI color).'],
+		['players.0', 'The first avatar color (the accent by default).'],
+	]}
+/>
+
+## Sizes and metadata
+
+| Token | Default | What it sets |
+| --- | --- | --- |
+| `radius` | `6.0` | Corner radius of cards, dialogs and large surfaces (cards use `radius + 2`). |
+| `radius_sm` | `4.0` | Corner radius of buttons, inputs, chips and list rows. |
+| `ui_font_size` | `14.0` | The base size of interface text; a form's **Font size** and the global style's `size` set it. |
+| `buffer_font_size` | `14.0` | Text size in the code editor. |
+| `name` | | The name used by `pz.themes.get` and `theme = "..."`. |
+| `appearance` | | `"dark"` or `"light"`; `theme.is_dark` reads it. |
+
+## From Python
+
+```python
+t = pz.themes.get("One Dark")
+t.accent                 # '#74ade8'
+t.color("text_muted")    # the same as t.text_muted; hex colors pass through unchanged
+t.tokens()               # every token as a dictionary
+t.to_dict()              # JSON-friendly, the format Theme.save writes
+```
+
+The names follow the theme format of the Zed editor, so themes made for it can be imported (see
+[Creating themes](/pyzed/theming/custom-themes/#import-a-zed-theme)). The [Theme API](/pyzed/reference/theme/) lists
+every method.
