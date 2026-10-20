@@ -9,6 +9,7 @@ import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components
 import pypiMain from '../../../../../examples/integrations/httpx_pypi/main.py?raw';
 import pypi from '../../../../../examples/integrations/httpx_pypi/pypi.py?raw';
 import download from '../../../../../examples/integrations/httpx_download/main.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 [httpx](https://www.python-httpx.org/) is the HTTP client a Pyzed window uses to talk to any API:
 a public one, your own [FastAPI](/pyzed/integrations/fastapi/) or [Django](/pyzed/integrations/django/)
@@ -82,11 +83,27 @@ inside a coroutine can be stored on `self` and used by later ones (the FastAPI d
 
 ![A PyPI explorer listing packages with versions, and the details of FastAPI](../../../assets/integrations/httpx.png)
 
-```bash
-cd examples/integrations/httpx_pypi
-uv run main.py
-uv run main.py rich textual polars      # other packages
-```
+<Commands
+	uv={`
+		cd examples/integrations/httpx_pypi
+		uv run main.py
+		uv run main.py rich textual polars      # other packages
+	`}
+	pip={`
+		cd examples/integrations/httpx_pypi
+		{venv}
+		{activate}
+		pip install pyzed-ui httpx pydantic
+		python main.py
+		python main.py rich textual polars      # other packages
+	`}
+	python={`
+		cd examples/integrations/httpx_pypi
+		{py} -m pip install pyzed-ui httpx pydantic
+		{py} main.py
+		{py} main.py rich textual polars      # other packages
+	`}
+/>
 
 <Steps>
 
@@ -135,10 +152,24 @@ uv run main.py rich textual polars      # other packages
 
 ![A download manager with progress bars](../../../assets/integrations/httpx-download.png)
 
-```bash
-cd examples/integrations/httpx_download
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/httpx_download
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/httpx_download
+		{venv}
+		{activate}
+		pip install pyzed-ui httpx
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/httpx_download
+		{py} -m pip install pyzed-ui httpx
+		{py} main.py
+	`}
+/>
 
 httpx's [streaming responses](https://www.python-httpx.org/quickstart/#streaming-responses) read
 the body in chunks instead of loading it into memory, and its

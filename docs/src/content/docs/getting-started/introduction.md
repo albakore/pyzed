@@ -10,6 +10,15 @@ terminal, menus, notifications and a workspace with dockable panels.
 
 ![A code editor built with Pyzed (One Light theme)](../../../../screenshots/zed-one-light.png)
 
+:::note[Where Pyzed is today]
+Pyzed 1.x is stable for desktop apps on Windows, macOS and Linux: its public API follows semantic versioning.
+`pyzed.agents`, `pyzed.mcp` and animations are still provisional, and mobile and web are planned but not available
+yet. See [Stability and known limitations](/pyzed/guides/stability/).
+:::
+
+The interface style takes after the Zed editor, and Pyzed Design, the visual designer, takes after the form and
+scene editors of Godot, Unreal Engine, Visual Basic and Qt Designer.
+
 ## How it works
 
 Your Python code describes **what** is shown. Rust takes care of **how** it is drawn.

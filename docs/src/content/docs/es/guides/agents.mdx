@@ -5,14 +5,18 @@ sidebar:
   order: 17
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 `pyzed.agents` es el motor del [panel del agente](/pyzed/es/editor/ai-agents/) del diseñador, y funciona en
 cualquier app de Pyzed: una sola API para varios proveedores de modelos, herramientas escritas como funciones de
 Python normales, eventos en streaming para la UI, conversaciones guardadas y claves en el llavero del sistema
 operativo.
 
-```bash
-pip install "pyzed-ui[agents]"     # anthropic (Claude) y keyring
-```
+<Commands
+	uv={`uv add "pyzed-ui[agents]"     # anthropic (Claude) y keyring`}
+	pip={`pip install "pyzed-ui[agents]"     # anthropic (Claude) y keyring`}
+	python={`{py} -m pip install "pyzed-ui[agents]"     # anthropic (Claude) y keyring`}
+/>
 
 ## Un primer agente
 

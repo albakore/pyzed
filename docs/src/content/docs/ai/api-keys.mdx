@@ -5,6 +5,8 @@ sidebar:
   order: 2.5
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 The agent in [Pyzed Design](/pyzed/editor/ai-agents/) and the [`pyzed.agents`](/pyzed/guides/agents/) library
 need a credential for the model provider you pick: an API key, a sign-in token or, for Claude, workload identity
 federation. This page explains where Pyzed looks for them, how to give it one without writing it in a file, and how
@@ -98,9 +100,11 @@ as a fallback. To fix it:
 
 - **Running Pyzed from pip or uv:** install the extra that brings `keyring`:
 
-  ```bash
-  pip install "pyzed-ui[agents]"     # or: uv add "pyzed-ui[agents]"
-  ```
+  <Commands
+  	uv={`uv add "pyzed-ui[agents]"`}
+  	pip={`pip install "pyzed-ui[agents]"`}
+  	python={`{py} -m pip install "pyzed-ui[agents]"`}
+  />
 
 - **Linux:** `keyring` needs a Secret Service running, which GNOME and KDE desktops start for you. On a minimal
   window manager or a headless machine, install and unlock `gnome-keyring` (or KWallet), or use an environment

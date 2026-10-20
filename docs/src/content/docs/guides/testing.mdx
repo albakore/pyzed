@@ -5,6 +5,8 @@ sidebar:
   order: 10
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 `app.screenshot(path)` renders the app's current state **off-screen** and saves a PNG.
 It needs no window, display or GPU (it uses the software renderer), so it works in CI.
 
@@ -20,10 +22,20 @@ app.screenshot("docs/list.png", size=(480, 320), scale=2)
 
 Every image in this documentation is generated this way:
 
-```bash
-python examples/screenshots.py              # large screenshots (docs/screenshots)
-python docs/scripts/component_shots.py      # component illustrations
-```
+<Commands
+	uv={`
+		uv run python examples/screenshots.py              # large screenshots (docs/screenshots)
+		uv run python docs/scripts/component_shots.py      # component illustrations
+	`}
+	pip={`
+		python examples/screenshots.py              # large screenshots (docs/screenshots)
+		python docs/scripts/component_shots.py      # component illustrations
+	`}
+	python={`
+		{py} examples/screenshots.py              # large screenshots (docs/screenshots)
+		{py} docs/scripts/component_shots.py      # component illustrations
+	`}
+/>
 
 ## Testing the logic
 

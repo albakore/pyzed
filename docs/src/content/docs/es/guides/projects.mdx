@@ -5,6 +5,8 @@ sidebar:
   order: 14
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 Un proyecto de Pyzed es un proyecto de [uv](https://docs.astral.sh/uv/) normal. La interfaz vive en su propia
 carpeta (`ui/`) y el resto del código queda donde lo pone uv, así el frontend y el backend están separados pero
 pueden importarse entre sí. Las dependencias las gestiona uv, [ruff](https://docs.astral.sh/ruff/) revisa y da
@@ -12,12 +14,29 @@ formato, [ty](https://docs.astral.sh/ty/) comprueba los tipos y el proyecto nace
 
 ## Crear un proyecto
 
-```bash
-pyzed new tienda          # uv init + pyzed-ui + ruff + ty + git
-cd tienda
-uv run pyzed design       # edita ui/main.pzform
-uv run pyzed run          # ejecútalo
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new tienda
+		cd tienda
+		uv run pyzed design     # edita ui/main.pzform
+		uv run pyzed run        # ejecútalo
+	`}
+	pip={`
+		pip install pyzed-ui uv
+		pyzed new tienda
+		cd tienda
+		{activate}  # el .venv propio del proyecto
+		pyzed design     # edita ui/main.pzform
+		pyzed run        # ejecútalo
+	`}
+	python={`
+		{py} -m pip install pyzed-ui uv
+		{py} -m pyzed new tienda
+		cd tienda
+		{vpy} -m pyzed design     # edita ui/main.pzform
+		{vpy} -m pyzed run        # ejecútalo
+	`}
+/>
 
 ```
 tienda/
@@ -149,10 +168,22 @@ propio `.venv`.
 
 Para compilarlo tú mismo en la plataforma actual:
 
-```bash
-python -m pip install pyzed-ui pyinstaller uv
-python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<so>-<arq>.zip
-```
+<Commands
+	uv={`
+		uv sync
+		uv run --with pyinstaller --with uv python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<so>-<arq>.zip
+	`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui pyinstaller uv
+		python scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<so>-<arq>.zip
+	`}
+	python={`
+		{py} -m pip install pyzed-ui pyinstaller uv
+		{py} scripts/build_designer.py      # dist/Pyzed Design/ y dist/pyzed-design-<so>-<arq>.zip
+	`}
+/>
 
 ### Actualizaciones
 

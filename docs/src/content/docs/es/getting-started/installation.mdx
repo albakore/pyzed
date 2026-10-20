@@ -4,26 +4,37 @@ description: "Instala Pyzed con pip o uv en Windows, macOS y Linux. Los wheels p
 ---
 
 import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components';
+import Commands from '../../../../components/Commands.astro';
 
 Pyzed necesita **Python 3.10 o superior**.
 
 ## Desde PyPI
 
-<Tabs syncKey="pkg">
-	<TabItem label="uv">
-		```bash
+<Commands
+	uv={`
 		uv add pyzed-ui          # en un proyecto de uv
 		uv run python main.py
-		```
-
-		Para empezar una app nueva como proyecto de uv, ve a [Crear un proyecto](/pyzed/es/getting-started/new-project/).
-	</TabItem>
-	<TabItem label="pip">
-		```bash
+	`}
+	pip={`
+		{venv}       # una vez por proyecto
+		{activate}
 		pip install pyzed-ui
-		```
-	</TabItem>
-</Tabs>
+		python main.py
+	`}
+	python={`
+		{py} -m pip install pyzed-ui
+		{py} main.py
+	`}
+/>
+
+- **uv** gestiona el proyecto por ti: [Crear un proyecto](/pyzed/es/getting-started/new-project/) empieza una app
+  nueva así, y es lo que usa el resto de esta documentación. Instálalo desde
+  [docs.astral.sh/uv](https://docs.astral.sh/uv/).
+- **pip** instala en un *entorno virtual* (`.venv`), una carpeta que separa los paquetes de este proyecto del resto
+  de tu equipo. Actívalo en cada terminal nueva antes de ejecutar tu app.
+- **python** instala en el Python de tu equipo, sin nada más que aprender. En Windows, `py` es el lanzador de
+  Python que trae el instalador de [python.org](https://www.python.org/downloads/); en macOS y Linux el comando
+  suele ser `python3`.
 
 El paquete se llama `pyzed-ui` en PyPI (el nombre `pyzed` ya estaba ocupado), pero se importa como `pyzed`.
 Los wheels precompilados para Linux, macOS y Windows incluyen el motor de Rust, así que no
@@ -36,10 +47,11 @@ Si `pip install pyzed-ui` no encuentra un wheel para tu plataforma, instala desd
 
 ## Desde el código fuente
 
-```bash
-uv add git+https://github.com/albakore/pyzed        # uv
-pip install git+https://github.com/albakore/pyzed   # pip
-```
+<Commands
+	uv={`uv add git+https://github.com/albakore/pyzed`}
+	pip={`pip install git+https://github.com/albakore/pyzed     # con .venv activado`}
+	python={`{py} -m pip install git+https://github.com/albakore/pyzed`}
+/>
 
 Esto compila la extensión de Rust, así que necesitas [Rust 1.88 o superior](https://rustup.rs) (`rustup update` actualiza uno más antiguo) y las
 dependencias de sistema de tu plataforma:
@@ -69,33 +81,32 @@ dependencias de sistema de tu plataforma:
 Para trabajar en Pyzed, clona el repositorio. Necesitas [Rust 1.88 o superior](https://rustup.rs) (`rustup update` actualiza uno más antiguo) y las
 dependencias del sistema de arriba.
 
-<Tabs syncKey="pkg">
-	<TabItem label="uv">
-		```bash
-		git clone https://github.com/albakore/pyzed && cd pyzed
+<Commands
+	uv={`
+		git clone https://github.com/albakore/pyzed
+		cd pyzed
 		uv sync                          # crea .venv, compila el núcleo de Rust (release) e instala pyzed editable
 		uv run pytest tests
 		uv run python examples/gallery.py
-		```
-
-		- `uv sync` también instala el grupo `test` (maturin y pytest). La primera compilación tarda unos minutos.
-		- Los cambios en Python (`python/pyzed/`) se usan directamente.
-		- Después de cambiar código de Rust (`src/`), el siguiente `uv run` o `uv sync` recompila el núcleo solo.
-		- `uv sync --extra designer` añade ty y ruff para el editor de código del diseñador.
-	</TabItem>
-	<TabItem label="pip">
-		```bash
-		git clone https://github.com/albakore/pyzed && cd pyzed
-		python -m venv .venv && source .venv/bin/activate
+	`}
+	pip={`
+		git clone https://github.com/albakore/pyzed
+		cd pyzed
+		{venv}
+		{activate}
 		pip install maturin pytest
 		maturin develop --release        # repítelo después de cambiar código de Rust
 		pytest tests
 		python examples/gallery.py
-		```
+	`}
+/>
 
-		Usa `--release`: la build de depuración es mucho más lenta al usar la ventana.
-	</TabItem>
-</Tabs>
+- `uv sync` también instala el grupo `test` (maturin y pytest). La primera compilación tarda unos minutos.
+- Los cambios en Python (`python/pyzed/`) se usan directamente.
+- Con uv, el siguiente `uv run` o `uv sync` después de cambiar código de Rust (`src/`) recompila el núcleo solo; con
+  pip, vuelve a ejecutar `maturin develop --release`. Usa `--release`: la build de depuración es mucho más lenta al
+  usar la ventana.
+- `uv sync --extra designer` añade ty y ruff para el editor de código del diseñador.
 
 ## Linux y WSL
 
@@ -119,7 +130,19 @@ Las variables que definas tú (`EGL_LOG_LEVEL`, `MESA_LOG`, `WAYLAND_DISPLAY`, `
 
 ## Comprobar la instalación
 
-```bash
-python -c "import pyzed; print(pyzed.__version__)"
-pyzed icons folder
-```
+<Commands
+	uv={`
+		uv run python -c "import pyzed; print(pyzed.__version__)"
+		uv run pyzed icons folder
+	`}
+	pip={`
+		python -c "import pyzed; print(pyzed.__version__)"
+		pyzed icons folder
+	`}
+	python={`
+		{py} -c "import pyzed; print(pyzed.__version__)"
+		{py} -m pyzed icons folder
+	`}
+/>
+
+La primera línea muestra la versión; la segunda, los nombres de iconos que contienen "folder".

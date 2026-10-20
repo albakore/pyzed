@@ -80,8 +80,14 @@ está:
   "próximamente".
 - Muestra capturas y grabaciones cortas con `<Media>` (`src/components/Media.astro`): una imagen de `src/assets`
   (opcionalmente con una versión `light`) o un bucle mp4/webm con `poster`, más un pie de foto.
-- Los comandos van en `<Tabs syncKey="pkg">` con una pestaña `uv` y otra `pip`, con bloques de código con título
-  para Windows y para macOS/Linux cuando cambian.
+- Escribe los comandos de terminal con `` <Commands uv={`...`} pip={`...`} python={`...`} /> ``
+  (`src/components/Commands.astro`, en una página `.mdx`). Dibuja las pestañas `uv`, `pip` y `python`
+  (sincronizadas en todo el sitio) y separa cada una en bloques para macOS/Linux y para Windows PowerShell cuando
+  cambian. Escribe `{py}`, `{venv}`, `{activate}`, `{vpy}` y `{env NOMBRE=valor}` donde los sistemas difieren; el
+  componente pone `python3`/`py`, `source .venv/bin/activate`/`.venv\Scripts\Activate.ps1`, etc. Los comandos
+  que solo existen en un sistema van en `<Tabs syncKey="os">`.
+- Los colores de los tokens de tema salen de `src/components/theme-tokens.json` (lo escribe
+  `docs/scripts/gen_theme_tokens.py`), y las capturas de temas de `docs/scripts/theming_shots.py`.
 - **Mover una página:** muévela con `git mv` en los dos idiomas, añade la ruta antigua a `MOVED` en
   `astro.config.mjs` para que la URL antigua redirija, y actualiza los enlaces (busca la ruta antigua con
   `git grep`, también en `docs/scripts` y `python/`).

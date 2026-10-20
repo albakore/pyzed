@@ -3,12 +3,24 @@ title: Ejemplos
 description: "Apps de ejemplo de Pyzed listas para ejecutar: listas de tareas, un editor de código, el Juego de la vida, reloj, cronómetro, varias ventanas y datos en vivo."
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 Todos los ejemplos están en [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
 Ejecútalos desde la raíz del repositorio:
 
-```bash
-python examples/<nombre>.py
-```
+<Commands
+	uv={`uv run python examples/<nombre>.py`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui
+		python examples/<nombre>.py
+	`}
+	python={`
+		{py} -m pip install pyzed-ui
+		{py} examples/<nombre>.py
+	`}
+/>
 
 | Ejemplo | Qué muestra | Tutorial |
 | --- | --- | --- |
@@ -58,9 +70,11 @@ en su carpeta y ejecuta `uv run main.py`.
 
 ## Editor de código
 
-```bash
-python examples/zed_editor.py .
-```
+<Commands
+	uv={`uv run python examples/zed_editor.py .`}
+	pip={`python examples/zed_editor.py .`}
+	python={`{py} examples/zed_editor.py .`}
+/>
 
 Atajos: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> paleta, <kbd>Ctrl</kbd>+<kbd>P</kbd>
 buscador de archivos, <kbd>Ctrl</kbd>+<kbd>S</kbd> guardar, <kbd>Ctrl</kbd>+<kbd>B</kbd>,
@@ -74,9 +88,11 @@ buscador de archivos, <kbd>Ctrl</kbd>+<kbd>S</kbd> guardar, <kbd>Ctrl</kbd>+<kbd
 
 ## Galería de componentes
 
-```bash
-python examples/gallery.py
-```
+<Commands
+	uv={`uv run python examples/gallery.py`}
+	pip={`python examples/gallery.py`}
+	python={`{py} examples/gallery.py`}
+/>
 
 ![Galería en One Light](../../../../screenshots/components-light.png)
 

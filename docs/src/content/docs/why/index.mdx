@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Commands from '../../../components/Commands.astro';
 
 Python is the first language of a whole generation of developers, but its desktop GUI story still feels
 like 2005: grey widgets, layouts written by hand, restart-the-app-to-see-a-change, and a packaging step
@@ -47,13 +48,32 @@ and AI assistants, and expect their tools to look and feel like that.
 
 ## The whole workflow, in a few commands
 
-```bash
-pyzed new shop          # a uv project with ruff, ty and git ready
-cd shop
-uv run pyzed design     # draw the UI in Pyzed Design
-uv run pyzed run        # run it
-uv run pyzed build      # one standalone app for Windows, macOS or Linux
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new shop
+		cd shop
+		uv run pyzed design     # draw the UI in Pyzed Design
+		uv run pyzed run        # run it
+		uv run pyzed build      # one standalone app for Windows, macOS or Linux
+	`}
+	pip={`
+		pip install pyzed-ui uv
+		pyzed new shop
+		cd shop
+		{activate}  # the project's own .venv
+		pyzed design     # draw the UI in Pyzed Design
+		pyzed run        # run it
+		pyzed build      # one standalone app for Windows, macOS or Linux
+	`}
+	python={`
+		{py} -m pip install pyzed-ui uv
+		{py} -m pyzed new shop
+		cd shop
+		{vpy} -m pyzed design     # draw the UI in Pyzed Design
+		{vpy} -m pyzed run        # run it
+		{vpy} -m pyzed build      # one standalone app for Windows, macOS or Linux
+	`}
+/>
 
 Projects are ordinary [uv](https://docs.astral.sh/uv/) projects, so dependencies, lock files, linting
 ([ruff](https://docs.astral.sh/ruff/)) and type checking ([ty](https://docs.astral.sh/ty/)) work the way the

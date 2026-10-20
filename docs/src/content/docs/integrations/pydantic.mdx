@@ -8,6 +8,7 @@ sidebar:
 import { Code, Steps, Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import main from '../../../../../examples/integrations/pydantic_signup/main.py?raw';
 import models from '../../../../../examples/integrations/pydantic_signup/models.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 [Pydantic](https://docs.pydantic.dev/) checks data against type hints. In a desktop app it does
 two jobs: it validates what the user typed in a form, and it parses JSON from files and APIs.
@@ -15,10 +16,24 @@ It runs in the same process as the window, with no thread or loop needed, becaus
 
 ![A sign-up form with Pydantic errors and the saved accounts as JSON](../../../assets/integrations/pydantic.png)
 
-```bash
-cd examples/integrations/pydantic_signup
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/pydantic_signup
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/pydantic_signup
+		{venv}
+		{activate}
+		pip install pyzed-ui "pydantic[email]"
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/pydantic_signup
+		{py} -m pip install pyzed-ui "pydantic[email]"
+		{py} main.py
+	`}
+/>
 
 <Steps>
 

@@ -5,6 +5,8 @@ sidebar:
   order: 5
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 Pyzed is a good fit for AI apps: answers stream in token by token while the window stays responsive, Markdown and
 code render out of the box, and the components (inputs, cards, spinners, badges) already look like a modern AI
 tool. This page builds a complete **streaming chat** that talks to any OpenAI-compatible server (OpenAI, Ollama,
@@ -19,12 +21,25 @@ network in a demo mode.
 
 ## Run it
 
-```bash
-python examples/ai_chat.py                         # demo: a canned answer, no network, no key
-pip install httpx                                  # for a real model
-CHAT_BASE_URL=http://localhost:11434/v1 CHAT_MODEL=llama3.2 python examples/ai_chat.py     # Ollama
-CHAT_BASE_URL=https://api.openai.com/v1 CHAT_API_KEY=sk-... CHAT_MODEL=<model> python examples/ai_chat.py
-```
+<Commands
+	uv={`
+		uv run python examples/ai_chat.py                  # demo: a canned answer, no network, no key
+		{env CHAT_BASE_URL=http://localhost:11434/v1} {env CHAT_MODEL=llama3.2} uv run --with httpx python examples/ai_chat.py     # Ollama
+		{env CHAT_BASE_URL=https://api.openai.com/v1} {env CHAT_API_KEY=sk-...} {env CHAT_MODEL=<model>} uv run --with httpx python examples/ai_chat.py
+	`}
+	pip={`
+		python examples/ai_chat.py                         # demo: a canned answer, no network, no key
+		pip install httpx                                  # for a real model
+		{env CHAT_BASE_URL=http://localhost:11434/v1} {env CHAT_MODEL=llama3.2} python examples/ai_chat.py     # Ollama
+		{env CHAT_BASE_URL=https://api.openai.com/v1} {env CHAT_API_KEY=sk-...} {env CHAT_MODEL=<model>} python examples/ai_chat.py
+	`}
+	python={`
+		{py} examples/ai_chat.py                          # demo: a canned answer, no network, no key
+		{py} -m pip install httpx                          # for a real model
+		{env CHAT_BASE_URL=http://localhost:11434/v1} {env CHAT_MODEL=llama3.2} {py} examples/ai_chat.py     # Ollama
+		{env CHAT_BASE_URL=https://api.openai.com/v1} {env CHAT_API_KEY=sk-...} {env CHAT_MODEL=<model>} {py} examples/ai_chat.py
+	`}
+/>
 
 The code is [`examples/ai_chat.py`](https://github.com/albakore/pyzed/blob/main/examples/ai_chat.py), about 220
 lines with the UI. The important parts follow.

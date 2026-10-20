@@ -5,6 +5,8 @@ sidebar:
   order: 10
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 `app.screenshot(ruta)` dibuja el estado actual de la app **fuera de pantalla** y guarda un PNG.
 No necesita ventana, display ni GPU (usa el renderizador por software), así que funciona en CI.
 
@@ -20,10 +22,20 @@ app.screenshot("docs/lista.png", size=(480, 320), scale=2)
 
 Todas las imágenes de esta documentación se generan así:
 
-```bash
-python examples/screenshots.py              # capturas grandes (docs/screenshots)
-python docs/scripts/component_shots.py      # ilustraciones de componentes
-```
+<Commands
+	uv={`
+		uv run python examples/screenshots.py              # capturas grandes (docs/screenshots)
+		uv run python docs/scripts/component_shots.py      # ilustraciones de componentes
+	`}
+	pip={`
+		python examples/screenshots.py              # capturas grandes (docs/screenshots)
+		python docs/scripts/component_shots.py      # ilustraciones de componentes
+	`}
+	python={`
+		{py} examples/screenshots.py              # capturas grandes (docs/screenshots)
+		{py} docs/scripts/component_shots.py      # ilustraciones de componentes
+	`}
+/>
 
 ## Probar la lógica
 

@@ -12,6 +12,7 @@ import qsSync from '../../../../../examples/integrations/sqlalchemy_quickstart/s
 import qsAsync from '../../../../../examples/integrations/sqlalchemy_quickstart/async_backend.py?raw';
 import main from '../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
 import db from '../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 SQLAlchemy runs in the same process as the window (architecture 1 in
 [Architectures](/pyzed/integrations/architectures/)). There are two demos:
@@ -25,11 +26,27 @@ SQLAlchemy runs in the same process as the window (architecture 1 in
 
 ![Users and their email addresses from SQLAlchemy's Quick Start](../../../assets/integrations/sqlalchemy-quickstart.png)
 
-```bash
-cd examples/integrations/sqlalchemy_quickstart
-uv run main.py            # Session in worker threads
-uv run main.py --async    # AsyncSession with aiosqlite on Pyzed's loop
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlalchemy_quickstart
+		uv run main.py            # Session in worker threads
+		uv run main.py --async    # AsyncSession with aiosqlite on Pyzed's loop
+	`}
+	pip={`
+		cd examples/integrations/sqlalchemy_quickstart
+		{venv}
+		{activate}
+		pip install pyzed-ui "sqlalchemy[asyncio]" aiosqlite
+		python main.py            # Session in worker threads
+		python main.py --async    # AsyncSession with aiosqlite on Pyzed's loop
+	`}
+	python={`
+		cd examples/integrations/sqlalchemy_quickstart
+		{py} -m pip install pyzed-ui "sqlalchemy[asyncio]" aiosqlite
+		{py} main.py            # Session in worker threads
+		{py} main.py --async    # AsyncSession with aiosqlite on Pyzed's loop
+	`}
+/>
 
 <Steps>
 
@@ -145,10 +162,24 @@ worker thread, so the window never waits for the database.
 
 ![A contacts table with 20,000 rows, statistics and an edit panel](../../../assets/integrations/sqlalchemy.png)
 
-```bash
-cd examples/integrations/sqlalchemy_contacts
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlalchemy_contacts
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlalchemy_contacts
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlalchemy
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlalchemy_contacts
+		{py} -m pip install pyzed-ui sqlalchemy
+		{py} main.py
+	`}
+/>
 
 The demo keeps the database code in `db.py`, with no Pyzed in it, and the window in `main.py`.
 That split is worth copying: the same `db.py` could serve a FastAPI app or a CLI.

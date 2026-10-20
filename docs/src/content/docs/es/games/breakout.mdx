@@ -8,6 +8,7 @@ sidebar:
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../examples/games/breakout.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 Breakout necesita movimiento fluido, así que en lugar de un temporizador usa `pz.frames`: una
 función que se ejecuta una vez por fotograma con el tiempo transcurrido desde el anterior.
@@ -143,6 +144,8 @@ hace falta ninguna ventana.
 
 <Code code={source} lang="py" title="examples/games/breakout.py" />
 
-```bash
-python examples/games/breakout.py
-```
+<Commands
+	uv={`uv run python examples/games/breakout.py`}
+	pip={`python examples/games/breakout.py`}
+	python={`{py} examples/games/breakout.py`}
+/>

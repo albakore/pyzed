@@ -5,6 +5,8 @@ sidebar:
   order: 14
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 A Pyzed project is a normal [uv](https://docs.astral.sh/uv/) project. The interface lives in its own folder
 (`ui/`) and the rest of the code stays where uv puts it, so the frontend and the backend are separated but can
 still import each other. Dependencies are managed by uv, [ruff](https://docs.astral.sh/ruff/) lints and formats,
@@ -12,12 +14,29 @@ still import each other. Dependencies are managed by uv, [ruff](https://docs.ast
 
 ## Create a project
 
-```bash
-pyzed new shop          # uv init + pyzed-ui + ruff + ty + git
-cd shop
-uv run pyzed design     # edit ui/main.pzform
-uv run pyzed run        # run it
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new shop
+		cd shop
+		uv run pyzed design     # edit ui/main.pzform
+		uv run pyzed run        # run it
+	`}
+	pip={`
+		pip install pyzed-ui uv
+		pyzed new shop
+		cd shop
+		{activate}  # the project's own .venv
+		pyzed design     # edit ui/main.pzform
+		pyzed run        # run it
+	`}
+	python={`
+		{py} -m pip install pyzed-ui uv
+		{py} -m pyzed new shop
+		cd shop
+		{vpy} -m pyzed design     # edit ui/main.pzform
+		{vpy} -m pyzed run        # run it
+	`}
+/>
 
 ```
 shop/
@@ -147,10 +166,22 @@ nothing else needs to be installed. Projects created from it are normal uv proje
 
 To build it yourself on the current platform:
 
-```bash
-python -m pip install pyzed-ui pyinstaller uv
-python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
-```
+<Commands
+	uv={`
+		uv sync
+		uv run --with pyinstaller --with uv python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
+	`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui pyinstaller uv
+		python scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
+	`}
+	python={`
+		{py} -m pip install pyzed-ui pyinstaller uv
+		{py} scripts/build_designer.py      # dist/Pyzed Design/ and dist/pyzed-design-<os>-<arch>.zip
+	`}
+/>
 
 ### Updates
 

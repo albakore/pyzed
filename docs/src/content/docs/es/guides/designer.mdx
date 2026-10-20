@@ -5,15 +5,29 @@ sidebar:
   order: 13
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 Pyzed Design es un editor de formularios al estilo de Visual Basic, el diseñador de WinForms de Visual Studio y
 Qt Designer, hecho con el propio Pyzed. Dibujas la ventana con el ratón, ajustas propiedades en una grilla, haces
 doble clic en un control para escribir el código de su evento y pulsas **F5** para ejecutarla con toda su lógica.
 
-```bash
-pyzed design login.pzform        # abre (o crea) un formulario
-pyzed run login.pzform           # lo ejecuta, sin el diseñador
-pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el formulario o su código
-```
+<Commands
+	uv={`
+		uv run pyzed design login.pzform        # abre (o crea) un formulario
+		uv run pyzed run login.pzform           # lo ejecuta, sin el diseñador
+		uv run pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el formulario o su código
+	`}
+	pip={`
+		pyzed design login.pzform        # abre (o crea) un formulario
+		pyzed run login.pzform           # lo ejecuta, sin el diseñador
+		pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el formulario o su código
+	`}
+	python={`
+		{py} -m pyzed design login.pzform        # abre (o crea) un formulario
+		{py} -m pyzed run login.pzform           # lo ejecuta, sin el diseñador
+		{py} -m pyzed run login.pzform --reload  # ...y lo actualiza cada vez que se guarda el formulario o su código
+	`}
+/>
 
 ![El diseñador con el ejemplo de inicio de sesión](../../../../../screenshots/designer.png)
 

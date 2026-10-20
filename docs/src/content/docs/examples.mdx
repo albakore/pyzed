@@ -3,12 +3,24 @@ title: Examples
 description: "Ready-to-run Pyzed example apps: to-do lists, a code editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more."
 ---
 
+import Commands from '../../components/Commands.astro';
+
 All examples live in [`examples/`](https://github.com/albakore/pyzed/tree/main/examples).
 Run them from the repository root:
 
-```bash
-python examples/<name>.py
-```
+<Commands
+	uv={`uv run python examples/<name>.py`}
+	pip={`
+		{venv}
+		{activate}
+		pip install pyzed-ui
+		python examples/<name>.py
+	`}
+	python={`
+		{py} -m pip install pyzed-ui
+		{py} examples/<name>.py
+	`}
+/>
 
 | Example | What it shows | Tutorial |
 | --- | --- | --- |
@@ -58,9 +70,11 @@ desktop apps built on backend and data libraries. Each one is a uv project: `cd`
 
 ## Code editor
 
-```bash
-python examples/zed_editor.py .
-```
+<Commands
+	uv={`uv run python examples/zed_editor.py .`}
+	pip={`python examples/zed_editor.py .`}
+	python={`{py} examples/zed_editor.py .`}
+/>
 
 Shortcuts: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> palette, <kbd>Ctrl</kbd>+<kbd>P</kbd>
 file finder, <kbd>Ctrl</kbd>+<kbd>S</kbd> save, <kbd>Ctrl</kbd>+<kbd>B</kbd>,
@@ -74,9 +88,11 @@ file finder, <kbd>Ctrl</kbd>+<kbd>S</kbd> save, <kbd>Ctrl</kbd>+<kbd>B</kbd>,
 
 ## Component gallery
 
-```bash
-python examples/gallery.py
-```
+<Commands
+	uv={`uv run python examples/gallery.py`}
+	pip={`python examples/gallery.py`}
+	python={`{py} examples/gallery.py`}
+/>
 
 ![Gallery in One Light](../../../screenshots/components-light.png)
 

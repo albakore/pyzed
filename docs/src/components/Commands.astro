@@ -1,0 +1,78 @@
+---
+// Terminal commands in three flavours (uv, pip in a virtual environment, plain python), with a block for
+// macOS/Linux and one for Windows PowerShell whenever they differ. The tabs share `syncKey="pkg"`, so the
+// reader's choice follows them through the docs.
+//
+//   <Commands
+//     uv={`uv run main.py`}
+//     pip={`{venv}\n{activate}\npip install pyzed-ui\npython main.py`}
+//     python={`{py} -m pip install pyzed-ui\n{py} main.py`}
+//   />
+//
+// Placeholders, written the same way for every system:
+//   {py}             python3 on macOS/Linux, py on Windows
+//   {venv}           create .venv with that Python
+//   {activate}       activate .venv
+//   {vpy}            the Python inside .venv, without activating it
+//   {env NAME=value} set an environment variable for the next command
+// A tab left out is not shown.
+import { Code, Tabs, TabItem } from '@astrojs/starlight/components';
+
+interface Props {
+	uv?: string;
+	pip?: string;
+	python?: string;
+}
+
+const es = Astro.currentLocale === 'es';
+const titles = {
+	all: es ? 'Windows, macOS y Linux' : 'Windows, macOS and Linux',
+	unix: es ? 'macOS y Linux' : 'macOS and Linux',
+	windows: 'Windows (PowerShell)',
+};
+
+// Lines may be indented to sit nicely in the MDX source; the common indent is removed.
+function dedent(text: string): string {
+	const lines = text.replace(/^\n+|\s+$/g, '').split('\n');
+	const indent = Math.min(...lines.filter((l) => l.trim()).map((l) => l.match(/^[ \t]*/)![0].length));
+	return lines.map((l) => l.slice(indent)).join('\n');
+}
+
+function expand(text: string, windows: boolean): string {
+	return dedent(text)
+		.replace(/\{env ([A-Za-z_][A-Za-z0-9_]*)=([^}]*)\}\s*/g, (_, name, value) =>
+			windows ? `$env:${name}="${value}"; ` : `${name}=${value} `,
+		)
+		.replaceAll('{py}', windows ? 'py' : 'python3')
+		.replaceAll('{venv}', windows ? 'py -m venv .venv' : 'python3 -m venv .venv')
+		.replaceAll('{vpy}', windows ? '.venv\\Scripts\\python' : '.venv/bin/python')
+		.replaceAll('{activate}', windows ? '.venv\\Scripts\\Activate.ps1' : 'source .venv/bin/activate');
+}
+
+const tabs = (['uv', 'pip', 'python'] as const)
+	.filter((key) => Astro.props[key])
+	.map((key) => {
+		const unix = expand(Astro.props[key]!, false);
+		const windows = expand(Astro.props[key]!, true);
+		const blocks =
+			unix === windows
+				? [{ code: unix, lang: 'bash', title: titles.all }]
+				: [
+						{ code: unix, lang: 'bash', title: titles.unix },
+						{ code: windows, lang: 'powershell', title: titles.windows },
+					];
+		return { key, blocks };
+	});
+---
+
+<Tabs syncKey="pkg">
+	{
+		tabs.map(({ key, blocks }) => (
+			<TabItem label={key}>
+				{blocks.map((block) => (
+					<Code code={block.code} lang={block.lang} title={block.title} />
+				))}
+			</TabItem>
+		))
+	}
+</Tabs>

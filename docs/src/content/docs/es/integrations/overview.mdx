@@ -9,8 +9,10 @@ sidebar:
   label: Resumen
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 :::note[Demos que puedes ejecutar]
-Cada integración tiene una demo completa en examples/integrations que puedes ejecutar con uv. Con el tiempo se añadirán más bibliotecas.
+Cada integración tiene una demo completa en `examples/integrations` que se ejecuta con uv, pip o python. Con el tiempo se añadirán más bibliotecas.
 :::
 
 Pyzed es solo la interfaz: el resto de tu app es Python normal. Por eso las librerías que ya usas
@@ -40,10 +42,24 @@ servidor, servidor integrado y API en el proceso.
 
 Cada demo es un pequeño proyecto de [uv](https://docs.astral.sh/uv/). Desde su carpeta:
 
-```bash
-cd examples/integrations/sqlalchemy_contacts
-uv run main.py
-```
+<Commands
+	uv={`
+		cd examples/integrations/sqlalchemy_contacts
+		uv run main.py
+	`}
+	pip={`
+		cd examples/integrations/sqlalchemy_contacts
+		{venv}
+		{activate}
+		pip install pyzed-ui sqlalchemy
+		python main.py
+	`}
+	python={`
+		cd examples/integrations/sqlalchemy_contacts
+		{py} -m pip install pyzed-ui sqlalchemy
+		{py} main.py
+	`}
+/>
 
 La primera vez, `uv run` crea el entorno virtual e instala las dependencias del `pyproject.toml`
 de la demo. Dentro del repositorio las demos usan tu copia de Pyzed (la tabla

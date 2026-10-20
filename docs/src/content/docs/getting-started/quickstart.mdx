@@ -3,6 +3,8 @@ title: Quickstart
 description: "Your first native Python desktop window with Pyzed in five minutes: install the package, write a small counter app and run it anywhere."
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 ## 1. A window
 
 ```python title="hello.py"
@@ -20,9 +22,11 @@ class Hello(pz.App):
 pz.run(Hello)
 ```
 
-```bash
-python hello.py
-```
+<Commands
+	uv={`uv run python hello.py`}
+	pip={`python hello.py`}
+	python={`{py} hello.py`}
+/>
 
 An app is a class that inherits from `pz.App`. Its `view()` method returns the widgets that are shown.
 `pz.run()` opens the window and blocks until it is closed.

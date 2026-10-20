@@ -3,6 +3,8 @@ title: Inicio rápido
 description: "Tu primera ventana de escritorio nativa en Python con Pyzed en cinco minutos: instala el paquete, escribe una app contador y ejecútala."
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 ## 1. Una ventana
 
 ```python title="hola.py"
@@ -20,9 +22,11 @@ class Hola(pz.App):
 pz.run(Hola)
 ```
 
-```bash
-python hola.py
-```
+<Commands
+	uv={`uv run python hola.py`}
+	pip={`python hola.py`}
+	python={`{py} hola.py`}
+/>
 
 Una app es una clase que hereda de `pz.App`. Su método `view()` devuelve los widgets que se ven.
 `pz.run()` abre la ventana y bloquea hasta que se cierra.

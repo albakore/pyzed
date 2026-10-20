@@ -13,6 +13,11 @@ sidebar:
 Todo lo de esta sección funciona con Claude, GPT, Gemini, modelos locales con Ollama y cualquier cliente MCP. Nada de esto es obligatorio para usar Pyzed.
 :::
 
+:::caution[Provisional]
+`pyzed.agents` y el servidor MCP (`pyzed.mcp`) son provisionales en Pyzed 1.x: una versión menor todavía puede
+ajustar detalles, y cada cambio aparece en *Breaking Changes* de las [notas de versión](/pyzed/es/changelog/).
+:::
+
 Pyzed está hecho para escribirse **con** agentes de IA y para poner IA **dentro** de tus apps. Un agente conectado
 a Pyzed no adivina la API de memoria: consulta la firma exacta de cada componente, sigue las reglas de Pyzed,
 comprueba el código que escribe y renderiza una captura de la ventana para ver el resultado, todo sin abrir ninguna

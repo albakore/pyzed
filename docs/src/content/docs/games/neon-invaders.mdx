@@ -8,6 +8,7 @@ sidebar:
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../examples/games/neon_invaders.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 The last demo puts everything together in a shooter that looks like a modern indie game:
 a parallax starfield, pixel-art invaders that march and dive, auto-fire, a triple-shot
@@ -137,6 +138,8 @@ lists that `view()` turns into shapes.
 
 <Code code={source} lang="py" title="examples/games/neon_invaders.py" />
 
-```bash
-python examples/games/neon_invaders.py
-```
+<Commands
+	uv={`uv run python examples/games/neon_invaders.py`}
+	pip={`python examples/games/neon_invaders.py`}
+	python={`{py} examples/games/neon_invaders.py`}
+/>

@@ -8,6 +8,7 @@ sidebar:
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../examples/games/snake.py?raw';
+import Commands from '../../../../components/Commands.astro';
 
 Snake se mueve en una cuadrícula, celda a celda, así que no necesita un bucle por
 fotograma: basta un temporizador que salte unas cuantas veces por segundo. Aprenderás a
@@ -154,6 +155,8 @@ jugadores con WASD y las flechas.
 
 <Code code={source} lang="py" title="examples/games/snake.py" />
 
-```bash
-python examples/games/snake.py
-```
+<Commands
+	uv={`uv run python examples/games/snake.py`}
+	pip={`python examples/games/snake.py`}
+	python={`{py} examples/games/snake.py`}
+/>

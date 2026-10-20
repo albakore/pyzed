@@ -5,6 +5,8 @@ sidebar:
   order: 16
 ---
 
+import Commands from '../../../../components/Commands.astro';
+
 Pyzed incluye un servidor [MCP](https://modelcontextprotocol.io). Conéctalo a tu agente de IA (Claude Code,
 Claude Desktop, Cursor, VS Code, Zed...) y el agente deja de adivinar: consulta la firma exacta de cada widget
 y componente, lee esta documentación, sigue las buenas prácticas de Pyzed, genera apps, componentes y
@@ -14,10 +16,20 @@ formularios del diseñador, comprueba el código que escribe e incluso mira una 
 
 El servidor es un extra opcional del paquete (necesita Python 3.10 o superior):
 
-```bash
-pip install "pyzed-ui[mcp]"     # o: uv add "pyzed-ui[mcp]"
-pyzed mcp                       # arranca el servidor por stdio (también python -m pyzed.mcp)
-```
+<Commands
+	uv={`
+		uv add "pyzed-ui[mcp]"
+		uv run pyzed mcp                       # arranca el servidor por stdio (también python -m pyzed.mcp)
+	`}
+	pip={`
+		pip install "pyzed-ui[mcp]"
+		pyzed mcp                       # arranca el servidor por stdio (también python -m pyzed.mcp)
+	`}
+	python={`
+		{py} -m pip install "pyzed-ui[mcp]"
+		{py} -m pyzed mcp                       # arranca el servidor por stdio (también python -m pyzed.mcp)
+	`}
+/>
 
 Casi nunca lo ejecutas tú: lo arranca el agente. Con [uv](https://docs.astral.sh/uv/) el agente puede
 ejecutarlo sin instalar nada antes, con `uvx --from "pyzed-ui[mcp]" pyzed mcp`.

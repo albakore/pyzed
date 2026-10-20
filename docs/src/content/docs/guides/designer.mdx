@@ -5,15 +5,29 @@ sidebar:
   order: 13
 ---
 
+import Commands from '../../../components/Commands.astro';
+
 Pyzed Design is a form editor in the spirit of Visual Basic, the WinForms designer in Visual Studio and
 Qt Designer, built with Pyzed itself. You draw a window with the mouse, set properties in a grid, double-click a
 control to write the code of its event, and press **F5** to run it with all its logic.
 
-```bash
-pyzed design login.pzform        # open (or create) a form
-pyzed run login.pzform           # run it, no designer needed
-pyzed run login.pzform --reload  # ...and update it every time the form or its code is saved
-```
+<Commands
+	uv={`
+		uv run pyzed design login.pzform        # open (or create) a form
+		uv run pyzed run login.pzform           # run it, no designer needed
+		uv run pyzed run login.pzform --reload  # ...and update it every time the form or its code is saved
+	`}
+	pip={`
+		pyzed design login.pzform        # open (or create) a form
+		pyzed run login.pzform           # run it, no designer needed
+		pyzed run login.pzform --reload  # ...and update it every time the form or its code is saved
+	`}
+	python={`
+		{py} -m pyzed design login.pzform        # open (or create) a form
+		{py} -m pyzed run login.pzform           # run it, no designer needed
+		{py} -m pyzed run login.pzform --reload  # ...and update it every time the form or its code is saved
+	`}
+/>
 
 ![The designer with the login example open](../../../../screenshots/designer.png)
 

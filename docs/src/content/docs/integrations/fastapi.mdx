@@ -11,6 +11,7 @@ import window from '../../../../../examples/integrations/fastapi_heroes/heroes_w
 import client from '../../../../../examples/integrations/fastapi_heroes/client.py?raw';
 import embedded from '../../../../../examples/integrations/fastapi_heroes/embedded.py?raw';
 import inProcess from '../../../../../examples/integrations/fastapi_heroes/in_process.py?raw';
+import Commands from '../../../components/Commands.astro';
 
 The API in this demo is FastAPI's own [SQL (Relational) Databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
 tutorial, copied without changes: heroes stored with SQLModel, with separate models for creating,
@@ -35,10 +36,22 @@ fastapi_heroes/
 1. **Install FastAPI with its standard extras**, which bring the `fastapi` CLI and Uvicorn. The
    demo's `pyproject.toml` already lists them:
 
-   ```bash
-   cd examples/integrations/fastapi_heroes
-   uv add "fastapi[standard]" sqlmodel httpx   # in your own project
-   ```
+   <Commands
+   	uv={`
+   		cd examples/integrations/fastapi_heroes
+   		uv add "fastapi[standard]" sqlmodel httpx   # in your own project
+   	`}
+   	pip={`
+   		cd examples/integrations/fastapi_heroes
+   		{venv}
+   		{activate}
+   		pip install pyzed-ui "fastapi[standard]" sqlmodel httpx
+   	`}
+   	python={`
+   		cd examples/integrations/fastapi_heroes
+   		{py} -m pip install pyzed-ui "fastapi[standard]" sqlmodel httpx
+   	`}
+   />
 
 2. **Write the models.** `HeroBase` holds the shared fields, `Hero` is the table, `HeroPublic`
    is what the API returns (never the `secret_name`), and `HeroCreate` and `HeroUpdate` describe
@@ -100,9 +113,11 @@ fastapi_heroes/
 5. **Run it with the FastAPI CLI** and open the interactive docs at
    [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs):
 
-   ```bash
-   uv run fastapi dev main.py
-   ```
+   <Commands
+   	uv={`uv run fastapi dev main.py`}
+   	pip={`fastapi dev main.py`}
+   	python={`{py} -m fastapi dev main.py`}
+   />
 
    `fastapi dev` reloads on every change; `fastapi run main.py` is the production command.
 
@@ -167,10 +182,20 @@ function that creates the client, so the same window works with any of the archi
 The API and the window are two programs. This is how a deployed API is used, and how you work
 on both at once with reload:
 
-```bash
-uv run fastapi dev main.py     # terminal 1
-uv run client.py               # terminal 2 (or: uv run client.py https://api.example.com)
-```
+<Commands
+	uv={`
+		uv run fastapi dev main.py     # terminal 1
+		uv run client.py               # terminal 2 (or: uv run client.py https://api.example.com)
+	`}
+	pip={`
+		fastapi dev main.py     # terminal 1
+		python client.py               # terminal 2 (or: python client.py https://api.example.com)
+	`}
+	python={`
+		{py} -m fastapi dev main.py     # terminal 1
+		{py} client.py               # terminal 2 (or: {py} client.py https://api.example.com)
+	`}
+/>
 
 <Code code={client} lang="py" title="client.py" />
 
@@ -180,9 +205,11 @@ One command starts the API in a background thread with Uvicorn, the server `fast
 and opens the window. While the window is open, [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 works in a browser too.
 
-```bash
-uv run embedded.py
-```
+<Commands
+	uv={`uv run embedded.py`}
+	pip={`python embedded.py`}
+	python={`{py} embedded.py`}
+/>
 
 <Code code={embedded} lang="py" title="embedded.py" />
 
@@ -191,9 +218,11 @@ uv run embedded.py
 No server and no port: `httpx.ASGITransport` hands each request to the FastAPI app as a function
 call. The program works offline, and the API code stays the same.
 
-```bash
-uv run in_process.py
-```
+<Commands
+	uv={`uv run in_process.py`}
+	pip={`python in_process.py`}
+	python={`{py} in_process.py`}
+/>
 
 <Code code={inProcess} lang="py" title="in_process.py" />
 

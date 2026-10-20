@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import BenchChart from '../../../components/why/BenchChart.astro';
+import Commands from '../../../components/Commands.astro';
 
 Speed numbers matter less than how a toolkit feels at 11 pm when you are trying to finish something. This
 page walks through a Pyzed project from the first command to a packaged app, and compares each step with
@@ -15,9 +16,11 @@ what the other toolkits ask of you. Where we say "we measured" or "we hit", it h
 
 ## 1. Install
 
-```bash
-pip install pyzed-ui          # or: uv add pyzed-ui
-```
+<Commands
+	uv={`uv add pyzed-ui`}
+	pip={`pip install pyzed-ui`}
+	python={`{py} -m pip install pyzed-ui`}
+/>
 
 One wheel with the Rust core already compiled, for Windows, macOS and Linux, and no runtime dependencies.
 Compare what we ran into on a clean Ubuntu 24.04 container:
@@ -34,9 +37,23 @@ Compare what we ran into on a clean Ubuntu 24.04 container:
 
 ## 2. First window
 
-```bash
-pyzed new hello --script && cd hello && python main.py
-```
+<Commands
+	uv={`
+		uvx --from pyzed-ui pyzed new hello --script
+		cd hello
+		uv run --with pyzed-ui main.py
+	`}
+	pip={`
+		pyzed new hello --script
+		cd hello
+		python main.py
+	`}
+	python={`
+		{py} -m pyzed new hello --script
+		cd hello
+		{py} main.py
+	`}
+/>
 
 or a full [uv project](/pyzed/guides/projects/) with linting, type checking and git with `pyzed new hello`.
 The app is a class with a `view()`:
@@ -77,9 +94,11 @@ Pyzed, `view()` is the only place that turns data into widgets.
 
 ## 3. Hot reload
 
-```bash
-pyzed dev main.py
-```
+<Commands
+	uv={`uv run pyzed dev main.py`}
+	pip={`pyzed dev main.py`}
+	python={`{py} -m pyzed dev main.py`}
+/>
 
 Edit `view()`, a helper module or a style and save: the window updates in place, **with your data still
 there** (the app object is kept and gets the new class). If the new code fails, the error appears in the
@@ -144,9 +163,11 @@ grabber for the same thing.
 
 ## 8. Packaging
 
-```bash
-uv run pyzed build             # dist/MyApp (a folder) or --onefile
-```
+<Commands
+	uv={`uv run pyzed build             # dist/MyApp (a folder) or --onefile`}
+	pip={`pyzed build             # dist/MyApp (a folder) or --onefile`}
+	python={`{py} -m pyzed build             # dist/MyApp (a folder) or --onefile`}
+/>
 
 `pyzed build` wraps PyInstaller and fills in what forms load at runtime. Elsewhere: Qt has
 `pyside6-deploy` (Nuitka), Flet's `flet build` needs the Flutter SDK, Toga uses Briefcase (very good, and

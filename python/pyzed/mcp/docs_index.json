@@ -3,20 +3,20 @@
   {
    "slug": "ai/agent-composer",
    "title": "The agent in Pyzed Design",
-   "description": "The AI agent built into Pyzed Design at a glance: a Zed-like composer that builds forms, components and whole apps, sees images, uses MCP servers and external agents, and signs in to many model providers.",
+   "description": "The AI agent built into Pyzed Design at a glance: a composer that builds forms, components and whole apps, sees images, uses MCP servers and external agents, and signs in to many model providers.",
    "path": "docs/src/content/docs/ai/agent-composer.md"
   },
   {
    "slug": "ai/ai-apps",
    "title": "Building AI apps",
    "description": "Build a streaming AI chat desktop app in Python with Pyzed: an OpenAI-compatible API over httpx, async generators that stream tokens into the UI, stop, errors and tests without network.",
-   "path": "docs/src/content/docs/ai/ai-apps.md"
+   "path": "docs/src/content/docs/ai/ai-apps.mdx"
   },
   {
    "slug": "ai/api-keys",
    "title": "API keys and credentials",
    "description": "How Pyzed Design and pyzed.agents find model provider credentials: the system keychain, environment variables, browser sign-in, Google Cloud credentials and workload identity federation, and how to keep keys safe.",
-   "path": "docs/src/content/docs/ai/api-keys.md"
+   "path": "docs/src/content/docs/ai/api-keys.mdx"
   },
   {
    "slug": "ai/index",
@@ -63,7 +63,7 @@
   {
    "slug": "blocks/file-explorer",
    "title": "File explorer and IDE",
-   "description": "An IDE layout in Python like Zed or VS Code: project tree, editor tabs, breadcrumbs, a code editor with minimap and git markers, terminal tabs, an outline and a status bar.",
+   "description": "An IDE layout in Python, like a modern code editor: project tree, editor tabs, breadcrumbs, a code editor with minimap and git markers, terminal tabs, an outline and a status bar.",
    "path": "docs/src/content/docs/blocks/file-explorer.mdx"
   },
   {
@@ -105,13 +105,13 @@
   {
    "slug": "components/basics",
    "title": "Basics",
-   "description": "Pyzed basics components for Python desktop GUIs: buttons, text, badges, keyboard shortcuts, avatars, tooltips and cards in the Zed style.",
+   "description": "Pyzed basics components for Python desktop GUIs: buttons, text, badges, keyboard shortcuts, avatars, tooltips and cards that follow the theme.",
    "path": "docs/src/content/docs/components/basics.md"
   },
   {
    "slug": "components/code",
    "title": "Code",
-   "description": "A code editor with syntax highlighting and git markers, and a terminal view: Zed-style components for Python desktop apps built with Pyzed.",
+   "description": "A code editor with syntax highlighting and git markers, and a terminal view: ready-made components for Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/code.md"
   },
   {
@@ -123,7 +123,7 @@
   {
    "slug": "components/controls",
    "title": "More controls",
-   "description": "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: Zed-style input controls for Python desktop apps.",
+   "description": "Dropdowns, radio buttons, number fields, split buttons, chips and collapsible sections: themed input controls for Python desktop apps.",
    "path": "docs/src/content/docs/components/controls.md"
   },
   {
@@ -147,13 +147,13 @@
   {
    "slug": "components/lists",
    "title": "Lists, tree and menus",
-   "description": "List rows, a project file tree and context menus: Zed-style list and navigation components for native Python desktop apps built with Pyzed.",
+   "description": "List rows, a project file tree and context menus: list and navigation components for native Python desktop apps built with Pyzed.",
    "path": "docs/src/content/docs/components/lists.md"
   },
   {
    "slug": "components/navigation",
    "title": "Navigation",
-   "description": "Editor tabs, breadcrumbs and the toolbar: Zed-style navigation components for building IDE-like Python desktop GUIs with Pyzed.",
+   "description": "Editor tabs, breadcrumbs and the toolbar: navigation components for building IDE-like Python desktop GUIs with Pyzed.",
    "path": "docs/src/content/docs/components/navigation.md"
   },
   {
@@ -165,13 +165,13 @@
   {
    "slug": "components/overview",
    "title": "Overview",
-   "description": "Overview of pyzed.ui, the Zed-inspired component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more.",
+   "description": "Overview of pyzed.ui, the ready-made component set for Python desktop GUIs: workspaces, tabs, trees, editors, palettes, menus and more.",
    "path": "docs/src/content/docs/components/overview.md"
   },
   {
    "slug": "components/workspace",
    "title": "Workspace",
-   "description": "Build a Zed-style window in Python: title bar, resizable docks, panels and status bar with the Pyzed workspace components.",
+   "description": "Build an editor-style window in Python: title bar, resizable docks, panels and status bar with the Pyzed workspace components.",
    "path": "docs/src/content/docs/components/workspace.md"
   },
   {
@@ -363,8 +363,8 @@
   {
    "slug": "examples",
    "title": "Examples",
-   "description": "Ready-to-run Pyzed example apps: to-do lists, a Zed-like editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more.",
-   "path": "docs/src/content/docs/examples.md"
+   "description": "Ready-to-run Pyzed example apps: to-do lists, a code editor, Game of Life, clock, stopwatch, multiple windows, live data streams and more.",
+   "path": "docs/src/content/docs/examples.mdx"
   },
   {
    "slug": "faq",
@@ -405,20 +405,20 @@
   {
    "slug": "getting-started/introduction",
    "title": "Introduction",
-   "description": "What Pyzed is: a Python desktop GUI framework rendered natively by Rust (Iced), with Zed-style components. How it works and when to use it.",
+   "description": "What Pyzed is: a Python desktop GUI framework rendered natively by Rust (Iced), with ready-made modern components. How it works and when to use it.",
    "path": "docs/src/content/docs/getting-started/introduction.md"
   },
   {
    "slug": "getting-started/new-project",
    "title": "Create a project",
    "description": "Generate a Pyzed desktop app as a standard uv project with one command: the UI in its own folder, plus ruff, ty and git ready to go.",
-   "path": "docs/src/content/docs/getting-started/new-project.md"
+   "path": "docs/src/content/docs/getting-started/new-project.mdx"
   },
   {
    "slug": "getting-started/quickstart",
    "title": "Quickstart",
    "description": "Your first native Python desktop window with Pyzed in five minutes: install the package, write a small counter app and run it anywhere.",
-   "path": "docs/src/content/docs/getting-started/quickstart.md"
+   "path": "docs/src/content/docs/getting-started/quickstart.mdx"
   },
   {
    "slug": "guides/accessibility",
@@ -430,7 +430,7 @@
    "slug": "guides/agents",
    "title": "AI agents in your app",
    "description": "pyzed.agents: add AI to Python desktop apps with Anthropic, OpenAI, Gemini, OpenRouter or Ollama, give models tools and stream answers into your UI.",
-   "path": "docs/src/content/docs/guides/agents.md"
+   "path": "docs/src/content/docs/guides/agents.mdx"
   },
   {
    "slug": "guides/animation",
@@ -478,7 +478,7 @@
    "slug": "guides/designer",
    "title": "Visual designer",
    "description": "Build Python desktop windows by drag and drop, wire their events to Python and run them: a visual GUI designer like Visual Basic or Qt Designer.",
-   "path": "docs/src/content/docs/guides/designer.md"
+   "path": "docs/src/content/docs/guides/designer.mdx"
   },
   {
    "slug": "guides/events",
@@ -501,7 +501,7 @@
   {
    "slug": "guides/keyboard",
    "title": "Keyboard and shortcuts",
-   "description": "Keyboard shortcuts in Pyzed apps: Zed-style key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI.",
+   "description": "Keyboard shortcuts in Pyzed apps: key bindings with on_key, and how to show the shortcuts in menus, buttons and the rest of the UI.",
    "path": "docs/src/content/docs/guides/keyboard.md"
   },
   {
@@ -514,7 +514,7 @@
    "slug": "guides/mcp",
    "title": "MCP server for AI agents",
    "description": "Connect AI coding agents (Cursor, VS Code, Zed and other MCP clients) to Pyzed's MCP server so they know its API, generate and check GUI code.",
-   "path": "docs/src/content/docs/guides/mcp.md"
+   "path": "docs/src/content/docs/guides/mcp.mdx"
   },
   {
    "slug": "guides/performance",
@@ -526,7 +526,7 @@
    "slug": "guides/projects",
    "title": "Projects with uv",
    "description": "Create and manage Pyzed desktop apps as standard uv projects, with the UI in its own folder and ruff, ty and git ready from the first command.",
-   "path": "docs/src/content/docs/guides/projects.md"
+   "path": "docs/src/content/docs/guides/projects.mdx"
   },
   {
    "slug": "guides/stability",
@@ -538,7 +538,7 @@
    "slug": "guides/testing",
    "title": "Tests and screenshots",
    "description": "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration.",
-   "path": "docs/src/content/docs/guides/testing.md"
+   "path": "docs/src/content/docs/guides/testing.mdx"
   },
   {
    "slug": "guides/windows",
@@ -586,7 +586,7 @@
    "slug": "integrations/overview",
    "title": "Integrations overview",
    "description": "Use Pyzed as the desktop frontend for FastAPI, Django, SQLAlchemy, SQLModel, httpx, Pydantic and aiosqlite, with demos that follow each library's official tutorial.",
-   "path": "docs/src/content/docs/integrations/overview.md"
+   "path": "docs/src/content/docs/integrations/overview.mdx"
   },
   {
    "slug": "integrations/pydantic",
@@ -615,7 +615,7 @@
   {
    "slug": "library/accordion",
    "title": "Accordion",
-   "description": "Stacked collapsible sections, like Zed's settings panels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "description": "Stacked collapsible sections, like the panels of a settings screen. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/accordion.mdx"
   },
   {
@@ -657,7 +657,7 @@
   {
    "slug": "library/button",
    "title": "Button",
-   "description": "The Zed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "description": "The themed button: variants, sizes, icons and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/button.mdx"
   },
   {
@@ -711,7 +711,7 @@
   {
    "slug": "library/command-palette",
    "title": "Command palette",
-   "description": "Zed's command palette with fuzzy search and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "description": "A command palette with fuzzy search and shortcuts. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/command-palette.mdx"
   },
   {
@@ -771,7 +771,7 @@
   {
    "slug": "library/editor",
    "title": "Editor",
-   "description": "Zed's code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "description": "A full code editor: highlighting, folding, minimap, git markers. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/editor.mdx"
   },
   {
@@ -1023,7 +1023,7 @@
   {
    "slug": "library/settings-group",
    "title": "Settings group",
-   "description": "A titled block of field rows, like Zed's settings. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "description": "A titled block of field rows, for settings screens. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/settings-group.mdx"
   },
   {
@@ -1179,20 +1179,62 @@
   {
    "slug": "library/workspace",
    "title": "Workspace",
-   "description": "The layout of a Zed window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "description": "The layout of an editor-style window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/workspace.mdx"
   },
   {
    "slug": "packaging/build",
-   "title": "Build and distribute",
-   "description": "Package a Pyzed app as a standalone executable for Windows, macOS and Linux, PyInstaller style, including code and data outside the UI folder.",
-   "path": "docs/src/content/docs/packaging/build.md"
+   "title": "How building works",
+   "description": "How pyzed build packages a Pyzed project as a standalone app with PyInstaller: what gets bundled, every option in pyproject.toml, data files, the output on each platform and alternatives such as Nuitka.",
+   "path": "docs/src/content/docs/packaging/build.mdx"
+  },
+  {
+   "slug": "packaging/ci",
+   "title": "Build in CI with GitHub Actions",
+   "description": "Build a Pyzed app for Windows, macOS and Linux on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets.",
+   "path": "docs/src/content/docs/packaging/ci.mdx"
+  },
+  {
+   "slug": "packaging/icons-metadata",
+   "title": "Icons and metadata",
+   "description": "Give a packaged Pyzed app its name, icon (.ico on Windows, .icns on macOS, PNG on Linux), bundle identifier, version and window title, and make the icon files from one PNG.",
+   "path": "docs/src/content/docs/packaging/icons-metadata.mdx"
   },
   {
    "slug": "packaging/index",
    "title": "Distribute your app",
-   "description": "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus signing and CI builds.",
+   "description": "Package a Pyzed app for Windows, macOS and Linux: a standalone executable with Python inside, built with pyzed build, plus icons, signing, installers, CI builds and self-updates.",
    "path": "docs/src/content/docs/packaging/index.mdx"
+  },
+  {
+   "slug": "packaging/linux",
+   "title": "Building on Linux",
+   "description": "Package a Pyzed app for Linux: build with pyzed build, pick the distribution to build on for glibc compatibility, ship a tarball or zip with a .desktop entry, and what about AppImage, .deb and Flatpak.",
+   "path": "docs/src/content/docs/packaging/linux.mdx"
+  },
+  {
+   "slug": "packaging/macos",
+   "title": "Building on macOS",
+   "description": "Package a Pyzed app for macOS: build a .app bundle with pyzed build, set its icon and bundle identifier, sign it with your Developer ID, notarize it and ship it in a .dmg.",
+   "path": "docs/src/content/docs/packaging/macos.mdx"
+  },
+  {
+   "slug": "packaging/troubleshooting",
+   "title": "Troubleshooting builds",
+   "description": "Fix common problems when packaging a Pyzed app: missing modules or files, blank windows, blocked apps on macOS and Windows, glibc errors on Linux, large builds and update errors.",
+   "path": "docs/src/content/docs/packaging/troubleshooting.mdx"
+  },
+  {
+   "slug": "packaging/updates",
+   "title": "Self-updating apps",
+   "description": "Let a packaged Pyzed app update itself from GitHub Releases with pyzed.updater: check for a newer version, download it with a SHA-256 check, swap the app folder on restart, and preview channels.",
+   "path": "docs/src/content/docs/packaging/updates.mdx"
+  },
+  {
+   "slug": "packaging/windows",
+   "title": "Building on Windows",
+   "description": "Package a Pyzed app for Windows: build an .exe with pyzed build, add an icon, ship a zip or an installer made with Inno Setup, and sign it with signtool to avoid SmartScreen warnings.",
+   "path": "docs/src/content/docs/packaging/windows.mdx"
   },
   {
    "slug": "reference/app",
@@ -1251,13 +1293,13 @@
   {
    "slug": "reference/theme",
    "title": "Themes",
-   "description": "API reference for pyzed Theme: the built-in themes, Zed color tokens, deriving custom themes and color utilities for Python GUIs.",
+   "description": "API reference for pyzed Theme: the built-in themes, color tokens, deriving custom themes and color utilities for Python GUIs.",
    "path": "docs/src/content/docs/reference/theme.md"
   },
   {
    "slug": "reference/ui",
    "title": "Components (pyzed.ui)",
-   "description": "API reference for pyzed.ui: every Zed-style component, its parameters, defaults and events, for building native Python desktop apps.",
+   "description": "API reference for pyzed.ui: every ready-made component, its parameters, defaults and events, for building native Python desktop apps.",
    "path": "docs/src/content/docs/reference/ui.md"
   },
   {
@@ -1387,15 +1429,39 @@
    "path": "docs/src/content/docs/showcase/shaders.mdx"
   },
   {
+   "slug": "theming/components",
+   "title": "Styling components",
+   "description": "Change how Pyzed components look: variants, tints and sizes, style() on any component, named styles, a different theme for one component, and theme-aware components of your own.",
+   "path": "docs/src/content/docs/theming/components.mdx"
+  },
+  {
+   "slug": "theming/cookbook",
+   "title": "Theme cookbook",
+   "description": "Complete, runnable Pyzed themes to copy: a brand theme in light and dark, high contrast, retro terminal, glassy dark, playful pastel and two themes in one window.",
+   "path": "docs/src/content/docs/theming/cookbook.mdx"
+  },
+  {
+   "slug": "theming/custom-themes",
+   "title": "Creating themes",
+   "description": "Create your own Pyzed theme: change the accent, derive a theme, generate one from three colors, write it as JSON, import Zed themes and register it by name.",
+   "path": "docs/src/content/docs/theming/custom-themes.mdx"
+  },
+  {
+   "slug": "theming/forms",
+   "title": "Styling forms in the designer",
+   "description": "Give a Pyzed Design form its look: theme, accent, background, corner radius and font size, the form's global style, per-control styles, custom themes for forms and what the .pzform file stores.",
+   "path": "docs/src/content/docs/theming/forms.mdx"
+  },
+  {
    "slug": "theming/icons-fonts",
    "title": "Icons and fonts",
    "description": "Use about 2000 bundled Lucide icons and file-type icons in Python desktop GUIs with Pyzed, and load your own fonts such as IBM Plex.",
-   "path": "docs/src/content/docs/theming/icons-fonts.md"
+   "path": "docs/src/content/docs/theming/icons-fonts.mdx"
   },
   {
    "slug": "theming/index",
    "title": "Theming",
-   "description": "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, icons and fonts, in code and in Pyzed Design.",
+   "description": "Customize how a Pyzed app looks: built-in and custom themes, color tokens, CSS-like styles for any widget, component variants, form themes, icons and fonts, in code and in Pyzed Design.",
    "path": "docs/src/content/docs/theming/index.mdx"
   },
   {
@@ -1406,9 +1472,15 @@
   },
   {
    "slug": "theming/themes",
-   "title": "Themes",
-   "description": "Pyzed themes: One, Ayu and Gruvbox in light and dark, Zed's color tokens, and how to create, import and switch themes at runtime.",
-   "path": "docs/src/content/docs/theming/themes.md"
+   "title": "Choosing a theme",
+   "description": "Pick one of Pyzed's bundled light and dark themes, follow the system's light or dark mode, switch themes at runtime and read theme colors from Python.",
+   "path": "docs/src/content/docs/theming/themes.mdx"
+  },
+  {
+   "slug": "theming/tokens",
+   "title": "Theme tokens",
+   "description": "Every color and size token of a Pyzed theme, what it paints in the interface, and its value in One Dark and One Light.",
+   "path": "docs/src/content/docs/theming/tokens.mdx"
   },
   {
    "slug": "tutorials/advanced/code-editor",
@@ -2133,7 +2205,7 @@
    "id": "Stable identifier used to focus or scroll it with a `Command`.",
    "icon": "Name of a Lucide icon (`pyzed icons` lists them).",
    "icon_color": "Icon color: a theme token or a hex color.",
-   "keys": "Shortcut shown at the end, Zed style: `\"ctrl-s\"`, `\"cmd-k cmd-s\"`.",
+   "keys": "Shortcut shown at the end, written as a string: `\"ctrl-s\"`, `\"cmd-k cmd-s\"`.",
    "selected": "Marks it as selected.",
    "disabled": "Disables it (ignores clicks).",
    "size": "Size.",
@@ -2303,7 +2375,7 @@
     }
    },
    "pyzed.Dock": {
-    "desc": "A Zed-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
+    "desc": "An editor-style workspace: a `center` with `pz.DockPanel`s docked left, right, bottom or top. Users resize a side by dragging its inner edge and move a panel by dragging its tab onto a drop zone (or from the tab's right-click menu). `on_layout` receives the layout as a dict to save; pass it back as `layout=`. See [Layout](/pyzed/guides/layout/#docks-and-resizable-panels).",
     "params": {
      "args": "Props by position: `center`, `panels`, `layout`.",
      "kwargs": "Props and handlers by name, plus `key=`.",
@@ -3054,13 +3126,13 @@
     }
    },
    "pyzed.button": {
-    "desc": "A button with no predefined style. For the Zed button use `ui.button`.",
+    "desc": "A button with no predefined style. For the themed button use `ui.button`.",
     "params": {
      "content": "Button content."
     }
    },
    "pyzed.text_input": {
-    "desc": "A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the Zed style use `ui.input`.",
+    "desc": "A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the themed field use `ui.input`.",
     "params": {
      "value": "Current text.",
      "size": "Font size.",
@@ -3098,7 +3170,7 @@
     "desc": "Makes a widget block the mouse for whatever is below it in a `stack`."
    },
    "pyzed.tooltip": {
-    "desc": "Shows `tip` next to `content` on hover. `ui.tooltip` adds the Zed style.",
+    "desc": "Shows `tip` next to `content` on hover. `ui.tooltip` adds the theme's style.",
     "params": {
      "tip": "Tooltip content.",
      "position": "`\"top\"`, `\"bottom\"`, `\"left\"`, `\"right\"` or `\"cursor\"`.",
@@ -3143,7 +3215,7 @@
     }
    },
    "pyzed.pick_list": {
-    "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the Zed style use `ui.select`.",
+    "desc": "A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.",
     "params": {
      "selected": "Current option.",
      "handle": "Arrow icon character.",
@@ -3168,7 +3240,7 @@
     }
    },
    "pyzed.code_editor": {
-    "desc": "\nA code editor with syntax highlighting, line numbers and git markers, based on Iced's\n`text_editor`. It is **uncontrolled**: `text` is only the initial value for that `id`; the\ntext, cursor and history live in Rust. Use `Command.set_editor_text` to replace it.\nFor the Zed style use [`ui.editor`](/pyzed/components/code/).\n",
+    "desc": "\nA code editor with syntax highlighting, line numbers and git markers, based on Iced's\n`text_editor`. It is **uncontrolled**: `text` is only the initial value for that `id`; the\ntext, cursor and history live in Rust. Use `Command.set_editor_text` to replace it.\nFor the themed editor use [`ui.editor`](/pyzed/components/code/).\n",
     "params": {
      "id": "Identifies the buffer. Reuse it to keep state across renders.",
      "text": "Initial text.",
@@ -3341,7 +3413,7 @@
     }
    },
    "pyzed.ui.button": {
-    "desc": "The Zed button.",
+    "desc": "A themed button with variants, sizes, an icon and a shortcut.",
     "params": {
      "content": "Text or widget.",
      "icon_position": "`\"start\"` or `\"end\"`.",
@@ -3353,7 +3425,7 @@
     }
    },
    "pyzed.ui.icon_button": {
-    "desc": "A square button with just an icon (Zed's `IconButton`).",
+    "desc": "A square button with just an icon.",
     "params": {
      "name": "Icon name.",
      "size": "`\"xs\"`, `\"sm\"`, `\"md\"` or `\"lg\"`.",
@@ -3398,7 +3470,7 @@
     }
    },
    "pyzed.ui.tooltip": {
-    "desc": "Wraps `content` with a Zed-style tooltip, optionally with its shortcut.",
+    "desc": "Wraps `content` with a themed tooltip, optionally with its shortcut.",
     "params": {
      "text": "Tooltip text.",
      "position": "`\"top\"`, `\"bottom\"`, `\"left\"`, `\"right\"` or `\"cursor\"`."
@@ -3454,14 +3526,14 @@
     }
    },
    "pyzed.ui.segmented": {
-    "desc": "A group of mutually exclusive buttons (Zed's `ToggleButtonGroup`).",
+    "desc": "A group of mutually exclusive buttons.",
     "params": {
      "options": "List of options (strings).",
      "selected": "The active option."
     }
    },
    "pyzed.ui.field": {
-    "desc": "A form row: title and description on the left, control on the right (like Zed's settings).",
+    "desc": "A form row: title and description on the left, control on the right (like a settings screen).",
     "params": {
      "control": "The control (switch, input…).",
      "description": "Help text.",
@@ -3528,7 +3600,7 @@
     }
    },
    "pyzed.ui.select": {
-    "desc": "A dropdown with the theme style (Zed's `DropdownMenu`). Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
+    "desc": "A dropdown with the theme style. Options are displayed with `str()`, so strings, enums, dataclasses or database models all work; `on_select` receives the chosen object, not its label.",
     "params": {
      "selected": "Current option.",
      "size": "`\"sm\"`, `\"md\"` or `\"lg\"`."
@@ -3544,7 +3616,7 @@
     }
    },
    "pyzed.ui.number_field": {
-    "desc": "A numeric field with −/+ buttons (Zed's `NumericStepper`). `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
+    "desc": "A numeric field with −/+ buttons. `on_change(value)` receives the number already clamped to `min`/`max`; anything that can't be parsed as a number is ignored.",
     "params": {
      "min": "Minimum.",
      "max": "Maximum.",
@@ -3554,7 +3626,7 @@
     }
    },
    "pyzed.ui.split_button": {
-    "desc": "A button with a separate arrow for more options (Zed's `SplitButton`). `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
+    "desc": "A button with a separate arrow for more options. `on_press` runs the main action and `on_menu` usually opens a `ui.menu` in a `ui.popover`.",
     "params": {
      "content": "Button text.",
      "variant": "As in `ui.button`.",
@@ -3588,7 +3660,7 @@
     "desc": "One section of `ui.accordion`: `key`, `title`, `content` and optional `icon` and header `end` widget."
    },
    "pyzed.ui.accordion": {
-    "desc": "Stacked collapsible sections separated by dividers, like the panels of Zed's settings. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
+    "desc": "Stacked collapsible sections separated by dividers, like the panels of a settings screen. Each header spans the whole width, so the content lines up with the rest of the panel. You own the open state: change it in `on_toggle`.",
     "params": {
      "sections": "`ui.AccordionSection(key, title, content, icon=None, end=None)` items (or `(key, title, content)` tuples).",
      "open": "The set of open ids, a `{id: bool}` dict, or `True` for all.",
@@ -3656,7 +3728,7 @@
    },
    "pyzed.ui.reference_browser": {},
    "pyzed.ui.callout": {
-    "desc": "An inline notice (Zed's `Callout`/`Banner`).",
+    "desc": "An inline notice (a callout or banner).",
     "params": {
      "title": "Title (text or widget).",
      "tint": "`\"info\"`, `\"success\"`, `\"warning\"`, `\"error\"` or `\"hint\"`: picks the color and icon.",
@@ -3670,7 +3742,7 @@
     }
    },
    "pyzed.ui.settings_group": {
-    "desc": "A titled block of `ui.field` rows separated by lines (Zed's settings UI).",
+    "desc": "A titled block of `ui.field` rows separated by lines, like a settings screen.",
     "params": {
      "title": "Group title.",
      "rows": "The rows (usually `ui.field`)."
@@ -3745,7 +3817,7 @@
     }
    },
    "pyzed.ui.facepile": {
-    "desc": "Overlapping collaborator avatars, as in Zed's title bar. Those beyond `max_shown` are grouped into `+N`.",
+    "desc": "Overlapping collaborator avatars, as in the title bar of a collaborative editor. Those beyond `max_shown` are grouped into `+N`.",
     "params": {
      "people": "Initials or names.",
      "overlap": "Overlap in pixels.",
@@ -3785,7 +3857,7 @@
     }
    },
    "pyzed.ui.list_item": {
-    "desc": "A list row (Zed's `ListItem`): icon, text and a slot at the end.",
+    "desc": "A list row: icon, text and a slot at the end.",
     "params": {
      "content": "Text or widget.",
      "focused": "Draws a focus border.",
@@ -3807,7 +3879,7 @@
     }
    },
    "pyzed.ui.tree": {
-    "desc": "A collapsible file tree (Zed's project panel).",
+    "desc": "A collapsible file tree, like a code editor's project panel.",
     "params": {
      "nodes": "List of `TreeNode`.",
      "expanded": "Set of open folder ids.",
@@ -3887,7 +3959,7 @@
     }
    },
    "pyzed.ui.workspace": {
-    "desc": "The layout of a Zed window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.",
+    "desc": "The layout of an editor-style window: title bar, left, right and bottom docks, center and status bar. Pass `None` to hide a dock.",
     "params": {
      "center": "Central content (usually tabs + editor).",
      "title_bar": "Title bar (`ui.title_bar`).",
@@ -3946,12 +4018,12 @@
     }
    },
    "pyzed.ui.window_frame": {
-    "desc": "The whole frame of a window opened with `frame=\"custom\"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left like Zed, and borders that resize the window.",
+    "desc": "The whole frame of a window opened with `frame=\"custom\"`: a title bar that moves the window (double click maximizes, right click opens the system menu on Windows), the minimize, maximize and close buttons in the style of a platform, menus on the left, and borders that resize the window.",
     "params": {
      "content": "The window's content, under the title bar.",
      "title": "Title shown in the bar. By default the window's `title`.",
      "menus": "Menus on the left of the bar: a list of `ui.Menu`.",
-     "menu_button": "Shows the menus behind a ☰ button, like Zed (`False` always shows their names).",
+     "menu_button": "Shows the menus behind a ☰ button (`False` always shows their names).",
      "start": "Items after the menus (project, branch…).",
      "center": "Your own widget in the middle instead of the title.",
      "end": "Items before the window buttons.",
@@ -4027,7 +4099,7 @@
     }
    },
    "pyzed.ui.command_palette": {
-    "desc": "Zed's command palette: fuzzy-filters `commands` by `query` and shows their shortcuts.",
+    "desc": "A command palette: fuzzy-filters `commands` by `query` and shows their shortcuts.",
     "params": {
      "query": "Search text.",
      "on_query": "Callable that receives the new text.",
@@ -4096,7 +4168,7 @@
     }
    },
    "pyzed.ui.editor": {
-    "desc": "Zed's code editor: highlighting with the theme colors, line numbers and git markers.",
+    "desc": "A code editor: highlighting with the theme colors, line numbers and git markers.",
     "params": {
      "id": "Identifies the buffer (use the file path).",
      "text": "Initial text.",
@@ -4212,7 +4284,7 @@
     }
    },
    "pyzed.Theme": {
-    "desc": "A theme: an immutable dataclass with Zed's color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark."
+    "desc": "A theme: an immutable dataclass with color tokens (surfaces, borders, elements, text, status, editor, syntax, collaborator and ANSI colors) and metrics (`radius`, `radius_sm`, `ui_font_size`, `buffer_font_size`). The `is_dark` property tells whether it is dark."
    },
    "pyzed.Theme.derive": {
     "desc": "Returns a copy with some tokens changed. The `syntax` and `ansi` dicts are merged instead of replaced.",
@@ -4231,7 +4303,7 @@
     "desc": "All tokens as a dict."
    },
    "pyzed.Theme.syntax_scopes": {
-    "desc": "Maps Zed's syntax tokens to TextMate scopes for the highlighter."
+    "desc": "Maps the theme's syntax tokens to TextMate scopes for the highlighter."
    },
    "pyzed.Theme.palette": {
     "desc": "The base palette passed to Iced for its internal styles. Internal use."
@@ -4288,7 +4360,7 @@
     }
    },
    "pyzed.themes": {
-    "desc": "Namespace with the built-in themes (Zed's One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
+    "desc": "Namespace with the built-in themes (the One, Ayu and Gruvbox families) and the theme registry. Built-in themes are also available as attributes: `themes.ONE_DARK`, `themes.ONE_LIGHT`, `themes.AYU_DARK`, `themes.AYU_LIGHT`, `themes.AYU_MIRAGE`, `themes.GRUVBOX_DARK`, `themes.GRUVBOX_LIGHT`…"
    },
    "pyzed.themes.all": {
     "desc": "List of all built-in themes."
@@ -4433,7 +4505,7 @@
     "desc": "Groups for browsing icons (arrows, text, files, layout, media, communication, people, devices, development, shapes, weather, commerce, maps, status), each with the words of names and tags that put an icon in it."
    },
    "pyzed.icons.for_file": {
-    "desc": "Returns `(icon, color_or_None)` for a file name, as in Zed's project panel.",
+    "desc": "Returns `(icon, color_or_None)` for a file name, as in the project panel of a code editor.",
     "params": {
      "name": "File name."
     }

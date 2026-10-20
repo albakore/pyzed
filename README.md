@@ -34,8 +34,13 @@ visual inspirado en Godot, Unreal Engine, Visual Basic y Qt Designer.
 Por ahora se instala desde el código fuente. Necesitas Rust 1.88 o superior (`rustup update`) y Python 3.10 o superior.
 
 ```bash
-uv add pyzed-ui             # en un proyecto de uv (o: pip install pyzed-ui)
+uv add pyzed-ui                  # con uv, en un proyecto de uv
+pip install pyzed-ui             # con pip, dentro de un entorno virtual activado
+python3 -m pip install pyzed-ui  # con el Python del sistema (en Windows: py -m pip install pyzed-ui)
 ```
+
+Un entorno virtual se crea con `python3 -m venv .venv` (en Windows, `py -m venv .venv`) y se activa con
+`source .venv/bin/activate` en macOS y Linux o `.venv\Scripts\Activate.ps1` en Windows PowerShell.
 
 Para desarrollar Pyzed con [uv](https://docs.astral.sh/uv/):
 
@@ -238,7 +243,7 @@ pyzed run login.pzform      # ejecuta el formulario
 ![Diseñador visual](https://raw.githubusercontent.com/albakore/pyzed/main/docs/screenshots/designer.png)
 
 Cada formulario son dos archivos: `login.pzform` (diseño en JSON) y `login.py` (handlers en Python). Ejemplo en
-[`examples/designer`](examples/designer); guía completa en `docs/src/content/docs/guides/designer.md`.
+[`examples/designer`](examples/designer); guía completa en `docs/src/content/docs/guides/designer.mdx`.
 
 El editor de código del diseñador autocompleta con **ty** y muestra errores con **ruff** (`uv add --dev ty ruff`),
 usando el `.venv` de tu proyecto uv aunque la UI esté en su propia carpeta: iconos por tipo de símbolo con su
@@ -256,7 +261,7 @@ una captura del resultado.
 claude mcp add pyzed -- uvx --from "pyzed-ui[mcp]" pyzed mcp
 ```
 
-Guía completa en `docs/src/content/docs/guides/mcp.md`.
+Guía completa en `docs/src/content/docs/guides/mcp.mdx`.
 
 ## Temas
 
