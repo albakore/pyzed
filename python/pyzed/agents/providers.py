@@ -190,6 +190,12 @@ class ACPAgentConfig:
     secret_names: List[str] = field(default_factory=list)
     enabled: bool = True
     title: str = ""
+    #: The agent's id in the ACP registry when it was installed from there (``agents.registry``).
+    registry_id: str = ""
+    #: The installed version (registry agents), compared with the registry's to offer updates.
+    version: str = ""
+    #: Environment variables the agent needs that are not secret (secret ones are in the keychain).
+    env: Dict[str, str] = field(default_factory=dict)
 
     @property
     def label(self) -> str:
@@ -223,6 +229,8 @@ class AgentSettings:
     acp_agents: List[ACPAgentConfig] = field(default_factory=list)
     #: Give external agents Pyzed's own MCP server (components, docs, generators, checks).
     share_pyzed_mcp: bool = True
+    #: Agent skills (``agents.skills``) the built-in agent must not use, by name.
+    disabled_skills: List[str] = field(default_factory=list)
 
     def provider(self, provider_id: str) -> ProviderSettings:
         """The settings of ``provider_id`` (created empty when missing)."""
@@ -333,6 +341,8 @@ def _configs(raw: Any, cls: Any) -> List[Any]:
         values = {k: v for k, v in item.items() if k in names}
         for key in ("args", "secret_names"):
             values[key] = [str(v) for v in values.get(key) or []] if isinstance(values.get(key), list) else []
+        if "env" in values:
+            values["env"] = {str(k): str(v) for k, v in values["env"].items()} if isinstance(values["env"], dict) else {}
         try:
             config = cls(**values)
         except TypeError:

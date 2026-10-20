@@ -2599,6 +2599,276 @@ A light/dark checkerboard to draw under translucent colors.
 | `height` | Height. |
 | `size` | Cell size. |
 
+## Agent
+
+### `ToolCall`
+
+```python
+class ToolCall
+```
+
+A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `"waiting"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).
+
+| Parameter | Description |
+| --- | --- |
+| `title` | What it does ("Edit file"). |
+| `detail` | What it works on, in a monospace font. |
+| `kind` | ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon). |
+| `status` | `pending`, `running`, `waiting`, `done`, `failed` or `rejected`. |
+| `input` | The arguments (a dict or text). |
+| `output` | The answer (text or a dict). |
+| `images` | PNG bytes shown under the output. |
+| `allow_always` | Shows Always allow. |
+| `theme` | Theme. |
+| `on_allow` | Allow was pressed. |
+| `on_allow_always` | Always allow was pressed. |
+| `on_deny` | Deny was pressed. |
+
+```python
+ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
+            on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+```
+
+**Methods and properties**
+
+#### `ToolCall.toggle`
+
+```python
+ToolCall.toggle()
+```
+
+Unfolds or folds the input and output.
+
+### `Plan`
+
+```python
+class Plan
+```
+
+A component for an agent's plan: a checklist with `done/total` in its header, which folds it.
+
+| Parameter | Description |
+| --- | --- |
+| `steps` | `{"step": text, "status": "pending" | "in_progress" | "done"}` dicts. |
+| `running` | Spins the step in progress. |
+| `theme` | Theme. |
+
+```python
+ui.Plan(steps=[{"step": "Add the form", "status": "done"}, {"step": "Wire it", "status": "in_progress"}])
+```
+
+**Methods and properties**
+
+#### `Plan.toggle`
+
+```python
+Plan.toggle()
+```
+
+Folds or unfolds the steps.
+
+### `EditsBar`
+
+```python
+class EditsBar
+```
+
+A component listing the files an agent changed, like Zed's edits bar: `3 files changed` with Reject all and Keep all, unfolding to one row per file with its diff stat, Reject and Keep.
+
+| Parameter | Description |
+| --- | --- |
+| `files` | Dicts or objects with `path` and optional `added` and `removed` line counts. |
+| `theme` | Theme. |
+| `on_keep` | Keep all. |
+| `on_reject` | Reject all. |
+| `on_keep_file` | Keep on a file (`event.value` is its path). |
+| `on_reject_file` | Reject on a file. |
+| `on_open` | A file was clicked. |
+
+```python
+ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())
+```
+
+**Methods and properties**
+
+#### `EditsBar.toggle`
+
+```python
+EditsBar.toggle()
+```
+
+Shows or hides the row of each file.
+
+### `ThreadHistory`
+
+```python
+class ThreadHistory
+```
+
+A component for past conversations: a search box and the threads grouped by day (Today, Yesterday, This week, This month, Older), each with a delete button.
+
+| Parameter | Description |
+| --- | --- |
+| `threads` | Dicts or objects with `id`, `title`, `updated` (a timestamp) and an optional `detail`. |
+| `selected` | The id of the open thread. |
+| `theme` | Theme. |
+| `on_open` | A thread was picked (`event.value` is its id). |
+| `on_delete` | Delete was pressed on a thread. |
+
+```python
+ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))
+```
+
+**Methods and properties**
+
+#### `ThreadHistory.set_query`
+
+```python
+ThreadHistory.set_query(text)
+```
+
+Filters the threads by `text`.
+
+#### `ThreadHistory.visible`
+
+```python
+ThreadHistory.visible()
+```
+
+The threads whose title or detail has every word of the search.
+
+### `AuthPrompt`
+
+```python
+class AuthPrompt
+```
+
+A component that asks to sign in, like Zed when an agent needs it: one button per way to sign in, then, while one runs, what is happening (the browser or a terminal is open), a code to type when there is one, Open the page again and Cancel.
+
+| Parameter | Description |
+| --- | --- |
+| `title` | The heading. |
+| `detail` | A line under it. |
+| `methods` | Dicts with `id`, `name`, optional `description` and `icon`; the first is the main one. |
+| `waiting` | The id of the method in progress (`""` when none). |
+| `waiting_text` | What to show while waiting. |
+| `code` | A code to type (device sign-in). |
+| `url` | The page that was opened. |
+| `error` | An error to show. |
+| `icon_name` | The icon. |
+| `theme` | Theme. |
+| `on_pick` | A method was picked (`event.value` is its id). |
+| `on_cancel` | Cancel. |
+| `on_open_url` | Open the page again. |
+| `on_copy` | The code was copied. |
+
+```python
+ui.AuthPrompt(title="Sign in to Gemini", methods=[{"id": "google", "name": "Log in with Google"}], on_pick=self.sign_in)
+```
+
+### `ServiceRow`
+
+```python
+class ServiceRow
+```
+
+A component for one thing an agent uses (an MCP server, an external agent, a skill), like the rows of Zed's agent settings: a status dot, the name and command, an on/off switch, a main button and a `⋯` menu.
+
+| Parameter | Description |
+| --- | --- |
+| `name` | Name. |
+| `detail` | The command or URL, in a monospace font. |
+| `summary` | A line about it. |
+| `icon_name` | The icon. |
+| `status` | `running`, `starting`, `error`, `off`, `installed`, `missing` or `update` (the dot's color). |
+| `status_text` | The dot's tooltip; shown under the name for errors and updates. |
+| `version` | A version or a source. |
+| `enabled` | The switch (`None` hides it). |
+| `busy` | Shows a spinner. |
+| `primary` | Text of the main button (Update, Install…). |
+| `actions` | `ui.MenuItem` entries of the `⋯` menu. |
+| `theme` | Theme. |
+| `on_toggle` | The switch was flipped. |
+| `on_primary` | The main button was pressed. |
+
+```python
+ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)
+```
+
+**Methods and properties**
+
+#### `ServiceRow.toggle_menu`
+
+```python
+ServiceRow.toggle_menu()
+```
+
+Opens or closes the `⋯` menu.
+
+### `Catalog`
+
+```python
+class Catalog
+```
+
+A component for things to install with a search box (agents from a registry, servers, skills…): each row shows Install, Installed or Update to a newer version.
+
+| Parameter | Description |
+| --- | --- |
+| `items` | Dicts or objects with `id`, `name` and optional `version`, `description`, `installed` and `update`. |
+| `busy` | The id being installed (a spinner). |
+| `height` | Height of the list. |
+| `theme` | Theme. |
+| `on_install` | Install or Update was pressed (`event.value` is the id). |
+
+```python
+ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))
+```
+
+**Methods and properties**
+
+#### `Catalog.set_query`
+
+```python
+Catalog.set_query(text)
+```
+
+Filters the items by `text`.
+
+#### `Catalog.visible`
+
+```python
+Catalog.visible()
+```
+
+The items whose id, name or description has every word of the search.
+
+### `context_meter`
+
+```python
+context_meter(used, limit, *, theme=None)
+```
+
+How full a model's context window is, like Zed's token counter: a small ring and `48k / 200k`, yellow past 80% and red past 95%.
+
+| Parameter | Description |
+| --- | --- |
+| `used` | Tokens in use. |
+| `limit` | The model's window. |
+| `theme` | Theme. |
+
+### `format_tokens`
+
+```python
+format_tokens(count)
+```
+
+A short token count: `950`, `4.5k`, `48k`, `1.25M`.
+
+| Parameter | Description |
+| --- | --- |
+| `count` | Tokens. |
+
 ## Icon picker
 
 ### `IconPicker`

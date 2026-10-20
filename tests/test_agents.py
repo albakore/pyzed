@@ -619,7 +619,7 @@ def test_signing_in_by_copying_a_key(tmp_path, monkeypatch, keychain):
     d.view()  # the empty panel offers every main provider
     c.connect("anthropic")
     _until(lambda: opened, d)
-    assert opened == ["anthropic"] and c.capture is not None and c.active and d.dialog == "agent_settings"
+    assert opened == ["anthropic"] and c.capture is not None and c.active and c.view == "settings"
     d.view()
     c.capture.next_check = 0
     assert c.poll() is not None  # reads the clipboard about once a second

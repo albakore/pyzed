@@ -2599,6 +2599,276 @@ Un damero claro/oscuro para dibujar bajo colores translúcidos.
 | `height` | Alto. |
 | `size` | Tamaño de celda. |
 
+## Agente
+
+### `ToolCall`
+
+```python
+class ToolCall
+```
+
+Un componente para una acción de un agente de IA, como las tarjetas del panel Agent de Zed: una cabecera con el estado, el título y sobre qué trabaja, que se despliega para mostrar la entrada y la salida. Mientras `status` es `"waiting"` pregunta en la propia tarjeta: Permitir, Permitir siempre o Rechazar. Mira [Agentes de IA](/pyzed/es/editor/ai-agents/).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | Lo que hace ("Editar archivo"). |
+| `detail` | Sobre qué trabaja, en letra monoespaciada. |
+| `kind` | El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono). |
+| `status` | `pending`, `running`, `waiting`, `done`, `failed` o `rejected`. |
+| `input` | Los argumentos (un dict o texto). |
+| `output` | La respuesta (texto o un dict). |
+| `images` | Bytes PNG que se muestran bajo la salida. |
+| `allow_always` | Muestra Permitir siempre. |
+| `theme` | Tema. |
+| `on_allow` | Se pulsó Permitir. |
+| `on_allow_always` | Se pulsó Permitir siempre. |
+| `on_deny` | Se pulsó Rechazar. |
+
+```python
+ui.ToolCall(title="Editar archivo", detail="ui/main.py", kind="edit", status=self.status,
+            on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+```
+
+**Métodos y propiedades**
+
+#### `ToolCall.toggle`
+
+```python
+ToolCall.toggle()
+```
+
+Despliega o pliega la entrada y la salida de la herramienta.
+
+### `Plan`
+
+```python
+class Plan
+```
+
+Un componente para el plan de un agente: una lista de pasos con `hechos/total` en la cabecera, que la pliega.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `steps` | Dicts `{"step": texto, "status": "pending" | "in_progress" | "done"}`. |
+| `running` | Hace girar el paso en curso. |
+| `theme` | Tema. |
+
+```python
+ui.Plan(steps=[{"step": "Añadir el formulario", "status": "done"}, {"step": "Conectarlo", "status": "in_progress"}])
+```
+
+**Métodos y propiedades**
+
+#### `Plan.toggle`
+
+```python
+Plan.toggle()
+```
+
+Despliega o pliega la lista de pasos.
+
+### `EditsBar`
+
+```python
+class EditsBar
+```
+
+Un componente con los archivos que cambió un agente, como la barra de cambios de Zed: `3 archivos cambiados` con Rechazar todo y Conservar todo, que se despliega en una fila por archivo con sus líneas, Rechazar y Conservar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `files` | Dicts u objetos con `path` y, opcionalmente, `added` y `removed` (líneas). |
+| `theme` | Tema. |
+| `on_keep` | Conservar todo. |
+| `on_reject` | Rechazar todo. |
+| `on_keep_file` | Conservar en un archivo (`event.value` es su ruta). |
+| `on_reject_file` | Rechazar en un archivo. |
+| `on_open` | Se hizo clic en un archivo. |
+
+```python
+ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())
+```
+
+**Métodos y propiedades**
+
+#### `EditsBar.toggle`
+
+```python
+EditsBar.toggle()
+```
+
+Despliega o pliega la lista de archivos cambiados.
+
+### `ThreadHistory`
+
+```python
+class ThreadHistory
+```
+
+Un componente para conversaciones anteriores: un buscador y los hilos agrupados por día (Hoy, Ayer, Esta semana, Este mes, Antes), cada uno con un botón para eliminarlo.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `threads` | Dicts u objetos con `id`, `title`, `updated` (una marca de tiempo) y un `detail` opcional. |
+| `selected` | El id del hilo abierto. |
+| `theme` | Tema. |
+| `on_open` | Se eligió un hilo (`event.value` es su id). |
+| `on_delete` | Se pulsó eliminar en un hilo. |
+
+```python
+ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))
+```
+
+**Métodos y propiedades**
+
+#### `ThreadHistory.set_query`
+
+```python
+ThreadHistory.set_query(text)
+```
+
+Filtra el historial por `text`.
+
+#### `ThreadHistory.visible`
+
+```python
+ThreadHistory.visible()
+```
+
+Las conversaciones cuyo título tiene todas las palabras de la búsqueda.
+
+### `AuthPrompt`
+
+```python
+class AuthPrompt
+```
+
+Un componente que pide iniciar sesión, como Zed cuando un agente lo necesita: un botón por cada forma de entrar y, mientras una está en curso, qué pasa (el navegador o una terminal está abierto), un código para escribir si lo hay, Abrir la página otra vez y Cancelar.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `title` | El título. |
+| `detail` | Una línea debajo. |
+| `methods` | Dicts con `id`, `name` y, opcionalmente, `description` e `icon`; el primero es el principal. |
+| `waiting` | El id del método en curso (`""` si no hay). |
+| `waiting_text` | Lo que se muestra mientras espera. |
+| `code` | Un código para escribir (inicio de sesión por dispositivo). |
+| `url` | La página que se abrió. |
+| `error` | Un error a mostrar. |
+| `icon_name` | El icono. |
+| `theme` | Tema. |
+| `on_pick` | Se eligió un método (`event.value` es su id). |
+| `on_cancel` | Cancelar. |
+| `on_open_url` | Abrir la página otra vez. |
+| `on_copy` | Se copió el código. |
+
+```python
+ui.AuthPrompt(title="Entrar en Gemini", methods=[{"id": "google", "name": "Entrar con Google"}], on_pick=self.sign_in)
+```
+
+### `ServiceRow`
+
+```python
+class ServiceRow
+```
+
+Un componente para algo que usa un agente (un servidor MCP, un agente externo, una skill), como las filas de los ajustes de agentes de Zed: un punto de estado, el nombre y el comando, un interruptor, un botón principal y un menú `⋯`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `name` | Nombre. |
+| `detail` | El comando o la URL, en letra monoespaciada. |
+| `summary` | Una línea sobre él. |
+| `icon_name` | El icono. |
+| `status` | `running`, `starting`, `error`, `off`, `installed`, `missing` o `update` (el color del punto). |
+| `status_text` | El tooltip del punto; se muestra bajo el nombre en errores y actualizaciones. |
+| `version` | Una versión o un origen. |
+| `enabled` | El interruptor (`None` lo oculta). |
+| `busy` | Muestra un indicador de carga. |
+| `primary` | Texto del botón principal (Actualizar, Instalar…). |
+| `actions` | Entradas `ui.MenuItem` del menú `⋯`. |
+| `theme` | Tema. |
+| `on_toggle` | Se cambió el interruptor. |
+| `on_primary` | Se pulsó el botón principal. |
+
+```python
+ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)
+```
+
+**Métodos y propiedades**
+
+#### `ServiceRow.toggle_menu`
+
+```python
+ServiceRow.toggle_menu()
+```
+
+Abre o cierra el menú de acciones de la fila.
+
+### `Catalog`
+
+```python
+class Catalog
+```
+
+Un componente para cosas que instalar con un buscador (agentes de un registro, servidores, skills…): cada fila muestra Instalar, Instalado o Actualizar a una versión nueva.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `items` | Dicts u objetos con `id`, `name` y, opcionalmente, `version`, `description`, `installed` y `update`. |
+| `busy` | El id que se está instalando (un indicador de carga). |
+| `height` | Alto de la lista. |
+| `theme` | Tema. |
+| `on_install` | Se pulsó Instalar o Actualizar (`event.value` es el id). |
+
+```python
+ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))
+```
+
+**Métodos y propiedades**
+
+#### `Catalog.set_query`
+
+```python
+Catalog.set_query(text)
+```
+
+Filtra el catálogo por `text`.
+
+#### `Catalog.visible`
+
+```python
+Catalog.visible()
+```
+
+Los elementos cuyo id, nombre o descripción tienen todas las palabras de la búsqueda.
+
+### `context_meter`
+
+```python
+context_meter(used, limit, *, theme=None)
+```
+
+Cuánto se llenó la ventana de contexto de un modelo, como el contador de tokens de Zed: un anillo pequeño y `48k / 200k`, amarillo pasado el 80 % y rojo pasado el 95 %.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `used` | Tokens en uso. |
+| `limit` | La ventana del modelo. |
+| `theme` | Tema. |
+
+### `format_tokens`
+
+```python
+format_tokens(count)
+```
+
+Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.
+
+| Parámetro | Descripción |
+| --- | --- |
+| `count` | Tokens. |
+
 ## Selector de iconos
 
 ### `IconPicker`

@@ -2448,8 +2448,6 @@ class Designer(App):
                                          theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
-        if self.dialog == "agent_settings":
-            return agent_panel.settings_dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,
                  "new": dialogs.new_form, "add_control": dialogs.add_control, "palette": dialogs.palette,
                  "preview_theme": dialogs.preview_theme, "preview_language": dialogs.preview_language,
