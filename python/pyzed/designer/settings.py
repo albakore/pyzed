@@ -25,6 +25,8 @@ LINE_HEIGHTS = {"compact": 1.35, "standard": 1.6, "comfortable": 1.85}
 class EditorSettings:
     #: Theme of the code editor; empty to follow the designer's theme.
     theme: str = ""
+    #: Font family of the code ("" keeps IBM Plex Mono).
+    font_family: str = ""
     font_size: float = DEFAULT_FONT
     tab_size: int = 4
     show_whitespace: bool = False

@@ -45,3 +45,33 @@ pub fn load_font(source: &Bound<'_, PyAny>) -> PyResult<()> {
     load(Cow::Owned(bytes));
     Ok(())
 }
+
+/// Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`
+/// goes back to IBM Plex Sans and Mono. Takes effect on the next frame.
+#[pyfunction]
+#[pyo3(signature = (ui=None, code=None))]
+pub fn set_fonts(ui: Option<&str>, code: Option<&str>) {
+    crate::style::set_fonts(ui, code);
+}
+
+/// The font families that can be used by name: the bundled ones, those loaded with `load_font` and the
+/// system's, sorted and without repeats.
+#[pyfunction]
+pub fn font_families(py: Python<'_>) -> Vec<String> {
+    py.detach(|| {
+        ensure_loaded();
+        let mut system = iced::advanced::graphics::text::font_system()
+            .write()
+            .expect("font system lock");
+        let mut names: Vec<String> = system
+            .raw()
+            .db()
+            .faces()
+            .filter_map(|face| face.families.first().map(|(name, _)| name.clone()))
+            .filter(|name| name != crate::style::ICONS)
+            .collect();
+        names.sort_by_key(|n| n.to_lowercase());
+        names.dedup();
+        names
+    })
+}

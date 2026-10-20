@@ -98,7 +98,7 @@ quita una tecla de fábrica. Se admiten comentarios (`//`) y comas finales.
   {
     "context": "Editor",
     "bindings": {
-      "ctrl-shift-d": "editor::DuplicateLineDown",
+      "ctrl-alt-d": "editor::DuplicateLineDown",
       "ctrl-d": null
     }
   },
@@ -127,5 +127,5 @@ diseñador las pasa a `keymap.json` la primera vez que arranca.
 
 ## En tus propias apps
 
-El componente editor de código acepta el mismo tipo de keymap: `ui.editor(keymap={"ctrl-shift-d": "duplicate_line_down",
+El componente editor de código acepta el mismo tipo de keymap: `ui.editor(keymap={"ctrl-alt-d": "duplicate_line_down",
 "ctrl-d": None})`. Mira [el componente editor de código](/pyzed/es/components/code/#varios-cursores-y-los-atajos-de-zed).

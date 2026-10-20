@@ -213,6 +213,8 @@ class Designer(App):
         self.code_error: Optional[str] = None
         self.code_revision = 0
         self.assist = CodeAssist(self, servers=language_servers)
+        self.scale = self.prefs.ui_scale
+        self.apply_fonts()
         # project files open in the code editor (tabs of the Code panel)
         self.buffers = _files.Buffers(self)
         # the AI agent (Agent panel, inline assist)
@@ -1269,6 +1271,26 @@ class Designer(App):
             setattr(self, key, value)
         _logs.event("designer", "Setting %s = %r", key, value)
         preferences.save(self.prefs)
+
+    def apply_fonts(self) -> None:
+        """Makes the interface and the code use the fonts chosen in the settings (IBM Plex when none)."""
+        _core.set_fonts(ui=self.prefs.ui_font or None, code=self.assist.settings.font_family or None)
+
+    def set_ui_font(self, family: str) -> None:
+        """The interface font: a family name, or ``""`` for the default (IBM Plex Sans)."""
+        self.set_pref("ui_font", family)
+        self.apply_fonts()
+
+    def set_ui_scale(self, scale: float) -> None:
+        """The size of the whole interface (1.0 is 100%), applied at once to every window."""
+        low, high, _ = preferences.UI_SCALE
+        scale = min(max(round(float(scale), 2), low), high)
+        self.scale = scale
+        self.set_pref("ui_scale", scale)
+
+    def zoom_ui(self, step: int) -> None:
+        """Zooms the interface in (1), out (-1) or back to 100% (0)."""
+        self.set_ui_scale(1.0 if step == 0 else self.scale + step * preferences.UI_SCALE[2])
 
     def toggle_pref(self, key: str) -> None:
         """Flips the boolean preference ``key`` and saves it."""

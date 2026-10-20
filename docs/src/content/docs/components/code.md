@@ -92,12 +92,12 @@ def zoom(self, step):
 
 ![Three cursors and the search results for prices](../../../assets/components/editor-multicursor.png)
 
-The editor uses Zed's default keys (Linux and Windows; <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd> on macOS):
+The editor uses Zed's and VS Code's default keys (Linux and Windows; <kbd>Cmd</kbd> instead of <kbd>Ctrl</kbd> on macOS):
 
 | Keys | Action |
 | --- | --- |
 | <kbd>Alt</kbd>+click | Add a cursor (or remove the one under the click) |
-| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Add a cursor above / below |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Select the word under the cursor, then add the next match as a cursor |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Select every match |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | One cursor on each line of the selection |
@@ -105,7 +105,8 @@ The editor uses Zed's default keys (Linux and Windows; <kbd>Cmd</kbd> instead of
 | <kbd>Esc</kbd> | Back to one cursor, then drop the selection |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Undo and redo (consecutive typing is one step) |
 | <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Move the lines up / down |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplicate the lines |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplicate the lines of every cursor above / below |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | Duplicate the selection of every cursor right after it (the line when there is none) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Delete the lines |
 | <kbd>Ctrl</kbd>+<kbd>L</kbd> | Select the line (again: the next one too) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> | Join lines |

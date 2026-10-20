@@ -1605,6 +1605,20 @@
   "Once": "Una vez",
   "Loop": "Bucle",
   "Ping-pong": "Ida y vuelta",
+  "Default ({font})": "Por defecto ({font})",
+  "Fonts and size": "Fuentes y tamaño",
+  "Interface font": "Fuente de la interfaz",
+  "Menus, panels, dialogs and the properties": "Menús, paneles, diálogos y propiedades",
+  "Interface size": "Tamaño de la interfaz",
+  "Zooms every window, like View → Zoom in and Zoom out": "Amplía todas las ventanas, como Ver → Ampliar y Reducir la interfaz",
+  "Code font": "Fuente del código",
+  "The code editor, the console and other code": "El editor de código, la consola y el resto del código",
+  "Code font size": "Tamaño de la fuente del código",
+  "Code line height": "Interlineado del código",
+  "Zoom in the interface": "Ampliar la interfaz",
+  "Zoom out the interface": "Reducir la interfaz",
+  "Reset the interface zoom": "Restablecer el zoom de la interfaz",
+  "Duplicate selection": "Duplicar selección",
   "Code with the forms": "Código con los formularios"
  }
 }

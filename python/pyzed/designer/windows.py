@@ -89,6 +89,15 @@ class DocWindow(Window):
             self.position = position
         self.title = self.window_title
 
+    @property
+    def scale(self) -> float:  # type: ignore[override]
+        """Windows of their own follow the designer's interface scale."""
+        return self.designer.scale
+
+    @scale.setter
+    def scale(self, _value: float) -> None:
+        pass
+
     def window_title(self) -> str:
         """The document in front, after a ``●`` when it has unsaved changes, or the panel in front."""
         from .docks import front
