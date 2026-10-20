@@ -413,6 +413,35 @@ def test_images_from_files_render_on_first_frame(tmp_path):
     assert read_png(out)[50][50][:3] == (0, 200, 0)
 
 
+def test_rotated_images_render(tmp_path):
+    # Rotated images used iced's widget, which uploaded big images in the background (the
+    # off-screen shot came out blank) and turned each 2048 px atlas piece on its own.
+    big = bytes((255, 0, 0, 255)) * (2400 * 1200)
+    small = bytes((255, 0, 0, 255)) * (40 * 20)
+
+    class Demo(pz.App):
+        size = (300, 150)
+
+        def view(self):
+            return pz.container(pz.row([
+                pz.image(big, size=(2400, 1200), width=120, height=60, rotation=8),
+                pz.image(small, size=(40, 20), width=120, height=60, rotation=8, radius=8),
+            ], spacing=40), center=True, width="fill", height="fill", bg="#0000ff")
+
+    out = tmp_path / "rotated.png"
+    Demo().screenshot(out, scale=1)
+    px = read_png(out)
+    def red(p):
+        return p[0] > 200 and p[2] < 60
+
+    left = sum(red(p) for row in px for p in row[:150])
+    right = sum(red(p) for row in px for p in row[150:])
+    assert left > 0.9 * 120 * 60 and right > 0.85 * 120 * 60
+    assert red(px[75][70]) and red(px[75][230])  # the centers
+    # Turned clockwise: the top-right corner of the left image drops below its box's top edge.
+    assert not red(px[47][128]) and red(px[47][16])
+
+
 def test_ui_button_style_overrides_its_defaults(monkeypatch):
     # `radius=` and friends used to clash with the values ui.button passes itself.
     assert isinstance(ui.button("Save", radius=12, padding=(4, 20), height=40), pz.Widget)
