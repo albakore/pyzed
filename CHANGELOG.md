@@ -23,7 +23,7 @@ stable version.
 ### Highlights
 
 - **Detachable panels and work layouts**: drag any panel out of Pyzed Design, stack panels together and save layouts for each kind of work.
-- **A Zed-like Agent panel**: new-thread menu, thread history, settings inside the panel, the ACP agent registry, skills, keep or reject each edit, external agent sign-in, follow-agent, a context meter and notifications.
+- **A Zed-like Agent panel**: new-thread menu, thread history, settings inside the panel, the ACP agent registry, skills, keep or reject each edit, external agent sign-in, follow-agent, a context meter, notifications, and threads and rules per project.
 - **Timeline animations**: `pz.Clip`, `pz.Track`, `pz.Call` and `AnimationPlayer`, saved as `.pzanim` and edited in the new Animation panel of `.pzform` files.
 - **Pyzed themes**: Midnight, Graphite, Forest, Rosé, Dawn and Glacier, plus property editors for each kind of value.
 - **Zed-like keymap**: `keymap.json` with contexts and a keymap editor.
@@ -42,6 +42,7 @@ stable version.
 - ✨ External agent sign-in like Zed, follow-agent, context meter and notifications. PR [#116](https://github.com/albakore/pyzed/pull/116), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
 - ✨ Pyzed theme family and property editors for each kind of value. PR [#117](https://github.com/albakore/pyzed/pull/117), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
 - ✨ Animation panel in `.pzform`. PR [#118](https://github.com/albakore/pyzed/pull/118), PR [#119](https://github.com/albakore/pyzed/pull/119) by [@albakore](https://github.com/albakore).
+- ✨ Agents work on the active project: threads per project and project rules (`AGENTS.md`, `.rules`, `CLAUDE.md`...) in `pyzed.agents.rules`. PR [#120](https://github.com/albakore/pyzed/pull/120) by [@albakore](https://github.com/albakore).
 
 ### Fixes
 
