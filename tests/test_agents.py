@@ -675,6 +675,8 @@ def _portal_request(url, method="GET", data=None, headers=None):
             return r.status, r.read().decode()
     except urllib.error.HTTPError as err:
         return err.code, ""
+    except OSError as err:  # a reset connection fails this request, not the whole sign-in
+        return None, str(err)
 
 
 def test_the_local_sign_in_page_takes_a_key_only_from_itself():
