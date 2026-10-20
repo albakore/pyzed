@@ -31,6 +31,9 @@ How to add a component to the library
    ``notes``     Optional ``T(en, es)`` Markdown shown as "Tips".
    ``related``   Optional list of other slugs.
    ``badge``     Optional: ``"new"`` adds a badge in the sidebar and the gallery.
+   ``clip``      Optional ``{"name": ..., "alt": T(...), "caption": T(...)}``: a recording of
+                 ``docs/public/media/manifest.json`` (made by ``docs/scripts/record.py``) shown
+                 under the preview.
 
 3. Render and generate, then build the site::
 
@@ -107,6 +110,13 @@ def add(**entry):
 
 add(
     slug="button",
+    clip={"name": "hover",
+          "alt": T("A pointer moving over Pyzed controls: buttons light up on hover and press, a tooltip appears, "
+                   "a switch, a check box and a slider change",
+                   "Un puntero pasando sobre controles de Pyzed: los botones se iluminan al pasar y al pulsar, "
+                   "aparece un tooltip y cambian un interruptor, una casilla y un deslizador"),
+          "caption": T("Hover and press states with a real pointer.",
+                       "Estados al pasar el puntero y al pulsar, con un puntero real.")},
     name=T("Button", "Botón"),
     category="actions",
     api=["pyzed.ui.button"],
@@ -652,6 +662,12 @@ add(
 
 add(
     slug="input",
+    clip={"name": "form-validation",
+          "alt": T("A sign-in form: a wrong email is flagged with Enter a valid email, then fixed, and Sign in runs",
+                   "Un formulario de inicio de sesión: un email incorrecto se marca con Enter a valid email, se "
+                   "corrige y Sign in se ejecuta"),
+          "caption": T("Inputs with validation: the email is checked as you type.",
+                       "Campos con validación: el email se comprueba mientras escribes.")},
     name=T("Input", "Campo de texto"),
     category="forms",
     api=["pyzed.ui.input"],
