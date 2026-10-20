@@ -47,8 +47,8 @@ def test_zooming_the_interface_stays_in_range():
 
 
 def test_panel_windows_follow_the_interface_size():
-    from pyzed.designer.dock_windows import DockWindow
+    from pyzed.designer.windows import DocWindow, Pane
 
     d = Designer(language_servers=False)
     d.set_ui_scale(1.25)
-    assert DockWindow(d, "window:1").scale == 1.25
+    assert DocWindow(d, Pane(place="window:1")).scale == 1.25

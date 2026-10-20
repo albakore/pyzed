@@ -96,7 +96,7 @@ ACTIONS: Tuple[Action, ...] = (
     Action("logs", "Logs", "View", lambda d: d.show_panel("logs"), "scroll-text", "ctrl-shift-u", global_keys=True),
     Action("tab_to_window", "Move tab to new window", "View", lambda d: d.panes.detach_active(),
            "square-arrow-out-up-right", None,
-           lambda d: d.panes.active is d.panes.main or len(d.panes.active.docs) > 1),
+           lambda d: d.panes.active.window is None or len(d.panes.active.docs) > 1),
     Action("tab_to_main", "Move tab to main window", "View", lambda d: d.panes.to_main(), "app-window", None,
            lambda d: d.panes.active is not d.panes.main),
     Action("toolbar", "Toolbar", "View", lambda d: d.toggle_pref("show_toolbar"), "wrench",

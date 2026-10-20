@@ -92,9 +92,10 @@ en la [referencia de la API](/pyzed/es/reference/ui/).
 ## ② ④ ⑤ Docks y paneles
 
 Los paneles viven en **docks** alrededor del centro: izquierdo, derecho, inferior y uno superior que está vacío hasta
-que mueves un panel allí. Cada dock muestra un panel a la vez, con una pestaña por panel. Cualquier panel puede además
-salir de los docks y flotar en una **ventana propia**, solo o apilado con otros paneles, igual que las pestañas de
-documentos.
+que mueves un panel allí. Cada dock muestra una pestaña a la vez. Cualquier sitio acepta cualquier pestaña: un panel
+puede ir junto a las pestañas de formularios en el centro (por ejemplo, el editor de código al lado de tus
+formularios), un formulario puede ir a un dock lateral, y cualquier pestaña puede flotar en una **ventana propia**,
+sola o apilada con otras.
 
 | Panel | Dock | Para qué sirve | Manual |
 | --- | --- | --- | --- |
@@ -109,24 +110,30 @@ documentos.
 
 Qué puedes hacer con ellos:
 
-- **Cambiar** de panel con las pestañas de arriba de cada dock.
-- **Arrastrar** la pestaña de un panel: a lo largo de su fila para reordenarla, sobre las pestañas de otro dock o
-  sobre el área de cualquier dock para moverlo allí (el dock de destino se ilumina), o fuera de la ventana para
-  abrirlo en una **ventana propia**. Suelta más pestañas sobre esa ventana para apilarlas y arrástralas de vuelta sobre
-  la ventana principal para acoplarlas otra vez.
+- **Cambiar** con las pestañas de arriba de cada dock.
+- **Arrastrar** cualquier pestaña, de un panel o de un formulario: a lo largo de su fila para reordenarla, sobre otra
+  fila para apilarla allí, sobre un dock o el centro para moverla allí, o fuera de la ventana para abrirla en una
+  **ventana propia**. Mientras arrastras, una copia de la pestaña sigue al puntero, el sitio de destino se ilumina y,
+  sobre una fila, una barra marca dónde caerá. Suelta más pestañas sobre una ventana para apilarlas y arrástralas de
+  vuelta sobre la ventana principal para devolverlas.
 - **Mover** un panel desde el menú: el botón del dock al final de la fila de pestañas abre **Mover *panel* a**
-  izquierdo, derecho, inferior o superior, o **Ventana nueva**. En una ventana de paneles, el mismo botón ofrece
-  **Devolver todo a los paneles laterales**, y cerrar la ventana hace lo mismo.
+  izquierdo, derecho, inferior, superior o **Centro**, o **Ventana nueva**. La pestaña de un panel fuera de los docks
+  tiene una **×** que lo devuelve a su dock. En una ventana propia, el mismo botón ofrece **Devolver todo a los paneles
+  laterales**, y cerrar la ventana hace lo mismo: los formularios vuelven a la ventana principal y los paneles a sus
+  docks.
 - **Cambiar el tamaño** de un dock arrastrando su borde que da al lienzo.
 - **Ocultar** un dock con su **×**, o alternarlo: <kbd>Ctrl</kbd>+<kbd>B</kbd> (izquierdo),
   <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> (derecho), <kbd>Ctrl</kbd>+<kbd>J</kbd> (inferior).
 - **Guardar la distribución** con **Ver → Guardar la distribución como…** y cambiar entre distribuciones desde
   **Ver → Distribuciones**. Pyzed trae **Por defecto**, **Programar** (el código junto a las propiedades),
-  **Concentración** (solo el lienzo y el dock derecho) y **Eventos y código**; **Eliminar esta distribución** borra
-  una tuya.
+  **Concentración** (solo el lienzo y el dock derecho), **Eventos y código** y **Código con los formularios** (el
+  editor de código como una pestaña junto a los formularios y los eventos a la izquierda); **Eliminar esta
+  distribución** borra una tuya.
 - **Restablecer** todo con **Ver → Restablecer los paneles**. Dónde está cada panel, el orden de las pestañas, el tamaño
   de cada dock y las ventanas de paneles (con su tamaño y posición) se guardan con tus ajustes y se reabren la próxima
   vez.
+
+<Media clip="designer-tabs-anywhere" alt="El panel Eventos arrastrado junto a las pestañas de formularios, un formulario arrastrado al dock izquierdo y ambos devueltos, con el destino iluminado y una copia de la pestaña bajo el puntero" caption="Cualquier pestaña va a cualquier sitio: el destino se ilumina mientras arrastras." />
 
 <Media src={dockMenu} alt="El menú del dock con Mover Propiedades al dock izquierdo, inferior o superior" caption="Mueve cualquier panel a otro dock desde el botón del dock." size="narrow" />
 
@@ -145,13 +152,16 @@ Python, la referencia o las notas de la versión. El final de la fila de pestañ
 (**Vista de formulario**, **Vista de componente**...).
 
 - **Haz clic** en una pestaña para cambiar; cada documento conserva su selección y su historial de deshacer.
-- **Arrastra** una pestaña por la fila para reordenarla.
+- **Arrastra** una pestaña por la fila para reordenarla, o sobre un dock para trabajar en ese formulario al lado del
+  del centro.
 - **Arrastra una pestaña fuera** de la ventana para darle una ventana propia, con sus pestañas, barra de herramientas y
   lienzo. Suéltala sobre otra ventana de Pyzed Design para apilarla allí. **Ver → Mover la pestaña a una ventana
   nueva** y **Mover la pestaña a la ventana principal** hacen lo mismo con el teclado (útil en Wayland, donde las
   apps no pueden saber dónde están sus ventanas).
-- Los paneles se quedan en la ventana principal y siguen a la ventana que usaste por última vez. Al cerrar una ventana
-  de documento, sus pestañas vuelven a la ventana principal.
+- Los paneles también pueden compartir esta fila: suelta aquí la pestaña **Código** o **Consola** y quedará entre los
+  formularios.
+- Los paneles siguen al formulario que usaste por última vez, esté donde esté. Al cerrar una ventana de documentos,
+  sus pestañas vuelven a la ventana principal.
 
 <Media src={tabWindow} alt="Un shader arrastrado fuera de la ventana principal a una segunda ventana de Pyzed Design" caption="Un shader en su propia ventana, junto a la ventana principal con el formulario." size="wide" />
 
