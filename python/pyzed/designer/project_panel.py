@@ -214,6 +214,7 @@ class ProjectController:
 
     def clone_target(self) -> Optional[Path]:
         """The folder ``clone`` creates: the repository's name under ``clone_folder``."""
+        # a URL, an scp-like address (git@host:user/app.git) or a local folder, with / or \ (Windows)
         name = re.split(r"[/\\]", self.clone_url.strip().rstrip("/\\"))[-1].rsplit(":", 1)[-1]
         name = name[:-4] if name.endswith(".git") else name
         return Path(self.clone_folder.strip() or ".").expanduser() / name if name else None
