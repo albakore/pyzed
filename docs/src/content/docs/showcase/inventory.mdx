@@ -2,19 +2,20 @@
 title: "RPG inventory"
 description: "An RPG inventory screen in Python where item rarity glows and blooms, with an animated glass details panel over a shader of embers."
 sidebar:
-  order: 3
+  order: 7
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from './_run.mdx';
 import source from '../../../../../examples/showcase/inventory.py?raw';
 
 An inventory where rarity is light: rare items glow, epic and legendary items bloom, and legendary ones pulse. Clicking an item swaps the glass details panel with `presence`, and its stat bars grow with `transition(width=...)`.
 
 ![RPG inventory](../../../assets/showcase/inventory.png)
 
-```sh
-python examples/showcase/inventory.py
-```
+<Run file="examples/showcase/inventory.py" />
+
+The embers behind it are the `embers.pzshad` graph; see it in [Shaders and effects](/pyzed/showcase/shaders/#every-graph).
 
 ## How it is made
 
@@ -42,6 +43,12 @@ bar.transition(width=240 * value, duration=320, easing="ease_out_cubic")
 ```python
 pz.presence(panel, key=self.selected, enter="fade_in_right", exit="fade_out")
 ```
+
+## Try this
+
+- Add an item with a new rarity, and a color and light for it in the rarity table.
+- Make the stat bars grow slower by raising the transition's `duration`.
+- Change the `rise` variable of the embers shader to make the sparks faster.
 
 ## Full code
 

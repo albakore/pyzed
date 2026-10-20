@@ -1,0 +1,177 @@
+---
+title: Dashboards y apps de datos
+description: "Apps de escritorio en Python con muchos datos hechas con Pyzed: un panel de administración con KPI y gráficos, una tabla de datos con filtros y páginas, un tablero kanban, un chat de equipo, un reproductor musical, un layout de IDE y una app de contactos sobre SQLite."
+sidebar:
+  order: 3
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+
+import dashboardDark from '../../../../assets/blocks/dashboard-dark.png';
+import dashboardLight from '../../../../assets/blocks/dashboard-light.png';
+import tableDark from '../../../../assets/blocks/data_table-dark.png';
+import tableLight from '../../../../assets/blocks/data_table-light.png';
+import kanbanDark from '../../../../assets/blocks/kanban-dark.png';
+import kanbanLight from '../../../../assets/blocks/kanban-light.png';
+import chatDark from '../../../../assets/blocks/chat-dark.png';
+import chatLight from '../../../../assets/blocks/chat-light.png';
+import musicDark from '../../../../assets/blocks/music_player-dark.png';
+import musicLight from '../../../../assets/blocks/music_player-light.png';
+import explorerDark from '../../../../assets/blocks/file_explorer-dark.png';
+import explorerLight from '../../../../assets/blocks/file_explorer-light.png';
+import libraryShot from '../../../../assets/tutorials/lists-tables.png';
+import contactsShot from '../../../../assets/tutorials/contacts-backend.png';
+
+import contactsMain from '../../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
+import contactsDb from '../../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+
+Pantallas llenas de números, tablas y listas: el tipo de herramienta interna, panel de administración o app
+multimedia que son muchos programas de escritorio. Los seis primeros son [Bloques](/pyzed/es/blocks/), pantallas
+completas escritas con la [biblioteca de componentes](/pyzed/es/library/) que puedes copiar y adaptar; la página de
+cada bloque tiene su código completo y notas sobre qué cambiar. Cada captura sigue el tema de este sitio: cambia
+entre claro y oscuro arriba de la página para verlas en los dos.
+
+## Dashboard
+
+Un panel de administración: navegación lateral, tarjetas de KPI con tendencias, un gráfico de ingresos, fuentes de
+tráfico y una tabla de pedidos recientes.
+
+<Media src={dashboardDark} light={dashboardLight} alt="Un dashboard con tarjetas de KPI, un gráfico de ingresos y pedidos recientes" size="wide" />
+
+- Las tarjetas de KPI son `ui.stat` con un `delta` y una pequeña línea de `trend`. Los gráficos también son
+  componentes listos: `ui.bar_chart` para los ingresos (su rango es un control `ui.segmented`) y `ui.donut` para
+  las fuentes de tráfico, con una barra `ui.progress` para el objetivo del mes.
+- La barra lateral cambia de página cambiando un atributo del estado: mira
+  [Una app con varias vistas](/pyzed/es/tutorials/intermediate/navigation/).
+
+<Run file="examples/blocks/dashboard.py" lang="es" />
+
+El código: [bloque Dashboard](/pyzed/es/blocks/dashboard/).
+
+## Tabla de datos
+
+Una tabla de miembros de un equipo con búsqueda, filtros por estado, columnas ordenables, selección de filas,
+páginas y una acción de exportar.
+
+<Media src={tableDark} light={tableLight} alt="Una tabla de miembros con filtros, selección y páginas" size="wide" />
+
+<Run file="examples/blocks/data_table.py" lang="es" />
+
+El código: [bloque Data table](/pyzed/es/blocks/data-table/). Para aprender las partes una a una (buscar, ordenar,
+seleccionar, mostrar los detalles), sigue [Listas y tablas con datos](/pyzed/es/tutorials/intermediate/lists-tables/),
+que construye esta pequeña biblioteca de libros:
+
+<Media src={libraryShot} alt="Una biblioteca de libros: una tabla con búsqueda y orden, y los detalles del libro elegido" />
+
+## Tablero kanban
+
+Un tablero de proyecto con columnas, tarjetas con etiquetas, responsables, progreso y botones para mover las
+tarjetas.
+
+<Media src={kanbanDark} light={kanbanLight} alt="Un tablero kanban con tres columnas de tarjetas" size="wide" />
+
+<Run file="examples/blocks/kanban.py" lang="es" />
+
+El código: [bloque Kanban](/pyzed/es/blocks/kanban/).
+
+## Chat de equipo
+
+Una mensajería con canales, mensajes directos, un hilo de mensajes y una caja para escribir.
+
+<Media src={chatDark} light={chatLight} alt="Un chat de equipo con canales y una conversación" size="wide" />
+
+<Run file="examples/blocks/chat.py" lang="es" />
+
+El código: [bloque Chat](/pyzed/es/blocks/chat/). Para un chat que recibe respuestas en streaming de un modelo de
+IA, mira el [Chat con IA](/pyzed/es/showcase/apps/#chat-con-ia).
+
+## Reproductor musical
+
+Una barra lateral con la biblioteca, una página de álbum con su lista de canciones y una barra de reproducción
+cuyo progreso avanza mientras suena una canción.
+
+<Media src={musicDark} light={musicLight} alt="Un reproductor musical con un álbum y sus canciones" size="wide" />
+
+<Run file="examples/blocks/music_player.py" lang="es" />
+
+El código: [bloque Music player](/pyzed/es/blocks/music-player/).
+
+## Layout de IDE
+
+La disposición de un editor de código: un árbol de proyecto, pestañas con migas de pan, una terminal, un panel de
+estructura y una barra de estado.
+
+<Media src={explorerDark} light={explorerLight} alt="Un layout de IDE con árbol de proyecto, editor y terminal" size="wide" />
+
+<Run file="examples/blocks/file_explorer.py" lang="es" />
+
+El código: [bloque File explorer](/pyzed/es/blocks/file-explorer/). Un editor que funciona con la misma idea es el
+[Editor de proyectos](/pyzed/es/showcase/apps/#editor-de-proyectos).
+
+## Contactos sobre SQLite
+
+Una app de contactos sobre [SQLAlchemy](https://www.sqlalchemy.org) 2.0 con **20.000 filas** en una tabla virtual.
+La búsqueda y el orden corren como consultas SQL en un hilo de trabajo (`Command.perform`), así que la ventana
+nunca espera a la base de datos.
+
+{/* media: showcase/sqlalchemy_contacts (escribir en el buscador sobre 20.000 filas) */}
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS y Linux"
+		cd examples/integrations/sqlalchemy_contacts
+		uv run main.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS / Linux"
+		cd examples/integrations/sqlalchemy_contacts
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install pyzed-ui "sqlalchemy>=2.0"
+		python main.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		cd examples\integrations\sqlalchemy_contacts
+		py -m venv .venv
+		.venv\Scripts\Activate.ps1
+		python -m pip install pyzed-ui "sqlalchemy>=2.0"
+		python main.py
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="Con pyzed-ui y SQLAlchemy ya instalados"
+		cd examples/integrations/sqlalchemy_contacts
+		python main.py
+		```
+	</TabItem>
+</Tabs>
+
+<details>
+<summary>Código completo: <code>db.py</code> y <code>main.py</code></summary>
+<Code code={contactsDb} lang="py" title="examples/integrations/sqlalchemy_contacts/db.py" />
+<Code code={contactsMain} lang="py" title="examples/integrations/sqlalchemy_contacts/main.py" />
+</details>
+
+La explicación está en [SQLAlchemy](/pyzed/es/integrations/sqlalchemy/). Sin ninguna biblioteca, el tutorial
+[Conectar un backend](/pyzed/es/tutorials/advanced/backend/) construye una app de contactos más pequeña sobre el
+módulo `sqlite3` que viene con Python, con una clase repositorio, un spinner y errores amables:
+
+<Media src={contactsShot} alt="Una lista de contactos cargada desde SQLite, con un buscador y un formulario para añadir" />
+
+## Más
+
+- [Datos en vivo](/pyzed/es/showcase/apps/#datos-en-vivo): un panel de cotizaciones alimentado por un generador
+  async.
+- [Centro de control de cristal](/pyzed/es/showcase/glass-dashboard/): un dashboard con tarjetas de cristal
+  esmerilado sobre un shader en movimiento.
+- [Integraciones](/pyzed/es/integrations/overview/): FastAPI, Django, SQLModel, httpx y más, cada una con una app de
+  escritorio.
+
+<Aside type="note" title="Sobre esta página">
+Los bloques se regeneran desde `examples/blocks` y las herramientas de la documentación los dibujan en los dos
+temas, así que las capturas coinciden con el código actual.
+</Aside>

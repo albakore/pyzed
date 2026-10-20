@@ -7,8 +7,8 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/games/snake.py?raw';
-import Commands from '../../../../components/Commands.astro';
 
 Snake se mueve en una cuadrícula, celda a celda, así que no necesita un bucle por
 fotograma: basta un temporizador que salte unas cuantas veces por segundo. Aprenderás a
@@ -16,6 +16,14 @@ guardar el estado del juego en la app, avanzarlo con `pz.every`, girar con `on_k
 el tablero en un canvas y poner un menú encima con `pz.stack`.
 
 ![Snake](../../../../assets/games/snake.png)
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| El Snake clásico: una cuadrícula, un temporizador, una cola de teclas y una tarjeta de game over | 30 minutos | Intermedio | El tutorial de la [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/), o algunas apps de Pyzed propias |
+
+Juégalo primero:
+
+<Run file="examples/games/snake.py" lang="es" />
 
 <Steps>
 
@@ -155,8 +163,3 @@ jugadores con WASD y las flechas.
 
 <Code code={source} lang="py" title="examples/games/snake.py" />
 
-<Commands
-	uv={`uv run python examples/games/snake.py`}
-	pip={`python examples/games/snake.py`}
-	python={`{py} examples/games/snake.py`}
-/>

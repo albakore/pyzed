@@ -1,0 +1,186 @@
+---
+title: Tu primera ventana en Pyzed Design
+description: "Dibuja tu primera ventana de escritorio con Pyzed Design, el diseñador visual: arrastra controles, cambia sus propiedades y ejecuta el formulario con F5, sin escribir código."
+sidebar:
+  order: 0
+  badge:
+    text: Sin código
+    variant: success
+---
+
+import { Aside, Code, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import newDialog from '../../../../../../screenshots/designer-new.png';
+import placing from '../../../../../../screenshots/editor-placing.png';
+import events from '../../../../../../screenshots/editor-events.png';
+import running from '../../../../../assets/tutorials/designer-hello.png';
+import handlers from '../../../../../../../examples/tutorial/designer/hello.py?raw';
+
+Vas a construir una ventana pequeña que te saluda por tu nombre. La vas a **dibujar** con el mouse, como en
+Visual Basic o Qt Designer, y a ejecutarla con una tecla. No hay que escribir código hasta el último paso (que es
+opcional), y ese paso es una línea.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una ventana con un título, un cuadro de texto y un botón | 15 minutos | Básico · sin código | Pyzed Design (abajo) |
+
+## Qué vas a aprender
+
+- Abrir Pyzed Design y crear un **formulario** (una ventana de tu app).
+- Colocar controles desde las **Herramientas** y cambiarlos en el panel **Propiedades**.
+- Hacer que un control se estire cuando la ventana crece, con **anclajes**.
+- Guardar y **ejecutar** el formulario con <kbd>F5</kbd>.
+- Conectar un botón a un **manejador de eventos** de Python (opcional).
+
+<Media src={running} alt="El formulario terminado en ejecución: Hello, Ada!" caption="Lo que tendrás al final: una ventana nativa de verdad." eager />
+
+## Antes de empezar
+
+Pyzed Design es el editor visual de Pyzed. Instálalo de una de estas formas:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS y Linux"
+		uv tool install "pyzed-ui[designer]"   # instala el comando pyzed
+		pyzed design hello.pzform
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS y Linux"
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install "pyzed-ui[designer]"
+		pyzed design hello.pzform
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py -m venv .venv
+		.venv\Scripts\Activate.ps1
+		python -m pip install "pyzed-ui[designer]"
+		pyzed design hello.pzform
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="Con Pyzed ya instalado"
+		python -m pyzed.designer hello.pzform   # lo mismo, sin el comando pyzed en el PATH
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="tip" title="¿No tienes Python?">
+Descarga la app **Pyzed Design** desde la página de [Descarga](/pyzed/es/download/). Trae su propio Python y `uv`,
+así que no hay que instalar nada más.
+</Aside>
+
+<Aside type="note" title="El editor en español">
+Pyzed Design usa el idioma de tu sistema. En esta página los nombres de paneles y propiedades aparecen en español,
+con el nombre en inglés entre paréntesis la primera vez, por si tu editor está en inglés.
+</Aside>
+
+## Pasos
+
+<Steps>
+
+1. **Crea el formulario.** En Pyzed Design pulsa <kbd>Ctrl</kbd>+<kbd>N</kbd> (o **☰ → Nueva**). Elige la
+   tarjeta **Formulario** (*Form*), escribe `hello` como **Nombre** (*Name*), `Hello` como **Título** (*Title*),
+   deja la plantilla **En blanco** (*Blank*) y pulsa **Crear** (*Create*). Si abriste el editor con
+   `pyzed design hello.pzform`, el formulario vacío ya está abierto.
+
+   <Media src={newDialog} alt="El diálogo Nueva con las tarjetas Formulario, Componente y Shader" caption="El diálogo Nueva: un formulario, un componente o un shader." />
+
+2. **Añade un título.** En las **Herramientas** (*Toolbox*) de la izquierda, busca **Título** (*Heading*;
+   escríbelo en **Buscar componentes…**) y arrástralo al formulario. Con él seleccionado, mira el panel
+   **Propiedades** (*Properties*) de la derecha y cambia:
+
+   - **Nombre**: `headline` (pulsa <kbd>Enter</kbd>). Así lo llamará tu código más adelante.
+   - **Texto** (*Text*): `Hello, Pyzed!`
+
+3. **Añade una etiqueta y un cuadro de texto.** Arrastra una **Etiqueta de texto** (*Label*) debajo del título y
+   pon en su **Texto** `Type your name and press the button.` y en su **Color** `text_muted` (un gris más suave que
+   sigue al tema). Luego arrastra un **Cuadro de texto** (*Text box*) debajo, llámalo `your_name` y pon en su
+   **Texto de ayuda** (*Placeholder*) `Your name` y en su **Icono** (*Icon*) `user`.
+
+   <Media src={placing} alt="Colocando un botón al arrastrar un rectángulo en el formulario" caption="Haz clic en un control de las Herramientas y luego haz clic o arrastra un rectángulo en el formulario." />
+
+4. **Añade el botón.** Arrastra un **Botón** (*Button*) debajo del cuadro de texto, llámalo `greet`, pon en su
+   **Texto** `Greet`, en su **Variante** (*Variant*) `solid` y en su **Icono** `hand`.
+
+5. **Alinea todo.** Arrastra los controles hasta que las **guías inteligentes** rojas muestren que sus bordes
+   izquierdos coinciden. Selecciona varios (arrastra un recuadro alrededor) y usa **Alinear a la izquierda**
+   (*Align left*) en la barra de herramientas para una línea perfecta.
+
+6. **Haz que se estire.** Selecciona el cuadro de texto y abre la sección **Posición** (*Position*) de
+   Propiedades. En la cuadrícula de presets de anclaje elige el que estira a **izquierda y derecha**. Haz lo mismo
+   con el título y la etiqueta. Para el botón elige **arriba · derecha**, así sigue al borde derecho.
+
+7. **Guarda y ejecuta.** Pulsa <kbd>Ctrl</kbd>+<kbd>S</kbd>: el editor escribe `hello.pzform` (el diseño) y
+   `hello.py` (su código, todavía vacío). Pulsa <kbd>F5</kbd>: tu formulario se abre como una ventana de verdad.
+   Cambia su tamaño y mira cómo se estira el cuadro de texto.
+
+</Steps>
+
+<Aside type="caution" title="Hay nombres ocupados">
+Un control no puede llamarse `name`, `title`, `size`, `data` ni `window`: tu código usa esas palabras para el
+propio formulario (`form.title` es el título de la ventana). Por eso el cuadro de texto es `your_name` y el título
+`headline`.
+</Aside>
+
+{/* media: tutorials/first-window-drag (una grabación corta: arrastrar un título, un cuadro de texto y un botón, cambiar su texto, pulsar F5) */}
+
+## Extra: que el botón haga algo
+
+<Steps>
+
+1. **Haz doble clic en el botón** en el lienzo. El panel **Eventos** (*Events*) conecta su evento `click` a una
+   función nueva, `greet_click`, y la abre en el **editor de código** de abajo.
+
+   <Media src={events} alt="El panel Eventos con un evento conectado a su manejador" caption="Panel Eventos: haz doble clic en un evento (o en el control) para escribir su código." />
+
+2. **Escribe una línea** (dos, si quieres) dentro de la función:
+
+   ```python
+   def greet_click(form, event):
+       form.headline.text = f"Hello, {form.your_name.text}!"
+   ```
+
+   `form` es la ventana en ejecución: cada control es un atributo (`form.your_name`), y al cambiar una propiedad
+   (`.text`) se redibuja enseguida. Escribe `form.` y el editor te lista tus controles.
+
+3. **Conecta también Enter.** Selecciona el cuadro de texto, abre **Eventos** y haz doble clic en su evento
+   `submit` (pulsar <kbd>Enter</kbd>). En la nueva función `your_name_submit`, llama al manejador del botón:
+
+   ```python
+   def your_name_submit(form, event):
+       return greet_click(form, event)
+   ```
+
+4. **Guarda** (<kbd>Ctrl</kbd>+<kbd>S</kbd>). Si el formulario sigue en ejecución se actualiza en el sitio; si no,
+   pulsa <kbd>F5</kbd> otra vez. Escribe tu nombre y pulsa **Greet**.
+
+</Steps>
+
+## Los archivos terminados
+
+El formulario son dos archivos juntos: `hello.pzform` (un JSON que describe la ventana, lo escribe el diseñador) y
+`hello.py` (tu código). Los dos están en
+[`examples/tutorial/designer`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/designer).
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/hello.py" />
+
+Ejecuta el ejemplo terminado sin abrir el diseñador:
+
+<Run file="examples/tutorial/designer/hello.pzform" form lang="es" />
+
+<Aside type="note" title="De dónde vienen las ideas">
+El lienzo, las herramientas y la grilla de propiedades siguen a los diseñadores RAD clásicos (Visual Basic, el
+diseñador de WinForms, Qt Designer); los anclajes funcionan como los de WinForms, Godot y Unreal Engine. El aspecto
+del editor está inspirado en el editor de código Zed.
+</Aside>
+
+## Siguiente
+
+- [Un formulario que hace algo](/pyzed/es/tutorials/basic/first-form/): varios campos, validación y la consola.
+- [El manual de Pyzed Design](/pyzed/es/editor/): cada panel del editor en detalle.
+- [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/): todas las formas de colocar, seleccionar y alinear
+  controles.

@@ -10,7 +10,7 @@ sidebar:
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
-import Commands from '../../../components/Commands.astro';
+import Run from '../showcase/_run.mdx';
 
 Pyzed is a UI library, but everything a 2D game needs is already in it: a GPU-drawn
 `pz.canvas`, a loop that runs once per displayed frame, the keys held down right now, and
@@ -26,27 +26,15 @@ below grow in difficulty and are complete, playable programs in
 	<LinkCard title="3. Neon Invaders" href="/pyzed/games/neon-invaders/" description="Pixel-art sprites, waves, power-ups, neon glow and a glass HUD with bloom." />
 </CardGrid>
 
-<Commands
-	uv={`
-		uv run python examples/games/snake.py
-		uv run python examples/games/breakout.py
-		uv run python examples/games/neon_invaders.py
-	`}
-	pip={`
-		{venv}
-		{activate}
-		pip install pyzed-ui
-		python examples/games/snake.py
-		python examples/games/breakout.py
-		python examples/games/neon_invaders.py
-	`}
-	python={`
-		{py} -m pip install pyzed-ui
-		{py} examples/games/snake.py
-		{py} examples/games/breakout.py
-		{py} examples/games/neon_invaders.py
-	`}
-/>
+Run any of them from the repository folder; change the file name for the other two:
+
+<Run file="examples/games/neon_invaders.py" />
+
+<Aside type="tip" title="New to game loops?">
+[A game loop](/pyzed/tutorials/advanced/game-loop/) builds a small game, Dodge, in one sitting: a frame loop, held
+keys, collisions, glow, particles and screen shake. It is the shortest way into the three games above. For a
+simulation instead of a game, see [Game of Life](/pyzed/showcase/apps/#game-of-life).
+</Aside>
 
 ## The building blocks
 

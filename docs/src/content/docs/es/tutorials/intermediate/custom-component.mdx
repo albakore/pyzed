@@ -1,0 +1,137 @@
+---
+title: Un componente propio
+description: "Dibuja una valoración con estrellas reutilizable en la vista de componente de Pyzed Design: una propiedad pública, enlaces, manejadores de eventos, un evento propio, y úsala en un formulario y en código."
+sidebar:
+  order: 4
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import newComponent from '../../../../../../screenshots/designer-component-new.png';
+import bindings from '../../../../../../screenshots/designer-component-bindings.png';
+import preview from '../../../../../../screenshots/designer-component-preview.png';
+import nested from '../../../../../../screenshots/designer-component.png';
+import rating from '../../../../../../../examples/designer/components/rating.py?raw';
+import reviews from '../../../../../../../examples/designer/components/reviews.py?raw';
+
+Cuando el mismo grupo de controles aparece una y otra vez (una valoración con estrellas, una tarjeta de usuario, una
+barra de búsqueda), conviértelo en un **componente**: lo dibujas una vez, le das propiedades y eventos, y lo
+colocas donde quieras como un control más. Es la idea de las escenas de Godot y de los widget blueprints de Unreal,
+y es como las apps grandes se mantienen ordenadas.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un `Rating` de cinco estrellas que puedes poner en cualquier formulario | 35 minutos | Intermedio · Python | [Enlace de datos](/pyzed/es/tutorials/intermediate/data-binding/) |
+
+## Qué vas a aprender
+
+- Crear un componente en la **Vista de componente** (un `.pzcomp` y su clase en un `.py`).
+- Añadir una **propiedad pública** (`value`) y un **estado privado** (`clicks`).
+- **Enlazar** las propiedades de los controles a las del componente (`"solid" if value >= 3 else "ghost"`).
+- Escribir **métodos** y lanzar un **evento propio** con `self.emit("change", ...)`.
+- Probarlo en la **ventana de vista previa**, ponerlo en un formulario y usarlo desde código Python.
+
+## Pasos
+
+<Steps>
+
+1. **Crea el componente.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Componente**, llámalo `rating` y pulsa **Crear
+   componente**. El diseñador crea `rating.pzcomp` (el dibujo) y `rating.py` (la clase `Rating`) y los abre en la
+   **Vista de componente**: un marco de color de acento en lugar de los botones de ventana, y una insignia
+   **Componente**.
+
+   <Media src={newComponent} alt="El diálogo Nueva con la tarjeta Componente elegida" caption="Nueva → Componente: una pieza reutilizable, no una ventana." />
+
+2. **Dibújalo.** Sin nada seleccionado, pon el **Ancho** del componente en 232 y el **Alto** en 28 (sección
+   Disposición). Coloca cinco **Botones** en fila llamados `star1` … `star5`, cada uno con el icono `star`, sin
+   texto y con variante `ghost`, y una **Etiqueta de texto** llamada `caption` al final.
+
+3. **Añade las propiedades.** En la sección **Properties** del panel del componente pulsa **Public** y crea
+   `value`, de tipo `int`, con valor por defecto `3`; luego `readonly`, de tipo `bool`. Pulsa **Private** para
+   `clicks`, un `int` que solo ve el componente. La clase de `rating.py` los recibe como atributos anotados:
+
+   ```python
+   value: Annotated[int, pz.Range(0, 5)] = 3
+   readonly: bool = False
+   clicks: int = pz.state(0, doc="Times the user picked a rating")
+   ```
+
+4. **Enlaza las estrellas.** Selecciona `star3`, abre **Bindings**, elige **variant** y luego **Expression…**:
+
+   ```python
+   "solid" if value >= 3 else "ghost"
+   ```
+
+   Haz lo mismo con las otras estrellas (cada una con su número) y enlaza `caption.text` a `f"{value} / 5"`. Cambia
+   `value` en el panel: las estrellas se encienden en el lienzo.
+
+   <Media src={bindings} alt="La sección Bindings que une una propiedad de un control con la propiedad del componente" caption="Los enlaces mantienen los controles al día con las propiedades del componente." />
+
+5. **Añade el evento propio.** En **Custom events** pulsa **Event**, llámalo `change` y descríbelo: *A star was
+   picked (event.value is the rating)*.
+
+6. **Escribe la lógica.** Añade un método `pick` (escribe el nombre y pulsa **+ Method**) y haz doble clic en cada
+   estrella para escribir su manejador de clic. En un componente los manejadores son métodos y los controles son
+   `self.<nombre>`:
+
+   ```python
+   def star1_click(self, event):
+       return self.pick(1)
+
+   def pick(self, stars):
+       """Lights stars stars and tells the parent."""
+       if self.readonly:
+           return None
+       self.value = stars
+       self.clicks += 1
+       return self.emit("change", stars)
+   ```
+
+7. **Pruébalo solo.** Pulsa <kbd>F5</kbd>: el componente se abre en una **ventana de vista previa** que lista cada
+   evento propio que lanza. Haz clic en las estrellas y mira llegar `change`.
+
+   <Media src={preview} alt="La ventana de vista previa de un componente, con su registro de eventos" caption="F5 sobre un componente: una vista previa con registro de eventos." />
+
+8. **Úsalo en un formulario.** Guarda y abre (o crea) un formulario: `Rating` ya está en las **Herramientas**, en
+   su categoría. Pon uno, añade una **Etiqueta de texto** llamada `status`, selecciona la valoración y, en
+   **Eventos**, haz doble clic en `change`:
+
+   ```python
+   def rating1_change(form, event):
+       form.status.text = f"You gave it {event.value} stars"   # event.value es lo que envió emit()
+   ```
+
+   Haz doble clic en un componente colocado para abrirlo en su propia pestaña; los cambios aparecen en cada
+   formulario que lo usa.
+
+</Steps>
+
+<Media src={nested} alt="Un componente ProfileCard que contiene un componente Rating" caption="Los componentes se anidan: esta ProfileCard contiene un Rating, como escenas dentro de escenas en Godot." />
+
+<Aside type="tip" title="La misma clase sirve en código">
+Un componente diseñado **es** un `pz.Component`. Impórtalo y úsalo en cualquier app:
+`Rating(value=self.stars, on_change=lambda e: setattr(self, "stars", e.value))`. También puedes escribir
+componentes enteramente a mano: mira [Componentes](/pyzed/es/guides/components/).
+</Aside>
+
+## Código completo
+
+Los componentes terminados (incluida una `ProfileCard` que contiene un `Rating`, y una `TeamCard` que hereda de
+ella) están en [`examples/designer/components`](https://github.com/albakore/pyzed/tree/main/examples/designer/components).
+
+<Code code={rating} lang="python" title="examples/designer/components/rating.py" />
+
+<Code code={reviews} lang="python" title="examples/designer/components/reviews.py (un formulario que usa dos tarjetas)" />
+
+Ejecuta la vista previa del componente, o el formulario que lo usa:
+
+<Run file="examples/designer/components/rating.pzcomp" form lang="es" />
+
+<Run file="examples/designer/components/reviews.pzform" form lang="es" />
+
+## Siguiente
+
+- [Diseñador de componentes](/pyzed/es/editor/component-designer/): cada sección del panel del componente, tipos de
+  propiedad, anidación, componentes adaptables y herencia.
+- [Tareas en segundo plano](/pyzed/es/tutorials/intermediate/background-tasks/).

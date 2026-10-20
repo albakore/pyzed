@@ -1,0 +1,133 @@
+---
+title: Un efecto de shader desde la vista de shader
+description: "Crea un fondo animado por GPU en la vista de shader de Pyzed Design a partir de una plantilla, ajusta sus nodos y variables, y ponlo detrás de un formulario cuyos botones lo cambian."
+sidebar:
+  order: 6
+  badge:
+    text: GPU
+    variant: note
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/designer-welcome.png';
+import newShader from '../../../../../../screenshots/designer-shader-new.png';
+import shaderView from '../../../../../../screenshots/designer-shader.png';
+import shaderPreview from '../../../../../../screenshots/designer-shader-preview.png';
+import handlers from '../../../../../../../examples/tutorial/designer/welcome.py?raw';
+
+Un **shader** es un programa diminuto que la tarjeta gráfica ejecuta para cada píxel, en cada fotograma: así dibujan
+los videojuegos anillos luminosos, nubes y fuego sin ir lentos. En Pyzed no tienes que escribir ese programa.
+Conectas **nodos** en la vista de shader (como los visual shaders de Godot o el editor de materiales de Unreal) y
+el diseñador los convierte en código de GPU por ti.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un anillo de neón que late detrás de una tarjeta de bienvenida | 25 minutos | Intermedio · poco código | [Tu primera ventana](/pyzed/es/tutorials/basic/first-window/) |
+
+## Qué vas a aprender
+
+- Crear un shader desde una **plantilla** y moverte por las pestañas **Grafo**, **Vista previa** y **WGSL**.
+- Cambiar la entrada de un nodo, conectar un nodo nuevo y leer la **vista previa en cada nodo**.
+- Usar **variables**: valores que tu código Python cambia mientras el shader corre.
+- Dibujar el shader en un formulario con el control **Shader** y cambiar sus variables desde un botón.
+
+<Media src={finished} alt="Una tarjeta de bienvenida sobre un anillo cian luminoso" caption="El formulario terminado: el brillo es un shader hecho de nodos; la tarjeta y los botones son controles normales." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Crea el shader.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Shader**, llámalo `glow`, elige la plantilla **Anillo
+   luminoso** (*Glow ring*) y pulsa **Crear shader**.
+
+   <Media src={newShader} alt="El diálogo de nuevo shader con sus plantillas" caption="Plantillas: En blanco, Plasma, Nubes, Anillo luminoso, Celdas y Pantalla retro." />
+
+2. **Echa un vistazo.** La pestaña **Grafo** muestra los nodos, de izquierda a derecha: **Time** y las variables
+   alimentan algunas operaciones, una forma **Ring** da la distancia a un anillo, **Glow** la convierte en luz y
+   **Output** es el color final. Cada nodo dibuja una pequeña vista previa de lo que produce, así que puedes seguir
+   la imagen mientras se construye.
+
+   <Media src={shaderView} alt="La vista de shader: barra lateral de nodos, el grafo con vistas previas y la salida" caption="La vista de shader: los nodos en la barra lateral, el grafo en el centro y el resultado en la ventana Output." />
+
+3. **Cambia un valor.** Las entradas que no están conectadas muestran su valor en el propio nodo. En el nodo
+   **Glow** cambia **radius** de 0.12 a 0.3: el brillo crece, y la vista previa de cada nodo posterior se actualiza
+   al instante. (El radio del anillo está conectado: viene de las operaciones del pulso, que es lo que lo hace
+   respirar.)
+
+4. **Conecta un nodo nuevo.** Cerca del final, un nodo **Multiply** mezcla la variable `color` con el brillo y
+   alimenta al nodo **RGBA**. Desde la barra lateral **Shading** arrastra un nodo **Hue shift** (categoría
+   *Color*) junto a ellos. Conecta el resultado de Multiply a su entrada **rgb** y su salida **rgb** al **rgb** de
+   RGBA, y luego conecta **Time** a **shift**: el anillo ahora recorre todos los colores. Pulsa
+   <kbd>Ctrl</kbd>+<kbd>Z</kbd> para volver atrás.
+
+5. **Conoce las variables.** La **Estructura** lista las variables del shader: `color` (el color del neón) y
+   `pulse` (latidos por segundo). Son **mutables**: tu app puede cambiarlas en cada fotograma sin coste. La pestaña
+   **Vista previa** tiene un deslizador para cada una.
+
+   <Media src={shaderPreview} alt="La pestaña Vista previa con un deslizador por variable" caption="Vista previa: el shader terminado, en grande, con un deslizador por variable." />
+
+6. **Guarda** (<kbd>Ctrl</kbd>+<kbd>S</kbd>). El shader es el archivo `glow.pzshad`. Pulsa <kbd>F5</kbd> para verlo
+   llenar una ventana propia.
+
+7. **Ponlo detrás de un formulario.** Crea un formulario `welcome` (560 × 380). Desde **Presentación**
+   (*Display*) en las Herramientas arrastra un control **Shader**, haz que cubra todo el formulario y ánclalo por
+   **los cuatro lados**; llámalo `backdrop` y pon en su **Archivo de shader** `glow.pzshad`. Luego añade una
+   **Tarjeta** en el centro (sin anclajes, para que quede centrada) con un título, una etiqueta llamada `hint` y
+   dos botones, `faster` y `color`. Da a la tarjeta un fondo translúcido en su sección **Estilo** (`#0f172acc`)
+   para que se vea el brillo a través.
+
+8. **Contrólalo desde Python.** La propiedad `variables` del control es un dict con las variables del shader. Haz
+   doble clic en **faster** y **color**:
+
+   ```python
+   def faster_click(form, event):
+       variables = dict(form.backdrop.variables)
+       variables["pulse"] = variables.get("pulse", 2.0) + 1.5
+       form.backdrop.variables = variables
+
+   def color_click(form, event):
+       variables = dict(form.backdrop.variables)
+       variables["color"] = "#a78bfa"
+       form.backdrop.variables = variables
+   ```
+
+9. **Ejecuta** el formulario (<kbd>F5</kbd>) y pulsa los botones.
+
+</Steps>
+
+<Aside type="caution" title="Rutas relativas">
+Un **Archivo de shader** relativo (`glow.pzshad`) se lee desde la carpeta en la que ejecutas la app. En un proyecto
+es la carpeta del proyecto; para un formulario que puedes ejecutar desde cualquier sitio, pon la ruta en el
+manejador `load` del formulario a partir de `__file__`, como hace el ejemplo de abajo.
+</Aside>
+
+<Aside type="note" title="¿Sin GPU?">
+En máquinas sin tarjeta gráfica (algunas máquinas virtuales y servidores de CI), un shader muestra en su lugar su
+color de **fallback**, que se define en las propiedades del shader. Todo lo demás de la ventana funciona igual.
+</Aside>
+
+## Código completo
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/welcome.py" />
+
+El mismo shader en Python puro, sin el diseñador, es un widget:
+
+```python
+pz.stack([
+    pz.shader("glow.pzshad", uniforms={"pulse": 4, "color": "#a78bfa"}, width="fill", height="fill"),
+    card,
+])
+```
+
+<Run file="examples/tutorial/designer/welcome.pzform" form lang="es" />
+
+{/* media: tutorials/shader-effect-nodes (una grabación corta: cambiar el radio del brillo actualiza cada vista previa; conectar Hue shift) */}
+
+## Siguiente
+
+- [Un grafo de shader propio](/pyzed/es/tutorials/advanced/shader-graph/): construye un grafo en Python, nodo a
+  nodo.
+- La sección [Shading](/pyzed/es/shading/): cada nodo, la vista de shader y los shaders WGSL.
+- Los [shaders del Showcase](/pyzed/es/showcase/shaders/): once archivos `.pzshad` para abrir y estudiar.

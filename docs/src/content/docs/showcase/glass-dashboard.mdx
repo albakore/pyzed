@@ -2,19 +2,18 @@
 title: "Glass control center"
 description: "A professional frosted-glass dashboard in Python: music player, smart lights, climate and schedule cards with real backdrop blur over moving color."
 sidebar:
-  order: 4
+  order: 8
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from './_run.mdx';
 import source from '../../../../../examples/showcase/glass_dashboard.py?raw';
 
-A smart-home control center in the frosted-glass style of modern operating systems. The colored blobs behind the cards are a shader, so the blur you see through each card moves with them.
+A smart-home control center in the frosted-glass style of modern operating systems. The colored blobs behind the cards are a shader graph (`shaders/blobs.pzshad`), so the blur you see through each card moves with them.
 
 ![Glass control center](../../../assets/showcase/glass-dashboard.png)
 
-```sh
-python examples/showcase/glass_dashboard.py
-```
+<Run file="examples/showcase/glass_dashboard.py" />
 
 ## How it is made
 
@@ -42,6 +41,17 @@ Sliders and switches update the state like in any Pyzed app.
 ```python
 pz.slider(0, 100, self.volume, on_change=self.set_volume)
 ```
+
+## Try this
+
+- Change the `tint` and `strength` in `GLASS` and see how much of the background shows through.
+- Turn every light on and watch the bloom.
+- Swap the blobs for another graph from [Shaders and effects](/pyzed/showcase/shaders/#every-graph), such as
+  `nebula.pzshad`.
+
+<Aside type="tip">
+Glass looks best over something that moves and has color. Over a flat background it is just a tinted panel.
+</Aside>
 
 ## Full code
 

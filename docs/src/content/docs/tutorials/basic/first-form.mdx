@@ -1,0 +1,132 @@
+---
+title: A form that does something
+description: "Build a contact form in Pyzed Design: text boxes, a drop-down and a text area, a Send button wired to Python, a live character counter and messages in the console."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/designer-contact.png';
+import consoleShot from '../../../../../screenshots/designer-console.png';
+import handlers from '../../../../../../examples/tutorial/designer/contact.py?raw';
+
+A **contact form**: the user types a name, an email and a message, picks a topic and presses **Send**. The form
+checks what was typed, shows a friendly message, counts characters as you type, and prints what it "sent" in the
+console. It is the shape of most business apps: inputs, a button, and a few lines of Python that react.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A contact form with checks and feedback | 25 minutes | Basic · a little Python | [Your first window](/pyzed/tutorials/basic/first-window/) |
+
+## What you'll learn
+
+- Use several kinds of input: **Text box**, **Drop-down** and **Text area**.
+- Read what the user typed in code: `form.email.text`, `form.topic.selected`.
+- React **as the user types** with a `change` event, and to a click with `click`.
+- Give feedback: change a label's text and color, move the cursor with `focus()`.
+- Run code when the window opens (the form's `load` event) and read `print` output in the **console**.
+
+<Media src={finished} alt="The contact form after sending: a green thank-you message" caption="The finished form, after pressing Send." eager />
+
+## Steps
+
+<Steps>
+
+1. **Create the form.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Form**, name it `contact`, title `Contact us`. Select an
+   empty spot of the canvas: the Properties panel now shows the **form**. Set **Width** to 480 and **Height** to
+   500.
+
+2. **Add the fields.** For each field drag a **Label** (its title) and the input under it:
+
+   | Label text | Control | Name | Properties |
+   | --- | --- | --- | --- |
+   | Name | Text box | `your_name` | Placeholder `Ada Lovelace` |
+   | Email | Text box | `email` | Placeholder `ada@example.com`, Icon `mail` |
+   | Topic | Drop-down | `topic` | Options `Question`, `Bug report`, `Idea`; Selected `Question` |
+   | (none) | Text area | `message` | Placeholder `How can we help?` |
+
+   The **Options** of a drop-down are a list: each item is its own field, and **+** adds one.
+
+3. **Add the button and two labels for feedback.** A **Button** named `send` (text `Send`, variant `solid`, icon
+   `send`) in the bottom-right corner, a small **Label** named `counter` (text `0 / 500`, size `xs`) under the
+   message, and an empty **Label** named `status` next to the button.
+
+4. **Anchor everything.** Text boxes and labels: stretch **left and right**. The text area: stretch on **all four
+   sides**, so it takes the extra room when the window grows. The button: **bottom · right**. `counter` and
+   `status`: **bottom**, so they stay under the text area.
+
+5. **Focus the first box when the window opens.** Click an empty spot (the form is selected), open **Events** and
+   double-click `load`. Write:
+
+   ```python
+   def form_load(form, event):
+       return form.your_name.focus()
+   ```
+
+   Handlers can **return a command**: `focus()` puts the cursor in that box.
+
+6. **Count characters as the user types.** Select the text area, double-click its `change` event.
+   `event.value` is the new text:
+
+   ```python
+   LIMIT = 500
+
+   def message_change(form, event):
+       count = len(event.value)
+       form.counter.text = f"{count} / {LIMIT}"
+       form.counter.color = "error" if count > LIMIT else "text_muted"
+   ```
+
+   `"error"` and `"text_muted"` are **theme colors**: they look right in a dark and in a light theme.
+
+7. **Check and send.** Double-click the **Send** button and write the checks. Each one shows a message, moves the
+   cursor to the field and stops with `return`:
+
+   ```python
+   def send_click(form, event):
+       if not form.your_name.text.strip():
+           form.status.color = "error"
+           form.status.text = "Please tell us your name."
+           return form.your_name.focus()
+       if "@" not in form.email.text:
+           form.status.color = "error"
+           form.status.text = "That email does not look right."
+           return form.email.focus()
+       print(f"New {form.topic.selected.lower()} from {form.email.text}")
+       form.status.color = "success"
+       form.status.text = "Thanks! We got your message."
+   ```
+
+8. **Run it** with <kbd>F5</kbd>. Press **Send** with empty fields, then fill them in. The `print` goes to the
+   **Console** at the bottom of the editor, together with the events the form handled and any error.
+
+   <Media src={consoleShot} alt="The console of Pyzed Design showing prints and events" caption="The console shows what your form prints, the events it handled and its errors." />
+
+</Steps>
+
+<Aside type="tip" title="Less code with data binding">
+Checking fields by hand is fine for a few of them. For bigger forms, give each control **rules** (required, a
+pattern, a minimum length) in the Properties panel and call `form.validate()`: see
+[Data binding and validation](/pyzed/tutorials/intermediate/data-binding/).
+</Aside>
+
+<Aside type="caution" title="Errors do not close the window">
+If a handler raises an exception, the running window shows a red **Event handler error** banner and the console
+gets the full traceback. Fix the code, save, and the window picks up the new version.
+</Aside>
+
+## The complete code
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/contact.py" />
+
+<Run file="examples/tutorial/designer/contact.pzform" form />
+
+{/* media: tutorials/first-form-run (a short recording: typing in the message box updates the counter; Send shows the error, then the thank-you) */}
+
+## Next
+
+- [Layout basics](/pyzed/tutorials/basic/layout-basics/): rows, columns and grids, in the designer and in code.
+- [Events and handlers](/pyzed/editor/events/): every event of every control.
+- [Running and the console](/pyzed/editor/console-and-running/).

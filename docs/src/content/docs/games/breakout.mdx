@@ -7,8 +7,8 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Run from '../showcase/_run.mdx';
 import source from '../../../../../examples/games/breakout.py?raw';
-import Commands from '../../../components/Commands.astro';
 
 Breakout needs smooth movement, so instead of a timer it uses `pz.frames`: a callback that
 runs once per displayed frame with the time since the previous one. You will learn the
@@ -16,6 +16,14 @@ frame loop, continuous input with `pz.pressed()`, collisions with `pyzed.game`, 
 small touches that make a game feel good: particles, combos and screen shake.
 
 ![Breakout](../../../assets/games/breakout.png)
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| Breakout at 60 fps: paddle, ball physics, bricks, particles and shake | 45 minutes | Intermediate · game loop | [Snake](/pyzed/games/snake/), or [A game loop](/pyzed/tutorials/advanced/game-loop/) |
+
+Play it first:
+
+<Run file="examples/games/breakout.py" />
 
 <Steps>
 
@@ -140,9 +148,3 @@ hundred times and check the score, lives or bricks left. No window is needed.
 ## Full code
 
 <Code code={source} lang="py" title="examples/games/breakout.py" />
-
-<Commands
-	uv={`uv run python examples/games/breakout.py`}
-	pip={`python examples/games/breakout.py`}
-	python={`{py} examples/games/breakout.py`}
-/>

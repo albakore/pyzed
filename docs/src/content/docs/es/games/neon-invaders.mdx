@@ -7,8 +7,8 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/games/neon_invaders.py?raw';
-import Commands from '../../../../components/Commands.astro';
 
 La última demo junta todo en un shooter con aspecto de juego indie moderno: un fondo de
 estrellas con paralaje, invasores pixel art que marchan y se lanzan en picado, disparo
@@ -17,6 +17,14 @@ de pantalla y un HUD de paneles de cristal y texto brillante dibujado por la bib
 widgets.
 
 ![Neon Invaders](../../../../assets/games/neon-invaders.png)
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un matamarcianos con sprites de pixel art, oleadas, power-ups, brillo de neón y un HUD de cristal | 1 hora | Avanzado | [Breakout](/pyzed/es/games/breakout/) |
+
+Juégalo primero:
+
+<Run file="examples/games/neon_invaders.py" lang="es" />
 
 <Steps>
 
@@ -141,8 +149,3 @@ mover o borrar, solo listas que `view()` convierte en formas.
 
 <Code code={source} lang="py" title="examples/games/neon_invaders.py" />
 
-<Commands
-	uv={`uv run python examples/games/neon_invaders.py`}
-	pip={`python examples/games/neon_invaders.py`}
-	python={`{py} examples/games/neon_invaders.py`}
-/>

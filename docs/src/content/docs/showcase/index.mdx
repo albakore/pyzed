@@ -1,0 +1,144 @@
+---
+title: "Showcase"
+description: "A gallery of Python desktop apps made with Pyzed: utilities, forms, games, GPU shaders and effects, and dashboards, each with an explanation, the full code and a command to run it."
+section:
+  eyebrow: "Showcase"
+  icon: "laptop"
+  lead: "What people build with Pyzed: apps and utilities, forms, games, shaders and dashboards. Each one is a file you can run, read and copy."
+sidebar:
+  order: 0
+  label: "Overview"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Gallery from '../../../components/showcase/Gallery.astro';
+import Run from './_run.mdx';
+
+import todos from '../../../assets/examples/todos.png';
+import markdown from '../../../assets/examples/markdown_viewer.png';
+import chat from '../../../assets/ai/ai-chat.png';
+import ticker from '../../../assets/showcase/apps/websocket_stream.png';
+import gallery from '../../../assets/showcase/apps/gallery.png';
+import editor from '../../../../screenshots/zed-one-dark.png';
+import clock from '../../../assets/examples/clock.png';
+import qr from '../../../assets/examples/qr_code.png';
+import loginForm from '../../../../screenshots/designer-run.png';
+import signup from '../../../assets/tutorials/designer-signup.png';
+import reviews from '../../../../screenshots/designer-component-run.png';
+import loginBlock from '../../../assets/blocks/login-dark.png';
+import onboarding from '../../../assets/blocks/onboarding-dark.png';
+import settings from '../../../assets/blocks/settings-dark.png';
+import snake from '../../../assets/games/snake.png';
+import breakout from '../../../assets/games/breakout.png';
+import invaders from '../../../assets/games/neon-invaders.png';
+import dodge from '../../../assets/tutorials/dodge.png';
+import hud from '../../../assets/showcase/hud.png';
+import menu from '../../../assets/showcase/main-menu.png';
+import inventory from '../../../assets/showcase/inventory.png';
+import shaders from '../../../assets/showcase/shaders.png';
+import effects from '../../../assets/showcase/apps/effects.png';
+import nebula from '../../../assets/showcase/shaders/nebula.png';
+import glass from '../../../assets/showcase/glass-dashboard.png';
+import dashboard from '../../../assets/blocks/dashboard-dark.png';
+import table from '../../../assets/blocks/data_table-dark.png';
+import kanban from '../../../assets/blocks/kanban-dark.png';
+import music from '../../../assets/blocks/music_player-dark.png';
+import teamChat from '../../../assets/blocks/chat-dark.png';
+
+Everything on these pages is a real program in the
+[`examples`](https://github.com/albakore/pyzed/tree/main/examples) folder of the repository, drawn by Pyzed with
+the GPU. Click a card to see how it is made, read the full code and run it. Want to build one yourself, step by
+step? The [Tutorials](/pyzed/tutorials/) take you there.
+
+<Aside type="tip" title="Run any of them">
+Download or clone the [repository](https://github.com/albakore/pyzed), open a terminal in its folder and run the
+file. Every page has a block like this one, with the commands for uv, pip and plain Python on Windows, macOS and
+Linux:
+
+<Run file="examples/todos.py" />
+</Aside>
+
+## Apps and utilities
+
+Small, complete programs: viewers, timers, live data, an AI chat and a code editor workspace.
+[See them all](/pyzed/showcase/apps/).
+
+<Gallery
+	items={[
+		{ title: 'Todos', text: 'Add, edit, filter and save tasks to disk.', href: '/pyzed/showcase/apps/#todos', image: todos },
+		{ title: 'Markdown viewer', text: 'Write on the left, see it rendered on the right.', href: '/pyzed/showcase/apps/#markdown-viewer', image: markdown },
+		{ title: 'AI chat', text: 'Answers streamed word by word from any OpenAI-compatible server.', href: '/pyzed/showcase/apps/#ai-chat', image: chat, tag: 'AI' },
+		{ title: 'Live data', text: 'Prices fed by an async generator, with trends.', href: '/pyzed/showcase/apps/#live-data', image: ticker },
+		{ title: 'Workspace editor', text: 'Project panel, tabs, highlighting, outline and a command palette.', href: '/pyzed/showcase/apps/#workspace-editor', image: editor },
+		{ title: 'Component gallery', text: 'Every ready-made component, in any theme.', href: '/pyzed/showcase/apps/#component-gallery', image: gallery },
+		{ title: 'Clock', text: 'An analog clock drawn on a canvas.', href: '/pyzed/showcase/apps/#clock', image: clock },
+		{ title: 'QR code', text: 'Type a link, get its QR code, in 30 lines.', href: '/pyzed/showcase/apps/#qr-code', image: qr },
+	]}
+/>
+
+## Forms
+
+Sign-in, sign-up, settings and wizards, drawn in Pyzed Design or written in code. [See them
+all](/pyzed/showcase/forms/).
+
+<Gallery
+	items={[
+		{ title: 'Sign-in form', text: 'Drawn in the designer, with four small event handlers.', href: '/pyzed/showcase/forms/#sign-in-form', image: loginForm, tag: 'Designer' },
+		{ title: 'Sign-up with validation', text: 'Bound fields, rules and one-line validation.', href: '/pyzed/showcase/forms/#sign-up-with-validation', image: signup, tag: 'Designer' },
+		{ title: 'Reviews', text: 'Reusable star-rating components in a flexible row.', href: '/pyzed/showcase/forms/#reviews-with-custom-components', image: reviews, tag: 'Designer' },
+		{ title: 'Login screen', text: 'Brand panel, single sign-on and an email form.', href: '/pyzed/showcase/forms/#login-screen', image: loginBlock },
+		{ title: 'Onboarding wizard', text: 'A stepper, choice cards and a summary.', href: '/pyzed/showcase/forms/#onboarding-wizard', image: onboarding },
+		{ title: 'Settings page', text: 'Sections, switches, theme and accent pickers.', href: '/pyzed/showcase/forms/#settings-page', image: settings },
+	]}
+/>
+
+## Games
+
+Real-time 2D games with a frame loop, held keys, particles and a HUD made of regular widgets. [How games
+work](/pyzed/games/).
+
+<Gallery
+	items={[
+		{ title: 'Snake', text: 'A grid, a timer and a key queue. The first game to read.', href: '/pyzed/games/snake/', image: snake, tag: 'Tutorial' },
+		{ title: 'Breakout', text: 'A 60 fps loop, ball physics, particles and shake.', href: '/pyzed/games/breakout/', image: breakout, tag: 'Tutorial' },
+		{ title: 'Neon Invaders', text: 'Pixel-art sprites, waves, power-ups and neon glow.', href: '/pyzed/games/neon-invaders/', image: invaders, tag: 'Tutorial' },
+		{ title: 'Dodge', text: 'A whole game in one sitting: the game loop tutorial.', href: '/pyzed/tutorials/advanced/game-loop/', image: dodge, tag: 'Tutorial' },
+		{ title: 'Game HUD', text: 'Health bars, a shader radar and cooldowns on glass.', href: '/pyzed/showcase/hud/', image: hud },
+		{ title: 'Main menu', text: 'A synthwave title screen that follows the mouse.', href: '/pyzed/showcase/main-menu/', image: menu },
+		{ title: 'RPG inventory', text: 'Items that glow by rarity and an animated details panel.', href: '/pyzed/showcase/inventory/', image: inventory },
+	]}
+/>
+
+## Shaders and effects
+
+GPU shaders made of nodes, and glass, bloom, blur and animations on any widget. [See them
+all](/pyzed/showcase/shaders/).
+
+<Gallery
+	items={[
+		{ title: 'Shader gallery', text: 'Six node graphs and one speed slider for all of them.', href: '/pyzed/showcase/shaders/#the-shader-gallery', image: shaders, tag: 'GPU' },
+		{ title: 'Every graph', text: 'Eleven .pzshad files to open, change and reuse.', href: '/pyzed/showcase/shaders/#every-graph', image: nebula, tag: 'GPU' },
+		{ title: 'Effects', text: 'Rotate, glass, bloom and blur, animated.', href: '/pyzed/showcase/shaders/#effects-on-any-widget', image: effects },
+	]}
+/>
+
+## Dashboards and data
+
+Admin panels, tables, boards and media apps. [See them all](/pyzed/showcase/dashboards/).
+
+<Gallery
+	items={[
+		{ title: 'Dashboard', text: 'KPI cards, a revenue chart, traffic and orders.', href: '/pyzed/showcase/dashboards/#dashboard', image: dashboard },
+		{ title: 'Data table', text: 'Search, filters, sorting, selection and paging.', href: '/pyzed/showcase/dashboards/#data-table', image: table },
+		{ title: 'Glass control center', text: 'Frosted-glass cards over a moving shader.', href: '/pyzed/showcase/glass-dashboard/', image: glass, tag: 'GPU' },
+		{ title: 'Kanban board', text: 'Columns, labelled cards, assignees and progress.', href: '/pyzed/showcase/dashboards/#kanban-board', image: kanban },
+		{ title: 'Music player', text: 'A library, an album and a live player bar.', href: '/pyzed/showcase/dashboards/#music-player', image: music },
+		{ title: 'Team chat', text: 'Channels, direct messages and a thread.', href: '/pyzed/showcase/dashboards/#team-chat', image: teamChat },
+	]}
+/>
+
+<Aside type="note" title="About this section">
+The Showcase grows with every release. All the programs here are drawn off-screen by the test suite, so they run
+with the current version of Pyzed; short recordings of the ones that move are being added. Made something with
+Pyzed you would like to show? Tell us on [GitHub](https://github.com/albakore/pyzed).
+</Aside>

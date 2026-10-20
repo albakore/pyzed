@@ -1,16 +1,29 @@
 ---
 title: A mini code editor
-description: "Tutorial: build a Zed-like code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette."
+description: "Tutorial: build a code editor in Python with Pyzed: workspace, file tree, tabs, syntax highlighting, saving and a command palette."
 sidebar:
-  order: 4
+  order: 0
 ---
 
-import { Code, Steps } from '@astrojs/starlight/components';
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
 import source from '../../../../../../examples/mini_editor.py?raw';
+import Run from '../../showcase/_run.mdx';
 
-Let's build a Zed-style editor in about 150 lines: it opens a real folder, shows the file tree,
+Let's build a code editor in about 150 lines: it opens a real folder, shows the file tree,
 opens tabs, edits with syntax highlighting, saves with <kbd>Ctrl</kbd>+<kbd>S</kbd> and has a
-command palette.
+command palette. The workspace pieces (docks, tabs, palette) are the same ones Pyzed Design is built with; their
+look is inspired by the Zed editor.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A working code editor for a folder | 45 minutes | Advanced · Python | [Lists and tables](/pyzed/tutorials/intermediate/lists-tables/), [Navigation](/pyzed/tutorials/intermediate/navigation/) |
+
+## What you'll learn
+
+- Turn a folder into a file tree (`ui.TreeNode.from_paths`) and open files in tabs.
+- Edit with syntax highlighting (`ui.editor`) and track unsaved changes.
+- Lay out a whole workspace: title bar, docks, status bar.
+- Add a command palette with fuzzy search, and keyboard shortcuts.
 
 ![The mini editor](../../../../assets/tutorials/mini-editor.png)
 
@@ -102,9 +115,19 @@ command palette.
 
 <Code code={source} lang="py" title="examples/mini_editor.py" />
 
-```bash
-python examples/mini_editor.py path/to/a/folder
-```
+<Run file="examples/mini_editor.py" />
+
+<Aside type="tip">
+Pass a folder to open it: `python examples/mini_editor.py path/to/a/folder`. Without one it opens the current
+folder.
+</Aside>
 
 For a more complete version (file finder, terminal panel, outline, themes, git markers) see
-[`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py).
+[`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) and its page in the
+[Showcase](/pyzed/showcase/apps/#workspace-editor).
+
+## Next
+
+- [A game loop](/pyzed/tutorials/advanced/game-loop/) with `pyzed.game`.
+- [Workspace](/pyzed/library/workspace/), [Tree](/pyzed/library/tree/) and
+  [Command palette](/pyzed/library/command-palette/) in the component library.

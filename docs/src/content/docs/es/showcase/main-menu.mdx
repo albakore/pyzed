@@ -2,29 +2,35 @@
 title: "Menú principal de videojuego"
 description: "Un menú principal synthwave en Python con un fondo de shader que sigue al ratón, un título brillante y botones de cristal que se elevan en hover."
 sidebar:
-  order: 2
+  order: 6
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/showcase/main_menu.py?raw';
 
-Una pantalla de título al estilo de un juego de carreras synthwave. El sol, las estrellas y la cuadrícula infinita son un solo shader que avanza con `time` y se inclina hacia el puntero con `mouse()`.
+Una pantalla de título al estilo de un juego de carreras synthwave. El sol, las estrellas y la cuadrícula infinita son un solo grafo de shader, `shaders/synthwave.pzshad`, que avanza con el tiempo y se inclina hacia el puntero.
 
 ![Menú principal de videojuego](../../../../assets/showcase/main-menu.png)
 
-```sh
-python examples/showcase/main_menu.py
-```
+<Run file="examples/showcase/main_menu.py" lang="es" />
+
+Usa <kbd>↑</kbd> y <kbd>↓</kbd> (o <kbd>W</kbd> y <kbd>S</kbd>) para elegir.
 
 ## Cómo está hecho
 
 ### Shader interactivo
 
-`mouse()` devuelve la posición del puntero de 0 a 1; el horizonte y el sol la siguen.
+El grafo tiene un nodo **Mouse**: la posición del puntero sobre el widget, de 0 a 1. Unos pocos nodos de
+operaciones mueven un poco el horizonte con él, así que la escena se inclina cuando mueves el puntero. En Python es
+un widget detrás del contenido:
 
-```rust
-var m = mouse();
-let horizon = 0.62 + (m.y - 0.5) * 0.04;
+```python
+pz.stack([
+    pz.shader(SHADER, width="fill", height="fill",
+              fallback=pz.Gradient(["#08021a", "#4a0d5e", "#d9468f"], angle=180)),
+    content,
+])
 ```
 
 ### Título brillante
@@ -42,6 +48,12 @@ Los botones se elevan en hover, se encogen al pulsar y el seleccionado se desliz
 ```python
 button.animate("lift", on="hover").animate("shrink", on="press").transition(x=6 if selected else 0)
 ```
+
+## Prueba esto
+
+- Añade una opción al menú y dale su propia acción.
+- Cambia el color y la intensidad del `bloom` del título.
+- Abre `shaders/synthwave.pzshad` en Pyzed Design y cambia los colores del sol.
 
 ## Código completo
 

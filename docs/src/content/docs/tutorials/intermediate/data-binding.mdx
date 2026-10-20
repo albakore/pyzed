@@ -1,0 +1,113 @@
+---
+title: Data binding and validation
+description: "Bind the controls of a Pyzed Design form to form.data, add validation rules without code, show a live expression in a label, and validate the whole form in one line."
+sidebar:
+  order: 0
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/designer-signup.png';
+import dataSection from '../../../../../screenshots/editor-data.png';
+import handlers from '../../../../../../examples/tutorial/designer/signup.py?raw';
+
+In [A form that does something](/pyzed/tutorials/basic/first-form/) every field was read and checked by hand. Here
+the controls do that work themselves: each one is **bound** to a field of the form's data, carries its own
+**rules**, and shows its own error message. The Python left to write is a single `if`.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A sign-up form that validates itself | 25 minutes | Intermediate · a little Python | [A form that does something](/pyzed/tutorials/basic/first-form/) |
+
+## What you'll learn
+
+- **Bind** an input to a field of `form.data` (two-way: it shows the field and writes back what the user types).
+- Show a **live expression** in a label (`f"Nice to meet you, {name}!"`).
+- Add **rules**: required, a pattern, a minimum length, a minimum number, your own message.
+- Validate everything with `form.validate()`, and read `form.data` and `form.errors`.
+
+<Media src={finished} alt="The sign-up form with an invalid email, a short password and the terms unchecked, each with its message" caption="Each control checks its own rules and shows the message under itself." eager />
+
+## Steps
+
+<Steps>
+
+1. **Draw the form.** A new form named `signup` with a **Heading**, a **Label** named `greeting`, three **Text
+   boxes** (`your_name`, `email`, `password`, the last with **Password** switched on), a **Number box** named
+   `age`, a **Check box** named `terms` (text `I accept the terms`), a small label `summary`, a label `status` and
+   a **Button** named `create`.
+
+2. **Bind the inputs.** Select `your_name` and, in the **Data** section of Properties, type `name` in **Bind to**.
+   Do the same for the others:
+
+   | Control | Bind to | Rules (Data section) |
+   | --- | --- | --- |
+   | `your_name` | `name` | **Required** |
+   | `email` | `email` | **Required**, **Pattern** `[^@\s]+@[^@\s]+\.[a-z]{2,}`, **Message** `Enter a valid email` |
+   | `password` | `password` | **Required**, **Minimum length** 8 |
+   | `age` | `age` | **Minimum** 13, **Message** `You must be 13 or older` |
+   | `terms` | `terms` | **Required** (a check box passes only when checked), **Message** `Please accept the terms` |
+
+   <Media src={dataSection} alt="The Data section of a text box: Bind to, Required, Pattern and Message" caption="The Data section: the field the control is bound to and its rules." />
+
+3. **Show a live expression.** A display control (label, heading, badge...) can bind to a **Python expression**
+   over the data, recomputed on every redraw. Select `greeting` and set **Bind to**:
+
+   ```python
+   f"Nice to meet you, {name}!" if name else "Fill in the form below."
+   ```
+
+   And `summary`:
+
+   ```python
+   f"{len(password)} characters in your password"
+   ```
+
+4. **Run it** (<kbd>F5</kbd>) and type. The greeting follows your name letter by letter, and each input checks its
+   rules **as you type**: a red border and a message bubble under it.
+
+5. **Validate on click.** Double-click `create` and write the handler:
+
+   ```python
+   def create_click(form, event):
+       if not form.validate():          # checks every rule and shows every message
+           form.status.color = "error"
+           form.status.text = f"{len(form.errors)} field(s) need your attention."
+           return
+       data = form.data                 # {"name": ..., "email": ..., "age": 18, "terms": True, ...}
+       form.status.color = "success"
+       form.status.text = f"Welcome aboard, {data['name']}!"
+   ```
+
+   `form.data` is a plain dict filled by the bound controls. Save it, send it to an API or pass it to another form.
+
+</Steps>
+
+<Aside type="tip" title="Load existing data">
+To edit a record instead of creating one, assign it: `form.data = {"name": "Ada", "email": "ada@example.com"}` in
+the form's `load` handler fills every bound control. Another form can pass it too:
+`form.open("signup", data=customer)`.
+</Aside>
+
+<Aside type="note" title="Server-side errors">
+Rules catch typing mistakes. For checks only a server can make ("that email is taken"), set the message yourself:
+`form.email.error = "Already registered"`. `None` clears it.
+</Aside>
+
+## Full code
+
+`signup.pzform` holds the layout, the bindings and the rules; `signup.py` only the button:
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/signup.py" />
+
+<Run file="examples/tutorial/designer/signup.pzform" form />
+
+{/* media: tutorials/data-binding-typing (a short recording: typing a name updates the greeting; a bad email turns red) */}
+
+## Next
+
+- [Data binding and validation](/pyzed/editor/data-binding/) in the designer manual: nested paths
+  (`customer.address.city`), tables, translations with `@keys` and previewing other languages.
+- [Validation errors from Pydantic, Django or FastAPI](/pyzed/integrations/overview/).
+- [A multi-view app](/pyzed/tutorials/intermediate/navigation/).

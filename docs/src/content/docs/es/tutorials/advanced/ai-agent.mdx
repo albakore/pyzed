@@ -1,0 +1,121 @@
+---
+title: Construye una app con el agente de IA
+description: "Usa el agente de IA de Pyzed Design para construir una app de escritorio completa a partir de una descripción: conecta un modelo, escribe un buen pedido, sigue su plan, revisa sus cambios y sigue mejorando el resultado."
+sidebar:
+  order: 5
+  badge:
+    text: IA
+    variant: caution
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import emptyThread from '../../../../../../screenshots/designer-agent-empty.png';
+import agent from '../../../../../../screenshots/designer-agent.png';
+import mention from '../../../../../../screenshots/designer-agent-mention.png';
+
+Pyzed Design trae un **agente de IA**. Describe una app con palabras normales y el agente planifica el trabajo, crea
+el proyecto, dibuja los formularios, escribe el Python, mira el resultado, lo ejecuta y corrige lo que falla, con el
+mismo editor que usas tú. Tú sigues al mando: cada cambio se puede deshacer o rechazar con un clic.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un registro de gastos construido a partir de una descripción y mejorado a mano | 30 minutos | Avanzado · no hace falta código | Pyzed Design y un modelo de IA (Claude, o cualquier proveedor de la lista) |
+
+## Qué vas a aprender
+
+- Abrir el **Panel del agente** y conectar un modelo.
+- Escribir un pedido que dé un buen resultado a la primera.
+- Seguir el **plan** del agente y **conservar** o **rechazar** sus cambios.
+- Señalar cosas con **@** (un control, el formulario, un archivo) y usar comandos **/**.
+- Seguir mejorando la app a mano, con el agente al lado.
+
+<Aside type="caution" title="Revisa lo que construye">
+Un agente es una ayuda rápida, no una garantía. Lee el código que escribe, ejecuta la app y prueba tú mismo los
+caminos importantes antes de publicarla, sobre todo lo que toque archivos, dinero o datos personales.
+</Aside>
+
+## Pasos
+
+<Steps>
+
+1. **Abre el panel.** En Pyzed Design pulsa <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> (o **Ver → Panel del
+   agente**). La primera vez te pide **conectar un modelo**: haz clic en un proveedor para iniciar sesión con el
+   navegador, o en **Todos los proveedores…** para el resto. Si instalaste Pyzed con pip, añade antes los extras
+   del agente:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash title="Windows, macOS y Linux"
+   		uv tool install "pyzed-ui[designer,agents]"
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash title="Windows, macOS y Linux (dentro de tu entorno)"
+   		python -m pip install "pyzed-ui[designer,agents]"
+   		```
+   	</TabItem>
+   	<TabItem label="python">
+   		```bash title="La app independiente Pyzed Design"
+   		# no hay nada que instalar: el agente viene incluido
+   		```
+   	</TabItem>
+   </Tabs>
+
+   <Media src={emptyThread} alt="Una conversación vacía del agente con sugerencias" caption="El Panel del agente, listo para un pedido." />
+
+2. **Pide la app.** Escribe `/app` y descríbela. Di **para qué** es, **qué** hay en pantalla y **qué** debe pasar;
+   deja el "cómo" al agente:
+
+   > Crea una app para registrar mis gastos. Un formulario con fecha, importe, un desplegable de categoría (Comida,
+   > Transporte, Casa, Ocio) y una nota. Guardar añade el gasto a una tabla debajo y a un archivo JSON junto a la
+   > app. Muestra arriba el total del mes y valida que el importe sea un número positivo.
+
+3. **Sigue el plan.** El agente escribe una tarjeta **Plan** encima de la caja de mensajes y va marcando los pasos:
+   crear el proyecto, añadir dependencias, dibujar los formularios, conectar los eventos, escribir los manejadores,
+   tomar una captura de cada formulario, hacer comprobaciones y, al final, ejecutar la app. Cada herramienta que
+   usa es una línea de la conversación; haz clic en una para ver qué hizo.
+
+   <Media src={agent} alt="El agente construyendo un formulario, con su plan y sus llamadas a herramientas" caption="El agente trabaja en el mismo editor: formularios, código y proyecto se actualizan mientras avanza." />
+
+4. **Revisa.** Cuando termine, ejecuta la app con <kbd>F5</kbd> y pruébala. La barra **Cambios del agente** ofrece
+   **Rechazar** (deja cada archivo que tocó como estaba) o **Conservar**. <kbd>Ctrl</kbd>+<kbd>Z</kbd> sigue
+   deshaciendo un cambio cada vez.
+
+5. **Mejórala señalando cosas.** Selecciona un control y pregunta por *esto*, o escribe **@** para adjuntar el
+   formulario, su código, un control o un archivo:
+
+   > @amount debería aceptar la coma como separador decimal, y la tabla debería mostrar primero el gasto más nuevo.
+
+   <Media src={mention} alt="Eligiendo qué adjuntar con @" caption="@ añade contexto: la selección, el formulario, su código, un control, un archivo o una captura." />
+
+6. **Pule con comandos.** `/tidy` alinea los controles e iguala los márgenes, `/look` toma una captura del
+   formulario y mejora su diseño, `/fix` revisa el código y corrige lo que encuentra, `/explain` te explica el
+   formulario y sus manejadores.
+
+7. **Toma el control.** Es tu proyecto: abre los archivos, cambia el diseño a mano, escribe código. El agente lee lo
+   que cambiaste en el siguiente mensaje, así que puedes alternar entre hacerlo tú y pedirlo.
+
+</Steps>
+
+<Aside type="tip" title="Pedidos que funcionan">
+Nombra las pantallas y los campos, las reglas ("el importe debe ser positivo"), dónde se guardan los datos y un
+ejemplo del resultado. Pide un cambio cada vez cuando refines. Más consejos en
+[Cómo pedir](/pyzed/es/ai/prompting/).
+</Aside>
+
+<Aside type="note" title="Modos de permiso">
+**Preguntar antes de escribir** (el modo por defecto) pregunta antes de crear archivos o ejecutar la app;
+**Omitir permisos** nunca pregunta; **Solo lectura** solo responde y sugiere; **Solo conversación** es una charla
+normal. Elige uno en el menú bajo la caja de mensajes.
+</Aside>
+
+{/* media: tutorials/ai-agent-app (una grabación corta: el pedido /app, el plan marcándose, la app terminada en ejecución) */}
+
+## Siguiente
+
+- [Agentes de IA](/pyzed/es/editor/ai-agents/) en el manual del diseñador: proveedores, servidores MCP, agentes
+  externos e imágenes.
+- La sección [IA](/pyzed/es/ai/): el servidor MCP y `llms.txt` para agentes fuera del editor (Claude Code,
+  Cursor...).
+- [Empaqueta tu app](/pyzed/es/tutorials/advanced/packaging/) cuando esté lista.

@@ -2,17 +2,29 @@
 title: Tareas en segundo plano
 description: "Tutorial: descargas con progreso, trabajo bloqueante y notificaciones en una app de escritorio de Pyzed sin congelar la interfaz de Python."
 sidebar:
-  order: 3
+  order: 5
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../../examples/downloads.py?raw';
+import Run from '../../../showcase/_run.mdx';
 
 Una interfaz nunca debe bloquearse esperando a la red o al disco. Pyzed ofrece dos herramientas:
 
 - **`Command.perform(fn, then)`** ejecuta una función bloqueante en otro hilo y te entrega el
   resultado.
 - **`pz.post(mensaje)`** envía mensajes a la app desde cualquier hilo (progreso, eventos).
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Descargas con barras de progreso y notificaciones que nunca congelan la ventana | 30 minutos | Intermedio · Python | [Diálogos y notificaciones](/pyzed/es/tutorials/intermediate/dialogs-feedback/) |
+
+## Qué vas a aprender
+
+- Por qué el trabajo lento debe salir del hilo de la interfaz, y las dos formas de sacarlo.
+- Recibir un resultado con `Command.perform`.
+- Informar del progreso desde un hilo con `pz.post` y manejarlo en `update`.
+- Mostrar notificaciones que se cierran solas.
 
 <Aside type="tip">
 Si prefieres `asyncio`, `update` y los callbacks también pueden ser `async def` o generadores
@@ -90,6 +102,10 @@ de trabajo no tocan `self`: envían mensajes con `pz.post`.
 
 <Code code={source} lang="py" title="examples/downloads.py" />
 
-```bash
-python examples/downloads.py
-```
+<Run file="examples/downloads.py" lang="es" />
+
+## Siguiente
+
+- [Un efecto de shader](/pyzed/es/tutorials/intermediate/shader-effect/) desde la vista de shader.
+- [Conectar un backend](/pyzed/es/tutorials/advanced/backend/): una base de datos detrás de una clase repositorio.
+- [Async y suscripciones](/pyzed/es/guides/async/): corrutinas, generadores async y streams.

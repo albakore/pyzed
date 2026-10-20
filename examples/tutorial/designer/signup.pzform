@@ -1,0 +1,277 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "signup",
+    "title": "Sign up",
+    "width": 460,
+    "height": 580,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "headline",
+      "type": "heading",
+      "x": 32,
+      "y": 24,
+      "width": 396,
+      "height": 36,
+      "props": {
+        "text": "Create your account",
+        "level": "2"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "greeting",
+      "type": "label",
+      "x": 32,
+      "y": 64,
+      "width": 396,
+      "height": 24,
+      "props": {
+        "text": "",
+        "color": "accent"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "f\"Nice to meet you, {name}!\" if name else \"Fill in the form below.\""
+    },
+    {
+      "name": "your_name",
+      "type": "input",
+      "x": 32,
+      "y": 104,
+      "width": 396,
+      "height": 32,
+      "props": {
+        "placeholder": "Name"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "name",
+      "rules": {
+        "required": true
+      }
+    },
+    {
+      "name": "email",
+      "type": "input",
+      "x": 32,
+      "y": 176,
+      "width": 396,
+      "height": 32,
+      "props": {
+        "placeholder": "Email",
+        "icon": "mail"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "email",
+      "rules": {
+        "required": true,
+        "pattern": "[^@\\s]+@[^@\\s]+\\.[a-z]{2,}",
+        "message": "Enter a valid email"
+      }
+    },
+    {
+      "name": "password",
+      "type": "input",
+      "x": 32,
+      "y": 248,
+      "width": 396,
+      "height": 32,
+      "props": {
+        "placeholder": "Password",
+        "secure": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "password",
+      "rules": {
+        "required": true,
+        "min_length": 8
+      }
+    },
+    {
+      "name": "age_label",
+      "type": "label",
+      "x": 32,
+      "y": 328,
+      "width": 120,
+      "height": 24,
+      "props": {
+        "text": "Age"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "age",
+      "type": "number",
+      "x": 160,
+      "y": 324,
+      "width": 128,
+      "height": 32,
+      "props": {
+        "value": 18,
+        "min": 0,
+        "max": 120
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "age",
+      "rules": {
+        "min": 13,
+        "message": "You must be 13 or older"
+      }
+    },
+    {
+      "name": "terms",
+      "type": "checkbox",
+      "x": 32,
+      "y": 392,
+      "width": 396,
+      "height": 24,
+      "props": {
+        "text": "I accept the terms"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "terms",
+      "rules": {
+        "required": true,
+        "message": "Please accept the terms"
+      }
+    },
+    {
+      "name": "summary",
+      "type": "label",
+      "x": 32,
+      "y": 452,
+      "width": 396,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm",
+        "color": "text_muted"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "bind": "f\"{len(password)} characters in your password\""
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 32,
+      "y": 524,
+      "width": 260,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "create",
+      "type": "button",
+      "x": 316,
+      "y": 520,
+      "width": 112,
+      "height": 32,
+      "props": {
+        "text": "Create",
+        "variant": "solid",
+        "icon": "user-plus"
+      },
+      "events": {
+        "click": "create_click"
+      },
+      "anchor": [
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}

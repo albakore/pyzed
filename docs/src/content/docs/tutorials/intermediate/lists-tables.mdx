@@ -1,0 +1,112 @@
+---
+title: Lists and tables with data
+description: "Show Python data in a Pyzed app: a searchable list, a sortable table with clickable rows and custom cells, and a details panel for the selected row."
+sidebar:
+  order: 2
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/lists-tables.png';
+import source from '../../../../../../examples/tutorial/lists_tables.py?raw';
+
+Most apps show **data**: customers, files, orders, books. This tutorial takes a plain Python list and shows it two
+ways, as a sortable **table** and as a simple **list**, with a search box and a panel with the details of the row
+you click.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A book library with search, sorting and details | 30 minutes | Intermediate · Python | [A multi-view app](/pyzed/tutorials/intermediate/navigation/) |
+
+## What you'll learn
+
+- Filter data in `view()` from a search box.
+- Draw a `ui.table` with columns, **sorting** by clicking a header, and clickable rows.
+- Turn a cell into any widget (a colored badge) with `render=`.
+- Show the same data as a list of `ui.list_item` rows.
+- Keep the **selected** item and show it in a details panel; change it in place.
+
+<Media src={finished} alt="A table of books with title, author, year and status, and a details panel for Neuromancer" caption="Click a header to sort, click a row to see its details." eager />
+
+## Steps
+
+<Steps>
+
+1. **The data is just Python.** A list of dicts (objects or dataclasses work too):
+
+   ```python
+   BOOKS = [
+       {"title": "Dune", "author": "Frank Herbert", "year": 1965, "status": "Read"},
+       {"title": "Neuromancer", "author": "William Gibson", "year": 1984, "status": "Reading"},
+       # ...
+   ]
+   ```
+
+2. **Search.** Keep the text in `self.query` and filter on every redraw. No "refresh" is needed: typing changes
+   the state and `view()` runs again.
+
+   ```python
+   def visible(self):
+       q = self.query.lower()
+       return [b for b in BOOKS if q in b["title"].lower() or q in b["author"].lower()]
+   ```
+
+3. **The columns.** A `ui.Column` has a title, the key it reads and a width (`("fill", 3)` takes three shares of
+   the free space). `render=` turns the value into a widget:
+
+   ```python
+   columns = [
+       ui.Column("Title", "title", width=("fill", 3)),
+       ui.Column("Author", "author", width=("fill", 2)),
+       ui.Column("Year", "year", width=70),
+       ui.Column("Status", "status", width=100, render=lambda s: ui.badge(s, tint=TINTS[s])),
+   ]
+   ```
+
+4. **Sorting.** Give the table the column it sorts by and the direction; clicking a header calls `on_sort` with
+   that column's title, and you flip the direction when it is the same one:
+
+   ```python
+   def sort(self, column):
+       self.descending = not self.descending if column == self.sort_by else False
+       self.sort_by = column
+
+   ui.table(columns, books, sort_by=self.sort_by, descending=self.descending, on_sort=self.sort,
+            on_row_press=lambda book: setattr(self, "selected", book), selected=self.selected,
+            striped=True, height="fill")
+   ```
+
+5. **The details panel** shows `self.selected`, or an empty state. Changing the status writes into the same dict,
+   so the table shows it too:
+
+   ```python
+   ui.segmented(list(TINTS), book["status"], lambda s: book.__setitem__("status", s))
+   ```
+
+6. **A list view.** The same data as rows with an icon and a trailing year, switched with a segmented control:
+
+   ```python
+   ui.list_item(book["title"], lambda book=book: setattr(self, "selected", book), icon="book",
+                selected=book is self.selected, end=ui.muted(str(book["year"])))
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Thousands of rows">
+`ui.table` only builds the rows you can see, so a table of 100,000 rows scrolls as smoothly as one of ten. Keep
+the list sorted in your state (or in a `@pz.memo` function) instead of sorting it on every redraw. The
+[SQLAlchemy contacts](/pyzed/integrations/sqlalchemy/) demo shows 20,000 rows searched in SQL.
+</Aside>
+
+## Full code
+
+<Code code={source} lang="python" title="examples/tutorial/lists_tables.py" />
+
+<Run file="examples/tutorial/lists_tables.py" />
+
+## Next
+
+- [Dialogs, notifications and validation](/pyzed/tutorials/intermediate/dialogs-feedback/).
+- The [Data table](/pyzed/showcase/dashboards/#data-table) showcase: filters, selection, paging and export.
+- [Table](/pyzed/library/table/) and [List item](/pyzed/library/list-item/) in the component library.

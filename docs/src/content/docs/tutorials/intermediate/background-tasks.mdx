@@ -2,17 +2,29 @@
 title: Background tasks
 description: "Tutorial: run downloads with progress, blocking work and notifications in a Pyzed desktop app without freezing the Python user interface."
 sidebar:
-  order: 3
+  order: 5
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../examples/downloads.py?raw';
+import Run from '../../showcase/_run.mdx';
 
 A UI must never block waiting on the network or the disk. Pyzed offers two tools:
 
 - **`Command.perform(fn, then)`** runs a blocking function on another thread and hands you the
   result.
 - **`pz.post(message)`** sends messages to the app from any thread (progress, events).
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| Downloads with progress bars and notifications that never freeze the window | 30 minutes | Intermediate · Python | [Dialogs and notifications](/pyzed/tutorials/intermediate/dialogs-feedback/) |
+
+## What you'll learn
+
+- Why slow work must leave the UI thread, and the two ways to move it out.
+- Get one result back with `Command.perform`.
+- Report progress from a thread with `pz.post` and handle it in `update`.
+- Show notifications that dismiss themselves.
 
 <Aside type="tip">
 If you prefer `asyncio`, `update` and callbacks can also be `async def` functions or `async`
@@ -90,6 +102,10 @@ touch `self`: they send messages with `pz.post`.
 
 <Code code={source} lang="py" title="examples/downloads.py" />
 
-```bash
-python examples/downloads.py
-```
+<Run file="examples/downloads.py" />
+
+## Next
+
+- [A shader effect](/pyzed/tutorials/intermediate/shader-effect/) from the Shader view.
+- [Connecting a backend](/pyzed/tutorials/advanced/backend/): a database behind a repository class.
+- [Async and subscriptions](/pyzed/guides/async/): coroutines, async generators and streams.

@@ -1,0 +1,170 @@
+---
+title: Dashboards and data apps
+description: "Data-heavy Python desktop apps made with Pyzed: an admin dashboard with KPIs and charts, a data table with filters and paging, a kanban board, a team chat, a music player, an IDE layout and a contacts app over SQLite."
+sidebar:
+  order: 3
+---
+
+import { Aside, Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from './_run.mdx';
+
+import dashboardDark from '../../../assets/blocks/dashboard-dark.png';
+import dashboardLight from '../../../assets/blocks/dashboard-light.png';
+import tableDark from '../../../assets/blocks/data_table-dark.png';
+import tableLight from '../../../assets/blocks/data_table-light.png';
+import kanbanDark from '../../../assets/blocks/kanban-dark.png';
+import kanbanLight from '../../../assets/blocks/kanban-light.png';
+import chatDark from '../../../assets/blocks/chat-dark.png';
+import chatLight from '../../../assets/blocks/chat-light.png';
+import musicDark from '../../../assets/blocks/music_player-dark.png';
+import musicLight from '../../../assets/blocks/music_player-light.png';
+import explorerDark from '../../../assets/blocks/file_explorer-dark.png';
+import explorerLight from '../../../assets/blocks/file_explorer-light.png';
+import libraryShot from '../../../assets/tutorials/lists-tables.png';
+import contactsShot from '../../../assets/tutorials/contacts-backend.png';
+
+import contactsMain from '../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
+import contactsDb from '../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+
+Screens full of numbers, tables and lists: the kind of internal tool, admin panel or media app that many desktop
+programs are. The first six are [Blocks](/pyzed/blocks/), complete screens written with the
+[components library](/pyzed/library/) that you can copy and adapt; each block's page has its full code and notes on
+what to change. Every capture follows this site's theme: switch between light and dark at the top of the page to
+see them in both.
+
+## Dashboard
+
+An admin dashboard: sidebar navigation, KPI cards with trends, a revenue chart, traffic sources and a table of recent
+orders.
+
+<Media src={dashboardDark} light={dashboardLight} alt="A dashboard with KPI cards, a revenue chart and recent orders" size="wide" />
+
+- KPI cards are `ui.stat` with a `delta` and a small `trend` line. The charts are ready-made components too:
+  `ui.bar_chart` for revenue (its range is a `ui.segmented` control) and `ui.donut` for traffic sources, with a
+  `ui.progress` bar for the monthly goal.
+- The sidebar switches pages by changing one attribute of the state: see [A multi-view
+  app](/pyzed/tutorials/intermediate/navigation/).
+
+<Run file="examples/blocks/dashboard.py" />
+
+The code: [Dashboard block](/pyzed/blocks/dashboard/).
+
+## Data table
+
+A team members table with search, status filters, sortable columns, row selection, paging and an export action.
+
+<Media src={tableDark} light={tableLight} alt="A table of team members with filters, selection and paging" size="wide" />
+
+<Run file="examples/blocks/data_table.py" />
+
+The code: [Data table block](/pyzed/blocks/data-table/). To learn the parts one by one (search, sort, select, show
+the details), follow [Lists and tables with data](/pyzed/tutorials/intermediate/lists-tables/), which builds this
+small book library:
+
+<Media src={libraryShot} alt="A book library: a searchable, sortable table and the details of the selected book" />
+
+## Kanban board
+
+A project board with columns, labelled cards, assignees, progress, and buttons to move cards along.
+
+<Media src={kanbanDark} light={kanbanLight} alt="A kanban board with three columns of cards" size="wide" />
+
+<Run file="examples/blocks/kanban.py" />
+
+The code: [Kanban block](/pyzed/blocks/kanban/).
+
+## Team chat
+
+A messenger with channels, direct messages, a message thread and a composer.
+
+<Media src={chatDark} light={chatLight} alt="A team chat with channels and a conversation" size="wide" />
+
+<Run file="examples/blocks/chat.py" />
+
+The code: [Chat block](/pyzed/blocks/chat/). For a chat that streams answers from an AI model, see the
+[AI chat](/pyzed/showcase/apps/#ai-chat).
+
+## Music player
+
+A library sidebar, an album page with its track list, and a player bar whose progress moves while a song plays.
+
+<Media src={musicDark} light={musicLight} alt="A music player with an album and its tracks" size="wide" />
+
+<Run file="examples/blocks/music_player.py" />
+
+The code: [Music player block](/pyzed/blocks/music-player/).
+
+## IDE layout
+
+The layout of a code editor: a project tree, editor tabs with breadcrumbs, a terminal, an outline panel and a
+status bar.
+
+<Media src={explorerDark} light={explorerLight} alt="An IDE layout with a project tree, editor and terminal" size="wide" />
+
+<Run file="examples/blocks/file_explorer.py" />
+
+The code: [File explorer block](/pyzed/blocks/file-explorer/). A working editor on the same idea is the
+[Workspace editor](/pyzed/showcase/apps/#workspace-editor).
+
+## Contacts over SQLite
+
+A contacts app on [SQLAlchemy](https://www.sqlalchemy.org) 2.0 with **20,000 rows** in a virtual table. Searching and sorting run as SQL queries in a worker thread (`Command.perform`), so the window never waits
+for the database.
+
+{/* media: showcase/sqlalchemy_contacts (typing in the search box over 20,000 rows) */}
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS and Linux"
+		cd examples/integrations/sqlalchemy_contacts
+		uv run main.py
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS / Linux"
+		cd examples/integrations/sqlalchemy_contacts
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install pyzed-ui "sqlalchemy>=2.0"
+		python main.py
+		```
+
+		```powershell title="Windows (PowerShell)"
+		cd examples\integrations\sqlalchemy_contacts
+		py -m venv .venv
+		.venv\Scripts\Activate.ps1
+		python -m pip install pyzed-ui "sqlalchemy>=2.0"
+		python main.py
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="With pyzed-ui and SQLAlchemy already installed"
+		cd examples/integrations/sqlalchemy_contacts
+		python main.py
+		```
+	</TabItem>
+</Tabs>
+
+<details>
+<summary>Full code: <code>db.py</code> and <code>main.py</code></summary>
+<Code code={contactsDb} lang="py" title="examples/integrations/sqlalchemy_contacts/db.py" />
+<Code code={contactsMain} lang="py" title="examples/integrations/sqlalchemy_contacts/main.py" />
+</details>
+
+The walkthrough is in [SQLAlchemy](/pyzed/integrations/sqlalchemy/). Without any library at all, the
+[Connecting a backend](/pyzed/tutorials/advanced/backend/) tutorial builds a smaller contacts app over the
+`sqlite3` module that comes with Python, with a repository class, a spinner and friendly errors:
+
+<Media src={contactsShot} alt="A contacts list loaded from SQLite, with a search box and an add form" />
+
+## More
+
+- [Live data](/pyzed/showcase/apps/#live-data): a price ticker fed by an async generator.
+- [Glass control center](/pyzed/showcase/glass-dashboard/): a dashboard with frosted-glass cards over a moving shader.
+- [Integrations](/pyzed/integrations/overview/): FastAPI, Django, SQLModel, httpx and more, each with a desktop app.
+
+<Aside type="note" title="About this page">
+The blocks are regenerated from `examples/blocks` and drawn in both themes by the docs tooling, so the captures
+match the current code.
+</Aside>

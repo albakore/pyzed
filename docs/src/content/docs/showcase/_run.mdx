@@ -1,0 +1,51 @@
+{/*
+  The "run it" block of the Showcase and the Tutorials: uv, pip and python tabs (synced across the page),
+  with the Windows (PowerShell) and macOS/Linux spellings. Files starting with "_" are not pages.
+
+    import Run from '../showcase/_run.mdx';
+    <Run file="examples/pomodoro.py" />                               a Python script
+    <Run file="examples/tutorial/designer/hello.pzform" form />        a designer form (pyzed run)
+    <Run file="examples/ai_chat.py" with="httpx" lang="es" />          extra packages, Spanish titles
+*/}
+
+import { Tabs, TabItem, Code } from '@astrojs/starlight/components';
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		<Code
+			lang="bash"
+			title={props.lang === 'es' ? 'Windows, macOS y Linux' : 'Windows, macOS and Linux'}
+			code={`uv run --with pyzed-ui${props.with ? ' --with ' + props.with.split(' ').join(' --with ') : ''} ${props.form ? 'pyzed run' : 'python'} ${props.file}`}
+		/>
+	</TabItem>
+	<TabItem label="pip">
+		<Code
+			lang="bash"
+			title="macOS / Linux"
+			code={`python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install pyzed-ui${props.with ? ' ' + props.with : ''}
+${props.form ? 'pyzed run' : 'python'} ${props.file}`}
+		/>
+		<Code
+			lang="powershell"
+			title="Windows (PowerShell)"
+			code={`py -m venv .venv
+.venv\\Scripts\\Activate.ps1
+python -m pip install pyzed-ui${props.with ? ' ' + props.with : ''}
+${props.form ? 'pyzed run' : 'python'} ${props.file.replaceAll('/', '\\')}`}
+		/>
+	</TabItem>
+	<TabItem label="python">
+		<Code
+			lang="bash"
+			title={props.lang === 'es' ? 'macOS / Linux (con Pyzed ya instalado)' : 'macOS / Linux (Pyzed already installed)'}
+			code={`python3 ${props.form ? '-m pyzed run' : ''}${props.form ? ' ' : ''}${props.file}`}
+		/>
+		<Code
+			lang="powershell"
+			title={props.lang === 'es' ? 'Windows (con Pyzed ya instalado)' : 'Windows (Pyzed already installed)'}
+			code={`py ${props.form ? '-m pyzed run ' : ''}${props.file.replaceAll('/', '\\')}`}
+		/>
+	</TabItem>
+</Tabs>

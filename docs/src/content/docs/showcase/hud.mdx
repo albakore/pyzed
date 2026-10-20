@@ -2,29 +2,36 @@
 title: "Game HUD"
 description: "A game heads-up display in Python: health and mana bars, a radar minimap drawn by a shader, an ability bar with cooldowns and glass panels."
 sidebar:
-  order: 1
+  order: 5
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from './_run.mdx';
 import source from '../../../../../examples/showcase/hud.py?raw';
 
-A complete heads-up display over an animated space nebula. Everything is ordinary Pyzed widgets: the nebula and the radar sweep are `pz.shader` functions, the panels are `glass`, and the ready ability and the level-up banner use `bloom`.
+A complete heads-up display over an animated space nebula. Everything is ordinary Pyzed widgets: the nebula and the radar sweep are shader graphs (`.pzshad` files made of nodes in Pyzed Design), the panels are `glass`, and the ready ability and the level-up banner use `bloom`.
 
 ![Game HUD](../../../assets/showcase/hud.png)
 
-```sh
-python examples/showcase/hud.py
-```
+<Run file="examples/showcase/hud.py" />
+
+Press <kbd>1</kbd> to <kbd>6</kbd> (or click a slot) to cast an ability.
 
 ## How it is made
 
 ### Shader backdrop
 
-The nebula is fractal noise in WGSL, redrawn every frame by the GPU. The radar sweep is a second shader inside a round glass panel.
+The nebula is a graph of domain-warped noise, redrawn every frame by the GPU. The radar sweep is a second graph
+inside a round glass panel; its `accent` variable sets the color from Python.
 
 ```python
-pz.shader(NEBULA, fallback=pz.Gradient(["#05040f", "#2a0c46"]))
+SHADERS = Path(__file__).parent / "shaders"
+pz.shader(SHADERS / "nebula.pzshad", width="fill", height="fill",
+          fallback=pz.Gradient(["#05040f", "#2a0c46", "#0b3a4a"], angle=135))
+pz.shader(SHADERS / "radar.pzshad", uniforms={"accent": "#34d399"}, width=176, height=176)
 ```
+
+See both graphs in [Shaders and effects](/pyzed/showcase/shaders/#every-graph).
 
 ### Glass panels
 
@@ -39,7 +46,8 @@ pz.row([...]).style(glass={"tint": "#0f172a", "strength": 0.35, "blur": 18}, rad
 Low health pulses, the ultimate ability blooms and pulses when it is ready.
 
 ```python
-tile.style(bloom=("#fbbf24", 0.9)).animate("pulse", repeat="infinite")
+health.animate("glow_pulse", repeat="infinite")                          # low health
+tile.animate("pulse", repeat="infinite", duration=1400)                    # the ultimate, when ready
 ```
 
 ### Cooldowns
@@ -50,6 +58,12 @@ Press 1 to 6: `pz.every` counts the cooldowns down and the overlay shrinks with 
 def subscriptions(self):
     return [pz.every(0.1, self.tick, key="cooldowns")] if self.cooldowns else []
 ```
+
+## Try this
+
+- Change the radar's `accent` to `"#f472b6"` and its `sweep` variable to `1.0`.
+- Open `examples/showcase/shaders/nebula.pzshad` in Pyzed Design and change the colors of its Mix node.
+- Make every ability's cooldown twice as long.
 
 ## Full code
 

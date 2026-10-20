@@ -1,0 +1,116 @@
+---
+title: Build an app with the AI agent
+description: "Use the AI agent of Pyzed Design to build a whole desktop app from a description: connect a model, write a good request, follow its plan, review its changes and keep improving the result."
+sidebar:
+  order: 5
+  badge:
+    text: AI
+    variant: caution
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import emptyThread from '../../../../../screenshots/designer-agent-empty.png';
+import agent from '../../../../../screenshots/designer-agent.png';
+import mention from '../../../../../screenshots/designer-agent-mention.png';
+
+Pyzed Design has an **AI agent** built in. Describe an app in plain words and it plans the work, creates the
+project, draws the forms, writes the Python, looks at the result, runs it and fixes what breaks, using the same
+editor you use. You stay in charge: every change can be undone or rejected in one click.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| An expense tracker built from a description, then improved by hand | 30 minutes | Advanced · no code needed | Pyzed Design and an AI model (Claude, or any provider in the list) |
+
+## What you'll learn
+
+- Open the **Agent** panel and connect a model.
+- Write a request that gets a good result the first time.
+- Follow the agent's **plan**, and **keep** or **reject** its changes.
+- Point at things with **@** (a control, the form, a file) and use **/** commands.
+- Keep improving the app by hand, with the agent at your side.
+
+<Aside type="caution" title="Check what it builds">
+An agent is a fast helper, not a guarantee. Read the code it writes, run the app and test the important paths
+yourself before you ship it, especially anything that touches files, money or personal data.
+</Aside>
+
+## Steps
+
+<Steps>
+
+1. **Open the panel.** In Pyzed Design press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> (or **View → Agent
+   panel**). The first time it asks you to **connect a model**: click a provider to sign in with the browser, or
+   **All providers…** for the rest. If you installed Pyzed with pip, add the agent's extras first:
+
+   <Tabs syncKey="pkg">
+   	<TabItem label="uv">
+   		```bash title="Windows, macOS and Linux"
+   		uv tool install "pyzed-ui[designer,agents]"
+   		```
+   	</TabItem>
+   	<TabItem label="pip">
+   		```bash title="Windows, macOS and Linux (inside your environment)"
+   		python -m pip install "pyzed-ui[designer,agents]"
+   		```
+   	</TabItem>
+   	<TabItem label="python">
+   		```bash title="The standalone Pyzed Design app"
+   		# nothing to install: the agent is included
+   		```
+   	</TabItem>
+   </Tabs>
+
+   <Media src={emptyThread} alt="An empty agent thread with suggestions" caption="The Agent panel, ready for a request." />
+
+2. **Ask for the app.** Type `/app` and describe it. Say **what** it is for, **what** is on screen and **what**
+   should happen; leave the "how" to the agent:
+
+   > Create an app to track my expenses. A form with date, amount, a category drop-down (Food, Transport, Home,
+   > Fun) and a note. Save adds the expense to a table below and to a JSON file next to the app. Show the total
+   > for the month at the top and validate that the amount is a positive number.
+
+3. **Follow the plan.** The agent writes a **Plan** card above the message box and ticks the steps off: create the
+   project, add dependencies, draw the forms, wire the events, write the handlers, take a screenshot of each form,
+   run checks and finally run the app. Each tool it uses is a line in the thread; click one to see what it did.
+
+   <Media src={agent} alt="The agent building a form, with its plan and tool calls" caption="The agent works in the same editor: forms, code and the project update as it goes." />
+
+4. **Review.** When it finishes, run the app with <kbd>F5</kbd> and try it. The **Agent changes** bar offers
+   **Reject** (put every file it touched back as it was) or **Keep**. <kbd>Ctrl</kbd>+<kbd>Z</kbd> still undoes
+   one change at a time.
+
+5. **Improve it, pointing at things.** Select a control and ask about *this*, or type **@** to attach the form,
+   its code, a control or a file:
+
+   > @amount should accept a comma as the decimal separator, and the table should show the newest expense first.
+
+   <Media src={mention} alt="Choosing what to attach with @" caption="@ adds context: the selection, the form, its code, a control, a file or a screenshot." />
+
+6. **Polish with commands.** `/tidy` aligns the controls and evens out the margins, `/look` takes a screenshot of
+   the form and improves its design, `/fix` checks the code and fixes what it finds, `/explain` walks you through
+   the form and its handlers.
+
+7. **Take over.** It is your project: open the files, change the layout by hand, write code. The agent reads what
+   you changed in the next message, so you can switch between doing it yourself and asking.
+
+</Steps>
+
+<Aside type="tip" title="Requests that work">
+Name the screens and the fields, the rules ("amount must be positive"), where data is saved, and one example of
+the result. Ask for one change at a time when you refine. More advice in [Prompting](/pyzed/ai/prompting/).
+</Aside>
+
+<Aside type="note" title="Permission modes">
+**Ask before writing** (the default) asks before it creates files or runs the app; **Bypass permissions** never
+asks; **Read only** only answers and suggests; **Chat only** is a plain conversation. Pick one in the menu under
+the message box.
+</Aside>
+
+{/* media: tutorials/ai-agent-app (a short recording: /app request, the plan ticking off, the finished app running) */}
+
+## Next
+
+- [AI agents](/pyzed/editor/ai-agents/) in the designer manual: providers, MCP servers, external agents, images.
+- The [AI](/pyzed/ai/) section: the MCP server and `llms.txt` for agents outside the editor (Claude Code, Cursor...).
+- [Package your app](/pyzed/tutorials/advanced/packaging/) once it is ready.

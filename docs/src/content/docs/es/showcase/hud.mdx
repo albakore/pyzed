@@ -2,29 +2,36 @@
 title: "HUD de videojuego"
 description: "Un HUD de videojuego en Python: barras de vida y maná, un minimapa de radar hecho con un shader, una barra de habilidades con enfriamientos y paneles de cristal."
 sidebar:
-  order: 1
+  order: 5
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/showcase/hud.py?raw';
 
-Un HUD completo sobre una nebulosa animada. Todo son widgets normales de Pyzed: la nebulosa y el barrido del radar son funciones `pz.shader`, los paneles son `glass`, y la habilidad lista y el cartel de subida de nivel usan `bloom`.
+Un HUD completo sobre una nebulosa animada. Todo son widgets normales de Pyzed: la nebulosa y el barrido del radar son grafos de shader (archivos `.pzshad` hechos con nodos en Pyzed Design), los paneles son `glass`, y la habilidad lista y el cartel de subida de nivel usan `bloom`.
 
 ![HUD de videojuego](../../../../assets/showcase/hud.png)
 
-```sh
-python examples/showcase/hud.py
-```
+<Run file="examples/showcase/hud.py" lang="es" />
+
+Pulsa de <kbd>1</kbd> a <kbd>6</kbd> (o haz clic en una casilla) para lanzar una habilidad.
 
 ## Cómo está hecho
 
 ### Fondo con shader
 
-La nebulosa es ruido fractal en WGSL que la GPU redibuja en cada frame. El barrido del radar es otro shader dentro de un panel de cristal redondo.
+La nebulosa es un grafo de ruido deformado que la GPU redibuja en cada fotograma. El barrido del radar es otro grafo
+dentro de un panel de cristal redondo; su variable `accent` fija el color desde Python.
 
 ```python
-pz.shader(NEBULA, fallback=pz.Gradient(["#05040f", "#2a0c46"]))
+SHADERS = Path(__file__).parent / "shaders"
+pz.shader(SHADERS / "nebula.pzshad", width="fill", height="fill",
+          fallback=pz.Gradient(["#05040f", "#2a0c46", "#0b3a4a"], angle=135))
+pz.shader(SHADERS / "radar.pzshad", uniforms={"accent": "#34d399"}, width=176, height=176)
 ```
+
+Mira los dos grafos en [Shaders y efectos](/pyzed/es/showcase/shaders/#todos-los-grafos).
 
 ### Paneles de cristal
 
@@ -39,7 +46,8 @@ pz.row([...]).style(glass={"tint": "#0f172a", "strength": 0.35, "blur": 18}, rad
 La vida baja palpita; la habilidad definitiva brilla con bloom y late cuando está lista.
 
 ```python
-tile.style(bloom=("#fbbf24", 0.9)).animate("pulse", repeat="infinite")
+health.animate("glow_pulse", repeat="infinite")                          # vida baja
+tile.animate("pulse", repeat="infinite", duration=1400)                    # la definitiva, cuando está lista
 ```
 
 ### Enfriamientos
@@ -50,6 +58,12 @@ Pulsa del 1 al 6: `pz.every` descuenta los enfriamientos y la capa oscura se enc
 def subscriptions(self):
     return [pz.every(0.1, self.tick, key="cooldowns")] if self.cooldowns else []
 ```
+
+## Prueba esto
+
+- Cambia el `accent` del radar a `"#f472b6"` y su variable `sweep` a `1.0`.
+- Abre `examples/showcase/shaders/nebula.pzshad` en Pyzed Design y cambia los colores de su nodo Mix.
+- Haz que el enfriamiento de cada habilidad dure el doble.
 
 ## Código completo
 

@@ -1,0 +1,126 @@
+---
+title: A game loop
+description: "Write a small real-time game with Pyzed: a frame loop with pz.frames, held keys, collisions, glow, particles and screen shake, and a HUD made of ordinary widgets."
+sidebar:
+  order: 1
+  badge:
+    text: Game
+    variant: tip
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import finished from '../../../../assets/tutorials/dodge.png';
+import source from '../../../../../../examples/tutorial/dodge.py?raw';
+
+Apps wait for the user; games do not. A game **updates the world many times per second**, whether or not you
+press a key. This tutorial builds *Dodge*: blocks fall, you slide left and right, you collect stars and the game
+speeds up. About 130 lines, and every piece is reusable.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A playable arcade game | 40 minutes | Advanced · Python | [A multi-view app](/pyzed/tutorials/intermediate/navigation/) |
+
+## What you'll learn
+
+- Run code **every frame** with `pz.frames(callback)` and move things by *speed × dt*.
+- Read the keys **held down** (`game.axis`) instead of single key presses.
+- Detect **collisions** with `game.Rect`.
+- Draw on a `pz.canvas` and add **glow**, **particles** and **screen shake**.
+- Stack a **HUD** and a *Game over* card, made of normal widgets, over the canvas.
+
+<Media src={finished} alt="Dodge: red blocks falling toward a cyan paddle, score badges on top" caption="Dodge, a few seconds in." eager />
+
+## Steps
+
+<Steps>
+
+1. **The loop.** Return `pz.frames(self.tick)` from `subscriptions()` and Pyzed calls `tick(dt)` before every
+   frame (60, 120 or 144 times a second, in sync with the screen). `dt` is the time since the last frame, in
+   seconds. When the game is over, return nothing and the loop stops, so a paused game uses no CPU:
+
+   ```python
+   def subscriptions(self):
+       return [] if self.over else [pz.frames(self.tick)]
+   ```
+
+2. **Move by speed × dt.** Speeds are in pixels per second. Multiplying by `dt` makes the game run at the same
+   speed on any screen:
+
+   ```python
+   self.x += game.axis(("left", "a"), ("right", "d")) * 380 * dt   # -1, 0 or 1 × speed × time
+   self.x = game.clamp(self.x, 0, W - PLAYER_W)
+   ```
+
+   `game.axis` reads the keys held **right now**: hold the arrow and the paddle keeps moving.
+
+3. **Spawn things on a timer.** A countdown in seconds, reset when it reaches zero. It shrinks over time, so the
+   game gets harder:
+
+   ```python
+   self.spawn -= dt
+   if self.spawn <= 0:
+       self.spawn = max(0.25, 0.8 - self.time * 0.01)
+       size = self.random.uniform(24, 60)
+       self.blocks.append(game.Rect(self.random.uniform(0, W - size), -size, size, size))
+   ```
+
+4. **Collisions.** `game.Rect` is a box with `overlaps`, `contains` and `center`:
+
+   ```python
+   player = game.Rect(self.x, PLAYER_Y, PLAYER_W, PLAYER_H)
+   if any(block.overlaps(player) for block in self.blocks):
+       self.over = True
+       self.shake.kick(10)                                       # screen shake
+       self.sparks.burst(*player.center, count=40, color=["#f87171", "#fca5a5"])
+   ```
+
+5. **Draw the world.** A list of shapes from `pyzed.draw` on a `pz.canvas`. `game.glow` adds soft light,
+   `sparks.shapes()` draws the particles and `shake.shapes()` moves everything a little after a hit:
+
+   ```python
+   shapes = [draw.background("#0b0e14"), *self.shake.shapes()]
+   shapes += [block.shape(fill="#ef4444", radius=6) for block in self.blocks]
+   for x, y in self.stars:
+       shapes += game.glow(x, y, 6, "#fbbf24", layers=3)
+   shapes.append(draw.rect(self.x, PLAYER_Y, PLAYER_W, PLAYER_H, radius=7, fill="#22d3ee"))
+   shapes += self.sparks.shapes(glow=True)
+   return pz.canvas(shapes, width=W, height=H)
+   ```
+
+6. **HUD and Game over.** These are not drawn on the canvas: they are widgets. `pz.stack` layers the *Game over*
+   card (a glass panel with a button) over the canvas, and the score badges sit above it:
+
+   ```python
+   play = pz.stack([self.board(), self.overlay()], width=W, height=H)
+   ```
+
+7. **Restart.** `on_key` gets single key presses; <kbd>Enter</kbd> resets the state and, since `over` is false
+   again, `subscriptions()` returns the loop and the game starts over.
+
+</Steps>
+
+<Aside type="tip" title="Make it yours">
+Change one number at a time and see what happens: the paddle speed (380), the gravity of the sparks
+(`Particles(gravity=300)`), the spawn interval, or give the blocks a `rotation` with `draw.group`. Run it with
+`pyzed dev examples/tutorial/dodge.py` to see each change when you save.
+</Aside>
+
+<Aside type="note" title="A fixed step or a frame loop?">
+Grid games such as Snake move one cell at a time at a steady pace: use `pz.every(seconds, callback)`. Action
+games that move smoothly use `pz.frames`. The [Games](/pyzed/games/) section has one of each.
+</Aside>
+
+## Full code
+
+<Code code={source} lang="python" title="examples/tutorial/dodge.py" />
+
+<Run file="examples/tutorial/dodge.py" />
+
+{/* media: tutorials/dodge-play (a short recording of a game: dodging, collecting a star, the game over card) */}
+
+## Next
+
+- [Making games](/pyzed/games/): Snake, Breakout and Neon Invaders, step by step.
+- [A custom shader graph](/pyzed/tutorials/advanced/shader-graph/) for a GPU background.

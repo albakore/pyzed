@@ -1,0 +1,128 @@
+---
+title: Un bucle de juego
+description: "Escribe un pequeño juego en tiempo real con Pyzed: un bucle por fotograma con pz.frames, teclas mantenidas, colisiones, brillo, partículas y temblor de pantalla, y un HUD hecho con widgets normales."
+sidebar:
+  order: 1
+  badge:
+    text: Juego
+    variant: tip
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/dodge.png';
+import source from '../../../../../../../examples/tutorial/dodge.py?raw';
+
+Las apps esperan al usuario; los juegos no. Un juego **actualiza el mundo muchas veces por segundo**, pulses una
+tecla o no. Este tutorial construye *Dodge*: caen bloques, te mueves a izquierda y derecha, recoges estrellas y el
+juego se acelera. Unas 130 líneas, y cada pieza se puede reutilizar.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un juego arcade que se puede jugar | 40 minutos | Avanzado · Python | [Una app con varias vistas](/pyzed/es/tutorials/intermediate/navigation/) |
+
+## Qué vas a aprender
+
+- Ejecutar código **en cada fotograma** con `pz.frames(callback)` y mover cosas según *velocidad × dt*.
+- Leer las teclas **mantenidas** (`game.axis`) en lugar de pulsaciones sueltas.
+- Detectar **colisiones** con `game.Rect`.
+- Dibujar en un `pz.canvas` y añadir **brillo**, **partículas** y **temblor de pantalla**.
+- Apilar un **HUD** y una tarjeta de *Game over*, hechos con widgets normales, sobre el canvas.
+
+<Media src={finished} alt="Dodge: bloques rojos cayendo hacia una paleta cian, con los marcadores arriba" caption="Dodge, a los pocos segundos de empezar." eager />
+
+## Pasos
+
+<Steps>
+
+1. **El bucle.** Devuelve `pz.frames(self.tick)` desde `subscriptions()` y Pyzed llama a `tick(dt)` antes de cada
+   fotograma (60, 120 o 144 veces por segundo, sincronizado con la pantalla). `dt` es el tiempo desde el fotograma
+   anterior, en segundos. Cuando el juego termina no devuelves nada y el bucle se detiene, así un juego en pausa no
+   usa CPU:
+
+   ```python
+   def subscriptions(self):
+       return [] if self.over else [pz.frames(self.tick)]
+   ```
+
+2. **Mueve según velocidad × dt.** Las velocidades están en píxeles por segundo. Multiplicar por `dt` hace que el
+   juego vaya a la misma velocidad en cualquier pantalla:
+
+   ```python
+   self.x += game.axis(("left", "a"), ("right", "d")) * 380 * dt   # -1, 0 o 1 × velocidad × tiempo
+   self.x = game.clamp(self.x, 0, W - PLAYER_W)
+   ```
+
+   `game.axis` lee las teclas pulsadas **ahora mismo**: mantén la flecha y la paleta sigue moviéndose.
+
+3. **Crea cosas con un temporizador.** Una cuenta atrás en segundos que se reinicia al llegar a cero. Se acorta con
+   el tiempo, así que el juego se vuelve más difícil:
+
+   ```python
+   self.spawn -= dt
+   if self.spawn <= 0:
+       self.spawn = max(0.25, 0.8 - self.time * 0.01)
+       size = self.random.uniform(24, 60)
+       self.blocks.append(game.Rect(self.random.uniform(0, W - size), -size, size, size))
+   ```
+
+4. **Colisiones.** `game.Rect` es una caja con `overlaps`, `contains` y `center`:
+
+   ```python
+   player = game.Rect(self.x, PLAYER_Y, PLAYER_W, PLAYER_H)
+   if any(block.overlaps(player) for block in self.blocks):
+       self.over = True
+       self.shake.kick(10)                                       # temblor de pantalla
+       self.sparks.burst(*player.center, count=40, color=["#f87171", "#fca5a5"])
+   ```
+
+5. **Dibuja el mundo.** Una lista de figuras de `pyzed.draw` en un `pz.canvas`. `game.glow` añade luz suave,
+   `sparks.shapes()` dibuja las partículas y `shake.shapes()` mueve todo un poco después de un golpe:
+
+   ```python
+   shapes = [draw.background("#0b0e14"), *self.shake.shapes()]
+   shapes += [block.shape(fill="#ef4444", radius=6) for block in self.blocks]
+   for x, y in self.stars:
+       shapes += game.glow(x, y, 6, "#fbbf24", layers=3)
+   shapes.append(draw.rect(self.x, PLAYER_Y, PLAYER_W, PLAYER_H, radius=7, fill="#22d3ee"))
+   shapes += self.sparks.shapes(glow=True)
+   return pz.canvas(shapes, width=W, height=H)
+   ```
+
+6. **HUD y Game over.** No se dibujan en el canvas: son widgets. `pz.stack` pone la tarjeta de *Game over* (un
+   panel de cristal con un botón) sobre el canvas, y los marcadores van encima:
+
+   ```python
+   play = pz.stack([self.board(), self.overlay()], width=W, height=H)
+   ```
+
+7. **Reinicia.** `on_key` recibe las pulsaciones sueltas; <kbd>Enter</kbd> reinicia el estado y, como `over` vuelve
+   a ser falso, `subscriptions()` devuelve el bucle y el juego empieza de nuevo.
+
+</Steps>
+
+<Aside type="tip" title="Hazlo tuyo">
+Cambia un número cada vez y mira qué pasa: la velocidad de la paleta (380), la gravedad de las chispas
+(`Particles(gravity=300)`), el intervalo de aparición, o da a los bloques una `rotation` con `draw.group`.
+Ejecútalo con `pyzed dev examples/tutorial/dodge.py` para ver cada cambio al guardar.
+</Aside>
+
+<Aside type="note" title="¿Paso fijo o bucle por fotograma?">
+Los juegos de cuadrícula como Snake avanzan una celda cada vez a ritmo constante: usa
+`pz.every(segundos, callback)`. Los juegos de acción que se mueven con suavidad usan `pz.frames`. La sección
+[Videojuegos](/pyzed/es/games/) tiene uno de cada.
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/dodge.py" />
+
+<Run file="examples/tutorial/dodge.py" lang="es" />
+
+{/* media: tutorials/dodge-play (una grabación corta de una partida: esquivar, recoger una estrella, la tarjeta de game over) */}
+
+## Siguiente
+
+- [Hacer videojuegos](/pyzed/es/games/): Snake, Breakout y Neon Invaders, paso a paso.
+- [Un grafo de shader propio](/pyzed/es/tutorials/advanced/shader-graph/) para un fondo por GPU.

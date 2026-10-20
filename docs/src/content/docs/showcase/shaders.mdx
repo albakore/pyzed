@@ -1,41 +1,165 @@
 ---
-title: "Shader gallery"
-description: "Six GPU shaders written in WGSL and shown as Pyzed widgets: plasma, a mouse ripple, a tunnel, a CRT screen, Voronoi cells and fire."
+title: Shaders and effects
+description: "GPU effects in Python desktop apps: eleven shader graphs made of nodes in Pyzed Design (plasma, fire, nebula, synthwave, radar...), and the glass, bloom, glow, blur and animation effects every widget has."
 sidebar:
-  order: 5
+  order: 4
+  badge:
+    text: GPU
+    variant: note
 ---
 
-import { Code } from '@astrojs/starlight/components';
-import source from '../../../../../examples/showcase/shaders.py?raw';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Gallery from '../../../components/showcase/Gallery.astro';
+import Run from './_run.mdx';
 
-Six classic effects, each a short WGSL function. A slider changes the `speed` uniform of all of them at once: uniforms are just values, so changing them never recompiles the shader.
+import galleryShot from '../../../assets/showcase/shaders.png';
+import blobs from '../../../assets/showcase/shaders/blobs.png';
+import crt from '../../../assets/showcase/shaders/crt.png';
+import embers from '../../../assets/showcase/shaders/embers.png';
+import fire from '../../../assets/showcase/shaders/fire.png';
+import nebula from '../../../assets/showcase/shaders/nebula.png';
+import plasma from '../../../assets/showcase/shaders/plasma.png';
+import radar from '../../../assets/showcase/shaders/radar.png';
+import ripple from '../../../assets/showcase/shaders/ripple.png';
+import synthwave from '../../../assets/showcase/shaders/synthwave.png';
+import tunnel from '../../../assets/showcase/shaders/tunnel.png';
+import voronoi from '../../../assets/showcase/shaders/voronoi.png';
+import effectsShot from '../../../assets/showcase/apps/effects.png';
+import animationsShot from '../../../assets/showcase/apps/animations.png';
+import stylesShot from '../../../assets/showcase/apps/styles.png';
 
-![Shader gallery](../../../assets/showcase/shaders.png)
+import gallerySource from '../../../../../examples/showcase/shaders.py?raw';
+import effectsSource from '../../../../../examples/effects.py?raw';
+import animationsSource from '../../../../../examples/animations.py?raw';
 
-```sh
-python examples/showcase/shaders.py
-```
+Pyzed draws everything with the GPU, so a desktop app can have what games have: moving backgrounds, light that
+spills out of bright things, frosted glass. There are two layers to it:
 
-## How it is made
+- **Shaders**: a small program that the graphics card runs for every pixel of a widget, every frame. In Pyzed you
+  make them as **graphs of nodes** in the Shader view of [Pyzed Design](/pyzed/shading/), saved as `.pzshad` files,
+  or in Python with `pyzed.shading.Graph`. No shader language to learn.
+- **Effects**: `glass`, `bloom`, `glow`, `blur`, rotation and animations, which any widget has through
+  `widget.style(...)` and `widget.animate(...)`.
 
-### One function per effect
+## The shader gallery
 
-`shade` gets the pixel's `uv`, its position in pixels, the widget size and `time`, and returns a color.
+Six graphs side by side, with a slider that changes the `speed` variable of all of them at once. Variables
+(uniforms) are just values, so changing them never recompiles the shader.
 
-```rust
-fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
-    return vec4<f32>(uv.x, uv.y, 0.5 + 0.5 * sin(time), 1.0);
-}
-```
+<Media src={galleryShot} alt="Six shaders: plasma, ripple, tunnel, CRT, Voronoi cells and fire" size="wide" />
 
-### Uniforms from Python
-
-Each uniform becomes a function you call in WGSL.
+<Run file="examples/showcase/shaders.py" />
 
 ```python
-pz.shader(code, uniforms={"speed": self.speed, "tint": "#a78bfa"})
+from pyzed import shading
+
+plasma = shading.load("shaders/plasma.pzshad")          # compile once
+pz.shader(plasma, uniforms={"speed": self.speed},       # variables by name, from your state
+          width=340, height=210,
+          fallback=pz.Gradient(["#7c3aed", "#ec4899"]))  # shown where shaders are not available
 ```
 
-## Full code
+<details>
+<summary>Full code: <code>examples/showcase/shaders.py</code></summary>
+<Code code={gallerySource} lang="py" title="examples/showcase/shaders.py" />
+</details>
 
-<Code code={source} lang="py" title="examples/showcase/shaders.py" />
+## Every graph
+
+All eleven graphs live in [`examples/showcase/shaders`](https://github.com/albakore/pyzed/tree/main/examples/showcase/shaders).
+Click one to see its file, or open it in the designer to see and change the nodes:
+`pyzed design examples/showcase/shaders/fire.pzshad`.
+
+<Gallery
+	min="14rem"
+	items={[
+		{ title: 'Plasma', text: 'Four sine waves summed into moving color. Variable: <code>speed</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/plasma.pzshad', image: plasma, tag: '28 nodes' },
+		{ title: 'Ripple', text: 'Rings of waves around the pointer. Variables: <code>speed</code>, <code>tint</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/ripple.pzshad', image: ripple, tag: 'Mouse' },
+		{ title: 'Tunnel', text: 'A checkered tunnel rushing towards you. Variable: <code>speed</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/tunnel.pzshad', image: tunnel, tag: '29 nodes' },
+		{ title: 'CRT', text: 'Color bars on a curved screen, with scanlines and a rolling band. Variable: <code>speed</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/crt.pzshad', image: crt, tag: '28 nodes' },
+		{ title: 'Voronoi', text: 'Wandering cells with glowing borders. Variables: <code>speed</code>, <code>tint</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/voronoi.pzshad', image: voronoi, tag: '14 nodes' },
+		{ title: 'Fire', text: 'Fractal noise flames rising from the bottom. Variable: <code>speed</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/fire.pzshad', image: fire, tag: '23 nodes' },
+		{ title: 'Nebula', text: 'Warped noise clouds and twinkling stars; the HUD\'s backdrop. Variable: <code>drift</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/nebula.pzshad', image: nebula, tag: '40 nodes' },
+		{ title: 'Radar', text: 'A sweep with a fading trail, rings and a cross; the HUD\'s minimap. Variables: <code>accent</code>, <code>sweep</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/radar.pzshad', image: radar, tag: '41 nodes' },
+		{ title: 'Embers', text: 'Sparks drifting up from a warm glow; the inventory\'s backdrop. Variable: <code>rise</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/embers.pzshad', image: embers, tag: '100 nodes' },
+		{ title: 'Synthwave', text: 'Dusk sky, stars, a striped sun and a grid that leans towards the pointer; the main menu\'s backdrop.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/synthwave.pzshad', image: synthwave, tag: 'Mouse' },
+		{ title: 'Blobs', text: 'Soft color blobs drifting slowly, made to sit behind glass panels. Variable: <code>speed</code>.', href: 'https://github.com/albakore/pyzed/blob/main/examples/showcase/shaders/blobs.pzshad', image: blobs, tag: '74 nodes' },
+	]}
+/>
+
+<Aside type="tip" title="Make your own">
+Start from a template in Pyzed Design (<kbd>Ctrl</kbd>+<kbd>N</kbd> → **Shader**) and follow
+[A shader effect from the Shader view](/pyzed/tutorials/intermediate/shader-effect/), or build one node by node in
+Python with [A custom shader graph](/pyzed/tutorials/advanced/shader-graph/). The [Shading](/pyzed/shading/)
+section documents every node.
+</Aside>
+
+## Effects on any widget
+
+Rotation, frosted glass, bloom and blur, applied with `style(...)` and animated. The buttons at the bottom animate
+blur and size; size, padding and font size reflow the layout as they move.
+
+<Media src={effectsShot} alt="Four cards over a gradient: rotated, glass, bloom and blurred" />
+
+```python
+card.style(rotate=-8)                       # turn it
+card.style(glass=True)                      # a tinted panel that blurs what is behind it
+card.style(bloom=("#fbbf24", 0.8))          # light around its bright parts
+card.style(blur=4)                          # blur the widget itself
+spinner.animate("spin")                     # a looping preset
+```
+
+<Run file="examples/effects.py" />
+
+<details>
+<summary>Full code: <code>examples/effects.py</code></summary>
+<Code code={effectsSource} lang="py" title="examples/effects.py" />
+</details>
+
+## Animations
+
+Every preset, played on click or on hover; glass, glow, bloom and opacity over a gradient; and transitions that
+animate a panel, a page and a wrong password.
+
+<Media src={animationsShot} alt="A grid of animation presets and four visual effects" />
+
+```python
+button.animate("lift", on="hover").animate("shrink", on="press")   # on events
+title.animate("fade_in_up")                                         # when it appears
+panel.transition(x=0 if self.open else -260, opacity=1 if self.open else 0)  # when a value changes
+pz.presence(page, key=self.page)                                    # out and in when the key changes
+```
+
+{/* media: showcase/animations (a short recording: presets playing, the panel sliding, the password shaking) */}
+
+<Run file="examples/animations.py" />
+
+<details>
+<summary>Full code: <code>examples/animations.py</code></summary>
+<Code code={animationsSource} lang="py" title="examples/animations.py" />
+</details>
+
+## Styles
+
+The CSS-like side: borders, radius, gradients, shadows, typography, named styles with `pz.define_style`, and
+paints with an opacity mask.
+
+<Media src={stylesShot} alt="Buttons and a card styled with borders, gradients and pills" />
+
+<Run file="examples/styles.py" />
+
+More in [Animation and effects](/pyzed/guides/animation/) and the [Theming](/pyzed/theming/) section.
+
+## Where they are used
+
+- [Game HUD](/pyzed/showcase/hud/): the Nebula and Radar graphs, glass panels and bloom.
+- [Game main menu](/pyzed/showcase/main-menu/): the Synthwave graph and a glowing title.
+- [RPG inventory](/pyzed/showcase/inventory/): the Embers graph, bloom by rarity and animated stats.
+- [Glass control center](/pyzed/showcase/glass-dashboard/): the Blobs graph behind frosted-glass cards.
+
+<Aside type="caution" title="When there is no GPU">
+On machines without a supported graphics card (some virtual machines and remote desktops) shaders cannot run, and
+Pyzed draws the widget's `fallback` instead, a gradient or a color. Always give one to shaders that sit behind
+your content.
+</Aside>

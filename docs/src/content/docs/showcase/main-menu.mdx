@@ -2,29 +2,34 @@
 title: "Game main menu"
 description: "A synthwave game main menu in Python with a shader backdrop that follows the mouse, a glowing title and glass buttons that lift on hover."
 sidebar:
-  order: 2
+  order: 6
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from './_run.mdx';
 import source from '../../../../../examples/showcase/main_menu.py?raw';
 
-A title screen in the style of a synthwave racer. The sun, the stars and the endless grid are one shader that scrolls with `time` and leans towards the pointer with `mouse()`.
+A title screen in the style of a synthwave racer. The sun, the stars and the endless grid are one shader graph, `shaders/synthwave.pzshad`, that scrolls with time and leans towards the pointer.
 
 ![Game main menu](../../../assets/showcase/main-menu.png)
 
-```sh
-python examples/showcase/main_menu.py
-```
+<Run file="examples/showcase/main_menu.py" />
+
+Use <kbd>↑</kbd> and <kbd>↓</kbd> (or <kbd>W</kbd> and <kbd>S</kbd>) to choose.
 
 ## How it is made
 
 ### Interactive shader
 
-`mouse()` returns the pointer position from 0 to 1; the horizon and the sun follow it.
+The graph has a **Mouse** node: the pointer position over the widget, from 0 to 1. A few math nodes move the
+horizon a little with it, so the scene leans as you move. In Python it is one widget behind the content:
 
-```rust
-var m = mouse();
-let horizon = 0.62 + (m.y - 0.5) * 0.04;
+```python
+pz.stack([
+    pz.shader(SHADER, width="fill", height="fill",
+              fallback=pz.Gradient(["#08021a", "#4a0d5e", "#d9468f"], angle=180)),
+    content,
+])
 ```
 
 ### Glowing title
@@ -42,6 +47,12 @@ Buttons lift on hover, shrink on press and the selected one slides with a transi
 ```python
 button.animate("lift", on="hover").animate("shrink", on="press").transition(x=6 if selected else 0)
 ```
+
+## Try this
+
+- Add an item to the menu and give it its own action.
+- Change the title's `bloom` color and intensity.
+- Open `shaders/synthwave.pzshad` in Pyzed Design and change the sun's colors.
 
 ## Full code
 

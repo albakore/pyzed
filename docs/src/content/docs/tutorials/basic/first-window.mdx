@@ -1,0 +1,176 @@
+---
+title: Your first window in Pyzed Design
+description: "Draw your first desktop window with Pyzed Design, the visual designer: drag controls, set their properties and run the form with F5, without writing code."
+sidebar:
+  order: 0
+  badge:
+    text: No code
+    variant: success
+---
+
+import { Aside, Code, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import newDialog from '../../../../../screenshots/designer-new.png';
+import placing from '../../../../../screenshots/editor-placing.png';
+import events from '../../../../../screenshots/editor-events.png';
+import running from '../../../../assets/tutorials/designer-hello.png';
+import handlers from '../../../../../../examples/tutorial/designer/hello.py?raw';
+
+You will build a small window that greets you by name. You will **draw** it with the mouse, the way you would
+in Visual Basic or Qt Designer, and run it with one key. There is no code to write until the very last (optional)
+step, and that step is one line.
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A window with a title, a text box and a button | 15 minutes | Basic · no code | Pyzed Design (below) |
+
+## What you'll learn
+
+- Open Pyzed Design and create a **form** (a window of your app).
+- Place controls from the **toolbox** and change them in the **Properties** panel.
+- Make a control stretch when the window grows, with **anchors**.
+- Save and **run** the form with <kbd>F5</kbd>.
+- Wire a button to a Python **event handler** (optional).
+
+<Media src={running} alt="The finished hello form running: Hello, Ada!" caption="What you will have at the end: a real native window." eager />
+
+## Before you start
+
+Pyzed Design is the visual editor of Pyzed. Install it in one of these ways:
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash title="Windows, macOS and Linux"
+		uv tool install "pyzed-ui[designer]"   # installs the pyzed command
+		pyzed design hello.pzform
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash title="macOS and Linux"
+		python3 -m venv .venv
+		source .venv/bin/activate
+		python -m pip install "pyzed-ui[designer]"
+		pyzed design hello.pzform
+		```
+
+		```powershell title="Windows (PowerShell)"
+		py -m venv .venv
+		.venv\Scripts\Activate.ps1
+		python -m pip install "pyzed-ui[designer]"
+		pyzed design hello.pzform
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="With Pyzed already installed"
+		python -m pyzed.designer hello.pzform   # the same, without the pyzed command on PATH
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="tip" title="No Python at all?">
+Download the standalone **Pyzed Design** app from the [Download](/pyzed/download/) page. It brings its own Python
+and `uv`, so there is nothing else to install.
+</Aside>
+
+## Steps
+
+<Steps>
+
+1. **Create the form.** In Pyzed Design press <kbd>Ctrl</kbd>+<kbd>N</kbd> (or **☰ → New**). Pick the **Form**
+   card, type `hello` as the **Name**, `Hello` as the **Title**, leave the **Blank** template and press
+   **Create**. If you started the editor with `pyzed design hello.pzform`, the empty form is already open.
+
+   <Media src={newDialog} alt="The New dialog with the Form, Component and Shader cards" caption="The New dialog: a form, a component or a shader." />
+
+2. **Add a heading.** In the **Toolbox** on the left, find **Heading** (type it in **Search components…**) and
+   drag it onto the form. With it selected, look at the **Properties** panel on the right and change:
+
+   - **Name**: `headline` (press <kbd>Enter</kbd>). This is how your code will call it later.
+   - **Text**: `Hello, Pyzed!`
+
+3. **Add a label and a text box.** Drag a **Label** under the heading and set its **Text** to
+   `Type your name and press the button.` and its **Color** to `text_muted` (a softer gray that follows the theme).
+   Then drag a **Text box** under it, name it `your_name` and set its **Placeholder** to `Your name` and its
+   **Icon** to `user`.
+
+   <Media src={placing} alt="Placing a button by dragging a rectangle on the form" caption="Click a control in the toolbox, then click or drag a rectangle on the form." />
+
+4. **Add the button.** Drag a **Button** below the text box, name it `greet`, set its **Text** to `Greet`, its
+   **Variant** to `solid` and its **Icon** to `hand`.
+
+5. **Line things up.** Drag the controls until the red **smart guides** show that their left edges line up.
+   Select several (drag a box around them) and use **Align left** in the toolbar for a perfect line.
+
+6. **Make it stretch.** Select the text box and open the **Position** section of Properties. In the grid of
+   anchor presets pick the one that stretches **left and right**. Do the same for the heading and the label. Pick
+   **top · right** for the button, so it follows the right edge.
+
+7. **Save and run.** Press <kbd>Ctrl</kbd>+<kbd>S</kbd>: the editor writes `hello.pzform` (the layout) and
+   `hello.py` (its code, still empty). Press <kbd>F5</kbd>: your form opens as a real window. Resize it and watch
+   the text box stretch.
+
+</Steps>
+
+<Aside type="caution" title="Two names are taken">
+A control cannot be called `name`, `title`, `size`, `data` or `window`: your code uses those words for the form
+itself (`form.title` is the window's title). That is why the text box is `your_name` and the heading `headline`.
+</Aside>
+
+{/* media: tutorials/first-window-drag (a short recording: drag a heading, a text box and a button, set their text, press F5) */}
+
+## Bonus: make the button do something
+
+<Steps>
+
+1. **Double-click the button** on the canvas. The **Events** panel wires its `click` event to a new function,
+   `greet_click`, and opens it in the **code editor** at the bottom.
+
+   <Media src={events} alt="The Events panel with an event wired to its handler" caption="Events panel: double-click an event (or the control) to write its code." />
+
+2. **Write one line** (two, if you like) inside the function:
+
+   ```python
+   def greet_click(form, event):
+       form.headline.text = f"Hello, {form.your_name.text}!"
+   ```
+
+   `form` is the running window: every control is an attribute (`form.your_name`), and changing a property
+   (`.text`) redraws it at once. Type `form.` and the editor lists your controls.
+
+3. **Wire Enter too.** Select the text box, open **Events** and double-click its `submit` event (pressing
+   <kbd>Enter</kbd>). In the new `your_name_submit` function, call the button's handler:
+
+   ```python
+   def your_name_submit(form, event):
+       return greet_click(form, event)
+   ```
+
+4. **Save** (<kbd>Ctrl</kbd>+<kbd>S</kbd>). If the form is still running it updates in place; otherwise press
+   <kbd>F5</kbd> again. Type your name and press **Greet**.
+
+</Steps>
+
+## The finished files
+
+The form is two files side by side: `hello.pzform` (JSON describing the window, made by the designer) and
+`hello.py` (your code). Both are in
+[`examples/tutorial/designer`](https://github.com/albakore/pyzed/tree/main/examples/tutorial/designer).
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/hello.py" />
+
+Run the finished example without opening the designer:
+
+<Run file="examples/tutorial/designer/hello.pzform" form />
+
+<Aside type="note" title="Where the ideas come from">
+The canvas, toolbox and property grid follow the classic RAD designers (Visual Basic, the WinForms designer, Qt
+Designer); anchors work like those of WinForms, Godot and Unreal Engine. The editor's look is inspired by the Zed
+code editor.
+</Aside>
+
+## Next
+
+- [A form that does something](/pyzed/tutorials/basic/first-form/): several inputs, validation and the console.
+- [The Pyzed Design manual](/pyzed/editor/): every panel of the editor in detail.
+- [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/): all the ways to place, select and align controls.

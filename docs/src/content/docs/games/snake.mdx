@@ -7,8 +7,8 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Run from '../showcase/_run.mdx';
 import source from '../../../../../examples/games/snake.py?raw';
-import Commands from '../../../components/Commands.astro';
 
 Snake moves on a grid, one cell at a time, so it doesn't need a frame loop: a timer that
 fires a few times a second is enough. You will learn how to keep the game state in the
@@ -16,6 +16,14 @@ app, step it with `pz.every`, steer with `on_key`, draw the board on a canvas an
 menu on top with `pz.stack`.
 
 ![Snake](../../../assets/games/snake.png)
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| Classic Snake: a grid, a timer, a key queue and a game-over card | 30 minutes | Intermediate | The [To-do list](/pyzed/tutorials/basic/todo-app/) tutorial, or a few Pyzed apps of your own |
+
+Play it first:
+
+<Run file="examples/games/snake.py" />
 
 <Steps>
 
@@ -153,9 +161,3 @@ and the arrows.
 ## Full code
 
 <Code code={source} lang="py" title="examples/games/snake.py" />
-
-<Commands
-	uv={`uv run python examples/games/snake.py`}
-	pip={`python examples/games/snake.py`}
-	python={`{py} examples/games/snake.py`}
-/>
