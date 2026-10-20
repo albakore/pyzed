@@ -157,3 +157,21 @@ def test_designer_update_channels(monkeypatch):
     command.close()
     app.prefs.update_channel = "nightly"  # unknown values fall back to stable
     assert app.updates.channel == "stable"
+
+
+def test_designer_waits_for_the_release_builds(monkeypatch):
+    """The tag publishes the release before the pipeline attaches its files: until then it is not offered."""
+    from pyzed.designer.app import Designer
+
+    app = Designer(language_servers=False)
+    app.updates._run = lambda work, done, failed=None: done(work())
+    building = dict(API_RELEASE, tag_name="v99.0.0", assets=[])
+    monkeypatch.setattr(updater, "latest", lambda repo, prerelease=False, **kw: updater.Release.from_api(building))
+    app.updates.check(quiet=True)
+    assert app.updates.status == "up_to_date"
+    wheel = {"name": "pyzed_ui-99.0.0-cp310-abi3-win_amd64.whl", "browser_download_url": "https://example.com/w"}
+    built = dict(building, assets=[*API_RELEASE["assets"], wheel])
+    monkeypatch.setattr(updater, "latest", lambda repo, prerelease=False, **kw: updater.Release.from_api(built))
+    monkeypatch.setattr(updater, "asset_name", lambda app: "pyzed-design-linux-x86_64.zip")
+    app.updates.check(quiet=True)
+    assert app.updates.status == "available" and app.updates.latest.has_wheels

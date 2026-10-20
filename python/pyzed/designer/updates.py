@@ -142,7 +142,9 @@ class UpdateController:
         def done(release: updater.Release) -> None:
             updater.save_state(last_check=time.time())
             self.latest = release
-            if updater.is_newer(release.version, self.current) and \
+            # A release counts once its builds are attached: the tag publishes it before the pipeline ends.
+            built = release.asset_for(updater.asset_name(APP)) is not None if self.can_install else release.has_wheels
+            if built and updater.is_newer(release.version, self.current) and \
                     updater.load_state().get("skipped") != release.version:
                 self.status = "available"
                 self.d.notify(tr("Pyzed Design {version} is available", version=release.version),
@@ -291,7 +293,8 @@ class UpdateController:
         """How to upgrade when the designer runs from Python and cannot replace itself."""
         if self.can_install or not updater.is_newer(release.version, self.current):
             return None
-        command = f"uv add pyzed-ui=={release.version}   # {tr('or')}: pip install -U pyzed-ui"
+        command = (f"uv add pyzed-ui=={release.version}   "
+                   f"# {tr('or')}: pip install -U --only-binary pyzed-ui pyzed-ui")
         return ui.callout(tr("Upgrade the package to get it:"), command, tint="accent", theme=t)
 
     def notes_view(self, t: Theme) -> Any:

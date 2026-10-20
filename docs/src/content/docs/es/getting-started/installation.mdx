@@ -40,9 +40,11 @@ El paquete se llama `pyzed-ui` en PyPI (el nombre `pyzed` ya estaba ocupado), pe
 Los wheels precompilados para Linux, macOS y Windows incluyen el motor de Rust, así que no
 necesitas compilar nada.
 
-<Aside type="caution" title="Antes de la primera versión en PyPI">
-Si `pip install pyzed-ui` no encuentra un wheel para tu plataforma, instala desde el código fuente
-(abajo). Necesitarás Rust 1.88 o superior.
+<Aside type="note" title="Solo wheels precompilados">
+En PyPI solo hay wheels, compilados y probados por el pipeline de releases para Linux (x86_64 y ARM, glibc y
+musl), macOS (Intel y Apple Silicon) y Windows (x64 y ARM). Un mismo wheel sirve para cualquier Python desde
+3.10. En otra plataforma la instalación se detiene con un error en lugar de compilar; ahí instala desde el
+código fuente (abajo).
 </Aside>
 
 ## Desde el código fuente
