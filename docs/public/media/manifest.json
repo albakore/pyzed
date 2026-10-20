@@ -343,19 +343,16 @@
         "designer",
         "theming"
       ],
-      "width": 1280,
-      "height": 800,
+      "width": 960,
+      "height": 600,
       "fps": 12,
       "duration": 7.5,
       "recorded": "off-screen",
-      "mp4": "media/designer-themes.mp4",
-      "mp4_bytes": 178201,
-      "webm": "media/designer-themes.webm",
-      "webm_bytes": 183735,
-      "poster": "media/designer-themes.poster.webp",
-      "poster_bytes": 44708,
+      "quality": 82,
       "webp": "media/designer-themes.webp",
-      "webp_bytes": 173930
+      "webp_bytes": 170698,
+      "poster": "media/designer-themes.poster.webp",
+      "poster_bytes": 30986
     },
     {
       "name": "form-validation",
@@ -384,17 +381,16 @@
       "tags": [
         "designer"
       ],
-      "width": 1280,
-      "height": 800,
+      "width": 960,
+      "height": 600,
       "fps": 24,
       "duration": 7.92,
       "recorded": "off-screen",
-      "mp4": "media/designer-place-controls.mp4",
-      "mp4_bytes": 120352,
-      "webm": "media/designer-place-controls.webm",
-      "webm_bytes": 190253,
+      "quality": 70,
+      "webp": "media/designer-place-controls.webp",
+      "webp_bytes": 196580,
       "poster": "media/designer-place-controls.poster.webp",
-      "poster_bytes": 49566
+      "poster_bytes": 34830
     },
     {
       "name": "designer-tabs-anywhere",
@@ -403,17 +399,34 @@
       "tags": [
         "designer"
       ],
-      "width": 1280,
-      "height": 800,
+      "width": 960,
+      "height": 600,
       "fps": 24,
       "duration": 11.67,
       "recorded": "off-screen",
-      "mp4": "media/designer-tabs-anywhere.mp4",
-      "mp4_bytes": 222523,
-      "webm": "media/designer-tabs-anywhere.webm",
-      "webm_bytes": 268957,
+      "quality": 64,
+      "webp": "media/designer-tabs-anywhere.webp",
+      "webp_bytes": 196824,
       "poster": "media/designer-tabs-anywhere.poster.webp",
-      "poster_bytes": 35674
+      "poster_bytes": 23668
+    },
+    {
+      "name": "designer-timer-outline",
+      "title": "A timer in the tray and the Outline",
+      "description": "Pyzed Design: a Timer dragged onto the login form lands in the tray under it, not on the form; then the Outline selects a control and the form's timer, listed under Non-visual.",
+      "tags": [
+        "designer"
+      ],
+      "width": 960,
+      "height": 600,
+      "fps": 20,
+      "duration": 8.85,
+      "recorded": "off-screen",
+      "quality": 82,
+      "webp": "media/designer-timer-outline.webp",
+      "webp_bytes": 123338,
+      "poster": "media/designer-timer-outline.poster.webp",
+      "poster_bytes": 24762
     },
     {
       "name": "shader-graph",
