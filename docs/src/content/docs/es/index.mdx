@@ -1,10 +1,10 @@
 ---
 title: Pyzed
-description: "Pyzed es un framework de código abierto para GUIs de escritorio nativas en Python: renderizado en Rust con Iced, 90+ componentes estilo Zed, diseñador visual, efectos y shaders en la GPU, videojuegos y un agente de IA integrado. Una alternativa moderna a tkinter, Kivy y PyQt."
+description: "Pyzed es un framework de frontend de código abierto para apps de escritorio nativas en Python: renderizado en la GPU con Rust e Iced, más de 90 componentes, diseñador visual de arrastrar y soltar, temas, shaders por nodos, empaquetado para Windows, macOS y Linux y un agente de IA integrado. Una alternativa moderna a tkinter, Kivy y PyQt."
 template: splash
 hero:
-  title: Apps de escritorio preciosas en <span class="pz-gradient-text">Python puro</span>
-  tagline: Tú describes la interfaz; Iced la dibuja de forma nativa en Rust. Diseña ventanas arrastrando y soltando en Pyzed Design, conéctalas a Python con un editor de código de verdad y distribúyelas en Windows, macOS y Linux.
+  title: El framework de frontend en Python para <span class="pz-gradient-text">apps de&nbsp;escritorio</span>
+  tagline: Diseña tu interfaz de forma visual o en código, dale estilo con temas y shaders en la GPU y distribúyela en Windows, macOS y Linux. Python puro, dibujado de forma nativa por Rust. Inspirado en la interfaz del editor Zed y en Godot, Unreal Engine, Visual Basic y Qt Designer; móvil y web están en el plan.
   actions:
     - text: Descargar Pyzed Design
       link: /pyzed/es/download/
@@ -30,6 +30,7 @@ import CodeShowcase from '../../../components/landing/CodeShowcase.astro';
 import Cta from '../../../components/landing/Cta.astro';
 import Gallery from '../../../components/landing/Gallery.astro';
 import Compare from '../../../components/landing/Compare.astro';
+import NavCards from '../../../components/NavCards.astro';
 
 <LatestRelease />
 
@@ -42,11 +43,30 @@ import Compare from '../../../components/landing/Compare.astro';
 
 <Stats
 	items={[
-		{ value: '90+', label: 'componentes al estilo Zed' },
+		{ value: '90+', label: 'componentes listos para usar' },
 		{ value: '11', label: 'temas incluidos' },
 		{ value: '~2000', label: 'iconos Lucide' },
 		{ value: '3', label: 'plataformas de escritorio' },
 		{ value: 'Rust', label: 'renderizado nativo (Iced)' },
+	]}
+/>
+
+<SectionTitle id="sections" eyebrow="Explora" title="Todo lo que abarca Pyzed">
+	Pyzed es una biblioteca, un diseñador visual y un conjunto de herramientas alrededor. Ve directo a la parte que necesitas.
+</SectionTitle>
+
+<NavCards
+	min="19rem"
+	items={[
+		{ title: 'Aprender', text: 'Instala Pyzed, crea una primera ventana y sigue tutoriales de básico a avanzado.', href: '/pyzed/es/tutorials/', icon: 'open-book' },
+		{ title: 'Biblioteca', text: 'Todos los componentes y pantallas listas, con vistas previas, variantes y código.', href: '/pyzed/es/library/', icon: 'puzzle' },
+		{ title: 'Diseñador', text: 'Pyzed Design: dibuja formularios y componentes, escribe su código y ejecútalos.', href: '/pyzed/es/editor/', icon: 'pencil' },
+		{ title: 'Shading', text: 'Shaders de GPU con nodos o WGSL para fondos, efectos y juegos.', href: '/pyzed/es/shading/', icon: 'star' },
+		{ title: 'Temas', text: 'Temas, tokens de color, estilos tipo CSS, iconos y fuentes.', href: '/pyzed/es/theming/', icon: 'moon' },
+		{ title: 'Distribuir', text: 'Empaqueta tu app para Windows, macOS y Linux con un comando.', href: '/pyzed/es/packaging/', icon: 'rocket' },
+		{ title: 'Showcase', text: 'Interfaces de juegos, paneles de cristal, shaders y juegos completos.', href: '/pyzed/es/showcase/', icon: 'laptop' },
+		{ title: 'Integraciones', text: 'FastAPI, Django, SQLAlchemy, SQLModel, httpx y Pydantic.', href: '/pyzed/es/integrations/overview/', icon: 'link' },
+		{ title: 'IA', text: 'El agente del diseñador, el servidor MCP, llms.txt y pyzed.agents.', href: '/pyzed/es/ai/', icon: 'comment-alt' },
 	]}
 />
 
@@ -209,7 +229,7 @@ import Compare from '../../../components/landing/Compare.astro';
 	overlay="zed-file-finder"
 	overlayAlt="La misma app en Gruvbox Dark con el buscador de archivos abierto"
 	reverse
-	href="/pyzed/es/guides/theming/"
+	href="/pyzed/es/theming/themes/"
 	more="Guía de temas"
 >
 	One, Ayu y Gruvbox vienen con los tokens de color de Zed, en variantes clara y oscura. Sigue la apariencia del
@@ -369,7 +389,7 @@ import Compare from '../../../components/landing/Compare.astro';
 		{
 			title: 'Distribúyela: pyzed build',
 			text: 'Un comando empaqueta tu proyecto como app independiente para Windows, macOS o Linux, con Python dentro.',
-			href: '/pyzed/es/guides/packaging/',
+			href: '/pyzed/es/packaging/build/',
 			icon: 'download',
 		},
 		{
@@ -451,7 +471,7 @@ pz.run(Counter)
 	<LinkCard title="Integraciones" href="/pyzed/es/integrations/overview/" description="FastAPI, SQLAlchemy, SQLModel, Django, httpx y Pydantic." />
 	<LinkCard title="Pyzed para agentes de IA" href="/pyzed/es/ai/" description="El agente del diseñador, el servidor MCP, llms.txt y pyzed.agents." />
 	<LinkCard title="Por qué Pyzed" href="/pyzed/es/why/" description="Cómo se compara Pyzed con tkinter, Kivy, PyQt y Flet, con benchmarks." />
-	<LinkCard title="Tutorial: lista de tareas" href="/pyzed/es/tutorials/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
+	<LinkCard title="Tutorial: lista de tareas" href="/pyzed/es/tutorials/basic/todo-app/" description="Estado, formularios, listas y atajos paso a paso." />
 </CardGrid>
 
 <Cta
