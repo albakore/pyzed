@@ -75,6 +75,7 @@ from .overlays import (
     toasts,
 )
 from .workspace import panel, panel_header, status_bar, status_item, title_bar, title_button, workspace
+from . import audio, camera, rack  # noqa: E402  (namespaces: ui.audio.Knob, ui.camera.Webcam, ui.rack.Rack)
 
 __all__ = [
     "ColorPicker",
