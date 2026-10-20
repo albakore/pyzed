@@ -214,6 +214,8 @@ class Designer(App):
         self.code_error: Optional[str] = None
         self.code_revision = 0
         self.assist = CodeAssist(self, servers=language_servers)
+        self.scale = self.prefs.ui_scale
+        self.apply_fonts()
         # project files open in the code editor (tabs of the Code panel)
         self.buffers = _files.Buffers(self)
         # the AI agent (Agent panel, inline assist)
@@ -1176,7 +1178,13 @@ class Designer(App):
     def toggle_agent(self) -> Any:
         """Shows the Agent panel and focuses its message box, or hides its dock when it is showing."""
         if self.layout.is_showing("agent", self):
-            self.toggle_dock(self.layout.docks["agent"])
+            place = self.layout.docks["agent"]
+            if place in preferences.DOCKS:
+                self.toggle_dock(place)
+            else:  # in the center or a window: the document comes back to the front
+                pane = self.panes.at(place)
+                if pane is not None and pane.docs:
+                    pane.front = None
             return None
         self.show_panel("agent")
         return _core.Command.focus(agent_panel.INPUT_ID)
@@ -1187,9 +1195,12 @@ class Designer(App):
         return self.dock_windows.move_to(panel, dock)
 
     def toggle_dock(self, dock: str) -> None:
-        """Shows or hides the dock ``dock`` and saves the layout."""
+        """Shows or hides the dock ``dock`` and saves the layout (a form in a hidden dock stops being the one
+        the panels follow)."""
         self.layout.toggle(dock)
         self.layout.menu = None
+        if self.layout.closed.get(dock) and self.panes.active is self.panes.at(dock):
+            self.panes.activate(self.panes.main)
         self._save_layout()
 
     def resize_dock(self, dock: str, size: float) -> None:
@@ -1198,8 +1209,8 @@ class Designer(App):
         self._save_layout()
 
     def dock_visible(self, dock: str) -> bool:
-        """Returns whether the dock ``dock`` is open and has a panel to show."""
-        return self.layout.shown(dock, self) is not None
+        """Returns whether the dock ``dock`` is open and has a panel or a document to show."""
+        return docks.front(self, dock) is not None
 
     def open_dock_menu(self, dock: str) -> None:
         """Opens the panel menu of the dock ``dock``, or closes it if it is already open."""
@@ -1261,6 +1272,26 @@ class Designer(App):
             setattr(self, key, value)
         _logs.event("designer", "Setting %s = %r", key, value)
         preferences.save(self.prefs)
+
+    def apply_fonts(self) -> None:
+        """Makes the interface and the code use the fonts chosen in the settings (IBM Plex when none)."""
+        _core.set_fonts(ui=self.prefs.ui_font or None, code=self.assist.settings.font_family or None)
+
+    def set_ui_font(self, family: str) -> None:
+        """The interface font: a family name, or ``""`` for the default (IBM Plex Sans)."""
+        self.set_pref("ui_font", family)
+        self.apply_fonts()
+
+    def set_ui_scale(self, scale: float) -> None:
+        """The size of the whole interface (1.0 is 100%), applied at once to every window."""
+        low, high, _ = preferences.UI_SCALE
+        scale = min(max(round(float(scale), 2), low), high)
+        self.scale = scale
+        self.set_pref("ui_scale", scale)
+
+    def zoom_ui(self, step: int) -> None:
+        """Zooms the interface in (1), out (-1) or back to 100% (0)."""
+        self.set_ui_scale(1.0 if step == 0 else self.scale + step * preferences.UI_SCALE[2])
 
     def toggle_pref(self, key: str) -> None:
         """Flips the boolean preference ``key`` and saves it."""
@@ -1599,6 +1630,7 @@ class Designer(App):
     def doc(self, value: Document) -> None:
         """Opens ``value`` in a tab: the tab of the same file (in any window), an untouched empty tab, or a new one."""
         self.__dict__["help_active"] = False  # show the document, not the Reference tab
+        self.panes.active.front = None
         docs: List[Document] = self.docs
         if not docs:
             docs.append(value)
@@ -1630,6 +1662,7 @@ class Designer(App):
 
     def select_doc(self, index: int) -> None:
         """Switches to the tab at ``index``."""
+        self.panes.active.front = None
         if index == self.active_doc or not 0 <= index < len(self.docs) or not self._leave_doc():
             return
         self.active_doc = index
@@ -1686,22 +1719,31 @@ class Designer(App):
         """Brings the tab ``index`` of ``pane`` to the front (and its window, when it has one of its own)."""
         if not self.panes.activate(pane):
             return None
+        pane.front = None
         self.select_doc(index)
-        return pane.window.focus() if pane.window is not None and pane.window.is_open else None
+        if pane.docked:
+            self.layout.closed[pane.place] = False
+        return _core.Command.focus_window(pane.window) if pane.window is not None and pane.window.is_open else None
 
-    def doc_tabs(self, t, pane: Optional[Pane] = None) -> Any:
-        """One tab per open file of ``pane`` (the main window's by default): forms open in the Form view,
-        components in the Component view. Tabs can be dragged to reorder them or to another window."""
-        pane = pane or self.panes.main
+    @staticmethod
+    def doc_tab_label(doc: Document) -> Tuple[str, str]:
+        """The icon and the label of the tab of ``doc``: "Form · Login", "Component · Card"..."""
+        scene = getattr(doc, "is_scene", False)
+        shader = getattr(doc, "is_shader", False)
+        kind = tr("Shader") if shader else tr("Component") if scene else tr("Form")
+        return shader_editor.ICON if shader else "component" if scene else "app-window", f"{kind} · {doc.display_name}"
+
+    def doc_tab_items(self, pane: Pane, t) -> Tuple[List[Any], str, Any]:
+        """The tabs of the documents of ``pane`` (forms open in the Form view, components in the Component
+        view; the main window also has Reference and What's new), the one in front, and the label of its
+        view."""
         main = pane is self.panes.main
         tabs = []
         for i, doc in enumerate(pane.docs):
-            scene = getattr(doc, "is_scene", False)
-            shader = getattr(doc, "is_shader", False)
-            kind = tr("Shader") if shader else tr("Component") if scene else tr("Form")
-            tabs.append(ui.Tab(id=str(i), label=f"{kind} · {doc.display_name}",
-                               icon=shader_editor.ICON if shader else "component" if scene else "app-window",
-                               icon_color="accent" if scene or shader else None, dirty=doc.dirty))
+            icon, label = self.doc_tab_label(doc)
+            accent = getattr(doc, "is_scene", False) or getattr(doc, "is_shader", False)
+            tabs.append(ui.Tab(id=str(i), label=label, icon=icon, icon_color="accent" if accent else None,
+                               dirty=doc.dirty))
         notes = self.updates.tab() if main else None
         if notes is not None:
             tabs.append(notes)
@@ -1712,8 +1754,7 @@ class Designer(App):
         active = str(pane.active)
         if main:
             active = HELP_TAB if self.help_shown else _NOTES_TAB if self.updates.notes_active else active
-        end = [ui.label(view, size="xs", color="text_muted", theme=t)]
-        return self.panes.tab_bar(pane, tabs, active, end, t)
+        return tabs, active, ui.label(view, size="xs", color="text_muted", theme=t)
 
     def _select_tab(self, tab_id: str) -> None:
         """Switches to a document tab, or to the What's new tab."""
@@ -2323,8 +2364,8 @@ class Designer(App):
             else:  # the View and Help buttons sit at the end of the title bar, before the gear
                 right = (ui_frame.end_x(frame) if frame else 8) + 30 * (1 if self.app_menu == "help" else 2)
                 body = ui.popover(body, menu, x=right, y=TITLE_HEIGHT, align_x="end", on_dismiss=self.close_app_menu)
-        # the dock a dragged panel tab would go to (always a layer, so a drag never changes the view's shape)
-        body = _core.stack([body, self.dock_windows.drop_hint(t)], width="fill", height="fill")
+        # where a dragged tab would go, and a copy of it (always a layer, so a drag never changes the view's shape)
+        body = _core.stack([body, self.dock_windows.drag_layer(main, t)], width="fill", height="fill")
         body = self.window_overlays(body, main, t)
         if frame is not None:  # the borders resize the window, above the menus and dialogs
             body = _core.window_edges(body, enabled=not self.window_maximized and frame != "overlay")
@@ -2335,15 +2376,23 @@ class Designer(App):
         return self.logs.boundary(lambda: self._center_view(pane, t), tr("The canvas"), t)
 
     def _center_view(self, pane: Pane, t) -> Any:
-        """What sits under the tabs of ``pane``: its document's toolbar and canvas (or, in the main window,
-        the Reference or What's new tab)."""
-        main = pane is self.panes.main
-        tabs = self.doc_tabs(t, pane)
-        if main and self.help_shown:
-            return _core.column([tabs, ui.reference_browser(self.help, on_open_url=self.open_url, theme=t)],
-                                width="fill", height="fill")
-        if main and self.updates.notes_active:
-            return _core.column([tabs, self.updates.notes_view(t)], width="fill", height="fill")
+        """The tabs of ``pane`` (the main window's center or a window of its own) over what is in front: a
+        panel placed there, or its document's toolbar and canvas (or, in the main window, the Reference or
+        What's new tab)."""
+        shown = docks.front(self, pane.place)
+        if shown is None:
+            return None
+        tabs = self.dock_windows.tab_bar(pane.place, shown, docks.place_end(self, pane.place, shown, t), t)
+        content = docks.panel_body(self, shown[1], t) if shown[0] == "panel" else self.doc_body(pane, t)
+        return docks.with_menu(self, pane.place, shown, _core.column([tabs, content], width="fill", height="fill"), t)
+
+    def doc_body(self, pane: Pane, t) -> Any:
+        """The document in front of ``pane``: its toolbar and canvas (or, in the main window, the Reference or
+        What's new tab). The canvas of a pane that is not the active one wakes up on the first click."""
+        if pane is self.panes.main and self.help_shown:
+            return ui.reference_browser(self.help, on_open_url=self.open_url, theme=t)
+        if pane is self.panes.main and self.updates.notes_active:
+            return self.updates.notes_view(t)
         with self.panes.showing(pane):
             if shader_editor.is_shader(self):
                 content = shader_editor.view(self, t)
@@ -2351,12 +2400,12 @@ class Designer(App):
                 canvas = _core.container(surface.form_surface(self, t), width="fill", height="fill", bg=t.background)
                 content = _core.column([self.toolbar(t) if self.prefs.show_toolbar else None, canvas],
                                        width="fill", height="fill")
-        return _core.column([tabs, self.panes.asleep(pane, content)], width="fill", height="fill")
+        return self.panes.asleep(pane, content)
 
     def window_overlays(self, body: Any, pane: Pane, t) -> Any:
         """Adds what opens over a window to ``body``, the view of the window of ``pane``: the context menu,
         toasts and dialogs show in the window used last; the window reports the pointer for menus and drags."""
-        here = pane is self.panes.here
+        here = self.panes.is_here(pane)
         if here and self.projects.files.menu is not None:
             menu, mx, my = self.projects.files.menu_at(t)
             body = ui.popover(body, menu, x=mx, y=my, on_dismiss=self.projects.files.close_menu)

@@ -156,7 +156,7 @@ from pyzed import ui
 
 # The look of the app, like a CSS file: classes, :hover and media queries.
 pz.stylesheet({{
-    ".page": {{"width": "fill", "height": "fill", "padding": 32, "align_y": "center"}},
+    ".page": {{"width": "fill", "height": "fill", "padding": 32}},
     ".card": {{"background": "panel", "border": (1, "border"), "radius": 12, "padding": 24, "width": 360}},
     "@media (max_width: 480)": {{".page": {{"padding": 12}}}},
 }})
@@ -188,7 +188,7 @@ class App(pz.App):
                 ),
                 class_="card", gap=16,
             ),
-            class_="page", display="flex", justify="center",
+            class_="page", display="flex", justify="center", align="center",
         )
 
 

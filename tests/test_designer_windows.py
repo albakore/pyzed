@@ -58,9 +58,9 @@ def test_the_command_moves_the_tab_out_and_back():
 def test_drag_along_the_row_reorders():
     d = designer_with("a", "b", "c")
     main = d.panes.main
-    d.panes.start_drag(main, "0")
-    d.panes.drag_over(3)  # past the last tab
-    d.panes.drop(main, "0", released(40, 10))
+    d.dock_windows.start_drag(main.place, "0")
+    d.dock_windows.drag_over("main", 3)  # past the last tab
+    d.dock_windows.drop(main.place, "0", released(40, 10))
     assert names(main) == ["b", "c", "a"]
     assert main.doc.form.name == "c"  # the tab in front stays in front
 
@@ -68,28 +68,28 @@ def test_drag_along_the_row_reorders():
 def test_drop_inside_the_window_moves_nothing():
     d = designer_with("a", "b")
     d.window_size = (1000, 700)
-    d.panes.start_drag(d.panes.main, "1")
-    d.panes.drag_over(None)
-    assert d.panes.drop(d.panes.main, "1", released(500, 400)) is None
+    d.dock_windows.start_drag("main", "1")
+    d.dock_windows.drag_over("main", None)
+    assert d.dock_windows.drop("main", "1", released(500, 400)) is None
     assert len(d.panes.panes) == 1 and names(d.panes.main) == ["a", "b"]
 
 
 def test_drop_outside_opens_a_window_and_onto_a_window_stacks():
     d = designer_with("a", "b", "c")
     d.window_size, d.window_position = (1000, 700), (0, 0)
-    d.panes.start_drag(d.panes.main, "2")
-    d.panes.drop(d.panes.main, "2", released(1200, 300, (1200, 300)))
+    d.dock_windows.start_drag("main", "2")
+    d.dock_windows.drop("main", "2", released(1200, 300, (1200, 300)))
     pane = d.panes.panes[1]
     assert names(pane) == ["c"]
     pane.window.window_size, pane.window.window_position = (800, 600), (1100, 280)
     # drag "b" from the main window onto the new window: it joins its tabs
-    d.panes.start_drag(d.panes.main, "1")
-    d.panes.drop(d.panes.main, "1", released(1300, 400, (1300, 400)))
+    d.dock_windows.start_drag("main", "1")
+    d.dock_windows.drop("main", "1", released(1300, 400, (1300, 400)))
     assert names(pane) == ["c", "b"] and names(d.panes.main) == ["a"]
     assert d.panes.active is pane and pane.doc.form.name == "b"
     # and back: drop "c" over the main window
-    d.panes.start_drag(pane, "0")
-    d.panes.drop(pane, "0", released(-600, 100, (500, 380)))
+    d.dock_windows.start_drag(pane.place, "0")
+    d.dock_windows.drop(pane.place, "0", released(-600, 100, (500, 380)))
     assert names(d.panes.main) == ["a", "c"] and names(pane) == ["b"]
 
 
@@ -98,8 +98,8 @@ def test_last_tab_dragged_off_moves_its_window():
     d.panes.detach(d.panes.main, 1)
     pane = d.panes.panes[1]
     pane.window.window_size = (800, 600)
-    d.panes.start_drag(pane, "0")
-    command = d.panes.drop(pane, "0", released(900, 50, (2000, 400)))
+    d.dock_windows.start_drag(pane.place, "0")
+    command = d.dock_windows.drop(pane.place, "0", released(900, 50, (2000, 400)))
     assert isinstance(command, _core.Command) and names(pane) == ["b"]
 
 

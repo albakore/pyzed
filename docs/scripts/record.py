@@ -382,6 +382,58 @@ def designer_place_clip(c: Clip):
     yield Frame(app, size, pointer, hold=c.fps)
 
 
+@clip("designer-tabs-anywhere", "Tabs anywhere",
+      "Pyzed Design: the Events panel dragged next to the forms, a form dragged into the left dock and both "
+      "dragged back, with the target lit up and a copy of the tab under the pointer.",
+      fps=24, poster=0.3, tags=["designer"])
+def designer_tabs_clip(c: Clip):
+    from types import SimpleNamespace
+
+    from pyzed.designer.document import Document
+
+    work = Path(tempfile.mkdtemp(prefix="pyzed-record-"))
+    app = _designer(work / "login.pzform")
+    app.doc.form.name = "login"
+    for type_, y in (("heading", 20), ("input", 70), ("input", 120), ("button", 170)):
+        app.doc.add(type_, 24, y)
+    app.doc.select([])
+    second = Document()
+    second.form.name = "settings"
+    second.add("switch", 24, 24)
+    second.add("slider", 24, 70)
+    app.doc = second
+    size = DESIGNER_SIZE
+    app.window_size, app.window_position = size, (0.0, 0.0)
+    tabs = app.dock_windows
+    pointer = (700.0, 500.0)
+
+    def drag(place, key, start, end, row=None):
+        nonlocal pointer
+        for p in glide(pointer, start, 12):
+            pointer = p
+            yield Frame(app, size, pointer)
+        app.window_moved(*start)
+        tabs.start_drag(place, key)
+        yield Frame(app, size, pointer, pressed=True, hold=3)
+        for p in glide(start, end, 22):
+            pointer = p
+            app.window_moved(*p)
+            if row is not None and p == end:
+                tabs.drag_over(*row)
+            yield Frame(app, size, pointer, pressed=True)
+        yield Frame(app, size, pointer, pressed=True, hold=10)
+        tabs.drop(place, key, SimpleNamespace(window_x=end[0], window_y=end[1], screen=None))
+        app.toasts.clear()
+        yield Frame(app, size, pointer, hold=14)
+
+    yield Frame(app, size, pointer, hold=12)
+    yield from drag("right", "events", (1098.0, 49.0), (640.0, 420.0))  # next to the forms
+    yield from drag("main", "1", (528.0, 48.0), (110.0, 470.0))  # a form into the left dock
+    yield from drag("main", "events", (480.0, 48.0), (1047.0, 49.0), row=("right", 1))  # back between two panels
+    yield from drag("left", "0", (90.0, 49.0), (432.0, 48.0), row=("main", 1))  # the form back among the forms
+    yield Frame(app, size, pointer, hold=c.fps)
+
+
 def _form_origin(app) -> tuple[float, float]:
     """Where the form's top-left corner is in the window: the left dock, the canvas's margin and the
     title bar the canvas draws around the form (GNOME's, see ``_designer``)."""

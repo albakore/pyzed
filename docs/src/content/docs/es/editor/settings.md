@@ -23,6 +23,23 @@ diálogo.
 | **Marco de ventana propio** | Activado por defecto: Pyzed Design dibuja su propia barra de título y botones de ventana, con el estilo de tu sistema. Desactívalo para usar el marco del sistema (se aplica la próxima vez que se abre). |
 | **Marco de la vista previa** | El marco de ventana que el lienzo muestra alrededor del formulario: el de este sistema, macOS, Windows 11, GNOME, Ubuntu o KDE Plasma. |
 
+## Fuentes y tamaño
+
+| Ajuste | Qué hace |
+| --- | --- |
+| **Fuente de la interfaz** | La fuente de los menús, paneles, diálogos y propiedades. *Por defecto* es IBM Plex Sans; la lista tiene las fuentes incluidas, las del sistema y las cargadas con `pz.load_font`. |
+| **Tamaño de la interfaz** | Agranda o achica todo el editor, del 75% al 150%, ventanas de paneles incluidas. **Ver → Ampliar la interfaz**, **Reducir la interfaz** y **Restablecer el zoom de la interfaz** hacen lo mismo en pasos del 5%; dales teclas en el [editor de atajos](/pyzed/es/editor/keymap/). |
+| **Fuente del código** | La fuente del editor de código y del resto del código. *Por defecto* es IBM Plex Mono. |
+| **Tamaño de la fuente del código** | De 8 a 32 puntos, el mismo ajuste que en los [ajustes del editor de código](/pyzed/es/editor/code-editor/#ajustes-del-editor). |
+| **Interlineado del código** | Compacto, Normal o Amplio. |
+
+Cada cambio se ve al momento, sin reiniciar, y se guarda para la próxima vez.
+
+:::tip
+Una fuente monoespaciada mantiene alineadas las columnas del código: elige una para **Fuente del código** (su
+nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con pesos normal, medio y seminegrita.
+:::
+
 ## Lienzo del formulario
 
 | Ajuste | Qué hace |
@@ -102,9 +119,9 @@ mano no puede romper el editor.
 
 ```json
 {
-  "designer": { "theme": "One Light", "language": "es", "grid": 8, "snap": true, "console_on_run": true,
+  "designer": { "theme": "One Light", "language": "es", "ui_font": "Inter", "ui_scale": 1.1, "grid": 8, "snap": true, "console_on_run": true,
                 "docks": { "events": "left" }, "sizes": { "right": 360 }, "recent": ["/home/ada/shop/ui/main.pzform"] },
-  "editor": { "font_size": 15, "tab_size": 4, "minimap": false, "cursor_shape": "block", "format_on_apply": true }
+  "editor": { "font_family": "JetBrains Mono", "font_size": 15, "tab_size": 4, "minimap": false, "cursor_shape": "block", "format_on_apply": true }
 }
 ```
 
