@@ -4,7 +4,7 @@
     "name": "signup",
     "title": "Sign up",
     "width": 460,
-    "height": 520,
+    "height": 580,
     "theme": "One Dark",
     "accent": null,
     "background": null,
@@ -87,7 +87,7 @@
       "name": "email",
       "type": "input",
       "x": 32,
-      "y": 160,
+      "y": 176,
       "width": 396,
       "height": 32,
       "props": {
@@ -114,7 +114,7 @@
       "name": "password",
       "type": "input",
       "x": 32,
-      "y": 216,
+      "y": 248,
       "width": 396,
       "height": 32,
       "props": {
@@ -140,7 +140,7 @@
       "name": "age_label",
       "type": "label",
       "x": 32,
-      "y": 276,
+      "y": 328,
       "width": 120,
       "height": 24,
       "props": {
@@ -159,7 +159,7 @@
       "name": "age",
       "type": "number",
       "x": 160,
-      "y": 272,
+      "y": 324,
       "width": 128,
       "height": 32,
       "props": {
@@ -185,7 +185,7 @@
       "name": "terms",
       "type": "checkbox",
       "x": 32,
-      "y": 332,
+      "y": 392,
       "width": 396,
       "height": 24,
       "props": {
@@ -210,7 +210,7 @@
       "name": "summary",
       "type": "label",
       "x": 32,
-      "y": 376,
+      "y": 452,
       "width": 396,
       "height": 24,
       "props": {
@@ -233,7 +233,7 @@
       "name": "status",
       "type": "label",
       "x": 32,
-      "y": 424,
+      "y": 524,
       "width": 260,
       "height": 24,
       "props": {
@@ -243,8 +243,8 @@
       "events": {},
       "anchor": [
         "left",
-        "top",
-        "right"
+        "right",
+        "bottom"
       ],
       "visible": true,
       "enabled": true,
@@ -254,7 +254,7 @@
       "name": "create",
       "type": "button",
       "x": 316,
-      "y": 456,
+      "y": 520,
       "width": 112,
       "height": 32,
       "props": {
