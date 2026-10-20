@@ -34,10 +34,10 @@ SHADER_TIME = 1.6
 
 os.environ["PYZED_CONFIG_DIR"] = tempfile.mkdtemp(prefix="pyzed-shots-")
 
-import pyzed as pz  # noqa: E402
-from pyzed import _core, designer, shading, ui  # noqa: E402
-from pyzed.designer import dialogs, shader_editor  # noqa: E402
-from pyzed.designer.app import Designer  # noqa: E402
+import pyzed as pz
+from pyzed import _core, shading, ui
+from pyzed.designer import dialogs, shader_editor
+from pyzed.designer.app import Designer
 
 ui.base.KEY_STYLE = "words"
 
@@ -353,7 +353,6 @@ def _feed(g, node):
 def nodes():
     """One image per node type: the node as the graph draws it, with its live preview (fed by a UV
     node when it would otherwise be one flat color)."""
-    from pyzed.shading import layout as L
     from pyzed.shading import nodes as N
 
     work = Path(tempfile.mkdtemp(prefix="pyzed-nodes-"))
