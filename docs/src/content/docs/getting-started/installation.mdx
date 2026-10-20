@@ -108,8 +108,13 @@ Pyzed sets a few defaults before the first window opens:
 - **WSL uses X11.** The Wayland compositor of WSLg drops the connection when a window is
   maximized or resized, which prints `Io error: Broken pipe (os error 32)`. Under WSL, Pyzed
   uses X11 (through XWayland) instead. Set `PYZED_WAYLAND=1` to keep Wayland.
+- **WSL opens pages in Windows' browser.** WSL usually has no browser of its own, so sign-ins (the
+  AI agents'), the docs and other links open in your default Windows browser. Pages that call
+  back to Pyzed on `127.0.0.1` still reach it through WSL's localhost forwarding. Programs that
+  need a terminal, such as the Claude Code sign-in, open in Windows Terminal (or a console) back
+  in your WSL distribution. Set `BROWSER` to pick a browser yourself.
 
-Variables you set yourself (`EGL_LOG_LEVEL`, `MESA_LOG`, `WAYLAND_DISPLAY`...) are never changed.
+Variables you set yourself (`EGL_LOG_LEVEL`, `MESA_LOG`, `WAYLAND_DISPLAY`, `BROWSER`...) are never changed.
 
 ## Verify the installation
 

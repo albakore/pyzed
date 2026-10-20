@@ -15,7 +15,6 @@ import re
 import shutil
 import threading
 import time
-import webbrowser
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Sequence, Tuple
@@ -1205,7 +1204,7 @@ class AgentController:
             try:
                 code = _agents.login.github_device_code(client_id)
                 put(("device", pid, code.user_code, code.verification_uri))
-                webbrowser.open(code.verification_uri)
+                _agents.login.open_browser(code.verification_uri)
                 token = _agents.login.github_device_token(client_id, code, cancelled=lambda: login.cancelled)
                 _providers.save_token(pid, token)
                 put(("models", pid, _agents.list_models(pid, settings)))
@@ -1459,7 +1458,7 @@ class AgentController:
         if shutil.which("npx") is None:
             self.d.notify(tr("Claude Code needs Node.js 18 or later"), tr("Install it, then try again."),
                           kind="warning", seconds=8)
-            webbrowser.open(NODE_URL)
+            _agents.login.open_browser(NODE_URL)
             return
         if self.settings.acp_agent("claude-code") is None:
             self.settings.acp_agents.append(_acp.preset("claude-code"))
@@ -1511,7 +1510,7 @@ class AgentController:
     def open_key_page(self, pid: str) -> None:
         url = _providers.PROVIDERS[pid].key_url
         if url:
-            webbrowser.open(url)
+            _agents.login.open_browser(url)
 
     def set_setting(self, key: str, value: Any) -> None:
         setattr(self.settings, key, value)
@@ -1989,7 +1988,7 @@ def _device_callout(c: AgentController, t: Theme) -> Optional[Any]:
                        _core.space(width="fill"), ui.spinner(size=12, theme=t)], spacing=6, align="center"),
         ]
     body.append(_core.row([
-        ui.button(tr("Open the page again"), lambda: webbrowser.open(login.uri or "https://github.com/login/device"),
+        ui.button(tr("Open the page again"), lambda: _agents.login.open_browser(login.uri or "https://github.com/login/device"),
                   variant="ghost", size="sm", theme=t),
         ui.button(tr("Cancel"), c.cancel_device, variant="ghost", size="sm", theme=t)], spacing=4, wrap=True))
     return _core.container(_core.column(body, spacing=6, width="fill"), padding=(8, 10), width="fill",

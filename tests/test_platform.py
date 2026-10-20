@@ -57,3 +57,67 @@ def test_wsl_detection(monkeypatch):
     monkeypatch.delenv("WSL_INTEROP", raising=False)
     assert _platform.is_wsl("6.6.87.2-microsoft-standard-WSL2")
     assert not _platform.is_wsl("6.8.0-45-generic")
+
+
+@pytest.fixture
+def wsl(env, tmp_path):
+    import webbrowser
+
+    system32 = tmp_path / "System32"
+    (system32 / "WindowsPowerShell" / "v1.0").mkdir(parents=True)
+    (system32 / "rundll32.exe").write_text("")
+    (system32 / "WindowsPowerShell" / "v1.0" / "powershell.exe").write_text("")
+    env.setattr(_platform, "is_wsl", lambda release=None: True)
+    env.setattr(_platform, "_SYSTEM32", str(system32))
+    env.setattr(_platform.shutil, "which", lambda name: None)
+    env.setattr(_platform, "_windows_browser", None)
+    env.setattr(webbrowser, "_tryorder", [])  # a registry of its own, put back after the test
+    env.setattr(webbrowser, "_browsers", {})
+    env.delenv("BROWSER", raising=False)
+    started = []
+    env.setattr(_platform.subprocess, "Popen", lambda command, **kw: started.append(command))
+    return system32, started
+
+
+def test_wsl_opens_pages_in_the_windows_browser(wsl):
+    import webbrowser
+
+    system32, started = wsl
+    assert _platform.use_windows_browser() and _platform.use_windows_browser()  # once is enough
+    url = "http://127.0.0.1:8123/callback/x?code=a&state=b%20c"
+    assert webbrowser.open(url)
+    assert started == [[str(system32 / "rundll32.exe"), "url.dll,FileProtocolHandler", url]]
+    powershell = _platform.windows_open_commands("https://x.test/?q=it's")[-1]
+    assert powershell[0].endswith("powershell.exe") and powershell[-1] == "Start-Process 'https://x.test/?q=it''s'"
+
+
+def test_wsl_keeps_the_browser_you_pick(wsl):
+    wsl[0].joinpath("rundll32.exe").unlink()
+    wsl[0].joinpath("WindowsPowerShell", "v1.0", "powershell.exe").unlink()
+    assert not _platform.use_windows_browser()  # no way to reach Windows
+    import os
+
+    os.environ["BROWSER"] = "firefox"
+    try:
+        assert not _platform.use_windows_browser()
+    finally:
+        del os.environ["BROWSER"]
+
+
+def test_wsl_runs_terminal_commands_in_windows_terminal(wsl, tmp_path, monkeypatch):
+    from pyzed.designer import file_ops
+
+    monkeypatch.delenv("TERMINAL", raising=False)
+    monkeypatch.setenv("WSL_DISTRO_NAME", "Ubuntu")
+    monkeypatch.setenv("SHELL", "/bin/zsh")
+    monkeypatch.setattr(file_ops.sys, "platform", "linux")
+    with pytest.raises(OSError):  # neither a Windows nor a Linux terminal
+        file_ops.run_in_terminal_command(["claude"], tmp_path)
+    wsl[0].joinpath("cmd.exe").write_text("")
+    command = file_ops.run_in_terminal_command(["npx", "-y", "@anthropic-ai/claude-code"], tmp_path)
+    assert command[1:5] == ["/c", "start", "", "wsl.exe"]
+    assert command[5:] == ["-d", "Ubuntu", "--cd", str(tmp_path), "--", "/bin/zsh", "-lic",
+                           "npx -y @anthropic-ai/claude-code"]
+    wsl[0].joinpath("wt.exe").write_text("")
+    command = file_ops.run_in_terminal_command(["claude"], tmp_path)
+    assert command[0].endswith("wt.exe") and command[1] == "wsl.exe"
