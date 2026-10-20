@@ -5,6 +5,7 @@
     python docs/scripts/library_shots.py --theme dark    # only one theme
     python docs/scripts/library_shots.py --variants      # only the variant clips
     python docs/scripts/library_shots.py --no-variants   # only the previews and examples
+    python docs/scripts/library_shots.py --only select-v1-1 select-v2-3  # only some clips
     python docs/scripts/library_shots.py --jobs 4        # in 4 processes
     python docs/scripts/library_shots.py --probe button  # print what the scripts can aim at
     python docs/scripts/library_shots.py --prune         # also delete files no entry uses any more
@@ -21,7 +22,8 @@ Clips are recorded off-screen with ``anim_webp.py`` (a scripted pointer, keyboar
   (hover, press, type, drag...) with the pointer drawn. ``<slug>-<n>.<theme>.webp``: the examples.
 * ``<slug>.thumb.<theme>.webp``: the preview cropped to its content (2:1) for the gallery cards.
 * ``<slug>-v<group>-<n>.<theme>.webp``: each variant on a small canvas, cropped to its content plus
-  a margin, hovered and pressed (or clicked and typed into, when it has a text field).
+  a margin, hovered and pressed (or clicked and typed into, when it has a text field). When what it
+  draws reaches the edge (an open menu), it is recorded again on a bigger canvas before the crop.
 
 A clip in which nothing changes (a label, a badge) plays a theme cycle instead: the same widget in
 four themes. Every clip also gets a still first frame, ``*.still.webp``, shown when the reader asks
@@ -70,6 +72,9 @@ EXAMPLE_SIZE = (720, 200)
 VARIANT_SIZE = (480, 160)
 #: Margin around a cropped variant, in image pixels (the clips are 2x, so 20 CSS px).
 VARIANT_MARGIN = 40
+#: How much a variant's canvas grows (logical pixels) when what it draws reaches the edge, and how often.
+GROW_STEP = (240, 160)
+GROW_TRIES = 3
 PREVIEW_FPS = 20
 VARIANT_FPS = 15
 THUMB_SIZE = (480, 240)
@@ -307,6 +312,18 @@ def expected_files(entries) -> set:
     return names
 
 
+def grown(frames, size: tuple) -> tuple:
+    """``size`` made bigger by ``GROW_STEP`` along each axis where what is drawn reaches the canvas edge."""
+    w, h = frames[0].size
+    boxes = [b for b in (aw.content_box(f) for f in frames) if b]
+    cw, ch = size
+    if any(b[0] <= 2 or b[2] >= w - 2 for b in boxes):
+        cw += GROW_STEP[0]
+    if any(b[1] <= 2 or b[3] >= h - 2 for b in boxes):
+        ch += GROW_STEP[1]
+    return (cw, ch)
+
+
 def film(stem, code, size, fill, start, kind, steps, key) -> tuple[dict, list[str]]:
     """Records one clip in one theme; returns its manifest entries and warnings."""
     warnings = []
@@ -335,6 +352,14 @@ def film(stem, code, size, fill, start, kind, steps, key) -> tuple[dict, list[st
             warnings.append(f"{name}.{key}: nothing moves")
 
     if kind == "variant":
+        # An open menu (a select's list, a split button's menu) can reach past the small canvas:
+        # record again on a bigger one until everything fits, then crop to the content as usual.
+        for _ in range(GROW_TRIES):
+            if not aw.touches_edge(raw):
+                break
+            size = grown(raw, size)
+            ctx = aw.record_frames(Shot(code, THEMES[key], fill, start), steps, size=size, fps=fps)
+            raw = frames = aw.images(ctx, pointer=False)
         if aw.touches_edge(raw):
             warnings.append(f"{stem}: touches the edge of its canvas (give it a bigger size)")
         box = aw.crop_box(raw, VARIANT_MARGIN)
@@ -349,11 +374,13 @@ def film(stem, code, size, fill, start, kind, steps, key) -> tuple[dict, list[st
 
 
 def render_entry(args) -> tuple[str, dict, list[str], float]:
-    slug, themes, variants, others = args
+    slug, themes, variants, others, only = args
     entry = next(e for e in library_data.COMPONENTS if e["slug"] == slug)
     started = time.time()
     manifest, warnings = {}, []
     for stem, code, size, fill, start, kind, steps in shots(entry, variants=variants, others=others):
+        if only and stem not in only:
+            continue
         run_snippet(code)  # fail here: inside the app an error is drawn instead of raised
         for key in themes:
             try:
@@ -401,6 +428,7 @@ def main() -> int:
     parser.add_argument("--theme", choices=sorted(THEMES), help="only this theme (default: both)")
     parser.add_argument("--variants", action="store_true", help="only the variant clips")
     parser.add_argument("--no-variants", action="store_true", help="only the previews and examples")
+    parser.add_argument("--only", nargs="+", metavar="STEM", help="only these clips (select-v1-1...)")
     parser.add_argument("--jobs", type=int, default=1, help="processes to record in")
     parser.add_argument("--probe", action="store_true", help="print what each preview's script can aim at")
     parser.add_argument("--prune", action="store_true", help="delete files that no entry uses")
@@ -427,7 +455,10 @@ def main() -> int:
                 probe(entry["slug"])
             return 0
         themes = [args.theme] if args.theme else list(THEMES)
-        jobs = [(e["slug"], themes, not args.no_variants, not args.variants) for e in entries]
+        only = set(args.only or ())
+        if only:
+            entries = [e for e in entries if any(stem in only for stem, *_ in shots(e))]
+        jobs = [(e["slug"], themes, not args.no_variants, not args.variants, only) for e in entries]
         if args.jobs > 1:
             import multiprocessing
 
