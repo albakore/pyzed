@@ -390,7 +390,7 @@ class Workspace:
         assert self.menu is not None
         rel, x, y = self.menu
         items = self.menu_items(rel)
-        width, height = self.d.window_size or self.d.size
+        width, height = self.d.panes.window_size()
         separators = sum(1 for i in items if i == ui.SEPARATOR)
         tall = (len(items) - separators) * 28 + separators * 10 + 12
         if x + MENU_WIDTH > width - 4:

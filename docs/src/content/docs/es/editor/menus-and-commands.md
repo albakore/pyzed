@@ -71,8 +71,11 @@ en el teclado y en la paleta de comandos.
 | Mostrar controles ocultos | | Dibuja atenuados en el lienzo los controles ocultos, o los omite. |
 | Vista previa del marco de ventana… | | Muestra el formulario en el lienzo con el marco de ventana de otra plataforma: macOS, Windows 11, GNOME, Ubuntu o KDE Plasma (marcada mientras no es el de este sistema). |
 | Vista previa con tema…, Vista previa con idioma… | | Muestra el lienzo (y la próxima ejecución) con otro tema o idioma sin cambiar el formulario (marcada mientras está activa). Consulta [Vista previa con otro tema o idioma](/pyzed/es/editor/data-binding/#vista-previa-con-otro-tema-o-idioma). |
-| Restablecer los paneles | | Devuelve cada panel a su dock y tamaño iniciales. |
-| *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`): clic para traerlo al frente. |
+| Restablecer los paneles | | Devuelve cada panel a su dock y tamaño iniciales y cierra las ventanas de paneles. |
+| Guardar la distribución como… | | Guarda con un nombre dónde está cada panel, el tamaño de los docks y las ventanas de paneles. |
+| Eliminar esta distribución | | Borra la distribución guardada que está en uso. |
+| *Paneles* | | Una entrada por panel, con el dock en el que está (`Propiedades · Derecha`, o `Ventana` si flota): clic para traerlo al frente. |
+| *Distribuciones* | | Las distribuciones de trabajo (Por defecto, Programar, Concentración, Eventos y código, y las tuyas); la que está en uso aparece marcada. |
 
 Los interruptores se recuerdan entre sesiones.
 
@@ -146,14 +149,19 @@ Ocho paneles viven en cuatro docks alrededor del lienzo:
 
 Cada dock muestra un panel a la vez, con una pestaña por panel. Al final de la barra de pestañas:
 
-- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, u
-  **Ocultar el panel**;
+- el **botón del dock** abre un menú para **Mover *panel* a** el dock izquierdo, derecho, inferior o superior, a una
+  **Ventana nueva**, u **Ocultar el panel**;
 - la **×** oculta el dock (vuelve a mostrarlo con su atajo o con el menú Ver).
+
+Arrastra una pestaña para reordenarla, sobre otro dock para moverla o fuera de la ventana para que flote en una ventana
+propia; suelta más pestañas sobre una ventana de paneles para apilarlas. En una ventana de paneles, el botón del dock
+ofrece **Devolver todo a los paneles laterales** y la **×** hace lo mismo.
 
 ![Moviendo el panel Propiedades a otro dock](../../../../../screenshots/editor-dock-menu.png)
 
 Arrastra el borde de un dock que da al lienzo para cambiar su tamaño (cada dock tiene un tamaño mínimo). Dónde está
-cada panel, qué docks están ocultos y sus tamaños se guardan con tus ajustes; **Ver → Restablecer los paneles** (o
+cada panel, qué docks están ocultos, sus tamaños y las ventanas de paneles se guardan con tus ajustes, y **Ver →
+Guardar la distribución como…** los conserva como una distribución de trabajo a la que volver; **Ver → Restablecer los paneles** (o
 **Ajustes → Paneles → Restablecer**) vuelve a la disposición inicial.
 
 ```mermaid
