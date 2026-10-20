@@ -12,7 +12,8 @@ do not click and text boxes do not type, so the mouse is free to edit.
 ## The toolbox
 
 Every component you can place, by category: **Common**, **Display**, **Containers**, **Layout**, **Navigation**,
-**Components** (the timer) and one category per group of [designed components](/pyzed/editor/component-designer/)
+**Components** (the [non-visual ones](/pyzed/editor/non-visual-components/): timers, file watchers,
+processes... which go to the tray under the form) and one category per group of [designed components](/pyzed/editor/component-designer/)
 of your project. Hover a row for the component's description.
 
 - **Search components…** filters the list by name (in English or in the editor's language) or by type.
@@ -170,8 +171,8 @@ itself: click it to select it, **+** adds a control to it.
 - **Right-click** a row for the context menu.
 
 :::tip
-The outline is the easiest way to pick a control buried under others, or a control with no size such as the
-timer, and to move controls between containers precisely.
+The outline is the easiest way to pick a control buried under others, or a
+[non-visual component](/pyzed/editor/non-visual-components/) such as a timer, and to move controls between containers precisely.
 :::
 
 ## The status bar

@@ -57,7 +57,7 @@ Every visible control has three common events on top of its own:
 | Slider, Number box | `change` (the new number) |
 | List box | `change` (the selected item) |
 | Table | `change` (the selected row's index) |
-| Timer (invisible at run time) | `tick`, every `interval` milliseconds while `running` |
+| Timer, Shortcut, File watcher, Process, Background worker, Web request, Clipboard, Settings, File dialog, Notification | Their own (`tick`, `activate`, `change`, `output`, `done`, `response`...): see [Non-visual components](/pyzed/editor/non-visual-components/). They have no mouse events. |
 | Heading, Progress bar, Badge, Image, Icon, Markdown, Spinner, Callout, Avatar, Key binding, Stat, Chart, containers, Spacer, Divider | Only the common ones |
 
 The form itself:

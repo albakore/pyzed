@@ -93,6 +93,7 @@ const topics = [
 					{ slug: 'editor/styles-and-themes' },
 					{ slug: 'editor/animations-and-effects' },
 					{ slug: 'editor/events' },
+					{ slug: 'editor/non-visual-components' },
 					{ slug: 'editor/data-binding' },
 				],
 			},
