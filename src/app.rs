@@ -813,7 +813,11 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             Task::perform(
                 async move {
                     if let Some(name) = save {
-                        let dialog = if name.is_empty() { dialog } else { dialog.set_file_name(name) };
+                        let dialog = if name.is_empty() {
+                            dialog
+                        } else {
+                            dialog.set_file_name(name)
+                        };
                         return dialog
                             .save_file()
                             .await
