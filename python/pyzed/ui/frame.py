@@ -356,7 +356,8 @@ def window_title_bar(
 ) -> _core.Widget:
     """A window's title bar: window buttons in the style of ``style`` (on the left for macOS, on the right
     elsewhere), ``start`` items (menus, project...), ``title`` (centered, or after the start items on
-    Windows) or your own ``center``, and ``end`` items.
+    Windows) or your own ``center`` (a search field, Run and Stop...: it sits in the middle of the space
+    the side items leave, which can still be dragged on both sides), and ``end`` items.
 
     ``on_drag`` is called when the empty part of the bar is dragged (return ``Command.drag_window()``) and
     double clicking it calls ``on_maximize``; a right click calls ``on_menu``. Without callbacks the bar
@@ -376,22 +377,25 @@ def window_title_bar(
             wrap=False)
     # Windows puts the title after the icon, unless menus or other items are there (then centered)
     inline_title = title_text is not None and style == "windows" and not any(x is not None for x in start)
-    gap: Any = _core.space(width="fill", height="fill")
-    if on_drag is not None or on_maximize is not None or on_menu is not None:
-        handlers = {k: v for k, v in (("drag_start", on_drag), ("double_click", on_maximize),
-                                      ("right_click", on_menu)) if v is not None}
-        gap = _core.container(None, width="fill", height="fill").on(**{k: (lambda _e, v=v: v())
-                                                                         for k, v in handlers.items()})
+    handlers = {k: v for k, v in (("drag_start", on_drag), ("double_click", on_maximize),
+                                  ("right_click", on_menu)) if v is not None}
+
+    def gap() -> Any:  # the empty part of the bar: it moves the window
+        space = _core.container(None, width="fill", height="fill")
+        return space.on(**{k: (lambda _e, v=v: v()) for k, v in handlers.items()}) if handlers else space
+
     # keep in step with start_x() and end_x()
     items: List[Any] = [controls if left else None, _core.space(width=6)]
     items += [s for s in start if s is not None]
     if inline_title:
         items.append(_core.container(title_text, padding=(0, 0, 0, 4 if start else 0)))
-    items.append(gap)
+    items.append(gap())
+    if center is not None:  # between two draggable gaps, so it never covers the items at the sides
+        items += [center, gap()]
     items += [e for e in end if e is not None]
     items += [_core.space(width=6), None if left else controls]
     bar = _core.row(items, spacing=2, align="center", height="fill")
-    middle = center if center is not None else (None if inline_title else title_text)
+    middle = None if center is not None or inline_title else title_text
     if middle is not None:
         # centered on the whole window, over the bar (a label lets the pointer through to the bar)
         bar = _core.stack([bar, _core.container(middle, width="fill", height="fill", center=True)],

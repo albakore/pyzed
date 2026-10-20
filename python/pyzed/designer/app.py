@@ -2135,7 +2135,7 @@ class Designer(App):
         if frame is not None:  # Pyzed's own window frame, with the title bar's items in it
             start, end = self.title_items(t)
             body = ui.window_frame(_core.column(inside, width="fill", height="fill"), start=start, end=end,
-                                   height=TITLE_HEIGHT, resize_edges=False, theme=t)
+                                   center=self.title_center(t), height=TITLE_HEIGHT, resize_edges=False, theme=t)
         else:
             body = _core.column([self.title_bar(t), *inside], width="fill", height="fill")
         body = _core.container(body, width="fill", height="fill", bg=t.background)
@@ -2258,12 +2258,36 @@ class Designer(App):
         self._guard(lambda: self.open_path(path))
 
     def title_bar(self, t) -> Any:
-        """Returns the title bar: menu, project and file buttons, Run and Stop, View, Help and Settings."""
+        """Returns the title bar: menu, project and file buttons, Run, Stop and search, View, Help and Settings."""
         start, end = self.title_items(t)
-        return ui.title_bar(start, end, height=TITLE_HEIGHT, theme=t)
+        return ui.title_bar(start, end, center=self.title_center(t), height=TITLE_HEIGHT, theme=t)
+
+    def title_center(self, t) -> Any:
+        """The middle of the title bar: Run and Stop, and the search field that opens the command palette
+        (commands, panels, settings and recent files)."""
+        search = _core.button(
+            _core.container(_core.row([
+                _icon("search", size=14, color=t.icon_muted),
+                _core.text(tr("Search commands, settings…"), size=13, color=t.text_muted, wrap=False),
+                _core.space(width="fill"),
+                ui.kbd("ctrl-shift-p", size="xs", theme=t),
+            ], spacing=8, align="center"), height="fill", align_y="center", clip=True),
+            self.open_palette, padding=(0, 6, 0, 10), width=320, height=24, bg=t.element,
+            border_color=t.border_variant, border_width=1.0, hover_bg=t.element_hover,
+            hover_border_color=t.border, radius=t.radius_sm,
+        )
+        return _core.row([
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
+                      theme=t),
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
+                           disabled=self.console.running is None, theme=t),
+            _core.space(width=6),
+            search,
+        ], spacing=4, align="center")
 
     def title_items(self, t) -> Tuple[List[Any], List[Any]]:
-        """The items at the start (menu, project, file) and end (Run, Stop, View, Help, Settings) of the title bar."""
+        """The items at the start (menu, project, file) and end (View, Help, Settings) of the title bar;
+        ``title_center`` has the middle."""
         doc = self.doc
         start = [
             ui.icon_button("menu", lambda: self.toggle_app_menu("file"), selected=self.app_menu == "file",
@@ -2279,11 +2303,6 @@ class Designer(App):
             if shader_editor.is_shader(self) else None,
         ]
         end = [
-            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
-                      theme=t),
-            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
-                           disabled=self.console.running is None, theme=t),
-            _core.space(width=8),
             ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",

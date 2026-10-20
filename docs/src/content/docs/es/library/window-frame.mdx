@@ -184,7 +184,7 @@ El marco entero de una ventana abierta con `frame="custom"`: una barra de títul
 | `menus` | `None` | Menús a la izquierda de la barra: una lista de `ui.Menu`. |
 | `menu_button` | `True` | Muestra los menús tras un botón ☰ (`False` muestra siempre sus nombres). |
 | `start` | `()` | Elementos después de los menús (proyecto, rama…). |
-| `center` | `None` | Tu propio widget en el centro en lugar del título. |
+| `center` | `None` | Tu propio widget en el centro en lugar del título (un buscador, Run y Stop…); la barra sigue arrastrándose a ambos lados. |
 | `end` | `()` | Elementos antes de los botones de ventana. |
 | `style` | `None` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"`. Por defecto el `frame` de la ventana, o el del sistema. |
 | `window` | `None` | La ventana sobre la que actúan los botones. Por defecto aquella cuyo `view()` se está ejecutando. |
@@ -244,7 +244,7 @@ La barra de título de una ventana, sola: botones de ventana con el estilo de `s
 | `title` | `None` | Título (centrado, o a la izquierda en Windows). |
 | `style` | `None` | `"macos"`, `"windows"`, `"gnome"`, `"ubuntu"` o `"kde"` (`None`: el del sistema). |
 | `start` | `()` | Elementos al principio. |
-| `center` | `None` | Widget en el centro en lugar del título. |
+| `center` | `None` | Widget en el centro en lugar del título; la barra sigue arrastrándose a ambos lados. |
 | `end` | `()` | Elementos al final. |
 | `on_drag` | `None` | Se llama al arrastrar la parte vacía de la barra (devuelve `Command.drag_window()`). |
 | `on_minimize` | `None` | Botón de minimizar. |

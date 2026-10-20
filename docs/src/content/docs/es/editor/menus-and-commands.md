@@ -12,8 +12,8 @@ lista de atajos siempre coinciden. Esta página los recoge todos.
 
 De izquierda a derecha: el menú **☰**, el nombre del proyecto (clic para mostrar el panel Proyecto), el nombre del
 archivo (clic para abrir otro), un punto cuando hay cambios sin guardar y una insignia **Componente** o **Shader** en
-esas vistas. A la derecha: **Ejecutar** (<kbd>F5</kbd>), **Detener**, el menú **Ver**, el menú **Ayuda** y el
-engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
+esas vistas. En el centro: **Ejecutar** (<kbd>F5</kbd>), **Detener** y el buscador, que abre la
+[paleta de comandos](#paleta-de-comandos). A la derecha: el menú **Ver**, el menú **Ayuda** y el engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Design dibuja su propio marco (ver
 [La interfaz](/pyzed/es/editor/interface/#el-marco-de-la-ventana)).
 
 ## Menú ☰ Archivo
@@ -107,8 +107,10 @@ barra se desplaza de lado cuando la ventana es estrecha. Ocúltala con **Ver →
 
 ## Paleta de comandos
 
-<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> abre un buscador sobre todos los comandos que se pueden ejecutar en
-ese momento, como `Grupo: Comando` con su atajo. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
+El buscador del centro de la barra de título, o <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, abre un buscador sobre
+todos los comandos que se pueden ejecutar en ese momento, como `Grupo: Comando` con su atajo, y sobre los lugares del
+editor: `Panel: Propiedades` muestra un panel, `Ajustes del editor: Cursor` y `Atajos de teclado: Plegado` abren esa
+página de los [ajustes del editor](/pyzed/es/editor/code-editor/#ajustes-del-editor), y `Recientes: login.pzform` abre un archivo reciente. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
 *Ver: Cuadrícula*), <kbd>↑</kbd>/<kbd>↓</kbd> para moverte, <kbd>Enter</kbd> para ejecutar, <kbd>Esc</kbd> para
 cerrar. También llega a los comandos que no tienen menú, como los de Editar.
 
