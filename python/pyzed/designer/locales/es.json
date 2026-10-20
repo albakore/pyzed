@@ -935,6 +935,8 @@
   "Could not create the project": "No se pudo crear el proyecto",
   "Could not download the examples": "No se pudieron descargar los ejemplos",
   "Downloading the examples": "Descargando los ejemplos",
+  "No permission to open it": "Sin permiso para abrirla",
+  "Could not show the dialog": "No se pudo mostrar el diálogo",
   "Welcome window": "Ventana de bienvenida",
   "Opens at startup with the example projects (also in Help → Welcome)": "Se abre al iniciar con los proyectos de ejemplo (también en Ayuda → Bienvenida)",
   "The project is a copy you can change freely. Its packages are installed with uv sync, and Run (F5) starts it.": "El proyecto es una copia que puedes cambiar a tu gusto. Sus paquetes se instalan con uv sync y Ejecutar (F5) lo inicia.",

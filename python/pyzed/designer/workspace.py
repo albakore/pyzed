@@ -842,20 +842,36 @@ def places() -> List[Tuple[str, Path, str]]:
                                (tr("Documents"), ("Documents", "Documentos"), "file-text"),
                                (tr("Downloads"), ("Downloads", "Descargas"), "download"),
                                (tr("Projects"), ("Projects", "Proyectos", "projects", "dev", "code"), "folder-git-2")):
-        folder = next((home / n for n in names if (home / n).is_dir()), None)
+        folder = next((home / n for n in names if os.path.isdir(home / n)), None)
         if folder is not None:
             found.append((label, folder, icon))
     if sys.platform == "win32":
         import string
 
-        found += [(f"{c}:", Path(f"{c}:\\"), "hard-drive") for c in string.ascii_uppercase if Path(f"{c}:\\").exists()]
+        found += [(f"{c}:", Path(f"{c}:\\"), "hard-drive") for c in string.ascii_uppercase
+                  if os.path.exists(f"{c}:\\")]
     else:
         found.append((tr("Computer"), Path("/"), "hard-drive"))
     return found
 
 
+# ``os.path`` answers ``False`` for folders it may not look into (``/lost+found``, another user's home),
+# where ``Path.is_file`` raises ``PermissionError`` before Python 3.14.
 def is_project(folder: Path) -> bool:
-    return (folder / "pyproject.toml").is_file()
+    return os.path.isfile(folder / "pyproject.toml")
+
+
+def start_folder() -> Path:
+    """Where new projects and the folder browser start: the current folder, or the home folder when the
+    designer was started from the disk's root or another folder the user cannot write to (a desktop
+    launcher often starts it in ``/``)."""
+    cwd = Path.cwd()
+    return cwd if cwd.parent != cwd and os.access(cwd, os.W_OK) else Path.home()
+
+
+def readable(folder: Path) -> bool:
+    """Whether the folder's contents can be listed (``False`` for folders without permission)."""
+    return os.access(folder, os.R_OK | os.X_OK)
 
 
 class FolderBrowser:
@@ -872,9 +888,9 @@ class FolderBrowser:
         path = Path(str(folder).strip() or "~").expanduser()
         if not path.is_absolute():
             path = Path.cwd() / path
-        while not path.is_dir() and path.parent != path:
+        while not (os.path.isdir(path) and readable(path)) and path.parent != path:
             path = path.parent
-        self.path = path.resolve() if path.is_dir() else Path.home()
+        self.path = path.resolve() if os.path.isdir(path) else Path.home()
         self.text = str(self.path)
 
     def up(self) -> None:
@@ -892,7 +908,8 @@ class FolderBrowser:
     def folders(self, limit: int = 500) -> List[Path]:
         """The folders inside the current one, by name (hidden ones only when shown)."""
         try:
-            items = [p for p in self.path.iterdir() if p.is_dir() and (self.show_hidden or not p.name.startswith("."))]
+            items = [p for p in self.path.iterdir()
+                     if os.path.isdir(p) and (self.show_hidden or not p.name.startswith("."))]
         except OSError:
             return []
         return sorted(items, key=lambda p: p.name.lower())[:limit]
@@ -917,7 +934,7 @@ def browser_view(b: FolderBrowser, t: Theme, *, open_project: Optional[Callable[
     path = ui.input(b.text, b.set_text, on_submit=b.submit_text, icon="folder", mono=True, size="sm", theme=t)
     side: List[Any] = [ui.list_item(label, lambda p=p: b.go(p), icon=icon, height=24, inset=True,
                                     selected=b.path == p, theme=t) for label, p, icon in places()]
-    recent = [r for r in recent if r.is_dir()][:6]
+    recent = [r for r in recent if os.path.isdir(r)][:6]
     if recent:
         side.append(_core.container(ui.label(tr("Recent").upper(), size="xs", weight="semibold", color="text_muted",
                                              theme=t), padding=(10, 8, 2, 8)))
@@ -926,6 +943,11 @@ def browser_view(b: FolderBrowser, t: Theme, *, open_project: Optional[Callable[
                                          theme=t), str(r), theme=t) for r in recent]
     rows: List[Any] = []
     for folder in b.folders():
+        if not readable(folder):  # shown, but there is nothing to see inside
+            rows.append(ui.tooltip(ui.list_item(folder.name, None, icon="folder-lock", icon_color="text_muted",
+                                                height=26, inset=True, disabled=True, theme=t),
+                                   tr("No permission to open it"), theme=t))
+            continue
         project = is_project(folder)
         end = None
         if project:

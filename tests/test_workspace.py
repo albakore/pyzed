@@ -1,11 +1,12 @@
 """The Project tab's file tree, file search and actions, the Dependencies tab and the folder browser."""
 
 import shutil
+from pathlib import Path
 import subprocess
 
 import pytest
 
-from pyzed import project, ui
+from pyzed import project, theme, ui
 from pyzed.designer import docks, workspace
 from pyzed.designer.app import Designer
 
@@ -316,3 +317,42 @@ def test_free_names_and_freedesktop_trash(tmp_path):
     assert info.startswith("[Trash Info]\nPath=") and "DeletionDate=" in info
     (tmp_path / "a.txt").write_text("3")
     assert file_ops.freedesktop_trash(tmp_path / "a.txt", data_home=tmp_path / "data").name == "a.2.txt"
+
+
+def test_folder_browser_survives_folders_without_permission(tmp_path, monkeypatch):
+    """Listing ``/`` must not fail on ``/lost+found`` (``Path.is_file`` raises there before Python 3.14)."""
+    locked = tmp_path / "lost+found"
+    (locked).mkdir()
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "pyproject.toml").write_text("")
+    real_access = workspace.os.access
+    monkeypatch.setattr(workspace.os, "access", lambda p, mode: Path(p) != locked and real_access(p, mode))
+
+    def is_file(self, **kwargs):
+        if self.parent == locked:
+            raise PermissionError(13, "Permission denied", str(self))
+        return Path.stat(self).st_mode & 0o170000 == 0o100000 if Path.exists(self) else False
+
+    monkeypatch.setattr(Path, "is_file", is_file)
+    b = workspace.FolderBrowser(tmp_path)
+    assert {f.name for f in b.folders()} == {"lost+found", "app"}
+    assert workspace.browser_view(b, theme.ONE_DARK) is not None
+    b.go(locked)  # a folder that cannot be listed is not entered
+    assert b.path == tmp_path.resolve()
+
+
+def test_start_folder_avoids_the_disk_root(monkeypatch):
+    monkeypatch.chdir("/")
+    assert workspace.start_folder() == Path.home()
+
+
+def test_a_broken_dialog_is_closed_once(monkeypatch):
+    d = Designer(language_servers=False)
+    d.dialog = "settings"
+
+    def broken(t):
+        raise PermissionError(13, "Permission denied")
+
+    monkeypatch.setattr(d, "dialog_view", broken)
+    assert d.safe_dialog_view(d.theme_obj) is None
+    assert d.dialog is None and d.toasts and d.toasts[-1].kind == "error"

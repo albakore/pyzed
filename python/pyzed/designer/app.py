@@ -2198,7 +2198,20 @@ class Designer(App):
         toasts = self.toasts if here else []
         body = ui.toasts(body, [ui.toast(x.title, x.message, kind=x.kind, on_dismiss=lambda x=x: self.dismiss_toast(x),
                                          theme=t) for x in toasts])
-        return ui.layer(body, self.dialog_view(t) if here else None, on_dismiss=self.close_dialog)
+        return ui.layer(body, self.safe_dialog_view(t) if here else None, on_dismiss=self.close_dialog)
+
+    def safe_dialog_view(self, t) -> Any:
+        """``dialog_view``, but a dialog that fails to draw is closed and reported once (in the console and a
+        toast), instead of failing on every frame."""
+        try:
+            return self.dialog_view(t)
+        except Exception as err:  # noqa: BLE001 - one broken dialog must not break the window
+            import traceback
+
+            traceback.print_exc()
+            self.dialog = None
+            self.notify(tr("Could not show the dialog"), f"{type(err).__name__}: {err}", kind="error", seconds=6)
+            return None
 
     @property
     def theme_obj(self):
