@@ -1,0 +1,382 @@
+---
+title: Apps y utilidades
+description: "Apps de escritorio en Python pequeñas y completas hechas con Pyzed: una lista de tareas, visores de Markdown e imágenes, un reloj, un cronómetro, un generador de QR, datos en vivo, un chat con IA, paneles, varias ventanas y un editor de proyectos."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+
+import todosShot from '../../../../assets/examples/todos.png';
+import markdownShot from '../../../../assets/examples/markdown_viewer.png';
+import imageShot from '../../../../assets/examples/image_viewer.png';
+import clockShot from '../../../../assets/examples/clock.png';
+import stopwatchShot from '../../../../assets/examples/stopwatch.png';
+import qrShot from '../../../../assets/examples/qr_code.png';
+import pomodoroShot from '../../../../assets/ai/pomodoro.png';
+import tickerShot from '../../../../assets/showcase/apps/websocket_stream.png';
+import chatShot from '../../../../assets/ai/ai-chat.png';
+import panesShot from '../../../../assets/showcase/apps/panes.png';
+import menuShot from '../../../../assets/showcase/apps/context_menu.png';
+import galleryShot from '../../../../assets/showcase/apps/gallery.png';
+import counterShot from '../../../../../screenshots/counter.png';
+import editorDark from '../../../../../screenshots/zed-one-dark.png';
+import editorLight from '../../../../../screenshots/zed-one-light.png';
+
+import todos from '../../../../../../examples/todos.py?raw';
+import markdown from '../../../../../../examples/markdown_viewer.py?raw';
+import image from '../../../../../../examples/image_viewer.py?raw';
+import clock from '../../../../../../examples/clock.py?raw';
+import stopwatch from '../../../../../../examples/stopwatch.py?raw';
+import qr from '../../../../../../examples/qr_code.py?raw';
+import pomodoro from '../../../../../../examples/pomodoro.py?raw';
+import colorPicker from '../../../../../../examples/color_picker.py?raw';
+import life from '../../../../../../examples/game_of_life.py?raw';
+import downloads from '../../../../../../examples/download_progress.py?raw';
+import ticker from '../../../../../../examples/websocket_stream.py?raw';
+import chat from '../../../../../../examples/ai_chat.py?raw';
+import windows from '../../../../../../examples/multi_window.py?raw';
+import panes from '../../../../../../examples/panes.py?raw';
+import menu from '../../../../../../examples/context_menu.py?raw';
+import components from '../../../../../../examples/components.py?raw';
+import gallery from '../../../../../../examples/gallery.py?raw';
+import counter from '../../../../../../examples/counter.py?raw';
+import editor from '../../../../../../examples/zed_editor.py?raw';
+
+Programas de todos los días, cada uno un único archivo de Python en
+[`examples/`](https://github.com/albakore/pyzed/tree/main/examples) que funciona tal cual. Son cortos a propósito:
+lee uno de arriba abajo y habrás visto el estado, una vista, eventos y una suscripción trabajando juntos. Varios son
+versiones en Pyzed de las demos clásicas de [Iced](https://iced.rs), la biblioteca de interfaces de Rust con la que
+dibuja Pyzed.
+
+<Aside type="tip" title="Cómo leer estas apps">
+Cada app es una clase con **estado** (atributos que se crean en `__init__`), un **`view()`** que construye la
+pantalla a partir del estado y **métodos** que cambian el estado cuando pasa algo. Pyzed redibuja después de cada
+cambio. ¿Es nueva para ti esta idea? Empieza por el tutorial de la
+[Lista de tareas](/pyzed/es/tutorials/basic/todo-app/).
+</Aside>
+
+## Todos
+
+Añade, edita, completa, filtra y borra tareas; se guardan como JSON en tu carpeta de usuario, así que siguen ahí la
+próxima vez que abras la app.
+
+<Media src={todosShot} alt="La app Todos con unas tareas, una de ellas hecha" />
+
+- Un dataclass por tarea y una lista en el estado; el filtro es un control `ui.segmented`.
+- Haz doble clic en una tarea para editarla en el sitio; las tareas se escriben en disco en cada cambio.
+- Una versión más simple se construye paso a paso en el tutorial de la
+  [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/).
+
+<Run file="examples/todos.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/todos.py</code></summary>
+<Code code={todos} lang="py" title="examples/todos.py" />
+</details>
+
+## Visor de Markdown
+
+Un editor de Markdown en vivo: escribe a la izquierda, mira el resultado con formato a la derecha y arrastra el
+divisor entre los dos.
+
+<Media src={markdownShot} alt="Texto Markdown a la izquierda y su vista previa a la derecha" />
+
+- `ui.editor` con `on_change` guarda el texto en el estado; `ui.markdown` lo muestra con formato.
+- `ui.split` hace que los dos paneles se puedan redimensionar; los enlaces de la vista previa se abren en tu
+  navegador.
+
+<Run file="examples/markdown_viewer.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/markdown_viewer.py</code></summary>
+<Code code={markdown} lang="py" title="examples/markdown_viewer.py" />
+</details>
+
+## Visor de imágenes
+
+Muestra una imagen con `pz.image` y en un `pz.image_viewer` con zoom: la rueda hace zoom y arrastrar la mueve. Pasa
+una ruta para abrir tu propia imagen; sin ella dibuja una imagen a partir de píxeles generados en Python puro.
+
+<Media src={imageShot} alt="Una imagen a tamaño normal y en un visor con zoom" />
+
+<Run file="examples/image_viewer.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/image_viewer.py</code></summary>
+<Code code={image} lang="py" title="examples/image_viewer.py" />
+</details>
+
+## Reloj
+
+Un reloj analógico dibujado en un `pz.canvas`. Una suscripción, `pz.every(1, ...)`, lo redibuja cada segundo, y las
+agujas son trazos girados alrededor del centro.
+
+<Media src={clockShot} alt="Un reloj analógico" size="narrow" />
+
+<Run file="examples/clock.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/clock.py</code></summary>
+<Code code={clock} lang="py" title="examples/clock.py" />
+</details>
+
+## Cronómetro
+
+Un cronómetro con vueltas. <kbd>Espacio</kbd> lo arranca y lo para, <kbd>L</kbd> guarda una vuelta y <kbd>R</kbd>
+lo reinicia.
+
+<Media src={stopwatchShot} alt="Un cronómetro con una lista de vueltas" size="narrow" />
+
+- La suscripción del temporizador solo existe **mientras el cronómetro corre**: si no, `subscriptions()` devuelve
+  una lista vacía, así que una app en reposo no usa CPU.
+
+<Run file="examples/stopwatch.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/stopwatch.py</code></summary>
+<Code code={stopwatch} lang="py" title="examples/stopwatch.py" />
+</details>
+
+## Generador de QR
+
+Escribe un texto o un enlace y obtén su código QR, con los colores del tema o en blanco y negro. Toda la app son
+unas 30 líneas: `pz.qr_code(data, cell_size=7)` hace el trabajo.
+
+<Media src={qrShot} alt="Un código QR generado a partir de un enlace" size="narrow" />
+
+<Run file="examples/qr_code.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/qr_code.py</code></summary>
+<Code code={qr} lang="py" title="examples/qr_code.py" />
+</details>
+
+## Pomodoro
+
+Un temporizador de concentración con periodos de trabajo y descanso: la app que la guía
+[Cómo pedir](/pyzed/es/ai/prompting/) construye con un asistente de IA, un pedido cada vez.
+
+<Media src={pomodoroShot} alt="Un temporizador Pomodoro en cuenta atrás" size="narrow" />
+
+<Run file="examples/pomodoro.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/pomodoro.py</code></summary>
+<Code code={pomodoro} lang="py" title="examples/pomodoro.py" />
+</details>
+
+## Selector de color
+
+`ui.ColorPicker` en sus tres modos: un color con transparencia, un degradado lineal y un relleno con máscara de
+opacidad. Devuelve un texto `"#rrggbbaa"`, un `pz.Gradient` o un `pz.Paint`, y los tres sirven como `background`.
+
+{/* media: showcase/color_picker */}
+
+<Run file="examples/color_picker.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/color_picker.py</code></summary>
+<Code code={colorPicker} lang="py" title="examples/color_picker.py" />
+</details>
+
+## Juego de la vida
+
+El Juego de la vida de Conway: haz clic o arrastra para pintar celdas, <kbd>Espacio</kbd> para reproducir o pausar,
+<kbd>N</kbd> para avanzar una generación. Miles de celdas se dibujan como una sola figura en un `pz.canvas`, y
+`pz.every` mueve la simulación.
+
+{/* media: showcase/game_of_life (una grabación corta de un cañón de planeadores) */}
+
+<Run file="examples/game_of_life.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/game_of_life.py</code></summary>
+<Code code={life} lang="py" title="examples/game_of_life.py" />
+</details>
+
+## Descargas con progreso
+
+Varias descargas a la vez, cada una con su barra de progreso, y una ventana que nunca se congela. Cada descarga es
+un generador `async def`: cada valor que hace `yield` va a `update` mientras sigue corriendo en el loop de eventos
+de Pyzed. Cambia la transferencia simulada por streaming con `httpx` para descargar archivos reales.
+
+{/* media: showcase/download_progress */}
+
+<Run file="examples/download_progress.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/download_progress.py</code></summary>
+<Code code={downloads} lang="py" title="examples/download_progress.py" />
+</details>
+
+La misma idea con hilos (para código bloqueante) se explica en el tutorial
+[Tareas en segundo plano](/pyzed/es/tutorials/intermediate/background-tasks/).
+
+## Datos en vivo
+
+Un panel de cotizaciones alimentado por `pz.listen`: una suscripción respaldada por un generador async. Corre
+mientras `subscriptions()` la devuelva y envía cada valor que produce a `update`.
+
+<Media src={tickerShot} alt="Cuatro símbolos con su precio, su variación y un pequeño gráfico" />
+
+```python
+async def feed():                       # una app real leería aquí un websocket
+    prices = {s: random.uniform(50, 150) for s in SYMBOLS}
+    while True:
+        await asyncio.sleep(0.25)
+        symbol = random.choice(SYMBOLS)
+        prices[symbol] *= 1 + random.gauss(0, 0.01)
+        yield symbol, prices[symbol]    # cada valor va a update()
+
+class Ticker(pz.App):
+    def subscriptions(self):
+        return [pz.listen(feed)] if self.connected else []   # el interruptor pausa el flujo
+
+    def update(self, message):
+        symbol, price = message
+        self.history[symbol] = (self.history[symbol] + [price])[-60:]
+```
+
+<Run file="examples/websocket_stream.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/websocket_stream.py</code></summary>
+<Code code={ticker} lang="py" title="examples/websocket_stream.py" />
+</details>
+
+## Chat con IA
+
+Un chat cuyas respuestas aparecen palabra a palabra. Habla con cualquier servidor compatible con OpenAI (Ollama,
+LM Studio, OpenAI...) a través de `httpx`, y tiene un modo demo con respuestas predefinidas, así que funciona sin
+conexión.
+
+<Media src={chatShot} alt="Una ventana de chat con una respuesta en streaming" />
+
+<Run file="examples/ai_chat.py" with="httpx" lang="es" />
+
+Para usar un modelo real, define tres variables de entorno antes de ejecutarlo, por ejemplo con
+[Ollama](https://ollama.com) en tu máquina: `CHAT_BASE_URL=http://localhost:11434/v1` y `CHAT_MODEL=llama3.2` (más
+`CHAT_API_KEY` para un servicio en la nube). La [sección de IA](/pyzed/es/ai/) explica el resto.
+
+<details>
+<summary>Código completo: <code>examples/ai_chat.py</code></summary>
+<Code code={chat} lang="py" title="examples/ai_chat.py" />
+</details>
+
+## Varias ventanas
+
+Abre tantas ventanas como quieras: cada `pz.Window` tiene su propia vista, título, tamaño y tema, pero todas
+comparten el estado de la app, así que el contador de clics es el mismo en todas. Cerrar la ventana principal cierra
+la app.
+
+{/* media: showcase/multi_window */}
+
+<Run file="examples/multi_window.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/multi_window.py</code></summary>
+<Code code={windows} lang="py" title="examples/multi_window.py" />
+</details>
+
+## Paneles
+
+Paneles redimensionables como los de un editor: divide cualquier panel a la derecha o hacia abajo, arrastra los
+divisores y cierra paneles. La disposición es un pequeño árbol de listas guardado en el estado y dibujado con
+`ui.split` anidados.
+
+<Media src={panesShot} alt="Tres paneles: uno a la izquierda y dos apilados a la derecha" />
+
+<Run file="examples/panes.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/panes.py</code></summary>
+<Code code={panes} lang="py" title="examples/panes.py" />
+</details>
+
+## Menú contextual
+
+Un menú de clic derecho hecho con `ui.popover` y `ui.menu`. `mouse_area(on_move=...)` recuerda dónde está el
+puntero, así que el menú se abre justo ahí; hacer clic en otro sitio o pulsar <kbd>Esc</kbd> lo cierra.
+
+<Media src={menuShot} alt="Un menú contextual abierto sobre un panel" />
+
+<Run file="examples/context_menu.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/context_menu.py</code></summary>
+<Code code={menu} lang="py" title="examples/context_menu.py" />
+</details>
+
+## Componentes propios
+
+Tres piezas reutilizables escritas en código: una valoración con estrellas y un editor de etiquetas (clases
+`pz.Component` con propiedades, su propio estado y sus propios eventos), y una nota que puedes arrastrar, a la que
+puedes hacer doble clic y escribirle, que registra los eventos comunes de todos los widgets.
+
+{/* media: showcase/components */}
+
+<Run file="examples/components.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/components.py</code></summary>
+<Code code={components} lang="py" title="examples/components.py" />
+</details>
+
+Para dibujar componentes con el mouse, sigue [Un componente propio](/pyzed/es/tutorials/intermediate/custom-component/).
+
+## Todos los componentes
+
+Un recorrido por los componentes listos de `pyzed.ui`: botones, campos, pestañas, un editor de código, menús,
+árboles, notificaciones, formularios, avisos y datos, con un selector de tema para verlos en cualquier tema.
+
+<Media src={galleryShot} alt="La galería de componentes: botones, campos, pestañas, menús, árboles y notificaciones" size="wide" />
+
+<Run file="examples/gallery.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/gallery.py</code></summary>
+<Code code={gallery} lang="py" title="examples/gallery.py" />
+</details>
+
+## Contador
+
+La app de Pyzed más pequeña: un número y dos botones. Es el mejor archivo para empezar cuando haces algo nuevo.
+
+<Media src={counterShot} alt="Un contador con botones de más y menos" size="narrow" />
+
+<Run file="examples/counter.py" lang="es" />
+
+<details>
+<summary>Código completo: <code>examples/counter.py</code></summary>
+<Code code={counter} lang="py" title="examples/counter.py" />
+</details>
+
+## Editor de proyectos
+
+Un workspace de editor de código completo en unas 450 líneas: un panel de proyecto con los archivos de una
+carpeta, pestañas, un editor con resaltado de sintaxis (editar, deshacer, guardar con <kbd>Ctrl</kbd>+<kbd>S</kbd>),
+colores de estado de git, un panel de estructura, cambio de tema, una paleta de comandos
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>) y un buscador de archivos (<kbd>Ctrl</kbd>+<kbd>P</kbd>). Su
+aspecto recrea el del editor [Zed](https://zed.dev), cuya interfaz inspiró el tema por defecto de Pyzed. El panel de
+terminal muestra una salida de ejemplo; no ejecuta una shell.
+
+<Media src={editorDark} light={editorLight} alt="Un editor de código con panel de proyecto, pestañas y estructura" size="wide" />
+
+<Run file="examples/zed_editor.py" lang="es" />
+
+Pasa una carpeta para abrirla: `python examples/zed_editor.py ruta/al/proyecto`. Una versión más pequeña se
+construye paso a paso en el tutorial del [mini editor de código](/pyzed/es/tutorials/advanced/code-editor/).
+
+<details>
+<summary>Código completo: <code>examples/zed_editor.py</code></summary>
+<Code code={editor} lang="py" title="examples/zed_editor.py" />
+</details>
+
+<Aside type="note" title="Sobre esta página">
+Cada app de aquí se dibuja fuera de pantalla en la suite de tests, así que funcionan con la versión actual de
+Pyzed. Se están añadiendo grabaciones cortas de las apps que se mueven (Juego de la vida, descargas, varias
+ventanas).
+</Aside>

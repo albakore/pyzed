@@ -2,19 +2,20 @@
 title: "Inventario de RPG"
 description: "Una pantalla de inventario de RPG en Python donde la rareza de los objetos brilla con glow y bloom, con un panel de detalles de cristal animado sobre un shader de brasas."
 sidebar:
-  order: 3
+  order: 7
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/showcase/inventory.py?raw';
 
 Un inventario donde la rareza es luz: los objetos raros tienen glow, los épicos y legendarios bloom, y los legendarios palpitan. Al hacer clic en un objeto, `presence` cambia el panel de detalles de cristal y sus barras crecen con `transition(width=...)`.
 
 ![Inventario de RPG](../../../../assets/showcase/inventory.png)
 
-```sh
-python examples/showcase/inventory.py
-```
+<Run file="examples/showcase/inventory.py" lang="es" />
+
+Las brasas del fondo son el grafo `embers.pzshad`; míralo en [Shaders y efectos](/pyzed/es/showcase/shaders/#todos-los-grafos).
 
 ## Cómo está hecho
 
@@ -42,6 +43,12 @@ bar.transition(width=240 * value, duration=320, easing="ease_out_cubic")
 ```python
 pz.presence(panel, key=self.selected, enter="fade_in_right", exit="fade_out")
 ```
+
+## Prueba esto
+
+- Añade un objeto con una rareza nueva, y un color y una luz para ella en la tabla de rarezas.
+- Haz que las barras de estadísticas crezcan más lento subiendo la `duration` de la transición.
+- Cambia la variable `rise` del shader de brasas para que las chispas vayan más rápido.
 
 ## Código completo
 
