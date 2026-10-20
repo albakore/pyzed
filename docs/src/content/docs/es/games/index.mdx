@@ -1,6 +1,6 @@
 ---
 title: Crear videojuegos
-description: Juegos en tiempo real con Pyzed — un bucle por fotograma, teclas mantenidas, sprites, partículas, efectos neón y un HUD hecho con widgets normales.
+description: "Aprende a hacer juegos 2D en Python con Pyzed, desde tu primer bucle de juego hasta plataformas, shooters y puzles completos: una ruta paso a paso con ejemplos animados, consejos y tres juegos terminados."
 section:
   eyebrow: "Showcase"
   icon: "rocket"
@@ -10,33 +10,84 @@ sidebar:
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import ClipGallery from '../../../../components/ClipGallery.astro';
 import Run from '../../showcase/_run.mdx';
 
 Pyzed es una librería de interfaces, pero ya trae todo lo que necesita un juego 2D: un
 `pz.canvas` dibujado por la GPU, un bucle que se ejecuta una vez por fotograma, las teclas
 que están pulsadas ahora mismo y toda la biblioteca de widgets para construir menús y HUD
-encima de la acción. Los tres juegos de abajo crecen en dificultad y son programas
-completos y jugables en
-[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games).
+encima de la acción. Cada juego de estas páginas es un programa completo y jugable en
+[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games), comprobado por
+las pruebas en cada cambio.
 
-![Neon Invaders, la demo más completa](../../../../assets/games/neon-invaders.png)
+<ClipGallery
+	items={[
+		{ clip: 'game-platformer', title: 'Pixel Run', href: '/pyzed/es/games/platformer/', alt: 'Un héroe que corre y salta por un nivel con scroll, monedas y slimes' },
+		{ clip: 'game-asteroids', title: 'Rock Storm', href: '/pyzed/es/games/asteroids/', alt: 'Una nave que dispara a rocas que se parten en chispas' },
+		{ clip: 'game-2048', title: '2048', href: '/pyzed/es/games/puzzle-2048/', alt: 'Fichas numeradas que se deslizan y se juntan en un tablero de 4 por 4' },
+		{ clip: 'game-menus', title: 'Menús de Orb Rush', href: '/pyzed/es/games/menus-hud/', alt: 'Un menú de título, un HUD de cristal, un menú de pausa y un panel de ajustes' },
+		{ clip: 'game-high-scores', title: 'Target Rush', href: '/pyzed/es/games/high-scores/', alt: 'Clics en dianas, escribir un nombre y una tabla de récords' },
+		{ clip: 'game-sprites', title: 'Walker', href: '/pyzed/es/games/sprites-animation/', alt: 'Un héroe pixel art que camina, salta y coge monedas' },
+		{ clip: 'game-jump-arc', title: 'Jump Lab', href: '/pyzed/es/games/collisions-physics/', alt: 'Una caja que salta entre plataformas con el arco del salto dibujado' },
+		{ clip: 'game-first', title: 'Coin Chase', href: '/pyzed/es/games/first-game/', alt: 'Un orbe que recoge monedas' },
+		{ clip: 'neon-invaders', title: 'Neon Invaders', href: '/pyzed/es/games/neon-invaders/', alt: 'Oleadas de invasores neón, disparos y explosiones' },
+		{ clip: 'breakout', title: 'Breakout', href: '/pyzed/es/games/breakout/', alt: 'Una pelota que rompe un muro de ladrillos de colores' },
+		{ clip: 'snake', title: 'Snake', href: '/pyzed/es/games/snake/', alt: 'Una serpiente que crece al comer' },
+	]}
+/>
+
+## Aprende a crear juegos
+
+Una ruta desde cero hasta juegos completos. Cada paso es un tutorial con un objetivo, el tiempo que lleva, lo que
+necesitas saber antes, el código completo e ideas para seguir. Si nunca has escrito un juego, empieza por el 1; si ya
+lo has hecho, salta a lo que necesites.
+
+```mermaid
+flowchart LR
+    A["1 · Bucle y teclas"] --> B["2 · Sprites y animación"] --> C["3 · Colisiones y física"]
+    C --> D["4 · Plataformas"]
+    C --> E["5 · Asteroids"]
+    B --> F["6 · Puzle: 2048"]
+    D --> G["7 · Menús, HUD, ajustes"]
+    E --> G
+    F --> G
+    G --> H["8 · Guardado y sonido"]
+```
+
+<NavCards
+	items={[
+		{ title: '1. Tu primer juego', text: 'Coin Chase: el bucle por fotograma, velocidad × dt, teclas mantenidas, un temporizador, una puntuación y una pausa.', href: '/pyzed/es/games/first-game/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: '2. Sprites y animación', text: 'Pixel art desde texto, hojas de sprites fotograma a fotograma, voltear y tweens con easing.', href: '/pyzed/es/games/sprites-animation/', icon: 'seti:image', tag: 'Principiante' },
+		{ title: '3. Colisiones y física', text: 'Velocidad, gravedad, colisiones de cajas y círculos, coyote time y una vista de depuración.', href: '/pyzed/es/games/collisions-physics/', icon: 'puzzle' },
+		{ title: '4. Un juego de plataformas', text: 'Un mapa de tiles en texto, una cámara con parallax, slimes que pisar, monedas, vidas y una bandera.', href: '/pyzed/es/games/platformer/', icon: 'laptop' },
+		{ title: '5. Asteroids y partículas', text: 'Rotación y empuje, espacio que da la vuelta, rocas que se parten y partículas por todas partes.', href: '/pyzed/es/games/asteroids/', icon: 'star' },
+		{ title: '6. Un puzle: 2048', text: 'Reglas como funciones comprobables, fichas con tweens, gestos y un bucle que duerme entre movimientos.', href: '/pyzed/es/games/puzzle-2048/', icon: 'seti:xls' },
+		{ title: '7. Menús, HUD y ajustes', text: 'Escenas, transiciones, menús con teclado, un HUD de cristal, pausa y una pantalla de ajustes.', href: '/pyzed/es/games/menus-hud/', icon: 'setting' },
+		{ title: '8. Récords y guardado', text: 'Una tabla de récords guardada con seguridad, pedir un nombre, efectos de sonido y compartir el juego.', href: '/pyzed/es/games/high-scores/', icon: 'document' },
+		{ title: 'Consejos', text: 'Pasos de tiempo fijos, rendimiento, buffer de entrada, juice, organizar el estado y pruebas.', href: '/pyzed/es/games/tips/', icon: 'information' },
+	]}
+/>
+
+<Aside type="tip" title="¿Nunca has programado un juego?">
+Empieza por [1. Tu primer juego](/pyzed/es/games/first-game/): explica cada línea, y el juego se puede jugar desde el
+tercer paso. [Un bucle de juego](/pyzed/es/tutorials/advanced/game-loop/) (Dodge, en los Tutoriales) es una buena
+segunda lectura.
+</Aside>
+
+## Juegos completos
+
+Tres juegos más grandes para leer, jugar y desmontar. Crecen en dificultad:
 
 <CardGrid>
-	<LinkCard title="1. Snake" href="/pyzed/es/games/snake/" description="Movimiento en cuadrícula con un temporizador fijo, cola de teclas, game over y reinicio. ~150 líneas." />
-	<LinkCard title="2. Breakout" href="/pyzed/es/games/breakout/" description="Un bucle a 60 fps con pz.frames, teclas mantenidas y ratón, física de la pelota, partículas y temblor." />
-	<LinkCard title="3. Neon Invaders" href="/pyzed/es/games/neon-invaders/" description="Sprites pixel art, oleadas, power-ups, brillo neón y un HUD de cristal con bloom." />
+	<LinkCard title="Snake" href="/pyzed/es/games/snake/" description="Movimiento en cuadrícula con un temporizador fijo, cola de teclas, game over y reinicio. ~150 líneas." />
+	<LinkCard title="Breakout" href="/pyzed/es/games/breakout/" description="Un bucle a 60 fps con pz.frames, teclas mantenidas y ratón, física de la pelota, partículas y temblor." />
+	<LinkCard title="Neon Invaders" href="/pyzed/es/games/neon-invaders/" description="Sprites pixel art, oleadas, power-ups, brillo neón y un HUD de cristal con bloom." />
 </CardGrid>
 
-Ejecuta cualquiera desde la carpeta del repositorio; cambia el nombre del archivo para los otros dos:
+Ejecuta cualquier juego desde la carpeta del repositorio; cambia el nombre del archivo para los demás:
 
 <Run file="examples/games/neon_invaders.py" lang="es" />
-
-<Aside type="tip" title="¿Nuevo con los bucles de juego?">
-[Un bucle de juego](/pyzed/es/tutorials/advanced/game-loop/) construye un juego pequeño, Dodge, de una sentada: un
-bucle por fotograma, teclas mantenidas, colisiones, brillo, partículas y temblor de pantalla. Es el camino más corto
-hacia los tres juegos de arriba. Para una simulación en lugar de un juego, mira el
-[Juego de la vida](/pyzed/es/showcase/apps/#juego-de-la-vida).
-</Aside>
 
 ## Las piezas
 
@@ -151,6 +202,8 @@ return pz.stack([self.scene(), hud], width=W, height=H)
 ```
 
 ## Consejos de rendimiento
+
+Más en [Consejos para crear juegos](/pyzed/es/games/tips/).
 
 - Haz poco trabajo Python por fotograma: listas y números simples, sin crear estructuras
   grandes cada vez.

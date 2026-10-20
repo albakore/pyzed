@@ -1,0 +1,178 @@
+---
+title: Game dev tips
+description: "Practical tips for making games with Pyzed in Python: delta time and fixed timesteps, performance, input buffering, juice and screen shake, organizing game state, debugging views and testing games headlessly."
+sidebar:
+  order: 9
+  label: Game dev tips
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+
+Short, practical advice gathered from the games of this section. Each tip says *why*, with the few lines of
+code that do it in Pyzed.
+
+## Time
+
+### Always multiply by dt
+
+`pz.frames(self.tick)` calls `tick(dt)` once per displayed frame, and `dt` is the seconds since the last one.
+Speeds are *per second* and every change is `speed × dt`, so the game runs the same on a 60 Hz laptop and a
+144 Hz monitor. Timers count down by `dt` too:
+
+```python
+self.x += self.vx * dt
+self.cooldown = max(0.0, self.cooldown - dt)
+```
+
+### Cap dt
+
+After a pause (a dragged window, a breakpoint, a slow frame) `dt` can be large, and a big step lets things pass
+through walls. Pyzed already caps it at 0.25 s; physics-heavy games cap it lower:
+
+```python
+def tick(self, dt):
+    dt = min(dt, 1 / 30)
+```
+
+### A fixed timestep, when you need one
+
+Some games need every step to be the same size: physics that must not depend on the frame rate, replays,
+networking, or a simulation that must give exactly the same result twice. Accumulate time and step in fixed
+slices:
+
+```python
+STEP = 1 / 120
+
+def tick(self, dt):
+    self.acc += dt
+    while self.acc >= STEP:
+        self.simulate(STEP)        # the game's logic, always with the same dt
+        self.acc -= STEP
+    self.blend = self.acc / STEP   # 0..1: how far between two steps, to interpolate drawing
+```
+
+<Aside type="caution">
+Don't call that method `update`: on a `pz.App`, `update(message)` is where widget messages arrive.
+</Aside>
+
+For turn-based or grid games, use `pz.every(seconds, callback)` instead of a frame loop, as
+[Snake](/pyzed/games/snake/) does.
+
+### Stop the loop when nothing moves
+
+`subscriptions()` is evaluated after every update. Return `[]` while paused, on a menu with nothing animated,
+or between moves of a puzzle, and the game uses no CPU:
+
+```python
+def subscriptions(self):
+    return [pz.frames(self.tick)] if self.animating else []
+```
+
+## Performance
+
+- **Keep `tick` small.** Plain numbers, lists and small classes are fast; avoid building big structures every
+  frame, and avoid reading files or the network in the loop.
+- **Batch shapes.** `draw.rects([...], fill=color)` draws many rectangles of one color as one shape; that is how
+  `game.sprite` and the platformer's tiles stay cheap.
+- **Draw only what is on screen**, and collide only with what is near (see the
+  [platformer](/pyzed/games/platformer/)).
+- **Cap particles** with `game.Particles(limit=...)`, and remove bullets and enemies that leave the screen.
+- **Images are cached.** `draw.image("ship.png", ...)` decodes a file once, so drawing it hundreds of times per
+  frame is fine.
+- **The HUD is cheap**, but `pz.memo` can cache a widget that is expensive to build and rarely changes.
+- **Measure.** Show an FPS counter (see [Orb Rush](/pyzed/games/menus-hud/)) and read the
+  [Performance](/pyzed/guides/performance/) guide.
+
+## Input
+
+- **Held vs pressed.** Use `game.axis`, `game.vector` and `pz.is_pressed` in `tick` for things that happen
+  *while* a key is down (moving, auto-fire), and `on_key` for things that happen *once* per press (jump, pause).
+- **Buffer inputs.** Remember a press for a short time so it is not lost: a jump pressed just before landing,
+  or two quick turns in Snake. A small timer or queue is enough:
+
+  ```python
+  def on_key(self, combo):
+      if combo == "space":
+          self.jump_buffer = 0.12          # seconds; tick counts it down and jumps when possible
+  ```
+
+- **Be forgiving.** Coyote time, slightly smaller hitboxes for the player than its sprite, and slightly bigger
+  ones for pickups make a game feel fair.
+- **Let people choose.** Accept arrows and WASD (`game.vector` does by default), and the mouse where it makes
+  sense.
+
+## Juice
+
+"Juice" is the feedback that makes an action feel good: the same hit, with and without it:
+
+<Media clip="concept-juice" alt="Two identical scenes side by side: on the left a ball hits a block and the block simply disappears; on the right the game pauses for an instant, the block flashes white, sparks fly, the screen shakes and the ball squashes" caption="Left: the hit. Right: the same hit with a 70 ms hit-stop, a white flash, particles, screen shake and a squash." size="narrow" />
+
+| Effect | How |
+| --- | --- |
+| Screen shake | `shake = game.Shake()`, `shake.kick(8)` on a hit, `shake.update(dt)` every frame, and start the canvas with `*shake.shapes()` |
+| Particles | `game.Particles(...)`, `burst(x, y, ...)` on events, `update(dt)` and `shapes(glow=True)` |
+| Hit-stop | skip the world's update for 50–100 ms after a big hit (keep particles moving) |
+| Flash | draw the hit thing white for one or two frames |
+| Squash and stretch | `draw.scale(sx, sy)` around the feet after landing, or along the direction of motion |
+| Easing | tweens with `ease_out` curves instead of linear moves (see [Sprites and animation](/pyzed/games/sprites-animation/)) |
+| Glow | `game.glow(x, y, r, color)` on canvas; `bloom` and `glow` on widgets |
+
+<Aside type="tip">
+Add a setting to turn shake and flashes off. Some players need it, and `pz.system_reduced_motion()` says whether
+the system already asks for less motion.
+</Aside>
+
+## Organizing a game
+
+- **State in one place.** The app's attributes are the game state; `reset()` or `new_game()` sets all of them,
+  so starting again is one call.
+- **Small classes for things.** `Enemy`, `Rock`, `Tile`: a few attributes each. Lists of them are the world.
+- **Rules as functions.** Code that decides *what happens* (`slide_line`, `can_move`, collisions) should not
+  draw; code that draws should not change the state. Then both are easy to change and to test.
+- **Scenes.** One `scene` attribute (`"title"`, `"play"`, `"pause"`...) decides what `tick` runs and what `view`
+  shows (see [Menus, HUD and settings](/pyzed/games/menus-hud/)).
+- **Constants at the top.** Speeds, sizes and timings as named constants are the game's tuning knobs.
+- **Randomness with a seed.** `self.random = random.Random(seed)` makes a game reproducible for tests and bug
+  reports; `seed=None` is random as usual.
+
+## Debugging
+
+- **Draw what the code sees**: hitboxes, velocities, paths, the tile under the mouse. Toggle it with a key, as
+  [Jump Lab](/pyzed/games/collisions-physics/) does with <kbd>H</kbd>.
+- **Print numbers on the canvas** with `draw.text(..., font="mono")` instead of to the console, so you see them
+  in context.
+- **Slow motion**: multiply `dt` by 0.25 while a key is held to watch a fast moment.
+
+## Testing games headlessly
+
+A Pyzed game is a normal Python object: you can create it, call `tick` in a loop and check the result, with no
+window. The games of this section let tests set the keys they read through a `held` attribute:
+
+```python
+from coin_chase import CoinChase, SPEED
+
+def test_moves_right():
+    app = CoinChase(seed=1)
+    app.held = {"right"}                  # instead of the real keyboard
+    x = app.x
+    for _ in range(30):
+        app.tick(1 / 60)                  # half a second, frame by frame
+    assert app.x == pytest.approx(x + SPEED * 0.5)
+
+def test_draws(tmp_path):
+    app = CoinChase(seed=1)
+    app.screenshot(tmp_path / "frame.png", scale=1)   # renders off-screen, no window needed
+```
+
+`game.axis`, `game.vector` and `game.is_pressed` all take `held=` for this. `App.screenshot` (or
+`pz.screenshot(app, path)`) renders any moment of the game to a PNG, which is also how the animations on these
+pages were recorded. The tests of these games are in
+[`tests/test_game_tutorials.py`](https://github.com/albakore/pyzed/blob/main/tests/test_game_tutorials.py).
+
+<Aside type="note" title="Also read">
+[Testing](/pyzed/guides/testing/) for testing Pyzed apps in general, and [Drawing with canvas](/pyzed/guides/canvas/)
+for every shape and transform.
+</Aside>
+
+<LinkCard title="Back to the games overview" href="/pyzed/games/" description="The learning path and the complete games." />

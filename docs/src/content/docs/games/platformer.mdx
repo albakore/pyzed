@@ -1,0 +1,160 @@
+---
+title: "4. A platformer"
+description: "Build a side-scrolling platformer in Python with Pyzed: a tile map written as text, collisions with nearby tiles only, a smooth camera with parallax, patrolling enemies you can stomp, coins, spikes, lives and a goal flag."
+sidebar:
+  order: 4
+  label: "4. A platformer"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from '../showcase/_run.mdx';
+import source from '../../../../../examples/games/platformer.py?raw';
+
+With the physics of Jump Lab you have a character that runs and jumps. Now give it a world. This step builds
+*Pixel Run*: a level three thousand pixels wide, written as a few lines of text, a camera that follows the
+player, slimes that patrol and can be stomped, coins, spikes and a flag at the end.
+
+<Media clip="game-platformer" alt="A cyan hero runs to the right through a scrolling level of grass and dirt under a purple sky, jumping over gaps, stairs and green slimes and collecting coins that burst into sparks" caption="Pixel Run: the camera follows the player, the hills scroll slower than the ground, and only the visible tiles are drawn." eager />
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A complete level with a camera, enemies, coins, lives and a win screen | 60 minutes | Intermediate | [3. Collisions and physics](/pyzed/games/collisions-physics/) |
+
+## What you'll learn
+
+- Write a level as a **tile map** in text and turn it into objects.
+- Collide only with the **tiles near the player**, and draw only the **tiles on screen**.
+- A **camera** that eases toward the player and stops at the level's edges, plus **parallax**.
+- **Enemies** that patrol, turn at walls and ledges, and can be **stomped**.
+- **Lives, respawn and a win screen**.
+
+<Run file="examples/games/platformer.py" />
+
+<Steps>
+
+1. **The level is text.** Each character is a 32 × 32 tile: `#` ground, `=` a platform, `o` a coin, `E` a
+   slime, `^` spikes, `P` the start and `F` the flag. Editing the level is editing these strings:
+
+   ```python
+   TILE = 32
+   LEVEL = [
+       "................................................................................................",
+       ...
+       "...P.ooo......ooo.......Eoo.######............Eoo...##...^^.ooE...............E.ooo.......F.....",
+       "##################...####################...######################...###########################",
+       "##################...####################...######################...###########################",
+   ]
+   COLS, ROWS = len(LEVEL[0]), len(LEVEL)
+   SOLID = "#="
+   ```
+
+   When a game starts, `new_game` reads it once: coins go into a set of `(col, row)`, each `E` becomes an
+   `Enemy`, `P` sets the start and `F` the flag's box.
+
+2. **Only the tiles that matter.** The level has more than a thousand tiles, but the player can only touch
+   the few under its box. `tiles_near` turns the player's box into a range of columns and rows and returns the
+   solid tiles there; the collision code is the same as in Jump Lab, one axis at a time:
+
+   ```python
+   def solid(col, row):
+       if col < 0 or col >= COLS:
+           return True              # the sides of the level are walls
+       if row < 0 or row >= ROWS:
+           return False             # above and below are open (falling out is a lost life)
+       return LEVEL[row][col] in SOLID
+
+   def tiles_near(rect):
+       out = []
+       for row in range(int(rect.top // TILE), int(rect.bottom // TILE) + 1):
+           for col in range(int(rect.left // TILE), int(rect.right // TILE) + 1):
+               if solid(col, row):
+                   out.append(game.Rect(col * TILE, row * TILE, TILE, TILE))
+       return out
+   ```
+
+3. **A camera.** The camera is one number: how far the world is scrolled. It aims a little ahead of the player
+   (40% of the screen), stays inside the level, and eases toward its target with `lerp`, so it glides instead
+   of jerking:
+
+   ```python
+   target = game.clamp(self.player.center[0] - W * 0.4, 0, LEVEL_W - W)
+   self.camera = game.lerp(self.camera, target, min(1.0, 8 * dt))
+   ```
+
+   Drawing the world through the camera is one transform: `draw.translate(-cam, 0)` before the world, inside
+   `save()`/`restore()` so the sky is not moved. Hills move by `cam × 0.2` and `cam × 0.45` instead, which makes
+   them look far away (**parallax**).
+
+4. **Draw only what is on screen.** From the camera you know the first and last visible columns. Tiles of one
+   color are collected and drawn with a single `draw.rects`, so the whole level costs three shapes:
+
+   ```python
+   first, last = cam // TILE, (cam + W) // TILE + 1
+   dirt, grass, stone = [], [], []
+   for row, line in enumerate(LEVEL):
+       for col in range(max(0, first), min(COLS, last + 1)):
+           ...
+   shapes += [draw.rects(dirt, fill="#5b3a29"), draw.rects(grass, fill="#65a30d"),
+              draw.rects(stone, fill="#64748b")]
+   ```
+
+5. **Enemies that patrol.** A slime walks until the tile ahead is a wall or the tile below-ahead is empty;
+   then it steps back and turns around. That one rule keeps it on its platform:
+
+   ```python
+   r.x += e.vx * dt
+   ahead = r.right if e.vx > 0 else r.left
+   col = int(ahead // TILE)
+   row = int((r.bottom - 1) // TILE)
+   if solid(col, row) or not solid(col, row + 1):
+       r.x -= e.vx * dt
+       e.vx = -e.vx
+   ```
+
+6. **Stomp or get hurt.** Touching a slime is fine *if you are falling onto it*: the player's bottom was above
+   the slime's top in the previous frame. Then the slime is squashed and the player bounces. Any other touch
+   costs a life:
+
+   ```python
+   if self.vy > 0 and p.bottom - self.vy / 60 <= e.rect.top + 8:   # coming down on it: stomp
+       e.squashed = 0.001
+       self.vy = -JUMP_SPEED * 0.6
+       self.sparks.burst(e.rect.center[0], e.rect.bottom, count=14, color="#a3e635", angle=-90, spread=160)
+       self.shake.kick(3)
+   elif not self.invincible:
+       return self.hurt()
+   ```
+
+   After a hit the player respawns at the start and blinks for a second (`invincible`), so one mistake never
+   costs two lives.
+
+7. **Win and lose.** Falling below the level, spikes and slimes call `hurt()`; reaching the flag sets `won`.
+   The cards are the same glass widgets as before, and <kbd>Enter</kbd> calls `new_game()`.
+
+</Steps>
+
+<Aside type="tip" title="Design levels for the jump you have">
+With `JUMP_SPEED = 680` and `GRAVITY = 1900` the hero rises about 120 pixels (almost four tiles) and covers
+about five tiles in a full jump at top speed. Keep gaps at three tiles and walls at three tiles high and every
+jump is fair. Change the physics and the level changes with it.
+</Aside>
+
+<Aside type="note" title="Bigger worlds">
+Text maps are perfect for a few levels. For many, keep each level in its own `.txt` file and read it with
+`Path("levels/1.txt").read_text().splitlines()`, or export from a tile editor such as Tiled as CSV.
+</Aside>
+
+## Try this
+
+- Add a checkpoint flag halfway: when touched, `respawn()` uses its position.
+- Make `=` platforms one-way: only collide when falling and the player's bottom was above the platform's top.
+- Add a second level: a list of maps, and `level += 1` when the flag is reached.
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/platformer.py" />
+
+## Next
+
+<LinkCard title="5. Asteroids with particles" href="/pyzed/games/asteroids/" description="Rotation and thrust, wrap-around space, circle collisions and lots of particles." />

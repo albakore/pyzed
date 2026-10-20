@@ -7,7 +7,7 @@ How to add a component to the library
    checked by ``gen_api.py --check``): the library's API tables come from there.
 2. Add a dict to ``COMPONENTS`` below (the list order does not matter; pages are sorted by name):
 
-   ``slug``      URL and file name: ``library/<slug>.mdx`` and ``assets/library/<slug>.*.png``.
+   ``slug``      URL and file name: ``library/<slug>.mdx`` and ``public/library/<slug>.*.webp``.
    ``name``      Title of the page and of its gallery card (``"Button"``).
    ``category``  A key of ``CATEGORIES`` (the gallery groups cards by it).
    ``api``       Public names documented on the page, the main one first: ``["pyzed.ui.tree",
@@ -51,7 +51,7 @@ How to add a component to the library
 
 3. Render and generate, then build the site::
 
-       python docs/scripts/library_shots.py <slug>     # docs/src/assets/library/<slug>*.png
+       python docs/scripts/library_shots.py <slug>     # docs/public/library/<slug>*.webp
        python docs/scripts/gen_library.py              # library/*.mdx in every language
        python docs/scripts/gen_library.py --check      # coverage and consistency
        cd docs && npm run build

@@ -1,6 +1,6 @@
 ---
 title: Making games
-description: Real-time games with Pyzed — a frame loop, held keys, sprites, particles, neon effects and a HUD made of regular widgets.
+description: "Learn to make 2D games in Python with Pyzed, from your first game loop to complete platformers, shooters and puzzles: a step-by-step learning path with animated examples, tips and three finished games."
 section:
   eyebrow: "Showcase"
   icon: "rocket"
@@ -10,31 +10,84 @@ sidebar:
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import NavCards from '../../../components/NavCards.astro';
+import ClipGallery from '../../../components/ClipGallery.astro';
 import Run from '../showcase/_run.mdx';
 
 Pyzed is a UI library, but everything a 2D game needs is already in it: a GPU-drawn
 `pz.canvas`, a loop that runs once per displayed frame, the keys held down right now, and
-the whole widget library to build menus and HUDs on top of the action. The three games
-below grow in difficulty and are complete, playable programs in
-[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games).
+the whole widget library to build menus and HUDs on top of the action. Every game on these
+pages is a complete, playable program in
+[`examples/games/`](https://github.com/albakore/pyzed/tree/main/examples/games), tested by the
+test suite on every change.
 
-![Neon Invaders, the most complete demo](../../../assets/games/neon-invaders.png)
+<ClipGallery
+	items={[
+		{ clip: 'game-platformer', title: 'Pixel Run', href: '/pyzed/games/platformer/', alt: 'A hero running and jumping through a scrolling level with coins and slimes' },
+		{ clip: 'game-asteroids', title: 'Rock Storm', href: '/pyzed/games/asteroids/', alt: 'A ship shooting rocks that split into sparks' },
+		{ clip: 'game-2048', title: '2048', href: '/pyzed/games/puzzle-2048/', alt: 'Numbered tiles sliding and merging on a 4 by 4 board' },
+		{ clip: 'game-menus', title: 'Orb Rush menus', href: '/pyzed/games/menus-hud/', alt: 'A title menu, a glass HUD, a pause menu and a settings panel' },
+		{ clip: 'game-high-scores', title: 'Target Rush', href: '/pyzed/games/high-scores/', alt: 'Clicking targets, entering a name and a leaderboard' },
+		{ clip: 'game-sprites', title: 'Walker', href: '/pyzed/games/sprites-animation/', alt: 'A pixel-art hero walking, jumping and collecting coins' },
+		{ clip: 'game-jump-arc', title: 'Jump Lab', href: '/pyzed/games/collisions-physics/', alt: 'A box jumping between platforms with its jump arc traced' },
+		{ clip: 'game-first', title: 'Coin Chase', href: '/pyzed/games/first-game/', alt: 'An orb collecting coins' },
+		{ clip: 'neon-invaders', title: 'Neon Invaders', href: '/pyzed/games/neon-invaders/', alt: 'Waves of neon invaders, shots and explosions' },
+		{ clip: 'breakout', title: 'Breakout', href: '/pyzed/games/breakout/', alt: 'A ball breaking a wall of colored bricks' },
+		{ clip: 'snake', title: 'Snake', href: '/pyzed/games/snake/', alt: 'A snake growing as it eats' },
+	]}
+/>
+
+## Learn to make games
+
+A path from zero to complete games. Each step is a tutorial with a goal, the time it takes, what you need to
+know first, the full code and ideas to keep going. If you have never written a game, start at 1; if you have,
+jump to what you need.
+
+```mermaid
+flowchart LR
+    A["1 · Loop and keys"] --> B["2 · Sprites and animation"] --> C["3 · Collisions and physics"]
+    C --> D["4 · Platformer"]
+    C --> E["5 · Asteroids"]
+    B --> F["6 · Puzzle: 2048"]
+    D --> G["7 · Menus, HUD, settings"]
+    E --> G
+    F --> G
+    G --> H["8 · Saves and sound"]
+```
+
+<NavCards
+	items={[
+		{ title: '1. Your first game', text: 'Coin Chase: the frame loop, speed × dt, held keys, a timer, a score and a pause.', href: '/pyzed/games/first-game/', icon: 'rocket', tag: 'Start here' },
+		{ title: '2. Sprites and animation', text: 'Pixel art from text, sprite sheets played frame by frame, flipping and tweens with easing.', href: '/pyzed/games/sprites-animation/', icon: 'seti:image', tag: 'Beginner' },
+		{ title: '3. Collisions and physics', text: 'Velocity, gravity, box and circle collisions, coyote time and a debug view.', href: '/pyzed/games/collisions-physics/', icon: 'puzzle' },
+		{ title: '4. A platformer', text: 'A tile map in text, a camera with parallax, slimes to stomp, coins, lives and a flag.', href: '/pyzed/games/platformer/', icon: 'laptop' },
+		{ title: '5. Asteroids and particles', text: 'Rotation and thrust, wrap-around space, splitting rocks and particles everywhere.', href: '/pyzed/games/asteroids/', icon: 'star' },
+		{ title: '6. A puzzle: 2048', text: 'Rules as testable functions, tweened tiles, swipes and a loop that sleeps between moves.', href: '/pyzed/games/puzzle-2048/', icon: 'seti:xls' },
+		{ title: '7. Menus, HUD and settings', text: 'Scenes, transitions, keyboard menus, a glass HUD, pause and a settings screen.', href: '/pyzed/games/menus-hud/', icon: 'setting' },
+		{ title: '8. High scores and saves', text: 'A leaderboard saved safely, name entry, sound effects, and shipping the game.', href: '/pyzed/games/high-scores/', icon: 'document' },
+		{ title: 'Game dev tips', text: 'Fixed timesteps, performance, input buffering, juice, organizing state and testing.', href: '/pyzed/games/tips/', icon: 'information' },
+	]}
+/>
+
+<Aside type="tip" title="Never programmed a game?">
+Start with [1. Your first game](/pyzed/games/first-game/): it explains every line, and the game is playable after
+the third step. [A game loop](/pyzed/tutorials/advanced/game-loop/) (Dodge, in the Tutorials) is a good second
+read.
+</Aside>
+
+## Complete games
+
+Three bigger games to read, play and take apart. They grow in difficulty:
 
 <CardGrid>
-	<LinkCard title="1. Snake" href="/pyzed/games/snake/" description="Grid movement on a fixed timer, a key queue, game over and restart. ~150 lines." />
-	<LinkCard title="2. Breakout" href="/pyzed/games/breakout/" description="A 60 fps loop with pz.frames, held keys and the mouse, ball physics, particles and shake." />
-	<LinkCard title="3. Neon Invaders" href="/pyzed/games/neon-invaders/" description="Pixel-art sprites, waves, power-ups, neon glow and a glass HUD with bloom." />
+	<LinkCard title="Snake" href="/pyzed/games/snake/" description="Grid movement on a fixed timer, a key queue, game over and restart. ~150 lines." />
+	<LinkCard title="Breakout" href="/pyzed/games/breakout/" description="A 60 fps loop with pz.frames, held keys and the mouse, ball physics, particles and shake." />
+	<LinkCard title="Neon Invaders" href="/pyzed/games/neon-invaders/" description="Pixel-art sprites, waves, power-ups, neon glow and a glass HUD with bloom." />
 </CardGrid>
 
-Run any of them from the repository folder; change the file name for the other two:
+Run any game from the repository folder; change the file name for the others:
 
 <Run file="examples/games/neon_invaders.py" />
-
-<Aside type="tip" title="New to game loops?">
-[A game loop](/pyzed/tutorials/advanced/game-loop/) builds a small game, Dodge, in one sitting: a frame loop, held
-keys, collisions, glow, particles and screen shake. It is the shortest way into the three games above. For a
-simulation instead of a game, see [Game of Life](/pyzed/showcase/apps/#game-of-life).
-</Aside>
 
 ## The building blocks
 
@@ -145,6 +198,8 @@ return pz.stack([self.scene(), hud], width=W, height=H)
 ```
 
 ## Performance tips
+
+More in [Game dev tips](/pyzed/games/tips/).
 
 - Keep the per-frame work in Python small: plain lists and numbers, no allocations of big
   structures every frame.

@@ -1,0 +1,44 @@
+---
+// An animated WebP of the component library (docs/scripts/library_shots.py records them into
+// public/library/), in One Dark or One Light to match the site's theme, drawn with <AnimatedImage>
+// (served as is from public/, lazy, and the still first frame `<name>.<theme>.still.webp` for a
+// reader who asks for reduced motion).
+//
+// Sizes come from public/library/manifest.json. `scale` is the clip's pixel ratio: 2 shows a 2x
+// capture at its natural CSS size (variants), 1 lets CSS size it (previews and cards).
+import AnimatedImage from '../AnimatedImage.astro';
+import manifest from '../../../public/library/manifest.json';
+
+interface Props {
+	/** File name without the theme: `button`, `button-v1-2` or `button.thumb`. */
+	name: string;
+	alt: string;
+	/** Divide the clip's pixel size by this for the width/height attributes. */
+	scale?: number;
+	class?: string;
+}
+
+const { name, alt, scale = 1, class: className } = Astro.props;
+type Entry = { width: number; height: number };
+const clips = manifest as Record<string, Entry>;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const dark = clips[`${name}.dark`];
+if (!dark) throw new Error(`Missing library clip: ${name}.dark.webp (run docs/scripts/library_shots.py)`);
+const themes = (['dark', 'light'] as const).filter((theme) => clips[`${name}.${theme}`]);
+---
+
+{
+	themes.map((theme) => {
+		const entry = clips[`${name}.${theme}`];
+		return (
+			<AnimatedImage
+				src={`${base}/library/${name}.${theme}.webp`}
+				poster={`${base}/library/${name}.${theme}.still.webp`}
+				alt={alt}
+				width={Math.round(entry.width / scale)}
+				height={Math.round(entry.height / scale)}
+				class:list={[className, { 'pz-only-dark': theme === 'dark' && themes.length > 1, 'pz-only-light': theme === 'light' }]}
+			/>
+		);
+	})
+}

@@ -1,0 +1,28 @@
+---
+// An animated WebP served as is from public/ (Astro's image pipeline would keep only its first frame):
+// it loads lazily and, for a reader who asks for reduced motion, the still `poster` is shown instead.
+// Used by <Media clip> (public/media, docs/scripts/record.py) and the component library's <Clip>
+// (public/library, docs/scripts/library_shots.py); both are encoded by docs/scripts/anim_webp.py.
+//
+//   <AnimatedImage src="/pyzed/media/snake.webp" poster="/pyzed/media/snake.poster.webp" alt="..." width={640} height={360} />
+interface Props {
+	/** URL of the animated WebP. */
+	src: string;
+	/** URL of the still shown with "reduce motion". */
+	poster: string;
+	alt: string;
+	width?: number;
+	height?: number;
+	/** Load right away instead of when it scrolls into view. */
+	eager?: boolean;
+	/** Classes for the <picture>. */
+	class?: string;
+}
+
+const { src, poster, alt, width, height, eager = false, class: className } = Astro.props;
+---
+
+<picture class={className}>
+	<source srcset={poster} media="(prefers-reduced-motion: reduce)" />
+	<img src={src} alt={alt} width={width} height={height} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+</picture>

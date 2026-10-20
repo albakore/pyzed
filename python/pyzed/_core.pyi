@@ -464,6 +464,9 @@ def qr_code(data: Any, *, cell_size: Any = ..., color: Any = ..., bg: Any = ...)
 def radio(label: Any, selected: Any, on_select: Any = ..., *, size: Any = ..., text_size: Any = ..., spacing: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., color: Any = ...) -> Any:
     """A radio button. Group several of them yourself; `on_select` is sent when it is clicked."""
     ...
+def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
+    """Drives `app` off-screen with `script`, a generator of commands (see the module's docs)."""
+    ...
 def reduced_motion() -> Any:
     """Whether reduced motion is on."""
     ...

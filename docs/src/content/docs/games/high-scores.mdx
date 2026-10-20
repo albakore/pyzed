@@ -1,0 +1,195 @@
+---
+title: "8. High scores, saves and sound"
+description: "Save a game's leaderboard and settings in Python with Pyzed: a JSON file in the right folder on Windows, macOS and Linux, atomic writes, name entry with ui.input, a leaderboard, sound effects synthesized with pyzed.audio, and packaging the game."
+sidebar:
+  order: 8
+  label: "8. High scores and saves"
+---
+
+import { Aside, Code, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import Run from '../showcase/_run.mdx';
+import source from '../../../../../examples/games/high_scores.py?raw';
+
+A score means more when it is still there tomorrow. This last step of the path builds *Target Rush*, a
+20-second clicking game, and gives it what finished games have: a **leaderboard saved on disk**, a **name
+entry** when you beat a record, **sound effects**, and a way to **ship it** to your friends.
+
+<Media clip="game-high-scores" alt="Pink targets appear on a dark board and the pointer clicks them, each bursting into sparks; at the end a New high score card asks for a name, Ada is typed, and the leaderboard shows Ada at the top, highlighted" caption="Target Rush: a high score asks for a name and goes into a top-10 table saved as JSON." eager />
+
+| Goal | Time | Level | You need |
+| --- | --- | --- | --- |
+| A game with sound that saves a top-10 leaderboard | 35 minutes | Intermediate | [7. Menus, HUD and settings](/pyzed/games/menus-hud/) |
+
+## What you'll learn
+
+- Find the **right folder** for saves on Windows, macOS and Linux.
+- **Save safely**: write a temporary file and swap it in, and survive a damaged file.
+- A **name entry** with `ui.input` (Enter submits) and a **leaderboard** made of rows.
+- **Sound effects**: one method called wherever a sound belongs, playing drums synthesized by `pyzed.audio`.
+- **Package** the game as an app.
+
+<Run file="examples/games/high_scores.py" />
+
+<Steps>
+
+1. **Where saves go.** Each system has a folder for app data, and games should not write next to their code
+   (that folder may be read-only once installed):
+
+   ```python
+   def data_dir(app_name):
+       if sys.platform == "win32":
+           base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
+       elif sys.platform == "darwin":
+           base = Path.home() / "Library" / "Application Support"
+       else:
+           base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+       return base / app_name
+   ```
+
+   | System | Folder for "Target Rush" |
+   | --- | --- |
+   | Windows | `C:\Users\you\AppData\Roaming\Target Rush` |
+   | macOS | `~/Library/Application Support/Target Rush` |
+   | Linux | `~/.local/share/Target Rush` |
+
+2. **Load without fear.** The first time there is no file, and a file can get damaged (a disk full, someone
+   editing it by hand). Both should just mean "no scores yet", never a crash:
+
+   ```python
+   def load(self):
+       try:
+           data = json.loads(self.path.read_text(encoding="utf-8"))
+           entries = [e for e in data.get("scores", []) if isinstance(e.get("score"), int)]
+       except (OSError, ValueError, AttributeError):
+           return []
+       return sorted(entries, key=lambda e: -e["score"])[:KEEP]
+   ```
+
+3. **Save safely.** If the game crashes while writing, a half-written file would lose every score. So write a
+   temporary file in the same folder and replace the real one in a single step; `os.replace` is atomic on every
+   system:
+
+   ```python
+   def save(self):
+       self.path.parent.mkdir(parents=True, exist_ok=True)
+       fd, tmp = tempfile.mkstemp(dir=self.path.parent, prefix=".scores-", suffix=".json")
+       with os.fdopen(fd, "w", encoding="utf-8") as f:
+           json.dump({"version": 1, "scores": self.entries}, f, indent=2)
+       os.replace(tmp, self.path)
+   ```
+
+   The `"version": 1` costs nothing and lets a future version of your game read old saves differently.
+
+4. **Does it make the table?** A score qualifies when the table is not full yet or it beats the last entry.
+   `add` inserts it, keeps the best 10, saves, and returns the place:
+
+   ```python
+   def qualifies(self, score):
+       return score > 0 and (len(self.entries) < KEEP or score > self.entries[-1]["score"])
+
+   def add(self, name, score):
+       entry = {"name": name.strip()[:16] or "Player", "score": score, "date": time.strftime("%Y-%m-%d")}
+       self.entries.append(entry)
+       self.entries.sort(key=lambda e: -e["score"])
+       del self.entries[KEEP:]
+       self.save()
+       return self.entries.index(entry) + 1 if entry in self.entries else None
+   ```
+
+5. **Name entry.** When a round ends with a qualifying score the scene becomes `"name"`. `ui.input` keeps the
+   text in your state through `on_input`, and `on_submit` runs on <kbd>Enter</kbd>, so typing a name and
+   pressing Enter is all it takes:
+
+   ```python
+   ui.input(self.name, self.set_name, placeholder="Your name", icon="user",
+            on_submit=self.submit_name, id="name", max_length=16)
+   ```
+
+   The leaderboard is a column of rows; the row you just added gets a tinted background, and the top three get
+   gold, silver and bronze numbers.
+
+6. **Sound hooks.** Decide *where* sounds go before deciding *how* they play. Target Rush calls
+   `self.sound("hit")`, `"miss"`, `"combo"`, `"start"`, `"end"` and `"record"` at the right moments, and only
+   this method knows what to do with them:
+
+   ```python
+   def sound(self, name):
+       """Called wherever a sound belongs: "start", "hit", "miss", "combo", "end", "record"."""
+       self.last_sound, self.sound_age = name, 0.0
+       if self.sounds is None and self.sound_backend:
+           self.sounds = Sounds(self.sound_backend)    # the first sound starts the engine
+       if self.sounds:
+           self.sounds.play(name)
+   ```
+
+   It also shows the name in the HUD for a moment, a handy way to check the timing of your sounds.
+
+7. **Make the sounds.** `Sounds` builds a tiny patch with [`pyzed.audio`](/pyzed/audio/): four `drum`
+   voices into a `mixer` and the speakers. Each effect is one voice with its own tuning, listed in a table
+   at the top of the file, so there are no sound files to ship:
+
+   ```python
+   SOUNDS = {                # effect: (drum voice, tune in semitones, decay in seconds)
+       "hit": ("tom", 7, 0.12),
+       "miss": ("kick", -6, 0.25),
+       ...
+   }
+
+   def play(self, name):
+       kind, tune, decay = SOUNDS[name]
+       voice = self.voices[kind]
+       voice.set(tune=tune, decay=decay)
+       voice.trigger()       # returns at once: the sound plays on the audio thread
+   ```
+
+</Steps>
+
+## Sound effects
+
+`pyzed.audio` computes the sound in Rust on its own real-time thread, so `trigger()` never slows the frame
+loop, and with no sound card the engine plays silently instead of failing. A few ways to go further:
+
+- **Recorded sounds**: a `sampler` module plays a WAV file. Call `node.load("coin.wav")` once at start and
+  `node.trigger()` in `sound()`.
+- **Volume settings**: the `audio_out` module has a `volume` knob, and the mixer a `level_1`…`level_4` per
+  channel. Set them from the sliders of [Orb Rush](/pyzed/games/menus-hud/): `self.sounds.out["volume"] = value`.
+- **Music**: a `clock` and a `sequencer` play a loop on their own; see the [audio engine](/pyzed/audio/engine/getting-started/).
+- **Tests**: `sound_backend="offline"` never opens a device; the tests call `engine.render(seconds)` to check
+  that each effect makes a sound, and `None` mutes the game.
+
+<Aside type="tip">
+Keep sounds short and a little different each time (vary `tune` by a semitone or two), so a sound heard a
+hundred times in a round does not get tiring.
+</Aside>
+
+Save the settings the same way as the scores: a `settings.json` next to `scores.json`, written with the same
+`save()` when the settings screen closes, and loaded at start with defaults for any missing key.
+
+## Ship your game
+
+A game is finished when someone else can play it. Pyzed packages an app as a double-clickable program for
+Windows, macOS and Linux, with its icon and name:
+
+<CardGrid>
+	<LinkCard title="Package your app" href="/pyzed/tutorials/advanced/packaging/" description="A step-by-step tutorial: build, icon, and builds for all three systems from CI." />
+	<LinkCard title="Distribute" href="/pyzed/packaging/" description="Everything about building, signing and updating apps for each system." />
+</CardGrid>
+
+<Aside type="tip">
+Once packaged, the game's own folder may be read-only, which is one more reason to keep saves in `data_dir`.
+</Aside>
+
+## Try this
+
+- Save the settings of [Orb Rush](/pyzed/games/menus-hud/) with the same pattern.
+- Keep a separate leaderboard per difficulty: one key per difficulty in the JSON.
+- Add a "Clear scores" button behind a `ui.confirm` dialog.
+
+## Full code
+
+<Code code={source} lang="py" title="examples/games/high_scores.py" />
+
+## Next
+
+<LinkCard title="Game dev tips" href="/pyzed/games/tips/" description="Performance, fixed timesteps, input buffering, juice, organizing state and testing headlessly." />

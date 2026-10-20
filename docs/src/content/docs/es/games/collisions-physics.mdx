@@ -1,0 +1,178 @@
+---
+title: "3. Colisiones y física"
+description: "Física de juego sencilla en Python con Pyzed: velocidad y gravedad, colisiones de cajas AABB resueltas eje por eje, círculos que rebotan en cajas, y un salto de plataformas con coyote time y buffer de salto."
+sidebar:
+  order: 3
+  label: "3. Colisiones y física"
+---
+
+import { Aside, Code, Steps, LinkCard } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import Run from '../../showcase/_run.mdx';
+import source from '../../../../../../examples/games/jump_lab.py?raw';
+
+No necesitas un motor de física para hacer un juego de plataformas. Unas pocas líneas te dan **velocidad** (lo
+rápido que se mueve algo), **gravedad** (un tirón constante hacia abajo) y **colisiones** con cajas. Este paso
+construye *Jump Lab*, un laboratorio donde una caja corre y salta entre plataformas mientras unas pelotas rebotan,
+con una vista de depuración que muestra las cajas de colisión, la velocidad y el arco de cada salto.
+
+<Media clip="game-jump-arc" alt="Una caja cian corre y salta entre plataformas oscuras; un rastro punteado cian dibuja el arco de cada salto, los bordes de las plataformas se iluminan en amarillo al contacto y tres pelotas de colores rebotan" caption="Jump Lab con la vista de depuración: caja de colisión verde, velocidad rosa, el rastro del último segundo y los contactos en amarillo." eager />
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una caja que corre, salta y aterriza en plataformas, y pelotas que rebotan | 40 minutos | Intermedio | [2. Sprites y animación](/pyzed/es/games/sprites-animation/) |
+
+## Qué aprenderás
+
+- **Velocidad y gravedad**: la posición cambia con velocidad × dt, la velocidad con gravedad × dt.
+- **Colisiones AABB** (cajas alineadas con los ejes) con `game.Rect.overlaps`, resueltas **eje por eje**.
+- **Círculos contra cajas** con `game.circle_rect`, que dice qué lado se golpeó.
+- **Sensación de juego**: aceleración, altura de salto variable, *coyote time* y *buffer de salto*.
+- Una **vista de depuración** que puedes encender y apagar.
+
+<Run file="examples/games/jump_lab.py" lang="es" />
+
+<Media clip="concept-collisions" alt="Izquierda: una caja verde gira alrededor de una caja gris; cuando se solapan las dos se vuelven rojas, el solape se sombrea en amarillo y una flecha muestra la salida más corta. Derecha: una pelota cae sobre una barra y rebota; una flecha amarilla muestra la normal que devuelve circle_rect" caption="Izquierda: dos cajas se solapan cuando se solapan en los dos ejes; la salida más corta va por el lado menor del solape. Derecha: game.circle_rect devuelve el lado que golpeó la pelota, para hacerla rebotar." size="narrow" />
+
+<Steps>
+
+1. **Números que se sienten bien.** Toda la física son unas pocas constantes, en píxeles y segundos. Cambiarlas es
+   *afinar* la sensación:
+
+   ```python
+   RUN = 250            # top running speed, px/s
+   ACCEL = 2200         # px/s² on the ground (how fast you reach RUN)
+   AIR_ACCEL = 1300     # less control in the air
+   GRAVITY = 1900       # px/s², added to vy every second
+   JUMP_SPEED = 660     # vy right after a jump (upwards, so negative)
+   LOW_JUMP = 2.6       # gravity multiplier while rising without the jump key: short hops
+   MAX_FALL = 900
+   COYOTE = 0.10        # seconds after leaving a ledge when a jump still works
+   BUFFER = 0.12        # seconds a jump press is remembered before landing
+   ```
+
+   Con estos valores, el salto más alto es `JUMP_SPEED² / (2 × GRAVITY)` ≈ 115 píxeles. Las pruebas lo comprueban.
+
+2. **Velocidad y gravedad.** `vx` y `vy` son velocidades en píxeles por segundo (`y` crece hacia abajo, así que
+   arriba es negativo). En vez de poner `vx` a la velocidad objetivo de golpe, se acerca a ella como mucho
+   `ACCEL × dt` por fotograma, lo que da un arranque y una parada cortos y suaves:
+
+   ```python
+   move = game.axis(("left", "a"), ("right", "d"), held=self.held)
+   jump_held = game.is_pressed(*JUMP_KEYS, held=self.held)
+
+   target = move * RUN
+   accel = (ACCEL if self.on_ground else AIR_ACCEL) * dt
+   self.vx += game.clamp(target - self.vx, -accel, accel)
+
+   g = GRAVITY * (LOW_JUMP if self.vy < 0 and not jump_held else 1)
+   self.vy = min(self.vy + g * dt, MAX_FALL)
+   ```
+
+   La segunda línea de la gravedad es la **altura de salto variable**: mientras sube, soltar la tecla hace la
+   gravedad más fuerte, así que un toque es un saltito y una pulsación larga un salto completo.
+
+3. **Mueve un eje cada vez.** Muévete en horizontal y sal de lo que ahora solapes; luego haz lo mismo en vertical.
+   Resolver cada eje por separado es lo que permite deslizarse por una pared al caer y aterrizar justo encima del
+   suelo:
+
+   ```python
+   def move_x(self, dx):
+       self.player.x += dx
+       for i, p in self.solids_hit(self.player):
+           self.player.x = p.left - self.player.w if dx > 0 else p.right
+           self.vx = 0.0
+
+   def move_y(self, dy):
+       self.player.y += dy
+       for i, p in self.solids_hit(self.player):
+           if dy > 0:                       # falling: land on top
+               self.player.y = p.top - self.player.h
+               self.on_ground = True
+           else:                            # rising: bump the head
+               self.player.y = p.bottom
+           self.vy = 0.0
+
+   # in tick:
+   self.move_x(self.vx * dt)
+   self.on_ground = False
+   self.move_y(self.vy * dt)
+   ```
+
+   `on_ground` solo es cierto cuando el movimiento vertical chocó con algo debajo, así que siempre está al día.
+
+4. **Coyote time y buffer de salto.** Dos temporizadores diminutos hacen los saltos indulgentes. El *coyote time*
+   te deja saltar 0,1 s después de salir corriendo de un borde (como el coyote de los dibujos, que solo cae cuando
+   mira abajo). El *buffer de salto* recuerda una pulsación hecha justo antes de aterrizar para que no se pierda:
+
+   ```python
+   def press_jump(self):           # called by on_key for Space, Up and W
+       self.buffer = BUFFER
+
+   # in tick:
+   self.coyote = COYOTE if self.on_ground else max(0.0, self.coyote - dt)
+   self.buffer = max(0.0, self.buffer - dt)
+   if self.buffer > 0 and self.coyote > 0:
+       self.vy = -JUMP_SPEED
+       self.buffer = self.coyote = 0.0
+   ```
+
+   Nadie nota que están, pero todo el mundo nota cuando faltan: el juego parece "comerse" saltos.
+
+5. **Las pelotas rebotan en cajas.** `game.circle_rect(cx, cy, r, rect)` devuelve `None`, o la dirección desde la
+   caja hacia el círculo por el lado golpeado: `(0, -1)` desde arriba, `(1, 0)` desde la derecha. Gira la velocidad
+   hacia ese lado, saca la pelota y quítale un poco de energía:
+
+   ```python
+   normal = game.circle_rect(ball.x, ball.y, ball.r, p)
+   if normal:
+       nx, ny = normal
+       if nx:
+           ball.vx = abs(ball.vx) * nx
+           ball.x = (p.right + ball.r) if nx > 0 else (p.left - ball.r)
+       if ny:
+           ball.vy = abs(ball.vy) * ny * 0.82
+           ball.y = (p.bottom + ball.r) if ny > 0 else (p.top - ball.r)
+   ```
+
+6. **Una vista de depuración.** Dibujar lo que "ve" el código ahorra horas. Con <kbd>H</kbd> el juego dibuja el
+   contorno de las cajas, la velocidad como una línea, las últimas 60 posiciones como puntos que se desvanecen (el
+   arco del salto) y los números:
+
+   ```python
+   self.trail.append(self.player.center)
+   del self.trail[:-60]
+   ...
+   if self.debug:
+       shapes.append(p.shape(stroke="#34d399", width=1.5))
+       shapes.append(draw.line(cx, cy, cx + self.vx * 0.15, cy + self.vy * 0.15, stroke="#f472b6", width=2.5))
+   ```
+
+</Steps>
+
+<Aside type="caution" title="Atravesar paredes (tunneling)">
+Si algo se mueve más que su propio tamaño en un fotograma, puede atravesar una pared fina sin llegar a solaparla.
+Jump Lab limita `dt` a 1/30 s; para objetos rápidos, divide el movimiento en pasos más pequeños, como hace
+[Breakout](/pyzed/es/games/breakout/) con su pelota (`steps = ceil(speed × dt / radius)`).
+</Aside>
+
+<Aside type="tip" title="Qué usar en cada caso">
+Cajas (`Rect.overlaps`) para personajes, plataformas, balas y objetos; círculos (`math.hypot`) para cosas redondas
+y para comprobar rápido si algo está "lo bastante cerca"; `circle_rect` cuando una pelota debe rebotar en una caja.
+La mayoría de juegos 2D no necesitan nada más.
+</Aside>
+
+## Prueba esto
+
+- Añade una plataforma móvil: un `Rect` cuya `x` sigue una onda seno; cuando el jugador está encima, suma su
+  movimiento a la `x` del jugador.
+- Añade un doble salto: un salto extra en el aire, que se recupera al aterrizar.
+- Ajusta `GRAVITY` y `JUMP_SPEED` para un salto más flotante o más seco, y mira cómo cambia el rastro.
+
+## Código completo
+
+<Code code={source} lang="py" title="examples/games/jump_lab.py" />
+
+## Siguiente
+
+<LinkCard title="4. Un juego de plataformas" href="/pyzed/es/games/platformer/" description="Un mapa de tiles, una cámara que te sigue, enemigos que pisar, monedas y una meta." />
