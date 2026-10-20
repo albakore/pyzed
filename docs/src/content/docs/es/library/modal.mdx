@@ -2,7 +2,7 @@
 title: "Modal"
 description: "Una superficie de diálogo con título, contenido y botones al pie. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 71
+  order: 73
   label: "Modal"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una ventana dentro de la ventana que pide tu atención antes de seguir.
+:::
 
 Una superficie de diálogo con título, botón de cerrar, tu contenido y un pie de botones. Úsala como capa de `ui.layer` o `ui.dialog_layer`. Los [diálogos](/pyzed/es/library/confirm/) listos para usar están hechos con ella.
 
@@ -53,6 +59,39 @@ ui.modal(
     width=440,
 )
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="modal-v1-1" caption={"Solo contenido"} alt={"Modal: Solo contenido"} code="Código">
+
+```python
+ui.modal(ui.muted("Your trial ends in 3 days."), width=320)
+```
+
+</Variant>
+<Variant name="modal-v1-2" caption={"title=, on_close="} alt={"Modal: title=, on_close="} code="Código" mono>
+
+```python
+ui.modal(ui.muted("Your trial ends in 3 days."), title="Trial", on_close=on_close, width=320)
+```
+
+</Variant>
+<Variant name="modal-v1-3" caption={"footer="} alt={"Modal: footer="} code="Código" mono>
+
+```python
+ui.modal(ui.muted("Discard the draft?"), title="Draft", on_close=on_close, width=320,
+         footer=[ui.button("Cancel", on_close), ui.button("Discard", on_discard, variant="error")])
+```
+
+</Variant>
+</VariantGrid>
 
 ## Ejemplos
 

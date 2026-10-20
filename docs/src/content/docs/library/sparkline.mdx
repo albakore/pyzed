@@ -2,7 +2,7 @@
 title: "Sparkline"
 description: "A tiny line chart for trends. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 74
+  order: 76
   label: "Sparkline"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A tiny line chart that shows if something is going up or down.
+:::
 
 A small line chart, filled below the line by default, that shows the shape of a series.
 
@@ -46,6 +52,64 @@ pz.column([
     ui.sparkline([8, 6, 7, 4, 5, 3, 2, 1], width=240, height=48, tint="error", fill=False),
 ], spacing=16)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="sparkline-v1-1" caption={"Filled"} alt={"Sparkline: Filled"} code="Code">
+
+```python
+ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40)
+```
+
+</Variant>
+<Variant name="sparkline-v1-2" caption={"fill=False"} alt={"Sparkline: fill=False"} code="Code" mono>
+
+```python
+ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40, fill=False)
+```
+
+</Variant>
+<Variant name="sparkline-v1-3" caption={"tint=\"error\""} alt={"Sparkline: tint=\"error\""} code="Code" mono>
+
+```python
+ui.sparkline([8, 6, 7, 4, 5, 3, 2, 1], width=200, height=40, tint="error")
+```
+
+</Variant>
+<Variant name="sparkline-v1-4" caption={"tint=\"success\""} alt={"Sparkline: tint=\"success\""} code="Code" mono>
+
+```python
+ui.sparkline([2, 3, 3, 5, 6, 8, 9, 12], width=200, height=40, tint="success")
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="sparkline-v2-1" caption={"width=80, height=20"} alt={"Sparkline: width=80, height=20"} code="Code" mono>
+
+```python
+ui.sparkline([3, 5, 2, 6, 4, 7], width=80, height=20)
+```
+
+</Variant>
+<Variant name="sparkline-v2-2" caption={"width=280, height=64"} alt={"Sparkline: width=280, height=64"} code="Code" mono>
+
+```python
+ui.sparkline([3, 5, 2, 6, 4, 7, 5, 9, 6, 8], width=280, height=64)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

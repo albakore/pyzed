@@ -2,7 +2,7 @@
 title: "Barra de herramientas"
 description: "La barra bajo las pestañas: migas de pan y acciones. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 10
+  order: 11
   label: "Barra de herramientas"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una barra fina con las acciones de lo que estás viendo.
+:::
 
 La barra bajo las pestañas de un editor de código: widgets al principio (`start`, normalmente migas de pan) y al final (`end`, acciones del buffer).
 
@@ -45,6 +51,40 @@ ui.toolbar(
     [ui.icon_button("search", on_search, size="sm"), ui.icon_button("sparkles", on_assist, size="sm")],
 )
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="toolbar-v1-1" caption={"Solo al principio"} alt={"Barra de herramientas: Solo al principio"} code="Código">
+
+```python
+pz.container(ui.toolbar([ui.breadcrumbs(["src", "main.rs"])]), width=400)
+```
+
+</Variant>
+<Variant name="toolbar-v1-2" caption={"Solo al final"} alt={"Barra de herramientas: Solo al final"} code="Código">
+
+```python
+pz.container(ui.toolbar([], [ui.icon_button("search", on_search, size="sm"),
+                            ui.icon_button("sparkles", on_assist, size="sm")]), width=400)
+```
+
+</Variant>
+<Variant name="toolbar-v1-3" caption={"height=40"} alt={"Barra de herramientas: height=40"} code="Código" mono>
+
+```python
+pz.container(ui.toolbar([ui.label("Preview")], [ui.button("Publish", on_publish, size="sm", variant="solid")],
+                        height=40), width=400)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

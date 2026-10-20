@@ -2,7 +2,7 @@
 title: "Heading"
 description: "Semibold titles in three levels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 35
+  order: 36
   label: "Heading"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A title: bigger, bolder text that names a page or a section.
+:::
 
 A semibold title. `level=1` (default), `2` or `3` pick the size, so headings stay consistent across screens.
 
@@ -51,6 +57,64 @@ pz.column([
     ui.muted("Body text below the headings."),
 ], spacing=6)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Level
+
+<VariantGrid>
+<Variant name="heading-v1-1" caption={"level=1"} alt={"Heading: level=1"} code="Code" mono>
+
+```python
+ui.heading("Project settings")
+```
+
+</Variant>
+<Variant name="heading-v1-2" caption={"level=2"} alt={"Heading: level=2"} code="Code" mono>
+
+```python
+ui.heading("Project settings", level=2)
+```
+
+</Variant>
+<Variant name="heading-v1-3" caption={"level=3"} alt={"Heading: level=3"} code="Code" mono>
+
+```python
+ui.heading("Project settings", level=3)
+```
+
+</Variant>
+<Variant name="heading-v1-4" caption={"level=4"} alt={"Heading: level=4"} code="Code" mono>
+
+```python
+ui.heading("Project settings", level=4)
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="heading-v2-1" caption={"color=\"accent\""} alt={"Heading: color=\"accent\""} code="Code" mono>
+
+```python
+ui.heading("Welcome back", level=2, color="accent")
+```
+
+</Variant>
+<Variant name="heading-v2-2" caption={"With a muted line"} alt={"Heading: With a muted line"} code="Code">
+
+```python
+pz.column([ui.heading("Billing", level=2), ui.muted("Invoices and payment methods.")], spacing=4)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

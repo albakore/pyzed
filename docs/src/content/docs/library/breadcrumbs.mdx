@@ -2,7 +2,7 @@
 title: "Breadcrumbs"
 description: "`src › main.rs › fn main`, optionally clickable. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 8
+  order: 9
   label: "Breadcrumbs"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Shows where you are, step by step: Folder › Subfolder › File.
+:::
 
 The path to the current location. Parts are strings or `(icon, text)` tuples; `on_press` receives the index of the clicked part.
 
@@ -48,6 +54,45 @@ pz.column([
     ui.breadcrumbs(["Settings", "Editor", "Font"], separator="/"),
 ], spacing=14)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="breadcrumbs-v1-1" caption={"Text"} alt={"Breadcrumbs: Text"} code="Code">
+
+```python
+ui.breadcrumbs(["src", "ui", "button.rs"])
+```
+
+</Variant>
+<Variant name="breadcrumbs-v1-2" caption={"With icons"} alt={"Breadcrumbs: With icons"} code="Code">
+
+```python
+ui.breadcrumbs([("folder", "src"), ("file-code", "main.rs"), "fn main"])
+```
+
+</Variant>
+<Variant name="breadcrumbs-v1-3" caption={"separator=\"/\""} alt={"Breadcrumbs: separator=\"/\""} code="Code" mono>
+
+```python
+ui.breadcrumbs(["Settings", "Editor", "Font"], separator="/")
+```
+
+</Variant>
+<Variant name="breadcrumbs-v1-4" caption={"on_press="} alt={"Breadcrumbs: on_press="} code="Code" mono>
+
+```python
+ui.breadcrumbs(["Home", "Projects", "pyzed"], on_press=on_press)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

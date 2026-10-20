@@ -2,7 +2,7 @@
 title: "Kbd"
 description: "Atajos de teclado dibujados como teclas, con símbolos en macOS. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 63
+  order: 65
   label: "Kbd"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Dibuja teclas del teclado para que la gente aprenda el atajo: Ctrl + S.
+:::
 
 Dibuja un atajo escrito como texto (`"ctrl-shift-p"`, acordes como `"cmd-k cmd-s"`) como teclas. En macOS usa símbolos (⌘⇧P) y palabras en el resto; `pyzed.ui.base.KEY_STYLE` fuerza `"symbols"` o `"words"`. `ui.format_keys` devuelve las etiquetas si quieres dibujarlas tú.
 
@@ -49,6 +55,66 @@ pz.column([
     pz.row([ui.kbd("escape", size="xs"), ui.kbd("enter", size="xs"), ui.kbd("tab", size="xs")], spacing=8),
 ], spacing=12, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Teclas
+
+Escribe los atajos como `"ctrl-s"`; en macOS `ctrl` pasa a ⌃ y `cmd` a ⌘ solo.
+
+<VariantGrid>
+<Variant name="kbd-v1-1" caption={"Una tecla"} alt={"Kbd: Una tecla"} code="Código">
+
+```python
+ui.kbd("enter")
+```
+
+</Variant>
+<Variant name="kbd-v1-2" caption={"Combinación"} alt={"Kbd: Combinación"} code="Código">
+
+```python
+ui.kbd("ctrl-shift-p")
+```
+
+</Variant>
+<Variant name="kbd-v1-3" caption={"Acorde"} alt={"Kbd: Acorde"} code="Código">
+
+```python
+ui.kbd("ctrl-k ctrl-s")
+```
+
+</Variant>
+<Variant name="kbd-v1-4" caption={"Teclas especiales"} alt={"Kbd: Teclas especiales"} code="Código">
+
+```python
+pz.row([ui.kbd("escape"), ui.kbd("tab"), ui.kbd("backspace"), ui.kbd("up")], spacing=6)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="kbd-v2-1" caption={"size=\"xs\""} alt={"Kbd: size=\"xs\""} code="Código" mono>
+
+```python
+ui.kbd("ctrl-p", size="xs")
+```
+
+</Variant>
+<Variant name="kbd-v2-2" caption={"size=\"sm\""} alt={"Kbd: size=\"sm\""} code="Código" mono>
+
+```python
+ui.kbd("ctrl-p", size="sm")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

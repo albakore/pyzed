@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+La caja “Acerca de esta app”: nombre, versión y enlaces.
+:::
 
 Una caja Acerca de: un icono, el nombre y la versión de la app, una descripción, algunos detalles `(etiqueta, valor)` y botones de enlace.
 
@@ -43,6 +49,39 @@ ui.about("Notes", "1.2.0", "A small notes app built with Pyzed.", icon="notebook
          details=[("Python", "3.12"), ("Pyzed", "0.4")],
          links=[("Website", on_website), ("GitHub", on_github)])
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="about-v1-1" caption={"Nombre y versión"} alt={"Acerca de: Nombre y versión"} code="Código">
+
+```python
+ui.about("Notes", "1.2.0")
+```
+
+</Variant>
+<Variant name="about-v1-2" caption={"details="} alt={"Acerca de: details="} code="Código" mono>
+
+```python
+ui.about("Notes", "1.2.0", "A small notes app.", icon="notebook-pen",
+         details=[("Python", "3.12"), ("Pyzed", "0.4")])
+```
+
+</Variant>
+<Variant name="about-v1-3" caption={"links="} alt={"Acerca de: links="} code="Código" mono>
+
+```python
+ui.about("Notes", "1.2.0", icon="notebook-pen", links=[("Website", on_web), ("GitHub", on_gh)])
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

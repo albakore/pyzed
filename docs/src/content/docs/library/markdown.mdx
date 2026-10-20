@@ -2,7 +2,7 @@
 title: "Markdown"
 description: "Renders Markdown with the theme's colors. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 48
+  order: 49
   label: "Markdown"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Shows formatted text (titles, lists, links) written in the simple Markdown format.
+:::
 
 Renders Markdown (headings, lists, code blocks, quotes, tables, links) with the theme's text, link and code colors. `on_link(url)` receives clicked links. `pz.markdown` is the base widget with explicit colors.
 
@@ -51,6 +57,52 @@ Pyzed **0.4** adds the *component designer*, `pyzed build` and [styles](https://
 - Ready-made dialogs
 ''', width=460, on_link=on_link)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Elements
+
+<VariantGrid>
+<Variant name="markdown-v1-1" caption={"Headings and emphasis"} alt={"Markdown: Headings and emphasis"} code="Code">
+
+```python
+ui.markdown("## Title\nSome **bold** and *italic* text.", width=320)
+```
+
+</Variant>
+<Variant name="markdown-v1-2" caption={"Lists"} alt={"Markdown: Lists"} code="Code">
+
+```python
+ui.markdown("- Fast\n- Native\n- Pythonic\n\n1. Install\n2. Run", width=320)
+```
+
+</Variant>
+<Variant name="markdown-v1-3" caption={"Code"} alt={"Markdown: Code"} code="Code">
+
+```python
+ui.markdown("Run `pyzed new`:\n\n```python\nimport pyzed as pz\n```", width=320)
+```
+
+</Variant>
+<Variant name="markdown-v1-4" caption={"Quote and link"} alt={"Markdown: Quote and link"} code="Code">
+
+```python
+ui.markdown("> Desktop UIs in Python.\n\nSee [the docs](https://albakore.github.io/pyzed/).", width=320, on_link=on_link)
+```
+
+</Variant>
+<Variant name="markdown-v1-5" caption={"Table"} alt={"Markdown: Table"} code="Code">
+
+```python
+ui.markdown("| Key | Action |\n| --- | --- |\n| ctrl-s | Save |\n| ctrl-p | Open |", width=320)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

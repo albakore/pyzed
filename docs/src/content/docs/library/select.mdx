@@ -2,7 +2,7 @@
 title: "Select"
 description: "A dropdown to choose one option. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 68
+  order: 70
   label: "Select"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A box that opens a list so you can pick one option from it.
+:::
 
 A dropdown in the theme style. Options are shown with `str()`, so strings, enums or dataclasses all work, and `on_select` receives the chosen object.
 
@@ -51,9 +57,84 @@ class Settings(pz.App):
                          lambda value: setattr(self, "language", value), width=180)
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### State
+
+<VariantGrid>
+<Variant name="select-v1-1" caption={"With a value"} alt={"Select: With a value"} code="Code">
+
+```python
+ui.select(["Python", "Rust", "TypeScript"], "Rust", on_select, width=200)
+```
+
+</Variant>
+<Variant name="select-v1-2" caption={"placeholder="} alt={"Select: placeholder="} code="Code" mono>
+
+```python
+ui.select(["UTF-8", "Latin-1"], None, on_select, placeholder="Encoding…", width=200)
+```
+
+</Variant>
+<Variant name="select-v1-3" caption={"Read-only (no on_select)"} alt={"Select: Read-only (no on_select)"} code="Code">
+
+```python
+ui.select(["One Dark"], "One Dark", width=200)
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="select-v2-1" caption={"size=\"sm\""} alt={"Select: size=\"sm\""} code="Code" mono>
+
+```python
+ui.select(["Python", "Rust"], "Python", on_select, size="sm", width=200)
+```
+
+</Variant>
+<Variant name="select-v2-2" caption={"size=\"md\""} alt={"Select: size=\"md\""} code="Code" mono>
+
+```python
+ui.select(["Python", "Rust"], "Python", on_select, size="md", width=200)
+```
+
+</Variant>
+<Variant name="select-v2-3" caption={"size=\"lg\""} alt={"Select: size=\"lg\""} code="Code" mono>
+
+```python
+ui.select(["Python", "Rust"], "Python", on_select, size="lg", width=200)
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="select-v3-1" caption={"pz.pick_list"} alt={"Select: pz.pick_list"} code="Code" mono>
+
+```python
+pz.pick_list(["Small", "Medium", "Large"], "Medium", on_select, width=200,
+             bg="#2b2140", color="#e9d5ff", border_color="#c678dd", radius=8)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Tips
 
+:::tip
 The menu opens on click; the preview shows the closed state.
+:::
 
 ## API
 
@@ -85,6 +166,67 @@ A dropdown with the theme style. Options are displayed with `str()`, so strings,
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#select)
+
+### `pz.pick_list`
+
+```python
+pick_list(
+    options,
+    selected=None,
+    on_select=None,
+    *,
+    placeholder=None,
+    width=None,
+    padding=None,
+    text_size=None,
+    font=None,
+    handle=None,
+    handle_size=12.0,
+    menu_height=None,
+    bg=None,
+    color=None,
+    placeholder_color=None,
+    handle_color=None,
+    border_color=None,
+    hover_border_color=None,
+    radius=None,
+    menu_bg=None,
+    menu_color=None,
+    menu_border_color=None,
+    selected_bg=None,
+    selected_color=None,
+)
+```
+
+A dropdown to choose one of `options`. `on_select(option)` receives the chosen one. For the themed dropdown use `ui.select`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `options` | *required* | List of options. |
+| `selected` | `None` | Current option. |
+| `on_select` | `None` | Callable that receives the chosen item. |
+| `placeholder` | `None` | Hint text shown when empty. |
+| `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `padding` | `None` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
+| `text_size` | `None` | Text size. |
+| `font` | `None` | Font family. |
+| `handle` | `None` | Arrow icon character. |
+| `handle_size` | `12.0` | Arrow size. |
+| `menu_height` | `None` | Maximum menu height. |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `color` | `None` | Text or icon color. |
+| `placeholder_color` | `None` | Placeholder color. |
+| `handle_color` | `None` | Arrow color. |
+| `border_color` | `None` | Border color. |
+| `hover_border_color` | `None` | Border color on hover. |
+| `radius` | `None` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
+| `menu_bg` | `None` | Menu background. |
+| `menu_color` | `None` | Menu text. |
+| `menu_border_color` | `None` | Menu border. |
+| `selected_bg` | `None` | Background of the highlighted option. |
+| `selected_color` | `None` | Text of the highlighted option. |
+
+[Full reference →](/pyzed/reference/widgets/#pick_list)
 
 ## Related
 

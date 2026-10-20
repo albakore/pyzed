@@ -2,7 +2,7 @@
 title: "Status bar"
 description: "The bottom bar: diagnostics, cursor position, language. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 80
+  order: 82
   label: "Status bar"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+The thin bar at the bottom of the window with small facts: errors, line number, language.
+:::
 
 The bottom bar with items at the `start` and `end`. `ui.status_item` shows an icon and/or text, can be pressed, `selected` (a dock that is open) and carry a `tooltip` with `keys`.
 
@@ -47,6 +53,65 @@ ui.status_bar(
     [ui.status_item("Ln 12, Col 8"), ui.status_item("UTF-8"), ui.status_item("Python", icon="file-code")],
 )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Items
+
+<VariantGrid>
+<Variant name="status-bar-v1-1" caption={"Text"} alt={"Status bar: Text"} code="Code">
+
+```python
+ui.status_item("Ln 12, Col 8")
+```
+
+</Variant>
+<Variant name="status-bar-v1-2" caption={"icon="} alt={"Status bar: icon="} code="Code" mono>
+
+```python
+ui.status_item("Python", icon="file-code")
+```
+
+</Variant>
+<Variant name="status-bar-v1-3" caption={"icon_color=\"warning\""} alt={"Status bar: icon_color=\"warning\""} code="Code" mono>
+
+```python
+ui.status_item("2", icon="triangle-alert", icon_color="warning")
+```
+
+</Variant>
+<Variant name="status-bar-v1-4" caption={"selected=True"} alt={"Status bar: selected=True"} code="Code" mono>
+
+```python
+ui.status_item(icon="panel-left", on_press=on_toggle, selected=True)
+```
+
+</Variant>
+<Variant name="status-bar-v1-5" caption={"color=\"accent\""} alt={"Status bar: color=\"accent\""} code="Code" mono>
+
+```python
+ui.status_item("main", icon="git-branch", color="accent")
+```
+
+</Variant>
+</VariantGrid>
+
+### Bar
+
+<VariantGrid>
+<Variant name="status-bar-v2-1" caption={"start=, end="} alt={"Status bar: start=, end="} code="Code" mono>
+
+```python
+pz.container(ui.status_bar([ui.status_item("0", icon="circle-x")],
+                           [ui.status_item("UTF-8"), ui.status_item("Python")]), width=420)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

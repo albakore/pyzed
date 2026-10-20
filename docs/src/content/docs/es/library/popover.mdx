@@ -2,7 +2,7 @@
 title: "Popover"
 description: "Contenido flotante en un punto: menús contextuales, selectores de color. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 77
+  order: 79
   label: "Popover"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una cajita flotante que aparece junto a donde pulsaste, como un menú de clic derecho.
+:::
 
 Muestra `content` (un menú, una tarjeta…) encima de `base` en `(x, y)`. Al pulsar en otro sitio se llama a `on_dismiss`; con `content=None` solo se muestra `base`. Para un menú de clic derecho, guarda la posición del puntero con `pz.mouse_area(on_move=...)` y ábrelo en `on_right_press`.
 
@@ -59,6 +65,34 @@ class Canvas(pz.App):
         return ui.popover(base, menu if self.menu_at else None, x=x, y=y,
                           on_dismiss=lambda: setattr(self, "menu_at", None))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="popover-v1-1" caption={"Un menú"} alt={"Popover: Un menú"} code="Código">
+
+```python
+ui.popover(main_view(), ui.menu([ui.MenuItem("Copy", on_copy, icon="copy"),
+                                    ui.MenuItem("Paste", on_paste, icon="clipboard")], width=180),
+           x=60, y=40, on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="popover-v1-2" caption={"Una tarjeta"} alt={"Popover: Una tarjeta"} code="Código">
+
+```python
+ui.popover(main_view(), ui.card(ui.muted("Any widget fits here."), title="Popover", width=220),
+           x=120, y=40, on_dismiss=on_close)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

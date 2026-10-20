@@ -2,7 +2,7 @@
 title: "Label"
 description: "Text with a theme color, size and weight; `muted` for secondary text. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 44
+  order: 45
   label: "Label"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Plain text on the screen, in the colors of the current theme.
+:::
 
 Text that takes its color from the theme. `color` is a theme token (`"text"`, `"accent"`, `"error"`…) or a hex color, and `size` is a named step (`"xs"` to `"2xl"`) or a number. `ui.muted(...)` is a label with the `"text_muted"` color, for secondary text.
 
@@ -53,54 +59,161 @@ pz.column([
 ], spacing=8)
 ```
 
-## Examples
+## Variants
 
-### Sizes
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
 
-Named sizes follow the theme's UI font size.
+### Size
 
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="label-1" alt="Label: Sizes" />
-</TabItem>
-<TabItem label="Code">
+Named sizes follow the theme's font size; a number is a size in pixels.
 
-```python
-pz.column([
-    ui.label("Extra small", size="xs"),
-    ui.label("Small", size="sm"),
-    ui.label("Medium (default)", size="md"),
-    ui.label("Large", size="lg"),
-    ui.label("Extra large", size="xl"),
-], spacing=4)
-```
-
-</TabItem>
-</Tabs>
-
-### Colors
-
-Semantic tokens adapt to every theme.
-
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="label-2" alt="Label: Colors" />
-</TabItem>
-<TabItem label="Code">
+<VariantGrid>
+<Variant name="label-v1-1" caption={"size=\"xs\""} alt={"Label: size=\"xs\""} code="Code" mono>
 
 ```python
-pz.row([
-    ui.label("accent", color="accent"),
-    ui.label("success", color="success"),
-    ui.label("warning", color="warning"),
-    ui.label("error", color="error"),
-    ui.label("italic", italic=True),
-    ui.label("#c678dd", color="#c678dd"),
-], spacing=16)
+ui.label("Extra small", size="xs")
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="label-v1-2" caption={"size=\"sm\""} alt={"Label: size=\"sm\""} code="Code" mono>
+
+```python
+ui.label("Small", size="sm")
+```
+
+</Variant>
+<Variant name="label-v1-3" caption={"size=\"md\""} alt={"Label: size=\"md\""} code="Code" mono>
+
+```python
+ui.label("Medium", size="md")
+```
+
+</Variant>
+<Variant name="label-v1-4" caption={"size=\"lg\""} alt={"Label: size=\"lg\""} code="Code" mono>
+
+```python
+ui.label("Large", size="lg")
+```
+
+</Variant>
+<Variant name="label-v1-5" caption={"size=\"xl\""} alt={"Label: size=\"xl\""} code="Code" mono>
+
+```python
+ui.label("Extra large", size="xl")
+```
+
+</Variant>
+<Variant name="label-v1-6" caption={"size=\"2xl\""} alt={"Label: size=\"2xl\""} code="Code" mono>
+
+```python
+ui.label("Huge", size="2xl")
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="label-v2-1" caption={"color=\"text\""} alt={"Label: color=\"text\""} code="Code" mono>
+
+```python
+ui.label("Text")
+```
+
+</Variant>
+<Variant name="label-v2-2" caption={"ui.muted"} alt={"Label: ui.muted"} code="Code" mono>
+
+```python
+ui.muted("Muted text")
+```
+
+</Variant>
+<Variant name="label-v2-3" caption={"color=\"accent\""} alt={"Label: color=\"accent\""} code="Code" mono>
+
+```python
+ui.label("Accent", color="accent")
+```
+
+</Variant>
+<Variant name="label-v2-4" caption={"color=\"success\""} alt={"Label: color=\"success\""} code="Code" mono>
+
+```python
+ui.label("Success", color="success")
+```
+
+</Variant>
+<Variant name="label-v2-5" caption={"color=\"warning\""} alt={"Label: color=\"warning\""} code="Code" mono>
+
+```python
+ui.label("Warning", color="warning")
+```
+
+</Variant>
+<Variant name="label-v2-6" caption={"color=\"error\""} alt={"Label: color=\"error\""} code="Code" mono>
+
+```python
+ui.label("Error", color="error")
+```
+
+</Variant>
+<Variant name="label-v2-7" caption={"color=\"#c678dd\""} alt={"Label: color=\"#c678dd\""} code="Code" mono>
+
+```python
+ui.label("Any hex color", color="#c678dd")
+```
+
+</Variant>
+</VariantGrid>
+
+### Weight and style
+
+<VariantGrid>
+<Variant name="label-v3-1" caption={"weight=\"normal\""} alt={"Label: weight=\"normal\""} code="Code" mono>
+
+```python
+ui.label("Normal", weight="normal", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-2" caption={"weight=\"medium\""} alt={"Label: weight=\"medium\""} code="Code" mono>
+
+```python
+ui.label("Medium", weight="medium", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-3" caption={"weight=\"semibold\""} alt={"Label: weight=\"semibold\""} code="Code" mono>
+
+```python
+ui.label("Semibold", weight="semibold", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-4" caption={"weight=\"bold\""} alt={"Label: weight=\"bold\""} code="Code" mono>
+
+```python
+ui.label("Bold", weight="bold", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-5" caption={"italic=True"} alt={"Label: italic=True"} code="Code" mono>
+
+```python
+ui.label("Italic", italic=True, size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-6" caption={"mono=True"} alt={"Label: mono=True"} code="Code" mono>
+
+```python
+ui.label("def mono(): ...", mono=True)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

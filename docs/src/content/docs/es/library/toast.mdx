@@ -2,7 +2,7 @@
 title: "Notificación"
 description: "Notificaciones apiladas en la esquina inferior derecha. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 72
+  order: 74
   label: "Notificación"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una notificación pequeña que aparece en una esquina y se va sola.
+:::
 
 `ui.toast` dibuja una notificación con título, mensaje, acciones y botón de cerrar; `kind` es `"info"`, `"success"`, `"warning"` o `"error"`. `ui.toasts(base, items)` las apila en la esquina inferior derecha encima de tu vista.
 
@@ -63,6 +69,72 @@ class Notes(pz.App):
                  for m in self.messages]
         return ui.toasts(self.main_view(), items)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Tipo
+
+<VariantGrid>
+<Variant name="toast-v1-1" caption={"kind=\"info\""} alt={"Notificación: kind=\"info\""} code="Código" mono>
+
+```python
+ui.toast("Update available", "Pyzed 0.5 is on PyPI.")
+```
+
+</Variant>
+<Variant name="toast-v1-2" caption={"kind=\"success\""} alt={"Notificación: kind=\"success\""} code="Código" mono>
+
+```python
+ui.toast("Saved", "main.py was saved.", kind="success")
+```
+
+</Variant>
+<Variant name="toast-v1-3" caption={"kind=\"warning\""} alt={"Notificación: kind=\"warning\""} code="Código" mono>
+
+```python
+ui.toast("Low disk space", "2 GB left.", kind="warning")
+```
+
+</Variant>
+<Variant name="toast-v1-4" caption={"kind=\"error\""} alt={"Notificación: kind=\"error\""} code="Código" mono>
+
+```python
+ui.toast("Could not connect", "Check your network.", kind="error")
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+<VariantGrid>
+<Variant name="toast-v2-1" caption={"Solo título"} alt={"Notificación: Solo título"} code="Código">
+
+```python
+ui.toast("Copied to clipboard", kind="success")
+```
+
+</Variant>
+<Variant name="toast-v2-2" caption={"actions=, on_dismiss="} alt={"Notificación: actions=, on_dismiss="} code="Código" mono>
+
+```python
+ui.toast("Update available", "Restart to install it.",
+         actions=[ui.button("Restart", on_restart, size="sm")], on_dismiss=on_dismiss)
+```
+
+</Variant>
+<Variant name="toast-v2-3" caption={"icon=\"music\""} alt={"Notificación: icon=\"music\""} code="Código" mono>
+
+```python
+ui.toast("Now playing", "Lo-fi beats", icon="music", width=280)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

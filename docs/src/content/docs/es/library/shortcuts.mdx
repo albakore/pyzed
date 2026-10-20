@@ -2,7 +2,7 @@
 title: "Atajos"
 description: "Una lista de atajos agrupada y con búsqueda. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 6
+  order: 7
   label: "Atajos"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una lista con buscador de todos los atajos de teclado de una app.
+:::
 
 Una lista de atajos agrupada y con búsqueda para un diálogo de Atajos de teclado. `groups` son pares `(título, [(acción, teclas), ...])`.
 
@@ -46,6 +52,33 @@ pz.container(ui.shortcuts([
     ("View", [("Command palette", "ctrl-shift-p"), ("Toggle left dock", "ctrl-b")]),
 ], on_query=on_query, height=240), width=420)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="shortcuts-v1-1" caption={"Agrupados"} alt={"Atajos: Agrupados"} code="Código">
+
+```python
+pz.container(ui.shortcuts([("File", [("Save", "ctrl-s"), ("Open", "ctrl-o")])], on_query=on_query, height=130),
+             width=360)
+```
+
+</Variant>
+<Variant name="shortcuts-v1-2" caption={"query=\"pal\""} alt={"Atajos: query=\"pal\""} code="Código" mono>
+
+```python
+pz.container(ui.shortcuts([("View", [("Command palette", "ctrl-shift-p"), ("Zoom in", "ctrl-=")])],
+                          query="pal", on_query=on_query, height=110), width=360)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

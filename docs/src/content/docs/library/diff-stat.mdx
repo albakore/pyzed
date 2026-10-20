@@ -2,7 +2,7 @@
 title: "Diff stat"
 description: "`+12 −3` with GitHub-style blocks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 24
+  order: 25
   label: "Diff stat"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+How many lines were added (green) and removed (red) in a change.
+:::
 
 Lines added and removed, with a row of green and red blocks, as in the git panel of a code editor.
 
@@ -48,6 +54,45 @@ pz.column([
     pz.row([ui.label("README.md", mono=True), pz.hspace(), ui.diff_stat(12, 0)], align="center"),
 ], spacing=10, width=320)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="diff-stat-v1-1" caption={"Mostly added"} alt={"Diff stat: Mostly added"} code="Code">
+
+```python
+ui.diff_stat(42, 3)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-2" caption={"Mostly removed"} alt={"Diff stat: Mostly removed"} code="Code">
+
+```python
+ui.diff_stat(2, 57)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-3" caption={"Only added"} alt={"Diff stat: Only added"} code="Code">
+
+```python
+ui.diff_stat(12, 0)
+```
+
+</Variant>
+<Variant name="diff-stat-v1-4" caption={"blocks=10"} alt={"Diff stat: blocks=10"} code="Code" mono>
+
+```python
+ui.diff_stat(120, 40, blocks=10)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Virtual list"
 description: "A list that only builds the rows in view, for millions of items. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 93
+  order: 95
   label: "Virtual list"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A list that stays fast even with millions of rows, because it only draws what you see.
+:::
 
 A scrolling list for thousands or millions of items. Only the rows in view are built: `render(item)` is called when an item scrolls into view, so the list costs the same whatever its length. Every row has the same `item_height`. `pz.virtual_column` is the building block underneath (rows by index, inside any `scrollable`), and [Table](/pyzed/library/table/) uses it for its rows too.
 
@@ -35,6 +41,10 @@ pz.container(ui.virtual_list(
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - For logs, search results, file lists or any list that can grow past a few hundred rows.
@@ -54,6 +64,42 @@ class Logs(pz.App):
         return ui.virtual_list(self.lines, lambda line: pz.text(line, font="mono", size=12),
                                item_height=20, id="logs")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="virtual-list-v1-1" caption={"A million rows"} alt={"Virtual list: A million rows"} code="Code">
+
+```python
+pz.container(ui.virtual_list([f"row {i:,}" for i in range(1_000_000)],
+                             lambda r: ui.list_item(r, icon="file"), height=150), width=260)
+```
+
+</Variant>
+<Variant name="virtual-list-v1-2" caption={"item_height=20"} alt={"Virtual list: item_height=20"} code="Code" mono>
+
+```python
+pz.container(ui.virtual_list([f"[{i:06}] request handled" for i in range(100_000)],
+                             lambda line: pz.text(line, font="mono", size=12), item_height=20, height=150),
+             width=260)
+```
+
+</Variant>
+<Variant name="virtual-list-v1-3" caption={"spacing=6"} alt={"Virtual list: spacing=6"} code="Code" mono>
+
+```python
+pz.container(ui.virtual_list(list(range(10_000)), lambda i: ui.card(ui.label(f"Card {i}"), padding=8),
+                             item_height=40, spacing=6, height=150), width=260)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 
@@ -80,8 +126,10 @@ pz.container(pz.scrollable(
 
 ## Tips
 
+:::tip
 - Rows are built again when they scroll back into view, so keep `render` cheap or wrap it in `@pz.memo`.
 - `items` should be a list or another sequence: other iterables are copied into a list on every `view()`.
+:::
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Terminal"
 description: "A read-only terminal view with ANSI colors. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 84
+  order: 86
   label: "Terminal"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Shows the text a program prints, with its colors, like a terminal window.
+:::
 
 A read-only view that understands ANSI colors and stays scrolled to the end. Feed it the output of a process you run (for example with `subprocess` in a thread and `pz.post`). It also accepts lines of `(text, color)` segments; `ui.ansi(text)` converts ANSI text into those segments.
 
@@ -46,6 +52,47 @@ out = ("$ pytest -q\n\x1b[32m........................\x1b[0m\n\x1b[32m24 passed\
        "\x1b[32m✓\x1b[0m Installed pyzed-0.4.0\n$ ")
 pz.container(ui.terminal(out), width=560, height=190)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="terminal-v1-1" caption={"Plain text"} alt={"Terminal: Plain text"} code="Code">
+
+```python
+pz.container(ui.terminal("$ ls\nmain.py  notes.md  pyproject.toml\n$ "), width=380, height=80)
+```
+
+</Variant>
+<Variant name="terminal-v1-2" caption={"ANSI colors"} alt={"Terminal: ANSI colors"} code="Code">
+
+```python
+pz.container(ui.terminal("\x1b[32m✓\x1b[0m 24 passed  \x1b[33m!\x1b[0m 1 warning  \x1b[31m✗\x1b[0m 0 failed"),
+             width=380, height=50)
+```
+
+</Variant>
+<Variant name="terminal-v1-3" caption={"font_size=16"} alt={"Terminal: font_size=16"} code="Code" mono>
+
+```python
+pz.container(ui.terminal("$ python main.py\nHello", font_size=16), width=380, height=70)
+```
+
+</Variant>
+<Variant name="terminal-v1-4" caption={"(text, color) segments"} alt={"Terminal: (text, color) segments"} code="Code">
+
+```python
+pz.container(ui.terminal([[("ok ", "#a1c181"), ("build", None)], [("err ", "#d07277"), ("lint", None)]]),
+             width=380, height=60)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Cifra"
 description: "Una cifra de dashboard con variación y minigráfico. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 28
+  order: 29
   label: "Cifra"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un número grande con su nombre y si subió o bajó, como en un panel de control.
+:::
 
 Un panel de dashboard: un título, un valor grande, una variación opcional (`delta`, mostrada como `+4.2%` en verde o rojo) y una `trend` opcional dibujada como minigráfico.
 
@@ -48,6 +54,45 @@ pz.row([
     ui.stat("Build time", "1m 12s", width=200),
 ], spacing=12)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="stat-v1-1" caption={"Solo valor"} alt={"Cifra: Solo valor"} code="Código">
+
+```python
+ui.stat("Build time", "1m 12s", width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-2" caption={"delta=12.5"} alt={"Cifra: delta=12.5"} code="Código" mono>
+
+```python
+ui.stat("Users", "1,284", delta=12.5, width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-3" caption={"delta=-8.0"} alt={"Cifra: delta=-8.0"} code="Código" mono>
+
+```python
+ui.stat("Errors", "37", delta=-8.0, width=190)
+```
+
+</Variant>
+<Variant name="stat-v1-4" caption={"trend=[...]"} alt={"Cifra: trend=[...]"} code="Código" mono>
+
+```python
+ui.stat("Revenue", "$9.4k", delta=4.2, trend=[3, 5, 4, 6, 8, 7, 9], width=190)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

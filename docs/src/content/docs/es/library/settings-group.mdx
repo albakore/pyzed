@@ -2,7 +2,7 @@
 title: "Grupo de ajustes"
 description: "Un bloque con título de filas de ajustes, para pantallas de ajustes. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 55
+  order: 57
   label: "Grupo de ajustes"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un bloque de ajustes con título, como una sección de una ventana de preferencias.
+:::
 
 Un bloque con título de filas `ui.field` separadas por líneas, con una descripción opcional, como una pantalla de ajustes.
 
@@ -48,6 +54,36 @@ pz.container(ui.settings_group("Editor", [
     ui.field("Theme", ui.select(["One Dark", "One Light"], "One Dark", on_select, width=150)),
 ], description="Editor preferences."), width=460)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="settings-group-v1-1" caption={"Sin descripción"} alt={"Grupo de ajustes: Sin descripción"} code="Código">
+
+```python
+pz.container(ui.settings_group("Files", [
+    ui.field("Autosave", ui.switch(True, on_toggle)),
+    ui.field("Trim whitespace", ui.checkbox(False, on_toggle)),
+]), width=380)
+```
+
+</Variant>
+<Variant name="settings-group-v1-2" caption={"description="} alt={"Grupo de ajustes: description="} code="Código" mono>
+
+```python
+pz.container(ui.settings_group("Git", [
+    ui.field("Inline blame", ui.switch(False, on_toggle)),
+], description="Shown in the editor gutter."), width=380)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

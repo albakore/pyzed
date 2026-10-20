@@ -2,7 +2,7 @@
 title: "Gráfico de barras"
 description: "Un gráfico de barras verticales con etiquetas. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 54
+  order: 56
   label: "Gráfico de barras"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un gráfico de barras para comparar unas pocas cantidades.
+:::
 
 Un gráfico de barras verticales dibujado con `pz.canvas` en los colores del tema, con etiquetas opcionales bajo las barras.
 
@@ -41,6 +47,45 @@ from pyzed import ui
 ui.bar_chart([12, 19, 8, 15, 22, 17, 9], labels=["M", "T", "W", "T", "F", "S", "S"],
              width=360, height=180)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="bar-chart-v1-1" caption={"labels="} alt={"Gráfico de barras: labels="} code="Código" mono>
+
+```python
+ui.bar_chart([12, 19, 8, 15, 22], labels=["M", "T", "W", "T", "F"], width=240, height=120)
+```
+
+</Variant>
+<Variant name="bar-chart-v1-2" caption={"Sin etiquetas"} alt={"Gráfico de barras: Sin etiquetas"} code="Código">
+
+```python
+ui.bar_chart([4, 8, 6, 9, 3, 7, 5, 10], width=240, height=100)
+```
+
+</Variant>
+<Variant name="bar-chart-v1-3" caption={"tint=\"success\""} alt={"Gráfico de barras: tint=\"success\""} code="Código" mono>
+
+```python
+ui.bar_chart([5, 9, 7, 12], labels=["Q1", "Q2", "Q3", "Q4"], width=240, height=120, tint="success")
+```
+
+</Variant>
+<Variant name="bar-chart-v1-4" caption={"tint=\"warning\""} alt={"Gráfico de barras: tint=\"warning\""} code="Código" mono>
+
+```python
+ui.bar_chart([30, 12, 18], labels=["cpu", "io", "net"], width=240, height=120, tint="warning")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

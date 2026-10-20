@@ -2,7 +2,7 @@
 title: "Radio group"
 description: "Mutually exclusive options as radio buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 59
+  order: 61
   label: "Radio group"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A few round options where picking one unpicks the others.
+:::
 
 A set of radio buttons where one option is selected. `options` are strings or `(value, label)` pairs; `on_select` receives the value. `horizontal=True` lays them out in a row.
 
@@ -51,6 +57,72 @@ class Settings(pz.App):
                               lambda value: setattr(self, "indent", value))
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Direction
+
+<VariantGrid>
+<Variant name="radio-group-v1-1" caption={"Vertical"} alt={"Radio group: Vertical"} code="Code">
+
+```python
+ui.radio_group(["Spaces", "Tabs"], "Spaces", on_select)
+```
+
+</Variant>
+<Variant name="radio-group-v1-2" caption={"horizontal=True"} alt={"Radio group: horizontal=True"} code="Code" mono>
+
+```python
+ui.radio_group(["LF", "CRLF", "CR"], "LF", on_select, horizontal=True)
+```
+
+</Variant>
+<Variant name="radio-group-v1-3" caption={"spacing=16"} alt={"Radio group: spacing=16"} code="Code" mono>
+
+```python
+ui.radio_group(["Small", "Medium", "Large"], "Medium", on_select, horizontal=True, spacing=16)
+```
+
+</Variant>
+</VariantGrid>
+
+### Options
+
+<VariantGrid>
+<Variant name="radio-group-v2-1" caption={"(value, label) pairs"} alt={"Radio group: (value, label) pairs"} code="Code">
+
+```python
+ui.radio_group([("lf", "Unix (LF)"), ("crlf", "Windows (CRLF)")], "crlf", on_select)
+```
+
+</Variant>
+<Variant name="radio-group-v2-2" caption={"Nothing selected"} alt={"Radio group: Nothing selected"} code="Code">
+
+```python
+ui.radio_group(["Yes", "No"], None, on_select, horizontal=True)
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="radio-group-v3-1" caption={"pz.radio"} alt={"Radio group: pz.radio"} code="Code" mono>
+
+```python
+pz.row([pz.radio("Cats", True, on_select, accent="#e5c07b"),
+        pz.radio("Dogs", False, on_select, accent="#e5c07b")], spacing=16)
+```
+
+</Variant>
+</VariantGrid>
+
 ## API
 
 ### `ui.radio_group`
@@ -79,6 +151,41 @@ Mutually exclusive options as radio buttons.
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#radio_group)
+
+### `pz.radio`
+
+```python
+radio(
+    label,
+    selected,
+    on_select=None,
+    *,
+    size=None,
+    text_size=None,
+    spacing=None,
+    accent=None,
+    bg=None,
+    border_color=None,
+    color=None,
+)
+```
+
+A radio button. Group several yourself (or use `ui.radio_group`); `on_select` is sent when it is clicked.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `label` | *required* | Label text. |
+| `selected` | *required* | Whether it is checked. |
+| `on_select` | `None` | Message or callable on click. |
+| `size` | `None` | Size. |
+| `text_size` | `None` | Text size. |
+| `spacing` | `None` | Space between the circle and the text. |
+| `accent` | `None` | Accent color (active part). |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `border_color` | `None` | Border color. |
+| `color` | `None` | Text or icon color. |
+
+[Full reference →](/pyzed/reference/widgets/#radio)
 
 ## Related
 

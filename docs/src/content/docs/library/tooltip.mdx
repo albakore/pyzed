@@ -2,7 +2,7 @@
 title: "Tooltip"
 description: "A hint shown on hover, optionally with its shortcut. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 90
+  order: 92
   label: "Tooltip"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A little box with a hint that appears when you rest the mouse on something.
+:::
 
 Wraps any widget and shows a small themed box next to it while the mouse is over it. `keys=` adds the shortcut and `position` is `"top"`, `"bottom"` (default), `"left"` or `"right"`. `pz.tooltip` is the unstyled base version.
 
@@ -48,9 +54,73 @@ pz.row([
 ], spacing=8)
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Position
+
+Drawn as the pointer shows it: tooltips only open on hover.
+
+<VariantGrid>
+<Variant name="tooltip-v1-1" caption={"position=\"bottom\""} alt={"Tooltip: position=\"bottom\""} code="Code" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save")
+```
+
+</Variant>
+<Variant name="tooltip-v1-2" caption={"position=\"top\""} alt={"Tooltip: position=\"top\""} code="Code" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="top")
+```
+
+</Variant>
+<Variant name="tooltip-v1-3" caption={"position=\"right\""} alt={"Tooltip: position=\"right\""} code="Code" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="right")
+```
+
+</Variant>
+<Variant name="tooltip-v1-4" caption={"position=\"left\""} alt={"Tooltip: position=\"left\""} code="Code" mono>
+
+```python
+ui.tooltip(ui.icon_button("save", on_save), "Save", position="left")
+```
+
+</Variant>
+</VariantGrid>
+
+### Content
+
+Drawn as the pointer shows it: tooltips only open on hover.
+
+<VariantGrid>
+<Variant name="tooltip-v2-1" caption={"keys=\"ctrl-s\""} alt={"Tooltip: keys=\"ctrl-s\""} code="Code" mono>
+
+```python
+ui.tooltip(ui.button("Save", on_save), "Save the file", keys="ctrl-s")
+```
+
+</Variant>
+<Variant name="tooltip-v2-2" caption={"icon_button(tooltip=)"} alt={"Tooltip: icon_button(tooltip=)"} code="Code" mono>
+
+```python
+ui.icon_button("settings", on_settings, tooltip="Settings")
+```
+
+</Variant>
+</VariantGrid>
+
 ## Tips
 
+:::tip
 Tooltips only appear on hover, so the preview shows the buttons. `ui.icon_button(..., tooltip="Text")` is a shortcut for wrapping it in `ui.tooltip`.
+:::
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Input"
 description: "A controlled text field with icon, placeholder and password mode. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 41
+  order: 42
   label: "Input"
 ---
 
@@ -11,6 +11,12 @@ sidebar:
 import Media from '../../../components/Media.astro';
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A box where people type one line of text: a name, an email, a password.
+:::
 
 A themed single-line text field. It is **controlled**: it shows `value` and reports every keystroke to `on_input`, so you store the text in your state and pass it back in `view()`. `on_submit` runs on Enter.
 
@@ -60,29 +66,125 @@ class Form(pz.App):
         return pz.Command.focus("name")
 ```
 
-## Examples
+## Variants
 
-### Sizes and styles
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
 
-`size` changes the height and text; `borderless=True` blends it into a toolbar or a palette, and `mono=True` uses the monospace font.
+### Content
 
-<Tabs syncKey="library-view">
-<TabItem label="Preview">
-<Preview name="input-1" alt="Input: Sizes and styles" />
-</TabItem>
-<TabItem label="Code">
+<VariantGrid>
+<Variant name="input-v1-1" caption={"placeholder="} alt={"Input: placeholder="} code="Code" mono>
 
 ```python
-pz.column([
-    ui.input("small", on_input, size="sm"),
-    ui.input("large", on_input, size="lg"),
-    ui.input("borderless", on_input, borderless=True),
-    ui.input("SELECT * FROM users", on_input, mono=True),
-], spacing=10, width=360)
+ui.input("", on_input, placeholder="Project name", width=260)
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="input-v1-2" caption={"With a value"} alt={"Input: With a value"} code="Code">
+
+```python
+ui.input("Pyzed", on_input, width=260)
+```
+
+</Variant>
+<Variant name="input-v1-3" caption={"icon=\"mail\""} alt={"Input: icon=\"mail\""} code="Code" mono>
+
+```python
+ui.input("ada@example.com", on_input, icon="mail", width=260)
+```
+
+</Variant>
+<Variant name="input-v1-4" caption={"secure=True"} alt={"Input: secure=True"} code="Code" mono>
+
+```python
+ui.input("hunter2", on_input, secure=True, icon="lock", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="input-v2-1" caption={"size=\"sm\""} alt={"Input: size=\"sm\""} code="Code" mono>
+
+```python
+ui.input("Small", on_input, size="sm", width=260)
+```
+
+</Variant>
+<Variant name="input-v2-2" caption={"size=\"md\""} alt={"Input: size=\"md\""} code="Code" mono>
+
+```python
+ui.input("Medium", on_input, size="md", width=260)
+```
+
+</Variant>
+<Variant name="input-v2-3" caption={"size=\"lg\""} alt={"Input: size=\"lg\""} code="Code" mono>
+
+```python
+ui.input("Large", on_input, size="lg", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Style
+
+<VariantGrid>
+<Variant name="input-v3-1" caption={"borderless=True"} alt={"Input: borderless=True"} code="Code" mono>
+
+```python
+ui.input("Borderless", on_input, borderless=True, width=260)
+```
+
+</Variant>
+<Variant name="input-v3-2" caption={"mono=True"} alt={"Input: mono=True"} code="Code" mono>
+
+```python
+ui.input("SELECT * FROM users", on_input, mono=True, width=260)
+```
+
+</Variant>
+<Variant name="input-v3-3" caption={"Read-only (no on_input)"} alt={"Input: Read-only (no on_input)"} code="Code">
+
+```python
+ui.input("Can't edit me", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Validation
+
+Show errors with [Field](/pyzed/library/field/)'s `error=`, next to the input.
+
+<VariantGrid>
+<Variant name="input-v4-1" caption={"With an error"} alt={"Input: With an error"} code="Code">
+
+```python
+ui.field("Email", ui.input("ada@", on_input, width=220), error="Enter a valid email")
+```
+
+</Variant>
+</VariantGrid>
+
+### Base widget
+
+The `pz.*` widget underneath: no theme, every color and size is yours.
+
+<VariantGrid>
+<Variant name="input-v5-1" caption={"pz.text_input"} alt={"Input: pz.text_input"} code="Code" mono>
+
+```python
+pz.text_input("", placeholder="pz.text_input", on_input=on_input, width=260, padding=8,
+              radius=8, border_color="#c678dd", focus_border_color="#e5c07b")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 
@@ -124,6 +226,67 @@ A text field.
 | `theme` | `None` | Theme to use instead of the current one (`pyzed.theme.current()`). |
 
 [Full reference →](/pyzed/reference/ui/#input)
+
+### `pz.text_input`
+
+```python
+text_input(
+    value,
+    *,
+    placeholder='',
+    on_input=None,
+    on_submit=None,
+    id=None,
+    size=None,
+    font=None,
+    padding=None,
+    width=None,
+    secure=False,
+    icon=None,
+    icon_size=None,
+    bg=None,
+    border_color=None,
+    hover_border_color=None,
+    focus_border_color=None,
+    border_width=None,
+    radius=None,
+    color=None,
+    placeholder_color=None,
+    selection_color=None,
+    icon_color=None,
+    align_x=None,
+)
+```
+
+A controlled text field: it shows `value` and notifies you of changes through `on_input`. For the themed field use `ui.input`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `value` | *required* | Current text. |
+| `placeholder` | `""` | Hint text shown when empty. |
+| `on_input` | `None` | Callable that receives the new text on every keystroke. |
+| `on_submit` | `None` | Message or callable sent when Enter is pressed. |
+| `id` | `None` | Stable identifier used to focus or scroll it with a `Command`. |
+| `size` | `None` | Font size. |
+| `font` | `None` | Font family. |
+| `padding` | `None` | Inner padding: `8`, `(vertical, horizontal)` or `(top, right, bottom, left)`. |
+| `width` | `None` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
+| `secure` | `False` | Hides the text (passwords). |
+| `icon` | `None` | Icon character (use `pyzed.icons.glyph(name)`). |
+| `icon_size` | `None` | Icon size. |
+| `bg` | `None` | Background color (`"#rrggbb[aa]"`, `(r, g, b[, a])` or `"transparent"`). |
+| `border_color` | `None` | Border color. |
+| `hover_border_color` | `None` | Border color on hover. |
+| `focus_border_color` | `None` | Border color when focused. |
+| `border_width` | `None` | Border width in pixels. |
+| `radius` | `None` | Corner radius: a number or `(top_left, top_right, bottom_right, bottom_left)`. |
+| `color` | `None` | Text or icon color. |
+| `placeholder_color` | `None` | Placeholder color. |
+| `selection_color` | `None` | Selection color. |
+| `icon_color` | `None` | Icon color. |
+| `align_x` | `None` | Horizontal alignment: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
+
+[Full reference →](/pyzed/reference/widgets/#text_input)
 
 ## Related
 

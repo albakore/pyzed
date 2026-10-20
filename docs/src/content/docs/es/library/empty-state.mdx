@@ -2,7 +2,7 @@
 title: "Estado vacío"
 description: "Un marcador centrado para listas y búsquedas vacías. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 48
+  order: 50
   label: "Estado vacío"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Lo que muestra una pantalla cuando aún no tiene nada, con una pista de qué hacer después.
+:::
 
 Un icono, un título, una descripción y acciones centrados para un lugar que aún no tiene nada que mostrar.
 
@@ -42,6 +48,39 @@ from pyzed import ui
 ui.empty_state("No results", "Try a different search.", icon="search",
                actions=[ui.button("Clear filters", on_clear, size="sm")])
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="empty-state-v1-1" caption={"Solo título"} alt={"Estado vacío: Solo título"} code="Código">
+
+```python
+ui.empty_state("No notifications")
+```
+
+</Variant>
+<Variant name="empty-state-v1-2" caption={"Con descripción"} alt={"Estado vacío: Con descripción"} code="Código">
+
+```python
+ui.empty_state("No results", "Try a different search.", icon="search")
+```
+
+</Variant>
+<Variant name="empty-state-v1-3" caption={"actions="} alt={"Estado vacío: actions="} code="Código" mono>
+
+```python
+ui.empty_state("No projects yet", "Create one to get started.", icon="folder-plus",
+               actions=[ui.button("New project", on_new, variant="solid", size="sm")])
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

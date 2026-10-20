@@ -2,7 +2,7 @@
 title: "Fila de lista"
 description: "Una fila de lista con icono, texto y un hueco al final. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 52
+  order: 54
   label: "Fila de lista"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una fila de una lista: un icono, un nombre y quizá algo a la derecha.
+:::
 
 Una fila de lista: un icono, el texto y huecos `start`/`end` para cualquier widget. Admite `selected`, `focused` (borde de foco), `disabled`, anidar con `indent` y `on_right_press` para un menú contextual.
 
@@ -56,6 +62,99 @@ class Recent(pz.App):
             for f in self.files
         ])
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Contenido
+
+<VariantGrid>
+<Variant name="list-item-v1-1" caption={"Texto"} alt={"Fila de lista: Texto"} code="Código">
+
+```python
+pz.container(ui.list_item("README.md", on_open), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v1-2" caption={"icon="} alt={"Fila de lista: icon="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("README.md", on_open, icon="file-text"), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v1-3" caption={"icon_color="} alt={"Fila de lista: icon_color="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_open, icon="file-code", icon_color="#3572a5"), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v1-4" caption={"end="} alt={"Fila de lista: end="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("app.py", on_open, icon="file-code", end=ui.badge("M", tint="warning")), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v1-5" caption={"start="} alt={"Fila de lista: start="} code="Código" mono>
+
+```python
+pz.container(ui.list_item("Buy milk", on_open, start=ui.checkbox(True, on_toggle)), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v1-6" caption={"color=\"error\""} alt={"Fila de lista: color=\"error\""} code="Código" mono>
+
+```python
+pz.container(ui.list_item("Delete project", on_open, icon="trash-2", color="error"), width=240)
+```
+
+</Variant>
+</VariantGrid>
+
+### Estado
+
+<VariantGrid>
+<Variant name="list-item-v2-1" caption={"selected=True"} alt={"Fila de lista: selected=True"} code="Código" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_open, icon="file-code", selected=True), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v2-2" caption={"focused=True"} alt={"Fila de lista: focused=True"} code="Código" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_open, icon="file-code", focused=True), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v2-3" caption={"disabled=True"} alt={"Fila de lista: disabled=True"} code="Código" mono>
+
+```python
+pz.container(ui.list_item("old.txt", on_open, icon="file", disabled=True), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v2-4" caption={"inset=True"} alt={"Fila de lista: inset=True"} code="Código" mono>
+
+```python
+pz.container(ui.list_item("main.py", on_open, icon="file-code", selected=True, inset=True), width=240)
+```
+
+</Variant>
+<Variant name="list-item-v2-5" caption={"indent=24"} alt={"Fila de lista: indent=24"} code="Código" mono>
+
+```python
+pz.container(ui.list_item("button.rs", on_open, icon="file-code", indent=24), width=240)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

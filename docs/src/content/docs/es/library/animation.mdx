@@ -14,6 +14,10 @@ sidebar:
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
 
+:::tip[En pocas palabras]
+Hace que las cosas se muevan: aparecer, deslizarse, rebotar o brillar, sin trabajo extra.
+:::
+
 Todo widget tiene `animate()` y `transition()`. `animate` reproduce uno de los 47 presets o una `pz.Animation` cuando el widget aparece, en hover, al pulsar, con foco, al hacer clic o mientras `active`; `transition` anima los cambios de propiedades como CSS. `pz.stagger` hace entrar una lista en cascada y `pz.presence` anima la entrada y salida del contenido cuando cambia. Todo se reproduce de forma nativa, sin llamar a Python en cada fotograma. Ver la [guía de animación](/pyzed/es/guides/animation/).
 
 `pz.Animation` · Categoría: [Contenido](/pyzed/es/library/#contenido) · [Referencia completa →](/pyzed/es/reference/widgets/#animation)
@@ -33,6 +37,10 @@ pz.column(pz.stagger([
 
 </TabItem>
 </Tabs>
+
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
 
 ## Cuándo usarlo
 
@@ -60,7 +68,9 @@ class Inbox(pz.App):
 
 ## Consejos
 
+:::tip
 Las capturas y `pz.set_reduced_motion(True)` muestran cada animación en reposo, así que los tests son estables. Respeta a quien apaga el movimiento.
+:::
 
 ## API
 

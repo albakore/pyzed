@@ -2,7 +2,7 @@
 title: "Facepile"
 description: "Overlapping collaborator avatars with +N. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 31
+  order: 32
   label: "Facepile"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A row of overlapping avatars that shows who is here.
+:::
 
 Overlapping avatars of collaborators, as in the title bar of a collaborative editor. People beyond `max_shown` are grouped into `+N`.
 
@@ -46,6 +52,45 @@ pz.column([
     ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam", "Jo", "Lee", "Max"], size=28, max_shown=4),
 ], spacing=16, align="center")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="facepile-v1-1" caption={"Two people"} alt={"Facepile: Two people"} code="Code">
+
+```python
+ui.facepile(["Ana", "Luis"])
+```
+
+</Variant>
+<Variant name="facepile-v1-2" caption={"Five people"} alt={"Facepile: Five people"} code="Code">
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam"])
+```
+
+</Variant>
+<Variant name="facepile-v1-3" caption={"max_shown=3"} alt={"Facepile: max_shown=3"} code="Code" mono>
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam", "Jo", "Lee"], max_shown=3)
+```
+
+</Variant>
+<Variant name="facepile-v1-4" caption={"size=32, overlap=10"} alt={"Facepile: size=32, overlap=10"} code="Code" mono>
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta"], size=32, overlap=10)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

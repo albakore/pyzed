@@ -2,7 +2,7 @@
 title: "Choice"
 description: "A message with your own buttons. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 15
+  order: 16
   label: "Choice"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A question with several possible answers, each one a button.
+:::
 
 A message with your own buttons: `options` are `(label, on_press)` pairs and the last one is the main one.
 
@@ -35,6 +41,10 @@ ui.dialog_layer(main_view(), ui.choice(
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - When a question has more than two answers (Keep both / Replace / Skip).
@@ -50,6 +60,33 @@ ui.dialog_layer(main_view(), ui.choice(
     on_cancel, title="File exists", width=420,
 ))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="choice-v1-1" caption={"Two answers"} alt={"Choice: Two answers"} code="Code">
+
+```python
+ui.choice("Open the project in…", [("This window", on_here), ("New window", on_new)],
+          on_cancel, width=360)
+```
+
+</Variant>
+<Variant name="choice-v1-2" caption={"Three answers"} alt={"Choice: Three answers"} code="Code">
+
+```python
+ui.choice("notes.py already exists.", [("Keep both", on_keep), ("Skip", on_skip),
+          ("Replace", on_replace)], on_cancel, title="File exists", width=400)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Dialog layer"
 description: "Centers a dialog over your view with a dimmed backdrop. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 23
+  order: 24
   label: "Dialog layer"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Darkens the app and shows a dialog in the middle, so the question can't be missed.
+:::
 
 Shows a dialog centered over `base` with a dimmed backdrop; clicking the backdrop calls `on_dismiss`. With `dialog=None` it returns `base` unchanged, so keep which dialog is open in your state and always wrap the view with it.
 
@@ -35,6 +41,10 @@ ui.dialog_layer(
 
 </TabItem>
 </Tabs>
+
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
 
 ## When to use
 
@@ -60,9 +70,44 @@ class Files(pz.App):
         return ui.dialog_layer(self.main_view(), dialog, on_dismiss=self.close)
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Dialog
+
+<VariantGrid>
+<Variant name="dialog-layer-v1-1" caption={"ui.alert"} alt={"Dialog layer: ui.alert"} code="Code" mono>
+
+```python
+ui.dialog_layer(main_view(), ui.alert("Export finished.", on_close, kind="success", width=280))
+```
+
+</Variant>
+<Variant name="dialog-layer-v1-2" caption={"ui.modal"} alt={"Dialog layer: ui.modal"} code="Code" mono>
+
+```python
+ui.dialog_layer(main_view(), ui.modal(ui.muted("Any content."), title="Modal", on_close=on_close,
+                                       width=280), on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="dialog-layer-v1-3" caption={"dialog=None"} alt={"Dialog layer: dialog=None"} code="Code" mono>
+
+```python
+ui.dialog_layer(main_view(), None)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Tips
 
+:::tip
 Button labels (OK, Cancel, Save…) are translated with [`pyzed.i18n`](/pyzed/guides/i18n/).
+:::
 
 ## API
 

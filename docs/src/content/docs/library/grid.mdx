@@ -2,7 +2,7 @@
 title: "Grid"
 description: "Equal columns, or CSS-like tracks with spans. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 34
+  order: 35
   label: "Grid"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Arranges things in rows and columns, like tiles on a wall.
+:::
 
 Lays out children in a grid. With `columns=3` the columns are equal, and `max_width` fits as many as possible. With track lists (`columns=[200, "1fr", "auto"]`) it works like a CSS grid, and `pz.cell(child, column=, row=, column_span=, row_span=)` places a child explicitly.
 
@@ -32,6 +38,10 @@ pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 9)], columns=4, sp
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - For galleries, dashboards and page layouts with a header, sidebar and content.
@@ -45,6 +55,66 @@ from pyzed import ui
 box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
 pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 9)], columns=4, spacing=8), width=440)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Columns
+
+<VariantGrid>
+<Variant name="grid-v1-1" caption={"columns=2"} alt={"Grid: columns=2"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 5)], columns=2, spacing=8, height=44), width=220)
+```
+
+</Variant>
+<Variant name="grid-v1-2" caption={"columns=3"} alt={"Grid: columns=3"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 7)], columns=3, spacing=8, height=44), width=300)
+```
+
+</Variant>
+<Variant name="grid-v1-3" caption={"columns=4"} alt={"Grid: columns=4"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.grid([box(str(i), w="fill") for i in range(1, 9)], columns=4, spacing=8, height=44), width=380)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tracks
+
+<VariantGrid>
+<Variant name="grid-v2-1" caption={"columns=[100, \"1fr\"]"} alt={"Grid: columns=[100, \"1fr\"]"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.grid([box("100 px", w="fill"), box("1fr", w="fill")], columns=[100, "1fr"], spacing=8),
+             width=340, height=44)
+```
+
+</Variant>
+<Variant name="grid-v2-2" caption={"column_span=2"} alt={"Grid: column_span=2"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.container(pz.grid([pz.cell(box("header", w="fill"), column=0, row=0, column_span=2),
+                      pz.cell(box("a", w="fill"), column=0, row=1),
+                      pz.cell(box("b", w="fill"), column=1, row=1)], columns=["1fr", "1fr"], spacing=8),
+             width=300, height=96)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 

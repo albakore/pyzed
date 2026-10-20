@@ -1,0 +1,107 @@
+---
+// The head of the library overview: a few totals and a chip per category that jumps to its
+// gallery. docs/scripts/gen_library.py writes the props into library/index.mdx.
+interface Props {
+	stats: { value: number; label: string }[];
+	categories: { label: string; href: string; count: number }[];
+	/** Accessible name of the category links. */
+	navLabel?: string;
+}
+
+const { stats, categories, navLabel = 'Categories' } = Astro.props;
+---
+
+<div class="lib-stats not-content">
+	<dl>
+		{
+			stats.map((s) => (
+				<div>
+					<dt>{s.label}</dt>
+					<dd>{s.value}</dd>
+				</div>
+			))
+		}
+	</dl>
+	<nav aria-label={navLabel}>
+		{
+			categories.map((c) => (
+				<a href={c.href}>
+					{c.label}
+					<span>{c.count}</span>
+				</a>
+			))
+		}
+	</nav>
+</div>
+
+<style>
+	.lib-stats {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-block: 0.5rem 1.75rem;
+	}
+	dl {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.75rem;
+		margin: 0;
+	}
+	dl > div {
+		display: flex;
+		flex-direction: column-reverse;
+		gap: 0.1rem;
+		padding: 0.8rem 1rem;
+		border: 1px solid var(--pz-frame-border, var(--sl-color-gray-5));
+		border-radius: 0.75rem;
+		background: var(--pz-tile-bg, var(--sl-color-gray-6));
+	}
+	dt {
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+	dd {
+		margin: 0;
+		font-size: var(--sl-text-2xl);
+		font-weight: 700;
+		line-height: 1.1;
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
+		font-variant-numeric: tabular-nums;
+	}
+	nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+	}
+	nav a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.3rem 0.45rem 0.3rem 0.75rem;
+		border: 1px solid var(--pz-frame-border, var(--sl-color-gray-5));
+		border-radius: 999px;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-white);
+		text-decoration: none;
+		transition: border-color 0.15s;
+	}
+	nav a:hover {
+		border-color: var(--sl-color-accent);
+	}
+	nav span {
+		min-width: 1.4rem;
+		padding: 0.05rem 0.4rem;
+		border-radius: 999px;
+		text-align: center;
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
+		background: var(--sl-color-accent-low);
+	}
+	@media (max-width: 30rem) {
+		dl > div {
+			padding: 0.6rem 0.7rem;
+		}
+		dd {
+			font-size: var(--sl-text-xl);
+		}
+	}
+</style>

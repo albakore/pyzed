@@ -2,7 +2,7 @@
 title: "Indicator"
 description: "A colored dot for status, presence or unsaved changes. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 40
+  order: 41
   label: "Indicator"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A small colored dot that tells a state at a glance: green is fine, red is a problem.
+:::
 
 A small colored dot. `color` is a theme token or a hex color and `size` its diameter.
 
@@ -51,6 +57,104 @@ pz.column([
     pz.row([ui.indicator(size=10), ui.label("Unsaved changes")], spacing=8, align="center"),
 ], spacing=10)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Color
+
+<VariantGrid>
+<Variant name="indicator-v1-1" caption={"\"accent\""} alt={"Indicator: \"accent\""} code="Code" mono>
+
+```python
+ui.indicator()
+```
+
+</Variant>
+<Variant name="indicator-v1-2" caption={"\"success\""} alt={"Indicator: \"success\""} code="Code" mono>
+
+```python
+ui.indicator("success")
+```
+
+</Variant>
+<Variant name="indicator-v1-3" caption={"\"warning\""} alt={"Indicator: \"warning\""} code="Code" mono>
+
+```python
+ui.indicator("warning")
+```
+
+</Variant>
+<Variant name="indicator-v1-4" caption={"\"error\""} alt={"Indicator: \"error\""} code="Code" mono>
+
+```python
+ui.indicator("error")
+```
+
+</Variant>
+<Variant name="indicator-v1-5" caption={"\"text_muted\""} alt={"Indicator: \"text_muted\""} code="Code" mono>
+
+```python
+ui.indicator("text_muted")
+```
+
+</Variant>
+<Variant name="indicator-v1-6" caption={"\"#c678dd\""} alt={"Indicator: \"#c678dd\""} code="Code" mono>
+
+```python
+ui.indicator("#c678dd")
+```
+
+</Variant>
+</VariantGrid>
+
+### Size
+
+<VariantGrid>
+<Variant name="indicator-v2-1" caption={"size=6"} alt={"Indicator: size=6"} code="Code" mono>
+
+```python
+ui.indicator("success", size=6)
+```
+
+</Variant>
+<Variant name="indicator-v2-2" caption={"size=10"} alt={"Indicator: size=10"} code="Code" mono>
+
+```python
+ui.indicator("success", size=10)
+```
+
+</Variant>
+<Variant name="indicator-v2-3" caption={"size=14"} alt={"Indicator: size=14"} code="Code" mono>
+
+```python
+ui.indicator("success", size=14)
+```
+
+</Variant>
+</VariantGrid>
+
+### Next to text
+
+<VariantGrid>
+<Variant name="indicator-v3-1" caption={"Online"} alt={"Indicator: Online"} code="Code">
+
+```python
+pz.row([ui.indicator("success"), ui.label("Ana is online")], spacing=8, align="center")
+```
+
+</Variant>
+<Variant name="indicator-v3-2" caption={"Unsaved"} alt={"Indicator: Unsaved"} code="Code">
+
+```python
+pz.row([ui.label("notes.py"), ui.indicator(size=8)], spacing=6, align="center")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

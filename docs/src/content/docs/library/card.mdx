@@ -2,7 +2,7 @@
 title: "Card"
 description: "A bordered surface with an optional title and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 12
+  order: 13
   label: "Card"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A box with a border that keeps related things together, like a card on a table.
+:::
 
 A rounded, bordered surface that groups content. `title` and `actions` add a header row; `padding` and `width` control its box.
 
@@ -59,6 +65,65 @@ ui.card(
     width=380,
 )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="card-v1-1" caption={"Content only"} alt={"Card: Content only"} code="Code">
+
+```python
+ui.card(ui.muted("A bordered surface."), width=260)
+```
+
+</Variant>
+<Variant name="card-v1-2" caption={"title="} alt={"Card: title="} code="Code" mono>
+
+```python
+ui.card(ui.muted("Three files changed."), title="Changes", width=260)
+```
+
+</Variant>
+<Variant name="card-v1-3" caption={"title=, actions="} alt={"Card: title=, actions="} code="Code" mono>
+
+```python
+ui.card(ui.muted("Three files changed."), title="Changes",
+        actions=[ui.icon_button("ellipsis", on_menu, size="sm")], width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Padding
+
+<VariantGrid>
+<Variant name="card-v2-1" caption={"padding=8"} alt={"Card: padding=8"} code="Code" mono>
+
+```python
+ui.card(ui.label("Compact"), padding=8)
+```
+
+</Variant>
+<Variant name="card-v2-2" caption={"padding=16"} alt={"Card: padding=16"} code="Code" mono>
+
+```python
+ui.card(ui.label("Default"))
+```
+
+</Variant>
+<Variant name="card-v2-3" caption={"padding=28"} alt={"Card: padding=28"} code="Code" mono>
+
+```python
+ui.card(ui.label("Roomy"), padding=28)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

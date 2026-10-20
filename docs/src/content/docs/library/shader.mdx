@@ -2,7 +2,7 @@
 title: "Shader"
 description: "A widget painted on the GPU by your own WGSL code. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 70
+  order: 72
   label: "Shader"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A surface painted by the graphics card, for moving backgrounds and visual effects.
+:::
 
 `pz.shader` runs a function you write in WGSL, `fn shade(uv, px, size, time) -> vec4<f32>`, for every pixel of the widget, every frame, on the GPU: animated backgrounds, plasma, fire or a radar sweep cost Python nothing. Each entry of `uniforms` becomes a WGSL function of the same name, and `mouse()` gives the pointer. Without a GPU the widget shows `fallback`. See the [Shaders guide](/pyzed/shading/shaders/) and the [showcase](/pyzed/showcase/).
 
@@ -37,6 +43,10 @@ fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> 
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - For animated backgrounds behind glass panels, menus and HUDs.
@@ -56,9 +66,63 @@ fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> 
     fallback=pz.Gradient(["#14172f", "#c678dd"], angle=0))
 ```
 
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Uniforms
+
+Each capture is one frame at `time=0.5`; run the example to see it move. Without a GPU the widget draws its `fallback`.
+
+<VariantGrid>
+<Variant name="shader-v1-1" caption={"tint=\"#c678dd\""} alt={"Shader: tint=\"#c678dd\""} code="Code" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#c678dd"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#c678dd"], angle=0))
+```
+
+</Variant>
+<Variant name="shader-v1-2" caption={"tint=\"#56b6c2\""} alt={"Shader: tint=\"#56b6c2\""} code="Code" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#56b6c2"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#56b6c2"], angle=0))
+```
+
+</Variant>
+<Variant name="shader-v1-3" caption={"tint=\"#e5c07b\""} alt={"Shader: tint=\"#e5c07b\""} code="Code" mono>
+
+```python
+pz.shader("""
+fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> {
+    let wave = 0.5 + 0.5 * sin(uv.x * 12.0 + uv.y * 4.0 + time * 2.0);
+    return vec4<f32>(mix(vec3<f32>(0.08, 0.09, 0.2), tint().rgb, wave), 1.0);
+}
+""", uniforms={"tint": "#e5c07b"}, width=260, height=110, time=0.5,
+    fallback=pz.Gradient(["#14172f", "#e5c07b"], angle=0))
+```
+
+</Variant>
+</VariantGrid>
+
 ## Tips
 
+:::tip
 Shaders need the GPU renderer. Always pass a `fallback` that looks right on its own: it is what the software renderer and machines without a GPU draw.
+:::
 
 ## API
 

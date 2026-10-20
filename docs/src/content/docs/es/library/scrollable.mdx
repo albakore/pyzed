@@ -2,7 +2,7 @@
 title: "Desplazable"
 description: "Desplaza el contenido que no cabe. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 37
+  order: 38
   label: "Desplazable"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Te deja desplazar el contenido que no cabe, con una barra de desplazamiento.
+:::
 
 Hace que su contenido se pueda desplazar en vertical, en horizontal o en `"both"`. Dale un `id` para desplazarlo desde código (`pz.Command.scroll_to`), `anchor_bottom=True` para quedarse al final (chats, registros), y personaliza el carril y la barra con el tema o tus colores.
 
@@ -46,6 +52,34 @@ pz.container(pz.scrollable(
     height=220,
 ), width=300)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Dirección
+
+<VariantGrid>
+<Variant name="scrollable-v1-1" caption={"Vertical"} alt={"Desplazable: Vertical"} code="Código">
+
+```python
+pz.container(pz.scrollable(pz.column([ui.list_item(f"Item {i}", icon="file", inset=True)
+                                       for i in range(1, 30)]), height=130), width=240)
+```
+
+</Variant>
+<Variant name="scrollable-v1-2" caption={"direction=\"horizontal\""} alt={"Desplazable: direction=\"horizontal\""} code="Código" mono>
+
+```python
+pz.container(pz.scrollable(pz.container(pz.row([ui.chip(f"tag {i}") for i in range(1, 25)], spacing=6),
+                                        padding=(0, 0, 14, 0)),
+                           direction="horizontal"), width=300)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

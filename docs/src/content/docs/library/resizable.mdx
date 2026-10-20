@@ -2,7 +2,7 @@
 title: "Resizable"
 description: "A panel whose edge can be dragged to resize it. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 61
+  order: 63
   label: "Resizable"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A panel with an edge you can drag to make it bigger or smaller.
+:::
 
 A panel whose `edge` (`"left"`, `"right"`, `"top"` or `"bottom"`) can be dragged to resize it, between `min_size` and `max_size`. It keeps the size the user drags it to; `on_resize(size)` is called when the drag ends so you can save it.
 
@@ -36,6 +42,10 @@ pz.row([
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - For one resizable sidebar or bottom panel next to fixed content.
@@ -53,6 +63,44 @@ pz.row([
     pz.container(ui.muted("Content"), center=True, width="fill", height="fill"),
 ], height="fill")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Edge
+
+<VariantGrid>
+<Variant name="resizable-v1-1" caption={"edge=\"right\""} alt={"Resizable: edge=\"right\""} code="Code" mono>
+
+```python
+t = pz.theme.current()
+pz.row([pz.resizable(pz.container(ui.label("Sidebar"), padding=10, width="fill", height="fill", bg=t.panel),
+                     edge="right", size=150, color=t.border), pz.container(width="fill")], height="fill")
+```
+
+</Variant>
+<Variant name="resizable-v1-2" caption={"edge=\"left\""} alt={"Resizable: edge=\"left\""} code="Code" mono>
+
+```python
+t = pz.theme.current()
+pz.row([pz.container(width="fill"), pz.resizable(pz.container(ui.label("Inspector"), padding=10, width="fill",
+        height="fill", bg=t.panel), edge="left", size=150, color=t.border)], height="fill")
+```
+
+</Variant>
+<Variant name="resizable-v1-3" caption={"edge=\"top\""} alt={"Resizable: edge=\"top\""} code="Code" mono>
+
+```python
+t = pz.theme.current()
+pz.column([pz.container(height="fill"), pz.resizable(pz.container(ui.label("Console"), padding=10, width="fill",
+           height="fill", bg=t.panel), edge="top", size=80, color=t.border)], width="fill")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

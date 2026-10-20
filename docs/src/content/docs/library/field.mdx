@@ -2,7 +2,7 @@
 title: "Field"
 description: "A settings row: title and description left, control right. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 32
+  order: 33
   label: "Field"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A row of a form: the name of a setting on the left and its control on the right.
+:::
 
 A form row like the ones of a settings screen: the title (and an optional description) on the left and any control on the right. Stack several in a column or a [Settings group](/pyzed/library/settings-group/).
 
@@ -49,6 +55,64 @@ pz.column([
     ui.field("Font size", ui.number_field(14, on_change, suffix="px")),
 ], spacing=14, width=440)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Control
+
+<VariantGrid>
+<Variant name="field-v1-1" caption={"Switch"} alt={"Field: Switch"} code="Code">
+
+```python
+pz.container(ui.field("Autosave", ui.switch(True, on_toggle)), width=380)
+```
+
+</Variant>
+<Variant name="field-v1-2" caption={"Number field"} alt={"Field: Number field"} code="Code">
+
+```python
+pz.container(ui.field("Font size", ui.number_field(14, on_change, suffix="px")), width=380)
+```
+
+</Variant>
+<Variant name="field-v1-3" caption={"Select"} alt={"Field: Select"} code="Code">
+
+```python
+pz.container(ui.field("Theme", ui.select(["One Dark", "One Light"], "One Dark", on_select, width=150)), width=380)
+```
+
+</Variant>
+<Variant name="field-v1-4" caption={"Input"} alt={"Field: Input"} code="Code">
+
+```python
+pz.container(ui.field("Name", ui.input("Pyzed", on_input, width=180)), width=380)
+```
+
+</Variant>
+</VariantGrid>
+
+### Help and errors
+
+<VariantGrid>
+<Variant name="field-v2-1" caption={"description="} alt={"Field: description="} code="Code" mono>
+
+```python
+pz.container(ui.field("Autosave", ui.switch(True, on_toggle), description="Saves when you switch tabs"), width=380)
+```
+
+</Variant>
+<Variant name="field-v2-2" caption={"error="} alt={"Field: error="} code="Code" mono>
+
+```python
+pz.container(ui.field("Port", ui.number_field(80, on_change), error="Ports below 1024 need admin rights"), width=380)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

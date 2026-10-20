@@ -2,7 +2,7 @@
 title: "Minigráfico"
 description: "Un gráfico de líneas diminuto para tendencias. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 70
+  order: 72
   label: "Minigráfico"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un gráfico de líneas diminuto que muestra si algo sube o baja.
+:::
 
 Un gráfico de líneas pequeño, relleno bajo la línea por defecto, que muestra la forma de una serie.
 
@@ -46,6 +52,64 @@ pz.column([
     ui.sparkline([8, 6, 7, 4, 5, 3, 2, 1], width=240, height=48, tint="error", fill=False),
 ], spacing=16)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="sparkline-v1-1" caption={"Relleno"} alt={"Minigráfico: Relleno"} code="Código">
+
+```python
+ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40)
+```
+
+</Variant>
+<Variant name="sparkline-v1-2" caption={"fill=False"} alt={"Minigráfico: fill=False"} code="Código" mono>
+
+```python
+ui.sparkline([1, 4, 2, 6, 3, 7, 5, 8], width=200, height=40, fill=False)
+```
+
+</Variant>
+<Variant name="sparkline-v1-3" caption={"tint=\"error\""} alt={"Minigráfico: tint=\"error\""} code="Código" mono>
+
+```python
+ui.sparkline([8, 6, 7, 4, 5, 3, 2, 1], width=200, height=40, tint="error")
+```
+
+</Variant>
+<Variant name="sparkline-v1-4" caption={"tint=\"success\""} alt={"Minigráfico: tint=\"success\""} code="Código" mono>
+
+```python
+ui.sparkline([2, 3, 3, 5, 6, 8, 9, 12], width=200, height=40, tint="success")
+```
+
+</Variant>
+</VariantGrid>
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="sparkline-v2-1" caption={"width=80, height=20"} alt={"Minigráfico: width=80, height=20"} code="Código" mono>
+
+```python
+ui.sparkline([3, 5, 2, 6, 4, 7], width=80, height=20)
+```
+
+</Variant>
+<Variant name="sparkline-v2-2" caption={"width=280, height=64"} alt={"Minigráfico: width=280, height=64"} code="Código" mono>
+
+```python
+ui.sparkline([3, 5, 2, 6, 4, 7, 5, 9, 6, 8], width=280, height=64)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

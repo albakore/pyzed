@@ -2,7 +2,7 @@
 title: "Campo de texto"
 description: "Un campo de texto controlado con icono, placeholder y modo contraseña. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 22
+  order: 23
   label: "Campo de texto"
 ---
 
@@ -11,6 +11,12 @@ sidebar:
 import Media from '../../../../components/Media.astro';
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja donde la gente escribe una línea de texto: un nombre, un correo, una contraseña.
+:::
 
 Un campo de texto de una línea con el estilo del tema. Es **controlado**: muestra `value` y avisa de cada tecla a `on_input`, así que guardas el texto en tu estado y lo devuelves en `view()`. `on_submit` se ejecuta al pulsar Enter.
 
@@ -60,29 +66,125 @@ class Form(pz.App):
         return pz.Command.focus("name")
 ```
 
-## Ejemplos
+## Variantes
 
-### Tamaños y estilos
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
 
-`size` cambia la altura y el texto; `borderless=True` lo integra en una barra o una paleta y `mono=True` usa la fuente monoespaciada.
+### Contenido
 
-<Tabs syncKey="library-view">
-<TabItem label="Vista previa">
-<Preview name="input-1" alt="Campo de texto: Tamaños y estilos" />
-</TabItem>
-<TabItem label="Código">
+<VariantGrid>
+<Variant name="input-v1-1" caption={"placeholder="} alt={"Campo de texto: placeholder="} code="Código" mono>
 
 ```python
-pz.column([
-    ui.input("small", on_input, size="sm"),
-    ui.input("large", on_input, size="lg"),
-    ui.input("borderless", on_input, borderless=True),
-    ui.input("SELECT * FROM users", on_input, mono=True),
-], spacing=10, width=360)
+ui.input("", on_input, placeholder="Project name", width=260)
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="input-v1-2" caption={"Con valor"} alt={"Campo de texto: Con valor"} code="Código">
+
+```python
+ui.input("Pyzed", on_input, width=260)
+```
+
+</Variant>
+<Variant name="input-v1-3" caption={"icon=\"mail\""} alt={"Campo de texto: icon=\"mail\""} code="Código" mono>
+
+```python
+ui.input("ada@example.com", on_input, icon="mail", width=260)
+```
+
+</Variant>
+<Variant name="input-v1-4" caption={"secure=True"} alt={"Campo de texto: secure=True"} code="Código" mono>
+
+```python
+ui.input("hunter2", on_input, secure=True, icon="lock", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tamaño
+
+<VariantGrid>
+<Variant name="input-v2-1" caption={"size=\"sm\""} alt={"Campo de texto: size=\"sm\""} code="Código" mono>
+
+```python
+ui.input("Small", on_input, size="sm", width=260)
+```
+
+</Variant>
+<Variant name="input-v2-2" caption={"size=\"md\""} alt={"Campo de texto: size=\"md\""} code="Código" mono>
+
+```python
+ui.input("Medium", on_input, size="md", width=260)
+```
+
+</Variant>
+<Variant name="input-v2-3" caption={"size=\"lg\""} alt={"Campo de texto: size=\"lg\""} code="Código" mono>
+
+```python
+ui.input("Large", on_input, size="lg", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Estilo
+
+<VariantGrid>
+<Variant name="input-v3-1" caption={"borderless=True"} alt={"Campo de texto: borderless=True"} code="Código" mono>
+
+```python
+ui.input("Borderless", on_input, borderless=True, width=260)
+```
+
+</Variant>
+<Variant name="input-v3-2" caption={"mono=True"} alt={"Campo de texto: mono=True"} code="Código" mono>
+
+```python
+ui.input("SELECT * FROM users", on_input, mono=True, width=260)
+```
+
+</Variant>
+<Variant name="input-v3-3" caption={"Solo lectura (sin on_input)"} alt={"Campo de texto: Solo lectura (sin on_input)"} code="Código">
+
+```python
+ui.input("Can't edit me", width=260)
+```
+
+</Variant>
+</VariantGrid>
+
+### Validación
+
+Muestra los errores con `error=` de [Campo de formulario](/pyzed/es/library/field/), junto al campo.
+
+<VariantGrid>
+<Variant name="input-v4-1" caption={"Con un error"} alt={"Campo de texto: Con un error"} code="Código">
+
+```python
+ui.field("Email", ui.input("ada@", on_input, width=220), error="Enter a valid email")
+```
+
+</Variant>
+</VariantGrid>
+
+### Widget base
+
+El widget `pz.*` de debajo: sin tema, todos los colores y tamaños son tuyos.
+
+<VariantGrid>
+<Variant name="input-v5-1" caption={"pz.text_input"} alt={"Campo de texto: pz.text_input"} code="Código" mono>
+
+```python
+pz.text_input("", placeholder="pz.text_input", on_input=on_input, width=260, padding=8,
+              radius=8, border_color="#c678dd", focus_border_color="#e5c07b")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 
@@ -124,6 +226,67 @@ Un campo de texto.
 | `theme` | `None` | Tema a usar en lugar del actual (`pyzed.theme.current()`). |
 
 [Referencia completa →](/pyzed/es/reference/ui/#input)
+
+### `pz.text_input`
+
+```python
+text_input(
+    value,
+    *,
+    placeholder='',
+    on_input=None,
+    on_submit=None,
+    id=None,
+    size=None,
+    font=None,
+    padding=None,
+    width=None,
+    secure=False,
+    icon=None,
+    icon_size=None,
+    bg=None,
+    border_color=None,
+    hover_border_color=None,
+    focus_border_color=None,
+    border_width=None,
+    radius=None,
+    color=None,
+    placeholder_color=None,
+    selection_color=None,
+    icon_color=None,
+    align_x=None,
+)
+```
+
+Un campo de texto controlado: muestra `value` y te avisa de los cambios con `on_input`. Para el campo con tema usa `ui.input`.
+
+| Parámetro | Por defecto | Descripción |
+| --- | --- | --- |
+| `value` | *obligatorio* | Texto actual. |
+| `placeholder` | `""` | Texto de ayuda cuando está vacío. |
+| `on_input` | `None` | Callable que recibe el texto nuevo en cada pulsación. |
+| `on_submit` | `None` | Mensaje o callable que se envía al pulsar Enter. |
+| `id` | `None` | Identificador estable para enfocarlo o desplazarlo con un `Command`. |
+| `size` | `None` | Tamaño de la fuente. |
+| `font` | `None` | Familia de la fuente. |
+| `padding` | `None` | Relleno interior: `8`, `(vertical, horizontal)` o `(arriba, derecha, abajo, izquierda)`. |
+| `width` | `None` | Ancho: píxeles, `"fill"`, `"shrink"` o `"fill:N"` (proporción). |
+| `secure` | `False` | Oculta el texto (contraseñas). |
+| `icon` | `None` | Carácter del icono (usa `pyzed.icons.glyph(nombre)`). |
+| `icon_size` | `None` | Tamaño del icono. |
+| `bg` | `None` | Color de fondo (`"#rrggbb[aa]"`, `(r, g, b[, a])` o `"transparent"`). |
+| `border_color` | `None` | Color del borde. |
+| `hover_border_color` | `None` | Color del borde al pasar el ratón. |
+| `focus_border_color` | `None` | Color del borde con el foco. |
+| `border_width` | `None` | Grosor del borde en píxeles. |
+| `radius` | `None` | Radio de las esquinas: un número o `(sup_izq, sup_der, inf_der, inf_izq)`. |
+| `color` | `None` | Color del texto o del icono. |
+| `placeholder_color` | `None` | Color del placeholder. |
+| `selection_color` | `None` | Color de la selección. |
+| `icon_color` | `None` | Color del icono. |
+| `align_x` | `None` | Alineación horizontal: `"start"`/`"left"`, `"center"`, `"end"`/`"right"`. |
+
+[Referencia completa →](/pyzed/es/reference/widgets/#text_input)
 
 ## Relacionados
 

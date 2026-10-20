@@ -2,7 +2,7 @@
 title: "Cabecera de lista"
 description: "Un título pequeño de sección para listas, con hueco al final. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 17
+  order: 18
   label: "Cabecera de lista"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Un título pequeño encima de un grupo de filas.
+:::
 
 Una cabecera de sección discreta para listas, con un widget opcional al final (normalmente un botón de icono).
 
@@ -52,6 +58,38 @@ pz.column([
     ui.list_item("README.md", on_open, icon="file-text", inset=True),
 ], width=300)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="list-header-v1-1" caption={"Título"} alt={"Cabecera de lista: Título"} code="Código">
+
+```python
+pz.container(ui.list_header("RECENT"), width=240)
+```
+
+</Variant>
+<Variant name="list-header-v1-2" caption={"end="} alt={"Cabecera de lista: end="} code="Código" mono>
+
+```python
+pz.container(ui.list_header("PINNED", end=ui.icon_button("plus", on_new, size="xs")), width=240)
+```
+
+</Variant>
+<Variant name="list-header-v1-3" caption={"Contador al final"} alt={"Cabecera de lista: Contador al final"} code="Código">
+
+```python
+pz.container(ui.list_header("CHANGES", end=ui.count_badge(4)), width=240)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

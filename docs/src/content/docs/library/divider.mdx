@@ -2,7 +2,7 @@
 title: "Divider"
 description: "A thin line in the theme's border color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 26
+  order: 27
   label: "Divider"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A thin line that separates groups of things.
+:::
 
 A one-pixel line in the theme's border color, horizontal by default (`vertical=True` for a vertical one). `pz.rule` is the base version with your own `color` and `thickness`.
 
@@ -55,6 +61,50 @@ pz.column([
     ui.muted("Sign out"),
 ], spacing=10, width=300)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Direction
+
+<VariantGrid>
+<Variant name="divider-v1-1" caption={"Horizontal"} alt={"Divider: Horizontal"} code="Code">
+
+```python
+pz.column([ui.label("Account"), ui.divider(), ui.label("Sign out")], spacing=8, width=220)
+```
+
+</Variant>
+<Variant name="divider-v1-2" caption={"vertical=True"} alt={"Divider: vertical=True"} code="Code" mono>
+
+```python
+pz.row([ui.label("Edit"), ui.divider(vertical=True), ui.label("View")], spacing=10, height=18)
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="divider-v2-1" caption={"color=\"accent\""} alt={"Divider: color=\"accent\""} code="Code" mono>
+
+```python
+pz.container(ui.divider(color="accent"), width=220)
+```
+
+</Variant>
+<Variant name="divider-v2-2" caption={"pz.rule(thickness=3)"} alt={"Divider: pz.rule(thickness=3)"} code="Code" mono>
+
+```python
+pz.container(pz.rule(color="#e5c07b", thickness=3), width=220)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

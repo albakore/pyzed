@@ -11,18 +11,23 @@ interface Item {
 	name: string;
 	blurb: string;
 	badge?: string;
+	/** "12 variants": how many captures the component's page shows. */
+	count?: string;
 }
 interface Props {
 	items: Item[];
 	/** Link prefix: `/pyzed/library/` or `/pyzed/es/library/`. */
 	base: string;
+	/** A line above the cards: "8 components · 64 variants". */
+	summary?: string;
 }
 
-const { items, base } = Astro.props;
+const { items, base, summary } = Astro.props;
 const pick = (slug: string, theme: string) =>
 	(images[`../../assets/library/${slug}.thumb.${theme}.png`] ?? images[`../../assets/library/${slug}.${theme}.png`])?.default;
 ---
 
+{summary && <p class="lib-summary not-content">{summary}</p>}
 <div class="lib-gallery not-content">
 	{
 		items.map((item) => {
@@ -40,6 +45,7 @@ const pick = (slug: string, theme: string) =>
 							{item.badge && <span class="badge">{item.badge}</span>}
 						</span>
 						<span class="blurb">{item.blurb}</span>
+						{item.count && <span class="count">{item.count}</span>}
 					</div>
 				</a>
 			);
@@ -48,16 +54,23 @@ const pick = (slug: string, theme: string) =>
 </div>
 
 <style>
+	.lib-summary {
+		margin-block: 0.5rem 0;
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
+	}
 	.lib-gallery {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr));
 		gap: 1rem;
-		margin-block: 1rem 2rem;
+		margin-block: 0.75rem 2rem;
 	}
 	.lib-card {
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--sl-color-gray-5);
+		border: 1px solid var(--pz-frame-border, var(--sl-color-gray-5));
 		border-radius: 0.75rem;
 		overflow: hidden;
 		background: var(--sl-color-black);
@@ -86,6 +99,7 @@ const pick = (slug: string, theme: string) =>
 		object-fit: cover;
 	}
 	.meta {
+		flex: 1;
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
@@ -111,6 +125,13 @@ const pick = (slug: string, theme: string) =>
 		font-size: var(--sl-text-xs);
 		color: var(--sl-color-gray-3);
 		line-height: 1.45;
+	}
+	.count {
+		margin-top: auto;
+		padding-top: 0.35rem;
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
 	}
 	.on-light {
 		display: none !important;

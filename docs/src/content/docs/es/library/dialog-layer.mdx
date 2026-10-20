@@ -2,7 +2,7 @@
 title: "Capa de diálogo"
 description: "Centra un diálogo encima de tu vista con el fondo oscurecido. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 25
+  order: 26
   label: "Capa de diálogo"
   badge:
     text: "Nuevo"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Oscurece la app y muestra un diálogo en el centro, para que la pregunta no pase desapercibida.
+:::
 
 Muestra un diálogo centrado encima de `base` con el fondo oscurecido; al pulsar el fondo se llama a `on_dismiss`. Con `dialog=None` devuelve `base` sin cambios, así que guarda en tu estado qué diálogo está abierto y envuelve siempre la vista con ella.
 
@@ -35,6 +41,10 @@ ui.dialog_layer(
 
 </TabItem>
 </Tabs>
+
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
 
 ## Cuándo usarlo
 
@@ -60,9 +70,44 @@ class Files(pz.App):
         return ui.dialog_layer(self.main_view(), dialog, on_dismiss=self.close)
 ```
 
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Diálogo
+
+<VariantGrid>
+<Variant name="dialog-layer-v1-1" caption={"ui.alert"} alt={"Capa de diálogo: ui.alert"} code="Código" mono>
+
+```python
+ui.dialog_layer(main_view(), ui.alert("Export finished.", on_close, kind="success", width=280))
+```
+
+</Variant>
+<Variant name="dialog-layer-v1-2" caption={"ui.modal"} alt={"Capa de diálogo: ui.modal"} code="Código" mono>
+
+```python
+ui.dialog_layer(main_view(), ui.modal(ui.muted("Any content."), title="Modal", on_close=on_close,
+                                       width=280), on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="dialog-layer-v1-3" caption={"dialog=None"} alt={"Capa de diálogo: dialog=None"} code="Código" mono>
+
+```python
+ui.dialog_layer(main_view(), None)
+```
+
+</Variant>
+</VariantGrid>
+
 ## Consejos
 
+:::tip
 Las etiquetas de los botones (Aceptar, Cancelar, Guardar…) se traducen con [`pyzed.i18n`](/pyzed/es/guides/i18n/).
+:::
 
 ## API
 

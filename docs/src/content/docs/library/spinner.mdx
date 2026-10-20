@@ -2,7 +2,7 @@
 title: "Spinner"
 description: "A spinning arc for loading states. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 75
+  order: 77
   label: "Spinner"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A spinning circle that says “wait, I'm working on it”.
+:::
 
 A spinning arc. Its angle comes from the app clock, so keep a subscription such as `pz.every(1 / 30, ...)` active while it is shown or it will not move.
 
@@ -53,6 +59,90 @@ class Loader(pz.App):
     def view(self):
         return ui.spinner() if self.loading else ui.label("Done")
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Size
+
+<VariantGrid>
+<Variant name="spinner-v1-1" caption={"size=12"} alt={"Spinner: size=12"} code="Code" mono>
+
+```python
+ui.spinner(size=12)
+```
+
+</Variant>
+<Variant name="spinner-v1-2" caption={"size=16"} alt={"Spinner: size=16"} code="Code" mono>
+
+```python
+ui.spinner()
+```
+
+</Variant>
+<Variant name="spinner-v1-3" caption={"size=24"} alt={"Spinner: size=24"} code="Code" mono>
+
+```python
+ui.spinner(size=24)
+```
+
+</Variant>
+<Variant name="spinner-v1-4" caption={"size=36"} alt={"Spinner: size=36"} code="Code" mono>
+
+```python
+ui.spinner(size=36)
+```
+
+</Variant>
+</VariantGrid>
+
+### Tint
+
+<VariantGrid>
+<Variant name="spinner-v2-1" caption={"tint=\"success\""} alt={"Spinner: tint=\"success\""} code="Code" mono>
+
+```python
+ui.spinner(size=24, tint="success")
+```
+
+</Variant>
+<Variant name="spinner-v2-2" caption={"tint=\"warning\""} alt={"Spinner: tint=\"warning\""} code="Code" mono>
+
+```python
+ui.spinner(size=24, tint="warning")
+```
+
+</Variant>
+<Variant name="spinner-v2-3" caption={"tint=\"text_muted\""} alt={"Spinner: tint=\"text_muted\""} code="Code" mono>
+
+```python
+ui.spinner(size=24, tint="text_muted")
+```
+
+</Variant>
+</VariantGrid>
+
+### With text
+
+<VariantGrid>
+<Variant name="spinner-v3-1" caption={"Inline"} alt={"Spinner: Inline"} code="Code">
+
+```python
+pz.row([ui.spinner(size=14), ui.muted("Indexing project…")], spacing=8, align="center")
+```
+
+</Variant>
+<Variant name="spinner-v3-2" caption={"In a button"} alt={"Spinner: In a button"} code="Code">
+
+```python
+ui.button(pz.row([ui.spinner(size=12, tint="text"), pz.text("Saving")], spacing=6, align="center"))
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

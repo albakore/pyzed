@@ -2,7 +2,7 @@
 title: "Layer"
 description: "Draws an overlay over your view; clicking outside dismisses it. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 45
+  order: 46
   label: "Layer"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Puts something on top of the screen, like a search box, and closes it if you click outside.
+:::
 
 Stacks `overlay` on top of `base`. Clicking outside the overlay sends `on_dismiss`, and `backdrop` dims the view behind it. With `overlay=None` it returns `base` unchanged, so it can always wrap your view. `align_x`, `align_y` and `offset` place the overlay (by default centered at the top, like a command palette).
 
@@ -54,6 +60,62 @@ class App(pz.App):
         return ui.layer(self.main_view(), overlay,
                         on_dismiss=lambda: setattr(self, "finder_open", False))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Placement
+
+<VariantGrid>
+<Variant name="layer-v1-1" caption={"Top (default)"} alt={"Layer: Top (default)"} code="Code">
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v1-2" caption={"align_y=\"center\""} alt={"Layer: align_y=\"center\""} code="Code" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_y="center",
+         on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v1-3" caption={"align_x=\"end\", align_y=\"end\""} alt={"Layer: align_x=\"end\", align_y=\"end\""} code="Code" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), align_x="end", align_y="end",
+         offset=16, on_dismiss=on_close)
+```
+
+</Variant>
+</VariantGrid>
+
+### Backdrop
+
+With `overlay=None` the layer returns your view unchanged.
+
+<VariantGrid>
+<Variant name="layer-v2-1" caption={"backdrop=\"#00000088\""} alt={"Layer: backdrop=\"#00000088\""} code="Code" mono>
+
+```python
+ui.layer(main_view(), ui.card(ui.label("Overlay"), width=200), backdrop="#00000088",
+         align_y="center", on_dismiss=on_close)
+```
+
+</Variant>
+<Variant name="layer-v2-2" caption={"overlay=None"} alt={"Layer: overlay=None"} code="Code" mono>
+
+```python
+ui.layer(main_view(), None)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

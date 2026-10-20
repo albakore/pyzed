@@ -2,7 +2,7 @@
 title: "División"
 description: "Dos paneles con un divisor que se arrastra. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 39
+  order: 41
   label: "División"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Dos zonas lado a lado (o una encima de otra) con una línea que arrastras para cambiar su tamaño.
+:::
 
 Separa dos widgets con un divisor que se arrastra, en el color de borde del tema (acento mientras se arrastra). El `ratio` es tuyo: guárdalo en `on_resize(ratio)`. `vertical=True` apila los paneles. `pz.split` es la versión base con `color`, `hover_color`, `thickness` y `handle` configurables.
 
@@ -51,6 +57,44 @@ class Panes(pz.App):
         return ui.split(self.sidebar(), self.editor(), ratio=self.ratio,
                         on_resize=lambda r: setattr(self, "ratio", r))
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Dirección
+
+<VariantGrid>
+<Variant name="split-v1-1" caption={"Lado a lado"} alt={"División: Lado a lado"} code="Código">
+
+```python
+t = pz.theme.current()
+ui.split(pz.container(ui.label("A"), padding=10, width="fill", height="fill", bg=t.panel),
+         pz.container(ui.label("B"), padding=10, width="fill", height="fill"), on_resize=on_resize)
+```
+
+</Variant>
+<Variant name="split-v1-2" caption={"vertical=True"} alt={"División: vertical=True"} code="Código" mono>
+
+```python
+t = pz.theme.current()
+ui.split(pz.container(ui.label("Top"), padding=10, width="fill", height="fill", bg=t.panel),
+         pz.container(ui.label("Bottom"), padding=10, width="fill", height="fill"), vertical=True)
+```
+
+</Variant>
+<Variant name="split-v1-3" caption={"ratio=0.25"} alt={"División: ratio=0.25"} code="Código" mono>
+
+```python
+t = pz.theme.current()
+ui.split(pz.container(ui.label("25%"), padding=10, width="fill", height="fill", bg=t.panel),
+         pz.container(ui.label("75%"), padding=10, width="fill", height="fill"), ratio=0.25)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

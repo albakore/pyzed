@@ -2,7 +2,7 @@
 title: "Aviso"
 description: "Un aviso en línea con título, texto y acciones. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 8
+  order: 9
   label: "Aviso"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una caja de color dentro de la página con un mensaje: un consejo, un aviso o un error.
+:::
 
 Un aviso en línea (un callout o banner): un icono, un título, una descripción opcional, botones de acción y un botón de cerrar con `on_dismiss`. `tint` es `"info"` (por defecto), `"success"`, `"warning"`, `"error"` o cualquier token del tema.
 
@@ -50,28 +56,80 @@ pz.column([
 ], spacing=10, width=520)
 ```
 
-## Ejemplos
+## Variantes
 
-### Colores
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
 
-Cada color elige un icono acorde.
+### Tinte
 
-<Tabs syncKey="library-view">
-<TabItem label="Vista previa">
-<Preview name="callout-1" alt="Aviso: Colores" />
-</TabItem>
-<TabItem label="Código">
+Cada tinte elige un icono acorde; `icon=` elige otro.
+
+<VariantGrid>
+<Variant name="callout-v1-1" caption={"tint=\"info\""} alt={"Aviso: tint=\"info\""} code="Código" mono>
 
 ```python
-pz.column([
-    ui.callout("Synced", tint="success"),
-    ui.callout("Unsaved changes", "Save before closing.", tint="warning"),
-    ui.callout("Tip", "Press Ctrl+Shift+P to open the palette.", tint="accent", icon="lightbulb"),
-], spacing=8, width=520)
+pz.container(ui.callout("Heads up", "Pyzed 0.5 is out."), width=380)
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="callout-v1-2" caption={"tint=\"success\""} alt={"Aviso: tint=\"success\""} code="Código" mono>
+
+```python
+pz.container(ui.callout("Synced", "All changes are saved.", tint="success"), width=380)
+```
+
+</Variant>
+<Variant name="callout-v1-3" caption={"tint=\"warning\""} alt={"Aviso: tint=\"warning\""} code="Código" mono>
+
+```python
+pz.container(ui.callout("Unsaved changes", "Save before closing.", tint="warning"), width=380)
+```
+
+</Variant>
+<Variant name="callout-v1-4" caption={"tint=\"error\""} alt={"Aviso: tint=\"error\""} code="Código" mono>
+
+```python
+pz.container(ui.callout("Could not save", "The file is read-only.", tint="error"), width=380)
+```
+
+</Variant>
+<Variant name="callout-v1-5" caption={"tint=\"accent\""} alt={"Aviso: tint=\"accent\""} code="Código" mono>
+
+```python
+pz.container(ui.callout("Tip", "Ctrl+Shift+P opens the palette.", tint="accent", icon="lightbulb"), width=380)
+```
+
+</Variant>
+</VariantGrid>
+
+### Contenido
+
+<VariantGrid>
+<Variant name="callout-v2-1" caption={"Solo título"} alt={"Aviso: Solo título"} code="Código">
+
+```python
+pz.container(ui.callout("Read-only file"), width=380)
+```
+
+</Variant>
+<Variant name="callout-v2-2" caption={"actions="} alt={"Aviso: actions="} code="Código" mono>
+
+```python
+pz.container(ui.callout("A new version is out", "Restart to update.",
+                        actions=[ui.button("Restart", on_restart, size="sm")]), width=380)
+```
+
+</Variant>
+<Variant name="callout-v2-3" caption={"on_dismiss="} alt={"Aviso: on_dismiss="} code="Código" mono>
+
+```python
+pz.container(ui.callout("Welcome!", "Open a folder to start.", on_dismiss=on_dismiss), width=380)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

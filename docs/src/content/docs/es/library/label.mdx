@@ -2,7 +2,7 @@
 title: "Etiqueta"
 description: "Texto con color, tamaño y peso del tema; `muted` para texto secundario. Componente de Pyzed para GUIs de escritorio en Python, con ejemplos y API."
 sidebar:
-  order: 49
+  order: 51
   label: "Etiqueta"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Texto normal en la pantalla, con los colores del tema actual.
+:::
 
 Texto que toma el color del tema. `color` es un token del tema (`"text"`, `"accent"`, `"error"`…) o un color hex, y `size` es un paso con nombre (`"xs"` a `"2xl"`) o un número. `ui.muted(...)` es una etiqueta con el color `"text_muted"`, para texto secundario.
 
@@ -53,54 +59,161 @@ pz.column([
 ], spacing=8)
 ```
 
-## Ejemplos
+## Variantes
 
-### Tamaños
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
 
-Los tamaños con nombre siguen el tamaño de fuente del tema.
+### Tamaño
 
-<Tabs syncKey="library-view">
-<TabItem label="Vista previa">
-<Preview name="label-1" alt="Etiqueta: Tamaños" />
-</TabItem>
-<TabItem label="Código">
+Los tamaños con nombre siguen el tamaño de fuente del tema; un número es un tamaño en píxeles.
 
-```python
-pz.column([
-    ui.label("Extra small", size="xs"),
-    ui.label("Small", size="sm"),
-    ui.label("Medium (default)", size="md"),
-    ui.label("Large", size="lg"),
-    ui.label("Extra large", size="xl"),
-], spacing=4)
-```
-
-</TabItem>
-</Tabs>
-
-### Colores
-
-Los tokens semánticos se adaptan a todos los temas.
-
-<Tabs syncKey="library-view">
-<TabItem label="Vista previa">
-<Preview name="label-2" alt="Etiqueta: Colores" />
-</TabItem>
-<TabItem label="Código">
+<VariantGrid>
+<Variant name="label-v1-1" caption={"size=\"xs\""} alt={"Etiqueta: size=\"xs\""} code="Código" mono>
 
 ```python
-pz.row([
-    ui.label("accent", color="accent"),
-    ui.label("success", color="success"),
-    ui.label("warning", color="warning"),
-    ui.label("error", color="error"),
-    ui.label("italic", italic=True),
-    ui.label("#c678dd", color="#c678dd"),
-], spacing=16)
+ui.label("Extra small", size="xs")
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="label-v1-2" caption={"size=\"sm\""} alt={"Etiqueta: size=\"sm\""} code="Código" mono>
+
+```python
+ui.label("Small", size="sm")
+```
+
+</Variant>
+<Variant name="label-v1-3" caption={"size=\"md\""} alt={"Etiqueta: size=\"md\""} code="Código" mono>
+
+```python
+ui.label("Medium", size="md")
+```
+
+</Variant>
+<Variant name="label-v1-4" caption={"size=\"lg\""} alt={"Etiqueta: size=\"lg\""} code="Código" mono>
+
+```python
+ui.label("Large", size="lg")
+```
+
+</Variant>
+<Variant name="label-v1-5" caption={"size=\"xl\""} alt={"Etiqueta: size=\"xl\""} code="Código" mono>
+
+```python
+ui.label("Extra large", size="xl")
+```
+
+</Variant>
+<Variant name="label-v1-6" caption={"size=\"2xl\""} alt={"Etiqueta: size=\"2xl\""} code="Código" mono>
+
+```python
+ui.label("Huge", size="2xl")
+```
+
+</Variant>
+</VariantGrid>
+
+### Color
+
+<VariantGrid>
+<Variant name="label-v2-1" caption={"color=\"text\""} alt={"Etiqueta: color=\"text\""} code="Código" mono>
+
+```python
+ui.label("Text")
+```
+
+</Variant>
+<Variant name="label-v2-2" caption={"ui.muted"} alt={"Etiqueta: ui.muted"} code="Código" mono>
+
+```python
+ui.muted("Muted text")
+```
+
+</Variant>
+<Variant name="label-v2-3" caption={"color=\"accent\""} alt={"Etiqueta: color=\"accent\""} code="Código" mono>
+
+```python
+ui.label("Accent", color="accent")
+```
+
+</Variant>
+<Variant name="label-v2-4" caption={"color=\"success\""} alt={"Etiqueta: color=\"success\""} code="Código" mono>
+
+```python
+ui.label("Success", color="success")
+```
+
+</Variant>
+<Variant name="label-v2-5" caption={"color=\"warning\""} alt={"Etiqueta: color=\"warning\""} code="Código" mono>
+
+```python
+ui.label("Warning", color="warning")
+```
+
+</Variant>
+<Variant name="label-v2-6" caption={"color=\"error\""} alt={"Etiqueta: color=\"error\""} code="Código" mono>
+
+```python
+ui.label("Error", color="error")
+```
+
+</Variant>
+<Variant name="label-v2-7" caption={"color=\"#c678dd\""} alt={"Etiqueta: color=\"#c678dd\""} code="Código" mono>
+
+```python
+ui.label("Any hex color", color="#c678dd")
+```
+
+</Variant>
+</VariantGrid>
+
+### Peso y estilo
+
+<VariantGrid>
+<Variant name="label-v3-1" caption={"weight=\"normal\""} alt={"Etiqueta: weight=\"normal\""} code="Código" mono>
+
+```python
+ui.label("Normal", weight="normal", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-2" caption={"weight=\"medium\""} alt={"Etiqueta: weight=\"medium\""} code="Código" mono>
+
+```python
+ui.label("Medium", weight="medium", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-3" caption={"weight=\"semibold\""} alt={"Etiqueta: weight=\"semibold\""} code="Código" mono>
+
+```python
+ui.label("Semibold", weight="semibold", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-4" caption={"weight=\"bold\""} alt={"Etiqueta: weight=\"bold\""} code="Código" mono>
+
+```python
+ui.label("Bold", weight="bold", size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-5" caption={"italic=True"} alt={"Etiqueta: italic=True"} code="Código" mono>
+
+```python
+ui.label("Italic", italic=True, size="lg")
+```
+
+</Variant>
+<Variant name="label-v3-6" caption={"mono=True"} alt={"Etiqueta: mono=True"} code="Código" mono>
+
+```python
+ui.label("def mono(): ...", mono=True)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

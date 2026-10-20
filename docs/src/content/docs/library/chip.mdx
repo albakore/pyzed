@@ -2,7 +2,7 @@
 title: "Chip"
 description: "A compact tag: clickable as a filter, removable with an ✕. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 14
+  order: 15
   label: "Chip"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A small rounded tag. Click it to turn a filter on or off, or press its ✕ to remove it.
+:::
 
 A small rounded tag. With `on_press` it acts as a filter you can toggle (`selected=True` highlights it), and with `on_remove` it shows a close button, as in a list of tags.
 
@@ -52,6 +58,71 @@ class Tags(pz.App):
         return pz.row([ui.chip(t, on_remove=lambda t=t: self.tags.remove(t)) for t in self.tags],
                       spacing=6, wrap=True)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Kind
+
+<VariantGrid>
+<Variant name="chip-v1-1" caption={"Static"} alt={"Chip: Static"} code="Code">
+
+```python
+ui.chip("python")
+```
+
+</Variant>
+<Variant name="chip-v1-2" caption={"on_press="} alt={"Chip: on_press="} code="Code" mono>
+
+```python
+ui.chip("rust", on_press=on_filter)
+```
+
+</Variant>
+<Variant name="chip-v1-3" caption={"selected=True"} alt={"Chip: selected=True"} code="Code" mono>
+
+```python
+ui.chip("python", on_press=on_filter, selected=True)
+```
+
+</Variant>
+<Variant name="chip-v1-4" caption={"on_remove="} alt={"Chip: on_remove="} code="Code" mono>
+
+```python
+ui.chip("iced", on_remove=on_remove)
+```
+
+</Variant>
+</VariantGrid>
+
+### Content
+
+<VariantGrid>
+<Variant name="chip-v2-1" caption={"icon=\"tag\""} alt={"Chip: icon=\"tag\""} code="Code" mono>
+
+```python
+ui.chip("design", icon="tag")
+```
+
+</Variant>
+<Variant name="chip-v2-2" caption={"Icon and remove"} alt={"Chip: Icon and remove"} code="Code">
+
+```python
+ui.chip("ada@example.com", icon="user", on_remove=on_remove)
+```
+
+</Variant>
+<Variant name="chip-v2-3" caption={"Selected with icon"} alt={"Chip: Selected with icon"} code="Code">
+
+```python
+ui.chip("favorites", icon="star", selected=True, on_press=on_filter)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

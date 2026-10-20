@@ -2,7 +2,7 @@
 title: "Icon picker"
 description: "Pick one of the ~2000 Lucide icons from a searchable grid. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 38
+  order: 39
   label: "Icon picker"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A searchable grid of little pictures to choose an icon from.
+:::
 
 `ui.IconPicker` is a component with a search box, a category drop-down and a grid of every bundled Lucide icon. The search matches names and tags ("person" finds `user`), Enter picks the first match and `on_change` receives the icon's name in `event.value`. `ui.icon_picker_dialog` puts it in a dialog that picks on a click, and `ui.icon_grid` is the bare grid, which only builds the rows in view.
 
@@ -30,6 +36,10 @@ ui.IconPicker(value="rocket", columns=10, height=200, clearable=True, on_change=
 
 </TabItem>
 </Tabs>
+
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
 
 ## When to use
 
@@ -56,6 +66,50 @@ class Shortcuts(pz.App):
         return ui.dialog_layer(page, dialog if self.picking else None,
                                on_dismiss=lambda: setattr(self, "picking", False))
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Picker
+
+<VariantGrid>
+<Variant name="icon-picker-v1-1" caption={"columns=8"} alt={"Icon picker: columns=8"} code="Code" mono>
+
+```python
+ui.IconPicker(value="rocket", columns=8, height=180, on_change=on_change)
+```
+
+</Variant>
+<Variant name="icon-picker-v1-2" caption={"clearable=True"} alt={"Icon picker: clearable=True"} code="Code" mono>
+
+```python
+ui.IconPicker(value="heart", columns=8, height=180, clearable=True, on_change=on_change)
+```
+
+</Variant>
+</VariantGrid>
+
+### Building blocks
+
+<VariantGrid>
+<Variant name="icon-picker-v2-1" caption={"ui.icon_grid"} alt={"Icon picker: ui.icon_grid"} code="Code" mono>
+
+```python
+ui.icon_grid(pz.icons.search("arrow")[:24], on_pick, selected="arrow-right", columns=8, height=110)
+```
+
+</Variant>
+<Variant name="icon-picker-v2-2" caption={"ui.icon_picker_dialog"} alt={"Icon picker: ui.icon_picker_dialog"} code="Code" mono>
+
+```python
+ui.icon_picker_dialog("rocket", on_pick, on_close=on_close, columns=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

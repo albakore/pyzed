@@ -2,7 +2,7 @@
 title: "Row"
 description: "Lays out children horizontally. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 64
+  order: 66
   label: "Row"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Puts things side by side, from left to right.
+:::
 
 Lays out its children horizontally, with `spacing` between them and `align` on the cross axis. `wrap=True` moves children that don't fit to the next line. Lists are flattened and `None`/`False` are skipped, so `cond and widget` works.
 
@@ -51,6 +57,91 @@ pz.column([
     pz.row([box("tall", h=70), box("center"), box("end")], spacing=8, align="center"),
 ], spacing=14)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Spacing
+
+<VariantGrid>
+<Variant name="row-v1-1" caption={"spacing=0"} alt={"Row: spacing=0"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")])
+```
+
+</Variant>
+<Variant name="row-v1-2" caption={"spacing=8"} alt={"Row: spacing=8"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")], spacing=8)
+```
+
+</Variant>
+<Variant name="row-v1-3" caption={"spacing=24"} alt={"Row: spacing=24"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("A"), box("B"), box("C")], spacing=24)
+```
+
+</Variant>
+</VariantGrid>
+
+### Cross-axis alignment
+
+<VariantGrid>
+<Variant name="row-v2-1" caption={"align=\"start\""} alt={"Row: align=\"start\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="start")
+```
+
+</Variant>
+<Variant name="row-v2-2" caption={"align=\"center\""} alt={"Row: align=\"center\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="center")
+```
+
+</Variant>
+<Variant name="row-v2-3" caption={"align=\"end\""} alt={"Row: align=\"end\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("tall", h=70), box("B"), box("C")], spacing=8, align="end")
+```
+
+</Variant>
+</VariantGrid>
+
+### Options
+
+<VariantGrid>
+<Variant name="row-v3-1" caption={"pz.hspace()"} alt={"Row: pz.hspace()"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.row([box("Start"), pz.hspace(), box("End")], width=320)
+```
+
+</Variant>
+<Variant name="row-v3-2" caption={"wrap=True"} alt={"Row: wrap=True"} code="Code" mono>
+
+```python
+pz.container(pz.row([ui.chip(t) for t in ["python", "rust", "iced", "desktop", "gui", "async", "themes"]],
+                    spacing=6, wrap=True, line_spacing=6), width=260)
+```
+
+</Variant>
+</VariantGrid>
 
 ## Examples
 

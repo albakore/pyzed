@@ -2,7 +2,7 @@
 title: "Facepile"
 description: "Avatares de colaboradores superpuestos con +N. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 50
+  order: 52
   label: "Facepile"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una fila de avatares superpuestos que muestra quién está.
+:::
 
 Avatares superpuestos de colaboradores, como en la barra de título de un editor colaborativo. Los que pasan de `max_shown` se agrupan en `+N`.
 
@@ -46,6 +52,45 @@ pz.column([
     ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam", "Jo", "Lee", "Max"], size=28, max_shown=4),
 ], spacing=16, align="center")
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Opciones
+
+<VariantGrid>
+<Variant name="facepile-v1-1" caption={"Dos personas"} alt={"Facepile: Dos personas"} code="Código">
+
+```python
+ui.facepile(["Ana", "Luis"])
+```
+
+</Variant>
+<Variant name="facepile-v1-2" caption={"Cinco personas"} alt={"Facepile: Cinco personas"} code="Código">
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam"])
+```
+
+</Variant>
+<Variant name="facepile-v1-3" caption={"max_shown=3"} alt={"Facepile: max_shown=3"} code="Código" mono>
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta", "Sam", "Jo", "Lee"], max_shown=3)
+```
+
+</Variant>
+<Variant name="facepile-v1-4" caption={"size=32, overlap=10"} alt={"Facepile: size=32, overlap=10"} code="Código" mono>
+
+```python
+ui.facepile(["Ana", "Luis", "Kev", "Marta"], size=32, overlap=10)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

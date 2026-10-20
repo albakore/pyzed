@@ -2,7 +2,7 @@
 title: "Flex"
 description: "CSS flexbox: justify, align, gap, wrap and grow. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 33
+  order: 34
   label: "Flex"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Spreads things along a line: packed together, evenly spaced, or with one that grows.
+:::
 
 Lays children out along one axis like CSS flexbox: `justify` on the main axis (`start`, `center`, `end`, `between`, `around`, `evenly`), `align` on the cross axis, `gap` and `wrap`. `pz.flex_item(child, grow=, basis=)` makes a child grow or gives it a base size.
 
@@ -36,6 +42,10 @@ pz.column([
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - When `row`/`column` are not enough: even distribution, growing items, wrapping cards.
@@ -53,6 +63,86 @@ pz.column([
     pz.flex([box("A"), box("B")], justify="center", gap=8, width=440),
 ], spacing=14)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Justify
+
+<VariantGrid>
+<Variant name="flex-v1-1" caption={"justify=\"start\""} alt={"Flex: justify=\"start\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B")], justify="start", gap=8, width=360)
+```
+
+</Variant>
+<Variant name="flex-v1-2" caption={"justify=\"center\""} alt={"Flex: justify=\"center\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B")], justify="center", gap=8, width=360)
+```
+
+</Variant>
+<Variant name="flex-v1-3" caption={"justify=\"end\""} alt={"Flex: justify=\"end\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B")], justify="end", gap=8, width=360)
+```
+
+</Variant>
+<Variant name="flex-v1-4" caption={"justify=\"between\""} alt={"Flex: justify=\"between\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B"), box("C")], justify="between", width=360)
+```
+
+</Variant>
+<Variant name="flex-v1-5" caption={"justify=\"around\""} alt={"Flex: justify=\"around\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B"), box("C")], justify="around", width=360)
+```
+
+</Variant>
+<Variant name="flex-v1-6" caption={"justify=\"evenly\""} alt={"Flex: justify=\"evenly\""} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("A"), box("B"), box("C")], justify="evenly", width=360)
+```
+
+</Variant>
+</VariantGrid>
+
+### Grow
+
+<VariantGrid>
+<Variant name="flex-v2-1" caption={"flex_item(grow=1)"} alt={"Flex: flex_item(grow=1)"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box("fixed"), pz.flex_item(box("grows", w="fill"), grow=1), box("fixed")], gap=8, width=360)
+```
+
+</Variant>
+<Variant name="flex-v2-2" caption={"wrap=True"} alt={"Flex: wrap=True"} code="Code" mono>
+
+```python
+box = lambda text, w=90, h=44: pz.container(ui.label(text), center=True, width=w, height=h, bg=pz.theme.current().element, radius=6)
+pz.flex([box(str(i)) for i in range(1, 7)], gap=8, wrap=True, width=300)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

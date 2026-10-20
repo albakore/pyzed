@@ -2,7 +2,7 @@
 title: "Stack"
 description: "Layers children on top of each other; `pin` places one at x, y. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 78
+  order: 80
   label: "Stack"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+Puts things on top of each other, like sheets of paper.
+:::
 
 Layers its children on top of each other, the last one on top: the basis of layers, modals and notifications. `pz.pin(child, x=, y=)` places a child at a position inside the stack.
 
@@ -54,6 +60,43 @@ pz.stack([
     pz.pin(pz.container(ui.label("on top", color="#ffffff"), padding=10, bg=t.accent, radius=6), x=150, y=110),
 ], width=320, height=180)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="stack-v1-1" caption={"Layers"} alt={"Stack: Layers"} code="Code">
+
+```python
+t = pz.theme.current()
+pz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),
+          pz.container(ui.label("on top"), center=True, width=180, height=100)])
+```
+
+</Variant>
+<Variant name="stack-v1-2" caption={"pz.pin(x=, y=)"} alt={"Stack: pz.pin(x=, y=)"} code="Code" mono>
+
+```python
+t = pz.theme.current()
+pz.stack([pz.container(width=180, height=100, bg=t.element, radius=10),
+          pz.pin(ui.count_badge(3), x=150, y=8)], width=180, height=100)
+```
+
+</Variant>
+<Variant name="stack-v1-3" caption={"Badge over an icon"} alt={"Stack: Badge over an icon"} code="Code">
+
+```python
+pz.stack([pz.container(ui.icon_button("bell", on_press, size="lg"), padding=6),
+          pz.pin(ui.indicator("error", size=8), x=24, y=6)], width=40, height=40)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

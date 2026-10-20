@@ -2,7 +2,7 @@
 title: "Menu"
 description: "A context menu with icons, shortcuts and checks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 49
+  order: 50
   label: "Menu"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+The list of options that appears when you right-click or press a “more” button.
+:::
 
 A floating context menu. Items are `ui.MenuItem(label, on_press, icon=, keys=, checked=, danger=, disabled=)`; `ui.SEPARATOR` draws a line between groups and a plain string is a header. Show it with a [Popover](/pyzed/library/popover/) or a [Layer](/pyzed/library/layer/).
 
@@ -58,6 +64,70 @@ ui.menu([
     ui.MenuItem("Delete", on_delete, icon="trash-2", danger=True),
 ])
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Items
+
+<VariantGrid>
+<Variant name="menu-v1-1" caption={"Plain"} alt={"Menu: Plain"} code="Code">
+
+```python
+ui.menu([ui.MenuItem("Open", on_open), ui.MenuItem("Rename", on_rename),
+         ui.MenuItem("Duplicate", on_duplicate)], width=200)
+```
+
+</Variant>
+<Variant name="menu-v1-2" caption={"icon=, keys="} alt={"Menu: icon=, keys="} code="Code" mono>
+
+```python
+ui.menu([ui.MenuItem("Copy", on_copy, icon="copy", keys="ctrl-c"),
+         ui.MenuItem("Paste", on_paste, icon="clipboard", keys="ctrl-v")], width=220)
+```
+
+</Variant>
+<Variant name="menu-v1-3" caption={"checked="} alt={"Menu: checked="} code="Code" mono>
+
+```python
+ui.menu([ui.MenuItem("Soft wrap", on_wrap, checked=True),
+         ui.MenuItem("Minimap", on_minimap, checked=False)], width=200)
+```
+
+</Variant>
+<Variant name="menu-v1-4" caption={"danger=True"} alt={"Menu: danger=True"} code="Code" mono>
+
+```python
+ui.menu([ui.MenuItem("Rename", on_rename), ui.SEPARATOR,
+         ui.MenuItem("Delete", on_delete, icon="trash-2", danger=True)], width=200)
+```
+
+</Variant>
+<Variant name="menu-v1-5" caption={"disabled=True"} alt={"Menu: disabled=True"} code="Code" mono>
+
+```python
+ui.menu([ui.MenuItem("Undo", on_undo, keys="ctrl-z"),
+         ui.MenuItem("Redo", on_redo, keys="ctrl-shift-z", disabled=True)], width=220)
+```
+
+</Variant>
+</VariantGrid>
+
+### Groups
+
+<VariantGrid>
+<Variant name="menu-v2-1" caption={"Headers and separators"} alt={"Menu: Headers and separators"} code="Code">
+
+```python
+ui.menu(["FILE", ui.MenuItem("New", on_new, keys="ctrl-n"), ui.SEPARATOR,
+         "EDIT", ui.MenuItem("Find", on_find, keys="ctrl-f")], width=220)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

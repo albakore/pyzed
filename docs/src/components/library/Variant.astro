@@ -1,0 +1,116 @@
+---
+// One captured variant of a library component: the image (dark or light, following the site's
+// theme) at its natural size, a caption and the code that draws it in a collapsible block.
+// docs/scripts/library_shots.py renders `<slug>-v<group>-<n>.<theme>.png` at 2x.
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/library/*.png', { eager: true });
+
+interface Props {
+	/** File name without the theme suffix: `button-v1-2`. */
+	name: string;
+	caption: string;
+	alt: string;
+	/** Label of the code toggle ("Code" / "Código"). */
+	code?: string;
+	/** Show the caption as code (a parameter such as `size="sm"`). */
+	mono?: boolean;
+}
+
+const { name, caption, alt, code = 'Code', mono = false } = Astro.props;
+const pick = (theme: string) => images[`../../assets/library/${name}.${theme}.png`]?.default;
+const dark = pick('dark');
+const light = pick('light') ?? dark;
+if (!dark) throw new Error(`Missing library variant: ${name}.dark.png (run docs/scripts/library_shots.py)`);
+// The PNGs are 2x: show them at half their pixel size so a button looks like a button.
+const css = (img: ImageMetadata) => Math.round(img.width / 2);
+const wide = css(dark) > 340;
+---
+
+<figure class:list={['lib-variant', { wide }]}>
+	<div class="lib-shot">
+		<Image class="on-dark" src={dark} alt={alt} width={css(dark)} densities={[1, 2]} loading="lazy" />
+		{light && <Image class="on-light" src={light} alt={alt} width={css(light)} densities={[1, 2]} loading="lazy" />}
+	</div>
+	<figcaption>{mono ? <code>{caption}</code> : caption}</figcaption>
+	<details>
+		<summary>{code}</summary>
+		<div class="code"><slot /></div>
+	</details>
+</figure>
+
+<style>
+	.lib-variant {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		margin: 0;
+		border: 1px solid var(--pz-frame-border, var(--sl-color-gray-5));
+		border-radius: 0.75rem;
+		overflow: hidden;
+		background: var(--pz-tile-bg, var(--sl-color-gray-6));
+	}
+	.lib-variant.wide {
+		grid-column: 1 / -1;
+	}
+	.lib-shot {
+		display: grid;
+		place-items: center;
+		flex: 1;
+		min-height: 5.5rem;
+		padding: 0.25rem;
+		background: #282c33;
+		border-bottom: 1px solid var(--pz-frame-border, var(--sl-color-gray-5));
+	}
+	.lib-shot img {
+		display: block;
+		max-width: 100%;
+		height: auto;
+	}
+	figcaption {
+		padding: 0.55rem 0.8rem 0.2rem;
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		color: var(--sl-color-white);
+		overflow-wrap: anywhere;
+	}
+	figcaption code {
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
+		background: none;
+		padding: 0;
+	}
+	details {
+		padding: 0 0.8rem 0.55rem;
+		font-size: var(--sl-text-xs);
+	}
+	summary {
+		cursor: pointer;
+		width: fit-content;
+		color: var(--sl-color-gray-3);
+		user-select: none;
+	}
+	summary:hover {
+		color: var(--pz-accent-text, var(--sl-color-accent-high));
+	}
+	.code {
+		margin-top: 0.5rem;
+	}
+	.code :global(.expressive-code) {
+		margin: 0;
+	}
+	.on-light {
+		display: none !important;
+	}
+	:global([data-theme='light']) .lib-variant .lib-shot {
+		background: #fafafa;
+	}
+	:global([data-theme='light']) .lib-variant .on-light {
+		display: block !important;
+	}
+	:global([data-theme='light']) .lib-variant .on-dark {
+		display: none !important;
+	}
+</style>

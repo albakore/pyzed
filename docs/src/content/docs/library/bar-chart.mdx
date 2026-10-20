@@ -2,7 +2,7 @@
 title: "Bar chart"
 description: "A vertical bar chart with labels. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 7
+  order: 8
   label: "Bar chart"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A chart of bars to compare a few amounts.
+:::
 
 A vertical bar chart drawn with `pz.canvas` in the theme colors, with optional labels under the bars.
 
@@ -41,6 +47,45 @@ from pyzed import ui
 ui.bar_chart([12, 19, 8, 15, 22, 17, 9], labels=["M", "T", "W", "T", "F", "S", "S"],
              width=360, height=180)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="bar-chart-v1-1" caption={"labels="} alt={"Bar chart: labels="} code="Code" mono>
+
+```python
+ui.bar_chart([12, 19, 8, 15, 22], labels=["M", "T", "W", "T", "F"], width=240, height=120)
+```
+
+</Variant>
+<Variant name="bar-chart-v1-2" caption={"No labels"} alt={"Bar chart: No labels"} code="Code">
+
+```python
+ui.bar_chart([4, 8, 6, 9, 3, 7, 5, 10], width=240, height=100)
+```
+
+</Variant>
+<Variant name="bar-chart-v1-3" caption={"tint=\"success\""} alt={"Bar chart: tint=\"success\""} code="Code" mono>
+
+```python
+ui.bar_chart([5, 9, 7, 12], labels=["Q1", "Q2", "Q3", "Q4"], width=240, height=120, tint="success")
+```
+
+</Variant>
+<Variant name="bar-chart-v1-4" caption={"tint=\"warning\""} alt={"Bar chart: tint=\"warning\""} code="Code" mono>
+
+```python
+ui.bar_chart([30, 12, 18], labels=["cpu", "io", "net"], width=240, height=120, tint="warning")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

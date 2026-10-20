@@ -2,7 +2,7 @@
 title: "Insignia"
 description: "Una pastilla pequeña para estados, versiones y contadores. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 61
+  order: 63
   label: "Insignia"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Una pastilla de color diminuta con una o dos palabras, como “beta” o “3 errores”.
+:::
 
 Una pastilla pequeña con texto y un icono opcional. `tint` elige un color semántico y `variant` es `"soft"` (por defecto), `"solid"` o `"outline"`.
 
@@ -52,29 +58,110 @@ pz.row([
 ], spacing=8)
 ```
 
-## Ejemplos
+## Variantes
 
-### Variantes
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
 
-`soft` tiñe el fondo, `solid` lo rellena y `outline` solo dibuja el borde.
+### Tinte
 
-<Tabs syncKey="library-view">
-<TabItem label="Vista previa">
-<Preview name="badge-1" alt="Insignia: Variantes" />
-</TabItem>
-<TabItem label="Código">
+<VariantGrid>
+<Variant name="badge-v1-1" caption={"tint=\"accent\""} alt={"Insignia: tint=\"accent\""} code="Código" mono>
 
 ```python
-pz.row([
-    ui.badge("soft"),
-    ui.badge("solid", variant="solid"),
-    ui.badge("outline", variant="outline"),
-    ui.badge("new", variant="solid", tint="success", icon="sparkles"),
-], spacing=8)
+ui.badge("accent")
 ```
 
-</TabItem>
-</Tabs>
+</Variant>
+<Variant name="badge-v1-2" caption={"tint=\"success\""} alt={"Insignia: tint=\"success\""} code="Código" mono>
+
+```python
+ui.badge("passed", tint="success")
+```
+
+</Variant>
+<Variant name="badge-v1-3" caption={"tint=\"warning\""} alt={"Insignia: tint=\"warning\""} code="Código" mono>
+
+```python
+ui.badge("pending", tint="warning")
+```
+
+</Variant>
+<Variant name="badge-v1-4" caption={"tint=\"error\""} alt={"Insignia: tint=\"error\""} code="Código" mono>
+
+```python
+ui.badge("failed", tint="error")
+```
+
+</Variant>
+<Variant name="badge-v1-5" caption={"tint=\"info\""} alt={"Insignia: tint=\"info\""} code="Código" mono>
+
+```python
+ui.badge("info", tint="info")
+```
+
+</Variant>
+<Variant name="badge-v1-6" caption={"tint=\"#c678dd\""} alt={"Insignia: tint=\"#c678dd\""} code="Código" mono>
+
+```python
+ui.badge("custom", tint="#c678dd")
+```
+
+</Variant>
+</VariantGrid>
+
+### Variante
+
+<VariantGrid>
+<Variant name="badge-v2-1" caption={"variant=\"soft\""} alt={"Insignia: variant=\"soft\""} code="Código" mono>
+
+```python
+ui.badge("soft")
+```
+
+</Variant>
+<Variant name="badge-v2-2" caption={"variant=\"solid\""} alt={"Insignia: variant=\"solid\""} code="Código" mono>
+
+```python
+ui.badge("solid", variant="solid")
+```
+
+</Variant>
+<Variant name="badge-v2-3" caption={"variant=\"outline\""} alt={"Insignia: variant=\"outline\""} code="Código" mono>
+
+```python
+ui.badge("outline", variant="outline")
+```
+
+</Variant>
+</VariantGrid>
+
+### Con icono
+
+<VariantGrid>
+<Variant name="badge-v3-1" caption={"icon=\"sparkles\""} alt={"Insignia: icon=\"sparkles\""} code="Código" mono>
+
+```python
+ui.badge("new", icon="sparkles")
+```
+
+</Variant>
+<Variant name="badge-v3-2" caption={"icon=\"circle-x\""} alt={"Insignia: icon=\"circle-x\""} code="Código" mono>
+
+```python
+ui.badge("3 errors", tint="error", icon="circle-x")
+```
+
+</Variant>
+<Variant name="badge-v3-3" caption={"variant=\"solid\", icon="} alt={"Insignia: variant=\"solid\", icon="} code="Código" mono>
+
+```python
+ui.badge("verified", tint="success", variant="solid", icon="check")
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

@@ -2,7 +2,7 @@
 title: "Prompt"
 description: "Asks for a line of text. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 57
+  order: 59
   label: "Prompt"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A small box that asks you to type something, like a new name for a file.
+:::
 
 Asks for a line of text: a controlled input plus Cancel and OK. Enter or the button calls `on_submit`.
 
@@ -33,6 +39,10 @@ ui.dialog_layer(main_view(), ui.prompt(
 
 </TabItem>
 </Tabs>
+
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
 
 ## When to use
 
@@ -55,6 +65,39 @@ class Files(pz.App):
                                self.rename, lambda: setattr(self, "new_name", None))
         return ui.dialog_layer(self.main_view(), dialog)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Content
+
+<VariantGrid>
+<Variant name="prompt-v1-1" caption={"Title only"} alt={"Prompt: Title only"} code="Code">
+
+```python
+ui.prompt("New branch", "", on_input, on_submit, on_cancel, placeholder="feature/…", width=340)
+```
+
+</Variant>
+<Variant name="prompt-v1-2" caption={"message="} alt={"Prompt: message="} code="Code" mono>
+
+```python
+ui.prompt("Rename", "notes.py", on_input, on_submit, on_cancel, message="New name for the file:",
+          width=340)
+```
+
+</Variant>
+<Variant name="prompt-v1-3" caption={"submit_label="} alt={"Prompt: submit_label="} code="Code" mono>
+
+```python
+ui.prompt("Save view", "My view", on_input, on_submit, on_cancel, submit_label="Save", width=340)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

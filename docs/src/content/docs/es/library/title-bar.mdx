@@ -2,7 +2,7 @@
 title: "Barra de título"
 description: "La barra superior con los selectores de proyecto y rama. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 12
+  order: 13
   label: "Barra de título"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+La barra de lo más alto de la ventana, con el nombre del proyecto y botones rápidos.
+:::
 
 La barra superior de la ventana: widgets al principio (`start`, selectores de proyecto y rama), un `center` opcional y widgets al final (`end`, cuenta, notificaciones). `ui.title_button` es el botón compacto que usa (`pyzed ▾`, `main`), con estilos `chevron` y `muted`.
 
@@ -49,6 +55,64 @@ ui.title_bar(
     center=ui.muted("notes.py"),
 )
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Botones de título
+
+<VariantGrid>
+<Variant name="title-bar-v1-1" caption={"Simple"} alt={"Barra de título: Simple"} code="Código">
+
+```python
+ui.title_button("pyzed", on_projects)
+```
+
+</Variant>
+<Variant name="title-bar-v1-2" caption={"chevron=True"} alt={"Barra de título: chevron=True"} code="Código" mono>
+
+```python
+ui.title_button("pyzed", on_projects, chevron=True)
+```
+
+</Variant>
+<Variant name="title-bar-v1-3" caption={"muted=True, icon="} alt={"Barra de título: muted=True, icon="} code="Código" mono>
+
+```python
+ui.title_button("main", on_branches, icon="git-branch", muted=True)
+```
+
+</Variant>
+</VariantGrid>
+
+### Barra
+
+<VariantGrid>
+<Variant name="title-bar-v2-1" caption={"start="} alt={"Barra de título: start="} code="Código" mono>
+
+```python
+pz.container(ui.title_bar([ui.title_button("pyzed", chevron=True)]), width=420)
+```
+
+</Variant>
+<Variant name="title-bar-v2-2" caption={"center="} alt={"Barra de título: center="} code="Código" mono>
+
+```python
+pz.container(ui.title_bar([], [], center=ui.muted("notes.py — Notes")), width=420)
+```
+
+</Variant>
+<Variant name="title-bar-v2-3" caption={"end="} alt={"Barra de título: end="} code="Código" mono>
+
+```python
+pz.container(ui.title_bar([], [ui.icon_button("bell", on_bell, size="sm"), ui.avatar("KV")]), width=420)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

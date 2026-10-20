@@ -2,7 +2,7 @@
 title: "Efectos"
 description: "Glow, bloom, glass y opacidad como propiedades de estilo. Un componente nativo de Pyzed para GUIs de escritorio en Python, con vista previa, ejemplos y su API."
 sidebar:
-  order: 43
+  order: 45
   label: "Efectos"
   badge:
     text: "Nuevo"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../../components/library/Preview.astro';
+import VariantGrid from '../../../../components/library/VariantGrid.astro';
+import Variant from '../../../../components/library/Variant.astro';
+
+:::tip[En pocas palabras]
+Brillos, cristal esmerilado y transparencia que puedes añadir a cualquier caja.
+:::
 
 Los efectos visuales son propiedades de [estilo](/pyzed/es/theming/styles/): `glow` (un halo suave), `bloom` (un resplandor amplio y brillante), `glass` (un panel translúcido y esmerilado), `opacity`, y `translate` y `scale`, que desplazan o escalan el dibujo sin cambiar el layout. Las animaciones también pueden cambiar `glow`.
 
@@ -40,6 +46,10 @@ pz.container(pz.row([
 </TabItem>
 </Tabs>
 
+:::note[Nuevo]
+Este componente se añadió hace poco. Cuéntanos qué tal te funciona en el [gestor de incidencias](https://github.com/albakore/pyzed/issues).
+:::
+
 ## Cuándo usarlo
 
 - Para destacar la acción principal o un estado en vivo (grabando, conectado).
@@ -62,6 +72,65 @@ pz.container(pz.row([
 ], spacing=24), padding=32).style(
     background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=14)
 ```
+
+## Variantes
+
+:::note[Sobre estas capturas]
+Cada captura la dibuja pyzed mismo, fuera de pantalla a 2x, en One Dark o One Light según el tema de este sitio, y recortada al componente para que se vea a su tamaño real. Abre **Código** bajo una captura para ver el fragmento que la dibuja; los nombres libres como `on_save` son tus propios callbacks.
+:::
+
+### Efectos
+
+<VariantGrid>
+<Variant name="effects-v1-1" caption={"glass=True"} alt={"Efectos: glass=True"} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Glass"), width=130, height=60, padding=12).style(glass=True, radius=12),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-2" caption={"glow="} alt={"Efectos: glow="} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Glow"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, glow=("#22d3ee", 18)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-3" caption={"bloom="} alt={"Efectos: bloom="} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Bloom"), width=130, height=60, padding=12).style(background="#1a0b16", radius=12, bloom=("#f472b6", 0.8)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-4" caption={"opacity=0.5"} alt={"Efectos: opacity=0.5"} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Opacity"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, opacity=0.5),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-5" caption={"scale=1.15"} alt={"Efectos: scale=1.15"} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Scale"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, scale=1.15),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+<Variant name="effects-v1-6" caption={"translate="} alt={"Efectos: translate="} code="Código" mono>
+
+```python
+pz.container(pz.container(ui.label("Translate"), width=130, height=60, padding=12).style(background="#0b1220", radius=12, translate=(16, 8)),
+             padding=24).style(background=pz.Gradient(["#0f172a", "#312e81", "#0e7490"], angle=90), radius=12)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

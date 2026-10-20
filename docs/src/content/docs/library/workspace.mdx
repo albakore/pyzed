@@ -2,7 +2,7 @@
 title: "Workspace"
 description: "The layout of an editor-style window: title bar, docks, center, status bar. A Pyzed component for Python desktop GUIs, with examples and its API."
 sidebar:
-  order: 95
+  order: 97
   label: "Workspace"
 ---
 
@@ -10,6 +10,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+The whole layout of an editor-like window: bar on top, side panels, the main area and a bar at the bottom.
+:::
 
 Builds the frame of an editor-style window: the title bar on top, docks on the left, right and bottom, the center and the status bar. Pass `None` to hide a dock (that is how Ctrl+B works); `left_width`, `right_width` and `bottom_height` set their size and `on_resize` reports drags.
 
@@ -70,6 +76,56 @@ class Ide(pz.App):
             status_bar=ui.status_bar([], [ui.status_item("Python")]),
         )
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Docks
+
+<VariantGrid>
+<Variant name="workspace-v1-1" caption={"Center and status bar"} alt={"Workspace: Center and status bar"} code="Code">
+
+```python
+ui.workspace(main_view(), status_bar=ui.status_bar([], [ui.status_item("Python")]))
+```
+
+</Variant>
+<Variant name="workspace-v1-2" caption={"left="} alt={"Workspace: left="} code="Code" mono>
+
+```python
+ui.workspace(main_view(), left=pz.column([ui.panel_header("Project"),
+             ui.list_item("main.py", icon="file-code", selected=True, inset=True)]), left_width=150)
+```
+
+</Variant>
+<Variant name="workspace-v1-3" caption={"bottom="} alt={"Workspace: bottom="} code="Code" mono>
+
+```python
+ui.workspace(main_view(), bottom=pz.column([ui.panel_header("Terminal", icon="terminal"),
+             ui.terminal("$ python main.py")]), bottom_height=90)
+```
+
+</Variant>
+<Variant name="workspace-v1-4" caption={"right="} alt={"Workspace: right="} code="Code" mono>
+
+```python
+ui.workspace(main_view(), right=pz.column([ui.panel_header("Outline"), ui.list_item("class Notes", icon="box")]),
+             right_width=150)
+```
+
+</Variant>
+<Variant name="workspace-v1-5" caption={"title_bar="} alt={"Workspace: title_bar="} code="Code" mono>
+
+```python
+ui.workspace(main_view(), title_bar=ui.title_bar([ui.title_button("pyzed", chevron=True)],
+                                                  [ui.avatar("KV")]))
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 

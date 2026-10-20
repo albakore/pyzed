@@ -2,7 +2,7 @@
 title: "Color picker"
 description: "Pick a color, a gradient or a masked fill; swatches show them. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API."
 sidebar:
-  order: 16
+  order: 17
   label: "Color picker"
   badge:
     text: "New"
@@ -13,6 +13,12 @@ sidebar:
 
 import { Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
 import Preview from '../../../components/library/Preview.astro';
+import VariantGrid from '../../../components/library/VariantGrid.astro';
+import Variant from '../../../components/library/Variant.astro';
+
+:::tip[In plain words]
+A palette to choose a color, its transparency, or a blend of colors.
+:::
 
 `ui.ColorPicker` is a component that picks a color with alpha, a linear gradient (stops you add, drag and remove, plus an angle) or a fill with an opacity mask. `on_change` receives an event whose `value` is a `"#rrggbb[aa]"` string, a `pz.Gradient` or a `pz.Paint`, all valid backgrounds. `ui.color_swatch` shows any of them over a checkerboard.
 
@@ -38,6 +44,10 @@ pz.row([
 </TabItem>
 </Tabs>
 
+:::note[New]
+This component was added recently. Tell us how it works for you in the [issue tracker](https://github.com/albakore/pyzed/issues).
+:::
+
 ## When to use
 
 - For theme editors, drawing apps and style properties.
@@ -59,6 +69,75 @@ class Styles(pz.App):
             pz.container(width=120, height=120, bg=self.fill, radius=8),
         ], spacing=16)
 ```
+
+## Variants
+
+:::note[About these captures]
+Each capture is drawn by pyzed itself, off-screen at 2x, in One Dark or One Light to match this site's theme, and cropped to the component so it shows at its real size. Open **Code** under a capture to see the snippet that draws it; free names such as `on_save` stand for your own callbacks.
+:::
+
+### Options
+
+<VariantGrid>
+<Variant name="color-picker-v1-1" caption={"Everything"} alt={"Color picker: Everything"} code="Code">
+
+```python
+ui.ColorPicker(value="#3b82f6cc", on_change=on_change)
+```
+
+</Variant>
+<Variant name="color-picker-v1-2" caption={"alpha=False, gradients=False, masks=False"} alt={"Color picker: alpha=False, gradients=False, masks=False"} code="Code" mono>
+
+```python
+ui.ColorPicker(value="#a1c181", alpha=False, gradients=False, masks=False,
+               on_change=on_change)
+```
+
+</Variant>
+<Variant name="color-picker-v1-3" caption={"swatches=[...]"} alt={"Color picker: swatches=[...]"} code="Code" mono>
+
+```python
+ui.ColorPicker(value="#e5c07b", gradients=False, masks=False,
+               swatches=["#e06c75", "#e5c07b", "#98c379", "#61afef", "#c678dd"], on_change=on_change)
+```
+
+</Variant>
+</VariantGrid>
+
+### Swatches
+
+A swatch draws any color, gradient or paint over a checkerboard, so transparency shows.
+
+<VariantGrid>
+<Variant name="color-picker-v2-1" caption={"Color"} alt={"Color picker: Color"} code="Code">
+
+```python
+ui.color_swatch("#3b82f6", size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-2" caption={"With alpha"} alt={"Color picker: With alpha"} code="Code">
+
+```python
+ui.color_swatch("#a1c181aa", size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-3" caption={"pz.Gradient"} alt={"Color picker: pz.Gradient"} code="Code" mono>
+
+```python
+ui.color_swatch(pz.Gradient(["#f97316", "#7c3aed"], angle=90), size=32)
+```
+
+</Variant>
+<Variant name="color-picker-v2-4" caption={"ui.checkerboard"} alt={"Color picker: ui.checkerboard"} code="Code" mono>
+
+```python
+ui.checkerboard(96, 48, size=8)
+```
+
+</Variant>
+</VariantGrid>
 
 ## API
 
