@@ -1648,6 +1648,22 @@ History.push(form, group=None)
 
 Guarda el estado actual del formulario; devuelve `False` si nada cambió.
 
+#### `History.steps`
+
+```python
+History.steps  # property
+```
+
+Cuántos pasos de deshacer hay (una marca para `merge`).
+
+#### `History.merge`
+
+```python
+History.merge(mark)
+```
+
+Convierte en un solo paso de deshacer todo lo guardado desde `mark` (`steps` antes de una tanda de cambios).
+
 #### `History.reset`
 
 ```python

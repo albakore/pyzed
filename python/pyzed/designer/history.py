@@ -40,6 +40,16 @@ class History:
         self._future.clear()
         return True
 
+    @property
+    def steps(self) -> int:
+        """How many undo steps there are (a mark for ``merge``)."""
+        return len(self._past)
+
+    def merge(self, mark: int) -> None:
+        """Makes every step recorded since ``mark`` (``steps`` before a batch of edits) a single undo step."""
+        del self._past[mark + 1:]
+        self._group = None
+
     def reset(self, form: Form) -> None:
         """Forgets all undo and redo steps and starts again from ``form``'s current state."""
         self._group = None

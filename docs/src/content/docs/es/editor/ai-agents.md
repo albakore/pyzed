@@ -68,14 +68,16 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 | Parte | Qué hace |
 | --- | --- |
 | **Cabecera** | El título de la conversación, **Seguir al agente** (la mira: ver [Ver trabajar al agente](#ver-trabajar-al-agente)), **+** (una conversación nueva con Pyzed Agent o con cualquier [agente externo](#agentes-externos), y **Añadir más agentes…**), **Historial** y **⋯**: **Ajustes del agente**, **Reglas…**, **Mostrar el razonamiento**, **Copiar el hilo como Markdown** y **Expandir el panel** (ocupa toda la ventana; elígelo otra vez para devolverlo a su dock). |
-| **Conversación** | Tus mensajes, las respuestas del agente (Markdown), su razonamiento (**Razonamiento**, plegado) y una línea por cada herramienta que usa: un indicador mientras corre, una marca cuando funcionó y una cruz roja cuando falló. Pulsa una línea para ver la entrada y el resultado. |
+| **Conversación** | Tus mensajes, las respuestas del agente (Markdown), su razonamiento (**Razonamiento**, plegado) y una línea por cada paso, en el momento en que ocurre: qué hace el agente (**Añadiendo controles**, **Read file**…) y sobre qué trabaja (el control, el archivo, el comando). Un indicador mientras corre, una marca cuando funcionó y una cruz roja cuando falló. Mientras el modelo todavía escribe una llamada larga, la línea dice **preparando…**; una edición muestra su diff y un comando sus últimas líneas mientras corren. Pulsa una línea para ver la entrada, el resultado y el diff completo. Cuando aún no hay nada en pantalla, el panel dice qué está haciendo el agente (pensando, ejecutando una herramienta, esperando tu respuesta) y desde hace cuánto. |
 | **Cambios del agente** | Tras una ejecución que cambió algo: los archivos que tocó, con las líneas añadidas y quitadas. **Conserva** o **Rechaza** cada uno, o todos a la vez; **Rechazar** deja el formulario o el archivo de código como estaba antes. Pulsa un archivo para abrirlo. Deshacer (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) sigue retrocediendo un cambio cada vez. |
 | **Cuadro de mensaje** | Crece con el texto. <kbd>Intro</kbd> envía y <kbd>Mayús</kbd>+<kbd>Intro</kbd> empieza otra línea. Escribe <kbd>@</kbd> para [añadir contexto](#añadir-contexto-con-) y <kbd>/</kbd> para [comandos](#comandos-con-); en su lista <kbd>↑</kbd> <kbd>↓</kbd> te mueven, <kbd>Intro</kbd> elige y <kbd>Esc</kbd> la cierra. Mientras el agente trabaja, el botón de enviar pasa a ser **Detener**. |
 | **+** | **Archivos, el formulario, su código, controles** (una mención con @), **Adjuntar imágenes…**, **Pegar imagen** y **Captura del formulario**. Ver [Imágenes](#imágenes). |
-| **Modo de permisos** | Qué puede hacer el agente sin preguntar (ver abajo). |
+| **Modo de permisos** | Qué puede hacer el agente sin preguntar (ver abajo). Con un [agente externo](#agentes-externos) que tiene sus propios modos (los de Claude Code: **Default**, **Accept edits**, **Plan mode**…), aquí se ven los suyos. |
 | **Modelo** | Todos los proveedores con sus modelos, y los [agentes externos](#agentes-externos). Un proveedor sin configurar muestra **Conectar…**, que inicia sesión ahí mismo. Al lado, un pequeño anillo muestra cuánto ocupa la ventana de contexto del modelo (`48k / 1M`); se vuelve amarillo pasado el 80 % y rojo pasado el 95 %. |
 | **Esfuerzo** | Cuánto piensa el modelo antes de responder: **Bajo**, **Medio**, **Alto**, **Muy alto**, **Máximo**. Solo modelos Claude. |
+| **Pensamiento** | Deja que Claude piense antes de responder (tan a fondo como diga el esfuerzo). Apagado, responde antes. Solo modelos Claude. |
 | **Rápido** | Modo rápido: respuestas más rápidas a mayor precio, en Claude Opus 5.5 y Opus 5 a través de la API de Claude. |
+| **Opciones del agente** | Con un agente externo, las opciones que ofrece, como en Zed: sus modelos (los de Claude Code: **Opus**, **Sonnet**, **Haiku**), su nivel de esfuerzo o de razonamiento y todo lo demás que liste. Pyzed recuerda lo que eliges para las próximas conversaciones con ese agente. |
 
 | Modo de permisos | Qué puede hacer el agente |
 | --- | --- |
@@ -86,8 +88,11 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 
 ![Todos los proveedores en el selector de modelos](../../../../../screenshots/designer-agent-models.png)
 
-Cada mensaje lleva una nota breve de dónde estás (el documento abierto, los controles seleccionados, el manejador
-del editor de código), así que "alinea estos" o "valida este campo" se refieren a lo que tienes delante.
+Cada mensaje lleva una nota breve de dónde estás (el proyecto y su entorno, el documento abierto con sus controles y
+su código, los controles seleccionados, el manejador del editor de código), así que "alinea estos" o "valida este
+campo" se refieren a lo que tienes delante. Pyzed Agent además empieza sabiendo la caja de herramientas (cada tipo
+con sus props y eventos), los temas, los componentes de `pz.ui` y las buenas prácticas de Pyzed, así que construye
+enseguida en lugar de buscarlos primero.
 
 ### Añadir contexto con @
 
@@ -121,7 +126,7 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | Herramienta | Hace |
 | --- | --- |
 | `get_document` | Lee el formulario o componente abierto: ajustes, cada control con su rect, props, eventos y estilo, la selección y el código. |
-| `add_control`, `update_control`, `remove_controls` | Coloca, cambia, mueve a un contenedor, renombra y borra controles. Tipos y props se comprueban contra la caja de herramientas. |
+| `add_controls`, `add_control`, `update_control`, `remove_controls` | Coloca un diseño entero de una vez, o un control; cambia, mueve a un contenedor, renombra y borra controles. Tipos y props se comprueban contra la caja de herramientas. |
 | `set_form`, `select_controls` | Cambia el título, tamaño, tema o estilo del formulario; selecciona controles para que los veas. |
 | `wire_event`, `set_handler`, `set_code` | Conecta eventos y escribe un manejador o el módulo entero (debe ser Python válido). |
 | `new_document`, `save_document` | Crea un formulario o componente junto al abierto y lo abre en una pestaña; guarda. |
@@ -136,8 +141,9 @@ Escribe <kbd>/</kbd> al principio del mensaje:
 | `mcp_<servidor>_<herramienta>` | Las herramientas de los [servidores MCP](#servidores-mcp) que añadiste. |
 
 En el modo **Preguntar antes de escribir**, las herramientas que **crean o escriben archivos** preguntan antes: una
-tarjeta muestra **Permitir**, **Permitir siempre** (el resto de la sesión) y **Denegar**. **Omitir permisos** se la
-salta. Los cambios al documento abierto nunca preguntan, porque se pueden deshacer.
+tarjeta muestra **Permitir**, **Permitir siempre** y **Denegar**. **Permitir siempre** se recuerda: **Ajustes →
+Permisos** lista esas herramientas y **Volver a preguntar** lo deshace. **Omitir permisos** se salta la pregunta. Los
+cambios al documento abierto nunca preguntan, porque se pueden deshacer.
 
 ## Imágenes
 
@@ -300,6 +306,21 @@ herramientas en `127.0.0.1`, en una dirección de un solo uso y con un token que
 que solo arrancan servidores locales reciben un pequeño programa puente). Sus propias herramientas de archivos y de
 terminal siguen siendo suyas. El plan que sigue el agente se ve en la tarjeta **Plan**.
 
+### El MCP de Pyzed en tus agentes
+
+Al arrancar, Pyzed Design busca los agentes de IA instalados en este equipo (Claude Code, Claude Desktop, Cursor,
+Windsurf, Gemini CLI, Codex, VS Code y Zed) y añade el [servidor MCP de Pyzed](/pyzed/es/guides/mcp/) a los que
+todavía no lo tienen, así conocen los componentes, la documentación y las comprobaciones de Pyzed allí donde los
+uses. Luego un mensaje te pide reiniciarlos: un agente lee sus servidores MCP al arrancar. **Reiniciar agentes**
+reinicia los agentes externos que corren en Pyzed; los demás, ciérralos y ábrelos.
+
+**Ajustes → El MCP de Pyzed en tus agentes** lista cada agente con **Añadir** o **Quitar**. Pyzed añade el servidor
+una sola vez a cada agente: si lo quitas, Pyzed no lo vuelve a poner. Solo cambia la entrada `pyzed` de los ajustes
+de cada agente, se guarda una copia del archivo al lado (`.pyzed-backup`) y los archivos de ajustes con comentarios
+no se tocan (ahí añádelo a mano). Apaga **Añadirlo a los agentes nuevos al iniciar** para que no lo haga. Los
+agentes arrancan el servidor con [uv](https://docs.astral.sh/uv/) (`uvx --from "pyzed-ui[mcp]" pyzed mcp`; Pyzed
+Design trae su propio `uv`).
+
 ### Ver trabajar al agente
 
 Con **Seguir al agente** activado (la mira de la cabecera, activada por defecto), los archivos que escribe el
@@ -361,6 +382,7 @@ sitio salvo las peticiones al proveedor que elijas.
 | --- | --- |
 | **Modelo predeterminado** | El modelo con el que empiezan las conversaciones nuevas. |
 | **Esfuerzo** | Cuánto piensa el modelo antes de responder (`low` … `max`). Solo Claude; `high` por defecto. |
+| **Pensamiento** | Deja que Claude piense antes de responder. Apagado, responde antes. También en el cuadro de mensaje. |
 | **Modo rápido** | Respuestas más rápidas a mayor precio (Claude Opus 5.5 y Opus 5). También en el cuadro de mensaje. |
 | **Preguntar antes de escribir archivos** | Crear formularios y componentes y guardar archivos esperan tu permiso. Activado por defecto; equivale a los modos **Preguntar antes de escribir** / **Omitir permisos**. |
 | **Mostrar el razonamiento** | Muestra los resúmenes del razonamiento del modelo en la conversación. |

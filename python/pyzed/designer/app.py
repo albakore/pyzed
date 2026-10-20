@@ -256,7 +256,9 @@ class Designer(App):
         self.title = self.window_title
 
     def on_start(self) -> Any:
-        """Loads the project's tools and checks for updates when the app starts; returns the commands."""
+        """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
+        computer when the app starts; returns the commands."""
+        self.agent.on_start()
         return [c for c in (self.projects.load_tools(), *self.updates.on_start(), *self.dock_windows.restore())
                 if c is not None]
 

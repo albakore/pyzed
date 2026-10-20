@@ -264,7 +264,7 @@ def test_openai_stream_with_tool_calls_and_reasoning():
     ]
     events = []
     turn = llm.parse_sse([line.encode() for line in lines], lambda k, t: events.append((k, t)), threading.Event())
-    assert events == [("thinking", "hmm"), ("text", "Hi ")]
+    assert events == [("thinking", "hmm"), ("text", "Hi "), ("tool", "add")]  # the call shows while it is written
     assert turn.stop_reason == "tool_use" and turn.usage == {"input": 7, "output": 3}
     assert turn.content[1] == {"type": "tool_use", "id": "c1", "name": "add", "input": {"a": 1}}
 
@@ -381,7 +381,7 @@ def test_claude_through_the_sdk(monkeypatch):
     assert body["output_config"] == {"effort": "xhigh"} and body["tools"][0]["eager_input_streaming"] is True
     assert body["system"][0]["cache_control"] == {"type": "ephemeral"}
     assert body["speed"] == "fast" and "fast-mode-2026-02-01" in headers.get("anthropic-beta", "")
-    assert deltas == [("text", "Hola")]
+    assert deltas == [("text", "Hola"), ("tool", "get_document")]
     assert turn.stop_reason == "tool_use" and turn.tool_uses[0]["name"] == "get_document"
     assert turn.usage["output"] == 4
 

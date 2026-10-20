@@ -1872,7 +1872,10 @@ _section("ui", "Agente", {
                    "kind": "El tipo de ACP: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` u `other` (su icono).",
                    "status": "`pending`, `running`, `waiting`, `done`, `failed` o `rejected`.",
                    "input": "Los argumentos (un dict o texto).", "output": "La respuesta (texto o un dict).",
-                   "images": "Bytes PNG que se muestran bajo la salida.", "allow_always": "Muestra Permitir siempre.",
+                   "images": "Bytes PNG que se muestran bajo la salida.",
+                   "diffs": "Los cambios que hizo: dicts `{\"path\", \"old\", \"new\"}`, que se muestran como diffs de colores (mira `ui.diff_view`).",
+                   "progress": "Lo que imprimió hasta ahora (la salida de un comando); sus últimas líneas se ven bajo la cabecera mientras corre.",
+                   "allow_always": "Muestra Permitir siempre.",
                    "theme": "Tema.", "on_allow": "Se pulsó Permitir.", "on_allow_always": "Se pulsó Permitir siempre.",
                    "on_deny": "Se pulsó Rechazar."},
         "example": """
@@ -1929,6 +1932,10 @@ _section("ui", "Agente", {
     "pyzed.ui.context_meter": {"desc": "Cuánto se llenó la ventana de contexto de un modelo, como el contador de tokens de Zed: un anillo pequeño y `48k / 200k`, amarillo pasado el 80 % y rojo pasado el 95 %.",
                                "params": {"used": "Tokens en uso.", "limit": "La ventana del modelo.", "theme": "Tema."}},
     "pyzed.ui.format_tokens": {"desc": "Un número de tokens corto: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
+    "pyzed.ui.diff_view": {"desc": "Un cambio tal como lo muestra Zed en un hilo: el nombre del archivo y las líneas cambiadas (en verde las añadidas, en rojo las quitadas) con unas pocas líneas alrededor.",
+                           "params": {"diff": "Un dict con `path`, `old` y `new` (los textos antes y después).", "theme": "Tema.",
+                                      "max_lines": "Líneas que se muestran antes de `… N líneas más`."},
+                           "example": 'ui.diff_view({"path": "main.py", "old": "x = 1\\n", "new": "x = 2\\n"})'},
 })
 
 _section("ui", "Selector de iconos", {
@@ -2768,6 +2775,8 @@ MEMBERS = {
     "pyzed.designer.EditorSettings.to_dict": "Devuelve los ajustes como un dict listo para JSON.",
     "pyzed.designer.EditorSettings.from_dict": "Crea los ajustes a partir de `data` guardados, con los valores por defecto para los que falten o no sean válidos, y limitando el tamaño de tabulación, el de fuente y la forma del cursor a valores válidos.",
     "pyzed.designer.History.push": "Guarda el estado actual del formulario; devuelve `False` si nada cambió.",
+    "pyzed.designer.History.steps": "Cuántos pasos de deshacer hay (una marca para `merge`).",
+    "pyzed.designer.History.merge": "Convierte en un solo paso de deshacer todo lo guardado desde `mark` (`steps` antes de una tanda de cambios).",
     "pyzed.designer.History.reset": "Olvida todos los pasos de deshacer y rehacer y empieza de nuevo desde el estado actual de `form`.",
     "pyzed.designer.History.can_undo": "Si hay un paso que deshacer.",
     "pyzed.designer.History.can_redo": "Si hay un paso deshecho que rehacer.",

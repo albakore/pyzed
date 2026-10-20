@@ -6,6 +6,7 @@ menu) and tells what happened through events, so an app only keeps the data::
     from pyzed import ui
 
     ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status="waiting",
+                diffs=[{"path": "ui/main.py", "old": "x = 1\n", "new": "x = 2\n"}],
                 on_allow=lambda e: agent.answer(True), on_deny=lambda e: agent.answer(False))
     ui.Plan(steps=[{"step": "Add the form", "status": "done"}, {"step": "Wire the events", "status": "pending"}])
     ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=..., on_reject=...)
@@ -49,6 +50,7 @@ __all__ = [
     "ToolCall",
     "context_meter",
     "date_group",
+    "diff_view",
     "format_tokens",
 ]
 
@@ -58,7 +60,7 @@ _i18n.add("en", {"pyzed": {"agent": {
     "groups": {"today": "Today", "yesterday": "Yesterday", "week": "This week", "month": "This month",
                "older": "Older"},
     "allow": "Allow", "allow_always": "Always allow", "deny": "Deny", "failed": "Failed", "rejected": "Rejected",
-    "waiting": "Waiting for your answer", "input": "Input", "output": "Output",
+    "waiting": "Waiting for your answer", "input": "Input", "output": "Output", "more_lines": "… {count} more lines",
     "plan": "Plan", "files_changed": {"one": "{count} file changed", "other": "{count} files changed"},
     "keep_all": "Keep all", "reject_all": "Reject all", "keep": "Keep", "reject": "Reject", "open": "Open",
     "waiting_browser": "Waiting for the browser…", "open_again": "Open the page again", "copy": "Copy",
@@ -74,6 +76,7 @@ _i18n.add("es", {"pyzed": {"agent": {
     "groups": {"today": "Hoy", "yesterday": "Ayer", "week": "Esta semana", "month": "Este mes", "older": "Antes"},
     "allow": "Permitir", "allow_always": "Permitir siempre", "deny": "Rechazar", "failed": "Falló",
     "rejected": "Rechazado", "waiting": "Esperando tu respuesta", "input": "Entrada", "output": "Salida",
+    "more_lines": "… {count} líneas más",
     "plan": "Plan", "files_changed": {"one": "{count} archivo cambiado", "other": "{count} archivos cambiados"},
     "keep_all": "Conservar todo", "reject_all": "Rechazar todo", "keep": "Conservar", "reject": "Rechazar",
     "open": "Abrir", "waiting_browser": "Esperando al navegador…", "open_again": "Abrir la página otra vez",
@@ -224,7 +227,9 @@ class ToolCall(Component):
     got and what it answered. While ``status`` is ``"waiting"`` it asks right there, like Zed: Allow,
     Always allow or Deny.
 
-    ``status`` is ``"pending"``, ``"running"``, ``"waiting"``, ``"done"``, ``"failed"`` or ``"rejected"``."""
+    ``status`` is ``"pending"``, ``"running"``, ``"waiting"``, ``"done"``, ``"failed"`` or ``"rejected"``.
+    ``diffs`` (``{"path", "old", "new"}``) are the edits it made, shown as colored diffs; ``progress`` is what
+    it printed so far (a command's output), shown under the header while it runs."""
 
     title: str = ""
     detail: str = ""
@@ -233,6 +238,8 @@ class ToolCall(Component):
     input: Any = None
     output: Any = None
     images: list = None  # type: ignore[assignment]
+    diffs: list = None  # type: ignore[assignment]
+    progress: str = ""
     allow_always: bool = True
     theme: Any = None
     events = {"allow": "Allow was pressed.", "allow_always": "Always allow was pressed.",
@@ -264,7 +271,8 @@ class ToolCall(Component):
         end = None
         if self.status in ("failed", "rejected"):
             end = label(_t(f"pyzed.agent.{self.status}"), size="xs", color="error", theme=t)
-        has_body = self.input not in (None, {}, "") or self.output not in (None, "") or bool(self.images)
+        has_body = self.input not in (None, {}, "") or self.output not in (None, "") or bool(self.images) \
+            or bool(self.diffs)
         head = _core.row([
             self._lead(t),
             label(self.title, size="sm", color="text_muted", wrap=False, theme=t),
@@ -279,6 +287,12 @@ class ToolCall(Component):
                                         hover_bg=t.element_hover, radius=t.radius)]
         if self.expanded and has_body:
             rows.append(self._body(t))
+        elif self.status in ("running", "waiting") and (self.diffs or self.progress):
+            # what it is doing right now, without unfolding it: the edit, or the last lines it printed
+            rows.append(_core.container(_core.column(
+                [diff_view(d, theme=t, max_lines=12) for d in self.diffs or []] if self.diffs else
+                [label("\n".join(self.progress.rstrip().splitlines()[-6:]), size="xs", mono=True, color="text_muted",
+                       theme=t)], spacing=4), padding=(4, 8), width="fill", bg=t.editor, radius=t.radius))
         if self.status == "waiting":
             rows.append(_core.container(_core.row([
                 label(_t("pyzed.agent.waiting"), size="xs", color="text_muted", theme=t),
@@ -297,8 +311,8 @@ class ToolCall(Component):
                                radius=t.radius + 2)
 
     def _body(self, t: Theme) -> Any:
-        parts: List[Any] = []
-        for name, value in (("input", self.input), ("output", self.output)):
+        parts: List[Any] = [diff_view(d, theme=t) for d in self.diffs or []]
+        for name, value in (("input", None if self.diffs else self.input), ("output", self.output)):
             if value in (None, {}, ""):
                 continue
             text = value if isinstance(value, str) else json.dumps(value, indent=1, ensure_ascii=False)
@@ -310,6 +324,30 @@ class ToolCall(Component):
             parts.append(_core.row(pictures, spacing=6, wrap=True))
         return _core.container(_core.column(parts, spacing=4), padding=(6, 8), width="fill", bg=t.editor,
                                radius=t.radius)
+
+
+def diff_view(diff: Mapping[str, Any], *, theme: Optional[Theme] = None, max_lines: int = 120) -> _core.Widget:
+    """An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red
+    removed) with a few lines around them. ``diff`` has ``path``, ``old`` and ``new`` (texts)."""
+    import difflib
+
+    t = _th(theme)
+    old, new = str(diff.get("old") or "").splitlines(), str(diff.get("new") or "").splitlines()
+    lines = [line for line in difflib.unified_diff(old, new, lineterm="", n=2)][2:]  # without the file headers
+    rows: List[Any] = [label(str(diff.get("path") or ""), size="xs", mono=True, color="text_muted", theme=t)]
+    for line in lines[:max_lines]:
+        if line.startswith("@@"):
+            rows.append(_core.text("⋯", size=11, color=t.text_placeholder, font="mono"))
+            continue
+        sign = line[:1]
+        bg = alpha(t.success, 0.14) if sign == "+" else alpha(t.error, 0.14) if sign == "-" else None
+        color = t.success if sign == "+" else t.error if sign == "-" else t.text_muted
+        rows.append(_core.container(_core.text(line or " ", size=11, color=color, font="mono", wrap=False),
+                                    padding=(0, 4), width="fill", bg=bg))
+    if len(lines) > max_lines:
+        rows.append(label(_t("pyzed.agent.more_lines", count=len(lines) - max_lines), size="xs",
+                          color="text_placeholder", theme=t))
+    return _core.column(rows, spacing=0, width="fill")
 
 
 # -- the plan ----------------------------------------------------------------------------------------

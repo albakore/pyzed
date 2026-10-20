@@ -1872,7 +1872,10 @@ _section("ui", "Agent", {
                    "kind": "ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon).",
                    "status": "`pending`, `running`, `waiting`, `done`, `failed` or `rejected`.",
                    "input": "The arguments (a dict or text).", "output": "The answer (text or a dict).",
-                   "images": "PNG bytes shown under the output.", "allow_always": "Shows Always allow.",
+                   "images": "PNG bytes shown under the output.",
+                   "diffs": "The edits it made: `{\"path\", \"old\", \"new\"}` dicts, shown as colored diffs (see `ui.diff_view`).",
+                   "progress": "What it printed so far (a command's output); its last lines show under the header while it runs.",
+                   "allow_always": "Shows Always allow.",
                    "theme": "Theme.", "on_allow": "Allow was pressed.", "on_allow_always": "Always allow was pressed.",
                    "on_deny": "Deny was pressed."},
         "example": """
@@ -1929,6 +1932,10 @@ _section("ui", "Agent", {
     "pyzed.ui.context_meter": {"desc": "How full a model's context window is, like Zed's token counter: a small ring and `48k / 200k`, yellow past 80% and red past 95%.",
                                "params": {"used": "Tokens in use.", "limit": "The model's window.", "theme": "Theme."}},
     "pyzed.ui.format_tokens": {"desc": "A short token count: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
+    "pyzed.ui.diff_view": {"desc": "An edit as Zed shows it in a thread: the file's name, then the changed lines (green added, red removed) with a few lines around them.",
+                           "params": {"diff": "A dict with `path`, `old` and `new` (the texts before and after).", "theme": "Theme.",
+                                      "max_lines": "Lines shown before `… N more lines`."},
+                           "example": 'ui.diff_view({"path": "main.py", "old": "x = 1\\n", "new": "x = 2\\n"})'},
 })
 
 _section("ui", "Icon picker", {
