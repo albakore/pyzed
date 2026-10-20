@@ -155,3 +155,60 @@ def test_init_creates_a_uv_project(tmp_path):
     # running it again on the same folder changes nothing
     again = project.init(created.root, sync=False, git=False)
     assert again.dependencies() == created.dependencies()
+
+
+def _write_project(root):
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "pyproject.toml").write_text('[project]\nname = "demo"\nversion = "0.1.0"\n\n[tool.pyzed]\nui = "ui"\n')
+    return project.Project.open(root)
+
+
+def test_commands_open_no_console_window(tmp_path, monkeypatch):
+    """The windowed Pyzed Design must not flash a console for each uv or git command, nor for a run."""
+    seen = []
+
+    class Done:
+        returncode, stdout = 0, ""
+
+    def run(args, **kwargs):
+        seen.append(kwargs)
+        return Done()
+
+    def popen(args, **kwargs):
+        seen.append(kwargs)
+        return None
+
+    monkeypatch.setattr(project.subprocess, "run", run)
+    monkeypatch.setattr(project.subprocess, "Popen", popen)
+    monkeypatch.setattr(project.subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False)
+    monkeypatch.setattr(project, "NO_WINDOW", 0x08000000)
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")  # CI runners may not have uv
+    project.execute(["uv", "--version"])
+    _write_project(tmp_path / "demo").spawn(capture=True)
+    assert [kw["creationflags"] for kw in seen] == [0x08000000, 0x08000000]
+    assert seen[1]["start_new_session"] == (sys.platform != "win32")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX process groups")
+def test_terminate_stops_the_processes_a_run_started(tmp_path):
+    """Stopping ``uv run`` also stops the Python it started, so the next run starts clean."""
+    import subprocess
+    import time
+
+    pid_file = tmp_path / "child.pid"
+    process = subprocess.Popen(["sh", "-c", f"sleep 30 & echo $! > {pid_file}; wait"], start_new_session=True)
+    for _ in range(100):
+        if pid_file.exists() and pid_file.read_text().strip():
+            break
+        time.sleep(0.02)
+    child = int(pid_file.read_text())
+    project.terminate(process)
+    process.wait(timeout=5)
+    for _ in range(100):
+        try:
+            os.kill(child, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.02)
+    else:
+        pytest.fail("the child process is still running")

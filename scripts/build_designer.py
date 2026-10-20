@@ -1,7 +1,8 @@
 """Builds Pyzed Design as a standalone app for this platform (with PyInstaller).
 
-The app bundles Python, pyzed-ui and the ``uv`` binary, so it can create and manage
-projects (``uv init``, ``uv add``...) on machines with nothing else installed. Each
+The app bundles Python, pyzed-ui, the ``uv`` binary and the example projects of the welcome
+window (with their thumbnails), so it can create and manage projects (``uv init``, ``uv add``...)
+on machines with nothing else installed. Each
 project keeps its own environment in ``.venv``; forms run there through ``uv run``.
 
     python -m pip install pyzed-ui pyinstaller uv
@@ -128,6 +129,15 @@ def main() -> int:
         # uv goes next to the executable, where pyzed.project.find_uv() looks for it
         "--add-binary", f"{uv_binary()}{os.pathsep}.",
     ]
+    # the example projects of the welcome window, read from sys._MEIPASS/examples
+    from pyzed.designer import samples
+
+    staged = work / "examples"
+    shutil.rmtree(staged, ignore_errors=True)
+    samples.stage(staged, ROOT / "examples")
+    size = sum(f.stat().st_size for f in staged.rglob("*") if f.is_file())
+    print(f"Bundling {len(samples.CATALOG)} examples ({size / 1e6:.1f} MB)")
+    command += ["--add-data", f"{staged}{os.pathsep}examples"]
     apps = oauth_apps(work)
     if apps:
         command += ["--paths", str(apps.parent), "--hidden-import", apps.stem]

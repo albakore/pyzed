@@ -709,3 +709,9 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
 
         return run_file(path)
     _run_app(open_form(path), reload=reload)
+    if os.environ.get("PYZED_DESIGNER_RUN"):
+        # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still
+        # running, so the designer sees the run finish and can start it again.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)

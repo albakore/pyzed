@@ -41,6 +41,8 @@ class DesignerSettings:
     console_on_run: bool = True
     #: Log every event the running form raises in the console.
     log_events: bool = True
+    #: Open the welcome window (start a project, the example gallery) when the designer starts.
+    show_welcome: bool = True
     #: Look for a new version of the designer once a day (the compiled app updates itself).
     check_updates: bool = True
     recent: List[str] = field(default_factory=list)

@@ -98,7 +98,8 @@ def _render(script: Path, cwd: Path, *, size, scale: float, timeout: float) -> b
         path = os.pathsep.join(p for p in (here, os.environ.get("PYTHONPATH", "")) if p)
         env = {**os.environ, "PYZED_RELOAD": "0", "PYTHONPATH": path}
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd, env=env)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=tmp, env=env,
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except subprocess.TimeoutExpired:
             raise RuntimeError(f"the code did not finish within {timeout:g} seconds") from None
         if result.returncode != 0 or not out.is_file():

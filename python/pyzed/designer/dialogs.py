@@ -60,6 +60,8 @@ def settings(d: "Designer", t: Theme) -> Any:
                  description=tr("Language of the designer's menus and panels"), theme=t),
         ui.field(tr("Toolbar"), switch("show_toolbar"), theme=t),
         ui.field(tr("Status bar"), switch("show_status_bar"), theme=t),
+        ui.field(tr("Welcome window"), switch("show_welcome"),
+                 description=tr("Opens at startup with the example projects (also in Help → Welcome)"), theme=t),
         ui.field(tr("Custom window frame"), ui.switch(bool(p.window_frame), d.set_window_frame, theme=t),
                  description=tr("Pyzed's own title bar and window buttons; off uses the system's frame (applies on "
                                 "restart)"), theme=t),

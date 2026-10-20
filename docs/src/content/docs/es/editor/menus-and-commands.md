@@ -31,6 +31,7 @@ engranaje de **Ajustes**.
 | *Recientes* | | Los cinco últimos archivos abiertos. |
 | Ejecutar | <kbd>F5</kbd> | [Ejecuta](/pyzed/es/editor/console-and-running/) el formulario o muestra la vista previa del componente. |
 | Detener | <kbd>Shift</kbd>+<kbd>F5</kbd> | Cierra el formulario en ejecución. |
+| Ejecutar el script del proyecto | | Inicia el `[tool.pyzed] script` del proyecto con `uv run` (ver [Bienvenida y ejemplos](/pyzed/es/editor/examples/#ejecutarlo)). |
 | Editar el código | <kbd>F7</kbd> | Abre el archivo de código entero en el editor de código. |
 
 ## Comandos de edición
@@ -76,6 +77,8 @@ Los interruptores se recuerdan entre sesiones.
 | --- | --- | --- |
 | Atajos de teclado | <kbd>F1</kbd> | Una lista con buscador de todos los atajos. |
 | Referencia | <kbd>Shift</kbd>+<kbd>F1</kbd> | La [referencia integrada](/pyzed/es/editor/reference/), en la página del control seleccionado o del nombre bajo el cursor. |
+| Bienvenida | | La [ventana de bienvenida](/pyzed/es/editor/examples/): empezar o abrir un proyecto, proyectos recientes y la galería de ejemplos. |
+| Proyectos de ejemplo… | | La ventana de bienvenida con todos los ejemplos. |
 | Documentación | | Abre esta documentación en el navegador. |
 | Informar un problema | | Abre el gestor de incidencias. |
 | Novedades | | Una pestaña con las notas de esta versión (o de la actualización pendiente de instalar). |

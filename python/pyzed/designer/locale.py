@@ -615,4 +615,86 @@ i18n.add("es", {"designer": {
     "Degrees clockwise, around the pivot": "Grados en sentido horario, alrededor del pivote",
 }})
 
+# Welcome window and example gallery
+i18n.add("es", {"designer": {
+    "Welcome": "Bienvenida", "Example projects…": "Proyectos de ejemplo…", "Example projects": "Proyectos de ejemplo",
+    "Show the welcome window at startup": "Mostrar la ventana de bienvenida al iniciar",
+    "Run project script": "Ejecutar el script del proyecto", "Could not start {name}": "No se pudo iniciar {name}",
+    "Running {name}": "Ejecutando {name}", "With uv run": "Con uv run", "All": "Todos", "Apps": "Apps",
+    "Games": "Juegos", "Showcase": "Vitrina", "Blocks": "Bloques", "Integrations": "Integraciones",
+    "New project…": "Nuevo proyecto…", "Open project…": "Abrir proyecto…", "Version {version}": "Versión {version}",
+    "Search examples…": "Buscar ejemplos…",
+    "The examples are not on this computer": "Los ejemplos no están en este equipo",
+    "Download them once from the release of this version (about 1.5 MB).":
+        "Descárgalos una vez desde la release de esta versión (unos 1,5 MB).",
+    "Downloading…": "Descargando…", "Download examples": "Descargar ejemplos",
+    "No examples match": "Ningún ejemplo coincide", "Creates {target}": "Crea {target}",
+    "Create from example": "Crear desde un ejemplo", "Create project": "Crear proyecto",
+    "Welcome to Pyzed Design": "Bienvenido a Pyzed Design", "Show at startup": "Mostrar al iniciar",
+    "Could not create the project": "No se pudo crear el proyecto",
+    "Could not download the examples": "No se pudieron descargar los ejemplos",
+    "Downloading the examples": "Descargando los ejemplos", "Welcome window": "Ventana de bienvenida",
+    "Opens at startup with the example projects (also in Help → Welcome)":
+        "Se abre al iniciar con los proyectos de ejemplo (también en Ayuda → Bienvenida)",
+    "The project is a copy you can change freely. Its packages are installed with uv sync, and Run (F5) starts it.":
+        "El proyecto es una copia que puedes cambiar a tu gusto. Sus paquetes se instalan con uv sync y Ejecutar "
+        "(F5) lo inicia.",
+    # the examples
+    "Counter": "Contador", "The smallest Pyzed app: state, update and view in a few lines.":
+        "La app de Pyzed más pequeña: estado, update y view en pocas líneas.",
+    "To-do list": "Lista de tareas", "Text input, list items, filters and keyboard shortcuts.":
+        "Entrada de texto, elementos de lista, filtros y atajos de teclado.",
+    "A focus timer with work and break sessions, built step by step in the AI guide.":
+        "Un temporizador de concentración con sesiones de trabajo y descanso, hecho paso a paso en la guía de IA.",
+    "Markdown viewer": "Visor de Markdown", "Write Markdown on the left and read it rendered on the right.":
+        "Escribe Markdown a la izquierda y léelo renderizado a la derecha.",
+    "Game of Life": "Juego de la vida", "Conway's cellular automaton drawn on a canvas, with patterns.":
+        "El autómata celular de Conway dibujado en un canvas, con patrones.",
+    "Component gallery": "Galería de componentes", "A tour of the ready-made components in pyzed.ui.":
+        "Un recorrido por los componentes listos de pyzed.ui.",
+    "Zed-like editor": "Editor estilo Zed",
+    "Zed recreated: project panel, tabs, a highlighted editor, git colors and the palette.":
+        "Zed recreado: panel de proyecto, pestañas, editor con resaltado, colores de git y la paleta.",
+    "The classic in about 150 lines: a fixed-rate game loop, keys and a canvas.":
+        "El clásico en unas 150 líneas: un bucle de juego a ritmo fijo, teclas y un canvas.",
+    "A paddle, a ball and a wall of bricks at the display's frame rate.":
+        "Una paleta, una pelota y un muro de ladrillos a la frecuencia de la pantalla.",
+    "A space shooter with a glowing HUD, particles, bloom and screen shake.":
+        "Un shooter espacial con HUD brillante, partículas, bloom y temblor de pantalla.",
+    "Glass dashboard": "Panel de cristal", "A frosted-glass control center over a moving shader background.":
+        "Un centro de control de cristal esmerilado sobre un fondo de shader en movimiento.",
+    "Game HUD": "HUD de juego", "Health and mana bars, a radar minimap and an ability bar.":
+        "Barras de vida y maná, un minimapa de radar y una barra de habilidades.",
+    "Game main menu": "Menú principal de juego",
+    "A synthwave shader backdrop, a glowing title and glass buttons.":
+        "Un fondo synthwave con shader, un título brillante y botones de cristal.",
+    "Inventory": "Inventario", "An RPG item grid whose rarity glows, with a glass details panel.":
+        "Una cuadrícula de objetos de RPG que brillan según su rareza, con un panel de detalles de cristal.",
+    "Dashboard": "Panel de control", "Sidebar navigation, KPI cards, a revenue chart and recent orders.":
+        "Navegación lateral, tarjetas de KPI, un gráfico de ingresos y pedidos recientes.",
+    "Kanban board": "Tablero Kanban", "A project board with columns, labelled cards, assignees and progress.":
+        "Un tablero de proyecto con columnas, tarjetas etiquetadas, responsables y progreso.",
+    "Music player": "Reproductor de música",
+    "A library sidebar, an album page and a player bar with live progress.":
+        "Una barra lateral de biblioteca, una página de álbum y una barra de reproducción con progreso en vivo.",
+    "Chat": "Chat", "A team messenger with channels, direct messages, a thread and a composer.":
+        "Un mensajero de equipo con canales, mensajes directos, un hilo y un editor de mensajes.",
+    "A sectioned settings page: profile, appearance, notifications, danger zone.":
+        "Una página de ajustes por secciones: perfil, apariencia, notificaciones y zona de peligro.",
+    "Login form": "Formulario de inicio de sesión",
+    "A sign-in form made in Pyzed Design, with its event code and components.":
+        "Un formulario de inicio de sesión hecho en Pyzed Design, con su código de eventos y componentes.",
+    "SQLModel heroes": "Héroes con SQLModel",
+    "SQLModel's tutorial: teams, heroes, filters and a validated form.":
+        "El tutorial de SQLModel: equipos, héroes, filtros y un formulario validado.",
+    "Pydantic sign-up": "Registro con Pydantic", "A sign-up form validated by a model, saved as JSON.":
+        "Un formulario de registro validado por un modelo y guardado como JSON.",
+    "PyPI with httpx": "PyPI con httpx",
+    "Concurrent requests streamed into the window and parsed into models.":
+        "Peticiones concurrentes que llegan a la ventana en streaming y se convierten en modelos.",
+    "SQLAlchemy contacts": "Contactos con SQLAlchemy",
+    "20,000 rows in a virtual table, searched and sorted in SQL.":
+        "20.000 filas en una tabla virtual, buscadas y ordenadas en SQL.",
+}})
+
 from . import agent_locale  # noqa: E402,F401 - the Agent panel's Spanish texts
