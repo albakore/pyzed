@@ -1,0 +1,40 @@
+---
+title: Visualizador de música
+description: Un visualizador de música en Python — analizadores de espectro, un espectro radial, un espectrograma, un osciloscopio y vúmetros cuyo aspecto cambia en vivo, alimentados por una canción o el micrófono.
+sidebar:
+  order: 2
+---
+
+![Un visualizador pasando por varios estilos: espectros de bloques, barras, relleno, espejo y línea, uno radial, un espectrograma, un osciloscopio y un vúmetro analógico](/pyzed/media/audio/ui/visualizer.webp)
+
+Todos los analizadores de Pyzed en una ventana: [`examples/audio/visualizer.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/visualizer.py).
+
+```bash
+python examples/audio/visualizer.py
+```
+
+Reproduce un pequeño groove hecho con el motor (un bajo secuenciado, bombo, caja, charles y
+acordes). Cambia la fuente a **Microphone** para ver tu propia voz. El panel de la izquierda cambia
+el espectro principal en vivo: su aspecto (`variant`), sus colores (`colors`), cuántas bandas
+tiene, lo rápido que caen las barras y si los picos se quedan.
+
+## Cómo está hecho
+
+- `demo_song(engine)` monta el groove: un `clock` mueve un `sequencer` para el bajo y otro para
+  la caja, y su salida de pulso golpea el bombo. Todo pasa por un módulo `scope` antes de los
+  altavoces, para poder analizarlo.
+- En cada fotograma, la vista pide a ese módulo su análisis, calculado en Rust:
+
+```python
+mags = tap.spectrum(512)      # 512 bandas, de 20 Hz a 24 kHz, en dB
+rms, peak = tap.level()
+wave = tap.scope(2048)        # las últimas 2048 muestras
+```
+
+- Las mismas `mags` alimentan un [`Spectrum`](/pyzed/es/audio/components/spectrum/) en dos estilos y
+  un [`Spectrogram`](/pyzed/es/audio/components/spectrogram/); `wave` alimenta un
+  [`Scope`](/pyzed/es/audio/components/scope/); los niveles alimentan dos
+  [`VuMeter`](/pyzed/es/audio/components/vu-meter/).
+
+Cuando la fuente es el micrófono, la salida de la canción se silencia para que los altavoces no se
+realimenten en el micrófono.

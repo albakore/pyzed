@@ -1,0 +1,36 @@
+---
+title: Drum machine
+description: A drum machine in Python like FL Studio's channel rack — a step grid you paint, a pad per sound, tempo and swing, with sample-accurate timing from the audio engine.
+sidebar:
+  order: 4
+---
+
+![A drum machine playing: the playhead moving over a grid of steps, a pointer painting new tom steps, pads flashing](/pyzed/media/audio/ui/drum-machine.webp)
+
+A six-sound drum machine: [`examples/audio/drum_machine.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/drum_machine.py).
+
+```bash
+python examples/audio/drum_machine.py
+```
+
+Click or drag on the [step grid](/pyzed/audio/components/step-sequencer/) to write the beat, play
+each sound with its [pad](/pyzed/audio/components/pads-and-buttons/), and change the tempo and
+the swing with the knobs.
+
+## Why the timing is exact
+
+The rhythm runs inside the engine, not in Python. A `clock` module ticks every sixteenth note
+and drives one `sequencer` per row; each sequencer's trigger strikes its `drum`:
+
+```python
+clock = engine.add("clock", bpm=124, division="1/16")
+for sound in ("kick", "snare", "clap", "hihat", "hihat", "tom"):
+    drum = engine.add("drum", sound=sound)
+    seq = engine.add("sequencer", steps=16)
+    engine.connect(clock, "clock", seq, "clock")
+    engine.connect(seq, "trigger", drum, "trigger")
+```
+
+So the beat stays on time however busy the window is. The grid only switches the sequencers'
+gates (`engine.set(seq, "gate_5", 1)`), and the playhead reads the step they are on
+(`seq.state["step"]`).

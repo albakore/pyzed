@@ -1,0 +1,36 @@
+---
+title: Caja de ritmos
+description: Una caja de ritmos en Python como el channel rack de FL Studio — una cuadrícula de pasos que pintas, un pad por sonido, tempo y swing, con la precisión de muestra del motor de audio.
+sidebar:
+  order: 4
+---
+
+![Una caja de ritmos sonando: el cabezal recorre una cuadrícula de pasos, un puntero pinta nuevos pasos de tom y los pads destellan](/pyzed/media/audio/ui/drum-machine.webp)
+
+Una caja de ritmos de seis sonidos: [`examples/audio/drum_machine.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/drum_machine.py).
+
+```bash
+python examples/audio/drum_machine.py
+```
+
+Haz clic o arrastra en la [cuadrícula de pasos](/pyzed/es/audio/components/step-sequencer/) para
+escribir el ritmo, toca cada sonido con su [pad](/pyzed/es/audio/components/pads-and-buttons/) y
+cambia el tempo y el swing con las perillas.
+
+## Por qué el ritmo es exacto
+
+El ritmo corre dentro del motor, no en Python. Un módulo `clock` marca cada semicorchea y mueve
+un `sequencer` por fila; el disparo de cada secuenciador golpea su `drum`:
+
+```python
+clock = engine.add("clock", bpm=124, division="1/16")
+for sound in ("kick", "snare", "clap", "hihat", "hihat", "tom"):
+    drum = engine.add("drum", sound=sound)
+    seq = engine.add("sequencer", steps=16)
+    engine.connect(clock, "clock", seq, "clock")
+    engine.connect(seq, "trigger", drum, "trigger")
+```
+
+Así el ritmo se mantiene a tiempo por muy ocupada que esté la ventana. La cuadrícula solo cambia
+las puertas de los secuenciadores (`engine.set(seq, "gate_5", 1)`) y el cabezal lee el paso en
+el que están (`seq.state["step"]`).

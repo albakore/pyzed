@@ -1,0 +1,70 @@
+---
+title: Webcam
+description: Show a live webcam in a Python desktop app with Pyzed — OpenCV or ffmpeg on Windows, macOS and Linux, snapshots, raw RGBA frames and a test pattern.
+sidebar:
+  order: 12
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A webcam view with a recording badge showing the moving test pattern](/pyzed/media/audio/ui/webcam.webp)
+
+<Aside type="note" title="In plain words">
+Put a camera's live picture in your window with one line. It opens the camera when it appears and
+closes it when it goes away.
+</Aside>
+
+```python
+ui.camera.Webcam(device=0, width=480, height=360, mirror=True)
+```
+
+## How frames arrive
+
+The camera is read in a background thread. Every new frame asks the window to redraw, so the
+view stays live without a timer and without slowing the rest of the app. Two `Webcam`s of the
+same device share one capture.
+
+The capture uses whichever of these is available, in this order (`backend="auto"`):
+
+| Backend | Needs | Notes |
+| --- | --- | --- |
+| `"opencv"` | `pip install opencv-python` | The most compatible on every system. |
+| `"ffmpeg"` | the `ffmpeg` program | Video4Linux on Linux, AVFoundation on macOS, DirectShow on Windows. |
+| `"test"` | nothing | Moving color bars: for screenshots, tests and machines without a camera. |
+
+## Using the frames
+
+`pyzed.camera.Camera` gives you the frames to process (detect faces, measure brightness, record):
+
+```python
+from pyzed import camera
+
+cam = camera.Camera(0, width=640, height=480, mirror=True)
+cam.start()
+frame = cam.read()             # waits for the next Frame(width, height, pixels, index, time)
+cam.snapshot("photo.png")      # saved without Pillow
+cam.on_frame.append(lambda f: print(f.index))   # runs in the camera thread
+cam.stop()
+```
+
+`frame.pixels` are RGBA bytes (`width * height * 4`): `numpy.frombuffer(frame.pixels, "uint8")`
+turns them into an array, and `pz.image(frame.pixels, size=(frame.width, frame.height))` draws
+them. `camera.devices()` lists the cameras found.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `device` | `0` | Camera index, a path (`"/dev/video2"`) or, on Windows with ffmpeg, its name. |
+| `camera` | `None` | A `Camera` of yours to show instead. |
+| `width`, `height` | `320`, `240` | Size of the view. |
+| `capture_width`, `capture_height`, `fps` | `640`, `480`, `30` | What to ask the camera for. |
+| `mirror` | `True` | Flip it like a mirror. |
+| `fit` | `"cover"` | `"cover"` crops to fill, `"contain"` shows it all. |
+| `radius` | `8` | Rounded corners. |
+| `overlay` | `True` | A badge with a recording dot and the frame rate. |
+| `paused` | `False` | Freezes the last frame. |
+| `backend` | `"auto"` | See above. |
+
+<Aside type="caution">
+On macOS the first run asks for permission to use the camera; the program that runs Python
+(Terminal, your editor) is the one that gets it.
+</Aside>

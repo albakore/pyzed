@@ -1,0 +1,81 @@
+---
+title: Analizador de espectro
+description: Un analizador de espectro en tiempo real para Python — barras, bloques LED, líneas, en espejo o radial, bandas logarítmicas, caída suave, picos y paletas de colores.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Seis analizadores de espectro bailando con la misma canción: barras, bloques, línea, relleno, espejo y radial](/pyzed/media/audio/ui/spectrum.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un analizador de espectro separa un sonido en sus tonos: graves a la izquierda, agudos a la derecha
+y, cuanto más alta la barra, más fuerte suena ese tono. Es el visualizador de música clásico.
+</Aside>
+
+```python
+class Visualizer(pz.App):
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]   # redibuja en cada fotograma
+
+    def view(self):
+        return ui.audio.Spectrum(magnitudes=engine.spectrum(512), variant="blocks", colors="fl")
+```
+
+## De bins a bandas
+
+`magnitudes` son decibelios (−120 a 0), uno por bin de frecuencia: justo lo que devuelven
+`node.spectrum()` y `engine.spectrum()`. El analizador los agrupa en `bands` bandas espaciadas de
+forma **logarítmica** (cada banda un poco más ancha que la anterior), como oye el oído: una octava
+ocupa el mismo ancho en 100 Hz que en 5 kHz. Cada banda muestra su bin más fuerte.
+
+`spacing` indica cómo están espaciados tus bins:
+
+- `"log"` (por defecto): ya espaciados de forma logarítmica de 20 Hz a la mitad de la frecuencia
+  de muestreo, como el espectro del motor. Solo se reagrupan en `bands`.
+- `"linear"`: espaciados por igual desde 0 Hz, como la salida de una FFT simple
+  (`numpy.fft.rfft`). El analizador calcula qué bins van en cada banda a partir de `sample_rate`.
+
+`min_db` y `max_db` son la parte de abajo y de arriba de la pantalla.
+
+## Movimiento
+
+Las barras suben de golpe y caen a `falloff` decibelios por segundo (0 hace que sigan la entrada
+exactamente), así la pantalla se ve suave aunque la entrada parpadee. Con `peaks=True` una pequeña
+tapa se queda encima de cada barra y baja más despacio. La velocidad se mide en tiempo real, así
+que es la misma a 30 o a 144 fotogramas por segundo.
+
+## Estilos y colores
+
+| `variant` | Se parece a |
+| --- | --- |
+| `"bars"` | Barras sólidas. |
+| `"blocks"` | Segmentos LED, como un equipo de alta fidelidad. |
+| `"line"` | Una línea luminosa por la parte alta de las bandas. |
+| `"filled"` | La misma línea con el área de debajo rellena. |
+| `"mirror"` | Barras centradas en vertical, con un aspecto simétrico. |
+| `"radial"` | Barras alrededor de un círculo, como un visualizador de música. |
+
+`colors` es una paleta (`"fl"`, `"neon"`, `"fire"`, `"ice"`, `"magma"`, `"viridis"`...) o una lista de
+colores. `color_by="level"` pinta cada barra de suave (abajo) a fuerte (arriba);
+`color_by="frequency"` da a cada banda su propio color de graves a agudos. `labels=True` marca
+100 Hz, 1 kHz y 10 kHz.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `magnitudes` | `()` | dB por bin de frecuencia. |
+| `width`, `height` | `360`, `140` | Tamaño en píxeles. |
+| `variant` | `"bars"` | Ver la tabla de arriba. |
+| `bands` | `48` | Número de bandas. |
+| `spacing` | `"log"` | Cómo están espaciadas las `magnitudes`: `"log"` (el motor) o `"linear"` (una FFT simple). |
+| `min_db`, `max_db` | `-90`, `0` | Rango mostrado. |
+| `colors`, `color_by` | `"fl"`, `"level"` | Paleta y qué sigue. |
+| `falloff`, `peaks` | `48`, `True` | Velocidad de caída (dB/s) y tapas de pico. |
+| `sample_rate` | `48000` | Para las etiquetas y los bordes de las bandas. |
+| `labels`, `gap`, `background` | `False`, `2`, `"#0f1012"` | |
+
+<Aside type="tip">
+`ui.audio.bands(magnitudes, 16)` te da las mismas bandas logarítmicas como números, para mover
+cualquier otra cosa con la música: el tamaño de un logo, el color de la ventana, un sistema de partículas.
+</Aside>

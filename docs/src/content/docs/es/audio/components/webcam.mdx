@@ -1,0 +1,70 @@
+---
+title: Webcam
+description: Muestra una webcam en vivo en una app de escritorio en Python con Pyzed — OpenCV o ffmpeg en Windows, macOS y Linux, capturas, fotogramas RGBA y un patrón de prueba.
+sidebar:
+  order: 12
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Una vista de webcam con una insignia de grabación mostrando el patrón de prueba en movimiento](/pyzed/media/audio/ui/webcam.webp)
+
+<Aside type="note" title="En pocas palabras">
+Pon la imagen en vivo de una cámara en tu ventana con una línea. Abre la cámara cuando aparece y
+la cierra cuando desaparece.
+</Aside>
+
+```python
+ui.camera.Webcam(device=0, width=480, height=360, mirror=True)
+```
+
+## Cómo llegan los fotogramas
+
+La cámara se lee en un hilo en segundo plano. Cada fotograma nuevo pide a la ventana que se
+redibuje, así la vista se mantiene en vivo sin temporizador y sin frenar el resto de la app. Dos
+`Webcam` del mismo dispositivo comparten una única captura.
+
+La captura usa lo primero que esté disponible, en este orden (`backend="auto"`):
+
+| Backend | Necesita | Notas |
+| --- | --- | --- |
+| `"opencv"` | `pip install opencv-python` | El más compatible en todos los sistemas. |
+| `"ffmpeg"` | el programa `ffmpeg` | Video4Linux en Linux, AVFoundation en macOS, DirectShow en Windows. |
+| `"test"` | nada | Barras de colores en movimiento: para capturas, tests y equipos sin cámara. |
+
+## Usar los fotogramas
+
+`pyzed.camera.Camera` te da los fotogramas para procesarlos (detectar caras, medir el brillo, grabar):
+
+```python
+from pyzed import camera
+
+cam = camera.Camera(0, width=640, height=480, mirror=True)
+cam.start()
+frame = cam.read()             # espera al siguiente Frame(width, height, pixels, index, time)
+cam.snapshot("photo.png")      # se guarda sin Pillow
+cam.on_frame.append(lambda f: print(f.index))   # se ejecuta en el hilo de la cámara
+cam.stop()
+```
+
+`frame.pixels` son bytes RGBA (`width * height * 4`): `numpy.frombuffer(frame.pixels, "uint8")` los
+convierte en un array y `pz.image(frame.pixels, size=(frame.width, frame.height))` los dibuja.
+`camera.devices()` lista las cámaras encontradas.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `device` | `0` | Índice de la cámara, una ruta (`"/dev/video2"`) o, en Windows con ffmpeg, su nombre. |
+| `camera` | `None` | Un `Camera` tuyo para mostrar en su lugar. |
+| `width`, `height` | `320`, `240` | Tamaño de la vista. |
+| `capture_width`, `capture_height`, `fps` | `640`, `480`, `30` | Lo que se le pide a la cámara. |
+| `mirror` | `True` | La voltea como un espejo. |
+| `fit` | `"cover"` | `"cover"` recorta para llenar, `"contain"` la muestra entera. |
+| `radius` | `8` | Esquinas redondeadas. |
+| `overlay` | `True` | Una insignia con un punto de grabación y los fotogramas por segundo. |
+| `paused` | `False` | Congela el último fotograma. |
+| `backend` | `"auto"` | Ver arriba. |
+
+<Aside type="caution">
+En macOS la primera vez se pide permiso para usar la cámara; lo recibe el programa que ejecuta
+Python (la Terminal, tu editor).
+</Aside>

@@ -1,0 +1,58 @@
+---
+title: Step sequencer
+description: A grid of steps like FL Studio's channel rack for Python — click or paint steps, rows with names, beat grouping and a moving playhead.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A five-row drum pattern with the playhead running across sixteen steps](/pyzed/media/audio/ui/step-sequencer.webp)
+
+<Aside type="note" title="In plain words">
+Each row is an instrument and each square a moment in the bar. Lit squares play, dark ones
+don't. Click a square to switch it, or drag across a row to paint several at once.
+</Aside>
+
+```python
+class Beat(pz.App):
+    pattern = ["x...x...x...x...", "....x.......x...", "x.x.x.x.x.x.x.x."]
+    step = 0
+
+    def view(self):
+        return ui.audio.StepSequencer(
+            pattern=self.pattern, labels=["Kick", "Snare", "Hat"], current=self.step,
+            on_change=lambda e: setattr(self, "pattern", e.value),
+        )
+```
+
+## Patterns
+
+`pattern` is a list of rows. Each row is either a list (`True`/`False`, or a velocity from 0
+to 1 that sets how bright the step is) or text where `x` (or `1`) is a step that plays and any
+other character is a rest: `"x...x...x...x..."` is a kick on every beat.
+
+`change` gives the whole new pattern as a list of lists, ready to store. A drag starting on an
+empty step paints steps on; one starting on a lit step erases.
+
+## Playhead
+
+`current` is the step being played: the sequencer frames that column and outlines its steps.
+Drive it from a timer (`pz.every`) or from the engine's sequencer (`node.state["step"]`). Steps
+are shaded in groups of `group` (4 by default), so beats are easy to count.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `pattern` | `()` | Rows of steps. |
+| `labels` | `()` | A name per row (shown on the left). |
+| `current` | `-1` | The step being played (`-1` for none). |
+| `color` | `"accent"` | Color of the steps that play. |
+| `group` | `4` | Steps per shaded group. |
+| `cell` | `22` | Size of a step in pixels. |
+
+Event: `on_change` with the new pattern.
+
+<Aside type="tip">
+The [drum machine demo](/pyzed/audio/demos/drum-machine/) joins a step sequencer, a row of pads and the engine's
+`drum` module: the pads light with `lit=` as the steps play.
+</Aside>

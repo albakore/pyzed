@@ -1,0 +1,56 @@
+---
+title: MIDI controller
+description: A MIDI controller in Python like FL Studio's — channel strips with pan knobs, faders, mute and solo, velocity pads, pitch and mod wheels, and a virtual MIDI port for your DAW.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A MIDI controller playing a beat: eight channel strips with faders moving, pads lighting up and MIDI messages in a log](/pyzed/media/audio/ui/midi-controller.webp)
+
+A controller you can use with any music program: [`examples/audio/midi_controller.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/midi_controller.py).
+
+```bash
+python examples/audio/midi_controller.py
+```
+
+It has eight channel strips (a pan [knob](/pyzed/audio/components/knob/), a
+[fader](/pyzed/audio/components/fader/) with a level meter, mute and solo), eight velocity
+[pads](/pyzed/audio/components/pads-and-buttons/), pitch and mod wheels, transport buttons and a
+three-octave [piano](/pyzed/audio/components/piano/). **PLAY** runs a beat on the pads.
+
+It plays its own drum kit and synth through the engine, so you hear everything. Switch on
+**MIDI OUT** to also send every move to other programs:
+
+| Control | MIDI message |
+| --- | --- |
+| Fader 1–8 | Control change 70–77 |
+| Pan 1–8 | Control change 10–17 |
+| Pad 1–8 | Note 36–43 on channel 10 (drums) |
+| Piano | Note on / note off on channel 1 |
+| Pitch wheel | Pitch bend |
+| Mod wheel | Control change 1 |
+
+<Aside type="tip" title="Using it with a DAW">
+On Linux and macOS the controller opens a virtual port named **Pyzed Controller**: pick it as a
+MIDI input in your DAW. On Windows it uses the first MIDI output found (install a loopback driver
+such as loopMIDI to reach a DAW).
+</Aside>
+
+## How it is built
+
+```python
+def set_level(self, i, value):
+    self.levels[i] = value
+    self.apply_mix()                              # the engine's mixer channel
+    self.send(0xB0, 70 + i, int(value * 127))     # and a MIDI control change
+
+def toggle_midi_out(self, on):
+    if on:
+        self.engine.open_midi_output(virtual="Pyzed Controller")
+    self.midi_out = on
+```
+
+`send` writes the bytes to the log on the right and, when MIDI OUT is on, calls
+`engine.send_midi(message)`.

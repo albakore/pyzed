@@ -128,6 +128,13 @@ pub struct Decoded {
     pixels: bytes::Bytes,
 }
 
+impl Decoded {
+    /// Bytes of decoded pixels this entry keeps alive.
+    pub fn bytes(&self) -> usize {
+        self.pixels.len()
+    }
+}
+
 /// Cropped / rounded copies of images, keyed by image, crop rectangle and corner radius.
 pub type MaskCache =
     std::cell::RefCell<std::collections::HashMap<(u64, [u32; 4], [u32; 3]), img::Handle>>;

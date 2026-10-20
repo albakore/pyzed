@@ -1,0 +1,87 @@
+---
+title: Audio
+description: Make music apps in Python with Pyzed — a modular audio engine, FL Studio-style knobs, faders and pads, waveforms, spectrum analyzers, a webcam view and a VCV Rack-style rack with animated cables.
+sidebar:
+  order: 0
+  label: Overview
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![A modular rack: modules on rails, cables being plugged, a knob turning the filter](/pyzed/media/audio/ui/rack.webp)
+
+Pyzed has everything to build a synthesizer, a drum machine, a MIDI controller or a music
+visualizer in Python. It comes in two layers that you can use together or apart:
+
+- **The engine** (`pyzed.audio`) makes the sound. You add modules (oscillators, filters,
+  envelopes, effects, sequencers, drums), join them with cables and it plays them on your sound
+  card with low latency. It needs no window: a script, a test or a server can use it alone.
+- **The interface** (`pyzed.ui.audio`, `pyzed.ui.rack`, `pyzed.ui.camera`) shows and controls
+  it: knobs, faders, pads, a piano, meters, waveforms, spectrum analyzers and a rack where you
+  patch modules with cables you drag, like VCV Rack or Reaktor.
+
+<Aside type="note" title="In plain words">
+The engine is the instrument; the interface is its front panel. You can play the instrument with
+code only, or give it a panel the user can touch.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import audio, ui
+
+engine = audio.Engine()
+osc = engine.add("oscillator", wave="saw", freq=110)
+lpf = engine.add("filter", cutoff=800, resonance=0.5)
+engine.chain(osc, lpf, engine.add("audio_out"))
+
+
+class Synth(pz.App):
+    def on_start(self):
+        engine.start()
+
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]  # redraw every frame: the meters move
+
+    def view(self):
+        return pz.row([
+            ui.audio.Knob(value=engine.get(lpf, "cutoff"), min=20, max=20000, curve="log", unit="Hz",
+                          caption="Cutoff", variant="fl",
+                          on_change=lambda e: engine.set(lpf, "cutoff", e.value)),
+            ui.audio.Spectrum(magnitudes=engine.spectrum(), width=360, height=120),
+            ui.audio.VuMeter(level=engine.level()),
+        ], spacing=16, align="center")
+
+
+pz.run(Synth)
+```
+
+## Where to start
+
+<CardGrid>
+	<LinkCard title="The engine" href="/pyzed/audio/engine/getting-started/" description="Modules, cables, MIDI and latency: making sound from Python." />
+	<LinkCard title="Components" href="/pyzed/audio/components/knob/" description="Knobs, faders, pads, piano, meters, waveforms and analyzers." />
+	<LinkCard title="The rack" href="/pyzed/audio/rack/rack/" description="A VCV Rack-style rack with modules you patch with cables." />
+	<LinkCard title="Demos" href="/pyzed/audio/demos/synth/" description="A synthesizer, a visualizer, a MIDI controller, a drum machine and more." />
+</CardGrid>
+
+## The components
+
+Every component is in the designer's toolbox, in the **Audio** group (the webcam is under
+**Media**), and has its own page with an animation:
+
+| Component | What it is |
+| --- | --- |
+| [`Knob`](/pyzed/audio/components/knob/) | A rotary control: five looks, logarithmic ranges, stepped selectors. |
+| [`Fader`](/pyzed/audio/components/fader/) | A slider like a mixing desk's, with an optional level meter. |
+| [`Pad`, `LedButton`](/pyzed/audio/components/pads-and-buttons/) | Velocity pads and buttons with a light. |
+| [`StepSequencer`](/pyzed/audio/components/step-sequencer/) | A grid of steps like FL Studio's channel rack. |
+| [`Piano`](/pyzed/audio/components/piano/) | A keyboard you play with the mouse or the computer keys. |
+| [`VuMeter`](/pyzed/audio/components/vu-meter/) | LED, bar and analog needle meters with peak hold. |
+| [`Waveform`](/pyzed/audio/components/waveform/) | A recording's shape, with a playhead and a selection. |
+| [`Scope`](/pyzed/audio/components/scope/) | An oscilloscope with trigger, XY mode and persistence. |
+| [`Spectrum`](/pyzed/audio/components/spectrum/) | A spectrum analyzer: bars, blocks, lines, mirror, radial. |
+| [`Spectrogram`](/pyzed/audio/components/spectrogram/) | The spectrum over time, as a scrolling picture. |
+| [`Webcam`](/pyzed/audio/components/webcam/) | The live picture of a camera. |
+| [`Rack`](/pyzed/audio/rack/rack/) | Modules on rails joined with [animated cables](/pyzed/audio/rack/cables/). |
+
+Colors and palettes are explained in [Colors and palettes](/pyzed/audio/components/colors/).

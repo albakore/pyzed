@@ -1,0 +1,65 @@
+---
+title: Pads y botones LED
+description: Pads de batería sensibles a la velocidad y botones LED (mute, solo, grabar) para apps de música en Python, al estilo de FL Studio y las cajas de ritmos.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Una cuadrícula de 4×3 pads que se iluminan con un ritmo, junto a botones PLAY, REC, MUTE y SOLO](/pyzed/media/audio/ui/pads.webp)
+
+<Aside type="note" title="En pocas palabras">
+Los pads son los cuadrados de goma de una caja de ritmos: golpeas uno y suena. Los botones LED son
+los interruptores pequeños con luz, como mute, solo o grabar.
+</Aside>
+
+## Pad
+
+```python
+ui.audio.Pad(text="KICK", color="#ff9f3d",
+             on_press=lambda e: engine.node("drums").trigger(),
+             on_release=lambda e: None)
+```
+
+- `press` se dispara al pulsar el pad, con una **velocidad** de 1 a 127 en `event.value` (como en
+  MIDI): cuanto más abajo del pad haces clic, más fuerte es el golpe. `velocity=False` envía
+  siempre 100.
+- `release` se dispara al soltar el botón o cuando el puntero sale del pad.
+- `lit=True` lo enciende desde fuera: el paso actual de un secuenciador, una nota que llega de un
+  teclado. El pad brilla en su `color`, así que una cuadrícula de pads muestra el ritmo de un vistazo.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `text` | `""` | La etiqueta del centro. |
+| `color` | `"accent"` | El color con el que se enciende. |
+| `lit` | `False` | Encendido desde fuera. |
+| `velocity` | `True` | Velocidad según dónde se pulsa. |
+| `width`, `height` | `72`, `72` | Tamaño en píxeles. |
+
+## Botón LED
+
+```python
+ui.audio.LedButton(text="MUTE", on=self.muted, color="warning",
+                   on_toggle=lambda e: setattr(self, "muted", e.value))
+```
+
+Una tecla oscura con una lucecita. **Alterna** con cada clic (`toggle` da `True` o `False`), o con
+`momentary=True` solo se enciende mientras lo mantienes (`press` / `release`), como una tecla de
+tap tempo.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `text` | `""` | La etiqueta. |
+| `on` | `False` | Si está encendido. |
+| `color` | `"success"` | El color de la luz (un token del tema o hex). |
+| `variant` | `"fl"` | `"fl"` (tecla cuadrada), `"round"` (LED más grande, tecla redonda) o `"pill"`. |
+| `momentary` | `False` | Encendido solo mientras se mantiene. |
+| `icon_name` | `""` | Un icono de Lucide junto a la etiqueta (`"play"`, `"circle"`...). |
+
+Eventos: `on_toggle`, `on_press`, `on_release`.
+
+<Aside type="tip">
+Toca los pads también desde el teclado del ordenador: asigna teclas en `on_key` y pon `lit` según
+el estado de tu app, así el pad se enciende tanto si se hizo clic como si se tecleó.
+</Aside>

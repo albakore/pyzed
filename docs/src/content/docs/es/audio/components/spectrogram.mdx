@@ -1,0 +1,37 @@
+---
+title: Espectrograma
+description: Un espectrograma desplazable (cascada) para Python — frecuencia a lo largo del tiempo en color, con magma, viridis o cualquier paleta, dibujado lo bastante rápido para audio en vivo.
+sidebar:
+  order: 10
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Dos espectrogramas desplazándose a la izquierda mientras suena una canción: los bombos como columnas abajo y los acordes como líneas brillantes](/pyzed/media/audio/ui/spectrogram.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un espectrograma es un analizador de espectro con memoria: el tiempo corre de izquierda a derecha,
+el tono de abajo arriba y el color dice lo fuerte que sonó cada tono. En él se ven el ritmo y los
+acordes de una canción.
+</Aside>
+
+```python
+ui.audio.Spectrogram(magnitudes=engine.spectrum(512), history=160, colors="magma")
+```
+
+Cada render que recibe una lista `magnitudes` **nueva** añade una columna a la derecha; redibujar
+por cualquier otro motivo (pasar el ratón, otro widget) no la añade, así que la velocidad sigue a
+tus actualizaciones. Conserva las últimas `history` columnas.
+
+El volumen se reduce a `levels` colores y todas las celdas de un mismo color se dibujan en una sola
+forma, así que incluso 160 columnas × 64 bandas se dibujan con poco coste.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `magnitudes` | `()` | dB por bin de frecuencia (como `node.spectrum()`). |
+| `width`, `height` | `360`, `140` | Tamaño en píxeles. |
+| `history` | `120` | Columnas que se conservan. |
+| `bands` | `48` | Filas (bandas logarítmicas). |
+| `min_db`, `max_db` | `-90`, `0` | Rango de los colores. |
+| `colors`, `levels` | `"magma"`, `24` | Paleta y cuántos pasos de color. |
+| `sample_rate`, `spacing` | `48000`, `"log"` | Como en [`Spectrum`](/pyzed/es/audio/components/spectrum/): cómo están espaciados los bins. |

@@ -1,0 +1,64 @@
+---
+title: Piano keyboard
+description: A clickable piano keyboard for Python synthesizers — glissando, velocity, lit notes from MIDI or a sequencer, and computer-keyboard playing.
+sidebar:
+  order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A four-octave keyboard lighting up a chord progression and an arpeggio](/pyzed/media/audio/ui/piano.webp)
+
+<Aside type="note" title="In plain words">
+A keyboard you can play with the mouse: click a key to play a note, drag across the keys to
+slide from one to the next. Notes played from elsewhere (a MIDI keyboard, a sequencer) light up.
+</Aside>
+
+```python
+from pyzed import audio, ui
+
+engine = audio.Engine()
+synth = engine.add("midi_in")  # notes from note_on/note_off reach the midi_in modules
+...
+
+ui.audio.Piano(start=48, octaves=3, pressed=sorted(self.held),
+               on_note_on=lambda e: engine.note_on(e.value.note, e.value.velocity),
+               on_note_off=lambda e: engine.note_off(e.value))
+```
+
+## Notes and velocity
+
+Notes are MIDI numbers: 60 is middle C (C4), 69 is the A at 440 Hz. `note_on` gives a
+`Note(note, velocity)`; the lower on a key you click, the louder (velocity 30 to 127).
+`note_off` gives the note number. Dragging across keys releases one and presses the next.
+
+`ui.audio.note_name(61)` gives `"C#4"`, handy for labels.
+
+## Playing from the computer keyboard
+
+`ui.audio.KEYBOARD` maps keys to semitones like most music apps: the row `a s d f g h j k`
+is the white keys and `w e t y u o p` the black ones.
+
+```python
+def on_key(self, combo):
+    if combo in ui.audio.KEYBOARD and combo not in self.keys:
+        self.keys.add(combo)
+        note = self.octave * 12 + ui.audio.KEYBOARD[combo]
+        engine.note_on(note)
+
+def on_key_up(self, key):
+    if key in self.keys:
+        self.keys.discard(key)
+        engine.note_off(self.octave * 12 + ui.audio.KEYBOARD[key])
+```
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `start` | `48` | The first note (rounded down to a C). |
+| `octaves` | `2` | How many octaves (plus the last C). |
+| `pressed` | `()` | Notes to light, played from elsewhere. |
+| `color` | `"accent"` | Color of pressed keys. |
+| `key_width`, `height` | `24`, `110` | Size of a white key. |
+| `labels` | `True` | Writes the name of every C. |
+
+Events: `on_note_on` (`Note(note, velocity)`), `on_note_off` (the note number).

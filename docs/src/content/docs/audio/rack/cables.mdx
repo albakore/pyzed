@@ -1,0 +1,80 @@
+---
+title: Animated cables
+description: How Pyzed's patch cables work — Bézier curves that sag with gravity, a spring that settles them when plugged, signal dots that flow, and how to draw them yourself.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Cables being plugged one by one: each plug travels to its jack, then the cable drops, overshoots and settles while dots flow along it](/pyzed/media/audio/ui/cables.webp)
+
+<Aside type="note" title="In plain words">
+The cables of the rack behave like real ones: they hang, they bounce a little when you plug them
+in, and small dots run along them in the direction the signal travels.
+</Aside>
+
+## The shape: a hanging curve
+
+A cable between two jacks is a **cubic Bézier curve**: it starts at one jack, ends at the other,
+and two control points pull it down. The control points sit a little inside the two ends and
+lower by the **sag**, which grows with the distance between the jacks:
+
+```
+sag = (18 + 0.3 × distance) × (1.15 − tension)
+```
+
+so a short cable is almost straight and a long one droops, as gravity would make it. `tension`
+(0..1) tightens all of them at once.
+
+```python
+from pyzed.ui import rack
+
+c0, c1 = rack.cable_path((40, 60), (300, 80), tension=0.45)
+shape = draw.path([("M", 40, 60), ("C", *c0, *c1, 300, 80)], stroke="#f5c542", width=5)
+```
+
+## The drop: a damped spring
+
+When a cable is plugged, its sag does not appear at once. It follows a **damped spring**:
+
+```
+drop(t) = 1 − e^(−5.5 t) · cos(13 t)
+```
+
+At `t = 0` the cable is straight; it falls, goes a little past its resting sag (the cosine makes
+it overshoot) and settles in about half a second. The rack stores when each cable was plugged and
+multiplies its sag by `drop(now − plugged)` on every frame. Nothing is simulated step by step, so
+the motion is the same at any frame rate.
+
+## The look
+
+Each cable is drawn as five layers, from the bottom up:
+
+1. A soft **shadow**, offset down and right, so the cable floats over the panels.
+2. A darker **outline**.
+3. The **body** in the cable's color (`cable_opacity` lets you see the panels through it).
+4. A thin white **shine** along the top edge, which makes it read as round.
+5. Two **plugs**: a ring, a lighter center and a highlight.
+
+New cables take the next color of `ui.rack.CABLE_COLORS` (yellow, red, green, blue, purple...),
+like VCV Rack. A cable keeps its color when you pick it up and move it.
+
+## Signal flow
+
+With `flow=True` small light dots travel from the output to the input, spaced about 38 px apart.
+Their position along the curve is the time multiplied by a speed, wrapped around, so they move
+smoothly at any frame rate and every cable shows which way its signal goes.
+
+## While dragging
+
+A cable being dragged follows the pointer with a tighter, lighter curve and **snaps** to the
+nearest compatible jack within 18 px (outputs only reach inputs and the other way round), so you
+see where it will land before you let go. An input takes one cable: dropping on a patched input
+replaces its cable.
+
+<Aside type="tip">
+The rack needs to redraw every frame for the drop and the flow: `pz.frames(lambda dt: None)` in
+`subscriptions()`. Set `flow=False` and return no subscription when nothing moves to let the app
+sleep.
+</Aside>
