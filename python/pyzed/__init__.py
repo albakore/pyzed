@@ -103,6 +103,7 @@ _LAZY = {
     "reference": ("reference", None),
     "dock": ("dock", None),
     "game": ("game", None),
+    "shading": ("shading", None),
     "Dock": ("dock", "Dock"),
     "DockPanel": ("dock", "DockPanel"),
     "is_pressed": ("game", "is_pressed"),
@@ -158,8 +159,28 @@ def _shader_uniform(value):
 def shader(code, *args, uniforms=None, **kwargs):
     if uniforms:
         uniforms = {name: _shader_uniform(value) for name, value in dict(uniforms).items()}
+    # A shader graph: a ``.pzshad`` path, a ``pyzed.shading`` Graph or Shader.
+    source = code if hasattr(code, "__pyzed_shader__") else None
+    if source is None and not (isinstance(code, str) and "fn shade" in code):
+        from .shading.runtime import resolve
+
+        source = resolve(code)
+    if source is not None:
+        code, uniforms, textures, defaults = source.__pyzed_shader__(uniforms)
+        for key, value in defaults.items():
+            kwargs.setdefault(key, value)
+        if textures:
+            kwargs.setdefault("textures", textures)
+    if uniforms:
         kwargs["uniforms"] = uniforms
     return _shader(code, *args, **kwargs)
+
+
+shader.__doc__ = (_shader.__doc__ or "") + """
+
+``code`` can also be a shader graph: a ``.pzshad`` file made in Pyzed Design, or a
+``pyzed.shading.Graph``/``Shader``. Then ``uniforms`` sets its mutable variables by name.
+"""
 
 
 def center(content, **kwargs):
