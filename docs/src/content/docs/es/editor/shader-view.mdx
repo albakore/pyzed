@@ -6,17 +6,20 @@ sidebar:
   order: 9.5
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 import Media from '../../../../components/Media.astro';
-import shaderShot from '../../../../../screenshots/designer-shader.png';
+import shaderShot from '../../../../assets/shading/shader-view.png';
+import shaderLight from '../../../../assets/shading/shader-view-light.png';
+import previewTab from '../../../../assets/shading/preview-tab.png';
+import wgslTab from '../../../../assets/shading/wgsl-tab.png';
 
 El tercer tipo de documento de Pyzed Design es un **shader**: un efecto de GPU hecho conectando nodos y guardado como
 archivo `.pzshad`. Se abre en la **vista Shader**, un editor de nodos con el espíritu de los visual shaders de Godot y
 del editor de materiales de Unreal Engine. Esta página muestra cómo encaja la vista en el editor; la
 [sección Shading](/pyzed/es/shading/) enseña los shaders en sí y lista cada nodo.
 
-<Media src={shaderShot} alt="La vista Shader con la barra Shading, el grafo y la vista previa de la Salida" caption="La vista Shader: la barra Shading y la Estructura a la izquierda, el grafo en el centro y Propiedades a la derecha." size="wide" />
+<Media src={shaderShot} light={shaderLight} alt="La vista Shader con la barra Shading, el grafo y la vista previa de la Salida" caption="La vista Shader: la barra Shading y la Estructura a la izquierda, el grafo en el centro y Propiedades a la derecha." size="wide" />
 
 ## Cómo cambia el editor con un shader
 
@@ -28,6 +31,20 @@ del editor de materiales de Unreal Engine. Esta página muestra cómo encaja la 
 | **Dock derecho: Propiedades** | El nodo seleccionado (sus ajustes, entradas y salidas), la variable seleccionada, o el propio shader si no hay nada seleccionado. |
 | **Eventos** | Indica que los shaders no tienen eventos y cómo usar este: `pz.shader("fire.pzshad")` o un control Shader en un formulario. Sus variables son lo que cambia tu código. |
 | **Barra de estado** | La posición del puntero en el grafo, cuántos nodos y cables hay (o cuántos están seleccionados) y el zoom (clic para 100 %). |
+
+Las tres pestañas del centro:
+
+<Tabs>
+	<TabItem label="Grafo">
+		<Media src={shaderShot} alt="La pestaña Grafo: nodos con vista previa en vivo conectados a la Salida" caption="<strong>Grafo</strong>: los nodos, cada uno con su vista previa en vivo, y la pequeña vista previa de la Salida en la esquina." />
+	</TabItem>
+	<TabItem label="Vista previa">
+		<Media src={previewTab} alt="La pestaña Vista previa: el anillo brillante en grande, con un deslizador por variable" caption="<strong>Vista previa</strong>: el shader terminado, en grande, con un control por variable." />
+	</TabItem>
+	<TabItem label="WGSL">
+		<Media src={wgslTab} alt="La pestaña WGSL: el código en el que se compila el grafo" caption="<strong>WGSL</strong>: el código en el que se compila el grafo, solo lectura." />
+	</TabItem>
+</Tabs>
 
 ## La barra de herramientas
 
@@ -51,6 +68,8 @@ del editor de materiales de Unreal Engine. Esta página muestra cómo encaja la 
 - **Conectar:** arrastra desde una salida (lado derecho de un nodo) hasta una entrada (lado izquierdo). Suelta un cable
   en un espacio vacío para añadir un nodo ya conectado a él.
 - **Cambiar un valor:** una entrada sin cable muestra su valor en el nodo; escribe un número o elige un color ahí.
+
+<Media clip="shader-graph" alt="Nodos Voronoi y Palette arrastrados al grafo y conectados a la Salida, con sus vistas previas actualizándose" caption="Arrastra nodos, conéctalos a la Salida y cada vista previa se actualiza al momento." />
 
 Todos los gestos y atajos están en la [referencia de la vista Shader](/pyzed/es/shading/shader-designer/).
 

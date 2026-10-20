@@ -9,9 +9,15 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 import Media from '../../../components/Media.astro';
-import designer from '../../../../screenshots/designer.png';
-import designerLight from '../../../../screenshots/designer-light.png';
-import fileMenu from '../../../../screenshots/editor-file-menu.png';
+import designer from '../../../assets/editor/form-view.png';
+import designerLight from '../../../assets/editor/form-view-light.png';
+import fileMenu from '../../../assets/editor/menu-file.png';
+import windowFrames from '../../../assets/editor/window-frames.png';
+import systemFrame from '../../../assets/editor/system-frame.png';
+import tabWindow from '../../../assets/editor/tab-window.png';
+import statusBar from '../../../assets/editor/status-bar.png';
+import welcome from '../../../assets/editor/welcome.png';
+import welcomeLight from '../../../assets/editor/welcome-light.png';
 import dockMenu from '../../../../screenshots/editor-dock-menu.png';
 
 Pyzed Design is one window split in a few areas, and every area has a single job. Once you know their names, the
@@ -20,8 +26,6 @@ bar are inspired by the [Zed](https://zed.dev) code editor, the form canvas and 
 Qt Designer, and the node and scene ideas by Godot and Unreal Engine.
 
 <Media src={designer} light={designerLight} alt="Pyzed Design with a sign-in form open: toolbox and outline on the left, the form in the middle, properties on the right" caption="A form open in Pyzed Design. Every area is described below." size="wide" eager />
-
-{/* media: editor/interface-annotated (the window with each area numbered) */}
 
 ```mermaid
 flowchart TB
@@ -59,7 +63,7 @@ The strip at the very top. From left to right:
 | **Help** (? icon) | Shortcuts, the built-in reference, the welcome window, updates and About. |
 | **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Settings](/pyzed/editor/settings/). |
 
-<Media src={fileMenu} alt="The ☰ menu open with File and Run commands and recent files" caption="The ☰ menu: file commands, recent files and Run." size="narrow" />
+<Media src={fileMenu} alt="The ☰ menu open with File and Run commands and recent files" caption="The ☰ menu: file commands, recent files and Run." />
 
 Every menu entry is listed with its keys in [Menus and commands](/pyzed/editor/menus-and-commands/). Anything you
 can click in a menu is also in the **command palette** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>): type a few
@@ -71,13 +75,15 @@ By default Pyzed Design draws its **own window frame**: the title bar above also
 close buttons, in the style of your system, and the borders of the window resize it. Drag the title bar to move the
 window; double-click it to maximize. This gives a compact, uniform window on every platform.
 
-{/* media: editor/window-frames (the same title bar with macOS, Windows 11, GNOME and KDE buttons) */}
+<Media src={windowFrames} alt="The same title bar five times, with the window buttons of macOS, Windows 11, GNOME, Ubuntu and KDE Plasma" caption="One title bar, five systems. From top to bottom: macOS, Windows 11, GNOME, Ubuntu and KDE Plasma." />
 
 <Aside type="tip" title="Prefer your system's frame?">
 Turn off **Settings → Appearance → Custom window frame** to use the frame of your operating system (it applies the
 next time Pyzed Design opens). Your own apps can use the same frames: see `ui.window_frame` and `Window.frame` in
 the [API reference](/pyzed/reference/ui/).
 </Aside>
+
+<Media src={systemFrame} alt="Pyzed Design with Custom window frame turned off: the bar with the menus and Run has no window buttons" caption="With <strong>Custom window frame</strong> off, the bar keeps the menus and Run, and your system draws the frame and its buttons around it." />
 
 ## ② ④ ⑤ Docks and panels
 
@@ -128,7 +134,7 @@ or the release notes. The end of the tab row says which view is in front (**Form
 - The panels stay in the main window and follow the window you used last. Closing a document window brings its tabs
   back to the main window.
 
-{/* media: editor/tab-drag-out (a tab dragged out into its own window, short loop) */}
+<Media src={tabWindow} alt="A shader dragged out of the main window into a second Pyzed Design window" caption="A shader in its own window, next to the main window with the form." size="wide" />
 
 ### Toolbar
 
@@ -166,7 +172,15 @@ The bar at the bottom tells you where you are and toggles a few things with a cl
 
 Hide it with **View → Status bar**.
 
-{/* media: editor/status-bar (the status bar while a control is selected) */}
+<Media src={statusBar} alt="The status bar: pointer position, the selected control sign_in with its size and position, the GNOME frame, 12 controls, Grid 8px and Snap" caption="The status bar with the <code>sign_in</code> button selected." plain />
+
+## The welcome window
+
+When Pyzed Design starts without a file, the **welcome window** greets you: start or open a project, reopen a
+recent one, or make a project from one of the examples (apps, games, showcase demos, blocks and integrations). Open
+it again from **Help → Welcome**. Everything about it is in [Welcome and examples](/pyzed/editor/examples/).
+
+<Media src={welcome} light={welcomeLight} alt="The welcome window: New project, Open project and recent projects on the left, the gallery of examples on the right" caption="The welcome window, with the gallery of example projects." />
 
 ## Notifications
 

@@ -13,6 +13,8 @@ import newForm from '../../../../screenshots/designer-new.png';
 import placing from '../../../../screenshots/editor-placing.png';
 import events from '../../../../screenshots/editor-events.png';
 import run from '../../../../screenshots/designer-run.png';
+import formView from '../../../assets/editor/form-view.png';
+import formViewLight from '../../../assets/editor/form-view-light.png';
 
 A **form** is one window of your app. The **Form view** is where you draw it: you pick controls from a box, drop
 them on the window, change their look in a list of properties, and write a few lines of Python for what happens when
@@ -31,6 +33,8 @@ idea; if you haven't, the walkthrough below takes ten minutes.
 | **Events** (right) | What the selected control can react to, and the Python function wired to each event. |
 | **Code** (bottom) | The Python of the form, opened when you wire an event. |
 
+<Media src={formView} light={formViewLight} alt="The Form view with a sign-in form: toolbox and outline on the left, the form on the canvas, the properties of the selected button on the right" caption="The Form view with the sign-in example open and its button selected." size="wide" eager />
+
 Every area is described in detail in its own page: [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/),
 [Properties](/pyzed/editor/properties/), [Events](/pyzed/editor/events/) and [Code editor](/pyzed/editor/code-editor/).
 
@@ -39,7 +43,7 @@ Every area is described in detail in its own page: [Toolbox and canvas](/pyzed/e
 You will build a window with a text box, a button and a label. Typing a name and clicking the button shows
 "Hello, *name*!".
 
-{/* media: editor/form-view-greeter (the finished greeter running, short loop) */}
+<Media clip="designer-place-controls" alt="A button, a text box and a check box dragged one by one from the toolbox onto an empty form" caption="Placing controls: drag them from the toolbox and drop them on the form." />
 
 <Steps>
 
@@ -156,9 +160,9 @@ it in a Python module with the same name. Both are yours to version, review and 
 }
 ```
 
-<Aside type="note" title="Status of this page">
-This page is new. Short recordings of each step are being added; the other pages of this section already describe
-every control of the view in depth.
+<Aside type="note" title="Go deeper">
+This page covers the essentials of the Form view. The other pages of this section describe every control of the
+view in depth, starting with [Toolbox and canvas](/pyzed/editor/toolbox-and-canvas/).
 </Aside>
 
 <NavCards

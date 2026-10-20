@@ -227,7 +227,7 @@ Los abren el **engranaje** de la cabecera del panel de código, los puntos de lo
 [ajustes del editor](/pyzed/es/editor/settings/). Un índice a la izquierda lista las secciones y a la
 derecha se ve la que eliges.
 
-![Ajustes del editor con el índice de secciones](../../../../../screenshots/designer-editor-settings.png)
+![Ajustes del editor con el índice de secciones](../../../../assets/editor/editor-settings-appearance.png)
 
 | Sección | Ajuste | Qué hace |
 | --- | --- | --- |
@@ -254,6 +254,8 @@ derecha se ve la que eliges.
 | Servidores de lenguaje | **ty**, **ruff** | Enciende o apaga cada servidor. Cada fila muestra su estado y versión. Debajo: la raíz del proyecto y el Python en uso. |
 | | **Reiniciar servidores** | Reinicia los dos; úsalo después de `uv sync` o de instalarlos. |
 
+![La sección Servidores de lenguaje de los ajustes del editor: ty y ruff con su estado y versión, la raíz del proyecto y el Python en uso](../../../../assets/editor/editor-settings-servers.png)
+
 ### Atajos de teclado
 
 En **Atajos de teclado**, el índice agrupa todas las acciones del editor y del panel de código: Panel de código,
@@ -263,7 +265,7 @@ Edición, Varios cursores, Líneas, Movimiento y Plegado. Cada fila muestra la a
 Las teclas nuevas sustituyen a las de por defecto; la flecha junto a una acción cambiada recupera las suyas, y
 **Restablecer todo** lo hace con todas.
 
-![Cambiar las teclas del editor de código](../../../../../screenshots/designer-editor-keys.png)
+![Cambiar las teclas del editor de código](../../../../assets/editor/editor-settings-keys.png)
 
 Los cambios se guardan en `"keymap"` dentro de `designer.json`, como acción → teclas:
 

@@ -9,9 +9,12 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 import Media from '../../../components/Media.astro';
-import formShot from '../../../../screenshots/designer.png';
-import componentShot from '../../../../screenshots/designer-component.png';
-import shaderShot from '../../../../screenshots/designer-shader.png';
+import formShot from '../../../assets/editor/form-view.png';
+import formLight from '../../../assets/editor/form-view-light.png';
+import componentShot from '../../../assets/editor/component-view.png';
+import componentLight from '../../../assets/editor/component-view-light.png';
+import shaderShot from '../../../assets/shading/shader-view.png';
+import shaderLight from '../../../assets/shading/shader-view-light.png';
 import codeShot from '../../../../screenshots/designer-code.png';
 
 Pyzed Design edits four kinds of document. Each opens in its own **view**: the same window, but the left dock, the
@@ -40,7 +43,7 @@ flowchart LR
 
 **For:** the windows of your app: a login, a settings page, a dashboard, a dialog.
 
-<Media src={formShot} alt="The Form view with a sign-in form" caption="Form view: the toolbox on the left, the form on the canvas, its properties on the right." />
+<Media src={formShot} light={formLight} alt="The Form view with a sign-in form" caption="Form view: the toolbox on the left, the form on the canvas, its properties on the right." />
 
 - **Left dock:** the **Toolbox** with every control, and the **Outline** of the form.
 - **Center:** the form drawn in a window frame, with a dot grid, handles and smart guides.
@@ -54,7 +57,7 @@ Read [The Form view](/pyzed/editor/form-view/) for a guided first form.
 **For:** pieces you use many times: a star rating, a profile card, a product tile. A component has no window; it lives
 inside forms and other components.
 
-<Media src={componentShot} alt="The Component view with a ProfileCard that contains a Rating component" caption="Component view: an accent frame with the class name instead of window buttons." />
+<Media src={componentShot} light={componentLight} alt="The Component view with a ProfileCard that contains a Rating component" caption="Component view: an accent frame with the class name instead of window buttons." />
 
 - The same toolbox and canvas as a form, but the canvas shows an **accent frame with the class name** instead of a
   window, and the title bar a **Component** badge.
@@ -69,7 +72,7 @@ Everything is in [The Component view](/pyzed/editor/component-designer/).
 
 **For:** animated backgrounds, glows, transitions and game visuals drawn by the graphics card.
 
-<Media src={shaderShot} alt="The Shader view: a graph of nodes with previews and the Output preview" caption="Shader view: nodes with live previews, wired from inputs to the Output." />
+<Media src={shaderShot} light={shaderLight} alt="The Shader view: a graph of nodes with previews and the Output preview" caption="Shader view: nodes with live previews, wired from inputs to the Output." />
 
 - **Left dock:** the **Shading** sidebar (every node, by category) and the **Outline** of variables, named values and
   nodes.

@@ -6,17 +6,20 @@ sidebar:
   order: 9.5
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 import Media from '../../../components/Media.astro';
-import shaderShot from '../../../../screenshots/designer-shader.png';
+import shaderShot from '../../../assets/shading/shader-view.png';
+import shaderLight from '../../../assets/shading/shader-view-light.png';
+import previewTab from '../../../assets/shading/preview-tab.png';
+import wgslTab from '../../../assets/shading/wgsl-tab.png';
 
 The third kind of document of Pyzed Design is a **shader**: a GPU effect built by wiring nodes, saved as a `.pzshad`
 file. It opens in the **Shader view**, a node editor in the spirit of Godot's visual shaders and Unreal Engine's
 material editor. This page shows how the view fits in the editor; the [Shading section](/pyzed/shading/) teaches
 shaders themselves and lists every node.
 
-<Media src={shaderShot} alt="The Shader view with the Shading sidebar, the graph and the Output preview" caption="The Shader view: Shading sidebar and Outline on the left, the graph in the center, Properties on the right." size="wide" />
+<Media src={shaderShot} light={shaderLight} alt="The Shader view with the Shading sidebar, the graph and the Output preview" caption="The Shader view: Shading sidebar and Outline on the left, the graph in the center, Properties on the right." size="wide" />
 
 ## How the editor changes in a shader
 
@@ -28,6 +31,20 @@ shaders themselves and lists every node.
 | **Right dock: Properties** | The selected node (its settings, inputs and outputs), the selected variable, or the shader itself when nothing is selected. |
 | **Events** | Says that shaders have no events, and how to use this one: `pz.shader("fire.pzshad")` or a Shader control on a form. Its variables are what your code changes. |
 | **Status bar** | The pointer's position on the graph, how many nodes and wires there are (or how many are selected), and the zoom (click it for 100%). |
+
+The three tabs of the center:
+
+<Tabs>
+	<TabItem label="Graph">
+		<Media src={shaderShot} alt="The Graph tab: nodes with live previews wired into the Output" caption="<strong>Graph</strong>: the nodes, each with a live preview, and the small Output preview in the corner." />
+	</TabItem>
+	<TabItem label="Preview">
+		<Media src={previewTab} alt="The Preview tab: the glow ring large, with a slider for each variable" caption="<strong>Preview</strong>: the finished shader, large, with a control per variable." />
+	</TabItem>
+	<TabItem label="WGSL">
+		<Media src={wgslTab} alt="The WGSL tab: the code the graph compiles to" caption="<strong>WGSL</strong>: the code the graph compiles to, read only." />
+	</TabItem>
+</Tabs>
 
 ## The toolbar
 
@@ -51,6 +68,8 @@ shaders themselves and lists every node.
 - **Wire:** drag from an output (right side of a node) to an input (left side). Drop a wire on empty space to add a
   node already connected to it.
 - **Change a value:** an input with no wire shows its value on the node; type a number or pick a color there.
+
+<Media clip="shader-graph" alt="Voronoi and Palette nodes dragged onto the graph and wired to the Output, with their previews updating" caption="Drag nodes in, wire them to the Output, and every preview updates as you go." />
 
 Every gesture and shortcut is in the full [Shader view reference](/pyzed/shading/shader-designer/).
 

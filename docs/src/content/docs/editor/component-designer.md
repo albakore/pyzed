@@ -11,7 +11,7 @@ form, declare its properties and events in a panel, write the logic of its metho
 or inside other components. The idea is the same as scenes in Godot: every component has its own properties,
 methods and events, and can contain other components.
 
-![A ProfileCard component that contains a Rating component](../../../../screenshots/designer-component.png)
+![A ProfileCard component that contains a Rating component](../../../assets/editor/component-view.png)
 
 A designed component **is** a [`pz.Component`](/pyzed/guides/components/). The designer writes an ordinary
 class, so drawing it and writing it by hand are the same thing, and you can switch between them at any time.

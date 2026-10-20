@@ -9,7 +9,7 @@ When Pyzed Design starts without a file, the **welcome window** opens. On the le
 open one, create a form or read the documentation, and reopen a recent project. On the right is the **gallery of
 example projects**: each example has a thumbnail, a title and a description.
 
-![The welcome window with the gallery of example projects](../../../../screenshots/editor-welcome.png)
+![The welcome window with the gallery of example projects](../../../assets/editor/welcome.png)
 
 Open it again at any time from **Help → Welcome**, or **Help → Example projects…** to see every example. Uncheck
 **Show at startup** (or turn off **Welcome window** in [Settings](/pyzed/editor/settings/)) to start straight on
@@ -28,6 +28,10 @@ The tabs filter the examples by category, and the search box filters them by tit
 | **Designer** | Login form: a form made in Pyzed Design, with its event code and components. |
 | **Integrations** | SQLModel heroes, Pydantic sign-up, PyPI with httpx, SQLAlchemy contacts. |
 
+![The Games tab of the gallery: Snake, Breakout and Neon Invaders](../../../assets/editor/welcome-games.png)
+
+![The Showcase tab of the gallery: the glass dashboard, the game HUD, the main menu and the inventory](../../../assets/editor/welcome-showcase.png)
+
 ## Creating a project from an example
 
 Click an example to name the new project and choose where it goes (by default `~/Pyzed Projects/<name>`; **Browse…**
@@ -38,7 +42,7 @@ picks another folder). **Create project** then:
 2. opens it in the Project panel, with its script (or, for the Designer example, its main form) in front;
 3. installs its packages with `uv sync` in the background.
 
-![Naming the project made from an example](../../../../screenshots/editor-welcome-example.png)
+![Naming the project made from an example](../../../assets/editor/welcome-create.png)
 
 The copy is yours: change it freely, the original example is not touched.
 

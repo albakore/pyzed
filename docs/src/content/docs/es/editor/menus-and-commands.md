@@ -18,7 +18,7 @@ engranaje de **Ajustes**, seguidos de los botones de la ventana cuando Pyzed Des
 
 ## Menú ☰ Archivo
 
-![El menú ☰ con archivos recientes](../../../../../screenshots/editor-file-menu.png)
+![El menú ☰ con archivos recientes](../../../../assets/editor/menu-file.png)
 
 | Entrada | Teclas | Hace |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ en el teclado y en la paleta de comandos.
 
 ## Menú Ver
 
-![El menú Ver](../../../../../screenshots/designer-menu.png)
+![El menú Ver](../../../../assets/editor/menu-view.png)
 
 | Entrada | Teclas | Hace |
 | --- | --- | --- |
@@ -75,6 +75,8 @@ en el teclado y en la paleta de comandos.
 Los interruptores se recuerdan entre sesiones.
 
 ## Menú Ayuda
+
+![El menú Ayuda abierto desde el signo de interrogación de la barra de título](../../../../assets/editor/menu-help.png)
 
 | Entrada | Teclas | Hace |
 | --- | --- | --- |

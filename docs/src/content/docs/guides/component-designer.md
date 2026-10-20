@@ -9,7 +9,7 @@ Pyzed Design has a second mode for building **components** instead of windows: y
 form, declare its properties and events in a panel, write the logic of its methods, and place it in forms or
 inside other components, like scenes in Godot. A designed component **is** a [`pz.Component`](/pyzed/guides/components/).
 
-![A ProfileCard component that contains a Rating component](../../../../screenshots/designer-component.png)
+![A ProfileCard component that contains a Rating component](../../../assets/editor/component-view.png)
 
 The full guide is in the Pyzed Design manual: **[Component designer](/pyzed/editor/component-designer/)**.
 

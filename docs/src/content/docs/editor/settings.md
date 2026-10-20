@@ -8,7 +8,7 @@ sidebar:
 **Settings** (<kbd>Ctrl</kbd>+<kbd>,</kbd>, the gear at the right of the title bar, or the ☰ menu) holds the
 editor's own preferences. Changes apply at once and are saved right away; **Done** closes the dialog.
 
-![The settings dialog](../../../../screenshots/designer-settings.png)
+![The settings dialog](../../../assets/editor/settings.png)
 
 ## Appearance
 

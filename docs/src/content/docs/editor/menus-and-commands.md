@@ -18,7 +18,7 @@ gear, followed by the window buttons when Pyzed Design draws its own frame (see
 
 ## ☰ File menu
 
-![The ☰ menu with recent files](../../../../screenshots/editor-file-menu.png)
+![The ☰ menu with recent files](../../../assets/editor/menu-file.png)
 
 | Entry | Keys | Does |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ keyboard and in the command palette.
 
 ## View menu
 
-![The View menu](../../../../screenshots/designer-menu.png)
+![The View menu](../../../assets/editor/menu-view.png)
 
 | Entry | Keys | Does |
 | --- | --- | --- |
@@ -75,6 +75,8 @@ keyboard and in the command palette.
 The toggles are remembered between sessions.
 
 ## Help menu
+
+![The Help menu open from the question mark of the title bar](../../../assets/editor/menu-help.png)
 
 | Entry | Keys | Does |
 | --- | --- | --- |
