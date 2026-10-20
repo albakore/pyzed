@@ -37,7 +37,7 @@ def check_format(fmt: Any, current: str, what: str) -> None:
 
 
 #: Names a control cannot take because handlers use them on the form (``form.title``...).
-RESERVED = frozenset({"name", "title", "size", "window", "close", "data", "errors", "valid", "validate"}
+RESERVED = frozenset({"name", "title", "size", "window", "close", "data", "errors", "valid", "validate", "animations"}
                      | set(keyword.kwlist))
 
 def _number(value: Any, default: float = 0.0) -> float:
@@ -171,6 +171,10 @@ class Form:
     controls: List[Control] = field(default_factory=list)
     events: Dict[str, str] = field(default_factory=dict)
     code: Optional[str] = None
+    #: Timeline animations (``pz.Clip.to_dict()`` data, see ``designer.timeline``).
+    animations: List[Dict[str, Any]] = field(default_factory=list)
+    #: The clip that plays when the form opens (``""``: none).
+    autoplay: str = ""
 
     # -- lookup -------------------------------------------------------------
     def get(self, name: str) -> Optional[Control]:
@@ -296,8 +300,9 @@ class Form:
     def to_dict(self) -> Dict[str, Any]:
         """Returns the form as JSON-ready data: ``{"format", "form": settings, "controls": [...]}``."""
         data = {k: v for k, v in asdict(self).items() if k not in ("controls",)}
-        if not data["style"]:
-            del data["style"]
+        for key in ("style", "animations", "autoplay"):
+            if not data[key]:
+                del data[key]
         return {
             "format": FORMAT,
             "form": data,
@@ -314,6 +319,7 @@ class Form:
         form = cls(**settings)
         form.events = dict(form.events or {})
         form.style = dict(form.style or {})
+        form.animations = [dict(a) for a in form.animations or ()]
         form.controls = [Control.from_dict(c) for c in data.get("controls", [])]
         form._repair_parents()
         return form

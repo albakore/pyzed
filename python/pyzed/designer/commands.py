@@ -89,6 +89,7 @@ ACTIONS: Tuple[Action, ...] = (
            checked=lambda d: d.dock_visible("right"), global_keys=True),
     Action("bottom_dock", "Bottom dock", "View", lambda d: d.toggle_dock("bottom"), "panel-bottom", "ctrl-j",
            checked=lambda d: d.dock_visible("bottom"), global_keys=True),
+    Action("animation_panel", "Animation", "View", lambda d: d.timeline.show(), "clapperboard", "ctrl-shift-m"),
     Action("console", "Console", "View", lambda d: d.show_panel("console"), "terminal", "ctrl-shift-y",
            global_keys=True),
     Action("tab_to_window", "Move tab to new window", "View", lambda d: d.panes.detach_active(),

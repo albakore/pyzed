@@ -120,7 +120,7 @@ Abre el diseñador visual, opcionalmente sobre un archivo `.pzform` (que se crea
 
 ```python
 @dataclass
-class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None)
+class Form(name='Form1', title='Form1', width=640.0, height=420.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=True, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='')
 ```
 
 Una ventana diseñada visualmente: sus ajustes, sus controles (en orden z) y sus eventos.
@@ -727,6 +727,30 @@ Document.set_animations(name, animations, *, group=None)
 ```
 
 Fija la lista de animaciones del control `name` (dicts con `preset` y, opcionalmente, `on`, `duration`, `delay`, `easing` y `repeat`); las ediciones con el mismo `group` se unen en un paso de deshacer.
+
+#### `Document.set_clip`
+
+```python
+Document.set_clip(clip, *, old=None, group=None)
+```
+
+Guarda el `pz.Clip` `clip` en el formulario (en lugar del clip `old` cuando se renombra).
+
+#### `Document.remove_clip`
+
+```python
+Document.remove_clip(name)
+```
+
+Quita el clip `name` (y deja de reproducirse al abrir el formulario).
+
+#### `Document.set_autoplay`
+
+```python
+Document.set_autoplay(name)
+```
+
+Reproduce el clip `name` al abrir el formulario (`""`: ninguno).
 
 #### `Document.clear_style`
 
@@ -1433,7 +1457,7 @@ Añade a la clase un método reutilizable (no un handler de evento); devuelve su
 
 ```python
 @dataclass
-class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, label='', icon='component', category='Custom', description='', extends='', bindings={})
+class Scene(name='Component1', title='Component1', width=240.0, height=120.0, theme='One Dark', accent=None, background=None, radius=None, font_size=14.0, resizable=False, grid=8, style={}, controls=[], events={}, code=None, animations=[], autoplay='', label='', icon='component', category='Custom', description='', extends='', bindings={})
 ```
 
 El layout de un componente diseñado: un `Form` cuyo `name` es el nombre de la clase.

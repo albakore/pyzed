@@ -282,6 +282,9 @@ class Document:
         removed = [c.name for c in self.form.remove(self.selection)]
         self.selection = []
         if removed:
+            from . import timeline
+
+            timeline.drop_targets(self.form, removed)
             self.commit()
         return removed
 
@@ -470,6 +473,30 @@ class Document:
         control.animations = [dict(a) for a in animations]
         self.commit(group=group)
 
+    # -- timeline animations (see ``designer.timeline``) ------------------------
+    def set_clip(self, clip: Any, *, old: Optional[str] = None, group: Optional[str] = None) -> None:
+        """Stores the ``pz.Clip`` ``clip`` in the form (in place of the clip ``old`` when it is renamed)."""
+        from . import timeline
+
+        before = [dict(a) for a in self.form.animations]
+        timeline.put(self.form, clip, old)
+        if self.form.animations != before:
+            self.commit(group=group)
+
+    def remove_clip(self, name: str) -> None:
+        """Removes the clip ``name`` (and stops it playing when the form opens)."""
+        from . import timeline
+
+        if any(a.get("name") == name for a in self.form.animations):
+            timeline.remove(self.form, name)
+            self.commit()
+
+    def set_autoplay(self, name: str) -> None:
+        """Plays the clip ``name`` when the form opens (``""``: none)."""
+        if self.form.autoplay != name:
+            self.form.autoplay = name
+            self.commit()
+
     def clear_style(self, name: Optional[str]) -> None:
         """Removes every style property of a control (or of the form's global style)."""
         target = self.form if name is None else self.form[name]
@@ -591,6 +618,9 @@ class Document:
         new = self.form.rename(old, new)
         if new == old:
             return old
+        from . import timeline
+
+        timeline.rename_target(self.form, old, new)
         self.selection = [new if n == old else n for n in self.selection]
         for event, handler in list(control.events.items()):
             if handler == _code.handler_name(old, event):
