@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union
 
 from .. import _core, hot_reload, ui
+from .. import services as _services
 from ..app import App, Window
 from ..app import run as _run_app
 from ..theme import Theme, themes
@@ -32,11 +33,15 @@ from . import binding as _binding
 from . import code as _code
 from . import components as _components
 from . import layout as _layout
+from . import nonvisual
 from . import styling
 from . import timeline
 from .model import SUFFIX, Control, Form, code_path, load
 
 _FIELDS = ("x", "y", "width", "height", "visible", "enabled", "anchor")
+
+#: Events too frequent for the designer's console log.
+_QUIET_EVENTS = frozenset({"tick", "mouse_enter", "mouse_leave", "output", "error_output", "progress"})
 
 #: Properties the user changes by interacting; hot reload keeps them.
 _VALUE_PROPS = {
@@ -115,6 +120,11 @@ class ControlProxy:
         control = self._control
         if key in _FIELDS:
             return getattr(control, key)
+        service = self.service
+        if service is not None and not key.startswith("_"):
+            name = nonvisual.attribute(control, key)
+            if hasattr(service, name):  # what a timer, a process... has now, and its methods
+                return getattr(service, name)
         if key in control.props:
             return control.props[key]
         default = _components.get(control.type).defaults()
@@ -126,9 +136,17 @@ class ControlProxy:
         raise AttributeError(f"{control.type} {control.name!r} has no property {key!r}")
 
     def __setattr__(self, key: str, value: Any) -> None:
+        service = self.service
         if key in _FIELDS:
             setattr(self._control, key, value)
+            if service is not None and key == "enabled":
+                service.enabled = bool(value)
             return
+        if service is not None and not key.startswith("_") \
+                and hasattr(service, nonvisual.attribute(self._control, key)):
+            nonvisual.apply(service, self._control, key, value)
+            if key not in _components.get(self._control.type).defaults():
+                return  # only the service has it
         if key == "error":
             self._runtime.set_error(self._control.name, value)
             return
@@ -137,6 +155,28 @@ class ControlProxy:
             setattr(instance, key, value)  # private state of a placed component
             return
         self._control.props[key] = value
+
+    def __getitem__(self, key: str) -> Any:
+        service = self.service
+        if service is None or not hasattr(service, "__getitem__"):
+            raise TypeError(f"{self._control.type} {self._control.name!r} is not subscriptable")
+        return service[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        service = self.service
+        if service is None or not hasattr(service, "__setitem__"):
+            raise TypeError(f"{self._control.type} {self._control.name!r} does not support item assignment")
+        service[key] = value
+
+    def __contains__(self, key: object) -> bool:
+        service = self.service
+        return service is not None and hasattr(service, "__contains__") and key in service
+
+    @property
+    def service(self) -> Any:
+        """The ``pyzed.services`` object behind a non-visual control (a Timer, a Process...), or ``None``."""
+        services = getattr(self._runtime, "services", None)  # a designed component's scene has none
+        return services.get(self._control.name) if services else None
 
     @property
     def instance(self) -> Any:
@@ -153,9 +193,14 @@ class ControlProxy:
         """Checks the control's rules now, shows the message if one fails and returns whether it passed."""
         return self._runtime.validate([self._control.name])
 
-    def show(self) -> None:
-        """Makes the control visible."""
+    def show(self, *args: Any, **kwargs: Any) -> Any:
+        """Makes the control visible. On a File dialog or a Notification it shows them instead (return a
+        dialog's ``show()`` from the handler: it is a command)."""
+        service = self.service
+        if service is not None and callable(getattr(service, "show", None)):
+            return service.show(*args, **kwargs)
         self._control.visible = True
+        return None
 
     def hide(self) -> None:
         """Hides the control (and whatever is inside it)."""
@@ -333,6 +378,8 @@ class FormRuntime:
         self.loaded = False
         #: Plays the form's timeline animations (``form.animations`` in handlers).
         self.player = timeline.player_for(self.form, timeline.FormOwner(self))
+        #: The services behind the non-visual controls (timers, file watchers, processes...), by name.
+        self.services: Dict[str, Any] = nonvisual.build_all(self)
 
     @property
     def size(self) -> Tuple[float, float]:
@@ -351,7 +398,7 @@ class FormRuntime:
             self.error = f"{owner}.{event}: handler {name}() not found in the code file"
             return None
         sender = ControlProxy(control, self) if control is not None else self.proxy
-        if self.log is not None and event not in ("tick", "mouse_enter", "mouse_leave"):
+        if self.log is not None and event not in _QUIET_EVENTS:
             shown = "" if value is None else f" ({value!r})"[:80]
             self.log("event", f"{owner}.{event}{shown} → {name}()")
         try:
@@ -365,6 +412,15 @@ class FormRuntime:
             else:
                 traceback.print_exc()
             return None
+
+    def call(self, name: str, event: str, value: Any = None) -> Any:
+        """Calls the handler of ``event`` of control ``name`` here and now and lets its exceptions through (a
+        Background worker's ``work`` runs like this, in its thread)."""
+        control = self.form[name]
+        handler = self.handlers.get(control.events.get(event, ""))
+        if handler is None:
+            raise LookupError(f"{name}.{event}: handler {control.events.get(event)}() not found in the code file")
+        return handler(self.proxy, Event(ControlProxy(control, self), event, value))
 
     # -- data binding and validation -----------------------------------------
     def _fill_data(self) -> None:
@@ -398,6 +454,8 @@ class FormRuntime:
                 self.error = f"{control.name}.bind = {control.bind}: {err}"
         if control.rules:
             self._check(control)
+        if self.services:
+            nonvisual.changed(self, control.name)
 
     def _check(self, control: Control) -> bool:
         prop = _binding.bound_prop(control.type)
@@ -453,18 +511,31 @@ class FormRuntime:
         if self.loaded:
             return None
         self.loaded = True
+        nonvisual.start(self)
         return self.dispatch(None, "load")
 
+    def key(self, combo: str) -> Any:
+        """A key press: the Shortcut controls with those keys raise ``activate``, then the form its ``key``
+        event. Returns the commands of the handlers."""
+        results = [service.handle(combo) for service in self.services.values()
+                   if isinstance(service, _services.Shortcut)]
+        results.append(self.dispatch(None, "key", combo))
+        results = [r for r in results if r is not None]
+        if not results:
+            return None
+        return results[0] if len(results) == 1 else results
+
+    def closed(self) -> None:
+        """The window is closing: saves what Settings controls remember and stops the services."""
+        nonvisual.stop(self)
+
     def subscriptions(self):
-        """Returns a timer subscription for every running, enabled timer whose ``tick`` event is wired."""
+        """The subscriptions of the services that need one (running timers, watched clipboards) and have an
+        event wired, and of the timeline player."""
         subs = []
-        for c in self.form.controls:
-            if c.type != "timer" or not c.events.get("tick"):
-                continue
-            props = {**_components.get("timer").defaults(), **c.props}
-            if props.get("running") and c.enabled:
-                interval = max(float(props.get("interval") or 1000), 10) / 1000
-                subs.append(_core.every(interval, self.ctx.on(c, "tick"), key=f"{self.form.name}:{c.name}"))
+        for service in self.services.values():
+            if any(service.handles(e) for e in service.events):
+                subs.extend(service.subscriptions())
         return subs + self.player.subscriptions()
 
     def _wrap_mouse(self, control: Control, widget: Any) -> Any:
@@ -547,6 +618,7 @@ class FormRuntime:
                 for prop in _VALUE_PROPS.get(control.type, ()):
                     if prop in old.props:
                         control.props[prop] = old.props[prop]
+        nonvisual.stop(self)
         self.form = form
         self.design_size = (form.width, form.height)
         self.handlers = handlers
@@ -554,6 +626,9 @@ class FormRuntime:
         self.ctx = LiveContext(self)
         self.window.theme = self.theme
         self.player = timeline.reload_player(self.player, form)
+        self.services = nonvisual.build_all(self)
+        if self.loaded:
+            nonvisual.start(self)
         self.error = None
         return True
 
@@ -593,14 +668,17 @@ class _FormHost:
         return self.runtime.subscriptions()
 
     def on_key(self, combo: str) -> Any:
-        result = self.runtime.dispatch(None, "key", combo)
+        result = self.runtime.key(combo)
         return [] if result is None else result
 
     def on_resize(self, width: float, height: float) -> Any:
         return self.runtime.dispatch(None, "resize", (width, height))
 
     def on_close(self) -> Optional[bool]:
-        return False if self.runtime.dispatch(None, "close") is False else None
+        if self.runtime.dispatch(None, "close") is False:
+            return False
+        self.runtime.closed()
+        return None
 
 
 class FormApp(_FormHost, App):

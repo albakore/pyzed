@@ -110,7 +110,7 @@ def test_search_bar_renders(tmp_path):
 def test_shortcut_reference_lists_the_editor_keys():
     groups = dict(commands.shortcut_groups())
     keys = {k for rows in groups.values() for _, k in rows}
-    assert {"ctrl-d", "alt-shift-down", "alt-up", "ctrl-/", "ctrl-f", "ctrl-g", "ctrl-k ctrl-0"} <= keys
+    assert {"ctrl-d", "ctrl-alt-down", "alt-shift-down", "ctrl-shift-d", "alt-up", "ctrl-/", "ctrl-f", "ctrl-g", "ctrl-k ctrl-0"} <= keys
 
 
 # -- telemetry ---------------------------------------------------------------------

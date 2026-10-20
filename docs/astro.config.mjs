@@ -94,6 +94,7 @@ const topics = [
 					{ slug: 'editor/styles-and-themes' },
 					{ slug: 'editor/animations-and-effects' },
 					{ slug: 'editor/events' },
+					{ slug: 'editor/non-visual-components' },
 					{ slug: 'editor/data-binding' },
 				],
 			},
@@ -158,6 +159,19 @@ const topics = [
 		link: '/showcase/',
 		icon: 'laptop',
 		items: [group('Showcase', 'Showcase', 'showcase'), group('Games', 'Videojuegos', 'games')],
+	},
+	{
+		id: 'audio',
+		label: { en: 'Audio', es: 'Audio' },
+		link: '/audio/',
+		icon: 'seti:audio',
+		items: [
+			{ slug: 'audio' },
+			group('Engine', 'Motor', 'audio/engine'),
+			group('Components', 'Componentes', 'audio/components'),
+			group('Rack and cables', 'Rack y cables', 'audio/rack'),
+			group('Demos', 'Demos', 'audio/demos'),
+		],
 	},
 	{
 		id: 'integrations',

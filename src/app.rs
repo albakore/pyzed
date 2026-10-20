@@ -21,7 +21,7 @@ use pyo3::types::{PyBytes, PyCFunction, PyDict, PyList, PyString, PyTuple, PyTyp
 
 use crate::fonts;
 use crate::render::{self, Caches, Ctx};
-use crate::style::{MONO, SANS};
+use crate::style::sans;
 use crate::widget::PyMsg;
 
 pub struct State {
@@ -184,6 +184,8 @@ struct PickFiles {
     directory: Option<String>,
     multiple: bool,
     folder: bool,
+    /// Asks for a file to save (with this suggested name) instead of picking existing ones.
+    save: Option<String>,
 }
 
 #[derive(Clone, Copy)]
@@ -528,6 +530,31 @@ impl Command {
             directory,
             multiple,
             folder,
+            save: None,
+        }))
+    }
+
+    /// Opens the system's "Save as" dialog and calls `then(paths)` with the chosen path in a
+    /// list (an empty list when it is cancelled).
+    ///
+    /// `file_name` is the name it suggests; `filters` and `directory` work as in `pick_files`.
+    #[staticmethod]
+    #[pyo3(signature = (then, *, title=None, filters=None, directory=None, file_name=String::new()))]
+    fn save_file(
+        then: &Bound<'_, PyAny>,
+        title: Option<String>,
+        filters: Option<Vec<(String, Vec<String>)>>,
+        directory: Option<String>,
+        file_name: String,
+    ) -> Self {
+        cmd(CommandKind::PickFiles(PickFiles {
+            then: PyMsg::new(then),
+            title,
+            filters: filters.unwrap_or_default(),
+            directory,
+            multiple: false,
+            folder: false,
+            save: Some(file_name),
         }))
     }
 
@@ -555,6 +582,7 @@ impl Command {
             CommandKind::CopyToClipboard(_) => "Command.copy(...)",
             CommandKind::ReadClipboard(_) => "Command.paste(...)",
             CommandKind::ReadClipboardImage(_) => "Command.paste_image(...)",
+            CommandKind::PickFiles(ref p) if p.save.is_some() => "Command.save_file(...)",
             CommandKind::PickFiles(_) => "Command.pick_files(...)",
         }
     }
@@ -781,9 +809,21 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
             if let Some(directory) = &pick.directory {
                 dialog = dialog.set_directory(directory);
             }
-            let (multiple, folder) = (pick.multiple, pick.folder);
+            let (multiple, folder, save) = (pick.multiple, pick.folder, pick.save.clone());
             Task::perform(
                 async move {
+                    if let Some(name) = save {
+                        let dialog = if name.is_empty() {
+                            dialog
+                        } else {
+                            dialog.set_file_name(name)
+                        };
+                        return dialog
+                            .save_file()
+                            .await
+                            .map(|h| vec![h.path().to_string_lossy().into_owned()])
+                            .unwrap_or_default();
+                    }
                     let chosen: Vec<rfd::FileHandle> = match (folder, multiple) {
                         (true, true) => dialog.pick_folders().await.unwrap_or_default(),
                         (true, false) => dialog.pick_folder().await.into_iter().collect(),
@@ -1459,11 +1499,14 @@ fn error_view<'a>(title: &'static str, message: String) -> Element<'a, Message> 
     let red = Color::from_rgb8(0xd0, 0x72, 0x77);
     container(
         column![
-            text(title).size(18).color(red).font(Font::with_name(SANS)),
+            text(title)
+                .size(18)
+                .color(red)
+                .font(Font::with_name(crate::style::sans())),
             scrollable(
                 text(message)
                     .size(13)
-                    .font(Font::with_name(MONO))
+                    .font(Font::with_name(crate::style::mono()))
                     .color(Color::from_rgb8(0xdc, 0xe0, 0xe5))
             )
             .height(Length::Fill),
@@ -2145,7 +2188,7 @@ fn daemon(
         .subscription(subscription)
         .scale_factor(scale_factor)
         .settings(iced::Settings {
-            default_font: Font::with_name(SANS),
+            default_font: Font::with_name(sans()),
             default_text_size: font_size.into(),
             antialiasing: true,
             ..Default::default()

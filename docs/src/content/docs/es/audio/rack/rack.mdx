@@ -1,0 +1,129 @@
+---
+title: El rack modular
+description: Crea un sintetizador modular al estilo de VCV Rack en Python con Pyzed — módulos en rieles, perillas y conectores colocados a partir de la descripción de cada módulo, un explorador de módulos y patches guardados en JSON.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+![Un rack de módulos — secuenciador, oscilador, filtro, envolvente, delay, osciloscopio y salida — conectados con cables que se balancean y llevan puntos de señal](/pyzed/media/audio/ui/rack.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un sintetizador modular es un conjunto de cajas (módulos) que hacen una cosa cada una (generar un
+tono, filtrarlo, dar forma a su volumen, hacer eco) unidas por cables. `ui.rack.Rack` pone en
+pantalla los módulos del motor de audio como hardware en rieles: gira sus perillas y arrastra
+cables entre sus conectores.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import audio, ui
+
+
+class Modular(pz.App):
+    def __init__(self):
+        self.engine = audio.Engine()
+        self.layout = {}          # dónde está cada módulo; se guarda con el patch
+        seq = self.engine.add("sequencer", bpm=118)
+        osc = self.engine.add("oscillator", wave="saw")
+        vcf = self.engine.add("filter", cutoff=900, resonance=0.6)
+        out = self.engine.add("audio_out")
+        self.engine.connect(seq, "pitch", osc, "pitch")
+        self.engine.chain(osc, vcf, out)
+        self.engine.start()
+
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]   # los cables se balancean, osciloscopios y LEDs se mueven
+
+    def view(self):
+        return ui.rack.Rack(engine=self.engine, layout=self.layout, rows=2)
+
+
+pz.run(Modular)
+```
+
+## Dos capas: lógica y gráfica
+
+El rack es solo la **capa gráfica**. El sonido sale del [motor de audio](/pyzed/es/audio/engine/getting-started/)
+(`pyzed.audio`), que funciona sin ninguna ventana: un script puede montar el mismo patch,
+reproducirlo o renderizarlo a un archivo WAV. El rack lee tres cosas del motor y las cambia a
+través de él:
+
+| El rack lee | De | Y lo cambia con |
+| --- | --- | --- |
+| Los módulos | `engine.nodes` | `engine.add(kind)`, `engine.remove(id)` |
+| Qué tiene cada módulo | `audio.modules()`: puertos y parámetros | |
+| Las perillas | `node.params` | `engine.set(id, param, value)` |
+| Los cables | `engine.cables` | `engine.connect(...)`, `engine.disconnect(...)` |
+| Pantallas, LEDs, medidores | `node.scope()`, `node.spectrum()`, `node.state`, `node.level()` | |
+
+Así, cualquier cosa que tu código haga en el motor aparece en el rack en el siguiente fotograma, y
+cualquier cosa que el usuario haga en el rack es una llamada normal al motor.
+
+## Los paneles se colocan solos
+
+Nunca dibujas un módulo. Cada panel se construye a partir de la descripción del módulo:
+
+- **Perillas** para sus parámetros, en columnas desde arriba (un parámetro con `options`, como la
+  forma de onda de un oscilador, se convierte en un selector por pasos). Los parámetros numerados,
+  como `pitch_1`…`pitch_16` y `gate_1`…`gate_16` de un secuenciador, se convierten en una rejilla
+  de perillas e interruptores pequeños, una columna por paso.
+- **Conectores** para sus entradas abajo, y para sus salidas debajo de ellas sobre una **placa más
+  oscura**, la convención que siguen todos los fabricantes de Eurorack para distinguir las salidas.
+- Una **pantalla** para los módulos que la tienen: un osciloscopio en vivo en `scope`, LEDs de paso
+  en el `sequencer` (se enciende el paso actual) y medidores de nivel en `audio_out`, `mixer`,
+  `vca` y `compressor`.
+- Una franja de color arriba según la categoría (fuentes en naranja, filtros en azul, efectos en
+  rosa...), el título, cuatro tornillos y una × para quitarlo.
+
+Los anchos son unidades de rack enteras (HP, 15 px) y todos los módulos miden 380 px de alto, como
+el Eurorack de 3U.
+
+## Cómo se usa
+
+<Steps>
+
+1. **Añade módulos** desde el explorador de la izquierda (escribe para buscar); el módulo va al
+   final de la primera fila con sitio.
+2. **Conecta un cable**: arrastra desde un conector y suéltalo en otro. Una salida va a una
+   entrada; mientras arrastras, el cable se engancha al conector más cercano a su alcance.
+3. **Mueve un cable**: arrastra una entrada conectada; levantas el cable por su clavija, como en
+   VCV Rack. Suéltalo en otra entrada, o en cualquier otro sitio para desconectarlo.
+4. **Desconecta**: clic derecho en un conector.
+5. **Mueve un módulo**: arrastra su título. Se ajusta a la rejilla de HP y a una fila, y se aparta
+   si cae sobre otro módulo.
+6. **Gira perillas**: arrastra arriba y abajo (<kbd>Shift</kbd> para ajuste fino), doble clic para reiniciar.
+
+</Steps>
+
+## Guardar patches
+
+```python
+ui.rack.save(self.engine, self.layout, "bass.json")     # engine.to_dict() + la disposición
+self.layout = ui.rack.load(self.engine, "bass.json")    # carga ambos de vuelta
+```
+
+El archivo es el formato de patch propio del motor con la disposición del rack bajo `"ui"`, así un
+patch hecho en el rack suena igual desde un script sin el rack.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `engine` | `None` | El `audio.Engine` que se muestra y edita. |
+| `layout` | `{}` | Tu dict de posiciones: `{id del nodo: {"row": r, "x": hp}}`. |
+| `catalog` | `None` | Descripciones de módulos (`audio.modules()` por defecto). |
+| `rows` | `2` | Filas de rieles. |
+| `browser` | `True` | El explorador de módulos de la izquierda. |
+| `tension` | `0.45` | Lo tensos que cuelgan los cables (0 sueltos, 1 rectos). |
+| `cable_opacity` | `0.9` | Para ver los módulos a través de los cables. |
+| `flow` | `True` | Puntos de señal moviéndose por los cables. |
+| `light` | `False` | Paneles claros, como el aspecto clásico de VCV Rack. |
+
+Evento: `on_change` con lo que cambió: `"add"`, `"remove"`, `"move"`, `"connect"`, `"disconnect"` o
+`"set"` (para marcar un documento como no guardado, por ejemplo).
+
+<Aside type="tip">
+`ui.rack.panel_layout(audio.module("filter"))` te dice dónde va cada perilla y conector de un
+módulo (`knobs`, `inputs`, `outputs`, `width`), por si quieres dibujar tus propios paneles con la
+misma geometría.
+</Aside>

@@ -418,6 +418,8 @@ class CodeAssist:
         self.settings = replace(self.settings, **{key: value})
         _settings.save(self.settings)
         self.intel.apply_settings(self.settings)
+        if key == "font_family":
+            self.d.apply_fonts()
         if key == "code_lens" and value:
             self.intel.refresh_lenses(self.d.doc.form)
 
@@ -1095,12 +1097,16 @@ def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any
         return ui.switch(bool(getattr(s, key)), a.setter(key), theme=t)
 
     def appearance() -> List[Any]:
+        from . import dialogs as _dialogs
+
         theme_names = [tr("Same as the designer"), *themes.names()]
         heights = {tr(name.capitalize()): name for name in _settings.LINE_HEIGHTS}
         return [ui.settings_group(tr("Appearance"), [
             ui.field(tr("Theme"), ui.select(theme_names, s.theme or theme_names[0],
                                             lambda name: a.set("theme", "" if name == theme_names[0] else name),
                                             width=200, theme=t), theme=t),
+            ui.field(tr("Font"), _dialogs.font_select(s.font_family, "IBM Plex Mono", a.setter("font_family"), t),
+                     theme=t),
             ui.field(tr("Font size"), ui.number_field(s.font_size, a.setter("font_size"), min=8, max=32, step=1,
                                                       width=110, theme=t),
                      description=tr("Ctrl+= and Ctrl+- (or Ctrl+wheel); Ctrl+0 resets"), theme=t),

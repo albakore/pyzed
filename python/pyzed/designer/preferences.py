@@ -13,13 +13,17 @@ from typing import Any, Dict, List, Optional
 
 from .settings import _read, settings_path
 
+#: Smallest and largest interface scale, and the step of zooming in and out.
+UI_SCALE = (0.75, 1.5, 0.05)
+
 #: Where a panel can be docked.
 DOCKS = ("left", "right", "bottom", "top")
 
 
 def is_place(value: Any) -> bool:
-    """Whether ``value`` is a dock or a panel window ("window:1", "window:2"...)."""
-    return isinstance(value, str) and (value in DOCKS or (value.startswith("window:") and value[7:].isdigit()))
+    """Whether ``value`` is a dock, the main window's center ("main") or a window of its own ("window:1"...)."""
+    return isinstance(value, str) and (value in DOCKS or value == "main"
+                                       or (value.startswith("window:") and value[7:].isdigit()))
 
 
 @dataclass
@@ -28,6 +32,10 @@ class DesignerSettings:
     theme: str = ""
     #: Language of the designer's interface ("" follows the system).
     language: str = ""
+    #: Font family of the interface ("" keeps IBM Plex Sans).
+    ui_font: str = ""
+    #: Size of the whole interface, like a zoom (1.0 is 100%).
+    ui_scale: float = 1.0
     show_grid: bool = True
     snap: bool = True
     smart_guides: bool = True
@@ -57,7 +65,7 @@ class DesignerSettings:
     #: "stable" (final releases) or "preview" (pre-releases too, like Zed Preview).
     update_channel: str = "stable"
     recent: List[str] = field(default_factory=list)
-    #: Panel id -> dock ("left", "right", "bottom", "top") or panel window ("window:1"...).
+    #: Panel id -> dock ("left", "right", "bottom", "top"), the center ("main") or a window ("window:1"...).
     docks: Dict[str, str] = field(default_factory=dict)
     #: The order of the panel tabs (panel ids).
     order: List[str] = field(default_factory=list)
@@ -97,6 +105,7 @@ class DesignerSettings:
             except (TypeError, ValueError):
                 continue
         out.grid = min(max(out.grid, 2), 64)
+        out.ui_scale = min(max(round(out.ui_scale, 2), UI_SCALE[0]), UI_SCALE[1])
         out.docks = {k: v for k, v in out.docks.items() if is_place(v)}
         out.layouts = {str(k): v for k, v in out.layouts.items() if isinstance(v, dict)}
         out.sizes = {k: float(v) for k, v in out.sizes.items() if k in DOCKS and isinstance(v, (int, float))}

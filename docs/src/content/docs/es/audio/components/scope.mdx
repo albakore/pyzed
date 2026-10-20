@@ -1,0 +1,50 @@
+---
+title: Osciloscopio
+description: Un osciloscopio para Python — varias trazas sobre una rejilla, un disparo que mantiene quietas las ondas periódicas, modo XY de Lissajous, persistencia de fósforo y brillo.
+sidebar:
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Un osciloscopio de dos trazas con persistencia que se desvanece junto a un osciloscopio XY dibujando una figura de Lissajous que gira](/pyzed/media/audio/ui/scope.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un osciloscopio dibuja una señal como un instrumento de laboratorio: unos pocos milisegundos sobre
+una rejilla verde. Así ves la forma de una onda (senoidal, sierra, cuadrada) mientras conectas.
+</Aside>
+
+```python
+ui.audio.Scope(traces=[osc.scope(1024), lfo.scope(1024)], width=320, height=180)
+```
+
+## Trazas y disparo
+
+`traces` es una lista de señales (o una sola lista de números), cada una dibujada con el siguiente
+color de `colors`. Con `trigger=True` cada traza empieza en el primer punto donde la onda sube
+cruzando el cero, así un tono estable se queda quieto en lugar de desplazarse. `window` es cuántas
+muestras se muestran.
+
+## Modo XY
+
+`xy=True` dibuja la primera traza contra la segunda: la primera mueve el punto a izquierda y
+derecha y la segunda arriba y abajo. Dos senoidales forman **figuras de Lissajous**; un par
+estéreo (izquierda, derecha) muestra lo ancha que es la imagen estéreo: una línea vertical es mono
+y una nube es amplia.
+
+## Fósforo
+
+`persistence=3` deja copias que se desvanecen de los tres últimos fotogramas, como el brillo de una
+pantalla CRT antigua; `glow=True` añade un halo suave alrededor de la traza más reciente.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `traces` | `()` | Señales a dibujar (−1..1). |
+| `width`, `height` | `320`, `180` | Tamaño en píxeles. |
+| `colors` | `"scope"` | Un nombre de paleta o una lista (un color por traza). |
+| `background` | `"#0b120e"` | La pantalla. |
+| `columns`, `rows` | `8`, `6` | Divisiones de la rejilla. |
+| `gain` | `1` | Zoom vertical. |
+| `trigger`, `window` | `True`, `512` | Mantiene quietas las ondas periódicas; muestras visibles. |
+| `xy` | `False` | Modo Lissajous. |
+| `persistence`, `glow` | `0`, `True` | Copias que se desvanecen y halo. |

@@ -42,14 +42,14 @@ def test_the_users_file_overrides_and_removes_defaults():
     km.path.write_text("""// my keys
     [
       {"context": "Workspace", "bindings": {"ctrl-alt-s": "workspace::SaveAs", "ctrl-s": null,}},
-      {"context": "Editor", "bindings": {"ctrl-shift-d": ["editor::DuplicateLineDown", {}], "ctrl-d": null}},
+      {"context": "Editor", "bindings": {"ctrl-alt-d": ["editor::DuplicateLineDown", {}], "ctrl-d": null}},
       {"context": "Canvas", "bindings": {"ctrl-d": "workspace::Save", "x": "nope::Nothing", "bad-key": "Undo"}},
       {"context": "Nowhere", "bindings": {}}
     ]""", encoding="utf-8")
     km.load()
     assert km.resolve("ctrl-alt-s", ("Workspace",)) == "workspace::save_as"
     assert km.resolve("ctrl-s", ("Canvas", "Workspace")) is None
-    assert km.editor_keymap() == {"ctrl-shift-d": "duplicate_line_down", "ctrl-d": None}
+    assert km.editor_keymap() == {"ctrl-alt-d": "duplicate_line_down", "ctrl-d": None}
     assert km.resolve("ctrl-d", ("Canvas",)) == "workspace::save"  # the user's binding wins...
     assert km.conflicts() == {("Canvas", "ctrl-d"): [Binding("ctrl-d", "workspace::duplicate", "Canvas"),
                                                      Binding("ctrl-d", "workspace::save", "Canvas", True)]}

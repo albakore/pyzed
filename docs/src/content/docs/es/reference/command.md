@@ -308,6 +308,22 @@ Abre el diálogo de archivos del sistema y llama a `then(rutas)` con las rutas e
 | `multiple` | `False` elige un solo archivo. |
 | `folder` | `True` elige carpetas en vez de archivos. |
 
+### `save_file`
+
+```python
+save_file(then, *, title=None, filters=None, directory=None, file_name=Ellipsis)
+```
+
+Abre el diálogo «Guardar como» del sistema y llama a `then(rutas)` con la ruta elegida en una lista (una lista vacía si se cancela).
+
+| Parámetro | Descripción |
+| --- | --- |
+| `then` | Callable que recibe la lista con la ruta. |
+| `title` | El título del diálogo. |
+| `filters` | Una lista de pares `(nombre, extensiones)`, como `[("Imágenes", ["png", "jpg"])]`. |
+| `directory` | La carpeta en la que se abre. |
+| `file_name` | El nombre que sugiere. |
+
 ## Ventanas y portapapeles
 
 ### `open_window`

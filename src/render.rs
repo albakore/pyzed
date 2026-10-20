@@ -22,6 +22,9 @@ use crate::sticky::{Split, SplitStyle};
 use crate::style::ICONS;
 use crate::widget::{Kind, SvgSource, Widget};
 
+/// Decoded image bytes kept between frames before the image cache is emptied.
+const IMAGE_BUDGET: usize = 192 << 20;
+
 /// Everything that must outlive a single `view()` call: editor buffers, decoded images,
 /// parsed markdown, canvas geometry... Keyed by id or by content hash.
 #[derive(Default)]
@@ -157,8 +160,12 @@ impl Caches {
         if self.qr.as_mut().len() > 64 {
             self.qr.as_mut().clear();
         }
-        if self.images.get_mut().len() > 512 {
-            self.images.get_mut().clear();
+        // Video frames (a webcam, a player) are new images every frame: bound the bytes too.
+        let images = self.images.get_mut();
+        if images.len() > 512
+            || images.values().map(extra::Decoded::bytes).sum::<usize>() > IMAGE_BUDGET
+        {
+            images.clear();
         }
         if self.image_masks.get_mut().len() > 64 {
             self.image_masks.get_mut().clear();

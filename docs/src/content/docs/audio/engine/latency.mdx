@@ -1,0 +1,116 @@
+---
+title: Devices and latency
+description: How pyzed.audio picks the sound card, the audio API, the buffer and the sample rate on Windows, macOS and Linux, how to measure the latency and how to bring it down.
+sidebar:
+  order: 3
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+**Latency** is the time between something happening (a key pressed, a knob turned, your voice in the
+microphone) and hearing it. The engine computes 64 frames at a time, but the sound card asks for a
+whole **buffer** at once: that buffer, plus what the system adds, is the latency. Smaller buffers mean
+less delay but less time to compute each one; too small and the sound crackles.
+
+<figure>
+	<img src="/pyzed/media/audio/latency.webp" width="720" height="300" loading="lazy" alt="Blocks of 64 frames filling four slots of a 256-frame buffer that then goes to the speakers" />
+	<figcaption>A buffer of 256 frames is 5.3 ms at 48 kHz: four blocks of the engine.</figcaption>
+</figure>
+
+## What the engine picks
+
+With no settings, `audio.Engine()` uses the system's best audio API, its default device at the device's
+own sample rate, and the smallest buffer that plays without dropouts on a typical machine:
+
+| System | Audio API (host) | Buffer | Latency at 48 kHz |
+| --- | --- | --- | --- |
+| Windows | WASAPI (ASIO when built with it) | 256 frames (WASAPI in shared mode may choose its own) | ~5–10 ms |
+| macOS | CoreAudio | 128 frames | ~3 ms |
+| Linux | PulseAudio, which also reaches PipeWire; ALSA when there is no sound server | 256 frames | ~5 ms |
+
+`audio.recommended_settings()` returns these choices for the current machine.
+
+## Choosing yourself
+
+```python
+from pyzed import audio
+
+audio.hosts()            # ['PulseAudio', 'ALSA']: the APIs available here
+audio.default_host()     # 'PulseAudio'
+for d in audio.devices():          # the devices of the default host (or devices("ALSA"))
+    print(d.name, d.outputs, d.inputs, d.sample_rate, d.buffer_range)
+
+engine = audio.Engine(
+    host="ALSA",                   # an API from audio.hosts()
+    device="USB Audio",            # a device's name or id (None: the default one)
+    sample_rate=48000,             # None: the device's own rate
+    buffer_size=128,               # frames; None: the recommended size
+    input=True,                    # also open the default input (for the audio_in module)
+    input_device=None,             # or name another one
+)
+engine.start()
+print(engine.info)
+```
+
+`engine.start(**settings)` also takes these settings, so you can stop and start again with a smaller
+buffer or another device; the patch stays as it is.
+
+## Measuring
+
+`engine.info` says what opened and how it runs:
+
+| Key | Meaning |
+| --- | --- |
+| `backend` | `"device"`, `"null"` (no sound card: a clock that keeps time) or `"offline"` |
+| `host`, `device`, `input_device` | the API and the devices in use |
+| `sample_rate`, `buffer_size`, `channels` | the stream's format (`buffer_size` is `None` when the system chose) |
+| `latency_ms` | from the moment a buffer is computed to the moment it leaves the speakers, as the system reports it |
+| `load` | the share of each buffer's time spent computing it: above 1.0 the sound breaks up |
+| `underruns` | buffers that came out silent |
+| `error` | the last problem (a device unplugged, or why there is no sound) |
+
+A `load` that stays below 0.5 leaves room for a smaller buffer.
+
+## Each system
+
+<Tabs syncKey="os">
+	<TabItem label="Windows">
+		- **WASAPI** is the default. In shared mode Windows mixes every program and decides the buffer
+		  (usually 10 ms); the engine asks for 256 frames and accepts what Windows gives.
+		- **ASIO** gives the lowest latency with audio interfaces that ship an ASIO driver. It needs
+		  Steinberg's ASIO SDK at build time, so it is not in the PyPI wheels: build Pyzed with
+		  `maturin develop --release --features asio` (with `CPAL_ASIO_DIR` pointing at the SDK), then use
+		  `audio.Engine(host="ASIO")`.
+		- For virtual MIDI ports, install [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html).
+	</TabItem>
+	<TabItem label="macOS">
+		- **CoreAudio** runs the audio thread at real-time priority by itself and handles small buffers
+		  well: 128 frames is the default, 64 works on most Macs.
+		- An aggregate device (Audio MIDI Setup) joins an input and an output that are different devices.
+		- `engine.open_midi_input(virtual="Pyzed")` creates a MIDI port other apps can play into.
+	</TabItem>
+	<TabItem label="Linux">
+		- **PulseAudio** is the default when a sound server runs. On current desktops that server is
+		  **PipeWire**, which answers PulseAudio's protocol; the engine asks it for a 256-frame latency.
+		- **ALSA** (`host="ALSA"`) talks to the card directly when no server runs, or to PipeWire through
+		  its ALSA plugin. `device="hw:0,0"` style names bypass any mixing for the lowest latency, but
+		  take the card for Pyzed alone.
+		- **JACK** is available when you build Pyzed with `--features jack`.
+		- The audio thread asks for real-time priority. If your user is not allowed it, the engine still
+		  runs; add yourself to the `audio` group (with an `rtprio` limit, as most distributions set it) for steadier small buffers.
+	</TabItem>
+</Tabs>
+
+## Without a sound card
+
+| Backend | Use it for |
+| --- | --- |
+| `audio.Engine("auto")` | The default: the sound card, or the `null` clock when there is none (`info["error"]` says why) |
+| `audio.Engine("device")` | The sound card or an error |
+| `audio.Engine("null")` | Real time with no sound: servers, CI, an interface that only shows the signals |
+| `audio.Engine("offline")` | No clock at all: `engine.render(seconds)` computes as fast as possible, for tests and files |
+
+<Aside type="tip" title="Headphones for the microphone">
+With an `audio_in` module playing through the speakers, the microphone hears them and the sound feeds
+back. Use headphones, or keep the input's `gain` low.
+</Aside>

@@ -95,10 +95,15 @@ class JsonRpcProcess:
         self._lock = threading.Lock()
         self.stderr: List[str] = []
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        from .. import _platform
+
+        # the user's shell PATH: npx and the like (and the node they run) are often only there
+        environ = {**os.environ, "PATH": _platform.user_path(), **(env or {})}
+        program = command if os.path.dirname(command) else (_platform.which(command) or command)
         try:
             self.process = subprocess.Popen(
-                [command, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                cwd=cwd or None, env={**os.environ, **(env or {})}, creationflags=flags)
+                [program, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                cwd=cwd or None, env=environ, creationflags=flags)
         except (OSError, ValueError) as err:
             raise MCPError(f"Could not start {command}: {err}") from err
         threading.Thread(target=self._read, daemon=True, name=f"pyzed-rpc-{command}").start()

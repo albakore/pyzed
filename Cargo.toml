@@ -1,6 +1,6 @@
 [package]
 name = "pyzed"
-version = "1.4.0"
+version = "1.5.0"
 edition = "2024"
 rust-version = "1.88"
 description = "Fast, modern GUIs for Python powered by Iced"
@@ -47,6 +47,19 @@ rfd = "0.17"
 arboard = { version = "3.7", features = ["wayland-data-control"] }
 # A faster allocator for the many small allocations of each view (widget trees, layout nodes, text).
 mimalloc = { version = "0.1", default-features = false }
+# Audio engine (pyzed.audio): device I/O on each system's low-latency API, MIDI, FFT and WAV files.
+# PulseAudio is a pure-Rust client (it also reaches PipeWire); ALSA is the fallback on Linux.
+cpal = { version = "0.18", features = ["pulseaudio", "realtime"] }
+midir = "0.11"
+rustfft = "6.4"
+hound = "3.5"
+rtrb = "0.4"
+
+[features]
+# Extra audio hosts for builds from source: ASIO needs Steinberg's SDK (CPAL_ASIO_DIR) on Windows,
+# JACK its development files. `maturin develop --release --features asio`.
+asio = ["cpal/asio"]
+jack = ["cpal/jack"]
 
 [profile.release]
 lto = "thin"

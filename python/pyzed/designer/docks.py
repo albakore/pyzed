@@ -1,12 +1,13 @@
-"""The designer's dockable, resizable panels.
+"""The designer's dockable, resizable panels and the tab areas they share with the documents.
 
 Panels (toolbox and outline, project, properties, events, agent, code, console, logs) live in four
-docks around the form: left, right, bottom and top, or in windows of their own. Each place shows
-one panel at a time with a tab per panel. Dragging a tab reorders it, drops it on another dock,
-or takes it out of the window (``dock_windows``); the dock menu does the same, as in Zed, and the
-splitters between docks and the form resize them. Where each panel is, which dock is open, how
-big it is and where the panel windows are are saved with the designer's preferences, and named
-work layouts keep several of those arrangements.
+docks around the form (left, right, bottom and top), in the main window's center next to the form
+tabs, or in windows of their own. Every place is one tab area: its documents (forms, components)
+and its panels share one row of tabs and show one of them at a time. Dragging a tab reorders it,
+drops it on another place or takes it out of the window (``dock_windows``); the dock menu does the
+same, as in Zed, and the splitters between docks and the form resize them. Where each panel is,
+which dock is open, how big it is and where the panel windows are are saved with the designer's
+preferences, and named work layouts keep several of those arrangements.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from .. import _core, ui
 from ..theme import Theme
 from .locale import tr
 from .preferences import DOCKS
+from .windows import MAIN, WINDOW
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -27,6 +29,13 @@ SIZES = {"left": 240.0, "right": 360.0, "bottom": 300.0, "top": 220.0}
 MIN_SIZE = {"left": 170.0, "right": 220.0, "bottom": 120.0, "top": 120.0}
 DOCK_ICONS = {"left": "panel-left", "right": "panel-right", "bottom": "panel-bottom", "top": "panel-top"}
 TAB_HEIGHT = 32.0
+#: Height of the tab row of the main window's center and of the windows of their own.
+CENTER_TAB_HEIGHT = 30.0
+
+
+def tab_height(place: str) -> float:
+    """The height of the tab row of ``place``."""
+    return TAB_HEIGHT if place in DOCKS else CENTER_TAB_HEIGHT
 
 
 @dataclass(frozen=True)
@@ -133,18 +142,36 @@ PANELS: Dict[str, Panel] = {p.id: p for p in (
 )}
 
 
-#: Places of panels in windows of their own start with this: "window:1", "window:2"...
-WINDOW = "window:"
-
-
 def is_window(place: Optional[str]) -> bool:
-    """Whether ``place`` is a window of its own (not one of the four docks)."""
+    """Whether ``place`` is a window of its own (not one of the four docks or the main window's center)."""
     return bool(place) and place.startswith(WINDOW)  # type: ignore[union-attr]
 
 
 def valid_place(place: Any) -> bool:
-    """Whether ``place`` is a dock ("left", "right", "bottom", "top") or a panel window ("window:N")."""
-    return isinstance(place, str) and (place in DOCKS or (is_window(place) and place[len(WINDOW):].isdigit()))
+    """Whether ``place`` is a dock ("left", "right", "bottom", "top"), the main window's center ("main") or a
+    window of its own ("window:N")."""
+    return isinstance(place, str) and (place in DOCKS or place == MAIN
+                                       or (is_window(place) and place[len(WINDOW):].isdigit()))
+
+
+def front(d: "Designer", place: str) -> Optional[tuple]:
+    """What ``place`` shows: ``("panel", panel)``, ``("doc", pane)`` (its document in front) or ``None`` (a
+    closed dock, or nothing to show). A panel whose tab was picked last comes before the documents."""
+    layout = d.layout
+    if layout.closed.get(place):
+        return None
+    pane = d.panes.at(place)
+    panels = layout.panels_in(place, d)
+    if pane is not None and pane.front is not None:
+        picked = next((p for p in panels if p.id == pane.front), None)
+        if picked is not None:
+            return "panel", picked
+    if pane is not None and pane.docs:
+        return "doc", pane
+    if panels:
+        active = layout.active.get(place)
+        return "panel", next((p for p in panels if p.id == active), panels[0])
+    return None
 
 
 class DockLayout:
@@ -219,8 +246,8 @@ class DockLayout:
 
     def is_showing(self, panel: str, d: "Designer") -> bool:
         """Whether ``panel`` is the one its place currently shows."""
-        shown = self.shown(self.docks[panel], d)
-        return shown is not None and shown.id == panel
+        shown = front(d, self.docks[panel])
+        return shown is not None and shown[0] == "panel" and shown[1].id == panel
 
     def move(self, panel: str, place: str, before: Optional[str] = None) -> None:
         """Moves ``panel`` to ``place`` (a dock or a panel window), before the panel ``before`` there (else
@@ -270,9 +297,9 @@ class DockLayout:
         self.sizes[dock] = max(round(size), MIN_SIZE[dock])
 
     def place_label(self, panel: str) -> str:
-        """Where ``panel`` is, in words: "Left", "Bottom"... or "Window"."""
+        """Where ``panel`` is, in words: "Left", "Bottom"..., "Center" or "Window"."""
         place = self.docks[panel]
-        return tr("Window") if is_window(place) else tr(place.capitalize())
+        return tr("Window") if is_window(place) else tr("Center") if place == MAIN else tr(place.capitalize())
 
     # -- saving -----------------------------------------------------------------
     def snapshot(self) -> Dict[str, Any]:
@@ -315,11 +342,18 @@ def _review(layout: DockLayout) -> None:
     layout.sizes["bottom"] = 360.0
 
 
+def _code_with_forms(layout: DockLayout) -> None:
+    layout.move("code", MAIN)
+    layout.move("events", "left")
+    layout.active[MAIN] = None
+
+
 PRESETS: Dict[str, Callable[[DockLayout], None]] = {
     "Default": lambda layout: None,
     "Coding": _coding,
     "Focus": _focus,
     "Events and code": _review,
+    "Code with the forms": _code_with_forms,
 }
 
 
@@ -340,45 +374,67 @@ def _dock_menu(d: "Designer", place: str, panel: Panel, t: Theme) -> Any:
     for target in DOCKS:
         items.append(ui.MenuItem(tr(target.capitalize()), lambda target=target: d.move_panel(panel.id, target),
                                  icon=DOCK_ICONS[target], checked=layout.docks[panel.id] == target))
-    alone = is_window(place) and len(layout.all_in(place)) == 1
+    items.append(ui.MenuItem(tr("Center"), lambda: d.move_panel(panel.id, MAIN), icon="app-window",
+                             checked=layout.docks[panel.id] == MAIN))
+    pane = d.panes.at(place)
+    alone = is_window(place) and len(layout.all_in(place)) == 1 and not (pane is not None and pane.docs)
     items.append(ui.MenuItem(tr("New window"), None if alone else lambda: d.dock_windows.detach(panel.id),
                              icon="square-arrow-out-up-right", disabled=alone))
     if place in DOCKS:
         items += [ui.SEPARATOR, ui.MenuItem(tr("Hide dock"), lambda: d.toggle_dock(place), icon="eye-off")]
-    else:
+    elif is_window(place):
         items += [ui.SEPARATOR, ui.MenuItem(tr("Dock everything here back"), lambda: d.dock_windows.dock_back(place),
                                             icon="panel-left-close")]
     return ui.menu(items, width=220, theme=t)
 
 
-def dock_view(d: "Designer", place: str, t: Theme) -> Optional[Any]:
-    """Builds ``place`` (a dock or a panel window) with its panel tabs, menu and the shown panel's body;
-    ``None`` if it shows nothing. The tabs can be dragged to reorder them, to another dock or out of the
-    window."""
-    layout = d.layout
-    panel = layout.shown(place, d)
-    if panel is None:
-        return None
-    panels = layout.panels_in(place, d)
-    # When the titles do not fit the dock (three panels on the left), the tabs not shown keep only their icon.
-    needed = sum(len(p.title) * 6.8 + 62 for p in panels)
-    compact = place in ("left", "right") and needed > layout.sizes.get(place, 0)
-    tabs = [ui.Tab(p.id, "" if compact and p.id != panel.id else p.title, icon=p.icon) for p in panels]
-    window = is_window(place)
-    end = [ui.icon_button("square-arrow-out-up-right" if window else DOCK_ICONS[place],
-                          lambda: d.open_dock_menu(place), size="sm", selected=layout.menu == place,
-                          tooltip=tr("Move this panel"), theme=t),
-           ui.icon_button("x", (lambda: d.dock_windows.dock_back(place)) if window else lambda: d.toggle_dock(place),
-                          size="sm", tooltip=tr("Dock everything here back") if window else tr("Hide dock"), theme=t)]
-    bar = d.dock_windows.tab_bar(place, tabs, panel.id, end, t)
-    # a panel that fails to draw shows the error in its place; the rest of the window keeps working
+def panel_body(d: "Designer", panel: Panel, t: Theme) -> Any:
+    """The body of ``panel``; one that fails to draw shows the error in its place and the rest of the window
+    keeps working."""
     content = d.logs.boundary(lambda: panel.view(d, t), tr("The {panel} panel", panel=panel.title), t)
-    body = _core.column([bar, content], width="fill", height="fill")
-    if layout.menu == place:
-        body = ui.popover(body, _dock_menu(d, place, panel, t), x=6, y=TAB_HEIGHT, align_x="end",
-                          on_dismiss=d.close_dock_menu)
-    return _core.mouse_area(_core.container(body, width="fill", height="fill", bg=t.panel, clip=True),
+    return _core.mouse_area(_core.container(content, width="fill", height="fill", bg=t.panel, clip=True),
                             on_enter=d.focus_code if panel.id == "code" else lambda: d.focus_panel(panel.id))
+
+
+def place_end(d: "Designer", place: str, shown: tuple, t: Theme) -> List[Any]:
+    """The buttons at the end of the tab row of ``place``: the menu of the panel in front, and closing the
+    dock (or docking a window's tabs back)."""
+    layout = d.layout
+    items: List[Any] = []
+    window = is_window(place)
+    if shown[0] == "panel":
+        items.append(ui.icon_button("square-arrow-out-up-right" if window or place == MAIN else DOCK_ICONS[place],
+                                    lambda: d.open_dock_menu(place), size="sm", selected=layout.menu == place,
+                                    tooltip=tr("Move this panel"), theme=t))
+    if window:
+        items.append(ui.icon_button("x", lambda: d.dock_windows.dock_back(place), size="sm",
+                                    tooltip=tr("Dock everything here back"), theme=t))
+    elif place in DOCKS:
+        items.append(ui.icon_button("x", lambda: d.toggle_dock(place), size="sm", tooltip=tr("Hide dock"), theme=t))
+    return items
+
+
+def with_menu(d: "Designer", place: str, shown: tuple, body: Any, t: Theme) -> Any:
+    """``body`` with the panel menu of ``place`` open over it, when it is."""
+    if d.layout.menu == place and shown[0] == "panel":
+        return ui.popover(body, _dock_menu(d, place, shown[1], t), x=6, y=tab_height(place), align_x="end",
+                          on_dismiss=d.close_dock_menu)
+    return body
+
+
+def dock_view(d: "Designer", place: str, t: Theme) -> Optional[Any]:
+    """Builds the dock ``place`` with its tabs (documents and panels), its menu and what is in front; ``None``
+    if it shows nothing. The tabs can be dragged to reorder them, to another place or out of the window."""
+    shown = front(d, place)
+    if shown is None:
+        return None
+    bar = d.dock_windows.tab_bar(place, shown, place_end(d, place, shown, t), t)
+    if shown[0] == "panel":
+        content = panel_body(d, shown[1], t)
+    else:
+        content = d.doc_body(shown[1], t)
+    body = with_menu(d, place, shown, _core.column([bar, content], width="fill", height="fill"), t)
+    return _core.container(body, width="fill", height="fill", bg=t.panel, clip=True)
 
 
 #: The edge of each dock that carries its resize handle (the one facing the form).

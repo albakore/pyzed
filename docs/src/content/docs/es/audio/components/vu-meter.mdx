@@ -1,0 +1,57 @@
+---
+title: Vúmetro
+description: Medidores de nivel para apps de audio en Python — segmentos LED, una barra con degradado o un vúmetro analógico de aguja con inercia, en decibelios, con retención de picos y cualquier color.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Medidores LED, de degradado y de cuatro canales saltando con el ritmo junto a un vúmetro analógico de aguja](/pyzed/media/audio/ui/vu-meter.webp)
+
+<Aside type="note" title="En pocas palabras">
+Un medidor muestra lo fuerte que suena algo en este momento. El verde está bien, el amarillo es
+fuerte y el rojo está a punto de distorsionar. La rayita que se queda arriba un momento es el
+último pico.
+</Aside>
+
+```python
+rms, peak = engine.level()              # la salida principal, 0..1
+ui.audio.VuMeter(level=[rms, peak])     # una barra por valor
+```
+
+## Niveles y escala
+
+`level` es un número o una lista (una barra por canal), como amplitud lineal de 0 a 1, que es lo
+que devuelven `node.level()` y `engine.level()`. Con `scale="db"` (por defecto) el medidor lo
+muestra en decibelios desde `floor` (−60 dB) hasta 0 dB, como los mezcladores: los sonidos suaves
+también lo mueven. `scale="linear"` muestra el número tal cual (útil para señales de control).
+
+Cada canal retiene su pico durante `hold` segundos y luego lo deja caer.
+
+## Estilos
+
+| `variant` | Se parece a |
+| --- | --- |
+| `"led"` | Segmentos que se encienden (`segments` en total), apagados en tenue. |
+| `"bar"` | Una barra continua con los colores en degradado. |
+| `"analog"` | Un vúmetro de aguja (−20 a +3 VU) que se mueve con la inercia de unos 300 ms de uno real. |
+
+`colors` es el nombre de una paleta (`"vu"`, `"fl"`, `"neon"`, `"fire"`... ver [Colores](/pyzed/es/audio/components/colors/))
+o una lista de colores de suave a fuerte. `vertical=False` lo coloca en horizontal.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `level` | `0` | Un nivel o una lista de niveles (0..1). |
+| `variant` | `"led"` | `"led"`, `"bar"` o `"analog"`. |
+| `vertical` | `True` | Dirección de las barras. |
+| `length`, `thickness` | `160`, `10` | Tamaño de cada barra en píxeles. |
+| `segments` | `24` | LEDs por barra. |
+| `scale`, `floor` | `"db"`, `-60` | Cómo se traduce un nivel al medidor. |
+| `hold` | `1.2` | Segundos que se retiene un pico. |
+| `colors` | `"vu"` | Un nombre de paleta o una lista de colores. |
+
+<Aside type="tip">
+Los medidores se tienen que redibujar en cada fotograma. Añade `pz.frames(lambda dt: None)` a las
+`subscriptions()` de tu app mientras suena el motor y lee los niveles en `view()`.
+</Aside>

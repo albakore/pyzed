@@ -90,6 +90,7 @@ CATEGORIES = {
     "dialogs": T("Dialogs", "Diálogos"),
     "workspace": T("Workspace", "Espacio de trabajo"),
     "code": T("Code and tools", "Código y herramientas"),
+    "agents": T("AI agents", "Agentes de IA"),
     "layout": T("Layout", "Disposición"),
     "content": T("Content", "Contenido"),
 }
@@ -116,6 +117,9 @@ CATEGORY_INTROS = {
                    "El marco de una ventana estilo editor: docks, barra de título, barra de estado y paneles."),
     "code": T("The code editor, a terminal view, a log console and help boxes.",
               "El editor de código, una vista de terminal, una consola de registro y cajas de ayuda."),
+    "agents": T("The pieces of an AI agent's chat and settings: tool calls, diffs, plans, history and sign-in.",
+                "Las piezas del chat y los ajustes de un agente de IA: llamadas a herramientas, diferencias, planes, "
+                "historial e inicio de sesión."),
     "layout": T("The base layout widgets of `pyzed` (`pz.*`) every component is built with.",
                 "Los widgets de disposición de `pyzed` (`pz.*`) con los que se construye todo."),
     "content": T("Base widgets for text, icons, images, Markdown, QR codes and drawing.",
@@ -1237,6 +1241,80 @@ add(
     related=["kbd", "empty-state", "shortcuts"],
 )
 
+add(
+    slug="error-boundary",
+    name=T("Error boundary", "Límite de errores"),
+    category="feedback",
+    api=["pyzed.ui.error_boundary", "pyzed.ui.error_card", "pyzed.ui.ErrorInfo"],
+    badge="new",
+    blurb=T("Draws a part of the view, or an error card in its place when it fails.",
+            "Dibuja una parte de la vista, o una tarjeta de error en su lugar cuando falla."),
+    desc=T(
+        "`ui.error_boundary(build)` returns `build()` or, when it raises, an error card in its place, so one "
+        "broken part of the view (a sidebar, a panel) never takes the whole window down. The card shows the "
+        "error, the file and line it comes from and a Copy error button; `on_details` adds a Details button and "
+        "`fallback` replaces the card with your own widget. `on_error(info)` is told about the error each time "
+        "the part fails to draw. `ui.ErrorInfo` describes an error (its type, message, traceback and origin) "
+        "and `ui.error_card` is the card on its own.",
+        "`ui.error_boundary(build)` devuelve `build()` o, cuando lanza una excepción, una tarjeta de error en "
+        "su lugar, así una parte rota de la vista (una barra lateral, un panel) nunca tumba la ventana entera. "
+        "La tarjeta muestra el error, el archivo y la línea de donde viene y un botón Copiar el error; "
+        "`on_details` añade un botón Detalles y `fallback` cambia la tarjeta por tu propio widget. "
+        "`on_error(info)` recibe el error cada vez que la parte no se puede dibujar. `ui.ErrorInfo` describe "
+        "un error (su tipo, mensaje, traceback y origen) y `ui.error_card` es la tarjeta sola.",
+    ),
+    when=T(
+        ["Around each panel of a big window, so a bug in one leaves the others working.",
+         "Around parts that draw data you don't control: a plugin, a file the user opened, a reply from a server.",
+         "Open an [Error dialog](/pyzed/library/error-dialog/) from `on_details` to show the whole traceback."],
+        ["Alrededor de cada panel de una ventana grande, para que un fallo en uno deje los demás funcionando.",
+         "Alrededor de partes que dibujan datos que no controlas: un plugin, un archivo que abrió el usuario, "
+         "la respuesta de un servidor.",
+         "Abre un [Diálogo de error](/pyzed/es/library/error-dialog/) desde `on_details` para enseñar el traceback "
+         "completo."],
+    ),
+    preview={"code": """def totals():
+    values = []
+    return ui.label(f"Average: {sum(values) / len(values)}")
+
+pz.row([
+    ui.card(ui.muted("This panel keeps working."), title="Files", width=200),
+    pz.container(ui.error_boundary(totals, title="Totals", on_details=on_details), width=380),
+], spacing=12, align="center")""", "size": (720, 300)},
+    usage="""class Report(pz.App):
+    def __init__(self):
+        self.error = None  # the ui.ErrorInfo shown in the dialog
+
+    def totals(self):
+        ...  # may raise
+
+    def show(self, info):
+        self.error = info
+
+    def close(self):
+        self.error = None
+
+    def view(self):
+        page = pz.row([
+            self.files(),
+            ui.error_boundary(self.totals, title="Totals", on_details=self.show),
+        ])
+        dialog = ui.error_dialog(self.error, self.close) if self.error else None
+        return ui.dialog_layer(page, dialog, on_dismiss=self.close)""",
+    notes=T(
+        "The boundary runs `build()` on every redraw, so `on_error` is called again each time the part fails. "
+        "To report an error once, compare it with the last one: two `ErrorInfo` with the same type, message, "
+        "traceback and origin are equal (`time` is left out). `ErrorInfo.from_exception(err)` describes any "
+        "exception you catch yourself, and `info.report()` gives the text to paste in a bug report.",
+        "El límite ejecuta `build()` en cada redibujado, así que `on_error` se llama otra vez cada vez que la "
+        "parte falla. Para avisar de un error una sola vez, compáralo con el anterior: dos `ErrorInfo` con el "
+        "mismo tipo, mensaje, traceback y origen son iguales (`time` no cuenta). `ErrorInfo.from_exception(err)` "
+        "describe cualquier excepción que captures tú, e `info.report()` da el texto para pegar en un informe "
+        "de error.",
+    ),
+    related=["error-dialog", "callout", "console"],
+)
+
 # ------------------------------------------------------------------------------------------- data
 
 add(
@@ -2157,6 +2235,72 @@ add(
     related=["confirm", "choice", "tab-bar"],
 )
 
+add(
+    slug="error-dialog",
+    name=T("Error dialog", "Diálogo de error"),
+    category="dialogs",
+    api=["pyzed.ui.error_dialog"],
+    badge="new",
+    blurb=T("What went wrong, where, and the traceback, with Copy and Go to source.",
+            "Qué salió mal, dónde y el traceback, con Copiar e Ir al origen."),
+    desc=T(
+        "`ui.error_dialog(info, on_close)` shows an error in a dialog: its message, where it happened, the file "
+        "and line it comes from and the traceback in a read-only editor, where any part can be selected and "
+        "copied. Its buttons copy the whole report, go to the origin (`on_go_to`, labeled `go_to_label`), show "
+        "it among the logs (`on_logs`) and close. `more` adds a line saying how many other errors came after it. "
+        "`info` is a `ui.ErrorInfo`; show the dialog with a [Dialog layer](/pyzed/library/dialog-layer/).",
+        "`ui.error_dialog(info, on_close)` muestra un error en un diálogo: su mensaje, dónde pasó, el archivo y "
+        "la línea de donde viene y el traceback en un editor de solo lectura, donde se puede seleccionar y copiar "
+        "cualquier parte. Sus botones copian el informe entero, van al origen (`on_go_to`, con el texto "
+        "`go_to_label`), lo muestran entre los logs (`on_logs`) y cierran. `more` añade una línea que dice "
+        "cuántos errores más llegaron después. `info` es un `ui.ErrorInfo`; muestra el diálogo con una "
+        "[Capa de diálogo](/pyzed/es/library/dialog-layer/).",
+    ),
+    when=T(
+        ["When something the user asked for fails (saving, exporting, running a script) and the details matter.",
+         "From the Details button of an [Error boundary](/pyzed/library/error-boundary/).",
+         "For a short message without a traceback, use an [Alert](/pyzed/library/alert/) with `kind=\"error\"`."],
+        ["Cuando algo que pidió el usuario falla (guardar, exportar, ejecutar un script) y los detalles importan.",
+         "Desde el botón Detalles de un [Límite de errores](/pyzed/es/library/error-boundary/).",
+         "Para un mensaje corto sin traceback, usa una [Alerta](/pyzed/es/library/alert/) con `kind=\"error\"`."],
+    ),
+    preview={"code": """def average(values):
+    return sum(values) / len(values)
+
+try:
+    average([])
+except ZeroDivisionError as err:
+    info = ui.ErrorInfo.from_exception(err, where="Totals")
+
+ui.dialog_layer(main_view(), ui.error_dialog(info, on_close, on_go_to=on_go_to, on_logs=on_logs, width=620))""",
+             "size": (820, 560), "fill": True},
+    usage="""class Notes(pz.App):
+    def __init__(self):
+        self.error = None
+
+    def save(self):
+        try:
+            write_notes(self.notes)
+        except OSError as err:
+            self.error = ui.ErrorInfo.from_exception(err, where="Save")
+
+    def close_error(self):
+        self.error = None
+
+    def view(self):
+        dialog = ui.error_dialog(self.error, self.close_error) if self.error else None
+        return ui.dialog_layer(self.page(), dialog, on_dismiss=self.close_error)""",
+    notes=T(
+        "`on_go_to` receives no arguments: read the file and line from `info.origin` (a `(path, line)` pair, or "
+        "`None`) and open it there. The traceback box is a read-only editor, so the user can select a single "
+        "line and copy it, while Copy error copies `info.report()`.",
+        "`on_go_to` no recibe argumentos: toma el archivo y la línea de `info.origin` (un par `(ruta, línea)`, o "
+        "`None`) y ábrelo ahí. La caja del traceback es un editor de solo lectura, así que se puede seleccionar "
+        "una sola línea y copiarla, mientras que Copiar el error copia `info.report()`.",
+    ),
+    related=["error-boundary", "alert", "dialog-layer", "modal"],
+)
+
 # -------------------------------------------------------------------------------------- workspace
 
 add(
@@ -2640,6 +2784,438 @@ add(
 help = reference.Browser("pyzed.ui.button")
 ui.reference_browser(help, on_open_url=open_in_browser, sidebar_width=230)""", "size": (900, 520), "fill": True},
     related=["shortcuts", "about", "markdown"],
+)
+
+# ----------------------------------------------------------------------------------------- agents
+# Components of ``pyzed.ui`` for AI agent interfaces. Each one keeps its own state (folded or open,
+# its search text) and reports through events, so an app only keeps the data.
+
+add(
+    slug="tool-call",
+    name=T("Tool call", "Llamada a herramienta"),
+    category="agents",
+    api=["pyzed.ui.ToolCall"],
+    badge="new",
+    blurb=T("One step of an AI agent: what it did, its result, and Allow or Deny.",
+            "Un paso de un agente de IA: qué hizo, su resultado y Permitir o Rechazar."),
+    desc=T(
+        "`ui.ToolCall` is a component for one action of an AI agent (reading a file, editing it, running a "
+        "command). Its header shows the status, the `title` and what it works on (`detail`), and a click "
+        "unfolds the `input` and the `output` (plus any `images`). `diffs` show the edits it made as colored "
+        "diffs, and while it runs `progress` shows the last lines a command printed. While `status` is "
+        "`\"waiting\"` it asks right on the card: Allow, Always allow or Deny, reported through `on_allow`, "
+        "`on_allow_always` and `on_deny`. The component remembers whether it is unfolded; your app only keeps "
+        "the data.",
+        "`ui.ToolCall` es un componente para una acción de un agente de IA (leer un archivo, editarlo, ejecutar "
+        "un comando). Su cabecera muestra el estado, el título (`title`) y sobre qué trabaja (`detail`), y un "
+        "clic despliega la entrada (`input`) y la salida (`output`), más las imágenes (`images`) si las hay. "
+        "`diffs` muestra los cambios que hizo como diferencias de colores y, mientras se ejecuta, `progress` "
+        "muestra las últimas líneas que imprimió un comando. Mientras `status` es `\"waiting\"` pregunta en la "
+        "misma tarjeta: Permitir, Permitir siempre o Rechazar, que llegan a `on_allow`, `on_allow_always` y "
+        "`on_deny`. El componente recuerda si está desplegado; tu app solo guarda los datos.",
+    ),
+    when=T(
+        ["In an agent's chat, one per step the agent takes.",
+         "With `status=\"waiting\"`, to ask before a risky step such as writing files or running a command.",
+         "For an edit on its own, outside a tool call, use [Diff view](/pyzed/library/diff-view/)."],
+        ["En el chat de un agente, una por cada paso que da.",
+         "Con `status=\"waiting\"`, para preguntar antes de un paso delicado como escribir archivos o ejecutar "
+         "un comando.",
+         "Para un cambio suelto, fuera de una llamada a herramienta, usa la "
+         "[Vista de diferencias](/pyzed/es/library/diff-view/)."],
+    ),
+    preview={"code": """pz.column([
+    ui.ToolCall(title="Read file", detail="app/storage.py", kind="read", output="def save(path): ..."),
+    ui.ToolCall(title="Search", detail="def save", kind="search", output="app/storage.py:12"),
+    ui.ToolCall(title="Edit file", detail="app/storage.py", kind="edit", status="waiting",
+                diffs=[{"path": "app/storage.py", "old": "def save(path):\\n    write(path)\\n",
+                        "new": "def save(path, data):\\n    write(path, data)\\n"}],
+                on_allow=on_allow, on_allow_always=on_allow_always, on_deny=on_deny),
+    ui.ToolCall(title="Run", detail="pytest -q", kind="execute", status="running",
+                progress="collected 24 items\\n........................"),
+], spacing=4, width=560)""", "size": (720, 420)},
+    usage="""class Chat(pz.App):
+    def __init__(self):
+        self.status = "waiting"
+
+    def answer(self, allowed):
+        self.status = "done" if allowed else "rejected"
+
+    def view(self):
+        return ui.ToolCall(title="Run", detail="pytest -q", kind="execute", status=self.status,
+                           input={"command": "pytest -q"}, output="24 passed",
+                           on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))""",
+    notes=T(
+        "`status` is yours: set it from what the agent reports (`pending`, then `running`, then `done` or "
+        "`failed`; `rejected` after a Deny). `kind` only picks the icon: `read`, `edit`, `delete`, `move`, "
+        "`search`, `execute`, `think`, `fetch`, `switch_mode` or `other`. The header only unfolds when there is "
+        "something to show (`input`, `output`, `images` or `diffs`).",
+        "`status` es tuyo: ponlo según lo que diga el agente (`pending`, luego `running`, luego `done` o "
+        "`failed`; `rejected` tras un Rechazar). `kind` solo elige el icono: `read`, `edit`, `delete`, `move`, "
+        "`search`, `execute`, `think`, `fetch`, `switch_mode` u `other`. La cabecera solo se despliega cuando hay "
+        "algo que mostrar (`input`, `output`, `images` o `diffs`).",
+    ),
+    related=["diff-view", "plan", "edits-bar", "context-meter"],
+)
+
+add(
+    slug="diff-view",
+    name=T("Diff view", "Vista de diferencias"),
+    category="agents",
+    api=["pyzed.ui.diff_view"],
+    badge="new",
+    blurb=T("An edit as colored lines: added in green, removed in red.",
+            "Un cambio como líneas de colores: lo añadido en verde, lo quitado en rojo."),
+    desc=T(
+        "`ui.diff_view(diff)` shows an edit: the file's name, then the lines that changed (added in green, "
+        "removed in red) with two lines of context around each change; changes far apart are split by `⋯`. "
+        "`diff` is a dict with `path`, `old` and `new`, the whole texts before and after, and `max_lines` limits "
+        "how many lines show before `… N more lines`. It is what a [Tool call](/pyzed/library/tool-call/) shows "
+        "for the edits it made.",
+        "`ui.diff_view(diff)` muestra un cambio: el nombre del archivo y luego las líneas que cambiaron (las "
+        "añadidas en verde, las quitadas en rojo) con dos líneas de contexto alrededor de cada cambio; los "
+        "cambios alejados se separan con `⋯`. `diff` es un diccionario con `path`, `old` y `new`, los textos "
+        "completos de antes y de después, y `max_lines` limita cuántas líneas se ven antes de `… N líneas más`. "
+        "Es lo que muestra una [Llamada a herramienta](/pyzed/es/library/tool-call/) para los cambios que hizo.",
+    ),
+    when=T(
+        ["To show what an agent or a tool changed in a file.",
+         "To review a change before saving it, next to Keep and Reject buttons.",
+         "For the counts alone (`+12 −3`), use [Diff stat](/pyzed/library/diff-stat/)."],
+        ["Para mostrar lo que un agente o una herramienta cambió en un archivo.",
+         "Para revisar un cambio antes de guardarlo, junto a botones de Conservar y Rechazar.",
+         "Para las cifras solas (`+12 −3`), usa el [Resumen de cambios](/pyzed/es/library/diff-stat/)."],
+    ),
+    preview={"code": """old = "def save(path):\\n    data = load()\\n    write(path, data)\\n    return True\\n"
+new = "def save(path, data):\\n    write(path, data)\\n    log(path)\\n    return True\\n"
+pz.container(ui.diff_view({"path": "app/storage.py", "old": old, "new": new}), width=420)""",
+             "size": (720, 280)},
+    related=["tool-call", "diff-stat", "edits-bar"],
+)
+
+add(
+    slug="plan",
+    name=T("Plan", "Plan"),
+    category="agents",
+    api=["pyzed.ui.Plan"],
+    badge="new",
+    blurb=T("An agent's plan as a checklist that folds.", "El plan de un agente como una lista que se pliega."),
+    desc=T(
+        "`ui.Plan` is a component that shows an AI agent's plan as a checklist: each step is pending (an empty "
+        "circle), in progress (a dot, or a spinner with `running=True`) or done (a green check, with its text "
+        "dimmed), and the header counts `done/total`. Clicking the header folds and unfolds the steps. `steps` "
+        "are dicts with `step` (the text) and `status`: `\"pending\"`, `\"in_progress\"` or `\"done\"`.",
+        "`ui.Plan` es un componente que muestra el plan de un agente de IA como una lista: cada paso está "
+        "pendiente (un círculo vacío), en curso (un punto, o un spinner con `running=True`) o hecho (un check "
+        "verde, con el texto atenuado), y la cabecera cuenta `hechos/total`. Un clic en la cabecera pliega y "
+        "despliega los pasos. `steps` son diccionarios con `step` (el texto) y `status`: `\"pending\"`, "
+        "`\"in_progress\"` o `\"done\"`.",
+    ),
+    when=T(
+        ["Above an agent's chat, while it works through a task of several steps.",
+         "For any list of steps that updates as the work goes on, such as an install or a migration."],
+        ["Encima del chat de un agente, mientras resuelve una tarea de varios pasos.",
+         "Para cualquier lista de pasos que se actualiza mientras avanza el trabajo, como una instalación o "
+         "una migración."],
+    ),
+    preview={"code": """pz.container(ui.Plan(steps=[
+    {"step": "Read the form and its handlers", "status": "done"},
+    {"step": "Add the email field", "status": "done"},
+    {"step": "Validate the email as you type", "status": "in_progress"},
+    {"step": "Run the tests", "status": "pending"},
+], running=True), width=420)"""},
+    usage="""class Agent(pz.App):
+    def __init__(self):
+        self.steps = [{"step": "Add the form", "status": "done"},
+                      {"step": "Wire the events", "status": "in_progress"}]
+        self.working = True
+
+    def view(self):
+        return ui.Plan(steps=self.steps, running=self.working)""",
+    related=["tool-call", "progress", "edits-bar"],
+)
+
+add(
+    slug="edits-bar",
+    name=T("Edits bar", "Barra de cambios"),
+    category="agents",
+    api=["pyzed.ui.EditsBar"],
+    badge="new",
+    blurb=T("The files an agent changed, with Keep all and Reject all.",
+            "Los archivos que cambió un agente, con Conservar todo y Rechazar todo."),
+    desc=T(
+        "`ui.EditsBar` is a component that lists the files an agent changed: `3 files changed` with the lines "
+        "added and removed, Reject all and Keep all. Clicking the title unfolds one row per file with its diff "
+        "stat and buttons to reject or keep that file alone; clicking a file's name reports `on_open`. `files` "
+        "are dicts or objects with `path` and optional `added` and `removed` line counts. The file events "
+        "(`on_keep_file`, `on_reject_file`, `on_open`) carry the path in `event.value`.",
+        "`ui.EditsBar` es un componente que lista los archivos que cambió un agente: `3 archivos cambiados` con "
+        "las líneas añadidas y quitadas, Rechazar todo y Conservar todo. Un clic en el título despliega una fila "
+        "por archivo con su resumen de cambios y botones para rechazar o conservar solo ese archivo; un clic en "
+        "el nombre de un archivo llega a `on_open`. `files` son diccionarios u objetos con `path` y, opcionales, "
+        "las líneas añadidas (`added`) y quitadas (`removed`). Los eventos de un archivo (`on_keep_file`, "
+        "`on_reject_file`, `on_open`) llevan la ruta en `event.value`.",
+    ),
+    when=T(
+        ["Under an agent's chat, once it has edited files, so the user reviews them before keeping them."],
+        ["Bajo el chat de un agente, cuando ya editó archivos, para que el usuario los revise antes de "
+         "conservarlos."],
+    ),
+    preview={"code": """pz.container(ui.EditsBar(files=[
+    {"path": "app/storage.py", "added": 12, "removed": 3},
+    {"path": "app/forms/login.py", "added": 40, "removed": 0},
+    {"path": "tests/test_login.py", "added": 18, "removed": 2},
+], on_keep=on_keep, on_reject=on_reject), width=520)""", "size": (720, 200)},
+    usage="""class Review(pz.App):
+    def __init__(self):
+        self.files = [{"path": "app/storage.py", "added": 12, "removed": 3}]
+
+    def keep(self, path=None):  # None: every file
+        self.files = [f for f in self.files if path is not None and f["path"] != path]
+
+    def view(self):
+        return ui.EditsBar(files=self.files, on_keep=lambda e: self.keep(),
+                           on_keep_file=lambda e: self.keep(e.value), on_open=lambda e: self.open(e.value))""",
+    related=["diff-view", "diff-stat", "tool-call"],
+)
+
+add(
+    slug="thread-history",
+    name=T("Thread history", "Historial de hilos"),
+    category="agents",
+    api=["pyzed.ui.ThreadHistory"],
+    badge="new",
+    blurb=T("Past conversations, searchable and grouped by day.", "Conversaciones pasadas, con búsqueda y agrupadas por día."),
+    desc=T(
+        "`ui.ThreadHistory` is a component for past conversations: a search box and the threads grouped by "
+        "when they were last updated (Today, Yesterday, This week, This month, Older). Each row shows the "
+        "title, an optional `detail` (the model or the agent) and a delete button. `threads` are dicts or "
+        "objects with `id`, `title`, `updated` (a `time.time()` timestamp) and `detail`; `selected` marks the "
+        "open one. Picking a thread reports `on_open` and the trash button `on_delete`, both with the thread's "
+        "id in `event.value`. The component keeps the search text itself.",
+        "`ui.ThreadHistory` es un componente para conversaciones pasadas: un buscador y los hilos agrupados "
+        "según cuándo se actualizaron (Hoy, Ayer, Esta semana, Este mes, Antes). Cada fila muestra el título, "
+        "un `detail` opcional (el modelo o el agente) y un botón para borrarlo. `threads` son diccionarios u "
+        "objetos con `id`, `title`, `updated` (una marca de `time.time()`) y `detail`; `selected` marca el que "
+        "está abierto. Elegir un hilo llega a `on_open` y el botón de la papelera a `on_delete`, los dos con el "
+        "id del hilo en `event.value`. El componente guarda el texto de búsqueda por su cuenta.",
+    ),
+    when=T(
+        ["In a side panel or a popover of a chat app, to reopen an earlier conversation."],
+        ["En un panel lateral o un popover de una app de chat, para volver a abrir una conversación anterior."],
+    ),
+    preview={"code": """import time
+
+now = time.time()
+pz.container(ui.ThreadHistory(threads=[
+    {"id": "1", "title": "Add a login form", "updated": now - 60, "detail": "Claude"},
+    {"id": "2", "title": "Fix the failing tests", "updated": now - 900, "detail": "Claude"},
+    {"id": "3", "title": "Dark theme for the settings", "updated": now - 86400, "detail": "Gemini CLI"},
+    {"id": "4", "title": "Export the table to CSV", "updated": now - 4 * 86400},
+    {"id": "5", "title": "First steps", "updated": now - 60 * 86400},
+], selected="1", on_open=on_open, on_delete=on_delete), width=380, height=320)""", "size": (720, 380)},
+    usage="""class Chats(pz.App):
+    def __init__(self):
+        self.threads = load_threads()  # [{"id", "title", "updated", "detail"}, ...]
+        self.open_id = ""
+
+    def delete(self, ident):
+        self.threads = [t for t in self.threads if t["id"] != ident]
+
+    def view(self):
+        return ui.ThreadHistory(threads=self.threads, selected=self.open_id,
+                                on_open=lambda e: setattr(self, "open_id", e.value),
+                                on_delete=lambda e: self.delete(e.value))""",
+    related=["list-item", "search-input", "virtual-list"],
+)
+
+add(
+    slug="auth-prompt",
+    name=T("Sign-in prompt", "Aviso de inicio de sesión"),
+    category="agents",
+    api=["pyzed.ui.AuthPrompt"],
+    badge="new",
+    blurb=T("Asks to sign in, then shows the browser step, a code and Cancel.",
+            "Pide iniciar sesión y luego muestra el paso del navegador, un código y Cancelar."),
+    desc=T(
+        "`ui.AuthPrompt` is a component that asks to sign in, for an agent or a service that needs it. It shows "
+        "a `title`, an optional `detail` and one button per way to sign in: `methods` are dicts with `id`, "
+        "`name` and optional `description` (shown as a tooltip) and `icon`, and the first one is the main "
+        "button. Picking one reports `on_pick` with its id. While `waiting` holds that id it shows a spinner and "
+        "what is happening (`waiting_text`, or \"Waiting for the browser…\"), the `code` to type with a copy "
+        "button when there is one, Open the page again when `url` is set, and Cancel. `error` shows a message "
+        "in red.",
+        "`ui.AuthPrompt` es un componente que pide iniciar sesión, para un agente o un servicio que lo necesita. "
+        "Muestra un título (`title`), un `detail` opcional y un botón por cada forma de entrar: `methods` son "
+        "diccionarios con `id`, `name` y, opcionales, `description` (se ve como tooltip) e `icon`, y el primero "
+        "es el botón principal. Elegir uno llega a `on_pick` con su id. Mientras `waiting` tiene ese id muestra "
+        "un spinner y lo que está pasando (`waiting_text`, o \"Esperando al navegador…\"), el código que hay que "
+        "escribir (`code`) con un botón para copiarlo si lo hay, Abrir la página otra vez si hay `url`, y "
+        "Cancelar. `error` muestra un mensaje en rojo.",
+    ),
+    when=T(
+        ["Where an agent or a connected service needs the user to sign in before it can work.",
+         "For a device sign-in: show the `code` the user types on the page that opened."],
+        ["Donde un agente o un servicio conectado necesita que el usuario inicie sesión para funcionar.",
+         "Para un inicio de sesión con código: muestra el `code` que el usuario escribe en la página que se abrió."],
+    ),
+    preview={"code": """pz.container(ui.AuthPrompt(
+    title="Sign in to use the agent",
+    detail="Your account is used to run the model.",
+    methods=[{"id": "browser", "name": "Log in with the browser", "icon": "globe"},
+             {"id": "key", "name": "Use an API key", "icon": "key-round"}],
+    on_pick=on_pick,
+), width=440)"""},
+    usage="""class Agent(pz.App):
+    def __init__(self):
+        self.waiting, self.code = "", ""
+
+    def sign_in(self, method):
+        self.waiting = method
+        self.code = start_device_login()  # opens the browser and returns the code to type
+
+    def view(self):
+        return ui.AuthPrompt(title="Sign in to use the agent", waiting=self.waiting, code=self.code,
+                             methods=[{"id": "browser", "name": "Log in with the browser"}],
+                             on_pick=lambda e: self.sign_in(e.value),
+                             on_cancel=lambda e: setattr(self, "waiting", ""),
+                             on_copy=lambda e: pz.Command.copy(e.value))""",
+    notes=T(
+        "The copy button only reports `on_copy` with the code in `event.value`; return "
+        "`pz.Command.copy(e.value)` from it to put the code on the clipboard.",
+        "El botón de copiar solo avisa a `on_copy` con el código en `event.value`; devuelve "
+        "`pz.Command.copy(e.value)` desde ahí para ponerlo en el portapapeles.",
+    ),
+    related=["callout", "button", "service-row"],
+)
+
+add(
+    slug="service-row",
+    name=T("Service row", "Fila de servicio"),
+    category="agents",
+    api=["pyzed.ui.ServiceRow"],
+    badge="new",
+    blurb=T("A settings row for an MCP server, agent or skill: status, switch and menu.",
+            "Una fila de ajustes para un servidor MCP, un agente o una skill: estado, interruptor y menú."),
+    desc=T(
+        "`ui.ServiceRow` is a component for one thing an AI agent uses (an MCP server, an external agent, a "
+        "skill) on a settings page: an icon, the name with its `version` and a status dot, the `detail` (its "
+        "command or URL, in a monospace font) and a `summary`; then a spinner while `busy`, a main button "
+        "(`primary`, such as Update or Install), an on/off switch (`enabled`; `None` hides it) and a `⋯` menu "
+        "with the `actions` (`ui.MenuItem`). `status` colors the dot: `running` and `installed` green, "
+        "`starting` yellow, `update` in the accent color, `error` red, `off` and `missing` gray. `status_text` "
+        "is the dot's tooltip, and it shows under the name for `error`, `missing` and `update`.",
+        "`ui.ServiceRow` es un componente para algo que usa un agente de IA (un servidor MCP, un agente externo, "
+        "una skill) en una página de ajustes: un icono, el nombre con su versión (`version`) y un punto de "
+        "estado, el `detail` (su comando o URL, en letra monoespaciada) y un `summary`; luego un spinner "
+        "mientras está `busy`, un botón principal (`primary`, como Actualizar o Instalar), un interruptor "
+        "(`enabled`; `None` lo oculta) y un menú `⋯` con las acciones (`actions`, de `ui.MenuItem`). `status` "
+        "colorea el punto: `running` e `installed` en verde, `starting` en amarillo, `update` en el color de "
+        "acento, `error` en rojo, `off` y `missing` en gris. `status_text` es el tooltip del punto, y se ve bajo "
+        "el nombre con `error`, `missing` y `update`.",
+    ),
+    when=T(
+        ["In the settings of an app with AI agents: one row per MCP server, agent or skill.",
+         "For any list of services that can be turned on and off, updated or removed."],
+        ["En los ajustes de una app con agentes de IA: una fila por servidor MCP, agente o skill.",
+         "Para cualquier lista de servicios que se pueden encender y apagar, actualizar o quitar."],
+    ),
+    preview={"code": """pz.column([
+    ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", icon_name="github",
+                  status="running", enabled=True, on_toggle=on_toggle,
+                  actions=[ui.MenuItem("Edit", on_edit, icon="pencil")]),
+    ui.ServiceRow(name="filesystem", detail="uvx mcp-server-filesystem ~/notes", status="error",
+                  status_text="Exited with code 1", enabled=True, on_toggle=on_toggle),
+    ui.ServiceRow(name="Gemini CLI", version="0.64.0", icon_name="bot", status="update",
+                  status_text="0.65.0 is available", primary="Update", on_primary=on_update),
+], spacing=4, width=560)""", "size": (720, 300)},
+    usage="""class Settings(pz.App):
+    def __init__(self):
+        self.on = True
+
+    def view(self):
+        return ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github",
+                             status="running" if self.on else "off", enabled=self.on,
+                             on_toggle=lambda e: setattr(self, "on", e.value),
+                             actions=[ui.MenuItem("Remove", self.remove, icon="trash-2", danger=True)])""",
+    related=["catalog", "switch", "menu", "settings-group"],
+)
+
+add(
+    slug="catalog",
+    name=T("Catalog", "Catálogo"),
+    category="agents",
+    api=["pyzed.ui.Catalog"],
+    badge="new",
+    blurb=T("Things to install, with a search box and Install or Update.",
+            "Cosas para instalar, con buscador e Instalar o Actualizar."),
+    desc=T(
+        "`ui.Catalog` is a component for things to install (agents from a registry, MCP servers, skills): a "
+        "search box over a scrolling list where each row shows the name, `version` and `description`, and on "
+        "the right Install, Installed or Update to a newer version. `items` are dicts or objects with `id`, "
+        "`name` and optional `version`, `description`, `installed` (a bool) and `update` (the newer version). "
+        "Install and Update report `on_install` with the item's id in `event.value`; while `busy` holds an id, "
+        "that row shows a spinner and the other Install buttons are disabled. `height` is the list's height.",
+        "`ui.Catalog` es un componente para cosas que instalar (agentes de un registro, servidores MCP, skills): "
+        "un buscador sobre una lista con desplazamiento en la que cada fila muestra el nombre, la versión "
+        "(`version`) y la descripción (`description`), y a la derecha Instalar, Instalado o Actualizar a una "
+        "versión nueva. `items` son diccionarios u objetos con `id`, `name` y, opcionales, `version`, "
+        "`description`, `installed` (un bool) y `update` (la versión nueva). Instalar y Actualizar llegan a "
+        "`on_install` con el id en `event.value`; mientras `busy` tiene un id, esa fila muestra un spinner y los "
+        "demás botones de Instalar se desactivan. `height` es la altura de la lista.",
+    ),
+    when=T(
+        ["To add agents, MCP servers, skills or plugins from a list, inside a dialog or a settings page."],
+        ["Para añadir agentes, servidores MCP, skills o plugins desde una lista, dentro de un diálogo o una "
+         "página de ajustes."],
+    ),
+    preview={"code": """pz.container(ui.Catalog(items=[
+    {"id": "gemini", "name": "Gemini CLI", "version": "0.64.0", "description": "A coding agent for the terminal.",
+     "installed": True, "update": "0.65.0"},
+    {"id": "codex", "name": "Codex CLI", "version": "0.40.0", "description": "Writes and runs code for you."},
+    {"id": "goose", "name": "Goose", "version": "1.9.0", "description": "An open source agent.",
+     "installed": True},
+    {"id": "opencode", "name": "OpenCode", "version": "0.12.1", "description": "An agent that edits whole projects."},
+], busy="codex", height=220, on_install=on_install), width=460)""", "size": (720, 340)},
+    usage="""class Agents(pz.App):
+    def __init__(self):
+        self.registry = load_registry()  # [{"id", "name", "version", "description", "installed"}, ...]
+        self.installing = ""
+
+    def view(self):
+        return ui.Catalog(items=self.registry, busy=self.installing,
+                          on_install=lambda e: self.install(e.value))""",
+    related=["service-row", "search-input", "list-item"],
+)
+
+add(
+    slug="context-meter",
+    name=T("Context meter", "Medidor de contexto"),
+    category="agents",
+    api=["pyzed.ui.context_meter", "pyzed.ui.format_tokens"],
+    badge="new",
+    blurb=T("How full a model's context window is: a ring and `48k / 200k`.",
+            "Cuánto se llenó la ventana de contexto de un modelo: un anillo y `48k / 200k`."),
+    desc=T(
+        "`ui.context_meter(used, limit)` shows how full an AI model's context window is: a small ring and "
+        "`48k / 200k`. It is gray below 80%, yellow from 80% and red from 95%, and its tooltip gives the exact "
+        "counts. `ui.format_tokens(count)` writes a count the short way: `950`, `4.5k`, `48k`, `1.25M`.",
+        "`ui.context_meter(used, limit)` muestra cuánto se llenó la ventana de contexto de un modelo de IA: un "
+        "anillo pequeño y `48k / 200k`. Es gris por debajo del 80 %, amarillo desde el 80 % y rojo desde el "
+        "95 %, y su tooltip da las cifras exactas. `ui.format_tokens(count)` escribe una cifra de forma corta: "
+        "`950`, `4.5k`, `48k`, `1.25M`.",
+    ),
+    when=T(
+        ["In the toolbar or the input box of an agent's chat, so the user sees when a conversation gets long."],
+        ["En la barra o en la caja de texto del chat de un agente, para que el usuario vea cuándo una "
+         "conversación se hace larga."],
+    ),
+    preview={"code": """pz.row([
+    ui.context_meter(48_000, 200_000),
+    ui.context_meter(170_000, 200_000),
+    ui.context_meter(196_000, 200_000),
+], spacing=24, align="center")"""},
+    related=["donut", "progress", "tool-call"],
 )
 
 # ----------------------------------------------------------------------------------------- layout
@@ -3509,6 +4085,37 @@ PLAIN = {
                 "Una superficie pintada por la tarjeta gráfica, para fondos en movimiento y efectos visuales."),
     "effects": T("Glows, frosted glass and transparency you can add to any box.",
                  "Brillos, cristal esmerilado y transparencia que puedes añadir a cualquier caja."),
+    "error-boundary": T("A safety net for one part of a window: if that part breaks, a small error box shows there "
+                        "and the rest of the app keeps working.",
+                        "Una red de seguridad para una parte de la ventana: si esa parte se rompe, ahí aparece una "
+                        "cajita de error y el resto de la app sigue funcionando."),
+    "error-dialog": T("A window that pops up when something fails, saying what went wrong and where, with a button "
+                      "to copy it for a bug report.",
+                      "Una ventana que aparece cuando algo falla, diciendo qué salió mal y dónde, con un botón para "
+                      "copiarlo en un informe de error."),
+    "tool-call": T("One thing an AI assistant did, like reading or changing a file. Click it to see the details; "
+                   "if it needs your permission, it asks with Allow and Deny buttons.",
+                   "Una cosa que hizo un asistente de IA, como leer o cambiar un archivo. Púlsala para ver los "
+                   "detalles; si necesita tu permiso, pregunta con botones de Permitir y Rechazar."),
+    "diff-view": T("Shows what changed in a file: new lines in green, deleted lines in red.",
+                   "Muestra qué cambió en un archivo: las líneas nuevas en verde y las borradas en rojo."),
+    "plan": T("A to-do list an AI assistant writes for itself and ticks off as it works.",
+              "Una lista de tareas que un asistente de IA se escribe y va tachando mientras trabaja."),
+    "edits-bar": T("A bar that lists the files an AI assistant changed, so you can keep or undo the changes.",
+                   "Una barra con los archivos que cambió un asistente de IA, para conservar o deshacer los cambios."),
+    "thread-history": T("The list of your earlier chats, sorted by day, with a box to search them.",
+                        "La lista de tus chats anteriores, ordenados por día, con una caja para buscarlos."),
+    "auth-prompt": T("A box that asks you to sign in, with a button for each way to do it.",
+                     "Una caja que te pide iniciar sesión, con un botón para cada forma de hacerlo."),
+    "service-row": T("One line of a settings page for a tool the assistant uses: whether it works, a switch to "
+                     "turn it on or off, and a menu with more options.",
+                     "Una línea de una página de ajustes para una herramienta que usa el asistente: si funciona, "
+                     "un interruptor para encenderla o apagarla y un menú con más opciones."),
+    "catalog": T("A searchable shop-like list of add-ons, each with an Install button.",
+                 "Una lista con buscador de complementos, como una tienda, cada uno con un botón Instalar."),
+    "context-meter": T("A little ring that fills up as a chat with an AI gets longer, like a fuel gauge.",
+                       "Un anillo pequeño que se llena a medida que un chat con una IA se alarga, como el indicador "
+                       "de gasolina."),
 }
 
 # ----------------------------------------------------------------------------------------- variants
@@ -4909,6 +5516,315 @@ for _slug, _group in _MORE.items():
     _groups = VARIANTS.setdefault(_slug, [])
     _at = len(_groups) - 1 if _groups and _groups[-1]["title"] == _BASE else len(_groups)
     _groups.insert(_at, _group)
+
+# ------------------------------------------------------------------------------- errors and agents
+# ``_RAISE`` defines a part that fails to draw, ``_TRACE`` makes a real ``ErrorInfo`` with a traceback.
+
+_RAISE = 'def totals():\n    values = []\n    return ui.label(f"Average: {sum(values) / len(values)}")\n\n'
+_TRACE = ('def average(values):\n    return sum(values) / len(values)\n\ntry:\n    average([])\n'
+          'except ZeroDivisionError as err:\n    info = ui.ErrorInfo.from_exception(err, where="Totals")\n\n')
+_INFO = 'info = ui.ErrorInfo("KeyError", "\'email\'", origin=("app/forms.py", 42), where="Sign-up form")\n'
+_UNFOLDED = T("Unfolded ones are drawn as they look after a click on the header.",
+              "Las desplegadas se dibujan como quedan tras un clic en la cabecera.")
+_THREADS = ('import time\n\nnow = time.time()\nthreads = [\n'
+            '    {"id": "1", "title": "Add a login form", "updated": now - 60, "detail": "Claude"},\n'
+            '    {"id": "2", "title": "Fix the failing tests", "updated": now - 86400},\n'
+            '    {"id": "3", "title": "Export the table to CSV", "updated": now - 4 * 86400},\n'
+            ']\n')
+
+VARIANTS.update({
+    "error-boundary": [
+        V(T("Boundary", "Límite"), [
+            (T("No error", "Sin error"), 'ui.error_boundary(lambda: ui.label("Average: 4.2"))'),
+            (T("Default card", "Tarjeta por defecto"), _RAISE + 'pz.container(ui.error_boundary(totals), width=360)',
+             {"size": (480, 220)}),
+            ('title="Totals"', _RAISE + 'pz.container(ui.error_boundary(totals, title="Totals"), width=360)',
+             {"size": (480, 220)}),
+            ('on_details=', _RAISE + 'pz.container(ui.error_boundary(totals, title="Totals", on_details=on_details),\n'
+                            '             width=360)', {"size": (480, 220)}),
+            ('fallback=', _RAISE + 'ui.error_boundary(totals, fallback=lambda info: ui.callout(\n'
+                          '    "Totals are not available", info.summary, tint="warning"))', {"size": (520, 200)}),
+        ], T("While `build()` works the boundary returns its widget untouched; only a part that raises is replaced.",
+             "Mientras `build()` funciona, el límite devuelve su widget tal cual; solo se reemplaza una parte que "
+             "lanza una excepción.")),
+        V(T("Error card", "Tarjeta de error"), [
+            ('ui.error_card(info)', _INFO + 'pz.container(ui.error_card(info), width=360)', {"size": (480, 220)}),
+            ('title=, actions=', _INFO + 'pz.container(ui.error_card(info, title="The form could not be loaded",\n'
+                                 '                           actions=[ui.button("Retry", on_retry, icon="rotate-ccw",\n'
+                                 '                                              size="sm", variant="ghost")]),\n'
+                                 '             width=360)', {"size": (480, 220)}),
+            (T("No origin", "Sin origen"), 'pz.container(ui.error_card(ui.ErrorInfo("TimeoutError", "the server took too long")),\n'
+                                           '             width=360)', {"size": (480, 200)}),
+        ], T("`ui.error_card` is the card on its own, for errors you catch yourself.",
+             "`ui.error_card` es la tarjeta sola, para los errores que capturas tú.")),
+    ],
+    "error-dialog": [
+        V(_OPTIONS, [
+            (T("Close only", "Solo cerrar"), _TRACE + 'ui.error_dialog(info, on_close, width=480)', {"size": (620, 560)}),
+            ('on_go_to=, go_to_label=', _TRACE + 'ui.error_dialog(info, on_close, on_go_to=on_go_to, go_to_label="Open app.py",\n'
+                                        '                width=480)', {"size": (620, 560)}),
+            ('on_logs=', _TRACE + 'ui.error_dialog(info, on_close, on_logs=on_logs, width=480)', {"size": (620, 560)}),
+            ('more=2', _TRACE + 'ui.error_dialog(info, on_close, more=2, width=480)', {"size": (620, 580)}),
+            ('title=', _TRACE + 'ui.error_dialog(info, on_close, title="The totals could not be computed", width=480)',
+             {"size": (620, 560)}),
+            (T("No traceback", "Sin traceback"),
+             'info = ui.ErrorInfo("PermissionError", "[Errno 13] Permission denied: \'notes.md\'", where="Save")\n'
+             'ui.error_dialog(info, on_close, width=480)', {"size": (620, 300)}),
+        ], T("Without a traceback the dialog leaves out the code box, as with an `ErrorInfo` you build yourself.",
+             "Sin traceback el diálogo no muestra la caja de código, como con un `ErrorInfo` que construyes tú.")),
+    ],
+    "tool-call": [
+        V(_STATE, [
+            ('status="pending"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="pending"),\n'
+                                 '             width=360)'),
+            ('status="running"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="running"),\n'
+                                 '             width=360)'),
+            ('status="done"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="done"),\n'
+                              '             width=360)'),
+            ('status="waiting"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="waiting",\n'
+                                 '                         on_allow=on_allow, on_allow_always=on_allow_always, on_deny=on_deny),\n'
+                                 '             width=360)', {"size": (480, 200)}),
+            ('status="failed"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="failed"),\n'
+                                '             width=360)'),
+            ('status="rejected"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="rejected"),\n'
+                                  '             width=360)'),
+        ], T("Pending and running show a spinner, waiting asks with Allow, Always allow and Deny, failed and "
+             "rejected say so in red.",
+             "Pendiente y en marcha muestran un spinner, esperando pregunta con Permitir, Permitir siempre y "
+             "Rechazar, y fallida y rechazada lo dicen en rojo.")),
+        V(_KIND, [
+            ('kind="read"', 'pz.container(ui.ToolCall(title="Read file", detail="app.py", kind="read"), width=300)'),
+            ('kind="edit"', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit"), width=300)'),
+            ('kind="delete"', 'pz.container(ui.ToolCall(title="Delete file", detail="old.py", kind="delete"), width=300)'),
+            ('kind="move"', 'pz.container(ui.ToolCall(title="Move file", detail="a.py → b.py", kind="move"), width=300)'),
+            ('kind="search"', 'pz.container(ui.ToolCall(title="Search", detail="def save", kind="search"), width=300)'),
+            ('kind="execute"', 'pz.container(ui.ToolCall(title="Run", detail="pytest -q", kind="execute"), width=300)'),
+            ('kind="think"', 'pz.container(ui.ToolCall(title="Think", kind="think"), width=300)'),
+            ('kind="fetch"', 'pz.container(ui.ToolCall(title="Fetch", detail="https://example.com", kind="fetch"),\n'
+                             '             width=300)'),
+            ('kind="switch_mode"', 'pz.container(ui.ToolCall(title="Switch mode", detail="plan", kind="switch_mode"),\n'
+                                   '             width=300)'),
+            ('kind="other"', 'pz.container(ui.ToolCall(title="Tool", detail="custom", kind="other"), width=300)'),
+        ], T("The kind picks the icon of a finished call.", "El tipo elige el icono de una llamada terminada.")),
+        V(_CONTENT, [
+            ('progress=', 'pz.container(ui.ToolCall(title="Run", detail="pytest -q", kind="execute", status="running",\n'
+                          '                         progress="collected 24 items\\n............\\n............"),\n'
+                          '             width=360)', {"size": (480, 220)}),
+            ('diffs=', 'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit", status="running",\n'
+                       '                         diffs=[{"path": "app.py", "old": "x = 1\\ny = 2\\n", "new": "x = 10\\ny = 2\\n"}]),\n'
+                       '             width=360)', {"size": (480, 220)}),
+            ('allow_always=False', 'pz.container(ui.ToolCall(title="Run", detail="rm -rf build", kind="execute", status="waiting",\n'
+                                   '                         allow_always=False, on_allow=on_allow, on_deny=on_deny),\n'
+                                   '             width=360)', {"size": (480, 200)}),
+            ('input=, output=',
+             'pz.container(ui.ToolCall(title="Read file", detail="app.py", kind="read",\n'
+             '                         input={"path": "app.py"}, output="import pyzed as pz\\n\\npz.run(App)"),\n'
+             '             width=360)',
+             {"size": (480, 300),
+              "draw": 'call = ui.ToolCall.create(title="Read file", detail="app.py", kind="read",\n'
+                      '                         input={"path": "app.py"}, output="import pyzed as pz\\n\\npz.run(App)")\n'
+                      'call.expanded = True\npz.container(call.render(), width=360)'}),
+            (T("Unfolded diffs", "Diferencias desplegadas"),
+             'pz.container(ui.ToolCall(title="Edit file", detail="app.py", kind="edit",\n'
+             '                         diffs=[{"path": "app.py", "old": "x = 1\\ny = 2\\n", "new": "x = 10\\ny = 2\\n"}]),\n'
+             '             width=360)',
+             {"size": (480, 260),
+              "draw": 'call = ui.ToolCall.create(title="Edit file", detail="app.py", kind="edit",\n'
+                      '                         diffs=[{"path": "app.py", "old": "x = 1\\ny = 2\\n", "new": "x = 10\\ny = 2\\n"}])\n'
+                      'call.expanded = True\npz.container(call.render(), width=360)'}),
+        ], _UNFOLDED),
+    ],
+    "diff-view": [
+        V(_CONTENT, [
+            (T("Changed lines", "Líneas cambiadas"),
+             'pz.container(ui.diff_view({"path": "app.py", "old": "x = 1\\ny = 2\\n", "new": "x = 10\\ny = 2\\n"}),\n'
+             '             width=300)'),
+            (T("New file", "Archivo nuevo"),
+             'pz.container(ui.diff_view({"path": "main.py", "old": "", "new": "import pyzed as pz\\n\\npz.run(App)\\n"}),\n'
+             '             width=300)', {"size": (480, 200)}),
+            (T("Removed lines", "Líneas quitadas"),
+             'pz.container(ui.diff_view({"path": "todo.txt", "old": "milk\\neggs\\nbread\\n", "new": "milk\\n"}),\n'
+             '             width=300)', {"size": (480, 200)}),
+            (T("Changes far apart", "Cambios separados"),
+             'old = "".join(f"line {i}\\n" for i in range(1, 13))\n'
+             'new = old.replace("line 2\\n", "line two\\n").replace("line 11\\n", "")\n'
+             'pz.container(ui.diff_view({"path": "notes.txt", "old": old, "new": new}), width=300)',
+             {"size": (480, 320)}),
+            ('max_lines=4',
+             'new = "".join(f"item {i}\\n" for i in range(1, 11))\n'
+             'pz.container(ui.diff_view({"path": "list.txt", "old": "", "new": new}, max_lines=4), width=300)',
+             {"size": (480, 220)}),
+        ], T("Two lines of context surround each change; changes further apart are split by `⋯`.",
+             "Dos líneas de contexto rodean cada cambio; los cambios más alejados se separan con `⋯`.")),
+    ],
+    "plan": [
+        V(_STATE, [
+            ('running=True', 'pz.container(ui.Plan(steps=[{"step": "Add the form", "status": "done"},\n'
+                             '                         {"step": "Wire the events", "status": "in_progress"},\n'
+                             '                         {"step": "Run the tests", "status": "pending"}],\n'
+                             '                  running=True), width=300)', {"size": (480, 200)}),
+            ('running=False', 'pz.container(ui.Plan(steps=[{"step": "Add the form", "status": "done"},\n'
+                              '                         {"step": "Wire the events", "status": "in_progress"},\n'
+                              '                         {"step": "Run the tests", "status": "pending"}]), width=300)',
+             {"size": (480, 200)}),
+            (T("All pending", "Todo pendiente"), 'pz.container(ui.Plan(steps=[{"step": "Add the form", "status": "pending"},\n'
+                                                 '                         {"step": "Run the tests", "status": "pending"}]), width=300)'),
+            (T("All done", "Todo hecho"), 'pz.container(ui.Plan(steps=[{"step": "Add the form", "status": "done"},\n'
+                                          '                         {"step": "Run the tests", "status": "done"}]), width=300)'),
+            (T("Folded", "Plegado"),
+             'pz.container(ui.Plan(steps=[{"step": "Add the form", "status": "done"},\n'
+             '                         {"step": "Run the tests", "status": "pending"}]), width=300)',
+             {"draw": 'plan = ui.Plan.create(steps=[{"step": "Add the form", "status": "done"},\n'
+                      '                            {"step": "Run the tests", "status": "pending"}])\n'
+                      'plan.folded = True\npz.container(plan.render(), width=300)'}),
+        ], T("Without `running` the step in progress shows a dot; folded is drawn as after a click on the header.",
+             "Sin `running` el paso en curso muestra un punto; el plegado se dibuja como queda tras un clic en la "
+             "cabecera.")),
+    ],
+    "edits-bar": [
+        V(_STATE, [
+            (T("Folded", "Plegada"), 'pz.container(ui.EditsBar(files=[{"path": "app.py", "added": 12, "removed": 3},\n'
+                                     '                             {"path": "ui/form.py", "added": 40, "removed": 0}]),\n'
+                                     '             width=440)', {"size": (560, 160)}),
+            (T("Unfolded", "Desplegada"),
+             'pz.container(ui.EditsBar(files=[{"path": "app.py", "added": 12, "removed": 3},\n'
+             '                             {"path": "ui/form.py", "added": 40, "removed": 0}]),\n'
+             '             width=440)',
+             {"size": (560, 220),
+              "draw": 'bar = ui.EditsBar.create(files=[{"path": "app.py", "added": 12, "removed": 3},\n'
+                      '                               {"path": "ui/form.py", "added": 40, "removed": 0}])\n'
+                      'bar.expanded = True\npz.container(bar.render(), width=440)'}),
+            (T("One file", "Un archivo"), 'pz.container(ui.EditsBar(files=[{"path": "app.py", "added": 2, "removed": 2}]), width=440)',
+             {"size": (560, 160)}),
+            (T("Without line counts", "Sin cifras de líneas"),
+             'pz.container(ui.EditsBar(files=[{"path": "app.py"}, {"path": "README.md"}]), width=440)',
+             {"size": (560, 160)}),
+        ], _UNFOLDED),
+    ],
+    "thread-history": [
+        V(_STATE, [
+            (T("Grouped by day", "Agrupado por día"), _THREADS + 'pz.container(ui.ThreadHistory(threads=threads), width=320, height=260)',
+             {"size": (480, 340)}),
+            ('selected="2"', _THREADS + 'pz.container(ui.ThreadHistory(threads=threads, selected="2"), width=320, height=260)',
+             {"size": (480, 340)}),
+            (T("No threads", "Sin hilos"), 'pz.container(ui.ThreadHistory(threads=[]), width=320, height=110)',
+             {"size": (480, 180)}),
+            (T("Searching", "Buscando"), _THREADS + 'pz.container(ui.ThreadHistory(threads=threads), width=320, height=160)',
+             {"size": (480, 240),
+              "draw": _THREADS + 'history = ui.ThreadHistory.create(threads=threads)\nhistory.set_query("form")\n'
+                                 'pz.container(history.render(), width=320, height=160)'}),
+            (T("Nothing matches", "Sin coincidencias"), _THREADS + 'pz.container(ui.ThreadHistory(threads=threads), width=320, height=110)',
+             {"size": (480, 180),
+              "draw": _THREADS + 'history = ui.ThreadHistory.create(threads=threads)\nhistory.set_query("deploy")\n'
+                                 'pz.container(history.render(), width=320, height=110)'}),
+        ], T("The search ones are drawn with text typed in the box (the component keeps it).",
+             "Las de búsqueda se dibujan con texto escrito en la caja (el componente lo guarda).")),
+    ],
+    "auth-prompt": [
+        V(T("Ways to sign in", "Formas de entrar"), [
+            (T("One method", "Un método"), 'pz.container(ui.AuthPrompt(title="Sign in to continue",\n'
+                                           '                           methods=[{"id": "browser", "name": "Log in with the browser"}]),\n'
+                                           '             width=380)'),
+            ('methods=[...]', 'pz.container(ui.AuthPrompt(title="Sign in to continue", methods=[\n'
+                              '    {"id": "browser", "name": "Log in with the browser", "icon": "globe"},\n'
+                              '    {"id": "key", "name": "Use an API key", "icon": "key-round"},\n'
+                              ']), width=380)'),
+            ('detail=', 'pz.container(ui.AuthPrompt(title="Sign in to continue", detail="The agent needs your account.",\n'
+                        '                           methods=[{"id": "browser", "name": "Log in with the browser"}]),\n'
+                        '             width=380)'),
+            ('error=', 'pz.container(ui.AuthPrompt(title="Sign in to continue", error="The sign-in was cancelled.",\n'
+                       '                           methods=[{"id": "browser", "name": "Try again"}]),\n'
+                       '             width=380)'),
+        ], T("The first method is the main (solid) button.", "El primer método es el botón principal (relleno).")),
+        V(T("Waiting", "Esperando"), [
+            ('waiting="browser"', 'pz.container(ui.AuthPrompt(title="Sign in to continue", waiting="browser"), width=380)'),
+            ('waiting_text=', 'pz.container(ui.AuthPrompt(title="Sign in to continue", waiting="cli",\n'
+                              '                           waiting_text="Finish signing in in the terminal."),\n'
+                              '             width=380)'),
+            ('code=, url=', 'pz.container(ui.AuthPrompt(title="Sign in to continue", waiting="device", code="WDJB-MJHT",\n'
+                            '                           url="https://example.com/device"), width=380)', {"size": (480, 200)}),
+        ]),
+    ],
+    "service-row": [
+        V(_STATE, [
+            ('status="running"', 'pz.container(ui.ServiceRow(name="github", detail="npx -y server-github", status="running",\n'
+                                 '                           enabled=True), width=420)', {"size": (520, 160)}),
+            ('status="starting"', 'pz.container(ui.ServiceRow(name="github", detail="npx -y server-github", status="starting",\n'
+                                  '                           enabled=True), width=420)', {"size": (520, 160)}),
+            ('status="error"', 'pz.container(ui.ServiceRow(name="github", detail="npx -y server-github", status="error",\n'
+                               '                           status_text="Exited with code 1", enabled=True), width=420)',
+             {"size": (520, 160)}),
+            ('status="off"', 'pz.container(ui.ServiceRow(name="github", detail="npx -y server-github", status="off",\n'
+                             '                           enabled=False), width=420)', {"size": (520, 160)}),
+            ('status="installed"', 'pz.container(ui.ServiceRow(name="Gemini CLI", version="0.64.0", icon_name="bot",\n'
+                                   '                           status="installed"), width=420)', {"size": (520, 160)}),
+            ('status="missing"', 'pz.container(ui.ServiceRow(name="Codex CLI", icon_name="bot", status="missing",\n'
+                                 '                           status_text="Not installed yet", primary="Install"), width=420)',
+             {"size": (520, 160)}),
+            ('status="update"', 'pz.container(ui.ServiceRow(name="Gemini CLI", version="0.64.0", icon_name="bot", status="update",\n'
+                                '                           status_text="0.65.0 is available", primary="Update"), width=420)',
+             {"size": (520, 160)}),
+        ], T("`enabled=False` also dims the name and the icon.", "`enabled=False` además atenúa el nombre y el icono.")),
+        V(_OPTIONS, [
+            ('summary=', 'pz.container(ui.ServiceRow(name="notes", icon_name="book-open", status="running",\n'
+                         '                           summary="Reads and writes the notes folder."), width=420)',
+             {"size": (520, 160)}),
+            ('busy=True', 'pz.container(ui.ServiceRow(name="Gemini CLI", version="0.64.0", icon_name="bot", busy=True,\n'
+                          '                           primary="Update"), width=420)', {"size": (520, 160)}),
+            ('actions=[...]',
+             'pz.container(ui.ServiceRow(name="github", detail="npx -y server-github", status="running", enabled=True,\n'
+             '                           actions=[ui.MenuItem("Edit", on_edit, icon="pencil"),\n'
+             '                                    ui.MenuItem("Remove", on_remove, icon="trash-2", danger=True)]),\n'
+             '             width=420)',
+             {"size": (520, 260),
+              "draw": 'row = ui.ServiceRow.create(name="github", detail="npx -y server-github", status="running", enabled=True,\n'
+                      '                           actions=[ui.MenuItem("Edit", on_edit, icon="pencil"),\n'
+                      '                                    ui.MenuItem("Remove", on_remove, icon="trash-2", danger=True)])\n'
+                      'row.menu_open = True\npz.container(row.render(), width=420)'}),
+        ], T("The `⋯` menu is drawn open, as after a click on it.",
+             "El menú `⋯` se dibuja abierto, como queda tras pulsarlo.")),
+    ],
+    "catalog": [
+        V(_STATE, [
+            (T("Not installed", "Sin instalar"), 'pz.container(ui.Catalog(items=[{"id": "goose", "name": "Goose", "version": "1.9.0",\n'
+                                                 '                                "description": "An open source agent."}],\n'
+                                                 '                         height=50), width=380)', {"size": (480, 180)}),
+            ('installed=True', 'pz.container(ui.Catalog(items=[{"id": "goose", "name": "Goose", "version": "1.9.0",\n'
+                               '                                "description": "An open source agent.", "installed": True}],\n'
+                               '                         height=50), width=380)', {"size": (480, 180)}),
+            ('update="2.0.0"', 'pz.container(ui.Catalog(items=[{"id": "goose", "name": "Goose", "version": "1.9.0",\n'
+                               '                                "description": "An open source agent.", "installed": True,\n'
+                               '                                "update": "2.0.0"}], height=50), width=380)',
+             {"size": (480, 180)}),
+            ('busy="goose"', 'pz.container(ui.Catalog(items=[\n'
+                             '    {"id": "goose", "name": "Goose", "version": "1.9.0", "description": "An open source agent."},\n'
+                             '    {"id": "codex", "name": "Codex CLI", "version": "0.40.0", "description": "Writes and runs code."},\n'
+                             '], busy="goose", height=100), width=380)', {"size": (480, 230)}),
+            (T("Nothing matches", "Sin coincidencias"),
+             'pz.container(ui.Catalog(items=[{"id": "goose", "name": "Goose"}], height=50), width=380)',
+             {"size": (480, 180),
+              "draw": 'catalog = ui.Catalog.create(items=[{"id": "goose", "name": "Goose"}], height=50)\n'
+                      'catalog.set_query("zzz")\npz.container(catalog.render(), width=380)'}),
+        ], T("While one item installs, the other Install buttons are disabled.",
+             "Mientras se instala uno, los demás botones de Instalar se desactivan.")),
+    ],
+    "context-meter": [
+        V(T("Level", "Nivel"), [
+            (T("Below 80%", "Bajo el 80 %"), 'ui.context_meter(48_000, 200_000)'),
+            (T("From 80%", "Desde el 80 %"), 'ui.context_meter(170_000, 200_000)'),
+            (T("From 95%", "Desde el 95 %"), 'ui.context_meter(196_000, 200_000)'),
+            (T("Tooltip", "Tooltip"), 'ui.context_meter(48_000, 200_000)',
+             {"draw": 'shown_tooltip(ui.context_meter(48_000, 200_000), "Context window: 48,000 of 200,000 tokens")'}),
+        ], _HOVER),
+        V(T("Short counts", "Cifras cortas"), [
+            ('format_tokens(950)', 'ui.label(ui.format_tokens(950), mono=True)'),
+            ('format_tokens(4_500)', 'ui.label(ui.format_tokens(4_500), mono=True)'),
+            ('format_tokens(48_000)', 'ui.label(ui.format_tokens(48_000), mono=True)'),
+            ('format_tokens(1_250_000)', 'ui.label(ui.format_tokens(1_250_000), mono=True)'),
+        ], T("`ui.format_tokens` returns the text the meter shows, for your own labels.",
+             "`ui.format_tokens` devuelve el texto que muestra el medidor, para tus propias etiquetas.")),
+    ],
+})
 
 # The animation presets only show while they play; see the clips on the Showcase pages.
 for _entry in COMPONENTS:

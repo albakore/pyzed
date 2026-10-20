@@ -1,0 +1,103 @@
+---
+title: Knob
+description: A rotary knob for Python audio apps — drag, scroll or double-click to reset, five looks from FL Studio to Eurorack, logarithmic ranges and stepped selectors.
+sidebar:
+  order: 1
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Six knobs turning: arc, FL Studio, vintage, rack, minimal and a bipolar one](/pyzed/media/audio/ui/knob.webp)
+
+<Aside type="note" title="In plain words">
+A knob is the round control of every synthesizer and mixer. Drag it up to turn it right and
+down to turn it left; hold <kbd>Shift</kbd> for fine adjustments; double-click to put it back.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Filter(pz.App):
+    cutoff = 1200.0
+
+    def view(self):
+        return ui.audio.Knob(
+            value=self.cutoff, min=20, max=20000, curve="log", unit="Hz", caption="Cutoff",
+            on_change=lambda e: setattr(self, "cutoff", e.value),
+        )
+
+
+pz.run(Filter)
+```
+
+## How it works
+
+- **Drag** up or down: `travel` pixels (200 by default) cover the whole range. With
+  <kbd>Shift</kbd> held, the same drag moves it ten times less.
+- **Scroll** the mouse wheel over it: 2 % of the range per notch, or one `step`.
+- **Double-click** to go back to `default` (or `min` when there is none).
+- `change` fires on every movement with the new value in `event.value`.
+
+The knob keeps the value the user sets even if your app does not store it. When your app
+passes a different `value` (a preset was loaded, a MIDI controller moved), that one wins.
+
+## Looks
+
+`variant` picks one of five drawings; all of them are vector shapes drawn on a canvas, so
+they stay sharp at any `diameter`.
+
+| `variant` | Looks like |
+| --- | --- |
+| `"arc"` | A ring that fills with `color` around a small dial. The default, matches the theme. |
+| `"fl"` | FL Studio: a shaded dark knob with a glowing ring. |
+| `"vintage"` | A cream knob with tick marks, like old hardware. |
+| `"rack"` | A small Eurorack knob with a colored pointer (the rack uses it). |
+| `"minimal"` | Only the ring, with the value written in the middle. |
+
+`bipolar=True` draws the ring from the top center instead of the left end: right for
+positive values, left for negative ones. Use it for pan, detune or a filter's envelope amount.
+
+## Ranges, units and choices
+
+- `curve="log"` turns the knob by ratios instead of steps: the middle of 20 Hz–20 kHz is
+  about 630 Hz, which is how we hear pitch. Use it for frequencies and times.
+- `unit` formats the value: `"Hz"` (switches to kHz), `"ms"` (switches to seconds), `"dB"`,
+  `"%"` (0..1 shown as a percentage) or any text. `decimals` fixes the decimals.
+- `step` snaps the value (`step=1` for whole numbers).
+- `options=["Sine", "Triangle", "Saw", "Square"]` makes a **stepped selector**: the value is the
+  index of the option and the label shows its name.
+
+```python
+ui.audio.Knob(value=self.wave, options=["Sine", "Tri", "Saw", "Square"], caption="Wave",
+              variant="fl", on_change=lambda e: engine.set(osc, "wave", e.value))
+```
+
+## Properties
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `value` | `0.5` | The value shown. |
+| `min`, `max` | `0`, `1` | The range. |
+| `default` | `None` | Where a double-click takes it (`min` when `None`). |
+| `step` | `None` | Snaps the value to multiples of `step`. |
+| `curve` | `"lin"` | `"log"` for frequencies and times. |
+| `caption` | `""` | Text under the knob. |
+| `unit`, `decimals` | `""`, `None` | How the value is written. |
+| `options` | `None` | Names of choices: turns it into a stepped selector. |
+| `diameter` | `48` | Size in pixels. |
+| `variant` | `"arc"` | `"arc"`, `"fl"`, `"vintage"`, `"rack"` or `"minimal"`. |
+| `color` | `"accent"` | A theme token or a hex color. |
+| `bipolar` | `False` | Draws the ring from the center. |
+| `show_value` | `True` | Writes the value under the caption. |
+| `travel` | `200` | Pixels of dragging for the whole range. |
+| `disabled` | `False` | Grays it out and ignores the pointer. |
+
+Event: `on_change` (`event.value` is the new value). In Pyzed Design the knob is in the
+**Audio** group of the toolbox.
+
+<Aside type="tip">
+Connecting a knob to the audio engine is one line: `on_change=lambda e: engine.set(node, "cutoff", e.value)`.
+`engine.set` only hands a number to the audio thread, so calling it on every movement is fine.
+</Aside>

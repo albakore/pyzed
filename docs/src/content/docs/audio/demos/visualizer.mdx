@@ -1,0 +1,40 @@
+---
+title: Music visualizer
+description: A music visualizer in Python — spectrum analyzers, a radial spectrum, a spectrogram, an oscilloscope and VU meters whose look changes live, fed by a song or the microphone.
+sidebar:
+  order: 2
+---
+
+![A visualizer cycling through looks: blocks, bars, filled, mirror and line spectrums, a radial one, a spectrogram, a scope and an analog VU meter](/pyzed/media/audio/ui/visualizer.webp)
+
+Every analyzer of Pyzed in one window: [`examples/audio/visualizer.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/visualizer.py).
+
+```bash
+python examples/audio/visualizer.py
+```
+
+It plays a short groove made with the engine (a sequenced bass, kick, snare, hats and chords).
+Switch the source to **Microphone** to see your own voice. The panel on the left changes the main
+spectrum live: its look (`variant`), its colors (`colors`), how many bands it has, how fast
+the bars fall and whether the peaks stay.
+
+## How it is built
+
+- `demo_song(engine)` builds the groove: a `clock` drives a `sequencer` for the bass and
+  another one for the snare, and its beat output strikes the kick. Everything goes through a
+  `scope` module before the speakers, so it can be analyzed.
+- Each frame, the view asks that module for its analysis, computed in Rust:
+
+```python
+mags = tap.spectrum(512)      # 512 bands, 20 Hz to 24 kHz, in dB
+rms, peak = tap.level()
+wave = tap.scope(2048)        # the last 2048 samples
+```
+
+- The same `mags` feed a [`Spectrum`](/pyzed/audio/components/spectrum/) in two looks and a
+  [`Spectrogram`](/pyzed/audio/components/spectrogram/); `wave` feeds a
+  [`Scope`](/pyzed/audio/components/scope/); the levels feed two
+  [`VuMeter`](/pyzed/audio/components/vu-meter/)s.
+
+When the source is the microphone, the song's output is muted so the speakers do not feed back
+into the microphone.

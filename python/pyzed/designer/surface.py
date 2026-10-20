@@ -9,6 +9,9 @@ Layers, bottom to top (one ``stack`` sized like the form):
 5. a grip tab on containers that hold controls, to select and drag the container itself
    (its own area is mostly covered by its children's hit boxes).
 
+Non-visual components (timers, file watchers, processes...) are not drawn on the form: they sit in
+the component tray under it, as in Visual Basic and Qt Designer (``tray``).
+
 The stack sits in a ``mouse_area`` whose ``on_move`` reports the pointer in form
 coordinates (where a click lands); the scroll view around it has another one that
 reports view coordinates, whose deltas drive drags even past the form's edges.
@@ -37,6 +40,9 @@ CHROME_HEIGHT = 30.0
 MARGIN = 48.0
 HANDLE = 7.0
 GRIP_HEIGHT = 16.0
+#: Width of a chip in the component tray, and the gap between chips.
+TRAY_CHIP = 150.0
+TRAY_GAP = 6.0
 
 _grid_cache: dict = {}
 
@@ -160,6 +166,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     drawn: List[Any] = []
     hidden: set = set()
     for c, _depth in form.walk():
+        if not _components.get(c.type).visual:
+            continue  # in the tray under the form
         if not c.visible or (c.parent and c.parent in hidden):
             hidden.add(c.name)
             if not d.show_hidden:
@@ -199,7 +207,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x, y=y))
 
     # 4. selection, handles, rubber band
-    for c in doc.selected:
+    selected = [c for c in doc.selected if _components.get(c.type).visual]
+    for c in selected:
         primary = c is doc.primary
         x, y, cw, ch = rects.get(c.name, c.rect)
         layers.append(_core.pin(_core.container(
@@ -208,7 +217,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x - 1, y=y - 1))
         if c.locked:
             layers.append(_core.pin(_icon("lock", size=11, color=t.accent), x=x + cw - 12, y=y - 14))
-    if len(doc.selected) == 1 and not doc.primary.locked:  # type: ignore[union-attr]
+    if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
     # 5. grip tabs on containers, above everything they hold
     for name, gx, gy in grips(d):
@@ -249,9 +258,51 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         _core.container(_icon("move-diagonal-2", size=12, color=t.icon_muted), width=16, height=16, center=True),
         on_press=d.press_form_grip, cursor="crosshair",
     )
-    sized = _core.column([frame, _core.row([_core.space(width=w + 2), grip])], spacing=0)
+    sized = _core.column([frame, _core.row([_core.space(width=w + 2), grip]), tray(d, w, t)], spacing=0)
     return _core.mouse_area(
         _core.scrollable(_core.container(sized, padding=MARGIN), direction="both", width="fill", height="fill"),
         on_release=d.release,
         on_move=d.pointer_moved_view,
     )
+
+
+def tray_rows(names: List[str], width: float) -> List[List[str]]:
+    """``names`` split into the rows of chips that fit in ``width``."""
+    per_row = max(int((width + TRAY_GAP) // (TRAY_CHIP + TRAY_GAP)), 1)
+    return [names[i:i + per_row] for i in range(0, len(names), per_row)]
+
+
+def tray(d: "Designer", width: float, t: Theme) -> Any:
+    """The component tray under the form: a chip for each non-visual component (press to select it,
+    double-click to open its main event, right-click for its menu). ``None`` when there is none."""
+    doc = d.doc
+    names = [c.name for c in doc.form.controls if not _components.get(c.type).visual]
+    if not names:
+        return None
+
+    def chip(name: str) -> Any:
+        control = doc.form[name]
+        spec = _components.get(control.type)
+        selected = doc.is_selected(name)
+        hovered = d.hovered_row == f"tray:{name}"
+        color = t.text if control.enabled else t.text_muted
+        body = _core.container(
+            _core.row([_icon(spec.icon, size=14, color=t.accent if selected else t.icon_muted),
+                       _core.container(_core.text(name, size=12.5, color=color, wrap=False), width="fill", clip=True)],
+                      spacing=6, align="center"),
+            width=TRAY_CHIP, height=28, padding=(0, 8), align_y="center", radius=t.radius_sm,
+            bg=t.ghost_selected if selected else (t.ghost_hover if hovered else t.element),
+            border_color=t.accent if selected else t.border_variant, border_width=1.5 if selected else 1)
+        return ui.tooltip(_core.mouse_area(
+            body, on_press=lambda: d.press_tray(name), on_double_click=lambda: d.open_default_event(name),
+            on_right_press=lambda: d.open_context_menu(name), on_enter=lambda: d.enter_row(f"tray:{name}"),
+            on_exit=lambda: d.leave_row(f"tray:{name}")), tr(spec.label), position="bottom", theme=t)
+
+    rows = [_core.row([chip(n) for n in row], spacing=TRAY_GAP) for row in tray_rows(names, width)]
+    return _core.container(_core.column([
+        _core.row([_icon("box", size=12, color=t.icon_muted),
+                   ui.label(tr("Non-visual components"), size="xs", color="text_muted", theme=t)],
+                  spacing=6, align="center"),
+        *rows,
+    ], spacing=TRAY_GAP), width=width + 8, padding=(10, 8), bg=alpha(t.panel, 0.6), radius=t.radius,
+        border_color=t.border_variant, border_width=1)

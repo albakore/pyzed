@@ -135,11 +135,13 @@ Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/p
 | <kbd>Ctrl</kbd>+<kbd>G</kbd> | Ir a la línea |
 | <kbd>Alt</kbd>+<kbd>Z</kbd> | Activar o desactivar el ajuste de líneas largas |
 | <kbd>Alt</kbd>+clic | Añadir un cursor |
-| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añadir un cursor arriba / abajo |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añadir un cursor arriba / abajo |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Seleccionar la siguiente coincidencia como otro cursor |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Seleccionar todas las coincidencias |
 | <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Subir / bajar la línea |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Duplicar / borrar la línea |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplicar la línea arriba / abajo, en cada cursor (también <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd>) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | Duplicar la selección de cada cursor (la línea si no hay) |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Borrar la línea |
 | <kbd>Ctrl</kbd>+<kbd>/</kbd> | Comentar o descomentar |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer / rehacer |
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> <kbd>Ctrl</kbd>+<kbd>0</kbd> / <kbd>J</kbd> | Plegar / desplegar todo |

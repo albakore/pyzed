@@ -1,0 +1,44 @@
+---
+title: Sintetizador modular
+description: Un sintetizador modular en Python como VCV Rack — módulos en rieles, cables que arrastras entre conectores, un explorador de módulos y patches guardados en JSON.
+sidebar:
+  order: 5
+---
+
+![Un rack modular: un cable arrastrado del delay al osciloscopio y después la perilla de corte del filtro girando](/pyzed/media/audio/ui/rack.webp)
+
+VCV Rack en unas 90 líneas: [`examples/audio/modular.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/modular.py).
+
+```bash
+python examples/audio/modular.py            # un patch de inicio
+python examples/audio/modular.py patch.json # uno guardado
+```
+
+Se abre con una línea de bajo ácida: un secuenciador toca un oscilador a través de un filtro, una
+envolvente, un amplificador y un delay, con un osciloscopio y la salida. Después:
+
+- Añade módulos desde el explorador de la izquierda (busca o elige una categoría).
+- Arrastra de un conector a otro para conectar un cable; las salidas están en las placas oscuras.
+- Clic derecho en un conector para desconectarlo; arrastra una entrada conectada para mover su cable.
+- Arrastra un módulo por su título para moverlo; la × lo quita.
+- <kbd>Ctrl</kbd>+<kbd>S</kbd> guarda el patch y <kbd>Ctrl</kbd>+<kbd>O</kbd> lo vuelve a abrir.
+
+## Cómo está hecho
+
+Toda la ventana es un componente [`Rack`](/pyzed/es/audio/rack/rack/) sobre el motor:
+
+```python
+engine = audio.Engine()
+starter_patch(engine)                       # engine.add(...) y engine.connect(...)
+
+class Modular(pz.App):
+    layout = {}
+
+    def view(self):
+        return ui.rack.Rack(engine=self.engine, layout=self.layout, rows=2)
+```
+
+El rack lee los módulos y los cables del motor, dibuja un panel para cada módulo a partir de su
+descripción en el catálogo y escribe de vuelta cada cambio que haces. `ui.rack.save()` guarda el
+patch y la posición de cada módulo en un único archivo JSON. Mira [Cables animados](/pyzed/es/audio/rack/cables/)
+para ver cómo se dibujan y animan los cables.

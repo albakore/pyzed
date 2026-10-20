@@ -1,0 +1,63 @@
+---
+title: Pads and LED buttons
+description: Velocity-sensitive drum pads and LED buttons (mute, solo, record) for Python music apps, styled after FL Studio and drum machines.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![A 4×3 grid of drum pads lighting up with a beat, next to PLAY, REC, MUTE and SOLO buttons](/pyzed/media/audio/ui/pads.webp)
+
+<Aside type="note" title="In plain words">
+Pads are the rubber squares of a drum machine: hit one and it plays a sound. LED buttons are
+the small switches with a light, like mute, solo or record.
+</Aside>
+
+## Pad
+
+```python
+ui.audio.Pad(text="KICK", color="#ff9f3d",
+             on_press=lambda e: engine.node("drums").trigger(),
+             on_release=lambda e: None)
+```
+
+- `press` fires when the pad is pressed, with a **velocity** from 1 to 127 in `event.value`
+  (like MIDI): the lower on the pad you click, the harder the hit. `velocity=False` always sends 100.
+- `release` fires when the button is released or the pointer leaves the pad.
+- `lit=True` lights it from outside: a sequencer's current step, a note coming from a keyboard.
+  The pad glows in its `color`, so a grid of them shows the rhythm at a glance.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `text` | `""` | The label in the middle. |
+| `color` | `"accent"` | The color it lights up in. |
+| `lit` | `False` | Lit from outside. |
+| `velocity` | `True` | Velocity from where it is pressed. |
+| `width`, `height` | `72`, `72` | Size in pixels. |
+
+## LED button
+
+```python
+ui.audio.LedButton(text="MUTE", on=self.muted, color="warning",
+                   on_toggle=lambda e: setattr(self, "muted", e.value))
+```
+
+A dark key with a small light. It **toggles** on each click (`toggle` gives `True` or `False`),
+or with `momentary=True` it lights only while held (`press` / `release`), like a tap-tempo key.
+
+| Property | Default | What it does |
+| --- | --- | --- |
+| `text` | `""` | The label. |
+| `on` | `False` | Whether it is lit. |
+| `color` | `"success"` | The light's color (a theme token or hex). |
+| `variant` | `"fl"` | `"fl"` (square key), `"round"` (bigger LED, round key) or `"pill"`. |
+| `momentary` | `False` | Lit only while held. |
+| `icon_name` | `""` | A Lucide icon next to the label (`"play"`, `"circle"`...). |
+
+Events: `on_toggle`, `on_press`, `on_release`.
+
+<Aside type="tip">
+Play pads from the computer keyboard too: map keys in `on_key` and set `lit` from your app's
+state, so the pad lights whether it was clicked or typed.
+</Aside>

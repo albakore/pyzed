@@ -21,7 +21,7 @@ def new_script(name: str) -> int:
     title = re.sub(r"[-_]+", " ", target.name).strip().title() or "My App"
     template = (Path(__file__).parent / "templates" / "app.py.tmpl").read_text(encoding="utf-8")
     (target / "main.py").write_text(template.format(name=title), encoding="utf-8")
-    (target / "requirements.txt").write_text("pyzed-ui\n", encoding="utf-8")
+    (target / "requirements.txt").write_text("--only-binary pyzed-ui\npyzed-ui\n", encoding="utf-8")
     print(f"Created {target}/main.py\n\n  cd {target}\n  python main.py\n")
     return 0
 

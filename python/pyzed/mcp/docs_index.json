@@ -103,6 +103,150 @@
    "path": "docs/src/content/docs/animation/transitions.md"
   },
   {
+   "slug": "audio/components/colors",
+   "title": "Colors and behavior",
+   "description": "Customize Pyzed's audio components — color palettes, theme tokens, variants, sizes and how meters move — and build visuals of your own on the same helpers.",
+   "path": "docs/src/content/docs/audio/components/colors.mdx"
+  },
+  {
+   "slug": "audio/components/fader",
+   "title": "Fader",
+   "description": "A mixer fader for Python — a console cap, FL Studio's style or a flat handle, vertical or as a crossfader, with an optional level meter beside the track.",
+   "path": "docs/src/content/docs/audio/components/fader.mdx"
+  },
+  {
+   "slug": "audio/components/knob",
+   "title": "Knob",
+   "description": "A rotary knob for Python audio apps — drag, scroll or double-click to reset, five looks from FL Studio to Eurorack, logarithmic ranges and stepped selectors.",
+   "path": "docs/src/content/docs/audio/components/knob.mdx"
+  },
+  {
+   "slug": "audio/components/pads-and-buttons",
+   "title": "Pads and LED buttons",
+   "description": "Velocity-sensitive drum pads and LED buttons (mute, solo, record) for Python music apps, styled after FL Studio and drum machines.",
+   "path": "docs/src/content/docs/audio/components/pads-and-buttons.mdx"
+  },
+  {
+   "slug": "audio/components/piano",
+   "title": "Piano keyboard",
+   "description": "A clickable piano keyboard for Python synthesizers — glissando, velocity, lit notes from MIDI or a sequencer, and computer-keyboard playing.",
+   "path": "docs/src/content/docs/audio/components/piano.mdx"
+  },
+  {
+   "slug": "audio/components/scope",
+   "title": "Oscilloscope",
+   "description": "An oscilloscope for Python — several traces over a grid, a trigger that holds periodic waves still, XY Lissajous mode, phosphor persistence and glow.",
+   "path": "docs/src/content/docs/audio/components/scope.mdx"
+  },
+  {
+   "slug": "audio/components/spectrogram",
+   "title": "Spectrogram",
+   "description": "A scrolling spectrogram (waterfall) for Python — frequency over time in color, with magma, viridis or any palette, drawn fast enough for live audio.",
+   "path": "docs/src/content/docs/audio/components/spectrogram.mdx"
+  },
+  {
+   "slug": "audio/components/spectrum",
+   "title": "Spectrum analyzer",
+   "description": "A real-time spectrum analyzer for Python — bars, LED blocks, lines, mirrored or radial, log-spaced bands, falloff, peak caps and color palettes.",
+   "path": "docs/src/content/docs/audio/components/spectrum.mdx"
+  },
+  {
+   "slug": "audio/components/step-sequencer",
+   "title": "Step sequencer",
+   "description": "A grid of steps like FL Studio's channel rack for Python — click or paint steps, rows with names, beat grouping and a moving playhead.",
+   "path": "docs/src/content/docs/audio/components/step-sequencer.mdx"
+  },
+  {
+   "slug": "audio/components/vu-meter",
+   "title": "VU meter",
+   "description": "Level meters for Python audio apps — LED segments, a smooth gradient bar or an analog needle VU with ballistics, in decibels, with peak hold and any colors.",
+   "path": "docs/src/content/docs/audio/components/vu-meter.mdx"
+  },
+  {
+   "slug": "audio/components/waveform",
+   "title": "Waveform",
+   "description": "Draw audio waveforms in Python — a music-app bar view with a played/unplayed split, an envelope, a glowing line, a playhead, selections and seeking.",
+   "path": "docs/src/content/docs/audio/components/waveform.mdx"
+  },
+  {
+   "slug": "audio/components/webcam",
+   "title": "Webcam",
+   "description": "Show a live webcam in a Python desktop app with Pyzed — OpenCV or ffmpeg on Windows, macOS and Linux, snapshots, raw RGBA frames and a test pattern.",
+   "path": "docs/src/content/docs/audio/components/webcam.mdx"
+  },
+  {
+   "slug": "audio/demos/drum-machine",
+   "title": "Drum machine",
+   "description": "A drum machine in Python like FL Studio's channel rack — a step grid you paint, a pad per sound, tempo and swing, with sample-accurate timing from the audio engine.",
+   "path": "docs/src/content/docs/audio/demos/drum-machine.mdx"
+  },
+  {
+   "slug": "audio/demos/midi-controller",
+   "title": "MIDI controller",
+   "description": "A MIDI controller in Python like FL Studio's — channel strips with pan knobs, faders, mute and solo, velocity pads, pitch and mod wheels, and a virtual MIDI port for your DAW.",
+   "path": "docs/src/content/docs/audio/demos/midi-controller.mdx"
+  },
+  {
+   "slug": "audio/demos/modular",
+   "title": "Modular synthesizer",
+   "description": "A modular synthesizer in Python like VCV Rack — modules on rails, cables you drag between jacks, a module browser, and patches saved to JSON.",
+   "path": "docs/src/content/docs/audio/demos/modular.mdx"
+  },
+  {
+   "slug": "audio/demos/synth",
+   "title": "Synthesizer",
+   "description": "A playable synthesizer with effects in Python — two oscillators, a resonant filter, an envelope, distortion, chorus, delay and reverb, with FL Studio-style knobs and a piano.",
+   "path": "docs/src/content/docs/audio/demos/synth.mdx"
+  },
+  {
+   "slug": "audio/demos/visualizer",
+   "title": "Music visualizer",
+   "description": "A music visualizer in Python — spectrum analyzers, a radial spectrum, a spectrogram, an oscilloscope and VU meters whose look changes live, fed by a song or the microphone.",
+   "path": "docs/src/content/docs/audio/demos/visualizer.mdx"
+  },
+  {
+   "slug": "audio/demos/webcam",
+   "title": "Webcam viewer",
+   "description": "A webcam viewer in Python — the live picture, a snapshot button that saves PNG files and the measured frame rate, with OpenCV, ffmpeg or a test pattern.",
+   "path": "docs/src/content/docs/audio/demos/webcam.mdx"
+  },
+  {
+   "slug": "audio/engine/getting-started",
+   "title": "The audio engine",
+   "description": "Build synthesizers, effects, drum machines and sequencers in Python with pyzed.audio — modules joined by cables like VCV Rack, computed in Rust with low latency, with or without a window.",
+   "path": "docs/src/content/docs/audio/engine/getting-started.mdx"
+  },
+  {
+   "slug": "audio/engine/latency",
+   "title": "Devices and latency",
+   "description": "How pyzed.audio picks the sound card, the audio API, the buffer and the sample rate on Windows, macOS and Linux, how to measure the latency and how to bring it down.",
+   "path": "docs/src/content/docs/audio/engine/latency.mdx"
+  },
+  {
+   "slug": "audio/engine/modules",
+   "title": "Module catalog",
+   "description": "Every module of the Pyzed audio engine: oscillators, filters, envelopes, LFOs, effects, sequencers, drums, samplers and MIDI, with their ports, ranges and defaults.",
+   "path": "docs/src/content/docs/audio/engine/modules.md"
+  },
+  {
+   "slug": "audio/index",
+   "title": "Audio",
+   "description": "Make music apps in Python with Pyzed — a modular audio engine, FL Studio-style knobs, faders and pads, waveforms, spectrum analyzers, a webcam view and a VCV Rack-style rack with animated cables.",
+   "path": "docs/src/content/docs/audio/index.mdx"
+  },
+  {
+   "slug": "audio/rack/cables",
+   "title": "Animated cables",
+   "description": "How Pyzed's patch cables work — Bézier curves that sag with gravity, a spring that settles them when plugged, signal dots that flow, and how to draw them yourself.",
+   "path": "docs/src/content/docs/audio/rack/cables.mdx"
+  },
+  {
+   "slug": "audio/rack/rack",
+   "title": "The modular rack",
+   "description": "Build a VCV Rack-style modular synthesizer in Python with Pyzed — modules on rails, knobs and jacks laid out from each module's description, a module browser, and patches saved to JSON.",
+   "path": "docs/src/content/docs/audio/rack/rack.mdx"
+  },
+  {
    "slug": "blocks/chat",
    "title": "Chat",
    "description": "A team chat UI in Python: channels with unread counts, direct messages with presence, grouped messages with Markdown, attachments, reactions and a rich composer.",
@@ -373,6 +517,12 @@
    "path": "docs/src/content/docs/editor/menus-and-commands.md"
   },
   {
+   "slug": "editor/non-visual-components",
+   "title": "Non-visual components",
+   "description": "Timers, keyboard shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications in Pyzed Design: components with properties and events that draw nothing.",
+   "path": "docs/src/content/docs/editor/non-visual-components.md"
+  },
+  {
    "slug": "editor/projects",
    "title": "Projects",
    "description": "Create and open uv projects in Pyzed Design, browse and search files, manage dependencies, run ruff and ty, and create the git repository.",
@@ -589,6 +739,12 @@
    "path": "docs/src/content/docs/guides/projects.mdx"
   },
   {
+   "slug": "guides/services",
+   "title": "Services",
+   "description": "Timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps with Pyzed, with events delivered on the UI thread.",
+   "path": "docs/src/content/docs/guides/services.md"
+  },
+  {
    "slug": "guides/stability",
    "title": "Stability and known limitations",
    "description": "What Pyzed 1.x promises about its Python API, how features are deprecated over releases, and what the framework does not do yet.",
@@ -697,6 +853,12 @@
    "path": "docs/src/content/docs/library/animation.mdx"
   },
   {
+   "slug": "library/auth-prompt",
+   "title": "Sign-in prompt",
+   "description": "Asks to sign in, then shows the browser step, a code and Cancel. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/auth-prompt.mdx"
+  },
+  {
    "slug": "library/avatar",
    "title": "Avatar",
    "description": "A round avatar with initials in a collaborator color. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -743,6 +905,12 @@
    "title": "Card",
    "description": "A bordered surface with an optional title and actions. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/card.mdx"
+  },
+  {
+   "slug": "library/catalog",
+   "title": "Catalog",
+   "description": "Things to install, with a search box and Install or Update. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/catalog.mdx"
   },
   {
    "slug": "library/checkbox",
@@ -799,6 +967,12 @@
    "path": "docs/src/content/docs/library/container.mdx"
   },
   {
+   "slug": "library/context-meter",
+   "title": "Context meter",
+   "description": "How full a model's context window is: a ring and `48k / 200k`. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/context-meter.mdx"
+  },
+  {
    "slug": "library/count-badge",
    "title": "Count badge",
    "description": "A round counter that shows 99+ above its max. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -815,6 +989,12 @@
    "title": "Diff stat",
    "description": "`+12 −3` with GitHub-style blocks. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/diff-stat.mdx"
+  },
+  {
+   "slug": "library/diff-view",
+   "title": "Diff view",
+   "description": "An edit as colored lines: added in green, removed in red. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/diff-view.mdx"
   },
   {
    "slug": "library/disclosure",
@@ -841,6 +1021,12 @@
    "path": "docs/src/content/docs/library/editor.mdx"
   },
   {
+   "slug": "library/edits-bar",
+   "title": "Edits bar",
+   "description": "The files an agent changed, with Keep all and Reject all. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/edits-bar.mdx"
+  },
+  {
    "slug": "library/effects",
    "title": "Effects",
    "description": "Glow, bloom, glass and opacity as style properties. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -851,6 +1037,18 @@
    "title": "Empty state",
    "description": "A centered placeholder for empty lists and searches. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/empty-state.mdx"
+  },
+  {
+   "slug": "library/error-boundary",
+   "title": "Error boundary",
+   "description": "Draws a part of the view, or an error card in its place when it fails. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/error-boundary.mdx"
+  },
+  {
+   "slug": "library/error-dialog",
+   "title": "Error dialog",
+   "description": "What went wrong, where, and the traceback, with Copy and Go to source. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/error-dialog.mdx"
   },
   {
    "slug": "library/facepile",
@@ -1009,6 +1207,12 @@
    "path": "docs/src/content/docs/library/picker.mdx"
   },
   {
+   "slug": "library/plan",
+   "title": "Plan",
+   "description": "An agent's plan as a checklist that folds. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/plan.mdx"
+  },
+  {
    "slug": "library/popover",
    "title": "Popover",
    "description": "Floating content at a point: context menus, color pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1091,6 +1295,12 @@
    "title": "Select",
    "description": "A dropdown to choose one option. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/select.mdx"
+  },
+  {
+   "slug": "library/service-row",
+   "title": "Service row",
+   "description": "A settings row for an MCP server, agent or skill: status, switch and menu. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/service-row.mdx"
   },
   {
    "slug": "library/settings-group",
@@ -1195,6 +1405,12 @@
    "path": "docs/src/content/docs/library/text.mdx"
   },
   {
+   "slug": "library/thread-history",
+   "title": "Thread history",
+   "description": "Past conversations, searchable and grouped by day. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
+   "path": "docs/src/content/docs/library/thread-history.mdx"
+  },
+  {
    "slug": "library/title-bar",
    "title": "Title bar",
    "description": "The top bar with project and branch pickers. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
@@ -1211,6 +1427,12 @@
    "title": "Toggle group",
    "description": "An icon-only segmented control. A native Pyzed component for Python desktop GUIs, with a live preview, code examples and its API.",
    "path": "docs/src/content/docs/library/toggle-group.mdx"
+  },
+  {
+   "slug": "library/tool-call",
+   "title": "Tool call",
+   "description": "One step of an AI agent: what it did, its result, and Allow or Deny. A Pyzed component for Python desktop GUIs, with examples and its API.",
+   "path": "docs/src/content/docs/library/tool-call.mdx"
   },
   {
    "slug": "library/toolbar",
@@ -1355,6 +1577,12 @@
    "title": "Reference",
    "description": "The Pyzed API reference: every class, function and parameter of pyzed, pyzed.ui, themes, drawing, icons, games, shader graphs, the designer and the command line.",
    "path": "docs/src/content/docs/reference/index.mdx"
+  },
+  {
+   "slug": "reference/services",
+   "title": "Services (pyzed.services)",
+   "description": "API reference for pyzed.services: timers, shortcuts, file watchers, processes, background workers, web requests, the clipboard, settings, file dialogs and notifications for Python desktop apps.",
+   "path": "docs/src/content/docs/reference/services.md"
   },
   {
    "slug": "reference/shading",
@@ -2127,10 +2355,22 @@
    "path": "examples/designer/login.py"
   },
   {
+   "name": "designer/tasks",
+   "kind": "designer",
+   "summary": "Event handlers for the task runner: the non-visual components at work.",
+   "path": "examples/designer/tasks.py"
+  },
+  {
    "name": "designer/login.pzform",
    "kind": "designer",
    "summary": "A form made with the visual designer (.pzform layout).",
    "path": "examples/designer/login.pzform"
+  },
+  {
+   "name": "designer/tasks.pzform",
+   "kind": "designer",
+   "summary": "A form made with the visual designer (.pzform layout).",
+   "path": "examples/designer/tasks.pzform"
   },
   {
    "name": "integrations/README.md",
@@ -2934,6 +3174,16 @@
      "directory": "The folder it opens in.",
      "multiple": "`False` picks a single file.",
      "folder": "`True` picks folders instead of files."
+    }
+   },
+   "pyzed.Command.save_file": {
+    "desc": "Opens the system's \"Save as\" dialog and calls `then(paths)` with the chosen path in a list (an empty list when it is cancelled).",
+    "params": {
+     "then": "Callable that receives the list with the path.",
+     "title": "The dialog's title.",
+     "filters": "A list of `(name, extensions)` pairs, like `[(\"Images\", [\"png\", \"jpg\"])]`.",
+     "directory": "The folder it opens in.",
+     "file_name": "The name it suggests."
     }
    },
    "pyzed.Command.open_window": {
@@ -5389,6 +5639,39 @@
    },
    "pyzed.game.Shake": {
     "desc": "Screen shake: `kick(8)` on a hit, `update(dt)` every frame, and start the canvas shapes with `*shake.shapes()` (a translate) so everything moves together."
+   },
+   "pyzed.Timer": {
+    "desc": "Raises `tick` (with the count) every `interval` milliseconds while it is running; `repeat=False` ticks once. Return `subscriptions()` from your app's `subscriptions`."
+   },
+   "pyzed.Shortcut": {
+    "desc": "Raises `activate` when one of its `keys` is pressed (`\"ctrl-s\"`, `\"Ctrl+S\"`, several separated by commas; `mod-` is Cmd on macOS and Ctrl elsewhere). Call `handle(combo)` from `on_key`."
+   },
+   "pyzed.FileWatcher": {
+    "desc": "Watches a folder or a file and raises `created`, `modified` and `deleted` (a path) and `change` (the changed paths), checking every `interval` milliseconds. `start()`, `stop()`, `running`."
+   },
+   "pyzed.Process": {
+    "desc": "Runs a program and raises `output` and `error_output` for every line it prints, `finished` with its exit code, `started` and `failed`. `start()`, `write()`, `kill()`, `wait()`."
+   },
+   "pyzed.Worker": {
+    "desc": "Runs `work(value)` in a background thread with `run(value)`; `report()` raises `progress`, the result arrives in `done` and an exception in `failed`. `cancel()` sets `cancelled`."
+   },
+   "pyzed.HttpRequest": {
+    "desc": "Calls a web address in the background: `send()` raises `response` with an `HttpResponse` (error statuses included) or `failed` when there was no answer. `json=` sends JSON."
+   },
+   "pyzed.HttpResponse": {
+    "desc": "A web server's answer: `status`, `ok`, `headers`, `content` (bytes), `text` and `json()`."
+   },
+   "pyzed.Clipboard": {
+    "desc": "The system clipboard: `copy(text)` and `paste()` return commands; with `watch=True` it raises `change` when something new is copied."
+   },
+   "pyzed.Settings": {
+    "desc": "Values kept between runs: a dict saved as JSON in the user's settings folder at every change, with `defaults`; raises `change` with `(key, value)`."
+   },
+   "pyzed.FileDialog": {
+    "desc": "The system's file dialog: `show()` returns the command that opens it in `mode` `\"open\"`, `\"open_many\"`, `\"save\"` or `\"folder\"`; raises `chosen` or `cancelled`."
+   },
+   "pyzed.Notification": {
+    "desc": "A desktop notification: `show(text)` shows it and returns whether it could; raises `shown` or `failed`."
    },
    "pyzed.shading.load": {
     "desc": "The `Shader` of a `.pzshad` file, cached by path (`fresh=True` reads it again). It reloads by itself when the file changes."

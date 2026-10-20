@@ -33,6 +33,13 @@ class Store:                      # the app's data: plain Python, easy to test
         self.selected = len(self.notes) - 1
 
 
+pz.stylesheet({
+    ".sidebar": {"width": 220, "height": "fill"},
+    ".content": {"width": "fill", "padding": 20},
+    "@media (max_width: 560)": {".sidebar": {"width": 160}},
+})
+
+
 class Notes(pz.App):
     title = "Notes"
     size = (720, 420)
@@ -41,26 +48,103 @@ class Notes(pz.App):
         self.store = Store()
 
     def sidebar(self):
-        return pz.column([
+        return pz.box(
             ui.panel_header("Notes", actions=[ui.icon_button("plus", self.store.add, tooltip="New note")]),
-            *[ui.list_item(n.title, icon="file-text", selected=i == self.store.selected,
-                           on_press=lambda i=i: setattr(self.store, "selected", i))
-              for i, n in enumerate(self.store.notes)],
-        ], width=220)
+            [ui.list_item(n.title, icon="file-text", selected=i == self.store.selected,
+                          on_press=lambda i=i: setattr(self.store, "selected", i))
+             for i, n in enumerate(self.store.notes)],
+            class_="sidebar", overflow="scroll_y",
+        )
 
     def content(self):
         note = self.store.notes[self.store.selected]
-        return pz.column([ui.heading(note.title, level=2), ui.label(note.body or "Empty", color="text_muted")],
-                         spacing=8, padding=20, width="fill")
+        return pz.box(ui.heading(note.title, level=2), ui.label(note.body or "Empty", color="text_muted"),
+                      class_="content", gap=8)
 
     def view(self):
-        return pz.row([self.sidebar(), ui.divider(vertical=True), self.content()], height="fill")
+        return pz.box(self.sidebar(), ui.divider(vertical=True), self.content(), display="flex", height="fill")
 
 
 pz.run(Notes)
 ```
 
 Docs: `guides/architecture`, `guides/projects`, `blocks/index`.
+
+## Web-style pages
+
+Pyzed apps can be written like a web page, and this is the default way to lay out a new app:
+`pz.box` is the `div` (`display="block"`, `"flex"`, `"grid"` or `"stack"`, with `gap`,
+`overflow` and children styled `position="absolute"`), `pz.stylesheet` is the CSS file (classes,
+`#id`, a component's name, `:hover`/`:pressed`/`:focus`, `transition` and `@media` rules), and a
+`pz.Component` nests like an HTML element: its positional arguments are its `children`, its
+`stylesheet` styles it (`&` is the component) and `pz.provide`/`use_context` share values with
+everything inside. `pz.media(...)`, `pz.viewport()` and `pz.current_breakpoint()` adapt the view itself.
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+pz.stylesheet({
+    ".page": {"padding": 32, "width": "fill", "height": "fill"},
+    ".title": {"size": 26, "weight": "bold"},
+    ".muted": {"color": "text_muted"},
+    "@media (max_width: 640)": {".page": {"padding": 16}, ".title": {"size": 20}},
+})
+
+
+class Tile(pz.Component):
+    """A clickable tile: what it shows comes in as children."""
+
+    name: str = ""
+    children: list = ()
+    events = {"pick": "The tile was clicked (event.value is its name)."}
+    stylesheet = {
+        "&": {"background": "panel", "border": (1, "border"), "radius": 10, "padding": 16, "transition": 120},
+        "&:hover": {"border_color": "accent", "translate": (0, -2)},
+        "&.chosen": {"border": (2, "accent")},
+    }
+
+    def render(self):
+        mark = ui.label("✓ Chosen").classes("muted") if pz.use_context("chosen") == self.name else None
+        return pz.box(*self.children, mark, gap=6).on(click=lambda: self.emit("pick", self.name), cursor="pointer")
+
+
+class Plans(pz.App):
+    title = "Plans"
+    size = (860, 480)
+
+    def __init__(self):
+        self.chosen = "Pro"
+
+    def tile(self, name, price, text):
+        return Tile(
+            pz.text(name).style(weight="semibold"),
+            pz.text(price).style(size=22, weight="bold"),
+            pz.text(text).classes("muted"),
+            ui.badge("Popular").style(position="absolute", top=0, right=0) if name == "Pro" else None,
+            name=name, class_="chosen" if name == self.chosen else None,
+            on_pick=lambda e: setattr(self, "chosen", e.value),
+        )
+
+    def view(self):
+        plans = [("Free", "$0", "To try it."), ("Pro", "$8", "To ship every week."), ("Team", "$20", "For teams.")]
+        with pz.provide(chosen=self.chosen):
+            tiles = [self.tile(*plan) for plan in plans]
+        return pz.box(
+            pz.text("Pick a plan").classes("title"),
+            pz.box(tiles, display="grid", columns=1 if pz.media("max_width: 640") else 3, gap=16),
+            pz.box(ui.button("Cancel", lambda: None), ui.button(f"Continue with {self.chosen}", lambda: None,
+                                                               variant="solid"),
+                   display="flex", justify="end", gap=8),
+            class_="page", gap=20, overflow="scroll",
+        )
+
+
+pz.run(Plans)
+```
+
+Docs: `guides/layout` (boxes), `theming/styles` (states, stylesheets, responsive styles),
+`guides/components` (children, context and styles).
 
 ## Background work without freezing the UI
 

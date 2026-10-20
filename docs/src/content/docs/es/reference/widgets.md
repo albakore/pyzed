@@ -1585,6 +1585,7 @@ code_editor(
     selection_highlight=True,
     keymap=None,
     scrollbar=True,
+    readonly=False,
 )
 ```
 
@@ -1641,6 +1642,7 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `selection_highlight` | Resalta las demás apariciones del texto seleccionado. |
 | `keymap` | Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción). |
 | `scrollbar` | `False` oculta las barras de desplazamiento. |
+| `readonly` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
 
 ## Estilos
 

@@ -390,6 +390,8 @@ def outline(d: "Designer", t: Theme) -> Any:
         flowing = holder is not None and _components.get(holder.type).container in ("flex", "grid")
         for c in (children if flowing else reversed(children)):
             spec = _components.get(c.type)
+            if not spec.visual:
+                continue  # listed at the end, with the other non-visual components
             container = spec.container is not None
             folded = c.name in d.folded
             buttons = [
@@ -430,6 +432,16 @@ def outline(d: "Designer", t: Theme) -> Any:
                 rows.extend(scene_panel.member_rows(d, c, members, 4 + (depth + 1) * 14 + 20, t))
 
     add(None, 0)
+    tray = [c for c in form.controls if not _components.get(c.type).visual]
+    if tray:  # timers, watchers... belong to the form but have no place on it
+        rows.append(_core.container(ui.label(tr("Non-visual"), size="xs", color="text_muted", theme=t),
+                                    padding=(6, spacing.GUTTER, 2, spacing.GUTTER + 4), width="fill"))
+        for c in tray:
+            rows.append(press_row(
+                d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t,
+                icon=_components.get(c.type).icon, selected=doc.is_selected(c.name), indent=4, height=OUTLINE_ROW,
+                start=_core.space(width=20), color=None if c.enabled else "text_muted",
+                on_right_press=lambda n=c.name: d.open_outline_menu(n)))
     return scroll_panel(_core.column(rows, width="fill"))
 
 
@@ -527,12 +539,16 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             data = []
     if data:
         rows += [Group("Data"), *data]
+    if not spec.visual:  # it draws nothing: no style, animations or position, only whether it runs
+        return rows + ([] if "Behavior" in groups else [Group("Behavior")]) + [prop_row(
+            "Enabled", _core.container(ui.switch(c.enabled, lambda v: d.set_field(c.name, "enabled", v), theme=t),
+                                       width="fill", align_x="end"), t,
+            tip="A disabled component raises no events")]
     rows.extend(style_rows(d, c.name, c.style, t))
-    if spec.visual:
-        from . import motion_panel
+    from . import motion_panel
 
-        rows.extend(motion_panel.effect_rows(d, c, t))
-        rows.extend(motion_panel.animation_rows(d, c, t))
+    rows.extend(motion_panel.effect_rows(d, c, t))
+    rows.extend(motion_panel.animation_rows(d, c, t))
     rows.extend(_layout_rows(d, c, t))
     return rows
 
@@ -727,7 +743,7 @@ def events(d: "Designer", t: Theme) -> Any:
     rows: List[Any] = []
     for event in doc.events_of(target):
         handler = wired.get(event)
-        doc_text = _help.event_doc(event, owner).replace("``", "")
+        doc_text = _help.event_doc(event, owner, control.type if control is not None else None).replace("``", "")
         name = ui.label(handler or "—", size="sm", mono=True, color="text_accent" if handler else "text_muted",
                         wrap=False, theme=t)
         actions = _core.row([

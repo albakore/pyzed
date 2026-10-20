@@ -1,0 +1,57 @@
+---
+title: Controlador MIDI
+description: Un controlador MIDI en Python como el de FL Studio — canales con perilla de paneo, faders, mute y solo, pads con velocidad, ruedas de pitch y modulación y un puerto MIDI virtual para tu DAW.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Un controlador MIDI tocando un ritmo: ocho canales con faders moviéndose, pads iluminándose y mensajes MIDI en un registro](/pyzed/media/audio/ui/midi-controller.webp)
+
+Un controlador que puedes usar con cualquier programa de música: [`examples/audio/midi_controller.py`](https://github.com/albakore/pyzed/blob/main/examples/audio/midi_controller.py).
+
+```bash
+python examples/audio/midi_controller.py
+```
+
+Tiene ocho canales (una [perilla](/pyzed/es/audio/components/knob/) de paneo, un
+[fader](/pyzed/es/audio/components/fader/) con medidor de nivel, mute y solo), ocho
+[pads](/pyzed/es/audio/components/pads-and-buttons/) con velocidad, ruedas de pitch y modulación,
+botones de transporte y un [piano](/pyzed/es/audio/components/piano/) de tres octavas. **PLAY**
+toca un ritmo en los pads.
+
+Toca su propia batería y su sintetizador con el motor, así oyes todo. Activa **MIDI OUT** para
+enviar además cada movimiento a otros programas:
+
+| Control | Mensaje MIDI |
+| --- | --- |
+| Fader 1–8 | Control change 70–77 |
+| Paneo 1–8 | Control change 10–17 |
+| Pad 1–8 | Nota 36–43 en el canal 10 (batería) |
+| Piano | Note on / note off en el canal 1 |
+| Rueda de pitch | Pitch bend |
+| Rueda de modulación | Control change 1 |
+
+<Aside type="tip" title="Usarlo con un DAW">
+En Linux y macOS el controlador abre un puerto virtual llamado **Pyzed Controller**: elígelo como
+entrada MIDI en tu DAW. En Windows usa la primera salida MIDI que encuentre (instala un driver de
+loopback como loopMIDI para llegar a un DAW).
+</Aside>
+
+## Cómo está hecho
+
+```python
+def set_level(self, i, value):
+    self.levels[i] = value
+    self.apply_mix()                              # el canal del mezclador del motor
+    self.send(0xB0, 70 + i, int(value * 127))     # y un control change MIDI
+
+def toggle_midi_out(self, on):
+    if on:
+        self.engine.open_midi_output(virtual="Pyzed Controller")
+    self.midi_out = on
+```
+
+`send` escribe los bytes en el registro de la derecha y, con MIDI OUT activado, llama a
+`engine.send_midi(message)`.

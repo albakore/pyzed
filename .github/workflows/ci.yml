@@ -64,6 +64,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+      - name: ALSA headers (the audio engine links ALSA on Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: lint
@@ -80,6 +83,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.88
+      - name: ALSA headers (the audio engine links ALSA on Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: msrv
@@ -104,6 +110,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
+      - name: ALSA headers (the audio engine links ALSA on Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: wheel

@@ -1,0 +1,260 @@
+---
+title: The audio engine
+description: Build synthesizers, effects, drum machines and sequencers in Python with pyzed.audio — modules joined by cables like VCV Rack, computed in Rust with low latency, with or without a window.
+sidebar:
+  order: 1
+  label: Getting started
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+`pyzed.audio` is a modular synthesizer you program from Python. You add **modules** (oscillators,
+filters, envelopes, effects, sequencers, drums, samplers), plug their **ports** together with
+**cables**, turn their **knobs**, and the engine plays the result on your sound card with low latency.
+It works on its own, with no window at all: a script, a server or a test can make sound. The
+interface side (knobs, faders, waveforms and the rack with animated cables) is built on top of it.
+
+<figure>
+	<img src="/pyzed/media/audio/patch.webp" width="720" height="300" loading="lazy" alt="Six modules joined by glowing cables: MIDI into an oscillator and an envelope, through a filter and an amplifier to the output" />
+	<figcaption>A synth voice: the dots are the signal travelling along the cables, the bars each module's level.</figcaption>
+</figure>
+
+## Your first sound
+
+```python
+from pyzed import audio
+
+engine = audio.Engine()                            # the default sound card, low-latency settings
+osc = engine.add("oscillator", freq=220, wave="saw")
+lpf = engine.add("filter", cutoff=800, resonance=0.5)
+out = engine.add("audio_out")
+engine.chain(osc, lpf, out)                        # osc → filter → speakers
+
+with engine:                                       # plays while inside the block
+    input("Playing. Press Enter to stop.")
+```
+
+<Aside type="note" title="Building from source on Linux">
+The wheels from PyPI need nothing else. To build Pyzed yourself on Linux, install ALSA's headers first:
+`sudo apt install libasound2-dev` (Fedora: `sudo dnf install alsa-lib-devel`).
+</Aside>
+
+Every line of the patch is plain Python, so you can change it while it plays:
+
+```python
+lpf["cutoff"] = 2000        # turn a knob (clamped to its range)
+osc["wave"] = "square"      # a choice takes the name of an option...
+osc.set(wave=1, fine=0.1)   # ...or its index; set() turns several knobs at once
+```
+
+## How it works
+
+<Steps>
+
+1. **Python describes the patch.** `engine.add`, `engine.connect` and `node["knob"] = value` only
+   record what you asked for and send it to the audio thread through a lock-free queue. They never wait
+   for the sound, and the sound never waits for them.
+
+2. **Rust computes the sound.** A real-time thread runs the modules in order, 64 frames at a time,
+   with no allocation and no locks. Python's garbage collector or a busy interface cannot make it miss
+   its deadline.
+
+3. **The system plays it** through its own low-latency API: WASAPI (or ASIO) on Windows, CoreAudio on
+   macOS, PulseAudio/PipeWire or ALSA on Linux. See [Devices and latency](/pyzed/audio/engine/latency/).
+
+4. **The engine reports back**: every module publishes its recent signal, level and state, so an
+   interface can draw scopes, spectra, meters and step lights at 60 fps without touching the audio
+   thread.
+
+</Steps>
+
+## Signals
+
+Like in a hardware modular synth (and in VCV Rack), every cable carries **one signal at audio rate**,
+and any output can go into any input. The port's type only says how to read it:
+
+| Type | What it carries | Range |
+| --- | --- | --- |
+| `audio` | Sound | -1 … 1 |
+| `cv` | A control voltage: pitch in **V/oct** or an amount | pitch: 0 = C4, +1 = one octave up |
+| `gate` | On or off: a key held, a step that plays | 0 or 1 |
+
+Pitch in volts per octave means adding 1 to the `pitch` input of an oscillator plays it an octave
+higher, and 1/12 a semitone higher. `audio.volts("A4")` gives `0.75`, so a constant can tune an
+oscillator to any note:
+
+```python
+pitch = engine.add("constant", value=audio.volts("E2"))
+engine.connect(pitch, "out", osc, "pitch")
+```
+
+<figure>
+	<img src="/pyzed/media/audio/oscillator-waves.webp" width="720" height="300" loading="lazy" alt="The sine, triangle, saw and square waves of the oscillator scrolling as they play" />
+	<figcaption>The four outputs of the oscillator, read live from the engine with <code>node.scope()</code>.</figcaption>
+</figure>
+
+## Modules, ports and cables
+
+`engine.add(kind, id=None, **params)` adds a module and returns a `Node`. Its `id` (`"oscillator1"`
+unless you name it) is how cables and saved patches refer to it. The [module catalog](/pyzed/audio/engine/modules/)
+lists every kind with its ports and knobs.
+
+```python
+keys = engine.add("midi_in", id="keys")
+vco = engine.add("oscillator", id="vco", wave="saw")
+vcf = engine.add("filter", id="vcf", cutoff=600, resonance=0.6)
+env = engine.add("adsr", id="env", attack=0.01, decay=0.3, sustain=0.4, release=0.5)
+vca = engine.add("vca", id="vca")
+
+engine.connect(keys, "pitch", vco, "pitch")   # the keyboard plays the oscillator
+engine.connect(keys, "gate", env, "gate")     # each key opens the envelope
+engine.connect(env, "out", vca, "cv")         # the envelope shapes the volume...
+engine.connect(env, "out", vcf, "cutoff")     # ...and opens the filter
+engine.chain(vco, vcf, vca, engine.add("audio_out"))
+```
+
+- **An input takes any number of cables**; their signals add up.
+- **`engine.chain(a, b, c)`** plugs each module's first output into the next one's first input (both
+  sides of a stereo pair when both modules have `left` and `right`).
+- **Loops are allowed.** A cable that goes back to an earlier module (feedback through a delay, an
+  oscillator modulating itself) reads the previous block, as in a hardware rack.
+- `engine.disconnect(...)` takes the same arguments as `connect`; `engine.cables` lists them all;
+  `node.remove()` takes a module out with its cables.
+
+<figure>
+	<img src="/pyzed/media/audio/adsr.webp" width="720" height="300" loading="lazy" alt="An ADSR envelope drawn while a key is held and released: attack, decay, sustain and release" />
+	<figcaption>The <code>adsr</code> module while a key is held and let go: attack, decay, sustain, release.</figcaption>
+</figure>
+
+## Playing notes
+
+The `midi_in` module turns notes into `pitch`, `gate` and `velocity`. They come from a MIDI keyboard
+or from your code:
+
+```python
+engine.note_on("C4", velocity=100)    # a MIDI number (60) or a name
+engine.note_off("C4")
+engine.note("E4", duration=0.5)       # the release happens on a timer
+engine.cc(1, 64)                      # the mod wheel
+engine.pitch_bend(0.5)                # half the bend range up
+
+engine.open_midi_input()              # the first MIDI keyboard; or open_midi_input("Arturia")
+engine.open_midi_input(virtual="Pyzed")  # a port your DAW can play into (Linux and macOS)
+```
+
+`audio.midi_inputs()` and `audio.midi_outputs()` list the ports. The `midi_out` module plays a gate
+and a pitch on the output opened with `engine.open_midi_output(...)`, so a Pyzed sequencer can drive
+a hardware synth or a DAW.
+
+## Sequencing
+
+A `clock` sets the tempo; a `sequencer` steps through up to 16 pitches and gates on each clock tick
+(or on its own `bpm` when nothing is plugged into `clock`):
+
+```python
+clock = engine.add("clock", bpm=124, division="1/16", swing=0.1)
+seq = engine.add("sequencer", steps=8, pitch_1=0, pitch_2=7, pitch_3=3, pitch_4=12, gate_3=0)
+engine.connect(clock, "clock", seq, "clock")
+engine.connect(seq, "pitch", vco, "pitch")
+engine.connect(seq, "gate", env, "gate")
+```
+
+<figure>
+	<img src="/pyzed/media/audio/sequencer.webp" width="720" height="300" loading="lazy" alt="Eight sequencer steps lighting up in turn, with the gate signal they send drawn below" />
+	<figcaption>The current step comes from <code>seq.state["step"]</code>; the gate below is <code>seq.probe("gate")</code>.</figcaption>
+</figure>
+
+Drums are modules too: `drum` synthesizes a kick, snare, hi-hat, clap or tom on each rising edge of
+its `trigger`. The [drum machine example](https://github.com/albakore/pyzed/blob/main/examples/audio/engine_drum_machine.py)
+builds a whole beat with a bass line ducked by the kick through a compressor's `sidechain`.
+
+## Samples
+
+The `sampler` plays a WAV file or a list of samples, once, while its gate is held or in a loop:
+
+```python
+smp = engine.add("sampler", mode="one-shot")
+smp.load("snare.wav")                       # or smp.load([0.0, 0.3, ...], sample_rate=48000)
+engine.connect(seq, "trigger", smp, "gate")
+smp.trigger()                               # or play it from code
+```
+
+## Watching the sound
+
+Every module records its signal for the interface: read it as often as you like, from any thread.
+
+| Call | Returns |
+| --- | --- |
+| `node.scope(n=1024)` | the last `n` samples, oldest first (a waveform view) |
+| `node.spectrum(bins=256, size=2048, log=True)` | `bins` bands in dB (-120 … 0), spread over octaves from 20 Hz |
+| `node.level()` | `(rms, peak)` from 0 to 1 (a VU meter) |
+| `node.probe("out")` | the latest value of an output (a cable can glow with it) |
+| `node.state` | what the module reports: the step of a sequencer, the stage of an envelope… |
+| `engine.scope()`, `engine.spectrum()`, `engine.level()` | the same for what goes to the speakers |
+
+<figure>
+	<img src="/pyzed/media/audio/visualizer.webp" width="720" height="300" loading="lazy" alt="A waveform and a bar spectrum moving with a beat and a bass line" />
+	<figcaption>A beat read at 20 fps with <code>engine.scope()</code> and <code>engine.spectrum(bins=48)</code>.</figcaption>
+</figure>
+
+<figure>
+	<img src="/pyzed/media/audio/filter-sweep.webp" width="720" height="300" loading="lazy" alt="The spectrum of a saw wave before and after a low-pass filter whose cutoff sweeps up and down" />
+	<figcaption><code>vco.spectrum()</code> (grey) and <code>vcf.spectrum()</code> (blue) while the filter's cutoff sweeps.</figcaption>
+</figure>
+
+In a `pz.App`, read them on each frame with `pz.frames` or `pz.every` and draw them with the audio
+components of `pz.ui`.
+
+## Rendering without a sound card
+
+`audio.Engine("offline")` never opens a device: `engine.render(seconds)` computes the patch as fast as
+the processor allows and returns `(left, right)`. It is how the tests and these pictures are made, and
+how you bounce a patch to a file:
+
+```python
+engine = audio.Engine("offline")
+...                                  # build the patch
+engine.note_on("A3")
+engine.render(1.0)                   # one second with the key held
+engine.note_off("A3")
+engine.render_wav("pad.wav", 3.0)    # three more seconds into a WAV file
+```
+
+`audio.write_wav(path, left, right, sample_rate)` saves any list of samples. `backend="null"` runs the
+patch in real time with no sound, for machines without a sound card.
+
+## Saving patches
+
+```python
+import json
+
+json.dump(engine.to_dict(), open("patch.json", "w"))
+engine.load(json.load(open("patch.json")))
+copy = audio.Engine.from_dict(data)
+```
+
+The data holds the modules with their knobs, the cables and the sample files. Anything you put in
+`engine.ui` or `node.ui` (positions in a rack, colors) travels with it untouched.
+
+## The catalog
+
+`audio.modules()` describes every kind of module, the same data as the [catalog page](/pyzed/audio/engine/modules/):
+its `inputs` and `outputs` (`Port` with `name`, `label` and `type`), its `params` and its `state`.
+A `Param` knows its range, unit and curve, which is all an interface needs to draw a knob:
+
+```python
+cutoff = audio.module("filter").param("cutoff")
+cutoff.to_unit(1000)     # 0.57: where 1 kHz sits on the knob (logarithmic, by octaves)
+cutoff.from_unit(0.25)   # 112.5 Hz
+cutoff.format(1500)      # "1.50 kHz"
+```
+
+## Examples
+
+The [`examples/audio/`](https://github.com/albakore/pyzed/tree/main/examples/audio) folder has
+complete scripts, each with `--render out.wav` to hear them without a device:
+
+- `engine_synth.py`: a subtractive synth with sub oscillator, filter, envelope, LFO, delay and reverb,
+  played by your MIDI keyboard or a melody.
+- `engine_drum_machine.py`: drums, an acid bass line and sidechain pumping at 124 BPM.
+- `engine_microphone.py`: your microphone through distortion, chorus, delay and reverb, live.

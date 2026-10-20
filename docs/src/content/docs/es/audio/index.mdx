@@ -1,0 +1,88 @@
+---
+title: Audio
+description: Crea apps de música en Python con Pyzed — un motor de audio modular, perillas, faders y pads al estilo de FL Studio, formas de onda, analizadores de espectro, una vista de webcam y un rack al estilo de VCV Rack con cables animados.
+sidebar:
+  order: 0
+  label: Introducción
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+![Un rack modular: módulos en rieles, cables conectándose y una perilla girando el filtro](/pyzed/media/audio/ui/rack.webp)
+
+Pyzed tiene todo lo necesario para crear un sintetizador, una caja de ritmos, un controlador MIDI
+o un visualizador de música en Python. Se divide en dos capas que puedes usar juntas o por separado:
+
+- **El motor** (`pyzed.audio`) genera el sonido. Añades módulos (osciladores, filtros,
+  envolventes, efectos, secuenciadores, batería), los unes con cables y los reproduce en tu
+  tarjeta de sonido con baja latencia. No necesita ventana: un script, un test o un servidor
+  pueden usarlo solo.
+- **La interfaz** (`pyzed.ui.audio`, `pyzed.ui.rack`, `pyzed.ui.camera`) lo muestra y lo controla:
+  perillas, faders, pads, un piano, medidores, formas de onda, analizadores de espectro y un rack
+  donde conectas módulos con cables que arrastras, como en VCV Rack o Reaktor.
+
+<Aside type="note" title="En pocas palabras">
+El motor es el instrumento y la interfaz su panel frontal. Puedes tocar el instrumento solo con
+código o darle un panel que el usuario pueda tocar.
+</Aside>
+
+```python
+import pyzed as pz
+from pyzed import audio, ui
+
+engine = audio.Engine()
+osc = engine.add("oscillator", wave="saw", freq=110)
+lpf = engine.add("filter", cutoff=800, resonance=0.5)
+engine.chain(osc, lpf, engine.add("audio_out"))
+
+
+class Synth(pz.App):
+    def on_start(self):
+        engine.start()
+
+    def subscriptions(self):
+        return [pz.frames(lambda dt: None)]  # redibuja en cada fotograma: los medidores se mueven
+
+    def view(self):
+        return pz.row([
+            ui.audio.Knob(value=engine.get(lpf, "cutoff"), min=20, max=20000, curve="log", unit="Hz",
+                          caption="Cutoff", variant="fl",
+                          on_change=lambda e: engine.set(lpf, "cutoff", e.value)),
+            ui.audio.Spectrum(magnitudes=engine.spectrum(), width=360, height=120),
+            ui.audio.VuMeter(level=engine.level()),
+        ], spacing=16, align="center")
+
+
+pz.run(Synth)
+```
+
+## Por dónde empezar
+
+<CardGrid>
+	<LinkCard title="El motor" href="/pyzed/es/audio/engine/getting-started/" description="Módulos, cables, MIDI y latencia: generar sonido desde Python." />
+	<LinkCard title="Componentes" href="/pyzed/es/audio/components/knob/" description="Perillas, faders, pads, piano, medidores, formas de onda y analizadores." />
+	<LinkCard title="El rack" href="/pyzed/es/audio/rack/rack/" description="Un rack al estilo de VCV Rack con módulos que conectas con cables." />
+	<LinkCard title="Demos" href="/pyzed/es/audio/demos/synth/" description="Un sintetizador, un visualizador, un controlador MIDI, una caja de ritmos y más." />
+</CardGrid>
+
+## Los componentes
+
+Todos los componentes están en la caja de herramientas del diseñador, en el grupo **Audio** (la
+webcam está en **Media**), y tienen su propia página con una animación:
+
+| Componente | Qué es |
+| --- | --- |
+| [`Knob`](/pyzed/es/audio/components/knob/) | Un control giratorio: cinco estilos, rangos logarítmicos, selectores por pasos. |
+| [`Fader`](/pyzed/es/audio/components/fader/) | Un deslizador como el de una mesa de mezclas, con medidor de nivel opcional. |
+| [`Pad`, `LedButton`](/pyzed/es/audio/components/pads-and-buttons/) | Pads con velocidad y botones con luz. |
+| [`StepSequencer`](/pyzed/es/audio/components/step-sequencer/) | Una cuadrícula de pasos como el channel rack de FL Studio. |
+| [`Piano`](/pyzed/es/audio/components/piano/) | Un teclado que se toca con el ratón o con las teclas del ordenador. |
+| [`VuMeter`](/pyzed/es/audio/components/vu-meter/) | Medidores LED, de barra y de aguja analógica con retención de picos. |
+| [`Waveform`](/pyzed/es/audio/components/waveform/) | La forma de una grabación, con cabezal y selección. |
+| [`Scope`](/pyzed/es/audio/components/scope/) | Un osciloscopio con disparo, modo XY y persistencia. |
+| [`Spectrum`](/pyzed/es/audio/components/spectrum/) | Un analizador de espectro: barras, bloques, líneas, espejo, radial. |
+| [`Spectrogram`](/pyzed/es/audio/components/spectrogram/) | El espectro a lo largo del tiempo, como una imagen que se desplaza. |
+| [`Webcam`](/pyzed/es/audio/components/webcam/) | La imagen en vivo de una cámara. |
+| [`Rack`](/pyzed/es/audio/rack/rack/) | Módulos en rieles unidos con [cables animados](/pyzed/es/audio/rack/cables/). |
+
+Los colores y paletas se explican en [Colores y comportamiento](/pyzed/es/audio/components/colors/).

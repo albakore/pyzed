@@ -92,12 +92,12 @@ def zoom(self, paso):
 
 ![Tres cursores y los resultados de buscar prices](../../../../assets/components/editor-multicursor.png)
 
-El editor usa los atajos por defecto de Zed (Linux y Windows; en macOS, <kbd>Cmd</kbd> en lugar de <kbd>Ctrl</kbd>):
+El editor usa los atajos por defecto de Zed y VS Code (Linux y Windows; en macOS, <kbd>Cmd</kbd> en lugar de <kbd>Ctrl</kbd>):
 
 | Teclas | Acción |
 | --- | --- |
 | <kbd>Alt</kbd>+clic | Añade un cursor (o quita el que hay bajo el clic) |
-| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añade un cursor arriba / abajo |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Añade un cursor arriba / abajo |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Selecciona la palabra bajo el cursor y luego añade la siguiente coincidencia como cursor |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> | Selecciona todas las coincidencias |
 | <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> | Un cursor en cada línea de la selección |
@@ -105,7 +105,8 @@ El editor usa los atajos por defecto de Zed (Linux y Windows; en macOS, <kbd>Cmd
 | <kbd>Esc</kbd> | Vuelve a un cursor y luego quita la selección |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> o <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | Deshacer y rehacer (lo escrito seguido es un solo paso) |
 | <kbd>Alt</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Sube / baja las líneas |
-| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplica las líneas |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> o <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd> | Duplica las líneas de cada cursor arriba / abajo |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> | Duplica la selección de cada cursor justo después (la línea si no hay) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> | Borra las líneas |
 | <kbd>Ctrl</kbd>+<kbd>L</kbd> | Selecciona la línea (otra vez: también la siguiente) |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> | Une líneas |

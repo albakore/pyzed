@@ -14,7 +14,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyTuple};
 
 use crate::app::Message;
-use crate::style::{self, Any, BoxStyle, ICONS, SANS};
+use crate::style::{self, Any, BoxStyle, ICONS};
 use crate::widget::{ButtonStyle, Kind, Layout, Widget, new};
 
 /// The box properties a style sets (`None` keeps the widget's own value).
@@ -76,7 +76,7 @@ impl TextStyle {
         if self.family.is_none() && self.weight.is_none() && self.italic.is_none() {
             return own;
         }
-        let base = own.unwrap_or(Font::with_name(SANS));
+        let base = own.unwrap_or(Font::with_name(style::sans()));
         if base.family == Family::Name(ICONS) {
             return own;
         }

@@ -1,0 +1,59 @@
+---
+title: Secuenciador por pasos
+description: Una cuadrícula de pasos como el channel rack de FL Studio para Python — haz clic o pinta pasos, filas con nombre, agrupación por pulsos y un cabezal que avanza.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+![Un patrón de batería de cinco filas con el cabezal recorriendo dieciséis pasos](/pyzed/media/audio/ui/step-sequencer.webp)
+
+<Aside type="note" title="En pocas palabras">
+Cada fila es un instrumento y cada cuadrado un momento del compás. Los cuadrados encendidos
+suenan y los oscuros no. Haz clic en un cuadrado para cambiarlo o arrastra por una fila para
+pintar varios a la vez.
+</Aside>
+
+```python
+class Beat(pz.App):
+    pattern = ["x...x...x...x...", "....x.......x...", "x.x.x.x.x.x.x.x."]
+    step = 0
+
+    def view(self):
+        return ui.audio.StepSequencer(
+            pattern=self.pattern, labels=["Kick", "Snare", "Hat"], current=self.step,
+            on_change=lambda e: setattr(self, "pattern", e.value),
+        )
+```
+
+## Patrones
+
+`pattern` es una lista de filas. Cada fila es una lista (`True`/`False`, o una velocidad de 0 a 1
+que fija el brillo del paso) o un texto donde `x` (o `1`) es un paso que suena y cualquier otro
+carácter es un silencio: `"x...x...x...x..."` es un bombo en cada pulso.
+
+`change` entrega el patrón nuevo completo como lista de listas, listo para guardar. Un arrastre que
+empieza en un paso vacío pinta pasos; uno que empieza en un paso encendido los borra.
+
+## Cabezal
+
+`current` es el paso que suena: el secuenciador enmarca esa columna y resalta sus pasos. Muévelo
+con un temporizador (`pz.every`) o con el secuenciador del motor (`node.state["step"]`). Los pasos
+se sombrean en grupos de `group` (4 por defecto) para contar los pulsos fácilmente.
+
+| Propiedad | Por defecto | Qué hace |
+| --- | --- | --- |
+| `pattern` | `()` | Filas de pasos. |
+| `labels` | `()` | Un nombre por fila (a la izquierda). |
+| `current` | `-1` | El paso que suena (`-1` para ninguno). |
+| `color` | `"accent"` | Color de los pasos que suenan. |
+| `group` | `4` | Pasos por grupo sombreado. |
+| `cell` | `22` | Tamaño de un paso en píxeles. |
+
+Evento: `on_change` con el patrón nuevo.
+
+<Aside type="tip">
+La [demo de la caja de ritmos](/pyzed/es/audio/demos/drum-machine/) une un secuenciador por pasos,
+una fila de pads y el módulo `drum` del motor: los pads se encienden con `lit=` mientras suenan los pasos.
+</Aside>
