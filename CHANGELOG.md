@@ -18,12 +18,34 @@ stable version.
 
 ### Features
 
-- ✨ The Agent panel shows every step as it happens: an external agent's tool calls with their files, diffs and command output while they run, the call the model is still writing, and what the agent is doing and for how long.
-- ✨ Each agent's own options in the message box, like Zed: Claude Code's modes and models (and any ACP session option), remembered per agent; a **Thinking** toggle for Claude; **Always allow** is remembered and listed under **Settings → Permissions**.
-- ✨ Pyzed Design adds Pyzed's MCP server to the AI agents of the computer (Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI, Codex, VS Code, Zed) and asks to restart them.
-- ⚡ Pyzed Agent designs faster: it starts out knowing the toolbox, themes, `pz.ui` components and best practices, gets the open document with each message, and lays out a whole form with one `add_controls` call.
-- ✨ The agent's steps go to the **Logs** panel (type *Agent*): each message, tool call and its result, files, permissions asked and answered, option changes, errors and Pyzed's MCP server added to other agents.
 - ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
+
+## [1.5.0] - 2026-10-20
+
+### Highlights
+
+- **Program apps like the web**: hover, pressed and focus styles with transitions, CSS-like stylesheets, `pz.box` (block, flex, grid and stack layouts), media queries with `pz.viewport()`, and components with children and context.
+- **Errors never take the editor down**: a Logs panel, error boundaries, an error dialog and a selectable console.
+- **Agents you can follow**: every agent step shows live, each agent's modes and models in the composer, and Pyzed's MCP server is added to the coding agents and editors on this computer.
+
+### Features
+
+- ✨ Every agent step shows live, each agent's modes, models and options in the composer, a Thinking toggle, remembered Always allow permissions, and Pyzed's MCP server added to the AI agents and editors of this computer (Claude Desktop, Cursor, Windsurf, Gemini CLI, Codex, VS Code, Zed and more). PR [#123](https://github.com/albakore/pyzed/pull/123) by [@albakore](https://github.com/albakore).
+- ✨ Logs panel, error boundaries and an error dialog, a selectable console, the `ui.error_boundary`, `ui.error_card`, `ui.error_dialog` and `ui.ErrorInfo` components and a `readonly` code editor. PR [#124](https://github.com/albakore/pyzed/pull/124) by [@albakore](https://github.com/albakore).
+- ✨ State styles and transitions, CSS-like stylesheets, `pz.box`, media queries and breakpoints with `pz.viewport()`, children, context and `animate=` for components. PR [#125](https://github.com/albakore/pyzed/pull/125) by [@albakore](https://github.com/albakore).
+- ⚡ Pyzed Agent designs faster: it starts out knowing the toolbox, themes, `pz.ui` components and best practices, gets the open document with each message and lays out a whole form with one `add_controls` call. PR [#123](https://github.com/albakore/pyzed/pull/123) by [@albakore](https://github.com/albakore).
+- ✨ The agent's steps go to the Logs panel: each message, tool call and result, files, permissions and errors. PR [#126](https://github.com/albakore/pyzed/pull/126) by [@albakore](https://github.com/albakore).
+- ✨ MCP tools for timeline animations (`.pzanim`) and component states. PR [#127](https://github.com/albakore/pyzed/pull/127) by [@albakore](https://github.com/albakore).
+- ✨ The MCP writes apps like a web page: boxes, stylesheets, media queries and nesting components. PR [#128](https://github.com/albakore/pyzed/pull/128) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 `pz.box` shrinks, centers on the cross axis and sizes its children correctly. PR [#129](https://github.com/albakore/pyzed/pull/129) by [@albakore](https://github.com/albakore).
+- 🐛 Recent projects stay in `PYZED_CONFIG_DIR` when it is set. PR [#125](https://github.com/albakore/pyzed/pull/125) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 The error and AI agent components in the component library. PR [#130](https://github.com/albakore/pyzed/pull/130) by [@albakore](https://github.com/albakore).
 
 ## [1.4.0] - 2026-10-20
 

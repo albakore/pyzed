@@ -245,9 +245,29 @@ def _placed(child: Any, place: dict) -> _core.Widget:
 def _stretched(child: Any, axis: str) -> Any:
     if isinstance(child, FlexItem):
         return child
-    if isinstance(child, _core.Widget) and repr(child).endswith(".style()") and axis not in child.style_props():
-        return child.style(**{axis: "fill"})  # its own box stretches, background and all
+    if isinstance(child, _core.Widget):
+        if child._length(axis) is not None:  # sized children keep their size, like CSS
+            return child
+        if repr(child).endswith(".style()"):
+            return child.style(**{axis: "fill"})  # its own box stretches, background and all
     return _core.container(child, **{axis: "fill"})
+
+
+_ALIGN_X = {"start": "start", "left": "start", "center": "center", "end": "end", "right": "end"}
+
+
+def _own_props(class_: Any, id: Any, style: Any, props: dict) -> dict:
+    """The style properties a box ends up with (its rules, then ``style`` and keywords)."""
+    from . import style as _style
+
+    shell = _style._apply_classes(_core.container(None), () if class_ is None else (class_,), id, "box")
+    if style is not None or props:
+        shell = shell.style(*(() if style is None else (style,)), **props)
+    own = dict(shell.style_props())
+    for query, extra in (own.pop("media", None) or {}).items():
+        if _style.media(query):
+            own.update(extra)
+    return own
 
 
 def box(
@@ -275,7 +295,9 @@ def box(
       a count or tracks such as ``"200 1fr auto"``) or ``"stack"`` (children on top of
       each other).
     - ``gap``: space between children. ``align``: ``"start"``, ``"center"``, ``"end"`` or
-      ``"stretch"`` across the main axis (``"stretch"`` by default for ``"block"``).
+      ``"stretch"`` across the main axis (``"stretch"`` by default for ``"block"``, or the
+      box's ``align_x`` when it has one). Children given their own width (height across a
+      row) keep it instead of stretching, and nothing stretches inside a ``"shrink"`` box.
     - ``overflow``: ``"visible"``, ``"hidden"`` (clips the content), ``"scroll"`` (scrolls
       along the box's axis), ``"scroll_x"`` or ``"scroll_y"``.
     - A child styled with ``position="absolute"`` leaves the flow and is placed by its
@@ -314,17 +336,28 @@ def box(
         else:
             layers.append((float(place["z_index"] or 0), len(layers), _placed(child, place)))
 
+    from . import style as _style
+
+    own = _own_props(class_, id, style, props)
+    shrink = {axis: own.get(axis) == "shrink" for axis in ("width", "height")}
     is_row = display == "flex" and direction == "row"
     if display == "block":
-        align = align or "stretch"
+        align = align or _ALIGN_X.get(own.get("align_x"), "stretch")
+        if align == "stretch" and shrink["width"]:  # stretching inside a shrinking box collapses it
+            align = "start"
         content = _core.column([_stretched(c, "width") if align == "stretch" else c for c in flow],
                                spacing=gap, align="start" if align == "stretch" else align)
     elif display == "flex":
-        cross = "height" if is_row else "width"
-        if align == "stretch":
+        main, cross = ("width", "height") if is_row else ("height", "width")
+        sizes = {}
+        if align == "stretch" and not shrink[cross]:
             flow = [_stretched(c, cross) for c in flow]
+        elif align in ("center", "end") and not shrink[cross]:
+            sizes[cross] = "fill"  # room on the cross axis to center (or end) the children in
+        if shrink[main]:
+            sizes[main] = "shrink"
         content = flex(flow, direction=direction, justify=justify, align=align if align in ALIGN else "start",
-                       gap=gap, wrap=wrap)
+                       gap=gap, wrap=wrap, **sizes)
     elif display == "grid":
         if columns is None or isinstance(columns, int):  # n equal columns, as wide as the box
             columns = " ".join(["1fr"] * max(1, columns or 1))
@@ -341,8 +374,6 @@ def box(
         content = _core.scrollable(content, direction=scroll, width="fill", height="fill")
     elif overflow == "hidden":
         props.setdefault("clip", True)
-
-    from . import style as _style
 
     widget = _core.container(content)
     widget = _style._apply_classes(widget, () if class_ is None else (class_,), id, "box")

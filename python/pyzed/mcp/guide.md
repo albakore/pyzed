@@ -63,6 +63,11 @@ and its documentation instead of guessing parameters.
 
 ## Layout essentials
 
+- Write layouts like a web page. `pz.box(*children, display=..., gap=..., class_=..., id=...)` is
+  the `div`: `display="block"` (the default, one under another), `"flex"` (with `direction`,
+  `justify`, `align`, `wrap`), `"grid"` (`columns=3` or `"200 1fr auto"`, `rows`) or `"stack"`;
+  `overflow="hidden"`/`"scroll"`; a child styled `position="absolute", top=..., right=...` leaves
+  the flow (`z_index` orders it). Boxes take every style property, so a whole screen is boxes.
 - `pz.column(children, spacing=8, padding=16, align="center")` stacks vertically,
   `pz.row(...)` horizontally. Children may be nested lists; `None` and `False` are skipped, so
   `self.error and ui.label(self.error, color="error")` is fine. Strings and numbers become text.
@@ -81,6 +86,12 @@ and its documentation instead of guessing parameters.
   JSON files load with `pz.themes.load_zed(path)`.
 - `widget.style(background="elevated", radius=10, padding=16, border=(1, "border"))` styles like
   CSS. Reuse styles with `pz.Style(...)` and `pz.define_style("card", ...)`.
+- States like CSS: `.style(hover={...}, pressed={...}, focus={...}, transition=120)`.
+- `pz.stylesheet({".card": {...}, ".card:hover": {...}, "#main": {...}, "Rating": {...}})` is the CSS
+  file; `widget.classes("card", "selected")` (or `class_=`/`id=` on boxes and components) applies it.
+- Responsive: `"@media (max_width: 700)"` and breakpoints (`"@md"`) in the stylesheet,
+  `.style(media={"max_width: 600": {...}})`, and `pz.media(...)`, `pz.viewport()`,
+  `pz.current_breakpoint()` in a view.
 
 ## Components (`pz.Component`)
 
@@ -107,6 +118,12 @@ class Rating(pz.Component):
 
 # In a view:  Rating(value=self.stars, on_change=lambda e: setattr(self, "stars", e.value))
 ```
+
+Components nest like HTML elements: a `children: list = ()` prop takes the positional arguments
+(`Card(pz.text("Hi"), ui.button(...), title="Inbox")`), a `stylesheet = {"&": {...}, "&:hover": {...}}`
+class attribute styles every instance (`&` is the component), and every component takes `style=`,
+`class_=`, `id=` and `animate=`. `with pz.provide(user=...):` shares a value with every component
+rendered inside, read with `pz.use_context("user")` (or `self.context("user")`).
 
 Calling a component returns a widget. Each declared event becomes an `on_<event>` keyword whose
 callback receives a `pz.Event` (`event.value`, `event.sender`). Lifecycle hooks: `setup()`,
