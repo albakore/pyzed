@@ -163,18 +163,20 @@ def button(
         align_x="center" if full_width else None,
     )
     border_color = colors.pop("border_color", None)
-    return _core.button(
-        inner,
-        None if disabled else on_press,
-        padding=(0, pad_x),
-        height=height,
-        width="fill" if full_width else None,
-        radius=t.radius_sm,
-        border_color=border_color,
-        border_width=1.0 if border_color else 0.0,
-        disabled_color=t.text_disabled,
-        **colors,
-    )
+    # Defaults first, then the variant colours and any caller ``**style``, so
+    # e.g. ``radius=`` or ``padding=`` override the defaults instead of
+    # clashing with them ("got multiple values for keyword argument").
+    kwargs = {
+        "padding": (0, pad_x),
+        "height": height,
+        "width": "fill" if full_width else None,
+        "radius": t.radius_sm,
+        "border_color": border_color,
+        "border_width": 1.0 if border_color else 0.0,
+        "disabled_color": t.text_disabled,
+    }
+    kwargs.update(colors)
+    return _core.button(inner, None if disabled else on_press, **kwargs)
 
 
 def icon_button(

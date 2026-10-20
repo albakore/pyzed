@@ -413,6 +413,18 @@ def test_images_from_files_render_on_first_frame(tmp_path):
     assert read_png(out)[50][50][:3] == (0, 200, 0)
 
 
+def test_ui_button_style_overrides_its_defaults(monkeypatch):
+    # `radius=` and friends used to clash with the values ui.button passes itself.
+    assert isinstance(ui.button("Save", radius=12, padding=(4, 20), height=40), pz.Widget)
+    from ui_tree import install
+
+    install(monkeypatch)
+    button = ui.button("Save", radius=12, padding=(4, 20), border_width=3, theme=pz.themes.ONE_DARK)
+    assert button.kind == "button"
+    assert (button.props["radius"], button.props["padding"], button.props["border_width"]) == (12, (4, 20), 3)
+    assert ui.button("Save", theme=pz.themes.ONE_DARK).props["radius"] == pz.themes.ONE_DARK.radius_sm
+
+
 def test_editor_folding_minimap_and_cursor_options(tmp_path):
     code = "def a():\n    x = 1\n    return x\n\n\nclass B:\n    def c(self):\n        pass\n"
 
