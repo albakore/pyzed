@@ -38,7 +38,7 @@ button). Other widgets get a box around them that carries the style.
 | `position`, `top`, `right`, `bottom`, `left`, `z_index` | `position="absolute"` places a child of a [`pz.box`](/pyzed/guides/layout/#boxes) by its offsets, out of the flow. |
 | `opacity`, `translate`, `scale`, `rotate` | Fades, moves, scales or turns how the widget is drawn, without changing the layout. |
 | `blur`, `backdrop_blur` | Blurs the widget, or what is behind it. |
-| `glow`, `bloom`, `glass` | Visual effects: a halo, light that spills from bright parts and a frosted panel. See [Animation and effects](/pyzed/guides/animation/#effects). |
+| `glow`, `bloom`, `glass` | Visual effects: a halo, light that spills from bright parts and a frosted panel. See [Animation and effects](/pyzed/animation/effects/). |
 
 Colors can be hex strings (with alpha, `"#3b82f680"`), `(r, g, b[, a])` tuples or theme tokens
 such as `"accent"`, `"panel"` or `"text_muted"`, so styles follow theme switches.
@@ -65,7 +65,7 @@ A state can change `background` (a color), `color`, `border_color`, `border_widt
 `radius`, `opacity`, `translate`, `scale`, `rotate` and `blur`. These don't move the widgets
 around, so hovering never shifts the layout. Without `transition` the state shows at once.
 With one, changes of `opacity`, `translate`, `scale`, `rotate` and `blur` from one render to
-the next animate too. For anything more, see [Animation](/pyzed/guides/animation/).
+the next animate too. For anything more, see [Animation](/pyzed/animation/).
 
 ## Stylesheets
 

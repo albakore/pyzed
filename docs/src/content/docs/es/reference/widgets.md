@@ -19,7 +19,7 @@ Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven 
 
 Todo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. `widget.classes(*nombres, id=None)` aplica las reglas de `pz.stylesheet` que coinciden, como `class` e `id` en HTML. Ver [Estilos](/pyzed/es/theming/styles/).
 
-`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).
+`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/animation/).
 
 ## Layout
 
@@ -1967,7 +1967,7 @@ Una línea de tiempo con nombre de `length` segundos, con pistas (`tracks`) y ll
 
 `loop` es `"none"` (se reproduce una vez y se queda en el último fotograma), `"loop"` o
 `"pingpong"`. Por defecto `length` es el tiempo de la última key o llamada. Ver la guía
-[Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
+[Animaciones con línea de tiempo](/pyzed/es/animation/timeline/).
 
 **Métodos y propiedades**
 
@@ -2690,7 +2690,7 @@ La animación que reproduce una ventana al abrirse (o cerrarse), según su `tran
 
 ### `PRESETS`
 
-Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/guides/animation/#presets).
+Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/animation/presets/).
 
 ### `CATEGORIES`
 

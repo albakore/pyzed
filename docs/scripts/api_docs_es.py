@@ -260,7 +260,7 @@ Si `view()` lanza una excepción, la ventana muestra el traceback en lugar de ce
         "sections": [
             ("Widget", {
                 "pyzed.Widget": {
-                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. `widget.classes(*nombres, id=None)` aplica las reglas de `pz.stylesheet` que coinciden, como `class` e `id` en HTML. Ver [Estilos](/pyzed/es/theming/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/guides/animation/).",
+                    "desc": "Un nodo inmutable del árbol de la interfaz, implementado en Rust. Lo devuelven todas las funciones de widgets y componentes. Donde se espera un hijo también puedes pasar un texto o un número (se convierte en `text`) o `None` (se ignora).\n\nTodo widget tiene `widget.on(...)` (ver [Eventos](/pyzed/es/guides/events/)) y `widget.style(*estilos, **props)`, que le da estilo como CSS: fondo, bordes, radio, sombra, padding, margen, tamaño y la tipografía de todos los textos de dentro. `widget.style_props()` devuelve lo que se fijó. `widget.classes(*nombres, id=None)` aplica las reglas de `pz.stylesheet` que coinciden, como `class` e `id` en HTML. Ver [Estilos](/pyzed/es/theming/styles/).\n\n`widget.animate(*animaciones, **opciones)` reproduce presets o animaciones por keyframes (al aparecer, en hover, al pulsar, con foco, al hacer clic o mientras `active`) y `widget.transition(**props)` anima los cambios de propiedades como una transición CSS. Ver [Animación](/pyzed/es/animation/).",
                     "no_signature": True,
                 },
             }),
@@ -2359,7 +2359,7 @@ _section("widgets", "Animaciones con línea de tiempo", {
 
         `loop` es `"none"` (se reproduce una vez y se queda en el último fotograma), `"loop"` o
         `"pingpong"`. Por defecto `length` es el tiempo de la última key o llamada. Ver la guía
-        [Animaciones con línea de tiempo](/pyzed/es/guides/timeline/).
+        [Animaciones con línea de tiempo](/pyzed/es/animation/timeline/).
     """),
     "pyzed.Track": _d("""
         Una propiedad que cambia con el tiempo: `Track("card:opacity", {0: 0, 0.5: 1})`.
@@ -2462,7 +2462,7 @@ _section("widgets", "Animación", {
         Útil para animar tus propios dibujos (`pz.canvas`) con las mismas curvas.
     """),
     "pyzed.animation.window_animations": _d("La animación que reproduce una ventana al abrirse (o cerrarse), según su `transition` y `exit_transition` (una lista vacía si no tiene)."),
-    "pyzed.animation.PRESETS": {"desc": "Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/guides/animation/#presets).", "no_signature": True},
+    "pyzed.animation.PRESETS": {"desc": "Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/animation/presets/).", "no_signature": True},
     "pyzed.animation.CATEGORIES": {"desc": "Categorías de presets: `entrance` (entrada), `exit` (salida), `attention` (atención), `interaction` (interacción) y `loop` (bucle).", "no_signature": True},
     "pyzed.animation.EASINGS": {"desc": "Nombres de easing (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` también acepta Béziers cúbicas `(x1, y1, x2, y2)` y `\"steps(n)\"`.", "no_signature": True},
     "pyzed.animation.TRIGGERS": {"desc": "Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click` y `active`.", "no_signature": True},

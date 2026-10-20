@@ -43,6 +43,66 @@
    "path": "docs/src/content/docs/ai/prompting.md"
   },
   {
+   "slug": "animation/animate",
+   "title": "animate() and triggers",
+   "description": "widget.animate() in Pyzed: play a preset or your own animation when a widget appears, on hover, press, focus or click, or while a flag is on, with duration, delay, repeat, direction, fill and easing.",
+   "path": "docs/src/content/docs/animation/animate.md"
+  },
+  {
+   "slug": "animation/effects",
+   "title": "Effects",
+   "description": "Visual effects in Pyzed: opacity, rotation, blur, backdrop blur, glow, bloom, glass, translate and scale as style properties, and which of them animations can change.",
+   "path": "docs/src/content/docs/animation/effects.md"
+  },
+  {
+   "slug": "animation/index",
+   "title": "Animation",
+   "description": "How animation works in Pyzed: animate any widget like the web (presets, keyframes, transitions), move many widgets on one timeline like Godot's AnimationPlayer, and edit clips in Pyzed Design.",
+   "path": "docs/src/content/docs/animation/index.md"
+  },
+  {
+   "slug": "animation/keyframes",
+   "title": "Keyframes and easing",
+   "description": "Write your own Pyzed animations with pz.Animation keyframes (like CSS @keyframes), give each step its own easing, name and save them, and pick easing curves: ease, cubic, back, bounce, spring, Bézier and steps.",
+   "path": "docs/src/content/docs/animation/keyframes.md"
+  },
+  {
+   "slug": "animation/motion-and-tests",
+   "title": "Reduced motion, tests and limits",
+   "description": "Respect the system's reduce-motion setting in Pyzed, test animated views and timeline clips, take stable screenshots, and know the limits of the animation system.",
+   "path": "docs/src/content/docs/animation/motion-and-tests.md"
+  },
+  {
+   "slug": "animation/player",
+   "title": "The animation player",
+   "description": "pz.AnimationPlayer plays Pyzed timeline clips: play, pause, resume, stop, seek, play backwards, speed, queues and events, and saves reusable clips in .pzanim libraries.",
+   "path": "docs/src/content/docs/animation/player.md"
+  },
+  {
+   "slug": "animation/presets",
+   "title": "Preset gallery",
+   "description": "Every named animation preset in Pyzed, playing: entrances, exits, attention seekers, hover and press feedback, and loops, with their durations and when to use them.",
+   "path": "docs/src/content/docs/animation/presets.md"
+  },
+  {
+   "slug": "animation/properties",
+   "title": "Animatable properties",
+   "description": "Every property a Pyzed animation can change: opacity, position, scale, rotation, blur, colors, radius, border, glow, size, padding and font size, with their units and how property values animate.",
+   "path": "docs/src/content/docs/animation/properties.md"
+  },
+  {
+   "slug": "animation/timeline",
+   "title": "Timeline animations",
+   "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer: interpolation, easing per key, loops and attribute tracks.",
+   "path": "docs/src/content/docs/animation/timeline.md"
+  },
+  {
+   "slug": "animation/transitions",
+   "title": "Transitions and states",
+   "description": "Animate changes in Pyzed like CSS: widget.transition() moves to new values, hover and pressed style states animate, pz.presence swaps pages with enter and exit animations, pz.stagger cascades lists, and windows open with transitions.",
+   "path": "docs/src/content/docs/animation/transitions.md"
+  },
+  {
    "slug": "audio/components/colors",
    "title": "Colors and behavior",
    "description": "Customize Pyzed's audio components — color palettes, theme tokens, variants, sizes and how meters move — and build visuals of your own on the same helpers.",
@@ -643,12 +703,6 @@
    "path": "docs/src/content/docs/guides/agents.mdx"
   },
   {
-   "slug": "guides/animation",
-   "title": "Animation and effects",
-   "description": "Animate any Pyzed widget like the web (presets, keyframes, transitions, presence) and add rotation, blur, glow, bloom, glass and opacity.",
-   "path": "docs/src/content/docs/guides/animation.md"
-  },
-  {
    "slug": "guides/architecture",
    "title": "App architecture",
    "description": "Pyzed app architecture: state, view, update, messages and callables. The Elm architecture of Iced, explained for Python desktop developers.",
@@ -755,12 +809,6 @@
    "title": "Tests and screenshots",
    "description": "Test Pyzed apps headlessly: render your Python GUI without a window for unit tests, documentation screenshots and continuous integration.",
    "path": "docs/src/content/docs/guides/testing.mdx"
-  },
-  {
-   "slug": "guides/timeline",
-   "title": "Timeline animations",
-   "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer, and save them as reusable .pzanim files.",
-   "path": "docs/src/content/docs/guides/timeline.md"
   },
   {
    "slug": "guides/windows",
@@ -3320,7 +3368,7 @@
     }
    },
    "pyzed.Widget": {
-    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/guides/animation/)."
+    "desc": "An immutable node of the UI tree, implemented in Rust. Returned by every widget and component function. Wherever a child is expected you can also pass a string or a number (converted to `text`) or `None` (ignored).\n\nEvery widget has `widget.on(...)` (see [Events](/pyzed/guides/events/)) and `widget.style(*styles, **props)`, which styles it like CSS: background, borders, radius, shadow, padding, margin, size and the typography of every text inside. `widget.style_props()` returns what was set. `widget.classes(*names, id=None)` applies the matching rules of `pz.stylesheet`, like HTML's `class` and `id`. See [Styles](/pyzed/theming/styles/).\n\n`widget.animate(*animations, **options)` plays presets or keyframe animations (on mount, hover, press, focus, click or while `active`) and `widget.transition(**props)` animates property changes like a CSS transition. See [Animation](/pyzed/animation/)."
    },
    "pyzed.column": {
     "desc": "Stacks its children vertically.",
@@ -3958,7 +4006,7 @@
    "pyzed.animation.ease": {},
    "pyzed.animation.window_animations": {},
    "pyzed.animation.PRESETS": {
-    "desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/guides/animation/#presets)."
+    "desc": "Every named animation (the built-in presets and the ones added with `define_animation`), mapped to its `Animation`. See [the preset list](/pyzed/animation/presets/)."
    },
    "pyzed.animation.CATEGORIES": {
     "desc": "Preset categories: `entrance`, `exit`, `attention`, `interaction` and `loop`."

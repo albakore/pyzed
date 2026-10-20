@@ -53,7 +53,7 @@ app pequeña.
 
 **Estilo**
 > Haz que esta pantalla parezca el lanzador de un videojuego: tema oscuro con acento morado, un panel de vidrio
-> sobre un degradado y un botón Jugar que brille. Mira los efectos en guides/animation.
+> sobre un degradado y un botón Jugar que brille. Mira los efectos en animation/effects.
 
 ## Qué evitar
 

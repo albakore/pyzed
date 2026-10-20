@@ -50,7 +50,7 @@ real outputs of the [MCP tools](/pyzed/ai/mcp/), of an agent building a small ap
 
 **Styling**
 > Make this screen feel like a game launcher: dark theme with a purple accent, a glass panel over a gradient,
-> a glowing Play button. Check the effects in guides/animation.
+> a glowing Play button. Check the effects in animation/effects.
 
 ## Things to avoid
 
