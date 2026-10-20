@@ -35,7 +35,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -57,6 +57,10 @@ ANIM_WIDTH = 640
 os.environ.setdefault("PYZED_CONFIG_DIR", tempfile.mkdtemp(prefix="pyzed-record-"))
 for sub in ("", "games", "showcase", "tutorial"):
     sys.path.insert(0, str(EXAMPLES / sub) if sub else str(EXAMPLES))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# The pointer drawn on clips, its ease-in-out glide and the animated WebP encoder are shared with anim_webp.py.
+from anim_webp import draw_pointer, fit_webp, glide, save_poster
 
 
 # -- clips -----------------------------------------------------------------------------------------
@@ -99,14 +103,6 @@ def clip(name: str, title: str, description: str, *, fps: int = 24, live: bool =
         return fn
 
     return register
-
-
-def glide(a: tuple[float, float], b: tuple[float, float], frames: int) -> Iterator[tuple[float, float]]:
-    """Points from ``a`` to ``b`` with an ease-in-out, like a hand moving a mouse."""
-    for i in range(1, frames + 1):
-        t = i / frames
-        t = t * t * (3 - 2 * t)
-        yield (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
 
 
 # -- games -----------------------------------------------------------------------------------------
@@ -1122,23 +1118,6 @@ def hover_clip(c: Clip):
 
 
 # -- rendering -------------------------------------------------------------------------------------
-def _cursor(img, at, pressed):
-    """Draws an arrow pointer (and a ring while the button is down) at ``at`` (physical pixels)."""
-    from PIL import ImageDraw
-
-    x, y = at
-    s = SCALE
-    d = ImageDraw.Draw(img, "RGBA")
-    if pressed:
-        r = 13 * s
-        d.ellipse((x - r, y - r, x + r, y + r), fill=(116, 173, 232, 70), outline=(116, 173, 232, 200), width=s)
-    arrow = [(0, 0), (0, 17), (4.2, 13.2), (7, 19.5), (9.6, 18.4), (6.9, 12.3), (12.3, 12.3)]
-    pts = [(x + px * s, y + py * s) for px, py in arrow]
-    d.polygon([(px + s, py + s) for px, py in pts], fill=(0, 0, 0, 90))
-    d.polygon(pts, fill=(255, 255, 255, 255), outline=(20, 20, 24, 255))
-    d.line(pts + [pts[0]], fill=(20, 20, 24, 255), width=max(1, s))
-
-
 def render_offscreen(c: Clip, folder: Path) -> int:
     """Renders the clip's frames to ``folder/00001.png``...; returns how many there are."""
     import pyzed as pz
@@ -1153,7 +1132,7 @@ def render_offscreen(c: Clip, folder: Path) -> int:
         with Image.open(path) as im:
             im = im.convert("RGB")
             if frame.pointer is not None:
-                _cursor(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed)
+                draw_pointer(im, (frame.pointer[0] * SCALE, frame.pointer[1] * SCALE), frame.pressed, SCALE)
             for _ in range(frame.hold):
                 n += 1
                 last = folder / f"{n:05d}.png"
@@ -1296,8 +1275,8 @@ def encode(c: Clip, source: list[str], width: int, frames: int, folder: Path) ->
 
 def encode_anim(c: Clip, width: int, frames: int, folder: Path) -> dict[str, Any]:
     """An ``anim`` clip: an animated WebP that loops forever, its quality lowered until it fits ANIM_TARGET,
-    and a poster (shown before it loads and with "reduce motion"). Encoded with Pillow (libwebp's animation
-    encoder, which only stores what changed between frames)."""
+    and a poster (shown before it loads and with "reduce motion"). Encoded by anim_webp.fit_webp (Pillow and
+    libwebp's animation encoder, which only stores what changed between frames; identical frames are merged)."""
     from PIL import Image
 
     for name in (f"{c.name}.mp4", f"{c.name}.webm"):  # left over from a recording as video
@@ -1308,16 +1287,12 @@ def encode_anim(c: Clip, width: int, frames: int, folder: Path) -> dict[str, Any
             height = round(im.height * width / im.width)
             images.append(im.convert("RGB").resize((width, height), Image.LANCZOS))
     anim = OUT / f"{c.name}.webp"
-    for quality in (82, 76, 70, 64, 58, 52):
-        images[0].save(anim, "WEBP", save_all=True, append_images=images[1:], duration=round(1000 / c.fps), loop=0,
-                       lossless=False, quality=quality, method=4, minimize_size=True)
-        if anim.stat().st_size <= ANIM_TARGET:
-            break
+    _, quality = fit_webp(images, anim, fps=c.fps, target=ANIM_TARGET, method=4)
     if anim.stat().st_size > BUDGET:
         print(f"  WARNING: {anim.stat().st_size / 1000:.0f} KB is over the {BUDGET / 1000:.0f} KB budget; make the clip "
               "shorter, smaller or slower")
     poster = OUT / f"{c.name}.poster.webp"
-    images[max(0, min(len(images) - 1, int(len(images) * c.poster)))].save(poster, "WEBP", quality=82, method=6)
+    save_poster(images[max(0, min(len(images) - 1, int(len(images) * c.poster)))], poster)
     w, h = images[0].size
     entry = {"name": c.name, "title": c.title, "description": c.description, "tags": c.tags, "width": w,
              "height": h, "fps": c.fps, "duration": round(frames / c.fps, 2), "recorded": "off-screen",

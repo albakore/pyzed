@@ -909,7 +909,7 @@ fn close_animated(py: Python<'_>, state: &State, id: window::Id) -> Task<Message
     .then(move |_| window::close(id))
 }
 
-fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
+pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settings> {
     let attr = |name: &str| obj.getattr(name).ok().filter(|v| !v.is_none());
     let size_of = |name: &str| -> PyResult<Option<Size>> {
         attr(name)
@@ -1573,12 +1573,12 @@ fn view(state: &State, id: window::Id) -> Element<'_, Message> {
     }
 }
 
-fn palette_key(obj: &Bound<'_, PyAny>) -> Option<Vec<String>> {
+pub(crate) fn palette_key(obj: &Bound<'_, PyAny>) -> Option<Vec<String>> {
     let palette = obj.call_method0("__pyzed_palette__").ok()?;
     palette.extract::<Vec<String>>().ok()
 }
 
-fn build_theme(key: &[String]) -> Option<Theme> {
+pub(crate) fn build_theme(key: &[String]) -> Option<Theme> {
     let color = |i: usize| key.get(i).and_then(|c| c.parse::<Color>().ok());
     let palette = iced::theme::Palette {
         background: color(0)?,
@@ -1647,10 +1647,14 @@ static POST: LazyLock<Mutex<Option<mpsc::UnboundedSender<Message>>>> =
 static POST_RECEIVER: LazyLock<Mutex<Option<mpsc::UnboundedReceiver<Message>>>> =
     LazyLock::new(|| Mutex::new(None));
 
-fn open_post_channel() {
+pub(crate) fn open_post_channel() {
     let (sender, receiver) = mpsc::unbounded();
     *POST.lock().unwrap() = Some(sender);
     *POST_RECEIVER.lock().unwrap() = Some(receiver);
+}
+
+pub(crate) fn close_post_channel() {
+    *POST.lock().unwrap() = None;
 }
 
 fn post_stream() -> impl Stream<Item = Message> {
@@ -2140,7 +2144,7 @@ fn subscription(state: &State) -> Subscription<Message> {
 // Entry points
 // ---------------------------------------------------------------------------
 
-fn daemon(
+pub(crate) fn daemon(
     app: Py<PyAny>,
     font_size: f32,
     headless: bool,
@@ -2195,7 +2199,7 @@ fn daemon(
         })
 }
 
-fn font_size(app: &Bound<'_, PyAny>) -> PyResult<f32> {
+pub(crate) fn font_size(app: &Bound<'_, PyAny>) -> PyResult<f32> {
     match app.getattr("font_size").ok().filter(|v| !v.is_none()) {
         Some(v) => v.extract(),
         None => Ok(14.0),

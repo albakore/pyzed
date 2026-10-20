@@ -12,8 +12,8 @@
 //   <Media clip="snake" alt="The snake steering toward the food" caption="The game loop at work." />
 //
 // A clip recorded as an animated WebP only (record.py's `anim=True`, for short illustrations) is shown as an
-// image: it loads lazily, is served as is from public/ (Astro's image pipeline would keep only its first frame)
-// and, with "reduce motion", the still poster is shown instead.
+// image (<AnimatedImage>): it loads lazily, is served as is from public/ (Astro's image pipeline would keep only
+// its first frame) and, with "reduce motion", the still poster is shown instead.
 //
 //   import Media from '../../../components/Media.astro';
 //   import dark from '../../../assets/editor/canvas-dark.png';
@@ -25,6 +25,7 @@
 //   <Media video={clip} poster={poster} alt="Dragging a button onto the form" />
 import type { ImageMetadata } from 'astro';
 import { Picture, getImage } from 'astro:assets';
+import AnimatedImage from './AnimatedImage.astro';
 import manifest from '../../public/media/manifest.json';
 
 interface Props {
@@ -110,17 +111,14 @@ if (poster && !posterUrl) {
 	<div class="frame">
 		{
 			animated ? (
-				<picture>
-					<source srcset={posterUrl} media="(prefers-reduced-motion: reduce)" />
-					<img
-						src={animated}
-						alt={alt}
-						width={videoWidth}
-						height={videoHeight}
-						loading={eager ? 'eager' : 'lazy'}
-						decoding="async"
-					/>
-				</picture>
+				<AnimatedImage
+					src={animated}
+					poster={posterUrl!}
+					alt={alt}
+					width={videoWidth}
+					height={videoHeight}
+					eager={eager}
+				/>
 			) : video ? (
 				<video
 					data-pz-autoplay

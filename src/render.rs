@@ -419,7 +419,7 @@ fn build_presence<'a>(
             ..spec.clone()
         })
     };
-    let now = std::time::Instant::now();
+    let now = crate::recorder::now();
     // Take what we need, then release the map: the children may hold presences too.
     let leaving = {
         let mut map = ctx.caches.presence.borrow_mut();

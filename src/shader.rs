@@ -470,7 +470,9 @@ impl iced_shader::Program<Message> for Program {
         let time = match self.time {
             Some(t) => t,
             None if crate::animation::settled() => 0.0,
-            None => START.elapsed().as_secs_f32(),
+            None => crate::recorder::now()
+                .saturating_duration_since(*START)
+                .as_secs_f32(),
         };
         let mouse = cursor
             .position_in(bounds)

@@ -20,7 +20,9 @@ docs/
 │   ├── gen_library.py            # generates library/*.mdx in both languages
 │   ├── shading_nodes_data.py     # node catalog texts and examples (en/es)
 │   ├── gen_shading_nodes.py      # generates shading/nodes/*.mdx in both languages
-│   ├── library_shots.py          # generates src/assets/library/*.png
+│   ├── anim_webp.py              # records animated WebP captures (shared library + CLI)
+│   ├── library_anim.py           # what each component's animated preview does
+│   ├── library_shots.py          # generates public/library/*.webp (animated previews)
 │   ├── component_shots.py        # generates src/assets/components/*.png
 │   ├── example_shots.py          # generates example and tutorial screenshots
 │   └── sync-changelog.mjs        # CHANGELOG.md → What's new page (both languages) + stable version
@@ -112,6 +114,7 @@ python docs/scripts/gen_api.py --lang en    # English only (or --lang es)
 python docs/scripts/gen_api.py --check      # reports public names without documentation
 python docs/scripts/gen_shading_nodes.py    # shader node catalog, both languages
 python docs/scripts/gen_shading_nodes.py --check  # fails if the pages are stale or an example breaks
+python docs/scripts/library_shots.py        # animated previews of the component library
 python docs/scripts/component_shots.py      # component illustrations
 python docs/scripts/example_shots.py        # example and tutorial screenshots
 python examples/screenshots.py              # large screenshots
@@ -119,6 +122,101 @@ python examples/screenshots.py              # large screenshots
 
 When you add a public function, describe its parameters in `docs/scripts/api_docs_en.py` and
 `docs/scripts/api_docs_es.py`, then regenerate the reference. CI runs `gen_api.py --check`.
+
+## Animated captures
+
+`docs/scripts/anim_webp.py` records a Pyzed view as a looping animated WebP, with a scripted pointer,
+keyboard and clock. Every component of the [library](/pyzed/library/) is recorded with it
+(`library_shots.py`), and any other page can use it for its own clips: animations, audio
+widgets, a form being filled in.
+
+It uses the same off-screen renderer as `pz.screenshot` (no window, display or GPU), through
+`pyzed._core.record`: the pointer's position is passed to every frame, so hover and pressed
+states and tooltips show up; events (press, release, wheel, keys, typed text) reach the widgets
+between frames; and time moves by exactly one frame per frame (animations, spinners, carets and
+presences follow it), so a clip comes out the same on every machine, however long a frame takes.
+
+```python
+import pyzed as pz
+from pyzed import ui
+from anim_webp import record_webp, hover, press, type_text, drag, wait, leave
+
+
+class Login(pz.App):
+    def __init__(self):
+        self.email = ""
+
+    def view(self):
+        return pz.column([
+            ui.input(self.email, lambda v: setattr(self, "email", v), placeholder="Email"),
+            ui.button("Sign in", lambda: None, variant="solid"),
+        ], spacing=8, width=280)
+
+
+record_webp(
+    Login(),
+    [press("input"), type_text("ada@example.com"), hover("Sign in"), press(), wait(600), leave()],
+    out="docs/public/media/login.webp",
+    size=(360, 160),          # canvas, in logical pixels (recorded at 2x)
+    theme="One Light",
+    crop="content",           # trim to what changes, plus a margin
+    poster="docs/public/media/login.still.webp",
+)
+```
+
+`record_webp` takes an `App` (instance or class) or a function that returns the widget. Steps:
+
+| Step | What it does |
+| --- | --- |
+| `wait(ms)` | time passes (animations, spinners and carets move) |
+| `move(target, ms)`, `hover(target, ms, hold)` | the pointer glides to `target` (and stays) |
+| `press(target=None, hold)`, `click` | a left click, held for `hold` ms |
+| `drag(start, end, ms)` | press, glide, release (sliders, splitters, color fields) |
+| `type_text(text, cps)` | types into the focused field |
+| `key(name, mods="")` | one key: `"Enter"`, `"Tab"`, `"Down"`, `"a"` with `"ctrl"`... |
+| `scroll(lines, target=None)` | the wheel over `target` |
+| `leave(ms)` | the pointer leaves (hover states end) |
+| `call(fn)`, `set_state(**attrs)` | change the app's state between frames |
+| `theme(name)` | switch the app's theme |
+
+A **target** is a point `(x, y)`, a text shown in the view (`"Sign in"`: its center), `"input"` /
+`"input:1"` (the first / second text field), `"center"` (the middle of what is drawn), `"@0.25,0.5"`
+(a point relative to what is drawn), `(target, dx, dy)` to aim beside one, or `fn(ctx) -> (x, y)`.
+Widgets drawn without text (switches, sliders, dropdown items) are aimed at with points.
+
+Encoding: identical consecutive frames are merged into one longer frame, the clip loops forever,
+and frames are lossy (`quality=80`, `method=6`) or lossless, whichever is smaller (WebP's
+`allow_mixed`), which keeps text sharp. Aim for **150 KB or less** per clip and never more than
+**400 KB**; shorten the clip, crop it or lower `fps` (20 by default) if it grows. Views can read
+`clip_time()` (seconds since the clip started) to move things that would otherwise stand still.
+
+The lower-level pieces are there too: `record_frames()` (the frames, as RGBA), `images()`,
+`crop_box()`, `encode_webp()`, `fit_webp()` (lowers the quality until the file fits a size; `record.py`
+encodes its `anim=True` clips with it), `info(path)` (frames, duration and size of a WebP). From the command
+line:
+
+```bash
+python docs/scripts/anim_webp.py out.webp --code 'ui.button("Save", None, variant="solid")' \
+    --steps 'hover("Save"); press(); wait(500)' --size 320x120 --crop --theme "One Light"
+```
+
+**On a page**, serve the files as they are, from `docs/public/`: Astro's image pipeline would turn
+an animated WebP into a still picture. `src/components/AnimatedImage.astro` writes the markup: the
+`<img>` with its `width`, `height`, `alt`, `loading="lazy"` and `decoding="async"`, and the still frame
+for readers who ask for reduced motion:
+
+```html
+<picture>
+  <source srcset="/pyzed/media/login.still.webp" media="(prefers-reduced-motion: reduce)" />
+  <img src="/pyzed/media/login.webp" width="360" height="160" alt="Typing an email and signing in"
+       loading="lazy" decoding="async" />
+</picture>
+```
+
+`<Media clip="...">` uses it for the clips in `public/media/`, and the library's
+`src/components/library/Clip.astro` for the ones in `public/library/` (sizes from
+`public/library/manifest.json`). What each library preview does is in `docs/scripts/library_anim.py`;
+`library_shots.py --probe <slug>` prints the texts and fields a script can aim at.
 
 ## What's new and versions
 
