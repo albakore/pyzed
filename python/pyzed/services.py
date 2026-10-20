@@ -396,7 +396,8 @@ class Process(Service):
         if self.shell:
             return command if isinstance(command, str) else subprocess.list2cmdline(list(command))
         if isinstance(command, str):
-            return shlex.split(command, posix=os.name != "nt")
+            # Windows splits a command line itself; non-POSIX shlex would keep the quotes in the arguments.
+            return command if os.name == "nt" else shlex.split(command)
         return [str(a) for a in command]
 
     def start(self, command: Union[str, Sequence[str], None] = None) -> bool:
