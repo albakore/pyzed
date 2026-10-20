@@ -27,15 +27,44 @@ flowchart LR
     wgsl --> widget["Widget pz.shader"] --> gpu["GPU"]
 ```
 
-## Tres formas de crear uno
+## Empieza aquí
 
 <NavCards
 	items={[
-		{ title: 'Grafos de shaders', text: 'Shaders hechos de nodos, guardados como <code>.pzshad</code>. Dibújalos con <code>pz.shader</code> y cambia sus variables desde Python.', href: '/pyzed/es/shading/shader-graphs/', icon: 'puzzle', tag: 'Empieza aquí' },
-		{ title: 'La vista de shaders', text: 'Conecta nodos en Pyzed Design con vista previa en cada nodo, como los shaders visuales de Godot.', href: '/pyzed/es/shading/shader-designer/', icon: 'pencil', tag: 'Diseñador' },
-		{ title: 'Shaders en WGSL', text: 'Escribe tú la función <code>shade</code> para tener control total: uniforms, el ratón, el tiempo.', href: '/pyzed/es/shading/shaders/', icon: 'seti:shell', tag: 'Código' },
+		{ title: 'Tu primer shader', text: 'Crea un círculo brillante que late, con el ratón y en diez minutos, y úsalo en una app. Sin matemáticas.', href: '/pyzed/es/shading/getting-started/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'La vista Shader', text: 'El editor de nodos de Pyzed Design: pestañas, gestos, la barra lateral, variables y propiedades.', href: '/pyzed/es/shading/shader-designer/', icon: 'pencil', tag: 'Diseñador' },
+		{ title: 'Recetas', text: 'Degradados, un brillo neón, plasma, nubes, celdas, una pantalla CRT, un foco, un spinner, fuego y rayas.', href: '/pyzed/es/shading/recipes/', icon: 'star', tag: '10 recetas' },
 	]}
 />
+
+## Todos los nodos
+
+El [catálogo de nodos](/pyzed/es/shading/nodes/) describe todos los nodos de un grafo, por categoría, con sus
+puertos, ajustes y un ejemplo para cada uno.
+
+<NavCards
+	min="13rem"
+	items={[
+		{ title: 'Entradas y constantes', text: 'UV, píxel, tamaño, tiempo, ratón, variables y valores fijos.', href: '/pyzed/es/shading/nodes/inputs/', icon: 'puzzle' },
+		{ title: 'Matemáticas', text: 'Aritmética, sin y compañía, mezclar, limitar, paso suave, reasignar.', href: '/pyzed/es/shading/nodes/math/', icon: 'puzzle' },
+		{ title: 'Vectores y UV', text: 'Componer, distancia, polar; repetir, desplazar, rotar, remolino, pixelar.', href: '/pyzed/es/shading/nodes/vectors-uv/', icon: 'puzzle' },
+		{ title: 'Ruido y patrones', text: 'Perlin, fractal, Voronoi; tablero, franjas, cuadrícula, degradados, ondas.', href: '/pyzed/es/shading/nodes/noise-patterns/', icon: 'puzzle' },
+		{ title: 'Formas', text: 'Círculo, rectángulo, anillo, polígono, estrella; unión y resta; relleno, contorno, resplandor.', href: '/pyzed/es/shading/nodes/shapes/', icon: 'puzzle' },
+		{ title: 'Color y efectos', text: 'Degradado, paleta, tono, modos de fusión, capas, viñeta, líneas de barrido, texturas.', href: '/pyzed/es/shading/nodes/color-effects/', icon: 'puzzle' },
+		{ title: 'Lógica y utilidades', text: 'Comparar, elegir, valores con nombre, tu propio WGSL, funciones shader, Salida.', href: '/pyzed/es/shading/nodes/logic-utility/', icon: 'puzzle' },
+	]}
+/>
+
+## Tres formas de crear uno
+
+| Forma | Para | Página |
+| --- | --- | --- |
+| **Nodos en la vista Shader** | Todo el mundo: conecta cajas con el ratón y ve el resultado en cada nodo. | [La vista Shader](/pyzed/es/shading/shader-designer/) |
+| **`pyzed.shading` en Python** | Generar o editar grafos desde código, pruebas, herramientas. | [Grafos de shaders](/pyzed/es/shading/shader-graphs/) |
+| **WGSL a mano** | Control total, portar shaders de otros sitios. | [Shaders en WGSL](/pyzed/es/shading/shaders/) |
+
+Las tres acaban siendo el mismo código WGSL en la GPU, así que son igual de rápidas, y un `.pzshad` hecho con el
+ratón se puede cambiar desde Python (y al revés).
 
 <Aside type="caution" title="Los shaders necesitan GPU">
 En un equipo sin una tarjeta gráfica utilizable, un widget de shader dibuja su color o gradiente `fallback`. Dale
@@ -52,16 +81,8 @@ a cada shader un fallback razonable para que la interfaz se siga viendo bien.
 	]}
 />
 
-## Próximamente
-
-<NavCards
-	items={[
-		{ title: 'Catálogo de nodos', text: 'Cada nodo con una captura, sus entradas y salidas, y para qué sirve.', icon: 'list-format' },
-		{ title: 'Recetas de shaders', text: 'Efectos paso a paso: fuego, agua, líneas de escaneo, un borde brillante, un spinner de carga.', icon: 'star' },
-	]}
-/>
-
 <Aside type="note" title="Estado de esta sección">
-Los grafos de shaders son nuevos en Pyzed. Las páginas de arriba describen lo que funciona hoy; el catálogo de
-nodos y las recetas, con vistas previas animadas, llegarán en las próximas actualizaciones de esta sección.
+Los grafos de shaders son nuevos en Pyzed. Cada página describe lo que funciona hoy, y el catálogo de nodos se
+genera a partir del código, así que siempre coincide con tu versión. Se están añadiendo capturas de cada nodo y
+vistas previas animadas de las recetas.
 </Aside>

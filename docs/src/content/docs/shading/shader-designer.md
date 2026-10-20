@@ -1,9 +1,14 @@
 ---
-title: Shader designer
+title: The Shader view
 description: "Build GPU shaders in Pyzed Design by wiring nodes, like Godot's visual shaders: live previews on every node, a sidebar of shading nodes and variables your code changes."
 sidebar:
   order: 2
 ---
+
+:::tip[New to shaders?]
+Start with [Your first shader](/pyzed/shading/getting-started/): a ten-minute walk through this view that builds a
+glowing circle step by step. This page is the full reference of the view.
+:::
 
 The designer has a third kind of document: **shaders**. Instead of writing WGSL, you wire nodes on a graph, as
 in Godot's visual shaders or Blender's shader editor. Every node shows a live preview of what it makes, the
@@ -93,6 +98,8 @@ matches titles, categories and keywords in English and in the designer's languag
 | **Variables** | Set value, Get value (named values inside the graph) |
 | **Utility** | Reroute, Expression (your own WGSL), Shader function (another `.pzshad`), Comment |
 | **Output** | Output: the color of every pixel (and its alpha) |
+
+Every node, with its ports, settings and an example, is described in the [node catalog](/pyzed/shading/nodes/).
 
 Ports are typed like Godot's: `float`, `int`, `bool`, `vec2`, `vec3`, `vec4` and `texture`. Most math nodes are
 generic: they take the widest type wired to them (a `float` times a `vec3` is a `vec3`), and values convert on

@@ -1,0 +1,210 @@
+---
+title: Tu primer shader
+description: "Un comienzo tranquilo con los shaders de GPU en Pyzed: crea un círculo brillante que late en la vista Shader de Pyzed Design sin escribir código y úsalo en una app."
+sidebar:
+  label: Primeros pasos
+  order: 1
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import shaderNew from '../../../../../screenshots/designer-shader-new.png';
+import shaderView from '../../../../../screenshots/designer-shader.png';
+import shaderPreview from '../../../../../screenshots/designer-shader-preview.png';
+
+En esta página creas un **círculo brillante que late**, en unos diez minutos, conectando cajas con el ratón. No
+necesitas saber matemáticas ni WGSL. Al final tendrás un archivo `.pzshad` que puedes usar en cualquier app de Pyzed
+y conocerás las pocas ideas sobre las que se construye todo shader.
+
+{/* media: shading/getting-started-result (el círculo terminado latiendo, bucle corto) */}
+
+## Tres ideas, en palabras sencillas
+
+1. **Un shader es una receta que se ejecuta para cada píxel.** La tarjeta gráfica pregunta "¿de qué color es
+   *este* píxel?" para cada píxel del widget, sesenta veces por segundo, todos a la vez. Tu grafo es la respuesta.
+2. **Cada píxel sabe dónde está.** El nodo **UV** lo dice: `x` va de 0 (izquierda) a 1 (derecha) e `y` de 0
+   (arriba) a 1 (abajo). Formas, degradados y patrones son solo cálculos sobre esa posición.
+3. **Los colores son números de 0 a 1.** El rojo es `(1, 0, 0)`, el blanco `(1, 1, 1)`, un gris medio
+   `(0.5, 0.5, 0.5)`. Multiplicar un color por un número de 0 a 1 lo oscurece; así funcionan las máscaras.
+
+<Aside type="tip" title="Terreno conocido">
+Si usaste los visual shaders de Godot, el editor de materiales de Unreal Engine o los nodos de shader de Blender,
+la vista Shader funciona igual: nodos en un lienzo, cables de salidas a entradas y una vista previa en vivo en cada
+nodo.
+</Aside>
+
+## Créalo en la vista Shader
+
+<Steps>
+
+1. **Abre Pyzed Design.** Inicia la app que [descargaste](/pyzed/es/download/) o ábrela desde Python:
+
+	<Tabs syncKey="pkg">
+		<TabItem label="uv">
+			```bash
+			uv run pyzed design          # dentro de un proyecto uv con pyzed-ui
+			uvx --from "pyzed-ui[designer]" pyzed design   # sin proyecto
+			```
+		</TabItem>
+		<TabItem label="pip">
+			```bash
+			pip install "pyzed-ui[designer]"
+			pyzed design
+			```
+		</TabItem>
+		<TabItem label="python">
+			```bash title="macOS / Linux"
+			python3 -m pyzed design
+			```
+			```powershell title="Windows (PowerShell)"
+			py -m pyzed design
+			```
+		</TabItem>
+	</Tabs>
+
+2. **Crea un shader.** Pulsa <kbd>Ctrl</kbd>+<kbd>N</kbd> para abrir el diálogo **Nuevo**, elige la tarjeta **Shader**, llámalo
+   `pulse` y elige la plantilla **En blanco**. **Crear shader** guarda `pulse.pzshad` y lo abre.
+
+	<Media src={shaderNew} alt="El diálogo Nuevo en la tarjeta Shader, con sus plantillas" caption="El diálogo Nuevo: <b>Shader</b>, un nombre, una carpeta y una plantilla." size="narrow" />
+
+3. **Echa un vistazo.** La plantilla en blanco son tres nodos: **UV** → **Degradado** → **Salida**. Cada nodo
+   muestra una pequeña vista previa de lo que produce, y la vista previa de **Salida** en la esquina es el shader
+   terminado. El panel izquierdo muestra ahora la barra **Shading** (todos los nodos, por categoría) y la
+   **Estructura** (variables y nodos).
+
+	<Media src={shaderView} alt="La vista Shader con la barra Shading, un grafo de nodos y la vista previa de Salida" caption="La vista Shader: barra lateral a la izquierda, el grafo en el centro y Propiedades a la derecha." size="wide" />
+
+4. **Dibuja un círculo.** Haz doble clic en un hueco del lienzo (o pulsa <kbd>Shift</kbd>+<kbd>A</kbd>) y escribe
+   `círculo`; pulsa <kbd>Enter</kbd> para añadir el nodo **Círculo**. Haz lo mismo con **Relleno**. Arrastra desde
+   la salida `distance` del Círculo hasta la entrada `distance` del Relleno: su vista previa muestra un disco
+   blanco sobre negro.
+
+	{/* media: shading/getting-started-circle (Círculo conectado a Relleno) */}
+
+	<Aside type="note" title="¿Por qué dos nodos?">
+	Un nodo de forma da una *distancia* (lo lejos que está cada píxel del borde), no una imagen. **Relleno**
+	convierte esa distancia en una máscara limpia: 1 dentro, 0 fuera, con bordes suaves. **Contorno** dibujaría solo
+	el borde y **Resplandor** una luz suave.
+	</Aside>
+
+5. **Dale color.** Añade un nodo **RGBA**. Conecta la salida `mask` del Relleno a la entrada `rgb` de RGBA (un
+   número rellena rojo, verde y azul: blanco) y la salida `color` de RGBA a la entrada `color` de la Salida. El
+   Degradado ya no se usa: selecciónalo y pulsa <kbd>Supr</kbd>.
+
+6. **Hazlo latir.** Añade un nodo **Tiempo** y un nodo **Multiplicar y sumar**. Conecta la salida `sin` del Tiempo
+   (un valor que oscila entre −1 y 1) a la entrada `a`, y escribe `0.05` en `b` y `0.3` en `c`: el resultado oscila
+   entre 0.25 y 0.35. Conéctalo al `radius` del Círculo. Todas las vistas previas empiezan a respirar.
+
+	{/* media: shading/getting-started-pulse (radio movido por el Tiempo, bucle corto) */}
+
+7. **Añade un resplandor.** Añade un nodo **Resplandor**, conéctale la `distance` del Círculo, y un nodo **Sumar**
+   que sume la `mask` del Relleno y el `value` del Resplandor. Conecta la suma a `rgb` de RGBA en lugar de la
+   máscara.
+
+8. **Dale un color que se pueda cambiar.** En la Estructura, pulsa la flecha de **Añadir** y elige **variable color**;
+   llámala `tint` y elige un rosa. Arrastra `tint` de la Estructura al grafo: se convierte en un nodo **Parámetro**.
+   Añade un nodo **Multiplicar**: el `rgb` de `tint` por la suma, hacia `rgb` de RGBA.
+
+9. **Pruébalo.** Abre la pestaña **Vista previa**: el shader en grande, con un deslizador o una muestra de color
+   para cada variable. La pestaña **WGSL** muestra el código en que se compila el grafo. Pulsa <kbd>F5</kbd> para
+   abrirlo en una ventana propia que sigue tus cambios. Guarda con <kbd>Ctrl</kbd>+<kbd>S</kbd>.
+
+	<Media src={shaderPreview} alt="La pestaña Vista previa con un deslizador por variable" caption="La pestaña Vista previa: cada variable mutable tiene un control." />
+
+</Steps>
+
+<Aside type="caution" title="Cuando se rechaza un cable">
+Los cables tienen tipo: un color no puede entrar en una entrada que espera verdadero/falso, por ejemplo. Cuando la
+vista Shader rechaza un cable, explica el motivo en una notificación. La insignia de la barra de herramientas dice
+**Compila**, o cuántos problemas hay; pasa el ratón por encima para leerlos, y el nodo con el problema se pone rojo.
+</Aside>
+
+## Úsalo en una app
+
+Un archivo `.pzshad` se usa como una imagen: pasa su ruta a `pz.shader`. `uniforms` fija sus variables mutables por
+nombre, así tu código puede cambiar el color mientras la app corre, sin coste.
+
+```python title="app.py"
+from pathlib import Path
+
+import pyzed as pz
+
+HERE = Path(__file__).parent
+
+
+class Pulse(pz.App):
+    title = "Mi primer shader"
+    size = (420, 320)
+
+    def view(self):
+        return pz.shader(HERE / "pulse.pzshad", uniforms={"tint": "#22d3ee"}, width="fill", height="fill",
+                         fallback="#1e1b4b")
+
+
+if __name__ == "__main__":
+    pz.run(Pulse)
+```
+
+Ejecuta la app, o mira el shader solo (pulsa <kbd>V</kbd> en esa ventana para un deslizador por variable):
+
+<Tabs syncKey="pkg">
+	<TabItem label="uv">
+		```bash
+		uv run app.py
+		uv run pyzed run pulse.pzshad
+		```
+	</TabItem>
+	<TabItem label="pip">
+		```bash
+		python app.py
+		pyzed run pulse.pzshad
+		```
+	</TabItem>
+	<TabItem label="python">
+		```bash title="macOS / Linux"
+		python3 app.py
+		python3 -m pyzed run pulse.pzshad
+		```
+		```powershell title="Windows (PowerShell)"
+		py app.py
+		py -m pyzed run pulse.pzshad
+		```
+	</TabItem>
+</Tabs>
+
+<Aside type="note" title="¿Sin GPU?">
+En un equipo sin una tarjeta gráfica utilizable (algunas máquinas virtuales y escritorios remotos), un widget de
+shader dibuja su color o degradado `fallback`. Dale siempre uno, para que tu interfaz se siga viendo bien.
+</Aside>
+
+## El mismo shader en Python
+
+Todo lo que hace la vista Shader también es una API de Python. Esto crea el mismo grafo y lo guarda; abre el archivo
+en Pyzed Design para seguir editándolo con el ratón.
+
+```python title="make_pulse.py"
+from pyzed import shading
+
+g = shading.Graph("pulse")
+tint = g.uniform("tint", "color", "#f472b6")          # una variable y un nodo Parámetro
+
+radius = g.time()["sin"] * 0.05 + 0.3                  # nodos de matemáticas, añadidos por ti
+circle = g.circle(radius=radius)
+light = g.fill(circle) + g.glow(circle, radius=0.1)
+g.output(g.rgba(tint["rgb"] * light, 1.0))
+
+g.arrange()                                            # columnas ordenadas, como Ordenar en la barra
+g.save("pulse.pzshad")
+```
+
+## Qué sigue
+
+<NavCards
+	items={[
+		{ title: 'La vista Shader', text: 'Cada pestaña, gesto, panel y atajo del editor de nodos.', href: '/pyzed/es/shading/shader-designer/', icon: 'pencil' },
+		{ title: 'Catálogo de nodos', text: 'Todos los nodos con sus puertos, ajustes y un ejemplo.', href: '/pyzed/es/shading/nodes/', icon: 'puzzle' },
+		{ title: 'Recetas', text: 'Degradados, brillo, plasma, nubes, fuego, una pantalla CRT, un spinner...', href: '/pyzed/es/shading/recipes/', icon: 'star' },
+		{ title: 'Grafos de shaders en Python', text: 'Carga, cambia y crea archivos <code>.pzshad</code> desde código.', href: '/pyzed/es/shading/shader-graphs/', icon: 'seti:python' },
+	]}
+/>
