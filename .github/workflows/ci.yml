@@ -35,8 +35,29 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  changes:
+    # Lint and the MSRV build only look at Rust: skip them when a change leaves it alone.
+    name: Changed files
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            rust:
+              - "src/**"
+              - "vendor/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - ".github/workflows/ci.yml"
+
   lint:
     name: Lint
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,6 +74,8 @@ jobs:
     # Keep in sync with `rust-version` in Cargo.toml: catches syntax that
     # newer compilers accept but users with an older rustc can't build.
     name: Rust 1.88 (MSRV)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -68,13 +91,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ["3.12"]
-        include:
-          # The oldest and newest supported Pythons, and Linux on ARM.
-          - { os: ubuntu-latest, python: "3.10" }
-          - { os: ubuntu-latest, python: "3.14" }
-          - { os: ubuntu-24.04-arm, python: "3.12" }
+        # A pull request runs one job per OS, spread over the oldest, a middle and the newest
+        # supported Python. main and manual runs test Linux on 3.10, 3.12 and 3.14, Linux on ARM,
+        # Windows and macOS.
+        include: >-
+          ${{ fromJSON(github.event_name == 'pull_request'
+          && '[{"os": "ubuntu-latest", "python": "3.14"}, {"os": "windows-latest", "python": "3.12"}, {"os": "macos-latest", "python": "3.10"}]'
+          || '[{"os": "ubuntu-latest", "python": "3.10"}, {"os": "ubuntu-latest", "python": "3.12"}, {"os": "ubuntu-latest", "python": "3.14"}, {"os": "ubuntu-24.04-arm", "python": "3.12"}, {"os": "windows-latest", "python": "3.12"}, {"os": "macos-latest", "python": "3.12"}]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -87,13 +110,13 @@ jobs:
       - name: Build the wheel
         shell: bash
         run: |
-          python -m pip install maturin pytest pillow mcp anthropic
+          python -m pip install maturin pytest pytest-xdist pillow mcp anthropic
           maturin build --release --out dist
       - name: Install and test it
         shell: bash
         run: |
           python -m pip install --no-index --find-links dist pyzed-ui
-          python -m pytest -q tests
+          python -m pytest -q -n auto tests
       - name: Upload the visual diffs
         if: failure() && runner.os == 'Linux'
         uses: actions/upload-artifact@v7

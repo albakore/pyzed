@@ -7,6 +7,7 @@ on:
       - "docs/**"
       - "CHANGELOG.md"
       - "examples/**"
+      - "benchmarks/**"
       - "python/**"
       - "src/**"
       - ".github/workflows/docs.yml"
@@ -15,6 +16,7 @@ on:
       - "docs/**"
       - "CHANGELOG.md"
       - "examples/**"
+      - "benchmarks/**"
       - "python/**"
       - "src/**"
       - ".github/workflows/docs.yml"
@@ -28,8 +30,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    # On a pull request, build the site only when something it shows changed, and check the API
+    # reference only when the code it is generated from changed.
+    name: Changed files
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ github.event_name != 'pull_request' || steps.filter.outputs.site == 'true' }}
+      api: ${{ github.event_name != 'pull_request' || steps.filter.outputs.api == 'true' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            site:
+              - "docs/**"
+              - "CHANGELOG.md"
+              - "examples/**"
+              - "benchmarks/**"
+              - ".github/workflows/docs.yml"
+            api:
+              - "python/**"
+              - "src/**"
+              - "docs/scripts/**"
+              - "docs/src/content/docs/reference/**"
+              - "docs/src/content/docs/es/reference/**"
+              - ".github/workflows/docs.yml"
+
   build:
     name: Build site
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,6 +73,14 @@ jobs:
       - name: Install
         working-directory: docs
         run: npm ci
+      # Optimizing the screenshots takes about 5 minutes from scratch; Astro keeps the results
+      # in node_modules/.astro and only redoes the images that changed.
+      - name: Restore the optimized images
+        uses: actions/cache@v6
+        with:
+          path: docs/node_modules/.astro
+          key: docs-images-${{ hashFiles('docs/package-lock.json', 'docs/src/assets/**', 'docs/screenshots/**') }}
+          restore-keys: docs-images-
       - name: Build (reads CHANGELOG.md and marks the latest stable release)
         working-directory: docs
         run: npm run build
@@ -50,6 +90,8 @@ jobs:
 
   api-reference:
     name: API reference up to date
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     env:
       # Only needs an importable build: skip LTO to compile faster.
