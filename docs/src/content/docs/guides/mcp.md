@@ -22,7 +22,9 @@ pyzed mcp                       # runs the server over stdio (python -m pyzed.mc
 You rarely run it by hand: the agent starts it. With [uv](https://docs.astral.sh/uv/) the agent can run it
 without installing anything first, using `uvx --from "pyzed-ui[mcp]" pyzed mcp`.
 
-`pyzed mcp --transport streamable-http` serves it over HTTP on `127.0.0.1` instead. Any program on your computer can reach it there without signing in, so the `screenshot` tool, which runs the code it is given, is left out unless you add `--allow-code`.
+`pyzed mcp --transport streamable-http` serves it over HTTP on `127.0.0.1` instead. Any program on your computer can reach it there without signing in, so `screenshot` and the project tools, which read and write files and run code, are left out unless you add `--allow-code`.
+
+The project tools work in the folder the server was started in; `pyzed mcp --root PATH` picks another one. They never reach outside it, nor files that may hold secrets (`.env`, keys, `.netrc`...).
 
 ## Connect your agent
 
@@ -70,13 +72,16 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 
 | Tool | What it does |
 | --- | --- |
-| `get_guide` | How Pyzed works (`"overview"`) and its rules (`"best-practices"`). |
+| `get_guide` | How Pyzed works (`"overview"`), its rules (`"best-practices"`), runnable recipes (`"cookbook"`: app structure, background work, forms, virtual lists, animation, shaders, games, custom window frames, anchored layouts) or any topic of `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), in English or Spanish. |
+| `list_guides` | Every topic `get_guide` takes. |
 | `list_components` | Every widget (`pz.*`), Zed-style component (`pz.ui.*`), designer toolbox type and `pz.Component` class, with a one-line summary. Filter by `kind`, `query` or `category`. |
 | `describe_component` | The signature, documentation and parameters of one widget or component (`"pz.column"`, `"ui.button"`), or the props and events of a designer type (`"designer:button"`). |
+| `search_reference`, `read_reference` | Search and read the [reference](/pyzed/reference/) of every module, class and function (`pyzed.game`, `pyzed.updater`, `ui.virtual_list`...). |
+| `editor_keymap` | The default key bindings of the code editor and how to change them. |
 | `search_icons` | Lucide icon names for `icon=` and `pz.icon`. |
 | `list_themes` | The built-in themes and the color tokens styles accept (`"accent"`, `"panel"`...). |
 | `list_docs`, `read_docs` | The pages of this documentation, in English or Spanish. |
-| `list_examples`, `read_example` | The source of the example apps (a Zed-like editor, a to-do list, dialogs...). |
+| `list_examples`, `read_example` | The source of the examples, by `kind`: apps, blocks (whole screens to copy), games, showcase (shaders, effects), backend integrations (FastAPI, SQLAlchemy, SQLModel, Django), tutorial and designer. |
 | `new_app` | A runnable `pz.App` script: a simple starting point or a Zed-like workspace. |
 | `new_component` | A `pz.Component` skeleton with its props, state and events. |
 | `new_form` | A visual-designer form: the `.pzform` layout and its handlers module. |
@@ -84,14 +89,31 @@ If Pyzed is already installed in an environment, `"command": "pyzed", "args": ["
 | `validate_form` | Checks a `.pzform` (types, props, events, names, containers) and that its handlers module defines every handler. |
 | `screenshot` | Renders the code off-screen (no window, no GPU) and returns a PNG, so the agent can see what it built. |
 
+### Project tools
+
+With these the agent builds a whole app in a folder, from the project to a clean check:
+
+| Tool | What it does |
+| --- | --- |
+| `project_info` | The project: name, version, main form, forms, components, package, dependencies and files. |
+| `list_files`, `read_file` | List and read the files of the folder. |
+| `write_files` | Creates or replaces several files at once and checks every Python file and form it wrote. |
+| `create_project` | A new uv project, like `pyzed new` (pyzed-ui, ruff, ty, `ui/main.pzform`, `src/<package>`, git). |
+| `add_dependency` | `uv add` in the project. |
+| `check_project` | Pyzed's checks of every file, plus ruff and ty. |
+| `run_tests` | `uv run pytest` in the project. |
+| `screenshot_project` | A screenshot of a form or script of the folder, by default the main form. |
+
 ### Resources and prompts
 
 Clients that support resources can attach `pyzed://guide`, `pyzed://best-practices`,
-`pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` and
+`pyzed://cookbook`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` and
 `pyzed://docs/{slug}` (with `--` instead of `/`, such as `guides--layout`).
 
 The prompts `create_app`, `create_component` and `create_form` start a task with the right steps:
-read the guides, look up existing components, generate, validate and preview.
+read the guides, look up existing components, generate, validate and preview. `build_project` builds a
+complete app in the folder: read the guides and examples, create the project, write it in small steps,
+then check, test and look at it until everything is clean.
 
 ## Example session
 
@@ -116,7 +138,7 @@ installed version's tag.
 `screenshot` runs the code in a separate process with a 60 second limit and replaces `pz.run`, so no
 window opens. It uses the same off-screen renderer as [tests and screenshots](/pyzed/guides/testing/).
 
-`pyzed.mcp.knowledge`, `pyzed.mcp.scaffold` and `pyzed.mcp.validate` are plain Python and work without the
+`pyzed.mcp.knowledge`, `pyzed.mcp.projects`, `pyzed.mcp.scaffold` and `pyzed.mcp.validate` are plain Python and work without the
 MCP SDK, for example from your own scripts or tests.
 
 ## More on AI agents

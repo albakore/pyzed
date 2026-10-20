@@ -75,3 +75,5 @@ Runs the [MCP server for AI agents](/pyzed/guides/mcp/) over stdio, until the cl
 | Option | Effect |
 | --- | --- |
 | `--transport streamable-http` | Serve over HTTP instead of stdio. |
+| `--allow-code` | Offer `screenshot` and the project tools over HTTP too (they are always on over stdio). |
+| `--root PATH` | The folder the project tools work in (by default the current one). |

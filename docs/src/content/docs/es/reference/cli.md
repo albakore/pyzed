@@ -76,3 +76,5 @@ desconecta. Necesita el extra `mcp`: `pip install "pyzed-ui[mcp]"`.
 | Opción | Efecto |
 | --- | --- |
 | `--transport streamable-http` | Sirve por HTTP en lugar de stdio. |
+| `--allow-code` | Ofrece `screenshot` y las herramientas de proyecto también por HTTP (por stdio siempre están). |
+| `--root RUTA` | La carpeta donde trabajan las herramientas de proyecto (por defecto, la actual). |

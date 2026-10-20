@@ -25,12 +25,39 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
     from ..mcp import knowledge, scaffold, validate
 
     @tool(title="Reading a Pyzed guide")
-    def get_guide(topic: str = "overview") -> str:
+    def get_guide(topic: str = "overview", lang: str = "en") -> str:
         """How Pyzed works.
 
-        topic: "overview" (architecture, API layers, components, designer) or "best-practices".
+        topic: "overview" (architecture, API layers, components, designer), "best-practices", "cookbook" (runnable recipes) or a topic of list_guides ("games", "shaders", "animation"...).
+        lang: "en" or "es".
         """
-        return knowledge.guide(topic)
+        return knowledge.guide(topic, lang)
+
+    @tool(title="Listing the guides")
+    def list_guides() -> Any:
+        """Every topic get_guide takes, with what it covers."""
+        return knowledge.guides()
+
+    @tool(title="Searching the reference")
+    def search_reference(query: str, lang: str = "en", limit: int = 20) -> Any:
+        """Searches Pyzed's whole reference (widgets, components, classes, functions, modules, designer controls).
+
+        query: words to look for; returns the ids read_reference takes.
+        """
+        return knowledge.search_reference(query, lang, limit)
+
+    @tool(title="Reading the reference")
+    def read_reference(name: str, lang: str = "en") -> Any:
+        """The reference page of anything in Pyzed: signature, description, parameters and members.
+
+        name: "pz.shader", "pyzed.game.vector", "ui.virtual_list", "App"...
+        """
+        return knowledge.read_reference(name, lang)
+
+    @tool(title="Reading the editor's key bindings")
+    def editor_keymap() -> Any:
+        """The default key bindings of Pyzed's code editor (ui.editor), by action, and how to change them."""
+        return knowledge.editor_keymap()
 
     @tool(title="Listing components")
     def list_components(kind: str = "all", query: str = "", category: str = "") -> Any:
@@ -76,9 +103,13 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
         return knowledge.list_docs()
 
     @tool(title="Listing the examples")
-    def list_examples() -> Any:
-        """The example apps of Pyzed (a Zed-like editor, a to-do list, dialogs, canvas...) to learn from."""
-        return knowledge.list_examples()
+    def list_examples(kind: str = "", query: str = "") -> Any:
+        """The example apps of Pyzed to learn from.
+
+        kind: "app", "blocks" (whole screens to copy), "games", "showcase", "integrations" (backend projects), "tutorial" or "designer"; empty for all.
+        query: filters by name or summary.
+        """
+        return knowledge.list_examples(kind, query)
 
     @tool(title="Reading an example")
     def read_example(name: str) -> str:
@@ -138,7 +169,7 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
 
         return [f"Screenshot of the app at {width}x{height}.", Image(render(code, size=(width, height)), "image/png")]
 
-    out = [get_guide, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
+    out = [get_guide, list_guides, search_reference, read_reference, editor_keymap, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
            list_examples, read_example, new_app, new_component_code, new_form, validate_code, validate_form]
     return out + [screenshot] if screenshots else out
 

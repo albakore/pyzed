@@ -8,7 +8,8 @@ sidebar:
 `pyzed mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server that ships with Pyzed. It gives
 an AI agent the same knowledge a Pyzed expert has, taken from the **installed version** of the package: every
 component's signature and docs, the icons, the themes, this documentation, the examples and blocks, generators for
-apps, components and forms, two validators and an off-screen renderer.
+apps, components and forms, two validators, an off-screen renderer and project tools to build a whole app in a
+folder.
 
 This page is the short version. The [full MCP reference](/pyzed/guides/mcp/) lists every tool, resource and prompt.
 
@@ -54,14 +55,15 @@ run `pip install "pyzed-ui[mcp]"` (Python 3.10 or newer) and use `pyzed mcp` as 
 
 | Group | Tools | Use them to |
 | --- | --- | --- |
-| Learn | `get_guide`, `list_docs`, `read_docs` | Read how Pyzed works, its rules and any page of these docs (English or Spanish). |
-| Look up | `list_components`, `describe_component`, `search_icons`, `list_themes` | Get exact signatures, parameters, icon names and color tokens instead of guessing. |
-| Reuse | `list_examples`, `read_example` | Read the examples and the [Blocks](/pyzed/blocks/) (`read_example("blocks/settings")`). |
+| Learn | `get_guide`, `list_guides`, `list_docs`, `read_docs` | Read how Pyzed works, its rules, the cookbook of runnable recipes, topics such as games or shaders, and any page of these docs (English or Spanish). |
+| Look up | `list_components`, `describe_component`, `search_reference`, `read_reference`, `search_icons`, `list_themes`, `editor_keymap` | Get exact signatures, parameters, icon names, color tokens and key bindings instead of guessing. |
+| Reuse | `list_examples`, `read_example` | Read the examples, the [Blocks](/pyzed/blocks/) (`read_example("blocks/settings")`), games, showcase and backend integrations. |
 | Generate | `new_app`, `new_component`, `new_form` | Start from correct skeletons: an app, a `pz.Component`, a visual-designer form. |
 | Check | `validate_code`, `validate_form` | Catch unknown names, wrong keyword arguments, side effects in `view()` and broken forms before running. |
 | See | `screenshot` | Render the app or a component off-screen and get a PNG back. |
+| Build | `project_info`, `create_project`, `list_files`, `read_file`, `write_files`, `add_dependency`, `check_project`, `run_tests`, `screenshot_project` | Create a project, write it, add libraries, check, test and look at it, in the folder the server runs in. |
 
-The prompts `create_app`, `create_component` and `create_form` start a task with the right steps, and resources
+The prompts `create_app`, `create_component`, `create_form` and `build_project` (a whole app, end to end) start a task with the right steps, and resources
 such as `pyzed://best-practices` and `pyzed://docs/{slug}` can be attached by clients that support them.
 
 ## Prompts that use the server well
@@ -80,10 +82,10 @@ More in the [prompting guide](/pyzed/ai/prompting/), including a full session wi
 - `screenshot` **runs the code it is given** in a separate process with a 60 second limit and without opening a
   window. Treat it like running code yourself: agents normally ask before calling tools, keep that on for
   untrusted prompts.
-- `pyzed mcp --transport streamable-http` serves it on `127.0.0.1` without authentication; there `screenshot` is
-  off unless you add `--allow-code`.
-- The server reads documentation from your checkout or from GitHub, and never reads your files: what the agent
-  shows it is what it chose to send.
+- The project tools read and write files only inside the folder the server was started in (or `--root PATH`),
+  never files that may hold secrets (`.env`, keys...), and run uv, ruff, ty and pytest there.
+- `pyzed mcp --transport streamable-http` serves it on `127.0.0.1` without authentication; there `screenshot` and
+  the project tools are off unless you add `--allow-code`.
 
 ## Troubleshooting
 

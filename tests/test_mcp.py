@@ -3,13 +3,14 @@
 import asyncio
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from pyzed.mcp import knowledge, preview, scaffold, validate
+from pyzed.mcp import knowledge, preview, projects, scaffold, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -211,31 +212,127 @@ def test_preview_renders_apps_and_components():
         preview.render("x = 1")
 
 
-def test_server_registers_everything():
+def _content(result):
+    content = result.content if hasattr(result, "content") else result
+    if isinstance(content, tuple):  # mcp 1.x returns (content, structured)
+        content = content[0]
+    return content
+
+
+def test_server_registers_everything(tmp_path):
     pytest.importorskip("mcp")
     from pyzed.mcp import create
 
-    server = create()
+    server = create(root=str(tmp_path))
+    project_tools = {"project_info", "list_files", "read_file", "write_files", "create_project", "add_dependency",
+                     "check_project", "run_tests", "screenshot_project"}
 
     async def check():
         tools = {t.name for t in await server.list_tools()}
-        assert {"get_guide", "list_components", "describe_component", "new_component", "new_form",
-                "validate_code", "validate_form", "screenshot", "read_docs"} <= tools
+        assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
+                "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
+                "screenshot", "read_docs", "list_examples"} | project_tools <= tools
         resources = {str(r.uri) for r in await server.list_resources()}
-        assert {"pyzed://guide", "pyzed://best-practices", "pyzed://components"} <= resources
-        assert {p.name for p in await server.list_prompts()} == {"create_component", "create_app", "create_form"}
-        result = await server.call_tool("describe_component", {"name": "ui.button"})
-        content = result.content if hasattr(result, "content") else result
-        if isinstance(content, tuple):  # mcp 1.x returns (content, structured)
-            content = content[0]
-        assert "ui.button(" in content[0].text
+        assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components"} <= resources
+        assert {p.name for p in await server.list_prompts()} == {"create_component", "create_app", "create_form",
+                                                                  "build_project"}
+        assert "ui.button(" in _content(await server.call_tool("describe_component", {"name": "ui.button"}))[0].text
+        written = _content(await server.call_tool("write_files", {"files": {"app.py": APP}}))
+        assert json.loads(written[0].text)["ok"]
+        shot = _content(await server.call_tool("screenshot_project", {"target": "app.py"}))
+        assert shot[0].text.startswith("Screenshot of app.py") and shot[1].type == "image"
 
     asyncio.run(check())
 
     async def no_code():
-        assert "screenshot" not in {t.name for t in await create(allow_code=False).list_tools()}
+        tools = {t.name for t in await create(allow_code=False).list_tools()}
+        assert "screenshot" not in tools and not tools & project_tools
 
     asyncio.run(no_code())
+
+
+APP = "import pyzed as pz\n\n\nclass A(pz.App):\n    def view(self):\n        return pz.text('hi')\n\n\npz.run(A)\n"
+
+
+def test_project_tools_stay_in_their_folder(tmp_path):
+    result = projects.write_files(tmp_path, {"app/main.py": APP, "bad.py": "import pyzed as pz\npz.nope()\n"})
+    assert result["written"] == ["app/main.py", "bad.py"] and not result["ok"]
+    assert "pz.nope" in result["checks"]["bad.py"]["issues"][0]["message"]
+    for path in ("../outside.py", ".env", "keys/id_rsa"):
+        with pytest.raises(PermissionError):
+            projects.write_files(tmp_path, {path: "x"})
+    (tmp_path / ".env").write_text("TOKEN=1")
+    assert ".env" not in projects.list_files(tmp_path)["files"]
+    with pytest.raises(PermissionError):
+        projects.read_file(tmp_path, ".env")
+    assert projects.read_file(tmp_path, "app/main.py") == APP
+    assert projects.info(tmp_path)["project"] is None
+    checked = projects.check_project(tmp_path, tools=False)
+    assert not checked["ok"] and list(checked["pyzed"]) == ["bad.py"]
+    caption, png = projects.screenshot(tmp_path, "app/main.py", size=(160, 90))
+    assert caption == "Screenshot of app/main.py." and png.startswith(b"\x89PNG")
+
+
+def test_project_tools_read_a_project(tmp_path):
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\nversion = "0.2.0"\n'
+                                              'dependencies = ["pyzed-ui"]\n\n[tool.pyzed]\n')
+    from pyzed.designer.model import Form, save
+
+    (tmp_path / "ui").mkdir()
+    save(Form(title="Main", width=200, height=120), tmp_path / "ui" / "main.pzform")
+    found = projects.info(tmp_path)
+    assert found["project"] == "demo" and found["version"] == "0.2.0" and found["main_form"] == "ui/main.pzform"
+    assert [d["name"] for d in found["dependencies"]] == ["pyzed-ui"]
+    caption, png = projects.screenshot(tmp_path)
+    assert "ui/main.pzform" in caption and png.startswith(b"\x89PNG")
+
+
+COOKBOOK = re.findall(r"```python\n(.*?)```", knowledge.guide("cookbook"), re.S)
+
+
+@pytest.mark.parametrize("recipe", COOKBOOK, ids=[f"recipe{i}" for i in range(len(COOKBOOK))])
+def test_cookbook_recipes_are_valid_and_render(recipe):
+    result = validate.check_code(recipe, lint=False)
+    assert result["ok"] and not result["issues"], result["issues"]
+    assert preview.render(recipe, size=(320, 200)).startswith(b"\x89PNG")
+
+
+def test_preview_reports_view_errors():
+    with pytest.raises(RuntimeError, match="ZeroDivisionError"):
+        preview.render("import pyzed as pz\nclass A(pz.App):\n    def view(self):\n        return 1 / 0\n")
+
+
+def test_guide_topics_reference_and_keymap(checkout):
+    pages = {p["slug"] for p in knowledge.list_docs()}
+    assert set(knowledge.TOPICS.values()) <= pages
+    assert set(knowledge.guides()) >= {"overview", "best-practices", "cookbook", "games", "shaders"}
+    assert "pz.frames" in knowledge.guide("games")
+    hits = knowledge.search_reference("virtual list")
+    assert any("virtual" in h["id"] for h in hits)
+    page = knowledge.read_reference("pz.shader")
+    assert "uniforms" in page["body"]
+    with pytest.raises(KeyError):
+        knowledge.read_reference("pz.does_not_exist_anywhere")
+    keymap = knowledge.editor_keymap()
+    assert keymap["actions"] and "keymap_for" in keymap["change"]
+
+
+def test_examples_cover_every_kind():
+    kinds = {e["kind"] for e in knowledge.list_examples()}
+    assert {"app", "blocks", "games", "showcase", "integrations", "tutorial", "designer"} <= kinds
+    assert all(e["kind"] == "games" for e in knowledge.list_examples(kind="games"))
+
+
+def test_check_code_counts_positional_arguments():
+    issues = validate.check_code("import pyzed as pz\npz.anchor(pz.text('a'), 1, 2)\n", lint=False)["issues"]
+    assert any("positional" in i["message"] for i in issues)
+
+
+def test_shader_uniforms_take_theme_tokens():
+    import pyzed as pz
+
+    pz.shader("fn shade(uv: vec2<f32>, px: vec2<f32>, size: vec2<f32>, time: f32) -> vec4<f32> "
+              "{ return tint(); }", uniforms={"tint": "accent"})
 
 
 def test_cli_without_the_sdk_explains_how_to_install(tmp_path):

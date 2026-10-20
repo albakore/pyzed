@@ -24,7 +24,22 @@ REPO = "albakore/pyzed"
 SITE = "https://albakore.github.io/pyzed/"
 
 #: Bundled guides, by topic.
-GUIDES = {"overview": "guide.md", "best-practices": "best_practices.md"}
+GUIDES = {"overview": "guide.md", "best-practices": "best_practices.md", "cookbook": "cookbook.md"}
+
+#: More topics for ``guide``: each one is a page of the documentation.
+TOPICS = {
+    "architecture": "guides/architecture", "layout": "guides/layout", "styles": "guides/styles",
+    "theming": "guides/theming", "components": "guides/components", "events": "guides/events",
+    "async": "guides/async", "commands": "guides/commands", "keyboard": "guides/keyboard",
+    "windows": "guides/windows", "animation": "guides/animation", "shaders": "guides/shaders",
+    "canvas": "guides/canvas", "performance": "guides/performance", "games": "games/index",
+    "integrations": "integrations/overview", "architectures": "integrations/architectures",
+    "projects": "guides/projects", "packaging": "guides/packaging", "testing": "guides/testing",
+    "i18n": "guides/i18n", "accessibility": "guides/accessibility", "agents": "guides/agents",
+    "designer": "editor/index", "component-designer": "editor/component-designer",
+    "data-binding": "editor/data-binding", "editor-shortcuts": "editor/keyboard-shortcuts",
+    "blocks": "blocks/index", "stability": "guides/stability",
+}
 
 #: The section of each top-level widget in ``list_components``.
 WIDGET_CATEGORIES = {
@@ -34,15 +49,21 @@ WIDGET_CATEGORIES = {
     "Controls": ("button", "checkbox", "text_input", "toggler", "slider", "vertical_slider", "radio",
                  "pick_list", "progress_bar"),
     "Interaction": ("mouse_area", "hover", "tooltip"),
-    "Media": ("image", "image_viewer", "svg", "qr_code", "canvas", "icon"),
+    "Media": ("image", "image_viewer", "svg", "qr_code", "canvas", "shader", "icon"),
     "Code": ("code_editor",),
+    "Anchors": ("anchor_layout", "anchor"),
+    "Animation": ("stagger", "presence"),
+    "Performance": ("virtual_column", "memo"),
+    "Window": ("window_edges",),
+    "Game loop": ("frames", "pressed", "is_pressed"),
 }
 
 #: ``pz.ui`` modules and the section they appear under.
 UI_CATEGORIES = {
     "base": "Basics", "controls": "Controls", "inputs": "Inputs", "display": "Data display", "lists": "Lists",
     "navigation": "Navigation", "overlays": "Overlays", "dialogs": "Dialogs", "workspace": "Workspace",
-    "editor": "Code", "color": "Color", "console": "Console", "help": "Help",
+    "editor": "Code", "color": "Color", "console": "Console", "help": "Help", "frame": "Window",
+    "icon_picker": "Icons",
 }
 
 
@@ -51,13 +72,27 @@ def version() -> str:
     return pyzed.__version__
 
 
-def guide(topic: str = "overview") -> str:
-    """Returns a bundled guide: ``"overview"`` (how Pyzed works) or ``"best-practices"``."""
-    try:
-        name = GUIDES[topic]
-    except KeyError:
-        raise KeyError(f"unknown guide {topic!r}; available: {', '.join(GUIDES)}") from None
-    return (HERE / name).read_text(encoding="utf-8")
+def guide(topic: str = "overview", lang: str = "en") -> str:
+    """Returns a guide: the bundled ``"overview"`` (how Pyzed works), ``"best-practices"`` and ``"cookbook"``
+    (runnable recipes), or the documentation page of a topic of ``TOPICS`` (``"games"``, ``"shaders"``...)."""
+    if topic in GUIDES:
+        return (HERE / GUIDES[topic]).read_text(encoding="utf-8")
+    if topic in TOPICS:
+        return read_docs(TOPICS[topic], lang)
+    raise KeyError(f"unknown guide {topic!r}; available: {', '.join([*GUIDES, *TOPICS])}")
+
+
+def guides() -> Dict[str, str]:
+    """Every topic ``guide`` takes, with what it covers."""
+    pages = {p["slug"]: p for p in index()["docs"]}
+    out = {"overview": "How Pyzed works: the Elm architecture, the API layers, components, designer and CLI.",
+           "best-practices": "Rules for views, state, components, styling, layout, projects and testing.",
+           "cookbook": "Runnable recipes: app structure, background work, forms, large data, animation, "
+                       "shaders, games, window frames and anchors."}
+    for topic, slug in TOPICS.items():
+        page = pages.get(slug)
+        out[topic] = (page["title"] + ": " + page["description"]) if page else slug
+    return out
 
 
 # -- components ---------------------------------------------------------------------------------------
@@ -347,9 +382,54 @@ def list_docs() -> List[Dict[str, str]]:
             for p in index()["docs"]]
 
 
-def list_examples() -> List[Dict[str, str]]:
-    """The example apps in the repository: their name (for ``read_example``) and summary."""
-    return list(index()["examples"])
+def list_examples(kind: str = "", query: str = "") -> List[Dict[str, str]]:
+    """The example apps in the repository: their name (for ``read_example``), kind and summary.
+
+    ``kind`` keeps one folder: ``"app"``, ``"blocks"`` (whole screens to copy), ``"games"``, ``"showcase"``,
+    ``"tutorial"``, ``"designer"`` or ``"integrations"`` (FastAPI, SQLAlchemy, Django... projects).
+    """
+    q = query.lower()
+    return [e for e in index()["examples"]
+            if (not kind or e.get("kind", "app") == kind) and (not q or q in e["name"].lower()
+                                                                or q in e["summary"].lower())]
+
+
+# -- the built-in reference ---------------------------------------------------------------------------
+
+
+def search_reference(query: str, lang: str = "en", limit: int = 20) -> List[Dict[str, str]]:
+    """Searches Pyzed's built-in reference: every widget, component, class, function, module and designer
+    control, with the id ``read_reference`` takes."""
+    from .. import reference
+
+    return [{"id": e.id, "title": e.title, "kind": e.kind, "section": e.section, "summary": e.summary}
+            for e in reference.search(query, lang=lang, limit=max(1, limit))]
+
+
+def read_reference(name: str, lang: str = "en") -> Dict[str, Optional[str]]:
+    """The reference page of anything in Pyzed (``"pyzed.game.vector"``, ``"ui.virtual_list"``, ``"App"``...):
+    signature, description, parameters and members, in Markdown."""
+    from .. import reference
+
+    target = name.strip()
+    found = reference.lookup(target) or reference.lookup(f"pyzed.{target}") or target
+    try:
+        page = reference.page(found, lang=lang)
+    except KeyError:
+        close = [e.id for e in reference.search(target.rsplit(".", 1)[-1], lang=lang, limit=8)]
+        hint = f"; did you mean: {', '.join(close)}" if close else ""
+        raise KeyError(f"no reference page for {name!r}{hint}") from None
+    return {"id": page.entry.id, "title": page.entry.title, "url": page.url, "body": page.body}
+
+
+def editor_keymap() -> Dict[str, Any]:
+    """The default key bindings of Pyzed's code editor (``ui.editor``, also used by Pyzed Design), by action."""
+    from ..ui.editor import DEFAULT_KEYS
+
+    return {"actions": {action: list(keys) for action, keys in DEFAULT_KEYS.items()},
+            "change": 'ui.editor(keymap={"ctrl-shift-d": "duplicate_line", "ctrl-d": None}) or '
+                      "keymap_for({action: 'keys, separated by commas'}) from pyzed.ui.editor",
+            "docs": f"{SITE}editor/keyboard-shortcuts/"}
 
 
 def _fetch(path: str) -> str:

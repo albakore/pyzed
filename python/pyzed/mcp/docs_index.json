@@ -1360,228 +1360,609 @@
  "examples": [
   {
    "name": "ai_chat",
+   "kind": "app",
    "summary": "A streaming AI chat: any OpenAI-compatible server through httpx, with a built-in demo stream.",
    "path": "examples/ai_chat.py"
   },
   {
    "name": "animations",
+   "kind": "app",
    "summary": "Animations and effects: presets, hover and press motion, transitions, presence and glass.",
    "path": "examples/animations.py"
   },
   {
    "name": "clock",
+   "kind": "app",
    "summary": "An analog clock drawn on a canvas, after Iced's ``clock`` demo.",
    "path": "examples/clock.py"
   },
   {
    "name": "color_picker",
+   "kind": "app",
    "summary": "Color picker: a color with alpha, a linear gradient, or a fill with an opacity mask.",
    "path": "examples/color_picker.py"
   },
   {
    "name": "components",
+   "kind": "app",
    "summary": "Custom components and events: a star rating, a tag editor and a draggable note.",
    "path": "examples/components.py"
   },
   {
    "name": "context_menu",
+   "kind": "app",
    "summary": "A right-click context menu built from ``ui.popover`` and ``ui.menu``.",
    "path": "examples/context_menu.py"
   },
   {
    "name": "counter",
+   "kind": "app",
    "summary": "The smallest Pyzed app: state + update + view.",
    "path": "examples/counter.py"
   },
   {
    "name": "dialogs",
+   "kind": "app",
    "summary": "Dialogs and languages: ready-made dialogs and switching the app's language while it runs.",
    "path": "examples/dialogs.py"
   },
   {
    "name": "download_progress",
+   "kind": "app",
    "summary": "Concurrent downloads with live progress, after Iced's ``download_progress`` demo.",
    "path": "examples/download_progress.py"
   },
   {
    "name": "downloads",
+   "kind": "app",
    "summary": "Background work without freezing the UI: Command.perform, pz.post from threads, progress bars and toasts.",
    "path": "examples/downloads.py"
   },
   {
    "name": "effects",
+   "kind": "app",
    "summary": "Effects drawn by the renderer: rotation, blur, backdrop blur, glass and bloom, animated.",
    "path": "examples/effects.py"
   },
   {
    "name": "gallery",
+   "kind": "app",
    "summary": "A tour of the ready-made components in ``pyzed.ui``.",
    "path": "examples/gallery.py"
   },
   {
    "name": "game_of_life",
+   "kind": "app",
    "summary": "Conway's Game of Life, after Iced's ``game_of_life`` demo.",
    "path": "examples/game_of_life.py"
   },
   {
    "name": "image_viewer",
+   "kind": "app",
    "summary": "Bitmap images: ``pz.image`` and the zoomable ``pz.image_viewer``.",
    "path": "examples/image_viewer.py"
   },
   {
    "name": "layout",
+   "kind": "app",
    "summary": "Layout: track grids, flex rows and a Zed-style dock with movable, resizable panels.",
    "path": "examples/layout.py"
   },
   {
    "name": "markdown_viewer",
+   "kind": "app",
    "summary": "A live Markdown editor: code editor on the left, rendered preview on the right.",
    "path": "examples/markdown_viewer.py"
   },
   {
    "name": "mini_editor",
+   "kind": "app",
    "summary": "A small Zed-like editor in ~150 lines: project tree, tabs, code editor, save, docks and command palette.",
    "path": "examples/mini_editor.py"
   },
   {
    "name": "multi_window",
+   "kind": "app",
    "summary": "Several windows in one app, after Iced's ``multi_window`` demo.",
    "path": "examples/multi_window.py"
   },
   {
    "name": "panes",
+   "kind": "app",
    "summary": "Resizable panes, after Iced's ``pane_grid`` demo, using nested ``ui.split``.",
    "path": "examples/panes.py"
   },
   {
    "name": "pomodoro",
+   "kind": "app",
    "summary": "A Pomodoro timer: the app built step by step in the AI prompting guide.",
    "path": "examples/pomodoro.py"
   },
   {
    "name": "qr_code",
+   "kind": "app",
    "summary": "Type something and get its QR code, after Iced's ``qr_code`` demo.",
    "path": "examples/qr_code.py"
   },
   {
    "name": "stopwatch",
+   "kind": "app",
    "summary": "A stopwatch with laps, after Iced's ``stopwatch`` demo.",
    "path": "examples/stopwatch.py"
   },
   {
    "name": "styles",
+   "kind": "app",
    "summary": "Styles: CSS-like properties on any widget, named styles, gradients, masks and a global style.",
    "path": "examples/styles.py"
   },
   {
    "name": "styling",
+   "kind": "app",
    "summary": "Theming playground, after Iced's ``styling`` demo.",
    "path": "examples/styling.py"
   },
   {
    "name": "todo",
+   "kind": "app",
    "summary": "A to-do list: state, text input, list items, filters and keyboard shortcuts.",
    "path": "examples/todo.py"
   },
   {
    "name": "todos",
+   "kind": "app",
    "summary": "Todos, after Iced's ``todos`` demo: add, edit, complete, filter and persist tasks.",
    "path": "examples/todos.py"
   },
   {
    "name": "websocket_stream",
+   "kind": "app",
    "summary": "Live data with ``pz.listen``: a subscription backed by an async generator.",
    "path": "examples/websocket_stream.py"
   },
   {
    "name": "window_frame",
+   "kind": "app",
    "summary": "A window with a frame drawn by Pyzed: title bar, menus on the left like Zed and the window buttons.",
    "path": "examples/window_frame.py"
   },
   {
    "name": "zed_editor",
+   "kind": "app",
    "summary": "A recreation of the Zed editor written with Pyzed.",
    "path": "examples/zed_editor.py"
   },
   {
    "name": "tutorial/step1_hello",
+   "kind": "tutorial",
    "summary": "Tutorial, step 1: a window with some text.",
    "path": "examples/tutorial/step1_hello.py"
   },
   {
    "name": "tutorial/step2_state",
+   "kind": "tutorial",
    "summary": "Tutorial, step 2: state, messages and callbacks.",
    "path": "examples/tutorial/step2_state.py"
   },
   {
    "name": "tutorial/step3_layout",
+   "kind": "tutorial",
    "summary": "Tutorial, step 3: layout, ready-made components and themes.",
    "path": "examples/tutorial/step3_layout.py"
   },
   {
    "name": "tutorial/step4_async",
+   "kind": "tutorial",
    "summary": "Tutorial, step 4: async work without freezing the window.",
    "path": "examples/tutorial/step4_async.py"
   },
   {
    "name": "tutorial/step5_notes",
+   "kind": "tutorial",
    "summary": "Tutorial, step 5: a small notes app that puts it all together.",
    "path": "examples/tutorial/step5_notes.py"
   },
   {
    "name": "blocks/chat",
+   "kind": "blocks",
    "summary": "Chat block: a team messenger with channels, direct messages, a message thread and a composer.",
    "path": "examples/blocks/chat.py"
   },
   {
    "name": "blocks/dashboard",
+   "kind": "blocks",
    "summary": "Dashboard block: sidebar navigation, KPI cards, a revenue chart, traffic sources and recent orders.",
    "path": "examples/blocks/dashboard.py"
   },
   {
    "name": "blocks/data_table",
+   "kind": "blocks",
    "summary": "Data table block: a team members table with search, status filters, sorting, selection and paging.",
    "path": "examples/blocks/data_table.py"
   },
   {
    "name": "blocks/file_explorer",
+   "kind": "blocks",
    "summary": "IDE layout block: a project tree, editor tabs with breadcrumbs, a terminal, an outline panel and a status bar.",
    "path": "examples/blocks/file_explorer.py"
   },
   {
    "name": "blocks/kanban",
+   "kind": "blocks",
    "summary": "Kanban block: a project board with columns, labelled cards, assignees, progress and moving cards along.",
    "path": "examples/blocks/kanban.py"
   },
   {
    "name": "blocks/login",
+   "kind": "blocks",
    "summary": "Login block: a split sign-in screen with a brand panel, single sign-on, passkey and an email form.",
    "path": "examples/blocks/login.py"
   },
   {
    "name": "blocks/music_player",
+   "kind": "blocks",
    "summary": "Music player block: a library sidebar, an album page with a track list and a player bar with live progress.",
    "path": "examples/blocks/music_player.py"
   },
   {
    "name": "blocks/onboarding",
+   "kind": "blocks",
    "summary": "Onboarding block: a multi-step setup wizard with a stepper, choice cards, validation and a summary.",
    "path": "examples/blocks/onboarding.py"
   },
   {
    "name": "blocks/settings",
+   "kind": "blocks",
    "summary": "Settings block: a sectioned settings page with profile, appearance, notifications and a danger zone.",
    "path": "examples/blocks/settings.py"
   },
   {
+   "name": "games/breakout",
+   "kind": "games",
+   "summary": "Breakout: a paddle, a ball and a wall of bricks, running at the display's frame rate.",
+   "path": "examples/games/breakout.py"
+  },
+  {
+   "name": "games/neon_invaders",
+   "kind": "games",
+   "summary": "Neon Invaders: a space shooter with a glowing HUD, particles, bloom and screen shake.",
+   "path": "examples/games/neon_invaders.py"
+  },
+  {
+   "name": "games/snake",
+   "kind": "games",
+   "summary": "Snake: the classic, in about 150 lines of Pyzed.",
+   "path": "examples/games/snake.py"
+  },
+  {
+   "name": "showcase/glass_dashboard",
+   "kind": "showcase",
+   "summary": "A frosted-glass control center: music, lights, climate and a schedule over moving color.",
+   "path": "examples/showcase/glass_dashboard.py"
+  },
+  {
+   "name": "showcase/hud",
+   "kind": "showcase",
+   "summary": "A game HUD: health and mana bars, a radar minimap, an ability bar and a quest tracker.",
+   "path": "examples/showcase/hud.py"
+  },
+  {
+   "name": "showcase/inventory",
+   "kind": "showcase",
+   "summary": "An RPG inventory: a grid of items whose rarity glows, and a glass details panel.",
+   "path": "examples/showcase/inventory.py"
+  },
+  {
+   "name": "showcase/main_menu",
+   "kind": "showcase",
+   "summary": "A game's main menu: a synthwave shader backdrop, a glowing title and glass buttons.",
+   "path": "examples/showcase/main_menu.py"
+  },
+  {
+   "name": "showcase/shaders",
+   "kind": "showcase",
+   "summary": "A gallery of ``pz.shader`` widgets: plasma, a ripple that follows the pointer, a tunnel, a CRT screen, Voronoi cells and a fire, each a few lines of WGSL.",
+   "path": "examples/showcase/shaders.py"
+  },
+  {
    "name": "designer/login",
+   "kind": "designer",
    "summary": "Event handlers for the login form.",
    "path": "examples/designer/login.py"
   },
   {
    "name": "designer/login.pzform",
+   "kind": "designer",
    "summary": "A form made with the visual designer (.pzform layout).",
    "path": "examples/designer/login.pzform"
+  },
+  {
+   "name": "integrations/README.md",
+   "kind": "integrations",
+   "summary": "What the examples in this folder show and how to run them.",
+   "path": "examples/integrations/README.md"
+  },
+  {
+   "name": "integrations/aiosqlite_journal/main",
+   "kind": "integrations",
+   "summary": "A journal on aiosqlite: one async SQLite connection living on Pyzed's asyncio loop.",
+   "path": "examples/integrations/aiosqlite_journal/main.py"
+  },
+  {
+   "name": "integrations/aiosqlite_journal/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/aiosqlite_journal/pyproject.toml"
+  },
+  {
+   "name": "integrations/django_polls/client",
+   "kind": "integrations",
+   "summary": "Desktop client for the Django site over HTTP: the site runs on its own, the window uses its JSON API.",
+   "path": "examples/integrations/django_polls/client.py"
+  },
+  {
+   "name": "integrations/django_polls/desktop",
+   "kind": "integrations",
+   "summary": "Desktop app on Django's ORM: the models, validation and database of the site, with no web server.",
+   "path": "examples/integrations/django_polls/desktop.py"
+  },
+  {
+   "name": "integrations/django_polls/manage",
+   "kind": "integrations",
+   "summary": "Django's command-line utility for administrative tasks.",
+   "path": "examples/integrations/django_polls/manage.py"
+  },
+  {
+   "name": "integrations/django_polls/mysite/__init__",
+   "kind": "integrations",
+   "summary": "",
+   "path": "examples/integrations/django_polls/mysite/__init__.py"
+  },
+  {
+   "name": "integrations/django_polls/mysite/asgi",
+   "kind": "integrations",
+   "summary": "ASGI config for mysite project.",
+   "path": "examples/integrations/django_polls/mysite/asgi.py"
+  },
+  {
+   "name": "integrations/django_polls/mysite/settings",
+   "kind": "integrations",
+   "summary": "Django settings for mysite project.",
+   "path": "examples/integrations/django_polls/mysite/settings.py"
+  },
+  {
+   "name": "integrations/django_polls/mysite/urls",
+   "kind": "integrations",
+   "summary": "URL configuration for mysite project.",
+   "path": "examples/integrations/django_polls/mysite/urls.py"
+  },
+  {
+   "name": "integrations/django_polls/mysite/wsgi",
+   "kind": "integrations",
+   "summary": "WSGI config for mysite project.",
+   "path": "examples/integrations/django_polls/mysite/wsgi.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/__init__",
+   "kind": "integrations",
+   "summary": "",
+   "path": "examples/integrations/django_polls/polls/__init__.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/admin",
+   "kind": "integrations",
+   "summary": "The admin from Django's tutorial, part 7: https://docs.djangoproject.com/en/stable/intro/tutorial07/",
+   "path": "examples/integrations/django_polls/polls/admin.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/apps",
+   "kind": "integrations",
+   "summary": "",
+   "path": "examples/integrations/django_polls/polls/apps.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/models",
+   "kind": "integrations",
+   "summary": "The models from Django's tutorial, part 2: https://docs.djangoproject.com/en/stable/intro/tutorial02/",
+   "path": "examples/integrations/django_polls/polls/models.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/urls",
+   "kind": "integrations",
+   "summary": "",
+   "path": "examples/integrations/django_polls/polls/urls.py"
+  },
+  {
+   "name": "integrations/django_polls/polls/views",
+   "kind": "integrations",
+   "summary": "The views from Django's tutorial (parts 3 and 4), plus a small JSON API for the desktop client.",
+   "path": "examples/integrations/django_polls/polls/views.py"
+  },
+  {
+   "name": "integrations/django_polls/polls_window",
+   "kind": "integrations",
+   "summary": "The Pyzed window shared by desktop.py (Django ORM in this process) and client.py (HTTP to the site).",
+   "path": "examples/integrations/django_polls/polls_window.py"
+  },
+  {
+   "name": "integrations/django_polls/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/django_polls/pyproject.toml"
+  },
+  {
+   "name": "integrations/fastapi_heroes/client",
+   "kind": "integrations",
+   "summary": "Architecture 1, client and server: the API runs on its own and the window talks to it over HTTP.",
+   "path": "examples/integrations/fastapi_heroes/client.py"
+  },
+  {
+   "name": "integrations/fastapi_heroes/embedded",
+   "kind": "integrations",
+   "summary": "Architecture 2, embedded server: one program starts the API and opens the window.",
+   "path": "examples/integrations/fastapi_heroes/embedded.py"
+  },
+  {
+   "name": "integrations/fastapi_heroes/heroes_window",
+   "kind": "integrations",
+   "summary": "The Pyzed window: a desktop client for the heroes API in main.py, written with httpx.",
+   "path": "examples/integrations/fastapi_heroes/heroes_window.py"
+  },
+  {
+   "name": "integrations/fastapi_heroes/in_process",
+   "kind": "integrations",
+   "summary": "Architecture 3, in process: the window calls the FastAPI app directly, with no server or port.",
+   "path": "examples/integrations/fastapi_heroes/in_process.py"
+  },
+  {
+   "name": "integrations/fastapi_heroes/main",
+   "kind": "integrations",
+   "summary": "The FastAPI app, exactly as FastAPI's \"SQL (Relational) Databases\" tutorial writes it: https://fastapi.tiangolo.com/tutorial/sql-databases/",
+   "path": "examples/integrations/fastapi_heroes/main.py"
+  },
+  {
+   "name": "integrations/fastapi_heroes/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/fastapi_heroes/pyproject.toml"
+  },
+  {
+   "name": "integrations/httpx_download/main",
+   "kind": "integrations",
+   "summary": "A download manager built on httpx's streaming responses, with a live progress bar.",
+   "path": "examples/integrations/httpx_download/main.py"
+  },
+  {
+   "name": "integrations/httpx_download/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/httpx_download/pyproject.toml"
+  },
+  {
+   "name": "integrations/httpx_pypi/main",
+   "kind": "integrations",
+   "summary": "A PyPI explorer: concurrent httpx requests streamed into the window, responses validated by Pydantic.",
+   "path": "examples/integrations/httpx_pypi/main.py"
+  },
+  {
+   "name": "integrations/httpx_pypi/pypi",
+   "kind": "integrations",
+   "summary": "PyPI's JSON API, described with Pydantic models and fetched with httpx.",
+   "path": "examples/integrations/httpx_pypi/pypi.py"
+  },
+  {
+   "name": "integrations/httpx_pypi/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/httpx_pypi/pyproject.toml"
+  },
+  {
+   "name": "integrations/pydantic_signup/main",
+   "kind": "integrations",
+   "summary": "A sign-up form whose rules live in a Pydantic model; accounts are saved to accounts.json.",
+   "path": "examples/integrations/pydantic_signup/main.py"
+  },
+  {
+   "name": "integrations/pydantic_signup/models",
+   "kind": "integrations",
+   "summary": "The form's rules, written as Pydantic models (https://docs.pydantic.dev/latest/concepts/models/).",
+   "path": "examples/integrations/pydantic_signup/models.py"
+  },
+  {
+   "name": "integrations/pydantic_signup/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/pydantic_signup/pyproject.toml"
+  },
+  {
+   "name": "integrations/sqlalchemy_contacts/db",
+   "kind": "integrations",
+   "summary": "The database: SQLAlchemy 2.0 models on SQLite, plus the queries the window runs.",
+   "path": "examples/integrations/sqlalchemy_contacts/db.py"
+  },
+  {
+   "name": "integrations/sqlalchemy_contacts/main",
+   "kind": "integrations",
+   "summary": "A contacts manager on SQLAlchemy 2.0: 20,000 rows in a virtual table, searched and sorted in SQL.",
+   "path": "examples/integrations/sqlalchemy_contacts/main.py"
+  },
+  {
+   "name": "integrations/sqlalchemy_contacts/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/sqlalchemy_contacts/pyproject.toml"
+  },
+  {
+   "name": "integrations/sqlalchemy_quickstart/async_backend",
+   "kind": "integrations",
+   "summary": "The same database code with SQLAlchemy's asyncio extension and the aiosqlite driver.",
+   "path": "examples/integrations/sqlalchemy_quickstart/async_backend.py"
+  },
+  {
+   "name": "integrations/sqlalchemy_quickstart/main",
+   "kind": "integrations",
+   "summary": "SQLAlchemy's ORM Quick Start in a Pyzed window: users and their email addresses.",
+   "path": "examples/integrations/sqlalchemy_quickstart/main.py"
+  },
+  {
+   "name": "integrations/sqlalchemy_quickstart/models",
+   "kind": "integrations",
+   "summary": "The models of SQLAlchemy's ORM Quick Start: https://docs.sqlalchemy.org/en/20/orm/quickstart.html",
+   "path": "examples/integrations/sqlalchemy_quickstart/models.py"
+  },
+  {
+   "name": "integrations/sqlalchemy_quickstart/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/sqlalchemy_quickstart/pyproject.toml"
+  },
+  {
+   "name": "integrations/sqlalchemy_quickstart/sync_backend",
+   "kind": "integrations",
+   "summary": "The database code, as the Quick Start writes it: an Engine, a Session per unit of work, select().",
+   "path": "examples/integrations/sqlalchemy_quickstart/sync_backend.py"
+  },
+  {
+   "name": "integrations/sqlmodel_heroes/db",
+   "kind": "integrations",
+   "summary": "Queries the window runs (in worker threads): select(), where(), relationships, add, delete.",
+   "path": "examples/integrations/sqlmodel_heroes/db.py"
+  },
+  {
+   "name": "integrations/sqlmodel_heroes/main",
+   "kind": "integrations",
+   "summary": "SQLModel's tutorial in a Pyzed window: teams, heroes, where() filters and a validated form.",
+   "path": "examples/integrations/sqlmodel_heroes/main.py"
+  },
+  {
+   "name": "integrations/sqlmodel_heroes/models",
+   "kind": "integrations",
+   "summary": "The tables of SQLModel's tutorial (\"Relationship Attributes\"): https://sqlmodel.tiangolo.com/tutorial/",
+   "path": "examples/integrations/sqlmodel_heroes/models.py"
+  },
+  {
+   "name": "integrations/sqlmodel_heroes/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/sqlmodel_heroes/pyproject.toml"
+  },
+  {
+   "name": "integrations/sqlmodel_inventory/main",
+   "kind": "integrations",
+   "summary": "An inventory app on SQLModel: the form is validated by the same model that defines the table.",
+   "path": "examples/integrations/sqlmodel_inventory/main.py"
+  },
+  {
+   "name": "integrations/sqlmodel_inventory/models",
+   "kind": "integrations",
+   "summary": "SQLModel models: one class is both the Pydantic schema and the database table.",
+   "path": "examples/integrations/sqlmodel_inventory/models.py"
+  },
+  {
+   "name": "integrations/sqlmodel_inventory/pyproject.toml",
+   "kind": "integrations",
+   "summary": "The project's dependencies (pyproject.toml).",
+   "path": "examples/integrations/sqlmodel_inventory/pyproject.toml"
   }
  ],
  "api": {
