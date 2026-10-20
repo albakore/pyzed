@@ -68,9 +68,11 @@ enum Action<M> {
     Runtime(runtime::Action<M>),
 }
 
+type DriverRuntime<E, M> = Runtime<E, mpsc::Sender<Action<M>>, Action<M>>;
+
 struct Driver<P: Program> {
     state: P::State,
-    runtime: Runtime<P::Executor, mpsc::Sender<Action<P::Message>>, Action<P::Message>>,
+    runtime: DriverRuntime<P::Executor, P::Message>,
     receiver: mpsc::Receiver<Action<P::Message>>,
     renderer: P::Renderer,
     size: Size,
