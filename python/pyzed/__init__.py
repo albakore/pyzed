@@ -28,6 +28,8 @@ import os as _os
 _os.environ.setdefault("MIMALLOC_ARENA_EAGER_COMMIT", "0")
 del _os
 
+import functools as _functools  # noqa: E402
+
 from ._core import (  # noqa: E402 - after the allocator options above
     Command,
     Span,
@@ -63,7 +65,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
     row,
     rule,
     scrollable,
-    shader,
+    shader as _shader,
     slider,
     space,
     span,
@@ -143,6 +145,21 @@ def hspace(width="fill"):
 def vspace(height="fill"):
     """Flexible vertical gap (pushes siblings in a column apart)."""
     return space(height=height)
+
+
+def _shader_uniform(value):
+    # Theme tokens ("accent", "text_muted"...) become the current theme's color; the core takes hex.
+    if isinstance(value, str) and not value.startswith("#") and isinstance(getattr(theme.current(), value, None), str):
+        return theme.current().color(value)
+    return value
+
+
+@_functools.wraps(_shader)
+def shader(code, *args, uniforms=None, **kwargs):
+    if uniforms:
+        uniforms = {name: _shader_uniform(value) for name, value in dict(uniforms).items()}
+        kwargs["uniforms"] = uniforms
+    return _shader(code, *args, **kwargs)
 
 
 def center(content, **kwargs):
