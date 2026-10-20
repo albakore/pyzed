@@ -317,8 +317,8 @@ def palette(d: "Designer", t: Theme) -> Any:
 
 
 def places(d: "Designer", t: Theme) -> List[Any]:
-    """The places of the editor the palette goes to: the panels, the sections of the editor settings (key
-    bindings too) and the recent files (the general settings are already a command)."""
+    """The places of the editor the palette goes to: the panels, the sections of the editor settings and the
+    recent files (the general settings and the keymap editor are already commands)."""
     from . import code_panel, docks
 
     def go(open_place: Any) -> Any:
@@ -340,9 +340,6 @@ def places(d: "Designer", t: Theme) -> List[Any]:
     for key, (title, icon, _build) in code_panel._settings_sections(d.assist, t).items():
         items.append(ui.PaletteItem(f"{tr('Editor settings')}: {title}", go(lambda k=key: editor_section(k)),
                                     icon=icon))
-    for page, title, _keys in code_panel.KEY_GROUPS:
-        items.append(ui.PaletteItem(f"{tr('Key bindings')}: {tr(title)}",
-                                    go(lambda p=page: editor_section(f"keys:{p}")), icon="keyboard"))
     for path in d.prefs.recent:
         items.append(ui.PaletteItem(f"{tr('Recent')}: {Path(path).name}", go(lambda p=path: d._open_recent(p)),
                                     icon="history", detail=str(Path(path).parent)))

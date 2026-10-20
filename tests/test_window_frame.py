@@ -181,7 +181,6 @@ def test_designer_title_center_and_palette_places():
     assert d.dialog == "palette" and d.dialog_view(d.theme_obj) is not None
     places = {item.label: item for item in dialogs.places(d, d.theme_obj)}
     assert "Panel: Properties" in places and "Editor settings: Cursor" in places
-    assert "Key bindings: Folding" in places
     places["Editor settings: Cursor"].on_press()
     assert d.dialog == "editor_settings" and d.assist.settings_section == "cursor"
     d.open_palette()

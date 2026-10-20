@@ -119,8 +119,8 @@ tiene un tooltip con su atajo, y las herramientas de edición se desplazan de la
 
 El buscador del centro de la barra de título, o <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, abre un buscador sobre
 todos los comandos que se pueden ejecutar en ese momento, como `Grupo: Comando` con su atajo, y sobre los lugares del
-editor: `Panel: Propiedades` muestra un panel, `Ajustes del editor: Cursor` y `Atajos de teclado: Plegado` abren esa
-página de los [ajustes del editor](/pyzed/es/editor/code-editor/#ajustes-del-editor), y `Recientes: login.pzform` abre un archivo reciente. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
+editor: `Panel: Propiedades` muestra un panel, `Ajustes del editor: Cursor` abre esa
+página de los [ajustes del editor](/pyzed/es/editor/code-editor/#ajustes-del-editor) (las teclas están en `Archivo: Editor de keymap`), y `Recientes: login.pzform` abre un archivo reciente. Escribe unas letras (la búsqueda es difusa: `vcu` encuentra
 *Ver: Cuadrícula*), <kbd>↑</kbd>/<kbd>↓</kbd> para moverte, <kbd>Enter</kbd> para ejecutar, <kbd>Esc</kbd> para
 cerrar. También llega a los comandos que no tienen menú, como los de Editar.
 

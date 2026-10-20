@@ -118,8 +118,8 @@ button has a tooltip with its shortcut, and the editing tools scroll sideways wh
 
 The search field in the middle of the title bar, or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>, opens a search box
 over every command that can run right now, as `Group: Command` with its shortcut, and over the places of the editor:
-`Panel: Properties` shows a panel, `Editor settings: Cursor` and `Key bindings: Folding` open that page of the
-[editor settings](/pyzed/editor/code-editor/#editor-settings), and `Recent: login.pzform` opens a recent file. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
+`Panel: Properties` shows a panel, `Editor settings: Cursor` opens that page of the
+[editor settings](/pyzed/editor/code-editor/#editor-settings) (the keys are in `File: Keymap editor`), and `Recent: login.pzform` opens a recent file. Type a few letters (the search is fuzzy: `vgr` finds *View: Grid*),
 <kbd>↑</kbd>/<kbd>↓</kbd> to move, <kbd>Enter</kbd> to run, <kbd>Esc</kbd> to close. It also reaches commands that
 have no menu, such as the Edit ones.
 
