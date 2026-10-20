@@ -30,6 +30,17 @@ def _issue(node: Optional[ast.AST], severity: str, message: str) -> Dict[str, An
             "severity": severity, "message": message}
 
 
+def _positional(func: Any) -> Optional[int]:
+    """How many positional arguments ``func`` takes, or ``None`` when it takes any (``*args``) or is unknown."""
+    try:
+        params = inspect.signature(func).parameters.values()
+    except (TypeError, ValueError):
+        return None
+    if any(p.kind is p.VAR_POSITIONAL for p in params):
+        return None
+    return sum(p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD) for p in params)
+
+
 def _accepted(func: Any) -> Optional[Set[str]]:
     """The keyword names ``func`` takes, or ``None`` when it takes any (``**kwargs``) or is unknown."""
     try:
@@ -105,7 +116,14 @@ class _Checker(ast.NodeVisitor):
             name, func = target
             if name.endswith(".run") or name == "run":
                 self.runs.append(node)
-            accepted = _accepted(func) if callable(func) and not inspect.isclass(func) else None
+            plain = callable(func) and not inspect.isclass(func)
+            most = _positional(func) if plain else None
+            given = len(node.args)
+            if most is not None and given > most and not any(isinstance(a, ast.Starred) for a in node.args):
+                self.issues.append(_issue(node, "error", f"{name}() takes {most} positional argument"
+                                                         f"{'' if most == 1 else 's'} but {given} were given; "
+                                                         "pass the rest by keyword"))
+            accepted = _accepted(func) if plain else None
             if accepted is not None:
                 for kw in node.keywords:
                     if kw.arg is not None and kw.arg not in accepted:

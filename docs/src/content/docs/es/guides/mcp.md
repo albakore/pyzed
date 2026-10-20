@@ -22,7 +22,9 @@ pyzed mcp                       # arranca el servidor por stdio (también python
 Casi nunca lo ejecutas tú: lo arranca el agente. Con [uv](https://docs.astral.sh/uv/) el agente puede
 ejecutarlo sin instalar nada antes, con `uvx --from "pyzed-ui[mcp]" pyzed mcp`.
 
-`pyzed mcp --transport streamable-http` lo sirve por HTTP en `127.0.0.1`. Ahí cualquier programa de tu equipo puede usarlo sin iniciar sesión, así que la herramienta `screenshot`, que ejecuta el código que recibe, se omite salvo que añadas `--allow-code`.
+`pyzed mcp --transport streamable-http` lo sirve por HTTP en `127.0.0.1`. Ahí cualquier programa de tu equipo puede usarlo sin iniciar sesión, así que `screenshot` y las herramientas de proyecto, que leen y escriben archivos y ejecutan código, se omiten salvo que añadas `--allow-code`.
+
+Las herramientas de proyecto trabajan en la carpeta donde arrancó el servidor; `pyzed mcp --root RUTA` elige otra. Nunca salen de ella ni tocan archivos que puedan guardar secretos (`.env`, claves, `.netrc`...).
 
 ## Conecta tu agente
 
@@ -70,13 +72,16 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 
 | Herramienta | Qué hace |
 | --- | --- |
-| `get_guide` | Cómo funciona Pyzed (`"overview"`) y sus reglas (`"best-practices"`). |
+| `get_guide` | Cómo funciona Pyzed (`"overview"`), sus reglas (`"best-practices"`), recetas ejecutables (`"cookbook"`: estructura de una app, trabajo en segundo plano, formularios, listas virtuales, animación, shaders, juegos, marcos de ventana propios, layouts con anclas) o cualquier tema de `list_guides` (`"games"`, `"shaders"`, `"performance"`, `"integrations"`...), en inglés o en español. |
+| `list_guides` | Todos los temas que acepta `get_guide`. |
 | `list_components` | Cada widget (`pz.*`), componente estilo Zed (`pz.ui.*`), tipo de la caja de herramientas del diseñador y clase `pz.Component`, con un resumen de una línea. Filtra por `kind`, `query` o `category`. |
 | `describe_component` | La firma, la documentación y los parámetros de un widget o componente (`"pz.column"`, `"ui.button"`), o las propiedades y eventos de un tipo del diseñador (`"designer:button"`). |
+| `search_reference`, `read_reference` | Buscan y leen la [referencia](/pyzed/es/reference/) de cada módulo, clase y función (`pyzed.game`, `pyzed.updater`, `ui.virtual_list`...). |
+| `editor_keymap` | Los atajos por defecto del editor de código y cómo cambiarlos. |
 | `search_icons` | Nombres de iconos Lucide para `icon=` y `pz.icon`. |
 | `list_themes` | Los temas incluidos y los tokens de color que aceptan los estilos (`"accent"`, `"panel"`...). |
 | `list_docs`, `read_docs` | Las páginas de esta documentación, en inglés o en español. |
-| `list_examples`, `read_example` | El código de las apps de ejemplo (un editor tipo Zed, una lista de tareas, diálogos...). |
+| `list_examples`, `read_example` | El código de los ejemplos, por `kind`: apps, bloques (pantallas completas para copiar), juegos, showcase (shaders, efectos), integraciones con backend (FastAPI, SQLAlchemy, SQLModel, Django), tutorial y diseñador. |
 | `new_app` | Un script `pz.App` ejecutable: un punto de partida simple o un workspace tipo Zed. |
 | `new_component` | El esqueleto de un `pz.Component` con sus props, estado y eventos. |
 | `new_form` | Un formulario del diseñador visual: el `.pzform` y su módulo de handlers. |
@@ -84,14 +89,31 @@ Si Pyzed ya está instalado en un entorno, `"command": "pyzed", "args": ["mcp"]`
 | `validate_form` | Revisa un `.pzform` (tipos, propiedades, eventos, nombres, contenedores) y que su módulo de handlers defina cada handler. |
 | `screenshot` | Dibuja el código fuera de pantalla (sin ventana ni GPU) y devuelve un PNG, para que el agente vea lo que construyó. |
 
+### Herramientas de proyecto
+
+Con ellas el agente construye una app completa en una carpeta, desde el proyecto hasta una revisión limpia:
+
+| Herramienta | Qué hace |
+| --- | --- |
+| `project_info` | El proyecto: nombre, versión, formulario principal, formularios, componentes, paquete, dependencias y archivos. |
+| `list_files`, `read_file` | Listan y leen los archivos de la carpeta. |
+| `write_files` | Crea o reemplaza varios archivos a la vez y revisa cada archivo Python y formulario que escribió. |
+| `create_project` | Un proyecto uv nuevo, como `pyzed new` (pyzed-ui, ruff, ty, `ui/main.pzform`, `src/<paquete>`, git). |
+| `add_dependency` | `uv add` en el proyecto. |
+| `check_project` | Las comprobaciones de Pyzed en cada archivo, más ruff y ty. |
+| `run_tests` | `uv run pytest` en el proyecto. |
+| `screenshot_project` | Una captura de un formulario o script de la carpeta, por defecto el formulario principal. |
+
 ### Recursos y prompts
 
 Los clientes que admiten recursos pueden adjuntar `pyzed://guide`, `pyzed://best-practices`,
-`pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` y
+`pyzed://cookbook`, `pyzed://reference/{name}`, `pyzed://components`, `pyzed://themes`, `pyzed://docs`, `pyzed://component/{name}` y
 `pyzed://docs/{slug}` (con `--` en lugar de `/`, como `guides--layout`).
 
 Los prompts `create_app`, `create_component` y `create_form` empiezan una tarea con los pasos correctos:
-leer las guías, buscar componentes existentes, generar, validar y previsualizar.
+leer las guías, buscar componentes existentes, generar, validar y previsualizar. `build_project` construye
+una app completa en la carpeta: lee las guías y ejemplos, crea el proyecto, lo escribe en pasos pequeños
+y luego lo revisa, lo prueba y lo mira hasta que todo esté limpio.
 
 ## Ejemplo de sesión
 
@@ -117,7 +139,7 @@ descargan de GitHub en el tag de la versión instalada.
 que no se abre ninguna ventana. Usa el mismo renderizador fuera de pantalla que
 [tests y capturas](/pyzed/es/guides/testing/).
 
-`pyzed.mcp.knowledge`, `pyzed.mcp.scaffold` y `pyzed.mcp.validate` son Python normal y funcionan sin el SDK
+`pyzed.mcp.knowledge`, `pyzed.mcp.projects`, `pyzed.mcp.scaffold` y `pyzed.mcp.validate` son Python normal y funcionan sin el SDK
 de MCP, por ejemplo desde tus propios scripts o tests.
 
 ## Más sobre agentes de IA
