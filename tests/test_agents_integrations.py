@@ -1175,3 +1175,71 @@ def test_external_agents_open_windows_browser_under_wsl(monkeypatch):
     assert _platform.browser_env() == {"BROWSER": "/mnt/c/Windows/System32/rundll32.exe url.dll,FileProtocolHandler %s"}
     monkeypatch.setenv("BROWSER", "firefox")
     assert _platform.browser_env() == {}
+
+
+def test_project_rules_files_like_zed(tmp_path):
+    from pyzed.agents import rules
+
+    assert rules.find(tmp_path) is None and rules.prompt(None) == ""
+    (tmp_path / "CLAUDE.md").write_text("Use tabs.")
+    (tmp_path / "AGENTS.md").write_text("  \n")  # empty: skipped
+    assert rules.find(tmp_path).name == "CLAUDE.md"
+    (tmp_path / ".rules").write_text("Answer in Spanish.")
+    found = rules.find(tmp_path)
+    assert found.name == ".rules" and "<project_rules>\nAnswer in Spanish.\n</project_rules>" in rules.prompt(found)
+    other = tmp_path / "other"
+    path = rules.create(other)
+    assert path.name == "AGENTS.md" and rules.find(other).text.startswith("# Rules for AI agents")
+
+
+def test_the_agents_follow_the_active_project(tmp_path, monkeypatch):
+    import types
+
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    one, two = tmp_path / "one", tmp_path / "two"
+    one.mkdir()
+    two.mkdir()
+    (two / "AGENTS.md").write_text("Name buttons with a _button suffix.")
+    stream = []
+
+    def fake(model, system, messages, tools, *, settings, on_event, cancel, **kw):
+        stream.append(system)
+        on_event("text", "ok")
+        return llm.Turn([{"type": "text", "text": "ok"}], "end_turn", {"input": 10, "output": 5})
+
+    d = Designer(tmp_path / "main.pzform", language_servers=False)
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"), stream=fake)
+    monkeypatch.setattr(c, "save_settings", lambda: None)
+    c.thread.model = c.settings.model = "ollama:llama3"
+    monkeypatch.setattr(providers, "is_ready", lambda *a, **k: True)
+    environment = lambda: types.SimpleNamespace(describe=lambda: "This computer (Linux).", is_wsl=False)  # noqa: E731
+    project = lambda root: types.SimpleNamespace(root=root, environment=environment(), name=root.name)  # noqa: E731
+
+    def run(text):
+        c.send(text)
+        for _ in range(2000):
+            c.poll()
+            if not c.running:
+                return
+            time.sleep(0.005)
+        raise AssertionError("timed out")
+
+    d.projects.project = project(one)
+    c.project_changed(d.projects.project)
+    assert c.thread.project == str(one.resolve())  # an empty thread moves to the new project
+    run("hello")
+    assert "<project_rules>" not in stream[-1]
+    first = c.thread.id
+    d.projects.project = project(two)
+    c.project_changed(d.projects.project)  # another project: a new thread of its own
+    assert c.thread.id != first and not c.thread.messages and c.thread.project == str(two.resolve())
+    assert first not in [th.id for th in c.threads()]  # the history shows this project's threads
+    run("add a button")
+    assert "Name buttons with a _button suffix." in stream[-1] and c.project_rules().name == "AGENTS.md"
+    d.projects.project = project(one)
+    c.project_changed(d.projects.project)
+    assert first in [th.id for th in c.threads()]
+    c.open_rules()  # creates the project's AGENTS.md and opens it
+    assert (one / "AGENTS.md").is_file() and d.buffers.index_of(one / "AGENTS.md") is not None

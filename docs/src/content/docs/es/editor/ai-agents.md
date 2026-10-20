@@ -367,6 +367,7 @@ sitio salvo las peticiones al proveedor que elijas.
 | **Seguir al agente** | Abre los archivos que escribe el agente mientras trabaja. |
 | **Avisar cuando el agente termine** | Una notificación del escritorio mientras la ventana está en segundo plano. |
 | **Reglas** | Instrucciones añadidas a cada conversación: "Responde en español", "Nombra los botones con el sufijo `_button`"… |
+| **Reglas del proyecto** | El archivo de reglas propio del proyecto, como en Zed: el primero de `.rules`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, `AGENT.md`, `AGENTS.md`, `CLAUDE.md` o `GEMINI.md` en su raíz. Pyzed Agent lo lee en cada hilo de ese proyecto; **Abrir** lo edita y **Crear AGENTS.md** empieza uno. Los agentes externos leen el suyo (Claude Code lee `CLAUDE.md`). |
 
 ## Cómo obtener buenos resultados
 
@@ -389,6 +390,18 @@ Hay más prompts que funcionan bien en la [guía de prompts](/pyzed/es/ai/prompt
 **Historial** en la cabecera lista tus conversaciones agrupadas por fecha (hoy, ayer, esta semana…), con un
 buscador y el agente de cada una. Pulsa una para continuarla (el agente recuerda toda la conversación) o bórrala.
 Se guardan las últimas 200.
+
+## Trabajar sobre el proyecto activo
+
+Los agentes trabajan sobre el proyecto que tienes abierto: su carpeta es donde leen y escriben archivos, donde
+arrancan los agentes externos y los servidores MCP, y donde se buscan las skills y las reglas del proyecto. Cada
+mensaje les dice además dónde vive el proyecto (este equipo, o una distribución de WSL como Ubuntu, donde los
+comandos corren en Linux), su rama de Git y los otros proyectos de la ventana, así que un proyecto en WSL se trata
+como Linux desde el principio.
+
+Cada proyecto tiene sus propios hilos, como en Zed: al cambiar a otro proyecto (el selector de proyectos de la barra
+de título) se abre un hilo nuevo allí y el historial muestra los hilos de ese proyecto. El hilo en el que estabas
+queda en el historial de su propio proyecto. Una ejecución que sigue en marcha termina en el proyecto donde empezó.
 
 ## Usar agentes en tu propia app
 

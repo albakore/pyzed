@@ -215,7 +215,7 @@ class AgentController:
         self.d = designer
         self.settings = _providers.load()
         self.store = store or _agents.ThreadStore()
-        self.thread = _agents.Thread(model=self.settings.model)
+        self.thread = self._fresh_thread(self.settings.model)
         self.input = ""
         self.running = False
         self.error = ""
@@ -524,6 +524,65 @@ class AgentController:
             self._agent = None
             self._keep()
 
+    # -- the active project ---------------------------------------------------------------------------
+    def project_key(self) -> str:
+        """The folder of the active project (``""`` without one): threads are kept per project, like Zed's."""
+        project = getattr(getattr(self.d, "projects", None), "project", None)
+        return str(Path(project.root).resolve()) if project is not None else ""
+
+    def _fresh_thread(self, model: str) -> _agents.Thread:
+        return _agents.Thread(model=model, project=self.project_key())
+
+    def project_changed(self, project: Any) -> None:
+        """Another project became the active one: the agents follow it. External agents start again in its
+        folder, its skills and rules are looked up again, and the panel shows a new thread of that project
+        (the current one stays in the history of its own)."""
+        self._skills = None
+        self._files = None
+        if self.running:  # a run in progress finishes on the project it started on
+            return
+        self.close_external_agents()
+        self.mcp.close()
+        self.agent_auth = None
+        key = self.project_key()
+        if not self.thread.messages:
+            self.thread.project = key
+            return
+        if self.thread.project == key:
+            return
+        self._keep()
+        self.thread = self._fresh_thread(self.thread.model or self.settings.model)
+        self.view = "thread" if self.view == "history" else self.view
+        self.error = ""
+        self.snapshot = []
+        self.changed = False
+
+    def threads(self) -> List[_agents.Thread]:
+        """The saved threads of the active project (and the ones that belong to none), newest first."""
+        key = self.project_key()
+        return [th for th in self.store.list() if not th.project or th.project == key]
+
+    def project_rules(self) -> Any:
+        """The active project's rules file (``AGENTS.md``, ``CLAUDE.md``, ``.rules``...), or ``None``."""
+        from ..agents import rules as _rules
+
+        return _rules.find(self.project_root())
+
+    def open_rules(self) -> None:
+        """Opens the project's rules file in the code editor, creating ``AGENTS.md`` when there is none."""
+        from ..agents import rules as _rules
+
+        found = self.project_rules()
+        try:
+            path = found.path if found is not None else _rules.create(self.project_root())
+        except OSError as err:
+            self.d.notify(tr("Could not create {name}", name="AGENTS.md"), str(err), kind="error", seconds=5)
+            return
+        self.d.buffers.open(path)
+        files = getattr(getattr(self.d, "projects", None), "files", None)
+        if files is not None and found is None:
+            files.refresh()
+
     def _keep(self) -> None:
         """Saves the current thread, unless the settings say not to keep conversations."""
         if self.settings.keep_history:
@@ -624,6 +683,7 @@ class AgentController:
         self.agent_auth = None
         model = self.thread.model or self.settings.model
         self.thread.model = model
+        self.thread.project = self.thread.project or self.project_key()
         put = self._queue.put
         emit = lambda e: put(("event", e))  # noqa: E731
         jobs = [b for b in content if b.get("type") == "screenshot"]
@@ -635,10 +695,13 @@ class AgentController:
         else:
             from ..agents import skills as _skills
 
+            from ..agents import rules as _rules
+
             found = _skills.enabled(self.skills(), self.settings)
-            system = agent_tools.system_prompt(self.d)
+            system = "\n\n".join(part for part in (agent_tools.system_prompt(self.d), _skills.prompt(found) if found
+                                                    else "", _rules.prompt(self.project_rules())) if part)
             agent = _agents.Agent(model, tools=[*agent_tools.designer_tools(self.d), *_skills.tools(found)],
-                                  system=f"{system}\n\n{_skills.prompt(found)}" if found else system,
+                                  system=system,
                                   settings=self.settings,
                                   confirm=self._confirm, executor=self._execute, messages=self.thread.messages,
                                   max_turns=MAX_TURNS, stream=self._stream)
@@ -738,7 +801,7 @@ class AgentController:
             model = agent
         elif agent == "" and model.startswith("acp:"):
             model = next((m for m in self.models() if not m.startswith("acp:")), _providers.DEFAULT_MODEL)
-        self.thread = _agents.Thread(model=model)
+        self.thread = self._fresh_thread(model)
         if agent is not None and model != self.settings.model:
             self.settings.model = model
             self.save_settings()
@@ -761,7 +824,7 @@ class AgentController:
     def delete_thread(self, thread_id: str) -> None:
         self.store.delete(thread_id)
         if self.thread.id == thread_id:
-            self.thread = _agents.Thread(model=self.settings.model)
+            self.thread = self._fresh_thread(self.settings.model)
 
     def toggle_history(self) -> None:
         self.menu = None
@@ -2233,7 +2296,7 @@ def _review_bar(c: AgentController, t: Theme) -> Any:
 
 def _history(c: AgentController, t: Theme) -> Any:
     threads = [{"id": th.id, "title": th.display_title, "updated": th.updated, "detail": _thread_agent(c, th.model)}
-               for th in c.store.list()]
+               for th in c.threads()]
     return ui.ThreadHistory(threads=threads, selected=c.thread.id, theme=t, key="agent-history",
                             on_open=lambda e: c.open_thread(e.value), on_delete=lambda e: c.delete_thread(e.value))
 
@@ -2992,9 +3055,15 @@ def settings_view(d: "Designer", t: Theme) -> Any:
         "Folders with a SKILL.md: instructions and files the agent reads when a task needs them. Claude Code "
         "reads its own."), _skill_rows(c, t), t, actions=[
         ui.icon_button("refresh-cw", c.refresh_skills, size="sm", tooltip=tr("Look for skills again"), theme=t)])
+    found = c.project_rules()
     rules = _section(tr("Rules"), tr("Instructions added to every thread, like Zed's rules."), [
         ui.input(s.rules, lambda v: c.set_setting("rules", v), placeholder=tr(
-            "e.g. Answer in Spanish. Use snake_case names."), size="sm", theme=t)], t)
+            "e.g. Answer in Spanish. Use snake_case names."), size="sm", theme=t),
+        ui.ServiceRow(name=tr("Project rules"), icon_name="scroll-text", detail=found.name if found else "",
+                      summary=tr("Read by the agent in every thread of this project") if found
+                      else tr("A file at the project's root with rules for every agent"),
+                      primary=tr("Open") if found else tr("Create AGENTS.md"), theme=t, key="project-rules",
+                      on_primary=lambda _e: c.open_rules())], t)
     efforts = list(_providers.EFFORTS)
     general = ui.settings_group(tr("Agent"), [
         ui.field(tr("Default model"), ui.select(c.models(), s.model, c.set_model, width=200, size="sm", theme=t),
