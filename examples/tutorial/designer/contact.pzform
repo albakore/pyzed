@@ -1,0 +1,280 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "contact",
+    "title": "Contact us",
+    "width": 480,
+    "height": 500,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {
+      "load": "form_load"
+    },
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "headline",
+      "type": "heading",
+      "x": 32,
+      "y": 24,
+      "width": 416,
+      "height": 36,
+      "props": {
+        "text": "Contact us",
+        "level": "2"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "intro",
+      "type": "label",
+      "x": 32,
+      "y": 64,
+      "width": 416,
+      "height": 24,
+      "props": {
+        "text": "We answer within a day.",
+        "size": "sm",
+        "color": "text_muted"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "name_label",
+      "type": "label",
+      "x": 32,
+      "y": 104,
+      "width": 416,
+      "height": 20,
+      "props": {
+        "text": "Name",
+        "size": "sm",
+        "weight": "medium"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "your_name",
+      "type": "input",
+      "x": 32,
+      "y": 128,
+      "width": 416,
+      "height": 32,
+      "props": {
+        "placeholder": "Ada Lovelace"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "email_label",
+      "type": "label",
+      "x": 32,
+      "y": 172,
+      "width": 416,
+      "height": 20,
+      "props": {
+        "text": "Email",
+        "size": "sm",
+        "weight": "medium"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "email",
+      "type": "input",
+      "x": 32,
+      "y": 196,
+      "width": 416,
+      "height": 32,
+      "props": {
+        "placeholder": "ada@example.com",
+        "icon": "mail"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "topic_label",
+      "type": "label",
+      "x": 32,
+      "y": 240,
+      "width": 416,
+      "height": 20,
+      "props": {
+        "text": "Topic",
+        "size": "sm",
+        "weight": "medium"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "topic",
+      "type": "select",
+      "x": 32,
+      "y": 264,
+      "width": 200,
+      "height": 32,
+      "props": {
+        "options": "Question\nBug report\nIdea",
+        "selected": "Question"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "message",
+      "type": "text_area",
+      "x": 32,
+      "y": 308,
+      "width": 416,
+      "height": 104,
+      "props": {
+        "placeholder": "How can we help?"
+      },
+      "events": {
+        "change": "message_change"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "counter",
+      "type": "label",
+      "x": 32,
+      "y": 420,
+      "width": 200,
+      "height": 20,
+      "props": {
+        "text": "0 / 500",
+        "size": "xs",
+        "color": "text_muted"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 32,
+      "y": 452,
+      "width": 300,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "send",
+      "type": "button",
+      "x": 336,
+      "y": 448,
+      "width": 112,
+      "height": 32,
+      "props": {
+        "text": "Send",
+        "variant": "solid",
+        "icon": "send"
+      },
+      "events": {
+        "click": "send_click"
+      },
+      "anchor": [
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}

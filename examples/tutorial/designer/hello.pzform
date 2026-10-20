@@ -1,0 +1,110 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "hello",
+    "title": "Hello",
+    "width": 440,
+    "height": 280,
+    "theme": "One Dark",
+    "accent": null,
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {},
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "headline",
+      "type": "heading",
+      "x": 32,
+      "y": 32,
+      "width": 376,
+      "height": 36,
+      "props": {
+        "text": "Hello, Pyzed!",
+        "level": "1",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "subtitle",
+      "type": "label",
+      "x": 32,
+      "y": 76,
+      "width": 376,
+      "height": 24,
+      "props": {
+        "text": "Type your name and press the button.",
+        "size": "md",
+        "color": "text_muted"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "your_name",
+      "type": "input",
+      "x": 32,
+      "y": 120,
+      "width": 376,
+      "height": 32,
+      "props": {
+        "placeholder": "Your name",
+        "icon": "user"
+      },
+      "events": {
+        "submit": "greet_click"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "greet",
+      "type": "button",
+      "x": 296,
+      "y": 176,
+      "width": 112,
+      "height": 32,
+      "props": {
+        "text": "Greet",
+        "variant": "solid",
+        "icon": "hand"
+      },
+      "events": {
+        "click": "greet_click"
+      },
+      "anchor": [
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}
