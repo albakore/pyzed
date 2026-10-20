@@ -185,7 +185,8 @@ class ACPAgent:
             return
         hidden = mcp_client.get_secrets(f"acp.{self.config.name}", self._store)
         try:
-            self._rpc = mcp_client.JsonRpcProcess(self.config.command, self.config.args, env=hidden,
+            self._rpc = mcp_client.JsonRpcProcess(self.config.command, self.config.args,
+                                                  env={**self.config.env, **hidden},
                                                   cwd=str(self.root), on_request=self._on_request,
                                                   on_notify=self._on_notify)
         except mcp_client.MCPError as err:

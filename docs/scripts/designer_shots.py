@@ -208,9 +208,9 @@ def settings():
 
     for provider in (None, "anthropic", "openrouter"):
         app.agent.provider_open = provider
-        app.dialog = "agent_settings"
+        app.agent.open_settings(provider)
         save(app, EDITOR / f"agent-settings{'-' + provider if provider else ''}.png")
-    app.dialog = None
+    app.agent.back()
 
 
 def keymap_editor(app):

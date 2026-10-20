@@ -20,6 +20,7 @@ from .base import (
     muted,
     tooltip_text as tooltip,
 )
+from .agent import AuthPrompt, Catalog, EditsBar, Plan, ServiceRow, ThreadHistory, ToolCall, context_meter, format_tokens
 from .color import ColorPicker, checkerboard, color_swatch
 from .icon_picker import IconPicker, icon_grid, icon_picker_dialog
 from .console import LEVELS as LOG_LEVELS, Log, LogEntry, console
@@ -88,6 +89,15 @@ __all__ = [
     "shortcuts",
     "AccordionSection",
     "accordion",
+    "AuthPrompt",
+    "Catalog",
+    "EditsBar",
+    "Plan",
+    "ServiceRow",
+    "ThreadHistory",
+    "ToolCall",
+    "context_meter",
+    "format_tokens",
     "alert",
     "choice",
     "confirm",

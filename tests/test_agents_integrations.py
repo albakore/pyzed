@@ -870,3 +870,115 @@ def test_commands_run_in_the_systems_terminal(monkeypatch, tmp_path):
     monkeypatch.setattr(file_ops.shutil, "which", lambda name: None)
     with pytest.raises(OSError):
         file_ops.run_in_terminal_command(["claude"], tmp_path)
+
+
+def test_panel_menus_history_and_settings_view_like_zed(tmp_path, monkeypatch):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.settings.acp_agents.append(acp.preset("gemini"))
+    c.toggle_menu("new")
+    d.view()  # the + menu lists the built-in agent and the external ones
+    c.new_thread("acp:gemini")
+    assert c.thread.model == "acp:gemini" and c.settings.model == "acp:gemini" and c.menu is None
+    c.new_thread("")  # the built-in agent again, with a model of its own
+    assert not c.thread.model.startswith("acp:")
+    c.thread.messages = [{"role": "user", "content": [{"type": "text", "text": "Make a login form"}]},
+                         {"role": "assistant", "content": [{"type": "text", "text": "Done."},
+                                                           {"type": "tool_use", "id": "t1", "name": "add_control",
+                                                            "input": {"name": "email"}}]}]
+    assert "## User" in c.thread_markdown() and "`add_control` email" in c.thread_markdown()
+    c.toggle_menu("options")
+    d.view()
+    c._keep()
+    c.toggle_history()
+    d.view()  # the history, grouped by day with a search box
+    assert c.view == "history"
+    c.back()
+    c.open_settings(section="agents")
+    assert c.view == "settings" and c.registry_open and d.dialog is None
+    d.view()
+
+
+def test_installing_agents_from_the_acp_registry(tmp_path, monkeypatch):
+    from pyzed.agents import registry
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    entries = [registry.RegistryAgent.from_dict({"id": "gemini", "name": "Gemini CLI", "version": v,
+                                                 "distribution": {"npx": {"package": f"@google/gemini-cli@{v}",
+                                                                          "args": ["--acp"]}}})
+               for v in ("0.64.0", "0.65.0")]
+    current = [entries[0]]
+    monkeypatch.setattr(registry, "fetch", lambda refresh=False: list(current))
+    monkeypatch.setattr(registry, "_prefetch_npm", lambda *a: None)
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.open_settings(section="agents")
+    _until(lambda: c.registry, d)
+    assert c.registry_items()[0]["installed"] is False
+    c.install_agent("gemini")
+    _until(lambda: not c.registry_busy, d)
+    config = c.settings.acp_agent("gemini")
+    assert config.registry_id == "gemini" and config.version == "0.64.0"
+    assert config.args == ["-y", "@google/gemini-cli@0.64.0", "--acp"]
+    d.view()
+    current[:] = [entries[1]]
+    c.load_registry(refresh=True)
+    _until(lambda: not c.registry_busy, d)
+    assert c.agent_update(config) == "0.65.0" and c.registry_items()[0]["update"] == "0.65.0"
+    d.view()  # the agent's row offers the update
+    c.update_agent("gemini")
+    _until(lambda: not c.registry_busy, d)
+    assert c.settings.acp_agent("gemini").version == "0.65.0" and len(c.settings.acp_agents) == 1
+    c.uninstall_agent("gemini")
+    assert c.settings.acp_agent("gemini") is None
+
+
+def test_skills_in_the_settings_and_the_agent(tmp_path, monkeypatch):
+    from pyzed.agents import skills
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    folder = tmp_path / "skills" / "forms"
+    folder.mkdir(parents=True)
+    (folder / "SKILL.md").write_text("---\nname: forms\ndescription: How to lay out forms\n---\nUse a grid.\n")
+    monkeypatch.setattr(skills, "discover", lambda root=None: [skills.load(folder, "project")])
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    c.open_settings()
+    d.view()
+    assert [s.name for s in c.skills()] == ["forms"]
+    c.toggle_skill("forms", False)
+    assert c.settings.disabled_skills == ["forms"]
+    c.toggle_skill("forms", True)
+    assert c.settings.disabled_skills == []
+
+
+def test_keeping_and_rejecting_changes_file_by_file(tmp_path, monkeypatch):
+    from pyzed.designer.agent_panel import AgentController
+    from pyzed.designer.app import Designer
+
+    monkeypatch.setattr(providers, "config_path", lambda: tmp_path / "agents.json")
+    d = Designer()
+    d.agent = c = AgentController(d, store=agents.ThreadStore(tmp_path / "threads"))
+    doc = d.doc
+    before = doc.code
+    c._remember_documents()
+    doc.code = before + "\nvalue = 1\n"
+    c.changed = True
+    [change] = c.file_changes()
+    assert change["added"] == 2 and change["removed"] == 0
+    d.view()  # the edits bar
+    c.reject_file(doc.display_name)
+    assert doc.code == before and not c.changed
+    c._remember_documents()
+    doc.code = before + "\nkept = 1\n"
+    c.changed = True
+    c.keep_file(doc.display_name)
+    assert doc.code.endswith("kept = 1\n") and not c.snapshot

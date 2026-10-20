@@ -490,10 +490,16 @@ class _Portal(http.server.BaseHTTPRequestHandler):
         self._send(200, self._page())
 
     def do_POST(self) -> None:  # noqa: N802 - http.server API
+        # Read the body before any answer: closing a socket with unread data resets the connection on
+        # Windows (WinError 10053), so the browser would get no answer at all.
+        try:
+            length = max(min(int(self.headers.get("Content-Length") or 0), 8192), 0)
+        except ValueError:
+            length = 0
+        body = self.rfile.read(length) if length else b""
         if not self._allowed():
             return self._send(404)
-        length = min(int(self.headers.get("Content-Length") or 0), 8192)
-        form = urllib.parse.parse_qs(self.rfile.read(length).decode("utf-8", "replace"))
+        form = urllib.parse.parse_qs(body.decode("utf-8", "replace"))
         key = (form.get("key") or [""])[0].strip()
         if not self.looks_like(key):
             return self._send(200, self._page(f"That does not look like a {self.name} key.", error=True))

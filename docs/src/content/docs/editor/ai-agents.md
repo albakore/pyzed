@@ -65,9 +65,9 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 
 | Part | What it does |
 | --- | --- |
-| **Header** | The thread's title, **New thread** (<kbd>+</kbd>), **History**, **Expand the panel** (it fills the window; click again to put it back in its dock) and the agent's **settings**. |
+| **Header** | The thread's title, **+** (a new thread with Pyzed Agent or with any [external agent](#external-agents), plus **Add more agents…**), **History** and **⋯**: **Agent settings**, **Rules…**, **Show thinking**, **Copy thread as Markdown** and **Expand the panel** (it fills the window; pick it again to put it back in its dock). |
 | **Thread** | Your messages, the agent's answers (Markdown), its reasoning (**Thought**, folded) and one line per tool it used: a spinner while it runs, a check when it worked, a red cross when it failed. Click a line to see the tool's input and result. |
-| **Agent changes** | After a run that changed something: **Reject** puts every form and code file it touched back as they were before the run; **Keep** hides the bar. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
+| **Agent changes** | After a run that changed something: the files it touched, with the lines added and removed. **Keep** or **Reject** each one, or all of them at once; **Reject** puts the form or code file back as it was before the run. Click a file to open it. Undo (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) still steps back one change at a time. |
 | **Message box** | Grows with the text. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd> starts a new line. Type <kbd>@</kbd> to [add context](#adding-context-with-) and <kbd>/</kbd> for [commands](#commands-with-); in their list <kbd>↑</kbd> <kbd>↓</kbd> move, <kbd>Enter</kbd> picks and <kbd>Esc</kbd> closes. While the agent works the send button becomes **Stop**. |
 | **+** | **Files, the form, its code, controls** (an @ mention), **Attach images…**, **Paste image** and **Screenshot of the form**. See [Images](#images). |
 | **Permission mode** | What the agent may do without asking (see below). |
@@ -193,8 +193,9 @@ Nothing is applied to the form until you click **Apply**, as with your own edits
 
 ## Settings
 
-**Settings → AI agents → AI agents settings…**, the gear in the panel header, or **AI agents settings…** in the
-command palette.
+The settings open inside the panel, as in Zed: **⋯ → Agent settings**, **Settings → AI agents → AI agents
+settings…** or **AI agents settings…** in the command palette. The arrow in the header goes back to the thread.
+They hold the model providers, the external agents, the MCP servers, the skills, the rules and the agent's options.
 
 ![Providers, keys and the agent's options](../../../assets/editor/agent-settings.png)
 
@@ -255,10 +256,16 @@ file writes; in **Read only** they are left out.
 ### External agents
 
 **External agents** run Claude Code, Gemini CLI, Codex or any agent that speaks the
-[Agent Client Protocol](https://agentclientprotocol.com) inside the panel. **Add an external agent…**
-offers the known ones (Claude Code through `@zed-industries/claude-code-acp`, `gemini --experimental-acp`, Codex
-through `@zed-industries/codex-acp`) or **Other…** for any command. Once added, pick it in the model picker under
-**External agents**.
+[Agent Client Protocol](https://agentclientprotocol.com) inside the panel, as in Zed:
+
+- **Install from registry** lists the agents of the [ACP registry](https://agentclientprotocol.com/registry)
+  with a search box. **Install** downloads the agent for your system (a program, or a package run with `npx` or
+  `uvx`) into Pyzed's settings folder and adds it. When the registry has a newer version, its row offers
+  **Update**; **Uninstall** removes it and its files.
+- **Add custom agent** takes any command, its arguments and its secrets.
+
+Start a thread with an agent from the **+** menu, or pick it in the model picker under **External agents**. The
+switch on each row hides it without removing it.
 
 The agent runs as its own program in the project folder and signs in its own way (its own account or key; put
 keys in **Secrets**). Pyzed answers its requests: it reads and writes files only inside the project and never
@@ -285,6 +292,19 @@ sign in with a subscription:
 
 Claude Code keeps its own sign-in; Pyzed never sees it. Usage counts toward your plan. When an answer fails
 because Claude Code is signed out, **Sign in to Claude** opens the terminal again.
+
+### Skills
+
+A skill is a folder with a `SKILL.md` file (a `name` and a `description` in its header, then instructions) and any
+files it needs, the same format Claude Code and other agents use. The agent sees the name and the description of
+each skill and reads the rest when a task needs it.
+
+Pyzed finds skills in the project (`.claude/skills/` and `.agents/skills/`), in your home folder
+(`~/.claude/skills/` and `~/.agents/skills/`) and in its own settings folder. **Skills** lists them with a switch to
+turn each one off. Paste the address of a Git repository and click **Install**, or **From a folder…**, to add
+skills; skills installed from Git offer **Update**. **Show in folder** opens the skill's folder.
+
+Claude Code reads its own skills; the switches apply to Pyzed Agent.
 
 ### Where keys are stored
 
@@ -327,8 +347,9 @@ More prompts that work well are in the [prompting guide](/pyzed/ai/prompting/).
 
 ## History
 
-**History** in the header lists your threads, newest first. Click one to continue it (the agent remembers the
-whole conversation), or delete it. The last 200 threads are kept.
+**History** in the header lists your threads grouped by date (today, yesterday, this week…), with a search box
+and the agent of each thread. Click one to continue it (the agent remembers the whole conversation), or delete it.
+The last 200 threads are kept.
 
 ## Using agents in your own app
 

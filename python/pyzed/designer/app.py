@@ -2604,8 +2604,6 @@ class Designer(App):
                                          theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
-        if self.dialog == "agent_settings":
-            return agent_panel.settings_dialog(self, t)
         if self.dialog == "keymap":
             return keymap_editor.dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,

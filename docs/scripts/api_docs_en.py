@@ -1803,6 +1803,72 @@ _section("ui", "Color picker", {
                               "params": {"width": "Width.", "height": "Height.", "size": "Cell size."}},
 })
 
+_section("ui", "Agent", {
+    "pyzed.ui.ToolCall": {
+        "desc": "A component for one action of an AI agent, like the cards in Zed's Agent panel: a header with the status, the title and what it works on, which unfolds to show the input and the output. While `status` is `\"waiting\"` it asks right on the card: Allow, Always allow or Deny. See [AI agents](/pyzed/editor/ai-agents/).",
+        "params": {"title": "What it does (\"Edit file\").", "detail": "What it works on, in a monospace font.",
+                   "kind": "ACP's kind: `read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch` or `other` (its icon).",
+                   "status": "`pending`, `running`, `waiting`, `done`, `failed` or `rejected`.",
+                   "input": "The arguments (a dict or text).", "output": "The answer (text or a dict).",
+                   "images": "PNG bytes shown under the output.", "allow_always": "Shows Always allow.",
+                   "theme": "Theme.", "on_allow": "Allow was pressed.", "on_allow_always": "Always allow was pressed.",
+                   "on_deny": "Deny was pressed."},
+        "example": """
+            ui.ToolCall(title="Edit file", detail="ui/main.py", kind="edit", status=self.status,
+                        on_allow=lambda e: self.answer(True), on_deny=lambda e: self.answer(False))
+        """,
+    },
+    "pyzed.ui.Plan": {
+        "desc": "A component for an agent's plan: a checklist with `done/total` in its header, which folds it.",
+        "params": {"steps": "`{\"step\": text, \"status\": \"pending\" | \"in_progress\" | \"done\"}` dicts.",
+                   "running": "Spins the step in progress.", "theme": "Theme."},
+        "example": 'ui.Plan(steps=[{"step": "Add the form", "status": "done"}, {"step": "Wire it", "status": "in_progress"}])',
+    },
+    "pyzed.ui.EditsBar": {
+        "desc": "A component listing the files an agent changed, like Zed's edits bar: `3 files changed` with Reject all and Keep all, unfolding to one row per file with its diff stat, Reject and Keep.",
+        "params": {"files": "Dicts or objects with `path` and optional `added` and `removed` line counts.", "theme": "Theme.",
+                   "on_keep": "Keep all.", "on_reject": "Reject all.", "on_keep_file": "Keep on a file (`event.value` is its path).",
+                   "on_reject_file": "Reject on a file.", "on_open": "A file was clicked."},
+        "example": 'ui.EditsBar(files=[{"path": "ui/main.py", "added": 12, "removed": 3}], on_keep=lambda e: self.keep())',
+    },
+    "pyzed.ui.ThreadHistory": {
+        "desc": "A component for past conversations: a search box and the threads grouped by day (Today, Yesterday, This week, This month, Older), each with a delete button.",
+        "params": {"threads": "Dicts or objects with `id`, `title`, `updated` (a timestamp) and an optional `detail`.",
+                   "selected": "The id of the open thread.", "theme": "Theme.", "on_open": "A thread was picked (`event.value` is its id).",
+                   "on_delete": "Delete was pressed on a thread."},
+        "example": "ui.ThreadHistory(threads=self.threads, on_open=lambda e: self.open(e.value))",
+    },
+    "pyzed.ui.AuthPrompt": {
+        "desc": "A component that asks to sign in, like Zed when an agent needs it: one button per way to sign in, then, while one runs, what is happening (the browser or a terminal is open), a code to type when there is one, Open the page again and Cancel.",
+        "params": {"title": "The heading.", "detail": "A line under it.", "methods": "Dicts with `id`, `name`, optional `description` and `icon`; the first is the main one.",
+                   "waiting": "The id of the method in progress (`\"\"` when none).", "waiting_text": "What to show while waiting.",
+                   "code": "A code to type (device sign-in).", "url": "The page that was opened.", "error": "An error to show.",
+                   "icon_name": "The icon.", "theme": "Theme.", "on_pick": "A method was picked (`event.value` is its id).",
+                   "on_cancel": "Cancel.", "on_open_url": "Open the page again.", "on_copy": "The code was copied."},
+        "example": 'ui.AuthPrompt(title="Sign in to Gemini", methods=[{"id": "google", "name": "Log in with Google"}], on_pick=self.sign_in)',
+    },
+    "pyzed.ui.ServiceRow": {
+        "desc": "A component for one thing an agent uses (an MCP server, an external agent, a skill), like the rows of Zed's agent settings: a status dot, the name and command, an on/off switch, a main button and a `⋯` menu.",
+        "params": {"name": "Name.", "detail": "The command or URL, in a monospace font.", "summary": "A line about it.",
+                   "icon_name": "The icon.", "status": "`running`, `starting`, `error`, `off`, `installed`, `missing` or `update` (the dot's color).",
+                   "status_text": "The dot's tooltip; shown under the name for errors and updates.", "version": "A version or a source.",
+                   "enabled": "The switch (`None` hides it).", "busy": "Shows a spinner.", "primary": "Text of the main button (Update, Install…).",
+                   "actions": "`ui.MenuItem` entries of the `⋯` menu.", "theme": "Theme.", "on_toggle": "The switch was flipped.",
+                   "on_primary": "The main button was pressed."},
+        "example": 'ui.ServiceRow(name="github", detail="npx -y @modelcontextprotocol/server-github", status="running", enabled=True)',
+    },
+    "pyzed.ui.Catalog": {
+        "desc": "A component for things to install with a search box (agents from a registry, servers, skills…): each row shows Install, Installed or Update to a newer version.",
+        "params": {"items": "Dicts or objects with `id`, `name` and optional `version`, `description`, `installed` and `update`.",
+                   "busy": "The id being installed (a spinner).", "height": "Height of the list.", "theme": "Theme.",
+                   "on_install": "Install or Update was pressed (`event.value` is the id)."},
+        "example": "ui.Catalog(items=self.registry, busy=self.installing, on_install=lambda e: self.install(e.value))",
+    },
+    "pyzed.ui.context_meter": {"desc": "How full a model's context window is, like Zed's token counter: a small ring and `48k / 200k`, yellow past 80% and red past 95%.",
+                               "params": {"used": "Tokens in use.", "limit": "The model's window.", "theme": "Theme."}},
+    "pyzed.ui.format_tokens": {"desc": "A short token count: `950`, `4.5k`, `48k`, `1.25M`.", "params": {"count": "Tokens."}},
+})
+
 _section("ui", "Icon picker", {
     "pyzed.ui.IconPicker": {
         "desc": "A component that picks a Lucide icon: a search box (names and tags), a category drop-down and a grid that only builds the rows in view. Enter picks the first match. `on_change` gets the icon's name (`\"\"` when cleared); pass it back as `value`. See the [Icon picker](/pyzed/library/icon-picker/) page.",

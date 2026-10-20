@@ -67,9 +67,9 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 
 | Parte | Qué hace |
 | --- | --- |
-| **Cabecera** | El título de la conversación, **Nueva conversación** (<kbd>+</kbd>), **Historial**, **Expandir el panel** (ocupa toda la ventana; púlsalo otra vez para devolverlo a su dock) y los **ajustes** del agente. |
+| **Cabecera** | El título de la conversación, **+** (una conversación nueva con Pyzed Agent o con cualquier [agente externo](#agentes-externos), y **Añadir más agentes…**), **Historial** y **⋯**: **Ajustes del agente**, **Reglas…**, **Mostrar el razonamiento**, **Copiar el hilo como Markdown** y **Expandir el panel** (ocupa toda la ventana; elígelo otra vez para devolverlo a su dock). |
 | **Conversación** | Tus mensajes, las respuestas del agente (Markdown), su razonamiento (**Razonamiento**, plegado) y una línea por cada herramienta que usa: un indicador mientras corre, una marca cuando funcionó y una cruz roja cuando falló. Pulsa una línea para ver la entrada y el resultado. |
-| **Cambios del agente** | Tras una ejecución que cambió algo: **Rechazar** deja cada formulario y archivo de código que tocó como estaban antes; **Conservar** oculta la barra. Deshacer (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) sigue retrocediendo un cambio cada vez. |
+| **Cambios del agente** | Tras una ejecución que cambió algo: los archivos que tocó, con las líneas añadidas y quitadas. **Conserva** o **Rechaza** cada uno, o todos a la vez; **Rechazar** deja el formulario o el archivo de código como estaba antes. Pulsa un archivo para abrirlo. Deshacer (<kbd>Ctrl</kbd>+<kbd>Z</kbd>) sigue retrocediendo un cambio cada vez. |
 | **Cuadro de mensaje** | Crece con el texto. <kbd>Intro</kbd> envía y <kbd>Mayús</kbd>+<kbd>Intro</kbd> empieza otra línea. Escribe <kbd>@</kbd> para [añadir contexto](#añadir-contexto-con-) y <kbd>/</kbd> para [comandos](#comandos-con-); en su lista <kbd>↑</kbd> <kbd>↓</kbd> te mueven, <kbd>Intro</kbd> elige y <kbd>Esc</kbd> la cierra. Mientras el agente trabaja, el botón de enviar pasa a ser **Detener**. |
 | **+** | **Archivos, el formulario, su código, controles** (una mención con @), **Adjuntar imágenes…**, **Pegar imagen** y **Captura del formulario**. Ver [Imágenes](#imágenes). |
 | **Modo de permisos** | Qué puede hacer el agente sin preguntar (ver abajo). |
@@ -197,8 +197,10 @@ ediciones.
 
 ## Ajustes
 
-**Ajustes → Agentes de IA → Ajustes de los agentes de IA…**, el engranaje de la cabecera del panel o **Ajustes de
-los agentes de IA…** en la paleta de comandos.
+Los ajustes se abren dentro del panel, como en Zed: **⋯ → Ajustes del agente**, **Ajustes → Agentes de IA →
+Ajustes de los agentes de IA…** o **Ajustes de los agentes de IA…** en la paleta de comandos. La flecha de la
+cabecera vuelve a la conversación. Reúnen los proveedores de modelos, los agentes externos, los servidores MCP, las
+skills, las reglas y las opciones del agente.
 
 ![Proveedores, claves y opciones del agente](../../../../assets/editor/agent-settings.png)
 
@@ -261,10 +263,16 @@ aparecen como `mcp_<servidor>_<herramienta>`. Las que el servidor no marca como 
 ### Agentes externos
 
 **Agentes externos** ejecuta Claude Code, Gemini CLI, Codex o cualquier agente que hable el
-[Agent Client Protocol](https://agentclientprotocol.com) dentro del panel. **Añadir un agente
-externo…** ofrece los conocidos (Claude Code con `@zed-industries/claude-code-acp`, `gemini --experimental-acp`,
-Codex con `@zed-industries/codex-acp`) u **Otro…** para cualquier comando. Una vez añadido, elígelo en el selector
-de modelos en **Agentes externos**.
+[Agent Client Protocol](https://agentclientprotocol.com) dentro del panel, como en Zed:
+
+- **Instalar desde el registro** lista los agentes del [registro de ACP](https://agentclientprotocol.com/registry)
+  con un buscador. **Instalar** descarga el agente para tu sistema (un programa, o un paquete que se ejecuta con
+  `npx` o `uvx`) en la carpeta de ajustes de Pyzed y lo añade. Cuando el registro tiene una versión más nueva, su
+  fila ofrece **Actualizar**; **Desinstalar** lo quita junto con sus archivos.
+- **Añadir agente propio** acepta cualquier comando, sus argumentos y sus secretos.
+
+Empieza una conversación con un agente desde el menú **+**, o elígelo en el selector de modelos en **Agentes
+externos**. El interruptor de cada fila lo oculta sin quitarlo.
 
 El agente corre como su propio programa en la carpeta del proyecto e inicia sesión a su manera (su propia cuenta o
 clave; pon las claves en **Secretos**). Pyzed responde a sus peticiones: lee y escribe archivos solo dentro del
@@ -292,6 +300,20 @@ deja que sus propias apps inicien sesión con una suscripción:
 
 Claude Code guarda su propio inicio de sesión; Pyzed nunca lo ve. El uso cuenta para tu plan. Si una respuesta
 falla porque Claude Code cerró la sesión, **Iniciar sesión en Claude** vuelve a abrir la terminal.
+
+### Skills
+
+Una skill es una carpeta con un archivo `SKILL.md` (un `name` y una `description` en su cabecera, y después
+instrucciones) y los archivos que necesite, el mismo formato que usan Claude Code y otros agentes. El agente ve el
+nombre y la descripción de cada skill y lee el resto cuando una tarea lo necesita.
+
+Pyzed busca skills en el proyecto (`.claude/skills/` y `.agents/skills/`), en tu carpeta personal
+(`~/.claude/skills/` y `~/.agents/skills/`) y en su propia carpeta de ajustes. **Skills** las lista con un
+interruptor para desactivar cada una. Pega la dirección de un repositorio Git y pulsa **Instalar**, o **Desde una
+carpeta…**, para añadir skills; las instaladas desde Git ofrecen **Actualizar**. **Mostrar en la carpeta** abre la
+carpeta de la skill.
+
+Claude Code lee sus propias skills; los interruptores se aplican a Pyzed Agent.
 
 ### Dónde se guardan las claves
 
@@ -337,8 +359,9 @@ Hay más prompts que funcionan bien en la [guía de prompts](/pyzed/es/ai/prompt
 
 ## Historial
 
-**Historial** en la cabecera lista tus conversaciones, de la más reciente a la más antigua. Pulsa una para
-continuarla (el agente recuerda toda la conversación) o bórrala. Se guardan las últimas 200.
+**Historial** en la cabecera lista tus conversaciones agrupadas por fecha (hoy, ayer, esta semana…), con un
+buscador y el agente de cada una. Pulsa una para continuarla (el agente recuerda toda la conversación) o bórrala.
+Se guardan las últimas 200.
 
 ## Usar agentes en tu propia app
 
