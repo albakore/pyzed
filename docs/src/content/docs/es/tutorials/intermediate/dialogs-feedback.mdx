@@ -1,0 +1,115 @@
+---
+title: Diálogos, notificaciones y validación
+description: "Comunícate con el usuario en una app de Pyzed: errores de campo calculados a partir del estado, un diálogo de confirmación sobre la página y notificaciones que desaparecen solas."
+sidebar:
+  order: 3
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import errors from '../../../../../assets/tutorials/feedback-errors.png';
+import confirm from '../../../../../assets/tutorials/feedback-confirm.png';
+import source from '../../../../../../../examples/tutorial/feedback.py?raw';
+
+Una buena app le cuenta al usuario qué pasa: qué está mal en el formulario, qué está a punto de pasar, qué acaba de
+pasar. Pyzed tiene una pieza lista para cada cosa: **errores de campo**, **diálogos** y **toasts** (pequeñas
+notificaciones en una esquina).
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un formulario de registro con errores, una confirmación y notificaciones | 30 minutos | Intermedio · Python | [Listas y tablas](/pyzed/es/tutorials/intermediate/lists-tables/) |
+
+## Qué vas a aprender
+
+- Calcular los errores de validación a partir de tu estado y mostrarlos con `ui.field(..., error=...)`.
+- Mostrarlos solo después del primer intento, no mientras el usuario todavía escribe.
+- Abrir un **diálogo de confirmación** sobre la página con `ui.dialog_layer` y `ui.confirm`.
+- Mostrar **toasts** con `ui.toasts` y quitarlos a los pocos segundos sin congelar la ventana.
+
+<Media src={errors} alt="El formulario de registro con un error bajo cada campo y un toast de error en la esquina" caption="Después de pulsar el botón con datos que faltan: un error bajo cada campo y un toast." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Los errores son una función del estado.** Un método devuelve `{campo: mensaje}` con lo que esté mal ahora
+   mismo:
+
+   ```python
+   def errors(self):
+       found = {}
+       if not self.name.strip():
+           found["name"] = "Tell us your name."
+       if "@" not in self.email:
+           found["email"] = "Enter an email such as ada@example.com."
+       if len(self.password) < 8:
+           found["password"] = "At least 8 characters."
+       return found
+   ```
+
+2. **Muéstralos bajo cada campo**, pero solo cuando el usuario ya intentó enviar (`self.tried`). A nadie le gusta
+   ver texto rojo antes de tener la oportunidad:
+
+   ```python
+   errors = self.errors() if self.tried else {}
+   ui.field("Email", ui.input(self.email, lambda v: setattr(self, "email", v)), error=errors.get("email"))
+   ```
+
+3. **Un diálogo de confirmación.** `ui.dialog_layer(page, dialog)` dibuja `dialog` centrado sobre la página
+   oscurecida; con `dialog=None` se ve solo la página. Así que "¿está abierto el diálogo?" es un atributo:
+
+   ```python
+   dialog = None
+   if self.confirming:
+       dialog = ui.confirm(f"Create an account for {self.email}?", self.create,
+                           lambda: setattr(self, "confirming", False), title="Almost there",
+                           confirm_label="Create")
+   page = ui.dialog_layer(page, dialog, on_dismiss=lambda: setattr(self, "confirming", False))
+   ```
+
+   <Media src={confirm} alt="Un diálogo de confirmación sobre el formulario oscurecido" caption="ui.confirm sobre la página; hacer clic fuera (on_dismiss) cancela." />
+
+4. **Toasts.** Guarda una lista de avisos, dibújalos con `ui.toasts` y quita cada uno a los 4 segundos.
+   `Command.perform` espera en un hilo en segundo plano, así que la ventana sigue respondiendo:
+
+   ```python
+   def notify(self, kind, title, text=""):
+       note_id = next(_ids)
+       self.notes.append((note_id, kind, title, text))
+       return pz.Command.perform(lambda: time.sleep(4), lambda _: self.dismiss(note_id))
+
+   # en view():
+   return ui.toasts(page, [ui.toast(title, text, kind=kind, on_dismiss=lambda i=i: self.dismiss(i))
+                           for i, kind, title, text in self.notes])
+   ```
+
+5. **Júntalo todo.** El botón marca `tried`, muestra un toast de error si algo está mal o abre el diálogo;
+   confirmar vacía el formulario y muestra un toast de éxito.
+
+</Steps>
+
+<Aside type="tip" title="Otros diálogos listos">
+`ui.alert` (un botón), `ui.prompt` (pide una línea de texto), `ui.choice` (tus propios botones) y
+`ui.unsaved_changes` ("¿Guardar antes de cerrar?") funcionan igual. Míralos todos en `examples/dialogs.py` y en las
+páginas [Alert](/pyzed/es/library/alert/) y [Confirm](/pyzed/es/library/confirm/) de la biblioteca.
+</Aside>
+
+<Aside type="note" title="Validar con Pydantic">
+Si tus datos ya tienen un modelo de Pydantic (o SQLModel, Django, FastAPI), deja que valide él y convierte sus
+errores en `{campo: mensaje}` con `pyzed.forms.validation_errors(error)`. Mira
+[Pydantic](/pyzed/es/integrations/pydantic/).
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/feedback.py" />
+
+<Run file="examples/tutorial/feedback.py" lang="es" />
+
+## Siguiente
+
+- [Un componente propio](/pyzed/es/tutorials/intermediate/custom-component/) en la vista de componente del
+  diseñador.
+- [Tareas en segundo plano](/pyzed/es/tutorials/intermediate/background-tasks/): barras de progreso y toasts desde
+  hilos.

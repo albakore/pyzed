@@ -1,0 +1,115 @@
+---
+title: Listas y tablas con datos
+description: "Muestra datos de Python en una app de Pyzed: una lista con búsqueda, una tabla ordenable con filas clicables y celdas propias, y un panel con los detalles de la fila elegida."
+sidebar:
+  order: 2
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/lists-tables.png';
+import source from '../../../../../../../examples/tutorial/lists_tables.py?raw';
+
+Casi todas las apps muestran **datos**: clientes, archivos, pedidos, libros. Este tutorial toma una lista normal de
+Python y la muestra de dos formas, como **tabla** ordenable y como **lista** simple, con un buscador y un panel con
+los detalles de la fila en la que haces clic.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una biblioteca de libros con búsqueda, orden y detalles | 30 minutos | Intermedio · Python | [Una app con varias vistas](/pyzed/es/tutorials/intermediate/navigation/) |
+
+## Qué vas a aprender
+
+- Filtrar datos en `view()` a partir de un buscador.
+- Dibujar un `ui.table` con columnas, **orden** al hacer clic en un encabezado y filas clicables.
+- Convertir una celda en cualquier widget (una insignia de color) con `render=`.
+- Mostrar los mismos datos como una lista de filas `ui.list_item`.
+- Guardar el elemento **seleccionado** y mostrarlo en un panel de detalles; cambiarlo en el sitio.
+
+<Media src={finished} alt="Una tabla de libros con título, autor, año y estado, y un panel de detalles de Neuromancer" caption="Haz clic en un encabezado para ordenar y en una fila para ver sus detalles." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Los datos son solo Python.** Una lista de dicts (también sirven objetos o dataclasses):
+
+   ```python
+   BOOKS = [
+       {"title": "Dune", "author": "Frank Herbert", "year": 1965, "status": "Read"},
+       {"title": "Neuromancer", "author": "William Gibson", "year": 1984, "status": "Reading"},
+       # ...
+   ]
+   ```
+
+2. **Búsqueda.** Guarda el texto en `self.query` y filtra en cada redibujado. No hace falta "refrescar": escribir
+   cambia el estado y `view()` se vuelve a ejecutar.
+
+   ```python
+   def visible(self):
+       q = self.query.lower()
+       return [b for b in BOOKS if q in b["title"].lower() or q in b["author"].lower()]
+   ```
+
+3. **Las columnas.** Un `ui.Column` tiene un título, la clave que lee y un ancho (`("fill", 3)` toma tres partes
+   del espacio libre). `render=` convierte el valor en un widget:
+
+   ```python
+   columns = [
+       ui.Column("Title", "title", width=("fill", 3)),
+       ui.Column("Author", "author", width=("fill", 2)),
+       ui.Column("Year", "year", width=70),
+       ui.Column("Status", "status", width=100, render=lambda s: ui.badge(s, tint=TINTS[s])),
+   ]
+   ```
+
+4. **Orden.** Pasa a la tabla la columna por la que ordena y el sentido; al hacer clic en un encabezado se llama a
+   `on_sort` con el título de esa columna, y tú inviertes el sentido si es la misma:
+
+   ```python
+   def sort(self, column):
+       self.descending = not self.descending if column == self.sort_by else False
+       self.sort_by = column
+
+   ui.table(columns, books, sort_by=self.sort_by, descending=self.descending, on_sort=self.sort,
+            on_row_press=lambda book: setattr(self, "selected", book), selected=self.selected,
+            striped=True, height="fill")
+   ```
+
+5. **El panel de detalles** muestra `self.selected`, o un estado vacío. Cambiar el estado del libro escribe en el
+   mismo dict, así que la tabla también lo muestra:
+
+   ```python
+   ui.segmented(list(TINTS), book["status"], lambda s: book.__setitem__("status", s))
+   ```
+
+6. **Una vista de lista.** Los mismos datos como filas con un icono y el año al final, alternando con un control
+   segmentado:
+
+   ```python
+   ui.list_item(book["title"], lambda book=book: setattr(self, "selected", book), icon="book",
+                selected=book is self.selected, end=ui.muted(str(book["year"])))
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Miles de filas">
+`ui.table` solo construye las filas que se ven, así que una tabla de 100.000 filas se desplaza tan suave como una
+de diez. Mantén la lista ordenada en tu estado (o en una función `@pz.memo`) en lugar de ordenarla en cada
+redibujado. La demo de [contactos con SQLAlchemy](/pyzed/es/integrations/sqlalchemy/) muestra 20.000 filas
+buscadas en SQL.
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/lists_tables.py" />
+
+<Run file="examples/tutorial/lists_tables.py" lang="es" />
+
+## Siguiente
+
+- [Diálogos, notificaciones y validación](/pyzed/es/tutorials/intermediate/dialogs-feedback/).
+- La [tabla de datos](/pyzed/es/showcase/dashboards/#tabla-de-datos) del Showcase: filtros, selección, páginas y
+  exportación.
+- [Table](/pyzed/es/library/table/) y [List item](/pyzed/es/library/list-item/) en la biblioteca de componentes.

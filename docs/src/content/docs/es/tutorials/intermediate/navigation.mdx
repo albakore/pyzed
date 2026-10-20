@@ -1,0 +1,111 @@
+---
+title: Una app con varias vistas
+description: "Construye una app de Pyzed con varias páginas: una barra lateral que cambia de vista, pestañas dentro de una página, migas de pan y atajos de teclado, todo controlado por un atributo del estado."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import inbox from '../../../../../assets/tutorials/navigation.png';
+import settings from '../../../../../assets/tutorials/navigation-settings.png';
+import source from '../../../../../../../examples/tutorial/navigation.py?raw';
+
+Las apps reales tienen más de una pantalla: un inicio, una bandeja de entrada, ajustes. En Pyzed, "qué pantalla se
+ve" es solo **un dato del estado**, como cualquier otro. Lo cambias y `view()` dibuja la otra pantalla. No hay un
+router que aprender.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una app con barra lateral, tres páginas y pestañas | 25 minutos | Intermedio · Python | [Bases del diseño de pantallas](/pyzed/es/tutorials/basic/layout-basics/) |
+
+## Qué vas a aprender
+
+- Guardar la página actual en `self.page` y elegir la vista a partir de ella.
+- Construir una **barra lateral** con filas `ui.list_item`, un estado seleccionado y un contador.
+- Usar `ui.segmented` como **pestañas** dentro de una página.
+- Mostrar **migas de pan** y saltar entre páginas con **atajos** (`on_key`).
+
+<Media src={inbox} alt="La app con barra lateral: Home, Inbox (seleccionada, con contador) y Settings, y los mensajes de la bandeja" caption="La página Inbox: la barra lateral marca dónde estás y cuenta los mensajes sin leer." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Un atributo decide la página.**
+
+   ```python
+   PAGES = {"Home": "house", "Inbox": "inbox", "Settings": "settings"}   # nombre → icono
+
+   def __init__(self):
+       self.page = "Home"
+
+   def go(self, page):
+       self.page = page
+   ```
+
+2. **La barra lateral.** Un `ui.list_item` por página. `selected=` resalta la actual y `end=` pone un contador a la
+   derecha. El `name=name` del lambda guarda el nombre de cada página:
+
+   ```python
+   items = [
+       ui.list_item(name, lambda name=name: self.go(name), icon=icon,
+                    selected=name == self.page, height=34)
+       for name, icon in PAGES.items()
+   ]
+   ```
+
+3. **Elige la página en `view()`.** Cada página es un método que devuelve widgets; un dict relaciona nombres con
+   métodos:
+
+   ```python
+   page = {"Home": self.home, "Inbox": self.inbox, "Settings": self.settings}[self.page]()
+   return pz.row([self.sidebar(), pz.column([breadcrumbs, page], padding=24, width="fill")])
+   ```
+
+4. **Pestañas dentro de una página.** Un segundo atributo, `self.tab`, y un control `ui.segmented` para cambiarlo.
+   El contenido de abajo depende de él:
+
+   ```python
+   tabs = ui.segmented(["General", "Notifications", "About"], self.tab,
+                       lambda tab: setattr(self, "tab", tab))
+   ```
+
+   <Media src={settings} alt="La página Settings con la pestaña Notifications seleccionada" caption="Settings: un control segmentado funciona como pestañas." />
+
+5. **Atajos.** `on_key` recibe cada combinación de teclas como texto. <kbd>Ctrl</kbd>+<kbd>1</kbd>,
+   <kbd>Ctrl</kbd>+<kbd>2</kbd> y <kbd>Ctrl</kbd>+<kbd>3</kbd> abren las páginas:
+
+   ```python
+   def on_key(self, combo):
+       shortcuts = {f"ctrl-{i}": page for i, page in enumerate(PAGES, start=1)}
+       if combo in shortcuts:
+           self.go(shortcuts[combo])
+   ```
+
+</Steps>
+
+<Aside type="tip" title="El estado sobrevive al cambiar de página">
+Como las páginas se dibujan a partir de tu estado, no se pierde nada al salir de una: la bandeja recuerda qué
+mensajes leíste y Settings recuerda su pestaña. Para reiniciar una página, reinicia sus atributos en `go()`.
+</Aside>
+
+<Aside type="note" title="En Pyzed Design">
+En el diseñador, un control **Pestañas** (*Tab bar*) lanza `change` con la pestaña elegida; muestra y oculta
+paneles en su manejador (`form.general.visible = event.value == "General"`), o abre otro formulario en su propia
+ventana con `form.open("settings")`. Mira [Eventos y manejadores](/pyzed/es/editor/events/).
+</Aside>
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/navigation.py" />
+
+<Run file="examples/tutorial/navigation.py" lang="es" />
+
+## Siguiente
+
+- [Listas y tablas con datos](/pyzed/es/tutorials/intermediate/lists-tables/).
+- [Varias ventanas](/pyzed/es/guides/windows/): varias ventanas reales que comparten estado.
+- El [Dashboard](/pyzed/es/showcase/dashboards/#dashboard) y los [Ajustes](/pyzed/es/showcase/forms/#ajustes) del
+  Showcase usan la misma barra lateral.

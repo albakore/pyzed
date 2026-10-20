@@ -2,10 +2,11 @@
 title: Tutorial en 5 pasos
 description: "Aprende Pyzed en cinco pasos: de una ventana vacía a una app de notas con Markdown, trabajo async y una segunda ventana, en Python puro."
 sidebar:
-  order: 0
+  order: 4
 ---
 
-import { Code } from '@astrojs/starlight/components';
+import { Aside, Code } from '@astrojs/starlight/components';
+import Run from '../../../showcase/_run.mdx';
 import step1 from '../../../../../../../examples/tutorial/step1_hello.py?raw';
 import step2 from '../../../../../../../examples/tutorial/step2_state.py?raw';
 import step3 from '../../../../../../../examples/tutorial/step3_layout.py?raw';
@@ -13,11 +14,27 @@ import step4 from '../../../../../../../examples/tutorial/step4_async.py?raw';
 import step5 from '../../../../../../../examples/tutorial/step5_notes.py?raw';
 
 Cinco archivos cortos en [`examples/tutorial/`](https://github.com/albakore/pyzed/tree/main/examples/tutorial).
-Cada uno se ejecuta solo y añade una idea al anterior:
+Cada uno se ejecuta solo y añade una idea al anterior, así que puedes parar después de cualquier paso y seguir
+teniendo un programa que funciona.
 
-```bash
-python examples/tutorial/step1_hello.py
-```
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| De una ventana vacía a una app de notas, en Python puro | 45 minutos | Básico · Python | Pyzed instalado ([Instalación](/pyzed/es/getting-started/installation/)) |
+
+## Qué vas a aprender
+
+- Cómo funciona una app de Pyzed: una clase `App`, su estado y un `view()` que describe la ventana.
+- Dos formas de reaccionar al usuario: mensajes enviados a `update()` y callbacks normales.
+- Layout, componentes listos para usar y temas.
+- Trabajo lento con `async def` sin congelar la ventana.
+- Atajos de teclado, un panel dividido redimensionable y una segunda ventana.
+
+<Run file="examples/tutorial/step1_hello.py" lang="es" />
+
+<Aside type="tip" title="Edita y mira">
+Ejecuta un paso con `pyzed dev examples/tutorial/step1_hello.py` y la ventana se actualiza cada vez que guardas el
+archivo, sin perder su estado.
+</Aside>
 
 ## 1. Una ventana
 
@@ -46,7 +63,7 @@ Los callbacks que traen datos reciben el valor nuevo: `on_input=lambda text: ...
 
 ## 3. Layout, componentes y temas
 
-`pyzed.ui` trae componentes al estilo de Zed (`button`, `input`, `select`, `number_field`,
+`pyzed.ui` trae componentes listos para usar (`button`, `input`, `select`, `number_field`,
 `settings_group`, `callout`…) que toman sus colores del tema activo. `theme` puede ser un
 `Theme`, el nombre de un tema incluido (`pz.themes.names()`) o `pz.themes.auto(...)` para seguir
 al sistema. `self.resolved_theme()` devuelve el `Theme` en uso. Más en [Temas](/pyzed/es/theming/themes/).
@@ -80,6 +97,7 @@ redimensionable, un atajo (`on_key` recibe combinaciones como `"ctrl-n"`) y una 
 
 ## Siguientes pasos
 
-- [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) y [mini editor tipo Zed](/pyzed/es/tutorials/advanced/code-editor/), más detallados.
+- [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) y el [mini editor de código](/pyzed/es/tutorials/advanced/code-editor/), más detallados.
+- [Enlace de datos en el diseñador](/pyzed/es/tutorials/intermediate/data-binding/), si prefieres dibujar tus formularios.
 - [Ejemplos](/pyzed/es/examples/): recreaciones de las demos de Iced (game of life, reloj, cronómetro,
   multi-ventana, imágenes, QR, estilos, paneles…).

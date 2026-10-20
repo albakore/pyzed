@@ -1,0 +1,117 @@
+---
+title: Enlace de datos y validación
+description: "Enlaza los controles de un formulario de Pyzed Design a form.data, añade reglas de validación sin código, muestra una expresión en vivo en una etiqueta y valida todo el formulario en una línea."
+sidebar:
+  order: 0
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/designer-signup.png';
+import dataSection from '../../../../../../screenshots/editor-data.png';
+import handlers from '../../../../../../../examples/tutorial/designer/signup.py?raw';
+
+En [Un formulario que hace algo](/pyzed/es/tutorials/basic/first-form/) cada campo se leía y se revisaba a mano.
+Aquí los controles hacen ese trabajo solos: cada uno está **enlazado** a un campo de los datos del formulario,
+lleva sus propias **reglas** y muestra su propio mensaje de error. El Python que queda por escribir es un solo `if`.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un formulario de registro que se valida solo | 25 minutos | Intermedio · un poco de Python | [Un formulario que hace algo](/pyzed/es/tutorials/basic/first-form/) |
+
+## Qué vas a aprender
+
+- **Enlazar** un campo a una clave de `form.data` (en los dos sentidos: muestra el valor y guarda lo que escribe el
+  usuario).
+- Mostrar una **expresión en vivo** en una etiqueta (`f"Nice to meet you, {name}!"`).
+- Añadir **reglas**: obligatorio, un patrón, una longitud mínima, un número mínimo, tu propio mensaje.
+- Validarlo todo con `form.validate()`, y leer `form.data` y `form.errors`.
+
+<Media src={finished} alt="El formulario de registro con un correo inválido, una contraseña corta y los términos sin marcar, cada uno con su mensaje" caption="Cada control revisa sus propias reglas y muestra el mensaje debajo de sí." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Dibuja el formulario.** Un formulario nuevo llamado `signup` con un **Título**, una **Etiqueta de texto**
+   llamada `greeting`, tres **Cuadros de texto** (`your_name`, `email`, `password`, este último con
+   **Contraseña** activado), un **Número** (*Number box*) llamado `age`, una **Casilla** (*Check box*) llamada
+   `terms` (texto `I accept the terms`), una etiqueta pequeña `summary`, una etiqueta `status` y un **Botón**
+   llamado `create`.
+
+2. **Enlaza los campos.** Selecciona `your_name` y, en la sección **Datos** (*Data*) de Propiedades, escribe `name`
+   en **Enlazar a** (*Bind to*). Haz lo mismo con los demás:
+
+   | Control | Enlazar a | Reglas (sección Datos) |
+   | --- | --- | --- |
+   | `your_name` | `name` | **Obligatorio** |
+   | `email` | `email` | **Obligatorio**, **Patrón** `[^@\s]+@[^@\s]+\.[a-z]{2,}`, **Mensaje** `Enter a valid email` |
+   | `password` | `password` | **Obligatorio**, **Longitud mínima** 8 |
+   | `age` | `age` | **Mínimo** 13, **Mensaje** `You must be 13 or older` |
+   | `terms` | `terms` | **Obligatorio** (una casilla solo pasa si está marcada), **Mensaje** `Please accept the terms` |
+
+   <Media src={dataSection} alt="La sección Datos de un cuadro de texto: Enlazar a, Obligatorio, Patrón y Mensaje" caption="La sección Datos: el campo al que está enlazado el control y sus reglas." />
+
+3. **Muestra una expresión en vivo.** Un control de solo lectura (etiqueta, título, insignia...) puede enlazarse a
+   una **expresión de Python** sobre los datos, que se recalcula en cada redibujado. Selecciona `greeting` y pon en
+   **Enlazar a**:
+
+   ```python
+   f"Nice to meet you, {name}!" if name else "Fill in the form below."
+   ```
+
+   Y en `summary`:
+
+   ```python
+   f"{len(password)} characters in your password"
+   ```
+
+4. **Ejecútalo** (<kbd>F5</kbd>) y escribe. El saludo sigue a tu nombre letra a letra, y cada campo revisa sus
+   reglas **mientras escribes**: un borde rojo y una burbuja con el mensaje debajo.
+
+5. **Valida al hacer clic.** Haz doble clic en `create` y escribe el manejador:
+
+   ```python
+   def create_click(form, event):
+       if not form.validate():          # revisa cada regla y muestra cada mensaje
+           form.status.color = "error"
+           form.status.text = f"{len(form.errors)} field(s) need your attention."
+           return
+       data = form.data                 # {"name": ..., "email": ..., "age": 18, "terms": True, ...}
+       form.status.color = "success"
+       form.status.text = f"Welcome aboard, {data['name']}!"
+   ```
+
+   `form.data` es un dict normal que llenan los controles enlazados. Guárdalo, envíalo a una API o pásalo a otro
+   formulario.
+
+</Steps>
+
+<Aside type="tip" title="Cargar datos existentes">
+Para editar un registro en lugar de crear uno, asígnalo: `form.data = {"name": "Ada", "email": "ada@example.com"}`
+en el manejador `load` del formulario llena cada control enlazado. Otro formulario también puede pasarlo:
+`form.open("signup", data=customer)`.
+</Aside>
+
+<Aside type="note" title="Errores del servidor">
+Las reglas atrapan errores de tipeo. Para comprobaciones que solo puede hacer un servidor ("ese correo ya existe"),
+pon el mensaje tú: `form.email.error = "Already registered"`. `None` lo borra.
+</Aside>
+
+## Código completo
+
+`signup.pzform` guarda el diseño, los enlaces y las reglas; `signup.py`, solo el botón:
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/signup.py" />
+
+<Run file="examples/tutorial/designer/signup.pzform" form lang="es" />
+
+{/* media: tutorials/data-binding-typing (una grabación corta: escribir un nombre actualiza el saludo; un correo malo se pone rojo) */}
+
+## Siguiente
+
+- [Enlace de datos y validación](/pyzed/es/editor/data-binding/) en el manual del diseñador: rutas anidadas
+  (`customer.address.city`), tablas, traducciones con `@claves` y vista previa en otros idiomas.
+- [Errores de validación de Pydantic, Django o FastAPI](/pyzed/es/integrations/overview/).
+- [Una app con varias vistas](/pyzed/es/tutorials/intermediate/navigation/).

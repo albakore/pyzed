@@ -1,0 +1,137 @@
+---
+title: Un formulario que hace algo
+description: "Construye un formulario de contacto en Pyzed Design: cuadros de texto, un desplegable y un área de texto, un botón Enviar conectado a Python, un contador de caracteres en vivo y mensajes en la consola."
+sidebar:
+  order: 1
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/designer-contact.png';
+import consoleShot from '../../../../../../screenshots/designer-console.png';
+import handlers from '../../../../../../../examples/tutorial/designer/contact.py?raw';
+
+Un **formulario de contacto**: el usuario escribe un nombre, un correo y un mensaje, elige un tema y pulsa
+**Send**. El formulario revisa lo escrito, muestra un mensaje amable, cuenta los caracteres mientras escribes e
+imprime en la consola lo que "envió". Es la forma de la mayoría de las apps de gestión: campos, un botón y unas
+pocas líneas de Python que reaccionan.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un formulario de contacto con comprobaciones y avisos | 25 minutos | Básico · un poco de Python | [Tu primera ventana](/pyzed/es/tutorials/basic/first-window/) |
+
+## Qué vas a aprender
+
+- Usar varios tipos de campo: **Cuadro de texto**, **Desplegable** (*Drop-down*) y **Área de texto** (*Text area*).
+- Leer en el código lo que escribió el usuario: `form.email.text`, `form.topic.selected`.
+- Reaccionar **mientras el usuario escribe** con un evento `change`, y a un clic con `click`.
+- Dar avisos: cambiar el texto y el color de una etiqueta, mover el cursor con `focus()`.
+- Ejecutar código al abrir la ventana (el evento `load` del formulario) y leer la salida de `print` en la
+  **Consola**.
+
+<Media src={finished} alt="El formulario de contacto después de enviar: un mensaje de agradecimiento en verde" caption="El formulario terminado, después de pulsar Send." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Crea el formulario.** <kbd>Ctrl</kbd>+<kbd>N</kbd> → **Formulario**, nómbralo `contact`, con título
+   `Contact us`. Selecciona un lugar vacío del lienzo: el panel Propiedades muestra ahora el **formulario**. Pon
+   **Ancho** (*Width*) en 480 y **Alto** (*Height*) en 500.
+
+2. **Añade los campos.** Para cada campo arrastra una **Etiqueta de texto** (su título) y el control debajo:
+
+   | Texto de la etiqueta | Control | Nombre | Propiedades |
+   | --- | --- | --- | --- |
+   | Name | Cuadro de texto | `your_name` | Texto de ayuda `Ada Lovelace` |
+   | Email | Cuadro de texto | `email` | Texto de ayuda `ada@example.com`, Icono `mail` |
+   | Topic | Desplegable | `topic` | Opciones `Question`, `Bug report`, `Idea`; Seleccionado `Question` |
+   | (ninguna) | Área de texto | `message` | Texto de ayuda `How can we help?` |
+
+   Las **Opciones** (*Options*) de un desplegable son una lista: cada elemento es su propio campo, y **+** añade
+   uno.
+
+3. **Añade el botón y dos etiquetas para los avisos.** Un **Botón** llamado `send` (texto `Send`, variante
+   `solid`, icono `send`) en la esquina inferior derecha, una **Etiqueta de texto** pequeña llamada `counter`
+   (texto `0 / 500`, tamaño `xs`) debajo del mensaje, y una **Etiqueta de texto** vacía llamada `status` junto al
+   botón.
+
+4. **Ancla todo.** Cuadros de texto y etiquetas: estirar a **izquierda y derecha**. El área de texto: estirar por
+   **los cuatro lados**, para que ocupe el espacio extra cuando la ventana crece. El botón: **abajo · derecha**.
+   `counter` y `status`: **abajo**, para que queden bajo el área de texto.
+
+5. **Pon el cursor en el primer campo al abrir.** Haz clic en un lugar vacío (queda seleccionado el formulario),
+   abre **Eventos** y haz doble clic en `load`. Escribe:
+
+   ```python
+   def form_load(form, event):
+       return form.your_name.focus()
+   ```
+
+   Los manejadores pueden **devolver un comando**: `focus()` pone el cursor en ese campo.
+
+6. **Cuenta caracteres mientras se escribe.** Selecciona el área de texto y haz doble clic en su evento `change`.
+   `event.value` es el texto nuevo:
+
+   ```python
+   LIMIT = 500
+
+   def message_change(form, event):
+       count = len(event.value)
+       form.counter.text = f"{count} / {LIMIT}"
+       form.counter.color = "error" if count > LIMIT else "text_muted"
+   ```
+
+   `"error"` y `"text_muted"` son **colores del tema**: se ven bien en un tema oscuro y en uno claro.
+
+7. **Revisa y envía.** Haz doble clic en el botón **Send** y escribe las comprobaciones. Cada una muestra un
+   mensaje, lleva el cursor al campo y se detiene con `return`:
+
+   ```python
+   def send_click(form, event):
+       if not form.your_name.text.strip():
+           form.status.color = "error"
+           form.status.text = "Please tell us your name."
+           return form.your_name.focus()
+       if "@" not in form.email.text:
+           form.status.color = "error"
+           form.status.text = "That email does not look right."
+           return form.email.focus()
+       print(f"New {form.topic.selected.lower()} from {form.email.text}")
+       form.status.color = "success"
+       form.status.text = "Thanks! We got your message."
+   ```
+
+8. **Ejecútalo** con <kbd>F5</kbd>. Pulsa **Send** con los campos vacíos y luego rellénalos. El `print` va a la
+   **Consola** de la parte de abajo del editor, junto con los eventos que manejó el formulario y cualquier error.
+
+   <Media src={consoleShot} alt="La consola de Pyzed Design con prints y eventos" caption="La consola muestra lo que imprime tu formulario, los eventos que manejó y sus errores." />
+
+</Steps>
+
+<Aside type="tip" title="Menos código con enlace de datos">
+Revisar los campos a mano está bien para unos pocos. En formularios más grandes, da a cada control **reglas**
+(obligatorio, un patrón, una longitud mínima) en el panel Propiedades y llama a `form.validate()`: mira
+[Enlace de datos y validación](/pyzed/es/tutorials/intermediate/data-binding/).
+</Aside>
+
+<Aside type="caution" title="Los errores no cierran la ventana">
+Si un manejador lanza una excepción, la ventana en ejecución muestra un aviso rojo **Event handler error** y la
+consola recibe el traceback completo. Corrige el código, guarda, y la ventana toma la versión nueva.
+</Aside>
+
+## El código completo
+
+<Code code={handlers} lang="python" title="examples/tutorial/designer/contact.py" />
+
+<Run file="examples/tutorial/designer/contact.pzform" form lang="es" />
+
+{/* media: tutorials/first-form-run (una grabación corta: escribir en el mensaje actualiza el contador; Send muestra el error y luego el agradecimiento) */}
+
+## Siguiente
+
+- [Bases del diseño de pantallas](/pyzed/es/tutorials/basic/layout-basics/): filas, columnas y cuadrículas, en el
+  diseñador y en código.
+- [Eventos y manejadores](/pyzed/es/editor/events/): cada evento de cada control.
+- [Ejecución y consola](/pyzed/es/editor/console-and-running/).

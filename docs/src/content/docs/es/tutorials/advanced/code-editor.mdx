@@ -1,16 +1,29 @@
 ---
 title: Un mini editor de código
-description: "Tutorial: crea un editor de código tipo Zed en Python con Pyzed: workspace, árbol de archivos, pestañas, resaltado, guardado y paleta de comandos."
+description: "Tutorial: crea un editor de código en Python con Pyzed: workspace, árbol de archivos, pestañas, resaltado, guardado y paleta de comandos."
 sidebar:
-  order: 4
+  order: 0
 ---
 
-import { Code, Steps } from '@astrojs/starlight/components';
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
 import source from '../../../../../../../examples/mini_editor.py?raw';
+import Run from '../../../showcase/_run.mdx';
 
-Vamos a construir un editor al estilo de Zed en unas 150 líneas: abre una carpeta real, muestra
-el árbol de archivos, abre pestañas, edita con resaltado de sintaxis, guarda con
-<kbd>Ctrl</kbd>+<kbd>S</kbd> y tiene paleta de comandos.
+Vamos a construir un editor de código en unas 150 líneas: abre una carpeta real, muestra el árbol de archivos,
+abre pestañas, edita con resaltado de sintaxis, guarda con <kbd>Ctrl</kbd>+<kbd>S</kbd> y tiene paleta de comandos.
+Las piezas del workspace (docks, pestañas, paleta) son las mismas con las que está hecho Pyzed Design; su aspecto
+está inspirado en el editor Zed.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Un editor de código que funciona sobre una carpeta | 45 minutos | Avanzado · Python | [Listas y tablas](/pyzed/es/tutorials/intermediate/lists-tables/), [Navegación](/pyzed/es/tutorials/intermediate/navigation/) |
+
+## Qué vas a aprender
+
+- Convertir una carpeta en un árbol de archivos (`ui.TreeNode.from_paths`) y abrir archivos en pestañas.
+- Editar con resaltado de sintaxis (`ui.editor`) y llevar la cuenta de los cambios sin guardar.
+- Montar un workspace completo: barra de título, docks y barra de estado.
+- Añadir una paleta de comandos con búsqueda difusa y atajos de teclado.
 
 ![El mini editor](../../../../../assets/tutorials/mini-editor.png)
 
@@ -102,9 +115,18 @@ el árbol de archivos, abre pestañas, edita con resaltado de sintaxis, guarda c
 
 <Code code={source} lang="py" title="examples/mini_editor.py" />
 
-```bash
-python examples/mini_editor.py ruta/a/una/carpeta
-```
+<Run file="examples/mini_editor.py" lang="es" />
+
+<Aside type="tip">
+Pasa una carpeta para abrirla: `python examples/mini_editor.py ruta/a/una/carpeta`. Sin ella abre la carpeta actual.
+</Aside>
 
 Para una versión más completa (buscador de archivos, panel de terminal, outline, temas, marcadores
-de git) mira [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py).
+de git) mira [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) y su
+página en el [Showcase](/pyzed/es/showcase/apps/#editor-de-proyectos).
+
+## Siguiente
+
+- [Un bucle de juego](/pyzed/es/tutorials/advanced/game-loop/) con `pyzed.game`.
+- [Workspace](/pyzed/es/library/workspace/), [Tree](/pyzed/es/library/tree/) y
+  [Command palette](/pyzed/es/library/command-palette/) en la biblioteca de componentes.

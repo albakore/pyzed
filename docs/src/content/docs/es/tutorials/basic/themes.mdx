@@ -1,0 +1,122 @@
+---
+title: Cambia el tema
+description: "Dale otro aspecto a una app de Pyzed: elige un tema incluido, cambia el color de acento, sigue el modo claro u oscuro del sistema o genera tu propio tema a partir de tres colores, en código y en Pyzed Design."
+sidebar:
+  order: 3
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import sunset from '../../../../../assets/tutorials/themes-sunset.png';
+import light from '../../../../../assets/tutorials/themes-light.png';
+import designerLight from '../../../../../../screenshots/designer-light.png';
+import source from '../../../../../../../examples/tutorial/theme_switcher.py?raw';
+
+Un **tema** es el conjunto de colores (y algunos tamaños, como el radio de las esquinas) que lee cada componente al
+dibujarse. Cambias el tema y cambia toda la ventana a la vez: botones, campos, insignias, el editor de código... Nunca
+coloreas los componentes uno por uno.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una ventana con un selector de tema | 15 minutos | Básico · Python, o sin código en el diseñador | [Bases del diseño de pantallas](/pyzed/es/tutorials/basic/layout-basics/) |
+
+## Qué vas a aprender
+
+- Elegir un tema en código (`theme = "One Light"`) y en el diseñador (**Propiedades → Aspecto → Tema**).
+- Cambiar solo el color de **acento**.
+- Seguir el modo **claro u oscuro** del sistema operativo.
+- Crear **tu propio tema** a partir de tres colores y darle un nombre.
+- Usar **colores del tema** (`"accent"`, `"text_muted"`) en lugar de valores `#hex` fijos.
+
+<Media src={sunset} light={light} alt="El selector de temas con un tema propio, Sunset" caption="La misma ventana con un tema propio, “Sunset” (y, en la versión clara de esta página, One Light con acento violeta)." eager />
+
+## Pasos
+
+<Steps>
+
+1. **Elige un tema incluido.** `theme` es un atributo de clase de tu app. Sirve cualquier nombre de
+   `pz.themes.names()`: las familias One, Ayu y Gruvbox, claras y oscuras.
+
+   ```python
+   class ThemeSwitcher(pz.App):
+       theme = "One Dark"
+   ```
+
+2. **Cámbialo mientras la app corre.** Asigna `self.theme`; el siguiente redibujado lo usa. Un desplegable con todos
+   los temas es una línea:
+
+   ```python
+   ui.select(pz.themes.names(), self.base, lambda name: setattr(self, "theme", name))
+   ```
+
+3. **Cambia solo el acento.** El acento es el color de los botones principales, los anillos de foco, la selección y
+   los enlaces:
+
+   ```python
+   self.theme = pz.themes.get("One Dark").with_accent("#e5c07b")
+   ```
+
+4. **Sigue al sistema.** `pz.themes.auto(light, dark)` cambia solo cuando el usuario pasa su sistema operativo de
+   modo claro a oscuro:
+
+   ```python
+   self.theme = pz.themes.auto("One Light", "One Dark")
+   ```
+
+5. **Crea el tuyo.** `pz.Theme.generate` deduce cada superficie, borde, estado hover y texto atenuado a partir de
+   tres colores; `pz.themes.register` lo añade a la lista con su nombre:
+
+   ```python
+   SUNSET = pz.themes.register(
+       pz.Theme.generate("Sunset", background="#2b1d2f", text="#f5e6e8", accent="#ff8a65")
+   )
+   ```
+
+6. **Lee el tema en tu vista.** `self.resolved_theme()` devuelve el `Theme` en uso, útil para un fondo o para
+   decir "oscuro" o "claro":
+
+   ```python
+   t = self.resolved_theme()
+   pz.container(..., bg=t.background)
+   ui.muted(f"Using {t.name} ({'dark' if t.is_dark else 'light'})")
+   ```
+
+</Steps>
+
+<Aside type="tip" title="Usa colores del tema, no #hex">
+Donde un componente acepte un color, prefiere un **token** como `"accent"`, `"text_muted"`, `"success"` o
+`"error"` en lugar de un `"#3b82f6"` fijo. Los tokens siguen al tema, así tu app se lee bien en temas claros y
+oscuros.
+</Aside>
+
+## En Pyzed Design
+
+Selecciona un lugar vacío del lienzo para que el panel Propiedades muestre el **formulario** y abre la sección
+**Aspecto** (*Look*):
+
+- **Tema** (*Theme*): todos los temas registrados.
+- **Acento** (*Accent*): siete colores predefinidos, o un `#rrggbb` propio.
+- **Fondo**, **Radio de esquina** y **Tamaño de letra** para todo el formulario.
+
+<Media src={designerLight} alt="Un formulario con el tema Gruvbox Light y un acento propio en Pyzed Design" caption="El tema del formulario es independiente del tema del editor: diseña un formulario claro en un editor oscuro." />
+
+**Ver → Vista previa con tema…** muestra el lienzo con otro tema sin cambiar el formulario, para revisar los dos
+aspectos. Cada control también puede cambiar sus propios colores en su sección **Estilo**.
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/theme_switcher.py" />
+
+<Run file="examples/tutorial/theme_switcher.py" lang="es" />
+
+<Aside type="note" title="Para ir más lejos">
+Esto es el recorrido rápido. La sección [Temas y estilos](/pyzed/es/theming/) explica cada token, cómo dar estilo a
+un widget con `.style(...)`, degradados, fuentes e iconos, y cómo guardar un tema en un archivo.
+</Aside>
+
+## Siguiente
+
+- [Tutorial en 5 pasos](/pyzed/es/tutorials/basic/step-by-step/): estado, layout, async y una app de notas en
+  Python puro.
+- [Temas](/pyzed/es/theming/themes/) y [Estilos](/pyzed/es/theming/styles/) en la sección de temas.

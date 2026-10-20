@@ -2,14 +2,26 @@
 title: Lista de tareas
 description: "Crea tu primera app de escritorio completa en Python con Pyzed: una lista de tareas con estado, formularios, listas, filtros y atajos de teclado."
 sidebar:
-  order: 1
+  order: 5
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
 import source from '../../../../../../../examples/todo.py?raw';
+import Run from '../../../showcase/_run.mdx';
 
-En este tutorial construimos una lista de tareas. Aprenderás a guardar estado, leer un campo de
-texto, dibujar listas, filtrar y añadir atajos de teclado.
+En este tutorial construimos una lista de tareas: la primera app clásica, y una buena, porque tiene todo lo que
+tiene una app real: datos, un formulario para añadirlos, una lista para mostrarlos y formas de cambiarlos.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una lista de tareas con filtros y atajos | 30 minutos | Básico · Python | [Tutorial en 5 pasos](/pyzed/es/tutorials/basic/step-by-step/) (pasos 1 y 2) |
+
+## Qué vas a aprender
+
+- Guardar los datos de la app en objetos de Python normales (un dataclass).
+- Leer un campo de texto mientras el usuario escribe y enviarlo con <kbd>Enter</kbd>.
+- Dibujar una lista de filas, cada una con una casilla y un botón de borrar.
+- Filtrar lo que se muestra y añadir atajos de teclado.
 
 ![La app terminada](../../../../../assets/tutorials/todo.png)
 
@@ -103,6 +115,10 @@ porque leen sus colores del tema activo.
 
 <Code code={source} lang="py" title="examples/todo.py" />
 
-```bash
-python examples/todo.py
-```
+<Run file="examples/todo.py" lang="es" />
+
+## Siguiente
+
+- [Enlace de datos y validación](/pyzed/es/tutorials/intermediate/data-binding/) en el diseñador.
+- [Listas y tablas](/pyzed/es/tutorials/intermediate/lists-tables/): buscar, ordenar y seleccionar filas.
+- La [app Todos del Showcase](/pyzed/es/showcase/apps/#todos), que guarda la lista en disco.

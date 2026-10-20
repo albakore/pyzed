@@ -1,0 +1,135 @@
+---
+title: Bases del diseño de pantallas
+description: "Organiza una ventana de Pyzed con filas, columnas, relleno del espacio libre, separaciones y cuadrículas, en código Python y con los contenedores flexibles y los anclajes de Pyzed Design."
+sidebar:
+  order: 2
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../../components/Media.astro';
+import Run from '../../../showcase/_run.mdx';
+import finished from '../../../../../assets/tutorials/layout-basics.png';
+import designerLayout from '../../../../../../screenshots/designer-layout.png';
+import source from '../../../../../../../examples/tutorial/layout_basics.py?raw';
+
+Cualquier pantalla, desde una caja de inicio de sesión hasta un IDE completo, se arma con cuatro ideas: **apilar**
+cosas en vertical, ponerlas **una al lado de otra**, decidir **quién ocupa el espacio libre** y dejar **aire**
+entre ellas. Apréndelas una vez y podrás leer cualquier layout de Pyzed.
+
+| Objetivo | Tiempo | Nivel | Necesitas |
+| --- | --- | --- | --- |
+| Una página de perfil que se adapta bien al tamaño | 20 minutos | Básico · Python | Pyzed instalado ([Instalación](/pyzed/es/getting-started/installation/)) |
+
+## Qué vas a aprender
+
+- `pz.column` y `pz.row`: pilas vertical y horizontal.
+- `spacing` (la separación entre hijos) y `padding` (el margen interior del borde).
+- `width="fill"` / `height="fill"` y `pz.hspace()`: ocupar el espacio libre.
+- `align`: alinear los hijos a lo ancho de la pila.
+- `pz.grid`: celdas iguales.
+- Las mismas ideas en el diseñador: **Fila flexible**, **Columna flexible**, **Cuadrícula**, **Espaciador** y
+  **anclajes**.
+
+<Media src={finished} alt="Una página de perfil: avatar y nombre, un botón Follow a la derecha, tres tarjetas de estadísticas y un recuadro About" caption="El layout terminado. Cambia el tamaño de la ventana: el recuadro About crece y el botón se queda a la derecha." eager />
+
+## Las cuatro ideas
+
+```text
+pz.column([...], spacing=16)        pz.row([...], spacing=12, align="center")
+┌──────────────┐                    ┌───────────────────────────────────────┐
+│ header       │                    │ (AL)  Ada Lovelace     ⟷fill⟷  [Follow]│
+│ ── 16 px ──  │                    └───────────────────────────────────────┘
+│ stats        │                         pz.hspace() empuja el botón a la derecha
+│ ── 16 px ──  │
+│ about (fill) │  ← height="fill" ocupa lo que queda
+└──────────────┘
+```
+
+| Valor de tamaño | Significa |
+| --- | --- |
+| un número (`width=200`) | Exactamente esa cantidad de píxeles. |
+| `"shrink"` (el valor por defecto de casi todos los widgets) | Tan pequeño como su contenido. |
+| `"fill"` | Todo el espacio libre; varios hijos `fill` lo reparten a partes iguales. |
+| `"fill:2"` | El doble de la parte de un hermano `fill` normal. |
+
+## Pasos
+
+<Steps>
+
+1. **La página es una columna.** `view()` devuelve un widget; aquí un `pz.container` con `padding=24` alrededor de
+   una columna de tres partes separadas por `spacing=16`:
+
+   ```python
+   def view(self):
+       t = self.resolved_theme()
+       return pz.container(
+           pz.column([self.header(), self.stats(), self.about()], spacing=16, height="fill"),
+           padding=24, width="fill", height="fill", bg=t.background,
+       )
+   ```
+
+2. **La cabecera es una fila.** Un avatar, una columna con el nombre y una línea atenuada, luego `pz.hspace()`, una
+   pieza vacía con `width="fill"`, y luego el botón. `align="center"` los centra en vertical:
+
+   ```python
+   pz.row([
+       ui.avatar("AL", size=48),
+       pz.column([ui.heading("Ada Lovelace", level=2), ui.muted("Analyst · London")], spacing=2),
+       pz.hspace(),
+       ui.button("Follow", self.toggle_follow, variant="solid", icon="user-plus"),
+   ], spacing=12, align="center")
+   ```
+
+3. **Tres tarjetas iguales: una cuadrícula.** `columns=3` crea tres celdas del mismo ancho; `height` es el alto de
+   cada fila:
+
+   ```python
+   pz.grid([ui.stat("Projects", "12", width="fill"), ...], columns=3, spacing=12, height=84)
+   ```
+
+4. **La última parte rellena.** `height="fill"` en el recuadro About hace que ocupe cada píxel que dejan las otras
+   partes, así que crece con la ventana.
+
+5. **Ejecútalo y cambia el tamaño de la ventana.** La cabecera mantiene el botón en el borde derecho, las tarjetas
+   siguen iguales y el recuadro About se estira.
+
+</Steps>
+
+<Aside type="tip" title="Mira los cambios al guardar">
+Ejecuta cualquier script con `pyzed dev examples/tutorial/layout_basics.py` (o `uv run pyzed dev ...`): la ventana
+se actualiza cada vez que guardas el archivo y conserva su estado. Ideal para jugar con `spacing` y `padding`.
+</Aside>
+
+## Lo mismo en Pyzed Design
+
+El diseñador tiene las mismas piezas en la categoría **Disposición** (*Layout*) de las Herramientas:
+
+| En código | En el diseñador |
+| --- | --- |
+| `pz.row([...], spacing=8)` | **Fila flexible** (*Flex row*), con **Separación** (*Gap*) 8 |
+| `pz.column([...])` | **Columna flexible** (*Flex column*) |
+| `pz.hspace()` | **Espaciador** (*Spacer*, un hijo que crece 1) |
+| `width="fill"` en un hijo | El campo **Crecer** (*Grow*) del hijo (sección Posición) en 1 |
+| `pz.grid([...], columns=3)` | **Cuadrícula** (*Grid*) con **Columnas** 3 |
+| `padding=24` | El **Relleno** (*Padding*) del contenedor |
+
+<Media src={designerLayout} alt="Un formulario con barra lateral hecho con una columna flexible y sus hijos" caption="Una columna flexible en Pyzed Design: los hijos se colocan uno tras otro, en el orden de la Estructura." />
+
+Los controles colocados libremente en el formulario (fuera de un contenedor flexible) usan **anclajes**: anclado a
+izquierda y derecha, un control se estira; anclado solo a la derecha, sigue al borde derecho. Selecciona controles y
+usa **Agrupar en una fila / columna / cuadrícula** (menú del clic derecho) para convertir una disposición libre en
+una flexible. Detalles en [Layouts y contenedores](/pyzed/es/editor/layouts/).
+
+## Código completo
+
+<Code code={source} lang="python" title="examples/tutorial/layout_basics.py" />
+
+<Run file="examples/tutorial/layout_basics.py" lang="es" />
+
+## Siguiente
+
+- [Cambia el tema](/pyzed/es/tutorials/basic/themes/) de esta ventana.
+- [Guía de layout](/pyzed/es/guides/layout/): cuadrículas por pistas (`"200 1fr auto"`), `pz.flex`, scroll y
+  layouts anclados.
+- [Row](/pyzed/es/library/row/), [Column](/pyzed/es/library/column/) y [Grid](/pyzed/es/library/grid/) en la
+  biblioteca de componentes.
