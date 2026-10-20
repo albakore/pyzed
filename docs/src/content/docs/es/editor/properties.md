@@ -44,7 +44,7 @@ Cada componente agrupa sus propiedades en secciones **Apariencia**, **Datos**, *
 | Multilínea | Un pequeño editor de código con ajuste de línea. | El `text` de un área de texto o de un markdown. |
 | Número | Un campo numérico con `−`/`+` y límites. | `min`, `max`, `step` de un deslizador. |
 | Interruptor | Un switch de encendido y apagado. | `checked`, `secure`, `wrap`. |
-| Opción | Un desplegable. | El `variant` de un botón, el `size` de una etiqueta. |
+| Opción | Hasta cuatro opciones cortas lado a lado como un control segmentado; las listas más largas, como desplegable. | El `variant` de un botón, el `size` de una etiqueta. |
 | Color | Una muestra y un campo para un token del tema (`accent`, `text_muted`) o `#hex`. | El `color` de una etiqueta. |
 | Icono | Una vista previa, un campo para un nombre de icono de [Lucide](https://lucide.dev) y un botón **…**: pulsa la vista previa o **…** para elegirlo en el diálogo de iconos (ver abajo). | El `icon` de un botón. |
 | Lista | Un campo por elemento (ver abajo). | Las `options` de un desplegable, los `items` de una lista, las `tabs` de una barra de pestañas. |
@@ -94,6 +94,11 @@ fondo (color, degradado o máscara), color del texto, fuente, peso, cursiva, tam
 radio de esquina, sombra, relleno, margen, tamaño máximo, alineación del contenido y recorte. Los campos vacíos
 mantienen el aspecto propio del componente y **Restablecer el estilo** los borra todos. Ver
 [Estilos y temas](/pyzed/es/editor/styles-and-themes/).
+
+Cada campo tiene un editor hecho para su valor: **Fuente**, **Cursiva**, **Recortar** y las dos alineaciones son
+controles segmentados (las alineaciones muestran iconos; pasa el ratón para ver su nombre), y **Relleno**,
+**Margen** y **Radio de esquina** son un solo número para todos los lados. Pulsa el botón de **enlace** al final
+para dar a cada lado (o esquina) su propio número; púlsalo otra vez para usar un valor en todos.
 
 Debajo, **Efectos** (opacidad, resplandor, bloom, cristal) y **Animación** (lo que se reproduce cuando el control
 aparece, con el ratón encima, al pulsarlo, con el foco o al hacer clic) se explican en
