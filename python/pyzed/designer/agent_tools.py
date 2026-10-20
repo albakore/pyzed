@@ -444,8 +444,9 @@ def project_info(d: "Designer") -> Dict[str, Any]:
         pass
     return {
         "project": project.name, "folder": str(root), "version": project.version,
+        "environment": project.environment.describe(), "branch": d.projects.branch,
         "main_form": project.main_form.relative_to(root).as_posix() if project.main_form.exists() else None,
-        "forms": [p.relative_to(root).as_posix() for p in project.forms],
+        "forms": [p.relative_to(root).as_posix() for p in project.forms()],
         "package": project.src_dir.relative_to(root).as_posix() if project.src_dir else None,
         "dependencies": [str(dep.name) + (" (dev)" if dep.dev else "") for dep in project.dependencies()],
         "files": files,
@@ -600,6 +601,14 @@ def context_note(d: "Designer") -> str:
     project = getattr(d.projects, "project", None)
     parts = [f"Project: {project.name} in {project.root}." if project is not None else
              f"No project is open; the folder is {d.agent.project_root()}."]
+    projects = d.projects
+    parts.append(f"Environment: {projects.environment.describe()}")
+    if project is not None and projects.branch:
+        parts.append(f"Git branch: {projects.branch}" + (f" (worktree {projects.worktree})." if projects.worktree
+                                                          else "."))
+    elsewhere = [root.name for root in projects.window if project is None or root != project.root]
+    if elsewhere:
+        parts.append(f"Also open in this window (not active): {', '.join(elsewhere[:8])}.")
     others = [x.display_name for x in d.panes.all_docs() if x is not doc]
     parts.append(f"Open {kind}: {doc.display_name} ({len(doc.form.controls)} controls"
                  + (f", saved as {doc.path.name}" if doc.path is not None else ", not saved yet") + ").")

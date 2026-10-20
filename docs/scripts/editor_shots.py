@@ -219,6 +219,22 @@ def open_project():
 
 
 @shot
+def project_picker():
+    folder = Path(tempfile.mkdtemp(prefix="pyzed-shots-picker-")) / "projects"
+    for name in ("weather", "notes", "shop"):
+        (folder / name / "ui").mkdir(parents=True)
+        (folder / name / ".venv").mkdir()
+        (folder / name / "pyproject.toml").write_text(f'[project]\nname = "{name}"\nversion = "0.1.0"\n'
+                                                       '[tool.pyzed]\nui = "ui"\n')
+    app = login()
+    for name in ("weather", "notes", "shop"):
+        app.projects.open(str(folder / name))
+    app.projects.close_project(folder / "weather")
+    app.picker_projects.open()
+    save(app, "project-picker", size=(1100, 420))
+
+
+@shot
 def reference():
     app = login()
     app.doc.select("sign_in")

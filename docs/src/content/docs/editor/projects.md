@@ -23,10 +23,44 @@ you opened or above it, or above the current folder. If it finds one it:
 - **activates** it, so forms and handlers can import `ui/` helpers, the `src/` package and every dependency of
   its `.venv`;
 - **discovers its components**: every `.pzcomp` of the project joins the toolbox;
-- **checks its tools** in the background (uv, git, ruff and ty, with their versions).
+- **checks its tools** in the background (uv, git, ruff and ty, with their versions);
+- **gets its environment ready**, like Zed does when a project opens: if uv is missing it installs it with its
+  official installer, and if the project has no `.venv` yet it runs `uv sync`, which also installs ruff and ty.
+  A notification says when the project is ready.
 
-The title bar then shows the project's name before the file name: click it to bring the Project panel to the
-front.
+The title bar then shows the project's name, its git branch and, in a linked
+[git worktree](https://git-scm.com/docs/git-worktree), the worktree's name, each one apart, as Zed does.
+
+## Several projects in one window
+
+Click the project's name in the title bar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd>) to open the
+**project picker**:
+
+![The project picker open under the project's name, with the projects of this window and the recent ones](../../../../screenshots/editor-project-picker.png)
+
+
+- **This window** lists the projects you opened in this window; the active one has a check mark. Click another to
+  make it active: the Project panel, Run, the checks and the AI agent all follow it. The **×** of a row takes that
+  project out of the window.
+- **Recent projects** lists the ones you opened before. Click one to open it here.
+- Type to filter both lists, move with the arrow keys and press <kbd>Enter</kbd> to open the highlighted one.
+- **Open local folder…** and **New project…** at the bottom open those dialogs.
+
+Forms always belong to the active project: they live in its `ui/` folder, and its main form (or its `script`) is
+where the app starts when you press Run.
+
+:::tip[Branches]
+Click the branch next to the project's name to switch to another local branch (`git switch`).
+:::
+
+## Environments and WSL
+
+The editor knows where each project lives. Under WSL the title bar starts with the Linux distribution
+(*Ubuntu*, for example), and the recent projects that live in a WSL distribution show its name next to them. uv,
+ruff, ty and git then run in Linux, the windows of your forms open through WSLg and web pages in Windows' browser.
+
+The AI agent is told the same with every message: the active project, its environment and branch, and the other
+projects open in the window, so it works on the right one.
 
 ## No project open
 

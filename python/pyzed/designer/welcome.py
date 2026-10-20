@@ -102,7 +102,7 @@ class Welcome:
         return Path(self.folder.strip() or DEFAULT_FOLDER).expanduser() / (self.name.strip() or "…")
 
     def create(self) -> Any:
-        """Copies the example into a new project, opens it (its script or main form in front) and installs
+        """Copies the example into a new project and opens it (its script or main form in front), which installs
         its packages with ``uv sync`` in the background; returns the commands."""
         sample, name = self.sample, self.name.strip()
         if sample is None or not name:
@@ -113,13 +113,12 @@ class Welcome:
             self.d.notify(tr("Could not create the project"), str(err), kind="error", seconds=5)
             return None
         self.d.dialog = None
-        commands = [self.d.projects.open(str(folder))]
+        commands = list(self.d.projects.open(str(folder)) or [])  # it also installs the packages (uv sync)
         project = self.d.projects.project
         if project is not None and project.root.resolve() == folder.resolve():
             front = project.script if project.script is not None else folder / "README.md"
             if front.is_file() and front.suffix != ".pzform" and not project.main_form.exists():
                 commands.append(self.d.projects.files.edit(front.relative_to(project.root).as_posix()))
-            commands.append(self.d.projects.sync())
         return [c for c in commands if c is not None]
 
     def download(self) -> Any:

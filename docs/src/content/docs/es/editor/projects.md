@@ -23,10 +23,46 @@ que abriste o por encima, o por encima de la carpeta actual. Si lo encuentra:
 - **lo activa**, para que formularios y manejadores puedan importar los módulos de `ui/`, el paquete de `src/` y
   cualquier dependencia de su `.venv`;
 - **descubre sus componentes**: cada `.pzcomp` del proyecto se suma a la caja de herramientas;
-- **comprueba sus herramientas** en segundo plano (uv, git, ruff y ty, con sus versiones).
+- **comprueba sus herramientas** en segundo plano (uv, git, ruff y ty, con sus versiones);
+- **prepara su entorno**, como Zed al abrir un proyecto: si falta uv lo instala con su instalador oficial, y si el
+  proyecto todavía no tiene `.venv` ejecuta `uv sync`, que también instala ruff y ty. Una notificación avisa
+  cuando el proyecto está listo.
 
-La barra de título muestra entonces el nombre del proyecto antes del archivo: haz clic en él para traer el panel
-Proyecto al frente.
+La barra de título muestra entonces el nombre del proyecto, su rama de git y, en un
+[worktree de git](https://git-scm.com/docs/git-worktree) enlazado, el nombre del worktree, cada uno por separado,
+como en Zed.
+
+## Varios proyectos en una ventana
+
+Haz clic en el nombre del proyecto en la barra de título (o pulsa <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd>) para
+abrir el **selector de proyectos**:
+
+![El selector de proyectos abierto bajo el nombre del proyecto, con los proyectos de esta ventana y los recientes](../../../../../screenshots/editor-project-picker.png)
+
+
+- **Esta ventana** lista los proyectos que abriste en esta ventana; el activo lleva una marca. Haz clic en otro
+  para activarlo: el panel Proyecto, Ejecutar, las comprobaciones y el agente de IA pasan a trabajar sobre él. La
+  **×** de una fila saca ese proyecto de la ventana.
+- **Proyectos recientes** lista los que abriste antes. Haz clic en uno para abrirlo aquí.
+- Escribe para filtrar las dos listas, muévete con las flechas y pulsa <kbd>Enter</kbd> para abrir el resaltado.
+- **Abrir carpeta local…** y **Nuevo proyecto…**, abajo, abren esos diálogos.
+
+Los formularios siempre pertenecen al proyecto activo: viven en su carpeta `ui/`, y su formulario principal (o su
+`script`) es donde arranca la aplicación al pulsar Ejecutar.
+
+:::tip[Ramas]
+Haz clic en la rama, junto al nombre del proyecto, para cambiar a otra rama local (`git switch`).
+:::
+
+## Entornos y WSL
+
+El editor sabe dónde vive cada proyecto. En WSL la barra de título empieza con la distribución de Linux (*Ubuntu*,
+por ejemplo), y los proyectos recientes que viven en una distribución de WSL muestran su nombre al lado. uv, ruff,
+ty y git se ejecutan entonces en Linux, las ventanas de tus formularios se abren a través de WSLg y las páginas web
+en el navegador de Windows.
+
+El agente de IA recibe lo mismo con cada mensaje: el proyecto activo, su entorno y su rama, y los demás proyectos
+abiertos en la ventana, para trabajar sobre el correcto.
 
 ## Sin proyecto abierto
 
