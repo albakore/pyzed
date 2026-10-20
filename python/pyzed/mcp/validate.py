@@ -204,7 +204,8 @@ def _ruff(source: str) -> List[Dict[str, Any]]:
         # Only syntax errors and pyflakes: style rules would bury the useful findings.
         cmd = [exe, "check", "--isolated", "--select", "E9,F", "--output-format", "json",
                "--stdin-filename", "app.py", "-"]
-        result = subprocess.run(cmd, input=source, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(cmd, input=source, capture_output=True, text=True, timeout=30,
+                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         found = json.loads(result.stdout or "[]")
     except (OSError, subprocess.SubprocessError, ValueError):
         return []

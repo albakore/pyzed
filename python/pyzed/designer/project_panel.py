@@ -276,8 +276,8 @@ class ProjectController:
 
     def stop(self) -> None:
         """Terminates the form process started with ``run_form``, if it is still running."""
-        if self.process is not None and self.process.poll() is None:
-            self.process.terminate()
+        if self.process is not None:
+            _project.terminate(self.process)
         self.process = None
 
     # -- input setters ---------------------------------------------------------------------

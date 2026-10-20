@@ -1929,6 +1929,7 @@ class Designer(App):
             self.console.start(name, "uv run")
             env = {k: v for k, v in (("PYZED_PREVIEW_THEME", self.preview_theme),
                                      ("PYZED_PREVIEW_LANGUAGE", self.preview_language)) if v}
+            env["PYZED_DESIGNER_RUN"] = "1"
             self.projects.run_form(Path(self.doc.path), capture=True, env=env)
             self.console.pipe(self.projects.process)
             return None

@@ -36,6 +36,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import site
 import subprocess
 import sys
@@ -140,13 +141,34 @@ def _clean_env() -> Dict[str, str]:
     return env
 
 
+#: Keeps console programs (uv, git, ruff...) from opening a console window on Windows: the windowed
+#: Pyzed Design has no console of its own to share with them.
+NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
+def terminate(process: "subprocess.Popen[bytes]") -> None:
+    """Stops ``process`` and the processes it started (stopping ``uv run`` alone leaves its Python running)."""
+    if process.poll() is not None:
+        return
+    if sys.platform == "win32":
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(process.pid)], capture_output=True,  # noqa: S603, S607
+                       creationflags=NO_WINDOW, check=False)
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except OSError:
+            process.terminate()
+    if process.poll() is None:
+        process.terminate()
+
+
 def execute(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Optional[float] = None) -> Result:
     """Runs ``args`` and returns its exit code and combined output (never raises)."""
     args = [str(a) for a in args]
     try:
         done = subprocess.run(args, cwd=str(cwd) if cwd else None, env=_clean_env(), stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-                              timeout=timeout, check=False)
+                              timeout=timeout, check=False, creationflags=NO_WINDOW)
     except FileNotFoundError:
         return Result(args, 127, f"{args[0]}: command not found")
     except subprocess.TimeoutExpired as err:
@@ -628,7 +650,10 @@ class Project:
         env = {**_clean_env(), **(env or {})}
         if capture:
             env["PYTHONUNBUFFERED"] = "1"  # lines reach the designer's console as they are printed
-        return subprocess.Popen(args, cwd=str(self.root), env=env, **pipes)
+        # No console window on Windows (the output goes to the designer), and a process group of its own
+        # elsewhere, so ``terminate`` stops uv and the Python it starts together.
+        return subprocess.Popen(args, cwd=str(self.root), env=env, creationflags=NO_WINDOW,
+                                start_new_session=sys.platform != "win32", **pipes)
 
 
 # -- creating projects --------------------------------------------------------------------------

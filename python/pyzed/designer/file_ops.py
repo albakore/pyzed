@@ -137,7 +137,8 @@ def _git(root: Path, *args: str) -> Optional[str]:
     if git is None:
         return None
     try:
-        out = subprocess.run([git, *args], cwd=root, capture_output=True, text=True, timeout=5)  # noqa: S603
+        out = subprocess.run([git, *args], cwd=root, capture_output=True, text=True, timeout=5,  # noqa: S603
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return None
     return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
