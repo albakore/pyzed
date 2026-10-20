@@ -142,7 +142,7 @@ def write_files(root: Path, files: Dict[str, str]) -> Dict[str, Any]:
             raise ValueError(f"{path} is larger than {WRITE_LIMIT // 1000} KB")
         target = resolve(root, path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(text, encoding="utf-8")
+        target.write_bytes(text.encode("utf-8"))  # as given: no newline translation on Windows
         written.append(_rel(root, target))
     for rel in written:
         result = _check_file(Path(root).resolve() / rel)
