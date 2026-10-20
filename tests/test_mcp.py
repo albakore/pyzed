@@ -225,13 +225,14 @@ def test_server_registers_everything(tmp_path):
 
     server = create(root=str(tmp_path))
     project_tools = {"project_info", "list_files", "read_file", "write_files", "create_project", "add_dependency",
-                     "check_project", "run_tests", "screenshot_project"}
+                     "check_project", "run_tests", "screenshot_project", "start_live_preview",
+                     "live_preview_status", "stop_live_preview"}
 
     async def check():
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
                 "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
-                "screenshot", "read_docs", "list_examples", "list_shader_nodes", "check_shader",
+                "screenshot", "read_docs", "list_examples", "plan_app", "list_shader_nodes", "check_shader",
                 "new_shader"} | project_tools <= tools
         resources = {str(r.uri) for r in await server.list_resources()}
         assert {"pyzed://guide", "pyzed://best-practices", "pyzed://cookbook", "pyzed://components"} <= resources
@@ -288,6 +289,44 @@ def test_project_tools_read_a_project(tmp_path):
     assert [d["name"] for d in found["dependencies"]] == ["pyzed-ui"]
     caption, png = projects.screenshot(tmp_path)
     assert "ui/main.pzform" in caption and png.startswith(b"\x89PNG")
+
+
+def test_project_tools_know_the_entry_environment_and_shaders(tmp_path):
+    from pyzed.mcp import shaders
+
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "demo"\n\n[tool.pyzed]\nscript = "app.py"\n')
+    (tmp_path / "app.py").write_text(APP)
+    (tmp_path / "fx").mkdir()
+    (tmp_path / "fx" / "glow.pzshad").write_text(shaders.template("glow_ring"))
+    found = projects.info(tmp_path)
+    assert found["entry"] == "app.py" and found["shaders"] == ["fx/glow.pzshad"]
+    assert {"system", "wsl", "venv", "runs_in"} <= set(found["environment"])
+    assert projects.check_project(tmp_path, tools=False)["ok"]
+    assert projects.write_files(tmp_path, {"bad.pzshad": "{}"})["checks"]["bad.pzshad"]["issues"]
+    caption, png = projects.screenshot(tmp_path, size=(160, 90))  # the entry by default
+    assert "app.py" in caption and png.startswith(b"\x89PNG")
+    caption, png = projects.screenshot(tmp_path, "fx/glow.pzshad", size=(120, 80))
+    assert png.startswith(b"\x89PNG")
+
+
+def test_live_preview_runs_and_reports(tmp_path):
+    from pyzed.mcp import live
+
+    (tmp_path / "app.py").write_text(APP)
+    assert live.command(tmp_path, "app.py")[-3:] == ["pyzed", "dev", str((tmp_path / "app.py").resolve())]
+    crash = [sys.executable, "-c", "print('starting'); raise SystemExit(4)"]
+    result = live.start(tmp_path, "app.py", cmd=crash)
+    assert not result["running"] and result["exit_code"] == 4 and "starting" in result["output"]
+    wait = [sys.executable, "-c", "import time; print('up', flush=True); time.sleep(60)"]
+    assert live.start(tmp_path, "app.py", cmd=wait)["running"]
+    assert [p["target"] for p in live.status()] == ["app.py"]
+    assert live.stop()["stopped"] == ["app.py"] and live.status() == []
+
+
+def test_plan_app_points_at_blocks_and_topics():
+    found = knowledge.plan("a kanban board that saves tasks to a SQLModel database")
+    assert found["examples"][0]["name"] == "blocks/kanban"
+    assert "integrations" in found["topics"] and found["steps"]
 
 
 COOKBOOK = re.findall(r"```python\n(.*?)```", knowledge.guide("cookbook"), re.S)

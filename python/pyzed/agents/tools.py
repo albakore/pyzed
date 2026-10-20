@@ -33,6 +33,14 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
         """
         return knowledge.guide(topic, lang)
 
+    @tool(title="Planning an app")
+    def plan_app(description: str) -> Any:
+        """Where to start for an app or screen: the closest blocks and examples, the components and guide topics it needs, the docs to read and the steps to build it. Call it first.
+
+        description: what the user asked for, in their words.
+        """
+        return knowledge.plan(description)
+
     @tool(title="Listing the guides")
     def list_guides() -> Any:
         """Every topic get_guide takes, with what it covers."""
@@ -169,7 +177,7 @@ def pyzed_tools(*, screenshots: bool = True) -> List[Tool]:
 
         return [f"Screenshot of the app at {width}x{height}.", Image(render(code, size=(width, height)), "image/png")]
 
-    out = [get_guide, list_guides, search_reference, read_reference, editor_keymap, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
+    out = [plan_app, get_guide, list_guides, search_reference, read_reference, editor_keymap, list_components, describe_component, search_icons, list_themes, read_docs, list_docs,
            list_examples, read_example, new_app, new_component_code, new_form, validate_code, validate_form]
     return out + [screenshot] if screenshots else out
 
