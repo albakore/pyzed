@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
 import Run from '../../showcase/_run.mdx';
 import source from '../../../../../../examples/games/breakout.py?raw';
 
@@ -16,7 +17,7 @@ Aprenderás el bucle por fotograma, la entrada continua con `pz.pressed()`, las 
 `pyzed.game` y los detalles que hacen que un juego se sienta bien: partículas, combos y
 temblor de pantalla.
 
-![Breakout](../../../../assets/games/breakout.png)
+<Media clip="breakout" alt="La pelota rebotando en la paleta y rompiendo filas de ladrillos de colores" caption="El juego a 60 fotogramas por segundo: la pelota, la paleta y ladrillos que se rompen en partículas." eager />
 
 | Objetivo | Tiempo | Nivel | Necesitas |
 | --- | --- | --- | --- |

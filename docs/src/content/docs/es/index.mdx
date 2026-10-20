@@ -31,12 +31,13 @@ import Cta from '../../../components/landing/Cta.astro';
 import Gallery from '../../../components/landing/Gallery.astro';
 import Compare from '../../../components/landing/Compare.astro';
 import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
 
 <LatestRelease />
 
 <HeroShot
-	name="designer"
-	light="designer-light"
+	name="editor/form-view"
+	light="editor/form-view-light"
 	alt="Pyzed Design con un formulario de inicio de sesión: caja de herramientas y esquema a la izquierda, el formulario en el centro y sus propiedades a la derecha"
 	tags={['Arrastrar y soltar', 'Propiedades y eventos', 'F5 para ejecutar', 'Más de 90 componentes']}
 />
@@ -75,13 +76,18 @@ import NavCards from '../../../components/NavCards.astro';
 	código que conoce tu proyecto y una biblioteca de interfaz moderna con temas y modo oscuro.
 </SectionTitle>
 
+<div class="pz-clip-pair not-content">
+	<Media clip="designer-place-controls" alt="Un botón, un cuadro de texto y una casilla arrastrados desde las herramientas a un formulario vacío en Pyzed Design" caption="Dibuja una ventana: arrastra controles al formulario." />
+	<Media clip="shader-graph" alt="Nodos Voronoi y Palette arrastrados a la vista Shader y conectados a la Salida" caption="Píntala en la GPU: conecta nodos en un shader." />
+</div>
+
 <Feature
 	id="visual-designer"
 	icon="pencil"
 	eyebrow="Pyzed Design"
 	title="Dibuja tus ventanas y pulsa F5"
-	shot="designer"
-	light="designer-light"
+	shot="editor/form-view"
+	light="editor/form-view-light"
 	alt="El diseñador con un formulario de inicio de sesión y las propiedades del botón seleccionado"
 	overlay="designer-run"
 	overlayAlt="El formulario de inicio de sesión ejecutándose como una ventana real"
@@ -102,7 +108,7 @@ import NavCards from '../../../components/NavCards.astro';
 	icon="puzzle"
 	eyebrow="Diseñador de componentes"
 	title="Componentes reutilizables, como las escenas de Godot"
-	shot="designer-component"
+	shot="editor/component-view"
 	alt="Un componente ProfileCard con su clase, su entrada en la caja de herramientas, su layout y sus propiedades"
 	overlay="designer-component-run"
 	overlayAlt="Tarjetas hechas con el componente, en ejecución"

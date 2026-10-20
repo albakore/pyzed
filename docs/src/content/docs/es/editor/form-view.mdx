@@ -13,6 +13,8 @@ import newForm from '../../../../../screenshots/designer-new.png';
 import placing from '../../../../../screenshots/editor-placing.png';
 import events from '../../../../../screenshots/editor-events.png';
 import run from '../../../../../screenshots/designer-run.png';
+import formView from '../../../../assets/editor/form-view.png';
+import formViewLight from '../../../../assets/editor/form-view-light.png';
 
 Un **formulario** es una ventana de tu app. La **vista de formulario** es donde la dibujas: eliges controles de una
 caja, los sueltas en la ventana, cambias su aspecto en una lista de propiedades y escribes unas líneas de Python para
@@ -31,6 +33,8 @@ conoces la idea; si no, el recorrido de abajo lleva diez minutos.
 | **Eventos** (derecha) | A qué puede reaccionar el control seleccionado y la función Python conectada a cada evento. |
 | **Código** (abajo) | El Python del formulario, que se abre al conectar un evento. |
 
+<Media src={formView} light={formViewLight} alt="La vista de formulario con un formulario de inicio de sesión: herramientas y estructura a la izquierda, el formulario en el lienzo, las propiedades del botón seleccionado a la derecha" caption="La vista de formulario con el ejemplo de inicio de sesión abierto y su botón seleccionado." size="wide" eager />
+
 Cada zona se describe en detalle en su propia página: [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/),
 [Propiedades](/pyzed/es/editor/properties/), [Eventos](/pyzed/es/editor/events/) y
 [Editor de código](/pyzed/es/editor/code-editor/).
@@ -40,7 +44,7 @@ Cada zona se describe en detalle en su propia página: [Herramientas y lienzo](/
 Vas a crear una ventana con un cuadro de texto, un botón y una etiqueta. Al escribir un nombre y pulsar el botón,
 muestra "¡Hola, *nombre*!".
 
-{/* media: editor/form-view-greeter (el saludador terminado en marcha, bucle corto) */}
+<Media clip="designer-place-controls" alt="Un botón, un cuadro de texto y una casilla arrastrados uno a uno desde las herramientas a un formulario vacío" caption="Colocar controles: arrástralos desde las herramientas y suéltalos en el formulario." />
 
 <Steps>
 
@@ -161,9 +165,9 @@ mano.
 }
 ```
 
-<Aside type="note" title="Estado de esta página">
-Esta página es nueva. Se están añadiendo grabaciones cortas de cada paso; las demás páginas de esta sección ya
-describen a fondo cada control de la vista.
+<Aside type="note" title="Para profundizar">
+Esta página cubre lo esencial de la vista de formulario. Las demás páginas de esta sección describen a fondo cada
+control de la vista, empezando por [Herramientas y lienzo](/pyzed/es/editor/toolbox-and-canvas/).
 </Aside>
 
 <NavCards

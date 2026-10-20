@@ -9,9 +9,12 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 import Media from '../../../../components/Media.astro';
-import formShot from '../../../../../screenshots/designer.png';
-import componentShot from '../../../../../screenshots/designer-component.png';
-import shaderShot from '../../../../../screenshots/designer-shader.png';
+import formShot from '../../../../assets/editor/form-view.png';
+import formLight from '../../../../assets/editor/form-view-light.png';
+import componentShot from '../../../../assets/editor/component-view.png';
+import componentLight from '../../../../assets/editor/component-view-light.png';
+import shaderShot from '../../../../assets/shading/shader-view.png';
+import shaderLight from '../../../../assets/shading/shader-view-light.png';
 import codeShot from '../../../../../screenshots/designer-code.png';
 
 Pyzed Design edita cuatro tipos de documento. Cada uno se abre en su propia **vista**: la misma ventana, pero el dock
@@ -42,7 +45,7 @@ flowchart LR
 
 **Para:** las ventanas de tu app: un inicio de sesión, una página de ajustes, un panel, un diálogo.
 
-<Media src={formShot} alt="La vista de formulario con un formulario de inicio de sesión" caption="Vista de formulario: herramientas a la izquierda, el formulario en el lienzo y sus propiedades a la derecha." />
+<Media src={formShot} light={formLight} alt="La vista de formulario con un formulario de inicio de sesión" caption="Vista de formulario: herramientas a la izquierda, el formulario en el lienzo y sus propiedades a la derecha." />
 
 - **Dock izquierdo:** las **Herramientas** con todos los controles y la **Estructura** del formulario.
 - **Centro:** el formulario dibujado en un marco de ventana, con cuadrícula de puntos, asas y guías inteligentes.
@@ -56,7 +59,7 @@ Lee [La vista de formulario](/pyzed/es/editor/form-view/) para un primer formula
 **Para:** piezas que usas muchas veces: una valoración con estrellas, una tarjeta de perfil, una ficha de producto.
 Un componente no tiene ventana; vive dentro de formularios y de otros componentes.
 
-<Media src={componentShot} alt="La vista de componente con un ProfileCard que contiene un componente Rating" caption="Vista de componente: un marco de acento con el nombre de la clase en lugar de botones de ventana." />
+<Media src={componentShot} light={componentLight} alt="La vista de componente con un ProfileCard que contiene un componente Rating" caption="Vista de componente: un marco de acento con el nombre de la clase en lugar de botones de ventana." />
 
 - Las mismas herramientas y lienzo que un formulario, pero el lienzo muestra un **marco de acento con el nombre de la
   clase** en lugar de una ventana, y la barra de título una insignia **Componente**.
@@ -71,7 +74,7 @@ Todo está en [La vista de componente](/pyzed/es/editor/component-designer/).
 
 **Para:** fondos animados, brillos, transiciones y gráficos de juegos dibujados por la tarjeta gráfica.
 
-<Media src={shaderShot} alt="La vista Shader: un grafo de nodos con vistas previas y la vista previa de la Salida" caption="Vista Shader: nodos con vista previa en vivo, conectados de las entradas a la Salida." />
+<Media src={shaderShot} light={shaderLight} alt="La vista Shader: un grafo de nodos con vistas previas y la vista previa de la Salida" caption="Vista Shader: nodos con vista previa en vivo, conectados de las entradas a la Salida." />
 
 - **Dock izquierdo:** la barra **Shading** (todos los nodos, por categoría) y la **Estructura** de variables, valores
   con nombre y nodos.

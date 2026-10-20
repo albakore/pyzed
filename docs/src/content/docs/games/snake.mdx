@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
 import Run from '../showcase/_run.mdx';
 import source from '../../../../../examples/games/snake.py?raw';
 
@@ -15,7 +16,7 @@ fires a few times a second is enough. You will learn how to keep the game state 
 app, step it with `pz.every`, steer with `on_key`, draw the board on a canvas and put a
 menu on top with `pz.stack`.
 
-![Snake](../../../assets/games/snake.png)
+<Media clip="snake" alt="The snake moving across the grid, turning toward the food and growing as it eats it" caption="The game running: a timer steps the snake a few times a second." eager />
 
 | Goal | Time | Level | You need |
 | --- | --- | --- | --- |

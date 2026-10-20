@@ -218,7 +218,7 @@ settings…** open them. They are saved per user, in the same `designer.json` as
 [editor's settings](/pyzed/editor/settings/). An index on the left lists the sections and
 the right side shows the one you pick.
 
-![Editor settings with the index of sections](../../../../screenshots/designer-editor-settings.png)
+![Editor settings with the index of sections](../../../assets/editor/editor-settings-appearance.png)
 
 | Section | Setting | What it does |
 | --- | --- | --- |
@@ -245,6 +245,8 @@ the right side shows the one you pick.
 | Language servers | **ty**, **ruff** | Turn each server on or off. Each row shows its state and version. Below: the project root and the Python in use. |
 | | **Restart servers** | Restarts both; use it after `uv sync` or after installing them. |
 
+![The Language servers section of the editor settings: ty and ruff with their state and version, the project root and the Python in use](../../../assets/editor/editor-settings-servers.png)
+
 ### Key bindings
 
 Under **Key bindings**, the index groups every action of the editor and the code panel: Code panel, Editing,
@@ -253,7 +255,7 @@ keys. The pencil changes them: type the keys as `ctrl-shift-d`, `alt-up`, `f2`, 
 `ctrl-k ctrl-c`), several separated by commas, or leave the field empty for no key. The new keys replace the
 default ones; the arrow next to a changed action puts its defaults back, and **Reset all** does it for every action.
 
-![Changing the keys of the code editor](../../../../screenshots/designer-editor-keys.png)
+![Changing the keys of the code editor](../../../assets/editor/editor-settings-keys.png)
 
 The changes are saved under `"keymap"` in `designer.json`, as action → keys:
 

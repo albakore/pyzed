@@ -71,6 +71,8 @@ All eleven graphs live in [`examples/showcase/shaders`](https://github.com/albak
 Click one to see its file, or open it in the designer to see and change the nodes:
 `pyzed design examples/showcase/shaders/fire.pzshad`.
 
+<Media clip="shaders" alt="Six node-made shaders running at once: plasma, tunnel, fire, Voronoi, synthwave and nebula" caption="Six of the graphs, animated: each one is a <code>.pzshad</code> drawn with <code>pz.shader</code>." size="wide" />
+
 <Gallery
 	min="14rem"
 	items={[
@@ -130,9 +132,6 @@ title.animate("fade_in_up")                                         # when it ap
 panel.transition(x=0 if self.open else -260, opacity=1 if self.open else 0)  # when a value changes
 pz.presence(page, key=self.page)                                    # out and in when the key changes
 ```
-
-{/* media: showcase/animations (a short recording: presets playing, the panel sliding, the password shaking) */}
-
 <Run file="examples/animations.py" />
 
 <details>

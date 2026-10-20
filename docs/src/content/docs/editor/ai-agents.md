@@ -196,7 +196,7 @@ Nothing is applied to the form until you click **Apply**, as with your own edits
 **Settings → AI agents → AI agents settings…**, the gear in the panel header, or **AI agents settings…** in the
 command palette.
 
-![Providers, keys and the agent's options](../../../../screenshots/designer-agent-settings.png)
+![Providers, keys and the agent's options](../../../assets/editor/agent-settings.png)
 
 ### Providers
 
@@ -215,6 +215,8 @@ command palette.
 Click a provider to open it: **Sign in with the browser** (see [Signing in](#signing-in)), paste a key and
 **Save**, **Get a key** (opens the provider's key page), **Remove key**, and **Refresh models**, which asks the
 provider for its list of models so they show up in the model picker.
+
+![The Anthropic provider open in the AI agents settings: an API key field, Sign in with the browser, Get a key and the workload identity federation fields](../../../assets/editor/agent-settings-anthropic.png)
 
 **Test the connection** checks the provider with what is set up and shows where the credentials come from.
 

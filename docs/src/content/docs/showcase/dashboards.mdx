@@ -26,6 +26,7 @@ import contactsShot from '../../../assets/tutorials/contacts-backend.png';
 
 import contactsMain from '../../../../../examples/integrations/sqlalchemy_contacts/main.py?raw';
 import contactsDb from '../../../../../examples/integrations/sqlalchemy_contacts/db.py?raw';
+import shot_sqlalchemy_contacts from '../../../assets/integrations/sqlalchemy.png';
 
 Screens full of numbers, tables and lists: the kind of internal tool, admin panel or media app that many desktop
 programs are. The first six are [Blocks](/pyzed/blocks/), complete screens written with the
@@ -112,7 +113,7 @@ The code: [File explorer block](/pyzed/blocks/file-explorer/). A working editor 
 A contacts app on [SQLAlchemy](https://www.sqlalchemy.org) 2.0 with **20,000 rows** in a virtual table. Searching and sorting run as SQL queries in a worker thread (`Command.perform`), so the window never waits
 for the database.
 
-{/* media: showcase/sqlalchemy_contacts (typing in the search box over 20,000 rows) */}
+<Media src={shot_sqlalchemy_contacts} alt="The contacts app: totals, a chart of top cities, the table of 20,000 contacts and the edit panel" />
 
 <Tabs syncKey="pkg">
 	<TabItem label="uv">

@@ -10,7 +10,7 @@ formulario, declaras sus propiedades y eventos en un panel, escribes la lógica 
 formularios o dentro de otros componentes, como las escenas de Godot. Un componente diseñado **es** un
 [`pz.Component`](/pyzed/es/guides/components/).
 
-![Un componente ProfileCard que contiene un componente Rating](../../../../../screenshots/designer-component.png)
+![Un componente ProfileCard que contiene un componente Rating](../../../../assets/editor/component-view.png)
 
 La guía completa está en el manual de Pyzed Design: **[Diseñador de componentes](/pyzed/es/editor/component-designer/)**.
 

@@ -9,15 +9,16 @@ sidebar:
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 import Media from '../../../components/Media.astro';
-import shaderNew from '../../../../screenshots/designer-shader-new.png';
-import shaderView from '../../../../screenshots/designer-shader.png';
-import shaderPreview from '../../../../screenshots/designer-shader-preview.png';
+import shaderNew from '../../../assets/shading/new-shader.png';
+import shaderView from '../../../assets/shading/shader-view.png';
+import shaderPreview from '../../../assets/shading/preview-tab.png';
+import circleNode from '../../../assets/shading/nodes/circle.png';
 
 In this page you build a **glowing circle that pulses**, in about ten minutes, by connecting boxes with the mouse.
 You don't need to know math or WGSL. At the end you will have a `.pzshad` file you can drop into any Pyzed app,
 and you will know the handful of ideas every shader is built on.
 
-{/* media: shading/getting-started-result (the finished pulsing circle, short loop) */}
+<Media clip="shader-preview" alt="A cyan ring glowing and pulsing on a dark background, in the Preview tab of the Shader view" caption="Where this page ends up: a glowing shape that breathes, made only of nodes." />
 
 ## Three ideas, in plain words
 
@@ -77,7 +78,7 @@ view works the same way: nodes on a canvas, wires from outputs to inputs, a live
    `circle`; press <kbd>Enter</kbd> to add the **Circle** node. Do the same for **Fill**. Drag from the Circle's
    `distance` output to the Fill's `distance` input: the Fill preview shows a white disc on black.
 
-	{/* media: shading/getting-started-circle (Circle wired into Fill) */}
+	<Media src={circleNode} alt="The Circle node with its center and radius inputs, its distance output and its preview" caption="The <strong>Circle</strong> node. Its preview shows the distance: the disc in the middle and rings growing outward." size="small" plain />
 
 	<Aside type="note" title="Why two nodes?">
 	A shape node gives a *distance* (how far each pixel is from the edge), not a picture. **Fill** turns that
@@ -92,8 +93,6 @@ view works the same way: nodes on a canvas, wires from outputs to inputs, a live
 6. **Make it pulse.** Add a **Time** node and a **Multiply add** node. Wire Time's `sin` (a value that swings
    between −1 and 1) into Multiply add's `a`, and type `0.05` in `b` and `0.3` in `c`: the result swings between
    0.25 and 0.35. Wire it into the Circle's `radius`. Every preview starts to breathe.
-
-	{/* media: shading/getting-started-pulse (radius driven by Time, short loop) */}
 
 7. **Add a glow.** Add a **Glow** node, wire the Circle's `distance` into it, and an **Add** node that sums Fill's
    `mask` and Glow's `value`. Wire the sum into RGBA's `rgb` instead of the mask.

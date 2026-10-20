@@ -6,6 +6,8 @@ sidebar:
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import shot_form_look from '../../../../screenshots/designer-light.png';
 
 Forms made in [Pyzed Design](/pyzed/editor/) use the same themes and styles as code. You set them in the
 **Properties** panel instead of writing Python, and they are saved in the `.pzform` file.
@@ -31,7 +33,7 @@ Click an empty spot of the canvas to select the form, then open **Properties →
 | **Corner radius** | The radius every control uses; `0` for square corners. | `"radius": 0` |
 | **Font size** | The base size of every text. | `"font_size": 15` |
 
-{/* media: theming/form-look */}
+<Media src={shot_form_look} alt="A form in Pyzed Design with the Gruvbox Light theme and a custom accent" />
 
 The form's theme is independent from the theme of the editor itself (Settings → Appearance): you can design a light
 form in a dark editor.

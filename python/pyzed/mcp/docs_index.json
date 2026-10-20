@@ -454,7 +454,7 @@
    "slug": "guides/canvas",
    "title": "Drawing with canvas",
    "description": "Draw custom graphics in Python desktop apps with pz.canvas and pyzed.draw: shapes, text, transforms and mouse events, rendered in Rust.",
-   "path": "docs/src/content/docs/guides/canvas.md"
+   "path": "docs/src/content/docs/guides/canvas.mdx"
   },
   {
    "slug": "guides/commands",

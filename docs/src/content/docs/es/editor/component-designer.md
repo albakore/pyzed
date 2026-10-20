@@ -11,7 +11,7 @@ formulario, declaras sus propiedades y eventos en un panel, escribes la lógica 
 formularios o dentro de otros componentes. La idea es la de las escenas de Godot: cada componente tiene sus propias
 propiedades, métodos y eventos, y puede contener otros componentes.
 
-![Un componente ProfileCard que contiene un componente Rating](../../../../../screenshots/designer-component.png)
+![Un componente ProfileCard que contiene un componente Rating](../../../../assets/editor/component-view.png)
 
 Un componente diseñado **es** un [`pz.Component`](/pyzed/es/guides/components/). El diseñador escribe una clase
 normal, así que dibujarlo y escribirlo a mano son lo mismo, y puedes pasar de una forma a la otra cuando quieras.

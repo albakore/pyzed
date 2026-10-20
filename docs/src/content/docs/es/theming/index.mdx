@@ -10,16 +10,18 @@ sidebar:
   order: 0
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 import Media from '../../../../components/Media.astro';
-import themesShot from '../../../../assets/tutorials/styling.png';
+import ayu from '../../../../assets/editor/form-view-ayu.png';
+import gruvbox from '../../../../assets/editor/form-view-gruvbox.png';
+import oneLight from '../../../../assets/editor/form-view-light.png';
 
 Pyzed separa **qué** muestra tu interfaz de **cómo se ve**. Todos los componentes leen sus colores del **tema**
 actual, un conjunto de colores con nombre llamados tokens (`background`, `text`, `border`, `accent`...). Cambia el
 tema y toda la app lo sigue; cambia un widget con `style()` y solo cambia ese widget.
 
-<Media src={themesShot} alt="La misma app con varios de los temas incluidos, claros y oscuros" caption="La misma interfaz con varios de los temas incluidos." eager />
+<Media clip="themes" alt="La galería de componentes cambiando entre One Dark, One Light, Ayu Mirage, Gruvbox Dark, Ayu Light y Gruvbox Light" caption="Una app, seis temas incluidos: cada componente sigue al tema, sin cambiar su código." eager />
 
 ```python
 import pyzed as pz
@@ -52,6 +54,27 @@ flowchart LR
   `tint="error"`) eligen cuáles de esos colores usan.
 - **`style()`** cambia un widget, como CSS; los estilos con nombre reutilizan un aspecto; `App.style` fija la fuente y
   los colores de toda la ventana.
+
+## Pyzed Design también lo sigue
+
+El diseñador visual es una app de Pyzed, así que también tiene temas: elige uno en **Ajustes → Apariencia → Tema** y
+todo el editor cambia a la vez. Cada formulario conserva su propio tema, que se fija en sus propiedades de
+**Aspecto** (ver [Estilo de formularios](/pyzed/es/theming/forms/)), así que el editor y la app que diseñas pueden
+verse distintos.
+
+<Media clip="designer-themes" alt="Pyzed Design cambiando de aspecto al elegir distintos temas en Ajustes" caption="Pyzed Design cambiando de tema desde Ajustes." />
+
+<Tabs>
+	<TabItem label="Ayu">
+		<Media src={ayu} alt="Pyzed Design con el tema Ayu y el formulario de inicio de sesión abierto" />
+	</TabItem>
+	<TabItem label="Gruvbox">
+		<Media src={gruvbox} alt="Pyzed Design con el tema Gruvbox y el formulario de inicio de sesión abierto" />
+	</TabItem>
+	<TabItem label="One Light">
+		<Media src={oneLight} alt="Pyzed Design con el tema One Light y el formulario de inicio de sesión abierto" />
+	</TabItem>
+</Tabs>
 
 ## En esta sección
 

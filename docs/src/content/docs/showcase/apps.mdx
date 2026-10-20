@@ -44,6 +44,10 @@ import components from '../../../../../examples/components.py?raw';
 import gallery from '../../../../../examples/gallery.py?raw';
 import counter from '../../../../../examples/counter.py?raw';
 import editor from '../../../../../examples/zed_editor.py?raw';
+import shot_color_picker from '../../../assets/tutorials/color-picker.png';
+import shot_download_progress from '../../../assets/tutorials/downloads.png';
+import shot_multi_window from '../../../assets/tutorials/multi-window.png';
+import shot_components from '../../../assets/tutorials/components.png';
 
 Everyday programs, each a single Python file in
 [`examples/`](https://github.com/albakore/pyzed/tree/main/examples) that runs as it is. They are short on purpose:
@@ -168,7 +172,7 @@ AI assistant, one request at a time.
 `ui.ColorPicker` in its three modes: a color with transparency, a linear gradient, and a fill with an opacity mask.
 It reports a `"#rrggbbaa"` string, a `pz.Gradient` or a `pz.Paint`, and all three work as a `background`.
 
-{/* media: showcase/color_picker */}
+<Media src={shot_color_picker} alt="The color picker in gradient mode: two stops, an angle, the hue and alpha bars, and the gradient it makes" />
 
 <Run file="examples/color_picker.py" />
 
@@ -182,7 +186,7 @@ It reports a `"#rrggbbaa"` string, a `pz.Gradient` or a `pz.Paint`, and all thre
 Conway's Game of Life: click or drag to paint cells, <kbd>Space</kbd> to play or pause, <kbd>N</kbd> to advance one
 generation. Thousands of cells are drawn as a single shape on a `pz.canvas`, and `pz.every` drives the simulation.
 
-{/* media: showcase/game_of_life (a short recording of a glider gun) */}
+<Media clip="game-of-life" alt="Conway's Game of Life: blue cells are born and die, generation after generation" caption="The simulation running: one canvas, thousands of cells." />
 
 <Run file="examples/game_of_life.py" />
 
@@ -197,7 +201,7 @@ Several downloads at once, each with its own progress bar, and a window that nev
 `async def` generator: every value it `yield`s goes to `update` while it keeps running on Pyzed's event loop. Swap
 the simulated transfer for streaming with `httpx` to download real files.
 
-{/* media: showcase/download_progress */}
+<Media src={shot_download_progress} alt="Four downloads, two in progress with their bars and one finished, with a notification" />
 
 <Run file="examples/download_progress.py" />
 
@@ -264,7 +268,7 @@ To use a real model, set three environment variables before running it, for exam
 Open as many windows as you like: each `pz.Window` has its own view, title, size and theme, but all of them share
 the app's state, so the click counter is the same in every window. Closing the main window quits the app.
 
-{/* media: showcase/multi_window */}
+<Media src={shot_multi_window} alt="The main window and two more windows, one in Ayu Mirage and one in Gruvbox Light, sharing the same click count" />
 
 <Run file="examples/multi_window.py" />
 
@@ -307,7 +311,7 @@ Three reusable pieces written in code: a star rating and a tag editor (`pz.Compo
 their own state and their own events), and a note you can drag, double-click and type on, which logs the common
 events every widget has.
 
-{/* media: showcase/components */}
+<Media src={shot_components} alt="A star rating, a tag editor, a pinned note and the event log" />
 
 <Run file="examples/components.py" />
 

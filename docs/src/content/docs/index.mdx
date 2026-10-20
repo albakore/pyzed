@@ -31,12 +31,13 @@ import Cta from '../../components/landing/Cta.astro';
 import Gallery from '../../components/landing/Gallery.astro';
 import Compare from '../../components/landing/Compare.astro';
 import NavCards from '../../components/NavCards.astro';
+import Media from '../../components/Media.astro';
 
 <LatestRelease />
 
 <HeroShot
-	name="designer"
-	light="designer-light"
+	name="editor/form-view"
+	light="editor/form-view-light"
 	alt="Pyzed Design with a sign-in form open: toolbox and outline on the left, the form in the center and its properties on the right"
 	tags={['Drag & drop', 'Properties & events', 'Press F5 to run', '90+ components']}
 />
@@ -75,13 +76,18 @@ import NavCards from '../../components/NavCards.astro';
 	knows your project, and a modern UI toolkit with themes and dark mode.
 </SectionTitle>
 
+<div class="pz-clip-pair not-content">
+	<Media clip="designer-place-controls" alt="A button, a text box and a check box dragged from the toolbox onto an empty form in Pyzed Design" caption="Draw a window: drag controls onto the form." />
+	<Media clip="shader-graph" alt="Voronoi and Palette nodes dragged onto the Shader view and wired to the Output" caption="Paint it on the GPU: wire nodes into a shader." />
+</div>
+
 <Feature
 	id="visual-designer"
 	icon="pencil"
 	eyebrow="Pyzed Design"
 	title="Draw your windows, then press F5"
-	shot="designer"
-	light="designer-light"
+	shot="editor/form-view"
+	light="editor/form-view-light"
 	alt="The designer with a sign-in form and the properties of the selected button"
 	overlay="designer-run"
 	overlayAlt="The sign-in form running as a real window"
@@ -102,7 +108,7 @@ import NavCards from '../../components/NavCards.astro';
 	icon="puzzle"
 	eyebrow="Component designer"
 	title="Reusable components, like Godot scenes"
-	shot="designer-component"
+	shot="editor/component-view"
 	alt="A ProfileCard component with its class, toolbox entry, layout and properties"
 	overlay="designer-component-run"
 	overlayAlt="Cards built from the component, running"

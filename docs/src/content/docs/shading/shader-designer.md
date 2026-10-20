@@ -15,7 +15,7 @@ in Godot's visual shaders or Blender's shader editor. Every node shows a live pr
 **Output** node is the finished shader, and the graph is saved as a `.pzshad` file that `pz.shader` draws on
 the GPU.
 
-![The Shader view: the Shading sidebar, the graph with a preview on every node and the Output preview](../../../../screenshots/designer-shader.png)
+![The Shader view: the Shading sidebar, the graph with a preview on every node and the Output preview](../../../assets/shading/shader-view.png)
 
 There is no WGSL to write and no Rust: the designer compiles the graph to WGSL as you edit it, checks it with
 the GPU compiler, and points at the node when something is wrong.
@@ -26,7 +26,7 @@ Press **New** (Ctrl+N) and pick the **Shader** card. Give it a name and a folder
 (a gradient), **Plasma**, **Clouds**, **Glow ring**, **Cells** or **Retro screen**. **Create shader** saves it
 and opens it. You can also open a `.pzshad` file directly:
 
-![The New shader dialog with its templates](../../../../screenshots/designer-shader-new.png)
+![The New shader dialog with its templates](../../../assets/shading/new-shader.png)
 
 ```bash
 pyzed design effects/fire.pzshad     # created on first save if it does not exist
@@ -48,6 +48,8 @@ The toolbar also has **Add a node** (Shift+A), **Delete**, **Arrange nodes in co
 shader in a window of its own that follows your edits. A badge says **Compiles** or how many problems there are;
 hover it to read them.
 
+![The WGSL tab: the code the glow ring graph compiles to, with line numbers](../../../assets/shading/wgsl-tab.png)
+
 ### Working on the canvas
 
 | Gesture | What it does |
@@ -67,6 +69,10 @@ hover it to read them.
 The keyboard works as on forms: Ctrl+Z / Ctrl+Shift+Z, Delete, Ctrl+C / Ctrl+X / Ctrl+V (nodes travel between
 shaders and windows), Ctrl+D, Ctrl+A, arrows to nudge, **P** to show or hide the selected nodes' previews,
 Ctrl+0 for 100% and Ctrl+= / Ctrl+- to zoom.
+
+![The node search opened on the graph, filtered by "noi": Noise, Random, Voronoi, Film grain and the other noise nodes](../../../assets/shading/node-search.png)
+
+![The right-click menu of a node: Duplicate, Copy, Hide preview, Disconnect all and Delete](../../../assets/shading/node-menu.png)
 
 ### Inline values
 
@@ -112,7 +118,7 @@ The **Outline** under the sidebar lists the shader's **variables**, its **named 
 and every node. **Add** creates a variable; its arrow picks the type (`float`, `int`, `bool`, `vec2`, `vec3`,
 `vec4`, `color` or `texture`). Drag a variable onto the graph to add a node that reads it.
 
-![The Preview tab with a slider per variable, and a variable in the Properties panel](../../../../screenshots/designer-shader-preview.png)
+![The Preview tab with a slider per variable, and a variable in the Properties panel](../../../assets/shading/preview-tab.png)
 
 | Kind | What it is | From code |
 | --- | --- | --- |
@@ -133,6 +139,10 @@ The Properties panel shows what is selected:
   changes it.
 - **Nothing**: the shader itself: its name and description, the size of the Preview and Run windows, the
   **fallback** color drawn where there is no GPU, and whether it animates.
+
+![The Properties panel of a Glow node: its title, its inputs with the wire from Ring and two values, and its output](../../../assets/shading/node-properties.png)
+
+![The Properties panel of the color variable: type color, mutable, its value, a description and the line of Python that changes it](../../../assets/shading/variable-properties.png)
 
 ## Reusing shaders
 

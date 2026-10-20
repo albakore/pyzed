@@ -7,6 +7,7 @@ sidebar:
 ---
 
 import { Code, Steps, Aside } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
 import Run from '../showcase/_run.mdx';
 import source from '../../../../../examples/games/neon_invaders.py?raw';
 
@@ -15,7 +16,7 @@ a parallax starfield, pixel-art invaders that march and dive, auto-fire, a tripl
 power-up, neon lights everywhere, explosions, screen shake and a HUD of glass panels and
 glowing text drawn by the widget library.
 
-![Neon Invaders](../../../assets/games/neon-invaders.png)
+<Media clip="neon-invaders" alt="Waves of neon invaders, the ship shooting, explosions and power-ups" caption="Waves, shots, explosions and power-ups, all drawn with bloom on the GPU." eager />
 
 | Goal | Time | Level | You need |
 | --- | --- | --- | --- |

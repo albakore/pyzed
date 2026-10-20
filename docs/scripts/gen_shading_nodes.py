@@ -8,7 +8,8 @@ texts from ``pyzed/shading/locales/es.json``), so they always match the Shader v
 and its example come from ``shading_nodes_data.py``. ``--check`` also compiles every example and fails when
 a node type has no entry there.
 
-Each node leaves an MDX comment ``{/* media: shading/nodes/<id> */}`` where its capture goes.
+Each node shows its capture from the Shader view, ``docs/src/assets/shading/nodes/<id>.png``, through the
+``<Media>`` component; a missing capture fails the run.
 """
 
 from __future__ import annotations
@@ -40,6 +41,7 @@ LANGS: Dict[str, Dict[str, Any]] = {
         "catalog": "Node catalog", "input": "Input", "output": "Output", "setting": "Setting", "type": "Type",
         "default": "Default", "values": "Values", "entries": "Sidebar entries", "entry": "Entry", "does": "What it does",
         "python": "In Python", "example": "Example", "context": "context", "none": "not used until connected",
+        "alt": "The {title} node as it looks in the Shader view, with its preview", "up": "../../../..",
         "dynamic": {
             "compose": "The inputs follow the `type` setting: `x` and `y` for vec2, up to `w` for vec4.",
             "parameter": "The output takes the variable's type; a `color` variable gives `color`, `rgb` and `alpha`.",
@@ -60,6 +62,7 @@ LANGS: Dict[str, Dict[str, Any]] = {
         "default": "Por defecto", "values": "Valores", "entries": "Entradas de la barra lateral", "entry": "Entrada",
         "does": "Qué hace", "python": "En Python", "example": "Ejemplo", "context": "contexto",
         "none": "sin usar hasta que se conecta",
+        "alt": "El nodo {title} tal como se ve en la vista Shader, con su vista previa", "up": "../../../../..",
         "dynamic": {
             "compose": "Las entradas siguen el ajuste `type`: `x` e `y` para vec2, hasta `w` para vec4.",
             "parameter": "La salida toma el tipo de la variable; una variable `color` da `color`, `rgb` y `alpha`.",
@@ -145,6 +148,23 @@ def _table(head: List[str], rows: List[List[str]]) -> List[str]:
     return out
 
 
+def image_name(type_id: str) -> str:
+    """The name a page imports a node's capture as."""
+    return "node_" + re.sub(r"\W", "_", type_id)
+
+
+def image_imports(types: List[N.NodeType], lang: str) -> List[str]:
+    """The imports of the captures of ``types``; fails when one is missing."""
+    up = LANGS[lang]["up"]
+    out = []
+    for nt in types:
+        path = ROOT / "docs" / "src" / "assets" / "shading" / "nodes" / f"{nt.id}.png"
+        if not path.exists():
+            raise SystemExit(f"missing capture: {path.relative_to(ROOT)}")
+        out.append(f"import {image_name(nt.id)} from '{up}/assets/shading/nodes/{nt.id}.png';")
+    return out
+
+
 def node_section(nt: N.NodeType, lang: str) -> List[str]:
     L = LANGS[lang]
     info = data.NODES[nt.id]
@@ -153,8 +173,9 @@ def node_section(nt: N.NodeType, lang: str) -> List[str]:
     meta = f"`{nt.id}` · {tr(nt.category, lang)} · `g.{nt.id}(...)`"
     if title != nt.title:
         meta = f"*{nt.title}* · " + meta
-    lines += [meta, "", prose(tr(nt.description, lang)), "", f"{{/* media: shading/nodes/{nt.id} */}}", "",
-              prose(info[lang]), ""]
+    alt = L["alt"].format(title=title).replace('"', "&quot;")
+    lines += [meta, "", prose(tr(nt.description, lang)), "",
+              f'<Media src={{{image_name(nt.id)}}} alt="{alt}" size="small" plain />', "", prose(info[lang]), ""]
     if nt.inputs:
         lines += _table([L["input"], L["type"], L["default"]],
                         [[port_name(p, lang), f"`{p.type}`", fmt_default(p, lang)] for p in nt.inputs]) + [""]
@@ -193,7 +214,9 @@ def page(slug_: str, en_title: str, es_title: str, en_desc: str, es_desc: str, c
     lines = [
         "---", f"title: {json.dumps(title, ensure_ascii=False)}", f"description: {json.dumps(desc, ensure_ascii=False)}",
         "sidebar:", f"  order: {order}", "---", "", f"{{/* {GENERATED} */}}", "",
-        "import { Aside } from '@astrojs/starlight/components';", "",
+        "import { Aside } from '@astrojs/starlight/components';",
+        f"import Media from '{L['up']}/components/Media.astro';",
+        *image_imports([nt for cat in categories for nt in by_cat[cat]], lang), "",
         L["intro"], "", "```python", PRELUDE.rstrip(), "```", "",
     ]
     for cat in categories:
@@ -302,10 +325,9 @@ is white. Many nodes return 0..1 so you can multiply them together, like stackin
 
 {table}
 
-<Aside type="note" title="Status of the catalog">
-Each node will get a capture of its preview as it looks in the Shader view; until then, run its example with
-`pyzed run` or paste it into a graph to see it. The ports and defaults are generated from the code, so they are
-always current.
+<Aside type="tip" title="Try a node">
+Each node is shown as it looks in the Shader view, with the preview of its default settings. To play with one, add
+it from the Shading sidebar and wire it to the Output, or paste its example into a Python file and run it.
 </Aside>
 """
 
@@ -375,10 +397,10 @@ plantillas.
 
 {table}
 
-<Aside type="note" title="Estado del catálogo">
-Cada nodo tendrá una captura de su vista previa tal como se ve en la vista Shader; mientras tanto, ejecuta su
-ejemplo con `pyzed run` o pégalo en un grafo para verlo. Los puertos y valores por defecto se generan desde el
-código, así que siempre están al día.
+<Aside type="tip" title="Prueba un nodo">
+Cada nodo se muestra tal como se ve en la vista Shader, con la vista previa de sus ajustes por defecto. Para jugar
+con uno, añádelo desde la barra lateral Shading y conéctalo a la Salida, o pega su ejemplo en un archivo de Python
+y ejecútalo.
 </Aside>
 """
 

@@ -8,6 +8,13 @@ sidebar:
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
+import Media from '../../../components/Media.astro';
+import shot_glow_ring from '../../../assets/shading/graphs/template-glow_ring.png';
+import shot_plasma from '../../../assets/shading/graphs/template-plasma.png';
+import shot_clouds from '../../../assets/shading/graphs/template-clouds.png';
+import shot_cells from '../../../assets/shading/graphs/template-cells.png';
+import shot_retro_screen from '../../../assets/shading/graphs/template-retro_screen.png';
+import shot_fire from '../../../assets/shading/graphs/showcase-fire.png';
 
 Each recipe is a small shader you can build in the [Shader view](/pyzed/shading/shader-designer/) by following its
 chain of nodes, or create in Python by running its code. The first six are also **templates** of the New dialog
@@ -50,8 +57,6 @@ Every code block below is a complete script: save it as `recipe.py`, run it, and
 
 A smooth color ramp from top to bottom: the simplest useful shader, and a nicer backdrop than a flat color.
 
-{/* media: shading/recipes/gradient */}
-
 **Chain:** `UV.y → Gradient → Output`. Click the Gradient node and edit its stops in Properties: drag a stop to move
 it, click the bar to add one.
 
@@ -73,7 +78,7 @@ Try `UV.x` for a horizontal ramp, or a **Linear gradient** node before the Gradi
 A ring that breathes, with a soft light around it, in a color your code can change: loading screens, status
 indicators, game power-ups.
 
-{/* media: shading/recipes/glow-ring */}
+<Media src={shot_glow_ring} alt="The Neon glow ring template in the Shader view: the ring, its glow and the pulse wired into the Output" caption="The <strong>Neon glow ring</strong> template open in the Shader view." size="wide" />
 
 **Chain:** `Time × pulse → Sin × 0.02 + 0.28 → Ring.radius`, `Ring → Glow (radius 0.12) × color.rgb → RGBA → Output`.
 
@@ -100,7 +105,7 @@ Change the **Ring** for a **Star** or a **Box** and you have a neon sign.
 Three sine waves (across, down and around the center) added together and colored with a **Palette**: the classic
 demo-scene effect.
 
-{/* media: shading/recipes/plasma */}
+<Media src={shot_plasma} alt="The Plasma template in the Shader view: sine waves of the UV and time added together" caption="The <strong>Plasma</strong> template open in the Shader view." size="wide" />
 
 **Chain:** `sin(UV.x × frequency + time)` + `sin(UV.y × frequency + time × 1.3)` + `sin(length(Centered UV) ×
 frequency × 1.5 − time)`, then `× 0.166 + 0.5 → Palette → RGBA → Output`.
@@ -129,7 +134,7 @@ g.save("plasma.pzshad")
 Fractal noise that scrolls with the wind, cut into clouds by a **Smoothstep** over a sky gradient. `cover` decides how
 cloudy it is.
 
-{/* media: shading/recipes/clouds */}
+<Media src={shot_clouds} alt="The Drifting clouds template in the Shader view: scrolling fractal noise mixed over the sky color" caption="The <strong>Drifting clouds</strong> template open in the Shader view." size="wide" />
 
 **Chain:** `Scroll (speed: wind) → Fractal noise → Smoothstep` (edges from `cover`), then `Mix (sky, white, clouds) →
 RGBA → Output`.
@@ -161,7 +166,7 @@ Swap the white for an orange and the sky stops for a dark purple and you get a s
 Voronoi cells that wander, each with its own color, separated by glowing borders: organic backgrounds, microscope
 views, stained glass.
 
-{/* media: shading/recipes/cells */}
+<Media src={shot_cells} alt="The Living cells template in the Shader view: Voronoi noise colored by a palette" caption="The <strong>Living cells</strong> template open in the Shader view." size="wide" />
 
 **Chain:** `Voronoi (scale) → cell → Palette × 0.6 → RGBA`; `Voronoi → edge → Smoothstep (0, 0.06)`; then
 `Mix (edge color, cells, border) → Output`.
@@ -187,7 +192,7 @@ g.save("cells.pzshad")
 A synthwave gradient seen through an old television: rolling scanlines, dark corners and film grain. The effect
 nodes return numbers around 1, so you multiply your color by them.
 
-{/* media: shading/recipes/retro-screen */}
+<Media src={shot_retro_screen} alt="The Retro CRT screen template in the Shader view: a gradient with scanlines, a vignette and film grain" caption="The <strong>Retro CRT screen</strong> template open in the Shader view." size="wide" />
 
 **Chain:** `UV.y → Gradient → rgb × Scanlines × Vignette × Film grain → RGBA → Output`.
 
@@ -212,8 +217,6 @@ Level: first steps
 
 A dark room lit where the pointer is. When the pointer leaves the shader, the light rests in the center.
 
-{/* media: shading/recipes/spotlight */}
-
 **Chain:** `Mouse.position → Radial gradient.center`, `Mix (dark, warm, light) → RGBA → Output`.
 
 ```python
@@ -231,8 +234,6 @@ g.save("spotlight.pzshad")
 Level: basic math
 
 A ring with a bright head and a fading tail that turns forever. The transparent background lets it sit on any card.
-
-{/* media: shading/recipes/spinner */}
 
 **Chain:** `Polar.angle01 − Time × 0.8 → Fract` (the tail), `Ring → Fill` (the shape), and the Output's `alpha` from
 `Fill × tail`.
@@ -253,7 +254,7 @@ Level: noise
 
 Fractal noise that scrolls upward, faded toward the top and colored by a black → red → orange → yellow ramp.
 
-{/* media: shading/recipes/fire */}
+<Media src={shot_fire} alt="A fire shader graph in the Shader view, from the shader showcase" caption="A richer fire from <code>examples/showcase/shaders</code>, built on the same idea: rising noise through a color ramp." size="wide" />
 
 **Chain:** `Scroll (speed: 0, speed × 0.6) → Fractal noise × UV.y × 1.6 → Gradient → Output`.
 
@@ -280,8 +281,6 @@ noise drifts the *opposite* way: a positive `y` speed makes the flames rise. Fli
 Level: first steps
 
 Diagonal stripes that slide sideways, like a barber pole or an "in progress" bar.
-
-{/* media: shading/recipes/stripes */}
 
 **Chain:** `Scroll (0.2, 0) → Stripes (count 10, angle 0.785) → Mix (white, red) → RGBA → Output`.
 

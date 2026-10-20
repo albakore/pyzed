@@ -9,15 +9,16 @@ sidebar:
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 import Media from '../../../../components/Media.astro';
-import shaderNew from '../../../../../screenshots/designer-shader-new.png';
-import shaderView from '../../../../../screenshots/designer-shader.png';
-import shaderPreview from '../../../../../screenshots/designer-shader-preview.png';
+import shaderNew from '../../../../assets/shading/new-shader.png';
+import shaderView from '../../../../assets/shading/shader-view.png';
+import shaderPreview from '../../../../assets/shading/preview-tab.png';
+import circleNode from '../../../../assets/shading/nodes/circle.png';
 
 En esta página creas un **círculo brillante que late**, en unos diez minutos, conectando cajas con el ratón. No
 necesitas saber matemáticas ni WGSL. Al final tendrás un archivo `.pzshad` que puedes usar en cualquier app de Pyzed
 y conocerás las pocas ideas sobre las que se construye todo shader.
 
-{/* media: shading/getting-started-result (el círculo terminado latiendo, bucle corto) */}
+<Media clip="shader-preview" alt="Un anillo cian que brilla y late sobre un fondo oscuro, en la pestaña Vista previa de la vista Shader" caption="Adónde llega esta página: una forma brillante que respira, hecha solo con nodos." />
 
 ## Tres ideas, en palabras sencillas
 
@@ -80,7 +81,7 @@ nodo.
    la salida `distance` del Círculo hasta la entrada `distance` del Relleno: su vista previa muestra un disco
    blanco sobre negro.
 
-	{/* media: shading/getting-started-circle (Círculo conectado a Relleno) */}
+	<Media src={circleNode} alt="El nodo Círculo con sus entradas de centro y radio, su salida de distancia y su vista previa" caption="El nodo <strong>Círculo</strong>. Su vista previa muestra la distancia: el disco en el centro y anillos que crecen hacia fuera." size="small" plain />
 
 	<Aside type="note" title="¿Por qué dos nodos?">
 	Un nodo de forma da una *distancia* (lo lejos que está cada píxel del borde), no una imagen. **Relleno**
@@ -95,8 +96,6 @@ nodo.
 6. **Hazlo latir.** Añade un nodo **Tiempo** y un nodo **Multiplicar y sumar**. Conecta la salida `sin` del Tiempo
    (un valor que oscila entre −1 y 1) a la entrada `a`, y escribe `0.05` en `b` y `0.3` en `c`: el resultado oscila
    entre 0.25 y 0.35. Conéctalo al `radius` del Círculo. Todas las vistas previas empiezan a respirar.
-
-	{/* media: shading/getting-started-pulse (radio movido por el Tiempo, bucle corto) */}
 
 7. **Añade un resplandor.** Añade un nodo **Resplandor**, conéctale la `distance` del Círculo, y un nodo **Sumar**
    que sume la `mask` del Relleno y el `value` del Resplandor. Conecta la suma a `rgb` de RGBA en lugar de la

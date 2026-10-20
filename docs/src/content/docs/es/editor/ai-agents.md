@@ -200,7 +200,7 @@ ediciones.
 **Ajustes → Agentes de IA → Ajustes de los agentes de IA…**, el engranaje de la cabecera del panel o **Ajustes de
 los agentes de IA…** en la paleta de comandos.
 
-![Proveedores, claves y opciones del agente](../../../../../screenshots/designer-agent-settings.png)
+![Proveedores, claves y opciones del agente](../../../../assets/editor/agent-settings.png)
 
 ### Proveedores
 
@@ -219,6 +219,8 @@ los agentes de IA…** en la paleta de comandos.
 Pulsa un proveedor para abrirlo: **Iniciar sesión con el navegador** (ver [Iniciar sesión](#iniciar-sesión)), pega
 una clave y **Guardar**, **Obtener una clave** (abre la página de claves del proveedor), **Quitar la clave** y
 **Actualizar modelos**, que pide al proveedor su lista de modelos para que aparezcan en el selector.
+
+![El proveedor Anthropic abierto en los ajustes de agentes de IA: el campo de la clave, Iniciar sesión con el navegador, Obtener una clave y los campos de federación de identidades](../../../../assets/editor/agent-settings-anthropic.png)
 
 **Probar la conexión** comprueba el proveedor con lo que esté configurado y muestra de dónde salen las credenciales.
 

@@ -9,9 +9,15 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 import Media from '../../../../components/Media.astro';
-import designer from '../../../../../screenshots/designer.png';
-import designerLight from '../../../../../screenshots/designer-light.png';
-import fileMenu from '../../../../../screenshots/editor-file-menu.png';
+import designer from '../../../../assets/editor/form-view.png';
+import designerLight from '../../../../assets/editor/form-view-light.png';
+import fileMenu from '../../../../assets/editor/menu-file.png';
+import windowFrames from '../../../../assets/editor/window-frames.png';
+import systemFrame from '../../../../assets/editor/system-frame.png';
+import tabWindow from '../../../../assets/editor/tab-window.png';
+import statusBar from '../../../../assets/editor/status-bar.png';
+import welcome from '../../../../assets/editor/welcome.png';
+import welcomeLight from '../../../../assets/editor/welcome-light.png';
 import dockMenu from '../../../../../screenshots/editor-dock-menu.png';
 
 Pyzed Design es una ventana dividida en unas pocas zonas, y cada zona tiene una sola tarea. Cuando conozcas sus
@@ -20,8 +26,6 @@ y la barra de título se inspiran en el editor de código [Zed](https://zed.dev)
 de propiedades en Visual Basic y Qt Designer, y las ideas de nodos y escenas en Godot y Unreal Engine.
 
 <Media src={designer} light={designerLight} alt="Pyzed Design con un formulario de inicio de sesión abierto: herramientas y estructura a la izquierda, el formulario en el centro, propiedades a la derecha" caption="Un formulario abierto en Pyzed Design. Cada zona se describe abajo." size="wide" eager />
-
-{/* media: editor/interface-annotated (la ventana con cada zona numerada) */}
 
 ```mermaid
 flowchart TB
@@ -59,7 +63,7 @@ La franja de arriba del todo. De izquierda a derecha:
 | **Ayuda** (icono ?) | Atajos, la referencia integrada, la ventana de bienvenida, actualizaciones y Acerca de. |
 | **⚙** (<kbd>Ctrl</kbd>+<kbd>,</kbd>) | [Ajustes](/pyzed/es/editor/settings/). |
 
-<Media src={fileMenu} alt="El menú ☰ abierto con los comandos de archivo, Ejecutar y archivos recientes" caption="El menú ☰: comandos de archivo, archivos recientes y Ejecutar." size="narrow" />
+<Media src={fileMenu} alt="El menú ☰ abierto con los comandos de archivo, Ejecutar y archivos recientes" caption="El menú ☰: comandos de archivo, archivos recientes y Ejecutar." />
 
 Cada entrada de los menús aparece con sus teclas en [Menús y comandos](/pyzed/es/editor/menus-and-commands/). Todo lo
 que puedes pulsar en un menú está también en la **paleta de comandos** (<kbd>Ctrl</kbd>+<kbd>Mayús</kbd>+<kbd>P</kbd>):
@@ -72,13 +76,15 @@ minimizar, maximizar y cerrar, con el estilo de tu sistema, y los bordes de la v
 Arrastra la barra de título para mover la ventana; haz doble clic para maximizarla. Así la ventana es compacta e
 igual en todas las plataformas.
 
-{/* media: editor/window-frames (la misma barra de título con los botones de macOS, Windows 11, GNOME y KDE) */}
+<Media src={windowFrames} alt="La misma barra de título cinco veces, con los botones de ventana de macOS, Windows 11, GNOME, Ubuntu y KDE Plasma" caption="Una barra de título, cinco sistemas. De arriba abajo: macOS, Windows 11, GNOME, Ubuntu y KDE Plasma." />
 
 <Aside type="tip" title="¿Prefieres el marco de tu sistema?">
 Desactiva **Ajustes → Apariencia → Marco de ventana propio** para usar el marco de tu sistema operativo (se aplica la
 próxima vez que abras Pyzed Design). Tus apps pueden usar los mismos marcos: mira `ui.window_frame` y `Window.frame`
 en la [referencia de la API](/pyzed/es/reference/ui/).
 </Aside>
+
+<Media src={systemFrame} alt="Pyzed Design con Marco de ventana propio desactivado: la barra con los menús y Ejecutar no tiene botones de ventana" caption="Con <strong>Marco de ventana propio</strong> desactivado, la barra conserva los menús y Ejecutar, y tu sistema dibuja el marco y sus botones alrededor." />
 
 ## ② ④ ⑤ Docks y paneles
 
@@ -132,7 +138,7 @@ Python, la referencia o las notas de la versión. El final de la fila de pestañ
 - Los paneles se quedan en la ventana principal y siguen a la ventana que usaste por última vez. Al cerrar una ventana
   de documento, sus pestañas vuelven a la ventana principal.
 
-{/* media: editor/tab-drag-out (una pestaña arrastrada a su propia ventana, bucle corto) */}
+<Media src={tabWindow} alt="Un shader arrastrado fuera de la ventana principal a una segunda ventana de Pyzed Design" caption="Un shader en su propia ventana, junto a la ventana principal con el formulario." size="wide" />
 
 ### Barra de herramientas
 
@@ -172,7 +178,16 @@ La barra de abajo te dice dónde estás y alterna algunas cosas con un clic:
 
 Ocúltala con **Ver → Barra de estado**.
 
-{/* media: editor/status-bar (la barra de estado con un control seleccionado) */}
+<Media src={statusBar} alt="La barra de estado: posición del puntero, el control sign_in seleccionado con su tamaño y posición, el marco GNOME, 12 controles, Cuadrícula 8px y Ajustar" caption="La barra de estado con el botón <code>sign_in</code> seleccionado." plain />
+
+## La ventana de bienvenida
+
+Cuando Pyzed Design arranca sin un archivo, te recibe la **ventana de bienvenida**: crea o abre un proyecto,
+vuelve a uno reciente o crea un proyecto a partir de un ejemplo (apps, juegos, demos, bloques e integraciones).
+Vuelve a abrirla desde **Ayuda → Bienvenida**. Todo sobre ella está en
+[Bienvenida y ejemplos](/pyzed/es/editor/examples/).
+
+<Media src={welcome} light={welcomeLight} alt="La ventana de bienvenida: Nuevo proyecto, Abrir proyecto y proyectos recientes a la izquierda, la galería de ejemplos a la derecha" caption="La ventana de bienvenida, con la galería de proyectos de ejemplo." />
 
 ## Notificaciones
 

@@ -78,9 +78,10 @@ To see them all running, open the gallery: `python examples/gallery.py`.
 Looking for whole screens built from them (login, dashboard, settings, chat, kanban...)? See
 [Blocks](/pyzed/blocks/).
 
-:::note[New captures on the way]
-Every component page is getting new, sharper captures of each variant in light and dark, plus short
-animations of the interactive ones.
+:::tip[Light and dark]
+Every preview is captured in both themes and follows the site's: switch the theme at the top of the page to see
+the other one. Pages of interactive components, such as [Button](/pyzed/library/button/) and
+[Input](/pyzed/library/input/), also show a short recording of them in use.
 :::
 """,
     },
@@ -123,9 +124,10 @@ Para verlos todos funcionando, abre la galería: `python examples/gallery.py`.
 ¿Buscas pantallas completas hechas con ellos (login, dashboard, ajustes, chat, kanban...)? Mira los
 [Bloques](/pyzed/es/blocks/).
 
-:::note[Capturas nuevas en camino]
-Cada página de componente va a recibir capturas nuevas y más nítidas de cada variante en claro y
-oscuro, y animaciones cortas de los componentes interactivos.
+:::tip[Claro y oscuro]
+Cada vista previa está capturada en los dos temas y sigue al del sitio: cambia el tema arriba de la página para
+ver el otro. Las páginas de componentes interactivos, como [Botón](/pyzed/es/library/button/) y
+[Campo de texto](/pyzed/es/library/input/), también muestran una grabación corta de su uso.
 :::
 """,
     },
@@ -389,6 +391,12 @@ def render_page(entry: dict, order: int, lang: str, api: Api, by_slug: dict) -> 
         "",
         tabs(entry["slug"], name, entry["preview"]["code"], labels),
     ]
+    clip = entry.get("clip")
+    if clip:
+        body[3:3] = [f"import Media from '{labels['components']}/Media.astro';"]
+        alt = json.dumps(text(clip["alt"], lang), ensure_ascii=False)
+        caption = json.dumps(text(clip["caption"], lang), ensure_ascii=False)
+        body += ["", f"<Media clip=\"{clip['name']}\" alt={{{alt}}} caption={{{caption}}} />", ""]
     when = text(entry.get("when"), lang)
     if when:
         body += [f"## {labels['when']}", ""] + [f"- {mdx(localize_links(w, lang))}" for w in when] + [""]
@@ -476,6 +484,8 @@ def problems() -> list:
             out.append(f"pyzed.ui.{export} is not on any library page (add it to an entry's api)")
     apis = {lang: Api(lang) for lang in LANGS}
     required = ("slug", "name", "category", "api", "blurb", "desc", "preview")
+    manifest = json.loads((HERE.parent / "public" / "media" / "manifest.json").read_text(encoding="utf-8"))
+    clips = {c["name"] for c in manifest["clips"]}
     for e in entries:
         where = e.get("slug", "?")
         out += [f"{where}: missing {k}" for k in required if k not in e]
@@ -498,6 +508,9 @@ def problems() -> list:
             for theme in ("dark", "light"):
                 if not (ASSETS / f"{stem}.{theme}.png").exists():
                     out.append(f"{where}: missing image {stem}.{theme}.png (run library_shots.py {where})")
+        clip = e.get("clip")
+        if clip and clip.get("name") not in clips:
+            out.append(f"{where}: unknown clip {clip.get('name')!r} (not in docs/public/media/manifest.json)")
         for lang in LANGS:
             for key in ("blurb", "desc", "when"):
                 value = e.get(key)

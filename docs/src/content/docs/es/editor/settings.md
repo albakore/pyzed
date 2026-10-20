@@ -9,7 +9,7 @@ sidebar:
 preferencias del propio editor. Los cambios se aplican al momento y se guardan enseguida; **Listo** cierra el
 diálogo.
 
-![El diálogo de ajustes](../../../../../screenshots/designer-settings.png)
+![El diálogo de ajustes](../../../../assets/editor/settings.png)
 
 ## Apariencia
 

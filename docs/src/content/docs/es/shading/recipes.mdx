@@ -8,6 +8,13 @@ sidebar:
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
+import Media from '../../../../components/Media.astro';
+import shot_glow_ring from '../../../../assets/shading/graphs/template-glow_ring.png';
+import shot_plasma from '../../../../assets/shading/graphs/template-plasma.png';
+import shot_clouds from '../../../../assets/shading/graphs/template-clouds.png';
+import shot_cells from '../../../../assets/shading/graphs/template-cells.png';
+import shot_retro_screen from '../../../../assets/shading/graphs/template-retro_screen.png';
+import shot_fire from '../../../../assets/shading/graphs/showcase-fire.png';
 
 Cada receta es un pequeño shader que puedes crear en la [vista Shader](/pyzed/es/shading/shader-designer/)
 siguiendo su cadena de nodos, o generar en Python ejecutando su código. Las seis primeras también son **plantillas**
@@ -50,8 +57,6 @@ Cada bloque de código es un script completo: guárdalo como `recipe.py`, ejecú
 
 Una rampa de color suave de arriba abajo: el shader útil más simple, y un fondo más bonito que un color plano.
 
-{/* media: shading/recipes/gradient */}
-
 **Cadena:** `UV.y → Degradado → Salida`. Haz clic en el nodo Degradado y edita sus paradas en Propiedades: arrastra
 una parada para moverla, haz clic en la barra para añadir otra.
 
@@ -73,7 +78,7 @@ Prueba `UV.x` para una rampa horizontal, o un nodo **Degradado lineal** antes de
 Un anillo que respira, con una luz suave alrededor, en un color que tu código puede cambiar: pantallas de carga,
 indicadores de estado, power-ups de juegos.
 
-{/* media: shading/recipes/glow-ring */}
+<Media src={shot_glow_ring} alt="La plantilla Anillo de neón en la vista Shader: el anillo, su brillo y el pulso conectados a la Salida" caption="La plantilla <strong>Anillo de neón</strong> abierta en la vista Shader." size="wide" />
 
 **Cadena:** `Tiempo × pulse → Sin × 0.02 + 0.28 → Anillo.radius`, `Anillo → Resplandor (radius 0.12) × color.rgb →
 RGBA → Salida`.
@@ -101,7 +106,7 @@ Cambia el **Anillo** por una **Estrella** o un **Rectángulo** y tendrás un let
 Tres ondas seno (a lo ancho, a lo alto y alrededor del centro) sumadas y coloreadas con una **Paleta**: el efecto
 clásico de la demoscene.
 
-{/* media: shading/recipes/plasma */}
+<Media src={shot_plasma} alt="La plantilla Plasma en la vista Shader: ondas seno de la UV y el tiempo sumadas" caption="La plantilla <strong>Plasma</strong> abierta en la vista Shader." size="wide" />
 
 **Cadena:** `sin(UV.x × frequency + time)` + `sin(UV.y × frequency + time × 1.3)` + `sin(longitud(UV centrado) ×
 frequency × 1.5 − time)`, luego `× 0.166 + 0.5 → Paleta → RGBA → Salida`.
@@ -130,7 +135,7 @@ g.save("plasma.pzshad")
 Ruido fractal que se desplaza con el viento, recortado en nubes por un **Paso suave** sobre un degradado de cielo.
 `cover` decide cuán nublado está.
 
-{/* media: shading/recipes/clouds */}
+<Media src={shot_clouds} alt="La plantilla Nubes a la deriva en la vista Shader: ruido fractal que se desplaza mezclado sobre el color del cielo" caption="La plantilla <strong>Nubes a la deriva</strong> abierta en la vista Shader." size="wide" />
 
 **Cadena:** `Desplazar (speed: wind) → Ruido fractal → Paso suave` (bordes a partir de `cover`), luego
 `Mezclar (cielo, blanco, nubes) → RGBA → Salida`.
@@ -162,7 +167,7 @@ rápido y baja `cover` para una tormenta.
 Celdas de Voronoi que se mueven, cada una con su color, separadas por bordes brillantes: fondos orgánicos, vistas de
 microscopio, vitrales.
 
-{/* media: shading/recipes/cells */}
+<Media src={shot_cells} alt="La plantilla Celdas vivas en la vista Shader: ruido Voronoi coloreado con una paleta" caption="La plantilla <strong>Celdas vivas</strong> abierta en la vista Shader." size="wide" />
 
 **Cadena:** `Voronoi (scale) → cell → Paleta × 0.6 → RGBA`; `Voronoi → edge → Paso suave (0, 0.06)`; luego
 `Mezclar (color del borde, celdas, borde) → Salida`.
@@ -188,7 +193,7 @@ g.save("cells.pzshad")
 Un degradado synthwave visto a través de un televisor antiguo: líneas de barrido que se desplazan, esquinas oscuras
 y grano de película. Los nodos de efecto devuelven números cercanos a 1, así que multiplicas tu color por ellos.
 
-{/* media: shading/recipes/retro-screen */}
+<Media src={shot_retro_screen} alt="La plantilla Pantalla CRT retro en la vista Shader: un degradado con líneas de barrido, viñeta y grano" caption="La plantilla <strong>Pantalla CRT retro</strong> abierta en la vista Shader." size="wide" />
 
 **Cadena:** `UV.y → Degradado → rgb × Líneas de barrido × Viñeta × Grano de película → RGBA → Salida`.
 
@@ -214,8 +219,6 @@ Nivel: primeros pasos
 Una habitación oscura iluminada donde está el puntero. Cuando el puntero sale del shader, la luz descansa en el
 centro.
 
-{/* media: shading/recipes/spotlight */}
-
 **Cadena:** `Ratón.position → Degradado radial.center`, `Mezclar (oscuro, cálido, luz) → RGBA → Salida`.
 
 ```python
@@ -234,8 +237,6 @@ Nivel: matemáticas básicas
 
 Un anillo con una cabeza brillante y una estela que se desvanece y gira sin fin. El fondo transparente le permite
 estar sobre cualquier tarjeta.
-
-{/* media: shading/recipes/spinner */}
 
 **Cadena:** `Polar.angle01 − Tiempo × 0.8 → Fract` (la estela), `Anillo → Relleno` (la forma), y el `alpha` de la
 Salida a partir de `Relleno × estela`.
@@ -256,7 +257,7 @@ Nivel: ruido
 
 Ruido fractal que sube, se desvanece hacia arriba y se colorea con una rampa negro → rojo → naranja → amarillo.
 
-{/* media: shading/recipes/fire */}
+<Media src={shot_fire} alt="Un grafo de fuego en la vista Shader, del showcase de shaders" caption="Un fuego más elaborado de <code>examples/showcase/shaders</code>, con la misma idea: ruido que sube por una rampa de color." size="wide" />
 
 **Cadena:** `Desplazar (speed: 0, speed × 0.6) → Ruido fractal × UV.y × 1.6 → Degradado → Salida`.
 
@@ -284,8 +285,6 @@ hace subir las llamas. Cambia el signo para que bajen.
 Nivel: primeros pasos
 
 Rayas diagonales que se deslizan de lado, como un poste de barbería o una barra de "en curso".
-
-{/* media: shading/recipes/stripes */}
 
 **Cadena:** `Desplazar (0.2, 0) → Franjas (count 10, angle 0.785) → Mezclar (blanco, rojo) → RGBA → Salida`.
 

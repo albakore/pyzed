@@ -15,7 +15,7 @@ grafo, como en los visual shaders de Godot o el editor de shaders de Blender. Ca
 en vivo de lo que produce, el nodo **Output** es el shader terminado, y el grafo se guarda como un archivo
 `.pzshad` que `pz.shader` dibuja en la GPU.
 
-![La vista de shaders: la barra Shading, el grafo con una vista previa en cada nodo y la vista previa de Output](../../../../../screenshots/designer-shader.png)
+![La vista de shaders: la barra Shading, el grafo con una vista previa en cada nodo y la vista previa de Output](../../../../assets/shading/shader-view.png)
 
 No hay WGSL que escribir ni Rust: el diseñador compila el grafo a WGSL mientras lo editas, lo comprueba con el
 compilador de la GPU y señala el nodo cuando algo está mal.
@@ -26,7 +26,7 @@ Pulsa **New** (Ctrl+N) y elige la tarjeta **Shader**. Ponle un nombre y una carp
 **Blank** (un degradado), **Plasma**, **Clouds**, **Glow ring**, **Cells** o **Retro screen**. **Create shader** lo
 guarda y lo abre. También puedes abrir un archivo `.pzshad` directamente:
 
-![El diálogo New shader con sus plantillas](../../../../../screenshots/designer-shader-new.png)
+![El diálogo New shader con sus plantillas](../../../../assets/shading/new-shader.png)
 
 ```bash
 pyzed design efectos/fuego.pzshad     # se crea al guardar si no existe
@@ -48,6 +48,8 @@ everything** (F), **Stop time** (congela todas las vistas previas en un instante
 que abre el shader en una ventana propia que sigue tus cambios. Una insignia dice **Compiles** o cuántos problemas
 hay; pasa el ratón por encima para leerlos.
 
+![La pestaña WGSL: el código en el que se compila el grafo del anillo brillante, con números de línea](../../../../assets/shading/wgsl-tab.png)
+
 ### Trabajar en el lienzo
 
 | Gesto | Qué hace |
@@ -67,6 +69,10 @@ hay; pasa el ratón por encima para leerlos.
 El teclado funciona como en los formularios: Ctrl+Z / Ctrl+Shift+Z, Supr, Ctrl+C / Ctrl+X / Ctrl+V (los nodos
 viajan entre shaders y ventanas), Ctrl+D, Ctrl+A, flechas para desplazar, **P** para mostrar u ocultar las vistas
 previas de los nodos seleccionados, Ctrl+0 para el 100 % y Ctrl+= / Ctrl+- para ampliar.
+
+![La búsqueda de nodos abierta sobre el grafo, filtrada por "noi": Noise, Random, Voronoi, Film grain y los demás nodos de ruido](../../../../assets/shading/node-search.png)
+
+![El menú de clic derecho de un nodo: Duplicar, Copiar, Ocultar vista previa, Desconectar todo y Eliminar](../../../../assets/shading/node-menu.png)
 
 ### Valores en el nodo
 
@@ -114,7 +120,7 @@ El **Outline** debajo de la barra lista las **variables** del shader, sus **valo
 value) y todos los nodos. **Add** crea una variable; su flecha elige el tipo (`float`, `int`, `bool`, `vec2`,
 `vec3`, `vec4`, `color` o `texture`). Arrastra una variable al grafo para añadir un nodo que la lea.
 
-![La pestaña Preview con un deslizador por variable, y una variable en el panel de propiedades](../../../../../screenshots/designer-shader-preview.png)
+![La pestaña Preview con un deslizador por variable, y una variable en el panel de propiedades](../../../../assets/shading/preview-tab.png)
 
 | Tipo | Qué es | Desde código |
 | --- | --- | --- |
@@ -136,6 +142,10 @@ El panel de propiedades muestra lo seleccionado:
   cambia.
 - **Nada**: el propio shader: su nombre y descripción, el tamaño de las ventanas Preview y Run, el color
   **fallback** que se dibuja donde no hay GPU y si se anima.
+
+![El panel Propiedades de un nodo Glow: su título, sus entradas con el cable desde Ring y dos valores, y su salida](../../../../assets/shading/node-properties.png)
+
+![El panel Propiedades de la variable color: tipo color, mutable, su valor, una descripción y la línea de Python que la cambia](../../../../assets/shading/variable-properties.png)
 
 ## Reutilizar shaders
 

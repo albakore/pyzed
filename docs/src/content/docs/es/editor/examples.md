@@ -9,7 +9,7 @@ Cuando Pyzed Design se inicia sin un archivo, se abre la **ventana de bienvenida
 proyecto nuevo, abrir uno, crear un formulario o leer la documentación, y volver a un proyecto reciente. A la derecha
 está la **galería de proyectos de ejemplo**: cada ejemplo tiene una miniatura, un título y una descripción.
 
-![La ventana de bienvenida con la galería de proyectos de ejemplo](../../../../../screenshots/editor-welcome.png)
+![La ventana de bienvenida con la galería de proyectos de ejemplo](../../../../assets/editor/welcome.png)
 
 Ábrela de nuevo cuando quieras desde **Ayuda → Bienvenida**, o **Ayuda → Proyectos de ejemplo…** para ver todos los
 ejemplos. Desmarca **Mostrar al iniciar** (o desactiva **Ventana de bienvenida** en
@@ -28,6 +28,10 @@ Las pestañas filtran los ejemplos por categoría y el buscador los filtra por t
 | **Diseñador** | Formulario de inicio de sesión: un formulario hecho en Pyzed Design, con su código de eventos y componentes. |
 | **Integraciones** | Héroes con SQLModel, Registro con Pydantic, PyPI con httpx, Contactos con SQLAlchemy. |
 
+![La pestaña Juegos de la galería: Snake, Breakout y Neon Invaders](../../../../assets/editor/welcome-games.png)
+
+![La pestaña Vitrina de la galería: el panel de cristal, el HUD de juego, el menú principal y el inventario](../../../../assets/editor/welcome-showcase.png)
+
 ## Crear un proyecto desde un ejemplo
 
 Haz clic en un ejemplo para darle nombre al proyecto nuevo y elegir dónde va (por defecto
@@ -38,7 +42,7 @@ Haz clic en un ejemplo para darle nombre al proyecto nuevo y elegir dónde va (p
 2. lo abre en el panel Proyecto, con su script (o, en el ejemplo del Diseñador, su formulario principal) delante;
 3. instala sus paquetes con `uv sync` en segundo plano.
 
-![Dar nombre al proyecto creado desde un ejemplo](../../../../../screenshots/editor-welcome-example.png)
+![Dar nombre al proyecto creado desde un ejemplo](../../../../assets/editor/welcome-create.png)
 
 La copia es tuya: cámbiala a tu gusto, el ejemplo original no se toca.
 

@@ -72,6 +72,8 @@ Los once grafos viven en
 para ver su archivo, o ábrelo en el diseñador para ver y cambiar los nodos:
 `pyzed design examples/showcase/shaders/fire.pzshad`.
 
+<Media clip="shaders" alt="Seis shaders hechos con nodos funcionando a la vez: plasma, túnel, fuego, Voronoi, synthwave y nebulosa" caption="Seis de los grafos, animados: cada uno es un <code>.pzshad</code> dibujado con <code>pz.shader</code>." size="wide" />
+
 <Gallery
 	min="14rem"
 	items={[
@@ -131,9 +133,6 @@ title.animate("fade_in_up")                                         # al aparece
 panel.transition(x=0 if self.open else -260, opacity=1 if self.open else 0)  # al cambiar un valor
 pz.presence(page, key=self.page)                                    # sale y entra al cambiar la key
 ```
-
-{/* media: showcase/animations (una grabación corta: los presets, el panel que se desliza, la contraseña que tiembla) */}
-
 <Run file="examples/animations.py" lang="es" />
 
 <details>
