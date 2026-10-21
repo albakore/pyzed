@@ -113,7 +113,8 @@ class ConsoleController:
         preview_open = d.preview is not None and d.preview.is_open
         process = d.projects.process
         process_alive = process is not None and process.poll() is None
-        if not preview_open and not process_alive:
+        exporting = d.exporter.running  # a build's output (File → Export app…)
+        if not preview_open and not process_alive and not exporting:
             self.stop()
 
 

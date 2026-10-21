@@ -11,6 +11,7 @@ mod focus;
 mod fonts;
 mod frame;
 mod highlighter;
+mod imaging;
 mod layout;
 mod min_size;
 mod recorder;
@@ -51,6 +52,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::frames, m)?)?;
     m.add_function(wrap_pyfunction!(app::pressed_keys, m)?)?;
     m.add_function(wrap_pyfunction!(app::run, m)?)?;
+    m.add_function(wrap_pyfunction!(imaging::image_size, m)?)?;
+    m.add_function(wrap_pyfunction!(imaging::resize_image, m)?)?;
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(recorder::record, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;

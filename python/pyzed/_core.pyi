@@ -411,6 +411,9 @@ def hover(base: Any, top: Any) -> Any:
 def image(source: Any, *, width: Any = ..., height: Any = ..., content_fit: Any = ..., filter: Any = ..., opacity: Any = ..., radius: Any = ..., rotation: Any = ..., scale: Any = ..., size: Any = ...) -> Any:
     """A bitmap image (PNG, JPEG, GIF, BMP, WebP, ...) from a path or bytes."""
     ...
+def image_size(source: Any) -> Any:
+    """The size of the image `source` (a path or the file's bytes), in pixels: `(width, height)`."""
+    ...
 def image_viewer(source: Any, *, width: Any = ..., height: Any = ..., min_scale: Any = ..., max_scale: Any = ..., scale_step: Any = ..., filter: Any = ..., size: Any = ...) -> Any:
     """An image you can pan (drag) and zoom (scroll wheel), like Iced's image viewer."""
     ...
@@ -476,6 +479,11 @@ def resizable(content: Any, *, edge: Any = ..., size: Any = ..., min_size: Any =
     keeps the size the user drags it to, and `on_resize(size)` is called when a drag
     ends so you can store it. Changing `size` later resets it. The handle is drawn as a
     `thickness`-wide line on that edge (`color`, `hover_color` while hovered or dragged).
+    """
+    ...
+def resize_image(source: Any, width: Any, height: Any) -> Any:
+    """The image `source` (a path or the file's bytes) scaled to exactly `width` × `height` pixels
+    (Lanczos filter) and encoded as PNG.
     """
     ...
 def responsive(function: Any) -> Any:

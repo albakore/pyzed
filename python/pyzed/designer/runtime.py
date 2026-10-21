@@ -787,12 +787,13 @@ def open_window(form: Union[str, Path, Form], *, data: Any = None, handlers: Opt
     return _core.Command.open_window(form_window(form, data=data, handlers=handlers, folder=folder))
 
 
-def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
+def run(path: Union[str, Path], *, reload: Optional[bool] = None, splash: Any = None) -> None:
     """Runs the form at ``path`` with all the logic wired in the designer.
 
     ``reload=True`` turns on hot reload: saving the form (from the designer or by hand)
     or its handlers module updates the running window without restarting it. ``None``
-    follows ``PYZED_RELOAD``, like ``pz.run``.
+    follows ``PYZED_RELOAD``, like ``pz.run``. ``splash`` (a ``pz.Splash``) is shown before
+    the form's window opens (see ``App.splash``).
     """
     if Path(path).suffix == ".pzcomp":  # a designed component on its own
         from .scene_panel import run_file
@@ -802,7 +803,10 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None) -> None:
         from ..shading.runtime import run_file as run_shader
 
         return run_shader(path)
-    _run_app(open_form(path), reload=reload)
+    app = open_form(path)
+    if splash is not None:
+        app.splash = splash
+    _run_app(app, reload=reload)
     if os.environ.get("PYZED_DESIGNER_RUN"):
         # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still
         # running, so the designer sees the run finish and can start it again.

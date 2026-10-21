@@ -32,6 +32,7 @@ from . import code as _code
 from . import components as _components
 from . import agent_panel, code_panel, dialogs, docks, geometry, panels, preferences, project_panel, surface
 from . import commands as _commands
+from . import export_panel as _export
 from . import keymap as _keymap
 from . import files as _files
 from . import layout as _layout
@@ -242,6 +243,8 @@ class Designer(App):
         # the uv project the form belongs to (Project panel)
         self.projects = ProjectController(self)
         self.projects.on_change(self.agent.project_changed)  # the agents work on the active project
+        # File → Export app…: package the project for each platform (pyzed build)
+        self.exporter = _export.ExportController(self)
         self.updates = UpdateController(self)
         # the welcome window and its gallery of example projects (Help → Welcome)
         self.welcome = Welcome(self)
@@ -305,6 +308,8 @@ class Designer(App):
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread
             subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
+        if self.exporter.running:  # the elapsed time of the build in the Export dialog
+            subs.append(_core.every(1.0, lambda: None, key="designer-export"))
         if self.console.running is not None:  # notices when the running form's window is closed
             subs.append(_core.every(1.0, self.console.poll, key="designer-console"))
         subs.extend(self.timeline.subscriptions())  # the Animation panel's preview
@@ -2791,6 +2796,8 @@ class Designer(App):
                                          theme=t)
         if self.dialog == "editor_settings":
             return code_panel.settings_dialog(self, t)
+        if self.dialog == "export":
+            return _export.dialog(self, t)
         if self.dialog == "keymap":
             return keymap_editor.dialog(self, t)
         named = {"settings": dialogs.settings, "shortcuts": dialogs.shortcuts, "about": dialogs.about,

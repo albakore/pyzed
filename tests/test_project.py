@@ -126,7 +126,7 @@ def test_build_command(shop):
     assert f"{shop.ui_dir}{os.pathsep}ui" in data and f"{shop.root / 'assets'}{os.pathsep}assets" in data
     assert ["--collect-submodules", "shop_app"] == args[args.index("shop_app") - 1: args.index("shop_app") + 1]
     workflow = build.workflow(shop)
-    assert "pyzed build" in workflow.read_text() and "${{ matrix.os }}" in workflow.read_text()
+    assert "pyzed build" in workflow.read_text() and "${{ matrix.target }}" in workflow.read_text()
 
 
 def test_cli_needs_a_project(tmp_path, monkeypatch, capsys):
