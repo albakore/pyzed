@@ -47,7 +47,9 @@ _QUIET_EVENTS = frozenset({"tick", "mouse_enter", "mouse_leave", "output", "erro
 _VALUE_PROPS = {
     "input": ("text",), "text_area": ("text",), "checkbox": ("checked",), "switch": ("checked",),
     "radio": ("selected",), "select": ("selected",), "slider": ("value",), "number": ("value",),
-    "list_box": ("selected",),
+    "list_box": ("selected",), "search": ("text",), "segmented": ("selected",), "tabs": ("tabs", "selected"),
+    "toggle_group": ("selected",), "tree": ("selected", "expanded"), "table": ("selected", "sort_by", "descending"),
+    "color_picker": ("value",), "icon_picker": ("value",), "dock": ("layout",),
 }
 
 
@@ -348,6 +350,10 @@ class LiveContext(_components.RenderContext):
 
         return callback
 
+    @property
+    def form(self) -> Form:  # type: ignore[override]
+        return self.runtime.form
+
     def set(self, control: Control, prop: str, value: Any) -> None:  # noqa: A003
         target = self.runtime.form.get(control.name) or control
         target.props[prop] = value
@@ -565,12 +571,32 @@ class FormRuntime:
         if painted is not None:
             layers.append(painted)
         rects = _layout.resolve(form, size)
-        hidden: set = set()
         bubbles: list = []  # validation messages, over every control
-        for control, _depth in form.walk():
+        layers.extend(self._draw(None, rects, bubbles))
+        layers.extend(bubbles)
+        if self.error:
+            layers.append(_core.container(
+                ui.callout("Event handler error", self.error, tint="error", on_dismiss=self._dismiss_error,
+                           theme=t),
+                width="fill", height="fill", align_y="end", padding=12))
+        return styling.apply_global(_core.stack(layers, width="fill", height="fill"), form.style, t, background=False)
+
+    def _draw(self, parent: Optional[Control], rects: Dict[str, Tuple[float, float, float, float]],
+              bubbles: list) -> list:
+        """The pinned widgets of every visible control inside ``parent`` (the form when ``None``) at ``rects``.
+        A dock draws what is inside it itself (see ``_dock``)."""
+        t = self.theme
+        form = self.form
+        layers = []
+        hidden: set = set()
+        docks: set = set()
+        for control, _depth in form.walk(parent.name if parent is not None else None):
             spec = _components.get(control.type)
             if not control.visible or (control.parent and control.parent in hidden):
                 hidden.add(control.name)
+                continue
+            if control.parent in docks:
+                docks.add(control.name)
                 continue
             if not spec.visual:
                 continue
@@ -578,7 +604,11 @@ class FormRuntime:
                 self._apply_binding(control)
             x, y, w, h = rects[control.name]
             placed = Control(**{**control.__dict__, "x": x, "y": y, "width": w, "height": h})
-            widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
+            if spec.container == "dock":
+                docks.add(control.name)
+                widget = self._wrap_mouse(control, _components.styled(self._dock(placed), control, self.ctx))
+            else:
+                widget = self._wrap_mouse(control, _components.render(placed, self.ctx))
             played = timeline.targets(self.player, form, control.name)
             if played:
                 widget = widget.animate(*played)
@@ -593,13 +623,44 @@ class FormRuntime:
                     _core.text(message, size=max(t.ui_font_size - 2, 10), color=t.error),
                     padding=(3, 8), bg=t.elevated, border_color=t.error, border_width=1, radius=t.radius_sm,
                 ), x=x, y=y + h + 4))
-        layers.extend(bubbles)
-        if self.error:
-            layers.append(_core.container(
-                ui.callout("Event handler error", self.error, tint="error", on_dismiss=self._dismiss_error,
-                           theme=t),
-                width="fill", height="fill", align_y="end", padding=12))
-        return styling.apply_global(_core.stack(layers, width="fill", height="fill"), form.style, t, background=False)
+        return layers
+
+    def _dock(self, control: Control) -> Any:
+        """A live ``pz.Dock`` for a Dock control: each Dock panel becomes a tab on its side (or the center) with
+        what is inside it, laid out by its anchors at the size the dock gives it."""
+        from ..dock import Dock, DockPanel
+
+        t = self.theme
+        panels = [p for p in self.form.children(control.name) if p.visible and p.type == "dock_panel"]
+
+        def content(panel: Control) -> Any:
+            def draw(width: float, height: float) -> Any:
+                rects: Dict[str, Tuple[float, float, float, float]] = {}
+                _layout.place(self.form, panel, (0.0, 0.0, width, height), (panel.width, panel.height), rects)
+                bubbles: list = []
+                body = _components.render(Control(**{**panel.__dict__, "x": 0, "y": 0, "width": width,
+                                                     "height": height}), self.ctx)
+                return _core.stack([_core.pin(self._wrap_mouse(panel, body), x=0, y=0),
+                                    *self._draw(panel, rects, bubbles), *bubbles], width="fill", height="fill")
+
+            return _core.responsive(draw)
+
+        center = [p for p in panels if _layout.dock_side(p) == "center"]
+        docked = [p for p in panels if _layout.dock_side(p) != "center"]
+        props = {**_components.get(control.type).defaults(), **control.props}
+        saved = dict(props.get("layout") or {})
+        # the top-most panel of each side is its tab shown first, as in the designer
+        active = {_layout.dock_side(p): p.name for p in docked}
+        layout = {**saved, "active": {**active, **saved.get("active", {})},
+                  "sizes": {**{side: float(props.get(f"{side}_size") or 0) or 200.0
+                               for side in ("left", "right", "top", "bottom")}, **saved.get("sizes", {})}}
+        on_layout = self.ctx.on(control, "layout", "layout")
+        return Dock(
+            center=_core.stack([content(p) for p in center], width="fill", height="fill") if center
+            else _core.container(width="fill", height="fill", bg=t.editor),
+            panels=[DockPanel(p.name, str(p.props.get("title") or p.name), content(p),
+                              icon=p.props.get("icon") or None, side=_layout.dock_side(p)) for p in docked],
+            layout=layout, on_layout=lambda e: on_layout(e.value), key=self.ctx.key(control))
 
     def _dismiss_error(self) -> None:
         self.error = None

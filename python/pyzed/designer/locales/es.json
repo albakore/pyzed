@@ -2047,6 +2047,20 @@
   "Spectrogram": "Espectrograma",
   "Media": "Multimedia",
   "Project explorer": "Explorador de proyecto",
-  "A tree, breadcrumbs, closable tabs, a sortable table and the other toolbox controls, with their events.": "Un árbol, una ruta de navegación, pestañas que se cierran, una tabla ordenable y los demás controles de la caja de herramientas, con sus eventos."
+  "A tree, breadcrumbs, closable tabs, a sortable table and the other toolbox controls, with their events.": "Un árbol, una ruta de navegación, pestañas que se cierran, una tabla ordenable y los demás controles de la caja de herramientas, con sus eventos.",
+  "Placed by its dock: change its Side, or the dock's sizes.": "Lo coloca su dock: cambia su Lado, o los tamaños del dock.",
+  "Dock": "Dock",
+  "Panels docked to the sides of a center area, like Zed: their tabs switch them, dragging a tab moves it to another side and dragging the inner edge resizes it.": "Paneles acoplados a los lados de un área central, como en Zed: sus pestañas los cambian, arrastrar una pestaña la lleva a otro lado y arrastrar el borde interior cambia su tamaño.",
+  "Dock panel": "Panel del dock",
+  "A panel of a Dock: put it inside a Dock, pick its side and drop controls on it.": "Un panel de un Dock: ponlo dentro de un Dock, elige su lado y suelta controles en él.",
+  "Left width": "Ancho izquierdo",
+  "Right width": "Ancho derecho",
+  "Top height": "Alto superior",
+  "Bottom height": "Alto inferior",
+  "Saved layout": "Distribución guardada",
+  "Side": "Lado",
+  "Runs when a panel of {name} is moved, resized or switched (``event.value`` is the layout: ``positions``, ``sizes``, ``active`` and ``hidden``; it is kept in ``layout``).": "Se ejecuta al mover, redimensionar o cambiar un panel de {name} (``event.value`` es la distribución: ``positions``, ``sizes``, ``active`` y ``hidden``; se guarda en ``layout``).",
+  "Mini IDE": "Mini IDE",
+  "A Dock like Zed's: panels on every side whose tabs move and resize, made in Pyzed Design.": "Un Dock como el de Zed: paneles en cada lado cuyas pestañas se mueven y cambian de tamaño, hecho en Pyzed Design."
  }
 }

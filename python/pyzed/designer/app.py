@@ -613,7 +613,15 @@ class Designer(App):
         return self.doc.form.get(self.drop_name) if self.drop_name else None
 
     def _container_under(self, x: float, y: float, exclude=()) -> Optional[str]:
-        found = _layout.container_at(self.doc.form, self.rects, x, y, exclude)
+        form = self.doc.form
+        found = _layout.container_at(form, self.rects, x, y, exclude)
+        # a dock only takes Dock panels: anything else goes to what holds the dock
+        placing = [form[n].type for n in exclude if form.get(n) is not None]
+        if not placing:
+            carry = self.carry
+            placing = list(carry.names) if carry is not None and carry.kind == "tool" else [self.tool or ""]
+        while found is not None and _layout.kind(found) == "dock" and any(t != "dock_panel" for t in placing):
+            found = form.get(found.parent) if found.parent else None
         return found.name if found is not None else None
 
     def press_control(self, name: str) -> None:

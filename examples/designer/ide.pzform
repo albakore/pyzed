@@ -1,0 +1,363 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "ide",
+    "title": "Mini IDE",
+    "width": 900,
+    "height": 560,
+    "theme": "One Dark",
+    "accent": "#74ade8",
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {
+      "load": "form_load"
+    },
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "workspace",
+      "type": "dock",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 900,
+      "height": 560,
+      "props": {
+        "left_size": 220,
+        "right_size": 260,
+        "top_size": 140,
+        "bottom_size": 160,
+        "layout": {}
+      },
+      "events": {
+        "layout": "workspace_layout"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "editor",
+      "type": "dock_panel",
+      "x": 0,
+      "y": 0,
+      "width": 420,
+      "height": 400,
+      "props": {
+        "title": "Editor",
+        "icon": "",
+        "side": "center",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "outline",
+      "type": "dock_panel",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 220,
+      "height": 528,
+      "props": {
+        "title": "Outline",
+        "icon": "list-tree",
+        "side": "left",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "problems",
+      "type": "dock_panel",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 420,
+      "height": 128,
+      "props": {
+        "title": "Problems",
+        "icon": "triangle-alert",
+        "side": "bottom",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "settings",
+      "type": "dock_panel",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 260,
+      "height": 528,
+      "props": {
+        "title": "Settings",
+        "icon": "settings",
+        "side": "right",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "explorer",
+      "type": "dock_panel",
+      "x": 0,
+      "y": 0,
+      "width": 220,
+      "height": 528,
+      "props": {
+        "title": "Explorer",
+        "icon": "folder",
+        "side": "left",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "terminal",
+      "type": "dock_panel",
+      "x": 0,
+      "y": 0,
+      "width": 420,
+      "height": 128,
+      "props": {
+        "title": "Terminal",
+        "icon": "square-terminal",
+        "side": "bottom",
+        "background": ""
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "workspace"
+    },
+    {
+      "name": "files",
+      "type": "tree",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 220,
+      "height": 528,
+      "props": {
+        "items": "src\n  main.py\n  app.py\n  forms.py\nREADME.md\npyproject.toml",
+        "selected": "src/main.py",
+        "expanded": "src",
+        "border": false
+      },
+      "events": {
+        "change": "files_change",
+        "open": "files_open"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "explorer"
+    },
+    {
+      "name": "symbols",
+      "type": "tree",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 220,
+      "height": 528,
+      "props": {
+        "items": "main.py\n  main()\n  greet(name)",
+        "selected": "",
+        "expanded": "main.py",
+        "border": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "outline"
+    },
+    {
+      "name": "code",
+      "type": "text_area",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 420,
+      "height": 400,
+      "props": {
+        "text": "def greet(name):\n    return f\"Hello, {name}!\"\n\n\ndef main():\n    print(greet(\"Pyzed\"))\n",
+        "placeholder": "Write something…",
+        "language": "py",
+        "line_numbers": true,
+        "wrap": false
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "editor"
+    },
+    {
+      "name": "log",
+      "type": "terminal",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 420,
+      "height": 128,
+      "props": {
+        "text": "$ python src/main.py\nHello, Pyzed!\n",
+        "font_size": 13,
+        "follow": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "terminal"
+    },
+    {
+      "name": "no_problems",
+      "type": "empty_state",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 420,
+      "height": 128,
+      "props": {
+        "title": "No problems",
+        "text": "Ruff and ty found nothing to fix.",
+        "icon": "circle-check",
+        "size": "sm"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "problems"
+    },
+    {
+      "name": "wrap",
+      "type": "switch",
+      "x": 16,
+      "y": 16,
+      "width": 228,
+      "height": 24,
+      "props": {
+        "text": "Wrap lines",
+        "checked": false
+      },
+      "events": {
+        "change": "wrap_change"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "settings"
+    },
+    {
+      "name": "numbers",
+      "type": "switch",
+      "x": 16,
+      "y": 48,
+      "width": 228,
+      "height": 24,
+      "props": {
+        "text": "Line numbers",
+        "checked": true
+      },
+      "events": {
+        "change": "numbers_change"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false,
+      "parent": "settings"
+    }
+  ]
+}

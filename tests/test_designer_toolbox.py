@@ -164,3 +164,73 @@ def test_explorer_example_runs(tmp_path):
     assert rt.form["unread"].props["count"] == 0
     assert rt.error is None
     app.screenshot(tmp_path / "explorer.png", scale=1)
+
+
+# -- dock -------------------------------------------------------------------------------------------
+def _dock_form():
+    from pyzed.designer.document import Document
+
+    doc = Document(Form(name="ide", width=800, height=500))
+    dock = doc.add("dock", 0, 0, 800, 500)
+    return doc, dock
+
+
+def test_a_new_dock_comes_with_panels_and_only_takes_panels():
+    doc, dock = _dock_form()
+    panels = doc.form.children(dock.name)
+    assert [p.props["side"] for p in panels] == ["left", "bottom", "center"]
+    button = doc.add("button", 10, 10, parent=dock.name)
+    assert button.parent is None  # a control dropped on the dock itself lands on the form
+    assert not doc.can_contain(dock.name, button.name)
+    assert doc.can_contain(panels[0].name, button.name)
+
+
+def test_dock_lays_its_panels_out_like_zed():
+    doc, dock = _dock_form()
+    left, bottom, center = doc.form.children(dock.name)
+    rects = doc.rects()
+    assert rects[left.name] == (0, 32, 220, 468)  # under its tabs, the whole height
+    assert rects[center.name] == (220, 0, 580, 340)  # no tabs in the center
+    assert rects[bottom.name] == (220, 372, 580, 128)
+    assert (left.width, left.height) == (220, 468)  # the panel takes the size its dock gives it
+    other = doc.add("dock_panel", 0, 0, parent=dock.name)  # a second tab on the left shares its place
+    assert doc.rects()[other.name] == rects[left.name]
+
+
+def test_running_dock_is_a_live_dock(monkeypatch, tmp_path):
+    import pyzed.dock
+
+    doc, dock = _dock_form()
+    left = doc.form.children(dock.name)[0]
+    doc.add("button", 4, 4, parent=left.name)
+    dock.events["layout"] = "dock_layout"
+    seen = []
+    got = {}
+    real = pyzed.dock.Dock
+
+    def fake(**kwargs):
+        got.update(kwargs)
+        return real(**kwargs)
+
+    monkeypatch.setattr(pyzed.dock, "Dock", fake)
+    app = FormApp(doc.form, {"dock_layout": lambda form, event: seen.append(event.value)})
+    app.runtime.view()
+    assert [(p.id, p.title, p.side) for p in got["panels"]] == [("dock_panel1", "Explorer", "left"),
+                                                                ("dock_panel2", "Terminal", "bottom")]
+    assert got["layout"]["sizes"]["left"] == 220 and got["layout"]["active"]["left"] == "dock_panel1"
+    got["on_layout"](pz.Event("layout", value={"sizes": {"left": 300}}))
+    assert app.runtime.form[dock.name].props["layout"] == {"sizes": {"left": 300}}
+    assert seen == [{"sizes": {"left": 300}}]
+    app.screenshot(tmp_path / "dock.png", scale=1)
+
+
+def test_ide_example_runs(tmp_path):
+    app = open_form(EXAMPLES / "ide.pzform")
+    rt = app.runtime
+    rt.dispatch(None, "load")
+    rt.dispatch(rt.form["files"], "open", "src/app.py")
+    assert "def greet" in rt.form["code"].props["text"] and rt.form["editor"].props["title"] == "app.py"
+    rt.dispatch(rt.form["workspace"], "layout", {"positions": {"terminal": "right"}, "sizes": {"left": 240}})
+    assert "terminal → right" in rt.form["log"].props["text"]
+    assert rt.error is None
+    app.screenshot(tmp_path / "ide.png", scale=1)

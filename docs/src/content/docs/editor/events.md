@@ -66,6 +66,7 @@ Every visible control has three common events on top of its own:
 | Breadcrumbs | `click` (the index of the part, 0 for the first) |
 | Markdown | `link` (the address of the clicked link; without a handler the link opens in the browser) |
 | Color picker, Icon picker | `change` (the new color or icon name) |
+| Dock | `layout` (a panel was moved, resized or switched: the layout dict, also kept in **Saved layout**) |
 | Timer, Shortcut, File watcher, Process, Background worker, Web request, Clipboard, Settings, File dialog, Notification | Their own (`tick`, `activate`, `change`, `output`, `done`, `response`...): see [Non-visual components](/pyzed/editor/non-visual-components/). They have no mouse events. |
 | Heading, Progress bar, Badge, Spinner, Callout, Key binding, Stat, Chart, Empty state, Diff stat, Image viewer, Terminal output, containers, Spacer, Divider | Only the common ones |
 

@@ -70,6 +70,8 @@ EVENT_DOCS = {
     ("tree", "toggle"): "Runs when an item of {name} is folded or unfolded (``event.value`` is its path; "
                         "``expanded`` already changed).",
     ("breadcrumbs", "click"): "Runs when a part of {name} is clicked (``event.value`` is its index, 0 for the first).",
+    ("dock", "layout"): "Runs when a panel of {name} is moved, resized or switched (``event.value`` is the layout: "
+                        "``positions``, ``sizes``, ``active`` and ``hidden``; it is kept in ``layout``).",
     "link": "Runs when a link in {name} is clicked (``event.value`` is the address); without it the link opens in "
             "the browser.",
     # non-visual components; ``(type, event)`` keys describe an event that means something else on one of them
@@ -148,6 +150,8 @@ class RenderContext:
     live = False
     #: The language ``@key`` texts are shown in (``None``: the current one).
     language: Optional[str] = None
+    #: The form being drawn, for controls that look at what is inside them (a Dock's tabs).
+    form: Any = None
 
     def __init__(self, theme: Optional[Theme] = None, form_name: str = "form") -> None:
         self.theme = theme or current()
@@ -183,10 +187,12 @@ class Component:
     events: Tuple[str, ...] = ()
     description: str = ""
     visual: bool = True
-    #: ``"free"``, ``"flex"`` or ``"grid"`` when other controls can be placed inside (see ``layout``).
+    #: ``"free"``, ``"flex"``, ``"grid"`` or ``"dock"`` when other controls can be placed inside (see ``layout``).
     container: Optional[str] = None
     #: Layout options given to new controls of this type (``(("grow", 1),)`` for a spacer).
     child_layout: Tuple[Tuple[str, Any], ...] = ()
+    #: Controls placed inside a new control of this type, as ``(type, props)`` (a Dock's first panels).
+    children: Tuple[Tuple[str, Tuple[Tuple[str, Any], ...]], ...] = ()
 
     @property
     def default_event(self) -> Optional[str]:
@@ -923,6 +929,47 @@ def _terminal(c: Control, ctx: RenderContext) -> Any:
         border_color=t.border_variant, border_width=1, radius=t.radius_sm)
 
 
+def _dock(c: Control, ctx: RenderContext) -> Any:
+    """The frame of a dock: each side's tabs over its panels (drawn on top as controls). A running form swaps
+    it for a live ``pz.Dock`` whose tabs switch, move and resize (see ``FormRuntime``)."""
+    from . import layout as _layout
+
+    t = ctx.theme
+    panels = [p for p in (ctx.form.children(c.name) if ctx.form is not None else []) if p.visible]
+    rect = (0.0, 0.0, c.width, c.height)
+    layers = [_core.container(width="fill", height="fill", bg=t.editor)]
+    for side, (x, y, w, h) in _layout.dock_areas(c, rect, panels).items():
+        if side == "center" or w <= 0 or h <= 0:
+            continue
+        group = [p for p in panels if _layout.dock_side(p) == side]
+        tabs = []
+        for p in group:
+            active = p is group[-1]  # the top-most panel of a side is its tab shown
+            title = str(p.props.get("title") or p.name)
+            icon = p.props.get("icon")
+            tabs.append(_core.container(_core.row([
+                _icon(icon, size=13, color=t.icon if active else t.icon_muted) if icon else None,
+                _core.text(title, size=12.5, color=t.text if active else t.text_muted, wrap=False),
+            ], spacing=5, align="center"), padding=(4, 8), radius=t.radius, height=26, align_y="center",
+                bg=t.element_selected if active else None))
+        edge = {"left": (w - 1, 0, 1, h), "right": (0, 0, 1, h), "top": (0, h - 1, w, 1), "bottom": (0, 0, w, 1)}[side]
+        layers.append(_core.pin(_core.stack([
+            _core.container(_core.column([_core.container(_core.row(tabs, spacing=2, align="center"),
+                                                          padding=(3, 6), width="fill",
+                                                          height=_layout.DOCK_HEADER, align_y="center")]),
+                            width=w, height=h, bg=t.panel, clip=True),
+            _core.pin(_core.container(width=edge[2], height=edge[3], bg=t.border), x=edge[0], y=edge[1]),
+        ], width=w, height=h), x=x, y=y))
+    return _core.stack(layers, width="fill", height="fill")
+
+
+def _dock_panel(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    bg = t.color(p["background"]) if p["background"] else (t.editor if p["side"] == "center" else t.panel)
+    return _core.container(width="fill", height="fill", bg=bg)
+
+
 ALIGN = Prop("align", "choice", "left", choices=("left", "center", "right"))
 
 for _component in (
@@ -1031,6 +1078,22 @@ for _component in (
                Prop("align", "choice", "stretch", choices=("stretch", "start", "center", "end"), group="Layout"),
                Prop("background", "color", "")),
               (), "Places the controls inside it in cells, left to right.", container="grid"),
+    Component("dock", "Dock", "layout-dashboard", "Layout", _dock, (640, 400),
+              (Prop("left_size", "number", 220, min=0, label="Left width", group="Layout"),
+               Prop("right_size", "number", 260, min=0, label="Right width", group="Layout"),
+               Prop("top_size", "number", 140, min=0, label="Top height", group="Layout"),
+               Prop("bottom_size", "number", 160, min=0, label="Bottom height", group="Layout"),
+               Prop("layout", "typed", {}, type="dict", group="Data", label="Saved layout")),
+              ("layout",), "Panels docked to the sides of a center area, like Zed: their tabs switch them, "
+              "dragging a tab moves it to another side and dragging the inner edge resizes it.", container="dock",
+              children=(("dock_panel", (("title", "Explorer"), ("icon", "folder"), ("side", "left"))),
+                        ("dock_panel", (("title", "Terminal"), ("icon", "square-terminal"), ("side", "bottom"))),
+                        ("dock_panel", (("title", "Editor"), ("icon", ""), ("side", "center"))))),
+    Component("dock_panel", "Dock panel", "panel-left", "Layout", _dock_panel, (220, 240),
+              (Prop("title", "text", "Panel"), Prop("icon", "icon", ""),
+               Prop("side", "choice", "left", choices=("left", "right", "top", "bottom", "center"), group="Layout"),
+               Prop("background", "color", "")),
+              (), "A panel of a Dock: put it inside a Dock, pick its side and drop controls on it.", container="free"),
     Component("spacer", "Spacer", "move-horizontal", "Layout", _spacer, (24, 24), (),
               (), "Empty space that grows to push its neighbours apart in a flex row or column.",
               child_layout=(("grow", 1),)),

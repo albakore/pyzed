@@ -244,6 +244,8 @@ CATALOG: Tuple[Sample, ...] = (
            "Designer", "designer", entry="tasks.pzform"),
     Sample("designer_explorer", "Project explorer", "A tree, breadcrumbs, closable tabs, a sortable table and the other "
            "toolbox controls, with their events.", "Designer", "designer", entry="explorer.pzform"),
+    Sample("designer_ide", "Mini IDE", "A Dock like Zed's: panels on every side whose tabs move and resize, made "
+           "in Pyzed Design.", "Designer", "designer", entry="ide.pzform"),
     Sample("designer_reviews", "Component cards", "A form of cards made in the component mode, that grow with the "
            "window.", "Designer", "designer", entry="components/reviews.pzform"),
     Sample("designer_signup", "Bound sign-up form", "Controls bound to data, with validation rules.", "Designer",

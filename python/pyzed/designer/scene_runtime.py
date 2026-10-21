@@ -262,6 +262,7 @@ class SceneComponent(Component):
         theme = theme_for(model)
         ctx = SceneContext(self, theme)
         view = dataclasses.replace(model, controls=list(controls.values()))
+        ctx.form = view
         # The controls are rendered now (nested components keep their state between renders)
         # and placed when the size is known, following their anchors and containers.
         widgets: Dict[str, Any] = {}

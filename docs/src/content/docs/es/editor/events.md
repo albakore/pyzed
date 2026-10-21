@@ -68,6 +68,7 @@ Cada control visible tiene tres eventos comunes además de los suyos:
 | Ruta de navegación | `click` (el índice de la parte, 0 para la primera) |
 | Markdown | `link` (la dirección del enlace pulsado; sin manejador, el enlace se abre en el navegador) |
 | Selector de color, Selector de iconos | `change` (el color o el nombre de icono nuevo) |
+| Dock | `layout` (se movió, redimensionó o cambió un panel: el dict de la distribución, que también queda en **Distribución guardada**) |
 | Temporizador, Atajo, Vigilante de archivos, Proceso, Tarea en segundo plano, Petición web, Portapapeles, Ajustes, Diálogo de archivos, Notificación | Los suyos (`tick`, `activate`, `change`, `output`, `done`, `response`...): mira [Componentes no visuales](/pyzed/es/editor/non-visual-components/). No tienen eventos de ratón. |
 | Título, Barra de progreso, Insignia, Indicador de carga, Aviso, Atajo, Métrica, Gráfico, Estado vacío, Resumen de cambios, Visor de imágenes, Salida de terminal, contenedores, Espaciador, Separador | Solo los comunes |
 
