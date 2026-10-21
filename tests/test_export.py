@@ -104,8 +104,9 @@ def test_pyinstaller_build_with_icon_splash_and_metadata(shop, tmp_path):  # noq
     data = [args[i + 1] for i, a in enumerate(args) if a == "--add-data"]
     sep = ";" if HERE.os == "windows" else ":"
     assert f"{work / 'app-icon.png'}{sep}." in data and f"{work / 'splash.png'}{sep}." in data
-    # no .venv here, so no Tk for PyInstaller's own splash: only the Pyzed one, with a warning
-    assert "--splash" not in args and any("Tk" in w for w in plan.warnings)
+    # no .venv here, so no Tk for PyInstaller's own splash (which macOS never has): only the Pyzed one
+    assert "--splash" not in args
+    assert any("Tk" in w for w in plan.warnings) == (HERE.os != "macos")
     excluded = {args[i + 1] for i, a in enumerate(args) if a == "--exclude-module"}
     assert "idlelib" in excluded and "tkinter" not in excluded  # Tk draws PyInstaller's splash
     launcher = (work / "shop_app_launcher.py").read_text(encoding="utf-8")
