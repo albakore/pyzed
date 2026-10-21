@@ -23,6 +23,7 @@ stable version.
 
 ### Fixes
 
+- 🐛 On Windows, the AI agents no longer fill the console with `ConnectionResetError: [WinError 10054]` tracebacks: the editor's MCP server and the sign-in pages ignore clients that close their connection, and log any other error instead of printing it.
 - 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu: Node.js (`npx`), `claude` and `uv` are found in the user's shell `PATH` and where nvm, volta, fnm and `~/.local/bin` put them. When Node.js is missing, the agent says so, with **Install Node.js** and **Use Pyzed Agent**.
 - 🐛 **Retry** sends the unanswered message again instead of adding it once more to the thread.
 - 🐛 Claude Code shows the current models (Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5), its effort levels up to **Max** and fast mode: its preset and Codex's run the renamed adapters (`@agentclientprotocol/claude-agent-acp`, `@agentclientprotocol/codex-acp`) at their latest version, and saved agents with the old package names are moved to them. They need Node.js 22 or later.

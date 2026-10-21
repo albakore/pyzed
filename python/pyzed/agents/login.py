@@ -42,6 +42,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from . import _localhttp
+
 OPENROUTER_AUTH = "https://openrouter.ai/auth"
 OPENROUTER_EXCHANGE = "https://openrouter.ai/api/v1/auth/keys"
 GITHUB_DEVICE = "https://github.com/login/device/code"
@@ -160,7 +162,7 @@ def wait_for_code(open_url: Callable[[str], None], build_url: Callable[[str], st
     the browser brings back."""
     path = f"/callback/{_random.token_urlsafe(16)}"
     handler = type("Callback", (_Callback,), {"codes": [], "errors": [], "path_secret": path})
-    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
+    server = _localhttp.HTTPServer(("127.0.0.1", 0), handler)
     server.timeout = 0.5
     callback = f"http://{host}:{server.server_address[1]}{path}"
     try:
@@ -532,7 +534,7 @@ def key_portal(provider_id: str, check: Callable[[str], Optional[str]], *,
                                           "key_url": provider.key_url, "check": staticmethod(check),
                                           "looks_like": staticmethod(lambda k: looks_like_key(provider_id, k)),
                                           "keys": []})
-    server = http.server.HTTPServer(("127.0.0.1", 0), handler)
+    server = _localhttp.HTTPServer(("127.0.0.1", 0), handler)
     server.timeout = 0.5
     handler.origin = f"127.0.0.1:{server.server_address[1]}"
     try:
