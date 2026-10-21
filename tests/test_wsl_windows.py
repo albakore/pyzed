@@ -468,6 +468,8 @@ def test_creating_and_cloning_in_wsl_use_linux_tools(monkeypatch, tmp_path):
 def test_targets_follow_the_installed_cross_compilers(wsl):
     tools = set()
     wsl.setattr(ww.shutil, "which", lambda name, *a, **k: f"/usr/bin/{name}" if name in tools else None)
+    # The wheel tests run without maturin installed.
+    wsl.setattr(ww, "_maturin", lambda: ["maturin"])
     assert ww.targets() == []
     assert "sudo apt install mingw-w64" in ww.build_core(Path("."), Path("core"), lambda line: None)
     tools.add("x86_64-w64-mingw32-gcc")
