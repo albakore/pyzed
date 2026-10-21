@@ -51,6 +51,8 @@ DEFAULT_UI = "ui"
 DEFAULT_MAIN = "main"
 PACKAGE = "pyzed-ui"
 DEV_TOOLS = ("ruff", "ty")
+#: Seconds a git command may take before it is given up (so a stuck one cannot hang the editor).
+GIT_TIMEOUT = 60
 #: uv only installs ``pyzed-ui`` from the wheels the release pipeline builds: it never compiles the Rust
 #: core on the user's machine, and says so when a platform has no wheel instead of building for minutes.
 PREBUILT = f'no-build-package = ["{PACKAGE}"]\n'
@@ -193,9 +195,9 @@ def execute(args: Sequence[str], cwd: Optional[PathLike] = None, *, timeout: Opt
     """Runs ``args`` and returns its exit code and combined output (never raises)."""
     args = [str(a) for a in args]
     try:
-        done = subprocess.run(args, cwd=str(cwd) if cwd else None, env=_clean_env(), stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
-                              timeout=timeout, check=False, creationflags=NO_WINDOW)
+        done = subprocess.run(args, cwd=str(cwd) if cwd else None, env=_clean_env(), stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                              errors="replace", timeout=timeout, check=False, creationflags=NO_WINDOW)
     except FileNotFoundError:
         return Result(args, 127, f"{args[0]}: command not found")
     except subprocess.TimeoutExpired as err:
@@ -790,12 +792,13 @@ class Project:
         """Whether the project is inside a git repository (here or in a parent folder)."""
         return any((folder / ".git").exists() for folder in (self.root, *self.root.parents))
 
-    def git(self, *args: str) -> Result:
-        """Runs ``git`` with ``args`` in the project folder (exit code 127 if git is not installed)."""
+    def git(self, *args: str, timeout: Optional[float] = GIT_TIMEOUT) -> Result:
+        """Runs ``git`` with ``args`` in the project folder (exit code 127 if git is not installed, 124 when it
+        takes longer than ``timeout`` seconds)."""
         git = "git" if self.environment.remote else shutil.which("git")
         if git is None:
             return Result(["git", *args], 127, "git is not installed")
-        return self._exec([git, *args])
+        return self._exec([git, *args], timeout=timeout)
 
     def git_init(self, *, commit: bool = False, message: str = "Initial commit") -> Result:
         """Creates a git repository (like Zed's "Create repository"), with a ``.gitignore``.
