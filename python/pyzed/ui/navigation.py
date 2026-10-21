@@ -50,6 +50,10 @@ def tab(
     on hover (``on_close``, also sent on a middle click). ``on_select`` is called when the tab is
     pressed. ``dimmed`` mutes the label (the tab being dragged). A ``pinned`` tab shows only its
     icon and can't be closed from it.
+
+    Events:
+        ``on_select()``: Callable that receives the chosen item.
+        ``on_close()``: Message or callable sent when the X is pressed.
     """
     t = _theme(theme)
     status_color = {"modified": t.modified, "created": t.created, "deleted": t.deleted}.get(item.status or "")
@@ -136,6 +140,18 @@ def tab_bar(
     While ``dragging`` names a tab, ``on_drag_over(index)`` reports where it would land
     (the insertion index, or ``None`` once the pointer leaves the bar) and ``drop_index``
     draws the insertion mark there.
+
+    Events:
+        ``on_select(tab_id)``: Callable that receives the chosen item.
+        ``on_close(tab_id)``: Message or callable sent when the X is pressed.
+        ``on_drag(tab_id)``: Called with the tab id when a tab starts being dragged.
+        ``on_drop(tab_id, event)``: Called with the tab id and the ``Event`` when the dragged tab is released:
+            ``event.window_x``/``window_y`` (outside the window if it was dropped outside) and
+            ``event.screen``.
+        ``on_drag_over(index)``: While ``dragging`` is set: called with the insertion index under the pointer,
+            or ``None`` when it leaves the bar.
+        ``on_context(tab_id)``: Called with the id of a tab that is right-clicked.
+        ``on_new()``: Sent on a double click of the empty space after the tabs.
     """
     t = _theme(theme)
     items: List[Any] = []
@@ -223,6 +239,10 @@ def breadcrumbs(
     With ``max_items``, a long path keeps its first part and the last ones and shows ``…``
     for the rest (``on_more`` makes the ``…`` clickable, to list the hidden parts).
     ``on_press(index)`` always gets the index in the full ``parts``.
+
+    Events:
+        ``on_press(index)``: Called with the index of the clicked part.
+        ``on_more()``: Makes the ``…`` clickable.
     """
     t = _theme(theme)
     items: List[Any] = []

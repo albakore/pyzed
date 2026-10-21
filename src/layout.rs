@@ -634,6 +634,9 @@ pub struct ResizableProps {
 /// keeps the size the user drags it to, and `on_resize(size)` is called when a drag
 /// ends so you can store it. Changing `size` later resets it. The handle is drawn as a
 /// `thickness`-wide line on that edge (`color`, `hover_color` while hovered or dragged).
+///
+/// Events:
+/// - `on_resize(size)`: Called with the new size when a drag ends.
 #[pyfunction]
 #[pyo3(signature = (content, *, edge="right", size=240.0, min_size=80.0, max_size=None,
     on_resize=None, color=None, hover_color=None, thickness=1.0, handle=8.0, width=None,

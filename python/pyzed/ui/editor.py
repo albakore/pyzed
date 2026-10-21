@@ -223,6 +223,15 @@ a log, a traceback or generated code to look at.
 
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
+
+    Events:
+        ``on_change(text)``: Callable that receives the new value.
+        ``on_cursor(line, column)``: Callable that receives ``(line, column)``.
+        ``on_scroll(info)``: Called on scroll.
+        ``on_zoom(step)``: Callable that receives ``1``, ``-1`` or ``0`` for Ctrl+= / Ctrl+- / Ctrl+0 and
+            Ctrl+wheel.
+        ``on_action(name)``: Callable that receives the name of each editor action that runs (``"undo"``,
+            ``"select_next"``…), e.g. to count them.
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size

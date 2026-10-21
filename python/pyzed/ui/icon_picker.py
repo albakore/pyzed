@@ -41,7 +41,11 @@ def icon_grid(
     id: Optional[str] = None,  # noqa: A002
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A scrolling grid of icons that only builds the rows in view; ``on_pick(name)`` runs on a click."""
+    """A scrolling grid of icons that only builds the rows in view; ``on_pick(name)`` runs on a click.
+
+    Events:
+        ``on_pick(name)``: Called with the clicked name.
+    """
     t = _theme(theme)
     columns = max(int(columns), 1)
     rows = [names[i:i + columns] for i in range(0, len(names), columns)]
@@ -71,7 +75,11 @@ def icon_grid(
 
 
 class IconPicker(Component):
-    """Picks a Lucide icon from a searchable grid, by name, tag or category."""
+    """Picks a Lucide icon from a searchable grid, by name, tag or category.
+
+    Events:
+        ``on_change(event)``: Receives ``event.value``.
+    """
 
     value: str = ""
     columns: int = 8
@@ -169,6 +177,10 @@ def icon_picker_dialog(
     """A dialog with an ``IconPicker``; ``on_pick(name)`` runs when an icon is clicked (``""`` when cleared).
 
     Use it as the dialog of ``ui.dialog_layer``. Enter in the search box picks the first match.
+
+    Events:
+        ``on_pick(name)``: Called with the clicked icon's name (``""`` when cleared).
+        ``on_close()``: The close button.
     """
     t = _theme(theme)
     picker = IconPicker(value=value or "", columns=columns, clearable=clearable, autofocus=True, key=key,

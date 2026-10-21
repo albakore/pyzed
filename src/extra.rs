@@ -822,6 +822,13 @@ pub fn parse_cursor(value: Option<&str>) -> PyResult<Option<mouse::Interaction>>
 ///
 /// Give it an `id` to cache the tessellated geometry between frames: it is only rebuilt
 /// when the shapes change.
+///
+/// Events:
+/// - `on_press(x, y)`: Callable that receives `(x, y)` on press.
+/// - `on_release(x, y)`: Callable that receives `(x, y)` on release.
+/// - `on_right_press(x, y)`: Callable that receives `(x, y)` on right click.
+/// - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
+/// - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
 #[pyfunction]
 #[pyo3(signature = (shapes=None, *, width=None, height=None, id=None, on_press=None,
     on_release=None, on_right_press=None, on_move=None, on_scroll=None, cursor=None))]
@@ -1285,6 +1292,9 @@ pub struct MarkdownProps {
 
 /// Renders Markdown (headings, lists, code blocks, quotes, tables, links...).
 /// `on_link(url)` is called when a link is clicked.
+///
+/// Events:
+/// - `on_link(url)`: Callable that receives the URL when a link is clicked.
 #[pyfunction]
 #[pyo3(signature = (source, *, size=14.0, color=None, link_color=None, code_color=None,
     code_bg=None, on_link=None, width=None))]
@@ -1451,6 +1461,11 @@ struct PickStyle {
 }
 
 /// A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
+///
+/// Events:
+/// - `on_select(item)`: Callable that receives the chosen item.
+/// - `on_open()`: Sent when the menu opens.
+/// - `on_close()`: Sent when the menu closes.
 #[pyfunction]
 #[pyo3(signature = (options, selected=None, on_select=None, *, on_open=None, on_close=None, placeholder=None, width=None,
     padding=None, text_size=None, font=None, handle=None, handle_size=12.0, menu_height=None,
@@ -1637,6 +1652,9 @@ pub struct RadioProps {
 }
 
 /// A radio button. Group several of them yourself; `on_select` is sent when it is clicked.
+///
+/// Events:
+/// - `on_select()`: Message or callable on click.
 #[pyfunction]
 #[pyo3(signature = (label, selected, on_select=None, *, size=None, text_size=None, spacing=None,
     accent=None, bg=None, border_color=None, color=None))]
@@ -1741,6 +1759,9 @@ pub struct SplitProps {
 /// Two panes with a draggable divider. `ratio` (0..1) is the first pane's share; the
 /// split keeps the ratio the user drags to (changing `ratio` resets it) and
 /// `on_resize(ratio)` is called while dragging. `vertical=True` stacks them top/bottom.
+///
+/// Events:
+/// - `on_resize(ratio)`: Callable that receives the new ratio while dragging.
 #[pyfunction]
 #[pyo3(signature = (first, second, *, ratio=0.5, on_resize=None, vertical=false, min_size=80.0,
     min_size_second=None, color=None, hover_color=None, thickness=1.0, handle=8.0, width=None,

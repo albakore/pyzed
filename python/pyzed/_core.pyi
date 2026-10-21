@@ -346,19 +346,38 @@ def audio_modules() -> Any:
     """The catalog as Python dictionaries (wrapped in dataclasses by `pyzed.audio`)."""
     ...
 def audio_recommended_buffer(host: Any) -> Any: ...
-def button(content: Any, on_press: Any = ..., *, padding: Any = ..., width: Any = ..., height: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ..., hover_bg: Any = ..., hover_color: Any = ..., hover_border_color: Any = ..., pressed_bg: Any = ..., disabled_color: Any = ..., clip: Any = ...) -> Any: ...
+def button(content: Any, on_press: Any = ..., *, padding: Any = ..., width: Any = ..., height: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ..., hover_bg: Any = ..., hover_color: Any = ..., hover_border_color: Any = ..., pressed_bg: Any = ..., disabled_color: Any = ..., clip: Any = ...) -> Any:
+    """A button with no predefined style. For the themed button use `ui.button`.
+
+    Events:
+    - `on_press()`: Message or callable sent on press. `None` disables the control.
+    """
+    ...
 def canvas(shapes: Any = ..., *, width: Any = ..., height: Any = ..., id: Any = ..., on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_move: Any = ..., on_scroll: Any = ..., cursor: Any = ...) -> Any:
     """A drawing surface. `shapes` is a list built with `pyzed.draw` (rect, circle, line,
     path, text, transforms...). Pointer callbacks receive canvas-relative coordinates.
 
     Give it an `id` to cache the tessellated geometry between frames: it is only rebuilt
     when the shapes change.
+
+    Events:
+    - `on_press(x, y)`: Callable that receives `(x, y)` on press.
+    - `on_release(x, y)`: Callable that receives `(x, y)` on release.
+    - `on_right_press(x, y)`: Callable that receives `(x, y)` on right click.
+    - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
+    - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
     """
     ...
 def cell(content: Any, *, column: Any = ..., row: Any = ..., column_span: Any = ..., row_span: Any = ..., align_x: Any = ..., align_y: Any = ...) -> Any:
     """Places a child in a grid cell. Outside a grid it is just the child."""
     ...
-def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any = ..., text_size: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., check_color: Any = ..., color: Any = ...) -> Any: ...
+def checkbox(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any = ..., text_size: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., check_color: Any = ..., color: Any = ...) -> Any:
+    """A checkbox.
+
+    Events:
+    - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
+    """
+    ...
 def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..., line_height: Any = ..., font: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., syntax: Any = ..., bg: Any = ..., color: Any = ..., selection_color: Any = ..., placeholder: Any = ..., placeholder_color: Any = ..., gutter: Any = ..., gutter_color: Any = ..., gutter_active_color: Any = ..., gutter_width: Any = ..., markers: Any = ..., wrap: Any = ..., on_change: Any = ..., on_cursor: Any = ..., active_line: Any = ..., scrollbar_color: Any = ..., annotations: Any = ..., whitespace: Any = ..., tab_size: Any = ..., capture_keys: Any = ..., on_scroll: Any = ..., auto_close: Any = ..., folding: Any = ..., minimap: Any = ..., minimap_thumb: Any = ..., cursor_shape: Any = ..., cursor_width: Any = ..., cursor_blink: Any = ..., cursor_color: Any = ..., on_zoom: Any = ..., on_action: Any = ..., highlights: Any = ..., highlight_color: Any = ..., match_brackets: Any = ..., selection_highlight: Any = ..., keymap: Any = ..., scrollbar: Any = ..., readonly: Any = ...) -> Any:
     """A code editor backed by iced's `text_editor`, with syntax highlighting and a gutter.
 
@@ -366,6 +385,15 @@ def code_editor(id: Any, text: Any = ..., *, language: Any = ..., size: Any = ..
     Use `Command.set_editor_text` to replace the contents later.
 
     With `readonly=True` the text can be selected and copied but not changed.
+
+    Events:
+    - `on_change(text)`: Callable that receives the full text after each edit.
+    - `on_cursor(line, column)`: Callable that receives `(line, column)`, from 1.
+    - `on_scroll(info)`: Called on scroll.
+    - `on_zoom(step)`: Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and
+      Ctrl+wheel.
+    - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
+      `"select_next"`…).
     """
     ...
 def column(children: Any = ..., *, spacing: Any = ..., padding: Any = ..., width: Any = ..., height: Any = ..., align: Any = ..., max_width: Any = ..., clip: Any = ...) -> Any: ...
@@ -430,15 +458,39 @@ def load_font(source: Any) -> Any:
 def markdown(source: Any, *, size: Any = ..., color: Any = ..., link_color: Any = ..., code_color: Any = ..., code_bg: Any = ..., on_link: Any = ..., width: Any = ...) -> Any:
     """Renders Markdown (headings, lists, code blocks, quotes, tables, links...).
     `on_link(url)` is called when a link is clicked.
+
+    Events:
+    - `on_link(url)`: Callable that receives the URL when a link is clicked.
     """
     ...
 def midi_ports() -> Any: ...
-def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_double_click: Any = ..., on_enter: Any = ..., on_exit: Any = ..., on_move: Any = ..., on_scroll: Any = ..., on_middle_press: Any = ..., on_middle_release: Any = ..., cursor: Any = ...) -> Any: ...
+def mouse_area(content: Any, *, on_press: Any = ..., on_release: Any = ..., on_right_press: Any = ..., on_double_click: Any = ..., on_enter: Any = ..., on_exit: Any = ..., on_move: Any = ..., on_scroll: Any = ..., on_middle_press: Any = ..., on_middle_release: Any = ..., cursor: Any = ...) -> Any:
+    """Detects mouse events over its content.
+
+    Events:
+    - `on_press()`: Left click (on press).
+    - `on_release()`: On releasing the left button.
+    - `on_right_press()`: Right click (context menus).
+    - `on_double_click()`: Double click.
+    - `on_enter()`: The mouse enters.
+    - `on_exit()`: The mouse leaves.
+    - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
+    - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
+    - `on_middle_press()`: Middle-button click.
+    - `on_middle_release()`: Middle button released (pan gestures, for example).
+    """
+    ...
 def opaque(content: Any) -> Any:
     """Makes a widget block mouse interactions with whatever sits below it in a `stack`."""
     ...
 def pick_list(options: Any, selected: Any = ..., on_select: Any = ..., *, on_open: Any = ..., on_close: Any = ..., placeholder: Any = ..., width: Any = ..., padding: Any = ..., text_size: Any = ..., font: Any = ..., handle: Any = ..., handle_size: Any = ..., menu_height: Any = ..., bg: Any = ..., color: Any = ..., placeholder_color: Any = ..., handle_color: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., radius: Any = ..., menu_bg: Any = ..., menu_color: Any = ..., menu_border_color: Any = ..., selected_bg: Any = ..., selected_color: Any = ...) -> Any:
-    """A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice."""
+    """A dropdown to pick one of `options` (strings). `on_select(option)` receives the choice.
+
+    Events:
+    - `on_select(item)`: Callable that receives the chosen item.
+    - `on_open()`: Sent when the menu opens.
+    - `on_close()`: Sent when the menu closes.
+    """
     ...
 def pin(content: Any, *, x: Any = ..., y: Any = ..., width: Any = ..., height: Any = ...) -> Any:
     """Places `content` at `(x, y)` inside a box of the given size (use it in a `stack`
@@ -465,7 +517,11 @@ def qr_code(data: Any, *, cell_size: Any = ..., color: Any = ..., bg: Any = ...)
     """A QR code encoding `data`."""
     ...
 def radio(label: Any, selected: Any, on_select: Any = ..., *, size: Any = ..., text_size: Any = ..., spacing: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., color: Any = ...) -> Any:
-    """A radio button. Group several of them yourself; `on_select` is sent when it is clicked."""
+    """A radio button. Group several of them yourself; `on_select` is sent when it is clicked.
+
+    Events:
+    - `on_select()`: Message or callable on click.
+    """
     ...
 def record(app: Any, script: Any, *, size: Any, scale: Any = ...) -> Any:
     """Drives `app` off-screen with `script`, a generator of commands (see the module's docs)."""
@@ -479,6 +535,9 @@ def resizable(content: Any, *, edge: Any = ..., size: Any = ..., min_size: Any =
     keeps the size the user drags it to, and `on_resize(size)` is called when a drag
     ends so you can store it. Changing `size` later resets it. The handle is drawn as a
     `thickness`-wide line on that edge (`color`, `hover_color` while hovered or dragged).
+
+    Events:
+    - `on_resize(size)`: Called with the new size when a drag ends.
     """
     ...
 def resize_image(source: Any, width: Any, height: Any) -> Any:
@@ -502,7 +561,14 @@ def run(app: Any) -> Any:
 def screenshot(app: Any, path: Any, *, size: Any = ..., scale: Any = ..., wait: Any = ...) -> Any:
     """Renders `app` off-screen (no window, no GPU needed) and saves it as a PNG."""
     ...
-def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any: ...
+def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: Any = ..., padding: Any = ..., id: Any = ..., anchor_bottom: Any = ..., rail: Any = ..., scroller: Any = ..., scroller_hover: Any = ..., scrollbar_width: Any = ..., scroller_width: Any = ..., margin: Any = ..., on_scroll: Any = ...) -> Any:
+    """Makes its content scrollable.
+
+    Events:
+    - `on_scroll(info)`: Callable that receives a dict with `x`, `y`, `relative_x`, `relative_y`,
+      `width`, `height`, `content_width` and `content_height`.
+    """
+    ...
 def set_fonts(ui: Any = ..., code: Any = ...) -> Any:
     """Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`
     goes back to IBM Plex Sans and Mono. Takes effect on the next frame.
@@ -529,7 +595,14 @@ def shader_module(code: Any, *, uniforms: Any = ..., textures: Any = ...) -> Any
     functions), without checking it: to map a compiler error's line back to your code.
     """
     ...
-def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any: ...
+def slider(min: Any, max: Any, value: Any, *, step: Any = ..., on_change: Any = ..., on_release: Any = ..., width: Any = ..., height: Any = ..., vertical: Any = ..., accent: Any = ..., bg: Any = ..., knob_color: Any = ..., border_color: Any = ...) -> Any:
+    """A slider between `min` and `max`.
+
+    Events:
+    - `on_change(value)`: Callable that receives the new value.
+    - `on_release()`: Sent when the knob is released.
+    """
+    ...
 def space(width: Any = ..., height: Any = ...) -> Any: ...
 def span(text: Any, *, color: Any = ..., size: Any = ..., font: Any = ..., weight: Any = ..., italic: Any = ..., bg: Any = ..., radius: Any = ..., padding: Any = ..., underline: Any = ..., strikethrough: Any = ..., link: Any = ...) -> Any:
     """A styled piece of text for `rich_text`. `link` makes it clickable: it is sent (or
@@ -540,12 +613,23 @@ def split(first: Any, second: Any, *, ratio: Any = ..., on_resize: Any = ..., ve
     """Two panes with a draggable divider. `ratio` (0..1) is the first pane's share; the
     split keeps the ratio the user drags to (changing `ratio` resets it) and
     `on_resize(ratio)` is called while dragging. `vertical=True` stacks them top/bottom.
+
+    Events:
+    - `on_resize(ratio)`: Callable that receives the new ratio while dragging.
     """
     ...
 def stack(children: Any = ..., *, width: Any = ..., height: Any = ...) -> Any: ...
 def svg(source: Any, *, width: Any = ..., height: Any = ..., color: Any = ..., content_fit: Any = ..., opacity: Any = ..., rotation: Any = ...) -> Any: ...
 def text(content: Any, *, size: Any = ..., color: Any = ..., font: Any = ..., weight: Any = ..., italic: Any = ..., line_height: Any = ..., align_x: Any = ..., align_y: Any = ..., width: Any = ..., height: Any = ..., wrap: Any = ...) -> Any: ...
-def text_input(value: Any, *, placeholder: Any = ..., on_input: Any = ..., on_submit: Any = ..., id: Any = ..., size: Any = ..., font: Any = ..., padding: Any = ..., width: Any = ..., secure: Any = ..., icon: Any = ..., icon_size: Any = ..., bg: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., focus_border_color: Any = ..., border_width: Any = ..., radius: Any = ..., color: Any = ..., placeholder_color: Any = ..., selection_color: Any = ..., icon_color: Any = ..., align_x: Any = ...) -> Any: ...
+def text_input(value: Any, *, placeholder: Any = ..., on_input: Any = ..., on_submit: Any = ..., id: Any = ..., size: Any = ..., font: Any = ..., padding: Any = ..., width: Any = ..., secure: Any = ..., icon: Any = ..., icon_size: Any = ..., bg: Any = ..., border_color: Any = ..., hover_border_color: Any = ..., focus_border_color: Any = ..., border_width: Any = ..., radius: Any = ..., color: Any = ..., placeholder_color: Any = ..., selection_color: Any = ..., icon_color: Any = ..., align_x: Any = ...) -> Any:
+    """A controlled text field: it shows `value` and notifies you of changes through `on_input`. For
+    the themed field use `ui.input`.
+
+    Events:
+    - `on_input(text)`: Callable that receives the new text on every keystroke.
+    - `on_submit()`: Message or callable sent when Enter is pressed.
+    """
+    ...
 def toggler(checked: Any, label: Any = ..., *, on_toggle: Any = ..., size: Any = ..., text_size: Any = ..., accent: Any = ..., bg: Any = ..., border_color: Any = ..., knob_color: Any = ..., color: Any = ...) -> Any: ...
 def tooltip(content: Any, tip: Any, *, position: Any = ..., gap: Any = ..., bg: Any = ..., color: Any = ..., border_color: Any = ..., border_width: Any = ..., radius: Any = ..., shadow: Any = ...) -> Any: ...
 def virtual_column(count: Any, item: Any, *, item_height: Any, spacing: Any = ..., overscan: Any = ..., width: Any = ...) -> Any:

@@ -42,6 +42,11 @@ def input(  # noqa: A001 - mirrors HTML naming
     copyable but unchangeable; ``invalid`` paints the border in the error color;
     ``max_length`` drops edits longer than that; ``on_clear`` shows an ``x`` while there
     is text. Focus, blur and keys come from the common events: ``.on(focus=..., blur=...)``.
+
+    Events:
+        ``on_input(text)``: Callable that receives the new text on every keystroke.
+        ``on_submit()``: Message or callable sent when Enter is pressed.
+        ``on_clear()``: Shows an ✕ while there is text; sent when it is clicked.
     """
     t = _theme(theme)
     font_size, pad = SIZES[size]
@@ -98,7 +103,11 @@ def _limited(on_input: Any, max_length: int) -> Any:
 
 
 def search_input(value: str, on_input: Any = None, *, placeholder: str = "Search…", **kwargs) -> _core.Widget:
-    """An ``input`` with a search icon and a "Search…" placeholder."""
+    """An ``input`` with a search icon and a "Search…" placeholder.
+
+    Events:
+        ``on_input(text)``: Callable that receives the new text on every keystroke.
+    """
     return input(value, on_input, placeholder=placeholder, icon="search", **kwargs)
 
 
@@ -111,7 +120,11 @@ def switch(
     disabled: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """An on/off toggle. ``on_toggle`` receives the new ``bool``; ``size`` is ``"sm"``, ``"md"`` or ``"lg"``."""
+    """An on/off toggle. ``on_toggle`` receives the new ``bool``; ``size`` is ``"sm"``, ``"md"`` or ``"lg"``.
+
+    Events:
+        ``on_toggle(checked)``: Callable that receives the new ``bool`` (or a message to send).
+    """
     t = _theme(theme)
     box, text = TOGGLE_SIZES[size]
     return _core.toggler(
@@ -139,6 +152,9 @@ def checkbox(
     """A themed checkbox with an optional ``label``; ``on_toggle`` receives the new state.
 
     ``checked=None`` shows the mixed state (some of a group checked); toggling it checks it.
+
+    Events:
+        ``on_toggle(checked)``: Callable that receives the new ``bool`` (or a message to send).
     """
     t = _theme(theme)
     box, text = TOGGLE_SIZES[size]
@@ -186,6 +202,10 @@ def slider(
 
     ``on_release`` runs when the drag ends (save or apply there); ``vertical`` stands it
     up; ``show_value`` adds the number next to it (``True``, or a format like ``"{:.0%}"``).
+
+    Events:
+        ``on_change(value)``: Callable that receives the new value.
+        ``on_release()``: Sent when the drag ends (save or apply there).
     """
     t = _theme(theme)
     if width is None and not vertical:
@@ -279,6 +299,9 @@ def segmented(
     ``options`` are strings, ``(value, label)`` or ``(value, label, icon)``; ``on_select``
     is called with the chosen value. ``width="fill"`` stretches the buttons evenly.
     ``disabled`` is ``True`` for all of them or a collection of the values to disable.
+
+    Events:
+        ``on_select(item)``: Callable that receives the chosen item.
     """
     t = _theme(theme)
     height = {"sm": 20, "md": 24, "lg": 28}[size]

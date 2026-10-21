@@ -45,7 +45,11 @@ def title_button(
     chevron: bool = False,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A compact ghost button for the title bar (``pyzed ▾``, ``main``...)."""
+    """A compact ghost button for the title bar (``pyzed ▾``, ``main``...).
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
+    """
     t = _theme(theme)
     color = t.text_muted if muted else t.text
     parts = [
@@ -101,7 +105,11 @@ def status_item(
     keys: Optional[str] = None,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """An icon and/or label in the status bar (diagnostics, cursor position, language...)."""
+    """An icon and/or label in the status bar (diagnostics, cursor position, language...).
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
+    """
     t = _theme(theme)
     text_color = t.color(color) if color else t.text_muted
     parts = [
@@ -166,6 +174,9 @@ def panel(
     With a numeric ``width`` (``height`` for ``side="bottom"``) the border facing the center
     can be dragged to resize the panel; ``on_resize(size)`` is called when a drag ends.
     ``resizable=False`` keeps it fixed.
+
+    Events:
+        ``on_resize(size)``: Called with the new size when a drag ends.
     """
     t = _theme(theme)
     body = _core.container(
@@ -218,6 +229,10 @@ def workspace(
     The docks can be resized by dragging their inner border; ``on_resize(side, size)`` is
     called when a drag ends (``side`` is "left", "right" or "bottom"). For panels the user
     can also move between sides, use ``pz.Dock``.
+
+    Events:
+        ``on_resize(side, size)``: Called with ``(side, size)`` when the user finishes resizing a dock by
+            dragging its inner border.
     """
 
     def resized(side: str) -> Any:

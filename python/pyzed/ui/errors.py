@@ -112,7 +112,11 @@ def error_card(
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """What a failed ``error_boundary`` shows: the error, where it comes from, and buttons to copy it
-    and (with ``on_details``) to see all of it."""
+    and (with ``on_details``) to see all of it.
+
+    Events:
+        ``on_details()``: Adds a Details button.
+    """
     t = _theme(theme)
     heading = title or _t("pyzed.errors.failed_to_draw")
     lines = [
@@ -151,6 +155,11 @@ def error_boundary(
     report it once per error, for example by comparing ``info.traceback``. ``title`` heads the card and
     ``where`` names the part in the report; ``on_details(info)`` adds a Details button (open an
     ``error_dialog``); ``fallback(info)`` replaces the card with your own widget.
+
+    Events:
+        ``on_error(info)``: Receives the ``ui.ErrorInfo``.
+        ``on_details(info)``: Adds a Details button; receives the ``ui.ErrorInfo`` (open a
+            ``ui.error_dialog``).
     """
     try:
         return build()
@@ -181,7 +190,13 @@ def error_dialog(
 ) -> _core.Widget:
     """A dialog with an error: its message, where it comes from and the traceback (selectable), with
     buttons to copy it all, to go to its origin (``on_go_to``, labelled ``go_to_label``), to see it among
-    the logs (``on_logs``) and to close. ``more`` says how many other errors came after it."""
+    the logs (``on_logs``) and to close. ``more`` says how many other errors came after it.
+
+    Events:
+        ``on_close()``: Close button and Escape.
+        ``on_go_to()``: Adds the go-to button (open the file at the line).
+        ``on_logs()``: Adds a Show in Logs button.
+    """
     t = _theme(theme)
     location = info.location
     body = _core.column([

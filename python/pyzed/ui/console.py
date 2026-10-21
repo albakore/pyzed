@@ -106,7 +106,11 @@ class _Tee:
 
 
 class Log:
-    """Entries for ``ui.console``: thread-safe, capped at ``limit``, repeated lines folded."""
+    """Entries for ``ui.console``: thread-safe, capped at ``limit``, repeated lines folded.
+
+    Events:
+        ``on_write()``: Called after every write (from any thread).
+    """
 
     def __init__(self, limit: int = 5000, on_write: Optional[Callable[[], Any]] = None) -> None:
         self.limit = limit
@@ -310,6 +314,16 @@ def console(
     ``sources`` (``(value, label)`` pairs) adds a dropdown that shows only the entries of one
     ``source`` (``None`` for all; ``on_source`` gets the choice), and ``show_source`` tags each line
     with it.
+
+    Events:
+        ``on_query(text)``: Receives each edit of the filter.
+        ``on_toggle_level(level)``: Called with the level of the clicked toggle.
+        ``on_clear()``: Adds a Clear button.
+        ``on_copy()``: Adds a Copy button.
+        ``on_context(line)``: Called with the line right-clicked (``None`` under the lines): open a menu there
+            (copy, go to source, clear...).
+        ``on_open(line)``: Called with the line double-clicked.
+        ``on_source(source)``: Receives the source picked in the dropdown (``None`` for all).
     """
     from .controls import select as _select
 

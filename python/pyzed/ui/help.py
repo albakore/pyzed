@@ -25,7 +25,11 @@ def shortcuts(
     height: float = 380,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A searchable list of key bindings: ``[("File", [("Save", "ctrl-s"), ...]), ...]``."""
+    """A searchable list of key bindings: ``[("File", [("Save", "ctrl-s"), ...]), ...]``.
+
+    Events:
+        ``on_query(text)``: Adds a search box.
+    """
     t = _theme(theme)
     needle = query.strip().lower()
     rows: List[Any] = []
@@ -94,6 +98,10 @@ def reference_browser(
         self.help = reference.Browser("pyzed.ui.button")
         ...
         ui.reference_browser(self.help, on_open_url=open_in_browser)
+
+    Events:
+        ``on_open_url(url)``: Called with the URL of a link that leaves the reference (open it in the
+            browser).
     """
     from .. import i18n
     from .. import reference as _reference

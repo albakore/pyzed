@@ -150,6 +150,9 @@ class Timer(Service):
 
         def subscriptions(self):
             return self.clock.subscriptions()
+
+    Events:
+        ``on_tick()``:
     """
 
     events = ("tick",)
@@ -219,6 +222,9 @@ class Shortcut(Service):
 
         def on_key(self, combo):
             return self.save.handle(combo)
+
+    Events:
+        ``on_activate()``:
     """
 
     events = ("activate",)
@@ -273,6 +279,12 @@ class FileWatcher(Service):
     then ``change`` once with the list of every changed path. It checks every ``interval``
     milliseconds by looking at the files' times and sizes, so it works the same on every system and on
     network drives. ``start()`` begins watching, ``stop()`` ends it.
+
+    Events:
+        ``on_change(value)``: Callable that receives the new value.
+        ``on_created()``:
+        ``on_modified()``:
+        ``on_deleted()``:
     """
 
     events = ("change", "created", "modified", "deleted")
@@ -361,6 +373,13 @@ class Process(Service):
     ``error_output`` get each line without its line break, ``finished`` the exit code (``0`` when it
     went well) and ``failed`` the message when the program could not start. ``write()`` sends text
     to its input, ``kill()`` ends it and ``wait()`` blocks until it ends (for scripts).
+
+    Events:
+        ``on_started()``:
+        ``on_output()``:
+        ``on_error_output()``:
+        ``on_finished()``:
+        ``on_failed()``:
     """
 
     events = ("started", "output", "error_output", "finished", "failed")
@@ -484,6 +503,11 @@ class Worker(Service):
 
         worker = pz.Worker(count, on_progress=show, on_done=finish)
         worker.run(1_000_000)
+
+    Events:
+        ``on_progress()``:
+        ``on_done()``:
+        ``on_failed()``:
     """
 
     events = ("progress", "done", "failed")
@@ -600,6 +624,10 @@ class HttpRequest(Service):
 
         def show(self, response):
             self.stars = response.json()["stargazers_count"]
+
+    Events:
+        ``on_response()``:
+        ``on_failed()``:
     """
 
     events = ("response", "failed")
@@ -683,6 +711,10 @@ class Clipboard(Service):
     clipboard every ``interval`` milliseconds and raises ``change`` when something new is copied, in this
     app or another one; add ``clipboard.subscriptions()`` to your app's ``subscriptions``.
     ``text`` is the last text it saw.
+
+    Events:
+        ``on_change(value)``: Callable that receives the new value.
+        ``on_paste()``:
     """
 
     events = ("change", "paste")
@@ -730,6 +762,9 @@ class Settings(Service):
     ``(key, value)``; ``settings.get("volume", 5)`` reads it back next time. The file is
     ``<name>.json`` in ``folder``, by default Pyzed's per-user settings folder (``settings/``
     inside ``pyzed.project.config_dir()``), so each user keeps their own.
+
+    Events:
+        ``on_change(value)``: Callable that receives the new value.
     """
 
     events = ("change",)
@@ -877,6 +912,10 @@ class FileDialog(Service):
     the path (a list of paths with ``"open_many"``) and ``cancelled`` runs when it is closed without
     choosing. ``filters`` limits the files shown (see ``parse_filters``), ``directory`` is where it
     opens and ``file_name`` the name suggested when saving. ``path``/``paths`` keep the last choice.
+
+    Events:
+        ``on_chosen()``:
+        ``on_cancelled()``:
     """
 
     events = ("chosen", "cancelled")
@@ -924,6 +963,10 @@ class Notification(Service):
 
     ``show()`` shows ``text`` under ``title``, or what it is given, and returns whether it could;
     ``shown`` and ``failed`` follow with the text.
+
+    Events:
+        ``on_shown()``:
+        ``on_failed()``:
     """
 
     events = ("shown", "failed")

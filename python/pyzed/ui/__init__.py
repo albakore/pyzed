@@ -3,6 +3,10 @@
 All of them are plain functions returning widgets, so they compose freely and
 every color comes from the current ``Theme`` (override any of them via kwargs
 or pass ``theme=``).
+
+Events: the docstring of each component lists its own events (its ``on_*`` parameters) and
+what their handler receives. Every widget also takes the common events through
+``widget.on(click=..., mouse_enter=..., key_down=...)``; see ``pyzed.events.COMMON``.
 """
 
 from .base import (

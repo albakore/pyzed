@@ -31,6 +31,9 @@ def dialog_layer(base: Any, dialog: Any = None, *, on_dismiss: Any = None, theme
     """Shows ``dialog`` centered over ``base`` with a dimmed backdrop; clicking the backdrop sends ``on_dismiss``.
 
     With ``dialog=None`` it returns ``base`` unchanged, so it can always wrap the view.
+
+    Events:
+        ``on_dismiss()``: Sent when the backdrop is clicked.
     """
     if dialog is None:
         return base
@@ -56,7 +59,11 @@ def alert(
     width: float = 400,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A message with one button. ``kind`` (``"info"``, ``"success"``, ``"warning"``, ``"error"``) adds an icon."""
+    """A message with one button. ``kind`` (``"info"``, ``"success"``, ``"warning"``, ``"error"``) adds an icon.
+
+    Events:
+        ``on_close()``: The button and the close icon.
+    """
     t = _theme(theme)
     return modal(
         _message(message, kind, t),
@@ -81,7 +88,12 @@ def confirm(
     width: float = 420,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """Asks a yes/no question. ``danger=True`` paints the confirm button red (deleting, discarding...)."""
+    """Asks a yes/no question. ``danger=True`` paints the confirm button red (deleting, discarding...).
+
+    Events:
+        ``on_confirm()``: The confirm button.
+        ``on_cancel()``: Cancel, the close icon.
+    """
     t = _theme(theme)
     return modal(
         _message(message, kind, t),
@@ -112,7 +124,13 @@ def prompt(
     width: float = 440,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """Asks for a line of text. ``on_input`` gets each edit; Enter or the submit button calls ``on_submit``."""
+    """Asks for a line of text. ``on_input`` gets each edit; Enter or the submit button calls ``on_submit``.
+
+    Events:
+        ``on_input(text)``: Receives each edit.
+        ``on_submit()``: Enter or the submit button.
+        ``on_cancel()``: Cancel, the close icon.
+    """
     t = _theme(theme)
     body = _core.column(
         [
@@ -143,7 +161,11 @@ def choice(
     width: float = 440,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """A message with your own buttons: ``options`` are ``(label, on_press)`` pairs (the last is the main one)."""
+    """A message with your own buttons: ``options`` are ``(label, on_press)`` pairs (the last is the main one).
+
+    Events:
+        ``on_cancel()``: The close icon.
+    """
     t = _theme(theme)
     options = list(options)
     footer = [button(text, action, variant="solid" if i == len(options) - 1 else "ghost", theme=t)
@@ -160,7 +182,13 @@ def unsaved_changes(
     width: float = 440,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
-    """"Save your changes to <name> before closing?" with Don't save / Cancel / Save."""
+    """"Save your changes to <name> before closing?" with Don't save / Cancel / Save.
+
+    Events:
+        ``on_save()``: Save.
+        ``on_discard()``: Don't save.
+        ``on_cancel()``: Cancel.
+    """
     t = _theme(theme)
     return modal(
         _message(_t("pyzed.unsaved.message", name=name), "warning", t),
