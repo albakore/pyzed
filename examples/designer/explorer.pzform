@@ -1,0 +1,480 @@
+{
+  "format": "pyzed.form/1",
+  "form": {
+    "name": "explorer",
+    "title": "Project explorer",
+    "width": 760,
+    "height": 520,
+    "theme": "One Dark",
+    "accent": "#74ade8",
+    "background": null,
+    "radius": null,
+    "font_size": 14.0,
+    "resizable": true,
+    "grid": 8,
+    "events": {
+      "load": "form_load"
+    },
+    "code": null
+  },
+  "controls": [
+    {
+      "name": "title",
+      "type": "heading",
+      "x": 24,
+      "y": 16,
+      "width": 240,
+      "height": 32,
+      "props": {
+        "text": "Project explorer",
+        "level": "2",
+        "align": "left"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "sync",
+      "type": "status_dot",
+      "x": 272,
+      "y": 24,
+      "width": 90,
+      "height": 16,
+      "props": {
+        "color": "success",
+        "text": "Synced"
+      },
+      "events": {
+        "click": "sync_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "team",
+      "type": "facepile",
+      "x": 528,
+      "y": 20,
+      "width": 100,
+      "height": 24,
+      "props": {
+        "people": "Ada Lovelace\nGrace Hopper\nAlan Turing\nKatherine Johnson\nLinus Torvalds\nMargaret Hamilton",
+        "max_shown": 4
+      },
+      "events": {
+        "click": "team_click"
+      },
+      "anchor": [
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "unread",
+      "type": "counter",
+      "x": 638,
+      "y": 22,
+      "width": 26,
+      "height": 20,
+      "props": {
+        "count": 2,
+        "max": 99,
+        "tint": "error",
+        "show_zero": true
+      },
+      "events": {
+        "click": "unread_click"
+      },
+      "anchor": [
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "share",
+      "type": "split_button",
+      "x": 672,
+      "y": 18,
+      "width": 64,
+      "height": 28,
+      "props": {
+        "text": "",
+        "variant": "ghost",
+        "icon": "share-2",
+        "items": "Copy link\nShow QR code\nHide QR code"
+      },
+      "events": {
+        "click": "share_click",
+        "choose": "share_choose"
+      },
+      "anchor": [
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "path",
+      "type": "breadcrumbs",
+      "x": 24,
+      "y": 60,
+      "width": 420,
+      "height": 24,
+      "props": {
+        "parts": "Project",
+        "separator": "›"
+      },
+      "events": {
+        "click": "path_click"
+      },
+      "anchor": [
+        "left",
+        "top"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "view",
+      "type": "toggle_group",
+      "x": 650,
+      "y": 58,
+      "width": 86,
+      "height": 30,
+      "props": {
+        "options": "details, list, Details\ncompact, rows-3, Compact",
+        "selected": "details",
+        "multiple": false
+      },
+      "events": {
+        "change": "view_change"
+      },
+      "anchor": [
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "files",
+      "type": "tree",
+      "x": 24,
+      "y": 96,
+      "width": 220,
+      "height": 368,
+      "props": {
+        "items": "Docs\n  README.md\n  guide.md\n  Images\n    logo.svg\n    cat.png\nSource\n  app.py\n  forms.py\npyproject.toml",
+        "selected": "",
+        "expanded": "Docs",
+        "border": true
+      },
+      "events": {
+        "change": "files_change",
+        "toggle": "files_toggle",
+        "open": "files_open"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "pages",
+      "type": "tabs",
+      "x": 260,
+      "y": 96,
+      "width": 476,
+      "height": 32,
+      "props": {
+        "tabs": "Details\nPreview\nOutput",
+        "selected": "Details",
+        "closable": true
+      },
+      "events": {
+        "change": "pages_change",
+        "close": "pages_close"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "preview",
+      "type": "empty_state",
+      "x": 260,
+      "y": 136,
+      "width": 476,
+      "height": 216,
+      "props": {
+        "title": "Nothing to preview",
+        "text": "Double-click a file to preview it here.",
+        "icon": "eye",
+        "size": "md"
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": false,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "log",
+      "type": "terminal",
+      "x": 260,
+      "y": 136,
+      "width": 476,
+      "height": 216,
+      "props": {
+        "text": "\u001b[2m# what the explorer did\u001b[0m\n",
+        "font_size": 13,
+        "follow": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": false,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "listing",
+      "type": "table",
+      "x": 260,
+      "y": 136,
+      "width": 476,
+      "height": 216,
+      "props": {
+        "data": "Name, Folder, Size, Kind\nREADME.md, Docs, 4 KB, Markdown\nguide.md, Docs, 12 KB, Markdown\nlogo.svg, Docs/Images, 2 KB, Image\ncat.png, Docs/Images, 180 KB, Image\napp.py, Source, 3 KB, Python\nforms.py, Source, 7 KB, Python\npyproject.toml, , 1 KB, TOML",
+        "selected": null,
+        "striped": true,
+        "sortable": true,
+        "sort_by": "",
+        "descending": false
+      },
+      "events": {
+        "change": "listing_change",
+        "open": "listing_open",
+        "sort": "listing_sort"
+      },
+      "anchor": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "link_qr",
+      "type": "qr_code",
+      "x": 648,
+      "y": 392,
+      "width": 88,
+      "height": 80,
+      "props": {
+        "data": "https://github.com/albakore/pyzed",
+        "cell_size": 2,
+        "color": "#000000",
+        "background": "#ffffff"
+      },
+      "events": {},
+      "anchor": [
+        "right",
+        "bottom"
+      ],
+      "visible": false,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "filters_label",
+      "type": "label",
+      "x": 260,
+      "y": 364,
+      "width": 60,
+      "height": 24,
+      "props": {
+        "text": "Filters",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "markdown_chip",
+      "type": "chip",
+      "x": 316,
+      "y": 363,
+      "width": 98,
+      "height": 26,
+      "props": {
+        "text": "Markdown",
+        "icon": "file-text",
+        "selected": true,
+        "tint": "accent",
+        "removable": true
+      },
+      "events": {
+        "click": "markdown_chip_click",
+        "remove": "markdown_chip_remove"
+      },
+      "anchor": [
+        "left",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "image_chip",
+      "type": "chip",
+      "x": 420,
+      "y": 363,
+      "width": 86,
+      "height": 26,
+      "props": {
+        "text": "Images",
+        "icon": "image",
+        "selected": true,
+        "tint": "accent",
+        "removable": true
+      },
+      "events": {
+        "click": "image_chip_click",
+        "remove": "image_chip_remove"
+      },
+      "anchor": [
+        "left",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "changes",
+      "type": "diff_stat",
+      "x": 616,
+      "y": 366,
+      "width": 120,
+      "height": 20,
+      "props": {
+        "added": 18,
+        "removed": 4
+      },
+      "events": {},
+      "anchor": [
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "zoom",
+      "type": "slider",
+      "x": 260,
+      "y": 404,
+      "width": 220,
+      "height": 24,
+      "props": {
+        "value": 100,
+        "min": 50,
+        "max": 200,
+        "step": 10,
+        "vertical": false,
+        "show_value": true
+      },
+      "events": {
+        "change": "zoom_change",
+        "release": "zoom_release"
+      },
+      "anchor": [
+        "left",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    },
+    {
+      "name": "status",
+      "type": "label",
+      "x": 24,
+      "y": 480,
+      "width": 712,
+      "height": 24,
+      "props": {
+        "text": "",
+        "size": "sm",
+        "color": "text_muted",
+        "weight": "normal",
+        "align": "left",
+        "wrap": true
+      },
+      "events": {},
+      "anchor": [
+        "left",
+        "right",
+        "bottom"
+      ],
+      "visible": true,
+      "enabled": true,
+      "locked": false
+    }
+  ]
+}

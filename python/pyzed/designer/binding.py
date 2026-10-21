@@ -35,6 +35,10 @@ BIND_PROPS: Dict[str, Tuple[str, bool]] = {
     "chip": ("text", False), "markdown": ("text", False), "callout": ("text", False), "kbd": ("keys", False),
     "avatar": ("initials", False), "stat": ("value", False), "progress": ("value", False),
     "image": ("source", False), "chart": ("values", False), "table": ("data", False),
+    "toggle_group": ("selected", True), "tree": ("selected", True), "breadcrumbs": ("parts", False),
+    "empty_state": ("title", False), "counter": ("count", False), "status_dot": ("text", False),
+    "facepile": ("people", False), "qr_code": ("data", False), "svg": ("source", False),
+    "image_viewer": ("source", False), "terminal": ("text", False), "diff_stat": ("added", False),
 }
 
 #: Validation rules, in the order they are checked, with the kinds of control they apply to.

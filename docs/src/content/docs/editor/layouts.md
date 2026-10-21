@@ -17,6 +17,7 @@ The same layout code runs in the editor and in the running app, so what you see 
 | **Free** | Panel, Group box, Card | Where you drop them, in coordinates relative to the container. Their anchors follow the container's edges. |
 | **Flex** | Flex row, Flex column | One after another, like CSS flexbox. |
 | **Grid** | Grid | In cells, left to right and top to bottom. |
+| **Dock** | Dock | Dock panels only, on their side under a row of tabs (see [Dock](#dock)). |
 
 ```mermaid
 flowchart TB
@@ -75,6 +76,30 @@ of the row.
 
 Each child gets a **Column span**: how many columns it takes (1 to 24). A child that does not fit in the rest of
 a row starts a new one.
+
+## Dock
+
+A **Dock** (Layout category) is the layout of Zed and of Pyzed Design itself: a center area with panels on its
+left, right, top and bottom. A new Dock comes with three **Dock panels**: Explorer on the left, Terminal at the
+bottom and Editor in the center. Drop controls on a panel as on any free container (anchors work inside it).
+
+| Where | Property | Meaning |
+| --- | --- | --- |
+| Dock panel | **Title**, **Icon** | What its tab shows. |
+| Dock panel | **Side** | `left`, `right`, `top`, `bottom` or `center` (no tab, between the others). |
+| Dock | **Left width**, **Right width**, **Top height**, **Bottom height** | The size of each side, tabs included. |
+| Dock | **Saved layout** | Where the user left the panels (filled in at run time; save it with a Settings component). |
+
+Panels on the same side share its place as tabs; the top-most one (last in the outline order) is the tab shown,
+so use **Bring to front** or the outline to edit the others. When the form runs, the tabs switch panels,
+dragging a tab onto another side moves it there, right-clicking a tab offers the same moves, and dragging a
+side's inner edge resizes it. Each change raises the dock's `layout` event with the new layout.
+
+```python
+def dock1_layout(form, event):
+    """Runs when a panel of dock1 is moved, resized or switched."""
+    form.status.text = f"Left side: {event.value['sizes'].get('left', 220):.0f} px"
+```
 
 ## Order of children
 

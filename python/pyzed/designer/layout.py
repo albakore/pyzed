@@ -7,7 +7,10 @@ Controls inside a container are positioned by it:
 * ``flex`` containers line their children up in a row or a column, like CSS flexbox
   (``gap``, ``padding``, ``justify``, ``align`` and a per-child ``grow``);
 * ``grid`` containers place their children in cells, left to right and top to bottom
-  (``columns``, ``gap``, ``padding``, ``row_height`` and a per-child ``span``).
+  (``columns``, ``gap``, ``padding``, ``row_height`` and a per-child ``span``);
+* ``dock`` containers (a Dock) put their Dock panels on their ``side`` (left, right, top,
+  bottom or the center) under a row of tabs, like Zed's docks; panels on the same side
+  share its place and the last one is the tab shown.
 
 ``resolve`` turns a form into absolute rectangles. The designer and the running form
 both draw from it, so a layout looks the same while designing and at run time. Like
@@ -29,8 +32,15 @@ JUSTIFY = ("start", "center", "end", "space-between", "space-around", "space-eve
 ALIGN_ITEMS = ("stretch", "start", "center", "end")
 
 
+#: Containers that place their children themselves (their children's x and y are ignored).
+MANAGED = ("flex", "grid", "dock")
+#: The sides of a dock, and the height of the row of tabs above each side's panels.
+DOCK_SIDES = ("left", "right", "top", "bottom", "center")
+DOCK_HEADER = 32.0
+
+
 def kind(control: Control) -> Optional[str]:
-    """``"free"``, ``"flex"`` or ``"grid"`` for containers, ``None`` for other controls."""
+    """``"free"``, ``"flex"``, ``"grid"`` or ``"dock"`` for containers, ``None`` for other controls."""
     try:
         return _components.get(control.type).container
     except KeyError:
@@ -86,7 +96,7 @@ def reflow(form: Form, parent: Optional[str], starts: Dict[str, Rect], design: T
 def managed(form: Form, control: Control) -> bool:
     """``True`` when the parent lays the control out (its x and y are ignored)."""
     parent = form.get(control.parent) if control.parent else None
-    return parent is not None and kind(parent) in ("flex", "grid")
+    return parent is not None and kind(parent) in MANAGED
 
 
 # -- layouts -----------------------------------------------------------------------
@@ -182,6 +192,47 @@ def grid(box: Rect, items: Sequence[Tuple[float, float, int]], *, columns: int =
     return out
 
 
+def dock_side(control: Control) -> str:
+    """The side of a dock a Dock panel goes on (``"center"`` for anything that is not a Dock panel)."""
+    side = str(props(control).get("side", "center")) if control.type == "dock_panel" else "center"
+    return side if side in DOCK_SIDES else "center"
+
+
+def dock_areas(container: Control, rect: Rect, children: Sequence[Control]) -> Dict[str, Rect]:
+    """The area of each side of a dock drawn at ``rect`` that has panels among ``children``, header included.
+
+    Left and right take the whole height; top, center and bottom share the middle, as in ``pz.Dock``.
+    """
+    p = props(container)
+    used = {dock_side(c) for c in children}
+    x, y, w, h = rect
+
+    def size(side: str, limit: float) -> float:
+        return max(min(_num(p.get(f"{side}_size"), 200.0), limit), 0.0) if side in used else 0.0
+
+    left = size("left", w)
+    right = size("right", max(w - left, 0))
+    mid_x, mid_w = x + left, max(w - left - right, 0.0)
+    top = size("top", h)
+    bottom = size("bottom", max(h - top, 0))
+    areas = {"left": (x, y, left, h), "right": (x + w - right, y, right, h), "top": (mid_x, y, mid_w, top),
+             "bottom": (mid_x, y + h - bottom, mid_w, bottom),
+             "center": (mid_x, y + top, mid_w, max(h - top - bottom, 0.0))}
+    return {side: areas[side] for side in DOCK_SIDES if side in used}
+
+
+def dock(container: Control, rect: Rect, children: Sequence[Control]) -> List[Rect]:
+    """Where a dock drawn at ``rect`` puts ``children``: each in its side's area, under the tabs."""
+    areas = dock_areas(container, rect, children)
+    out = []
+    for c in children:
+        side = dock_side(c)
+        x, y, w, h = areas[side]
+        header = 0.0 if side == "center" else min(DOCK_HEADER, h)
+        out.append((x, y + header, w, h - header))
+    return out
+
+
 def content_box(control: Control, rect: Rect) -> Rect:
     """The area of a container where its children go."""
     if kind(control) in ("flex", "grid"):
@@ -197,6 +248,8 @@ def arrange(form: Form, container: Control, rect: Rect, children: Sequence[Contr
     p = props(container)
     box = content_box(container, rect)
     sizes = sizes or {}
+    if kind(container) == "dock":
+        return dock(container, rect, children)
     gap = max(_num(p.get("gap")), 0.0)
     if kind(container) == "grid":
         items = [(*sizes.get(c.name, (c.width, c.height)), int(_num(c.layout.get("span"), 1))) for c in children]
@@ -218,31 +271,37 @@ def resolve(form: Form, size: Optional[Tuple[float, float]] = None, *, free: Col
     design = (form.width, form.height)
     actual = size or design
     out: Dict[str, Rect] = {}
-
-    def place(parent: Optional[Control], origin: Rect, design_size: Tuple[float, float]) -> None:
-        children = form.children(parent.name if parent else None)
-        if not children:
-            return
-        ox, oy, ow, oh = origin
-        layout = kind(parent) if parent is not None else None
-        if layout in ("flex", "grid") and parent is not None:
-            laid = [c for c in children if c.name not in free and c.visible]
-            for c, r in zip(laid, arrange(form, parent, origin, laid)):
-                out[c.name] = r
-        for c in children:
-            if c.name in out:
-                continue
-            if layout in ("flex", "grid"):
-                x, y, w, h = c.rect
-            else:
-                x, y, w, h = anchored(c, design_size, (ow, oh))
-            out[c.name] = (ox + x, oy + y, w, h)
-        for c in children:
-            if kind(c) is not None:
-                place(c, out[c.name], (c.width, c.height))
-
-    place(None, (0.0, 0.0, actual[0], actual[1]), design)
+    place(form, None, (0.0, 0.0, actual[0], actual[1]), design, out, free=free, sync=size is None)
     return out
+
+
+def place(form: Form, parent: Optional[Control], origin: Rect, design_size: Tuple[float, float],
+          out: Dict[str, Rect], *, free: Collection[str] = (), sync: bool = False) -> None:
+    """Puts in ``out`` the absolute rectangle of everything inside ``parent`` (the form when ``None``) drawn at
+    ``origin``, which was ``design_size`` when it was designed. With ``sync`` (the design size), a Dock panel
+    takes the size its dock gives it, so what is inside follows its anchors from there at run time."""
+    children = form.children(parent.name if parent else None)
+    if not children:
+        return
+    ox, oy, ow, oh = origin
+    layout = kind(parent) if parent is not None else None
+    if layout in MANAGED and parent is not None:
+        laid = [c for c in children if c.name not in free and c.visible]
+        for c, r in zip(laid, arrange(form, parent, origin, laid)):
+            out[c.name] = r
+            if sync and layout == "dock":
+                c.width, c.height = round(r[2]), round(r[3])
+    for c in children:
+        if c.name in out:
+            continue
+        if layout in MANAGED:
+            x, y, w, h = c.rect
+        else:
+            x, y, w, h = anchored(c, design_size, (ow, oh))
+        out[c.name] = (ox + x, oy + y, w, h)
+    for c in children:
+        if kind(c) is not None:
+            place(form, c, out[c.name], (c.width, c.height), out, free=free, sync=sync)
 
 
 def origin(form: Form, rects: Dict[str, Rect], parent: Optional[str]) -> Tuple[float, float]:

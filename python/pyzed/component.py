@@ -542,8 +542,10 @@ class Component:
             values = {k: v for k, v in values.items() if v is not None or not cls.__props__[k].required}
             handlers = {}
             for event in custom_events:
-                if control.events.get(event):
-                    callback = ctx.on(control, event)
+                # a change of a component with a ``value`` keeps the new value (``form.knob1.value``)
+                keeps = event == "change" and "value" in cls.__props__
+                if control.events.get(event) or (keeps and ctx.live):
+                    callback = ctx.on(control, event, "value" if keeps else None)
                     handlers[f"on_{event}"] = lambda e, callback=callback: callback(e.value)
             return cls(key=ctx.key(control), **values, **handlers)
 

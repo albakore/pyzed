@@ -480,6 +480,9 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
         rows += [prop_row("Width", num("width"), t), prop_row("Height", num("height"), t),
                  _core.container(ui.label(f"Placed by {parent.name}: drag it to reorder.", size="xs",
                                           color="text_muted", theme=t), padding=(2, 0))]
+    elif kind == "dock":
+        rows.append(_core.container(ui.label(tr("Placed by its dock: change its Side, or the dock's sizes."),
+                                             size="xs", color="text_muted", theme=t), padding=(2, 0)))
     else:
         from . import anchor_panel
 

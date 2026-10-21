@@ -18,6 +18,7 @@ lo que obtienes.
 | **Libre** | Panel, Marco (group box), Tarjeta | Donde los sueltas, en coordenadas relativas al contenedor. Sus anclajes siguen los bordes del contenedor. |
 | **Flex** | Fila flexible, Columna flexible | Uno tras otro, como flexbox de CSS. |
 | **Grilla** | Grid | En celdas, de izquierda a derecha y de arriba abajo. |
+| **Dock** | Dock | Solo paneles del dock, cada uno en su lado bajo una fila de pestañas (mira [Dock](#dock)). |
 
 ```mermaid
 flowchart TB
@@ -77,6 +78,32 @@ final de la fila.
 
 Cada hijo recibe **Columnas**: cuántas columnas ocupa (1 a 24). Un hijo que no cabe en lo que queda de fila empieza
 una nueva.
+
+## Dock
+
+Un **Dock** (categoría Disposición) es la disposición de Zed y del propio Pyzed Design: un área central con paneles
+a la izquierda, a la derecha, arriba y abajo. Un Dock nuevo trae tres **Paneles del dock**: Explorer a la izquierda,
+Terminal abajo y Editor en el centro. Suelta controles en un panel como en cualquier contenedor libre (los anclajes
+funcionan dentro).
+
+| Dónde | Propiedad | Significado |
+| --- | --- | --- |
+| Panel del dock | **Título**, **Icono** | Lo que muestra su pestaña. |
+| Panel del dock | **Lado** | `left`, `right`, `top`, `bottom` o `center` (sin pestaña, entre los demás). |
+| Dock | **Ancho izquierdo**, **Ancho derecho**, **Alto superior**, **Alto inferior** | El tamaño de cada lado, con las pestañas. |
+| Dock | **Distribución guardada** | Dónde dejó el usuario los paneles (se rellena al ejecutar; guárdala con un componente Ajustes). |
+
+Los paneles del mismo lado comparten su sitio como pestañas; el de más arriba (el último en el orden del esquema) es
+la pestaña visible, así que usa **Traer al frente** o el esquema para editar los demás. Al ejecutar el formulario,
+las pestañas cambian de panel, arrastrar una pestaña a otro lado la mueve allí, el clic derecho en una pestaña ofrece
+los mismos movimientos y arrastrar el borde interior de un lado cambia su tamaño. Cada cambio lanza el evento
+`layout` del dock con la distribución nueva.
+
+```python
+def dock1_layout(form, event):
+    """Se ejecuta al mover, redimensionar o cambiar un panel de dock1."""
+    form.status.text = f"Lado izquierdo: {event.value['sizes'].get('left', 220):.0f} px"
+```
 
 ## El orden de los hijos
 

@@ -80,8 +80,9 @@ class IconPicker(Component):
     autofocus: bool = False
     events = {"change": "An icon was picked (``event.value`` is its name, ``\"\"`` when cleared)."}
     icon = "smile-plus"
-    category = "Input"
-    designer = False
+    label = "Icon picker"
+    category = "Common"
+    size = (300, 340)
 
     def setup(self) -> None:
         self.query = ""

@@ -67,8 +67,9 @@ class ColorPicker(Component):
     swatches: list = None
     events = {"change": "A new color, gradient or paint was picked (``event.value``)."}
     icon = "palette"
-    category = "Input"
-    designer = False
+    label = "Color picker"
+    category = "Common"
+    size = (260, 390)
 
     def setup(self) -> None:
         self.hue: Optional[float] = None

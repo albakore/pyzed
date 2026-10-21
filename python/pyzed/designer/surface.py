@@ -148,6 +148,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     ctx = _components.RenderContext(ft, form.name)
     ctx.preview = d.motion_preview
     ctx.language = d.preview_language
+    ctx.form = form
     w, h = form.width, form.height
 
     layers: List[Any] = [_core.container(width="fill", height="fill", bg=ft.background)]

@@ -164,6 +164,8 @@ class Document:
         container = self.form.get(parent) if parent else None
         if container is not None and (_layout.kind(container) is None or not spec.visual):
             container = None  # non-visual components belong to the form itself
+        if container is not None and _layout.kind(container) == "dock" and type_ != "dock_panel":
+            container = None  # a dock holds Dock panels; controls go on a panel
         w, h = width or spec.size[0], height or spec.size[1]
         bounds = (container.width, container.height) if container is not None else self.size
         if container is not None and _layout.kind(container) != "free":
@@ -175,6 +177,12 @@ class Document:
         control = spec.create(self.form.unique_name(type_), x, y, w, h)
         control.parent = container.name if container is not None else None
         self.form.add(control)
+        for child_type, values in spec.children:  # a new Dock comes with its first panels
+            child_spec = _components.get(child_type)
+            child = child_spec.create(self.form.unique_name(child_type), 0, 0, *child_spec.size)
+            child.props.update(dict(values))
+            child.parent = control.name
+            self.form.add(child)
         self.selection = [control.name]
         self.commit()
         return control
@@ -193,6 +201,8 @@ class Document:
         if control is not None and not _components.get(control.type).visual:
             return False  # a timer, a watcher... belongs to the form, not to a container
         target = self.form.get(container)
+        if target is not None and _layout.kind(target) == "dock" and (control is None or control.type != "dock_panel"):
+            return False  # a dock holds Dock panels only
         return (target is not None and _layout.kind(target) is not None and container != name
                 and not self.form.is_inside(container, name))
 
