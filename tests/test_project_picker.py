@@ -258,3 +258,49 @@ def test_local_projects_run_commands_directly(tmp_path, monkeypatch):
     app = project.Project.open(_make(tmp_path, "shop"))
     assert not app.environment.remote
     assert project.Environment("local", "Linux").command(["uv", "sync"], tmp_path) == ["uv", "sync"]
+
+
+def test_opening_a_wsl_project_from_windows_does_not_wait_for_git(tmp_path, monkeypatch):
+    """Each look at a WSL project opened from Windows crosses into Linux (wsl.exe, 9P), and a stuck git froze the
+    window while the project opened: its branch, branches and files are read on worker threads."""
+    import threading
+    import time
+
+    from pyzed.designer import workspace
+
+    root = _make(tmp_path, "shop")
+    (root / "app.py").write_text("")
+    d = Designer(language_servers=False)
+    release = threading.Event()
+
+    def later(value):
+        return lambda *args: (release.wait(10), value)[1]
+
+    monkeypatch.setattr(project.Environment, "remote", property(lambda self: True))
+    monkeypatch.setattr(project.Project, "git_branch", later("main"))
+    monkeypatch.setattr(project.Project, "git_worktree", lambda self: None)
+    monkeypatch.setattr(project.Project, "git_branches", later(["dev", "main"]))
+    monkeypatch.setattr(workspace, "git_status", later({"app.py": "modified"}))
+    started = time.monotonic()
+    _close(d.projects.open(str(root)))
+    d.projects.open_branches()
+    assert time.monotonic() - started < 5
+    assert d.projects.loading and d.projects.branch is None and d.view() is not None
+    release.set()
+    deadline = time.monotonic() + 10
+    while d.projects.loading and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert d.projects.branch == "main" and d.projects.branches == ["dev", "main"]
+    assert d.projects.files.status == {"app.py": "modified"} and "app.py" in d.projects.files.entries
+    assert "ui" in d.projects.files.expanded
+
+
+def test_commands_never_share_the_editors_stdin(monkeypatch):
+    seen = {}
+
+    def run(args, **kwargs):
+        seen.update(kwargs)
+        return subprocess.CompletedProcess(args, 0, "ok")
+
+    monkeypatch.setattr(project.subprocess, "run", run)
+    assert project.execute(["git", "--version"]).ok and seen["stdin"] is subprocess.DEVNULL

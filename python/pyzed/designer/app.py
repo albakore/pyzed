@@ -299,6 +299,8 @@ class Designer(App):
         subs = [_core.every(0.5, self._expire_toasts, key="designer-toasts")] if self.toasts else []
         if self.projects.busy:  # keeps the spinner of a running uv command moving
             subs.append(_core.every(1 / 30, lambda: None, key="designer-busy"))
+        elif self.projects.loading:  # shows the files and branch of a WSL project once they are read
+            subs.append(_core.every(0.2, lambda: None, key="designer-loading"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread

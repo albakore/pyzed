@@ -12,10 +12,12 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from .. import _core, ui
+from .. import project as _project
 from ..icons import for_file
 from ..icons import icon as _icon
 from ..theme import Theme
@@ -61,15 +63,10 @@ def list_entries(root: Path, limit: int = MAX_ENTRIES) -> List[str]:
 def git_status(root: Path) -> Dict[str, str]:
     """``{relative path: "modified" | "created" | "deleted" | "conflict"}`` from ``git status`` (empty
     when ``root`` is not a repository or git is missing)."""
-    git = shutil.which("git")
-    if git is None or not (root / ".git").exists():
+    if not (root / ".git").exists():
         return {}
-    try:
-        out = subprocess.run([git, "status", "--porcelain=v1", "-z", "--untracked-files=all"], cwd=root,
-                             capture_output=True, timeout=5, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    except (OSError, subprocess.SubprocessError):
-        return {}
-    if out.returncode != 0:
+    out = _ops.run_git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+    if out is None or out.returncode != 0:
         return {}
     status: Dict[str, str] = {}
     items = out.stdout.decode("utf-8", "replace").split("\0")
@@ -176,29 +173,53 @@ class Workspace:
         self.redo_stack: List[_ops.Op] = []
         #: The web address of the project's git remote (for permalinks), if it has one.
         self.remote: Optional[str] = None
+        #: Whether the files are being read in the background (a WSL folder opened from Windows).
+        self.loading = False
+        self._reads = 0
+        #: What the next read also does for a folder just attached: look up its git remote, open its UI folders.
+        self._opening = False
 
     # -- loading ---------------------------------------------------------------------------------
     def attach(self, root: Optional[Path]) -> None:
         """Shows the files of ``root`` (``None`` empties the tree); opens the UI and source folders."""
-        if root != self.root:
+        changed = root != self.root
+        if changed:
             self.expanded = set()
             self.selected = None
             self.query = ""
             self.clipboard = None
             self.undo_stack, self.redo_stack = [], []
-            self.remote = _ops.remote_url(root) if root is not None else None
+            self.entries, self.status, self.remote = [], {}, None
         self.root = root
+        self._opening = self._opening or changed or not self.expanded
         self.refresh()
-        if root is not None and not self.expanded:
-            self.expanded = {e.rstrip("/") for e in self.entries if e in ("ui/", "src/")}
 
     def refresh(self) -> None:
-        """Rereads the files and their git status from the disk."""
-        if self.root is None or not self.root.is_dir():
-            self.entries, self.status = [], {}
-            return
-        self.entries = list_entries(self.root)
-        self.status = git_status(self.root)
+        """Rereads the files and their git status from the disk. A WSL folder opened from Windows is read on a
+        worker thread: each look at it crosses into Linux (9P, ``wsl.exe``), and doing that on the UI thread
+        froze the window while a project opened."""
+        self._reads += 1
+        root, read, opening = self.root, self._reads, self._opening
+
+        def work() -> None:
+            try:
+                found = (list_entries(root), git_status(root)) if root is not None and root.is_dir() else ([], {})
+                url = _ops.remote_url(root) if opening and root is not None else self.remote
+            except OSError:
+                found, url = ([], {}), self.remote
+            if read != self._reads:  # a newer read (or another folder) took its place
+                return
+            self.entries, self.status = found
+            self.remote, self.loading = url, False
+            if opening and not self.expanded:
+                self.expanded = {e.rstrip("/") for e in self.entries if e in ("ui/", "src/")}
+            self._opening = False
+
+        if root is not None and _project.environment(root).remote:
+            self.loading = True
+            threading.Thread(target=work, daemon=True, name="pyzed-files").start()
+        else:
+            work()
 
     def path_of(self, rel: str) -> Path:
         assert self.root is not None
@@ -789,7 +810,11 @@ def tree_view(w: Workspace, t: Theme) -> Any:
                 walk(node.children or [], depth + 1)
 
     walk(w.nodes(), 0)
-    if not rows:
+    if not rows and w.loading:
+        rows.append(_core.container(_core.row([ui.spinner(size=12, theme=t), ui.label(
+            tr("Reading the files…"), size="sm", color="text_muted", theme=t)], spacing=8, align="center"),
+            padding=(8, 12)))
+    elif not rows:
         rows.append(_core.container(ui.label(tr("The project folder is empty"), size="sm", color="text_muted",
                                              theme=t), padding=(8, 12)))
     return _core.column(rows, width="fill")

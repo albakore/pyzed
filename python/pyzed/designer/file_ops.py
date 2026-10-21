@@ -13,8 +13,10 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 from urllib.parse import quote
+
+from .. import project as _project
 
 
 # -- the system --------------------------------------------------------------------------------
@@ -187,16 +189,35 @@ def add_ignore(file: Path, rel: str) -> bool:
 # -- permalinks ------------------------------------------------------------------------------------
 
 
-def _git(root: Path, *args: str) -> Optional[str]:
+def git_command(root: Path, *args: str) -> Optional[Tuple[List[str], Optional[Path], float]]:
+    """How to run ``git args`` in ``root``: the command, its working folder and the seconds it may take. A WSL
+    folder opened from Windows uses Linux's git through ``wsl.exe`` (Windows' git refuses those folders and is
+    slow on them); ``None`` when git is not installed."""
+    where = _project.environment(root)
+    if where.remote:
+        return where.command(["git", *args], root), None, 15
     git = shutil.which("git")
-    if git is None:
+    return ([git, *args], root, 5) if git else None
+
+
+def run_git(root: Path, *args: str) -> Optional["subprocess.CompletedProcess[bytes]"]:
+    """Runs ``git args`` in ``root`` without a window or stdin, and with a time limit (``None`` when it could
+    not run or took too long)."""
+    found = git_command(root, *args)
+    if found is None:
         return None
+    command, cwd, timeout = found
     try:
-        out = subprocess.run([git, *args], cwd=root, capture_output=True, text=True, timeout=5,  # noqa: S603
-                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        return subprocess.run(command, cwd=cwd, capture_output=True, stdin=subprocess.DEVNULL,  # noqa: S603
+                              timeout=timeout, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError):
         return None
-    return out.stdout.strip() if out.returncode == 0 and out.stdout.strip() else None
+
+
+def _git(root: Path, *args: str) -> Optional[str]:
+    out = run_git(root, *args)
+    text = out.stdout.decode("utf-8", "replace").strip() if out is not None and out.returncode == 0 else ""
+    return text or None
 
 
 def web_url(remote: str) -> Optional[str]:

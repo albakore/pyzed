@@ -12,6 +12,7 @@ import asyncio
 import os
 import re
 import subprocess
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
@@ -49,6 +50,11 @@ class ProjectController:
         #: Called with the new active project (or ``None``) whenever it changes; see ``on_change``.
         self._listeners: List[Callable[[Optional[Project]], Any]] = []
         self.busy: Optional[str] = None
+        #: Whether the git branch is being read in the background (a WSL project opened from Windows).
+        self.reading_git = False
+        self._git_reads = 0
+        self._git_root: Optional[Path] = None
+        self.reading_branches = False
         self.last: Optional[Result] = None
         self.process: Optional[subprocess.Popen] = None
         # inputs
@@ -108,13 +114,34 @@ class ProjectController:
 
     def refresh(self) -> None:
         """Rereads the open project's files: its dependencies and current git branch."""
-        if self.project is None:
+        project = self.project
+        if project is None:
             return
-        self.project.reload()
-        self.deps = self.project.dependencies()
-        self.branch = self.project.git_branch()
-        self.worktree = self.project.git_worktree()
+        project.reload()
+        self.deps = project.dependencies()
         self.files.refresh()
+        self._git_reads += 1
+        read = self._git_reads
+
+        def work() -> None:
+            branch, worktree = project.git_branch(), project.git_worktree()
+            if read == self._git_reads:  # not overtaken by a newer read or another project
+                self.branch, self.worktree, self.reading_git = branch, worktree, False
+
+        if project.environment.remote:  # git crosses into Linux through wsl.exe: not on the UI thread
+            if self._git_root != project.root:
+                self.branch = self.worktree = None
+            self._git_root = project.root
+            self.reading_git = True
+            threading.Thread(target=work, daemon=True, name="pyzed-git").start()
+        else:
+            self._git_root = project.root
+            work()
+
+    @property
+    def loading(self) -> bool:
+        """Whether the project's files or git branch are still being read in the background."""
+        return self.reading_git or self.reading_branches or self.files.loading
 
     @property
     def environment(self) -> _project.Environment:
@@ -177,9 +204,25 @@ class ProjectController:
         return self.open(str(self.window[-1]))
 
     def open_branches(self) -> None:
-        """Opens the branch menu of the title bar with the project's local branches."""
-        self.branches = self.project.git_branches() if self.project is not None else []
+        """Opens the branch menu of the title bar with the project's local branches (read in the background for
+        a WSL project opened from Windows: the menu shows the current one until they arrive)."""
+        project = self.project
         self.d.app_menu = None if self.d.app_menu == "branches" else "branches"
+        if project is None:
+            self.branches = []
+        elif not project.environment.remote:
+            self.branches = project.git_branches()
+        else:
+            self.branches = [self.branch] if self.branch else []
+            self.reading_branches = True
+
+            def work() -> None:
+                found = project.git_branches()
+                if self.project is project:
+                    self.branches = found
+                self.reading_branches = False
+
+            threading.Thread(target=work, daemon=True, name="pyzed-git-branches").start()
 
     def switch_branch(self, name: str) -> Any:
         """Checks out branch ``name`` (``git switch``) in the background; returns the task."""

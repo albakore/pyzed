@@ -480,6 +480,20 @@ try:
     _parent = os.dup(sys.stdin.fileno())
 except (AttributeError, OSError, ValueError):
     _parent = None
+# Nothing else may touch that pipe: on Windows a synchronous read waiting on it (the thread below) blocks every
+# other use of it, so a program started from here with it as its stdin (git or wsl.exe without stdin=...) would
+# hang for ever, and the window with it. Descriptor 0 and the process's standard input become NUL.
+try:
+    _null = os.open(os.devnull, os.O_RDONLY)
+    os.dup2(_null, 0)
+    os.close(_null)
+    if os.name == "nt":
+        import ctypes
+        import msvcrt
+
+        ctypes.windll.kernel32.SetStdHandle(-10, msvcrt.get_osfhandle(0))  # STD_INPUT_HANDLE
+except (AttributeError, ImportError, OSError, ValueError):
+    pass
 
 
 def _follow_parent():
@@ -497,7 +511,7 @@ def _follow_parent():
 
 if _parent is not None:
     threading.Thread(target=_follow_parent, name="pyzed-wsl-parent", daemon=True).start()
-sys.stdin = open(os.devnull, encoding="utf-8")
+sys.stdin = open(0, encoding="utf-8", closefd=False)
 if os.environ.get("PYZED_WSL_CWD"):  # the WSL folder it was started from
     os.chdir(os.environ.pop("PYZED_WSL_CWD"))
 _crossed = set(os.environ.pop("PYZED_WSL_CROSSED", "").split(":"))

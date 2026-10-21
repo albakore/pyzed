@@ -476,3 +476,24 @@ def test_targets_follow_the_installed_cross_compilers(wsl):
     assert ww.targets() == ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"]
     wsl.setenv("PYZED_WINDOWS_TARGET", "aarch64-pc-windows-msvc")
     assert ww.targets() == ["aarch64-pc-windows-msvc"]
+
+
+def test_bootstrap_gives_its_programs_no_stdin(tmp_path):
+    """The WSL side's pipe is the bootstrap's stdin; a program started from the app must not get it (on Windows
+    a read waiting on that pipe blocks any other use of it, so git or wsl.exe hung the editor for ever)."""
+    import subprocess
+
+    boot = tmp_path / "bootstrap.py"
+    boot.write_text(ww.BOOTSTRAP, encoding="utf-8")
+    app = tmp_path / "app.py"
+    app.write_text("import subprocess, sys\n"
+                   "out = subprocess.run([sys.executable, '-c', 'import sys; print(len(sys.stdin.read()))'],\n"
+                   "                     capture_output=True, text=True, timeout=20)\n"
+                   "print('child read', out.stdout.strip(), len(sys.stdin.read()))\n", encoding="utf-8")
+    process = subprocess.Popen([sys.executable, str(boot), str(app)], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    try:
+        out = process.stdout.read()
+        assert process.wait(30) == 0
+    finally:
+        process.stdin.close()
+    assert b"child read 0 0" in out
