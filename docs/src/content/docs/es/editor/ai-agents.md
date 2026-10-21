@@ -77,7 +77,7 @@ Siempre puedes pegar una clave a mano en los [ajustes](#ajustes) o definir la va
 | **Esfuerzo** | Cuánto piensa el modelo antes de responder: **Bajo**, **Medio**, **Alto**, **Muy alto**, **Máximo**. Solo modelos Claude. |
 | **Pensamiento** | Deja que Claude piense antes de responder (tan a fondo como diga el esfuerzo). Apagado, responde antes. Solo modelos Claude. |
 | **Rápido** | Modo rápido: respuestas más rápidas a mayor precio, en Claude Opus 5.5 y Opus 5 a través de la API de Claude. |
-| **Opciones del agente** | Con un agente externo, las opciones que ofrece, como en Zed: sus modelos (los de Claude Code: **Opus**, **Sonnet**, **Haiku**), su nivel de esfuerzo o de razonamiento y todo lo demás que liste. Pyzed recuerda lo que eliges para las próximas conversaciones con ese agente. |
+| **Opciones del agente** | Con un agente externo, las opciones que ofrece, como en Zed: sus modelos (los de Claude Code: **Fable 5.1**, **Opus 5.5**, **Sonnet 5.5** y **Haiku 5.5**), su esfuerzo (de **Low** a **Max**) o nivel de razonamiento y todo lo demás que liste. Claude Code y Codex usan la última versión de su adaptador, así que los modelos nuevos aparecen solos. Pyzed recuerda lo que eliges para las próximas conversaciones con ese agente. |
 
 | Modo de permisos | Qué puede hacer el agente |
 | --- | --- |
@@ -341,7 +341,7 @@ termine** en los ajustes.
 externos**) usa tu plan Claude Pro o Max a través de Claude Code, el agente de Anthropic, ya que Anthropic solo
 deja que sus propias apps inicien sesión con una suscripción:
 
-1. Necesita [Node.js](https://nodejs.org/en/download) 18 o posterior; si no está, Pyzed abre la página de descarga.
+1. Necesita [Node.js](https://nodejs.org/en/download) 22 o posterior; si no está, Pyzed abre la página de descarga.
    Pyzed encuentra Node también si se instaló con nvm, volta, fnm o en `~/.local/bin`, aunque Pyzed Design se haya
    abierto desde el menú del escritorio. Si una respuesta falla porque falta Node.js, **Instalar Node.js** abre la
    página de descarga y **Usar Pyzed Agent** envía el mensaje al agente propio de Pyzed.

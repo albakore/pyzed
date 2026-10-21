@@ -358,6 +358,8 @@ class AgentSettings:
                                                    if isinstance(fed.get(f.name), str)})
         out.mcp_servers = _configs(data.get("mcp_servers"), MCPServerConfig)
         out.acp_agents = _configs(data.get("acp_agents"), ACPAgentConfig)
+        for agent in out.acp_agents:
+            agent.args = [_renamed_package(a) for a in agent.args]
         out.allowed_tools = [str(n) for n in out.allowed_tools if isinstance(n, str)]
         out.pyzed_mcp_done = [str(n) for n in out.pyzed_mcp_done if isinstance(n, str)]
         out.agent_options = {str(a): {str(k): str(v) for k, v in o.items()} for a, o in out.agent_options.items()
@@ -367,6 +369,22 @@ class AgentSettings:
         if out.profile not in ("write", "ask", "minimal"):
             out.profile = "write"
         return out
+
+
+#: ACP adapter packages that were renamed: the old names stopped getting updates (and new models).
+RENAMED_PACKAGES = {
+    "@zed-industries/claude-code-acp": "@agentclientprotocol/claude-agent-acp@latest",
+    "@zed-industries/claude-agent-acp": "@agentclientprotocol/claude-agent-acp@latest",
+    "@zed-industries/codex-acp": "@agentclientprotocol/codex-acp@latest",
+}
+
+
+def _renamed_package(arg: str) -> str:
+    """An npx argument with a renamed adapter package (``@zed-industries/claude-code-acp@0.16``...) replaced."""
+    for old, new in RENAMED_PACKAGES.items():
+        if arg == old or arg.startswith(old + "@"):
+            return new
+    return arg
 
 
 def _configs(raw: Any, cls: Any) -> List[Any]:

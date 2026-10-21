@@ -34,11 +34,12 @@ from .tools import SECRET_FILES
 PROTOCOL_VERSION = 1
 
 #: Ready-made external agents: name -> (title, command, args). They need the program installed
-#: (``npx`` comes with Node.js); the adapter packages are the ones Zed uses.
+#: (``npx`` comes with Node.js); the adapter packages are the ones Zed uses. ``@latest`` makes ``npx`` pick up
+#: new versions (and with them new models, such as Claude's) instead of keeping the one it downloaded first.
 PRESETS: Dict[str, "tuple[str, str, List[str]]"] = {
-    "claude-code": ("Claude Code", "npx", ["-y", "@zed-industries/claude-code-acp"]),
+    "claude-code": ("Claude Code", "npx", ["-y", "@agentclientprotocol/claude-agent-acp@latest"]),
     "gemini": ("Gemini CLI", "gemini", ["--experimental-acp"]),
-    "codex": ("Codex", "npx", ["-y", "@zed-industries/codex-acp"]),
+    "codex": ("Codex", "npx", ["-y", "@agentclientprotocol/codex-acp@latest"]),
 }
 
 #: What each permission mode lets an external agent do without asking (ACP tool kinds).
@@ -109,7 +110,7 @@ def _not_started(config: _providers.ACPAgentConfig, err: Exception) -> str:
     """Why an agent's program did not start, with what to do about it."""
     if not installed(config):
         if os.path.basename(config.command).split(".")[0] in ("npx", "node", "npm"):
-            return (f"{config.label} needs Node.js 18 or later, and it was not found on this computer. Install it "
+            return (f"{config.label} needs Node.js 22 or later, and it was not found on this computer. Install it "
                     "(nodejs.org) and try again, or pick Pyzed Agent.")
         return f"{config.label} needs {config.command}, and it was not found on this computer. Install it and try again."
     return f"Could not start {config.label}: {err}"
