@@ -27,6 +27,7 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, List, Optional
 
+from . import _localhttp
 from .agent import Agent
 
 #: The MCP versions this server answers with (the client's when it is one of these).
@@ -102,7 +103,7 @@ class ToolServer:
             def log_message(self, *args: Any) -> None:
                 pass
 
-        self._httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self._httpd = _localhttp.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self._httpd.daemon_threads = True
         self.host = f"127.0.0.1:{self._httpd.server_address[1]}"
         self.url = f"http://{self.host}{self.path}"
