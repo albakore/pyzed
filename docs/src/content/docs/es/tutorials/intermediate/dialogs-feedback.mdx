@@ -107,6 +107,33 @@ errores en `{campo: mensaje}` con `pyzed.forms.validation_errors(error)`. Mira
 
 <Run file="examples/tutorial/feedback.py" lang="es" />
 
+## Eventos de este tutorial
+
+| Widget | Evento | Handler |
+| --- | --- | --- |
+| `ui.input` (tres campos) | `on_input` | `lambda v: setattr(self, "name", v)`… |
+| `ui.input` (contraseña) | `on_submit` | `self.submit` |
+| **Create account** | `on_press` | `self.submit` |
+| `ui.confirm` | `on_confirm`, `on_cancel` | `self.create`, cerrar el diálogo |
+| `ui.dialog_layer` | `on_dismiss` | cerrar el diálogo (un clic en el fondo) |
+| `ui.toast` | `on_dismiss` | `lambda i=i: self.dismiss(i)` |
+
+### Prueba más eventos
+
+```python
+def on_key(self, combo):
+    if combo == "escape" and self.confirming:   # Escape cierra el diálogo
+        self.confirming = False
+        return []                               # atendida: la tecla no sigue
+
+def view(self):
+    ...
+    toasts = [ui.toast(title, text, kind=kind,
+                       on_dismiss=lambda i=i: self.dismiss(i),
+                       on_press=lambda i=i: self.dismiss(i))   # un clic en la tarjeta también lo cierra
+              for i, kind, title, text in self.notes]
+```
+
 ## Siguiente
 
 - [Un componente propio](/pyzed/es/tutorials/intermediate/custom-component/) en la vista de componente del

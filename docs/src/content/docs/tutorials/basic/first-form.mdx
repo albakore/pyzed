@@ -123,6 +123,36 @@ gets the full traceback. Fix the code, save, and the window picks up the new ver
 
 <Run file="examples/tutorial/designer/contact.pzform" form />
 
+## Events in this tutorial
+
+| Control | Event | Handler | `event.value` |
+| --- | --- | --- | --- |
+| The form | `load` | `form_load` | `None`: it puts the cursor in the first box. |
+| `message` (Text area) | `change` | `message_change` | The whole text, on every keystroke. |
+| `send` (Button) | `click` | `send_click` | `None`. |
+
+### Try more events
+
+```python
+def email_submit(form, event):              # Enter in the email box sends too
+    return send_click(form, event)
+
+
+def topic_change(form, event):              # a drop-down: event.value is the option picked
+    form.status.color = "text_muted"
+    form.status.text = f"Topic: {event.value}"
+
+
+def send_mouse_enter(form, event):          # every control has mouse_enter and mouse_leave
+    form.status.text = "Ready to send?"
+
+
+def form_close(form, event):                # return False to keep the window open
+    if form.message.text.strip():
+        form.status.text = "Send or clear the message before closing."
+        return False
+```
+
 ## Next
 
 - [Layout basics](/pyzed/tutorials/basic/layout-basics/): rows, columns and grids, in the designer and in code.

@@ -153,6 +153,27 @@ The same pattern with real libraries, each a complete project in
 	]}
 />
 
+## Events in this tutorial
+
+| Source | Event | Handler |
+| --- | --- | --- |
+| The app | `on_start` | Loads the contacts from the backend in the background. |
+| `ui.input` | `on_input` | Stores the text of each field. |
+| `ui.input` (email) | `on_submit` | `self.add`: sends the new contact to the backend. |
+
+### Try more events
+
+```python
+def row(self, contact):
+    return ui.list_item(contact.name, None, icon="user",
+                        on_double_press=lambda: setattr(self, "editing", contact),  # edit it
+                        on_right_press=lambda: setattr(self, "deleting", contact))  # ask to delete it
+
+def on_key(self, combo):
+    if combo == "f5":                       # reload from the backend
+        return self.on_start()
+```
+
 ## Next
 
 - [Package your app](/pyzed/tutorials/advanced/packaging/) for Windows, macOS and Linux.

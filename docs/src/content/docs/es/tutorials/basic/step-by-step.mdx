@@ -95,6 +95,49 @@ redimensionable, un atajo (`on_key` recibe combinaciones como `"ctrl-n"`) y una 
 
 <Code code={step5} lang="python" title="examples/tutorial/step5_notes.py" />
 
+## Eventos de este tutorial
+
+| Paso | Widget | Evento | El handler recibe |
+| --- | --- | --- | --- |
+| 2 | `ui.input` | `on_input` | El texto nuevo, en cada tecla. |
+| 2 | `ui.input`, `ui.button` | `on_submit`, `on_press` | Nada. Aquí son el *mensaje* `"greet"`, que va a `update`. |
+| 3 | `ui.number_field`, `ui.switch`, `ui.select` | `on_change`, `on_toggle`, `on_select` | El número, `True`/`False`, la opción. |
+| 4 | `subscriptions()` | un temporizador | `pz.every(segundos, mensaje)` manda el mensaje a `update`. |
+| 5 | `on_key(combo)` | cada tecla | La combinación, como `"ctrl-n"`. |
+| 5 | `ui.editor`, `ui.split` | `on_change`, `on_resize` | El texto; la parte del primer panel. |
+
+El paso 2 maneja sus eventos en dos estilos a la vez: la caja llama a una lambda que cambia `self` (imperativo) y el
+botón manda el mensaje `"greet"` a `update` (declarativo). El mismo saludador solo con mensajes:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class Typed:
+    text: str
+
+
+class Greeter(pz.App):
+    def __init__(self):
+        self.name, self.greetings = "", 0
+
+    def update(self, message):
+        match message:
+            case Typed(text):
+                self.name = text
+            case "greet" if self.name:
+                self.greetings += 1
+
+    def view(self):
+        return pz.column([
+            ui.input(self.name, Typed, placeholder="Tu nombre", on_submit="greet"),
+            ui.button("Saludar", "greet", variant="solid"),
+        ], spacing=12, padding=24)
+```
+
+Mira [Imperativo, declarativo y funcional](/pyzed/es/guides/code-styles/) para la tercera forma.
+
 ## Siguientes pasos
 
 - [Lista de tareas](/pyzed/es/tutorials/basic/todo-app/) y el [mini editor de código](/pyzed/es/tutorials/advanced/code-editor/), más detallados.

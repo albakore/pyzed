@@ -105,6 +105,26 @@ Rules catch typing mistakes. For checks only a server can make ("that email is t
 
 <Media clip="form-validation" alt="A sign-in form: a wrong email is flagged with a message under the field, fixed, then Sign in runs" caption="Validation at work in the sign-in example: a wrong email is flagged as you type and clears once fixed." />
 
+## Events in this tutorial
+
+Bound controls need almost no events: each change goes into `form.data` by itself. The form has one handler,
+`create_click`, which calls `form.validate()` and reads `form.data`.
+
+### Try more events
+
+```python
+def form_load(form, event):                 # start in the first box
+    return form.name.focus()
+
+
+def terms_change(form, event):              # a check box: event.value is True or False
+    form.create.enabled = event.value
+
+
+def email_change(form, event):              # check one field as the user types
+    form.email.validate()                   # shows (or clears) its message right away
+```
+
 ## Next
 
 - [Data binding and validation](/pyzed/editor/data-binding/) in the designer manual: nested paths

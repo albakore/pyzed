@@ -125,6 +125,35 @@ Para una versión más completa (buscador de archivos, panel de terminal, outlin
 de git) mira [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) y su
 página en el [Showcase](/pyzed/es/showcase/apps/#editor-de-proyectos).
 
+## Eventos de este tutorial
+
+| Widget | Evento | El handler recibe |
+| --- | --- | --- |
+| `ui.tab_bar` | `on_select`, `on_close` | El id de la pestaña (su ruta). |
+| `ui.editor` | `on_change`, `on_cursor` | El texto; la línea y la columna. |
+| `ui.tree` | `on_toggle`, `on_select` | La ruta de la carpeta o del archivo. |
+| `ui.status_item` | `on_press` | Nada. |
+| `ui.command_palette` | `on_query`, `on_submit` | La búsqueda; nada. |
+| `ui.layer` | `on_dismiss` | Nada (un clic fuera de la paleta). |
+| La app | `on_key` | La combinación (`ctrl-shift-p`, `ctrl-b`…). |
+
+### Prueba más eventos
+
+```python
+ui.editor(self.active, self.texts[self.active], path=self.active, font_size=self.font_size,
+          on_change=self.edited,
+          on_cursor=lambda line, col: setattr(self, "cursor", (line, col)),
+          on_zoom=lambda step: setattr(self, "font_size", 14 if step == 0 else self.font_size + step))
+
+ui.tree(self.nodes, expanded=self.expanded, selected=self.active,
+        on_toggle=self.toggle_folder, on_select=self.open_file,
+        on_open=self.open_file,                                     # doble clic
+        on_context=lambda path: setattr(self, "menu_for", path))    # clic derecho: un menú
+
+ui.tab_bar(tabs, self.active, on_select=lambda p: setattr(self, "active", p), on_close=self.close_tab,
+           on_new=self.new_file)                                    # doble clic después de las pestañas
+```
+
 ## Siguiente
 
 - [Un bucle de juego](/pyzed/es/tutorials/advanced/game-loop/) con `pyzed.game`.

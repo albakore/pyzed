@@ -104,6 +104,34 @@ touch `self`: they send messages with `pz.post`.
 
 <Run file="examples/downloads.py" />
 
+## Events in this tutorial
+
+This app is **declarative**: the events of the threads are messages. `pz.post(("progress", name, done))` from a
+worker thread and `on_dismiss=("dismiss", tid)` of each toast both reach `update(message)`, which unpacks the tuple.
+
+| Source | Event | Message or handler |
+| --- | --- | --- |
+| **Download** button | `on_press` | `lambda: self.start(name)` |
+| The worker thread | progress, finished | `pz.post(("progress", name, done))`, `pz.post(("finished", name))` |
+| **Check for updates** | `on_press` | `self.check_updates`, which returns `Command.perform(work, done)` |
+| `Command.perform` | the work finished | `self.got_version(result)` |
+| A toast | `on_dismiss` | the message `("dismiss", tid)` |
+
+### Try more events
+
+```python
+def row(self, name):
+    ...
+    return pz.column([...]).on(double_click=lambda: self.start(name))   # double click: download again
+
+def subscriptions(self):                    # an event every second while something downloads
+    busy = any(v < 1 for v in self.progress.values())
+    return [pz.every(1, ("tick", "", None))] if busy else []
+```
+
+`update` gets `("tick", "", None)` every second while a download runs, and nothing once they finish: a subscription
+you stop returning stops.
+
 ## Next
 
 - [A shader effect](/pyzed/tutorials/intermediate/shader-effect/) from the Shader view.

@@ -125,6 +125,32 @@ control stretches; anchored only right, it follows the right edge. Select contro
 
 <Run file="examples/tutorial/layout_basics.py" />
 
+## Events in this tutorial
+
+The page has one event: the **Follow** button's `on_press`, which calls `toggle_follow` (no argument). Layout
+widgets have no events of their own, but any widget takes the [common events](/pyzed/guides/events/) with `.on()`.
+
+### Try more events
+
+```python
+def __init__(self):
+    self.follows = False
+    self.narrow = False                     # new: the window is narrow
+    self.opened = None                      # new: the stat that was clicked
+
+def stats(self):
+    return pz.grid([
+        ui.stat(name, value, width="fill", on_press=lambda name=name: setattr(self, "opened", name))
+        for name, value in (("Projects", "12"), ("Followers", "1,204"), ("Stars", "86"))
+    ], columns=1 if self.narrow else 3, spacing=12, height=84)
+
+def view(self):
+    page = pz.column([self.header(), self.stats(), self.about()], spacing=20, padding=24)
+    # resize: one column when the window is narrower than 560 px
+    return page.on(resize=lambda e: setattr(self, "narrow", e.width < 560),
+                   double_click=lambda: setattr(self, "opened", None))
+```
+
 ## Next
 
 - [Change the theme](/pyzed/tutorials/basic/themes/) of this window.

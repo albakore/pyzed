@@ -120,6 +120,35 @@ Los juegos de cuadrícula como Snake avanzan una celda cada vez a ritmo constant
 
 <Run file="examples/tutorial/dodge.py" lang="es" />
 
+## Eventos de este tutorial
+
+| Origen | Evento | Handler |
+| --- | --- | --- |
+| `subscriptions()` | cada fotograma | `pz.frames(self.tick)`: `tick(dt)` recibe los segundos desde el anterior. |
+| El teclado | teclas mantenidas | `game.axis(("left", "a"), ("right", "d"))` las lee dentro de `tick`. |
+| La app | `on_key` | Enter vuelve a empezar después de chocar. |
+
+Un juego lee en cada fotograma las teclas que están *pulsadas* en lugar de reaccionar a cada pulsación; `on_key` es
+para acciones puntuales.
+
+### Prueba más eventos
+
+```python
+def on_key(self, combo):
+    if combo == "enter" and self.over:
+        self.reset()
+    elif combo == "p":                       # pausa: deja de devolver la suscripción de fotogramas
+        self.paused = not self.paused
+
+def subscriptions(self):
+    return [] if self.over or self.paused else [pz.frames(self.tick)]
+
+def board(self):
+    ...
+    return pz.canvas(shapes, width=W, height=H,
+                     on_press=lambda x, y: self.reset() if self.over else None)   # clic para reiniciar
+```
+
 ## Siguiente
 
 - [Hacer videojuegos](/pyzed/es/games/): Snake, Breakout y Neon Invaders, paso a paso.

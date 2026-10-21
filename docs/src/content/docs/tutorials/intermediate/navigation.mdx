@@ -101,6 +101,43 @@ In the designer, a **Tab bar** control raises `change` with the selected tab; sh
 
 <Run file="examples/tutorial/navigation.py" />
 
+## Events in this tutorial
+
+| Widget | Event | Handler |
+| --- | --- | --- |
+| Sidebar `ui.list_item` | `on_press` | `lambda name=name: self.go(name)` |
+| The app | `on_key` | `ctrl-1`, `ctrl-2`, `ctrl-3` go to a page |
+| `ui.breadcrumbs` | `on_press` | gets the index of the part: `0` goes home |
+| Inbox `ui.list_item` | `on_press` | marks the message as read |
+| `ui.segmented`, `ui.select`, `ui.switch` | `on_select`, `on_select`, `on_toggle` | the tab, the theme, on/off |
+
+### Try more events
+
+Back and forward with a history, like a browser:
+
+```python
+def __init__(self):
+    ...
+    self.history, self.future = [], []
+
+def go(self, page):
+    if page != self.page:
+        self.history.append(self.page)
+        self.future.clear()
+        self.page = page
+
+def on_key(self, combo):
+    if combo == "alt-left" and self.history:
+        self.future.append(self.page)
+        self.page = self.history.pop()
+    elif combo == "alt-right" and self.future:
+        self.history.append(self.page)
+        self.page = self.future.pop()
+```
+
+Mice with back and forward buttons send them as `mouse_down` with `event.button` set: add
+`.on(mouse_down=lambda e: ...)` to the page.
+
 ## Next
 
 - [Lists and tables with data](/pyzed/tutorials/intermediate/lists-tables/).

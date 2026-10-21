@@ -121,6 +121,31 @@ pz.stack([
 
 <Media clip="shader-graph" alt="Nodes dragged onto the Shader view and wired to the Output, with every preview updating" caption="Every node shows its preview, so you see each change the moment you wire it." />
 
+## Events in this tutorial
+
+| Control | Event | Handler |
+| --- | --- | --- |
+| The form | `load` | `form_load`: points the Shader control at `glow.pzshad`. |
+| `faster` (Button) | `click` | `faster_click`: changes the `pulse` variable. |
+| `color` (Button) | `click` | `color_click`: the next neon color. |
+
+### Try more events
+
+```python
+def color_right_click(form, event):         # every control has right_click: back to the first color
+    variables = dict(form.backdrop.variables)
+    variables["color"] = COLORS[0]
+    form.backdrop.variables = variables
+
+
+def backdrop_mouse_enter(form, event):      # the Shader control has the mouse events too
+    form.hint.text = "Move the pointer away to calm it down"
+
+
+def backdrop_mouse_leave(form, event):
+    form.hint.text = ""
+```
+
 ## Next
 
 - [A custom shader graph](/pyzed/tutorials/advanced/shader-graph/): build a graph in Python, node by node.

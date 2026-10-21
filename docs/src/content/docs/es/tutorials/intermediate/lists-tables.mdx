@@ -107,6 +107,37 @@ buscadas en SQL.
 
 <Run file="examples/tutorial/lists_tables.py" lang="es" />
 
+## Eventos de este tutorial
+
+| Widget | Evento | El handler recibe |
+| --- | --- | --- |
+| `ui.table` | `on_sort` | El título de la columna pulsada. |
+| `ui.table` | `on_row_press` | La fila: el dict del libro. |
+| `ui.list_item` | `on_press` | Nada (el libro se ata con `book=book`). |
+| `ui.search_input`, `ui.segmented` | `on_input`, `on_select` | La búsqueda; el modo. |
+
+### Prueba más eventos
+
+La tabla tiene dos eventos de fila más: el doble clic y el clic derecho.
+
+```python
+def table(self, books):
+    return ui.table(
+        columns, books, sort_by=self.sort_by, descending=self.descending, on_sort=self.sort,
+        selected=self.selected,
+        on_row_press=lambda book: setattr(self, "selected", book),
+        on_row_double_press=lambda book: setattr(self, "editing", book),   # abrir un editor
+        on_row_context=lambda book: setattr(self, "menu_for", book),       # un menú contextual
+        striped=True, row_height=34, height="fill",
+    )
+
+def on_key(self, combo):                    # las flechas mueven la selección
+    books = self.visible()
+    if combo in ("up", "down") and books:
+        i = books.index(self.selected) if self.selected in books else -1
+        self.selected = books[max(0, min(len(books) - 1, i + (1 if combo == "down" else -1)))]
+```
+
 ## Siguiente
 
 - [Diálogos, notificaciones y validación](/pyzed/es/tutorials/intermediate/dialogs-feedback/).

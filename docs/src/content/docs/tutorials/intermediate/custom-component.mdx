@@ -125,6 +125,41 @@ Run the component's preview, or the form that uses it:
 
 <Run file="examples/designer/components/reviews.pzform" form />
 
+## Events in this tutorial
+
+`Rating` declares one custom event, `change`, in `events` and raises it with `self.emit("change", stars)`. The
+parent listens with `on_change=`, and its handler gets a `pz.Event` whose `value` is the rating. Like every
+component, `Rating` also raises `mount` and `unmount`, and takes the common events (`on_right_click`,
+`on_mouse_enter`…).
+
+### Try more events
+
+A second custom event, raised only if someone listens:
+
+```python
+class Rating(pz.Component):
+    value: int = 0
+    events = {
+        "change": "A star was picked (event.value is the rating).",
+        "clear": "The rating was cleared with a right click.",          # new
+    }
+
+    def render(self):
+        stars = pz.row([...])                                           # as in the tutorial
+        if self.handles("clear"):                                       # only when the parent passed on_clear
+            stars = stars.on(right_click=lambda: self.emit("clear"))
+        return stars
+
+
+# The parent, in its view:
+Rating(value=self.stars,
+       on_change=lambda e: setattr(self, "stars", e.value),
+       on_clear=lambda: setattr(self, "stars", 0),                      # no argument: called with nothing
+       on_mount=lambda: print("the rating is on screen"))
+```
+
+More in [creating your own events](/pyzed/guides/classes/#creating-your-own-events).
+
 ## Next
 
 - [Component designer](/pyzed/editor/component-designer/): every section of the Component panel, property types,

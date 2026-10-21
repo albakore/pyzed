@@ -117,6 +117,47 @@ porque leen sus colores del tema activo.
 
 <Run file="examples/todo.py" lang="es" />
 
+## Eventos de este tutorial
+
+| Widget | Evento | Handler | Recibe |
+| --- | --- | --- | --- |
+| `ui.input` | `on_input` | `lambda text: setattr(self, "draft", text)` | El texto. |
+| `ui.input`, **Añadir** | `on_submit`, `on_press` | `self.add` | Nada. |
+| `ui.segmented` | `on_select` | `lambda f: setattr(self, "filter", f)` | El filtro. |
+| `ui.list_item` | `on_press` | `lambda: self.toggle(task)` | Nada. |
+| `ui.checkbox` | `on_toggle` | `lambda _: self.toggle(task)` | `True`/`False` (se ignora: `_`). |
+| `ui.icon_button` | `on_press` | `lambda: self.remove(task)` | Nada. |
+| La app | `on_start`, `on_key` | enfoca el campo; `ctrl-l`, `ctrl-t` | —, la combinación. |
+
+### Prueba más eventos
+
+Renombra una tarea con doble clic y abre un menú con clic derecho:
+
+```python
+def __init__(self):
+    ...
+    self.renaming = None                    # la tarea que se renombra
+    self.menu_for = None                    # la tarea con el menú abierto
+
+def task_row(self, task):
+    return ui.list_item(
+        ui.label(task.title), lambda: self.toggle(task),
+        start=ui.checkbox(task.done, lambda _: self.toggle(task)),
+        on_double_press=lambda: setattr(self, "renaming", task),     # doble clic
+        on_right_press=lambda: setattr(self, "menu_for", task),      # clic derecho
+        height=34, inset=True,
+    )
+
+def view(self):
+    page = ...                              # la página del tutorial
+    dialog = None
+    if self.renaming:
+        task = self.renaming
+        dialog = ui.prompt("Renombrar", task.title, lambda t: setattr(task, "title", t),
+                           lambda: setattr(self, "renaming", None), lambda: setattr(self, "renaming", None))
+    return ui.dialog_layer(page, dialog)
+```
+
 ## Siguiente
 
 - [Enlace de datos y validación](/pyzed/es/tutorials/intermediate/data-binding/) en el diseñador.

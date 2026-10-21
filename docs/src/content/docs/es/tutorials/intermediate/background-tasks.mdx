@@ -104,6 +104,34 @@ de trabajo no tocan `self`: envían mensajes con `pz.post`.
 
 <Run file="examples/downloads.py" lang="es" />
 
+## Eventos de este tutorial
+
+Esta app es **declarativa**: los eventos de los hilos son mensajes. `pz.post(("progress", name, done))` desde un hilo
+y el `on_dismiss=("dismiss", tid)` de cada aviso llegan a `update(message)`, que desempaqueta la tupla.
+
+| Origen | Evento | Mensaje o handler |
+| --- | --- | --- |
+| Botón **Descargar** | `on_press` | `lambda: self.start(name)` |
+| El hilo de trabajo | progreso, terminado | `pz.post(("progress", name, done))`, `pz.post(("finished", name))` |
+| **Buscar actualizaciones** | `on_press` | `self.check_updates`, que devuelve `Command.perform(trabajo, hecho)` |
+| `Command.perform` | terminó el trabajo | `self.got_version(resultado)` |
+| Un aviso | `on_dismiss` | el mensaje `("dismiss", tid)` |
+
+### Prueba más eventos
+
+```python
+def row(self, name):
+    ...
+    return pz.column([...]).on(double_click=lambda: self.start(name))   # doble clic: descargar otra vez
+
+def subscriptions(self):                    # un evento por segundo mientras algo se descarga
+    busy = any(v < 1 for v in self.progress.values())
+    return [pz.every(1, ("tick", "", None))] if busy else []
+```
+
+`update` recibe `("tick", "", None)` cada segundo mientras hay una descarga y nada cuando terminan: la suscripción que
+dejas de devolver se detiene.
+
 ## Siguiente
 
 - [Un efecto de shader](/pyzed/es/tutorials/intermediate/shader-effect/) desde la vista de shader.
