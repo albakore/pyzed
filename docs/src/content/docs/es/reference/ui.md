@@ -2714,6 +2714,10 @@ editor(
     annotations=None,
     show_whitespace=False,
     tab_size=None,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
     capture_keys=(),
     on_scroll=None,
     auto_close=True,
@@ -2757,6 +2761,10 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `annotations` | `{línea: "texto"}` o `{línea: ("texto", color)}`: texto virtual al final de la línea (code lens, diagnósticos). |
 | `show_whitespace` | Dibuja los espacios como `·` y los tabuladores como `→`. |
 | `tab_size` | Tab inserta espacios hasta el siguiente múltiplo; Enter mantiene la sangría (un nivel más tras `:`); Backspace quita un nivel. |
+| `hard_tabs` | Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios. |
+| `backspace_unindent` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
+| `repeat_delay` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
+| `repeat_rate` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
 | `capture_keys` | Teclas que el editor deja al `on_key` de la app (`"up"`, `"enter"`…), por ejemplo con una lista de autocompletado abierta. |
 | `on_scroll` | Se llama al desplazar. |
 | `auto_close` | Cierra paréntesis, corchetes, llaves y comillas al escribir (y envuelve la selección). |

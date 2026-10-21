@@ -22,6 +22,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, List, Optional, Tuple, Union
 
+from .indentation import keeps_indentation
+
 _counter = itertools.count()
 
 HEADER = '''"""Event handlers for the {form} form.
@@ -81,6 +83,7 @@ def get_function(source: str, name: str) -> Optional[str]:
     return "".join(lines[span[0] - 1: span[1]])
 
 
+@keeps_indentation
 def ensure_function(source: str, name: str, doc: str = "") -> Tuple[str, bool]:
     """Adds a stub for ``name`` at the end of ``source`` if missing; returns ``(source, created)``."""
     if find_function(source, name) is not None:
@@ -90,6 +93,7 @@ def ensure_function(source: str, name: str, doc: str = "") -> Tuple[str, bool]:
     return source + gap + stub(name, doc), True
 
 
+@keeps_indentation
 def replace_function(source: str, name: str, new_code: str, *, strict: bool = True) -> str:
     """Replaces the source of function ``name`` with ``new_code`` (appended if it is missing).
 

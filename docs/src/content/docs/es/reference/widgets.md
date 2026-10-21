@@ -1586,6 +1586,10 @@ code_editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
 )
 ```
 
@@ -1643,6 +1647,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `keymap` | Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción). |
 | `scrollbar` | `False` oculta las barras de desplazamiento. |
 | `readonly` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
+| `hard_tabs` | Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios. |
+| `backspace_unindent` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
+| `repeat_delay` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
+| `repeat_rate` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
 
 ## Estilos
 

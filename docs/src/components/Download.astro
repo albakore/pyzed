@@ -1,14 +1,12 @@
 ---
 // Platform picker for the Pyzed Design downloads. Detects the visitor's OS and selects it.
 import { Icon } from '@astrojs/starlight/components';
+import downloads from '../generated/downloads.json';
 import release from '../generated/release.json';
 import {
 	DESIGNER_ASSETS,
-	DESIGNER_INSTALLERS,
 	INSTALL_SH,
 	RELEASES_URL,
-	downloadUrl,
-	hasInstallers,
 	type Platform,
 } from './downloads';
 
@@ -16,14 +14,16 @@ const es = Astro.currentLocale === 'es';
 const stable = release.latestStable;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const changelog = `${base}${es ? '/es' : ''}/changelog/`;
-// Releases after 1.2.0 come with a setup program, a disk image and install.sh; older ones only with zips.
-const installers = hasInstallers(stable?.version);
-const files = installers ? DESIGNER_INSTALLERS : DESIGNER_ASSETS;
+// The newest stable release that has each file (scripts/sync-downloads.mjs): one published before its
+// builds are attached is skipped. Releases after 1.2.0 come with installers; older ones only with zips.
+const builds = downloads as Record<Platform, { version: string | null; file: string; url: string; installer: boolean } | null>;
 const curl = `<code>curl -fsSL ${INSTALL_SH} | sh</code>`;
 
 const t = es
 	? {
 			latest: 'Última versión estable',
+			missing: 'Todavía no hay descarga para este sistema. Mira todas las versiones o instálalo con pip.',
+			unavailable: 'No disponible',
 			notes: 'Novedades',
 			all: 'Todas las versiones',
 			yours: 'Tu sistema',
@@ -34,6 +34,8 @@ const t = es
 		}
 	: {
 			latest: 'Latest stable release',
+			missing: 'There is no download for this system yet. See all releases or install it with pip.',
+			unavailable: 'Not available',
 			notes: "What's new",
 			all: 'All releases',
 			yours: 'Your system',
@@ -208,6 +210,7 @@ const initial: Platform = 'windows';
 	{
 		order.map((id) => {
 			const p = platforms[id];
+			const build = builds[id];
 			return (
 				<section
 					class="pz-panel"
@@ -223,17 +226,32 @@ const initial: Platform = 'windows';
 								{t.for} {p.name}
 							</h3>
 							<p class="muted">
-								{p.requires} · {t.file}: <code>{files[id]}</code>
+								{p.requires}
+								{build && (
+									<>
+										{' · '}
+										{t.file}: <code>{build.file}</code>
+										{build.version && ` (v${build.version})`}
+									</>
+								)}
 							</p>
 						</div>
-						<a class="pz-button" href={downloadUrl(id, installers)} data-asset={files[id]}>
-							<Icon name="download" size="1.25rem" />
-							{t.download} {p.name}
-						</a>
+						{build ? (
+							<a class="pz-button" href={build.url} data-asset={build.file}>
+								<Icon name="download" size="1.25rem" />
+								{t.download} {p.name}
+							</a>
+						) : (
+							<span class="pz-button" aria-disabled="true">
+								<Icon name="download" size="1.25rem" />
+								{t.unavailable}
+							</span>
+						)}
 					</div>
+					{!build && <p class="pz-note">{t.missing}</p>}
 					<h4>{t.install}</h4>
 					<ol class="pz-steps">
-						{(installers ? p.install : p.steps).map((step) => (
+						{(build?.installer !== false ? p.install : p.steps).map((step) => (
 							<li set:html={step} />
 						))}
 					</ol>
@@ -454,6 +472,12 @@ const initial: Platform = 'windows';
 	}
 	.pz-button:hover {
 		background: var(--sl-color-white);
+	}
+	.pz-button[aria-disabled='true'] {
+		color: var(--sl-color-gray-3);
+		background: var(--pz-tile-bg);
+		box-shadow: none;
+		cursor: not-allowed;
 	}
 	.pz-panel h4 {
 		margin: 1.5rem 0 0.5rem;

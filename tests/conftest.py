@@ -28,3 +28,18 @@ def _isolated_config(tmp_path, monkeypatch):
     from pyzed import i18n
 
     i18n.set_language("en")  # a test that switches the designer's language must not leak it into the next
+
+
+@pytest.fixture(autouse=True)
+def _isolated_styles():
+    """Keeps the named styles, stylesheet rules and global style an example or test sets out of the next test
+    (``examples/styles.py`` names a "card" style that a stylesheet test's ``.card`` would otherwise pick up)."""
+    from pyzed import style
+
+    named, rules, global_style = dict(style._named), dict(style._rules), style._global
+    yield
+    style._named.clear()
+    style._named.update(named)
+    style._rules.clear()
+    style._rules.update(rules)
+    style._global = global_style

@@ -32,7 +32,9 @@ Translations and Internal.
    git push origin v0.3.0
    ```
 
-   Creating a release on GitHub with a new `v0.3.0` tag on `main` works too.
+   Creating a release on GitHub with a new `v0.3.0` tag on `main` works too. The workflow turns it
+   into a draft until its files are attached, so the download page, `install.sh` and the app's
+   updater keep offering the previous version meanwhile (and if a build fails).
 
 The **Release** workflow (`.github/workflows/release.yml`) then:
 

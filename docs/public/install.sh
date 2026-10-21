@@ -5,8 +5,9 @@
 #
 # It downloads the release zip for this machine, checks it against the release's SHA256SUMS,
 # unpacks it into ~/.local/share/pyzed-design, links ~/.local/bin/pyzed-design and adds the
-# app (and .pzform files) to the desktop's menu. Nothing needs root. Once installed, the app
-# updates itself. Run it again to reinstall, or with --uninstall to remove it.
+# app to the desktop's menu (opening .pzform, .pzcomp, .pzshad and .pzanim files). Nothing
+# needs root. Once installed, the app updates itself. Run it again to reinstall, or with
+# --uninstall to remove it.
 #
 # Optional environment variables:
 #   PYZED_VERSION       a version to install (1.3.0); the latest stable release by default
@@ -121,7 +122,7 @@ Exec="$INSTALL_DIR/$APP/$APP" %f
 Icon=$ID
 Terminal=false
 Categories=Development;IDE;GUIDesigner;
-MimeType=application/x-pyzed-form;
+MimeType=application/x-pyzed-form;application/x-pyzed-component;application/x-pyzed-shader;application/x-pyzed-animation;
 StartupWMClass=$APP
 EOF
     cat > "$MIME_FILE" <<EOF
@@ -131,6 +132,21 @@ EOF
     <comment>Pyzed form</comment>
     <sub-class-of type="application/json"/>
     <glob pattern="*.pzform"/>
+  </mime-type>
+  <mime-type type="application/x-pyzed-component">
+    <comment>Pyzed component</comment>
+    <sub-class-of type="application/json"/>
+    <glob pattern="*.pzcomp"/>
+  </mime-type>
+  <mime-type type="application/x-pyzed-shader">
+    <comment>Pyzed shader</comment>
+    <sub-class-of type="application/json"/>
+    <glob pattern="*.pzshad"/>
+  </mime-type>
+  <mime-type type="application/x-pyzed-animation">
+    <comment>Pyzed animation library</comment>
+    <sub-class-of type="application/json"/>
+    <glob pattern="*.pzanim"/>
   </mime-type>
 </mime-info>
 EOF

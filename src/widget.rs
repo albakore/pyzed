@@ -144,6 +144,12 @@ pub struct EditorProps {
     pub whitespace: Option<Color>,
     /// Tab inserts spaces up to the next multiple of `tab_size`; Enter keeps the indentation.
     pub tab_size: Option<usize>,
+    /// With `tab_size`: Tab and Enter indent with tab characters.
+    pub hard_tabs: bool,
+    /// With `tab_size`: Backspace in leading spaces removes a whole level.
+    pub backspace_unindent: bool,
+    /// The pace of Backspace and Delete held down (`None`: the system's key repeat).
+    pub key_repeat: Option<crate::editor::KeyRepeat>,
     /// Keys the editor ignores (handled by the app's `on_key` instead), e.g. `"up"`, `"enter"`.
     pub capture_keys: Vec<String>,
     pub on_scroll: Option<PyMsg>,
@@ -1471,7 +1477,8 @@ pub fn progress_bar(
     tab_size=None, capture_keys=None, on_scroll=None, auto_close=false, folding=false,
     minimap=None, minimap_thumb=None, cursor_shape="bar", cursor_width=2.0, cursor_blink=true,
     cursor_color=None, on_zoom=None, on_action=None, highlights=None, highlight_color=None,
-    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false))]
+    match_brackets=true, selection_highlight=true, keymap=None, scrollbar=true, readonly=false,
+    hard_tabs=false, backspace_unindent=true, repeat_delay=None, repeat_rate=None))]
 #[allow(clippy::too_many_arguments)]
 pub fn code_editor(
     py: Python<'_>,
@@ -1522,7 +1529,22 @@ pub fn code_editor(
     keymap: Option<Bound<'_, PyDict>>,
     scrollbar: bool,
     readonly: bool,
+    hard_tabs: bool,
+    backspace_unindent: bool,
+    repeat_delay: Option<f32>,
+    repeat_rate: Option<f32>,
 ) -> PyResult<Py<Widget>> {
+    // Held Backspace/Delete: kept after `repeat_delay` ms, then `repeat_rate` times a second.
+    let key_repeat =
+        (repeat_delay.is_some() || repeat_rate.is_some()).then(|| crate::editor::KeyRepeat {
+            delay: std::time::Duration::from_secs_f32(
+                repeat_delay.unwrap_or(0.0).max(0.0) / 1000.0,
+            ),
+            interval: match repeat_rate {
+                Some(rate) if rate > 0.0 => std::time::Duration::from_secs_f32(1.0 / rate),
+                _ => std::time::Duration::ZERO,
+            },
+        });
     let shape = crate::editor_widgets::CaretShape::parse(cursor_shape).ok_or_else(|| {
         pyo3::exceptions::PyValueError::new_err(format!(
             "cursor_shape must be \"bar\", \"block\", \"underline\" or \"hollow\", not {cursor_shape:?}"
@@ -1605,6 +1627,9 @@ pub fn code_editor(
             annotations: annotation_list,
             whitespace: style::opt_color(&whitespace)?,
             tab_size: tab_size.filter(|n| *n > 0),
+            hard_tabs,
+            backspace_unindent,
+            key_repeat,
             capture_keys: capture_keys.unwrap_or_default(),
             on_scroll: PyMsg::maybe(&on_scroll),
             auto_close,

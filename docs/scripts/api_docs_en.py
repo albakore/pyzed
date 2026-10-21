@@ -429,6 +429,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "annotations": '`{line: "text"}` or `{line: ("text", color)}`: virtual text at the end of the line (code lens, diagnostics).',
                         "whitespace": "Draws spaces as `·` and tabs as `→` in this color.",
                         "tab_size": "Tab inserts spaces up to the next multiple; Enter keeps the indentation; Backspace removes a level.",
+                        "hard_tabs": "With `tab_size`: Tab, Enter and indent (Ctrl+]) use tab characters instead of spaces.",
+                        "backspace_unindent": "With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space).",
+                        "repeat_delay": "Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's).",
+                        "repeat_rate": "Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace).",
                         "capture_keys": 'Keys the editor leaves to the app\'s `on_key` (`"up"`, `"enter"`…), e.g. while a completion list is open.',
                         "auto_close": "Typing a bracket or quote also inserts its closing pair.",
                         "folding": "Fold chevrons in the gutter and Ctrl+Shift+[ / ].",
@@ -825,6 +829,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
                         "annotations": '`{line: "text"}` or `{line: ("text", color)}`: virtual text at the end of the line (code lens, diagnostics).',
                         "show_whitespace": "Draws spaces as `·` and tabs as `→`.",
                         "tab_size": "Tab inserts spaces up to the next multiple; Enter keeps the indentation (one more level after `:`); Backspace removes a level.",
+                        "hard_tabs": "With `tab_size`: Tab, Enter and indent (Ctrl+]) use tab characters instead of spaces.",
+                        "backspace_unindent": "With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space).",
+                        "repeat_delay": "Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's).",
+                        "repeat_rate": "Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace).",
                         "capture_keys": 'Keys the editor leaves to the app\'s `on_key` (`"up"`, `"enter"`…), e.g. while a completion list is open.',
                         "auto_close": "Closes brackets and quotes as you type (and wraps the selection).",
                         "folding": "Fold chevrons in the gutter; Ctrl+Shift+[ folds and Ctrl+Shift+] unfolds.",
@@ -2042,7 +2050,8 @@ def _doc(*names):
 
 _section("app", "Hot reload", {
     **_doc("pyzed.hot_reload.enable", "pyzed.hot_reload.current", "pyzed.hot_reload.is_reloading",
-           "pyzed.hot_reload.enabled_by_env", "pyzed.hot_reload.Reloader", "pyzed.hot_reload.ReloadError"),
+           "pyzed.hot_reload.enabled_by_env", "pyzed.hot_reload.Reloader", "pyzed.hot_reload.ReloadError",
+           "pyzed.hot_reload.Change", "pyzed.hot_reload.remember"),
 }, before="Languages")
 _section("app", "Events and components", _doc(
     "pyzed.component.State", "pyzed.component.StateInfo", "pyzed.component.PropInfo", "pyzed.component.find",

@@ -64,6 +64,8 @@ from . import shader_editor
 from . import telemetry as _telemetry
 from ..project import Project
 from .. import reference as _reference
+from .. import animation_player as _animation_player
+from . import indentation as _indentation
 from . import help as _help
 
 Rect = Tuple[float, float, float, float]
@@ -72,6 +74,12 @@ SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "target", "__pycache__", "
 
 #: Files the designer opens: forms and components designed visually.
 DOCUMENT_SUFFIXES = (SUFFIX, _scene.SUFFIX, _shader_doc.SUFFIX)
+#: Every Pyzed file the Open dialog lists: the documents and the animation libraries (``.pzanim``, opened as JSON).
+PYZED_SUFFIXES = (*DOCUMENT_SUFFIXES, _animation_player.SUFFIX)
+#: What each Pyzed file is, for the Open dialog: suffix -> (kind, icon).
+FILE_KINDS = {SUFFIX: ("Form", "layout-template"), _scene.SUFFIX: ("Component", "component"),
+              _shader_doc.SUFFIX: ("Shader", "sparkles"), _animation_player.SUFFIX: ("Animation library",
+                                                                                     "clapperboard")}
 
 #: What "New" can create: (label, icon, suffix, factory returning a new document).
 NEW_DOCUMENT_KINDS: List[Tuple[str, str, str, Callable[[], Document]]] = [
@@ -140,7 +148,12 @@ class Designer(App):
                  language_servers: bool = True) -> None:
         # the open documents: the main window's tabs, and those moved to windows of their own
         self.panes = PaneController(self)
-        if path is not None and Path(path).exists():
+        #: A file given to open that is not a document (a ``.pzanim``, a script): opened once the panels exist.
+        opened_later = None
+        if path is not None and Path(path).exists() and Path(path).suffix not in DOCUMENT_SUFFIXES:
+            opened_later, path = Path(path), None
+            self.doc = Document()
+        elif path is not None and Path(path).exists():
             self.doc = _scene.open_document(path)
         elif path is not None and Path(path).suffix == _scene.SUFFIX:
             self.doc = _scene.new_component(Path(path).stem, path)
@@ -260,6 +273,8 @@ class Designer(App):
         # Designed components (.pzcomp) of the project join the toolbox.
         _scene.discover(found.root if found is not None else Path(path).resolve().parent if path else Path.cwd())
         self.title = self.window_title
+        if opened_later is not None:
+            self.open_path(opened_later)
 
     def on_start(self) -> Any:
         """Loads the project's tools, checks for updates and adds Pyzed's MCP server to the AI agents of this
@@ -2007,13 +2022,16 @@ class Designer(App):
         self.dialog_path = ""
 
     def open_path(self, path: Union[str, Path]) -> Any:
-        """Opens the form or component at ``path`` in a tab (``.pzform`` is added when there is no suffix).
+        """Opens the Pyzed file at ``path``: a form, component or shader in a tab (``.pzform`` is added when there
+        is no suffix), an animation library (``.pzanim``) or any other text file in the code editor.
 
         Switches to its tab if it is already open, and remembers it among the recent files.
         """
         path = Path(path)
         if not path.suffix:
             path = path.with_suffix(SUFFIX)
+        if path.suffix not in DOCUMENT_SUFFIXES:
+            return self._open_text(path)
         found = self.panes.find_path(path) if path.exists() else None
         if found is not None:
             self.dialog = None
@@ -2035,15 +2053,42 @@ class Designer(App):
         _logs.event("document", "Opened %s", path)
         self.notify(f"Opened {path.name}")
 
-    def save(self) -> None:
+    def _open_text(self, path: Path) -> Any:
+        """Opens a file that is not a document in the code editor; an animation library says what clips it has."""
+        if not path.is_file():
+            self.notify(tr("Could not open {name}", name=path.name), tr("The file does not exist"), kind="error",
+                        seconds=5)
+            return None
+        if not self.buffers.open(path):
+            self.notify(tr("{name} is not a text file", name=path.name), kind="error", seconds=4)
+            return None
+        self.dialog = None
+        if path.suffix == _animation_player.SUFFIX:
+            try:
+                clips = _animation_player.AnimationLibrary.load(path).names
+            except (OSError, ValueError) as err:
+                self.notify(tr("{name} is not a valid animation library", name=path.name), str(err),
+                            kind="warning", seconds=6)
+            else:
+                self.notify(tr("Opened {name}", name=path.name),
+                            tr("Clips: {clips}. Play them with pz.AnimationPlayer(\"{name}\")",
+                               clips=", ".join(clips) or "-", name=path.name), seconds=5)
+        _logs.event("document", "Opened %s", path)
+        return _core.Command.focus(self.editor_id)
+
+    def save(self) -> Any:
         """Saves the active document, asking for a path first if it has none.
 
         Does not save if the open code does not parse. A running preview reloads what was saved. While a
         project file has the keyboard in the code editor, that file is saved instead.
         """
         if self.focus == "code" and self.buffers.current is not None:
+            buffer = self.buffers.current
+            before = buffer.text
             self.buffers.save()
-            return
+            if buffer.text != before:  # "Convert indentation on save" rewrote it
+                return _core.Command.set_editor_text(self.editor_id, buffer.text)
+            return None
         if self.doc.path is None:
             self.dialog = "save_as"
             self.dialog_path = self._new_document_path(getattr(self.doc, "suffix", SUFFIX))
@@ -2051,6 +2096,7 @@ class Designer(App):
         if not self._flush_code():
             self.notify("Fix the code before saving", self.code_error, kind="error", seconds=4)
             return
+        self._convert_form_code()
         path = self.doc.save()
         _logs.event("document", "Saved %s", path)
         self.notify(f"Saved {path.name}", kind="success", seconds=2)
@@ -2058,6 +2104,39 @@ class Designer(App):
         if self.preview is not None and self.preview.is_open:
             # the running form picks up the saved layout and code, keeping what was typed in it
             self.preview.runtime.reload(path)
+
+    def _convert_form_code(self) -> None:
+        """With "Convert indentation on save", rewrites the form's code with tabs or spaces before it is saved."""
+        settings = self.assist.settings
+        code = getattr(self.doc, "code", None)
+        if not settings.convert_indentation or not isinstance(code, str) or not hasattr(self.doc, "set_code"):
+            return
+        converted = _indentation.convert(code, settings.hard_tabs, settings.tab_size)
+        if converted != code:
+            self.doc.set_code(converted)  # the code editor picks it up (sync_code)
+
+    def convert_indentation(self, tabs: Optional[bool] = None) -> Any:
+        """Rewrites the indentation of what the code editor shows with tabs (``tabs``) or spaces (by default as
+        "Indent with tabs" says); returns the command that puts the new text in the editor."""
+        settings = self.assist.settings
+        tabs = settings.hard_tabs if tabs is None else tabs
+        buffer = self.buffers.current
+        if buffer is not None:
+            text, python = buffer.text, buffer.language == "py"
+        elif self.editing is not None:
+            text, python = self.editing[1], True
+        else:
+            self.notify(tr("Open a file in the code editor first"), kind="warning", seconds=3)
+            return None
+        converted = _indentation.convert(text, tabs, settings.tab_size, python=python)
+        if converted == text:
+            self.notify(tr("The indentation already uses tabs") if tabs else
+                        tr("The indentation already uses spaces"), seconds=2)
+            return None
+        self.set_code_buffer(converted)
+        self.notify(tr("Indentation converted to tabs") if tabs else tr("Indentation converted to spaces"),
+                    kind="success", seconds=2)
+        return _core.Command.set_editor_text(self.editor_id, converted)
 
     def _new_document_path(self, suffix: str) -> str:
         """Where an unsaved document goes by default: the project's UI folder (forms belong to the project), named
@@ -2112,20 +2191,36 @@ class Designer(App):
         self.doc.dirty = False
         return action() if action else None
 
-    def form_files(self, limit: int = 40) -> List[Path]:
-        """Returns up to ``limit`` form and component files under the working folder, relative to it.
+    def pyzed_files(self, limit: int = 200) -> List[Path]:
+        """Returns up to ``limit`` Pyzed files (forms, components, shaders, animation libraries) of the project
+        (or the working folder), relative to the working folder when they are inside it.
 
         Folders such as ``.git``, ``.venv`` and ``node_modules`` are skipped.
         """
         found: List[Path] = []
-        root = Path.cwd()
-        for path in sorted(p for suffix in DOCUMENT_SUFFIXES for p in root.rglob(f"*{suffix}")):
+        here = Path.cwd()
+        root = self.projects.project.root if self.projects.project is not None else here
+        for path in sorted(p for suffix in PYZED_SUFFIXES for p in root.rglob(f"*{suffix}")):
             if any(part in SKIP_DIRS for part in path.relative_to(root).parts):
                 continue
-            found.append(path.relative_to(root))
+            try:
+                found.append(path.resolve().relative_to(here.resolve()))
+            except ValueError:
+                found.append(path)
             if len(found) >= limit:
                 break
         return found
+
+    def browse_open(self) -> Any:
+        """The Open dialog's "Browse…": the system's file dialog, for a Pyzed file anywhere."""
+        root = self.projects.project.root if self.projects.project is not None else Path.cwd()
+
+        def chosen(paths: List[str]) -> Any:
+            return self.open_path(paths[0]) if paths else None
+
+        return _core.Command.pick_files(chosen, title=tr("Open a Pyzed file"), multiple=False, directory=str(root),
+                                        filters=[(tr("Pyzed files"), [x.lstrip(".") for x in PYZED_SUFFIXES]),
+                                                 (tr("Python files"), ["py"]), (tr("All files"), ["*"])])
 
     # -- running ------------------------------------------------------------
     def run_form(self) -> Any:
@@ -2138,8 +2233,13 @@ class Designer(App):
         if shader_editor.is_shader(self):
             return self.shading.run()
         project = self.projects.project
-        if project is not None and project.script is not None and self.doc.path is None and not self.doc.dirty:
+        nothing_open = self.doc.path is None and not self.doc.dirty
+        if project is not None and project.script is not None and nothing_open:
             return self.run_script()
+        if project is not None and nothing_open and project.main_form.is_file():
+            self.open_path(project.main_form)  # nothing open: run the startup form
+            if self.doc.path is None:
+                return None
         if self.prefs.save_on_run and self.doc.path is not None:
             self.save()
         if self.prefs.console_on_run:
@@ -2174,6 +2274,20 @@ class Designer(App):
         self.preview.runtime.log = self.console.event
         commands.append(self.preview.open())
         return commands
+
+    def can_use_as_startup(self) -> bool:
+        """Whether the open document is a form of the project that is not its startup file yet."""
+        project = self.projects.project
+        path = getattr(self.doc, "path", None)
+        if project is None or path is None or Path(path).suffix != SUFFIX:
+            return False
+        path = Path(path).resolve()
+        return path.is_relative_to(project.root.resolve()) and path != project.startup.resolve()
+
+    def use_as_startup(self) -> None:
+        """Makes the open form the file the app starts from (instead of a script or another form)."""
+        if self.can_use_as_startup():
+            self.projects.set_startup(Path(self.doc.path).resolve())
 
     def run_script(self) -> Any:
         """Runs the project's ``script`` with ``uv run`` (F5 when no form is open), its output in the console;
@@ -2786,19 +2900,29 @@ class Designer(App):
                 footer=[ui.button("Cancel", self.close_dialog, variant="ghost", theme=t),
                         ui.button("Save", lambda: self.save_as(self.dialog_path), variant="solid", theme=t)])
         if self.dialog == "open":
-            files = self.form_files()
-            rows = [ui.list_item(str(p), lambda p=p: self.open_path(p), icon="layout-template", inset=True, theme=t)
-                    for p in files if not self.dialog_path or self.dialog_path.lower() in str(p).lower()]
+            rows = []
+            for p in self.pyzed_files():
+                if self.dialog_path and self.dialog_path.lower() not in p.as_posix().lower():
+                    continue
+                kind, icon = FILE_KINDS.get(p.suffix, ("File", "file"))
+                rows.append(ui.list_item(p.as_posix(), lambda p=p: self.open_path(p), icon=icon,
+                                         end=ui.label(tr(kind), size="xs", color="text_muted", theme=t), inset=True,
+                                         theme=t))
             if not rows:
-                rows = [ui.label("No .pzform or .pzcomp files here; type a path above.", size="sm", color="text_muted",
-                                 theme=t)]
+                rows = [ui.label(tr("No Pyzed files here; type a path above or browse."), size="sm",
+                                 color="text_muted", theme=t)]
             return ui.modal(
                 _core.column([
-                    ui.input(self.dialog_path, self.set_dialog_path, placeholder="Filter or type a path…",
+                    ui.input(self.dialog_path, self.set_dialog_path, placeholder=tr("Filter or type a path…"),
                              icon="search", on_submit=lambda: self.open_path(self.dialog_path), theme=t),
-                    _core.container(_core.scrollable(_core.column(rows, width="fill")), height=260),
+                    _core.container(_core.scrollable(_core.column(rows, width="fill")), height=300),
                 ], spacing=10),
-                title="Open form or component", on_close=self.close_dialog, width=520, theme=t)
+                title=tr("Open file"), on_close=self.close_dialog, width=560, theme=t,
+                footer=[ui.label(".pzform  .pzcomp  .pzshad  .pzanim", size="xs", mono=True, color="text_muted",
+                                 theme=t),
+                        _core.space(width="fill"),
+                        ui.button(tr("Browse…"), self.browse_open, icon="folder-search", variant="ghost", theme=t),
+                        ui.button(tr("Cancel"), self.close_dialog, variant="ghost", theme=t)])
         if self.dialog == "icon_picker":
             return ui.icon_picker_dialog(self.icon_value, self.pick_icon, on_close=self.close_dialog,
                                          theme=t)

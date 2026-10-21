@@ -34,6 +34,8 @@ iced_test = "0.14"
 iced_renderer = { version = "0.14", default-features = false }
 iced_wgpu = { version = "0.14", default-features = false }
 iced_tiny_skia = { version = "0.14", default-features = false }
+# Sets the tab width of the text editors (see vendor/README.md).
+iced_graphics = { version = "0.14", default-features = false }
 # Checks `pz.shader` code, so mistakes raise in Python instead of crashing the GPU.
 naga = { version = "27", features = ["wgsl-in"] }
 pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
@@ -89,4 +91,5 @@ strip = true
 [patch.crates-io]
 iced_wgpu = { path = "vendor/iced_wgpu" }
 iced_tiny_skia = { path = "vendor/iced_tiny_skia" }
+iced_graphics = { path = "vendor/iced_graphics" }
 iced_winit = { path = "vendor/iced_winit" }

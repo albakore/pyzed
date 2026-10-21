@@ -96,6 +96,14 @@ class Window:
     window_position: Optional[Tuple[float, float]] = None
     _pyzed_window_open: bool = False
 
+    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+        if (args or kwargs) and cls.__init__ is object.__init__:
+            raise TypeError(f"{cls.__name__}() takes no arguments")
+        self = super().__new__(cls)
+        # Hot reload runs ``__init__`` again with them on a scratch copy to find new attributes.
+        self.__dict__["_pyzed_init"] = (args, kwargs)
+        return self
+
     def view(self) -> _core.Widget:  # pragma: no cover - meant to be overridden
         """Returns the window's root widget; subclasses must override it."""
         raise NotImplementedError(f"{type(self).__name__}.view() must return a widget")
@@ -155,6 +163,11 @@ class Window:
         return _style.Style(_style.global_style(), style)
 
     # -- hooks used by the native runtime ---------------------------------
+    def __pyzed_fresh__(self) -> "Window":
+        """A scratch instance of this window's class, made with the arguments it was made with (hot reload)."""
+        args, kwargs = self.__dict__.get("_pyzed_init", ((), {}))
+        return type(self)(*args, **kwargs)
+
     def __pyzed_view__(self):
         _hot_reload.note_window(self)
         _hot_reload.check()
