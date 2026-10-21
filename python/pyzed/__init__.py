@@ -26,6 +26,10 @@ import os as _os
 # Linux it would commit whole memory arenas up front; committing on demand keeps the resident
 # memory where it was without the system allocator (and keeps mimalloc's speed).
 _os.environ.setdefault("MIMALLOC_ARENA_EAGER_COMMIT", "0")
+if _os.environ.get("PYZED_CORE_DIR") and _os.name == "nt":
+    # A checkout of Pyzed run on Windows from WSL (see pyzed._wsl_windows): these sources, with the native core
+    # cross-compiled for Windows in a folder of its own.
+    __path__.append(_os.environ["PYZED_CORE_DIR"])
 del _os
 
 import functools as _functools  # noqa: E402
@@ -134,7 +138,9 @@ def __getattr__(name):
 
             value = _version("pyzed-ui")
         except Exception:  # pragma: no cover - running from a source tree without metadata
-            value = "0+unknown"
+            import os
+
+            value = os.environ.get("PYZED_VERSION") or "0+unknown"  # a checkout run on Windows from WSL
     elif name in _LAZY:
         import importlib
 

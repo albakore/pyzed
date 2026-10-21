@@ -13,9 +13,12 @@ Pyzed Design and the MCP server's live previews. How it works:
    starts in the same folder, so relative paths, imports and hot reload (which polls the files) work as usual.
 2. Windows gets an environment of its own in ``%LOCALAPPDATA%\\pyzed\\wsl\\<distro>-<project>-<hash>-py3XX``,
    made with uv (or with ``py.exe`` and pip): the same Python version, the project's dependencies (exported
-   from ``uv.lock``) and the ``pyzed-ui`` wheel of the same version, always a prebuilt wheel, never compiled.
-   The project's ``.venv`` stays the Linux one. It is made the first time and again only when the
-   dependencies change.
+   from ``uv.lock``), what the editor's extras need (agents, MCP, language servers) and the ``pyzed-ui`` wheel
+   of the same version, always a prebuilt wheel, never compiled on Windows. The project's ``.venv`` stays the
+   Linux one. It is made the first time and again only when the dependencies change.
+   From a checkout of Pyzed (its version may not be released, and its Rust may have changed), Windows imports
+   the checkout's own Python sources instead, with the native core cross-compiled for Windows in WSL
+   (``maturin build --target x86_64-pc-windows-gnu``, or ``-msvc``) once per version of the Rust sources.
 3. The Linux process waits for the Windows one and passes its output and exit code along. When it is
    stopped (Stop in the designer, Ctrl+C, the MCP server closing the preview), the Windows app ends too: it
    watches a pipe from the Linux side and exits when the pipe closes.
@@ -27,8 +30,10 @@ Environment variables (all optional):
 
 * ``PYZED_WINDOWS=0`` opens windows through WSLg (the ``--wslg`` option of ``design``, ``run`` and ``dev``
   sets it for the command and everything it starts).
-* ``PYZED_WINDOWS_WHEEL`` is the path or URL of the ``pyzed-ui`` wheel for Windows to use, for example one
-  built by CI from your branch. Without it, a checkout of Pyzed (an editable install) uses the latest release.
+* ``PYZED_WINDOWS_WHEEL`` is the path or URL of the ``pyzed-ui`` wheel for Windows to use instead (a checkout
+  then uses it instead of building its core).
+* ``PYZED_WINDOWS_TARGET`` picks the Rust target a checkout's core is built for (default: MSVC when clang and
+  lld are installed, else MinGW).
 * ``PYZED_WINDOWS_ENV=NAME,NAME`` passes more variables to the Windows app (API keys...). ``PYZED_*`` ones
   always cross, and so does anything already listed in ``WSLENV``.
 """
@@ -63,9 +68,6 @@ _OWN = {SETTING, WHEEL, PASS_ENV}
 NO_PYTHON = ("Pyzed: no uv or Python found on Windows, so the window opens through WSLg. Run `pyzed windows "
              "setup` to install uv on Windows and open windows as native Windows windows, or set "
              "PYZED_WINDOWS=0 to hide this note.")
-CHECKOUT = ("Pyzed: this is a checkout of Pyzed, so the Windows window uses the latest pyzed-ui release. Set "
-            "PYZED_WINDOWS_WHEEL to a Windows wheel (built by CI from your branch) to use your own.")
-
 
 def enabled() -> bool:
     """Whether windows opened here should open on Windows: under WSL, unless ``PYZED_WINDOWS`` says no."""
@@ -318,6 +320,138 @@ def pyzed_requirement() -> tuple:
     return f"{PACKAGE}=={dist.version}", True
 
 
+def editor_requirements() -> List[str]:
+    """What the editor's extras need (the agents, the MCP server, the code editor's language servers): the
+    dependencies of this pyzed's ``agents``, ``designer`` and ``mcp`` extras, so ``pyzed design`` on Windows can
+    do all it does here."""
+    from importlib import metadata
+
+    try:
+        requires = metadata.requires(PACKAGE) or []
+    except metadata.PackageNotFoundError:
+        requires = []
+    found = []
+    for spec in requires:
+        requirement, _, marker = spec.partition(";")
+        if "extra" in marker and keep_requirement(requirement):
+            found.append(requirement.strip())
+    return found
+
+
+def checkout() -> Optional[Path]:
+    """The Pyzed checkout this pyzed runs from (an editable install of the repository), or ``None``."""
+    here = Path(__file__).resolve().parents[2]
+    if (here / "Cargo.toml").is_file() and (here / "python" / "pyzed").is_dir():
+        return here
+    return None
+
+
+#: What makes up the native core: a change to any of them needs a new Windows build.
+_CORE_SOURCES = ("Cargo.toml", "Cargo.lock", "build.rs", "pyproject.toml", "src", "vendor")
+
+
+def core_hash(root: Path) -> str:
+    """A fingerprint of the checkout's Rust sources (names, sizes and modification times)."""
+    digest = hashlib.sha1()  # noqa: S324 - a cache key, not security
+    for name in _CORE_SOURCES:
+        path = root / name
+        files = sorted(p for p in path.rglob("*") if p.is_file()) if path.is_dir() else [path]
+        for file in files:
+            try:
+                info = file.stat()
+            except OSError:
+                continue
+            digest.update(f"{file.relative_to(root).as_posix()}:{info.st_size}:{info.st_mtime_ns}\n".encode())
+    return digest.hexdigest()[:12]
+
+
+#: The Windows targets a checkout's core can be built for: MSVC like the released wheels (needs clang and lld;
+#: maturin downloads Microsoft's libraries the first time) and MinGW (needs the mingw-w64 package). Both give a
+#: core that only uses Windows' own DLLs.
+TARGETS = {"x86_64-pc-windows-msvc": ("clang", "lld-link"), "x86_64-pc-windows-gnu": ("x86_64-w64-mingw32-gcc",)}
+TOOLCHAIN_HELP = ("To build Pyzed's core for Windows from WSL, install a cross compiler once:\n"
+                  "  sudo apt install mingw-w64\n"
+                  "then run the command again (or set PYZED_WINDOWS=0 to keep using WSLg).")
+
+
+def targets() -> List[str]:
+    """The Windows targets whose cross compiler is installed, best first (``PYZED_WINDOWS_TARGET`` picks one)."""
+    wanted = os.environ.get("PYZED_WINDOWS_TARGET", "").strip()
+    if wanted:
+        return [wanted]
+    return [t for t, tools in TARGETS.items() if all(shutil.which(tool) for tool in tools)]
+
+
+def _maturin() -> Optional[List[str]]:
+    try:
+        import maturin  # type: ignore[import-not-found]  # noqa: F401
+
+        return [sys.executable, "-m", "maturin"]
+    except ImportError:
+        pass
+    found = shutil.which("maturin")
+    if found:
+        return [found]
+    from .project import find_uv
+
+    uv = find_uv()
+    return [uv, "tool", "run", "maturin"] if uv else None
+
+
+def _rustup() -> Optional[str]:
+    found = shutil.which("rustup") or str(Path.home() / ".cargo" / "bin" / "rustup")
+    return found if os.path.isfile(found) else None
+
+
+def _stream(args: Sequence[str], cwd: Path, log: Callable[[str], None]) -> tuple:
+    """Runs ``args``, passing its output on line by line; ``(ok, last lines)``."""
+    tail: List[str] = []
+    try:
+        process = subprocess.Popen([str(a) for a in args], cwd=str(cwd), stdout=subprocess.PIPE,  # noqa: S603
+                                   stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True, errors="replace")
+    except OSError as err:
+        return False, str(err)
+    assert process.stdout is not None
+    for line in process.stdout:
+        line = line.rstrip()
+        log(line)
+        tail = [*tail[-29:], line]
+    return process.wait() == 0, "\n".join(tail)
+
+
+def build_core(root: Path, out: Path, log: Callable[[str], None] = print) -> Optional[str]:
+    """Cross-compiles the checkout's native core for Windows (``maturin build --target``, in WSL: nothing is
+    compiled on Windows) and puts ``_core.pyd`` in ``out``; the error, or ``None``."""
+    import tempfile
+    import zipfile
+
+    maturin = _maturin()
+    if maturin is None:
+        return "maturin is not installed (uv sync installs it)"
+    found = targets()
+    if not found:
+        return TOOLCHAIN_HELP
+    rustup = _rustup()
+    errors = []
+    for target in found:
+        if rustup is not None:
+            subprocess.run([rustup, "target", "add", target], capture_output=True, check=False,  # noqa: S603
+                           stdin=subprocess.DEVNULL, timeout=600)
+        log(f"Pyzed: building the native core for Windows ({target}); the first build takes a few minutes…")
+        with tempfile.TemporaryDirectory(prefix="pyzed-core-") as tmp:
+            ok, tail = _stream([*maturin, "build", "--release", "--target", target, "--out", tmp], root, log)
+            wheels = list(Path(tmp).glob("*.whl"))
+            if ok and wheels:
+                with zipfile.ZipFile(wheels[0]) as wheel:
+                    member = next((n for n in wheel.namelist() if re.fullmatch(r"pyzed/_core[^/]*\.pyd", n)), None)
+                    if member is not None:
+                        out.mkdir(parents=True, exist_ok=True)
+                        (out / "_core.pyd").write_bytes(wheel.read(member))
+                        return None
+            errors.append(f"{target}:\n{tail}")
+    return "\n\n".join([*errors, TOOLCHAIN_HELP])
+
+
 def _slug(text: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "-", text).strip("-").lower() or "app"
 
@@ -356,6 +490,8 @@ if _parent is not None:
 sys.stdin = open(os.devnull, encoding="utf-8")
 if os.environ.get("PYZED_WSL_CWD"):  # the WSL folder it was started from
     os.chdir(os.environ.pop("PYZED_WSL_CWD"))
+_crossed = set(os.environ.pop("PYZED_WSL_CROSSED", "").split(":"))
+os.environ["WSLENV"] = ":".join(i for i in os.environ.get("WSLENV", "").split(":") if i and i.split("/")[0] not in _crossed)
 _args = sys.argv[1:]
 if _args[:1] == ["-m"]:
     sys.argv = _args[1:]
@@ -379,23 +515,30 @@ class WindowsEnv:
     exact: bool = True
     paths: List[str] = field(default_factory=list)
     python_version: str = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    #: The project this environment is for (its Linux path), so Pyzed Design on Windows runs its forms itself.
+    project_root: Optional[str] = None
+    #: Running from a checkout: its root, whose Python sources Windows imports with a core built for Windows.
+    source: Optional[Path] = None
 
     @classmethod
     def for_target(cls, host: Host, project=None, script: Optional[Path] = None) -> "WindowsEnv":
         """The environment for ``project`` (its dependencies, its folders importable) or, without one, for the
         single-file app ``script``."""
-        pyzed, exact = pyzed_requirement()
+        source = None if os.environ.get(WHEEL) else checkout()
+        pyzed, exact = pyzed_requirement() if source is None else ("", True)
         distro = _slug(os.environ.get("WSL_DISTRO_NAME") or "wsl")
         version = f"{sys.version_info[0]}{sys.version_info[1]}"
+        paths = [to_windows(source / "python")] if source is not None else []
         if project is not None:
             requirements = project_requirements(project)
             name = f"{distro}-{_slug(project.name)}-{_digest(str(project.root))}-py{version}"
-            paths = [to_windows(p) for p in project.paths()]
+            paths += [to_windows(p) for p in project.paths()]
         else:
             requirements = script_requirements(script) if script is not None else []
             name = f"{distro}-scripts-{_digest(chr(10).join(sorted(requirements)))}-py{version}"
-            paths = []
-        return cls(host, name, requirements, pyzed, exact, paths)
+        requirements += [r for r in editor_requirements() if r not in requirements]
+        return cls(host, name, requirements, pyzed, exact, paths,
+                   project_root=str(project.root) if project is not None else None, source=source)
 
     # -- where things are (Linux paths) --
     @property
@@ -414,9 +557,15 @@ class WindowsEnv:
     def bootstrap(self) -> Path:
         return self.host.envs / "bootstrap.py"
 
+    @property
+    def core(self) -> Optional[Path]:
+        """For a checkout, the folder with its native core built for Windows (one per version of the sources)."""
+        return self.host.envs / "core" / core_hash(self.source) if self.source is not None else None
+
     def wanted(self, pyzed: Optional[str] = None) -> str:
         """The requirements file this environment installs (also its stamp once installed)."""
-        lines = [f"# Python {self.python_version}", pyzed or self.pyzed, *self.requirements]
+        what = f"# Pyzed from {self.source}" if self.source is not None else (pyzed or self.pyzed)
+        lines = [f"# Python {self.python_version}", what, *self.requirements]
         return "\n".join(lines) + "\n"
 
     @property
@@ -460,6 +609,11 @@ class WindowsEnv:
         self.base.mkdir(parents=True, exist_ok=True)
         if not self.bootstrap.is_file() or self.bootstrap.read_text(encoding="utf-8") != BOOTSTRAP:
             self.bootstrap.write_text(BOOTSTRAP, encoding="utf-8")
+        core = self.core
+        if core is not None and not (core / "_core.pyd").is_file():
+            error = build_core(self.source, core, log)
+            if error:
+                return error
         if self.ready:
             return None
         log(f"Pyzed: preparing the Windows environment in {to_windows(self.base)} (the first time, and when the "
@@ -469,7 +623,7 @@ class WindowsEnv:
             if not ok or not self.python.is_file():
                 return output or "could not create the virtual environment"
         requirements = self.base / "requirements.txt"
-        attempts = [self.pyzed] + ([PACKAGE] if self.exact and self.pyzed != PACKAGE and
+        attempts = [self.pyzed] + ([PACKAGE] if self.exact and self.pyzed not in ("", PACKAGE) and
                                    not os.environ.get(WHEEL) else [])
         output = ""
         for pyzed in attempts:
@@ -497,10 +651,11 @@ class WindowsEnv:
             crossing["PYZED_WATCH"] = ";".join(to_windows(p) for p in crossing["PYZED_WATCH"].split(os.pathsep) if p)
         if crossing.get("PYZED_CONFIG_DIR"):
             crossing["PYZED_CONFIG_DIR"] = to_windows(crossing["PYZED_CONFIG_DIR"])
-        crossing.update(PYZED_WSL_CWD=to_windows(cwd or os.getcwd()), PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
-                        PYTHONUNBUFFERED="1")
-        if self.paths:
-            crossing["PYTHONPATH"] = ";".join(self.paths)
+        own = self.variables()
+        own["PYZED_WSL_CWD"] = to_windows(cwd or os.getcwd())
+        # The Windows side takes these back out of WSLENV, so programs it starts in WSL do not get them.
+        own["PYZED_WSL_CROSSED"] = ":".join([*own, "PYZED_WSL_CROSSED"])
+        crossing.update(own)
         env.update(crossing)
         if "PYTHONPATH" not in crossing:
             env.pop("PYTHONPATH", None)
@@ -508,6 +663,24 @@ class WindowsEnv:
                   if item and item.split("/")[0] not in crossing]
         env["WSLENV"] = ":".join([*listed, *crossing])
         return env
+
+    def variables(self) -> Dict[str, str]:
+        """The variables Python needs on Windows for this environment (Windows values)."""
+        found = {"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1",
+                 "PYZED_WSL_DISTRO": os.environ.get("WSL_DISTRO_NAME", "")}
+        if self.paths:
+            found["PYTHONPATH"] = ";".join(self.paths)
+        if self.core is not None:
+            from importlib import metadata
+
+            found["PYZED_CORE_DIR"] = to_windows(self.core)
+            try:
+                found["PYZED_VERSION"] = metadata.version(PACKAGE)
+            except metadata.PackageNotFoundError:
+                pass
+        if self.project_root:
+            found["PYZED_WSL_PROJECT"] = self.project_root
+        return found
 
     def command(self, args: Sequence[str]) -> List[str]:
         """``python.exe bootstrap.py <args>``, with the paths among ``args`` turned into Windows paths."""
@@ -577,8 +750,6 @@ def environment_for(project=None, script: Optional[Path] = None) -> Optional[Win
         return None
     try:
         env = WindowsEnv.for_target(found, project, script)
-        if not env.exact and env.pyzed == PACKAGE:
-            _note(CHECKOUT)
         error = env.prepare()
     except OSError as err:
         error = str(err)
@@ -656,9 +827,14 @@ def status(project=None) -> List[str]:
     lines += [f"uv on Windows: {found.uv or 'not found'}", f"Python launcher (py.exe): {found.py or 'not found'}"]
     if not found.ready:
         return [*lines, "Run `pyzed windows setup` to install uv on Windows."]
-    pyzed, exact = pyzed_requirement()
-    lines.append(f"Pyzed on Windows: {pyzed}" + ("" if exact else " (latest release: this is a checkout)"))
     env = WindowsEnv.for_target(found, project)
+    if env.source is not None:
+        core = env.core
+        built = core is not None and (core / "_core.pyd").is_file()
+        lines.append(f"Pyzed on Windows: this checkout ({env.source}), its core cross-compiled for Windows "
+                     f"({'built' if built else 'built on first run'})")
+    else:
+        lines.append(f"Pyzed on Windows: {env.pyzed}" + ("" if env.exact else " (the latest release)"))
     where = f"for {project.name}" if project is not None else "for single-file apps"
     lines.append(f"Environment {where}: {to_windows(env.base)} ({'ready' if env.ready else 'made on first run'})")
     return lines
@@ -682,8 +858,6 @@ def setup(project=None, on_output: Callable[[str], None] = print) -> int:
         found = host()
         assert found is not None
     env = WindowsEnv.for_target(found, project)
-    if not env.exact and env.pyzed == PACKAGE:
-        on_output(CHECKOUT)
     error = env.prepare(on_output)
     if error:
         on_output(error)

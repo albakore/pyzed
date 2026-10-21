@@ -569,11 +569,24 @@ class Project:
 
     @property
     def uses_own_venv(self) -> bool:
-        """Whether this interpreter *is* the project's ``.venv`` (e.g. under ``uv run``)."""
+        """Whether this interpreter *is* the project's ``.venv`` (e.g. under ``uv run``), or the Windows
+        environment Pyzed made for this WSL project when it started this process from WSL."""
+        if self.served_from_wsl:
+            return True
         try:
             return Path(sys.prefix).resolve() == self.venv.resolve()
         except OSError:
             return False
+
+    @property
+    def served_from_wsl(self) -> bool:
+        """On Windows, whether this process was started from WSL for this WSL project (``pyzed design`` there):
+        it runs in a Windows environment with the project's dependencies, so its forms and scripts run here, as
+        Windows programs, instead of going back into WSL (see ``pyzed._wsl_windows``)."""
+        served = os.environ.get("PYZED_WSL_PROJECT")
+        env = self.environment
+        return (bool(served) and env.remote and linux_path(self.root) == served
+                and os.environ.get("PYZED_WSL_DISTRO", env.name).lower() == env.name.lower())
 
     @property
     def can_run_in_process(self) -> bool:
@@ -830,10 +843,12 @@ class Project:
     def run_args(self, form: Optional[PathLike] = None, *, reload: bool = False) -> List[str]:
         """The command that runs ``form`` (default: the main form) with the project's environment."""
         form = Path(form) if form else self.main_form
-        args = ["run", "pyzed", "run", str(form)]
+        args = ["pyzed", "run", str(form)]
         if reload:
             args.append("--reload")
-        return [self._uv_command(), *args]
+        if self.served_from_wsl:  # this Windows environment has the project's dependencies
+            return [sys.executable, "-m", *args]
+        return [self._uv_command(), "run", *args]
 
     def spawn(self, form: Optional[PathLike] = None, *, reload: bool = False,
               capture: bool = False, env: Optional[Dict[str, str]] = None) -> "subprocess.Popen[bytes]":
@@ -850,6 +865,8 @@ class Project:
         script = Path(script) if script else self.script
         if script is None:
             raise FileNotFoundError("The project has no script in [tool.pyzed]")
+        if self.served_from_wsl:
+            return self._popen([sys.executable, str(script)], capture, env)
         return self._popen([self._uv_command(), "run", str(script)], capture, env)
 
     def _popen(self, args: List[str], capture: bool, env: Optional[Dict[str, str]]) -> "subprocess.Popen[bytes]":
@@ -860,7 +877,7 @@ class Project:
         # No console window on Windows (the output goes to the designer), and a process group of its own
         # elsewhere, so ``terminate`` stops uv and the Python it starts together.
         where = self.environment
-        if where.remote:  # the variables cross into WSL on the command line; wsl.exe itself needs none
+        if where.remote and not self.served_from_wsl:  # the variables cross into WSL on the command line
             extra = {k: v for k, v in env.items() if k in ("PYTHONUNBUFFERED", "UV_NO_PROGRESS", "NO_COLOR")
                      or k.startswith("PYZED") or os.environ.get(k) != v}
             return subprocess.Popen(where.command(args, self.root, extra), env=_clean_env(), creationflags=NO_WINDOW,
@@ -988,7 +1005,11 @@ def init(path: PathLike = ".", *, name: Optional[str] = None, ui: str = DEFAULT_
         args.append("--package" if package else "--app")
         if python:
             args += ["--python", python]
-        result = execute([_uv(), *args, str(root)], root)
+        where = environment(root)
+        if where.remote:  # a folder of WSL opened from Windows: the project is made by Linux's uv, like its .venv
+            result = execute(where.command(["uv", *args, str(root)], root, {"UV_NO_PROGRESS": "1"}), timeout=300)
+        else:
+            result = execute([_uv(), *args, str(root)], root)
         if not result.ok:
             raise RuntimeError(result.output or "uv init failed")
     project = Project.open(root)
@@ -1032,6 +1053,16 @@ def run(form: Optional[PathLike] = None, *, reload: Optional[bool] = None) -> No
         raise FileNotFoundError("not inside a Pyzed project (no pyproject.toml found)")
     project.activate()
     designer.run(Path(form) if form else project.main_form, reload=reload)
+
+
+def clone(url: str, target: PathLike) -> Result:
+    """``git clone url target``; into a folder of WSL opened from Windows, with Linux's git."""
+    target = Path(target)
+    where = environment(target)
+    if where.remote:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        return execute(where.command(["git", "clone", url, str(target)], target.parent), timeout=600)
+    return execute([shutil.which("git") or "git", "clone", url, str(target)], timeout=600)
 
 
 def find(start: Optional[PathLike] = None) -> Optional[Project]:

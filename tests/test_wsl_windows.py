@@ -5,6 +5,7 @@ import stat
 import sys
 
 import pytest
+from pathlib import Path
 
 from pyzed import _platform
 from pyzed import _wsl_windows as ww
@@ -295,3 +296,173 @@ def test_mcp_environment_reports_where_windows_open(wsl):
 
     wsl.setattr(projects, "_is_wsl", lambda: True)
     assert projects.environment()["windows_open_on"].startswith("Windows")
+
+
+# -- a checkout of Pyzed ------------------------------------------------------------------------------------
+
+
+def test_this_repository_is_a_checkout():
+    root = ww.checkout()
+    assert root is not None and (root / "Cargo.toml").is_file() and (root / "python" / "pyzed").is_dir()
+
+
+def test_core_hash_follows_the_rust_sources(tmp_path):
+    (tmp_path / "src").mkdir()
+    rs = tmp_path / "src" / "lib.rs"
+    rs.write_text("fn main() {}", encoding="utf-8")
+    (tmp_path / "Cargo.toml").write_text("[package]", encoding="utf-8")
+    first = ww.core_hash(tmp_path)
+    (tmp_path / "python.py").write_text("x = 1", encoding="utf-8")  # Python files do not count
+    assert ww.core_hash(tmp_path) == first
+    rs.write_text("fn main() { loop {} }", encoding="utf-8")
+    assert ww.core_hash(tmp_path) != first
+
+
+def _fake_maturin(tmp_path, *, fail=False):
+    """A maturin that writes a wheel with a fake Windows core into --out."""
+    import zipfile
+
+    wheel = tmp_path / "built.whl"
+    with zipfile.ZipFile(wheel, "w") as zf:
+        zf.writestr("pyzed/_core.pyd", b"MZ fake core")
+        zf.writestr("pyzed/__init__.py", "")
+    script = tmp_path / "maturin"
+    script.write_text(f"""#!/bin/sh
+echo "Compiling pyzed v1.0.0"
+{'exit 1' if fail else ''}
+while [ "$1" != "--out" ]; do shift; done
+cp {wheel} "$2/pyzed_ui-1.0.0-cp310-abi3-win_amd64.whl"
+""", encoding="utf-8")
+    script.chmod(0o755)
+    return [str(script)]
+
+
+def test_build_core_extracts_the_windows_core(wsl, tmp_path):
+    wsl.setattr(ww, "_maturin", lambda: _fake_maturin(tmp_path))
+    wsl.setattr(ww, "_rustup", lambda: None)
+    wsl.setenv("PYZED_WINDOWS_TARGET", "x86_64-pc-windows-msvc")
+    lines = []
+    assert ww.build_core(tmp_path, tmp_path / "core", lines.append) is None
+    assert (tmp_path / "core" / "_core.pyd").read_bytes() == b"MZ fake core"
+    assert any("Compiling pyzed" in line for line in lines)
+
+
+def test_build_core_explains_the_toolchain_when_it_fails(wsl, tmp_path):
+    wsl.setattr(ww, "_maturin", lambda: _fake_maturin(tmp_path, fail=True))
+    wsl.setattr(ww, "_rustup", lambda: None)
+    wsl.setenv("PYZED_WINDOWS_TARGET", "x86_64-pc-windows-msvc")
+    error = ww.build_core(tmp_path, tmp_path / "core", lambda line: None)
+    assert "mingw-w64" in error and "Compiling" in error and not (tmp_path / "core").exists()
+
+
+def test_checkout_uses_its_sources_and_a_core_built_for_windows(wsl, tmp_path):
+    host, log = _fake_host(tmp_path)
+    source = tmp_path / "pyzed-checkout"
+    (source / "python" / "pyzed").mkdir(parents=True)
+    (source / "Cargo.toml").write_text("[package]", encoding="utf-8")
+    wsl.setattr(ww, "checkout", lambda: source)
+    wsl.setattr(ww, "editor_requirements", lambda: ["anthropic>=1.0"])
+    built = []
+
+    def build(root, out, log=print):
+        built.append(root)
+        out.mkdir(parents=True)
+        (out / "_core.pyd").write_bytes(b"MZ")
+
+    wsl.setattr(ww, "build_core", build)
+    env = ww.WindowsEnv.for_target(host, None, None)
+    assert env.source == source and env.pyzed == "" and env.paths == [str(source / "python")]
+    assert env.prepare(lambda line: None) is None and built == [source]
+    assert "# Pyzed from" in (env.base / "installed.txt").read_text(encoding="utf-8")
+    assert "pyzed-ui" not in (env.base / "requirements.txt").read_text(encoding="utf-8")  # not from the index
+    variables = env.variables()
+    assert variables["PYZED_CORE_DIR"] == str(env.core) and variables["PYTHONPATH"] == str(source / "python")
+    # built once per version of the Rust sources
+    assert env.prepare(lambda line: None) is None and len(built) == 1
+
+
+def test_the_project_and_what_crossed_are_named(wsl, tmp_path):
+    host, _ = _fake_host(tmp_path)
+    env = ww.WindowsEnv(host, "e", [], "pyzed-ui", project_root="/home/kev/app")
+    found = env.environ(str(tmp_path))
+    assert found["PYZED_WSL_PROJECT"] == "/home/kev/app" and found["PYZED_WSL_DISTRO"] == "Ubuntu"
+    crossed = found["PYZED_WSL_CROSSED"].split(":")
+    assert {"PYZED_WSL_PROJECT", "PYTHONUTF8", "PYZED_WSL_CWD", "PYZED_WSL_CROSSED"} <= set(crossed)
+
+
+def test_bootstrap_keeps_what_crossed_out_of_wslenv(tmp_path):
+    import subprocess
+
+    boot = tmp_path / "bootstrap.py"
+    boot.write_text(ww.BOOTSTRAP, encoding="utf-8")
+    app = tmp_path / "app.py"
+    app.write_text("import os\nprint(os.environ['WSLENV'])\n", encoding="utf-8")
+    env = {**os.environ, "WSLENV": "USERPROFILE/p:PYTHONPATH:PYZED_WSL_CROSSED",
+           "PYZED_WSL_CROSSED": "PYTHONPATH:PYZED_WSL_CROSSED"}
+    process = subprocess.Popen([sys.executable, str(boot), str(app)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               env=env)
+    out = process.stdout.read()
+    process.wait(30)
+    process.stdin.close()
+    assert out.strip() == b"USERPROFILE/p"
+
+
+# -- Pyzed Design on Windows, started from WSL ------------------------------------------------------------------
+
+
+@pytest.fixture
+def served(monkeypatch, tmp_path):
+    """A WSL project opened by Pyzed Design on Windows, which Pyzed started from WSL for it."""
+    from pyzed import project
+
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "app"\n\n[tool.pyzed]\nscript = "main.py"\n',
+                                             encoding="utf-8")
+    (tmp_path / "main.py").write_text("", encoding="utf-8")
+    monkeypatch.setattr(project.Environment, "remote", property(lambda self: self.is_wsl))
+    monkeypatch.setattr(project, "environment", lambda path=None: project.Environment("wsl", "Ubuntu"))
+    monkeypatch.setenv("PYZED_WSL_PROJECT", str(tmp_path))
+    monkeypatch.setenv("PYZED_WSL_DISTRO", "Ubuntu")
+    return project.Project.open(tmp_path)
+
+
+def test_served_project_runs_on_windows(served, monkeypatch):
+    assert served.served_from_wsl and served.uses_own_venv and served.can_run_in_process
+    assert served.run_args(served.root / "ui" / "main.pzform", reload=True) == [
+        sys.executable, "-m", "pyzed", "run", str(served.root / "ui" / "main.pzform"), "--reload"]
+    monkeypatch.setenv("PYZED_WSL_PROJECT", "/home/kev/other")
+    assert not served.served_from_wsl and served.run_args()[1] == "run"
+
+
+def test_served_script_starts_here(served):
+    process = served.spawn_script(capture=True)
+    assert process.args == [sys.executable, str(served.root / "main.py")]
+    assert process.wait(30) == 0
+
+
+def test_creating_and_cloning_in_wsl_use_linux_tools(monkeypatch, tmp_path):
+    from pyzed import project
+
+    monkeypatch.setattr(project.Environment, "remote", property(lambda self: self.is_wsl))
+    monkeypatch.setattr(project, "environment", lambda path=None: project.Environment("wsl", "Ubuntu"))
+    seen = []
+    monkeypatch.setattr(project, "execute", lambda args, cwd=None, timeout=None: seen.append(args) or
+                        project.Result(args, 1, "stop here"))
+    assert not project.clone("https://example.com/app.git", tmp_path / "work" / "app").ok
+    assert seen[-1][:2] == ["wsl.exe", "-d"] and seen[-1][-4:] == ["git", "clone", "https://example.com/app.git",
+                                                                    str(tmp_path / "work" / "app")]
+    with pytest.raises(RuntimeError, match="stop here"):
+        project.init(tmp_path / "new")
+    assert seen[-1][0] == "wsl.exe" and "uv" in seen[-1] and "init" in seen[-1]
+
+
+def test_targets_follow_the_installed_cross_compilers(wsl):
+    tools = set()
+    wsl.setattr(ww.shutil, "which", lambda name, *a, **k: f"/usr/bin/{name}" if name in tools else None)
+    assert ww.targets() == []
+    assert "sudo apt install mingw-w64" in ww.build_core(Path("."), Path("core"), lambda line: None)
+    tools.add("x86_64-w64-mingw32-gcc")
+    assert ww.targets() == ["x86_64-pc-windows-gnu"]
+    tools.update({"clang", "lld-link"})
+    assert ww.targets() == ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"]
+    wsl.setenv("PYZED_WINDOWS_TARGET", "aarch64-pc-windows-msvc")
+    assert ww.targets() == ["aarch64-pc-windows-msvc"]
