@@ -17,20 +17,30 @@ an empty form.
 
 ## The gallery
 
-The tabs filter the examples by category, and the search box filters them by title and description:
+The buttons above the gallery filter the examples by category (each shows how many it has), and the search box
+filters them by title and description. **All** shows every category under its own heading:
 
 | Category | Examples |
 | --- | --- |
-| **Apps** | Counter, To-do list, Pomodoro, Markdown viewer, Game of Life, Component gallery, Zed-like editor. |
-| **Games** | Snake, Breakout, Neon Invaders. |
+| **Apps** | Counter, To-do list, Todos, Pomodoro, Markdown viewer, Game of Life, Analog clock, Stopwatch, QR code, Color picker, Image viewer, Several windows, Custom window frame, Component gallery, Mini editor, Zed-like editor. |
+| **Tutorial** | The five steps of the tutorial (Hello, State, Layout, Async work, Notes app), Layout basics, Lists and tables, Navigation, Talking to the user, Theme switcher, Contacts with SQLite. |
+| **Audio** | Synthesizer, Drum machine, Modular rack, Music visualizer, MIDI controller, Webcam. |
+| **Games** | Snake, Breakout, Neon Invaders, Rock Storm, Pixel Run, 2048, Coin Chase, Jump Lab, Walker, Orb Rush, Target Rush, Dodge. |
+| **Animation** | Animations, Effects, Timeline. |
+| **Styling** | Styles, Web-style layout, Theming playground, and the themes Brand, Glassy dark, Pastel, Retro terminal, High contrast and Two themes. |
+| **Shading** | Shader gallery, Aurora shader. |
 | **Showcase** | Glass dashboard, Game HUD, Game main menu, Inventory. |
-| **Blocks** | Dashboard, Kanban board, Music player, Chat, Settings. |
-| **Designer** | Login form: a form made in Pyzed Design, with its event code and components. |
-| **Integrations** | SQLModel heroes, Pydantic sign-up, PyPI with httpx, SQLAlchemy contacts. |
+| **Blocks** | Dashboard, Kanban board, Music player, Chat, Settings, Data table, IDE layout, Sign-in screen, Onboarding wizard. |
+| **Patterns** | Services (timer, worker, process, clipboard, settings), Custom components, Docks and grids, Resizable panes, Context menu, Dialogs and languages, Background work, Download progress, Live data. |
+| **AI** | Pyzed agent (an agent that calls tools, with a demo model that needs no key), AI chat. |
+| **Designer** | Forms made in Pyzed Design: Login form, Task runner (the non-visual components), Component cards, Bound sign-up form, Form over a shader. |
+| **Integrations** | SQLModel heroes, SQLModel inventory, Pydantic sign-up, PyPI with httpx, Downloads with httpx, SQLAlchemy contacts, SQLAlchemy quick start, Async SQLite journal, FastAPI heroes. |
 
-![The Games tab of the gallery: Snake, Breakout and Neon Invaders](../../../assets/editor/welcome-games.png)
+![The Audio category of the gallery: the synthesizer, the drum machine, the modular rack, the visualizer, the MIDI controller and the webcam](../../../assets/editor/welcome-audio.png)
 
-![The Showcase tab of the gallery: the glass dashboard, the game HUD, the main menu and the inventory](../../../assets/editor/welcome-showcase.png)
+![The Games category of the gallery](../../../assets/editor/welcome-games.png)
+
+![The Showcase category of the gallery: the glass dashboard, the game HUD, the main menu and the inventory](../../../assets/editor/welcome-showcase.png)
 
 ## Creating a project from an example
 
@@ -62,7 +72,7 @@ project files with unsaved changes are saved first.
 
 ## Where the examples come from
 
-The standalone **Pyzed Design** app carries every example and its thumbnail inside it (about 1.5 MB), so the gallery
+The standalone **Pyzed Design** app carries every example and its thumbnail inside it (about 5 MB), so the gallery
 works without a connection. A designer installed with pip does not include them: the gallery offers **Download
 examples**, which fetches them once from the release of the installed version. Creating the project's environment
 with `uv sync` needs a connection the first time, to download Python and the packages.

@@ -50,6 +50,29 @@ def test_create_makes_a_project(tmp_path, sample_id):
     assert (folder / "README.md").is_file() and (folder / ".gitignore").is_file()
 
 
+def test_every_category_has_examples_and_texts_in_spanish():
+    from pyzed.designer.locale import _ES
+
+    assert set(samples.CATEGORIES) == {s.category for s in samples.CATALOG}
+    assert set(samples.CATEGORIES) <= set(welcome.ICONS)
+    texts = [*samples.CATEGORIES, *(t for s in samples.CATALOG for t in (s.title, s.description))]
+    assert [t for t in texts if t not in _ES] == []
+
+
+def test_designer_examples_open_their_own_form(tmp_path):
+    tasks = project.Project.open(samples.create(samples.BY_ID["designer_tasks"], tmp_path / "tasks"))
+    assert tasks.main_form.name == "tasks.pzform" and tasks.main_form.is_file()
+    reviews = project.Project.open(samples.create(samples.BY_ID["designer_reviews"], tmp_path / "reviews"))
+    assert reviews.main_form.relative_to(reviews.root).as_posix() == "ui/components/reviews.pzform"
+
+
+def test_extra_files_and_folders_go_next_to_the_script(tmp_path):
+    folder = samples.create(samples.BY_ID["shaders"], tmp_path / "shaders")
+    assert (folder / "shaders.py").is_file() and (folder / "shaders" / "plasma.pzshad").is_file()
+    folder = samples.create(samples.BY_ID["theme_pastel"], tmp_path / "pastel")
+    assert (folder / "pastel.py").is_file() and (folder / "preview.py").is_file()
+
+
 def test_create_refuses_a_folder_that_is_not_empty(tmp_path):
     (tmp_path / "taken").mkdir()
     (tmp_path / "taken" / "file.txt").write_text("x")
@@ -108,10 +131,17 @@ def test_welcome_window_and_gallery(tmp_path):
     commands.run("welcome", d)
     assert d.dialog == "welcome"
     assert d.view() is not None and welcome.dialog(d, d.theme_obj) is not None
+    d.welcome.set_category("Audio")
+    assert {"synth", "drum_machine", "modular", "visualizer", "midi_controller", "webcam"} <= \
+        {s.id for s in d.welcome.shown()}
+    assert welcome.dialog(d, d.theme_obj) is not None
     d.welcome.set_category("Games")
-    assert {s.id for s in d.welcome.shown()} == {"snake", "breakout", "neon_invaders"}
+    assert {"snake", "breakout", "neon_invaders", "platformer"} <= {s.id for s in d.welcome.shown()}
     d.welcome.set_query("bricks")
     assert [s.id for s in d.welcome.shown()] == ["breakout"]
+    d.welcome.set_category(welcome.ALL)
+    d.welcome.set_query("")
+    assert welcome.dialog(d, d.theme_obj) is not None  # every category under its heading
     commands.run("examples", d)
     assert d.welcome.category == welcome.ALL and len(d.welcome.shown()) == len(samples.CATALOG)
 
