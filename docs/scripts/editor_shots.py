@@ -179,7 +179,8 @@ def motion():
     app.add_animation("sign_in", "hover")
     app.set_animation("sign_in", 1, "duration", 180.0)
     app.add_animation("sign_in", "press")
-    app.open_animation("sign_in", 1)
+    app.add_animation("sign_in", "manual")
+    app.set_animation("sign_in", 3, "preset", "tada")
     app.stop_preview("sign_in")
     app.collapsed_sections |= {"Style", "Behavior", "Position", "Button", "Appearance", "Text"}
     save(app, "motion")

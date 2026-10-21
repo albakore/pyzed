@@ -2461,6 +2461,29 @@ _section("widgets", "Animación", {
         Los demás campos son los valores por defecto que sobrescriben las opciones de `animate()`.
         `category` y `description` dicen a los editores dónde y cómo mostrar un preset.
     """),
+    "pyzed.Trigger": _d("""
+        Inicia una animación desde tu código, como un botón que pulsas en un manejador.
+
+        Guarda uno en la app, pásalo a `animate(on=...)` en `view()` y llama a `fire()` cada vez que
+        la animación deba reproducirse (desde el principio, aunque siga en marcha):
+
+        ```python
+        class Login(pz.App):
+            def __init__(self):
+                self.error = pz.Trigger()
+
+            def view(self):
+                return ui.input(self.clave, self.poner_clave).animate("shake", on=self.error)
+
+            def enviar(self):
+                if not self.comprobar():
+                    self.error.fire()          # el campo tiembla ahora
+        ```
+
+        No se reproduce nada cuando el widget aparece: solo `fire()` la inicia. `count` dice cuántas
+        veces se disparó. `fire` acepta e ignora cualquier argumento, así que puede ser un callback:
+        `ui.button("Temblar", self.error.fire)`.
+    """),
     "pyzed.define_animation": _d("""
         Da nombre a una animación para que `animate(nombre)` la reproduzca; la devuelve.
 
@@ -2506,7 +2529,7 @@ _section("widgets", "Animación", {
     "pyzed.animation.PRESETS": {"desc": "Todas las animaciones con nombre (los presets incluidos y los añadidos con `define_animation`), asociadas a su `Animation`. Ver [la lista de presets](/pyzed/es/animation/presets/).", "no_signature": True},
     "pyzed.animation.CATEGORIES": {"desc": "Categorías de presets: `entrance` (entrada), `exit` (salida), `attention` (atención), `interaction` (interacción) y `loop` (bucle).", "no_signature": True},
     "pyzed.animation.EASINGS": {"desc": "Nombres de easing (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` también acepta Béziers cúbicas `(x1, y1, x2, y2)` y `\"steps(n)\"`.", "no_signature": True},
-    "pyzed.animation.TRIGGERS": {"desc": "Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click` y `active`.", "no_signature": True},
+    "pyzed.animation.TRIGGERS": {"desc": "Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click`, `active` y `manual` (cada vez que cambia `key`; un `pz.Trigger` pasado a `on=` lo usa).", "no_signature": True},
     "pyzed.animation.PROPERTIES": {"desc": "Las propiedades que cambian las animaciones y transiciones: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` y `glow_color`.", "no_signature": True},
     "pyzed.animation.WINDOW_TRANSITIONS": {"desc": "Nombres para `Window.transition` (`fade`, `zoom`, `pop`, `slide_up`, `slide_down`, `slide_left`, `slide_right`) asociados a sus presets `(apertura, cierre)`.", "no_signature": True},
 })
@@ -2737,6 +2760,7 @@ MEMBERS = {
     "pyzed.designer.Document.reorder": "Mueve los controles seleccionados en el orden z (`where`: ver `Form.reorder`).",
     "pyzed.designer.Document.set_rect": "Fija la posición y el tamaño del control `name` a partir de `rect` `(x, y, width, height)`, redondeados a píxeles enteros; las ediciones con el mismo `group` se unen en un paso de deshacer.",
     "pyzed.designer.Document.set_prop": "Fija la propiedad `key` del control `name` a `value` (las ediciones repetidas se unen en un paso de deshacer).",
+    "pyzed.Trigger.fire": "Reproduce desde el principio las animaciones que usan este disparador.",
     "pyzed.Animation.properties": "Las propiedades que cambian los keyframes, en orden de aparición.",
     "pyzed.Animation.total": "Milisegundos del principio al final (`inf` si se repite para siempre).",
     "pyzed.Animation.with_options": "Una copia con otro timing o disparador (`duration`, `easing`, `on`...).",

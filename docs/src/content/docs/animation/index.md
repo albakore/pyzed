@@ -19,6 +19,12 @@ ui.button("Recording", self.stop).animate("glow_pulse")          # a looping glo
 pz.icon("loader-circle").animate("spin")                         # a spinner
 ```
 
+:::tip[Start here]
+New to animations? [Start here: apply and play](/pyzed/animation/start/) shows where `.animate()` goes,
+every way to start an animation (when a widget appears, on the pointer, from your code with
+`pz.Trigger`, from a timeline) and how the same works in Pyzed Design.
+:::
+
 ## Three ways to animate
 
 Pick the one that fits what you want to do. They work together, so one app often uses all three.
@@ -58,7 +64,8 @@ for a timeline. Both are short and commented.
 
 | Page | What it explains |
 | --- | --- |
-| [animate() and triggers](/pyzed/animation/animate/) | What plays an animation (appearing, hover, press, focus, click, a flag) and its timing options. |
+| [Start here: apply and play](/pyzed/animation/start/) | Where `.animate()` goes, what starts an animation, how they are named and customized, in each code style and in the editor. |
+| [animate() and triggers](/pyzed/animation/animate/) | What plays an animation (appearing, hover, press, focus, click, a flag, a `pz.Trigger`) and its timing options. |
 | [Animatable properties](/pyzed/animation/properties/) | Every property an animation can change, and how values work. |
 | [Keyframes and easing](/pyzed/animation/keyframes/) | Your own animations with `pz.Animation`, and the curves that shape the motion. |
 | [Transitions and states](/pyzed/animation/transitions/) | `transition()`, hover and pressed styles, page changes with `presence`, lists with `stagger`, and window transitions. |

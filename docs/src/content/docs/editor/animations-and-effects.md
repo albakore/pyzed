@@ -36,7 +36,7 @@ can removes it. Click a row to open its editor:
 
 | Field | Meaning |
 | --- | --- |
-| **When** | What plays it: **When it appears**, **While hovered**, **While pressed**, **While focused** or **On click**. Hover, press and focus play forward while the condition holds and back when it ends. |
+| **When** | What plays it: **When it appears**, **While hovered**, **While pressed**, **While focused**, **On click** or **When played from code**. Hover, press and focus play forward while the condition holds and back when it ends. Under the field, a line says how the chosen one starts. |
 | **Animation** | The preset. The ones that suit the trigger come first (entrances for *appears*, interactions for hover and press, attention seekers for click); the tooltip describes the selected one. |
 | **Duration**, **Delay** | Milliseconds. Empty keeps the preset's own timing. |
 | **Easing** | How the speed changes along the way (ease, linear, ease out cubic, spring...). |
@@ -44,6 +44,33 @@ can removes it. Click a row to open its editor:
 
 **Add animation** adds a row (a *Fade in up* when it appears) and opens it. Picking another preset
 resets the row's timing to the new preset's. Every change can be undone.
+
+### Playing it from your code
+
+Choose **When played from code** and the animation waits for your handlers: it doesn't play when the
+form opens. The open row shows the line that plays it, with a copy button. Paste it in any handler
+(a button's click, a timer's tick, a failed validation):
+
+```python
+def sign_in_click(form, event):
+    if not form.password.validate():
+        form.password.play_animation()      # plays the password box's "When played from code" animations
+```
+
+`play_animation()` also replays the control's **When it appears** animations. Give it a preset name,
+a `pz.Animation` or property values to play something the control has no row for, and use
+`stop_animation()` to stop what it started (a loop, for example):
+
+| Call | What plays |
+| --- | --- |
+| `form.title.play_animation()` | Its own rows set to **When played from code** (and replays **When it appears**). |
+| `form.title.play_animation("tada")` | That preset, once. |
+| `form.badge.play_animation("pulse", repeat=3, duration=400)` | A preset with other timing (any [`animate()` option](/pyzed/animation/animate/#timing-options)). |
+| `form.card.play_animation(scale=1.05, duration=200)` | To these values and back. |
+| `form.spinner.stop_animation()` | Stops what `play_animation` started. |
+
+[Start here: apply and play](/pyzed/animation/start/) compares this with `pz.Trigger`, the way a
+code-only app does the same.
 
 ### Previewing
 
@@ -63,9 +90,10 @@ Animations are saved as plain data on the control:
 ]
 ```
 
-`Document.set_animations(name, animations)` changes them from a script and `Control.animations` reads
-them. To animate a control from its handlers, use the library: `pz.Animation`, `define_animation` and
-the [preset list](/pyzed/animation/presets/).
+`"on": "manual"` is **When played from code**. `Document.set_animations(name, animations)` changes them
+from a script and `Control.animations` reads them. To play one from a handler, call
+`form.<control>.play_animation(...)` (see above); to make your own presets, use the library's
+`pz.Animation` and `define_animation` (see the [preset list](/pyzed/animation/presets/)).
 
 ## Timeline animations
 
@@ -75,17 +103,47 @@ For animations that move several controls together (an intro, a transition betwe
 
 ![The Animation panel: dragging the playhead through an intro clip makes the title drop in, the subtitle fade in and the Sign in button grow on the form above](/pyzed/media/animation/editor-scrub.webp)
 
+An empty panel lists the three steps (add a track, add keys, play it) and has a **New animation** button.
+
 | Action | Result |
 | --- | --- |
 | **Add track for …** | Adds a track for a property of the selected control (opacity, position, scale, colors, size…) or any of its properties, such as a label's text. |
-| **Double-click** a lane | Adds a key at that time with the control's current value. |
-| **Drag** a key | Moves it in time. Select a key to edit its value and easing below the tracks. |
-| **Click** or **drag** the ruler | Moves the playhead; the canvas shows the form at that time. |
-| **Calls** lane (right-click a call to remove it) | Calls a method of the form's code file at a time. |
+| **Click** anywhere on the ruler or the lanes, or **drag** | Moves the playhead; the canvas shows the form at that time. It snaps to keys nearby. |
+| **Double-click** a lane | Adds a key at that time with the value the track has there. |
+| **Drag** a key | Moves it in time. You can grab it from a few pixels away (the pointer becomes a hand) and it snaps to the keys of the other tracks, the start and the end. A label shows its time and value while you drag or hover it. |
+| **Click** a key | Selects it: edit its time, value and easing below the tracks. |
+| **Right-click** a key | Deletes it. |
+| **Calls** lane | Type a handler name and press Enter (or double-click the lane) to call that method of the form's code file at the playhead. Drag a call to move it; right-click it to remove it. |
 | **Length**, **loop**, **autoplay** | Set how long the clip lasts, whether it repeats, and whether it plays when the form opens. |
+
+With the pointer over the panel, the keyboard edits the timeline:
+
+| Key | Does |
+| --- | --- |
+| `Delete` / `Backspace` | Deletes the selected key. |
+| `Space` | Plays or pauses the preview. |
+| `←` / `→` | Moves the selected key (or the playhead) by 0.01 s; with `Shift`, by 0.1 s. |
+| `Home` / `End` | Jumps to the start or the end. |
 
 ![Adding a scale track for the title from the panel, double-clicking its lane to add a key, dragging the key earlier and choosing Ease out back for it](/pyzed/media/animation/editor-keys.webp)
 
 Controls inside an animated container follow its opacity, position and blur. Every change can be undone.
-In a running form, `self.animations` is the player: `self.animations.play("intro")`. The
-[Animation section](/pyzed/animation/) explains clips, tracks, keys, easing and the player in depth.
+
+### How a clip starts
+
+A clip plays in one of two ways, and the bar under the tracks says which one applies to the clip you
+are editing:
+
+- **⚡ Play when the form opens** (in the toolbar) makes it the form's autoplay clip: "Plays when the
+  form opens."
+- Otherwise it waits for a handler. The bar shows the line to call, with a copy button:
+
+```python
+def replay_click(form, event):
+    form.animations.play("intro", restart=True)  # from the start, even if it is playing
+    # also: form.animations.pause(), .resume(), .seek(0.5), .play_backwards("intro"), .queue("outro")
+```
+
+`form.animations` is the form's [`pz.AnimationPlayer`](/pyzed/animation/player/): it can also pause,
+seek, queue clips and say when one ends. The [Animation section](/pyzed/animation/) explains clips,
+tracks, keys, easing and the player in depth.

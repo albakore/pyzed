@@ -2585,6 +2585,44 @@ Animation.from_dict(data)
 
 Reconstruye una animación guardada con `to_dict`.
 
+### `Trigger`
+
+```python
+class Trigger
+```
+
+Inicia una animación desde tu código, como un botón que pulsas en un manejador.
+
+Guarda uno en la app, pásalo a `animate(on=...)` en `view()` y llama a `fire()` cada vez que
+la animación deba reproducirse (desde el principio, aunque siga en marcha):
+
+```python
+class Login(pz.App):
+    def __init__(self):
+        self.error = pz.Trigger()
+
+    def view(self):
+        return ui.input(self.clave, self.poner_clave).animate("shake", on=self.error)
+
+    def enviar(self):
+        if not self.comprobar():
+            self.error.fire()          # el campo tiembla ahora
+```
+
+No se reproduce nada cuando el widget aparece: solo `fire()` la inicia. `count` dice cuántas
+veces se disparó. `fire` acepta e ignora cualquier argumento, así que puede ser un callback:
+`ui.button("Temblar", self.error.fire)`.
+
+**Métodos y propiedades**
+
+#### `Trigger.fire`
+
+```python
+Trigger.fire(*_args)
+```
+
+Reproduce desde el principio las animaciones que usan este disparador.
+
 ### `define_animation`
 
 ```python
@@ -2710,7 +2748,7 @@ Nombres de easing (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`
 
 ### `TRIGGERS`
 
-Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click` y `active`.
+Qué reproduce una animación: `mount`, `hover`, `press`, `focus`, `click`, `active` y `manual` (cada vez que cambia `key`; un `pz.Trigger` pasado a `on=` lo usa).
 
 ### `PROPERTIES`
 
