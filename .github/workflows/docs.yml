@@ -83,9 +83,6 @@ jobs:
         with:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
-      - name: ALSA headers (the audio engine links ALSA on Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: wheel

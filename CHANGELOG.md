@@ -26,6 +26,7 @@ stable version.
 - 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu: Node.js (`npx`), `claude` and `uv` are found in the user's shell `PATH` and where nvm, volta, fnm and `~/.local/bin` put them. When Node.js is missing, the agent says so, with **Install Node.js** and **Use Pyzed Agent**.
 - 🐛 **Retry** sends the unanswered message again instead of adding it once more to the thread.
 - 🐛 Pyzed's MCP server is added to Zed (and VS Code) even when their settings file has comments, which are kept.
+- 🐛 Pyzed builds from source on Linux without ALSA's headers (as in a fresh WSL): audio devices and MIDI come with the `alsa` feature, which CI and the released wheels turn on; without it `pyzed.audio` renders offline and on its silent clock and says how to get sound.
 
 ### Refactors
 

@@ -57,8 +57,11 @@ pytest tests
 
 Use `--release`: debug builds of Iced are too slow to use the real window.
 After changing Rust code, run `maturin develop --release` again.
-On Linux the audio engine needs ALSA's headers to build: `sudo apt install libasound2-dev`
-(Fedora: `sudo dnf install alsa-lib-devel`).
+On Linux a build from source plays no sound by default, so it builds without extra system packages:
+`pyzed.audio` renders offline and on its silent clock. For audio devices and MIDI, install ALSA's
+headers (`sudo apt install libasound2-dev pkg-config`; Fedora: `sudo dnf install alsa-lib-devel`)
+and build with `maturin develop --release --features alsa` (with uv, keep `MATURIN_PEP517_ARGS="--features alsa"` exported and run `uv sync --reinstall-package pyzed-ui`).
+CI and the released wheels always build with `--features alsa`.
 
 Before pushing, run the same checks as CI:
 
