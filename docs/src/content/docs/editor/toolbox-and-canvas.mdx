@@ -5,6 +5,8 @@ sidebar:
   order: 2
 ---
 
+import Media from '../../../components/Media.astro';
+
 The **Design** panel (left dock) holds the **Toolbox** on top and the **Outline** below; drag the bar between them
 to give one more room. The **canvas** in the center shows the document exactly as it will run, but inert: buttons
 do not click and text boxes do not type, so the mouse is free to edit.
@@ -174,6 +176,8 @@ itself: click it to select it, **+** adds a control to it.
 The outline is the easiest way to pick a control buried under others, or a
 [non-visual component](/pyzed/editor/non-visual-components/) such as a timer, and to move controls between containers precisely.
 :::
+
+<Media clip="designer-timer-outline" alt="A Timer dragged from the toolbox onto the login form lands in the tray under the form, not on it; then the email text box and the form's ticker timer are selected from the Outline, where non-visual components are listed under Non-visual" caption="Drop a Timer on the form and it goes to the tray. In the Outline, non-visual components come after the controls, under Non-visual." />
 
 ## The status bar
 

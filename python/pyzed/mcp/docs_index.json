@@ -568,7 +568,7 @@
    "slug": "editor/toolbox-and-canvas",
    "title": "Toolbox and canvas",
    "description": "Place, select, move, resize and arrange controls in Pyzed Design: snapping, smart guides, alignment, z-order and the outline of your form.",
-   "path": "docs/src/content/docs/editor/toolbox-and-canvas.md"
+   "path": "docs/src/content/docs/editor/toolbox-and-canvas.mdx"
   },
   {
    "slug": "editor/views",

@@ -1,6 +1,6 @@
 """Records the short muted clips the docs embed (docs/public/media/): MP4 (H.264) + WebM (VP9) + a WebP
 poster, and an animated WebP when it is smaller than the MP4. ``manifest.json`` there lists every clip.
-Clips registered with ``anim=True`` (short illustrations: the game tutorials and their concepts) are made
+Clips registered with ``anim=True`` (short illustrations: the game tutorials, their concepts and Pyzed Design) are made
 as an animated WebP and its poster only, sized to stay under ``ANIM_TARGET``.
 
     python docs/scripts/record.py                 # every clip
@@ -749,7 +749,7 @@ def themes_clip(c: Clip):
 
 
 @clip("designer-themes", "Pyzed Design in other themes", "Pyzed Design's own look following the theme picked in Settings.",
-      fps=12, poster=0.0, tags=["designer", "theming"])
+      fps=12, poster=0.0, tags=["designer", "theming"], anim=True, width=960)
 def designer_themes_clip(c: Clip):
     import pyzed as pz
 
@@ -848,7 +848,7 @@ DESIGNER_SIZE = (1280, 800)
 
 @clip("designer-place-controls", "Placing controls from the toolbox",
       "Pyzed Design: a button, a text box and a check box dragged from the toolbox onto an empty form.",
-      fps=24, poster=0.98, tags=["designer"])
+      fps=24, poster=0.98, tags=["designer"], anim=True, width=960)
 def designer_place_clip(c: Clip):
     work = Path(tempfile.mkdtemp(prefix="pyzed-record-"))
     app = _designer(work / "form1.pzform")
@@ -882,7 +882,7 @@ def designer_place_clip(c: Clip):
 @clip("designer-tabs-anywhere", "Tabs anywhere",
       "Pyzed Design: the Events panel dragged next to the forms, a form dragged into the left dock and both "
       "dragged back, with the target lit up and a copy of the tab under the pointer.",
-      fps=24, poster=0.3, tags=["designer"])
+      fps=24, poster=0.3, tags=["designer"], anim=True, width=960)
 def designer_tabs_clip(c: Clip):
     from types import SimpleNamespace
 
@@ -928,6 +928,62 @@ def designer_tabs_clip(c: Clip):
     yield from drag("main", "1", (528.0, 48.0), (110.0, 470.0))  # a form into the left dock
     yield from drag("main", "events", (480.0, 48.0), (1047.0, 49.0), row=("right", 1))  # back between two panels
     yield from drag("left", "0", (90.0, 49.0), (432.0, 48.0), row=("main", 1))  # the form back among the forms
+    yield Frame(app, size, pointer, hold=c.fps)
+
+
+@clip("designer-timer-outline", "A timer in the tray and the Outline",
+      "Pyzed Design: a Timer dragged onto the login form lands in the tray under it, not on the form; then the "
+      "Outline selects a control and the form's timer, listed under Non-visual.",
+      fps=20, poster=0.97, tags=["designer"], anim=True, width=960)
+def designer_timer_outline_clip(c: Clip):
+    app = _designer(EXAMPLES / "designer" / "login.pzform")
+    app.left_ratio = 0.4  # room in the Outline for every control and the Non-visual list
+    app.doc.select(None)
+    app._selection_changed()
+    size = DESIGNER_SIZE
+    origin = _form_origin(app)
+    pointer = (640.0, 640.0)
+
+    def move(to, frames=12, pressed=False):
+        nonlocal pointer
+        for p in glide(pointer, to, frames):
+            pointer = p
+            if pressed:
+                app.window_moved(*p)
+                app.pointer_moved(p[0] - origin[0], p[1] - origin[1])
+            yield Frame(app, size, pointer, pressed=pressed)
+
+    def outline_click(name, y):
+        yield from move((90.0, y))
+        app.enter_row(f"outline:{name}")
+        app.window_moved(*pointer)
+        app.press_outline(name)
+        yield Frame(app, size, pointer, pressed=True, hold=3)
+        app.window_release()
+        yield Frame(app, size, pointer, hold=c.fps)
+        app.leave_row(f"outline:{name}")
+
+    yield Frame(app, size, pointer, hold=10)
+    # find the Timer in the toolbox and drag it onto the form: it goes to the tray
+    yield from move((110.0, 117.0), 10)
+    typed = ""
+    for ch in "tim":
+        typed += ch
+        app.set_toolbox_query(typed)
+        yield Frame(app, size, pointer, hold=2)
+    yield from move((60.0, 203.0), 8)
+    app.window_moved(*pointer)
+    app.press_tool("timer")
+    yield Frame(app, size, pointer, pressed=True, hold=3)
+    app.enter_form()
+    yield from move((origin[0] + 220.0, origin[1] + 130.0), 18, pressed=True)
+    app.window_release()
+    app.toasts.clear()
+    yield Frame(app, size, pointer, hold=int(c.fps * 1.6))
+    app.set_toolbox_query("")
+    # the Outline: a control, then the form's own timer under Non-visual
+    yield from outline_click("email", 561.0)
+    yield from outline_click("ticker", 703.0)
     yield Frame(app, size, pointer, hold=c.fps)
 
 
