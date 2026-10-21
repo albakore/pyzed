@@ -155,8 +155,9 @@ Cómo funciona:
 
 - Windows lee el proyecto a través de `\\wsl.localhost\<distribución>\...` y arranca en la misma carpeta.
 - Windows tiene **su propio entorno**, en `%LOCALAPPDATA%\pyzed\wsl\`, con la misma versión de Python, las
-  dependencias del proyecto en las versiones de `uv.lock` y la wheel de `pyzed-ui` de la misma versión (siempre
-  una wheel ya compilada: en Windows no se compila nada). El `.venv` del proyecto sigue siendo el de Linux. Se crea
+  dependencias del proyecto en las versiones de `uv.lock`, lo que necesita el editor (agentes de IA, MCP,
+  servidores de lenguaje) y la wheel de `pyzed-ui` de la misma versión (siempre una wheel ya compilada: en Windows
+  no se compila nada). El `.venv` del proyecto sigue siendo el de Linux. Se crea
   la primera vez (unos segundos) y de nuevo solo cuando cambian las dependencias.
 - El comando en WSL espera a la ventana: su salida, la consola de Pyzed Design y el código de salida son los de la
   aplicación, y al detenerlo (Detener, <kbd>Ctrl</kbd>+<kbd>C</kbd>) la ventana se cierra.
@@ -170,13 +171,25 @@ o `dev`.
 | `PYZED_WINDOWS=0` | Abre las ventanas por WSLg. |
 | `PYZED_WINDOWS_ENV=NOMBRE,NOMBRE` | Más variables para la aplicación en Windows (claves de API...). Las `PYZED_*` siempre pasan. |
 | `PYZED_WINDOWS_WHEEL` | Ruta o URL de la wheel de `pyzed-ui` para Windows (ver abajo). |
+| `PYZED_WINDOWS_TARGET` | Target de Rust para el núcleo de un checkout (`x86_64-pc-windows-gnu` o `-msvc`). |
 
 :::note[Si trabajas en Pyzed]
-Un checkout de Pyzed (`uv sync` en el repositorio) está compilado para Linux, y puede que su versión aún no esté
-publicada, así que la ventana de Windows usa la última versión publicada de `pyzed-ui`. Para probar tus cambios en
-Windows, descarga la wheel de Windows que CI compila para tu rama (o la de una release) y apunta
-`PYZED_WINDOWS_WHEEL` a ella.
+Desde un checkout de Pyzed (`uv sync` en el repositorio), Windows ejecuta **tu checkout**: sus archivos Python se
+importan desde WSL, así que cada cambio se nota, y su núcleo en Rust se compila para Windows dentro de WSL
+(compilación cruzada), una vez por cada cambio en las fuentes de Rust (la primera compilación tarda unos minutos;
+en Windows no se compila nada). Necesita un compilador cruzado, que se instala una vez:
+
+```bash
+sudo apt install mingw-w64     # o clang y lld, para el target MSVC de las wheels publicadas
+```
+
+Sin él, las ventanas se abren por WSLg con un aviso que lo explica. `PYZED_WINDOWS_WHEEL` (la ruta o URL de una
+wheel de Windows) evita la compilación, y `PYZED_WINDOWS_TARGET` elige el target de Rust.
 :::
+
+Cuando Pyzed Design corre así en Windows, todo lo que inicia corre también en Windows: Ejecutar, el script del
+proyecto, las vistas previas y el audio usan los dispositivos de Windows. Crear o clonar un proyecto en una carpeta
+de WSL usa el uv y el git de Linux, así que el proyecto y su `.venv` siguen siendo de Linux.
 
 ## Comprobar la instalación
 

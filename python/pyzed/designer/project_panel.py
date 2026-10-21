@@ -11,7 +11,6 @@ from __future__ import annotations
 import asyncio
 import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
@@ -245,9 +244,7 @@ class ProjectController:
                 return None
             return self.open(str(target))
 
-        git = shutil.which("git") or "git"
-        return self._task(tr("Cloning {name}", name=target.name),
-                          lambda: _project.execute([git, "clone", url, str(target)], timeout=600), done)
+        return self._task(tr("Cloning {name}", name=target.name), lambda: _project.clone(url, target), done)
 
     # -- background commands -------------------------------------------------------------
     def _task(self, label: str, work: Callable[[], Any], done: Optional[Callable[[Any], Any]] = None,
