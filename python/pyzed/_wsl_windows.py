@@ -403,12 +403,21 @@ def _rustup() -> Optional[str]:
     return found if os.path.isfile(found) else None
 
 
-def _stream(args: Sequence[str], cwd: Path, log: Callable[[str], None]) -> tuple:
+def linux_only_path() -> str:
+    """``PATH`` without Windows' folders (``/mnt/c/...``): maturin looks for ``python.exe`` to build for Windows,
+    and on Windows' ``PATH`` that is the Microsoft Store's stand-in, which fails. The core is abi3, so it needs
+    no Windows interpreter at all."""
+    return os.pathsep.join(p for p in os.environ.get("PATH", "").split(os.pathsep) if p and not p.startswith("/mnt/"))
+
+
+def _stream(args: Sequence[str], cwd: Path, log: Callable[[str], None],
+            env: Optional[Dict[str, str]] = None) -> tuple:
     """Runs ``args``, passing its output on line by line; ``(ok, last lines)``."""
     tail: List[str] = []
     try:
         process = subprocess.Popen([str(a) for a in args], cwd=str(cwd), stdout=subprocess.PIPE,  # noqa: S603
-                                   stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True, errors="replace")
+                                   stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True, errors="replace",
+                                   env=env)
     except OSError as err:
         return False, str(err)
     assert process.stdout is not None
@@ -439,7 +448,8 @@ def build_core(root: Path, out: Path, log: Callable[[str], None] = print) -> Opt
                            stdin=subprocess.DEVNULL, timeout=600)
         log(f"Pyzed: building the native core for Windows ({target}); the first build takes a few minutes…")
         with tempfile.TemporaryDirectory(prefix="pyzed-core-") as tmp:
-            ok, tail = _stream([*maturin, "build", "--release", "--target", target, "--out", tmp], root, log)
+            ok, tail = _stream([*maturin, "build", "--release", "--target", target, "--out", tmp], root, log,
+                               {**os.environ, "PATH": linux_only_path()})
             wheels = list(Path(tmp).glob("*.whl"))
             if ok and wheels:
                 with zipfile.ZipFile(wheels[0]) as wheel:
@@ -448,8 +458,8 @@ def build_core(root: Path, out: Path, log: Callable[[str], None] = print) -> Opt
                         out.mkdir(parents=True, exist_ok=True)
                         (out / "_core.pyd").write_bytes(wheel.read(member))
                         return None
-            errors.append(f"{target}:\n{tail}")
-    return "\n\n".join([*errors, TOOLCHAIN_HELP])
+            errors.append(f"{target}: the build failed\n" + "\n".join(tail.splitlines()[-6:]))
+    return "\n\n".join(errors)
 
 
 def _slug(text: str) -> str:
