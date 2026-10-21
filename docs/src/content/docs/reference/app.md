@@ -1072,6 +1072,26 @@ class ReloadError
 
 Raised by `view()` while the last reload failed; the window shows its message.
 
+### `Change`
+
+```python
+@dataclass
+class Change(name, changed=[], added=[], removed=[], new_state=[], updated_state=[])
+```
+
+What one reload changed in a class (see `Reloader.changes`).
+
+### `remember`
+
+```python
+remember(obj)
+```
+
+Records the initial plain values of `obj` (once), so a reload can tell what the app changed.
+
+The runtime calls it for the app, each window and each component; call it for other
+objects created after hot reload started only if you need their defaults updated too.
+
 ## Languages
 
 ### `t`

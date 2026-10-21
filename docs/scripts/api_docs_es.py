@@ -2058,6 +2058,18 @@ _section("app", "Hot reload", {
         La mayoría de los programas nunca crean uno a mano: lo hace `pz.run(app, reload=True)`.
     """),
     "pyzed.hot_reload.ReloadError": _d("Lo lanza `view()` mientras la última recarga haya fallado; la ventana muestra su mensaje."),
+    "pyzed.hot_reload.Change": _d("""
+        Lo que una recarga cambió en una clase (ver `Reloader.changes`): `name`, los métodos
+        cambiados (`changed`), nuevos (`added`) y quitados (`removed`), los atributos que los objetos
+        vivos recibieron del nuevo `__init__` (`new_state`) y los que tomaron su nuevo valor inicial
+        (`updated_state`).
+    """),
+    "pyzed.hot_reload.remember": _d("""
+        Guarda (una vez) los valores iniciales simples de `obj`, para que una recarga sepa qué cambió la app.
+
+        El runtime lo llama para la app, cada ventana y cada componente; llámalo para otros objetos
+        creados después de iniciar el hot reload solo si quieres que también se actualicen sus valores iniciales.
+    """),
 }, before="Idiomas")
 _section("app", "Eventos y componentes", {
     "pyzed.component.State": _d("El valor por defecto de una variable de estado declarada en la clase (ver `state`)."),
