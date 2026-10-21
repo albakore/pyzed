@@ -34,11 +34,15 @@ Central once (`com.chaquo.python:target`, cached in `~/.cache/pyzed/android`) an
 
 ```bash
 adb install -r dist/counter.apk
-adb logcat -s python.stdout python.stderr
+adb logcat -s pyzed python.stdout python.stderr RustPanic AndroidRuntime DEBUG
 ```
 
-`print` and Python errors go to the log. When the app closes at start, the traceback is also
-in the app's files folder: `adb shell run-as org.pyzed.counter cat files/last-error.txt`.
+The `pyzed` lines show each step of the start (unpacking, starting Python, running the app) and
+the error that stopped it; `print` goes to `python.stdout`. The last error is also kept in the
+app's files folder: `adb shell run-as org.pyzed.counter cat files/last-error.txt`.
+
+The window waits for the activity to resume before it opens, since Android gives it nothing to
+draw on before that. Leaving the app and coming back is not handled yet.
 
 ## What is still to do
 

@@ -176,6 +176,11 @@ where
 
         #[cfg(target_arch = "wasm32")]
         canvas: Option<web_sys::HtmlCanvasElement>,
+
+        // pyzed: on Android a window has no surface to draw on until the activity resumes, so the
+        // events before that wait here (iced opens its windows at the first one).
+        #[cfg(target_os = "android")]
+        waiting: Option<Vec<Event<Action<Message>>>>,
     }
 
     let runner = Runner {
@@ -189,6 +194,9 @@ where
 
         #[cfg(target_arch = "wasm32")]
         canvas: None,
+
+        #[cfg(target_os = "android")]
+        waiting: Some(Vec::new()),
     };
 
     boot_span.finish();
@@ -206,6 +214,13 @@ where
                         .map(conversion::theme_mode)
                         .unwrap_or_default(),
                 );
+            }
+
+            #[cfg(target_os = "android")]
+            if let Some(waiting) = self.waiting.take() {
+                for event in waiting {
+                    self.process_event(event_loop, event);
+                }
             }
         }
 
@@ -292,6 +307,12 @@ where
             event: Event<Action<Message>>,
         ) {
             if event_loop.exiting() {
+                return;
+            }
+
+            #[cfg(target_os = "android")]
+            if let Some(waiting) = &mut self.waiting {
+                waiting.push(event);
                 return;
             }
 
