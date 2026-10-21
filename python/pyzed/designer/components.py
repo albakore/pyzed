@@ -53,6 +53,25 @@ EVENT_DOCS = {
     "close": "Runs when {name} is closing; return False to keep it open.",
     "key": "Runs on every key press (``event.value`` is a combo such as ``\"ctrl-s\"``).",
     "resize": "Runs when {name} is resized (``event.value`` is ``(width, height)``).",
+    "open": "Runs when an item of {name} is double-clicked (``event.value`` is the item).",
+    ("table", "open"): "Runs when a row of {name} is double-clicked (``event.value`` is its index).",
+    ("table", "sort"): "Runs when a column header of {name} is clicked to sort it (``event.value`` is its title; "
+                       "``sort_by`` and ``descending`` already changed).",
+    ("tabs", "close"): "Runs after a tab of {name} is closed with its x (``event.value`` is its name).",
+    ("chip", "remove"): "Runs when the x of {name} is clicked (``event.value`` is ``None``).",
+    ("split_button", "click"): "Runs when the main part of {name} is clicked.",
+    ("split_button", "choose"): "Runs when an item of the menu of {name} is chosen (``event.value`` is its text).",
+    ("split_button", "menu"): "Runs when the menu of {name} opens.",
+    ("toggle_group", "change"): "Runs when a button of {name} is pressed (``event.value`` is its value, or the "
+                                "list of pressed values when ``multiple``).",
+    ("tree", "change"): "Runs when an item of {name} is selected (``event.value`` is its path, such as "
+                        "``\"Documents/Notes.md\"``).",
+    ("tree", "open"): "Runs when an item without children of {name} is double-clicked (``event.value`` is its path).",
+    ("tree", "toggle"): "Runs when an item of {name} is folded or unfolded (``event.value`` is its path; "
+                        "``expanded`` already changed).",
+    ("breadcrumbs", "click"): "Runs when a part of {name} is clicked (``event.value`` is its index, 0 for the first).",
+    "link": "Runs when a link in {name} is clicked (``event.value`` is the address); without it the link opens in "
+            "the browser.",
     # non-visual components; ``(type, event)`` keys describe an event that means something else on one of them
     ("timer", "tick"): "Runs every ``interval`` milliseconds while {name} is running (``event.value`` counts the "
                        "ticks).",
@@ -137,6 +156,9 @@ class RenderContext:
     def on(self, control: Control, event: str, prop: Optional[str] = None) -> Callable[..., Any]:
         """A callback for ``event``; when ``prop`` is given the value is also stored there."""
         return _inert
+
+    def set(self, control: Control, prop: str, value: Any) -> None:  # noqa: A003
+        """Stores ``value`` in ``prop`` of a running control without raising an event (a tree's open folders)."""
 
     def key(self, control: Control) -> str:
         """A stable id for widgets with internal state (editors, inputs)."""
@@ -300,16 +322,20 @@ VARIANTS = ("filled", "solid", "ghost", "outline", "subtle", "tinted")
 # -- built-in components -------------------------------------------------------
 
 
+def _clickable(widget: Any, c: Control, ctx: RenderContext) -> Any:
+    """``widget`` raising the ``click`` and ``double_click`` events of ``c`` when they have handlers."""
+    if not (c.events.get("click") or c.events.get("double_click")) or not c.enabled:
+        return widget
+    return _core.mouse_area(widget, on_press=ctx.on(c, "click") if c.events.get("click") else None,
+                            on_double_click=ctx.on(c, "double_click") if c.events.get("double_click") else None,
+                            cursor="pointer" if ctx.live else None)
+
+
 def _label(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     text = ui.label(p["text"], size=p["size"], color=p["color"] or "text",
                     weight=None if p["weight"] == "normal" else p["weight"], wrap=p["wrap"], theme=ctx.theme)
-    widget = _fill(text, c, align_x=_align(p["align"]))
-    if c.events.get("click") or c.events.get("double_click"):
-        widget = _core.mouse_area(widget, on_press=ctx.on(c, "click") if c.events.get("click") else None,
-                                  on_double_click=ctx.on(c, "double_click") if c.events.get("double_click") else None,
-                                  cursor="pointer" if ctx.live else None)
-    return widget
+    return _clickable(_fill(text, c, align_x=_align(p["align"])), c, ctx)
 
 
 def _heading(c: Control, ctx: RenderContext) -> Any:
@@ -383,8 +409,14 @@ def _slider(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     lo, hi = _num(p["min"]), _num(p["max"], 100)
     value = min(max(_num(p["value"]), lo), hi)
-    return _fill(ui.slider(value, ctx.on(c, "change", "value") if c.enabled else None, min=lo, max=hi,
-                           step=_num(p["step"], 1) or 1, theme=ctx.theme), c)
+    vertical = bool(p["vertical"])
+    widget = ui.slider(value, ctx.on(c, "change", "value") if c.enabled else None, min=lo, max=hi,
+                       step=_num(p["step"], 1) or 1, on_release=ctx.on(c, "release") if c.enabled else None,
+                       vertical=vertical, show_value=bool(p["show_value"]), disabled=not c.enabled,
+                       theme=ctx.theme)
+    if vertical:
+        return _core.container(widget, width="fill", height="fill", align_x="center")
+    return _fill(widget, c)
 
 
 def _number(c: Control, ctx: RenderContext) -> Any:
@@ -436,8 +468,8 @@ def _image(c: Control, ctx: RenderContext) -> Any:
     if not source:
         return _core.container(_icon("image", size=24, color=t.icon_muted), width="fill", height="fill",
                                center=True, bg=t.element, radius=t.radius_sm)
-    return _core.image(source, width="fill", height="fill", content_fit=c.props["fit"],
-                       radius=_num(c.props["radius"]))
+    return _clickable(_core.image(source, width="fill", height="fill", content_fit=c.props["fit"],
+                                  radius=_num(c.props["radius"])), c, ctx)
 
 
 def _shader(c: Control, ctx: RenderContext) -> Any:
@@ -466,16 +498,19 @@ def _shader(c: Control, ctx: RenderContext) -> Any:
 def _icon_control(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     color = ctx.theme.color(p["color"]) if p["color"] else None
-    return _core.container(_icon(p["name"] or "star", size=_num(p["size"], 20), color=color), width="fill",
-                           height="fill", center=True)
+    return _clickable(_core.container(_icon(p["name"] or "star", size=_num(p["size"], 20), color=color),
+                                      width="fill", height="fill", center=True), c, ctx)
 
 
 def _list_box(c: Control, ctx: RenderContext) -> Any:
     t = ctx.theme
     p = c.props
     on_select = ctx.on(c, "change", "selected")
-    rows = [ui.list_item(item, (lambda item=item: on_select(item)) if ctx.live else None,
-                         selected=item == p["selected"], theme=t)
+    on_open = ctx.on(c, "open") if c.events.get("open") else None
+    rows = [ui.list_item(item, (lambda item=item: on_select(item)) if ctx.live and c.enabled else None,
+                         selected=item == p["selected"],
+                         on_double_press=(lambda item=item: on_open(item)) if on_open and c.enabled else None,
+                         theme=t)
             for item in _lines(p["items"])]
     return _core.container(
         _core.scrollable(_core.column(rows, width="fill", padding=4)),
@@ -484,7 +519,15 @@ def _list_box(c: Control, ctx: RenderContext) -> Any:
 
 
 def _markdown(c: Control, ctx: RenderContext) -> Any:
-    return _core.scrollable(ui.markdown(c.props["text"], width="fill", theme=ctx.theme))
+    # a link opens in the browser unless the form handles it in its link event
+    on_link = ctx.on(c, "link") if c.events.get("link") else (_open_url if ctx.live else None)
+    return _core.scrollable(ui.markdown(c.props["text"], width="fill", on_link=on_link, theme=ctx.theme))
+
+
+def _open_url(url: str) -> None:
+    import webbrowser
+
+    webbrowser.open(url)
 
 
 def _spinner(c: Control, ctx: RenderContext) -> Any:
@@ -583,7 +626,19 @@ def _tabs(c: Control, ctx: RenderContext) -> Any:
     names = _lines(p["tabs"])
     tabs = [ui.Tab(n, n) for n in names]
     selected = p["selected"] if p["selected"] in names else (names[0] if names else None)
-    return _core.container(ui.tab_bar(tabs, selected, on_select=ctx.on(c, "change", "selected"),
+    on_close = None
+    if p["closable"]:
+        def on_close(name: str) -> Any:
+            # the tab leaves the bar (its neighbour is selected), then the close event runs
+            left = [n for n in names if n != name]
+            ctx.set(c, "tabs", "\n".join(left))
+            if selected == name and left:
+                ctx.on(c, "change", "selected")(left[min(names.index(name), len(left) - 1)])
+            return ctx.on(c, "close")(name)
+
+        if not ctx.live:
+            on_close = _inert
+    return _core.container(ui.tab_bar(tabs, selected, on_select=ctx.on(c, "change", "selected"), on_close=on_close,
                                       height=max(c.height, 24), theme=ctx.theme),
                            width="fill", height="fill", align_y="center")
 
@@ -604,14 +659,15 @@ def _callout(c: Control, ctx: RenderContext) -> Any:
 def _avatar(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     size = min(c.width, c.height)
-    return _core.container(ui.avatar(p["initials"] or "?", color=p["color"] or None, size=size, theme=ctx.theme),
-                           width="fill", height="fill", center=True)
+    return _clickable(_core.container(ui.avatar(p["initials"] or "?", color=p["color"] or None, size=size,
+                                                theme=ctx.theme), width="fill", height="fill", center=True), c, ctx)
 
 
 def _chip(c: Control, ctx: RenderContext) -> Any:
     p = c.props
     return _fill(ui.chip(p["text"], on_press=ctx.on(c, "click") if ctx.live else None, selected=bool(p["selected"]),
-                         icon=p["icon"] or None, theme=ctx.theme), c)
+                         on_remove=(ctx.on(c, "remove") if ctx.live else _inert) if p["removable"] else None,
+                         icon=p["icon"] or None, tint=p["tint"], disabled=not c.enabled, theme=ctx.theme), c)
 
 
 def _kbd(c: Control, ctx: RenderContext) -> Any:
@@ -652,13 +708,219 @@ def _table(c: Control, ctx: RenderContext) -> Any:
     rows = [dict(zip(header, (v.strip() for v in line.split(",")))) for line in lines[1:]]
     selected = p["selected"]
     on_row = ctx.on(c, "change", "selected")
+    live = ctx.live and c.enabled
+
+    def index(row: Any) -> Any:
+        return next((i for i, r in enumerate(rows) if r is row), row)
+
+    on_open = ctx.on(c, "open") if c.events.get("open") else None
+    on_sort = None
+    if p["sortable"]:
+        def on_sort(title: str) -> Any:
+            # a click on the sorted column flips the order; on another one sorts by it, ascending
+            ctx.set(c, "descending", not p["descending"] if p["sort_by"] == title else False)
+            ctx.set(c, "sort_by", title)
+            return ctx.on(c, "sort")(title)
+
     return _core.container(
         ui.table(header, rows, striped=bool(p["striped"]), height="fill",
-                 on_row_press=(lambda row: on_row(rows.index(row) if row in rows else row)) if ctx.live else None,
+                 sort_by=(p["sort_by"] or None) if p["sortable"] else None, descending=bool(p["descending"]),
+                 on_sort=on_sort if live else (_inert if on_sort else None),
+                 on_row_press=(lambda row: on_row(index(row))) if live else None,
+                 on_row_double_press=(lambda row: on_open(index(row))) if live and on_open else None,
                  selected=rows[int(selected)] if isinstance(selected, int) and 0 <= selected < len(rows) else None,
                  theme=ctx.theme),
         width="fill", height="fill", border_color=ctx.theme.border_variant, border_width=1,
         radius=ctx.theme.radius_sm, clip=True)
+
+
+def _fields(line: str) -> List[str]:
+    return [part.strip() for part in line.split(",")]
+
+
+def _toggle_group(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    # one option per line: "value, icon, tooltip" (the icon defaults to the value, the tooltip is optional)
+    options = []
+    for line in _lines(p["options"]):
+        value, *rest = _fields(line)
+        options.append((value, rest[0] if rest and rest[0] else value, *(rest[1:2] if len(rest) > 1 else ())))
+    multiple = bool(p["multiple"])
+    chosen = _lines(p["selected"]) if multiple else p["selected"]
+    on_change = ctx.on(c, "change", "selected")
+
+    def pick(value: str) -> Any:
+        if not multiple:
+            return on_change(value)
+        values = [v for v in chosen if v != value] if value in chosen else [*chosen, value]
+        # the property keeps the values one per line; the event gets them as a list
+        ctx.set(c, "selected", "\n".join(values))
+        return ctx.on(c, "change")(values)
+
+    return _fill(ui.toggle_group(options, chosen, pick if ctx.live else None, multiple=multiple,
+                                 disabled=not c.enabled, theme=ctx.theme), c)
+
+
+def _split_button(c: Control, ctx: RenderContext) -> Any:
+    from ..icons import glyph
+    from ..ui.base import _button_colors
+
+    t = ctx.theme
+    p = c.props
+    main = _button(c, ctx)
+    colors = _button_colors(t, p["variant"], None, False)
+    items = _lines(p["items"])
+    # the chevron is a drop-down without text, so its menu opens over the rest of the form
+    menu = _core.pick_list(items, None, ctx.on(c, "choose") if c.enabled and ctx.live else None,
+                           on_open=ctx.on(c, "menu") if c.enabled else None, placeholder="", width=28,
+                           padding=(0, 0, 0, 6), handle=glyph("chevron-down"), handle_size=12, text_size=13,
+                           bg=colors.get("bg", t.element), handle_color=colors.get("color", t.icon),
+                           border_color=colors.get("border_color") or "transparent",
+                           hover_border_color=t.border_focused, radius=t.radius_sm, menu_bg=t.elevated,
+                           menu_color=t.text, menu_border_color=t.border, selected_bg=t.ghost_selected,
+                           selected_color=t.text)
+    return _core.row([_core.container(main, width="fill", height="fill"),
+                      _core.container(menu, height="fill", align_y="center")], spacing=1, width="fill",
+                     height="fill")
+
+
+def _tree_nodes(text: Any) -> List[Any]:
+    """Tree nodes from indented lines (two spaces or a tab per level); ids are paths such as ``"src/main.py"``."""
+    lines = text.splitlines() if isinstance(text, str) else [str(v) for v in (text or [])]
+    root: List[Any] = []
+    stack: List[Tuple[int, Any]] = []
+    for raw in lines:
+        if not raw.strip():
+            continue
+        depth = len(raw.expandtabs(2)) - len(raw.expandtabs(2).lstrip())
+        name = raw.strip()
+        folder = name.endswith("/")
+        name = name.rstrip("/").strip()
+        while stack and stack[-1][0] >= depth:
+            stack.pop()
+        parent = stack[-1][1] if stack else None
+        if parent is not None and parent.children is None:
+            parent.children = []  # an item with items under it is a folder
+        node = ui.TreeNode(name, children=[] if folder else None,
+                           id=f"{parent.id}/{name}" if parent is not None else name)
+        (parent.children if parent is not None else root).append(node)
+        stack.append((depth, node))
+    return root
+
+
+def _tree(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    nodes = _tree_nodes(p["items"])
+    expanded = set(_lines(p["expanded"]))
+    live = ctx.live and c.enabled
+
+    def toggle(node_id: str) -> Any:
+        ctx.set(c, "expanded", "\n".join(sorted(expanded ^ {node_id})))
+        return ctx.on(c, "toggle")(node_id)
+
+    on_open = ctx.on(c, "open") if c.events.get("open") else None
+    return _core.container(
+        _core.scrollable(_core.container(
+            ui.tree(nodes, expanded=expanded, selected=p["selected"] or None, on_toggle=toggle if live else None,
+                    on_select=ctx.on(c, "change", "selected") if live else None,
+                    on_open=on_open if live else None, theme=t),
+            width="fill", padding=4)),
+        width="fill", height="fill", bg=t.editor if p["border"] else None,
+        border_color=t.border_variant if p["border"] else None, border_width=1 if p["border"] else 0,
+        radius=t.radius_sm)
+
+
+def _breadcrumbs(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    parts = _lines(p["parts"])
+    return _fill(ui.breadcrumbs(parts, separator=p["separator"] or "›",
+                                on_press=ctx.on(c, "click") if c.enabled else None, theme=ctx.theme), c)
+
+
+def _empty_state(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return ui.empty_state(p["title"], p["text"] or None, icon=p["icon"] or "inbox", size=p["size"],
+                          theme=ctx.theme)
+
+
+def _counter(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _clickable(_core.container(ui.count_badge(int(_num(p["count"])), tint=p["tint"],
+                                                     max=int(_num(p["max"], 99)) or 99,
+                                                     show_zero=bool(p["show_zero"]), theme=ctx.theme),
+                                      width="fill", height="fill", center=True), c, ctx)
+
+
+def _status_dot(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    dot = ui.indicator(p["color"] or "accent", size=max(min(c.width, c.height) - 2, 2) if not p["text"] else 8,
+                       theme=ctx.theme)
+    if p["text"]:
+        dot = _core.row([dot, ui.label(p["text"], size="sm", wrap=False, theme=ctx.theme)], spacing=6,
+                        align="center")
+        return _clickable(_fill(dot, c), c, ctx)
+    return _clickable(_core.container(dot, width="fill", height="fill", center=True), c, ctx)
+
+
+def _facepile(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _clickable(_fill(ui.facepile(_lines(p["people"]), size=max(min(c.height, 64), 12),
+                                        max_shown=int(_num(p["max_shown"], 5)) or 5, theme=ctx.theme), c),
+                      c, ctx)
+
+
+def _diff_stat(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    return _fill(ui.diff_stat(int(_num(p["added"])), int(_num(p["removed"])), theme=ctx.theme), c)
+
+
+def _qr_code(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    data = str(p["data"] or " ")
+    try:
+        code = _core.qr_code(data, cell_size=max(_num(p["cell_size"], 4), 1), color=t.color(p["color"] or "text"),
+                             bg=t.color(p["background"]) if p["background"] else "transparent")
+    except Exception as err:  # noqa: BLE001 - too much data for a QR code
+        code = _core.text(str(err).splitlines()[0], size=11, color=t.text_muted, wrap=True)
+    return _clickable(_core.container(code, width="fill", height="fill", center=True), c, ctx)
+
+
+def _svg(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    if not p["source"]:
+        return _core.container(_icon("shapes", size=24, color=t.icon_muted), width="fill", height="fill",
+                               center=True, bg=t.element, radius=t.radius_sm)
+    return _clickable(_core.svg(p["source"], width="fill", height="fill", content_fit=p["fit"],
+                                color=t.color(p["color"]) if p["color"] else None,
+                                opacity=min(max(_num(p["opacity"], 1), 0), 1), rotation=_num(p["rotation"])),
+                      c, ctx)
+
+
+def _image_viewer(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    if not p["source"]:
+        return _core.container(_icon("zoom-in", size=24, color=t.icon_muted), width="fill", height="fill",
+                               center=True, bg=t.element, radius=t.radius_sm)
+    return _core.container(
+        _core.image_viewer(p["source"], width="fill", height="fill", min_scale=max(_num(p["min_zoom"], 0.25), 0.01),
+                           max_scale=max(_num(p["max_zoom"], 10), 0.01)),
+        width="fill", height="fill", bg=t.editor, radius=t.radius_sm, clip=True)
+
+
+def _terminal(c: Control, ctx: RenderContext) -> Any:
+    t = ctx.theme
+    p = c.props
+    return _core.container(
+        # it follows the last line while new output arrives, as terminals do
+        _core.scrollable(_core.container(ui.terminal(str(p["text"] or ""), font_size=_num(p["font_size"], 13) or 13,
+                                                     theme=t), padding=(6, 10)),
+                         width="fill", height="fill", anchor_bottom=bool(p["follow"])),
+        width="fill", height="fill", bg=t.terminal,
+        border_color=t.border_variant, border_width=1, radius=t.radius_sm)
 
 
 ALIGN = Prop("align", "choice", "left", choices=("left", "center", "right"))
@@ -701,8 +963,9 @@ for _component in (
               ("change",), "A drop-down list."),
     Component("slider", "Slider", "sliders-horizontal", "Common", _slider, (200, 24),
               (Prop("value", "number", 50, group="Data"), Prop("min", "number", 0, group="Data"),
-               Prop("max", "number", 100, group="Data"), Prop("step", "number", 1, group="Data")),
-              ("change",), "Choose a number by dragging."),
+               Prop("max", "number", 100, group="Data"), Prop("step", "number", 1, group="Data"),
+               Prop("vertical", "bool", False), Prop("show_value", "bool", False, label="Show value")),
+              ("change", "release"), "Choose a number by dragging."),
     Component("number", "Number box", "hash", "Common", _number, (128, 28),
               (Prop("value", "number", 0, group="Data"), Prop("min", "number", None, group="Data"),
                Prop("max", "number", None, group="Data"), Prop("step", "number", 1, group="Data")),
@@ -710,7 +973,7 @@ for _component in (
     Component("list_box", "List box", "list", "Common", _list_box, (180, 140),
               (Prop("items", "list", "First\nSecond\nThird", group="Data"),
                Prop("selected", "text", "", group="Data")),
-              ("change",), "A scrollable list of items."),
+              ("change", "open"), "A scrollable list of items."),
     Component("progress", "Progress bar", "loader", "Display", _progress, (200, 8),
               (Prop("value", "number", 40, group="Data"), Prop("max", "number", 100, group="Data"),
                Prop("tint", "choice", "accent", choices=TINTS)),
@@ -722,17 +985,17 @@ for _component in (
               (Prop("source", "text", "", label="File"),
                Prop("fit", "choice", "cover", choices=("contain", "cover", "fill", "none", "scale-down")),
                Prop("radius", "number", 0)),
-              (), "A picture from a file."),
+              ("click", "double_click"), "A picture from a file."),
     Component("shader", "Shader", "blend", "Display", _shader, (240, 160),
               (Prop("file", "text", "", label="Shader file"),
                Prop("variables", "typed", {}, type="dict[str, float | str]", group="Data")),
               (), "A shader made of nodes (.pzshad) drawn on the GPU; set its variables to animate it."),
     Component("icon", "Icon", "star", "Display", _icon_control, (24, 24),
               (Prop("name", "icon", "star"), Prop("size", "number", 20), Prop("color", "color", "")),
-              (), "A Lucide icon."),
+              ("click", "double_click"), "A Lucide icon."),
     Component("markdown", "Markdown", "file-text", "Display", _markdown, (280, 120),
               (Prop("text", "multiline", "## Title\n\nSome **rich** text."),),
-              (), "Formatted text."),
+              ("link",), "Formatted text; links open in the browser unless its link event is handled."),
     Component("spinner", "Spinner", "loader-circle", "Display", _spinner, (24, 24),
               (Prop("tint", "choice", "accent", choices=TINTS),),
               (), "An activity indicator."),
@@ -789,18 +1052,19 @@ for _component in (
               ("change",), "Pick one of a few options, side by side."),
     Component("tabs", "Tab bar", "panels-top-left", "Navigation", _tabs, (320, 32),
               (Prop("tabs", "list", "General\nAdvanced\nAbout", group="Data"),
-               Prop("selected", "text", "General", group="Data")),
-              ("change",), "Tabs; show or hide panels from its change event."),
+               Prop("selected", "text", "General", group="Data"), Prop("closable", "bool", False)),
+              ("change", "close"), "Tabs; show or hide panels from its change event."),
     Component("chip", "Chip", "tag", "Display", _chip, (90, 26),
-              (Prop("text", "text", "Filter"), Prop("icon", "icon", ""), Prop("selected", "bool", False, group="Data")),
-              ("click",), "A compact, clickable tag."),
+              (Prop("text", "text", "Filter"), Prop("icon", "icon", ""), Prop("selected", "bool", False, group="Data"),
+               Prop("tint", "choice", "accent", choices=TINTS), Prop("removable", "bool", False)),
+              ("click", "remove"), "A compact, clickable tag; removable ones have an x."),
     Component("callout", "Callout", "info", "Display", _callout, (320, 64),
               (Prop("title", "text", "Heads up"), Prop("text", "text", "Something worth knowing."),
                Prop("tint", "choice", "info", choices=TINTS), Prop("icon", "icon", "")),
               (), "A highlighted message."),
     Component("avatar", "Avatar", "circle-user", "Display", _avatar, (32, 32),
               (Prop("initials", "text", "PZ"), Prop("color", "color", "")),
-              (), "Initials in a circle."),
+              ("click", "double_click"), "Initials in a circle."),
     Component("kbd", "Key binding", "keyboard", "Display", _kbd, (80, 22),
               (Prop("keys", "text", "ctrl-s"),),
               (), "Keys shown as key caps."),
@@ -815,8 +1079,65 @@ for _component in (
               (), "A bar, line or donut chart."),
     Component("table", "Table", "table", "Display", _table, (360, 160),
               (Prop("data", "rows", "Name, Role\nAda, Engineer\nGrace, Admiral", group="Data", label="Rows"),
-               Prop("selected", "number", None, group="Data"), Prop("striped", "bool", True)),
-              ("change",), "Rows and columns from comma-separated text; change gives the row index."),
+               Prop("selected", "number", None, group="Data"), Prop("striped", "bool", True),
+               Prop("sortable", "bool", False, group="Behavior"), Prop("sort_by", "text", "", group="Behavior"),
+               Prop("descending", "bool", False, group="Behavior")),
+              ("change", "open", "sort"), "Rows and columns from comma-separated text; change gives the row index."),
+    Component("toggle_group", "Toggle group", "toggle-left", "Common", _toggle_group, (96, 30),
+              (Prop("options", "list", "left, align-left, Left\ncenter, align-center, Center\nright, align-right, Right",
+                    group="Data"),
+               Prop("selected", "list", "left", group="Data"), Prop("multiple", "bool", False, group="Behavior")),
+              ("change",), "Icon buttons where one (or several) stay pressed, like text alignment in a toolbar."),
+    Component("split_button", "Split button", "square-chevron-down", "Common", _split_button, (148, 28),
+              (Prop("text", "text", "Save"), Prop("variant", "choice", "filled", choices=VARIANTS),
+               Prop("icon", "icon", ""), Prop("items", "list", "Save as…\nSave all", group="Data")),
+              ("click", "choose", "menu"), "A button with a menu of related actions next to it."),
+    Component("tree", "Tree view", "list-tree", "Navigation", _tree, (220, 200),
+              (Prop("items", "multiline", "Documents\n  Notes.md\n  Plans\n    2026.md\nPictures\n  cat.png",
+                    group="Data"),
+               Prop("selected", "text", "", group="Data"), Prop("expanded", "list", "Documents", group="Data"),
+               Prop("border", "bool", True)),
+              ("change", "open", "toggle"), "A folding tree of items; indent an item to put it inside the one above."),
+    Component("breadcrumbs", "Breadcrumbs", "chevrons-right", "Navigation", _breadcrumbs, (240, 24),
+              (Prop("parts", "list", "Home\nProjects\nPyzed", group="Data"), Prop("separator", "text", "›")),
+              ("click",), "Where you are, such as Home › Projects › Pyzed; each part can be clicked."),
+    Component("empty_state", "Empty state", "inbox", "Display", _empty_state, (280, 160),
+              (Prop("title", "text", "Nothing here yet"), Prop("text", "text", "Items you add show up here."),
+               Prop("icon", "icon", "inbox"), Prop("size", "choice", "md", choices=("sm", "md", "lg"))),
+              (), "A friendly placeholder for an empty list or a search without results."),
+    Component("counter", "Counter badge", "circle-dot", "Display", _counter, (28, 20),
+              (Prop("count", "number", 3, group="Data"), Prop("max", "number", 99, min=1),
+               Prop("tint", "choice", "accent", choices=TINTS), Prop("show_zero", "bool", True, label="Show zero")),
+              ("click", "double_click"), "A small round number, such as unread messages (99+ past the maximum)."),
+    Component("status_dot", "Status dot", "circle", "Display", _status_dot, (12, 12),
+              (Prop("color", "color", "success"), Prop("text", "text", "")),
+              ("click", "double_click"), "A colored dot, with an optional label: online, busy, failed..."),
+    Component("facepile", "Facepile", "users", "Display", _facepile, (120, 24),
+              (Prop("people", "list", "Ada Lovelace\nGrace Hopper\nAlan Turing", group="Data"),
+               Prop("max_shown", "number", 5, min=1, label="Most shown")),
+              ("click", "double_click"), "Overlapping avatars of people, with +N for the rest."),
+    Component("diff_stat", "Diff stat", "diff", "Display", _diff_stat, (120, 20),
+              (Prop("added", "number", 12, min=0, group="Data"), Prop("removed", "number", 3, min=0, group="Data")),
+              (), "Lines added and removed, with colored blocks like GitHub."),
+    Component("qr_code", "QR code", "qr-code", "Display", _qr_code, (120, 120),
+              (Prop("data", "text", "https://github.com/albakore/pyzed", group="Data", label="Text or link"),
+               Prop("cell_size", "number", 4, min=1, max=32), Prop("color", "color", "text"),
+               Prop("background", "color", "")),
+              ("click", "double_click"), "A QR code that phones can scan."),
+    Component("svg", "SVG image", "shapes", "Display", _svg, (96, 96),
+              (Prop("source", "text", "", label="File"),
+               Prop("fit", "choice", "contain", choices=("contain", "cover", "fill", "none", "scale-down")),
+               Prop("color", "color", "", label="Tint"), Prop("opacity", "number", 1, min=0, max=1, step=0.1),
+               Prop("rotation", "number", 0, label="Rotation (degrees)")),
+              ("click", "double_click"), "A vector drawing from an .svg file, sharp at any size and tintable."),
+    Component("image_viewer", "Image viewer", "zoom-in", "Display", _image_viewer, (280, 200),
+              (Prop("source", "text", "", label="File"), Prop("min_zoom", "number", 0.25, min=0.01, step=0.25),
+               Prop("max_zoom", "number", 10, min=0.01, step=0.5)),
+              (), "A picture you can zoom with the wheel and pan by dragging."),
+    Component("terminal", "Terminal output", "square-terminal", "Display", _terminal, (360, 160),
+              (Prop("text", "multiline", "$ pyzed run\n\x1b[32m✓ Ready\x1b[0m", group="Data"),
+               Prop("font_size", "number", 13, min=8, max=32), Prop("follow", "bool", True, label="Follow output")),
+              (), "Monospace output with ANSI colors, such as what a Process prints."),
     # -- non-visual components: they sit in the tray under the form and draw nothing at run time
     Component("timer", "Timer", "timer", NON_VISUAL, _non_visual, TRAY_SIZE,
               (Prop("interval", "number", 1000, label="Interval (ms)", min=10, group="Behavior"),

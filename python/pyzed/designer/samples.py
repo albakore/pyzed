@@ -242,6 +242,8 @@ CATALOG: Tuple[Sample, ...] = (
            "Designer", "designer", entry="login.pzform"),
     Sample("designer_tasks", "Task runner", "Non-visual components at work: a timer, a process, a worker, settings.",
            "Designer", "designer", entry="tasks.pzform"),
+    Sample("designer_explorer", "Project explorer", "A tree, breadcrumbs, closable tabs, a sortable table and the other "
+           "toolbox controls, with their events.", "Designer", "designer", entry="explorer.pzform"),
     Sample("designer_reviews", "Component cards", "A form of cards made in the component mode, that grow with the "
            "window.", "Designer", "designer", entry="components/reviews.pzform"),
     Sample("designer_signup", "Bound sign-up form", "Controls bound to data, with validation rules.", "Designer",

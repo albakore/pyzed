@@ -48,17 +48,26 @@ Every visible control has three common events on top of its own:
 
 | Component | Own events |
 | --- | --- |
-| Label | `click`, `double_click` |
-| Button, Link, Chip | `click` |
+| Label, Image, Icon, Avatar, Counter badge, Status dot, Facepile, QR code, SVG image | `click`, `double_click` |
+| Button, Link | `click` |
+| Chip | `click`, `remove` (its x, when **Removable** is on) |
+| Split button | `click` (the main part), `choose` (an item of its menu: its text), `menu` (the menu opens) |
 | Text box, Search box | `change` (the new text), `submit` (<kbd>Enter</kbd> pressed) |
 | Text area | `change` (the new text) |
 | Check box, Switch | `change` (`True` or `False`) |
-| Radio group, Drop-down, Segmented, Tab bar | `change` (the selected option) |
-| Slider, Number box | `change` (the new number) |
-| List box | `change` (the selected item) |
-| Table | `change` (the selected row's index) |
+| Radio group, Drop-down, Segmented | `change` (the selected option) |
+| Tab bar | `change` (the selected tab), `close` (a tab closed with its x when **Closable** is on: its name) |
+| Toggle group | `change` (the pressed value, or the list of pressed values when **Multiple** is on) |
+| Slider | `change` (the new number while dragging), `release` (the drag ended: save or apply here) |
+| Number box | `change` (the new number) |
+| List box | `change` (the selected item), `open` (an item double-clicked) |
+| Table | `change` (the selected row's index), `open` (a row double-clicked: its index), `sort` (a header clicked when **Sortable** is on: its title) |
+| Tree view | `change` (the selected item's path, such as `"Docs/README.md"`), `toggle` (an item folded or unfolded), `open` (an item without children double-clicked) |
+| Breadcrumbs | `click` (the index of the part, 0 for the first) |
+| Markdown | `link` (the address of the clicked link; without a handler the link opens in the browser) |
+| Color picker, Icon picker | `change` (the new color or icon name) |
 | Timer, Shortcut, File watcher, Process, Background worker, Web request, Clipboard, Settings, File dialog, Notification | Their own (`tick`, `activate`, `change`, `output`, `done`, `response`...): see [Non-visual components](/pyzed/editor/non-visual-components/). They have no mouse events. |
-| Heading, Progress bar, Badge, Image, Icon, Markdown, Spinner, Callout, Avatar, Key binding, Stat, Chart, containers, Spacer, Divider | Only the common ones |
+| Heading, Progress bar, Badge, Spinner, Callout, Key binding, Stat, Chart, Empty state, Diff stat, Image viewer, Terminal output, containers, Spacer, Divider | Only the common ones |
 
 The form itself:
 

@@ -33,7 +33,7 @@ filters them by title and description. **All** shows every category under its ow
 | **Blocks** | Dashboard, Kanban board, Music player, Chat, Settings, Data table, IDE layout, Sign-in screen, Onboarding wizard. |
 | **Patterns** | Services (timer, worker, process, clipboard, settings), Custom components, Docks and grids, Resizable panes, Context menu, Dialogs and languages, Background work, Download progress, Live data. |
 | **AI** | Pyzed agent (an agent that calls tools, with a demo model that needs no key), AI chat. |
-| **Designer** | Forms made in Pyzed Design: Login form, Task runner (the non-visual components), Component cards, Bound sign-up form, Form over a shader. |
+| **Designer** | Forms made in Pyzed Design: Login form, Task runner (the non-visual components), Project explorer (tree, breadcrumbs, tabs, sortable table and other toolbox controls), Component cards, Bound sign-up form, Form over a shader. |
 | **Integrations** | SQLModel heroes, SQLModel inventory, Pydantic sign-up, PyPI with httpx, Downloads with httpx, SQLAlchemy contacts, SQLAlchemy quick start, Async SQLite journal, FastAPI heroes. |
 
 ![The Audio category of the gallery: the synthesizer, the drum machine, the modular rack, the visualizer, the MIDI controller and the webcam](../../../assets/editor/welcome-audio.png)

@@ -348,6 +348,11 @@ class LiveContext(_components.RenderContext):
 
         return callback
 
+    def set(self, control: Control, prop: str, value: Any) -> None:  # noqa: A003
+        target = self.runtime.form.get(control.name) or control
+        target.props[prop] = value
+        self.runtime.changed(target, prop, value)
+
 
 class FormRuntime:
     """The engine behind ``FormApp``/``FormWindow``: state, event dispatch and drawing."""

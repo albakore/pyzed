@@ -87,6 +87,9 @@ class SceneContext(_components.RenderContext):
 
         return callback
 
+    def set(self, control: Control, prop: str, value: Any) -> None:  # noqa: A003
+        self.owner._pyzed_controls.get(control.name, control).props[prop] = value
+
 
 class SceneComponent(Component):
     """Base class of the components made in the designer's component mode.
