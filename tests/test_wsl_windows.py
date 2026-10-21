@@ -301,9 +301,13 @@ def test_mcp_environment_reports_where_windows_open(wsl):
 # -- a checkout of Pyzed ------------------------------------------------------------------------------------
 
 
-def test_this_repository_is_a_checkout():
-    root = ww.checkout()
-    assert root is not None and (root / "Cargo.toml").is_file() and (root / "python" / "pyzed").is_dir()
+def test_checkout_is_found_next_to_the_sources(monkeypatch, tmp_path):
+    module = tmp_path / "python" / "pyzed" / "_wsl_windows.py"
+    module.parent.mkdir(parents=True)
+    monkeypatch.setattr(ww, "__file__", str(module))
+    assert ww.checkout() is None  # an installed wheel: no Cargo.toml above it
+    (tmp_path / "Cargo.toml").write_text("[package]", encoding="utf-8")
+    assert ww.checkout() == tmp_path.resolve()
 
 
 def test_core_hash_follows_the_rust_sources(tmp_path):
