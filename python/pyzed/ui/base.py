@@ -115,6 +115,69 @@ def _mix_button_colors(t: Theme, variant: str, tint: Optional[str], selected: bo
     return colors
 
 
+# Widgets and keyword arguments that only depend on the theme and a few plain values (the inside
+# of a text button, key caps, tooltip bubbles...). Views build the same few over and over, and
+# widgets are immutable, so one copy serves every place that shows them. The theme is kept to
+# tell a reused id apart. Shared values must not be changed: copy them first.
+_SHARED: dict = {}
+
+
+def _shared(t: Theme, key: tuple, build):
+    full = (id(t),) + key
+    hit = _SHARED.get(full)
+    if hit is None or hit[0] is not t:
+        if len(_SHARED) > 2048:
+            _SHARED.clear()
+        hit = _SHARED[full] = (t, build())
+    return hit[1]
+
+
+def _button_kwargs(t: Theme, variant: str, tint: Optional[str], selected: bool, size: str, full_width: bool):
+    """The keyword arguments of ``_core.button`` for these settings (shared: copy before changing)."""
+    def build():
+        colors = _button_colors(t, variant, tint, selected)
+        border_color = colors.pop("border_color", None)
+        kwargs = {
+            "padding": (0, BUTTON_SIZES[size][1]),
+            "height": BUTTON_SIZES[size][0],
+            "width": "fill" if full_width else None,
+            "radius": t.radius_sm,
+            "border_color": border_color,
+            "border_width": 1.0 if border_color else 0.0,
+            "disabled_color": t.text_disabled,
+        }
+        kwargs.update(colors)
+        return kwargs
+
+    return _shared(t, ("button", variant, tint, selected, size, full_width), build)
+
+
+def _button_inner(t: Theme, content, icon, icon_position, icon_color, size, keys, full_width, loading):
+    _, _, font_size, icon_size = BUTTON_SIZES[size]
+    parts = []
+    glyph = _icon(icon, size=icon_size, color=t.color(icon_color) if icon_color else None) if icon else None
+    if loading:
+        from .display import spinner
+
+        glyph, icon_position = spinner(size=icon_size, tint=icon_color or "text_muted", theme=t), "start"
+    if glyph is not None and icon_position == "start":
+        parts.append(glyph)
+    if content is not None:
+        parts.append(content if isinstance(content, _core.Widget) else _core.text(content, size=font_size, wrap=False))
+    if glyph is not None and icon_position == "end":
+        parts.append(glyph)
+    if keys:
+        parts.append(_core.space(width=4))
+        parts.append(kbd(keys, theme=t, size="xs"))
+    return _core.container(
+        _core.row(parts, spacing=6, align="center"),
+        height="fill",
+        width="fill" if full_width else None,
+        align_y="center",
+        align_x="center" if full_width else None,
+    )
+
+
 def button(
     content: Any = None,
     on_press: Any = None,
@@ -144,49 +207,21 @@ def button(
     tooltip: text shown on hover (with ``keys`` in it too).
     """
     t = _theme(theme)
-    height, pad_x, font_size, icon_size = BUTTON_SIZES[size]
-    colors = _button_colors(t, variant, tint, selected)
-    colors.update(style)
     if loading:
         disabled = True
-
-    parts = []
-    glyph = _icon(icon, size=icon_size, color=t.color(icon_color) if icon_color else None) if icon else None
-    if loading:
-        from .display import spinner
-
-        glyph, icon_position = spinner(size=icon_size, tint=icon_color or "text_muted", theme=t), "start"
-    if glyph is not None and icon_position == "start":
-        parts.append(glyph)
-    if content is not None:
-        parts.append(content if isinstance(content, _core.Widget) else _core.text(content, size=font_size, wrap=False))
-    if glyph is not None and icon_position == "end":
-        parts.append(glyph)
-    if keys:
-        parts.append(_core.space(width=4))
-        parts.append(kbd(keys, theme=t, size="xs"))
-
-    inner = _core.container(
-        _core.row(parts, spacing=6, align="center"),
-        height="fill",
-        width="fill" if full_width else None,
-        align_y="center",
-        align_x="center" if full_width else None,
-    )
-    border_color = colors.pop("border_color", None)
-    # Defaults first, then the variant colours and any caller ``**style``, so
-    # e.g. ``radius=`` or ``padding=`` override the defaults instead of
-    # clashing with them ("got multiple values for keyword argument").
-    kwargs = {
-        "padding": (0, pad_x),
-        "height": height,
-        "width": "fill" if full_width else None,
-        "radius": t.radius_sm,
-        "border_color": border_color,
-        "border_width": 1.0 if border_color else 0.0,
-        "disabled_color": t.text_disabled,
-    }
-    kwargs.update(colors)
+    if loading or not (content is None or isinstance(content, str)):
+        inner = _button_inner(t, content, icon, icon_position, icon_color, size, keys, full_width, loading)
+    else:
+        # Plain text and icons: the same few insides come back on every view.
+        inner = _shared(t, ("button_inner", content, icon, icon_position, icon_color, size, keys, full_width),
+                        lambda: _button_inner(t, content, icon, icon_position, icon_color, size, keys,
+                                              full_width, False))
+    kwargs = _button_kwargs(t, variant, tint, selected, size, full_width)
+    if style:
+        # The caller's ``**style`` goes last, so e.g. ``radius=`` or ``padding=`` override the defaults.
+        kwargs = {**kwargs, **style}
+        if "border_color" in style and "border_width" not in style:
+            kwargs["border_width"] = 1.0 if style["border_color"] else 0.0
     widget = _core.button(inner, None if disabled else on_press, **kwargs)
     return tooltip_text(widget, tooltip, theme=t) if tooltip else widget
 
@@ -214,19 +249,40 @@ def icon_button(
     ``indicator`` adds a small dot in that color at the top right (unread, changes...).
     """
     t = _theme(theme)
-    height, _, _, icon_size = BUTTON_SIZES[size]
-    colors = _button_colors(t, variant, tint, selected)
-    colors.pop("border_color", None)
-    if color:
-        colors["color"] = t.color(color)
-    elif variant == "ghost" and not selected and not tint:
-        colors["color"] = t.icon_muted
-        colors["hover_color"] = t.icon
+    if loading:
+        disabled = True
+        content = _icon_button_content(t, name, size, indicator, True)
+    else:
+        content = _shared(t, ("icon_button", name, size, indicator),
+                          lambda: _icon_button_content(t, name, size, indicator, False))
+    widget = _core.button(content, None if disabled else on_press,
+                          **_icon_button_kwargs(t, variant, tint, selected, size, color))
+    return tooltip_text(widget, tooltip, keys=keys, theme=t) if tooltip else widget
+
+
+def _icon_button_kwargs(t: Theme, variant: str, tint: Optional[str], selected: bool, size: str,
+                        color: Optional[str]):
+    def build():
+        height = BUTTON_SIZES[size][0]
+        colors = _button_colors(t, variant, tint, selected)
+        colors.pop("border_color", None)
+        if color:
+            colors["color"] = t.color(color)
+        elif variant == "ghost" and not selected and not tint:
+            colors["color"] = t.icon_muted
+            colors["hover_color"] = t.icon
+        return dict(padding=0, width=height, height=height, radius=t.radius_sm, disabled_color=t.text_disabled,
+                    **colors)
+
+    return _shared(t, ("icon_button_kwargs", variant, tint, selected, size, color), build)
+
+
+def _icon_button_content(t: Theme, name: str, size: str, indicator: Optional[str], loading: bool):
+    icon_size = BUTTON_SIZES[size][3]
     if loading:
         from .display import spinner
 
         glyph = spinner(size=icon_size, tint="text_muted", theme=t)
-        disabled = True
     else:
         glyph = _icon(name, size=icon_size)
     content = _core.container(glyph, center=True)
@@ -235,17 +291,7 @@ def icon_button(
                               border_width=1.0)
         content = _core.stack([content, _core.container(dot, width="fill", height="fill", align_x="end",
                                                         align_y="start", padding=3)])
-    widget = _core.button(
-        content,
-        None if disabled else on_press,
-        padding=0,
-        width=height,
-        height=height,
-        radius=t.radius_sm,
-        disabled_color=t.text_disabled,
-        **colors,
-    )
-    return tooltip_text(widget, tooltip, keys=keys, theme=t) if tooltip else widget
+    return content
 
 
 def badge(
@@ -317,6 +363,10 @@ def format_keys(keys: str) -> Sequence[str]:
 def kbd(keys: str, *, size: str = "sm", theme: Optional[Theme] = None) -> _core.Widget:
     """Renders a key binding such as ``"ctrl-shift-p"`` as key caps."""
     t = _theme(theme)
+    return _shared(t, ("kbd", keys, size, KEY_STYLE), lambda: _kbd(t, keys, size))
+
+
+def _kbd(t: Theme, keys: str, size: str) -> _core.Widget:
     font_size = 11.0 if size == "xs" else 12.0
     chords = []
     for chord in format_keys(keys):
@@ -410,22 +460,14 @@ def tooltip_text(
 ) -> _core.Widget:
     """Wraps ``content`` with a Zed-like tooltip (optionally showing its key binding)."""
     t = _theme(theme)
-    tip = _core.row(
+    tip = _shared(t, ("tooltip", text, keys), lambda: _core.container(_core.row(
         [_core.text(text, size=12.5, color=t.text, wrap=False), kbd(keys, theme=t, size="xs") if keys else None],
         spacing=8,
         align="center",
-    )
-    return _core.tooltip(
-        content,
-        _core.container(tip, padding=(4, 8)),
-        position=position,
-        gap=6,
-        bg=t.elevated,
-        border_color=t.border,
-        border_width=1.0,
-        radius=t.radius,
-        shadow=(t.shadow, (0, 2), 8),
-    )
+    ), padding=(4, 8)))
+    style = _shared(t, ("tooltip_style",), lambda: dict(
+        gap=6, bg=t.elevated, border_color=t.border, border_width=1.0, radius=t.radius, shadow=(t.shadow, (0, 2), 8)))
+    return _core.tooltip(content, tip, position=position, **style)
 
 
 def card(

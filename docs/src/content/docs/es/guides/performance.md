@@ -27,6 +27,14 @@ rápidos para mantener ágil su interfaz: empezar a dibujar cuanto antes y no re
   menos, y el núcleo nativo reserva memoria con [mimalloc](https://github.com/microsoft/mimalloc),
   mucho más rápido que el asignador del sistema con los muchos objetos pequeños que crea cada
   `view()`.
+- **Piezas compartidas de los componentes.** `ui.button`, `ui.icon_button`, `ui.kbd` y los
+  tooltips reutilizan los widgets que solo dependen del tema y de su texto, icono o teclas. Un
+  widget no cambia una vez construido, así que una sola copia sirve para todos los botones que
+  dicen "Abrir". Una vista de 1.000 botones y etiquetas se construye en un tercio menos de tiempo.
+- **El renderizador de CPU cuando no hay una GPU de verdad.** En una máquina virtual, un
+  escritorio remoto o un equipo sin driver gráfico, la GPU que ofrecen Vulkan, DirectX u OpenGL es
+  una emulación que corre en la CPU (llvmpipe y lavapipe de Mesa, WARP de Windows). Ahí Pyzed
+  dibuja con su renderizador de CPU (tiny-skia): es más rápido y usa unos 100 MB menos de memoria.
 - **Sin reconstrucciones por teclas que nadie escucha.** Las pulsaciones y liberaciones de
   teclas solo llegan a tu app (y reconstruyen la vista) cuando una ventana define `on_key` u
   `on_key_up`. Escribir en un campo reconstruye la vista una vez por tecla en lugar de tres.
@@ -42,8 +50,9 @@ y un botón por fila, Xvfb sin GPU, medianas de 5 arranques) en la misma máquin
 | Memoria, 10 filas (RSS) | 174 MB | 146 MB |
 
 :::note
-`WGPU_BACKEND=gl` (o `vulkan`, `metal`, `dx12`) sigue eligiendo el backend de GPU a mano, e
-`ICED_BACKEND=tiny-skia` usa el renderizador de CPU.
+`WGPU_BACKEND=gl` (o `vulkan`, `metal`, `dx12`) sigue eligiendo el backend de GPU a mano,
+`ICED_BACKEND=wgpu` mantiene el renderizador de GPU aunque la GPU sea emulada (lo que necesitan los
+[shaders](/pyzed/es/shading/shaders/)), e `ICED_BACKEND=tiny-skia` usa siempre el renderizador de CPU.
 :::
 
 ## Listas y tablas virtuales

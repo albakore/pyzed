@@ -88,6 +88,8 @@ horizonte synthwave, brasas y manchas de color en movimiento.
 ## Límites
 
 - Los shaders necesitan el renderer de GPU. En el renderer por software (sin GPU, y en algunas
-  máquinas de CI) el widget muestra `fallback`, y las capturas hechas ahí también. En Linux sin
-  GPU, el driver Vulkan por software de Mesa (`mesa-vulkan-drivers`) los ejecuta.
+  máquinas de CI) el widget muestra `fallback`, y las capturas hechas ahí también. Sin una GPU de
+  verdad, Pyzed elige el renderer por software; arranca la app con `ICED_BACKEND=wgpu` para
+  ejecutar los shaders en una GPU emulada (en Linux, el driver Vulkan por software de Mesa,
+  `mesa-vulkan-drivers`).
 - Las esquinas de un shader son rectas: `radius` en un contenedor alrededor no las redondea.

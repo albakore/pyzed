@@ -56,6 +56,39 @@ def test_button_colors_are_cached_per_theme_and_copied():
     )
 
 
+def test_plain_buttons_share_their_inside_per_theme():
+    from pyzed.ui import base
+
+    base._SHARED.clear()
+    ui.button("Open", "a", theme=theme.ONE_DARK)
+    ui.button("Open", "b", theme=theme.ONE_DARK, variant="ghost")
+    ui.button("Open", "c", theme=theme.ONE_LIGHT)
+    ui.button(pz.text("Open"), "d", theme=theme.ONE_DARK)  # widget content: built every time
+    ui.button("Save", "e", theme=theme.ONE_DARK, loading=True)  # spinner: built every time
+    insides = [key for key in base._SHARED if key[1] == "button_inner"]
+    assert len(insides) == 2
+
+
+def test_button_style_overrides_the_cached_defaults():
+    from pyzed.ui import base
+
+    kwargs = base._button_kwargs(theme.ONE_DARK, "filled", None, False, "md", False)
+    before = dict(kwargs)
+    ui.button("Open", "a", theme=theme.ONE_DARK, radius=12, border_color=None, padding=2)
+    ui.icon_button("search", "s", theme=theme.ONE_DARK, tooltip="Search", keys="ctrl-f")
+    assert kwargs == before  # the shared defaults are copied, not changed
+
+
+def test_shared_widgets_follow_the_theme_and_key_style(monkeypatch):
+    from pyzed.ui import base
+
+    assert ui.kbd("ctrl-s", theme=theme.ONE_DARK) is ui.kbd("ctrl-s", theme=theme.ONE_DARK)
+    assert ui.kbd("ctrl-s", theme=theme.ONE_DARK) is not ui.kbd("ctrl-s", theme=theme.ONE_LIGHT)
+    words = ui.kbd("ctrl-s", theme=theme.ONE_DARK)
+    monkeypatch.setattr(base, "KEY_STYLE", "symbols")
+    assert ui.kbd("ctrl-s", theme=theme.ONE_DARK) is not words
+
+
 def test_async_drain_handles_every_kind_of_result():
     from pyzed import _async
 

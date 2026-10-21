@@ -80,4 +80,6 @@ def install(monkeypatch) -> FakeCore:
     for name, module in list(sys.modules.items()):
         if (name == "pyzed.icons" or name.startswith("pyzed.ui.")) and hasattr(module, "_core"):
             monkeypatch.setattr(module, "_core", fake)
+    # Widgets shared between calls were built with the real core: start an empty cache.
+    monkeypatch.setattr(sys.modules["pyzed.ui.base"], "_SHARED", {})
     return fake
