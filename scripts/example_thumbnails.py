@@ -4,7 +4,7 @@
 
 Each sample of ``pyzed.designer.samples.CATALOG`` is started off-screen and captured at
 800x500 (the integrations need their packages installed: ``uv pip install sqlmodel httpx
-sqlalchemy``). Run it again after changing an example's look.
+sqlalchemy aiosqlite "fastapi[standard]" "pydantic[email]"``). Run it again after changing an example's look.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
+from typing import Sequence
 
 import pyzed as pz
 from pyzed.designer import samples
@@ -24,9 +25,13 @@ ROOT = Path(__file__).resolve().parent.parent
 EXAMPLES = ROOT / "examples"
 SIZE = (800, 500)
 SCALE = 1.0
+#: Arguments some examples need to show something without hardware (the webcam's test pattern).
+ARGS = {"webcam": ["test"]}
+#: Frames (at 60 per second) a game plays before the capture, so its first frame is not empty.
+FRAMES = {"menus": 120, "asteroids": 120, "dodge": 120}
 
 
-def app_of(script: Path) -> pz.App:
+def app_of(script: Path, args: Sequence[str] = ()) -> pz.App:
     """Runs ``script`` as ``__main__`` with ``pz.run`` and ``App.run`` caught; returns the app it starts."""
     caught = []
 
@@ -37,7 +42,7 @@ def app_of(script: Path) -> pz.App:
         caught.append(self)
 
     saved = (pz.run, pz.App.run, sys.argv)
-    pz.run, pz.App.run, sys.argv = catch, catch_method, [str(script)]
+    pz.run, pz.App.run, sys.argv = catch, catch_method, [str(script), *args]
     sys.path.insert(0, str(script.parent))
     try:
         runpy.run_path(str(script), run_name="__main__")
@@ -58,14 +63,16 @@ def render(sample: samples.Sample, out: Path) -> None:
         cwd = Path.cwd()
         try:
             if sample.category == "Designer":
-                app = open_form(source / "login.pzform")
+                app = open_form(source / sample.entry)
             elif sample.is_folder:
                 folder = Path(tmp) / source.name
                 shutil.copytree(source, folder)
                 os.chdir(folder)  # databases and files are created in the copy
-                app = app_of(folder / sample.script)
+                app = app_of(folder / sample.script, ARGS.get(sample.id, ()))
             else:
-                app = app_of(source)
+                app = app_of(source, ARGS.get(sample.id, ()))
+            for _ in range(FRAMES.get(sample.id, 0)):
+                app.tick(1 / 60)
             app.screenshot(out, size=SIZE, scale=SCALE, wait=0.6)
         finally:
             os.chdir(cwd)

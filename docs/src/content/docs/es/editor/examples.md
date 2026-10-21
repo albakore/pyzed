@@ -17,20 +17,30 @@ ejemplos. Desmarca **Mostrar al iniciar** (o desactiva **Ventana de bienvenida**
 
 ## La galería
 
-Las pestañas filtran los ejemplos por categoría y el buscador los filtra por título y descripción:
+Los botones de encima de la galería filtran los ejemplos por categoría (cada uno dice cuántos tiene) y el buscador
+los filtra por título y descripción. **Todos** muestra cada categoría bajo su propio título:
 
 | Categoría | Ejemplos |
 | --- | --- |
-| **Apps** | Contador, Lista de tareas, Pomodoro, Visor de Markdown, Juego de la vida, Galería de componentes, Editor estilo Zed. |
-| **Juegos** | Snake, Breakout, Neon Invaders. |
+| **Apps** | Contador, Lista de tareas, Tareas (Iced), Pomodoro, Visor de Markdown, Juego de la vida, Reloj analógico, Cronómetro, Código QR, Selector de color, Visor de imágenes, Varias ventanas, Marco de ventana propio, Galería de componentes, Mini editor, Editor estilo Zed. |
+| **Tutorial** | Los cinco pasos del tutorial (Hola, Estado, Diseño, Trabajo asíncrono, App de notas), Diseño básico, Listas y tablas, Navegación, Hablar con el usuario, Selector de tema, Contactos con SQLite. |
+| **Audio** | Sintetizador, Caja de ritmos, Rack modular, Visualizador de música, Controlador MIDI, Webcam. |
+| **Juegos** | Snake, Breakout, Neon Invaders, Rock Storm, Pixel Run, 2048, Coin Chase, Jump Lab, Walker, Orb Rush, Target Rush, Dodge. |
+| **Animación** | Animaciones, Efectos, Línea de tiempo. |
+| **Estilo** | Estilos, Diseño estilo web, Laboratorio de temas y los temas De marca, Oscuro de cristal, Pastel, Terminal retro, Alto contraste y Dos temas. |
+| **Shading** | Galería de shaders, Shader de aurora. |
 | **Vitrina** | Panel de cristal, HUD de juego, Menú principal de juego, Inventario. |
-| **Bloques** | Panel de control, Tablero Kanban, Reproductor de música, Chat, Ajustes. |
-| **Diseñador** | Formulario de inicio de sesión: un formulario hecho en Pyzed Design, con su código de eventos y componentes. |
-| **Integraciones** | Héroes con SQLModel, Registro con Pydantic, PyPI con httpx, Contactos con SQLAlchemy. |
+| **Bloques** | Panel de control, Tablero Kanban, Reproductor de música, Chat, Ajustes, Tabla de datos, Diseño de IDE, Pantalla de inicio de sesión, Asistente de bienvenida. |
+| **Patrones** | Servicios (temporizador, trabajo en segundo plano, proceso, portapapeles, ajustes), Componentes propios, Paneles y cuadrículas, Paneles redimensionables, Menú contextual, Diálogos e idiomas, Trabajo en segundo plano, Progreso de descargas, Datos en vivo. |
+| **IA** | Agente de Pyzed (un agente que usa herramientas, con un modelo de demostración que no necesita clave), Chat de IA. |
+| **Diseñador** | Formularios hechos en Pyzed Design: Inicio de sesión, Lanzador de tareas (los componentes no visuales), Tarjetas de componentes, Registro con datos enlazados, Formulario sobre un shader. |
+| **Integraciones** | Héroes con SQLModel, Inventario con SQLModel, Registro con Pydantic, PyPI con httpx, Descargas con httpx, Contactos con SQLAlchemy, Inicio rápido de SQLAlchemy, Diario con SQLite asíncrono, Héroes con FastAPI. |
 
-![La pestaña Juegos de la galería: Snake, Breakout y Neon Invaders](../../../../assets/editor/welcome-games.png)
+![La categoría Audio de la galería: el sintetizador, la caja de ritmos, el rack modular, el visualizador, el controlador MIDI y la webcam](../../../../assets/editor/welcome-audio.png)
 
-![La pestaña Vitrina de la galería: el panel de cristal, el HUD de juego, el menú principal y el inventario](../../../../assets/editor/welcome-showcase.png)
+![La categoría Juegos de la galería](../../../../assets/editor/welcome-games.png)
+
+![La categoría Vitrina de la galería: el panel de cristal, el HUD de juego, el menú principal y el inventario](../../../../assets/editor/welcome-showcase.png)
 
 ## Crear un proyecto desde un ejemplo
 
@@ -62,7 +72,7 @@ cualquier momento. Los archivos del proyecto abiertos con cambios sin guardar se
 
 ## De dónde salen los ejemplos
 
-La app independiente **Pyzed Design** lleva dentro todos los ejemplos y sus miniaturas (unos 1,5 MB), así que la
+La app independiente **Pyzed Design** lleva dentro todos los ejemplos y sus miniaturas (unos 5 MB), así que la
 galería funciona sin conexión. Un diseñador instalado con pip no los incluye: la galería ofrece **Descargar
 ejemplos**, que los baja una vez desde la release de la versión instalada. Crear el entorno del proyecto con
 `uv sync` necesita conexión la primera vez, para descargar Python y los paquetes.

@@ -100,6 +100,8 @@ def welcome():
     save(app, EDITOR / "welcome-games.png")
     app.welcome.category = "Showcase"
     save(app, EDITOR / "welcome-showcase.png")
+    app.welcome.category = "Audio"
+    save(app, EDITOR / "welcome-audio.png")
     from pyzed.designer import samples
 
     app.welcome.category = "All"

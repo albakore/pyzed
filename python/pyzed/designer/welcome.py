@@ -26,6 +26,11 @@ ALL = "All"
 DEFAULT_FOLDER = Path.home() / "Pyzed Projects"
 COLUMNS = 3
 THUMB_HEIGHT = 128
+#: The icon of each category on its filter and its heading.
+ICONS = {ALL: "layout-grid", "Apps": "app-window", "Tutorial": "graduation-cap", "Audio": "audio-lines",
+         "Games": "gamepad-2", "Animation": "sparkles", "Styling": "palette", "Shading": "wand-sparkles",
+         "Showcase": "gem", "Blocks": "blocks", "Patterns": "puzzle", "AI": "bot", "Designer": "layout-template",
+         "Integrations": "plug"}
 
 
 class Welcome:
@@ -57,7 +62,8 @@ class Welcome:
         self.d.toggle_pref("show_welcome")
 
     def set_category(self, label: str) -> None:
-        self.category = next((c for c in (ALL, *_samples.CATEGORIES) if tr(c) == label), ALL)
+        """Shows one category (its name, in English or translated) or every example (``ALL``)."""
+        self.category = next((c for c in (ALL, *_samples.CATEGORIES) if label in (c, tr(c))), ALL)
 
     def set_query(self, text: str) -> None:
         self.query = text
@@ -190,25 +196,57 @@ def _start(d: "Designer", t: Theme) -> Any:
     return _core.container(_core.column(items, spacing=2, width="fill"), width=220)
 
 
+def _filters(w: Welcome, t: Theme) -> Any:
+    counts = {c: sum(s.category == c for s in _samples.CATALOG) for c in _samples.CATEGORIES}
+    counts[ALL] = len(_samples.CATALOG)
+    return _core.row([ui.button(f"{tr(c)} {counts[c]}", lambda c=c: w.set_category(c), icon=ICONS.get(c),
+                                size="xs", variant="tinted" if c == w.category else "ghost",
+                                selected=c == w.category, theme=t)
+                      for c in (ALL, *_samples.CATEGORIES) if counts[c]], spacing=4, wrap=True)
+
+
+def _grid(w: Welcome, shown: List[Sample], root: Optional[Path], t: Theme) -> Any:
+    return _core.grid([_card(w, s, root, t) for s in shown], columns=COLUMNS, spacing=10)
+
+
+def _groups(w: Welcome, shown: List[Sample], root: Optional[Path], t: Theme) -> Any:
+    """Every category with examples among ``shown``, under its heading."""
+    parts: List[Any] = []
+    for category in _samples.CATEGORIES:
+        group = [s for s in shown if s.category == category]
+        if not group:
+            continue
+        parts.append(_core.row([_icon(ICONS.get(category, "folder"), size=14, color=t.text_muted),
+                                ui.label(tr(category), weight="semibold", theme=t),
+                                ui.label(str(len(group)), size="xs", color="text_muted", theme=t)],
+                               spacing=6, align="center"))
+        parts.append(_grid(w, group, root, t))
+    return _core.column(parts, spacing=10, width="fill")
+
+
 def _gallery(w: Welcome, t: Theme) -> Any:
     root = _samples.examples_root()
-    tabs = ui.segmented([tr(c) for c in (ALL, *_samples.CATEGORIES)], tr(w.category), w.set_category, theme=t)
     search = ui.input(w.query, w.set_query, placeholder=tr("Search examples…"), icon="search", size="sm",
                       width=200, theme=t)
     head = _core.row([_heading("Example projects", t), _core.space(width="fill"), search], align="center")
     if root is None:
         body: Any = ui.empty_state(
             tr("The examples are not on this computer"),
-            tr("Download them once from the release of this version (about 1.5 MB)."), icon="download", theme=t,
+            tr("Download them once from the release of this version."), icon="download", theme=t,
             actions=[ui.button(tr("Downloading…") if w.downloading else tr("Download examples"), w.download,
                                icon="download", variant="solid", size="sm", disabled=w.downloading, theme=t)])
     else:
-        cards = [_card(w, s, root, t) for s in w.shown()]
-        body = _core.grid(cards, columns=COLUMNS, spacing=10) if cards else \
-            ui.empty_state(tr("No examples match"), icon="search", theme=t)
-    return _core.column([head, tabs, _core.container(_core.scrollable(_core.container(body, padding=(0, 10, 0, 0),
-                                                                                      width="fill")),
-                                                     width="fill", height=470)], spacing=10, width="fill")
+        shown = w.shown()
+        if not shown:
+            body = ui.empty_state(tr("No examples match"), icon="search", theme=t)
+        elif w.category == ALL:
+            body = _groups(w, shown, root, t)
+        else:
+            body = _grid(w, shown, root, t)
+    return _core.column([head, _filters(w, t),
+                         _core.container(_core.scrollable(_core.container(body, padding=(0, 10, 0, 0), width="fill"),
+                                                          id="welcome-gallery"),
+                                         width="fill", height=440)], spacing=10, width="fill")
 
 
 def _labelled(title: str, control: Any, t: Theme) -> Any:
