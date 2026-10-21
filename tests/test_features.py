@@ -301,6 +301,7 @@ EXAMPLES = sorted(
     + list((ROOT / "examples" / "tutorial").glob("*.py"))
     + list((ROOT / "examples" / "showcase").glob("*.py"))
     + list((ROOT / "examples" / "games").glob("*.py"))
+    + list((ROOT / "examples" / "code_styles").glob("*.py"))
     + [ROOT / "examples" / "hot_reload" / "main.py"]
 )
 
