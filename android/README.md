@@ -41,6 +41,9 @@ The `pyzed` lines show each step of the start (unpacking, starting Python, runni
 the error that stopped it; `print` goes to `python.stdout`. The last error is also kept in the
 app's files folder: `adb shell run-as org.pyzed.counter cat files/last-error.txt`.
 
+Without `adb`, connect the phone to a computer over USB (file transfer) and open
+`Android/data/org.pyzed.counter/files/pyzed-log.txt`: the same lines are written there.
+
 The window waits for the activity to resume before it opens, since Android gives it nothing to
 draw on before that. Leaving the app and coming back is not handled yet.
 
