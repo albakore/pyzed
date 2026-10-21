@@ -143,6 +143,10 @@ def environment(project=None) -> Dict[str, Any]:
 
     out: Dict[str, Any] = {"system": platform.system(), "wsl": _is_wsl(), "uv": _project.find_uv(),
                            "server_python": sys.version.split()[0]}
+    if out["wsl"]:
+        from .. import _wsl_windows
+
+        out["windows_open_on"] = "Windows (native windows)" if _wsl_windows.enabled() else "WSLg"
     if project is not None:
         python = project.python_executable()
         out.update(venv=str(project.venv) if python else None, venv_python=project.venv_python_version(),

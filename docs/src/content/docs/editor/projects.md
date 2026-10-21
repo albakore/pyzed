@@ -67,7 +67,8 @@ Click the branch next to the project's name to switch to another local branch (`
 
 The editor knows where each project lives. Under WSL the title bar starts with the Linux distribution
 (*Ubuntu*, for example), and the recent projects that live in a WSL distribution show its name next to them. uv,
-ruff, ty and git then run in Linux, the windows of your forms open through WSLg and web pages in Windows' browser.
+ruff, ty and git then run in Linux, web pages open in Windows' browser, and the editor and the windows of your forms
+open as native Windows windows (see [WSL: native Windows windows](/pyzed/getting-started/installation/#wsl-native-windows-windows)).
 
 Pyzed Design running **on Windows** can also open a project that lives in WSL, like Zed's WSL projects: open its
 folder through `\\wsl.localhost\<distribution>\...` (or `\\wsl$\...`). The title bar shows the distribution,

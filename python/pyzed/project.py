@@ -278,10 +278,14 @@ class Environment:
         """One sentence for people and agents about what working here means."""
         if self.remote:
             return (f"WSL ({self.name}), opened from Windows: the project's files and its uv, git, ruff and ty "
-                    "are in Linux and run through wsl.exe, with Linux paths; its windows open through WSLg.")
+                    "are in Linux and run through wsl.exe, with Linux paths; its windows open as Windows windows.")
         if self.is_wsl:
+            from . import _wsl_windows
+
+            windows = ("as native Windows windows" if _wsl_windows.enabled() and sys.platform != "win32"
+                       else "through WSLg")
             return (f"WSL ({self.name}): Linux running on Windows. Commands run in Linux with Linux paths; "
-                    "windows open through WSLg and web pages in Windows' browser.")
+                    f"windows open {windows} and web pages in Windows' browser.")
         return f"This computer ({self.name})."
 
 
