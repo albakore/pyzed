@@ -61,7 +61,7 @@ def test_an_agent_without_node_says_what_to_install(tmp_path, monkeypatch):
     events = []
     agent.run("hi", on_event=events.append)
     error = next(e.text for e in events if e.kind == "error")
-    assert "Claude Code needs Node.js 18 or later" in error and "Pyzed Agent" in error
+    assert "Claude Code needs Node.js 22 or later" in error and "Pyzed Agent" in error
 
 
 def test_retry_does_not_repeat_the_message_and_pyzed_agent_takes_over(tmp_path, monkeypatch):
@@ -126,3 +126,27 @@ def test_the_agent_settings_show_the_everyday_ones_first(tmp_path, monkeypatch):
     c.advanced_open = False
     c.open_settings(section="agents")
     assert c.advanced_open  # the registry of agents is in the Advanced part
+
+
+def test_claude_code_runs_the_current_adapter_with_its_new_models_and_effort():
+    claude = acp.preset("claude-code")
+    assert claude.args == ["-y", "@agentclientprotocol/claude-agent-acp@latest"]
+    saved = providers.AgentSettings.from_dict({"acp_agents": [
+        {"name": "claude-code", "command": "npx", "args": ["-y", "@zed-industries/claude-code-acp"]},
+        {"name": "codex", "command": "npx", "args": ["-y", "@zed-industries/codex-acp@0.16.0"]},
+        {"name": "mine", "command": "npx", "args": ["-y", "my-agent"]}]})
+    assert [a.args[-1] for a in saved.acp_agents] == [
+        "@agentclientprotocol/claude-agent-acp@latest", "@agentclientprotocol/codex-acp@latest", "my-agent"]
+    # what the current adapter answers to session/new (trimmed)
+    options = acp.session_options({"sessionId": "s", "configOptions": [
+        {"id": "model", "name": "Model", "category": "model", "type": "select", "currentValue": "default", "options": [
+            {"value": "default", "name": "Default (recommended)"}, {"value": "fable", "name": "Fable 5.1"},
+            {"value": "opus", "name": "Opus 5.5"}, {"value": "sonnet", "name": "Sonnet 5.5"},
+            {"value": "haiku", "name": "Haiku 5.5"}]},
+        {"id": "effort", "name": "Effort", "category": "thought_level", "type": "select", "currentValue": "default",
+         "options": [{"value": v, "name": v.capitalize()} for v in ("default", "low", "medium", "high", "xhigh", "max")]},
+    ]})
+    by_id = {o["id"]: o for o in options}
+    assert [c["name"] for c in by_id["model"]["choices"]][1:] == ["Fable 5.1", "Opus 5.5", "Sonnet 5.5", "Haiku 5.5"]
+    assert [c["value"] for c in by_id["effort"]["choices"]][-2:] == ["xhigh", "max"]
+    assert by_id["effort"]["category"] == "thought_level"

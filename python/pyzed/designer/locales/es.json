@@ -1324,7 +1324,7 @@
   "Loading the ACP registry…": "Cargando el registro ACP…",
   "Use my Claude subscription…": "Usar mi suscripción de Claude…",
   "Claude Pro or Max through Claude Code, Anthropic's own agent; it controls the editor": "Claude Pro o Max a través de Claude Code, el agente de Anthropic; controla el editor",
-  "Claude Code needs Node.js 18 or later": "Claude Code necesita Node.js 18 o posterior",
+  "Claude Code needs Node.js 22 or later": "Claude Code necesita Node.js 22 o posterior",
   "Install it, then try again.": "Instálalo y vuelve a intentarlo.",
   "Claude Code is ready": "Claude Code está listo",
   "It uses your Claude subscription": "Usa tu suscripción de Claude",

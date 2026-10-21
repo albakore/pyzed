@@ -75,7 +75,7 @@ You can always paste a key by hand in the [settings](#settings) or set the provi
 | **Effort** | How much the model thinks before answering: **Low**, **Medium**, **High**, **Extra high**, **Max**. Claude models only. |
 | **Thinking** | Lets Claude think before answering (as deep as the effort says). Off, it answers sooner. Claude models only. |
 | **Fast** | Fast mode: faster answers at a higher price, on Claude Opus 5.5 and Opus 5 through the Claude API. |
-| **Agent options** | With an external agent, the options it offers, as in Zed: its models (Claude Code's **Opus**, **Sonnet**, **Haiku**), its effort or reasoning level and anything else it lists. Pyzed remembers what you pick for the next threads with that agent. |
+| **Agent options** | With an external agent, the options it offers, as in Zed: its models (Claude Code's **Fable 5.1**, **Opus 5.5**, **Sonnet 5.5** and **Haiku 5.5**), its effort (**Low** to **Max**) or reasoning level and anything else it lists. Claude Code and Codex run the latest version of their adapter, so new models show up on their own. Pyzed remembers what you pick for the next threads with that agent. |
 
 | Permission mode | What the agent may do |
 | --- | --- |
@@ -328,7 +328,7 @@ settings.
 your Claude Pro or Max plan through Claude Code, Anthropic's own agent, since Anthropic only lets its own apps
 sign in with a subscription:
 
-1. It needs [Node.js](https://nodejs.org/en/download) 18 or later; without it, Pyzed opens the download page.
+1. It needs [Node.js](https://nodejs.org/en/download) 22 or later; without it, Pyzed opens the download page.
    Pyzed finds Node also when it was installed with nvm, volta, fnm or in `~/.local/bin`, even if Pyzed Design was
    opened from the desktop's menu. If an answer fails because Node.js is missing, **Install Node.js** opens the
    download page and **Use Pyzed Agent** sends the message to Pyzed's own agent instead.

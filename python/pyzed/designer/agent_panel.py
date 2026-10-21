@@ -1822,7 +1822,7 @@ class AgentController:
         """Uses the user's Claude subscription (Pro or Max) through Claude Code, Anthropic's own agent: adds it
         as an external agent, picks it, and opens Claude Code in a terminal to sign in when it is not yet."""
         if _platform.which("npx") is None:
-            self.d.notify(tr("Claude Code needs Node.js 18 or later"), tr("Install it, then try again."),
+            self.d.notify(tr("Claude Code needs Node.js 22 or later"), tr("Install it, then try again."),
                           kind="warning", seconds=8)
             _agents.login.open_browser(NODE_URL)
             return
@@ -3214,7 +3214,7 @@ def _draft_form(c: AgentController, t: Theme) -> Any:
         ui.field(tr("Name"), _text(draft["name"], lambda v: c.set_draft("name", v), "github", t, width=200), theme=t),
         ui.field(tr("Command"), _text(draft["command"], lambda v: c.set_draft("command", v),
                                       "npx -y @modelcontextprotocol/server-github" if mcp else
-                                      "npx -y @zed-industries/claude-code-acp", t, width=340),
+                                      "npx -y @agentclientprotocol/claude-agent-acp@latest", t, width=340),
                  description=tr("The program and its arguments, as you would type them in a terminal"), theme=t),
     ]
     if mcp:
