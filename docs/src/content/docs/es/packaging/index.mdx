@@ -13,7 +13,8 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../../components/NavCards.astro';
 
-Cuando tu app funciona en tu equipo, `pyzed build` la empaqueta: Python, Pyzed, tus dependencias, tu código y tus
+Cuando tu app funciona en tu equipo, `pyzed build` (o **Archivo → Exportar aplicación…** en
+[Pyzed Design](/pyzed/es/editor/exporting/)) la empaqueta con PyInstaller o Nuitka: Python, Pyzed, tus dependencias, tu código y tus
 formularios van a una carpeta (o un archivo) que funciona por sí sola. Quien la use no necesita Python, pip ni nada
 más. Ejecútalo desde la raíz de tu [proyecto](/pyzed/es/getting-started/new-project/):
 
@@ -46,7 +47,7 @@ más. Ejecútalo desde la raíz de tu [proyecto](/pyzed/es/getting-started/new-p
 
 ```mermaid
 flowchart LR
-    P["Tu proyecto<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller)"]
+    P["Tu proyecto<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller o Nuitka)"]
     B --> W["Windows<br/>Shop.exe"]
     B --> M["macOS<br/>Shop.app"]
     B --> L["Linux<br/>Shop/Shop"]
@@ -66,11 +67,12 @@ la de Linux en Linux. Un [flujo de CI](/pyzed/es/packaging/ci/) puede hacer las 
 
 <NavCards
 	items={[
-		{ title: 'Cómo funciona la compilación', text: 'Qué se incluye, cada opción de <code>pyproject.toml</code>, archivos de datos y otros empaquetadores.', href: '/pyzed/es/packaging/build/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Cómo funciona la compilación', text: 'Qué se incluye, cada opción de <code>pyproject.toml</code>, PyInstaller o Nuitka, archivos de datos y la pantalla de inicio.', href: '/pyzed/es/packaging/build/', icon: 'rocket', tag: 'Empieza aquí' },
+		{ title: 'Exportar desde el diseñador', text: 'Archivo → Exportar aplicación… en Pyzed Design: plataformas, empaquetador, icono y pantalla de inicio en un solo diálogo.', href: '/pyzed/es/editor/exporting/', icon: 'pencil' },
 		{ title: 'Windows', text: 'El .exe, carpeta o archivo único, un zip o un instalador de Inno Setup, y firma para SmartScreen.', href: '/pyzed/es/packaging/windows/', icon: 'seti:windows' },
 		{ title: 'macOS', text: 'El paquete .app, identificador de paquete, firma, notarización y un .dmg.', href: '/pyzed/es/packaging/macos/', icon: 'apple' },
 		{ title: 'Linux', text: 'En qué distribución compilar, archivos comprimidos, entradas de menú, y AppImage o .deb.', href: '/pyzed/es/packaging/linux/', icon: 'linux' },
-		{ title: 'Iconos y metadatos', text: 'Nombre, versión, iconos para cada sistema y el identificador de paquete de macOS.', href: '/pyzed/es/packaging/icons-metadata/', icon: 'star' },
+		{ title: 'Iconos y metadatos', text: 'Nombre, versión, editor, los iconos creados a partir de un PNG y el identificador de paquete de macOS.', href: '/pyzed/es/packaging/icons-metadata/', icon: 'star' },
 		{ title: 'CI con GitHub Actions', text: 'Compila los tres sistemas en cada etiqueta, publica una versión y firma con secretos.', href: '/pyzed/es/packaging/ci/', icon: 'github' },
 		{ title: 'Apps que se actualizan solas', text: 'Busca en GitHub Releases, descarga con suma de verificación y cambia la app al reiniciar.', href: '/pyzed/es/packaging/updates/', icon: 'random' },
 		{ title: 'Solución de problemas', text: 'Módulos que faltan, ventanas en blanco, apps bloqueadas, errores de glibc y mensajes de actualización.', href: '/pyzed/es/packaging/troubleshooting/', icon: 'warning' },
@@ -84,8 +86,12 @@ la de Linux en Linux. Un [flujo de CI](/pyzed/es/packaging/ci/) puede hacer las 
 | --- | --- | --- | --- |
 | Carpeta de la app (`pyzed build`) | ✅ `.exe` | ✅ `.app` | ✅ ejecutable |
 | Archivo único (`--onefile`) | ✅ | ✅ | ✅ |
-| Icono (`icon =`) | ✅ `.ico` | ✅ `.icns` | Con un archivo `.desktop` |
-| Flujo de CI (`--workflow`) | ✅ | ✅ | ✅ |
+| PyInstaller o Nuitka (`--backend`) | ✅ | ✅ | ✅ |
+| x64 y ARM | ✅ | ✅ | ✅ |
+| Icono a partir de un PNG (`icon =`) | ✅ `.ico` + ventana | ✅ `.icns` | ✅ ventana; menú con un archivo `.desktop` |
+| Datos del archivo (versión, editor...) | ✅ | ✅ `Info.plist` | - |
+| Pantalla de inicio | ✅ | ✅ | ✅ |
+| Flujo de CI (`--workflow`) y archivos comprimidos para releases | ✅ | ✅ | ✅ |
 | Autoactualización (`pyzed.updater`) | ✅ | ✅ | ✅ |
 | Firma | Con `signtool` | Con `codesign` + notarización | No hace falta |
 | Instalador | El tuyo (Inno Setup, WiX) | Tu propio `.dmg` (`hdiutil`) | El tuyo (archivo, script, AppImage...) |

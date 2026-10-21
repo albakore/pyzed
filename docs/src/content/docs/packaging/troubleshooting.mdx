@@ -39,10 +39,12 @@ the traceback:
 
 | Symptom | Cause and fix |
 | --- | --- |
-| `uv: command not found`, or `uv` is not recognized | `pyzed build` runs PyInstaller through uv. Install it: `pip install uv`, or see [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
+| `uv: command not found`, or `uv` is not recognized | `pyzed build` runs PyInstaller and Nuitka through uv. Install it: `pip install uv`, or see [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
 | `ui/main.pzform does not exist; set [tool.pyzed] main in pyproject.toml` | The main form moved or was renamed. Set `main = "ui/<form>.pzform"` under `[tool.pyzed]`. |
 | `uv sync --locked` fails in CI | `uv.lock` is out of date: run `uv lock` (or `pyzed sync`) and commit it. |
-| The build is very slow the first time | uv downloads PyInstaller and PyInstaller analyzes every dependency; later builds reuse uv's cache. |
+| The build is very slow the first time | uv downloads PyInstaller and PyInstaller analyzes every dependency; later builds reuse uv's cache. Nuitka compiles everything to C, which takes minutes. |
+| Nuitka: no C compiler found | Install one: `sudo apt install gcc` (Linux), `xcode-select --install` (macOS), Visual Studio Build Tools (Windows), or let Nuitka download MinGW when it asks. |
+| *PyInstaller's early splash draws with Tk, which the project's Python lacks* | The project's Python has no `tkinter`, so only the Pyzed splash shows. Use a Python from `uv python install`, or install `python3-tk`. |
 
 ## When the app starts
 
@@ -71,7 +73,7 @@ the traceback:
 
 | Symptom | Fix |
 | --- | --- |
-| The app is large | Keep build-only tools in the dev group (`pyzed add --dev ...`), exclude modules you do not use with `args = ["--exclude-module", "tkinter"]`, and avoid `collect` on big packages when `hidden-imports` is enough. |
+| The app is large | Keep build-only tools in the dev group (`pyzed add --dev ...`), keep `slim = true`, leave out modules you do not use with `exclude = [...]`, and avoid `collect` on big packages when `hidden-imports` is enough. A single file (`onefile`) is compressed. |
 | The zip is larger than expected | Do not include `build/`, `.venv/` or test data in `include`. |
 
 ## Self-updates

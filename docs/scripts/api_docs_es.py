@@ -1019,8 +1019,9 @@ mensajes, `update(message)`. El estado vive en atributos de la instancia.
 | `style` | `None` | El estilo global: un `pz.Style` para toda la ventana. Su color de texto, tamaño, fondo, color de borde y radio se vuelven tokens del tema. Ver [Estilos](/pyzed/es/theming/styles/#el-estilo-global). |
 | `system_dark` | `True` | Si el sistema está en modo oscuro (lo actualiza el runtime). |
 | `tab_focus` | `True` | Tab y Shift+Tab mueven el foco entre los campos de la ventana. Ver [Accesibilidad](/pyzed/es/guides/accessibility/). |
+| `splash` | `None` | Una ventana [`Splash`](#splash) que se muestra antes de abrir la ventana principal. |
 
-El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `scale`…) están en `Window`.
+El resto de opciones de ventana (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) están en `Window`.
 
 | Método | Descripción |
 | --- | --- |
@@ -1056,6 +1057,8 @@ reenvía a `app.update()`.
 | `scale` | `1.0` | Escala de la interfaz. |
 | `theme` | `None` | Tema propio; `None` usa el de la app. |
 | `style` | `None` | Estilo global propio; `None` usa el de la app. |
+| `icon` | `None` | El icono de la ventana (barra de título, barra de tareas): una ruta a una imagen o sus bytes. Fíjalo en `pz.Window` para dar el mismo a todas las ventanas. Ver [Iconos y metadatos](/pyzed/es/packaging/icons-metadata/#el-icono-de-la-ventana). |
+| `app_id` | `None` | Linux: el id de la app que el escritorio empareja con un archivo `.desktop` (`com.acme.shop`). |
 | `app` | — | La app dueña de la ventana (se asigna al abrirla). |
 | `window_size` | — | Tamaño actual en píxeles lógicos (lo actualiza el runtime). |
 | `window_position` | — | Dónde está la ventana en la pantalla, su esquina superior izquierda exterior (lo actualiza el runtime; `None` en Wayland). |
@@ -1073,6 +1076,23 @@ reenvía a `app.update()`.
 | `on_key(combo)`, `subscriptions()` | Como en `App`. |
 """,
         "no_signature": True,
+    },
+    "pyzed.Splash": {
+        "desc": "Una pantalla de inicio: una ventana sin marco con una imagen, centrada en la pantalla, que se muestra mientras arranca la app. Dásela a `App.splash`; se queda al menos `duration` segundos, luego se abre la ventana principal y la pantalla se cierra. Ver [Pantalla de inicio](/pyzed/es/packaging/build/#pantalla-de-inicio).",
+        "params": {
+            "image": "Ruta a la imagen (PNG, JPEG...) o sus bytes.",
+            "duration": "Segundos que se queda, como mínimo.",
+            "size": "Tamaño de la ventana; por defecto, el de la imagen, reducido para caber en 900 × 600.",
+            "text": "Texto escrito sobre la parte inferior de la imagen (por ejemplo `\"Cargando…\"`).",
+            "color": "Color del texto.",
+            "background": "Color detrás de la imagen (para imágenes con transparencia).",
+            "title": "Título de la ventana (lo muestra la barra de tareas).",
+            "icon": "Icono de la ventana.",
+        },
+        "example": """
+            class Shop(pz.App):
+                splash = pz.Splash("assets/splash.png", duration=1.5, text="Cargando…")
+        """,
     },
 })
 _section("app", "Async y suscripciones", {

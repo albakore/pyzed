@@ -1,14 +1,14 @@
 ---
 title: Build in CI with GitHub Actions
-description: "Build a Pyzed app for Windows, macOS and Linux on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets."
+description: "Build a Pyzed app for Windows, macOS and Linux on x64 and ARM on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets."
 sidebar:
   order: 6
 ---
 
 import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
-Since each system builds its own app, the easiest way to ship all three is to let GitHub build them on its own
-Windows, macOS and Linux machines ("runners") every time you publish a version.
+Since each system builds its own app, the easiest way to ship them all is to let GitHub build them on its own
+Windows, macOS and Linux machines ("runners"), on x64 and ARM, every time you publish a version.
 
 ## Write the workflow
 
@@ -29,14 +29,16 @@ Windows, macOS and Linux machines ("runners") every time you publish a version.
 	</TabItem>
 </Tabs>
 
-It writes `.github/workflows/build.yml`:
+It writes `.github/workflows/build.yml`, with one job per target listed in `targets` of `[tool.pyzed.build]` (by
+default Windows x64, macOS on Apple silicon and Linux x64). In Pyzed Design, check the platforms in
+**File → Export app… → Platforms** and press **Write CI workflow** ([Exporting your app](/pyzed/editor/exporting/#platforms-and-architectures)).
 
 ```yaml title=".github/workflows/build.yml"
 name: Build
 
-# Builds the app on each platform with `pyzed build` and keeps the result as an
-# artifact (Actions -> this run -> Artifacts). PyInstaller cannot cross-compile, so
-# every platform builds on its own runner.
+# Builds the app for each target with `pyzed build` and keeps the result as an
+# artifact (Actions -> this run -> Artifacts). The backends cannot cross-compile, so
+# every platform and architecture builds on its own runner.
 on:
   push:
     tags: ["v*"]
@@ -44,22 +46,28 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - { target: windows-x64, runner: windows-latest }
+          - { target: macos-arm64, runner: macos-latest }
+          - { target: linux-x64, runner: ubuntu-22.04 }
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
-      - run: uv run pyzed build
+      - run: uv run pyzed build --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: shop-${{ runner.os }}
+          name: shop-${{ matrix.target }}
           path: dist/
 ```
+
+`--target` makes each job check that its machine builds what the matrix says. The backend, the icon, the splash
+screen and every other setting come from `pyproject.toml`, the same as on your computer.
 
 ## Run it
 
@@ -76,63 +84,60 @@ jobs:
 
    Or start it by hand: **Actions → Build → Run workflow**.
 
-3. When it finishes, download the three builds from the run's page, under **Artifacts**.
+3. When it finishes, download the builds from the run's page, under **Artifacts**.
 
 </Steps>
 
-<Aside type="note" title="Which machines">
-`ubuntu-latest` builds for Linux x86-64, `windows-latest` for Windows x64 and `macos-latest` for Apple silicon
-(arm64). Add `macos-15-intel` for Intel Macs and `ubuntu-24.04-arm` for Linux on ARM to the `os` list if you need
-them. For Linux, remember that the app runs on the runner's glibc or newer ([Linux](/pyzed/packaging/linux/)).
-</Aside>
+## Which machines
+
+| Target | Runner | Builds for |
+| --- | --- | --- |
+| `windows-x64` | `windows-latest` | Windows 10 and 11 on Intel and AMD |
+| `windows-arm64` | `windows-11-arm` | Windows 11 on ARM |
+| `macos-arm64` | `macos-latest` | Macs with Apple silicon |
+| `macos-x64` | `macos-15-intel` | Intel Macs |
+| `linux-x64` | `ubuntu-22.04` | Linux on Intel and AMD |
+| `linux-arm64` | `ubuntu-22.04-arm` | Linux on ARM |
+
+The Linux runners are the oldest Ubuntu GitHub offers on purpose: the app runs on the runner's glibc or newer
+([Linux](/pyzed/packaging/linux/#which-distribution-to-build-on)). With `backend = "nuitka"` every runner already has the
+C compiler Nuitka needs.
 
 ## Publish a GitHub Release
 
-Artifacts expire after a while and need a GitHub login to download. To give people a permanent download page, zip each
-build with a predictable name and attach it to a GitHub Release. Replace the last step with:
+Artifacts expire after a while and need a GitHub login to download. To give people a permanent download page, set
+`archive` before writing the workflow:
 
-```yaml title=".github/workflows/build.yml (steps)"
-      - run: uv run pyzed build
-      - name: Zip the app
-        shell: bash
-        run: |
-          # the exact name the self-updater looks for on this machine: shop-<system>-<arch>.zip
-          name=$(uv run python -c "from pyzed import updater; print(updater.asset_name('shop'))")
-          cd dist
-          if [ "$RUNNER_OS" = macOS ]; then
-            ditto -c -k --keepParent Shop.app "../$name"   # keeps the bundle's symlinks and signature
-          elif [ "$RUNNER_OS" = Windows ]; then
-            7z a -tzip "../$name" Shop >/dev/null
-          else
-            zip -qr "../$name" Shop
-          fi
-      - name: Attach to the release
+```toml title="pyproject.toml"
+[tool.pyzed.build]
+archive = "zip"
+```
+
+Each build then packs the app as `<app>-<system>-<arch>.zip` (`shop-windows-x86_64.zip`, `shop-macos-arm64.zip`,
+`shop-linux-x86_64.zip`), the names the [self-updater](/pyzed/packaging/updates/) looks for, and the workflow gets a
+last step that attaches it to the tag's release (and the permission to create it):
+
+```yaml title=".github/workflows/build.yml (what archive adds)"
+jobs:
+  build:
+    permissions:
+      contents: write
+    steps:
+      # ... the build, then:
+      - name: Attach to the GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # the first job to get here creates the release; the others only upload
+          # the first build to get here creates the release; the others only upload
           gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --verify-tag || true
-          gh release upload "$GITHUB_REF_NAME" shop-*.zip --clobber
+          gh release upload "$GITHUB_REF_NAME" dist/*.zip --clobber
 ```
 
-and give the job permission to create releases:
-
-```yaml
-jobs:
-  build:
-    permissions:
-      contents: write
-```
-
-The names follow `<app>-<system>-<arch>.zip` (`shop-windows-x86_64.zip`, `shop-macos-arm64.zip`,
-`shop-linux-x86_64.zip`), the names the [self-updater](/pyzed/packaging/updates/) looks for.
-
-<Aside type="tip" title="Why ask Python for the name">
-`pyzed.updater.asset_name("shop")` returns the exact name the app looks for on the machine that runs it, so the zips
-and the updater always agree.
-</Aside>
+On macOS the zip is made with `ditto`, which keeps the bundle's symlinks and signature. If you
+[sign](#signing-in-ci) the app, sign it before it is packed: set `archive` only after adding the signing step, or zip
+after signing yourself.
 
 ## Signing in CI
 

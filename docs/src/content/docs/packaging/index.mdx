@@ -13,7 +13,8 @@ sidebar:
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 import NavCards from '../../../components/NavCards.astro';
 
-When your app works on your machine, `pyzed build` packages it: Python, Pyzed, your dependencies, your code and
+When your app works on your machine, `pyzed build` (or **File → Export app…** in
+[Pyzed Design](/pyzed/editor/exporting/)) packages it with PyInstaller or Nuitka: Python, Pyzed, your dependencies, your code and
 your forms go into one folder (or one file) that runs on its own. The people who use it do not need Python, pip or
 anything else. Run it from the root of your [project](/pyzed/getting-started/new-project/):
 
@@ -46,7 +47,7 @@ anything else. Run it from the root of your [project](/pyzed/getting-started/new
 
 ```mermaid
 flowchart LR
-    P["Your project<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller)"]
+    P["Your project<br/>pyproject.toml · ui/ · src/"] --> B["pyzed build<br/>(PyInstaller or Nuitka)"]
     B --> W["Windows<br/>Shop.exe"]
     B --> M["macOS<br/>Shop.app"]
     B --> L["Linux<br/>Shop/Shop"]
@@ -66,11 +67,12 @@ Linux app on Linux. A [CI workflow](/pyzed/packaging/ci/) can do all three for y
 
 <NavCards
 	items={[
-		{ title: 'How building works', text: 'What gets bundled, every option in <code>pyproject.toml</code>, data files and other packagers.', href: '/pyzed/packaging/build/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'How building works', text: 'What gets bundled, every option in <code>pyproject.toml</code>, PyInstaller or Nuitka, data files and the splash screen.', href: '/pyzed/packaging/build/', icon: 'rocket', tag: 'Start here' },
+		{ title: 'Export from the designer', text: 'File → Export app… in Pyzed Design: platforms, backend, icon and splash screen in one dialog.', href: '/pyzed/editor/exporting/', icon: 'pencil' },
 		{ title: 'Windows', text: 'The .exe, folder or single file, a zip or an Inno Setup installer, and signing for SmartScreen.', href: '/pyzed/packaging/windows/', icon: 'seti:windows' },
 		{ title: 'macOS', text: 'The .app bundle, bundle identifier, signing, notarization and a .dmg.', href: '/pyzed/packaging/macos/', icon: 'apple' },
 		{ title: 'Linux', text: 'Which distribution to build on, archives, menu entries, and AppImage or .deb.', href: '/pyzed/packaging/linux/', icon: 'linux' },
-		{ title: 'Icons and metadata', text: 'Name, version, icons for each system and the macOS bundle identifier.', href: '/pyzed/packaging/icons-metadata/', icon: 'star' },
+		{ title: 'Icons and metadata', text: 'Name, version, publisher, the icons made from one PNG and the macOS bundle identifier.', href: '/pyzed/packaging/icons-metadata/', icon: 'star' },
 		{ title: 'CI with GitHub Actions', text: 'Build all three systems on every tag, publish a release and sign with secrets.', href: '/pyzed/packaging/ci/', icon: 'github' },
 		{ title: 'Self-updating apps', text: 'Check GitHub Releases, download with a checksum and swap the app on restart.', href: '/pyzed/packaging/updates/', icon: 'random' },
 		{ title: 'Troubleshooting', text: 'Missing modules, blank windows, blocked apps, glibc errors and update messages.', href: '/pyzed/packaging/troubleshooting/', icon: 'warning' },
@@ -84,8 +86,12 @@ Linux app on Linux. A [CI workflow](/pyzed/packaging/ci/) can do all three for y
 | --- | --- | --- | --- |
 | App folder (`pyzed build`) | ✅ `.exe` | ✅ `.app` | ✅ executable |
 | Single file (`--onefile`) | ✅ | ✅ | ✅ |
-| Icon (`icon =`) | ✅ `.ico` | ✅ `.icns` | Through a `.desktop` file |
-| CI workflow (`--workflow`) | ✅ | ✅ | ✅ |
+| PyInstaller or Nuitka (`--backend`) | ✅ | ✅ | ✅ |
+| x64 and ARM | ✅ | ✅ | ✅ |
+| Icon from one PNG (`icon =`) | ✅ `.ico` + window | ✅ `.icns` | ✅ window; menu through a `.desktop` file |
+| File details (version, publisher...) | ✅ | ✅ `Info.plist` | - |
+| Splash screen | ✅ | ✅ | ✅ |
+| CI workflow (`--workflow`) and release archives | ✅ | ✅ | ✅ |
 | Self-update (`pyzed.updater`) | ✅ | ✅ | ✅ |
 | Signing | With `signtool` | With `codesign` + notarization | Not needed |
 | Installer | Your own (Inno Setup, WiX) | Your own `.dmg` (`hdiutil`) | Your own (archive, script, AppImage...) |

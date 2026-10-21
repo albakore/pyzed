@@ -1,6 +1,6 @@
 ---
 title: How building works
-description: "How pyzed build packages a Pyzed project as a standalone app with PyInstaller: what gets bundled, every option in pyproject.toml, data files, the output on each platform and alternatives such as Nuitka."
+description: "How pyzed build packages a Pyzed project as a standalone app with PyInstaller or Nuitka: what gets bundled, every option in pyproject.toml, icons, splash screen, data files and the output on each platform."
 sidebar:
   label: How building works
   order: 1
@@ -10,8 +10,14 @@ import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 `pyzed build` turns a [Pyzed project](/pyzed/guides/projects/) into an app that runs on machines without Python:
 a folder (or a single file) with the Python interpreter, `pyzed-ui`, your dependencies, your backend code and your
-forms. It uses [PyInstaller](https://pyinstaller.org) underneath, run inside the project's own environment, so
-nothing has to be installed globally.
+forms. It uses [PyInstaller](https://pyinstaller.org) or [Nuitka](https://nuitka.net) underneath, run inside the
+project's own environment, so nothing has to be installed globally.
+
+<Aside type="tip" title="From the designer">
+Pyzed Design does all of this from a dialog: **File → Export app…** sets every option below, previews the icon and the
+splash screen, builds with the output in the Console and writes the CI workflow. See
+[Exporting your app](/pyzed/editor/exporting/).
+</Aside>
 
 ## Build in three steps
 
@@ -52,14 +58,15 @@ nothing has to be installed globally.
 </Steps>
 
 <Aside type="note" title="uv is needed, even with pip">
-`pyzed build` runs PyInstaller through `uv run --with pyinstaller`, so [uv](https://docs.astral.sh/uv/) must be
-installed even if you use pip for everything else. You do not need to install PyInstaller yourself. Install uv with
+`pyzed build` runs PyInstaller through `uv run --with pyinstaller` (and Nuitka through `uv run --with nuitka`), so [uv](https://docs.astral.sh/uv/) must be
+installed even if you use pip for everything else. You do not need to install PyInstaller or Nuitka yourself. Install uv with
 `pip install uv` or from its website.
 </Aside>
 
 <Aside type="caution" title="One build per platform">
-PyInstaller does not cross-compile: build the Windows app on Windows, the macOS app on macOS and the Linux app on
-Linux. A [CI workflow](/pyzed/packaging/ci/) builds all three for you.
+Neither PyInstaller nor Nuitka cross-compiles: build the Windows app on Windows, the macOS app on macOS and the Linux
+app on Linux, each on the architecture it is for (x64 or ARM). A [CI workflow](/pyzed/packaging/ci/) builds all of them
+for you.
 </Aside>
 
 ## What happens when you build
@@ -70,16 +77,18 @@ flowchart LR
     U["ui/ forms + handlers"] --> B
     S["src/ backend"] --> B
     B --> L["launcher script<br/>build/pyzed/"]
-    B --> I["PyInstaller<br/>(uv run --with pyinstaller)"]
+    B --> I["PyInstaller or Nuitka<br/>(uv run --with ...)"]
     L --> I
     I --> D["dist/<br/>app folder, .exe or .app"]
 ```
 
 1. `pyzed build` reads `[tool.pyzed]` and `[tool.pyzed.build]` from `pyproject.toml`.
 2. It writes a small **launcher** (`build/pyzed/<name>_launcher.py`) that opens the main form (`[tool.pyzed] main`)
-   from inside the bundle.
-3. It scans the `.py` files of the UI folder with Python's `ast` module to find what they import.
-4. It runs PyInstaller in the project's environment with the right options, and PyInstaller writes the app to `dist/`.
+   from inside the bundle, with the window icon and the splash screen.
+3. It makes the icon files (`.ico`, `.icns`, `.png`) from your picture, and the Windows version file.
+4. It scans the `.py` files of the UI folder with Python's `ast` module to find what they import.
+5. It runs the backend in the project's environment with the right options, and the app lands in `dist/`. Last, it
+   fills in the macOS `Info.plist` and packs the archive, if you asked for one.
 
 ### What gets bundled
 
@@ -102,7 +111,7 @@ pyzed add --editable ../billing     # then `from billing import invoice` in a ha
 
 <Aside type="note" title="Apps written in code">
 `pyzed build` starts the project's main **form**. For an app written fully in code (a `pz.App` class and
-`pz.run(...)`), run PyInstaller on your script yourself; see [Other tools](#other-tools) below.
+`pz.run(...)`), see [Apps written in code](#apps-written-in-code) below.
 </Aside>
 
 ## Options
@@ -111,36 +120,105 @@ Command line flags win over `[tool.pyzed.build]` in `pyproject.toml`:
 
 | Flag | Effect |
 | --- | --- |
+| `--backend nuitka` | Build with Nuitka instead of PyInstaller (see [Choosing a backend](#choosing-a-backend)). |
 | `--onefile` | A single executable instead of a folder. |
 | `--console` | Keep the console window (useful to see tracebacks). |
 | `--name Shop` | Name of the executable or bundle. |
-| `--dry-run` | Print the PyInstaller command and stop. |
-| `--workflow` | Write a GitHub Actions workflow instead of building (see [CI](/pyzed/packaging/ci/)). |
+| `--archive zip` | Also pack the app in a `zip` (or `tar.gz`) named for the [self-updater](/pyzed/packaging/updates/). |
+| `--target linux-x64` | Check that this computer builds that target (CI uses it); it does not cross-compile. |
+| `--dry-run` | Print the backend's command and stop. |
+| `--workflow` | Write a GitHub Actions workflow for the project's `targets` instead of building (see [CI](/pyzed/packaging/ci/)). |
 
-All the settings of a project live in `pyproject.toml`:
+All the settings of a project live in `pyproject.toml` (the [Export dialog](/pyzed/editor/exporting/) of Pyzed Design
+writes the same table):
 
 ```toml title="pyproject.toml"
 [tool.pyzed.build]
 name = "Shop"                          # executable / bundle name (default: the project name)
+backend = "pyinstaller"                # or "nuitka"
 onefile = false                        # one self-extracting file instead of a folder
 windowed = true                        # no console window on Windows and macOS
-icon = "assets/icon.ico"               # .ico on Windows, .icns on macOS
+icon = "assets/icon.png"               # one square picture; .ico and .icns are made from it
+version = "1.2.0"                      # default: [project] version
+publisher = "Acme"                     # the company in the Windows file properties
+identifier = "com.acme.shop"           # macOS bundle id and Linux app id
+copyright = "© 2026 Acme"
+optimize = 0                           # 1 drops asserts, 2 also docstrings
+slim = true                            # leave out tkinter, test, idlelib... (unused by Pyzed apps)
+exclude = ["numpy.tests"]              # more modules to leave out
 include = ["assets", "data/prices.csv"]  # extra files and folders, same relative path in the bundle
 hidden-imports = ["shop.plugins.csv"]  # modules imported with importlib or by name
 collect = ["babel"]                    # packages to ship whole: code, data files and binaries
-args = ["--noupx"]                     # anything else, passed to PyInstaller as is
+archive = "zip"                        # also pack the app: shop-windows-x86_64.zip...
+targets = ["windows-x64", "macos-arm64", "linux-x64"]  # what the CI workflow builds
+args = []                              # anything else, passed to the backend as is
+
+[tool.pyzed.build.splash]
+image = "assets/splash.png"
+duration = 1.5                         # seconds, at least
+text = "Loading…"
+native = true                          # also the backend's own splash while the app unpacks
+
+[tool.pyzed.build.nuitka]              # options for one backend only ([tool.pyzed.build.pyinstaller] too)
+args = ["--lto=yes"]
 ```
 
 | Setting | Default | Notes |
 | --- | --- | --- |
 | `name` | the project name | Also the name of the folder in `dist/`. |
+| `backend` | `"pyinstaller"` | `"nuitka"` compiles to C: see below. |
 | `onefile` | `false` | A single file starts slower (it unpacks itself each time) and cannot [update itself](/pyzed/packaging/updates/). |
 | `windowed` | `true` | `false` (or `--console`) shows a terminal next to the app. |
-| `icon` | none | See [Icons and metadata](/pyzed/packaging/icons-metadata/). |
+| `icon` | none | A PNG becomes `.ico`, `.icns` and the window icon; see [Icons and metadata](/pyzed/packaging/icons-metadata/). |
+| `version`, `publisher`, `identifier`, `description`, `copyright` | from `[project]` | Written into the Windows file properties and the macOS `Info.plist`. |
+| `splash` | none | A [splash screen](#splash-screen). |
+| `optimize` | `0` | Python's `-O` (`1`) or `-OO` (`2`). |
+| `slim` | `true` | Leaves out `tkinter`, `test`, `idlelib`, `lib2to3`, `ensurepip`, `pydoc_data`, `turtle` and `turtledemo`. |
+| `strip`, `upx` | `true`, `false` | Strip debug symbols (Linux and macOS); compress with [UPX](https://upx.github.io/) if installed. |
+| `exclude` | `[]` | Modules to leave out. |
 | `include` | `[]` | Paths relative to the project root. |
-| `hidden-imports` | `[]` | Modules PyInstaller cannot see. |
+| `hidden-imports` | `[]` | Modules the backend cannot see. |
 | `collect` | `[]` | Packages with data files or plugins. |
-| `args` | `[]` | Any other [PyInstaller option](https://pyinstaller.org/en/stable/usage.html). |
+| `archive` | none | `"zip"` or `"tar.gz"`. |
+| `targets` | this computer | For `--workflow`: `windows-x64`, `windows-arm64`, `macos-arm64`, `macos-x64`, `linux-x64`, `linux-arm64`. |
+| `args` | `[]` | Any other option of the backend ([PyInstaller](https://pyinstaller.org/en/stable/usage.html), [Nuitka](https://nuitka.net/user-documentation/)). |
+
+## Choosing a backend
+
+| | PyInstaller | Nuitka |
+| --- | --- | --- |
+| How | Bundles your `.py` files as they are, next to Python | Compiles your code and its dependencies to C, then to machine code |
+| Build time | Seconds | Minutes |
+| Speed | Normal Python | Compiled: faster pure-Python code |
+| Size of a single file | Larger | About 15% smaller (better compression) |
+| Size of a folder | Smaller | Larger (compiled code takes more room than `.pyc`) |
+| Needs | Nothing (uv installs it) | A C compiler |
+
+Measured with a one-form app on Linux x64: PyInstaller made a 57 MB folder or a 25 MB single file in about 25
+seconds; Nuitka a 72 MB folder or a 21 MB single file in about 3 minutes. Most of the size is Pyzed's engine (about
+33 MB) and Python itself, so `slim`, `exclude` and `strip` matter more than the backend.
+
+Start with PyInstaller while you develop, and try Nuitka for releases. Nuitka needs a C compiler: on Linux `gcc`
+(`sudo apt install gcc`), on macOS the Xcode command line tools (`xcode-select --install`), on Windows Visual Studio's
+Build Tools, or Nuitka downloads a compiler the first time. `pyzed build` adds `patchelf` (Linux) and `zstandard`
+(single files) itself.
+
+## Splash screen
+
+With `[tool.pyzed.build.splash]`, the app opens a frameless window with your image, centered on the screen, before the
+main form. It stays up for `duration` seconds at least and until the main form has loaded, then closes. `text` is
+written over the bottom of the image. With `native = true`, the backend's own splash also shows before Python starts
+(PyInstaller on Windows and Linux, which needs `tkinter` in the project's Python; Nuitka for single files on Windows),
+useful for single-file apps that take a moment to unpack.
+
+The same splash works in an app written in code, through `App.splash`:
+
+```python
+import pyzed as pz
+
+class Shop(pz.App):
+    splash = pz.Splash("assets/splash.png", duration=1.5, text="Loading…")
+```
 
 ### Finding your data files
 
@@ -154,8 +232,9 @@ ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[1]))
 prices = ROOT / "data" / "prices.csv"
 ```
 
-`sys._MEIPASS` is the bundle folder when the app is packaged; while you develop, the fallback points at the project
-root (adjust `parents[1]` to where the file that runs this lives).
+`sys._MEIPASS` is the bundle folder of a PyInstaller app. In a Nuitka app and while you develop, the fallback is used:
+from a handler in `ui/` it points at the bundle (or the project) root; adjust `parents[1]` to where the file that runs
+this lives.
 
 <Aside type="tip" title="Do not write next to the app">
 The app folder may be read-only once installed (for example in `/Applications` or `Program Files`). Save user data
@@ -166,13 +245,13 @@ system with `platformdirs.user_data_dir("Shop")`.
 ### Where the files go
 
 The intermediate files go to `build/pyzed/` and the result to `dist/`; both are in the `.gitignore` of new projects.
-Each build starts clean (`--clean`), so delete nothing by hand.
+Each build starts clean, so delete nothing by hand.
 
-## Other tools
+## Apps written in code
 
-`pyzed build --dry-run` prints the exact PyInstaller command, which you can adapt to other packagers.
-
-**An app written in code.** Run PyInstaller on your script, collecting Pyzed's data files:
+`pyzed build` starts the project's main **form**. For an app written fully in code (a `pz.App` class and
+`pz.run(...)`), run PyInstaller on your script yourself, collecting Pyzed's data files. `pyzed build --dry-run` prints
+the exact command `pyzed build` would run, which you can adapt:
 
 <Tabs syncKey="pkg">
 	<TabItem label="uv">
@@ -193,20 +272,11 @@ Each build starts clean (`--clean`), so delete nothing by hand.
 	</TabItem>
 </Tabs>
 
-**Nuitka.** [Nuitka](https://nuitka.net) compiles Python to C and can produce smaller, faster binaries. Run it from
-the project environment with the same ideas: include the UI folder as data and the modules it imports. The launcher
-that `pyzed build` writes already knows how to find the UI folder in a Nuitka build:
+With Nuitka:
 
 ```bash
-uv run --with nuitka python -m nuitka --standalone --include-data-dir=ui=ui \
-  --include-package=shop --include-package=pyzed --include-package-data=pyzed build/pyzed/shop_launcher.py
+uv run --with nuitka --with patchelf python -m nuitka --mode=standalone --include-package-data=pyzed main.py
 ```
-
-(`build/pyzed/shop_launcher.py` is written by `pyzed build --dry-run`.)
-
-<Aside type="caution" title="Nuitka is not tested by Pyzed">
-The Nuitka command is a starting point, not a supported path: `pyzed build` only drives PyInstaller.
-</Aside>
 
 ## Next
 

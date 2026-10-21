@@ -23,7 +23,7 @@ designer.run("ui/main.pzform", reload=True)
 ### `run`
 
 ```python
-run(path, *, reload=None)
+run(path, *, reload=None, splash=None)
 ```
 
 Ejecuta el formulario de `path` con toda la lógica conectada en el diseñador.

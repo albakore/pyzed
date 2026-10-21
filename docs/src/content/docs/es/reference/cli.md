@@ -50,15 +50,19 @@ salvo `--script`. Si no hay `pyproject.toml`, ejecuta antes `uv init`. No modifi
 
 ## `pyzed build`
 
-Empaqueta el proyecto para la plataforma actual con PyInstaller. Consulta [Compilar y distribuir](/pyzed/es/packaging/build/).
+Empaqueta el proyecto para la plataforma actual con PyInstaller o Nuitka. Consulta [Cómo funciona la compilación](/pyzed/es/packaging/build/)
+y, en Pyzed Design, [Exportar tu aplicación](/pyzed/es/editor/exporting/).
 
 | Opción | Efecto |
 | --- | --- |
+| `--backend pyinstaller\|nuitka` | El empaquetador (por defecto: `backend` en `pyproject.toml`, si no PyInstaller). |
 | `--onefile` | Un único ejecutable en lugar de una carpeta. |
 | `--console` | Mantiene la ventana de consola. |
 | `--name NOMBRE` | Nombre del ejecutable. |
-| `--dry-run` | Muestra el comando de PyInstaller. |
-| `--workflow` | Escribe `.github/workflows/build.yml`, que compila en Linux, Windows y macOS. |
+| `--archive zip\|tar.gz` | Además comprime la aplicación, con el nombre que busca el actualizador (`shop-windows-x86_64.zip`). |
+| `--target DESTINO` | Falla si este equipo no compila `DESTINO` (`windows-x64`, `macos-arm64`, `linux-x64`...); lo usa la CI. |
+| `--dry-run` | Muestra el comando del empaquetador. |
+| `--workflow` | Escribe `.github/workflows/build.yml`, que compila cada destino de `targets` en GitHub Actions. |
 
 ## `pyzed icons [filtro]`
 

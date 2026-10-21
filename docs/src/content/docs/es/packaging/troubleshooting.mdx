@@ -39,10 +39,12 @@ terminal para leer el traceback:
 
 | Síntoma | Causa y solución |
 | --- | --- |
-| `uv: command not found`, o `uv` no se reconoce | `pyzed build` ejecuta PyInstaller con uv. Instálalo: `pip install uv`, o mira [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
+| `uv: command not found`, o `uv` no se reconoce | `pyzed build` ejecuta PyInstaller y Nuitka con uv. Instálalo: `pip install uv`, o mira [docs.astral.sh/uv](https://docs.astral.sh/uv/). |
 | `ui/main.pzform does not exist; set [tool.pyzed] main in pyproject.toml` | El formulario principal se movió o cambió de nombre. Fija `main = "ui/<formulario>.pzform"` en `[tool.pyzed]`. |
 | `uv sync --locked` falla en CI | `uv.lock` está desactualizado: ejecuta `uv lock` (o `pyzed sync`) y haz commit. |
-| La primera compilación es muy lenta | uv descarga PyInstaller y PyInstaller analiza cada dependencia; las siguientes reutilizan la caché de uv. |
+| La primera compilación es muy lenta | uv descarga PyInstaller y PyInstaller analiza cada dependencia; las siguientes reutilizan la caché de uv. Nuitka compila todo a C, lo que lleva minutos. |
+| Nuitka: no se encuentra un compilador de C | Instala uno: `sudo apt install gcc` (Linux), `xcode-select --install` (macOS), las Build Tools de Visual Studio (Windows), o deja que Nuitka descargue MinGW cuando lo pregunte. |
+| *La pantalla de inicio temprana de PyInstaller dibuja con Tk, que no tiene el Python del proyecto* | El Python del proyecto no tiene `tkinter`, así que solo se ve la pantalla de Pyzed. Usa un Python de `uv python install` o instala `python3-tk`. |
 
 ## Al arrancar la app
 
@@ -71,7 +73,7 @@ terminal para leer el traceback:
 
 | Síntoma | Solución |
 | --- | --- |
-| La app es grande | Deja las herramientas de desarrollo en el grupo dev (`pyzed add --dev ...`), excluye módulos que no usas con `args = ["--exclude-module", "tkinter"]` y evita `collect` en paquetes grandes cuando basta con `hidden-imports`. |
+| La app es grande | Deja las herramientas de desarrollo en el grupo dev (`pyzed add --dev ...`), deja `slim = true`, excluye módulos que no usas con `exclude = [...]` y evita `collect` en paquetes grandes cuando basta con `hidden-imports`. Un archivo único (`onefile`) va comprimido. |
 | El zip es más grande de lo esperado | No incluyas `build/`, `.venv/` ni datos de prueba en `include`. |
 
 ## Autoactualización

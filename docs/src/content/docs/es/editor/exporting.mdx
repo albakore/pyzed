@@ -1,0 +1,180 @@
+---
+title: Exportar tu app
+description: "Exporta un proyecto de Pyzed desde Pyzed Design como app para Windows, macOS y Linux en x64 y ARM: PyInstaller o Nuitka, icono de la app, pantalla de inicio, datos del archivo y un flujo de GitHub Actions para cada plataforma."
+sidebar:
+  order: 10.2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Media from '../../../../components/Media.astro';
+import general from '../../../../assets/editor/export-general.png';
+import platforms from '../../../../assets/editor/export-platforms.png';
+import backend from '../../../../assets/editor/export-backend.png';
+import icon from '../../../../assets/editor/export-icon.png';
+import splash from '../../../../assets/editor/export-splash.png';
+import files from '../../../../assets/editor/export-files.png';
+import command from '../../../../assets/editor/export-command.png';
+import splashScreen from '../../../../assets/editor/export-splash-screen.png';
+
+**Archivo → Exportar aplicación…** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>) convierte el
+[proyecto](/pyzed/es/editor/projects/) abierto en una app que la gente ejecuta sin instalar Python: un `.exe` en
+Windows, una `.app` en macOS, un ejecutable en Linux. Como la ventana de exportación de Godot, un solo diálogo lo
+reúne todo: el nombre y los datos de la app, las plataformas, el empaquetador, el icono y la pantalla de inicio.
+
+<Media src={platforms} alt="El diálogo Exportar en su sección Plataformas: seis plataformas con una casilla cada una, Linux x64 marcada como este equipo" caption="El diálogo Exportar: las secciones a la izquierda y las plataformas que compilar a la derecha." size="wide" />
+
+## Exportar en tres pasos
+
+<Steps>
+
+1. Abre un proyecto (**Proyecto → Abrir**) y pulsa <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>.
+2. Rellena **General** (al menos el nombre) y, si quieres, el **Icono** y la **Pantalla de inicio**.
+3. Pulsa **Compilar para …** (el nombre de tu sistema). La salida de la compilación aparece en la
+   [Consola](/pyzed/es/editor/console-and-running/); al terminar, una notificación dice dónde está la app y cuánto
+   ocupa, y **Mostrar en la carpeta** la abre.
+
+</Steps>
+
+Las compilaciones siguientes no necesitan el diálogo: **Ejecutar → Compilar la aplicación para este equipo**
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>) compila con los mismos ajustes. El resultado va a `dist/` en la carpeta
+del proyecto (`dist/Shop/`, `dist/Shop.exe` o `dist/Shop.app`).
+
+<Aside type="note" title="Los ajustes viven en pyproject.toml">
+El diálogo guarda en la tabla `[tool.pyzed.build]` de `pyproject.toml` al cerrarlo o al compilar. `uv run pyzed build`
+en una terminal y el flujo de CI usan exactamente los mismos ajustes; mira [Cómo funciona la
+compilación](/pyzed/es/packaging/build/) para ver cada clave.
+</Aside>
+
+## General
+
+<Media src={general} alt="La sección General: nombre, versión, editor, identificador, descripción y copyright" caption="General: lo que la gente ve en las propiedades del archivo y en las ventanas Acerca de de su sistema." size="wide" />
+
+| Campo | Para qué sirve |
+| --- | --- |
+| **Nombre** | El ejecutable, la `.app` y la carpeta en `dist/`. Vacío: el nombre del proyecto. |
+| **Versión** | La versión del archivo en Windows y la del paquete en macOS. Vacío: la versión de `[project]`. |
+| **Editor** | La empresa en las propiedades del archivo en Windows. |
+| **Identificador** | Un dominio invertido como `com.acme.shop`: el id del paquete en macOS y el id de la app en Linux. macOS guarda los ajustes y permisos de la app bajo él, así que no lo cambies entre versiones. |
+| **Descripción**, **Copyright** | Las propiedades del archivo en Windows y el `Info.plist` de macOS. |
+
+## Plataformas y arquitecturas
+
+PyInstaller y Nuitka compilan para el sistema en el que se ejecutan: un ordenador con Windows hace la app de Windows,
+un Mac la de macOS. La lista muestra los seis destinos que admite Pyzed, con **Este equipo** en el tuyo:
+
+| Destino | Sistema | Máquina de GitHub que lo compila |
+| --- | --- | --- |
+| `windows-x64` | Windows 10 y 11 en Intel y AMD | `windows-latest` |
+| `windows-arm64` | Windows 11 en ARM (Snapdragon) | `windows-11-arm` |
+| `macos-arm64` | Macs con Apple silicon (M1 y posteriores) | `macos-latest` |
+| `macos-x64` | Macs con Intel | `macos-15-intel` |
+| `linux-x64` | Linux en Intel y AMD | `ubuntu-22.04` |
+| `linux-arm64` | Linux en ARM (Raspberry Pi 4/5, servidores ARM) | `ubuntu-22.04-arm` |
+
+Marca las plataformas que quieras y pulsa **Escribir workflow de CI**: escribe `.github/workflows/build.yml`, que
+compila cada destino marcado en las máquinas de GitHub cada vez que subes una etiqueta de versión
+(`git tag v1.0.0 && git push --tags`). Mira [Compilar en CI](/pyzed/es/packaging/ci/). Las máquinas Linux son a
+propósito el Ubuntu más antiguo que ofrece GitHub: una app compilada en un sistema más antiguo funciona en más
+distribuciones.
+
+**Archivo comprimido** además empaqueta la app en un `zip` (o `tar.gz`) con un nombre como
+`shop-windows-x86_64.zip`, el que busca el [actualizador](/pyzed/es/packaging/updates/), listo para adjuntarlo a una
+Release de GitHub.
+
+<Aside type="tip" title="Un proyecto en WSL compila la app de Linux">
+En Windows, un proyecto que vive en WSL se compila dentro de WSL: **Este equipo** es entonces `linux-x64` y obtienes
+la app de Linux sin salir de Windows.
+</Aside>
+
+## Empaquetador: PyInstaller o Nuitka
+
+<Media src={backend} alt="La sección Empaquetador con las tarjetas de PyInstaller y Nuitka y las opciones de compilación" caption="Empaquetador: la herramienta que crea la app y sus opciones." size="wide" />
+
+| | PyInstaller | Nuitka |
+| --- | --- | --- |
+| Cómo | Empaqueta tus `.py` tal cual, junto a Python | Compila tu código y sus dependencias a C y luego a código máquina |
+| Tiempo de compilación | Segundos | Minutos (más rápido con [ccache](https://ccache.dev) instalado) |
+| Velocidad | Python normal | Compilado: código Python puro más rápido |
+| Tamaño de un archivo único | Mayor | Alrededor de un 15 % menor (mejor compresión) |
+| Tamaño de una carpeta | Menor | Mayor (el código compilado ocupa más que los `.pyc`) |
+| Necesita | Nada (uv lo instala) | Un compilador de C |
+
+Los dos se ejecutan dentro del entorno del proyecto con `uv run --with …`, así que no instalas ninguno. Nuitka
+necesita un compilador de C: `gcc` en Linux (`sudo apt install gcc`), las herramientas de línea de comandos de Xcode en
+macOS (`xcode-select --install`) y, en Windows, las Build Tools de Visual Studio, o Nuitka descarga uno la primera
+vez.
+
+| Opción | Qué hace |
+| --- | --- |
+| **Un solo archivo** | Un ejecutable que se descomprime en una carpeta temporal al arrancar. Una carpeta arranca más rápido y puede [actualizarse sola](/pyzed/es/packaging/updates/). |
+| **Solo ventana** | Sin consola junto a la app. Desactívalo mientras buscas un error: la consola muestra los print y los tracebacks. |
+| **Optimización** | El `-O` de Python (quita los `assert`) o `-OO` (también los docstrings). Déjalo en *Ninguno* si alguna biblioteca usa docstrings al ejecutarse. |
+| **Ligera** | Deja fuera módulos estándar que las apps no usan (`tkinter`, `test`, `idlelib`, `lib2to3`, `ensurepip`...). |
+| **Quitar símbolos** | Quita los símbolos de depuración de las bibliotecas: ocupa menos en Linux y macOS. |
+| **Comprimir con UPX** | Comprime los binarios con [UPX](https://upx.github.io/) si está instalado. Algunos antivirus desconfían de los archivos comprimidos con UPX, así que viene desactivado. |
+| **Más opciones** | Cualquier otra cosa, pasada al empaquetador tal cual (por ejemplo `--lto=yes` para Nuitka). |
+
+## Icono
+
+<Media src={icon} alt="La sección Icono con assets/icon.png elegido y una vista previa a 16, 24, 32, 48, 64 y 128 píxeles" caption="Icono: una imagen, vista a los tamaños en que la muestran los sistemas." size="wide" />
+
+Elige una imagen cuadrada, idealmente un PNG de 1024 × 1024 con fondo transparente. La compilación crea a partir de
+ella todos los archivos que piden los sistemas, sin herramientas extra:
+
+- `app-icon.ico` con imágenes de 16 a 256 píxeles, para el `.exe` de Windows, el Explorador y la barra de tareas;
+- `app-icon.icns` hasta 1024 píxeles (Retina), para el paquete de macOS, el Finder y el Dock;
+- `app-icon.png` (256 píxeles), incluido en la app como icono de sus ventanas: la barra de título y la barra de tareas
+  en Windows y Linux.
+
+La vista previa muestra cómo se ve en pequeño: si la versión de 16 píxeles es un borrón, simplifica el dibujo. Un
+archivo `.ico` o `.icns` se usa tal cual, para su sistema. En código, cualquier ventana puede tener su propio icono
+con `Window.icon` (mira [Iconos y metadatos](/pyzed/es/packaging/icons-metadata/)).
+
+## Pantalla de inicio
+
+<Media src={splash} alt="La sección Pantalla de inicio: imagen, duración, texto y pantalla de inicio temprana, con una vista previa de la imagen" caption="Pantalla de inicio: una imagen que se muestra mientras arranca la app." size="wide" />
+
+Una pantalla de inicio (splash screen) es una imagen en una ventana sin marco, centrada en la pantalla, mientras
+arranca la app. Se queda al menos **Duración** segundos; luego se abre el formulario de inicio y la pantalla se cierra.
+Si el formulario tarda más en cargar (una base de datos grande, un evento `load` lento), la pantalla sigue hasta que
+está listo, así nadie se queda mirando un escritorio vacío. **Texto** se escribe sobre la parte inferior de la imagen
+(por ejemplo *Cargando…*).
+
+<Media src={splashScreen} alt="Una pantalla de inicio con el icono de la app, su nombre Tasks, Version 1.0 y Loading… abajo" caption="La pantalla de inicio del ejemplo Tasks." size="narrow" />
+
+**Pantalla de inicio temprana** también pide al empaquetador su propia pantalla, que el cargador muestra incluso antes
+de que arranque Python, mientras una app de un solo archivo se descomprime. PyInstaller tiene una en Windows y Linux
+(dibuja con Tk, así que el Python del proyecto necesita `tkinter`; los Python de uv lo traen), y Nuitka para archivos
+únicos en Windows. Si las dos están activas, la temprana deja paso a la de Pyzed en cuanto arranca la app.
+
+Haz la imagen del tamaño que quieras para la ventana (si es mayor, se reduce para caber en 900 × 600); un PNG o JPEG
+de unos 600 × 360 va bien.
+
+## Archivos y módulos
+
+<Media src={files} alt="La sección Archivos y módulos: listas de archivos y carpetas, importaciones ocultas, paquetes completos y módulos que excluir" caption="Archivos y módulos: qué añadir a la app y qué dejar fuera." size="wide" />
+
+La compilación ya encuentra la carpeta de la interfaz, el backend en `src/` y cada módulo que importa el código de los
+formularios. Añade aquí lo que no puede ver:
+
+| Lista | Para |
+| --- | --- |
+| **Archivos y carpetas** | Datos que abre la app: imágenes, una base de datos, un archivo de configuración. Misma ruta desde la raíz del proyecto, dentro de la app. |
+| **Importaciones ocultas** | Módulos cargados por nombre (`importlib.import_module("plugins.csv")`). |
+| **Paquetes completos** | Paquetes con archivos de datos o plugins que hay que incluir enteros (`babel`, `certifi`...). |
+| **Excluir** | Módulos que no incluir, para que la app ocupe menos (`numpy.tests`). |
+
+## Línea de comandos
+
+<Media src={command} alt="La sección Línea de comandos: uv run pyzed build y la tabla [tool.pyzed.build]" caption="Línea de comandos: la misma compilación desde una terminal y los ajustes tal como se guardan." size="wide" />
+
+La última sección muestra la misma compilación como comando de terminal, la tabla que escribe en `pyproject.toml` y un
+botón que copia la línea de comandos completa de PyInstaller o Nuitka, para adaptarla o informar de un problema.
+
+## Siguiente
+
+- [Cómo funciona la compilación](/pyzed/es/packaging/build/): cada ajuste y lo que acaba dentro de la app.
+- [Compilar en CI](/pyzed/es/packaging/ci/) para las plataformas que no tienes.
+- Firma e instaladores: [Windows](/pyzed/es/packaging/windows/), [macOS](/pyzed/es/packaging/macos/),
+  [Linux](/pyzed/es/packaging/linux/).
+- ¿Algo falla? [Solución de problemas](/pyzed/es/packaging/troubleshooting/).

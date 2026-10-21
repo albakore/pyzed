@@ -1,26 +1,48 @@
 ---
 title: Icons and metadata
-description: "Give a packaged Pyzed app its name, icon (.ico on Windows, .icns on macOS, PNG on Linux), bundle identifier, version and window title, and make the icon files from one PNG."
+description: "Give a packaged Pyzed app its name, icon (.ico, .icns and the window icon made from one PNG), version, publisher, bundle identifier and file properties on Windows, macOS and Linux."
 sidebar:
   order: 5
 ---
 
 import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
 
-An app's identity is a few small things: its **name**, its **icon**, its **version** and, on macOS, its **bundle
-identifier**. Some are set in `pyproject.toml` for `pyzed build`, some in your app.
+An app's identity is a few small things: its **name**, its **icon**, its **version**, who **publishes** it and, on
+macOS, its **bundle identifier**. All of them are set in `[tool.pyzed.build]` of `pyproject.toml`, by hand or from the
+[Export dialog](/pyzed/editor/exporting/#general) of Pyzed Design, and `pyzed build` writes them where each system
+looks.
 
-## Name and version
+## Name, version and details
 
-| What | Where | Example |
-| --- | --- | --- |
-| Executable and bundle name | `[tool.pyzed.build] name` (or `--name`) | `name = "Shop"` → `Shop.exe`, `Shop.app` |
-| Window title | The form's **Title** in the designer, or `title` of your `pz.App` | `title = "Shop"` |
-| Version | `[project] version` in `pyproject.toml` | `version = "1.2.0"` |
+```toml title="pyproject.toml"
+[tool.pyzed.build]
+name = "Shop"                   # Shop.exe, Shop.app, dist/Shop/
+version = "1.2.0"               # default: [project] version
+publisher = "Acme"
+identifier = "com.acme.shop"    # default: com.<publisher>.<name>
+description = "Point of sale"   # default: [project] description
+copyright = "© 2026 Acme"
+```
 
-`pyzed build` does not write the version into the executable's metadata. If your app shows its version or
-[checks for updates](/pyzed/packaging/updates/), keep it in your code, for example in your package's `__init__.py`,
-and update it together with `pyproject.toml`:
+| What | Windows | macOS | Linux |
+| --- | --- | --- | --- |
+| `name` | `Shop.exe`, the product name | `Shop.app`, `CFBundleDisplayName` | The executable |
+| `version` | File and product version (Details tab) | `CFBundleShortVersionString` and `CFBundleVersion` | - |
+| `publisher` | Company name | - | - |
+| `identifier` | - | `CFBundleIdentifier` | The windows' app id (see [The window icon](#the-window-icon)) |
+| `description` | File description | - | - |
+| `copyright` | Legal copyright | `NSHumanReadableCopyright` | - |
+
+With PyInstaller, `pyzed build` writes a Windows version file (`build/pyzed/version.txt`) and fills in the bundle's
+`Info.plist` after the build; Nuitka gets the same values as options.
+
+Use a reverse domain you own as the `identifier`. macOS keeps the app's preferences and privacy permissions under it,
+so do not change it between releases.
+
+The **window title** is not here: it is the form's **Title** in the designer, or `title` of your `pz.App`.
+
+If your app shows its version or [checks for updates](/pyzed/packaging/updates/), keep the version in your code too,
+for example in your package's `__init__.py`, and update it together with `pyproject.toml`:
 
 ```python title="src/shop/__init__.py"
 __version__ = "1.2.0"
@@ -33,42 +55,31 @@ bundle unless you ask it to (`args = ["--copy-metadata", "shop"]`). A constant i
 
 ## The icon
 
-Each system wants its own format:
-
-| System | Format | Sizes inside the file | Setting |
-| --- | --- | --- | --- |
-| Windows | `.ico` | 16, 24, 32, 48, 64, 128, 256 px | `icon = "assets/icon.ico"` |
-| macOS | `.icns` | 16 to 1024 px | `icon = "assets/icon.icns"` |
-| Linux | `.png` (512 px is enough) | - | In the `.desktop` file (see [Linux](/pyzed/packaging/linux/#add-it-to-the-application-menu)) |
-
-`icon` in `[tool.pyzed.build]` is a single path. When you build on several systems, the easiest setup is **one PNG
-for all of them**: PyInstaller converts a PNG to `.ico` or `.icns` when [Pillow](https://pypi.org/project/pillow/) is
-installed in the build environment, and `pyzed build` runs PyInstaller in your project's environment:
-
-<Tabs syncKey="pkg">
-	<TabItem label="uv">
-		```bash
-		uv add --dev pillow      # or: pyzed add --dev pillow
-		```
-	</TabItem>
-	<TabItem label="pip">
-		```bash
-		pyzed add --dev pillow   # pyzed build needs uv anyway; this adds Pillow with it
-		```
-	</TabItem>
-</Tabs>
+Give `icon` one square picture, ideally a PNG of 1024 × 1024 pixels with a transparent background:
 
 ```toml title="pyproject.toml"
 [tool.pyzed.build]
-icon = "assets/icon.png"   # 1024 x 1024; converted on Windows and macOS
+icon = "assets/icon.png"
 ```
 
-For the sharpest result at small sizes, make the `.ico` and `.icns` files yourself (below) and set `icon` to the one
-for the system you build on.
+`pyzed build` makes every file the systems want from it, with Pyzed's own image code (no Pillow, `sips` or
+`iconutil` needed), in `build/pyzed/`:
+
+| File | Sizes inside | Used for |
+| --- | --- | --- |
+| `app-icon.ico` | 16, 20, 24, 32, 40, 48, 64, 128, 256 px | The Windows `.exe`: Explorer, the taskbar, Alt+Tab |
+| `app-icon.icns` | 16 to 1024 px, with Retina sizes | The macOS bundle: Finder and the Dock |
+| `app-icon.png` | 256 px | The icon of the app's windows (shipped inside the app) |
+
+Small sizes are made by scaling the big picture down. If the 16 and 32 pixel versions look blurry, draw a simpler
+version for them yourself (below), or keep the design bold. The [Export dialog](/pyzed/editor/exporting/#icon)
+previews every size.
+
+An `.ico` or `.icns` file given as `icon` is used as it is, for its own system.
 
 ### Making the icon files yourself
 
-Start from a square PNG of 1024 × 1024 pixels.
+For full control over each size, make the files with your favorite tool from a 1024 × 1024 PNG:
 
 <Tabs>
 	<TabItem label="Windows .ico (Python)">
@@ -88,48 +99,37 @@ Start from a square PNG of 1024 × 1024 pixels.
 		iconutil -c icns icon.iconset   # writes icon.icns (macOS only)
 		```
 	</TabItem>
-	<TabItem label="Linux .png">
-		```bash
-		# ImageMagick
-		convert icon.png -resize 512x512 icon-512.png
-		```
-	</TabItem>
 </Tabs>
 
-## The icon of the window
+## The window icon
 
-The icon above is the one of the **file** (in Explorer, Finder, the Dock and the taskbar).
+The `.exe` and `.app` icons are the ones of the **file**. A packaged app also gives its **windows** the icon (the title
+bar and the taskbar on Windows and Linux): the launcher sets `pz.Window.icon` to `app-icon.png`. macOS always shows
+the bundle's icon in the Dock.
 
-<Aside type="caution" title="Not supported yet">
-Setting a separate icon for the window itself (the small icon some systems draw in the title bar) from Python is not
-supported yet.
-</Aside>
+In your own code, any window can have its icon, a path to an image or its bytes:
 
-## macOS bundle identifier
+```python
+import pyzed as pz
 
-```toml title="pyproject.toml"
-[tool.pyzed.build]
-args = ["--osx-bundle-identifier", "com.acme.shop"]
+class Shop(pz.App):
+    icon = "assets/icon.png"
+    app_id = "com.acme.shop"   # Linux: matches the .desktop file
 ```
 
-Use a reverse domain you own. macOS keeps the app's preferences and privacy permissions under it, so do not change it
-between releases.
+On Linux, `app_id` names the app to the desktop. Wayland takes the icon of the taskbar and the dock from the
+`.desktop` file whose name matches it (`com.acme.shop.desktop`, see
+[Linux](/pyzed/packaging/linux/#add-it-to-the-application-menu)); X11 uses `icon` directly.
 
-## Windows file properties
+## Windows file properties by hand
 
-The **Details** tab of an `.exe`'s properties (company, product name, version) comes from a version resource.
-PyInstaller can add one from a version file:
+To write a version resource of your own instead of the generated one (more fields, other languages), capture one from an
+existing `.exe` with `pyi-grab_version` and pass it to PyInstaller:
 
 ```toml title="pyproject.toml"
-[tool.pyzed.build]
+[tool.pyzed.build.pyinstaller]
 args = ["--version-file", "assets/version.txt"]
 ```
 
-Write `version.txt` by hand (see PyInstaller's
-[version file format](https://pyinstaller.org/en/stable/usage.html#capturing-windows-version-data)) or capture one
-from an existing `.exe` with `pyi-grab_version`. Paths in `args` reach PyInstaller unchanged, and PyInstaller writes
-its spec file to `build/pyzed/`: if it cannot find the file, give its absolute path.
-
-<Aside type="caution" title="Not generated by pyzed build yet">
-Pyzed does not generate the version file or the macOS `Info.plist` entries for you; both go through `args`.
-</Aside>
+Paths in `args` reach PyInstaller unchanged, and PyInstaller writes its spec file to `build/pyzed/`: if it cannot find
+the file, give its absolute path.

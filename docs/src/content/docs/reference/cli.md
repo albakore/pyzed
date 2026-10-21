@@ -49,15 +49,19 @@ Adds Pyzed to the uv project at `path` (default: the current folder), with the s
 
 ## `pyzed build`
 
-Packages the project for the current platform with PyInstaller. See [Build and distribute](/pyzed/packaging/build/).
+Packages the project for the current platform with PyInstaller or Nuitka. See [How building works](/pyzed/packaging/build/)
+and, in Pyzed Design, [Exporting your app](/pyzed/editor/exporting/).
 
 | Option | Effect |
 | --- | --- |
+| `--backend pyinstaller\|nuitka` | The packager (default: `backend` in `pyproject.toml`, else PyInstaller). |
 | `--onefile` | A single executable instead of a folder. |
 | `--console` | Keep the console window. |
 | `--name NAME` | Name of the executable. |
-| `--dry-run` | Print the PyInstaller command. |
-| `--workflow` | Write `.github/workflows/build.yml`, which builds on Linux, Windows and macOS. |
+| `--archive zip\|tar.gz` | Also pack the app, named for the self-updater (`shop-windows-x86_64.zip`). |
+| `--target TARGET` | Fail unless this computer builds `TARGET` (`windows-x64`, `macos-arm64`, `linux-x64`...); CI uses it. |
+| `--dry-run` | Print the backend's command. |
+| `--workflow` | Write `.github/workflows/build.yml`, which builds every target of `targets` on GitHub Actions. |
 
 ## `pyzed icons [filter]`
 

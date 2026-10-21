@@ -30,8 +30,9 @@ messages, `update(message)`. State lives in instance attributes.
 | `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |
 | `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |
 | `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |
+| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |
 
-The remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.
+The remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.
 
 | Method | Description |
 | --- | --- |
@@ -161,6 +162,8 @@ forwards them to `app.update()`.
 | `scale` | `1.0` | UI scale. |
 | `theme` | `None` | Its own theme; `None` uses the app's. |
 | `style` | `None` | Its own global style; `None` uses the app's. |
+| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |
+| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |
 | `app` | — | The app that owns the window (assigned when it opens). |
 | `window_size` | — | Current size in logical pixels (updated by the runtime). |
 | `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |
@@ -274,6 +277,30 @@ Window.resolved_style()
 ```
 
 The global style of this window: `pz.set_style` with its own (or the app's) `style` on top.
+
+### `Splash`
+
+```python
+class Splash
+```
+
+A splash screen: a frameless window with an image, centered on the screen, shown while the app starts. Give it to `App.splash`; it stays up for `duration` seconds at least, then the main window opens and the splash closes. See [Splash screen](/pyzed/packaging/build/#splash-screen).
+
+| Parameter | Description |
+| --- | --- |
+| `image` | Path to the picture (PNG, JPEG...) or its bytes. |
+| `duration` | Seconds it stays up, at least. |
+| `size` | Window size; default: the image's, scaled down to fit 900 × 600. |
+| `text` | Text written over the bottom of the image (for example `"Loading…"`). |
+| `color` | Color of the text. |
+| `background` | Color behind the image (for pictures with transparency). |
+| `title` | Window title (the taskbar shows it). |
+| `icon` | Window icon. |
+
+```python
+class Shop(pz.App):
+    splash = pz.Splash("assets/splash.png", duration=1.5, text="Loading…")
+```
 
 ## Async and subscriptions
 
