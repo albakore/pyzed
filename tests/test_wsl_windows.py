@@ -333,6 +333,7 @@ def _fake_maturin(tmp_path, *, fail=False):
     script = tmp_path / "maturin"
     script.write_text(f"""#!/bin/sh
 echo "Compiling pyzed v1.0.0"
+echo "PATH=$PATH"
 {'exit 1' if fail else ''}
 while [ "$1" != "--out" ]; do shift; done
 cp {wheel} "$2/pyzed_ui-1.0.0-cp310-abi3-win_amd64.whl"
@@ -342,6 +343,7 @@ cp {wheel} "$2/pyzed_ui-1.0.0-cp310-abi3-win_amd64.whl"
 
 
 def test_build_core_extracts_the_windows_core(wsl, tmp_path):
+    wsl.setenv("PATH", "/mnt/c/Windows/System32:/usr/bin:/bin:/mnt/c/Users/kev/AppData/Local/Microsoft/WindowsApps")
     wsl.setattr(ww, "_maturin", lambda: _fake_maturin(tmp_path))
     wsl.setattr(ww, "_rustup", lambda: None)
     wsl.setenv("PYZED_WINDOWS_TARGET", "x86_64-pc-windows-msvc")
@@ -349,6 +351,9 @@ def test_build_core_extracts_the_windows_core(wsl, tmp_path):
     assert ww.build_core(tmp_path, tmp_path / "core", lines.append) is None
     assert (tmp_path / "core" / "_core.pyd").read_bytes() == b"MZ fake core"
     assert any("Compiling pyzed" in line for line in lines)
+    # Windows' folders are left out, so maturin does not find the Microsoft Store's python.exe
+    path = next(line for line in lines if line.startswith("PATH="))
+    assert "/mnt/c/Windows" not in path and "/usr/bin" in path
 
 
 def test_build_core_explains_the_toolchain_when_it_fails(wsl, tmp_path):
@@ -356,7 +361,8 @@ def test_build_core_explains_the_toolchain_when_it_fails(wsl, tmp_path):
     wsl.setattr(ww, "_rustup", lambda: None)
     wsl.setenv("PYZED_WINDOWS_TARGET", "x86_64-pc-windows-msvc")
     error = ww.build_core(tmp_path, tmp_path / "core", lambda line: None)
-    assert "mingw-w64" in error and "Compiling" in error and not (tmp_path / "core").exists()
+    assert "the build failed" in error and "Compiling" in error and not (tmp_path / "core").exists()
+    assert "mingw-w64" not in error  # the cross compiler is there: the advice to install it would mislead
 
 
 def test_checkout_uses_its_sources_and_a_core_built_for_windows(wsl, tmp_path):
