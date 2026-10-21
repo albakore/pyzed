@@ -152,6 +152,8 @@ class RenderContext:
     language: Optional[str] = None
     #: The form being drawn, for controls that look at what is inside them (a Dock's tabs).
     form: Any = None
+    #: What a running form's code played on each control (``form.title.play_animation()``), by name.
+    played: Optional[Dict[str, Any]] = None
 
     def __init__(self, theme: Optional[Theme] = None, form_name: str = "form") -> None:
         self.theme = theme or current()
@@ -266,19 +268,24 @@ def render(control: Control, ctx: RenderContext) -> Any:
     # shadows, glows and motion are drawn outside the box: clipping would cut them off
     from . import motion
 
+    played = (ctx.played or {}).get(control.name)
     return _core.container(widget, width=control.width, height=control.height,
-                           clip=not motion.moves(control.animations, control.style))
+                           clip=not (motion.moves(control.animations, control.style) or (played and played.extra)))
 
 
 def animated(widget: Any, control: Control, ctx: RenderContext) -> Any:
-    """``widget`` with the control's animations: always in a running form, and in the designer only
-    while its Preview plays (``ctx.preview`` maps control names to a restart counter)."""
-    if not control.animations:
-        return widget
+    """``widget`` with the control's animations: always in a running form (with what its code played,
+    ``ctx.played``), and in the designer only while its Preview plays (``ctx.preview`` maps control
+    names to a restart counter)."""
     from . import motion
 
     if ctx.live:
-        return motion.apply(widget, control.animations)
+        played = (ctx.played or {}).get(control.name)
+        if not control.animations and played is None:
+            return widget
+        return motion.apply(widget, control.animations, played=played)
+    if not control.animations:
+        return widget
     generation = (getattr(ctx, "preview", None) or {}).get(control.name)
     if generation is None:
         return widget

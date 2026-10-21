@@ -92,7 +92,7 @@ from .i18n import t
 from .hints import Color, Icon, Multiline, Range
 from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
                     stylesheet, viewport)
-from .animation import Animation, define_animation, presence, set_reduced_motion, stagger
+from .animation import Animation, Trigger, define_animation, presence, set_reduced_motion, stagger
 from .animation_player import AnimationLibrary, AnimationPlayer, Call, Clip, Key, Track, load_animations
 from .accessibility import system_reduced_motion
 from .events import Event, on
@@ -222,6 +222,7 @@ __all__ = [
     "Clip",
     "Key",
     "Track",
+    "Trigger",
     "load_animations",
     "App",
     "Color",

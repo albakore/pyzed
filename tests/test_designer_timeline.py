@@ -190,3 +190,88 @@ def test_a_running_form_plays_its_clips_and_runs_calls():
     player.pause()
     reloaded = timeline.reload_player(player, runtime.form)
     assert reloaded.current == "intro" and reloaded.position == pytest.approx(player.position)
+
+
+def test_the_lanes_are_one_pointer_area_with_big_keys_and_snapping():
+    d = Designer(None, language_servers=False)
+    d.doc = Document(_form())
+    d.doc.set_clip(INTRO)
+    e = d.timeline
+    px = e.px
+    lane = lambda row: timeline.RULER + timeline.ROW * row + timeline.ROW / 2  # noqa: E731
+    at = lambda time: timeline.ORIGIN + time * px  # noqa: E731
+    assert e.row_at(4) == -1 and e.row_at(lane(1)) == 1 and e.row_at(lane(3)) == 3 and e.row_at(lane(9)) is None
+    # a key is grabbed from a few pixels away, and the cursor says so
+    e.pointer_move(at(1.0) - timeline.HIT + 2, lane(0))
+    assert e.hover == ("key", "card:opacity", 1.0) and e.cursor() == "grab"
+    e.pointer_press()
+    assert e.dragging == ("card:opacity", 1.0) and e.cursor() == "grabbing" and d.focus == "timeline"
+    e.pointer_move(at(0.6) - timeline.HIT + 2, lane(0))  # it keeps the distance it was grabbed from
+    e.pointer_release()
+    assert [k.time for k in e.clip.track("card:opacity").keys] == [0.0, 0.6] and e.dragging is None
+    # dragging near another track's key snaps onto it
+    e.pointer_move(at(1.0), lane(1))
+    e.pointer_press()
+    e.pointer_move(at(0.5) + timeline.SNAP - 1, lane(1))  # 0.5: the status track's key
+    e.pointer_release()
+    assert [k.time for k in e.clip.track("card:scale").keys] == [0.0, 0.5]
+    # a press on an empty spot moves the playhead and drops the selection
+    e.pointer_move(at(0.3), lane(0))
+    e.pointer_press()
+    e.pointer_release()
+    assert e.position == pytest.approx(0.3) and e.selected is None
+    # the ruler scrubs
+    e.pointer_move(at(0.2), 4)
+    e.pointer_press()
+    e.pointer_move(at(0.8), 4)
+    e.pointer_release()
+    assert e.position == pytest.approx(0.8) and not e.scrubbing
+    # double-click adds a key; right-click deletes it
+    e.pointer_move(at(0.25), lane(0))
+    e.pointer_double_click()
+    assert [k.time for k in e.clip.track("card:opacity").keys] == [0.0, 0.25, 0.6]
+    e.pointer_right_press()
+    assert [k.time for k in e.clip.track("card:opacity").keys] == [0.0, 0.6]
+    # calls drag along their lane and are removed with a right-click
+    e.pointer_move(at(0.75) + 10, lane(3))
+    assert e.hover == ("call", 0)
+    e.pointer_press()
+    e.pointer_move(at(0.4) + 10, lane(3))
+    e.pointer_release()
+    assert e.clip.calls[0].time == pytest.approx(0.4) and e.clip.calls[0].args == (7,)
+    e.call_draft = "ready"
+    e.pointer_move(at(0.9), lane(3))
+    e.pointer_double_click()
+    assert [c.method for c in e.clip.calls] == ["intro_done", "ready"]
+    e.pointer_move(at(e.clip.calls[0].time) + 5, lane(3))
+    e.pointer_right_press()
+    assert [c.method for c in e.clip.calls] == ["ready"]
+    d.doc.undo()
+    assert len(e.clip.calls) == 2
+
+
+def test_the_timeline_takes_its_keys_before_the_workspace():
+    d = Designer(None, language_servers=False)
+    d.doc = Document(_form())
+    d.doc.set_clip(INTRO)
+    d.doc.select("card")
+    e = d.timeline
+    d.focus_panel("animation")
+    assert d.focus == "timeline"
+    e.select_key("card:opacity", 1.0)
+    d.on_key("right")
+    assert e.selected == ("card:opacity", 1.01)
+    d.on_key("shift+left")
+    assert e.selected == ("card:opacity", 0.91)
+    d.on_key("delete")  # the key, not the selected control
+    assert [k.time for k in e.clip.track("card:opacity").keys] == [0.0] and d.doc.form.get("card") is not None
+    d.on_key("end")
+    assert e.position == e.clip.length == 1.01  # the key went past the end: the clip grew
+    d.on_key("left")
+    assert e.position == pytest.approx(1.0)
+    d.on_key("home")
+    assert e.position == 0.0
+    d.on_key("space")
+    assert e.playing
+    d.on_key("space")
+    assert not e.playing

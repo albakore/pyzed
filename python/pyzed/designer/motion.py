@@ -12,11 +12,16 @@ Only ``preset`` is required; the other keys override the preset's own timing. Ef
 The running form plays every animation. The designer's canvas stays still while you edit
 and plays a control's animations when you press Preview (``preview`` maps control names to
 a counter that restarts them).
+
+An entry with ``"on": "manual"`` waits for the form's code: ``form.title.play_animation()``
+plays it (and replays the ones that play when the control appears), and
+``form.title.play_animation("shake")`` plays any preset once. ``Played`` keeps that state.
 """
 
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .. import animation as _animation
@@ -28,6 +33,7 @@ TRIGGERS: Tuple[Tuple[str, str], ...] = (
     ("press", "While pressed"),
     ("focus", "While focused"),
     ("click", "On click"),
+    ("manual", "When played from code"),
 )
 TRIGGER_LABELS = dict(TRIGGERS)
 #: The easings offered first (every name in ``pz.animation.EASINGS`` is valid).
@@ -37,7 +43,7 @@ EASINGS = ("ease", "linear", "ease_in", "ease_out", "ease_in_out", "ease_out_cub
 REPEATS = ("1", "2", "3", "5", "infinite")
 #: The category each trigger suggests first in the preset list.
 SUGGESTED = {"mount": "entrance", "hover": "interaction", "press": "interaction", "focus": "interaction",
-             "click": "attention"}
+             "click": "attention", "manual": "attention"}
 CATEGORY_LABELS = {"entrance": "Entrance", "exit": "Exit", "attention": "Attention", "interaction": "Interaction",
                    "loop": "Loop"}
 
@@ -59,7 +65,8 @@ def presets_for(trigger: str) -> List[str]:
 
 def new_entry(trigger: str = "mount") -> Dict[str, Any]:
     """The animation a new row starts with for ``trigger``."""
-    preset = {"mount": "fade_in_up", "hover": "lift", "press": "shrink", "focus": "glow", "click": "pulse"}[trigger]
+    preset = {"mount": "fade_in_up", "hover": "lift", "press": "shrink", "focus": "glow", "click": "pulse",
+              "manual": "pulse"}[trigger]
     return {"preset": preset, "on": trigger}
 
 
@@ -123,9 +130,32 @@ def options(entry: Mapping[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def apply(widget: Any, animations: Optional[List[Mapping[str, Any]]], *, preview: Optional[int] = None) -> Any:
+@dataclass
+class Played:
+    """What a running form's code asked a control to play (``form.title.play_animation(...)``)."""
+
+    #: How many times ``play_animation`` was called: a new count plays again.
+    count: int = 0
+    #: The animations ``play_animation("shake")`` plays besides the control's own.
+    extra: List[Any] = field(default_factory=list)
+    #: ``stop_animation()`` was called: the control's "from code" animations and the extra ones stop.
+    stopped: bool = False
+
+    def play(self, animation: Any = None, **opts: Any) -> None:
+        self.count += 1
+        self.stopped = False
+        self.extra = [] if animation is None else [(animation, opts)]
+
+    def stop(self) -> None:
+        self.stopped = True
+        self.extra = []
+
+
+def apply(widget: Any, animations: Optional[List[Mapping[str, Any]]], *, preview: Optional[int] = None,
+          played: Optional[Played] = None) -> Any:
     """``widget`` with a control's animations. ``preview`` (the designer's Preview counter) plays
-    them all once, as if the control had just appeared; invalid entries are skipped."""
+    them all once, as if the control had just appeared; ``played`` is what the form's code asked
+    for (``form.title.play_animation()``). Invalid entries are skipped."""
     for entry in animations or ():
         preset = preset_of(entry)
         if preset is None:
@@ -134,10 +164,18 @@ def apply(widget: Any, animations: Optional[List[Mapping[str, Any]]], *, preview
         if preview is not None:
             opts["on"] = "mount"
             opts["key"] = preview
+        elif played is not None and timing(entry)["on"] in ("mount", "manual"):
+            if played.stopped and timing(entry)["on"] == "manual":
+                continue
+            opts["key"] = played.count  # play_animation() plays them again
         try:
             widget = widget.animate(preset, **opts)
         except (TypeError, ValueError):
             continue
+    if played is not None and preview is None:
+        for animation, opts in played.extra:
+            # a new animation plays as it is added; the same one again plays because its key changed
+            widget = widget.animate(animation, **{**opts, "on": "mount", "key": played.count})
     return widget
 
 

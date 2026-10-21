@@ -6,6 +6,7 @@ Every widget has ``animate()`` and ``transition()``::
     card.animate("lift", on="hover")                             # forward on hover, back on leave
     icon.animate("pulse", repeat="infinite")                     # loops
     field.animate("shake", key=self.errors)                      # replays when ``key`` changes
+    field.animate("shake", on=self.wrong)                        # plays on ``self.wrong.fire()``
     button.animate(on="press", scale=0.96, duration=90)          # ad-hoc: values to animate to
     panel.transition(opacity=1 if self.open else 0, x=0 if self.open else -24)  # like CSS
 
@@ -13,7 +14,9 @@ Every widget has ``animate()`` and ``transition()``::
 
 - ``on``: what plays it. ``"mount"`` (when the widget appears; the default), ``"hover"``,
   ``"press"``, ``"focus"`` and ``"active"`` (play forward while the condition holds and
-  back when it ends), ``"click"`` (from the start on every click).
+  back when it ends), ``"click"`` (from the start on every click), ``"manual"`` (from the
+  start each time ``key`` changes, never on its own) or a ``pz.Trigger`` that your code
+  fires (``on=self.shake`` in ``view()``, ``self.shake.fire()`` in a handler).
 - ``duration`` and ``delay`` in milliseconds (or ``"0.3s"``/``"300ms"``), ``easing`` (see
   ``EASINGS``, ``(x1, y1, x2, y2)`` for a cubic Bézier, ``"steps(4)"``), ``repeat`` (a
   count or ``"infinite"``), ``direction`` (``"normal"``, ``"reverse"``, ``"alternate"``,
@@ -53,7 +56,7 @@ from . import style as _style
 #: The easing names (also ``(x1, y1, x2, y2)`` cubic Béziers and ``"steps(n)"``).
 EASINGS: Tuple[str, ...] = tuple(_core.EASINGS)
 #: What plays an animation.
-TRIGGERS = ("mount", "hover", "press", "focus", "click", "active")
+TRIGGERS = ("mount", "hover", "press", "focus", "click", "active", "manual")
 #: The properties animations and transitions change.
 PROPERTIES = ("opacity", "x", "y", "scale", "rotate", "blur", "background", "border_color", "color", "radius",
               "border_width", "glow", "glow_color", "width", "height", "padding", "font_size")
@@ -205,6 +208,46 @@ def _frames(keyframes: Keyframes) -> List[Tuple[float, Dict[str, Any], Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Trigger
+# ---------------------------------------------------------------------------
+
+class Trigger:
+    """Starts an animation from your code, like a button you press in a handler.
+
+    Keep one on the app, give it to ``animate(on=...)`` in ``view()`` and call ``fire()``
+    whenever the animation should play (from the start, even if it is still running)::
+
+        class Login(pz.App):
+            def __init__(self):
+                self.wrong = pz.Trigger()
+
+            def view(self):
+                return ui.input(self.password, self.set_password).animate("shake", on=self.wrong)
+
+            def submit(self):
+                if not self.check():
+                    self.wrong.fire()          # the field shakes now
+
+    Nothing plays when the widget appears: only ``fire()`` starts it. ``count`` says how
+    many times it was fired. ``fire`` takes and ignores any arguments, so it can be a
+    callback itself: ``ui.button("Shake", self.wrong.fire)``.
+    """
+
+    __slots__ = ("count",)
+
+    def __init__(self) -> None:
+        #: How many times ``fire()`` was called.
+        self.count = 0
+
+    def fire(self, *_args: Any) -> None:
+        """Plays the animations that use this trigger, from the start."""
+        self.count += 1
+
+    def __repr__(self) -> str:
+        return f"Trigger(count={self.count})"
+
+
+# ---------------------------------------------------------------------------
 # Animation
 # ---------------------------------------------------------------------------
 
@@ -332,7 +375,7 @@ def _from_props(props: Mapping[str, Any], on: str) -> Animation:
     base = {k: None for k in props}
     if on == "mount":
         frames = [dict(props), base]
-    elif on == "click":
+    elif on in ("click", "manual"):
         frames = [base, dict(props), base]
     else:
         frames = [base, dict(props)]
@@ -529,6 +572,11 @@ def _compile(animations: Sequence[Any], options: Optional[Mapping[str, Any]]) ->
     if unknown:
         raise TypeError(f"unknown animate() option {unknown[0]!r}; options: {', '.join(_OPTIONS)}; "
                         f"properties: {', '.join(PROPERTIES)}")
+    trigger = options.get("on")
+    if isinstance(trigger, Trigger):  # `on=self.shake`: plays each time it is fired
+        key = options.get("key")
+        options["key"] = trigger.count if key is None else (key, trigger.count)
+        options["on"] = "manual"
     on = _choice(options.get("on"), TRIGGERS, "trigger")
     if on is not None:
         options["on"] = on
@@ -709,7 +757,7 @@ def _window_exit(window: Any) -> float:
 
 
 __all__ = [
-    "Animation", "CATEGORIES", "EASINGS", "PRESETS", "PROPERTIES", "TRIGGERS", "WINDOW_TRANSITIONS",
+    "Animation", "CATEGORIES", "EASINGS", "PRESETS", "PROPERTIES", "TRIGGERS", "Trigger", "WINDOW_TRANSITIONS",
     "animation", "define_animation", "ease", "presence", "presets", "reduced_motion", "set_reduced_motion",
     "stagger", "window_animations",
 ]

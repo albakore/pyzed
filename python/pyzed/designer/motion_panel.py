@@ -24,7 +24,16 @@ if TYPE_CHECKING:  # pragma: no cover
 
 #: Icons of the triggers in the animation rows.
 TRIGGER_ICONS = {"mount": "sparkles", "hover": "mouse-pointer-2", "press": "pointer", "focus": "scan",
-                 "click": "mouse-pointer-click"}
+                 "click": "mouse-pointer-click", "manual": "code"}
+#: How each trigger starts its animation, shown under the open row.
+TRIGGER_HINTS = {
+    "mount": "Plays each time the control appears (when the form opens or the control is shown).",
+    "hover": "Plays forward while the pointer is over the control, and back when it leaves.",
+    "press": "Plays forward while the control is pressed, and back when it is released.",
+    "focus": "Plays forward while the control has the focus, and back when it loses it.",
+    "click": "Plays from the start on every click.",
+    "manual": "Waits for your code: call this line in any handler to play it.",
+}
 
 
 def _number(value: Any, on_change: Callable[[Any], Any], t: Theme, *, min: float = 0, max: float = 10000,
@@ -140,6 +149,25 @@ def _entry_row(d: "Designer", name: str, index: int, entry: dict, is_open: bool,
     ], spacing=2, align="center"), padding=(1, 4), width="fill")
 
 
+def code_line(name: str) -> str:
+    """The line of handler code that plays a control's animations (``form.title.play_animation()``)."""
+    return f"form.{name}.play_animation()"
+
+
+def _how_it_starts(d: "Designer", name: str, trigger: str, t: Theme) -> Any:
+    """Under the open row: what starts this animation and, for code, the line to call (with a copy button)."""
+    rows: List[Any] = [ui.label(tr(TRIGGER_HINTS.get(trigger, "")), size="xs", color="text_muted", theme=t)]
+    if trigger in ("manual", "mount"):
+        line = code_line(name)
+        if trigger == "mount":
+            rows.append(ui.label(tr("To replay it from a handler:"), size="xs", color="text_muted", theme=t))
+        rows.append(_core.container(_core.row([
+            _core.container(ui.label(line, size="xs", mono=True, wrap=False, theme=t), width="fill", clip=True),
+            ui.icon_button("copy", lambda: _core.Command.copy(line), size="xs", tooltip=tr("Copy"), theme=t),
+        ], spacing=4, align="center"), padding=(2, 2, 2, 6), bg=t.element, radius=t.radius_sm, width="fill"))
+    return _core.container(_core.column(rows, spacing=3, width="fill"), padding=(4, 0, 0, 0), width="fill")
+
+
 def _entry_editor(d: "Designer", name: str, index: int, entry: dict, t: Theme) -> Any:
     timing = motion.timing(entry)
     trigger = timing["on"]
@@ -158,7 +186,8 @@ def _entry_editor(d: "Designer", name: str, index: int, entry: dict, t: Theme) -
     rows = [
         prop_row("When", ui.select(list(triggers), current_trigger, lambda label: d.set_animation(
             name, index, "on", triggers.get(label, "mount")), width="fill", size="sm", theme=t), t,
-            tip="What plays it: appearing, hovering, pressing, focusing or clicking the control"),
+            tip="What plays it: appearing, hovering, pressing, focusing, clicking the control, or your code"),
+        _how_it_starts(d, name, trigger, t),
         prop_row("Animation", ui.select(list(labels), current_preset, lambda label: d.set_animation(
             name, index, "preset", labels.get(label, label)), width="fill", size="sm", theme=t), t,
             tip=hint or None),

@@ -695,6 +695,8 @@ pub enum Trigger {
     Click,
     /// Plays forward while `active=True`.
     Active,
+    /// Plays from the start each time its `key` changes, never on its own (`pz.Trigger`).
+    Manual,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -776,6 +778,7 @@ impl Anim {
             "focus" => Trigger::Focus,
             "click" => Trigger::Click,
             "active" => Trigger::Active,
+            "manual" => Trigger::Manual,
             other => {
                 return Err(PyValueError::new_err(format!(
                     "unknown animation trigger {other:?}"
@@ -1340,6 +1343,8 @@ struct Run {
     started: bool,
     ended: bool,
     was_on: bool,
+    /// A manual run was played at least once (reduced motion then shows its end).
+    fired: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -1407,6 +1412,7 @@ impl State {
                     run.pending = true;
                     run.started = false;
                     run.ended = false;
+                    run.fired = true;
                 }
             }
             runs.push(run);
@@ -1597,7 +1603,7 @@ impl<'a, Renderer> Animated<'a, Renderer> {
             Trigger::Press => state.pressed,
             Trigger::Focus => state.focused,
             Trigger::Active => anim.active,
-            Trigger::Mount | Trigger::Click => true,
+            Trigger::Mount | Trigger::Click | Trigger::Manual => true,
         }
     }
 
@@ -1611,7 +1617,10 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 Trigger::Mount if anim.iterations.is_finite() => {
                     anim.at_time(f32::MAX).0.map(|p| (p, 1.0))
                 }
-                Trigger::Mount | Trigger::Click => None,
+                Trigger::Manual if anim.iterations.is_finite() && run.fired => {
+                    anim.at_time(f32::MAX).0.map(|p| (p, 1.0))
+                }
+                Trigger::Mount | Trigger::Click | Trigger::Manual => None,
                 _ if anim.looping() => None,
                 _ => self
                     .condition(anim, state)
@@ -1639,9 +1648,9 @@ impl<'a, Renderer> Animated<'a, Renderer> {
                 let elapsed = now.saturating_duration_since(start).as_secs_f32();
                 anim.at_time(anim.clock(elapsed)).0.map(|p| (p, 1.0))
             }
-            // Not started yet: a mount animation shows its first frame (no flash of the
-            // final state); a click animation waits for a click.
-            _ if anim.trigger == Trigger::Mount && run.pending => {
+            // Not started yet: a mount (or just fired manual) animation shows its first
+            // frame (no flash of the final state); a click animation waits for a click.
+            _ if matches!(anim.trigger, Trigger::Mount | Trigger::Manual) && run.pending => {
                 let at = if anim.seek > 0.0 { anim.seek } else { -1.0 };
                 anim.at_time(at).0.map(|p| (p, 1.0))
             }
