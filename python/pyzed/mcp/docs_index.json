@@ -469,6 +469,12 @@
    "path": "docs/src/content/docs/editor/examples.md"
   },
   {
+   "slug": "editor/exporting",
+   "title": "Exporting your app",
+   "description": "Export a Pyzed project from Pyzed Design as an app for Windows, macOS and Linux on x64 and ARM: PyInstaller or Nuitka, app icon, splash screen, file details and a GitHub Actions workflow for every platform.",
+   "path": "docs/src/content/docs/editor/exporting.mdx"
+  },
+  {
    "slug": "editor/files-and-scripting",
    "title": "Files, templates and scripting",
    "description": "Document tabs, new forms and templates, opening and saving, the .pzform format, custom components and the Python scripting API of Pyzed Design.",
@@ -1533,19 +1539,19 @@
   {
    "slug": "packaging/build",
    "title": "How building works",
-   "description": "How pyzed build packages a Pyzed project as a standalone app with PyInstaller: what gets bundled, every option in pyproject.toml, data files, the output on each platform and alternatives such as Nuitka.",
+   "description": "How pyzed build packages a Pyzed project as a standalone app with PyInstaller or Nuitka: what gets bundled, every option in pyproject.toml, icons, splash screen, data files and the output on each platform.",
    "path": "docs/src/content/docs/packaging/build.mdx"
   },
   {
    "slug": "packaging/ci",
    "title": "Build in CI with GitHub Actions",
-   "description": "Build a Pyzed app for Windows, macOS and Linux on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets.",
+   "description": "Build a Pyzed app for Windows, macOS and Linux on x64 and ARM on every release with GitHub Actions: the workflow pyzed build --workflow writes, publishing a GitHub Release, and signing with secrets.",
    "path": "docs/src/content/docs/packaging/ci.mdx"
   },
   {
    "slug": "packaging/icons-metadata",
    "title": "Icons and metadata",
-   "description": "Give a packaged Pyzed app its name, icon (.ico on Windows, .icns on macOS, PNG on Linux), bundle identifier, version and window title, and make the icon files from one PNG.",
+   "description": "Give a packaged Pyzed app its name, icon (.ico, .icns and the window icon made from one PNG), version, publisher, bundle identifier and file properties on Windows, macOS and Linux.",
    "path": "docs/src/content/docs/packaging/icons-metadata.mdx"
   },
   {
@@ -2037,6 +2043,12 @@
  ],
  "examples": [
   {
+   "name": "agent_chat",
+   "kind": "app",
+   "summary": "An AI agent that knows Pyzed: a chat whose answers call tools, shown like Zed's Agent panel.",
+   "path": "examples/agent_chat.py"
+  },
+  {
    "name": "ai_chat",
    "kind": "app",
    "summary": "A streaming AI chat: any OpenAI-compatible server through httpx, with a built-in demo stream.",
@@ -2161,6 +2173,12 @@
    "kind": "app",
    "summary": "Type something and get its QR code, after Iced's ``qr_code`` demo.",
    "path": "examples/qr_code.py"
+  },
+  {
+   "name": "services",
+   "kind": "app",
+   "summary": "Services: the parts of an app that draw nothing but raise events, written in code.",
+   "path": "examples/services.py"
   },
   {
    "name": "stopwatch",
@@ -2851,7 +2869,7 @@
   },
   "entries": {
    "pyzed.App": {
-    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
+    "desc": "\nBase class for applications (Elm architecture, like Iced). It is also the **main\nwindow**, so it inherits everything from [`Window`](#window). Override `view()` and, if you use\nmessages, `update(message)`. State lives in instance attributes.\n\n| Class attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Window title. Can be a callable (or property) that returns the text. |\n| `size` | `(1280, 800)` | Initial window size. |\n| `font_size` | `14` | Default text size. |\n| `theme` | `themes.ONE_DARK` | A `Theme`, the name of a registered theme or `themes.auto(light, dark)`. Change it at any time. |\n| `style` | `None` | The global style: a `pz.Style` for the whole window. Its text color, size, background, border color and radius become theme tokens. See [Styles](/pyzed/theming/styles/#the-global-style). |\n| `system_dark` | `True` | Whether the system is in dark mode (updated by the runtime). |\n| `tab_focus` | `True` | Tab and Shift+Tab move the focus between the fields of the window. See [Accessibility](/pyzed/guides/accessibility/). |\n| `splash` | `None` | A [`Splash`](#splash) window shown before the main window opens. |\n\nThe remaining window options (`min_size`, `resizable`, `decorations`, `icon`, `scale`…) are on `Window`.\n\n| Method | Description |\n| --- | --- |\n| `view()` | Returns the widget tree. Called after every message. |\n| `update(message)` | Receives messages. Can return a `Command`, a list of them, a coroutine, a generator (regular or async) or another message. |\n| `on_start()` | Optional. Runs once at startup; can return a `Command` or a coroutine. |\n| `on_key(combo)` | Optional. Receives every key as `\"ctrl-shift-p\"`, `\"escape\"`, `\"up\"`… |\n| `on_key_up(key)` | Optional. Receives key releases by name (`\"left\"`, `\"space\"`). |\n| `subscriptions()` | Optional. Returns the active subscriptions (`pz.every`, `pz.listen`). Re-evaluated after every `update`. |\n| `resolved_theme()` | The concrete `Theme` in use (resolves names and `themes.auto`). |\n| `run()` | Opens the window and blocks until the app exits. |\n| `screenshot(path, *, size=None, scale=2.0, wait=0.1)` | Renders the current state to a PNG without a window. |\n\nIf `view()` raises an exception, the window shows the traceback instead of closing.\n"
    },
    "pyzed.run": {
     "desc": "Runs an app: opens the window and blocks until it is closed. Accepts the class or an instance.",
@@ -2881,7 +2899,21 @@
     }
    },
    "pyzed.Window": {
-    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n"
+    "desc": "\nAn extra window with its own `view()`, title, size and theme. Open it by returning\n`window.open()` (or `Command.open_window(window)`). Inside it, `self.app` is the app, so\nwindows share state; the messages it produces go to its `update()`, which by default\nforwards them to `app.update()`.\n\n| Attribute | Default | Description |\n| --- | --- | --- |\n| `title` | `\"Pyzed\"` | Text or callable. |\n| `size` | `(800, 600)` | Initial size. |\n| `min_size`, `max_size` | `None` | Size limits. |\n| `position` | `None` | `\"center\"` or `(x, y)`. |\n| `resizable` | `True` | Whether it can be resized. |\n| `decorations` | `True` | `False` removes the system frame (custom title bar with `drag()`). |\n| `transparent`, `maximized`, `fullscreen` | `False` | Initial state. |\n| `scale` | `1.0` | UI scale. |\n| `theme` | `None` | Its own theme; `None` uses the app's. |\n| `style` | `None` | Its own global style; `None` uses the app's. |\n| `icon` | `None` | The window's icon (title bar, taskbar): a path to an image or its bytes. Set it on `pz.Window` to give every window the same one. See [Icons and metadata](/pyzed/packaging/icons-metadata/#the-window-icon). |\n| `app_id` | `None` | Linux: the app id the desktop matches with a `.desktop` file (`com.acme.shop`). |\n| `app` | — | The app that owns the window (assigned when it opens). |\n| `window_size` | — | Current size in logical pixels (updated by the runtime). |\n| `window_position` | — | Where the window is on the screen, its outer top-left corner (updated by the runtime; `None` on Wayland). |\n\n| Method | Description |\n| --- | --- |\n| `view()` | Required. Returns the window's widget tree. |\n| `update(message)` | Receives the window's messages (by default forwards them to the app). |\n| `open()` / `close()` / `drag()` | Commands to open it, close it or start moving it. |\n| `is_open` | Whether it is open. |\n| `resolved_theme()` | The concrete `Theme` it uses. |\n| `on_open()` | When it opens. |\n| `on_close()` | When the user asks to close it; return `False` to prevent it. |\n| `on_resize(width, height)` | When it is resized. |\n| `on_key(combo)`, `subscriptions()` | As in `App`. |\n"
+   },
+   "pyzed.Splash": {
+    "desc": "A splash screen: a frameless window with an image, centered on the screen, shown while the app starts. Give it to `App.splash`; it stays up for `duration` seconds at least, then the main window opens and the splash closes. See [Splash screen](/pyzed/packaging/build/#splash-screen).",
+    "params": {
+     "image": "Path to the picture (PNG, JPEG...) or its bytes.",
+     "duration": "Seconds it stays up, at least.",
+     "size": "Window size; default: the image's, scaled down to fit 900 × 600.",
+     "text": "Text written over the bottom of the image (for example `\"Loading…\"`).",
+     "color": "Color of the text.",
+     "background": "Color behind the image (for pictures with transparency).",
+     "title": "Window title (the taskbar shows it).",
+     "icon": "Window icon."
+    },
+    "example": "\n            class Shop(pz.App):\n                splash = pz.Splash(\"assets/splash.png\", duration=1.5, text=\"Loading…\")\n        "
    },
    "pyzed.every": {
     "desc": "A subscription that sends `message` to `update` every `seconds` seconds (like Iced's `time::every`). If `message` is a callable, it is called. Return it from `subscriptions()`.",
