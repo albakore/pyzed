@@ -2042,7 +2042,8 @@ def _doc(*names):
 
 _section("app", "Hot reload", {
     **_doc("pyzed.hot_reload.enable", "pyzed.hot_reload.current", "pyzed.hot_reload.is_reloading",
-           "pyzed.hot_reload.enabled_by_env", "pyzed.hot_reload.Reloader", "pyzed.hot_reload.ReloadError"),
+           "pyzed.hot_reload.enabled_by_env", "pyzed.hot_reload.Reloader", "pyzed.hot_reload.ReloadError",
+           "pyzed.hot_reload.Change", "pyzed.hot_reload.remember"),
 }, before="Languages")
 _section("app", "Events and components", _doc(
     "pyzed.component.State", "pyzed.component.StateInfo", "pyzed.component.PropInfo", "pyzed.component.find",

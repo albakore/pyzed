@@ -101,8 +101,10 @@ mantiene sincronizados; en Pyzed, `view()` es el único lugar que convierte dato
 />
 
 Edita `view()`, un módulo auxiliar o un estilo y guarda: la ventana se actualiza en el sitio, **con tus datos
-todavía ahí** (el objeto de la app se conserva y recibe la clase nueva). Si el código nuevo falla, el error
-aparece en la ventana, y el siguiente guardado que lo corrige devuelve la app.
+todavía ahí** (el objeto de la app se conserva y recibe la clase nueva). Los métodos nuevos y los atributos nuevos
+de `__init__` aparecen sin reiniciar, y un valor inicial cambiado se aplica si la app no lo modificó (ver
+[Recarga en caliente](/pyzed/es/guides/hot-reload/)). Si el código nuevo falla, el error aparece en la ventana, y
+el siguiente guardado que lo corrige devuelve la app.
 
 ![Antes de guardar](../../../../../screenshots/hot-reload-before.png)
 

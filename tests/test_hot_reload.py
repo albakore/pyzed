@@ -209,3 +209,189 @@ def test_env_var_turns_reload_on(monkeypatch):
     assert hot_reload.enabled_by_env()
     monkeypatch.setenv("PYZED_RELOAD", "0")
     assert not hot_reload.enabled_by_env()
+
+
+STATEFUL = '''
+import pyzed as pz
+
+STARTS = globals().get("STARTS", 0)
+
+
+class Todo:
+    def __init__(self, text):
+        self.text = text
+{todo_extra}
+
+class Panel(pz.Window):
+    def __init__(self, title, *, rows=3):
+        self.heading = title
+        self.rows = rows
+{panel_extra}
+    def view(self):
+        return pz.text(self.heading)
+
+
+class Base(pz.App):
+    def describe(self):
+        return "base"
+
+
+class Demo(Base):
+    def __init__(self):
+        global STARTS
+        STARTS += 1
+        print("init ran")
+        self.count = 0
+        self.step = 1
+        self.todos = [Todo("milk")]
+        self.callback = self.label
+{app_extra}
+    def label(self):
+        return "{label}"
+
+    def describe(self):
+        return "demo " + super().describe()
+
+    def view(self):
+        return pz.text(str(self.count))
+'''
+
+
+def stateful(project, todo_extra="", panel_extra="", app_extra="", label="old"):
+    def block(text):
+        return textwrap.indent(textwrap.dedent(text), "        ") if text else ""
+
+    write(project.app_file, STATEFUL.format(todo_extra=block(todo_extra), panel_extra=block(panel_extra),
+                                            app_extra=block(app_extra), label=label))
+
+
+@pytest.fixture
+def live(project):
+    """The stateful app, imported fresh, with a reloader watching it."""
+    stateful(project)
+    module = importlib.reload(project.module)
+    app = module.Demo()
+    return types.SimpleNamespace(module=module, app=app, reloader=hot_reload.Reloader(app))
+
+
+def test_new_attributes_appear_without_restarting(project, live, capsys):
+    app = live.app
+    app.count = 5
+    todos = app.todos
+    stateful(project, app_extra="self.tags = ['new']\nself.filter = None")
+    assert live.reloader.reload([project.app_file]) is None
+    assert live.reloader.error is None
+    assert app.tags == ["new"] and app.filter is None
+    assert app.count == 5 and app.todos is todos  # the existing state is kept
+    [change] = live.reloader.changes
+    assert change.name == "Demo" and change.changed == ["__init__"]
+    assert change.new_state == ["tags", "filter"]
+    err = capsys.readouterr()
+    assert "pyzed: reloaded Demo: methods changed: __init__; new state: tags, filter" in err.err
+    assert "init ran" not in err.out  # the scratch copy's prints are hidden
+
+
+def test_new_initial_values_apply_unless_the_app_changed_them(project, live):
+    app = live.app
+    app.count = 9  # changed while running: kept
+    stateful(project, app_extra="")
+    source = project.app_file.read_text().replace("self.count = 0", "self.count = 100")
+    write(project.app_file, source.replace("self.step = 1", "self.step = 5"))
+    live.reloader.reload([project.app_file])
+    assert app.count == 9 and app.step == 5
+    assert live.reloader.changes[0].updated_state == ["step"]
+    # The next edit compares against the new default.
+    write(project.app_file, project.app_file.read_text().replace("self.step = 5", "self.step = 2"))
+    live.reloader.reload([project.app_file])
+    assert app.step == 2
+
+
+def test_unchanged_classes_do_not_run_init_again(project, live):
+    starts = live.module.STARTS
+    write(project.app_file, project.app_file.read_text() + "\nEXTRA = 1\n")
+    live.reloader.reload([project.app_file])
+    assert live.module.STARTS == starts
+    assert live.reloader.changes == []
+
+
+def test_reload_init_false_skips_the_scratch_copy(project, live):
+    starts = live.module.STARTS
+    stateful(project, app_extra="self.tags = []")
+    write(project.app_file, project.app_file.read_text().replace("class Demo(Base):", "class Demo(Base):\n    reload_init = False"))
+    live.reloader.reload([project.app_file])
+    assert live.module.STARTS == starts
+    assert not hasattr(live.app, "tags")
+
+
+def test_stored_methods_run_the_new_code(project, live):
+    app = live.app
+    callback = app.callback  # a bound method kept from before the reload
+    stateful(project, label="new")
+    live.reloader.reload([project.app_file])
+    assert callback() == "new" and app.label() == "new"
+    assert live.reloader.changes[0].changed == ["label"]
+    # `super()` inside a method kept from before the reload still finds the right class.
+    describe = app.describe
+    stateful(project, label="newer")
+    live.reloader.reload([project.app_file])
+    assert describe() == "demo base"
+
+
+def test_windows_rerun_init_with_their_arguments(project, live):
+    panel = live.module.Panel("Files", rows=7)
+    hot_reload.note_window(panel)
+    panel.heading = "Renamed"
+    stateful(project, panel_extra="self.summary = f'{title}: {rows}'")
+    live.reloader.reload([project.app_file])
+    assert panel.summary == "Files: 7" and panel.heading == "Renamed"
+
+
+def test_plain_objects_get_simple_new_attributes(project, live):
+    todo = live.app.todos[0]
+    stateful(project, todo_extra="self.done = False\nself.upper = text.upper()")
+    live.reloader.reload([project.app_file])
+    assert todo.done is False and todo.text == "milk"
+    assert not hasattr(todo, "upper")  # needs an argument of __init__, which is unknown
+
+
+def test_a_failing_init_does_not_break_the_reload(project, live, capsys):
+    stateful(project, app_extra="raise RuntimeError('no database')", label="new")
+    live.reloader.reload([project.app_file])
+    assert live.reloader.error is None
+    assert live.app.label() == "new"
+    assert "Demo.__init__ failed while reloading its state" in capsys.readouterr().err
+
+
+def test_components_get_new_state(project, live):
+    source = project.app_file.read_text() + textwrap.dedent('''
+
+        class Meter(pz.Component):
+            designer = False
+            value: int = 0
+            level: int = pz.state(1)
+
+            def setup(self):
+                self.hover = False
+
+            def render(self):
+                return pz.text(str(self.value))
+    ''')
+    write(project.app_file, source)
+    live.reloader.reload([project.app_file])
+    meter = live.module.Meter.create(value=3)
+    hot_reload.remember(meter)
+    meter.level = 4
+    source = source.replace("level: int = pz.state(1)", "level: int = pz.state(1)\n    peak: int = pz.state(10)")
+    write(project.app_file, source.replace("self.hover = False", "self.hover = False\n        self.history = []"))
+    live.reloader.reload([project.app_file])
+    assert meter.peak == 10 and meter.history == [] and meter.level == 4 and meter.value == 3
+    change = next(c for c in live.reloader.changes if c.name == "Meter")
+    assert set(change.new_state) == {"peak", "history"}
+
+
+def test_windows_still_refuse_unknown_arguments():
+    class Plain(pz.Window):
+        pass
+
+    with pytest.raises(TypeError):
+        Plain(1)
