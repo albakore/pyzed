@@ -181,6 +181,7 @@ enum CommandKind {
 }
 
 /// What `Command.pick_files` asks the system file dialog for.
+#[cfg_attr(target_os = "android", allow(dead_code))]
 struct PickFiles {
     then: PyMsg,
     title: Option<String>,
@@ -801,6 +802,15 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
                 })
             })
         }
+        // Android has no native file dialog here yet: the callback gets an empty list.
+        #[cfg(target_os = "android")]
+        CommandKind::PickFiles(pick) => {
+            let then = pick.then.clone();
+            Task::done(Python::attach(|py| {
+                Message::Call(then.clone(), PyMsg::new(PyList::empty(py).as_any()))
+            }))
+        }
+        #[cfg(not(target_os = "android"))]
         CommandKind::PickFiles(pick) => {
             let then = pick.then.clone();
             let mut dialog = rfd::AsyncFileDialog::new();
@@ -850,7 +860,14 @@ fn command_task(py: Python<'_>, state: &mut State, value: &Bound<'_, PyAny>) -> 
     }
 }
 
+/// The image on the system clipboard, encoded as PNG (none on Android yet).
+#[cfg(target_os = "android")]
+fn clipboard_png() -> Option<Vec<u8>> {
+    None
+}
+
 /// The image on the system clipboard, encoded as PNG.
+#[cfg(not(target_os = "android"))]
 fn clipboard_png() -> Option<Vec<u8>> {
     let image = arboard::Clipboard::new().ok()?.get_image().ok()?;
     let mut out = Vec::new();
@@ -1048,7 +1065,7 @@ fn platform_specific(
 
 /// On Linux, `Window.app_id` names the app to the desktop (it should match the `.desktop` file),
 /// which takes the icon of the taskbar and the dock from there on Wayland.
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "android")))]
 fn platform_specific(
     _custom: bool,
     _overlay: bool,
@@ -1058,6 +1075,15 @@ fn platform_specific(
         application_id: app_id.unwrap_or_default(),
         ..Default::default()
     }
+}
+
+#[cfg(target_os = "android")]
+fn platform_specific(
+    _custom: bool,
+    _overlay: bool,
+    _app_id: Option<String>,
+) -> window::settings::PlatformSpecific {
+    window::settings::PlatformSpecific
 }
 
 // ---------------------------------------------------------------------------

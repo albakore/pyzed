@@ -42,11 +42,6 @@ elsa = "1.11"
 png = "0.18"
 image = "0.25"
 bytes = "1"
-# Native file dialogs (Command.pick_files) and images on the clipboard (Command.paste_image).
-rfd = "0.17"
-arboard = { version = "3.7", features = ["wayland-data-control"] }
-# A faster allocator for the many small allocations of each view (widget trees, layout nodes, text).
-mimalloc = { version = "0.1", default-features = false }
 # Audio engine (pyzed.audio): FFT and WAV files; devices and MIDI below.
 rustfft = "6.4"
 hound = "3.5"
@@ -55,7 +50,14 @@ rtrb = "0.4"
 # Audio devices and MIDI on each system's low-latency API. On Linux they link ALSA, whose
 # development files a checkout may not have, so there they come with the `alsa` feature (CI and
 # the released wheels turn it on); without it the engine renders offline and on the silent clock.
-[target.'cfg(not(target_os = "linux"))'.dependencies]
+# A faster allocator for the many small allocations of each view (widget trees, layout nodes, text).
+[target.'cfg(not(target_os = "android"))'.dependencies]
+mimalloc = { version = "0.1", default-features = false }
+# Native file dialogs (Command.pick_files) and images on the clipboard (Command.paste_image).
+rfd = "0.17"
+arboard = { version = "3.7", features = ["wayland-data-control"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "android")))'.dependencies]
 cpal = "0.18"
 midir = "0.11"
 
@@ -63,6 +65,12 @@ midir = "0.11"
 [target.'cfg(target_os = "linux")'.dependencies]
 cpal = { version = "0.18", features = ["pulseaudio", "realtime"], optional = true }
 midir = { version = "0.11", optional = true }
+
+# Android (a prototype): winit runs as a NativeActivity, so the app needs no Java code.
+[target.'cfg(target_os = "android")'.dependencies]
+winit = { version = "0.30", features = ["android-native-activity"] }
+iced_winit = "0.14"
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 [features]
 # Audio devices and MIDI on Linux: needs libasound2-dev and pkg-config (Fedora: alsa-lib-devel).
@@ -81,3 +89,4 @@ strip = true
 [patch.crates-io]
 iced_wgpu = { path = "vendor/iced_wgpu" }
 iced_tiny_skia = { path = "vendor/iced_tiny_skia" }
+iced_winit = { path = "vendor/iced_winit" }
