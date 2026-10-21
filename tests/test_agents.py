@@ -375,7 +375,9 @@ def test_claude_through_the_sdk(monkeypatch):
     finally:
         server.shutdown()
     path, headers, body = seen[0]
-    assert path.startswith("/v1/messages") and headers["x-api-key"] == "sk-ant-test"
+    # anthropic 2.x sends the key as a bearer token; 1.x as x-api-key.
+    key = headers.get("x-api-key") or headers.get("authorization", "").removeprefix("Bearer ")
+    assert path.startswith("/v1/messages") and key == "sk-ant-test"
     assert "server-side-fallback-2026-07-01" in headers.get("anthropic-beta", "") and body["fallbacks"] == "default"
     assert body["thinking"] == {"type": "adaptive", "display": "summarized"}
     assert body["output_config"] == {"effort": "xhigh"} and body["tools"][0]["eager_input_streaming"] is True

@@ -55,6 +55,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+          targets: aarch64-linux-android
       - name: ALSA headers (audio devices and MIDI on Linux, the `alsa` feature)
         if: runner.os == 'Linux'
         run: sudo apt-get update -q && sudo apt-get install -y -q libasound2-dev
@@ -65,6 +66,10 @@ jobs:
       - run: cargo clippy --features alsa -- -D warnings
       - name: cargo clippy without ALSA (a checkout without its headers)
         run: cargo clippy -- -D warnings
+      - name: cargo clippy for Android (the prototype in android/)
+        run: cargo clippy --target aarch64-linux-android -- -D warnings
+        env:
+          PYO3_CROSS_PYTHON_VERSION: "3.13"
 
   msrv:
     # Keep in sync with `rust-version` in Cargo.toml: catches syntax that

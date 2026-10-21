@@ -3,8 +3,10 @@
 
 fn main() {
     println!("cargo::rustc-check-cfg=cfg(audio_devices)");
-    let linux = std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux");
-    if !linux || std::env::var_os("CARGO_FEATURE_ALSA").is_some() {
+    let os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+    if os == "android" {
+        // The Android prototype has no audio devices or MIDI yet (pyzed.audio renders offline).
+    } else if os != "linux" || std::env::var_os("CARGO_FEATURE_ALSA").is_some() {
         println!("cargo::rustc-cfg=audio_devices");
     } else {
         println!(

@@ -1,5 +1,7 @@
 //! Native core of Pyzed: a thin, fast bridge between Python and the Iced GUI toolkit.
 
+#[cfg(target_os = "android")]
+mod android;
 mod animation;
 mod app;
 mod audio;
@@ -28,6 +30,7 @@ use pyo3::prelude::*;
 /// Every view builds and drops thousands of small objects (widget nodes, layout nodes,
 /// shaped text); mimalloc handles that churn much faster than the system allocator.
 /// Only Rust's allocations use it: Python keeps its own.
+#[cfg(not(target_os = "android"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
