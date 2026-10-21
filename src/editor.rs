@@ -85,6 +85,46 @@ pub enum EditKey {
     Char(char),
 }
 
+/// How the editor indents (see `EditorState::key`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Indent {
+    /// Columns of a level, and between tab stops.
+    pub size: usize,
+    /// Tab and Enter indent with tab characters instead of spaces.
+    pub tabs: bool,
+    /// Backspace in leading spaces removes a whole level.
+    pub unindent: bool,
+}
+
+impl Indent {
+    pub fn spaces(size: usize) -> Self {
+        Self {
+            size,
+            tabs: false,
+            unindent: true,
+        }
+    }
+}
+
+/// The columns `text` takes with a tab stop every `size` columns.
+pub(crate) fn columns(text: &str, size: usize) -> usize {
+    text.chars().fold(0, |col, c| {
+        if c == '\t' {
+            (col / size.max(1) + 1) * size.max(1)
+        } else {
+            col + 1
+        }
+    })
+}
+
+/// Holding Backspace or Delete: repeats are dropped until `delay` has passed since the key went
+/// down, then one is kept every `interval`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct KeyRepeat {
+    pub delay: std::time::Duration,
+    pub interval: std::time::Duration,
+}
+
 /// What the editor does with its folds.
 #[derive(Debug, Clone, Copy)]
 pub enum FoldOp {
@@ -142,6 +182,10 @@ pub struct EditorState {
     pub(crate) ime_commit: Cell<bool>,
     /// The action context of the last render, for actions run from Python commands.
     pub(crate) context: RefCell<Option<Arc<ActionContext>>>,
+    /// The key being pressed is the system's key repeat (tracked by `EditorInput`).
+    pub(crate) repeat: Cell<bool>,
+    /// When the held delete key went down and when its last repeat was kept (`KeyRepeat`).
+    held: Cell<Option<(std::time::Instant, std::time::Instant)>>,
 }
 
 impl EditorState {
@@ -161,7 +205,27 @@ impl EditorState {
             composing: Cell::new(false),
             ime_commit: Cell::new(false),
             context: RefCell::new(None),
+            repeat: Cell::new(false),
+            held: Cell::new(None),
         }
+    }
+
+    /// Whether a press of Backspace or Delete goes through under `limit`: the first press always
+    /// does, the system's repeats only after the delay and once per interval.
+    pub(crate) fn repeat_allowed(&self, limit: KeyRepeat) -> bool {
+        let now = std::time::Instant::now();
+        match self.held.get() {
+            Some((since, last)) if self.repeat.get() => {
+                if now.duration_since(since) < limit.delay
+                    || now.duration_since(last) < limit.interval
+                {
+                    return false;
+                }
+                self.held.set(Some((since, now)));
+            }
+            _ => self.held.set(Some((now, now))),
+        }
+        true
     }
 
     pub fn reset(&mut self, text: &str) {
@@ -721,7 +785,7 @@ impl EditorState {
     /// inserts its closing one (or wraps the selection), typing a closer that is already next
     /// steps over it, Backspace between an empty pair deletes both and Enter between brackets
     /// opens an indented line.
-    pub fn key(&mut self, id: &str, key: EditKey, size: Option<usize>, pairs: bool) -> Outcome {
+    pub fn key(&mut self, id: &str, key: EditKey, indent: Option<Indent>, pairs: bool) -> Outcome {
         let before = self.real_position(self.content.cursor().position);
         let kind = match key {
             EditKey::Char(_) => EditKind::Typing,
@@ -730,7 +794,7 @@ impl EditorState {
         };
         let text = self.content.text();
         self.record(kind);
-        let mut edited = self.each_cursor(|s, _| s.key_one(key, size, pairs));
+        let mut edited = self.each_cursor(|s, _| s.key_one(key, indent, pairs));
         // Typing a closer that is already there steps over it.
         if edited && self.content.text() == text {
             edited = false;
@@ -741,7 +805,7 @@ impl EditorState {
         self.outcome(id, before, edited, true)
     }
 
-    fn key_one(&mut self, key: EditKey, size: Option<usize>, pairs: bool) -> bool {
+    pub(crate) fn key_one(&mut self, key: EditKey, indent: Option<Indent>, pairs: bool) -> bool {
         use text_editor::{Action, Edit};
         let cursor = self.content.cursor();
         let line = self
@@ -754,7 +818,8 @@ impl EditorState {
         let prev = head.chars().last();
         let next = line.chars().nth(column);
         let selecting = cursor.selection.is_some();
-        let step = size.unwrap_or(4);
+        let step = indent.map_or(4, |i| i.size).max(1);
+        let tabs = indent.is_some_and(|i| i.tabs);
         let safe = !selecting
             && match key {
                 EditKey::Enter => false,
@@ -770,27 +835,42 @@ impl EditorState {
         };
         let mut edited = true;
         match key {
+            EditKey::Tab if tabs => content.perform(Action::Edit(Edit::Insert('\t'))),
             EditKey::Tab => run(
                 content,
                 Action::Edit(Edit::Insert(' ')),
-                step - column % step,
+                step - columns(&head, step) % step,
             ),
             EditKey::Enter => {
-                let mut indent = head.chars().take_while(|c| *c == ' ').count();
+                // The new line starts with the same spaces and tabs.
+                let lead: String = head
+                    .chars()
+                    .take_while(|c| *c == ' ' || *c == '\t')
+                    .collect();
                 let between = pairs
                     && !selecting
                     && matches!(
                         (prev, next),
                         (Some('('), Some(')')) | (Some('['), Some(']')) | (Some('{'), Some('}'))
                     );
-                if size.is_some() && head.trim_end().ends_with(':') || between {
-                    indent += step;
+                let mut deeper = lead.clone();
+                if indent.is_some() && head.trim_end().ends_with(':') || between {
+                    if tabs {
+                        deeper.push('\t');
+                    } else {
+                        deeper.extend(std::iter::repeat_n(' ', step));
+                    }
                 }
+                let insert = |content: &mut text_editor::Content, text: &str| {
+                    for c in text.chars() {
+                        content.perform(Action::Edit(Edit::Insert(c)));
+                    }
+                };
                 content.perform(Action::Edit(Edit::Enter));
-                run(content, Action::Edit(Edit::Insert(' ')), indent);
+                insert(content, &deeper);
                 if between {
                     content.perform(Action::Edit(Edit::Enter));
-                    run(content, Action::Edit(Edit::Insert(' ')), indent - step);
+                    insert(content, &lead);
                     content.perform(Action::Move(Motion::Up));
                     content.perform(Action::Move(Motion::End));
                 }
@@ -805,7 +885,7 @@ impl EditorState {
                     content.perform(Action::Edit(Edit::Backspace));
                     content.perform(Action::Edit(Edit::Delete));
                 } else {
-                    let n = if size.is_some()
+                    let n = if indent.is_some_and(|i| i.unindent)
                         && !selecting
                         && column > 0
                         && head.chars().all(|c| c == ' ')
@@ -1651,7 +1731,16 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
 
     let page_id = props.id.clone();
     let page_cursor = props.on_cursor.clone();
-    let indent_size = props.tab_size;
+    let indent = props.tab_size.map(|size| Indent {
+        size,
+        tabs: props.hard_tabs,
+        unindent: props.backspace_unindent,
+    });
+    if let Some(size) = props.tab_size {
+        // Tabs are drawn as wide as a level of indentation.
+        iced_graphics::text::set_tab_width(size.min(u16::MAX as usize) as u16);
+    }
+    let key_repeat = props.key_repeat;
     let pairs = props.auto_close;
     let folding = props.folding;
     let readonly = props.readonly;
@@ -1664,7 +1753,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
         .filter_map(|k| keymap::Keystroke::parse(k))
         .collect();
     let ctx = Arc::new(ActionContext {
-        size: props.tab_size,
+        indent,
         pairs: props.auto_close,
         comment: comment_prefix(&props.language).map(Arc::from),
         on_change: props.on_change.clone(),
@@ -1721,7 +1810,7 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 Some(Binding::Custom(Message::EditorIndent {
                     id: props.id.clone(),
                     key,
-                    size: indent_size,
+                    indent,
                     pairs,
                     on_change: props.on_change.clone(),
                     on_cursor: props.on_cursor.clone(),
@@ -1729,6 +1818,18 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
             };
             if !matches!(press.status, text_editor::Status::Focused { .. }) {
                 return Binding::from_key_press(press);
+            }
+            // Holding Backspace or Delete deletes at the pace set by `key_repeat`.
+            if let Some(limit) = key_repeat
+                && matches!(
+                    press.key.as_ref(),
+                    keyboard::Key::Named(
+                        keyboard::key::Named::Backspace | keyboard::key::Named::Delete
+                    )
+                )
+                && !state.repeat_allowed(limit)
+            {
+                return Some(Binding::Custom(Message::Noop));
             }
             let plain =
                 !(press.modifiers.control() || press.modifiers.alt() || press.modifiers.logo());
@@ -1839,11 +1940,11 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                 keyboard::Key::Named(keyboard::key::Named::PageDown) => page(true, select),
                 keyboard::Key::Named(keyboard::key::Named::PageUp) => page(false, select),
                 keyboard::Key::Named(named) if plain && !select => match named {
-                    keyboard::key::Named::Tab if indent_size.is_some() => edit(EditKey::Tab),
-                    keyboard::key::Named::Enter if indent_size.is_some() || pairs => {
+                    keyboard::key::Named::Tab if indent.is_some() => edit(EditKey::Tab),
+                    keyboard::key::Named::Enter if indent.is_some() || pairs => {
                         edit(EditKey::Enter)
                     }
-                    keyboard::key::Named::Backspace if indent_size.is_some() || pairs => {
+                    keyboard::key::Named::Backspace if indent.is_some() || pairs => {
                         edit(EditKey::Backspace)
                     }
                     _ => Binding::from_key_press(press),
@@ -1937,6 +2038,10 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
 
     // Visible whitespace: a copy of the text where only spaces and tabs are drawn.
     if let (Some(color), None) = (props.whitespace, wrap_width) {
+        let tab_stop = props
+            .tab_size
+            .unwrap_or_else(|| iced_graphics::text::tab_width() as usize)
+            .max(1);
         let mut dots = String::new();
         for (i, line) in lines.iter().enumerate() {
             if i > 0 {
@@ -1950,8 +2055,8 @@ fn body<'a>(state: &'a EditorState, props: &Arc<EditorProps>, size: Size) -> Ele
                         col += 1;
                     }
                     '\t' => {
-                        // cosmic-text puts tab stops every 8 columns.
-                        let next = (col / 8 + 1) * 8;
+                        // Tab stops every `tab_size` columns (see `set_tab_width`).
+                        let next = (col / tab_stop + 1) * tab_stop;
                         dots.push('→');
                         dots.extend(std::iter::repeat_n(' ', next - col - 1));
                         col = next;
@@ -2418,7 +2523,7 @@ mod tests {
     fn typed(s: &mut EditorState, text: &str) {
         for c in text.chars() {
             if is_pair_char(c) {
-                s.key("e", EditKey::Char(c), Some(4), true);
+                s.key("e", EditKey::Char(c), Some(Indent::spaces(4)), true);
             } else {
                 s.perform("e", Action::Edit(Edit::Insert(c)));
             }
@@ -2459,12 +2564,67 @@ mod tests {
     #[test]
     fn backspace_deletes_empty_pair_and_enter_opens_block() {
         let mut s = at("x = []", 0, 5);
-        s.key("e", EditKey::Backspace, Some(4), true);
+        s.key("e", EditKey::Backspace, Some(Indent::spaces(4)), true);
         assert_eq!(s.text(), "x = ");
         let mut s = at("    d = {}", 0, 9);
-        s.key("e", EditKey::Enter, Some(4), true);
+        s.key("e", EditKey::Enter, Some(Indent::spaces(4)), true);
         assert_eq!(s.text(), "    d = {\n        \n    }");
         assert_eq!(cursor(&s), (1, 8));
+    }
+
+    #[test]
+    fn hard_tabs_indent_with_tabs_and_enter_keeps_them() {
+        let tabs = Some(Indent {
+            size: 4,
+            tabs: true,
+            unindent: true,
+        });
+        let mut s = at("def f():", 0, 8);
+        s.key("e", EditKey::Enter, tabs, true);
+        assert_eq!((s.text().as_str(), cursor(&s)), ("def f():\n\t", (1, 1)));
+        s.key("e", EditKey::Tab, tabs, true);
+        assert_eq!(s.text(), "def f():\n\t\t");
+        s.key("e", EditKey::Backspace, tabs, true);
+        assert_eq!(s.text(), "def f():\n\t");
+        // Spaces mode keeps the tabs of a line too, instead of dropping the indentation.
+        let mut s = at("\tif x:", 0, 6);
+        s.key("e", EditKey::Enter, Some(Indent::spaces(4)), true);
+        assert_eq!(s.text(), "\tif x:\n\t    ");
+        assert_eq!(columns("\t  \t", 4), 8);
+    }
+
+    #[test]
+    fn backspace_unindent_can_be_turned_off() {
+        let one = Some(Indent {
+            size: 4,
+            tabs: false,
+            unindent: false,
+        });
+        let mut s = at("        x", 0, 8);
+        s.key("e", EditKey::Backspace, one, true);
+        assert_eq!(s.text(), "       x");
+        s.key("e", EditKey::Backspace, Some(Indent::spaces(4)), true);
+        assert_eq!(s.text(), "    x");
+    }
+
+    #[test]
+    fn held_delete_waits_and_keeps_its_pace() {
+        let s = EditorState::new("");
+        let limit = KeyRepeat {
+            delay: std::time::Duration::from_secs(60),
+            interval: std::time::Duration::ZERO,
+        };
+        assert!(s.repeat_allowed(limit)); // the press itself
+        s.repeat.set(true);
+        assert!(!s.repeat_allowed(limit)); // a repeat within the delay
+        s.repeat.set(false);
+        assert!(s.repeat_allowed(limit)); // pressed again
+        let fast = KeyRepeat {
+            delay: std::time::Duration::ZERO,
+            interval: std::time::Duration::ZERO,
+        };
+        s.repeat.set(true);
+        assert!(s.repeat_allowed(fast));
     }
 
     #[test]
@@ -2474,7 +2634,7 @@ mod tests {
             position: Position { line: 0, column: 6 },
             selection: Some(Position { line: 0, column: 2 }),
         });
-        s.key("e", EditKey::Char('('), Some(4), true);
+        s.key("e", EditKey::Char('('), Some(Indent::spaces(4)), true);
         assert_eq!(s.text(), "a (word) here");
         assert_eq!(s.content.selection().as_deref(), Some("word"));
     }
@@ -2513,14 +2673,14 @@ mod tests {
             position: Position { line: 0, column: 8 },
             selection: None,
         });
-        s.key("e", EditKey::Enter, Some(4), true);
+        s.key("e", EditKey::Enter, Some(Indent::spaces(4)), true);
         assert!(s.is_folded(3));
         assert_eq!(s.text(), CODE.replacen("def a():", "def a():\n    ", 1));
         s.content.move_to(text_editor::Cursor {
             position: Position { line: 3, column: 9 },
             selection: None,
         });
-        s.key("e", EditKey::Enter, Some(4), true);
+        s.key("e", EditKey::Enter, Some(Indent::spaces(4)), true);
         assert!(s.folds.is_empty());
     }
 

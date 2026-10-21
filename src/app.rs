@@ -87,7 +87,7 @@ pub enum Message {
     EditorIndent {
         id: Arc<str>,
         key: crate::editor::EditKey,
-        size: Option<usize>,
+        indent: Option<crate::editor::Indent>,
         pairs: bool,
         on_change: Option<PyMsg>,
         on_cursor: Option<PyMsg>,
@@ -1347,12 +1347,12 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
             Message::EditorIndent {
                 id,
                 key,
-                size,
+                indent,
                 pairs,
                 on_change,
                 on_cursor,
             } => {
-                let Some(outcome) = state.caches.key_editor(&id, key, size, pairs) else {
+                let Some(outcome) = state.caches.key_editor(&id, key, indent, pairs) else {
                     return Task::none();
                 };
                 return editor_outcome(py, state, &target, outcome, on_change, on_cursor);

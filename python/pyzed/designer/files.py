@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
 
+from . import indentation as _indentation
 from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -23,6 +24,8 @@ SNIFF = 8192
 #: Editor languages of files whose name says it all (the others use their extension).
 NAMES = {"Makefile": "makefile", "Dockerfile": "dockerfile", "CMakeLists.txt": "cmake", ".gitignore": "sh",
          ".env": "sh", "uv.lock": "toml"}
+#: Editor languages of suffixes that are another format underneath (Pyzed's files are JSON).
+SUFFIXES = {".pzform": "json", ".pzcomp": "json", ".pzshad": "json", ".pzanim": "json", ".pyi": "py"}
 
 
 def read_text(path: Path) -> Optional[str]:
@@ -48,6 +51,8 @@ def language_of(path: Path) -> str:
     """The editor language of ``path`` (its highlighting and comment prefix)."""
     if path.name in NAMES:
         return NAMES[path.name]
+    if path.suffix.lower() in SUFFIXES:
+        return SUFFIXES[path.suffix.lower()]
     return path.suffix.lstrip(".").lower() or "txt"
 
 
@@ -133,6 +138,13 @@ class Buffers:
         if index is None or not 0 <= index < len(self.items):
             return False
         buffer = self.items[index]
+        settings = self.d.assist.settings
+        if settings.convert_indentation and buffer.language == "py":
+            converted = _indentation.convert(buffer.text, settings.hard_tabs, settings.tab_size)
+            if converted != buffer.text:
+                buffer.text = converted
+                if index != self.active:
+                    buffer.revision += 1  # its editor gets the new text when it is shown again
         try:
             buffer.path.parent.mkdir(parents=True, exist_ok=True)
             buffer.path.write_text(buffer.text, encoding="utf-8", newline="\n")

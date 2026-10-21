@@ -25,7 +25,7 @@ esas vistas. En el centro: **Ejecutar** (<kbd>F5</kbd>), **Detener** y el buscad
 | --- | --- | --- |
 | Nuevo formulario… | <kbd>Ctrl</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Formulario. |
 | Nuevo componente… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | El diálogo Nuevo, en Componente. |
-| Abrir… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lista los formularios y componentes bajo la carpeta de trabajo. |
+| Abrir… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lista los formularios, componentes, shaders y bibliotecas de animaciones del proyecto; **Examinar…** para cualquier archivo. |
 | Abrir proyecto reciente… | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | El selector de proyectos de la barra de título; ver [Varios proyectos en una ventana](/pyzed/es/editor/projects/#varios-proyectos-en-una-ventana). |
 | Ir a un archivo… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Busca un archivo del proyecto por su nombre y lo abre; ver [Ir a un archivo](/pyzed/es/editor/projects/#ir-a-un-archivo). |
 | Guardar | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Guarda el documento y su código. |
@@ -35,6 +35,8 @@ esas vistas. En el centro: **Ejecutar** (<kbd>F5</kbd>), **Detener** y el buscad
 | Ejecutar | <kbd>F5</kbd> | [Ejecuta](/pyzed/es/editor/console-and-running/) el formulario o muestra la vista previa del componente. |
 | Detener | <kbd>Shift</kbd>+<kbd>F5</kbd> | Cierra el formulario en ejecución. |
 | Ejecutar el script del proyecto | | Inicia el `[tool.pyzed] script` del proyecto con `uv run` (ver [Bienvenida y ejemplos](/pyzed/es/editor/examples/#ejecutarlo)). |
+| Elegir el archivo de inicio… | | Elige el formulario o script desde el que inicia la app (ver [El archivo de inicio](/pyzed/es/editor/projects/#el-archivo-de-inicio)). |
+| Usar este formulario como archivo de inicio | | Hace del formulario abierto el archivo de inicio. |
 | Editar el código | <kbd>F7</kbd> | Abre el archivo de código entero en el editor de código. |
 
 ## Comandos de edición
@@ -51,6 +53,7 @@ en el teclado y en la paleta de comandos.
 | Seleccionar todo | <kbd>Ctrl</kbd>+<kbd>A</kbd> |
 | Añadir control… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> |
 | Agrupar en una fila / en una columna / en una cuadrícula | |
+| Convertir la sangría a tabulaciones / a espacios | (paleta) el archivo del editor de código; ver [Tabulaciones o espacios](/pyzed/es/editor/code-editor/#tabulaciones-o-espacios) |
 
 ## Menú Ver
 

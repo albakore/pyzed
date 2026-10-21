@@ -2688,6 +2688,10 @@ editor(
     annotations=None,
     show_whitespace=False,
     tab_size=None,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
     capture_keys=(),
     on_scroll=None,
     auto_close=True,
@@ -2731,6 +2735,10 @@ A code editor: highlighting with the theme colors, line numbers and git markers.
 | `annotations` | `{line: "text"}` or `{line: ("text", color)}`: virtual text at the end of the line (code lens, diagnostics). |
 | `show_whitespace` | Draws spaces as `·` and tabs as `→`. |
 | `tab_size` | Tab inserts spaces up to the next multiple; Enter keeps the indentation (one more level after `:`); Backspace removes a level. |
+| `hard_tabs` | With `tab_size`: Tab, Enter and indent (Ctrl+]) use tab characters instead of spaces. |
+| `backspace_unindent` | With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space). |
+| `repeat_delay` | Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's). |
+| `repeat_rate` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
 | `capture_keys` | Keys the editor leaves to the app's `on_key` (`"up"`, `"enter"`…), e.g. while a completion list is open. |
 | `on_scroll` | Called on scroll. |
 | `auto_close` | Closes brackets and quotes as you type (and wraps the selection). |

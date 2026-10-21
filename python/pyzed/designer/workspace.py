@@ -37,7 +37,7 @@ MENU_WIDTH = 290
 FIND_ID = "workspace-find"
 NAME_ID = "workspace-name"
 #: Files the designer opens in its own tabs; text files open in the code editor, the rest in the system's app.
-DESIGN_SUFFIXES = (".pzform", ".pzcomp")
+DESIGN_SUFFIXES = (".pzform", ".pzcomp", ".pzshad")
 
 
 # -- reading the disk -------------------------------------------------------------------------
@@ -264,10 +264,10 @@ class Workspace:
             self.expanded.add(rel.rstrip("/"))
             return None
         self.selected = rel
-        if path.suffix in DESIGN_SUFFIXES:
+        if path.suffix in DESIGN_SUFFIXES or path.suffix == ".pzanim":
             return self.d._guard(lambda: self.d.open_path(path))
         if path.suffix == ".py":
-            design = next((path.with_suffix(s) for s in DESIGN_SUFFIXES if path.with_suffix(s).exists()), None)
+            design = next((path.with_suffix(s) for s in (".pzform", ".pzcomp") if path.with_suffix(s).exists()), None)
             if design is not None:  # the code of a form or component: open it with the code panel
                 self.d._guard(lambda: self.d.open_path(design))
                 return self.d.edit_whole_file()
@@ -390,15 +390,8 @@ class Workspace:
 
     def set_startup(self, rel: str) -> None:
         """Makes ``rel`` the file the app starts from (Run with no form open, ``pyzed run``, ``pyzed build``)."""
-        project = self.d.projects.project
-        if project is None:
-            return
-        try:
-            project.set_startup(rel)
-        except (OSError, ValueError) as err:
-            self.d.notify(tr("Could not change the startup file"), str(err), kind="error", seconds=5)
-            return
-        self.d.notify(tr("{name} is the startup file", name=rel.rsplit("/", 1)[-1]), kind="success", seconds=3)
+        if self.root is not None:
+            self.d.projects.set_startup(self.root / rel)
 
     def _folder_for(self, rel: Optional[str]) -> str:
         """The folder new and pasted entries go to for ``rel``: itself if it is a folder, else its folder."""

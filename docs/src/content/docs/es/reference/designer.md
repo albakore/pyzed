@@ -1606,12 +1606,20 @@ El editor visual de formularios.
 
 ```python
 @dataclass
-class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True, keymap={})
+class EditorSettings(theme='', font_family='', font_size=14.0, tab_size=4, hard_tabs=False, convert_indentation=False, backspace_unindent=True, repeat_delay=500.0, repeat_rate=20.0, show_whitespace=False, wrap=False, line_numbers=True, highlight_line=True, autocomplete=True, code_lens=True, inline_diagnostics=True, format_on_apply=False, auto_close=True, folding=True, minimap=True, cursor_shape='bar', cursor_blink=True, cursor_width=2.0, line_height='standard', scrollbar=True, match_brackets=True, selection_highlight=True, ty=True, ruff=True, keymap={})
 ```
 
-Los ajustes del editor de código del diseñador (un dataclass): `theme`, `font_size`, `tab_size`, `show_whitespace`, `wrap`, `line_numbers`, `highlight_line`, `autocomplete`, `code_lens`, `inline_diagnostics`, `format_on_apply`, `auto_close`, `folding`, `minimap`, `cursor_shape`, `cursor_blink`, `ty` y `ruff`.
+Los ajustes del editor de código del diseñador (un dataclass): `theme`, `font_size`, `tab_size`, `hard_tabs`, `convert_indentation`, `backspace_unindent`, `repeat_delay`, `repeat_rate`, `show_whitespace`, `wrap`, `line_numbers`, `highlight_line`, `autocomplete`, `code_lens`, `inline_diagnostics`, `format_on_apply`, `auto_close`, `folding`, `minimap`, `cursor_shape`, `cursor_blink`, `ty` y `ruff`.
 
 **Métodos y propiedades**
+
+#### `EditorSettings.key_repeat`
+
+```python
+EditorSettings.key_repeat  # property
+```
+
+Los `repeat_delay` y `repeat_rate` del editor (`None` donde se mantiene la repetición de teclas del sistema).
 
 #### `EditorSettings.to_dict`
 

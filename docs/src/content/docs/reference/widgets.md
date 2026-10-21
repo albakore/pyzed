@@ -1586,6 +1586,10 @@ code_editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
 )
 ```
 
@@ -1643,6 +1647,10 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `keymap` | Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides). |
 | `scrollbar` | `False` hides the scrollbars. |
 | `readonly` | `True` lets the text be selected and copied but not changed (a log, a traceback). |
+| `hard_tabs` | With `tab_size`: Tab, Enter and indent (Ctrl+]) use tab characters instead of spaces. |
+| `backspace_unindent` | With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space). |
+| `repeat_delay` | Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's). |
+| `repeat_rate` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
 
 ## Styles
 

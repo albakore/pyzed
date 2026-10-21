@@ -52,9 +52,19 @@ Los formularios siempre pertenecen al proyecto activo: un formulario nuevo se gu
 ### El archivo de inicio
 
 Cada proyecto tiene un archivo desde el que arranca la aplicación: su formulario principal (`main` en
-`[tool.pyzed]`) o, si lo tiene, su `script`. El panel Proyecto lo marca con un ▶. Haz clic derecho en otro
-formulario o archivo `.py` y elige **Usar como archivo de inicio** para cambiarlo; `pyproject.toml` se actualiza
-solo.
+`[tool.pyzed]`) o, si lo tiene, su `script`. El panel Proyecto lo muestra bajo el nombre del proyecto (**▶ Inicia
+desde** `ui/main.pzform`) y lo marca con un ▶ en el árbol. Para cambiarlo:
+
+- haz clic en ese nombre: un selector lista primero los formularios del proyecto y luego sus scripts de Python (los
+  archivos de código de formularios y componentes quedan fuera). Escribe para filtrar, haz clic en uno o pulsa
+  <kbd>Enter</kbd>;
+- o haz clic derecho en un formulario o archivo `.py` del árbol y elige **Usar como archivo de inicio**;
+- o, con un formulario abierto, usa **Usar este formulario como archivo de inicio** desde el menú Ejecutar o la
+  paleta de comandos (la paleta también tiene **Elegir el archivo de inicio…**).
+
+`pyproject.toml` se actualiza solo: un formulario pasa a ser `main` (y se quita el `script`), un script pasa a ser
+`script`. **Ejecutar** (<kbd>F5</kbd>) sin nada abierto inicia la app desde ese archivo (un formulario se abre como
+ventana principal, un script se ejecuta con `uv run`), y lo mismo hacen `pyzed run` y `pyzed build`.
 
 ### Clonar un repositorio
 

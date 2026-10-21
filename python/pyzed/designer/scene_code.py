@@ -27,6 +27,8 @@ import textwrap
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+from .indentation import keeps_indentation
+
 #: Types offered for properties; each maps to a property editor in the designer.
 TYPES = ("str", "int", "float", "bool", "list", "dict", "Any")
 
@@ -282,6 +284,7 @@ def _ensure_body(source: str, cls_name: Optional[str]) -> str:
     return source
 
 
+@keeps_indentation
 def set_members(source: str, members: Sequence[Member], cls_name: Optional[str] = None) -> str:
     """Rewrites the property declarations of the class to ``members`` (in that order)."""
     cls = find_class(source, cls_name)
@@ -416,6 +419,7 @@ def type_for(kind: str, previous: str = "") -> str:
     return kind
 
 
+@keeps_indentation
 def set_events(source: str, events: Dict[str, str], cls_name: Optional[str] = None) -> str:
     """Rewrites (or adds, or removes) the ``events = {...}`` declaration."""
     cls = find_class(source, cls_name)
@@ -495,6 +499,7 @@ def _indent(code: str) -> str:
     return "".join(f"{INDENT}{line}" if line.strip() else line for line in _lines(code))
 
 
+@keeps_indentation
 def ensure_method(source: str, name: str, doc: str = "", args: str = "self, event",
                   cls_name: Optional[str] = None) -> Tuple[str, bool]:
     """Adds a stub method at the end of the class if missing; returns ``(source, created)``."""
@@ -517,6 +522,7 @@ def ensure_method(source: str, name: str, doc: str = "", args: str = "self, even
     return "".join(lines), True
 
 
+@keeps_indentation
 def replace_method(source: str, name: str, new_code: str, cls_name: Optional[str] = None) -> str:
     """Replaces method ``name`` with ``new_code`` (written at column 0, as the editor shows it).
 
@@ -538,6 +544,7 @@ def replace_method(source: str, name: str, new_code: str, cls_name: Optional[str
     return "".join(lines[: span[0] - 1]) + _indent(new_code) + "".join(lines[span[1]:])
 
 
+@keeps_indentation
 def remove_method(source: str, name: str, cls_name: Optional[str] = None) -> str:
     """Removes method ``name`` (and the blank lines above it) from the class; returns the new source.
 
@@ -672,6 +679,7 @@ def _designer_imports(source: str) -> str:
     return "".join(lines)
 
 
+@keeps_indentation
 def set_docstring(source: str, doc: str, cls_name: Optional[str] = None) -> str:
     """Sets (or replaces, or with an empty ``doc`` removes) the docstring of the class; returns the new
     source."""
