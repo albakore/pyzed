@@ -87,6 +87,7 @@ horizon, drifting embers and moving color blobs.
 ## Limits
 
 - Shaders need the GPU renderer. On the software renderer (no GPU, and some CI machines) the
-  widget shows `fallback`; screenshots taken there show it too. On Linux without a GPU,
-  Mesa's software Vulkan driver (`mesa-vulkan-drivers`) runs them.
+  widget shows `fallback`; screenshots taken there show it too. Without a real GPU, Pyzed picks
+  the software renderer; start the app with `ICED_BACKEND=wgpu` to run shaders on an emulated GPU
+  instead (on Linux, Mesa's software Vulkan driver, `mesa-vulkan-drivers`).
 - The corners of a shader are square: `radius` on a container around it does not round them.

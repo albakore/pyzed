@@ -24,6 +24,14 @@ their UI fast: start drawing as soon as possible, and don't redo work nobody ask
 - **Cheap widget trees.** Building containers, buttons and theme colors costs less, and the
   native core allocates with [mimalloc](https://github.com/microsoft/mimalloc), which is much
   faster than the system allocator with the many small objects every `view()` creates.
+- **Shared pieces of components.** `ui.button`, `ui.icon_button`, `ui.kbd` and tooltips reuse the
+  widgets that only depend on the theme and on their text, icon or keys. Widgets never change once
+  built, so one copy serves every button that says "Open". A view of 1,000 buttons and labels
+  builds in about a third less time.
+- **The CPU renderer when there is no real GPU.** On a virtual machine, a remote desktop or a
+  computer without a graphics driver, the GPU that Vulkan, DirectX or OpenGL offer is an emulation
+  running on the CPU (Mesa's llvmpipe and lavapipe, Windows' WARP). There Pyzed draws with its CPU
+  renderer (tiny-skia) instead: it is faster and takes about 100 MB less memory.
 - **No rebuilds for keys nobody listens to.** Key presses and releases only reach your app
   (and rebuild the view) when a window defines `on_key` or `on_key_up`. Typing in a field
   rebuilds the view once per key instead of three times.
@@ -39,8 +47,9 @@ button per row, Xvfb without a GPU, medians of 5 launches) on the same machine:
 | Memory, 10 rows (RSS) | 174 MB | 146 MB |
 
 :::note
-`WGPU_BACKEND=gl` (or `vulkan`, `metal`, `dx12`) still picks a GPU backend yourself, and
-`ICED_BACKEND=tiny-skia` uses the CPU renderer.
+`WGPU_BACKEND=gl` (or `vulkan`, `metal`, `dx12`) still picks a GPU backend yourself,
+`ICED_BACKEND=wgpu` keeps the GPU renderer even on an emulated GPU (what [shaders](/pyzed/shading/shaders/)
+need), and `ICED_BACKEND=tiny-skia` always uses the CPU renderer.
 :::
 
 ## Virtual lists and tables

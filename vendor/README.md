@@ -14,7 +14,9 @@ a translucent tint drew opaque and a tinted SVG didn't fade with its parent.
 
 `iced_wgpu` also starts the native GPU APIs (Vulkan, Metal, DirectX 12) before OpenGL: the GL
 backend is only started when none of them has an adapter, since starting it at every launch
-costs time and memory (`src/window/compositor.rs`).
+costs time and memory (`src/window/compositor.rs`). When the adapter it finds runs on the CPU
+(llvmpipe, lavapipe, WARP, SwiftShader) and no backend was named, it steps aside so `iced_tiny_skia`
+draws instead: it is faster there and takes about 100 MB less.
 
 Everything else is unchanged. To update iced, copy the new releases over these folders and
 re-apply the changes marked `pyzed:` in the code.
