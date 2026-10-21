@@ -52,6 +52,11 @@ def _has_selection(d: "Designer") -> bool:
     return bool(d.doc.selection)
 
 
+def _has_code(d: "Designer") -> bool:
+    """Whether the code editor shows a file or the form's code."""
+    return d.buffers.current is not None or d.editing is not None
+
+
 ACTIONS: Tuple[Action, ...] = (
     # File
     Action("new", "New form…", "File", lambda d: d.new(), "file-plus", "ctrl-n", global_keys=True),
@@ -83,6 +88,10 @@ ACTIONS: Tuple[Action, ...] = (
     Action("group_row", "Group in a row", "Edit", lambda d: d.wrap("row"), "columns-3", None, _has_selection),
     Action("group_column", "Group in a column", "Edit", lambda d: d.wrap("column"), "rows-3", None, _has_selection),
     Action("group_grid", "Group in a grid", "Edit", lambda d: d.wrap("grid"), "layout-grid", None, _has_selection),
+    Action("convert_to_tabs", "Convert indentation to tabs", "Edit", lambda d: d.convert_indentation(True),
+           "indent-increase", None, _has_code, menu=False),
+    Action("convert_to_spaces", "Convert indentation to spaces", "Edit", lambda d: d.convert_indentation(False),
+           "indent-decrease", None, _has_code, menu=False),
     # View
     Action("palette", "Command palette…", "View", lambda d: d.open_palette(), "search", "ctrl-shift-p",
            global_keys=True),
@@ -141,6 +150,10 @@ ACTIONS: Tuple[Action, ...] = (
            enabled=lambda d: d.projects.project is not None and d.projects.project.script is not None),
     Action("build_app", "Build app for this computer", "Run", lambda d: d.exporter.build_now(), "hammer",
            "ctrl-shift-b", lambda d: d.projects.project is not None and not d.exporter.running, global_keys=True),
+    Action("set_startup", "Choose startup file…", "Run", lambda d: d.projects.open_startup(), "file-play",
+           enabled=lambda d: d.projects.project is not None),
+    Action("use_as_startup", "Use this form as startup file", "Run", lambda d: d.use_as_startup(), "play",
+           enabled=lambda d: d.can_use_as_startup()),
     Action("stop", "Stop", "Run", lambda d: d.stop_form(), "square", "shift-f5", global_keys=True),
     Action("code_file", "Edit code file", "Run", lambda d: d.edit_whole_file(), "code", "f7", global_keys=True),
     # Help

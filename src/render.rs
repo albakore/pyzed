@@ -81,11 +81,11 @@ impl Caches {
         &mut self,
         id: &str,
         key: crate::editor::EditKey,
-        size: Option<usize>,
+        indent: Option<crate::editor::Indent>,
         pairs: bool,
     ) -> Option<Outcome> {
         let editor = self.editors.as_mut().get_mut(id)?;
-        Some(editor.key(id, key, size, pairs))
+        Some(editor.key(id, key, indent, pairs))
     }
 
     pub fn fold_editor_command(&mut self, id: &str, op: crate::editor::FoldOp) -> Task<Message> {

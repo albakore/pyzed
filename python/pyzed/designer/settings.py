@@ -16,6 +16,9 @@ from typing import Any, Dict, Optional
 
 
 MIN_FONT, MAX_FONT, DEFAULT_FONT = 8.0, 32.0, 14.0
+#: Backspace and Delete held down: the wait before they repeat (ms) and their pace (per second).
+DEFAULT_REPEAT_DELAY, MAX_REPEAT_DELAY = 500.0, 2000.0
+DEFAULT_REPEAT_RATE, MAX_REPEAT_RATE = 20.0, 100.0
 CURSOR_SHAPES = ("bar", "block", "underline", "hollow")
 #: Line heights, as a multiple of the font size.
 LINE_HEIGHTS = {"compact": 1.35, "standard": 1.6, "comfortable": 1.85}
@@ -29,6 +32,16 @@ class EditorSettings:
     font_family: str = ""
     font_size: float = DEFAULT_FONT
     tab_size: int = 4
+    #: Tab and Enter indent with tab characters instead of spaces.
+    hard_tabs: bool = False
+    #: Saving a file rewrites its indentation with tabs (``hard_tabs``) or spaces, so they never mix.
+    convert_indentation: bool = False
+    #: Backspace in leading spaces removes a whole level (off: one space).
+    backspace_unindent: bool = True
+    #: Holding Backspace or Delete: milliseconds before it repeats (0 keeps the system's).
+    repeat_delay: float = DEFAULT_REPEAT_DELAY
+    #: Holding Backspace or Delete: deletions per second at most (0 keeps the system's).
+    repeat_rate: float = DEFAULT_REPEAT_RATE
     show_whitespace: bool = False
     wrap: bool = False
     line_numbers: bool = True
@@ -62,6 +75,11 @@ class EditorSettings:
     #: Keys changed by the user: action name -> bindings separated by commas (``""``: no key).
     keymap: Dict[str, str] = field(default_factory=dict)
 
+    @property
+    def key_repeat(self) -> Dict[str, Optional[float]]:
+        """The editor's ``repeat_delay`` and ``repeat_rate`` (``None`` where the system's key repeat stays)."""
+        return {"repeat_delay": self.repeat_delay or None, "repeat_rate": self.repeat_rate or None}
+
     def to_dict(self) -> Dict[str, Any]:
         """Returns the settings as a JSON-ready dict."""
         return asdict(self)
@@ -87,6 +105,8 @@ class EditorSettings:
         if out.line_height not in LINE_HEIGHTS:
             out.line_height = "standard"
         out.cursor_width = min(max(out.cursor_width, 1.0), 4.0)
+        out.repeat_delay = min(max(out.repeat_delay, 0.0), MAX_REPEAT_DELAY)
+        out.repeat_rate = min(max(out.repeat_rate, 0.0), MAX_REPEAT_RATE)
         out.keymap = {k: v for k, v in out.keymap.items() if isinstance(k, str) and isinstance(v, str)}
         return out
 

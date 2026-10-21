@@ -61,9 +61,14 @@ de los [Ajustes](/pyzed/es/editor/settings/).
 
 ## Abrir, guardar y guardar como
 
-- **Abrir…** (<kbd>Ctrl</kbd>+<kbd>O</kbd>, o clic en el nombre del archivo en la barra de título) lista los
-  archivos `.pzform` y `.pzcomp` bajo la carpeta de trabajo (saltando `.git`, `.venv`, `node_modules`, `build`...).
-  Escribe para filtrar la lista, o escribe una ruta y pulsa <kbd>Enter</kbd>.
+- **Abrir…** (<kbd>Ctrl</kbd>+<kbd>O</kbd>, o clic en el nombre del archivo en la barra de título) lista todos los
+  archivos de Pyzed del proyecto (o de la carpeta de trabajo), saltando `.git`, `.venv`, `node_modules`, `build`...:
+  formularios (`.pzform`), componentes (`.pzcomp`), shaders (`.pzshad`) y bibliotecas de animaciones (`.pzanim`).
+  Escribe para filtrar la lista, escribe una ruta y pulsa <kbd>Enter</kbd>, o pulsa **Examinar…** para el diálogo de
+  archivos del sistema. Formularios, componentes y shaders se abren en su vista; una biblioteca de animaciones se abre
+  como JSON en el editor de código, con un aviso que lista sus clips.
+- Los instaladores hacen que el sistema abra estos cuatro tipos de archivo en Pyzed Design con doble clic (y
+  `pyzed design ruta/al/archivo` abre cualquiera de ellos, o un script en el editor de código).
 - Los archivos **recientes** aparecen al final del menú ☰ (los cinco últimos).
 - **Guardar** (<kbd>Ctrl</kbd>+<kbd>S</kbd>) escribe el documento y su archivo de código. Un documento sin título
   pide antes una ruta. Guardar también refresca el formulario que se ejecuta desde <kbd>F5</kbd>.

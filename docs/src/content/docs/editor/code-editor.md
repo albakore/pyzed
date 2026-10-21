@@ -43,8 +43,10 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 ## Writing code
 
 - **Syntax highlighting** for Python, with the theme of the editor (or its own, see settings).
-- **Indentation**: <kbd>Tab</kbd> inserts spaces (the *Tab size*), <kbd>Enter</kbd> keeps the indentation of the
-  line and adds a level after a `:`, <kbd>Backspace</kbd> in the indentation removes a whole level.
+- **Indentation**: <kbd>Tab</kbd> inserts spaces (the *Tab size*), or a tab with *Indent with tabs*;
+  <kbd>Enter</kbd> keeps the indentation of the line (its spaces and tabs) and adds a level after a `:`;
+  <kbd>Backspace</kbd> in the indentation removes a whole level (one space with *Backspace removes a whole level*
+  off). See [Tabs or spaces](#tabs-or-spaces).
 - **Brackets and quotes**: typing `(`, `[`, `{`, `"` or `'` inserts its pair, wraps the selection if there is one,
   and typing the closing character steps over it instead of doubling it.
 - **Gutter**: line numbers (they follow wrapped lines) and the current line highlighted.
@@ -86,6 +88,25 @@ editor says where (`Line 3: invalid syntax`), and saving, running and switching 
 On macOS, <kbd>Cmd</kbd> works where these say <kbd>Ctrl</kbd>. The editor's global commands (<kbd>F5</kbd>,
 <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) work while you type; the canvas
 shortcuts (<kbd>Delete</kbd>, arrows, <kbd>Ctrl</kbd>+<kbd>D</kbd>) do not, so typing never moves a control.
+
+## Tabs or spaces
+
+Python refuses a block that mixes tabs and spaces, so the editor keeps to one of them:
+
+- **Indent with tabs** (Editor settings → Editing) makes <kbd>Tab</kbd>, <kbd>Enter</kbd> and indent
+  (<kbd>Ctrl</kbd>+<kbd>]</kbd>) write tab characters. Tabs are drawn *Tab size* columns wide, and
+  <kbd>Enter</kbd> copies the spaces and tabs of the line above as they are, in either mode.
+- **Convert indentation to tabs** and **Convert indentation to spaces**, in the command palette
+  (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), rewrite the indentation of the file the code editor shows. The
+  text inside multi-line strings is left as it is.
+- **Convert indentation on save** does it every time a Python file (or the form's code) is saved, so pasted code
+  never breaks the file.
+- The code the designer writes for you (a new handler or method) follows the file: in a file indented with tabs it
+  is written with tabs.
+
+Holding <kbd>Backspace</kbd> or <kbd>Delete</kbd> deletes at the pace set under **Deleting**: the first press
+always deletes; the next ones wait *Delay before repeating* and then come at most *Deletions per second* times a
+second. They can be slower than your system's key repeat, not faster.
 
 ## Find, replace and multiple cursors
 
@@ -232,13 +253,18 @@ the right side shows the one you pick.
 | Cursor | **Shape** | Bar, Block, Underline or Hollow. |
 | | **Blink** | Whether the cursor blinks. |
 | | **Width** | 1 to 4 pixels, for the bar cursor. |
-| Editing | **Tab size** | 1 to 8 spaces per level. |
+| Editing | **Tab size** | 1 to 8 columns per level, and the width tabs are drawn with. |
+| | **Indent with tabs** | <kbd>Tab</kbd>, <kbd>Enter</kbd> and <kbd>Ctrl</kbd>+<kbd>]</kbd> indent with tab characters instead of spaces. |
+| | **Convert indentation on save** | Saving a Python file rewrites its indentation with tabs or spaces, as set above. |
+| | **Backspace removes a whole level** | Off: <kbd>Backspace</kbd> in the indentation removes one space at a time. |
 | | **Autocomplete while typing** | Off: the list only opens with <kbd>Ctrl</kbd>+<kbd>Space</kbd>. |
 | | **Auto-close brackets and quotes** | Pairs, wrapping the selection and stepping over the closer. |
 | | **Code folding** | The chevrons and the fold keys. |
 | | **Match brackets** | Outlines the bracket that pairs with the one at the cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> jumps to it). |
 | | **Highlight selection matches** | Highlights the other places with the selected text. |
 | | **Format with ruff on Apply** | Runs `ruff format` on the code when you press Apply. |
+| Deleting | **Delay before repeating** | Milliseconds <kbd>Backspace</kbd> and <kbd>Delete</kbd> wait, held down, before they repeat (500 by default; 0 keeps the system's). |
+| | **Deletions per second** | How fast they delete while held down (20 by default; 0 keeps the system's pace). |
 | Scrolling and wrapping | **Wrap long lines** | Off by default: long lines scroll sideways. <kbd>Alt</kbd>+<kbd>Z</kbd> toggles it. |
 | | **Scrollbars** | Shows or hides the scrollbars. |
 | | **Minimap** | The zoomed-out code on the right. |

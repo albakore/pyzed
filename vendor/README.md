@@ -18,6 +18,11 @@ costs time and memory (`src/window/compositor.rs`). When the adapter it finds ru
 (llvmpipe, lavapipe, WARP, SwiftShader) and no backend was named, it steps aside so `iced_tiny_skia`
 draws instead: it is faster there and takes about 100 MB less.
 
+`iced_graphics` 0.14.0 lets the text editors draw tabs as wide as their indentation:
+`text::set_tab_width` sets the columns between tab stops (cosmic-text's 8 otherwise), which the
+editors (`text/editor.rs`) and plain paragraphs (`text/paragraph.rs`) use. `pyzed.ui.editor` sets
+it from `tab_size`.
+
 `iced_winit` 0.14.1 is vendored for Android only: its event loop needs the activity that
 `android_main` receives (`iced_winit::android::set_app`, see `src/android.rs`), which iced does not
 let an app hand over. It also skips the key-without-modifiers lookup there, which Android lacks.

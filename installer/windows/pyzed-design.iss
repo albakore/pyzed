@@ -54,7 +54,7 @@ Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "associate"; Description: "{cm:AssocFileExtension,{#AppName},.pzform}"
+Name: "associate"; Description: "{cm:AssocFileExtension,{#AppName},.pzform .pzcomp .pzshad .pzanim}"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -64,11 +64,23 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Registry]
-; .pzform files open in Pyzed Design (per user: HKCU\Software\Classes).
+; .pzform, .pzcomp, .pzshad and .pzanim files open in Pyzed Design (per user: HKCU\Software\Classes).
 Root: HKA; Subkey: "Software\Classes\.pzform"; ValueType: string; ValueName: ""; ValueData: "PyzedDesign.Form"; Flags: uninsdeletevalue; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\PyzedDesign.Form"; ValueType: string; ValueName: ""; ValueData: "Pyzed form"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\PyzedDesign.Form\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},0"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\PyzedDesign.Form\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.pzcomp"; ValueType: string; ValueName: ""; ValueData: "PyzedDesign.Component"; Flags: uninsdeletevalue; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Component"; ValueType: string; ValueName: ""; ValueData: "Pyzed component"; Flags: uninsdeletekey; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Component\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},0"; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Component\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.pzshad"; ValueType: string; ValueName: ""; ValueData: "PyzedDesign.Shader"; Flags: uninsdeletevalue; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Shader"; ValueType: string; ValueName: ""; ValueData: "Pyzed shader"; Flags: uninsdeletekey; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Shader\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},0"; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Shader\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\.pzanim"; ValueType: string; ValueName: ""; ValueData: "PyzedDesign.Animation"; Flags: uninsdeletevalue; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Animation"; ValueType: string; ValueName: ""; ValueData: "Pyzed animation library"; Flags: uninsdeletekey; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Animation\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},0"; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\PyzedDesign.Animation\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: associate
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent

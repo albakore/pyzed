@@ -923,7 +923,8 @@ def _editor(d: "Designer", text: str, language: str, annotations: Dict[int, Any]
     return ui.editor(
         d.editor_id, text, language=language, on_change=d.set_code_buffer, on_cursor=d.set_code_cursor,
         on_scroll=a.scrolled, font_size=s.font_size, gutter=s.line_numbers, wrap=s.wrap,
-        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size,
+        active_line=s.highlight_line, show_whitespace=s.show_whitespace, tab_size=s.tab_size, hard_tabs=s.hard_tabs,
+        backspace_unindent=s.backspace_unindent, **s.key_repeat,
         annotations=annotations, capture_keys=a.captured_keys, auto_close=s.auto_close, folding=s.folding,
         minimap=s.minimap, cursor_shape=s.cursor_shape, cursor_blink=s.cursor_blink, on_zoom=a.zoom,
         on_action=a.action_ran, highlights=a.search.matches if a.search else None,
@@ -1134,7 +1135,14 @@ def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any
         return [ui.settings_group(tr("Editing"), [
             ui.field(tr("Tab size"), ui.number_field(float(s.tab_size), lambda v: a.set("tab_size", int(v)), min=1,
                                                      max=8, step=1, width=110, theme=t),
-                     description=tr("Tab inserts spaces; Enter keeps the indentation"), theme=t),
+                     description=tr("Columns of a level of indentation and of a tab; Enter keeps the indentation"),
+                     theme=t),
+            ui.field(tr("Indent with tabs"), switch("hard_tabs"),
+                     description=tr("Tab, Enter and Ctrl+] indent with tab characters instead of spaces"), theme=t),
+            ui.field(tr("Convert indentation on save"), switch("convert_indentation"),
+                     description=tr("Saving a Python file rewrites its indentation as set above, so they never mix"), theme=t),
+            ui.field(tr("Backspace removes a whole level"), switch("backspace_unindent"),
+                     description=tr("In the indentation; off: one space at a time"), theme=t),
             ui.field(tr("Autocomplete while typing"), switch("autocomplete"),
                      description=tr("Ctrl+Space opens it anytime"), theme=t),
             ui.field(tr("Auto-close brackets and quotes"), switch("auto_close"),
@@ -1147,6 +1155,18 @@ def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any
             ui.field(tr("Highlight selection matches"), switch("selection_highlight"),
                      description=tr("Ctrl+D adds the next one as a cursor, Ctrl+Shift+L all of them"), theme=t),
             ui.field(tr("Format with ruff on Apply"), switch("format_on_apply"), theme=t),
+        ], theme=t)]
+
+    def repeat() -> List[Any]:
+        return [ui.settings_group(tr("Deleting"), [
+            ui.field(tr("Delay before repeating"),
+                     ui.number_field(s.repeat_delay, a.setter("repeat_delay"), min=0,
+                                     max=_settings.MAX_REPEAT_DELAY, step=50, width=110, theme=t),
+                     description=tr("Milliseconds Backspace and Delete wait before repeating (0: the system's)"), theme=t),
+            ui.field(tr("Deletions per second"),
+                     ui.number_field(s.repeat_rate, a.setter("repeat_rate"), min=0, max=_settings.MAX_REPEAT_RATE,
+                                     step=1, width=110, theme=t),
+                     description=tr("At most, while held down (0: the system's pace, the fastest)"), theme=t),
         ], theme=t)]
 
     def scrolling() -> List[Any]:
@@ -1190,6 +1210,7 @@ def _settings_sections(a: CodeAssist, t: Theme) -> Dict[str, Tuple[str, str, Any
         "appearance": (tr("Appearance"), "palette", appearance),
         "cursor": (tr("Cursor"), "text-cursor", cursor),
         "editing": (tr("Editing"), "pencil", editing),
+        "deleting": (tr("Deleting"), "delete", repeat),
         "scrolling": (tr("Scrolling and wrapping"), "wrap-text", scrolling),
         "diagnostics": (tr("Code lens and diagnostics"), "circle-alert", diagnostics),
         "servers": (tr("Language servers"), "server", servers),

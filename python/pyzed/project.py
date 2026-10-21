@@ -47,6 +47,8 @@ from typing import Any, Dict, Iterator, List, Optional, Sequence, Union
 PathLike = Union[str, Path]
 
 PYPROJECT = "pyproject.toml"
+#: Folders ``startup_choices`` does not look into.
+_SKIP_DIRS = {"venv", "node_modules", "target", "__pycache__", "dist", "build", "tests"}
 DEFAULT_UI = "ui"
 DEFAULT_MAIN = "main"
 PACKAGE = "pyzed-ui"
@@ -512,6 +514,24 @@ class Project:
             _set_pyzed_keys(self, main=rel, script=None)
         else:
             raise ValueError(f"{path.name} is not a form (.pzform) or a script (.py)")
+
+    def startup_choices(self, limit: int = 300) -> List[Path]:
+        """The files the app can start from (``set_startup``): the project's forms and its Python scripts, the
+        code of forms and components left out, sorted with the forms first."""
+        forms: List[Path] = []
+        scripts: List[Path] = []
+        for folder, dirs, files in os.walk(self.root):
+            dirs[:] = sorted(d for d in dirs if d not in _SKIP_DIRS and not d.startswith("."))
+            here = Path(folder)
+            for name in sorted(files):
+                path = here / name
+                if name.endswith(".pzform"):
+                    forms.append(path)
+                elif name.endswith(".py") and not any(path.with_suffix(s).exists() for s in (".pzform", ".pzcomp")):
+                    scripts.append(path)
+            if len(forms) + len(scripts) >= limit:
+                break
+        return (forms + scripts)[:limit]
 
     @property
     def src_dir(self) -> Optional[Path]:

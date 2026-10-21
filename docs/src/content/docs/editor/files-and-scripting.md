@@ -57,9 +57,13 @@ anything: it is saved (asking for a path) the first time you save. New forms tak
 
 ## Open, save and save as
 
-- **Open…** (<kbd>Ctrl</kbd>+<kbd>O</kbd>, or click the file name in the title bar) lists the `.pzform` and
-  `.pzcomp` files under the working folder (skipping `.git`, `.venv`, `node_modules`, `build`...). Type to filter
-  the list, or type a path and press <kbd>Enter</kbd>.
+- **Open…** (<kbd>Ctrl</kbd>+<kbd>O</kbd>, or click the file name in the title bar) lists every Pyzed file of the
+  project (or the working folder), skipping `.git`, `.venv`, `node_modules`, `build`...: forms (`.pzform`),
+  components (`.pzcomp`), shaders (`.pzshad`) and animation libraries (`.pzanim`). Type to filter the list, type a
+  path and press <kbd>Enter</kbd>, or press **Browse…** for the system's file dialog. Forms, components and shaders
+  open in their view; an animation library opens as JSON in the code editor, with a note listing its clips.
+- The installers make the system open these four kinds of file in Pyzed Design when you double-click them (and
+  `pyzed design path/to/file` opens any of them, or a script in the code editor).
 - **Recent** files are listed at the end of the ☰ menu (the last five).
 - **Save** (<kbd>Ctrl</kbd>+<kbd>S</kbd>) writes the document and its code file. An untitled document asks for a
   path first. Saving also refreshes the form running from <kbd>F5</kbd>.

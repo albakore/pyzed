@@ -152,8 +152,8 @@ impl EditorAction {
 /// What an action needs from the editor's props.
 #[derive(Debug, Clone, Default)]
 pub struct ActionContext {
-    /// Python-style indentation width (`None`: the editor does not manage indentation).
-    pub size: Option<usize>,
+    /// Python-style indentation (`None`: the editor does not manage indentation).
+    pub indent: Option<crate::editor::Indent>,
     pub pairs: bool,
     /// The line comment prefix of the language (`#`, `//`...).
     pub comment: Option<Arc<str>>,
@@ -951,20 +951,35 @@ impl EditorState {
         )
     }
 
-    fn indent_lines(&mut self, step: usize, outdent: bool) -> bool {
+    /// Indents (or outdents) the lines of every cursor by a level: `step` spaces, or a tab with
+    /// `tabs` or when the line is already indented with one.
+    fn indent_lines(&mut self, step: usize, tabs: bool, outdent: bool) -> bool {
         let cursors = self.cursors();
         let ranges = line_ranges(&cursors);
         let lines = self.visible_lines();
-        // Change of leading spaces per line.
+        // Change of leading whitespace per line, and the character added.
         let mut delta: Vec<isize> = vec![0; lines.len()];
+        let mut fill: Vec<char> = vec![' '; lines.len()];
         for &(s, e) in &ranges {
             for (i, line) in lines.iter().enumerate().take(e + 1).skip(s) {
                 let lead = line.chars().take_while(|c| *c == ' ').count();
+                let tabbed = line.starts_with('\t');
                 if outdent {
-                    let remove = if lead == 0 { 0 } else { (lead - 1) % step + 1 };
+                    let remove = if tabbed {
+                        1
+                    } else if lead == 0 {
+                        0
+                    } else {
+                        (lead - 1) % step + 1
+                    };
                     delta[i] = -(remove as isize);
                 } else if !line.trim().is_empty() || s == e {
-                    delta[i] = (step - lead % step) as isize;
+                    if tabs || tabbed {
+                        delta[i] = 1;
+                        fill[i] = '\t';
+                    } else {
+                        delta[i] = (step - lead % step) as isize;
+                    }
                 }
             }
         }
@@ -973,10 +988,10 @@ impl EditorState {
         }
         let new_lines: Vec<String> = lines
             .iter()
-            .zip(&delta)
-            .map(|(line, d)| {
+            .zip(delta.iter().zip(&fill))
+            .map(|(line, (d, c))| {
                 if *d >= 0 {
-                    format!("{}{line}", " ".repeat(*d as usize))
+                    format!("{}{line}", c.to_string().repeat(*d as usize))
                 } else {
                     line[(-*d) as usize..].to_string()
                 }
@@ -1480,7 +1495,7 @@ impl EditorState {
             let line = s.primary().position.line;
             let len = s.line_text(line).len();
             s.set_cursor(collapsed(pos(line, len)));
-            s.key_one(EditKey::Enter, ctx.size, false)
+            s.key_one(EditKey::Enter, ctx.indent, false)
         })
     }
 
@@ -1580,7 +1595,8 @@ impl EditorState {
         if edits {
             self.record(EditKind::Other);
         }
-        let step = ctx.size.unwrap_or(4);
+        let step = ctx.indent.map_or(4, |i| i.size).max(1);
+        let tabs = ctx.indent.is_some_and(|i| i.tabs);
         let mut clipboard = None;
         let mut scroll = Task::none();
         let mut done = match action {
@@ -1602,8 +1618,8 @@ impl EditorState {
             A::DeleteLine => self.delete_lines(),
             A::NewlineBelow => self.newline_below(ctx),
             A::NewlineAbove => self.newline_above(),
-            A::Indent => self.indent_lines(step, false),
-            A::Outdent => self.indent_lines(step, true),
+            A::Indent => self.indent_lines(step, tabs, false),
+            A::Outdent => self.indent_lines(step, tabs, true),
             A::SelectLine => {
                 self.select_lines();
                 true
@@ -1679,7 +1695,7 @@ mod tests {
 
     fn ctx() -> ActionContext {
         ActionContext {
-            size: Some(4),
+            indent: Some(crate::editor::Indent::spaces(4)),
             pairs: true,
             comment: Some("#".into()),
             ..Default::default()
@@ -1823,6 +1839,28 @@ mod tests {
         run(&mut s, EditorAction::Outdent);
         run(&mut s, EditorAction::Outdent);
         assert_eq!(s.text(), "def f():\nreturn 1");
+    }
+
+    #[test]
+    fn indents_with_tabs() {
+        let tabs = ActionContext {
+            indent: Some(crate::editor::Indent {
+                size: 4,
+                tabs: true,
+                unindent: true,
+            }),
+            ..ctx()
+        };
+        let mut s = editor("def f():\n\treturn 1");
+        s.set_cursor(selected(pos(0, 0), pos(1, 3)));
+        let _ = s.run("e", EditorAction::Indent, &tabs);
+        assert_eq!(s.text(), "\tdef f():\n\t\treturn 1");
+        let _ = s.run("e", EditorAction::Outdent, &tabs);
+        assert_eq!(s.text(), "def f():\n\treturn 1");
+        // With spaces, a line indented with a tab still gets a tab.
+        s.set_cursor(selected(pos(1, 0), pos(1, 2)));
+        run(&mut s, EditorAction::Indent);
+        assert_eq!(s.text(), "def f():\n\t\treturn 1");
     }
 
     #[test]
