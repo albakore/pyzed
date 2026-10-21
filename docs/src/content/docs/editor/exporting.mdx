@@ -1,0 +1,176 @@
+---
+title: Exporting your app
+description: "Export a Pyzed project from Pyzed Design as an app for Windows, macOS and Linux on x64 and ARM: PyInstaller or Nuitka, app icon, splash screen, file details and a GitHub Actions workflow for every platform."
+sidebar:
+  order: 10.2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Media from '../../../components/Media.astro';
+import general from '../../../assets/editor/export-general.png';
+import platforms from '../../../assets/editor/export-platforms.png';
+import backend from '../../../assets/editor/export-backend.png';
+import icon from '../../../assets/editor/export-icon.png';
+import splash from '../../../assets/editor/export-splash.png';
+import files from '../../../assets/editor/export-files.png';
+import command from '../../../assets/editor/export-command.png';
+import splashScreen from '../../../assets/editor/export-splash-screen.png';
+
+**File → Export app…** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>) turns the open [project](/pyzed/editor/projects/)
+into an app that people run without installing Python: a `.exe` on Windows, a `.app` on macOS, an executable on
+Linux. Like Godot's export window, one dialog holds everything: the app's name and details, the platforms, the
+packager, the icon and the splash screen.
+
+<Media src={platforms} alt="The Export dialog on its Platforms section: six platforms with a check box each, Linux x64 marked as this computer" caption="The Export dialog: sections on the left, the platforms to build on the right." size="wide" />
+
+## Export in three steps
+
+<Steps>
+
+1. Open a project (**Project → Open**) and press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>.
+2. Fill in **General** (at least the name) and, if you like, the **Icon** and the **Splash screen**.
+3. Press **Build for …** (the name of your system). The output of the build streams into the
+   [Console](/pyzed/editor/console-and-running/); when it is done a notification says where the app is and how big
+   it is, and **Show in folder** opens it.
+
+</Steps>
+
+Later builds do not need the dialog: **Run → Build app for this computer** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>)
+builds with the same settings. The result goes to `dist/` in the project folder (`dist/Shop/`, `dist/Shop.exe` or
+`dist/Shop.app`).
+
+<Aside type="note" title="The settings live in pyproject.toml">
+The dialog saves to the `[tool.pyzed.build]` table of `pyproject.toml` when you close it or build. `uv run pyzed build`
+in a terminal and the CI workflow use exactly the same settings; see [How building works](/pyzed/packaging/build/) for
+every key.
+</Aside>
+
+## General
+
+<Media src={general} alt="The General section: name, version, publisher, identifier, description and copyright" caption="General: what people see in the file's properties and the About boxes of their system." size="wide" />
+
+| Field | Used for |
+| --- | --- |
+| **Name** | The executable, the `.app` and the folder in `dist/`. Empty: the project's name. |
+| **Version** | The Windows file version and the macOS bundle version. Empty: `[project] version`. |
+| **Publisher** | The company in the Windows file properties. |
+| **Identifier** | A reverse domain such as `com.acme.shop`: the macOS bundle id and the Linux app id. macOS keeps the app's settings and permissions under it, so do not change it between releases. |
+| **Description**, **Copyright** | The Windows file properties and the macOS `Info.plist`. |
+
+## Platforms and architectures
+
+PyInstaller and Nuitka build for the system they run on: a Windows computer makes the Windows app, a Mac the macOS
+app. The list shows the six targets Pyzed supports, with **This computer** on yours:
+
+| Target | System | GitHub machine that builds it |
+| --- | --- | --- |
+| `windows-x64` | Windows 10 and 11 on Intel and AMD | `windows-latest` |
+| `windows-arm64` | Windows 11 on ARM (Snapdragon) | `windows-11-arm` |
+| `macos-arm64` | Macs with Apple silicon (M1 and later) | `macos-latest` |
+| `macos-x64` | Intel Macs | `macos-15-intel` |
+| `linux-x64` | Linux on Intel and AMD | `ubuntu-22.04` |
+| `linux-arm64` | Linux on ARM (Raspberry Pi 4/5, ARM servers) | `ubuntu-22.04-arm` |
+
+Check the platforms you want and press **Write CI workflow**: it writes `.github/workflows/build.yml`, which builds each
+checked target on GitHub's own machines every time you push a version tag (`git tag v1.0.0 && git push --tags`). See
+[Build in CI](/pyzed/packaging/ci/). The Linux machines are the oldest Ubuntu GitHub offers on purpose: an app built
+against an older system runs on more distributions.
+
+**Archive** also packs the app in a `zip` (or `tar.gz`) named like `shop-windows-x86_64.zip`, the name the
+[self-updater](/pyzed/packaging/updates/) looks for, ready to attach to a GitHub Release.
+
+<Aside type="tip" title="A WSL project builds the Linux app">
+On Windows, a project that lives in WSL builds inside WSL: **This computer** is then `linux-x64`, and you get the
+Linux app without leaving Windows.
+</Aside>
+
+## Backend: PyInstaller or Nuitka
+
+<Media src={backend} alt="The Backend section with the PyInstaller and Nuitka cards and the build options" caption="Backend: the packager and its options." size="wide" />
+
+| | PyInstaller | Nuitka |
+| --- | --- | --- |
+| How | Bundles your `.py` files as they are, next to Python | Compiles your code and its dependencies to C, then to machine code |
+| Build time | Seconds | Minutes (faster with [ccache](https://ccache.dev) installed) |
+| Speed | Normal Python | Compiled: faster pure-Python code |
+| Size of a single file | Larger | About 15% smaller (better compression) |
+| Size of a folder | Smaller | Larger (compiled code takes more room than `.pyc`) |
+| Needs | Nothing (uv installs it) | A C compiler |
+
+Both run inside the project's environment with `uv run --with …`, so you install neither yourself. Nuitka needs a C
+compiler: `gcc` on Linux (`sudo apt install gcc` and friends), the Xcode command line tools on macOS
+(`xcode-select --install`), and on Windows Visual Studio's Build Tools, or Nuitka downloads one the first time.
+
+| Option | What it does |
+| --- | --- |
+| **Single file** | One executable that unpacks itself to a temporary folder when it starts. A folder starts faster and can [update itself](/pyzed/packaging/updates/). |
+| **Window only** | No console next to the app. Turn it off while you look for an error: the console shows prints and tracebacks. |
+| **Optimization** | Python's `-O` (drops `assert`) or `-OO` (also docstrings). Leave it at *None* if a library uses docstrings at runtime. |
+| **Slim** | Leaves out standard modules apps do not use (`tkinter`, `test`, `idlelib`, `lib2to3`, `ensurepip`...). |
+| **Strip symbols** | Removes debug symbols from the libraries: smaller on Linux and macOS. |
+| **Compress with UPX** | Compresses the binaries with [UPX](https://upx.github.io/) if it is installed. Some antivirus programs flag UPX-packed files, so it is off by default. |
+| **More options** | Anything else, passed to the backend as is (for example `--lto=yes` for Nuitka). |
+
+## Icon
+
+<Media src={icon} alt="The Icon section with assets/icon.png chosen and a preview at 16, 24, 32, 48, 64 and 128 pixels" caption="Icon: one picture, previewed at the sizes the systems show it." size="wide" />
+
+Choose one square picture, ideally a 1024 × 1024 PNG with a transparent background. The build makes every file the
+systems want from it, with no extra tool:
+
+- `app-icon.ico` with 16 to 256 pixel images, for the Windows `.exe`, Explorer and the taskbar;
+- `app-icon.icns` up to 1024 pixels (Retina), for the macOS bundle, Finder and the Dock;
+- `app-icon.png` (256 pixels), shipped with the app as the icon of its windows: the title bar and the taskbar on
+  Windows and Linux.
+
+The preview shows how it looks small: if the 16 pixel version is a blur, simplify the drawing. An `.ico` or `.icns` file
+is used as it is, for its own system. In code, any window can have its own icon with `Window.icon` (see
+[Icons and metadata](/pyzed/packaging/icons-metadata/)).
+
+## Splash screen
+
+<Media src={splash} alt="The Splash screen section: image, duration, text and early splash, with a preview of the image" caption="Splash screen: an image shown while the app starts." size="wide" />
+
+A splash screen is a picture in a window without a frame, centered on the screen, while the app starts. It stays up
+for **Duration** seconds at least; then the startup form opens and the splash closes. If the form takes longer to load
+(a big database, a slow `load` event), the splash stays until it is ready, so people never stare at an empty desktop.
+**Text** is written over the bottom of the image (for example *Loading…*).
+
+<Media src={splashScreen} alt="A splash screen with the app's icon, its name Tasks, Version 1.0 and Loading… at the bottom" caption="The splash screen of the Tasks example." size="narrow" />
+
+**Early splash** also asks the backend for its own splash, which the bootloader shows even before Python starts,
+while a single-file app unpacks itself. PyInstaller has one on Windows and Linux (it draws with Tk, so the project's
+Python needs `tkinter`; uv's Pythons have it), Nuitka for single files on Windows. When both are on, the early splash
+gives way to the Pyzed one as soon as the app runs.
+
+Make the image the size you want the window (it is scaled down to fit 900 × 600 if larger); a PNG or JPEG of about
+600 × 360 works well.
+
+## Files and modules
+
+<Media src={files} alt="The Files and modules section: lists of files and folders, hidden imports, whole packages and modules to leave out" caption="Files and modules: what to add to the app and what to leave out." size="wide" />
+
+The build already finds the UI folder, the backend in `src/` and every module the forms' code imports. Add here what it
+cannot see:
+
+| List | For |
+| --- | --- |
+| **Files and folders** | Data the app opens: images, a database, a config file. Same path from the project root, inside the app. |
+| **Hidden imports** | Modules loaded by name (`importlib.import_module("plugins.csv")`). |
+| **Whole packages** | Packages with data files or plugins that need everything shipped (`babel`, `certifi`...). |
+| **Leave out** | Modules not to ship, to make the app smaller (`numpy.tests`). |
+
+## Command line
+
+<Media src={command} alt="The Command line section: uv run pyzed build and the [tool.pyzed.build] table" caption="Command line: the same build from a terminal, and the settings as saved." size="wide" />
+
+The last section shows the same build as a terminal command, the table it writes to `pyproject.toml` and a button that
+copies the full PyInstaller or Nuitka command line, to adapt it or report a problem.
+
+## Next
+
+- [How building works](/pyzed/packaging/build/): every setting, and what ends up in the app.
+- [Build in CI](/pyzed/packaging/ci/) for the platforms you do not have.
+- Signing and installers: [Windows](/pyzed/packaging/windows/), [macOS](/pyzed/packaging/macos/),
+  [Linux](/pyzed/packaging/linux/).
+- Something wrong? [Troubleshooting](/pyzed/packaging/troubleshooting/).

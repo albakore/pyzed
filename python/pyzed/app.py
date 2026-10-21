@@ -42,6 +42,11 @@ class Window:
     uses the app's theme) and ``style`` (a ``pz.Style`` applied to the whole view, on top
     of ``pz.set_style``; ``None`` uses the app's).
 
+    ``icon`` is the window's icon in the title bar and the taskbar: a path to a PNG (or other
+    image) or its bytes; ``None`` keeps the system's (or the packaged app's) icon. macOS draws
+    the app bundle's icon instead. ``app_id`` names the app to the Linux desktop: it should
+    match the app's ``.desktop`` file, which gives Wayland the icon and groups its windows.
+
     ``transition`` animates the window's content when it opens: a window transition
     (``"fade"``, ``"zoom"``, ``"pop"``, ``"slide_up"``, ``"slide_down"``, ``"slide_left"``,
     ``"slide_right"``), a preset or a ``pz.Animation``. ``exit_transition`` plays before it
@@ -75,6 +80,8 @@ class Window:
     style: Any = None
     transition: Any = None
     exit_transition: Any = None
+    icon: Any = None
+    app_id: Optional[str] = None
 
     #: The app that owns this window (set when the window is opened).
     app: Optional["App"] = None
@@ -193,6 +200,10 @@ class App(Window):
 
     ``theme`` may be a ``Theme``, a theme name (``"Ayu Dark"``) or
     ``themes.auto(light, dark)`` to follow the operating system's appearance.
+
+    ``splash`` shows a window before the main one: a ``pz.Splash`` (an image without a
+    frame, centered on the screen) or any ``Window``. It stays up for its ``duration`` in
+    seconds, then the main window opens, ``on_start`` runs and the splash closes.
     """
 
     size: Tuple[float, float] = (1280, 800)
@@ -203,6 +214,8 @@ class App(Window):
     #: Tab and Shift+Tab move the keyboard focus between the fields of the window
     #: (``on_key`` sees the key first; returning something from it keeps the focus).
     tab_focus: bool = True
+    #: A window shown while the app starts (see ``pz.Splash``); ``None`` for none.
+    splash: Optional[Window] = None
 
     def subscriptions(self) -> List[Any]:
         """Timers and streams that should run right now (re-evaluated after every update)."""

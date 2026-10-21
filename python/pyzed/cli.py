@@ -111,12 +111,14 @@ def check(fix: bool = False) -> int:
     return 0 if lint.ok and types.ok else 1
 
 
-def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = False, workflow: bool = False) -> int:
-    """``pyzed build``: packages the project with PyInstaller and prints where the result is.
+def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = False, workflow: bool = False,
+          backend=None, target=None, archive=None) -> int:
+    """``pyzed build``: packages the project with PyInstaller or Nuitka and prints where the result is.
 
-    ``workflow`` writes a GitHub Actions workflow instead, and ``dry_run`` only prints the PyInstaller
-    command. ``onefile``, ``console`` and ``name`` override the project's build settings.
-    Returns the exit code.
+    ``workflow`` writes a GitHub Actions workflow instead (for the project's ``targets``), and ``dry_run``
+    only prints the backend's command. ``onefile``, ``console``, ``name``, ``backend`` and ``archive``
+    override the project's build settings; ``target`` must be this computer's (``linux-x64``...), since
+    the backends do not cross-compile. Returns the exit code.
     """
     from . import build as _build
 
@@ -126,16 +128,21 @@ def build(*, onefile=None, console: bool = False, name=None, dry_run: bool = Fal
     if workflow:
         print(f"Wrote {_build.workflow(project).relative_to(project.root).as_posix()}")
         return 0
-    opts = _build.BuildOptions.from_project(project, onefile=onefile, name=name,
+    here = _build.host_target(project)
+    if target is not None and target != here.id:
+        print(f"This computer builds {here.id}, not {target}: build {target} on its own system, or write a "
+              "workflow that builds every target with `pyzed build --workflow`", file=sys.stderr)
+        return 2
+    opts = _build.BuildOptions.from_project(project, onefile=onefile, name=name, backend=backend, archive=archive,
                                             windowed=False if console else None)
-    args = _build.command(project, opts)
     if dry_run:
-        print(_build.describe(args))
+        print(_build.describe(_build.prepare(project, opts).command))
         return 0
-    print(f"Building {project.name} with PyInstaller…")
+    print(f"Building {project.name} for {here.label} with {_build.BACKEND_LABELS[opts.backend]}…")
     code = _report(_build.build(project, opts))
     if code == 0:
-        print(f"\nDone: {_build.output(project, opts)}")
+        result = _build.output(project, opts)
+        print(f"\nDone: {result} ({_build.human_size(_build.size_of(result))})")
     return code
 
 
@@ -270,13 +277,16 @@ def main(argv=None) -> int:
     p_deps.add_argument("--outdated", action="store_true", help="only those with a newer release")
     p_check = sub.add_parser("check", help="lint with ruff and type check with ty")
     p_check.add_argument("--fix", action="store_true", help="let ruff fix what it can")
-    p_build = sub.add_parser("build", help="package the app for this platform (PyInstaller)")
+    p_build = sub.add_parser("build", help="package the app for this platform (PyInstaller or Nuitka)")
+    p_build.add_argument("--backend", choices=["pyinstaller", "nuitka"], help="the packager (default: pyproject.toml)")
+    p_build.add_argument("--target", help="the platform to build, which must be this computer's (e.g. linux-x64)")
+    p_build.add_argument("--archive", choices=["zip", "tar.gz"], help="also pack the app in an archive")
     p_build.add_argument("--onefile", action="store_true", default=None, help="a single executable file")
     p_build.add_argument("--console", action="store_true", help="keep the console window")
     p_build.add_argument("--name", help="name of the executable")
-    p_build.add_argument("--dry-run", action="store_true", help="print the PyInstaller command")
+    p_build.add_argument("--dry-run", action="store_true", help="print the backend's command")
     p_build.add_argument("--workflow", action="store_true",
-                         help="write a GitHub Actions workflow that builds on Linux, Windows and macOS")
+                         help="write a GitHub Actions workflow that builds every target of the project")
     p_dev = sub.add_parser("dev", help="run a script with hot reload (changes show up when you save)")
     p_dev.add_argument("script")
     p_dev.add_argument("--watch", action="append", default=[], metavar="PATH", help="also watch this folder or file")
@@ -325,7 +335,7 @@ def main(argv=None) -> int:
         return check(args.fix)
     if args.command == "build":
         return build(onefile=args.onefile, console=args.console, name=args.name, dry_run=args.dry_run,
-                     workflow=args.workflow)
+                     workflow=args.workflow, backend=args.backend, target=args.target, archive=args.archive)
     if args.command in ("dev", "design", "run"):
         code = on_windows(args, argv)
         if code is not None:

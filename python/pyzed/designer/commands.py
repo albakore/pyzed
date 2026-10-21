@@ -64,6 +64,8 @@ ACTIONS: Tuple[Action, ...] = (
            "ctrl-alt-o", global_keys=True),
     Action("save", "Save", "File", lambda d: d.save(), "save", "ctrl-s", global_keys=True),
     Action("save_as", "Save as…", "File", lambda d: d.show_save_as(), "save-all", "ctrl-shift-s", global_keys=True),
+    Action("export", "Export app…", "File", lambda d: d.exporter.open(), "package", "ctrl-shift-e",
+           lambda d: d.projects.project is not None, global_keys=True),
     Action("settings", "Settings…", "File", lambda d: d.open_settings(), "settings", "ctrl-,", global_keys=True),
     Action("open_keymap", "Keymap editor…", "File", lambda d: d.open_keymap(), "keyboard", "ctrl-k ctrl-s",
            global_keys=True),
@@ -137,6 +139,8 @@ ACTIONS: Tuple[Action, ...] = (
     Action("run", "Run", "Run", lambda d: d.run_form(), "play", "f5", global_keys=True),
     Action("run_script", "Run project script", "Run", lambda d: d.run_script(), "square-terminal",
            enabled=lambda d: d.projects.project is not None and d.projects.project.script is not None),
+    Action("build_app", "Build app for this computer", "Run", lambda d: d.exporter.build_now(), "hammer",
+           "ctrl-shift-b", lambda d: d.projects.project is not None and not d.exporter.running, global_keys=True),
     Action("stop", "Stop", "Run", lambda d: d.stop_form(), "square", "shift-f5", global_keys=True),
     Action("code_file", "Edit code file", "Run", lambda d: d.edit_whole_file(), "code", "f7", global_keys=True),
     # Help

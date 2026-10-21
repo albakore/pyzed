@@ -24,3 +24,7 @@ def pytest_configure(config):
 def _isolated_config(tmp_path, monkeypatch):
     """Keeps the designer's saved preferences out of the user's real config folder."""
     monkeypatch.setenv("PYZED_CONFIG_DIR", str(tmp_path / "pyzed-config"))
+    yield
+    from pyzed import i18n
+
+    i18n.set_language("en")  # a test that switches the designer's language must not leak it into the next

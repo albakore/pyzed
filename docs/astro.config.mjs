@@ -103,6 +103,7 @@ const topics = [
 				translations: { es: 'Ejecutar, archivos e IA' },
 				items: [
 					{ slug: 'editor/console-and-running' },
+					{ slug: 'editor/exporting' },
 					{ slug: 'editor/files-and-scripting' },
 					{ slug: 'editor/ai-agents' },
 				],

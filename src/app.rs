@@ -41,6 +41,8 @@ pub struct State {
     frame_interval: std::cell::Cell<f64>,
     /// When the previous frame was delivered (reset when no `pz.frames` is active).
     last_frame: std::cell::Cell<Option<iced::time::Instant>>,
+    /// The splash screen (`App.splash`) while it is shown: it closes once the main window opens.
+    splash: Option<window::Id>,
 }
 
 impl State {
@@ -122,6 +124,8 @@ pub enum Message {
     /// A message produced inside the given window.
     Windowed(window::Id, Box<Message>),
     WindowOpened(window::Id),
+    /// The splash screen has been shown for its `duration`: open the main window.
+    SplashDone,
     CloseRequested(window::Id),
     WindowClosed(window::Id),
     WindowResized(window::Id, Size),
@@ -883,6 +887,32 @@ fn open_window(py: Python<'_>, state: &mut State, obj: &Bound<'_, PyAny>) -> Tas
     task.map(Message::WindowOpened)
 }
 
+/// Runs the app's `on_start` hook and returns the task of the commands it returns.
+fn start_task(py: Python<'_>, state: &mut State, app: &Bound<'_, PyAny>) -> Task<Message> {
+    match app.hasattr("on_start") {
+        Ok(true) => match app.call_method0("on_start") {
+            Ok(value) => command_task(py, state, &value),
+            Err(err) => {
+                err.print(py);
+                Task::none()
+            }
+        },
+        _ => Task::none(),
+    }
+}
+
+/// A task that finishes after `seconds`.
+fn after(seconds: f64) -> Task<()> {
+    let (sender, receiver) = iced::futures::channel::oneshot::channel::<()>();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs_f64(seconds));
+        let _ = sender.send(());
+    });
+    Task::future(async move {
+        let _ = receiver.await;
+    })
+}
+
 /// Closes window `id` once its exit transition (``Window.exit_transition``) has played.
 fn close_animated(py: Python<'_>, state: &State, id: window::Id) -> Task<Message> {
     let obj = state.window(id).bind(py);
@@ -960,13 +990,42 @@ pub(crate) fn window_settings(obj: &Bound<'_, PyAny>) -> PyResult<window::Settin
         maximized: flag("maximized", false)?,
         fullscreen: flag("fullscreen", false)?,
         exit_on_close_request: false,
-        platform_specific: platform_specific(frame.is_some(), overlay),
+        icon: attr("icon").and_then(|v| window_icon(&v)),
+        platform_specific: platform_specific(
+            frame.is_some(),
+            overlay,
+            attr("app_id").and_then(|v| v.extract::<String>().ok()),
+        ),
         ..Default::default()
     })
 }
 
+/// The icon of a window (`Window.icon`: a path to an image or its bytes), at most 256 pixels wide; a
+/// file that cannot be read is reported and the window keeps the system's icon.
+fn window_icon(value: &Bound<'_, PyAny>) -> Option<window::Icon> {
+    let image = match crate::imaging::decode(value) {
+        Ok(image) => image,
+        Err(err) => {
+            eprintln!("pyzed: window icon: {err}");
+            return None;
+        }
+    };
+    let image = if image.width() > 256 || image.height() > 256 {
+        image.thumbnail(256, 256)
+    } else {
+        image
+    };
+    let rgba = image.to_rgba8();
+    let (width, height) = rgba.dimensions();
+    window::icon::from_rgba(rgba.into_raw(), width, height).ok()
+}
+
 #[cfg(target_os = "macos")]
-fn platform_specific(_custom: bool, overlay: bool) -> window::settings::PlatformSpecific {
+fn platform_specific(
+    _custom: bool,
+    overlay: bool,
+    _app_id: Option<String>,
+) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         title_hidden: overlay,
         titlebar_transparent: overlay,
@@ -975,7 +1034,11 @@ fn platform_specific(_custom: bool, overlay: bool) -> window::settings::Platform
 }
 
 #[cfg(target_os = "windows")]
-fn platform_specific(custom: bool, _overlay: bool) -> window::settings::PlatformSpecific {
+fn platform_specific(
+    custom: bool,
+    _overlay: bool,
+    _app_id: Option<String>,
+) -> window::settings::PlatformSpecific {
     window::settings::PlatformSpecific {
         // the drop shadow and rounded corners of Windows 11 for windows without decorations
         undecorated_shadow: custom,
@@ -983,9 +1046,18 @@ fn platform_specific(custom: bool, _overlay: bool) -> window::settings::Platform
     }
 }
 
+/// On Linux, `Window.app_id` names the app to the desktop (it should match the `.desktop` file),
+/// which takes the icon of the taskbar and the dock from there on Wayland.
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn platform_specific(_custom: bool, _overlay: bool) -> window::settings::PlatformSpecific {
-    window::settings::PlatformSpecific::default()
+fn platform_specific(
+    _custom: bool,
+    _overlay: bool,
+    app_id: Option<String>,
+) -> window::settings::PlatformSpecific {
+    window::settings::PlatformSpecific {
+        application_id: app_id.unwrap_or_default(),
+        ..Default::default()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1344,7 +1416,24 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
                 let obj = state.window(id).bind(py).clone();
                 let _ = obj.setattr("_pyzed_window_open", true);
                 let hook = run_hook(py, state, call_hook(&obj, "on_open", ()));
-                return Task::batch([ask_maximized(id), hook]);
+                let splash = match state.splash {
+                    Some(splash) if Some(id) == state.main => {
+                        state.splash = None;
+                        window::close(splash)
+                    }
+                    _ => Task::none(),
+                };
+                return Task::batch([ask_maximized(id), hook, splash]);
+            }
+            Message::SplashDone => {
+                if state.main.is_some() || state.splash.is_none() {
+                    return Task::none();
+                }
+                let app = state.app.bind(py).clone();
+                let open = open_window(py, state, &app);
+                state.main = state.window_id_of(py, &app);
+                let start = start_task(py, state, &app);
+                return Task::batch([open, start]);
             }
             Message::CloseRequested(id) => {
                 let obj = state.window(id).bind(py).clone();
@@ -2162,26 +2251,34 @@ pub(crate) fn daemon(
                 frames: RefCell::new(Vec::new()),
                 frame_interval: std::cell::Cell::new(0.0),
                 last_frame: std::cell::Cell::new(None),
+                splash: None,
             };
             let bound = app.bind(py).clone();
-            let open = open_window(py, &mut state, &bound);
-            state.main = state.windows.keys().next().copied();
-            let start = match bound.hasattr("on_start") {
-                Ok(true) => match bound.call_method0("on_start") {
-                    Ok(value) => command_task(py, &mut state, &value),
-                    Err(err) => {
-                        err.print(py);
-                        Task::none()
-                    }
-                },
-                _ => Task::none(),
-            };
             // The off-screen emulator can't answer theme queries; screenshots keep `system_dark`.
             let theme = if headless {
                 Task::none()
             } else {
                 iced::system::theme().map(Message::SystemTheme)
             };
+            // `App.splash`: a window shown first, for at least its `duration`; the main window
+            // opens (and `on_start` runs) after it, so a slow start keeps the splash on screen.
+            let splash = bound.getattr("splash").ok().filter(|v| !v.is_none());
+            if let (Some(splash), false) = (splash, headless) {
+                let open = open_window(py, &mut state, &splash);
+                state.splash = state.window_id_of(py, &splash);
+                if state.splash.is_some() {
+                    let seconds = splash
+                        .getattr("duration")
+                        .and_then(|v| v.extract::<f64>())
+                        .unwrap_or(1.0)
+                        .clamp(0.0, 60.0);
+                    let done = after(seconds).map(|_| Message::SplashDone);
+                    return (state, Task::batch([open, theme, done]));
+                }
+            }
+            let open = open_window(py, &mut state, &bound);
+            state.main = state.windows.keys().next().copied();
+            let start = start_task(py, &mut state, &bound);
             (state, Task::batch([open, theme, start]))
         })
     };

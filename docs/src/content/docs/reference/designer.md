@@ -22,14 +22,15 @@ designer.run("ui/main.pzform", reload=True)
 ### `run`
 
 ```python
-run(path, *, reload=None)
+run(path, *, reload=None, splash=None)
 ```
 
 Runs the form at `path` with all the logic wired in the designer.
 
 `reload=True` turns on hot reload: saving the form (from the designer or by hand)
 or its handlers module updates the running window without restarting it. `None`
-follows `PYZED_RELOAD`, like `pz.run`.
+follows `PYZED_RELOAD`, like `pz.run`. `splash` (a `pz.Splash`) is shown before
+the form's window opens (see `App.splash`).
 
 ### `load`
 

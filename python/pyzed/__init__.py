@@ -85,6 +85,7 @@ from ._core import (  # noqa: E402 - after the allocator options above
 )
 from ._async import loop as asyncio_loop, spawn
 from .app import App, Window, run, screenshot
+from .splash import Splash
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
@@ -242,6 +243,7 @@ __all__ = [
     "Theme",
     "Widget",
     "Window",
+    "Splash",
     "Clipboard",
     "FileDialog",
     "FileWatcher",

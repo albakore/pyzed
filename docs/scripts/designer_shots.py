@@ -1,6 +1,6 @@
 """Screenshots of Pyzed Design's newer parts, rendered off-screen at 2x: the welcome window, the title bar
 on every desktop, the menus, the settings dialogs, the Shader view (one image per node type), the
-Component view and document windows.
+Component view, document windows and the Export dialog.
 
     python docs/scripts/designer_shots.py               # every shot
     python docs/scripts/designer_shots.py welcome nodes # only the shots whose name contains a word
@@ -297,6 +297,69 @@ def _crop_to_modal(path, width=560):
         pad = 16 * SCALE
         im.crop((int(left * SCALE) - pad, max(0, y0 - pad), int((left + width) * SCALE) + pad,
                  min(h, y1 + pad))).save(path, optimize=True)
+
+
+# -- the Export dialog ----------------------------------------------------------------------------
+def _export_project():
+    """A small uv project with the tasks form, an icon and a splash image, in a throwaway folder."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    root = Path(tempfile.mkdtemp(prefix="pyzed-export-")) / "tasks"
+    (root / "ui").mkdir(parents=True)
+    (root / "assets").mkdir()
+    shutil.copyfile(EXAMPLES / "tasks.pzform", root / "ui" / "main.pzform")
+    shutil.copyfile(EXAMPLES / "tasks.py", root / "ui" / "main.py")
+    shutil.copyfile(ROOT / "docs" / "public" / "icon-512.png", root / "assets" / "icon.png")
+    splash = Image.new("RGB", (720, 400))
+    draw = ImageDraw.Draw(splash)
+    for y in range(400):  # a dark blue to violet gradient
+        draw.line((0, y, 720, y), fill=(int(28 + 40 * y / 400), int(32 + 8 * y / 400), int(60 + 70 * y / 400)))
+    with Image.open(ROOT / "docs" / "public" / "icon-192.png") as icon:
+        splash.paste(icon.convert("RGBA").resize((96, 96)), (56, 56), icon.convert("RGBA").resize((96, 96)))
+    draw.text((56, 180), "Tasks", fill=(255, 255, 255), font=ImageFont.load_default(56))
+    draw.text((58, 250), "Version 1.0", fill=(190, 200, 230), font=ImageFont.load_default(22))
+    splash.save(root / "assets" / "splash.png")
+    (root / "pyproject.toml").write_text("""[project]
+name = "tasks"
+version = "1.0.0"
+description = "A to-do list"
+dependencies = ["pyzed-ui"]
+
+[tool.pyzed]
+ui = "ui"
+main = "ui/main.pzform"
+
+[tool.pyzed.build]
+name = "Tasks"
+icon = "assets/icon.png"
+publisher = "Acme"
+archive = "zip"
+targets = ["windows-x64", "macos-arm64", "linux-x64"]
+
+[tool.pyzed.build.splash]
+image = "assets/splash.png"
+duration = 1.5
+text = "Loading…"
+""", encoding="utf-8")
+    return root
+
+
+@shot
+def export():
+    """File → Export app…: every section of the dialog, and the splash screen it gives the app."""
+    root = _export_project()
+    app = make(root / "ui" / "main.pzform")
+    app.exporter.open()
+    from pyzed.designer.export_panel import SECTIONS
+
+    for section in SECTIONS:
+        app.exporter.show(section)
+        save(app, EDITOR / f"export-{section}.png")
+    app.exporter.close()
+    splash = pz.Splash(root / "assets" / "splash.png", text="Loading…")
+    out = EDITOR / "export-splash-screen.png"
+    pz.screenshot(Host(splash.view), out, size=splash.size, scale=SCALE)
+    print("wrote", out.relative_to(ROOT))
 
 
 # -- the Shader view -------------------------------------------------------------------------------
