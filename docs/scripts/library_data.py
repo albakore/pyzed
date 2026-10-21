@@ -49,7 +49,12 @@ How to add a component to the library
                  ``draw`` (a snippet drawn *instead of* ``code``, for states that only a real pointer
                  shows, such as an open tooltip) and ``start`` (as in ``preview``).
 
-3. Render and generate, then build the site::
+3. If the component has events (``on_*`` parameters), describe each one in the API docs (step 1) and add
+   the same events handled three ways to ``EXAMPLES`` in ``library_events.py`` (imperative, declarative
+   and functional; ``tests/test_library_events.py`` runs them). If a handler receives something other
+   than its parameter's usual value, add it to ``library_events.HANDLERS``.
+
+4. Render and generate, then build the site::
 
        python docs/scripts/library_shots.py <slug>     # docs/public/library/<slug>*.webp
        python docs/scripts/gen_library.py              # library/*.mdx in every language

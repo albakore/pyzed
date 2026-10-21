@@ -41,6 +41,9 @@ de la API los usa cuando falta una descripción. El estilo del repositorio (en i
   `gen_api.py`.
 - Después, si hace falta, un párrafo corto sobre **los callbacks y el comportamiento**: qué recibe
   `on_change` y qué pasa sin él.
+- Al final, una **sección `Events:`** que enumera cada parámetro `on_*` con lo que recibe su handler,
+  escrito como una llamada (``` ``on_change(stars)`` ```, ``` ``on_press()`` ```). Los editores la muestran al
+  pasar el ratón, y es la misma lista que la sección **Eventos** de la página de la biblioteca.
 - Los nombres de código van entre comillas invertidas dobles de reST (```` ``value`` ````) y los ejemplos en
   un bloque `::`; `gen_api.py` convierte las dos cosas a Markdown (código en línea y un bloque `python`).
 - Sin secciones `Args:`/`Returns:`: los parámetros se describen en `api_docs_*.py` (abajo), así el docstring
@@ -55,8 +58,14 @@ def rating(value: float, on_change: Any = None, *, max: int = 5, size: float = 1
 
     ``on_change`` is called with the number of the clicked star (1 to ``max``);
     without it the stars are read only.
+
+    Events:
+        ``on_change(stars)``: Called with the number of the clicked star.
     """
 ```
+
+Los widgets escritos en Rust (`pz.button`, `pz.slider`…) llevan el mismo texto en comentarios `///` sobre su
+`#[pyfunction]`; `scripts/gen_stubs.py` los copia a `_core.pyi` después de `maturin develop`.
 
 ## 2. Referencia de la API
 
@@ -170,6 +179,25 @@ add(
 | `examples` | Lista opcional de `{"title": T(...), "text": T(...), "code": ..., "size": (w, h)}`, cada uno con su imagen (`"shot": False` para mostrar solo el código). |
 | `notes` | «Consejos» opcionales (Markdown). |
 | `related`, `badge` | Slugs relacionados opcionales; `"new"` añade una insignia en la barra lateral y en la galería. |
+
+**Eventos.** Cada página tiene una sección **Eventos**, también generada: una tabla con los eventos propios
+del componente (sus parámetros `on_*`, con la descripción de la referencia de la API), los eventos comunes de
+`.on()` y un ejemplo **Manejar los eventos** en tres pestañas: imperativo, declarativo y funcional. Lo que
+recibe cada handler (`(text)`, `(x, y)`…) y los tres ejemplos están en `docs/scripts/library_events.py`:
+
+```python
+HANDLERS = {"on_change": "(value)", "ui.rating.on_change": "(stars)", ...}
+
+ex("rating",
+   """class Review(pz.App): ...""",               # imperativo: los métodos cambian self
+   """@dataclass\nclass Rate: ...""",             # declarativo: mensajes y update()
+   """@dataclass(frozen=True)\nclass State: ...""")  # funcional: view(state, set_state)
+```
+
+Los ejemplos imperativo y declarativo terminan con una clase `App`; el funcional define `view(state, set_state)`
+y un `State` congelado. `tests/test_library_events.py` ejecuta los tres de cada página, y `--check` falla si un
+componente con eventos no tiene ejemplos. La página [Eventos](/pyzed/es/library/events/) enumera cada
+componente con su número de eventos.
 
 Los fragmentos se ejecutan con `pz`, `ui` y `draw` ya importados; cualquier otro nombre libre (`on_rate`,
 `save`…) es un callback que no hace nada, así que escríbelos como los escribiría alguien en su aplicación;
