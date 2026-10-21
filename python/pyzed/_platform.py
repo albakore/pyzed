@@ -9,6 +9,9 @@ Under WSL, the Wayland compositor of WSLg drops the connection on some window ch
 (maximizing, resizing), which prints ``Io error: Broken pipe (os error 32)``. There
 the app uses X11 (through XWayland) instead, which WSLg handles reliably.
 
+Under WSL, windows usually open as native Windows windows instead, through Windows' own Python (see
+``pyzed._wsl_windows``); X11 is for when they open through WSLg (``PYZED_WINDOWS=0``, or no Python on Windows).
+
 Under WSL there is usually no Linux browser, so web pages (sign-ins, the docs) open in Windows' default
 browser (``use_windows_browser``). Pages that call back to the app (``http://127.0.0.1:...``) still reach
 it, through WSL's localhost forwarding.

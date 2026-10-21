@@ -1,5 +1,6 @@
 """The ``pyzed`` command: projects (``new``, ``init``, ``add``, ``remove``, ``upgrade``, ``sync``,
-``deps``, ``check``, ``build``), running (``dev``, ``design``, ``run``), ``icons`` and ``mcp``."""
+``deps``, ``check``, ``build``), running (``dev``, ``design``, ``run``), ``icons``, ``mcp`` and ``windows``
+(native Windows windows under WSL)."""
 
 from __future__ import annotations
 
@@ -9,6 +10,7 @@ import re
 import runpy
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 def new_script(name: str) -> int:
@@ -204,6 +206,38 @@ def run_form(path=None, reload: bool = False) -> int:
     return 0
 
 
+def on_windows(args, argv) -> Optional[int]:
+    """Under WSL, runs ``design``, ``run`` or ``dev`` again as a Windows program, so its window is a native one
+    (see ``pyzed._wsl_windows``); returns its exit code, or ``None`` to open the window here (WSLg)."""
+    from . import _wsl_windows
+    from .project import Project
+
+    if args.wslg:
+        _wsl_windows.disable()
+    if not _wsl_windows.enabled():
+        return None
+    target = args.script if args.command == "dev" else args.form
+    project = Project.find(target or ".")
+    script = Path(args.script).resolve() if args.command == "dev" and project is None else None
+    return _wsl_windows.handoff(["-m", "pyzed", *(sys.argv[1:] if argv is None else argv)], project=project,
+                                script=script)
+
+
+def windows(action: str, path: str = ".") -> int:
+    """``pyzed windows``: under WSL, shows (``status``), prepares (``setup``) or deletes (``reset``) what opens
+    the windows of the project at ``path`` as native Windows windows."""
+    from . import _wsl_windows
+    from .project import Project
+
+    project = Project.find(path)
+    if action == "setup":
+        return _wsl_windows.setup(project)
+    if action == "reset":
+        return _wsl_windows.reset(project)
+    print("\n".join(_wsl_windows.status(project)))
+    return 0
+
+
 def main(argv=None) -> int:
     """The ``pyzed`` command line: parses ``argv`` (``sys.argv`` by default) and runs the subcommand.
 
@@ -254,6 +288,13 @@ def main(argv=None) -> int:
                                          "project's main form)")
     p_run.add_argument("form", nargs="?")
     p_run.add_argument("--reload", action="store_true", help="update the window when the form or its code is saved")
+    for p in (p_dev, p_design, p_run):
+        p.add_argument("--wslg", action="store_true",
+                       help="under WSL, open the window through WSLg instead of as a native Windows window")
+    p_windows = sub.add_parser("windows", help="under WSL: native Windows windows (status, setup, reset)")
+    p_windows.add_argument("action", nargs="?", choices=("status", "setup", "reset"), default="status",
+                           help="setup installs uv on Windows if needed and prepares the Windows environment")
+    p_windows.add_argument("path", nargs="?", default=".", help="the project (default: the current folder)")
     p_icons = sub.add_parser("icons", help="list the bundled Lucide icon names")
     p_icons.add_argument("filter", nargs="?", default="")
     p_mcp = sub.add_parser("mcp", help="run the MCP server for AI agents (stdio)")
@@ -285,12 +326,18 @@ def main(argv=None) -> int:
     if args.command == "build":
         return build(onefile=args.onefile, console=args.console, name=args.name, dry_run=args.dry_run,
                      workflow=args.workflow)
+    if args.command in ("dev", "design", "run"):
+        code = on_windows(args, argv)
+        if code is not None:
+            return code
     if args.command == "dev":
         return dev(args.script, args.args, args.watch)
     if args.command == "design":
         return design(args.form)
     if args.command == "run":
         return run_form(args.form, args.reload)
+    if args.command == "windows":
+        return windows(args.action, args.path)
     if args.command == "mcp":
         from .mcp import main as mcp_main
 

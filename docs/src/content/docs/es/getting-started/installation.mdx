@@ -134,6 +134,50 @@ Pyzed ajusta algunas cosas antes de abrir la primera ventana:
 
 Las variables que definas tú (`EGL_LOG_LEVEL`, `MESA_LOG`, `WAYLAND_DISPLAY`, `BROWSER`...) nunca se tocan.
 
+## WSL: ventanas nativas de Windows
+
+En WSL, Pyzed abre cada ventana **como un programa nativo de Windows**, no a través de WSLg: `pyzed design`,
+`pyzed run`, `pyzed dev`, tus scripts que llaman a `pz.run`, Ejecutar en Pyzed Design y las vistas en vivo de los
+agentes de IA. La ventana es una ventana de Windows de verdad, dibujada con los drivers de GPU de Windows, así que
+va más rápida y se acopla, escala y aparece en la barra de tareas como cualquier otra aplicación. Tu código y tu
+proyecto siguen en WSL: sigues editando en Linux (en Zed, por ejemplo) y la recarga en caliente recoge cada
+guardado.
+
+Solo necesita [uv en Windows](https://docs.astral.sh/uv/getting-started/installation/). Pyzed puede instalarlo por
+ti, desde WSL:
+
+```bash
+uv run pyzed windows setup     # instala uv en Windows si falta y prepara el proyecto
+uv run pyzed windows           # muestra qué se usa y dónde
+```
+
+Cómo funciona:
+
+- Windows lee el proyecto a través de `\\wsl.localhost\<distribución>\...` y arranca en la misma carpeta.
+- Windows tiene **su propio entorno**, en `%LOCALAPPDATA%\pyzed\wsl\`, con la misma versión de Python, las
+  dependencias del proyecto en las versiones de `uv.lock` y la wheel de `pyzed-ui` de la misma versión (siempre
+  una wheel ya compilada: en Windows no se compila nada). El `.venv` del proyecto sigue siendo el de Linux. Se crea
+  la primera vez (unos segundos) y de nuevo solo cuando cambian las dependencias.
+- El comando en WSL espera a la ventana: su salida, la consola de Pyzed Design y el código de salida son los de la
+  aplicación, y al detenerlo (Detener, <kbd>Ctrl</kbd>+<kbd>C</kbd>) la ventana se cierra.
+
+Sin uv (ni el lanzador `py` de Python) en Windows, las ventanas se abren por WSLg como antes, con un aviso que
+explica cómo prepararlo. Para usar siempre WSLg, define `PYZED_WINDOWS=0` o añade `--wslg` a `pyzed design`, `run`
+o `dev`.
+
+| Variable | Qué hace |
+| --- | --- |
+| `PYZED_WINDOWS=0` | Abre las ventanas por WSLg. |
+| `PYZED_WINDOWS_ENV=NOMBRE,NOMBRE` | Más variables para la aplicación en Windows (claves de API...). Las `PYZED_*` siempre pasan. |
+| `PYZED_WINDOWS_WHEEL` | Ruta o URL de la wheel de `pyzed-ui` para Windows (ver abajo). |
+
+:::note[Si trabajas en Pyzed]
+Un checkout de Pyzed (`uv sync` en el repositorio) está compilado para Linux, y puede que su versión aún no esté
+publicada, así que la ventana de Windows usa la última versión publicada de `pyzed-ui`. Para probar tus cambios en
+Windows, descarga la wheel de Windows que CI compila para tu rama (o la de una release) y apunta
+`PYZED_WINDOWS_WHEEL` a ella.
+:::
+
 ## Comprobar la instalación
 
 <Commands

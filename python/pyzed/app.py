@@ -233,6 +233,12 @@ def run(app, *, reload: Optional[bool] = None, watch: Sequence[Any] = ()) -> Non
     """
     if _hot_reload.is_reloading():
         return  # the main script is being re-executed by a reload; the app already runs
+    if _platform.is_wsl():  # under WSL the window opens as a Windows program (see pyzed._wsl_windows)
+        from . import _wsl_windows
+
+        code = _wsl_windows.handoff_script()
+        if code is not None:
+            raise SystemExit(code)
     if isinstance(app, type):
         app = app()
     if reload is None:

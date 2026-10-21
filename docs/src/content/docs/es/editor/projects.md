@@ -69,8 +69,9 @@ Haz clic en la rama, junto al nombre del proyecto, para cambiar a otra rama loca
 
 El editor sabe dónde vive cada proyecto. En WSL la barra de título empieza con la distribución de Linux (*Ubuntu*,
 por ejemplo), y los proyectos recientes que viven en una distribución de WSL muestran su nombre al lado. uv, ruff,
-ty y git se ejecutan entonces en Linux, las ventanas de tus formularios se abren a través de WSLg y las páginas web
-en el navegador de Windows.
+ty y git se ejecutan entonces en Linux, las páginas web se abren en el navegador de Windows, y el editor y las
+ventanas de tus formularios se abren como ventanas nativas de Windows (ver
+[WSL: ventanas nativas de Windows](/pyzed/es/getting-started/installation/#wsl-ventanas-nativas-de-windows)).
 
 Pyzed Design **en Windows** también puede abrir un proyecto que vive en WSL, como los proyectos WSL de Zed: abre su
 carpeta a través de `\\wsl.localhost\<distribución>\...` (o `\\wsl$\...`). La barra de título muestra la
