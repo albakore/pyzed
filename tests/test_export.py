@@ -12,6 +12,11 @@ from test_project import shop  # noqa: F401 - the fixture
 HERE = build.host_target()
 
 
+@pytest.fixture(autouse=True)
+def _uv(monkeypatch):
+    monkeypatch.setattr(project, "find_uv", lambda: "uv")  # CI runners may not have uv
+
+
 def _png(tmp_path, name="icon.png", size=(64, 64)):
     """A PNG made by the core (no Pillow needed)."""
     import zlib
@@ -64,7 +69,7 @@ def test_options_round_trip_through_pyproject(shop):  # noqa: F811
     opts.targets = ["linux-x64", "windows-x64"]
     opts.backend_options = {"nuitka": {"args": ["--lto=yes"]}}
     build.save_options(shop, opts)
-    text = (shop.root / "pyproject.toml").read_text()
+    text = (shop.root / "pyproject.toml").read_text(encoding="utf-8")
     assert text.count("[tool.pyzed.build]") == 1 and "[tool.pyzed.build.splash]" in text
     assert 'ui = "ui"' in text and "[dependency-groups]" in text  # the rest of the file is kept
     again = build.BuildOptions.from_project(shop)
@@ -75,7 +80,7 @@ def test_options_round_trip_through_pyproject(shop):  # noqa: F811
     assert parsed["splash"]["text"] == "Loading…" and parsed["targets"] == ["linux-x64", "windows-x64"]
     # saving again replaces the tables instead of adding more
     build.save_options(shop, again)
-    assert (shop.root / "pyproject.toml").read_text().count("[tool.pyzed.build.splash]") == 1
+    assert (shop.root / "pyproject.toml").read_text(encoding="utf-8").count("[tool.pyzed.build.splash]") == 1
 
 
 def test_pyinstaller_build_with_icon_splash_and_metadata(shop, tmp_path):  # noqa: F811
@@ -103,7 +108,7 @@ def test_pyinstaller_build_with_icon_splash_and_metadata(shop, tmp_path):  # noq
     assert "--splash" not in args and any("Tk" in w for w in plan.warnings)
     excluded = {args[i + 1] for i, a in enumerate(args) if a == "--exclude-module"}
     assert "idlelib" in excluded and "tkinter" not in excluded  # Tk draws PyInstaller's splash
-    launcher = (work / "shop_app_launcher.py").read_text()
+    launcher = (work / "shop_app_launcher.py").read_text(encoding="utf-8")
     compile(launcher, "launcher", "exec")
     assert "pz.Window.icon = str(ROOT / 'app-icon.png')" in launcher
     assert "close_native_splash()" in launcher
@@ -174,14 +179,14 @@ def test_finish_fills_in_the_macos_info_plist(shop, monkeypatch):  # noqa: F811
 
 def test_workflow_builds_each_target(shop):  # noqa: F811
     path = build.workflow(shop, targets=["windows-arm64", "linux-x64", "macos-x64"])
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     assert "- { target: windows-arm64, runner: windows-11-arm }" in text
     assert "- { target: macos-x64, runner: macos-15-intel }" in text
     assert "uv run pyzed build --target ${{ matrix.target }}" in text and "path: dist/" in text
     assert "linux-arm64" not in text and "gh release" not in text
     opts = build.BuildOptions.from_project(shop, archive="zip")
     build.save_options(shop, opts)
-    text = build.workflow(shop, targets=["linux-x64"]).read_text()
+    text = build.workflow(shop, targets=["linux-x64"]).read_text(encoding="utf-8")
     assert "contents: write" in text and 'gh release upload "$GITHUB_REF_NAME" dist/*.zip --clobber' in text
 
 
@@ -240,6 +245,8 @@ def test_export_dialog(shop, monkeypatch):  # noqa: F811
     from pyzed.designer.app import Designer
     from pyzed.designer import commands, export_panel
 
+    monkeypatch.chdir(shop.root)  # opening the project changes the folder and sys.path: put both back after
+    monkeypatch.setattr(sys, "path", list(sys.path))
     d = Designer(shop.main_form)
     assert d.projects.project is not None and d.projects.project.root == shop.root
     commands.run("export", d)
@@ -262,3 +269,4 @@ def test_export_dialog(shop, monkeypatch):  # noqa: F811
     assert "linux-arm64" in saved.targets and d.dialog is None
     e.write_workflow()
     assert (shop.root / ".github" / "workflows" / "build.yml").is_file()
+    d.logs.uninstall()
