@@ -10,29 +10,56 @@ Sections follow FastAPI's release notes: `### Breaking Changes`,
 `### Translations` and `### Internal`. They are generated from the gitmoji
 commit messages when a version is released (see
 [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)); notes
-written by hand under `## [Unreleased]` are kept and merged in.
-The documentation site reads this file on every build and marks the latest
-stable version.
+written by hand under `## [Unreleased]
 
-## [Unreleased]
+## [1.6.0] - 2026-10-21
+
+### Highlights
+
+- **Sound in your apps**: `pyzed.audio`, an audio engine in Rust with 23 modules joined by cables (oscillators, filters, effects, sampler, drums, sequencer, MIDI) and low-latency output on every system, plus waveform, spectrum, knobs, faders, a webcam view and a VCV-style rack with animated cables.
+- **Export your app**: Pyzed Design builds apps for Windows, macOS and Linux on x64 and ARM with PyInstaller or Nuitka, with an icon and a splash screen. An Android prototype builds APKs too.
+- **Components that do work**: timers, shortcuts, file watchers, processes, workers and web requests as non-visual components in Pyzed Design, and `pyzed.services` in code.
+- **Tabs anywhere and WSL as Windows**: any tab goes to any dock or window of its own, and under WSL Pyzed opens its windows as native Windows programs.
 
 ### Features
 
-- ✨ Tabs anywhere in Pyzed Design: any tab, a panel's or a form's, can go to any dock, next to the form tabs in the center or to a window of its own, and stack with the others there (the code editor beside the forms, a form in a side dock). While a tab is dragged, a copy follows the pointer, the place it would land in lights up and a bar marks the spot in a tab row. New **Code with the forms** work layout.
-- ✨ An audio engine, `pyzed.audio`: build synthesizers, effects, drum machines and sequencers from 23 modules joined by cables, like VCV Rack (oscillators, filters, envelopes, LFOs, delay, reverb, distortion, chorus, compressor, sampler, drums, clock, sequencer, mixer, MIDI in and out). The sound is computed in Rust on a real-time thread and played with low latency on WASAPI, CoreAudio, PulseAudio/PipeWire or ALSA, or rendered offline to a WAV file; scopes, spectra and meters can be read at any time for visualizers. New **Audio** section in the docs.
+- ✨ Put any tab anywhere: panels next to the forms, forms in docks, and a clearer tab drag. PR [#136](https://github.com/albakore/pyzed/pull/136) by [@albakore](https://github.com/albakore).
+- ✨ Interface and code fonts and sizes in the editor settings, and duplicating lines on every cursor. PR [#135](https://github.com/albakore/pyzed/pull/135) by [@albakore](https://github.com/albakore).
+- ✨ Non-visual components in Pyzed Design and `pyzed.services`: timers, shortcuts, file watchers, processes, workers, web requests and more. PR [#138](https://github.com/albakore/pyzed/pull/138) by [@albakore](https://github.com/albakore).
+- ✨ An audio engine, `pyzed.audio`: modules joined by cables, low-latency devices (WASAPI, CoreAudio, PulseAudio/PipeWire, ALSA), MIDI, offline rendering to WAV and analysis for visualizers. PR [#139](https://github.com/albakore/pyzed/pull/139) by [@albakore](https://github.com/albakore).
+- ✨ Audio UI components, a webcam view, a VCV-style rack with animated cables, audio demos and the Audio docs section. PR [#142](https://github.com/albakore/pyzed/pull/142) by [@albakore](https://github.com/albakore).
+- ✨ Windows open as native Windows windows when Pyzed runs in WSL (`pyzed windows setup`, `PYZED_WINDOWS=0` for WSLg). PR [#150](https://github.com/albakore/pyzed/pull/150) by [@albakore](https://github.com/albakore).
+- ✨ Every demo in the welcome gallery of Pyzed Design: audio, games, animation, styling, shaders, AI and more. PR [#153](https://github.com/albakore/pyzed/pull/153) by [@albakore](https://github.com/albakore).
+- ⚡️ Faster views with shared button parts, and the CPU renderer when the GPU is emulated. PR [#157](https://github.com/albakore/pyzed/pull/157) by [@albakore](https://github.com/albakore).
+- ✨ Export apps from Pyzed Design for Windows, macOS and Linux on x64 and ARM, with PyInstaller or Nuitka, icons and a splash screen. PR [#158](https://github.com/albakore/pyzed/pull/158) by [@albakore](https://github.com/albakore).
+- ✨ Android prototype: build APKs of Pyzed apps. PR [#159](https://github.com/albakore/pyzed/pull/159) by [@albakore](https://github.com/albakore).
 
 ### Fixes
 
-- 🐛 On Windows, the AI agents no longer fill the console with `ConnectionResetError: [WinError 10054]` tracebacks: the editor's MCP server and the sign-in pages ignore clients that close their connection, and log any other error instead of printing it.
-- 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu: Node.js (`npx`), `claude` and `uv` are found in the user's shell `PATH` and where nvm, volta, fnm and `~/.local/bin` put them. When Node.js is missing, the agent says so, with **Install Node.js** and **Use Pyzed Agent**.
-- 🐛 **Retry** sends the unanswered message again instead of adding it once more to the thread.
-- 🐛 Claude Code shows the current models (Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5), its effort levels up to **Max** and fast mode: its preset and Codex's run the renamed adapters (`@agentclientprotocol/claude-agent-acp`, `@agentclientprotocol/codex-acp`) at their latest version, and saved agents with the old package names are moved to them. They need Node.js 22 or later.
-- 🐛 Pyzed's MCP server is added to Zed (and VS Code) even when their settings file has comments, which are kept.
-- 🐛 Pyzed builds from source on Linux without ALSA's headers (as in a fresh WSL): audio devices and MIDI come with the `alsa` feature, which CI and the released wheels turn on; without it `pyzed.audio` renders offline and on its silent clock and says how to get sound.
+- 🐛 Claude Code, Codex and other agents start when Pyzed Design is opened from the desktop's menu (Node.js found where nvm, volta and fnm put it), **Retry** no longer repeats the message, and Pyzed's MCP server is added to Zed's settings even when they have comments. PR [#137](https://github.com/albakore/pyzed/pull/137) by [@albakore](https://github.com/albakore).
+- 🐛 The silent audio clock keeps real time when the system timer wakes late. PR [#144](https://github.com/albakore/pyzed/pull/144) by [@albakore](https://github.com/albakore).
+- 🐛 Pyzed builds from source on Linux without ALSA's headers: audio devices and MIDI come with the `alsa` feature, which the released wheels turn on. PR [#149](https://github.com/albakore/pyzed/pull/149) by [@albakore](https://github.com/albakore).
+- 🐛 Claude Code and Codex run their current ACP adapters, so the new models and effort levels show. PR [#151](https://github.com/albakore/pyzed/pull/151) by [@albakore](https://github.com/albakore).
+- 🐛 Your checkout and everything Pyzed Design starts run on Windows when they come from WSL. PR [#152](https://github.com/albakore/pyzed/pull/152) by [@albakore](https://github.com/albakore).
+- 🐛 The Windows core builds without Windows' folders on PATH, so maturin does not pick the Microsoft Store's `python.exe`. PR [#154](https://github.com/albakore/pyzed/pull/154) by [@albakore](https://github.com/albakore).
+- 🐛 Pyzed Design on Windows no longer freezes when it opens or creates a WSL project. PR [#155](https://github.com/albakore/pyzed/pull/155) by [@albakore](https://github.com/albakore).
+- 🐛 The agents' local servers no longer print dropped connections (`WinError 10054`) on Windows. PR [#156](https://github.com/albakore/pyzed/pull/156) by [@albakore](https://github.com/albakore).
 
 ### Refactors
 
-- ♻ The agent settings show the everyday ones first (model, providers, permissions; Claude's effort, thinking and fast mode only when Pyzed Agent uses Claude) and fold the rest under **Advanced**.
+- ♻ The new app template is centered with a flex box now that `pz.box` centers on the cross axis. PR [#132](https://github.com/albakore/pyzed/pull/132) by [@albakore](https://github.com/albakore).
+- ♻ The agent settings show the everyday ones first and fold the rest under **Advanced**. PR [#137](https://github.com/albakore/pyzed/pull/137) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 Game tutorials and the Animation docs section. PR [#146](https://github.com/albakore/pyzed/pull/146) by [@albakore](https://github.com/albakore).
+- 🍱 Pyzed Design captures retaken with the event tray. PR [#148](https://github.com/albakore/pyzed/pull/148) by [@albakore](https://github.com/albakore).
+
+### Internal
+
+- 📦 `pyzed-ui` installs only from the prebuilt wheels, never compiling the Rust core. PR [#140](https://github.com/albakore/pyzed/pull/140) by [@albakore](https://github.com/albakore).
+- ✅ The real-time audio test waits for the audio clock instead of a fixed sleep. PR [#141](https://github.com/albakore/pyzed/pull/141) by [@albakore](https://github.com/albakore).
+- 👷 CI decides which jobs run from `git diff`, so pull requests with over 300 files still run their tests. PR [#147](https://github.com/albakore/pyzed/pull/147) by [@albakore](https://github.com/albakore).
 
 ## [1.5.0] - 2026-10-20
 
