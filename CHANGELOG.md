@@ -16,6 +16,25 @@ stable version.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-22
+
+### Highlights
+
+- **A faster designer**: Pyzed draws only what changed (cached components, form controls and panels), skips rebuilds for pointer moves that change nothing and redraws big forms for less.
+- **Projects that stay in sync**: Pyzed Design warns when a project needs a newer `pyzed-ui` or a sync, and the Dependencies tab keeps itself up to date.
+
+### Features
+
+- ✨ Pyzed Design warns when a project needs a newer `pyzed-ui` or a sync, and keeps the Dependencies tab up to date. PR [#172](https://github.com/albakore/pyzed/pull/172) by [@albakore](https://github.com/albakore).
+- ✨ Hidden dialogs and drawers stay off the designer canvas until one is selected. PR [#171](https://github.com/albakore/pyzed/pull/171) by [@albakore](https://github.com/albakore).
+- ✨ Select and copy text in the Agent, Logs and Console panels, and close any tab. PR [#173](https://github.com/albakore/pyzed/pull/173) by [@albakore](https://github.com/albakore).
+- ⚡️ Pointer moves that change nothing no longer rebuild the view, and big forms are cheaper to redraw. PR [#174](https://github.com/albakore/pyzed/pull/174) by [@albakore](https://github.com/albakore).
+- ⚡️ Only what changed is drawn again: cached components, form controls and designer panels. PR [#175](https://github.com/albakore/pyzed/pull/175) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 New projects are no longer created in the installed app's folder (where they failed, or were deleted by the next update): Pyzed Design offers the last project's folder or `~/Pyzed Projects`, and refuses folders it cannot write to with a clear message. PR [#170](https://github.com/albakore/pyzed/pull/170) by [@albakore](https://github.com/albakore).
+
 ## [1.7.0] - 2026-10-22
 
 1.6.0 was tagged but never published (its wheels failed to build), so this release carries all of it.

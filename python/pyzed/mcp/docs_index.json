@@ -2946,6 +2946,10 @@
     "desc": "Sends a message to the running app from **any thread**. Raises `RuntimeError` if no app is running.",
     "example": "\n                        def worker():\n                            for i in range(100):\n                                time.sleep(0.05)\n                                pz.post((\"progress\", i / 100))\n\n                        threading.Thread(target=worker, daemon=True).start()\n                    "
    },
+   "pyzed.UNCHANGED": {
+    "desc": "Return it from a callback that changed nothing on screen (a pointer move you only record, a focus change): the window is not rebuilt. Any other return value redraws as usual. See the [performance guide](/pyzed/guides/performance/).",
+    "example": "\n                        def pointer_moved(self, x, y):\n                            self.pointer = (x, y)\n                            return pz.UNCHANGED  # nothing visible changed: no rebuild\n                    "
+   },
    "pyzed.load_font": {
     "desc": "Loads an extra font (path to a `.ttf`/`.otf` or its bytes) so you can use it by family name: `text(\"hello\", font=\"JetBrains Mono\")`.",
     "params": {
@@ -3745,7 +3749,9 @@
      "weight": "`\"thin\"`, `\"light\"`, `\"normal\"`, `\"medium\"`, `\"semibold\"`, `\"bold\"`, `\"black\"` or a number (100–900).",
      "italic": "Italic.",
      "line_height": "Line height relative to the size (1.0, 1.5…).",
-     "wrap": "Line wrapping. With `False` the text doesn't wrap."
+     "wrap": "Line wrapping. With `False` the text doesn't wrap.",
+     "selectable": "`True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat).",
+     "selection_color": "Color behind the selected text."
     }
    },
    "pyzed.icon": {
@@ -3789,7 +3795,9 @@
      "link_color": "Link color.",
      "code_color": "Code color.",
      "code_bg": "Code background.",
-     "on_link": "Callable that receives the URL when a link is clicked."
+     "on_link": "Callable that receives the URL when a link is clicked.",
+     "selectable": "`True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat).",
+     "selection_color": "Color behind the selected text."
     }
    },
    "pyzed.rich_text": {
@@ -4739,7 +4747,8 @@
     "desc": "`pz.markdown` with the theme's text, link and code colors.",
     "params": {
      "source": "The Markdown text.",
-     "on_link": "Callable that receives the URL when a link is clicked."
+     "on_link": "Callable that receives the URL when a link is clicked.",
+     "selectable": "Same as in `pz.markdown`; the selection uses the theme's `selection` color."
     }
    },
    "pyzed.ui.split": {
