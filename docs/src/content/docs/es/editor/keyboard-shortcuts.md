@@ -83,6 +83,8 @@ en el lienzo para recuperar sus atajos.
 | Arrastrar una fila de la estructura | Reordenar, o mover a otro contenedor |
 | Arrastrar el tirador bajo el formulario | Redimensionar el formulario |
 | <kbd>Ctrl</kbd>+rueda en el editor de código | Tamaño de letra |
+| <kbd>Ctrl</kbd>+clic en el editor de código | Ir a la definición |
+| Dejar el ratón sobre un nombre en el editor de código | Su tipo, documentación y problemas |
 
 ## Listas, paletas y diálogos
 
@@ -120,6 +122,12 @@ Después de hacer clic en el árbol de la [pestaña Proyecto](/pyzed/es/editor/p
 | <kbd>RePág</kbd> / <kbd>AvPág</kbd> | Nueve filas en la lista, o una página en el código |
 | <kbd>Enter</kbd>, <kbd>Tab</kbd> | Aceptar la sugerencia |
 | <kbd>Esc</kbd> | Cerrar la lista de sugerencias |
+| <kbd>F12</kbd> / <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Ir a la definición / a la definición del tipo |
+| <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Atrás / adelante |
+| <kbd>Shift</kbd>+<kbd>F12</kbd> | Buscar todas las referencias |
+| <kbd>F2</kbd> | Renombrar el símbolo |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Arreglos rápidos y refactorizaciones |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> | Organizar imports |
 | <kbd>Tab</kbd> | Sangrar con espacios |
 | <kbd>Enter</kbd> | Línea nueva manteniendo la sangría (un nivel más después de `:`) |
 | <kbd>Retroceso</kbd> | Dentro de la sangría, quitar un nivel |

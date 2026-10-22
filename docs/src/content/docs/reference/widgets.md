@@ -1598,6 +1598,9 @@ code_editor(
     backspace_unindent=True,
     repeat_delay=None,
     repeat_rate=None,
+    on_hover=None,
+    hover_delay=500.0,
+    sticky_scroll=0,
 )
 ```
 
@@ -1659,6 +1662,9 @@ For the themed editor use [`ui.editor`](/pyzed/components/code/).
 | `backspace_unindent` | With `tab_size`: Backspace in leading spaces removes a whole level (`False`: one space). |
 | `repeat_delay` | Milliseconds Backspace and Delete wait, held down, before repeating (`None`: the system's). |
 | `repeat_rate` | Deletions per second at most while Backspace or Delete is held down (`None`: the system's pace). |
+| `on_hover` | Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards). |
+| `hover_delay` | Milliseconds the mouse rests on a word before `on_hover` is called. |
+| `sticky_scroll` | How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none). |
 
 ## Styles
 

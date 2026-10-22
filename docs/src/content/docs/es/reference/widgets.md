@@ -1598,6 +1598,9 @@ code_editor(
     backspace_unindent=True,
     repeat_delay=None,
     repeat_rate=None,
+    on_hover=None,
+    hover_delay=500.0,
+    sticky_scroll=0,
 )
 ```
 
@@ -1659,6 +1662,9 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `backspace_unindent` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
 | `repeat_delay` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
 | `repeat_rate` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
+| `on_hover` | Función que recibe `{line, column, start, end, x, y, height}` (la palabra bajo el ratón, desde 1, y su lugar en el editor) cuando el ratón se detiene sobre ella, y `None` cuando se va (tarjetas de información). |
+| `hover_delay` | Milisegundos que el ratón debe quedarse sobre una palabra antes de llamar a `on_hover`. |
+| `sticky_scroll` | Cuántas líneas de los bloques que rodean al código visible (`class`, `def`, `if`…) quedan fijas arriba al desplazarse (`0`: ninguna). |
 
 ## Estilos
 

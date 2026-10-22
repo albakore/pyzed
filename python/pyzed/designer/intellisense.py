@@ -138,6 +138,133 @@ class Lens:
         return " · ".join(self.parts)
 
 
+@dataclass
+class Location:
+    """A place in a file: ``line`` and ``character`` are 0-based, as in LSP (UTF-16 characters)."""
+
+    path: Path
+    line: int
+    character: int = 0
+    end_line: Optional[int] = None
+    end_character: Optional[int] = None
+
+
+@dataclass
+class CodeAction:
+    """A fix or refactoring offered at the cursor (Ctrl+.)."""
+
+    title: str
+    kind: str = "quickfix"
+    #: The LSP ``WorkspaceEdit`` it makes (``None`` for designer actions, which run ``run``).
+    edit: Optional[Dict[str, Any]] = None
+    preferred: bool = False
+    #: A designer action (installing a missing package) instead of an edit.
+    run: Optional[Callable[[], Any]] = None
+
+
+def location_from_lsp(data: Any) -> Optional[Location]:
+    """A ``Location`` from an LSP ``Location`` or ``LocationLink`` (``None`` if it is not a file)."""
+    if not isinstance(data, dict):
+        return None
+    target = data.get("uri") or data.get("targetUri")
+    rng = data.get("range") or data.get("targetSelectionRange") or data.get("targetRange")
+    if not target or not str(target).startswith("file:") or not isinstance(rng, dict):
+        return None
+    start, end = rng.get("start") or {}, rng.get("end") or {}
+    return Location(lsp.path_of(target), int(start.get("line", 0)), int(start.get("character", 0)),
+                    end.get("line"), end.get("character"))
+
+
+def locations_from_lsp(result: Any) -> List[Location]:
+    """The locations of a definition or references answer (one location, a list, or ``None``)."""
+    items = result if isinstance(result, list) else [result] if result else []
+    return [loc for loc in (location_from_lsp(x) for x in items) if loc is not None]
+
+
+def hover_text(result: Any) -> str:
+    """The Markdown of an LSP hover answer (``MarkupContent``, a ``MarkedString`` or a list of them)."""
+    if not isinstance(result, dict):
+        return ""
+    contents = result.get("contents")
+    parts = contents if isinstance(contents, list) else [contents]
+    out = []
+    for part in parts:
+        if isinstance(part, str):
+            out.append(part)
+        elif isinstance(part, dict):
+            value = part.get("value") or ""
+            out.append(f"```{part['language']}\n{value}\n```" if part.get("language") else value)
+    text = "\n\n".join(x.strip() for x in out if x and x.strip())
+    # ty fences what is not Python (a module, a literal) as ``xml``; show it as Python like the rest.
+    return re.sub(r"```(?:xml|text)\n", "```python\n", text)
+
+
+def utf16_column(line: str, column: int) -> int:
+    """The LSP character (UTF-16, 0-based) of 1-based byte ``column`` in ``line``."""
+    head = line.encode("utf-8")[: max(column - 1, 0)].decode("utf-8", "ignore")
+    return len(head.encode("utf-16-le")) // 2
+
+
+def byte_column(line: str, character: int) -> int:
+    """The 1-based byte column of LSP character ``character`` (UTF-16, 0-based) in ``line``."""
+    units = 0
+    for i, ch in enumerate(line):
+        if units >= character:
+            return len(line[:i].encode("utf-8")) + 1
+        units += 2 if ord(ch) > 0xFFFF else 1
+    return len(line.encode("utf-8")) + 1
+
+
+def _char_index(line: str, character: int) -> int:
+    """The string index of LSP character ``character`` (UTF-16, 0-based) in ``line``."""
+    units = 0
+    for i, ch in enumerate(line):
+        if units >= character:
+            return i
+        units += 2 if ord(ch) > 0xFFFF else 1
+    return len(line)
+
+
+def edits_by_path(edit: Any) -> Dict[Path, List[Dict[str, Any]]]:
+    """The text edits of an LSP ``WorkspaceEdit`` by file (``changes`` or ``documentChanges``)."""
+    out: Dict[Path, List[Dict[str, Any]]] = {}
+    if not isinstance(edit, dict):
+        return out
+    for uri_, edits in (edit.get("changes") or {}).items():
+        out.setdefault(lsp.path_of(uri_), []).extend(e for e in edits if isinstance(e, dict))
+    for change in edit.get("documentChanges") or []:
+        if isinstance(change, dict) and isinstance(change.get("textDocument"), dict):
+            out.setdefault(lsp.path_of(change["textDocument"]["uri"]), []).extend(
+                e for e in change.get("edits") or [] if isinstance(e, dict))
+    return out
+
+
+#: Packages whose import name is not their name on PyPI.
+PACKAGES = {
+    "cv2": "opencv-python", "PIL": "pillow", "yaml": "pyyaml", "sklearn": "scikit-learn", "bs4": "beautifulsoup4",
+    "dateutil": "python-dateutil", "dotenv": "python-dotenv", "jwt": "pyjwt", "serial": "pyserial",
+    "usb": "pyusb", "magic": "python-magic", "docx": "python-docx", "pptx": "python-pptx", "fitz": "pymupdf",
+    "Crypto": "pycryptodome", "OpenGL": "pyopengl", "gi": "pygobject", "win32api": "pywin32",
+    "win32con": "pywin32", "attr": "attrs", "google.protobuf": "protobuf", "skimage": "scikit-image",
+    "pyzed": "pyzed-ui", "websocket": "websocket-client", "zmq": "pyzmq", "Levenshtein": "python-levenshtein",
+}
+
+_UNRESOLVED_IMPORT = re.compile(r"(?:Cannot resolve imported module|Import) [`'\"]([A-Za-z_][\w.]*)[`'\"]")
+
+
+def missing_package(diag: "Diagnostic") -> Optional[str]:
+    """The package to install for an unresolved ``import`` diagnostic (``None`` for other problems or
+    relative imports)."""
+    if diag.code not in ("unresolved-import", "reportMissingImports", "import-error") and \
+            "resolve imported module" not in diag.message:
+        return None
+    match = _UNRESOLVED_IMPORT.search(diag.message)
+    if match is None:
+        return None
+    module = match.group(1)
+    return PACKAGES.get(module) or PACKAGES.get(module.split(".")[0]) or module.split(".")[0].replace("_", "-")
+
+
 def item_from_lsp(data: Dict[str, Any]) -> CompletionItem:
     """Builds a ``CompletionItem`` from an LSP completion item ``data`` (documentation, details, insert text
     from a ``textEdit`` and the extra edits of auto-imports)."""
@@ -232,8 +359,9 @@ def apply_edits(text: str, edits: Sequence[Dict[str, Any]], line_offset: int = 0
     def index(pos: Dict[str, int]) -> int:
         line = min(max(pos["line"] - line_offset, 0), len(lines))
         before = sum(len(x) + 1 for x in lines[:line])
-        width = len(lines[line]) if line < len(lines) else 0
-        return before + min(pos["character"], width)
+        if line >= len(lines):
+            return before
+        return before + _char_index(lines[line], pos["character"])
 
     ordered = sorted(edits, key=lambda e: (e["range"]["start"]["line"], e["range"]["start"]["character"]),
                      reverse=True)
@@ -310,6 +438,19 @@ def designer_completions(form: Optional[Form], line: str, column: int) -> Option
     return items
 
 
+def designer_hover(form: Optional[Form], line: str, start: int, end: int) -> str:
+    """The hover text of what only the designer knows: ``form.<control>``, a control's properties and
+    ``event.`` fields (``start``/``end`` are the word's 1-based columns); ``""`` for anything else."""
+    word = line[start - 1: end - 1]
+    items = designer_completions(form, line[: end - 1], end)
+    item = next((i for i in items or [] if i.label == word), None)
+    if item is None:
+        return ""
+    kind = {"control": "control", "method": "method", "property": "property"}.get(item.kind, item.kind)
+    head = f"```python\n({kind}) {word}: {item.detail}\n```" if item.detail else f"`{word}`"
+    return f"{head}\n\n{item.documentation}" if item.documentation else head
+
+
 def _prop_type(prop: Any) -> str:
     kind = getattr(prop, "kind", "")
     return {"text": "str", "multiline": "str", "number": "float", "bool": "bool", "color": "str (color)",
@@ -346,6 +487,9 @@ class CodeIntel:
         self.lenses: List[Lens] = []
         self._lens_timer: Optional[threading.Timer] = None
         self._generation = 0
+        self._lines: Optional[List[str]] = None
+        #: ``Environment.stamp()`` when the servers started (``refresh_environment`` compares it).
+        self._stamp: Optional[Tuple[float, ...]] = None
 
     # -- servers ------------------------------------------------------------
     def attach(self, file: Path) -> None:
@@ -363,6 +507,7 @@ class CodeIntel:
             return
         self.shutdown()
         self.env = env
+        self._stamp = env.stamp()
         self._sync_enabled()
 
     def _sync_enabled(self) -> None:
@@ -439,6 +584,7 @@ class CodeIntel:
         if text == self.text:
             return
         self.text = text
+        self._lines = None
         self._generation += 1
         if self.uri is None:
             return
@@ -498,11 +644,129 @@ class CodeIntel:
 
         id_ = server.request("textDocument/completion", {
             "textDocument": {"uri": self.uri},
-            "position": {"line": line - 1 + self.offset, "character": column - 1},
+            "position": self.position(line, column),
             "context": {"triggerKind": 1},
         }, done)
         self._completion = (server, id_) if id_ is not None else None
         return id_ is not None
+
+    # -- positions ----------------------------------------------------------
+    def _file_line(self, index: int) -> str:
+        """Line ``index`` (0-based) of the document sent to the servers."""
+        if self._lines is None:
+            self._lines = self.text.split("\n")
+        return self._lines[index] if 0 <= index < len(self._lines) else ""
+
+    def position(self, line: int, column: int) -> Dict[str, int]:
+        """The LSP position (0-based, UTF-16) of an editor position (1-based line and byte column)."""
+        index = line - 1 + self.offset
+        return {"line": index, "character": utf16_column(self._file_line(index), column)}
+
+    def editor_position(self, line: int, character: int) -> Optional[Tuple[int, int]]:
+        """The editor position (1-based line and byte column) of an LSP position in the document, or ``None``
+        when it is outside the text the editor shows."""
+        editor_line = line - self.offset + 1
+        if not 1 <= editor_line <= self.length:
+            return None
+        return editor_line, byte_column(self._file_line(line), character)
+
+    def _ask(self, name: str, capability: str, method: str, params: Dict[str, Any],
+             callback: Callable[[Any], None]) -> bool:
+        """Sends ``method`` to server ``name`` if it is ready and offers ``capability``; ``False`` otherwise."""
+        server = self.servers.get(name)
+        if server is None or not server.ready or not server.supports(capability) or self.uri is None:
+            return False
+        return server.request(method, params, callback) is not None
+
+    # -- navigation, hover and refactoring ----------------------------------------
+    def hover(self, line: int, column: int, callback: Callable[[str], None]) -> bool:
+        """Asks ty what is at an editor position; ``callback(markdown)`` (``""`` when there is nothing)."""
+        generation = self._generation
+        return self._ask("ty", "hoverProvider", "textDocument/hover", {
+            "textDocument": {"uri": self.uri}, "position": self.position(line, column),
+        }, lambda result: callback(hover_text(result) if generation == self._generation else ""))
+
+    def definition(self, line: int, column: int, callback: Callable[[List[Location]], None], *,
+                   kind: str = "definition") -> bool:
+        """Asks ty where the symbol at an editor position is defined (``kind="typeDefinition"``: its type);
+        ``callback(locations)``."""
+        capability = "typeDefinitionProvider" if kind == "typeDefinition" else "definitionProvider"
+        return self._ask("ty", capability, f"textDocument/{kind}", {
+            "textDocument": {"uri": self.uri}, "position": self.position(line, column),
+        }, lambda result: callback(locations_from_lsp(result)))
+
+    def references(self, line: int, column: int, callback: Callable[[List[Location]], None]) -> bool:
+        """Asks ty for every use of the symbol at an editor position (with its definition)."""
+        return self._ask("ty", "referencesProvider", "textDocument/references", {
+            "textDocument": {"uri": self.uri}, "position": self.position(line, column),
+            "context": {"includeDeclaration": True},
+        }, lambda result: callback(locations_from_lsp(result)))
+
+    def rename(self, line: int, column: int, new_name: str, callback: Callable[[Optional[Dict[str, Any]]], None]) -> bool:
+        """Asks ty for the edits that rename the symbol at an editor position to ``new_name`` (its
+        ``WorkspaceEdit``, ``None`` when it cannot be renamed)."""
+        return self._ask("ty", "renameProvider", "textDocument/rename", {
+            "textDocument": {"uri": self.uri}, "position": self.position(line, column), "newName": new_name,
+        }, lambda result: callback(result if isinstance(result, dict) else None))
+
+    def code_actions(self, line: int, end_line: int, callback: Callable[[List[CodeAction]], None]) -> bool:
+        """Asks ruff and ty for the fixes and refactorings of editor lines ``line``..``end_line``;
+        ``callback`` runs once with all of them."""
+        first, last = line - 1 + self.offset, end_line - 1 + self.offset
+        rng = {"start": {"line": first, "character": 0},
+               "end": {"line": last, "character": len(self._file_line(last).encode("utf-16-le")) // 2}}
+        names = [n for n, srv in self.servers.items() if srv.ready and srv.supports("codeActionProvider")]
+        if not names or self.uri is None:
+            return False
+        answers: Dict[str, List[CodeAction]] = {}
+
+        def done(name: str, result: Any) -> Any:
+            actions = []
+            for item in result or []:
+                if not isinstance(item, dict) or item.get("disabled"):
+                    continue
+                if "edit" not in item and "command" in item and "title" not in item:
+                    continue
+                if not item.get("edit"):
+                    continue  # commands run on the server are not supported
+                actions.append(CodeAction(item.get("title", ""), item.get("kind") or "quickfix", item["edit"],
+                                          bool(item.get("isPreferred"))))
+            answers[name] = actions
+            if len(answers) == len(names):
+                ordered = [a for n in names for a in answers[n]]
+                ordered.sort(key=lambda a: (not a.kind.startswith("quickfix"), not a.preferred))
+                return callback(ordered)
+            return None
+
+        for name in names:
+            diagnostics = [d for d in self._raw.get(name, [])
+                           if d["range"]["start"]["line"] <= last and d["range"]["end"]["line"] >= first]
+            self.servers[name].request("textDocument/codeAction", {
+                "textDocument": {"uri": self.uri}, "range": rng, "context": {"diagnostics": diagnostics},
+            }, lambda result, name=name: done(name, result))
+        return True
+
+    # -- the environment ----------------------------------------------------
+    def refresh_environment(self) -> bool:
+        """Restarts the servers when the project's packages changed since they started (a package was
+        added or synced); returns whether they restarted."""
+        if self.env is None or self._stamp is None:
+            return False
+        stamp = self.env.stamp()
+        if stamp == self._stamp:
+            return False
+        if self.file is not None:
+            env = lsp.find_environment(self.file)
+            if env.root != self.env.root or env.venv != self.env.venv or env.fallback != self.env.fallback:
+                self.shutdown()
+            self.env = env
+        self._stamp = self.env.stamp()
+        for name, server in list(self.servers.items()):
+            server.stop()
+            del self.servers[name]
+            self._raw.pop(name, None)
+        self._sync_enabled()
+        return True
 
     # -- code lens ----------------------------------------------------------
     def _schedule_lenses(self, delay: float = 0.6) -> None:
@@ -513,6 +777,10 @@ class CodeIntel:
         self._lens_timer = threading.Timer(delay, lambda: self.dispatch(self.refresh_lenses))
         self._lens_timer.daemon = True
         self._lens_timer.start()
+
+    def use_form(self, form: Optional[Form]) -> None:
+        """Sets the form whose wiring the code lenses show (``None`` for a file that is not a form's code)."""
+        self._form = form
 
     def refresh_lenses(self, form: Optional[Form] = None) -> None:
         """Recomputes the lenses of the definitions in the editor: references, implementations, wiring."""
@@ -673,7 +941,8 @@ def format_code(source: str, env: Optional[lsp.Environment]) -> Optional[str]:
 
 
 __all__ = [
-    "CodeIntel", "CompletionItem", "Diagnostic", "Lens", "KIND_STYLE", "apply_completion", "compose",
-    "definitions", "designer_completions", "filter_items", "format_code", "should_complete", "word_before",
+    "CodeAction", "CodeIntel", "CompletionItem", "Diagnostic", "Lens", "Location", "KIND_STYLE", "apply_completion",
+    "byte_column", "compose", "definitions", "designer_completions", "designer_hover", "edits_by_path", "filter_items", "format_code",
+    "hover_text", "locations_from_lsp", "missing_package", "should_complete", "utf16_column", "word_before",
     "wired_to",
 ]

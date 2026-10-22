@@ -177,9 +177,13 @@ SETTINGS: Tuple[Setting, ...] = (
             "Off: long lines scroll sideways (Shift+wheel). Alt+Z toggles it"),
     Setting("editor", "scrollbar", "editor.scrolling", "Scrollbars"),
     Setting("editor", "minimap", "editor.scrolling", "Minimap", "Click or drag it to scroll"),
+    Setting("editor", "sticky_scroll", "editor.scrolling", "Sticky scroll",
+            "Keeps the class and def you are scrolling through at the top; click one to go there"),
     Setting("editor", "code_lens", "editor.diagnostics", "Code lens", "References, implementations and wired events"),
     Setting("editor", "inline_diagnostics", "editor.diagnostics", "Inline diagnostics",
             "Problems at the end of the line"),
+    Setting("editor", "hover", "editor.diagnostics", "Information on hover",
+            "Resting the mouse on a name shows what it is, its documentation and its problems"),
     Setting("editor", "ty", "editor.servers", "ty", "Types, completion and references"),
     Setting("editor", "ruff", "editor.servers", "ruff", "Linting"),
 )

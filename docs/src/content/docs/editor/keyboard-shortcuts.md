@@ -82,6 +82,8 @@ the code editor keeps it while you type; click the canvas again to get the canva
 | Drag an outline row | Reorder, or move into another container |
 | Drag the grip under the form | Resize the form |
 | <kbd>Ctrl</kbd>+wheel in the code editor | Font size |
+| <kbd>Ctrl</kbd>+click in the code editor | Go to the definition |
+| Rest the mouse on a name in the code editor | Its type, documentation and problems |
 
 ## Lists, palettes and dialogs
 
@@ -119,6 +121,12 @@ After a click in the [Project tab](/pyzed/editor/projects/#files)'s tree:
 | <kbd>Page Up</kbd> / <kbd>Page Down</kbd> | Move nine rows in the list, or a page in the code |
 | <kbd>Enter</kbd>, <kbd>Tab</kbd> | Accept the completion |
 | <kbd>Esc</kbd> | Close the completion list |
+| <kbd>F12</kbd> / <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Go to the definition / the type's definition |
+| <kbd>Alt</kbd>+<kbd>←</kbd> / <kbd>→</kbd> | Go back / forward |
+| <kbd>Shift</kbd>+<kbd>F12</kbd> | Find all references |
+| <kbd>F2</kbd> | Rename the symbol |
+| <kbd>Ctrl</kbd>+<kbd>.</kbd> | Quick fixes and refactorings |
+| <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> | Organize imports |
 | <kbd>Tab</kbd> | Indent with spaces |
 | <kbd>Enter</kbd> | New line, keeping the indentation (one level more after `:`) |
 | <kbd>Backspace</kbd> | In the indentation, remove one level |

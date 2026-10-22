@@ -114,6 +114,10 @@ pub enum Message {
         y: f32,
     },
     Scrolled(PyMsg, scrollable::Viewport),
+    /// The mouse rests on a word of a code editor (`None`: it left the word).
+    Hover(PyMsg, Option<crate::editor::Hit>),
+    /// A code editor laid out for the first time with its cursor set: scroll the cursor into view.
+    EditorReveal(Arc<str>),
     Key(String),
     /// A key was released (its name without modifiers, e.g. `"left"`).
     KeyUp(String),
@@ -1453,7 +1457,14 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 let Some(outcome) = state.caches.perform_editor(&id, action) else {
                     return Task::none();
                 };
-                return editor_outcome(py, state, &target, outcome, on_change, on_cursor);
+                // Ctrl+click names an action (go to definition) for `on_action`.
+                let on_action = outcome
+                    .action
+                    .and_then(|_| state.caches.editor_context(&id))
+                    .and_then(|ctx| ctx.on_action.clone());
+                return editor_outcome_with(
+                    py, state, &target, outcome, on_change, on_cursor, on_action,
+                );
             }
             Message::EditorIndent {
                 id,
@@ -1499,6 +1510,7 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                 let ctx = (*ctx).clone();
                 return editor_outcome(py, state, &target, outcome, ctx.on_change, ctx.on_cursor);
             }
+            Message::EditorReveal(id) => return state.caches.center_editor(&id),
             Message::EditorScroll { id, y } => {
                 return iced::widget::operation::scroll_to(
                     id,
@@ -1533,6 +1545,20 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     }
                 };
             }
+            Message::Hover(cb, hit) => match hit {
+                Some(hit) => {
+                    let info = PyDict::new(py);
+                    let _ = info.set_item("line", hit.line + 1);
+                    let _ = info.set_item("column", hit.column + 1);
+                    let _ = info.set_item("start", hit.start + 1);
+                    let _ = info.set_item("end", hit.end + 1);
+                    let _ = info.set_item("x", hit.x);
+                    let _ = info.set_item("y", hit.y);
+                    let _ = info.set_item("height", hit.height);
+                    callback(&target, cb.0.bind(py), (info,))
+                }
+                None => callback(&target, cb.0.bind(py), (py.None(),)),
+            },
             Message::Scrolled(cb, viewport) => {
                 let info = PyDict::new(py);
                 let offset = viewport.absolute_offset();

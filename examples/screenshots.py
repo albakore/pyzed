@@ -410,6 +410,19 @@ def code_editor_shots(scale):
     _wait(lambda: all(lens.parts and "reference" in lens.parts[0] for lens in intel.lenses), 5)
     app.screenshot(OUT / "designer-diagnostics.png", size=(1440, 900), scale=scale)
 
+    # The hover card of re.fullmatch (the editor sends where the mouse rests; here, the word's place).
+    a = app.assist
+    width = a.settings.font_size * 0.6
+    bottom = app.layout.sizes.get("bottom")
+    app.layout.sizes["bottom"] = 560
+    app.assist.hovered({"line": 4, "column": 16, "start": 15, "end": 24, "x": 56 + 14 * width,
+                        "y": 3 * a.line_height + 4, "height": a.line_height})
+    _wait(lambda: a.hover is None or not a.hover.loading)
+    app.screenshot(OUT / "designer-code-hover.png", size=(1440, 900), scale=scale)
+    a.hovered(None)
+    if bottom is not None:
+        app.layout.sizes["bottom"] = bottom
+
     # The whole file with two handlers folded and the minimap.
     app.edit_whole_file()
     lines = app.editing[1].split("\n")

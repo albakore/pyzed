@@ -441,7 +441,7 @@
   {
    "slug": "editor/code-editor",
    "title": "Code editor",
-   "description": "The Python code editor inside Pyzed Design: completion, diagnostics, code lens, folding, minimap, ty and ruff language servers, keys and settings.",
+   "description": "The Python code editor inside Pyzed Design: completion, hover, go to definition, rename, quick fixes, diagnostics, code lens, sticky scroll, folding, minimap, ty and ruff language servers, keys and settings.",
    "path": "docs/src/content/docs/editor/code-editor.md"
   },
   {
@@ -4023,7 +4023,10 @@
      "selection_highlight": "Highlights the other occurrences of the selected text.",
      "keymap": "Zed-style `{binding: action}` dict; `None` as the action removes a default key (`pyzed.ui.editor.keymap_for` builds one from per-action overrides).",
      "scrollbar": "`False` hides the scrollbars.",
-     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
+     "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
+     "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
     }
    },
    "pyzed.Style": {
@@ -5141,7 +5144,10 @@
      "selection_highlight": "Highlights the other occurrences of the selected text (Ctrl+D adds the next one as a cursor).",
      "keymap": "Zed-style `{binding: action}` dict (`{\"ctrl-shift-d\": \"duplicate_line_down\"}`); `None` as the action removes a default key. Build it from per-action overrides with `pyzed.ui.editor.keymap_for`.",
      "scrollbar": "`False` hides the scrollbars.",
-     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback)."
+     "readonly": "`True` lets the text be selected and copied but not changed (a log, a traceback).",
+     "on_hover": "Callable that receives `{line, column, start, end, x, y, height}` (the word under the mouse, from 1, and its place in the editor) after the mouse rests on it, and `None` when it leaves (hover cards).",
+     "hover_delay": "Milliseconds the mouse rests on a word before `on_hover` is called.",
+     "sticky_scroll": "How many lines of the enclosing blocks (`class`, `def`, `if`…) stay pinned at the top while scrolling (`0`: none)."
     }
    },
    "pyzed.ui.language_token": {

@@ -688,6 +688,19 @@ class Document:
                 self.code = self.code.replace("\n\n\n\n", "\n\n\n")
         self.commit()
 
+    def rename_handler(self, old: str, new: str) -> bool:
+        """Points the events wired to handler ``old`` at ``new`` (after its function was renamed in the code);
+        returns whether any event used it."""
+        changed = False
+        for events in (self.form.events, *(c.events for c in self.form.controls)):
+            for event, handler in list(events.items()):
+                if handler == old:
+                    events[event] = new
+                    changed = True
+        if changed:
+            self.commit()
+        return changed
+
     def handler_source(self, handler: str) -> str:
         """Returns the source of ``handler`` in the code, or a new stub if it is not there yet."""
         return _code.get_function(self.code, handler) or _code.stub(handler)

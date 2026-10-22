@@ -43,6 +43,9 @@ class Environment:
     venv: Optional[Path] = None
     #: Extra folders searched for first-party imports (the form's own folder, ``src/``...).
     extra_paths: List[Path] = field(default_factory=list)
+    #: Where packages are looked up when there is no venv: the designer's own Python, so ``import pyzed``
+    #: (and what the designer has installed) still resolves in a form that is not in a project.
+    fallback: Optional[str] = None
 
     @property
     def python(self) -> str:
@@ -77,7 +80,23 @@ class Environment:
         env: Dict[str, Any] = {"extra-paths": [str(p) for p in self.extra_paths]}
         if self.venv is not None:
             env["python"] = str(self.venv)
+        elif self.fallback is not None:
+            env["python"] = self.fallback
         return {"environment": env}
+
+    def stamp(self) -> Tuple[float, ...]:
+        """When the project's packages last changed (``pyproject.toml``, ``uv.lock`` and the venv's
+        site-packages): servers restart when it differs, so a package just added resolves."""
+        paths = [self.root / "pyproject.toml", self.root / "uv.lock"]
+        if self.venv is not None:
+            paths += sorted(self.venv.glob("lib/python*/site-packages")) or [self.venv / "Lib" / "site-packages"]
+        out = []
+        for path in paths:
+            try:
+                out.append(path.stat().st_mtime)
+            except OSError:
+                out.append(0.0)
+        return tuple(out)
 
 
 def find_root(start: Path) -> Path:
@@ -110,7 +129,21 @@ def find_environment(path: Optional[Path]) -> Environment:
     extra = [folder] if folder != root else []
     if (root / "src").is_dir():
         extra.append(root / "src")
-    return Environment(root=root, venv=venv, extra_paths=extra)
+    env = Environment(root=root, venv=venv, extra_paths=extra)
+    if venv is None:
+        designer_fallback(env)
+    return env
+
+
+def designer_fallback(env: Environment) -> None:
+    """Lets a form without a venv resolve ``pyzed`` and the designer's packages: ty gets the designer's
+    Python, or (in the compiled app, which has none) the folder its packages are bundled in."""
+    if getattr(sys, "frozen", False):
+        bundle = Path(__file__).resolve().parent.parent.parent
+        if bundle not in env.extra_paths:
+            env.extra_paths.append(bundle)
+    else:
+        env.fallback = sys.prefix
 
 
 def _pyzed_project(folder: Path) -> Optional[Environment]:
@@ -131,7 +164,11 @@ def _pyzed_project(folder: Path) -> Optional[Environment]:
         paths = [Path(p) for p in proj.paths() if Path(p) != root]
         if folder != root and folder not in paths:
             paths.insert(0, folder)
-        return Environment(root=root, venv=venv, extra_paths=paths)
+        env = Environment(root=root, venv=venv if venv is not None and (venv / "pyvenv.cfg").exists() else None,
+                          extra_paths=paths)
+        if env.venv is None:  # not synced yet
+            designer_fallback(env)
+        return env
     except Exception:  # noqa: BLE001 - fall back to our own detection
         return None
 
@@ -173,12 +210,21 @@ CLIENT_CAPABILITIES: Dict[str, Any] = {
         "hover": {"contentFormat": ["markdown", "plaintext"]},
         "publishDiagnostics": {"relatedInformation": False, "codeDescriptionSupport": True},
         "references": {},
-        "definition": {},
+        "definition": {"linkSupport": False},
+        "typeDefinition": {"linkSupport": False},
+        "rename": {"prepareSupport": True},
+        "codeAction": {
+            "codeActionLiteralSupport": {"codeActionKind": {"valueSet": [
+                "", "quickfix", "refactor", "refactor.extract", "refactor.inline", "refactor.rewrite", "source",
+                "source.organizeImports", "source.fixAll"]}},
+            "isPreferredSupport": True,
+        },
+        "signatureHelp": {"signatureInformation": {"documentationFormat": ["markdown", "plaintext"]}},
         "implementation": {},
         "documentSymbol": {"hierarchicalDocumentSymbolSupport": True},
         "codeLens": {},
     },
-    "workspace": {"configuration": True, "workspaceFolders": True},
+    "workspace": {"configuration": True, "workspaceFolders": True, "workspaceEdit": {"documentChanges": True}},
     "window": {"workDoneProgress": False},
 }
 

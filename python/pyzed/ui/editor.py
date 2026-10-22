@@ -161,6 +161,9 @@ def editor(
     keymap: Optional[Mapping[str, Optional[str]]] = None,
     scrollbar: bool = True,
     readonly: bool = False,
+    on_hover: Any = None,
+    hover_delay: float = 500,
+    sticky_scroll: int = 0,
     theme: Optional[Theme] = None,
 ) -> _core.Widget:
     """A Zed-styled code editor.
@@ -229,6 +232,16 @@ def editor(
 ``readonly=True`` lets the text be selected and copied (mouse, Shift+arrows, Ctrl+A, Ctrl+C) but not changed:
 a log, a traceback or generated code to look at.
 
+    IDE features, for an app that talks to a language server:
+
+    - ``on_hover(info)`` is called when the mouse rests on a word for ``hover_delay`` milliseconds, with
+      its ``line``, ``column``, ``start`` and ``end`` (1-based byte columns) and where it is drawn (``x``,
+      ``y`` and ``height``, relative to the editor) to place a popup; and with ``None`` when the mouse
+      leaves the word (after a moment, so it can reach the popup), types, clicks or scrolls.
+    - Ctrl+click (Cmd+click) moves the cursor and calls ``on_action("go_to_definition")``.
+    - ``sticky_scroll=5`` pins up to five headers of the blocks around the first visible line (the
+      ``class`` and ``def`` you are scrolling through) to the top; a click on one jumps to it.
+
     ``font`` is the typeface (``"mono"`` by default; ``"sans"`` makes a multi-line text box, like a
     chat message box). Shift+Enter always breaks the line, even with ``"enter"`` in ``capture_keys``.
 
@@ -240,6 +253,7 @@ a log, a traceback or generated code to look at.
             Ctrl+wheel.
         ``on_action(name)``: Callable that receives the name of each editor action that runs (``"undo"``,
             ``"select_next"``…), e.g. to count them.
+        ``on_hover(info)``: Callable that receives the word the mouse rests on (a dict), or ``None``.
     """
     t = _theme(theme)
     size = font_size or t.buffer_font_size
@@ -293,6 +307,9 @@ a log, a traceback or generated code to look at.
         keymap=dict(keymap) if keymap else None,
         scrollbar=scrollbar,
         readonly=readonly,
+        on_hover=on_hover,
+        hover_delay=hover_delay,
+        sticky_scroll=sticky_scroll,
     )
 
 

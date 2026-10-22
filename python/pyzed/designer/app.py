@@ -1825,6 +1825,22 @@ class Designer(App):
         if self.editing is not None:
             self.buffers.select(None)
 
+    def edit_code(self, handler: str) -> bool:
+        """Shows function ``handler`` of the form's code (``"*"``: the whole file) in the code editor; ``False``
+        if the code open now does not parse."""
+        if not self._flush_code():
+            return False
+        self.buffers.active = None
+        self.editing = (handler, self.doc.code if handler == "*" else self.doc.handler_source(handler))
+        if handler != "*":
+            self.last_handler = handler
+        self.code_revision += 1
+        self.code_error = None
+        self.layout.show("code")
+        self.focus = "code"
+        self.assist.opened()
+        return True
+
     def edit_whole_file(self) -> None:
         """Opens the form's whole code file in the code editor (F7)."""
         if self._flush_code():
