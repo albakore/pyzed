@@ -112,6 +112,41 @@ def test_dependencies_tab_needs_a_project(tmp_path, monkeypatch):
     assert d.view() is not None and docks.PANELS["dependencies"].view(d, d.theme_obj) is not None
 
 
+
+def test_dependencies_tab_follows_changes_and_warns(tmp_path, monkeypatch):
+    monkeypatch.setattr(project, "editor_version", lambda: "1.7.0")
+    root = _project_dir(tmp_path)
+    (root / "pyproject.toml").write_text('[project]\nname = "shop"\nversion = "0.1.0"\ndependencies = ["pyzed-ui>=1.2"]'
+                                         '\n\n[tool.pyzed]\nui = "ui"\n')
+    (root / "uv.lock").write_text('version = 1\n\n[[package]]\nname = "pyzed-ui"\nversion = "1.2.0"\n')
+    d = Designer(language_servers=False)
+    p = d.projects
+    p.attach(project.Project.open(root))
+    assert [x.kind for x in p.problems] == ["pyzed-old", "no-environment"]
+    assert any("pyzed-ui 1.2.0" in toast.title for toast in d.toasts)
+    d.left_tab = "dependencies"
+    d.layout.show("dependencies")
+    assert docks.PANELS["dependencies"].view(d, d.theme_obj) is not None
+    fixes = []
+    monkeypatch.setattr(project.Project, "update_pyzed", lambda self: fixes.append("pyzed"))
+    monkeypatch.setattr(project.Project, "sync", lambda self: fixes.append("sync"))
+    monkeypatch.setattr(p, "_uv", lambda label, work: work(p.project))  # runs it here instead of in the background
+    p.fix(p.problems[0])
+    p.fix(p.problems[1])
+    assert fixes == ["pyzed", "sync"]
+    p.latest = {"pyzed-ui": "1.7.0"}
+    # something else (a terminal, the agent) upgrades it: the tab reads it again
+    (root / "uv.lock").write_text('version = 1\n\n[[package]]\nname = "pyzed-ui"\nversion = "1.7.0"\n')
+    site = root / ".venv" / "lib" / "python3.12" / "site-packages"
+    site.mkdir(parents=True)
+    (site / "pyzed_ui-1.7.0.dist-info").mkdir()
+    p.poll(force=True)
+    assert p.problems == [] and p.latest == {} and p.deps[0].installed == "1.7.0"
+    p.problems = [project.Problem("not-installed", "x")]
+    p.dismiss_problems()
+    assert p.shown_problems == []
+
+
 def test_go_to_file(tmp_path, monkeypatch):
     d = _designer(tmp_path)
     opened = []

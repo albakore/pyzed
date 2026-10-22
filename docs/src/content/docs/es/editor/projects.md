@@ -224,6 +224,25 @@ no caben, los paneles que no se muestran se quedan solo con su icono).
 
 Las dependencias de otros grupos muestran su grupo como insignia.
 
+Cada fila muestra la versión instalada en `.venv`. Se pone amarilla cuando no es la que dice `uv.lock` (pasa el ratón
+para ver las dos): pulsa **Recargar** (`uv sync`). El panel vuelve a leer `pyproject.toml`, `uv.lock` y `.venv` solo
+cuando otra cosa los cambia, como `uv add` en una terminal o el agente.
+
+### Avisos
+
+Cuando un proyecto no puede ejecutarse como espera el editor, un recuadro amarillo arriba de los paneles **Proyecto**
+y **Dependencias** dice por qué, y al abrir el proyecto también sale como notificación:
+
+- **El proyecto usa pyzed-ui 1.2.0** y el editor es más nuevo: los formularios que usan controles o propiedades
+  añadidos después no funcionan. **Actualizar pyzed-ui** sube su versión a la del editor
+  (`uv add "pyzed-ui>=<versión del editor>"`, que bloquea y sincroniza); si esa versión aún no está publicada, lo
+  actualiza hasta la última de PyPI.
+- **pyzed-ui no es una dependencia** de un proyecto de Pyzed: el mismo botón lo añade.
+- **El entorno no está creado** o hay paquetes **sin instalar como dice uv.lock**: **Sincronizar** ejecuta `uv sync`.
+
+La **×** oculta el recuadro hasta que se vuelva a abrir el proyecto. Un proyecto que toma `pyzed-ui` de una copia local
+(`[tool.uv.sources]`) no se compara con la versión del editor.
+
 ### Herramientas
 
 uv, git, ruff y ty con la versión encontrada, o una insignia roja **missing**. Debajo:

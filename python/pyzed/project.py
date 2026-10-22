@@ -399,6 +399,7 @@ class Dependency:
     group: str = "main"  # "main" for [project.dependencies], else the dependency group ("dev", ...)
     locked: Optional[str] = None
     latest: Optional[str] = None  # filled by ``Project.outdated()``
+    installed: Optional[str] = None  # the version in ``.venv`` (``None`` when it is not installed there)
 
     @property
     def dev(self) -> bool:
@@ -409,6 +410,41 @@ class Dependency:
     def outdated(self) -> bool:
         """Whether a newer release than the locked version is known."""
         return bool(self.latest and self.locked and self.latest != self.locked)
+
+
+@dataclass
+class Problem:
+    """Something in a project's dependencies that keeps it from running as this Pyzed expects.
+
+    ``title`` and ``detail`` are English templates filled from ``values`` (a UI can translate them first);
+    ``kind`` is ``"pyzed-missing"``, ``"pyzed-old"``, ``"no-environment"`` or ``"not-installed"``.
+    """
+
+    kind: str
+    title: str
+    detail: str = ""
+    values: Dict[str, str] = field(default_factory=dict)
+
+    @property
+    def message(self) -> str:
+        """``title`` and ``detail`` with their values, in English."""
+        return " ".join(x.format(**self.values) for x in (self.title, self.detail) if x)
+
+
+def editor_version() -> str:
+    """The version of the running Pyzed (``"0+unknown"`` in a source tree without metadata)."""
+    from . import __version__
+
+    return str(__version__)
+
+
+def is_older(version: str, than: str) -> bool:
+    """Whether ``version`` is an older release than ``than`` (``False`` when either is unknown)."""
+    from .updater import is_newer
+
+    if not version or not than or than.startswith("0+"):
+        return False
+    return is_newer(than, version)
 
 
 # -- projects ---------------------------------------------------------------------------
@@ -654,9 +690,37 @@ class Project:
         found = re.findall(r'^\[\[package\]\]\s*\nname = "([^"]+)"\s*\nversion = "([^"]+)"', text, re.M)
         return {normalize(n): v for n, v in found}
 
+    def installed_versions(self) -> Dict[str, str]:
+        """``{normalized name: version}`` of the packages installed in ``.venv`` (read from its ``*.dist-info``
+        folders; empty before the first ``uv sync``)."""
+        packages = self.site_packages()
+        try:
+            entries = os.listdir(packages) if packages is not None else []
+        except OSError:
+            return {}
+        found: Dict[str, str] = {}
+        for entry in entries:
+            if entry.endswith(".dist-info"):
+                name, _, version = entry[:-len(".dist-info")].partition("-")
+                if version:
+                    found[normalize(name)] = version
+        return found
+
+    def stamp(self) -> tuple:
+        """When ``pyproject.toml``, ``uv.lock`` and the packages of ``.venv`` last changed: compare two stamps
+        to notice that something else (a terminal, the agent) added, removed or upgraded a package."""
+        stamps = []
+        for path in (self.root / PYPROJECT, self.root / "uv.lock", self.site_packages() or self.venv):
+            try:
+                stamps.append(path.stat().st_mtime_ns)
+            except OSError:
+                stamps.append(None)
+        return tuple(stamps)
+
     def dependencies(self) -> List[Dependency]:
         """Direct dependencies: ``[project.dependencies]`` then each ``[dependency-groups]`` table."""
         locked = self.locked_versions()
+        installed = self.installed_versions()
         groups: List[tuple] = [("main", self.data.get("project", {}).get("dependencies", []))]
         groups += list(self.data.get("dependency-groups", {}).items())
         legacy = self.data.get("tool", {}).get("uv", {}).get("dev-dependencies", [])
@@ -668,8 +732,60 @@ class Project:
                 if not isinstance(spec, str):
                     continue  # {include-group = "..."}
                 name = requirement_name(spec)
-                deps.append(Dependency(name, spec, group, locked.get(normalize(name))))
+                key = normalize(name)
+                deps.append(Dependency(name, spec, group, locked.get(key), installed=installed.get(key)))
         return deps
+
+    @property
+    def pyzed_from_source(self) -> bool:
+        """Whether ``pyzed-ui`` comes from a local checkout (``[tool.uv.sources]``) rather than a release."""
+        sources = self.data.get("tool", {}).get("uv", {}).get("sources", {})
+        return isinstance(sources, dict) and any(normalize(k) == PACKAGE for k in sources)
+
+    def problems(self, editor: Optional[str] = None) -> List[Problem]:
+        """What keeps the project from running with the Pyzed ``editor`` (default: this one): ``pyzed-ui``
+        missing or older than it, no ``.venv`` yet, or packages not installed as ``uv.lock`` says.
+
+        Only reads files, so it is cheap enough for the UI thread; ``update_pyzed`` and ``sync`` fix them.
+        """
+        editor = editor or editor_version()
+        deps = self.dependencies()
+        found: List[Problem] = []
+        pyzed = next((d for d in deps if normalize(d.name) == PACKAGE and d.group == "main"), None)
+        if not self.pyzed_from_source:
+            if pyzed is None and self.is_pyzed:
+                found.append(Problem("pyzed-missing", "pyzed-ui is not a dependency of the project",
+                                     "Its forms need it to run outside the editor."))
+            elif pyzed is not None:
+                have = pyzed.installed or pyzed.locked
+                if have and is_older(have, editor):
+                    found.append(Problem("pyzed-old", "The project uses pyzed-ui {have}",
+                                         "The editor is {editor}: controls and properties added since may not run. "
+                                         "Update it to the editor's version.", {"have": have, "editor": editor}))
+        if not self.venv.is_dir():
+            found.append(Problem("no-environment", "The project's environment is not created",
+                                 "Sync creates .venv with the packages of uv.lock."))
+        else:
+            stale = [d.name for d in deps if d.group in ("main", "dev") and ";" not in d.spec  # no platform markers
+                     and (d.installed is None or (d.locked is not None and d.installed != d.locked))]
+            if stale:
+                found.append(Problem("not-installed", "Not installed as uv.lock says: {names}",
+                                     "Sync the environment to install them.",
+                                     {"count": str(len(stale)), "names": ", ".join(stale)}))
+        return found
+
+    def update_pyzed(self, version: Optional[str] = None) -> Result:
+        """Brings ``pyzed-ui`` up to ``version`` (default: this Pyzed's): raises its lowest version in
+        ``pyproject.toml`` with ``uv add`` (which locks and syncs), or, when that release is not published,
+        upgrades it as far as the package index goes."""
+        version = version or editor_version()
+        if version.startswith("0+"):
+            return self.upgrade(PACKAGE)
+        result = self.add(f"{PACKAGE}>={version}")
+        if result.ok:
+            return result
+        upgraded = self.upgrade(PACKAGE)
+        return Result(upgraded.args, upgraded.code, "\n".join(x for x in (result.output, upgraded.output) if x))
 
     # -- preparing -------------------------------------------------------------------------------
     @property

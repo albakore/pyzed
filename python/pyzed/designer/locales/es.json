@@ -2117,6 +2117,21 @@
   "Play it from a handler:": "Reprodúcela desde un manejador:",
   "1. Select a control on the form and press Add track.": "1. Selecciona un control en el formulario y pulsa Añadir pista.",
   "2. Move the playhead and double-click the lane to add keys; edit each key's value below.": "2. Mueve el cursor de tiempo y haz doble clic en la pista para añadir claves; edita el valor de cada clave abajo.",
-  "3. Press ▶ to preview it. Turn on ⚡ to play it when the form opens, or call form.animations.play(\"name\") from a handler.": "3. Pulsa ▶ para previsualizarla. Activa ⚡ para reproducirla al abrir el formulario, o llama a form.animations.play(\"nombre\") desde un manejador."
+  "3. Press ▶ to preview it. Turn on ⚡ to play it when the form opens, or call form.animations.play(\"name\") from a handler.": "3. Pulsa ▶ para previsualizarla. Activa ⚡ para reproducirla al abrir el formulario, o llama a form.animations.play(\"nombre\") desde un manejador.",
+  "Updating pyzed-ui": "Actualizando pyzed-ui",
+  "Update pyzed-ui": "Actualizar pyzed-ui",
+  "Sync": "Sincronizar",
+  "See the Dependencies tab to fix it": "Mira la pestaña Dependencias para arreglarlo",
+  "Installed {installed}, uv.lock says {locked}: press Sync": "Instalado {installed}, uv.lock dice {locked}: pulsa Sincronizar",
+  "nothing": "nada",
+  "pyzed-ui is not a dependency of the project": "pyzed-ui no es una dependencia del proyecto",
+  "Its forms need it to run outside the editor.": "Sus formularios lo necesitan para ejecutarse fuera del editor.",
+  "The project uses pyzed-ui {have}": "El proyecto usa pyzed-ui {have}",
+  "The editor is {editor}: controls and properties added since may not run. Update it to the editor's version.": "El editor es {editor}: los controles y propiedades añadidos desde entonces pueden no funcionar. Actualízalo a la versión del editor.",
+  "The project's environment is not created": "El entorno del proyecto no está creado",
+  "Sync creates .venv with the packages of uv.lock.": "Sincronizar crea .venv con los paquetes de uv.lock.",
+  "Hide until the project opens again": "Ocultar hasta volver a abrir el proyecto",
+  "Not installed as uv.lock says: {names}": "Sin instalar como dice uv.lock: {names}",
+  "Sync the environment to install them.": "Sincroniza el entorno para instalarlos."
  }
 }

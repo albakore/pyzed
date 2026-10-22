@@ -101,6 +101,58 @@ def test_project_settings_and_dependencies(shop):
     assert project.normalize("Foo_Bar.baz") == "foo-bar-baz"
 
 
+
+def _install(root, **packages):
+    """A fake ``.venv`` with ``packages`` (name=version) installed in it."""
+    site = root / ".venv" / "lib" / "python3.12" / "site-packages"
+    site.mkdir(parents=True, exist_ok=True)
+    for name, version in packages.items():
+        (site / f"{name}-{version}.dist-info").mkdir()
+    return site
+
+
+def test_installed_versions_and_problems(shop):
+    assert [p.kind for p in shop.problems("0.3.1")] == ["no-environment"]
+    old = shop.problems("1.7.0")
+    assert [p.kind for p in old] == ["pyzed-old", "no-environment"]
+    assert old[0].values == {"have": "0.3.1", "editor": "1.7.0"} and "pyzed-ui 0.3.1" in old[0].message
+    _install(shop.root, pyzed_ui="1.2.0", httpx="0.28.1", ruff="0.6.0", ty="0.0.1")
+    deps = {d.name: d for d in shop.dependencies()}
+    assert deps["pyzed-ui"].installed == "1.2.0" and deps["pyzed-ui"].locked == "0.3.1"
+    found = shop.problems("1.7.0")
+    assert [p.kind for p in found] == ["pyzed-old", "not-installed"]  # .venv also disagrees with uv.lock
+    assert found[0].values["have"] == "1.2.0" and found[1].values == {"count": "1", "names": "pyzed-ui"}
+    assert [p.kind for p in shop.problems("1.2.0")] == ["not-installed"]
+    assert project.is_older("1.2.0", "1.7.0") and not project.is_older("1.7.0", "1.7.0")
+    assert not project.is_older("1.2.0", "0+unknown")  # a source tree: no version to compare with
+
+
+def test_missing_pyzed_and_local_checkouts(shop):
+    text = shop.root.joinpath("pyproject.toml").read_text()
+    shop.root.joinpath("pyproject.toml").write_text(text.replace('"pyzed-ui>=0.3",\n', ""))
+    assert [p.kind for p in shop.reload().problems("1.7.0")] == ["pyzed-missing", "no-environment"]
+    shop.root.joinpath("pyproject.toml").write_text(text + '\n[tool.uv.sources]\npyzed-ui = { path = "../pyzed" }\n')
+    assert shop.reload().pyzed_from_source and [p.kind for p in shop.problems("1.7.0")] == ["no-environment"]
+
+
+def test_stamp_notices_changes(shop):
+    before = shop.stamp()
+    os.utime(shop.root / "uv.lock", ns=(1, 1))
+    assert shop.stamp() != before
+
+
+def test_update_pyzed(shop, monkeypatch):
+    calls = []
+    fails = {"add"}
+    monkeypatch.setattr(project.Project, "uv", lambda self, *a, **k: calls.append(a) or
+                        project.Result(["uv", *a], 1 if a[0] in fails else 0, a[0]))
+    shop.update_pyzed("1.7.0")
+    assert calls == [("add", "pyzed-ui>=1.7.0"), ("lock", "--upgrade-package", "pyzed-ui"), ("sync",)]
+    calls.clear()
+    fails.clear()
+    assert shop.update_pyzed("1.7.0").ok and calls == [("add", "pyzed-ui>=1.7.0")]
+
+
 def test_find_walks_up_to_the_pyzed_project(shop, tmp_path):
     assert project.find(shop.ui_dir).root == shop.root
     assert project.find(shop.main_form).root == shop.root
