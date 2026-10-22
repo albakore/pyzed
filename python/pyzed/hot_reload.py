@@ -84,6 +84,8 @@ _current: Optional["Reloader"] = None
 _reloading = False
 #: The reloader whose last reload failed (its windows show the error until a fix is saved).
 _failed: Optional["Reloader"] = None
+#: Counts successful reloads (cached component drawings are redone after each one).
+generation = 0
 #: Every window that has been drawn, so reloaded classes reach all of them.
 _windows: "weakref.WeakSet[Any]" = weakref.WeakSet()
 #: The initial plain values of each live object, by ``id``: what ``__init__`` gave it.
@@ -529,7 +531,7 @@ class Reloader:
         Returns what the ``on_reload`` hooks returned (commands for the runtime). Errors
         are stored in ``error`` and shown in the window instead of being raised.
         """
-        global _failed
+        global _failed, generation
         changed = {Path(p).resolve() for p in changed}
         results: List[Any] = []
         self.changes = []
@@ -550,6 +552,7 @@ class Reloader:
         if _failed is self:
             _failed = None
         self.count += 1
+        generation += 1
         commands = [r for r in results if isinstance(r, _core.Command)]
         return commands or None
 
