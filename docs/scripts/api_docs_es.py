@@ -429,6 +429,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "annotations": '`{línea: "texto"}` o `{línea: ("texto", color)}`: texto virtual al final de la línea (code lens, diagnósticos).',
                         "whitespace": "Dibuja los espacios como `·` y los tabuladores como `→` en este color.",
                         "tab_size": "Tab inserta espacios hasta el siguiente múltiplo; Enter mantiene la sangría; Backspace quita un nivel.",
+                        "hard_tabs": "Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios.",
+                        "backspace_unindent": "Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio).",
+                        "repeat_delay": "Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema).",
+                        "repeat_rate": "Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema).",
                         "capture_keys": 'Teclas que el editor deja al `on_key` de la app (`"up"`, `"enter"`…), por ejemplo con una lista de autocompletado abierta.',
                         "auto_close": "Al escribir un paréntesis, corchete, llave o comilla también inserta el de cierre.",
                         "folding": "Flechas de plegado en el margen y Ctrl+Shift+[ / ].",
@@ -825,6 +829,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                         "annotations": '`{línea: "texto"}` o `{línea: ("texto", color)}`: texto virtual al final de la línea (code lens, diagnósticos).',
                         "show_whitespace": "Dibuja los espacios como `·` y los tabuladores como `→`.",
                         "tab_size": "Tab inserta espacios hasta el siguiente múltiplo; Enter mantiene la sangría (un nivel más tras `:`); Backspace quita un nivel.",
+                        "hard_tabs": "Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios.",
+                        "backspace_unindent": "Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio).",
+                        "repeat_delay": "Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema).",
+                        "repeat_rate": "Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema).",
                         "capture_keys": 'Teclas que el editor deja al `on_key` de la app (`"up"`, `"enter"`…), por ejemplo con una lista de autocompletado abierta.',
                         "auto_close": "Cierra paréntesis, corchetes, llaves y comillas al escribir (y envuelve la selección).",
                         "folding": "Flechas de plegado en el margen; Ctrl+Shift+[ pliega y Ctrl+Shift+] despliega.",
@@ -2058,6 +2066,18 @@ _section("app", "Hot reload", {
         La mayoría de los programas nunca crean uno a mano: lo hace `pz.run(app, reload=True)`.
     """),
     "pyzed.hot_reload.ReloadError": _d("Lo lanza `view()` mientras la última recarga haya fallado; la ventana muestra su mensaje."),
+    "pyzed.hot_reload.Change": _d("""
+        Lo que una recarga cambió en una clase (ver `Reloader.changes`): `name`, los métodos
+        cambiados (`changed`), nuevos (`added`) y quitados (`removed`), los atributos que los objetos
+        vivos recibieron del nuevo `__init__` (`new_state`) y los que tomaron su nuevo valor inicial
+        (`updated_state`).
+    """),
+    "pyzed.hot_reload.remember": _d("""
+        Guarda (una vez) los valores iniciales simples de `obj`, para que una recarga sepa qué cambió la app.
+
+        El runtime lo llama para la app, cada ventana y cada componente; llámalo para otros objetos
+        creados después de iniciar el hot reload solo si quieres que también se actualicen sus valores iniciales.
+    """),
 }, before="Idiomas")
 _section("app", "Eventos y componentes", {
     "pyzed.component.State": _d("El valor por defecto de una variable de estado declarada en la clase (ver `state`)."),
@@ -2361,6 +2381,7 @@ PAGES.append({
             "pyzed.designer.Designer": _d("El editor visual de formularios.", members=False),
             "pyzed.designer.EditorSettings": _d(
                 "Los ajustes del editor de código del diseñador (un dataclass): `theme`, `font_size`, `tab_size`, "
+                "`hard_tabs`, `convert_indentation`, `backspace_unindent`, `repeat_delay`, `repeat_rate`, "
                 "`show_whitespace`, `wrap`, `line_numbers`, `highlight_line`, `autocomplete`, `code_lens`, "
                 "`inline_diagnostics`, `format_on_apply`, `auto_close`, `folding`, `minimap`, `cursor_shape`, "
                 "`cursor_blink`, `ty` y `ruff`."
@@ -2837,6 +2858,7 @@ MEMBERS = {
     "pyzed.designer.SceneComponent.scene_model": "La escena tal como está guardada (o previsualizada por el diseñador), o `None`.",
     "pyzed.designer.SceneComponent.ctx": "Un contexto de render para esta instancia, con el tema de su escena (lo que necesita `ControlProxy.focus()`).",
     # designer: app del diseñador
+    "pyzed.designer.EditorSettings.key_repeat": "Los `repeat_delay` y `repeat_rate` del editor (`None` donde se mantiene la repetición de teclas del sistema).",
     "pyzed.designer.EditorSettings.to_dict": "Devuelve los ajustes como un dict listo para JSON.",
     "pyzed.designer.EditorSettings.from_dict": "Crea los ajustes a partir de `data` guardados, con los valores por defecto para los que falten o no sean válidos, y limitando el tamaño de tabulación, el de fuente y la forma del cursor a valores válidos.",
     "pyzed.designer.History.push": "Guarda el estado actual del formulario; devuelve `False` si nada cambió.",

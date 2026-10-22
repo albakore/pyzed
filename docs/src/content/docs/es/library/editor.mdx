@@ -334,6 +334,10 @@ editor(
     annotations=None,
     show_whitespace=False,
     tab_size=None,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
     capture_keys=(),
     on_scroll=None,
     auto_close=True,
@@ -375,6 +379,10 @@ Un editor de código: resaltado con los colores del tema, números de línea y m
 | `annotations` | `None` | `{línea: "texto"}` o `{línea: ("texto", color)}`: texto virtual al final de la línea (code lens, diagnósticos). |
 | `show_whitespace` | `False` | Dibuja los espacios como `·` y los tabuladores como `→`. |
 | `tab_size` | `None` | Tab inserta espacios hasta el siguiente múltiplo; Enter mantiene la sangría (un nivel más tras `:`); Backspace quita un nivel. |
+| `hard_tabs` | `False` | Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios. |
+| `backspace_unindent` | `True` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
+| `repeat_delay` | `None` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
+| `repeat_rate` | `None` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
 | `capture_keys` | `()` | Teclas que el editor deja al `on_key` de la app (`"up"`, `"enter"`…), por ejemplo con una lista de autocompletado abierta. |
 | `auto_close` | `True` | Cierra paréntesis, corchetes, llaves y comillas al escribir (y envuelve la selección). |
 | `folding` | `True` | Flechas de plegado en el margen; Ctrl+Shift+[ pliega y Ctrl+Shift+] despliega. |
@@ -462,6 +470,10 @@ code_editor(
     keymap=None,
     scrollbar=True,
     readonly=False,
+    hard_tabs=False,
+    backspace_unindent=True,
+    repeat_delay=None,
+    repeat_rate=None,
 )
 ```
 
@@ -514,6 +526,10 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
 | `keymap` | `None` | Diccionario `{atajo: acción}` al estilo de Zed; `None` como acción quita una tecla por defecto (`pyzed.ui.editor.keymap_for` crea uno a partir de cambios por acción). |
 | `scrollbar` | `True` | `False` oculta las barras de desplazamiento. |
 | `readonly` | `False` | `True` deja seleccionar y copiar el texto, pero no cambiarlo (un log, un traceback). |
+| `hard_tabs` | `False` | Con `tab_size`: Tab, Enter y sangrar (Ctrl+]) usan tabulaciones en vez de espacios. |
+| `backspace_unindent` | `True` | Con `tab_size`: Backspace en los espacios iniciales quita un nivel entero (`False`: un espacio). |
+| `repeat_delay` | `None` | Milisegundos que esperan Backspace y Suprimir, mantenidos, antes de repetirse (`None`: los del sistema). |
+| `repeat_rate` | `None` | Borrados por segundo como máximo mientras se mantiene Backspace o Suprimir (`None`: el ritmo del sistema). |
 
 Eventos: `on_change`, `on_cursor`, `on_scroll`, `on_zoom`, `on_action` ([eventos](#eventos)).
 

@@ -28,6 +28,8 @@ jobs:
   meta:
     name: Check version
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
@@ -49,6 +51,16 @@ jobs:
           esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+      # A release made on GitHub before its files exist becomes the latest one, so the download page,
+      # install.sh and the app's updater would link files that are not there yet (and stay missing if
+      # a build fails): keep it a draft until the GitHub Release job attaches them.
+      - name: Hide the release until its files are attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          empty=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,assets \
+            --jq '(.isDraft | not) and (.assets | length == 0)' 2>/dev/null || echo false)
+          if [ "$empty" = true ]; then gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=true; fi
 
   wheels:
     name: Wheel ${{ matrix.name }}
@@ -323,7 +335,7 @@ jobs:
           if [ "$PRERELEASE" = true ]; then flags+=(--prerelease --latest=false); else flags+=(--latest); fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
-            gh release edit "$TAG" --notes-file notes.md
+            gh release edit "$TAG" --draft=false "${flags[@]}"
           else
             gh release create "$TAG" dist/* "${flags[@]}"
           fi

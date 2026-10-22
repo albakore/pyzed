@@ -233,6 +233,17 @@ def rst_to_md(text: str) -> str:
             code = inspect.cleandoc("\n".join(block))
             out += ["", "```python", code, "```", ""]
             continue
+        if line.strip() == "Events:" and i + 1 < len(lines) and lines[i + 1].startswith(" "):
+            # ``on_x(args)``: text, one per line (deeper lines continue it) -> a list.
+            out += [line.strip(), ""]
+            indent, i = len(lines[i + 1]) - len(lines[i + 1].lstrip()), i + 1
+            while i < len(lines) and lines[i].startswith(" "):
+                if len(lines[i]) - len(lines[i].lstrip()) > indent and out[-1].startswith("- "):
+                    out[-1] += " " + lines[i].strip()
+                else:
+                    out.append("- " + lines[i].strip())
+                i += 1
+            continue
         out.append(line)
         i += 1
     return re.sub(r"(?<!`)``([^`\n]+)``(?!`)", r"`\1`", "\n".join(out)).strip()

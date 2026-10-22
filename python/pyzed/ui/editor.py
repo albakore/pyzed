@@ -139,6 +139,10 @@ def editor(
     annotations: Optional[Dict[int, Union[str, Tuple[str, str]]]] = None,
     show_whitespace: bool = False,
     tab_size: Optional[int] = None,
+    hard_tabs: bool = False,
+    backspace_unindent: bool = True,
+    repeat_delay: Optional[float] = None,
+    repeat_rate: Optional[float] = None,
     capture_keys: Sequence[str] = (),
     on_scroll: Any = None,
     auto_close: bool = True,
@@ -180,7 +184,11 @@ def editor(
     (``"2 references"`` or ``("undefined name", "#e06c75")``), as used for code lens and
     inline diagnostics. ``show_whitespace`` draws spaces as ``·`` and tabs as ``→``.
     With ``tab_size``, Tab inserts spaces, Enter keeps the indentation (one level more after
-    ``:``) and Backspace removes a whole level. Keys in ``capture_keys`` (``"up"``, ``"down"``,
+    ``:``) and Backspace removes a whole level (``backspace_unindent=False``: one space); tabs are
+    drawn ``tab_size`` columns wide. ``hard_tabs=True`` indents with tab characters instead.
+    ``repeat_delay`` (milliseconds) and ``repeat_rate`` (deletions per second) slow down Backspace
+    and Delete held down: repeats start after the delay and come at most that often (they can't
+    beat the system's own key repeat). Keys in ``capture_keys`` (``"up"``, ``"down"``,
     ``"enter"``, ``"tab"``, ``"escape"``...) are left to the app's ``on_key``, e.g. while a
     completion list is open. ``on_scroll(info)`` gets the scroll offset (``info["x"]``, ``info["y"]``).
 
@@ -262,6 +270,10 @@ a log, a traceback or generated code to look at.
         annotations=annotations,
         whitespace=alpha(t.line_number, 0.8) if show_whitespace else None,
         tab_size=tab_size,
+        hard_tabs=hard_tabs,
+        backspace_unindent=backspace_unindent,
+        repeat_delay=repeat_delay,
+        repeat_rate=repeat_rate,
         capture_keys=list(capture_keys),
         on_scroll=on_scroll,
         auto_close=auto_close,

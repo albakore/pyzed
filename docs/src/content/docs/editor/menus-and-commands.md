@@ -25,7 +25,7 @@ views. In the middle: **Run** (<kbd>F5</kbd>), **Stop** and the search field, wh
 | --- | --- | --- |
 | New form… | <kbd>Ctrl</kbd>+<kbd>N</kbd> | The New dialog, on Form. |
 | New component… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> | The New dialog, on Component. |
-| Open… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lists the forms and components under the working folder. |
+| Open… | <kbd>Ctrl</kbd>+<kbd>O</kbd> | Lists the project's forms, components, shaders and animation libraries; **Browse…** for any file. |
 | Go to file… | <kbd>Ctrl</kbd>+<kbd>P</kbd> | Finds a project file by name and opens it; see [Go to file](/pyzed/editor/projects/#go-to-file). |
 | Open recent project… | <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd> | The project picker of the title bar; see [Several projects in one window](/pyzed/editor/projects/#several-projects-in-one-window). |
 | Save | <kbd>Ctrl</kbd>+<kbd>S</kbd> | Saves the document and its code. |
@@ -35,6 +35,8 @@ views. In the middle: **Run** (<kbd>F5</kbd>), **Stop** and the search field, wh
 | Run | <kbd>F5</kbd> | [Runs](/pyzed/editor/console-and-running/) the form or previews the component. |
 | Stop | <kbd>Shift</kbd>+<kbd>F5</kbd> | Closes the running form. |
 | Run project script | | Starts the project's `[tool.pyzed] script` with `uv run` (see [Welcome and examples](/pyzed/editor/examples/#running-it)). |
+| Choose startup file… | | Picks the form or script the app starts from (see [The startup file](/pyzed/editor/projects/#the-startup-file)). |
+| Use this form as startup file | | Makes the open form the startup file. |
 | Edit code file | <kbd>F7</kbd> | Opens the whole code file in the code editor. |
 
 ## Edit commands
@@ -51,6 +53,7 @@ keyboard and in the command palette.
 | Select all | <kbd>Ctrl</kbd>+<kbd>A</kbd> |
 | Add control… | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> |
 | Group in a row / in a column / in a grid | |
+| Convert indentation to tabs / to spaces | (palette) the file in the code editor; see [Tabs or spaces](/pyzed/editor/code-editor/#tabs-or-spaces) |
 
 ## View menu
 

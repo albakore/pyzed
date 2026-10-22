@@ -101,8 +101,10 @@ Pyzed, `view()` is the only place that turns data into widgets.
 />
 
 Edit `view()`, a helper module or a style and save: the window updates in place, **with your data still
-there** (the app object is kept and gets the new class). If the new code fails, the error appears in the
-window, and the next save that fixes it brings the app back.
+there** (the app object is kept and gets the new class). New methods and new attributes in `__init__` show up
+without restarting, and a changed initial value applies if the app has not changed it (see
+[Hot reload](/pyzed/guides/hot-reload/)). If the new code fails, the error appears in the window, and the next
+save that fixes it brings the app back.
 
 ![Before saving](../../../../screenshots/hot-reload-before.png)
 

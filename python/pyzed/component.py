@@ -86,6 +86,7 @@ from typing import Any, Callable, ClassVar, Dict, Iterator, List, Mapping, Optio
 from . import _core
 from . import events as _events
 from . import hints as _hints
+from . import hot_reload as _hot_reload
 from . import style as _style
 
 __all__ = ["LIFECYCLE_EVENTS", "Component", "PropInfo", "State", "StateInfo", "find", "provide", "registered",
@@ -362,6 +363,8 @@ class Component:
         instance._set_props(props)
         if fresh:
             instance.setup()
+            if _hot_reload._current is not None:
+                _hot_reload.remember(instance)
         if current is not None:
             current.seen.add(slot)
             current.store[slot] = instance
@@ -405,6 +408,16 @@ class Component:
         instance._init_state()
         instance._pyzed_handlers = custom
         instance._set_props(props)
+        instance.setup()
+        return instance
+
+    def __pyzed_fresh__(self) -> "Component":
+        """A scratch instance with this one's props, after ``setup()`` (hot reload compares its state)."""
+        instance = object.__new__(type(self))
+        instance._pyzed_mounted = False
+        instance._init_state()
+        instance._pyzed_handlers = dict(getattr(self, "_pyzed_handlers", {}))
+        instance._set_props({n: getattr(self, n) for n in self.__props__ if n in vars(self)})
         instance.setup()
         return instance
 

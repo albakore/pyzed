@@ -677,6 +677,9 @@ impl Widget<Message, Theme, Renderer> for EditorInput<'_> {
             Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) => {
                 state.modifiers = *modifiers;
             }
+            Event::Keyboard(keyboard::Event::KeyPressed { repeat, .. }) => {
+                self.state.repeat.set(*repeat);
+            }
             // Some X11 setups miss the change when the key goes up.
             Event::Keyboard(keyboard::Event::KeyReleased {
                 key: keyboard::Key::Named(named),

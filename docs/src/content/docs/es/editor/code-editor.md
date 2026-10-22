@@ -45,8 +45,10 @@ bajo el editor dice dónde (`Line 3: invalid syntax`), y guardar, ejecutar o cam
 ## Escribir código
 
 - **Resaltado de sintaxis** de Python, con el tema del editor (o uno propio, ver los ajustes).
-- **Sangría**: <kbd>Tab</kbd> inserta espacios (el *Tab size*), <kbd>Enter</kbd> mantiene la sangría de la línea y
-  añade un nivel después de `:`, <kbd>Retroceso</kbd> dentro de la sangría quita un nivel entero.
+- **Sangría**: <kbd>Tab</kbd> inserta espacios (el *Tamaño de tabulación*), o una tabulación con *Sangrar con
+  tabulaciones*; <kbd>Enter</kbd> mantiene la sangría de la línea (sus espacios y tabulaciones) y añade un nivel
+  después de `:`; <kbd>Retroceso</kbd> dentro de la sangría quita un nivel entero (un espacio si se apaga *Retroceso
+  borra un nivel entero*). Ver [Tabulaciones o espacios](#tabulaciones-o-espacios).
 - **Paréntesis y comillas**: escribir `(`, `[`, `{`, `"` o `'` inserta su pareja, envuelve la selección si la hay,
   y escribir el carácter de cierre lo salta en lugar de duplicarlo.
 - **Margen**: números de línea (siguen a las líneas ajustadas) y la línea actual resaltada.
@@ -89,6 +91,25 @@ En macOS, <kbd>Cmd</kbd> funciona donde aquí pone <kbd>Ctrl</kbd>. Los comandos
 (<kbd>F5</kbd>, <kbd>Ctrl</kbd>+<kbd>S</kbd>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>...) funcionan mientras
 escribes; los atajos del lienzo (<kbd>Supr</kbd>, flechas, <kbd>Ctrl</kbd>+<kbd>D</kbd>) no, así que escribir nunca
 mueve un control.
+
+## Tabulaciones o espacios
+
+Python rechaza un bloque que mezcla tabulaciones y espacios, así que el editor se queda con uno de los dos:
+
+- **Sangrar con tabulaciones** (Ajustes del editor → Edición) hace que <kbd>Tab</kbd>, <kbd>Enter</kbd> y sangrar
+  (<kbd>Ctrl</kbd>+<kbd>]</kbd>) escriban tabulaciones. Se dibujan con el ancho del *Tamaño de tabulación*, y
+  <kbd>Enter</kbd> copia tal cual los espacios y tabulaciones de la línea de arriba, en los dos modos.
+- **Convertir la sangría a tabulaciones** y **Convertir la sangría a espacios**, en la paleta de comandos
+  (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), reescriben la sangría del archivo que muestra el editor de
+  código. El texto dentro de cadenas de varias líneas queda como está.
+- **Convertir la sangría al guardar** lo hace cada vez que se guarda un archivo de Python (o el código del
+  formulario), así el código pegado nunca rompe el archivo.
+- El código que el diseñador escribe por ti (un manejador o método nuevo) sigue al archivo: en un archivo sangrado
+  con tabulaciones se escribe con tabulaciones.
+
+Mantener <kbd>Retroceso</kbd> o <kbd>Supr</kbd> borra al ritmo de **Borrado**: la primera pulsación siempre borra;
+las siguientes esperan la *Espera antes de repetir* y luego llegan como mucho *Borrados por segundo* veces por
+segundo. Pueden ir más lentas que la repetición de teclas del sistema, no más rápidas.
 
 ## Buscar, reemplazar y varios cursores
 
@@ -241,13 +262,18 @@ derecha se ve la que eliges.
 | Cursor | **Forma** | Barra, bloque, subrayado o hueco. |
 | | **Parpadeo** | Si el cursor parpadea. |
 | | **Ancho** | De 1 a 4 píxeles, para el cursor de barra. |
-| Edición | **Tamaño de tabulación** | De 1 a 8 espacios por nivel. |
+| Edición | **Tamaño de tabulación** | De 1 a 8 columnas por nivel, y el ancho con que se dibujan las tabulaciones. |
+| | **Sangrar con tabulaciones** | <kbd>Tab</kbd>, <kbd>Enter</kbd> y <kbd>Ctrl</kbd>+<kbd>]</kbd> sangran con tabulaciones en vez de espacios. |
+| | **Convertir la sangría al guardar** | Al guardar un archivo de Python su sangría se reescribe con tabulaciones o espacios, según lo de arriba. |
+| | **Retroceso borra un nivel entero** | Apagado: <kbd>Retroceso</kbd> en la sangría borra un espacio cada vez. |
 | | **Autocompletar al escribir** | Apagado: la lista solo se abre con <kbd>Ctrl</kbd>+<kbd>Espacio</kbd>. |
 | | **Cerrar paréntesis y comillas** | Pares, envolviendo la selección y saltando el de cierre. |
 | | **Plegado de código** | Los chevrones y las teclas de plegado. |
 | | **Remarcar corchetes** | Marca el paréntesis que hace pareja con el del cursor (<kbd>Ctrl</kbd>+<kbd>M</kbd> salta a él). |
 | | **Resaltar coincidencias de la selección** | Resalta los otros sitios con el texto seleccionado. |
 | | **Formatear con ruff al aplicar** | Ejecuta `ruff format` sobre el código al pulsar Aplicar. |
+| Borrado | **Espera antes de repetir** | Milisegundos que esperan <kbd>Retroceso</kbd> y <kbd>Supr</kbd>, mantenidos, antes de repetirse (500 por defecto; 0 deja los del sistema). |
+| | **Borrados por segundo** | Qué tan rápido borran mientras se mantienen (20 por defecto; 0 deja el ritmo del sistema). |
 | Desplazamiento y ajuste de línea | **Ajustar líneas largas** | Apagado por defecto: las líneas largas se desplazan de lado. <kbd>Alt</kbd>+<kbd>Z</kbd> lo alterna. |
 | | **Barras de desplazamiento** | Muestra u oculta las barras. |
 | | **Minimapa** | El código en miniatura a la derecha. |

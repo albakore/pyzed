@@ -1,0 +1,142 @@
+---
+title: Recarga en caliente
+description: "Edita una app de Pyzed mientras corre: métodos nuevos, atributos nuevos y nuevos valores iniciales llegan a la ventana abierta al guardar, sin perder los datos que ya tiene la app."
+sidebar:
+  order: 11
+---
+
+import Commands from '../../../../components/Commands.astro';
+
+La recarga en caliente (hot reload) actualiza la ventana abierta cada vez que guardas un archivo del proyecto. La app
+no se reinicia: los mismos objetos conservan sus datos y pasan a ejecutar el código nuevo.
+
+<Commands
+	uv={`uv run pyzed dev main.py`}
+	pip={`pyzed dev main.py`}
+	python={`{py} -m pyzed dev main.py`}
+/>
+
+Desde código, usa `pz.run(MiApp, reload=True)` o define la variable de entorno `PYZED_RELOAD=1`. Los formularios
+también se actualizan al guardar (ver [Ejecutar y la consola](/pyzed/es/editor/console-and-running/#actualización-en-vivo-al-guardar));
+esta página trata de las apps escritas en Python.
+
+## Qué cambia al guardar
+
+| Cambias | Qué pasa en la ventana abierta |
+| --- | --- |
+| `view()`, un método, un módulo auxiliar, un estilo | El código nuevo se usa desde el siguiente redibujado. |
+| Un método que otra cosa guarda (`self.al_terminar = self.guardar`, un temporizador, un hilo, `functools.partial`) | Esa referencia también ejecuta el código nuevo. |
+| Un atributo nuevo en `__init__` (`self.etiquetas = []`) | El objeto vivo lo recibe al momento; nada más cambia. |
+| El valor inicial de un atributo (`self.paso = 1` → `self.paso = 5`) | Toma el valor nuevo si la app no lo cambió mientras corría; si lo cambió, se queda el de la app. |
+| Un `pz.state(...)` nuevo o un atributo nuevo en el `setup()` de un componente | Todas las instancias del componente lo reciben. |
+| Un atributo de clase (`size = (400, 300)`, `title`) | Sale de la clase nueva. |
+| Código que no se puede importar, o un `view()` que lanza un error | El error se ve en la ventana hasta que guardes la corrección. |
+
+Cada recarga escribe una línea por clase que cambió, para que veas qué se aplicó:
+
+```text
+pyzed: reloaded Notas: methods changed: agregar, view; new state: etiquetas
+pyzed: reloaded Notas: updated state: paso
+```
+
+## Un ejemplo
+
+Abre esta app con `pyzed dev notas.py`, escribe algunas notas y luego haz los cambios de abajo de a uno, guardando
+cada vez:
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Notas(pz.App):
+    title = "Notas"
+    size = (420, 320)
+
+    def __init__(self):
+        self.notas = []
+        self.borrador = ""
+
+    def escribir(self, texto):
+        self.borrador = texto
+
+    def agregar(self):
+        if self.borrador.strip():
+            self.notas.append(self.borrador.strip())
+        self.borrador = ""
+
+    def view(self):
+        return pz.column([
+            pz.row([ui.input(self.borrador, self.escribir, on_submit=self.agregar, placeholder="Nota nueva"),
+                    ui.button("Agregar", self.agregar)], spacing=8),
+            *[pz.text(nota) for nota in self.notas],
+        ], spacing=8, padding=16)
+
+
+if __name__ == "__main__":
+    pz.run(Notas)
+```
+
+1. **Un atributo nuevo.** Agrega `self.favoritas = set()` en `__init__` y un botón de estrella por nota en `view()`.
+   Las notas que escribiste siguen ahí y `self.favoritas` existe al instante.
+2. **Un método nuevo.** Agrega `def limpiar(self): self.notas.clear()` y un botón que lo llame. Funciona en el siguiente clic.
+3. **Un valor inicial nuevo.** Agrega `self.limite = 10` en `__init__`, guarda y cámbialo a `5`: la app ve `5`. Si la
+   app hubiera cambiado `limite` por su cuenta, se conservaría su valor.
+
+## Cómo se actualiza el estado
+
+Cuando una clase cambió, Pyzed vuelve a ejecutar su `__init__` sobre una **copia de prueba**, con los argumentos con
+los que se creó el objeto (en un componente, `setup()` con sus props actuales), y la compara con el objeto vivo:
+
+- los atributos que el objeto vivo no tiene se copian;
+- los valores simples (números, texto, booleanos y listas, tuplas, conjuntos y diccionarios pequeños de ellos) cuyo
+  valor inicial cambió en el código se actualizan, pero solo si el valor vivo sigue siendo el inicial anterior;
+- todo lo demás se deja como está. Después la copia se descarta, y lo que su `__init__` imprimió no se muestra.
+
+Las clases cuyo código no cambió no se tocan, así que guardar otro archivo nunca ejecuta tu `__init__`.
+
+Los objetos de tus propias clases que Pyzed no creó (un `Tarea` dentro de una lista, por ejemplo) reciben los
+atributos nuevos que solo usan `self`, globales o funciones integradas: `self.hecha = False` funciona,
+`self.etiqueta = texto.upper()` necesita el argumento `texto` y se omite.
+
+## Cuando `__init__` tiene efectos secundarios
+
+Si `__init__` abre un archivo, un dispositivo, un socket o arranca un hilo, ejecutarlo otra vez sobre una copia
+suele ser inofensivo, pero puedes desactivarlo en esa clase:
+
+```python
+class Reproductor(pz.App):
+    reload_init = False   # la recarga deja el estado como está: sin copia de prueba
+
+    def __init__(self):
+        self.salida = abrir_dispositivo_de_audio()
+```
+
+Mejor aún, mueve ese trabajo a `on_start()`, que se ejecuta una vez al abrir la ventana. Si el `__init__` de la
+copia falla, la recarga se aplica igual y la consola explica por qué no se actualizó el estado.
+
+## Migrar el estado a mano
+
+Para cambios que Pyzed no puede adivinar (renombrar un atributo, cambiar su tipo), define `on_reload()` en la app
+o en una ventana. Se ejecuta después de cada recarga y puede devolver un `Command`:
+
+```python
+class Notas(pz.App):
+    def on_reload(self):
+        if isinstance(self.notas, list) and self.notas and isinstance(self.notas[0], str):
+            self.notas = [{"texto": n, "hecha": False} for n in self.notas]
+```
+
+## Ver qué hizo una recarga
+
+`pz.hot_reload.current()` devuelve el `Reloader` en marcha. Su lista `changes` tiene un `Change` por clase que
+cambió en la última recarga (métodos `changed`, `added` y `removed`, `new_state` y `updated_state`), `count` dice
+cuántas recargas salieron bien y `error` guarda el traceback de una que falló. Con `verbose = False` deja de
+escribir en la consola.
+
+## Límites
+
+- Una tarea `async` o un generador en marcha sigue con el código con el que empezó hasta que termina.
+- Quitar un atributo de `__init__` no lo borra del objeto vivo.
+- El código que ya se ejecutó (el bloque `if __name__ == "__main__":`, `on_start()`) no se vuelve a ejecutar.
+- Una clase cuyos `__slots__` cambian no puede pasar a la versión nueva; en ese caso reinicia la app.

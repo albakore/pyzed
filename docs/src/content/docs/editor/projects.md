@@ -51,8 +51,18 @@ Forms always belong to the active project: a new form is saved in its `ui/` fold
 ### The startup file
 
 Every project has one file the app starts from: its main form (`main` in `[tool.pyzed]`) or, when it has one, its
-`script`. The Project panel marks it with a ▶. Right-click another form or `.py` file and choose
-**Set as Startup File** to change it; `pyproject.toml` is updated for you.
+`script`. The Project panel shows it under the project's name (**▶ Starts from** `ui/main.pzform`) and marks it
+with a ▶ in the tree. To change it:
+
+- click that name: a picker lists the project's forms first and then its Python scripts (the code files of forms
+  and components are left out). Type to filter, click one or press <kbd>Enter</kbd>;
+- or right-click a form or `.py` file in the tree and choose **Set as Startup File**;
+- or, with a form open, run **Use this form as startup file** from the Run menu or the command palette (the
+  palette also has **Choose startup file…**).
+
+`pyproject.toml` is updated for you: a form becomes `main` (and the `script` is dropped), a script becomes
+`script`. **Run** (<kbd>F5</kbd>) with nothing open starts the app from that file (a form opens as the main window,
+a script runs with `uv run`), and so do `pyzed run` and `pyzed build`.
 
 ### Clone a repository
 

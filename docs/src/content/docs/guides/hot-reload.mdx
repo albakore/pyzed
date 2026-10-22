@@ -1,0 +1,141 @@
+---
+title: Hot reload
+description: "Edit a Pyzed app while it runs: new methods, new attributes and new initial values reach the open window on save, keeping the data the app already has."
+sidebar:
+  order: 11
+---
+
+import Commands from '../../../components/Commands.astro';
+
+Hot reload updates the open window every time you save a file of your project. The app is not restarted:
+the same objects keep their data and start running the new code.
+
+<Commands
+	uv={`uv run pyzed dev main.py`}
+	pip={`pyzed dev main.py`}
+	python={`{py} -m pyzed dev main.py`}
+/>
+
+From code, use `pz.run(MyApp, reload=True)` or set the `PYZED_RELOAD=1` environment variable. Forms update on
+save too (see [Running and the console](/pyzed/editor/console-and-running/#live-updates-on-save)); this page is
+about apps written in Python.
+
+## What a save changes
+
+| You change | What happens in the open window |
+| --- | --- |
+| `view()`, a method, a helper module, a style | The new code runs from the next redraw. |
+| A method that something else keeps (`self.on_done = self.save`, a timer, a thread, `functools.partial`) | That reference runs the new code too. |
+| A new attribute in `__init__` (`self.tags = []`) | The live object gets it right away, nothing else changes. |
+| The initial value of an attribute (`self.step = 1` → `self.step = 5`) | It takes the new value if the app has not changed it while running; otherwise the app's value stays. |
+| A new `pz.state(...)` or a new attribute in a component's `setup()` | Every instance of the component gets it. |
+| A class attribute (`size = (400, 300)`, `title`) | It comes from the new class. |
+| Code that fails to import, or a `view()` that raises | The error shows in the window until you save a fix. |
+
+Each reload prints a line per class that changed, so you can see what was picked up:
+
+```text
+pyzed: reloaded Notes: methods changed: add, view; new state: tags
+pyzed: reloaded Notes: updated state: step
+```
+
+## An example
+
+Start this app with `pyzed dev notes.py`, add a few notes, then make the edits below one at a time and save:
+
+```python
+import pyzed as pz
+from pyzed import ui
+
+
+class Notes(pz.App):
+    title = "Notes"
+    size = (420, 320)
+
+    def __init__(self):
+        self.notes = []
+        self.draft = ""
+
+    def type_draft(self, text):
+        self.draft = text
+
+    def add(self):
+        if self.draft.strip():
+            self.notes.append(self.draft.strip())
+        self.draft = ""
+
+    def view(self):
+        return pz.column([
+            pz.row([ui.input(self.draft, self.type_draft, on_submit=self.add, placeholder="New note"),
+                    ui.button("Add", self.add)], spacing=8),
+            *[pz.text(note) for note in self.notes],
+        ], spacing=8, padding=16)
+
+
+if __name__ == "__main__":
+    pz.run(Notes)
+```
+
+1. **A new attribute.** Add `self.starred = set()` to `__init__` and a star button per note in `view()`. The notes
+   you typed are still there and `self.starred` exists at once.
+2. **A new method.** Add `def clear(self): self.notes.clear()` and a button that calls it. It works on the next click.
+3. **A new initial value.** Add `self.limit = 10` to `__init__`, save, then change it to `5`: the app sees `5`.
+   If the app had changed `limit` itself in the meantime, its value would be kept.
+
+## How state is brought up to date
+
+When a class changed, Pyzed runs its `__init__` again on a **scratch copy**, with the arguments the object was
+created with (for a component, `setup()` with its current props), and compares it with the live object:
+
+- attributes the live object does not have are copied over;
+- plain values (numbers, text, booleans, and small lists, tuples, sets and dicts of them) whose initial value
+  changed in the code are updated, but only if the live value is still the old initial one;
+- everything else is left alone. The scratch copy is then thrown away, and what its `__init__` printed is hidden.
+
+Classes whose code did not change are not touched, so saving an unrelated file never runs your `__init__`.
+
+Objects of your own classes that Pyzed did not create (a `Todo` in a list, for example) get the new attributes
+that only need `self`, globals or builtins: `self.done = False` works, `self.label = text.upper()` needs the
+`text` argument and is skipped.
+
+## When `__init__` has side effects
+
+If `__init__` opens a file, a device, a socket or starts a thread, running it again on a scratch copy is
+usually harmless, but you can turn it off for that class:
+
+```python
+class Player(pz.App):
+    reload_init = False   # hot reload keeps the state as it is: no scratch copy
+
+    def __init__(self):
+        self.stream = open_audio_device()
+```
+
+Better yet, move that work to `on_start()`, which runs once when the window opens. If the scratch `__init__`
+fails, the reload still applies and the console says why the state was not updated.
+
+## Migrating state by hand
+
+For changes Pyzed cannot guess (renaming an attribute, changing its type), define `on_reload()` on the app or a
+window. It runs after every reload and may return a `Command`:
+
+```python
+class Notes(pz.App):
+    def on_reload(self):
+        if isinstance(self.notes, list) and self.notes and isinstance(self.notes[0], str):
+            self.notes = [{"text": n, "done": False} for n in self.notes]
+```
+
+## Inspecting a reload
+
+`pz.hot_reload.current()` returns the running `Reloader`. Its `changes` list has one `Change` per class that
+changed in the last reload (`changed`, `added` and `removed` methods, `new_state` and `updated_state`), `count`
+says how many reloads succeeded and `error` holds the traceback of a failed one. Set `verbose = False` to stop
+the console lines.
+
+## Limits
+
+- A running `async` task or generator keeps the code it started with until it ends.
+- Removing an attribute from `__init__` does not delete it from the live object.
+- Code that already ran (the `if __name__ == "__main__":` block, `on_start()`) does not run again.
+- A class with `__slots__` that change cannot switch to the new version; restart the app in that case.

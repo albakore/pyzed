@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from .. import project as _project
+from ..icons import icon as _icon
 from ..project import Dependency, Project, Result, Tool
 from ..theme import Theme, alpha
 from . import logs as _logs
@@ -68,6 +69,8 @@ class ProjectController:
         self.new_package = True
         self.open_text = ""
         self.clone_url = ""
+        #: The filter typed in the startup file picker.
+        self.startup_query = ""
         self.clone_folder = str(_workspace.start_folder())
         #: The project's file tree.
         self.files = _workspace.Workspace(designer)
@@ -437,6 +440,53 @@ class ProjectController:
             _project.terminate(self.process)
         self.process = None
 
+    # -- startup file ----------------------------------------------------------------------
+    def startup_label(self) -> Optional[str]:
+        """The startup file relative to the project (``ui/main.pzform``), or ``None`` without a project."""
+        if self.project is None:
+            return None
+        try:
+            return self.project.startup.resolve().relative_to(self.project.root.resolve()).as_posix()
+        except ValueError:
+            return str(self.project.startup)
+
+    def open_startup(self) -> None:
+        """Opens the picker of the file the app starts from (a form or a script)."""
+        if self.project is None:
+            self.d.notify(tr("Open a project first"), tr("The startup file is a setting of the project"),
+                          kind="warning", seconds=4)
+            return
+        self.startup_query = ""
+        self.d.app_menu = None
+        self.d.dialog = "project:startup"
+
+    def startup_choices(self) -> List[str]:
+        """The forms and scripts the picker offers, relative to the project, filtered by what was typed."""
+        if self.project is None:
+            return []
+        root = self.project.root
+        query = self.startup_query.strip().lower()
+        rels = [p.relative_to(root).as_posix() for p in self.project.startup_choices()]
+        return [r for r in rels if query in r.lower()]
+
+    def set_startup(self, path: Any) -> bool:
+        """Makes ``path`` (a ``.pzform`` or ``.py`` file of the project) the file Run (F5 with nothing open),
+        ``pyzed run`` and ``pyzed build`` start from."""
+        if self.project is None:
+            return False
+        path = Path(path)
+        try:
+            self.project.set_startup(path if path.is_absolute() else self.project.root / path)
+        except (OSError, ValueError) as err:
+            self.d.notify(tr("Could not change the startup file"), str(err), kind="error", seconds=5)
+            return False
+        if self.d.dialog == "project:startup":
+            self.d.dialog = None
+        _logs.event("project", "Startup file: %s", path.name)
+        self.d.notify(tr("{name} is the startup file", name=path.name), tr("Run (F5) starts the app from it"),
+                      kind="success", seconds=3)
+        return True
+
     # -- input setters ---------------------------------------------------------------------
     def setter(self, attr: str) -> Callable[[Any], None]:
         """Returns a callback that stores the value it receives in attribute ``attr`` (for input widgets)."""
@@ -536,6 +586,18 @@ def _output(p: ProjectController, t: Theme) -> Any:
     ], width="fill")
 
 
+def _startup_row(p: ProjectController, project: Project, t: Theme) -> Any:
+    """The project's startup file under its name, with the picker to change it."""
+    label = p.startup_label() or ""
+    icon = "layout-template" if label.endswith(".pzform") else "file-code"
+    button = ui.button(label, p.open_startup, icon=icon, variant="ghost", size="sm", theme=t)
+    return _core.row([
+        _icon("play", size=12, color=t.success),
+        ui.label(tr("Starts from"), size="xs", color="text_muted", theme=t),
+        ui.tooltip(button, tr("Choose the form or script the app starts from"), theme=t),
+    ], spacing=6, align="center")
+
+
 def _header(d: "Designer", p: ProjectController, project: Project, t: Theme) -> Any:
     git = (ui.badge(p.branch or "git", icon="git-branch", tint="accent", theme=t) if project.is_git else
            ui.button(tr("Create repository"), p.git_init, icon="git-branch-plus", size="sm", variant="ghost",
@@ -547,6 +609,7 @@ def _header(d: "Designer", p: ProjectController, project: Project, t: Theme) -> 
                    ui.icon_button("folder-open", p.show("open"), size="sm", tooltip=tr("Open another project"),
                                   theme=t)], spacing=6, align="center"),
         ui.label(str(project.root), size="xs", color="text_muted", wrap=False, theme=t),
+        _startup_row(p, project, t),
     ], spacing=2), padding=(10, 12, 4, 12), width="fill")
 
 
@@ -667,6 +730,8 @@ def dialog(d: "Designer", t: Theme) -> Any:
             _core.space(width="fill"),
             ui.button(tr("Back"), p.show("clone"), variant="ghost", theme=t),
             ui.button(tr("Choose this folder"), p.choose_clone_location, icon="check", variant="solid", theme=t)])
+    if which == "startup" and p.project is not None:
+        return startup_dialog(d, t)
     if which == "name" and p.files.naming is not None:
         return _workspace.name_dialog(p.files, t)
     if which == "delete" and p.files.deleting is not None:
@@ -682,3 +747,26 @@ def dialog(d: "Designer", t: Theme) -> Any:
                 ui.button("Cancel", d.close_dialog, variant="ghost", theme=t),
                 ui.button("Apply", p.change, variant="solid", theme=t)])
     return None
+
+
+def startup_dialog(d: "Designer", t: Theme) -> Any:
+    """Picks the file the app starts from: the project's forms first, then its scripts."""
+    p = d.projects
+    current = p.startup_label()
+    rows = []
+    for rel in p.startup_choices():
+        form = rel.endswith(".pzform")
+        rows.append(ui.list_item(rel, lambda r=rel: p.set_startup(r), icon="layout-template" if form else "file-code",
+                                 description=tr("Form") if form else tr("Python script"),
+                                 end=_icon("check", size=14, color=t.text_accent) if rel == current else None,
+                                 selected=rel == current, inset=True, theme=t))
+    if not rows:
+        rows = [ui.label(tr("No forms or scripts match"), size="sm", color="text_muted", theme=t)]
+    choices = p.startup_choices()
+    return ui.modal(_core.column([
+        ui.label(tr("Run (F5) with nothing open, pyzed run and pyzed build start the app from this file. A form "
+                    "opens as the main window; a script runs with uv run."), size="sm", color="text_muted", theme=t),
+        ui.input(p.startup_query, p.setter("startup_query"), placeholder=tr("Filter forms and scripts…"),
+                 icon="search", on_submit=lambda: p.set_startup(choices[0]) if choices else None, theme=t),
+        _core.container(_core.scrollable(_core.column(rows, width="fill")), height=280),
+    ], spacing=10), title=tr("Startup file"), on_close=d.close_dialog, width=560, theme=t)

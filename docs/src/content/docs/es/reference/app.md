@@ -1072,6 +1072,29 @@ class ReloadError
 
 Lo lanza `view()` mientras la última recarga haya fallado; la ventana muestra su mensaje.
 
+### `Change`
+
+```python
+@dataclass
+class Change(name, changed=[], added=[], removed=[], new_state=[], updated_state=[])
+```
+
+Lo que una recarga cambió en una clase (ver `Reloader.changes`): `name`, los métodos
+cambiados (`changed`), nuevos (`added`) y quitados (`removed`), los atributos que los objetos
+vivos recibieron del nuevo `__init__` (`new_state`) y los que tomaron su nuevo valor inicial
+(`updated_state`).
+
+### `remember`
+
+```python
+remember(obj)
+```
+
+Guarda (una vez) los valores iniciales simples de `obj`, para que una recarga sepa qué cambió la app.
+
+El runtime lo llama para la app, cada ventana y cada componente; llámalo para otros objetos
+creados después de iniciar el hot reload solo si quieres que también se actualicen sus valores iniciales.
+
 ## Idiomas
 
 ### `t`

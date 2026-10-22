@@ -193,7 +193,7 @@ def design(path=None) -> int:
 
 def run_form(path=None, reload: bool = False) -> int:
     """``pyzed run``: runs a ``.pzform`` file (or a ``.pzcomp`` component or ``.pzshad`` shader), by default
-    the current project's main form.
+    the current project's startup file (its main form, or the script set as startup in the designer).
 
     ``reload`` updates the window when the form or its code is saved. Returns 1 when there is no form to run.
     """
@@ -205,11 +205,24 @@ def run_form(path=None, reload: bool = False) -> int:
         if project is None or not project.is_pyzed:
             print("error: give a .pzform file, or run inside a Pyzed project", file=sys.stderr)
             return 1
+        if project.script is not None:
+            return dev(str(project.script), [], []) if reload else _run_script(project.script)
         path = project.main_form
     if not Path(path).exists():
         print(f"error: {path} does not exist", file=sys.stderr)
         return 1
     run(path, reload=reload or None)
+    return 0
+
+
+def _run_script(script: Path) -> int:
+    """Runs a project's startup script like ``python script``."""
+    if not script.is_file():
+        print(f"error: {script} does not exist", file=sys.stderr)
+        return 1
+    sys.argv = [str(script)]
+    sys.path.insert(0, str(script.parent))
+    runpy.run_path(str(script), run_name="__main__")
     return 0
 
 
