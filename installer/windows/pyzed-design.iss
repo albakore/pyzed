@@ -56,6 +56,13 @@ Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "associate"; Description: "{cm:AssocFileExtension,{#AppName},.pzform .pzcomp .pzshad .pzanim}"
 
+[InstallDelete]
+; Installing over an older version: remove its app files first. Copying over them would leave behind what the
+; new version no longer has, such as the old pyzed_ui-X.Y.Z.dist-info, which then reports the old version (and
+; makes the updater offer the version just installed again and again). The uninstaller (unins000.*) stays.
+Type: filesandordirs; Name: "{app}\_internal"
+Type: files; Name: "{app}\{#AppExe}"
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 

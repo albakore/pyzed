@@ -297,12 +297,22 @@ rem Waits for the old app to exit, swaps in the new one and starts it.
 rem (ping, not timeout: timeout fails when its input is not a keyboard)
 tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >NUL & goto wait)
 if exist {old} rmdir /S /Q {old}
-move {target} {old} >NUL || exit /b 1
-move {new} {target} >NUL || (move {old} {target} >NUL & exit /b 1)
+rem A file of the old app can stay in use for a while (an antivirus scan, a child process still ending): retry.
+set tries=0
+:swap
+move {target} {old} >NUL && goto moved
+set /a tries+=1
+if %tries% GEQ {tries} (echo The app folder is still in use: the update was not installed. & {fail})
+ping -n 2 127.0.0.1 >NUL
+goto swap
+:moved
+move {new} {target} >NUL || (move {old} {target} >NUL & echo Could not move the new version in. & {fail})
 {keep}rmdir /S /Q {old}
 {launch}
 del "%~f0"
 """
+#: How many seconds (about) the Windows swap waits for the app folder to be free.
+SWAP_TRIES = 30
 
 
 def _fresh_environment() -> Dict[str, str]:
@@ -325,7 +335,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
 
     A small shell (or ``.cmd`` on Windows) script waits for the current process to end,
     moves the old app aside, moves the new one in and starts it; if the move fails the
-    old app is put back. What the script prints goes to a ``.log`` next to it. Returns the
+    old app is put back (on Windows, where a folder in use cannot move, it first retries for
+    about ``SWAP_TRIES`` seconds, and starts the old app again if it gives up). What the
+    script prints goes to a ``.log`` next to it. Returns the
     script's path. Quit the app right after calling it, and make sure the process really
     ends (``os._exit``): the swap waits for it, so a busy background thread delays the restart.
 
@@ -343,16 +355,19 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
         q = lambda p: f'"{p}"'  # noqa: E731
         launch = f'start "" {q(target / exe_name)} {" ".join(q(a) for a in args)}' if relaunch else ""
         kept = "".join(f'for %%f in ({q(old / p)}) do copy /Y "%%~f" {q(target)} >NUL\n' for p in keep)
+        # when the swap fails the old version starts again (the updater then tells what happened)
+        fail = f"{launch} & exit /b 1" if launch else "exit /b 1"
         text = _WINDOWS_SCRIPT.format(pid=os.getpid(), old=q(old), target=q(target), new=q(bundle), launch=launch,
-                                      keep=kept)
+                                      keep=kept, tries=SWAP_TRIES, fail=fail)
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
         # A hidden console, not DETACHED_PROCESS: without one, each tasklist/find/ping the script runs while
         # it waits would open a console window of its own.
         flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         with open(script.with_suffix(".log"), "w") as log:
+            # started outside the app folder: a process whose current folder is in it keeps it from moving
             subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True, env=env,  # noqa: S603, S607
-                             stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+                             cwd=script.parent, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
         return script
     import shlex
 
@@ -369,7 +384,7 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
     script.chmod(0o755)
     with open(script.with_suffix(".log"), "w") as log:
         subprocess.Popen(["/bin/sh", str(script)], start_new_session=True, close_fds=True, env=env,  # noqa: S603
-                         stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
+                         cwd=script.parent, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)
     return script
 
 

@@ -133,7 +133,26 @@ class UpdateController:
         commands.append(self._run(self._clean_downloads, lambda _: None, lambda _: None))
         if self.d.prefs.check_updates and updater.due():
             commands.append(self.check(quiet=True))
+        pending, log = state.get("pending"), state.get("pending_log")
+        if pending:
+            updater.save_state(pending=None, pending_log=None)
+            if updater.is_newer(str(pending), self.current):  # restarted to update, but this is still the old app
+                self._swap_failed(str(pending), log)
         return [c for c in commands if c is not None]
+
+    def _swap_failed(self, version: str, log: Any) -> None:
+        """Tells that the last "Restart to update" could not replace the app (and where the details are)."""
+        detail = ""
+        try:
+            detail = Path(str(log)).read_text(encoding="utf-8", errors="replace").strip().splitlines()[-1]
+        except (OSError, IndexError, TypeError):
+            pass
+        self.error = tr("Pyzed Design {version} could not replace this version: {detail}", version=version,
+                        detail=detail or tr("the app folder was in use")) + \
+            "\n" + tr("Restart to update again, or install it with the installer from the Download page.")
+        if log:
+            self.error += "\n" + tr("Details: {path}", path=str(log))
+        self.d.notify(tr("The update failed"), self.error, kind="error", seconds=10)
 
     def _clean_downloads(self) -> None:
         """Deletes the downloads of versions already installed (or older): each one is a whole app."""
@@ -235,11 +254,13 @@ class UpdateController:
         if self.bundle is None:
             return None
         try:
-            updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES)
+            script = updater.replace_on_exit(self.bundle, keep=INSTALLER_FILES)
         except (updater.UpdateError, OSError) as err:
             self.d.notify(tr("The update failed"), str(err), kind="error", seconds=6)
             return None
-        updater.save_state(last_seen=self.current)
+        # the next launch compares: still this version means the swap failed (see ``on_start``)
+        updater.save_state(last_seen=self.current, pending=self.latest.version if self.latest else None,
+                           pending_log=str(script.with_suffix(".log")))
         self.restart_pending = True
         return _core.Command.exit()
 

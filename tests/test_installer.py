@@ -115,3 +115,72 @@ def test_swap_script_keeps_the_uninstaller(tmp_path, monkeypatch):
     subprocess.run(["/bin/sh", str(script)], check=True, timeout=30)
     assert (old / "unins000.exe").read_text() == "uninstaller" and not new.exists()
     assert not (tmp_path / "app.old").exists()
+
+
+def _windows_swap(tmp_path, monkeypatch, **kw):
+    """Writes the Windows swap script for ``tmp_path/new`` -> ``tmp_path/app`` and runs it (without waiting for
+    this process to exit); returns the finished process, with its output."""
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda *a, **kw: None)
+    script = updater.replace_on_exit(tmp_path / "new", tmp_path / "app", relaunch=False, **kw)
+    monkeypatch.undo()
+    lines = [line for line in script.read_text().splitlines() if not line.startswith("tasklist ")]
+    script.write_text("\r\n".join(lines) + "\r\n")
+    done = subprocess.run(["cmd", "/c", str(script)], timeout=60, capture_output=True, text=True, errors="replace",
+                          check=False)
+    script.unlink(missing_ok=True)
+    script.with_suffix(".log").unlink(missing_ok=True)
+    return done
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
+def test_windows_swap_script_swaps_and_keeps_the_uninstaller(tmp_path, monkeypatch):
+    old, new = tmp_path / "app", tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    (old / "unins000.exe").write_text("uninstaller")
+    (new / "pyzed-design.exe").write_text("new")
+    assert _windows_swap(tmp_path, monkeypatch, keep=("unins*",)).returncode == 0
+    assert (old / "pyzed-design.exe").read_text() == "new" and (old / "unins000.exe").read_text() == "uninstaller"
+    assert not new.exists() and not (tmp_path / "app.old").exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows swap script")
+def test_windows_swap_script_gives_up_on_a_folder_in_use(tmp_path, monkeypatch):
+    """A process still using the app folder (the bundled uv behind a language server...) keeps it from moving:
+    the script retries, then leaves the old app as it was."""
+    old, new = tmp_path / "app", tmp_path / "new"
+    old.mkdir()
+    new.mkdir()
+    (new / "pyzed-design.exe").write_text("new")
+    monkeypatch.setattr(updater, "SWAP_TRIES", 2)
+    with open(old / "pyzed-design.exe", "w") as busy:
+        busy.write("old")
+        busy.flush()
+        done = _windows_swap(tmp_path, monkeypatch)
+    assert done.returncode == 1 and "still in use" in done.stdout
+    assert (old / "pyzed-design.exe").read_text() == "old" and (new / "pyzed-design.exe").exists()
+
+
+def test_installer_removes_the_old_version_first():
+    """Copying over an older install left its pyzed_ui-X.Y.Z.dist-info behind, which reported the old version."""
+    text = ISS.read_text(encoding="utf-8")
+    section = text.split("[InstallDelete]", 1)[1].split("\n[", 1)[0]
+    entries = [line for line in section.splitlines() if line.startswith("Type:")]
+    assert any('"{app}\\_internal"' in e for e in entries) and not any("unins" in e for e in entries)
+
+
+def test_a_packaged_app_reports_its_newest_metadata(monkeypatch):
+    import importlib.metadata
+    import types
+
+    import pyzed
+
+    found = [types.SimpleNamespace(version=v) for v in ("1.7.0", "1.10.0", "1.8.1", "1.10.0rc1")]
+    monkeypatch.setattr(importlib.metadata, "distributions", lambda name=None: list(found))
+    monkeypatch.delitem(pyzed.__dict__, "__version__", raising=False)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    assert pyzed.__version__ == "1.10.0"
+    monkeypatch.delitem(pyzed.__dict__, "__version__")
+    monkeypatch.delattr(sys, "frozen")
+    assert pyzed.__version__ == "1.7.0"  # from Python: the first on sys.path, the one imported
+    monkeypatch.delitem(pyzed.__dict__, "__version__")
