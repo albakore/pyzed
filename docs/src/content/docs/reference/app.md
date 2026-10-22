@@ -129,6 +129,20 @@ def worker():
 threading.Thread(target=worker, daemon=True).start()
 ```
 
+### `UNCHANGED`
+
+```python
+UNCHANGED(...)
+```
+
+Return it from a callback that changed nothing on screen (a pointer move you only record, a focus change): the window is not rebuilt. Any other return value redraws as usual. See the [performance guide](/pyzed/guides/performance/).
+
+```python
+def pointer_moved(self, x, y):
+    self.pointer = (x, y)
+    return pz.UNCHANGED  # nothing visible changed: no rebuild
+```
+
 ### `load_font`
 
 ```python
@@ -678,6 +692,14 @@ Rating(value=3, on_change=lambda e: print(e.value))
 ```
 
 **Methods and properties**
+
+#### `Component.refresh`
+
+```python
+Component.refresh()
+```
+
+Draws the component again on the next `view()`, even if its props and state are the same.
 
 #### `Component.create`
 

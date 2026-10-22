@@ -129,6 +129,20 @@ def worker():
 threading.Thread(target=worker, daemon=True).start()
 ```
 
+### `UNCHANGED`
+
+```python
+UNCHANGED(...)
+```
+
+Devuélvelo desde un callback que no cambió nada en pantalla (un movimiento del puntero que solo guardas, un cambio de foco): la ventana no se reconstruye. Cualquier otro valor redibuja como siempre. Ver la [guía de rendimiento](/pyzed/es/guides/performance/).
+
+```python
+def pointer_moved(self, x, y):
+    self.pointer = (x, y)
+    return pz.UNCHANGED  # no cambió nada visible: no se reconstruye
+```
+
 ### `load_font`
 
 ```python
@@ -678,6 +692,14 @@ Rating(value=3, on_change=lambda e: print(e.value))
 ```
 
 **Métodos y propiedades**
+
+#### `Component.refresh`
+
+```python
+Component.refresh()
+```
+
+Vuelve a dibujar el componente en el próximo `view()`, aunque sus props y su estado sean los mismos.
 
 #### `Component.create`
 

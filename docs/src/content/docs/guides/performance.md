@@ -47,6 +47,17 @@ their UI fast: start drawing as soon as possible, and don't redo work nobody ask
   it is drawn and kept while it is on screen, however many blocks there are.
 - **Long lists build what is in view.** `ui.table`, `ui.virtual_list` and Pyzed Design's List box
   (from 50 items) only build the rows you can see.
+- **Components are drawn when they change.** A [`pz.Component`](#components-drawn-only-when-they-change)
+  whose props, state and context are the same as last time gives back its last drawing instead
+  of running `render()` again. A view of 500 rows of components rebuilds in 4 ms instead of 26 ms
+  when one of them changes.
+- **So are form controls.** A form made in Pyzed Design, running or on the designer's canvas,
+  only builds again the controls whose properties changed. The designer does the same with its
+  console, outline and toolbox: its view went from 21 ms to 4.5 ms with an 85-control form and
+  400 log lines.
+- **Files are listed off the UI thread.** The Open dialog, the agent's `@` list and the shader file
+  picker read the project folder once and then refresh it on a worker thread, so typing in them
+  never waits for the disk.
 
 Measured with the [benchmark app](/pyzed/why/benchmarks/) (640×480 window, a label and a
 button per row, Xvfb without a GPU, medians of 5 launches) on the same machine:
@@ -141,6 +152,55 @@ and anything your `update()` returns. Return it only when nothing that `view()`,
 For a highlight under the pointer you don't need a callback at all: `.style(hover={"background": "ghost_hover"})`
 draws it in the native widget.
 :::
+
+## Components drawn only when they change
+
+Every [component](/pyzed/guides/components/) keeps its last drawing. On the next `view()` it is
+reused, without calling `render()`, while all of these are the same:
+
+- its **props** and its **state** (any attribute you set on `self`). Lists, dicts, sets and plain
+  objects are compared by their contents, so `self.items.append(x)` is seen;
+- the values it reads with `pz.use_context` (or `self.context`);
+- the theme, the language, the window size and the stylesheet;
+- the components drawn inside it: when a child changes its state, every component that contains
+  it is drawn again too.
+
+Callbacks you pass as props or create in `render()` don't get in the way: they are compared by
+their code and the values they captured, so a new `lambda: self.pick(i)` with the same `i` counts
+as the same callback.
+
+```python
+class Row(pz.Component):
+    name: str = ""
+    stars: int = 0
+
+    def render(self):  # runs only when name, stars or the Rating inside change
+        return pz.row([ui.label(self.name), Rating(value=self.stars)])
+```
+
+Two cases need a hand, because the component can't see what changed:
+
+- `render()` reads something that is neither a prop, nor state, nor context: the clock, a global,
+  data changed by another object. Call `self.refresh()` when it changes, or put `cache = False` on
+  the class to draw it on every `view()` (live meters do that).
+- A value whose changes can't be compared (a NumPy array, a native handle, a huge object graph)
+  turns the cache off for that component on its own: it is drawn every time, as before.
+
+A component that gets widgets as `children` is drawn whenever the parent builds them again, since
+they are new widgets each time; it costs no more than drawing it.
+
+## Threads
+
+Your `view()`, `update()` and callbacks run on the UI thread, one at a time, as in every native
+toolkit. Python runs one thread at a time anyway (the GIL), so the fastest UI is the one that
+does less on that thread, which is what the caches above are for. What Pyzed does on other
+threads:
+
+- Iced lays out and renders the frame in Rust, outside the GIL, and the GPU draws it.
+- System fonts are scanned, project files are listed and the designer's agents, language servers
+  and builds run on worker threads.
+- Your slow work belongs there too: [async tasks](/pyzed/guides/async/) or a `threading.Thread`
+  that sends its result with `pz.post(...)`.
 
 ## Memoized subtrees
 

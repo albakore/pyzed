@@ -769,8 +769,6 @@ text(
     width=None,
     height=None,
     wrap=True,
-    selectable=None,
-    selection_color=None,
 )
 ```
 
@@ -790,8 +788,6 @@ A piece of text.
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `height` | Height: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
 | `wrap` | Line wrapping. With `False` the text doesn't wrap. |
-| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
-| `selection_color` | Color behind the selected text. |
 
 ### `icon`
 
@@ -919,8 +915,6 @@ markdown(
     code_bg=None,
     on_link=None,
     width=None,
-    selectable=None,
-    selection_color=None,
 )
 ```
 
@@ -936,8 +930,6 @@ Renders Markdown (headings, lists, code blocks, quotes, tables, links…). For t
 | `code_bg` | Code background. |
 | `on_link` | Callable that receives the URL when a link is clicked. |
 | `width` | Width: pixels, `"fill"`, `"shrink"` or `"fill:N"` (proportion). |
-| `selectable` | `True` lets the mouse select the text (drag, double-click a word, triple-click a block) and Ctrl+C copy it. A string names a selection group: the texts and Markdown of one group form a single selection, in the order they are drawn (the lines of a log, the messages of a chat). |
-| `selection_color` | Color behind the selected text. |
 
 ### `rich_text`
 

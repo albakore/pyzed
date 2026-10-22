@@ -274,7 +274,7 @@ Returns a deep copy of the form and its controls.
 
 ```python
 @dataclass
-class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={})
+class Control(name, type, x=0.0, y=0.0, width=100.0, height=28.0, props={}, events={}, anchor=('left', 'top'), visible=True, enabled=True, locked=False, parent=None, layout={}, style={}, animations=[], bind='', rules={}, hidden_in_editor=False)
 ```
 
 One component placed on a form.
@@ -288,7 +288,8 @@ handler function names. `layout` holds options read by the parent's layout, such
 (`pz.Style.to_dict()`: background, border, radius, font...) drawn on top of the props.
 `animations` lists the control's animations (see `designer.motion`). `bind` names the
 field of `form.data` the control shows (and edits, for inputs), and `rules` what its
-value must be (see `designer.binding`).
+value must be (see `designer.binding`). `hidden_in_editor` hides it on the designer's canvas only
+(the outline's eye with the "editor" setting); the running form ignores it.
 
 **Methods and properties**
 
@@ -1547,6 +1548,10 @@ render(control, ctx)
 ```
 
 Draws `control` at its size (its own props, falling back to the component defaults).
+
+A control whose fields, theme, language and animations are the same as last time gets its
+last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
+Controls made from a `pz.Component` keep their own cache (see `pyzed.component`).
 
 ## Layout helpers
 
