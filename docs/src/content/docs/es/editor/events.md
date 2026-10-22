@@ -81,8 +81,9 @@ El propio formulario:
 | `key` | En cada pulsación de tecla. | La combinación, como `"ctrl-s"` |
 | `resize` | La ventana cambia de tamaño. | `(ancho, alto)` |
 
-Los [componentes diseñados](/pyzed/es/editor/component-designer/) añaden sus propios **eventos personalizados** a
-esta lista cuando los colocas en un formulario.
+Los [componentes diseñados](/pyzed/es/editor/component-designer/) añaden sus propios **eventos personalizados** cuando
+los colocas en un formulario: la pestaña Eventos los muestra primero, en **Eventos personalizados**, separados de los
+**Eventos incluidos** que tiene cualquier control.
 
 ## Escribir manejadores
 

@@ -339,7 +339,7 @@ def lookup_code(symbol: str, form: Optional[Form] = None) -> Optional[str]:
             if cls is not None:
                 return _reference.lookup(cls.__name__)
             try:
-                _components.get(control.type)
+                _components.spec(control.type)
                 return f"control:{control.type}"
             except KeyError:
                 found = _reference.lookup(control.type)

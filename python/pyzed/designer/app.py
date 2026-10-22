@@ -276,8 +276,8 @@ class Designer(App):
         found = Project.find(path or Path.cwd())
         if found is not None and found.is_pyzed:
             self.projects.attach(found)
-        # Designed components (.pzcomp) of the project join the toolbox.
-        _scene.discover(found.root if found is not None else Path(path).resolve().parent if path else Path.cwd())
+        # The project's components (.pzcomp and pz.Component classes) join the toolbox.
+        _scene.discover_project(found.root if found is not None else Path(path).resolve().parent if path else None)
         self.title = self.window_title
         if opened_later is not None:
             self.open_path(opened_later)
@@ -849,7 +849,7 @@ class Designer(App):
             rects = _layout.resolve(form, free=drag.rects.keys())
             others = [rects[c.name] for c in form.controls
                       if c.name not in drag.rects and c.name not in inside and c.visible and c.name in rects
-                      and _components.get(c.type).visual]
+                      and _components.spec(c.type).visual]
             gx, gy, self.guides = geometry.smart_guides(moving, others, (form.width, form.height))
             ddx += gx
             ddy += gy
@@ -910,7 +910,7 @@ class Designer(App):
         elif drag.mode == "band":
             if band is not None:
                 rects = _layout.resolve(form)
-                hit = [c.name for c in form.controls if c.name in rects and _components.get(c.type).visual
+                hit = [c.name for c in form.controls if c.name in rects and _components.spec(c.type).visual
                        and self.on_canvas(c) and geometry.intersects(rects[c.name], band)]
                 # a container and what is inside it move together: keep the outermost
                 doc.select([n for n in hit if not any(a.name in hit for a in form.ancestors(n))])
@@ -964,7 +964,7 @@ class Designer(App):
         control = self.doc.form.get(name)
         locked = bool(control and control.locked)
         container = control is not None and _layout.kind(control) is not None
-        if control is not None and not _components.get(control.type).visual:  # in the tray: nothing to lay out
+        if control is not None and not _components.spec(control.type).visual:  # in the tray: nothing to lay out
             return [
                 ui.MenuItem(tr("View code"), self._menu_action(lambda: self.open_default_event(name)), icon="code"),
                 ui.MenuItem(tr("Help"), self._menu_action(lambda: self.open_reference(self.help_page_of(name))),
@@ -1031,7 +1031,7 @@ class Designer(App):
             icon, text = spec.icon, tr(spec.label)
         else:
             control = self.doc.form.get(carry.names[0])
-            icon = _components.get(control.type).icon if control is not None else "box"
+            icon = _components.spec(control.type).icon if control is not None else "box"
             text = carry.names[0] if len(carry.names) == 1 else f"{carry.names[0]} +{len(carry.names) - 1}"
         return _core.container(_core.row([_icon(icon, size=13, color=t.accent),
                                           _core.text(text, size=12.5, color=t.text, wrap=False)],
@@ -1569,7 +1569,7 @@ class Designer(App):
             return
         if self.open_component_of(name):  # a designed component opens in its Component view
             return
-        event = _components.get(control.type).default_event
+        event = _components.spec(control.type).default_event
         if event:
             self.edit_event(name, event)
 
@@ -2131,6 +2131,7 @@ class Designer(App):
             return self._show_tab(*found)  # already open: keep its unsaved changes
         if not self._leave_doc():
             return
+        _scene.discover_project(path)  # a form of another folder may use its components
         try:
             self.doc = _scene.open_document(path)
         except (OSError, ValueError) as err:
@@ -2969,7 +2970,7 @@ class Designer(App):
         primary = doc.primary
         if len(doc.selection) > 1:
             info = tr("{count} selected", count=len(doc.selection))
-        elif primary is not None and not _components.get(primary.type).visual:
+        elif primary is not None and not _components.spec(primary.type).visual:
             info = f"{primary.name}  " + tr("Non-visual")
         elif primary is not None:
             info = f"{primary.name}  {primary.width:g}×{primary.height:g} " + tr(

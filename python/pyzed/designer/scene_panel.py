@@ -168,7 +168,6 @@ def component_rows(d: "Designer", t: Theme) -> List[Any]:
         ]), icon="ruler"),
         inherited_section(d, t),
         member_section(d, t),
-        event_section(d, t),
         method_section(d, t),
     ]
     return [header, warning, _accordion(d, [s for s in sections if s is not None], t)]
@@ -424,9 +423,9 @@ def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
     return None
 
 
-def event_section(d: "Designer", t: Theme) -> Any:
-    """Builds the Events section: a card per declared custom event (name and description), and a button to add
-    one."""
+def custom_events(d: "Designer", t: Theme) -> Any:
+    """The component's custom events, for the Events tab: a card per declared event (name and description), and a
+    button to add one."""
     doc = d.doc
     assert isinstance(doc, SceneDocument)
     events = doc.custom_events
@@ -446,7 +445,7 @@ def event_section(d: "Designer", t: Theme) -> Any:
         rows.append(_hint("Raise them from a method with self.emit(\"name\", value); the parent handles them "
                           "with on_name=..., or in the Events tab of a form.", t))
     rows.append(_core.row([_add_button("Event", "plus", lambda: _guard(d, lambda: doc.add_event("changed")), t)]))
-    return ui.AccordionSection("events", f"Custom events ({len(events)})", _stack(rows), icon="zap")
+    return _stack(rows)
 
 
 def method_section(d: "Designer", t: Theme) -> Any:
@@ -535,7 +534,7 @@ def binding_section(d: "Designer", t: Theme) -> Any:
     assert isinstance(doc, SceneDocument)
     control = doc.primary
     assert control is not None
-    spec = _components.get(control.type)
+    spec = _components.spec(control.type)
     if not spec.props:
         return None
     bound = doc.scene.bound(control.name)

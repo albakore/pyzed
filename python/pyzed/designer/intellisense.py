@@ -293,7 +293,7 @@ def designer_completions(form: Optional[Form], line: str, column: int) -> Option
     if control_name is None:
         items = []
         for control in form.controls:
-            comp = _components.get(control.type)
+            comp = _components.spec(control.type)
             items.append(CompletionItem(control.name, "control", comp.label if comp else control.type,
                                         comp.description if comp else ""))
         items += [CompletionItem(n, k, d, doc) for n, k, d, doc in _FORM_MEMBERS]
@@ -301,7 +301,7 @@ def designer_completions(form: Optional[Form], line: str, column: int) -> Option
     control = form.get(control_name)
     if control is None:
         return None
-    comp = _components.get(control.type)
+    comp = _components.spec(control.type)
     items = []
     if comp is not None:
         for prop in comp.props:

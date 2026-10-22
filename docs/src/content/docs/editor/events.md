@@ -79,8 +79,9 @@ The form itself:
 | `key` | On every key press. | The combo, such as `"ctrl-s"` |
 | `resize` | The window is resized. | `(width, height)` |
 
-[Designed components](/pyzed/editor/component-designer/) add their own **custom events** to this list when you
-place them on a form.
+[Designed components](/pyzed/editor/component-designer/) add their own **custom events** when you place them on a
+form: the Events tab lists them first, under **Custom events**, apart from the **Built-in events** every control
+has.
 
 ## Writing handlers
 

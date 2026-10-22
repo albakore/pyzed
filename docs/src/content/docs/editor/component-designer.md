@@ -88,7 +88,6 @@ With nothing selected, the Properties tab shows the component itself, in collaps
 | **Layout** | **Width**, **Height**, **Background** (transparent when empty) and **Grid size** of the design surface. |
 | **Inherited** | Only with a base: what comes from each base class, read only. |
 | **Properties** | A row per property (type icon, name and value), and **Public** / **Private** buttons to add one. |
-| **Custom events** | A card per event (name and description), and **Event** to add one. |
 | **Methods** | The class's code, grouped, a field to add a method and **Edit the class**. |
 
 - **Properties**: like Unreal's details panel, each property is one compact row: its type icon, its name (a lock
@@ -98,8 +97,6 @@ With nothing selected, the Properties tab shows the component itself, in collaps
   declared with `pz.state`. Both are attributes in the code: `self.value`, `self.clicks`. The type decides the
   editor the property gets, here and in the Properties tab of the forms that use the component (see
   [Property types](#property-types)).
-- **Custom events**: the events the component raises with `self.emit("change", value)`, with a description.
-  The parent handles them with `on_change=...` in code, or in the Events tab of a form.
 - **Methods**: every method of the class, grouped in **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
   added when you click them), **Event handlers** (the code of the controls' events) and your own **Methods** (a
   name starting with `_` is marked private). Click one to open it in the code editor. Type a name and press
@@ -190,6 +187,19 @@ def clear_click(self, event):
 ```
 
 Every instance has its own copy of the controls, so two ratings on one form keep their own state.
+
+## Custom events
+
+With nothing selected, the Events tab shows the component's own events in two groups:
+
+- **Custom events**: the events the component raises with `self.emit("change", value)`, a card per event with
+  its name and description, and **Event** to add one. The parent handles them with `on_change=...` in code, or
+  in the Events tab of a form.
+- **Built-in events**: the ones every component has, `setup`, `mount` and `unmount`.
+
+Placed on a form, the component keeps the same split in the form's Events tab: its custom events first, then the
+built-in ones every control has (`mouse_enter`, `mouse_leave`, `right_click`). Classes written by hand with
+`pz.Component` and an `events` attribute show theirs the same way.
 
 ## Bindings
 

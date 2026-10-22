@@ -244,6 +244,61 @@ def get(type_: str) -> Component:
         raise KeyError(f"unknown component type {type_!r}; registered: {sorted(_REGISTRY)}") from None
 
 
+#: The toolbox category of the stand-ins drawn for controls whose component is not registered.
+MISSING = "Missing"
+#: Stand-ins for unknown types (see ``spec``), by type.
+_missing: Dict[str, Component] = {}
+
+
+def spec(type_: str) -> Component:
+    """Returns the registered component for ``type_``, or a stand-in when nobody registered it.
+
+    A control whose component is gone (a project class that failed to import, or a form saved by a newer
+    Pyzed) is drawn as a warning box with its type and keeps its properties and events untouched, so the
+    rest of the form still opens, runs and saves.
+    """
+    found = _REGISTRY.get(type_)
+    if found is not None:
+        return found
+    stand_in = _missing.get(type_)
+    if stand_in is None:
+        label = type_.replace("_", " ").capitalize()
+        stand_in = _missing[type_] = Component(
+            type_, label, "puzzle", MISSING, _missing_render, (160, 60),
+            description=f"The component {type_!r} is not available: its code was not found or failed to import.")
+    return stand_in
+
+
+def custom_events(type_: str) -> Tuple[str, ...]:
+    """The events a ``pz.Component`` (or designed component) declares itself, in order; built-in components and
+    the events every component has (``mount``, ``unmount``) give none."""
+    cls = _components_api.find(type_)
+    if cls is None:
+        return ()
+    return tuple(e for e in getattr(cls, "__events__", {}) if e not in _components_api.LIFECYCLE_EVENTS)
+
+
+def is_known(type_: str) -> bool:
+    """Whether a component is registered for ``type_`` (``spec`` draws a stand-in when it is not)."""
+    return type_ in _REGISTRY
+
+
+def _missing_render(c: Control, ctx: RenderContext) -> Any:
+    """The stand-in of an unknown component: a warning box with its type."""
+    from ..theme import alpha
+
+    t = ctx.theme
+    return _core.container(
+        _core.column([
+            _core.row([_icon("triangle-alert", size=14, color=t.warning),
+                       _core.text(c.type, size=12, font="mono", color=t.text, wrap=False)], spacing=6,
+                      align="center"),
+            _core.text("Component not found", size=11, color=t.text_muted, wrap=False),
+        ], spacing=2, align="center"),
+        width="fill", height="fill", center=True, clip=True, bg=alpha(t.warning, 0.08), radius=t.radius_sm,
+        border_color=alpha(t.warning, 0.6), border_width=1)
+
+
 def all_components() -> List[Component]:
     """Returns every registered component, in registration order."""
     return list(_REGISTRY.values())
@@ -271,7 +326,7 @@ def render(control: Control, ctx: RenderContext) -> Any:
     last drawing back, so a form with hundreds of controls only rebuilds the ones that changed.
     Controls made from a ``pz.Component`` keep their own cache (see ``pyzed.component``).
     """
-    if control.type in _UNCACHED or _components_api.find(control.type) is not None:
+    if control.type in _UNCACHED or control.type not in _REGISTRY or _components_api.find(control.type) is not None:
         return _render_now(control, ctx)
     plain = type(ctx) is RenderContext  # the designer's: inert callbacks, nothing tied to the context
     try:
@@ -295,10 +350,10 @@ def render(control: Control, ctx: RenderContext) -> Any:
 def _render_now(control: Control, ctx: RenderContext) -> Any:
     from .binding import translate
 
-    spec = get(control.type)
-    props = {k: translate(v, ctx.language) for k, v in {**spec.defaults(), **control.props}.items()}
+    component = spec(control.type)
+    props = {k: translate(v, ctx.language) for k, v in {**component.defaults(), **control.props}.items()}
     merged = Control(**{**control.__dict__, "props": props})
-    widget = styled(spec.render(merged, ctx), control, ctx)
+    widget = styled(component.render(merged, ctx), control, ctx)
     widget = animated(widget, control, ctx)
     # shadows, glows and motion are drawn outside the box: clipping would cut them off
     from . import motion

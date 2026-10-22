@@ -2149,6 +2149,8 @@
   "Sync creates .venv with the packages of uv.lock.": "Sincronizar crea .venv con los paquetes de uv.lock.",
   "Hide until the project opens again": "Ocultar hasta volver a abrir el proyecto",
   "Not installed as uv.lock says: {names}": "Sin instalar como dice uv.lock: {names}",
-  "Sync the environment to install them.": "Sincroniza el entorno para instalarlos."
+  "Sync the environment to install them.": "Sincroniza el entorno para instalarlos.",
+  "Custom events": "Eventos personalizados",
+  "Built-in events": "Eventos incluidos"
  }
 }

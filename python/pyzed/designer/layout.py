@@ -42,7 +42,7 @@ DOCK_HEADER = 32.0
 def kind(control: Control) -> Optional[str]:
     """``"free"``, ``"flex"``, ``"grid"`` or ``"dock"`` for containers, ``None`` for other controls."""
     try:
-        return _components.get(control.type).container
+        return _components.spec(control.type).container
     except KeyError:
         return None
 
@@ -51,7 +51,7 @@ def props(control: Control) -> Dict[str, Any]:
     """Returns the control's properties merged over its component's defaults (just its own for an unknown
     type)."""
     try:
-        defaults = _components.get(control.type).defaults()
+        defaults = _components.spec(control.type).defaults()
     except KeyError:
         defaults = {}
     return {**defaults, **control.props}

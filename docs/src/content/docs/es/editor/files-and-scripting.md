@@ -129,6 +129,13 @@ callbacks y el mismo código funciona en los dos. Todas las subclases de `pz.Com
 también en la caja de herramientas (ver [Componentes](/pyzed/es/guides/components/)), igual que los componentes que
 dibujas en el [diseñador de componentes](/pyzed/es/editor/component-designer/).
 
+Se cargan cada vez que se abre un proyecto (al arrancar, desde el selector de proyectos o desde una carpeta
+reciente) y cuando abres un formulario de otra carpeta. Pyzed importa un módulo por sus componentes solo si su nivel
+superior se limita a definir cosas: un módulo que llama a `pz.run(...)` fuera de `if __name__ == "__main__":` se
+omite. Un control cuyo componente no se encuentra (su módulo falla al importarse, o el formulario viene de un Pyzed
+más nuevo) se ve como un recuadro amarillo **Component not found** con su tipo: el resto del formulario se abre
+igual y sus propiedades y eventos se conservan al guardar.
+
 ## Tus propias plantillas
 
 Las plantillas de Nuevo formulario son datos, no código. Cada una es una carpeta:

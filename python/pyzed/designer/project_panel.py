@@ -109,6 +109,10 @@ class ProjectController:
         if project.root not in self.window:
             self.window.append(project.root)
         project.activate()
+        if changed:  # its components join the toolbox, so its forms can draw them
+            from . import scene as _scene
+
+            _scene.discover_project(project.root)
         _project.remember(project)
         try:
             os.chdir(project.root)

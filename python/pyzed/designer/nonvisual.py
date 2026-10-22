@@ -53,7 +53,7 @@ def attribute(control: Control, prop: str) -> str:
 
 def props(control: Control) -> Dict[str, Any]:
     """The control's properties, with the component's defaults for the ones it does not set."""
-    return {**_components.get(control.type).defaults(), **control.props}
+    return {**_components.spec(control.type).defaults(), **control.props}
 
 
 def _value(control: Control, prop: str, value: Any) -> Any:
@@ -101,7 +101,7 @@ def build_all(runtime: "FormRuntime") -> Dict[str, _services.Service]:
     """The services of every non-visual control of the running form, by control name."""
     out: Dict[str, _services.Service] = {}
     for control in runtime.form.controls:
-        if not _components.get(control.type).visual:
+        if not _components.spec(control.type).visual:
             service = build(control, runtime)
             if service is not None:
                 out[control.name] = service
@@ -179,7 +179,7 @@ def remember(runtime: "FormRuntime", control: Control, settings: _services.Setti
         target = runtime.form.get(name)
         prop = _value_prop(target) if target is not None else None
         if prop is not None:
-            saved[name] = target.props.get(prop, _components.get(target.type).defaults().get(prop))
+            saved[name] = target.props.get(prop, _components.spec(target.type).defaults().get(prop))
     settings.set("controls", saved)
 
 
