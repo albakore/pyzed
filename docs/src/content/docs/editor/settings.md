@@ -46,6 +46,7 @@ A monospaced font keeps code columns aligned: pick one for **Code font** (its na
 | **Show grid** | The dot grid on the canvas (also <kbd>G</kbd>). |
 | **Snap to grid** | Rounds positions and sizes to the grid. |
 | **Smart guides** | Aligns to other controls while dragging. |
+| **Outline eye** | **Hidden when running** (the default): the eye turns Visible off; the control is also left out of the canvas and shown while selected. **Hidden in the editor only**: the eye hides it on the canvas only and the running form still shows it. |
 | **Show all hidden controls** | Draws every control whose Visible is off, dimmed. Off (the default), a hidden control appears only while it or something inside it is selected. |
 | **Grid size for new forms** | The grid step (2 to 64) given to forms and components you create. Each form then keeps its own in Properties. |
 

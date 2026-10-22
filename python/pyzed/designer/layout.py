@@ -19,7 +19,7 @@ both draw from it, so a layout looks the same while designing and at run time. L
 
 from __future__ import annotations
 
-from typing import Any, Collection, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Collection, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from . import components as _components
 from .geometry import MIN_SIZE, anchored, contains
@@ -312,17 +312,18 @@ def origin(form: Form, rects: Dict[str, Rect], parent: Optional[str]) -> Tuple[f
 
 
 def container_at(form: Form, rects: Dict[str, Rect], x: float, y: float,
-                 exclude: Iterable[str] = (), revealed: Iterable[str] = ()) -> Optional[Control]:
+                 exclude: Iterable[str] = (), shown: Optional[Callable[[Control], bool]] = None) -> Optional[Control]:
     """The innermost visible container under ``(x, y)``, skipping ``exclude`` and what is inside them.
 
-    Hidden controls named in ``revealed`` count as visible (a hidden dialog being edited, see ``reveal``)."""
-    shown = set(revealed)
+    ``shown`` tells which controls count as visible (the designer's canvas: a hidden dialog being edited
+    does); by default those visible when the form runs."""
     banned = set(exclude)
     for name in list(banned):
         banned.update(c.name for c in form.descendants(name))
     found: Optional[Control] = None
     for control, _depth in form.walk():
-        if control.name in banned or kind(control) is None or not visible(form, control, shown):
+        if control.name in banned or kind(control) is None \
+                or not (shown(control) if shown is not None else visible(form, control)):
             continue
         rect = rects.get(control.name)
         if rect and contains(rect, x, y):

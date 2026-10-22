@@ -183,7 +183,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     animated = d.timeline.canvas_overrides()
     # A hidden control (a dialog, a drawer, a page that code shows) stays off the canvas, so they do not
     # pile up on the form; selecting it, or something inside it, brings it up in front of the dimmed form.
-    front, revealed = d.revealed
+    front = d.revealed[0]
     in_front = {front, *(c.name for c in form.descendants(front))} if front else set()
     shown = []
     drawn: List[Any] = []
@@ -192,7 +192,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     for c, _depth in form.walk():
         if not _components.get(c.type).visual:
             continue  # in the tray under the form
-        if (not c.visible and c.name not in revealed) or (c.parent and c.parent in hidden):
+        if d.hidden_on_canvas(c):
             hidden.add(c.name)
             if not d.show_all_hidden:
                 continue
@@ -236,7 +236,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
         ), x=x, y=y))
 
     # 4. selection, handles, rubber band
-    selected = [c for c in doc.selected if _components.get(c.type).visual]
+    selected = [c for c in doc.selected if _components.get(c.type).visual and d.on_canvas(c)]
     for c in selected:
         primary = c is doc.primary
         x, y, cw, ch = rects.get(c.name, c.rect)

@@ -81,3 +81,34 @@ def test_the_old_preference_does_not_bring_back_the_pile():
     prefs = preferences.DesignerSettings.from_dict({"show_hidden": True})
     assert prefs.show_all_hidden is False
     assert preferences.DesignerSettings.from_dict({"show_all_hidden": True}).show_all_hidden is True
+
+
+def test_the_eye_can_hide_controls_in_the_editor_only():
+    app = _designer()
+    app.prefs.outline_eye = "editor"
+    form = app.doc.form
+    # hidden when running is not hidden here: the dialogs are drawn, ready to edit
+    assert all(app.on_canvas(c) for c in form.controls)
+    assert app._container_under(250, 200) == "dialog"
+    app.toggle_eye("dialog")
+    assert form["dialog"].hidden_in_editor and not form["dialog"].visible  # Visible is left alone
+    assert not app.on_canvas(form["dialog"]) and not app.on_canvas(form["ok"])
+    app.select_from_outline("ok")  # selecting it does not bring it back
+    assert app.revealed == (None, set()) and not app.on_canvas(form["ok"])
+    surface.form_surface(app, app.theme_obj)
+    assert app._container_under(250, 200) is None
+    # saved with the form, and left out of the file when off
+    data = form["dialog"].to_dict()
+    assert data["hidden_in_editor"] is True and "hidden_in_editor" not in form["ok"].to_dict()
+    assert Control.from_dict(data).hidden_in_editor
+    app.toggle_eye("dialog")
+    assert not form["dialog"].hidden_in_editor
+
+
+def test_the_eye_mode_is_a_setting():
+    assert preferences.DesignerSettings().outline_eye == "visible"
+    assert preferences.DesignerSettings.from_dict({"outline_eye": "editor"}).outline_eye == "editor"
+    assert preferences.DesignerSettings.from_dict({"outline_eye": "nope"}).outline_eye == "visible"
+    app = _designer()
+    app.toggle_eye("heading")
+    assert not app.doc.form["heading"].visible and not app.doc.form["heading"].hidden_in_editor

@@ -96,6 +96,8 @@ def settings(d: "Designer", t: Theme) -> Any:
     def pick_frame(name: str) -> None:
         d.set_preview("frame", next(k for k, v in frame_labels.items() if v == name) or None)
 
+    eyes = {tr("Hidden when running"): "visible", tr("Hidden in the editor only"): "editor"}
+    eye_current = next((k for k, v in eyes.items() if v == p.outline_eye), next(iter(eyes)))
     names = {code: tr(name) if not code else name for code, name in LANGUAGES}
     language_names = list(names.values())
     current = names.get(p.language, language_names[0])
@@ -121,6 +123,10 @@ def settings(d: "Designer", t: Theme) -> Any:
         ui.field(tr("Smart guides"), switch("smart_guides"), description=tr("Align to other controls while dragging"),
                  theme=t),
         ui.field(tr("Show all hidden controls"), switch("show_all_hidden"), theme=t),
+        ui.field(tr("Outline eye"), ui.select(list(eyes), eye_current, lambda name: d.set_pref("outline_eye", eyes[name]),
+                                              width=260, theme=t),
+                 description=tr("Hidden when running: also off the canvas, shown while selected. "
+                                "Editor only: hides it on the canvas, the running form still shows it"), theme=t),
         ui.field(tr("Grid size for new forms"), ui.number_field(float(p.grid), lambda v: d.set_pref("grid", int(v)), min=2,
                                                             max=64, step=1, width=110, theme=t), theme=t),
     ], theme=t)

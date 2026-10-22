@@ -626,12 +626,31 @@ class Designer(App):
     @property
     def revealed(self) -> Tuple[Optional[str], Set[str]]:
         """The hidden control drawn in front while it (or something inside it) is selected, and every hidden
-        control the canvas shows for the selection (see ``layout.reveal``)."""
+        control the canvas shows for the selection (see ``layout.reveal``). Nothing when the outline's eye
+        only hides controls in the editor: those stay hidden even when selected."""
+        if self.prefs.outline_eye == "editor":
+            return None, set()
         return _layout.reveal(self.doc.form, self.doc.selection)
+
+    def hidden_on_canvas(self, control: Control) -> bool:
+        """Whether the canvas leaves ``control`` out (or, with every hidden control shown, dims it): hidden
+        when the form runs and not revealed, or hidden in the editor, itself or a container holding it."""
+        form = self.doc.form
+        if self.prefs.outline_eye == "editor":
+            return any(c.hidden_in_editor for c in (control, *form.ancestors(control.name)))
+        return not _layout.visible(form, control, self.revealed[1])
 
     def on_canvas(self, control: Control) -> bool:
         """Whether ``control`` is drawn on the canvas (hidden ones only when revealed or all are shown)."""
-        return self.show_all_hidden or _layout.visible(self.doc.form, control, self.revealed[1])
+        return self.show_all_hidden or not self.hidden_on_canvas(control)
+
+    def toggle_eye(self, name: str) -> None:
+        """The outline's eye on control ``name``: its Visible, or whether the canvas hides it (``outline_eye``)."""
+        control = self.doc.form[name]
+        if self.prefs.outline_eye == "editor":
+            self.set_field(name, "hidden_in_editor", not control.hidden_in_editor)
+        else:
+            self.set_field(name, "visible", not control.visible)
 
     @property
     def drop_target(self):
@@ -640,7 +659,8 @@ class Designer(App):
 
     def _container_under(self, x: float, y: float, exclude=()) -> Optional[str]:
         form = self.doc.form
-        found = _layout.container_at(form, self.rects, x, y, exclude, self.revealed[1])
+        found = _layout.container_at(form, self.rects, x, y, exclude,
+                                     shown=lambda c: not self.hidden_on_canvas(c))
         # a dock only takes Dock panels: anything else goes to what holds the dock
         placing = [form[n].type for n in exclude if form.get(n) is not None]
         if not placing:

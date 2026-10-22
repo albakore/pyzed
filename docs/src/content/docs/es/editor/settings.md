@@ -47,6 +47,7 @@ nombre suele decir *Mono* o *Code*). Para la interfaz se ve mejor una fuente con
 | **Mostrar la cuadrícula** | La cuadrícula de puntos del lienzo (también <kbd>G</kbd>). |
 | **Ajustar a la cuadrícula** | Redondea posiciones y tamaños a la cuadrícula. |
 | **Guías inteligentes** | Alinea con otros controles al arrastrar. |
+| **Ojo de la estructura** | **Oculto al ejecutar** (lo normal): el ojo apaga Visible; el control tampoco se ve en el lienzo, salvo mientras está seleccionado. **Oculto solo en el editor**: el ojo lo oculta solo en el lienzo y al ejecutar el formulario se sigue viendo. |
 | **Mostrar todos los controles ocultos** | Dibuja atenuados todos los controles con Visible apagado. Apagado (lo normal), un control oculto solo aparece mientras él o algo dentro de él está seleccionado. |
 | **Cuadrícula de los formularios nuevos** | El paso de cuadrícula (2 a 64) que reciben los formularios y componentes que creas. Luego cada formulario conserva el suyo en Propiedades. |
 
