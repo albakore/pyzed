@@ -38,6 +38,19 @@ rápidos para mantener ágil su interfaz: empezar a dibujar cuanto antes y no re
 - **Sin reconstrucciones por teclas que nadie escucha.** Las pulsaciones y liberaciones de
   teclas solo llegan a tu app (y reconstruyen la vista) cuando una ventana define `on_key` u
   `on_key_up`. Escribir en un campo reconstruye la vista una vez por tecla en lugar de tres.
+- **Pasar el ratón no cuesta nada.** Los botones, las filas de las listas y todo lo que tiene un
+  estilo `hover=` se iluminan bajo el puntero por sí solos, sin mensaje ni un `view()` nuevo. Los
+  callbacks del puntero (`on_move`, `on_enter`, `on_exit`, `mouse_move`...) se ejecutan en cuanto se
+  mueve el ratón, y cuando uno devuelve [`pz.UNCHANGED`](#callbacks-que-no-cambian-nada-en-pantalla)
+  no se reconstruye ni se redibuja nada. Los componentes de la librería y Pyzed Design lo hacen
+  siempre que un movimiento no cambia nada.
+- **Estilos resueltos una vez.** `widget.style(...)` guarda lo que resuelve según sus propiedades
+  y el tema, así que el mismo color de hover en todas las filas de una lista se calcula una vez, no
+  una vez por fila en cada `view()`.
+- **Markdown analizado una vez.** Un chat o documento largo en bloques `pz.markdown` se analiza la
+  primera vez que se dibuja y se conserva mientras está en pantalla, tenga los bloques que tenga.
+- **Las listas largas construyen lo visible.** `ui.table`, `ui.virtual_list` y el List box de Pyzed
+  Design (desde 50 elementos) solo construyen las filas que se ven.
 
 Medido con la [app del benchmark](/pyzed/es/why/benchmarks/) (ventana de 640×480, una etiqueta
 y un botón por fila, Xvfb sin GPU, medianas de 5 arranques) en la misma máquina:
@@ -99,6 +112,40 @@ Medido con una tabla de 200 000 filas, construir la vista pasó de 3,7 s a 0,2 m
 `items` y `rows` deberían ser listas (u otras secuencias): otros iterables se copian a una lista
 en cada `view()`. Ordenar una tabla enorme en cada `view()` es el coste que queda; guarda las
 filas ya ordenadas en tu estado u ordénalas en una función `@pz.memo`.
+:::
+
+## Callbacks que no cambian nada en pantalla
+
+Un mensaje hace que Pyzed vuelva a llamar a `view()` y a calcular el layout y dibujar la ventana.
+Eso es lo que quieres tras un clic, pero un puntero que se mueve sobre una vista grande manda un
+mensaje por movimiento. Cuando un callback solo recuerda algo que no se dibuja, devuelve
+`pz.UNCHANGED`: el mensaje termina ahí, sin `view()`, sin layout y sin redibujar.
+
+```python
+class Lienzo(pz.App):
+    def __init__(self):
+        self.puntero = (0, 0)   # se usa al abrir el menú, no se dibuja
+        self.resaltado = None   # se dibuja resaltado
+
+    def movido(self, x, y):
+        self.puntero = (x, y)
+        resaltado = self.elemento_en(x, y)
+        if resaltado == self.resaltado:
+            return pz.UNCHANGED  # nada en pantalla depende del movimiento
+        self.resaltado = resaltado  # esto sí se dibuja: se reconstruye la vista
+
+    def view(self):
+        return pz.mouse_area(self.tablero(), on_move=self.movido)
+```
+
+Sirve en los callbacks del puntero (`on_move`, `on_enter`, `on_exit` de `pz.mouse_area` y los
+eventos `mouse_move`, `mouse_enter`, `mouse_leave`... de `.on(...)`), en los mensajes enviados con
+`pz.post` y en lo que devuelva tu `update()`. Devuélvelo solo cuando no cambió nada de lo que leen
+`view()`, `title` o `subscriptions()`: la ventana sigue mostrando lo que mostraba.
+
+:::tip
+Para resaltar algo bajo el puntero no hace falta ningún callback: `.style(hover={"background": "ghost_hover"})`
+lo dibuja el propio widget nativo.
 :::
 
 ## Subárboles memoizados

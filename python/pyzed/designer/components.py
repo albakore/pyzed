@@ -515,20 +515,27 @@ def _icon_control(c: Control, ctx: RenderContext) -> Any:
                                       width="fill", height="fill", center=True), c, ctx)
 
 
+#: Rows from which a List box builds only the rows in view.
+VIRTUAL_ROWS = 50
+
+
 def _list_box(c: Control, ctx: RenderContext) -> Any:
     t = ctx.theme
     p = c.props
     on_select = ctx.on(c, "change", "selected")
     on_open = ctx.on(c, "open") if c.events.get("open") else None
-    rows = [ui.list_item(item, (lambda item=item: on_select(item)) if ctx.live and c.enabled else None,
-                         selected=item == p["selected"],
-                         on_double_press=(lambda item=item: on_open(item)) if on_open and c.enabled else None,
-                         theme=t)
-            for item in _lines(p["items"])]
-    return _core.container(
-        _core.scrollable(_core.column(rows, width="fill", padding=4)),
-        width="fill", height="fill", bg=t.editor, border_color=t.border_variant, border_width=1,
-        radius=t.radius_sm)
+    def row(item: str) -> Any:
+        return ui.list_item(item, (lambda: on_select(item)) if ctx.live and c.enabled else None,
+                            selected=item == p["selected"],
+                            on_double_press=(lambda: on_open(item)) if on_open and c.enabled else None, theme=t)
+
+    items = _lines(p["items"])
+    if len(items) > VIRTUAL_ROWS:  # long lists only build the rows in view
+        body = ui.virtual_list(items, row, padding=4, theme=t)
+    else:
+        body = _core.scrollable(_core.column([row(item) for item in items], width="fill", padding=4))
+    return _core.container(body, width="fill", height="fill", bg=t.editor, border_color=t.border_variant,
+                           border_width=1, radius=t.radius_sm)
 
 
 def _markdown(c: Control, ctx: RenderContext) -> Any:

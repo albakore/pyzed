@@ -35,6 +35,18 @@ their UI fast: start drawing as soon as possible, and don't redo work nobody ask
 - **No rebuilds for keys nobody listens to.** Key presses and releases only reach your app
   (and rebuild the view) when a window defines `on_key` or `on_key_up`. Typing in a field
   rebuilds the view once per key instead of three times.
+- **Hovering costs nothing.** Buttons, list rows and anything styled with `hover=` light up
+  under the pointer on their own, without a message or a new `view()`. Pointer callbacks
+  (`on_move`, `on_enter`, `on_exit`, `mouse_move`...) run as soon as the pointer moves, and when
+  one returns [`pz.UNCHANGED`](#callbacks-that-change-nothing-on-screen) nothing is rebuilt nor
+  redrawn. The library's own components and Pyzed Design do that whenever a move changes nothing.
+- **Styles resolved once.** `widget.style(...)` caches what it resolves by its properties and the
+  theme, so the same hover color on every row of a list is worked out once, not once per row per
+  `view()`.
+- **Markdown parsed once.** A long chat or document in `pz.markdown` blocks is parsed the first time
+  it is drawn and kept while it is on screen, however many blocks there are.
+- **Long lists build what is in view.** `ui.table`, `ui.virtual_list` and Pyzed Design's List box
+  (from 50 items) only build the rows you can see.
 
 Measured with the [benchmark app](/pyzed/why/benchmarks/) (640×480 window, a label and a
 button per row, Xvfb without a GPU, medians of 5 launches) on the same machine:
@@ -94,6 +106,40 @@ Measured on a 200 000-row table, building the view went from 3.7 s to 0.2 ms.
 `items` and `rows` should be lists (or other sequences): other iterables are copied into a list
 on every `view()`. Sorting a huge table on every `view()` is the remaining cost; keep the rows
 sorted in your state, or sort them in a `@pz.memo` function.
+:::
+
+## Callbacks that change nothing on screen
+
+A message makes Pyzed call `view()` again and lay out and draw the window. That is what you want
+after a click, but a pointer that moves over a big view sends a message per move. When a callback
+only remembers something that is not drawn, return `pz.UNCHANGED`: the message ends there, with no
+`view()`, no layout and no redraw.
+
+```python
+class Canvas(pz.App):
+    def __init__(self):
+        self.pointer = (0, 0)   # used when the menu opens, not drawn
+        self.hovered = None     # drawn highlighted
+
+    def moved(self, x, y):
+        self.pointer = (x, y)
+        hovered = self.item_at(x, y)
+        if hovered == self.hovered:
+            return pz.UNCHANGED  # nothing on screen depends on the move
+        self.hovered = hovered   # this one is drawn: the view is rebuilt
+
+    def view(self):
+        return pz.mouse_area(self.board(), on_move=self.moved)
+```
+
+It works for pointer callbacks (`on_move`, `on_enter`, `on_exit` of `pz.mouse_area` and the
+`mouse_move`, `mouse_enter`, `mouse_leave`... events of `.on(...)`), messages posted with `pz.post`,
+and anything your `update()` returns. Return it only when nothing that `view()`, `title` or
+`subscriptions()` read has changed: the window keeps showing what it showed.
+
+:::tip
+For a highlight under the pointer you don't need a callback at all: `.style(hover={"background": "ghost_hover"})`
+draws it in the native widget.
 :::
 
 ## Memoized subtrees

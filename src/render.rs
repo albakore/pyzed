@@ -40,6 +40,8 @@ pub struct Caches {
     svgs: RefCell<HashMap<u64, svg::Handle>>,
     canvases: FrozenMap<String, Box<CanvasCache>>,
     markdown: FrozenMap<u64, Vec<markdown::Item>>,
+    /// The markdown drawn since the last `prune`: kept when the cache is trimmed.
+    markdown_used: RefCell<std::collections::HashSet<u64>>,
     qr: FrozenMap<u64, Box<qr_code::Data>>,
     /// `presence(...)` nodes: the key shown and the content leaving.
     presence: RefCell<HashMap<String, crate::animation::PresenceEntry>>,
@@ -154,8 +156,14 @@ impl Caches {
 
     /// Drops content-keyed caches that grew large (they are rebuilt on demand).
     pub fn prune(&mut self) {
-        if self.markdown.as_mut().len() > 32 {
-            self.markdown.as_mut().clear();
+        // Only after a view drew (several updates can run before one): what it drew stays parsed, so
+        // a long chat or document is not parsed again at every redraw.
+        let used = self.markdown_used.get_mut();
+        if !used.is_empty() {
+            if self.markdown.as_mut().len() > 32 {
+                self.markdown.as_mut().retain(|key, _| used.contains(key));
+            }
+            used.clear();
         }
         if self.qr.as_mut().len() > 64 {
             self.qr.as_mut().clear();
@@ -1187,6 +1195,7 @@ pub fn build<'a>(py: Python<'_>, node_ref: &Py<Widget>, ctx: Ctx<'a>) -> Element
         }
         Kind::RichText(props) => extra::render_rich(props),
         Kind::Markdown(props) => {
+            ctx.caches.markdown_used.borrow_mut().insert(props.key);
             let items = match ctx.caches.markdown.get(&props.key) {
                 Some(items) => items,
                 None => ctx

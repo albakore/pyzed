@@ -36,6 +36,8 @@ iced_wgpu = { version = "0.14", default-features = false }
 iced_tiny_skia = { version = "0.14", default-features = false }
 # Sets the tab width of the text editors (see vendor/README.md).
 iced_graphics = { version = "0.14", default-features = false }
+# Named directly to skip the rebuild after callbacks that return `pz.UNCHANGED` (see vendor/README.md).
+iced_winit = "0.14"
 # Checks `pz.shader` code, so mistakes raise in Python instead of crashing the GPU.
 naga = { version = "27", features = ["wgsl-in"] }
 pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
@@ -71,7 +73,6 @@ midir = { version = "0.11", optional = true }
 # Android (a prototype): winit runs as a NativeActivity, so the app needs no Java code.
 [target.'cfg(target_os = "android")'.dependencies]
 winit = { version = "0.30", features = ["android-native-activity"] }
-iced_winit = "0.14"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 
 [features]

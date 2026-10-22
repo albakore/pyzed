@@ -122,6 +122,8 @@ HELP_TAB = "__reference__"
 
 #: Pixels the pointer must travel before a press in the toolbox or outline becomes a drag.
 CARRY_THRESHOLD = 4
+#: Seconds the pointer rests over the form before the status bar shows where it is.
+POINTER_REST = 0.12
 
 
 @dataclass
@@ -178,6 +180,11 @@ class Designer(App):
         self.window_pointer: Tuple[float, float] = (0.0, 0.0)
         self.carry: Optional[Carry] = None
         self.over_form = False  # the pointer is over the form being designed
+        #: The grip tabs drawn by the last view and when the pointer last moved over the form: a move that
+        #: changes neither redraws nothing, and the status bar's position follows once the pointer rests.
+        self.shown_grips: Dict[int, List[Tuple[str, float, float]]] = {}  # by id() of each document drawn
+        self._pointer_moved_at = 0.0
+        self._pointer_refresh: Optional[threading.Timer] = None
         self.color_picker: Optional[Tuple[Optional[str], str]] = None  # (control or None, style key) being picked
         self.picker_at: Tuple[float, float] = (0.0, 0.0)  # window point where the picker was opened
         #: The value and setter of each color property shown, so its picker can change it.
@@ -185,7 +192,6 @@ class Designer(App):
         self.text_editors: set = set()  # "control.prop" lists and tables edited as plain text
         #: outline row under the pointer while carrying, and where it would drop: "before", "inside" or "after"
         self.outline_target: Optional[Tuple[str, str]] = None
-        self.hovered_row: Optional[str] = None  # toolbox or outline row under the pointer
         self.focus = "canvas"
         #: The first keys of a chord (such as ctrl-k) waiting for the second.
         self.key_prefix: Optional[str] = None
@@ -439,30 +445,66 @@ class Designer(App):
         self.toolbox_query = text
 
     # -- pointer gestures on the surface ------------------------------------
-    def pointer_moved(self, x: float, y: float) -> None:
-        """Pointer over the form, in form coordinates."""
+    def pointer_moved(self, x: float, y: float) -> Any:
+        """Pointer over the form, in form coordinates. Redraws only when what is shown depends on it (a carry,
+        the grip tabs under the pointer); the status bar's position follows once the pointer rests."""
         self.pointer = (x, y)
         if self.carry is not None and self.carry.moved:
             self.drop_name = self._carry_container()
+            return None
+        if self._grips_changed():
+            return None
+        self._pointer_moved_at = time.monotonic()
+        if self._pointer_refresh is None:
+            self._refresh_pointer_later(POINTER_REST)
+        return _core.UNCHANGED
 
-    def window_moved(self, x: float, y: float) -> None:
-        """Pointer anywhere in the window, in window coordinates (menus and drags out of panels)."""
+    def _grips_changed(self) -> bool:
+        return surface.grips(self) != self.shown_grips.get(id(self.doc))
+
+    def _refresh_pointer_later(self, delay: float) -> None:
+        """Redraws (for the status bar's position) once the pointer has rested ``POINTER_REST`` seconds."""
+        def check() -> None:
+            rest = POINTER_REST - (time.monotonic() - self._pointer_moved_at)
+            if rest > 0.005:
+                self._refresh_pointer_later(rest)
+                return
+            self._pointer_refresh = None
+            try:
+                _core.post(lambda: None)
+            except RuntimeError:  # the app has stopped
+                pass
+
+        timer = threading.Timer(delay, check)
+        timer.daemon = True
+        self._pointer_refresh = timer
+        timer.start()
+
+    def window_moved(self, x: float, y: float) -> Any:
+        """Pointer anywhere in the window, in window coordinates (menus and drags out of panels). Redraws only
+        while something follows the pointer (a control or node carried out of a panel, a dragged tab)."""
         self.window_pointer = (x, y)
         self.shading.window_moved(x, y)
         carry = self.carry
         if carry is not None and not carry.moved:
             ox, oy = carry.origin
             carry.moved = abs(x - ox) + abs(y - oy) > CARRY_THRESHOLD
+        if carry is None and self.shading.carry is None and self.dock_windows.drag is None:
+            return _core.UNCHANGED
+        return None
 
-    def enter_form(self) -> None:
+    def enter_form(self) -> Any:
         """The pointer entered the form being designed."""
         self.over_form = True
+        return None if self.carry is not None or self._grips_changed() else _core.UNCHANGED
 
-    def exit_form(self) -> None:
+    def exit_form(self) -> Any:
         """The pointer left the form being designed: a control carried out of a panel has no drop target."""
         self.over_form = False
         if self.carry is not None:
             self.drop_name = None
+            return None
+        return None if self._grips_changed() else _core.UNCHANGED
 
     # -- dragging out of the toolbox and the outline ------------------------------
     def press_tool(self, type_: str) -> None:
@@ -481,8 +523,13 @@ class Designer(App):
                                                            for a in self.doc.form.ancestors(n))]
         self.carry = Carry("outline", names or [name], self.window_pointer)
 
-    def hover_outline(self, name: str, y: float, height: float) -> None:
+    def hover_outline(self, name: str, y: float, height: float) -> Any:
         """The pointer over an outline row while carrying: before, inside (a container) or after it."""
+        before = self.outline_target
+        self._hover_outline(name, y, height)
+        return _core.UNCHANGED if self.outline_target == before else None
+
+    def _hover_outline(self, name: str, y: float, height: float) -> None:
         if self.carry is None or not self.carry.moved or self.carry.kind != "outline" or name in self.carry.names:
             self.outline_target = None
             return
@@ -500,19 +547,12 @@ class Designer(App):
             target = None
         self.outline_target = target
 
-    def enter_row(self, key: str) -> None:
-        """The pointer entered the toolbox or outline row ``key``, which is drawn highlighted."""
-        self.hovered_row = key
-
-    def leave_row(self, key: str) -> None:
-        """The pointer left the row ``key``: clears the highlight if it is still on that row."""
-        if self.hovered_row == key:
-            self.hovered_row = None
-
-    def leave_outline(self, name: str) -> None:
+    def leave_outline(self, name: str) -> Any:
         """The pointer left the outline row ``name``: forgets it as the drop target of a carry."""
-        if self.outline_target is not None and self.outline_target[0] == name:
-            self.outline_target = None
+        if self.outline_target is None or self.outline_target[0] != name:
+            return _core.UNCHANGED
+        self.outline_target = None
+        return None
 
     def _carry_container(self) -> Optional[str]:
         carry = self.carry
@@ -607,11 +647,13 @@ class Designer(App):
         if doc.reparent(names, parent, index=index, at=at):
             self._selection_changed()
 
-    def pointer_moved_view(self, x: float, y: float) -> None:
-        """Pointer anywhere over the surface's scroll view, in view coordinates."""
+    def pointer_moved_view(self, x: float, y: float) -> Any:
+        """Pointer anywhere over the surface's scroll view, in view coordinates (redraws only while dragging)."""
         self.view_pointer = (x, y)
-        if self.drag is not None:
-            self._drag_to()
+        if self.drag is None:
+            return _core.UNCHANGED
+        self._drag_to()
+        return None
 
     def _start(self, mode: str, **kwargs: Any) -> None:
         self.drag = Drag(mode, self.view_pointer, start=self.pointer, **kwargs)
@@ -1463,19 +1505,21 @@ class Designer(App):
         self.dialog = "save_as"
         self.dialog_path = str(self.doc.path or self._new_document_path(SUFFIX))
 
-    def focus_panel(self, panel: Optional[str] = None) -> None:
+    def focus_panel(self, panel: Optional[str] = None) -> Any:
         """Gives the keyboard to a side panel, so canvas shortcuts stop acting (the Project tree keeps it
-        when the pointer comes back to its panel)."""
+        when the pointer comes back to its panel). Only the keys change: nothing is redrawn."""
         if panel == "project" and self.focus == "files":
-            return
+            return _core.UNCHANGED
         if panel == "animation":  # the timeline's keys: Delete, Space, arrows (see TimelineEditor.on_key)
             self.focus = "timeline"
-            return
+            return _core.UNCHANGED
         self.focus = panel if panel in ("console", "logs") else "panel"  # their lines take Ctrl+C and Ctrl+A
+        return _core.UNCHANGED
 
-    def focus_code(self) -> None:
-        """Gives the keyboard to the code editor."""
+    def focus_code(self) -> Any:
+        """Gives the keyboard to the code editor (nothing is redrawn)."""
         self.focus = "code"
+        return _core.UNCHANGED
 
     # -- events and code ----------------------------------------------------
     def open_default_event(self, name: str) -> None:

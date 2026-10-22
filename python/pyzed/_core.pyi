@@ -275,6 +275,7 @@ class Subscription:
     """
     key: Any
 
+UNCHANGED: Any
 
 class Widget:
     """An immutable node of the UI tree. Create them with the functions in `pyzed`."""

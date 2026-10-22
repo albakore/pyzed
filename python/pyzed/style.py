@@ -81,7 +81,9 @@ joined with ``and``, or a breakpoint name of ``BREAKPOINTS`` (``sm``, ``md``, ``
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, FrozenSet, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
+from collections import OrderedDict
+from typing import (Any, Dict, FrozenSet, Hashable, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple,
+                    Union)
 
 from . import theme as _theme
 
@@ -512,8 +514,10 @@ def _props_of(style: Any) -> Dict[str, Any]:
 
 def define_style(name: str, *styles: Any, **props: Any) -> Style:
     """Names a style so widgets can use it by name: ``widget.style("card")``. Returns it."""
+    global _named_version
     style = Style(*styles, **props)
     _named[name] = style
+    _named_version += 1
     return style
 
 
@@ -659,13 +663,68 @@ def _translate(value: Any) -> Tuple[Any, Any]:
     return one(x), one(y)
 
 
+#: Recent results of ``_resolve``: a view builds the same styles (a hover color on every row of a list...)
+#: at every redraw, and resolving one takes far longer than looking it up.
+_resolved: "OrderedDict[Hashable, Tuple[Dict[str, Any], Dict[str, Any]]]" = OrderedDict()
+_RESOLVED_SIZE = 1024
+#: Bumped by ``define_style``: a named style may change what a name resolves to.
+_named_version = 0
+
+
+class _Same:
+    """A key part equal only to the same object (kept alive, so its id is not reused while cached)."""
+
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: Any):
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, _Same) and other.obj is self.obj
+
+
+def _style_key(value: Any) -> Hashable:
+    if isinstance(value, Style):
+        return ("Style", _style_key(value.props))
+    if isinstance(value, dict):  # (not typing.Mapping: its isinstance check is slow)
+        return ("dict", tuple((k, _style_key(v)) for k, v in value.items()))
+    if isinstance(value, (list, tuple)):
+        return (type(value).__name__, tuple(_style_key(v) for v in value))
+    hash(value)  # anything else must be hashable (a Gradient, a Paint...), or the result isn't cached
+    return (type(value).__name__, value)
+
+
 def _resolve(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
              props: Optional[Mapping[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Merges a widget's styles (called by ``Widget.style``).
 
     Returns the merged properties (kept on the widget, so a later ``style()`` merges with
     them and ``style_props()`` reads them back) and the plain values the native side draws.
+    The results are cached by their inputs and the current theme (its tokens are resolved here).
     """
+    try:
+        key: Optional[Hashable] = (_style_key(previous), _style_key(tuple(styles)), _style_key(props),
+                                   _Same(_theme.current()), _named_version, len(_named))
+    except TypeError:
+        key = None
+    if key is not None:
+        found = _resolved.get(key)
+        if found is not None:
+            _resolved.move_to_end(key)
+            return found
+    result = _resolve_now(previous, styles, props)
+    if key is not None and "media" not in result[0]:  # media queries depend on the window's size
+        _resolved[key] = result
+        if len(_resolved) > _RESOLVED_SIZE:
+            _resolved.popitem(last=False)
+    return result
+
+
+def _resolve_now(previous: Optional[Mapping[str, Any]], styles: Sequence[Any],
+                 props: Optional[Mapping[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     merged: Dict[str, Any] = dict(previous or {})
     for style in styles:
         _merge(merged, _props_of(style))
