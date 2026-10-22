@@ -202,11 +202,16 @@ def download(asset: Asset, folder: Optional[Union[str, Path]] = None, *, progres
              timeout: float = 30) -> Path:
     """Downloads ``asset`` into ``folder`` (a temporary one by default), checking its SHA-256.
 
-    ``progress`` receives the fraction done (0.0 to 1.0) as the file arrives.
+    ``progress`` receives the fraction done (0.0 to 1.0) as the file arrives. A file already in
+    ``folder`` with the right SHA-256 (an earlier download) is reused instead of fetched again.
     """
     target_dir = Path(folder) if folder else Path(tempfile.mkdtemp(prefix="pyzed-update-"))
     target_dir.mkdir(parents=True, exist_ok=True)
     target = target_dir / asset.name
+    if asset.sha256 and target.is_file() and _sha256(target) == asset.sha256.lower():
+        if progress:
+            progress(1.0)
+        return target
     partial = target.with_name(target.name + ".part")
     digest = hashlib.sha256()
     request = urllib.request.Request(asset.url, headers={"User-Agent": USER_AGENT})
@@ -237,6 +242,14 @@ def download(asset: Asset, folder: Optional[Union[str, Path]] = None, *, progres
     if progress:
         progress(1.0)
     return target
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def extract(archive: Union[str, Path], folder: Optional[Union[str, Path]] = None) -> Path:

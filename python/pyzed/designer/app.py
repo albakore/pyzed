@@ -332,6 +332,8 @@ class Designer(App):
             subs.append(_core.every(1.0, self.projects.poll, key="designer-dependencies"))
         if self.updates.status == "downloading":  # redraws the download progress
             subs.append(_core.every(0.2, lambda: None, key="designer-update"))
+        else:  # looks for a new version again every few hours while the designer stays open
+            subs.append(_core.every(600, self.updates.tick, key="designer-update-check"))
         if self.agent.active:  # streams the agent's answer and runs its tools on this thread
             subs.append(_core.every(1 / 30, self.agent.poll, key="designer-agent"))
         if self.exporter.running:  # the elapsed time of the build in the Export dialog
@@ -2850,6 +2852,7 @@ class Designer(App):
             if shader_editor.is_shader(self) else None,
         ]
         end = [
+            *self.updates.title_items(t),
             ui.icon_button("panels-top-left", lambda: self.toggle_app_menu("view"), selected=self.app_menu == "view",
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
@@ -2961,8 +2964,7 @@ class Designer(App):
         doc = self.doc
         problems = self.logs_status_item(t)
         if shader_editor.is_shader(self):
-            return ui.status_bar([*shader_editor.status_items(self, t), problems], list(self.updates.status_items(t)),
-                                 theme=t)
+            return ui.status_bar([*shader_editor.status_items(self, t), problems], [], theme=t)
         x, y = self.pointer
         primary = doc.primary
         if len(doc.selection) > 1:
@@ -2996,7 +2998,6 @@ class Designer(App):
             ui.status_item(tr("Grid {size}px", size=doc.form.grid), self.toggle("show_grid"), icon="grid-3x3",
                            selected=self.show_grid),
             ui.status_item(tr("Snap"), self.toggle("snap"), icon="magnet", selected=self.snap),
-            *self.updates.status_items(t),
         ]
         if self.buffers.current is not None:
             line, column = self.assist.cursor

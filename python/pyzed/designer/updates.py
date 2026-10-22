@@ -1,10 +1,11 @@
-"""Updates of Pyzed Design, like Zed's: a quiet daily check, a download in the background,
-"Restart to update", and a What's new tab with the release notes after an update.
+"""Updates of Pyzed Design, like Zed's: a quiet check at launch and every few hours, a download
+in the background, a "Restart to update" button at the top right of the title bar, and a What's
+new tab with the release notes after an update.
 The stable channel follows the latest release; the preview channel also takes pre-releases
 (``vX.Y.Z-rc.N``), like Zed Preview.
 
 ``UpdateController`` keeps the state and runs the slow parts off the UI thread (see
-``pyzed.updater`` for the checking, downloading and swapping itself); ``status_items``
+``pyzed.updater`` for the checking, downloading and swapping itself); ``title_items``
 and ``notes_view`` draw it. The compiled app replaces itself; when the designer runs
 from Python (``pip``/``uv``), the tab shows the command that upgrades the package.
 """
@@ -12,6 +13,7 @@ from Python (``pip``/``uv``), the tab shows the command that upgrades the packag
 from __future__ import annotations
 
 import asyncio
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -19,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 from .. import __version__, _core, ui
 from .. import updater
+from ..animation import Animation
 from ..theme import Theme, alpha
 from .locale import tr
 
@@ -36,6 +39,11 @@ WINDOWS_UNINSTALL_KEY = ("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstal
                          "{8F4C2E6B-3A1D-4F7E-9B2C-5D6E7F8A9B0C}_is1")
 #: The installer's files in the app folder, carried over when an update replaces it.
 INSTALLER_FILES = ("unins*",)
+#: How often an open designer looks again (the check at launch is daily).
+RECHECK_EVERY = 4 * 3600
+#: The update button's subtle blink: a slow fade and back, never a flash.
+BLINK = Animation({0: {"opacity": 1.0}, 0.5: {"opacity": 0.55}, 1: {"opacity": 1.0}}, duration=2000,
+                  easing="ease_in_out_sine", repeat="infinite")
 
 
 def sync_windows_registration(version: str) -> bool:
@@ -122,9 +130,27 @@ class UpdateController:
         if seen != self.current:
             updater.save_state(last_seen=self.current)
             sync_windows_registration(self.current)
+        commands.append(self._run(self._clean_downloads, lambda _: None, lambda _: None))
         if self.d.prefs.check_updates and updater.due():
             commands.append(self.check(quiet=True))
         return [c for c in commands if c is not None]
+
+    def _clean_downloads(self) -> None:
+        """Deletes the downloads of versions already installed (or older): each one is a whole app."""
+        from ..project import config_dir
+
+        folder = config_dir() / "updates"
+        if not folder.is_dir():
+            return
+        for entry in folder.iterdir():
+            if entry.is_dir() and not updater.is_newer(entry.name, self.current):
+                shutil.rmtree(entry, ignore_errors=True)
+
+    def tick(self) -> Any:
+        """Called now and then while the designer is open: checks again every ``RECHECK_EVERY`` seconds."""
+        if self.d.prefs.check_updates and self.status in ("idle", "up_to_date") and updater.due(RECHECK_EVERY):
+            return self.check(quiet=True)
+        return None
 
     # -- actions ----------------------------------------------------------------------------
     @property
@@ -139,7 +165,7 @@ class UpdateController:
             return None
         self.status, self.error = "checking", None
 
-        def done(release: updater.Release) -> None:
+        def done(release: updater.Release) -> Any:
             updater.save_state(last_check=time.time())
             self.latest = release
             # A release counts once its builds are attached: the tag publishes it before the pipeline ends.
@@ -147,12 +173,15 @@ class UpdateController:
             if built and updater.is_newer(release.version, self.current) and \
                     updater.load_state().get("skipped") != release.version:
                 self.status = "available"
+                if self.can_install and self.d.prefs.check_updates:
+                    return self.install(quiet=True)  # like Zed: fetched in the background, then "Restart"
                 self.d.notify(tr("Pyzed Design {version} is available", version=release.version),
                               tr("Open What's new to see the changes and update."), kind="info", seconds=6)
             else:
                 self.status = "up_to_date"
                 if not quiet:
                     self.d.notify(tr("Pyzed Design is up to date"), f"{self.current}", kind="success", seconds=3)
+            return None
 
         def failed(message: str) -> None:
             self._failed(message)
@@ -164,8 +193,12 @@ class UpdateController:
         preview = self.channel == "preview"
         return self._run(lambda: updater.latest(REPO, prerelease=preview), done, failed)
 
-    def install(self) -> Any:
-        """Downloads the new version for this platform and unpacks it next to the download."""
+    def install(self, quiet: bool = False) -> Any:
+        """Downloads the new version for this platform and unpacks it next to the download.
+
+        A download already finished (the designer was closed before restarting) is checked again
+        and reused. ``quiet`` (the automatic download) only speaks up when it fails.
+        """
         release = self.latest
         if release is None or self.busy:
             return None
@@ -187,11 +220,13 @@ class UpdateController:
 
         def done(bundle: Path) -> None:
             self.bundle, self.status = bundle, "ready"
-            self.d.notify(tr("Update downloaded"), tr("Restart Pyzed Design to finish."), kind="success", seconds=5)
+            self.d.notify(tr("Pyzed Design {version} is ready", version=release.version),
+                          tr("Restart to update (the button at the top right)."), kind="success", seconds=6)
 
         def failed(message: str) -> None:
             self.status, self.error = "available", message
-            self.d.notify(tr("The update failed"), message, kind="error", seconds=6)
+            if not quiet:
+                self.d.notify(tr("The update failed"), message, kind="error", seconds=6)
 
         return self._run(work, done, failed)
 
@@ -262,17 +297,29 @@ class UpdateController:
         return ui.Tab(id=TAB_ID, label=tr("What's new in {version}", version=self.notes.version),
                       icon="sparkles", icon_color="accent")
 
-    def status_items(self, t: Theme) -> List[Any]:
-        """The status bar item announcing an update (none while up to date)."""
-        if self.status == "available" and self.latest is not None:
-            return [ui.status_item(tr("Update to {version}", version=self.latest.version),
-                                   self.show_notes, icon="circle-arrow-up", color="accent")]
+    def title_items(self, t: Theme) -> List[Any]:
+        """The button announcing an update, at the top right of the title bar (none while up to date).
+
+        It blinks softly while it waits for a click: "Update to X" (downloads it, or shows how to
+        upgrade the package) and "Restart to update"; the download shows its progress instead.
+        """
+        latest = self.latest
+        if latest is None or self.status not in ("available", "downloading", "ready"):
+            return []
         if self.status == "downloading":
-            return [ui.status_item(tr("Downloading update… {percent}%", percent=int(self.progress * 100)),
-                                   self.show_notes, icon="download", color="accent")]
+            return [ui.button(tr("Downloading update… {percent}%", percent=int(self.progress * 100)), self.show_notes,
+                              icon="download", variant="ghost", tint="accent", size="sm",
+                              tooltip=tr("What's new in {version}", version=latest.version), theme=t)]
         if self.status == "ready":
-            return [ui.status_item(tr("Restart to update"), self.restart, icon="refresh-cw", color="success")]
-        return []
+            button = ui.button(tr("Restart to update"), self.restart, icon="refresh-cw", variant="tinted",
+                               tint="success", size="sm",
+                               tooltip=tr("Pyzed Design {version} is ready", version=latest.version), theme=t)
+        else:
+            button = ui.button(tr("Update to {version}", version=latest.version),
+                               self.install if self.can_install else self.show_notes, icon="circle-arrow-up",
+                               variant="tinted", tint="accent", size="sm",
+                               tooltip=self.error or tr("What's new in {version}", version=latest.version), theme=t)
+        return [button.animate(BLINK)]
 
     def _actions(self, release: updater.Release, t: Theme) -> List[Any]:
         newer = updater.is_newer(release.version, self.current)
