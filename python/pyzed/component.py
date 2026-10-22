@@ -87,6 +87,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import os
 import re
 import sys
 import types
@@ -784,7 +785,22 @@ class Component:
             props=props,
             events=custom_events,
             description=cls.describe(),
+            # the library's own components get a role from what they are; the project's are its own
+            role=None if _in_library(cls) else "custom",
         )
+
+
+def _in_library(cls: type) -> bool:
+    """Whether ``cls`` is one of Pyzed's own components (its module file is inside this package), whatever
+    name its module was imported under."""
+    path = getattr(sys.modules.get(cls.__module__), "__file__", None)
+    if not path:
+        return False
+    folder = os.path.dirname(os.path.abspath(path))
+    return folder == _PACKAGE_DIR or folder.startswith(_PACKAGE_DIR + os.sep)
+
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _designer_prop(info: PropInfo, prop_class: Callable[..., Any]) -> Any:

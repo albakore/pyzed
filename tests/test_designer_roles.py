@@ -11,19 +11,25 @@ def _role(type_):
     return roles.of(components.get(type_))
 
 
+def _roles(*types):
+    """The roles of built-in toolbox types (a project component of the same name, defined by another test,
+    replaces the built-in one in the toolbox and is left out)."""
+    return {roles.of(s) for s in map(components.get, types) if s.role != "custom"}
+
+
 def test_every_component_has_a_role():
     for spec in components.all_components():
         assert roles.of(spec) in roles.ROLES, spec.type
 
 
 def test_roles_follow_what_a_component_is():
-    assert {_role(t) for t in ("panel", "card", "row", "grid", "dock", "dock_panel", "divider", "spacer")} == {"layout"}
-    assert {_role(t) for t in ("input", "checkbox", "select", "slider", "number", "segmented")} == {"input"}
-    assert {_role(t) for t in ("button", "split_button")} == {"action"}
-    assert {_role(t) for t in ("tabs", "tree", "breadcrumbs", "link")} == {"navigation"}
-    assert {_role(t) for t in ("label", "image", "table", "chart", "badge")} == {"display"}
-    assert {_role(t) for t in ("timer", "process", "file_dialog")} == {"system"}
-    assert {_role(t) for t in ("knob", "waveform", "webcam")} == {"media"}
+    assert _roles("panel", "card", "row", "grid", "dock", "dock_panel", "divider", "spacer") == {"layout"}
+    assert _roles("input", "checkbox", "select", "slider", "number", "segmented") == {"input"}
+    assert _roles("button", "split_button") == {"action"}
+    assert _roles("tabs", "tree", "breadcrumbs", "link") == {"navigation"}
+    assert _roles("label", "image", "table", "chart", "badge") == {"display"}
+    assert _roles("timer", "process", "file_dialog") == {"system"}
+    assert _roles("knob", "waveform", "webcam") == {"media"}
     # the library's own pz.Components are not "custom"
     assert _role("color_picker") == "input"
 
@@ -42,8 +48,8 @@ def test_project_components_are_custom():
             return pz.text(str(self.value))
 
     # whatever its category says, a component of the project is the user's own
-    spec = components.Component(RoleGauge.type_name, "Gauge", "box", "Display", lambda c, ctx: None)
-    assert roles.of(spec) == "custom"
+    assert roles.of(replace(RoleGauge.designer_spec(), category="Display")) == "custom"
+
 
 
 def test_colors_come_from_the_theme_and_differ():

@@ -6,7 +6,7 @@ fields take input, yellow buttons run actions, and so on. The colors come from t
 palette, so they follow every theme (light or dark) without new tokens.
 
 A role is worked out from what the component is (visual or not, a container, its category and
-events); a ``Component`` can also name its own with ``role``.
+events); a ``Component`` can also name its own with ``role`` (a ``pz.Component`` of the project is ``"custom"``).
 """
 
 from __future__ import annotations
@@ -45,11 +45,6 @@ def of(spec: Any) -> str:
         return own
     if not spec.visual:
         return "system"
-    from .. import component as _component
-
-    cls = _component.find(spec.type)
-    if cls is not None and not (cls.__module__ or "").startswith("pyzed."):  # a pz.Component of the project
-        return "custom"
     category = _CATEGORY_ROLES.get(spec.category)
     if category is not None:
         return category
