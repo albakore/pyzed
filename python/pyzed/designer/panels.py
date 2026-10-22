@@ -14,6 +14,7 @@ from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import components as _components
 from . import help as _help
+from . import keymap as _keymap
 from . import scene_code as _scene_code
 from . import prop_editors, spacing
 from .components import Prop
@@ -524,7 +525,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
 def _help_button(d: "Designer", name: str, t: Theme) -> Any:
     """The "?" of a control's header: opens its page in the built-in reference (Shift+F1)."""
     return ui.icon_button("book-marked", lambda: d.open_reference(d.help_page_of(name)), size="sm",
-                          tooltip=tr("Help") + " (Shift+F1)", theme=t)
+                          tooltip=tr("Help"), keys=_keymap.shown_keys("reference"), theme=t)
 
 
 def control_properties(d: "Designer", t: Theme) -> List[Any]:

@@ -136,3 +136,28 @@ def test_the_keymap_editor_records_keys_and_marks_conflicts(tmp_path):
     assert d.dialog is None
     ke.edit_file()
     assert d.buffers.current is not None and d.buffers.current.path == keymap.get().path
+
+
+def test_tooltips_show_the_keys_in_force():
+    km = keymap.get()
+    assert keymap.shown_keys("new") == "ctrl-n" and keymap.shown_keys("workspace::stop") == "shift-f5"
+    assert keymap.shown_keys("nope", "f9") == "f9"  # keys outside the keymap
+    [run] = km.bindings_for("workspace::run")
+    km.change(run, "ctrl-r")
+    assert keymap.shown_keys("run") == "ctrl-r"
+    km.remove(km.bindings_for("workspace::run")[0])
+    assert keymap.shown_keys("run") is None  # unbound: the tooltip shows no keys
+    km.reset_all()
+
+
+def test_no_tooltip_writes_its_keys_into_the_text():
+    """Tooltips take ``keys=`` (drawn as key caps from the keymap); text like "Stop (Shift+F5)" goes stale when
+    the user changes the keys, and ``format_keys`` in an f-string printed "([['Ctrl', 'N']])"."""
+    import re
+    from pathlib import Path
+
+    root = Path(keymap.__file__).parent
+    pattern = re.compile(r"\{ui\.format_keys\(|tooltip=[^,\n]*(\((Ctrl|Shift|Alt|F\d)|\+ \"  )")
+    found = [f"{path.name}:{n}" for path in root.glob("*.py")
+             for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1) if pattern.search(line)]
+    assert found == []

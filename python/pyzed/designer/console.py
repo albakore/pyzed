@@ -16,7 +16,9 @@ from typing import TYPE_CHECKING, Any, Optional, Set
 
 from .. import _core, ui
 from ..theme import Theme
+from . import keymap as _keymap
 from . import logs
+from .locale import tr
 
 if TYPE_CHECKING:  # pragma: no cover
     from .app import Designer
@@ -127,8 +129,9 @@ def view(d: "Designer", t: Theme) -> Any:
     actions = [
         ui.badge("Running" if running else "Idle", tint="success" if running else "accent", icon="circle", theme=t)
         if running else None,
-        ui.icon_button("square", d.stop_form, size="sm", tooltip="Stop (Shift+F5)", disabled=not running, theme=t),
-        ui.icon_button("play", d.run_form, size="sm", tooltip="Run (F5)", theme=t),
+        ui.icon_button("square", d.stop_form, size="sm", tooltip=tr("Stop"), keys=_keymap.shown_keys("stop"),
+                       disabled=not running, theme=t),
+        ui.icon_button("play", d.run_form, size="sm", tooltip=tr("Run"), keys=_keymap.shown_keys("run"), theme=t),
     ]
     c.selection.keep(c.log.entries)
     return ui.console(c.log.entries, query=c.query, on_query=c.set_query, hidden=c.hidden,

@@ -984,7 +984,8 @@ def form_code(d: "Designer", t: Theme) -> Any:
     problems = ui.tooltip(problems, tr("Problems"), theme=t)
     header = ui.panel_header(title, icon="code", actions=[
         problems,
-        ui.icon_button("sparkles", d.agent.open_inline, size="sm", tooltip=tr("Inline assist (Ctrl+Alt+I)"), theme=t),
+        ui.icon_button("sparkles", d.agent.open_inline, size="sm", tooltip=tr("Inline assist"),
+                       keys=_keymap.shown_keys("inline_assist"), theme=t),
         ui.icon_button("settings", d.open_editor_settings, size="sm", tooltip=tr("Editor settings"), theme=t),
         ui.button(tr("Whole file") if not whole else tr("This handler"), d.toggle_whole_file, variant="ghost", size="sm",
                   theme=t),
@@ -1036,12 +1037,12 @@ def search_bar(a: CodeAssist, t: Theme) -> Any:
         option("word", "whole-word", "Match whole words"),
         option("regex", "regex", "Use regular expressions"),
         _core.container(count, width=74, align_x="center"),
-        ui.icon_button("arrow-up", lambda: a.next_match(-1), size="sm", tooltip=tr("Previous match") + "  ⇧F3",
+        ui.icon_button("arrow-up", lambda: a.next_match(-1), size="sm", tooltip=tr("Previous match"), keys="shift-f3",
                        theme=t),
-        ui.icon_button("arrow-down", lambda: a.next_match(1), size="sm", tooltip=tr("Next match") + "  F3", theme=t),
-        ui.icon_button("text-cursor", a.select_all_matches, size="sm", tooltip=tr("Select all matches") + "  Alt+Enter",
-                       theme=t),
-        ui.icon_button("x", a.close_search, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+        ui.icon_button("arrow-down", lambda: a.next_match(1), size="sm", tooltip=tr("Next match"), keys="f3", theme=t),
+        ui.icon_button("text-cursor", a.select_all_matches, size="sm", tooltip=tr("Select all matches"),
+                       keys="alt-enter", theme=t),
+        ui.icon_button("x", a.close_search, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=4, align="center")
     rows = [find]
     if s.replacing:
@@ -1066,7 +1067,7 @@ def goto_bar(a: CodeAssist, t: Theme) -> Any:
                  on_submit=a.submit_goto, size="sm", mono=True, width=180, theme=t),
         ui.label(hint, size="sm", color="text_muted", theme=t),
         _core.space(width="fill"),
-        ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close") + "  Esc", theme=t),
+        ui.icon_button("x", a.close_goto, size="sm", tooltip=tr("Close"), keys="escape", theme=t),
     ], spacing=8, align="center"), padding=(4, 8), width="fill", bg=t.tab_bar)
 
 

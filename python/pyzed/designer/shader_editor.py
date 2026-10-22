@@ -28,6 +28,7 @@ from ..shading.locale import tr as str_
 from ..shading.types import COLORS, LABELS, SIZE, components, describe, to_hex
 from ..theme import Theme, alpha
 from . import file_scan, spacing
+from . import keymap as _keymap
 from .locale import tr
 from .shader_doc import ShaderDocument
 
@@ -1026,10 +1027,11 @@ def toolbar(d: "Designer", t: Theme) -> Any:
     ed = d.shading
 
     def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
-             keys: Optional[str] = None) -> Any:
-        tip = tr(tip)
-        label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
-        return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
+             keys: Optional[str] = None, command: Optional[str] = None) -> Any:
+        if command:
+            keys = _keymap.shown_keys(command)
+        return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=tr(tip), keys=keys,
+                              theme=t)
 
     sep = _core.container(ui.divider(vertical=True, theme=t), height=18, padding=(0, 4))
     tabs = _core.row([ui.button(tr(label), lambda key=key: set_tab(d, key), icon=icon, size="sm",
@@ -1042,16 +1044,16 @@ def toolbar(d: "Designer", t: Theme) -> Any:
               if errors else ui.badge(tr("Compiles"), tint="success", icon="check", theme=t))
     start = [
         tool("file-plus", lambda: d.new("shader"), "New shader"),
-        tool("folder-open", d.open_dialog, "Open", keys="ctrl-o"),
-        tool("save", d.save, "Save", keys="ctrl-s"),
+        tool("folder-open", d.open_dialog, "Open", command="open"),
+        tool("save", d.save, "Save", command="save"),
         sep,
-        tool("undo-2", d.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
-        tool("redo-2", d.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z"),
+        tool("undo-2", d.undo, "Undo", enabled=doc.history.can_undo, command="undo"),
+        tool("redo-2", d.redo, "Redo", enabled=doc.history.can_redo, command="redo"),
         sep,
         tabs,
         sep,
         tool("plus", lambda: ed.open_search((doc.view_size[0] / 2 - 140, 80)), "Add a node", keys="shift-a"),
-        tool("trash-2", d.delete, "Delete", enabled=bool(doc.selection), keys="delete"),
+        tool("trash-2", d.delete, "Delete", enabled=bool(doc.selection), command="delete"),
         tool("layout-grid", doc.arrange, "Arrange nodes in columns", keys="ctrl-l"),
         tool("maximize", lambda: doc.fit(whole=True), "Fit everything", keys="f"),
         sep,

@@ -2819,16 +2819,16 @@ class Designer(App):
                 _icon("search", size=14, color=t.icon_muted),
                 _core.text(tr("Search commands, settings…"), size=13, color=t.text_muted, wrap=False),
                 _core.space(width="fill"),
-                ui.kbd("ctrl-shift-p", size="xs", theme=t),
+                ui.kbd(_keymap.shown_keys("palette") or "ctrl-shift-p", size="xs", theme=t),
             ], spacing=8, align="center"), height="fill", align_y="center", clip=True),
             self.open_palette, padding=(0, 6, 0, 10), width=320, height=24, bg=t.element,
             border_color=t.border_variant, border_width=1.0, hover_bg=t.element_hover,
             hover_border_color=t.border, radius=t.radius_sm,
         )
         return _core.row([
-            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm", keys="f5",
-                      theme=t),
-            ui.icon_button("square", self.stop_form, size="sm", tooltip=f"{tr('Stop')} (Shift+F5)",
+            ui.button(tr("Run"), self.run_form, icon="play", variant="solid", tint="success", size="sm",
+                      keys=_keymap.shown_keys("run"), theme=t),
+            ui.icon_button("square", self.stop_form, size="sm", tooltip=tr("Stop"), keys=_keymap.shown_keys("stop"),
                            disabled=self.console.running is None, theme=t),
             _core.space(width=6),
             search,
@@ -2857,7 +2857,8 @@ class Designer(App):
                            tooltip=None if self.app_menu else tr("View"), theme=t),
             ui.icon_button("circle-help", lambda: self.toggle_app_menu("help"), selected=self.app_menu == "help",
                            tooltip=None if self.app_menu else tr("Help"), theme=t),
-            ui.icon_button("settings", self.open_settings, tooltip=f"{tr('Settings')} (Ctrl+,)", theme=t),
+            ui.icon_button("settings", self.open_settings, tooltip=tr("Settings"), keys=_keymap.shown_keys("settings"),
+                           theme=t),
         ]
         return start, end
 
@@ -2882,19 +2883,19 @@ class Designer(App):
         count = len(doc.selection)
 
         def tool(icon: str, action: Any, tip: str, *, enabled: bool = True, selected: bool = False,
-                 keys: Optional[str] = None) -> Any:
-            tip = tr(tip)
-            label = f"{tip} ({ui.format_keys(keys)})" if keys else tip
-            return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=label, theme=t)
+                 command: Optional[str] = None) -> Any:
+            keys = _keymap.shown_keys(command) if command else None
+            return ui.icon_button(icon, action, disabled=not enabled, selected=selected, tooltip=tr(tip), keys=keys,
+                                  theme=t)
 
         def group(*items: Any) -> Any:
             return _core.row([i for i in items if i is not None], spacing=2, align="center")
 
         sep = _core.container(ui.divider(vertical=True, theme=t), height=16, padding=(0, 6))
         groups = [
-            group(tool("file-plus", self.new, "New form, component or shader…", keys="ctrl-n"),
-                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, keys="ctrl-z"),
-                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, keys="ctrl-shift-z")),
+            group(tool("file-plus", self.new, "New form, component or shader…", command="new"),
+                  tool("undo-2", self.undo, "Undo", enabled=doc.history.can_undo, command="undo"),
+                  tool("redo-2", self.redo, "Redo", enabled=doc.history.can_redo, command="redo")),
         ]
         if count:
             groups += [
@@ -2914,7 +2915,7 @@ class Designer(App):
                       tool("stretch-vertical", lambda: self.same_size("height"), "Same height") if count > 1 else None),
                 group(tool("bring-to-front", lambda: self.reorder("front"), "Bring to front"),
                       tool("send-to-back", lambda: self.reorder("back"), "Send to back"),
-                      tool("trash-2", self.delete, "Delete", keys="delete")),
+                      tool("trash-2", self.delete, "Delete", command="delete")),
             ]
         else:
             groups.append(ui.label(tr("Select controls to align, size and order them"), size="xs",
@@ -2923,14 +2924,14 @@ class Designer(App):
         for g in groups:
             start += [sep, g] if start else [g]
         end = [
-            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, keys="g"),
+            group(tool("grid-3x3", self.toggle("show_grid"), "Show grid", selected=self.show_grid, command="grid"),
                   tool("magnet", self.toggle("snap"), "Snap to grid", selected=self.snap),
                   tool("ruler", self.toggle("smart_guides"), "Smart guides", selected=self.smart_guides),
                   tool("anchor", self.toggle_follow_anchors, "Resize contents with their anchors",
                        selected=doc.follow_anchors),
                   tool("scaling", doc.snap_to_grid, "Fit selection to grid", enabled=bool(count))),
             sep,
-            tool("code", self.edit_whole_file, "Edit code file", keys="f7"),
+            tool("code", self.edit_whole_file, "Edit code file", command="code_file"),
         ]
         # The editing tools scroll sideways when the window is too narrow; the canvas toggles stay at the end.
         tools = _core.row([
