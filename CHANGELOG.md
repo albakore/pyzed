@@ -16,6 +16,24 @@ stable version.
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-10-22
+
+### Highlights
+
+- **Updates that get out of the way**: the update button moves to the top right of the title bar with a subtle blink, new versions download in the background, and Pyzed Design restarts cleanly on Windows after updating.
+
+### Features
+
+- ✨ The update button sits in the title bar next to View, Help and Settings and blinks softly while it waits; the version found by the automatic check downloads in the background, the check runs again every 4 hours while the designer is open, a finished download is reused and old downloads are cleaned up. PR [#178](https://github.com/albakore/pyzed/pull/178) by [@albakore](https://github.com/albakore).
+
+### Fixes
+
+- 🐛 Restarting after an update on Windows no longer fails with `'NoneType' object has no attribute 'flush'` or opens several console windows. PR [#178](https://github.com/albakore/pyzed/pull/178) by [@albakore](https://github.com/albakore).
+
+### Docs
+
+- 📝 The README is in English (Spanish in `README.es.md`), the repository has a `CITATION.cff`, and the docs sitemap carries real dates, unique titles and image descriptions. PR [#177](https://github.com/albakore/pyzed/pull/177) by [@albakore](https://github.com/albakore).
+
 ## [1.8.0] - 2026-10-22
 
 ### Highlights

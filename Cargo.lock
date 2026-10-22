@@ -3722,7 +3722,7 @@ dependencies = [
 
 [[package]]
 name = "pyzed"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "arboard",
  "bytes",
