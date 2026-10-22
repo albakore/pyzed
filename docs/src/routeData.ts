@@ -160,6 +160,9 @@ export const onRequest = defineRouteMiddleware(async (context) => {
 		if (isHome) title.content = t.homeTitle;
 		else if (slug.startsWith('library/') && slug !== 'library') title.content = `${data.title} - ${t.librarySuffix}`;
 		else if (slug.startsWith('editor/')) title.content = `${data.title} - Pyzed Design`;
+		// The older category pages ("Forms") would share a title with Showcase pages.
+		else if (slug.startsWith('components/'))
+			title.content = `${data.title} - ${lang === 'es' ? 'componentes de GUI para Python' : 'Python GUI components'} | Pyzed`;
 		else if (slug.startsWith('reference/')) title.content = `${data.title} - ${t.reference} | Pyzed`;
 		else if (`${data.title} | Pyzed`.length <= 32) title.content = `${data.title} | ${t.shortSuffix}`;
 	}

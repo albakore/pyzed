@@ -31,7 +31,7 @@ const soon = Astro.currentLocale === 'es' ? 'Captura en camino' : 'Capture on th
 			<a class="card" href={item.href}>
 				<span class="shot">
 					{item.image ? (
-						<Image src={item.image} alt="" width={640} widths={[320, 640]} sizes={`(min-width: 50rem) 20rem, 100vw`} />
+						<Image src={item.image} alt={item.title} width={640} widths={[320, 640]} sizes={`(min-width: 50rem) 20rem, 100vw`} />
 					) : (
 						<span class="empty">{soon}</span>
 					)}

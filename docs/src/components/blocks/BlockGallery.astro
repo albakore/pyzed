@@ -21,6 +21,8 @@ interface Props {
 }
 
 const { items, base } = Astro.props;
+// Alt text for image search: "Dashboard: screen built with Pyzed".
+const kind = Astro.currentLocale === 'es' ? 'pantalla hecha con Pyzed en Python' : 'Python screen built with Pyzed';
 const pick = (shot: string, theme: string) => images[`../../assets/blocks/${shot}-${theme}.png`]?.default;
 ---
 
@@ -32,8 +34,8 @@ const pick = (shot: string, theme: string) => images[`../../assets/blocks/${shot
 			return (
 				<a class="block-card" href={`${base}${item.slug}/`}>
 					<div class="thumb">
-						{dark && <Image class="on-dark" src={dark} alt="" width={720} loading="lazy" />}
-						{light && <Image class="on-light" src={light} alt="" width={720} loading="lazy" />}
+						{dark && <Image class="on-dark" src={dark} alt={`${item.name}: ${kind}`} width={720} loading="lazy" />}
+						{light && <Image class="on-light" src={light} alt={`${item.name}: ${kind}`} width={720} loading="lazy" />}
 					</div>
 					<div class="meta">
 						<span class="name">{item.name}</span>
