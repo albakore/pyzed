@@ -29,6 +29,7 @@ from .. import animation as _animation
 from .. import services as _services
 from ..app import App, Window
 from ..app import run as _run_app
+from .. import rendering as _rendering
 from ..theme import Theme, themes
 from . import binding as _binding
 from . import code as _code
@@ -908,6 +909,8 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None, splash: Any = 
     app = open_form(path)
     if splash is not None:
         app.splash = splash
+    if app.rendering is None:  # the [tool.pyzed.rendering] of the form's project, wherever it starts from
+        app.rendering = _rendering.find(Path(path).resolve().parent)
     _run_app(app, reload=reload)
     if os.environ.get("PYZED_DESIGNER_RUN"):
         # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still

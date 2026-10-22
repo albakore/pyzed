@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import _core, ui
 from .. import project as _project
+from .. import rendering as _rendering
 from ..icons import icon as _icon
 from ..project import Dependency, Problem, Project, Result, Tool
 from ..theme import Theme, alpha
@@ -473,8 +474,11 @@ class ProjectController:
     # -- running forms -------------------------------------------------------------------
     @property
     def runs_outside(self) -> bool:
-        """Forms of this project run through ``uv run`` (the designer lacks its dependencies)."""
-        return self.project is not None and not self.project.can_run_in_process
+        """Forms of this project run through ``uv run``: the designer lacks its dependencies, or the project picks
+        its own renderer (``[tool.pyzed.rendering]``), which only a new process can use."""
+        if self.project is None:
+            return False
+        return not self.project.can_run_in_process or _rendering.find(self.project.root).custom
 
     def run_form(self, form: Path, *, capture: bool = False, env: Optional[Dict[str, str]] = None) -> None:
         """Starts ``form`` with ``uv run pyzed run --reload`` in the project (``capture``: pipe its output;
