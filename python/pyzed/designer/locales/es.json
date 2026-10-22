@@ -2149,6 +2149,10 @@
   "Sync creates .venv with the packages of uv.lock.": "Sincronizar crea .venv con los paquetes de uv.lock.",
   "Hide until the project opens again": "Ocultar hasta volver a abrir el proyecto",
   "Not installed as uv.lock says: {names}": "Sin instalar como dice uv.lock: {names}",
-  "Sync the environment to install them.": "Sincroniza el entorno para instalarlos."
+  "Sync the environment to install them.": "Sincroniza el entorno para instalarlos.",
+  "Built-in events": "Eventos incluidos",
+  "Custom events": "Eventos personalizados",
+  "What it means": "Qué significa",
+  "Raise them from a method with self.emit(\"name\", value); the parent handles them with on_name=..., or in the Events tab of a form.": "Lánzalos desde un método con self.emit(\"nombre\", valor); el padre los maneja con on_nombre=... o en la pestaña Eventos de un formulario."
  }
 }
