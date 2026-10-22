@@ -29,8 +29,6 @@ SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
                  "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket",
                  "Effects": "sparkles", "Animation": "clapperboard"}
-#: Icons of the Events panel's sections: what a component declares itself, and what every control has.
-EVENT_ICONS = {"Events": "zap", "Built-in events": "zap", "Custom events": "sparkles"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -758,9 +756,8 @@ def events(d: "Designer", t: Theme) -> Any:
     owner, wired = doc.owner(target)
     control = doc.form.get(target) if target else None
     spec = _components.spec(control.type) if control is not None else None
-    scene = getattr(doc, "is_scene", False)
-    icon = spec.icon if spec is not None else "component" if scene else "app-window"
-    kind = tr(spec.label) if spec is not None else tr("Component") if scene else tr("Form")
+    icon = spec.icon if spec is not None else "app-window"
+    kind = tr(spec.label) if spec is not None else tr("Form")
     head = _core.container(_core.row([_icon(icon, size=16, color=t.accent),
                                       _core.column([ui.label(owner, weight="semibold", mono=True, theme=t),
                                                     ui.label(kind, size="xs", color="text_muted", theme=t)],
@@ -768,7 +765,8 @@ def events(d: "Designer", t: Theme) -> Any:
                                       _help_button(d, control.name, t) if control is not None else None],
                                      spacing=10, align="center"),
                            padding=spacing.HEADER_PADDING, width="fill")
-    def event_row(event: str) -> Any:
+    rows: List[Any] = []
+    for event in doc.events_of(target):
         handler = wired.get(event)
         doc_text = _help.event_doc(event, owner, control.type if control is not None else None).replace("``", "")
         name = ui.label(handler or "—", size="sm", mono=True, color="text_accent" if handler else "text_muted",
@@ -779,7 +777,7 @@ def events(d: "Designer", t: Theme) -> Any:
             ui.icon_button("unlink", lambda e=event: d.unwire(target, e), size="xs", tooltip=tr("Disconnect"),
                            theme=t) if handler else None,
         ], spacing=2)
-        return ui.tooltip(_core.mouse_area(
+        rows.append(ui.tooltip(_core.mouse_area(
             _core.container(_core.row([
                 _core.container(ui.label(event, size="sm", color="text_muted", wrap=False, theme=t), width=LABEL_WIDTH,
                                 clip=True),
@@ -788,32 +786,13 @@ def events(d: "Designer", t: Theme) -> Any:
             ], spacing=spacing.LABEL_GAP, align="center"), padding=(spacing.ROW_PAD, 0), width="fill",
                 height=ROW_HEIGHT + 2 * spacing.ROW_PAD, align_y="center",
                 radius=t.radius_sm, bg=alpha(t.accent, 0.08) if d.editing and d.editing[0] == handler else None),
-            on_double_click=lambda e=event: d.edit_event(target, e)), doc_text, position="left", theme=t)
-
-    def rows_of(names: List[str]) -> Any:
-        return _core.column([event_row(e) for e in names], width="fill", spacing=spacing.ROW_GAP)
-
-    # The events a component declares itself, apart from the ones every control (or component) has.
-    everything = list(doc.events_of(target))
-    declared = set(_components.custom_events(control.type)) if control is not None else set()
-    custom = [e for e in everything if e in declared]
-    sections = []
-    if getattr(doc, "is_scene", False) and target is None:  # component mode: the events it declares, to edit
-        from . import scene_panel
-
-        mine = scene_panel.custom_events(d, t)
-        sections.append(("Custom events", f"{tr('Custom events')} ({len(doc.custom_events)})", mine))
-    elif custom:
-        sections.append(("Custom events", f"{tr('Custom events')} ({len(custom)})", rows_of(custom)))
-    builtin = [e for e in everything if e not in declared]
-    title = "Built-in events" if sections else "Events"
-    sections.append((title, tr(title), rows_of(builtin)))
-    hint = _core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
-                                    size="xs", color="text_muted", theme=t), padding=(6, spacing.GUTTER))
-    body = ui.accordion(sections, open={key for key, _, _ in sections} - d.collapsed_sections,
-                        on_toggle=d.toggle_section, icons=EVENT_ICONS, padding=spacing.GROUP_PADDING, theme=t)
+            on_double_click=lambda e=event: d.edit_event(target, e)), doc_text, position="left", theme=t))
+    rows.append(_core.container(ui.label(tr("Double-click an event, or a control on the form, to write its code."),
+                                         size="xs", color="text_muted", theme=t), padding=(6, 0)))
+    body = ui.accordion([("Events", tr("Events"), _core.column(rows, width="fill", spacing=spacing.ROW_GAP))],
+                        open={"Events"}, icons={"Events": "zap"}, padding=spacing.GROUP_PADDING, theme=t)
     # the same insets as the property grid, so both docks line up
-    return scroll_panel(_core.column([head, body, _core.container(hint, padding=(0, 0, 16, 0), width="fill")],
+    return scroll_panel(_core.column([head, _core.container(body, padding=(0, 0, 16, 0), width="fill")],
                                      width="fill"))
 
 

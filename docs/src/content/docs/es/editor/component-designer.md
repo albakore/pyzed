@@ -89,6 +89,7 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
 | **Layout** | **Width**, **Height**, **Background** (transparente si está vacío) y **Grid size** de la superficie de diseño. |
 | **Inherited** | Solo con una base: lo que viene de cada clase base, de solo lectura. |
 | **Properties** | Una fila por propiedad (icono del tipo, nombre y valor), y los botones **Public** / **Private** para añadir una. |
+| **Custom events** | Una tarjeta por evento (nombre y descripción), y **Event** para añadir uno. |
 | **Methods** | El código de la clase, agrupado, un campo para añadir un método y **Edit the class**. |
 
 - **Properties**: como en el panel de detalles de Unreal, cada propiedad es una fila compacta: el icono de su tipo,
@@ -98,6 +99,8 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
   (`Rating(value=4)`); una **privada** es estado, declarado con `pz.state`. Las dos son atributos en el código:
   `self.value`, `self.clicks`. El tipo decide el editor de la propiedad, aquí y en la pestaña Propiedades de los
   formularios que usan el componente (ver [Tipos de propiedad](#tipos-de-propiedad)).
+- **Custom events**: los eventos que el componente lanza con `self.emit("change", valor)`, con su descripción. El
+  padre los recibe con `on_change=...` en código, o en la pestaña Eventos de un formulario.
 - **Methods**: todos los métodos de la clase, agrupados en **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
   que se añaden al hacer clic en ellos), **Event handlers** (el código de los eventos de los controles) y tus
   propios **Methods** (un nombre que empieza por `_` se marca como privado). Haz clic en uno para abrirlo en el
@@ -190,19 +193,6 @@ def clear_click(self, event):
 ```
 
 Cada instancia tiene su propia copia de los controles, así que dos ratings en un formulario guardan su propio estado.
-
-## Eventos personalizados
-
-Sin nada seleccionado, la pestaña Events muestra los eventos del propio componente en dos grupos:
-
-- **Eventos personalizados**: los que el componente lanza con `self.emit("change", valor)`, una tarjeta por evento
-  con su nombre y descripción, y **Event** para añadir uno. El padre los recibe con `on_change=...` en código, o
-  en la pestaña Eventos de un formulario.
-- **Eventos incluidos**: los que tiene todo componente, `setup`, `mount` y `unmount`.
-
-Colocado en un formulario, el componente mantiene la misma separación en la pestaña Eventos: primero sus eventos
-personalizados y después los incluidos que tiene cualquier control (`mouse_enter`, `mouse_leave`, `right_click`).
-Las clases escritas a mano con `pz.Component` y un atributo `events` muestran los suyos igual.
 
 ## Enlaces
 

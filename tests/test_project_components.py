@@ -87,36 +87,6 @@ def test_opening_an_old_project_registers_its_components(tmp_path):
     assert d.doc.form["sidebar1"].props["workspace"] == "Acme"
 
 
-def test_the_events_tab_separates_custom_events(tmp_path, monkeypatch):
-    from ui_tree import install
-
-    from pyzed.designer import panels, scene_panel
-
-    def texts(widget):
-        return widget.texts()
-
-    _slack(tmp_path)
-    assert components.custom_events("slack_sidebar") == ("pick",)
-    assert components.custom_events("button") == ()
-    d = Designer(tmp_path / "slack" / "ui" / "main.pzform", language_servers=False)
-    d.doc.select("sidebar1")
-    fake = install(monkeypatch)
-    monkeypatch.setattr(panels, "_core", fake)
-    shown = texts(panels.events(d, d.theme_obj))
-    assert "Custom events (1)" in shown and "Built-in events" in shown
-    assert shown.index("pick") < shown.index("mouse_enter")
-    monkeypatch.undo()
-    rating = _scene.new_component("Rating", tmp_path / "rating.pzcomp")
-    rating.add_event("picked", "A star was clicked")
-    rating.save()
-    d.open_path(tmp_path / "rating.pzcomp")
-    fake = install(monkeypatch)
-    for module in (panels, scene_panel):
-        monkeypatch.setattr(module, "_core", fake)
-    shown = texts(panels.events(d, d.theme_obj))
-    assert "Custom events (1)" in shown and "setup" in shown  # declared here now, not in Properties
-
-
 def test_a_form_with_an_unknown_component_still_opens_and_runs(tmp_path):
     _forget("slack_sidebar")
     root = _slack(tmp_path, "broken")

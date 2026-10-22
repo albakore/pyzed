@@ -269,15 +269,6 @@ def spec(type_: str) -> Component:
     return stand_in
 
 
-def custom_events(type_: str) -> Tuple[str, ...]:
-    """The events a ``pz.Component`` (or designed component) declares itself, in order; built-in components and
-    the events every component has (``mount``, ``unmount``) give none."""
-    cls = _components_api.find(type_)
-    if cls is None:
-        return ()
-    return tuple(e for e in getattr(cls, "__events__", {}) if e not in _components_api.LIFECYCLE_EVENTS)
-
-
 def is_known(type_: str) -> bool:
     """Whether a component is registered for ``type_`` (``spec`` draws a stand-in when it is not)."""
     return type_ in _REGISTRY
