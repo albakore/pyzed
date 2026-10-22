@@ -138,6 +138,9 @@ pub enum Message {
     /// A window was opened (with its size) or moved to this screen position (`None` on Wayland).
     WindowPlaced(window::Id, Option<Point>, Option<Size>),
     SystemTheme(iced::theme::Mode),
+    /// Files dragged from the system over a window: the hook it calls (`on_file_hover`,
+    /// `on_file_drop` or `on_file_leave`) and the file's path (none when the drag leaves).
+    FileDrag(&'static str, Option<String>),
     /// What a callback already run by [`quiet`] returned: dispatched like any callback result.
     Done(PyMsg),
     Noop,
@@ -1408,6 +1411,20 @@ fn handle(state: &mut State, message: Message) -> Task<Message> {
                     None => return Task::none(),
                 }
             }
+            Message::FileDrag(hook, path) => {
+                let main = state.app.bind(py).clone();
+                let Ok(args) = PyTuple::new(py, path) else {
+                    return Task::none();
+                };
+                match call_hook(&target, hook, args.clone()) {
+                    Some(result) => result,
+                    None if !target.is(&main) => match call_hook(&main, hook, args) {
+                        Some(result) => result,
+                        None => return Task::none(),
+                    },
+                    None => return Task::none(),
+                }
+            }
             Message::KeyUp(name) => {
                 let main = state.app.bind(py).clone();
                 match call_hook(&target, "on_key_up", (name.clone(),)) {
@@ -2007,7 +2024,8 @@ pub fn pressed_keys() -> Vec<String> {
 }
 
 /// Where a window is on the screen and how big: reported when it opens, and each time it moves
-/// (positions are not reported on Wayland). Also whether it has the keyboard focus.
+/// (positions are not reported on Wayland). Also whether it has the keyboard focus, and the
+/// files dragged onto it from the system (one message per file).
 fn window_moved(
     event: iced::Event,
     _status: iced::event::Status,
@@ -2019,6 +2037,17 @@ fn window_moved(
         }
         iced::Event::Window(window::Event::Moved(at)) => {
             Some(Message::WindowPlaced(window, Some(at), None))
+        }
+        iced::Event::Window(window::Event::FileHovered(path)) => Some(
+            Message::FileDrag("on_file_hover", Some(path.to_string_lossy().into_owned()))
+                .in_window(window),
+        ),
+        iced::Event::Window(window::Event::FileDropped(path)) => Some(
+            Message::FileDrag("on_file_drop", Some(path.to_string_lossy().into_owned()))
+                .in_window(window),
+        ),
+        iced::Event::Window(window::Event::FilesHoveredLeft) => {
+            Some(Message::FileDrag("on_file_leave", None).in_window(window))
         }
         iced::Event::Window(window::Event::Focused) => Some(Message::WindowFocused(window, true)),
         iced::Event::Window(window::Event::Unfocused) => {

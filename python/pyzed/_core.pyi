@@ -502,6 +502,16 @@ def pin(content: Any, *, x: Any = ..., y: Any = ..., width: Any = ..., height: A
     to position popovers and context menus).
     """
     ...
+def popup(base: Any, content: Any = ..., *, on_dismiss: Any = ..., side: Any = ..., align: Any = ..., gap: Any = ...) -> Any:
+    """Shows `content` over everything else next to `base` (below it by default), like the menu of a
+    drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does
+    not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls
+    `on_dismiss`. With `content=None` only `base` is shown.
+
+    `side` is ``"bottom"``, ``"top"``, ``"right"`` or ``"left"``; `align` lines it up with the start,
+    center or end of `base`; `gap` is the space between them.
+    """
+    ...
 def post(message: Any) -> Any:
     """Sends a message to the running app from any thread (e.g. a worker thread)."""
     ...

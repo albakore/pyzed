@@ -285,6 +285,15 @@ pub enum Kind {
         base: Py<Widget>,
         top: Py<Widget>,
     },
+    /// Content drawn over everything else next to `child` (`popup(...)`, see `popup.rs`).
+    Popup {
+        child: Py<Widget>,
+        content: Option<Py<Widget>>,
+        on_dismiss: Option<PyMsg>,
+        side: crate::popup::Side,
+        align: crate::popup::Align,
+        gap: f32,
+    },
     Tooltip {
         child: Py<Widget>,
         tip: Py<Widget>,
@@ -434,6 +443,7 @@ impl Widget {
             Kind::Opaque { .. } => "opaque",
             Kind::Hover { .. } => "hover",
             Kind::Tooltip { .. } => "tooltip",
+            Kind::Popup { .. } => "popup",
             Kind::Checkbox { .. } => "checkbox",
             Kind::Toggler { .. } => "toggler",
             Kind::Slider { .. } => "slider",
@@ -1325,6 +1335,59 @@ pub fn hover(
     )
 }
 
+/// Shows `content` over everything else next to `base` (below it by default), like the menu of a
+/// drop-down: it is not cut off by the panels `base` sits in, flips to the other side when it does
+/// not fit and stays inside the window. A press outside it (and outside `base`) or Escape calls
+/// `on_dismiss`. With `content=None` only `base` is shown.
+///
+/// `side` is ``"bottom"``, ``"top"``, ``"right"`` or ``"left"``; `align` lines it up with the start,
+/// center or end of `base`; `gap` is the space between them.
+#[pyfunction]
+#[pyo3(signature = (base, content=None, *, on_dismiss=None, side="bottom", align="start", gap=4.0))]
+pub fn popup(
+    py: Python<'_>,
+    base: &Bound<'_, PyAny>,
+    content: Option<&Bound<'_, PyAny>>,
+    on_dismiss: Any<'_>,
+    side: &str,
+    align: &str,
+    gap: f32,
+) -> PyResult<Py<Widget>> {
+    use crate::popup::{Align, Side};
+    let side = match side {
+        "bottom" => Side::Bottom,
+        "top" => Side::Top,
+        "right" => Side::Right,
+        "left" => Side::Left,
+        _ => {
+            return Err(PyValueError::new_err(
+                "side must be bottom, top, right or left",
+            ));
+        }
+    };
+    let align = match align {
+        "start" => Align::Start,
+        "center" => Align::Center,
+        "end" => Align::End,
+        _ => return Err(PyValueError::new_err("align must be start, center or end")),
+    };
+    let content = match content {
+        Some(c) if !c.is_none() => Some(child(c)?),
+        _ => None,
+    };
+    new(
+        py,
+        Kind::Popup {
+            child: child(base)?,
+            content,
+            on_dismiss: PyMsg::maybe(&on_dismiss),
+            side,
+            align,
+            gap,
+        },
+    )
+}
+
 #[pyfunction]
 #[pyo3(signature = (content, tip, *, position="bottom", gap=4.0, bg=None, color=None,
     border_color=None, border_width=0.0, radius=None, shadow=None))]
@@ -1785,6 +1848,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(opaque, m)?)?;
     m.add_function(wrap_pyfunction!(hover, m)?)?;
     m.add_function(wrap_pyfunction!(tooltip, m)?)?;
+    m.add_function(wrap_pyfunction!(popup, m)?)?;
     m.add_function(wrap_pyfunction!(checkbox, m)?)?;
     m.add_function(wrap_pyfunction!(toggler, m)?)?;
     m.add_function(wrap_pyfunction!(slider, m)?)?;
