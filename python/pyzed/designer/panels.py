@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
-from .. import _core, ui
+from .. import _core, component as _component, ui
 from ..icons import icon as _icon
 from ..theme import Theme, alpha, themes
 from . import components as _components
@@ -336,7 +336,18 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
 
 def toolbox(d: "Designer", t: Theme) -> Any:
     """Builds the toolbox: a search box, the pointer, and the components by category, each of which can be
-    picked or dragged onto the form."""
+    picked or dragged onto the form. It is built again only when the search, the picked tool, the
+    components or the theme change."""
+    key = (_component._token(), t, d.toolbox_query, d.tool, tuple(_components.all_components()))
+    cached = d.__dict__.get("_toolbox_drawn")
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    widget = _toolbox(d, t)
+    d._toolbox_drawn = (key, widget)
+    return widget
+
+
+def _toolbox(d: "Designer", t: Theme) -> Any:
     query = d.toolbox_query.strip().lower()
     rows: List[Any] = [
         press_row(d, "tool:", tr("Pointer"), d.pick_tool(None), t, icon="mouse-pointer-2", selected=d.tool is None),
@@ -375,6 +386,9 @@ def outline(d: "Designer", t: Theme) -> Any:
     doc = d.doc
     form = doc.form
     editor_eye = d.prefs.outline_eye == "editor"
+    token = (_component._token(), t)
+    drawn = d.__dict__.get("_outline_rows") or {}
+    kept: dict = {}  # each control's row, built again only when what it shows changes
     rows: List[Any] = [press_row(d, "outline:", form.name, d.select_form, t, icon="app-window",
                                  selected=not doc.selection, height=OUTLINE_ROW,
                                  end=ui.icon_button("plus", lambda: d.open_add_child(None), size="xs",
@@ -391,45 +405,24 @@ def outline(d: "Designer", t: Theme) -> Any:
                 continue  # listed at the end, with the other non-visual components
             container = spec.container is not None
             folded = c.name in d.folded
-            buttons = [
-                ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip="Add inside",
-                               theme=t) if container else None,
-                ui.icon_button("eye-off" if (c.hidden_in_editor if editor_eye else not c.visible) else "eye",
-                               lambda n=c.name: d.toggle_eye(n), size="xs",
-                               tooltip="Hide in the editor" if editor_eye else "Visible", theme=t),
-                ui.icon_button("lock" if c.locked else "lock-open",
-                               lambda n=c.name, v=c.locked: d.set_field(n, "locked", not v), size="xs",
-                               selected=c.locked, tooltip="Lock", theme=t),
-            ]
-            chevron = None
             members = None if container else scene_panel.child_members(c.type)  # a component placed here
-            if container:
-                chevron = ui.icon_button("chevron-right" if folded else "chevron-down",
-                                         lambda n=c.name: d.toggle_folded(n), size="xs", theme=t)
-            elif members:
-                opened = c.name in d.members_open
-                chevron = ui.icon_button("chevron-down" if opened else "chevron-right",
-                                         lambda n=c.name: d.toggle_members(n), size="xs",
-                                         tooltip="Its properties and methods", theme=t)
-            else:
-                chevron = _core.space(width=20)
+            opened = c.name in d.members_open
             target = d.outline_target
-            # press to select, drag to reorder or to move into another container (or onto the form)
-            rows.append(press_row(
-                d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=spec.icon,
-                selected=doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
-                end=_core.row(buttons, spacing=0),
-                color=None if c.visible and not c.hidden_in_editor else "text_muted",
-                on_right_press=lambda n=c.name: d.open_outline_menu(n),
-                on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
-                on_exit=lambda n=c.name: d.leave_outline(n),
-                drop=target[1] if target is not None and target[0] == c.name else None))
+            drop = target[1] if target is not None and target[0] == c.name else None
+            key = (token, id(doc), c.type, c.visible, c.hidden_in_editor, editor_eye, c.locked, folded, depth,
+                   doc.is_selected(c.name), drop, bool(members), opened)
+            hit = drawn.get(c.name)
+            row = hit[1] if hit is not None and hit[0] == key else \
+                _outline_row(d, c, spec.icon, depth, container, folded, bool(members), opened, drop, editor_eye, t)
+            kept[c.name] = (key, row)
+            rows.append(row)
             if container and not folded:
                 add(c.name, depth + 1)
-            if members and c.name in d.members_open:
+            if members and opened:
                 rows.extend(scene_panel.member_rows(d, c, members, 4 + (depth + 1) * 14 + 20, t))
 
     add(None, 0)
+    d._outline_rows = kept
     tray = [c for c in form.controls if not _components.get(c.type).visual]
     if tray:  # timers, watchers... belong to the form but have no place on it
         rows.append(_core.container(ui.label(tr("Non-visual"), size="xs", color="text_muted", theme=t),
@@ -442,6 +435,37 @@ def outline(d: "Designer", t: Theme) -> Any:
                 on_right_press=lambda n=c.name: d.open_outline_menu(n)))
     return scroll_panel(_core.column(rows, width="fill"))
 
+
+def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, folded: bool, members: bool,
+                 opened: bool, drop: Optional[str], editor_eye: bool, t: Theme) -> Any:
+    """One control's row in the outline (``outline`` keeps it while what it shows stays the same)."""
+    buttons = [
+        ui.icon_button("plus", lambda n=c.name: d.open_add_child(n), size="xs", tooltip="Add inside",
+                       theme=t) if container else None,
+        ui.icon_button("eye-off" if (c.hidden_in_editor if editor_eye else not c.visible) else "eye",
+                       lambda n=c.name: d.toggle_eye(n), size="xs",
+                       tooltip="Hide in the editor" if editor_eye else "Visible", theme=t),
+        ui.icon_button("lock" if c.locked else "lock-open",
+                       lambda n=c.name, v=c.locked: d.set_field(n, "locked", not v), size="xs",
+                       selected=c.locked, tooltip="Lock", theme=t),
+    ]
+    if container:
+        chevron = ui.icon_button("chevron-right" if folded else "chevron-down",
+                                 lambda n=c.name: d.toggle_folded(n), size="xs", theme=t)
+    elif members:
+        chevron = ui.icon_button("chevron-down" if opened else "chevron-right",
+                                 lambda n=c.name: d.toggle_members(n), size="xs",
+                                 tooltip="Its properties and methods", theme=t)
+    else:
+        chevron = _core.space(width=20)
+    # press to select, drag to reorder or to move into another container (or onto the form)
+    return press_row(
+        d, f"outline:{c.name}", c.name, lambda n=c.name: d.press_outline(n), t, icon=icon,
+        selected=d.doc.is_selected(c.name), indent=4 + depth * 14, start=chevron, height=OUTLINE_ROW,
+        end=_core.row(buttons, spacing=0), color=None if c.visible and not c.hidden_in_editor else "text_muted",
+        on_right_press=lambda n=c.name: d.open_outline_menu(n),
+        on_move=lambda _x, y, n=c.name: d.hover_outline(n, y, OUTLINE_ROW),
+        on_exit=lambda n=c.name: d.leave_outline(n), drop=drop)
 
 # -- properties ------------------------------------------------------------------
 

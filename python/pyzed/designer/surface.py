@@ -24,7 +24,7 @@ reports view coordinates, whose deltas drive drags even past the form's edges.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from .. import _core, draw, ui
 from ..icons import icon as _icon
@@ -103,7 +103,7 @@ def _handles(d: "Designer", rect: Tuple[float, float, float, float], t: Theme) -
     return out
 
 
-def grips(d: "Designer") -> List[Tuple[str, float, float]]:
+def grips(d: "Designer", rects: Optional[Dict[str, Tuple[float, float, float, float]]] = None) -> List[Tuple[str, float, float]]:
     """``(name, x, y)`` of the grip tab for each container that holds controls and is selected,
     holds the selection or is under the pointer. The tab sits just above the container's top-left
     corner, or inside it when the container touches the top of the form, clear of the corner's
@@ -112,7 +112,7 @@ def grips(d: "Designer") -> List[Tuple[str, float, float]]:
     form = doc.form
     if d.tool or (d.drag is not None and d.drag.mode != "band") or d.carry is not None:
         return []
-    rects = d.rects
+    rects = rects if rects is not None else d.rects
     wanted = set()
     for c in doc.selected:
         wanted.add(c.name)
@@ -249,7 +249,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
     # 5. grip tabs on containers, above everything they hold
-    shown_grips = d.shown_grips[id(doc)] = grips(d)
+    shown_grips = d.shown_grips[id(doc)] = grips(d, rects)
     for name, gx, gy in shown_grips:
         layers.append(_core.pin(_grip(d, name, t), x=gx, y=gy))
     band = d.band_rect
