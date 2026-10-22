@@ -118,6 +118,35 @@ games that move smoothly use `pz.frames`. The [Games](/pyzed/games/) section has
 
 <Run file="examples/tutorial/dodge.py" />
 
+## Events in this tutorial
+
+| Source | Event | Handler |
+| --- | --- | --- |
+| `subscriptions()` | every displayed frame | `pz.frames(self.tick)`: `tick(dt)` gets the seconds since the last frame. |
+| The keyboard | keys held | `game.axis(("left", "a"), ("right", "d"))` reads them inside `tick`. |
+| The app | `on_key` | Enter starts again after a crash. |
+
+A game reads the keys that are *held* in every frame instead of reacting to each press; `on_key` is for one-off
+actions.
+
+### Try more events
+
+```python
+def on_key(self, combo):
+    if combo == "enter" and self.over:
+        self.reset()
+    elif combo == "p":                       # pause: stop returning the frame subscription
+        self.paused = not self.paused
+
+def subscriptions(self):
+    return [] if self.over or self.paused else [pz.frames(self.tick)]
+
+def board(self):
+    ...
+    return pz.canvas(shapes, width=W, height=H,
+                     on_press=lambda x, y: self.reset() if self.over else None)   # click to restart
+```
+
 ## Next
 
 - [Making games](/pyzed/games/): Snake, Breakout and Neon Invaders, step by step.

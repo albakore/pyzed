@@ -112,6 +112,30 @@ This is the quick tour. The [Theming](/pyzed/theming/) section explains every to
 with `.style(...)`, gradients, fonts and icons, and how to save a theme to a file.
 </Aside>
 
+## Events in this tutorial
+
+| Widget | Event | Handler gets |
+| --- | --- | --- |
+| `ui.switch` (Follow the system) | `on_toggle` | `True` or `False`. |
+| `ui.select` (Theme) | `on_select` | The theme's name. |
+| `ui.segmented` (Accent) | `on_select` | The accent's name. |
+| `ui.input` (Your name) | `on_input` | The text. |
+
+`self.choose("base")` returns the handler: a small function that stores what it receives in that field. One factory
+serves the three controls.
+
+### Try more events
+
+```python
+def on_key(self, combo):                    # a shortcut for every window of the app
+    if combo == "ctrl-t":                   # Ctrl+T: flip between light and dark
+        self.base = "One Light" if self.resolved_theme().is_dark else "One Dark"
+        self.follow_system = False
+
+def on_resize(self, width, height):         # the window's own resize event
+    self.compact = width < 600              # e.g. hide the preview on small windows
+```
+
 ## Next
 
 - [5-step tutorial](/pyzed/tutorials/basic/step-by-step/): state, layout, async and a notes app in pure Python.

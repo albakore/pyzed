@@ -1009,6 +1009,10 @@ pub fn container(
     )
 }
 
+/// A button with no predefined style. For the themed button use `ui.button`.
+///
+/// Events:
+/// - `on_press()`: Message or callable sent on press. `None` disables the control.
 #[pyfunction]
 #[pyo3(signature = (content, on_press=None, *, padding=None, width=None, height=None, bg=None,
     color=None, border_color=None, border_width=0.0, radius=None, shadow=None, hover_bg=None,
@@ -1059,6 +1063,12 @@ pub fn button(
     )
 }
 
+/// A controlled text field: it shows `value` and notifies you of changes through `on_input`. For
+/// the themed field use `ui.input`.
+///
+/// Events:
+/// - `on_input(text)`: Callable that receives the new text on every keystroke.
+/// - `on_submit()`: Message or callable sent when Enter is pressed.
 #[pyfunction]
 #[pyo3(signature = (value, *, placeholder="", on_input=None, on_submit=None, id=None, size=None,
     font=None, padding=None, width=None, secure=false, icon=None, icon_size=None, bg=None,
@@ -1125,6 +1135,11 @@ pub fn text_input(
     )
 }
 
+/// Makes its content scrollable.
+///
+/// Events:
+/// - `on_scroll(info)`: Callable that receives a dict with `x`, `y`, `relative_x`, `relative_y`,
+///   `width`, `height`, `content_width` and `content_height`.
 #[pyfunction]
 #[pyo3(signature = (content, *, direction="vertical", width=None, height=None, padding=None,
     id=None, anchor_bottom=false, rail=None, scroller=None, scroller_hover=None,
@@ -1203,6 +1218,19 @@ pub fn rule(
     )
 }
 
+/// Detects mouse events over its content.
+///
+/// Events:
+/// - `on_press()`: Left click (on press).
+/// - `on_release()`: On releasing the left button.
+/// - `on_right_press()`: Right click (context menus).
+/// - `on_double_click()`: Double click.
+/// - `on_enter()`: The mouse enters.
+/// - `on_exit()`: The mouse leaves.
+/// - `on_move(x, y)`: Called with `(x, y)` when the mouse moves.
+/// - `on_scroll(dx, dy)`: Callable that receives `(dx, dy)` in lines when the wheel is used.
+/// - `on_middle_press()`: Middle-button click.
+/// - `on_middle_release()`: Middle button released (pan gestures, for example).
 #[pyfunction]
 #[pyo3(signature = (content, *, on_press=None, on_release=None, on_right_press=None,
     on_double_click=None, on_enter=None, on_exit=None, on_move=None, on_scroll=None,
@@ -1337,6 +1365,10 @@ fn toggle_style(
     })
 }
 
+/// A checkbox.
+///
+/// Events:
+/// - `on_toggle(checked)`: Callable that receives the new `bool` (or a message to send).
 #[pyfunction]
 #[pyo3(signature = (checked, label=None, *, on_toggle=None, size=None, text_size=None,
     accent=None, bg=None, border_color=None, check_color=None, color=None))]
@@ -1397,6 +1429,11 @@ pub fn toggler(
     )
 }
 
+/// A slider between `min` and `max`.
+///
+/// Events:
+/// - `on_change(value)`: Callable that receives the new value.
+/// - `on_release()`: Sent when the knob is released.
 #[pyfunction]
 #[pyo3(signature = (min, max, value, *, step=1.0, on_change=None, on_release=None, width=None,
     height=None, vertical=false, accent=None, bg=None, knob_color=None, border_color=None))]
@@ -1468,6 +1505,15 @@ pub fn progress_bar(
 /// Use `Command.set_editor_text` to replace the contents later.
 ///
 /// With `readonly=True` the text can be selected and copied but not changed.
+///
+/// Events:
+/// - `on_change(text)`: Callable that receives the full text after each edit.
+/// - `on_cursor(line, column)`: Callable that receives `(line, column)`, from 1.
+/// - `on_scroll(info)`: Called on scroll.
+/// - `on_zoom(step)`: Callable that receives `1`, `-1` or `0` for Ctrl+= / Ctrl+- / Ctrl+0 and
+///   Ctrl+wheel.
+/// - `on_action(name)`: Callable that receives the name of each editor action that runs (`"undo"`,
+///   `"select_next"`…).
 #[pyfunction]
 #[pyo3(signature = (id, text="", *, language="txt", size=14.0, line_height=None, font=None,
     width=None, height=None, padding=None, syntax=None, bg=None, color=None, selection_color=None,

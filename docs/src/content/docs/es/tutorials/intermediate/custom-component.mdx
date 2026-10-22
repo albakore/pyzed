@@ -130,6 +130,40 @@ Ejecuta la vista previa del componente, o el formulario que lo usa:
 
 <Run file="examples/designer/components/reviews.pzform" form lang="es" />
 
+## Eventos de este tutorial
+
+`Rating` declara un evento propio, `change`, en `events` y lo lanza con `self.emit("change", stars)`. El padre lo
+escucha con `on_change=`, y su handler recibe un `pz.Event` cuyo `value` es la puntuación. Como todo componente,
+`Rating` lanza además `mount` y `unmount`, y acepta los eventos comunes (`on_right_click`, `on_mouse_enter`…).
+
+### Prueba más eventos
+
+Un segundo evento propio, que solo se lanza si alguien lo escucha:
+
+```python
+class Rating(pz.Component):
+    value: int = 0
+    events = {
+        "change": "Se eligió una estrella (event.value es la puntuación).",
+        "clear": "Se borró la puntuación con un clic derecho.",         # nuevo
+    }
+
+    def render(self):
+        stars = pz.row([...])                                           # como en el tutorial
+        if self.handles("clear"):                                       # solo si el padre pasó on_clear
+            stars = stars.on(right_click=lambda: self.emit("clear"))
+        return stars
+
+
+# El padre, en su view:
+Rating(value=self.stars,
+       on_change=lambda e: setattr(self, "stars", e.value),
+       on_clear=lambda: setattr(self, "stars", 0),                      # sin argumentos: se llama sin nada
+       on_mount=lambda: print("la puntuación está en pantalla"))
+```
+
+Más en [crear tus propios eventos](/pyzed/es/guides/classes/#crear-tus-propios-eventos).
+
 ## Siguiente
 
 - [Diseñador de componentes](/pyzed/es/editor/component-designer/): cada sección del panel del componente, tipos de

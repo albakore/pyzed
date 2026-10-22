@@ -155,6 +155,27 @@ El mismo patrón con bibliotecas reales, cada uno un proyecto completo en
 	]}
 />
 
+## Eventos de este tutorial
+
+| Origen | Evento | Handler |
+| --- | --- | --- |
+| La app | `on_start` | Carga los contactos del backend en segundo plano. |
+| `ui.input` | `on_input` | Guarda el texto de cada campo. |
+| `ui.input` (email) | `on_submit` | `self.add`: manda el contacto nuevo al backend. |
+
+### Prueba más eventos
+
+```python
+def row(self, contact):
+    return ui.list_item(contact.name, None, icon="user",
+                        on_double_press=lambda: setattr(self, "editing", contact),  # editarlo
+                        on_right_press=lambda: setattr(self, "deleting", contact))  # pedir borrarlo
+
+def on_key(self, combo):
+    if combo == "f5":                       # recargar desde el backend
+        return self.on_start()
+```
+
 ## Siguiente
 
 - [Empaqueta tu app](/pyzed/es/tutorials/advanced/packaging/) para Windows, macOS y Linux.

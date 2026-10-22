@@ -31,6 +31,9 @@ def callout(
     ``tint`` is ``"info"``, ``"success"``, ``"warning"``, ``"error"`` or ``"hint"``; it picks
     the color and the default icon. ``actions`` are extra widgets (usually buttons) shown
     at the end, and ``on_dismiss`` adds a close button.
+
+    Events:
+        ``on_dismiss()``: Adds a close button.
     """
     t = _theme(theme)
     base = t.color(tint)
@@ -274,6 +277,12 @@ def table(
     thousands of rows scrolls as smoothly as a short one. ``rows`` should be a list (or any
     sequence); sorting a huge list on every ``view()`` is the remaining cost, so keep it
     sorted in your state or sort it in a ``@pz.memo`` function.
+
+    Events:
+        ``on_sort(title)``: Callable that receives the clicked title.
+        ``on_row_press(row)``: Callable that receives the clicked row.
+        ``on_row_double_press(row)``: Called with the row on a double click (open, edit…).
+        ``on_row_context(row)``: Called with the row on a right click (a context menu).
     """
     t = _theme(theme)
     cols = [c if isinstance(c, Column) else Column(str(c), c) for c in columns]
@@ -364,6 +373,9 @@ def popover(base: Any, content: Any = None, *, x: float = 0, y: float = 0, on_di
     the popover from ``on_right_press``; see ``examples/context_menu.py``. With
     ``align_x="end"``, ``x`` is the distance from the right edge to the content's right
     side (for menus opened from buttons at the end of a title bar).
+
+    Events:
+        ``on_dismiss()``: Message or callable sent on close.
     """
     if content is None:
         return base
@@ -495,6 +507,9 @@ def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Option
 
     ``icon`` goes before the title; ``inverse=True`` colors a drop green and a rise red (for
     errors, latency...); ``on_press`` makes the card clickable (drill down).
+
+    Events:
+        ``on_press()``: Makes the card clickable.
     """
     t = _theme(theme)
     change = None
@@ -527,7 +542,11 @@ def stat(title: str, value: Any, *, delta: Optional[float] = None, trend: Option
 
 def markdown(source: str, *, size: Optional[float] = None, on_link: Any = None, width: Any = None,
              theme: Optional[Theme] = None) -> _core.Widget:
-    """``pz.markdown`` with the theme's text, link and code colors."""
+    """``pz.markdown`` with the theme's text, link and code colors.
+
+    Events:
+        ``on_link(url)``: Callable that receives the URL when a link is clicked.
+    """
     t = _theme(theme)
     return _core.markdown(source, size=size or t.ui_font_size, color=t.text, link_color=t.text_accent,
                           code_color=t.editor_text, code_bg=t.element, on_link=on_link, width=width)
@@ -535,7 +554,11 @@ def markdown(source: str, *, size: Optional[float] = None, on_link: Any = None, 
 
 def split(first: Any, second: Any, *, ratio: float = 0.5, on_resize: Any = None, vertical: bool = False,
           min_size: float = 80, theme: Optional[Theme] = None, **kwargs) -> _core.Widget:
-    """``pz.split`` with a divider in the theme's border color (accent while dragged/hovered)."""
+    """``pz.split`` with a divider in the theme's border color (accent while dragged/hovered).
+
+    Events:
+        ``on_resize(ratio)``: Callable that receives the new ratio.
+    """
     t = _theme(theme)
     return _core.split(first, second, ratio=ratio, on_resize=on_resize, vertical=vertical, min_size=min_size,
                        color=t.border_variant, hover_color=t.border_focused, **kwargs)

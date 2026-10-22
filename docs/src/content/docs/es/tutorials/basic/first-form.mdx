@@ -127,6 +127,36 @@ consola recibe el traceback completo. Corrige el código, guarda, y la ventana t
 
 <Run file="examples/tutorial/designer/contact.pzform" form lang="es" />
 
+## Eventos de este tutorial
+
+| Control | Evento | Handler | `event.value` |
+| --- | --- | --- | --- |
+| El formulario | `load` | `form_load` | `None`: pone el cursor en la primera caja. |
+| `message` (Área de texto) | `change` | `message_change` | El texto entero, en cada tecla. |
+| `send` (Botón) | `click` | `send_click` | `None`. |
+
+### Prueba más eventos
+
+```python
+def email_submit(form, event):              # Enter en la caja del email también envía
+    return send_click(form, event)
+
+
+def topic_change(form, event):              # un desplegable: event.value es la opción elegida
+    form.status.color = "text_muted"
+    form.status.text = f"Tema: {event.value}"
+
+
+def send_mouse_enter(form, event):          # todo control tiene mouse_enter y mouse_leave
+    form.status.text = "¿Listo para enviar?"
+
+
+def form_close(form, event):                # devuelve False para dejar la ventana abierta
+    if form.message.text.strip():
+        form.status.text = "Envía o borra el mensaje antes de cerrar."
+        return False
+```
+
 ## Siguiente
 
 - [Bases del diseño de pantallas](/pyzed/es/tutorials/basic/layout-basics/): filas, columnas y cuadrículas, en el

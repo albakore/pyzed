@@ -2468,6 +2468,11 @@ that holds the player in an attribute, found automatically, or the one you pass.
   ends (never for looping clips); they may take no argument.
 - `fps`: how often app attributes update while a clip with attribute tracks plays.
 
+Events:
+
+- `on_started(name)`: Called with the name of a clip when it starts.
+- `on_finished(name)`: Called with the name of a clip when it ends (never for looping clips).
+
 **Methods and properties**
 
 #### `AnimationPlayer.add`

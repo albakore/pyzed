@@ -727,6 +727,18 @@
    "path": "docs/src/content/docs/guides/canvas.mdx"
   },
   {
+   "slug": "guides/classes",
+   "title": "Apps, windows, forms and components",
+   "description": "The methods that matter when you write a pz.App, a pz.Window, a designed form or a pz.Component, when Pyzed calls each one, and how to create your own events.",
+   "path": "docs/src/content/docs/guides/classes.md"
+  },
+  {
+   "slug": "guides/code-styles",
+   "title": "Imperative, declarative and functional",
+   "description": "Three ways to write a Pyzed app: methods that change the state, messages handled by one update(), or an immutable state drawn by pure functions. The same to-do list written each way, and how to manage state in classes.",
+   "path": "docs/src/content/docs/guides/code-styles.mdx"
+  },
+  {
    "slug": "guides/commands",
    "title": "Commands and tasks",
    "description": "Pyzed commands: focus fields, close the app, edit the code editor, run background work and send messages from threads in Python GUIs.",
@@ -1115,6 +1127,12 @@
    "title": "Error dialog",
    "description": "What went wrong, where, and the traceback, with Copy and Go to source. A Pyzed component for Python desktop GUIs, with examples and its API.",
    "path": "docs/src/content/docs/library/error-dialog.mdx"
+  },
+  {
+   "slug": "library/events",
+   "title": "Events of every component",
+   "description": "Every event of every Pyzed component: what each one reports, what the handler gets, and how many events each component can have.",
+   "path": "docs/src/content/docs/library/events.mdx"
   },
   {
    "slug": "library/facepile",

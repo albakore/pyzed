@@ -178,6 +178,36 @@ diseñador de WinForms, Qt Designer); los anclajes funcionan como los de WinForm
 del editor está inspirado en el editor de código Zed.
 </Aside>
 
+## Eventos de este tutorial
+
+| Control | Evento | Handler | Qué hace aquí |
+| --- | --- | --- | --- |
+| `greet` (Botón) | `click` | `greet_click` | Escribe el saludo en `headline`. |
+| `your_name` (Caja de texto) | `submit` | `your_name_submit` | Enter hace lo mismo que el botón. |
+
+### Prueba más eventos
+
+Haz doble clic en un evento del panel **Eventos** para crear su handler y pega el cuerpo:
+
+```python
+def your_name_change(form, event):          # cada tecla: event.value es el texto
+    form.greet.enabled = bool(event.value.strip())
+
+
+def headline_double_click(form, event):     # una etiqueta tiene click y double_click
+    form.headline.text = "¡Hola!"
+    form.your_name.text = ""
+
+
+def form_key(form, event):                  # cualquier tecla en la ventana: event.value es la combinación
+    if event.value == "escape":
+        return form.close()
+```
+
+Todo control tiene además `mouse_enter`, `mouse_leave` y `right_click`. La lista completa de cada control está en
+[Eventos y handlers](/pyzed/es/editor/events/), y cómo reciben sus eventos formularios, apps y componentes en
+[Apps, ventanas, formularios y componentes](/pyzed/es/guides/classes/).
+
 ## Siguiente
 
 - [Un formulario que hace algo](/pyzed/es/tutorials/basic/first-form/): varios campos, validación y la consola.

@@ -14,7 +14,11 @@ from .inputs import input as _input
 
 def layer(base: Any, overlay: Any = None, *, on_dismiss: Any = None, backdrop: Optional[str] = None,
           align_x: str = "center", align_y: str = "start", offset: float = 72) -> _core.Widget:
-    """Stacks ``overlay`` on top of ``base``. Clicking outside the overlay sends ``on_dismiss``."""
+    """Stacks ``overlay`` on top of ``base``. Clicking outside the overlay sends ``on_dismiss``.
+
+    Events:
+        ``on_dismiss()``: Message or callable sent on close.
+    """
     if overlay is None:
         return base
     shade = _core.container(None, width="fill", height="fill", bg=backdrop or "transparent")
@@ -49,6 +53,9 @@ def modal(
     ``description`` is a muted line under the title and ``icon`` goes before it;
     ``max_height`` scrolls content taller than that, keeping the header and footer in view.
     The Escape key closes it while it has focus (it is sent ``on_close``).
+
+    Events:
+        ``on_close()``: The close button; also sent by Escape while the dialog has focus.
     """
     t = _theme(theme)
     width = {"sm": 360, "md": 480, "lg": 640, "xl": 820}.get(width, width)
@@ -159,6 +166,12 @@ def highlighted(text: str, positions: Sequence[int], *, color: str, match_color:
 
 @dataclass
 class PaletteItem:
+    """One result of a ``ui.command_palette`` or ``ui.picker``: a label with optional shortcut, icon and detail.
+
+    Events:
+        ``on_press()``: Message or callable sent when the item is chosen.
+    """
+
     label: str
     on_press: Any = None
     keys: Optional[str] = None
@@ -183,6 +196,10 @@ def picker(
     """A searchable list in a floating surface (base of the command palette and file finder).
 
     ``items`` are ``(PaletteItem, matched_positions)`` pairs, e.g. from ``fuzzy_filter``.
+
+    Events:
+        ``on_query(text)``: Callable that receives the new text.
+        ``on_submit()``: Message or callable sent when Enter is pressed.
     """
     t = _theme(theme)
     rows: List[Any] = []
@@ -259,7 +276,12 @@ def command_palette(
     theme: Optional[Theme] = None,
     **kwargs,
 ) -> _core.Widget:
-    """Zed's command palette: fuzzy-filters ``commands`` by ``query`` and shows their key bindings."""
+    """Zed's command palette: fuzzy-filters ``commands`` by ``query`` and shows their key bindings.
+
+    Events:
+        ``on_query(text)``: Callable that receives the new text.
+        ``on_submit()``: Message or callable sent when Enter is pressed.
+    """
     matches = fuzzy_filter(query, commands, key=lambda c: c.label)
     return picker(query, on_query, matches, selected=selected, placeholder=placeholder, input_id=input_id,
                   on_submit=on_submit, theme=theme, **kwargs)
@@ -289,6 +311,10 @@ def toast(
 
     ``progress`` (0 to 1) draws a thin bar at the bottom: the time left before it closes,
     or a download. ``on_press`` makes the card clickable (open what it is about).
+
+    Events:
+        ``on_dismiss()``: Message or callable sent on close.
+        ``on_press()``: Makes the card clickable.
     """
     t = _theme(theme)
     color = t.color(kind)

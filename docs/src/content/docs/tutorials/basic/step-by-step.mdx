@@ -95,6 +95,49 @@ with `return About().open()` that shares the app's state. More in
 
 <Code code={step5} lang="python" title="examples/tutorial/step5_notes.py" />
 
+## Events in this tutorial
+
+| Step | Widget | Event | Handler gets |
+| --- | --- | --- | --- |
+| 2 | `ui.input` | `on_input` | The new text, on every keystroke. |
+| 2 | `ui.input`, `ui.button` | `on_submit`, `on_press` | Nothing. Here they are the *message* `"greet"`, which goes to `update`. |
+| 3 | `ui.number_field`, `ui.switch`, `ui.select` | `on_change`, `on_toggle`, `on_select` | The number, `True`/`False`, the option. |
+| 4 | `subscriptions()` | a timer | `pz.every(seconds, message)` sends the message to `update`. |
+| 5 | `on_key(combo)` | every key | The combo, such as `"ctrl-n"`. |
+| 5 | `ui.editor`, `ui.split` | `on_change`, `on_resize` | The text; the share of the first pane. |
+
+Step 2 handles its events in two styles at once: the input calls a lambda that changes `self` (imperative) and the
+button sends the message `"greet"` to `update` (declarative). The same greeter with only messages:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class Typed:
+    text: str
+
+
+class Greeter(pz.App):
+    def __init__(self):
+        self.name, self.greetings = "", 0
+
+    def update(self, message):
+        match message:
+            case Typed(text):
+                self.name = text
+            case "greet" if self.name:
+                self.greetings += 1
+
+    def view(self):
+        return pz.column([
+            ui.input(self.name, Typed, placeholder="Your name", on_submit="greet"),
+            ui.button("Greet", "greet", variant="solid"),
+        ], spacing=12, padding=24)
+```
+
+See [Imperative, declarative and functional](/pyzed/guides/code-styles/) for the third way.
+
 ## Next steps
 
 - [To-do list](/pyzed/tutorials/basic/todo-app/) and the [mini code editor](/pyzed/tutorials/advanced/code-editor/), in more detail.

@@ -109,6 +109,26 @@ pon el mensaje tú: `form.email.error = "Already registered"`. `None` lo borra.
 
 <Media clip="form-validation" alt="Un formulario de inicio de sesión: un email incorrecto se marca con un mensaje bajo el campo, se corrige y Sign in se ejecuta" caption="La validación en el ejemplo de inicio de sesión: un email incorrecto se marca al escribir y se limpia al corregirlo." />
 
+## Eventos de este tutorial
+
+Los controles enlazados casi no necesitan eventos: cada cambio va solo a `form.data`. El formulario tiene un handler,
+`create_click`, que llama a `form.validate()` y lee `form.data`.
+
+### Prueba más eventos
+
+```python
+def form_load(form, event):                 # empieza en la primera caja
+    return form.name.focus()
+
+
+def terms_change(form, event):              # una casilla: event.value es True o False
+    form.create.enabled = event.value
+
+
+def email_change(form, event):              # comprueba un campo mientras se escribe
+    form.email.validate()                   # muestra (o quita) su mensaje al momento
+```
+
 ## Siguiente
 
 - [Enlace de datos y validación](/pyzed/es/editor/data-binding/) en el manual del diseñador: rutas anidadas

@@ -32,6 +32,9 @@ class Theme:
 
     Colors are ``"#rrggbb"`` or ``"#rrggbbaa"`` strings. Themes are immutable; use
     ``derive``/``with_accent`` to make variations.
+
+    Events:
+        ``on_accent()``:
     """
 
     name: str

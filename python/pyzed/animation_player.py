@@ -581,6 +581,10 @@ class AnimationPlayer:
     - ``on_started(name)``/``on_finished(name)``: called when a clip starts and when it
       ends (never for looping clips); they may take no argument.
     - ``fps``: how often app attributes update while a clip with attribute tracks plays.
+
+    Events:
+        ``on_started(name)``: Called with the name of a clip when it starts.
+        ``on_finished(name)``: Called with the name of a clip when it ends (never for looping clips).
     """
 
     def __init__(self, *sources: Any, autoplay: Optional[str] = None, speed: float = 1.0,

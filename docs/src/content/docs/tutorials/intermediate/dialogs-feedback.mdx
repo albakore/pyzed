@@ -105,6 +105,33 @@ If your data already has a Pydantic (or SQLModel, Django, FastAPI) model, let it
 
 <Run file="examples/tutorial/feedback.py" />
 
+## Events in this tutorial
+
+| Widget | Event | Handler |
+| --- | --- | --- |
+| `ui.input` (three fields) | `on_input` | `lambda v: setattr(self, "name", v)`… |
+| `ui.input` (password) | `on_submit` | `self.submit` |
+| **Create account** | `on_press` | `self.submit` |
+| `ui.confirm` | `on_confirm`, `on_cancel` | `self.create`, close the dialog |
+| `ui.dialog_layer` | `on_dismiss` | close the dialog (a click on the backdrop) |
+| `ui.toast` | `on_dismiss` | `lambda i=i: self.dismiss(i)` |
+
+### Try more events
+
+```python
+def on_key(self, combo):
+    if combo == "escape" and self.confirming:   # Escape closes the dialog
+        self.confirming = False
+        return []                               # handled: the key goes no further
+
+def view(self):
+    ...
+    toasts = [ui.toast(title, text, kind=kind,
+                       on_dismiss=lambda i=i: self.dismiss(i),
+                       on_press=lambda i=i: self.dismiss(i))   # a click on the card closes it too
+              for i, kind, title, text in self.notes]
+```
+
 ## Next
 
 - [A custom component](/pyzed/tutorials/intermediate/custom-component/) in the designer's Component view.

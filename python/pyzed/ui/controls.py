@@ -33,6 +33,11 @@ def select(
     so any value with a readable ``__str__`` works (strings, enums, dataclasses...).
     ``disabled`` greys it out, ``invalid`` paints the border red, and ``on_open`` /
     ``on_close`` run when the menu opens and closes.
+
+    Events:
+        ``on_select(item)``: Callable that receives the chosen item.
+        ``on_open()``: Sent when the menu opens.
+        ``on_close()``: Sent when the menu closes.
     """
     t = _theme(theme)
     height, pad = {"sm": (22, 6), "md": (28, 8), "lg": (32, 10)}[size]
@@ -93,6 +98,9 @@ def radio_group(
     ``options`` are strings or ``(value, label)`` pairs; ``on_select(value)`` is called
     when one is picked. ``disabled`` is ``True`` for all of them or a collection of the
     values to disable; ``descriptions`` maps values to a muted line under their label.
+
+    Events:
+        ``on_select(value)``: Callable that receives the chosen value.
     """
     t = _theme(theme)
     items = []
@@ -152,6 +160,10 @@ def number_field(
     between the buttons; ``align="start"`` or ``"end"`` moves it. Once clicked, the ↑/↓
     keys step it (with Shift, ten steps) and Home/End jump to ``min``/``max``.
     ``decimals`` fixes how many decimals it shows (by default, as many as ``step``).
+
+    Events:
+        ``on_change(value)``: Callable that receives the new value.
+        ``on_submit()``: Sent on Enter.
     """
     t = _theme(theme)
     if disabled:
@@ -257,6 +269,10 @@ def split_button(
     """A button with a separate chevron for more options (Zed's ``SplitButton``).
 
     ``on_press`` runs the main action; ``on_menu`` usually opens a ``ui.menu`` popover.
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
+        ``on_menu()``: Message or callable for the menu button.
     """
     from .base import tooltip_text
 
@@ -286,6 +302,10 @@ def chip(
     """A compact tag, optionally clickable (filters) and removable (an ``x`` at the end).
 
     ``tint`` colors it when selected; ``disabled`` greys it out and ignores presses.
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
+        ``on_remove()``: Shows a ✕ that sends this when clicked.
     """
     t = _theme(theme)
     removable = on_remove is not None
@@ -336,6 +356,9 @@ def disclosure(
     """A collapsible section: a header with a chevron that shows or hides ``content``.
 
     The open state is yours (like every Pyzed widget): flip it in ``on_toggle``.
+
+    Events:
+        ``on_toggle()``: Message or callable when the header is clicked.
     """
     t = _theme(theme)
     header = _core.button(
@@ -386,6 +409,9 @@ def accordion(
     ``on_toggle(id)`` flips one. ``icons`` maps ids to Lucide icons and ``spacing`` is the
     space around the dividers between sections. Headers span the
     whole width, so content lines up with the rest of the panel.
+
+    Events:
+        ``on_toggle(key)``: Called with the key of the clicked header.
     """
     t = _theme(theme)
     if open is True:
@@ -444,6 +470,9 @@ def toggle_group(
     With ``multiple=True``, ``selected`` is a collection and each button toggles its value
     on or off (``on_select`` gets the value). ``disabled`` is ``True`` for all of them or a
     collection of the values to disable.
+
+    Events:
+        ``on_select(value)``: Callable that receives the chosen item.
     """
     from .base import tooltip_text
 

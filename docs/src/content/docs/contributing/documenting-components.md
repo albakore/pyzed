@@ -41,6 +41,9 @@ falls back to them. The repository's style:
   `gen_api.py` uses as a summary.
 - Then, if needed, a short paragraph about **callbacks and behavior**: what `on_change` receives, what
   happens without it.
+- Last, an **`Events:` section** that lists every `on_*` parameter with what its handler receives,
+  written as a call (``` ``on_change(stars)`` ```, ``` ``on_press()`` ```). Editors show it on hover, and it is
+  the same list as the **Events** section of the library page.
 - Code names use reST double backticks (```` ``value`` ````) and examples a `::` block; `gen_api.py`
   converts both to Markdown (an inline code span and a fenced `python` block).
 - No `Args:`/`Returns:` sections: parameters are described in `api_docs_*.py` (below), so the docstring
@@ -55,8 +58,14 @@ def rating(value: float, on_change: Any = None, *, max: int = 5, size: float = 1
 
     ``on_change`` is called with the number of the clicked star (1 to ``max``);
     without it the stars are read only.
+
+    Events:
+        ``on_change(stars)``: Called with the number of the clicked star.
     """
 ```
+
+Widgets written in Rust (`pz.button`, `pz.slider`…) carry the same text as `///` comments above their
+`#[pyfunction]`; `scripts/gen_stubs.py` copies them into `_core.pyi` after `maturin develop`.
 
 ## 2. API reference
 
@@ -168,6 +177,25 @@ add(
 | `examples` | Optional list of `{"title": T(...), "text": T(...), "code": ..., "size": (w, h)}`, each with its own image (`"shot": False` for code only). |
 | `notes` | Optional "Tips" (Markdown). |
 | `related`, `badge` | Optional related slugs; `"new"` adds a badge in the sidebar and the gallery. |
+
+**Events.** Every page gets an **Events** section, also generated: a table of the component's own events
+(its `on_*` parameters, with the description of the API reference), the common events of `.on()` and a
+**Handling the events** example in three tabs: imperative, declarative and functional. What each handler
+receives (`(text)`, `(x, y)`…) and the three examples live in `docs/scripts/library_events.py`:
+
+```python
+HANDLERS = {"on_change": "(value)", "ui.rating.on_change": "(stars)", ...}
+
+ex("rating",
+   """class Review(pz.App): ...""",               # imperative: methods change self
+   """@dataclass\nclass Rate: ...""",             # declarative: messages and update()
+   """@dataclass(frozen=True)\nclass State: ...""")  # functional: view(state, set_state)
+```
+
+The imperative and declarative examples end with an `App` class; the functional one defines
+`view(state, set_state)` and a frozen `State`. `tests/test_library_events.py` runs the three of every page,
+and `--check` fails when a component with events has no examples. The page
+[Events](/pyzed/library/events/) lists every component with its number of events.
 
 Snippets run with `pz`, `ui` and `draw` already imported; any other free name (`on_rate`, `save`…) is a
 do-nothing callback, so write them the way a reader would write them in an app; **the last expression is

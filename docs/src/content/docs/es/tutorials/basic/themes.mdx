@@ -115,6 +115,30 @@ Esto es el recorrido rápido. La sección [Temas y estilos](/pyzed/es/theming/) 
 un widget con `.style(...)`, degradados, fuentes e iconos, y cómo guardar un tema en un archivo.
 </Aside>
 
+## Eventos de este tutorial
+
+| Widget | Evento | El handler recibe |
+| --- | --- | --- |
+| `ui.switch` (Seguir al sistema) | `on_toggle` | `True` o `False`. |
+| `ui.select` (Tema) | `on_select` | El nombre del tema. |
+| `ui.segmented` (Acento) | `on_select` | El nombre del acento. |
+| `ui.input` (Tu nombre) | `on_input` | El texto. |
+
+`self.choose("base")` devuelve el handler: una función pequeña que guarda lo que recibe en ese campo. Una sola
+fábrica sirve a los tres controles.
+
+### Prueba más eventos
+
+```python
+def on_key(self, combo):                    # un atajo para todas las ventanas de la app
+    if combo == "ctrl-t":                   # Ctrl+T: alterna claro y oscuro
+        self.base = "One Light" if self.resolved_theme().is_dark else "One Dark"
+        self.follow_system = False
+
+def on_resize(self, width, height):         # el evento de tamaño de la propia ventana
+    self.compact = width < 600              # p. ej. ocultar la vista previa en ventanas pequeñas
+```
+
 ## Siguiente
 
 - [Tutorial en 5 pasos](/pyzed/es/tutorials/basic/step-by-step/): estado, layout, async y una app de notas en

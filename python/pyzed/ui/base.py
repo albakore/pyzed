@@ -205,6 +205,9 @@ def button(
     loading: shows a spinner in place of the icon and ignores presses (keep a
              ``pz.every(1/30, ...)`` subscription while it spins).
     tooltip: text shown on hover (with ``keys`` in it too).
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
     """
     t = _theme(theme)
     if loading:
@@ -247,6 +250,9 @@ def icon_button(
     ``keys`` shows a key binding in the tooltip; ``tint`` colors it (``"error"``,
     ``"accent"``...); ``loading`` swaps the icon for a spinner and ignores presses;
     ``indicator`` adds a small dot in that color at the top right (unread, changes...).
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
     """
     t = _theme(theme)
     if loading:
@@ -307,6 +313,9 @@ def badge(
     """A small pill. variant: "soft" | "solid" | "outline"; size: "sm" | "md" | "lg".
 
     ``on_press`` makes it clickable (a filter, a link to the issues it counts...).
+
+    Events:
+        ``on_press()``: Makes it clickable.
     """
     t = _theme(theme)
     font_size, pad, icon_size = {"sm": (10.5, (0, 5), 10), "md": (11.5, (1, 7), 11), "lg": (12.5, (2, 9), 12)}[size]
@@ -488,6 +497,9 @@ def card(
     ``footer`` widgets go at the bottom right (buttons); ``on_press`` makes the whole card
     clickable (a choice, a project to open) and ``selected`` outlines it in the accent color;
     ``elevated`` adds a shadow.
+
+    Events:
+        ``on_press()``: Makes the whole card clickable.
     """
     t = _theme(theme)
     footer = list(footer)

@@ -126,6 +126,35 @@ For a more complete version (file finder, terminal panel, outline, themes, git m
 [`examples/zed_editor.py`](https://github.com/albakore/pyzed/blob/main/examples/zed_editor.py) and its page in the
 [Showcase](/pyzed/showcase/apps/#workspace-editor).
 
+## Events in this tutorial
+
+| Widget | Event | Handler gets |
+| --- | --- | --- |
+| `ui.tab_bar` | `on_select`, `on_close` | The tab's id (its path). |
+| `ui.editor` | `on_change`, `on_cursor` | The text; the line and column. |
+| `ui.tree` | `on_toggle`, `on_select` | The path of the folder or file. |
+| `ui.status_item` | `on_press` | Nothing. |
+| `ui.command_palette` | `on_query`, `on_submit` | The query; nothing. |
+| `ui.layer` | `on_dismiss` | Nothing (a click outside the palette). |
+| The app | `on_key` | The combo (`ctrl-shift-p`, `ctrl-b`…). |
+
+### Try more events
+
+```python
+ui.editor(self.active, self.texts[self.active], path=self.active, font_size=self.font_size,
+          on_change=self.edited,
+          on_cursor=lambda line, col: setattr(self, "cursor", (line, col)),
+          on_zoom=lambda step: setattr(self, "font_size", 14 if step == 0 else self.font_size + step))
+
+ui.tree(self.nodes, expanded=self.expanded, selected=self.active,
+        on_toggle=self.toggle_folder, on_select=self.open_file,
+        on_open=self.open_file,                                     # double click
+        on_context=lambda path: setattr(self, "menu_for", path))    # right click: a menu
+
+ui.tab_bar(tabs, self.active, on_select=lambda p: setattr(self, "active", p), on_close=self.close_tab,
+           on_new=self.new_file)                                    # double click after the tabs
+```
+
 ## Next
 
 - [A game loop](/pyzed/tutorials/advanced/game-loop/) with `pyzed.game`.

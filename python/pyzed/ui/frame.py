@@ -273,7 +273,13 @@ def window_controls(
     """The minimize, maximize and close buttons in the style of a platform (``"macos"``, ``"windows"``,
     ``"gnome"``, ``"ubuntu"`` or ``"kde"``; ``None`` is this system's). A button without a callback is drawn
     but does nothing (for previews). ``maximized`` shows the restore symbol, ``focused=False`` the dimmed
-    look of a window in the background."""
+    look of a window in the background.
+
+    Events:
+        ``on_minimize()``: Minimize button.
+        ``on_maximize()``: Maximize button.
+        ``on_close()``: Close button.
+    """
     t = _theme(theme)
     style = style or system_platform()
     if style == "overlay":  # the system draws them
@@ -362,6 +368,13 @@ def window_title_bar(
     ``on_drag`` is called when the empty part of the bar is dragged (return ``Command.drag_window()``) and
     double clicking it calls ``on_maximize``; a right click calls ``on_menu``. Without callbacks the bar
     only shows (Pyzed Design previews forms with it). Most apps use ``window_frame`` instead.
+
+    Events:
+        ``on_drag()``: Called when the empty part of the bar is dragged (return ``Command.drag_window()``).
+        ``on_minimize()``: Minimize button.
+        ``on_maximize()``: Maximize button and double click on the bar.
+        ``on_close()``: Close button.
+        ``on_menu()``: Right click on the bar.
     """
     t = _theme(theme)
     style = style or system_platform()

@@ -103,6 +103,43 @@ ventana con `form.open("settings")`. Mira [Eventos y manejadores](/pyzed/es/edit
 
 <Run file="examples/tutorial/navigation.py" lang="es" />
 
+## Eventos de este tutorial
+
+| Widget | Evento | Handler |
+| --- | --- | --- |
+| `ui.list_item` de la barra lateral | `on_press` | `lambda name=name: self.go(name)` |
+| La app | `on_key` | `ctrl-1`, `ctrl-2`, `ctrl-3` van a una página |
+| `ui.breadcrumbs` | `on_press` | recibe el índice de la parte: `0` vuelve al inicio |
+| `ui.list_item` del buzón | `on_press` | marca el mensaje como leído |
+| `ui.segmented`, `ui.select`, `ui.switch` | `on_select`, `on_select`, `on_toggle` | la pestaña, el tema, sí/no |
+
+### Prueba más eventos
+
+Atrás y adelante con un historial, como un navegador:
+
+```python
+def __init__(self):
+    ...
+    self.history, self.future = [], []
+
+def go(self, page):
+    if page != self.page:
+        self.history.append(self.page)
+        self.future.clear()
+        self.page = page
+
+def on_key(self, combo):
+    if combo == "alt-left" and self.history:
+        self.future.append(self.page)
+        self.page = self.history.pop()
+    elif combo == "alt-right" and self.future:
+        self.history.append(self.page)
+        self.page = self.future.pop()
+```
+
+Los ratones con botones de atrás y adelante los mandan como `mouse_down` con `event.button`: añade
+`.on(mouse_down=lambda e: ...)` a la página.
+
 ## Siguiente
 
 - [Listas y tablas con datos](/pyzed/es/tutorials/intermediate/lists-tables/).

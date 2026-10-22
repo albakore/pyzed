@@ -1,0 +1,208 @@
+---
+title: Imperative, declarative and functional
+description: "Three ways to write a Pyzed app: methods that change the state, messages handled by one update(), or an immutable state drawn by pure functions. The same to-do list written each way, and how to manage state in classes."
+sidebar:
+  order: 1.6
+---
+
+import { Code, Tabs, TabItem } from '@astrojs/starlight/components';
+import imperative from '../../../../../examples/code_styles/imperative.py?raw';
+import declarative from '../../../../../examples/code_styles/declarative.py?raw';
+import functional from '../../../../../examples/code_styles/functional.py?raw';
+
+Pyzed does not force one way of writing an app. A handler can be a method, a message or a function that returns a
+new state, and all three mix in the same program. This page writes the same to-do list in each style, so you can
+compare them line by line, and says when each one fits.
+
+| Style | The state lives in | An event | Fits |
+| --- | --- | --- | --- |
+| **Imperative** | Attributes of the app (`self.tasks`). | Calls a method that changes them (`on_submit=self.add`). | Small apps, prototypes, designed forms. |
+| **Declarative** | Attributes of the app. | Produces a message (`on_submit=Add()`); one `update()` changes the state. | Apps with many ways to do the same thing, logging, undo, tests without a window. |
+| **Functional** | One immutable value (`State`). | Asks for a new state (`set_state(draft="")`); the view is a pure function. | Logic you want to test as plain functions, reusable view functions, caching with `@pz.memo`. |
+
+In the three of them the view is **declarative**: `view()` describes the whole window from the state, and Pyzed
+works out what changed. The styles differ in how events reach the state.
+
+## The same app three ways
+
+<Tabs syncKey="code-style">
+<TabItem label="Imperative">
+<Code code={imperative} lang="python" title="examples/code_styles/imperative.py" />
+</TabItem>
+<TabItem label="Declarative">
+<Code code={declarative} lang="python" title="examples/code_styles/declarative.py" />
+</TabItem>
+<TabItem label="Functional">
+<Code code={functional} lang="python" title="examples/code_styles/functional.py" />
+</TabItem>
+</Tabs>
+
+Run any of them with `python examples/code_styles/imperative.py` (or `declarative.py`, `functional.py`): the three
+windows look and behave the same.
+
+## Imperative: methods change the state
+
+Every handler is a method or a lambda, and it changes `self`. Pyzed calls `view()` again afterwards.
+
+```python
+def add(self):
+    if self.draft.strip():
+        self.tasks.append({"title": self.draft.strip(), "done": False})
+        self.draft = ""
+
+ui.input(self.draft, self.type, on_submit=self.add)
+ui.checkbox(t["done"], lambda done, t=t: self.toggle(t, done), label=t["title"])
+```
+
+- A handler that takes no argument is called with nothing (`on_press`, `on_submit`); one of a control that produces
+  a value gets it (`on_input(text)`, `on_toggle(done)`, `on_select(item)`).
+- To pass your own data, bind it with a default argument: `lambda t=t: self.remove(t)`. Without `t=t`, every lambda
+  of the loop would see the last task.
+- It is the shortest style, and the one the handlers of a [designed form](/pyzed/guides/classes/#designed-forms-pzform--handlers)
+  use: `form.status.text = "Saved"`.
+
+## Declarative: messages and one `update()`
+
+Handlers are **values**, the messages, which go to `update(message)`. A message says *what happened*; `update`
+decides *what it means*.
+
+```python
+@dataclass
+class Type:
+    text: str
+
+@dataclass
+class Toggle:
+    index: int
+    done: bool
+
+ui.input(self.draft, Type, on_submit=Add())            # Type(text) is built from the new text
+ui.checkbox(t["done"], lambda done, i=i: Toggle(i, done))
+
+def update(self, message):
+    match message:
+        case Type(text):
+            self.draft = text
+        case Toggle(index, done):
+            self.tasks[index]["done"] = done
+```
+
+- **A message is any value that is not callable**: a string (`"save"`), a tuple (`("delete", 3)`) or, best, a small
+  dataclass, which reads well in `match`.
+- **Controls with a value** call what you give them with that value. A dataclass *class* is callable, so
+  `on_input=Type` builds `Type(text)` and sends it to `update`. For events without a value pass an *instance*:
+  `on_submit=Add()`.
+- A callable that returns a message also works: `lambda done, i=i: Toggle(i, done)`.
+- `update` can return a `Command` (focus, close, open a window) or start async work, like any handler.
+- Since every change goes through one method, you can log messages, keep a history to undo, replay them or test
+  the logic without opening a window:
+
+```python
+app = Todo()
+app.update(Type("Buy milk"))
+app.update(Add())
+assert app.tasks[-1]["title"] == "Buy milk"
+```
+
+Messages also come from outside the view: shortcuts (`on_key`), timers (`pz.every(1, Tick())`), menus and threads
+(`pz.post(Downloaded(...))`). See [App architecture](/pyzed/guides/architecture/#messages).
+
+## Functional: an immutable state and pure functions
+
+The state is **one frozen dataclass**. The view is a function `view(state, set_state)` that only reads it, and the
+logic lives in functions that take data and return new data:
+
+```python
+@dataclass(frozen=True)
+class State:
+    tasks: tuple = ()
+    draft: str = ""
+
+def added(tasks, title):                        # pure: no self, no side effects
+    return tasks + (Task(title.strip()),) if title.strip() else tasks
+
+def view(state, set_state):
+    return ui.input(state.draft, lambda text: set_state(draft=text),
+                    on_submit=lambda: set_state(tasks=added(state.tasks, state.draft), draft=""))
+
+class Todo(pz.App):                             # the only class: it keeps the current state
+    state = State()
+
+    def set_state(self, **changes):
+        self.state = replace(self.state, **changes)
+
+    def view(self):
+        return view(self.state, self.set_state)
+```
+
+- Nothing changes in place: `set_state(...)` builds a new `State` with `dataclasses.replace`. Use tuples and
+  `frozenset` instead of lists and sets.
+- Pure functions are trivial to test: `assert added((), "Milk") == (Task("Milk"),)`.
+- View functions are your components: `task_row(task, on_toggle, on_remove)` takes data and callbacks and returns
+  widgets, like the functions of `pyzed.ui`. Since their arguments are plain values, they can be cached with
+  [`@pz.memo`](/pyzed/guides/performance/), which rebuilds them only when the arguments change.
+
+For a pure *reducer* (the Elm or Redux way), combine it with messages: `update` replaces the state with what a pure
+function returns.
+
+```python
+def reduce(state: State, message) -> State:
+    match message:
+        case Type(text):
+            return replace(state, draft=text)
+        case Add():
+            return replace(state, tasks=added(state.tasks, state.draft), draft="")
+    return state
+
+class Todo(pz.App):
+    state = State()
+
+    def update(self, message):
+        self.state = reduce(self.state, message)
+
+    def view(self):
+        return view(self.state)                 # the view only sends messages
+```
+
+## Managing state in classes
+
+Wherever the state lives, the same rules keep an app predictable:
+
+| Rule | Why |
+| --- | --- |
+| Put the initial state in `__init__` (or in class attributes for immutable defaults). | A class attribute that is a list or a dict is shared by every instance; `__init__` gives each app its own. |
+| Never change state inside `view()`. | `view()` runs after every event; compute what to show there, nothing else. |
+| Compute derived values in `view()` instead of storing them. | `shown = [t for t in self.tasks if ...]` can never go stale. |
+| Keep data in plain Python: dataclasses, dicts, lists. | Pyzed redraws from whatever you have; there are no observables to wrap. |
+| Replace lists instead of mutating them when a part of the view is cached. | `@pz.memo` compares arguments; `self.tasks = [*self.tasks, t]` is a new value. |
+| State of one window goes in its `Window`; shared state in the `App` (`self.app`). | Every window has its own `view()`, and reads the app through `self.app`. |
+| State of a reusable piece goes in a `pz.Component` (`pz.state(...)`). | Each instance keeps its own, and the parent only sees its props and events. |
+
+A component has the same three options inside: methods that change `self`, `self.emit(...)` to tell the parent, or a
+`render()` that only reads its props. See [Apps, windows, forms and components](/pyzed/guides/classes/).
+
+## Mixing styles
+
+Most real apps mix them: imperative handlers for small UI state (an open menu, the hovered row), messages for the
+actions that matter (save, delete, sync), and pure functions for the logic and the reusable parts of the view.
+
+```python
+class Editor(pz.App):
+    def __init__(self):
+        self.menu_open = False             # UI detail: imperative
+        self.doc = Document()
+
+    def update(self, message):             # actions: messages
+        match message:
+            case Save():
+                return save(self.doc)      # pure function, returns a Command
+
+    def view(self):
+        return pz.column([
+            toolbar(self.doc.name, on_save=Save()),                    # a view function
+            ui.icon_button("menu", lambda: setattr(self, "menu_open", True)),
+        ])
+```
+
+Each page of the [library](/pyzed/library/) shows the events of its component in the three styles, under
+**Events → Handling the events**.

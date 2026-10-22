@@ -126,6 +126,33 @@ una flexible. Detalles en [Layouts y contenedores](/pyzed/es/editor/layouts/).
 
 <Run file="examples/tutorial/layout_basics.py" lang="es" />
 
+## Eventos de este tutorial
+
+La página tiene un evento: el `on_press` del botón **Follow**, que llama a `toggle_follow` (sin argumentos). Los
+widgets de disposición no tienen eventos propios, pero cualquier widget acepta los
+[eventos comunes](/pyzed/es/guides/events/) con `.on()`.
+
+### Prueba más eventos
+
+```python
+def __init__(self):
+    self.follows = False
+    self.narrow = False                     # nuevo: la ventana es estrecha
+    self.opened = None                      # nuevo: la cifra que se pulsó
+
+def stats(self):
+    return pz.grid([
+        ui.stat(name, value, width="fill", on_press=lambda name=name: setattr(self, "opened", name))
+        for name, value in (("Projects", "12"), ("Followers", "1,204"), ("Stars", "86"))
+    ], columns=1 if self.narrow else 3, spacing=12, height=84)
+
+def view(self):
+    page = pz.column([self.header(), self.stats(), self.about()], spacing=20, padding=24)
+    # resize: una sola columna cuando la ventana mide menos de 560 px
+    return page.on(resize=lambda e: setattr(self, "narrow", e.width < 560),
+                   double_click=lambda: setattr(self, "opened", None))
+```
+
 ## Siguiente
 
 - [Cambia el tema](/pyzed/es/tutorials/basic/themes/) de esta ventana.

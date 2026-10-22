@@ -150,7 +150,12 @@ class ThreadHistory(Component):
     """Past conversations with a search box, grouped by day like Zed's thread history.
 
     ``threads`` are dicts or objects with ``id``, ``title``, ``updated`` (a timestamp) and an optional
-    ``detail`` (the model, the agent...)."""
+    ``detail`` (the model, the agent...).
+
+    Events:
+        ``on_open(event)``: A thread was picked (``event.value`` is its id).
+        ``on_delete(event)``: Delete was pressed on a thread.
+    """
 
     threads: list = None  # type: ignore[assignment]
     selected: str = ""
@@ -229,7 +234,13 @@ class ToolCall(Component):
 
     ``status`` is ``"pending"``, ``"running"``, ``"waiting"``, ``"done"``, ``"failed"`` or ``"rejected"``.
     ``diffs`` (``{"path", "old", "new"}``) are the edits it made, shown as colored diffs; ``progress`` is what
-    it printed so far (a command's output), shown under the header while it runs."""
+    it printed so far (a command's output), shown under the header while it runs.
+
+    Events:
+        ``on_allow(event)``: Allow was pressed.
+        ``on_allow_always(event)``: Always allow was pressed.
+        ``on_deny(event)``: Deny was pressed.
+    """
 
     title: str = ""
     detail: str = ""
@@ -407,7 +418,15 @@ class EditsBar(Component):
     """The files an agent changed, like Zed's edits bar: ``3 files changed`` with Reject all / Keep all,
     unfolding to one row per file (open it, reject or keep it alone).
 
-    ``files`` are dicts or objects with ``path`` and optional ``added`` / ``removed`` line counts."""
+    ``files`` are dicts or objects with ``path`` and optional ``added`` / ``removed`` line counts.
+
+    Events:
+        ``on_keep(event)``: Keep all.
+        ``on_reject(event)``: Reject all.
+        ``on_keep_file(event)``: Keep on a file (``event.value`` is its path).
+        ``on_reject_file(event)``: Reject on a file.
+        ``on_open(event)``: A file was clicked.
+    """
 
     files: list = None  # type: ignore[assignment]
     theme: Any = None
@@ -474,7 +493,14 @@ class AuthPrompt(Component):
     """Asks to sign in, like Zed when an agent needs it: one button per way to sign in (``methods``: dicts
     with ``id``, ``name``, optional ``description`` and ``icon``; the first is the main one). While
     ``waiting`` holds a method id it shows that the browser (or a terminal) is open, with a ``code`` to
-    type when there is one, "Open the page again" when ``url`` is set, and Cancel."""
+    type when there is one, "Open the page again" when ``url`` is set, and Cancel.
+
+    Events:
+        ``on_pick(event)``: A method was picked (``event.value`` is its id).
+        ``on_cancel(event)``: Cancel.
+        ``on_open_url(event)``: Open the page again.
+        ``on_copy(event)``: The code was copied.
+    """
 
     title: str = ""
     detail: str = ""
@@ -544,7 +570,12 @@ _STATUS_COLORS = {"running": "success", "installed": "success", "starting": "war
 class ServiceRow(Component):
     """One configured thing an agent uses (an MCP server, an external agent, a skill), like the rows of
     Zed's agent settings: a status dot, its name and command, an on/off switch, a main button (Update,
-    Install...) and a ``⋯`` menu with ``actions`` (``ui.MenuItem``)."""
+    Install...) and a ``⋯`` menu with ``actions`` (``ui.MenuItem``).
+
+    Events:
+        ``on_toggle(event)``: The switch was flipped.
+        ``on_primary(event)``: The main button was pressed.
+    """
 
     name: str = ""
     detail: str = ""
@@ -622,7 +653,11 @@ class ServiceRow(Component):
 class Catalog(Component):
     """Things to install with a search box (agents from a registry, servers, skills...). ``items`` are dicts
     or objects with ``id``, ``name`` and optional ``version``, ``description``, ``installed`` (bool) and
-    ``update`` (a newer version)."""
+    ``update`` (a newer version).
+
+    Events:
+        ``on_install(event)``: Install or Update was pressed (``event.value`` is the id).
+    """
 
     items: list = None  # type: ignore[assignment]
     busy: str = ""

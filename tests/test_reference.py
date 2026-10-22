@@ -159,3 +159,8 @@ def test_shipped_descriptions_match_the_docs_sources():
         fresh = out.decode("utf-8")
         shipped = (Path(reference.__file__).parent / "_reference" / f"{lang}.json").read_text(encoding="utf-8")
         assert json.loads(fresh) == json.loads(shipped), f"run docs/scripts/gen_api.py ({lang})"
+
+
+def test_events_section_becomes_a_list():
+    doc = "A thing.\n\nEvents:\n    ``on_a(x)``: First,\n        continued.\n    ``on_b()``: Second.\n"
+    assert reference.rst_to_md(doc) == "A thing.\n\nEvents:\n\n- `on_a(x)`: First, continued.\n- `on_b()`: Second."

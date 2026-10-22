@@ -38,6 +38,11 @@ def list_item(
     ``description`` adds a muted second line (the row grows to fit it unless ``height`` is
     set); ``on_double_press`` runs on a double click (open, rename...) and
     ``on_right_press`` on a right click (a context menu); ``tooltip`` shows on hover.
+
+    Events:
+        ``on_press()``: Message or callable sent on press. ``None`` disables the control.
+        ``on_right_press()``: Right click.
+        ``on_double_press()``: Sent on a double click (open, rename…).
     """
     t = _theme(theme)
     text_color = t.color(color) if color else (t.text_disabled if disabled else t.text)
@@ -109,6 +114,9 @@ def virtual_list(
     called when the item scrolls into view, so building the list costs the same whatever
     its length. Every row is ``item_height`` tall. ``items`` is a list or any sequence; to
     scroll to item ``i``, scroll the list's ``id`` to ``i * (item_height + spacing)``.
+
+    Events:
+        ``on_scroll(info)``: Callable that receives the scroll viewport, as in ``pz.scrollable``.
     """
     t = _theme(theme)
     if not isinstance(items, Sequence):
@@ -201,6 +209,12 @@ def tree(
     ``on_open(id)`` runs when a file is double-clicked and ``on_context(id)`` on a right
     click of any row (show a ``ui.menu`` there). ``selected`` is one id or a collection of
     them (multiple selection); ``focused`` outlines the row the keyboard is on.
+
+    Events:
+        ``on_toggle(id)``: Called with the id of the clicked folder.
+        ``on_select(id)``: Called with the id of the clicked file.
+        ``on_open(id)``: Called with the id of a file that is double-clicked.
+        ``on_context(id)``: Called with the id of a row that is right-clicked (show a ``ui.menu`` there).
     """
     t = _theme(theme)
     rows: List[Any] = []
@@ -260,6 +274,12 @@ def tree(
 
 @dataclass
 class MenuItem:
+    """One row of a ``ui.menu``: a label with an optional icon, shortcut, check mark or submenu chevron.
+
+    Events:
+        ``on_press()``: Message or callable sent when the row is clicked.
+    """
+
     label: str
     on_press: Any = None
     icon: Optional[str] = None

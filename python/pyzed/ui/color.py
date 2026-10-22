@@ -58,7 +58,11 @@ def checkerboard(width: float, height: float, size: float = 6) -> _core.Widget:
 
 
 class ColorPicker(Component):
-    """Picks a color with alpha, a linear gradient or a masked fill."""
+    """Picks a color with alpha, a linear gradient or a masked fill.
+
+    Events:
+        ``on_change(event)``: Receives ``event.value``.
+    """
 
     value: Any = "#3b82f6"
     alpha: bool = True
@@ -443,7 +447,11 @@ def _sample(stops: List[Tuple[float, str]], offset: float) -> Tuple[float, float
 
 
 def color_swatch(value: Any, *, size: float = 20, on_press: Any = None) -> _core.Widget:
-    """A small square showing a color, gradient or paint over a checkerboard."""
+    """A small square showing a color, gradient or paint over a checkerboard.
+
+    Events:
+        ``on_press()``: Makes it clickable.
+    """
     t = _current_theme()
     fill = _core.container(None, width=size, height=size).style(background=value)
     box = _core.container(_core.stack([checkerboard(size, size, max(size / 4, 3)), fill], width=size, height=size),

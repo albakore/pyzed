@@ -118,6 +118,47 @@ because it reads its colors from the active theme.
 
 <Run file="examples/todo.py" />
 
+## Events in this tutorial
+
+| Widget | Event | Handler | Gets |
+| --- | --- | --- | --- |
+| `ui.input` | `on_input` | `lambda text: setattr(self, "draft", text)` | The text. |
+| `ui.input`, **Add** | `on_submit`, `on_press` | `self.add` | Nothing. |
+| `ui.segmented` | `on_select` | `lambda f: setattr(self, "filter", f)` | The filter. |
+| `ui.list_item` | `on_press` | `lambda: self.toggle(task)` | Nothing. |
+| `ui.checkbox` | `on_toggle` | `lambda _: self.toggle(task)` | `True`/`False` (ignored: `_`). |
+| `ui.icon_button` | `on_press` | `lambda: self.remove(task)` | Nothing. |
+| The app | `on_start`, `on_key` | focus the field; `ctrl-l`, `ctrl-t` | —, the combo. |
+
+### Try more events
+
+Rename a task with a double click, and open a menu with a right click:
+
+```python
+def __init__(self):
+    ...
+    self.renaming = None                    # the task being renamed
+    self.menu_for = None                    # the task whose menu is open
+
+def task_row(self, task):
+    return ui.list_item(
+        ui.label(task.title), lambda: self.toggle(task),
+        start=ui.checkbox(task.done, lambda _: self.toggle(task)),
+        on_double_press=lambda: setattr(self, "renaming", task),     # double click
+        on_right_press=lambda: setattr(self, "menu_for", task),      # right click
+        height=34, inset=True,
+    )
+
+def view(self):
+    page = ...                              # the page of the tutorial
+    dialog = None
+    if self.renaming:
+        task = self.renaming
+        dialog = ui.prompt("Rename", task.title, lambda t: setattr(task, "title", t),
+                           lambda: setattr(self, "renaming", None), lambda: setattr(self, "renaming", None))
+    return ui.dialog_layer(page, dialog)
+```
+
 ## Next
 
 - [Data binding and validation](/pyzed/tutorials/intermediate/data-binding/) in the designer.

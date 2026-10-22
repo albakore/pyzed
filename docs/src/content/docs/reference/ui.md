@@ -3520,3 +3520,7 @@ self.help = reference.Browser("pyzed.ui.button")
 ...
 ui.reference_browser(self.help, on_open_url=open_in_browser)
 ```
+
+Events:
+
+- `on_open_url(url)`: Called with the URL of a link that leaves the reference (open it in the browser).

@@ -169,6 +169,36 @@ Designer); anchors work like those of WinForms, Godot and Unreal Engine. The edi
 code editor.
 </Aside>
 
+## Events in this tutorial
+
+| Control | Event | Handler | What it does here |
+| --- | --- | --- | --- |
+| `greet` (Button) | `click` | `greet_click` | Writes the greeting in `headline`. |
+| `your_name` (Text box) | `submit` | `your_name_submit` | Enter does the same as the button. |
+
+### Try more events
+
+Double-click an event in the **Events** panel to create its handler, then paste the body:
+
+```python
+def your_name_change(form, event):          # every keystroke: event.value is the text
+    form.greet.enabled = bool(event.value.strip())
+
+
+def headline_double_click(form, event):     # a label has click and double_click
+    form.headline.text = "Hello!"
+    form.your_name.text = ""
+
+
+def form_key(form, event):                  # any key in the window: event.value is the combo
+    if event.value == "escape":
+        return form.close()
+```
+
+Every control has `mouse_enter`, `mouse_leave` and `right_click` too. The full list of each control is in
+[Events and handlers](/pyzed/editor/events/), and how forms, apps and components get their events in
+[Apps, windows, forms and components](/pyzed/guides/classes/).
+
 ## Next
 
 - [A form that does something](/pyzed/tutorials/basic/first-form/): several inputs, validation and the console.
