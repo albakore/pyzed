@@ -37,6 +37,8 @@ FORM_EVENTS = ("load", "close", "key", "resize")
 
 #: The toolbox category of the non-visual components (timers, watchers...), drawn in the tray under the form.
 NON_VISUAL = "Components"
+#: The toolbox category of the controls and components that reach the operating system (files, the clipboard...).
+SYSTEM = "System"
 #: The size a non-visual component is given (it has no place on the form; the tray sizes its chip itself).
 TRAY_SIZE = (120, 24)
 
@@ -105,6 +107,39 @@ EVENT_DOCS = {
     "cancelled": "Runs when {name} is closed without choosing.",
     "shown": "Runs after {name} is shown (``event.value`` is the text).",
     ("notification", "failed"): "Runs when this system cannot show {name}.",
+    ("date_picker", "change"): "Runs when the date of {name} changes (``event.value`` is its text, such as "
+                               "``\"2026-10-22\"``, or ``\"\"``).",
+    ("date_range", "change"): "Runs when the range of {name} changes (``event.value`` is ``(start, end)`` as text; "
+                              "``start`` and ``end`` already changed).",
+    ("time_picker", "change"): "Runs when the time of {name} changes (``event.value`` is its text, such as "
+                               "``\"14:30\"``).",
+    ("calendar", "change"): "Runs when a day of {name} is picked (``event.value``: ``\"2026-10-22\"``, "
+                            "``\"start / end\"`` in a range, one date per line with several).",
+    "month": "Runs when {name} shows another month (``event.value`` is ``(year, month)``).",
+    ("date_picker", "open"): "Runs when the calendar of {name} opens.",
+    ("date_picker", "close"): "Runs when the calendar of {name} closes.",
+    ("date_range", "open"): "Runs when the calendar of {name} opens.",
+    ("date_range", "close"): "Runs when the calendar of {name} closes.",
+    ("time_picker", "open"): "Runs when the list of {name} opens.",
+    ("time_picker", "close"): "Runs when the list of {name} closes.",
+    ("file_input", "change"): "Runs when a path is chosen or typed in {name} (``event.value``).",
+    "drop": "Runs for each file dropped on {name} (``event.value`` is its path).",
+    "files": "Runs when the files of {name} change (``event.value`` is the list; ``files`` already changed).",
+    "reject": "Runs when a file {name} does not accept is dropped (``event.value`` is its path).",
+    "enter": "Runs when files are dragged over the window of {name} (``event.value`` is the first path).",
+    "leave": "Runs when the files dragged over the window of {name} leave without being dropped.",
+    "update": "Runs when {name} reads the system (``event.value`` is a dict: ``os``, ``memory_available``, "
+              "``disk_free``...).",
+    "opened": "Runs when {name} opened something (``event.value`` is what).",
+    ("launcher", "failed"): "Runs when {name} could not open something (``event.value`` says why).",
+    ("network_monitor", "change"): "Runs when the connection of {name} changes (``event.value`` is ``True`` "
+                                   "online, ``False`` offline).",
+    "online": "Runs when the connection comes back.",
+    "offline": "Runs when the connection is lost.",
+    ("power_monitor", "change"): "Runs when the battery changes (``event.value`` is ``(percent, plugged)``).",
+    "low": "Runs when the battery drops under ``low_level`` while unplugged (``event.value`` is the percent).",
+    "plugged": "Runs when the charger is connected.",
+    "unplugged": "Runs when the charger is disconnected.",
 }
 
 
@@ -1065,7 +1100,135 @@ def _dock_panel(c: Control, ctx: RenderContext) -> Any:
     return _core.container(width="fill", height="fill", bg=bg)
 
 
+# -- dates and times ------------------------------------------------------------
+
+
+def _iso(value: Any) -> str:
+    """A date or time as the text a form keeps (``"2026-10-22"``, ``"14:30"``); ``""`` for none."""
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        text = value.isoformat()
+        return text[:5] if len(text) == 8 and text.endswith(":00") else text
+    return str(value)
+
+
+def _changed(c: Control, ctx: RenderContext, prop: str, convert: Callable[[Any], Any] = _iso) -> Any:
+    """``on_change`` for a component: keeps the converted value in ``prop`` and raises ``change`` with it."""
+    if not c.enabled:
+        return None
+    callback = ctx.on(c, "change", prop)
+    return lambda e: callback(convert(e.value))
+
+
+def _raise(c: Control, ctx: RenderContext, event: str) -> Any:
+    callback = ctx.on(c, event)
+    return (lambda e: callback(e.value)) if c.events.get(event) else None
+
+
+def _calendar(c: Control, ctx: RenderContext) -> Any:
+    from ..ui import dates
+
+    p = c.props
+    mode = p["mode"]
+    if mode == "range":
+        def convert(v: Any) -> str:
+            return " / ".join(_iso(d) for d in v)
+    elif mode == "multiple":
+        def convert(v: Any) -> str:
+            return "\n".join(_iso(d) for d in v)
+    else:
+        convert = _iso
+    return dates.Calendar(p["value"], mode=mode, min=p["min"] or None, max=p["max"] or None,
+                          disabled=_lines(p["disabled"]), first_weekday=p["first_weekday"],
+                          months=max(1, int(_num(p["months"], 1))), week_numbers=p["week_numbers"],
+                          today_button=p["today_button"], key=ctx.key(c),
+                          on_change=_changed(c, ctx, "value", convert), on_month=_raise(c, ctx, "month"))
+
+
+def _date_picker(c: Control, ctx: RenderContext) -> Any:
+    from ..ui import dates
+
+    p = c.props
+    return _fill(dates.DatePicker(p["value"], format=p["format"] or "YYYY-MM-DD", placeholder=p["placeholder"],
+                                  min=p["min"] or None, max=p["max"] or None, disabled_dates=_lines(p["disabled_dates"]),
+                                  first_weekday=p["first_weekday"], week_numbers=p["week_numbers"],
+                                  clearable=p["clearable"], today_button=p["today_button"], disabled=not c.enabled,
+                                  key=ctx.key(c), on_change=_changed(c, ctx, "value"),
+                                  on_open=_raise(c, ctx, "open"), on_close=_raise(c, ctx, "close")), c)
+
+
+def _date_range(c: Control, ctx: RenderContext) -> Any:
+    from ..ui import dates
+
+    p = c.props
+    callback = ctx.on(c, "change") if c.enabled else None
+
+    def change(e: Any) -> Any:
+        start, end = (_iso(d) for d in e.value)
+        ctx.set(c, "start", start)
+        ctx.set(c, "end", end)
+        return callback((start, end)) if callback else None
+
+    return _fill(dates.DateRangePicker((p["start"], p["end"]), format=p["format"] or "YYYY-MM-DD",
+                                       separator=p["separator"] or " – ", placeholder=p["placeholder"],
+                                       min=p["min"] or None, max=p["max"] or None, first_weekday=p["first_weekday"],
+                                       months=max(1, int(_num(p["months"], 2))), presets=p["presets"],
+                                       clearable=p["clearable"], disabled=not c.enabled, key=ctx.key(c),
+                                       on_change=change if c.enabled else None, on_open=_raise(c, ctx, "open"),
+                                       on_close=_raise(c, ctx, "close")), c)
+
+
+def _time_picker(c: Control, ctx: RenderContext) -> Any:
+    from ..ui import dates
+
+    p = c.props
+    return _fill(dates.TimePicker(p["value"], format=p["format"] or "HH:mm", placeholder=p["placeholder"],
+                                  minute_step=max(1, int(_num(p["minute_step"], 5))), min=p["min"] or None,
+                                  max=p["max"] or None, clearable=p["clearable"], disabled=not c.enabled,
+                                  key=ctx.key(c), on_change=_changed(c, ctx, "value"),
+                                  on_open=_raise(c, ctx, "open"), on_close=_raise(c, ctx, "close")), c)
+
+
+# -- the operating system --------------------------------------------------------
+
+
+def _file_input(c: Control, ctx: RenderContext) -> Any:
+    p = c.props
+    mode = p["mode"]
+    store = ctx.on(c, "change", "path") if c.enabled else None
+    on_change = (lambda v: store("; ".join(v) if isinstance(v, list) else v)) if store else None
+    return _fill(ui.file_input(p["path"], on_change, mode=mode, filters=p["filters"], title=p["title"] or None,
+                               directory=p["directory"] or None, file_name=p["file_name"],
+                               placeholder=p["placeholder"] or None, button=p["button"] or None,
+                               disabled=not c.enabled, id=ctx.key(c), theme=ctx.theme), c)
+
+
+def _drop_zone(c: Control, ctx: RenderContext) -> Any:
+    from ..ui import system
+
+    p = c.props
+
+    def files(e: Any) -> Any:
+        ctx.set(c, "files", "\n".join(e.value))
+        return ctx.on(c, "files")(e.value) if c.events.get("files") else None
+
+    return system.DropZone(text=p["text"], hint=p["hint"], icon_name=p["icon"] or "upload",
+                           accept=_lines(p["accept"]), multiple=p["multiple"], browse=p["browse"],
+                           show_files=p["show_files"], files=_lines(p["files"]), disabled=not c.enabled,
+                           live=ctx.live, key=ctx.key(c), on_files=files if ctx.live else None,
+                           on_drop=_raise(c, ctx, "drop"), on_reject=_raise(c, ctx, "reject"),
+                           on_enter=_raise(c, ctx, "enter"), on_leave=_raise(c, ctx, "leave"))
+
+
 ALIGN = Prop("align", "choice", "left", choices=("left", "center", "right"))
+
+WEEK_START = Prop("first_weekday", "choice", "monday", choices=("monday", "sunday", "saturday"), label="Week starts on",
+                  group="Behavior")
+DATE_LIMITS = (Prop("min", "text", "", label="Earliest (YYYY-MM-DD)", group="Behavior"),
+               Prop("max", "text", "", label="Latest (YYYY-MM-DD)", group="Behavior"))
+DATE_FORMATS = ("YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY", "DD.MM.YYYY", "D MMM YYYY", "MMM D, YYYY",
+                "ddd, D MMM YYYY", "dddd, D MMMM YYYY")
 
 for _component in (
     Component("label", "Label", "type", "Common", _label, (120, 24),
@@ -1080,42 +1243,75 @@ for _component in (
               (Prop("text", "text", "Button"), Prop("variant", "choice", "filled", choices=VARIANTS),
                Prop("icon", "icon", "")),
               ("click",), "Runs code when pressed."),
-    Component("input", "Text box", "text-cursor-input", "Common", _input, (200, 28),
+    Component("input", "Text box", "text-cursor-input", "Forms", _input, (200, 28),
               (Prop("text", "text", "", group="Data"), Prop("placeholder", "text", "Type here…"),
                Prop("icon", "icon", ""), Prop("secure", "bool", False, label="Password")),
               ("change", "submit"), "Single-line text entry."),
-    Component("text_area", "Text area", "file-text", "Common", _text_area, (280, 120),
+    Component("text_area", "Text area", "file-text", "Forms", _text_area, (280, 120),
               (Prop("text", "multiline", "", group="Data"), Prop("placeholder", "text", "Write something…"),
                Prop("language", "choice", "txt", choices=("txt", "py", "md", "json", "toml", "rs", "js", "sql")),
                Prop("line_numbers", "bool", False), Prop("wrap", "bool", True)),
               ("change",), "Multi-line text, with optional syntax highlighting."),
-    Component("checkbox", "Check box", "square-check", "Common", _checkbox, (140, 24),
+    Component("checkbox", "Check box", "square-check", "Forms", _checkbox, (140, 24),
               (Prop("text", "text", "Check box"), Prop("checked", "bool", False, group="Data")),
               ("change",), "An on/off option."),
-    Component("switch", "Switch", "toggle-right", "Common", _switch, (140, 24),
+    Component("switch", "Switch", "toggle-right", "Forms", _switch, (140, 24),
               (Prop("text", "text", "Switch"), Prop("checked", "bool", False, group="Data")),
               ("change",), "A toggle, like Zed's settings switches."),
-    Component("radio", "Radio group", "circle-dot", "Common", _radio, (160, 72),
+    Component("radio", "Radio group", "circle-dot", "Forms", _radio, (160, 72),
               (Prop("options", "list", "Option A\nOption B\nOption C", group="Data"),
                Prop("selected", "text", "Option A", group="Data"), Prop("horizontal", "bool", False)),
               ("change",), "Pick one of several options."),
-    Component("select", "Drop-down", "chevron-down", "Common", _select, (180, 28),
+    Component("select", "Drop-down", "chevron-down", "Forms", _select, (180, 28),
               (Prop("options", "list", "One\nTwo\nThree", group="Data"), Prop("selected", "text", "", group="Data"),
                Prop("placeholder", "text", "Select…")),
               ("change",), "A drop-down list."),
-    Component("slider", "Slider", "sliders-horizontal", "Common", _slider, (200, 24),
+    Component("slider", "Slider", "sliders-horizontal", "Forms", _slider, (200, 24),
               (Prop("value", "number", 50, group="Data"), Prop("min", "number", 0, group="Data"),
                Prop("max", "number", 100, group="Data"), Prop("step", "number", 1, group="Data"),
                Prop("vertical", "bool", False), Prop("show_value", "bool", False, label="Show value")),
               ("change", "release"), "Choose a number by dragging."),
-    Component("number", "Number box", "hash", "Common", _number, (128, 28),
+    Component("number", "Number box", "hash", "Forms", _number, (128, 28),
               (Prop("value", "number", 0, group="Data"), Prop("min", "number", None, group="Data"),
                Prop("max", "number", None, group="Data"), Prop("step", "number", 1, group="Data")),
               ("change",), "A numeric field with steppers."),
-    Component("list_box", "List box", "list", "Common", _list_box, (180, 140),
+    Component("list_box", "List box", "list", "Forms", _list_box, (180, 140),
               (Prop("items", "list", "First\nSecond\nThird", group="Data"),
                Prop("selected", "text", "", group="Data")),
               ("change", "open"), "A scrollable list of items."),
+    # -- dates and times
+    Component("date_picker", "Date picker", "calendar-days", "Date & time", _date_picker, (180, 30),
+              (Prop("value", "text", "", label="Date (YYYY-MM-DD)", group="Data"),
+               Prop("format", "choice", "YYYY-MM-DD", choices=DATE_FORMATS), Prop("placeholder", "text", ""),
+               *DATE_LIMITS, Prop("disabled_dates", "list", "", label="Days off", group="Behavior"), WEEK_START,
+               Prop("week_numbers", "bool", False, label="Week numbers"), Prop("clearable", "bool", True),
+               Prop("today_button", "bool", True, label="Today button")),
+              ("change", "open", "close"), "A date field that opens a calendar; it can also be typed in the chosen "
+              "format, and ↑/↓ change the day."),
+    Component("date_range", "Date range", "calendar-range", "Date & time", _date_range, (240, 30),
+              (Prop("start", "text", "", label="From (YYYY-MM-DD)", group="Data"),
+               Prop("end", "text", "", label="To (YYYY-MM-DD)", group="Data"),
+               Prop("format", "choice", "YYYY-MM-DD", choices=DATE_FORMATS), Prop("separator", "text", " – "),
+               Prop("placeholder", "text", ""), *DATE_LIMITS, WEEK_START,
+               Prop("months", "number", 2, min=1, max=3, label="Months shown"),
+               Prop("presets", "bool", True, label="Quick ranges"), Prop("clearable", "bool", True)),
+              ("change", "open", "close"), "A start and an end date picked on two months, with quick ranges such "
+              "as \"Last 7 days\"."),
+    Component("time_picker", "Time picker", "clock", "Date & time", _time_picker, (140, 30),
+              (Prop("value", "text", "", label="Time (HH:MM)", group="Data"),
+               Prop("format", "choice", "HH:mm", choices=("HH:mm", "HH:mm:ss", "h:mm A", "h:mm:ss A")),
+               Prop("placeholder", "text", ""), Prop("minute_step", "number", 5, min=1, max=30, label="Minute step"),
+               Prop("min", "text", "", label="Earliest (HH:MM)", group="Behavior"),
+               Prop("max", "text", "", label="Latest (HH:MM)", group="Behavior"), Prop("clearable", "bool", True)),
+              ("change", "open", "close"), "A time field with lists of hours and minutes, in 24 or 12 hours."),
+    Component("calendar", "Calendar", "calendar", "Date & time", _calendar, (252, 296),
+              (Prop("value", "text", "", label="Date (YYYY-MM-DD)", group="Data"),
+               Prop("mode", "choice", "single", choices=("single", "range", "multiple"), group="Behavior"),
+               *DATE_LIMITS, Prop("disabled", "list", "", label="Days off", group="Behavior"), WEEK_START,
+               Prop("months", "number", 1, min=1, max=3, label="Months shown"),
+               Prop("week_numbers", "bool", False, label="Week numbers"),
+               Prop("today_button", "bool", False, label="Today button")),
+              ("change", "month"), "A month to pick a day, a range of days or several days on."),
     Component("progress", "Progress bar", "loader", "Display", _progress, (200, 8),
               (Prop("value", "number", 40, group="Data"), Prop("max", "number", 100, group="Data"),
                Prop("tint", "choice", "accent", choices=TINTS)),
@@ -1201,10 +1397,10 @@ for _component in (
     Component("link", "Link", "link", "Common", _link, (100, 22),
               (Prop("text", "text", "Learn more"), ALIGN),
               ("click",), "Clickable text."),
-    Component("search", "Search box", "search", "Common", _search, (220, 28),
+    Component("search", "Search box", "search", "Forms", _search, (220, 28),
               (Prop("text", "text", "", group="Data"), Prop("placeholder", "text", "Search…")),
               ("change", "submit"), "A text box with a search icon."),
-    Component("segmented", "Segmented", "toggle-left", "Common", _segmented, (240, 28),
+    Component("segmented", "Segmented", "toggle-left", "Forms", _segmented, (240, 28),
               (Prop("options", "list", "Day\nWeek\nMonth", group="Data"),
                Prop("selected", "text", "Day", group="Data")),
               ("change",), "Pick one of a few options, side by side."),
@@ -1241,7 +1437,7 @@ for _component in (
                Prop("sortable", "bool", False, group="Behavior"), Prop("sort_by", "text", "", group="Behavior"),
                Prop("descending", "bool", False, group="Behavior")),
               ("change", "open", "sort"), "Rows and columns from comma-separated text; change gives the row index."),
-    Component("toggle_group", "Toggle group", "toggle-left", "Common", _toggle_group, (96, 30),
+    Component("toggle_group", "Toggle group", "toggle-left", "Forms", _toggle_group, (96, 30),
               (Prop("options", "list", "left, align-left, Left\ncenter, align-center, Center\nright, align-right, Right",
                     group="Data"),
                Prop("selected", "list", "left", group="Data"), Prop("multiple", "bool", False, group="Behavior")),
@@ -1296,22 +1492,40 @@ for _component in (
               (Prop("text", "multiline", "$ pyzed run\n\x1b[32m✓ Ready\x1b[0m", group="Data"),
                Prop("font_size", "number", 13, min=8, max=32), Prop("follow", "bool", True, label="Follow output")),
               (), "Monospace output with ANSI colors, such as what a Process prints."),
+    # -- the operating system
+    Component("file_input", "File picker", "folder-open", SYSTEM, _file_input, (260, 30),
+              (Prop("path", "text", "", group="Data"),
+               Prop("mode", "choice", "open", choices=("open", "open_many", "save", "folder"), group="Behavior"),
+               Prop("filters", "multiline", "", group="Behavior"), Prop("title", "text", "", label="Dialog title",
+                                                                       group="Behavior"),
+               Prop("directory", "text", "", label="Start folder", group="Behavior"),
+               Prop("file_name", "text", "", label="Suggested name", group="Behavior"),
+               Prop("placeholder", "text", ""), Prop("button", "text", "", label="Button text")),
+              ("change",), "A path field with a button that opens the system's file dialog."),
+    Component("drop_zone", "Drop zone", "upload", SYSTEM, _drop_zone, (260, 140),
+              (Prop("text", "text", ""), Prop("hint", "text", ""), Prop("icon", "icon", "upload"),
+               Prop("accept", "list", "", label="Accepted types", group="Behavior"),
+               Prop("multiple", "bool", True, group="Behavior"),
+               Prop("browse", "bool", True, label="Click to browse", group="Behavior"),
+               Prop("show_files", "bool", False, label="List the files"), Prop("files", "list", "", group="Data")),
+              ("drop", "files", "reject", "enter", "leave"),
+              "Takes files dragged from the file manager onto the window; a click opens the file dialog."),
     # -- non-visual components: they sit in the tray under the form and draw nothing at run time
     Component("timer", "Timer", "timer", NON_VISUAL, _non_visual, TRAY_SIZE,
               (Prop("interval", "number", 1000, label="Interval (ms)", min=10, group="Behavior"),
                Prop("running", "bool", True, group="Behavior"), Prop("repeat", "bool", True, group="Behavior")),
               ("tick",), "Runs its tick event periodically. Invisible at run time.", visual=False),
-    Component("shortcut", "Shortcut", "command", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("shortcut", "Shortcut", "command", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("keys", "text", "ctrl-s", group="Behavior"),),
               ("activate",), "A keyboard shortcut for the whole window, such as ctrl-s.", visual=False),
-    Component("file_watcher", "File watcher", "folder-search", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("file_watcher", "File watcher", "folder-search", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("path", "text", ".", label="Path", group="Behavior"), Prop("pattern", "text", "*", group="Behavior"),
                Prop("recursive", "bool", False, label="Subfolders", group="Behavior"),
                Prop("interval", "number", 500, label="Interval (ms)", min=50, group="Behavior"),
                Prop("running", "bool", True, group="Behavior")),
               ("change", "created", "modified", "deleted"),
               "Raises events when files are created, modified or deleted in a folder.", visual=False),
-    Component("process", "Process", "square-terminal", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("process", "Process", "square-terminal", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("command", "text", "", group="Behavior"), Prop("directory", "text", "", label="Folder", group="Behavior"),
                Prop("shell", "bool", False, label="Run in shell", group="Behavior"),
                Prop("autostart", "bool", False, label="Start on load", group="Behavior")),
@@ -1327,7 +1541,7 @@ for _component in (
                Prop("timeout", "number", 30, label="Timeout (s)", min=1, group="Behavior"),
                Prop("send_on_load", "bool", False, label="Send on load", group="Behavior")),
               ("response", "failed"), "Calls a web address or API in the background.", visual=False),
-    Component("clipboard", "Clipboard", "clipboard", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("clipboard", "Clipboard", "clipboard", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("watch", "bool", False, label="Watch changes", group="Behavior"),
                Prop("interval", "number", 500, label="Interval (ms)", min=100, group="Behavior")),
               ("change", "paste"), "Copies and pastes text, and notices what is copied.", visual=False),
@@ -1335,15 +1549,34 @@ for _component in (
               (Prop("file", "text", "", label="File", group="Behavior"),
                Prop("remember", "list", "", label="Remember", group="Behavior")),
               ("change",), "Keeps values between runs, and the values of the controls you list.", visual=False),
-    Component("file_dialog", "File dialog", "folder-open", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("file_dialog", "File dialog", "folder-open", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("mode", "choice", "open", choices=("open", "open_many", "save", "folder"), group="Behavior"),
                Prop("title", "text", "", group="Behavior"), Prop("filters", "multiline", "", group="Behavior"),
                Prop("directory", "text", "", label="Start folder", group="Behavior"),
                Prop("file_name", "text", "", label="Suggested name", group="Behavior")),
               ("chosen", "cancelled"), "The system's open, save and folder dialogs.", visual=False),
-    Component("notification", "Notification", "bell", NON_VISUAL, _non_visual, TRAY_SIZE,
+    Component("notification", "Notification", "bell", SYSTEM, _non_visual, TRAY_SIZE,
               (Prop("title", "text", "", group="Behavior"), Prop("text", "text", "", group="Behavior")),
               ("shown", "failed"), "A desktop notification.", visual=False),
+    Component("system_info", "System info", "monitor", SYSTEM, _non_visual, TRAY_SIZE,
+              (Prop("interval", "number", 0, label="Check every (ms, 0 = once)", min=0, group="Behavior"),
+               Prop("disk_path", "text", "", label="Disk of", group="Behavior")),
+              ("update",), "The system, user, folders, processors, memory and free disk space.", visual=False),
+    Component("launcher", "Launcher", "external-link", SYSTEM, _non_visual, TRAY_SIZE,
+              (Prop("target", "text", "", label="File, folder or link", group="Behavior"),),
+              ("opened", "failed"), "Opens files, folders and links with the app the system uses for them.",
+              visual=False),
+    Component("network_monitor", "Network monitor", "wifi", SYSTEM, _non_visual, TRAY_SIZE,
+              (Prop("host", "text", "1.1.1.1", group="Behavior"), Prop("port", "number", 53, group="Behavior"),
+               Prop("interval", "number", 5000, label="Interval (ms)", min=500, group="Behavior"),
+               Prop("running", "bool", True, group="Behavior")),
+              ("change", "online", "offline"), "Notices when the computer goes online or offline.", visual=False),
+    Component("power_monitor", "Battery monitor", "battery-medium", SYSTEM, _non_visual, TRAY_SIZE,
+              (Prop("interval", "number", 30000, label="Interval (ms)", min=1000, group="Behavior"),
+               Prop("low_level", "number", 20, label="Low below (%)", min=1, max=99, group="Behavior"),
+               Prop("running", "bool", True, group="Behavior")),
+              ("change", "low", "plugged", "unplugged"), "The battery's charge and whether it is plugged in.",
+              visual=False),
 ):
     register(_component)
 

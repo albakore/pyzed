@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from .. import services as _services
+from .. import system as _system
 from . import components as _components
 from .model import Control
 
@@ -32,6 +33,10 @@ FACTORIES: Dict[str, Callable[[Control], _services.Service]] = {
     "settings": lambda c: _services.Settings(),
     "file_dialog": lambda c: _services.FileDialog(),
     "notification": lambda c: _services.Notification(),
+    "system_info": lambda c: _system.SystemInfo(),
+    "launcher": lambda c: _system.Launcher(),
+    "network_monitor": lambda c: _system.NetworkMonitor(),
+    "power_monitor": lambda c: _system.PowerMonitor(),
 }
 
 #: Properties whose service attribute has another name (``(type, property)`` -> attribute).
@@ -57,7 +62,8 @@ def props(control: Control) -> Dict[str, Any]:
 
 
 def _value(control: Control, prop: str, value: Any) -> Any:
-    if control.type in ("settings", "process", "file_dialog") and prop in ("file", "directory"):
+    if control.type in ("settings", "process", "file_dialog", "system_info") and prop in ("file", "directory",
+                                                                                         "disk_path"):
         return value or None
     return value
 
@@ -123,6 +129,8 @@ def start(runtime: "FormRuntime") -> List[Any]:
                 apply(service, control, prop, values[prop])
         if isinstance(service, _services.Timer):
             service.count = 0
+        if isinstance(service, _system.SystemInfo) and control.enabled:
+            service.start()  # a first ``update`` with the facts, then more every ``interval``
         if isinstance(service, _services.Process) and values.get("autostart") and control.enabled:
             service.start()
         if isinstance(service, _services.HttpRequest) and values.get("send_on_load") and control.enabled:
