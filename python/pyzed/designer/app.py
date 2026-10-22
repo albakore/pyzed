@@ -3104,6 +3104,7 @@ def design(path: Optional[Union[str, Path]] = None, *, theme: Any = None) -> Non
     if designer.updates.restart_pending:
         # The update swaps the app once this process is gone: a background task still running (a uv
         # command, a download, a sign-in) must not keep the old version alive and delay the restart.
-        sys.stdout.flush()
-        sys.stderr.flush()
+        for stream in (sys.stdout, sys.stderr):  # None in an app without a console (Windows)
+            if stream is not None:
+                stream.flush()
         os._exit(0)

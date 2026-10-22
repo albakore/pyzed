@@ -281,7 +281,7 @@ rm -f "$0"
 _WINDOWS_SCRIPT = """@echo off
 rem Waits for the old app to exit, swaps in the new one and starts it.
 :wait
-rem (ping, not timeout: timeout fails without a console, which this detached script has none of)
+rem (ping, not timeout: timeout fails when its input is not a keyboard)
 tasklist /FI "PID eq {pid}" 2>NUL | find "{pid}" >NUL && (ping -n 2 127.0.0.1 >NUL & goto wait)
 if exist {old} rmdir /S /Q {old}
 move {target} {old} >NUL || exit /b 1
@@ -334,7 +334,9 @@ def replace_on_exit(bundle: Union[str, Path], target: Optional[Union[str, Path]]
                                       keep=kept)
         script = Path(tempfile.gettempdir()) / f"pyzed-update-{os.getpid()}.cmd"
         script.write_text(text, encoding="utf-8")
-        flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        # A hidden console, not DETACHED_PROCESS: without one, each tasklist/find/ping the script runs while
+        # it waits would open a console window of its own.
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         with open(script.with_suffix(".log"), "w") as log:
             subprocess.Popen(["cmd", "/c", str(script)], creationflags=flags, close_fds=True, env=env,  # noqa: S603, S607
                              stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT)

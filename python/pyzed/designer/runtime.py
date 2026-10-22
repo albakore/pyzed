@@ -912,6 +912,7 @@ def run(path: Union[str, Path], *, reload: Optional[bool] = None, splash: Any = 
     if os.environ.get("PYZED_DESIGNER_RUN"):
         # Started by Run in Pyzed Design: end when the window closes, even if a thread of the app is still
         # running, so the designer sees the run finish and can start it again.
-        sys.stdout.flush()
-        sys.stderr.flush()
+        for stream in (sys.stdout, sys.stderr):  # None in an app without a console (Windows)
+            if stream is not None:
+                stream.flush()
         os._exit(0)

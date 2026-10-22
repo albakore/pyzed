@@ -1,6 +1,7 @@
 """The self-updater: versions, releases, downloads, unpacking and the swap script."""
 
 import hashlib
+import types
 import zipfile
 
 import pytest
@@ -100,6 +101,25 @@ def test_replace_on_exit_writes_a_swap_script(tmp_path, monkeypatch):
     script.with_suffix(".log").unlink()
     with pytest.raises(updater.UpdateError):
         updater.replace_on_exit(tmp_path / "new")  # not a packaged app
+
+
+@pytest.mark.skipif(updater.os.name == "nt", reason="fakes Windows on another system")
+def test_windows_swap_script_opens_no_console_windows(tmp_path, monkeypatch):
+    started = []
+    monkeypatch.setattr(updater.subprocess, "Popen", lambda args, **kw: started.append((args, kw["creationflags"])))
+    monkeypatch.setattr(updater.subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False)
+    monkeypatch.setattr(updater.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x200, raising=False)
+    fake_os = types.ModuleType("os")
+    fake_os.__dict__.update(vars(updater.os), name="nt")  # only the updater sees Windows; pathlib does not
+    monkeypatch.setattr(updater, "os", fake_os)
+    (tmp_path / "app").mkdir()
+    (tmp_path / "new").mkdir()
+    script = updater.replace_on_exit(tmp_path / "new", tmp_path / "app")
+    # a hidden console the script's tasklist/find/ping share, instead of one window each (DETACHED_PROCESS)
+    [(args, flags)] = started
+    assert args == ["cmd", "/c", str(script)] and flags == 0x08000000 | 0x200
+    script.unlink()
+    script.with_suffix(".log").unlink()
 
 
 def test_state_and_due():
