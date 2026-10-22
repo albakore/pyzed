@@ -21,6 +21,8 @@ interface Props {
 }
 
 const { items, base, summary } = Astro.props;
+// Alt text for image search: "Button: Python GUI component".
+const kind = Astro.currentLocale === 'es' ? 'componente de GUI para Python' : 'Python GUI component';
 ---
 
 {summary && <p class="lib-summary not-content">{summary}</p>}
@@ -30,7 +32,7 @@ const { items, base, summary } = Astro.props;
 			return (
 				<a class="lib-card" href={`${base}${item.slug}/`}>
 					<div class="thumb">
-						<Clip name={`${item.slug}.thumb`} alt="" />
+						<Clip name={`${item.slug}.thumb`} alt={`${item.name}: ${kind}`} />
 					</div>
 					<div class="meta">
 						<span class="name">

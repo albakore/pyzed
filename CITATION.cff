@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use Pyzed in your work, please cite it as below."
+title: "Pyzed: native desktop GUIs in Python, rendered by Iced (Rust)"
+type: software
+authors:
+  - alias: albakore
+abstract: >-
+  Pyzed is an open-source Python frontend framework for native desktop apps. Python describes the interface and
+  Iced, a GPU-accelerated GUI toolkit written in Rust, lays it out and draws it. It ships 90+ components inspired
+  by the Zed editor, themes, animations, node-based GPU shaders, packaging for Windows, macOS and Linux and
+  Pyzed Design, a drag-and-drop visual designer. Published on PyPI as pyzed-ui.
+url: "https://albakore.github.io/pyzed/"
+repository-code: "https://github.com/albakore/pyzed"
+license: MIT
+keywords:
+  - python
+  - gui
+  - desktop
+  - rust
+  - iced
+  - gui-framework
+  - visual-designer
+  - cross-platform

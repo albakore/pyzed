@@ -34,7 +34,7 @@ descriptions live in `docs/scripts/sync-changelog.mjs`.
 | Social card images (1200×630) | `docs/scripts/gen_og.py` writes `docs/public/og/<section>[.es].png` and the app icons; re-run it after changing screenshots |
 | JSON-LD structured data | `routeData.ts`: `Organization` and `WebSite` everywhere, `SoftwareSourceCode` and `SoftwareApplication` (Pyzed Design, with the version from `src/generated/release.json`) on the home page, `BreadcrumbList` and `TechArticle` on every docs page, `FAQPage` on the [FAQ](/pyzed/faq/) |
 | `hreflang` alternates | Starlight, filtered by `routeData.ts` so a page only lists the languages it is really translated to. An untranslated page shown in Spanish points its canonical URL to the English one and is `noindex` |
-| `sitemap-index.xml` | `@astrojs/sitemap`, added by Starlight, with both languages |
+| `sitemap-index.xml` | `@astrojs/sitemap` in `astro.config.mjs`, with both languages and each page's `<lastmod>` from the git history of its file (the docs workflow checks out the whole history; the same history gives the *Last updated* date of every page) |
 | `robots.txt`, `humans.txt`, `.well-known/security.txt`, `manifest.webmanifest` | Static files in `docs/public/` |
 | `llms.txt`, `llms-full.txt`, `llms-small.txt`, `llms/<section>.txt`, `es/llms.txt`, `es/llms-full.txt` | Endpoints in `docs/src/pages/`, built from the content collection by `docs/src/lib/llms.ts` |
 | `<page>.md` (raw Markdown of every page) | `docs/src/pages/[...page].md.ts` |

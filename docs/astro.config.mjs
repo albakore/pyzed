@@ -1,6 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
+import { execFileSync } from 'node:child_process';
 import mermaid from 'astro-mermaid';
 import starlightSidebarTopics from 'starlight-sidebar-topics';
 
@@ -201,6 +203,34 @@ const topics = [
 	},
 ];
 
+/**
+ * When each page last changed, by URL, from the git history of its Markdown file: the sitemap's `<lastmod>`,
+ * which tells search engines what to crawl again. CI checks out the whole history for it (docs.yml).
+ */
+function lastModified() {
+	const dates = new Map();
+	let log = '';
+	try {
+		log = execFileSync('git', ['log', '--format=%x00%cI', '--name-only', '--', 'src/content/docs'], {
+			encoding: 'utf8',
+			maxBuffer: 256 * 1024 * 1024,
+		});
+	} catch {
+		return dates; // not a git checkout: no <lastmod>
+	}
+	for (const commit of log.split('\0').slice(1)) {
+		const [date, ...files] = commit.trim().split('\n');
+		for (const file of files) {
+			const m = file.match(/^docs\/src\/content\/docs\/(.+?)(?:\/index)?\.mdx?$/);
+			if (!m) continue;
+			const url = `https://albakore.github.io/pyzed/${m[1] === 'index' ? '' : `${m[1].toLowerCase()}/`}`;
+			if (!dates.has(url)) dates.set(url, date);
+		}
+	}
+	return dates;
+}
+const modified = lastModified();
+
 // Pages that moved to their own section: old URLs keep working (see contributing/docs.md).
 const MOVED = {
 	'guides/shaders': 'shading/shaders',
@@ -244,6 +274,14 @@ export default defineConfig({
 	integrations: [
 		// Renders ```mermaid code blocks; must come before Starlight.
 		mermaid({ theme: 'default', autoTheme: true }),
+		// The sitemap Starlight would add, plus <lastmod>; Starlight skips its own when this one is present.
+		sitemap({
+			i18n: { defaultLocale: 'root', locales: { root: 'en', es: 'es' } },
+			serialize(item) {
+				const date = modified.get(item.url);
+				return date ? { ...item, lastmod: date } : item;
+			},
+		}),
 		starlight({
 			title: 'Pyzed',
 			description:
