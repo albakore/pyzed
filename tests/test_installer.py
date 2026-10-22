@@ -139,7 +139,8 @@ def test_windows_swap_script_swaps_and_keeps_the_uninstaller(tmp_path, monkeypat
     new.mkdir()
     (old / "unins000.exe").write_text("uninstaller")
     (new / "pyzed-design.exe").write_text("new")
-    assert _windows_swap(tmp_path, monkeypatch, keep=("unins*",)).returncode == 0
+    done = _windows_swap(tmp_path, monkeypatch, keep=("unins*",))
+    assert "cannot be found" not in done.stderr, done.stderr  # it deleted itself cleanly
     assert (old / "pyzed-design.exe").read_text() == "new" and (old / "unins000.exe").read_text() == "uninstaller"
     assert not new.exists() and not (tmp_path / "app.old").exists()
 

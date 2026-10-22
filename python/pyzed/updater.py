@@ -309,7 +309,8 @@ goto swap
 move {new} {target} >NUL || (move {old} {target} >NUL & echo Could not move the new version in. & {fail})
 {keep}rmdir /S /Q {old}
 {launch}
-del "%~f0"
+rem deletes this script without cmd then failing to read its next line ("The batch file cannot be found")
+(goto) 2>NUL & del "%~f0"
 """
 #: How many seconds (about) the Windows swap waits for the app folder to be free.
 SWAP_TRIES = 30
