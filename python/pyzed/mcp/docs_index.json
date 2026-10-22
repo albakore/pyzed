@@ -91,6 +91,12 @@
    "path": "docs/src/content/docs/animation/properties.md"
   },
   {
+   "slug": "animation/start",
+   "title": "Start here: apply and play",
+   "description": "The two things every Pyzed animation needs: which widget it moves (animate() on the widget) and what starts it (a trigger, your code, a timeline). Declarative and imperative examples, in classes, components and plain functions, and the same in Pyzed Design.",
+   "path": "docs/src/content/docs/animation/start.md"
+  },
+  {
    "slug": "animation/timeline",
    "title": "Timeline animations",
    "description": "Animate many widgets and your app's state on one timeline with clips, tracks, keys and method calls, like Godot's AnimationPlayer: interpolation, easing per key, loops and attribute tracks.",
@@ -2493,6 +2499,18 @@
    "path": "examples/showcase/shaders.py"
   },
   {
+   "name": "designer/explorer",
+   "kind": "designer",
+   "summary": "Event handlers for the project explorer: the tree, breadcrumbs, tabs, table and the other newer controls.",
+   "path": "examples/designer/explorer.py"
+  },
+  {
+   "name": "designer/ide",
+   "kind": "designer",
+   "summary": "Event handlers for the mini IDE: a Dock with panels on its sides, like Zed.",
+   "path": "examples/designer/ide.py"
+  },
+  {
    "name": "designer/login",
    "kind": "designer",
    "summary": "Event handlers for the login form.",
@@ -2503,6 +2521,18 @@
    "kind": "designer",
    "summary": "Event handlers for the task runner: the non-visual components at work.",
    "path": "examples/designer/tasks.py"
+  },
+  {
+   "name": "designer/explorer.pzform",
+   "kind": "designer",
+   "summary": "A form made with the visual designer (.pzform layout).",
+   "path": "examples/designer/explorer.pzform"
+  },
+  {
+   "name": "designer/ide.pzform",
+   "kind": "designer",
+   "summary": "A form made with the visual designer (.pzform layout).",
+   "path": "examples/designer/ide.pzform"
   },
   {
    "name": "designer/login.pzform",
@@ -4057,6 +4087,7 @@
    "pyzed.style.to_hex": {},
    "pyzed.style.paint_from_dict": {},
    "pyzed.Animation": {},
+   "pyzed.Trigger": {},
    "pyzed.define_animation": {},
    "pyzed.presence": {},
    "pyzed.stagger": {},
@@ -4077,7 +4108,7 @@
     "desc": "Easing names (`linear`, `ease`, `ease_out_cubic`, `ease_out_back`, `spring`...). `animate()` also takes `(x1, y1, x2, y2)` cubic Béziers and `\"steps(n)\"`."
    },
    "pyzed.animation.TRIGGERS": {
-    "desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click` and `active`."
+    "desc": "What plays an animation: `mount`, `hover`, `press`, `focus`, `click`, `active` and `manual` (each time `key` changes; a `pz.Trigger` given to `on=` uses it)."
    },
    "pyzed.animation.PROPERTIES": {
     "desc": "The properties animations and transitions change: `opacity`, `x`, `y`, `scale`, `background`, `border_color`, `color`, `radius`, `border_width`, `glow` and `glow_color`."

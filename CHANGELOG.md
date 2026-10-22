@@ -10,15 +10,23 @@ Sections follow FastAPI's release notes: `### Breaking Changes`,
 `### Translations` and `### Internal`. They are generated from the gitmoji
 commit messages when a version is released (see
 [CONTRIBUTING.md](CONTRIBUTING.md#commit-messages-and-pr-titles)); notes
-written by hand under `## [Unreleased]
+written by hand under `## [Unreleased]` are kept and merged in.
+The documentation site reads this file on every build and marks the latest
+stable version.
 
-## [1.6.0] - 2026-10-21
+## [Unreleased]
+
+## [1.7.0] - 2026-10-22
+
+1.6.0 was tagged but never published (its wheels failed to build), so this release carries all of it.
 
 ### Highlights
 
 - **Sound in your apps**: `pyzed.audio`, an audio engine in Rust with 23 modules joined by cables (oscillators, filters, effects, sampler, drums, sequencer, MIDI) and low-latency output on every system, plus waveform, spectrum, knobs, faders, a webcam view and a VCV-style rack with animated cables.
 - **Export your app**: Pyzed Design builds apps for Windows, macOS and Linux on x64 and ARM with PyInstaller or Nuitka, with an icon and a splash screen. An Android prototype builds APKs too.
 - **Components that do work**: timers, shortcuts, file watchers, processes, workers and web requests as non-visual components in Pyzed Design, and `pyzed.services` in code.
+- **Hot reload that keeps your app running**: the state stays and new attributes, initial values and methods are picked up without restarting.
+- **A fuller designer**: every library component in the toolbox (Dock included) with its properties and events, the startup form, any Pyzed file open in the editor, and animations you start from code with an easier timeline.
 - **Tabs anywhere and WSL as Windows**: any tab goes to any dock or window of its own, and under WSL Pyzed opens its windows as native Windows programs.
 
 ### Features
@@ -33,6 +41,10 @@ written by hand under `## [Unreleased]
 - ⚡️ Faster views with shared button parts, and the CPU renderer when the GPU is emulated. PR [#157](https://github.com/albakore/pyzed/pull/157) by [@albakore](https://github.com/albakore).
 - ✨ Export apps from Pyzed Design for Windows, macOS and Linux on x64 and ARM, with PyInstaller or Nuitka, icons and a splash screen. PR [#158](https://github.com/albakore/pyzed/pull/158) by [@albakore](https://github.com/albakore).
 - ✨ Android prototype: build APKs of Pyzed apps. PR [#159](https://github.com/albakore/pyzed/pull/159) by [@albakore](https://github.com/albakore).
+- ✨ Hot reload keeps the state and picks up new attributes, initial values and methods without restarting. PR [#164](https://github.com/albakore/pyzed/pull/164) by [@albakore](https://github.com/albakore).
+- ✨ Editor: choose the startup form, open every Pyzed file, indent with tabs and pace a held Backspace. PR [#166](https://github.com/albakore/pyzed/pull/166) by [@albakore](https://github.com/albakore).
+- ✨ The library's missing components in the designer's toolbox (Dock included), with their properties and events. PR [#165](https://github.com/albakore/pyzed/pull/165) by [@albakore](https://github.com/albakore).
+- ✨ Clearer animations: start them from code, an easier timeline and a "Start here" guide. PR [#167](https://github.com/albakore/pyzed/pull/167) by [@albakore](https://github.com/albakore).
 
 ### Fixes
 
@@ -44,6 +56,7 @@ written by hand under `## [Unreleased]
 - 🐛 The Windows core builds without Windows' folders on PATH, so maturin does not pick the Microsoft Store's `python.exe`. PR [#154](https://github.com/albakore/pyzed/pull/154) by [@albakore](https://github.com/albakore).
 - 🐛 Pyzed Design on Windows no longer freezes when it opens or creates a WSL project. PR [#155](https://github.com/albakore/pyzed/pull/155) by [@albakore](https://github.com/albakore).
 - 🐛 The agents' local servers no longer print dropped connections (`WinError 10054`) on Windows. PR [#156](https://github.com/albakore/pyzed/pull/156) by [@albakore](https://github.com/albakore).
+- 🐛 A release stays a draft until its files are attached, and the download page links only files that exist. PR [#163](https://github.com/albakore/pyzed/pull/163) by [@albakore](https://github.com/albakore).
 
 ### Refactors
 
@@ -54,12 +67,14 @@ written by hand under `## [Unreleased]
 
 - 📝 Game tutorials and the Animation docs section. PR [#146](https://github.com/albakore/pyzed/pull/146) by [@albakore](https://github.com/albakore).
 - 🍱 Pyzed Design captures retaken with the event tray. PR [#148](https://github.com/albakore/pyzed/pull/148) by [@albakore](https://github.com/albakore).
+- 📝 The events of every component, with imperative, declarative and functional examples. PR [#168](https://github.com/albakore/pyzed/pull/168) by [@albakore](https://github.com/albakore).
 
 ### Internal
 
 - 📦 `pyzed-ui` installs only from the prebuilt wheels, never compiling the Rust core. PR [#140](https://github.com/albakore/pyzed/pull/140) by [@albakore](https://github.com/albakore).
 - ✅ The real-time audio test waits for the audio clock instead of a fixed sleep. PR [#141](https://github.com/albakore/pyzed/pull/141) by [@albakore](https://github.com/albakore).
 - 👷 CI decides which jobs run from `git diff`, so pull requests with over 300 files still run their tests. PR [#147](https://github.com/albakore/pyzed/pull/147) by [@albakore](https://github.com/albakore).
+- 💚 The release wheels build and test again: tests no longer share styles or need maturin, and the musllinux wheels build without ALSA. PRs [#162](https://github.com/albakore/pyzed/pull/162) and [#163](https://github.com/albakore/pyzed/pull/163) by [@albakore](https://github.com/albakore).
 
 ## [1.5.0] - 2026-10-20
 
