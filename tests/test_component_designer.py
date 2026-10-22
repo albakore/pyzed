@@ -282,6 +282,34 @@ def test_designer_component_mode(tmp_path):
     app.screenshot(tmp_path / "designer.png", size=(1280, 800), scale=1)
 
 
+def test_custom_events_live_in_the_events_tab(tmp_path, monkeypatch):
+    from pyzed.designer import panels, scene_panel
+    from ui_tree import install
+
+    path = make_rating(tmp_path).save()
+    app = designer.Designer(path, language_servers=False)
+    t = app.theme_obj
+    fake = install(monkeypatch)
+    for module in (panels, scene_panel):
+        monkeypatch.setattr(module, "_core", fake)
+    texts = " ".join(panels.events(app, t).texts())
+    assert "Built-in events" in texts and "Custom events (1)" in texts and "setup" in texts
+    assert not any("Custom events" in x for row in scene_panel.component_rows(app, t) if row is not None
+                   for x in row.texts())
+    # an instance of the component on a form: its own events apart from the built-in ones
+    load_component(path)
+    form = designer.Form(width=300, height=200)
+    form.add(components.get("rating").create("rating1", 10, 10))
+    designer.save(form, tmp_path / "main.pzform")
+    app = designer.Designer(tmp_path / "main.pzform", language_servers=False)
+    app.doc.select("rating1")
+    texts = panels.events(app, t).texts()
+    custom = texts.index("Custom events (1)")
+    assert texts.index("Built-in events") < texts.index("mouse_enter") < custom < texts.index("change")
+    app.doc.select(None)  # the form has built-in events only
+    assert "Custom events (1)" not in panels.events(app, t).texts()
+
+
 def test_designed_component_keeps_the_values_it_changes(tmp_path):
     cls = load_component(make_rating(tmp_path).save())
     owner = type("Owner", (), {})()

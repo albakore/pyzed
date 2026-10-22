@@ -89,8 +89,13 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
 | **Layout** | **Width**, **Height**, **Background** (transparente si está vacío) y **Grid size** de la superficie de diseño. |
 | **Inherited** | Solo con una base: lo que viene de cada clase base, de solo lectura. |
 | **Properties** | Una fila por propiedad (icono del tipo, nombre y valor), y los botones **Public** / **Private** para añadir una. |
-| **Custom events** | Una tarjeta por evento (nombre y descripción), y **Event** para añadir uno. |
 | **Methods** | El código de la clase, agrupado, un campo para añadir un método y **Edit the class**. |
+
+Los **eventos personalizados** están en la pestaña **Eventos**, en una sección **Eventos personalizados** debajo de
+los **Eventos incluidos** (`setup`, `mount`, `unmount`): una tarjeta por evento (nombre y descripción), y **Evento**
+para añadir uno. Son los eventos que el componente lanza con `self.emit("change", valor)`. El padre los recibe con
+`on_change=...` en código, o en la pestaña Eventos de un formulario, donde aparecen aparte de los eventos incluidos
+del control.
 
 - **Properties**: como en el panel de detalles de Unreal, cada propiedad es una fila compacta: el icono de su tipo,
   su nombre (un candado marca una privada) y su valor por defecto. Las listas, diccionarios e instancias muestran
@@ -99,8 +104,6 @@ Sin nada seleccionado, la pestaña Propiedades muestra el propio componente, en 
   (`Rating(value=4)`); una **privada** es estado, declarado con `pz.state`. Las dos son atributos en el código:
   `self.value`, `self.clicks`. El tipo decide el editor de la propiedad, aquí y en la pestaña Propiedades de los
   formularios que usan el componente (ver [Tipos de propiedad](#tipos-de-propiedad)).
-- **Custom events**: los eventos que el componente lanza con `self.emit("change", valor)`, con su descripción. El
-  padre los recibe con `on_change=...` en código, o en la pestaña Eventos de un formulario.
 - **Methods**: todos los métodos de la clase, agrupados en **Lifecycle** (`setup()`, `on_mount()`, `on_unmount()`,
   que se añaden al hacer clic en ellos), **Event handlers** (el código de los eventos de los controles) y tus
   propios **Methods** (un nombre que empieza por `_` se marca como privado). Haz clic en uno para abrirlo en el
