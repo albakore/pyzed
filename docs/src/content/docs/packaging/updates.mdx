@@ -132,7 +132,7 @@ class Shop(pz.App):
 | `is_newer(candidate, current)` | Compares versions; a final release is newer than its pre-releases (`1.2.0` > `1.2.0-rc.1`). |
 | `asset_name(app)` | `"<app>-<system>-<arch>.zip"` for this machine. |
 | `Release.asset_for(name)` | The release file with that name, or `None` if the release has no build for this system. |
-| `download(asset, progress=None)` | Downloads to a temporary folder, checks the SHA-256 and returns the path. `progress` receives the fraction done, from 0 to 1. |
+| `download(asset, folder=None, progress=None)` | Downloads to `folder` (a temporary one by default), checks the SHA-256 and returns the path. `progress` receives the fraction done, from 0 to 1. A file already in `folder` with the right SHA-256 is reused. |
 | `extract(archive)` | Unpacks the zip and returns the app inside it. |
 | `replace_on_exit(bundle, relaunch=True, args=(), keep=())` | Starts a small script that waits for the app to exit, swaps the old folder for `bundle` (restoring the old one if that fails) and starts the new version. `keep` lists files to carry over, such as an installer's uninstaller (`"unins*"`). |
 | `is_frozen()` | Whether this is a packaged app. |
