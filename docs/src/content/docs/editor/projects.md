@@ -6,7 +6,7 @@ sidebar:
 ---
 
 A Pyzed app is a normal [uv](https://docs.astral.sh/uv/) project: the interface lives in `ui/`, the backend in
-`src/` and uv manages the dependencies. The **Project** panel (left dock, next to **Design**) shows the project's
+`src/` and uv manages the dependencies. The **Project** panel (left dock, next to **Toolbox**) shows the project's
 files, like the explorer of a code editor, and the **Dependencies** panel next to it manages
 packages, tools and checks, all without leaving the editor. The background, the layout of a project and the matching `pyzed` commands are in
 [Projects with uv](/pyzed/guides/projects/).

@@ -112,13 +112,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         return _json(knowledge.guides())
 
     @tool()
-    def list_components(kind: str = "all", query: str = "", category: str = "") -> str:
+    def list_components(kind: str = "all", query: str = "", category: str = "", role: str = "") -> str:
         """Lists Pyzed widgets and components with a one-line summary.
 
         kind: "widget" (pz.* primitives), "ui" (pz.ui.* Zed-style components), "designer" (the visual
         designer's toolbox types), "component" (pz.Component classes) or "all".
-        query filters by name or summary; category keeps one section (e.g. "Layout", "Navigation")."""
-        return _json(knowledge.list_components(kind, query, category))
+        query filters by name or summary; category keeps one section (e.g. "Layout", "Navigation");
+        role keeps the designer types of one color role: layout, input, action, navigation, display, media,
+        system or custom (the color of their icon in the designer)."""
+        return _json(knowledge.list_components(kind, query, category, role))
 
     @tool()
     def describe_component(name: str) -> str:

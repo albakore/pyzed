@@ -2153,6 +2153,17 @@
   "Built-in events": "Eventos incluidos",
   "Custom events": "Eventos personalizados",
   "What it means": "Qué significa",
-  "Raise them from a method with self.emit(\"name\", value); the parent handles them with on_name=..., or in the Events tab of a form.": "Lánzalos desde un método con self.emit(\"nombre\", valor); el padre los maneja con on_nombre=... o en la pestaña Eventos de un formulario."
+  "Raise them from a method with self.emit(\"name\", value); the parent handles them with on_name=..., or in the Events tab of a form.": "Lánzalos desde un método con self.emit(\"nombre\", valor); el padre los maneja con on_nombre=... o en la pestaña Eventos de un formulario.",
+  "Input": "Entrada",
+  "Custom": "Propio",
+  "Icon colors": "Colores de los iconos",
+  "Holds and arranges other controls: panels, cards, rows, columns, grids, docks.": "Contiene y ordena otros controles: paneles, tarjetas, filas, columnas, cuadrículas, docks.",
+  "Takes a value from the user: text boxes, checks, selects, sliders, pickers.": "Recoge un valor del usuario: cuadros de texto, casillas, desplegables, deslizadores, selectores.",
+  "Runs something when pressed: buttons and split buttons.": "Ejecuta algo al pulsarlo: botones y botones divididos.",
+  "Moves between views: tabs, trees, breadcrumbs, links.": "Lleva de una vista a otra: pestañas, árboles, migas de pan, enlaces.",
+  "Shows content: text, images, tables, charts, badges.": "Muestra contenido: texto, imágenes, tablas, gráficos, insignias.",
+  "Sound and video: knobs, faders, meters, waveforms, the webcam.": "Sonido y vídeo: perillas, faders, medidores, ondas, la webcam.",
+  "Non-visual: timers, processes, files, requests, the clipboard.": "No visuales: temporizadores, procesos, archivos, peticiones, el portapapeles.",
+  "Your own components, made with the designer or pz.Component.": "Tus propios componentes, hechos con el diseñador o con pz.Component."
  }
 }

@@ -36,6 +36,7 @@ from . import export_panel as _export
 from . import keymap as _keymap
 from . import files as _files
 from . import layout as _layout
+from . import roles as _roles
 from . import new as _new
 from .console import ConsoleController
 from . import logs as _logs
@@ -1028,12 +1029,13 @@ class Designer(App):
             return None
         if carry.kind == "tool":
             spec = _components.get(carry.names[0])
-            icon, text = spec.icon, tr(spec.label)
+            text = tr(spec.label)
         else:
             control = self.doc.form.get(carry.names[0])
-            icon = _components.spec(control.type).icon if control is not None else "box"
+            spec = _components.spec(control.type) if control is not None else None
             text = carry.names[0] if len(carry.names) == 1 else f"{carry.names[0]} +{len(carry.names) - 1}"
-        return _core.container(_core.row([_icon(icon, size=13, color=t.accent),
+        icon = spec.icon if spec is not None else "box"
+        return _core.container(_core.row([_icon(icon, size=13, color=_roles.icon_color(spec, t)),
                                           _core.text(text, size=12.5, color=t.text, wrap=False)],
                                          spacing=6, align="center"),
                                padding=(4, 8), bg=t.elevated, border_color=t.border_focused,
