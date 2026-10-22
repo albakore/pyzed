@@ -47,18 +47,19 @@ TRAY_GAP = 6.0
 _grid_cache: dict = {}
 
 
-def dot_grid(width: float, height: float, step: int, color: str) -> List[Any]:
-    """Canvas shapes for a grid of dots every ``step`` pixels (memoized: forms rarely change size)."""
+def dot_grid(width: float, height: float, step: int, color: str) -> Any:
+    """A canvas with a dot every ``step`` pixels. Memoized, widget included: forms rarely change size, and
+    handing tens of thousands of dots to the canvas again at every redraw would cost milliseconds."""
     key = (width, height, step, color)
-    shapes = _grid_cache.get(key)
-    if shapes is None:
+    grid = _grid_cache.get(key)
+    if grid is None:
         step = max(int(step), 4)
         dots = [(x - 0.75, y - 0.75, 1.5, 1.5)
                 for y in range(step, int(height), step) for x in range(step, int(width), step)]
-        shapes = [draw.rects(dots, fill=color)]
+        grid = _core.canvas([draw.rects(dots, fill=color)], width=width, height=height, id="designer-grid")
         _grid_cache.clear()
-        _grid_cache[key] = shapes
-    return shapes
+        _grid_cache[key] = grid
+    return grid
 
 
 def frame_style(d: "Designer") -> str:
@@ -156,8 +157,7 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     if painted is not None:
         layers.append(painted)
     if d.show_grid:
-        layers.append(_core.canvas(dot_grid(w, h, form.grid, alpha(ft.text_muted, 0.35)), width=w, height=h,
-                                   id="designer-grid"))
+        layers.append(dot_grid(w, h, form.grid, alpha(ft.text_muted, 0.35)))
 
     # 2. the controls, as they will look, containers before what they hold
     rects = d.rects
@@ -221,7 +221,8 @@ def form_surface(d: "Designer", t: Theme) -> Any:
     if len(selected) == 1 and selected[0] is doc.primary and not doc.primary.locked:  # type: ignore[union-attr]
         layers.extend(_handles(d, rects.get(doc.primary.name, doc.primary.rect), t))  # type: ignore[union-attr]
     # 5. grip tabs on containers, above everything they hold
-    for name, gx, gy in grips(d):
+    shown_grips = d.shown_grips[id(doc)] = grips(d)
+    for name, gx, gy in shown_grips:
         layers.append(_core.pin(_grip(d, name, t), x=gx, y=gy))
     band = d.band_rect
     if band is not None:
@@ -285,19 +286,19 @@ def tray(d: "Designer", width: float, t: Theme) -> Any:
         control = doc.form[name]
         spec = _components.get(control.type)
         selected = doc.is_selected(name)
-        hovered = d.hovered_row == f"tray:{name}"
         color = t.text if control.enabled else t.text_muted
         body = _core.container(
             _core.row([_icon(spec.icon, size=14, color=t.accent if selected else t.icon_muted),
                        _core.container(_core.text(name, size=12.5, color=color, wrap=False), width="fill", clip=True)],
                       spacing=6, align="center"),
             width=TRAY_CHIP, height=28, padding=(0, 8), align_y="center", radius=t.radius_sm,
-            bg=t.ghost_selected if selected else (t.ghost_hover if hovered else t.element),
+            bg=t.ghost_selected if selected else t.element,
             border_color=t.accent if selected else t.border_variant, border_width=1.5 if selected else 1)
+        if not selected:  # the widget itself highlights it under the pointer
+            body = body.style(hover={"background": t.ghost_hover})
         return ui.tooltip(_core.mouse_area(
             body, on_press=lambda: d.press_tray(name), on_double_click=lambda: d.open_default_event(name),
-            on_right_press=lambda: d.open_context_menu(name), on_enter=lambda: d.enter_row(f"tray:{name}"),
-            on_exit=lambda: d.leave_row(f"tray:{name}")), tr(spec.label), position="bottom", theme=t)
+            on_right_press=lambda: d.open_context_menu(name)), tr(spec.label), position="bottom", theme=t)
 
     rows = [_core.row([chip(n) for n in row], spacing=TRAY_GAP) for row in tray_rows(names, width)]
     return _core.container(_core.column([

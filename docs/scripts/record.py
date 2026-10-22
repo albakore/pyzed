@@ -955,13 +955,11 @@ def designer_timer_outline_clip(c: Clip):
 
     def outline_click(name, y):
         yield from move((90.0, y))
-        app.enter_row(f"outline:{name}")
         app.window_moved(*pointer)
         app.press_outline(name)
         yield Frame(app, size, pointer, pressed=True, hold=3)
         app.window_release()
         yield Frame(app, size, pointer, hold=c.fps)
-        app.leave_row(f"outline:{name}")
 
     yield Frame(app, size, pointer, hold=10)
     # find the Timer in the toolbox and drag it onto the form: it goes to the tray

@@ -310,7 +310,6 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
     ``drop`` marks where a dragged control would land: a line ``"before"`` or ``"after"`` the
     row, or a frame around it for ``"inside"``.
     """
-    hovered = d.hovered_row == key
     text_color = t.color(color) if color else t.text
     row = _core.row([
         _core.space(width=indent) if indent else None,
@@ -320,7 +319,7 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
         end,
     ], spacing=6, align="center")
     body = _core.container(row, padding=(0, spacing.GUTTER), width="fill", height=height, align_y="center",
-                           bg=t.ghost_selected if selected else (t.ghost_hover if hovered else None),
+                           bg=t.ghost_selected if selected else None,
                            border_color=t.accent if drop == "inside" else None,
                            border_width=1.5 if drop == "inside" else 0)
     if drop in ("before", "after"):
@@ -329,13 +328,10 @@ def press_row(d: "Designer", key: str, label: str, on_press: Callable[[], Any], 
                                                   align_y="start" if drop == "before" else "end")],
                            width="fill", height=height)
 
-    def leave() -> None:
-        d.leave_row(key)
-        if on_exit is not None:
-            on_exit()
-
-    return _core.mouse_area(body, on_press=on_press, on_right_press=on_right_press,
-                            on_enter=lambda: d.enter_row(key), on_exit=leave, on_move=on_move)
+    if not selected:  # highlighted under the pointer by the widget itself: hovering redraws nothing in Python
+        body = body.style(hover={"background": t.ghost_hover})
+    return _core.mouse_area(body, on_press=on_press, on_right_press=on_right_press, on_exit=on_exit,
+                            on_move=on_move)
 
 
 def toolbox(d: "Designer", t: Theme) -> Any:

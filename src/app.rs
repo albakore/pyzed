@@ -138,6 +138,8 @@ pub enum Message {
     /// A window was opened (with its size) or moved to this screen position (`None` on Wayland).
     WindowPlaced(window::Id, Option<Point>, Option<Size>),
     SystemTheme(iced::theme::Mode),
+    /// What a callback already run by [`quiet`] returned: dispatched like any callback result.
+    Done(PyMsg),
     Noop,
 }
 
@@ -148,6 +150,107 @@ impl Message {
             other => Message::Windowed(id, Box::new(other)),
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Quiet messages: callbacks that change nothing on screen skip the rebuild.
+// ---------------------------------------------------------------------------
+
+/// `pz.UNCHANGED`: returned by a callback (or `update`) that changed nothing the views show.
+#[pyclass(frozen, module = "pyzed", name = "Unchanged")]
+pub struct Unchanged;
+
+#[pymethods]
+impl Unchanged {
+    fn __repr__(&self) -> &'static str {
+        "pz.UNCHANGED"
+    }
+}
+
+fn is_unchanged(value: &Bound<'_, PyAny>) -> bool {
+    value.cast::<Unchanged>().is_ok()
+}
+
+/// What [`quiet`] needs of the [`State`] to run a callback as `update` would (it runs outside it).
+struct Targets {
+    app: Py<PyAny>,
+    main: Option<window::Id>,
+    windows: HashMap<window::Id, Py<PyAny>>,
+    positions: HashMap<window::Id, Point>,
+}
+
+thread_local! {
+    static TARGETS: RefCell<Option<Targets>> = const { RefCell::new(None) };
+}
+
+fn sync_targets(py: Python<'_>, state: &State) {
+    let targets = Targets {
+        app: state.app.clone_ref(py),
+        main: state.main,
+        windows: state
+            .windows
+            .iter()
+            .map(|(id, obj)| (*id, obj.clone_ref(py)))
+            .collect(),
+        positions: state.positions.clone(),
+    };
+    TARGETS.with(|t| *t.borrow_mut() = Some(targets));
+}
+
+/// Runs a pointer callback (`on_move`, `on_enter`, `on_exit`...) as soon as its message arrives,
+/// before iced rebuilds the windows: if it returns `pz.UNCHANGED` the message is dropped and, when
+/// the whole batch was, nothing is rebuilt nor redrawn (a mouse moving over a big view costs
+/// nothing). Anything else becomes [`Message::Done`], handled in order by `update`.
+fn quiet(message: &mut dyn std::any::Any) -> bool {
+    let Some(message) = message.downcast_mut::<Message>() else {
+        return false;
+    };
+    let (window, inner) = match message {
+        Message::Windowed(id, inner) => (Some(*id), &mut **inner),
+        other => (None, other),
+    };
+    if !matches!(
+        inner,
+        Message::Py(_) | Message::Point(..) | Message::Event(..)
+    ) {
+        return false;
+    }
+    Python::attach(|py| {
+        let found = TARGETS.with(|t| {
+            t.borrow().as_ref().map(|targets| {
+                let target = window
+                    .and_then(|id| targets.windows.get(&id))
+                    .unwrap_or(&targets.app)
+                    .clone_ref(py);
+                let origin = window
+                    .or(targets.main)
+                    .and_then(|id| targets.positions.get(&id).copied());
+                (target, origin)
+            })
+        });
+        let Some((target, origin)) = found else {
+            return false;
+        };
+        let target = target.bind(py);
+        let result = match &*inner {
+            Message::Py(msg) => dispatch(target, msg.0.bind(py)),
+            Message::Point(cb, x, y) => callback(target, cb.0.bind(py), (*x, *y)),
+            Message::Event(cb, data) => deliver_event(target, cb.0.bind(py), data, origin),
+            _ => return false,
+        };
+        match result {
+            Ok(value) if is_unchanged(&value) => true,
+            Ok(value) => {
+                *inner = Message::Done(PyMsg::new(&value));
+                false
+            }
+            Err(err) => {
+                err.print(py);
+                *inner = Message::Noop;
+                false
+            }
+        }
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -1093,6 +1196,7 @@ fn platform_specific(
 /// Returned values that the runtime handles itself instead of passing them to `update`.
 fn is_final(value: &Bound<'_, PyAny>) -> bool {
     value.is_none()
+        || is_unchanged(value)
         || value.cast::<Command>().is_ok()
         || value.cast::<PyList>().is_ok()
         || is_deferred(value)
@@ -1256,10 +1360,16 @@ fn editor_outcome_with(
 }
 
 fn update(state: &mut State, message: Message) -> Task<Message> {
+    let task = handle(state, message);
+    Python::attach(|py| sync_targets(py, state));
+    task
+}
+
+fn handle(state: &mut State, message: Message) -> Task<Message> {
     state.caches.prune();
     if let Message::Windowed(id, inner) = message {
         let previous = state.current.replace(id);
-        let task = update(state, *inner);
+        let task = handle(state, *inner);
         state.current = previous;
         return if Some(id) == state.main {
             task
@@ -1275,6 +1385,7 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
         let result = match message {
             Message::Noop | Message::Windowed(..) => return Task::none(),
             Message::Py(msg) => dispatch(&target, msg.0.bind(py)),
+            Message::Done(value) => Ok(value.0.bind(py).clone()),
             Message::Input(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Toggle(cb, value) => callback(&target, cb.0.bind(py), (value,)),
             Message::Slide(cb, value) => callback(&target, cb.0.bind(py), (value,)),
@@ -2305,10 +2416,12 @@ pub(crate) fn daemon(
             let open = open_window(py, &mut state, &bound);
             state.main = state.windows.keys().next().copied();
             let start = start_task(py, &mut state, &bound);
+            sync_targets(py, &state);
             (state, Task::batch([open, theme, start]))
         })
     };
 
+    iced_winit::quiet::set_filter(quiet);
     iced::daemon(boot, update, view)
         .title(title)
         .theme(theme_of)

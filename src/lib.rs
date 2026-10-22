@@ -60,6 +60,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(app::screenshot, m)?)?;
     m.add_function(wrap_pyfunction!(recorder::record, m)?)?;
     m.add_function(wrap_pyfunction!(app::post, m)?)?;
+    m.add("UNCHANGED", Py::new(m.py(), app::Unchanged)?)?;
     m.add_function(wrap_pyfunction!(fonts::load_font, m)?)?;
     m.add_function(wrap_pyfunction!(fonts::set_fonts, m)?)?;
     m.add_function(wrap_pyfunction!(fonts::font_families, m)?)?;

@@ -33,6 +33,38 @@ pub mod android {
         let _ = APP.set(app);
     }
 }
+/// pyzed: messages the app can handle before the user interfaces are rebuilt.
+///
+/// The filter runs on each message in order, before `update`. It returns `true` when it handled the
+/// message and nothing on screen changed (the message is dropped and, if every message of the batch
+/// was dropped, no window is rebuilt nor redrawn); `false` keeps the message for `update`, and also
+/// stops the filter for the rest of the batch, so messages are still handled in order.
+pub mod quiet {
+    use std::any::Any;
+    use std::sync::OnceLock;
+
+    pub(crate) static FILTER: OnceLock<fn(&mut dyn Any) -> bool> = OnceLock::new();
+
+    /// Installs `filter` (only the first call counts).
+    pub fn set_filter(filter: fn(&mut dyn Any) -> bool) {
+        let _ = FILTER.set(filter);
+    }
+
+    pub(crate) fn apply<M: 'static>(messages: &mut Vec<M>) {
+        let Some(filter) = FILTER.get() else {
+            return;
+        };
+        let mut handled = 0;
+        for message in messages.iter_mut() {
+            if !filter(message) {
+                break;
+            }
+            handled += 1;
+        }
+        drop(messages.drain(..handled));
+    }
+}
+
 pub use program::core;
 pub use program::graphics;
 pub use program::runtime;
@@ -858,6 +890,10 @@ async fn run_instance<P>(
                                 &mut messages,
                             );
 
+                            // pyzed: pointer callbacks that change nothing (the
+                            // mouse areas of a new layout report the pointer)
+                            quiet::apply(&mut messages);
+
                             if message_count == messages.len()
                                 && !state.has_layout_changed()
                             {
@@ -1234,6 +1270,9 @@ async fn run_instance<P>(
                                 },
                             );
                         }
+
+                        // pyzed: drop what the app handled without changing the view
+                        quiet::apply(&mut messages);
 
                         if !messages.is_empty() || uis_stale {
                             let cached_interfaces: FxHashMap<_, _> =

@@ -23,7 +23,10 @@ draws instead: it is faster there and takes about 100 MB less.
 editors (`text/editor.rs`) and plain paragraphs (`text/paragraph.rs`) use. `pyzed.ui.editor` sets
 it from `tab_size`.
 
-`iced_winit` 0.14.1 is vendored for Android only: its event loop needs the activity that
+`iced_winit` 0.14.1 also lets the app handle a message before the windows are rebuilt
+(`iced_winit::quiet`): Pyzed runs pointer callbacks there, and when one returns `pz.UNCHANGED` the
+message is dropped, so a pointer moving over a big view rebuilds and redraws nothing. It was first
+vendored for Android: its event loop needs the activity that
 `android_main` receives (`iced_winit::android::set_app`, see `src/android.rs`), which iced does not
 let an app hand over. It also skips the key-without-modifiers lookup there, which Android lacks.
 
