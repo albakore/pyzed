@@ -52,6 +52,12 @@ def _has_selection(d: "Designer") -> bool:
     return bool(d.doc.selection)
 
 
+def _layout_panel() -> Any:
+    from . import layout_panel
+
+    return layout_panel
+
+
 def _has_code(d: "Designer") -> bool:
     """Whether the code editor shows a file or the form's code."""
     return d.buffers.current is not None or d.editing is not None
@@ -88,6 +94,11 @@ ACTIONS: Tuple[Action, ...] = (
     Action("group_row", "Group in a row", "Edit", lambda d: d.wrap("row"), "columns-3", None, _has_selection),
     Action("group_column", "Group in a column", "Edit", lambda d: d.wrap("column"), "rows-3", None, _has_selection),
     Action("group_grid", "Group in a grid", "Edit", lambda d: d.wrap("grid"), "layout-grid", None, _has_selection),
+    Action("group", "Group", "Edit", lambda d: _layout_panel().group(d), "group", "ctrl-g", _has_selection),
+    Action("ungroup", "Ungroup", "Edit", lambda d: _layout_panel().ungroup(d), "ungroup", "ctrl-shift-g",
+           _has_selection),
+    Action("auto_layout", "Add auto layout", "Edit", lambda d: _layout_panel().wrap_auto_layout(d),
+           "align-horizontal-space-around", "shift-a", _has_selection),
     Action("convert_to_tabs", "Convert indentation to tabs", "Edit", lambda d: d.convert_indentation(True),
            "indent-increase", None, _has_code, menu=False),
     Action("convert_to_spaces", "Convert indentation to spaces", "Edit", lambda d: d.convert_indentation(False),

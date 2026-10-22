@@ -63,6 +63,9 @@ en el lienzo para recuperar sus atajos.
 | <kbd>Ctrl</kbd>+<kbd>V</kbd> | Pegar |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicar |
 | <kbd>Ctrl</kbd>+<kbd>A</kbd> | Seleccionar todos los controles |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> | Agrupar la selección en un panel invisible |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Desagrupar: sacar los hijos del contenedor seleccionado |
+| <kbd>Shift</kbd>+<kbd>A</kbd> | Añadir auto layout: envolver la selección en una fila o columna flex |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Deshacer |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Rehacer |
 | <kbd>Enter</kbd> | Abrir el código del evento principal del control seleccionado |
@@ -79,6 +82,7 @@ en el lienzo para recuperar sus atajos.
 | Arrastrar en un hueco | Selección con rectángulo |
 | Doble clic en un control | Abrir el código de su evento principal, o un componente diseñado en su pestaña |
 | Clic derecho | Menú contextual |
+| Arrastrar un número de lado (Propiedades) | Bajarlo o subirlo; doble clic para escribirlo |
 | Arrastrar desde la caja de herramientas | Colocar un control donde lo sueltas |
 | Arrastrar una fila de la estructura | Reordenar, o mover a otro contenedor |
 | Arrastrar el tirador bajo el formulario | Redimensionar el formulario |

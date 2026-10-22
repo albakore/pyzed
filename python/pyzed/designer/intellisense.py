@@ -313,7 +313,8 @@ def designer_completions(form: Optional[Form], line: str, column: int) -> Option
 def _prop_type(prop: Any) -> str:
     kind = getattr(prop, "kind", "")
     return {"text": "str", "multiline": "str", "number": "float", "bool": "bool", "color": "str (color)",
-            "choice": "str", "list": "list[str]", "icon": "str (icon)"}.get(kind, kind or "Any")
+            "choice": "str", "list": "list[str]", "icon": "str (icon)", "file": "str (path)",
+            "folder": "str (path)"}.get(kind, kind or "Any")
 
 
 # ---------------------------------------------------------------------------

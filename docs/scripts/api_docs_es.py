@@ -578,6 +578,11 @@ Para el editor con tema usa [`ui.editor`](/pyzed/es/components/code/).
                     "desc": "Un `input` con icono de lupa.",
                     "params": {"value": "Texto actual.", "kwargs": "Los de `input`."},
                 },
+                "pyzed.ui.path_input": {
+                    "desc": "Un campo de texto para la ruta de un archivo o carpeta con un botón que abre el diálogo de archivos del sistema, para no tener que escribirla (aunque se puede).",
+                    "params": {"value": "Ruta actual.", "on_change": "Función que recibe la ruta escrita o elegida.", "folder": "Elige una carpeta en vez de un archivo.", "save": "Muestra el diálogo \"Guardar como\".", "filters": "Pares `(nombre, extensiones)`: `[(\"Imágenes\", [\"png\", \"jpg\"])]`.", "kind": 'Filtros comunes por nombre: `"image"`, `"audio"`, `"video"`, `"font"`, `"shader"` o `"data"`.', "directory": "Carpeta donde se abre el diálogo (por defecto, la de la ruta actual).", "relative_to": "Una ruta elegida dentro de esta carpeta se da relativa a ella.", "title": "Título del diálogo.", "placeholder": "Texto que se ve mientras está vacío.", "size": '`"sm"`, `"md"` o `"lg"`.', "mono": "Texto monoespaciado.", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error."},
+                    "example": 'ui.path_input(self.logo, self.set_logo, kind="image", relative_to=".")',
+                },
                 "pyzed.ui.switch": {"desc": "Un interruptor encendido/apagado.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "Lo atenúa e ignora los clics."}},
                 "pyzed.ui.checkbox": {"desc": "Una casilla de verificación. `checked=None` muestra el estado mixto (parte de un grupo marcada); al pulsarla se marca.", "params": {"size": '`"sm"`, `"md"` o `"lg"`.', "disabled": "La atenúa e ignora los clics."}},
                 "pyzed.ui.slider": {
@@ -1434,8 +1439,8 @@ _section("ui", "Controles", {
         "params": {"options": "Textos o pares `(valor, etiqueta)`.", "selected": "Valor actual.", "on_select": "Callable que recibe el valor elegido.", "horizontal": "En fila en lugar de columna.", "disabled": "`True`, o los valores a desactivar.", "descriptions": "Asocia valores a una línea atenuada bajo su etiqueta."},
     },
     "pyzed.ui.number_field": {
-        "desc": "Un campo numérico con botones −/+. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
-        "params": {"min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
+        "desc": "Un campo numérico con botones −/+ que también se puede arrastrar, como en Figma. `on_change(valor)` recibe el número ya limitado a `min`/`max`; lo que no se puede leer como número se ignora. Mantén pulsado y mueve el ratón de lado a lado sobre el número para cambiarlo (sigue aunque salgas de la ventana); haz doble clic para escribir un valor, y Enter, Escape o un clic fuera para terminar. Tras pulsarlo, ↑/↓ lo mueven un paso (con Shift, diez) e Inicio/Fin saltan a `min`/`max`.",
+        "params": {"steppers": "Muestra los botones −/+ (`False`: un campo compacto, como en una rejilla de propiedades).", "drag": "Deja cambiarlo arrastrando el ratón (`False`: un campo de texto normal).", "drag_step": "Cuánto suma cada píxel arrastrado (por defecto `step`, hasta 1; los pasos menores de 1 piden tres píxeles cada uno).", "min": "Mínimo.", "max": "Máximo.", "step": "Paso de los botones.", "suffix": "Unidad que se muestra al final (`\"px\"`, `\"%\"`…).", "align": 'Dónde va el número entre los botones: `"center"` (por defecto), `"start"` o `"end"`.', "prefix": "Texto antes del número (`\"$\"`…).", "decimals": "Decimales que muestra (por defecto, los de `step`).", "disabled": "Lo atenúa.", "invalid": "Pinta el borde con el color de error.", "on_submit": "Se envía con Enter."},
     },
     "pyzed.ui.split_button": {
         "desc": "Un botón con una flecha aparte para más opciones. `on_press` ejecuta la acción principal y `on_menu` normalmente abre un `ui.menu` en un `ui.popover`.",
@@ -1701,6 +1706,14 @@ _section("app", "Eventos y componentes", {
     "pyzed.Multiline": {
         "desc": "Anotación para un prop de componente con texto largo: el diseñador muestra un área de texto. En ejecución es un `str` normal.",
         "example": 'notes: pz.Multiline = ""',
+    },
+    "pyzed.FilePath": {
+        "desc": "Anotación para un prop de componente con la ruta de un archivo: el diseñador muestra la ruta con un botón que abre el diálogo de archivos del sistema (una anotación `pathlib.Path` hace lo mismo). En ejecución es un `str` normal.",
+        "example": 'logo: pz.FilePath = ""',
+    },
+    "pyzed.FolderPath": {
+        "desc": "Anotación para un prop de componente con una carpeta: el diseñador muestra la ruta con un botón que abre el diálogo de carpetas del sistema. En ejecución es un `str` normal.",
+        "example": 'output: pz.FolderPath = ""',
     },
     "pyzed.Range": {
         "desc": "Límites de un prop numérico, con `typing.Annotated`: el diseñador muestra un campo numérico limitado a ellos. Ver [Componentes propios](/pyzed/es/guides/components/#en-el-diseñador).",
@@ -2743,6 +2756,7 @@ MEMBERS = {
     "pyzed.designer.Document.can_contain": "Si el control `name` puede moverse dentro de `container` (`None` es el formulario, que admite cualquiera): debe ser un contenedor distinto del propio control y que no esté dentro de él.",
     "pyzed.designer.Document.reparent": "Mueve controles dentro de `parent` (o al formulario con `None`), dejándolos donde están.",
     "pyzed.designer.Document.wrap": "Mete controles (por defecto, la selección) dentro de un contenedor nuevo de tipo `type_` que los rodea.",
+    "pyzed.designer.Document.ungroup": "Saca los hijos de los contenedores seleccionados (donde están en pantalla) y quita los contenedores; los hijos quedan seleccionados. Devuelve los nombres de los contenedores quitados.",
     "pyzed.designer.Document.move_out": "Saca un control de su contenedor y lo pasa al padre de ese contenedor.",
     "pyzed.designer.Document.parent_size": "El tamaño del padre del control `name` (su contenedor o el formulario).",
     "pyzed.designer.Document.set_anchor": "Ancla el control `name` con un preset, palabras o bordes; con `move=True` también lo lleva a ese sitio, a `margin` píxeles del borde.",

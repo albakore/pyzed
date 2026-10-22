@@ -16,6 +16,11 @@ a counter that restarts them).
 An entry with ``"on": "manual"`` waits for the form's code: ``form.title.play_animation()``
 plays it (and replays the ones that play when the control appears), and
 ``form.title.play_animation("shake")`` plays any preset once. ``Played`` keeps that state.
+
+Other triggers play once on each event of the control (a double click, the pointer entering
+or leaving, a new value, Enter, a failed validation rule) or of another control or the form
+(``{"on": "event", "source": "save", "event": "click"}``, ``"source": ""`` for the form). The
+running form counts the events (``Played.fired``) and replays the animation on each one.
 """
 
 from __future__ import annotations
@@ -33,9 +38,26 @@ TRIGGERS: Tuple[Tuple[str, str], ...] = (
     ("press", "While pressed"),
     ("focus", "While focused"),
     ("click", "On click"),
+    ("double_click", "On double click"),
+    ("right_click", "On right click"),
+    ("enter", "When the pointer enters"),
+    ("leave", "When the pointer leaves"),
+    ("change", "When its value changes"),
+    ("submit", "When Enter is pressed"),
+    ("invalid", "When its value is invalid"),
+    ("event", "On another control's event"),
     ("manual", "When played from code"),
 )
 TRIGGER_LABELS = dict(TRIGGERS)
+#: Triggers that play once each time an event happens, and the control's event that plays them ("invalid" is
+#: raised when a validation rule fails; "event" names the control and event in the entry: ``source``,
+#: ``event``). The running form counts the events (``Played.fired``) and replays the animation on each one.
+EVENT_TRIGGERS = {"double_click": "double_click", "right_click": "right_click", "enter": "mouse_enter",
+                  "leave": "mouse_leave", "change": "change", "submit": "submit", "invalid": "invalid",
+                  "event": ""}
+#: What a form's event wiring gets for an event only an animation listens to: the running form raises it, and
+#: the dispatcher plays the animations without looking for a handler.
+ANIMATION_ONLY = "·animation"
 #: The easings offered first (every name in ``pz.animation.EASINGS`` is valid).
 EASINGS = ("ease", "linear", "ease_in", "ease_out", "ease_in_out", "ease_out_cubic", "ease_in_out_sine",
            "ease_out_back", "ease_out_elastic", "ease_out_bounce", "spring")
@@ -43,7 +65,7 @@ EASINGS = ("ease", "linear", "ease_in", "ease_out", "ease_in_out", "ease_out_cub
 REPEATS = ("1", "2", "3", "5", "infinite")
 #: The category each trigger suggests first in the preset list.
 SUGGESTED = {"mount": "entrance", "hover": "interaction", "press": "interaction", "focus": "interaction",
-             "click": "attention", "manual": "attention"}
+             "click": "attention", "manual": "attention", **{k: "attention" for k in EVENT_TRIGGERS}}
 CATEGORY_LABELS = {"entrance": "Entrance", "exit": "Exit", "attention": "Attention", "interaction": "Interaction",
                    "loop": "Loop"}
 
@@ -66,8 +88,55 @@ def presets_for(trigger: str) -> List[str]:
 def new_entry(trigger: str = "mount") -> Dict[str, Any]:
     """The animation a new row starts with for ``trigger``."""
     preset = {"mount": "fade_in_up", "hover": "lift", "press": "shrink", "focus": "glow", "click": "pulse",
-              "manual": "pulse"}[trigger]
-    return {"preset": preset, "on": trigger}
+              "manual": "pulse", "invalid": "shake", "change": "pulse", "enter": "rubber_band",
+              "leave": "pulse", "submit": "pulse", "double_click": "tada", "right_click": "pulse",
+              "event": "pulse"}.get(trigger, "pulse")
+    entry: Dict[str, Any] = {"preset": preset, "on": trigger}
+    if trigger == "event":
+        entry.update(source="", event="click")
+    return entry
+
+
+#: Ready-made animations the Animation section offers in one click: label, trigger, preset and the events a
+#: control must have for it to make sense (empty: any control).
+RECIPES: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
+    ("Fade in when it appears", "mount", "fade_in_up", ()),
+    ("Lift on hover", "hover", "lift", ()),
+    ("Pulse on click", "click", "pulse", ("click",)),
+    ("Press in while pressed", "press", "shrink", ("click",)),
+    ("Bounce when the value changes", "change", "rubber_band", ("change",)),
+    ("Shake when the value is invalid", "invalid", "shake", ("change",)),
+    ("Float forever", "mount", "float", ()),
+)
+
+
+def recipes_for(events: Tuple[str, ...]) -> List[Tuple[str, str, str]]:
+    """The recipes that suit a control with ``events``: ``(label, trigger, preset)``."""
+    return [(label, trigger, preset) for label, trigger, preset, needs in RECIPES
+            if all(e in events for e in needs)]
+
+
+def listens(entry: Mapping[str, Any], owner: str) -> Optional[Tuple[str, str]]:
+    """``(control, event)`` an entry plays on (``""`` names the form), or ``None`` for the triggers the
+    widget plays by itself (appearing, hover, press, focus, click) and from code."""
+    trigger = str(entry.get("on") or "")
+    if trigger not in EVENT_TRIGGERS:
+        return None
+    if trigger == "event":
+        event = str(entry.get("event") or "")
+        return (str(entry.get("source") or ""), event) if event else None
+    return (owner, EVENT_TRIGGERS[trigger])
+
+
+def listeners(controls: Any) -> Dict[Tuple[str, str], List[Tuple[str, int]]]:
+    """Which animations each event plays: ``{(source, event): [(control, index), ...]}`` over ``controls``."""
+    out: Dict[Tuple[str, str], List[Tuple[str, int]]] = {}
+    for control in controls:
+        for index, entry in enumerate(control.animations or ()):
+            key = listens(entry, control.name)
+            if key is not None:
+                out.setdefault(key, []).append((control.name, index))
+    return out
 
 
 def preset_of(entry: Mapping[str, Any]) -> Optional[_animation.Animation]:
@@ -140,6 +209,11 @@ class Played:
     extra: List[Any] = field(default_factory=list)
     #: ``stop_animation()`` was called: the control's "from code" animations and the extra ones stop.
     stopped: bool = False
+    #: How many times the event of each of the control's event-triggered animations happened, by index.
+    fired: Dict[int, int] = field(default_factory=dict)
+
+    def fire(self, index: int) -> None:
+        self.fired[index] = self.fired.get(index, 0) + 1
 
     def play(self, animation: Any = None, **opts: Any) -> None:
         self.count += 1
@@ -156,16 +230,20 @@ def apply(widget: Any, animations: Optional[List[Mapping[str, Any]]], *, preview
     """``widget`` with a control's animations. ``preview`` (the designer's Preview counter) plays
     them all once, as if the control had just appeared; ``played`` is what the form's code asked
     for (``form.title.play_animation()``). Invalid entries are skipped."""
-    for entry in animations or ():
+    for index, entry in enumerate(animations or ()):
         preset = preset_of(entry)
         if preset is None:
             continue
         opts = options(entry)
+        on = timing(entry)["on"]
         if preview is not None:
             opts["on"] = "mount"
             opts["key"] = preview
-        elif played is not None and timing(entry)["on"] in ("mount", "manual"):
-            if played.stopped and timing(entry)["on"] == "manual":
+        elif on in EVENT_TRIGGERS:  # waits for its event, then plays from the start on each one
+            opts["on"] = "manual"
+            opts["key"] = played.fired.get(index, 0) if played is not None else 0
+        elif played is not None and played.count and on in ("mount", "manual"):
+            if played.stopped and on == "manual":
                 continue
             opts["key"] = played.count  # play_animation() plays them again
         try:

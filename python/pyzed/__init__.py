@@ -90,7 +90,7 @@ from .splash import Splash
 from .component import Component, provide, state, use_context
 from .layout import anchor, anchor_layout, box, flex, flex_item
 from .i18n import t
-from .hints import Color, Icon, Multiline, Range
+from .hints import Color, FilePath, FolderPath, Icon, Multiline, Range
 from .style import (Gradient, Mask, Paint, Style, clear_stylesheet, current_breakpoint, define_style, media, set_style,
                     stylesheet, viewport)
 from .animation import Animation, Trigger, define_animation, presence, set_reduced_motion, stagger
@@ -231,6 +231,8 @@ __all__ = [
     "Gradient",
     "Icon",
     "Multiline",
+    "FilePath",
+    "FolderPath",
     "Range",
     "Mask",
     "Paint",

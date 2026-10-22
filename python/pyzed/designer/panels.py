@@ -28,7 +28,8 @@ ROW_HEIGHT = spacing.ROW_HEIGHT
 SECTION_ICONS = {"Appearance": "palette", "Data": "database", "Behavior": "mouse-pointer-click",
                  "Layout": "layout-dashboard", "Window": "app-window", "Look": "paintbrush", "Designer": "grid-3x3",
                  "Align": "align-start-vertical", "Spacing and size": "ruler", "Position": "move", "Style": "paint-bucket",
-                 "Effects": "sparkles", "Animation": "clapperboard"}
+                 "Effects": "sparkles", "Animation": "clapperboard", "Auto layout": "align-horizontal-space-around",
+                 "Text": "type", "Fill": "paint-bucket", "Border": "square-dashed", "Spacing": "box"}
 ACCENTS = ("#74ade8", "#b477cf", "#a1c181", "#e5c07b", "#d07277", "#6eb4bf", "#ff8a65")
 
 
@@ -148,7 +149,58 @@ def editor_for(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any],
         return prop_color_editor(d, value, on_change, key, t)
     if kind == "icon":
         return icon_editor(d, value, on_change, t)
+    if kind in ("file", "folder") or (kind == "text" and is_path_prop(prop)):
+        return path_editor(d, prop, value, on_change, t)
     return ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
+
+
+#: Property names that hold a path even when their kind is plain text (a component from a library, say).
+PATH_NAMES = ("path", "file", "source", "src", "directory", "folder", "dir", "cwd", "image", "sound", "sample")
+PATH_SUFFIXES = ("_path", "_file", "_dir", "_folder", "_directory", "_image", "_sound")
+
+
+def is_path_prop(prop: Prop) -> bool:
+    """Whether a text property holds a path (by its kind, its name or its label), so it gets a browse button."""
+    if prop.kind in ("file", "folder"):
+        return True
+    name = prop.name.lower()
+    label = (prop.label or "").lower()
+    return name in PATH_NAMES or name.endswith(PATH_SUFFIXES) or any(w in label.split() for w in ("file", "folder",
+                                                                                                    "path"))
+
+
+def _is_folder(prop: Prop) -> bool:
+    if prop.kind in ("file", "folder"):
+        return prop.kind == "folder"
+    name = prop.name.lower()
+    return name in ("directory", "folder", "dir", "cwd") or name.endswith(("_dir", "_folder", "_directory"))
+
+
+def path_base(d: "Designer") -> Optional[str]:
+    """The folder chosen paths are kept relative to: the open project's, else the form's."""
+    project = getattr(getattr(d, "projects", None), "project", None)
+    if project is not None:
+        return str(project.root)
+    path = getattr(d.doc, "path", None)
+    return str(path.parent) if path else None
+
+
+def path_editor(d: "Designer", prop: Prop, value: Any, on_change: Callable[[Any], Any], t: Theme) -> Any:
+    """A path property: the path as text and a button that opens the system's file (or folder) dialog. A file
+    chosen inside the project (or the form's folder) is kept relative to it."""
+    accept = str(getattr(prop, "accept", "") or "")
+    filters = None
+    kind = None
+    if accept in ui.inputs.PATH_FILTERS:
+        kind = accept
+    elif accept:
+        extensions = [e.strip(". ") for e in accept.replace(",", " ").split() if e.strip(". ")]
+        filters = [(tr("Files"), extensions)] if extensions else None
+    elif prop.name in ("source", "image") or prop.name.endswith("_image"):
+        kind = "image"
+    folder = _is_folder(prop)
+    return ui.path_input("" if value is None else str(value), on_change, folder=folder, filters=filters, kind=kind,
+                         relative_to=path_base(d), title=tr(prop.title), size="sm", theme=t)
 
 
 TALL_KINDS = ("multiline", "list", "rows", "typed")
@@ -470,12 +522,11 @@ def _outline_row(d: "Designer", c: Any, icon: str, depth: int, container: bool, 
 # -- properties ------------------------------------------------------------------
 
 
-def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
+def _position_rows(d: "Designer", c, t: Theme) -> List[Any]:
+    """The Position section: where the control is and how big, by its container's rules (free, flex, grid or
+    dock), first in the grid like Figma's."""
     from . import layout as _layout
-
-    def num(field: str):
-        return ui.number_field(round(getattr(c, field)), lambda v, f=field: d.set_field(c.name, f, v), step=1,
-                               width="fill", theme=t)
+    from . import layout_panel
 
     form = d.doc.form
     parent = form.get(c.parent) if c.parent else None
@@ -490,18 +541,7 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
                            theme=t),
         ], align="center"), t, tip="The container holding this control"))
     if kind in ("flex", "grid"):
-        if kind == "flex":
-            rows.append(prop_row(tr("Grow"), ui.number_field(float(c.layout.get("grow", 0)),
-                                                         lambda v: d.set_layout(c.name, "grow", v), min=0, step=1,
-                                                         width="fill", theme=t), t,
-                                 tip="Share of the free space this control takes (0 keeps its size)"))
-        else:
-            rows.append(prop_row(tr("Column span"), ui.number_field(float(c.layout.get("span", 1)),
-                                                                lambda v: d.set_layout(c.name, "span", int(v)), min=1,
-                                                                max=24, step=1, width="fill", theme=t), t))
-        rows += [prop_row("Width", num("width"), t), prop_row("Height", num("height"), t),
-                 _core.container(ui.label(f"Placed by {parent.name}: drag it to reorder.", size="xs",
-                                          color="text_muted", theme=t), padding=(2, 0))]
+        rows += layout_panel.child_rows(d, c, parent, t, prop_row)
     elif kind == "dock":
         rows.append(_core.container(ui.label(tr("Placed by its dock: change its Side, or the dock's sizes."),
                                              size="xs", color="text_muted", theme=t), padding=(2, 0)))
@@ -509,8 +549,12 @@ def _layout_rows(d: "Designer", c, t: Theme) -> List[Any]:
         from . import anchor_panel
 
         rows += anchor_panel.position_rows(d, c, t, prop_row)
-    return rows + [
-        Group("Behavior"),
+    return rows
+
+
+def _behavior_rows(d: "Designer", c, t: Theme) -> List[Any]:
+    """Visible, Enabled and Locked (they join the control's own Behavior group)."""
+    return [
         prop_row("Visible", _core.container(ui.switch(c.visible, lambda v: d.set_field(c.name, "visible", v),
                                                       theme=t), width="fill", align_x="end"), t),
         prop_row("Enabled", _core.container(ui.switch(c.enabled, lambda v: d.set_field(c.name, "enabled", v),
@@ -546,8 +590,18 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
                                  tip="Press Enter to rename (handlers are renamed too)"), padding=(0, spacing.GUTTER),
                         width="fill"),
     ]
+    from . import layout_panel
+
+    auto = spec.visual and layout_panel.is_auto(c)
+    if spec.visual:  # where it is and how big comes first, like Figma's
+        rows.extend(_position_rows(d, c, t))
+    if auto:
+        rows.append(Group("Auto layout"))
+        rows.extend(layout_panel.auto_layout_rows(d, c, t, prop_row))
     groups: dict = {}
     for prop in spec.props:
+        if auto and prop.name in layout_panel.EDITED:
+            continue
         groups.setdefault(prop.group, []).append(prop)
     # the binding and validation rows join the control's Data group (or make one)
     data = data_rows(d, c, t) if not getattr(d.doc, "is_scene", False) else []
@@ -569,12 +623,12 @@ def control_properties(d: "Designer", t: Theme) -> List[Any]:
             "Enabled", _core.container(ui.switch(c.enabled, lambda v: d.set_field(c.name, "enabled", v), theme=t),
                                        width="fill", align_x="end"), t,
             tip="A disabled component raises no events")]
+    rows += [Group("Behavior"), *_behavior_rows(d, c, t)]
     rows.extend(style_rows(d, c.name, c.style, t))
     from . import motion_panel
 
     rows.extend(motion_panel.effect_rows(d, c, t))
     rows.extend(motion_panel.animation_rows(d, c, t))
-    rows.extend(_layout_rows(d, c, t))
     return rows
 
 
@@ -726,11 +780,16 @@ def properties(d: "Designer", t: Theme) -> Any:
         rows = scene_panel.properties(d, t, rows)
     head: List[Any] = []
     groups: List[Any] = []
+    current: Optional[List[Any]] = None
     for row in rows:
-        if isinstance(row, Group):
-            groups.append((row.title, []))
-        elif groups:
-            groups[-1][1].append(row)
+        if isinstance(row, Group):  # a title seen before adds to that section (Behavior comes from two places)
+            found = next((g for g in groups if g[0] == row.title), None)
+            if found is None:
+                found = (row.title, [])
+                groups.append(found)
+            current = found[1]
+        elif current is not None:
+            current.append(row)
         else:
             head.append(row)
     sections = [(title, tr(title), _core.column(items, width="fill", spacing=spacing.ROW_GAP))
@@ -950,58 +1009,12 @@ def _background_rows(d: "Designer", name: Optional[str], value: Any, t: Theme) -
 
 
 def style_rows(d: "Designer", name: Optional[str], style: dict, t: Theme, *, fields: Any = None) -> List[Any]:
-    """The Style section: background, text, border, corners, shadow, spacing and alignment.
+    """The style sections, like Figma's: Text, Fill, Border and Spacing (see ``style_panel``).
 
-    ``name`` is the control being edited, or ``None`` for the form's global style.
+    ``name`` is the control being edited, or ``None`` for the form's global style; ``fields`` limits them to
+    some style properties (``styling.GLOBAL_FIELDS`` for the form).
     """
-    from . import styling
+    from . import style_panel
 
-    fields = styling.FIELDS if fields is None else fields
-    rows: List[Any] = [Group("Style")]
-    rows.extend(_background_rows(d, name, style.get("background"), t))
-    for field in fields:
-        value = style.get(field.key)
-
-        def on_change(v: Any, key: str = field.key) -> None:
-            d.set_style(name, key, v)
-
-        if field.kind == "color":
-            rows.extend(_color_rows(d, name, field.key, field.title, value, on_change, t, tip=field.tip))
-            continue
-        if field.kind == "number":
-            number = float(value) if isinstance(value, (int, float)) else 0.0
-            editor = ui.number_field(number, on_change, min=field.min, max=field.max, step=field.step, width="fill",
-                                     theme=t)
-        elif field.kind == "choice":
-            editor = _style_choice_editor(field, styling.choice_of(field.key, value), on_change, t)
-        elif field.kind in ("box", "radius"):
-            box_key = f"{name}:{field.key}"
-            editor = prop_editors.box_editor(d, box_key, value, on_change, t, corners=field.kind == "radius")
-            if prop_editors.is_split(d, box_key, value):
-                rows.append(prop_row(field.title, editor, t, tip=field.tip, lines=2))
-                continue
-        elif field.kind == "shadow":
-            color, x, y, blur = styling.shadow_parts(value)
-
-            def shadow(part: int, v: Any, parts: tuple = (color, x, y, blur)) -> None:
-                values = list(parts)
-                values[part] = v
-                d.set_style_value(name, "shadow", styling.shadow_value(*values))
-
-            rows.extend(_color_rows(d, name, "shadow", field.title, color, lambda v: shadow(0, v), t, tip=field.tip,
-                                    placeholder="none"))
-            if color:
-                rows.append(prop_row("Offset", _core.row([
-                    ui.number_field(x, lambda v: shadow(1, v), min=-64, max=64, width="fill", theme=t),
-                    ui.number_field(y, lambda v: shadow(2, v), min=-64, max=64, width="fill", theme=t),
-                ], spacing=6), t, tip="Horizontal and vertical offset"))
-                rows.append(prop_row("Blur", ui.number_field(blur, lambda v: shadow(3, v), min=0, max=96, width="fill",
-                                                             theme=t), t))
-            continue
-        else:
-            editor = ui.input("" if value is None else str(value), on_change, size="sm", theme=t)
-        rows.append(prop_row(field.title, editor, t, tip=field.tip))
-    if style:
-        rows.append(_core.container(ui.button(tr("Reset style"), lambda: d.clear_style(name), icon="rotate-ccw",
-                                              variant="ghost", size="sm", theme=t), padding=(4, 0)))
-    return rows
+    keys = None if fields is None else {f.key for f in fields}
+    return style_panel.sections(d, name, style, t, prop_row, Group, keys=keys)

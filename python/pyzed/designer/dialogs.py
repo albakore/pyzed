@@ -19,6 +19,7 @@ from . import commands as _commands
 from . import components as _components
 from . import keymap as _keymap
 from . import new as _new
+from . import panels as _panels
 from . import telemetry as _telemetry
 from .locale import tr
 
@@ -258,7 +259,9 @@ def new_form(d: "Designer", t: Theme) -> Any:
                  description=tr("File name and handler prefix"), theme=t),
         ui.field(tr("Title"), ui.input(s["title"], lambda v: d.set_new("title", v), placeholder=tr("Same as the name"),
                                    width=240, theme=t), theme=t),
-        ui.field(tr("Folder"), ui.input(s["folder"], lambda v: d.set_new("folder", v), mono=True, width=240, theme=t),
+        ui.field(tr("Folder"), _core.container(ui.path_input(
+            s["folder"], lambda v: d.set_new("folder", v), folder=True, relative_to=_panels.path_base(d),
+            title=tr("Folder"), theme=t), width=240),
                  description=tr("Creates {path}", path=path), theme=t),
         ui.label(tr("Template"), size="sm", weight="medium", theme=t),
         grid,
@@ -290,7 +293,9 @@ def _new_component(d: "Designer", t: Theme, kinds: Any) -> Any:
         ui.field(tr("Name"), ui.input(name, lambda v: d.set_new("name", v), mono=True, width=240,
                                   on_submit=d.create_new_component, id="new-form-name", theme=t),
                  description=tr("Class {name}", name=_scene_code.class_identifier(name)), theme=t),
-        ui.field(tr("Folder"), ui.input(s["folder"], lambda v: d.set_new("folder", v), mono=True, width=240, theme=t),
+        ui.field(tr("Folder"), _core.container(ui.path_input(
+            s["folder"], lambda v: d.set_new("folder", v), folder=True, relative_to=_panels.path_base(d),
+            title=tr("Folder"), theme=t), width=240),
                  description=tr("Creates {path}", path=path), theme=t),
         ui.field(tr("Inherits from"),
                  ui.select([none, *bases], chosen, lambda v: d.set_new("extends", bases.get(v, "")), width=240,
@@ -323,7 +328,9 @@ def _new_shader(d: "Designer", t: Theme, kinds: Any) -> Any:
         ui.field(tr("Name"), ui.input(name, lambda v: d.set_new("name", v), mono=True, width=240,
                                   on_submit=d.create_new_shader, id="new-form-name", theme=t),
                  description=tr("The file name, and how code loads it"), theme=t),
-        ui.field(tr("Folder"), ui.input(s["folder"], lambda v: d.set_new("folder", v), mono=True, width=240, theme=t),
+        ui.field(tr("Folder"), _core.container(ui.path_input(
+            s["folder"], lambda v: d.set_new("folder", v), folder=True, relative_to=_panels.path_base(d),
+            title=tr("Folder"), theme=t), width=240),
                  description=tr("Creates {path}", path=path), theme=t),
         ui.label(tr("Template"), size="sm", weight="medium", theme=t),
         _core.grid(cards, columns="1fr 1fr", spacing=8),

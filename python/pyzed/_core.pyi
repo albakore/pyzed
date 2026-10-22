@@ -574,6 +574,21 @@ def scrollable(content: Any, *, direction: Any = ..., width: Any = ..., height: 
       `width`, `height`, `content_width` and `content_height`.
     """
     ...
+def scrub(content: Any, on_scrub: Any = ..., *, on_start: Any = ..., on_end: Any = ...) -> Any:
+    """Lets the mouse change a number field by dragging over it, like Figma's.
+
+    Pressing the left button over `content` and moving sideways calls `on_scrub(dx)` with the
+    pixels moved since the last call (even outside the window), between `on_start()` and
+    `on_end()`. A double click focuses the text input inside with its text selected, to type
+    a value; Enter, Escape or a click outside end the typing. While the input has the focus,
+    every event goes to it.
+
+    Events:
+    - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
+    - `on_start()`: A drag begins.
+    - `on_end()`: The button is released after a drag.
+    """
+    ...
 def set_fonts(ui: Any = ..., code: Any = ...) -> Any:
     """Makes `"sans"` (the interface) and `"mono"` (code) stand for other loaded or system families; `None`
     goes back to IBM Plex Sans and Mono. Takes effect on the next frame.

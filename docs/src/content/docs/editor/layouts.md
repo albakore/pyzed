@@ -37,8 +37,12 @@ flowchart TB
   canvas or from the outline.
 - **Draw** a new control inside it: pick a component and click or drag inside the container.
 - **Add inside…**: the **+** on the container's outline row, or its context menu, opens the Add control list.
-- **Group**: select some controls and use **Edit → Group in a row / column / grid** (palette) or the context menu,
-  which also offers **Group in a panel**. The new container wraps the selection exactly.
+- **Group**: select some controls and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to put them in an invisible panel that
+  wraps them exactly, without moving them. <kbd>Shift</kbd>+<kbd>A</kbd> (**Add auto layout**) wraps them in a
+  flex row or column instead, guessed from how they are placed. **Edit → Group in a row / column / grid** (palette)
+  and the context menu offer every kind, including **Group in a panel**.
+- **Ungroup**: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> on a container takes its children out and removes it.
+  They keep the place and size they had on the canvas, even the ones a flex row stretched.
 - **Take out**: drag the control onto the bare form, use **Move out of *container*** in its context menu, or the
   arrow next to **Inside** in its Position section.
 
@@ -51,12 +55,18 @@ along. A container cannot be dropped inside itself or its own children.
 | --- | --- |
 | **Direction** | `row` (left to right) or `column` (top to bottom). A flex row and a flex column are the same container with a different default. |
 | **Gap** | Space between children, in pixels. |
-| **Padding** | Space between the container's edge and its children. |
+| **Padding** | Space between the container's edge and its children: one number for every side, two (vertical and horizontal) or four (top, right, bottom, left). |
 | **Justify** | Where children go along the main axis when there is room left: `start`, `center`, `end`, `space-between`, `space-around`, `space-evenly`. |
 | **Align** | Across the main axis: `stretch` (fill), `start`, `center`, `end`. |
 | **Background** | A color behind the children. |
 
-Each child gets a **Grow** field in its Position section: the share of the free space it takes (0 keeps its own
+The **Auto layout** section of the Properties panel edits all of these the way Figma does: a direction, a 3×3
+**Align** box (click where the children sit), the gap (or a way to spread them), the padding and **Fill across**.
+See [Properties](/pyzed/editor/properties/#auto-layout).
+
+Each child says in its Position section whether its **Width** and **Height** are **Fixed** (its own size) or
+**Fill** (the room the container leaves); a child that fills across overrides the container's **Align** for itself
+(`align_self` in the `.pzform`). Each child also gets a **Grow** field: the share of the free space it takes (0 keeps its own
 size). Two children with grow 1 split the free space in halves; 2 and 1 in thirds. When the children do not fit,
 they all shrink in proportion to their size, like CSS `flex-shrink`.
 

@@ -250,6 +250,52 @@ def check_code(source: str, *, lint: bool = True) -> Dict[str, Any]:
     return {"ok": not any(i["severity"] == "error" for i in issues), "issues": issues}
 
 
+def animation_triggers() -> Dict[str, Any]:
+    """What a ``.pzform`` control's ``animations`` entries take: the triggers (``on``) and presets by category."""
+    from .. import animation as _animation
+    from ..designer import motion
+
+    return {"triggers": {key: label for key, label in motion.TRIGGERS},
+            "event_triggers": sorted(motion.EVENT_TRIGGERS),
+            "presets": {c: sorted(_animation.presets(c)) for c in _animation.CATEGORIES},
+            "easings": list(motion.EASINGS), "repeats": list(motion.REPEATS),
+            "example": [{"preset": "fade_in_up", "on": "mount"}, {"preset": "shake", "on": "invalid"},
+                        {"preset": "tada", "on": "event", "source": "save", "event": "click"}]}
+
+
+def _animation_issues(form: Any, control: Any) -> List[tuple]:
+    """Problems of a control's ``animations`` entries: unknown presets or triggers, events that don't exist."""
+    from ..designer import components, motion
+
+    out: List[tuple] = []
+    for i, entry in enumerate(control.animations or ()):
+        where = f"{control.name}.animations[{i}]"
+        if not isinstance(entry, dict):
+            out.append(("error", f"{where}: an animation is an object like {{\"preset\": \"fade_in\"}}"))
+            continue
+        if motion.preset_of(entry) is None:
+            out.append(("error", f"{where}: unknown preset {entry.get('preset')!r}; see form_animations()"))
+        on = entry.get("on")
+        if on not in (None, "") and on not in motion.TRIGGER_LABELS:
+            out.append(("error", f"{where}: unknown trigger on={on!r}; it takes: {', '.join(motion.TRIGGER_LABELS)}"))
+        if on == "event":
+            source, event = str(entry.get("source") or ""), str(entry.get("event") or "")
+            if source and form.get(source) is None:
+                out.append(("error", f"{where}: source {source!r} is not a control of the form"))
+            elif not event:
+                out.append(("error", f"{where}: on='event' needs an \"event\" of its source"))
+            else:
+                try:
+                    events = (components.get(form[source].type).all_events + ("invalid",)) if source \
+                        else components.FORM_EVENTS
+                except KeyError:
+                    events = ()
+                if events and event not in events:
+                    out.append(("error", f"{where}: {source or 'the form'} has no event {event!r}; it has: "
+                                         f"{', '.join(events)}"))
+    return out
+
+
 def check_form(content: str, handlers: str = "") -> Dict[str, Any]:
     """Validates the JSON of a ``.pzform`` and, when given, that its handlers module defines every handler."""
     from ..designer import code as code_mod
@@ -301,6 +347,8 @@ def check_form(content: str, handlers: str = "") -> Dict[str, Any]:
             parent = form.get(control.parent)
             if parent is not None and components.get(parent.type).container is None:
                 add("error", f"{control.name}: its parent {parent.name!r} ({parent.type}) is not a container")
+        for issue in _animation_issues(form, control):
+            add(*issue)
     for event, handler in form.events.items():
         if event not in components.FORM_EVENTS:
             add("error", f"the form has no event {event!r}; it has: {', '.join(components.FORM_EVENTS)}")

@@ -4,8 +4,9 @@ Controls inside a container are positioned by it:
 
 * ``free`` containers (panel, group box, card...) keep their children where they were
   dropped, in coordinates relative to the container, and resize them with their anchors;
-* ``flex`` containers line their children up in a row or a column, like CSS flexbox
-  (``gap``, ``padding``, ``justify``, ``align`` and a per-child ``grow``);
+* ``flex`` containers line their children up in a row or a column, like CSS flexbox and
+  Figma's auto layout (``gap``, ``padding``, ``justify``, ``align`` and a per-child ``grow``
+  and ``align_self``);
 * ``grid`` containers place their children in cells, left to right and top to bottom
   (``columns``, ``gap``, ``padding``, ``row_height`` and a per-child ``span``);
 * ``dock`` containers (a Dock) put their Dock panels on their ``side`` (left, right, top,
@@ -64,8 +65,19 @@ def _num(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def _padding(p: Dict[str, Any]) -> float:
-    return max(_num(p.get("padding")), 0.0)
+def padding(p: Dict[str, Any]) -> Tuple[float, float, float, float]:
+    """A flex or grid container's padding as ``(top, right, bottom, left)``: it is saved as one number, two
+    (vertical horizontal) or four, like CSS."""
+    value = p.get("padding")
+    if isinstance(value, (list, tuple)):
+        values = [max(_num(v), 0.0) for v in value]
+        if len(values) == 2:
+            return (values[0], values[1], values[0], values[1])
+        if len(values) == 4:
+            return (values[0], values[1], values[2], values[3])
+        value = values[0] if values else 0.0
+    pad = max(_num(value), 0.0)
+    return (pad, pad, pad, pad)
 
 
 def reflow(form: Form, parent: Optional[str], starts: Dict[str, Rect], design: Tuple[float, float],
@@ -102,9 +114,10 @@ def managed(form: Form, control: Control) -> bool:
 # -- layouts -----------------------------------------------------------------------
 
 
-def flex(box: Rect, items: Sequence[Tuple[float, float, float]], *, direction: str = "row", gap: float = 0,
+def flex(box: Rect, items: Sequence[Tuple[Any, ...]], *, direction: str = "row", gap: float = 0,
          justify: str = "start", align: str = "stretch") -> List[Rect]:
-    """Rectangles for ``items`` (``(width, height, grow)``) laid out in a row or column inside ``box``."""
+    """Rectangles for ``items`` (``(width, height, grow)``, or with a fourth ``align_self`` that overrides
+    ``align`` for that item, like CSS) laid out in a row or column inside ``box``."""
     x, y, w, h = box
     row = direction != "column"
     main_total, cross_total = (w, h) if row else (h, w)
@@ -139,12 +152,13 @@ def flex(box: Rect, items: Sequence[Tuple[float, float, float]], *, direction: s
             start = free / (n + 1)
     out: List[Rect] = []
     pos = start
-    for main, cross in zip(mains, crosses):
-        if align == "stretch":
+    selves = [(str(it[3]) if len(it) > 3 and it[3] else align) for it in items]
+    for main, cross, own in zip(mains, crosses, selves):
+        if own == "stretch":
             c0, size = 0.0, cross_total
         else:
             size = min(cross, cross_total) if cross_total > 0 else cross
-            c0 = {"center": (cross_total - size) / 2, "end": cross_total - size}.get(align, 0.0)
+            c0 = {"center": (cross_total - size) / 2, "end": cross_total - size}.get(own, 0.0)
         if row:
             out.append((x + pos, y + c0, main, size))
         else:
@@ -236,9 +250,9 @@ def dock(container: Control, rect: Rect, children: Sequence[Control]) -> List[Re
 def content_box(control: Control, rect: Rect) -> Rect:
     """The area of a container where its children go."""
     if kind(control) in ("flex", "grid"):
-        pad = _padding(props(control))
+        top, right, bottom, left = padding(props(control))
         x, y, w, h = rect
-        return (x + pad, y + pad, max(w - 2 * pad, 0), max(h - 2 * pad, 0))
+        return (x + left, y + top, max(w - left - right, 0), max(h - top - bottom, 0))
     return rect
 
 
@@ -255,7 +269,8 @@ def arrange(form: Form, container: Control, rect: Rect, children: Sequence[Contr
         items = [(*sizes.get(c.name, (c.width, c.height)), int(_num(c.layout.get("span"), 1))) for c in children]
         return grid(box, items, columns=int(_num(p.get("columns"), 2)), gap=gap,
                     row_height=_num(p.get("row_height")), align=str(p.get("align", "stretch")))
-    items = [(*sizes.get(c.name, (c.width, c.height)), _num(c.layout.get("grow"))) for c in children]
+    items = [(*sizes.get(c.name, (c.width, c.height)), _num(c.layout.get("grow")), c.layout.get("align_self"))
+             for c in children]
     return flex(box, items, direction=str(p.get("direction", "row")), gap=gap,
                 justify=str(p.get("justify", "start")), align=str(p.get("align", "stretch")))
 

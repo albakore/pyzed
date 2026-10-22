@@ -35,7 +35,7 @@ What to do for each kind of request:
   a stylesheet and pz.provide / use_context (cookbook "Web-style pages").
 - "Make a component": list_components to reuse what exists, new_component, then validate_code and
   screenshot with a preview() function.
-- "Make a designer form": list_components(kind="designer"), new_form, validate_form.
+- "Make a designer form": list_components(kind="designer"), new_form, form_animations, validate_form.
 - "A shader / visual effect": get_guide("shaders"); node graphs (.pzshad, drawn with pz.shader("x.pzshad"))
   start from new_shader, use list_shader_nodes and check_shader; style effects (glow, glass...) are in the cookbook.
 - "Animate it": one widget uses .animate() / .transition() (cookbook); several widgets or app state on one
@@ -45,7 +45,7 @@ What to do for each kind of request:
 
 Knowledge: get_guide("overview"), "best-practices" and "cookbook" (runnable recipes), list_components /
 describe_component, search_icons, list_themes, list_examples / read_example (blocks are whole screens).
-Checks: validate_code, validate_form, check_project; pictures: screenshot, screenshot_project.
+Checks: validate_code, validate_form, check_project; animation triggers: form_animations; pictures: screenshot, screenshot_project.
 Project tools work in the folder the server runs in and in the project's own environment (its .venv through
 uv run; project_info shows it, WSL included). Code goes in the project's files: the entry is its script
 (`script` in [tool.pyzed]) or its main form; forms, components and shaders are files of the project."""
@@ -272,6 +272,15 @@ def create(allow_code: bool = True, root: Optional[str] = None) -> Any:
         """Checks Pyzed code without running it: unknown pz/ui names, wrong keyword arguments, apps without
         view(), components without render(), side effects in view(), lambdas in loops, plus ruff if installed."""
         return _json(validate.check_code(code))
+
+    @tool()
+    def form_animations() -> str:
+        """The animations a .pzform control takes in its "animations" list: every trigger ("on": appearing,
+        hover, click, double click, pointer enter/leave, a new value, Enter, a failed validation rule, another
+        control's event, code) and the presets by category, with examples."""
+        from . import validate
+
+        return _json(validate.animation_triggers())
 
     @tool()
     def validate_form(form: str, handlers: str = "") -> str:

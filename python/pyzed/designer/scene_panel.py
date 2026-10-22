@@ -263,8 +263,8 @@ CARD_INSET = CARD_PADDING + 1  # padding plus border: rows inside a card use it 
 MEMBER_LABEL = 116.0  # the name column of the property rows (icon, name and the settings arrow)
 
 #: The types the Type list offers; any other annotation can be typed in the Annotation field.
-PRESETS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "Choice", "Range", "int | None",
-           "list[str]", "dict[str, int]", "Any")
+PRESETS = ("str", "int", "float", "bool", "Color", "Icon", "Multiline", "FilePath", "FolderPath", "Choice", "Range",
+           "int | None", "list[str]", "dict[str, int]", "Any")
 
 
 def type_context(d: "Designer", t: Theme) -> _type_editor.Context:
@@ -416,7 +416,8 @@ def member_prop(m: scene_code.Member) -> Optional[_components.Prop]:
         base, low, high, step = scene_code.range_of(m.type) if kind == "Range" else (
             kind, None, None, 1.0 if kind == "int" else 0.1)
         return Prop(m.name, "number", m.default, min=low, max=high, step=step)
-    simple = {"bool": "bool", "str": "text", "Color": "color", "Icon": "icon", "Multiline": "multiline"}
+    simple = {"bool": "bool", "str": "text", "Color": "color", "Icon": "icon", "Multiline": "multiline",
+              "FilePath": "file", "FolderPath": "folder"}
     if kind in simple:
         return Prop(m.name, simple[kind], m.default)
     if kind == "Choice":

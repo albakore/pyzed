@@ -281,6 +281,12 @@ pub enum Kind {
     Opaque {
         child: Py<Widget>,
     },
+    Scrub {
+        child: Py<Widget>,
+        on_scrub: Option<PyMsg>,
+        on_start: Option<PyMsg>,
+        on_end: Option<PyMsg>,
+    },
     Hover {
         base: Py<Widget>,
         top: Py<Widget>,
@@ -432,6 +438,7 @@ impl Widget {
             Kind::MouseArea { .. } => "mouse_area",
             Kind::Stack { .. } => "stack",
             Kind::Opaque { .. } => "opaque",
+            Kind::Scrub { .. } => "scrub",
             Kind::Hover { .. } => "hover",
             Kind::Tooltip { .. } => "tooltip",
             Kind::Checkbox { .. } => "checkbox",
@@ -1309,6 +1316,38 @@ pub fn opaque(py: Python<'_>, content: &Bound<'_, PyAny>) -> PyResult<Py<Widget>
     )
 }
 
+/// Lets the mouse change a number field by dragging over it, like Figma's.
+///
+/// Pressing the left button over `content` and moving sideways calls `on_scrub(dx)` with the
+/// pixels moved since the last call (even outside the window), between `on_start()` and
+/// `on_end()`. A double click focuses the text input inside with its text selected, to type
+/// a value; Enter, Escape or a click outside end the typing. While the input has the focus,
+/// every event goes to it.
+///
+/// Events:
+/// - `on_scrub(dx)`: Callable that receives the horizontal movement, in pixels.
+/// - `on_start()`: A drag begins.
+/// - `on_end()`: The button is released after a drag.
+#[pyfunction]
+#[pyo3(signature = (content, on_scrub=None, *, on_start=None, on_end=None))]
+pub fn scrub(
+    py: Python<'_>,
+    content: &Bound<'_, PyAny>,
+    on_scrub: Any<'_>,
+    on_start: Any<'_>,
+    on_end: Any<'_>,
+) -> PyResult<Py<Widget>> {
+    new(
+        py,
+        Kind::Scrub {
+            child: child(content)?,
+            on_scrub: PyMsg::maybe(&on_scrub),
+            on_start: PyMsg::maybe(&on_start),
+            on_end: PyMsg::maybe(&on_end),
+        },
+    )
+}
+
 /// Shows `top` over `base` only while the mouse hovers it.
 #[pyfunction]
 pub fn hover(
@@ -1783,6 +1822,7 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(event_names, m)?)?;
     m.add_function(wrap_pyfunction!(stack, m)?)?;
     m.add_function(wrap_pyfunction!(opaque, m)?)?;
+    m.add_function(wrap_pyfunction!(scrub, m)?)?;
     m.add_function(wrap_pyfunction!(hover, m)?)?;
     m.add_function(wrap_pyfunction!(tooltip, m)?)?;
     m.add_function(wrap_pyfunction!(checkbox, m)?)?;

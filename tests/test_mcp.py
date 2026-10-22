@@ -232,7 +232,8 @@ def test_server_registers_everything(tmp_path):
     async def check():
         tools = {t.name for t in await server.list_tools()}
         assert {"get_guide", "list_guides", "list_components", "describe_component", "search_reference",
-                "read_reference", "editor_keymap", "new_component", "new_form", "validate_code", "validate_form",
+                "read_reference", "editor_keymap", "new_component", "new_form", "form_animations", "validate_code",
+                "validate_form",
                 "screenshot", "read_docs", "list_examples", "plan_app", "animation_properties", "new_animation",
                 "check_animation", "list_shader_nodes", "check_shader",
                 "new_shader"} | project_tools <= tools
@@ -411,3 +412,23 @@ def test_cli_without_the_sdk_explains_how_to_install(tmp_path):
     result = subprocess.run([sys.executable, "-c", "import sys; from pyzed.cli import main; sys.exit(main(['mcp']))"],
                             capture_output=True, text=True, env={**os.environ, "PYTHONPATH": str(tmp_path)}, timeout=60)
     assert result.returncode == 1 and "pyzed-ui[mcp]" in result.stderr
+
+
+def test_validate_form_checks_animations():
+    from pyzed.mcp import validate
+
+    form = json.dumps({"controls": [
+        {"name": "save", "type": "button"},
+        {"name": "status", "type": "label", "animations": [
+            {"preset": "tada", "on": "event", "source": "save", "event": "click"},
+            {"preset": "nope"},
+            {"preset": "pulse", "on": "sometimes"},
+            {"preset": "pulse", "on": "event", "source": "ghost", "event": "click"},
+            {"preset": "pulse", "on": "event", "source": "save", "event": "melt"}]}]})
+    issues = " ".join(i["message"] for i in validate.check_form(form)["issues"])
+    assert "animations[0]" not in issues
+    for part in ("unknown preset 'nope'", "unknown trigger on='sometimes'", "'ghost' is not a control",
+                 "no event 'melt'"):
+        assert part in issues
+    triggers = validate.animation_triggers()
+    assert "invalid" in json.dumps(triggers) and "event" in json.dumps(triggers)

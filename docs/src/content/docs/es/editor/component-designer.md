@@ -122,6 +122,7 @@ escribe cualquier anotación en **Annotation**:
 | Color | `pz.Color` | Muestra de color con un token del tema o `#rrggbb`. |
 | Icon | `pz.Icon` | Selector de icono. |
 | Multiline | `pz.Multiline` | Área de texto. |
+| Archivo, carpeta | `pz.FilePath`, `pz.FolderPath` (o `pathlib.Path`) | Un campo de ruta con un botón que abre el diálogo de archivo o de carpeta. |
 | Choice | `Literal["fast", "slow"]` | Desplegable; la tarjeta tiene un campo **Options**. |
 | Range | `Annotated[int, pz.Range(0, 5)]` | Campo numérico con límites; la tarjeta tiene **Min**, **Max** y **Step**. |
 | Optional | `float \| None`, `Optional[float]` | **None** con **+** para darle un valor, o el editor del valor con **×** para vaciarlo. |
